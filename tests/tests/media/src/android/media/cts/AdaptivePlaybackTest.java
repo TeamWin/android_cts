@@ -72,6 +72,14 @@ public class AdaptivePlaybackTest extends MediaPlayerTestBase {
                 R.raw.bbb_s1_352x288_mp4_hevc_mp2_600kbps_30fps_aac_he_stereo_96kbps_48000hz);
     }
 
+    public Iterable<Codec> Mpeg2(CodecFactory factory) {
+        return factory.createCodecList(
+                mContext,
+                MediaFormat.MIMETYPE_VIDEO_MPEG2,
+                R.raw.video_640x360_mp4_mpeg2_2000kbps_30fps_aac_stereo_128kbps_48000hz,
+                R.raw.video_1280x720_mp4_mpeg2_3000kbps_30fps_aac_stereo_128kbps_48000hz);
+    }
+
     public Iterable<Codec> H263(CodecFactory factory) {
         return factory.createCodecList(
                 mContext,
@@ -125,19 +133,20 @@ public class AdaptivePlaybackTest extends MediaPlayerTestBase {
     public Iterable<Codec> VP8()   { return VP8(ALL);   }
     public Iterable<Codec> VP9()   { return VP9(ALL);   }
     public Iterable<Codec> AV1()   { return AV1(ALL);   }
+    public Iterable<Codec> Mpeg2() { return Mpeg2(ALL); }
     public Iterable<Codec> Mpeg4() { return Mpeg4(ALL); }
     public Iterable<Codec> H263()  { return H263(ALL);  }
 
     public Iterable<Codec> AllCodecs() {
-        return chain(H264(ALL), HEVC(ALL), VP8(ALL), VP9(ALL), AV1(ALL), Mpeg4(ALL), H263(ALL));
+        return chain(H264(ALL), HEVC(ALL), VP8(ALL), VP9(ALL), AV1(ALL), Mpeg2(ALL), Mpeg4(ALL), H263(ALL));
     }
 
     public Iterable<Codec> SWCodecs() {
-        return chain(H264(SW), HEVC(SW), VP8(SW), VP9(SW), AV1(SW), Mpeg4(SW), H263(SW));
+        return chain(H264(SW), HEVC(SW), VP8(SW), VP9(SW), AV1(SW), Mpeg2(SW), Mpeg4(SW), H263(SW));
     }
 
     public Iterable<Codec> HWCodecs() {
-        return chain(H264(HW), HEVC(HW), VP8(HW), VP9(HW), AV1(HW), Mpeg4(HW), H263(HW));
+        return chain(H264(HW), HEVC(HW), VP8(HW), VP9(HW), AV1(HW), Mpeg2(HW), Mpeg4(HW), H263(HW));
     }
 
     /* tests for adaptive codecs */
@@ -195,6 +204,7 @@ public class AdaptivePlaybackTest extends MediaPlayerTestBase {
     public void runVP8()   { ex(VP8(),   allTests); }
     public void runVP9()   { ex(VP9(),   allTests); }
     public void runAV1()   { ex(AV1(),   allTests); }
+    public void runMpeg2() { ex(Mpeg2(), allTests); }
     public void runMpeg4() { ex(Mpeg4(), allTests); }
     public void runH263()  { ex(H263(),  allTests); }
 
@@ -203,6 +213,7 @@ public class AdaptivePlaybackTest extends MediaPlayerTestBase {
     public void onlyVP8HW()   { ex(VP8(HW),   allTests); }
     public void onlyVP9HW()   { ex(VP9(HW),   allTests); }
     public void onlyAV1HW()   { ex(AV1(HW),   allTests); }
+    public void onlyMpeg2HW() { ex(Mpeg2(HW), allTests); }
     public void onlyMpeg4HW() { ex(Mpeg4(HW), allTests); }
     public void onlyH263HW()  { ex(H263(HW),  allTests); }
 
@@ -211,6 +222,7 @@ public class AdaptivePlaybackTest extends MediaPlayerTestBase {
     public void onlyVP8SW()   { ex(VP8(SW),   allTests); }
     public void onlyVP9SW()   { ex(VP9(SW),   allTests); }
     public void onlyAV1SW()   { ex(AV1(SW),   allTests); }
+    public void onlyMpeg2SW() { ex(Mpeg2(SW), allTests); }
     public void onlyMpeg4SW() { ex(Mpeg4(SW), allTests); }
     public void onlyH263SW()  { ex(H263(SW),  allTests); }
 
@@ -223,6 +235,7 @@ public class AdaptivePlaybackTest extends MediaPlayerTestBase {
     public void testVP8_adaptiveEarlyEos()   { ex(VP8(),   adaptiveEarlyEos); }
     public void testVP9_adaptiveEarlyEos()   { ex(VP9(),   adaptiveEarlyEos); }
     public void testAV1_adaptiveEarlyEos()   { ex(AV1(),   adaptiveEarlyEos); }
+    public void testMpeg2_adaptiveEarlyEos() { ex(Mpeg2(), adaptiveEarlyEos); }
     public void testMpeg4_adaptiveEarlyEos() { ex(Mpeg4(), adaptiveEarlyEos); }
     public void testH263_adaptiveEarlyEos()  { ex(H263(),  adaptiveEarlyEos); }
 
@@ -231,6 +244,7 @@ public class AdaptivePlaybackTest extends MediaPlayerTestBase {
     public void testVP8_adaptiveEosFlushSeek()   { ex(VP8(),   adaptiveEosFlushSeek); }
     public void testVP9_adaptiveEosFlushSeek()   { ex(VP9(),   adaptiveEosFlushSeek); }
     public void testAV1_adaptiveEosFlushSeek()   { ex(AV1(),   adaptiveEosFlushSeek); }
+    public void testMpeg2_adaptiveEosFlushSeek() { ex(Mpeg2(), adaptiveEosFlushSeek); }
     public void testMpeg4_adaptiveEosFlushSeek() { ex(Mpeg4(), adaptiveEosFlushSeek); }
     public void testH263_adaptiveEosFlushSeek()  { ex(H263(),  adaptiveEosFlushSeek); }
 
@@ -239,6 +253,7 @@ public class AdaptivePlaybackTest extends MediaPlayerTestBase {
     public void testVP8_adaptiveSkipAhead()   { ex(VP8(),   adaptiveSkipAhead); }
     public void testVP9_adaptiveSkipAhead()   { ex(VP9(),   adaptiveSkipAhead); }
     public void testAV1_adaptiveSkipAhead()   { ex(AV1(),   adaptiveSkipAhead); }
+    public void testMpeg2_adaptiveSkipAhead() { ex(Mpeg2(), adaptiveSkipAhead); }
     public void testMpeg4_adaptiveSkipAhead() { ex(Mpeg4(), adaptiveSkipAhead); }
     public void testH263_adaptiveSkipAhead()  { ex(H263(),  adaptiveSkipAhead); }
 
@@ -247,6 +262,7 @@ public class AdaptivePlaybackTest extends MediaPlayerTestBase {
     public void testVP8_adaptiveSkipBack()   { ex(VP8(),   adaptiveSkipBack); }
     public void testVP9_adaptiveSkipBack()   { ex(VP9(),   adaptiveSkipBack); }
     public void testAV1_adaptiveSkipBack()   { ex(AV1(),   adaptiveSkipBack); }
+    public void testMpeg2_adaptiveSkipBack() { ex(Mpeg2(), adaptiveSkipBack); }
     public void testMpeg4_adaptiveSkipBack() { ex(Mpeg4(), adaptiveSkipBack); }
     public void testH263_adaptiveSkipBack()  { ex(H263(),  adaptiveSkipBack); }
 
@@ -255,6 +271,7 @@ public class AdaptivePlaybackTest extends MediaPlayerTestBase {
     public void testVP8_adaptiveReconfigDrc()   { ex(VP8(),   adaptiveReconfigDrc); }
     public void testVP9_adaptiveReconfigDrc()   { ex(VP9(),   adaptiveReconfigDrc); }
     public void testAV1_adaptiveReconfigDrc()   { ex(AV1(),   adaptiveReconfigDrc); }
+    public void testMpeg2_adaptiveReconfigDrc() { ex(Mpeg2(), adaptiveReconfigDrc); }
     public void testMpeg4_adaptiveReconfigDrc() { ex(Mpeg4(), adaptiveReconfigDrc); }
     public void testH263_adaptiveReconfigDrc()  { ex(H263(),  adaptiveReconfigDrc); }
 
@@ -263,6 +280,7 @@ public class AdaptivePlaybackTest extends MediaPlayerTestBase {
     public void testVP8_adaptiveSmallReconfigDrc()   { ex(VP8(),   adaptiveSmallReconfigDrc); }
     public void testVP9_adaptiveSmallReconfigDrc()   { ex(VP9(),   adaptiveSmallReconfigDrc); }
     public void testAV1_adaptiveSmallReconfigDrc()   { ex(AV1(),   adaptiveSmallReconfigDrc); }
+    public void testMpeg2_adaptiveSmallReconfigDrc() { ex(Mpeg2(), adaptiveSmallReconfigDrc); }
     public void testMpeg4_adaptiveSmallReconfigDrc() { ex(Mpeg4(), adaptiveSmallReconfigDrc); }
     public void testH263_adaptiveSmallReconfigDrc()  { ex(H263(),  adaptiveSmallReconfigDrc); }
 
@@ -271,6 +289,7 @@ public class AdaptivePlaybackTest extends MediaPlayerTestBase {
     public void testVP8_adaptiveDrc()  { ex(VP8(),  adaptiveDrc); }
     public void testVP9_adaptiveDrc()  { ex(VP9(),  adaptiveDrc); }
     public void testAV1_adaptiveDrc()  { ex(AV1(),  adaptiveDrc); }
+    public void testMpeg2_adaptiveDrc() { ex(Mpeg2(), adaptiveDrc); }
     public void testMpeg4_adaptiveDrc() { ex(Mpeg4(), adaptiveDrc); }
     public void testH263_adaptiveDrc() { ex(H263(), adaptiveDrc); }
 
@@ -279,18 +298,21 @@ public class AdaptivePlaybackTest extends MediaPlayerTestBase {
     public void testVP8_adaptiveDrcEarlyEos()  { ex(VP8(),  new AdaptiveDrcEarlyEosTest()); }
     public void testVP9_adaptiveDrcEarlyEos()  { ex(VP9(),  new AdaptiveDrcEarlyEosTest()); }
     public void testAV1_adaptiveDrcEarlyEos()  { ex(AV1(),  new AdaptiveDrcEarlyEosTest()); }
+    public void testMpeg2_adaptiveDrcEarlyEos(){ ex(Mpeg2(), new AdaptiveDrcEarlyEosTest()); }
 
     public void testH264_adaptiveSmallDrc()  { ex(H264(),  adaptiveSmallDrc); }
     public void testHEVC_adaptiveSmallDrc()  { ex(HEVC(),  adaptiveSmallDrc); }
     public void testVP8_adaptiveSmallDrc()   { ex(VP8(),   adaptiveSmallDrc); }
     public void testVP9_adaptiveSmallDrc()   { ex(VP9(),   adaptiveSmallDrc); }
     public void testAV1_adaptiveSmallDrc()   { ex(AV1(),   adaptiveSmallDrc); }
+    public void testMpeg2_adaptiveSmallDrc() { ex(Mpeg2(), adaptiveSmallDrc); }
 
     public void testH264_earlyEos()  { ex(H264(),  earlyEos); }
     public void testHEVC_earlyEos()  { ex(HEVC(),  earlyEos); }
     public void testVP8_earlyEos()   { ex(VP8(),   earlyEos); }
     public void testVP9_earlyEos()   { ex(VP9(),   earlyEos); }
     public void testAV1_earlyEos()   { ex(AV1(),   earlyEos); }
+    public void testMpeg2_earlyEos() { ex(Mpeg2(), earlyEos); }
     public void testMpeg4_earlyEos() { ex(Mpeg4(), earlyEos); }
     public void testH263_earlyEos()  { ex(H263(),  earlyEos); }
 
@@ -299,6 +321,7 @@ public class AdaptivePlaybackTest extends MediaPlayerTestBase {
     public void testVP8_eosFlushSeek()   { ex(VP8(),   eosFlushSeek); }
     public void testVP9_eosFlushSeek()   { ex(VP9(),   eosFlushSeek); }
     public void testAV1_eosFlushSeek()   { ex(AV1(),   eosFlushSeek); }
+    public void testMpeg2_eosFlushSeek() { ex(Mpeg2(), eosFlushSeek); }
     public void testMpeg4_eosFlushSeek() { ex(Mpeg4(), eosFlushSeek); }
     public void testH263_eosFlushSeek()  { ex(H263(),  eosFlushSeek); }
 
@@ -307,6 +330,7 @@ public class AdaptivePlaybackTest extends MediaPlayerTestBase {
     public void testVP8_flushConfigureDrc()   { ex(VP8(),   flushConfigureDrc); }
     public void testVP9_flushConfigureDrc()   { ex(VP9(),   flushConfigureDrc); }
     public void testAV1_flushConfigureDrc()   { ex(AV1(),   flushConfigureDrc); }
+    public void testMpeg2_flushConfigureDrc() { ex(Mpeg2(), flushConfigureDrc); }
     public void testMpeg4_flushConfigureDrc() { ex(Mpeg4(), flushConfigureDrc); }
     public void testH263_flushConfigureDrc()  { ex(H263(),  flushConfigureDrc); }
 

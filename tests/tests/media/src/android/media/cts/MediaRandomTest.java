@@ -179,6 +179,9 @@ public class MediaRandomTest extends ActivityInstrumentationTestCase2<MediaStubA
     public void testPlayerRandomActionHEVC() throws Exception {
         testPlayerRandomAction(R.raw.video_480x360_mp4_hevc_650kbps_30fps_aac_stereo_128kbps_48000hz);
     }
+    public void testPlayerRandomActionMpeg2() throws Exception {
+        testPlayerRandomAction(R.raw.video_480x360_mp4_mpeg2_1500kbps_30fps_aac_stereo_128kbps_48000hz);
+    }
     private void testPlayerRandomAction(int resid) throws Exception {
         Watchdog watchdog = new Watchdog(5000);
         try {
