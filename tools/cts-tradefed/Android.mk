@@ -1,10 +1,10 @@
-# Copyright (C) 2014 The Android Open Source Project
+# Copyright (C) 2015 The Android Open Source Project
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-# http://www.apache.org/licenses/LICENSE-2.0
+#      http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -20,12 +20,15 @@ LOCAL_SRC_FILES := $(call all-java-files-under, src)
 
 LOCAL_JAVA_RESOURCE_DIRS := res
 
-LOCAL_MODULE := compatibility-tradefed_v2
+LOCAL_JAR_MANIFEST := MANIFEST.mf
 
+LOCAL_MODULE := cts-tradefed_v2
 LOCAL_MODULE_TAGS := optional
+LOCAL_JAVA_LIBRARIES := tradefed-prebuilt hosttestlib compatibility-tradefed_v2
 
-LOCAL_JAVA_LIBRARIES := tradefed-prebuilt hosttestlib compatibility-common-util-hostsidelib_v2
+LOCAL_ADDITIONAL_DEPENDENCIES := $(LOCAL_PATH)/Android.mk
 
 include $(BUILD_HOST_JAVA_LIBRARY)
 
+# Build all sub-directories
 include $(call all-makefiles-under,$(LOCAL_PATH))

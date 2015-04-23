@@ -18,14 +18,12 @@ include $(CLEAR_VARS)
 
 LOCAL_SRC_FILES := $(call all-java-files-under, src)
 
-LOCAL_JAVA_RESOURCE_DIRS := res
-
-LOCAL_MODULE := compatibility-tradefed_v2
-
 LOCAL_MODULE_TAGS := optional
 
-LOCAL_JAVA_LIBRARIES := tradefed-prebuilt hosttestlib compatibility-common-util-hostsidelib_v2
+LOCAL_MODULE := compatibility-device-info_v2
 
-include $(BUILD_HOST_JAVA_LIBRARY)
+LOCAL_SDK_VERSION := current
+
+include $(BUILD_STATIC_JAVA_LIBRARY)
 
 include $(call all-makefiles-under,$(LOCAL_PATH))
