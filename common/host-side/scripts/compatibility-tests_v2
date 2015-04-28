@@ -24,9 +24,6 @@ checkFile() {
 HOST_JAR_DIR=${ANDROID_HOST_OUT}/framework
 HOST_JARS="ddmlib-prebuilt tradefed-prebuilt hosttestlib\
     compatibility-tradefed_v2 compatibility-tradefed-tests_v2\
-    compatibility-java-scanner_v2 compatibility-java-scanner-tests_v2\
-    compatibility-native-scanner_v2 compatibility-native-scanner-tests_v2\
-    compatibility-xml-plan-generator_v2 compatibility-xml-plan-generator-tests_v2\
     compatibility-device-util-tests_v2 compatibility-device-setup-tests_v2\
     compatibility-common-util-hostsidelib_v2 compatibility-common-util-tests_v2"
 
@@ -48,12 +45,9 @@ done
 # once our wrappers for tradefed are in place we can make it scan and generate
 # the list of test at runtime.
 TEST_CLASSES="com.android.compatibility.common.devicesetup.DeviceSetupTest\
-    com.android.compatibility.common.scanner.JavaScannerTest\
-    com.android.compatibility.common.scanner.NativeScannerTest\
     com.android.compatibility.common.tradefed.TradefedTest\
     com.android.compatibility.common.util.DeviceUtilTest\
-    com.android.compatibility.common.util.CommonUtilTest\
-    com.android.compatibility.common.xmlgenerator.XmlPlanGeneratorTest"
+    com.android.compatibility.common.util.CommonUtilTest"
 
 for CLASS in ${TEST_CLASSES}; do
     java $RDBG_FLAG -cp ${JAR_PATH} com.android.compatibility.common.tradefed.command.CompatibilityConsole run\
