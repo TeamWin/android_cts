@@ -28,18 +28,4 @@ LOCAL_SDK_VERSION := current
 
 include $(BUILD_STATIC_JAVA_LIBRARY)
 
-################################################################################
-# Build the tests
-###############################################################################
-
-include $(CLEAR_VARS)
-
-LOCAL_SRC_FILES := $(call all-java-files-under, tests/src)
-
-LOCAL_JAVA_LIBRARIES := junit
-
-LOCAL_MODULE_TAGS := optional
-
-LOCAL_MODULE := compatibility-device-util-tests_v2
-
-include $(BUILD_HOST_JAVA_LIBRARY)
+include $(call all-makefiles-under,$(LOCAL_PATH))
