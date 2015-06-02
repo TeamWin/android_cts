@@ -13,26 +13,30 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package com.android.compatibility.tradefed;
 
-package com.android.compatibility.common.tradefed.build;
-
+import com.android.compatibility.common.tradefed.build.BuildHelper;
+import com.android.compatibility.tradefed.command.CtsConsole;
 import com.android.tradefed.util.FileUtil;
 
 import junit.framework.TestCase;
 
 import java.io.File;
 
-public class BuildHelperTest extends TestCase {
+/**
+ * Tests for cts-tradefed.
+ */
+public class CtsTradefedTest extends TestCase {
 
-    public void testBuildHelper() throws Exception {
+    private static final String PROPERTY_NAME = "CTS_ROOT";
+    private static final String SUITE_FULL_NAME = "Compatibility Test Suite";
+    private static final String SUITE_NAME = "CTS";
+
+    public void testManifest() throws Exception {
+        // Test the values in the manifest can be loaded
         File root = FileUtil.createTempDir("root");
-        try {
-            new BuildHelper("", "blah", "", "", root);
-            fail("Build helper validation succeeded on an invalid installation");
-        } catch (IllegalArgumentException e) {
-            // Expected
-        }
-        File base = new File(root, "android-blah");
+        System.setProperty(PROPERTY_NAME, root.getAbsolutePath());
+        File base = new File(root, "android-cts");
         base.mkdirs();
         File repo = new File(base, "repository");
         repo.mkdirs();
@@ -40,14 +44,11 @@ public class BuildHelperTest extends TestCase {
         tests.mkdirs();
         File plans = new File(repo, "plans");
         plans.mkdirs();
-        try {
-            new BuildHelper("", "blah", "", "", root);
-        } catch (IllegalArgumentException e) {
-            e.printStackTrace();
-            fail("Build helper validation failed on a valid installation");
-        }
-
+        CtsConsole c = new CtsConsole();
+        BuildHelper build = c.getCompatibilityBuild();
+        assertEquals("Incorrect suite full name", SUITE_FULL_NAME, build.getSuiteFullName());
+        assertEquals("Incorrect suite name", SUITE_NAME, build.getSuiteName());
         FileUtil.recursiveDelete(root);
+        System.clearProperty(PROPERTY_NAME);
     }
-
 }

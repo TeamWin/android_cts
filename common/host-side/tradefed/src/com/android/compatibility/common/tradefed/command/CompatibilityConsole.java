@@ -230,7 +230,7 @@ public abstract class CompatibilityConsole extends Console {
         }
     }
 
-    private BuildHelper getCompatibilityBuild() {
+    public BuildHelper getCompatibilityBuild() {
         if (mBuild == null) {
             mBuild = new BuildHelper(new CompatibilityBuildProvider().getCompatibilityBuild());
         }

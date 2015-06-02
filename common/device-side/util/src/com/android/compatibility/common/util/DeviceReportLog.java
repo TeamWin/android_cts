@@ -30,13 +30,19 @@ import com.android.compatibility.common.util.ReportLog;
  */
 public class DeviceReportLog extends ReportLog {
     private static final String TAG = DeviceReportLog.class.getSimpleName();
-    private static final String RESULT = "RESULT";
+    private static final String RESULT = "COMPATIBILITY_TEST_RESULT";
+    private static final int INST_STATUS_ERROR = -1;
     private static final int INST_STATUS_IN_PROGRESS = 2;
 
     public void submit(Instrumentation instrumentation) {
         Log.i(TAG, "submit");
-        Bundle output = new Bundle();
-        output.putSerializable(RESULT, this);
-        instrumentation.sendStatus(INST_STATUS_IN_PROGRESS, output);
+        String encoded = toEncodedString();
+        if (encoded != null) {
+            Bundle output = new Bundle();
+            output.putString(RESULT, encoded);
+            instrumentation.sendStatus(INST_STATUS_IN_PROGRESS, output);
+        } else {
+            instrumentation.sendStatus(INST_STATUS_ERROR, null);
+        }
     }
 }

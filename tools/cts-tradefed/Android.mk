@@ -24,7 +24,7 @@ LOCAL_JAR_MANIFEST := MANIFEST.mf
 
 LOCAL_MODULE := cts-tradefed_v2
 LOCAL_MODULE_TAGS := optional
-LOCAL_JAVA_LIBRARIES := tradefed-prebuilt hosttestlib compatibility-tradefed_v2
+LOCAL_JAVA_LIBRARIES := tradefed-prebuilt hosttestlib compatibility-tradefed
 
 LOCAL_ADDITIONAL_DEPENDENCIES := $(LOCAL_PATH)/Android.mk
 

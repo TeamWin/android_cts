@@ -11,22 +11,14 @@
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
- * limitations under the License
+ * limitations under the License.
  */
-package com.android.compatibility.common.tradefed;
-
-import com.android.compatibility.common.tradefed.build.BuildHelperTest;
-
-import junit.framework.TestSuite;
+package com.android.compatibility.tradefed.command;
 
 /**
- * A {@link TestSuite} for the common.tradefed package.
+ * This console is not used for any purpose other than creating the package name space from which
+ * the suite-specific values in the MANIFEST.mf can be read; replicating what a test suite.
  */
-public class TradefedTests extends TestSuite {
+public class MockConsole {
 
-    public TradefedTests() {
-        super();
-
-        addTestSuite(BuildHelperTest.class);
-    }
 }

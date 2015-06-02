@@ -27,7 +27,7 @@ LOCAL_SRC_FILES := $(call all-java-files-under, src) $(call all-Iaidl-files-unde
 
 LOCAL_STATIC_JAVA_LIBRARIES := android-ex-camera2 \
                                android-support-v4 \
-                               compatibility-common-util-devicesidelib_v2 \
+                               compatibility-common-util-devicesidelib \
                                cts-sensors-tests \
                                ctstestrunner \
                                apache-commons-math \

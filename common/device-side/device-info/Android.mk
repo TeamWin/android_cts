@@ -20,7 +20,7 @@ LOCAL_SRC_FILES := $(call all-java-files-under, src)
 
 LOCAL_MODULE_TAGS := optional
 
-LOCAL_MODULE := compatibility-device-info_v2
+LOCAL_MODULE := compatibility-device-info
 
 LOCAL_SDK_VERSION := current
 

@@ -1,4 +1,5 @@
-/*
+<?xml version="1.0" encoding="utf-8"?>
+<!--
  * Copyright (C) 2015 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,24 +13,20 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- */
-package com.android.compatibility.tradefed;
+ -->
 
-import junit.framework.Test;
-import junit.framework.TestSuite;
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.android.compatibility.common">
 
-/**
- * A test suite for all cts-tradefed unit tests.
- */
-public class CtsTradefedTests extends TestSuite {
+    <application>
+        <uses-library android:name="android.test.runner" />
+    </application>
 
-    public CtsTradefedTests() {
-        super();
+    <!--  self-instrumenting test package. -->
+    <instrumentation android:name="android.support.test.runner.AndroidJUnitRunner"
+                     android:targetPackage="com.android.compatibility.common"
+                     android:label="Tests for device-side Compatibility common code">
+    </instrumentation>
 
-        //addTestSuite(FooBar.class);
-    }
+</manifest>
 
-    public static Test suite() {
-        return new CtsTradefedTests();
-    }
-}

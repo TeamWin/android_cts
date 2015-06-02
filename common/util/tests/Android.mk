@@ -18,12 +18,9 @@ include $(CLEAR_VARS)
 
 LOCAL_SRC_FILES := $(call all-java-files-under, src)
 
-LOCAL_STATIC_JAVA_LIBRARIES := \
-                        junit \
-                        kxml2-2.3.0 \
-                        compatibility-common-util-hostsidelib_v2
+LOCAL_STATIC_JAVA_LIBRARIES := junit kxml2-2.3.0 compatibility-common-util-hostsidelib
 
-LOCAL_MODULE := compatibility-common-util-tests_v2
+LOCAL_MODULE := compatibility-common-util-tests
 
 LOCAL_MODULE_TAGS := optional
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014 The Android Open Source Project
+ * Copyright (C) 2015 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,21 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License
  */
+package com.android.compatibility.common.deviceinfo;
 
-package com.android.compatibility.common.util;
-
-import junit.framework.TestSuite;
+import junit.framework.TestCase;
 
 /**
- * A {@link TestSuite} for the common.util package.
+ * Tests for {@link DeviceInfo}.
  */
-public class UtilTests extends TestSuite {
+public class DeviceInfoTest extends TestCase {
 
-    public UtilTests() {
-        super();
-
-        addTestSuite(MetricsStoreTest.class);
-        addTestSuite(MetricsXmlSerializerTest.class);
-        addTestSuite(ReportLogTest.class);
-    }
 }
