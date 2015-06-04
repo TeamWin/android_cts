@@ -19,6 +19,8 @@ import com.android.compatibility.common.tradefed.result.IInvocationResult;
 import com.android.compatibility.common.tradefed.result.IModuleResult;
 import com.android.compatibility.common.tradefed.result.IResult;
 import com.android.compatibility.common.tradefed.result.TestStatus;
+import com.android.compatibility.common.util.ReportLog;
+import com.android.compatibility.common.util.ReportLog.Result;
 import com.android.tradefed.log.LogUtil.CLog;
 import com.android.tradefed.util.FileUtil;
 import com.android.tradefed.util.TimeUtil;
@@ -43,12 +45,12 @@ public class XmlResultHandler {
     private static final String NS = null;
     private static final String TEST_RESULT_FILE_NAME = "test-result.xml";
     private static final String RESULT_FILE_VERSION = "5.0";
-    private static final String[] RESULT_RESOURCES = {"compatibility_result.css",
+    private static final String[] RESULT_RESOURCES = {"compatibility-result.css",
         "compatibility-result.xsd", "compatibility-result.xsl", "logo.png", "newrule-green.png"};
 
     // XML constants
     private static final String ABI_ATTR = "abi";
-    private static final String DETAILS_TAG = "Details";
+    private static final String DETAIL_TAG = "Detail";
     private static final String DEVICE_ATTR = "device";
     private static final String END_TIME_ATTR = "end";
     private static final String FAILED_ATTR = "failed";
@@ -68,6 +70,7 @@ public class XmlResultHandler {
     private static final String RESULT_ATTR = "result";
     private static final String RESULT_TAG = "Result";
     private static final String SCORETYPE_ATTR = "score-type";
+    private static final String SCOREUNIT_ATTR = "score-unit";
     private static final String SOURCE_ATTR = "source";
     private static final String STACK_TAG = "StackTrace";
     private static final String START_TIME_ATTR = "start";
@@ -75,17 +78,10 @@ public class XmlResultHandler {
     private static final String SUITE_VERSION_ATTR = "suite-version";
     private static final String SUMMARY_TAG = "Summary";
     private static final String TARGET_ATTR = "target";
-    private static final String UNIT_ATTR = "unit";
-    private static final String VALUEARRAY_TAG = "ValueArray";
     private static final String VALUE_TAG = "Value";
-
-    // separators for the test result metrics
-    private static final String LOG_SEPARATOR = "\\+\\+\\+";
-    private static final String LOG_ELEM_SEPARATOR = "\\|";
 
     /**
      * @param resultDir
-     * @return
      */
     public static List<IInvocationResult> getResults(File resultDir) {
         // TODO(stuartscott): Auto-generated method stub
@@ -165,37 +161,17 @@ public class XmlResultHandler {
                         }
                         serializer.endTag(NS, FAILURE_TAG);
                     }
-                    String summary = r.getSummary();
-                    if (summary != null) {
-                        String[] summaryElems = summary.split(LOG_ELEM_SEPARATOR);
+                    ReportLog report = r.getReportLog();
+                    if (report != null) {
+                        Result summary = report.getSummary();
                         serializer.startTag(NS, SUMMARY_TAG);
-                        serializer.attribute(NS, MESSAGE_ATTR, summaryElems[0]);
-                        if (summaryElems[1].trim().length() > 0) {
-                            serializer.attribute(NS, TARGET_ATTR, summaryElems[1].trim());
-                        }
-                        serializer.attribute(NS, SCORETYPE_ATTR, summaryElems[2]);
-                        serializer.attribute(NS, UNIT_ATTR, summaryElems[3]);
-                        serializer.text(summaryElems[4]);
+                        serializeResult(serializer, summary);
                         serializer.endTag(NS, SUMMARY_TAG);
-                        String details = r.getDetails();
-                        if (details != null) {
-                            serializer.startTag(NS, DETAILS_TAG);
-                            String[] arrays = details.split(LOG_SEPARATOR);
-                            for (int i = 0; i < arrays.length; i++) {
-                                String[] elems = arrays[i].split(LOG_ELEM_SEPARATOR);
-                                serializer.startTag(NS, VALUEARRAY_TAG);
-                                serializer.attribute(NS, SOURCE_ATTR, elems[0]);
-                                serializer.attribute(NS, MESSAGE_ATTR, elems[1]);
-                                serializer.attribute(NS, SCORETYPE_ATTR, elems[2]);
-                                serializer.attribute(NS, UNIT_ATTR, elems[3]);
-                                for (String v : elems[4].split(" ")) {
-                                    serializer.startTag(NS, VALUE_TAG);
-                                    serializer.text(v);
-                                    serializer.endTag(NS, VALUE_TAG);
-                                }
-                                serializer.endTag(NS, VALUEARRAY_TAG);
-                            }
-                            serializer.endTag(NS, DETAILS_TAG);
+                        List<Result> details = report.getDetailedMetrics();
+                        for (Result detail : details) {
+                            serializer.startTag(NS, DETAIL_TAG);
+                            serializeResult(serializer, detail);
+                            serializer.endTag(NS, DETAIL_TAG);
                         }
                     }
                     serializer.endTag(NS, "Test");
@@ -208,6 +184,27 @@ public class XmlResultHandler {
             CLog.i("Saved results in %s", resultFile.getAbsolutePath());
         } catch (IOException e) {
             CLog.e(e);
+        }
+    }
+
+    /**
+     * @param serializer
+     * @param result
+     * @throws IOException
+     */
+    private static void serializeResult(KXmlSerializer serializer, Result result)
+            throws IOException {
+        serializer.attribute(NS, SOURCE_ATTR, result.getLocation());
+        serializer.attribute(NS, MESSAGE_ATTR, result.getMessage());
+        if (result.getTarget() != null) {
+            serializer.attribute(NS, TARGET_ATTR, result.getTarget().toString());
+        }
+        serializer.attribute(NS, SCORETYPE_ATTR, result.getType().toString());
+        serializer.attribute(NS, SCOREUNIT_ATTR, result.getUnit().toString());
+        for (double d : result.getValues()) {
+            serializer.startTag(NS, VALUE_TAG);
+            serializer.text(Double.toString(d));
+            serializer.endTag(NS, VALUE_TAG);
         }
     }
 

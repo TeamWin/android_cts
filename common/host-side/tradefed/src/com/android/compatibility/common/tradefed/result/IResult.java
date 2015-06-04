@@ -15,6 +15,8 @@
  */
 package com.android.compatibility.common.tradefed.result;
 
+import com.android.compatibility.common.util.ReportLog;
+
 /**
  * Represents a single test result.
  */
@@ -31,7 +33,7 @@ public interface IResult {
     TestStatus getResultStatus();
 
     /**
-     * Sets the {@link TestStatus} of the result and udates the end time of the test.
+     * Sets the {@link TestStatus} of the result and updates the end time of the test.
      *
      * @param status The {@link TestStatus} of this result.
      */
@@ -68,24 +70,14 @@ public interface IResult {
     void setStackTrace(String stackTrace);
 
     /**
-     * @return the headline metric..
+     * @return the metrics report.
      */
-    String getSummary();
+    ReportLog getReportLog();
 
     /**
-     * @param summary the headline metric.
+     * @param report the metrics report.
      */
-    void setSummary(String summary);
-
-    /**
-     * @return the detailed metrics.
-     */
-    String getDetails();
-
-    /**
-     * @param details the detailed metrics.
-     */
-    void setDetails(String details);
+    void setReportLog(ReportLog report);
 
     /**
      * @return the uri of the bug report generated of the failure.

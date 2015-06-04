@@ -16,14 +16,21 @@ LOCAL_PATH:= $(call my-dir)
 
 include $(CLEAR_VARS)
 
-# don't include this package in any target
-LOCAL_MODULE_TAGS := optional
-# and when built explicitly put it in the data partition
+# Don't include this package in any target
+LOCAL_MODULE_TAGS := tests
+# When built explicitly put it in the data partition
 LOCAL_MODULE_PATH := $(TARGET_OUT_DATA_APPS)
 
-LOCAL_STATIC_JAVA_LIBRARIES := ctstestrunner
+LOCAL_DEX_PREOPT := false
+
+LOCAL_PROGUARD_ENABLED := disabled
 
 LOCAL_SRC_FILES := $(call all-java-files-under, src)
+
+LOCAL_STATIC_JAVA_LIBRARIES := android-support-test
+
+# Tag this module as a cts_v2 test artifact
+LOCAL_COMPATIBILITY_SUITE := cts_v2
 
 LOCAL_PACKAGE_NAME := CtsDisplayTestCases
 
@@ -31,4 +38,4 @@ LOCAL_CTS_MODULE_CONFIG := $(LOCAL_PATH)/Old$(CTS_MODULE_TEST_CONFIG)
 
 LOCAL_SDK_VERSION := current
 
-include $(BUILD_CTS_PACKAGE)
+include $(BUILD_PACKAGE)

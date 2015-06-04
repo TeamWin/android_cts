@@ -34,7 +34,7 @@ public class ReportLog implements Serializable {
     private Result mSummary;
     private final List<Result> mDetails = new ArrayList<Result>();
 
-    static class Result implements Serializable {
+    public static class Result implements Serializable {
         private String mLocation;
         private String mMessage;
         private double[] mValues;
@@ -70,7 +70,7 @@ public class ReportLog implements Serializable {
             mTarget = target;
         }
 
-        public double getTarget() {
+        public Double getTarget() {
             return mTarget;
         }
 

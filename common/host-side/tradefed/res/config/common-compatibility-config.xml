@@ -19,7 +19,6 @@
     <build_provider class="com.android.compatibility.common.tradefed.build.CompatibilityBuildProvider" />
     <test class="com.android.compatibility.common.tradefed.testtype.CompatibilityTest" />
     <logger class="com.android.tradefed.log.FileLogger" />
-    <result_reporter class="com.android.tradefed.result.TextResultReporter" />
     <result_reporter class="com.android.compatibility.common.tradefed.result.ResultReporter" />
 
 </configuration>

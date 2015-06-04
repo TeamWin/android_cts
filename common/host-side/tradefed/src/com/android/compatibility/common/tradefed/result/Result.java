@@ -15,6 +15,8 @@
  */
 package com.android.compatibility.common.tradefed.result;
 
+import com.android.compatibility.common.util.ReportLog;
+
 /**
  * Represents a single test result.
  */
@@ -26,8 +28,7 @@ public class Result implements IResult {
     private TestStatus mResult;
     private String mMessage;
     private String mStackTrace;
-    private String mSummary;
-    private String mDetails;
+    private ReportLog mReport;
     private String mBugReport;
     private String mLog;
 
@@ -118,32 +119,16 @@ public class Result implements IResult {
      * {@inheritDoc}
      */
     @Override
-    public String getSummary() {
-        return mSummary;
+    public ReportLog getReportLog() {
+        return mReport;
     }
 
     /**
      * {@inheritDoc}
      */
     @Override
-    public void setSummary(String summary) {
-        mSummary = summary;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public String getDetails() {
-        return mDetails;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public void setDetails(String details) {
-        mDetails = details;
+    public void setReportLog(ReportLog report) {
+        mReport = report;
     }
 
     /**
