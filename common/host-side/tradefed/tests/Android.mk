@@ -18,12 +18,12 @@ include $(CLEAR_VARS)
 
 LOCAL_SRC_FILES := $(call all-java-files-under, src)
 
-LOCAL_MODULE := compatibility-tradefed-tests_v2
+LOCAL_MODULE := compatibility-tradefed-tests
 
 LOCAL_JAR_MANIFEST := MANIFEST.mf
 
 LOCAL_MODULE_TAGS := optional
 
-LOCAL_JAVA_LIBRARIES := tradefed-prebuilt compatibility-tradefed_v2 junit
+LOCAL_JAVA_LIBRARIES := tradefed-prebuilt compatibility-tradefed junit
 
 include $(BUILD_HOST_JAVA_LIBRARY)

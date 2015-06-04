@@ -18,10 +18,10 @@ include $(CLEAR_VARS)
 
 LOCAL_SRC_FILES := $(call all-java-files-under, src)
 
-LOCAL_JAVA_LIBRARIES := junit
+LOCAL_STATIC_JAVA_LIBRARIES := compatibility-common-util-devicesidelib compatibility-device-util
 
 LOCAL_MODULE_TAGS := optional
 
-LOCAL_MODULE := compatibility-device-util-tests_v2
+LOCAL_MODULE := compatibility-device-util-tests
 
-include $(BUILD_HOST_JAVA_LIBRARY)
+include $(BUILD_STATIC_JAVA_LIBRARY)

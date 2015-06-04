@@ -12,17 +12,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-LOCAL_PATH:= $(call my-dir)
+LOCAL_PATH := $(call my-dir)
 
 include $(CLEAR_VARS)
 
 LOCAL_SRC_FILES := $(call all-java-files-under, src)
 
-LOCAL_STATIC_JAVA_LIBRARIES := compatibility-common-util-devicesidelib_v2
+LOCAL_STATIC_JAVA_LIBRARIES := compatibility-common-util-devicesidelib
 
 LOCAL_MODULE_TAGS := optional
 
-LOCAL_MODULE := compatibility-device-util_v2
+LOCAL_MODULE := compatibility-device-util
 
 LOCAL_SDK_VERSION := current
 

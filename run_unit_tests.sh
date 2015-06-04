@@ -14,7 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# helper script for running the cts-tradefed unit tests
+# Helper script for running unit tests for compatibility libraries
 
 checkFile() {
     if [ ! -f "$1" ]; then
@@ -36,31 +36,42 @@ if [ ! -z ${ANDROID_BUILD_TOP} ]; then
     fi;
 fi;
 
-JAR_DIR=${ANDROID_BUILD_TOP}/out/host/$OS/framework
-JARS="ddmlib-prebuilt\
-    tradefed-prebuilt\
-    hosttestlib\
-    compatibility-common-util-hostsidelib_v2\
-    compatibility-common-util-tests_v2\
-    compatibility-device-info-tests_v2\
-    compatibility-device-util-tests_v2\
-    compatibility-tradefed_v2\
-    compatibility-tradefed-tests_v2\
+JAR_DIR=${ANDROID_HOST_OUT}/framework
+JARS="
+    compatibility-common-util-hostsidelib\
+    compatibility-common-util-tests\
+    compatibility-tradefed-tests\
+    compatibility-tradefed\
+    cts-tradefed-tests_v2\
     cts-tradefed_v2\
-    cts-tradefed-tests_v2"
+    ddmlib-prebuilt\
+    hosttestlib\
+    tradefed-prebuilt"
 
 for JAR in $JARS; do
     checkFile ${JAR_DIR}/${JAR}.jar
     JAR_PATH=${JAR_PATH}:${JAR_DIR}/${JAR}.jar
 done
 
+APK=${ANDROID_PRODUCT_OUT}/data/app/CompatibilityTestApp/CompatibilityTestApp.apk
+checkFile ${APK}
+
+TF_CONSOLE=com.android.tradefed.command.Console
+COMMON_PACKAGE=com.android.compatibility.common
+RUNNER=android.support.test.runner.AndroidJUnitRunner
+adb install -r ${APK}
+java $RDBG_FLAG -cp ${JAR_PATH} ${TF_CONSOLE} run singleCommand instrument --package ${COMMON_PACKAGE} --runner ${RUNNER}
+adb uninstall ${COMMON_PACKAGE}
+
 TEST_CLASSES="
-    com.android.compatibility.common.deviceinfo.DeviceInfoTests\
-    com.android.compatibility.common.tradefed.TradefedTests\
-    com.android.compatibility.common.util.DeviceUtilTests\
-    com.android.compatibility.common.util.UtilTests\
-    com.android.compatibility.tradefed.CtsTradefedTests"
+    com.android.compatibility.common.tradefed.build.BuildHelperTest\
+    com.android.compatibility.common.tradefed.build.CompatibilityBuildProviderTest\
+    com.android.compatibility.common.util.AbiUtilsTest\
+    com.android.compatibility.common.util.MetricsStoreTest\
+    com.android.compatibility.common.util.MetricsXmlSerializerTest\
+    com.android.compatibility.common.util.ReportLogTest\
+    com.android.compatibility.tradefed.CtsTradefedTest"
 
 for CLASS in ${TEST_CLASSES}; do
-    java $RDBG_FLAG -cp ${JAR_PATH} com.android.tradefed.command.Console run singleCommand host -n --class ${CLASS} "$@"
+    java $RDBG_FLAG -cp ${JAR_PATH} ${TF_CONSOLE} run singleCommand host -n --class ${CLASS} "$@"
 done
