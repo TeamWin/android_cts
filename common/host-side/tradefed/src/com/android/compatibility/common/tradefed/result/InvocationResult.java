@@ -15,6 +15,10 @@
  */
 package com.android.compatibility.common.tradefed.result;
 
+import com.android.compatibility.common.util.IInvocationResult;
+import com.android.compatibility.common.util.IModuleResult;
+import com.android.compatibility.common.util.TestStatus;
+
 import java.io.File;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;

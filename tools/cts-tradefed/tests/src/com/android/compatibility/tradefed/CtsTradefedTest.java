@@ -15,7 +15,7 @@
  */
 package com.android.compatibility.tradefed;
 
-import com.android.compatibility.common.tradefed.build.BuildHelper;
+import com.android.compatibility.common.tradefed.build.CompatibilityBuildInfo;
 import com.android.compatibility.tradefed.command.CtsConsole;
 import com.android.tradefed.util.FileUtil;
 
@@ -28,24 +28,20 @@ import java.io.File;
  */
 public class CtsTradefedTest extends TestCase {
 
-    private static final String PROPERTY_NAME = "CTS_ROOT";
+    private static final String PROPERTY_NAME = "CTS_V2_ROOT";
     private static final String SUITE_FULL_NAME = "Compatibility Test Suite";
-    private static final String SUITE_NAME = "CTS";
+    private static final String SUITE_NAME = "CTS_V2";
 
     public void testManifest() throws Exception {
         // Test the values in the manifest can be loaded
         File root = FileUtil.createTempDir("root");
         System.setProperty(PROPERTY_NAME, root.getAbsolutePath());
-        File base = new File(root, "android-cts");
+        File base = new File(root, "android-cts_v2");
         base.mkdirs();
-        File repo = new File(base, "repository");
-        repo.mkdirs();
-        File tests = new File(repo, "testcases");
+        File tests = new File(base, "testcases");
         tests.mkdirs();
-        File plans = new File(repo, "plans");
-        plans.mkdirs();
         CtsConsole c = new CtsConsole();
-        BuildHelper build = c.getCompatibilityBuild();
+        CompatibilityBuildInfo build = c.getCompatibilityBuild();
         assertEquals("Incorrect suite full name", SUITE_FULL_NAME, build.getSuiteFullName());
         assertEquals("Incorrect suite name", SUITE_NAME, build.getSuiteName());
         FileUtil.recursiveDelete(root);

@@ -15,7 +15,6 @@
  */
 package com.android.compatibility.common.tradefed.targetprep;
 
-import com.android.compatibility.common.tradefed.build.BuildHelper;
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildInfo;
 import com.android.tradefed.build.IBuildInfo;
 import com.android.tradefed.config.OptionClass;
@@ -23,6 +22,7 @@ import com.android.tradefed.targetprep.TargetSetupError;
 import com.android.tradefed.targetprep.TestAppInstallSetup;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 
 /**
  * Installs specified APKs from Compatibility repository.
@@ -30,13 +30,13 @@ import java.io.File;
 @OptionClass(alias="apk-installer")
 public class ApkInstaller extends TestAppInstallSetup {
 
-    private BuildHelper mBuildHelper = null;
+    private CompatibilityBuildInfo mBuild = null;
 
-    protected BuildHelper getBuildHelper(IBuildInfo buildInfo) {
-        if (mBuildHelper == null) {
-            mBuildHelper = new BuildHelper((CompatibilityBuildInfo) buildInfo);
+    protected CompatibilityBuildInfo getBuild(IBuildInfo buildInfo) {
+        if (mBuild == null) {
+            mBuild = (CompatibilityBuildInfo) buildInfo;
         }
-        return mBuildHelper;
+        return mBuild;
     }
 
     /**
@@ -45,9 +45,14 @@ public class ApkInstaller extends TestAppInstallSetup {
     @Override
     protected File getLocalPathForFilename(IBuildInfo buildInfo, String apkFileName)
             throws TargetSetupError {
-        File apkFile = new File(getBuildHelper(buildInfo).getTestsDir(), apkFileName);
-        if (!apkFile.isFile()) {
-            throw new TargetSetupError(String.format("%s not found", apkFileName));
+        File apkFile = null;
+        try {
+            apkFile = new File(getBuild(buildInfo).getTestsDir(), apkFileName);
+            if (!apkFile.isFile()) {
+                throw new FileNotFoundException();
+            }
+        } catch (FileNotFoundException e) {
+            throw new TargetSetupError(String.format("%s not found", apkFileName), e);
         }
         return apkFile;
     }

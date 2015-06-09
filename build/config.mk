@@ -16,7 +16,7 @@
 # directory before creating the final CTS distribution.
 CTS_TESTCASES_OUT := $(HOST_OUT)/cts/android-cts/repository/testcases
 
-COMPATIBILITY_TESTCASES_OUT_cts_v2 := $(HOST_OUT)/cts_v2/android-cts_v2/repository/testcases
+COMPATIBILITY_TESTCASES_OUT_cts_v2 := $(HOST_OUT)/cts_v2/android-cts_v2/testcases
 
 # Scanners of source files for tests which are then inputed into
 # the XML generator to produce test XMLs.

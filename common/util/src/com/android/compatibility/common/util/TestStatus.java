@@ -13,12 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.android.compatibility.common.tradefed.result;
+package com.android.compatibility.common.util;
 
 /**
  * An enum of possible test statuses.
- *
- * TODO should use TestStatus in ddmlib
  */
 public enum TestStatus {
     PASS("pass"),

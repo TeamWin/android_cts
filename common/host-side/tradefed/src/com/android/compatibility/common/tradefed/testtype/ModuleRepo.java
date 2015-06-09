@@ -15,7 +15,9 @@
  */
 package com.android.compatibility.common.tradefed.testtype;
 
+import com.android.compatibility.common.tradefed.build.CompatibilityBuildInfo;
 import com.android.compatibility.common.util.AbiUtils;
+import com.android.compatibility.common.util.TestFilter;
 import com.android.tradefed.config.Configuration;
 import com.android.tradefed.config.ConfigurationException;
 import com.android.tradefed.config.ConfigurationFactory;
@@ -25,6 +27,7 @@ import com.android.tradefed.testtype.IAbi;
 import com.android.tradefed.testtype.IRemoteTest;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FilenameFilter;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -33,6 +36,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 /**
  * Retrieves Compatibility test module definitions from the repository.
@@ -46,13 +50,15 @@ public class ModuleRepo implements IModuleRepo {
     private final Set<IAbi> mAbis;
 
     /**
-     * Creates a {@link ModuleRepo}, initialized from provided repo files
-     *
-     * @param testCaseDir directory containing all module config xmls
+     * Creates a {@link ModuleRepo}, initialized from provided build
      */
-    public ModuleRepo(File testCaseDir, Set<IAbi> abis) {
+    public ModuleRepo(CompatibilityBuildInfo build, Set<IAbi> abis) {
         this(new HashMap<String, IModuleDef>(), abis);
-        parse(testCaseDir);
+        try {
+            parse(build.getTestsDir());
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
     }
 
     /**
@@ -93,7 +99,7 @@ public class ModuleRepo implements IModuleRepo {
     /**
      * A {@link FilenameFilter} to find all the config files in a directory.
      */
-    private static class ConfigFilter implements FilenameFilter {
+    public static class ConfigFilter implements FilenameFilter {
 
         /**
          * {@inheritDoc}
@@ -160,5 +166,113 @@ public class ModuleRepo implements IModuleRepo {
         List<String> namesList = new ArrayList<>(names);
         Collections.sort(namesList);
         return namesList;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public Set<String> getModulesMatching(String regex) {
+        Set<String> names = new HashSet<>();
+        Pattern pattern = Pattern.compile(regex);
+        for (IModuleDef moduleDef : mModules.values()) {
+            if (moduleDef.nameMatches(pattern)) {
+                names.add(moduleDef.getName());
+            }
+        }
+        return names;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public List<IModuleDef> getModules(List<String> filters, String moduleName, String testName) {
+        Map<String, IModuleDef> moduleDefs = new HashMap<>();
+        // Get all the tests that would run in this plan.
+        for (String filterString : filters) {
+            TestFilter filter = TestFilter.createFrom(filterString);
+            String abi = filter.getAbi();
+            String name = filter.getName();
+            String test = filter.getTest();
+            boolean include = filter.isInclude();
+            // Generate all IDs
+            Set<String> filteredIds = new HashSet<>();
+            Set<String> filteredNames = getModulesMatching(name);
+            if (filteredNames.size() == 0) {
+                throw new IllegalArgumentException(String.format(
+                        "Not modules matching %s. Use 'list modules' to see available modules.",
+                        filter.getName()));
+            }
+            for (String module : filteredNames) {
+                if (abi != null) {
+                    filteredIds.add(AbiUtils.createId(abi, module));
+                } else {
+                    // ABI not specified, test on all ABIs
+                    for (IAbi a : mAbis) filteredIds.add(AbiUtils.createId(a.getName(), module));
+                }
+            }
+            // Iterate through all IDs
+            for (String id : filteredIds) {
+                if (include) {
+                    IModuleDef module = getModule(id);
+                    if (test != null) {
+                        // We're including a subset of tests
+                        module.addFilter(include, test);
+                    }
+                    moduleDefs.put(id, module);
+                } else {
+                    IModuleDef module = getModule(id);
+                    if (test != null) {
+                        // Excluding a subset of tests, so keep module but give filter
+                        module.addFilter(include, test);
+                        moduleDefs.put(id, module);
+                    } else {
+                        // Excluding all tests in the module so just remove the whole thing
+                        moduleDefs.remove(id);
+                    }
+                }
+            }
+        }
+        // If user supplied an include param then remove all modules which do not match. Or if the
+        // user supplied an exclude param, remove all modules that do match.
+        if (moduleName != null) {
+            TestFilter filter = TestFilter.createFrom(moduleName);
+            Pattern pattern = Pattern.compile(filter.getName());
+            boolean include = filter.isInclude();
+            Map<String, IModuleDef> defs = new HashMap<>(moduleDefs);
+            if (include) {
+                // Remove all modules which a different name
+                // If a test is specified, add the filter
+                for (IModuleDef module : defs.values()) {
+                    if (module.nameMatches(pattern)) {
+                        if (testName != null) {
+                            module.addFilter(true, testName);
+                        }
+                    } else {
+                        moduleDefs.remove(module.getId());
+                    }
+                }
+            } else {
+                // If a test is specified, filter it out else remove all module with this name
+                for (IModuleDef module : defs.values()) {
+                    if (module.nameMatches(pattern)) {
+                        if (testName != null) {
+                            module.addFilter(false, testName);
+                        } else {
+                            moduleDefs.remove(module.getId());
+                        }
+                    }
+                }
+            }
+        }
+        if (moduleDefs.size() == 0) {
+            throw new IllegalStateException("Nothing to do. Use 'list modules' to see available"
+                    + " modules, and 'list results' to see available sessions to re-run.");
+        }
+        // Note: run() relies on the fact that the list is reliably sorted for sharding purposes
+        List<IModuleDef> sortedModuleDefs = new ArrayList<>(moduleDefs.values());
+        Collections.sort(sortedModuleDefs);
+        return sortedModuleDefs;
     }
 }

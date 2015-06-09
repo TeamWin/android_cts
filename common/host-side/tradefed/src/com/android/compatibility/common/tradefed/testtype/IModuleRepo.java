@@ -19,6 +19,7 @@ import com.android.compatibility.common.util.AbiUtils;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Interface for accessing tests from the Compatibility repository.
@@ -33,9 +34,14 @@ public interface IModuleRepo {
     IModuleDef getModule(String id);
 
     /**
-     * @return a {@link Map} of all module in repo.
+     * @return a {@link Map} of all modules in repo.
      */
     Map<String, IModuleDef> getModules();
+
+    /**
+     * @return a sorted {@link List} of {@link IModuleDef}s given the filters.
+     */
+    List<IModuleDef> getModules(List<String> filters, String moduleName, String testName);
 
     /**
      * @return a {@link Map} of all module in repo keyed by name.
@@ -43,12 +49,17 @@ public interface IModuleRepo {
     Map<String, List<IModuleDef>> getModulesByName();
 
     /**
-     * @return a sorted {@link List} of module names
+     * @return a sorted {@link List} of module names.
      */
     List<String> getModuleNames();
 
     /**
-     * @return a sorted {@link List} of module ids
+     * @return a {@link Set} of modules names that match the given regular expression.
+     */
+    Set<String> getModulesMatching(String regex);
+
+    /**
+     * @return a sorted {@link List} of module ids.
      */
     List<String> getModuleIds();
 }

@@ -16,10 +16,11 @@
 package com.android.compatibility.common.tradefed.result;
 
 import com.android.compatibility.common.util.AbiUtils;
+import com.android.compatibility.common.util.IModuleResult;
+import com.android.compatibility.common.util.IResult;
 import com.android.compatibility.common.util.MetricsStore;
 import com.android.compatibility.common.util.ReportLog;
-import com.android.ddmlib.Log.LogLevel;
-import com.android.ddmlib.testrunner.TestIdentifier;
+import com.android.compatibility.common.util.TestStatus;
 import com.android.tradefed.log.LogUtil.CLog;
 
 import java.util.ArrayList;
@@ -38,7 +39,7 @@ public class ModuleResult implements IModuleResult {
     private String mDeviceSerial;
     private String mId;
 
-    private Map<TestIdentifier, IResult> mResults = new HashMap<>();
+    private Map<String, IResult> mResults = new HashMap<>();
     private Map<IResult, Map<String, String>> mMetrics = new HashMap<>();
 
     /**
@@ -92,11 +93,11 @@ public class ModuleResult implements IModuleResult {
      * {@inheritDoc}
      */
     @Override
-    public IResult getOrCreateResult(TestIdentifier testId) {
-        IResult result = mResults.get(testId);
+    public IResult getOrCreateResult(String testName) {
+        IResult result = mResults.get(testName);
         if (result == null) {
-            result = new Result(String.format("%s#%s", testId.getClassName(), testId.getTestName()));
-            mResults.put(testId, result);
+            result = new Result(testName);
+            mResults.put(testName, result);
         }
         return result;
     }
@@ -105,8 +106,8 @@ public class ModuleResult implements IModuleResult {
      * {@inheritDoc}
      */
     @Override
-    public IResult getResult(TestIdentifier testId) {
-        return mResults.get(testId);
+    public IResult getResult(String testName) {
+        return mResults.get(testName);
     }
 
     /**
@@ -173,9 +174,9 @@ public class ModuleResult implements IModuleResult {
      * {@inheritDoc}
      */
     @Override
-    public void reportTestFailure(TestIdentifier test, TestStatus status, String trace) {
-        IResult result = getResult(test);
-        result.setResultStatus(status);
+    public void reportTestFailure(String testName, String trace) {
+        IResult result = getResult(testName);
+        result.setResultStatus(TestStatus.FAIL);
         result.setStackTrace(trace);
     }
 
@@ -183,13 +184,13 @@ public class ModuleResult implements IModuleResult {
      * {@inheritDoc}
      */
     @Override
-    public void reportTestEnded(TestIdentifier test, Map<String, String> testMetrics) {
-        IResult result = getResult(test);
+    public void reportTestEnded(String testName, Map<String, String> testMetrics) {
+        IResult result = getResult(testName);
         if (!result.getResultStatus().equals(TestStatus.FAIL)) {
             result.setResultStatus(TestStatus.PASS);
         }
-        if (mMetrics.containsKey(test)) {
-            CLog.e("Test metrics already contains key: " + test);
+        if (mMetrics.containsKey(testName)) {
+            CLog.e("Test metrics already contains key: " + testName);
         }
         mMetrics.put(result, testMetrics);
         CLog.i("Test metrics:" + testMetrics);

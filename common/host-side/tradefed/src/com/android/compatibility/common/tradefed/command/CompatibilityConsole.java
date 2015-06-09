@@ -15,12 +15,13 @@
  */
 package com.android.compatibility.common.tradefed.command;
 
-import com.android.compatibility.common.tradefed.build.BuildHelper;
+import com.android.compatibility.common.tradefed.build.CompatibilityBuildInfo;
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildProvider;
-import com.android.compatibility.common.tradefed.result.IInvocationResult;
 import com.android.compatibility.common.tradefed.result.IInvocationResultRepo;
 import com.android.compatibility.common.tradefed.result.InvocationResultRepo;
-import com.android.compatibility.common.tradefed.result.TestStatus;
+import com.android.compatibility.common.tradefed.testtype.ModuleRepo;
+import com.android.compatibility.common.util.IInvocationResult;
+import com.android.compatibility.common.util.TestStatus;
 import com.android.tradefed.command.Console;
 import com.android.tradefed.util.ArrayUtil;
 import com.android.tradefed.util.FileUtil;
@@ -29,7 +30,7 @@ import com.android.tradefed.util.TableFormatter;
 import com.android.tradefed.util.TimeUtil;
 
 import java.io.File;
-import java.io.FilenameFilter;
+import java.io.FileNotFoundException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -41,21 +42,21 @@ import java.util.Map;
  */
 public abstract class CompatibilityConsole extends Console {
 
-    private BuildHelper mBuild = null;
+    private CompatibilityBuildInfo mBuild = null;
 
     /**
      * {@inheritDoc}
      */
     @Override
     public void run() {
-        BuildHelper build = getCompatibilityBuild();
+        CompatibilityBuildInfo build = getCompatibilityBuild();
         printLine(String.format("Android %s %s (%s)", build.getSuiteName(), build.getSuiteVersion(),
                 build.getBuildId()));
         super.run();
     }
 
     /**
-     * Adds the 'list modules' and 'list plans' commands
+     * Adds the 'list plans', 'list modules' and 'list results' commands
      */
     @Override
     protected void setCustomCommands(RegexTrie<Runnable> trie, List<String> genericHelp,
@@ -63,25 +64,25 @@ public abstract class CompatibilityConsole extends Console {
         trie.put(new Runnable() {
             @Override
             public void run() {
-                BuildHelper build = getCompatibilityBuild();
+                CompatibilityBuildInfo build = getCompatibilityBuild();
                 if (build != null) {
-                    listPlans(build);
+                    // TODO(stuartscott)" listPlans(build);
                 }
             }
         }, LIST_PATTERN, "p(?:lans)?");
         trie.put(new Runnable() {
             @Override
             public void run() {
-                BuildHelper build = getCompatibilityBuild();
+                CompatibilityBuildInfo build = getCompatibilityBuild();
                 if (build != null) {
                     listModules(build);
                 }
             }
-        }, LIST_PATTERN, "m(?:modules)?");
+        }, LIST_PATTERN, "m(?:odules)?");
         trie.put(new Runnable() {
             @Override
             public void run() {
-                BuildHelper build = getCompatibilityBuild();
+                CompatibilityBuildInfo build = getCompatibilityBuild();
                 if (build != null) {
                     listResults(build);
                 }
@@ -95,8 +96,8 @@ public abstract class CompatibilityConsole extends Console {
             listHelp = new String();
         }
         String combinedHelp = listHelp +
-                "\tp[lans]\t\tList all test plans" + LINE_SEPARATOR +
-                "\tm[modules]\tList all modules" + LINE_SEPARATOR +
+                "\tp[lans]\tList all plans" + LINE_SEPARATOR +
+                "\tm[odules]\tList all modules" + LINE_SEPARATOR +
                 "\tr[esults]\tList all results" + LINE_SEPARATOR;
         commandHelp.put(LIST_PATTERN, combinedHelp);
     }
@@ -114,7 +115,7 @@ public abstract class CompatibilityConsole extends Console {
      */
     @Override
     protected String getGenericHelpString(List<String> genericHelp) {
-        BuildHelper build = getCompatibilityBuild();
+        CompatibilityBuildInfo build = getCompatibilityBuild();
         StringBuilder helpBuilder = new StringBuilder();
         helpBuilder.append(build.getSuiteFullName());
         helpBuilder.append("\n\n");
@@ -129,9 +130,7 @@ public abstract class CompatibilityConsole extends Console {
         helpBuilder.append("  exit: gracefully exit the compatibiltiy console, waiting until all ");
         helpBuilder.append("invocations have completed\n");
         helpBuilder.append("Run:\n");
-        final String runPrompt = String.format("  run %s ", build.getSuiteName());
-        helpBuilder.append(runPrompt);
-        helpBuilder.append("--plan/-p <plan_name>: run a test plan\n");
+        final String runPrompt = "  run <plan> ";
         helpBuilder.append(runPrompt);
         helpBuilder.append("--module/-m <module>: run a test module\n");
         helpBuilder.append(runPrompt);
@@ -139,11 +138,7 @@ public abstract class CompatibilityConsole extends Console {
         helpBuilder.append(" the module. Test name can be <package>, ");
         helpBuilder.append("<package>.<class>, <package>.<class>#<method> or <native_name>");
         helpBuilder.append(runPrompt);
-        helpBuilder.append("--continue-session <session_id>: run all not executed tests from a ");
-        helpBuilder.append("previous session\n");
-        helpBuilder.append(runPrompt);
-        helpBuilder.append("--retry-session <session_id>: run all failed tests from a previous ");
-        helpBuilder.append("session\n");
+        helpBuilder.append("--retry <session_id>: run all failed tests from a previous session\n");
         helpBuilder.append(runPrompt);
         helpBuilder.append("[options] --serial/-s <device_id>: run on the specified device\n");
         helpBuilder.append(runPrompt);
@@ -157,7 +152,6 @@ public abstract class CompatibilityConsole extends Console {
         helpBuilder.append("\n");
         helpBuilder.append("List:\n");
         helpBuilder.append("  l/list d/devices: list connected devices and their state\n");
-        helpBuilder.append("  l/list p/plans: list test plans\n");
         helpBuilder.append("  l/list m/modules: list test modules\n");
         helpBuilder.append("  l/list i/invocations: list invocations aka test runs currently in ");
         helpBuilder.append("progress\n");
@@ -172,48 +166,38 @@ public abstract class CompatibilityConsole extends Console {
         return helpBuilder.toString();
     }
 
-    private void listPlans(BuildHelper build) {
-        FilenameFilter xmlFilter = new FilenameFilter() {
-            @Override
-            public boolean accept(File dir, String name) {
-                return name.endsWith(".xml");
-            }
-        };
-        File[] files = build.getPlansDir().listFiles(xmlFilter);
-        if (files.length > 0) {
-            for (File planFile : files) {
-                printLine(FileUtil.getBaseName(planFile.getName()));
-            }
-        } else {
-            printLine(String.format("No plans found in %s", build.getPlansDir()));
+    private void listModules(CompatibilityBuildInfo build) {
+        File[] files = null;
+        try {
+            files = build.getTestsDir().listFiles(new ModuleRepo.ConfigFilter());
+        } catch (FileNotFoundException e) {
+            printLine(e.getMessage());
+            e.printStackTrace();
         }
-    }
-
-    private void listModules(BuildHelper build) {
-        FilenameFilter xmlFilter = new FilenameFilter() {
-            @Override
-            public boolean accept(File dir, String name) {
-                return name.endsWith(".config");
-            }
-        };
-        File[] files = build.getTestsDir().listFiles(xmlFilter);
-        if (files.length > 0) {
+        if (files != null && files.length > 0) {
             for (File moduleFile : files) {
                 printLine(FileUtil.getBaseName(moduleFile.getName()));
             }
         } else {
-            printLine(String.format("No modules found in %s", build.getTestsDir()));
+            printLine("No modules found");
         }
     }
 
-    private void listResults(BuildHelper build) {
+    private void listResults(CompatibilityBuildInfo build) {
         TableFormatter tableFormatter = new TableFormatter();
         List<List<String>> table = new ArrayList<>();
-        table.add(Arrays.asList("Session","Pass", "Fail", "Not Executed", "Start time", "Plan name",
+        table.add(Arrays.asList("Session","Pass", "Fail", "Not Executed", "Start Time", "Test Plan",
                 "Device serial(s)"));
-        IInvocationResultRepo testResultRepo = new InvocationResultRepo(build.getResultsDir());
-        List<IInvocationResult> results = testResultRepo.getResults();
-        if (results.size() > 0) {
+        IInvocationResultRepo testResultRepo = null;
+        List<IInvocationResult> results = null;
+        try {
+            testResultRepo = new InvocationResultRepo(build.getResultsDir());
+            results = testResultRepo.getResults();
+        } catch (FileNotFoundException e) {
+            printLine(e.getMessage());
+            e.printStackTrace();
+        }
+        if (testResultRepo != null && results.size() > 0) {
             for (int i = 0; i < results.size(); i++) {
                 IInvocationResult result = results.get(i);
                 table.add(Arrays.asList(Integer.toString(i),
@@ -226,13 +210,13 @@ public abstract class CompatibilityConsole extends Console {
             }
             tableFormatter.displayTable(table, new PrintWriter(System.out, true));
         } else {
-            printLine(String.format("No results found in %s", build.getResultsDir()));
+            printLine(String.format("No results found"));
         }
     }
 
-    public BuildHelper getCompatibilityBuild() {
+    public CompatibilityBuildInfo getCompatibilityBuild() {
         if (mBuild == null) {
-            mBuild = new BuildHelper(new CompatibilityBuildProvider().getCompatibilityBuild());
+            mBuild = new CompatibilityBuildProvider().getCompatibilityBuild();
         }
         return mBuild;
     }

@@ -13,33 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package com.android.compatibility.common.tradefed.testtype;
 
-import java.util.Collection;
+import junit.framework.TestCase;
 
-/**
- * Interface for accessing test plan data.
- */
-public interface ITestPlan {
+public class CompatibilityTestTest extends TestCase {
 
-    /**
-     * @return The name of this test plan.
-     */
-    String getName();
+    @Override
+    public void setUp() throws Exception {
+    }
 
-    /**
-     * Gets a sorted list of module names contained in this plan.
-     */
-    Collection<String> getModuleNames();
-
-    /**
-     * Add a module to this test plan
-     */
-    void addModule(String name);
-
-    /**
-     * Adds the option to pass to the module referenced by the given name.
-     */
-    void addModuleOption(String name, String key, String value);
+    @Override
+    public void tearDown() throws Exception {
+    }
 
 }

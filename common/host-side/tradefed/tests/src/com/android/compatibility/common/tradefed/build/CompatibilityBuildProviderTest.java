@@ -17,18 +17,21 @@
 package com.android.compatibility.common.tradefed.build;
 
 import com.android.compatibility.tradefed.command.MockConsole;
+import com.android.tradefed.config.OptionSetter;
 
 import junit.framework.TestCase;
 
 public class CompatibilityBuildProviderTest extends TestCase {
 
-    private static final String ROOT_PROPERTY = "TESTS_ROOT";
-    private static final String SUITE_FULL_NAME = "Compatibility Tests";
-    private static final String SUITE_NAME = "TESTS";
-    private static final String SUITE_VERSION = "1";
-    private static final String SUITE_BUILD_ID = "2";
+    public static final String ROOT_PROPERTY = "TESTS_ROOT";
+    public static final String BUILD_ID = "2";
+    public static final String SUITE_NAME = "TESTS";
+    public static final String SUITE_FULL_NAME = "Compatibility Tests";
+    public static final String SUITE_VERSION = "1";
+    public static final String SUITE_PLAN = "foobar";
 
     // Make sure the mock is in the ClassLoader
+    @SuppressWarnings("unused")
     private MockConsole mMockConsole;
 
     @Override
@@ -45,13 +48,16 @@ public class CompatibilityBuildProviderTest extends TestCase {
     public void testManifestLoad() throws Exception {
         setProperty("/tmp/foobar");
         CompatibilityBuildProvider provider = new CompatibilityBuildProvider();
+        OptionSetter setter = new OptionSetter(provider);
+        setter.setOptionValue(CompatibilityBuildProvider.PLAN_OPTION, SUITE_PLAN);
         CompatibilityBuildInfo info = provider.getCompatibilityBuild();
-        assertEquals("Incorrect suite full name", SUITE_FULL_NAME, info.getSuiteFullName());
+        assertEquals("Incorrect build id", BUILD_ID, info.getBuildId());
         assertEquals("Incorrect suite name", SUITE_NAME, info.getSuiteName());
+        assertEquals("Incorrect suite full name", SUITE_FULL_NAME, info.getSuiteFullName());
         assertEquals("Incorrect suite version", SUITE_VERSION, info.getSuiteVersion());
-        assertEquals("Incorrect suite build id", SUITE_BUILD_ID, info.getBuildId());
+        assertEquals("Incorrect suite plan", SUITE_PLAN, info.getSuitePlan());
     }
-    
+
     public void testProperty() throws Exception {
         setProperty(null);
         CompatibilityBuildProvider provider = new CompatibilityBuildProvider();
@@ -72,7 +78,7 @@ public class CompatibilityBuildProviderTest extends TestCase {
      *
      * @param value the value to set, or null to clear the property.
      */
-    private void setProperty(String value) {
+    public static void setProperty(String value) {
         if (value == null) {
             System.clearProperty(ROOT_PROPERTY);
         } else {
