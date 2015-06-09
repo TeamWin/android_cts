@@ -119,8 +119,8 @@ public abstract class CompatibilityConsole extends Console {
         helpBuilder.append(build.getSuiteFullName());
         helpBuilder.append("\n\n");
         helpBuilder.append(build.getSuiteName());
-        helpBuilder.append(" is the test harness for running the Android Compatibility");
-        helpBuilder.append("Suite, built on top of the Trade Federation framework.\n\n");
+        helpBuilder.append(" is the test harness for running the Android Compatibility Suite, ");
+        helpBuilder.append("built on top of Trade Federation.\n\n");
         helpBuilder.append("Available commands and options\n");
         helpBuilder.append("Host:\n");
         helpBuilder.append("  help: show this message\n");

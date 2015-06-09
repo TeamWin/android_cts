@@ -17,7 +17,7 @@
     <include name="common-config" />
     <option name="apk-installer:test-file-name" value="CtsGestureTestCases.apk" />
     <test class="com.android.tradefed.testtype.InstrumentationTest" >
-        <option name="package" value="com.android.cts.gesture" />
+        <option name="package" value="android.gesture.cts" />
         <option name="runner" value="android.support.test.runner.AndroidJUnitRunner" />
     </test>
 </configuration>

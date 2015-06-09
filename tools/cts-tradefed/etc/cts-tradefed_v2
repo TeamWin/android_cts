@@ -100,5 +100,10 @@ elif [ "$HOST" == "Darwin" ]; then
     export DYLD_LIBRARY_PATH
 fi
 
-java $RDBG_FLAG -cp ${JAR_PATH} -DCTS_V2_ROOT=${CTS_V2_ROOT} com.android.compatibility.tradefed.command.CtsConsole "$@"
+# include any host-side test jars
+HOST_TEST_JAR_PATH="$(ls -1 ${CTS_V2_ROOT}/android-cts_v2/repository/testcases/*.jar)"
+
+CLASS_PATH=${JAR_PATH}:${HOST_TEST_JAR_PATH}
+
+java $RDBG_FLAG -cp ${CLASS_PATH} -DCTS_V2_ROOT=${CTS_V2_ROOT} com.android.compatibility.tradefed.command.CtsConsole "$@"
 

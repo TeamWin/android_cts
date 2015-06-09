@@ -16,6 +16,9 @@
 package com.android.compatibility.common.tradefed.result;
 
 import com.android.compatibility.common.util.AbiUtils;
+import com.android.compatibility.common.util.MetricsStore;
+import com.android.compatibility.common.util.ReportLog;
+import com.android.ddmlib.Log.LogLevel;
 import com.android.ddmlib.testrunner.TestIdentifier;
 import com.android.tradefed.log.LogUtil.CLog;
 
@@ -24,8 +27,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  * Data structure for a Compatibility test module result.
@@ -33,8 +34,6 @@ import java.util.regex.Pattern;
 public class ModuleResult implements IModuleResult {
 
     public static final String RESULT_KEY = "COMPATIBILITY_TEST_RESULT";
-
-    private static final Pattern mLogPattern = Pattern.compile("(.*)\\+\\+\\+\\+(.*)");
 
     private String mDeviceSerial;
     private String mId;
@@ -156,21 +155,16 @@ public class ModuleResult implements IModuleResult {
             IResult result = entry.getKey();
             // device test can have performance results in test metrics
             String perfResult = entry.getValue().get(RESULT_KEY);
-            // host test should be checked in HostStore.
-            if (perfResult == null) {
-                perfResult = HostStore.removeResult(mDeviceSerial, getAbi(), result.getName());
-            }
+            ReportLog report = null;
             if (perfResult != null) {
-                // Compatibility result is passed in Summary++++Details format.
-                // Extract Summary and Details, and pass them.
-                Matcher m = mLogPattern.matcher(perfResult);
-                if (m.find()) {
-                    result.setResultStatus(TestStatus.PASS);
-                    result.setSummary(m.group(1));
-                    result.setDetails(m.group(2));
-                } else {
-                    CLog.e("Compatibility Result unrecognizable:" + perfResult);
-                }
+                report = ReportLog.fromEncodedString(perfResult);
+            } else {
+                // host test should be checked into MetricsStore.
+                report = MetricsStore.removeResult(mDeviceSerial, getAbi(), result.getName());
+            }
+            if (report != null) {
+                result.setResultStatus(TestStatus.PASS);
+                result.setReportLog(report);
             }
         }
     }

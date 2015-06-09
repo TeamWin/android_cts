@@ -18,7 +18,6 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="android.sample.cts">
 
-    <uses-permission android:name="android.permission.DISABLE_KEYGUARD" />
     <application>
         <uses-library android:name="android.test.runner" />
         <activity android:name="android.sample.SampleDeviceActivity" >
@@ -34,9 +33,6 @@
         android:name="android.support.test.runner.AndroidJUnitRunner"
         android:label="CTS sample tests"
         android:targetPackage="android.sample.cts" >
-        <meta-data
-            android:name="listener"
-            android:value="com.android.cts.runner.CtsTestRunListener" />
     </instrumentation>
 </manifest>
 

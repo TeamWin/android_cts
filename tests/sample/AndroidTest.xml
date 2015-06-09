@@ -15,12 +15,9 @@
 -->
 <configuration description="Base config for CTS package preparer">
     <include name="common-config" />
-    <!-- Use a non-standard pattern, must match values in tests/tests/display/.../DisplayTest.java -->
-    <option name="run-command:run-command" value="settings put global overlay_display_devices '181x161/214|181x161/214'" />
-    <option name="run-command:teardown-command" value="settings put global overlay_display_devices &quot;&quot;" />
-    <option name="apk-installer:test-file-name" value="CtsDisplayTestCases.apk" />
+    <option name="apk-installer:test-file-name" value="CtsSampleDeviceTestCases.apk" />
     <test class="com.android.tradefed.testtype.InstrumentationTest" >
-        <option name="package" value="android.display.cts" />
+        <option name="package" value="android.sample.cts" />
         <option name="runner" value="android.support.test.runner.AndroidJUnitRunner" />
     </test>
 </configuration>
