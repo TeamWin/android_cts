@@ -19,8 +19,10 @@ import com.android.compatibility.common.util.AbiUtils;
 import com.android.tradefed.targetprep.ITargetPreparer;
 import com.android.tradefed.testtype.IAbi;
 import com.android.tradefed.testtype.IRemoteTest;
+import com.android.tradefed.testtype.InstrumentationTest;
 
 import java.util.List;
+import java.util.regex.Pattern;
 
 /**
  * Container for Compatibility test module info.
@@ -86,7 +88,31 @@ public class ModuleDef implements IModuleDef {
      * {@inheritDoc}
      */
     @Override
+    public void addFilter(boolean include, String name) {
+        for (IRemoteTest test : mTests) {
+            if (test instanceof InstrumentationTest) {
+                // TODO tell InstrumentationTest to include/exclude the test
+            //TODO} else if (test instanceof ITestFilterReciever) {
+                // TODO ((ITestFilterReciever) test).addFilter(include, name);
+            } else {
+                // Skip because it doesn't support this
+            }
+        }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
     public int compareTo(IModuleDef moduleDef) {
         return getName().compareTo(moduleDef.getName());
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public boolean nameMatches(Pattern pattern) {
+        return pattern.matcher(mName).matches();
     }
 }

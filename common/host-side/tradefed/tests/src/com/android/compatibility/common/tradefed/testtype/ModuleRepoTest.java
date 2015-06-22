@@ -13,25 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.android.compatibility.common.xml;
 
-import com.android.compatibility.common.tradefed.testtype.ITestPlan;
+package com.android.compatibility.common.tradefed.testtype;
 
-import java.io.File;
+import junit.framework.TestCase;
 
-/**
- * Handles parsing of plans from XML.
- */
-public class XmlPlanHandler {
+public class ModuleRepoTest extends TestCase {
 
-    /**
-     * @param name
-     * @param planFile
-     * @return
-     */
-    public static ITestPlan parsePlan(String name, File planFile) {
-        // TODO(stuartscott): Auto-generated method stub
-        return null;
+    @Override
+    public void setUp() throws Exception {
+    }
+
+    @Override
+    public void tearDown() throws Exception {
     }
 
 }

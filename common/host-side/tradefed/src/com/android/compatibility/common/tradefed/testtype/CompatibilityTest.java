@@ -15,19 +15,22 @@
  */
 package com.android.compatibility.common.tradefed.testtype;
 
-import com.android.compatibility.common.tradefed.build.BuildHelper;
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildInfo;
+import com.android.compatibility.common.tradefed.result.IInvocationResultRepo;
 import com.android.compatibility.common.tradefed.result.IModuleListener;
+import com.android.compatibility.common.tradefed.result.InvocationResultRepo;
 import com.android.compatibility.common.tradefed.result.ModuleListener;
-import com.android.compatibility.common.tradefed.result.PlanCreator;
-import com.android.compatibility.common.tradefed.result.TestStatus;
 import com.android.compatibility.common.util.AbiUtils;
-import com.android.compatibility.common.xml.XmlPlanHandler;
+import com.android.compatibility.common.util.IInvocationResult;
+import com.android.compatibility.common.util.IModuleResult;
+import com.android.compatibility.common.util.IResult;
+import com.android.compatibility.common.util.TestFilter;
+import com.android.compatibility.common.util.TestStatus;
 import com.android.ddmlib.Log.LogLevel;
 import com.android.tradefed.build.IBuildInfo;
-import com.android.tradefed.config.ConfigurationException;
 import com.android.tradefed.config.Option;
 import com.android.tradefed.config.Option.Importance;
+import com.android.tradefed.config.OptionClass;
 import com.android.tradefed.config.OptionCopier;
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.device.ITestDevice;
@@ -45,35 +48,36 @@ import com.android.tradefed.testtype.IRemoteTest;
 import com.android.tradefed.testtype.IShardableTest;
 import com.android.tradefed.util.AbiFormatter;
 
-import java.io.File;
+import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 /**
  * A Test for running Compatibility Suites
  */
+@OptionClass(alias="compatibility-test")
 public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildReceiver {
 
-    public static final String PLAN_OPTION = "plan";
-    public static final String MODULE_OPTION = "module";
-    public static final String CONTINUE_OPTION = "continue-session";
-    public static final String RETRY_OPTION = "retry-session";
-    public static final String ABI_OPTION = "abi";
-    public static final String SHARD_OPTION = "shard";
+    private static final String FILTER_OPTION = "filter";
+    private static final String MODULE_OPTION = "module";
+    private static final String TEST_OPTION = "test";
+    public static final String RETRY_OPTION = "retry";
+    private static final String ABI_OPTION = "abi";
+    private static final String SHARD_OPTION = "shard";
+    private static final TestStatus[] RETRY_TEST_STATUS = new TestStatus[] {
+        TestStatus.FAIL,
+        TestStatus.NOT_EXECUTED
+    };
 
-    @Option(name = PLAN_OPTION,
-            shortName = 'p',
-            description = "the test plan to run.",
-            importance = Importance.IF_UNSET)
-    private String mPlanName = null;
+    @Option(name = FILTER_OPTION,
+            description = "the module filters to apply.",
+            importance = Importance.ALWAYS)
+    private List<String> mFilters = new ArrayList<>();
 
     @Option(name = MODULE_OPTION,
             shortName = 'm',
@@ -81,11 +85,11 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
             importance = Importance.IF_UNSET)
     private String mModuleName = null;
 
-    @Option(name = CONTINUE_OPTION,
-            shortName = 'c',
-            description = "continue a previous session.",
+    @Option(name = TEST_OPTION,
+            shortName = 't',
+            description = "the test run.",
             importance = Importance.IF_UNSET)
-    private Integer mContinueSessionId = null;
+    private String mTestName = null;
 
     @Option(name = RETRY_OPTION,
             shortName = 'r',
@@ -106,8 +110,7 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
     private int mShardAssignment;
     private int mTotalShards;
     private ITestDevice mDevice;
-    private BuildHelper mBuildHelper;
-    private IBuildInfo mBuildInfo;
+    private CompatibilityBuildInfo mBuild;
     private List<IModuleDef> mModules = new ArrayList<>();
     private int mLastModuleIndex = 0;
 
@@ -155,8 +158,7 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
      */
     @Override
     public void setBuild(IBuildInfo buildInfo) {
-        mBuildHelper = new BuildHelper((CompatibilityBuildInfo) buildInfo);
-        mBuildInfo = buildInfo;
+        mBuild = (CompatibilityBuildInfo) buildInfo;
     }
 
     /**
@@ -204,7 +206,7 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
                         cleaners.add((ITargetCleaner) preparer);
                     }
                     try {
-                        preparer.setUp(getDevice(), mBuildInfo);
+                        preparer.setUp(getDevice(), mBuild);
                     } catch (BuildError e) {
                         // This should only happen for flashing new build
                         CLog.e("Unexpected BuildError from preparer: %s",
@@ -220,7 +222,7 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
                 for (IRemoteTest test : tests) {
                     CLog.d("Test: %s", test.getClass().getSimpleName());
                     if (test instanceof IBuildReceiver) {
-                        ((IBuildReceiver) test).setBuild(mBuildInfo);
+                        ((IBuildReceiver) test).setBuild(mBuild);
                     }
                     if (test instanceof IDeviceTest) {
                         ((IDeviceTest) test).setDevice(getDevice());
@@ -234,7 +236,7 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
                 Collections.reverse(cleaners);
                 for (ITargetCleaner cleaner : cleaners) {
                     CLog.d("Cleaner: %s", cleaner.getClass().getSimpleName());
-                    cleaner.tearDown(getDevice(), mBuildInfo, null);
+                    cleaner.tearDown(getDevice(), mBuild, null);
                 }
                 // Track of the last complete test package index for resume
                 mLastModuleIndex = i;
@@ -244,8 +246,10 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
             throw e;
         } catch (RuntimeException e) {
             CLog.logAndDisplay(LogLevel.ERROR, "Exception: %s", e.getMessage());
+            CLog.e(e);
         } catch (Error e) {
             CLog.logAndDisplay(LogLevel.ERROR, "Error: %s", e.getMessage());
+            CLog.e(e);
         }
     }
 
@@ -258,11 +262,37 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
             CLog.d("Resume tests using existing module list");
             return;
         }
+        if (mRetrySessionId != null) {
+            // We're retrying so clear the filters
+            mFilters.clear();
+            mModuleName = null;
+            // Load the invocation result
+            IInvocationResultRepo repo;
+            IInvocationResult result = null;
+            try {
+                repo = new InvocationResultRepo(mBuild.getResultsDir());
+                result = repo.getResult(mRetrySessionId);
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
+            }
+            if (result == null) {
+                throw new IllegalArgumentException(String.format(
+                        "Could not find session with id %d", mRetrySessionId));
+            }
+            // Append each test that failed or was not executed to the filters
+            for (IModuleResult module : result.getModules()) {
+                for (TestStatus status : RETRY_TEST_STATUS) {
+                    for (IResult r : module.getResults(status)) {
+                        // Create the filter for the test to be run.
+                        mFilters.add(new TestFilter(
+                                module.getAbi(), module.getName(), r.getName(), true).toString());
+                    }
+                }
+            }
+        }
         // Collect ALL tests
-        IModuleRepo testRepo = new ModuleRepo(mBuildHelper.getTestsDir(), abis);
-        List<IModuleDef> modules = new ArrayList<>(getModules(testRepo));
-        // Note: run() relies on the fact that the list is reliably sorted for sharding purposes
-        Collections.sort(modules);
+        IModuleRepo testRepo = new ModuleRepo(mBuild, abis);
+        List<IModuleDef> modules = testRepo.getModules(mFilters, mModuleName, mTestName);
         // Filter by shard
         int numTestmodules = modules.size();
         int totalShards = Math.min(mTotalShards, numTestmodules);
@@ -271,88 +301,6 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
         for (int i = mShardAssignment; i < numTestmodules; i += totalShards) {
             mModules.add(modules.get(i));
         }
-    }
-
-    /**
-     * @return the {@link Set} of {@link IModuleDef}s to run
-     */
-    private Set<IModuleDef> getModules(IModuleRepo testRepo) {
-        // use LinkedHashSet to have predictable iteration order
-        Set<IModuleDef> moduleDefs = new LinkedHashSet<>();
-        if (mPlanName != null) {
-            CLog.i("Executing test plan %s", mPlanName);
-            File planFile = new File(mBuildHelper.getPlansDir(), mPlanName);
-            ITestPlan plan = XmlPlanHandler.parsePlan(mPlanName, planFile);
-            if (plan == null) {
-                throw new IllegalArgumentException(String.format(
-                        "Could not find plan %s. Use 'list plans' to see available plans.",
-                        mPlanName));
-            }
-            Map<String, List<IModuleDef>> modules = testRepo.getModulesByName();
-            for (String test : plan.getModuleNames()) {
-                if (!modules.containsKey(test)) {
-                    CLog.e("Could not find test %s referenced in plan %s", test, mPlanName);
-                } else {
-                    moduleDefs.addAll(modules.get(test));
-                }
-            }
-        } else if (mModuleName != null){
-            CLog.i("Executing test module %s", mModuleName);
-            Map<String, List<IModuleDef>> modules = testRepo.getModulesByName();
-            if (!modules.containsKey(mModuleName)) {
-                throw new IllegalArgumentException(String.format(
-                        "Could not find module %s. Use 'list modules' to see available modules.",
-                        mModuleName));
-            }
-            moduleDefs.addAll(modules.get(mModuleName));
-        } else if (mContinueSessionId != null) {
-            // create an in-memory derived plan that contains the notExecuted tests from previous
-            // session use timestamp as plan name so it will hopefully be unique
-            String uniquePlanName = Long.toString(System.currentTimeMillis());
-            ITestPlan plan;
-            try {
-                plan = new PlanCreator(uniquePlanName, mContinueSessionId,
-                        TestStatus.NOT_EXECUTED).createDerivedPlan(mBuildHelper);
-                Map<String, List<IModuleDef>> modules = testRepo.getModulesByName();
-                for (String test : plan.getModuleNames()) {
-                    if (!modules.containsKey(test)) {
-                        CLog.e("Could not find test %s", test);
-                    } else {
-                        moduleDefs.addAll(modules.get(test));
-                    }
-                }
-            } catch (ConfigurationException e) {
-                throw new IllegalStateException(String.format(
-                        "Could not load session %s. Use 'list results' to see available sessions.",
-                        mContinueSessionId));
-            }
-        } else if (mRetrySessionId != null) {
-            // create an in-memory derived plan that contains the failed tests from previous
-            // session use timestamp as plan name so it will hopefully be unique
-            String uniquePlanName = Long.toString(System.currentTimeMillis());
-            ITestPlan plan;
-            try {
-                plan = new PlanCreator(uniquePlanName, mRetrySessionId,
-                        TestStatus.FAIL, TestStatus.NOT_EXECUTED).createDerivedPlan(mBuildHelper);
-                Map<String, List<IModuleDef>> modules = testRepo.getModulesByName();
-                for (String test : plan.getModuleNames()) {
-                    if (!modules.containsKey(test)) {
-                        CLog.e("Could not find test %s", test);
-                    } else {
-                        moduleDefs.addAll(modules.get(test));
-                    }
-                }
-            } catch (ConfigurationException e) {
-                throw new IllegalStateException(String.format(
-                        "Could not load session %s. Use 'list results' to see available sessions.",
-                        mRetrySessionId));
-            }
-        } else {
-            throw new IllegalStateException(
-                    "Nothing to do. Use 'list plans' to see available plans, 'list modules' to see "
-                    + "available modules, and 'list results' to see available sessions to re-run.");
-        }
-        return moduleDefs;
     }
 
     /**

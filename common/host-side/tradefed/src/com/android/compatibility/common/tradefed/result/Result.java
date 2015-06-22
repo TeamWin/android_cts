@@ -15,7 +15,9 @@
  */
 package com.android.compatibility.common.tradefed.result;
 
+import com.android.compatibility.common.util.IResult;
 import com.android.compatibility.common.util.ReportLog;
+import com.android.compatibility.common.util.TestStatus;
 
 /**
  * Represents a single test result.

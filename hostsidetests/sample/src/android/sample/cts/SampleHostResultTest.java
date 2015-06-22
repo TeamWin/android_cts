@@ -16,7 +16,6 @@
 
 package android.sample.cts;
 
-import com.android.compatibility.common.tradefed.build.BuildHelper;
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildInfo;
 import com.android.compatibility.common.util.MeasureRun;
 import com.android.compatibility.common.util.MeasureTime;
@@ -64,7 +63,7 @@ public class SampleHostResultTest extends DeviceTestCase implements IAbiReceiver
     /**
      * A reference to the build.
      */
-    private BuildHelper mBuild;
+    private CompatibilityBuildInfo mBuild;
 
     /**
      * A reference to the device under test.
@@ -84,7 +83,7 @@ public class SampleHostResultTest extends DeviceTestCase implements IAbiReceiver
     @Override
     public void setBuild(IBuildInfo buildInfo) {
         // Get the build, this is used to access the APK.
-        mBuild = new BuildHelper((CompatibilityBuildInfo) buildInfo);
+        mBuild = (CompatibilityBuildInfo) buildInfo;
     }
 
     @Override

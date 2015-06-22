@@ -16,8 +16,36 @@
 
 package com.android.compatibility.common.tradefed.command;
 
+import com.android.compatibility.common.tradefed.build.CompatibilityBuildProviderTest;
+import com.android.compatibility.tradefed.command.MockConsole;
+
 import junit.framework.TestCase;
 
 public class CompatibilityConsoleTest extends TestCase {
 
+    // Make sure the mock is in the ClassLoader
+    @SuppressWarnings("unused")
+    private MockConsole mMockConsole;
+
+    @Override
+    public void setUp() throws Exception {
+        CompatibilityBuildProviderTest.setProperty("/tmp/foobar");
+        mMockConsole = new MockConsole();
+    }
+
+    @Override
+    public void tearDown() throws Exception {
+        CompatibilityBuildProviderTest.setProperty(null);
+        mMockConsole = null;
+    }
+
+    public void testHelpExists() throws Exception {
+        CompatibilityConsole console = new CompatibilityConsole() {};
+        assertFalse("No help", console.getGenericHelpString(null).isEmpty());
+    }
+
+    public void testPromptExists() throws Exception {
+        CompatibilityConsole console = new CompatibilityConsole() {};
+        assertFalse("No prompt", console.getConsolePrompt().isEmpty());
+    }
 }

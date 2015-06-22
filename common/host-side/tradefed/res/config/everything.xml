@@ -13,14 +13,11 @@
      See the License for the specific language governing permissions and
      limitations under the License.
 -->
-<configuration description="Runs CTS from a pre-existing CTS installation">
+<configuration description="Common config for Compatibility suites to run all modules">
 
-    <include name="everything" />
+    <include name="common-compatibility-config" />
+    <option name="compatibility-build-provider:plan" value="everything" />
 
-    <option name="enable-root" value="false" />
-    <option name="compatibility-build-provider:plan" value="cts" />
-
-    <option name="compatibility-test:filter" value="!arm64-v8a CtsSampleDeviceTestCases" />
-    <option name="compatibility-test:filter" value="!CtsSampleHostTestCases" />
+    <option name="compatibility-test:filter" value=".*" />
 
 </configuration>

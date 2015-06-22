@@ -13,9 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.android.compatibility.common.tradefed.result;
-
-import com.android.ddmlib.testrunner.TestIdentifier;
+package com.android.compatibility.common.util;
 
 import java.util.List;
 import java.util.Map;
@@ -36,20 +34,20 @@ public interface IModuleResult extends Comparable<IModuleResult> {
     String getAbi();
 
     /**
-     * Gets a {@link Result} for the given {@link TestIdentifier}, creating it if it doesn't exist.
+     * Gets a {@link IResult} for the given test, creating it if it doesn't exist.
      *
-     * @param testId
-     * @return the {@link Result} or <code>null</code>
-     */
-    IResult getOrCreateResult(TestIdentifier testId);
-
-    /**
-     * Gets the test result for given {@link TestIdentifier}.
-     *
-     * @param testId
+     * @param testName the name of the test eg <package>.<class>#<method>
      * @return the {@link IResult} or <code>null</code>
      */
-    IResult getResult(TestIdentifier testId);
+    IResult getOrCreateResult(String testName);
+
+    /**
+     * Gets the test result for given test.
+     *
+     * @param testName the name of the test eg <package>.<class>#<method>
+     * @return the {@link IResult} or <code>null</code>
+     */
+    IResult getResult(String testName);
 
     /**
      * Gets all results.
@@ -70,19 +68,18 @@ public interface IModuleResult extends Comparable<IModuleResult> {
     /**
      * Report the given test as a failure.
      *
-     * @param test
-     * @param status
-     * @param trace
+     * @param testName the name of the test eg <package>.<class>#<method>
+     * @param trace the stacktrace of the failure.
      */
-    void reportTestFailure(TestIdentifier test, TestStatus status, String trace);
+    void reportTestFailure(String testName, String trace);
 
     /**
      * Report that the given test has completed.
      *
-     * @param test The {@link TestIdentifier} of the completed test.
+     * @param testName the name of the test eg <package>.<class>#<method>
      * @param testMetrics A map holding metrics about the completed test, if any.
      */
-    void reportTestEnded(TestIdentifier test, Map<String, String> testMetrics);
+    void reportTestEnded(String testName, Map<String, String> testMetrics);
 
     /**
      * Counts the number of results which have the given status.

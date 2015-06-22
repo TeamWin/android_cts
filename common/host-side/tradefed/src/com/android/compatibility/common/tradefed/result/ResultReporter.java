@@ -1,10 +1,13 @@
 package com.android.compatibility.common.tradefed.result;
 
-import com.android.compatibility.common.tradefed.build.BuildHelper;
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildInfo;
 import com.android.compatibility.common.tradefed.testtype.CompatibilityTest;
 import com.android.compatibility.common.util.AbiUtils;
-import com.android.compatibility.common.xml.XmlResultHandler;
+import com.android.compatibility.common.util.IInvocationResult;
+import com.android.compatibility.common.util.IModuleResult;
+import com.android.compatibility.common.util.IResult;
+import com.android.compatibility.common.util.TestStatus;
+import com.android.compatibility.common.util.XmlResultHandler;
 import com.android.ddmlib.Log;
 import com.android.ddmlib.Log.LogLevel;
 import com.android.ddmlib.testrunner.TestIdentifier;
@@ -17,9 +20,14 @@ import com.android.tradefed.result.InputStreamSource;
 import com.android.tradefed.result.LogDataType;
 import com.android.tradefed.result.LogFileSaver;
 import com.android.tradefed.result.TestSummary;
+import com.android.tradefed.util.FileUtil;
+
+import org.xmlpull.v1.XmlPullParserException;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
@@ -32,18 +40,12 @@ import java.util.Map;
 public class ResultReporter implements ITestInvocationListener {
 
     private static final String DEVICE_INFO_COLLECTOR = "com.android.compatibility.deviceinfo";
-
-    @Option(name = CompatibilityTest.PLAN_OPTION,
-            shortName = 'p',
-            description = "the test plan to run.",
-            importance = Importance.IF_UNSET)
-    private String mPlanName = null;
-
-    @Option(name = CompatibilityTest.CONTINUE_OPTION,
-            shortName = 'c',
-            description = "continue a previous session.",
-            importance = Importance.IF_UNSET)
-    private Integer mContinueSessionId = null;
+    private static final String[] RESULT_RESOURCES = {
+        "compatibility-result.css",
+        "compatibility-result.xsd",
+        "compatibility-result.xsl",
+        "logo.png",
+        "newrule-green.png"};
 
     @Option(name = CompatibilityTest.RETRY_OPTION,
             shortName = 'r',
@@ -55,13 +57,13 @@ public class ResultReporter implements ITestInvocationListener {
 
     private boolean mInitialized;
     private IInvocationResult mResult;
-    private File mResultDir;
-    private File mLogDir;
+    private File mResultDir = null;
+    private File mLogDir = null;
     private long mStartTime;
     private boolean mIsDeviceInfoRun;
     private IModuleResult mCurrentModuleResult;
     private IResult mCurrentResult;
-    private BuildHelper mBuildHelper;
+    private CompatibilityBuildInfo mBuild;
 
     /**
      * {@inheritDoc}
@@ -69,23 +71,38 @@ public class ResultReporter implements ITestInvocationListener {
     @Override
     public void invocationStarted(IBuildInfo buildInfo) {
         mInitialized = false;
-        mBuildHelper = new BuildHelper((CompatibilityBuildInfo) buildInfo);
+        mBuild = (CompatibilityBuildInfo) buildInfo;
         mDeviceSerial = buildInfo.getDeviceSerial();
         if (mDeviceSerial == null) {
             mDeviceSerial = "unknown_device";
         }
         long time = System.currentTimeMillis();
         String dirSuffix = getDirSuffix(time);
-        if (mContinueSessionId != null) {
-            Log.d(mDeviceSerial, String.format("Continuing session %d", mContinueSessionId));
-            initializeFromSession(mContinueSessionId);
-        } else if (mRetrySessionId != null) {
+        if (mRetrySessionId != null) {
             Log.d(mDeviceSerial, String.format("Retrying session %d", mRetrySessionId));
-            initializeFromSession(mRetrySessionId);
+            List<IInvocationResult> results = null;
+            try {
+                results = XmlResultHandler.getResults(
+                        mBuild.getResultsDir());
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
+            }
+            if (results != null && mRetrySessionId >= 0 && mRetrySessionId < results.size()) {
+                mResult = results.get(mRetrySessionId);
+            } else {
+                throw new IllegalArgumentException(
+                        String.format("Could not find session %d",mRetrySessionId));
+            }
+            mStartTime = mResult.getStartTime();
+            mResultDir = mResult.getResultDir();
         } else {
             mStartTime = time;
-            mResultDir = new File(mBuildHelper.getResultsDir(), dirSuffix);
-            if (mResultDir.mkdirs()) {
+            try {
+                mResultDir = new File(mBuild.getResultsDir(), dirSuffix);
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
+            }
+            if (mResultDir != null && mResultDir.mkdirs()) {
                 Log.logAndDisplay(LogLevel.INFO, mDeviceSerial,
                         String.format("Created result dir %s", mResultDir.getAbsolutePath()));
             } else {
@@ -94,8 +111,12 @@ public class ResultReporter implements ITestInvocationListener {
             }
             mResult = new InvocationResult(mStartTime, mResultDir);
         }
-        mLogDir = new File(mBuildHelper.getLogsDir(), dirSuffix);
-        if (mLogDir.mkdirs()) {
+        try {
+            mLogDir = new File(mBuild.getLogsDir(), dirSuffix);
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
+        if (mLogDir != null && mLogDir.mkdirs()) {
             Log.logAndDisplay(LogLevel.INFO, mDeviceSerial,
                     String.format("Created log dir %s", mLogDir.getAbsolutePath()));
         } else {
@@ -103,21 +124,6 @@ public class ResultReporter implements ITestInvocationListener {
                     mLogDir.getAbsolutePath()));
         }
         mInitialized = true;
-    }
-
-    /**
-     * Initializes this {@link ResultReporter} from the given session.
-     */
-    private void initializeFromSession(Integer session) {
-        List<IInvocationResult> results = XmlResultHandler.getResults(mBuildHelper.getResultsDir());
-        if (session >= 0 && session < results.size()) {
-            mResult = results.get(session);
-        } else {
-            throw new IllegalArgumentException(String.format("Could not find session %d",session));
-        }
-        mPlanName = mResult.getTestPlan();
-        mStartTime = mResult.getStartTime();
-        mResultDir = mResult.getResultDir();
     }
 
     /**
@@ -145,9 +151,10 @@ public class ResultReporter implements ITestInvocationListener {
      */
     @Override
     public void testStarted(TestIdentifier test) {
-        Log.d(mDeviceSerial, String.format("ResultReporter.testStarted(%s)", test.toString()));
+        String name = test.toString();
+        Log.d(mDeviceSerial, String.format("ResultReporter.testStarted(%s)", name));
         if (!mIsDeviceInfoRun) {
-            mCurrentResult = mCurrentModuleResult.getOrCreateResult(test);
+            mCurrentResult = mCurrentModuleResult.getOrCreateResult(name);
         }
     }
 
@@ -156,19 +163,19 @@ public class ResultReporter implements ITestInvocationListener {
      */
     @Override
     public void testEnded(TestIdentifier test, Map<String, String> metrics) {
-        Log.d(mDeviceSerial, String.format("ResultReporter.testEnded(%s, %s)",
-                test.toString(), metrics.toString()));
+        String name = test.toString();
+        Log.d(mDeviceSerial, String.format("ResultReporter.testEnded(%s, %s)", name,
+                metrics.toString()));
         if (!mIsDeviceInfoRun) {
-            mCurrentModuleResult.reportTestEnded(test, metrics);
-            IResult result = mCurrentModuleResult.getResult(test);
+            mCurrentModuleResult.reportTestEnded(name, metrics);
+            IResult result = mCurrentModuleResult.getResult(name);
             String stacktrace = result.getStackTrace();
             if (stacktrace == null) {
-                Log.logAndDisplay(LogLevel.INFO, mDeviceSerial, String.format("%s#%s %s",
-                        test.getClassName(), test.getTestName(), result.getResultStatus()));
+                Log.logAndDisplay(LogLevel.INFO, mDeviceSerial, String.format("%s %s",
+                        name, result.getResultStatus()));
             } else {
-                Log.logAndDisplay(LogLevel.INFO, mDeviceSerial, String.format("%s#%s %s\n%s",
-                        test.getClassName(), test.getTestName(), result.getResultStatus(),
-                        stacktrace));
+                Log.logAndDisplay(LogLevel.INFO, mDeviceSerial, String.format("%s %s\n%s",
+                        name, result.getResultStatus(), stacktrace));
             }
         }
     }
@@ -187,10 +194,10 @@ public class ResultReporter implements ITestInvocationListener {
      */
     @Override
     public void testFailed(TestIdentifier test, String trace) {
-        Log.d(mDeviceSerial, String.format("ResultReporter.testFailed(%s, %s)", test.toString(),
-                trace));
+        String name = test.toString();
+        Log.d(mDeviceSerial, String.format("ResultReporter.testFailed(%s, %s)", name, trace));
         if (!mIsDeviceInfoRun) {
-            mCurrentModuleResult.reportTestFailure(test, TestStatus.FAIL, trace);
+            mCurrentModuleResult.reportTestFailure(name, trace);
         }
     }
 
@@ -199,10 +206,11 @@ public class ResultReporter implements ITestInvocationListener {
      */
     @Override
     public void testAssumptionFailure(TestIdentifier test, String trace) {
-        Log.d(mDeviceSerial, String.format("ResultReporter.testAssumptionFailure(%s, %s)",
-                test.toString(), trace));
+        String name = test.toString();
+        Log.d(mDeviceSerial, String.format("ResultReporter.testAssumptionFailure(%s, %s)", name,
+                trace));
         if (!mIsDeviceInfoRun) {
-            mCurrentModuleResult.reportTestFailure(test, TestStatus.FAIL, trace);
+            mCurrentModuleResult.reportTestFailure(name, trace);
         }
     }
 
@@ -259,9 +267,15 @@ public class ResultReporter implements ITestInvocationListener {
                     mResult.countResults(TestStatus.PASS),
                     mResult.countResults(TestStatus.FAIL),
                     mResult.countResults(TestStatus.NOT_EXECUTED)));
-            XmlResultHandler.writeResults(mBuildHelper.getSuiteName(),
-                    mBuildHelper.getSuiteVersion(), mPlanName, mResult, mResultDir, mLogDir,
-                    mStartTime, elapsedTime + mStartTime);
+            try {
+                XmlResultHandler.writeResults(mBuild.getSuiteName(),
+                        mBuild.getSuiteVersion(), mBuild.getSuitePlan(), mResult,
+                        mResultDir, mStartTime, elapsedTime + mStartTime);
+                copyFormattingFiles(mResultDir);
+                zipResults(mResultDir);
+            } catch (IOException | XmlPullParserException e) {
+                e.printStackTrace();
+            }
         }
     }
 
@@ -275,7 +289,9 @@ public class ResultReporter implements ITestInvocationListener {
         mInitialized = false;
         // Clean up
         mResultDir.delete();
+        mResultDir = null;
         mLogDir.delete();
+        mLogDir = null;
     }
 
     /**
@@ -294,6 +310,55 @@ public class ResultReporter implements ITestInvocationListener {
             Log.e(mDeviceSerial, String.format("Failed to write log for %s", name));
             e.printStackTrace();
         }
+    }
+
+    /**
+     * Copy the xml formatting files stored in this jar to the results directory
+     *
+     * @param resultsDir
+     */
+    static void copyFormattingFiles(File resultsDir) {
+        for (String resultFileName : RESULT_RESOURCES) {
+            InputStream configStream = XmlResultHandler.class.getResourceAsStream(
+                    String.format("/report/%s", resultFileName));
+            if (configStream != null) {
+                File resultFile = new File(resultsDir, resultFileName);
+                try {
+                    FileUtil.writeToFile(configStream, resultFile);
+                } catch (IOException e) {
+                    Log.w(ResultReporter.class.getSimpleName(),
+                            String.format("Failed to write %s to file", resultFileName));
+                }
+            } else {
+                Log.w(ResultReporter.class.getSimpleName(),
+                        String.format("Failed to load %s from jar", resultFileName));
+            }
+        }
+    }
+
+    /**
+     * Zip the contents of the given results directory.
+     *
+     * @param resultsDir
+     */
+    @SuppressWarnings("deprecation")
+    private static void zipResults(File resultsDir) {
+        try {
+            // create a file in parent directory, with same name as resultsDir
+            File zipResultFile = new File(resultsDir.getParent(), String.format("%s.zip",
+                    resultsDir.getName()));
+            FileUtil.createZip(resultsDir, zipResultFile);
+        } catch (IOException e) {
+            Log.w(ResultReporter.class.getSimpleName(),
+                    String.format("Failed to create zip for %s", resultsDir.getName()));
+        }
+    }
+
+    /**
+     * @return the mResult
+     */
+    public IInvocationResult getResult() {
+        return mResult;
     }
 
 }

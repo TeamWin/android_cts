@@ -17,18 +17,29 @@ package com.android.compatibility.common.tradefed.build;
 
 import com.android.tradefed.build.IBuildInfo;
 import com.android.tradefed.build.IBuildProvider;
+import com.android.tradefed.config.Option;
+import com.android.tradefed.config.OptionClass;
+import com.android.tradefed.config.Option.Importance;
 
 import java.io.File;
 
 /**
  * A simple {@link IBuildProvider} that uses a pre-existing Compatibility install.
  */
+@OptionClass(alias="compatibility-build-provider")
 public class CompatibilityBuildProvider implements IBuildProvider {
 
-    private final String mSuiteBuildId;
+    public static final String PLAN_OPTION = "plan";
+
+    private final String mBuildId;
     private final String mSuiteName;
     private final String mSuiteFullName;
     private final String mSuiteVersion;
+
+    @Option(name = PLAN_OPTION,
+            description = "the test suite plan to run, such as \"everything\" or \"cts\"",
+            importance = Importance.ALWAYS)
+    private String mSuitePlan;
 
     /**
      * Creates a new {@link CompatibilityBuildProvider} which reads Test Suite-specific information
@@ -39,7 +50,7 @@ public class CompatibilityBuildProvider implements IBuildProvider {
         mSuiteFullName = pkg.getSpecificationTitle();
         mSuiteName = pkg.getSpecificationVendor();
         mSuiteVersion = pkg.getSpecificationVersion();
-        mSuiteBuildId = pkg.getImplementationVersion();
+        mBuildId = pkg.getImplementationVersion();
     }
 
     /**
@@ -61,10 +72,8 @@ public class CompatibilityBuildProvider implements IBuildProvider {
             throw new IllegalArgumentException(
                     String.format("Missing install path property %s_ROOT", mSuiteName));
         }
-        CompatibilityBuildInfo build = new CompatibilityBuildInfo(mSuiteBuildId, mSuiteName,
-                mSuiteFullName, mSuiteVersion);
-        build.setRootDir(new File(mRootDirPath));
-        return build;
+        return new CompatibilityBuildInfo(mBuildId, mSuiteName, mSuiteFullName, mSuiteVersion,
+                mSuitePlan, new File(mRootDirPath));
     }
 
     /**

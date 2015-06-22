@@ -15,7 +15,8 @@
  */
 package com.android.compatibility.common.tradefed.result;
 
-import com.android.compatibility.common.xml.XmlResultHandler;
+import com.android.compatibility.common.util.IInvocationResult;
+import com.android.compatibility.common.util.XmlResultHandler;
 
 import java.io.File;
 import java.util.ArrayList;
