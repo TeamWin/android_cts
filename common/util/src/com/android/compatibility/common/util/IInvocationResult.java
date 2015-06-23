@@ -18,6 +18,7 @@ package com.android.compatibility.common.util;
 import java.io.File;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Interface for a the result of a single Compatibility invocation.
@@ -30,19 +31,29 @@ public interface IInvocationResult {
     long getStartTime();
 
     /**
+     * @param time the starting timestamp
+     */
+    void setStartTime(long time);
+
+    /**
      * Count the number of results with given status.
      */
     int countResults(TestStatus result);
 
     /**
-     * @return the test plan associated with result.
+     * @param plan the plan associated with this result.
+     */
+    void setTestPlan(String plan);
+
+    /**
+     * @return the test plan associated with this result.
      */
     String getTestPlan();
 
     /**
      * @return the device serials associated with result.
      */
-    List<String> getDeviceSerials();
+    Set<String> getDeviceSerials();
 
     /**
      * @return the {@link IModuleResult} for the given id, creating one if it doesn't exist
@@ -50,7 +61,7 @@ public interface IInvocationResult {
     IModuleResult getOrCreateModule(String id);
 
     /**
-     * @return the {@link IModuleResult}s.
+     * @return the {@link IModuleResult}s sorted by id.
      */
     List<IModuleResult> getModules();
 

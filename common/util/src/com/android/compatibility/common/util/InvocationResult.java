@@ -13,36 +13,41 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.android.compatibility.common.tradefed.result;
-
-import com.android.compatibility.common.util.IInvocationResult;
-import com.android.compatibility.common.util.IModuleResult;
-import com.android.compatibility.common.util.TestStatus;
+package com.android.compatibility.common.util;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Data structure for the detailed Compatibility test results.
  */
 public class InvocationResult implements IInvocationResult {
 
-    private final long mTimestamp;
+    private long mTimestamp;
     private Map<String, IModuleResult> mModuleResults = new LinkedHashMap<>();
     private DeviceInfoResult mDeviceInfo = new DeviceInfoResult();
     private String mTestPlan;
-    private List<String> mSerials;
     private File mResultDir;
+
+    /**
+     * @param resultDir
+     */
+    public InvocationResult(File resultDir) {
+        this(System.currentTimeMillis(), resultDir);
+    }
 
     /**
      * @param timestamp
      * @param resultDir
      */
     public InvocationResult(long timestamp, File resultDir) {
-        mTimestamp = timestamp;
+        setStartTime(timestamp);
         mResultDir = resultDir;
     }
 
@@ -51,7 +56,9 @@ public class InvocationResult implements IInvocationResult {
      */
     @Override
     public List<IModuleResult> getModules() {
-        return new ArrayList<IModuleResult>(mModuleResults.values());
+        ArrayList<IModuleResult> modules = new ArrayList<>(mModuleResults.values());
+        Collections.sort(modules);
+        return modules;
     }
 
     /**
@@ -91,8 +98,24 @@ public class InvocationResult implements IInvocationResult {
      * {@inheritDoc}
      */
     @Override
+    public void setStartTime(long time) {
+        mTimestamp = time;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
     public long getStartTime() {
         return mTimestamp;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void setTestPlan(String plan) {
+        mTestPlan = plan;
     }
 
     /**
@@ -107,8 +130,12 @@ public class InvocationResult implements IInvocationResult {
      * {@inheritDoc}
      */
     @Override
-    public List<String> getDeviceSerials() {
-        return mSerials;
+    public Set<String> getDeviceSerials() {
+        Set<String> serials = new HashSet<>();
+        for (IModuleResult module : mModuleResults.values()) {
+            serials.add(module.getDeviceSerial());
+        }
+        return serials;
     }
 
     /**

@@ -16,6 +16,7 @@
 package com.android.compatibility.common.tradefed.result;
 
 import com.android.compatibility.common.util.IInvocationResult;
+import com.android.compatibility.common.util.InvocationResult;
 
 import java.util.List;
 

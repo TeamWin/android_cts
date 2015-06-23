@@ -15,12 +15,10 @@
  */
 package com.android.compatibility.common.util;
 
-import com.android.compatibility.common.util.ReportLog;
-
 /**
  * Represents a single test result.
  */
-public interface IResult {
+public interface IResult extends Comparable<IResult> {
 
     /**
      * @return The name of this test result.
@@ -50,9 +48,19 @@ public interface IResult {
     void setMessage(String message);
 
     /**
+     * @param time the start time of the test.
+     */
+    void setStartTime(long time);
+
+    /**
      * @return The time the test started
      */
     long getStartTime();
+
+    /**
+     * @param time the end time of the test.
+     */
+    void setEndTime(long time);
 
     /**
      * @return The time the test ended

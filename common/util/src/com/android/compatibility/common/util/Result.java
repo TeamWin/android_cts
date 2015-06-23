@@ -13,11 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.android.compatibility.common.tradefed.result;
-
-import com.android.compatibility.common.util.IResult;
-import com.android.compatibility.common.util.ReportLog;
-import com.android.compatibility.common.util.TestStatus;
+package com.android.compatibility.common.util;
 
 /**
  * Represents a single test result.
@@ -25,7 +21,7 @@ import com.android.compatibility.common.util.TestStatus;
 public class Result implements IResult {
 
     private final String mTestName;
-    private final long mStartTime;
+    private long mStartTime;
     private long mEndTime;
     private TestStatus mResult;
     private String mMessage;
@@ -88,8 +84,24 @@ public class Result implements IResult {
      * {@inheritDoc}
      */
     @Override
+    public void setStartTime(long time) {
+        mStartTime = time;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
     public long getStartTime() {
         return mStartTime;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void setEndTime(long time) {
+        mEndTime = time;
     }
 
     /**
@@ -114,7 +126,6 @@ public class Result implements IResult {
     @Override
     public void setStackTrace(String stackTrace) {
         mStackTrace = sanitizeStackTrace(stackTrace);
-        mMessage = mStackTrace;
     }
 
     /**
@@ -163,6 +174,14 @@ public class Result implements IResult {
     @Override
     public void setLog(String uri) {
         mLog = uri;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public int compareTo(IResult another) {
+        return getName().compareTo(another.getName());
     }
 
     /**

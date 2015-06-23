@@ -18,6 +18,7 @@ package com.android.compatibility.common.tradefed.result;
 
 import com.android.compatibility.common.util.AbiUtils;
 import com.android.compatibility.common.util.IResult;
+import com.android.compatibility.common.util.ModuleResult;
 import com.android.compatibility.common.util.TestStatus;
 
 import junit.framework.TestCase;
@@ -37,7 +38,9 @@ public class ModuleResultTest extends TestCase {
     public static final String TEST_1 = String.format("%s#%s", CLASS, METHOD_1);
     public static final String TEST_2 = String.format("%s#%s", CLASS, METHOD_2);
     public static final String TEST_3 = String.format("%s#%s", CLASS, METHOD_3);
-    public static final String STACK_TRACE = "Everything Broke";
+    public static final String MESSAGE = "Something small is not alright";
+    public static final String STACK_TRACE = "Something small is not alright\n " +
+            "at four.big.insects.Marley.sing(Marley.java:10)";
     private ModuleResult mResult;
 
     @Override
@@ -73,6 +76,7 @@ public class ModuleResultTest extends TestCase {
         IResult testResult = mResult.getOrCreateResult(TEST_1);
         mResult.reportTestFailure(TEST_1, STACK_TRACE);
         assertEquals("Expected status to be set", TestStatus.FAIL, testResult.getResultStatus());
+        assertEquals("Expected message to be set", MESSAGE, testResult.getMessage());
         assertEquals("Expected stack to be set", STACK_TRACE, testResult.getStackTrace());
         testResult = mResult.getOrCreateResult(TEST_2);
         mResult.reportTestEnded(TEST_2, null);

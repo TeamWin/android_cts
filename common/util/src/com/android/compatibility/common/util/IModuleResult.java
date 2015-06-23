@@ -50,7 +50,7 @@ public interface IModuleResult extends Comparable<IModuleResult> {
     IResult getResult(String testName);
 
     /**
-     * Gets all results.
+     * Gets all results sorted by name.
      */
     List<IResult> getResults();
 
