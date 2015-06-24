@@ -43,7 +43,7 @@ public class ReportLog implements Serializable {
         private Double mTarget;
 
 
-        private Result(String location, String message, double[] values,
+        Result(String location, String message, double[] values,
                 ResultType type, ResultUnit unit) {
             this(location, message, values, null /*target*/, type, unit);
         }
@@ -60,7 +60,7 @@ public class ReportLog implements Serializable {
          * @param type Represents how to interpret the values (eg. A lower score is better)
          * @param unit Represents the unit in which the values are (eg. Milliseconds)
          */
-        private Result(String location, String message, double[] values,
+        Result(String location, String message, double[] values,
                 Double target, ResultType type, ResultUnit unit) {
             mLocation = location;
             mMessage = message;
@@ -139,10 +139,17 @@ public class ReportLog implements Serializable {
     }
 
     /**
+     * @param result
+     */
+    /* package */ void addDetail(Result result) {
+        mDetails.add(result);
+    }
+
+    /**
      * Adds an array of values to the report.
      */
     public void addValues(String message, double[] values, ResultType type, ResultUnit unit) {
-        mDetails.add(new Result(Stacktrace.getTestCallerClassMethodNameLineNumber(),
+        addDetail(new Result(Stacktrace.getTestCallerClassMethodNameLineNumber(),
                 message, values, type, unit));
     }
 
@@ -151,14 +158,14 @@ public class ReportLog implements Serializable {
      */
     public void addValues(
             String message, double[] values, ResultType type, ResultUnit unit, String location) {
-        mDetails.add(new Result(location, message, values, type, unit));
+        addDetail(new Result(location, message, values, type, unit));
     }
 
     /**
      * Adds a value to the report.
      */
     public void addValue(String message, double value, ResultType type, ResultUnit unit) {
-        mDetails.add(new Result(Stacktrace.getTestCallerClassMethodNameLineNumber(), message,
+        addDetail(new Result(Stacktrace.getTestCallerClassMethodNameLineNumber(), message,
                 new double[] {value}, type, unit));
     }
 
@@ -167,15 +174,22 @@ public class ReportLog implements Serializable {
      */
     public void addValue(String message, double value, ResultType type,
             ResultUnit unit, String location) {
-        mDetails.add(new Result(location, message, new double[] {value}, type, unit));
+        addDetail(new Result(location, message, new double[] {value}, type, unit));
+    }
+
+    /**
+     * @param result
+     */
+    /* package */ void setSummary(Result result) {
+        mSummary = result;
     }
 
     /**
      * Sets the summary of the report.
      */
     public void setSummary(String message, double value, ResultType type, ResultUnit unit) {
-        mSummary = new Result(Stacktrace.getTestCallerClassMethodNameLineNumber(),
-                message, new double[] {value}, type, unit);
+        setSummary(new Result(Stacktrace.getTestCallerClassMethodNameLineNumber(),
+                message, new double[] {value}, type, unit));
     }
 
     public Result getSummary() {
@@ -194,13 +208,13 @@ public class ReportLog implements Serializable {
         StringTokenizer tok = new StringTokenizer(encodedString, SUMMARY_SEPARATOR);
         if (tok.hasMoreTokens()) {
             // Extract the summary
-            reportLog.mSummary = Result.fromEncodedString(tok.nextToken());
+            reportLog.setSummary(Result.fromEncodedString(tok.nextToken()));
         }
         if (tok.hasMoreTokens()) {
             // Extract the detailed results
             StringTokenizer detailedTok = new StringTokenizer(tok.nextToken(), LOG_SEPARATOR);
             while (detailedTok.hasMoreTokens()) {
-                reportLog.mDetails.add(Result.fromEncodedString(detailedTok.nextToken()));
+                reportLog.addDetail(Result.fromEncodedString(detailedTok.nextToken()));
             }
         }
         return reportLog;

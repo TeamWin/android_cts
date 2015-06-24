@@ -42,8 +42,8 @@ public final class MetricsXmlSerializer {
         if (summary != null) {
             mXmlSerializer.startTag(null, "Summary");
             mXmlSerializer.attribute(null, "message", summary.getMessage());
-            mXmlSerializer.attribute(null, "scoreType", summary.getType().getXmlString());
-            mXmlSerializer.attribute(null, "unit", summary.getUnit().getXmlString());
+            mXmlSerializer.attribute(null, "scoreType", summary.getType().toReportString());
+            mXmlSerializer.attribute(null, "unit", summary.getUnit().toReportString());
             mXmlSerializer.text(Double.toString(summary.getValues()[0]));
             mXmlSerializer.endTag(null, "Summary");
         }
@@ -54,8 +54,8 @@ public final class MetricsXmlSerializer {
                 mXmlSerializer.startTag(null, "ValueArray");
                 mXmlSerializer.attribute(null, "source", result.getLocation());
                 mXmlSerializer.attribute(null, "message", result.getMessage());
-                mXmlSerializer.attribute(null, "scoreType", result.getType().getXmlString());
-                mXmlSerializer.attribute(null, "unit", result.getUnit().getXmlString());
+                mXmlSerializer.attribute(null, "scoreType", result.getType().toReportString());
+                mXmlSerializer.attribute(null, "unit", result.getUnit().toReportString());
 
                 for (double value : result.getValues()) {
                     mXmlSerializer.startTag(null, "Value");

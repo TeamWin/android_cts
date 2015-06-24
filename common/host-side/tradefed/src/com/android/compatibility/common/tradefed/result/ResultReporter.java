@@ -6,6 +6,7 @@ import com.android.compatibility.common.util.AbiUtils;
 import com.android.compatibility.common.util.IInvocationResult;
 import com.android.compatibility.common.util.IModuleResult;
 import com.android.compatibility.common.util.IResult;
+import com.android.compatibility.common.util.InvocationResult;
 import com.android.compatibility.common.util.TestStatus;
 import com.android.compatibility.common.util.XmlResultHandler;
 import com.android.ddmlib.Log;

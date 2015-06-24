@@ -13,17 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.android.compatibility.common.tradefed.result;
-
-import com.android.compatibility.common.util.AbiUtils;
-import com.android.compatibility.common.util.IModuleResult;
-import com.android.compatibility.common.util.IResult;
-import com.android.compatibility.common.util.MetricsStore;
-import com.android.compatibility.common.util.ReportLog;
-import com.android.compatibility.common.util.TestStatus;
-import com.android.tradefed.log.LogUtil.CLog;
+package com.android.compatibility.common.util;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -129,7 +122,9 @@ public class ModuleResult implements IModuleResult {
      */
     @Override
     public List<IResult> getResults() {
-        return new ArrayList<>(mResults.values());
+        ArrayList<IResult> results = new ArrayList<>(mResults.values());
+        Collections.sort(results);
+        return results;
     }
 
     /**
@@ -177,6 +172,13 @@ public class ModuleResult implements IModuleResult {
     public void reportTestFailure(String testName, String trace) {
         IResult result = getResult(testName);
         result.setResultStatus(TestStatus.FAIL);
+        int index = trace.indexOf('\n');
+        if (index < 0) {
+            // Trace is a single line, just set the message to be the same as the stacktrace.
+            result.setMessage(trace);
+        } else {
+            result.setMessage(trace.substring(0, index));
+        }
         result.setStackTrace(trace);
     }
 
@@ -189,11 +191,9 @@ public class ModuleResult implements IModuleResult {
         if (!result.getResultStatus().equals(TestStatus.FAIL)) {
             result.setResultStatus(TestStatus.PASS);
         }
-        if (mMetrics.containsKey(testName)) {
-            CLog.e("Test metrics already contains key: " + testName);
+        if (!mMetrics.containsKey(testName)) {
+            mMetrics.put(result, testMetrics);
         }
-        mMetrics.put(result, testMetrics);
-        CLog.i("Test metrics:" + testMetrics);
     }
 
     /**
