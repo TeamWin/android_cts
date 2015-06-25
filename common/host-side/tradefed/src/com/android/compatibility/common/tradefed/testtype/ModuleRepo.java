@@ -187,46 +187,35 @@ public class ModuleRepo implements IModuleRepo {
      * {@inheritDoc}
      */
     @Override
-    public List<IModuleDef> getModules(List<String> filters, String moduleName, String testName) {
+    public List<IModuleDef> getModules(List<String> includeFilters, List<String> excludeFilters) {
         Map<String, IModuleDef> moduleDefs = new HashMap<>();
-        // Get all the tests that would run in this plan.
-        for (String filterString : filters) {
+        Set<String> ids;
+        // Include all the inclusions
+        for (String filterString : includeFilters) {
             TestFilter filter = TestFilter.createFrom(filterString);
-            String abi = filter.getAbi();
-            String name = filter.getName();
             String test = filter.getTest();
-            boolean include = filter.isInclude();
-            // Generate all IDs
-            Set<String> filteredIds = new HashSet<>();
-            Set<String> filteredNames = getModulesMatching(name);
-            if (filteredNames.size() == 0) {
-                throw new IllegalArgumentException(String.format(
-                        "Not modules matching %s. Use 'list modules' to see available modules.",
-                        filter.getName()));
-            }
-            for (String module : filteredNames) {
-                if (abi != null) {
-                    filteredIds.add(AbiUtils.createId(abi, module));
-                } else {
-                    // ABI not specified, test on all ABIs
-                    for (IAbi a : mAbis) filteredIds.add(AbiUtils.createId(a.getName(), module));
+            ids = getAllIds(filter);
+            for (String id : ids) {
+                IModuleDef module = getModule(id);
+                if (test != null) {
+                    // We're including a subset of tests
+                    module.addIncludeFilter(test);
                 }
+                moduleDefs.put(id, module);
             }
+        }
+        // Exclude all the exclusions
+        for (String filterString : includeFilters) {
+            TestFilter filter = TestFilter.createFrom(filterString);
+            String test = filter.getTest();
+            ids = getAllIds(filter);
             // Iterate through all IDs
-            for (String id : filteredIds) {
-                if (include) {
-                    IModuleDef module = getModule(id);
-                    if (test != null) {
-                        // We're including a subset of tests
-                        module.addFilter(include, test);
-                    }
-                    moduleDefs.put(id, module);
-                } else {
-                    IModuleDef module = getModule(id);
+            for (String id : ids) {
+                IModuleDef module = moduleDefs.get(id);
+                if (module != null) {
                     if (test != null) {
                         // Excluding a subset of tests, so keep module but give filter
-                        module.addFilter(include, test);
-                        moduleDefs.put(id, module);
+                        module.addExcludeFilter(test);
                     } else {
                         // Excluding all tests in the module so just remove the whole thing
                         moduleDefs.remove(id);
@@ -234,45 +223,37 @@ public class ModuleRepo implements IModuleRepo {
                 }
             }
         }
-        // If user supplied an include param then remove all modules which do not match. Or if the
-        // user supplied an exclude param, remove all modules that do match.
-        if (moduleName != null) {
-            TestFilter filter = TestFilter.createFrom(moduleName);
-            Pattern pattern = Pattern.compile(filter.getName());
-            boolean include = filter.isInclude();
-            Map<String, IModuleDef> defs = new HashMap<>(moduleDefs);
-            if (include) {
-                // Remove all modules which a different name
-                // If a test is specified, add the filter
-                for (IModuleDef module : defs.values()) {
-                    if (module.nameMatches(pattern)) {
-                        if (testName != null) {
-                            module.addFilter(true, testName);
-                        }
-                    } else {
-                        moduleDefs.remove(module.getId());
-                    }
-                }
-            } else {
-                // If a test is specified, filter it out else remove all module with this name
-                for (IModuleDef module : defs.values()) {
-                    if (module.nameMatches(pattern)) {
-                        if (testName != null) {
-                            module.addFilter(false, testName);
-                        } else {
-                            moduleDefs.remove(module.getId());
-                        }
-                    }
-                }
-            }
-        }
-        if (moduleDefs.size() == 0) {
+        if (moduleDefs.isEmpty()) {
             throw new IllegalStateException("Nothing to do. Use 'list modules' to see available"
-                    + " modules, and 'list results' to see available sessions to re-run.");
+                    + " modules, and 'list results' to see available sessions to retry.");
         }
         // Note: run() relies on the fact that the list is reliably sorted for sharding purposes
         List<IModuleDef> sortedModuleDefs = new ArrayList<>(moduleDefs.values());
         Collections.sort(sortedModuleDefs);
         return sortedModuleDefs;
+    }
+
+    /**
+     * Returns all IDs matching the given filter.
+     */
+    private Set<String> getAllIds(TestFilter filter) {
+        String abi = filter.getAbi();
+        String name = filter.getName();
+        Set<String> filteredNames = getModulesMatching(name);
+        if (filteredNames.isEmpty()) {
+            throw new IllegalArgumentException(String.format(
+                    "Not modules matching %s. Use 'list modules' to see available modules.",
+                    filter.getName()));
+        }
+        Set<String> ids = new HashSet<>();
+        for (String module : filteredNames) {
+            if (abi != null) {
+                ids.add(AbiUtils.createId(abi, module));
+            } else {
+                // ABI not specified, test on all ABIs
+                for (IAbi a : mAbis) ids.add(AbiUtils.createId(a.getName(), module));
+            }
+        }
+        return ids;
     }
 }

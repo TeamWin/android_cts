@@ -41,7 +41,7 @@ public interface IModuleRepo {
     /**
      * @return a sorted {@link List} of {@link IModuleDef}s given the filters.
      */
-    List<IModuleDef> getModules(List<String> filters, String moduleName, String testName);
+    List<IModuleDef> getModules(List<String> includeFilters, List<String> excludeFilters);
 
     /**
      * @return a {@link Map} of all module in repo keyed by name.

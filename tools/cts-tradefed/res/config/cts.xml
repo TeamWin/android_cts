@@ -20,7 +20,7 @@
     <option name="enable-root" value="false" />
     <option name="compatibility-build-provider:plan" value="cts" />
 
-    <option name="compatibility-test:filter" value="!arm64-v8a CtsSampleDeviceTestCases" />
-    <option name="compatibility-test:filter" value="!CtsSampleHostTestCases" />
+    <option name="compatibility-test:include-filter" value="arm64-v8a CtsSampleDeviceTestCases" />
+    <option name="compatibility-test:exclude-filter" value="CtsSampleHostTestCases" />
 
 </configuration>

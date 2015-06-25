@@ -20,14 +20,9 @@ package com.android.compatibility.common.util;
  */
 public class TestFilter {
 
-    /**
-     * Holds the prefix used to make a filter exclusive.
-     */
-    private static final String EXCLUDE_PREFIX = "!";
     private final String mAbi;
     private final String mName;
     private final String mTest;
-    private final boolean mIsInclude;
 
     /**
      * Builds a new {@link TestFilter} from the given string. Filters can be in one of four forms,
@@ -41,13 +36,6 @@ public class TestFilter {
      * @return the {@link TestFilter}
      */
     public static TestFilter createFrom(String filter) {
-        boolean isInclude;
-        if (filter.startsWith(EXCLUDE_PREFIX)) {
-            isInclude = false;
-            filter = filter.substring(EXCLUDE_PREFIX.length());
-        } else {
-            isInclude = true;
-        }
         String[] parts = filter.split(" ");
         String abi = null, name = null, test = null;
         // Either:
@@ -72,7 +60,7 @@ public class TestFilter {
         } else {
             throw new IllegalArgumentException(String.format("Could not parse filter: %s", filter));
         }
-        return new TestFilter(abi, name, test, isInclude);
+        return new TestFilter(abi, name, test);
     }
 
     /**
@@ -82,11 +70,10 @@ public class TestFilter {
      * @param name The module's name
      * @param test The test's identifier eg <package>.<class>#<method>
      */
-    public TestFilter(String abi, String name, String test, boolean isInclude) {
+    public TestFilter(String abi, String name, String test) {
         mAbi = abi;
         mName = name;
         mTest = test;
-        mIsInclude = isInclude;
     }
 
     /**
@@ -103,9 +90,6 @@ public class TestFilter {
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
-        if (!mIsInclude) {
-            sb.append("!");
-        }
         if (mAbi != null) {
             sb.append(mAbi);
             sb.append(" ");
@@ -139,13 +123,6 @@ public class TestFilter {
      */
     public String getTest() {
         return mTest;
-    }
-
-    /**
-     * @return true iff this filter is an inclusion (filter string started with '!')
-     */
-    public boolean isInclude() {
-        return mIsInclude;
     }
 
 }

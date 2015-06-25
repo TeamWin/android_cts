@@ -26,116 +26,57 @@ public class TestFilterTest extends TestCase {
     private static final String NAME = "ModuleName";
     private static final String ABI = "mips64";
     private static final String TEST = "com.android.foobar.Blah#testAllTheThings";
-    private static final String NAME_INCLUDE_FILTER = String.format("%s", NAME);
-    private static final String NAME_EXCLUDE_FILTER = String.format("!%s", NAME_INCLUDE_FILTER);
-    private static final String ABI_NAME_INCLUDE_FILTER = String.format("%s %s", ABI, NAME);
-    private static final String ABI_NAME_EXCLUDE_FILTER = String.format("!%s", ABI_NAME_INCLUDE_FILTER);
-    private static final String NAME_TEST_INCLUDE_FILTER = String.format("%s %s", NAME, TEST);
-    private static final String NAME_TEST_EXCLUDE_FILTER = String.format("!%s", NAME_TEST_INCLUDE_FILTER);
-    private static final String FULL_INCLUDE_FILTER = String.format("%s %s %s", ABI, NAME, TEST);
-    private static final String FULL_EXCLUDE_FILTER = String.format("!%s", FULL_INCLUDE_FILTER);
+    private static final String NAME_FILTER = String.format("%s", NAME);
+    private static final String ABI_NAME_FILTER = String.format("%s %s", ABI, NAME);
+    private static final String NAME_TEST_FILTER = String.format("%s %s", NAME, TEST);
+    private static final String FULL_FILTER = String.format("%s %s %s", ABI, NAME, TEST);
 
-    public void testParseNameIncludeFilter() {
-        TestFilter filter = TestFilter.createFrom(NAME_INCLUDE_FILTER);
+    public void testParseNameFilter() {
+        TestFilter filter = TestFilter.createFrom(NAME_FILTER);
         assertNull("Incorrect abi", filter.getAbi());
         assertEquals("Incorrect name", NAME, filter.getName());
         assertNull("Incorrect test", filter.getTest());
-        assertTrue("Incorrect flag", filter.isInclude());
     }
 
-    public void testParseNameExcludeFilter() {
-        TestFilter filter = TestFilter.createFrom(NAME_EXCLUDE_FILTER);
-        assertNull("Incorrect abi", filter.getAbi());
-        assertEquals("Incorrect name", NAME, filter.getName());
-        assertNull("Incorrect test", filter.getTest());
-        assertFalse("Incorrect flag", filter.isInclude());
-    }
-
-    public void testParseAbiNameIncludeFilter() {
-        TestFilter filter = TestFilter.createFrom(ABI_NAME_INCLUDE_FILTER);
+    public void testParseAbiNameFilter() {
+        TestFilter filter = TestFilter.createFrom(ABI_NAME_FILTER);
         assertEquals("Incorrect abi", ABI, filter.getAbi());
         assertEquals("Incorrect name", NAME, filter.getName());
         assertNull("Incorrect test", filter.getTest());
-        assertTrue("Incorrect flag", filter.isInclude());
     }
 
-    public void testParseAbiNameExcludeFilter() {
-        TestFilter filter = TestFilter.createFrom(ABI_NAME_EXCLUDE_FILTER);
-        assertEquals("Incorrect abi", ABI, filter.getAbi());
-        assertEquals("Incorrect name", NAME, filter.getName());
-        assertNull("Incorrect test", filter.getTest());
-        assertFalse("Incorrect flag", filter.isInclude());
-    }
-
-    public void testParseNameTestIncludeFilter() {
-        TestFilter filter = TestFilter.createFrom(NAME_TEST_INCLUDE_FILTER);
+    public void testParseNameTestFilter() {
+        TestFilter filter = TestFilter.createFrom(NAME_TEST_FILTER);
         assertNull("Incorrect abi", filter.getAbi());
         assertEquals("Incorrect name", NAME, filter.getName());
         assertEquals("Incorrect test", TEST, filter.getTest());
-        assertTrue("Incorrect flag", filter.isInclude());
     }
 
-    public void testParseNameTestExcludeFilter() {
-        TestFilter filter = TestFilter.createFrom(NAME_TEST_EXCLUDE_FILTER);
-        assertNull("Incorrect abi", filter.getAbi());
-        assertEquals("Incorrect name", NAME, filter.getName());
-        assertEquals("Incorrect test", TEST, filter.getTest());
-        assertFalse("Incorrect flag", filter.isInclude());
-    }
-
-    public void testParseFullIncludeFilter() {
-        TestFilter filter = TestFilter.createFrom(FULL_INCLUDE_FILTER);
+    public void testParseFullFilter() {
+        TestFilter filter = TestFilter.createFrom(FULL_FILTER);
         assertEquals("Incorrect abi", ABI, filter.getAbi());
         assertEquals("Incorrect name", NAME, filter.getName());
         assertEquals("Incorrect test", TEST, filter.getTest());
-        assertTrue("Incorrect flag", filter.isInclude());
     }
 
-    public void testParseFullExcludeFilter() {
-        TestFilter filter = TestFilter.createFrom(FULL_EXCLUDE_FILTER);
-        assertEquals("Incorrect abi", ABI, filter.getAbi());
-        assertEquals("Incorrect name", NAME, filter.getName());
-        assertEquals("Incorrect test", TEST, filter.getTest());
-        assertFalse("Incorrect flag", filter.isInclude());
+    public void testCreateNameFilter() {
+        TestFilter filter = new TestFilter(null, NAME, null);
+        assertEquals("Incorrect filter", NAME_FILTER, filter.toString());
     }
 
-    public void testCreateNameIncludeFilter() {
-        TestFilter filter = new TestFilter(null, NAME, null, true);
-        assertEquals("Incorrect filter", NAME_INCLUDE_FILTER, filter.toString());
+    public void testCreateAbiNameFilter() {
+        TestFilter filter = new TestFilter(ABI, NAME, null);
+        assertEquals("Incorrect filter", ABI_NAME_FILTER, filter.toString());
     }
 
-    public void testCreateNameExcludeFilter() {
-        TestFilter filter = new TestFilter(null, NAME, null, false);
-        assertEquals("Incorrect filter", NAME_EXCLUDE_FILTER, filter.toString());
+    public void testCreateNameTestFilter() {
+        TestFilter filter = new TestFilter(null, NAME, TEST);
+        assertEquals("Incorrect filter", NAME_TEST_FILTER, filter.toString());
     }
 
-    public void testCreateAbiNameIncludeFilter() {
-        TestFilter filter = new TestFilter(ABI, NAME, null, true);
-        assertEquals("Incorrect filter", ABI_NAME_INCLUDE_FILTER, filter.toString());
+    public void testCreateFullFilter() {
+        TestFilter filter = new TestFilter(ABI, NAME, TEST);
+        assertEquals("Incorrect filter", FULL_FILTER, filter.toString());
     }
 
-    public void testCreateAbiNameExcludeFilter() {
-        TestFilter filter = new TestFilter(ABI, NAME, null, false);
-        assertEquals("Incorrect filter", ABI_NAME_EXCLUDE_FILTER, filter.toString());
-    }
-
-    public void testCreateNameTestIncludeFilter() {
-        TestFilter filter = new TestFilter(null, NAME, TEST, true);
-        assertEquals("Incorrect filter", NAME_TEST_INCLUDE_FILTER, filter.toString());
-    }
-
-    public void testCreateNameTestExcludeFilter() {
-        TestFilter filter = new TestFilter(null, NAME, TEST, false);
-        assertEquals("Incorrect filter", NAME_TEST_EXCLUDE_FILTER, filter.toString());
-    }
-
-    public void testCreateFullIncludeFilter() {
-        TestFilter filter = new TestFilter(ABI, NAME, TEST, true);
-        assertEquals("Incorrect filter", FULL_INCLUDE_FILTER, filter.toString());
-    }
-
-    public void testCreateFullExcludeFilter() {
-        TestFilter filter = new TestFilter(ABI, NAME, TEST, false);
-        assertEquals("Incorrect filter", FULL_EXCLUDE_FILTER, filter.toString());
-    }
 }

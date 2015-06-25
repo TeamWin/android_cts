@@ -18,6 +18,6 @@
     <include name="common-compatibility-config" />
     <option name="compatibility-build-provider:plan" value="everything" />
 
-    <option name="compatibility-test:filter" value=".*" />
+    <option name="compatibility-test:include-filter" value=".*" />
 
 </configuration>

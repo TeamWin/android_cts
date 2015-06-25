@@ -17,16 +17,23 @@
 package com.android.compatibility.common.tradefed.testtype;
 
 import com.android.compatibility.common.util.AbiUtils;
+import com.android.ddmlib.testrunner.TestIdentifier;
+import com.android.tradefed.build.IBuildInfo;
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.result.ITestInvocationListener;
+import com.android.tradefed.result.InputStreamSource;
+import com.android.tradefed.result.LogDataType;
+import com.android.tradefed.result.TestSummary;
 import com.android.tradefed.targetprep.ITargetPreparer;
 import com.android.tradefed.testtype.IAbi;
 import com.android.tradefed.testtype.IRemoteTest;
+import com.android.tradefed.testtype.ITestFilterReceiver;
 
 import junit.framework.TestCase;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.regex.Pattern;
 
 public class ModuleDefTest extends TestCase {
@@ -59,24 +66,124 @@ public class ModuleDefTest extends TestCase {
         assertFalse("Expected no match to empty", def.nameMatches(Pattern.compile("")));
     }
 
-    public void testAddFilter() throws Exception {
+    public void testAddFilters() throws Exception {
         IAbi abi = new Abi(ABI, "");
         List<IRemoteTest> tests = new ArrayList<>();
-        IRemoteTest mockTest = new MockRemoteTest();
+        MockRemoteTest mockTest = new MockRemoteTest();
         tests.add(mockTest);
         ModuleDef def = new ModuleDef(NAME, abi, tests, new ArrayList<ITargetPreparer>());
-        def.addFilter(true, TEST_1);
-        // TODO(stuartscott): When filters are supported, test the filter was set.
+        def.addIncludeFilter(CLASS);
+        def.addExcludeFilter(TEST_1);
+        MockListener mockListener = new MockListener();
+        def.run(mockListener);
+        assertEquals("Expected one include filter", 1, mockTest.mIncludeFilters.size());
+        assertEquals("Expected one exclude filter", 1, mockTest.mExcludeFilters.size());
+        assertEquals("Incorrect include filter", CLASS, mockTest.mIncludeFilters.get(0));
+        assertEquals("Incorrect exclude filter", TEST_1, mockTest.mExcludeFilters.get(0));
     }
 
-    public class MockRemoteTest implements IRemoteTest {//, ITestFilterReceiver {
+    private class MockRemoteTest implements IRemoteTest, ITestFilterReceiver {
+
+        private final List<String> mIncludeFilters = new ArrayList<>();
+        private final List<String> mExcludeFilters = new ArrayList<>();
+
+        @Override
+        public void addIncludeFilter(String filter) {
+            mIncludeFilters.add(filter);
+        }
+
+        @Override
+        public void addAllIncludeFilters(List<String> filters) {
+            mIncludeFilters.addAll(filters);
+        }
+
+        @Override
+        public void addExcludeFilter(String filter) {
+            mExcludeFilters.add(filter);
+        }
+
+        @Override
+        public void addAllExcludeFilters(List<String> filters) {
+            mExcludeFilters.addAll(filters);
+        }
 
         @Override
         public void run(ITestInvocationListener listener) throws DeviceNotAvailableException {
-            // TODO(stuartscott): Auto-generated method stub
-
+            // Do nothing
         }
 
     }
 
+    private class MockListener implements ITestInvocationListener {
+
+        @Override
+        public void invocationStarted(IBuildInfo buildInfo) {
+            // Do nothing
+        }
+
+        @Override
+        public void testRunStarted(String name, int numTests) {
+            // Do nothing
+        }
+
+        @Override
+        public void testStarted(TestIdentifier test) {
+            // Do nothing
+        }
+
+        @Override
+        public void testEnded(TestIdentifier test, Map<String, String> metrics) {
+            // Do nothing
+        }
+
+        @Override
+        public void testIgnored(TestIdentifier test) {
+            // Do nothing
+        }
+
+        @Override
+        public void testFailed(TestIdentifier test, String trace) {
+            // Do nothing
+        }
+
+        @Override
+        public void testAssumptionFailure(TestIdentifier test, String trace) {
+            // Do nothing
+        }
+
+        @Override
+        public void testRunStopped(long elapsedTime) {
+            // Do nothing
+        }
+
+        @Override
+        public void testRunEnded(long elapsedTime, Map<String, String> metrics) {
+            // Do nothing
+        }
+
+        @Override
+        public void testRunFailed(String id) {
+            // Do nothing
+        }
+
+        @Override
+        public TestSummary getSummary() {
+            return null;
+        }
+
+        @Override
+        public void invocationEnded(long elapsedTime) {
+            // Do nothing
+        }
+
+        @Override
+        public void invocationFailed(Throwable cause) {
+            // Do nothing
+        }
+
+        @Override
+        public void testLog(String name, LogDataType type, InputStreamSource stream) {
+            // Do nothing
+        }
+    }
 }

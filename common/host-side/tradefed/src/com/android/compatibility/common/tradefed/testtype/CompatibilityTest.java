@@ -17,9 +17,7 @@ package com.android.compatibility.common.tradefed.testtype;
 
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildInfo;
 import com.android.compatibility.common.tradefed.result.IInvocationResultRepo;
-import com.android.compatibility.common.tradefed.result.IModuleListener;
 import com.android.compatibility.common.tradefed.result.InvocationResultRepo;
-import com.android.compatibility.common.tradefed.result.ModuleListener;
 import com.android.compatibility.common.util.AbiUtils;
 import com.android.compatibility.common.util.ICaseResult;
 import com.android.compatibility.common.util.IInvocationResult;
@@ -37,12 +35,7 @@ import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.log.LogUtil.CLog;
 import com.android.tradefed.result.ITestInvocationListener;
-import com.android.tradefed.targetprep.BuildError;
-import com.android.tradefed.targetprep.ITargetCleaner;
-import com.android.tradefed.targetprep.ITargetPreparer;
-import com.android.tradefed.targetprep.TargetSetupError;
 import com.android.tradefed.testtype.IAbi;
-import com.android.tradefed.testtype.IAbiReceiver;
 import com.android.tradefed.testtype.IBuildReceiver;
 import com.android.tradefed.testtype.IDeviceTest;
 import com.android.tradefed.testtype.IRemoteTest;
@@ -52,7 +45,6 @@ import com.android.tradefed.util.AbiFormatter;
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -64,7 +56,8 @@ import java.util.Set;
 @OptionClass(alias="compatibility-test")
 public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildReceiver {
 
-    private static final String FILTER_OPTION = "filter";
+    private static final String INCLUDE_FILTER_OPTION = "include-filter";
+    private static final String EXCLUDE_FILTER_OPTION = "exclude-filter";
     private static final String MODULE_OPTION = "module";
     private static final String TEST_OPTION = "test";
     public static final String RETRY_OPTION = "retry";
@@ -75,10 +68,15 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
         TestStatus.NOT_EXECUTED
     };
 
-    @Option(name = FILTER_OPTION,
-            description = "the module filters to apply.",
+    @Option(name = INCLUDE_FILTER_OPTION,
+            description = "the include module filters to apply.",
             importance = Importance.ALWAYS)
-    private List<String> mFilters = new ArrayList<>();
+    private List<String> mIncludeFilters = new ArrayList<>();
+
+    @Option(name = EXCLUDE_FILTER_OPTION,
+            description = "the exclude module filters to apply.",
+            importance = Importance.ALWAYS)
+    private List<String> mExcludeFilters = new ArrayList<>();
 
     @Option(name = MODULE_OPTION,
             shortName = 'm',
@@ -173,8 +171,8 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
                 if (mAbiName == null) {
                     throw new IllegalArgumentException("Could not get device's ABIs");
                 } else {
-                    throw new IllegalArgumentException(String.format("Device %s does not support %s",
-                            getDevice().getSerialNumber(), mAbiName));
+                    throw new IllegalArgumentException(String.format("Device %s does't support %s",
+                            mDevice.getSerialNumber(), mAbiName));
                 }
             }
             CLog.logAndDisplay(LogLevel.INFO, "ABIs: %s", abiSet);
@@ -190,55 +188,10 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
 
             for (int i = mLastModuleIndex; i < moduleCount; i++) {
                 IModuleDef module = mModules.get(i);
-                IModuleListener moduleListener = new ModuleListener(module, listener);
                 CLog.logAndDisplay(LogLevel.INFO, "Module: %s", module.getId());
-                List<ITargetPreparer> preparers = module.getPreparers();
-                List<IRemoteTest> tests = module.getTests();
-                IAbi abi = module.getAbi();
-
-                List<ITargetCleaner> cleaners = new ArrayList<>();
-                // Setup
-                for (ITargetPreparer preparer : preparers) {
-                    CLog.d("Preparer: %s", preparer.getClass().getSimpleName());
-                    if (preparer instanceof IAbiReceiver) {
-                        ((IAbiReceiver) preparer).setAbi(abi);
-                    }
-                    if (preparer instanceof ITargetCleaner) {
-                        cleaners.add((ITargetCleaner) preparer);
-                    }
-                    try {
-                        preparer.setUp(getDevice(), mBuild);
-                    } catch (BuildError e) {
-                        // This should only happen for flashing new build
-                        CLog.e("Unexpected BuildError from preparer: %s",
-                            preparer.getClass().getCanonicalName());
-                    } catch (TargetSetupError e) {
-                        // log preparer class then rethrow & let caller handle
-                        CLog.e("TargetSetupError in preparer: %s",
-                            preparer.getClass().getCanonicalName());
-                        throw new RuntimeException(e);
-                    }
-                }
-                // Run tests
-                for (IRemoteTest test : tests) {
-                    CLog.d("Test: %s", test.getClass().getSimpleName());
-                    if (test instanceof IBuildReceiver) {
-                        ((IBuildReceiver) test).setBuild(mBuild);
-                    }
-                    if (test instanceof IDeviceTest) {
-                        ((IDeviceTest) test).setDevice(getDevice());
-                    }
-                    if (test instanceof IAbiReceiver) {
-                        ((IAbiReceiver) test).setAbi(abi);
-                    }
-                    test.run(moduleListener);
-                }
-                // Tear down - in reverse order
-                Collections.reverse(cleaners);
-                for (ITargetCleaner cleaner : cleaners) {
-                    CLog.d("Cleaner: %s", cleaner.getClass().getSimpleName());
-                    cleaner.tearDown(getDevice(), mBuild, null);
-                }
+                module.setBuild(mBuild);
+                module.setDevice(mDevice);
+                module.run(listener);
                 // Track of the last complete test package index for resume
                 mLastModuleIndex = i;
             }
@@ -265,8 +218,10 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
         }
         if (mRetrySessionId != null) {
             // We're retrying so clear the filters
-            mFilters.clear();
+            mIncludeFilters.clear();
+            mExcludeFilters.clear();
             mModuleName = null;
+            mTestName = null;
             // Load the invocation result
             IInvocationResultRepo repo;
             IInvocationResult result = null;
@@ -286,16 +241,38 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
                     for (TestStatus status : RETRY_TEST_STATUS) {
                         for (ITestResult r : cr.getResults(status)) {
                             // Create the filter for the test to be run.
-                            mFilters.add(new TestFilter(module.getAbi(), module.getName(),
-                                    r.getFullName(), true).toString());
+                            mIncludeFilters.add(new TestFilter(module.getAbi(), module.getName(),
+                                    r.getFullName()).toString());
                         }
                     }
                 }
             }
         }
+        if (mModuleName != null) {
+            mIncludeFilters.clear();
+            mIncludeFilters.add(new TestFilter(mAbiName, mModuleName, mTestName).toString());
+            if (mTestName != null) {
+                // We're filtering it down to the lowest level, no need to give excludes
+                mExcludeFilters.clear();
+            } else {
+                // If we dont specify a test name, we only want to run this module with any
+                // exclusions defined by the plan as long as they dont exclude the whole module.
+                List<String> excludeFilters = new ArrayList<>();
+                for (String excludeFilter : mExcludeFilters) {
+                    TestFilter filter = TestFilter.createFrom(excludeFilter);
+                    String name = filter.getName();
+                    // Add the filter if it applies to this module, and it has a test name
+                    if ((mModuleName.equals(name) || mModuleName.matches(name) ||
+                            name.matches(mModuleName)) && filter.getTest() != null) {
+                        excludeFilters.add(excludeFilter);
+                    }
+                }
+                mExcludeFilters = excludeFilters;
+            }
+        }
         // Collect ALL tests
         IModuleRepo testRepo = new ModuleRepo(mBuild, abis);
-        List<IModuleDef> modules = testRepo.getModules(mFilters, mModuleName, mTestName);
+        List<IModuleDef> modules = testRepo.getModules(mIncludeFilters, mExcludeFilters);
         // Filter by shard
         int numTestmodules = modules.size();
         int totalShards = Math.min(mTotalShards, numTestmodules);
