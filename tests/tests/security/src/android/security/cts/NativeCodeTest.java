@@ -64,6 +64,15 @@ public class NativeCodeTest extends TestCase {
                    + "https://github.com/torvalds/linux/commit/a134f083e79f",
                    doPingPongRootTest());
     }
+
+    public void testSysVipc() throws Exception {
+        assertTrue("Android does not support Sys V IPC, it must "
+                   + "be removed from the kernel. In the kernel config: "
+                   + "Change \"CONFIG_SYSVIPC=y\" to \"# CONFIG_SYSVIPC is not set\" "
+                   + "and rebuild.",
+                   doSysVipcTest());
+    }
+
     /**
      * Returns true iff this device is vulnerable to CVE-2013-2094.
      * A patch for CVE-2013-2094 can be found at
@@ -139,5 +148,26 @@ public class NativeCodeTest extends TestCase {
      * http://seclists.org/oss-sec/2015/q2/333
      */
     private static native boolean doPingPongRootTest();
+
+    /**
+     * Test that SysV IPC has been removed from the kernel.
+     *
+     * Returns true if SysV IPC has been removed.
+     *
+     * System V IPCs are not compliant with Android's application lifecycle because allocated
+     * resources are not freed by the low memory killer. This lead to global kernel resource leakage.
+     *
+     * For example, there is no way to automatically release a SysV semaphore
+     * allocated in the kernel when:
+     * - a buggy or malicious process exits
+     * - a non-buggy and non-malicious process crashes or is explicitly killed.
+     *
+     * Killing processes automatically to make room for new ones is an
+     * important part of Android's application lifecycle implementation. This means
+     * that, even assuming only non-buggy and non-malicious code, it is very likely
+     * that over time, the kernel global tables used to implement SysV IPCs will fill
+     * up.
+     */
+    private static native boolean doSysVipcTest();
 
 }

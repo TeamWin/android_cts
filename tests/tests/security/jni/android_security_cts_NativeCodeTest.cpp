@@ -35,6 +35,7 @@
 #include <inttypes.h>
 #include <linux/sysctl.h>
 #include <arpa/inet.h>
+#include <linux/ipc.h>
 
 /*
  * Returns true iff this device is vulnerable to CVE-2013-2094.
@@ -251,6 +252,20 @@ static jboolean android_security_cts_NativeCodeTest_doPingPongRootTest(JNIEnv*, 
     return true;
 }
 
+#define SHMEMSIZE 0x1 /* request one page */
+static jboolean android_security_cts_NativeCodeTest_doSysVipcTest(JNIEnv*, jobject)
+{
+    key_t key = 0x1a25;
+
+    /*
+     * Not supported in bionic. Must directly invoke syscall
+     * Only acceptable errno is ENOSYS: shmget syscall
+     * function not implemented
+     */
+    return ((syscall(SYS_shmget, key, SHMEMSIZE, IPC_CREAT | 0666) == -1)
+                && (errno == ENOSYS));
+}
+
 static JNINativeMethod gMethods[] = {
     {  "doPerfEventTest", "()Z",
             (void *) android_security_cts_NativeCodeTest_doPerfEventTest },
@@ -266,6 +281,8 @@ static JNINativeMethod gMethods[] = {
             (void *) android_security_cts_NativeCodeTest_doNvmapIocFromIdTest },
     {  "doPingPongRootTest", "()Z",
             (void *) android_security_cts_NativeCodeTest_doPingPongRootTest },
+    {  "doSysVipcTest", "()Z",
+            (void *) android_security_cts_NativeCodeTest_doSysVipcTest },
 };
 
 int register_android_security_cts_NativeCodeTest(JNIEnv* env)
