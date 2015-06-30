@@ -36,7 +36,7 @@ LOCAL_STATIC_JAVA_LIBRARIES := android-ex-camera2 \
                                core-tests \
                                mockito-target \
                                mockwebserver \
-                               compatibility-device-util_v2 \
+                               compatibility-device-util \
 
 LOCAL_PACKAGE_NAME := CtsVerifier
 
