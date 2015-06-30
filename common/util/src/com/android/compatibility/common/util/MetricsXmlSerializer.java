@@ -21,6 +21,7 @@ import org.xmlpull.v1.XmlSerializer;
 import java.io.IOException;
 import java.util.List;
 
+//TODO(stuartscott): Delete file for v2, ReportLog can serialize itself.
 /**
  * Serialize Metric data from {@link ReportLog} into compatibility report friendly XML
  */
@@ -36,8 +37,8 @@ public final class MetricsXmlSerializer {
         if (reportLog == null) {
             return;
         }
-        ReportLog.Result summary = reportLog.getSummary();
-        List<ReportLog.Result> detailedMetrics = reportLog.getDetailedMetrics();
+        ReportLog.Metric summary = reportLog.getSummary();
+        List<ReportLog.Metric> detailedMetrics = reportLog.getDetailedMetrics();
         // <Summary message="Average" scoreType="lower_better" unit="ms">195.2</Summary>
         if (summary != null) {
             mXmlSerializer.startTag(null, "Summary");
@@ -50,9 +51,9 @@ public final class MetricsXmlSerializer {
 
         if (!detailedMetrics.isEmpty()) {
             mXmlSerializer.startTag(null, "Details");
-            for (ReportLog.Result result : detailedMetrics) {
+            for (ReportLog.Metric result : detailedMetrics) {
                 mXmlSerializer.startTag(null, "ValueArray");
-                mXmlSerializer.attribute(null, "source", result.getLocation());
+                mXmlSerializer.attribute(null, "source", result.getSource());
                 mXmlSerializer.attribute(null, "message", result.getMessage());
                 mXmlSerializer.attribute(null, "scoreType", result.getType().toReportString());
                 mXmlSerializer.attribute(null, "unit", result.getUnit().toReportString());

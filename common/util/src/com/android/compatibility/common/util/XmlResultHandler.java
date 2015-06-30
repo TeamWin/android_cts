@@ -48,7 +48,6 @@ public class XmlResultHandler {
 
     // XML constants
     private static final String ABI_ATTR = "abi";
-    private static final String DETAIL_TAG = "Detail";
     private static final String DEVICE_ATTR = "device";
     private static final String END_TIME_ATTR = "end";
     private static final String FAILED_ATTR = "failed";
@@ -67,18 +66,13 @@ public class XmlResultHandler {
     private static final String REPORT_VERSION_ATTR = "report-version";
     private static final String RESULT_ATTR = "result";
     private static final String RESULT_TAG = "Result";
-    private static final String SCORETYPE_ATTR = "score-type";
-    private static final String SCOREUNIT_ATTR = "score-unit";
-    private static final String SOURCE_ATTR = "source";
     private static final String STACK_TAG = "StackTrace";
     private static final String START_TIME_ATTR = "start";
     private static final String SUITE_NAME_ATTR = "suite-name";
     private static final String SUITE_PLAN_ATTR = "suite-plan";
     private static final String SUITE_VERSION_ATTR = "suite-version";
     private static final String SUMMARY_TAG = "Summary";
-    private static final String TARGET_ATTR = "target";
     private static final String TEST_TAG = "Test";
-    private static final String VALUE_TAG = "Value";
 
     /**
      * @param resultsDir
@@ -132,16 +126,8 @@ public class XmlResultHandler {
                                 parser.require(XmlPullParser.END_TAG, NS, FAILURE_TAG);
                                 parser.nextTag();
                             } else {
-                                parser.require(XmlPullParser.START_TAG, NS, SUMMARY_TAG);
-                                ReportLog report = new ReportLog();
-                                report.setSummary(parseResult(parser));
-                                parser.require(XmlPullParser.END_TAG, NS, SUMMARY_TAG);
-                                while (parser.nextTag() == XmlPullParser.START_TAG) {
-                                    parser.require(XmlPullParser.START_TAG, NS, DETAIL_TAG);
-                                    report.addDetail(parseResult(parser));
-                                    parser.require(XmlPullParser.END_TAG, NS, DETAIL_TAG);
-                                }
-                                test.setReportLog(report);
+                                test.setReportLog(ReportLog.parse(parser));
+                                parser.nextTag();
                             }
                         }
                         parser.require(XmlPullParser.END_TAG, NS, TEST_TAG);
@@ -162,37 +148,6 @@ public class XmlResultHandler {
     }
 
     /**
-     * @param parser
-     * @throws IOException
-     * @throws XmlPullParserException
-     * @throws NumberFormatException
-     */
-    private static ReportLog.Result parseResult(XmlPullParser parser) throws NumberFormatException,
-            XmlPullParserException, IOException {
-        String source = parser.getAttributeValue(NS, SOURCE_ATTR);
-        String message = parser.getAttributeValue(NS, MESSAGE_ATTR);
-        String target = parser.getAttributeValue(NS, TARGET_ATTR);
-        ResultType type = ResultType.parseReportString(parser.getAttributeValue(NS, SCORETYPE_ATTR));
-        ResultUnit unit = ResultUnit.parseReportString(parser.getAttributeValue(NS, SCOREUNIT_ATTR));
-        List<Double> valuesList = new ArrayList<>();
-        while (parser.nextTag() == XmlPullParser.START_TAG) {
-            parser.require(XmlPullParser.START_TAG, NS, VALUE_TAG);
-            valuesList.add(Double.parseDouble(parser.nextText()));
-            parser.require(XmlPullParser.END_TAG, NS, VALUE_TAG);
-        }
-        int length = valuesList.size();
-        double[] values = new double[length];
-        for (int i = 0; i < length; i++) {
-            values[i] = valuesList.get(i);
-        }
-        if (target != null && !target.equals("")) {
-            return new ReportLog.Result(source, message, values, Double.parseDouble(target), type,
-                    unit);
-        }
-        return new ReportLog.Result(source, message, values, type, unit);
-    }
-
-    /**
      * @param result
      * @param resultDir
      * @param startTime
@@ -210,8 +165,7 @@ public class XmlResultHandler {
         XmlSerializer serializer = XmlPullParserFactory.newInstance(TYPE, null).newSerializer();
         serializer.setOutput(stream, ENCODING);
         serializer.startDocument(ENCODING, false);
-        serializer.setFeature(
-                "http://xmlpull.org/v1/doc/features.html#indent-output", true);
+        serializer.setFeature("http://xmlpull.org/v1/doc/features.html#indent-output", true);
         serializer.processingInstruction(
                 "xml-stylesheet type=\"text/xsl\" href=\"compatibility-result.xsl\"");
         serializer.startTag(NS, RESULT_TAG);
@@ -264,45 +218,12 @@ public class XmlResultHandler {
                     }
                     serializer.endTag(NS, FAILURE_TAG);
                 }
-                ReportLog report = r.getReportLog();
-                if (report != null) {
-                    ReportLog.Result summary = report.getSummary();
-                    serializer.startTag(NS, SUMMARY_TAG);
-                    serializeResult(serializer, summary);
-                    serializer.endTag(NS, SUMMARY_TAG);
-                    List<ReportLog.Result> details = report.getDetailedMetrics();
-                    for (ReportLog.Result detail : details) {
-                        serializer.startTag(NS, DETAIL_TAG);
-                        serializeResult(serializer, detail);
-                        serializer.endTag(NS, DETAIL_TAG);
-                    }
-                }
+                ReportLog.serialize(serializer, r.getReportLog());
                 serializer.endTag(NS, TEST_TAG);
             }
             serializer.endTag(NS, MODULE_TAG);
         }
         serializer.endDocument();
-    }
-
-    /**
-     * @param serializer
-     * @param result
-     * @throws IOException
-     */
-    private static void serializeResult(XmlSerializer serializer, ReportLog.Result result)
-            throws IOException {
-        serializer.attribute(NS, SOURCE_ATTR, result.getLocation());
-        serializer.attribute(NS, MESSAGE_ATTR, result.getMessage());
-        if (result.getTarget() != null) {
-            serializer.attribute(NS, TARGET_ATTR, result.getTarget().toString());
-        }
-        serializer.attribute(NS, SCORETYPE_ATTR, result.getType().toString());
-        serializer.attribute(NS, SCOREUNIT_ATTR, result.getUnit().toString());
-        for (double d : result.getValues()) {
-            serializer.startTag(NS, VALUE_TAG);
-            serializer.text(Double.toString(d));
-            serializer.endTag(NS, VALUE_TAG);
-        }
     }
 
     private static String formatTimeStamp(long epochTime) {

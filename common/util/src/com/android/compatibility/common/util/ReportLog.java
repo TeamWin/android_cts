@@ -16,66 +16,71 @@
 
 package com.android.compatibility.common.util;
 
+import org.xmlpull.v1.XmlPullParser;
+import org.xmlpull.v1.XmlPullParserException;
+import org.xmlpull.v1.XmlPullParserFactory;
+import org.xmlpull.v1.XmlSerializer;
+
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.StringTokenizer;
-import java.util.regex.Pattern;
 
 /**
  * Utility class to add results to the report.
  */
 public class ReportLog implements Serializable {
 
-    private static final String LOG_SEPARATOR = "+++";
-    private static final String SUMMARY_SEPARATOR = "++++";
-    private static final String LOG_ELEM_SEPARATOR = "|";
-    private static final String EMPTY_CHAR = " ";
-    private Result mSummary;
-    private final List<Result> mDetails = new ArrayList<Result>();
+    private static final String ENCODING = "UTF-8";
+    private static final String TYPE = "org.kxml2.io.KXmlParser,org.kxml2.io.KXmlSerializer";
 
-    public static class Result implements Serializable {
-        private String mLocation;
+    // XML constants
+    private static final String DETAIL_TAG = "Detail";
+    private static final String METRIC_TAG = "Metric";
+    private static final String MESSAGE_ATTR = "message";
+    private static final String SCORETYPE_ATTR = "score-type";
+    private static final String SCOREUNIT_ATTR = "score-unit";
+    private static final String SOURCE_ATTR = "source";
+    private static final String SUMMARY_TAG = "Summary";
+    private static final String VALUE_TAG = "Value";
+
+    private Metric mSummary;
+    private final List<Metric> mDetails = new ArrayList<>();
+
+    public static class Metric implements Serializable {
+        private String mSource;
         private String mMessage;
         private double[] mValues;
         private ResultType mType;
         private ResultUnit mUnit;
-        private Double mTarget;
 
-
-        Result(String location, String message, double[] values,
-                ResultType type, ResultUnit unit) {
-            this(location, message, values, null /*target*/, type, unit);
+        Metric(String source, String message, double value, ResultType type, ResultUnit unit) {
+            this(source, message, new double[] { value }, type, unit);
         }
 
         /**
-         * Creates a result object to be included in the report. Each object has a message
+         * Creates a metric array to be included in the report. Each object has a message
          * describing its values and enums to interpret them. In addition, each result also includes
          * class, method and line number information about the test which added this result which is
          * collected by looking at the stack trace.
          *
          * @param message A string describing the values
          * @param values An array of the values
-         * @param target Nullable. The target value.
          * @param type Represents how to interpret the values (eg. A lower score is better)
          * @param unit Represents the unit in which the values are (eg. Milliseconds)
          */
-        Result(String location, String message, double[] values,
-                Double target, ResultType type, ResultUnit unit) {
-            mLocation = location;
+        Metric(String source, String message, double[] values, ResultType type, ResultUnit unit) {
+            mSource = source;
             mMessage = message;
             mValues = values;
             mType = type;
             mUnit = unit;
-            mTarget = target;
         }
 
-        public Double getTarget() {
-            return mTarget;
-        }
-
-        public String getLocation() {
-            return mLocation;
+        public String getSource() {
+            return mSource;
         }
 
         public String getMessage() {
@@ -94,154 +99,189 @@ public class ReportLog implements Serializable {
             return mUnit;
         }
 
-        /**
-         * Format:
-         * location|message|target|type|unit|value[s], target can be " " if there is no target set.
-         * log for array = classMethodName:line_number|message|unit|type|space separated values
-         */
-        String toEncodedString() {
-            StringBuilder builder = new StringBuilder()
-                    .append(mLocation)
-                    .append(LOG_ELEM_SEPARATOR)
-                    .append(mMessage)
-                    .append(LOG_ELEM_SEPARATOR)
-                    .append(mTarget != null ? mTarget : EMPTY_CHAR)
-                    .append(LOG_ELEM_SEPARATOR)
-                    .append(mType.name())
-                    .append(LOG_ELEM_SEPARATOR)
-                    .append(mUnit.name())
-                    .append(LOG_ELEM_SEPARATOR);
-            for (double value : mValues) {
-                builder.append(value).append(" ");
+        void serialize(XmlSerializer serializer)
+                throws IllegalArgumentException, IllegalStateException, IOException {
+            serializer.startTag(null, METRIC_TAG);
+            serializer.attribute(null, SOURCE_ATTR, getSource());
+            serializer.attribute(null, MESSAGE_ATTR, getMessage());
+            serializer.attribute(null, SCORETYPE_ATTR, getType().toReportString());
+            serializer.attribute(null, SCOREUNIT_ATTR, getUnit().toReportString());
+            for (double d : getValues()) {
+                serializer.startTag(null, VALUE_TAG);
+                serializer.text(Double.toString(d));
+                serializer.endTag(null, VALUE_TAG);
             }
-            return builder.toString();
+            serializer.endTag(null, METRIC_TAG);
         }
 
-        static Result fromEncodedString(String encodedString) {
-            String[] elems = encodedString.split(Pattern.quote(LOG_ELEM_SEPARATOR));
-            if (elems.length < 5) {
-                return null;
+        static Metric parse(XmlPullParser parser)
+                throws XmlPullParserException, IOException {
+            parser.require(XmlPullParser.START_TAG, null, METRIC_TAG);
+            String source = parser.getAttributeValue(null, SOURCE_ATTR);
+            String message = parser.getAttributeValue(null, MESSAGE_ATTR);
+            ResultType type = ResultType.parseReportString(
+                    parser.getAttributeValue(null, SCORETYPE_ATTR));
+            ResultUnit unit = ResultUnit.parseReportString(
+                    parser.getAttributeValue(null, SCOREUNIT_ATTR));
+            List<String> valuesList = new ArrayList<>();
+            while (parser.nextTag() == XmlPullParser.START_TAG) {
+                parser.require(XmlPullParser.START_TAG, null, VALUE_TAG);
+                valuesList.add(parser.nextText());
+                parser.require(XmlPullParser.END_TAG, null, VALUE_TAG);
             }
-
-            String[] valueStrArray = elems[5].split(" ");
-            double[] valueArray = new double[valueStrArray.length];
-            for (int i = 0; i < valueStrArray.length; i++) {
-                valueArray[i] = Double.parseDouble(valueStrArray[i]);
+            int length = valuesList.size();
+            double[] values = new double[length];
+            for (int i = 0; i < length; i++) {
+                values[i] = Double.parseDouble(valuesList.get(i));
             }
-            return new Result(
-                    elems[0], /*location*/
-                    elems[1], /*message*/
-                    valueArray, /*values*/
-                    elems[2].equals(EMPTY_CHAR) ? null : Double.parseDouble(elems[2]), /*target*/
-                    ResultType.valueOf(elems[3]), /*type*/
-                    ResultUnit.valueOf(elems[4])  /*unit*/);
+            parser.require(XmlPullParser.END_TAG, null, METRIC_TAG);
+            return new Metric(source, message, values, type, unit);
         }
     }
 
     /**
-     * @param result
+     * @param elem
      */
-    /* package */ void addDetail(Result result) {
-        mDetails.add(result);
+    /* package */ void addMetric(Metric elem) {
+        mDetails.add(elem);
     }
 
     /**
-     * Adds an array of values to the report.
+     * Adds an array of metrics to the report.
      */
     public void addValues(String message, double[] values, ResultType type, ResultUnit unit) {
-        addDetail(new Result(Stacktrace.getTestCallerClassMethodNameLineNumber(),
+        addMetric(new Metric(Stacktrace.getTestCallerClassMethodNameLineNumber(),
                 message, values, type, unit));
     }
 
     /**
-     * Adds an array of values to the report.
+     * Adds an array of metrics to the report.
      */
-    public void addValues(String location, String message, double[] values, ResultType type,
+    public void addValues(String source, String message, double[] values, ResultType type,
             ResultUnit unit) {
-        addDetail(new Result(location, message, values, type, unit));
+        addMetric(new Metric(source, message, values, type, unit));
     }
 
     /**
-     * Adds a value to the report.
+     * Adds a metric to the report.
      */
     public void addValue(String message, double value, ResultType type, ResultUnit unit) {
-        addDetail(new Result(Stacktrace.getTestCallerClassMethodNameLineNumber(), message,
-                new double[] {value}, type, unit));
+        addMetric(new Metric(Stacktrace.getTestCallerClassMethodNameLineNumber(), message,
+                value, type, unit));
     }
 
     /**
-     * Adds a value to the report.
+     * Adds a metric to the report.
      */
-    public void addValue(String location, String message, double value, ResultType type,
+    public void addValue(String source, String message, double value, ResultType type,
             ResultUnit unit) {
-        addDetail(new Result(location, message, new double[] {value}, type, unit));
+        addMetric(new Metric(source, message, value, type, unit));
     }
 
     /**
-     * @param result
+     * @param elem
      */
-    /* package */ void setSummary(Result result) {
-        mSummary = result;
+    /* package */ void setSummary(Metric elem) {
+        mSummary = elem;
     }
 
     /**
      * Sets the summary of the report.
      */
     public void setSummary(String message, double value, ResultType type, ResultUnit unit) {
-        setSummary(new Result(Stacktrace.getTestCallerClassMethodNameLineNumber(),
-                message, new double[] {value}, type, unit));
+        setSummary(new Metric(Stacktrace.getTestCallerClassMethodNameLineNumber(),
+                message, value, type, unit));
     }
 
-    public Result getSummary() {
+    public Metric getSummary() {
         return mSummary;
     }
 
-    public List<Result> getDetailedMetrics() {
-        return new ArrayList<Result>(mDetails);
+    public List<Metric> getDetailedMetrics() {
+        return new ArrayList<Metric>(mDetails);
     }
 
     /**
-     * Parse a String encoded {@link com.android.compatibility.common.util.ReportLog}
+     * Serializes a given {@link ReportLog} to a String.
+     * @throws XmlPullParserException
+     * @throws IOException
+     * @throws IllegalStateException
+     * @throws IllegalArgumentException
      */
-    public static ReportLog fromEncodedString(String encodedString) {
-        if (encodedString == null || encodedString.isEmpty()) {
-            return null;
+    public static String serialize(ReportLog reportlog) throws XmlPullParserException,
+            IllegalArgumentException, IllegalStateException, IOException {
+        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+        XmlSerializer serializer = XmlPullParserFactory.newInstance(TYPE, null).newSerializer();
+        serializer.setOutput(byteArrayOutputStream, ENCODING);
+        serializer.startDocument(ENCODING, true);
+        serializer.setFeature("http://xmlpull.org/v1/doc/features.html#indent-output", true);
+        serialize(serializer, reportlog);
+        serializer.endDocument();
+        return byteArrayOutputStream.toString(ENCODING);
+    }
+
+    /**
+     * Serializes a given {@link ReportLog} to XML.
+     * @param serializer
+     * @param reportLog
+     * @throws IOException
+     */
+    public static void serialize(XmlSerializer serializer, ReportLog reportLog)
+            throws IOException {
+        if (reportLog == null) {
+            return;
         }
-        ReportLog reportLog = new ReportLog();
-        StringTokenizer tok = new StringTokenizer(encodedString, SUMMARY_SEPARATOR);
-        if (tok.hasMoreTokens()) {
-            // Extract the summary
-            reportLog.setSummary(Result.fromEncodedString(tok.nextToken()));
+        Metric summary = reportLog.getSummary();
+        List<Metric> detailedMetrics = reportLog.getDetailedMetrics();
+        if (summary != null) {
+            serializer.startTag(null, SUMMARY_TAG);
+            summary.serialize(serializer);
+            serializer.endTag(null, SUMMARY_TAG);
         }
-        if (tok.hasMoreTokens()) {
-            // Extract the detailed results
-            StringTokenizer detailedTok = new StringTokenizer(tok.nextToken(), LOG_SEPARATOR);
-            while (detailedTok.hasMoreTokens()) {
-                reportLog.addDetail(Result.fromEncodedString(detailedTok.nextToken()));
+
+        if (!detailedMetrics.isEmpty()) {
+            serializer.startTag(null, DETAIL_TAG);
+            for (Metric elem : detailedMetrics) {
+                elem.serialize(serializer);
             }
+            serializer.endTag(null, DETAIL_TAG);
         }
-        return reportLog;
     }
 
     /**
-     * @return a String representation of this report or null if not collected
+     * Parses a {@link ReportLog} from the given string.
+     * @throws XmlPullParserException
+     * @throws IOException
      */
-    protected String toEncodedString() {
-        if ((mSummary == null) && mDetails.isEmpty()) {
-            // just return empty string
-            return null;
-        }
-        StringBuilder builder = new StringBuilder();
-        builder.append(mSummary.toEncodedString());
-        builder.append(SUMMARY_SEPARATOR);
-        for (Result result : mDetails) {
-            builder.append(result.toEncodedString());
-            builder.append(LOG_SEPARATOR);
-        }
-        // delete the last separator
-        if (builder.length() >= LOG_SEPARATOR.length()) {
-            builder.delete(builder.length() - LOG_SEPARATOR.length(), builder.length());
-        }
-        return builder.toString();
+    public static ReportLog parse(String result) throws XmlPullParserException, IOException {
+        XmlPullParserFactory factory = XmlPullParserFactory.newInstance();
+        XmlPullParser parser = factory.newPullParser();
+        parser.setInput(new ByteArrayInputStream(result.getBytes(ENCODING)), ENCODING);
+        parser.nextTag();
+        return parse(parser);
     }
+
+    /**
+     * Parses a {@link ReportLog} from the given XML parser.
+     * @param parser
+     * @throws IOException
+     * @throws XmlPullParserException
+     */
+    public static ReportLog parse(XmlPullParser parser) throws XmlPullParserException, IOException {
+        parser.require(XmlPullParser.START_TAG, null, SUMMARY_TAG);
+        parser.nextTag();
+        ReportLog report = new ReportLog();
+        report.setSummary(Metric.parse(parser));
+        parser.nextTag();
+        parser.require(XmlPullParser.END_TAG, null, SUMMARY_TAG);
+        parser.nextTag();
+        if (parser.getName().equals(DETAIL_TAG)) {
+            while (parser.nextTag() == XmlPullParser.START_TAG) {
+                report.addMetric(Metric.parse(parser));
+            }
+            parser.require(XmlPullParser.END_TAG, null, DETAIL_TAG);
+        }
+        return report;
+    }
+
 }

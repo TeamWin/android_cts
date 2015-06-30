@@ -24,6 +24,7 @@ import org.xmlpull.v1.XmlSerializer;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 
+//TODO(stuartscott): Delete file for v2, ReportLog can serialize itself.
 /**
  * Unit tests for {@link MetricsXmlSerializer}
  */
@@ -32,8 +33,7 @@ public class MetricsXmlSerializerTest extends TestCase {
     static class LocalReportLog extends ReportLog {}
     private static final double[] VALUES = new double[] {1, 11, 21, 1211, 111221};
     private static final String HEADER = "<?xml version='1.0' encoding='utf-8' standalone='yes' ?>";
-    private static final String EXPECTED_XML =
-            HEADER
+    private static final String EXPECTED_XML = HEADER
             + "<Summary message=\"Sample\" scoreType=\"higher_better\" unit=\"byte\">1.0</Summary>"
             + "<Details>"
                     + "<ValueArray source=\"com.android.compatibility.common.util."

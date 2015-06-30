@@ -173,8 +173,14 @@ public class ResultReporter implements ITestInvocationListener {
         if (!mIsDeviceInfoRun) {
             // device test can have performance results in test metrics
             String perfResult = metrics.get(RESULT_KEY);
-            ReportLog report = ReportLog.fromEncodedString(perfResult);
-            if (perfResult == null) {
+            ReportLog report = null;
+            if (perfResult != null) {
+                try {
+                    report = ReportLog.parse(perfResult);
+                } catch (XmlPullParserException | IOException e) {
+                    e.printStackTrace();
+                }
+            } else {
                 // host test should be checked into MetricsStore.
                 report = MetricsStore.removeResult(
                         mDeviceSerial, mCurrentModuleResult.getAbi(), name);

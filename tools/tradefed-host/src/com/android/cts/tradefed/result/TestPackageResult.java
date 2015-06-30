@@ -249,7 +249,11 @@ class TestPackageResult extends AbstractXmlPullParser {
             String perfResult = mTestMetrics.get(test).get(RESULT_KEY);
             ReportLog report = null;
             if (perfResult != null) {
-                report = ReportLog.fromEncodedString(perfResult);
+                try {
+                    report = ReportLog.parse(perfResult);
+                } catch (XmlPullParserException | IOException e) {
+                    e.printStackTrace();
+                }
             } else {
                 // host test should be checked into MetricsStore.
                 report = MetricsStore.removeResult(mDeviceSerial, getAbi(), test.toString());
