@@ -69,6 +69,7 @@ vmteststf_dep_jars := $(addprefix $(HOST_OUT_JAVA_LIBRARIES)/, cts-tf-dalvik-bui
 vmteststf_dep_jars += $(addprefix $(HOST_OUT_JAVA_LIBRARIES)/, jack.jar)
 vmteststf_dep_jars += $(private_jill_jarjar_asm)
 
+$(vmteststf_jar): PRIVATE_JACK_VM_ARGS := $(LOCAL_JACK_VM_ARGS)
 $(vmteststf_jar): PRIVATE_JACK_EXTRA_ARGS := $(LOCAL_JACK_EXTRA_ARGS)
 
 ifdef LOCAL_JACK_ENABLED
@@ -112,7 +113,7 @@ $(vmteststf_jar) : $(vmteststf_dep_jars) $(JACK_JAR) $(JILL_JAR) $(call intermed
 		$(addprefix -C $(PRIVATE_INTERMEDIATES_CLASSES) , dot/junit/DxUtil.class dot/junit/DxAbstractMain.class)
 	$(hide) $(JILL) --output $(PRIVATE_INTERMEDIATES_DEXCORE_JAR).jack $(PRIVATE_INTERMEDIATES_DEXCORE_JAR)-class.jar
 	$(hide) mkdir -p $(PRIVATE_INTERMEDIATES_DEXCORE_JAR).tmp
-	$(hide) $(call call-jack,$(PRIVATE_JACK_EXTRA_ARGS)) --output-dex $(PRIVATE_INTERMEDIATES_DEXCORE_JAR).tmp \
+	$(hide) $(call call-jack,$(PRIVATE_JACK_VM_ARGS),$(PRIVATE_JACK_EXTRA_ARGS)) --output-dex $(PRIVATE_INTERMEDIATES_DEXCORE_JAR).tmp \
 		$(if $(NO_OPTIMIZE_DX), -D jack.dex.optimize "false") --import $(PRIVATE_INTERMEDIATES_DEXCORE_JAR).jack && rm -f $(PRIVATE_INTERMEDIATES_DEXCORE_JAR).jack
 	$(hide) cd $(PRIVATE_INTERMEDIATES_DEXCORE_JAR).tmp && zip -q -r $(abspath $(PRIVATE_INTERMEDIATES_DEXCORE_JAR)) .
 	$(hide) cd $(PRIVATE_INTERMEDIATES_HOSTJUNIT_FILES)/classes && zip -q -r ../../android.core.vm-tests-tf.jar .
