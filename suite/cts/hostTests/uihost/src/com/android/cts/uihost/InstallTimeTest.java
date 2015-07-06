@@ -16,15 +16,14 @@
 
 package com.android.cts.uihost;
 
+import com.android.compatibility.common.util.AbiUtils;
+import com.android.compatibility.common.util.MeasureRun;
+import com.android.compatibility.common.util.MeasureTime;
+import com.android.compatibility.common.util.MetricsReportLog;
+import com.android.compatibility.common.util.ResultType;
+import com.android.compatibility.common.util.ResultUnit;
+import com.android.compatibility.common.util.Stat;
 import com.android.cts.tradefed.build.CtsBuildHelper;
-import com.android.cts.tradefed.util.HostReportLog;
-import com.android.cts.util.AbiUtils;
-import com.android.cts.util.MeasureRun;
-import com.android.cts.util.MeasureTime;
-import com.android.cts.util.ResultType;
-import com.android.cts.util.ResultUnit;
-import com.android.cts.util.ReportLog;
-import com.android.cts.util.Stat;
 import com.android.ddmlib.Log;
 import com.android.tradefed.build.IBuildInfo;
 import com.android.tradefed.device.ITestDevice;
@@ -34,7 +33,6 @@ import com.android.tradefed.testtype.IAbiReceiver;
 import com.android.tradefed.testtype.IBuildReceiver;
 
 import java.io.File;
-
 
 /**
  * Test to measure installation time of a APK.
@@ -73,8 +71,8 @@ public class InstallTimeTest extends DeviceTestCase implements IAbiReceiver, IBu
     }
 
     public void testInstallTime() throws Exception {
-        HostReportLog report = new HostReportLog(mDevice.getSerialNumber(), mAbi.getName(),
-                ReportLog.getClassMethodNames());
+        MetricsReportLog report = new MetricsReportLog(mDevice.getSerialNumber(), mAbi.getName(),
+                String.format("%s#%s", getClass().getName(), "testInstallTime"));
         final int NUMBER_REPEAT = 10;
         final CtsBuildHelper build = mBuild;
         final ITestDevice device = mDevice;
@@ -90,15 +88,13 @@ public class InstallTimeTest extends DeviceTestCase implements IAbiReceiver, IBu
                 device.installPackage(app, false, options);
             }
         });
-        report.printArray("install time", result, ResultType.LOWER_BETTER,
-                ResultUnit.MS);
+        report.addValues("install time", result, ResultType.LOWER_BETTER, ResultUnit.MS);
         Stat.StatResult stat = Stat.getStatWithOutlierRejection(result, OUTLIER_THRESHOLD);
         if (stat.mDataCount != result.length) {
             Log.w(TAG, "rejecting " + (result.length - stat.mDataCount) + " outliers");
         }
-        report.printSummary("install time", stat.mAverage, ResultType.LOWER_BETTER,
-                ResultUnit.MS);
-        report.deliverReportToHost();
+        report.setSummary("install time", stat.mAverage, ResultType.LOWER_BETTER, ResultUnit.MS);
+        report.submit();
     }
 
 }

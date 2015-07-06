@@ -40,6 +40,8 @@ JAR_DIR=${ANDROID_HOST_OUT}/framework
 JARS="
     compatibility-common-util-hostsidelib\
     compatibility-common-util-tests\
+    compatibility-host-util\
+    compatibility-host-util-tests\
     compatibility-tradefed-tests\
     compatibility-tradefed\
     cts-tradefed-tests_v2\

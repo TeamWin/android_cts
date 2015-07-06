@@ -13,7 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import com.android.cts.util.AbiUtils;
+
+import com.android.compatibility.common.util.AbiUtils;
 
 import org.junit.runner.RunWith;
 import org.w3c.dom.Document;

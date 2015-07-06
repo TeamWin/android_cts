@@ -16,11 +16,11 @@
 
 package com.android.cts.tradefed.testtype;
 
+import com.android.compatibility.common.util.AbiUtils;
 import com.android.cts.tradefed.build.CtsBuildHelper;
 import com.android.cts.tradefed.device.DeviceInfoCollector;
 import com.android.cts.tradefed.result.CtsTestStatus;
 import com.android.cts.tradefed.result.PlanCreator;
-import com.android.cts.util.AbiUtils;
 import com.android.ddmlib.Log;
 import com.android.ddmlib.Log.LogLevel;
 import com.android.ddmlib.testrunner.TestIdentifier;
@@ -1078,7 +1078,7 @@ public class CtsTest implements IDeviceTest, IResumableTest, IShardableTest, IBu
      * Exposed for unit testing
      */
     ITestPlan createPlan(String planName) {
-        return new TestPlan(planName, AbiUtils.getAbisSupportedByCts());
+        return new TestPlan(planName, AbiUtils.getAbisSupportedByCompatibility());
     }
 
     /**
@@ -1092,7 +1092,7 @@ public class CtsTest implements IDeviceTest, IResumableTest, IShardableTest, IBu
         String bitness = (mForceAbi == null) ? "" : mForceAbi;
         Set<String> abis = new HashSet<>();
         for (String abi : AbiFormatter.getSupportedAbis(mDevice, bitness)) {
-            if (AbiUtils.isAbiSupportedByCts(abi)) {
+            if (AbiUtils.isAbiSupportedByCompatibility(abi)) {
                 abis.add(abi);
             }
         }
@@ -1107,7 +1107,7 @@ public class CtsTest implements IDeviceTest, IResumableTest, IShardableTest, IBu
      */
     ITestPlan createPlan(PlanCreator planCreator)
             throws ConfigurationException {
-        return planCreator.createDerivedPlan(mCtsBuild, AbiUtils.getAbisSupportedByCts());
+        return planCreator.createDerivedPlan(mCtsBuild, AbiUtils.getAbisSupportedByCompatibility());
     }
 
     /**

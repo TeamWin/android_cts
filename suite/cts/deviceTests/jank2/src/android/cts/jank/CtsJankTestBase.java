@@ -16,14 +16,14 @@
 
 package android.cts.jank;
 
-import android.cts.util.DeviceReportLog;
 import android.os.Bundle;
 import android.support.test.jank.JankTestBase;
 import android.support.test.jank.WindowContentFrameStatsMonitor;
 import android.support.test.uiautomator.UiDevice;
 
-import com.android.cts.util.ResultType;
-import com.android.cts.util.ResultUnit;
+import com.android.compatibility.common.util.DeviceReportLog;
+import com.android.compatibility.common.util.ResultType;
+import com.android.compatibility.common.util.ResultUnit;
 
 public abstract class CtsJankTestBase extends JankTestBase {
 
@@ -33,16 +33,16 @@ public abstract class CtsJankTestBase extends JankTestBase {
     @Override
     public void afterTest(Bundle metrics) {
         String source = String.format("%s#%s", getClass().getCanonicalName(), getName());
-        mLog.printValue(source, WindowContentFrameStatsMonitor.KEY_AVG_FPS,
+        mLog.addValue(source, WindowContentFrameStatsMonitor.KEY_AVG_FPS,
                 metrics.getDouble(WindowContentFrameStatsMonitor.KEY_AVG_FPS),
                 ResultType.HIGHER_BETTER, ResultUnit.FPS);
-        mLog.printValue(source, WindowContentFrameStatsMonitor.KEY_AVG_LONGEST_FRAME,
+        mLog.addValue(source, WindowContentFrameStatsMonitor.KEY_AVG_LONGEST_FRAME,
                 metrics.getDouble(WindowContentFrameStatsMonitor.KEY_AVG_LONGEST_FRAME),
                 ResultType.LOWER_BETTER, ResultUnit.MS);
-        mLog.printValue(source, WindowContentFrameStatsMonitor.KEY_MAX_NUM_JANKY,
+        mLog.addValue(source, WindowContentFrameStatsMonitor.KEY_MAX_NUM_JANKY,
                 metrics.getInt(WindowContentFrameStatsMonitor.KEY_MAX_NUM_JANKY),
                 ResultType.LOWER_BETTER, ResultUnit.COUNT);
-        mLog.printSummary(WindowContentFrameStatsMonitor.KEY_AVG_NUM_JANKY,
+        mLog.setSummary(WindowContentFrameStatsMonitor.KEY_AVG_NUM_JANKY,
                 metrics.getDouble(WindowContentFrameStatsMonitor.KEY_AVG_NUM_JANKY),
                 ResultType.LOWER_BETTER, ResultUnit.COUNT);
     }
@@ -58,7 +58,7 @@ public abstract class CtsJankTestBase extends JankTestBase {
 
     @Override
     protected void tearDown() throws Exception {
-        mLog.deliverReportToHost(getInstrumentation());
+        mLog.submit(getInstrumentation());
         // restore device orientation
         mDevice.unfreezeRotation();
         super.tearDown();

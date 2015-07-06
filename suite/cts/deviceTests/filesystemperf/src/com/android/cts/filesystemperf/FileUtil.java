@@ -16,6 +16,17 @@
 
 package com.android.cts.filesystemperf;
 
+import android.content.Context;
+import android.cts.util.SystemUtil;
+import android.util.Log;
+
+import com.android.compatibility.common.util.MeasureRun;
+import com.android.compatibility.common.util.MeasureTime;
+import com.android.compatibility.common.util.ReportLog;
+import com.android.compatibility.common.util.ResultType;
+import com.android.compatibility.common.util.ResultUnit;
+import com.android.compatibility.common.util.Stat;
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
@@ -24,17 +35,6 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.RandomAccessFile;
 import java.util.Random;
-
-import com.android.cts.util.MeasureRun;
-import com.android.cts.util.MeasureTime;
-import com.android.cts.util.ResultType;
-import com.android.cts.util.ResultUnit;
-import com.android.cts.util.ReportLog;
-import com.android.cts.util.Stat;
-import android.cts.util.SystemUtil;
-
-import android.content.Context;
-import android.util.Log;
 
 public class FileUtil {
     private static final String TAG = "FileUtil";
@@ -301,15 +301,15 @@ public class FileUtil {
             }
         });
         randomFile.close();
-        double[] mbps = ReportLog.calcRatePerSecArray((double)fileSize / runsInOneGo / 1024 / 1024,
+        double[] mbps = Stat.calcRatePerSecArray((double)fileSize / runsInOneGo / 1024 / 1024,
                 times);
-        report.printArray("read throughput",
+        report.addValues("read throughput",
                 mbps, ResultType.HIGHER_BETTER, ResultUnit.MBPS);
         // This is just the amount of IO returned from kernel. So this is performance neutral.
-        report.printArray("read amount", rdAmount, ResultType.NEUTRAL, ResultUnit.BYTE);
+        report.addValues("read amount", rdAmount, ResultType.NEUTRAL, ResultUnit.BYTE);
         Stat.StatResult stat = Stat.getStat(mbps);
 
-        report.printSummary("read throughput", stat.mAverage, ResultType.HIGHER_BETTER,
+        report.setSummary("read throughput", stat.mAverage, ResultType.HIGHER_BETTER,
                 ResultUnit.MBPS);
     }
 
@@ -354,15 +354,15 @@ public class FileUtil {
             }
         });
         randomFile.close();
-        double[] mbps = ReportLog.calcRatePerSecArray((double)fileSize / runsInOneGo / 1024 / 1024,
+        double[] mbps = Stat.calcRatePerSecArray((double)fileSize / runsInOneGo / 1024 / 1024,
                 times);
-        report.printArray("write throughput",
+        report.addValues("write throughput",
                 mbps, ResultType.HIGHER_BETTER, ResultUnit.MBPS);
-        report.printArray("write amount", wrAmount, ResultType.NEUTRAL,
+        report.addValues("write amount", wrAmount, ResultType.NEUTRAL,
                 ResultUnit.BYTE);
         Stat.StatResult stat = Stat.getStat(mbps);
 
-        report.printSummary("write throughput", stat.mAverage, ResultType.HIGHER_BETTER,
+        report.setSummary("write throughput", stat.mAverage, ResultType.HIGHER_BETTER,
                 ResultUnit.MBPS);
     }
 
@@ -395,14 +395,17 @@ public class FileUtil {
                 }
             });
             randomFile.close();
-            double[] mbps = ReportLog.calcRatePerSecArray((double)bufferSize / 1024 / 1024,
+            double[] mbps = Stat.calcRatePerSecArray((double)bufferSize / 1024 / 1024,
                     times);
-            report.printArray(i + "-th round throughput",
+            report.addValues(i + "-th round throughput",
                     mbps, ResultType.HIGHER_BETTER, ResultUnit.MBPS);
-            ReportLog.copyArray(mbps, mbpsAll, i * numberRepeatInOneRun);
+            int offset = i * numberRepeatInOneRun;
+            for (int j = 0; j < mbps.length; j++) {
+                mbpsAll[offset + j] = mbps[j];
+            }
         }
         Stat.StatResult stat = Stat.getStat(mbpsAll);
-        report.printSummary("update throughput", stat.mAverage, ResultType.HIGHER_BETTER,
+        report.setSummary("update throughput", stat.mAverage, ResultType.HIGHER_BETTER,
                 ResultUnit.MBPS);
     }
 }
