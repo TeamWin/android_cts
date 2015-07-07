@@ -201,8 +201,8 @@ public class TestApp extends Activity {
     private void pickOptionRequest() {
         Prompt prompt = new Prompt(Utils.TEST_PROMPT);
         PickOptionRequest.Option[] options = new VoiceInteractor.PickOptionRequest.Option[2];
-        options[0] = new Option(Utils.PICKOPTON_1);
-        options[1] = new Option(Utils.PICKOPTON_2);
+        options[0] = new Option(Utils.PICKOPTON_1, -1);
+        options[1] = new Option(Utils.PICKOPTON_2, -1);
         Log.i(TAG, "pickOptionRequest initiated with Bundle = ");
         PickOptionRequest req = new VoiceInteractor.PickOptionRequest(prompt, options, mTestinfo) {
             @Override
