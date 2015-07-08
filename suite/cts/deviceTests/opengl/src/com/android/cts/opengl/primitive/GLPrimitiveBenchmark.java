@@ -13,18 +13,19 @@
  */
 package com.android.cts.opengl.primitive;
 
-import com.android.cts.opengl.GLActivityIntentKeys;
-import android.cts.util.CtsActivityInstrumentationTestCase2;
-import com.android.cts.util.ResultType;
-import com.android.cts.util.ResultUnit;
-
 import android.content.Intent;
+import android.test.ActivityInstrumentationTestCase2;
+
+import com.android.compatibility.common.util.DeviceReportLog;
+import com.android.compatibility.common.util.ResultType;
+import com.android.compatibility.common.util.ResultUnit;
+import com.android.cts.opengl.GLActivityIntentKeys;
 import com.android.cts.util.TimeoutReq;
 
 /**
  * Runs the Primitive OpenGL ES 2.0 Benchmarks.
  */
-public class GLPrimitiveBenchmark extends CtsActivityInstrumentationTestCase2<GLPrimitiveActivity> {
+public class GLPrimitiveBenchmark extends ActivityInstrumentationTestCase2<GLPrimitiveActivity> {
 
     private static final int NUM_FRAMES = 100;
     private static final int NUM_ITERATIONS = 8;
@@ -131,11 +132,10 @@ public class GLPrimitiveBenchmark extends CtsActivityInstrumentationTestCase2<GL
 
             // TODO: maybe standard deviation / RMSE will be useful?
 
-            getReportLog().printArray(
-                    "Fps Values", fpsValues, ResultType.HIGHER_BETTER, ResultUnit.FPS);
-            getReportLog().printSummary(
-                    "Average Frames Per Second", score, ResultType.HIGHER_BETTER,
-                    ResultUnit.SCORE);
+            DeviceReportLog report = new DeviceReportLog();
+            report.addValues("FPS Values", fpsValues, ResultType.HIGHER_BETTER, ResultUnit.FPS);
+            report.setSummary("Average FPS", score, ResultType.HIGHER_BETTER, ResultUnit.SCORE);
+            report.submit(getInstrumentation());
         }
     }
 }

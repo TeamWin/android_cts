@@ -15,18 +15,16 @@
  */
 package com.android.cts.tradefed.testtype;
 
-import com.android.cts.tradefed.build.StubCtsBuildHelper;
+import com.android.compatibility.common.util.AbiUtils;
 import com.android.cts.tradefed.UnitTests;
-import com.android.cts.util.AbiUtils;
+import com.android.cts.tradefed.build.StubCtsBuildHelper;
 import com.android.ddmlib.IDevice;
 import com.android.ddmlib.IShellOutputReceiver;
 import com.android.ddmlib.ShellCommandUnresponsiveException;
-import com.android.ddmlib.testrunner.ITestRunListener;
 import com.android.ddmlib.testrunner.TestIdentifier;
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.result.ITestInvocationListener;
-import com.android.tradefed.testtype.IAbi;
 import com.android.tradefed.util.IRunUtil;
 import com.android.tradefed.util.RunInterruptedException;
 
@@ -38,7 +36,6 @@ import org.easymock.IMocksControl;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;

@@ -13,10 +13,10 @@
  */
 package com.android.cts.jank;
 
+import com.android.compatibility.common.util.MetricsReportLog;
+import com.android.compatibility.common.util.ResultType;
+import com.android.compatibility.common.util.ResultUnit;
 import com.android.cts.tradefed.build.CtsBuildHelper;
-import com.android.cts.tradefed.util.HostReportLog;
-import com.android.cts.util.ResultType;
-import com.android.cts.util.ResultUnit;
 import com.android.ddmlib.IShellOutputReceiver;
 import com.android.ddmlib.Log;
 import com.android.ddmlib.Log.LogLevel;
@@ -131,17 +131,17 @@ public class CtsHostJankTest extends DeviceTestCase implements IAbiReceiver, IBu
         double avgMaxAccFrames = results.get("average of max accumulated frames");
 
         // Create and deliver the report.
-        HostReportLog report = new HostReportLog(mDevice.getSerialNumber(), mAbi.getName(),
+        MetricsReportLog report = new MetricsReportLog(mDevice.getSerialNumber(), mAbi.getName(),
                 mHostTestClass + "#" + testName);
-        report.printValue(
+        report.addValue(
                 "Average Frame Rate", avgFrameRate, ResultType.HIGHER_BETTER, ResultUnit.COUNT);
-        report.printValue("Average of Maximum Accumulated Frames", avgMaxAccFrames,
+        report.addValue("Average of Maximum Accumulated Frames", avgMaxAccFrames,
                 ResultType.LOWER_BETTER, ResultUnit.COUNT);
-        report.printValue(
+        report.addValue(
                 "Maximum Number of Janks", maxNumJanks, ResultType.LOWER_BETTER, ResultUnit.COUNT);
-        report.printSummary(
+        report.setSummary(
                 "Average Number of Janks", avgNumJanks, ResultType.LOWER_BETTER, ResultUnit.SCORE);
-        report.deliverReportToHost();
+        report.submit();
     }
 
 }

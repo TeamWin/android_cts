@@ -17,7 +17,6 @@
 package com.android.cts.devicepolicy;
 
 import com.android.cts.tradefed.build.CtsBuildHelper;
-import com.android.cts.util.AbiUtils;
 import com.android.ddmlib.Log.LogLevel;
 import com.android.ddmlib.testrunner.InstrumentationResultParser;
 import com.android.ddmlib.testrunner.RemoteAndroidTestRunner;
