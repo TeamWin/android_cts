@@ -27,13 +27,10 @@ import java.util.Map.Entry;
  */
 public class ModuleResult implements IModuleResult {
 
-    public static final String RESULT_KEY = "COMPATIBILITY_TEST_RESULT";
-
     private String mDeviceSerial;
     private String mId;
 
     private Map<String, IResult> mResults = new HashMap<>();
-    private Map<IResult, Map<String, String>> mMetrics = new HashMap<>();
 
     /**
      * Creates a {@link ModuleResult} for the given id, created with
@@ -145,30 +142,6 @@ public class ModuleResult implements IModuleResult {
      * {@inheritDoc}
      */
     @Override
-    public void populateMetrics(Map<String, String> metrics) {
-        // Collect performance results
-        for (Entry<IResult, Map<String, String>> entry : mMetrics.entrySet()) {
-            IResult result = entry.getKey();
-            // device test can have performance results in test metrics
-            String perfResult = entry.getValue().get(RESULT_KEY);
-            ReportLog report = null;
-            if (perfResult != null) {
-                report = ReportLog.fromEncodedString(perfResult);
-            } else {
-                // host test should be checked into MetricsStore.
-                report = MetricsStore.removeResult(mDeviceSerial, getAbi(), result.getName());
-            }
-            if (report != null) {
-                result.setResultStatus(TestStatus.PASS);
-                result.setReportLog(report);
-            }
-        }
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
     public void reportTestFailure(String testName, String trace) {
         IResult result = getResult(testName);
         result.setResultStatus(TestStatus.FAIL);
@@ -186,13 +159,13 @@ public class ModuleResult implements IModuleResult {
      * {@inheritDoc}
      */
     @Override
-    public void reportTestEnded(String testName, Map<String, String> testMetrics) {
+    public void reportTestEnded(String testName, ReportLog report) {
         IResult result = getResult(testName);
         if (!result.getResultStatus().equals(TestStatus.FAIL)) {
             result.setResultStatus(TestStatus.PASS);
-        }
-        if (!mMetrics.containsKey(testName)) {
-            mMetrics.put(result, testMetrics);
+            if (report != null) {
+                result.setReportLog(report);
+            }
         }
     }
 

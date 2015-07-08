@@ -17,11 +17,10 @@ package com.android.cts.tradefed.result;
 
 import static com.android.cts.tradefed.result.CtsXmlResultReporter.CTS_RESULT_FILE_VERSION;
 
-import com.android.cts.tradefed.build.ICtsBuildInfo;
+import com.android.compatibility.common.util.AbiUtils;
 import com.android.cts.tradefed.UnitTests;
-import com.android.cts.util.AbiUtils;
+import com.android.cts.tradefed.build.ICtsBuildInfo;
 import com.android.ddmlib.testrunner.TestIdentifier;
-import com.android.tradefed.log.LogUtil.CLog;
 import com.android.tradefed.result.LogDataType;
 import com.android.tradefed.result.LogFile;
 import com.android.tradefed.result.TestSummary;
@@ -36,8 +35,8 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.util.Arrays;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;

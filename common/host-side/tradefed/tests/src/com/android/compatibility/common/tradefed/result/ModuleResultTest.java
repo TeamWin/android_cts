@@ -90,7 +90,7 @@ public class ModuleResultTest extends TestCase {
         mResult.getOrCreateResult(TEST_2);
         mResult.reportTestFailure(TEST_2, STACK_TRACE);
         mResult.getOrCreateResult(TEST_3);
-        mResult.reportTestEnded(TEST_3, new HashMap<String, String>());
+        mResult.reportTestEnded(TEST_3, null);
         assertEquals("Expected two failures", 2, mResult.countResults(TestStatus.FAIL));
         assertEquals("Expected one pass", 1, mResult.countResults(TestStatus.PASS));
     }

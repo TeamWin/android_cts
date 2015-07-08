@@ -19,15 +19,13 @@ package android.hardware.cts.helpers.sensorverification;
 import junit.framework.Assert;
 
 import android.hardware.Sensor;
-import android.hardware.cts.helpers.SensorCtsHelper;
 import android.hardware.cts.helpers.SensorStats;
 import android.hardware.cts.helpers.TestSensorEnvironment;
 import android.hardware.cts.helpers.TestSensorEvent;
 import android.util.SparseIntArray;
 
-import com.android.cts.util.StatisticsUtils;
+import com.android.compatibility.common.util.Stat;
 
-import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -87,8 +85,8 @@ public class JitterVerification extends AbstractSensorVerification {
             return;
         }
 
-        List<Double> jitters = getJitterValues();
-        double jitter95PercentileNs = SensorCtsHelper.get95PercentileValue(jitters);
+        double[] jitters = getJitterValues();
+        double jitter95PercentileNs = Stat.get95PercentileValue(jitters);
         long firstTimestamp = mTimestamps.get(0);
         long lastTimestamp = mTimestamps.get(timestampsCount - 1);
         long measuredPeriodNs = (lastTimestamp - firstTimestamp) / (timestampsCount - 1);
@@ -128,15 +126,16 @@ public class JitterVerification extends AbstractSensorVerification {
     /**
      * Get the list of all jitter values. Exposed for unit testing.
      */
-    List<Double> getJitterValues() {
-        List<Long> deltas = new ArrayList<Long>(mTimestamps.size() - 1);
-        for (int i = 1; i < mTimestamps.size(); i++) {
-            deltas.add(mTimestamps.get(i) - mTimestamps.get(i - 1));
+    double[] getJitterValues() {
+        int length = mTimestamps.size() - 1;
+        double[] deltas = new double[length];
+        for (int i = 0; i < length; i++) {
+            deltas[i] = mTimestamps.get(i + 1) - mTimestamps.get(i);
         }
-        double deltaMean = StatisticsUtils.getMean(deltas);
-        List<Double> jitters = new ArrayList<Double>(deltas.size());
-        for (long delta : deltas) {
-            jitters.add(Math.abs(delta - deltaMean));
+        double deltaMean = Stat.getAverage(deltas);
+        double[] jitters = new double[length];
+        for (int i = 0; i < length; i++) {
+            jitters[i] = Math.abs(deltas[i] - deltaMean);
         }
         return jitters;
     }

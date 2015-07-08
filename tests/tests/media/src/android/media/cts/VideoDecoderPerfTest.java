@@ -16,29 +16,26 @@
 
 package android.media.cts;
 
-import com.android.cts.media.R;
-
-import android.content.Context;
 import android.content.res.AssetFileDescriptor;
 import android.content.res.Resources;
-import android.cts.util.DeviceReportLog;
 import android.cts.util.MediaUtils;
 import android.media.MediaCodec;
-import android.media.MediaCodecList;
 import android.media.MediaCodecInfo;
 import android.media.MediaCodecInfo.CodecCapabilities;
+import android.media.MediaCodecList;
 import android.media.MediaExtractor;
 import android.media.MediaFormat;
 import android.util.Log;
 import android.view.Surface;
 
-import com.android.cts.util.ReportLog;
-import com.android.cts.util.ResultType;
-import com.android.cts.util.ResultUnit;
+import com.android.compatibility.common.util.DeviceReportLog;
+import com.android.compatibility.common.util.ResultType;
+import com.android.compatibility.common.util.ResultUnit;
+import com.android.cts.media.R;
 
 import java.nio.ByteBuffer;
-import java.util.Arrays;
 import java.util.ArrayList;
+import java.util.Arrays;
 
 public class VideoDecoderPerfTest extends MediaPlayerTestBase {
     private static final String TAG = "VideoDecoderPerfTest";
@@ -220,10 +217,10 @@ public class VideoDecoderPerfTest extends MediaPlayerTestBase {
 
         String message = "average fps for " + testConfig;
         double fps = (double)outputNum / ((finish - start) / 1000.0);
-        mReportLog.printValue(message, fps, ResultType.HIGHER_BETTER, ResultUnit.FPS);
+        mReportLog.addValue(message, fps, ResultType.HIGHER_BETTER, ResultUnit.FPS);
 
         message = "frame time diff for " + testConfig + ": " + Arrays.toString(frameTimeDiff);
-        mReportLog.printValue(message, 0, ResultType.NEUTRAL, ResultUnit.NONE);
+        mReportLog.addValue(message, 0, ResultType.NEUTRAL, ResultUnit.NONE);
     }
 
     public void testH264320x240() throws Exception {

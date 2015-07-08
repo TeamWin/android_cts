@@ -16,9 +16,6 @@
 
 package android.media.cts;
 
-import java.nio.ByteBuffer;
-import java.util.ArrayList;
-
 import android.content.pm.PackageManager;
 import android.cts.util.CtsAndroidTestCase;
 import android.media.AudioFormat;
@@ -31,11 +28,13 @@ import android.media.MediaSyncEvent;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
-import android.util.Log;
 
-import com.android.cts.util.ReportLog;
-import com.android.cts.util.ResultType;
-import com.android.cts.util.ResultUnit;
+import com.android.compatibility.common.util.DeviceReportLog;
+import com.android.compatibility.common.util.ResultType;
+import com.android.compatibility.common.util.ResultUnit;
+
+import java.nio.ByteBuffer;
+import java.util.ArrayList;
 
 public class AudioRecordTest extends CtsAndroidTestCase {
     private final static String TAG = "AudioRecordTest";
@@ -905,36 +904,37 @@ public class AudioRecordTest extends CtsAndroidTestCase {
         }
 
         // report this
-        ReportLog log = getReportLog();
-        log.printValue(reportName + ": startRecording lag", firstSampleTime - startTime,
+        DeviceReportLog log = new DeviceReportLog();
+        log.addValue(reportName + ": startRecording lag", firstSampleTime - startTime,
                 ResultType.LOWER_BETTER, ResultUnit.MS);
-        log.printValue(reportName + ": Total record time expected", TEST_TIME_MS,
+        log.addValue(reportName + ": Total record time expected", TEST_TIME_MS,
                 ResultType.NEUTRAL, ResultUnit.MS);
-        log.printValue(reportName + ": Total record time actual", (endTime - firstSampleTime),
+        log.addValue(reportName + ": Total record time actual", (endTime - firstSampleTime),
                 ResultType.NEUTRAL, ResultUnit.MS);
-        log.printValue(reportName + ": Total markers expected", markerPeriods,
+        log.addValue(reportName + ": Total markers expected", markerPeriods,
                 ResultType.NEUTRAL, ResultUnit.COUNT);
-        log.printValue(reportName + ": Total markers actual", markerList.size(),
+        log.addValue(reportName + ": Total markers actual", markerList.size(),
                 ResultType.NEUTRAL, ResultUnit.COUNT);
-        log.printValue(reportName + ": Total periods expected", updatePeriods,
+        log.addValue(reportName + ": Total periods expected", updatePeriods,
                 ResultType.NEUTRAL, ResultUnit.COUNT);
-        log.printValue(reportName + ": Total periods actual", periodicList.size(),
+        log.addValue(reportName + ": Total periods actual", periodicList.size(),
                 ResultType.NEUTRAL, ResultUnit.COUNT);
-        log.printValue(reportName + ": Average Marker diff", markerStat.getAvg(),
+        log.addValue(reportName + ": Average Marker diff", markerStat.getAvg(),
                 ResultType.LOWER_BETTER, ResultUnit.MS);
-        log.printValue(reportName + ": Maximum Marker abs diff", markerStat.getMaxAbs(),
+        log.addValue(reportName + ": Maximum Marker abs diff", markerStat.getMaxAbs(),
                 ResultType.LOWER_BETTER, ResultUnit.MS);
-        log.printValue(reportName + ": Average Marker abs diff", markerStat.getAvgAbs(),
+        log.addValue(reportName + ": Average Marker abs diff", markerStat.getAvgAbs(),
                 ResultType.LOWER_BETTER, ResultUnit.MS);
-        log.printValue(reportName + ": Average Periodic diff", periodicStat.getAvg(),
+        log.addValue(reportName + ": Average Periodic diff", periodicStat.getAvg(),
                 ResultType.LOWER_BETTER, ResultUnit.MS);
-        log.printValue(reportName + ": Maximum Periodic abs diff", periodicStat.getMaxAbs(),
+        log.addValue(reportName + ": Maximum Periodic abs diff", periodicStat.getMaxAbs(),
                 ResultType.LOWER_BETTER, ResultUnit.MS);
-        log.printValue(reportName + ": Average Periodic abs diff", periodicStat.getAvgAbs(),
+        log.addValue(reportName + ": Average Periodic abs diff", periodicStat.getAvgAbs(),
                 ResultType.LOWER_BETTER, ResultUnit.MS);
-        log.printSummary(reportName + ": Unified abs diff",
+        log.setSummary(reportName + ": Unified abs diff",
                 (periodicStat.getAvgAbs() + markerStat.getAvgAbs()) / 2,
                 ResultType.LOWER_BETTER, ResultUnit.MS);
+        log.submit(getInstrumentation());
     }
 
     private class MockOnRecordPositionUpdateListener

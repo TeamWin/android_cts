@@ -17,13 +17,13 @@
 package android.hardware.camera2.cts;
 
 import android.content.pm.PackageManager;
-import android.cts.util.DeviceReportLog;
-import android.hardware.camera2.cts.testcases.Camera2SurfaceViewTestCase;
 import android.hardware.camera2.cts.helpers.CameraMetadataGetter;
+import android.hardware.camera2.cts.testcases.Camera2SurfaceViewTestCase;
 import android.util.Log;
 
-import com.android.cts.util.ResultType;
-import com.android.cts.util.ResultUnit;
+import com.android.compatibility.common.util.DeviceReportLog;
+import com.android.compatibility.common.util.ResultType;
+import com.android.compatibility.common.util.ResultUnit;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -48,7 +48,7 @@ public class StaticMetadataCollectionTest extends Camera2SurfaceViewTestCase {
     @Override
     protected void tearDown() throws Exception {
         // Deliver the report to host will automatically clear the report log.
-        mReportLog.deliverReportToHost(getInstrumentation());
+        mReportLog.submit(getInstrumentation());
         super.tearDown();
     }
 
@@ -80,7 +80,7 @@ public class StaticMetadataCollectionTest extends Camera2SurfaceViewTestCase {
                 Log.e(TAG, "Unable to close camera info getter " + e.getMessage());
             }
 
-            mReportLog.printSummary("Camera data collection for static info and capture request"
+            mReportLog.setSummary("Camera data collection for static info and capture request"
                     + " templates",
                     0.0, ResultType.NEUTRAL, ResultUnit.NONE);
         }
@@ -88,11 +88,11 @@ public class StaticMetadataCollectionTest extends Camera2SurfaceViewTestCase {
     }
 
     private void dumpDoubleAsCtsResult(String name, double value) {
-        mReportLog.printValue(name, value, ResultType.NEUTRAL, ResultUnit.NONE);
+        mReportLog.addValue(name, value, ResultType.NEUTRAL, ResultUnit.NONE);
     }
 
     public void dumpDoubleArrayAsCtsResult(String name, double[] values) {
-        mReportLog.printArray(name, values, ResultType.NEUTRAL, ResultUnit.NONE);
+        mReportLog.addValues(name, values, ResultType.NEUTRAL, ResultUnit.NONE);
     }
 
     private double getJsonValueAsDouble(String name, Object obj) throws Exception {

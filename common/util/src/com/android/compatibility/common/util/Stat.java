@@ -22,6 +22,10 @@ import java.util.Arrays;
  * Utilities for doing statistics
  */
 public class Stat {
+    /**
+     * Private constructor for static class.
+     */
+    private Stat() {}
 
     /**
      * Collection of statistical propertirs like average, max, min, and stddev
@@ -159,7 +163,6 @@ public class Stat {
      * timeInSec with 0 value will be changed to small value to prevent divide by zero.
      * @param change total change of quality for the given duration timeInMSec.
      * @param timeInMSec
-     * @return
      */
     public static double calcRatePerSec(double change, double timeInMSec) {
         if (timeInMSec == 0) {
@@ -183,6 +186,16 @@ public class Stat {
             }
         }
         return result;
+    }
+
+    /**
+     * Get the value of the 95th percentile using nearest rank algorithm.
+     */
+    public static double get95PercentileValue(double[] values) {
+        Arrays.sort(values);
+        // zero-based array index
+        int index = (int) Math.round(values.length * 0.95 + .5) - 1;
+        return values[index];
     }
 
 }

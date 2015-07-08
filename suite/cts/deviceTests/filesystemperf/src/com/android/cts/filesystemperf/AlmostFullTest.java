@@ -21,6 +21,7 @@ import android.util.Log;
 import android.cts.util.CtsAndroidTestCase;
 import android.cts.util.SystemUtil;
 
+import com.android.compatibility.common.util.DeviceReportLog;
 import com.android.cts.util.TimeoutReq;
 
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -106,8 +107,10 @@ public class AlmostFullTest extends CtsAndroidTestCase {
         }
         final int BUFFER_SIZE = 10 * 1024 * 1024;
         final int NUMBER_REPETITION = 10;
-        FileUtil.doSequentialUpdateTest(getContext(), DIR_SEQ_UPDATE, getReportLog(), FILE_SIZE,
+        DeviceReportLog report = new DeviceReportLog();
+        FileUtil.doSequentialUpdateTest(getContext(), DIR_SEQ_UPDATE, report, FILE_SIZE,
                 BUFFER_SIZE, NUMBER_REPETITION);
+        report.submit(getInstrumentation());
     }
 
     // TODO: file size too small and caching will give wrong better result.
@@ -121,8 +124,9 @@ public class AlmostFullTest extends CtsAndroidTestCase {
             Log.w(TAG, "too little space: " + freeDisk);
             return;
         }
-        FileUtil.doRandomReadTest(getContext(), DIR_RANDOM_RD, getReportLog(), fileSize,
-                BUFFER_SIZE);
+        DeviceReportLog report = new DeviceReportLog();
+        FileUtil.doRandomReadTest(getContext(), DIR_RANDOM_RD, report, fileSize, BUFFER_SIZE);
+        report.submit(getInstrumentation());
     }
 
     @TimeoutReq(minutes = 60)
@@ -134,7 +138,8 @@ public class AlmostFullTest extends CtsAndroidTestCase {
             Log.w(TAG, "too little space: " + freeDisk);
             return;
         }
-        FileUtil.doRandomWriteTest(getContext(), DIR_RANDOM_WR, getReportLog(), fileSize,
-                BUFFER_SIZE);
+        DeviceReportLog report = new DeviceReportLog();
+        FileUtil.doRandomWriteTest(getContext(), DIR_RANDOM_WR, report, fileSize, BUFFER_SIZE);
+        report.submit(getInstrumentation());
     }
 }
