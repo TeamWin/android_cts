@@ -17,8 +17,6 @@
 package com.android.cts.filesystemperf;
 
 import android.cts.util.CtsAndroidTestCase;
-
-import com.android.compatibility.common.util.DeviceReportLog;
 import com.android.cts.util.TimeoutReq;
 
 public class RandomRWTest extends CtsAndroidTestCase {
@@ -39,10 +37,8 @@ public class RandomRWTest extends CtsAndroidTestCase {
         if (fileSize == 0) { // not enough space, give up
             return;
         }
-        DeviceReportLog report = new DeviceReportLog();
-        FileUtil.doRandomReadTest(getContext(), DIR_RANDOM_RD, report, fileSize,
+        FileUtil.doRandomReadTest(getContext(), DIR_RANDOM_RD, getReportLog(), fileSize,
                 READ_BUFFER_SIZE);
-        report.submit(getInstrumentation());
     }
 
     // It is taking too long in some device, and thus cannot run multiple times
@@ -50,9 +46,7 @@ public class RandomRWTest extends CtsAndroidTestCase {
     public void testRandomUpdate() throws Exception {
         final int WRITE_BUFFER_SIZE = 4 * 1024;
         final long fileSize = 256 * 1024 * 1024;
-        DeviceReportLog report = new DeviceReportLog();
-        FileUtil.doRandomWriteTest(getContext(), DIR_RANDOM_WR, report, fileSize,
+        FileUtil.doRandomWriteTest(getContext(), DIR_RANDOM_WR, getReportLog(), fileSize,
                 WRITE_BUFFER_SIZE);
-        report.submit(getInstrumentation());
     }
 }

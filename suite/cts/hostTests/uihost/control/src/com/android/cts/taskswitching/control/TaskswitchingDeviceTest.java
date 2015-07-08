@@ -25,14 +25,13 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 
+import com.android.cts.util.MeasureRun;
+import com.android.cts.util.MeasureTime;
+import com.android.cts.util.ResultType;
+import com.android.cts.util.ResultUnit;
 import android.cts.util.CtsAndroidTestCase;
+import com.android.cts.util.Stat;
 
-import com.android.compatibility.common.util.DeviceReportLog;
-import com.android.compatibility.common.util.MeasureRun;
-import com.android.compatibility.common.util.MeasureTime;
-import com.android.compatibility.common.util.ResultType;
-import com.android.compatibility.common.util.ResultUnit;
-import com.android.compatibility.common.util.Stat;
 
 /**
  * Device test which actually launches two apps sequentially and
@@ -84,12 +83,11 @@ public class TaskswitchingDeviceTest extends CtsAndroidTestCase {
                 }
             }
         });
-        DeviceReportLog report = new DeviceReportLog();
-        report.addValues("taskswitching time", results, ResultType.LOWER_BETTER, ResultUnit.MS);
+        getReportLog().printArray("taskswitching time", results, ResultType.LOWER_BETTER,
+                ResultUnit.MS);
         Stat.StatResult stat = Stat.getStat(results);
-        report.setSummary("taskswitching time", stat.mAverage,
+        getReportLog().printSummary("taskswitching time", stat.mAverage,
                 ResultType.LOWER_BETTER, ResultUnit.MS);
-        report.submit(getInstrumentation());
     }
 
     private void startActivity(String packageName, String activityName) {

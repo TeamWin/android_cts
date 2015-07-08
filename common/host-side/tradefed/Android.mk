@@ -24,7 +24,7 @@ LOCAL_MODULE := compatibility-tradefed
 
 LOCAL_MODULE_TAGS := optional
 
-LOCAL_JAVA_LIBRARIES := tradefed-prebuilt hosttestlib compatibility-host-util
+LOCAL_JAVA_LIBRARIES := tradefed-prebuilt hosttestlib compatibility-common-util-hostsidelib
 
 include $(BUILD_HOST_JAVA_LIBRARY)
 

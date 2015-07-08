@@ -16,13 +16,12 @@
 
 package com.android.cts.simplecpu;
 
-import android.cts.util.CtsAndroidTestCase;
 import android.util.Log;
 
-import com.android.compatibility.common.util.DeviceReportLog;
-import com.android.compatibility.common.util.ResultType;
-import com.android.compatibility.common.util.ResultUnit;
-import com.android.compatibility.common.util.Stat;
+import com.android.cts.util.ResultType;
+import com.android.cts.util.ResultUnit;
+import android.cts.util.CtsAndroidTestCase;
+import com.android.cts.util.Stat;
 import com.android.cts.util.TimeoutReq;
 
 /**
@@ -100,14 +99,14 @@ public class SimpleCpuTest extends CtsAndroidTestCase {
         for (int i = 0; i < numberRepeat; i++) {
             result[i] = CpuNative.runSort(arrayLength, numberRepeatInEachCall);
         }
-        DeviceReportLog report = new DeviceReportLog();
-        report.addValues("sorting time", result, ResultType.LOWER_BETTER, ResultUnit.MS);
+        getReportLog().printArray("sorting time", result, ResultType.LOWER_BETTER,
+                ResultUnit.MS);
         Stat.StatResult stat = Stat.getStatWithOutlierRejection(result, OUTLIER_THRESHOLD);
         if (stat.mDataCount != result.length) {
             Log.w(TAG, "rejecting " + (result.length - stat.mDataCount) + " outliers");
         }
-        report.setSummary("sorting time", stat.mAverage, ResultType.LOWER_BETTER, ResultUnit.MS);
-        report.submit(getInstrumentation());
+        getReportLog().printSummary("sorting time", stat.mAverage, ResultType.LOWER_BETTER,
+                ResultUnit.MS);
     }
 
     /**
@@ -122,16 +121,14 @@ public class SimpleCpuTest extends CtsAndroidTestCase {
         for (int i = 0; i < numberRepeat; i++) {
             result[i] = CpuNative.runMatrixMultiplication(n, numberRepeatInEachCall);
         }
-        DeviceReportLog report = new DeviceReportLog();
-        report.addValues("matrix mutiplication time", result, ResultType.LOWER_BETTER,
+        getReportLog().printArray("matrix mutiplication time", result, ResultType.LOWER_BETTER,
                 ResultUnit.MS);
         Stat.StatResult stat = Stat.getStatWithOutlierRejection(result, OUTLIER_THRESHOLD);
         if (stat.mDataCount != result.length) {
             Log.w(TAG, "rejecting " + (result.length - stat.mDataCount) + " outliers");
         }
-        report.setSummary("matrix mutiplication time", stat.mAverage,
+        getReportLog().printSummary("matrix mutiplication time", stat.mAverage,
                 ResultType.LOWER_BETTER, ResultUnit.MS);
-        report.submit(getInstrumentation());
     }
 
 }

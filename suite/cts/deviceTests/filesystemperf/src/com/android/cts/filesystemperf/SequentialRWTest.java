@@ -17,13 +17,12 @@
 package com.android.cts.filesystemperf;
 
 import android.cts.util.CtsAndroidTestCase;
-
-import com.android.compatibility.common.util.DeviceReportLog;
-import com.android.compatibility.common.util.MeasureRun;
-import com.android.compatibility.common.util.MeasureTime;
-import com.android.compatibility.common.util.ResultType;
-import com.android.compatibility.common.util.ResultUnit;
-import com.android.compatibility.common.util.Stat;
+import com.android.cts.util.MeasureRun;
+import com.android.cts.util.MeasureTime;
+import com.android.cts.util.ResultType;
+import com.android.cts.util.ResultUnit;
+import com.android.cts.util.ReportLog;
+import com.android.cts.util.Stat;
 import com.android.cts.util.TimeoutReq;
 
 import java.io.File;
@@ -51,8 +50,8 @@ public class SequentialRWTest extends CtsAndroidTestCase {
             return;
         }
         final int numberOfFiles =(int)(fileSize / BUFFER_SIZE);
-        DeviceReportLog report = new DeviceReportLog();
-        report.addValue("files", numberOfFiles, ResultType.NEUTRAL, ResultUnit.COUNT);
+        getReportLog().printValue("files", numberOfFiles, ResultType.NEUTRAL,
+                ResultUnit.COUNT);
         final byte[] data = FileUtil.generateRandomData(BUFFER_SIZE);
         final File[] files = FileUtil.createNewFiles(getContext(), DIR_SEQ_WR,
                 numberOfFiles);
@@ -65,15 +64,14 @@ public class SequentialRWTest extends CtsAndroidTestCase {
                 FileUtil.writeFile(files[i], data, false);
             }
         });
-        double[] mbps = Stat.calcRatePerSecArray((double)BUFFER_SIZE / 1024 / 1024, times);
-        report.addValues("write throughput",
+        double[] mbps = ReportLog.calcRatePerSecArray((double)BUFFER_SIZE / 1024 / 1024, times);
+        getReportLog().printArray("write throughput",
                 mbps, ResultType.HIGHER_BETTER, ResultUnit.MBPS);
-        report.addValues("write amount", wrAmount, ResultType.NEUTRAL,
+        getReportLog().printArray("write amount", wrAmount, ResultType.NEUTRAL,
                 ResultUnit.BYTE);
         Stat.StatResult stat = Stat.getStat(mbps);
-        report.setSummary("write throughput", stat.mAverage, ResultType.HIGHER_BETTER,
+        getReportLog().printSummary("write throughput", stat.mAverage, ResultType.HIGHER_BETTER,
                 ResultUnit.MBPS);
-        report.submit(getInstrumentation());
     }
 
     @TimeoutReq(minutes = 60)
@@ -83,10 +81,8 @@ public class SequentialRWTest extends CtsAndroidTestCase {
             return;
         }
         final int NUMBER_REPETITION = 6;
-        DeviceReportLog report = new DeviceReportLog();
-        FileUtil.doSequentialUpdateTest(getContext(), DIR_SEQ_UPDATE, report, fileSize,
+        FileUtil.doSequentialUpdateTest(getContext(), DIR_SEQ_UPDATE, getReportLog(), fileSize,
                 BUFFER_SIZE, NUMBER_REPETITION);
-        report.submit(getInstrumentation());
     }
 
     @TimeoutReq(minutes = 30)
@@ -99,9 +95,8 @@ public class SequentialRWTest extends CtsAndroidTestCase {
         final File file = FileUtil.createNewFilledFile(getContext(),
                 DIR_SEQ_RD, fileSize);
         long finish = System.currentTimeMillis();
-        DeviceReportLog report = new DeviceReportLog();
-        report.addValue("write throughput for test file of length " + fileSize,
-                Stat.calcRatePerSec((double)fileSize / 1024 / 1024, finish - start),
+        getReportLog().printValue("write throughput for test file of length " + fileSize,
+                ReportLog.calcRatePerSec((double)fileSize / 1024 / 1024, finish - start),
                 ResultType.HIGHER_BETTER, ResultUnit.MBPS);
 
         final int NUMBER_READ = 10;
@@ -120,12 +115,11 @@ public class SequentialRWTest extends CtsAndroidTestCase {
                 in.close();
             }
         });
-        double[] mbps = Stat.calcRatePerSecArray((double)fileSize / 1024 / 1024, times);
-        report.addValues("read throughput",
+        double[] mbps = ReportLog.calcRatePerSecArray((double)fileSize / 1024 / 1024, times);
+        getReportLog().printArray("read throughput",
                 mbps, ResultType.HIGHER_BETTER, ResultUnit.MBPS);
         Stat.StatResult stat = Stat.getStat(mbps);
-        report.setSummary("read throughput", stat.mAverage, ResultType.HIGHER_BETTER,
+        getReportLog().printSummary("read throughput", stat.mAverage, ResultType.HIGHER_BETTER,
                 ResultUnit.MBPS);
-        report.submit(getInstrumentation());
     }
 }

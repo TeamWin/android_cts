@@ -38,7 +38,8 @@ LOCAL_MODULE_PATH := $(TARGET_OUT_DATA_APPS)
 # include both the 32 and 64 bit versions
 LOCAL_MULTILIB := both
 
-LOCAL_STATIC_JAVA_LIBRARIES := ctsmediautil ctsdeviceutil compatibility-device-util ctstestserver ctstestrunner
+LOCAL_STATIC_JAVA_LIBRARIES := \
+    ctsmediautil ctsdeviceutil ctstestserver ctstestrunner
 
 LOCAL_JNI_SHARED_LIBRARIES := libctsmediacodec_jni
 

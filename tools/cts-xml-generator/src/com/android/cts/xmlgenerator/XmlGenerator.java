@@ -16,11 +16,11 @@
 
 package com.android.cts.xmlgenerator;
 
+import com.android.cts.util.AbiUtils;
+
 import vogar.Expectation;
 import vogar.ExpectationStore;
 import vogar.Result;
-
-import com.android.compatibility.common.util.AbiUtils;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -259,7 +259,7 @@ class XmlGenerator {
         String[] unsupportedAbis = description.split(":")[1].split(",");
         for (String a : unsupportedAbis) {
             String abi = a.trim();
-            if (!AbiUtils.isAbiSupportedByCompatibility(abi)) {
+            if (!AbiUtils.isAbiSupportedByCts(abi)) {
                 throw new RuntimeException(
                         String.format("Unrecognised ABI %s in %s", abi, description));
             }

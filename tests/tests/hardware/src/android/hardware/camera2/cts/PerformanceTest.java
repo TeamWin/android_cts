@@ -16,7 +16,7 @@
 
 package android.hardware.camera2.cts;
 
-import static com.android.ex.camera2.blocking.BlockingSessionCallback.SESSION_CLOSED;
+import static com.android.ex.camera2.blocking.BlockingSessionCallback.*;
 
 import android.graphics.ImageFormat;
 import android.hardware.camera2.CameraAccessException;
@@ -32,20 +32,20 @@ import android.hardware.camera2.cts.helpers.StaticMetadata;
 import android.hardware.camera2.cts.helpers.StaticMetadata.CheckLevel;
 import android.hardware.camera2.cts.testcases.Camera2SurfaceViewTestCase;
 import android.hardware.camera2.params.InputConfiguration;
+import android.util.Log;
+import android.util.Pair;
+import android.util.Size;
+import android.view.Surface;
+import android.cts.util.DeviceReportLog;
 import android.media.Image;
 import android.media.ImageReader;
 import android.media.ImageWriter;
 import android.os.ConditionVariable;
 import android.os.SystemClock;
-import android.util.Log;
-import android.util.Pair;
-import android.util.Size;
-import android.view.Surface;
 
-import com.android.compatibility.common.util.DeviceReportLog;
-import com.android.compatibility.common.util.ResultType;
-import com.android.compatibility.common.util.ResultUnit;
-import com.android.compatibility.common.util.Stat;
+import com.android.cts.util.ResultType;
+import com.android.cts.util.ResultUnit;
+import com.android.cts.util.Stat;
 import com.android.ex.camera2.blocking.BlockingSessionCallback;
 import com.android.ex.camera2.exceptions.TimeoutRuntimeException;
 
@@ -96,7 +96,7 @@ public class PerformanceTest extends Camera2SurfaceViewTestCase {
     @Override
     protected void tearDown() throws Exception {
         // Deliver the report to host will automatically clear the report log.
-        mReportLog.submit(getInstrumentation());
+        mReportLog.deliverReportToHost(getInstrumentation());
         super.tearDown();
     }
 
@@ -171,22 +171,22 @@ public class PerformanceTest extends Camera2SurfaceViewTestCase {
 
                 avgCameraLaunchTimes[counter] = Stat.getAverage(cameraLaunchTimes);
                 // Finish the data collection, report the KPIs.
-                mReportLog.addValues("Camera " + id
+                mReportLog.printArray("Camera " + id
                         + ": Camera open time", cameraOpenTimes,
                         ResultType.LOWER_BETTER, ResultUnit.MS);
-                mReportLog.addValues("Camera " + id
+                mReportLog.printArray("Camera " + id
                         + ": Camera configure stream time", configureStreamTimes,
                         ResultType.LOWER_BETTER, ResultUnit.MS);
-                mReportLog.addValues("Camera " + id
+                mReportLog.printArray("Camera " + id
                         + ": Camera start preview time", startPreviewTimes,
                         ResultType.LOWER_BETTER, ResultUnit.MS);
-                mReportLog.addValues("Camera " + id
+                mReportLog.printArray("Camera " + id
                         + ": Camera stop preview", stopPreviewTimes,
                         ResultType.LOWER_BETTER, ResultUnit.MS);
-                mReportLog.addValues("Camera " + id
+                mReportLog.printArray("Camera " + id
                         + ": Camera close time", cameraCloseTimes,
                         ResultType.LOWER_BETTER, ResultUnit.MS);
-                mReportLog.addValues("Camera " + id
+                mReportLog.printArray("Camera " + id
                         + ": Camera launch time", cameraLaunchTimes,
                         ResultType.LOWER_BETTER, ResultUnit.MS);
             }
@@ -195,7 +195,7 @@ public class PerformanceTest extends Camera2SurfaceViewTestCase {
             }
             counter++;
         }
-        mReportLog.setSummary("Camera launch average time for all cameras ",
+        mReportLog.printSummary("Camera launch average time for all cameras ",
                 Stat.getAverage(avgCameraLaunchTimes), ResultType.LOWER_BETTER, ResultUnit.MS);
     }
 
@@ -283,16 +283,16 @@ public class PerformanceTest extends Camera2SurfaceViewTestCase {
                     stopPreview();
 
                 }
-                mReportLog.addValues("Camera " + id
+                mReportLog.printArray("Camera " + id
                         + ": Camera capture latency", captureTimes,
                         ResultType.LOWER_BETTER, ResultUnit.MS);
                 // If any of the partial results do not contain AE and AF state, then no report
                 if (isPartialTimingValid) {
-                    mReportLog.addValues("Camera " + id
+                    mReportLog.printArray("Camera " + id
                             + ": Camera partial result latency", getPartialTimes,
                             ResultType.LOWER_BETTER, ResultUnit.MS);
                 }
-                mReportLog.addValues("Camera " + id
+                mReportLog.printArray("Camera " + id
                         + ": Camera capture result latency", getResultTimes,
                         ResultType.LOWER_BETTER, ResultUnit.MS);
 
@@ -306,7 +306,7 @@ public class PerformanceTest extends Camera2SurfaceViewTestCase {
         }
 
         // Result will not be reported in CTS report if no summary is printed.
-        mReportLog.setSummary("Camera capture result average latency for all cameras ",
+        mReportLog.printSummary("Camera capture result average latency for all cameras ",
                 Stat.getAverage(avgResultTimes), ResultType.LOWER_BETTER, ResultUnit.MS);
     }
 
@@ -460,13 +460,13 @@ public class PerformanceTest extends Camera2SurfaceViewTestCase {
             reprocessType = " opaque reprocessing ";
         }
 
-        mReportLog.addValues("Camera " + mCamera.getId()
+        mReportLog.printArray("Camera " + mCamera.getId()
                 + ":" + reprocessType + " max capture timestamp gaps", maxCaptureGapsMs,
                 ResultType.LOWER_BETTER, ResultUnit.MS);
-        mReportLog.addValues("Camera " + mCamera.getId()
+        mReportLog.printArray("Camera " + mCamera.getId()
                 + ":" + reprocessType + "capture average frame duration", averageFrameDurationMs,
                 ResultType.LOWER_BETTER, ResultUnit.MS);
-        mReportLog.setSummary("Camera reprocessing average max capture timestamp gaps for Camera "
+        mReportLog.printSummary("Camera reprocessing average max capture timestamp gaps for Camera "
                 + mCamera.getId(), Stat.getAverage(maxCaptureGapsMs), ResultType.LOWER_BETTER,
                 ResultUnit.MS);
 
@@ -544,17 +544,17 @@ public class PerformanceTest extends Camera2SurfaceViewTestCase {
 
         // Report the performance data
         if (asyncMode) {
-            mReportLog.addValues("Camera " + mCamera.getId()
+            mReportLog.printArray("Camera " + mCamera.getId()
                     + ":" + reprocessType + "capture latency", getImageLatenciesMs,
                     ResultType.LOWER_BETTER, ResultUnit.MS);
-            mReportLog.setSummary("Camera reprocessing average latency for Camera " +
+            mReportLog.printSummary("Camera reprocessing average latency for Camera " +
                     mCamera.getId(), Stat.getAverage(getImageLatenciesMs), ResultType.LOWER_BETTER,
                     ResultUnit.MS);
         } else {
-            mReportLog.addValues("Camera " + mCamera.getId()
+            mReportLog.printArray("Camera " + mCamera.getId()
                     + ":" + reprocessType + "shot to shot latency", getImageLatenciesMs,
                     ResultType.LOWER_BETTER, ResultUnit.MS);
-            mReportLog.setSummary("Camera reprocessing shot to shot average latency for Camera " +
+            mReportLog.printSummary("Camera reprocessing shot to shot average latency for Camera " +
                     mCamera.getId(), Stat.getAverage(getImageLatenciesMs), ResultType.LOWER_BETTER,
                     ResultUnit.MS);
         }

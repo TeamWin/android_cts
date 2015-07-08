@@ -26,13 +26,14 @@ import android.media.AudioTrack;
 import android.media.PlaybackParams;
 import android.util.Log;
 
-import com.android.compatibility.common.util.DeviceReportLog;
-import com.android.compatibility.common.util.ResultType;
-import com.android.compatibility.common.util.ResultUnit;
+import com.android.cts.util.ReportLog;
+import com.android.cts.util.ResultType;
+import com.android.cts.util.ResultUnit;
 
+import java.nio.ByteOrder;
 import java.nio.ByteBuffer;
-import java.nio.FloatBuffer;
 import java.nio.ShortBuffer;
+import java.nio.FloatBuffer;
 
 public class AudioTrackTest extends CtsAndroidTestCase {
     private String TAG = "AudioTrackTest";
@@ -2012,16 +2013,15 @@ public class AudioTrackTest extends CtsAndroidTestCase {
         track.release();
         // Log the average jitter
         if (cumulativeJitterCount > 0) {
-            DeviceReportLog log = new DeviceReportLog();
+            ReportLog log = getReportLog();
             final float averageJitterInFrames = cumulativeJitter / cumulativeJitterCount;
             final float averageJitterInMs = averageJitterInFrames * 1000 / TEST_SR;
             final float maxJitterInMs = maxJitter * 1000 / TEST_SR;
             // ReportLog needs at least one Value and Summary.
-            log.addValue("Maximum Jitter", maxJitterInMs,
+            log.printValue("Maximum Jitter", maxJitterInMs,
                     ResultType.LOWER_BETTER, ResultUnit.MS);
-            log.setSummary("Average Jitter", averageJitterInMs,
+            log.printSummary("Average Jitter", averageJitterInMs,
                     ResultType.LOWER_BETTER, ResultUnit.MS);
-            log.submit(getInstrumentation());
         }
     }
 

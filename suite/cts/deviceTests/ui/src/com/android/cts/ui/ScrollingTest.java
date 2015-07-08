@@ -15,19 +15,17 @@
  */
 package com.android.cts.ui;
 
-import android.test.ActivityInstrumentationTestCase2;
-
-import com.android.compatibility.common.util.DeviceReportLog;
-import com.android.compatibility.common.util.MeasureRun;
-import com.android.compatibility.common.util.MeasureTime;
-import com.android.compatibility.common.util.ResultType;
-import com.android.compatibility.common.util.ResultUnit;
-import com.android.compatibility.common.util.Stat;
+import com.android.cts.util.MeasureRun;
+import com.android.cts.util.MeasureTime;
+import com.android.cts.util.ResultType;
+import com.android.cts.util.ResultUnit;
+import android.cts.util.CtsActivityInstrumentationTestCase2;
+import com.android.cts.util.Stat;
 import com.android.cts.util.TimeoutReq;
 
 import java.io.IOException;
 
-public class ScrollingTest extends ActivityInstrumentationTestCase2<ScrollingActivity> {
+public class ScrollingTest extends CtsActivityInstrumentationTestCase2<ScrollingActivity> {
     private ScrollingActivity mActivity;
 
     public ScrollingTest() {
@@ -41,7 +39,6 @@ public class ScrollingTest extends ActivityInstrumentationTestCase2<ScrollingAct
         getInstrumentation().waitForIdleSync();
         try {
             runTestOnUiThread(new Runnable() {
-                @Override
                 public void run() {
                 }
             });
@@ -69,10 +66,10 @@ public class ScrollingTest extends ActivityInstrumentationTestCase2<ScrollingAct
                 assertTrue(activity.scrollToTop());
             }
         });
-        DeviceReportLog report = new DeviceReportLog();
-        report.addValues("scrolling time", results, ResultType.LOWER_BETTER,ResultUnit.MS);
+        getReportLog().printArray("scrolling time", results, ResultType.LOWER_BETTER,
+                ResultUnit.MS);
         Stat.StatResult stat = Stat.getStat(results);
-        report.setSummary("scrolling time", stat.mAverage, ResultType.LOWER_BETTER,ResultUnit.MS);
-        report.submit(getInstrumentation());
+        getReportLog().printSummary("scrolling time", stat.mAverage, ResultType.LOWER_BETTER,
+                ResultUnit.MS);
     }
 }

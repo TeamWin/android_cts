@@ -13,8 +13,8 @@
  */
 package com.android.cts.jank.opengl;
 
-import com.android.compatibility.common.util.AbiUtils;
 import com.android.cts.jank.CtsHostJankTest;
+import com.android.cts.util.AbiUtils;
 import java.io.File;
 
 public class CtsHostJankOpenGl extends CtsHostJankTest {

@@ -13,13 +13,11 @@
  */
 package com.android.cts.opengl.reference;
 
-import com.android.compatibility.common.util.DeviceReportLog;
-import com.android.compatibility.common.util.ResultType;
-import com.android.compatibility.common.util.ResultUnit;
 import com.android.cts.opengl.GLActivityIntentKeys;
 
-import android.test.ActivityInstrumentationTestCase2;
-
+import android.cts.util.CtsActivityInstrumentationTestCase2;
+import com.android.cts.util.ResultType;
+import com.android.cts.util.ResultUnit;
 import com.android.cts.util.TimeoutReq;
 
 import android.content.Intent;
@@ -27,7 +25,7 @@ import android.content.Intent;
 /**
  * Runs the Reference OpenGL ES 2.0 Benchmark.
  */
-public class GLReferenceBenchmark extends ActivityInstrumentationTestCase2<GLReferenceActivity> {
+public class GLReferenceBenchmark extends CtsActivityInstrumentationTestCase2<GLReferenceActivity> {
 
     private static final int NUM_FRAMES_PER_SCENE = 500;
     private static final int NUM_SCENES = 2;
@@ -67,18 +65,22 @@ public class GLReferenceBenchmark extends ActivityInstrumentationTestCase2<GLRef
             double updateAverage = updateSum / NUM_FRAMES;
             double renderAverage = renderSum / NUM_FRAMES;
 
-            DeviceReportLog report = new DeviceReportLog();
-            report.addValues("Set Up Times", setUpTimes, ResultType.LOWER_BETTER, ResultUnit.MS);
-            report.addValues("Update Times", updateTimes, ResultType.LOWER_BETTER, ResultUnit.MS);
-            report.addValue("Update Time Average", updateAverage, ResultType.LOWER_BETTER,
+            getReportLog().printArray(
+                    "Set Up Times", setUpTimes, ResultType.LOWER_BETTER, ResultUnit.MS);
+            getReportLog().printArray(
+                    "Update Times", updateTimes, ResultType.LOWER_BETTER, ResultUnit.MS);
+            getReportLog().printValue(
+                    "Update Time Average", updateAverage, ResultType.LOWER_BETTER,
                     ResultUnit.MS);
-            report.addValues("Render Times", renderTimes, ResultType.LOWER_BETTER, ResultUnit.MS);
-            report.addValue("Render Time Average", renderAverage, ResultType.LOWER_BETTER,
+            getReportLog().printArray(
+                    "Render Times", renderTimes, ResultType.LOWER_BETTER, ResultUnit.MS);
+            getReportLog().printValue(
+                    "Render Time Average", renderAverage, ResultType.LOWER_BETTER,
                     ResultUnit.MS);
-            totalTime = setUpTimes[0] + setUpTimes[1] + setUpTimes[2] + setUpTimes[3] +
-                    updateAverage + renderAverage;
-            report.setSummary("Total Time", totalTime, ResultType.LOWER_BETTER, ResultUnit.MS);
-            report.submit(getInstrumentation());
+            totalTime = setUpTimes[0] + setUpTimes[1] + setUpTimes[2] +
+                    setUpTimes[3] + updateAverage + renderAverage;
+            getReportLog().printSummary(
+                    "Total Time", totalTime, ResultType.LOWER_BETTER, ResultUnit.MS);
         }
     }
 }

@@ -18,13 +18,15 @@ LOCAL_PATH := $(call my-dir)
 # ============================================================
 include $(CLEAR_VARS)
 
-LOCAL_SRC_FILES := $(call all-subdir-java-files)
+LOCAL_SRC_FILES := \
+    $(call all-subdir-java-files) \
+    ../../../libs/commonutil/src/com/android/cts/util/AbiUtils.java
 
 LOCAL_JAR_MANIFEST := MANIFEST.mf
 
 LOCAL_MODULE := cts-xml-generator
 LOCAL_MODULE_TAGS := optional
 
-LOCAL_STATIC_JAVA_LIBRARIES := vogarexpectlib compatibility-host-util
+LOCAL_STATIC_JAVA_LIBRARIES := vogarexpectlib
 
 include $(BUILD_HOST_JAVA_LIBRARY)
