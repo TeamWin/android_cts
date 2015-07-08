@@ -16,20 +16,21 @@
 
 package android.media.cts;
 
+import java.util.ArrayList;
+
 import android.cts.util.CtsAndroidTestCase;
 import android.media.AudioFormat;
 import android.media.AudioManager;
 import android.media.AudioTrack;
 import android.media.AudioTrack.OnPlaybackPositionUpdateListener;
+import android.media.cts.AudioHelper;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
-
-import com.android.compatibility.common.util.DeviceReportLog;
-import com.android.compatibility.common.util.ResultType;
-import com.android.compatibility.common.util.ResultUnit;
-
-import java.util.ArrayList;
+import android.util.Log;
+import com.android.cts.util.ReportLog;
+import com.android.cts.util.ResultType;
+import com.android.cts.util.ResultUnit;
 
 public class AudioTrack_ListenerTest extends CtsAndroidTestCase {
     private final static String TAG = "AudioTrack_ListenerTest";
@@ -205,23 +206,22 @@ public class AudioTrack_ListenerTest extends CtsAndroidTestCase {
         }
 
         // report this
-        DeviceReportLog log = new DeviceReportLog();
-        log.addValue(reportName + ": Average Marker diff", markerStat.getAvg(),
+        ReportLog log = getReportLog();
+        log.printValue(reportName + ": Average Marker diff", markerStat.getAvg(),
                 ResultType.LOWER_BETTER, ResultUnit.MS);
-        log.addValue(reportName + ": Maximum Marker abs diff", markerStat.getMaxAbs(),
+        log.printValue(reportName + ": Maximum Marker abs diff", markerStat.getMaxAbs(),
                 ResultType.LOWER_BETTER, ResultUnit.MS);
-        log.addValue(reportName + ": Average Marker abs diff", markerStat.getAvgAbs(),
+        log.printValue(reportName + ": Average Marker abs diff", markerStat.getAvgAbs(),
                 ResultType.LOWER_BETTER, ResultUnit.MS);
-        log.addValue(reportName + ": Average Periodic diff", periodicStat.getAvg(),
+        log.printValue(reportName + ": Average Periodic diff", periodicStat.getAvg(),
                 ResultType.LOWER_BETTER, ResultUnit.MS);
-        log.addValue(reportName + ": Maximum Periodic abs diff", periodicStat.getMaxAbs(),
+        log.printValue(reportName + ": Maximum Periodic abs diff", periodicStat.getMaxAbs(),
                 ResultType.LOWER_BETTER, ResultUnit.MS);
-        log.addValue(reportName + ": Average Periodic abs diff", periodicStat.getAvgAbs(),
+        log.printValue(reportName + ": Average Periodic abs diff", periodicStat.getAvgAbs(),
                 ResultType.LOWER_BETTER, ResultUnit.MS);
-        log.setSummary(reportName + ": Unified abs diff",
+        log.printSummary(reportName + ": Unified abs diff",
                 (periodicStat.getAvgAbs() + markerStat.getAvgAbs()) / 2,
                 ResultType.LOWER_BETTER, ResultUnit.MS);
-        log.submit(getInstrumentation());
     }
 
     private class MockOnPlaybackPositionUpdateListener

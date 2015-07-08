@@ -16,8 +16,8 @@
 
 package com.android.cts.tradefed.result;
 
-import com.android.compatibility.common.util.AbiUtils;
 import com.android.cts.tradefed.device.DeviceInfoCollector;
+import com.android.cts.util.AbiUtils;
 import com.android.ddmlib.Log;
 import com.android.ddmlib.Log.LogLevel;
 import com.android.ddmlib.testrunner.TestIdentifier;

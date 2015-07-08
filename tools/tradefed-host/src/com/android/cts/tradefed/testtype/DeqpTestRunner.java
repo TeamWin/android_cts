@@ -1,7 +1,7 @@
 package com.android.cts.tradefed.testtype;
 
-import com.android.compatibility.common.util.AbiUtils;
 import com.android.cts.tradefed.build.CtsBuildHelper;
+import com.android.cts.util.AbiUtils;
 import com.android.ddmlib.AdbCommandRejectedException;
 import com.android.ddmlib.IShellOutputReceiver;
 import com.android.ddmlib.MultiLineReceiver;
@@ -161,7 +161,7 @@ public class DeqpTestRunner implements IBuildReceiver, IDeviceTest, IRemoteTest 
     }
 
     private static final class CapabilityQueryFailureException extends Exception {
-    }
+    };
 
     /**
      * Test configuration of dEPQ test instance execution.
@@ -241,13 +241,13 @@ public class DeqpTestRunner implements IBuildReceiver, IDeviceTest, IRemoteTest 
         private boolean mGotTestResult;
         private String mCurrentTestLog;
 
-        private class PendingResult {
+        private class PendingResult
+        {
             boolean allInstancesPassed;
             Map<BatchRunConfiguration, String> testLogs;
             Map<BatchRunConfiguration, String> errorMessages;
             Set<BatchRunConfiguration> remainingConfigs;
-        }
-
+        };
         private final Map<TestIdentifier, PendingResult> mPendingResults = new HashMap<>();
 
         public void setSink(ITestInvocationListener sink) {
@@ -726,7 +726,7 @@ public class DeqpTestRunner implements IBuildReceiver, IDeviceTest, IRemoteTest 
      */
     public static interface ISleepProvider {
         public void sleep(int milliseconds);
-    }
+    };
 
     private static class SleepProvider implements ISleepProvider {
         public void sleep(int milliseconds) {
@@ -735,7 +735,7 @@ public class DeqpTestRunner implements IBuildReceiver, IDeviceTest, IRemoteTest 
             } catch (InterruptedException ex) {
             }
         }
-    }
+    };
 
     /**
      * Interface for failure recovery.
@@ -993,7 +993,7 @@ public class DeqpTestRunner implements IBuildReceiver, IDeviceTest, IRemoteTest 
         private void rebootDevice() throws DeviceNotAvailableException {
             mDevice.reboot();
         }
-    }
+    };
 
     /**
      * Parse map of instance arguments to map of BatchRunConfigurations
@@ -1315,13 +1315,12 @@ public class DeqpTestRunner implements IBuildReceiver, IDeviceTest, IRemoteTest 
         public AdbComLinkOpenError(String description, Throwable inner) {
             super(description, inner);
         }
-    }
-
+    };
     private static final class AdbComLinkKilledError extends Exception {
         public AdbComLinkKilledError(String description, Throwable inner) {
             super(description, inner);
         }
-    }
+    };
 
     /**
      * Executes a given command in adb shell

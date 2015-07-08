@@ -18,22 +18,17 @@ package com.android.cts.browser;
 
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.cts.util.CtsAndroidTestCase;
 import android.cts.util.WatchDog;
 import android.net.Uri;
 import android.provider.Browser;
 import android.util.Log;
 import android.webkit.cts.CtsTestServer;
 
-import com.android.compatibility.common.util.DeviceReportLog;
-import com.android.compatibility.common.util.ResultType;
-import com.android.compatibility.common.util.ResultUnit;
-import com.android.compatibility.common.util.Stat;
+import android.cts.util.CtsAndroidTestCase;
+import com.android.cts.util.ResultType;
+import com.android.cts.util.ResultUnit;
+import com.android.cts.util.Stat;
 import com.android.cts.util.TimeoutReq;
-
-import org.apache.http.HttpRequest;
-import org.apache.http.HttpResponse;
-import org.apache.http.RequestLine;
 
 import java.net.URLDecoder;
 import java.util.LinkedHashMap;
@@ -42,6 +37,10 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import org.apache.http.HttpRequest;
+import org.apache.http.HttpResponse;
+import org.apache.http.RequestLine;
 /**
  * Browser benchmarking.
  * It launches an activity with URL and wait for POST from the client.
@@ -73,12 +72,10 @@ public class BrowserBenchTest extends CtsAndroidTestCase {
     /** stores results for each runs. last entry will be the final score. */
     private LinkedHashMap<String, double[]> mResultsMap;
     private PackageManager mPackageManager;
-    private DeviceReportLog mReport;
 
     @Override
     protected void setUp() throws Exception {
         super.setUp();
-        mReport = new DeviceReportLog();
         mPackageManager = getInstrumentation().getContext().getPackageManager();
         mWebServer = new CtsTestServer(getContext()) {
             @Override
@@ -105,7 +102,7 @@ public class BrowserBenchTest extends CtsAndroidTestCase {
                     scores[mRunIndex] = score;
                     if (isFinal == 1) {
                         String userAgent = request.getFirstHeader(HTTP_USER_AGENT).getValue();
-                        mReport.addValue(HTTP_USER_AGENT + "=" + userAgent, 0,
+                        getReportLog().printValue(HTTP_USER_AGENT + "=" + userAgent, 0,
                                 ResultType.NEUTRAL, ResultUnit.NONE);
                         mLatch.countDown();
                     }
@@ -125,7 +122,6 @@ public class BrowserBenchTest extends CtsAndroidTestCase {
         mWebServer.shutdown();
         mWebServer = null;
         mResultsMap = null;
-        mReport.submit(getInstrumentation());
         super.tearDown();
     }
 
@@ -163,16 +159,17 @@ public class BrowserBenchTest extends CtsAndroidTestCase {
         }
         // it is somewhat awkward to handle the last one specially with Map
         int numberEntries = mResultsMap.size();
-        int numberToProcess = 1; 
+        int numberToProcess = 1;
         for (Map.Entry<String, double[]> entry : mResultsMap.entrySet()) {
             String message = entry.getKey();
             double[] scores = entry.getValue();
             if (numberToProcess == numberEntries) { // final score
                 // store the whole results first
-                mReport.addValues(message, scores, mTypeFinal, mUnitFinal);
-                mReport.setSummary(message, Stat.getAverage(scores), mTypeFinal, mUnitFinal);
+                getReportLog().printArray(message, scores, mTypeFinal, mUnitFinal);
+                getReportLog().printSummary(message, Stat.getAverage(scores), mTypeFinal,
+                        mUnitFinal);
             } else { // interim results
-                mReport.addValues(message, scores, mTypeNonFinal, mUnitNonFinal);
+                getReportLog().printArray(message, scores, mTypeNonFinal, mUnitNonFinal);
             }
             numberToProcess++;
         }

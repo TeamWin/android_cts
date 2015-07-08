@@ -15,8 +15,8 @@
  */
 package com.android.cts.tradefed.device;
 
-import com.android.compatibility.common.util.AbiUtils;
 import com.android.cts.tradefed.build.ICtsBuildInfo;
+import com.android.cts.util.AbiUtils;
 import com.android.ddmlib.Log;
 import com.android.tradefed.build.IBuildInfo;
 import com.android.tradefed.device.DeviceNotAvailableException;
@@ -53,7 +53,7 @@ public class DeviceInfoCollector {
     public static final Set<String> EXTENDED_IDS = new HashSet<String>();
 
     static {
-        for (String abi : AbiUtils.getAbisSupportedByCompatibility()) {
+        for (String abi : AbiUtils.getAbisSupportedByCts()) {
             IDS.add(AbiUtils.createId(abi, APP_PACKAGE_NAME));
             EXTENDED_IDS.add(AbiUtils.createId(abi, EXTENDED_APP_PACKAGE_NAME));
         }

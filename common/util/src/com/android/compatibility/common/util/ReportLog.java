@@ -156,8 +156,8 @@ public class ReportLog implements Serializable {
     /**
      * Adds an array of values to the report.
      */
-    public void addValues(String location, String message, double[] values, ResultType type,
-            ResultUnit unit) {
+    public void addValues(
+            String message, double[] values, ResultType type, ResultUnit unit, String location) {
         addDetail(new Result(location, message, values, type, unit));
     }
 
@@ -172,8 +172,8 @@ public class ReportLog implements Serializable {
     /**
      * Adds a value to the report.
      */
-    public void addValue(String location, String message, double value, ResultType type,
-            ResultUnit unit) {
+    public void addValue(String message, double value, ResultType type,
+            ResultUnit unit, String location) {
         addDetail(new Result(location, message, new double[] {value}, type, unit));
     }
 
@@ -204,9 +204,6 @@ public class ReportLog implements Serializable {
      * Parse a String encoded {@link com.android.compatibility.common.util.ReportLog}
      */
     public static ReportLog fromEncodedString(String encodedString) {
-        if (encodedString == null || encodedString.isEmpty()) {
-            return null;
-        }
         ReportLog reportLog = new ReportLog();
         StringTokenizer tok = new StringTokenizer(encodedString, SUMMARY_SEPARATOR);
         if (tok.hasMoreTokens()) {

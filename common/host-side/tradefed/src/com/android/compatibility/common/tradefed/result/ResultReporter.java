@@ -7,8 +7,6 @@ import com.android.compatibility.common.util.IInvocationResult;
 import com.android.compatibility.common.util.IModuleResult;
 import com.android.compatibility.common.util.IResult;
 import com.android.compatibility.common.util.InvocationResult;
-import com.android.compatibility.common.util.MetricsStore;
-import com.android.compatibility.common.util.ReportLog;
 import com.android.compatibility.common.util.TestStatus;
 import com.android.compatibility.common.util.XmlResultHandler;
 import com.android.ddmlib.Log;
@@ -42,7 +40,6 @@ import java.util.Map;
 @OptionClass(alias="result-reporter")
 public class ResultReporter implements ITestInvocationListener {
 
-    private static final String RESULT_KEY = "COMPATIBILITY_TEST_RESULT";
     private static final String DEVICE_INFO_COLLECTOR = "com.android.compatibility.deviceinfo";
     private static final String[] RESULT_RESOURCES = {
         "compatibility-result.css",
@@ -171,15 +168,7 @@ public class ResultReporter implements ITestInvocationListener {
         Log.d(mDeviceSerial, String.format("ResultReporter.testEnded(%s, %s)", name,
                 metrics.toString()));
         if (!mIsDeviceInfoRun) {
-            // device test can have performance results in test metrics
-            String perfResult = metrics.get(RESULT_KEY);
-            ReportLog report = ReportLog.fromEncodedString(perfResult);
-            if (perfResult == null) {
-                // host test should be checked into MetricsStore.
-                report = MetricsStore.removeResult(
-                        mDeviceSerial, mCurrentModuleResult.getAbi(), name);
-            }
-            mCurrentModuleResult.reportTestEnded(name, report);
+            mCurrentModuleResult.reportTestEnded(name, metrics);
             IResult result = mCurrentModuleResult.getResult(name);
             String stacktrace = result.getStackTrace();
             if (stacktrace == null) {
@@ -244,6 +233,8 @@ public class ResultReporter implements ITestInvocationListener {
                 metrics.toString()));
         if (mIsDeviceInfoRun) {
             mResult.populateDeviceInfoMetrics(metrics);
+        } else {
+            mCurrentModuleResult.populateMetrics(metrics);
         }
     }
 

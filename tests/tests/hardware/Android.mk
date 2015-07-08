@@ -22,7 +22,7 @@ LOCAL_MODULE := cts-sensors-tests
 
 LOCAL_MODULE_TAGS := tests
 
-LOCAL_STATIC_JAVA_LIBRARIES := ctsdeviceutil compatibility-device-util
+LOCAL_STATIC_JAVA_LIBRARIES := ctsdeviceutil
 
 LOCAL_SDK_VERSION := current
 
@@ -36,6 +36,8 @@ LOCAL_SRC_FILES += \
     src/android/hardware/cts/SensorTest.java \
     src/android/hardware/cts/SensorManagerStaticTest.java \
 
+LOCAL_STATIC_JAVA_LIBRARIES := ctsdeviceutil
+
 include $(BUILD_STATIC_JAVA_LIBRARY)
 
 
@@ -45,7 +47,7 @@ include $(CLEAR_VARS)
 
 LOCAL_MODULE_TAGS := tests
 
-LOCAL_STATIC_JAVA_LIBRARIES := ctsdeviceutil compatibility-device-util ctstestrunner mockito-target android-ex-camera2
+LOCAL_STATIC_JAVA_LIBRARIES := ctsdeviceutil ctstestrunner mockito-target android-ex-camera2
 
 LOCAL_SRC_FILES := $(call all-java-files-under, src) $(call all-renderscript-files-under, src)
 

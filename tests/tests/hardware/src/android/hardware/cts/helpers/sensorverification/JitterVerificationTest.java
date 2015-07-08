@@ -24,6 +24,7 @@ import android.hardware.cts.helpers.TestSensorEvent;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 
 /**
  * Tests for {@link EventOrderingVerification}.
@@ -72,30 +73,31 @@ public class JitterVerificationTest extends TestCase {
     public void testCalculateJitter() {
         long[] timestamps = new long[]{0, 1, 2, 3, 4};
         JitterVerification verification = getVerification(1, timestamps);
-        double[] jitterValues = verification.getJitterValues();
-        assertEquals(4, jitterValues.length);
-        assertEquals(0.0, jitterValues[0]);
-        assertEquals(0.0, jitterValues[1]);
-        assertEquals(0.0, jitterValues[2]);
-        assertEquals(0.0, jitterValues[3]);
+        List<Double> jitterValues = verification.getJitterValues();
+        assertEquals(4, jitterValues.size());
+        assertEquals(0.0, jitterValues.get(0));
+        assertEquals(0.0, jitterValues.get(1));
+        assertEquals(0.0, jitterValues.get(2));
+        assertEquals(0.0, jitterValues.get(3));
 
         timestamps = new long[]{0, 0, 2, 4, 4};
         verification = getVerification(1, timestamps);
         jitterValues = verification.getJitterValues();
-        assertEquals(4, jitterValues.length);
-        assertEquals(1.0, jitterValues[0]);
-        assertEquals(1.0, jitterValues[1]);
-        assertEquals(1.0, jitterValues[2]);
-        assertEquals(1.0, jitterValues[3]);
+        assertEquals(4, jitterValues.size());
+        assertEquals(1.0, jitterValues.get(0));
+        assertEquals(1.0, jitterValues.get(1));
+        assertEquals(1.0, jitterValues.get(2));
+        assertEquals(1.0, jitterValues.get(3));
 
         timestamps = new long[]{0, 1, 4, 9, 16};
         verification = getVerification(1, timestamps);
         jitterValues = verification.getJitterValues();
-        assertEquals(4, jitterValues.length);
-        assertEquals(3.0, jitterValues[0]);
-        assertEquals(1.0, jitterValues[1]);
-        assertEquals(1.0, jitterValues[2]);
-        assertEquals(3.0, jitterValues[3]);
+        assertEquals(4, jitterValues.size());
+        assertEquals(4, jitterValues.size());
+        assertEquals(3.0, jitterValues.get(0));
+        assertEquals(1.0, jitterValues.get(1));
+        assertEquals(1.0, jitterValues.get(2));
+        assertEquals(3.0, jitterValues.get(3));
     }
 
     private static JitterVerification getVerification(int threshold, long ... timestamps) {

@@ -24,6 +24,6 @@ LOCAL_JAR_MANIFEST := MANIFEST.mf
 
 LOCAL_MODULE_TAGS := optional
 
-LOCAL_JAVA_LIBRARIES := tradefed-prebuilt compatibility-tradefed junit compatibility-host-util
+LOCAL_JAVA_LIBRARIES := tradefed-prebuilt compatibility-tradefed junit compatibility-common-util-hostsidelib
 
 include $(BUILD_HOST_JAVA_LIBRARY)

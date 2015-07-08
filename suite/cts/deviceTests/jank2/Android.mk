@@ -24,7 +24,7 @@ LOCAL_SRC_FILES := $(call all-java-files-under, src)
 
 LOCAL_PACKAGE_NAME := CtsJankTestCases
 
-LOCAL_STATIC_JAVA_LIBRARIES := ctsdeviceutil compatibility-device-util ctstestrunner ub-uiautomator ub-janktesthelper
+LOCAL_STATIC_JAVA_LIBRARIES := ctsdeviceutil ctstestrunner ub-uiautomator ub-janktesthelper
 
 LOCAL_CTS_MODULE_CONFIG := $(LOCAL_PATH)/Old$(CTS_MODULE_TEST_CONFIG)
 
