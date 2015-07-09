@@ -22,6 +22,10 @@ import android.util.Log;
 
 import com.android.compatibility.common.util.ReportLog;
 
+import org.xmlpull.v1.XmlPullParserException;
+
+import java.io.IOException;
+
 /**
  * Handles adding results to the report for device side tests.
  *
@@ -35,13 +39,14 @@ public class DeviceReportLog extends ReportLog {
     private static final int INST_STATUS_IN_PROGRESS = 2;
 
     public void submit(Instrumentation instrumentation) {
-        Log.i(TAG, "submit");
-        String encoded = toEncodedString();
-        if (encoded != null) {
+        Log.i(TAG, "Submit");
+        try {
             Bundle output = new Bundle();
-            output.putString(RESULT, encoded);
+            output.putString(RESULT, serialize(this));
             instrumentation.sendStatus(INST_STATUS_IN_PROGRESS, output);
-        } else {
+        } catch (IllegalArgumentException | IllegalStateException | XmlPullParserException
+                | IOException e) {
+            Log.e(TAG, "Submit Failed", e);
             instrumentation.sendStatus(INST_STATUS_ERROR, null);
         }
     }

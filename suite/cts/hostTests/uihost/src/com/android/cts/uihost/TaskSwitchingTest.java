@@ -32,7 +32,10 @@ import com.android.tradefed.testtype.IAbi;
 import com.android.tradefed.testtype.IAbiReceiver;
 import com.android.tradefed.testtype.IBuildReceiver;
 
+import org.xmlpull.v1.XmlPullParserException;
+
 import java.io.File;
+import java.io.IOException;
 import java.util.Map;
 
 /**
@@ -112,7 +115,11 @@ public class TaskSwitchingTest extends DeviceTestCase implements IAbiReceiver, I
         public void testEnded(TestIdentifier test, Map<String, String> testMetrics) {
             // necessary as testMetrics passed from CollectingTestListerner is empty
             if (testMetrics.containsKey(RESULT_KEY)) {
-                mReport = ReportLog.fromEncodedString(testMetrics.get(RESULT_KEY));
+                try {
+                    mReport = ReportLog.parse(testMetrics.get(RESULT_KEY));
+                } catch (XmlPullParserException | IOException e) {
+                    e.printStackTrace();
+                }
             }
             super.testEnded(test, testMetrics);
         }

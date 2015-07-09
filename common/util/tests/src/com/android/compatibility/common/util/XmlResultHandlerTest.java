@@ -15,7 +15,6 @@
  */
 package com.android.compatibility.common.util;
 
-import com.android.compatibility.common.util.ReportLog.Result;
 import com.android.tradefed.util.FileUtil;
 
 import junit.framework.TestCase;
@@ -59,8 +58,8 @@ public class XmlResultHandlerTest extends TestCase {
     private static final String TEST_2 = String.format("%s#%s", CLASS_A, METHOD_2);
     private static final String TEST_3 = String.format("%s#%s", CLASS_B, METHOD_3);
     private static final String TEST_4 = String.format("%s#%s", CLASS_B, METHOD_4);
-    private static final String SUMMARY_LOCATION = String.format("%s:20", TEST_4);
-    private static final String DETAILS_LOCATION = String.format("%s:18", TEST_4);
+    private static final String SUMMARY_SOURCE = String.format("%s:20", TEST_4);
+    private static final String DETAILS_SOURCE = String.format("%s:18", TEST_4);
     private static final String SUMMARY_MESSAGE = "Headline";
     private static final double SUMMARY_VALUE = 9001;
     private static final String DETAILS_MESSAGE = "Deats";
@@ -101,13 +100,17 @@ public class XmlResultHandlerTest extends TestCase {
             "    </Test>\n";
     private static final String XML_TEST_RESULT =
             "    <Test result=\"pass\" name=\"%s\" start=\"%s\" end=\"%s\">\n" +
-            "      <Summary source=\"%s\" message=\"%s\" score-type=\"%s\" score-unit=\"%s\">\n" +
-            "        <Value>%s</Value>\n" +
+            "      <Summary>\n" +
+            "        <Metric source=\"%s\" message=\"%s\" score-type=\"%s\" score-unit=\"%s\">\n" +
+            "           <Value>%s</Value>\n" +
+            "        </Metric>\n" +
             "      </Summary>\n" +
-            "      <Detail source=\"%s\" message=\"%s\" score-type=\"%s\" score-unit=\"%s\">\n" +
-            "        <Value>%s</Value>\n" +
-            "        <Value>%s</Value>\n" +
-            "        <Value>%s</Value>\n" +
+            "      <Detail>\n" +
+            "        <Metric source=\"%s\" message=\"%s\" score-type=\"%s\" score-unit=\"%s\">\n" +
+            "          <Value>%s</Value>\n" +
+            "          <Value>%s</Value>\n" +
+            "          <Value>%s</Value>\n" +
+            "        </Metric>\n" +
             "      </Detail>\n" +
             "    </Test>\n";
     private File resultsDir = null;
@@ -153,13 +156,13 @@ public class XmlResultHandlerTest extends TestCase {
         moduleBTest4.setStartTime(START_MS);
         moduleBTest4.setResultStatus(TestStatus.PASS);
         ReportLog report = new ReportLog();
-        ReportLog.Result summary = new Result(SUMMARY_LOCATION, SUMMARY_MESSAGE,
-                new double[] {SUMMARY_VALUE}, ResultType.HIGHER_BETTER, ResultUnit.SCORE);
+        ReportLog.Metric summary = new ReportLog.Metric(SUMMARY_SOURCE, SUMMARY_MESSAGE,
+                SUMMARY_VALUE, ResultType.HIGHER_BETTER, ResultUnit.SCORE);
         report.setSummary(summary);
-        ReportLog.Result details = new Result(DETAILS_LOCATION, DETAILS_MESSAGE,
+        ReportLog.Metric details = new ReportLog.Metric(DETAILS_SOURCE, DETAILS_MESSAGE,
                 new double[] {DETAILS_VALUE_1, DETAILS_VALUE_2, DETAILS_VALUE_3},
                 ResultType.LOWER_BETTER, ResultUnit.MS);
-        report.addDetail(details);
+        report.addMetric(details);
         moduleBTest4.setReportLog(report);
         moduleBTest4.setEndTime(END_MS);
 
@@ -187,9 +190,9 @@ public class XmlResultHandlerTest extends TestCase {
             String moduleA = String.format(XML_MODULE, NAME_A, ABI, DEVICE_A, moduleATests);
             String moduleBTest3 = String.format(XML_TEST_FAIL, TEST_3, START, END, MESSAGE, STACK_TRACE);
             String moduleBTest4 = String.format(XML_TEST_RESULT, TEST_4, START, END,
-                    SUMMARY_LOCATION, SUMMARY_MESSAGE, ResultType.HIGHER_BETTER.toReportString(),
+                    SUMMARY_SOURCE, SUMMARY_MESSAGE, ResultType.HIGHER_BETTER.toReportString(),
                     ResultUnit.SCORE.toReportString(), Double.toString(SUMMARY_VALUE),
-                    DETAILS_LOCATION, DETAILS_MESSAGE, ResultType.LOWER_BETTER.toReportString(),
+                    DETAILS_SOURCE, DETAILS_MESSAGE, ResultType.LOWER_BETTER.toReportString(),
                     ResultUnit.MS.toReportString(), Double.toString(DETAILS_VALUE_1),
                     Double.toString(DETAILS_VALUE_2), Double.toString(DETAILS_VALUE_3));
             String moduleBTests = String.format(JOIN, moduleBTest3, moduleBTest4);
@@ -289,22 +292,19 @@ public class XmlResultHandlerTest extends TestCase {
         assertNull("Unexpected stack trace", moduleBTest4.getStackTrace());
         ReportLog report = moduleBTest4.getReportLog();
         assertNotNull("Expected report", report);
-        Result summary = report.getSummary();
+        ReportLog.Metric summary = report.getSummary();
         assertNotNull("Expected report summary", summary);
-        assertEquals("Incorrect location", SUMMARY_LOCATION, summary.getLocation());
+        assertEquals("Incorrect source", SUMMARY_SOURCE, summary.getSource());
         assertEquals("Incorrect message", SUMMARY_MESSAGE, summary.getMessage());
-        assertNull("Unexpected target", summary.getTarget());
         assertEquals("Incorrect type", ResultType.HIGHER_BETTER, summary.getType());
         assertEquals("Incorrect unit", ResultUnit.SCORE, summary.getUnit());
         assertTrue("Incorrect values", Arrays.equals(new double[] { SUMMARY_VALUE },
                 summary.getValues()));
-        List<Result> details = report.getDetailedMetrics();
+        List<ReportLog.Metric> details = report.getDetailedMetrics();
         assertEquals("Expected 1 report detail", 1, details.size());
-        Result detail = details.get(0);
-        assertEquals("Incorrect location", DETAILS_LOCATION,
-                detail.getLocation());
+        ReportLog.Metric detail = details.get(0);
+        assertEquals("Incorrect source", DETAILS_SOURCE, detail.getSource());
         assertEquals("Incorrect message", DETAILS_MESSAGE, detail.getMessage());
-        assertNull("Unexpected target", detail.getTarget());
         assertEquals("Incorrect type", ResultType.LOWER_BETTER, detail.getType());
         assertEquals("Incorrect unit", ResultUnit.MS, detail.getUnit());
         assertTrue("Incorrect values", Arrays.equals(new double[] { DETAILS_VALUE_1,

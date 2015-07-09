@@ -61,8 +61,7 @@ public class DeviceReportTest extends TestCase {
         assertNotNull("Bundle missing", inst.mResults);
         String metrics = inst.mResults.getString(RESULT_KEY);
         assertNotNull("Metrics missing", metrics);
-        ReportLog result = ReportLog.fromEncodedString(metrics);
+        ReportLog result = ReportLog.parse(metrics);
         assertNotNull("Metrics could not be decoded", result);
-        // Tests for the contents of DeviceReportLog are in ReportLogTest
     }
 }

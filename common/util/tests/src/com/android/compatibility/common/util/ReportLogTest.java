@@ -18,51 +18,50 @@ package com.android.compatibility.common.util;
 
 import junit.framework.TestCase;
 
-import java.util.Arrays;
-
 /**
  * Unit tests for {@link ReportLog}
  */
 public class ReportLogTest extends TestCase {
 
-    private static final double[] VALUES = new double[] {1, 11, 21, 1211, 111221};
+    private static final double[] VALUES = new double[] {.1, 124, 4736, 835.683, 98, 395};
+    private static final String HEADER = "<?xml version='1.0' encoding='UTF-8' standalone='yes' ?>";
+    private static final String EXPECTED_XML =
+            HEADER + "\r\n" +
+            "<Summary>\r\n" +
+            "  <Metric source=\"com.android.compatibility.common.util.ReportLogTest#testSerialize:62\" message=\"Sample\" score-type=\"higher_better\" score-unit=\"byte\">\r\n" +
+            "    <Value>1.0</Value>\r\n" +
+            "  </Metric>\r\n" +
+            "</Summary>\r\n" +
+            "<Detail>\r\n" +
+            "  <Metric source=\"com.android.compatibility.common.util.ReportLogTest#testSerialize:63\" message=\"Details\" score-type=\"neutral\" score-unit=\"fps\">\r\n" +
+            "    <Value>0.1</Value>\r\n" +
+            "    <Value>124.0</Value>\r\n" +
+            "    <Value>4736.0</Value>\r\n" +
+            "    <Value>835.683</Value>\r\n" +
+            "    <Value>98.0</Value>\r\n" +
+            "    <Value>395.0</Value>\r\n" +
+            "  </Metric>\r\n" +
+            "</Detail>";
 
-    private static final String EXPECTED_ENCODED_REPORT_LOG =
-            "com.android.compatibility.common.util.ReportLogTest#testEncodeDecode:44|" +
-            "Sample Summary| |HIGHER_BETTER|BYTE|1.0 ++++" +
-            "com.android.compatibility.common.util.ReportLogTest#testEncodeDecode:45|" +
-            "Details| |NEUTRAL|FPS|1.0 11.0 21.0 1211.0 111221.0 ";
-    private ReportLog reportLog;
+    private ReportLog mReportLog;
 
     @Override
     protected void setUp() throws Exception {
-        this.reportLog = new ReportLog();
+        mReportLog = new ReportLog();
     }
 
-    public void testEncodeDecode() {
-
-        reportLog.setSummary("Sample Summary", 1.0, ResultType.HIGHER_BETTER, ResultUnit.BYTE);
-        reportLog.addValues("Details", VALUES, ResultType.NEUTRAL, ResultUnit.FPS);
-
-        String encodedReportLog = reportLog.toEncodedString();
-        assertEquals(EXPECTED_ENCODED_REPORT_LOG, encodedReportLog);
-
-        ReportLog decodedReportLog = ReportLog.fromEncodedString(encodedReportLog);
-        ReportLog.Result summary = reportLog.getSummary();
-        assertEquals("Sample Summary", summary.getMessage());
-        assertFalse(summary.getLocation().isEmpty());
-        assertEquals(ResultType.HIGHER_BETTER, summary.getType());
-        assertEquals(ResultUnit.BYTE, summary.getUnit());
-        assertTrue(Arrays.equals(new double[] {1.0}, summary.getValues()));
-
-        assertEquals(1, decodedReportLog.getDetailedMetrics().size());
-        ReportLog.Result detail = decodedReportLog.getDetailedMetrics().get(0);
-        assertEquals("Details", detail.getMessage());
-        assertFalse(detail.getLocation().isEmpty());
-        assertEquals(ResultType.NEUTRAL, detail.getType());
-        assertEquals(ResultUnit.FPS, detail.getUnit());
-        assertTrue(Arrays.equals(VALUES, detail.getValues()));
-
-        assertEquals(encodedReportLog, decodedReportLog.toEncodedString());
+    public void testSerialize_null() throws Exception {
+        assertEquals(HEADER, ReportLog.serialize(null));
     }
+
+    public void testSerialize_noData() throws Exception {
+        assertEquals(HEADER, ReportLog.serialize(mReportLog));
+    }
+
+    public void testSerialize() throws Exception {
+        mReportLog.setSummary("Sample", 1.0, ResultType.HIGHER_BETTER, ResultUnit.BYTE);
+        mReportLog.addValues("Details", VALUES, ResultType.NEUTRAL, ResultUnit.FPS);
+        assertEquals(EXPECTED_XML, ReportLog.serialize(mReportLog));
+    }
+
 }
