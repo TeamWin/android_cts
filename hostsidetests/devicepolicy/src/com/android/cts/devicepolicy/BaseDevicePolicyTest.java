@@ -90,7 +90,7 @@ public class BaseDevicePolicyTest extends DeviceTestCase implements IBuildReceiv
         }
 
         final String result = device.executeShellCommand(
-                "pm install --user " + userId + " " + remotePath);
+                "pm install -r --user " + userId + " " + remotePath);
         assertTrue(result, result.contains("\nSuccess"));
     }
 
