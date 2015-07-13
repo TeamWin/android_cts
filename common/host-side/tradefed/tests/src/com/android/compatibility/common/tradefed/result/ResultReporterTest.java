@@ -16,28 +16,12 @@
 
 package com.android.compatibility.common.tradefed.result;
 
-import static com.android.compatibility.common.tradefed.build.CompatibilityBuildInfoTest.BASE_DIR_NAME;
-import static com.android.compatibility.common.tradefed.build.CompatibilityBuildInfoTest.ROOT_DIR_NAME;
-import static com.android.compatibility.common.tradefed.build.CompatibilityBuildInfoTest.TESTCASES;
-import static com.android.compatibility.common.tradefed.build.CompatibilityBuildProviderTest.BUILD_ID;
-import static com.android.compatibility.common.tradefed.build.CompatibilityBuildProviderTest.SUITE_FULL_NAME;
-import static com.android.compatibility.common.tradefed.build.CompatibilityBuildProviderTest.SUITE_NAME;
-import static com.android.compatibility.common.tradefed.build.CompatibilityBuildProviderTest.SUITE_PLAN;
-import static com.android.compatibility.common.tradefed.build.CompatibilityBuildProviderTest.SUITE_VERSION;
-import static com.android.compatibility.common.tradefed.result.ModuleResultTest.CLASS;
-import static com.android.compatibility.common.tradefed.result.ModuleResultTest.ID;
-import static com.android.compatibility.common.tradefed.result.ModuleResultTest.METHOD_1;
-import static com.android.compatibility.common.tradefed.result.ModuleResultTest.METHOD_2;
-import static com.android.compatibility.common.tradefed.result.ModuleResultTest.METHOD_3;
-import static com.android.compatibility.common.tradefed.result.ModuleResultTest.STACK_TRACE;
-import static com.android.compatibility.common.tradefed.result.ModuleResultTest.TEST_1;
-import static com.android.compatibility.common.tradefed.result.ModuleResultTest.TEST_2;
-import static com.android.compatibility.common.tradefed.result.ModuleResultTest.TEST_3;
-
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildInfo;
+import com.android.compatibility.common.util.AbiUtils;
+import com.android.compatibility.common.util.ICaseResult;
 import com.android.compatibility.common.util.IInvocationResult;
 import com.android.compatibility.common.util.IModuleResult;
-import com.android.compatibility.common.util.IResult;
+import com.android.compatibility.common.util.ITestResult;
 import com.android.compatibility.common.util.TestStatus;
 import com.android.ddmlib.testrunner.TestIdentifier;
 import com.android.tradefed.util.FileUtil;
@@ -51,6 +35,26 @@ import java.util.List;
 
 public class ResultReporterTest extends TestCase {
 
+    private static final String BUILD_ID = "2";
+    private static final String SUITE_NAME = "TESTS";
+    private static final String SUITE_FULL_NAME = "Compatibility Tests";
+    private static final String SUITE_VERSION = "1";
+    private static final String SUITE_PLAN = "foobar";
+    private static final String ROOT_DIR_NAME = "root";
+    private static final String BASE_DIR_NAME = "android-tests";
+    private static final String TESTCASES = "testcases";
+    private static final String NAME = "ModuleName";
+    private static final String ABI = "mips64";
+    private static final String ID = AbiUtils.createId(ABI, NAME);
+    private static final String CLASS = "android.test.FoorBar";
+    private static final String METHOD_1 = "testBlah1";
+    private static final String METHOD_2 = "testBlah2";
+    private static final String METHOD_3 = "testBlah3";
+    private static final String TEST_1 = String.format("%s#%s", CLASS, METHOD_1);
+    private static final String TEST_2 = String.format("%s#%s", CLASS, METHOD_2);
+    private static final String TEST_3 = String.format("%s#%s", CLASS, METHOD_3);
+    private static final String STACK_TRACE = "Something small is not alright\n " +
+            "at four.big.insects.Marley.sing(Marley.java:10)";
     private static final String RESULT_DIR = "result123";
     private static final String[] FORMATTING_FILES = {
         "compatibility-result.css",
@@ -125,17 +129,20 @@ public class ResultReporterTest extends TestCase {
         assertEquals("Expected 1 module", 1, modules.size());
         IModuleResult module = modules.get(0);
         assertEquals("Incorrect ID", ID, module.getId());
-        List<IResult> results = module.getResults();
-        assertEquals("Expected 3 tests", 3, results.size());
-        IResult result1 = module.getResult(TEST_1);
+        List<ICaseResult> caseResults = module.getResults();
+        assertEquals("Expected 1 test case", 1, caseResults.size());
+        ICaseResult caseResult = caseResults.get(0);
+        List<ITestResult> testResults = caseResult.getResults();
+        assertEquals("Expected 3 tests", 3, testResults.size());
+        ITestResult result1 = caseResult.getResult(METHOD_1);
         assertNotNull(String.format("Expected result for %s", TEST_1), result1);
         assertEquals(String.format("Expected pass for %s", TEST_1), TestStatus.PASS,
                 result1.getResultStatus());
-        IResult result2 = module.getResult(TEST_2);
+        ITestResult result2 = caseResult.getResult(METHOD_2);
         assertNotNull(String.format("Expected result for %s", TEST_2), result2);
         assertEquals(String.format("Expected fail for %s", TEST_2), TestStatus.FAIL,
                 result2.getResultStatus());
-        IResult result3 = module.getResult(TEST_3);
+        ITestResult result3 = caseResult.getResult(METHOD_3);
         assertNotNull(String.format("Expected result for %s", TEST_3), result3);
         assertEquals(String.format("Expected fail for %s", TEST_3), TestStatus.FAIL,
                 result3.getResultStatus());

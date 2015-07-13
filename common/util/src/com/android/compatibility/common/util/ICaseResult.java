@@ -18,40 +18,37 @@ package com.android.compatibility.common.util;
 import java.util.List;
 
 /**
- * Data structure for a Compatibility test module result.
+ * Data structure for a Compatibility test case result.
  */
-public interface IModuleResult extends Comparable<IModuleResult> {
-
-    void setDeviceSerial(String deviceSerial);
-
-    String getDeviceSerial();
-
-    String getId();
+public interface ICaseResult extends Comparable<ICaseResult> {
 
     String getName();
 
-    String getAbi();
-
     /**
-     * Gets a {@link ICaseResult} for the given testcase, creating it if it doesn't exist.
+     * Gets a {@link ITestResult} for the given test, creating it if it doesn't exist.
      *
-     * @param caseName the name of the testcase eg &lt;package-name&gt;&lt;class-name&gt;
-     * @return the {@link ICaseResult} or <code>null</code>
-     */
-    ICaseResult getOrCreateResult(String caseName);
-
-    /**
-     * Gets the {@link ICaseResult} result for given testcase.
-     *
-     * @param caseName the name of the testcase eg &lt;package-name&gt;&lt;class-name&gt;
+     * @param testName the name of the test eg &lt;method-name&gt;
      * @return the {@link ITestResult} or <code>null</code>
      */
-    ICaseResult getResult(String caseName);
+    ITestResult getOrCreateResult(String testName);
+
+    /**
+     * Gets the {@link ITestResult} for given test.
+     *
+     * @param testName the name of the test eg &lt;method-name&gt;
+     * @return the {@link ITestResult} or <code>null</code>
+     */
+    ITestResult getResult(String testName);
 
     /**
      * Gets all results sorted by name.
      */
-    List<ICaseResult> getResults();
+    List<ITestResult> getResults();
+
+    /**
+     * Gets all results which have the given status.
+     */
+    List<ITestResult> getResults(TestStatus status);
 
     /**
      * Counts the number of results which have the given status.

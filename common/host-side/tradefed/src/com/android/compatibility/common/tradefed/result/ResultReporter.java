@@ -3,9 +3,10 @@ package com.android.compatibility.common.tradefed.result;
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildInfo;
 import com.android.compatibility.common.tradefed.testtype.CompatibilityTest;
 import com.android.compatibility.common.util.AbiUtils;
+import com.android.compatibility.common.util.ICaseResult;
 import com.android.compatibility.common.util.IInvocationResult;
 import com.android.compatibility.common.util.IModuleResult;
-import com.android.compatibility.common.util.IResult;
+import com.android.compatibility.common.util.ITestResult;
 import com.android.compatibility.common.util.InvocationResult;
 import com.android.compatibility.common.util.MetricsStore;
 import com.android.compatibility.common.util.ReportLog;
@@ -66,7 +67,8 @@ public class ResultReporter implements ITestInvocationListener {
     private long mStartTime;
     private boolean mIsDeviceInfoRun;
     private IModuleResult mCurrentModuleResult;
-    private IResult mCurrentResult;
+    private ICaseResult mCurrentCaseResult;
+    private ITestResult mCurrentResult;
     private CompatibilityBuildInfo mBuild;
 
     /**
@@ -155,10 +157,10 @@ public class ResultReporter implements ITestInvocationListener {
      */
     @Override
     public void testStarted(TestIdentifier test) {
-        String name = test.toString();
-        Log.d(mDeviceSerial, String.format("ResultReporter.testStarted(%s)", name));
+        Log.d(mDeviceSerial, String.format("ResultReporter.testStarted(%s)", test));
         if (!mIsDeviceInfoRun) {
-            mCurrentResult = mCurrentModuleResult.getOrCreateResult(name);
+            mCurrentCaseResult = mCurrentModuleResult.getOrCreateResult(test.getClassName());
+            mCurrentResult = mCurrentCaseResult.getOrCreateResult(test.getTestName());
         }
     }
 
@@ -167,9 +169,7 @@ public class ResultReporter implements ITestInvocationListener {
      */
     @Override
     public void testEnded(TestIdentifier test, Map<String, String> metrics) {
-        String name = test.toString();
-        Log.d(mDeviceSerial, String.format("ResultReporter.testEnded(%s, %s)", name,
-                metrics.toString()));
+        Log.d(mDeviceSerial, String.format("ResultReporter.testEnded(%s, %s)", test, metrics));
         if (!mIsDeviceInfoRun) {
             // device test can have performance results in test metrics
             String perfResult = metrics.get(RESULT_KEY);
@@ -183,18 +183,9 @@ public class ResultReporter implements ITestInvocationListener {
             } else {
                 // host test should be checked into MetricsStore.
                 report = MetricsStore.removeResult(
-                        mDeviceSerial, mCurrentModuleResult.getAbi(), name);
+                        mDeviceSerial, mCurrentModuleResult.getAbi(), test.toString());
             }
-            mCurrentModuleResult.reportTestEnded(name, report);
-            IResult result = mCurrentModuleResult.getResult(name);
-            String stacktrace = result.getStackTrace();
-            if (stacktrace == null) {
-                Log.logAndDisplay(LogLevel.INFO, mDeviceSerial, String.format("%s %s",
-                        name, result.getResultStatus()));
-            } else {
-                Log.logAndDisplay(LogLevel.INFO, mDeviceSerial, String.format("%s %s\n%s",
-                        name, result.getResultStatus(), stacktrace));
-            }
+            mCurrentResult.passed(report);
         }
     }
 
@@ -203,7 +194,7 @@ public class ResultReporter implements ITestInvocationListener {
      */
     @Override
     public void testIgnored(TestIdentifier test) {
-        Log.d(mDeviceSerial, String.format("ResultReporter.testIgnored(%s)", test.toString()));
+        Log.d(mDeviceSerial, String.format("ResultReporter.testIgnored(%s)", test));
         // ignore
     }
 
@@ -212,10 +203,9 @@ public class ResultReporter implements ITestInvocationListener {
      */
     @Override
     public void testFailed(TestIdentifier test, String trace) {
-        String name = test.toString();
-        Log.d(mDeviceSerial, String.format("ResultReporter.testFailed(%s, %s)", name, trace));
+        Log.d(mDeviceSerial, String.format("ResultReporter.testFailed(%s, %s)", test, trace));
         if (!mIsDeviceInfoRun) {
-            mCurrentModuleResult.reportTestFailure(name, trace);
+            mCurrentResult.failed(trace);
         }
     }
 
@@ -224,11 +214,10 @@ public class ResultReporter implements ITestInvocationListener {
      */
     @Override
     public void testAssumptionFailure(TestIdentifier test, String trace) {
-        String name = test.toString();
-        Log.d(mDeviceSerial, String.format("ResultReporter.testAssumptionFailure(%s, %s)", name,
+        Log.d(mDeviceSerial, String.format("ResultReporter.testAssumptionFailure(%s, %s)", test,
                 trace));
         if (!mIsDeviceInfoRun) {
-            mCurrentModuleResult.reportTestFailure(name, trace);
+            mCurrentResult.failed(trace);
         }
     }
 
@@ -247,7 +236,7 @@ public class ResultReporter implements ITestInvocationListener {
     @Override
     public void testRunEnded(long elapsedTime, Map<String, String> metrics) {
         Log.d(mDeviceSerial, String.format("ResultReporter.testRunEnded(%d, %s)", elapsedTime,
-                metrics.toString()));
+                metrics));
         if (mIsDeviceInfoRun) {
             mResult.populateDeviceInfoMetrics(metrics);
         }
@@ -300,8 +289,7 @@ public class ResultReporter implements ITestInvocationListener {
      */
     @Override
     public void invocationFailed(Throwable cause) {
-        Log.d(mDeviceSerial, String.format("ResultReporter.invocationFailed(%s)",
-                cause.toString()));
+        Log.d(mDeviceSerial, String.format("ResultReporter.invocationFailed(%s)", cause));
         mInitialized = false;
         // Clean up
         mResultDir.delete();
@@ -315,8 +303,8 @@ public class ResultReporter implements ITestInvocationListener {
      */
     @Override
     public void testLog(String name, LogDataType type, InputStreamSource stream) {
-        Log.d(mDeviceSerial, String.format("ResultReporter.testLog(%s, %s, %s)", name,
-                type.toString(), stream.toString()));
+        Log.d(mDeviceSerial, String.format("ResultReporter.testLog(%s, %s, %s)", name, type,
+                stream));
         try {
             LogFileSaver saver = new LogFileSaver(mLogDir);
             File logFile = saver.saveAndZipLogData(name, type, stream.createInputStream());

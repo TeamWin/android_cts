@@ -16,12 +16,6 @@
 
 package com.android.compatibility.common.tradefed.build;
 
-import static com.android.compatibility.common.tradefed.build.CompatibilityBuildProviderTest.BUILD_ID;
-import static com.android.compatibility.common.tradefed.build.CompatibilityBuildProviderTest.SUITE_FULL_NAME;
-import static com.android.compatibility.common.tradefed.build.CompatibilityBuildProviderTest.SUITE_NAME;
-import static com.android.compatibility.common.tradefed.build.CompatibilityBuildProviderTest.SUITE_PLAN;
-import static com.android.compatibility.common.tradefed.build.CompatibilityBuildProviderTest.SUITE_VERSION;
-
 import com.android.tradefed.util.FileUtil;
 
 import junit.framework.TestCase;
@@ -31,9 +25,14 @@ import java.io.FileNotFoundException;
 
 public class CompatibilityBuildInfoTest extends TestCase {
 
-    public static final String ROOT_DIR_NAME = "root";
-    public static final String BASE_DIR_NAME = "android-tests";
-    public static final String TESTCASES = "testcases";
+    private static final String BUILD_ID = "2";
+    private static final String SUITE_NAME = "TESTS";
+    private static final String SUITE_FULL_NAME = "Compatibility Tests";
+    private static final String SUITE_VERSION = "1";
+    private static final String SUITE_PLAN = "foobar";
+    private static final String ROOT_DIR_NAME = "root";
+    private static final String BASE_DIR_NAME = "android-tests";
+    private static final String TESTCASES = "testcases";
 
     private File mRoot = null;
     private File mBase = null;

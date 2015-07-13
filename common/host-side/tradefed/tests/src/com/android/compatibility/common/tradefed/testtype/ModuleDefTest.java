@@ -16,11 +16,7 @@
 
 package com.android.compatibility.common.tradefed.testtype;
 
-import static com.android.compatibility.common.tradefed.result.ModuleResultTest.ABI;
-import static com.android.compatibility.common.tradefed.result.ModuleResultTest.ID;
-import static com.android.compatibility.common.tradefed.result.ModuleResultTest.NAME;
-import static com.android.compatibility.common.tradefed.result.ModuleResultTest.TEST_1;
-
+import com.android.compatibility.common.util.AbiUtils;
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.result.ITestInvocationListener;
 import com.android.tradefed.targetprep.ITargetPreparer;
@@ -34,6 +30,13 @@ import java.util.List;
 import java.util.regex.Pattern;
 
 public class ModuleDefTest extends TestCase {
+
+    private static final String NAME = "ModuleName";
+    private static final String ABI = "mips64";
+    private static final String ID = AbiUtils.createId(ABI, NAME);
+    private static final String CLASS = "android.test.FoorBar";
+    private static final String METHOD_1 = "testBlah1";
+    private static final String TEST_1 = String.format("%s#%s", CLASS, METHOD_1);
 
     public void testAccessors() throws Exception {
         IAbi abi = new Abi(ABI, "");

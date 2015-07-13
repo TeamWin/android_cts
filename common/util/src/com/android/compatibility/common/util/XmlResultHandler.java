@@ -48,6 +48,7 @@ public class XmlResultHandler {
 
     // XML constants
     private static final String ABI_ATTR = "abi";
+    private static final String CASE_TAG = "TestCase";
     private static final String DEVICE_ATTR = "device";
     private static final String END_TIME_ATTR = "end";
     private static final String FAILED_ATTR = "failed";
@@ -105,32 +106,38 @@ public class XmlResultHandler {
                     IModuleResult module = invocation.getOrCreateModule(id);
                     module.setDeviceSerial(parser.getAttributeValue(NS, DEVICE_ATTR));
                     while (parser.nextTag() == XmlPullParser.START_TAG) {
-                        parser.require(XmlPullParser.START_TAG, NS, TEST_TAG);
-                        String testName = parser.getAttributeValue(NS, NAME_ATTR);
-                        IResult test = module.getOrCreateResult(testName);
-                        String result = parser.getAttributeValue(NS, RESULT_ATTR);
-                        test.setResultStatus(TestStatus.getStatus(result));
-                        test.setStartTime(parseTimeStamp(
-                                parser.getAttributeValue(NS, START_TIME_ATTR)));
-                        test.setEndTime(parseTimeStamp(
-                                parser.getAttributeValue(NS, END_TIME_ATTR)));
-                        if (parser.nextTag() == XmlPullParser.START_TAG) {
-                            if (parser.getName().equals(FAILURE_TAG)) {
-                                test.setMessage(parser.getAttributeValue(NS, MESSAGE_ATTR));
-                                if (parser.nextTag() == XmlPullParser.START_TAG) {
-                                    parser.require(XmlPullParser.START_TAG, NS, STACK_TAG);
-                                    test.setStackTrace(parser.nextText());
-                                    parser.require(XmlPullParser.END_TAG, NS, STACK_TAG);
+                        parser.require(XmlPullParser.START_TAG, NS, CASE_TAG);
+                        String caseName = parser.getAttributeValue(NS, NAME_ATTR);
+                        ICaseResult testCase = module.getOrCreateResult(caseName);
+                        while (parser.nextTag() == XmlPullParser.START_TAG) {
+                            parser.require(XmlPullParser.START_TAG, NS, TEST_TAG);
+                            String testName = parser.getAttributeValue(NS, NAME_ATTR);
+                            ITestResult test = testCase.getOrCreateResult(testName);
+                            String result = parser.getAttributeValue(NS, RESULT_ATTR);
+                            test.setResultStatus(TestStatus.getStatus(result));
+                            test.setStartTime(parseTimeStamp(
+                                    parser.getAttributeValue(NS, START_TIME_ATTR)));
+                            test.setEndTime(parseTimeStamp(
+                                    parser.getAttributeValue(NS, END_TIME_ATTR)));
+                            if (parser.nextTag() == XmlPullParser.START_TAG) {
+                                if (parser.getName().equals(FAILURE_TAG)) {
+                                    test.setMessage(parser.getAttributeValue(NS, MESSAGE_ATTR));
+                                    if (parser.nextTag() == XmlPullParser.START_TAG) {
+                                        parser.require(XmlPullParser.START_TAG, NS, STACK_TAG);
+                                        test.setStackTrace(parser.nextText());
+                                        parser.require(XmlPullParser.END_TAG, NS, STACK_TAG);
+                                        parser.nextTag();
+                                    }
+                                    parser.require(XmlPullParser.END_TAG, NS, FAILURE_TAG);
+                                    parser.nextTag();
+                                } else {
+                                    test.setReportLog(ReportLog.parse(parser));
                                     parser.nextTag();
                                 }
-                                parser.require(XmlPullParser.END_TAG, NS, FAILURE_TAG);
-                                parser.nextTag();
-                            } else {
-                                test.setReportLog(ReportLog.parse(parser));
-                                parser.nextTag();
                             }
+                            parser.require(XmlPullParser.END_TAG, NS, TEST_TAG);
                         }
-                        parser.require(XmlPullParser.END_TAG, NS, TEST_TAG);
+                        parser.require(XmlPullParser.END_TAG, NS, CASE_TAG);
                     }
                     parser.require(XmlPullParser.END_TAG, NS, MODULE_TAG);
                 }
@@ -200,26 +207,31 @@ public class XmlResultHandler {
             serializer.attribute(NS, NAME_ATTR, module.getName());
             serializer.attribute(NS, ABI_ATTR, module.getAbi());
             serializer.attribute(NS, DEVICE_ATTR, module.getDeviceSerial());
-            for (IResult r : module.getResults()) {
-                serializer.startTag(NS, TEST_TAG);
-                serializer.attribute(NS, RESULT_ATTR, r.getResultStatus().getValue());
-                serializer.attribute(NS, NAME_ATTR, r.getName());
-                serializer.attribute(NS, START_TIME_ATTR, formatTimeStamp(r.getStartTime()));
-                serializer.attribute(NS, END_TIME_ATTR, formatTimeStamp(r.getEndTime()));
-                String message = r.getMessage();
-                if (message != null) {
-                    serializer.startTag(NS, FAILURE_TAG);
-                    serializer.attribute(NS, MESSAGE_ATTR, message);
-                    String stackTrace = r.getStackTrace();
-                    if (stackTrace != null) {
-                        serializer.startTag(NS, STACK_TAG);
-                        serializer.text(stackTrace);
-                        serializer.endTag(NS, STACK_TAG);
+            for (ICaseResult cr : module.getResults()) {
+                serializer.startTag(NS, CASE_TAG);
+                serializer.attribute(NS, NAME_ATTR, cr.getName());
+                for (ITestResult r : cr.getResults()) {
+                    serializer.startTag(NS, TEST_TAG);
+                    serializer.attribute(NS, RESULT_ATTR, r.getResultStatus().getValue());
+                    serializer.attribute(NS, NAME_ATTR, r.getName());
+                    serializer.attribute(NS, START_TIME_ATTR, formatTimeStamp(r.getStartTime()));
+                    serializer.attribute(NS, END_TIME_ATTR, formatTimeStamp(r.getEndTime()));
+                    String message = r.getMessage();
+                    if (message != null) {
+                        serializer.startTag(NS, FAILURE_TAG);
+                        serializer.attribute(NS, MESSAGE_ATTR, message);
+                        String stackTrace = r.getStackTrace();
+                        if (stackTrace != null) {
+                            serializer.startTag(NS, STACK_TAG);
+                            serializer.text(stackTrace);
+                            serializer.endTag(NS, STACK_TAG);
+                        }
+                        serializer.endTag(NS, FAILURE_TAG);
                     }
-                    serializer.endTag(NS, FAILURE_TAG);
+                    ReportLog.serialize(serializer, r.getReportLog());
+                    serializer.endTag(NS, TEST_TAG);
                 }
-                ReportLog.serialize(serializer, r.getReportLog());
-                serializer.endTag(NS, TEST_TAG);
+                serializer.endTag(NS, CASE_TAG);
             }
             serializer.endTag(NS, MODULE_TAG);
         }

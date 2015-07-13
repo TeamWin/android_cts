@@ -54,12 +54,8 @@ public class XmlResultHandlerTest extends TestCase {
     private static final String METHOD_2 = "testBlah2";
     private static final String METHOD_3 = "testBlah3";
     private static final String METHOD_4 = "testBlah4";
-    private static final String TEST_1 = String.format("%s#%s", CLASS_A, METHOD_1);
-    private static final String TEST_2 = String.format("%s#%s", CLASS_A, METHOD_2);
-    private static final String TEST_3 = String.format("%s#%s", CLASS_B, METHOD_3);
-    private static final String TEST_4 = String.format("%s#%s", CLASS_B, METHOD_4);
-    private static final String SUMMARY_SOURCE = String.format("%s:20", TEST_4);
-    private static final String DETAILS_SOURCE = String.format("%s:18", TEST_4);
+    private static final String SUMMARY_SOURCE = String.format("%s#%s:20", CLASS_B, METHOD_4);
+    private static final String DETAILS_SOURCE = String.format("%s#%s:18", CLASS_B, METHOD_4);
     private static final String SUMMARY_MESSAGE = "Headline";
     private static final double SUMMARY_VALUE = 9001;
     private static final String DETAILS_MESSAGE = "Deats";
@@ -88,31 +84,35 @@ public class XmlResultHandlerTest extends TestCase {
             "  <Module name=\"%s\" abi=\"%s\" device=\"%s\">\n" +
             "%s" +
             "  </Module>\n";
+    private static final String XML_CASE =
+            "    <TestCase name=\"%s\">\n" +
+            "%s" +
+            "    </TestCase>\n";
     private static final String XML_TEST_PASS =
-            "    <Test result=\"pass\" name=\"%s\" start=\"%s\" end=\"%s\" />\n";
+            "      <Test result=\"pass\" name=\"%s\" start=\"%s\" end=\"%s\" />\n";
     private static final String XML_TEST_NOT_EXECUTED =
-            "    <Test result=\"not-executed\" name=\"%s\" start=\"%s\" end=\"%s\" />\n";
+            "      <Test result=\"not-executed\" name=\"%s\" start=\"%s\" end=\"%s\" />\n";
     private static final String XML_TEST_FAIL =
-            "    <Test result=\"fail\" name=\"%s\" start=\"%s\" end=\"%s\" >\n" +
-            "      <Failure message=\"%s\">\n" +
-            "        <StackTrace>%s</StackTrace>\n" +
-            "      </Failure>\n" +
-            "    </Test>\n";
+            "      <Test result=\"fail\" name=\"%s\" start=\"%s\" end=\"%s\" >\n" +
+            "        <Failure message=\"%s\">\n" +
+            "          <StackTrace>%s</StackTrace>\n" +
+            "        </Failure>\n" +
+            "      </Test>\n";
     private static final String XML_TEST_RESULT =
-            "    <Test result=\"pass\" name=\"%s\" start=\"%s\" end=\"%s\">\n" +
-            "      <Summary>\n" +
-            "        <Metric source=\"%s\" message=\"%s\" score-type=\"%s\" score-unit=\"%s\">\n" +
-            "           <Value>%s</Value>\n" +
-            "        </Metric>\n" +
-            "      </Summary>\n" +
-            "      <Detail>\n" +
-            "        <Metric source=\"%s\" message=\"%s\" score-type=\"%s\" score-unit=\"%s\">\n" +
-            "          <Value>%s</Value>\n" +
-            "          <Value>%s</Value>\n" +
-            "          <Value>%s</Value>\n" +
-            "        </Metric>\n" +
-            "      </Detail>\n" +
-            "    </Test>\n";
+            "      <Test result=\"pass\" name=\"%s\" start=\"%s\" end=\"%s\">\n" +
+            "        <Summary>\n" +
+            "          <Metric source=\"%s\" message=\"%s\" score-type=\"%s\" score-unit=\"%s\">\n" +
+            "             <Value>%s</Value>\n" +
+            "          </Metric>\n" +
+            "        </Summary>\n" +
+            "        <Detail>\n" +
+            "          <Metric source=\"%s\" message=\"%s\" score-type=\"%s\" score-unit=\"%s\">\n" +
+            "            <Value>%s</Value>\n" +
+            "            <Value>%s</Value>\n" +
+            "            <Value>%s</Value>\n" +
+            "          </Metric>\n" +
+            "        </Detail>\n" +
+            "      </Test>\n";
     private File resultsDir = null;
     private File resultDir = null;
 
@@ -135,24 +135,26 @@ public class XmlResultHandlerTest extends TestCase {
         result.setTestPlan(SUITE_PLAN);
         IModuleResult moduleA = result.getOrCreateModule(ID_A);
         moduleA.setDeviceSerial(DEVICE_A);
-        IResult moduleATest1 = moduleA.getOrCreateResult(TEST_1);
+        ICaseResult moduleACase = moduleA.getOrCreateResult(CLASS_A);
+        ITestResult moduleATest1 = moduleACase.getOrCreateResult(METHOD_1);
         moduleATest1.setStartTime(START_MS);
         moduleATest1.setResultStatus(TestStatus.PASS);
         moduleATest1.setEndTime(END_MS);
-        IResult moduleATest2 = moduleA.getOrCreateResult(TEST_2);
+        ITestResult moduleATest2 = moduleACase.getOrCreateResult(METHOD_2);
         moduleATest2.setStartTime(START_MS);
         moduleATest2.setResultStatus(TestStatus.NOT_EXECUTED);
         moduleATest2.setEndTime(END_MS);
 
         IModuleResult moduleB = result.getOrCreateModule(ID_B);
         moduleB.setDeviceSerial(DEVICE_B);
-        IResult moduleBTest3 = moduleB.getOrCreateResult(TEST_3);
+        ICaseResult moduleBCase = moduleB.getOrCreateResult(CLASS_B);
+        ITestResult moduleBTest3 = moduleBCase.getOrCreateResult(METHOD_3);
         moduleBTest3.setStartTime(START_MS);
         moduleBTest3.setResultStatus(TestStatus.FAIL);
         moduleBTest3.setMessage(MESSAGE);
         moduleBTest3.setStackTrace(STACK_TRACE);
         moduleBTest3.setEndTime(END_MS);
-        IResult moduleBTest4 = moduleB.getOrCreateResult(TEST_4);
+        ITestResult moduleBTest4 = moduleBCase.getOrCreateResult(METHOD_4);
         moduleBTest4.setStartTime(START_MS);
         moduleBTest4.setResultStatus(TestStatus.PASS);
         ReportLog report = new ReportLog();
@@ -184,19 +186,21 @@ public class XmlResultHandlerTest extends TestCase {
             File resultFile = new File(resultDir, XmlResultHandler.TEST_RESULT_FILE_NAME);
             writer = new FileWriter(resultFile);
             String summary = String.format(XML_SUMMARY, 2, 1, 1);
-            String moduleATest1 = String.format(XML_TEST_PASS, TEST_1, START, END);
-            String moduleATest2 = String.format(XML_TEST_NOT_EXECUTED, TEST_2, START, END);
+            String moduleATest1 = String.format(XML_TEST_PASS, METHOD_1, START, END);
+            String moduleATest2 = String.format(XML_TEST_NOT_EXECUTED, METHOD_2, START, END);
             String moduleATests = String.format(JOIN, moduleATest1, moduleATest2);
-            String moduleA = String.format(XML_MODULE, NAME_A, ABI, DEVICE_A, moduleATests);
-            String moduleBTest3 = String.format(XML_TEST_FAIL, TEST_3, START, END, MESSAGE, STACK_TRACE);
-            String moduleBTest4 = String.format(XML_TEST_RESULT, TEST_4, START, END,
+            String moduleACases = String.format(XML_CASE, CLASS_A, moduleATests);
+            String moduleA = String.format(XML_MODULE, NAME_A, ABI, DEVICE_A, moduleACases);
+            String moduleBTest3 = String.format(XML_TEST_FAIL, METHOD_3, START, END, MESSAGE, STACK_TRACE);
+            String moduleBTest4 = String.format(XML_TEST_RESULT, METHOD_4, START, END,
                     SUMMARY_SOURCE, SUMMARY_MESSAGE, ResultType.HIGHER_BETTER.toReportString(),
                     ResultUnit.SCORE.toReportString(), Double.toString(SUMMARY_VALUE),
                     DETAILS_SOURCE, DETAILS_MESSAGE, ResultType.LOWER_BETTER.toReportString(),
                     ResultUnit.MS.toReportString(), Double.toString(DETAILS_VALUE_1),
                     Double.toString(DETAILS_VALUE_2), Double.toString(DETAILS_VALUE_3));
             String moduleBTests = String.format(JOIN, moduleBTest3, moduleBTest4);
-            String moduleB = String.format(XML_MODULE, NAME_B, ABI, DEVICE_B, moduleBTests);
+            String moduleBCases = String.format(XML_CASE, CLASS_B, moduleBTests);
+            String moduleB = String.format(XML_MODULE, NAME_B, ABI, DEVICE_B, moduleBCases);
             String modules = String.format(JOIN, moduleA, moduleB);
             String hostName = "";
             try {
@@ -242,10 +246,14 @@ public class XmlResultHandlerTest extends TestCase {
         assertEquals("Incorrect name", NAME_A, moduleA.getName());
         assertEquals("Incorrect ID", ID_A, moduleA.getId());
         assertEquals("Incorrect device", DEVICE_A, moduleA.getDeviceSerial());
-        List<IResult> moduleAResults = moduleA.getResults();
+        List<ICaseResult> moduleACases = moduleA.getResults();
+        assertEquals("Expected 1 test case", 1, moduleACases.size());
+        ICaseResult moduleACase = moduleACases.get(0);
+        assertEquals("Incorrect name", CLASS_A, moduleACase.getName());
+        List<ITestResult> moduleAResults = moduleACase.getResults();
         assertEquals("Expected 2 results", 2, moduleAResults.size());
-        IResult moduleATest1 = moduleAResults.get(0);
-        assertEquals("Incorrect name", TEST_1, moduleATest1.getName());
+        ITestResult moduleATest1 = moduleAResults.get(0);
+        assertEquals("Incorrect name", METHOD_1, moduleATest1.getName());
         assertEquals("Incorrect start time", START_MS, moduleATest1.getStartTime());
         assertEquals("Incorrect end time", END_MS, moduleATest1.getEndTime());
         assertEquals("Incorrect result", TestStatus.PASS, moduleATest1.getResultStatus());
@@ -253,8 +261,8 @@ public class XmlResultHandlerTest extends TestCase {
         assertNull("Unexpected message", moduleATest1.getMessage());
         assertNull("Unexpected stack trace", moduleATest1.getStackTrace());
         assertNull("Unexpected report", moduleATest1.getReportLog());
-        IResult moduleATest2 = moduleAResults.get(1);
-        assertEquals("Incorrect name", TEST_2, moduleATest2.getName());
+        ITestResult moduleATest2 = moduleAResults.get(1);
+        assertEquals("Incorrect name", METHOD_2, moduleATest2.getName());
         assertEquals("Incorrect start time", START_MS, moduleATest2.getStartTime());
         assertEquals("Incorrect end time", END_MS, moduleATest2.getEndTime());
         assertEquals("Incorrect result", TestStatus.NOT_EXECUTED, moduleATest2.getResultStatus());
@@ -271,10 +279,14 @@ public class XmlResultHandlerTest extends TestCase {
         assertEquals("Incorrect name", NAME_B, moduleB.getName());
         assertEquals("Incorrect ID", ID_B, moduleB.getId());
         assertEquals("Incorrect device", DEVICE_B, moduleB.getDeviceSerial());
-        List<IResult> moduleBResults = moduleB.getResults();
+        List<ICaseResult> moduleBCases = moduleB.getResults();
+        assertEquals("Expected 1 test case", 1, moduleBCases.size());
+        ICaseResult moduleBCase = moduleBCases.get(0);
+        assertEquals("Incorrect name", CLASS_B, moduleBCase.getName());
+        List<ITestResult> moduleBResults = moduleBCase.getResults();
         assertEquals("Expected 2 results", 2, moduleBResults.size());
-        IResult moduleBTest3 = moduleBResults.get(0);
-        assertEquals("Incorrect name", TEST_3, moduleBTest3.getName());
+        ITestResult moduleBTest3 = moduleBResults.get(0);
+        assertEquals("Incorrect name", METHOD_3, moduleBTest3.getName());
         assertEquals("Incorrect start time", START_MS, moduleBTest3.getStartTime());
         assertEquals("Incorrect end time", END_MS, moduleBTest3.getEndTime());
         assertEquals("Incorrect result", TestStatus.FAIL, moduleBTest3.getResultStatus());
@@ -282,8 +294,8 @@ public class XmlResultHandlerTest extends TestCase {
         assertEquals("Incorrect message", MESSAGE, moduleBTest3.getMessage());
         assertEquals("Incorrect stack trace", STACK_TRACE, moduleBTest3.getStackTrace());
         assertNull("Unexpected report", moduleBTest3.getReportLog());
-        IResult moduleBTest4 = moduleBResults.get(1);
-        assertEquals("Incorrect name", TEST_4, moduleBTest4.getName());
+        ITestResult moduleBTest4 = moduleBResults.get(1);
+        assertEquals("Incorrect name", METHOD_4, moduleBTest4.getName());
         assertEquals("Incorrect start time", START_MS, moduleBTest4.getStartTime());
         assertEquals("Incorrect end time", END_MS, moduleBTest4.getEndTime());
         assertEquals("Incorrect result", TestStatus.PASS, moduleBTest4.getResultStatus());

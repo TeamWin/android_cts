@@ -23,12 +23,12 @@ import junit.framework.TestCase;
 
 public class CompatibilityBuildProviderTest extends TestCase {
 
-    public static final String ROOT_PROPERTY = "TESTS_ROOT";
-    public static final String BUILD_ID = "2";
-    public static final String SUITE_NAME = "TESTS";
-    public static final String SUITE_FULL_NAME = "Compatibility Tests";
-    public static final String SUITE_VERSION = "1";
-    public static final String SUITE_PLAN = "foobar";
+    private static final String ROOT_PROPERTY = "TESTS_ROOT";
+    private static final String BUILD_ID = "2";
+    private static final String SUITE_NAME = "TESTS";
+    private static final String SUITE_FULL_NAME = "Compatibility Tests";
+    private static final String SUITE_VERSION = "1";
+    private static final String SUITE_PLAN = "foobar";
 
     // Make sure the mock is in the ClassLoader
     @SuppressWarnings("unused")

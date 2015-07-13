@@ -21,9 +21,10 @@ import com.android.compatibility.common.tradefed.result.IModuleListener;
 import com.android.compatibility.common.tradefed.result.InvocationResultRepo;
 import com.android.compatibility.common.tradefed.result.ModuleListener;
 import com.android.compatibility.common.util.AbiUtils;
+import com.android.compatibility.common.util.ICaseResult;
 import com.android.compatibility.common.util.IInvocationResult;
 import com.android.compatibility.common.util.IModuleResult;
-import com.android.compatibility.common.util.IResult;
+import com.android.compatibility.common.util.ITestResult;
 import com.android.compatibility.common.util.TestFilter;
 import com.android.compatibility.common.util.TestStatus;
 import com.android.ddmlib.Log.LogLevel;
@@ -281,11 +282,13 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
             }
             // Append each test that failed or was not executed to the filters
             for (IModuleResult module : result.getModules()) {
-                for (TestStatus status : RETRY_TEST_STATUS) {
-                    for (IResult r : module.getResults(status)) {
-                        // Create the filter for the test to be run.
-                        mFilters.add(new TestFilter(
-                                module.getAbi(), module.getName(), r.getName(), true).toString());
+                for (ICaseResult cr : module.getResults()) {
+                    for (TestStatus status : RETRY_TEST_STATUS) {
+                        for (ITestResult r : cr.getResults(status)) {
+                            // Create the filter for the test to be run.
+                            mFilters.add(new TestFilter(module.getAbi(), module.getName(),
+                                    r.getFullName(), true).toString());
+                        }
                     }
                 }
             }

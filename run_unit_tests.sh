@@ -69,16 +69,18 @@ TEST_CLASSES="
     com.android.compatibility.common.tradefed.build.CompatibilityBuildInfoTest\
     com.android.compatibility.common.tradefed.build.CompatibilityBuildProviderTest\
     com.android.compatibility.common.tradefed.command.CompatibilityConsoleTest\
-    com.android.compatibility.common.tradefed.result.ModuleResultTest\
     com.android.compatibility.common.tradefed.result.ResultReporterTest\
     com.android.compatibility.common.tradefed.testtype.CompatibilityTestTest\
     com.android.compatibility.common.tradefed.testtype.ModuleDefTest\
     com.android.compatibility.common.tradefed.testtype.ModuleRepoTest\
     com.android.compatibility.common.util.AbiUtilsTest\
+    com.android.compatibility.common.util.CaseResultTest\
     com.android.compatibility.common.util.MetricsStoreTest\
     com.android.compatibility.common.util.MetricsXmlSerializerTest\
+    com.android.compatibility.common.util.ModuleResultTest\
     com.android.compatibility.common.util.ReportLogTest\
     com.android.compatibility.common.util.TestFilterTest\
+    com.android.compatibility.common.util.TestResultTest\
     com.android.compatibility.common.util.XmlResultHandlerTest\
     com.android.compatibility.tradefed.CtsTradefedTest"
 

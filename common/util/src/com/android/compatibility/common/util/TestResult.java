@@ -18,8 +18,9 @@ package com.android.compatibility.common.util;
 /**
  * Represents a single test result.
  */
-public class Result implements IResult {
+public class TestResult implements ITestResult {
 
+    private final ICaseResult mParent;
     private final String mTestName;
     private long mStartTime;
     private long mEndTime;
@@ -31,9 +32,10 @@ public class Result implements IResult {
     private String mLog;
 
     /**
-     * Create a {@link Result} for the given test name.
+     * Create a {@link TestResult} for the given test name.
      */
-    public Result(String name) {
+    public TestResult(ICaseResult parent, String name) {
+        mParent = parent;
         mTestName = name;
         mResult = TestStatus.NOT_EXECUTED;
         mStartTime = System.currentTimeMillis();
@@ -45,6 +47,14 @@ public class Result implements IResult {
     @Override
     public String getName() {
         return mTestName;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public String getFullName() {
+        return String.format("%s#%s", mParent.getName(), getName());
     }
 
     /**
@@ -180,7 +190,36 @@ public class Result implements IResult {
      * {@inheritDoc}
      */
     @Override
-    public int compareTo(IResult another) {
+    public void failed(String trace) {
+        setResultStatus(TestStatus.FAIL);
+        int index = trace.indexOf('\n');
+        if (index < 0) {
+            // Trace is a single line, just set the message to be the same as the stacktrace.
+            setMessage(trace);
+        } else {
+            setMessage(trace.substring(0, index));
+        }
+        setStackTrace(trace);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void passed(ReportLog report) {
+        if (!getResultStatus().equals(TestStatus.FAIL)) {
+            setResultStatus(TestStatus.PASS);
+            if (report != null) {
+                setReportLog(report);
+            }
+        }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public int compareTo(ITestResult another) {
         return getName().compareTo(another.getName());
     }
 
