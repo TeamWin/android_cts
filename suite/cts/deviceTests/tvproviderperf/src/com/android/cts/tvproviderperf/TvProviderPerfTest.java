@@ -171,7 +171,7 @@ public class TvProviderPerfTest extends CtsAndroidTestCase {
                 }
             });
         }
-        getReportLog().printArray("Elapsed time for query (a channel): ",
+        report.addValues("Elapsed time for query (a channel): ",
                 applyBatchTimes, ResultType.LOWER_BETTER, ResultUnit.MS);
         averages[3] = Stat.getAverage(applyBatchTimes);
 
@@ -337,7 +337,7 @@ public class TvProviderPerfTest extends CtsAndroidTestCase {
                 }
             });
         }
-        getReportLog().printArray("Elapsed time for query (a program): ",
+        report.addValues("Elapsed time for query (a program): ",
                 applyBatchTimes, ResultType.LOWER_BETTER, ResultUnit.MS);
         averages[4] = Stat.getAverage(applyBatchTimes);
 
