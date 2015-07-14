@@ -133,7 +133,6 @@ public class GLPrimitiveBenchmark extends ActivityInstrumentationTestCase2<GLPri
             // TODO: maybe standard deviation / RMSE will be useful?
 
             DeviceReportLog report = new DeviceReportLog();
-            report.addValues("FPS Values", fpsValues, ResultType.HIGHER_BETTER, ResultUnit.FPS);
             report.setSummary("Average FPS", score, ResultType.HIGHER_BETTER, ResultUnit.SCORE);
             report.submit(getInstrumentation());
         }

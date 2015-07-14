@@ -69,15 +69,14 @@ public class GLReferenceBenchmark extends ActivityInstrumentationTestCase2<GLRef
 
             DeviceReportLog report = new DeviceReportLog();
             report.addValues("Set Up Times", setUpTimes, ResultType.LOWER_BETTER, ResultUnit.MS);
-            report.addValues("Update Times", updateTimes, ResultType.LOWER_BETTER, ResultUnit.MS);
             report.addValue("Update Time Average", updateAverage, ResultType.LOWER_BETTER,
                     ResultUnit.MS);
-            report.addValues("Render Times", renderTimes, ResultType.LOWER_BETTER, ResultUnit.MS);
             report.addValue("Render Time Average", renderAverage, ResultType.LOWER_BETTER,
                     ResultUnit.MS);
             totalTime = setUpTimes[0] + setUpTimes[1] + setUpTimes[2] + setUpTimes[3] +
                     updateAverage + renderAverage;
-            report.setSummary("Total Time", totalTime, ResultType.LOWER_BETTER, ResultUnit.MS);
+            report.setSummary("Total Time Average", totalTime, ResultType.LOWER_BETTER,
+                    ResultUnit.MS);
             report.submit(getInstrumentation());
         }
     }
