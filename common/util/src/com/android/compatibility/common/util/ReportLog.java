@@ -26,6 +26,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -50,6 +51,9 @@ public class ReportLog implements Serializable {
     private final List<Metric> mDetails = new ArrayList<>();
 
     public static class Metric implements Serializable {
+        private static final int MAX_SOURCE_LENGTH = 200;
+        private static final int MAX_MESSAGE_LENGTH = 200;
+        private static final int MAX_NUM_VALUES = 1000;
         private String mSource;
         private String mMessage;
         private double[] mValues;
@@ -72,9 +76,27 @@ public class ReportLog implements Serializable {
          * @param unit Represents the unit in which the values are (eg. Milliseconds)
          */
         Metric(String source, String message, double[] values, ResultType type, ResultUnit unit) {
-            mSource = source;
-            mMessage = message;
-            mValues = values;
+            int sourceLength = source.length();
+            if (sourceLength > MAX_SOURCE_LENGTH) {
+                // Substring to the end
+                mSource = source.substring(sourceLength - MAX_SOURCE_LENGTH);
+            } else {
+                mSource = source;
+            }
+            int messageLength = message.length();
+            if (messageLength > MAX_MESSAGE_LENGTH) {
+                // Substring from the start
+                mMessage = message.substring(0, MAX_MESSAGE_LENGTH);
+            } else {
+                mMessage = message;
+            }
+            int valuesLength = values.length;
+            if (valuesLength > MAX_NUM_VALUES) {
+                // Subarray from the start
+                mValues = Arrays.copyOf(values, MAX_NUM_VALUES);
+            } else {
+                mValues = values;
+            }
             mType = type;
             mUnit = unit;
         }
@@ -148,6 +170,9 @@ public class ReportLog implements Serializable {
 
     /**
      * Adds an array of metrics to the report.
+     *
+     * NOTE: messages over {@value Metric#MAX_MESSAGE_LENGTH} chars will be trimmed.
+     * NOTE: arrays with length over {@value Metric#MAX_NUM_VALUES} will be truncated.
      */
     public void addValues(String message, double[] values, ResultType type, ResultUnit unit) {
         addMetric(new Metric(Stacktrace.getTestCallerClassMethodNameLineNumber(),
@@ -156,6 +181,10 @@ public class ReportLog implements Serializable {
 
     /**
      * Adds an array of metrics to the report.
+     *
+     * NOTE: sources over {@value Metric#MAX_SOURCE_LENGTH} chars will be trimmed.
+     * NOTE: messages over {@value Metric#MAX_MESSAGE_LENGTH} chars will be trimmed.
+     * NOTE: arrays with length over {@value Metric#MAX_NUM_VALUES} will be truncated.
      */
     public void addValues(String source, String message, double[] values, ResultType type,
             ResultUnit unit) {
@@ -164,6 +193,8 @@ public class ReportLog implements Serializable {
 
     /**
      * Adds a metric to the report.
+     *
+     * NOTE: messages over {@value Metric#MAX_MESSAGE_LENGTH} chars will be trimmed.
      */
     public void addValue(String message, double value, ResultType type, ResultUnit unit) {
         addMetric(new Metric(Stacktrace.getTestCallerClassMethodNameLineNumber(), message,
@@ -172,6 +203,9 @@ public class ReportLog implements Serializable {
 
     /**
      * Adds a metric to the report.
+     *
+     * NOTE: sources over {@value Metric#MAX_SOURCE_LENGTH} chars will be trimmed.
+     * NOTE: messages over {@value Metric#MAX_MESSAGE_LENGTH} chars will be trimmed.
      */
     public void addValue(String source, String message, double value, ResultType type,
             ResultUnit unit) {
@@ -187,6 +221,8 @@ public class ReportLog implements Serializable {
 
     /**
      * Sets the summary of the report.
+     *
+     * NOTE: messages over {@value Metric#MAX_MESSAGE_LENGTH} chars will be trimmed.
      */
     public void setSummary(String message, double value, ResultType type, ResultUnit unit) {
         setSummary(new Metric(Stacktrace.getTestCallerClassMethodNameLineNumber(),
