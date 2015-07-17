@@ -258,8 +258,8 @@ class TestPackageResult extends AbstractXmlPullParser {
                 // host test should be checked into MetricsStore.
                 report = MetricsStore.removeResult(mDeviceSerial, getAbi(), test.toString());
             }
-            if (report != null) {
-                Test result = findTest(test);
+            Test result = findTest(test);
+            if (report != null && !result.getResult().equals(CtsTestStatus.FAIL)) {
                 result.setResultStatus(CtsTestStatus.PASS);
                 result.setReportLog(report);
             }
