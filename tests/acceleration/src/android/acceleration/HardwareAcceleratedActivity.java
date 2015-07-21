@@ -14,17 +14,7 @@
  * limitations under the License.
  */
 
-package android.acceleration.cts;
+package android.acceleration;
 
-import android.os.Bundle;
-import android.view.WindowManager;
-
-public class WindowFlagHardwareAcceleratedActivity extends BaseAcceleratedActivity {
-
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        getWindow().setFlags(WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED,
-                WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED);
-    }
+public class HardwareAcceleratedActivity extends BaseAcceleratedActivity {
 }

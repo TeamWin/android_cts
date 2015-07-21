@@ -16,6 +16,8 @@
 
 package android.acceleration.cts;
 
+import android.acceleration.AcceleratedView;
+import android.acceleration.BaseAcceleratedActivity;
 import android.app.ActivityManager;
 import android.content.Context;
 import android.content.pm.ConfigurationInfo;

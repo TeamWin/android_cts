@@ -16,6 +16,8 @@
 
 package android.acceleration.cts;
 
+import android.acceleration.WindowFlagHardwareAcceleratedActivity;
+
 /**
  * Test that uses an Activity with hardware acceleration enabled.
  */
