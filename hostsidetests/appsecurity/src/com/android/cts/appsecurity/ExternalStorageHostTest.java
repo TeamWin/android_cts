@@ -16,8 +16,8 @@
 
 package com.android.cts.appsecurity;
 
+import com.android.compatibility.common.util.AbiUtils;
 import com.android.cts.tradefed.build.CtsBuildHelper;
-import com.android.cts.util.AbiUtils;
 import com.android.ddmlib.Log;
 import com.android.tradefed.build.IBuildInfo;
 import com.android.tradefed.device.DeviceNotAvailableException;
