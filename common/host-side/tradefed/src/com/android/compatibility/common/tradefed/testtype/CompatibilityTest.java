@@ -188,7 +188,6 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
 
             for (int i = mLastModuleIndex; i < moduleCount; i++) {
                 IModuleDef module = mModules.get(i);
-                CLog.logAndDisplay(LogLevel.INFO, "Module: %s", module.getId());
                 module.setBuild(mBuild);
                 module.setDevice(mDevice);
                 module.run(listener);
