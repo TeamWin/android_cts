@@ -257,6 +257,10 @@ static jboolean android_security_cts_NativeCodeTest_doSysVipcTest(JNIEnv*, jobje
 {
     key_t key = 0x1a25;
 
+#if defined(__i386__) || (_MIPS_SIM == _MIPS_SIM_ABI32)
+    /* system call does not exist for x86 or mips 32 */
+    return true;
+#else
     /*
      * Not supported in bionic. Must directly invoke syscall
      * Only acceptable errno is ENOSYS: shmget syscall
@@ -264,6 +268,7 @@ static jboolean android_security_cts_NativeCodeTest_doSysVipcTest(JNIEnv*, jobje
      */
     return ((syscall(SYS_shmget, key, SHMEMSIZE, IPC_CREAT | 0666) == -1)
                 && (errno == ENOSYS));
+#endif
 }
 
 static JNINativeMethod gMethods[] = {
