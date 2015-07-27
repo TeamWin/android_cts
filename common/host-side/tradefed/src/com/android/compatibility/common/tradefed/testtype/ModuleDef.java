@@ -15,12 +15,27 @@
  */
 package com.android.compatibility.common.tradefed.testtype;
 
+import com.android.compatibility.common.tradefed.result.IModuleListener;
+import com.android.compatibility.common.tradefed.result.ModuleListener;
 import com.android.compatibility.common.util.AbiUtils;
+import com.android.tradefed.build.IBuildInfo;
+import com.android.tradefed.device.DeviceNotAvailableException;
+import com.android.tradefed.device.ITestDevice;
+import com.android.tradefed.log.LogUtil.CLog;
+import com.android.tradefed.result.ITestInvocationListener;
+import com.android.tradefed.targetprep.BuildError;
+import com.android.tradefed.targetprep.ITargetCleaner;
 import com.android.tradefed.targetprep.ITargetPreparer;
+import com.android.tradefed.targetprep.TargetSetupError;
 import com.android.tradefed.testtype.IAbi;
+import com.android.tradefed.testtype.IAbiReceiver;
+import com.android.tradefed.testtype.IBuildReceiver;
+import com.android.tradefed.testtype.IDeviceTest;
 import com.android.tradefed.testtype.IRemoteTest;
-import com.android.tradefed.testtype.InstrumentationTest;
+import com.android.tradefed.testtype.ITestFilterReceiver;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.regex.Pattern;
 
@@ -34,6 +49,10 @@ public class ModuleDef implements IModuleDef {
     private final IAbi mAbi;
     private List<IRemoteTest> mTests = null;
     private List<ITargetPreparer> mPreparers = null;
+    private IBuildInfo mBuild;
+    private ITestDevice mDevice;
+    private List<String> mIncludeFilters = new ArrayList<>();
+    private List<String> mExcludeFilters = new ArrayList<>();
 
     public ModuleDef(String name, IAbi abi, List<IRemoteTest> tests,
             List<ITargetPreparer> preparers) {
@@ -88,16 +107,16 @@ public class ModuleDef implements IModuleDef {
      * {@inheritDoc}
      */
     @Override
-    public void addFilter(boolean include, String name) {
-        for (IRemoteTest test : mTests) {
-            if (test instanceof InstrumentationTest) {
-                // TODO tell InstrumentationTest to include/exclude the test
-            //TODO} else if (test instanceof ITestFilterReciever) {
-                // TODO ((ITestFilterReciever) test).addFilter(include, name);
-            } else {
-                // Skip because it doesn't support this
-            }
-        }
+    public void addIncludeFilter(String filter) {
+        mIncludeFilters.add(filter);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void addExcludeFilter(String filter) {
+        mExcludeFilters.add(filter);
     }
 
     /**
@@ -114,5 +133,85 @@ public class ModuleDef implements IModuleDef {
     @Override
     public boolean nameMatches(Pattern pattern) {
         return pattern.matcher(mName).matches();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void setBuild(IBuildInfo build) {
+        mBuild = build;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public ITestDevice getDevice() {
+        return mDevice;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void setDevice(ITestDevice device) {
+        mDevice = device;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void run(ITestInvocationListener listener) throws DeviceNotAvailableException {
+        IModuleListener moduleListener = new ModuleListener(this, listener);
+
+        List<ITargetCleaner> cleaners = new ArrayList<>();
+        // Setup
+        for (ITargetPreparer preparer : mPreparers) {
+            CLog.d("Preparer: %s", preparer.getClass().getSimpleName());
+            if (preparer instanceof IAbiReceiver) {
+                ((IAbiReceiver) preparer).setAbi(mAbi);
+            }
+            if (preparer instanceof ITargetCleaner) {
+                cleaners.add((ITargetCleaner) preparer);
+            }
+            try {
+                preparer.setUp(mDevice, mBuild);
+            } catch (BuildError e) {
+                // This should only happen for flashing new build
+                CLog.e("Unexpected BuildError from preparer: %s",
+                    preparer.getClass().getCanonicalName());
+            } catch (TargetSetupError e) {
+                // log preparer class then rethrow & let caller handle
+                CLog.e("TargetSetupError in preparer: %s",
+                    preparer.getClass().getCanonicalName());
+                throw new RuntimeException(e);
+            }
+        }
+        // Run tests
+        for (IRemoteTest test : mTests) {
+            CLog.d("Test: %s", test.getClass().getSimpleName());
+            if (test instanceof IAbiReceiver) {
+                ((IAbiReceiver) test).setAbi(mAbi);
+            }
+            if (test instanceof IBuildReceiver) {
+                ((IBuildReceiver) test).setBuild(mBuild);
+            }
+            if (test instanceof IDeviceTest) {
+                ((IDeviceTest) test).setDevice(mDevice);
+            }
+            if (test instanceof ITestFilterReceiver) {
+                ((ITestFilterReceiver) test).addAllIncludeFilters(mIncludeFilters);
+                ((ITestFilterReceiver) test).addAllExcludeFilters(mExcludeFilters);
+            }
+            test.run(moduleListener);
+        }
+        // Tear down - in reverse order
+        Collections.reverse(cleaners);
+        for (ITargetCleaner cleaner : cleaners) {
+            CLog.d("Cleaner: %s", cleaner.getClass().getSimpleName());
+            cleaner.tearDown(mDevice, mBuild, null);
+        }
     }
 }

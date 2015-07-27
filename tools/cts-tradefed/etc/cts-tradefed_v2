@@ -81,7 +81,6 @@ fi;
 JAR_DIR=${CTS_V2_ROOT}/android-cts_v2/tools
 JARS="tradefed-prebuilt
   hosttestlib
-  compatibility-common-util-hostsidelib
   compatibility-host-util
   compatibility-tradefed
   cts-tradefed_v2"

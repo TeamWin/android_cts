@@ -17,6 +17,8 @@ package com.android.compatibility.common.tradefed.testtype;
 
 import com.android.tradefed.targetprep.ITargetPreparer;
 import com.android.tradefed.testtype.IAbi;
+import com.android.tradefed.testtype.IBuildReceiver;
+import com.android.tradefed.testtype.IDeviceTest;
 import com.android.tradefed.testtype.IRemoteTest;
 
 import java.util.List;
@@ -25,7 +27,7 @@ import java.util.regex.Pattern;
 /**
  * Container for Compatibility test info.
  */
-public interface IModuleDef extends Comparable<IModuleDef> {
+public interface IModuleDef extends Comparable<IModuleDef>, IBuildReceiver, IDeviceTest, IRemoteTest {
 
     /**
      * @return The name of this module.
@@ -53,13 +55,20 @@ public interface IModuleDef extends Comparable<IModuleDef> {
     List<IRemoteTest> getTests();
 
     /**
-     * Adds a filter to include or exclude a specific test
+     * Adds a filter to include a specific test
      *
-     * @param include whether to include or exclude the test.
      * @param name the name of the test. Can be <package>, <package>.<class>,
      * <package>.<class>#<method> or <native_name>
      */
-    void addFilter(boolean include, String name);
+    void addIncludeFilter(String name);
+
+    /**
+     * Adds a filter to exclude a specific test
+     *
+     * @param name the name of the test. Can be <package>, <package>.<class>,
+     * <package>.<class>#<method> or <native_name>
+     */
+    void addExcludeFilter(String name);
 
     /**
      * @return true iff this module's name matches the give regular expression pattern.
