@@ -205,7 +205,7 @@ public class ModuleRepo implements IModuleRepo {
             }
         }
         // Exclude all the exclusions
-        for (String filterString : includeFilters) {
+        for (String filterString : excludeFilters) {
             TestFilter filter = TestFilter.createFrom(filterString);
             String test = filter.getTest();
             ids = getAllIds(filter);

@@ -34,6 +34,7 @@ import java.io.FileNotFoundException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -175,8 +176,13 @@ public abstract class CompatibilityConsole extends Console {
             e.printStackTrace();
         }
         if (files != null && files.length > 0) {
+            List<String> modules = new ArrayList<>();
             for (File moduleFile : files) {
-                printLine(FileUtil.getBaseName(moduleFile.getName()));
+                modules.add(FileUtil.getBaseName(moduleFile.getName()));
+            }
+            Collections.sort(modules);
+            for (String module : modules) {
+                printLine(module);
             }
         } else {
             printLine("No modules found");
