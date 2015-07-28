@@ -16,6 +16,8 @@
 
 package android.acceleration.cts;
 
+import android.acceleration.SoftwareAcceleratedActivity;
+
 /**
  * Test that uses an Activity with hardware acceleration explicitly disabled
  * and makes sure that all views are rendered using software acceleration.

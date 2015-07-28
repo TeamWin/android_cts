@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.acceleration.cts;
+package android.acceleration;
 
 public class SoftwareAcceleratedActivity extends BaseAcceleratedActivity {
 }

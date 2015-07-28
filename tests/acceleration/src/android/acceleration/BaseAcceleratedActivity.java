@@ -14,15 +14,15 @@
  * limitations under the License.
  */
 
-package android.acceleration.cts;
+package android.acceleration;
 
-import com.android.cts.acceleration.stub.R;
+import android.acceleration.cts.R;
 
 import android.app.Activity;
 import android.os.Bundle;
 import android.view.View;
 
-abstract class BaseAcceleratedActivity extends Activity {
+public abstract class BaseAcceleratedActivity extends Activity {
 
     private AcceleratedView mHardwareAcceleratedView;
     private AcceleratedView mSoftwareAcceleratedView;

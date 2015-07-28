@@ -69,7 +69,6 @@ cts_security_keysets_list := \
     CtsKeySetSigningEcAUpgradeA
 
 cts_support_packages := \
-    CtsAccelerationTestStubs \
     CtsAlarmClockService \
     CtsAppTestStubs \
     CtsAtraceTestApp \
