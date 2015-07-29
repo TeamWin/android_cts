@@ -79,8 +79,13 @@ public class XmlResultHandler {
      * @param resultsDir
      */
     public static List<IInvocationResult> getResults(File resultsDir) {
-        ArrayList<IInvocationResult> results = new ArrayList<>();
-        for (File resultDir : resultsDir.listFiles()) {
+        List<IInvocationResult> results = new ArrayList<>();
+        File[] files = resultsDir.listFiles();
+        if (files == null || files.length == 0) {
+            // No results, just return the empty list
+            return results;
+        }
+        for (File resultDir : files) {
             if (!resultDir.isDirectory()) {
                 continue;
             }
