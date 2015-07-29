@@ -46,6 +46,7 @@ import android.view.Gravity;
 import android.view.InputDevice;
 import android.view.InputQueue;
 import android.view.KeyEvent;
+import android.view.KeyboardShortcutGroup;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -62,6 +63,7 @@ import android.view.accessibility.AccessibilityEvent;
 import android.widget.Button;
 import android.widget.TextView;
 
+import java.util.List;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
@@ -1148,6 +1150,9 @@ public class WindowTest extends ActivityInstrumentationTestCase2<WindowCtsActivi
         }
 
         public void onWindowDismissed() {
+        }
+
+        public void onProvideKeyboardShortcuts(List<KeyboardShortcutGroup> data, Menu menu) {
         }
     }
 }
