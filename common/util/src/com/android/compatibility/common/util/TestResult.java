@@ -37,8 +37,7 @@ public class TestResult implements ITestResult {
     public TestResult(ICaseResult parent, String name) {
         mParent = parent;
         mTestName = name;
-        mResult = TestStatus.NOT_EXECUTED;
-        mStartTime = System.currentTimeMillis();
+        resetResult();
     }
 
     /**
@@ -213,6 +212,20 @@ public class TestResult implements ITestResult {
                 setReportLog(report);
             }
         }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void resetResult() {
+        setResultStatus(TestStatus.NOT_EXECUTED);
+        setStartTime(System.currentTimeMillis());
+        setMessage(null);
+        setStackTrace(null);
+        setReportLog(null);
+        setBugReport(null);
+        setLog(null);
     }
 
     /**

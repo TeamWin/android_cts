@@ -127,4 +127,8 @@ public interface ITestResult extends Comparable<ITestResult> {
      */
     void passed(ReportLog report);
 
+    /**
+     * Reset the state of this {@link ITestResult}.
+     */
+    void resetResult();
 }
