@@ -15,7 +15,7 @@
  */
 package com.android.compatibility.common.tradefed.testtype;
 
-import com.android.compatibility.common.tradefed.build.CompatibilityBuildInfo;
+import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
 import com.android.compatibility.common.tradefed.result.IInvocationResultRepo;
 import com.android.compatibility.common.tradefed.result.InvocationResultRepo;
 import com.android.compatibility.common.util.AbiUtils;
@@ -27,6 +27,7 @@ import com.android.compatibility.common.util.TestFilter;
 import com.android.compatibility.common.util.TestStatus;
 import com.android.ddmlib.Log.LogLevel;
 import com.android.tradefed.build.IBuildInfo;
+import com.android.tradefed.build.IFolderBuildInfo;
 import com.android.tradefed.config.Option;
 import com.android.tradefed.config.Option.Importance;
 import com.android.tradefed.config.OptionClass;
@@ -109,7 +110,8 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
     private int mShardAssignment;
     private int mTotalShards;
     private ITestDevice mDevice;
-    private CompatibilityBuildInfo mBuild;
+    private IFolderBuildInfo mBuild;
+    private CompatibilityBuildHelper mBuildHelper;
     private List<IModuleDef> mModules = new ArrayList<>();
     private int mLastModuleIndex = 0;
 
@@ -157,7 +159,9 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
      */
     @Override
     public void setBuild(IBuildInfo buildInfo) {
-        mBuild = (CompatibilityBuildInfo) buildInfo;
+        mBuild = (IFolderBuildInfo) buildInfo;
+        mBuildHelper = new CompatibilityBuildHelper(mBuild);
+        mBuildHelper.init();
     }
 
     /**
@@ -225,7 +229,7 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
             IInvocationResultRepo repo;
             IInvocationResult result = null;
             try {
-                repo = new InvocationResultRepo(mBuild.getResultsDir());
+                repo = new InvocationResultRepo(mBuildHelper.getResultsDir());
                 result = repo.getResult(mRetrySessionId);
             } catch (FileNotFoundException e) {
                 e.printStackTrace();
@@ -269,16 +273,21 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
                 mExcludeFilters = excludeFilters;
             }
         }
-        // Collect ALL tests
-        IModuleRepo testRepo = new ModuleRepo(mBuild, abis);
-        List<IModuleDef> modules = testRepo.getModules(mIncludeFilters, mExcludeFilters);
-        // Filter by shard
-        int numTestmodules = modules.size();
-        int totalShards = Math.min(mTotalShards, numTestmodules);
+        try {
+            // Collect ALL tests
+            IModuleRepo testRepo = new ModuleRepo(mBuildHelper.getTestsDir(), abis);
+            List<IModuleDef> modules = testRepo.getModules(mIncludeFilters, mExcludeFilters);
 
-        mModules.clear();
-        for (int i = mShardAssignment; i < numTestmodules; i += totalShards) {
-            mModules.add(modules.get(i));
+            // Filter by shard
+            int numTestmodules = modules.size();
+            int totalShards = Math.min(mTotalShards, numTestmodules);
+
+            mModules.clear();
+            for (int i = mShardAssignment; i < numTestmodules; i += totalShards) {
+                mModules.add(modules.get(i));
+            }
+        } catch (FileNotFoundException e) {
+            CLog.e(e);
         }
     }
 

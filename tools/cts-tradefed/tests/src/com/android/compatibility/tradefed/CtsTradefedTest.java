@@ -15,8 +15,10 @@
  */
 package com.android.compatibility.tradefed;
 
-import com.android.compatibility.common.tradefed.build.CompatibilityBuildInfo;
+import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
+import com.android.compatibility.common.tradefed.build.CompatibilityBuildProvider;
 import com.android.compatibility.tradefed.command.CtsConsole;
+import com.android.tradefed.build.IFolderBuildInfo;
 import com.android.tradefed.util.FileUtil;
 
 import junit.framework.TestCase;
@@ -41,9 +43,12 @@ public class CtsTradefedTest extends TestCase {
         File tests = new File(base, "testcases");
         tests.mkdirs();
         CtsConsole c = new CtsConsole();
-        CompatibilityBuildInfo build = c.getCompatibilityBuild();
-        assertEquals("Incorrect suite full name", SUITE_FULL_NAME, build.getSuiteFullName());
-        assertEquals("Incorrect suite name", SUITE_NAME, build.getSuiteName());
+        CompatibilityBuildProvider provider = new CompatibilityBuildProvider();
+        IFolderBuildInfo info = (IFolderBuildInfo) provider.getBuild();
+        CompatibilityBuildHelper helper = new CompatibilityBuildHelper(info);
+        helper.init();
+        assertEquals("Incorrect suite full name", SUITE_FULL_NAME, helper.getSuiteFullName());
+        assertEquals("Incorrect suite name", SUITE_NAME, helper.getSuiteName());
         FileUtil.recursiveDelete(root);
         System.clearProperty(PROPERTY_NAME);
     }
