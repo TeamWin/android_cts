@@ -144,7 +144,8 @@ public class ResultReporter implements ITestInvocationListener {
      */
     @Override
     public void testRunStarted(String id, int numTests) {
-        Log.d(mDeviceSerial, String.format("ResultReporter.testRunStarted(%s, %d)", id, numTests));
+        Log.logAndDisplay(LogLevel.INFO, mDeviceSerial,
+                String.format("Starting %s with %d tests", id, numTests));
         mIsDeviceInfoRun = AbiUtils.parseTestName(id).equals(DEVICE_INFO_COLLECTOR);
         if (!mIsDeviceInfoRun) {
             mCurrentModuleResult = mResult.getOrCreateModule(id);
@@ -157,7 +158,6 @@ public class ResultReporter implements ITestInvocationListener {
      */
     @Override
     public void testStarted(TestIdentifier test) {
-        Log.d(mDeviceSerial, String.format("ResultReporter.testStarted(%s)", test));
         if (!mIsDeviceInfoRun) {
             mCurrentCaseResult = mCurrentModuleResult.getOrCreateResult(test.getClassName());
             mCurrentResult = mCurrentCaseResult.getOrCreateResult(test.getTestName());
@@ -169,7 +169,6 @@ public class ResultReporter implements ITestInvocationListener {
      */
     @Override
     public void testEnded(TestIdentifier test, Map<String, String> metrics) {
-        Log.d(mDeviceSerial, String.format("ResultReporter.testEnded(%s, %s)", test, metrics));
         if (!mIsDeviceInfoRun) {
             // device test can have performance results in test metrics
             String perfResult = metrics.get(RESULT_KEY);
@@ -186,6 +185,7 @@ public class ResultReporter implements ITestInvocationListener {
                         mDeviceSerial, mCurrentModuleResult.getAbi(), test.toString());
             }
             mCurrentResult.passed(report);
+            Log.logAndDisplay(LogLevel.INFO, mDeviceSerial, String.format("%s passed", test));
         }
     }
 
@@ -194,7 +194,7 @@ public class ResultReporter implements ITestInvocationListener {
      */
     @Override
     public void testIgnored(TestIdentifier test) {
-        Log.d(mDeviceSerial, String.format("ResultReporter.testIgnored(%s)", test));
+        Log.logAndDisplay(LogLevel.INFO, mDeviceSerial, String.format("%s ignored", test));
         // ignore
     }
 
@@ -203,9 +203,10 @@ public class ResultReporter implements ITestInvocationListener {
      */
     @Override
     public void testFailed(TestIdentifier test, String trace) {
-        Log.d(mDeviceSerial, String.format("ResultReporter.testFailed(%s, %s)", test, trace));
         if (!mIsDeviceInfoRun) {
             mCurrentResult.failed(trace);
+            Log.logAndDisplay(LogLevel.INFO, mDeviceSerial,
+                    String.format("%s failed: %s", test, trace));
         }
     }
 
@@ -214,10 +215,10 @@ public class ResultReporter implements ITestInvocationListener {
      */
     @Override
     public void testAssumptionFailure(TestIdentifier test, String trace) {
-        Log.d(mDeviceSerial, String.format("ResultReporter.testAssumptionFailure(%s, %s)", test,
-                trace));
         if (!mIsDeviceInfoRun) {
             mCurrentResult.failed(trace);
+            Log.logAndDisplay(LogLevel.INFO, mDeviceSerial,
+                    String.format("%s failed assumption: %s", test, trace));
         }
     }
 
@@ -226,7 +227,8 @@ public class ResultReporter implements ITestInvocationListener {
      */
     @Override
     public void testRunStopped(long elapsedTime) {
-        Log.d(mDeviceSerial, String.format("ResultReporter.testRunStopped(%d)", elapsedTime));
+        Log.logAndDisplay(LogLevel.INFO, mDeviceSerial,
+                String.format("%s stopped after %dms", mCurrentModuleResult.getId(), elapsedTime));
         // ignore
     }
 
@@ -235,10 +237,16 @@ public class ResultReporter implements ITestInvocationListener {
      */
     @Override
     public void testRunEnded(long elapsedTime, Map<String, String> metrics) {
-        Log.d(mDeviceSerial, String.format("ResultReporter.testRunEnded(%d, %s)", elapsedTime,
-                metrics));
         if (mIsDeviceInfoRun) {
             mResult.populateDeviceInfoMetrics(metrics);
+        } else {
+            Log.logAndDisplay(LogLevel.INFO, mDeviceSerial,
+                    String.format("%s completed in %dms. %d passed, %d failed, %d non executed",
+                            mCurrentModuleResult.getId(),
+                            elapsedTime,
+                            mCurrentModuleResult.countResults(TestStatus.PASS),
+                            mCurrentModuleResult.countResults(TestStatus.FAIL),
+                            mCurrentModuleResult.countResults(TestStatus.NOT_EXECUTED)));
         }
     }
 
@@ -247,7 +255,7 @@ public class ResultReporter implements ITestInvocationListener {
      */
     @Override
     public void testRunFailed(String id) {
-        Log.d(mDeviceSerial, String.format("ResultReporter.testRunFailed(%s)", id));
+        Log.logAndDisplay(LogLevel.INFO, mDeviceSerial, String.format("%s failed to run", id));
         // ignore
     }
 
@@ -268,7 +276,8 @@ public class ResultReporter implements ITestInvocationListener {
         Log.d(mDeviceSerial, String.format("ResultReporter.invocationEnded(%d)", elapsedTime));
         if (mInitialized) {
             Log.logAndDisplay(LogLevel.INFO, mDeviceSerial, String.format(
-                    "Invocation finished. Passed %d, Failed %d, Not Executed %d",
+                    "Invocation completed in %dms. %d passed, %d failed, %d non executed",
+                    elapsedTime,
                     mResult.countResults(TestStatus.PASS),
                     mResult.countResults(TestStatus.FAIL),
                     mResult.countResults(TestStatus.NOT_EXECUTED)));
