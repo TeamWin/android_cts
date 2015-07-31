@@ -75,6 +75,7 @@ TEST_CLASSES="
     com.android.compatibility.common.tradefed.testtype.ModuleRepoTest\
     com.android.compatibility.common.util.AbiUtilsTest\
     com.android.compatibility.common.util.CaseResultTest\
+    com.android.compatibility.common.util.DynamicConfigTest\
     com.android.compatibility.common.util.MetricsStoreTest\
     com.android.compatibility.common.util.MetricsXmlSerializerTest\
     com.android.compatibility.common.util.ModuleResultTest\

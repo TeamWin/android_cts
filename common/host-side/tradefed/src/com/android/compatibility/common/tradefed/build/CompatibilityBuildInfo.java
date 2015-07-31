@@ -19,6 +19,8 @@ import com.android.tradefed.build.FolderBuildInfo;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * A simple {@link FolderBuildInfo} that uses a pre-existing Compatibility install.
@@ -31,6 +33,7 @@ public class CompatibilityBuildInfo extends FolderBuildInfo {
     private final String mSuiteFullName;
     private final String mSuiteVersion;
     private final String mSuitePlan;
+    private Map<String, String> mConfigHashes = new HashMap<>();
 
     /**
      * Creates a {@link CompatibilityBuildInfo} containing information about the suite and
@@ -67,6 +70,14 @@ public class CompatibilityBuildInfo extends FolderBuildInfo {
 
     public String getSuitePlan() {
         return mSuitePlan;
+    }
+
+    public void addDynamicConfig(String moduleName, String hash) {
+        mConfigHashes.put(moduleName, hash);
+    }
+
+    public Map<String, String> getDynamicConfigHashes() {
+        return mConfigHashes;
     }
 
     /**
@@ -112,5 +123,4 @@ public class CompatibilityBuildInfo extends FolderBuildInfo {
         }
         return testsDir;
     }
-
 }

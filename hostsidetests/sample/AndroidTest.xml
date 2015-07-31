@@ -18,4 +18,8 @@
     <option name="apk-installer:test-file-name" value="CtsSampleDeviceApp.apk" />
     <test class="android.sample.cts.SampleHostTest" />
     <test class="android.sample.cts.SampleHostResultTest" />
+    <target_preparer class="com.android.compatibility.common.tradefed.targetprep.DynamicConfigPusher">
+        <option name="target" value="host" />
+        <option name="module-name" value="CtsSampleHostTestCases"/>
+    </target_preparer>
 </configuration>

@@ -16,6 +16,7 @@
 
 package android.sample.cts;
 
+import com.android.compatibility.common.util.DynamicConfigHostSide;
 import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.testtype.DeviceTestCase;
 
@@ -50,6 +51,15 @@ public class SampleHostTest extends DeviceTestCase {
      * The test string to look for.
      */
     private static final String TEST_STRING = "SampleTestString";
+
+    /**
+     * Test if dynamic config on the host side works
+     * @throws Exception
+     */
+    public void testDynamicConfig() throws Exception {
+        DynamicConfigHostSide config = new DynamicConfigHostSide("CtsSampleHostTestCases");
+        assertEquals(config.getConfig("host-config"), "host-config-val");
+    }
 
     /**
      * Tests the string was successfully logged to Logcat from the activity.

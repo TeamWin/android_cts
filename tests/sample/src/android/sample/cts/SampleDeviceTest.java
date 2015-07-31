@@ -18,6 +18,8 @@ package android.sample.cts;
 import android.sample.SampleDeviceActivity;
 import android.test.ActivityInstrumentationTestCase2;
 
+import com.android.compatibility.common.util.DynamicConfigDeviceSide;
+
 /**
  * A simple compatibility test which tests the SharedPreferences API.
  *
@@ -72,5 +74,14 @@ public class SampleDeviceTest extends ActivityInstrumentationTestCase2<SampleDev
         // Clear the shared preferences and assert the data was removed.
         mActivity.clearPreferences();
         assertNull("Preferences were not cleared", mActivity.getPreference(KEY));
+    }
+
+    /**
+     * Test if Dynamic Config on the device side works
+     * @throws Exception
+     */
+    public void testDynamicConfig() throws Exception {
+        DynamicConfigDeviceSide config = new DynamicConfigDeviceSide("CtsSampleDeviceTestCases");
+        assertEquals(config.getConfig("device-config"), "device-config-val");
     }
 }

@@ -20,4 +20,8 @@
         <option name="package" value="android.sample.cts" />
         <option name="runner" value="android.support.test.runner.AndroidJUnitRunner" />
     </test>
+    <target_preparer class="com.android.compatibility.common.tradefed.targetprep.DynamicConfigPusher">
+        <option name="target" value="device" />
+        <option name="module-name" value="CtsSampleDeviceTestCases"/>
+    </target_preparer>
 </configuration>
