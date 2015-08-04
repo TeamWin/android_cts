@@ -88,8 +88,7 @@ public class ResultReporter implements ITestInvocationListener {
             Log.d(mDeviceSerial, String.format("Retrying session %d", mRetrySessionId));
             List<IInvocationResult> results = null;
             try {
-                results = XmlResultHandler.getResults(
-                        mBuild.getResultsDir());
+                results = XmlResultHandler.getResults(mBuild.getResultsDir());
             } catch (FileNotFoundException e) {
                 e.printStackTrace();
             }
@@ -161,6 +160,8 @@ public class ResultReporter implements ITestInvocationListener {
         if (!mIsDeviceInfoRun) {
             mCurrentCaseResult = mCurrentModuleResult.getOrCreateResult(test.getClassName());
             mCurrentResult = mCurrentCaseResult.getOrCreateResult(test.getTestName());
+            // Reset the result
+            mCurrentResult.resetResult();
         }
     }
 
