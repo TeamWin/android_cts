@@ -34,7 +34,7 @@ LOCAL_SRC_FILES += \
     src/android/hardware/cts/SensorIntegrationTests.java \
     src/android/hardware/cts/SensorBatchingTests.java \
     src/android/hardware/cts/SensorTest.java \
-    src/android/hardware/cts/SensorManagerStaticTest.java \
+    src/android/hardware/cts/SensorManagerStaticTest.java
 
 include $(BUILD_STATIC_JAVA_LIBRARY)
 
