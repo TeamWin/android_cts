@@ -553,6 +553,11 @@ public class SpannableStringBuilderTest extends AndroidTestCase {
         UnderlineSpan span2 = new UnderlineSpan();
         builder.setSpan(span1, 1, 2, Spanned.SPAN_POINT_POINT);
         builder.setSpan(span2, 4, 8, Spanned.SPAN_MARK_POINT);
+
+        Object[] emptySpans = builder.getSpans(0, 10, null);
+        assertNotNull(emptySpans);
+        assertEquals(0, emptySpans.length);
+
         UnderlineSpan[] underlineSpans = builder.getSpans(0, 10, UnderlineSpan.class);
         assertEquals(2, underlineSpans.length);
         assertSame(span1, underlineSpans[0]);
