@@ -1330,10 +1330,19 @@ public class TextUtilsTest extends AndroidTestCase {
     }
 
     public void testIsDigitsOnly() {
+        assertTrue(TextUtils.isDigitsOnly(""));
         assertFalse(TextUtils.isDigitsOnly("no digit"));
         assertFalse(TextUtils.isDigitsOnly("character and 56 digits"));
         assertTrue(TextUtils.isDigitsOnly("0123456789"));
         assertFalse(TextUtils.isDigitsOnly("1234 56789"));
+
+        // U+104A0 OSMANYA DIGIT ZERO
+        assertTrue(TextUtils.isDigitsOnly(new String(Character.toChars(0x104A0))));
+        // U+10858 IMPERIAL ARAMAIC NUMBER ONE
+        assertFalse(TextUtils.isDigitsOnly(new String(Character.toChars(0x10858))));
+
+        assertFalse(TextUtils.isDigitsOnly("\uD801")); // lonely lead surrogate
+        assertFalse(TextUtils.isDigitsOnly("\uDCA0")); // lonely trailing surrogate
 
         try {
             TextUtils.isDigitsOnly(null);
