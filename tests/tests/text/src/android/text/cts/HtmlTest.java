@@ -198,6 +198,23 @@ public class HtmlTest extends AndroidTestCase {
                 ret);
     }
 
+    public void testMarkupFromHtml() throws Exception {
+        Spanned s;
+        final int expectedStart = 6;
+        final int expectedEnd = expectedStart + 6;
+
+        String tags[] = {"del", "s", "strike"};
+        for (String tag : tags) {
+            String source = String.format("Hello <%s>struck</%s> world", tag, tag);
+            Spanned spanned = Html.fromHtml(source);
+            Object[] spans = spanned.getSpans(0, spanned.length(), Object.class);
+            assertEquals(1, spans.length);
+            assertEquals(StrikethroughSpan.class, spans[0].getClass());
+            assertEquals(expectedStart, spanned.getSpanStart(spans[0]));
+            assertEquals(expectedEnd, spanned.getSpanEnd(spans[0]));
+        }
+    }
+
     public void testImg() throws Exception {
         Spanned s = Html.fromHtml("yes<img src=\"http://example.com/foo.gif\">no");
         assertEquals("<p dir=\"ltr\">yes<img src=\"http://example.com/foo.gif\">no</p>\n",
