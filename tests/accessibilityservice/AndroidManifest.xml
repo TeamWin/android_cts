@@ -17,7 +17,7 @@
  -->
 
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-        package="com.android.cts.accessibilityservice">
+        package="android.accessibilityservice.cts">
 
     <uses-permission android:name="android.permission.DISABLE_KEYGUARD" />
 
@@ -26,24 +26,24 @@
       <uses-library android:name="android.test.runner"/>
 
       <activity android:label="@string/accessibility_end_to_end_test_activity"
-              android:name="android.accessibilityservice.cts.AccessibilityEndToEndActivity"/>
+              android:name=".AccessibilityEndToEndActivity"/>
 
       <activity android:label="@string/accessibility_query_window_test_activity"
-              android:name="android.accessibilityservice.cts.AccessibilityWindowQueryActivity"/>
+              android:name=".AccessibilityWindowQueryActivity"/>
 
       <activity android:label="@string/accessibility_view_tree_reporting_test_activity"
-              android:name="android.accessibilityservice.cts.AccessibilityViewTreeReportingActivity"/>
+              android:name=".AccessibilityViewTreeReportingActivity"/>
 
       <activity android:label="@string/accessibility_focus_and_input_focus_sync_test_activity"
-              android:name="android.accessibilityservice.cts.AccessibilityFocusAndInputFocusSyncActivity"/>
+              android:name=".AccessibilityFocusAndInputFocusSyncActivity"/>
 
       <activity android:label="@string/accessibility_text_traversal_test_activity"
-              android:name="android.accessibilityservice.cts.AccessibilityTextTraversalActivity"/>
+              android:name=".AccessibilityTextTraversalActivity"/>
 
   </application>
 
   <instrumentation android:name="android.support.test.runner.AndroidJUnitRunner"
-                   android:targetPackage="com.android.cts.accessibilityservice"
+                   android:targetPackage="android.accessibilityservice.cts"
                    android:label="Tests for the accessibility APIs.">
         <meta-data android:name="listener"
             android:value="com.android.cts.runner.CtsTestRunListener" />
