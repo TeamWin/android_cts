@@ -1352,7 +1352,7 @@ public class TextUtilsTest extends AndroidTestCase {
 
     public void testIsGraphicChar() {
         assertTrue(TextUtils.isGraphic('a'));
-        assertTrue(TextUtils.isGraphic("\uBA00"));
+        assertTrue(TextUtils.isGraphic('\uBA00'));
 
         // LINE_SEPARATOR
         assertFalse(TextUtils.isGraphic('\u2028'));
@@ -1386,6 +1386,11 @@ public class TextUtilsTest extends AndroidTestCase {
         assertFalse(TextUtils.isGraphic("\u2028\u2029\u0085\u0D00\uD800\u0020"));
 
         assertTrue(TextUtils.isGraphic("a\u2028\u2029\u0085\u0D00\uD800\u0020"));
+
+        assertTrue(TextUtils.isGraphic("\uD83D\uDC0C")); // U+1F40C SNAIL
+        assertFalse(TextUtils.isGraphic("\uDB40\uDC01")); // U+E0000 (unassigned)
+        assertFalse(TextUtils.isGraphic("\uDB3D")); // unpaired high surrogate
+        assertFalse(TextUtils.isGraphic("\uDC0C")); // unpaired low surrogate
 
         try {
             TextUtils.isGraphic(null);
