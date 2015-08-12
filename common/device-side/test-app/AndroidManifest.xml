@@ -20,7 +20,7 @@
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <application>
         <uses-library android:name="android.test.runner" />
-        <activity android:name="com.android.compatibility.common.deviceinfo.SampleDeviceInfo" />
+        <activity android:name="com.android.compatibility.common.deviceinfo.TestDeviceInfo" />
     </application>
 
     <!--  self-instrumenting test package. -->
