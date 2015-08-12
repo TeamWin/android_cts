@@ -266,6 +266,17 @@ public class CheckedTextViewTest extends
         assertFalse(checkedTextView.isLayoutRequested());
     }
 
+    public void testSetCheckMarkByMixedTypes() {
+        CheckedTextView checkedTextView = new MockCheckedTextView(mActivity);
+        cleanUpForceLayoutFlags(checkedTextView);
+
+        // Specifically test for b/22626247 (AOSP issue 180455).
+        checkedTextView.setCheckMarkDrawable(R.drawable.scenery);
+        checkedTextView.setCheckMarkDrawable(null);
+        checkedTextView.setCheckMarkDrawable(R.drawable.scenery);
+        assertNotNull(checkedTextView.getCheckMarkDrawable());
+    }
+
     public void testOnDraw() {
         // Do not test. Implementation details.
     }
