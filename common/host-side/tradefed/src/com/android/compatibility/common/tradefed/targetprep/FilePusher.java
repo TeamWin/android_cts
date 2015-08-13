@@ -15,8 +15,9 @@
  */
 package com.android.compatibility.common.tradefed.targetprep;
 
-import com.android.compatibility.common.tradefed.build.CompatibilityBuildInfo;
+import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
 import com.android.tradefed.build.IBuildInfo;
+import com.android.tradefed.build.IFolderBuildInfo;
 import com.android.tradefed.config.OptionClass;
 import com.android.tradefed.targetprep.PushFilePreparer;
 
@@ -29,13 +30,13 @@ import java.io.FileNotFoundException;
 @OptionClass(alias="file-pusher")
 public class FilePusher extends PushFilePreparer {
 
-    private CompatibilityBuildInfo mBuild;
+    private CompatibilityBuildHelper mBuildHelper = null;
 
-    protected CompatibilityBuildInfo getBuild(IBuildInfo buildInfo) {
-        if (mBuild == null) {
-            mBuild = (CompatibilityBuildInfo) buildInfo;
+    protected File getTestsDir(IFolderBuildInfo buildInfo) throws FileNotFoundException {
+        if (mBuildHelper == null) {
+            mBuildHelper = new CompatibilityBuildHelper(buildInfo);
         }
-        return mBuild;
+        return mBuildHelper.getTestsDir();
     }
 
     /**
@@ -44,7 +45,7 @@ public class FilePusher extends PushFilePreparer {
     @Override
     public File resolveRelativeFilePath(IBuildInfo buildInfo, String fileName) {
         try {
-            return new File(getBuild(buildInfo).getTestsDir(), fileName);
+            return new File(getTestsDir((IFolderBuildInfo) buildInfo), fileName);
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         }

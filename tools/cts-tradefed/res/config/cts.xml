@@ -18,11 +18,11 @@
     <include name="everything" />
 
     <option name="enable-root" value="false" />
-    <option name="compatibility-build-provider:plan" value="cts" />
 
     <!-- Example Filters
     <option name="compatibility-test:include-filter" value="arm64-v8a CtsSampleDeviceTestCases" />
     <option name="compatibility-test:exclude-filter" value="CtsSampleHostTestCases" />
     -->
+    <option name="result-reporter:plan" value="cts" />
 
 </configuration>
