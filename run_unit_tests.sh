@@ -66,8 +66,7 @@ java $RDBG_FLAG -cp ${JAR_PATH} ${TF_CONSOLE} run singleCommand instrument --pac
 adb uninstall ${COMMON_PACKAGE}
 
 TEST_CLASSES="
-    com.android.compatibility.common.tradefed.build.CompatibilityBuildInfoTest\
-    com.android.compatibility.common.tradefed.build.CompatibilityBuildProviderTest\
+    com.android.compatibility.common.tradefed.build.CompatibilityBuildHelperTest\
     com.android.compatibility.common.tradefed.command.CompatibilityConsoleTest\
     com.android.compatibility.common.tradefed.result.ResultReporterTest\
     com.android.compatibility.common.tradefed.testtype.CompatibilityTestTest\
@@ -75,11 +74,13 @@ TEST_CLASSES="
     com.android.compatibility.common.tradefed.testtype.ModuleRepoTest\
     com.android.compatibility.common.util.AbiUtilsTest\
     com.android.compatibility.common.util.CaseResultTest\
+    com.android.compatibility.common.util.DeviceReportTest\
     com.android.compatibility.common.util.DynamicConfigTest\
     com.android.compatibility.common.util.MetricsStoreTest\
     com.android.compatibility.common.util.MetricsXmlSerializerTest\
     com.android.compatibility.common.util.ModuleResultTest\
     com.android.compatibility.common.util.ReportLogTest\
+    com.android.compatibility.common.util.StatTest\
     com.android.compatibility.common.util.TestFilterTest\
     com.android.compatibility.common.util.TestResultTest\
     com.android.compatibility.common.util.XmlResultHandlerTest\

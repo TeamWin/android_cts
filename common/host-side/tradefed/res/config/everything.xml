@@ -16,8 +16,7 @@
 <configuration description="Common config for Compatibility suites to run all modules">
 
     <include name="common-compatibility-config" />
-    <option name="compatibility-build-provider:plan" value="everything" />
-
     <option name="compatibility-test:include-filter" value=".*" />
+    <option name="result-reporter:plan" value="everything" />
 
 </configuration>
