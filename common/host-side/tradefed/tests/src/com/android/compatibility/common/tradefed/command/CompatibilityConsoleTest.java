@@ -16,7 +16,7 @@
 
 package com.android.compatibility.common.tradefed.command;
 
-import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelperTest;
+import com.android.compatibility.common.tradefed.build.CompatibilityBuildProviderTest;
 import com.android.compatibility.tradefed.command.MockConsole;
 
 import junit.framework.TestCase;
@@ -29,13 +29,13 @@ public class CompatibilityConsoleTest extends TestCase {
 
     @Override
     public void setUp() throws Exception {
-        CompatibilityBuildHelperTest.setProperty("/tmp/foobar");
+        CompatibilityBuildProviderTest.setProperty("/tmp/foobar");
         mMockConsole = new MockConsole();
     }
 
     @Override
     public void tearDown() throws Exception {
-        CompatibilityBuildHelperTest.setProperty(null);
+        CompatibilityBuildProviderTest.setProperty(null);
         mMockConsole = null;
     }
 

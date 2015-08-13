@@ -15,6 +15,7 @@
  */
 package com.android.compatibility.common.tradefed.testtype;
 
+import com.android.compatibility.common.tradefed.build.CompatibilityBuildInfo;
 import com.android.compatibility.common.util.AbiUtils;
 import com.android.compatibility.common.util.TestFilter;
 import com.android.tradefed.config.Configuration;
@@ -26,6 +27,7 @@ import com.android.tradefed.testtype.IAbi;
 import com.android.tradefed.testtype.IRemoteTest;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FilenameFilter;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -50,9 +52,13 @@ public class ModuleRepo implements IModuleRepo {
     /**
      * Creates a {@link ModuleRepo}, initialized from provided build
      */
-    public ModuleRepo(File testsDir, Set<IAbi> abis) {
+    public ModuleRepo(CompatibilityBuildInfo build, Set<IAbi> abis) {
         this(new HashMap<String, IModuleDef>(), abis);
-        parse(testsDir);
+        try {
+            parse(build.getTestsDir());
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
     }
 
     /**

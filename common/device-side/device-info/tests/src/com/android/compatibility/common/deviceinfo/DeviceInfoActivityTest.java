@@ -52,9 +52,6 @@ public class DeviceInfoActivityTest extends ActivityInstrumentationTestCase2<Tes
     }
 
     public void testJsonFile() throws IOException {
-        String errorMessage = mActivity.getErrorMessage();
-        // Check no errors
-        assertNull("Expected no errors", errorMessage);
         String resultFilePath = mActivity.getResultFilePath();
         // Check file path exist
         assertNotNull("Expected a non-null resultFilePath", resultFilePath);

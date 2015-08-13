@@ -15,10 +15,13 @@
  */
 package com.android.compatibility.common.tradefed.build;
 
-import com.android.tradefed.build.FolderBuildInfo;
 import com.android.tradefed.build.IBuildInfo;
 import com.android.tradefed.build.IBuildProvider;
+import com.android.tradefed.config.Option;
 import com.android.tradefed.config.OptionClass;
+import com.android.tradefed.config.Option.Importance;
+
+import java.io.File;
 
 /**
  * A simple {@link IBuildProvider} that uses a pre-existing Compatibility install.
@@ -26,13 +29,51 @@ import com.android.tradefed.config.OptionClass;
 @OptionClass(alias="compatibility-build-provider")
 public class CompatibilityBuildProvider implements IBuildProvider {
 
+    public static final String PLAN_OPTION = "plan";
+
+    private final String mBuildId;
+    private final String mSuiteName;
+    private final String mSuiteFullName;
+    private final String mSuiteVersion;
+
+    @Option(name = PLAN_OPTION,
+            description = "the test suite plan to run, such as \"everything\" or \"cts\"",
+            importance = Importance.ALWAYS)
+    private String mSuitePlan;
+
+    /**
+     * Creates a new {@link CompatibilityBuildProvider} which reads Test Suite-specific information
+     * from the jar's manifest file.
+     */
+    public CompatibilityBuildProvider() {
+        Package pkg = Package.getPackage("com.android.compatibility.tradefed.command");
+        mSuiteFullName = pkg.getSpecificationTitle();
+        mSuiteName = pkg.getSpecificationVendor();
+        mSuiteVersion = pkg.getSpecificationVersion();
+        mBuildId = pkg.getImplementationVersion();
+    }
+
     /**
      * {@inheritDoc}
      */
     @Override
     public IBuildInfo getBuild() {
-        // Create a blank FolderBuildInfo which will get populated later.
-        return new FolderBuildInfo("" /* buildId */, "" /* testTarget */, "" /* buildName */);
+        return getCompatibilityBuild();
+    }
+
+    /**
+     * Returns the {@link CompatibilityBuildInfo} for this test suite.
+     *
+     * Note: this is a convenience method for {@code (CompatibilityBuildInfo) getBuild()}
+     */
+    public CompatibilityBuildInfo getCompatibilityBuild() {
+        String mRootDirPath = System.getProperty(String.format("%s_ROOT", mSuiteName));
+        if (mRootDirPath == null || mRootDirPath.equals("")) {
+            throw new IllegalArgumentException(
+                    String.format("Missing install path property %s_ROOT", mSuiteName));
+        }
+        return new CompatibilityBuildInfo(mBuildId, mSuiteName, mSuiteFullName, mSuiteVersion,
+                mSuitePlan, new File(mRootDirPath));
     }
 
     /**

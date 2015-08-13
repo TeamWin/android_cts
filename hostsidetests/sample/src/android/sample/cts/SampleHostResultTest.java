@@ -16,7 +16,7 @@
 
 package android.sample.cts;
 
-import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
+import com.android.compatibility.common.tradefed.build.CompatibilityBuildInfo;
 import com.android.compatibility.common.util.MeasureRun;
 import com.android.compatibility.common.util.MeasureTime;
 import com.android.compatibility.common.util.MetricsReportLog;
@@ -24,7 +24,6 @@ import com.android.compatibility.common.util.ResultType;
 import com.android.compatibility.common.util.ResultUnit;
 import com.android.compatibility.common.util.Stat;
 import com.android.tradefed.build.IBuildInfo;
-import com.android.tradefed.build.IFolderBuildInfo;
 import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.testtype.DeviceTestCase;
 import com.android.tradefed.testtype.IAbi;
@@ -62,9 +61,9 @@ public class SampleHostResultTest extends DeviceTestCase implements IAbiReceiver
     private static final String FILE_NAME = "CtsSampleHostTestCases.config";
 
     /**
-     * A helper to access resources in the build.
+     * A reference to the build.
      */
-    private CompatibilityBuildHelper mBuildHelper;
+    private CompatibilityBuildInfo mBuild;
 
     /**
      * A reference to the device under test.
@@ -84,7 +83,7 @@ public class SampleHostResultTest extends DeviceTestCase implements IAbiReceiver
     @Override
     public void setBuild(IBuildInfo buildInfo) {
         // Get the build, this is used to access the APK.
-        mBuildHelper = new CompatibilityBuildHelper((IFolderBuildInfo) buildInfo);
+        mBuild = (CompatibilityBuildInfo) buildInfo;
     }
 
     @Override
@@ -106,7 +105,7 @@ public class SampleHostResultTest extends DeviceTestCase implements IAbiReceiver
         // Create the device side path where the file will be transfered.
         final String devicePath = String.format(FILE_PATH, "tmp_testPushPull.txt");
         // Get this test's module config file from the build.
-        final File testFile = new File(mBuildHelper.getTestsDir(), FILE_NAME);
+        final File testFile = new File(mBuild.getTestsDir(), FILE_NAME);
         double[] result = MeasureTime.measure(REPEAT, new MeasureRun() {
             @Override
             public void prepare(int i) throws Exception {

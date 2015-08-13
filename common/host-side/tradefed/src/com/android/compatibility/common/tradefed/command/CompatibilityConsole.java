@@ -15,14 +15,13 @@
  */
 package com.android.compatibility.common.tradefed.command;
 
-import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
+import com.android.compatibility.common.tradefed.build.CompatibilityBuildInfo;
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildProvider;
 import com.android.compatibility.common.tradefed.result.IInvocationResultRepo;
 import com.android.compatibility.common.tradefed.result.InvocationResultRepo;
 import com.android.compatibility.common.tradefed.testtype.ModuleRepo;
 import com.android.compatibility.common.util.IInvocationResult;
 import com.android.compatibility.common.util.TestStatus;
-import com.android.tradefed.build.IFolderBuildInfo;
 import com.android.tradefed.command.Console;
 import com.android.tradefed.util.ArrayUtil;
 import com.android.tradefed.util.FileUtil;
@@ -44,16 +43,16 @@ import java.util.Map;
  */
 public abstract class CompatibilityConsole extends Console {
 
-    private CompatibilityBuildHelper mBuildHelper = null;
+    private CompatibilityBuildInfo mBuild = null;
 
     /**
      * {@inheritDoc}
      */
     @Override
     public void run() {
-        CompatibilityBuildHelper buildHelper = getCompatibilityBuildHelper();
-        printLine(String.format("Android %s %s (%s)", buildHelper.getSuiteName(),
-                buildHelper.getSuiteVersion(), buildHelper.getBuildId()));
+        CompatibilityBuildInfo build = getCompatibilityBuild();
+        printLine(String.format("Android %s %s (%s)", build.getSuiteName(), build.getSuiteVersion(),
+                build.getBuildId()));
         super.run();
     }
 
@@ -66,27 +65,27 @@ public abstract class CompatibilityConsole extends Console {
         trie.put(new Runnable() {
             @Override
             public void run() {
-                CompatibilityBuildHelper buildHelper = getCompatibilityBuildHelper();
-                if (buildHelper != null) {
-                    // TODO(stuartscott)" listPlans(buildHelper);
+                CompatibilityBuildInfo build = getCompatibilityBuild();
+                if (build != null) {
+                    // TODO(stuartscott)" listPlans(build);
                 }
             }
         }, LIST_PATTERN, "p(?:lans)?");
         trie.put(new Runnable() {
             @Override
             public void run() {
-                CompatibilityBuildHelper buildHelper = getCompatibilityBuildHelper();
-                if (buildHelper != null) {
-                    listModules(buildHelper);
+                CompatibilityBuildInfo build = getCompatibilityBuild();
+                if (build != null) {
+                    listModules(build);
                 }
             }
         }, LIST_PATTERN, "m(?:odules)?");
         trie.put(new Runnable() {
             @Override
             public void run() {
-                CompatibilityBuildHelper buildHelper = getCompatibilityBuildHelper();
-                if (buildHelper != null) {
-                    listResults(buildHelper);
+                CompatibilityBuildInfo build = getCompatibilityBuild();
+                if (build != null) {
+                    listResults(build);
                 }
             }
         }, LIST_PATTERN, "r(?:esults)?");
@@ -109,8 +108,7 @@ public abstract class CompatibilityConsole extends Console {
      */
     @Override
     protected String getConsolePrompt() {
-        return String.format("%s-tf > ",
-                getCompatibilityBuildHelper().getSuiteName().toLowerCase());
+        return String.format("%s-tf > ", getCompatibilityBuild().getSuiteName().toLowerCase());
     }
 
     /**
@@ -118,11 +116,11 @@ public abstract class CompatibilityConsole extends Console {
      */
     @Override
     protected String getGenericHelpString(List<String> genericHelp) {
-        CompatibilityBuildHelper buildHelper = getCompatibilityBuildHelper();
+        CompatibilityBuildInfo build = getCompatibilityBuild();
         StringBuilder helpBuilder = new StringBuilder();
-        helpBuilder.append(buildHelper.getSuiteFullName());
+        helpBuilder.append(build.getSuiteFullName());
         helpBuilder.append("\n\n");
-        helpBuilder.append(buildHelper.getSuiteName());
+        helpBuilder.append(build.getSuiteName());
         helpBuilder.append(" is the test harness for running the Android Compatibility Suite, ");
         helpBuilder.append("built on top of Trade Federation.\n\n");
         helpBuilder.append("Available commands and options\n");
@@ -151,7 +149,7 @@ public abstract class CompatibilityConsole extends Console {
         helpBuilder.append("independent chunks, to run on multiple devices in parallel\n");
         helpBuilder.append(runPrompt);
         helpBuilder.append("--help/--help-all: get help for ");
-        helpBuilder.append(buildHelper.getSuiteFullName());
+        helpBuilder.append(build.getSuiteFullName());
         helpBuilder.append("\n");
         helpBuilder.append("List:\n");
         helpBuilder.append("  l/list d/devices: list connected devices and their state\n");
@@ -169,10 +167,10 @@ public abstract class CompatibilityConsole extends Console {
         return helpBuilder.toString();
     }
 
-    private void listModules(CompatibilityBuildHelper buildHelper) {
+    private void listModules(CompatibilityBuildInfo build) {
         File[] files = null;
         try {
-            files = buildHelper.getTestsDir().listFiles(new ModuleRepo.ConfigFilter());
+            files = build.getTestsDir().listFiles(new ModuleRepo.ConfigFilter());
         } catch (FileNotFoundException e) {
             printLine(e.getMessage());
             e.printStackTrace();
@@ -191,7 +189,7 @@ public abstract class CompatibilityConsole extends Console {
         }
     }
 
-    private void listResults(CompatibilityBuildHelper buildHelper) {
+    private void listResults(CompatibilityBuildInfo build) {
         TableFormatter tableFormatter = new TableFormatter();
         List<List<String>> table = new ArrayList<>();
         table.add(Arrays.asList("Session","Pass", "Fail", "Not Executed", "Start Time", "Test Plan",
@@ -199,7 +197,7 @@ public abstract class CompatibilityConsole extends Console {
         IInvocationResultRepo testResultRepo = null;
         List<IInvocationResult> results = null;
         try {
-            testResultRepo = new InvocationResultRepo(buildHelper.getResultsDir());
+            testResultRepo = new InvocationResultRepo(build.getResultsDir());
             results = testResultRepo.getResults();
         } catch (FileNotFoundException e) {
             printLine(e.getMessage());
@@ -222,13 +220,10 @@ public abstract class CompatibilityConsole extends Console {
         }
     }
 
-    public CompatibilityBuildHelper getCompatibilityBuildHelper() {
-        if (mBuildHelper == null) {
-            CompatibilityBuildProvider buildProvider = new CompatibilityBuildProvider();
-            IFolderBuildInfo buildInfo = (IFolderBuildInfo) buildProvider.getBuild();
-            mBuildHelper = new CompatibilityBuildHelper(buildInfo);
-            mBuildHelper.init();
+    public CompatibilityBuildInfo getCompatibilityBuild() {
+        if (mBuild == null) {
+            mBuild = new CompatibilityBuildProvider().getCompatibilityBuild();
         }
-        return mBuildHelper;
+        return mBuild;
     }
 }
