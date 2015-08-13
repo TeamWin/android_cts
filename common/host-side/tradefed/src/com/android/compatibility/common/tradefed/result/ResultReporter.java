@@ -20,16 +20,21 @@ import com.android.tradefed.build.IFolderBuildInfo;
 import com.android.tradefed.config.Option;
 import com.android.tradefed.config.Option.Importance;
 import com.android.tradefed.config.OptionClass;
+import com.android.tradefed.result.ILogSaver;
+import com.android.tradefed.result.ILogSaverListener;
 import com.android.tradefed.result.ITestInvocationListener;
 import com.android.tradefed.result.InputStreamSource;
 import com.android.tradefed.result.LogDataType;
+import com.android.tradefed.result.LogFile;
 import com.android.tradefed.result.LogFileSaver;
 import com.android.tradefed.result.TestSummary;
 import com.android.tradefed.util.FileUtil;
+import com.android.tradefed.util.StreamUtil;
 
 import org.xmlpull.v1.XmlPullParserException;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
@@ -42,7 +47,7 @@ import java.util.Map;
  * Reporter for Compatibility test results.
  */
 @OptionClass(alias="result-reporter")
-public class ResultReporter implements ITestInvocationListener {
+public class ResultReporter implements ILogSaverListener, ITestInvocationListener {
 
     private static final String RESULT_KEY = "COMPATIBILITY_TEST_RESULT";
     private static final String DEVICE_INFO_COLLECTOR = "com.android.compatibility.deviceinfo";
@@ -65,6 +70,12 @@ public class ResultReporter implements ITestInvocationListener {
             importance = Importance.IF_UNSET)
     private Integer mRetrySessionId = null;
 
+    @Option(name = "include-test-log-tags", description = "Include test log tags in report.")
+    private boolean mIncludeTestLogTags = false;
+
+    @Option(name = "use-log-saver", description = "Also saves generated result with log saver")
+    private boolean mUseLogSaver = false;
+
     private String mDeviceSerial;
 
     private boolean mInitialized;
@@ -78,6 +89,7 @@ public class ResultReporter implements ITestInvocationListener {
     private ITestResult mCurrentResult;
     private IFolderBuildInfo mBuild;
     private CompatibilityBuildHelper mBuildHelper;
+    private ILogSaver mLogSaver;
 
     /**
      * {@inheritDoc}
@@ -292,11 +304,23 @@ public class ResultReporter implements ITestInvocationListener {
                     mResult.countResults(TestStatus.FAIL),
                     mResult.countResults(TestStatus.NOT_EXECUTED)));
             try {
-                XmlResultHandler.writeResults(mBuildHelper.getSuiteName(),
+                File resultFile = XmlResultHandler.writeResults(mBuildHelper.getSuiteName(),
                         mBuildHelper.getSuiteVersion(), mSuitePlan, mResult, mResultDir,
                         mStartTime, elapsedTime + mStartTime);
                 copyFormattingFiles(mResultDir);
                 zipResults(mResultDir);
+                if (mUseLogSaver) {
+                    FileInputStream fis = null;
+                    try {
+                        fis = new FileInputStream(resultFile);
+                        mLogSaver.saveLogData("log-result", LogDataType.XML, fis);
+                    } catch (IOException ioe) {
+                        Log.e(mDeviceSerial, "error saving XML with log saver");
+                        Log.e(mDeviceSerial, ioe);
+                    } finally {
+                        StreamUtil.close(fis);
+                    }
+                }
             } catch (IOException | XmlPullParserException e) {
                 e.printStackTrace();
             }
@@ -317,6 +341,11 @@ public class ResultReporter implements ITestInvocationListener {
         mLogDir = null;
     }
 
+    @Override
+    public void setLogSaver(ILogSaver logSaver) {
+        mLogSaver = logSaver;
+    }
+
     /**
      * {@inheritDoc}
      */
@@ -332,6 +361,21 @@ public class ResultReporter implements ITestInvocationListener {
         } catch (IOException e) {
             Log.e(mDeviceSerial, String.format("Failed to write log for %s", name));
             e.printStackTrace();
+        }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void testLogSaved(String dataName, LogDataType dataType, InputStreamSource dataStream,
+            LogFile logFile) {
+        if (mIncludeTestLogTags && mCurrentResult != null) {
+            if (dataType == LogDataType.BUGREPORT) {
+                mCurrentResult.setBugReport(logFile.getUrl());
+            } else if (dataType == LogDataType.LOGCAT) {
+                mCurrentResult.setLog(logFile.getUrl());
+            }
         }
     }
 

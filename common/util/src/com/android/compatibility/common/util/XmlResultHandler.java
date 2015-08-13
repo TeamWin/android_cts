@@ -48,6 +48,7 @@ public class XmlResultHandler {
 
     // XML constants
     private static final String ABI_ATTR = "abi";
+    private static final String BUGREPORT_TAG = "BugReport";
     private static final String CASE_TAG = "TestCase";
     private static final String DEVICE_ATTR = "device";
     private static final String END_TIME_ATTR = "end";
@@ -56,6 +57,7 @@ public class XmlResultHandler {
     private static final String HOST_NAME_ATTR = "host-name";
     private static final String JAVA_VENDOR_ATTR = "java-vendor";
     private static final String JAVA_VERSION_ATTR = "java-version";
+    private static final String LOGCAT_TAG = "Logcat";
     private static final String MESSAGE_ATTR = "message";
     private static final String MODULE_TAG = "Module";
     private static final String NAME_ATTR = "name";
@@ -135,6 +137,12 @@ public class XmlResultHandler {
                                     }
                                     parser.require(XmlPullParser.END_TAG, NS, FAILURE_TAG);
                                     parser.nextTag();
+                                } else if (parser.getName().equals(BUGREPORT_TAG)) {
+                                    test.setBugReport(parser.nextText());
+                                    parser.nextTag();
+                                } else if (parser.getName().equals(LOGCAT_TAG)) {
+                                    test.setLog(parser.nextText());
+                                    parser.nextTag();
                                 } else {
                                     test.setReportLog(ReportLog.parse(parser));
                                     parser.nextTag();
@@ -163,10 +171,11 @@ public class XmlResultHandler {
      * @param result
      * @param resultDir
      * @param startTime
+     * @return The result file created.
      * @throws IOException
      * @throws XmlPullParserException
      */
-    public static void writeResults(String suiteName, String suiteVersion, String suitePlan,
+    public static File writeResults(String suiteName, String suiteVersion, String suitePlan,
             IInvocationResult result, File resultDir, long startTime, long endTime)
                     throws IOException, XmlPullParserException {
         int passed = result.countResults(TestStatus.PASS);
@@ -233,6 +242,18 @@ public class XmlResultHandler {
                         }
                         serializer.endTag(NS, FAILURE_TAG);
                     }
+                    String bugreport = r.getBugReport();
+                    if (bugreport != null) {
+                        serializer.startTag(NS, BUGREPORT_TAG);
+                        serializer.text(bugreport);
+                        serializer.endTag(NS, BUGREPORT_TAG);
+                    }
+                    String logcat = r.getLog();
+                    if (logcat != null) {
+                        serializer.startTag(NS, LOGCAT_TAG);
+                        serializer.text(logcat);
+                        serializer.endTag(NS, LOGCAT_TAG);
+                    }
                     ReportLog.serialize(serializer, r.getReportLog());
                     serializer.endTag(NS, TEST_TAG);
                 }
@@ -241,6 +262,7 @@ public class XmlResultHandler {
             serializer.endTag(NS, MODULE_TAG);
         }
         serializer.endDocument();
+        return resultFile;
     }
 
     private static String formatTimeStamp(long epochTime) {

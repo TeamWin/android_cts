@@ -257,6 +257,7 @@ public class XmlResultHandlerTest extends TestCase {
         assertEquals("Incorrect start time", START_MS, moduleATest1.getStartTime());
         assertEquals("Incorrect end time", END_MS, moduleATest1.getEndTime());
         assertEquals("Incorrect result", TestStatus.PASS, moduleATest1.getResultStatus());
+        assertNull("Unexpected bugreport", moduleATest1.getBugReport());
         assertNull("Unexpected log", moduleATest1.getLog());
         assertNull("Unexpected message", moduleATest1.getMessage());
         assertNull("Unexpected stack trace", moduleATest1.getStackTrace());
@@ -266,6 +267,7 @@ public class XmlResultHandlerTest extends TestCase {
         assertEquals("Incorrect start time", START_MS, moduleATest2.getStartTime());
         assertEquals("Incorrect end time", END_MS, moduleATest2.getEndTime());
         assertEquals("Incorrect result", TestStatus.NOT_EXECUTED, moduleATest2.getResultStatus());
+        assertNull("Unexpected bugreport", moduleATest2.getBugReport());
         assertNull("Unexpected log", moduleATest2.getLog());
         assertNull("Unexpected message", moduleATest2.getMessage());
         assertNull("Unexpected stack trace", moduleATest2.getStackTrace());
@@ -290,6 +292,7 @@ public class XmlResultHandlerTest extends TestCase {
         assertEquals("Incorrect start time", START_MS, moduleBTest3.getStartTime());
         assertEquals("Incorrect end time", END_MS, moduleBTest3.getEndTime());
         assertEquals("Incorrect result", TestStatus.FAIL, moduleBTest3.getResultStatus());
+        assertNull("Unexpected bugreport", moduleBTest3.getBugReport());
         assertNull("Unexpected log", moduleBTest3.getLog());
         assertEquals("Incorrect message", MESSAGE, moduleBTest3.getMessage());
         assertEquals("Incorrect stack trace", STACK_TRACE, moduleBTest3.getStackTrace());
@@ -299,6 +302,7 @@ public class XmlResultHandlerTest extends TestCase {
         assertEquals("Incorrect start time", START_MS, moduleBTest4.getStartTime());
         assertEquals("Incorrect end time", END_MS, moduleBTest4.getEndTime());
         assertEquals("Incorrect result", TestStatus.PASS, moduleBTest4.getResultStatus());
+        assertNull("Unexpected bugreport", moduleBTest4.getBugReport());
         assertNull("Unexpected log", moduleBTest4.getLog());
         assertNull("Unexpected message", moduleBTest4.getMessage());
         assertNull("Unexpected stack trace", moduleBTest4.getStackTrace());
