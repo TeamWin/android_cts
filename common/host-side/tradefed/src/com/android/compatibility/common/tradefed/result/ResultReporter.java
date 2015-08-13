@@ -1,6 +1,6 @@
 package com.android.compatibility.common.tradefed.result;
 
-import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
+import com.android.compatibility.common.tradefed.build.CompatibilityBuildInfo;
 import com.android.compatibility.common.tradefed.testtype.CompatibilityTest;
 import com.android.compatibility.common.util.AbiUtils;
 import com.android.compatibility.common.util.ICaseResult;
@@ -16,7 +16,6 @@ import com.android.ddmlib.Log;
 import com.android.ddmlib.Log.LogLevel;
 import com.android.ddmlib.testrunner.TestIdentifier;
 import com.android.tradefed.build.IBuildInfo;
-import com.android.tradefed.build.IFolderBuildInfo;
 import com.android.tradefed.config.Option;
 import com.android.tradefed.config.Option.Importance;
 import com.android.tradefed.config.OptionClass;
@@ -53,12 +52,6 @@ public class ResultReporter implements ITestInvocationListener {
         "logo.png",
         "newrule-green.png"};
 
-    private static final String PLAN_OPTION = "plan";
-    @Option(name = PLAN_OPTION,
-            description = "the test suite plan to run, such as \"everything\" or \"cts\"",
-            importance = Importance.ALWAYS)
-    private String mSuitePlan;
-
     @Option(name = CompatibilityTest.RETRY_OPTION,
             shortName = 'r',
             description = "retry a previous session.",
@@ -76,8 +69,7 @@ public class ResultReporter implements ITestInvocationListener {
     private IModuleResult mCurrentModuleResult;
     private ICaseResult mCurrentCaseResult;
     private ITestResult mCurrentResult;
-    private IFolderBuildInfo mBuild;
-    private CompatibilityBuildHelper mBuildHelper;
+    private CompatibilityBuildInfo mBuild;
 
     /**
      * {@inheritDoc}
@@ -85,8 +77,7 @@ public class ResultReporter implements ITestInvocationListener {
     @Override
     public void invocationStarted(IBuildInfo buildInfo) {
         mInitialized = false;
-        mBuild = (IFolderBuildInfo) buildInfo;
-        mBuildHelper = new CompatibilityBuildHelper(mBuild);
+        mBuild = (CompatibilityBuildInfo) buildInfo;
         mDeviceSerial = buildInfo.getDeviceSerial();
         if (mDeviceSerial == null) {
             mDeviceSerial = "unknown_device";
@@ -97,7 +88,7 @@ public class ResultReporter implements ITestInvocationListener {
             Log.d(mDeviceSerial, String.format("Retrying session %d", mRetrySessionId));
             List<IInvocationResult> results = null;
             try {
-                results = XmlResultHandler.getResults(mBuildHelper.getResultsDir());
+                results = XmlResultHandler.getResults(mBuild.getResultsDir());
             } catch (FileNotFoundException e) {
                 e.printStackTrace();
             }
@@ -112,7 +103,7 @@ public class ResultReporter implements ITestInvocationListener {
         } else {
             mStartTime = time;
             try {
-                mResultDir = new File(mBuildHelper.getResultsDir(), dirSuffix);
+                mResultDir = new File(mBuild.getResultsDir(), dirSuffix);
             } catch (FileNotFoundException e) {
                 e.printStackTrace();
             }
@@ -126,7 +117,7 @@ public class ResultReporter implements ITestInvocationListener {
             mResult = new InvocationResult(mStartTime, mResultDir);
         }
         try {
-            mLogDir = new File(mBuildHelper.getLogsDir(), dirSuffix);
+            mLogDir = new File(mBuild.getLogsDir(), dirSuffix);
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         }
@@ -292,9 +283,9 @@ public class ResultReporter implements ITestInvocationListener {
                     mResult.countResults(TestStatus.FAIL),
                     mResult.countResults(TestStatus.NOT_EXECUTED)));
             try {
-                XmlResultHandler.writeResults(mBuildHelper.getSuiteName(),
-                        mBuildHelper.getSuiteVersion(), mSuitePlan, mResult, mResultDir,
-                        mStartTime, elapsedTime + mStartTime);
+                XmlResultHandler.writeResults(mBuild.getSuiteName(),
+                        mBuild.getSuiteVersion(), mBuild.getSuitePlan(), mResult,
+                        mResultDir, mStartTime, elapsedTime + mStartTime);
                 copyFormattingFiles(mResultDir);
                 zipResults(mResultDir);
             } catch (IOException | XmlPullParserException e) {

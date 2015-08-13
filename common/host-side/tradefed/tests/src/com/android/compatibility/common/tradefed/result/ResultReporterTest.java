@@ -16,18 +16,14 @@
 
 package com.android.compatibility.common.tradefed.result;
 
-import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
+import com.android.compatibility.common.tradefed.build.CompatibilityBuildInfo;
 import com.android.compatibility.common.util.AbiUtils;
 import com.android.compatibility.common.util.ICaseResult;
 import com.android.compatibility.common.util.IInvocationResult;
 import com.android.compatibility.common.util.IModuleResult;
 import com.android.compatibility.common.util.ITestResult;
 import com.android.compatibility.common.util.TestStatus;
-import com.android.compatibility.tradefed.command.MockConsole;
 import com.android.ddmlib.testrunner.TestIdentifier;
-import com.android.tradefed.build.FolderBuildInfo;
-import com.android.tradefed.build.IFolderBuildInfo;
-import com.android.tradefed.config.OptionSetter;
 import com.android.tradefed.util.FileUtil;
 
 import junit.framework.TestCase;
@@ -39,10 +35,11 @@ import java.util.List;
 
 public class ResultReporterTest extends TestCase {
 
-    private static final String ROOT_PROPERTY = "TESTS_ROOT";
-    private static final String PLAN_OPTION = "plan";
     private static final String BUILD_ID = "2";
-    private static final String SUITE_PLAN = "cts";
+    private static final String SUITE_NAME = "TESTS";
+    private static final String SUITE_FULL_NAME = "Compatibility Tests";
+    private static final String SUITE_VERSION = "1";
+    private static final String SUITE_PLAN = "foobar";
     private static final String ROOT_DIR_NAME = "root";
     private static final String BASE_DIR_NAME = "android-tests";
     private static final String TESTCASES = "testcases";
@@ -66,13 +63,8 @@ public class ResultReporterTest extends TestCase {
         "logo.png",
         "newrule-green.png"};
 
-    // Make sure the mock is in the ClassLoader
-    @SuppressWarnings("unused")
-    private MockConsole mMockConsole;
-
     private ResultReporter mReporter;
-    private IFolderBuildInfo mBuildInfo;
-    private CompatibilityBuildHelper mBuildHelper;
+    private CompatibilityBuildInfo mBuild;
 
     private File mRoot = null;
     private File mBase = null;
@@ -80,39 +72,33 @@ public class ResultReporterTest extends TestCase {
 
     @Override
     public void setUp() throws Exception {
-        mMockConsole = new MockConsole();
         mReporter = new ResultReporter();
-        OptionSetter setter = new OptionSetter(mReporter);
-        setter.setOptionValue(PLAN_OPTION, SUITE_PLAN);
         mRoot = FileUtil.createTempDir(ROOT_DIR_NAME);
         mBase = new File(mRoot, BASE_DIR_NAME);
         mBase.mkdirs();
         mTests = new File(mBase, TESTCASES);
         mTests.mkdirs();
-        System.setProperty(ROOT_PROPERTY, mRoot.getAbsolutePath());
-        mBuildInfo = new FolderBuildInfo(BUILD_ID, "", "");
-        mBuildHelper = new CompatibilityBuildHelper(mBuildInfo);
-        mBuildHelper.init();
+        mBuild = new CompatibilityBuildInfo(
+                BUILD_ID, SUITE_NAME, SUITE_FULL_NAME, SUITE_VERSION, SUITE_PLAN, mRoot);
     }
 
     @Override
     public void tearDown() throws Exception {
-        mMockConsole = null;
         mReporter = null;
         FileUtil.recursiveDelete(mRoot);
     }
 
     public void testSetup() throws Exception {
-        mReporter.invocationStarted(mBuildInfo);
-        // Should have created a directory for the logs
-        File[] children = mBuildHelper.getLogsDir().listFiles();
-        assertTrue("Didn't create logs dir", children.length == 1 && children[0].isDirectory());
+        mReporter.invocationStarted(mBuild);
         // Should have created a directory for the results
-        children = mBuildHelper.getResultsDir().listFiles();
+        File[] children = mBuild.getResultsDir().listFiles();
         assertTrue("Didn't create results dir", children.length == 1 && children[0].isDirectory());
+        // Should have created a directory for the logs
+        children = mBuild.getResultsDir().listFiles();
+        assertTrue("Didn't create logs dir", children.length == 1 && children[0].isDirectory());
         mReporter.invocationEnded(10);
         // Should have created a zip file
-        children = mBuildHelper.getResultsDir().listFiles(new FileFilter() {
+        children = mBuild.getResultsDir().listFiles(new FileFilter() {
             @Override
             public boolean accept(File pathname) {
                 return pathname.getName().endsWith(".zip");
@@ -123,7 +109,7 @@ public class ResultReporterTest extends TestCase {
     }
 
     public void testResultReporting() throws Exception {
-        mReporter.invocationStarted(mBuildInfo);
+        mReporter.invocationStarted(mBuild);
         mReporter.testRunStarted(ID, 2);
         TestIdentifier test1 = new TestIdentifier(CLASS, METHOD_1);
         mReporter.testStarted(test1);
@@ -163,7 +149,7 @@ public class ResultReporterTest extends TestCase {
     }
 
     public void testCopyFormattingFiles() throws Exception {
-        File resultDir = new File(mBuildHelper.getResultsDir(), RESULT_DIR);
+        File resultDir = new File(mBuild.getResultsDir(), RESULT_DIR);
         resultDir.mkdirs();
         ResultReporter.copyFormattingFiles(resultDir);
         for (String filename : FORMATTING_FILES) {

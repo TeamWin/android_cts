@@ -15,9 +15,8 @@
  */
 package com.android.compatibility.common.tradefed.targetprep;
 
-import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
+import com.android.compatibility.common.tradefed.build.CompatibilityBuildInfo;
 import com.android.tradefed.build.IBuildInfo;
-import com.android.tradefed.build.IFolderBuildInfo;
 import com.android.tradefed.config.OptionClass;
 import com.android.tradefed.targetprep.TargetSetupError;
 import com.android.tradefed.targetprep.TestAppInstallSetup;
@@ -31,13 +30,13 @@ import java.io.FileNotFoundException;
 @OptionClass(alias="apk-installer")
 public class ApkInstaller extends TestAppInstallSetup {
 
-    private CompatibilityBuildHelper mBuildHelper = null;
+    private CompatibilityBuildInfo mBuild = null;
 
-    protected File getTestsDir(IFolderBuildInfo buildInfo) throws FileNotFoundException {
-        if (mBuildHelper == null) {
-            mBuildHelper = new CompatibilityBuildHelper(buildInfo);
+    protected CompatibilityBuildInfo getBuild(IBuildInfo buildInfo) {
+        if (mBuild == null) {
+            mBuild = (CompatibilityBuildInfo) buildInfo;
         }
-        return mBuildHelper.getTestsDir();
+        return mBuild;
     }
 
     /**
@@ -48,7 +47,7 @@ public class ApkInstaller extends TestAppInstallSetup {
             throws TargetSetupError {
         File apkFile = null;
         try {
-            apkFile = new File(getTestsDir((IFolderBuildInfo) buildInfo), apkFileName);
+            apkFile = new File(getBuild(buildInfo).getTestsDir(), apkFileName);
             if (!apkFile.isFile()) {
                 throw new FileNotFoundException();
             }

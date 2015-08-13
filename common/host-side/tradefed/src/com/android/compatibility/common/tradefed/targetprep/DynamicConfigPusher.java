@@ -15,10 +15,9 @@
  */
 package com.android.compatibility.common.tradefed.targetprep;
 
-import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
+import com.android.compatibility.common.tradefed.build.CompatibilityBuildInfo;
 import com.android.compatibility.common.util.DynamicConfig;
 import com.android.tradefed.build.IBuildInfo;
-import com.android.tradefed.build.IFolderBuildInfo;
 import com.android.tradefed.config.Option;
 import com.android.tradefed.config.OptionClass;
 import com.android.tradefed.device.DeviceNotAvailableException;
@@ -67,10 +66,9 @@ public class DynamicConfigPusher implements ITargetCleaner {
     public void setUp(ITestDevice device, IBuildInfo buildInfo) throws TargetSetupError, BuildError,
             DeviceNotAvailableException {
         File src = null;
-        CompatibilityBuildHelper buildHelper =
-                new CompatibilityBuildHelper((IFolderBuildInfo) buildInfo);
+        CompatibilityBuildInfo build = (CompatibilityBuildInfo) buildInfo;
         try {
-            src = DynamicConfig.getConfigFile(buildHelper.getTestsDir(), mModuleName);
+            src = DynamicConfig.getConfigFile(build.getTestsDir(), mModuleName);
         } catch (FileNotFoundException e) {
             throw new TargetSetupError(String.format(
                     "Cannot find config file for module '%s' in repository", mModuleName));
@@ -83,7 +81,7 @@ public class DynamicConfigPusher implements ITargetCleaner {
                         src.getName(), dest));
             } else {
                 mFilePushed = dest;
-                buildHelper.addDynamicConfig(mModuleName, DynamicConfig.calculateSHA1(src));
+                build.addDynamicConfig(mModuleName, DynamicConfig.calculateSHA1(src));
             }
 
         } else if (mTarget == TestTarget.HOST) {
@@ -97,7 +95,7 @@ public class DynamicConfigPusher implements ITargetCleaner {
                         src.getAbsolutePath(), dest.getAbsolutePath()), e);
             }
             mFilePushed = dest.getAbsolutePath();
-            buildHelper.addDynamicConfig(mModuleName, DynamicConfig.calculateSHA1(src));
+            build.addDynamicConfig(mModuleName, DynamicConfig.calculateSHA1(src));
         }
     }
 
