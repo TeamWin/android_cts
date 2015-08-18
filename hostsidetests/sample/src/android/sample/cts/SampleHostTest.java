@@ -56,9 +56,18 @@ public class SampleHostTest extends DeviceTestCase {
      * Test if dynamic config on the host side works
      * @throws Exception
      */
-    public void testDynamicConfig() throws Exception {
+    public void testDynamicConfigLocal() throws Exception {
         DynamicConfigHostSide config = new DynamicConfigHostSide("CtsSampleHostTestCases");
-        assertEquals(config.getConfig("host-config"), "host-config-val");
+        assertEquals("local-config-val", config.getConfig("local-config"));
+    }
+
+    /**
+     * Test if dynamic config override on the host side works
+     * @throws Exception
+     */
+    public void testDynamicConfigOverride() throws Exception {
+        DynamicConfigHostSide config = new DynamicConfigHostSide("CtsSampleHostTestCases");
+        assertEquals("host-1.0-cts-keyone", config.getConfig("sample_host_key_one"));
     }
 
     /**

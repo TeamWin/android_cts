@@ -64,6 +64,8 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
     public static final String RETRY_OPTION = "retry";
     private static final String ABI_OPTION = "abi";
     private static final String SHARD_OPTION = "shard";
+    private static final String URL = "dynamic-config-url";
+
     private static final TestStatus[] RETRY_TEST_STATUS = new TestStatus[] {
         TestStatus.FAIL,
         TestStatus.NOT_EXECUTED
@@ -106,6 +108,10 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
     @Option(name = SHARD_OPTION,
             description = "split the modules up to run on multiple devices concurrently.")
     private int mShards = 1;
+
+    @Option(name = URL,
+            description = "Specify the url for override config")
+    private String mURL;
 
     private int mShardAssignment;
     private int mTotalShards;
@@ -161,7 +167,7 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
     public void setBuild(IBuildInfo buildInfo) {
         mBuild = (IFolderBuildInfo) buildInfo;
         mBuildHelper = new CompatibilityBuildHelper(mBuild);
-        mBuildHelper.init();
+        mBuildHelper.init(mURL);
     }
 
     /**

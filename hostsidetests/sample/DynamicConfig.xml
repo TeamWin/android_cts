@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<DynamicConfig>
+    <Config key ="local-config">local-config-val</Config>
+</DynamicConfig>
