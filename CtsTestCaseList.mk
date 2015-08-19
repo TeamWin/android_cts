@@ -82,6 +82,7 @@ cts_support_packages := \
     CtsDeviceOpenGl \
     CtsWifiConfigCreator \
     CtsDeviceAndProfileOwnerApp \
+    CtsDeviceAppUsageTestApp \
     CtsDeviceInfo \
     CtsDeviceOsTestApp \
     CtsDeviceOwnerApp \
