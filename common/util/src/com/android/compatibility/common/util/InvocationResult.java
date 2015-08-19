@@ -18,6 +18,7 @@ package com.android.compatibility.common.util;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -31,7 +32,7 @@ public class InvocationResult implements IInvocationResult {
 
     private long mTimestamp;
     private Map<String, IModuleResult> mModuleResults = new LinkedHashMap<>();
-    private DeviceInfoResult mDeviceInfo = new DeviceInfoResult();
+    private Map<String, String> mDeviceInfo = new HashMap();
     private String mTestPlan;
     private File mResultDir;
 
@@ -90,8 +91,16 @@ public class InvocationResult implements IInvocationResult {
      * {@inheritDoc}
      */
     @Override
-    public void populateDeviceInfoMetrics(Map<String, String> metrics) {
-        mDeviceInfo.populateMetrics(metrics);
+    public void addDeviceInfo(String key, String value) {
+        mDeviceInfo.put(key, value);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public Map<String, String> getDeviceInfo() {
+        return mDeviceInfo;
     }
 
     /**

@@ -76,8 +76,10 @@ public class XmlResultHandlerTest extends TestCase {
             "<Result start=\"%s\" end=\"%s\" suite-name=\"%s\" suite-version=\"%s\" " +
             "suite-plan=\"%s\" report-version=\"%s\" host-name=\"%s\" os-name=\"%s\" " +
             "os-version=\"%s\" os-arch=\"%s\" java-vendor=\"%s\" java-version=\"%s\">\n" +
-            "%s%s" +
+            "%s%s%s" +
             "</Result>";
+    private static final String XML_DEVICE_INFO =
+            "  <DeviceInfo build_serial=\"%s\" />\n";
     private static final String XML_SUMMARY =
             "  <Summary pass=\"%d\" failed=\"%d\" not-executed=\"%d\" />\n";
     private static final String XML_MODULE =
@@ -185,6 +187,7 @@ public class XmlResultHandlerTest extends TestCase {
             // Create the result file
             File resultFile = new File(resultDir, XmlResultHandler.TEST_RESULT_FILE_NAME);
             writer = new FileWriter(resultFile);
+            String deviceInfo = String.format(XML_DEVICE_INFO, DEVICE_A);
             String summary = String.format(XML_SUMMARY, 2, 1, 1);
             String moduleATest1 = String.format(XML_TEST_PASS, METHOD_1, START, END);
             String moduleATest2 = String.format(XML_TEST_NOT_EXECUTED, METHOD_2, START, END);
@@ -208,7 +211,7 @@ public class XmlResultHandlerTest extends TestCase {
             } catch (UnknownHostException ignored) {}
             String output = String.format(XML_BASE, START, END, SUITE_NAME, SUITE_VERSION,
                     SUITE_PLAN, REPORT_VERSION, hostName, OS_NAME,  OS_VERSION, OS_ARCH,
-                    JAVA_VENDOR, JAVA_VERSION, summary, modules);
+                    JAVA_VENDOR, JAVA_VERSION, deviceInfo, summary, modules);
             writer.write(output);
             writer.flush();
 

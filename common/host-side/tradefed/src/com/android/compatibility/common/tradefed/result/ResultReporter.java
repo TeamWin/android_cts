@@ -51,7 +51,8 @@ import java.util.Map;
 public class ResultReporter implements ILogSaverListener, ITestInvocationListener {
 
     private static final String RESULT_KEY = "COMPATIBILITY_TEST_RESULT";
-    private static final String DEVICE_INFO_COLLECTOR = "com.android.compatibility.deviceinfo";
+    private static final String DEVICE_INFO = "DEVICE_INFO_";
+    private static final String DEVICE_INFO_PACKAGE = "com.android.compatibility.common.deviceinfo";
     private static final String[] RESULT_RESOURCES = {
         "compatibility-result.css",
         "compatibility-result.xsd",
@@ -134,6 +135,7 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
             }
             mResult = new InvocationResult(mStartTime, mResultDir);
         }
+        mBuildHelper.setResultDir(mResultDir.getName());
         try {
             mLogDir = new File(mBuildHelper.getLogsDir(), dirSuffix);
         } catch (FileNotFoundException e) {
@@ -161,7 +163,7 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
     @Override
     public void testRunStarted(String id, int numTests) {
         logResult("Starting %s with %d tests", id, numTests);
-        mIsDeviceInfoRun = AbiUtils.parseTestName(id).equals(DEVICE_INFO_COLLECTOR);
+        mIsDeviceInfoRun = AbiUtils.parseTestName(id).equals(DEVICE_INFO_PACKAGE);
         if (!mIsDeviceInfoRun) {
             mCurrentModuleResult = mResult.getOrCreateModule(id);
             mCurrentModuleResult.setDeviceSerial(mDeviceSerial);
@@ -252,7 +254,17 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
     @Override
     public void testRunEnded(long elapsedTime, Map<String, String> metrics) {
         if (mIsDeviceInfoRun) {
-            mResult.populateDeviceInfoMetrics(metrics);
+            for (Map.Entry<String, String> metricEntry : metrics.entrySet()) {
+                String key = metricEntry.getKey();
+                String value = metricEntry.getValue();
+                if (key.startsWith(DEVICE_INFO)) {
+                    // Device info needs to be in the report
+                    mResult.addDeviceInfo(key.substring(DEVICE_INFO.length()), value);
+                } else if (!value.endsWith(".deviceinfo.json")) {
+                    Log.logAndDisplay(LogLevel.INFO, mDeviceSerial,
+                            String.format("%s failed: %s", metricEntry.getKey(), value));
+                }
+            }
         } else {
             logResult("%s completed in %dms. %d passed, %d failed, %d non executed",
                     mCurrentModuleResult.getId(),

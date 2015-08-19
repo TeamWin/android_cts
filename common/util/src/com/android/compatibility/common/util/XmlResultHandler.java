@@ -32,6 +32,7 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.Map.Entry;
 import java.util.List;
 
 /**
@@ -51,6 +52,7 @@ public class XmlResultHandler {
     private static final String BUGREPORT_TAG = "BugReport";
     private static final String CASE_TAG = "TestCase";
     private static final String DEVICE_ATTR = "device";
+    private static final String DEVICE_INFO_TAG = "DeviceInfo";
     private static final String END_TIME_ATTR = "end";
     private static final String FAILED_ATTR = "failed";
     private static final String FAILURE_TAG = "Failure";
@@ -101,6 +103,12 @@ public class XmlResultHandler {
                 invocation.setStartTime(parseTimeStamp(
                         parser.getAttributeValue(NS, START_TIME_ATTR)));
                 invocation.setTestPlan(parser.getAttributeValue(NS, SUITE_PLAN_ATTR));
+                parser.nextTag();
+                parser.require(XmlPullParser.START_TAG, NS, DEVICE_INFO_TAG);
+                // TODO(stuartscott): may want to reload these incase the retry was done with
+                // --skip-device-info flag
+                parser.nextTag();
+                parser.require(XmlPullParser.END_TAG, NS, DEVICE_INFO_TAG);
                 parser.nextTag();
                 parser.require(XmlPullParser.START_TAG, NS, SUMMARY_TAG);
                 parser.nextTag();
@@ -207,6 +215,13 @@ public class XmlResultHandler {
         serializer.attribute(NS, OS_ARCH_ATTR, System.getProperty("os.arch"));
         serializer.attribute(NS, JAVA_VENDOR_ATTR, System.getProperty("java.vendor"));
         serializer.attribute(NS, JAVA_VERSION_ATTR, System.getProperty("java.version"));
+
+        // Device Info
+        serializer.startTag(NS, DEVICE_INFO_TAG);
+        for (Entry<String, String> entry : result.getDeviceInfo().entrySet()) {
+            serializer.attribute(NS, entry.getKey(), entry.getValue());
+        }
+        serializer.endTag(NS, DEVICE_INFO_TAG);
 
         // Summary
         serializer.startTag(NS, SUMMARY_TAG);

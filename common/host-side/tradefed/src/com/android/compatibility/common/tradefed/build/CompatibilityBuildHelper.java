@@ -32,9 +32,9 @@ public class CompatibilityBuildHelper {
     private static final String SUITE_FULL_NAME = "SUITE_FULL_NAME";
     private static final String SUITE_VERSION = "SUITE_VERSION";
     private static final String SUITE_PLAN = "SUITE_PLAN";
+    private static final String RESULT_DIR = "RESULT_DIR";
     private static final String CONFIG_PATH_PREFIX = "DYNAMIC_CONFIG_FILE:";
     private static final String DYNAMIC_CONFIG_OVERRIDE_URL = "DYNAMIC_CONFIG_OVERRIDE_URL";
-
     private final IFolderBuildInfo mBuildInfo;
     private boolean mInitialized = false;
 
@@ -151,6 +151,21 @@ public class CompatibilityBuildHelper {
      */
     public File getResultsDir() throws FileNotFoundException {
         return new File(getDir(), "results");
+    }
+
+    /**
+     * Sets the name of the current invocation's result directory.
+     */
+    public void setResultDir(String resultDir) {
+        mBuildInfo.addBuildAttribute(RESULT_DIR, resultDir);
+    }
+
+    /**
+     * @return a {@link File} representing the result directory of the current invocation.
+     * @throws FileNotFoundException if the directory structure is not valid.
+     */
+    public File getResultDir() throws FileNotFoundException {
+        return new File(getResultsDir(), mBuildInfo.getBuildAttributes().get(RESULT_DIR));
     }
 
     /**

@@ -71,7 +71,12 @@ public interface IInvocationResult {
     File getResultDir();
 
     /**
-     * Populate the results with collected device info metrics.
+     * Adds the given device info to the result.
      */
-    void populateDeviceInfoMetrics(Map<String, String> metrics);
+    void addDeviceInfo(String key, String value);
+
+    /**
+     * Gets the {@link Map} of device info collected.
+     */
+    Map<String, String> getDeviceInfo();
 }

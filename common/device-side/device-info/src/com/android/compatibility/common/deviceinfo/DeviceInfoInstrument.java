@@ -80,6 +80,9 @@ public class DeviceInfoInstrument extends Instrumentation {
         String errorMessage = activity.getErrorMessage();
         if (TextUtils.isEmpty(errorMessage)) {
             mBundle.putString(className, activity.getResultFilePath());
+            if (activity instanceof GenericDeviceInfo) {
+                ((GenericDeviceInfo) activity).putDeviceInfo(mBundle);
+            }
         } else {
             mBundle.putString(className, errorMessage);
             throw new Exception(errorMessage);

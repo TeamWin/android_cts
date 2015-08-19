@@ -40,7 +40,10 @@ import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Scanner;
 import java.util.Set;
 
@@ -51,6 +54,7 @@ import com.android.compatibility.common.deviceinfo.DeviceInfoActivity;
  */
 public class GenericDeviceInfo extends DeviceInfoActivity {
 
+    public static final String DEVICE_INFO = "DEVICE_INFO_%s";
     public static final String BUILD_ID = "build_id";
     public static final String BUILD_PRODUCT = "build_product";
     public static final String BUILD_DEVICE = "build_device";
@@ -69,6 +73,8 @@ public class GenericDeviceInfo extends DeviceInfoActivity {
     public static final String BUILD_VERSION_RELEASE = "build_version_release";
     public static final String BUILD_VERSION_SDK = "build_version_sdk";
 
+    private final Map<String, String> mDeviceInfo = new HashMap<>();
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -76,22 +82,33 @@ public class GenericDeviceInfo extends DeviceInfoActivity {
 
     @Override
     protected void collectDeviceInfo() {
-        addResult(BUILD_ID, Build.ID);
-        addResult(BUILD_PRODUCT, Build.PRODUCT);
-        addResult(BUILD_DEVICE, Build.DEVICE);
-        addResult(BUILD_BOARD, Build.BOARD);
-        addResult(BUILD_MANUFACTURER, Build.MANUFACTURER);
-        addResult(BUILD_BRAND, Build.BRAND);
-        addResult(BUILD_MODEL, Build.MODEL);
-        addResult(BUILD_TYPE, Build.TYPE);
-        addResult(BUILD_FINGERPRINT, Build.FINGERPRINT);
-        addResult(BUILD_ABI, Build.CPU_ABI);
-        addResult(BUILD_ABI2, Build.CPU_ABI2);
-        addResult(BUILD_ABIS, TextUtils.join(",", Build.SUPPORTED_ABIS));
-        addResult(BUILD_ABIS_32, TextUtils.join(",", Build.SUPPORTED_32_BIT_ABIS));
-        addResult(BUILD_ABIS_64, TextUtils.join(",", Build.SUPPORTED_64_BIT_ABIS));
-        addResult(BUILD_SERIAL, Build.SERIAL);
-        addResult(BUILD_VERSION_RELEASE, Build.VERSION.RELEASE);
-        addResult(BUILD_VERSION_SDK, Build.VERSION.SDK);
+        addDeviceInfo(BUILD_ID, Build.ID);
+        addDeviceInfo(BUILD_PRODUCT, Build.PRODUCT);
+        addDeviceInfo(BUILD_DEVICE, Build.DEVICE);
+        addDeviceInfo(BUILD_BOARD, Build.BOARD);
+        addDeviceInfo(BUILD_MANUFACTURER, Build.MANUFACTURER);
+        addDeviceInfo(BUILD_BRAND, Build.BRAND);
+        addDeviceInfo(BUILD_MODEL, Build.MODEL);
+        addDeviceInfo(BUILD_TYPE, Build.TYPE);
+        addDeviceInfo(BUILD_FINGERPRINT, Build.FINGERPRINT);
+        addDeviceInfo(BUILD_ABI, Build.CPU_ABI);
+        addDeviceInfo(BUILD_ABI2, Build.CPU_ABI2);
+        addDeviceInfo(BUILD_ABIS, TextUtils.join(",", Build.SUPPORTED_ABIS));
+        addDeviceInfo(BUILD_ABIS_32, TextUtils.join(",", Build.SUPPORTED_32_BIT_ABIS));
+        addDeviceInfo(BUILD_ABIS_64, TextUtils.join(",", Build.SUPPORTED_64_BIT_ABIS));
+        addDeviceInfo(BUILD_SERIAL, Build.SERIAL);
+        addDeviceInfo(BUILD_VERSION_RELEASE, Build.VERSION.RELEASE);
+        addDeviceInfo(BUILD_VERSION_SDK, Build.VERSION.SDK);
+    }
+
+    private void addDeviceInfo(String key, String value) {
+        mDeviceInfo.put(key, value);
+        addResult(key, value);
+    }
+
+    protected void putDeviceInfo(Bundle bundle) {
+        for (Entry<String, String> entry : mDeviceInfo.entrySet()) {
+            bundle.putString(String.format(DEVICE_INFO, entry.getKey()), entry.getValue());
+        }
     }
 }

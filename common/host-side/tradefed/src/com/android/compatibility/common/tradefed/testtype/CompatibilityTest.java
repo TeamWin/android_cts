@@ -194,9 +194,10 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
             CLog.logAndDisplay(LogLevel.INFO, "ABIs: %s", abiSet);
             setupTestModules(abiSet);
 
-            // Always collect the device info, even for resumed runs, since test will likely be
-            // running on a different device
-            //collectDeviceInfo(getDevice(), mBuildHelper, listener);
+            // TODO(stuartscott): Enable skipping of deviceinfo
+            // if (mSkipDeviceInfo) {
+            //   remove device info from modules
+            // }
 
             int moduleCount = mModules.size();
             CLog.logAndDisplay(LogLevel.INFO, "Start test run of %d module%s", moduleCount,
