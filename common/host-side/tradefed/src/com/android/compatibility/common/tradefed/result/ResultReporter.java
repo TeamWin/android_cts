@@ -58,12 +58,6 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
         "logo.png",
         "newrule-green.png"};
 
-    private static final String PLAN_OPTION = "plan";
-    @Option(name = PLAN_OPTION,
-            description = "the test suite plan to run, such as \"everything\" or \"cts\"",
-            importance = Importance.ALWAYS)
-    private String mSuitePlan;
-
     @Option(name = CompatibilityTest.RETRY_OPTION,
             shortName = 'r',
             description = "retry a previous session.",
@@ -305,8 +299,8 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
                     mResult.countResults(TestStatus.NOT_EXECUTED)));
             try {
                 File resultFile = XmlResultHandler.writeResults(mBuildHelper.getSuiteName(),
-                        mBuildHelper.getSuiteVersion(), mSuitePlan, mResult, mResultDir,
-                        mStartTime, elapsedTime + mStartTime);
+                        mBuildHelper.getSuiteVersion(), mBuildHelper.getSuitePlan(), mResult,
+                        mResultDir, mStartTime, elapsedTime + mStartTime);
                 copyDynamicConfigFiles(mBuildHelper.getDynamicConfigFiles(), mResultDir);
                 copyFormattingFiles(mResultDir);
                 zipResults(mResultDir);

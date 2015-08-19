@@ -227,7 +227,7 @@ public abstract class CompatibilityConsole extends Console {
             CompatibilityBuildProvider buildProvider = new CompatibilityBuildProvider();
             IFolderBuildInfo buildInfo = (IFolderBuildInfo) buildProvider.getBuild();
             mBuildHelper = new CompatibilityBuildHelper(buildInfo);
-            mBuildHelper.init();
+            mBuildHelper.init(""/* plan */, ""/* dynamic config url */);
         }
         return mBuildHelper;
     }

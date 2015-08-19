@@ -27,7 +27,6 @@ import com.android.compatibility.tradefed.command.MockConsole;
 import com.android.ddmlib.testrunner.TestIdentifier;
 import com.android.tradefed.build.FolderBuildInfo;
 import com.android.tradefed.build.IFolderBuildInfo;
-import com.android.tradefed.config.OptionSetter;
 import com.android.tradefed.util.FileUtil;
 
 import junit.framework.TestCase;
@@ -40,9 +39,9 @@ import java.util.List;
 public class ResultReporterTest extends TestCase {
 
     private static final String ROOT_PROPERTY = "TESTS_ROOT";
-    private static final String PLAN_OPTION = "plan";
     private static final String BUILD_ID = "2";
     private static final String SUITE_PLAN = "cts";
+    private static final String DYNAMIC_CONFIG_URL = "";
     private static final String ROOT_DIR_NAME = "root";
     private static final String BASE_DIR_NAME = "android-tests";
     private static final String TESTCASES = "testcases";
@@ -82,8 +81,6 @@ public class ResultReporterTest extends TestCase {
     public void setUp() throws Exception {
         mMockConsole = new MockConsole();
         mReporter = new ResultReporter();
-        OptionSetter setter = new OptionSetter(mReporter);
-        setter.setOptionValue(PLAN_OPTION, SUITE_PLAN);
         mRoot = FileUtil.createTempDir(ROOT_DIR_NAME);
         mBase = new File(mRoot, BASE_DIR_NAME);
         mBase.mkdirs();
@@ -92,7 +89,7 @@ public class ResultReporterTest extends TestCase {
         System.setProperty(ROOT_PROPERTY, mRoot.getAbsolutePath());
         mBuildInfo = new FolderBuildInfo(BUILD_ID, "", "");
         mBuildHelper = new CompatibilityBuildHelper(mBuildInfo);
-        mBuildHelper.init();
+        mBuildHelper.init(SUITE_PLAN, DYNAMIC_CONFIG_URL);
     }
 
     @Override

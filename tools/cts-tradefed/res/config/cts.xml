@@ -23,6 +23,6 @@
     <option name="compatibility-test:include-filter" value="arm64-v8a CtsSampleDeviceTestCases" />
     <option name="compatibility-test:exclude-filter" value="CtsSampleHostTestCases" />
     -->
-    <option name="result-reporter:plan" value="cts" />
+    <option name="compatibility-test:plan" value="cts" />
 
 </configuration>

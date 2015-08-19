@@ -27,10 +27,11 @@ import java.util.Map;
  */
 public class CompatibilityBuildHelper {
 
-    private static final String ROOT_DIR = "CTS_ROOT_DIR";
-    private static final String SUITE_NAME = "CTS_SUITE_NAME";
-    private static final String SUITE_FULL_NAME = "CTS_SUITE_FULL_NAME";
-    private static final String SUITE_VERSION = "CTS_SUITE_VERSION";
+    private static final String ROOT_DIR = "ROOT_DIR";
+    private static final String SUITE_NAME = "SUITE_NAME";
+    private static final String SUITE_FULL_NAME = "SUITE_FULL_NAME";
+    private static final String SUITE_VERSION = "SUITE_VERSION";
+    private static final String SUITE_PLAN = "SUITE_PLAN";
     private static final String CONFIG_PATH_PREFIX = "DYNAMIC_CONFIG_FILE:";
     private static final String DYNAMIC_CONFIG_OVERRIDE_URL = "DYNAMIC_CONFIG_OVERRIDE_URL";
 
@@ -47,7 +48,7 @@ public class CompatibilityBuildHelper {
     /**
      * Initializes the {@link IFolderBuildInfo} from the manifest.
      */
-    public void init() {
+    public void init(String suitePlan, String dynamicConfigUrl) {
         if (mInitialized) {
             return;
         }
@@ -61,6 +62,7 @@ public class CompatibilityBuildHelper {
         mBuildInfo.addBuildAttribute(SUITE_NAME, suiteName);
         mBuildInfo.addBuildAttribute(SUITE_FULL_NAME, suiteFullName);
         mBuildInfo.addBuildAttribute(SUITE_VERSION, suiteVersion);
+        mBuildInfo.addBuildAttribute(SUITE_PLAN, suitePlan);
         String mRootDirPath = System.getProperty(String.format("%s_ROOT", suiteName));
         if (mRootDirPath == null || mRootDirPath.equals("")) {
             throw new IllegalArgumentException(
@@ -69,18 +71,10 @@ public class CompatibilityBuildHelper {
         File rootDir = new File(mRootDirPath);
         mBuildInfo.addBuildAttribute(ROOT_DIR, rootDir.getAbsolutePath());
         mBuildInfo.setRootDir(rootDir);
-    }
-
-    /**
-     * Initializes the {@link IFolderBuildInfo} from the manifest.
-     */
-    public void init(String dynamicConfigOverrideUrl) {
-        init();
-        if (dynamicConfigOverrideUrl != null) {
+        if (dynamicConfigUrl != null && !dynamicConfigUrl.isEmpty()) {
             mBuildInfo.addBuildAttribute(DYNAMIC_CONFIG_OVERRIDE_URL,
-                    dynamicConfigOverrideUrl.replace("{suite-name}", getSuiteName()));
+                    dynamicConfigUrl.replace("{suite-name}", getSuiteName()));
         }
-
     }
 
     public String getBuildId() {
@@ -97,6 +91,10 @@ public class CompatibilityBuildHelper {
 
     public String getSuiteVersion() {
         return mBuildInfo.getBuildAttributes().get(SUITE_VERSION);
+    }
+
+    public String getSuitePlan() {
+        return mBuildInfo.getBuildAttributes().get(SUITE_PLAN);
     }
 
     public String getDynamicConfigUrl() {
