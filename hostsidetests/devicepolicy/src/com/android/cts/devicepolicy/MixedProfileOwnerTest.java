@@ -28,6 +28,8 @@ import junit.framework.AssertionFailedError;
  */
 public class MixedProfileOwnerTest extends DeviceAndProfileOwnerTest {
 
+    private int mParentUserId = -1;
+
     @Override
     protected void setUp() throws Exception {
         super.setUp();
@@ -37,7 +39,10 @@ public class MixedProfileOwnerTest extends DeviceAndProfileOwnerTest {
 
         if (mHasFeature) {
             removeTestUsers();
-            mUserId = createManagedProfile();
+            mParentUserId = getPrimaryUser();
+            mUserId = createManagedProfile(mParentUserId);
+            switchUser(mParentUserId);
+            startUser(mUserId);
 
             installAppAsUser(DEVICE_ADMIN_APK, mUserId);
             setProfileOwnerOrFail(DEVICE_ADMIN_PKG + "/" + ADMIN_RECEIVER_TEST_CLASS, mUserId);
@@ -64,9 +69,9 @@ public class MixedProfileOwnerTest extends DeviceAndProfileOwnerTest {
             return;
         }
         executeDeviceTestMethod(".ScreenCaptureDisabledTest", "testSetScreenCaptureDisabled_true");
-        // start the ScreenCaptureDisabledActivity in the primary user
-        installAppAsUser(DEVICE_ADMIN_APK, USER_OWNER);
-        String command = "am start -W --user 0 " + DEVICE_ADMIN_PKG + "/"
+        // start the ScreenCaptureDisabledActivity in the parent
+        installAppAsUser(DEVICE_ADMIN_APK, mParentUserId);
+        String command = "am start -W --user " + mParentUserId + " " + DEVICE_ADMIN_PKG + "/"
                 + DEVICE_ADMIN_PKG + ".ScreenCaptureDisabledActivity";
         getDevice().executeShellCommand(command);
         executeDeviceTestMethod(".ScreenCaptureDisabledTest", "testScreenCapturePossible");

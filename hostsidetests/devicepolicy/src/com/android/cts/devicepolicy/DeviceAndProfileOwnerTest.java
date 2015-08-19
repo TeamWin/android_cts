@@ -196,24 +196,25 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
         if (!mHasFeature) {
             return;
         }
+        int parentUserId = getPrimaryUser();
         installAppAsUser(CERT_INSTALLER_APK, mUserId);
-        installAppAsUser(DEVICE_ADMIN_APK, USER_OWNER);
-        setDeviceAdmin(DEVICE_ADMIN_PKG + "/.PrimaryUserDeviceAdmin");
+        installAppAsUser(DEVICE_ADMIN_APK, parentUserId);
+        setDeviceAdmin(DEVICE_ADMIN_PKG + "/.PrimaryUserDeviceAdmin", parentUserId);
 
         final String adminHelperClass = ".PrimaryUserAdminHelper";
         try {
             // Set a non-empty device lockscreen password, which is a precondition for installing
             // private key pairs.
             assertTrue("Set lockscreen password failed", runDeviceTestsAsUser(DEVICE_ADMIN_PKG,
-                    adminHelperClass, "testSetPassword", 0 /* user 0 */));
+                    adminHelperClass, "testSetPassword", parentUserId));
             assertTrue("DelegatedCertInstaller failed", runDeviceTestsAsUser(DEVICE_ADMIN_PKG,
                     ".DelegatedCertInstallerTest", mUserId));
         } finally {
             // Reset lockscreen password and remove device admin.
             assertTrue("Clear lockscreen password failed", runDeviceTestsAsUser(DEVICE_ADMIN_PKG,
-                    adminHelperClass, "testClearPassword", 0 /* user 0 */));
+                    adminHelperClass, "testClearPassword", parentUserId));
             assertTrue("Clear device admin failed", runDeviceTestsAsUser(DEVICE_ADMIN_PKG,
-                    adminHelperClass, "testClearDeviceAdmin", 0 /* user 0 */));
+                    adminHelperClass, "testClearDeviceAdmin", parentUserId));
         }
     }
 
