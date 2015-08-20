@@ -307,6 +307,7 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
                 File resultFile = XmlResultHandler.writeResults(mBuildHelper.getSuiteName(),
                         mBuildHelper.getSuiteVersion(), mSuitePlan, mResult, mResultDir,
                         mStartTime, elapsedTime + mStartTime);
+                copyDynamicConfigFiles(mBuildHelper.getDynamicConfigFiles(), mResultDir);
                 copyFormattingFiles(mResultDir);
                 zipResults(mResultDir);
                 if (mUseLogSaver) {
@@ -399,6 +400,29 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
             } else {
                 Log.w(ResultReporter.class.getSimpleName(),
                         String.format("Failed to load %s from jar", resultFileName));
+            }
+        }
+    }
+
+    /**
+     * move the dynamic config files to the results directory
+     *
+     * @param configFiles
+     * @param resultsDir
+     */
+    static void copyDynamicConfigFiles(Map<String, File> configFiles, File resultsDir) {
+        if (configFiles.size() == 0) return;
+
+        File folder = new File(resultsDir, "config");
+        folder.mkdir();
+        for (String moduleName : configFiles.keySet()) {
+            File resultFile = new File(folder, moduleName+".dynamic");
+            try {
+                FileUtil.copyFile(configFiles.get(moduleName), resultFile);
+                FileUtil.deleteFile(configFiles.get(moduleName));
+            } catch (IOException e) {
+                Log.w(ResultReporter.class.getSimpleName(),
+                        String.format("Failed to copy config file for %s to file", moduleName));
             }
         }
     }

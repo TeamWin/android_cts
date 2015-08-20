@@ -23,5 +23,6 @@
     <target_preparer class="com.android.compatibility.common.tradefed.targetprep.DynamicConfigPusher">
         <option name="target" value="device" />
         <option name="module-name" value="CtsSampleDeviceTestCases"/>
+        <option name="version-name" value="1.0"/>
     </target_preparer>
 </configuration>

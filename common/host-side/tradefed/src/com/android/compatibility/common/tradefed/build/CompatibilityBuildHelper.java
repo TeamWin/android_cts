@@ -31,8 +31,10 @@ public class CompatibilityBuildHelper {
     private static final String SUITE_NAME = "CTS_SUITE_NAME";
     private static final String SUITE_FULL_NAME = "CTS_SUITE_FULL_NAME";
     private static final String SUITE_VERSION = "CTS_SUITE_VERSION";
+    private static final String CONFIG_PATH_PREFIX = "DYNAMIC_CONFIG_FILE:";
+    private static final String DYNAMIC_CONFIG_OVERRIDE_URL = "DYNAMIC_CONFIG_OVERRIDE_URL";
+
     private final IFolderBuildInfo mBuildInfo;
-    private final Map<String, String> mConfigHashes = new HashMap<>();
     private boolean mInitialized = false;
 
     /**
@@ -69,6 +71,18 @@ public class CompatibilityBuildHelper {
         mBuildInfo.setRootDir(rootDir);
     }
 
+    /**
+     * Initializes the {@link IFolderBuildInfo} from the manifest.
+     */
+    public void init(String dynamicConfigOverrideUrl) {
+        init();
+        if (dynamicConfigOverrideUrl != null) {
+            mBuildInfo.addBuildAttribute(DYNAMIC_CONFIG_OVERRIDE_URL,
+                    dynamicConfigOverrideUrl.replace("{suite-name}", getSuiteName()));
+        }
+
+    }
+
     public String getBuildId() {
         return mBuildInfo.getBuildId();
     }
@@ -85,12 +99,23 @@ public class CompatibilityBuildHelper {
         return mBuildInfo.getBuildAttributes().get(SUITE_VERSION);
     }
 
-    public void addDynamicConfig(String moduleName, String hash) {
-        mConfigHashes.put(moduleName, hash);
+    public String getDynamicConfigUrl() {
+        return mBuildInfo.getBuildAttributes().get(DYNAMIC_CONFIG_OVERRIDE_URL);
     }
 
-    public Map<String, String> getDynamicConfigHashes() {
-        return mConfigHashes;
+    public void addDynamicConfigFile(String moduleName, File configFile) {
+        mBuildInfo.addBuildAttribute(CONFIG_PATH_PREFIX + moduleName, configFile.getAbsolutePath());
+    }
+
+    public Map<String, File> getDynamicConfigFiles() {
+        Map<String, File> configMap = new HashMap<>();
+        for (String key : mBuildInfo.getBuildAttributes().keySet()) {
+            if (key.startsWith(CONFIG_PATH_PREFIX)) {
+                configMap.put(key.substring(CONFIG_PATH_PREFIX.length()),
+                        new File(mBuildInfo.getBuildAttributes().get(key)));
+            }
+        }
+        return configMap;
     }
 
     /**
