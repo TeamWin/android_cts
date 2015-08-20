@@ -20,6 +20,7 @@ import com.android.tradefed.build.IFolderBuildInfo;
 import com.android.tradefed.config.Option;
 import com.android.tradefed.config.Option.Importance;
 import com.android.tradefed.config.OptionClass;
+import com.android.tradefed.log.LogUtil.CLog;
 import com.android.tradefed.result.ILogSaver;
 import com.android.tradefed.result.ILogSaverListener;
 import com.android.tradefed.result.ITestInvocationListener;
@@ -63,6 +64,9 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
             description = "retry a previous session.",
             importance = Importance.IF_UNSET)
     private Integer mRetrySessionId = null;
+
+    @Option(name = "quiet-output", description = "Mute display of test results.")
+    private boolean mQuietOutput = false;
 
     @Option(name = "include-test-log-tags", description = "Include test log tags in report.")
     private boolean mIncludeTestLogTags = false;
@@ -123,8 +127,7 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
                 e.printStackTrace();
             }
             if (mResultDir != null && mResultDir.mkdirs()) {
-                Log.logAndDisplay(LogLevel.INFO, mDeviceSerial,
-                        String.format("Created result dir %s", mResultDir.getAbsolutePath()));
+                logResult("Created result dir %s", mResultDir.getAbsolutePath());
             } else {
                 throw new IllegalArgumentException(String.format("Could not create result dir %s",
                         mResultDir.getAbsolutePath()));
@@ -137,8 +140,7 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
             e.printStackTrace();
         }
         if (mLogDir != null && mLogDir.mkdirs()) {
-            Log.logAndDisplay(LogLevel.INFO, mDeviceSerial,
-                    String.format("Created log dir %s", mLogDir.getAbsolutePath()));
+            logResult("Created log dir %s", mLogDir.getAbsolutePath());
         } else {
             throw new IllegalArgumentException(String.format("Could not create log dir %s",
                     mLogDir.getAbsolutePath()));
@@ -158,8 +160,7 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
      */
     @Override
     public void testRunStarted(String id, int numTests) {
-        Log.logAndDisplay(LogLevel.INFO, mDeviceSerial,
-                String.format("Starting %s with %d tests", id, numTests));
+        logResult("Starting %s with %d tests", id, numTests);
         mIsDeviceInfoRun = AbiUtils.parseTestName(id).equals(DEVICE_INFO_COLLECTOR);
         if (!mIsDeviceInfoRun) {
             mCurrentModuleResult = mResult.getOrCreateModule(id);
@@ -201,7 +202,7 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
                         mDeviceSerial, mCurrentModuleResult.getAbi(), test.toString());
             }
             mCurrentResult.passed(report);
-            Log.logAndDisplay(LogLevel.INFO, mDeviceSerial, String.format("%s passed", test));
+            logResult("%s passed", test);
         }
     }
 
@@ -210,7 +211,7 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
      */
     @Override
     public void testIgnored(TestIdentifier test) {
-        Log.logAndDisplay(LogLevel.INFO, mDeviceSerial, String.format("%s ignored", test));
+        logResult("%s ignored", test);
         // ignore
     }
 
@@ -221,8 +222,7 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
     public void testFailed(TestIdentifier test, String trace) {
         if (!mIsDeviceInfoRun) {
             mCurrentResult.failed(trace);
-            Log.logAndDisplay(LogLevel.INFO, mDeviceSerial,
-                    String.format("%s failed: %s", test, trace));
+            logResult("%s failed: %s", test, trace);
         }
     }
 
@@ -233,8 +233,7 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
     public void testAssumptionFailure(TestIdentifier test, String trace) {
         if (!mIsDeviceInfoRun) {
             mCurrentResult.failed(trace);
-            Log.logAndDisplay(LogLevel.INFO, mDeviceSerial,
-                    String.format("%s failed assumption: %s", test, trace));
+            logResult("%s failed assumption: %s", test, trace);
         }
     }
 
@@ -243,8 +242,7 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
      */
     @Override
     public void testRunStopped(long elapsedTime) {
-        Log.logAndDisplay(LogLevel.INFO, mDeviceSerial,
-                String.format("%s stopped after %dms", mCurrentModuleResult.getId(), elapsedTime));
+        logResult("%s stopped after %dms", mCurrentModuleResult.getId(), elapsedTime);
         // ignore
     }
 
@@ -256,13 +254,12 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
         if (mIsDeviceInfoRun) {
             mResult.populateDeviceInfoMetrics(metrics);
         } else {
-            Log.logAndDisplay(LogLevel.INFO, mDeviceSerial,
-                    String.format("%s completed in %dms. %d passed, %d failed, %d non executed",
-                            mCurrentModuleResult.getId(),
-                            elapsedTime,
-                            mCurrentModuleResult.countResults(TestStatus.PASS),
-                            mCurrentModuleResult.countResults(TestStatus.FAIL),
-                            mCurrentModuleResult.countResults(TestStatus.NOT_EXECUTED)));
+            logResult("%s completed in %dms. %d passed, %d failed, %d non executed",
+                    mCurrentModuleResult.getId(),
+                    elapsedTime,
+                    mCurrentModuleResult.countResults(TestStatus.PASS),
+                    mCurrentModuleResult.countResults(TestStatus.FAIL),
+                    mCurrentModuleResult.countResults(TestStatus.NOT_EXECUTED));
         }
     }
 
@@ -271,7 +268,7 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
      */
     @Override
     public void testRunFailed(String id) {
-        Log.logAndDisplay(LogLevel.INFO, mDeviceSerial, String.format("%s failed to run", id));
+        logResult("%s failed to run", id);
         // ignore
     }
 
@@ -289,14 +286,13 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
      */
     @Override
     public void invocationEnded(long elapsedTime) {
-        Log.d(mDeviceSerial, String.format("ResultReporter.invocationEnded(%d)", elapsedTime));
+        logResult("ResultReporter.invocationEnded(%d)", elapsedTime);
         if (mInitialized) {
-            Log.logAndDisplay(LogLevel.INFO, mDeviceSerial, String.format(
-                    "Invocation completed in %dms. %d passed, %d failed, %d non executed",
+            logResult("Invocation completed in %dms. %d passed, %d failed, %d non executed",
                     elapsedTime,
                     mResult.countResults(TestStatus.PASS),
                     mResult.countResults(TestStatus.FAIL),
-                    mResult.countResults(TestStatus.NOT_EXECUTED)));
+                    mResult.countResults(TestStatus.NOT_EXECUTED));
             try {
                 File resultFile = XmlResultHandler.writeResults(mBuildHelper.getSuiteName(),
                         mBuildHelper.getSuiteVersion(), mBuildHelper.getSuitePlan(), mResult,
@@ -327,7 +323,7 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
      */
     @Override
     public void invocationFailed(Throwable cause) {
-        Log.d(mDeviceSerial, String.format("ResultReporter.invocationFailed(%s)", cause));
+        logResult("ResultReporter.invocationFailed(%s)", cause);
         mInitialized = false;
         // Clean up
         mResultDir.delete();
@@ -346,15 +342,13 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
      */
     @Override
     public void testLog(String name, LogDataType type, InputStreamSource stream) {
-        Log.d(mDeviceSerial, String.format("ResultReporter.testLog(%s, %s, %s)", name, type,
-                stream));
+        logResult("ResultReporter.testLog(%s, %s, %s)", name, type, stream);
         try {
             LogFileSaver saver = new LogFileSaver(mLogDir);
             File logFile = saver.saveAndZipLogData(name, type, stream.createInputStream());
-            Log.i(mDeviceSerial, String.format("Saved logs for %s in %s", name,
-                    logFile.getAbsolutePath()));
+            logResult("Saved logs for %s in %s", name, logFile.getAbsolutePath());
         } catch (IOException e) {
-            Log.e(mDeviceSerial, String.format("Failed to write log for %s", name));
+            logResult("Failed to write log for %s", name);
             e.printStackTrace();
         }
     }
@@ -446,4 +440,11 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
         return mResult;
     }
 
+    private void logResult(String format, Object... args) {
+        if (mQuietOutput) {
+            CLog.i(format, args);
+        } else {
+            Log.logAndDisplay(LogLevel.INFO, mDeviceSerial, String.format(format, args));
+        }
+    }
 }
