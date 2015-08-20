@@ -78,6 +78,7 @@ TEST_CLASSES="
     com.android.compatibility.common.util.MetricsStoreTest\
     com.android.compatibility.common.util.MetricsXmlSerializerTest\
     com.android.compatibility.common.util.ModuleResultTest\
+    com.android.compatibility.common.util.MultipartFormTest\
     com.android.compatibility.common.util.ReportLogTest\
     com.android.compatibility.common.util.StatTest\
     com.android.compatibility.common.util.TestFilterTest\

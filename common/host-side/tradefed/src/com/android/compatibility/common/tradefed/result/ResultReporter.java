@@ -10,6 +10,7 @@ import com.android.compatibility.common.util.ITestResult;
 import com.android.compatibility.common.util.InvocationResult;
 import com.android.compatibility.common.util.MetricsStore;
 import com.android.compatibility.common.util.ReportLog;
+import com.android.compatibility.common.util.ResultUploader;
 import com.android.compatibility.common.util.TestStatus;
 import com.android.compatibility.common.util.XmlResultHandler;
 import com.android.ddmlib.Log;
@@ -24,6 +25,7 @@ import com.android.tradefed.log.LogUtil.CLog;
 import com.android.tradefed.result.ILogSaver;
 import com.android.tradefed.result.ILogSaverListener;
 import com.android.tradefed.result.ITestInvocationListener;
+import com.android.tradefed.result.ITestSummaryListener;
 import com.android.tradefed.result.InputStreamSource;
 import com.android.tradefed.result.LogDataType;
 import com.android.tradefed.result.LogFile;
@@ -48,7 +50,8 @@ import java.util.Map;
  * Reporter for Compatibility test results.
  */
 @OptionClass(alias="result-reporter")
-public class ResultReporter implements ILogSaverListener, ITestInvocationListener {
+public class ResultReporter implements ILogSaverListener, ITestInvocationListener,
+       ITestSummaryListener {
 
     private static final String RESULT_KEY = "COMPATIBILITY_TEST_RESULT";
     private static final String DEVICE_INFO = "DEVICE_INFO_";
@@ -70,6 +73,9 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
     @Option(name = "quiet-output", description = "Mute display of test results.")
     private boolean mQuietOutput = false;
 
+    @Option(name = "result-server", description = "Server to publish test results.")
+    private String mResultServer;
+
     @Option(name = "include-test-log-tags", description = "Include test log tags in report.")
     private boolean mIncludeTestLogTags = false;
 
@@ -84,6 +90,8 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
     private File mLogDir = null;
     private long mStartTime;
     private boolean mIsDeviceInfoRun;
+    private ResultUploader mUploader;
+    private String mReferenceUrl;
     private IModuleResult mCurrentModuleResult;
     private ICaseResult mCurrentCaseResult;
     private ITestResult mCurrentResult;
@@ -137,6 +145,7 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
             mResult = new InvocationResult(mStartTime, mResultDir);
         }
         mBuildHelper.setResultDir(mResultDir.getName());
+        mUploader = new ResultUploader(mResultServer, mBuildHelper.getSuiteName());
         try {
             mLogDir = new File(mBuildHelper.getLogsDir(), dirSuffix);
         } catch (FileNotFoundException e) {
@@ -303,6 +312,16 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
      * {@inheritDoc}
      */
     @Override
+    public void putSummary(List<TestSummary> summaries) {
+        if (summaries.size() > 0) {
+            mReferenceUrl = summaries.get(0).getSummary().getString();
+        }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
     public void invocationEnded(long elapsedTime) {
         logResult("ResultReporter.invocationEnded(%d)", elapsedTime);
         if (mInitialized) {
@@ -330,8 +349,11 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
                         StreamUtil.close(fis);
                     }
                 }
+                if (mResultServer != null && !mResultServer.trim().isEmpty()) {
+                    mUploader.uploadResult(resultFile, mReferenceUrl);
+                }
             } catch (IOException | XmlPullParserException e) {
-                e.printStackTrace();
+                CLog.e(e);
             }
         }
     }
