@@ -17,6 +17,6 @@
 
     <include name="common-compatibility-config" />
     <option name="compatibility-test:include-filter" value=".*" />
-    <option name="result-reporter:plan" value="everything" />
+    <option name="compatibility-test:plan" value="everything" />
 
 </configuration>

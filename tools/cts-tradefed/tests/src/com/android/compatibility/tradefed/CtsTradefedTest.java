@@ -33,6 +33,8 @@ public class CtsTradefedTest extends TestCase {
     private static final String PROPERTY_NAME = "CTS_V2_ROOT";
     private static final String SUITE_FULL_NAME = "Compatibility Test Suite";
     private static final String SUITE_NAME = "CTS_V2";
+    private static final String SUITE_PLAN = "cts";
+    private static final String DYNAMIC_CONFIG_URL = "";
 
     public void testManifest() throws Exception {
         // Test the values in the manifest can be loaded
@@ -46,7 +48,7 @@ public class CtsTradefedTest extends TestCase {
         CompatibilityBuildProvider provider = new CompatibilityBuildProvider();
         IFolderBuildInfo info = (IFolderBuildInfo) provider.getBuild();
         CompatibilityBuildHelper helper = new CompatibilityBuildHelper(info);
-        helper.init();
+        helper.init(SUITE_PLAN, DYNAMIC_CONFIG_URL);
         assertEquals("Incorrect suite full name", SUITE_FULL_NAME, helper.getSuiteFullName());
         assertEquals("Incorrect suite name", SUITE_NAME, helper.getSuiteName());
         FileUtil.recursiveDelete(root);

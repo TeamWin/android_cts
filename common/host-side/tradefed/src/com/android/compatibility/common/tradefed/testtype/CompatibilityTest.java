@@ -59,6 +59,7 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
 
     private static final String INCLUDE_FILTER_OPTION = "include-filter";
     private static final String EXCLUDE_FILTER_OPTION = "exclude-filter";
+    private static final String PLAN_OPTION = "plan";
     private static final String MODULE_OPTION = "module";
     private static final String TEST_OPTION = "test";
     public static final String RETRY_OPTION = "retry";
@@ -70,6 +71,11 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
         TestStatus.FAIL,
         TestStatus.NOT_EXECUTED
     };
+
+    @Option(name = PLAN_OPTION,
+            description = "the test suite plan to run, such as \"everything\" or \"cts\"",
+            importance = Importance.ALWAYS)
+    private String mSuitePlan;
 
     @Option(name = INCLUDE_FILTER_OPTION,
             description = "the include module filters to apply.",
@@ -167,7 +173,7 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
     public void setBuild(IBuildInfo buildInfo) {
         mBuild = (IFolderBuildInfo) buildInfo;
         mBuildHelper = new CompatibilityBuildHelper(mBuild);
-        mBuildHelper.init(mURL);
+        mBuildHelper.init(mSuitePlan, mURL);
     }
 
     /**
