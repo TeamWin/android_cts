@@ -119,6 +119,19 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
             description = "Specify the url for override config")
     private String mURL;
 
+    @Option(name = "bugreport-on-failure", description =
+            "take a bugreport on every test failure. " +
+            "Warning: can potentially use a lot of disk space.")
+    private boolean mBugReportOnFailure = false;
+
+    @Option(name = "logcat-on-failure", description =
+            "take a logcat snapshot on every test failure.")
+    private boolean mLogcatOnFailure = false;
+
+    @Option(name = "screenshot-on-failure", description =
+            "take a screenshot on every test failure.")
+    private boolean mScreenshotOnFailure = false;
+
     private int mShardAssignment;
     private int mTotalShards;
     private ITestDevice mDevice;
@@ -199,6 +212,8 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
             //   remove device info from modules
             // }
 
+            listener = new FailureListener(listener, getDevice(), mBugReportOnFailure,
+                    mLogcatOnFailure, mScreenshotOnFailure);
             int moduleCount = mModules.size();
             CLog.logAndDisplay(LogLevel.INFO, "Start test run of %d module%s", moduleCount,
                     (moduleCount > 1) ? "s" : "");

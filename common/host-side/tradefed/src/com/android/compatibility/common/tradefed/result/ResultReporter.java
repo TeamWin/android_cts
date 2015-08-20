@@ -52,6 +52,7 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
 
     private static final String RESULT_KEY = "COMPATIBILITY_TEST_RESULT";
     private static final String DEVICE_INFO = "DEVICE_INFO_";
+    private static final String DEVICE_INFO_EXT = ".deviceinfo.json";
     private static final String DEVICE_INFO_PACKAGE = "com.android.compatibility.common.deviceinfo";
     private static final String[] RESULT_RESOURCES = {
         "compatibility-result.css",
@@ -164,10 +165,11 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
     public void testRunStarted(String id, int numTests) {
         logResult("Starting %s with %d tests", id, numTests);
         mIsDeviceInfoRun = AbiUtils.parseTestName(id).equals(DEVICE_INFO_PACKAGE);
-        if (!mIsDeviceInfoRun) {
-            mCurrentModuleResult = mResult.getOrCreateModule(id);
-            mCurrentModuleResult.setDeviceSerial(mDeviceSerial);
+        if (mIsDeviceInfoRun) {
+            return;
         }
+        mCurrentModuleResult = mResult.getOrCreateModule(id);
+        mCurrentModuleResult.setDeviceSerial(mDeviceSerial);
     }
 
     /**
@@ -175,12 +177,13 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
      */
     @Override
     public void testStarted(TestIdentifier test) {
-        if (!mIsDeviceInfoRun) {
-            mCurrentCaseResult = mCurrentModuleResult.getOrCreateResult(test.getClassName());
-            mCurrentResult = mCurrentCaseResult.getOrCreateResult(test.getTestName());
-            // Reset the result
-            mCurrentResult.resetResult();
+        if (mIsDeviceInfoRun) {
+            return;
         }
+        mCurrentCaseResult = mCurrentModuleResult.getOrCreateResult(test.getClassName());
+        mCurrentResult = mCurrentCaseResult.getOrCreateResult(test.getTestName());
+        // Reset the result
+        mCurrentResult.resetResult();
     }
 
     /**
@@ -188,24 +191,25 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
      */
     @Override
     public void testEnded(TestIdentifier test, Map<String, String> metrics) {
-        if (!mIsDeviceInfoRun) {
-            // device test can have performance results in test metrics
-            String perfResult = metrics.get(RESULT_KEY);
-            ReportLog report = null;
-            if (perfResult != null) {
-                try {
-                    report = ReportLog.parse(perfResult);
-                } catch (XmlPullParserException | IOException e) {
-                    e.printStackTrace();
-                }
-            } else {
-                // host test should be checked into MetricsStore.
-                report = MetricsStore.removeResult(
-                        mDeviceSerial, mCurrentModuleResult.getAbi(), test.toString());
-            }
-            mCurrentResult.passed(report);
-            logResult("%s passed", test);
+        if (mIsDeviceInfoRun) {
+            return;
         }
+        // device test can have performance results in test metrics
+        String perfResult = metrics.get(RESULT_KEY);
+        ReportLog report = null;
+        if (perfResult != null) {
+            try {
+                report = ReportLog.parse(perfResult);
+            } catch (XmlPullParserException | IOException e) {
+                e.printStackTrace();
+            }
+        } else {
+            // host test should be checked into MetricsStore.
+            report = MetricsStore.removeResult(
+                    mDeviceSerial, mCurrentModuleResult.getAbi(), test.toString());
+        }
+        mCurrentResult.passed(report);
+        logResult("%s passed", test);
     }
 
     /**
@@ -222,10 +226,11 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
      */
     @Override
     public void testFailed(TestIdentifier test, String trace) {
-        if (!mIsDeviceInfoRun) {
-            mCurrentResult.failed(trace);
-            logResult("%s failed: %s", test, trace);
+        if (mIsDeviceInfoRun) {
+            return;
         }
+        mCurrentResult.failed(trace);
+        logResult("%s failed: %s", test, trace);
     }
 
     /**
@@ -233,10 +238,11 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
      */
     @Override
     public void testAssumptionFailure(TestIdentifier test, String trace) {
-        if (!mIsDeviceInfoRun) {
-            mCurrentResult.failed(trace);
-            logResult("%s failed assumption: %s", test, trace);
+        if (mIsDeviceInfoRun) {
+            return;
         }
+        mCurrentResult.failed(trace);
+        logResult("%s failed assumption: %s", test, trace);
     }
 
     /**
@@ -260,7 +266,7 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
                 if (key.startsWith(DEVICE_INFO)) {
                     // Device info needs to be in the report
                     mResult.addDeviceInfo(key.substring(DEVICE_INFO.length()), value);
-                } else if (!value.endsWith(".deviceinfo.json")) {
+                } else if (!value.endsWith(DEVICE_INFO_EXT)) {
                     Log.logAndDisplay(LogLevel.INFO, mDeviceSerial,
                             String.format("%s failed: %s", metricEntry.getKey(), value));
                 }
@@ -344,17 +350,11 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
         mLogDir = null;
     }
 
-    @Override
-    public void setLogSaver(ILogSaver logSaver) {
-        mLogSaver = logSaver;
-    }
-
     /**
      * {@inheritDoc}
      */
     @Override
     public void testLog(String name, LogDataType type, InputStreamSource stream) {
-        logResult("ResultReporter.testLog(%s, %s, %s)", name, type, stream);
         try {
             LogFileSaver saver = new LogFileSaver(mLogDir);
             File logFile = saver.saveAndZipLogData(name, type, stream.createInputStream());
@@ -371,13 +371,24 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
     @Override
     public void testLogSaved(String dataName, LogDataType dataType, InputStreamSource dataStream,
             LogFile logFile) {
-        if (mIncludeTestLogTags && mCurrentResult != null) {
+        if (mIncludeTestLogTags && mCurrentResult != null
+                && dataName.startsWith(mCurrentResult.getFullName())) {
             if (dataType == LogDataType.BUGREPORT) {
                 mCurrentResult.setBugReport(logFile.getUrl());
             } else if (dataType == LogDataType.LOGCAT) {
                 mCurrentResult.setLog(logFile.getUrl());
+            } else if (dataType == LogDataType.PNG) {
+                mCurrentResult.setScreenshot(logFile.getUrl());
             }
         }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void setLogSaver(ILogSaver saver) {
+        mLogSaver = saver;
     }
 
     /**

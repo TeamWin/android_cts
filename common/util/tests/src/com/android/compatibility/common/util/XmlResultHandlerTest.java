@@ -262,6 +262,7 @@ public class XmlResultHandlerTest extends TestCase {
         assertEquals("Incorrect result", TestStatus.PASS, moduleATest1.getResultStatus());
         assertNull("Unexpected bugreport", moduleATest1.getBugReport());
         assertNull("Unexpected log", moduleATest1.getLog());
+        assertNull("Unexpected screenshot", moduleATest1.getScreenshot());
         assertNull("Unexpected message", moduleATest1.getMessage());
         assertNull("Unexpected stack trace", moduleATest1.getStackTrace());
         assertNull("Unexpected report", moduleATest1.getReportLog());
@@ -272,6 +273,7 @@ public class XmlResultHandlerTest extends TestCase {
         assertEquals("Incorrect result", TestStatus.NOT_EXECUTED, moduleATest2.getResultStatus());
         assertNull("Unexpected bugreport", moduleATest2.getBugReport());
         assertNull("Unexpected log", moduleATest2.getLog());
+        assertNull("Unexpected screenshot", moduleATest2.getScreenshot());
         assertNull("Unexpected message", moduleATest2.getMessage());
         assertNull("Unexpected stack trace", moduleATest2.getStackTrace());
         assertNull("Unexpected report", moduleATest2.getReportLog());
@@ -297,6 +299,7 @@ public class XmlResultHandlerTest extends TestCase {
         assertEquals("Incorrect result", TestStatus.FAIL, moduleBTest3.getResultStatus());
         assertNull("Unexpected bugreport", moduleBTest3.getBugReport());
         assertNull("Unexpected log", moduleBTest3.getLog());
+        assertNull("Unexpected screenshot", moduleBTest3.getScreenshot());
         assertEquals("Incorrect message", MESSAGE, moduleBTest3.getMessage());
         assertEquals("Incorrect stack trace", STACK_TRACE, moduleBTest3.getStackTrace());
         assertNull("Unexpected report", moduleBTest3.getReportLog());
@@ -307,6 +310,7 @@ public class XmlResultHandlerTest extends TestCase {
         assertEquals("Incorrect result", TestStatus.PASS, moduleBTest4.getResultStatus());
         assertNull("Unexpected bugreport", moduleBTest4.getBugReport());
         assertNull("Unexpected log", moduleBTest4.getLog());
+        assertNull("Unexpected screenshot", moduleBTest4.getScreenshot());
         assertNull("Unexpected message", moduleBTest4.getMessage());
         assertNull("Unexpected stack trace", moduleBTest4.getStackTrace());
         ReportLog report = moduleBTest4.getReportLog();
