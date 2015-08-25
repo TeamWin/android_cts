@@ -61,6 +61,8 @@ public class CtsXmlResultReporter
         implements ITestInvocationListener, ITestSummaryListener, ILogSaverListener {
 
     private static final String LOG_TAG = "CtsXmlResultReporter";
+    private static final String DEVICE_INFO = "DEVICE_INFO_";
+    private static final String DEVICE_INFO_EXT = ".deviceinfo.json";
 
     public static final String CTS_RESULT_DIR = "cts-result-dir";
     static final String TEST_RESULT_FILE_NAME = "testResult.xml";
@@ -238,6 +240,7 @@ public class CtsXmlResultReporter
     @Override
     public void testLogSaved(String dataName, LogDataType dataType, InputStreamSource dataStream,
             LogFile logFile) {
+        CLog.i("Got log for %s %s %s", dataName, dataType, logFile.getUrl());
         if (mIncludeTestLogTags && mCurrentTest != null) {
             TestLog log = TestLog.fromDataName(dataName, logFile.getUrl());
             if (log != null) {
@@ -336,7 +339,7 @@ public class CtsXmlResultReporter
     private void checkExtendedDeviceInfoMetrics(Map<String, String> runMetrics) {
         for (Map.Entry<String, String> metricEntry : runMetrics.entrySet()) {
             String value = metricEntry.getValue();
-            if (!value.endsWith(".deviceinfo.json")) {
+            if (!value.startsWith(DEVICE_INFO) && !value.endsWith(DEVICE_INFO_EXT)) {
                 CLog.e(String.format("%s failed: %s", metricEntry.getKey(), value));
             }
         }

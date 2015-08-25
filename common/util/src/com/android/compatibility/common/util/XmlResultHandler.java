@@ -71,6 +71,7 @@ public class XmlResultHandler {
     private static final String REPORT_VERSION_ATTR = "report-version";
     private static final String RESULT_ATTR = "result";
     private static final String RESULT_TAG = "Result";
+    private static final String SCREENSHOT_TAG = "Screenshot";
     private static final String STACK_TAG = "StackTrace";
     private static final String START_TIME_ATTR = "start";
     private static final String SUITE_NAME_ATTR = "suite-name";
@@ -150,6 +151,9 @@ public class XmlResultHandler {
                                     parser.nextTag();
                                 } else if (parser.getName().equals(LOGCAT_TAG)) {
                                     test.setLog(parser.nextText());
+                                    parser.nextTag();
+                                } else if (parser.getName().equals(SCREENSHOT_TAG)) {
+                                    test.setScreenshot(parser.nextText());
                                     parser.nextTag();
                                 } else {
                                     test.setReportLog(ReportLog.parse(parser));
@@ -268,6 +272,12 @@ public class XmlResultHandler {
                         serializer.startTag(NS, LOGCAT_TAG);
                         serializer.text(logcat);
                         serializer.endTag(NS, LOGCAT_TAG);
+                    }
+                    String screenshot = r.getScreenshot();
+                    if (screenshot != null) {
+                        serializer.startTag(NS, SCREENSHOT_TAG);
+                        serializer.text(screenshot);
+                        serializer.endTag(NS, SCREENSHOT_TAG);
                     }
                     ReportLog.serialize(serializer, r.getReportLog());
                     serializer.endTag(NS, TEST_TAG);

@@ -30,6 +30,7 @@ public class TestResult implements ITestResult {
     private ReportLog mReport;
     private String mBugReport;
     private String mLog;
+    private String mScreenshot;
 
     /**
      * Create a {@link TestResult} for the given test name.
@@ -165,8 +166,8 @@ public class TestResult implements ITestResult {
      * {@inheritDoc}
      */
     @Override
-    public void setBugReport(String uri) {
-        mBugReport = uri;
+    public void setBugReport(String path) {
+        mBugReport = path;
     }
 
     /**
@@ -181,8 +182,24 @@ public class TestResult implements ITestResult {
      * {@inheritDoc}
      */
     @Override
-    public void setLog(String uri) {
-        mLog = uri;
+    public void setLog(String path) {
+        mLog = path;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public String getScreenshot() {
+        return mScreenshot;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void setScreenshot(String path) {
+        mScreenshot = path;
     }
 
     /**

@@ -94,24 +94,34 @@ public interface ITestResult extends Comparable<ITestResult> {
     void setReportLog(ReportLog report);
 
     /**
-     * @return the uri of the bug report generated of the failure.
+     * @return the path of the bug report generated of the failure.
      */
     String getBugReport();
 
     /**
-     * @param uri the uri of the bug report generated of the failure.
+     * @param path the path of the bug report generated of the failure.
      */
-    void setBugReport(String uri);
+    void setBugReport(String path);
 
     /**
-     * @return the uri of the log file generated of the failure.
+     * @return the path of the log file generated of the failure.
      */
     String getLog();
 
     /**
-     * @param uri the uri of the log file generated of the failure.
+     * @param path the path of the log file generated of the failure.
      */
-    void setLog(String uri);
+    void setLog(String path);
+
+    /**
+     * @return the path of the screenshot file generated of the failure.
+     */
+    String getScreenshot();
+
+    /**
+     * @param path the path of the screenshot file generated of the failure.
+     */
+    void setScreenshot(String path);
 
     /**
      * Report the test as a failure.
