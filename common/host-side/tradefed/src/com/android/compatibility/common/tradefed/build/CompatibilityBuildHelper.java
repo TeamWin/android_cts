@@ -28,6 +28,7 @@ import java.util.Map;
 public class CompatibilityBuildHelper {
 
     private static final String ROOT_DIR = "ROOT_DIR";
+    private static final String SUITE_BUILD = "SUITE_BUILD";
     private static final String SUITE_NAME = "SUITE_NAME";
     private static final String SUITE_FULL_NAME = "SUITE_FULL_NAME";
     private static final String SUITE_VERSION = "SUITE_VERSION";
@@ -57,18 +58,25 @@ public class CompatibilityBuildHelper {
         String suiteFullName = pkg.getSpecificationTitle();
         String suiteName = pkg.getSpecificationVendor();
         String suiteVersion = pkg.getSpecificationVersion();
-        String buildId = pkg.getImplementationVersion();
-        mBuildInfo.setBuildId(buildId);
+        String suiteBuild = pkg.getImplementationVersion();
+        mBuildInfo.addBuildAttribute(SUITE_BUILD, suiteBuild);
         mBuildInfo.addBuildAttribute(SUITE_NAME, suiteName);
         mBuildInfo.addBuildAttribute(SUITE_FULL_NAME, suiteFullName);
         mBuildInfo.addBuildAttribute(SUITE_VERSION, suiteVersion);
         mBuildInfo.addBuildAttribute(SUITE_PLAN, suitePlan);
         String mRootDirPath = System.getProperty(String.format("%s_ROOT", suiteName));
-        if (mRootDirPath == null || mRootDirPath.equals("")) {
-            throw new IllegalArgumentException(
-                    String.format("Missing install path property %s_ROOT", suiteName));
+        if (mRootDirPath == null || mRootDirPath.trim().equals("")) {
+            mRootDirPath = mBuildInfo.getRootDir().getAbsolutePath();
+            if (mRootDirPath == null || mRootDirPath.equals("")) {
+                throw new IllegalArgumentException(
+                        String.format("Missing install path property %s_ROOT", suiteName));
+            }
         }
         File rootDir = new File(mRootDirPath);
+        if (!rootDir.exists()) {
+            throw new IllegalArgumentException(
+                    String.format("Root directory doesn't exist %s", rootDir.getAbsolutePath()));
+        }
         mBuildInfo.addBuildAttribute(ROOT_DIR, rootDir.getAbsolutePath());
         mBuildInfo.setRootDir(rootDir);
         if (dynamicConfigUrl != null && !dynamicConfigUrl.isEmpty()) {
@@ -77,8 +85,8 @@ public class CompatibilityBuildHelper {
         }
     }
 
-    public String getBuildId() {
-        return mBuildInfo.getBuildId();
+    public String getSuiteBuild() {
+        return mBuildInfo.getBuildAttributes().get(SUITE_BUILD);
     }
 
     public String getSuiteName() {
