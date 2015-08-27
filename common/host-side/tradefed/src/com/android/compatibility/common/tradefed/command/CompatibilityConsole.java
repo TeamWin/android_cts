@@ -32,6 +32,7 @@ import com.android.tradefed.util.TimeUtil;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -53,7 +54,7 @@ public abstract class CompatibilityConsole extends Console {
     public void run() {
         CompatibilityBuildHelper buildHelper = getCompatibilityBuildHelper();
         printLine(String.format("Android %s %s (%s)", buildHelper.getSuiteName(),
-                buildHelper.getSuiteVersion(), buildHelper.getBuildId()));
+                buildHelper.getSuiteVersion(), buildHelper.getSuiteBuild()));
         super.run();
     }
 
@@ -226,6 +227,13 @@ public abstract class CompatibilityConsole extends Console {
         if (mBuildHelper == null) {
             CompatibilityBuildProvider buildProvider = new CompatibilityBuildProvider();
             IFolderBuildInfo buildInfo = (IFolderBuildInfo) buildProvider.getBuild();
+            try {
+                File file = File.createTempFile("root", "tmp");
+                file.deleteOnExit();
+                buildInfo.setRootDir(file);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
             mBuildHelper = new CompatibilityBuildHelper(buildInfo);
             mBuildHelper.init(""/* plan */, ""/* dynamic config url */);
         }
