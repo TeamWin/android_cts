@@ -16,6 +16,7 @@
 
 package android.media.cts;
 
+import com.android.compatibility.common.util.DynamicConfigDeviceSide;
 import com.android.cts.media.R;
 
 import android.content.Context;
@@ -65,20 +66,6 @@ public class DecoderTest extends MediaPlayerTestBase {
     private MediaCodecTunneledPlayer mMediaCodecPlayer;
     private static final int SLEEP_TIME_MS = 1000;
     private static final long PLAY_TIME_MS = TimeUnit.MILLISECONDS.convert(1, TimeUnit.MINUTES);
-    private static final Uri AUDIO_URL = Uri.parse(
-            "http://redirector.c.youtube.com/videoplayback?id=c80658495af60617"
-                + "&itag=18&source=youtube&ip=0.0.0.0&ipbits=0&expire=19000000000"
-                + "&sparams=ip,ipbits,expire,id,itag,source"
-                + "&signature=46A04ED550CA83B79B60060BA80C79FDA5853D26."
-                + "49582D382B4A9AFAA163DED38D2AE531D85603C0"
-                + "&key=ik0&user=android-device-test");  // H.264 Base + AAC
-    private static final Uri VIDEO_URL = Uri.parse(
-            "http://redirector.c.youtube.com/videoplayback?id=c80658495af60617"
-                + "&itag=18&source=youtube&ip=0.0.0.0&ipbits=0&expire=19000000000"
-                + "&sparams=ip,ipbits,expire,id,itag,source"
-                + "&signature=46A04ED550CA83B79B60060BA80C79FDA5853D26."
-                + "49582D382B4A9AFAA163DED38D2AE531D85603C0"
-                + "&key=ik0&user=android-device-test");  // H.264 Base + AAC
 
     @Override
     protected void setUp() throws Exception {
@@ -1959,8 +1946,11 @@ public class DecoderTest extends MediaPlayerTestBase {
         mMediaCodecPlayer = new MediaCodecTunneledPlayer(
                 getActivity().getSurfaceHolder(), true, am.generateAudioSessionId());
 
-        mMediaCodecPlayer.setAudioDataSource(AUDIO_URL, null);
-        mMediaCodecPlayer.setVideoDataSource(VIDEO_URL, null);
+        DynamicConfigDeviceSide config = new DynamicConfigDeviceSide("CtsMediaTestCases");
+        Uri audio_url = Uri.parse(config.getConfig("DecoderTest-AUDIO_URL"));
+        mMediaCodecPlayer.setAudioDataSource(audio_url, null);
+        Uri video_url = Uri.parse(config.getConfig("DecoderTest-VIDEO_URL"));
+        mMediaCodecPlayer.setVideoDataSource(video_url, null);
         assertTrue("MediaCodecPlayer.start() failed!", mMediaCodecPlayer.start());
         assertTrue("MediaCodecPlayer.prepare() failed!", mMediaCodecPlayer.prepare());
 
@@ -1998,8 +1988,11 @@ public class DecoderTest extends MediaPlayerTestBase {
         mMediaCodecPlayer = new MediaCodecTunneledPlayer(
                 getActivity().getSurfaceHolder(), true, am.generateAudioSessionId());
 
-        mMediaCodecPlayer.setAudioDataSource(AUDIO_URL, null);
-        mMediaCodecPlayer.setVideoDataSource(VIDEO_URL, null);
+        DynamicConfigDeviceSide config = new DynamicConfigDeviceSide("CtsMediaTestCases");
+        Uri audio_url = Uri.parse(config.getConfig("DecoderTest-AUDIO_URL"));
+        mMediaCodecPlayer.setAudioDataSource(audio_url, null);
+        Uri video_url = Uri.parse(config.getConfig("DecoderTest-VIDEO_URL"));
+        mMediaCodecPlayer.setVideoDataSource(video_url, null);
         assertTrue("MediaCodecPlayer.start() failed!", mMediaCodecPlayer.start());
         assertTrue("MediaCodecPlayer.prepare() failed!", mMediaCodecPlayer.prepare());
 

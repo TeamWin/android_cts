@@ -36,6 +36,8 @@ import android.media.MediaPlayer;
 import android.os.Build;
 import android.util.Log;
 
+import com.android.compatibility.common.util.DynamicConfigDeviceSide;
+
 import java.io.IOException;
 import java.util.HashSet;
 import java.util.Set;
@@ -172,39 +174,28 @@ public class MediaCodecCapabilitiesTest extends MediaPlayerTestBase {
             return; // skip
         }
 
-        playVideoWithRetries("http://redirector.c.youtube.com/videoplayback?id=271de9756065677e"
-                + "&itag=160&source=youtube&user=android-device-test"
-                + "&sparams=ip,ipbits,expire,id,itag,source,user"
-                + "&ip=0.0.0.0&ipbits=0&expire=19000000000"
-                + "&signature=9EDCA0B395B8A949C511FD5E59B9F805CFF797FD."
-                + "702DE9BA7AF96785FD6930AD2DD693A0486C880E"
-                + "&key=ik0", 256, 144, PLAY_TIME_MS);
+        String url = new DynamicConfigDeviceSide("CtsMediaTestCases")
+                .getConfig("MediaCodecCapabilitiesTest-testAvcBaseline12");
+        playVideoWithRetries(url, 256, 144, PLAY_TIME_MS);
     }
 
     public void testAvcBaseline30() throws Exception {
         if (!checkDecoder(MIMETYPE_VIDEO_AVC, AVCProfileBaseline, AVCLevel3)) {
             return; // skip
         }
-        playVideoWithRetries("http://redirector.c.youtube.com/videoplayback?id=271de9756065677e"
-                + "&itag=18&source=youtube&user=android-device-test"
-                + "&sparams=ip,ipbits,expire,id,itag,source,user"
-                + "&ip=0.0.0.0&ipbits=0&expire=19000000000"
-                + "&signature=7DCDE3A6594D0B91A27676A3CDC3A87B149F82EA."
-                + "7A83031734CB1EDCE06766B6228842F954927960"
-                + "&key=ik0", 640, 360, PLAY_TIME_MS);
+        String url = new DynamicConfigDeviceSide("CtsMediaTestCases")
+                .getConfig("MediaCodecCapabilitiesTest-testAvcBaseline30");
+        playVideoWithRetries(url, 640, 360, PLAY_TIME_MS);
     }
 
     public void testAvcHigh31() throws Exception {
         if (!checkDecoder(MIMETYPE_VIDEO_AVC, AVCProfileHigh, AVCLevel31)) {
             return; // skip
         }
-        playVideoWithRetries("http://redirector.c.youtube.com/videoplayback?id=271de9756065677e"
-                + "&itag=22&source=youtube&user=android-device-test"
-                + "&sparams=ip,ipbits,expire,id,itag,source,user"
-                + "&ip=0.0.0.0&ipbits=0&expire=19000000000"
-                + "&signature=179525311196616BD8E1381759B0E5F81A9E91B5."
-                + "C4A50E44059FEBCC6BBC78E3B3A4E0E0065777"
-                + "&key=ik0", 1280, 720, PLAY_TIME_MS);
+
+        String url = new DynamicConfigDeviceSide("CtsMediaTestCases")
+                .getConfig("MediaCodecCapabilitiesTest-testAvcHigh31");
+        playVideoWithRetries(url, 1280, 720, PLAY_TIME_MS);
     }
 
     public void testAvcHigh40() throws Exception {
@@ -215,13 +206,10 @@ public class MediaCodecCapabilitiesTest extends MediaPlayerTestBase {
             MediaUtils.skipTest(TAG, "fragmented mp4 not supported");
             return;
         }
-        playVideoWithRetries("http://redirector.c.youtube.com/videoplayback?id=271de9756065677e"
-                + "&itag=137&source=youtube&user=android-device-test"
-                + "&sparams=ip,ipbits,expire,id,itag,source,user"
-                + "&ip=0.0.0.0&ipbits=0&expire=19000000000"
-                + "&signature=B0976085596DD42DEA3F08307F76587241CB132B."
-                + "043B719C039E8B92F45391ADC0BE3665E2332930"
-                + "&key=ik0", 1920, 1080, PLAY_TIME_MS);
+
+        String url = new DynamicConfigDeviceSide("CtsMediaTestCases")
+                .getConfig("MediaCodecCapabilitiesTest-testAvcHigh40");
+        playVideoWithRetries(url, 1920, 1080, PLAY_TIME_MS);
     }
 
     public void testHevcMain1() throws Exception {
