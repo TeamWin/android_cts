@@ -77,7 +77,7 @@ public class CompatibilityBuildHelperTest extends TestCase {
     public void testManifestLoad() throws Exception {
         setProperty(mRoot.getAbsolutePath());
         mHelper.init(SUITE_PLAN, DYNAMIC_CONFIG_URL);
-        assertEquals("Incorrect build id", BUILD_ID, mHelper.getBuildId());
+        assertEquals("Incorrect suite build id", BUILD_ID, mHelper.getSuiteBuild());
         assertEquals("Incorrect suite name", SUITE_NAME, mHelper.getSuiteName());
         assertEquals("Incorrect suite full name", SUITE_FULL_NAME, mHelper.getSuiteFullName());
         assertEquals("Incorrect suite version", SUITE_VERSION, mHelper.getSuiteVersion());
