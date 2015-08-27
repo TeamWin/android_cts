@@ -18,7 +18,7 @@ include $(CLEAR_VARS)
 
 LOCAL_SRC_FILES := $(call all-java-files-under, src)
 
-LOCAL_JAVA_LIBRARIES := compatibility-host-util junit
+LOCAL_JAVA_LIBRARIES := compatibility-host-util junit json-prebuilt
 
 LOCAL_MODULE := compatibility-host-util-tests
 
