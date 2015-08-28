@@ -15,6 +15,7 @@
  */
 package com.android.compatibility.common.tradefed.build;
 
+import com.android.compatibility.SuiteInfo;
 import com.android.tradefed.build.IFolderBuildInfo;
 
 import java.io.File;
@@ -54,22 +55,20 @@ public class CompatibilityBuildHelper {
             return;
         }
         mInitialized = true;
-        Package pkg = Package.getPackage("com.android.compatibility.tradefed.command");
-        String suiteFullName = pkg.getSpecificationTitle();
-        String suiteName = pkg.getSpecificationVendor();
-        String suiteVersion = pkg.getSpecificationVersion();
-        String suiteBuild = pkg.getImplementationVersion();
-        mBuildInfo.addBuildAttribute(SUITE_BUILD, suiteBuild);
-        mBuildInfo.addBuildAttribute(SUITE_NAME, suiteName);
-        mBuildInfo.addBuildAttribute(SUITE_FULL_NAME, suiteFullName);
-        mBuildInfo.addBuildAttribute(SUITE_VERSION, suiteVersion);
+        mBuildInfo.addBuildAttribute(SUITE_BUILD, SuiteInfo.BUILD_NUMBER);
+        mBuildInfo.addBuildAttribute(SUITE_NAME, SuiteInfo.NAME);
+        mBuildInfo.addBuildAttribute(SUITE_FULL_NAME, SuiteInfo.FULLNAME);
+        mBuildInfo.addBuildAttribute(SUITE_VERSION, SuiteInfo.VERSION);
         mBuildInfo.addBuildAttribute(SUITE_PLAN, suitePlan);
-        String mRootDirPath = System.getProperty(String.format("%s_ROOT", suiteName));
+        String mRootDirPath = System.getProperty(String.format("%s_ROOT", SuiteInfo.NAME));
         if (mRootDirPath == null || mRootDirPath.trim().equals("")) {
-            mRootDirPath = mBuildInfo.getRootDir().getAbsolutePath();
-            if (mRootDirPath == null || mRootDirPath.equals("")) {
+            File root = mBuildInfo.getRootDir();
+            if (root != null) {
+                mRootDirPath = root.getAbsolutePath();
+            }
+            if (mRootDirPath == null || mRootDirPath.trim().equals("")) {
                 throw new IllegalArgumentException(
-                        String.format("Missing install path property %s_ROOT", suiteName));
+                        String.format("Missing install path property %s_ROOT", SuiteInfo.NAME));
             }
         }
         File rootDir = new File(mRootDirPath);

@@ -16,11 +16,10 @@ LOCAL_PATH := $(call my-dir)
 
 include $(CLEAR_VARS)
 
-# Only compile source java files in this lib.
 LOCAL_SRC_FILES := $(call all-java-files-under, src)
 
 LOCAL_MODULE := cts-tradefed-tests_v2
 LOCAL_MODULE_TAGS := optional
-LOCAL_JAVA_LIBRARIES := tradefed-prebuilt cts-tradefed_v2 compatibility-tradefed
+LOCAL_JAVA_LIBRARIES := tradefed-prebuilt cts-tradefed_v2
 
 include $(BUILD_HOST_JAVA_LIBRARY)

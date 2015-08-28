@@ -17,18 +17,19 @@ LOCAL_PATH := $(call my-dir)
 include $(CLEAR_VARS)
 
 LOCAL_SRC_FILES := $(call all-java-files-under, src)
+LOCAL_SRC_FILES += $(call all-java-files-under, ../../common/host-side/tradefed/src)
 
 LOCAL_JAVA_RESOURCE_DIRS := res
+LOCAL_JAVA_RESOURCE_DIRS += ../../common/host-side/tradefed/res
 
-LOCAL_JAR_MANIFEST := MANIFEST.mf
+LOCAL_SUITE_BUILD_NUMBER := $(BUILD_NUMBER)
+LOCAL_SUITE_NAME := CTS_V2
+LOCAL_SUITE_FULLNAME := "Compatibility Test Suite"
+LOCAL_SUITE_VERSION := 5.0
 
 LOCAL_MODULE := cts-tradefed_v2
-LOCAL_MODULE_TAGS := optional
-LOCAL_JAVA_LIBRARIES := tradefed-prebuilt hosttestlib compatibility-tradefed
 
-LOCAL_ADDITIONAL_DEPENDENCIES := $(LOCAL_PATH)/Android.mk
-
-include $(BUILD_HOST_JAVA_LIBRARY)
+include $(BUILD_COMPATIBILITY_SUITE)
 
 # Build all sub-directories
 include $(call all-makefiles-under,$(LOCAL_PATH))

@@ -15,6 +15,7 @@
  */
 package com.android.compatibility.common.tradefed.command;
 
+import com.android.compatibility.SuiteInfo;
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildProvider;
 import com.android.compatibility.common.tradefed.result.IInvocationResultRepo;
@@ -24,6 +25,7 @@ import com.android.compatibility.common.util.IInvocationResult;
 import com.android.compatibility.common.util.TestStatus;
 import com.android.tradefed.build.IFolderBuildInfo;
 import com.android.tradefed.command.Console;
+import com.android.tradefed.config.ConfigurationException;
 import com.android.tradefed.util.ArrayUtil;
 import com.android.tradefed.util.FileUtil;
 import com.android.tradefed.util.RegexTrie;
@@ -32,7 +34,6 @@ import com.android.tradefed.util.TimeUtil;
 
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -43,18 +44,17 @@ import java.util.Map;
 /**
  * An extension of Tradefed's console which adds features specific to compatibility testing.
  */
-public abstract class CompatibilityConsole extends Console {
+public class CompatibilityConsole extends Console {
 
-    private CompatibilityBuildHelper mBuildHelper = null;
+    private CompatibilityBuildHelper mBuildHelper;
 
     /**
      * {@inheritDoc}
      */
     @Override
     public void run() {
-        CompatibilityBuildHelper buildHelper = getCompatibilityBuildHelper();
-        printLine(String.format("Android %s %s (%s)", buildHelper.getSuiteName(),
-                buildHelper.getSuiteVersion(), buildHelper.getSuiteBuild()));
+        printLine(String.format("Android %s %s (%s)", SuiteInfo.FULLNAME, SuiteInfo.VERSION,
+                SuiteInfo.BUILD_NUMBER));
         super.run();
     }
 
@@ -67,28 +67,19 @@ public abstract class CompatibilityConsole extends Console {
         trie.put(new Runnable() {
             @Override
             public void run() {
-                CompatibilityBuildHelper buildHelper = getCompatibilityBuildHelper();
-                if (buildHelper != null) {
-                    // TODO(stuartscott)" listPlans(buildHelper);
-                }
+                // TODO(stuartscott)" listPlans(buildHelper);
             }
         }, LIST_PATTERN, "p(?:lans)?");
         trie.put(new Runnable() {
             @Override
             public void run() {
-                CompatibilityBuildHelper buildHelper = getCompatibilityBuildHelper();
-                if (buildHelper != null) {
-                    listModules(buildHelper);
-                }
+                listModules();
             }
         }, LIST_PATTERN, "m(?:odules)?");
         trie.put(new Runnable() {
             @Override
             public void run() {
-                CompatibilityBuildHelper buildHelper = getCompatibilityBuildHelper();
-                if (buildHelper != null) {
-                    listResults(buildHelper);
-                }
+                listResults();
             }
         }, LIST_PATTERN, "r(?:esults)?");
 
@@ -110,8 +101,7 @@ public abstract class CompatibilityConsole extends Console {
      */
     @Override
     protected String getConsolePrompt() {
-        return String.format("%s-tf > ",
-                getCompatibilityBuildHelper().getSuiteName().toLowerCase());
+        return String.format("%s-tf > ", SuiteInfo.NAME.toLowerCase());
     }
 
     /**
@@ -119,11 +109,10 @@ public abstract class CompatibilityConsole extends Console {
      */
     @Override
     protected String getGenericHelpString(List<String> genericHelp) {
-        CompatibilityBuildHelper buildHelper = getCompatibilityBuildHelper();
         StringBuilder helpBuilder = new StringBuilder();
-        helpBuilder.append(buildHelper.getSuiteFullName());
+        helpBuilder.append(SuiteInfo.FULLNAME);
         helpBuilder.append("\n\n");
-        helpBuilder.append(buildHelper.getSuiteName());
+        helpBuilder.append(SuiteInfo.NAME);
         helpBuilder.append(" is the test harness for running the Android Compatibility Suite, ");
         helpBuilder.append("built on top of Trade Federation.\n\n");
         helpBuilder.append("Available commands and options\n");
@@ -152,7 +141,7 @@ public abstract class CompatibilityConsole extends Console {
         helpBuilder.append("independent chunks, to run on multiple devices in parallel\n");
         helpBuilder.append(runPrompt);
         helpBuilder.append("--help/--help-all: get help for ");
-        helpBuilder.append(buildHelper.getSuiteFullName());
+        helpBuilder.append(SuiteInfo.FULLNAME);
         helpBuilder.append("\n");
         helpBuilder.append("List:\n");
         helpBuilder.append("  l/list d/devices: list connected devices and their state\n");
@@ -170,10 +159,10 @@ public abstract class CompatibilityConsole extends Console {
         return helpBuilder.toString();
     }
 
-    private void listModules(CompatibilityBuildHelper buildHelper) {
+    private void listModules() {
         File[] files = null;
         try {
-            files = buildHelper.getTestsDir().listFiles(new ModuleRepo.ConfigFilter());
+            files = getBuildHelper().getTestsDir().listFiles(new ModuleRepo.ConfigFilter());
         } catch (FileNotFoundException e) {
             printLine(e.getMessage());
             e.printStackTrace();
@@ -192,7 +181,7 @@ public abstract class CompatibilityConsole extends Console {
         }
     }
 
-    private void listResults(CompatibilityBuildHelper buildHelper) {
+    private void listResults() {
         TableFormatter tableFormatter = new TableFormatter();
         List<List<String>> table = new ArrayList<>();
         table.add(Arrays.asList("Session","Pass", "Fail", "Not Executed", "Start Time", "Test Plan",
@@ -200,7 +189,7 @@ public abstract class CompatibilityConsole extends Console {
         IInvocationResultRepo testResultRepo = null;
         List<IInvocationResult> results = null;
         try {
-            testResultRepo = new InvocationResultRepo(buildHelper.getResultsDir());
+            testResultRepo = new InvocationResultRepo(getBuildHelper().getResultsDir());
             results = testResultRepo.getResults();
         } catch (FileNotFoundException e) {
             printLine(e.getMessage());
@@ -223,20 +212,18 @@ public abstract class CompatibilityConsole extends Console {
         }
     }
 
-    public CompatibilityBuildHelper getCompatibilityBuildHelper() {
+    private CompatibilityBuildHelper getBuildHelper() {
         if (mBuildHelper == null) {
             CompatibilityBuildProvider buildProvider = new CompatibilityBuildProvider();
             IFolderBuildInfo buildInfo = (IFolderBuildInfo) buildProvider.getBuild();
-            try {
-                File file = File.createTempFile("root", "tmp");
-                file.deleteOnExit();
-                buildInfo.setRootDir(file);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
             mBuildHelper = new CompatibilityBuildHelper(buildInfo);
-            mBuildHelper.init(""/* plan */, ""/* dynamic config url */);
+            mBuildHelper.init("" /* suite plan */, "" /* dynamic config url */);
         }
         return mBuildHelper;
+    }
+
+    public static void main(String[] args) throws InterruptedException, ConfigurationException {
+        Console console = new CompatibilityConsole();
+        Console.startConsole(console, args);
     }
 }

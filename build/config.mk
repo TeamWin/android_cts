@@ -40,6 +40,7 @@ CTS_TARGET_ARCH := $(TARGET_ARCH)
 CTS_MODULE_TEST_CONFIG := AndroidTest.xml
 
 # CTS build rules
+BUILD_COMPATIBILITY_SUITE := cts/build/compatibility_test_suite.mk
 BUILD_CTS_EXECUTABLE := cts/build/test_executable.mk
 BUILD_CTS_PACKAGE := cts/build/test_package.mk
 BUILD_CTS_GTEST_PACKAGE := cts/build/test_gtest_package.mk

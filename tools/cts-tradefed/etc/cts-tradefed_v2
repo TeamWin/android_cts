@@ -82,7 +82,6 @@ JAR_DIR=${CTS_V2_ROOT}/android-cts_v2/tools
 JARS="tradefed-prebuilt
   hosttestlib
   compatibility-host-util
-  compatibility-tradefed
   cts-tradefed_v2"
 
 for JAR in $JARS; do
@@ -105,5 +104,5 @@ HOST_TEST_JAR_PATH="$(ls -1 ${CTS_V2_ROOT}/android-cts_v2/testcases/*.jar)"
 
 CLASS_PATH=${JAR_PATH}:${HOST_TEST_JAR_PATH}
 
-java $RDBG_FLAG -cp ${CLASS_PATH} -DCTS_V2_ROOT=${CTS_V2_ROOT} com.android.compatibility.tradefed.command.CtsConsole "$@"
+java $RDBG_FLAG -cp ${CLASS_PATH} -DCTS_V2_ROOT=${CTS_V2_ROOT} com.android.compatibility.common.tradefed.command.CompatibilityConsole "$@"
 

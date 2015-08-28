@@ -23,7 +23,6 @@ import com.android.compatibility.common.util.IInvocationResult;
 import com.android.compatibility.common.util.IModuleResult;
 import com.android.compatibility.common.util.ITestResult;
 import com.android.compatibility.common.util.TestStatus;
-import com.android.compatibility.tradefed.command.MockConsole;
 import com.android.ddmlib.testrunner.TestIdentifier;
 import com.android.tradefed.build.FolderBuildInfo;
 import com.android.tradefed.build.IFolderBuildInfo;
@@ -39,7 +38,7 @@ import java.util.List;
 public class ResultReporterTest extends TestCase {
 
     private static final String ROOT_PROPERTY = "TESTS_ROOT";
-    private static final String BUILD_ID = "2";
+    private static final String BUILD_NUMBER = "2";
     private static final String SUITE_PLAN = "cts";
     private static final String DYNAMIC_CONFIG_URL = "";
     private static final String ROOT_DIR_NAME = "root";
@@ -65,10 +64,6 @@ public class ResultReporterTest extends TestCase {
         "logo.png",
         "newrule-green.png"};
 
-    // Make sure the mock is in the ClassLoader
-    @SuppressWarnings("unused")
-    private MockConsole mMockConsole;
-
     private ResultReporter mReporter;
     private IFolderBuildInfo mBuildInfo;
     private CompatibilityBuildHelper mBuildHelper;
@@ -79,7 +74,6 @@ public class ResultReporterTest extends TestCase {
 
     @Override
     public void setUp() throws Exception {
-        mMockConsole = new MockConsole();
         mReporter = new ResultReporter();
         mRoot = FileUtil.createTempDir(ROOT_DIR_NAME);
         mBase = new File(mRoot, BASE_DIR_NAME);
@@ -87,14 +81,13 @@ public class ResultReporterTest extends TestCase {
         mTests = new File(mBase, TESTCASES);
         mTests.mkdirs();
         System.setProperty(ROOT_PROPERTY, mRoot.getAbsolutePath());
-        mBuildInfo = new FolderBuildInfo(BUILD_ID, "", "");
+        mBuildInfo = new FolderBuildInfo(BUILD_NUMBER, "", "");
         mBuildHelper = new CompatibilityBuildHelper(mBuildInfo);
         mBuildHelper.init(SUITE_PLAN, DYNAMIC_CONFIG_URL);
     }
 
     @Override
     public void tearDown() throws Exception {
-        mMockConsole = null;
         mReporter = null;
         FileUtil.recursiveDelete(mRoot);
     }

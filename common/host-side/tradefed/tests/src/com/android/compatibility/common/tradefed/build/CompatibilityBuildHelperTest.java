@@ -16,7 +16,6 @@
 
 package com.android.compatibility.common.tradefed.build;
 
-import com.android.compatibility.tradefed.command.MockConsole;
 import com.android.tradefed.build.IFolderBuildInfo;
 import com.android.tradefed.util.FileUtil;
 
@@ -28,7 +27,7 @@ import java.io.FileNotFoundException;
 public class CompatibilityBuildHelperTest extends TestCase {
 
     private static final String ROOT_PROPERTY = "TESTS_ROOT";
-    private static final String BUILD_ID = "2";
+    private static final String BUILD_NUMBER = "2";
     private static final String SUITE_NAME = "TESTS";
     private static final String SUITE_FULL_NAME = "Compatibility Tests";
     private static final String SUITE_VERSION = "1";
@@ -38,10 +37,6 @@ public class CompatibilityBuildHelperTest extends TestCase {
     private static final String BASE_DIR_NAME = "android-tests";
     private static final String TESTCASES = "testcases";
 
-    // Make sure the mock is in the ClassLoader
-    @SuppressWarnings("unused")
-    private MockConsole mMockConsole;
-
     private File mRoot = null;
     private File mBase = null;
     private File mTests = null;
@@ -50,7 +45,6 @@ public class CompatibilityBuildHelperTest extends TestCase {
 
     @Override
     public void setUp() throws Exception {
-        mMockConsole = new MockConsole();
         mRoot = FileUtil.createTempDir(ROOT_DIR_NAME);
         CompatibilityBuildProvider provider = new CompatibilityBuildProvider();
         mBuild = (IFolderBuildInfo) provider.getBuild();
@@ -60,7 +54,6 @@ public class CompatibilityBuildHelperTest extends TestCase {
     @Override
     public void tearDown() throws Exception {
         setProperty(null);
-        mMockConsole = null;
         FileUtil.recursiveDelete(mRoot);
         mRoot = null;
         mBase = null;
@@ -74,10 +67,10 @@ public class CompatibilityBuildHelperTest extends TestCase {
         mTests.mkdirs();
     }
 
-    public void testManifestLoad() throws Exception {
+    public void testSuiteInfoLoad() throws Exception {
         setProperty(mRoot.getAbsolutePath());
         mHelper.init(SUITE_PLAN, DYNAMIC_CONFIG_URL);
-        assertEquals("Incorrect suite build id", BUILD_ID, mHelper.getSuiteBuild());
+        assertEquals("Incorrect suite build number", BUILD_NUMBER, mHelper.getSuiteBuild());
         assertEquals("Incorrect suite name", SUITE_NAME, mHelper.getSuiteName());
         assertEquals("Incorrect suite full name", SUITE_FULL_NAME, mHelper.getSuiteFullName());
         assertEquals("Incorrect suite version", SUITE_VERSION, mHelper.getSuiteVersion());

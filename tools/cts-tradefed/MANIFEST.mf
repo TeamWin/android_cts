@@ -1,6 +1,0 @@
-Manifest-Version: 1.0
-Main-Class: com.android.compatibility.tradefed.command.CtsConsole
-Specification-Title: Compatibility Test Suite
-Specification-Vendor: CTS_V2
-Specification-Version: 5.0_r1.91
-Implementation-Version: %BUILD_NUMBER%
