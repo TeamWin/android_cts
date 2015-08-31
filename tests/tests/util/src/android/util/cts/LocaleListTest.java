@@ -184,4 +184,11 @@ public class LocaleListTest extends AndroidTestCase {
         final Locale[] la = {Locale.forLanguageTag("en-PH"), Locale.forLanguageTag("en-US")};
         assertEquals(new LocaleList(la), LocaleList.forLanguageTags("en-PH,en-US"));
     }
+
+    public void testGetDefault() {
+        LocaleList ll = LocaleList.getDefault();
+        assertNotNull(ll);
+        assertTrue(ll.size() >= 1);
+        assertEquals(Locale.getDefault(), ll.getPrimary());
+    }
 }

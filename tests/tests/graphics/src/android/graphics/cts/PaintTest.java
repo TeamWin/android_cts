@@ -36,6 +36,7 @@ import android.graphics.Xfermode;
 import android.os.Build;
 import android.test.AndroidTestCase;
 import android.text.SpannedString;
+import android.util.LocaleList;
 import android.util.Log;
 
 import java.util.Locale;
@@ -600,30 +601,73 @@ public class PaintTest extends AndroidTestCase {
         // Check default
         assertEquals(defaultLocale, p.getTextLocale());
 
-        // Check setter / getter
+        // Check setter / getters
         p.setTextLocale(Locale.US);
         assertEquals(Locale.US, p.getTextLocale());
+        assertEquals(new LocaleList(Locale.US), p.getTextLocales());
 
         p.setTextLocale(Locale.CHINESE);
         assertEquals(Locale.CHINESE, p.getTextLocale());
+        assertEquals(new LocaleList(Locale.CHINESE), p.getTextLocales());
 
         p.setTextLocale(Locale.JAPANESE);
         assertEquals(Locale.JAPANESE, p.getTextLocale());
+        assertEquals(new LocaleList(Locale.JAPANESE), p.getTextLocales());
 
         p.setTextLocale(Locale.KOREAN);
         assertEquals(Locale.KOREAN, p.getTextLocale());
+        assertEquals(new LocaleList(Locale.KOREAN), p.getTextLocales());
 
         // Check reverting back to default
         p.setTextLocale(defaultLocale);
         assertEquals(defaultLocale, p.getTextLocale());
+        assertEquals(new LocaleList(defaultLocale), p.getTextLocales());
 
         // Check that we cannot pass a null locale
         try {
             p.setTextLocale(null);
-            assertFalse(true);
+            fail("Setting the text locale to null should throw");
+        } catch (Throwable e) {
+            assertEquals(IllegalArgumentException.class, e.getClass());
         }
-        catch (IllegalArgumentException iae) {
-            // OK !!
+    }
+
+    public void testAccessTextLocales() {
+        Paint p = new Paint();
+
+        final LocaleList defaultLocales = LocaleList.getDefault();
+
+        // Check default
+        assertEquals(defaultLocales, p.getTextLocales());
+
+        // Check setter / getters for a one-member locale list
+        p.setTextLocales(new LocaleList(Locale.CHINESE));
+        assertEquals(Locale.CHINESE, p.getTextLocale());
+        assertEquals(new LocaleList(Locale.CHINESE), p.getTextLocales());
+
+        // Check setter / getters for a two-member locale list
+        p.setTextLocales(LocaleList.forLanguageTags("fr,de"));
+        assertEquals(Locale.forLanguageTag("fr"), p.getTextLocale());
+        assertEquals(LocaleList.forLanguageTags("fr,de"), p.getTextLocales());
+
+        // Check reverting back to default
+        p.setTextLocales(defaultLocales);
+        assertEquals(defaultLocales, p.getTextLocales());
+
+        // Check that we cannot pass a null locale list
+        try {
+            p.setTextLocales(null);
+            fail("Setting the text locale list to null should throw");
+        } catch (Throwable e) {
+            assertEquals(IllegalArgumentException.class, e.getClass());
+        }
+
+        // Check that we cannot pass an empty locale list
+        try {
+            p.setTextLocales(new LocaleList());
+            fail("Setting the text locale list to an empty list should throw");
+        } catch (Throwable e) {
+            assertEquals(IllegalArgumentException.class, e.getClass());
         }
     }
 

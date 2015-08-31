@@ -74,6 +74,7 @@ import android.text.method.TransformationMethod;
 import android.text.style.URLSpan;
 import android.text.util.Linkify;
 import android.util.DisplayMetrics;
+import android.util.LocaleList;
 import android.util.TypedValue;
 import android.view.ContextMenu;
 import android.view.ContextMenu.ContextMenuInfo;
@@ -4037,6 +4038,41 @@ public class TextViewTest extends ActivityInstrumentationTestCase2<TextViewCtsAc
             tv.onPreDraw();  // For freezing layout.
             Layout layout = tv.getLayout();
             assertEquals(Layout.DIR_RIGHT_TO_LEFT, layout.getParagraphDirection(0));
+        }
+    }
+
+    public void testTextLocales() {
+        TextView tv = new TextView(mActivity);
+        assertEquals(Locale.getDefault(), tv.getTextLocale());
+        assertEquals(LocaleList.getDefault(), tv.getTextLocales());
+
+        tv.setTextLocale(Locale.CHINESE);
+        assertEquals(Locale.CHINESE, tv.getTextLocale());
+        assertEquals(new LocaleList(Locale.CHINESE), tv.getTextLocales());
+
+        tv.setTextLocales(LocaleList.forLanguageTags("en,ja"));
+        assertEquals(Locale.forLanguageTag("en"), tv.getTextLocale());
+        assertEquals(LocaleList.forLanguageTags("en,ja"), tv.getTextLocales());
+
+        try {
+            tv.setTextLocale(null);
+            fail("Setting the text locale to null should throw");
+        } catch (Throwable e) {
+            assertEquals(IllegalArgumentException.class, e.getClass());
+        }
+
+        try {
+            tv.setTextLocales(null);
+            fail("Setting the text locales to null should throw");
+        } catch (Throwable e) {
+            assertEquals(IllegalArgumentException.class, e.getClass());
+        }
+
+        try {
+            tv.setTextLocales(new LocaleList());
+            fail("Setting the text locale to an empty list should throw");
+        } catch (Throwable e) {
+            assertEquals(IllegalArgumentException.class, e.getClass());
         }
     }
 
