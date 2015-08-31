@@ -975,4 +975,25 @@ public class StaticLayoutTest extends AndroidTestCase {
             assertEquals(testLabel, 6, layout.getOffsetToRightOf(7));
         }
     }
+
+    public void testGetOffsetForHorizontal_Multilines() {
+        // Emoticons for surrogate pairs tests.
+        String testString = "\uD83D\uDE00\uD83D\uDE01\uD83D\uDE02\uD83D\uDE03\uD83D\uDE04";
+        final float width = mDefaultPaint.measureText(testString, 0, 6);
+        StaticLayout layout = new StaticLayout(testString, mDefaultPaint, (int)width,
+                DEFAULT_ALIGN, SPACE_MULTI, SPACE_ADD, true);
+        // We expect the line break to be after the third emoticon, but we allow flexibility of the
+        // line break algorithm as long as the break is within the string. These other cases might
+        // happen if for example the font has kerning between emoticons.
+        final int lineBreakOffset = layout.getOffsetForHorizontal(1, 0.0f);
+        assertEquals(0, layout.getLineForOffset(lineBreakOffset - 1));
+
+        assertEquals(0, layout.getOffsetForHorizontal(0, 0.0f));
+        assertEquals(lineBreakOffset - 2, layout.getOffsetForHorizontal(0, width));
+        assertEquals(lineBreakOffset - 2, layout.getOffsetForHorizontal(0, width * 2));
+
+        final int lineCount = layout.getLineCount();
+        assertEquals(testString.length(), layout.getOffsetForHorizontal(lineCount - 1, width));
+        assertEquals(testString.length(), layout.getOffsetForHorizontal(lineCount - 1, width * 2));
+    }
 }
