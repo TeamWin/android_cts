@@ -640,6 +640,21 @@ public class LayerDrawableTest extends AndroidTestCase {
         assertTrue(mockDrawable2.hasCalledOnBoundsChange());
     }
 
+    public void testJumpToCurrentState() {
+        MockDrawable mockDrawable1 = new MockDrawable();
+        MockDrawable mockDrawable2 = new MockDrawable();
+        Drawable[] array = new Drawable[] { mockDrawable1, mockDrawable2 };
+        LayerDrawable layerDrawable = new LayerDrawable(array);
+
+        assertFalse(mockDrawable1.hasCalledJumpToCurrentState());
+        assertFalse(mockDrawable2.hasCalledJumpToCurrentState());
+
+        layerDrawable.jumpToCurrentState();
+
+        assertTrue(mockDrawable1.hasCalledJumpToCurrentState());
+        assertTrue(mockDrawable2.hasCalledJumpToCurrentState());
+    }
+
     public void testSetLevel() {
         MockDrawable mockDrawable1 = new MockDrawable();
         MockDrawable mockDrawable2 = new MockDrawable();
@@ -1400,7 +1415,7 @@ public class LayerDrawableTest extends AndroidTestCase {
         private boolean mCalledSetState = false;
         private boolean mCalledOnLevelChange = false;
         private boolean mCalledOnBoundsChange = false;
-
+        private boolean mCalledJumpToCurrentState = false;
 
         private boolean mCalledDraw = false;
 
@@ -1474,8 +1489,20 @@ public class LayerDrawableTest extends AndroidTestCase {
             mCalledSetState = false;
             mCalledOnLevelChange = false;
             mCalledOnBoundsChange = false;
+            mCalledJumpToCurrentState = false;
 
             mCalledDraw = false;
+        }
+
+        @Override
+        public void jumpToCurrentState() {
+            super.jumpToCurrentState();
+
+            mCalledJumpToCurrentState = true;
+        }
+
+        public boolean hasCalledJumpToCurrentState() {
+            return mCalledJumpToCurrentState;
         }
 
         @Override
