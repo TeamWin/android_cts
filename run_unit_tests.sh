@@ -54,7 +54,7 @@ checkFile ${APK}
 TF_CONSOLE=com.android.tradefed.command.Console
 COMMON_PACKAGE=com.android.compatibility.common
 RUNNER=android.support.test.runner.AndroidJUnitRunner
-adb install -r ${APK}
+adb install -r -g ${APK}
 java $RDBG_FLAG -cp ${JAR_PATH} ${TF_CONSOLE} run singleCommand instrument --package ${COMMON_PACKAGE} --runner ${RUNNER}
 adb uninstall ${COMMON_PACKAGE}
 
