@@ -25,7 +25,7 @@ LOCAL_COMPATIBILITY_SUITE := cts_v2
 
 LOCAL_MODULE := CtsSampleHostTestCases
 
-LOCAL_JAVA_LIBRARIES := compatibility-host-util compatibility-tradefed tradefed-prebuilt
+LOCAL_JAVA_LIBRARIES := compatibility-host-util cts-tradefed_v2 tradefed-prebuilt
 
 include $(BUILD_HOST_JAVA_LIBRARY)
 

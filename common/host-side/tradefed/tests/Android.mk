@@ -12,18 +12,32 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-LOCAL_PATH:= $(call my-dir)
+# Make a mock compatibility suite to test
+LOCAL_PATH := $(call my-dir)
 
+include $(CLEAR_VARS)
+
+LOCAL_SRC_FILES := $(call all-java-files-under, ../src)
+LOCAL_JAVA_RESOURCE_DIRS := ../res
+
+LOCAL_SUITE_BUILD_NUMBER := 2
+LOCAL_SUITE_NAME := TESTS
+LOCAL_SUITE_FULLNAME := "Compatibility Tests"
+LOCAL_SUITE_VERSION := 1
+
+LOCAL_MODULE := compatibility-mock-tradefed
+
+include $(BUILD_COMPATIBILITY_SUITE)
+
+# Make the tests
 include $(CLEAR_VARS)
 
 LOCAL_SRC_FILES := $(call all-java-files-under, src)
 
 LOCAL_MODULE := compatibility-tradefed-tests
 
-LOCAL_JAR_MANIFEST := MANIFEST.mf
-
 LOCAL_MODULE_TAGS := optional
 
-LOCAL_JAVA_LIBRARIES := tradefed-prebuilt compatibility-tradefed junit compatibility-host-util
+LOCAL_JAVA_LIBRARIES := tradefed-prebuilt compatibility-mock-tradefed junit compatibility-host-util
 
 include $(BUILD_HOST_JAVA_LIBRARY)

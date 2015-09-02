@@ -13,12 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.android.compatibility.tradefed.command;
+package com.android.compatibility.common.util;
+
+import junit.framework.Test;
+import junit.framework.TestSuite;
 
 /**
- * This console is not used for any purpose other than creating the package name space from which
- * the suite-specific values in the MANIFEST.mf can be read; replicating what a test suite.
+ * A test suite for all host util unit tests.
+ * <p/>
+ * All tests listed here should be self-contained, and do not require any external dependencies.
  */
-public class MockConsole {
+public class HostUnitTests extends TestSuite {
 
+    public HostUnitTests() {
+        super();
+        addTestSuite(DynamicConfigHandlerTest.class);
+        addTestSuite(MetricsStoreTest.class);
+    }
+
+    public static Test suite() {
+        return new HostUnitTests();
+    }
 }

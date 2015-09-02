@@ -36,20 +36,13 @@ if [ ! -z ${ANDROID_BUILD_TOP} ]; then
     fi;
 fi;
 
+############### Run the device side tests ###############
 JAR_DIR=${ANDROID_HOST_OUT}/framework
 JARS="
-    compatibility-common-util-hostsidelib\
-    compatibility-common-util-tests\
-    compatibility-host-util\
-    compatibility-host-util-tests\
-    compatibility-tradefed-tests\
-    compatibility-tradefed\
-    cts-tradefed-tests_v2\
-    cts-tradefed_v2\
     ddmlib-prebuilt\
     hosttestlib\
     tradefed-prebuilt"
-
+JAR_PATH=
 for JAR in $JARS; do
     checkFile ${JAR_DIR}/${JAR}.jar
     JAR_PATH=${JAR_PATH}:${JAR_DIR}/${JAR}.jar
@@ -65,25 +58,48 @@ adb install -r ${APK}
 java $RDBG_FLAG -cp ${JAR_PATH} ${TF_CONSOLE} run singleCommand instrument --package ${COMMON_PACKAGE} --runner ${RUNNER}
 adb uninstall ${COMMON_PACKAGE}
 
+############### Run the host side tests ###############
+JARS="
+    compatibility-common-util-hostsidelib\
+    compatibility-common-util-tests\
+    compatibility-host-util\
+    compatibility-host-util-tests\
+    compatibility-mock-tradefed\
+    compatibility-tradefed-tests\
+    ddmlib-prebuilt\
+    hosttestlib\
+    tradefed-prebuilt"
+JAR_PATH=
+for JAR in $JARS; do
+    checkFile ${JAR_DIR}/${JAR}.jar
+    JAR_PATH=${JAR_PATH}:${JAR_DIR}/${JAR}.jar
+done
+
 TEST_CLASSES="
-    com.android.compatibility.common.tradefed.build.CompatibilityBuildHelperTest\
-    com.android.compatibility.common.tradefed.command.CompatibilityConsoleTest\
-    com.android.compatibility.common.tradefed.result.ResultReporterTest\
-    com.android.compatibility.common.tradefed.testtype.CompatibilityTestTest\
-    com.android.compatibility.common.tradefed.testtype.ModuleDefTest\
-    com.android.compatibility.common.tradefed.testtype.ModuleRepoTest\
-    com.android.compatibility.common.util.AbiUtilsTest\
-    com.android.compatibility.common.util.CaseResultTest\
-    com.android.compatibility.common.util.DynamicConfigTest\
-    com.android.compatibility.common.util.MetricsStoreTest\
-    com.android.compatibility.common.util.MetricsXmlSerializerTest\
-    com.android.compatibility.common.util.ModuleResultTest\
-    com.android.compatibility.common.util.MultipartFormTest\
-    com.android.compatibility.common.util.ReportLogTest\
-    com.android.compatibility.common.util.StatTest\
-    com.android.compatibility.common.util.TestFilterTest\
-    com.android.compatibility.common.util.TestResultTest\
-    com.android.compatibility.common.util.XmlResultHandlerTest\
+    com.android.compatibility.common.tradefed.UnitTests\
+    com.android.compatibility.common.util.HostUnitTests\
+    com.android.compatibility.common.util.UnitTests"
+
+for CLASS in ${TEST_CLASSES}; do
+    java $RDBG_FLAG -cp ${JAR_PATH} ${TF_CONSOLE} run singleCommand host -n --class ${CLASS} "$@"
+done
+
+############### Run the cts tests ###############
+JARS="
+    compatibility-common-util-hostsidelib\
+    compatibility-host-util\
+    cts-tradefed-tests_v2\
+    cts-tradefed_v2\
+    ddmlib-prebuilt\
+    hosttestlib\
+    tradefed-prebuilt"
+JAR_PATH=
+for JAR in $JARS; do
+    checkFile ${JAR_DIR}/${JAR}.jar
+    JAR_PATH=${JAR_PATH}:${JAR_DIR}/${JAR}.jar
+done
+
+TEST_CLASSES="
     com.android.compatibility.tradefed.CtsTradefedTest"
 
 for CLASS in ${TEST_CLASSES}; do

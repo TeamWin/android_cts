@@ -17,7 +17,6 @@ package com.android.compatibility.tradefed;
 
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildProvider;
-import com.android.compatibility.tradefed.command.CtsConsole;
 import com.android.tradefed.build.IFolderBuildInfo;
 import com.android.tradefed.util.FileUtil;
 
@@ -36,7 +35,7 @@ public class CtsTradefedTest extends TestCase {
     private static final String SUITE_PLAN = "cts";
     private static final String DYNAMIC_CONFIG_URL = "";
 
-    public void testManifest() throws Exception {
+    public void testSuiteInfoLoad() throws Exception {
         // Test the values in the manifest can be loaded
         File root = FileUtil.createTempDir("root");
         System.setProperty(PROPERTY_NAME, root.getAbsolutePath());
@@ -44,7 +43,6 @@ public class CtsTradefedTest extends TestCase {
         base.mkdirs();
         File tests = new File(base, "testcases");
         tests.mkdirs();
-        CtsConsole c = new CtsConsole();
         CompatibilityBuildProvider provider = new CompatibilityBuildProvider();
         IFolderBuildInfo info = (IFolderBuildInfo) provider.getBuild();
         CompatibilityBuildHelper helper = new CompatibilityBuildHelper(info);
