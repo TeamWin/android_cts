@@ -123,30 +123,10 @@ public abstract class ActivityTestBase extends
         getActivity().runOnUiThread(finishRunnable);
     }
 
-    static int[] getBitmapPixels(Bitmap bitmap) {
-        int[] pixels = new int[bitmap.getWidth() * bitmap.getHeight()];
-        bitmap.getPixels(pixels, 0, bitmap.getWidth(),
-                0, 0, bitmap.getWidth(), bitmap.getHeight());
-        return pixels;
-    }
-
-    private Bitmap takeScreenshotImpl(Point testOffset) {
-        Bitmap source = getInstrumentation().getUiAutomation().takeScreenshot();
-        return Bitmap.createBitmap(source, testOffset.x, testOffset.y, TEST_WIDTH, TEST_HEIGHT);
-    }
-
     public Bitmap takeScreenshot(Point testOffset) {
         getInstrumentation().waitForIdleSync();
-        Bitmap bitmap1 = takeScreenshotImpl(testOffset);
-        Bitmap bitmap2;
-        int count = 0;
-        do  {
-            bitmap2 = bitmap1;
-            bitmap1 = takeScreenshotImpl(testOffset);
-            count++;
-        } while (count < MAX_SCREEN_SHOTS &&
-                !Arrays.equals(getBitmapPixels(bitmap2), getBitmapPixels(bitmap1)));
-        return bitmap1;
+        Bitmap source = getInstrumentation().getUiAutomation().takeScreenshot();
+        return Bitmap.createBitmap(source, testOffset.x, testOffset.y, TEST_WIDTH, TEST_HEIGHT);
     }
 
     /**
