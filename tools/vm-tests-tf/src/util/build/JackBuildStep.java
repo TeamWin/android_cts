@@ -16,10 +16,11 @@
 
 package util.build;
 
+import com.android.jack.CLILogConfiguration;
+import com.android.jack.CLILogConfiguration.LogConfigurationException;
 import com.android.jack.Jack;
 import com.android.jack.Main;
 import com.android.jack.Options;
-
 import java.io.File;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -27,6 +28,14 @@ import java.util.List;
 import java.util.Set;
 
 public class JackBuildStep extends SourceBuildStep {
+
+    static {
+        try {
+              CLILogConfiguration.setupLogs();
+            } catch (LogConfigurationException e) {
+              throw new Error("Failed to setup logs", e);
+            }
+    }
 
     private final String destPath;
     private final String classPath;
