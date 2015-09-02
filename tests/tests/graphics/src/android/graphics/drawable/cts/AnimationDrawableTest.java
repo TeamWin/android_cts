@@ -275,6 +275,23 @@ public class AnimationDrawableTest extends ActivityInstrumentationTestCase2<Imag
         pollingCheckDrawable(THIRD_FRAME_INDEX, SECOND_FRAME_DURATION);
         // do not repeat
         assertStoppedAnimation(THIRD_FRAME_INDEX, THIRD_FRAME_DURATION);
+        runTestOnUiThread(new Runnable() {
+            public void run() {
+                // Set visible to false and restart to false
+                mAnimationDrawable.setVisible(false, false);
+            }
+        });
+        // Check that animation drawable stays on the same frame
+        assertStoppedAnimation(THIRD_FRAME_INDEX, THIRD_FRAME_DURATION);
+
+        runTestOnUiThread(new Runnable() {
+            public void run() {
+                // Set visible to true and restart to false
+                mAnimationDrawable.setVisible(true, false);
+            }
+        });
+        // Check that animation drawable stays on the same frame
+        assertStoppedAnimation(THIRD_FRAME_INDEX, THIRD_FRAME_DURATION);
     }
 
     public void testInflateCorrect() throws XmlPullParserException, IOException {
