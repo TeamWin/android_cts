@@ -30,9 +30,9 @@ public class DynamicConfigHandlerTest extends TestCase {
     private static final String localConfig =
             "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
             "<DynamicConfig>\n" +
-            "    <Config key=\"test-config-1\">test-config-1</Config>\n" +
-            "    <Config key=\"test-config-2\">test-config-2</Config>\n" +
-            "    <Config key=\"override-config-2\">test-config-3\n" +
+            "    <Config key=\"test-config-1\">test config 1</Config>\n" +
+            "    <Config key=\"test-config-2\">test config 2</Config>\n" +
+            "    <Config key=\"override-config-2\">test config 3</Config>\n" +
             "    <ConfigList key=\"config-list\">\n" +
             "        <Item>config0</Item>\n" +
             "        <Item>config1</Item>\n" +
@@ -80,7 +80,7 @@ public class DynamicConfigHandlerTest extends TestCase {
             "    {\n" +
             "      \"key\": \"override-config-list-2\",\n" +
             "      \"value\": [\n" +
-            "        \"override-config-list-val-2-1\",\n" +
+            "        \"override-config-list-val-2-1\"\n" +
             "      ]\n" +
             "    },\n" +
             "    {\n" +
@@ -107,7 +107,7 @@ public class DynamicConfigHandlerTest extends TestCase {
         assertTrue(params.mDynamicArrayParams.get("override-config-list-3").size() == 0);
 
         assertEquals("test config 1", params.mDynamicParams.get("test-config-1"));
-        assertTrue(params.mDynamicArrayParams.get("config-list").contains("Config2"));
+        assertTrue(params.mDynamicArrayParams.get("config-list").contains("config2"));
 
         assertEquals("override-config-val-2", params.mDynamicParams.get("override-config-2"));
         assertEquals(1, params.mDynamicArrayParams.get("override-config-list-2").size());
@@ -118,9 +118,16 @@ public class DynamicConfigHandlerTest extends TestCase {
 
     private File createFileFromStr(String configStr, String module) throws IOException {
         File file = File.createTempFile(module, "dynamic");
-        FileOutputStream stream = new FileOutputStream(file);
-        stream.write(configStr.getBytes());
-        stream.flush();
+        FileOutputStream stream = null;
+        try {
+            stream = new FileOutputStream(file);
+            stream.write(configStr.getBytes());
+            stream.flush();
+        } finally {
+            if (stream != null) {
+                stream.close();
+            }
+        }
         return file;
     }
 }

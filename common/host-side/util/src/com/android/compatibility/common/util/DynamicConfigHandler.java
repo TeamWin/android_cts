@@ -55,7 +55,7 @@ public class DynamicConfigHandler {
     }
 
     private static DynamicConfig.Params parseJsonToParam(String apfeConfigJson)
-            throws IOException, JSONException {
+            throws JSONException {
         if (apfeConfigJson == null) return new DynamicConfig.Params();
 
         Map<String, String> configMap = new HashMap<>();

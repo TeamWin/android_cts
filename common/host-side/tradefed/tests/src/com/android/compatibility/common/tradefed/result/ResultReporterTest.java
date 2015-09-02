@@ -26,6 +26,7 @@ import com.android.compatibility.common.util.TestStatus;
 import com.android.ddmlib.testrunner.TestIdentifier;
 import com.android.tradefed.build.FolderBuildInfo;
 import com.android.tradefed.build.IFolderBuildInfo;
+import com.android.tradefed.config.OptionSetter;
 import com.android.tradefed.util.FileUtil;
 
 import junit.framework.TestCase;
@@ -75,6 +76,8 @@ public class ResultReporterTest extends TestCase {
     @Override
     public void setUp() throws Exception {
         mReporter = new ResultReporter();
+        OptionSetter setter = new OptionSetter(mReporter);
+        setter.setOptionValue("quiet-output", "true");
         mRoot = FileUtil.createTempDir(ROOT_DIR_NAME);
         mBase = new File(mRoot, BASE_DIR_NAME);
         mBase.mkdirs();
