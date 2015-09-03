@@ -52,10 +52,8 @@ public class Stat {
         double average = data[0];
         double min = data[0];
         double max = data[0];
-        double eX2 = data[0] * data[0]; // will become E[X^2]
         for (int i = 1; i < data.length; i++) {
             average += data[i];
-            eX2 += data[i] * data[i];
             if (data[i] > max) {
                 max = data[i];
             }
@@ -64,9 +62,13 @@ public class Stat {
             }
         }
         average /= data.length;
-        eX2 /= data.length;
-        // stddev = sqrt(E[X^2] - (E[X])^2)
-        double stddev = Math.sqrt(eX2 - average * average);
+        double sumOfSquares = 0.0;
+        for (int i = 0; i < data.length; i++) {
+            double diff = average - data[i];
+            sumOfSquares += diff * diff;
+        }
+        double variance = sumOfSquares / (data.length - 1);
+        double stddev = Math.sqrt(variance);
         return new StatResult(average, min, max, stddev, data.length);
     }
 
@@ -88,37 +90,16 @@ public class Stat {
         double thresholdMin = median * (1.0 - rejectionThreshold);
         double thresholdMax = median * (1.0 + rejectionThreshold);
 
-        double average = 0.0;
-        double min = median;
-        double max = median;
-        double eX2 = 0.0; // will become E[X^2]
-        int validDataCounter = 0;
+        double[] validData = new double[data.length];
+        int index = 0;
         for (int i = 0; i < data.length; i++) {
             if ((data[i] > thresholdMin) && (data[i] < thresholdMax)) {
-                validDataCounter++;
-                average += data[i];
-                eX2 += data[i] * data[i];
-                if (data[i] > max) {
-                    max = data[i];
-                }
-                if (data[i] < min) {
-                    min = data[i];
-                }
+                validData[index] = data[i];
+                index++;
             }
             // TODO report rejected data
         }
-        double stddev;
-        if (validDataCounter > 0) {
-            average /= validDataCounter;
-            eX2 /= validDataCounter;
-            // stddev = sqrt(E[X^2] - (E[X])^2)
-            stddev = Math.sqrt(eX2 - average * average);
-        } else { // both median is showing too much diff
-            average = median;
-            stddev = 0; // don't care
-        }
-
-        return new StatResult(average, min, max, stddev, validDataCounter);
+        return getStat(Arrays.copyOf(validData, index));
     }
 
     /**
