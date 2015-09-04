@@ -21,6 +21,7 @@ import android.content.Context;
 import android.content.pm.PackageManager;
 import android.content.res.AssetFileDescriptor;
 import android.cts.util.MediaUtils;
+import android.graphics.Rect;
 import android.media.AudioManager;
 import android.media.MediaCodec;
 import android.media.MediaDataSource;
@@ -78,6 +79,8 @@ public class MediaPlayerTest extends MediaPlayerTestBase {
     private Monitor mOnTimedTextCalled = new Monitor();
 
     private File mOutFile;
+
+    private int mBoundsCount;
 
     @Override
     protected void setUp() throws Exception {
@@ -1270,6 +1273,7 @@ public class MediaPlayerTest extends MediaPlayerTestBase {
         mMediaPlayer.setDisplay(getActivity().getSurfaceHolder());
         mMediaPlayer.setScreenOnWhilePlaying(true);
         mMediaPlayer.setWakeMode(mContext, PowerManager.PARTIAL_WAKE_LOCK);
+        mBoundsCount = 0;
         mMediaPlayer.setOnTimedTextListener(new MediaPlayer.OnTimedTextListener() {
             @Override
             public void onTimedText(MediaPlayer mp, TimedText text) {
@@ -1293,6 +1297,13 @@ public class MediaPlayerTest extends MediaPlayerTestBase {
                                      ", actual track: " + subtitleTrackIndex,
                                      mSelectedTimedTextIndex, subtitleTrackIndex);
                         mOnTimedTextCalled.signal();
+                    }
+                    Rect bounds = text.getBounds();
+                    if (bounds != null) {
+                        Log.d(LOG_TAG, "bounds: " + bounds);
+                        mBoundsCount++;
+                        Rect expected = new Rect(0, 0, 352, 288);
+                        assertEquals("wrong bounds", expected, bounds);
                     }
                 }
             }
@@ -1350,6 +1361,8 @@ public class MediaPlayerTest extends MediaPlayerTestBase {
         mOnTimedTextCalled.reset();
         assertTrue(mOnTimedTextCalled.waitForCountedSignals(2, 2500) >= 2);
         mMediaPlayer.stop();
+
+        assertEquals("Wrong bounds count", 2, mBoundsCount);
     }
 
     public void testGetTrackInfo() throws Throwable {
