@@ -362,4 +362,20 @@ public class BaseDevicePolicyTest extends DeviceTestCase implements IBuildReceiv
         CLog.logAndDisplay(LogLevel.INFO, "Output for command " + command + ": " + commandOutput);
         return commandOutput.startsWith("Success:");
     }
+
+    protected String getSettings(String namespace, String name, int userId)
+            throws DeviceNotAvailableException {
+        String command = "settings --user " + userId + " get " + namespace + " " + name;
+        String commandOutput = getDevice().executeShellCommand(command);
+        CLog.logAndDisplay(LogLevel.INFO, "Output for command " + command + ": " + commandOutput);
+        return commandOutput.replace("\n", "").replace("\r", "");
+    }
+
+    protected void putSettings(String namespace, String name, String value, int userId)
+            throws DeviceNotAvailableException {
+        String command = "settings --user " + userId + " put " + namespace + " " + name
+                + " " + value;
+        String commandOutput = getDevice().executeShellCommand(command);
+        CLog.logAndDisplay(LogLevel.INFO, "Output for command " + command + ": " + commandOutput);
+    }
 }
