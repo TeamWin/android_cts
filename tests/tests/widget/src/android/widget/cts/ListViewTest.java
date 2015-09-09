@@ -37,6 +37,7 @@ import android.util.Xml;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.ViewTreeObserver.OnDrawListener;
 import android.view.animation.LayoutAnimationController;
 import android.widget.AbsListView;
 import android.widget.AdapterView;
@@ -137,8 +138,11 @@ public class ListViewTest extends ActivityInstrumentationTestCase2<ListViewCtsAc
     }
 
     public void testAccessDividerHeight() {
+        final HasDrawnListener drawListener = new HasDrawnListener();
+
         mInstrumentation.runOnMainSync(new Runnable() {
             public void run() {
+                mListView.getViewTreeObserver().addOnDrawListener(drawListener);
                 mListView.setAdapter(mAdapter_countries);
             }
         });
@@ -155,21 +159,42 @@ public class ListViewTest extends ActivityInstrumentationTestCase2<ListViewCtsAc
 
         mInstrumentation.runOnMainSync(new Runnable() {
             public void run() {
+                drawListener.reset();
                 mListView.setDividerHeight(20);
             }
         });
         mInstrumentation.waitForIdleSync();
+        assertTrue(drawListener.hasDrawn());
         assertEquals(20, mListView.getDividerHeight());
         assertEquals(20, r.bottom - r.top);
 
         mInstrumentation.runOnMainSync(new Runnable() {
             public void run() {
+                drawListener.reset();
                 mListView.setDividerHeight(10);
             }
         });
         mInstrumentation.waitForIdleSync();
+        assertTrue(drawListener.hasDrawn());
         assertEquals(10, mListView.getDividerHeight());
         assertEquals(10, r.bottom - r.top);
+    }
+
+    static class HasDrawnListener implements OnDrawListener {
+        private boolean mHasDrawn;
+
+        @Override
+        public void onDraw() {
+            mHasDrawn = true;
+        }
+
+        public boolean hasDrawn() {
+            return mHasDrawn;
+        }
+
+        public void reset() {
+            mHasDrawn = false;
+        }
     }
 
     public void testAccessItemsCanFocus() {
