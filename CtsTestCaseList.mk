@@ -163,7 +163,7 @@ cts_test_packages := \
     CtsHardwareTestCases \
     CtsJankTestCases \
     CtsLeanbackJankTestCases \
-    CtsJobSchedulerDeviceTestCases \
+    CtsJobSchedulerTestCases \
     CtsJniTestCases \
     CtsKeystoreTestCases \
     CtsLibcoreLegacy22TestCases \
