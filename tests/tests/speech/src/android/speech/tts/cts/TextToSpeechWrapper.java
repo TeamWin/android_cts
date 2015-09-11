@@ -35,7 +35,7 @@ import java.util.concurrent.locks.ReentrantLock;
 public class TextToSpeechWrapper {
     private static final String LOG_TAG = "TextToSpeechServiceTest";
 
-    public static final String MOCK_TTS_ENGINE = "com.android.cts.speech";
+    public static final String MOCK_TTS_ENGINE = "android.speech.tts.cts";
 
     private final Context mContext;
     private TextToSpeech mTts;
