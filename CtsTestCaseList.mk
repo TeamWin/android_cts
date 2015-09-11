@@ -192,6 +192,7 @@ cts_test_packages := \
     CtsSecurityTestCases \
     CtsSignatureTestCases \
     CtsSpeechTestCases \
+    CtsSystemUiTestCases \
     CtsTelecomTestCases \
     CtsTelecomTestCases2 \
     CtsTelephonyTestCases \
