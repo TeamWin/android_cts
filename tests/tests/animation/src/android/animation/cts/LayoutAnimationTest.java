@@ -19,7 +19,7 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 
-import com.android.cts.animation.R;
+import android.animation.cts.R;
 
 import android.animation.Animator;
 import android.animation.LayoutTransition;
