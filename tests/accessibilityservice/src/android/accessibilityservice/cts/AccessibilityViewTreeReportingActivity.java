@@ -16,7 +16,7 @@ package android.accessibilityservice.cts;
 
 import android.os.Bundle;
 
-import com.android.cts.accessibilityservice.R;
+import android.accessibilityservice.cts.R;
 
 /**
  * Activity for testing the accessibility focus APIs exposed to

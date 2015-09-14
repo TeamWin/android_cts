@@ -17,7 +17,7 @@ package android.accessibilityservice.cts;
 import android.test.suitebuilder.annotation.MediumTest;
 import android.view.accessibility.AccessibilityNodeInfo;
 
-import com.android.cts.accessibilityservice.R;
+import android.accessibilityservice.cts.R;
 
 /**
  * Test cases for testing the accessibility focus APIs exposed to accessibility

@@ -33,7 +33,7 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ListView;
 
-import com.android.cts.accessibilityservice.R;
+import android.accessibilityservice.cts.R;
 
 import java.util.Iterator;
 import java.util.List;

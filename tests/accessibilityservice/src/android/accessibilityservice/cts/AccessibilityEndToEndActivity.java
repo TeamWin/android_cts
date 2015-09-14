@@ -16,7 +16,7 @@
 
 package android.accessibilityservice.cts;
 
-import com.android.cts.accessibilityservice.R;
+import android.accessibilityservice.cts.R;
 
 import android.os.Bundle;
 import android.view.View;

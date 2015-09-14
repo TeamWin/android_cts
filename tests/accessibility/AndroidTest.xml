@@ -24,7 +24,7 @@
     <option name="apk-installer:test-file-name" value="CtsAccessibilityTestCases.apk" />
     <option name="apk-installer:test-file-name" value="CtsSomeAccessibilityServices.apk" />
     <test class="com.android.tradefed.testtype.InstrumentationTest" >
-        <option name="package" value="android.accessibility.cts" />
+        <option name="package" value="android.view.accessibility.cts" />
         <option name="runner" value="android.support.test.runner.AndroidJUnitRunner" />
     </test>
 </configuration>
