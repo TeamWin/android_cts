@@ -24,7 +24,7 @@ import android.view.View;
 import android.view.accessibility.AccessibilityEvent;
 import android.view.accessibility.AccessibilityNodeInfo;
 import android.view.accessibility.AccessibilityNodeInfo.AccessibilityAction;
-import android.view.cts.accessibility.R;
+import android.view.accessibility.cts.R;
 
 import java.util.ArrayList;
 import java.util.List;

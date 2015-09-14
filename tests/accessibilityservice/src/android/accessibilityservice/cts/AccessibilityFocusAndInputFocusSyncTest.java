@@ -22,7 +22,7 @@ import android.test.suitebuilder.annotation.MediumTest;
 import android.view.accessibility.AccessibilityEvent;
 import android.view.accessibility.AccessibilityNodeInfo;
 
-import com.android.cts.accessibilityservice.R;
+import android.accessibilityservice.cts.R;
 
 import java.util.LinkedList;
 import java.util.Queue;

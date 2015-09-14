@@ -37,7 +37,7 @@ import android.view.accessibility.AccessibilityNodeInfo.AccessibilityAction;
 import android.view.accessibility.AccessibilityWindowInfo;
 
 import android.widget.Button;
-import com.android.cts.accessibilityservice.R;
+import android.accessibilityservice.cts.R;
 
 import java.util.ArrayList;
 import java.util.LinkedList;

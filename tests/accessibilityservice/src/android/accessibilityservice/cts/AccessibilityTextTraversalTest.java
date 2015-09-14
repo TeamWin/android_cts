@@ -26,7 +26,7 @@ import android.view.accessibility.AccessibilityNodeInfo;
 import android.widget.EditText;
 import android.widget.TextView;
 
-import com.android.cts.accessibilityservice.R;
+import android.accessibilityservice.cts.R;
 
 /**
  * Test cases for testing the accessibility APIs for traversing the text content of

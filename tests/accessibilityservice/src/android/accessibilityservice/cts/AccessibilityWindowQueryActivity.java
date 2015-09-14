@@ -19,7 +19,7 @@ import android.view.View;
 
 import android.view.accessibility.AccessibilityNodeInfo;
 import android.view.accessibility.AccessibilityNodeInfo.AccessibilityAction;
-import com.android.cts.accessibilityservice.R;
+import android.accessibilityservice.cts.R;
 
 /**
  * Activity for testing the accessibility APIs for querying of
