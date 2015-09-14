@@ -107,7 +107,6 @@ public class ThemeHostTest extends DeviceTestCase implements IAbiReceiver, IBuil
 
         final String density = getDensityBucketForDevice(mDevice);
         final String zipFile = String.format("/%s.zip", density);
-        Log.logAndDisplay(LogLevel.INFO, LOG_TAG, "Loading resources from " + zipFile);
 
         final InputStream zipStream = ThemeHostTest.class.getResourceAsStream(zipFile);
         if (zipStream != null) {
@@ -172,8 +171,6 @@ public class ThemeHostTest extends DeviceTestCase implements IAbiReceiver, IBuil
             return;
         }
 
-        Log.logAndDisplay(LogLevel.INFO, LOG_TAG, "Generating device images...");
-
         assertTrue("Aborted image generation", generateDeviceImages());
 
         // Pull ZIP file from remote device.
@@ -181,8 +178,6 @@ public class ThemeHostTest extends DeviceTestCase implements IAbiReceiver, IBuil
         mDevice.pullFile(GENERATED_ASSETS_ZIP, localZip);
 
         int numTasks = 0;
-
-        Log.logAndDisplay(LogLevel.INFO, LOG_TAG, "Extracting generated images...");
 
         // Extract generated images to temporary files.
         final byte[] data = new byte[4096];
@@ -214,16 +209,12 @@ public class ThemeHostTest extends DeviceTestCase implements IAbiReceiver, IBuil
 
         zipInput.close();
 
-        Log.logAndDisplay(LogLevel.INFO, LOG_TAG, "Waiting for comparison tasks...");
-
         int failures = 0;
         for (int i = numTasks; i > 0; i--) {
             failures += mCompletionService.take().get() ? 0 : 1;
         }
 
         assertTrue(failures + " failures in theme test", failures == 0);
-
-        Log.logAndDisplay(LogLevel.INFO, LOG_TAG, "Finished!");
     }
 
     private boolean generateDeviceImages() throws Exception {
@@ -235,8 +226,6 @@ public class ThemeHostTest extends DeviceTestCase implements IAbiReceiver, IBuil
 
         // Start activity
         mDevice.executeShellCommand(START_CMD);
-
-        Log.logAndDisplay(LogLevel.VERBOSE, LOG_TAG, "Starting image generation...");
 
         boolean aborted = false;
         boolean waiting = true;
@@ -269,8 +258,6 @@ public class ThemeHostTest extends DeviceTestCase implements IAbiReceiver, IBuil
             }
             in.close();
         } while (waiting && !aborted);
-
-        Log.logAndDisplay(LogLevel.VERBOSE, LOG_TAG, "Image generation completed!");
 
         return !aborted;
     }
