@@ -39,7 +39,7 @@ public class WebViewStartupTest
     private WebViewStartupCtsActivity mActivity;
 
     public WebViewStartupTest() {
-        super("com.android.cts.webkit", WebViewStartupCtsActivity.class);
+        super("android.webkit.cts", WebViewStartupCtsActivity.class);
     }
 
     @Override

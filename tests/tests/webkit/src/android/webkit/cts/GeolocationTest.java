@@ -110,7 +110,7 @@ public class GeolocationTest extends ActivityInstrumentationTestCase2<WebViewCts
     private List<String> mProviders;
 
     public GeolocationTest() throws Exception {
-        super("com.android.cts.webkit", WebViewCtsActivity.class);
+        super("android.webkit.cts", WebViewCtsActivity.class);
     }
 
     // Both this test and WebViewOnUiThread need to override some of the methods on WebViewClient,

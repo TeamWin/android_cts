@@ -48,7 +48,7 @@ public class WebViewClientTest extends ActivityInstrumentationTestCase2<WebViewC
     private CtsTestServer mWebServer;
 
     public WebViewClientTest() {
-        super("com.android.cts.webkit", WebViewCtsActivity.class);
+        super("android.webkit.cts", WebViewCtsActivity.class);
     }
 
     @Override
