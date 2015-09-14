@@ -16,7 +16,7 @@
 
 package android.widget.cts;
 
-import com.android.cts.widget.R;
+import android.widget.cts.R;
 
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
@@ -73,7 +73,7 @@ public class AbsListViewTest extends ActivityInstrumentationTestCase2<ListViewCt
     private static final float DELTA = 0.001f;
 
     public AbsListViewTest() {
-        super("com.android.cts.widget", ListViewCtsActivity.class);
+        super("android.widget.cts", ListViewCtsActivity.class);
     }
 
 

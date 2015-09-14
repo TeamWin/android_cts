@@ -16,7 +16,7 @@
 
 package android.widget.cts;
 
-import com.android.cts.widget.R;
+import android.widget.cts.R;
 
 import org.xmlpull.v1.XmlPullParser;
 
@@ -70,7 +70,7 @@ public class ListViewTest extends ActivityInstrumentationTestCase2<ListViewCtsAc
     private ArrayAdapter<String> mAdapter_empty;
 
     public ListViewTest() {
-        super("com.android.cts.widget", ListViewCtsActivity.class);
+        super("android.widget.cts", ListViewCtsActivity.class);
     }
 
     protected void setUp() throws Exception {

@@ -16,7 +16,7 @@
 
 package android.widget.cts;
 
-import com.android.cts.widget.R;
+import android.widget.cts.R;
 
 import android.app.Activity;
 import android.app.Instrumentation;
@@ -108,7 +108,7 @@ public class VideoViewTest extends ActivityInstrumentationTestCase2<VideoViewCts
      * Instantiates a new video view test.
      */
     public VideoViewTest() {
-        super("com.android.cts.widget", VideoViewCtsActivity.class);
+        super("android.widget.cts", VideoViewCtsActivity.class);
     }
 
     /**

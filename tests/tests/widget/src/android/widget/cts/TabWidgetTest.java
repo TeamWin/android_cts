@@ -36,7 +36,7 @@ public class TabWidgetTest extends ActivityInstrumentationTestCase2<TabHostCtsAc
     private Activity mActivity;
 
     public TabWidgetTest() {
-        super("com.android.cts.widget", TabHostCtsActivity.class);
+        super("android.widget.cts", TabHostCtsActivity.class);
     }
 
     @Override

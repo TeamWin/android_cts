@@ -16,7 +16,7 @@
 
 package android.widget.cts;
 
-import com.android.cts.widget.R;
+import android.widget.cts.R;
 
 
 import android.app.Activity;
@@ -55,7 +55,7 @@ public class PopupWindowTest extends
      * Instantiates a new popup window test.
      */
     public PopupWindowTest() {
-        super("com.android.cts.widget", MockPopupWindowCtsActivity.class);
+        super("android.widget.cts", MockPopupWindowCtsActivity.class);
     }
 
     /*

@@ -31,7 +31,7 @@ import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.TextView;
 
-import com.android.cts.widget.R;
+import android.widget.cts.R;
 
 /**
  * Test {@link LinearLayout}.
@@ -41,7 +41,7 @@ public class LinearLayoutTest extends ActivityInstrumentationTestCase<LinearLayo
     private Activity mActivity;
 
     public LinearLayoutTest() {
-        super("com.android.cts.widget", LinearLayoutCtsActivity.class);
+        super("android.widget.cts", LinearLayoutCtsActivity.class);
     }
 
     @Override

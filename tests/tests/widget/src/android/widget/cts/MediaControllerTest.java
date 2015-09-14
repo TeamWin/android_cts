@@ -16,7 +16,7 @@
 
 package android.widget.cts;
 
-import com.android.cts.widget.R;
+import android.widget.cts.R;
 
 
 import org.xmlpull.v1.XmlPullParser;
@@ -50,7 +50,7 @@ public class MediaControllerTest extends
     private static final long DEFAULT_TIMEOUT = 3000;
 
     public MediaControllerTest() {
-        super("com.android.cts.widget", MediaControllerCtsActivity.class);
+        super("android.widget.cts", MediaControllerCtsActivity.class);
     }
 
     @Override

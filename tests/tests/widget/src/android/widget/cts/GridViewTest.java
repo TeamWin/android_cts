@@ -16,7 +16,7 @@
 
 package android.widget.cts;
 
-import com.android.cts.widget.R;
+import android.widget.cts.R;
 
 
 import org.xmlpull.v1.XmlPullParser;
@@ -57,7 +57,7 @@ public class GridViewTest extends ActivityInstrumentationTestCase<GridViewCtsAct
     private Instrumentation mInstrumentation;
 
     public GridViewTest() {
-        super("com.android.cts.widget", GridViewCtsActivity.class);
+        super("android.widget.cts", GridViewCtsActivity.class);
     }
 
     private GridView findGridViewById(int id) {

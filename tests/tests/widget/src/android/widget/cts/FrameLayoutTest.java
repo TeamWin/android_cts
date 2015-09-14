@@ -23,7 +23,7 @@ import android.graphics.Color;
 import android.graphics.ColorFilter;
 import android.graphics.PorterDuff;
 
-import com.android.cts.widget.R;
+import android.widget.cts.R;
 
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
@@ -56,7 +56,7 @@ public class FrameLayoutTest extends ActivityInstrumentationTestCase2<FrameLayou
     private FrameLayout mFrameLayout;
 
     public FrameLayoutTest() {
-        super("com.android.cts.widget", FrameLayoutCtsActivity.class);
+        super("android.widget.cts", FrameLayoutCtsActivity.class);
     }
 
     @Override

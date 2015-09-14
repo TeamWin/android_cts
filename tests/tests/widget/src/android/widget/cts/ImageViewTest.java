@@ -49,7 +49,7 @@ import android.util.Xml;
 import android.widget.ImageView;
 import android.widget.ImageView.ScaleType;
 
-import com.android.cts.widget.R;
+import android.widget.cts.R;
 
 
 /**
@@ -60,7 +60,7 @@ public class ImageViewTest extends ActivityInstrumentationTestCase<ImageViewCtsA
     private Activity mActivity;
 
     public ImageViewTest() {
-        super("com.android.cts.widget", ImageViewCtsActivity.class);
+        super("android.widget.cts", ImageViewCtsActivity.class);
     }
 
     /**

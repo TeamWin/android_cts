@@ -16,7 +16,7 @@
 
 package android.widget.cts;
 
-import com.android.cts.widget.R;
+import android.widget.cts.R;
 
 
 import android.app.Activity;
@@ -44,7 +44,7 @@ public class CheckedTextViewTest extends
     private Instrumentation mInstrumentation;
 
     public CheckedTextViewTest() {
-        super("com.android.cts.widget", CheckedTextViewCtsActivity.class);
+        super("android.widget.cts", CheckedTextViewCtsActivity.class);
     }
 
     @Override

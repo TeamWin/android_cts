@@ -16,7 +16,7 @@
 
 package android.widget.cts;
 
-import com.android.cts.widget.R;
+import android.widget.cts.R;
 
 
 import org.xmlpull.v1.XmlPullParser;
@@ -61,7 +61,7 @@ public class ScrollViewTest extends ActivityInstrumentationTestCase2<ScrollViewC
     private Activity mActivity;
 
     public ScrollViewTest() {
-        super("com.android.cts.widget", ScrollViewCtsActivity.class);
+        super("android.widget.cts", ScrollViewCtsActivity.class);
     }
 
     @Override
