@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.android.cts.browser;
+package android.browser.cts;
 
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -51,7 +51,7 @@ public class BrowserBenchTest extends CtsAndroidTestCase {
     private static final boolean DEBUG = false;
     private static final String OCTANE_START_FILE = "octane/index.html";
     private static final String ROBOHORNET_START_FILE = "robohornet/robohornet.html";
-    private static final String HOST_COMPLETION_BROADCAST = "com.android.cts.browser.completion";
+    private static final String HOST_COMPLETION_BROADCAST = "android.browser.cts.completion";
     // time-out for watch-dog. POST should happen within this time.
     private static long BROWSER_POST_TIMEOUT_IN_MS = 10 * 60 * 1000L;
     // watch-dog will time-out first. So make it long enough.

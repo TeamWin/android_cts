@@ -132,7 +132,6 @@ cts_test_packages := \
     CtsDeviceUi \
     CtsDeviceDram \
     CtsDeviceSimpleCpu \
-    CtsDeviceBrowserBench \
     CtsDeviceVideoPerf \
     CtsDeviceOpenGl \
     CtsDeviceTvProviderPerf \
@@ -147,6 +146,7 @@ cts_test_packages := \
     CtsAppWidgetTestCases \
     CtsAssistTestCases \
     CtsBluetoothTestCases \
+    CtsBrowserTestCases \
     CtsCalendarcommon2TestCases \
     CtsCallLogTestCases \
     CtsContentTestCases \

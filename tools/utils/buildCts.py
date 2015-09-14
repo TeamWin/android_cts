@@ -165,7 +165,7 @@ class CtsBuilder(object):
 
     # CTS Stable plan
     plan = tools.TestPlan(packages)
-    plan.Exclude(r'com\.android\.cts\.browserbench')
+    plan.Exclude(r'android\.browser')
     for package, test_list in flaky_tests.iteritems():
       plan.ExcludeTests(package, test_list)
     for package, test_list in releasekey_tests.iteritems():
@@ -175,7 +175,7 @@ class CtsBuilder(object):
     # CTS Flaky plan - list of tests known to be flaky in lab environment
     plan = tools.TestPlan(packages)
     plan.Exclude('.*')
-    plan.Include(r'com\.android\.cts\.browserbench')
+    plan.Include(r'android\.browser')
     for package, test_list in flaky_tests.iteritems():
       plan.Include(package+'$')
       plan.IncludeTests(package, test_list)
@@ -190,7 +190,7 @@ class CtsBuilder(object):
     plan.Exclude('.*')
     for package, test_list in small_tests.iteritems():
       plan.Include(package+'$')
-    plan.Exclude(r'com\.android\.cts\.browserbench')
+    plan.Exclude(r'android\.browser')
     for package, test_list in flaky_tests.iteritems():
       plan.ExcludeTests(package, test_list)
     for package, test_list in releasekey_tests.iteritems():
@@ -203,7 +203,7 @@ class CtsBuilder(object):
     plan.Exclude('.*')
     for package, test_list in medium_tests.iteritems():
       plan.Include(package+'$')
-    plan.Exclude(r'com\.android\.cts\.browserbench')
+    plan.Exclude(r'android\.browser')
     for package, test_list in flaky_tests.iteritems():
       plan.ExcludeTests(package, test_list)
     for package, test_list in releasekey_tests.iteritems():
@@ -215,7 +215,7 @@ class CtsBuilder(object):
     plan = tools.TestPlan(packages)
     plan.Exclude('.*')
     plan.Include(r'android\.hardware$')
-    plan.Exclude(r'com\.android\.cts\.browserbench')
+    plan.Exclude(r'android\.browser')
     for package, test_list in flaky_tests.iteritems():
       plan.ExcludeTests(package, test_list)
     for package, test_list in releasekey_tests.iteritems():
@@ -227,7 +227,7 @@ class CtsBuilder(object):
     plan.Exclude('.*')
     plan.Include(r'android\.media$')
     plan.Include(r'android\.view$')
-    plan.Exclude(r'com\.android\.cts\.browserbench')
+    plan.Exclude(r'android\.browser')
     for package, test_list in flaky_tests.iteritems():
       plan.ExcludeTests(package, test_list)
     for package, test_list in releasekey_tests.iteritems():
@@ -238,7 +238,7 @@ class CtsBuilder(object):
     plan = tools.TestPlan(packages)
     plan.Exclude('.*')
     plan.Include(r'android\.mediastress$')
-    plan.Exclude(r'com\.android\.cts\.browserbench')
+    plan.Exclude(r'android\.browser')
     for package, test_list in flaky_tests.iteritems():
       plan.ExcludeTests(package, test_list)
     for package, test_list in releasekey_tests.iteritems():
@@ -250,7 +250,7 @@ class CtsBuilder(object):
     plan.Exclude('.*')
     for package, test_list in new_test_packages.iteritems():
       plan.Include(package+'$')
-    plan.Exclude(r'com\.android\.cts\.browserbench')
+    plan.Exclude(r'android\.browser')
     for package, test_list in flaky_tests.iteritems():
       plan.ExcludeTests(package, test_list)
     for package, test_list in releasekey_tests.iteritems():
@@ -276,7 +276,7 @@ class CtsBuilder(object):
     plan.Exclude(r'android\.media$')
     plan.Exclude(r'android\.view$')
     plan.Exclude(r'android\.mediastress$')
-    plan.Exclude(r'com\.android\.cts\.browserbench')
+    plan.Exclude(r'android\.browser')
     for package, test_list in flaky_tests.iteritems():
       plan.ExcludeTests(package, test_list)
     for package, test_list in releasekey_tests.iteritems():
@@ -314,7 +314,7 @@ def BuildAospMediumSizeTestList():
       'android.telephony' : [],
       'android.webkit' : [],
       'android.widget' : [],
-      'com.android.cts.browserbench' : []}
+      'android.browser' : []}
 
 def BuildAospSmallSizeTestList():
   """ Construct a default dict that lists packages names of small tests
