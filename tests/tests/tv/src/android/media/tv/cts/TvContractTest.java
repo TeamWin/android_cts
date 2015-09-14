@@ -31,7 +31,7 @@ import android.media.tv.TvContract.Programs.Genres;
 import android.net.Uri;
 import android.test.AndroidTestCase;
 
-import com.android.cts.tv.R;
+import android.tv.cts.R;
 
 import java.io.InputStream;
 import java.io.OutputStream;

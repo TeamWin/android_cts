@@ -27,7 +27,7 @@ import android.media.tv.TvView;
 import android.test.ActivityInstrumentationTestCase2;
 import android.util.ArrayMap;
 
-import com.android.cts.tv.R;
+import android.tv.cts.R;
 
 import java.util.ArrayList;
 import java.util.List;
