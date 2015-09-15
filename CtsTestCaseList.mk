@@ -79,17 +79,15 @@ cts_support_packages := \
     CtsAtraceTestApp \
     CtsCertInstallerApp \
     CtsDeviceAdmin \
-    CtsDeviceOpenGl \
     CtsWifiConfigCreator \
     CtsDeviceAndProfileOwnerApp \
     CtsDeviceAppUsageTestApp \
     CtsDeviceInfo \
     CtsDeviceOsTestApp \
     CtsDeviceOwnerApp \
-    CtsDeviceTaskswitchingAppA \
-    CtsDeviceTaskswitchingAppB \
-    CtsDeviceTaskswitchingControl \
-    CtsDeviceUi \
+    CtsDeviceTaskSwitchingAppA \
+    CtsDeviceTaskSwitchingAppB \
+    CtsDeviceTaskSwitchingControl \
     CtsHostsideNetworkTestsApp \
     CtsIntentReceiverApp \
     CtsIntentSenderApp \
@@ -128,10 +126,8 @@ CTS_TEST_CASE_LIST := \
 
 # Test packages that require an associated test package XML.
 cts_test_packages := \
-    CtsDeviceUi \
     CtsDeviceSimpleCpu \
     CtsDeviceVideoPerf \
-    CtsDeviceOpenGl \
     CtsDeviceTvProviderPerf \
     CtsAccelerationTestCases \
     CtsAccountManagerTestCases \
@@ -161,7 +157,7 @@ cts_test_packages := \
     CtsGraphicsTestCases \
     CtsGraphics2TestCases \
     CtsHardwareTestCases \
-    CtsJankTestCases \
+    CtsJankDeviceTestCases \
     CtsLeanbackJankTestCases \
     CtsJobSchedulerTestCases \
     CtsJniTestCases \
@@ -178,6 +174,7 @@ cts_test_packages := \
     CtsNetTestCasesLegacyPermission22 \
     CtsOpenGLTestCases \
     CtsOpenGlPerfTestCases \
+    CtsOpenGlPerf2TestCases \
     CtsOsTestCases \
     CtsPermissionTestCases \
     CtsPermission2TestCases \
@@ -203,6 +200,7 @@ cts_test_packages := \
     CtsTvTestCases \
     CtsUiAutomationTestCases \
     CtsUiRenderingTestCases \
+    CtsUiDeviceTestCases \
     CtsUsageStatsTestCases \
     CtsUtilTestCases \
     CtsViewTestCases \
@@ -223,15 +221,15 @@ cts_host_libraries := \
     CtsAtraceHostTestCases \
     CtsDevicePolicyManagerTestCases \
     CtsDumpsysHostTestCases \
-    CtsHostJank \
+    CtsJankHostTestCases \
     CtsHostsideNetworkTests \
-    CtsHostUi \
     CtsJdwpSecurityHostTestCases \
     CtsMonkeyTestCases \
     CtsOsHostTestCases \
-    CtsThemeHostTestCases \
-    CtsUsageHostTestCases \
     CtsSecurityHostTestCases \
+    CtsThemeHostTestCases \
+    CtsUiHostTestCases \
+    CtsUsageHostTestCases \
     CtsUsbTests
 
 # List of native tests. For 32 bit targets, assumes that there will be
@@ -250,7 +248,7 @@ cts_ui_tests := \
     CtsUiAutomatorTests
 
 cts_device_jars := \
-    CtsDeviceJank \
+    CtsJankTestJar \
     CtsJdwpApp
 
 cts_target_junit_tests := \

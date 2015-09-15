@@ -1,4 +1,4 @@
-# Copyright (C) 2012 The Android Open Source Project
+# Copyright (C) 2013 The Android Open Source Project
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -11,21 +11,21 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#
-LOCAL_PATH := $(call my-dir)
+
+LOCAL_PATH:= $(call my-dir)
 
 include $(CLEAR_VARS)
 
-LOCAL_MODULE    := libctsdram_jni
-
+LOCAL_SRC_FILES := $(call all-java-files-under, src)
 LOCAL_MODULE_TAGS := optional
+LOCAL_MODULE := CtsJankTestJar
+LOCAL_DEX_PREOPT := false
 
-LOCAL_SRC_FILES := MemoryNativeJni.cpp
+# Tag this module as a cts_v2 test artifact
+LOCAL_COMPATIBILITY_SUITE := cts_v2
 
-LOCAL_C_INCLUDES := $(JNI_H_INCLUDE)
+LOCAL_JAVA_LIBRARIES := uiautomator.core
 
-LOCAL_SHARED_LIBRARIES := libnativehelper
+LOCAL_STATIC_JAVA_LIBRARIES := com.android.uiautomator.platform.common
 
-LOCAL_SDK_VERSION := 14
-
-include $(BUILD_SHARED_LIBRARY)
+include $(BUILD_JAVA_LIBRARY)

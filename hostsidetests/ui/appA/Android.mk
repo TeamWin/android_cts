@@ -11,21 +11,24 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#
-LOCAL_PATH := $(call my-dir)
 
+LOCAL_PATH:= $(call my-dir)
 include $(CLEAR_VARS)
 
-LOCAL_MODULE    := libctsdram_jni
-
+# don't include this package in any target
 LOCAL_MODULE_TAGS := optional
 
-LOCAL_SRC_FILES := MemoryNativeJni.cpp
+LOCAL_MODULE_PATH := $(TARGET_OUT_DATA_APPS)
 
-LOCAL_C_INCLUDES := $(JNI_H_INCLUDE)
+LOCAL_STATIC_JAVA_LIBRARIES := ctsdeviceutil ctstestrunner
 
-LOCAL_SHARED_LIBRARIES := libnativehelper
+LOCAL_SRC_FILES := $(call all-java-files-under, src)
 
-LOCAL_SDK_VERSION := 14
+LOCAL_PACKAGE_NAME := CtsDeviceTaskSwitchingAppA
 
-include $(BUILD_SHARED_LIBRARY)
+# Tag this module as a cts_v2 test artifact
+LOCAL_COMPATIBILITY_SUITE := cts_v2
+
+LOCAL_SDK_VERSION := current
+
+include $(BUILD_CTS_SUPPORT_PACKAGE)
