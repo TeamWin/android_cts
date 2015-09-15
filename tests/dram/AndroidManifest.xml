@@ -15,7 +15,7 @@
 -->
 
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-        package="com.android.cts.dram">
+        package="android.dram.cts">
 
     <uses-permission android:name="android.permission.DISABLE_KEYGUARD" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
@@ -24,6 +24,6 @@
         <uses-library android:name="android.test.runner" />
     </application>
     <instrumentation android:name="android.support.test.runner.AndroidJUnitRunner"
-            android:targetPackage="com.android.cts.dram"
+            android:targetPackage="android.dram.cts"
             android:label="DRAM bandwidth measurement" />
 </manifest>

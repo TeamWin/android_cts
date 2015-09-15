@@ -130,7 +130,6 @@ CTS_TEST_CASE_LIST := \
 cts_test_packages := \
     CtsDeviceFilePerf \
     CtsDeviceUi \
-    CtsDeviceDram \
     CtsDeviceSimpleCpu \
     CtsDeviceBrowserBench \
     CtsDeviceVideoPerf \
@@ -154,6 +153,7 @@ cts_test_packages := \
     CtsDisplayTestCases \
     CtsDpiTestCases \
     CtsDpiTestCases2 \
+    CtsDramTestCases \
     CtsDreamsTestCases \
     CtsDrmTestCases \
     CtsEffectTestCases \
