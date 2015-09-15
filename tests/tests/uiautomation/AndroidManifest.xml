@@ -17,7 +17,7 @@
  -->
 
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-        package="android.app.cts.uiautomation">
+        package="android.app.uiautomation.cts">
 
   <uses-permission android:name="android.permission.DISABLE_KEYGUARD" />
 
@@ -38,7 +38,7 @@
   </application>
 
   <instrumentation android:name="android.support.test.uiautomator.UiAutomatorInstrumentationTestRunner"
-                   android:targetPackage="android.app.cts.uiautomation">
+                   android:targetPackage="android.app.uiautomation.cts">
         <meta-data android:name="listener"
             android:value="com.android.cts.runner.CtsTestRunListener" />
     </instrumentation>

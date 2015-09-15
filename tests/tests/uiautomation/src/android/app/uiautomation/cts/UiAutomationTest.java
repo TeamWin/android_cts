@@ -66,7 +66,7 @@ public class UiAutomationTest extends UiAutomatorTestCase {
 
             // Find the list to scroll around.
             UiScrollable listView = new UiScrollable(new UiSelector().resourceId(
-                    "android.app.cts.uiautomation:id/list_view"));
+                    "android.app.uiautomation.cts:id/list_view"));
 
             // Scoll a bit.
             listView.scrollToEnd(Integer.MAX_VALUE);
