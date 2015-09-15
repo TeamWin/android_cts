@@ -13,13 +13,11 @@
      See the License for the specific language governing permissions and
      limitations under the License.
 -->
-<configuration description="Configuration for Voice Interaction Tests">
+<configuration description="Test module config for VoiceInteraction">
     <include name="common-config" />
-    <option name="apk-installer:test-file-name" value="CtsVoiceInteractionService.apk" />
-    <option name="apk-installer:test-file-name" value="CtsVoiceInteractionApp.apk" />
-    <option name="apk-installer:test-file-name" value="CtsVoiceInteractionTestCases.apk" />
-    <test class="com.android.tradefed.testtype.InstrumentationTest" >
-        <option name="package" value="android.voiceinteraction.cts" />
-        <option name="runner" value="android.support.test.runner.AndroidJUnitRunner" />
-    </test>
+    <option name="cts-apk-installer:test-file-name" value="CtsVoiceInteractionService.apk" />
+    <option name="cts-apk-installer:test-file-name" value="CtsVoiceInteractionApp.apk" />
+    <option name="run-command:run-command"
+         value="settings put secure voice_interaction_service android.voiceinteraction.service/.MainInteractionService" />
+    <option name="cts-apk-installer:test-file-name" value="CtsVoiceInteractionTestCases.apk" />
 </configuration>
