@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.android.cts.filesystemperf;
+package android.filesystem.cts;
 
 import android.content.Context;
 import android.cts.util.SystemUtil;

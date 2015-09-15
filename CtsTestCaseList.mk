@@ -128,7 +128,6 @@ CTS_TEST_CASE_LIST := \
 
 # Test packages that require an associated test package XML.
 cts_test_packages := \
-    CtsDeviceFilePerf \
     CtsDeviceUi \
     CtsDeviceSimpleCpu \
     CtsDeviceVideoPerf \
@@ -157,6 +156,7 @@ cts_test_packages := \
     CtsDreamsTestCases \
     CtsDrmTestCases \
     CtsEffectTestCases \
+    CtsFileSystemTestCases \
     CtsGestureTestCases \
     CtsGraphicsTestCases \
     CtsGraphics2TestCases \
