@@ -30,7 +30,7 @@ public class CookieTest extends ActivityInstrumentationTestCase2<CookieSyncManag
     private static final long WAIT_TIME = 50;
 
     public CookieTest() {
-        super("com.android.cts.webkit", CookieSyncManagerCtsActivity.class);
+        super("android.webkit.cts", CookieSyncManagerCtsActivity.class);
     }
 
     @Override
