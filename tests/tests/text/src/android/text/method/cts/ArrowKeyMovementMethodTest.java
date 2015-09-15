@@ -56,7 +56,7 @@ public class ArrowKeyMovementMethodTest extends ActivityInstrumentationTestCase2
     private MyMetaKeyKeyListener mMetaListener;
 
     public ArrowKeyMovementMethodTest() {
-        super("com.android.cts.text", CtsActivity.class);
+        super("android.text.cts", CtsActivity.class);
     }
 
     @Override

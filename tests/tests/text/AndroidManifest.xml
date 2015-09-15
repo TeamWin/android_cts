@@ -16,7 +16,7 @@
  -->
 
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.android.cts.text">
+    package="android.text.cts">
 
     <uses-permission android:name="android.permission.DISABLE_KEYGUARD" />
     <uses-permission android:name="android.permission.WRITE_SETTINGS" />
@@ -67,7 +67,7 @@
     </application>
 
     <instrumentation android:name="android.support.test.runner.AndroidJUnitRunner"
-                     android:targetPackage="com.android.cts.text"
+                     android:targetPackage="android.text.cts"
                      android:label="CTS tests of android.text">
         <meta-data android:name="listener"
             android:value="com.android.cts.runner.CtsTestRunListener" />

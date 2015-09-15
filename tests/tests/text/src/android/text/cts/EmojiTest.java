@@ -33,7 +33,7 @@ import android.webkit.cts.WebViewOnUiThread;
 public class EmojiTest extends ActivityInstrumentationTestCase2<EmojiCtsActivity> {
 
     public EmojiTest() {
-        super("com.android.cts.text", EmojiCtsActivity.class);
+        super("android.text.cts", EmojiCtsActivity.class);
     }
 
     protected void setUp() throws Exception {

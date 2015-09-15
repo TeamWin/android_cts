@@ -56,7 +56,7 @@ public class LinkMovementMethodTest extends
     private MockClickableSpan mClickable1;
 
     public LinkMovementMethodTest() {
-        super("com.android.cts.text", CtsActivity.class);
+        super("android.text.cts", CtsActivity.class);
     }
 
     @Override
