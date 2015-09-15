@@ -15,7 +15,7 @@
  */
 package android.transition.cts;
 
-import com.android.cts.transition.R;
+import android.transition.cts.R;
 
 import android.transition.Scene;
 import android.transition.TransitionManager;
