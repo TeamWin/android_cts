@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-
 package com.android.compatibility.common.tradefed.targetprep;
 
+import com.android.compatibility.common.tradefed.testtype.CompatibilityTest;
 import com.android.tradefed.build.IBuildInfo;
 import com.android.tradefed.config.Option;
 import com.android.tradefed.device.DeviceNotAvailableException;
@@ -26,25 +26,22 @@ import com.android.tradefed.targetprep.ITargetPreparer;
 import com.android.tradefed.targetprep.TargetSetupError;
 
 /**
- * An {@link ITargetPreparer} that checks whether the device is ready for CTS.
+ * An {@link ITargetPreparer} that performs a task to set the device up to run the test.
  */
-public abstract class PreconditionsChecker implements ITargetPreparer {
+public abstract class PreconditionTask implements ITargetPreparer {
 
-    @Option(name = "skip-precondition-checks", description = "Whether precondition checks " +
-            "should be skipped")
-    protected boolean mSkipPreconditionChecks = false;
+    @Option(name = CompatibilityTest.SKIP_PRECONDITION_TASKS_OPTION, description =
+            "Whether precondition setup tasks should be skipped")
+    private boolean mSkipPreconditionTasks = false;
 
     @Override
     public void setUp(ITestDevice device, IBuildInfo buildInfo) throws TargetSetupError,
             BuildError, DeviceNotAvailableException {
-        if (mSkipPreconditionChecks) {
-            System.out.println("Skipping Precondition Checking");
-        } else {
-            check(device, buildInfo);
+        if (!mSkipPreconditionTasks) {
+            run(device, buildInfo);
         }
     }
 
-    public abstract void check(ITestDevice device, IBuildInfo buildInfo) throws TargetSetupError,
-            BuildError, DeviceNotAvailableException;
-
+    public abstract void run(ITestDevice device, IBuildInfo buildInfo)
+            throws TargetSetupError, BuildError, DeviceNotAvailableException;
 }

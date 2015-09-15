@@ -21,8 +21,8 @@ import com.android.tradefed.config.OptionClass;
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.targetprep.BuildError;
-import com.android.tradefed.targetprep.ITargetPreparer;
 import com.android.tradefed.targetprep.TargetSetupError;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -30,7 +30,7 @@ import java.util.List;
  * Checks that a given setting on the device is one of the given values
  */
 @OptionClass(alias="settings-checker")
-public class SettingsChecker extends PreconditionsChecker {
+public class SettingsChecker extends PreconditionCheck {
 
     public enum SettingType {
         SECURE,
@@ -49,7 +49,7 @@ public class SettingsChecker extends PreconditionsChecker {
     protected SettingType mSettingType = null;
 
     @Override
-    public void check(ITestDevice device, IBuildInfo buildInfo) throws TargetSetupError,
+    public void run(ITestDevice device, IBuildInfo buildInfo) throws TargetSetupError,
             BuildError, DeviceNotAvailableException {
         if (mSettingName == null) {
             throw new TargetSetupError("device-setting not defined");

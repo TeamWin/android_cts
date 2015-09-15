@@ -15,6 +15,7 @@
  */
 package com.android.compatibility.common.tradefed.testtype;
 
+import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.targetprep.ITargetPreparer;
 import com.android.tradefed.testtype.IAbi;
 import com.android.tradefed.testtype.IBuildReceiver;
@@ -74,5 +75,10 @@ public interface IModuleDef extends Comparable<IModuleDef>, IBuildReceiver, IDev
      * @return true iff this module's name matches the give regular expression pattern.
      */
     boolean nameMatches(Pattern pattern);
+
+    /**
+     * Runs the module's precondition checks and setup tasks.
+     */
+    void runPreconditions(boolean skipChecks, boolean skipSetup) throws DeviceNotAvailableException;
 
 }
