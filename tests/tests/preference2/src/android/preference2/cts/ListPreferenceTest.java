@@ -19,7 +19,7 @@ package android.preference2.cts;
 import android.preference.ListPreference;
 import android.test.ActivityInstrumentationTestCase2;
 
-import android.preference2.cts.R;
+import com.android.cts.preference2.R;
 
 public class ListPreferenceTest
         extends ActivityInstrumentationTestCase2<PreferenceFromCodeActivity> {

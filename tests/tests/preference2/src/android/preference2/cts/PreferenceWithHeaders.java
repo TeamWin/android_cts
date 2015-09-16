@@ -20,7 +20,7 @@ import android.os.Bundle;
 import android.preference.PreferenceActivity;
 import android.preference.PreferenceFragment;
 import android.widget.Button;
-import android.preference2.cts.R;
+import com.android.cts.preference2.R;
 import java.util.List;
 
 /**

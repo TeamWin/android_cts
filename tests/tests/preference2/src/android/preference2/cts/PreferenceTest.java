@@ -22,7 +22,7 @@ import android.preference.Preference;
 import android.preference.PreferenceGroup;
 import android.test.ActivityInstrumentationTestCase2;
 
-import android.preference2.cts.R;
+import com.android.cts.preference2.R;
 
 public class PreferenceTest
         extends ActivityInstrumentationTestCase2<PreferenceFromCodeActivity> {

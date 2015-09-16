@@ -20,7 +20,7 @@ import 	android.content.res.Resources;
 import android.preference.SwitchPreference;
 import android.test.ActivityInstrumentationTestCase2;
 
-import android.preference2.cts.R;
+import com.android.cts.preference2.R;
 
 public class SwitchPreferenceTest
         extends ActivityInstrumentationTestCase2<PreferenceFromCodeActivity> {
