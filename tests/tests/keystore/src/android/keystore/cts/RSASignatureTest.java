@@ -28,7 +28,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
-import com.android.cts.keystore.R;
+import android.keystore.cts.R;
 
 import android.content.Context;
 import android.security.keystore.KeyProperties;

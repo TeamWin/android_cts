@@ -25,7 +25,7 @@ import android.test.MoreAsserts;
 import android.test.suitebuilder.annotation.LargeTest;
 import android.util.Log;
 
-import com.android.cts.keystore.R;
+import android.keystore.cts.R;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
