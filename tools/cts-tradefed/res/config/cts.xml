@@ -25,4 +25,20 @@
     -->
     <option name="compatibility-test:plan" value="cts" />
 
+    <target_preparer class="com.android.compatibility.common.tradefed.targetprep.SettingsChecker">
+        <option name="device-setting" value="stay_on_while_plugged_in"/>
+        <option name="setting-type" value="global"/>
+        <!-- The following values encode the conditions in which the device stays awake -->
+        <option name="expected-values" value="2"/> <!-- Charging via USB only -->
+        <option name="expected-values" value="3"/> <!-- Charging via USB or AC -->
+        <option name="expected-values" value="6"/> <!-- Charging via USB or Wireless -->
+        <option name="expected-values" value="7"/> <!-- Charging via USB or AC or Wireless -->
+    </target_preparer>
+
+    <target_preparer class="com.android.compatibility.common.tradefed.targetprep.SettingsChecker">
+        <option name="device-setting" value="install_non_market_apps"/>
+        <option name="setting-type" value="secure"/>
+        <option name="expected-values" value="1"/> <!-- Installs from non-market apps allowed -->
+    </target_preparer>
+
 </configuration>
