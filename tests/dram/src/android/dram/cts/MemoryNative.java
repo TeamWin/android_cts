@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.android.cts.dram;
+package android.dram.cts;
 
 public class MemoryNative {
     static {
@@ -24,7 +24,7 @@ public class MemoryNative {
      * run memcpy for given number of repetition from a source to a destination buffers
      * with each having the size of bufferSize.
      * @param bufferSize
-     * @param repeatition
+     * @param repetition
      * @return time spent in copying in ms.
      */
     public static native double runMemcpy(int bufferSize, int repetition);

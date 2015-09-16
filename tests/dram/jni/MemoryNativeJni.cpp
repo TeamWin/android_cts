@@ -26,7 +26,7 @@ double currentTimeMillis()
     return tv.tv_sec * 1000.0 + tv.tv_usec / 1000.0;
 }
 
-extern "C" JNIEXPORT jdouble JNICALL Java_com_android_cts_dram_MemoryNative_runMemcpy(JNIEnv* env,
+extern "C" JNIEXPORT jdouble JNICALL Java_android_dram_cts_MemoryNative_runMemcpy(JNIEnv* env,
         jclass clazz, jint bufferSize, jint repetition)
 {
     char* src = new char[bufferSize];
@@ -50,7 +50,7 @@ extern "C" JNIEXPORT jdouble JNICALL Java_com_android_cts_dram_MemoryNative_runM
     return end - start;
 }
 
-extern "C" JNIEXPORT jdouble JNICALL Java_com_android_cts_dram_MemoryNative_runMemset(JNIEnv* env,
+extern "C" JNIEXPORT jdouble JNICALL Java_android_dram_cts_MemoryNative_runMemset(JNIEnv* env,
         jclass clazz, jint bufferSize, jint repetition, jint c)
 {
     char* dst = new char[bufferSize];

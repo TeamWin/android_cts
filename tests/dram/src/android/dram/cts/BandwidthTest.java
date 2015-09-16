@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.android.cts.dram;
+package android.dram.cts;
 
 import android.content.Context;
 import android.cts.util.CtsAndroidTestCase;
