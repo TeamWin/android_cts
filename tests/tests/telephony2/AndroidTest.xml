@@ -13,21 +13,11 @@
      See the License for the specific language governing permissions and
      limitations under the License.
 -->
-
-<manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="android.telephony2.cts">
-
-    <uses-permission android:name="android.permission.DISABLE_KEYGUARD" />
-
-    <application>
-        <uses-library android:name="android.test.runner" />
-    </application>
-
-    <instrumentation android:name="android.support.test.runner.AndroidJUnitRunner"
-                     android:targetPackage="android.telephony2.cts">
-        <meta-data android:name="listener"
-            android:value="com.android.cts.runner.CtsTestRunListener" />
-    </instrumentation>
-
-</manifest>
-
+<configuration description="Configuration for Telephony2 Tests">
+    <include name="common-config" />
+    <option name="apk-installer:test-file-name" value="CtsTelephony2TestCases.apk" />
+    <test class="com.android.tradefed.testtype.InstrumentationTest" >
+        <option name="package" value="android.telephony2.cts" />
+        <option name="runner" value="android.support.test.runner.AndroidJUnitRunner" />
+    </test>
+</configuration>
