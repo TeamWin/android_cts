@@ -53,11 +53,11 @@ public class BroadcastReceiverTest extends ActivityInstrumentationTestCase2<Mock
     private static final long START_SERVICE_TIMEOUT  = 3000;
 
     private static final ComponentName DISABLEABLE_RECEIVER =
-            new ComponentName("com.android.cts.content",
+            new ComponentName("android.content.cts",
                     "android.content.cts.MockReceiverDisableable");
 
     public BroadcastReceiverTest() {
-        super("com.android.cts.content", MockActivity.class);
+        super("android.content.cts", MockActivity.class);
     }
 
     @Override

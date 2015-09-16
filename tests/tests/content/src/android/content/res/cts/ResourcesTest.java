@@ -16,7 +16,7 @@
 
 package android.content.res.cts;
 
-import com.android.cts.content.R;
+import android.content.cts.R;
 
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
@@ -48,9 +48,9 @@ public class ResourcesTest extends AndroidTestCase {
     private static final String CONFIG_VARYING = "configVarying";
     private static final String SIMPLE = "simple";
     private static final String CONFIG_VARYING_SIMPLE = "configVarying/simple";
-    private static final String PACKAGE_NAME = "com.android.cts.content";
+    private static final String PACKAGE_NAME = "android.content.cts";
     private static final String COM_ANDROID_CTS_STUB_IDENTIFIER =
-                "com.android.cts.content:configVarying/simple";
+                "android.content.cts:configVarying/simple";
     private Resources mResources;
 
     @Override
@@ -319,7 +319,7 @@ public class ResourcesTest extends AndroidTestCase {
             //expected
         }
 
-        mResources.getValue("com.android.cts.content:raw/text", tv, false);
+        mResources.getValue("android.content.cts:raw/text", tv, false);
         assertNotNull(tv);
         assertEquals("res/raw/text.txt", tv.coerceToString());
     }

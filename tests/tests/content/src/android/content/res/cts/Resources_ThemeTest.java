@@ -29,7 +29,7 @@ import android.util.TypedValue;
 import android.util.Xml;
 import android.view.View;
 
-import com.android.cts.content.R;
+import android.content.cts.R;
 
 import java.util.Locale;
 

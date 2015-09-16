@@ -34,4 +34,7 @@ LOCAL_SRC_FILES := $(call all-java-files-under, src)
 
 LOCAL_PACKAGE_NAME := CtsContentTestCases
 
+# Tag this module as a cts_v2 test artifact
+LOCAL_COMPATIBILITY_SUITE := cts_v2
+
 include $(BUILD_CTS_PACKAGE)

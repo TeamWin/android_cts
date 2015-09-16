@@ -15,7 +15,7 @@
  */
 package android.content.res.cts;
 
-import com.android.cts.content.R;
+import android.content.cts.R;
 
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
