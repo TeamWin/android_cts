@@ -21,7 +21,7 @@ import android.security.keystore.KeyProtection;
 import android.test.AndroidTestCase;
 import android.test.MoreAsserts;
 
-import com.android.cts.keystore.R;
+import android.keystore.cts.R;
 
 import java.security.AlgorithmParameters;
 import java.security.InvalidKeyException;

@@ -16,7 +16,7 @@
 
 package android.keystore.cts;
 
-import com.android.cts.keystore.R;
+import android.keystore.cts.R;
 
 import java.security.InvalidKeyException;
 import java.security.KeyPair;
