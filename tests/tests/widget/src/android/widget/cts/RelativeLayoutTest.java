@@ -16,7 +16,7 @@
 
 package android.widget.cts;
 
-import com.android.cts.widget.R;
+import android.widget.cts.R;
 
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
@@ -46,7 +46,7 @@ public class RelativeLayoutTest extends
     private Activity mActivity;
 
     public RelativeLayoutTest() {
-        super("com.android.cts.widget", RelativeLayoutCtsActivity.class);
+        super("android.widget.cts", RelativeLayoutCtsActivity.class);
     }
 
     @Override

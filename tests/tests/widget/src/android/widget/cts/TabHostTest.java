@@ -16,7 +16,7 @@
 
 package android.widget.cts;
 
-import com.android.cts.widget.R;
+import android.widget.cts.R;
 
 
 import android.app.Activity;
@@ -43,7 +43,7 @@ public class TabHostTest extends ActivityInstrumentationTestCase2<TabHostCtsActi
     private TabHostCtsActivity mActivity;
 
     public TabHostTest() {
-        super("com.android.cts.widget", TabHostCtsActivity.class);
+        super("android.widget.cts", TabHostCtsActivity.class);
     }
 
     @Override
@@ -72,7 +72,7 @@ public class TabHostTest extends ActivityInstrumentationTestCase2<TabHostCtsActi
      * 2. no exception occurs when doing normal operation after setup().
      */
     public void testSetup1() throws Throwable {
-        final Activity activity = launchActivity("com.android.cts.widget", CtsActivity.class, null);
+        final Activity activity = launchActivity("android.widget.cts", CtsActivity.class, null);
 
         runTestOnUiThread(new Runnable() {
             public void run() {
@@ -103,7 +103,7 @@ public class TabHostTest extends ActivityInstrumentationTestCase2<TabHostCtsActi
      * 2. no exception occurs when uses TabSpec.setContent(android.content.Intent) after setup().
      */
     public void testSetup2() throws Throwable {
-        final ActivityGroup activity = launchActivity("com.android.cts.widget",
+        final ActivityGroup activity = launchActivity("android.widget.cts",
                 ActivityGroup.class, null);
 
 

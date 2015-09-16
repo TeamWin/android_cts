@@ -16,7 +16,7 @@
 
 package android.widget.cts;
 
-import com.android.cts.widget.R;
+import android.widget.cts.R;
 
 import android.app.Activity;
 import android.app.Instrumentation;
@@ -31,7 +31,7 @@ public class PopupMenuTest extends
     private Activity mActivity;
 
     public PopupMenuTest() {
-        super("com.android.cts.widget", MockPopupWindowCtsActivity.class);
+        super("android.widget.cts", MockPopupWindowCtsActivity.class);
     }
 
     @Override

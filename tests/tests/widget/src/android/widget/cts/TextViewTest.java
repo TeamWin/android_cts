@@ -16,7 +16,7 @@
 
 package android.widget.cts;
 
-import com.android.cts.widget.R;
+import android.widget.cts.R;
 
 import org.xmlpull.v1.XmlPullParserException;
 
@@ -121,7 +121,7 @@ public class TextViewTest extends ActivityInstrumentationTestCase2<TextViewCtsAc
     private CharSequence mTransformedText;
 
     public TextViewTest() {
-        super("com.android.cts.widget", TextViewCtsActivity.class);
+        super("android.widget.cts", TextViewCtsActivity.class);
     }
 
     @Override

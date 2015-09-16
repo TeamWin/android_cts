@@ -27,7 +27,7 @@ import android.widget.AbsoluteLayout;
 import android.widget.Button;
 import android.widget.GridLayout;
 import android.widget.TextView;
-import com.android.cts.widget.R;
+import android.widget.cts.R;
 import org.xmlpull.v1.XmlPullParser;
 
 import static android.view.ViewGroup.LAYOUT_MODE_OPTICAL_BOUNDS;
@@ -117,7 +117,7 @@ public class GridLayoutTest extends ActivityInstrumentationTestCase<GridLayoutCt
     private Context mContext;
 
     public GridLayoutTest() {
-        super("com.android.cts.widget", GridLayoutCtsActivity.class);
+        super("android.widget.cts", GridLayoutCtsActivity.class);
     }
 
     @Override

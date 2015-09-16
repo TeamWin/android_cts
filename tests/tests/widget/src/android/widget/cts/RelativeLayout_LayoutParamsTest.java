@@ -16,7 +16,7 @@
 
 package android.widget.cts;
 
-import com.android.cts.widget.R;
+import android.widget.cts.R;
 
 import android.test.ActivityInstrumentationTestCase2;
 import android.test.ViewAsserts;
@@ -32,7 +32,7 @@ public class RelativeLayout_LayoutParamsTest extends
         ActivityInstrumentationTestCase2<RelativeLayoutCtsActivity> {
 
     public RelativeLayout_LayoutParamsTest() {
-        super("com.android.cts.widget", RelativeLayoutCtsActivity.class);
+        super("android.widget.cts", RelativeLayoutCtsActivity.class);
     }
 
     public void testConstructor() {

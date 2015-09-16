@@ -16,7 +16,7 @@
 
 package android.widget.cts;
 
-import com.android.cts.widget.R;
+import android.widget.cts.R;
 
 
 import org.xmlpull.v1.XmlPullParser;
@@ -54,7 +54,7 @@ public class HorizontalScrollViewTest
     private Activity mActivity;
 
     public HorizontalScrollViewTest() {
-        super("com.android.cts.widget", HorizontalScrollViewCtsActivity.class);
+        super("android.widget.cts", HorizontalScrollViewCtsActivity.class);
     }
 
     @Override
