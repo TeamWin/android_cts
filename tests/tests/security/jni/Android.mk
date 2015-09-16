@@ -35,7 +35,8 @@ LOCAL_SRC_FILES := \
 		android_security_cts_MediaCryptoTest.cpp \
 		android_security_cts_MediaPlayerInfoLeakTest.cpp \
 		android_security_cts_StagefrightTest.cpp \
-		android_security_cts_AudioEffectBinderTest.cpp
+		android_security_cts_AudioEffectBinderTest.cpp \
+		android_security_cts_AudioFlingerBinderTest.cpp
 
 LOCAL_C_INCLUDES := \
 	$(JNI_H_INCLUDE) \
