@@ -17,8 +17,12 @@ package com.android.compatibility.common.tradefed.testtype;
 
 import com.android.compatibility.common.tradefed.result.IModuleListener;
 import com.android.compatibility.common.tradefed.result.ModuleListener;
+import com.android.compatibility.common.tradefed.targetprep.PreconditionCheck;
+import com.android.compatibility.common.tradefed.targetprep.PreconditionTask;
 import com.android.compatibility.common.util.AbiUtils;
 import com.android.tradefed.build.IBuildInfo;
+import com.android.tradefed.config.ConfigurationException;
+import com.android.tradefed.config.OptionSetter;
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.log.LogUtil.CLog;
@@ -48,7 +52,9 @@ public class ModuleDef implements IModuleDef {
     private final String mName;
     private final IAbi mAbi;
     private List<IRemoteTest> mTests = null;
-    private List<ITargetPreparer> mPreparers = null;
+    private List<ITargetPreparer> mPreconditions = new ArrayList<>();
+    private List<ITargetPreparer> mPreparers = new ArrayList<>();
+    private List<ITargetCleaner> mCleaners = new ArrayList<>();
     private IBuildInfo mBuild;
     private ITestDevice mDevice;
     private List<String> mIncludeFilters = new ArrayList<>();
@@ -60,7 +66,19 @@ public class ModuleDef implements IModuleDef {
         mName = name;
         mAbi = abi;
         mTests = tests;
-        mPreparers = preparers;
+        for (ITargetPreparer preparer : preparers) {
+            // Separate preconditions from target preparers.
+            if (preparer instanceof PreconditionCheck || preparer instanceof PreconditionTask) {
+                mPreconditions.add(preparer);
+            } else {
+                mPreparers.add(preparer);
+            }
+            if (preparer instanceof ITargetCleaner) {
+                mCleaners.add((ITargetCleaner) preparer);
+            }
+        }
+        // Reverse cleaner order
+        Collections.reverse(mCleaners);
     }
 
     /**
@@ -166,29 +184,26 @@ public class ModuleDef implements IModuleDef {
     public void run(ITestInvocationListener listener) throws DeviceNotAvailableException {
         IModuleListener moduleListener = new ModuleListener(this, listener);
 
-        List<ITargetCleaner> cleaners = new ArrayList<>();
         // Setup
         for (ITargetPreparer preparer : mPreparers) {
             CLog.d("Preparer: %s", preparer.getClass().getSimpleName());
             if (preparer instanceof IAbiReceiver) {
                 ((IAbiReceiver) preparer).setAbi(mAbi);
             }
-            if (preparer instanceof ITargetCleaner) {
-                cleaners.add((ITargetCleaner) preparer);
-            }
             try {
                 preparer.setUp(mDevice, mBuild);
             } catch (BuildError e) {
                 // This should only happen for flashing new build
-                CLog.e("Unexpected BuildError from preparer: %s",
-                    preparer.getClass().getCanonicalName());
+                CLog.e("Unexpected BuildError from precondition: %s",
+                        preparer.getClass().getCanonicalName());
             } catch (TargetSetupError e) {
-                // log preparer class then rethrow & let caller handle
-                CLog.e("TargetSetupError in preparer: %s",
-                    preparer.getClass().getCanonicalName());
+                // log precondition class then rethrow & let caller handle
+                CLog.e("TargetSetupError in precondition: %s",
+                        preparer.getClass().getCanonicalName());
                 throw new RuntimeException(e);
             }
         }
+
         // Run tests
         for (IRemoteTest test : mTests) {
             CLog.d("Test: %s", test.getClass().getSimpleName());
@@ -207,11 +222,54 @@ public class ModuleDef implements IModuleDef {
             }
             test.run(moduleListener);
         }
-        // Tear down - in reverse order
-        Collections.reverse(cleaners);
-        for (ITargetCleaner cleaner : cleaners) {
+
+        // Tear down
+        for (ITargetCleaner cleaner : mCleaners) {
             CLog.d("Cleaner: %s", cleaner.getClass().getSimpleName());
             cleaner.tearDown(mDevice, mBuild, null);
+        }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void runPreconditions(boolean skipChecks, boolean skipSetup)
+            throws DeviceNotAvailableException {
+        for (ITargetPreparer preparer : mPreconditions) {
+            CLog.d("Preparer: %s", preparer.getClass().getSimpleName());
+            if (preparer instanceof IAbiReceiver) {
+                ((IAbiReceiver) preparer).setAbi(mAbi);
+            }
+            if (preparer instanceof PreconditionCheck) {
+                setOption(preparer, CompatibilityTest.SKIP_PRECONDITION_CHECKS_OPTION,
+                        Boolean.toString(skipChecks));
+            }
+            if (preparer instanceof PreconditionTask) {
+                setOption(preparer, CompatibilityTest.SKIP_PRECONDITION_TASKS_OPTION,
+                        Boolean.toString(skipSetup));
+            }
+            try {
+                preparer.setUp(mDevice, mBuild);
+            } catch (BuildError e) {
+                // This should only happen for flashing new build
+                CLog.e("Unexpected BuildError from precondition: %s",
+                        preparer.getClass().getCanonicalName());
+            } catch (TargetSetupError e) {
+                // log precondition class then rethrow & let caller handle
+                CLog.e("TargetSetupError in precondition: %s",
+                        preparer.getClass().getCanonicalName());
+                throw new RuntimeException(e);
+            }
+        }
+    }
+
+    private void setOption(Object target, String option, String value) {
+        try {
+            OptionSetter setter = new OptionSetter(target);
+            setter.setOptionValue(option, value);
+        } catch (ConfigurationException e) {
+            e.printStackTrace();
         }
     }
 }

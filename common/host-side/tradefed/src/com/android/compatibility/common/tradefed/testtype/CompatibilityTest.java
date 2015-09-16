@@ -65,6 +65,9 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
     public static final String RETRY_OPTION = "retry";
     private static final String ABI_OPTION = "abi";
     private static final String SHARD_OPTION = "shard";
+    private static final String SKIP_DEVICE_INFO_OPTION = "skip-device-info";
+    public static final String SKIP_PRECONDITION_CHECKS_OPTION = "skip-precondition-checks";
+    public static final String SKIP_PRECONDITION_TASKS_OPTION = "skip-precondition-tasks";
     private static final String URL = "dynamic-config-url";
 
     private static final TestStatus[] RETRY_TEST_STATUS = new TestStatus[] {
@@ -119,17 +122,29 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
             description = "Specify the url for override config")
     private String mURL;
 
+    @Option(name = SKIP_DEVICE_INFO_OPTION, description =
+            "Whether device info collection should be skipped")
+    private boolean mSkipDeviceInfo = false;
+
+    @Option(name = SKIP_PRECONDITION_CHECKS_OPTION, description =
+            "Whether precondition checks should be skipped")
+    private boolean mSkipPreconditionChecks = false;
+
+    @Option(name = SKIP_PRECONDITION_TASKS_OPTION, description =
+            "Whether precondition setup tasks should be skipped")
+    private boolean mSkipPreconditionTasks = false;
+
     @Option(name = "bugreport-on-failure", description =
-            "take a bugreport on every test failure. " +
+            "Take a bugreport on every test failure. " +
             "Warning: can potentially use a lot of disk space.")
     private boolean mBugReportOnFailure = false;
 
     @Option(name = "logcat-on-failure", description =
-            "take a logcat snapshot on every test failure.")
+            "Take a logcat snapshot on every test failure.")
     private boolean mLogcatOnFailure = false;
 
     @Option(name = "screenshot-on-failure", description =
-            "take a screenshot on every test failure.")
+            "Take a screenshot on every test failure.")
     private boolean mScreenshotOnFailure = false;
 
     private int mShardAssignment;
@@ -218,11 +233,16 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
             CLog.logAndDisplay(LogLevel.INFO, "Start test run of %d module%s", moduleCount,
                     (moduleCount > 1) ? "s" : "");
 
+            // Set values and run preconditions
             for (int i = mLastModuleIndex; i < moduleCount; i++) {
                 IModuleDef module = mModules.get(i);
                 module.setBuild(mBuild);
                 module.setDevice(mDevice);
-                module.run(listener);
+                module.runPreconditions(mSkipPreconditionChecks, mSkipPreconditionTasks);
+            }
+            // Run the tests
+            for (int i = mLastModuleIndex; i < moduleCount; i++) {
+                mModules.get(i).run(listener);
                 // Track of the last complete test package index for resume
                 mLastModuleIndex = i;
             }
