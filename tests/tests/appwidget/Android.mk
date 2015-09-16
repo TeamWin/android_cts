@@ -26,4 +26,7 @@ LOCAL_PACKAGE_NAME := CtsAppWidgetTestCases
 
 LOCAL_STATIC_JAVA_LIBRARIES := mockito-target ctstestrunner
 
+# Tag this module as a cts_v2 test artifact
+LOCAL_COMPATIBILITY_SUITE := cts_v2
+
 include $(BUILD_CTS_PACKAGE)
