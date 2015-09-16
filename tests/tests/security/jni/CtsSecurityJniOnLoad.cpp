@@ -90,5 +90,9 @@ jint JNI_OnLoad(JavaVM *vm, void *reserved) {
         return JNI_ERR;
     }
 
+    if (register_android_security_cts_AudioFlingerBinderTest(env)) {
+        return JNI_ERR;
+    }
+
     return JNI_VERSION_1_4;
 }
