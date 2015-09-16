@@ -16,7 +16,7 @@
 
 package android.graphics.drawable.cts;
 
-import com.android.cts.graphics.R;
+import android.graphics.cts.R;
 
 
 import org.xmlpull.v1.XmlPullParser;
@@ -50,7 +50,7 @@ public class AnimationDrawableTest extends ActivityInstrumentationTestCase2<Imag
     private Resources mResources;
 
     public AnimationDrawableTest() {
-        super("com.android.cts.graphics", ImageViewCtsActivity.class);
+        super("android.graphics.cts", ImageViewCtsActivity.class);
     }
 
     @Override

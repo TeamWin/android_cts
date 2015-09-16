@@ -48,7 +48,7 @@ public class OpenGlEsVersionTest
     private OpenGlEsVersionCtsActivity mActivity;
 
     public OpenGlEsVersionTest() {
-        super("com.android.cts.graphics", OpenGlEsVersionCtsActivity.class);
+        super("android.graphics.cts", OpenGlEsVersionCtsActivity.class);
     }
 
     @Override

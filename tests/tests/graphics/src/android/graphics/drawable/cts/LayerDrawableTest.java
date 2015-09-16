@@ -17,7 +17,7 @@
 package android.graphics.drawable.cts;
 
 import android.view.Gravity;
-import com.android.cts.graphics.R;
+import android.graphics.cts.R;
 
 import org.xmlpull.v1.XmlPullParserException;
 
