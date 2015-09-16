@@ -105,3 +105,23 @@ TEST_CLASSES="
 for CLASS in ${TEST_CLASSES}; do
     java $RDBG_FLAG -cp ${JAR_PATH} ${TF_CONSOLE} run singleCommand host -n --class ${CLASS} "$@"
 done
+
+############### Run the manifest generator tests ###############
+JARS="
+    compatibility-manifest-generator\
+    compatibility-manifest-generator-tests\
+    ddmlib-prebuilt\
+    hosttestlib\
+    tradefed-prebuilt"
+JAR_PATH=
+for JAR in $JARS; do
+    checkFile ${JAR_DIR}/${JAR}.jar
+    JAR_PATH=${JAR_PATH}:${JAR_DIR}/${JAR}.jar
+done
+
+TEST_CLASSES="
+    com.android.compatibility.common.generator.ManifestGeneratorTest"
+
+for CLASS in ${TEST_CLASSES}; do
+    java $RDBG_FLAG -cp ${JAR_PATH} ${TF_CONSOLE} run singleCommand host -n --class ${CLASS} "$@"
+done
