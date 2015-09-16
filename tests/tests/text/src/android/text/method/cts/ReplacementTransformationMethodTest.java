@@ -37,7 +37,7 @@ public class ReplacementTransformationMethodTest extends
     private EditText mEditText;
 
     public ReplacementTransformationMethodTest() {
-        super("com.android.cts.text", CtsActivity.class);
+        super("android.text.cts", CtsActivity.class);
     }
 
     @Override
