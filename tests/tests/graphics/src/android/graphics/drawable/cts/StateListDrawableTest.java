@@ -34,7 +34,7 @@ import android.test.InstrumentationTestCase;
 import android.util.StateSet;
 import android.util.Xml;
 
-import com.android.cts.graphics.R;
+import android.graphics.cts.R;
 
 
 public class StateListDrawableTest extends InstrumentationTestCase {
