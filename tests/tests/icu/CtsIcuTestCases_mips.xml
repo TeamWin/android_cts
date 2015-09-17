@@ -1,0 +1,563 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+
+<TestPackage AndroidFramework="Android 1.0"
+             appNameSpace="android.icu.cts"
+             appPackageName="com.ibm.icu.dev.test"
+             name="CtsIcuTestCases"
+             runner=".IcuTestRunner"
+             version="1.0">
+
+    <!--
+    ICU tests are run against ICU as a standalone library so the package names are com.ibm.icu.*.
+    Each test class has one dummy method called "run-everything". This is because CTS will not try
+    to run a class if there is no known test method on it. The IcuTestRunner is aware of this and
+    pretends to run the method "run-everything", but actually dispatches the run to ICU's own test
+    runner. If the test is successful, a return code of 0 from ICU's test runner will be detected
+    and we report that the "run-everything" method passed. If there is any failure in the class,
+    we report that "run-everything" failed and print out the detailed method by method listing
+    from ICU about what actually failed, as the stack trace for the failure in "run-everything".
+    -->
+
+    <TestSuite name="com">
+        <TestSuite name="ibm">
+            <TestSuite name="icu">
+                <TestSuite name="dev">
+                    <TestSuite name="test">
+                        <TestSuite name="translit">
+                            <TestCase abis="mips mips64" name="PrettyPrinterTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="mips mips64" name="TransliteratorTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="mips mips64" name="RegexUtilitiesTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="mips mips64" name="ReplaceableTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="mips mips64" name="RoundTripTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="mips mips64" name="AnyScriptTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="mips mips64" name="ErrorTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="mips mips64" name="UnicodeMapTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="mips mips64"
+                                      name="CompoundTransliteratorTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="mips mips64" name="TestUnicodeProperty">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                        </TestSuite>
+                        <TestSuite name="util">
+                            <TestCase abis="mips mips64"
+                                      name="ICUResourceBundleCollationTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="mips mips64" name="ULocaleCollationTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="mips mips64" name="GenderInfoTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="mips mips64" name="BytesTrieTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="mips mips64" name="LocaleDataTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="mips mips64" name="CurrencyTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="mips mips64" name="RegionTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="mips mips64" name="ULocaleTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="mips mips64" name="StringTokenizerTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="mips mips64" name="CharsTrieTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="mips mips64" name="CompactArrayTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="mips mips64" name="LocaleBuilderTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="mips mips64" name="TrieMapTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="mips mips64" name="ICUServiceThreadTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="mips mips64" name="ICUBinaryTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="mips mips64" name="ICUResourceBundleTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="mips mips64" name="DebugUtilitiesTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="mips mips64"
+                                      name="SimplePatternFormatterTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="mips mips64" name="LocaleMatcherTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="mips mips64" name="UtilityTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="mips mips64" name="Trie2Test">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="mips mips64" name="ICUServiceTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="mips mips64" name="VersionInfoTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="mips mips64" name="LocalePriorityListTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="mips mips64" name="TrieTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="mips mips64" name="TextTrieMapTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                        </TestSuite>
+                        <TestSuite name="search">
+                            <TestCase abis="mips mips64" name="SearchTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                        </TestSuite>
+                        <TestSuite name="collator">
+                            <TestCase abis="mips mips64" name="LotusCollationKoreanTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="mips mips64" name="CollationTurkishTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="mips mips64" name="CollationMiscTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="mips mips64" name="CollationAPITest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="mips mips64" name="CollationServiceTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="mips mips64" name="AlphabeticIndexTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="mips mips64" name="CollationFinnishTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="mips mips64" name="CollationDummyTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="mips mips64" name="CollationRegressionTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="mips mips64" name="CollationChineseTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="mips mips64" name="CollationGermanTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="mips mips64" name="G7CollationTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="mips mips64" name="CollationSpanishTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="mips mips64"
+                                      name="CollationCreationMethodTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="mips mips64" name="UCAConformanceTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="mips mips64" name="CollationKanaTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="mips mips64" name="CollationFrenchTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="mips mips64" name="CollationIteratorTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="mips mips64" name="CollationTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="mips mips64" name="CollationThaiTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="mips mips64" name="CollationFrozenMonkeyTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="mips mips64" name="CollationThreadTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="mips mips64" name="CollationEnglishTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="mips mips64" name="CollationMonkeyTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="mips mips64" name="CollationCurrencyTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                        </TestSuite>
+                        <TestSuite name="format">
+                            <TestCase abis="mips mips64"
+                                      name="GlobalizationPreferencesTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="mips mips64" name="RbnfLenientScannerTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="mips mips64" name="PluralRangesTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="mips mips64" name="SelectFormatUnitTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="mips mips64" name="PluralRulesTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="mips mips64"
+                                      name="RelativeDateTimeFormatterTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="mips mips64" name="RBNFParseTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="mips mips64" name="TimeUnitTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="mips mips64" name="CompactDecimalFormatTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="mips mips64" name="RbnfRoundTripTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="mips mips64" name="RbnfTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="mips mips64" name="SelectFormatAPITest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="mips mips64" name="PluralFormatTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="mips mips64" name="BigNumberFormatTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="mips mips64" name="ListFormatterTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="mips mips64" name="DateTimeGeneratorTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="mips mips64"
+                                      name="NumberFormatSpecificationTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="mips mips64" name="MeasureUnitTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="mips mips64"
+                                      name="ScientificNumberFormatterTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="mips mips64" name="PluralFormatUnitTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                        </TestSuite>
+                        <TestSuite name="compression">
+                            <TestCase abis="mips mips64" name="ExhaustiveTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="mips mips64" name="DecompressionTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                        </TestSuite>
+                        <TestSuite name="text">
+                            <TestCase abis="mips mips64" name="SpoofCheckerTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                        </TestSuite>
+                        <TestSuite name="iterator">
+                            <TestCase abis="mips mips64" name="TestUCharacterIterator">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                        </TestSuite>
+                        <TestSuite name="duration">
+                            <TestSuite name="languages">
+                                <TestCase abis="mips mips64"
+                                          name="Test_en">
+                                    <Test name="run-everything"/>
+                                </TestCase>
+                                <TestCase abis="mips mips64"
+                                          name="Test_es">
+                                    <Test name="run-everything"/>
+                                </TestCase>
+                                <TestCase abis="mips mips64"
+                                          name="Test_fr">
+                                    <Test name="run-everything"/>
+                                </TestCase>
+                                <TestCase abis="mips mips64"
+                                          name="Test_he_IL">
+                                    <Test name="run-everything"/>
+                                </TestCase>
+                                <TestCase abis="mips mips64"
+                                          name="Test_hi">
+                                    <Test name="run-everything"/>
+                                </TestCase>
+                                <TestCase abis="mips mips64"
+                                          name="Test_it">
+                                    <Test name="run-everything"/>
+                                </TestCase>
+                                <TestCase abis="mips mips64"
+                                          name="Test_ja">
+                                    <Test name="run-everything"/>
+                                </TestCase>
+                                <TestCase abis="mips mips64"
+                                          name="Test_ko">
+                                    <Test name="run-everything"/>
+                                </TestCase>
+                                <TestCase abis="mips mips64"
+                                          name="Test_zh_Hans">
+                                    <Test name="run-everything"/>
+                                </TestCase>
+                                <TestCase abis="mips mips64"
+                                          name="Test_zh_Hans_SG">
+                                    <Test name="run-everything"/>
+                                </TestCase>
+                                <TestCase abis="mips mips64"
+                                          name="Test_zh_Hant">
+                                    <Test name="run-everything"/>
+                                </TestCase>
+                                <TestCase abis="mips mips64"
+                                          name="Test_zh_Hant_HK">
+                                    <Test name="run-everything"/>
+                                </TestCase>
+                            </TestSuite>
+                            <TestCase abis="mips mips64"
+                                      name="ResourceBasedPeriodFormatterDataServiceTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="mips mips64" name="ICUDurationTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="mips mips64" name="PeriodBuilderFactoryTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="mips mips64" name="PeriodBuilderTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="mips mips64" name="PeriodTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="mips mips64" name="DataReadWriteTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="mips mips64" name="RegressionTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                        </TestSuite>
+                        <TestSuite name="rbbi">
+                            <TestCase abis="mips mips64" name="RBBITestExtended">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="mips mips64" name="SimpleBITest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="mips mips64" name="BreakIteratorTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="mips mips64" name="RBBITestMonkey">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="mips mips64" name="RBBITest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="mips mips64" name="BreakIteratorRegTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                        </TestSuite>
+                        <TestSuite name="lang">
+                            <TestCase abis="mips mips64" name="TestUScript">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="mips mips64" name="UPropertyAliasesTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="mips mips64" name="UTF16Test">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="mips mips64" name="UCharacterCategoryTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="mips mips64" name="UnicodeSetStringSpanTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="mips mips64" name="UnicodeSetTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="mips mips64" name="UCharacterCaseTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="mips mips64" name="UCharacterTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="mips mips64" name="UCharacterThreadTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="mips mips64" name="UCharacterSurrogateTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="mips mips64" name="TestUScriptRun">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="mips mips64" name="UCharacterDirectionTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                        </TestSuite>
+                        <TestSuite name="charsetdet">
+                            <TestCase abis="mips mips64" name="TestCharsetDetector">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                        </TestSuite>
+                        <TestSuite name="normalizer">
+                            <TestCase abis="mips mips64"
+                                      name="TestDeprecatedNormalizerAPI">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="mips mips64" name="NormalizationMonkeyTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="mips mips64" name="TestCanonicalIterator">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="mips mips64" name="BasicTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="mips mips64" name="ConformanceTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="mips mips64" name="NormalizerRegressionTests">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="mips mips64" name="UTS46Test">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="mips mips64"
+                                      name="UnicodeNormalizerConformanceTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                        </TestSuite>
+                        <TestSuite name="bidi">
+                            <TestCase abis="mips mips64" name="BidiTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="mips mips64" name="BiDiConformanceTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                        </TestSuite>
+                        <TestSuite name="shaping">
+                            <TestCase abis="mips mips64" name="ArabicShapingRegTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                        </TestSuite>
+                        <TestSuite name="stringprep">
+                            <TestCase abis="mips mips64" name="TestStringPrep">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="mips mips64" name="IDNAConformanceTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="mips mips64" name="TestIDNA">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="mips mips64" name="TestStringPrepProfiles">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="mips mips64" name="TestIDNARef">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                        </TestSuite>
+                        <TestSuite name="timezone">
+                            <TestCase abis="mips mips64" name="TimeZoneTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="mips mips64" name="TimeZoneRuleTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="mips mips64" name="TimeZoneRegression">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="mips mips64" name="TimeZoneBoundaryTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="mips mips64" name="TimeZoneOffsetLocalTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                        </TestSuite>
+                        <TestSuite name="bigdec">
+                            <TestCase abis="mips mips64" name="DiagBigDecimal">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                        </TestSuite>
+                        <TestSuite name="calendar">
+                            <TestCase abis="mips mips64" name="CalendarTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="mips mips64" name="AstroTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="mips mips64" name="HolidayTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                        </TestSuite>
+                        <TestSuite name="timescale">
+                            <TestCase abis="mips mips64" name="TimeScaleMonkeyTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="mips mips64" name="TimeScaleAPITest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="mips mips64" name="TimeScaleDataTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                        </TestSuite>
+                        <TestSuite name="charset">
+                            <TestCase abis="mips mips64" name="TestSelection">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="mips mips64" name="TestCharset">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                        </TestSuite>
+                        <TestCase abis="mips mips64" name="TestLocaleNamePackaging">
+                            <Test name="run-everything"/>
+                        </TestCase>
+                    </TestSuite>
+                </TestSuite>
+            </TestSuite>
+        </TestSuite>
+    </TestSuite>
+</TestPackage>

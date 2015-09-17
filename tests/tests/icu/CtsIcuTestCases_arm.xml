@@ -1,0 +1,563 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+
+<TestPackage AndroidFramework="Android 1.0"
+             appNameSpace="android.icu.cts"
+             appPackageName="com.ibm.icu.dev.test"
+             name="CtsIcuTestCases"
+             runner=".IcuTestRunner"
+             version="1.0">
+
+    <!--
+    ICU tests are run against ICU as a standalone library so the package names are com.ibm.icu.*.
+    Each test class has one dummy method called "run-everything". This is because CTS will not try
+    to run a class if there is no known test method on it. The IcuTestRunner is aware of this and
+    pretends to run the method "run-everything", but actually dispatches the run to ICU's own test
+    runner. If the test is successful, a return code of 0 from ICU's test runner will be detected
+    and we report that the "run-everything" method passed. If there is any failure in the class,
+    we report that "run-everything" failed and print out the detailed method by method listing
+    from ICU about what actually failed, as the stack trace for the failure in "run-everything".
+    -->
+
+    <TestSuite name="com">
+        <TestSuite name="ibm">
+            <TestSuite name="icu">
+                <TestSuite name="dev">
+                    <TestSuite name="test">
+                        <TestSuite name="translit">
+                            <TestCase abis="armeabi-v7a arm64-v8a" name="PrettyPrinterTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="armeabi-v7a arm64-v8a" name="TransliteratorTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="armeabi-v7a arm64-v8a" name="RegexUtilitiesTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="armeabi-v7a arm64-v8a" name="ReplaceableTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="armeabi-v7a arm64-v8a" name="RoundTripTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="armeabi-v7a arm64-v8a" name="AnyScriptTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="armeabi-v7a arm64-v8a" name="ErrorTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="armeabi-v7a arm64-v8a" name="UnicodeMapTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="armeabi-v7a arm64-v8a"
+                                      name="CompoundTransliteratorTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="armeabi-v7a arm64-v8a" name="TestUnicodeProperty">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                        </TestSuite>
+                        <TestSuite name="util">
+                            <TestCase abis="armeabi-v7a arm64-v8a"
+                                      name="ICUResourceBundleCollationTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="armeabi-v7a arm64-v8a" name="ULocaleCollationTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="armeabi-v7a arm64-v8a" name="GenderInfoTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="armeabi-v7a arm64-v8a" name="BytesTrieTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="armeabi-v7a arm64-v8a" name="LocaleDataTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="armeabi-v7a arm64-v8a" name="CurrencyTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="armeabi-v7a arm64-v8a" name="RegionTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="armeabi-v7a arm64-v8a" name="ULocaleTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="armeabi-v7a arm64-v8a" name="StringTokenizerTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="armeabi-v7a arm64-v8a" name="CharsTrieTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="armeabi-v7a arm64-v8a" name="CompactArrayTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="armeabi-v7a arm64-v8a" name="LocaleBuilderTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="armeabi-v7a arm64-v8a" name="TrieMapTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="armeabi-v7a arm64-v8a" name="ICUServiceThreadTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="armeabi-v7a arm64-v8a" name="ICUBinaryTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="armeabi-v7a arm64-v8a" name="ICUResourceBundleTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="armeabi-v7a arm64-v8a" name="DebugUtilitiesTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="armeabi-v7a arm64-v8a"
+                                      name="SimplePatternFormatterTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="armeabi-v7a arm64-v8a" name="LocaleMatcherTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="armeabi-v7a arm64-v8a" name="UtilityTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="armeabi-v7a arm64-v8a" name="Trie2Test">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="armeabi-v7a arm64-v8a" name="ICUServiceTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="armeabi-v7a arm64-v8a" name="VersionInfoTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="armeabi-v7a arm64-v8a" name="LocalePriorityListTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="armeabi-v7a arm64-v8a" name="TrieTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="armeabi-v7a arm64-v8a" name="TextTrieMapTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                        </TestSuite>
+                        <TestSuite name="search">
+                            <TestCase abis="armeabi-v7a arm64-v8a" name="SearchTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                        </TestSuite>
+                        <TestSuite name="collator">
+                            <TestCase abis="armeabi-v7a arm64-v8a" name="LotusCollationKoreanTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="armeabi-v7a arm64-v8a" name="CollationTurkishTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="armeabi-v7a arm64-v8a" name="CollationMiscTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="armeabi-v7a arm64-v8a" name="CollationAPITest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="armeabi-v7a arm64-v8a" name="CollationServiceTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="armeabi-v7a arm64-v8a" name="AlphabeticIndexTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="armeabi-v7a arm64-v8a" name="CollationFinnishTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="armeabi-v7a arm64-v8a" name="CollationDummyTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="armeabi-v7a arm64-v8a" name="CollationRegressionTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="armeabi-v7a arm64-v8a" name="CollationChineseTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="armeabi-v7a arm64-v8a" name="CollationGermanTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="armeabi-v7a arm64-v8a" name="G7CollationTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="armeabi-v7a arm64-v8a" name="CollationSpanishTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="armeabi-v7a arm64-v8a"
+                                      name="CollationCreationMethodTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="armeabi-v7a arm64-v8a" name="UCAConformanceTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="armeabi-v7a arm64-v8a" name="CollationKanaTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="armeabi-v7a arm64-v8a" name="CollationFrenchTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="armeabi-v7a arm64-v8a" name="CollationIteratorTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="armeabi-v7a arm64-v8a" name="CollationTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="armeabi-v7a arm64-v8a" name="CollationThaiTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="armeabi-v7a arm64-v8a" name="CollationFrozenMonkeyTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="armeabi-v7a arm64-v8a" name="CollationThreadTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="armeabi-v7a arm64-v8a" name="CollationEnglishTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="armeabi-v7a arm64-v8a" name="CollationMonkeyTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="armeabi-v7a arm64-v8a" name="CollationCurrencyTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                        </TestSuite>
+                        <TestSuite name="format">
+                            <TestCase abis="armeabi-v7a arm64-v8a"
+                                      name="GlobalizationPreferencesTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="armeabi-v7a arm64-v8a" name="RbnfLenientScannerTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="armeabi-v7a arm64-v8a" name="PluralRangesTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="armeabi-v7a arm64-v8a" name="SelectFormatUnitTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="armeabi-v7a arm64-v8a" name="PluralRulesTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="armeabi-v7a arm64-v8a"
+                                      name="RelativeDateTimeFormatterTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="armeabi-v7a arm64-v8a" name="RBNFParseTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="armeabi-v7a arm64-v8a" name="TimeUnitTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="armeabi-v7a arm64-v8a" name="CompactDecimalFormatTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="armeabi-v7a arm64-v8a" name="RbnfRoundTripTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="armeabi-v7a arm64-v8a" name="RbnfTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="armeabi-v7a arm64-v8a" name="SelectFormatAPITest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="armeabi-v7a arm64-v8a" name="PluralFormatTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="armeabi-v7a arm64-v8a" name="BigNumberFormatTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="armeabi-v7a arm64-v8a" name="ListFormatterTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="armeabi-v7a arm64-v8a" name="DateTimeGeneratorTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="armeabi-v7a arm64-v8a"
+                                      name="NumberFormatSpecificationTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="armeabi-v7a arm64-v8a" name="MeasureUnitTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="armeabi-v7a arm64-v8a"
+                                      name="ScientificNumberFormatterTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="armeabi-v7a arm64-v8a" name="PluralFormatUnitTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                        </TestSuite>
+                        <TestSuite name="compression">
+                            <TestCase abis="armeabi-v7a arm64-v8a" name="ExhaustiveTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="armeabi-v7a arm64-v8a" name="DecompressionTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                        </TestSuite>
+                        <TestSuite name="text">
+                            <TestCase abis="armeabi-v7a arm64-v8a" name="SpoofCheckerTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                        </TestSuite>
+                        <TestSuite name="iterator">
+                            <TestCase abis="armeabi-v7a arm64-v8a" name="TestUCharacterIterator">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                        </TestSuite>
+                        <TestSuite name="duration">
+                            <TestSuite name="languages">
+                                <TestCase abis="armeabi-v7a arm64-v8a"
+                                          name="Test_en">
+                                    <Test name="run-everything"/>
+                                </TestCase>
+                                <TestCase abis="armeabi-v7a arm64-v8a"
+                                          name="Test_es">
+                                    <Test name="run-everything"/>
+                                </TestCase>
+                                <TestCase abis="armeabi-v7a arm64-v8a"
+                                          name="Test_fr">
+                                    <Test name="run-everything"/>
+                                </TestCase>
+                                <TestCase abis="armeabi-v7a arm64-v8a"
+                                          name="Test_he_IL">
+                                    <Test name="run-everything"/>
+                                </TestCase>
+                                <TestCase abis="armeabi-v7a arm64-v8a"
+                                          name="Test_hi">
+                                    <Test name="run-everything"/>
+                                </TestCase>
+                                <TestCase abis="armeabi-v7a arm64-v8a"
+                                          name="Test_it">
+                                    <Test name="run-everything"/>
+                                </TestCase>
+                                <TestCase abis="armeabi-v7a arm64-v8a"
+                                          name="Test_ja">
+                                    <Test name="run-everything"/>
+                                </TestCase>
+                                <TestCase abis="armeabi-v7a arm64-v8a"
+                                          name="Test_ko">
+                                    <Test name="run-everything"/>
+                                </TestCase>
+                                <TestCase abis="armeabi-v7a arm64-v8a"
+                                          name="Test_zh_Hans">
+                                    <Test name="run-everything"/>
+                                </TestCase>
+                                <TestCase abis="armeabi-v7a arm64-v8a"
+                                          name="Test_zh_Hans_SG">
+                                    <Test name="run-everything"/>
+                                </TestCase>
+                                <TestCase abis="armeabi-v7a arm64-v8a"
+                                          name="Test_zh_Hant">
+                                    <Test name="run-everything"/>
+                                </TestCase>
+                                <TestCase abis="armeabi-v7a arm64-v8a"
+                                          name="Test_zh_Hant_HK">
+                                    <Test name="run-everything"/>
+                                </TestCase>
+                            </TestSuite>
+                            <TestCase abis="armeabi-v7a arm64-v8a"
+                                      name="ResourceBasedPeriodFormatterDataServiceTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="armeabi-v7a arm64-v8a" name="ICUDurationTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="armeabi-v7a arm64-v8a" name="PeriodBuilderFactoryTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="armeabi-v7a arm64-v8a" name="PeriodBuilderTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="armeabi-v7a arm64-v8a" name="PeriodTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="armeabi-v7a arm64-v8a" name="DataReadWriteTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="armeabi-v7a arm64-v8a" name="RegressionTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                        </TestSuite>
+                        <TestSuite name="rbbi">
+                            <TestCase abis="armeabi-v7a arm64-v8a" name="RBBITestExtended">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="armeabi-v7a arm64-v8a" name="SimpleBITest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="armeabi-v7a arm64-v8a" name="BreakIteratorTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="armeabi-v7a arm64-v8a" name="RBBITestMonkey">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="armeabi-v7a arm64-v8a" name="RBBITest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="armeabi-v7a arm64-v8a" name="BreakIteratorRegTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                        </TestSuite>
+                        <TestSuite name="lang">
+                            <TestCase abis="armeabi-v7a arm64-v8a" name="TestUScript">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="armeabi-v7a arm64-v8a" name="UPropertyAliasesTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="armeabi-v7a arm64-v8a" name="UTF16Test">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="armeabi-v7a arm64-v8a" name="UCharacterCategoryTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="armeabi-v7a arm64-v8a" name="UnicodeSetStringSpanTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="armeabi-v7a arm64-v8a" name="UnicodeSetTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="armeabi-v7a arm64-v8a" name="UCharacterCaseTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="armeabi-v7a arm64-v8a" name="UCharacterTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="armeabi-v7a arm64-v8a" name="UCharacterThreadTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="armeabi-v7a arm64-v8a" name="UCharacterSurrogateTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="armeabi-v7a arm64-v8a" name="TestUScriptRun">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="armeabi-v7a arm64-v8a" name="UCharacterDirectionTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                        </TestSuite>
+                        <TestSuite name="charsetdet">
+                            <TestCase abis="armeabi-v7a arm64-v8a" name="TestCharsetDetector">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                        </TestSuite>
+                        <TestSuite name="normalizer">
+                            <TestCase abis="armeabi-v7a arm64-v8a"
+                                      name="TestDeprecatedNormalizerAPI">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="armeabi-v7a arm64-v8a" name="NormalizationMonkeyTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="armeabi-v7a arm64-v8a" name="TestCanonicalIterator">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="armeabi-v7a arm64-v8a" name="BasicTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="armeabi-v7a arm64-v8a" name="ConformanceTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="armeabi-v7a arm64-v8a" name="NormalizerRegressionTests">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="armeabi-v7a arm64-v8a" name="UTS46Test">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="armeabi-v7a arm64-v8a"
+                                      name="UnicodeNormalizerConformanceTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                        </TestSuite>
+                        <TestSuite name="bidi">
+                            <TestCase abis="armeabi-v7a arm64-v8a" name="BidiTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="armeabi-v7a arm64-v8a" name="BiDiConformanceTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                        </TestSuite>
+                        <TestSuite name="shaping">
+                            <TestCase abis="armeabi-v7a arm64-v8a" name="ArabicShapingRegTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                        </TestSuite>
+                        <TestSuite name="stringprep">
+                            <TestCase abis="armeabi-v7a arm64-v8a" name="TestStringPrep">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="armeabi-v7a arm64-v8a" name="IDNAConformanceTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="armeabi-v7a arm64-v8a" name="TestIDNA">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="armeabi-v7a arm64-v8a" name="TestStringPrepProfiles">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="armeabi-v7a arm64-v8a" name="TestIDNARef">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                        </TestSuite>
+                        <TestSuite name="timezone">
+                            <TestCase abis="armeabi-v7a arm64-v8a" name="TimeZoneTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="armeabi-v7a arm64-v8a" name="TimeZoneRuleTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="armeabi-v7a arm64-v8a" name="TimeZoneRegression">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="armeabi-v7a arm64-v8a" name="TimeZoneBoundaryTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="armeabi-v7a arm64-v8a" name="TimeZoneOffsetLocalTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                        </TestSuite>
+                        <TestSuite name="bigdec">
+                            <TestCase abis="armeabi-v7a arm64-v8a" name="DiagBigDecimal">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                        </TestSuite>
+                        <TestSuite name="calendar">
+                            <TestCase abis="armeabi-v7a arm64-v8a" name="CalendarTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="armeabi-v7a arm64-v8a" name="AstroTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="armeabi-v7a arm64-v8a" name="HolidayTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                        </TestSuite>
+                        <TestSuite name="timescale">
+                            <TestCase abis="armeabi-v7a arm64-v8a" name="TimeScaleMonkeyTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="armeabi-v7a arm64-v8a" name="TimeScaleAPITest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="armeabi-v7a arm64-v8a" name="TimeScaleDataTest">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                        </TestSuite>
+                        <TestSuite name="charset">
+                            <TestCase abis="armeabi-v7a arm64-v8a" name="TestSelection">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                            <TestCase abis="armeabi-v7a arm64-v8a" name="TestCharset">
+                                <Test name="run-everything"/>
+                            </TestCase>
+                        </TestSuite>
+                        <TestCase abis="armeabi-v7a arm64-v8a" name="TestLocaleNamePackaging">
+                            <Test name="run-everything"/>
+                        </TestCase>
+                    </TestSuite>
+                </TestSuite>
+            </TestSuite>
+        </TestSuite>
+    </TestSuite>
+</TestPackage>
