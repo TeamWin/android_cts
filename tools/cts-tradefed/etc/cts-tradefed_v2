@@ -100,9 +100,9 @@ elif [ "$HOST" == "Darwin" ]; then
 fi
 
 # include any host-side test jars
-HOST_TEST_JAR_PATH="$(ls -1 ${CTS_V2_ROOT}/android-cts_v2/testcases/*.jar)"
+for j in ${CTS_V2_ROOT}/android-cts_v2/testcases/*.jar; do
+    JAR_PATH=${JAR_PATH}:$j
+done
 
-CLASS_PATH=${JAR_PATH}:${HOST_TEST_JAR_PATH}
-
-java $RDBG_FLAG -cp ${CLASS_PATH} -DCTS_V2_ROOT=${CTS_V2_ROOT} com.android.compatibility.common.tradefed.command.CompatibilityConsole "$@"
+java $RDBG_FLAG -cp ${JAR_PATH} -DCTS_V2_ROOT=${CTS_V2_ROOT} com.android.compatibility.common.tradefed.command.CompatibilityConsole "$@"
 
