@@ -18,6 +18,7 @@ package com.android.compatibility.common.tradefed;
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelperTest;
 import com.android.compatibility.common.tradefed.command.CompatibilityConsoleTest;
 import com.android.compatibility.common.tradefed.result.ResultReporterTest;
+import com.android.compatibility.common.tradefed.targetprep.BuildCheckTest;
 import com.android.compatibility.common.tradefed.testtype.CompatibilityTestTest;
 import com.android.compatibility.common.tradefed.testtype.ModuleDefTest;
 import com.android.compatibility.common.tradefed.testtype.ModuleRepoTest;
@@ -40,6 +41,7 @@ public class UnitTests extends TestSuite {
         addTestSuite(CompatibilityTestTest.class);
         addTestSuite(ModuleDefTest.class);
         addTestSuite(ModuleRepoTest.class);
+        addTestSuite(BuildCheckTest.class);
     }
 
     public static Test suite() {

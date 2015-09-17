@@ -41,4 +41,9 @@
         <option name="expected-values" value="1"/> <!-- Installs from non-market apps allowed -->
     </target_preparer>
 
+    <target_preparer class="com.android.compatibility.common.tradefed.targetprep.BuildCheck">
+        <option name="expected-build-type" value="user"/> <!-- Device should have user build -->
+        <option name="throw-error" value="false"/> <!-- Only print warning for other build type -->
+    </target_preparer>
+
 </configuration>
