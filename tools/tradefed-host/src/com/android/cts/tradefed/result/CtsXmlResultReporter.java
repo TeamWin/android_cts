@@ -338,9 +338,10 @@ public class CtsXmlResultReporter
 
     private void checkExtendedDeviceInfoMetrics(Map<String, String> runMetrics) {
         for (Map.Entry<String, String> metricEntry : runMetrics.entrySet()) {
+            String key = metricEntry.getKey();
             String value = metricEntry.getValue();
-            if (!value.startsWith(DEVICE_INFO) && !value.endsWith(DEVICE_INFO_EXT)) {
-                CLog.e(String.format("%s failed: %s", metricEntry.getKey(), value));
+            if (!key.startsWith(DEVICE_INFO) && !value.endsWith(DEVICE_INFO_EXT)) {
+                CLog.e(String.format("%s failed: %s", key, value));
             }
         }
     }
