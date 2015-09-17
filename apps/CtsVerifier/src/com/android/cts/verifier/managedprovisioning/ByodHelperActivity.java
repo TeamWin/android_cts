@@ -25,6 +25,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
+import android.content.res.Configuration;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
@@ -193,6 +194,12 @@ public class ByodHelperActivity extends Activity implements DialogCallback {
         super.onSaveInstanceState(savedState);
 
         savedState.putBundle(ORIGINAL_SETTINGS_NAME, mOriginalSettings);
+    }
+
+    @Override
+    public void onConfigurationChanged(Configuration newConfig){
+        Log.v(TAG,"onConfigurationChanged");
+        super.onConfigurationChanged(newConfig);
     }
 
     @Override
