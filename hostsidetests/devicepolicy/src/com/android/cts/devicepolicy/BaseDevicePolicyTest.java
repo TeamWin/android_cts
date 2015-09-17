@@ -37,6 +37,8 @@ import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import javax.annotation.Nullable;
 
@@ -47,6 +49,10 @@ import javax.annotation.Nullable;
 public class BaseDevicePolicyTest extends DeviceTestCase implements IBuildReceiver {
 
     private static final String RUNNER = "android.support.test.runner.AndroidJUnitRunner";
+
+    static final int USER_SYSTEM = 0; // From the UserHandle class.
+
+    private static final int FLAG_PRIMARY = 1; // From the UserInfo class
 
     protected CtsBuildHelper mCtsBuild;
 
@@ -112,6 +118,13 @@ public class BaseDevicePolicyTest extends DeviceTestCase implements IBuildReceiv
                 commandOutput.startsWith("Success:"));
     }
 
+    protected void switchUser(int userId) throws Exception {
+        String command = "am switch-user " + userId;
+        CLog.logAndDisplay(LogLevel.INFO, "Starting command " + command);
+        String commandOutput = getDevice().executeShellCommand(command);
+        CLog.logAndDisplay(LogLevel.INFO, "Output for command " + command + ": " + commandOutput);
+    }
+
     protected int getMaxNumberOfUsersSupported() throws DeviceNotAvailableException {
         // TODO: move this to ITestDevice once it supports users
         String command = "pm get-max-users";
@@ -160,8 +173,9 @@ public class BaseDevicePolicyTest extends DeviceTestCase implements IBuildReceiv
     }
 
     protected void removeTestUsers() throws Exception {
+        int primaryUser = getPrimaryUser();
         for (int userId : listUsers()) {
-            if (userId != 0) {
+            if (userId != primaryUser && userId != USER_SYSTEM) {
                 removeUser(userId);
             }
         }
@@ -298,9 +312,9 @@ public class BaseDevicePolicyTest extends DeviceTestCase implements IBuildReceiv
         return Integer.parseInt(tokens[tokens.length-1]);
     }
 
-    protected int createManagedProfile() throws DeviceNotAvailableException {
-        String command =
-                "pm create-user --profileOf 0 --managed TestProfile_" + System.currentTimeMillis();
+    protected int createManagedProfile(int parentUserId) throws DeviceNotAvailableException {
+        String command = "pm create-user --profileOf " + parentUserId + " --managed "
+                + "TestProfile_" + System.currentTimeMillis();
         CLog.logAndDisplay(LogLevel.INFO, "Starting command " + command);
         String commandOutput = getDevice().executeShellCommand(command);
         CLog.logAndDisplay(LogLevel.INFO, "Output for command " + command + ": " + commandOutput);
@@ -311,6 +325,26 @@ public class BaseDevicePolicyTest extends DeviceTestCase implements IBuildReceiv
                 tokens.length > 0);
         assertEquals(commandOutput, "Success:", tokens[0]);
         return Integer.parseInt(tokens[tokens.length-1]);
+    }
+
+    // TODO: use the method from Device.java once it is available.
+    protected int getPrimaryUser() throws DeviceNotAvailableException {
+        final String command = "pm list users";
+        final String commandOutput = getDevice().executeShellCommand(command);
+        CLog.logAndDisplay(LogLevel.INFO, "Output for command " + command + ": " + commandOutput);
+        final String[] lines = commandOutput.split("\\n");
+        final Pattern p = Pattern.compile("\\{(\\d+):.*:(\\d+)");
+        for (String line : lines) {
+            Matcher m = p.matcher(line);
+            if (m.find()) {
+                final int flag = Integer.parseInt(m.group(2));
+                if ((flag & FLAG_PRIMARY) != 0) {
+                    return Integer.parseInt(m.group(1));
+                }
+            }
+        }
+        fail("There is no primary user on this device?");
+        return -1;
     }
 
     protected int getUserSerialNumber(int userId) throws DeviceNotAvailableException{
@@ -348,8 +382,9 @@ public class BaseDevicePolicyTest extends DeviceTestCase implements IBuildReceiv
         }
     }
 
-    protected void setDeviceAdmin(String componentName) throws DeviceNotAvailableException {
-        String command = "dpm set-active-admin '" + componentName + "'";
+    protected void setDeviceAdmin(String componentName, int userId)
+            throws DeviceNotAvailableException {
+        String command = "dpm set-active-admin --user " + userId + " '" + componentName + "'";
         String commandOutput = getDevice().executeShellCommand(command);
         CLog.logAndDisplay(LogLevel.INFO, "Output for command " + command + ": " + commandOutput);
         assertTrue(commandOutput + " expected to start with \"Success:\"",

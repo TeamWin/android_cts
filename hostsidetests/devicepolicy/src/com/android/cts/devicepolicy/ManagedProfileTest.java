@@ -57,10 +57,10 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
 
     private static final String ADD_RESTRICTION_COMMAND = "add-restriction";
 
-    private static final int USER_OWNER = 0;
+    private int mParentUserId;
 
-    // ID of the profile we'll create. This will always be a profile of USER_OWNER.
-    private int mUserId;
+    // ID of the profile we'll create. This will always be a profile of the parent.
+    private int mProfileUserId;
     private String mPackageVerifier;
 
     private boolean mHasNfcFeature;
@@ -76,18 +76,21 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
 
         if (mHasFeature) {
             removeTestUsers();
-            mUserId = createManagedProfile();
+            mParentUserId = getPrimaryUser();
+            mProfileUserId = createManagedProfile(mParentUserId);
 
             installApp(MANAGED_PROFILE_APK);
-            setProfileOwnerOrFail(MANAGED_PROFILE_PKG + "/" + ADMIN_RECEIVER_TEST_CLASS, mUserId);
-            startUser(mUserId);
+            setProfileOwnerOrFail(MANAGED_PROFILE_PKG + "/" + ADMIN_RECEIVER_TEST_CLASS,
+                    mProfileUserId);
+            switchUser(mParentUserId);
+            startUser(mProfileUserId);
         }
     }
 
     @Override
     protected void tearDown() throws Exception {
         if (mHasFeature) {
-            removeUser(mUserId);
+            removeUser(mProfileUserId);
             getDevice().uninstallPackage(MANAGED_PROFILE_PKG);
             getDevice().uninstallPackage(INTENT_SENDER_PKG);
             getDevice().uninstallPackage(INTENT_RECEIVER_PKG);
@@ -100,7 +103,8 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
             return;
         }
         assertTrue(runDeviceTestsAsUser(
-                MANAGED_PROFILE_PKG, MANAGED_PROFILE_PKG + ".ManagedProfileSetupTest", mUserId));
+                MANAGED_PROFILE_PKG, MANAGED_PROFILE_PKG + ".ManagedProfileSetupTest",
+                mProfileUserId));
     }
 
     /**
@@ -110,18 +114,18 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
         if (!mHasFeature) {
             return;
         }
-        assertTrue(listUsers().contains(mUserId));
+        assertTrue(listUsers().contains(mProfileUserId));
         assertTrue(runDeviceTestsAsUser(
-                MANAGED_PROFILE_PKG, MANAGED_PROFILE_PKG + ".WipeDataTest", mUserId));
+                MANAGED_PROFILE_PKG, MANAGED_PROFILE_PKG + ".WipeDataTest", mProfileUserId));
         // Note: the managed profile is removed by this test, which will make removeUserCommand in
         // tearDown() to complain, but that should be OK since its result is not asserted.
-        assertFalse(listUsers().contains(mUserId));
+        assertFalse(listUsers().contains(mProfileUserId));
     }
 
     public void testMaxOneManagedProfile() throws Exception {
         int newUserId = -1;
         try {
-            newUserId = createManagedProfile();
+            newUserId = createManagedProfile(mParentUserId);
         } catch (AssertionFailedError expected) {
         }
         if (newUserId > 0) {
@@ -139,16 +143,17 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
             return;
         }
         assertTrue("WiFi config already exists and could not be removed", runDeviceTestsAsUser(
-                MANAGED_PROFILE_PKG, ".WifiTest", "testRemoveWifiNetworkIfExists", USER_OWNER));
+                MANAGED_PROFILE_PKG, ".WifiTest", "testRemoveWifiNetworkIfExists", mParentUserId));
         try {
             installApp(WIFI_CONFIG_CREATOR_APK);
             assertTrue("Failed to add WiFi config", runDeviceTestsAsUser(
-                    MANAGED_PROFILE_PKG, ".WifiTest", "testAddWifiNetwork", mUserId));
+                    MANAGED_PROFILE_PKG, ".WifiTest", "testAddWifiNetwork", mProfileUserId));
 
             // Now delete the user - should undo the effect of testAddWifiNetwork.
-            removeUser(mUserId);
+            removeUser(mProfileUserId);
             assertTrue("WiFi config not removed after deleting profile", runDeviceTestsAsUser(
-                    MANAGED_PROFILE_PKG, ".WifiTest", "testWifiNetworkDoesNotExist", USER_OWNER));
+                    MANAGED_PROFILE_PKG, ".WifiTest", "testWifiNetworkDoesNotExist",
+                    mParentUserId));
         } finally {
             getDevice().uninstallPackage(WIFI_CONFIG_CREATOR_APK);
         }
@@ -160,14 +165,14 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
         }
         // Set up activities: ManagedProfileActivity will only be enabled in the managed profile and
         // PrimaryUserActivity only in the primary one
-        disableActivityForUser("ManagedProfileActivity", 0);
-        disableActivityForUser("PrimaryUserActivity", mUserId);
+        disableActivityForUser("ManagedProfileActivity", mParentUserId);
+        disableActivityForUser("PrimaryUserActivity", mProfileUserId);
 
         assertTrue(runDeviceTestsAsUser(MANAGED_PROFILE_PKG,
-                MANAGED_PROFILE_PKG + ".ManagedProfileTest", mUserId));
+                MANAGED_PROFILE_PKG + ".ManagedProfileTest", mProfileUserId));
 
         // Set up filters from primary to managed profile
-        String command = "am start -W --user " + mUserId  + " " + MANAGED_PROFILE_PKG
+        String command = "am start -W --user " + mProfileUserId  + " " + MANAGED_PROFILE_PKG
                 + "/.PrimaryUserFilterSetterActivity";
         CLog.logAndDisplay(LogLevel.INFO, "Output for command " + command + ": "
               + getDevice().executeShellCommand(command));
@@ -182,36 +187,36 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
         // Disable all pre-existing browsers in the managed profile so they don't interfere with
         // intents resolution.
         assertTrue(runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".CrossProfileUtils",
-                "testDisableAllBrowsers", mUserId));
+                "testDisableAllBrowsers", mProfileUserId));
         installApp(INTENT_RECEIVER_APK);
         installApp(INTENT_SENDER_APK);
 
-        changeVerificationStatus(USER_OWNER, INTENT_RECEIVER_PKG, "ask");
-        changeVerificationStatus(mUserId, INTENT_RECEIVER_PKG, "ask");
+        changeVerificationStatus(mParentUserId, INTENT_RECEIVER_PKG, "ask");
+        changeVerificationStatus(mProfileUserId, INTENT_RECEIVER_PKG, "ask");
         // We should have two receivers: IntentReceiverActivity and BrowserActivity in the
         // managed profile
         assertAppLinkResult("testTwoReceivers");
 
         changeUserRestrictionForUser("allow_parent_profile_app_linking", ADD_RESTRICTION_COMMAND,
-                mUserId);
+                mProfileUserId);
         // Now we should also have one receiver in the primary user, so three receivers in total.
         assertAppLinkResult("testThreeReceivers");
 
-        changeVerificationStatus(USER_OWNER, INTENT_RECEIVER_PKG, "never");
+        changeVerificationStatus(mParentUserId, INTENT_RECEIVER_PKG, "never");
         // The primary user one has been set to never: we should only have the managed profile ones.
         assertAppLinkResult("testTwoReceivers");
 
-        changeVerificationStatus(mUserId, INTENT_RECEIVER_PKG, "never");
+        changeVerificationStatus(mProfileUserId, INTENT_RECEIVER_PKG, "never");
         // Now there's only the browser in the managed profile left
         assertAppLinkResult("testReceivedByBrowserActivityInManaged");
 
-        changeVerificationStatus(USER_OWNER, INTENT_RECEIVER_PKG, "always");
-        changeVerificationStatus(mUserId, INTENT_RECEIVER_PKG, "ask");
+        changeVerificationStatus(mParentUserId, INTENT_RECEIVER_PKG, "always");
+        changeVerificationStatus(mProfileUserId, INTENT_RECEIVER_PKG, "ask");
         // We've set the receiver in the primary user to always: only this one should receive the
         // intent.
         assertAppLinkResult("testReceivedByAppLinkActivityInPrimary");
 
-        changeVerificationStatus(mUserId, INTENT_RECEIVER_PKG, "always");
+        changeVerificationStatus(mProfileUserId, INTENT_RECEIVER_PKG, "always");
         // We have one always in the primary user and one always in the managed profile: the managed
         // profile one should have precedence.
         assertAppLinkResult("testReceivedByAppLinkActivityInManaged");
@@ -223,7 +228,8 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
             return;
         }
 
-        assertTrue(runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".SettingsIntentsTest", mUserId));
+        assertTrue(runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".SettingsIntentsTest",
+                mProfileUserId));
     }
 
     public void testCrossProfileContent() throws Exception {
@@ -235,17 +241,17 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
 
         // Test from parent to managed
         assertTrue(runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".CrossProfileUtils",
-                "testRemoveAllFilters", mUserId));
+                "testRemoveAllFilters", mProfileUserId));
         assertTrue(runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".CrossProfileUtils",
-                "testAddManagedCanAccessParentFilters", mUserId));
-        assertTrue(runDeviceTestsAsUser(INTENT_SENDER_PKG, ".ContentTest", 0));
+                "testAddManagedCanAccessParentFilters", mProfileUserId));
+        assertTrue(runDeviceTestsAsUser(INTENT_SENDER_PKG, ".ContentTest", mParentUserId));
 
         // Test from managed to parent
         assertTrue(runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".CrossProfileUtils",
-                "testRemoveAllFilters", mUserId));
+                "testRemoveAllFilters", mProfileUserId));
         assertTrue(runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".CrossProfileUtils",
-                "testAddParentCanAccessManagedFilters", mUserId));
-        assertTrue(runDeviceTestsAsUser(INTENT_SENDER_PKG, ".ContentTest", mUserId));
+                "testAddParentCanAccessManagedFilters", mProfileUserId));
+        assertTrue(runDeviceTestsAsUser(INTENT_SENDER_PKG, ".ContentTest", mProfileUserId));
 
     }
 
@@ -257,29 +263,29 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
         installApp(INTENT_SENDER_APK);
 
         assertTrue(runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".CrossProfileUtils",
-                "testAllowCrossProfileCopyPaste", mUserId));
+                "testAllowCrossProfileCopyPaste", mProfileUserId));
         // Test that managed can see what is copied in the parent.
-        testCrossProfileCopyPasteInternal(mUserId, true);
+        testCrossProfileCopyPasteInternal(mProfileUserId, true);
         // Test that the parent can see what is copied in managed.
-        testCrossProfileCopyPasteInternal(0, true);
+        testCrossProfileCopyPasteInternal(mParentUserId, true);
 
         assertTrue(runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".CrossProfileUtils",
-                "testDisallowCrossProfileCopyPaste", mUserId));
+                "testDisallowCrossProfileCopyPaste", mProfileUserId));
         // Test that managed can still see what is copied in the parent.
-        testCrossProfileCopyPasteInternal(mUserId, true);
+        testCrossProfileCopyPasteInternal(mProfileUserId, true);
         // Test that the parent cannot see what is copied in managed.
-        testCrossProfileCopyPasteInternal(0, false);
+        testCrossProfileCopyPasteInternal(mParentUserId, false);
     }
 
     private void testCrossProfileCopyPasteInternal(int userId, boolean shouldSucceed)
             throws DeviceNotAvailableException {
-        final String direction = (userId == 0)
+        final String direction = (userId == mParentUserId)
                 ? "testAddManagedCanAccessParentFilters"
                 : "testAddParentCanAccessManagedFilters";
         assertTrue(runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".CrossProfileUtils",
-                "testRemoveAllFilters", mUserId));
+                "testRemoveAllFilters", mProfileUserId));
         assertTrue(runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".CrossProfileUtils",
-                direction, mUserId));
+                direction, mProfileUserId));
         if (shouldSucceed) {
             assertTrue(runDeviceTestsAsUser(INTENT_SENDER_PKG, ".CopyPasteTest",
                     "testCanReadAcrossProfiles", userId));
@@ -310,14 +316,14 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
         String restriction = "no_debugging_features";  // UserManager.DISALLOW_DEBUGGING_FEATURES
 
         String addRestrictionCommandOutput =
-                changeUserRestrictionForUser(restriction, ADD_RESTRICTION_COMMAND, mUserId);
+                changeUserRestrictionForUser(restriction, ADD_RESTRICTION_COMMAND, mProfileUserId);
         assertTrue("Command was expected to succeed " + addRestrictionCommandOutput,
                 addRestrictionCommandOutput.contains("Status: ok"));
 
         // This should now fail, as the shell is not available to start activities under a different
         // user once the restriction is in place.
         addRestrictionCommandOutput =
-                changeUserRestrictionForUser(restriction, ADD_RESTRICTION_COMMAND, mUserId);
+                changeUserRestrictionForUser(restriction, ADD_RESTRICTION_COMMAND, mProfileUserId);
         assertTrue(
                 "Expected SecurityException when starting the activity "
                         + addRestrictionCommandOutput,
@@ -332,13 +338,13 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
         }
 
         assertTrue(runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".BluetoothTest",
-                "testEnableDisable", mUserId));
+                "testEnableDisable", mProfileUserId));
         assertTrue(runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".BluetoothTest",
-                "testGetAddress", mUserId));
+                "testGetAddress", mProfileUserId));
         assertTrue(runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".BluetoothTest",
-                "testListenUsingRfcommWithServiceRecord", mUserId));
+                "testListenUsingRfcommWithServiceRecord", mProfileUserId));
         assertTrue(runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".BluetoothTest",
-                "testGetRemoteDevice", mUserId));
+                "testGetRemoteDevice", mProfileUserId));
     }
 
     public void testCameraPolicy() throws Exception {
@@ -347,43 +353,43 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
             return;
         }
         try {
-            setDeviceAdmin(MANAGED_PROFILE_PKG + "/.PrimaryUserDeviceAdmin");
+            setDeviceAdmin(MANAGED_PROFILE_PKG + "/.PrimaryUserDeviceAdmin", mParentUserId);
 
             // Disable managed profile camera.
             assertTrue(runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".CameraPolicyTest",
                     "testDisableCameraInManagedProfile",
-                    mUserId));
+                    mProfileUserId));
             assertTrue(runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".CameraPolicyTest",
                     "testIsCameraEnabledInPrimaryProfile",
-                    0));
+                    mParentUserId));
 
             // Enable managed profile camera.
             assertTrue(runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".CameraPolicyTest",
                     "testEnableCameraInManagedProfile",
-                    mUserId));
+                    mProfileUserId));
             assertTrue(runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".CameraPolicyTest",
                     "testIsCameraEnabledInPrimaryProfile",
-                    0));
+                    mParentUserId));
 
             // Disable primary profile camera.
             assertTrue(runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".CameraPolicyTest",
                     "testDisableCameraInPrimaryProfile",
-                    0));
+                    mParentUserId));
             assertTrue(runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".CameraPolicyTest",
                     "testIsCameraEnabledInManagedProfile",
-                    mUserId));
+                    mProfileUserId));
 
             // Enable primary profile camera.
             assertTrue(runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".CameraPolicyTest",
                     "testEnableCameraInPrimaryProfile",
-                    0));
+                    mParentUserId));
             assertTrue(runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".CameraPolicyTest",
                     "testIsCameraEnabledInManagedProfile",
-                    mUserId));
+                    mProfileUserId));
         } finally {
             final String adminHelperClass = ".PrimaryUserAdminHelper";
             assertTrue("Clear device admin failed", runDeviceTestsAsUser(MANAGED_PROFILE_PKG,
-                    adminHelperClass, "testClearDeviceAdmin", 0 /* user 0 */));
+                    adminHelperClass, "testClearDeviceAdmin", mParentUserId));
         }
     }
 
@@ -395,121 +401,136 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
         try {
             // Insert Primary profile Contacts
             assertTrue(runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".ContactsTest",
-                    "testPrimaryProfilePhoneAndEmailLookup_insertedAndfound", 0));
+                    "testPrimaryProfilePhoneAndEmailLookup_insertedAndfound", mParentUserId));
             // Insert Managed profile Contacts
             assertTrue(runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".ContactsTest",
-                    "testManagedProfilePhoneAndEmailLookup_insertedAndfound", mUserId));
+                    "testManagedProfilePhoneAndEmailLookup_insertedAndfound", mProfileUserId));
             // Insert a primary contact with same phone & email as other enterprise contacts
             assertTrue(runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".ContactsTest",
-                    "testPrimaryProfileDuplicatedPhoneEmailContact_insertedAndfound", 0));
+                    "testPrimaryProfileDuplicatedPhoneEmailContact_insertedAndfound",
+                    mParentUserId));
             // Insert a enterprise contact with same phone & email as other primary contacts
             assertTrue(runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".ContactsTest",
-                    "testManagedProfileDuplicatedPhoneEmailContact_insertedAndfound", mUserId));
+                    "testManagedProfileDuplicatedPhoneEmailContact_insertedAndfound",
+                    mProfileUserId));
 
 
             // Set cross profile caller id to enabled
             assertTrue(runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".ContactsTest",
-                    "testSetCrossProfileCallerIdDisabled_false", mUserId));
+                    "testSetCrossProfileCallerIdDisabled_false", mProfileUserId));
 
             // Primary user cannot use ordinary phone/email lookup api to access managed contacts
             assertTrue(runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".ContactsTest",
-                    "testPrimaryProfilePhoneLookup_canNotAccessEnterpriseContact", 0));
+                    "testPrimaryProfilePhoneLookup_canNotAccessEnterpriseContact", mParentUserId));
             assertTrue(runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".ContactsTest",
-                    "testPrimaryProfileEmailLookup_canNotAccessEnterpriseContact", 0));
+                    "testPrimaryProfileEmailLookup_canNotAccessEnterpriseContact", mParentUserId));
             // Primary user can use ENTERPRISE_CONTENT_FILTER_URI to access primary contacts
             assertTrue(runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".ContactsTest",
-                    "testPrimaryProfileEnterprisePhoneLookup_canAccessPrimaryContact", 0));
+                    "testPrimaryProfileEnterprisePhoneLookup_canAccessPrimaryContact",
+                    mParentUserId));
             assertTrue(runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".ContactsTest",
-                    "testPrimaryProfileEnterpriseEmailLookup_canAccessPrimaryContact", 0));
+                    "testPrimaryProfileEnterpriseEmailLookup_canAccessPrimaryContact",
+                    mParentUserId));
             // Primary user can use ENTERPRISE_CONTENT_FILTER_URI to access managed profile contacts
             assertTrue(runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".ContactsTest",
-                    "testPrimaryProfileEnterprisePhoneLookup_canAccessEnterpriseContact", 0));
+                    "testPrimaryProfileEnterprisePhoneLookup_canAccessEnterpriseContact",
+                    mParentUserId));
             assertTrue(runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".ContactsTest",
-                    "testPrimaryProfileEnterpriseEmailLookup_canAccessEnterpriseContact", 0));
+                    "testPrimaryProfileEnterpriseEmailLookup_canAccessEnterpriseContact",
+                    mParentUserId));
             // When there exist contacts with the same phone/email in primary & enterprise,
             // primary user can use ENTERPRISE_CONTENT_FILTER_URI to access the primary contact.
             assertTrue(runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".ContactsTest",
                     "testPrimaryProfileEnterpriseEmailLookupDuplicated_canAccessPrimaryContact",
-                    0));
+                    mParentUserId));
             assertTrue(runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".ContactsTest",
                     "testPrimaryProfileEnterprisePhoneLookupDuplicated_canAccessPrimaryContact",
-                    0));
+                    mParentUserId));
 
             // Make sure SIP enterprise lookup works too.
             assertTrue(runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".ContactsTest",
-                    "testPrimaryProfileEnterpriseSipLookup_canAccessEnterpriseContact", 0));
+                    "testPrimaryProfileEnterpriseSipLookup_canAccessEnterpriseContact",
+                    mParentUserId));
 
             // Managed user cannot use ordinary phone/email lookup api to access primary contacts
             assertTrue(runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".ContactsTest",
-                    "testManagedProfilePhoneLookup_canNotAccessPrimaryContact", mUserId));
+                    "testManagedProfilePhoneLookup_canNotAccessPrimaryContact", mProfileUserId));
             assertTrue(runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".ContactsTest",
-                    "testManagedProfileEmailLookup_canNotAccessPrimaryContact", mUserId));
+                    "testManagedProfileEmailLookup_canNotAccessPrimaryContact", mProfileUserId));
             // Managed user can use ENTERPRISE_CONTENT_FILTER_URI to access enterprise contacts
             assertTrue(runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".ContactsTest",
-                    "testManagedProfileEnterprisePhoneLookup_canAccessEnterpriseContact", mUserId));
+                    "testManagedProfileEnterprisePhoneLookup_canAccessEnterpriseContact",
+                    mProfileUserId));
             assertTrue(runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".ContactsTest",
-                    "testManagedProfileEnterpriseEmailLookup_canAccessEnterpriseContact", mUserId));
+                    "testManagedProfileEnterpriseEmailLookup_canAccessEnterpriseContact",
+                    mProfileUserId));
             // Managed user cannot use ENTERPRISE_CONTENT_FILTER_URI to access primary contacts
             assertTrue(runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".ContactsTest",
-                    "testManagedProfileEnterprisePhoneLookup_canNotAccessPrimaryContact", mUserId));
+                    "testManagedProfileEnterprisePhoneLookup_canNotAccessPrimaryContact",
+                    mProfileUserId));
             assertTrue(runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".ContactsTest",
-                    "testManagedProfileEnterpriseEmailLookup_canNotAccessPrimaryContact", mUserId));
+                    "testManagedProfileEnterpriseEmailLookup_canNotAccessPrimaryContact",
+                    mProfileUserId));
             // When there exist contacts with the same phone/email in primary & enterprise,
             // managed user can use ENTERPRISE_CONTENT_FILTER_URI to access the enterprise contact.
             assertTrue(runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".ContactsTest",
                     "testManagedProfileEnterpriseEmailLookupDuplicated_canAccessEnterpriseContact",
-                    mUserId));
+                    mProfileUserId));
             assertTrue(runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".ContactsTest",
                     "testManagedProfileEnterprisePhoneLookupDuplicated_canAccessEnterpriseContact",
-                    mUserId));
+                    mProfileUserId));
 
             // Set cross profile caller id to disabled
             assertTrue(runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".ContactsTest",
-                    "testSetCrossProfileCallerIdDisabled_true", mUserId));
+                    "testSetCrossProfileCallerIdDisabled_true", mProfileUserId));
 
             // Primary user cannot use ordinary phone/email lookup api to access managed contacts
             assertTrue(runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".ContactsTest",
-                    "testPrimaryProfilePhoneLookup_canNotAccessEnterpriseContact", 0));
+                    "testPrimaryProfilePhoneLookup_canNotAccessEnterpriseContact", mParentUserId));
             assertTrue(runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".ContactsTest",
-                    "testPrimaryProfileEmailLookup_canNotAccessEnterpriseContact", 0));
+                    "testPrimaryProfileEmailLookup_canNotAccessEnterpriseContact", mParentUserId));
             // Primary user cannot use ENTERPRISE_CONTENT_FILTER_URI to access managed contacts
             assertTrue(runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".ContactsTest",
-                    "testPrimaryProfileEnterprisePhoneLookup_canNotAccessEnterpriseContact", 0));
+                    "testPrimaryProfileEnterprisePhoneLookup_canNotAccessEnterpriseContact",
+                    mParentUserId));
             assertTrue(runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".ContactsTest",
-                    "testPrimaryProfileEnterpriseEmailLookup_canNotAccessEnterpriseContact", 0));
+                    "testPrimaryProfileEnterpriseEmailLookup_canNotAccessEnterpriseContact",
+                    mParentUserId));
             // When there exist contacts with the same phone/email in primary & enterprise,
             // primary user can use ENTERPRISE_CONTENT_FILTER_URI to access primary contacts
             assertTrue(runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".ContactsTest",
                     "testPrimaryProfileEnterpriseEmailLookupDuplicated_canAccessPrimaryContact",
-                    0));
+                    mParentUserId));
             assertTrue(runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".ContactsTest",
                     "testPrimaryProfileEnterprisePhoneLookupDuplicated_canAccessPrimaryContact",
-                    0));
+                    mParentUserId));
 
             // Managed user cannot use ordinary phone/email lookup api to access primary contacts
             assertTrue(runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".ContactsTest",
-                    "testManagedProfilePhoneLookup_canNotAccessPrimaryContact", mUserId));
+                    "testManagedProfilePhoneLookup_canNotAccessPrimaryContact", mProfileUserId));
             assertTrue(runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".ContactsTest",
-                    "testManagedProfileEmailLookup_canNotAccessPrimaryContact", mUserId));
+                    "testManagedProfileEmailLookup_canNotAccessPrimaryContact", mProfileUserId));
             // Managed user cannot use ENTERPRISE_CONTENT_FILTER_URI to access primary contacts
             assertTrue(runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".ContactsTest",
-                    "testManagedProfileEnterprisePhoneLookup_canNotAccessPrimaryContact", mUserId));
+                    "testManagedProfileEnterprisePhoneLookup_canNotAccessPrimaryContact",
+                    mProfileUserId));
             assertTrue(runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".ContactsTest",
-                    "testManagedProfileEnterpriseEmailLookup_canNotAccessPrimaryContact", mUserId));
+                    "testManagedProfileEnterpriseEmailLookup_canNotAccessPrimaryContact",
+                    mProfileUserId));
             // When there exist contacts with the same phone/email in primary & enterprise,
             // managed user can use ENTERPRISE_CONTENT_FILTER_URI to access enterprise contacts
             assertTrue(runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".ContactsTest",
                     "testManagedProfileEnterpriseEmailLookupDuplicated_canAccessEnterpriseContact",
-                    mUserId));
+                    mProfileUserId));
             assertTrue(runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".ContactsTest",
                     "testManagedProfileEnterprisePhoneLookupDuplicated_canAccessEnterpriseContact",
-                    mUserId));
+                    mProfileUserId));
         } finally {
             // Clean up in managed profile and primary profile
             runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".ContactsTest",
-                    "testCurrentProfileContacts_removeContacts", mUserId);
+                    "testCurrentProfileContacts_removeContacts", mProfileUserId);
             runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".ContactsTest",
-                    "testCurrentProfileContacts_removeContacts", 0);
+                    "testCurrentProfileContacts_removeContacts", mParentUserId);
         }
     }
 
@@ -518,7 +539,7 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
             return;
         }
         assertTrue(runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".ContactsTest",
-                "testSetBluetoothContactSharingDisabled_setterAndGetter", mUserId));
+                "testSetBluetoothContactSharingDisabled_setterAndGetter", mProfileUserId));
     }
 
     public void testCannotSetProfileOwnerAgain() throws Exception {
@@ -527,11 +548,11 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
         }
         // verify that we can't set the same admin receiver as profile owner again
         assertFalse(setProfileOwner(
-                MANAGED_PROFILE_PKG + "/" + ADMIN_RECEIVER_TEST_CLASS, mUserId));
+                MANAGED_PROFILE_PKG + "/" + ADMIN_RECEIVER_TEST_CLASS, mProfileUserId));
 
         // verify that we can't set a different admin receiver as profile owner
-        installAppAsUser(DEVICE_OWNER_APK, mUserId);
-        assertFalse(setProfileOwner(DEVICE_OWNER_PKG + "/" + DEVICE_OWNER_ADMIN, mUserId));
+        installAppAsUser(DEVICE_OWNER_APK, mProfileUserId);
+        assertFalse(setProfileOwner(DEVICE_OWNER_PKG + "/" + DEVICE_OWNER_ADMIN, mProfileUserId));
     }
 
     public void testCannotSetDeviceOwnerWhenProfilePresent() throws Exception {
@@ -555,22 +576,22 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
         }
 
         assertTrue(runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".NfcTest",
-                "testNfcShareEnabled", mUserId));
+                "testNfcShareEnabled", mProfileUserId));
         assertTrue(runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".NfcTest",
-                "testNfcShareEnabled", 0));
+                "testNfcShareEnabled", mParentUserId));
 
         String restriction = "no_outgoing_beam";  // UserManager.DISALLOW_OUTGOING_BEAM
         String command = "add-restriction";
 
         String addRestrictionCommandOutput =
-                changeUserRestrictionForUser(restriction, command, mUserId);
+                changeUserRestrictionForUser(restriction, command, mProfileUserId);
         assertTrue("Command was expected to succeed " + addRestrictionCommandOutput,
                 addRestrictionCommandOutput.contains("Status: ok"));
 
         assertTrue(runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".NfcTest",
-                "testNfcShareDisabled", mUserId));
+                "testNfcShareDisabled", mProfileUserId));
         assertTrue(runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".NfcTest",
-                "testNfcShareEnabled", 0));
+                "testNfcShareEnabled", mParentUserId));
     }
 
     public void testCrossProfileWidgets() throws Exception {
@@ -580,36 +601,36 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
 
         try {
             installApp(WIDGET_PROVIDER_APK);
-            getDevice().executeShellCommand("appwidget grantbind --user 0 --package "
-                    + WIDGET_PROVIDER_PKG);
+            getDevice().executeShellCommand("appwidget grantbind --user " + mParentUserId
+                    + " --package " + WIDGET_PROVIDER_PKG);
             startWidgetHostService();
 
             String commandOutput = changeCrossProfileWidgetForUser(WIDGET_PROVIDER_PKG,
-                    "add-cross-profile-widget", mUserId);
+                    "add-cross-profile-widget", mProfileUserId);
             assertTrue("Command was expected to succeed " + commandOutput,
                     commandOutput.contains("Status: ok"));
 
             assertTrue(runDeviceTests(MANAGED_PROFILE_PKG, ".CrossProfileWidgetTest",
-                    "testCrossProfileWidgetProviderAdded", mUserId));
+                    "testCrossProfileWidgetProviderAdded", mProfileUserId));
             assertTrue(runDeviceTests(MANAGED_PROFILE_PKG, ".CrossProfileWidgetPrimaryUserTest",
-                    "testHasCrossProfileWidgetProvider_true", 0));
+                    "testHasCrossProfileWidgetProvider_true", mParentUserId));
             assertTrue(runDeviceTests(MANAGED_PROFILE_PKG, ".CrossProfileWidgetPrimaryUserTest",
-                    "testHostReceivesWidgetUpdates_true", 0));
+                    "testHostReceivesWidgetUpdates_true", mParentUserId));
 
             commandOutput = changeCrossProfileWidgetForUser(WIDGET_PROVIDER_PKG,
-                    "remove-cross-profile-widget", mUserId);
+                    "remove-cross-profile-widget", mProfileUserId);
             assertTrue("Command was expected to succeed " + commandOutput,
                     commandOutput.contains("Status: ok"));
 
             assertTrue(runDeviceTests(MANAGED_PROFILE_PKG, ".CrossProfileWidgetTest",
-                    "testCrossProfileWidgetProviderRemoved", mUserId));
+                    "testCrossProfileWidgetProviderRemoved", mProfileUserId));
             assertTrue(runDeviceTests(MANAGED_PROFILE_PKG, ".CrossProfileWidgetPrimaryUserTest",
-                    "testHasCrossProfileWidgetProvider_false", 0));
+                    "testHasCrossProfileWidgetProvider_false", mParentUserId));
             assertTrue(runDeviceTests(MANAGED_PROFILE_PKG, ".CrossProfileWidgetPrimaryUserTest",
-                    "testHostReceivesWidgetUpdates_false", 0));
+                    "testHostReceivesWidgetUpdates_false", mParentUserId));
         } finally {
             changeCrossProfileWidgetForUser(WIDGET_PROVIDER_PKG, "remove-cross-profile-widget",
-                    mUserId);
+                    mProfileUserId);
             getDevice().uninstallPackage(WIDGET_PROVIDER_PKG);
         }
     }
@@ -659,15 +680,16 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
     }
 
     protected void startWidgetHostService() throws Exception {
-        String command = "am startservice --user 0 "
-                + "-a " + WIDGET_PROVIDER_PKG + ".REGISTER_CALLBACK "
-                + "--ei user-extra " + getUserSerialNumber(mUserId)
+        String command = "am startservice --user " + mParentUserId
+                + " -a " + WIDGET_PROVIDER_PKG + ".REGISTER_CALLBACK "
+                + "--ei user-extra " + getUserSerialNumber(mProfileUserId)
                 + " " + WIDGET_PROVIDER_PKG + "/.SimpleAppWidgetHostService";
         CLog.logAndDisplay(LogLevel.INFO, "Output for command " + command + ": "
               + getDevice().executeShellCommand(command));
     }
 
     private void assertAppLinkResult(String methodName) throws DeviceNotAvailableException {
-        assertTrue(runDeviceTestsAsUser(INTENT_SENDER_PKG, ".AppLinkTest", methodName, mUserId));
+        assertTrue(runDeviceTestsAsUser(INTENT_SENDER_PKG, ".AppLinkTest", methodName,
+                mProfileUserId));
     }
 }

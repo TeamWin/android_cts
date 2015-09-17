@@ -31,6 +31,7 @@ public class LauncherAppsProfileTest extends BaseLauncherAppsTest {
             MANAGED_PROFILE_PKG + ".BaseManagedProfileTest$BasicAdminReceiver";
 
     private int mProfileUserId;
+    private int mParentUserId;
     private int mProfileSerialNumber;
     private int mMainUserSerialNumber;
 
@@ -42,12 +43,13 @@ public class LauncherAppsProfileTest extends BaseLauncherAppsTest {
             removeTestUsers();
             installTestApps();
             // Create a managed profile
-            mProfileUserId = createManagedProfile();
+            mParentUserId = getPrimaryUser();
+            mProfileUserId = createManagedProfile(mParentUserId);
             installApp(MANAGED_PROFILE_APK);
             setProfileOwnerOrFail(MANAGED_PROFILE_PKG + "/" + ADMIN_RECEIVER_TEST_CLASS,
                     mProfileUserId);
             mProfileSerialNumber = getUserSerialNumber(mProfileUserId);
-            mMainUserSerialNumber = getUserSerialNumber(0);
+            mMainUserSerialNumber = getUserSerialNumber(mParentUserId);
             startUser(mProfileUserId);
         }
     }
@@ -73,10 +75,10 @@ public class LauncherAppsProfileTest extends BaseLauncherAppsTest {
             assertTrue(runDeviceTests(LAUNCHER_TESTS_PKG,
                     LAUNCHER_TESTS_CLASS,
                     "testSimpleAppInstalledForUser",
-                            0, "-e testUser " + mProfileSerialNumber));
+                            mParentUserId, "-e testUser " + mProfileSerialNumber));
             assertTrue(runDeviceTests(LAUNCHER_TESTS_PKG,
                     LAUNCHER_TESTS_PKG + ".LauncherAppsTests", "testSimpleAppInstalledForUser",
-                            0, "-e testUser " + mMainUserSerialNumber));
+                            mParentUserId, "-e testUser " + mMainUserSerialNumber));
         } finally {
             getDevice().uninstallPackage(SIMPLE_APP_PKG);
         }
@@ -92,7 +94,7 @@ public class LauncherAppsProfileTest extends BaseLauncherAppsTest {
             assertTrue(runDeviceTests(LAUNCHER_TESTS_PKG,
                     LAUNCHER_TESTS_CLASS,
                             "testPackageAddedCallbackForUser",
-                            0, "-e testUser " + mProfileSerialNumber));
+                            mParentUserId, "-e testUser " + mProfileSerialNumber));
         } finally {
             getDevice().uninstallPackage(SIMPLE_APP_PKG);
         }
@@ -109,7 +111,7 @@ public class LauncherAppsProfileTest extends BaseLauncherAppsTest {
             assertTrue(runDeviceTests(LAUNCHER_TESTS_PKG,
                     LAUNCHER_TESTS_CLASS,
                             "testPackageRemovedCallbackForUser",
-                            0, "-e testUser " + mProfileSerialNumber));
+                            mParentUserId, "-e testUser " + mProfileSerialNumber));
         } finally {
             getDevice().uninstallPackage(SIMPLE_APP_PKG);
         }
@@ -126,7 +128,7 @@ public class LauncherAppsProfileTest extends BaseLauncherAppsTest {
             assertTrue(runDeviceTests(LAUNCHER_TESTS_PKG,
                     LAUNCHER_TESTS_CLASS,
                             "testPackageChangedCallbackForUser",
-                            0, "-e testUser " + mProfileSerialNumber));
+                            mParentUserId, "-e testUser " + mProfileSerialNumber));
         } finally {
             getDevice().uninstallPackage(SIMPLE_APP_PKG);
         }
