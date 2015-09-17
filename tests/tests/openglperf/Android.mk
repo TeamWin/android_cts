@@ -36,6 +36,9 @@ LOCAL_INSTRUMENTATION_FOR := com.replica.replicaisland
 
 LOCAL_SDK_VERSION := current
 
+# Tag this module as a cts_v2 test artifact
+LOCAL_COMPATIBILITY_SUITE := cts_v2
+
 include $(BUILD_CTS_PACKAGE)
 
 # Make the replica island app and copy it to CTS out dir.
