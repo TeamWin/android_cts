@@ -18,7 +18,7 @@
          android:layout_width="match_parent"
          android:layout_height="wrap_content"
          android:id="@+id/toolbar"
-         android:titleMargins="5px"
+         android:titleMargin="5px"
          android:titleMarginTop="10px"
          android:titleMarginEnd="15px"
          android:titleMarginBottom="20px" />
