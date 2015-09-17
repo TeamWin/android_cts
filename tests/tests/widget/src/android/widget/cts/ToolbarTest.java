@@ -23,8 +23,6 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.Toolbar;
 
-import com.android.cts.widget.R;
-
 public class ToolbarTest extends AndroidTestCase {
     private Context mContext;
 
@@ -38,7 +36,7 @@ public class ToolbarTest extends AndroidTestCase {
     @UiThreadTest
     public void testGetTitleMargins() {
         LayoutInflater inflater = LayoutInflater.from(mContext);
-        View layout = inflater.inflate(R.layout.toolbar);
+        View layout = inflater.inflate(R.layout.toolbar_layout, null);
         Toolbar toolbar = (Toolbar) layout.findViewById(R.id.toolbar);
 
         assertEquals(5, toolbar.getTitleMarginStart());
