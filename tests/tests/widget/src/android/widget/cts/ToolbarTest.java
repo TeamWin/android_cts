@@ -55,7 +55,7 @@ public class ToolbarTest extends AndroidTestCase {
         assertEquals(0, toolbar.getTitleMarginEnd());
         assertEquals(0, toolbar.getTitleMarginBottom());
 
-        toolbar.setTitleMargins(5, 10, 15, 20);
+        toolbar.setTitleMargin(5, 10, 15, 20);
         assertEquals(5, toolbar.getTitleMarginStart());
         assertEquals(10, toolbar.getTitleMarginTop());
         assertEquals(15, toolbar.getTitleMarginEnd());
