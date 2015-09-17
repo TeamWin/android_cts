@@ -16,7 +16,7 @@
 
 package android.content.cts;
 
-import com.android.cts.content.R;
+import android.content.cts.R;
 
 import android.content.ActivityNotFoundException;
 import android.content.BroadcastReceiver;
@@ -474,7 +474,7 @@ public class ContextWrapperTest extends AndroidTestCase {
     }
 
     public void testGetPackageName() {
-        assertEquals("com.android.cts.content", mContextWrapper.getPackageName());
+        assertEquals("android.content.cts", mContextWrapper.getPackageName());
     }
 
     public void testGetCacheDir() {
