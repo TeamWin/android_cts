@@ -28,7 +28,7 @@ import android.uirendering.cts.bitmapverifiers.ColorVerifier;
 import android.uirendering.cts.testinfrastructure.ActivityTestBase;
 import android.uirendering.cts.testinfrastructure.ViewInitializer;
 import android.view.View;
-import com.android.cts.uirendering.R;
+import android.uirendering.cts.R;
 
 public class LayerTests extends ActivityTestBase {
     @SmallTest

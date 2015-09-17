@@ -31,7 +31,7 @@ import android.uirendering.cts.testinfrastructure.ViewInitializer;
 import android.view.View;
 import android.view.ViewGroup;
 import android.webkit.WebView;
-import com.android.cts.uirendering.R;
+import android.uirendering.cts.R;
 
 public class PathClippingTests extends ActivityTestBase {
     // draw circle with hole in it, with stroked circle

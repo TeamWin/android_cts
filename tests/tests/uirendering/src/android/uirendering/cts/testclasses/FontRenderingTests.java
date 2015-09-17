@@ -29,7 +29,7 @@ import android.uirendering.cts.bitmapverifiers.GoldenImageVerifier;
 import android.uirendering.cts.testinfrastructure.ActivityTestBase;
 import android.uirendering.cts.testinfrastructure.CanvasClient;
 
-import com.android.cts.uirendering.R;
+import android.uirendering.cts.R;
 
 public class FontRenderingTests extends ActivityTestBase {
     // Thresholds are barely loose enough for differences between sw and hw renderers.

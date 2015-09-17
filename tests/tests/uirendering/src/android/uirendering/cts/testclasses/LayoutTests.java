@@ -19,7 +19,7 @@ import android.graphics.Color;
 import android.graphics.Rect;
 import android.uirendering.cts.bitmapverifiers.ColorVerifier;
 import android.uirendering.cts.bitmapverifiers.RectVerifier;
-import com.android.cts.uirendering.R;
+import android.uirendering.cts.R;
 
 import android.test.suitebuilder.annotation.SmallTest;
 import android.uirendering.cts.testinfrastructure.ActivityTestBase;
