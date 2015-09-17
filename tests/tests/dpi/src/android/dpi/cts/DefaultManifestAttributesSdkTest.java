@@ -24,7 +24,7 @@ import android.os.Build;
  */
 public class DefaultManifestAttributesSdkTest extends DefaultManifestAttributesTest {
     protected String getPackageName() {
-        return "com.android.cts.dpi";
+        return "android.dpi.cts";
     }
 
     // This is a sanity test to make sure that we're instrumenting the proper package
