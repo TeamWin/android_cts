@@ -241,7 +241,7 @@ class TestPackageDef implements ITestPackageDef {
                 CLog.d("Setting new timeout to " + mTimeoutInMins + " mins");
                 hostTest.setTimeout(mTimeoutInMins * 60 * 1000);
             }
-            hostTest.setRunName(mAppPackageName);
+            hostTest.setRunName(getId());
             hostTest.setJarFileName(mJarPath);
             hostTest.setTests(mTests);
             hostTest.setAbi(mAbi);
@@ -250,7 +250,7 @@ class TestPackageDef implements ITestPackageDef {
         } else if (VM_HOST_TEST.equals(mTestType)) {
             CLog.d("Creating vm host test for %s", mName);
             VMHostTest vmHostTest = new VMHostTest();
-            vmHostTest.setRunName(mAppPackageName);
+            vmHostTest.setRunName(getId());
             vmHostTest.setJarFileName(mJarPath);
             vmHostTest.setTests(mTests);
             vmHostTest.setAbi(mAbi);
@@ -272,11 +272,12 @@ class TestPackageDef implements ITestPackageDef {
             return wrappedGeeTest;
         } else if (UIAUTOMATOR_TEST.equals(mTestType)) {
             UiAutomatorJarTest uiautomatorTest = new UiAutomatorJarTest();
+            uiautomatorTest.setRunName(getId());
             return setUiAutomatorTest(uiautomatorTest);
         } else if (JUNIT_DEVICE_TEST.equals(mTestType)){
             CLog.d("Creating JUnit device test %s", mName);
             JUnitDeviceTest jUnitDeviceTest = new JUnitDeviceTest();
-            jUnitDeviceTest.setRunName(mAppPackageName);
+            jUnitDeviceTest.setRunName(getId());
             jUnitDeviceTest.addTestJarFileName(mJarPath);
             jUnitDeviceTest.addRunTimeArgs(mRunTimeArgs);
             jUnitDeviceTest.setTests(mTests);
@@ -305,7 +306,7 @@ class TestPackageDef implements ITestPackageDef {
      */
     private InstrumentationTest setInstrumentationTest(CtsInstrumentationApkTest instrTest,
             File testCaseDir) {
-        instrTest.setRunName(mAppPackageName);
+        instrTest.setRunName(getId());
         instrTest.setPackageName(mAppNameSpace);
         instrTest.setRunnerName(mRunner);
         instrTest.setAbi(mAbi);
@@ -340,7 +341,7 @@ class TestPackageDef implements ITestPackageDef {
         } else {
             uiautomatorTest.addClassNames(mTestClasses);
         }
-        uiautomatorTest.setRunName(mAppPackageName);
+        uiautomatorTest.setRunName(getId());
         uiautomatorTest.setCaptureLogs(false);
         return uiautomatorTest;
     }
