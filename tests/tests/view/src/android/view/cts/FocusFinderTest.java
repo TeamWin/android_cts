@@ -34,7 +34,7 @@ public class FocusFinderTest extends ActivityInstrumentationTestCase2<FocusFinde
     private Button mBottomRight;
 
     public FocusFinderTest() {
-        super("com.android.cts.view", FocusFinderCtsActivity.class);
+        super("android.view.cts", FocusFinderCtsActivity.class);
     }
 
     @Override

@@ -16,7 +16,7 @@
 
 package android.view.inputmethod.cts;
 
-import com.android.cts.view.R;
+import android.view.cts.R;
 
 
 import android.app.Instrumentation;
@@ -48,7 +48,7 @@ public class BaseInputConnectionTest extends
     private Instrumentation mInstrumentation;
 
     public BaseInputConnectionTest() {
-        super("com.android.cts.view", InputMethodCtsActivity.class);
+        super("android.view.cts", InputMethodCtsActivity.class);
     }
 
     @Override

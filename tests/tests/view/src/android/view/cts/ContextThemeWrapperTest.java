@@ -23,7 +23,7 @@ import android.content.res.Resources.Theme;
 import android.test.AndroidTestCase;
 import android.view.ContextThemeWrapper;
 
-import com.android.cts.view.R;
+import android.view.cts.R;
 
 
 public class ContextThemeWrapperTest extends AndroidTestCase {

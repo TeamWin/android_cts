@@ -726,7 +726,7 @@ public class ViewGroupTest extends InstrumentationTestCase implements CTSResult{
     public void testGenerateLayoutParamsWithParaAttributeSet() throws Exception{
         MockViewGroup vg = new MockViewGroup(mContext);
         XmlResourceParser set = mContext.getResources().getLayout(
-                com.android.cts.view.R.layout.abslistview_layout);
+                android.view.cts.R.layout.abslistview_layout);
         XmlUtils.beginDocument(set, "ViewGroup_Layout");
         LayoutParams lp = vg.generateLayoutParams(set);
         assertNotNull(lp);

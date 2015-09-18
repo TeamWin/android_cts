@@ -16,7 +16,7 @@
 
 package android.view.cts;
 
-import com.android.cts.view.R;
+import android.view.cts.R;
 import com.android.internal.view.menu.ContextMenuBuilder;
 
 import android.content.Context;
@@ -2537,7 +2537,7 @@ public class ViewTest extends ActivityInstrumentationTestCase2<ViewTestCtsActivi
         assertFalse(view.hasCalledOnWindowFocusChanged());
         assertFalse(view.hasCalledDispatchWindowFocusChanged());
 
-        CtsActivity activity = launchActivity("com.android.cts.view", CtsActivity.class, null);
+        CtsActivity activity = launchActivity("android.view.cts", CtsActivity.class, null);
 
         // Wait until the window lost focus.
         new PollingCheck(TIMEOUT_DELTA) {

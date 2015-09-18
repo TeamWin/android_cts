@@ -16,7 +16,7 @@
  -->
 
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.android.cts.view">
+    package="android.view.cts">
 
     <uses-permission android:name="android.permission.DISABLE_KEYGUARD" />
     <application android:label="Android TestCase"
@@ -194,7 +194,7 @@
     </application>
 
     <instrumentation android:name="android.support.test.runner.AndroidJUnitRunner"
-                     android:targetPackage="com.android.cts.view"
+                     android:targetPackage="android.view.cts"
                      android:label="CTS tests of android.view">
         <meta-data android:name="listener"
             android:value="com.android.cts.runner.CtsTestRunListener" />

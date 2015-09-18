@@ -15,7 +15,7 @@
  */
 package android.view.inputmethod.cts;
 
-import com.android.cts.view.R;
+import android.view.cts.R;
 
 import android.app.Instrumentation;
 import android.content.Context;
@@ -38,7 +38,7 @@ public class InputMethodManagerTest
                   extends ActivityInstrumentationTestCase2<InputMethodCtsActivity> {
 
     public InputMethodManagerTest() {
-        super("com.android.cts.view", InputMethodCtsActivity.class);
+        super("android.view.cts", InputMethodCtsActivity.class);
     }
 
     private InputMethodCtsActivity mActivity;

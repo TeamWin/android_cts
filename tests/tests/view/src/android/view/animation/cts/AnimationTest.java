@@ -16,7 +16,7 @@
 
 package android.view.animation.cts;
 
-import com.android.cts.view.R;
+import android.view.cts.R;
 
 
 import android.app.Activity;
@@ -51,7 +51,7 @@ public class AnimationTest extends ActivityInstrumentationTestCase2<AnimationTes
     private Object mLockObject = new Object();
 
     public AnimationTest() {
-        super("com.android.cts.view", AnimationTestCtsActivity.class);
+        super("android.view.cts", AnimationTestCtsActivity.class);
     }
 
     @Override

@@ -16,7 +16,7 @@
 
 package android.view.cts;
 
-import com.android.cts.view.R;
+import android.view.cts.R;
 
 import android.app.Instrumentation;
 import android.app.Presentation;
@@ -80,7 +80,7 @@ public class WindowTest extends ActivityInstrumentationTestCase2<WindowCtsActivi
     private VirtualDisplay mVirtualDisplay;
 
     public WindowTest() {
-        super("com.android.cts.view", WindowCtsActivity.class);
+        super("android.view.cts", WindowCtsActivity.class);
     }
 
     @Override
