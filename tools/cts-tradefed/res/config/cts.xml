@@ -52,4 +52,8 @@
         <option name="runner" value="android.support.test.runner.AndroidJUnitRunner"/>
     </target_preparer>
 
+    <target_preparer class="com.android.compatibility.common.tradefed.targetprep.LocaleCheck">
+        <option name="expected-locale" value="en-US"/> <!-- Device locale must be US English -->
+    </target_preparer>
+
 </configuration>

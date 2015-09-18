@@ -19,6 +19,7 @@ import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelperT
 import com.android.compatibility.common.tradefed.command.CompatibilityConsoleTest;
 import com.android.compatibility.common.tradefed.result.ResultReporterTest;
 import com.android.compatibility.common.tradefed.targetprep.BuildCheckTest;
+import com.android.compatibility.common.tradefed.targetprep.LocaleCheckTest;
 import com.android.compatibility.common.tradefed.testtype.CompatibilityTestTest;
 import com.android.compatibility.common.tradefed.testtype.ModuleDefTest;
 import com.android.compatibility.common.tradefed.testtype.ModuleRepoTest;
@@ -42,6 +43,7 @@ public class UnitTests extends TestSuite {
         addTestSuite(ModuleDefTest.class);
         addTestSuite(ModuleRepoTest.class);
         addTestSuite(BuildCheckTest.class);
+        addTestSuite(LocaleCheckTest.class);
     }
 
     public static Test suite() {
