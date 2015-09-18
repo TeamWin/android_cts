@@ -486,6 +486,8 @@ public class DumpsysHostTest extends DeviceTestCase implements IBuildReceiver {
                     case "ctr":
                         checkChargeTimeRemain(parts);
                         break;
+                    case "cpu":
+                        checkUidCpuUsage(parts);
                     default:
                         break;
                 }
@@ -812,6 +814,12 @@ public class DumpsysHostTest extends DeviceTestCase implements IBuildReceiver {
     private void checkChargeTimeRemain(String[] parts) {
         assertEquals(5, parts.length);
         assertInteger(parts[4]); // chargeTimeRemaining
+    }
+
+    private void checkUidCpuUsage(String[] parts) {
+        assertTrue(parts.length >= 6);
+        assertInteger(parts[4]); // user time
+        assertInteger(parts[5]); // system time
     }
 
     /**
