@@ -22,6 +22,8 @@
  */
 package android.security.cts;
 
+import android.test.AndroidTestCase;
+import android.util.Log;
 import android.content.Context;
 import android.content.res.AssetFileDescriptor;
 import android.media.MediaPlayer;
@@ -33,7 +35,7 @@ import java.io.IOException;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 
-import com.android.cts.security.R;
+import android.security.cts.R;
 
 
 /**

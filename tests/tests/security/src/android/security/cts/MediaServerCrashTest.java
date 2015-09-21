@@ -22,7 +22,7 @@ import android.os.ConditionVariable;
 import android.test.AndroidTestCase;
 import android.util.Log;
 
-import com.android.cts.security.R;
+import android.security.cts.R;
 
 public class MediaServerCrashTest extends AndroidTestCase {
     private static final String TAG = "MediaServerCrashTest";
