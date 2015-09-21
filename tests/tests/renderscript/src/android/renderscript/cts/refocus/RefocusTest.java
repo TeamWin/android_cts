@@ -25,7 +25,7 @@ import android.renderscript.RenderScript;
 import android.renderscript.cts.RSBaseCompute;
 import android.util.Log;
 
-import com.android.cts.renderscript.R;
+import android.renderscript.cts.R;
 
 import java.io.IOException;
 
