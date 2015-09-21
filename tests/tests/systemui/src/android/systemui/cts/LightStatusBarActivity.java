@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License
  */
-package com.android.cts.systemui;
+package android.systemui.cts;
 
 import android.app.Activity;
 import android.graphics.Color;

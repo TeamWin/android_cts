@@ -14,7 +14,7 @@
  * limitations under the License
  */
 
-package com.android.cts.systemui;
+package android.systemui.cts;
 
 /**
  * Copies of non-public {@link android.graphics.Color} APIs

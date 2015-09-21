@@ -14,7 +14,7 @@
  * limitations under the License
  */
 
-package com.android.cts.systemui;
+package android.systemui.cts;
 
 import android.app.ActivityManager;
 import android.content.pm.PackageManager;

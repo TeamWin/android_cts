@@ -246,7 +246,7 @@
 {
   description: "Light status bar CTS coming in late",
   names: [
-    "com.android.cts.systemui.LightStatusBarTests#testLightStatusBarIcons"
+    "android.systemui.cts.LightStatusBarTests#testLightStatusBarIcons"
   ],
   bug: 23427621
 },
