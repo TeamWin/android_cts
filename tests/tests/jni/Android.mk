@@ -27,6 +27,9 @@ LOCAL_MULTILIB := both
 # When built, explicitly put it in the data partition.
 LOCAL_MODULE_PATH := $(TARGET_OUT_DATA_APPS)
 
+# Tag this module as a cts_v2 test artifact
+LOCAL_COMPATIBILITY_SUITE := cts_v2
+
 LOCAL_STATIC_JAVA_LIBRARIES := ctstestrunner
 
 LOCAL_JNI_SHARED_LIBRARIES := libjnitest
