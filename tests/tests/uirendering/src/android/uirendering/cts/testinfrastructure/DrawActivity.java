@@ -27,7 +27,7 @@ import android.view.ViewStub;
 import android.view.ViewTreeObserver;
 import android.webkit.WebView;
 
-import com.android.cts.uirendering.R;
+import android.uirendering.cts.R;
 
 /**
  * A generic activity that uses a view specified by the user.

@@ -19,7 +19,7 @@ import android.graphics.Color;
 import android.graphics.Point;
 import android.uirendering.cts.bitmapverifiers.SamplePointVerifier;
 
-import com.android.cts.uirendering.R;
+import android.uirendering.cts.R;
 
 import android.test.suitebuilder.annotation.SmallTest;
 import android.uirendering.cts.testinfrastructure.ActivityTestBase;

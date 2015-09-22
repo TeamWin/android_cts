@@ -30,7 +30,7 @@ import android.uirendering.cts.bitmapcomparers.MSSIMComparer;
 import android.uirendering.cts.bitmapverifiers.ColorVerifier;
 import android.uirendering.cts.testinfrastructure.ActivityTestBase;
 import android.uirendering.cts.testinfrastructure.CanvasClient;
-import com.android.cts.uirendering.R;
+import android.uirendering.cts.R;
 
 public class ShaderTests extends ActivityTestBase {
     @SmallTest

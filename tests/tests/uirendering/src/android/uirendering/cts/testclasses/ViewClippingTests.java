@@ -11,7 +11,7 @@ import android.uirendering.cts.testinfrastructure.ViewInitializer;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewOutlineProvider;
-import com.android.cts.uirendering.R;
+import android.uirendering.cts.R;
 
 /**
  * This tests view clipping by modifying properties of blue_padded_layout, and validating

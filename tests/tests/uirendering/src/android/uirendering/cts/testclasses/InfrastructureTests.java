@@ -16,7 +16,7 @@
 package android.uirendering.cts.testclasses;
 
 import android.graphics.Point;
-import com.android.cts.uirendering.R;
+import android.uirendering.cts.R;
 
 import android.graphics.Canvas;
 import android.graphics.Color;
