@@ -38,7 +38,7 @@ public class NoActivityRelatedPermissionTest
     private PermissionStubActivity mActivity;
 
     public NoActivityRelatedPermissionTest() {
-        super("com.android.cts.permission", PermissionStubActivity.class);
+        super("android.permission.cts", PermissionStubActivity.class);
     }
 
     @Override
