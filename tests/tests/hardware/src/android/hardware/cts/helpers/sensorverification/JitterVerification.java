@@ -23,13 +23,13 @@ import android.content.pm.PackageManager;
 
 import android.util.Log;
 import android.hardware.Sensor;
+import android.hardware.cts.helpers.SensorCtsHelper;
 import android.hardware.cts.helpers.SensorStats;
 import android.hardware.cts.helpers.TestSensorEnvironment;
 import android.hardware.cts.helpers.TestSensorEvent;
 import android.util.SparseIntArray;
 
-import com.android.compatibility.common.util.Stat;
-
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -41,15 +41,22 @@ public class JitterVerification extends AbstractSensorVerification {
 
     // sensorType: threshold (% of expected period)
     private static final SparseIntArray DEFAULTS = new SparseIntArray(12);
-    // Max allowed jitter (in percentage).
+    // Max allowed jitter in +/- sense (in percentage).
     private static final int GRACE_FACTOR = 2;
     private static final int THRESHOLD_PERCENT_FOR_HIFI_SENSORS = 1 * GRACE_FACTOR;
+
+    // Margin sample intervals that considered outliers, lower and higher margin is discarded
+    // before verification
+    private static final float OUTLIER_MARGIN = 0.025f; //2.5%
+
     static {
         // Use a method so that the @deprecation warning can be set for that method only
         setDefaults();
     }
 
-    private final int mThresholdAsPercentage;
+    private final float     mOutlierMargin;
+    private final long      mThresholdNs;
+    private final long      mExpectedPeriodNs; // for error message only
     private final List<Long> mTimestamps = new LinkedList<Long>();
 
     /**
@@ -57,8 +64,10 @@ public class JitterVerification extends AbstractSensorVerification {
      *
      * @param thresholdAsPercentage the acceptable margin of error as a percentage
      */
-    public JitterVerification(int thresholdAsPercentage) {
-        mThresholdAsPercentage = thresholdAsPercentage;
+    public JitterVerification(float outlierMargin, long thresholdNs, long expectedPeriodNs) {
+        mExpectedPeriodNs = expectedPeriodNs;
+        mOutlierMargin = outlierMargin;
+        mThresholdNs = thresholdNs;
     }
 
     /**
@@ -69,16 +78,20 @@ public class JitterVerification extends AbstractSensorVerification {
      */
     public static JitterVerification getDefault(TestSensorEnvironment environment) {
         int sensorType = environment.getSensor().getType();
-        int threshold = DEFAULTS.get(sensorType, -1);
-        if (threshold == -1) {
+
+        int thresholdPercent = DEFAULTS.get(sensorType, -1);
+        if (thresholdPercent == -1) {
             return null;
         }
         boolean hasHifiSensors = environment.getContext().getPackageManager().hasSystemFeature(
                 PackageManager.FEATURE_HIFI_SENSORS);
         if (hasHifiSensors) {
-           threshold = THRESHOLD_PERCENT_FOR_HIFI_SENSORS;
+           thresholdPercent = THRESHOLD_PERCENT_FOR_HIFI_SENSORS;
         }
-        return new JitterVerification(threshold);
+
+        long expectedPeriodNs = (long) environment.getExpectedSamplingPeriodUs() * 1000;
+        long jitterThresholdNs = expectedPeriodNs * thresholdPercent * 2 / 100; // *2 is for +/-
+        return new JitterVerification(OUTLIER_MARGIN, jitterThresholdNs, expectedPeriodNs);
     }
 
     /**
@@ -97,24 +110,33 @@ public class JitterVerification extends AbstractSensorVerification {
             return;
         }
 
-        double[] jitters = getJitterValues();
-        double jitter95PercentileNs = Stat.get95PercentileValue(jitters);
-        long firstTimestamp = mTimestamps.get(0);
-        long lastTimestamp = mTimestamps.get(timestampsCount - 1);
-        long measuredPeriodNs = (lastTimestamp - firstTimestamp) / (timestampsCount - 1);
-        double jitter95PercentilePercent = (jitter95PercentileNs * 100.0) / measuredPeriodNs;
-        stats.addValue(SensorStats.JITTER_95_PERCENTILE_PERCENT_KEY, jitter95PercentilePercent);
+        List<Long> deltas = getDeltaValues();
+        float percentiles[] = new float[2];
+        percentiles[0] = mOutlierMargin;
+        percentiles[1] = 1 - percentiles[0];
 
-        boolean success = (jitter95PercentilePercent < mThresholdAsPercentage);
+        List<Long> percentileValues = SensorCtsHelper.getPercentileValue(deltas, percentiles);
+        double normalizedRange =
+                (double)(percentileValues.get(1) - percentileValues.get(0)) / mThresholdNs;
+
+        double percentageJitter =
+                (double)(percentileValues.get(1) - percentileValues.get(0)) /
+                        mExpectedPeriodNs / 2 * 100; //one side variation comparing to sample time
+
+        stats.addValue(SensorStats.JITTER_95_PERCENTILE_PERCENT_KEY, percentageJitter);
+
+        boolean success = normalizedRange <= 1.0;
         stats.addValue(PASSED_KEY, success);
 
         if (!success) {
             String message = String.format(
-                    "Jitter out of range: measured period=%dns, jitter(95th percentile)=%.2f%%"
-                            + " (expected < %d%%)",
-                    measuredPeriodNs,
-                    jitter95PercentilePercent,
-                    mThresholdAsPercentage);
+                    "Jitter out of range: requested period = %dns, " +
+                    "jitter min, max, range (95th percentile) = (%dns, %dns, %dns), " +
+                    "jitter expected range <= %dns",
+                    mExpectedPeriodNs,
+                    percentileValues.get(0), percentileValues.get(1),
+                    percentileValues.get(1) - percentileValues.get(0),
+                    mThresholdNs);
             Assert.fail(message);
         }
     }
@@ -124,7 +146,7 @@ public class JitterVerification extends AbstractSensorVerification {
      */
     @Override
     public JitterVerification clone() {
-        return new JitterVerification(mThresholdAsPercentage);
+        return new JitterVerification(mOutlierMargin, mThresholdNs, mExpectedPeriodNs);
     }
 
     /**
@@ -136,20 +158,14 @@ public class JitterVerification extends AbstractSensorVerification {
     }
 
     /**
-     * Get the list of all jitter values. Exposed for unit testing.
+     * Get the list of delta values. Exposed for unit testing.
      */
-    double[] getJitterValues() {
-        int length = mTimestamps.size() - 1;
-        double[] deltas = new double[length];
-        for (int i = 0; i < length; i++) {
-            deltas[i] = mTimestamps.get(i + 1) - mTimestamps.get(i);
+    List<Long> getDeltaValues() {
+        List<Long> deltas = new ArrayList<Long>(mTimestamps.size() - 1);
+        for (int i = 1; i < mTimestamps.size(); i++) {
+            deltas.add(mTimestamps.get(i) - mTimestamps.get(i - 1));
         }
-        double deltaMean = Stat.getAverage(deltas);
-        double[] jitters = new double[length];
-        for (int i = 0; i < length; i++) {
-            jitters[i] = Math.abs(deltas[i] - deltaMean);
-        }
-        return jitters;
+        return deltas;
     }
 
     @SuppressWarnings("deprecation")
