@@ -12,7 +12,7 @@ import com.android.compatibility.common.util.MetricsStore;
 import com.android.compatibility.common.util.ReportLog;
 import com.android.compatibility.common.util.ResultUploader;
 import com.android.compatibility.common.util.TestStatus;
-import com.android.compatibility.common.util.XmlResultHandler;
+import com.android.compatibility.common.util.ResultHandler;
 import com.android.ddmlib.Log;
 import com.android.ddmlib.Log.LogLevel;
 import com.android.ddmlib.testrunner.TestIdentifier;
@@ -58,11 +58,11 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
     private static final String DEVICE_INFO_EXT = ".deviceinfo.json";
     private static final String DEVICE_INFO_PACKAGE = "com.android.compatibility.common.deviceinfo";
     private static final String[] RESULT_RESOURCES = {
-        "compatibility-result.css",
-        "compatibility-result.xsd",
-        "compatibility-result.xsl",
+        "compatibility_result.css",
+        "compatibility_result.xsd",
+        "compatibility_result.xsl",
         "logo.png",
-        "newrule-green.png"};
+        "newrule_green.png"};
 
     @Option(name = CompatibilityTest.RETRY_OPTION,
             shortName = 'r',
@@ -117,7 +117,7 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
             Log.d(mDeviceSerial, String.format("Retrying session %d", mRetrySessionId));
             List<IInvocationResult> results = null;
             try {
-                results = XmlResultHandler.getResults(mBuildHelper.getResultsDir());
+                results = ResultHandler.getResults(mBuildHelper.getResultsDir());
             } catch (FileNotFoundException e) {
                 e.printStackTrace();
             }
@@ -178,7 +178,7 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
             return;
         }
         mCurrentModuleResult = mResult.getOrCreateModule(id);
-        mCurrentModuleResult.setDeviceSerial(mDeviceSerial);
+        mResult.addDeviceSerial(mDeviceSerial);
     }
 
     /**
@@ -278,7 +278,7 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
                 String value = metricEntry.getValue();
                 if (key.startsWith(DEVICE_INFO)) {
                     // Device info needs to be in the report
-                    mResult.addDeviceInfo(key.substring(DEVICE_INFO.length()), value);
+                    mResult.addBuildInfo(key.substring(DEVICE_INFO.length()), value);
                 } else if (!value.endsWith(DEVICE_INFO_EXT)) {
                     Log.logAndDisplay(LogLevel.INFO, mDeviceSerial,
                             String.format("%s failed: %s", metricEntry.getKey(), value));
@@ -334,7 +334,7 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
                     mResult.countResults(TestStatus.FAIL),
                     mResult.countResults(TestStatus.NOT_EXECUTED));
             try {
-                File resultFile = XmlResultHandler.writeResults(mBuildHelper.getSuiteName(),
+                File resultFile = ResultHandler.writeResults(mBuildHelper.getSuiteName(),
                         mBuildHelper.getSuiteVersion(), mBuildHelper.getSuitePlan(), mResult,
                         mResultDir, mStartTime, elapsedTime + mStartTime);
                 copyDynamicConfigFiles(mBuildHelper.getDynamicConfigFiles(), mResultDir);
@@ -423,7 +423,7 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
      */
     static void copyFormattingFiles(File resultsDir) {
         for (String resultFileName : RESULT_RESOURCES) {
-            InputStream configStream = XmlResultHandler.class.getResourceAsStream(
+            InputStream configStream = ResultHandler.class.getResourceAsStream(
                     String.format("/report/%s", resultFileName));
             if (configStream != null) {
                 File resultFile = new File(resultsDir, resultFileName);
