@@ -51,6 +51,11 @@ public interface IInvocationResult {
     String getTestPlan();
 
     /**
+     * Adds the given device serial to the result.
+     */
+    void addDeviceSerial(String serial);
+
+    /**
      * @return the device serials associated with result.
      */
     Set<String> getDeviceSerials();
@@ -71,12 +76,12 @@ public interface IInvocationResult {
     File getResultDir();
 
     /**
-     * Adds the given device info to the result.
+     * Adds the given build info to the result.
      */
-    void addDeviceInfo(String key, String value);
+    void addBuildInfo(String key, String value);
 
     /**
-     * Gets the {@link Map} of device info collected.
+     * Gets the {@link Map} of build info collected.
      */
-    Map<String, String> getDeviceInfo();
+    Map<String, String> getBuildInfo();
 }

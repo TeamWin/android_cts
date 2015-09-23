@@ -21,7 +21,7 @@ package com.android.compatibility.common.util;
 public enum TestStatus {
     PASS("pass"),
     FAIL("fail"),
-    NOT_EXECUTED("not-executed");
+    NOT_EXECUTED("not_executed");
 
     private String mValue;
 
