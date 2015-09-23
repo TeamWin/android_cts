@@ -229,15 +229,16 @@ public class ReportLog implements Serializable {
     public static void serialize(XmlSerializer serializer, ReportLog reportLog)
             throws IOException {
         if (reportLog == null) {
-            return;
+            throw new IllegalArgumentException("Metrics reports was null");
         }
         Metric summary = reportLog.getSummary();
         List<Metric> detailedMetrics = reportLog.getDetailedMetrics();
-        if (summary != null) {
-            serializer.startTag(null, SUMMARY_TAG);
-            summary.serialize(serializer);
-            serializer.endTag(null, SUMMARY_TAG);
+        if (summary == null) {
+            throw new IllegalArgumentException("Metrics reports must have a summary");
         }
+        serializer.startTag(null, SUMMARY_TAG);
+        summary.serialize(serializer);
+        serializer.endTag(null, SUMMARY_TAG);
 
         if (!detailedMetrics.isEmpty()) {
             serializer.startTag(null, DETAIL_TAG);
@@ -254,11 +255,15 @@ public class ReportLog implements Serializable {
      * @throws IOException
      */
     public static ReportLog parse(String result) throws XmlPullParserException, IOException {
-        XmlPullParserFactory factory = XmlPullParserFactory.newInstance();
-        XmlPullParser parser = factory.newPullParser();
-        parser.setInput(new ByteArrayInputStream(result.getBytes(ENCODING)), ENCODING);
-        parser.nextTag();
-        return parse(parser);
+        try {
+            XmlPullParserFactory factory = XmlPullParserFactory.newInstance();
+            XmlPullParser parser = factory.newPullParser();
+            parser.setInput(new ByteArrayInputStream(result.getBytes(ENCODING)), ENCODING);
+            parser.nextTag();
+            return parse(parser);
+        } catch (NullPointerException | XmlPullParserException e) {
+            throw new IllegalArgumentException("Metrics string was empty");
+        }
     }
 
     /**
@@ -274,7 +279,12 @@ public class ReportLog implements Serializable {
         report.setSummary(Metric.parse(parser));
         parser.nextTag();
         parser.require(XmlPullParser.END_TAG, null, SUMMARY_TAG);
-        parser.nextTag();
+        try {
+            parser.nextTag();
+        } catch (XmlPullParserException e) {
+            // Report doesn't have any details, it's ok
+            return report;
+        }
         if (parser.getName().equals(DETAIL_TAG)) {
             while (parser.nextTag() == XmlPullParser.START_TAG) {
                 report.addMetric(Metric.parse(parser));

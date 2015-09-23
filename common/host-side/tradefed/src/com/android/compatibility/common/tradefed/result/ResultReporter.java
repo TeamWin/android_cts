@@ -203,6 +203,10 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
         if (mIsDeviceInfoRun) {
             return;
         }
+        if (mCurrentResult.getResultStatus() == TestStatus.FAIL) {
+            // Test has already failed.
+            return;
+        }
         // device test can have performance results in test metrics
         String perfResult = metrics.get(RESULT_KEY);
         ReportLog report = null;
@@ -323,7 +327,6 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
      */
     @Override
     public void invocationEnded(long elapsedTime) {
-        logResult("ResultReporter.invocationEnded(%d)", elapsedTime);
         if (mInitialized) {
             logResult("Invocation completed in %dms. %d passed, %d failed, %d non executed",
                     elapsedTime,

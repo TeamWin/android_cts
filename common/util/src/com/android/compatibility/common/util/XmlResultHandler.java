@@ -95,10 +95,14 @@ public class XmlResultHandler {
                 continue;
             }
             try {
+                File resultFile = new File(resultDir, TEST_RESULT_FILE_NAME);
+                if (!resultFile.exists()) {
+                    continue;
+                }
                 IInvocationResult invocation = new InvocationResult(resultDir);
                 XmlPullParserFactory factory = XmlPullParserFactory.newInstance();
                 XmlPullParser parser = factory.newPullParser();
-                parser.setInput(new FileReader(new File(resultDir, TEST_RESULT_FILE_NAME)));
+                parser.setInput(new FileReader(resultFile));
                 parser.nextTag();
                 parser.require(XmlPullParser.START_TAG, NS, RESULT_TAG);
                 invocation.setStartTime(parseTimeStamp(
@@ -279,7 +283,10 @@ public class XmlResultHandler {
                         serializer.text(screenshot);
                         serializer.endTag(NS, SCREENSHOT_TAG);
                     }
-                    ReportLog.serialize(serializer, r.getReportLog());
+                    ReportLog report = r.getReportLog();
+                    if (report != null) {
+                        ReportLog.serialize(serializer, report);
+                    }
                     serializer.endTag(NS, TEST_TAG);
                 }
                 serializer.endTag(NS, CASE_TAG);

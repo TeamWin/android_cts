@@ -16,7 +16,11 @@
 
 package com.android.compatibility.common.util;
 
+import com.android.compatibility.common.util.ReportLog.Metric;
+
 import junit.framework.TestCase;
+
+import java.util.List;
 
 /**
  * Unit tests for {@link ReportLog}
@@ -24,16 +28,18 @@ import junit.framework.TestCase;
 public class ReportLogTest extends TestCase {
 
     private static final double[] VALUES = new double[] {.1, 124, 4736, 835.683, 98, 395};
-    private static final String HEADER = "<?xml version='1.0' encoding='UTF-8' standalone='yes' ?>";
-    private static final String EXPECTED_XML =
-            HEADER + "\r\n" +
+    private static final String HEADER_XML =
+            "<?xml version='1.0' encoding='UTF-8' standalone='yes' ?>";
+    private static final String SUMMARY_XML =
+            HEADER_XML + "\r\n" +
             "<Summary>\r\n" +
-            "  <Metric source=\"com.android.compatibility.common.util.ReportLogTest#testSerialize:62\" message=\"Sample\" score-type=\"higher_better\" score-unit=\"byte\">\r\n" +
+            "  <Metric source=\"com.android.compatibility.common.util.ReportLogTest#%s\" message=\"Sample\" score-type=\"higher_better\" score-unit=\"byte\">\r\n" +
             "    <Value>1.0</Value>\r\n" +
             "  </Metric>\r\n" +
-            "</Summary>\r\n" +
+            "</Summary>";
+    private static final String DETAIL_XML =
             "<Detail>\r\n" +
-            "  <Metric source=\"com.android.compatibility.common.util.ReportLogTest#testSerialize:63\" message=\"Details\" score-type=\"neutral\" score-unit=\"fps\">\r\n" +
+            "  <Metric source=\"com.android.compatibility.common.util.ReportLogTest#%s\" message=\"Details\" score-type=\"neutral\" score-unit=\"fps\">\r\n" +
             "    <Value>0.1</Value>\r\n" +
             "    <Value>124.0</Value>\r\n" +
             "    <Value>4736.0</Value>\r\n" +
@@ -42,6 +48,7 @@ public class ReportLogTest extends TestCase {
             "    <Value>395.0</Value>\r\n" +
             "  </Metric>\r\n" +
             "</Detail>";
+    private static final String FULL_XML = SUMMARY_XML + "\r\n" + DETAIL_XML;
 
     private ReportLog mReportLog;
 
@@ -51,17 +58,87 @@ public class ReportLogTest extends TestCase {
     }
 
     public void testSerialize_null() throws Exception {
-        assertEquals(HEADER, ReportLog.serialize(null));
+        try {
+            ReportLog.serialize(null);
+            fail("Expected IllegalArgumentException when serializing an empty report");
+        } catch (IllegalArgumentException e) {
+            // Expected
+        }
     }
 
     public void testSerialize_noData() throws Exception {
-        assertEquals(HEADER, ReportLog.serialize(mReportLog));
+        try {
+            ReportLog.serialize(mReportLog);
+            fail("Expected IllegalArgumentException when serializing an empty report");
+        } catch (IllegalArgumentException e) {
+            // Expected
+        }
     }
 
-    public void testSerialize() throws Exception {
+    public void testSerialize_summaryOnly() throws Exception {
+        mReportLog.setSummary("Sample", 1.0, ResultType.HIGHER_BETTER, ResultUnit.BYTE);
+        assertEquals(String.format(SUMMARY_XML, "testSerialize_summaryOnly:79"),
+                ReportLog.serialize(mReportLog));
+    }
+
+    public void testSerialize_detailOnly() throws Exception {
+        mReportLog.addValues("Details", VALUES, ResultType.NEUTRAL, ResultUnit.FPS);
+        try {
+            ReportLog.serialize(mReportLog);
+            fail("Expected IllegalArgumentException when serializing report without summary");
+        } catch(IllegalArgumentException e) {
+            // Expected
+        }
+    }
+
+    public void testSerialize_full() throws Exception {
         mReportLog.setSummary("Sample", 1.0, ResultType.HIGHER_BETTER, ResultUnit.BYTE);
         mReportLog.addValues("Details", VALUES, ResultType.NEUTRAL, ResultUnit.FPS);
-        assertEquals(EXPECTED_XML, ReportLog.serialize(mReportLog));
+        assertEquals(String.format(FULL_XML, "testSerialize_full:95", "testSerialize_full:96"),
+                ReportLog.serialize(mReportLog));
+    }
+
+    public void testParse_null() throws Exception {
+        try {
+            ReportLog.parse((String) null);
+            fail("Expected IllegalArgumentException when passing a null report");
+        } catch(IllegalArgumentException e) {
+            // Expected
+        }
+    }
+
+    public void testParse_noData() throws Exception {
+        try {
+            ReportLog.parse(HEADER_XML);
+            fail("Expected IllegalArgumentException when passing an empty report");
+        } catch(IllegalArgumentException e) {
+            // Expected
+        }
+    }
+
+    public void testParse_summaryOnly() throws Exception {
+        ReportLog report = ReportLog.parse(String.format(SUMMARY_XML, "testParse_summaryOnly:120"));
+        assertNotNull(report);
+        assertEquals("Sample", report.getSummary().getMessage());
+    }
+
+    public void testParse_detailOnly() throws Exception {
+        try {
+            ReportLog.parse(String.format(DETAIL_XML, "testParse_detailOnly:127"));
+            fail("Expected IllegalArgumentException when serializing report without summary");
+        } catch (IllegalArgumentException e) {
+            // Expected
+        }
+    }
+
+    public void testParse_full() throws Exception {
+        ReportLog report = ReportLog.parse(String.format(FULL_XML, "testParse_full:135",
+                "testParse_full:135"));
+        assertNotNull(report);
+        assertEquals("Sample", report.getSummary().getMessage());
+        List<Metric> details = report.getDetailedMetrics();
+        assertEquals(1, details.size());
+        assertEquals("Details", details.get(0).getMessage());
     }
 
 }
