@@ -33,6 +33,7 @@ import android.graphics.drawable.ClipDrawable;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.Drawable.ConstantState;
 import android.graphics.drawable.ScaleDrawable;
+import android.os.Debug;
 import android.test.AndroidTestCase;
 import android.util.AttributeSet;
 import android.util.DisplayMetrics;
@@ -294,6 +295,29 @@ public class ScaleDrawableTest extends AndroidTestCase {
         // input null as param
         scaleDrawable.onStateChange(null);
         // expected, no Exception thrown out, test success
+    }
+
+    public void testInitialLevel() throws XmlPullParserException, IOException {
+        ScaleDrawable dr = new ScaleDrawable(null, Gravity.CENTER, 1, 1);
+        Resources res = mContext.getResources();
+        XmlResourceParser parser = res.getXml(R.xml.scaledrawable_level);
+        AttributeSet attrs = DrawableTestUtils.getAttributeSet(parser, "scale_allattrs");
+
+        // Ensure that initial level is loaded from XML.
+        dr.inflate(res, parser, attrs);
+        assertEquals(5000, dr.getLevel());
+
+        dr.setLevel(0);
+        assertEquals(0, dr.getLevel());
+
+        // Ensure that initial level is propagated to constant state clones.
+        ScaleDrawable clone = (ScaleDrawable) dr.getConstantState().newDrawable(res);
+        assertEquals(5000, clone.getLevel());
+
+        // Ensure that current level is not tied to constant state.
+        dr.setLevel(1000);
+        assertEquals(1000, dr.getLevel());
+        assertEquals(5000, clone.getLevel());
     }
 
     public void testOnLevelChange() {
