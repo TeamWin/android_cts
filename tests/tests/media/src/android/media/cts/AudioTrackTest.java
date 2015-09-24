@@ -1645,6 +1645,7 @@ public class AudioTrackTest extends CtsAndroidTestCase {
                     Thread.sleep(WAIT_MSEC); // wait for the data to drain.
                     // -------- tear down --------------
                     track.release();
+                    Thread.sleep(WAIT_MSEC); // wait for release to complete
                     frequency += 50; // increment test tone frequency
                 }
             }
