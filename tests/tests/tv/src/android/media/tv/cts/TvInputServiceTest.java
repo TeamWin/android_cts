@@ -39,7 +39,7 @@ import android.view.SurfaceView;
 import android.view.View;
 import android.widget.LinearLayout;
 
-import com.android.cts.tv.R;
+import android.tv.cts.R;
 
 import java.util.ArrayList;
 import java.util.List;

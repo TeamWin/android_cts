@@ -29,7 +29,7 @@ import android.media.tv.cts.HardwareSessionTest.HardwareProxyTvInputService.Coun
 import android.net.Uri;
 import android.test.ActivityInstrumentationTestCase2;
 
-import com.android.cts.tv.R;
+import android.tv.cts.R;
 
 import java.util.ArrayList;
 import java.util.List;

@@ -35,7 +35,7 @@ import android.util.SparseIntArray;
 import android.view.InputEvent;
 import android.view.KeyEvent;
 
-import com.android.cts.tv.R;
+import android.tv.cts.R;
 
 import java.util.ArrayList;
 import java.util.Collections;
