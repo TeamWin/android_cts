@@ -58,7 +58,7 @@ import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-import com.android.cts.media.R;
+import android.media.cts.R;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -1292,7 +1292,7 @@ public class EncodeVirtualDisplayWithCompositionTest extends AndroidTestCase {
 
         void connect() throws Exception {
             Intent intent = new Intent();
-            intent.setClassName("com.android.cts.media",
+            intent.setClassName("android.media.cts",
                     "android.media.cts.RemoteVirtualDisplayService");
             mContext.bindService(intent, mConnection, Context.BIND_AUTO_CREATE);
             if (!mConnectionWait.tryAcquire(DEFAULT_WAIT_TIMEOUT_MS, TimeUnit.MILLISECONDS)) {

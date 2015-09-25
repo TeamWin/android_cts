@@ -30,7 +30,7 @@ public class MediaBrowserTest extends InstrumentationTestCase {
     // The maximum time to wait for an operation.
     private static final long TIME_OUT_MS = 3000L;
     private static final ComponentName TEST_BROWSER_SERVICE = new ComponentName(
-            "com.android.cts.media", "android.media.cts.StubMediaBrowserService");
+            "android.media.cts", "android.media.cts.StubMediaBrowserService");
     private static final ComponentName TEST_INVALID_BROWSER_SERVICE = new ComponentName(
             "invalid.package", "invalid.ServiceClassName");
     private final StubConnectionCallback mConnectionCallback = new StubConnectionCallback();

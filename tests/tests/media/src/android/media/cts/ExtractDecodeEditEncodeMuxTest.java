@@ -35,7 +35,7 @@ import android.media.MediaCodecInfo;
 import android.media.MediaCodecInfo.CodecCapabilities;
 import android.media.MediaCodecInfo.CodecProfileLevel;
 
-import com.android.cts.media.R;
+import android.media.cts.R;
 
 import java.io.File;
 import java.io.IOException;

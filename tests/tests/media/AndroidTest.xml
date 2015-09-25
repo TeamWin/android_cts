@@ -13,7 +13,7 @@
      See the License for the specific language governing permissions and
      limitations under the License.
 -->
-<configuration description="Base config for CTS package preparer">
+<configuration description="Configuration for Media Tests">
     <include name="common-config" />
     <option name="apk-installer:test-file-name" value="CtsMediaTestCases.apk" />
     <target_preparer class="com.android.compatibility.common.tradefed.targetprep.DynamicConfigPusher">
@@ -22,7 +22,7 @@
         <option name="version-name" value="1.0"/>
     </target_preparer>
     <test class="com.android.tradefed.testtype.InstrumentationTest" >
-        <option name="package" value="com.android.cts.media" />
+        <option name="package" value="android.media.cts" />
         <option name="runner" value="android.support.test.runner.AndroidJUnitRunner" />
     </test>
 </configuration>

@@ -16,7 +16,7 @@
 
 package android.media.cts;
 
-import com.android.cts.media.R;
+import android.media.cts.R;
 
 import android.media.cts.CodecUtils;
 
@@ -57,7 +57,7 @@ public class VideoEncoderTest extends MediaPlayerTestBase {
     private static final long INIT_TIMEOUT_MS = 2000;
 
     private static final String SOURCE_URL =
-        "android.resource://com.android.cts.media/raw/video_480x360_mp4_h264_871kbps_30fps";
+        "android.resource://android.media.cts/raw/video_480x360_mp4_h264_871kbps_30fps";
 
     private final boolean DEBUG = false;
 
