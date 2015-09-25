@@ -22,6 +22,8 @@ public class TestResult implements ITestResult {
 
     private final ICaseResult mParent;
     private final String mTestName;
+    private long mStartTime;
+    private long mEndTime;
     private TestStatus mResult;
     private String mMessage;
     private String mStackTrace;
@@ -69,6 +71,7 @@ public class TestResult implements ITestResult {
     @Override
     public void setResultStatus(TestStatus status) {
         mResult = status;
+        mEndTime = System.currentTimeMillis();
     }
 
     /**
@@ -85,6 +88,38 @@ public class TestResult implements ITestResult {
     @Override
     public void setMessage(String message) {
         mMessage = message;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void setStartTime(long time) {
+        mStartTime = time;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public long getStartTime() {
+        return mStartTime;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void setEndTime(long time) {
+        mEndTime = time;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public long getEndTime() {
+        return mEndTime;
     }
 
     /**
@@ -202,6 +237,7 @@ public class TestResult implements ITestResult {
     @Override
     public void resetResult() {
         setResultStatus(TestStatus.NOT_EXECUTED);
+        setStartTime(System.currentTimeMillis());
         setMessage(null);
         setStackTrace(null);
         setReportLog(null);

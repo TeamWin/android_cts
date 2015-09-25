@@ -21,6 +21,7 @@ import junit.framework.TestCase;
 import org.xmlpull.v1.XmlPullParserException;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 

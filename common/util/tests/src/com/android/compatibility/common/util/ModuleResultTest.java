@@ -26,6 +26,7 @@ public class ModuleResultTest extends TestCase {
     private static final String NAME = "ModuleName";
     private static final String ABI = "mips64";
     private static final String ID = AbiUtils.createId(ABI, NAME);
+    private static final String DEVICE = "device123";
     private static final String CLASS = "android.test.FoorBar";
     private static final String METHOD_1 = "testBlah1";
     private static final String METHOD_2 = "testBlah2";
@@ -45,6 +46,8 @@ public class ModuleResultTest extends TestCase {
     }
 
     public void testAccessors() throws Exception {
+        mResult.setDeviceSerial(DEVICE);
+        assertEquals("Incorrect device serial", DEVICE, mResult.getDeviceSerial());
         assertEquals("Incorrect module ID", ID, mResult.getId());
         assertEquals("Incorrect module ABI", ABI, mResult.getAbi());
         assertEquals("Incorrect module name", NAME, mResult.getName());

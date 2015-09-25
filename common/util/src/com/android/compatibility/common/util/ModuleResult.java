@@ -26,6 +26,7 @@ import java.util.Map;
  */
 public class ModuleResult implements IModuleResult {
 
+    private String mDeviceSerial;
     private String mId;
 
     private Map<String, ICaseResult> mResults = new HashMap<>();
@@ -36,6 +37,21 @@ public class ModuleResult implements IModuleResult {
      */
     public ModuleResult(String id) {
         mId = id;
+    }
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void setDeviceSerial(String deviceSerial) {
+        mDeviceSerial = deviceSerial;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public String getDeviceSerial() {
+        return mDeviceSerial;
     }
 
     /**
