@@ -25,6 +25,11 @@ LOCAL_MULTILIB := both
 # and when built explicitly put it in the data partition
 LOCAL_MODULE_PATH := $(TARGET_OUT_DATA_APPS)
 
+# Tag this module as a cts_v2 test artifact
+LOCAL_COMPATIBILITY_SUITE := cts_v2
+
+LOCAL_CTS_MODULE_CONFIG := $(LOCAL_PATH)/Old$(CTS_MODULE_TEST_CONFIG)
+
 LOCAL_JAVA_LIBRARIES := android.test.runner telephony-common
 
 LOCAL_STATIC_JAVA_LIBRARIES := ctsdeviceutil ctstestrunner

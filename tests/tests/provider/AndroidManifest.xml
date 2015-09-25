@@ -16,7 +16,7 @@
  -->
 
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-          package="com.android.cts.provider">
+          package="android.provider.cts">
 
     <uses-sdk android:minSdkVersion="21" android:targetSdkVersion="21" />
 
@@ -50,7 +50,7 @@
         </activity>
 
         <service android:name="android.provider.cts.contacts.account.MockAccountService"
-                 process="com.android.cts.provider"
+                 process="android.provider.cts"
                  android:exported="true">
             <intent-filter>
                 <action android:name="android.accounts.AccountAuthenticator"/>
@@ -72,14 +72,14 @@
     </application>
 
     <instrumentation android:name="android.support.test.runner.AndroidJUnitRunner"
-                     android:targetPackage="com.android.cts.provider"
+                     android:targetPackage="android.provider.cts"
                      android:label="CTS tests of android.provider">
         <meta-data android:name="listener"
             android:value="com.android.cts.runner.CtsTestRunListener" />
     </instrumentation>
 
     <instrumentation android:name="android.provider.cts.CalendarTest$CalendarEmmaTestRunner"
-                     android:targetPackage="com.android.cts.provider"
+                     android:targetPackage="android.provider.cts"
                      android:label="Augmented CTS tests of Calendar provider"/>
 
 </manifest>
