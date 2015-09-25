@@ -127,7 +127,7 @@ td.pass {
     margin-right:auto;
 }
 
-td.not-executed {
+td.not_executed {
     background-color: #A5C639;
     vertical-align: top;
     text-align: center;

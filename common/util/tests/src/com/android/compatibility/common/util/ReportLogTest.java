@@ -20,6 +20,8 @@ import com.android.compatibility.common.util.ReportLog.Metric;
 
 import junit.framework.TestCase;
 
+import org.xmlpull.v1.XmlPullParserException;
+
 import java.util.List;
 
 /**
@@ -33,13 +35,13 @@ public class ReportLogTest extends TestCase {
     private static final String SUMMARY_XML =
             HEADER_XML + "\r\n" +
             "<Summary>\r\n" +
-            "  <Metric source=\"com.android.compatibility.common.util.ReportLogTest#%s\" message=\"Sample\" score-type=\"higher_better\" score-unit=\"byte\">\r\n" +
+            "  <Metric source=\"com.android.compatibility.common.util.ReportLogTest#%s\" message=\"Sample\" score_type=\"higher_better\" score_unit=\"byte\">\r\n" +
             "    <Value>1.0</Value>\r\n" +
             "  </Metric>\r\n" +
             "</Summary>";
     private static final String DETAIL_XML =
             "<Detail>\r\n" +
-            "  <Metric source=\"com.android.compatibility.common.util.ReportLogTest#%s\" message=\"Details\" score-type=\"neutral\" score-unit=\"fps\">\r\n" +
+            "  <Metric source=\"com.android.compatibility.common.util.ReportLogTest#%s\" message=\"Details\" score_type=\"neutral\" score_unit=\"fps\">\r\n" +
             "    <Value>0.1</Value>\r\n" +
             "    <Value>124.0</Value>\r\n" +
             "    <Value>4736.0</Value>\r\n" +
@@ -77,7 +79,7 @@ public class ReportLogTest extends TestCase {
 
     public void testSerialize_summaryOnly() throws Exception {
         mReportLog.setSummary("Sample", 1.0, ResultType.HIGHER_BETTER, ResultUnit.BYTE);
-        assertEquals(String.format(SUMMARY_XML, "testSerialize_summaryOnly:79"),
+        assertEquals(String.format(SUMMARY_XML, "testSerialize_summaryOnly:81"),
                 ReportLog.serialize(mReportLog));
     }
 
@@ -94,7 +96,7 @@ public class ReportLogTest extends TestCase {
     public void testSerialize_full() throws Exception {
         mReportLog.setSummary("Sample", 1.0, ResultType.HIGHER_BETTER, ResultUnit.BYTE);
         mReportLog.addValues("Details", VALUES, ResultType.NEUTRAL, ResultUnit.FPS);
-        assertEquals(String.format(FULL_XML, "testSerialize_full:95", "testSerialize_full:96"),
+        assertEquals(String.format(FULL_XML, "testSerialize_full:97", "testSerialize_full:98"),
                 ReportLog.serialize(mReportLog));
     }
 
@@ -110,30 +112,30 @@ public class ReportLogTest extends TestCase {
     public void testParse_noData() throws Exception {
         try {
             ReportLog.parse(HEADER_XML);
-            fail("Expected IllegalArgumentException when passing an empty report");
-        } catch(IllegalArgumentException e) {
+            fail("Expected XmlPullParserException when passing a report with no content");
+        } catch(XmlPullParserException e) {
             // Expected
         }
     }
 
     public void testParse_summaryOnly() throws Exception {
-        ReportLog report = ReportLog.parse(String.format(SUMMARY_XML, "testParse_summaryOnly:120"));
+        ReportLog report = ReportLog.parse(String.format(SUMMARY_XML, "testParse_summaryOnly:122"));
         assertNotNull(report);
         assertEquals("Sample", report.getSummary().getMessage());
     }
 
     public void testParse_detailOnly() throws Exception {
         try {
-            ReportLog.parse(String.format(DETAIL_XML, "testParse_detailOnly:127"));
-            fail("Expected IllegalArgumentException when serializing report without summary");
-        } catch (IllegalArgumentException e) {
+            ReportLog.parse(String.format(DETAIL_XML, "testParse_detailOnly:129"));
+            fail("Expected XmlPullParserException when serializing report without summary");
+        } catch (XmlPullParserException e) {
             // Expected
         }
     }
 
     public void testParse_full() throws Exception {
-        ReportLog report = ReportLog.parse(String.format(FULL_XML, "testParse_full:135",
-                "testParse_full:135"));
+        ReportLog report = ReportLog.parse(String.format(FULL_XML, "testParse_full:137",
+                "testParse_full:138"));
         assertNotNull(report);
         assertEquals("Sample", report.getSummary().getMessage());
         List<Metric> details = report.getDetailedMetrics();
