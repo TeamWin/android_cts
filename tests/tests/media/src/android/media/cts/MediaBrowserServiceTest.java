@@ -33,7 +33,7 @@ public class MediaBrowserServiceTest extends InstrumentationTestCase {
     private static final long TIME_OUT_MS = 3000L;
     private static final long WAIT_TIME_FOR_NO_RESPONSE_MS = 500L;
     private static final ComponentName TEST_BROWSER_SERVICE = new ComponentName(
-            "com.android.cts.media", "android.media.cts.StubMediaBrowserService");
+            "android.media.cts", "android.media.cts.StubMediaBrowserService");
     private final Object mWaitLock = new Object();
 
     private final MediaBrowser.ConnectionCallback mConnectionCallback =

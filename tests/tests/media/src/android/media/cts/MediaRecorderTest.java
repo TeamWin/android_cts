@@ -90,7 +90,7 @@ public class MediaRecorderTest extends ActivityInstrumentationTestCase2<MediaStu
     private ConditionVariable mMaxFileSizeCond;
 
     public MediaRecorderTest() {
-        super("com.android.cts.media", MediaStubActivity.class);
+        super("android.media.cts", MediaStubActivity.class);
         OUTPUT_PATH = new File(Environment.getExternalStorageDirectory(),
                 "record.out").getAbsolutePath();
         OUTPUT_PATH2 = new File(Environment.getExternalStorageDirectory(),

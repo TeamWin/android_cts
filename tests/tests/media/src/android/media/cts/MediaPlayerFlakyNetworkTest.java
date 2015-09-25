@@ -46,7 +46,7 @@ import java.util.concurrent.FutureTask;
  * from an HTTP server over a simulated "flaky" network.
  */
 public class MediaPlayerFlakyNetworkTest extends MediaPlayerTestBase {
-    private static final String PKG = "com.android.cts.media";
+    private static final String PKG = "android.media.cts";
 
     private static final String[] TEST_VIDEOS = {
         "raw/video_480x360_mp4_h264_1350kbps_30fps_aac_stereo_192kbps_44100hz",

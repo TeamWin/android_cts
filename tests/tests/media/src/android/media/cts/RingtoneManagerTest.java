@@ -15,7 +15,7 @@
  */
 package android.media.cts;
 
-import com.android.cts.media.R;
+import android.media.cts.R;
 
 
 import android.app.Activity;
@@ -34,7 +34,7 @@ import android.util.Log;
 public class RingtoneManagerTest
         extends ActivityInstrumentationTestCase2<RingtonePickerActivity> {
 
-    private static final String PKG = "com.android.cts.media";
+    private static final String PKG = "android.media.cts";
     private static final String TAG = "RingtoneManagerTest";
 
     private RingtonePickerActivity mActivity;
