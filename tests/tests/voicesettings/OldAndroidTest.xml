@@ -1,4 +1,3 @@
-<?xml version="1.0" encoding="utf-8"?>
 <!-- Copyright (C) 2015 The Android Open Source Project
 
      Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,14 +12,9 @@
      See the License for the specific language governing permissions and
      limitations under the License.
 -->
-<configuration description="Configuration for Voice Settings Tests">
+<configuration description="Test module config for VoiceSettings">
     <include name="common-config" />
+    <option name="cts-apk-installer:test-file-name" value="CtsVoiceSettingsService.apk" />
     <option name="run-command:run-command"
          value="settings put secure voice_interaction_service android.voicesettings.service/.MainInteractionService" />
-    <option name="apk-installer:test-file-name" value="CtsVoiceSettingsService.apk" />
-    <option name="apk-installer:test-file-name" value="CtsVoiceSettingsTestCases.apk" />
-    <test class="com.android.tradefed.testtype.InstrumentationTest" >
-        <option name="package" value="android.voicesettings.cts" />
-        <option name="runner" value="android.support.test.runner.AndroidJUnitRunner" />
-    </test>
 </configuration>
