@@ -89,17 +89,6 @@ for JAR in $JARS; do
     JAR_PATH=${JAR_PATH}:${JAR_DIR}/${JAR}.jar
 done
 
-OPTIONAL_JARS="
-  google-tradefed
-  google-tradefed-tests
-  google-tf-prod-tests"
-
-for JAR in $OPTIONAL_JARS; do
-    if [ -f "$JAR.jar" ]; then
-        JAR_PATH=${JAR_PATH}:${JAR_DIR}/${JAR}.jar
-    fi;
-done
-
 # load any shared libraries for host-side executables
 LIB_DIR=${CTS_V2_ROOT}/android-cts_v2/lib
 if [ "$HOST" == "Linux" ]; then

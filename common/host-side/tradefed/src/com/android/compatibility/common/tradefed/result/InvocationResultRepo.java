@@ -16,7 +16,7 @@
 package com.android.compatibility.common.tradefed.result;
 
 import com.android.compatibility.common.util.IInvocationResult;
-import com.android.compatibility.common.util.ResultHandler;
+import com.android.compatibility.common.util.XmlResultHandler;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -38,7 +38,7 @@ public class InvocationResultRepo implements IInvocationResultRepo {
      * @param testResultDir the parent directory of results
      */
     public InvocationResultRepo(File testResultDir) {
-        mResults = ResultHandler.getResults(testResultDir);
+        mResults = XmlResultHandler.getResults(testResultDir);
     }
 
     /**

@@ -22,6 +22,10 @@ import java.util.List;
  */
 public interface IModuleResult extends Comparable<IModuleResult> {
 
+    void setDeviceSerial(String deviceSerial);
+
+    String getDeviceSerial();
+
     String getId();
 
     String getName();

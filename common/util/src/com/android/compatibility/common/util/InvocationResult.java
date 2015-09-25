@@ -32,8 +32,7 @@ public class InvocationResult implements IInvocationResult {
 
     private long mTimestamp;
     private Map<String, IModuleResult> mModuleResults = new LinkedHashMap<>();
-    private Map<String, String> mBuildInfo = new HashMap<>();
-    private Set<String> mSerials = new HashSet<>();
+    private Map<String, String> mDeviceInfo = new HashMap();
     private String mTestPlan;
     private File mResultDir;
 
@@ -92,16 +91,16 @@ public class InvocationResult implements IInvocationResult {
      * {@inheritDoc}
      */
     @Override
-    public void addBuildInfo(String key, String value) {
-        mBuildInfo.put(key, value);
+    public void addDeviceInfo(String key, String value) {
+        mDeviceInfo.put(key, value);
     }
 
     /**
      * {@inheritDoc}
      */
     @Override
-    public Map<String, String> getBuildInfo() {
-        return mBuildInfo;
+    public Map<String, String> getDeviceInfo() {
+        return mDeviceInfo;
     }
 
     /**
@@ -140,16 +139,12 @@ public class InvocationResult implements IInvocationResult {
      * {@inheritDoc}
      */
     @Override
-    public void addDeviceSerial(String serial) {
-        mSerials.add(serial);
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
     public Set<String> getDeviceSerials() {
-        return mSerials;
+        Set<String> serials = new HashSet<>();
+        for (IModuleResult module : mModuleResults.values()) {
+            serials.add(module.getDeviceSerial());
+        }
+        return serials;
     }
 
     /**

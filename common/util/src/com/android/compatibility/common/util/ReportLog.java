@@ -40,8 +40,8 @@ public class ReportLog implements Serializable {
     private static final String DETAIL_TAG = "Detail";
     private static final String METRIC_TAG = "Metric";
     private static final String MESSAGE_ATTR = "message";
-    private static final String SCORETYPE_ATTR = "score_type";
-    private static final String SCOREUNIT_ATTR = "score_unit";
+    private static final String SCORETYPE_ATTR = "score-type";
+    private static final String SCOREUNIT_ATTR = "score-unit";
     private static final String SOURCE_ATTR = "source";
     private static final String SUMMARY_TAG = "Summary";
     private static final String VALUE_TAG = "Value";
@@ -255,14 +255,15 @@ public class ReportLog implements Serializable {
      * @throws IOException
      */
     public static ReportLog parse(String result) throws XmlPullParserException, IOException {
-        if (result == null || result.trim().isEmpty()) {
+        try {
+            XmlPullParserFactory factory = XmlPullParserFactory.newInstance();
+            XmlPullParser parser = factory.newPullParser();
+            parser.setInput(new ByteArrayInputStream(result.getBytes(ENCODING)), ENCODING);
+            parser.nextTag();
+            return parse(parser);
+        } catch (NullPointerException | XmlPullParserException e) {
             throw new IllegalArgumentException("Metrics string was empty");
         }
-        XmlPullParserFactory factory = XmlPullParserFactory.newInstance();
-        XmlPullParser parser = factory.newPullParser();
-        parser.setInput(new ByteArrayInputStream(result.getBytes(ENCODING)), ENCODING);
-        parser.nextTag();
-        return parse(parser);
     }
 
     /**

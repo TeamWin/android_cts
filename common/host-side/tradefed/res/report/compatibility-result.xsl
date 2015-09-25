@@ -24,7 +24,7 @@
             <head>
                 <title>Test Report</title>
                 <style type="text/css">
-                    @import "compatibility_result.css";
+                    @import "compatibility-result.css";
                 </style>
             </head>
             <body>
@@ -38,12 +38,12 @@
                         </tr>
                     </table>
                 </div>
-                <img src="newrule_green.png" align="left"></img>
+                <img src="newrule-green.png" align="left"></img>
 
                 <br></br>
 
                 <center>
-                    <a href="device-info/GenericDeviceInfo.deviceinfo.json" >Device Information</a>
+                    <a href="device-info.xml" >Device Information</a>
                 </center>
 
                 <br></br>
@@ -56,26 +56,26 @@
                         <tr>
                             <td class="rowtitle">Compatibility Suite</td>
                             <td>
-                                <xsl:value-of select="Result/@suite_name"/>
+                                <xsl:value-of select="Result/@suite-name"/>
                             </td>
                         </tr>
                         <tr>
                             <td class="rowtitle">Compatibility Version</td>
                             <td>
-                                <xsl:value-of select="Result/@suite_version"/>
+                                <xsl:value-of select="Result/@suite-version"/>
                             </td>
                         </tr>
                         <tr>
                             <td class="rowtitle">Report Version</td>
                             <td>
-                                <xsl:value-of select="Result/@report_version"/>
+                                <xsl:value-of select="Result/@report-version"/>
                             </td>
                         </tr>
                         <tr>
                             <td class="rowtitle">Host Info</td>
                             <td>
-                                <xsl:value-of select="Result/@host_name"/>
-                                (<xsl:value-of select="Result/@os_name"/> - <xsl:value-of select="Result/@os_version"/>)
+                                <xsl:value-of select="Result/@host-name"/>
+                                (<xsl:value-of select="Result/@os-name"/> - <xsl:value-of select="Result/@os-version"/>)
                             </td>
                         </tr>
                         <tr>
@@ -111,7 +111,7 @@
                         <tr>
                             <td class="rowtitle">Tests Not Executed</td>
                             <td>
-                                <xsl:value-of select="Result/Summary/@not_executed"/>
+                                <xsl:value-of select="Result/Summary/@not-executed"/>
                             </td>
                         </tr>
                     </table>
@@ -141,7 +141,7 @@
                                     <xsl:value-of select="count(Test[@result = 'fail'])"/>
                                 </td>
                                 <td>
-                                    <xsl:value-of select="count(Test[@result = 'not_executed'])"/>
+                                    <xsl:value-of select="count(Test[@result = 'not-executed'])"/>
                                 </td>
                                 <td>
                                     <xsl:value-of select="count(Test)"/>
@@ -158,7 +158,7 @@
 
                 <xsl:call-template name="filteredResultTestReport">
                     <xsl:with-param name="header" select="'Not Executed Tests'" />
-                    <xsl:with-param name="resultFilter" select="'not_executed'" />
+                    <xsl:with-param name="resultFilter" select="'not-executed'" />
                 </xsl:call-template>
 
                 <h2 align="center">Detailed Test Report</h2>
@@ -230,8 +230,8 @@
                                         </td>
                                     </xsl:if>
 
-                                    <xsl:if test="@result='not_executed'">
-                                        <td class="not_executed">
+                                    <xsl:if test="@result='not-executed'">
+                                        <td class="not-executed">
                                             <div style="text-align: center; margin-left:auto; margin-right:auto;">
                                                 <xsl:value-of select="@result"/>
                                             </div>

@@ -59,11 +59,11 @@ public class ResultReporterTest extends TestCase {
             "at four.big.insects.Marley.sing(Marley.java:10)";
     private static final String RESULT_DIR = "result123";
     private static final String[] FORMATTING_FILES = {
-        "compatibility_result.css",
-        "compatibility_result.xsd",
-        "compatibility_result.xsl",
+        "compatibility-result.css",
+        "compatibility-result.xsd",
+        "compatibility-result.xsl",
         "logo.png",
-        "newrule_green.png"};
+        "newrule-green.png"};
 
     private ResultReporter mReporter;
     private IFolderBuildInfo mBuildInfo;

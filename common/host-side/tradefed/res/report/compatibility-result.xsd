@@ -29,14 +29,14 @@
       <xs:attribute name="start" type="xs:string"/>
       <xs:attribute name="end" type="xs:string"/>
       <xs:attribute name="plan" type="xs:string"/>
-      <xs:attribute name="suite_name" type="xs:string"/>
-      <xs:attribute name="suite_version" type="xs:string"/>
+      <xs:attribute name="suite-name" type="xs:string"/>
+      <xs:attribute name="suite-version" type="xs:string"/>
     </xs:complexType>
   </xs:element>
 
   <xs:complexType name="summaryType">
     <xs:attribute name="failed" type="xs:integer"/>
-    <xs:attribute name="not_executed" type="xs:integer"/>
+    <xs:attribute name="not-executed" type="xs:integer"/>
     <xs:attribute name="pass" type="xs:integer"/>
   </xs:complexType>
 
@@ -121,7 +121,7 @@
     <xs:restriction base="xs:string">
       <xs:enumeration value="pass"/>
       <xs:enumeration value="fail"/>
-      <xs:enumeration value="not_executed"/>
+      <xs:enumeration value="not-executed"/>
     </xs:restriction>
   </xs:simpleType>
 </xs:schema>
