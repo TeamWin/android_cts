@@ -13,15 +13,10 @@
      See the License for the specific language governing permissions and
      limitations under the License.
 -->
-<configuration description="Configuration for Assist Tests">
+<configuration description="Test module config for Assist">
     <include name="common-config" />
+    <option name="cts-apk-installer:test-file-name" value="CtsAssistService.apk" />
+    <option name="cts-apk-installer:test-file-name" value="CtsAssistApp.apk" />
     <option name="run-command:run-command"
          value="settings put secure voice_interaction_service android.assist.service/.MainInteractionService" />
-    <option name="apk-installer:test-file-name" value="CtsAssistService.apk" />
-    <option name="apk-installer:test-file-name" value="CtsAssistApp.apk" />
-    <option name="apk-installer:test-file-name" value="CtsAssistTestCases.apk" />
-    <test class="com.android.tradefed.testtype.InstrumentationTest" >
-        <option name="package" value="android.assist.cts" />
-        <option name="runner" value="android.support.test.runner.AndroidJUnitRunner" />
-    </test>
 </configuration>
