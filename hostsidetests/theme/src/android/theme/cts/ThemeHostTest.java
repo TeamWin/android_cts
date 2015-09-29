@@ -17,11 +17,11 @@
 package android.theme.cts;
 
 import com.android.compatibility.common.util.AbiUtils;
-import com.android.cts.tradefed.build.CtsBuildHelper;
-import com.android.cts.util.TimeoutReq;
+import com.android.cts.migration.MigrationHelper;
 import com.android.ddmlib.Log;
 import com.android.ddmlib.Log.LogLevel;
 import com.android.tradefed.build.IBuildInfo;
+import com.android.tradefed.build.IFolderBuildInfo;
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.testtype.DeviceTestCase;
@@ -73,7 +73,7 @@ public class ThemeHostTest extends DeviceTestCase implements IAbiReceiver, IBuil
     private IAbi mAbi;
 
     /** A reference to the build. */
-    private CtsBuildHelper mBuild;
+    private IFolderBuildInfo mBuildInfo;
 
     /** A reference to the device under test. */
     private ITestDevice mDevice;
@@ -89,8 +89,7 @@ public class ThemeHostTest extends DeviceTestCase implements IAbiReceiver, IBuil
 
     @Override
     public void setBuild(IBuildInfo buildInfo) {
-        // Get the build, this is used to access the APK.
-        mBuild = CtsBuildHelper.createBuildHelper(buildInfo);
+        mBuildInfo = (IFolderBuildInfo) buildInfo;
     }
 
     @Override
@@ -101,7 +100,7 @@ public class ThemeHostTest extends DeviceTestCase implements IAbiReceiver, IBuil
         mDevice.uninstallPackage(APP_PACKAGE_NAME);
 
         // Get the APK from the build.
-        final File app = mBuild.getTestApp(String.format("%s.apk", APK_NAME));
+        final File app = MigrationHelper.getTestFile(mBuildInfo, String.format("%s.apk", APK_NAME));
         final String[] options = {AbiUtils.createAbiFlag(mAbi.getName())};
 
         mDevice.installPackage(app, false, options);
@@ -162,7 +161,6 @@ public class ThemeHostTest extends DeviceTestCase implements IAbiReceiver, IBuil
         super.tearDown();
     }
 
-    @TimeoutReq(minutes = 60)
     public void testThemes() throws Exception {
         if (checkHardwareTypeSkipTest(mDevice.executeShellCommand(HARDWARE_TYPE_CMD).trim())) {
             Log.logAndDisplay(LogLevel.INFO, LOG_TAG, "Skipped themes test for watch");

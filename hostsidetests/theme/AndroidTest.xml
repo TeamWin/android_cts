@@ -13,11 +13,8 @@
      See the License for the specific language governing permissions and
      limitations under the License.
 -->
-<configuration description="Configuration for Theme Tests">
+<configuration description="Base config for CTS package preparer">
     <include name="common-config" />
-    <option name="apk-installer:test-file-name" value="CtsThemeDeviceTestCases.apk" />
-    <test class="com.android.tradefed.testtype.InstrumentationTest" >
-        <option name="package" value="android.theme.cts" />
-        <option name="runner" value="android.support.test.runner.AndroidJUnitRunner" />
-    </test>
+    <option name="apk-installer:test-file-name" value="CtsThemeDeviceApp.apk" />
+    <test class="android.theme.cts.ThemeHostTest" />
 </configuration>
