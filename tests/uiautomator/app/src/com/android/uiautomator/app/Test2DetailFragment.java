@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.android.cts.uiautomator;
+package com.android.uiautomator.app;
 
 import android.app.AlertDialog;
 import android.os.Bundle;

@@ -104,7 +104,7 @@ cts_support_packages := \
     CtsSomeAccessibilityServices \
     CtsThemeDeviceApp \
     TestDeviceSetup \
-    CtsUiAutomatorApp \
+    CtsUiAutomatorTestApp \
     CtsUsbSerialTestApp \
     CtsVoiceInteractionService \
     CtsVoiceInteractionApp \
@@ -246,7 +246,7 @@ cts_native_tests += bionic-unit-tests-cts
 endif
 
 cts_ui_tests := \
-    CtsUiAutomatorTests
+    CtsUiAutomatorTestCases
 
 cts_device_jars := \
     CtsJankTestJar \

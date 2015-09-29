@@ -15,27 +15,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  -->
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<fragment xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    android:orientation="horizontal"
+    android:name="com.android.uiautomator.app.TestListFragment"
+    android:id="@+id/item_list"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:layout_marginLeft="16dp"
     android:layout_marginRight="16dp"
-    android:divider="?android:attr/dividerHorizontal"
-    android:showDividers="middle"
-    tools:context=".TestListActivity">
-
-    <fragment
-        android:id="@+id/item_list"
-        android:name="com.android.cts.uiautomator.TestListFragment"
-        android:layout_width="0dp"
-        android:layout_height="match_parent"
-        android:layout_weight="1" />
-
-    <FrameLayout android:id="@+id/test_detail_container"
-        android:layout_width="0dp"
-        android:layout_height="match_parent"
-        android:layout_weight="3" />
-
-</LinearLayout>
+    tools:context=".MainActivity" />
