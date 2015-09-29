@@ -11,21 +11,22 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#
-LOCAL_PATH := $(call my-dir)
+
+LOCAL_PATH:= $(call my-dir)
 
 include $(CLEAR_VARS)
 
-LOCAL_MODULE    := libctsdram_jni
+LOCAL_SRC_FILES := $(call all-java-files-under, src)
+
+LOCAL_JAVA_LIBRARIES := tradefed-prebuilt
 
 LOCAL_MODULE_TAGS := optional
 
-LOCAL_SRC_FILES := MemoryNativeJni.cpp
+LOCAL_MODULE := cts-migration-lib
 
-LOCAL_C_INCLUDES := $(JNI_H_INCLUDE)
+LOCAL_SDK_VERSION := current
 
-LOCAL_SHARED_LIBRARIES := libnativehelper
+# Tag this module as a cts_v2 test artifact
+LOCAL_COMPATIBILITY_SUITE := cts_v2
 
-LOCAL_SDK_VERSION := 14
-
-include $(BUILD_SHARED_LIBRARY)
+include $(BUILD_HOST_JAVA_LIBRARY)
