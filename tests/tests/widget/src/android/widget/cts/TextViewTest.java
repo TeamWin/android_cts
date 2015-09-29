@@ -4452,9 +4452,10 @@ public class TextViewTest extends ActivityInstrumentationTestCase2<TextViewCtsAc
     public void testSetGetBreakStrategy() {
         TextView tv = new TextView(mActivity);
 
-        // The default value is from the theme, here the default is BREAK_STRATEGY_HIGH_QUALITY for
-        // TextView.
-        assertEquals(Layout.BREAK_STRATEGY_HIGH_QUALITY, tv.getBreakStrategy());
+        // The default value is from the theme.
+        int defaultValue = mActivity.getTheme().obtainStyledAttributes(
+                new int[] {android.R.attr.breakStrategy}).getInt(0, -1);
+        assertTrue(defaultValue == -1 || defaultValue == tv.getBreakStrategy());
 
         tv.setBreakStrategy(Layout.BREAK_STRATEGY_SIMPLE);
         assertEquals(Layout.BREAK_STRATEGY_SIMPLE, tv.getBreakStrategy());
@@ -4464,27 +4465,14 @@ public class TextViewTest extends ActivityInstrumentationTestCase2<TextViewCtsAc
 
         tv.setBreakStrategy(Layout.BREAK_STRATEGY_BALANCED);
         assertEquals(Layout.BREAK_STRATEGY_BALANCED, tv.getBreakStrategy());
-
-        EditText et = new EditText(mActivity);
-
-        // The default value is from the theme, here the default is BREAK_STRATEGY_SIMPLE for
-        // EditText.
-        assertEquals(Layout.BREAK_STRATEGY_SIMPLE, et.getBreakStrategy());
-
-        et.setBreakStrategy(Layout.BREAK_STRATEGY_SIMPLE);
-        assertEquals(Layout.BREAK_STRATEGY_SIMPLE, et.getBreakStrategy());
-
-        et.setBreakStrategy(Layout.BREAK_STRATEGY_HIGH_QUALITY);
-        assertEquals(Layout.BREAK_STRATEGY_HIGH_QUALITY, et.getBreakStrategy());
-
-        et.setBreakStrategy(Layout.BREAK_STRATEGY_BALANCED);
-        assertEquals(Layout.BREAK_STRATEGY_BALANCED, et.getBreakStrategy());
     }
 
     public void testSetGetHyphenationFrequency() {
         TextView tv = new TextView(mActivity);
 
-        assertEquals(Layout.HYPHENATION_FREQUENCY_NORMAL, tv.getHyphenationFrequency());
+        int defaultValue = mActivity.getTheme().obtainStyledAttributes(
+                new int[] {android.R.attr.hyphenationFrequency}).getInt(0, -1);
+        assertTrue(defaultValue == -1 || defaultValue ==  tv.getHyphenationFrequency());
 
         tv.setHyphenationFrequency(Layout.HYPHENATION_FREQUENCY_NONE);
         assertEquals(Layout.HYPHENATION_FREQUENCY_NONE, tv.getHyphenationFrequency());
