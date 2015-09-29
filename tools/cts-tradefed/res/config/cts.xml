@@ -46,4 +46,10 @@
         <option name="throw-error" value="false"/> <!-- Only print warning for other build type -->
     </target_preparer>
 
+    <target_preparer class="com.android.compatibility.common.tradefed.targetprep.ApkPreconditionCheck">
+        <option name="apk-name" value="CtsPreconditions.apk"/>
+        <option name="package-name" value="com.android.preconditions.cts"/>
+        <option name="runner" value="android.support.test.runner.AndroidJUnitRunner"/>
+    </target_preparer>
+
 </configuration>
