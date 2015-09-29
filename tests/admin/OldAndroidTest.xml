@@ -15,6 +15,6 @@
 -->
 <configuration description="CTS device admin test config">
     <include name="common-config" />
-    <option name="run-command:run-command" value="dpm set-active-admin android.deviceadmin.cts/.CtsDeviceAdminReceiver" />
-    <option name="run-command:run-command" value="dpm set-active-admin android.deviceadmin.cts/.CtsDeviceAdminReceiver2" />
+    <option name="run-command:run-command" value="dpm set-active-admin android.admin.app/.CtsDeviceAdminReceiver" />
+    <option name="run-command:run-command" value="dpm set-active-admin android.admin.app/.CtsDeviceAdminReceiver2" />
 </configuration>

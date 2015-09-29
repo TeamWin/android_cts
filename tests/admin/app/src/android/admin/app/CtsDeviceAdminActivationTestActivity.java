@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.deviceadmin.cts;
+package android.admin.app;
 
 import android.app.Activity;
 import android.content.Intent;

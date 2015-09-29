@@ -680,7 +680,7 @@ public class DevicePolicyManagerTest extends AndroidTestCase {
             return;
         }
         try {
-            mDevicePolicyManager.clearDeviceOwnerApp("android.deviceadmin.cts");
+            mDevicePolicyManager.clearDeviceOwnerApp("android.admin.app");
             fail("did not throw expected SecurityException");
         } catch (SecurityException e) {
             assertDeviceOwnerMessage(e.getMessage());

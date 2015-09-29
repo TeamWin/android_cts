@@ -48,9 +48,8 @@
     </target_preparer>
 
     <target_preparer class="com.android.compatibility.common.tradefed.targetprep.ApkPreconditionCheck">
-        <option name="apk-name" value="CtsPreconditions.apk"/>
-        <option name="package-name" value="com.android.preconditions.cts"/>
-        <option name="runner" value="android.support.test.runner.AndroidJUnitRunner"/>
+        <option name="apk" value="CtsPreconditions.apk"/>
+        <option name="package" value="com.android.preconditions.cts"/>
     </target_preparer>
 
     <target_preparer class="com.android.compatibility.common.tradefed.targetprep.LocaleCheck">
