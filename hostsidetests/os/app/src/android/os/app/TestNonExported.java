@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.android.cts.app.os.test;
+package android.os.app;
 
 import android.app.Activity;
 

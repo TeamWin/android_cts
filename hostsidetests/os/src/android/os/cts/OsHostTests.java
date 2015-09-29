@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.android.cts.app.os;
+package android.os.cts;
 
 import com.android.tradefed.build.IBuildInfo;
 import com.android.tradefed.device.CollectingOutputReceiver;
@@ -23,7 +23,7 @@ import com.android.tradefed.testtype.DeviceTestCase;
 import com.android.tradefed.testtype.IBuildReceiver;
 
 public class OsHostTests extends DeviceTestCase implements IBuildReceiver {
-    private static final String TEST_APP_PACKAGE = "com.android.cts.app.os.test";
+    private static final String TEST_APP_PACKAGE = "android.os.app";
     private static final String TEST_NON_EXPORTED_ACTIVITY_CLASS = "TestNonExported";
 
     private static final String START_NON_EXPORTED_ACTIVITY_COMMAND = String.format(
