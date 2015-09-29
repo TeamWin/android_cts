@@ -16,6 +16,7 @@
 
 package android.jdwpsecurity.cts;
 
+import com.android.cts.migration.MigrationHelper;
 import com.android.tradefed.build.IBuildInfo;
 import com.android.tradefed.build.IFolderBuildInfo;
 import com.android.tradefed.device.DeviceNotAvailableException;
