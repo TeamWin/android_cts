@@ -16,8 +16,8 @@
 
 package android.jdwpsecurity.cts;
 
-import com.android.cts.tradefed.build.CtsBuildHelper;
 import com.android.tradefed.build.IBuildInfo;
+import com.android.tradefed.build.IFolderBuildInfo;
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.log.LogUtil.CLog;
 import com.android.tradefed.testtype.DeviceTestCase;
@@ -45,7 +45,7 @@ public class JdwpSecurityHostTest extends DeviceTestCase implements IBuildReceiv
     private static final String DEVICE_JAR_FILENAME = "CtsJdwpApp.jar";
     private static final String JAR_MAIN_CLASS_NAME = "com.android.cts.jdwpsecurity.JdwpTest";
 
-    private CtsBuildHelper mCtsBuild;
+    private IFolderBuildInfo mBuildInfo;
 
     private static String getDeviceScriptFilepath() {
         return DEVICE_LOCATION + File.separator + DEVICE_SCRIPT_FILENAME;
@@ -57,7 +57,7 @@ public class JdwpSecurityHostTest extends DeviceTestCase implements IBuildReceiv
 
     @Override
     public void setBuild(IBuildInfo buildInfo) {
-        mCtsBuild = CtsBuildHelper.createBuildHelper(buildInfo);
+        mBuildInfo = (IFolderBuildInfo) buildInfo;
     }
 
     @Override
@@ -85,7 +85,7 @@ public class JdwpSecurityHostTest extends DeviceTestCase implements IBuildReceiv
         getDevice().executeShellCommand("chmod 755 " + getDeviceScriptFilepath());
 
         // Push jar file.
-        File jarFile = mCtsBuild.getTestApp(DEVICE_JAR_FILENAME);
+        File jarFile = MigrationHelper.getTestFile(mBuildInfo, DEVICE_JAR_FILENAME);
         boolean success = getDevice().pushFile(jarFile, getDeviceJarFilepath());
         assertTrue("Failed to push jar file to " + getDeviceScriptFilepath(), success);
     }

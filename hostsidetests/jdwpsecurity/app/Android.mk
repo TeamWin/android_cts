@@ -18,6 +18,8 @@ include $(CLEAR_VARS)
 LOCAL_MODULE_TAGS := optional
 LOCAL_MODULE := CtsJdwpApp
 LOCAL_SRC_FILES := $(call all-subdir-java-files)
+# Tag this module as a cts_v2 test artifact
+LOCAL_COMPATIBILITY_SUITE := cts_v2
 include $(BUILD_JAVA_LIBRARY)
 
 # Copy the built module to the cts dir
