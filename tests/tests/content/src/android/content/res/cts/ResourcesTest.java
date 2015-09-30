@@ -35,6 +35,7 @@ import android.os.Bundle;
 import android.test.AndroidTestCase;
 import android.util.AttributeSet;
 import android.util.DisplayMetrics;
+import android.util.LocaleList;
 import android.util.TypedValue;
 import android.util.Xml;
 import android.view.Display;
@@ -224,6 +225,24 @@ public class ResourcesTest extends AndroidTestCase {
         mResources.updateConfiguration(cfg, null);
         Configuration cfgNew = mResources.getConfiguration();
         assertEquals(5.0f, cfgNew.fontScale, 0.001f);
+    }
+
+    public void testUpdateConfiguration_emptyLocaleIsOverridden() {
+        final Configuration cfg = mResources.getConfiguration();
+        cfg.setLocales(null);
+        assertTrue(cfg.getLocales().isEmpty());
+
+        mResources.updateConfiguration(cfg, null);
+        Configuration cfgNew = mResources.getConfiguration();
+        assertEquals(LocaleList.getDefault(), cfgNew.getLocales());
+    }
+
+    public void testUpdateConfiguration_copyLocales() {
+        final Configuration cfg = mResources.getConfiguration();
+        cfg.setLocales(LocaleList.forLanguageTags("az-Arab,ru"));
+        mResources.updateConfiguration(cfg, null);
+        Configuration cfgNew = mResources.getConfiguration();
+        assertEquals(LocaleList.forLanguageTags("az-Arab,ru"), cfgNew.getLocales());
     }
 
     public void testGetDimensionPixelSize() {
@@ -456,7 +475,7 @@ public class ResourcesTest extends AndroidTestCase {
     private Resources resourcesForLanguage(final String lang) {
         final Configuration config = new Configuration();
         config.updateFrom(mResources.getConfiguration());
-        config.locale = new Locale(lang);
+        config.setLocale(new Locale(lang));
         return new Resources(mResources.getAssets(), mResources.getDisplayMetrics(), config);
     }
 
