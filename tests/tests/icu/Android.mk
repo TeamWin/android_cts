@@ -51,6 +51,15 @@ include $(BUILD_CTS_PACKAGE)
 # lists of classes in ICU4J that we know are used in libcore and should be tested as part of CTS.
 # The following rule uses the Android CoPy (ACP) tool to copy this file to where it is expected.
 
+ifeq ($(TARGET_ARCH),arm64)
+	LOCAL_ARCH := arm
+else ifeq ($(TARGET_ARCH),mips64)
+	LOCAL_ARCH := mips
+else ifeq ($(TARGET_ARCH),x86_64)
+	LOCAL_ARCH := x86
+else
+	LOCAL_ARCH := $(TARGET_ARCH)
+endif
 $(cts_package_xml): $(call intermediates-dir-for,APPS,$(LOCAL_PACKAGE_NAME))/package.apk | $(ACP)
-	$(ACP) -fp cts/tests/tests/icu/CtsIcuTestCases_$(TARGET_ARCH).xml \
+	$(ACP) -fp cts/tests/tests/icu/CtsIcuTestCases_$(LOCAL_ARCH).xml \
 	$(CTS_TESTCASES_OUT)/CtsIcuTestCases.xml
