@@ -23,12 +23,15 @@ import junit.framework.TestCase;
 import org.xmlpull.v1.XmlPullParserException;
 
 import java.util.List;
+import java.util.Arrays;
 
 /**
  * Unit tests for {@link ReportLog}
  */
 public class ReportLogTest extends TestCase {
 
+    private static final String SOURCE = "Source";
+    private static final String MESSAGE = "Message";
     private static final double[] VALUES = new double[] {.1, 124, 4736, 835.683, 98, 395};
     private static final String HEADER_XML =
             "<?xml version='1.0' encoding='UTF-8' standalone='yes' ?>";
@@ -79,7 +82,7 @@ public class ReportLogTest extends TestCase {
 
     public void testSerialize_summaryOnly() throws Exception {
         mReportLog.setSummary("Sample", 1.0, ResultType.HIGHER_BETTER, ResultUnit.BYTE);
-        assertEquals(String.format(SUMMARY_XML, "testSerialize_summaryOnly:81"),
+        assertEquals(String.format(SUMMARY_XML, "testSerialize_summaryOnly:84"),
                 ReportLog.serialize(mReportLog));
     }
 
@@ -96,7 +99,7 @@ public class ReportLogTest extends TestCase {
     public void testSerialize_full() throws Exception {
         mReportLog.setSummary("Sample", 1.0, ResultType.HIGHER_BETTER, ResultUnit.BYTE);
         mReportLog.addValues("Details", VALUES, ResultType.NEUTRAL, ResultUnit.FPS);
-        assertEquals(String.format(FULL_XML, "testSerialize_full:97", "testSerialize_full:98"),
+        assertEquals(String.format(FULL_XML, "testSerialize_full:100", "testSerialize_full:101"),
                 ReportLog.serialize(mReportLog));
     }
 
@@ -119,14 +122,14 @@ public class ReportLogTest extends TestCase {
     }
 
     public void testParse_summaryOnly() throws Exception {
-        ReportLog report = ReportLog.parse(String.format(SUMMARY_XML, "testParse_summaryOnly:122"));
+        ReportLog report = ReportLog.parse(String.format(SUMMARY_XML, "testParse_summaryOnly:125"));
         assertNotNull(report);
         assertEquals("Sample", report.getSummary().getMessage());
     }
 
     public void testParse_detailOnly() throws Exception {
         try {
-            ReportLog.parse(String.format(DETAIL_XML, "testParse_detailOnly:129"));
+            ReportLog.parse(String.format(DETAIL_XML, "testParse_detailOnly:132"));
             fail("Expected XmlPullParserException when serializing report without summary");
         } catch (XmlPullParserException e) {
             // Expected
@@ -134,13 +137,57 @@ public class ReportLogTest extends TestCase {
     }
 
     public void testParse_full() throws Exception {
-        ReportLog report = ReportLog.parse(String.format(FULL_XML, "testParse_full:137",
+        ReportLog report = ReportLog.parse(String.format(FULL_XML, "testParse_full:140",
                 "testParse_full:138"));
         assertNotNull(report);
         assertEquals("Sample", report.getSummary().getMessage());
         List<Metric> details = report.getDetailedMetrics();
         assertEquals(1, details.size());
         assertEquals("Details", details.get(0).getMessage());
+    }
+
+    public void testLimits_source() throws Exception {
+        // Should pass with a short source.
+        Metric metric = new Metric(SOURCE, MESSAGE, 1.0, ResultType.HIGHER_BETTER, ResultUnit.BYTE);
+        assertEquals("Expected message to be ok", SOURCE, metric.getSource());
+        // Make a long source.
+        StringBuilder sb = new StringBuilder();
+        // 40 x "Source" = 240 character string
+        for (int i = 0; i < 40; i++) sb.append(SOURCE);
+        String source = sb.toString();
+        // Should be trimmed because source is too long.
+        metric = new Metric(source, MESSAGE, 1.0, ResultType.HIGHER_BETTER, ResultUnit.BYTE);
+        assertEquals("Expected source to be trimmed", source.substring(source.length() - 200),
+                metric.getSource());
+    }
+
+    public void testLimits_message() throws Exception {
+        // Should pass with a short message.
+        Metric metric = new Metric(SOURCE, MESSAGE, 1.0, ResultType.HIGHER_BETTER, ResultUnit.BYTE);
+        assertEquals("Expected message to be ok", MESSAGE, metric.getMessage());
+        // Make a long message.
+        StringBuilder sb = new StringBuilder();
+        // 40 x "Message" = 280 character string
+        for (int i = 0; i < 40; i++) sb.append(MESSAGE);
+        String message = sb.toString();
+        // Should be trimmed because message is too long.
+        metric = new Metric(SOURCE, message, 1.0, ResultType.HIGHER_BETTER, ResultUnit.BYTE);
+        assertEquals("Expected message to be trimmed", message.substring(0, 200),
+                metric.getMessage());
+    }
+
+    public void testLimits_values() throws Exception {
+        // Should pass with a small array.
+        Metric metric = new Metric(SOURCE, MESSAGE, VALUES, ResultType.HIGHER_BETTER,
+                ResultUnit.BYTE);
+        assertTrue("Expected values to be ok", Arrays.equals(VALUES, metric.getValues()));
+        // Make a big array.
+        double[] values = new double[1001];
+        for (int i = 0; i < values.length; i++) values[i] = i;
+        // Should be trimmed because array is too big.
+        metric = new Metric(SOURCE, MESSAGE, values, ResultType.HIGHER_BETTER, ResultUnit.BYTE);
+        assertTrue("Expected values to be trimmed", Arrays.equals(Arrays.copyOf(values, 1000),
+                metric.getValues()));
     }
 
 }
