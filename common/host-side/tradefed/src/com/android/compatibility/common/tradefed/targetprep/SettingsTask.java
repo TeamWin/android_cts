@@ -29,8 +29,8 @@ import java.util.List;
 /**
  * Checks that a given setting on the device is one of the given values
  */
-@OptionClass(alias="settings-checker")
-public class SettingsChecker extends PreconditionCheck {
+@OptionClass(alias="settings-task")
+public class SettingsTask extends PreconditionTask {
 
     public enum SettingType {
         SECURE,
@@ -38,32 +38,23 @@ public class SettingsChecker extends PreconditionCheck {
         SYSTEM;
     }
 
-    @Option(name = "device-setting", description = "The setting on the device to be checked")
+    @Option(name = "device-setting", description = "The setting on the device to be checked",
+            mandatory = true)
     protected String mSettingName = null;
 
-    @Option(name = "expected-values", description = "The set of expected values of the setting")
-    protected List<String> mExpectedSettingValues = new ArrayList<String>();
-
-    @Option(name = "setting-type", description = "Describes whether the setting is 'global' " +
-            "or 'secure'")
+    @Option(name = "setting-type",
+            description = "If the setting is 'secure', 'global' or 'system'", mandatory = true)
     protected SettingType mSettingType = null;
+
+    @Option(name = "set-value",
+            description = "The value to be set for the setting", mandatory = true)
+    protected String mSetValue = null;
 
     @Override
     public void run(ITestDevice device, IBuildInfo buildInfo) throws TargetSetupError,
             BuildError, DeviceNotAvailableException {
-        if (mSettingName == null) {
-            throw new TargetSetupError("device-setting not defined");
-        }
-        if (mSettingType == null) {
-            throw new TargetSetupError("setting-type not defined");
-        }
-        String shellCmd = String.format("settings get %s %s", mSettingType, mSettingName);
-        String actualSettingValue = device.executeShellCommand(shellCmd).trim();
-        if (!mExpectedSettingValues.contains(actualSettingValue)) {
-            throw new TargetSetupError(
-                    String.format("Device setting \"%s\" returned \"%s\", not found in %s",
-                    mSettingName, actualSettingValue, mExpectedSettingValues.toString()));
-        }
+        device.executeShellCommand(
+            String.format("settings put %s %s %s", mSettingType, mSettingName, mSetValue));
     }
 
 }
