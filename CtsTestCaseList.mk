@@ -196,7 +196,7 @@ cts_test_packages := \
     CtsTelephonyTestCases \
     CtsTextTestCases \
     CtsTextureViewTestCases \
-    CtsThemeTestCases \
+    CtsThemeDeviceTestCases \
     CtsTransitionTestCases \
     CtsTvTestCases \
     CtsUiAutomationTestCases \
