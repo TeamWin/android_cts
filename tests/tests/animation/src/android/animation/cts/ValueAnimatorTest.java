@@ -90,12 +90,22 @@ public class ValueAnimatorTest extends
     }
 
     public void testGetFrameDelay() throws Throwable {
-        long frameDelay = 10;
-        mValueAnimator.setFrameDelay(frameDelay);
+        final long frameDelay = 10;
+        runTestOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                mValueAnimator.setFrameDelay(frameDelay);
+            }
+        });
         startAnimation(mValueAnimator);
         Thread.sleep(100);
-        long actualFrameDelay = mValueAnimator.getFrameDelay();
-        assertEquals(frameDelay, actualFrameDelay);
+        runTestOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                long actualFrameDelay = mValueAnimator.getFrameDelay();
+                assertEquals(frameDelay, actualFrameDelay);
+            }
+        });
     }
 
     public void testSetInterpolator() throws Throwable {
