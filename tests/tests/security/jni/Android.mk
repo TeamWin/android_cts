@@ -33,7 +33,6 @@ LOCAL_SRC_FILES := \
 		android_security_cts_AudioPolicyBinderTest.cpp \
 		android_security_cts_EncryptionTest.cpp \
 		android_security_cts_MediaPlayerInfoLeakTest.cpp \
-		android_security_cts_StagefrightTest.cpp \
 		android_security_cts_AudioEffectBinderTest.cpp \
 		android_security_cts_AudioFlingerBinderTest.cpp
 
@@ -44,14 +43,4 @@ LOCAL_SHARED_LIBRARIES := libnativehelper liblog libbinder libutils libmedia lib
 LOCAL_C_INCLUDES += ndk/sources/cpufeatures
 LOCAL_STATIC_LIBRARIES := cpufeatures
 
-include $(BUILD_SHARED_LIBRARY)
-
-
-include $(CLEAR_VARS)
-LOCAL_MODULE := libctsstagefright
-LOCAL_MODULE_TAGS := optional
-LOCAL_SRC_FILES := StagefrightTest.cpp
-LOCAL_C_INCLUDES := frameworks/av/media/libstagefright/include \
-		frameworks/native/include/media/openmax
-LOCAL_SHARED_LIBRARIES := liblog libstagefright
 include $(BUILD_SHARED_LIBRARY)
