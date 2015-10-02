@@ -18,6 +18,7 @@ package com.android.preconditions.cts;
 import android.content.Context;
 import android.test.AndroidTestCase;
 
+import com.android.compatibility.common.preconditions.ExternalStorageHelper;
 import com.android.compatibility.common.preconditions.ScreenLockHelper;
 
 /**
@@ -32,6 +33,17 @@ public class PreconditionsTest extends AndroidTestCase {
     public void testScreenUnlocked() throws Exception {
         assertFalse("Device must have screen lock disabled",
                 ScreenLockHelper.isDeviceSecure(this.getContext()));
+    }
+
+    /**
+     * Test if device has accessible external storage
+     * @throws Exception
+     */
+    public void testExternalStoragePresent() throws Exception {
+        assertTrue("Device must have external storage mounted in order to run CTS",
+                ExternalStorageHelper.isExternalStorageReadable());
+        assertTrue("Device external storage must be writable in order to run CTS",
+                ExternalStorageHelper.isExternalStorageWritable());
     }
 
 }
