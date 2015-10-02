@@ -14,28 +14,19 @@
  * limitations under the License.
  */
 
-package com.android.cts.app.usage;
+package android.app.usage.cts;
 
-import com.android.cts.tradefed.build.CtsBuildHelper;
-import com.android.tradefed.build.IBuildInfo;
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.testtype.DeviceTestCase;
-import com.android.tradefed.testtype.IBuildReceiver;
 
-public class AppIdleHostTest extends DeviceTestCase implements IBuildReceiver {
+public class AppIdleHostTest extends DeviceTestCase {
     private static final String SETTINGS_APP_IDLE_CONSTANTS = "app_idle_constants";
 
-    private static final String TEST_APP_PACKAGE = "com.android.cts.app.usage.test";
-    private static final String TEST_APP_APK = "CtsDeviceAppUsageTestApp.apk";
+    private static final String TEST_APP_PACKAGE = "android.app.usage.app";
     private static final String TEST_APP_CLASS = "TestActivity";
 
     private static final long ACTIVITY_LAUNCH_WAIT_MILLIS = 500;
-
-    /**
-     * A reference to the build.
-     */
-    private CtsBuildHelper mBuild;
 
     /**
      * A reference to the device under test.
@@ -43,29 +34,10 @@ public class AppIdleHostTest extends DeviceTestCase implements IBuildReceiver {
     private ITestDevice mDevice;
 
     @Override
-    public void setBuild(IBuildInfo buildInfo) {
-        // Get the build, this is used to access the APK.
-        mBuild = CtsBuildHelper.createBuildHelper(buildInfo);
-    }
-
-    @Override
     protected void setUp() throws Exception {
         super.setUp();
         // Get the device, this gives a handle to run commands and install APKs.
         mDevice = getDevice();
-
-        // Remove any previously installed versions of this APK.
-        mDevice.uninstallPackage(TEST_APP_PACKAGE);
-
-        // Install the APK on the device.
-        mDevice.installPackage(mBuild.getTestApp(TEST_APP_APK), false);
-    }
-
-    @Override
-    protected void tearDown() throws Exception {
-        // Remove the package once complete.
-        mDevice.uninstallPackage(TEST_APP_PACKAGE);
-        super.tearDown();
     }
 
     /**

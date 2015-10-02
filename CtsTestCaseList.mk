@@ -74,6 +74,7 @@ cts_account_support_packages := \
 cts_support_packages := \
     CtsAlarmClockService \
     CtsAppTestStubs \
+    CtsAppUsageTestApp \
     CtsAssistService \
     CtsAssistApp \
     CtsAtraceTestApp \
@@ -81,7 +82,6 @@ cts_support_packages := \
     CtsDeviceAdmin \
     CtsWifiConfigCreator \
     CtsDeviceAndProfileOwnerApp \
-    CtsDeviceAppUsageTestApp \
     CtsDeviceInfo \
     CtsDeviceOsTestApp \
     CtsDeviceOwnerApp \
@@ -219,6 +219,7 @@ CTS_COVERAGE_TEST_CASE_LIST := \
 cts_host_libraries := \
     CtsAdbTests \
     CtsAppSecurityTests \
+    CtsAppUsageHostTestCases \
     CtsAtraceHostTestCases \
     CtsDevicePolicyManagerTestCases \
     CtsDumpsysHostTestCases \
@@ -230,7 +231,6 @@ cts_host_libraries := \
     CtsSecurityHostTestCases \
     CtsThemeHostTestCases \
     CtsUiHostTestCases \
-    CtsUsageHostTestCases \
     CtsUsbTests
 
 # List of native tests. For 32 bit targets, assumes that there will be
