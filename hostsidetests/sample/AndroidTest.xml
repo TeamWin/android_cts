@@ -13,11 +13,12 @@
      See the License for the specific language governing permissions and
      limitations under the License.
 -->
-<configuration description="Base config for CTS package preparer">
+<configuration description="Config for CtsSampleHostTestCases">
     <include name="common-config" />
     <option name="apk-installer:test-file-name" value="CtsSampleDeviceApp.apk" />
-    <test class="android.sample.cts.SampleHostTest" />
-    <test class="android.sample.cts.SampleHostResultTest" />
+    <test class="com.android.compatibility.common.tradefed.testtype.HostJUnitTest" >
+        <option name="jar" value="CtsSampleHostTestCases.jar" />
+    </test>
     <target_preparer class="com.android.compatibility.common.tradefed.targetprep.DynamicConfigPusher">
         <option name="target" value="host" />
         <option name="module-name" value="CtsSampleHostTestCases"/>
