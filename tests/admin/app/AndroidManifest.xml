@@ -17,12 +17,12 @@
  -->
 
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-          package="android.deviceadmin.cts">
+          package="android.admin.app">
     <application>
 
         <uses-library android:name="android.test.runner"/>
 
-        <receiver android:name="android.deviceadmin.cts.CtsDeviceAdminReceiver"
+        <receiver android:name="android.admin.app.CtsDeviceAdminReceiver"
                 android:permission="android.permission.BIND_DEVICE_ADMIN">
             <meta-data android:name="android.app.device_admin"
                     android:resource="@xml/device_admin" />
@@ -30,8 +30,8 @@
                 <action android:name="android.app.action.DEVICE_ADMIN_ENABLED" />
             </intent-filter>
         </receiver>
-        
-        <receiver android:name="android.deviceadmin.cts.CtsDeviceAdminReceiver2"
+
+        <receiver android:name="android.admin.app.CtsDeviceAdminReceiver2"
                 android:permission="android.permission.BIND_DEVICE_ADMIN">
             <meta-data android:name="android.app.device_admin"
                     android:resource="@xml/device_admin_2" />
@@ -42,7 +42,7 @@
 
         <!-- Device Admin that needs to be in the deactivated state in order
              for tests to pass. -->
-        <receiver android:name="android.deviceadmin.cts.CtsDeviceAdminDeactivatedReceiver"
+        <receiver android:name="android.admin.app.CtsDeviceAdminDeactivatedReceiver"
                 android:permission="android.permission.BIND_DEVICE_ADMIN">
             <meta-data android:name="android.app.device_admin"
                     android:resource="@xml/device_admin" />
@@ -52,11 +52,11 @@
         </receiver>
 
         <!-- Helper Activity used by Device Admin activation tests -->
-        <activity android:name="android.deviceadmin.cts.CtsDeviceAdminActivationTestActivity"
+        <activity android:name="android.admin.app.CtsDeviceAdminActivationTestActivity"
                 android:label="Device Admin activation test" />
 
         <!-- Broken device admin: meta-data missing -->
-        <receiver android:name="android.deviceadmin.cts.CtsDeviceAdminBrokenReceiver"
+        <receiver android:name="android.admin.app.CtsDeviceAdminBrokenReceiver"
                 android:permission="android.permission.BIND_DEVICE_ADMIN">
             <intent-filter>
                 <action android:name="android.app.action.DEVICE_ADMIN_ENABLED" />
@@ -66,7 +66,7 @@
         <!-- Broken device admin: filter doesn't match an Intent with action
              android.app.action.DEVICE_ADMIN_ENABLED and nothing else (e.g.,
              data) set -->
-        <receiver android:name="android.deviceadmin.cts.CtsDeviceAdminBrokenReceiver2"
+        <receiver android:name="android.admin.app.CtsDeviceAdminBrokenReceiver2"
                 android:permission="android.permission.BIND_DEVICE_ADMIN">
             <meta-data android:name="android.app.device_admin"
                     android:resource="@xml/device_admin" />
@@ -78,7 +78,7 @@
 
         <!-- Broken device admin: meta-data element doesn't point to valid
              Device Admin configuration/description -->
-        <receiver android:name="android.deviceadmin.cts.CtsDeviceAdminBrokenReceiver3"
+        <receiver android:name="android.admin.app.CtsDeviceAdminBrokenReceiver3"
                 android:permission="android.permission.BIND_DEVICE_ADMIN">
             <meta-data android:name="android.app.device_admin"
                     android:resource="@xml/broken_device_admin" />
@@ -89,7 +89,7 @@
 
         <!-- Broken device admin: filter doesn't match Intents with action
              android.app.action.DEVICE_ADMIN_ENABLED -->
-        <receiver android:name="android.deviceadmin.cts.CtsDeviceAdminBrokenReceiver4"
+        <receiver android:name="android.admin.app.CtsDeviceAdminBrokenReceiver4"
                 android:permission="android.permission.BIND_DEVICE_ADMIN">
             <meta-data android:name="android.app.device_admin"
                     android:resource="@xml/device_admin" />
@@ -99,7 +99,7 @@
         </receiver>
 
         <!-- Broken device admin: no intent-filter -->
-        <receiver android:name="android.deviceadmin.cts.CtsDeviceAdminBrokenReceiver5"
+        <receiver android:name="android.admin.app.CtsDeviceAdminBrokenReceiver5"
                 android:permission="android.permission.BIND_DEVICE_ADMIN">
             <meta-data android:name="android.app.device_admin"
                     android:resource="@xml/device_admin" />
@@ -107,7 +107,11 @@
 
     </application>
 
-    <instrumentation android:name="android.support.test.runner.AndroidJUnitRunner"
-            android:targetPackage="com.android.cts.admin"
-            android:label="Tests for the device admin APIs."/>
+    <!--  self-instrumenting test package. -->
+    <instrumentation
+        android:name="android.support.test.runner.AndroidJUnitRunner"
+        android:label="Deactivate Admins"
+        android:targetPackage="android.admin.app" >
+    </instrumentation>
+
 </manifest>

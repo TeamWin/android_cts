@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-package android.deviceadmin.cts;
+package android.admin.app;
 
 import android.app.admin.DeviceAdminReceiver;
 
-public class CtsDeviceAdminBrokenReceiver3 extends DeviceAdminReceiver {
+public class CtsDeviceAdminBrokenReceiver extends DeviceAdminReceiver {
 }

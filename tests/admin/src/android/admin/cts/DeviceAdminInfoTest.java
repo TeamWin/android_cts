@@ -43,13 +43,11 @@ public class DeviceAdminInfoTest extends AndroidTestCase {
     }
 
     static ComponentName getReceiverComponent() {
-        return new ComponentName("android.deviceadmin.cts",
-                "android.deviceadmin.cts.CtsDeviceAdminReceiver");
+        return new ComponentName("android.admin.app", "android.admin.app.CtsDeviceAdminReceiver");
     }
 
     static ComponentName getSecondReceiverComponent() {
-        return new ComponentName("android.deviceadmin.cts",
-                "android.deviceadmin.cts.CtsDeviceAdminReceiver2");
+        return new ComponentName("android.admin.app", "android.admin.app.CtsDeviceAdminReceiver2");
     }
 
     public void testDeviceAdminInfo() throws Exception {

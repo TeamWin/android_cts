@@ -57,8 +57,8 @@ import java.util.Set;
 @OptionClass(alias="compatibility-test")
 public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildReceiver {
 
-    private static final String INCLUDE_FILTER_OPTION = "include-filter";
-    private static final String EXCLUDE_FILTER_OPTION = "exclude-filter";
+    public static final String INCLUDE_FILTER_OPTION = "include-filter";
+    public static final String EXCLUDE_FILTER_OPTION = "exclude-filter";
     private static final String PLAN_OPTION = "plan";
     private static final String MODULE_OPTION = "module";
     private static final String TEST_OPTION = "test";

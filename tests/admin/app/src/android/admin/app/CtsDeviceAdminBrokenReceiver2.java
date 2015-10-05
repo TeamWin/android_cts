@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011 The Android Open Source Project
+ * Copyright (C) 2013 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-package android.deviceadmin.cts;
+package android.admin.app;
 
 import android.app.admin.DeviceAdminReceiver;
 
-public class CtsDeviceAdminReceiver2 extends DeviceAdminReceiver {
+public class CtsDeviceAdminBrokenReceiver2 extends DeviceAdminReceiver {
 }
