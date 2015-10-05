@@ -1,4 +1,4 @@
-# Copyright (C) 2008 The Android Open Source Project
+# Copyright (C) 2015 The Android Open Source Project
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -21,20 +21,19 @@ LOCAL_MODULE_TAGS := optional
 # and when built explicitly put it in the data partition
 LOCAL_MODULE_PATH := $(TARGET_OUT_DATA_APPS)
 
-LOCAL_JAVA_LIBRARIES := android.test.runner org.apache.http.legacy
+LOCAL_DEX_PREOPT := false
 
-LOCAL_STATIC_JAVA_LIBRARIES := ctsdeviceutil ctsdeviceutillegacy ctstestserver ctstestrunner
+LOCAL_PROGUARD_ENABLED := disabled
+
+LOCAL_STATIC_JAVA_LIBRARIES := android-support-test compatibility-device-preconditions
 
 LOCAL_SRC_FILES := $(call all-java-files-under, src)
 
-LOCAL_PACKAGE_NAME := CtsWebkitTestCases
+LOCAL_PACKAGE_NAME := CtsWebkitPreconditions
 
 # Tag this module as a cts_v2 test artifact
 LOCAL_COMPATIBILITY_SUITE := cts_v2
 
-# uncomment when dalvik.annotation.Test* are removed or part of SDK
-#LOCAL_SDK_VERSION := current
+LOCAL_SDK_VERSION := current
 
-include $(BUILD_CTS_PACKAGE)
-
-include $(call all-makefiles-under,$(LOCAL_PATH))
+include $(BUILD_PACKAGE)

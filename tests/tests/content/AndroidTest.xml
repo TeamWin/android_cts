@@ -15,6 +15,10 @@
 -->
 <configuration description="Configuration for content Tests">
     <include name="common-config" />
+    <target_preparer class="com.android.compatibility.common.tradefed.targetprep.ApkPreconditionCheck">
+        <option name="apk" value="CtsContentPreconditions.apk"/>
+        <option name="package" value="android.content.preconditions"/>
+    </target_preparer>
     <option name="apk-installer:test-file-name" value="CtsContentTestCases.apk" />
     <test class="com.android.tradefed.testtype.InstrumentationTest" >
         <option name="package" value="android.content.cts" />

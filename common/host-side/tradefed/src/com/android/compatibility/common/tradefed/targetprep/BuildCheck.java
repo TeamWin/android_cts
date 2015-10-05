@@ -47,7 +47,7 @@ public class BuildCheck extends PreconditionCheck {
     @Override
     public void run(ITestDevice device, IBuildInfo buildInfo) throws TargetSetupError,
             BuildError, DeviceNotAvailableException {
-        String deviceBuildType = device.executeShellCommand("getprop ro.build.type").trim();
+        String deviceBuildType = device.getProperty("ro.build.type");
         if (!mExpectedBuildType.name().equalsIgnoreCase(deviceBuildType)) {
             String msg = String.format("Expected build type \"%s\" but found build type \"%s\"",
                     mExpectedBuildType.name().toLowerCase(), deviceBuildType);
