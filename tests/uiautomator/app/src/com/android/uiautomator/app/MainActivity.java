@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.android.cts.uiautomator;
+package com.android.uiautomator.app;
 
 import android.content.Intent;
 import android.os.Bundle;

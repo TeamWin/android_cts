@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.android.cts.uiautomatortest;
+package com.android.uiautomator.cts;
 
 import android.graphics.Point;
 import android.graphics.Rect;
@@ -37,14 +37,14 @@ import java.io.IOException;
 /**
  * Sanity test uiautomator functionality on target device.
  */
-public class CtsUiAutomatorTest extends UiAutomatorTestCase {
-    private static final String LOG_TAG = CtsUiAutomatorTest.class.getSimpleName();
+public class UiAutomatorTest extends UiAutomatorTestCase {
+    private static final String LOG_TAG = UiAutomatorTest.class.getSimpleName();
     private static final String[] LIST_SCROLL_TESTS = new String[] {
             "Test 17", "Test 11", "Test 20", "Test 35"
     };
-    private static final String LAUNCH_APP = "am start -a android.intent.action.MAIN"
-            + " -n com.android.cts.uiautomator/.MainActivity -W";
-    private static final String PKG_NAME = "com.android.cts.uiautomator";
+    private static final String PKG_NAME = "com.android.uiautomator.app";
+    private static final String LAUNCH_APP = "am start -a android.intent.action.MAIN -n "
+            + PKG_NAME + "/.MainActivity -W";
 
     // Maximum wait for key object to become visible
     private static final int WAIT_EXIST_TIMEOUT = 5 * 1000;
@@ -765,7 +765,7 @@ public class CtsUiAutomatorTest extends UiAutomatorTestCase {
     public void testSelectorResourceId() throws UiObjectNotFoundException {
         openTest("Test 5");
         UiSelector toggleSelector =
-                new UiSelector().resourceId("com.android.cts.uiautomator:id/test_5_toggleButton");
+                new UiSelector().resourceId("com.android.uiautomator.app:id/test_5_toggleButton");
         UiObject toggleButton = new UiObject(toggleSelector);
         assertTrue("Object with selector resource-id not found", toggleButton.exists());
         assertTrue("Incorrect object for selector resource-id returned",
