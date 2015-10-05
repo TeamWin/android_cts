@@ -42,7 +42,7 @@ LOCAL_PACKAGE_NAME := CtsIcuTestCases
 
 LOCAL_SDK_VERSION := current
 
-include $(BUILD_CTS_PACKAGE)
+include $(BUILD_CTS_SUPPORT_PACKAGE)
 
 # The CTS framework has it's own logic for generating XML files based on scanning the source
 # for test methods and classes. Since the classes that we are testing are not actually in this
@@ -60,6 +60,7 @@ else ifeq ($(TARGET_ARCH),x86_64)
 else
 	LOCAL_ARCH := $(TARGET_ARCH)
 endif
+
+cts_package_xml := $(CTS_TESTCASES_OUT)/CtsIcuTestCases.xml
 $(cts_package_xml): $(call intermediates-dir-for,APPS,$(LOCAL_PACKAGE_NAME))/package.apk | $(ACP)
-	$(ACP) -fp cts/tests/tests/icu/CtsIcuTestCases_$(LOCAL_ARCH).xml \
-	$(CTS_TESTCASES_OUT)/CtsIcuTestCases.xml
+	$(ACP) -fp cts/tests/tests/icu/CtsIcuTestCases_$(LOCAL_ARCH).xml $@
