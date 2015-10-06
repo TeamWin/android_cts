@@ -15,6 +15,7 @@
  */
 package com.android.compatibility.common.deviceinfo;
 
+import android.test.AndroidTestCase;
 import android.test.ActivityInstrumentationTestCase2;
 
 import java.io.BufferedReader;
@@ -23,39 +24,19 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 
 /**
- * Test for {@link DeviceInfoActivity}.
+ * Test for {@link DeviceInfo}.
  */
-public class DeviceInfoActivityTest extends ActivityInstrumentationTestCase2<TestDeviceInfo> {
+public class DeviceInfoTest extends AndroidTestCase {
 
     private static final String EXPECTED_FILE_PATH =
             "/storage/emulated/0/device-info-files/TestDeviceInfo.deviceinfo.json";
 
-    private TestDeviceInfo mActivity;
+    private TestDeviceInfo testDeviceInfo = new TestDeviceInfo();
 
-    public DeviceInfoActivityTest() {
-        super(TestDeviceInfo.class);
-    }
-
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
-        // Start the activity and get a reference to it.
-        mActivity = getActivity();
-        // Wait for the activity to finish.
-        mActivity.waitForActivityToFinish();
-    }
-
-    @Override
-    protected void tearDown() throws Exception {
-        mActivity = null;
-        super.tearDown();
-    }
-
-    public void testJsonFile() throws IOException {
-        String errorMessage = mActivity.getErrorMessage();
-        // Check no errors
-        assertEquals("Expected no errors", null, errorMessage);
-        String resultFilePath = mActivity.getResultFilePath();
+    public void testJsonFile() throws Exception {
+        testDeviceInfo.setUp();
+        testDeviceInfo.testCollectDeviceInfo();
+        String resultFilePath = testDeviceInfo.getResultFilePath();
         // Check file path exist
         assertNotNull("Expected a non-null resultFilePath", resultFilePath);
         // Check file path location

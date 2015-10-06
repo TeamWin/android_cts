@@ -48,7 +48,7 @@ public class DeviceInfoCollector {
     public static final String EXTENDED_APP_PACKAGE_NAME =
             "com.android.compatibility.common.deviceinfo";
     private static final String EXTENDED_INSTRUMENTATION_NAME =
-            "com.android.compatibility.common.deviceinfo.DeviceInfoInstrument";
+            "android.support.test.runner.AndroidJUnitRunner";
     private static final String DEVICE_INFO_FILES = "device-info-files";
 
     public static final Set<String> IDS = new HashSet<String>();

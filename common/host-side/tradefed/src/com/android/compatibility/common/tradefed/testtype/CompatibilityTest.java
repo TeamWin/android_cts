@@ -65,7 +65,7 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
     public static final String RETRY_OPTION = "retry";
     private static final String ABI_OPTION = "abi";
     private static final String SHARD_OPTION = "shard";
-    private static final String SKIP_DEVICE_INFO_OPTION = "skip-device-info";
+    public static final String SKIP_DEVICE_INFO_OPTION = "skip-device-info";
     public static final String SKIP_PRECONDITIONS_OPTION = "skip-preconditions";
     private static final String URL = "dynamic-config-url";
 

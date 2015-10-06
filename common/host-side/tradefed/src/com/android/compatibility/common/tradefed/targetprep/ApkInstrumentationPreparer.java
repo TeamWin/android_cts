@@ -38,6 +38,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -69,6 +70,8 @@ public class ApkInstrumentationPreparer extends PreconditionPreparer implements 
     @Option(name = "when", description = "When to instrument the apk", mandatory = true)
     protected When mWhen = null;
 
+    protected ConcurrentHashMap<TestIdentifier, Map<String, String>> testMetrics =
+            new ConcurrentHashMap<>();
     private ConcurrentHashMap<TestIdentifier, String> testFailures = new ConcurrentHashMap<>();
 
     /**
@@ -140,6 +143,11 @@ public class ApkInstrumentationPreparer extends PreconditionPreparer implements 
     }
 
     public class TargetPreparerListener extends NoOpTestInvocationListener {
+
+        @Override
+        public void testEnded(TestIdentifier test, Map<String, String> metrics) {
+            testMetrics.put(test, metrics);
+        }
 
         @Override
         public void testFailed(TestIdentifier test, String trace) {

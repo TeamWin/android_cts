@@ -54,9 +54,7 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
        ITestSummaryListener {
 
     private static final String RESULT_KEY = "COMPATIBILITY_TEST_RESULT";
-    private static final String DEVICE_INFO = "DEVICE_INFO_";
-    private static final String DEVICE_INFO_EXT = ".deviceinfo.json";
-    private static final String DEVICE_INFO_PACKAGE = "com.android.compatibility.common.deviceinfo";
+    private static final String DEVICE_INFO_GENERIC = "DEVICE_INFO_GENERIC_";
     private static final String[] RESULT_RESOURCES = {
         "compatibility_result.css",
         "compatibility_result.xsd",
@@ -89,7 +87,6 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
     private File mResultDir = null;
     private File mLogDir = null;
     private long mStartTime;
-    private boolean mIsDeviceInfoRun;
     private ResultUploader mUploader;
     private String mReferenceUrl;
     private IModuleResult mCurrentModuleResult;
@@ -173,10 +170,6 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
     @Override
     public void testRunStarted(String id, int numTests) {
         logResult("Starting %s with %d tests", id, numTests);
-        mIsDeviceInfoRun = AbiUtils.parseTestName(id).equals(DEVICE_INFO_PACKAGE);
-        if (mIsDeviceInfoRun) {
-            return;
-        }
         mCurrentModuleResult = mResult.getOrCreateModule(id);
         mResult.addDeviceSerial(mDeviceSerial);
     }
@@ -186,9 +179,6 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
      */
     @Override
     public void testStarted(TestIdentifier test) {
-        if (mIsDeviceInfoRun) {
-            return;
-        }
         mCurrentCaseResult = mCurrentModuleResult.getOrCreateResult(test.getClassName());
         mCurrentResult = mCurrentCaseResult.getOrCreateResult(test.getTestName());
         // Reset the result
@@ -200,9 +190,6 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
      */
     @Override
     public void testEnded(TestIdentifier test, Map<String, String> metrics) {
-        if (mIsDeviceInfoRun) {
-            return;
-        }
         if (mCurrentResult.getResultStatus() == TestStatus.FAIL) {
             // Test has already failed.
             return;
@@ -239,9 +226,6 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
      */
     @Override
     public void testFailed(TestIdentifier test, String trace) {
-        if (mIsDeviceInfoRun) {
-            return;
-        }
         mCurrentResult.failed(trace);
         logResult("%s failed: %s", test, trace);
     }
@@ -251,9 +235,6 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
      */
     @Override
     public void testAssumptionFailure(TestIdentifier test, String trace) {
-        if (mIsDeviceInfoRun) {
-            return;
-        }
         mCurrentResult.failed(trace);
         logResult("%s failed assumption: %s", test, trace);
     }
@@ -272,26 +253,21 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
      */
     @Override
     public void testRunEnded(long elapsedTime, Map<String, String> metrics) {
-        if (mIsDeviceInfoRun) {
-            for (Map.Entry<String, String> metricEntry : metrics.entrySet()) {
-                String key = metricEntry.getKey();
-                String value = metricEntry.getValue();
-                if (key.startsWith(DEVICE_INFO)) {
-                    // Device info needs to be in the report
-                    mResult.addBuildInfo(key.substring(DEVICE_INFO.length()), value);
-                } else if (!value.endsWith(DEVICE_INFO_EXT)) {
-                    Log.logAndDisplay(LogLevel.INFO, mDeviceSerial,
-                            String.format("%s failed: %s", metricEntry.getKey(), value));
-                }
+        // Check build attributes to add generic device info to report.
+        Map<String, String> buildAttributes = mBuild.getBuildAttributes();
+        for (Map.Entry<String, String> attributeEntry : buildAttributes.entrySet()) {
+            String key = attributeEntry.getKey();
+            String value = attributeEntry.getValue();
+            if (key.startsWith(DEVICE_INFO_GENERIC)) {
+                mResult.addBuildInfo(key.substring(DEVICE_INFO_GENERIC.length()), value);
             }
-        } else {
-            logResult("%s completed in %dms. %d passed, %d failed, %d non executed",
-                    mCurrentModuleResult.getId(),
-                    elapsedTime,
-                    mCurrentModuleResult.countResults(TestStatus.PASS),
-                    mCurrentModuleResult.countResults(TestStatus.FAIL),
-                    mCurrentModuleResult.countResults(TestStatus.NOT_EXECUTED));
         }
+        logResult("%s completed in %dms. %d passed, %d failed, %d non executed",
+                mCurrentModuleResult.getId(),
+                elapsedTime,
+                mCurrentModuleResult.countResults(TestStatus.PASS),
+                mCurrentModuleResult.countResults(TestStatus.FAIL),
+                mCurrentModuleResult.countResults(TestStatus.NOT_EXECUTED));
     }
 
     /**

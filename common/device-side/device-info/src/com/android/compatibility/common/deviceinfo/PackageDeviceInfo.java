@@ -19,12 +19,12 @@ import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 
-import com.android.compatibility.common.deviceinfo.DeviceInfoActivity;
+import com.android.compatibility.common.deviceinfo.DeviceInfo;
 
 /**
  * PackageDeviceInfo collector.
  */
-public class PackageDeviceInfo extends DeviceInfoActivity {
+public class PackageDeviceInfo extends DeviceInfo {
 
     private static final String PACKAGE = "package";
     private static final String NAME = "name";
@@ -34,7 +34,7 @@ public class PackageDeviceInfo extends DeviceInfoActivity {
 
     @Override
     protected void collectDeviceInfo() {
-        PackageManager pm = this.getPackageManager();
+        PackageManager pm = getContext().getPackageManager();
         startArray(PACKAGE);
         for (PackageInfo pkg : pm.getInstalledPackages(0)) {
             startGroup();
