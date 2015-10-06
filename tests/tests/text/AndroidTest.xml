@@ -13,15 +13,16 @@
      See the License for the specific language governing permissions and
      limitations under the License.
 -->
-<configuration description="Configuration for Text Tests">
-    <include name="common-config" />
+<configuration description="Config for CTS Text test cases">
     <target_preparer class="com.android.compatibility.common.tradefed.targetprep.ApkPreconditionCheck">
         <option name="apk" value="CtsTextPreconditions.apk"/>
         <option name="package" value="android.text.preconditions"/>
     </target_preparer>
-    <option name="apk-installer:test-file-name" value="CtsTextTestCases.apk" />
-    <test class="com.android.tradefed.testtype.InstrumentationTest" >
+    <target_preparer class="com.android.compatibility.common.tradefed.targetprep.ApkInstaller">
+        <option name="cleanup-apks" value="true" />
+        <option name="test-file-name" value="CtsTextTestCases.apk" />
+    </target_preparer>
+    <test class="com.android.tradefed.testtype.AndroidJUnitTest" >
         <option name="package" value="android.text.cts" />
-        <option name="runner" value="android.support.test.runner.AndroidJUnitRunner" />
     </test>
 </configuration>

@@ -13,7 +13,7 @@
      See the License for the specific language governing permissions and
      limitations under the License.
 -->
-<configuration description="Config for the CTS JDWP host tests">
+<configuration description="Config for the CTS JDWP host test cases">
     <test class="com.android.tradefed.testtype.HostTest">
         <option name="class" value="android.jdwpsecurity.cts.JdwpSecurityHostTest" />
     </test>

@@ -13,10 +13,15 @@
      See the License for the specific language governing permissions and
      limitations under the License.
 -->
-<configuration description="Config for CTS UI Automator tests">
-    <include name="common-config" />
-    <option name="file-pusher:push" value="CtsUiAutomatorTestCases.jar->/data/local/tmp/CtsUiAutomatorTestCases.jar" />
-    <option name="apk-installer:test-file-name" value="CtsUiAutomatorTestApp.apk" />
+<configuration description="Config for CTS UI Automator test cases">
+    <target_preparer class="com.android.compatibility.common.tradefed.targetprep.ApkInstaller">
+        <option name="cleanup-apks" value="true" />
+        <option name="test-file-name" value="CtsUiAutomatorTestApp.apk" />
+    </target_preparer>
+    <target_preparer class="com.android.compatibility.common.tradefed.targetprep.FilePusher">
+        <option name="cleanup" value="true" />
+        <option name="push" value="CtsUiAutomatorTestCases.jar->/data/local/tmp/CtsUiAutomatorTestCases.jar" />
+    </target_preparer>
     <test class="com.android.tradefed.testtype.UiAutomatorTest" >
         <option name="jar-path" value="CtsUiAutomatorTestCases.jar" />
         <option name="capture-logs" value="OFF" />
