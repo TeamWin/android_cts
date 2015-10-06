@@ -24,8 +24,6 @@ import android.content.Context;
  */
 public class ScreenLockHelper {
 
-    private final static String PASSWORD_TYPE_KEY = "lockscreen.password_type";
-
     /*
      * This helper returns false for the Screen Lock set to 'Swipe' or 'None', as it seems there
      * is no way to programmatically distinguish between the two.

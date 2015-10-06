@@ -13,14 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package android.net.preconditions;
+package android.content.preconditions;
 
 import android.test.AndroidTestCase;
 
 import com.android.compatibility.common.preconditions.WifiHelper;
 
 /**
- * A test to verify that device-side preconditions are met for the net module of CTS
+ * A test to verify that device-side preconditions are met for the content module of CTS
  */
 public class PreconditionsTest extends AndroidTestCase {
 

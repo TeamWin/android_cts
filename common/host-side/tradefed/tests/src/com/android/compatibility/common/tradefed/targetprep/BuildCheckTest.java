@@ -40,8 +40,7 @@ public class BuildCheckTest extends TestCase {
         mMockDevice = EasyMock.createMock(ITestDevice.class);
         mMockBuildInfo = new DeviceBuildInfo("0", "", "");
         mOptionSetter = new OptionSetter(mBuildCheck);
-        EasyMock.expect(mMockDevice.executeShellCommand(
-                "getprop ro.build.type")).andReturn("\nuser\n").anyTimes();
+        EasyMock.expect(mMockDevice.getProperty("ro.build.type")).andReturn("user").anyTimes();
     }
 
     public void testWarningMatch() throws Exception {

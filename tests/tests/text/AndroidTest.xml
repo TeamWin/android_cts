@@ -15,6 +15,10 @@
 -->
 <configuration description="Configuration for Text Tests">
     <include name="common-config" />
+    <target_preparer class="com.android.compatibility.common.tradefed.targetprep.ApkPreconditionCheck">
+        <option name="apk" value="CtsTextPreconditions.apk"/>
+        <option name="package" value="android.text.preconditions"/>
+    </target_preparer>
     <option name="apk-installer:test-file-name" value="CtsTextTestCases.apk" />
     <test class="com.android.tradefed.testtype.InstrumentationTest" >
         <option name="package" value="android.text.cts" />
