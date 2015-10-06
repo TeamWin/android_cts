@@ -1126,6 +1126,39 @@ public class WebViewTest extends ActivityInstrumentationTestCase2<WebViewCtsActi
         }.run();
     }
 
+    public void testClearFormData() throws Throwable {
+        if (!NullWebViewUtils.isWebViewAvailable()) {
+            return;
+        }
+        try {
+            startWebServer(false);
+            WebSettings settings = mOnUiThread.getSettings();
+            settings.setDatabaseEnabled(true);
+            WebViewDatabase webViewDatabase = WebViewDatabase.getInstance(getActivity());
+            webViewDatabase.clearFormData();
+            final String url = mWebServer.getAssetUrl(TestHtmlConstants.LOGIN_FORM_URL);
+            mOnUiThread.loadUrlAndWaitForCompletion(url);
+            new PollingCheck(TEST_TIMEOUT) {
+                @Override
+                public boolean check() {
+                    return !WebViewDatabase.getInstance(getActivity()).hasFormData();
+                }
+            }.run();
+
+            // click submit
+            moveFocusDown();
+            getInstrumentation().sendKeyDownUpSync(KeyEvent.KEYCODE_ENTER);
+            new PollingCheck(TEST_TIMEOUT) {
+                @Override
+                public boolean check() {
+                    return WebViewDatabase.getInstance(getActivity()).hasFormData();
+                }
+            }.run();
+        } finally {
+            WebViewDatabase.getInstance(getActivity()).clearFormData();
+        }
+    }
+
     @UiThreadTest
     public void testAccessHttpAuthUsernamePassword() {
         if (!NullWebViewUtils.isWebViewAvailable()) {
