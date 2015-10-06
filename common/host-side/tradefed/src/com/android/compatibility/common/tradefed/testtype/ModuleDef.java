@@ -17,8 +17,7 @@ package com.android.compatibility.common.tradefed.testtype;
 
 import com.android.compatibility.common.tradefed.result.IModuleListener;
 import com.android.compatibility.common.tradefed.result.ModuleListener;
-import com.android.compatibility.common.tradefed.targetprep.PreconditionCheck;
-import com.android.compatibility.common.tradefed.targetprep.PreconditionTask;
+import com.android.compatibility.common.tradefed.targetprep.PreconditionPreparer;
 import com.android.compatibility.common.util.AbiUtils;
 import com.android.tradefed.build.IBuildInfo;
 import com.android.tradefed.config.ConfigurationException;
@@ -68,7 +67,7 @@ public class ModuleDef implements IModuleDef {
         mTests = tests;
         for (ITargetPreparer preparer : preparers) {
             // Separate preconditions from target preparers.
-            if (preparer instanceof PreconditionCheck || preparer instanceof PreconditionTask) {
+            if (preparer instanceof PreconditionPreparer) {
                 mPreconditions.add(preparer);
             } else {
                 mPreparers.add(preparer);
@@ -234,21 +233,14 @@ public class ModuleDef implements IModuleDef {
      * {@inheritDoc}
      */
     @Override
-    public void runPreconditions(boolean skipChecks, boolean skipSetup)
-            throws DeviceNotAvailableException {
+    public void prepare(boolean skipPrep) throws DeviceNotAvailableException {
         for (ITargetPreparer preparer : mPreconditions) {
             CLog.d("Preparer: %s", preparer.getClass().getSimpleName());
             if (preparer instanceof IAbiReceiver) {
                 ((IAbiReceiver) preparer).setAbi(mAbi);
             }
-            if (preparer instanceof PreconditionCheck) {
-                setOption(preparer, CompatibilityTest.SKIP_PRECONDITION_CHECKS_OPTION,
-                        Boolean.toString(skipChecks));
-            }
-            if (preparer instanceof PreconditionTask) {
-                setOption(preparer, CompatibilityTest.SKIP_PRECONDITION_TASKS_OPTION,
-                        Boolean.toString(skipSetup));
-            }
+            setOption(preparer, CompatibilityTest.SKIP_PRECONDITIONS_OPTION,
+                    Boolean.toString(skipPrep));
             try {
                 preparer.setUp(mDevice, mBuild);
             } catch (BuildError e) {

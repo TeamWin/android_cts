@@ -66,8 +66,7 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
     private static final String ABI_OPTION = "abi";
     private static final String SHARD_OPTION = "shard";
     private static final String SKIP_DEVICE_INFO_OPTION = "skip-device-info";
-    public static final String SKIP_PRECONDITION_CHECKS_OPTION = "skip-precondition-checks";
-    public static final String SKIP_PRECONDITION_TASKS_OPTION = "skip-precondition-tasks";
+    public static final String SKIP_PRECONDITIONS_OPTION = "skip-preconditions";
     private static final String URL = "dynamic-config-url";
 
     private static final TestStatus[] RETRY_TEST_STATUS = new TestStatus[] {
@@ -126,13 +125,9 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
             "Whether device info collection should be skipped")
     private boolean mSkipDeviceInfo = false;
 
-    @Option(name = SKIP_PRECONDITION_CHECKS_OPTION, description =
-            "Whether precondition checks should be skipped")
-    private boolean mSkipPreconditionChecks = false;
-
-    @Option(name = SKIP_PRECONDITION_TASKS_OPTION, description =
-            "Whether precondition setup tasks should be skipped")
-    private boolean mSkipPreconditionTasks = false;
+    @Option(name = SKIP_PRECONDITIONS_OPTION, description =
+            "Whether preconditions should be skipped")
+    private boolean mSkipPreconditions = false;
 
     @Option(name = "bugreport-on-failure", description =
             "Take a bugreport on every test failure. " +
@@ -238,7 +233,7 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
                 IModuleDef module = mModules.get(i);
                 module.setBuild(mBuild);
                 module.setDevice(mDevice);
-                module.runPreconditions(mSkipPreconditionChecks, mSkipPreconditionTasks);
+                module.prepare(mSkipPreconditions);
             }
             // Run the tests
             for (int i = mLastModuleIndex; i < moduleCount; i++) {

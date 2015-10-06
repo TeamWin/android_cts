@@ -27,7 +27,7 @@ import com.android.tradefed.targetprep.TargetSetupError;
  * Checks that the device's locale is as expected
  */
 @OptionClass(alias="locale-check")
-public class LocaleCheck extends PreconditionCheck {
+public class LocaleCheck extends PreconditionPreparer {
 
     @Option(name = "expected-locale", description = "The device's expected locale",
             mandatory = true)

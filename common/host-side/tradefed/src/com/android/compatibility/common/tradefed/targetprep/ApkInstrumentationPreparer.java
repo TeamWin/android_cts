@@ -44,7 +44,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * Target preparer that instruments an APK.
  */
 @OptionClass(alias="apk-instrumentation-preparer")
-public class ApkInstrumentationPreparer extends PreconditionCheck implements ITargetCleaner {
+public class ApkInstrumentationPreparer extends PreconditionPreparer implements ITargetCleaner {
 
     @Option(name = "apk", description = "Name of the apk to instrument", mandatory = true)
     protected String mApkFileName = null;

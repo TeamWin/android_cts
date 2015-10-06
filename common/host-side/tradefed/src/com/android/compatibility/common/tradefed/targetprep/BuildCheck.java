@@ -28,7 +28,7 @@ import com.android.tradefed.targetprep.TargetSetupError;
  * Checks that the device's build type is as expected
  */
 @OptionClass(alias="build-check")
-public class BuildCheck extends PreconditionCheck {
+public class BuildCheck extends PreconditionPreparer {
 
     public enum BuildType {
         USER,

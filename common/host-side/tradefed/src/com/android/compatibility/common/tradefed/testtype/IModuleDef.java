@@ -79,6 +79,6 @@ public interface IModuleDef extends Comparable<IModuleDef>, IBuildReceiver, IDev
     /**
      * Runs the module's precondition checks and setup tasks.
      */
-    void runPreconditions(boolean skipChecks, boolean skipSetup) throws DeviceNotAvailableException;
+    void prepare(boolean skipPrep) throws DeviceNotAvailableException;
 
 }

@@ -26,18 +26,19 @@ import com.android.tradefed.targetprep.ITargetPreparer;
 import com.android.tradefed.targetprep.TargetSetupError;
 
 /**
- * An {@link ITargetPreparer} that performs a task to set the device up to run the test.
+ * An {@link ITargetPreparer} that performs checks and/or tasks to ensure the 
+ * the device is ready to run the test suite.
  */
-public abstract class PreconditionTask implements ITargetPreparer {
+public abstract class PreconditionPreparer implements ITargetPreparer {
 
-    @Option(name = CompatibilityTest.SKIP_PRECONDITION_TASKS_OPTION, description =
-            "Whether precondition setup tasks should be skipped")
-    private boolean mSkipPreconditionTasks = false;
+    @Option(name = CompatibilityTest.SKIP_PRECONDITIONS_OPTION, description =
+            "Whether preconditions should be skipped")
+    private boolean mSkipPreconditions = false;
 
     @Override
     public void setUp(ITestDevice device, IBuildInfo buildInfo) throws TargetSetupError,
             BuildError, DeviceNotAvailableException {
-        if (!mSkipPreconditionTasks) {
+        if (!mSkipPreconditions) {
             run(device, buildInfo);
         }
     }
