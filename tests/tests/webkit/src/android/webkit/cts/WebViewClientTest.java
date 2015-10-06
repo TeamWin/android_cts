@@ -34,11 +34,14 @@ import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.webkit.cts.WebViewOnUiThread.WaitForLoadedClient;
+import android.util.Pair;
 
 import java.io.ByteArrayInputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.List;
+import java.util.ArrayList;
 
 public class WebViewClientTest extends ActivityInstrumentationTestCase2<WebViewCtsActivity> {
     private static final long TEST_TIMEOUT = 5000;
@@ -210,6 +213,40 @@ public class WebViewClientTest extends ActivityInstrumentationTestCase2<WebViewC
         }.run();
     }
 
+    public void testOnReceivedLoginRequest() throws Exception {
+        if (!NullWebViewUtils.isWebViewAvailable()) {
+            return;
+        }
+        final MockWebViewClient webViewClient = new MockWebViewClient();
+        mOnUiThread.setWebViewClient(webViewClient);
+        TestWebServer testServer = null;
+        //set the url and html
+        final String path = "/main";
+        final String page = "<head></head><body>test onReceivedLoginRequest</body>";
+        final String headerName = "x-auto-login";
+        final String headerValue = "realm=com.google&account=foo%40bar.com&args=random_string";
+        List<Pair<String, String>> headers = new ArrayList<Pair<String, String>>();
+        headers.add(Pair.create(headerName, headerValue));
+
+        try {
+            testServer = new TestWebServer(false);
+            String url = testServer.setResponse(path, page, headers);
+            assertFalse(webViewClient.hasOnReceivedLoginRequest());
+            mOnUiThread.loadUrlAndWaitForCompletion(url);
+            assertTrue(webViewClient.hasOnReceivedLoginRequest());
+            new PollingCheck(TEST_TIMEOUT) {
+                @Override
+                protected boolean check() {
+                    return webViewClient.hasOnReceivedLoginRequest();
+                }
+            }.run();
+           assertEquals("com.google", webViewClient.getLoginRequestRealm());
+           assertEquals("foo@bar.com", webViewClient.getLoginRequestAccount());
+           assertEquals("random_string", webViewClient.getLoginRequestArgs());
+        } finally {
+            testServer.shutdown();
+        }
+    }
     public void testOnReceivedError() throws Exception {
         if (!NullWebViewUtils.isWebViewAvailable()) {
             return;
@@ -541,6 +578,10 @@ public class WebViewClientTest extends ActivityInstrumentationTestCase2<WebViewC
         private boolean mOnFormResubmissionCalled;
         private boolean mDoUpdateVisitedHistoryCalled;
         private boolean mOnReceivedHttpAuthRequestCalled;
+        private boolean mOnReceivedLoginRequest;
+        private String mOnReceivedLoginAccount;
+        private String mOnReceivedLoginArgs;
+        private String mOnReceivedLoginRealm;
         private boolean mOnUnhandledKeyEventCalled;
         private boolean mOnScaleChangedCalled;
         private int mShouldOverrideUrlLoadingCallCount;
@@ -564,6 +605,10 @@ public class WebViewClientTest extends ActivityInstrumentationTestCase2<WebViewC
 
         public int hasOnReceivedErrorCode() {
             return mOnReceivedErrorCode;
+        }
+
+        public boolean hasOnReceivedLoginRequest() {
+            return mOnReceivedLoginRequest;
         }
 
         public WebResourceError hasOnReceivedResourceError() {
@@ -600,6 +645,18 @@ public class WebViewClientTest extends ActivityInstrumentationTestCase2<WebViewC
 
         public String getLastShouldOverrideUrl() {
             return mLastShouldOverrideUrl;
+        }
+
+        public String getLoginRequestRealm() {
+            return mOnReceivedLoginRealm;
+        }
+
+        public String getLoginRequestAccount() {
+            return mOnReceivedLoginAccount;
+        }
+
+        public String getLoginRequestArgs() {
+            return mOnReceivedLoginArgs;
         }
 
         @Override
@@ -643,6 +700,16 @@ public class WebViewClientTest extends ActivityInstrumentationTestCase2<WebViewC
             super.onReceivedHttpError(view, request, errorResponse);
             mOnReceivedHttpError = errorResponse;
         }
+
+        @Override
+        public void onReceivedLoginRequest(WebView view, String realm, String account,
+                String args) {
+            super.onReceivedLoginRequest(view, realm, account, args);
+            mOnReceivedLoginRequest = true;
+            mOnReceivedLoginRealm = realm;
+            mOnReceivedLoginAccount = account;
+            mOnReceivedLoginArgs = args;
+       }
 
         @Override
         public void onFormResubmission(WebView view, Message dontResend, Message resend) {
