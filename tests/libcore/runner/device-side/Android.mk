@@ -12,23 +12,24 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-LOCAL_PATH := $(call my-dir)
+LOCAL_PATH:= $(call my-dir)
 
 include $(CLEAR_VARS)
 
-LOCAL_SRC_FILES := $(call all-java-files-under, ../../common/host-side/tradefed/src)
+LOCAL_SRC_FILES := $(call all-java-files-under, src)
 
-LOCAL_JAVA_RESOURCE_DIRS := res
-LOCAL_JAVA_RESOURCE_DIRS += ../../common/host-side/tradefed/res
+LOCAL_MODULE := cts-dalvik-device-test-runner
 
-LOCAL_SUITE_BUILD_NUMBER := $(BUILD_NUMBER)
-LOCAL_SUITE_NAME := CTS_V2
-LOCAL_SUITE_FULLNAME := "Compatibility Test Suite"
-LOCAL_SUITE_VERSION := 5.0
+LOCAL_DEX_PREOPT := false
 
-LOCAL_MODULE := cts-tradefed_v2
+LOCAL_PROGUARD_ENABLED := disabled
 
-include $(BUILD_COMPATIBILITY_SUITE)
+LOCAL_STATIC_JAVA_LIBRARIES := compatibility-device-util
 
-# Build all sub-directories
-include $(call all-makefiles-under,$(LOCAL_PATH))
+# don't include these packages in any target
+LOCAL_MODULE_TAGS := optional
+
+# Tag this module as a cts_v2 test artifact
+LOCAL_COMPATIBILITY_SUITE := cts_v2
+
+include $(BUILD_JAVA_LIBRARY)

@@ -45,7 +45,7 @@ Or else if you are working from the Android source tree and have run make cts,
 the script can be found at
   out/host/linux-x86/cts/android-cts/tools/cts-tradefed
 3. Type:
-'run cts --plan CTS' to run the default CTS plan
+'run cts' to run the default CTS plan
 
 Some other useful commands are
 
@@ -56,7 +56,7 @@ To run a specific test:
 'run cts --test <test_name>'
 
 To shard a plan test run on multiple devices
-'run cts --plan CTS --shards <number of shards>
+'run cts --shards <number of shards>
 note: all connected devices must be running the same build
 
 For more options:
