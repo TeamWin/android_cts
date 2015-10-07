@@ -14,9 +14,13 @@
      limitations under the License.
 -->
 <configuration description="Config for CTS Extensible Device Info Collector">
-    <include name="common-config" />
-    <option name="run-command:run-command" value="rm /sdcard/device-info-files" />
-    <option name="apk-installer:test-file-name" value="CtsDeviceInfo.apk" />
+    <target_preparer class="com.android.compatibility.common.tradefed.targetprep.ApkInstaller">
+        <option name="cleanup-apks" value="true" />
+        <option name="test-file-name" value="CtsDeviceInfo.apk" />
+    </target_preparer>
+    <target_preparer class="com.android.tradefed.targetprep.RunCommandTargetPreparer">
+        <option name="run-command" value="rm /sdcard/device-info-files" />
+    </target_preparer>
     <target_preparer class="com.android.compatibility.common.tradefed.targetprep.ResultFilePuller">
         <option name="src-dir" value="/sdcard/device-info-files/"/>
         <option name="dest-dir" value="device-info-files/"/>

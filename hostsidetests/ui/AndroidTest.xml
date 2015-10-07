@@ -13,8 +13,7 @@
      See the License for the specific language governing permissions and
      limitations under the License.
 -->
-<configuration description="Config for CTS UI Host Test Cases">
-    <include name="common-config" />
+<configuration description="Config for CTS UI host test cases">
     <test class="android.ui.cts.InstallTimeTest" />
     <test class="android.ui.cts.TaskSwitchingTest" />
 </configuration>

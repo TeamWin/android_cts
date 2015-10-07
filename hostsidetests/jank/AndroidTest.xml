@@ -13,7 +13,6 @@
      See the License for the specific language governing permissions and
      limitations under the License.
 -->
-<configuration description="Config for CTS Jank Host Test Cases">
-    <include name="common-config" />
+<configuration description="Config for CTS Jank host test cases">
     <test class="android.jank.cts.opengl.CtsHostJankOpenGl" />
 </configuration>
