@@ -21,7 +21,9 @@
     <uses-permission android:name="android.permission.DISABLE_KEYGUARD" />
     <application>
         <activity android:name="android.animation.cts.AnimationActivity"
-            android:label="AnimationActivity"/>
+                  android:label="AnimationActivity"/>
+        <activity android:name="android.animation.cts.ButtonViewActivity"
+                  android:label="ButtonViewActivity"/>
         <activity
            android:name="android.animation.cts.LayoutAnimationActivity" />
         <uses-library android:name="android.test.runner" />
