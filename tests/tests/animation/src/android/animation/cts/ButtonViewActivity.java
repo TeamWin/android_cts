@@ -19,7 +19,7 @@ package android.animation.cts;
 import android.app.Activity;
 import android.os.Bundle;
 
-import com.android.cts.animation.R;
+import android.animation.cts.R;
 
 public class ButtonViewActivity extends Activity {
 

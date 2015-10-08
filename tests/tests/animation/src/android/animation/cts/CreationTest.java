@@ -24,7 +24,7 @@ import android.os.Debug;
 import android.test.ActivityInstrumentationTestCase2;
 import android.test.UiThreadTest;
 
-import com.android.cts.animation.R;
+import android.animation.cts.R;
 
 public class CreationTest extends ActivityInstrumentationTestCase2<ButtonViewActivity> {
 

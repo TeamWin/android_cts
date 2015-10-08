@@ -18,7 +18,6 @@ package android.animation.cts;
 import android.animation.ObjectAnimator;
 import android.animation.ValueAnimator;
 import android.test.ActivityInstrumentationTestCase2;
-import android.test.UiThreadTest;
 import android.view.animation.AccelerateInterpolator;
 
 public class ValueAnimatorTest extends
