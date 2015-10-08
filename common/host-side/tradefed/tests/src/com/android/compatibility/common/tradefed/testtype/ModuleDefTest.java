@@ -16,14 +16,10 @@
 
 package com.android.compatibility.common.tradefed.testtype;
 
+import com.android.compatibility.common.tradefed.util.NoOpTestInvocationListener;
 import com.android.compatibility.common.util.AbiUtils;
-import com.android.ddmlib.testrunner.TestIdentifier;
-import com.android.tradefed.build.IBuildInfo;
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.result.ITestInvocationListener;
-import com.android.tradefed.result.InputStreamSource;
-import com.android.tradefed.result.LogDataType;
-import com.android.tradefed.result.TestSummary;
 import com.android.tradefed.targetprep.ITargetPreparer;
 import com.android.tradefed.testtype.IAbi;
 import com.android.tradefed.testtype.IRemoteTest;
@@ -33,8 +29,6 @@ import junit.framework.TestCase;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import java.util.regex.Pattern;
 
 public class ModuleDefTest extends TestCase {
 
@@ -47,31 +41,17 @@ public class ModuleDefTest extends TestCase {
 
     public void testAccessors() throws Exception {
         IAbi abi = new Abi(ABI, "");
-        IModuleDef def = new ModuleDef(NAME, abi, new ArrayList<IRemoteTest>(),
-                new ArrayList<ITargetPreparer>());
+        MockRemoteTest mockTest = new MockRemoteTest();
+        IModuleDef def = new ModuleDef(NAME, abi, mockTest, new ArrayList<ITargetPreparer>());
         assertEquals("Incorrect ID", ID, def.getId());
         assertEquals("Incorrect ABI", ABI, def.getAbi().getName());
         assertEquals("Incorrect Name", NAME, def.getName());
-        assertNotNull("Expected tests", def.getTests());
-        assertNotNull("Expected preparers", def.getPreparers());
-    }
-
-    public void testNameMatching() throws Exception {
-        IAbi abi = new Abi(ABI, "");
-        ModuleDef def = new ModuleDef(NAME, abi, new ArrayList<IRemoteTest>(),
-                new ArrayList<ITargetPreparer>());
-        assertTrue("Expected equality", def.nameMatches(Pattern.compile(NAME)));
-        assertTrue("Expected regex equality", def.nameMatches(Pattern.compile(".*")));
-        assertFalse("Expected no match to ID", def.nameMatches(Pattern.compile(ID)));
-        assertFalse("Expected no match to empty", def.nameMatches(Pattern.compile("")));
     }
 
     public void testAddFilters() throws Exception {
         IAbi abi = new Abi(ABI, "");
-        List<IRemoteTest> tests = new ArrayList<>();
         MockRemoteTest mockTest = new MockRemoteTest();
-        tests.add(mockTest);
-        ModuleDef def = new ModuleDef(NAME, abi, tests, new ArrayList<ITargetPreparer>());
+        ModuleDef def = new ModuleDef(NAME, abi, mockTest, new ArrayList<ITargetPreparer>());
         def.addIncludeFilter(CLASS);
         def.addExcludeFilter(TEST_1);
         MockListener mockListener = new MockListener();
@@ -114,76 +94,5 @@ public class ModuleDefTest extends TestCase {
 
     }
 
-    private class MockListener implements ITestInvocationListener {
-
-        @Override
-        public void invocationStarted(IBuildInfo buildInfo) {
-            // Do nothing
-        }
-
-        @Override
-        public void testRunStarted(String name, int numTests) {
-            // Do nothing
-        }
-
-        @Override
-        public void testStarted(TestIdentifier test) {
-            // Do nothing
-        }
-
-        @Override
-        public void testEnded(TestIdentifier test, Map<String, String> metrics) {
-            // Do nothing
-        }
-
-        @Override
-        public void testIgnored(TestIdentifier test) {
-            // Do nothing
-        }
-
-        @Override
-        public void testFailed(TestIdentifier test, String trace) {
-            // Do nothing
-        }
-
-        @Override
-        public void testAssumptionFailure(TestIdentifier test, String trace) {
-            // Do nothing
-        }
-
-        @Override
-        public void testRunStopped(long elapsedTime) {
-            // Do nothing
-        }
-
-        @Override
-        public void testRunEnded(long elapsedTime, Map<String, String> metrics) {
-            // Do nothing
-        }
-
-        @Override
-        public void testRunFailed(String id) {
-            // Do nothing
-        }
-
-        @Override
-        public TestSummary getSummary() {
-            return null;
-        }
-
-        @Override
-        public void invocationEnded(long elapsedTime) {
-            // Do nothing
-        }
-
-        @Override
-        public void invocationFailed(Throwable cause) {
-            // Do nothing
-        }
-
-        @Override
-        public void testLog(String name, LogDataType type, InputStreamSource stream) {
-            // Do nothing
-        }
-    }
+    private class MockListener extends NoOpTestInvocationListener {}
 }

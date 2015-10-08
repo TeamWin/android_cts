@@ -16,14 +16,12 @@
 package com.android.compatibility.common.tradefed.testtype;
 
 import com.android.tradefed.device.DeviceNotAvailableException;
-import com.android.tradefed.targetprep.ITargetPreparer;
 import com.android.tradefed.testtype.IAbi;
 import com.android.tradefed.testtype.IBuildReceiver;
 import com.android.tradefed.testtype.IDeviceTest;
 import com.android.tradefed.testtype.IRemoteTest;
 
-import java.util.List;
-import java.util.regex.Pattern;
+import java.util.Set;
 
 /**
  * Container for Compatibility test info.
@@ -46,14 +44,9 @@ public interface IModuleDef extends Comparable<IModuleDef>, IBuildReceiver, IDev
     IAbi getAbi();
 
     /**
-     * @return a list of preparers used for setup or teardown of test cases in this module
+     * @return the {@link Set} of tokens a device must have in order to run this module.
      */
-    List<ITargetPreparer> getPreparers();
-
-    /**
-     * @return a {@link List} of {@link IRemoteTest}s to run the test module.
-     */
-    List<IRemoteTest> getTests();
+    Set<String> getTokens();
 
     /**
      * Adds a filter to include a specific test
@@ -70,11 +63,6 @@ public interface IModuleDef extends Comparable<IModuleDef>, IBuildReceiver, IDev
      * <package>.<class>#<method> or <native_name>
      */
     void addExcludeFilter(String name);
-
-    /**
-     * @return true iff this module's name matches the give regular expression pattern.
-     */
-    boolean nameMatches(Pattern pattern);
 
     /**
      * Runs the module's precondition checks and setup tasks.

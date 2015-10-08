@@ -18,6 +18,7 @@ package com.android.compatibility.common.tradefed.testtype;
 import com.android.compatibility.common.tradefed.result.IModuleListener;
 import com.android.compatibility.common.tradefed.result.ModuleListener;
 import com.android.compatibility.common.tradefed.targetprep.PreconditionPreparer;
+import com.android.compatibility.common.tradefed.targetprep.TokenRequirement;
 import com.android.compatibility.common.util.AbiUtils;
 import com.android.tradefed.build.IBuildInfo;
 import com.android.tradefed.config.ConfigurationException;
@@ -39,8 +40,9 @@ import com.android.tradefed.testtype.ITestFilterReceiver;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
-import java.util.regex.Pattern;
+import java.util.Set;
 
 /**
  * Container for Compatibility test module info.
@@ -50,7 +52,8 @@ public class ModuleDef implements IModuleDef {
     private final String mId;
     private final String mName;
     private final IAbi mAbi;
-    private List<IRemoteTest> mTests = null;
+    private final Set<String> mTokens = new HashSet<>();
+    private IRemoteTest mTest = null;
     private List<ITargetPreparer> mPreconditions = new ArrayList<>();
     private List<ITargetPreparer> mPreparers = new ArrayList<>();
     private List<ITargetCleaner> mCleaners = new ArrayList<>();
@@ -59,16 +62,18 @@ public class ModuleDef implements IModuleDef {
     private List<String> mIncludeFilters = new ArrayList<>();
     private List<String> mExcludeFilters = new ArrayList<>();
 
-    public ModuleDef(String name, IAbi abi, List<IRemoteTest> tests,
+    public ModuleDef(String name, IAbi abi, IRemoteTest test,
             List<ITargetPreparer> preparers) {
         mId = AbiUtils.createId(abi.getName(), name);
         mName = name;
         mAbi = abi;
-        mTests = tests;
+        mTest = test;
         for (ITargetPreparer preparer : preparers) {
             // Separate preconditions from target preparers.
             if (preparer instanceof PreconditionPreparer) {
                 mPreconditions.add(preparer);
+            } else if (preparer instanceof TokenRequirement) {
+                mTokens.addAll(((TokenRequirement) preparer).getTokens());
             } else {
                 mPreparers.add(preparer);
             }
@@ -78,6 +83,14 @@ public class ModuleDef implements IModuleDef {
         }
         // Reverse cleaner order
         Collections.reverse(mCleaners);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public String toString() {
+        return mId;
     }
 
     /**
@@ -108,16 +121,8 @@ public class ModuleDef implements IModuleDef {
      * {@inheritDoc}
      */
     @Override
-    public List<IRemoteTest> getTests() {
-        return mTests;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public List<ITargetPreparer> getPreparers() {
-        return mPreparers;
+    public Set<String> getTokens() {
+        return mTokens;
     }
 
     /**
@@ -142,14 +147,6 @@ public class ModuleDef implements IModuleDef {
     @Override
     public int compareTo(IModuleDef moduleDef) {
         return getName().compareTo(moduleDef.getName());
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public boolean nameMatches(Pattern pattern) {
-        return pattern.matcher(mName).matches();
     }
 
     /**
@@ -203,24 +200,22 @@ public class ModuleDef implements IModuleDef {
             }
         }
 
-        // Run tests
-        for (IRemoteTest test : mTests) {
-            CLog.d("Test: %s", test.getClass().getSimpleName());
-            if (test instanceof IAbiReceiver) {
-                ((IAbiReceiver) test).setAbi(mAbi);
-            }
-            if (test instanceof IBuildReceiver) {
-                ((IBuildReceiver) test).setBuild(mBuild);
-            }
-            if (test instanceof IDeviceTest) {
-                ((IDeviceTest) test).setDevice(mDevice);
-            }
-            if (test instanceof ITestFilterReceiver) {
-                ((ITestFilterReceiver) test).addAllIncludeFilters(mIncludeFilters);
-                ((ITestFilterReceiver) test).addAllExcludeFilters(mExcludeFilters);
-            }
-            test.run(moduleListener);
+
+        CLog.d("Test: %s", mTest.getClass().getSimpleName());
+        if (mTest instanceof IAbiReceiver) {
+            ((IAbiReceiver) mTest).setAbi(mAbi);
         }
+        if (mTest instanceof IBuildReceiver) {
+            ((IBuildReceiver) mTest).setBuild(mBuild);
+        }
+        if (mTest instanceof IDeviceTest) {
+            ((IDeviceTest) mTest).setDevice(mDevice);
+        }
+        if (mTest instanceof ITestFilterReceiver) {
+            ((ITestFilterReceiver) mTest).addAllIncludeFilters(mIncludeFilters);
+            ((ITestFilterReceiver) mTest).addAllExcludeFilters(mExcludeFilters);
+        }
+        mTest.run(moduleListener);
 
         // Tear down
         for (ITargetCleaner cleaner : mCleaners) {

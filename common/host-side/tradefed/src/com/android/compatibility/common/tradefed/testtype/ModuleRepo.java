@@ -17,25 +17,25 @@ package com.android.compatibility.common.tradefed.testtype;
 
 import com.android.compatibility.common.util.AbiUtils;
 import com.android.compatibility.common.util.TestFilter;
-import com.android.tradefed.config.Configuration;
+import com.android.ddmlib.Log.LogLevel;
 import com.android.tradefed.config.ConfigurationException;
 import com.android.tradefed.config.ConfigurationFactory;
+import com.android.tradefed.config.IConfiguration;
 import com.android.tradefed.config.IConfigurationFactory;
 import com.android.tradefed.log.LogUtil.CLog;
-import com.android.tradefed.targetprep.ITargetPreparer;
 import com.android.tradefed.testtype.IAbi;
 import com.android.tradefed.testtype.IRemoteTest;
+import com.android.tradefed.testtype.IShardableTest;
 
 import java.io.File;
 import java.io.FilenameFilter;
 import java.util.ArrayList;
-import java.util.Collections;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.regex.Pattern;
 
 /**
  * Retrieves Compatibility test module definitions from the repository.
@@ -44,50 +44,214 @@ public class ModuleRepo implements IModuleRepo {
 
     private static final String CONFIG_EXT = ".config";
 
-    /** mapping of module id to definition */
-    private final Map<String, IModuleDef> mModules;
-    private final Set<IAbi> mAbis;
+    static IModuleRepo sInstance;
 
-    /**
-     * Creates a {@link ModuleRepo}, initialized from provided build
-     */
-    public ModuleRepo(File testsDir, Set<IAbi> abis) {
-        this(new HashMap<String, IModuleDef>(), abis);
-        parse(testsDir);
+    private int mShards;
+    private int mModulesPerShard;
+    private Set<String> mSerials = new HashSet<>();
+    private Map<String, Set<String>> mDeviceTokens = new HashMap<>();
+    private boolean mIncludeAll;
+    private Map<String, List<TestFilter>> mIncludeFilters = new HashMap<>();
+    private Map<String, List<TestFilter>> mExcludeFilters = new HashMap<>();
+    private IConfigurationFactory mConfigFactory = ConfigurationFactory.getInstance();
+
+    private volatile boolean mInitialized = false;
+
+    // Holds all the 'normal' tests waiting to be run.
+    private Set<IModuleDef> mRemainingModules = new HashSet<>();
+    // Holds all the 'special' tests waiting to be run. Meaning the DUT must have a specific token.
+    private Set<IModuleDef> mRemainingWithTokens = new HashSet<>();
+
+    public static IModuleRepo getInstance() {
+        if (sInstance == null) {
+            sInstance = new ModuleRepo();
+        }
+        return sInstance;
     }
 
     /**
-     * Creates a {@link ModuleRepo}, initialized with the given modules
+     * {@inheritDoc}
      */
-    public ModuleRepo(Map<String, IModuleDef> modules, Set<IAbi> abis) {
-        mModules = modules;
-        mAbis = abis;
+    @Override
+    public int getNumberOfShards() {
+        return mShards;
     }
 
     /**
-     * Builds mTestMap based on directory contents
+     * {@inheritDoc}
      */
-    private void parse(File dir) {
-        File[] configFiles = dir.listFiles(new ConfigFilter());
-        IConfigurationFactory configFactory = ConfigurationFactory.getInstance();
+    @Override
+    public int getModulesPerShard() {
+        return mModulesPerShard;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public Map<String, Set<String>> getDeviceTokens() {
+        return mDeviceTokens;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public Set<String> getSerials() {
+        return mSerials;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public Set<IModuleDef> getRemainingModules() {
+        return mRemainingModules;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public Set<IModuleDef> getRemainingWithTokens() {
+        return mRemainingWithTokens;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public boolean isInitialized() {
+        return mInitialized;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void initialize(int shards, File testsDir, Set<IAbi> abis, List<String> deviceTokens,
+            List<String> includeFilters, List<String> excludeFilters) {
+        mInitialized = true;
+        mShards = shards;
+        for (String line : deviceTokens) {
+            String[] parts = line.split(":");
+            if (parts.length == 2) {
+                String key = parts[0];
+                String value = parts[1];
+                Set<String> list = mDeviceTokens.get(key);
+                if (list == null) {
+                    list = new HashSet<>();
+                    mDeviceTokens.put(key, list);
+                }
+                list.add(value);
+            } else {
+                throw new IllegalArgumentException(
+                        String.format("Could not parse device token: %s", line));
+            }
+        }
+        mIncludeAll = includeFilters.isEmpty();
+        // Include all the inclusions
+        addFilters(includeFilters, mIncludeFilters, abis);
+        // Exclude all the exclusions
+        addFilters(excludeFilters, mExcludeFilters, abis);
+
+        File[] configFiles = testsDir.listFiles(new ConfigFilter());
         for (File configFile : configFiles) {
+            final String name = configFile.getName().replace(CONFIG_EXT, "");
+            final String[] pathArg = new String[] { configFile.getAbsolutePath() };
             try {
                 // Invokes parser to process the test module config file
                 // Need to generate a different config for each ABI as we cannot guarantee the
-                // configs are idempotent. This however means we parse the same file multiple times.
-                for (IAbi abi : mAbis) {
-                    Configuration config = (Configuration) configFactory.createConfigurationFromArgs(
-                            new String[]{configFile.getAbsolutePath()});
-                    String name = configFile.getName().replace(CONFIG_EXT, "");
+                // configs are idempotent. This however means we parse the same file multiple times
+                for (IAbi abi : abis) {
+                    IConfiguration config = mConfigFactory.createConfigurationFromArgs(pathArg);
                     List<IRemoteTest> tests = config.getTests();
-                    List<ITargetPreparer> preparers = config.getTargetPreparers();
-                    IModuleDef def = new ModuleDef(name, abi, tests, preparers);
-                    mModules.put(AbiUtils.createId(abi.getName(), name), def);
+                    int testCount = tests.size();
+                    for (int i = 0; i < testCount; i++) {
+                        IRemoteTest test = tests.get(i);
+                        if (test instanceof IShardableTest) {
+                            Collection<IRemoteTest> ts = ((IShardableTest) test).split();
+                            for (IRemoteTest t : ts) {
+                                addModuleDef(name, abi, t, pathArg);
+                            }
+                        } else {
+                            addModuleDef(name, abi, test, pathArg);
+                        }
+                    }
                 }
             } catch (ConfigurationException e) {
                 throw new RuntimeException(String.format("error parsing config file: %s",
                         configFile.getName()), e);
             }
+        }
+    }
+
+    private static void addFilters(List<String> stringFilters,
+            Map<String, List<TestFilter>> filters, Set<IAbi> abis) {
+        for (String filterString : stringFilters) {
+            TestFilter filter = TestFilter.createFrom(filterString);
+            String abi = filter.getAbi();
+            if (abi == null) {
+                for (IAbi a : abis) {
+                    addFilter(a.getName(), filter, filters);
+                }
+            } else {
+                addFilter(abi, filter, filters);
+            }
+        }
+    }
+
+    private static void addFilter(String abi, TestFilter filter,
+            Map<String, List<TestFilter>> filters) {
+        getFilter(filters, AbiUtils.createId(abi, filter.getName())).add(filter);
+    }
+
+    private static List<TestFilter> getFilter(Map<String, List<TestFilter>> filters, String id) {
+        List<TestFilter> fs = filters.get(id);
+        if (fs == null) {
+            fs = new ArrayList<>();
+            filters.put(id, fs);
+        }
+        return fs;
+    }
+
+    private void addModuleDef(String name, IAbi abi, IRemoteTest test,
+            String[] configPaths) throws ConfigurationException {
+        // Invokes parser to process the test module config file
+        IConfiguration config = mConfigFactory.createConfigurationFromArgs(configPaths);
+        addModuleDef(new ModuleDef(name, abi, test, config.getTargetPreparers()));
+    }
+
+    private void addModuleDef(IModuleDef moduleDef) {
+        String id = moduleDef.getId();
+        boolean includeModule = mIncludeAll;
+        for (TestFilter include : getFilter(mIncludeFilters, id)) {
+            String test = include.getTest();
+            if (test != null) {
+                // We're including a subset of tests
+                moduleDef.addIncludeFilter(test);
+            }
+            includeModule = true;
+        }
+        for (TestFilter exclude : getFilter(mExcludeFilters, id)) {
+            String test = exclude.getTest();
+            if (test != null) {
+                // Excluding a subset of tests, so keep module but give filter
+                moduleDef.addExcludeFilter(test);
+            } else {
+                // Excluding all tests in the module so just remove the whole thing
+                includeModule = false;
+            }
+        }
+        if (includeModule) {
+            Set<String> tokens = moduleDef.getTokens();
+            if (tokens == null || tokens.isEmpty()) {
+                mRemainingModules.add(moduleDef);
+            } else {
+                mRemainingWithTokens.add(moduleDef);
+            }
+            int numModules = mRemainingModules.size() + mRemainingWithTokens.size();
+            mModulesPerShard = (int) ((numModules / mShards) + 0.5f); // Round up
         }
     }
 
@@ -109,146 +273,74 @@ public class ModuleRepo implements IModuleRepo {
      * {@inheritDoc}
      */
     @Override
-    public IModuleDef getModule(String id) {
-        return mModules.get(id);
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public Map<String, IModuleDef> getModules() {
-        return mModules;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public Map<String, List<IModuleDef>> getModulesByName() {
-        Map<String, List<IModuleDef>> modules = new HashMap<>();
-        for (IModuleDef moduleDef : mModules.values()) {
-            String name = moduleDef.getName();
-            List<IModuleDef> defs = modules.get(name);
-            if (defs == null) {
-                defs = new ArrayList<IModuleDef>();
-                modules.put(name, defs);
+    public synchronized List<IModuleDef> getModules(String serial) {
+        Set<String> tokens = mDeviceTokens.get(serial);
+        List<IModuleDef> modules = getModulesWithTokens(tokens);
+        int diff = mModulesPerShard - modules.size();
+        if (diff > 0) {
+            modules.addAll(getModules(diff));
+        }
+        mSerials.add(serial);
+        if (mSerials.size() == mShards) {
+            // All shards have been given their workload.
+            if (!mRemainingWithTokens.isEmpty()) {
+                CLog.logAndDisplay(LogLevel.INFO, "Device Tokens:");
+                for (String s : mDeviceTokens.keySet()) {
+                    CLog.logAndDisplay(LogLevel.INFO, "%s: %s", s, mDeviceTokens.get(s));
+                }
+                CLog.logAndDisplay(LogLevel.INFO, "Module Tokens:");
+                for (IModuleDef module : mRemainingWithTokens) {
+                    CLog.logAndDisplay(LogLevel.INFO, "%s: %s", module.getId(), module.getTokens());
+                }
+                throw new IllegalArgumentException("Not all modules could be scheduled.");
             }
-            defs.add(moduleDef);
+        }
+        CLog.logAndDisplay(LogLevel.INFO, "%s: %s", serial, modules);
+        return modules;
+    }
+
+    /**
+     * Iterates through the remaining tests that require tokens and if the device has all the
+     * required tokens it will queue that module to run on that device, else the module gets put
+     * back into the list.
+     */
+    private List<IModuleDef> getModulesWithTokens(Set<String> tokens) {
+        List<IModuleDef> modules = new ArrayList<>();
+        if (tokens != null) {
+            Set<IModuleDef> copy = mRemainingWithTokens;
+            mRemainingWithTokens = new HashSet<>();
+            for (IModuleDef module : copy) {
+                // If a device has all the tokens required by the module then it can run it.
+                if (tokens.containsAll(module.getTokens())) {
+                    modules.add(module);
+                } else {
+                    mRemainingWithTokens.add(module);
+                }
+            }
         }
         return modules;
     }
 
     /**
-     * {@inheritDoc}
+     * Returns a {@link List} of modules that do not require tokens.
      */
-    @Override
-    public List<String> getModuleIds() {
-        List<String> ids = new ArrayList<>(mModules.keySet());
-        Collections.sort(ids);
-        return ids;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public List<String> getModuleNames() {
-        Set<String> names = new HashSet<>();
-        for (IModuleDef moduleDef : mModules.values()) {
-            names.add(moduleDef.getName());
+    private List<IModuleDef> getModules(int count) {
+        int size = mRemainingModules.size();
+        if (count >= size) {
+            count = size;
         }
-        List<String> namesList = new ArrayList<>(names);
-        Collections.sort(namesList);
-        return namesList;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public Set<String> getModulesMatching(String regex) {
-        Set<String> names = new HashSet<>();
-        Pattern pattern = Pattern.compile(regex);
-        for (IModuleDef moduleDef : mModules.values()) {
-            if (moduleDef.nameMatches(pattern)) {
-                names.add(moduleDef.getName());
-            }
-        }
-        return names;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public List<IModuleDef> getModules(List<String> includeFilters, List<String> excludeFilters) {
-        Map<String, IModuleDef> moduleDefs = new HashMap<>();
-        Set<String> ids;
-        // Include all the inclusions
-        for (String filterString : includeFilters) {
-            TestFilter filter = TestFilter.createFrom(filterString);
-            String test = filter.getTest();
-            ids = getAllIds(filter);
-            for (String id : ids) {
-                IModuleDef module = getModule(id);
-                if (test != null) {
-                    // We're including a subset of tests
-                    module.addIncludeFilter(test);
-                }
-                moduleDefs.put(id, module);
-            }
-        }
-        // Exclude all the exclusions
-        for (String filterString : excludeFilters) {
-            TestFilter filter = TestFilter.createFrom(filterString);
-            String test = filter.getTest();
-            ids = getAllIds(filter);
-            // Iterate through all IDs
-            for (String id : ids) {
-                IModuleDef module = moduleDefs.get(id);
-                if (module != null) {
-                    if (test != null) {
-                        // Excluding a subset of tests, so keep module but give filter
-                        module.addExcludeFilter(test);
-                    } else {
-                        // Excluding all tests in the module so just remove the whole thing
-                        moduleDefs.remove(id);
-                    }
-                }
-            }
-        }
-        if (moduleDefs.isEmpty()) {
-            throw new IllegalStateException("Nothing to do. Use 'list modules' to see available"
-                    + " modules, and 'list results' to see available sessions to retry.");
-        }
-        // Note: run() relies on the fact that the list is reliably sorted for sharding purposes
-        List<IModuleDef> sortedModuleDefs = new ArrayList<>(moduleDefs.values());
-        Collections.sort(sortedModuleDefs);
-        return sortedModuleDefs;
-    }
-
-    /**
-     * Returns all IDs matching the given filter.
-     */
-    private Set<String> getAllIds(TestFilter filter) {
-        String abi = filter.getAbi();
-        String name = filter.getName();
-        Set<String> filteredNames = getModulesMatching(name);
-        if (filteredNames.isEmpty()) {
-            throw new IllegalArgumentException(String.format(
-                    "Not modules matching %s. Use 'list modules' to see available modules.",
-                    filter.getName()));
-        }
-        Set<String> ids = new HashSet<>();
-        for (String module : filteredNames) {
-            if (abi != null) {
-                ids.add(AbiUtils.createId(abi, module));
+        Set<IModuleDef> copy = mRemainingModules;
+        mRemainingModules = new HashSet<>();
+        List<IModuleDef> modules = new ArrayList<>();
+        for (IModuleDef module : copy) {
+            // Give 'count' modules to this shard and then put the rest back in the queue.
+            if (count > 0) {
+                modules.add(module);
+                count--;
             } else {
-                // ABI not specified, test on all ABIs
-                for (IAbi a : mAbis) ids.add(AbiUtils.createId(a.getName(), module));
+                mRemainingModules.add(module);
             }
         }
-        return ids;
+        return modules;
     }
 }

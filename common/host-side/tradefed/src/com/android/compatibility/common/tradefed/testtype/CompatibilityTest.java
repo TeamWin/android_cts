@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package com.android.compatibility.common.tradefed.testtype;
 
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
@@ -53,7 +54,7 @@ import java.util.Set;
 /**
  * A Test for running Compatibility Suites
  */
-@OptionClass(alias="compatibility-test")
+@OptionClass(alias = "compatibility-test")
 public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildReceiver {
 
     public static final String INCLUDE_FILTER_OPTION = "include-filter";
@@ -66,11 +67,12 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
     private static final String SHARD_OPTION = "shard";
     public static final String SKIP_DEVICE_INFO_OPTION = "skip-device-info";
     public static final String SKIP_PRECONDITIONS_OPTION = "skip-preconditions";
+    public static final String DEVICE_TOKEN_OPTION = "device-token";
     private static final String URL = "dynamic-config-url";
 
     private static final TestStatus[] RETRY_TEST_STATUS = new TestStatus[] {
-        TestStatus.FAIL,
-        TestStatus.NOT_EXECUTED
+            TestStatus.FAIL,
+            TestStatus.NOT_EXECUTED
     };
 
     @Option(name = PLAN_OPTION,
@@ -120,55 +122,55 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
             description = "Specify the url for override config")
     private String mURL;
 
-    @Option(name = SKIP_DEVICE_INFO_OPTION, description =
-            "Whether device info collection should be skipped")
+    @Option(name = SKIP_DEVICE_INFO_OPTION,
+            description = "Whether device info collection should be skipped")
     private boolean mSkipDeviceInfo = false;
 
-    @Option(name = SKIP_PRECONDITIONS_OPTION, description =
-            "Whether preconditions should be skipped")
+    @Option(name = SKIP_PRECONDITIONS_OPTION,
+            description = "Whether preconditions should be skipped")
     private boolean mSkipPreconditions = false;
 
-    @Option(name = "bugreport-on-failure", description =
-            "Take a bugreport on every test failure. " +
-            "Warning: can potentially use a lot of disk space.")
+    @Option(name = DEVICE_TOKEN_OPTION,
+            description = "Holds the devices' tokens, used when scheduling tests that have"
+                    + "prerequisits such as requiring a SIM card. Format is <serial>:<token>",
+            importance = Importance.ALWAYS)
+    private List<String> mDeviceTokens = new ArrayList<>();
+
+    @Option(name = "bugreport-on-failure",
+            description = "Take a bugreport on every test failure. " +
+                    "Warning: can potentially use a lot of disk space.")
     private boolean mBugReportOnFailure = false;
 
-    @Option(name = "logcat-on-failure", description =
-            "Take a logcat snapshot on every test failure.")
+    @Option(name = "logcat-on-failure",
+            description = "Take a logcat snapshot on every test failure.")
     private boolean mLogcatOnFailure = false;
 
-    @Option(name = "screenshot-on-failure", description =
-            "Take a screenshot on every test failure.")
+    @Option(name = "screenshot-on-failure",
+            description = "Take a screenshot on every test failure.")
     private boolean mScreenshotOnFailure = false;
 
-    private int mShardAssignment;
     private int mTotalShards;
     private ITestDevice mDevice;
     private IBuildInfo mBuild;
     private CompatibilityBuildHelper mBuildHelper;
-    private List<IModuleDef> mModules = new ArrayList<>();
-    private int mLastModuleIndex = 0;
 
     /**
-     * Create a new {@link CompatibilityTest} that will run the default list of modules.
+     * Create a new {@link CompatibilityTest} that will run the default list of
+     * modules.
      */
     public CompatibilityTest() {
-        this(0 /*shardAssignment*/, 1 /*totalShards*/);
+        this(1 /* totalShards */);
     }
 
     /**
-     * Create a new {@link CompatibilityTest} that will run a sublist of modules.
+     * Create a new {@link CompatibilityTest} that will run a sublist of
+     * modules.
      */
-    public CompatibilityTest(int shardAssignment, int totalShards) {
-        if (shardAssignment < 0) {
-            throw new IllegalArgumentException(
-                "shardAssignment cannot be negative. found:" + shardAssignment);
-        }
+    public CompatibilityTest(int totalShards) {
         if (totalShards < 1) {
             throw new IllegalArgumentException(
-                "shardAssignment must be at least 1. found:" + totalShards);
+                    "Must be at least 1 shard. Given:" + totalShards);
         }
-        mShardAssignment = shardAssignment;
         mTotalShards = totalShards;
     }
 
@@ -204,46 +206,41 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
     @Override
     public void run(ITestInvocationListener listener) throws DeviceNotAvailableException {
         try {
-            Set<IAbi> abiSet = getAbis();
-            if (abiSet == null || abiSet.isEmpty()) {
-                if (mAbiName == null) {
-                    throw new IllegalArgumentException("Could not get device's ABIs");
-                } else {
-                    throw new IllegalArgumentException(String.format("Device %s does't support %s",
-                            mDevice.getSerialNumber(), mAbiName));
+            IModuleRepo moduleRepo = ModuleRepo.getInstance();
+            // Synchronized so only one shard enters and sets up the moduleRepo. When the other
+            // shards enter after this, moduleRepo is already initialized so they dont do anything
+            synchronized (moduleRepo) {
+                if (!moduleRepo.isInitialized()) {
+                    setupFilters();
+                    // Initialize the repository, {@link CompatibilityBuildHelper#getTestsDir} can
+                    // throw a {@link FileNotFoundException}
+                    moduleRepo.initialize(mTotalShards, mBuildHelper.getTestsDir(), getAbis(),
+                            mDeviceTokens, mIncludeFilters, mExcludeFilters);
                 }
             }
-            CLog.logAndDisplay(LogLevel.INFO, "ABIs: %s", abiSet);
-            setupTestModules(abiSet);
-
-            // TODO(stuartscott): Enable skipping of deviceinfo
-            // if (mSkipDeviceInfo) {
-            //   remove device info from modules
-            // }
-
+            // Get the tests to run in this shard
+            List<IModuleDef> modules = moduleRepo.getModules(getDevice().getSerialNumber());
             listener = new FailureListener(listener, getDevice(), mBugReportOnFailure,
                     mLogcatOnFailure, mScreenshotOnFailure);
-            int moduleCount = mModules.size();
-            CLog.logAndDisplay(LogLevel.INFO, "Start test run of %d module%s", moduleCount,
-                    (moduleCount > 1) ? "s" : "");
+            int moduleCount = modules.size();
+            CLog.logAndDisplay(LogLevel.INFO, "Starting %d module%s on %s", moduleCount,
+                    (moduleCount > 1) ? "s" : "", mDevice.getSerialNumber());
 
             // Set values and run preconditions
-            for (int i = mLastModuleIndex; i < moduleCount; i++) {
-                IModuleDef module = mModules.get(i);
+            for (int i = 0; i < moduleCount; i++) {
+                IModuleDef module = modules.get(i);
                 module.setBuild(mBuild);
                 module.setDevice(mDevice);
                 module.prepare(mSkipPreconditions);
             }
             // Run the tests
-            for (int i = mLastModuleIndex; i < moduleCount; i++) {
-                mModules.get(i).run(listener);
-                // Track of the last complete test package index for resume
-                mLastModuleIndex = i;
+            for (int i = 0; i < moduleCount; i++) {
+                modules.get(i).run(listener);
             }
         } catch (DeviceNotAvailableException e) {
             // Pass up
             throw e;
-        } catch (RuntimeException e) {
+        } catch (FileNotFoundException | RuntimeException e) {
             CLog.logAndDisplay(LogLevel.ERROR, "Exception: %s", e.getMessage());
             CLog.e(e);
         } catch (Error e) {
@@ -253,14 +250,37 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
     }
 
     /**
-     * Set {@code mModules} to the list of test modules to run.
-     * @param abis
+     * Gets the set of ABIs supported by both Compatibility and the device under test
+     *
+     * @return The set of ABIs to run the tests on
+     * @throws DeviceNotAvailableException
      */
-    private void setupTestModules(Set<IAbi> abis) {
-        if (!mModules.isEmpty()) {
-            CLog.d("Resume tests using existing module list");
-            return;
+    Set<IAbi> getAbis() throws DeviceNotAvailableException {
+        Set<IAbi> abis = new HashSet<>();
+        for (String abi : AbiFormatter.getSupportedAbis(mDevice, "")) {
+            // Only test against ABIs supported by Compatibility, and if the
+            // --abi option was given, it must match.
+            if (AbiUtils.isAbiSupportedByCompatibility(abi)
+                    && (mAbiName == null || mAbiName.equals(abi))) {
+                abis.add(new Abi(abi, AbiUtils.getBitness(abi)));
+            }
         }
+        if (abis == null || abis.isEmpty()) {
+            if (mAbiName == null) {
+                throw new IllegalArgumentException("Could not get device's ABIs");
+            } else {
+                throw new IllegalArgumentException(String.format(
+                        "Device %s doesn't support %s", mDevice.getSerialNumber(), mAbiName));
+            }
+        }
+        return abis;
+    }
+
+    /**
+     * Sets the include/exclude filters up based on if a module name was given or whether this is a
+     * retry run.
+     */
+    void setupFilters() {
         if (mRetrySessionId != null) {
             // We're retrying so clear the filters
             mIncludeFilters.clear();
@@ -286,8 +306,9 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
                     for (TestStatus status : RETRY_TEST_STATUS) {
                         for (ITestResult r : cr.getResults(status)) {
                             // Create the filter for the test to be run.
-                            mIncludeFilters.add(new TestFilter(module.getAbi(), module.getName(),
-                                    r.getFullName()).toString());
+                            TestFilter filter = new TestFilter(
+                                    module.getAbi(), module.getName(), r.getFullName());
+                            mIncludeFilters.add(filter.toString());
                         }
                     }
                 }
@@ -297,16 +318,18 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
             mIncludeFilters.clear();
             mIncludeFilters.add(new TestFilter(mAbiName, mModuleName, mTestName).toString());
             if (mTestName != null) {
-                // We're filtering it down to the lowest level, no need to give excludes
+                // We're filtering it down to the lowest level, no need
+                // to give excludes
                 mExcludeFilters.clear();
             } else {
-                // If we dont specify a test name, we only want to run this module with any
-                // exclusions defined by the plan as long as they dont exclude the whole module.
+                // If we dont specify a test name, we want to run this module with any exclusions
+                // defined by the plan but only as long as they dont exclude the whole module.
                 List<String> excludeFilters = new ArrayList<>();
                 for (String excludeFilter : mExcludeFilters) {
                     TestFilter filter = TestFilter.createFrom(excludeFilter);
                     String name = filter.getName();
-                    // Add the filter if it applies to this module, and it has a test name
+                    // Add the filter if it applies to this module, and
+                    // it has a test name
                     if ((mModuleName.equals(name) || mModuleName.matches(name) ||
                             name.matches(mModuleName)) && filter.getTest() != null) {
                         excludeFilters.add(excludeFilter);
@@ -315,40 +338,6 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
                 mExcludeFilters = excludeFilters;
             }
         }
-        try {
-            // Collect ALL tests
-            IModuleRepo testRepo = new ModuleRepo(mBuildHelper.getTestsDir(), abis);
-            List<IModuleDef> modules = testRepo.getModules(mIncludeFilters, mExcludeFilters);
-
-            // Filter by shard
-            int numTestmodules = modules.size();
-            int totalShards = Math.min(mTotalShards, numTestmodules);
-
-            mModules.clear();
-            for (int i = mShardAssignment; i < numTestmodules; i += totalShards) {
-                mModules.add(modules.get(i));
-            }
-        } catch (FileNotFoundException e) {
-            CLog.e(e);
-        }
-    }
-
-    /**
-     * Gets the set of ABIs supported by both Compatibility and the device under test
-     * @return The set of ABIs to run the tests on
-     * @throws DeviceNotAvailableException
-     */
-    Set<IAbi> getAbis() throws DeviceNotAvailableException {
-        Set<IAbi> abis = new HashSet<>();
-        for (String abi : AbiFormatter.getSupportedAbis(mDevice, "")) {
-            // Only test against ABIs supported by Compatibility, and if the --abi option was given,
-            // it must match.
-            if (AbiUtils.isAbiSupportedByCompatibility(abi)
-                    && (mAbiName == null || mAbiName.equals(abi))) {
-                abis.add(new Abi(abi, AbiUtils.getBitness(abi)));
-            }
-        }
-        return abis;
     }
 
     /**
@@ -361,11 +350,11 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
         }
 
         List<IRemoteTest> shardQueue = new LinkedList<>();
-        for (int shardAssignment = 0; shardAssignment < mShards; shardAssignment++) {
-            CompatibilityTest test = new CompatibilityTest(shardAssignment, mShards /* total */);
+        for (int i = 0; i < mShards; i++) {
+            CompatibilityTest test = new CompatibilityTest(mShards);
             OptionCopier.copyOptionsNoThrow(this, test);
-            // Set the shard count because the copy option on the previous line copies
-            // over the mShard value
+            // Set the shard count because the copy option on the previous line
+            // copies over the mShard value
             test.mShards = 0;
             shardQueue.add(test);
         }
