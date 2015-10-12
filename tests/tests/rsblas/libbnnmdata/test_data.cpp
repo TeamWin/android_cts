@@ -56569,12 +56569,12 @@ unsigned char expected_c_data[c_count] = {
 
 
 extern "C" JNIEXPORT void JNICALL
-Java_android_renderscript_cts_BNNMTest_getData(JNIEnv * env,
-                                                                      jclass,
-                                                                      jbyteArray a,
-                                                                      jbyteArray b,
-                                                                      jbyteArray c
-                                                                      )
+Java_android_cts_rsblas_BNNMTest_getData(JNIEnv * env,
+                                         jclass,
+                                         jbyteArray a,
+                                         jbyteArray b,
+                                         jbyteArray c
+                                         )
 {
     jbyte * a_byte = (jbyte *) env->GetPrimitiveArrayCritical(a, 0);
     jbyte * b_byte = (jbyte *) env->GetPrimitiveArrayCritical(b, 0);

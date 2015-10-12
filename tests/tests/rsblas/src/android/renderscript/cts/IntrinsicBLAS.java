@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.renderscript.cts;
+package android.cts.rsblas;
 
 import android.renderscript.*;
 import android.util.Log;
