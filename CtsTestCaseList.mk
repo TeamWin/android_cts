@@ -189,6 +189,7 @@ cts_test_packages := \
     CtsProviderTestCases \
     CtsRenderscriptTestCases \
     CtsRenderscriptLegacyTestCases \
+    CtsRsBlasTestCases \
     CtsRsCppTestCases \
     CtsSaxTestCases \
     CtsSecurityTestCases \
