@@ -18,15 +18,17 @@ package com.android.compatibility.common.deviceinfo;
 import android.os.Bundle;
 
 import java.lang.StringBuilder;
+import java.util.ArrayList;
 
 /**
- * Collector for testing DeviceInfoActivity
+ * Collector for testing DeviceInfo
  */
-public class TestDeviceInfo extends DeviceInfoActivity {
+public class TestDeviceInfo extends DeviceInfo {
 
     @Override
-    public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
+    protected void setUp() throws Exception {
+        mActivityList = new ArrayList<String>();
+        mActivityList.add(getClass().getName());
     }
 
     @Override
@@ -82,4 +84,7 @@ public class TestDeviceInfo extends DeviceInfoActivity {
         addResult("max_length_string", sb.toString());
         addArray("max_num_ints", arr);
     }
+
+    @Override
+    void sendStatus() {}
 }

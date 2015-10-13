@@ -24,6 +24,8 @@ LOCAL_MODULE := compatibility-device-info
 
 LOCAL_SDK_VERSION := current
 
+LOCAL_STATIC_JAVA_LIBRARIES := android-support-test
+
 include $(BUILD_STATIC_JAVA_LIBRARY)
 
 include $(call all-makefiles-under,$(LOCAL_PATH))

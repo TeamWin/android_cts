@@ -16,10 +16,12 @@
 package com.android.compatibility.common.deviceinfo;
 
 import android.app.Activity;
-import android.content.Intent;
-import android.net.Uri;
+import android.content.Context;
+import android.content.pm.ActivityInfo;
+import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.os.Environment;
+import android.test.InstrumentationTestCase;
 import android.text.TextUtils;
 import android.util.JsonWriter;
 import android.util.Log;
@@ -29,58 +31,76 @@ import java.io.FileOutputStream;
 import java.io.OutputStreamWriter;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
-import java.util.concurrent.CountDownLatch;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * Collect device information on target device and write to a JSON file.
  */
-public abstract class DeviceInfoActivity extends Activity {
+public abstract class DeviceInfo extends InstrumentationTestCase {
 
-    /** Device info result code: collector failed to complete. */
-    private static final int DEVICE_INFO_RESULT_FAILED = -2;
-    /** Device info result code: collector completed with error. */
-    private static final int DEVICE_INFO_RESULT_ERROR = -1;
-    /** Device info result code: collector has started but not completed. */
-    private static final int DEVICE_INFO_RESULT_STARTED = 0;
-    /** Device info result code: collector completed success. */
-    private static final int DEVICE_INFO_RESULT_OK = 1;
+    private enum ResultCode {
+        // Collection started.
+        STARTED,
+        // Collection completed.
+        COMPLETED,
+        // Collection completed with error.
+        ERROR,
+        // Collection failed to complete.
+        FAILED
+    }
 
     private static final int MAX_STRING_VALUE_LENGTH = 1000;
     private static final int MAX_ARRAY_LENGTH = 1000;
 
-    private static final String LOG_TAG = "DeviceInfoActivity";
+    private static final String LOG_TAG = "ExtendedDeviceInfo";
 
-    private CountDownLatch mDone = new CountDownLatch(1);
     private JsonWriter mJsonWriter = null;
     private String mResultFilePath = null;
-    private String mErrorMessage = "Collector has started.";
-    private int mResultCode = DEVICE_INFO_RESULT_STARTED;
+    private String mErrorMessage = null;
+    private ResultCode mResultCode = ResultCode.STARTED;
 
-    @Override
-    public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
+    Set<String> mActivityList = new HashSet<String>();
+
+    public void testCollectDeviceInfo() {
+        if (!mActivityList.contains(getClass().getName())) {
+            return;
+        }
+
         if (createFilePath()) {
             createJsonWriter();
             startJsonWriter();
             collectDeviceInfo();
             closeJsonWriter();
 
-            if (mResultCode == DEVICE_INFO_RESULT_STARTED) {
-                mResultCode = DEVICE_INFO_RESULT_OK;
+            if (mResultCode == ResultCode.STARTED) {
+                mResultCode = ResultCode.COMPLETED;
             }
         }
 
-        Intent data = new Intent();
-        if (mResultCode == DEVICE_INFO_RESULT_OK) {
-            data.setData(Uri.parse(mResultFilePath));
-            setResult(RESULT_OK, data);
-        } else {
-            data.setData(Uri.parse(mErrorMessage));
-            setResult(RESULT_CANCELED, data);
+        sendStatus();
+
+        String message = getClass().getSimpleName() + " collection completed.";
+        assertEquals(message, ResultCode.COMPLETED, mResultCode);
+    }
+
+    @Override
+    protected void setUp() throws Exception {
+        super.setUp();
+
+        // Build the list of supported activities that can run collection.
+        ActivityInfo[] activities = null;
+        try {
+            activities = getContext().getPackageManager().getPackageInfo(
+                getContext().getPackageName(), PackageManager.GET_ACTIVITIES).activities;
+        } catch (Exception e) {
+            Log.e(LOG_TAG, "Exception occurred while getting activities.", e);
+            return;
         }
 
-        mDone.countDown();
-        finish();
+        for (ActivityInfo activityInfo : activities) {
+            mActivityList.add(activityInfo.name);
+        }
     }
 
     /**
@@ -88,42 +108,43 @@ public abstract class DeviceInfoActivity extends Activity {
      */
     protected abstract void collectDeviceInfo();
 
-    void waitForActivityToFinish() {
-        try {
-            mDone.await();
-        } catch (Exception e) {
-            failed("Exception while waiting for activity to finish: " + e.getMessage());
-        }
+    protected Context getContext() {
+        return getInstrumentation().getContext();
     }
 
     /**
-     * Returns the error message if collector did not complete successfully.
+     * Sends status to instrumentation.
      */
-    String getErrorMessage() {
-        if (mResultCode == DEVICE_INFO_RESULT_OK) {
-            return null;
+    void sendStatus() {
+        Bundle bundle = new Bundle();
+        String className = getClass().getSimpleName();
+        if (this instanceof GenericDeviceInfo) {
+            ((GenericDeviceInfo) this).putDeviceInfo(bundle);
         }
-        return mErrorMessage;
+        if (!TextUtils.isEmpty(mErrorMessage)) {
+            bundle.putString("DEVICE_INFO_ERROR_" + className, mErrorMessage);
+        }
+        if (mResultCode == ResultCode.COMPLETED) {
+            bundle.putString("DEVICE_INFO_FILE_" + className, mResultFilePath);
+        }
+        getInstrumentation().sendStatus(Activity.RESULT_OK, bundle);
     }
 
     /**
      * Returns the path to the json file if collector completed successfully.
      */
     String getResultFilePath() {
-        if (mResultCode == DEVICE_INFO_RESULT_OK) {
-            return mResultFilePath;
-        }
-        return null;
+        return mResultFilePath;
     }
 
     private void error(String message) {
-        mResultCode = DEVICE_INFO_RESULT_ERROR;
+        mResultCode = ResultCode.ERROR;
         mErrorMessage = message;
         Log.e(LOG_TAG, message);
     }
 
     private void failed(String message) {
-        mResultCode = DEVICE_INFO_RESULT_FAILED;
+        mResultCode = ResultCode.FAILED;
         mErrorMessage = message;
         Log.e(LOG_TAG, message);
     }

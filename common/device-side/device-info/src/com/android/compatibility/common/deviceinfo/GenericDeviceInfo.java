@@ -47,14 +47,14 @@ import java.util.Map.Entry;
 import java.util.Scanner;
 import java.util.Set;
 
-import com.android.compatibility.common.deviceinfo.DeviceInfoActivity;
+import com.android.compatibility.common.deviceinfo.DeviceInfo;
 
 /**
  * Generic device info collector.
  */
-public class GenericDeviceInfo extends DeviceInfoActivity {
+public class GenericDeviceInfo extends DeviceInfo {
 
-    public static final String DEVICE_INFO = "DEVICE_INFO_%s";
+    public static final String DEVICE_INFO_GENERIC = "DEVICE_INFO_GENERIC_%s";
     public static final String BUILD_ID = "build_id";
     public static final String BUILD_PRODUCT = "build_product";
     public static final String BUILD_DEVICE = "build_device";
@@ -74,11 +74,6 @@ public class GenericDeviceInfo extends DeviceInfoActivity {
     public static final String BUILD_VERSION_SDK = "build_version_sdk";
 
     private final Map<String, String> mDeviceInfo = new HashMap<>();
-
-    @Override
-    public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-    }
 
     @Override
     protected void collectDeviceInfo() {
@@ -108,7 +103,7 @@ public class GenericDeviceInfo extends DeviceInfoActivity {
 
     protected void putDeviceInfo(Bundle bundle) {
         for (Entry<String, String> entry : mDeviceInfo.entrySet()) {
-            bundle.putString(String.format(DEVICE_INFO, entry.getKey()), entry.getValue());
+            bundle.putString(String.format(DEVICE_INFO_GENERIC, entry.getKey()), entry.getValue());
         }
     }
 }
