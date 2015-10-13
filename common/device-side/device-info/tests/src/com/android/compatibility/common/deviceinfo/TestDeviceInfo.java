@@ -18,7 +18,7 @@ package com.android.compatibility.common.deviceinfo;
 import android.os.Bundle;
 
 import java.lang.StringBuilder;
-import java.util.ArrayList;
+import java.util.HashSet;
 
 /**
  * Collector for testing DeviceInfo
@@ -27,7 +27,7 @@ public class TestDeviceInfo extends DeviceInfo {
 
     @Override
     protected void setUp() throws Exception {
-        mActivityList = new ArrayList<String>();
+        mActivityList = new HashSet<String>();
         mActivityList.add(getClass().getName());
     }
 
