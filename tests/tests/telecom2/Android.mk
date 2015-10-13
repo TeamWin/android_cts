@@ -38,9 +38,12 @@ LOCAL_RESOURCE_DIR := $(addprefix $(LOCAL_PATH)/, $(res_dirs))
 
 LOCAL_AAPT_FLAGS := \
     --auto-add-overlay \
-    --extra-packages com.android.cts.telecom \
-    --rename-manifest-package com.android.cts.telecom2 \
+    --extra-packages android.telecom.cts \
+    --rename-manifest-package android.telecom2.cts \
 
 LOCAL_SDK_VERSION := current
+
+# Tag this module as a cts_v2 test artifact
+LOCAL_COMPATIBILITY_SUITE := cts_v2
 
 include $(BUILD_CTS_PACKAGE)

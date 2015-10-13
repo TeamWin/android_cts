@@ -36,7 +36,7 @@ public class TestUtils {
 
     // Non-final to allow modification by tests not in this package (e.g. permission-related
     // tests in the Telecom2 test package.
-    public static String PACKAGE = "com.android.cts.telecom";
+    public static String PACKAGE = "android.telecom.cts";
     public static final String COMPONENT = "android.telecom.cts.CtsConnectionService";
     public static final String REMOTE_COMPONENT = "android.telecom.cts.CtsRemoteConnectionService";
     public static final String ACCOUNT_ID = "xtstest_CALL_PROVIDER_ID";

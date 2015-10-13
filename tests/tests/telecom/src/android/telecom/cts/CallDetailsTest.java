@@ -35,8 +35,6 @@ import android.telecom.PhoneAccountHandle;
 import android.telecom.StatusHints;
 import android.telecom.TelecomManager;
 
-import com.android.cts.telecom.R;
-
 /**
  * Suites of tests that verifies the various Call details.
  */
