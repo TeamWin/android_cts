@@ -37,5 +37,8 @@ LOCAL_RENDERSCRIPT_FLAGS := -Wno-error=deprecated-declarations
 
 LOCAL_SDK_VERSION := current
 
+# Tag this module as a cts_v2 test artifact
+LOCAL_COMPATIBILITY_SUITE := cts_v2
+
 include $(BUILD_CTS_PACKAGE)
 include $(call all-makefiles-under,$(LOCAL_PATH))

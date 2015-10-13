@@ -19,7 +19,7 @@
 -->
 
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.android.cts.renderscript">
+    package="android.renderscript.cts">
 
     <uses-permission android:name="android.permission.DISABLE_KEYGUARD" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
@@ -30,7 +30,7 @@
 
     <!-- This is a self-instrumenting test package. -->
     <instrumentation android:name="android.support.test.runner.AndroidJUnitRunner"
-                     android:targetPackage="com.android.cts.renderscript"
+                     android:targetPackage="android.renderscript.cts"
                      android:label="CTS tests of Renderscript component">
         <meta-data android:name="listener"
             android:value="com.android.cts.runner.CtsTestRunListener" />
