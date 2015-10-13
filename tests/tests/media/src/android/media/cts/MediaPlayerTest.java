@@ -295,6 +295,43 @@ public class MediaPlayerTest extends MediaPlayerTestBase {
         }
     }
 
+    public void testPlayAudioLooping() throws Exception {
+        final int resid = R.raw.testmp3;
+
+        MediaPlayer mp = MediaPlayer.create(mContext, resid);
+        try {
+            mp.setAudioStreamType(AudioManager.STREAM_MUSIC);
+            mp.setWakeMode(mContext, PowerManager.PARTIAL_WAKE_LOCK);
+            mp.setLooping(true);
+            mOnCompletionCalled.reset();
+            mp.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
+                @Override
+                public void onCompletion(MediaPlayer mp) {
+                    Log.i("@@@", "got oncompletion");
+                    mOnCompletionCalled.signal();
+                }
+            });
+
+            assertFalse(mp.isPlaying());
+            mp.start();
+            assertTrue(mp.isPlaying());
+
+            int duration = mp.getDuration();
+            Thread.sleep(duration * 4); // allow for several loops
+            assertTrue(mp.isPlaying());
+            assertEquals("wrong number of completion signals", 0, mOnCompletionCalled.getNumSignal());
+            mp.setLooping(false);
+
+            // wait for playback to finish
+            while(mp.isPlaying()) {
+                Thread.sleep(SLEEP_TIME);
+            }
+            assertEquals("wrong number of completion signals", 1, mOnCompletionCalled.getNumSignal());
+        } finally {
+            mp.release();
+        }
+    }
+
     public void testPlayMidi() throws Exception {
         final int resid = R.raw.midi8sec;
         final int midiDuration = 8000;
