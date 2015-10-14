@@ -1267,6 +1267,34 @@ public class TextViewTest extends ActivityInstrumentationTestCase2<TextViewCtsAc
         }
     }
 
+    public void testRemoveSelectionWithSelectionHandles() {
+        initTextViewForTyping();
+
+        mActivity.runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                mTextView.setTextIsSelectable(true);
+                mTextView.setText("abcd", BufferType.EDITABLE);
+            }
+        });
+        mInstrumentation.waitForIdleSync();
+
+        // Long click on the text selects all text and shows selection handlers. The view has an
+        // attribute layout_width="wrap_content", so clicked location (the center of the view)
+        // should be on the text.
+        TouchUtils.longClickView(this, mTextView);
+
+        mActivity.runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                Selection.removeSelection((Spannable) mTextView.getText());
+            }
+        });
+
+        // Make sure that a crash doesn't happen with {@link Selection#removeSelection}.
+        mInstrumentation.waitForIdleSync();
+    }
+
     public void testUndo_insert() {
         initTextViewForTyping();
 
