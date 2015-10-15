@@ -127,7 +127,6 @@ CTS_TEST_CASE_LIST := \
 # Test packages that require an associated test package XML.
 cts_test_packages := \
     CtsIcuTestCases \
-    CtsDeviceSimpleCpu \
     CtsDeviceVideoPerf \
     CtsDeviceTvProviderPerf \
     CtsAccelerationTestCases \
@@ -190,6 +189,7 @@ cts_test_packages := \
     CtsSaxTestCases \
     CtsSecurityTestCases \
     CtsSignatureTestCases \
+    CtsSimpleCpuTestCases \
     CtsSpeechTestCases \
     CtsSystemUiTestCases \
     CtsTelecomTestCases \
