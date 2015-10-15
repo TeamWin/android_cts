@@ -59,6 +59,7 @@ import android.view.animation.Transformation;
 import android.view.animation.Animation.AnimationListener;
 import android.widget.TextView;
 
+import java.lang.IndexOutOfBoundsException;
 import java.util.ArrayList;
 
 public class ViewGroupTest extends InstrumentationTestCase implements CTSResult{
@@ -1233,10 +1234,25 @@ public class ViewGroupTest extends InstrumentationTestCase implements CTSResult{
         MockViewGroup child2 = new MockViewGroup(mContext);
 
         assertEquals(0, parent.getChildCount());
-
         parent.addView(child1);
         parent.addView(child2);
         assertEquals(2, parent.getChildCount());
+
+        try {
+            parent.removeViews(-1, 1); // negative begin
+            fail("should fail with IndexOutOfBoundsException");
+        } catch (IndexOutOfBoundsException e) {}
+
+        try {
+            parent.removeViews(0, -1); // negative count
+            fail("should fail with IndexOutOfBoundsException");
+        } catch (IndexOutOfBoundsException e) {}
+
+        try {
+            parent.removeViews(1, 2); // past end
+            fail("should fail with IndexOutOfBoundsException");
+        } catch (IndexOutOfBoundsException e) {}
+        assertEquals(2, parent.getChildCount()); // child list unmodified
 
         parent.removeViews(0, 1);
         assertEquals(1, parent.getChildCount());
@@ -1253,10 +1269,25 @@ public class ViewGroupTest extends InstrumentationTestCase implements CTSResult{
         MockViewGroup child2 = new MockViewGroup(mContext);
 
         assertEquals(0, parent.getChildCount());
-
         parent.addView(child1);
         parent.addView(child2);
         assertEquals(2, parent.getChildCount());
+
+        try {
+            parent.removeViewsInLayout(-1, 1); // negative begin
+            fail("should fail with IndexOutOfBoundsException");
+        } catch (IndexOutOfBoundsException e) {}
+
+        try {
+            parent.removeViewsInLayout(0, -1); // negative count
+            fail("should fail with IndexOutOfBoundsException");
+        } catch (IndexOutOfBoundsException e) {}
+
+        try {
+            parent.removeViewsInLayout(1, 2); // past end
+            fail("should fail with IndexOutOfBoundsException");
+        } catch (IndexOutOfBoundsException e) {}
+        assertEquals(2, parent.getChildCount()); // child list unmodified
 
         parent.removeViewsInLayout(0, 1);
         assertEquals(1, parent.getChildCount());
