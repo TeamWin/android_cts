@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.android.cts.tvproviderperf;
+package android.tvprovider.cts;
 
 import android.content.ComponentName;
 import android.content.ContentProviderOperation;

@@ -15,7 +15,7 @@
 -->
 
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-        package="com.android.cts.tvproviderperf">
+        package="android.tvprovider.cts">
 
     <uses-permission android:name="android.permission.DISABLE_KEYGUARD" />
     <uses-permission android:name="com.android.providers.tv.permission.READ_EPG_DATA" />
@@ -26,6 +26,6 @@
     </application>
 
     <instrumentation android:name="android.support.test.runner.AndroidJUnitRunner"
-            android:targetPackage="com.android.cts.tvproviderperf"
-            android:label="TvProvider performance measurement" />
+            android:targetPackage="android.tvprovider.cts"
+            android:label="CTS tests for TV Provider tests" />
 </manifest>

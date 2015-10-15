@@ -129,7 +129,6 @@ cts_test_packages := \
     CtsIcuTestCases \
     CtsDeviceSimpleCpu \
     CtsDeviceVideoPerf \
-    CtsDeviceTvProviderPerf \
     CtsAccelerationTestCases \
     CtsAccountManagerTestCases \
     CtsAccessibilityServiceTestCases \
@@ -199,6 +198,7 @@ cts_test_packages := \
     CtsTextureViewTestCases \
     CtsThemeDeviceTestCases \
     CtsTransitionTestCases \
+    CtsTvProviderTestCases \
     CtsTvTestCases \
     CtsUiAutomationTestCases \
     CtsUiRenderingTestCases \
