@@ -370,12 +370,12 @@ def BuildAospSmallSizeTestList():
       'android.theme' : [],
       'android.usb' : [],
       'android.util' : [],
+      'android.video' : [],
       'com.android.cts.jank' : [],
       'com.android.cts.jank2' : [],
       'com.android.cts.opengl' : [],
       'com.android.cts.ui' : [],
       'com.android.cts.uihost' : [],
-      'com.android.cts.videoperf' : [],
       'zzz.android.monkey' : []}
 
 def BuildCtsVettedNewPackagesList():

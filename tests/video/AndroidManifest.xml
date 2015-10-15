@@ -15,7 +15,7 @@
 -->
 
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-        package="com.android.cts.videoperf">
+        package="android.video.cts">
 
     <uses-permission android:name="android.permission.DISABLE_KEYGUARD" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
@@ -24,8 +24,8 @@
         <uses-library android:name="android.test.runner" />
     </application>
     <instrumentation android:name="android.support.test.runner.AndroidJUnitRunner"
-            android:targetPackage="com.android.cts.videoperf"
-            android:label="UI Latency measurement" >
+            android:targetPackage="android.video.cts"
+            android:label="CTS tests for Video" >
         <meta-data
             android:name="listener"
             android:value="com.android.cts.runner.CtsTestRunListener" />

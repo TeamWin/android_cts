@@ -27,5 +27,5 @@
 
     <instrumentation android:name="android.support.test.runner.AndroidJUnitRunner"
             android:targetPackage="android.tvprovider.cts"
-            android:label="CTS tests for TV Provider tests" />
+            android:label="CTS tests for TV Provider" />
 </manifest>

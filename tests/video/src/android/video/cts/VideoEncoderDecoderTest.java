@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.android.cts.videoperf;
+package android.video.cts;
 
 import android.cts.util.MediaUtils;
 import android.cts.util.DeviceReportLog;
