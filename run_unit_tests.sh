@@ -36,6 +36,9 @@ if [ ! -z ${ANDROID_BUILD_TOP} ]; then
     fi;
 fi;
 
+############### Build the tests ###############
+make compatibility-common-util-tests compatibility-host-util-tests compatibility-device-util-tests compatibility-tradefed-tests cts-tradefed-tests_v2 compatibility-device-info-tests compatibility-manifest-generator-tests compatibility-host-media-preconditions-tests CompatibilityTestApp -j32
+
 ############### Run the device side tests ###############
 JAR_DIR=${ANDROID_HOST_OUT}/framework
 JARS="
