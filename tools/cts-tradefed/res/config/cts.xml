@@ -53,7 +53,7 @@
     </target_preparer>
 
     <target_preparer class="com.android.tradefed.targetprep.RunCommandTargetPreparer">
-        <option name="run-command" value="rm /sdcard/device-info-files" />
+        <option name="run-command" value="rm -rf /sdcard/device-info-files" />
     </target_preparer>
 
     <target_preparer class="com.android.compatibility.common.tradefed.targetprep.DeviceInfoCollector">
