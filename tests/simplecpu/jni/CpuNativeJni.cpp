@@ -182,7 +182,7 @@ int cmpint(const void* p1, const void* p2)
     return *(int*)p1 - *(int*)p2;
 }
 
-extern "C" JNIEXPORT jdouble JNICALL Java_com_android_cts_simplecpu_CpuNative_runSort(JNIEnv* env,
+extern "C" JNIEXPORT jdouble JNICALL Java_android_simplecpu_cts_CpuNative_runSort(JNIEnv* env,
         jclass clazz, jint numberElements, jint repetition)
 {
     int* data = new int[numberElements];
@@ -239,7 +239,7 @@ void doMatrixMultiplication(float* A, float* B, float* C, int n)
     }
 }
 
-extern "C" JNIEXPORT jdouble JNICALL Java_com_android_cts_simplecpu_CpuNative_runMatrixMultiplication(
+extern "C" JNIEXPORT jdouble JNICALL Java_android_simplecpu_cts_CpuNative_runMatrixMultiplication(
         JNIEnv* env, jclass clazz, jint n, jint repetition)
 {
     // C = A x B

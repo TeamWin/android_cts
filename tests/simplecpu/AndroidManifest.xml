@@ -15,7 +15,7 @@
 -->
 
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-        package="com.android.cts.simplecpu">
+        package="android.simplecpu.cts">
 
     <uses-permission android:name="android.permission.DISABLE_KEYGUARD" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
@@ -24,6 +24,6 @@
         <uses-library android:name="android.test.runner" />
     </application>
     <instrumentation android:name="android.support.test.runner.AndroidJUnitRunner"
-            android:targetPackage="com.android.cts.simplecpu"
-            android:label="Very simple CPU benchmarking" />
+            android:targetPackage="android.simplecpu.cts"
+            android:label="CTS tests for simple CPU" />
 </manifest>

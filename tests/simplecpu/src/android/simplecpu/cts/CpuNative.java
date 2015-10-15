@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.android.cts.simplecpu;
+package android.simplecpu.cts;
 
 public class CpuNative {
     static {
