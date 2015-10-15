@@ -125,3 +125,23 @@ TEST_CLASSES="
 for CLASS in ${TEST_CLASSES}; do
     java $RDBG_FLAG -cp ${JAR_PATH} ${TF_CONSOLE} run singleCommand host -n --class ${CLASS} "$@"
 done
+
+############### Run precondition tests ###############
+JARS="
+    tradefed-prebuilt\
+    compatibility-host-util\
+    cts-tradefed_v2\
+    compatibility-host-media-preconditions\
+    compatibility-host-media-preconditions-tests"
+JAR_PATH=
+for JAR in $JARS; do
+    checkFile ${JAR_DIR}/${JAR}.jar
+    JAR_PATH=${JAR_PATH}:${JAR_DIR}/${JAR}.jar
+done
+
+TEST_CLASSES="
+    android.mediastress.cts.preconditions.MediaPreparerTest"
+
+for CLASS in ${TEST_CLASSES}; do
+    java $RDBG_FLAG -cp ${JAR_PATH} ${TF_CONSOLE} run singleCommand host -n --class ${CLASS} "$@"
+done
