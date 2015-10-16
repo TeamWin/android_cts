@@ -128,7 +128,6 @@ CTS_TEST_CASE_LIST := \
 cts_test_packages := \
     CtsIcuTestCases \
     CtsDeviceVideoPerf \
-    CtsDeviceTvProviderPerf \
     CtsAccelerationTestCases \
     CtsAccountManagerTestCases \
     CtsAccessibilityServiceTestCases \
@@ -199,6 +198,7 @@ cts_test_packages := \
     CtsTextureViewTestCases \
     CtsThemeDeviceTestCases \
     CtsTransitionTestCases \
+    CtsTvProviderTestCases \
     CtsTvTestCases \
     CtsUiAutomationTestCases \
     CtsUiRenderingTestCases \

@@ -22,7 +22,11 @@ LOCAL_STATIC_JAVA_LIBRARIES := ctsdeviceutil compatibility-device-util ctstestru
 
 LOCAL_SRC_FILES := $(call all-java-files-under, src)
 
-LOCAL_PACKAGE_NAME := CtsDeviceTvProviderPerf
+LOCAL_PACKAGE_NAME := CtsTvProviderTestCases
+
+# Tag this module as a cts_v2 test artifact
+LOCAL_COMPATIBILITY_SUITE := cts_v2
+
 
 LOCAL_SDK_VERSION := current
 
