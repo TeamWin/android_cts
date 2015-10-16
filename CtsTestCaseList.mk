@@ -166,7 +166,6 @@ cts_test_packages := \
     CtsLocation2TestCases \
     CtsMediaStressTestCases \
     CtsMidiTestCases \
-    CtsNativeOpenGLTestCases \
     CtsNdefTestCases \
     CtsNetTestCases \
     CtsNetTestCasesLegacyApi22 \

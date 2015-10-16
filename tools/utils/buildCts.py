@@ -350,7 +350,6 @@ def BuildAospSmallSizeTestList():
       'android.location' : [],
       'android.nativemedia.sl' : [],
       'android.nativemedia.xa' : [],
-      'android.nativeopengl' : [],
       'android.ndef' : [],
       'android.opengl' : [],
       'android.openglperf' : [],
