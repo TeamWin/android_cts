@@ -72,6 +72,8 @@ public class GenericDeviceInfo extends DeviceInfo {
     public static final String BUILD_SERIAL = "build_serial";
     public static final String BUILD_VERSION_RELEASE = "build_version_release";
     public static final String BUILD_VERSION_SDK = "build_version_sdk";
+    public static final String BUILD_VERSION_BASE_OS = "build_version_base_os";
+    public static final String BUILD_VERSION_SECURITY_PATH = "build_version_security_patch";
 
     private final Map<String, String> mDeviceInfo = new HashMap<>();
 
@@ -94,6 +96,8 @@ public class GenericDeviceInfo extends DeviceInfo {
         addDeviceInfo(BUILD_SERIAL, Build.SERIAL);
         addDeviceInfo(BUILD_VERSION_RELEASE, Build.VERSION.RELEASE);
         addDeviceInfo(BUILD_VERSION_SDK, Build.VERSION.SDK);
+        addDeviceInfo(BUILD_VERSION_BASE_OS, Build.VERSION.BASE_OS);
+        addDeviceInfo(BUILD_VERSION_SECURITY_PATH, Build.VERSION.SECURITY_PATCH);
     }
 
     private void addDeviceInfo(String key, String value) {
