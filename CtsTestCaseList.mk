@@ -238,8 +238,8 @@ cts_host_libraries := \
 # that there will be two executables, one that ends in 32 for the 32
 # bit executable and one that ends in 64 for the 64 bit executable.
 cts_native_tests := \
-    NativeMediaTest_SL \
-    NativeMediaTest_XA \
+    CtsNativeMediaSlTestCases \
+    CtsNativeMediaXaTestCases \
 
 ifeq ($(HOST_OS)-$(HOST_ARCH),$(filter $(HOST_OS)-$(HOST_ARCH),linux-x86 linux-x86_64))
 cts_native_tests += CtsBionicTestCases
