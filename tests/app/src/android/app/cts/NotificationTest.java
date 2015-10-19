@@ -17,6 +17,7 @@
 package android.app.cts;
 
 import android.app.Notification;
+import android.app.Notification.Topic;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
@@ -24,6 +25,9 @@ import android.net.Uri;
 import android.os.Parcel;
 import android.test.AndroidTestCase;
 import android.widget.RemoteViews;
+
+import java.util.Arrays;
+import java.util.List;
 
 public class NotificationTest extends AndroidTestCase {
 
@@ -158,12 +162,42 @@ public class NotificationTest extends AndroidTestCase {
                 .setContentTitle(CONTENT_TITLE)
                 .setContentText(CONTENT_TEXT)
                 .setContentIntent(contentIntent)
+                .addTopic(new Topic("id1", "label1"))
+                .addTopic(new Topic("id2", "label2"))
                 .build();
         assertEquals(CONTENT_TEXT, mNotification.extras.getString(Notification.EXTRA_TEXT));
         assertEquals(CONTENT_TITLE, mNotification.extras.getString(Notification.EXTRA_TITLE));
         assertEquals(1, mNotification.icon);
         assertEquals(contentIntent, mNotification.contentIntent);
+        List<Topic> topics = Arrays.asList(mNotification.getTopics());
+        assertEquals(2, topics.size());
+        assertTrue(topics.contains(new Topic("id1", "label1")));
+        assertTrue(topics.contains(new Topic("id2", "label2")));
         assertNotNull(mNotification.contentView);
+    }
+
+    public void testWriteTopicsToParcel() {
+        mNotification = new Notification.Builder(mContext)
+                .addTopic(new Topic("id1", "label1"))
+                .addTopic(new Topic("id2", "label2"))
+                .build();
+        Parcel parcel = Parcel.obtain();
+        mNotification.writeToParcel(parcel, 0);
+        parcel.setDataPosition(0);
+        // Test Notification(Parcel)
+        Notification result = new Notification(parcel);
+        List<Topic> topics = Arrays.asList(result.getTopics());
+        assertEquals(2, topics.size());
+        assertTrue(topics.contains(new Topic("id1", "label1")));
+        assertTrue(topics.contains(new Topic("id2", "label2")));
+
+        mNotification = new Notification();
+        parcel = Parcel.obtain();
+        mNotification.writeToParcel(parcel, 0);
+        parcel.setDataPosition(0);
+        // Test Notification(Parcel)
+        result = new Notification(parcel);
+        assertNull(result.getTopics());
     }
 
     public void testToString() {
