@@ -18,8 +18,7 @@ package com.android.compatibility.common.tradefed;
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelperTest;
 import com.android.compatibility.common.tradefed.command.CompatibilityConsoleTest;
 import com.android.compatibility.common.tradefed.result.ResultReporterTest;
-import com.android.compatibility.common.tradefed.targetprep.BuildCheckTest;
-import com.android.compatibility.common.tradefed.targetprep.LocaleCheckTest;
+import com.android.compatibility.common.tradefed.targetprep.PropertyCheckTest;
 import com.android.compatibility.common.tradefed.targetprep.SettingsPreparerTest;
 import com.android.compatibility.common.tradefed.testtype.CompatibilityTestTest;
 import com.android.compatibility.common.tradefed.testtype.ModuleDefTest;
@@ -43,8 +42,7 @@ public class UnitTests extends TestSuite {
         addTestSuite(CompatibilityTestTest.class);
         addTestSuite(ModuleDefTest.class);
         addTestSuite(ModuleRepoTest.class);
-        addTestSuite(BuildCheckTest.class);
-        addTestSuite(LocaleCheckTest.class);
+        addTestSuite(PropertyCheckTest.class);
         addTestSuite(SettingsPreparerTest.class);
     }
 

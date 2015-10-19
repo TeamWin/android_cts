@@ -15,47 +15,53 @@
  */
 package com.android.compatibility.common.tradefed.targetprep;
 
+import com.android.ddmlib.Log;
 import com.android.tradefed.build.IBuildInfo;
 import com.android.tradefed.config.Option;
 import com.android.tradefed.config.OptionClass;
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.device.ITestDevice;
-import com.android.tradefed.log.LogUtil.CLog;
+import com.android.tradefed.log.LogUtil;
 import com.android.tradefed.targetprep.BuildError;
 import com.android.tradefed.targetprep.TargetSetupError;
 
 /**
- * Checks that the device's build type is as expected
+ * Checks that a device property is as expected
  */
-@OptionClass(alias="build-check")
-public class BuildCheck extends PreconditionPreparer {
+@OptionClass(alias="property-check")
+public class PropertyCheck extends PreconditionPreparer {
 
-    public enum BuildType {
-        USER,
-        USERDEBUG,
-        ENG;
-    }
+    @Option(name = "property-name", description = "The name of the property to check",
+            mandatory = true)
+    protected String mPropertyName = null;
 
-    @Option(name = "expected-build-type", description =
-            "The device's expected build type: 'user', 'userdebug' or 'eng'", mandatory = true)
-    protected BuildType mExpectedBuildType = null;
+    @Option(name = "expected-value", description = "The expected value of the property",
+            mandatory = true)
+    protected String mExpectedPropertyValue = null;
 
     @Option(name = "throw-error",
-            description = "Whether to throw an error for an unexpected build type")
+            description = "Whether to throw an error for an unexpected property value")
     protected boolean mThrowError = false;
+
+    private static final String LOG_TAG = PropertyCheck.class.getSimpleName();
 
     @Override
     public void run(ITestDevice device, IBuildInfo buildInfo) throws TargetSetupError,
             BuildError, DeviceNotAvailableException {
-        String deviceBuildType = device.getProperty("ro.build.type");
-        if (!mExpectedBuildType.name().equalsIgnoreCase(deviceBuildType)) {
-            String msg = String.format("Expected build type \"%s\" but found build type \"%s\"",
-                    mExpectedBuildType.name().toLowerCase(), deviceBuildType);
-            // Handle unexpected build type with either exception or warning
+        String propertyValue = device.getProperty(mPropertyName);
+        if (propertyValue == null) {
+            throw new TargetSetupError(String.format(
+                    "Device property \"%s\" not found.", mPropertyName));
+        }
+
+        if (!mExpectedPropertyValue.equalsIgnoreCase(propertyValue)) {
+            String msg = String.format("Expected \"%s\" but found \"%s\" for property: %s",
+                    mExpectedPropertyValue, propertyValue, mPropertyName);
+            // Handle unexpected property value with either exception or warning
             if(mThrowError) {
                 throw new TargetSetupError(msg);
             } else {
-                CLog.e(msg);
+                LogUtil.printLog(Log.LogLevel.WARN, LOG_TAG, msg);
             }
         }
     }

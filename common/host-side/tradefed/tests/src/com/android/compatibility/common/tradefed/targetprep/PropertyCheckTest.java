@@ -26,50 +26,58 @@ import junit.framework.TestCase;
 
 import org.easymock.EasyMock;
 
-public class BuildCheckTest extends TestCase {
+public class PropertyCheckTest extends TestCase {
 
-    private BuildCheck mBuildCheck;
+    private PropertyCheck mPropertyCheck;
     private IDeviceBuildInfo mMockBuildInfo;
     private ITestDevice mMockDevice;
     private OptionSetter mOptionSetter;
 
+    private static final String PROPERTY = "ro.mock.property";
+    private static final String ACTUAL_VALUE = "mock_actual_value";
+    private static final String BAD_VALUE = "mock_bad_value";
+
     @Override
     public void setUp() throws Exception {
         super.setUp();
-        mBuildCheck = new BuildCheck();
+        mPropertyCheck = new PropertyCheck();
         mMockDevice = EasyMock.createMock(ITestDevice.class);
         mMockBuildInfo = new DeviceBuildInfo("0", "", "");
-        mOptionSetter = new OptionSetter(mBuildCheck);
-        EasyMock.expect(mMockDevice.getProperty("ro.build.type")).andReturn("user").anyTimes();
+        mOptionSetter = new OptionSetter(mPropertyCheck);
+        EasyMock.expect(mMockDevice.getProperty(PROPERTY)).andReturn(ACTUAL_VALUE).anyTimes();
     }
 
     public void testWarningMatch() throws Exception {
-        mOptionSetter.setOptionValue("expected-build-type", "user");
+        mOptionSetter.setOptionValue("property-name", PROPERTY);
+        mOptionSetter.setOptionValue("expected-value", ACTUAL_VALUE);
         mOptionSetter.setOptionValue("throw-error", "false");
         EasyMock.replay(mMockDevice);
-        mBuildCheck.run(mMockDevice, mMockBuildInfo); // no warnings or errors
+        mPropertyCheck.run(mMockDevice, mMockBuildInfo); // no warnings or errors
     }
 
     public void testWarningMismatch() throws Exception {
-        mOptionSetter.setOptionValue("expected-build-type", "eng");
+        mOptionSetter.setOptionValue("property-name", PROPERTY);
+        mOptionSetter.setOptionValue("expected-value", BAD_VALUE);
         mOptionSetter.setOptionValue("throw-error", "false");
         EasyMock.replay(mMockDevice);
-        mBuildCheck.run(mMockDevice, mMockBuildInfo); // should only print a warning
+        mPropertyCheck.run(mMockDevice, mMockBuildInfo); // should only print a warning
     }
 
     public void testErrorMatch() throws Exception {
-        mOptionSetter.setOptionValue("expected-build-type", "user");
+        mOptionSetter.setOptionValue("property-name", PROPERTY);
+        mOptionSetter.setOptionValue("expected-value", ACTUAL_VALUE);
         mOptionSetter.setOptionValue("throw-error", "true");
         EasyMock.replay(mMockDevice);
-        mBuildCheck.run(mMockDevice, mMockBuildInfo); // no warnings or errors
+        mPropertyCheck.run(mMockDevice, mMockBuildInfo); // no warnings or errors
     }
 
     public void testErrorMismatch() throws Exception {
-        mOptionSetter.setOptionValue("expected-build-type", "userdebug");
+        mOptionSetter.setOptionValue("property-name", PROPERTY);
+        mOptionSetter.setOptionValue("expected-value", BAD_VALUE);
         mOptionSetter.setOptionValue("throw-error", "true");
         EasyMock.replay(mMockDevice);
         try {
-            mBuildCheck.run(mMockDevice, mMockBuildInfo); // expecting TargetSetupError
+            mPropertyCheck.run(mMockDevice, mMockBuildInfo); // expecting TargetSetupError
             fail("TargetSetupError expected");
         } catch (TargetSetupError e) {
             // Expected
