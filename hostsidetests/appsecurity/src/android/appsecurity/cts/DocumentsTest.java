@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-package com.android.cts.appsecurity;
+package android.appsecurity.cts;
 
-import com.android.cts.tradefed.build.CtsBuildHelper;
+import com.android.cts.migration.MigrationHelper;
 import com.android.tradefed.build.IBuildInfo;
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.testtype.DeviceTestCase;
@@ -36,7 +36,7 @@ public class DocumentsTest extends DeviceTestCase implements IAbiReceiver, IBuil
     private static final String CLIENT_APK = "CtsDocumentClient.apk";
 
     private IAbi mAbi;
-    private CtsBuildHelper mCtsBuild;
+    private IBuildInfo mCtsBuild;
 
     @Override
     public void setAbi(IAbi abi) {
@@ -45,7 +45,7 @@ public class DocumentsTest extends DeviceTestCase implements IAbiReceiver, IBuil
 
     @Override
     public void setBuild(IBuildInfo buildInfo) {
-        mCtsBuild = CtsBuildHelper.createBuildHelper(buildInfo);
+        mCtsBuild = buildInfo;
     }
 
     @Override
@@ -58,8 +58,10 @@ public class DocumentsTest extends DeviceTestCase implements IAbiReceiver, IBuil
         getDevice().uninstallPackage(PROVIDER_PKG);
         getDevice().uninstallPackage(CLIENT_PKG);
 
-        assertNull(getDevice().installPackage(mCtsBuild.getTestApp(PROVIDER_APK), false));
-        assertNull(getDevice().installPackage(mCtsBuild.getTestApp(CLIENT_APK), false));
+        assertNull(getDevice().installPackage(
+                MigrationHelper.getTestFile(mCtsBuild, PROVIDER_APK), false));
+        assertNull(getDevice().installPackage(
+                MigrationHelper.getTestFile(mCtsBuild, CLIENT_APK), false));
     }
 
     @Override

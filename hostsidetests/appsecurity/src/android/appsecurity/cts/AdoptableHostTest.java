@@ -14,17 +14,17 @@
  * limitations under the License.
  */
 
-package com.android.cts.appsecurity;
+package android.appsecurity.cts;
 
-import static com.android.cts.appsecurity.SplitTests.ABI_TO_APK;
-import static com.android.cts.appsecurity.SplitTests.APK;
-import static com.android.cts.appsecurity.SplitTests.APK_mdpi;
-import static com.android.cts.appsecurity.SplitTests.APK_xxhdpi;
-import static com.android.cts.appsecurity.SplitTests.CLASS;
-import static com.android.cts.appsecurity.SplitTests.PKG;
+import static android.appsecurity.cts.SplitTests.ABI_TO_APK;
+import static android.appsecurity.cts.SplitTests.APK;
+import static android.appsecurity.cts.SplitTests.APK_mdpi;
+import static android.appsecurity.cts.SplitTests.APK_xxhdpi;
+import static android.appsecurity.cts.SplitTests.CLASS;
+import static android.appsecurity.cts.SplitTests.PKG;
 
-import com.android.cts.appsecurity.SplitTests.BaseInstallMultiple;
-import com.android.cts.tradefed.build.CtsBuildHelper;
+import android.appsecurity.cts.SplitTests.BaseInstallMultiple;
+import com.android.cts.migration.MigrationHelper;
 import com.android.tradefed.build.IBuildInfo;
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.testtype.DeviceTestCase;
@@ -39,7 +39,7 @@ import java.util.Arrays;
  */
 public class AdoptableHostTest extends DeviceTestCase implements IAbiReceiver, IBuildReceiver {
     private IAbi mAbi;
-    private CtsBuildHelper mCtsBuild;
+    private IBuildInfo mCtsBuild;
 
     @Override
     public void setAbi(IAbi abi) {
@@ -48,7 +48,7 @@ public class AdoptableHostTest extends DeviceTestCase implements IAbiReceiver, I
 
     @Override
     public void setBuild(IBuildInfo buildInfo) {
-        mCtsBuild = CtsBuildHelper.createBuildHelper(buildInfo);
+        mCtsBuild = buildInfo;
     }
 
     @Override
@@ -88,7 +88,8 @@ public class AdoptableHostTest extends DeviceTestCase implements IAbiReceiver, I
             final LocalVolumeInfo vol = getAdoptionVolume();
 
             // Move app and verify
-            assertSuccess(getDevice().executeShellCommand("pm move-package " + PKG + " " + vol.uuid));
+            assertSuccess(getDevice().executeShellCommand(
+                    "pm move-package " + PKG + " " + vol.uuid));
             runDeviceTests(PKG, CLASS, "testDataNotInternal");
             runDeviceTests(PKG, CLASS, "testDataRead");
             runDeviceTests(PKG, CLASS, "testNative");

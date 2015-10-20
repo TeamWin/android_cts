@@ -218,7 +218,7 @@ CTS_COVERAGE_TEST_CASE_LIST := \
 # Host side only tests
 cts_host_libraries := \
     CtsAadbHostTestCases \
-    CtsAppSecurityTests \
+    CtsAppSecurityHostTestCases \
     CtsAppUsageHostTestCases \
     CtsAtraceHostTestCases \
     CtsDevicePolicyManagerTestCases \

@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-package com.android.cts.appsecurity;
+package android.appsecurity.cts;
 
-import com.android.cts.tradefed.build.CtsBuildHelper;
+import com.android.cts.migration.MigrationHelper;
 import com.android.tradefed.build.IBuildInfo;
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.testtype.DeviceTestCase;
@@ -35,7 +35,7 @@ public class PermissionsHostTest extends DeviceTestCase implements IAbiReceiver,
     private static final String APK_COMPAT = "CtsUsePermissionAppCompat.apk";
 
     private IAbi mAbi;
-    private CtsBuildHelper mCtsBuild;
+    private IBuildInfo mCtsBuild;
 
     @Override
     public void setAbi(IAbi abi) {
@@ -44,7 +44,7 @@ public class PermissionsHostTest extends DeviceTestCase implements IAbiReceiver,
 
     @Override
     public void setBuild(IBuildInfo buildInfo) {
-        mCtsBuild = CtsBuildHelper.createBuildHelper(buildInfo);
+        mCtsBuild = buildInfo;
     }
 
     @Override
@@ -66,7 +66,8 @@ public class PermissionsHostTest extends DeviceTestCase implements IAbiReceiver,
 
     public void testFail() throws Exception {
         // Sanity check that remote failure is host failure
-        assertNull(getDevice().installPackage(mCtsBuild.getTestApp(APK), false, false));
+        assertNull(getDevice().installPackage(
+                MigrationHelper.getTestFile(mCtsBuild, APK), false, false));
         try {
             runDeviceTests(PKG, ".UsePermissionTest", "testFail");
             fail("Expected remote failure");
@@ -76,7 +77,8 @@ public class PermissionsHostTest extends DeviceTestCase implements IAbiReceiver,
 
     public void testKill() throws Exception {
         // Sanity check that remote kill is host failure
-        assertNull(getDevice().installPackage(mCtsBuild.getTestApp(APK), false, false));
+        assertNull(getDevice().installPackage(
+                MigrationHelper.getTestFile(mCtsBuild, APK), false, false));
         try {
             runDeviceTests(PKG, ".UsePermissionTest", "testKill");
             fail("Expected remote failure");
@@ -85,39 +87,46 @@ public class PermissionsHostTest extends DeviceTestCase implements IAbiReceiver,
     }
 
     public void testDefault() throws Exception {
-        assertNull(getDevice().installPackage(mCtsBuild.getTestApp(APK), false, false));
+        assertNull(getDevice().installPackage(
+                MigrationHelper.getTestFile(mCtsBuild, APK), false, false));
         runDeviceTests(PKG, ".UsePermissionTest", "testDefault");
     }
 
     public void testGranted() throws Exception {
-        assertNull(getDevice().installPackage(mCtsBuild.getTestApp(APK), false, false));
+        assertNull(getDevice().installPackage(
+                MigrationHelper.getTestFile(mCtsBuild, APK), false, false));
         grantPermission(PKG, "android.permission.READ_EXTERNAL_STORAGE");
         grantPermission(PKG, "android.permission.WRITE_EXTERNAL_STORAGE");
         runDeviceTests(PKG, ".UsePermissionTest", "testGranted");
     }
 
     public void testInteractiveGrant() throws Exception {
-        assertNull(getDevice().installPackage(mCtsBuild.getTestApp(APK), false, false));
+        assertNull(getDevice().installPackage(
+                MigrationHelper.getTestFile(mCtsBuild, APK), false, false));
         runDeviceTests(PKG, ".UsePermissionTest", "testInteractiveGrant");
     }
 
     public void testRuntimeGroupGrantSpecificity() throws Exception {
-        assertNull(getDevice().installPackage(mCtsBuild.getTestApp(APK), false, false));
+        assertNull(getDevice().installPackage(
+                MigrationHelper.getTestFile(mCtsBuild, APK), false, false));
         runDeviceTests(PKG, ".UsePermissionTest", "testRuntimeGroupGrantSpecificity");
     }
 
     public void testRuntimeGroupGrantExpansion() throws Exception {
-        assertNull(getDevice().installPackage(mCtsBuild.getTestApp(APK), false, false));
+        assertNull(getDevice().installPackage(
+                MigrationHelper.getTestFile(mCtsBuild, APK), false, false));
         runDeviceTests(PKG, ".UsePermissionTest", "testRuntimeGroupGrantExpansion");
     }
 
     public void testCompatDefault() throws Exception {
-        assertNull(getDevice().installPackage(mCtsBuild.getTestApp(APK_COMPAT), false, false));
+        assertNull(getDevice().installPackage(MigrationHelper.getTestFile(mCtsBuild, APK_COMPAT),
+                false, false));
         runDeviceTests(PKG, ".UsePermissionCompatTest", "testCompatDefault");
     }
 
     public void testCompatRevoked() throws Exception {
-        assertNull(getDevice().installPackage(mCtsBuild.getTestApp(APK_COMPAT), false, false));
+        assertNull(getDevice().installPackage(MigrationHelper.getTestFile(mCtsBuild, APK_COMPAT),
+                false, false));
         setAppOps(PKG, "android:read_external_storage", "deny");
         setAppOps(PKG, "android:write_external_storage", "deny");
         runDeviceTests(PKG, ".UsePermissionCompatTest", "testCompatRevoked");

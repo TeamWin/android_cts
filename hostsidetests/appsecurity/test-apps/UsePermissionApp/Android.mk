@@ -27,6 +27,9 @@ LOCAL_SRC_FILES := $(call all-java-files-under, src) \
 
 LOCAL_PACKAGE_NAME := CtsUsePermissionApp
 
+# tag this module as a cts_v2 test artifact
+LOCAL_COMPATIBILITY_SUITE := cts_v2
+
 LOCAL_CERTIFICATE := cts/hostsidetests/appsecurity/certs/cts-testkey2
 
 LOCAL_PROGUARD_ENABLED := disabled

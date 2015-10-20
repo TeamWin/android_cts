@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-package com.android.cts.appsecurity;
+package android.appsecurity.cts;
 
 import com.android.compatibility.common.util.AbiUtils;
-import com.android.cts.tradefed.build.CtsBuildHelper;
+import com.android.cts.migration.MigrationHelper;
 import com.android.ddmlib.Log;
 import com.android.tradefed.build.IBuildInfo;
 import com.android.tradefed.device.DeviceNotAvailableException;
@@ -53,7 +53,7 @@ public class ExternalStorageHostTest extends DeviceTestCase
     private static final String MULTIUSER_CLASS = ".MultiUserStorageTest";
 
     private IAbi mAbi;
-    private CtsBuildHelper mCtsBuild;
+    private IBuildInfo mCtsBuild;
 
     @Override
     public void setAbi(IAbi abi) {
@@ -62,11 +62,11 @@ public class ExternalStorageHostTest extends DeviceTestCase
 
     @Override
     public void setBuild(IBuildInfo buildInfo) {
-        mCtsBuild = CtsBuildHelper.createBuildHelper(buildInfo);
+        mCtsBuild = buildInfo;
     }
 
     private File getTestAppFile(String fileName) throws FileNotFoundException {
-        return mCtsBuild.getTestApp(fileName);
+        return MigrationHelper.getTestFile(mCtsBuild, fileName);
     }
 
     @Override

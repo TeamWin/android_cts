@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.android.cts.appsecurity;
+package android.appsecurity.cts;
 
 import com.android.ddmlib.Log;
 import com.android.ddmlib.testrunner.RemoteAndroidTestRunner;

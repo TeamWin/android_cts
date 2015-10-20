@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-package com.android.cts.appsecurity;
+package android.appsecurity.cts;
 
 import com.android.compatibility.common.util.AbiUtils;
-import com.android.cts.tradefed.build.CtsBuildHelper;
+import com.android.cts.migration.MigrationHelper;
 import com.android.tradefed.build.IBuildInfo;
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.device.ITestDevice;
@@ -83,7 +83,7 @@ public class SplitTests extends DeviceTestCase implements IAbiReceiver, IBuildRe
     }
 
     private IAbi mAbi;
-    private CtsBuildHelper mCtsBuild;
+    private IBuildInfo mCtsBuild;
 
     @Override
     public void setAbi(IAbi abi) {
@@ -92,7 +92,7 @@ public class SplitTests extends DeviceTestCase implements IAbiReceiver, IBuildRe
 
     @Override
     public void setBuild(IBuildInfo buildInfo) {
-        mCtsBuild = CtsBuildHelper.createBuildHelper(buildInfo);
+        mCtsBuild = buildInfo;
     }
 
     @Override
@@ -297,16 +297,16 @@ public class SplitTests extends DeviceTestCase implements IAbiReceiver, IBuildRe
 
     public static class BaseInstallMultiple<T extends BaseInstallMultiple<?>> {
         private final ITestDevice mDevice;
-        private final CtsBuildHelper mBuild;
+        private final IBuildInfo mBuild;
         private final IAbi mAbi;
 
         private final List<String> mArgs = new ArrayList<>();
         private final List<File> mApks = new ArrayList<>();
         private boolean mUseNaturalAbi;
 
-        public BaseInstallMultiple(ITestDevice device, CtsBuildHelper build, IAbi abi) {
+        public BaseInstallMultiple(ITestDevice device, IBuildInfo buildInfo, IAbi abi) {
             mDevice = device;
-            mBuild = build;
+            mBuild = buildInfo;
             mAbi = abi;
             addArg("-g");
         }
@@ -317,7 +317,7 @@ public class SplitTests extends DeviceTestCase implements IAbiReceiver, IBuildRe
         }
 
         T addApk(String apk) throws FileNotFoundException {
-            mApks.add(mBuild.getTestApp(apk));
+            mApks.add(MigrationHelper.getTestFile(mBuild, apk));
             return (T) this;
         }
 
