@@ -360,7 +360,7 @@ public class SELinuxHostTest extends DeviceTestCase {
         /* run checkfc -p on service_contexts */
         ProcessBuilder pb = new ProcessBuilder(checkFc.getAbsolutePath(),
                 "-p", devicePolicyFile.getAbsolutePath(),
-                devicePcFile.getAbsolutePath());
+                deviceSvcFile.getAbsolutePath());
         pb.redirectOutput(ProcessBuilder.Redirect.PIPE);
         pb.redirectErrorStream(true);
         Process p = pb.start();
