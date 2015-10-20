@@ -26,9 +26,6 @@ LOCAL_C_INCLUDES := $(JNI_H_INCLUDE)
 
 LOCAL_SHARED_LIBRARIES := libnativehelper
 
-# Tag this module as a cts_v2 test artifact
-LOCAL_COMPATIBILITY_SUITE := cts_v2
-
 LOCAL_SDK_VERSION := 14
 
 include $(BUILD_SHARED_LIBRARY)
