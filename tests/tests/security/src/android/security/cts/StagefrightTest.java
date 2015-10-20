@@ -26,7 +26,7 @@ import android.content.Context;
 import android.content.res.AssetFileDescriptor;
 import android.media.MediaPlayer;
 import android.os.Looper;
-import android.test.AndroidTestCase;
+import android.test.InstrumentationTestCase;
 import android.util.Log;
 
 import java.io.IOException;
@@ -40,7 +40,7 @@ import com.android.cts.security.R;
  * Verify that the device is not vulnerable to any known Stagefright
  * vulnerabilities.
  */
-public class StagefrightTest extends AndroidTestCase {
+public class StagefrightTest extends InstrumentationTestCase {
     static final String TAG = "StagefrightTest";
 
     public StagefrightTest() {
@@ -146,7 +146,7 @@ public class StagefrightTest extends AndroidTestCase {
                 mp.setOnPreparedListener(mpcl);
                 mp.setOnCompletionListener(mpcl);
                 try {
-                    AssetFileDescriptor fd = getContext().getResources()
+                    AssetFileDescriptor fd = getInstrumentation().getContext().getResources()
                         .openRawResourceFd(rid);
 
                     mp.setDataSource(fd.getFileDescriptor(),
@@ -163,7 +163,7 @@ public class StagefrightTest extends AndroidTestCase {
         });
 
         t.start();
-        String name = getContext().getResources().getResourceEntryName(rid);
+        String name = getInstrumentation().getContext().getResources().getResourceEntryName(rid);
         String cve = name.replace("_", "-").toUpperCase();
         assertFalse("Device *IS* vulnerable to " + cve,
                     mpcl.waitForError() == MediaPlayer.MEDIA_ERROR_SERVER_DIED);
