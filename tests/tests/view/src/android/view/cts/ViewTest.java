@@ -45,6 +45,7 @@ import android.test.UiThreadTest;
 import android.text.format.DateUtils;
 import android.util.AttributeSet;
 import android.util.Log;
+import android.util.Pair;
 import android.util.SparseArray;
 import android.util.Xml;
 import android.view.ActionMode;
@@ -84,9 +85,11 @@ import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.ListView;
 
+import java.lang.reflect.Constructor;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
 
 /**
  * Test {@link View}.
@@ -143,6 +146,37 @@ public class ViewTest extends ActivityInstrumentationTestCase2<ViewTestCtsActivi
             new View(null, null, 1);
             fail("should throw NullPointerException");
         } catch (NullPointerException e) {
+        }
+    }
+
+    // Test that validates that Views can be constructed on a thread that
+    // does not have a Looper. Necessary for async inflation
+    private Pair<Class<?>, Throwable> sCtorException = null;
+    public void testConstructor2() throws Exception {
+        final Object[] args = new Object[] { mActivity, null };
+        final CountDownLatch latch = new CountDownLatch(1);
+        sCtorException = null;
+        new Thread() {
+            public void run() {
+                final Class<?>[] ctorSignature = new Class[] {
+                        Context.class, AttributeSet.class};
+                for (Class<?> clazz : ASYNC_INFLATE_VIEWS) {
+                    try {
+                        Constructor<?> constructor = clazz.getConstructor(ctorSignature);
+                        constructor.setAccessible(true);
+                        constructor.newInstance(args);
+                    } catch (Throwable t) {
+                        sCtorException = new Pair<Class<?>, Throwable>(clazz, t);
+                        break;
+                    }
+                }
+                latch.countDown();
+            }
+        }.start();
+        latch.await();
+        if (sCtorException != null) {
+            throw new AssertionError("Failed to inflate "
+                    + sCtorException.first.getName(), sCtorException.second);
         }
     }
 
@@ -4095,4 +4129,75 @@ public class ViewTest extends ActivityInstrumentationTestCase2<ViewTestCtsActivi
             hasRun = true;
         }
     }
+
+    private static Class<?> ASYNC_INFLATE_VIEWS[] = {
+        android.app.FragmentBreadCrumbs.class,
+// DISABLED because it doesn't have a AppWidgetHostView(Context, AttributeSet)
+// constructor, so it's not inflate-able
+//        android.appwidget.AppWidgetHostView.class,
+        android.gesture.GestureOverlayView.class,
+        android.inputmethodservice.ExtractEditText.class,
+        android.inputmethodservice.KeyboardView.class,
+//        android.media.tv.TvView.class,
+//        android.opengl.GLSurfaceView.class,
+//        android.view.SurfaceView.class,
+        android.view.TextureView.class,
+        android.view.ViewStub.class,
+//        android.webkit.WebView.class,
+        android.widget.AbsoluteLayout.class,
+        android.widget.AdapterViewFlipper.class,
+        android.widget.AnalogClock.class,
+        android.widget.AutoCompleteTextView.class,
+        android.widget.Button.class,
+        android.widget.CalendarView.class,
+        android.widget.CheckBox.class,
+        android.widget.CheckedTextView.class,
+        android.widget.Chronometer.class,
+        android.widget.DatePicker.class,
+        android.widget.DialerFilter.class,
+        android.widget.DigitalClock.class,
+        android.widget.EditText.class,
+        android.widget.ExpandableListView.class,
+        android.widget.FrameLayout.class,
+        android.widget.Gallery.class,
+        android.widget.GridView.class,
+        android.widget.HorizontalScrollView.class,
+        android.widget.ImageButton.class,
+        android.widget.ImageSwitcher.class,
+        android.widget.ImageView.class,
+        android.widget.LinearLayout.class,
+        android.widget.ListView.class,
+        android.widget.MediaController.class,
+        android.widget.MultiAutoCompleteTextView.class,
+        android.widget.NumberPicker.class,
+        android.widget.ProgressBar.class,
+        android.widget.QuickContactBadge.class,
+        android.widget.RadioButton.class,
+        android.widget.RadioGroup.class,
+        android.widget.RatingBar.class,
+        android.widget.RelativeLayout.class,
+        android.widget.ScrollView.class,
+        android.widget.SeekBar.class,
+// DISABLED because it has required attributes
+//        android.widget.SlidingDrawer.class,
+        android.widget.Spinner.class,
+        android.widget.StackView.class,
+        android.widget.Switch.class,
+        android.widget.TabHost.class,
+        android.widget.TabWidget.class,
+        android.widget.TableLayout.class,
+        android.widget.TableRow.class,
+        android.widget.TextClock.class,
+        android.widget.TextSwitcher.class,
+        android.widget.TextView.class,
+        android.widget.TimePicker.class,
+        android.widget.ToggleButton.class,
+        android.widget.TwoLineListItem.class,
+//        android.widget.VideoView.class,
+        android.widget.ViewAnimator.class,
+        android.widget.ViewFlipper.class,
+        android.widget.ViewSwitcher.class,
+        android.widget.ZoomButton.class,
+        android.widget.ZoomControls.class,
+    };
 }
