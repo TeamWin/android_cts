@@ -44,5 +44,7 @@ $(CTS_TESTCASES_OUT)/CtsJankHostTestCases.xml: $(cts_library_jar_)
 
 include $(BUILD_CTS_HOST_JAVA_LIBRARY)
 
+$(COMPATIBILITY_TESTCASES_OUT_cts_v2)/CtsJankHostTestCases.jar : $(COMPATIBILITY_TESTCASES_OUT_cts_v2)/CtsOpenGlPerf2TestCases.apk
+
 # Build the library using its own makefile
 include $(call all-makefiles-under,$(LOCAL_PATH))
