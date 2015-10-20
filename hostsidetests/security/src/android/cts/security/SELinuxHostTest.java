@@ -357,9 +357,9 @@ public class SELinuxHostTest extends DeviceTestCase {
      */
     public void testValidServiceContexts() throws Exception {
 
-        /* run checkfc -p on service_contexts */
+        /* run checkfc -s on service_contexts */
         ProcessBuilder pb = new ProcessBuilder(checkFc.getAbsolutePath(),
-                "-p", devicePolicyFile.getAbsolutePath(),
+                "-s", devicePolicyFile.getAbsolutePath(),
                 deviceSvcFile.getAbsolutePath());
         pb.redirectOutput(ProcessBuilder.Redirect.PIPE);
         pb.redirectErrorStream(true);
