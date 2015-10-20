@@ -90,8 +90,15 @@ public class StagefrightTest extends AndroidTestCase {
         doStagefrightTest(R.raw.cve_2015_3864);
     }
 
+    public void testStagefright_cve_2015_6598() throws Exception {
+        doStagefrightTest(R.raw.cve_2015_6598);
+    }
+
     private void doStagefrightTest(final int rid) throws Exception {
-        class MediaPlayerCrashListener implements MediaPlayer.OnErrorListener {
+        class MediaPlayerCrashListener
+                implements MediaPlayer.OnErrorListener,
+                    MediaPlayer.OnPreparedListener,
+                    MediaPlayer.OnCompletionListener {
             @Override
             public boolean onError(MediaPlayer mp, int newWhat, int extra) {
                 what = newWhat;
@@ -99,7 +106,20 @@ public class StagefrightTest extends AndroidTestCase {
                 condition.signal();
                 lock.unlock();
 
-                return false;
+                return true; // don't call oncompletion
+            }
+
+            @Override
+            public void onPrepared(MediaPlayer mp) {
+                mp.start();
+            }
+
+            @Override
+            public void onCompletion(MediaPlayer mp) {
+                what = 0;
+                lock.lock();
+                condition.signal();
+                lock.unlock();
             }
 
             public int waitForError() throws InterruptedException {
@@ -123,6 +143,8 @@ public class StagefrightTest extends AndroidTestCase {
 
                 MediaPlayer mp = new MediaPlayer();
                 mp.setOnErrorListener(mpcl);
+                mp.setOnPreparedListener(mpcl);
+                mp.setOnCompletionListener(mpcl);
                 try {
                     AssetFileDescriptor fd = getContext().getResources()
                         .openRawResourceFd(rid);
