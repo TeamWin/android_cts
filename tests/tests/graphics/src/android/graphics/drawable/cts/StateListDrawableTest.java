@@ -22,15 +22,18 @@ import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
 
 import android.R.attr;
+import android.content.res.Configuration;
 import android.content.res.Resources;
 import android.content.res.XmlResourceParser;
 import android.graphics.Canvas;
 import android.graphics.ColorFilter;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
+import android.graphics.drawable.Drawable.ConstantState;
 import android.graphics.drawable.StateListDrawable;
 import android.graphics.drawable.DrawableContainer.DrawableContainerState;
 import android.test.InstrumentationTestCase;
+import android.util.DisplayMetrics;
 import android.util.StateSet;
 import android.util.Xml;
 
@@ -151,6 +154,85 @@ public class StateListDrawableTest extends InstrumentationTestCase {
             fail("Should throw NullPointerException.");
         } catch (NullPointerException e) {
         }
+    }
+
+    public void testPreloadDensity() throws XmlPullParserException, IOException {
+        runPreloadDensityTestForDrawable(R.drawable.state_list_density, false);
+    }
+
+    public void testPreloadDensityConstantSize() throws XmlPullParserException, IOException {
+        runPreloadDensityTestForDrawable(R.drawable.state_list_density_constant_size, true);
+    }
+
+    private void runPreloadDensityTestForDrawable(int drawableResId, boolean isConstantSize)
+            throws XmlPullParserException, IOException {
+        final Configuration origConfig = new Configuration();
+        origConfig.setTo(mResources.getConfiguration());
+        final DisplayMetrics origMetrics = new DisplayMetrics();
+        origMetrics.setTo(mResources.getDisplayMetrics());
+
+        final Configuration halfConfig = new Configuration();
+        halfConfig.setTo(origConfig);
+        final DisplayMetrics halfMetrics = new DisplayMetrics();
+        halfMetrics.setTo(origMetrics);
+        halfConfig.densityDpi /= 2;
+        halfMetrics.densityDpi /= 2;
+        halfMetrics.density *= 2;
+
+        final Configuration doubleConfig = new Configuration();
+        doubleConfig.setTo(origConfig);
+        final DisplayMetrics doubleMetrics = new DisplayMetrics();
+        doubleMetrics.setTo(origMetrics);
+        doubleConfig.densityDpi *= 2;
+        doubleMetrics.densityDpi *= 2;
+        doubleMetrics.density /= 2;
+
+        final XmlResourceParser parser = getResourceParser(drawableResId);
+        final StateListDrawable preloadedDrawable = new StateListDrawable();
+        preloadedDrawable.inflate(mResources, parser, Xml.asAttributeSet(parser));
+        final ConstantState preloadedConstantState = preloadedDrawable.getConstantState();
+        preloadedDrawable.selectDrawable(0);
+        final int tempWidth0 = preloadedDrawable.getIntrinsicWidth();
+        preloadedDrawable.selectDrawable(1);
+        final int tempWidth1 = preloadedDrawable.getIntrinsicWidth();
+
+        // Pick comparison widths based on constant size.
+        final int origWidth0;
+        final int origWidth1;
+        if (isConstantSize) {
+            origWidth0 = Math.max(tempWidth0, tempWidth1);
+            origWidth1 = origWidth0;
+        } else {
+            origWidth0 = tempWidth0;
+            origWidth1 = tempWidth1;
+        }
+
+        // Set density to half of original.
+        mResources.updateConfiguration(halfConfig, halfMetrics);
+        final StateListDrawable halfDrawable =
+                (StateListDrawable) preloadedConstantState.newDrawable(mResources);
+        halfDrawable.selectDrawable(0);
+        assertEquals(origWidth0 / 2, halfDrawable.getIntrinsicWidth());
+        halfDrawable.selectDrawable(1);
+        assertEquals(origWidth1 / 2, halfDrawable.getIntrinsicWidth());
+
+        // Restore original configuration and metrics.
+        mResources.updateConfiguration(origConfig, origMetrics);
+        final StateListDrawable origDrawable =
+                (StateListDrawable) preloadedConstantState.newDrawable(mResources);
+        origDrawable.selectDrawable(0);
+        assertEquals(origWidth0, origDrawable.getIntrinsicWidth());
+        origDrawable.selectDrawable(1);
+        assertEquals(origWidth1, origDrawable.getIntrinsicWidth());
+
+        // Set density to double original.
+        mResources.updateConfiguration(doubleConfig, doubleMetrics);
+        final StateListDrawable doubleDrawable =
+                (StateListDrawable) preloadedConstantState.newDrawable(mResources);
+        doubleDrawable.selectDrawable(0);
+        assertEquals(origWidth0 * 2, doubleDrawable.getIntrinsicWidth());
+        doubleDrawable.selectDrawable(1);
+        assertEquals(origWidth1 * 2, doubleDrawable.getIntrinsicWidth());
     }
 
     public void testInflate() throws XmlPullParserException, IOException {
