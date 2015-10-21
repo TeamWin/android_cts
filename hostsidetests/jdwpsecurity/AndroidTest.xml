@@ -14,7 +14,7 @@
      limitations under the License.
 -->
 <configuration description="Config for the CTS JDWP host test cases">
-    <test class="com.android.tradefed.testtype.HostTest">
-        <option name="class" value="android.jdwpsecurity.cts.JdwpSecurityHostTest" />
+    <test class="com.android.compatibility.common.tradefed.testtype.JarHostTest" >
+        <option name="jar" value="CtsJdwpSecurityHostTestCases.jar" />
     </test>
 </configuration>

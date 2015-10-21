@@ -14,5 +14,7 @@
      limitations under the License.
 -->
 <configuration description="Config for CTS Jank host test cases">
-    <test class="android.jank.cts.opengl.CtsHostJankOpenGl" />
+    <test class="com.android.compatibility.common.tradefed.testtype.JarHostTest" >
+        <option name="jar" value="CtsJankHostTestCases.jar" />
+    </test>
 </configuration>
