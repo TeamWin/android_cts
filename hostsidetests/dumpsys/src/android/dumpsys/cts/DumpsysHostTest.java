@@ -16,8 +16,9 @@
 
 package android.dumpsys.cts;
 
-import com.android.cts.tradefed.build.CtsBuildHelper;
+import com.android.cts.migration.MigrationHelper;
 import com.android.tradefed.build.IBuildInfo;
+import com.android.tradefed.build.IFolderBuildInfo;
 import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.testtype.DeviceTestCase;
 import com.android.tradefed.testtype.IBuildReceiver;
@@ -872,7 +873,7 @@ public class DumpsysHostTest extends DeviceTestCase implements IBuildReceiver {
             getDevice().uninstallPackage(TEST_PKG);
 
             // install the test app
-            File testAppFile = mCtsBuild.getTestApp(TEST_APK);
+            File testAppFile = MigrationHelper.getTestFile((IFolderBuildInfo) mCtsBuild, TEST_APK);
             String installResult = getDevice().installPackage(testAppFile, false);
             assertNull(
                     String.format("failed to install atrace test app. Reason: %s", installResult),
@@ -944,14 +945,14 @@ public class DumpsysHostTest extends DeviceTestCase implements IBuildReceiver {
         assertTrue(foundAtLeastOneRow);
     }
 
-    private CtsBuildHelper mCtsBuild;
+    private IBuildInfo mCtsBuild;
 
     /**
      * {@inheritDoc}
      */
     @Override
     public void setBuild(IBuildInfo buildInfo) {
-        mCtsBuild = CtsBuildHelper.createBuildHelper(buildInfo);
+        mCtsBuild = buildInfo;
     }
 
     private static long assertInteger(String input) {
