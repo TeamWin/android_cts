@@ -242,7 +242,7 @@ cts_native_tests := \
     NativeMediaTest_XA \
 
 ifeq ($(HOST_OS)-$(HOST_ARCH),$(filter $(HOST_OS)-$(HOST_ARCH),linux-x86 linux-x86_64))
-cts_native_tests += bionic-unit-tests-cts
+cts_native_tests += CtsBionicTestCases
 endif
 
 cts_ui_tests := \

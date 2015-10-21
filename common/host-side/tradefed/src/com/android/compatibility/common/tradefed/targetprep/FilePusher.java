@@ -16,10 +16,15 @@
 package com.android.compatibility.common.tradefed.targetprep;
 
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
+import com.android.ddmlib.Log.LogLevel;
 import com.android.tradefed.build.IBuildInfo;
 import com.android.tradefed.build.IFolderBuildInfo;
+import com.android.tradefed.config.Option;
 import com.android.tradefed.config.OptionClass;
+import com.android.tradefed.log.LogUtil.CLog;
 import com.android.tradefed.targetprep.PushFilePreparer;
+import com.android.tradefed.testtype.IAbi;
+import com.android.tradefed.testtype.IAbiReceiver;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -28,9 +33,15 @@ import java.io.FileNotFoundException;
  * Pushes specified testing artifacts from Compatibility repository.
  */
 @OptionClass(alias="file-pusher")
-public class FilePusher extends PushFilePreparer {
+public class FilePusher extends PushFilePreparer implements IAbiReceiver {
+
+    @Option(name = "append-bitness",
+            description = "Append the ABI's bitness to the filename.")
+    private boolean mAppendBitness = false;
 
     private CompatibilityBuildHelper mBuildHelper = null;
+
+    private IAbi mAbi;
 
     protected File getTestsDir(IFolderBuildInfo buildInfo) throws FileNotFoundException {
         if (mBuildHelper == null) {
@@ -43,9 +54,20 @@ public class FilePusher extends PushFilePreparer {
      * {@inheritDoc}
      */
     @Override
+    public void setAbi(IAbi abi) {
+        mAbi = abi;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
     public File resolveRelativeFilePath(IBuildInfo buildInfo, String fileName) {
         try {
-            return new File(getTestsDir((IFolderBuildInfo) buildInfo), fileName);
+            File f = new File(getTestsDir((IFolderBuildInfo) buildInfo),
+                    String.format("%s%s", fileName, mAppendBitness ? mAbi.getBitness() : ""));
+            CLog.logAndDisplay(LogLevel.ERROR, "Copying from %s", f.getAbsolutePath());
+            return f;
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         }
