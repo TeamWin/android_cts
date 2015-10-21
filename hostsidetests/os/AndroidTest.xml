@@ -18,7 +18,7 @@
         <option name="cleanup-apks" value="true" />
         <option name="test-file-name" value="CtsDeviceOsTestApp.apk" />
     </target_preparer>
-    <test class="com.android.tradefed.testtype.HostTest">
-        <option name="class" value="android.os.cts.OsHostTests" />
+    <test class="com.android.compatibility.common.tradefed.testtype.JarHostTest" >
+        <option name="jar" value="CtsOsHostTestCases.jar" />
     </test>
 </configuration>

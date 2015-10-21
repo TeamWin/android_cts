@@ -13,8 +13,8 @@
      See the License for the specific language governing permissions and
      limitations under the License.
 -->
-<configuration description="Config for the CTS security host tests">
-    <test class="com.android.tradefed.testtype.HostTest">
-        <option name="class" value="android.security.cts.SELinuxHostTest" />
+<configuration description="Config for the CTS Security host tests">
+    <test class="com.android.compatibility.common.tradefed.testtype.JarHostTest" >
+        <option name="jar" value="CtsSecurityHostTestCases.jar" />
     </test>
 </configuration>

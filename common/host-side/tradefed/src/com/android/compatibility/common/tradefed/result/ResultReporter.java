@@ -169,7 +169,7 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
      */
     @Override
     public void testRunStarted(String id, int numTests) {
-        logResult("Starting %s with %d tests", id, numTests);
+        logResult("Starting %s with %d test%s", id, numTests, (numTests > 1) ? "s" : "");
         mCurrentModuleResult = mResult.getOrCreateModule(id);
         mResult.addDeviceSerial(mDeviceSerial);
     }

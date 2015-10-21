@@ -20,16 +20,19 @@ import com.android.cts.migration.MigrationHelper;
 import com.android.tradefed.build.IBuildInfo;
 import com.android.tradefed.build.IFolderBuildInfo;
 import com.android.tradefed.device.ITestDevice;
-import com.android.tradefed.testtype.DeviceTestCase;
 import com.android.tradefed.testtype.IAbi;
 import com.android.tradefed.testtype.IAbiReceiver;
 import com.android.tradefed.testtype.IBuildReceiver;
+import com.android.tradefed.testtype.IDeviceTest;
+
+import junit.framework.TestCase;
 
 import java.io.File;
 import java.util.HashMap;
 import java.util.Scanner;
 
-public class CtsHostJankTest extends DeviceTestCase implements IAbiReceiver, IBuildReceiver {
+public abstract class CtsHostJankTest extends TestCase
+        implements IAbiReceiver, IDeviceTest, IBuildReceiver {
 
     private static final String TAG = CtsHostJankTest.class.getSimpleName();
     private static final String DEVICE_LOCATION = "/data/local/tmp/";
@@ -50,16 +53,41 @@ public class CtsHostJankTest extends DeviceTestCase implements IAbiReceiver, IBu
         this.mJarPath = DEVICE_LOCATION + jarName;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void setAbi(IAbi abi) {
         mAbi = abi;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void setBuild(IBuildInfo buildInfo) {
         mBuild = (IFolderBuildInfo) buildInfo;
     }
 
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void setDevice(ITestDevice device) {
+        mDevice = device;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public ITestDevice getDevice() {
+        return mDevice;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
     @Override
     protected void setUp() throws Exception {
         super.setUp();
@@ -70,6 +98,9 @@ public class CtsHostJankTest extends DeviceTestCase implements IAbiReceiver, IBu
         assertTrue("Failed to push file to " + mJarPath, result);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     protected void tearDown() throws Exception {
         // Delete jar from device.
