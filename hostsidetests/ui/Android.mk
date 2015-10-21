@@ -28,6 +28,8 @@ LOCAL_STATIC_JAVA_LIBRARIES := cts-migration-lib
 
 LOCAL_ADDITIONAL_DEPENDENCIES := $(LOCAL_PATH)/Android.mk
 
+$(COMPATIBILITY_TESTCASES_OUT_cts_v2)/CtsUiHostTestCases.jar : $(COMPATIBILITY_TESTCASES_OUT_cts_v2)/com.replica.replicaisland.apk
+
 LOCAL_CTS_TEST_PACKAGE := android.ui.cts
 
 # Tag this module as a cts_v2 test artifact
