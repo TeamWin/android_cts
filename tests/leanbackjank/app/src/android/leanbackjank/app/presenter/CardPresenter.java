@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.cts.jank.leanback.presenter;
+package android.leanbackjank.app.presenter;
 
 import android.graphics.drawable.Drawable;
 import android.support.v17.leanback.widget.ImageCardView;
@@ -22,8 +22,8 @@ import android.support.v17.leanback.widget.Presenter;
 import android.view.ViewGroup;
 
 import com.bumptech.glide.Glide;
-import android.cts.jank.leanback.R;
-import android.cts.jank.leanback.model.Movie;
+import android.leanbackjank.app.R;
+import android.leanbackjank.app.model.Movie;
 
 /**
  * A CardPresenter is used to generate Views and bind Objects to them on demand.

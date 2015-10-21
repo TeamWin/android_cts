@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.cts.jank.leanback.presenter;
+package android.leanbackjank.app.presenter;
 
 import android.content.Context;
 import android.graphics.drawable.Drawable;
@@ -28,7 +28,7 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-import android.cts.jank.leanback.R;
+import android.leanbackjank.app.R;
 
 public class IconHeaderItemPresenter extends RowHeaderPresenter {
     private float mUnselectedAlpha;

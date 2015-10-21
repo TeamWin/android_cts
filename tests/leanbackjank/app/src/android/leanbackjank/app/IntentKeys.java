@@ -1,4 +1,4 @@
-package android.cts.jank.leanback;
+package android.leanbackjank.app;
 
 /**
  * Intent key strings of the leanback jank test helper app.

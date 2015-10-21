@@ -93,7 +93,7 @@ cts_support_packages := \
     CtsIntentSenderApp \
     CtsLauncherAppsTests \
     CtsLauncherAppsTestsSupport \
-    CtsLeanbackJank \
+    CtsLeanbackJankApp \
     CtsManagedProfileApp \
     CtsMonkeyApp \
     CtsMonkeyApp2 \
