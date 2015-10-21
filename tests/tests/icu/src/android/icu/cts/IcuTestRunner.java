@@ -90,13 +90,12 @@ public final class IcuTestRunner extends Instrumentation {
     public void onCreate(Bundle args) {
         Log.d("IcuTestRunner", "In OnCreate");
 
-        this.debug = false;
-        this.testCountOnly = false;
-
-        List<String> classList;
+        this.debug = args.getBoolean("debug");
+        this.testCountOnly = args.getBoolean("count");
 
         // The test can be run specifying a list of classes to run, or as cts-tradefed does it,
         // by passing a fileName with a test to run on each line.
+        List<String> classList;
         if (args.getString(ARGUMENT_TEST_FILE) != null) {
             // The tests are specified in a file.
             try {
@@ -105,14 +104,14 @@ public final class IcuTestRunner extends Instrumentation {
                 finish(Activity.RESULT_CANCELED, new Bundle());
                 return;
             }
-        } else {
+        } else if (args.getString(ARGUMENT_TEST_FILE) != null) {
             // The tests are specified in a String passed in the bundle.
             String[] classes = args.getString(ARGUMENT_TEST_CLASS).split(",");
             classList = new ArrayList<>(Arrays.asList(classes));
+        } else {
+            // null means the runner should run all tests.
+            classList = null;
         }
-
-        debug = args.getBoolean("debug");
-        testCountOnly = args.getBoolean("count");
 
         // Use all classes if a set isn't provided
         if (classList == null) {
