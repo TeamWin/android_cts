@@ -29,6 +29,7 @@ public class JavacBuildStep extends SourceBuildStep {
     private final String classPath;
     private final Set<String> sourceFiles = new HashSet<String>();
     public JavacBuildStep(String destPath, String classPath) {
+        super(new File(destPath));
         this.destPath = destPath;
         this.classPath = classPath;
     }
