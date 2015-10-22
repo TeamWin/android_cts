@@ -73,6 +73,7 @@ public class VectorDrawableTest extends AndroidTestCase {
             R.drawable.vector_icon_scale_1,
             R.drawable.vector_icon_scale_2,
             R.drawable.vector_icon_implicit_lineto,
+            R.drawable.vector_icon_arcto,
     };
 
     private static final int[] GOLDEN_IMAGES = new int[] {
@@ -102,6 +103,7 @@ public class VectorDrawableTest extends AndroidTestCase {
             R.drawable.vector_icon_scale_1_golden,
             R.drawable.vector_icon_scale_2_golden,
             R.drawable.vector_icon_implicit_lineto_golden,
+            R.drawable.vector_icon_arcto_golden,
     };
 
     private static final int[] STATEFUL_RES_IDS = new int[] {
@@ -124,7 +126,7 @@ public class VectorDrawableTest extends AndroidTestCase {
     // exactly with the golden image.
     // We can increase the threshold if the Skia is drawing with some variance
     // on different devices. So far, the tests show they are matching correctly.
-    private static final float PIXEL_ERROR_THRESHOLD = 0.02f;
+    private static final float PIXEL_ERROR_THRESHOLD = 0.03f;
     private static final float PIXEL_ERROR_COUNT_THRESHOLD = 0.005f;
 
     private static final boolean DBG_DUMP_PNG = false;
