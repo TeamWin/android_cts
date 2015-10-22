@@ -18,6 +18,7 @@ package android.graphics.drawable.cts;
 
 import android.content.res.Configuration;
 import android.content.res.Resources;
+import android.content.res.Resources.Theme;
 import android.content.res.XmlResourceParser;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -371,13 +372,6 @@ public class VectorDrawableTest extends AndroidTestCase {
         final DisplayMetrics origMetrics = new DisplayMetrics();
         origMetrics.setTo(mResources.getDisplayMetrics());
 
-        final XmlResourceParser parser = getResourceParser(R.drawable.vector_density);
-        final VectorDrawable preloadedDrawable = new VectorDrawable();
-        preloadedDrawable.inflate(mResources, parser, Xml.asAttributeSet(parser));
-        final ConstantState preloadedConstantState = preloadedDrawable.getConstantState();
-        final int origWidth = preloadedDrawable.getIntrinsicWidth();
-
-        // Set density to half of original.
         final Configuration halfConfig = new Configuration();
         halfConfig.setTo(origConfig);
         final DisplayMetrics halfMetrics = new DisplayMetrics();
@@ -386,17 +380,6 @@ public class VectorDrawableTest extends AndroidTestCase {
         halfMetrics.densityDpi /= 2;
         halfMetrics.density *= 2;
 
-        mResources.updateConfiguration(halfConfig, halfMetrics);
-        final VectorDrawable halfDrawable =
-                (VectorDrawable) preloadedConstantState.newDrawable(mResources);
-        assertEquals(origWidth / 2, halfDrawable.getIntrinsicWidth());
-
-        // Ensure original has not been modified.
-        final VectorDrawable origDrawable =
-                (VectorDrawable) preloadedConstantState.newDrawable();
-        assertEquals(origWidth, origDrawable.getIntrinsicWidth());
-
-        // Set density to double original.
         final Configuration doubleConfig = new Configuration();
         doubleConfig.setTo(origConfig);
         final DisplayMetrics doubleMetrics = new DisplayMetrics();
@@ -405,6 +388,19 @@ public class VectorDrawableTest extends AndroidTestCase {
         doubleMetrics.densityDpi *= 2;
         doubleMetrics.density /= 2;
 
+        final XmlResourceParser parser = getResourceParser(R.drawable.vector_density);
+        final VectorDrawable preloadedDrawable = new VectorDrawable();
+        preloadedDrawable.inflate(mResources, parser, Xml.asAttributeSet(parser));
+        final ConstantState preloadedConstantState = preloadedDrawable.getConstantState();
+        final int origWidth = preloadedDrawable.getIntrinsicWidth();
+
+        // Set density to half of original.
+        mResources.updateConfiguration(halfConfig, halfMetrics);
+        final VectorDrawable halfDrawable =
+                (VectorDrawable) preloadedConstantState.newDrawable(mResources);
+        assertEquals(origWidth / 2, halfDrawable.getIntrinsicWidth());
+
+        // Set density to double original.
         mResources.updateConfiguration(doubleConfig, doubleMetrics);
         final VectorDrawable doubleDrawable =
                 (VectorDrawable) preloadedConstantState.newDrawable(mResources);
@@ -412,6 +408,16 @@ public class VectorDrawableTest extends AndroidTestCase {
 
         // Restore original configuration and metrics.
         mResources.updateConfiguration(origConfig, origMetrics);
+        final VectorDrawable origDrawable =
+                (VectorDrawable) preloadedConstantState.newDrawable();
+        assertEquals(origWidth, origDrawable.getIntrinsicWidth());
+
+        // Ensure theme density is applied correctly.
+        final Theme t = mResources.newTheme();
+        halfDrawable.applyTheme(t);
+        assertEquals(origWidth, halfDrawable.getIntrinsicWidth());
+        doubleDrawable.applyTheme(t);
+        assertEquals(origWidth, doubleDrawable.getIntrinsicWidth());
     }
 
     private XmlResourceParser getResourceParser(int resId)
