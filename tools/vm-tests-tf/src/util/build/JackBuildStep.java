@@ -16,11 +16,16 @@
 
 package util.build;
 
+import com.android.jack.CLILogConfiguration;
+import com.android.jack.CLILogConfiguration.LogConfigurationException;
+
+import util.build.BuildStep.BuildFile;
+
 import com.android.jack.Jack;
 import com.android.jack.Main;
 import com.android.jack.Options;
-
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -28,11 +33,20 @@ import java.util.Set;
 
 public class JackBuildStep extends SourceBuildStep {
 
+    static {
+        try {
+              CLILogConfiguration.setupLogs();
+            } catch (LogConfigurationException e) {
+              throw new Error("Failed to setup logs", e);
+            }
+    }
+
     private final String destPath;
     private final String classPath;
     private final Set<String> sourceFiles = new HashSet<String>();
 
     public JackBuildStep(String destPath, String classPath) {
+        super(new File(destPath));
         this.destPath = destPath;
         this.classPath = classPath;
     }
@@ -55,23 +69,44 @@ public class JackBuildStep extends SourceBuildStep {
                         + outDir.getAbsolutePath());
                 return false;
             }
-            List<String> commandLine = new ArrayList(4 + sourceFiles.size());
-            commandLine.add("--verbose");
-            commandLine.add("error");
-            commandLine.add("--classpath");
-            commandLine.add(classPath);
-            commandLine.add("--output-jack");
-            commandLine.add(destPath);
-            commandLine.addAll(sourceFiles);
+
+            File tmpOutDir = new File(outDir, outputFile.fileName.getName() + ".dexTmp");
+            if (!tmpOutDir.exists() && !tmpOutDir.mkdirs()) {
+                System.err.println("failed to create temp dir: "
+                        + tmpOutDir.getAbsolutePath());
+                return false;
+            }
+            File tmpDex = new File(tmpOutDir, "classes.dex");
 
             try {
+                List<String> commandLine = new ArrayList<String>(6 + sourceFiles.size());
+                commandLine.add("--verbose");
+                commandLine.add("error");
+                commandLine.add("--classpath");
+                commandLine.add(classPath);
+                commandLine.add("--output-dex");
+                commandLine.add(tmpOutDir.getAbsolutePath());
+                commandLine.addAll(sourceFiles);
+
                 Options options = Main.parseCommandLine(commandLine);
                 Jack.checkAndRun(options);
+
+                JarBuildStep jarStep = new JarBuildStep(
+                    new BuildFile(tmpDex),
+                    "classes.dex",
+                    outputFile,
+                    /* deleteInputFileAfterBuild = */ true);
+                if (!jarStep.build()) {
+                  throw new IOException("Failed to make jar: " + outputFile.getPath());
+                }
+                return true;
             } catch (Throwable ex) {
                 ex.printStackTrace();
                 return false;
+            } finally {
+              tmpDex.delete();
+              tmpOutDir.delete();
             }
-            return true;
         }
         return false;
     }
