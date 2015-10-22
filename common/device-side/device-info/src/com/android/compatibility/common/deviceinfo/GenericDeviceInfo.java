@@ -15,37 +15,14 @@
  */
 package com.android.compatibility.common.deviceinfo;
 
-import android.app.Activity;
-import android.app.Instrumentation;
-import android.content.Context;
-import android.content.Intent;
-import android.content.pm.FeatureInfo;
-import android.content.pm.PackageManager;
-import android.content.res.Configuration;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.Environment;
-import android.os.UserManager;
-import android.telephony.TelephonyManager;
 import android.text.TextUtils;
-import android.util.DisplayMetrics;
-import android.util.Log;
-import android.view.Display;
-import android.view.WindowManager;
 
-import java.io.IOException;
-import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
+import java.lang.Integer;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Scanner;
-import java.util.Set;
 
 import com.android.compatibility.common.deviceinfo.DeviceInfo;
 
@@ -72,6 +49,7 @@ public class GenericDeviceInfo extends DeviceInfo {
     public static final String BUILD_SERIAL = "build_serial";
     public static final String BUILD_VERSION_RELEASE = "build_version_release";
     public static final String BUILD_VERSION_SDK = "build_version_sdk";
+    public static final String BUILD_VERSION_SDK_INT = "build_version_sdk_int";
     public static final String BUILD_VERSION_BASE_OS = "build_version_base_os";
     public static final String BUILD_VERSION_SECURITY_PATH = "build_version_security_patch";
 
@@ -96,6 +74,7 @@ public class GenericDeviceInfo extends DeviceInfo {
         addDeviceInfo(BUILD_SERIAL, Build.SERIAL);
         addDeviceInfo(BUILD_VERSION_RELEASE, Build.VERSION.RELEASE);
         addDeviceInfo(BUILD_VERSION_SDK, Build.VERSION.SDK);
+        addDeviceInfo(BUILD_VERSION_SDK_INT, Integer.toString(Build.VERSION.SDK_INT));
         addDeviceInfo(BUILD_VERSION_BASE_OS, Build.VERSION.BASE_OS);
         addDeviceInfo(BUILD_VERSION_SECURITY_PATH, Build.VERSION.SECURITY_PATCH);
     }
