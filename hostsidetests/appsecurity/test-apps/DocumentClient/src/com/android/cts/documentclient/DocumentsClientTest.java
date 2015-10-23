@@ -25,6 +25,7 @@ import android.os.SystemClock;
 import android.provider.DocumentsContract;
 import android.provider.DocumentsContract.Document;
 import android.provider.DocumentsProvider;
+import android.support.test.uiautomator.Configurator;
 import android.support.test.uiautomator.UiDevice;
 import android.support.test.uiautomator.UiObject;
 import android.support.test.uiautomator.UiObjectNotFoundException;
@@ -34,6 +35,7 @@ import android.test.InstrumentationTestCase;
 import android.test.MoreAsserts;
 import android.text.format.DateUtils;
 import android.util.Log;
+import android.view.MotionEvent;
 
 import com.android.cts.documentclient.MyActivity.Result;
 
@@ -58,6 +60,8 @@ public class DocumentsClientTest extends InstrumentationTestCase {
     @Override
     public void setUp() throws Exception {
         super.setUp();
+
+        Configurator.getInstance().setToolType(MotionEvent.TOOL_TYPE_FINGER);
 
         mDevice = UiDevice.getInstance(getInstrumentation());
         mActivity = launchActivity(getInstrumentation().getTargetContext().getPackageName(),
