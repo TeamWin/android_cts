@@ -104,7 +104,7 @@ public class RecordingTest extends Camera2SurfaceViewTestCase {
         super.tearDown();
     }
 
-    private void doBasicRecording() throws Exception {
+    private void doBasicRecording(boolean useVideoStab) throws Exception {
         for (int i = 0; i < mCameraIds.length; i++) {
             try {
                 Log.i(TAG, "Testing basic recording for camera " + mCameraIds[i]);
@@ -116,14 +116,39 @@ public class RecordingTest extends Camera2SurfaceViewTestCase {
                             " does not support color outputs, skipping");
                     continue;
                 }
+
+                if (!mStaticInfo.isVideoStabilizationSupported() && useVideoStab) {
+                    Log.i(TAG, "Camera " + mCameraIds[i] +
+                            " does not support video stabilization, skipping the stabilization"
+                            + " test");
+                    continue;
+                }
+
                 initSupportedVideoSize(mCameraIds[i]);
 
-                basicRecordingTestByCamera(mCamcorderProfileList);
+                basicRecordingTestByCamera(mCamcorderProfileList, useVideoStab);
             } finally {
                 closeDevice();
                 releaseRecorder();
             }
         }
+    }
+
+    /**
+     * <p>
+     * Test basic video stabilitzation camera recording.
+     * </p>
+     * <p>
+     * This test covers the typical basic use case of camera recording with video
+     * stabilization is enabled, if video stabilization is supported.
+     * MediaRecorder is used to record the audio and video, CamcorderProfile is
+     * used to configure the MediaRecorder. It goes through the pre-defined
+     * CamcorderProfile list, test each profile configuration and validate the
+     * recorded video. Preview is set to the video size.
+     * </p>
+     */
+    public void testBasicVideoStabilizationRecording() throws Exception {
+        doBasicRecording(/*useVideoStab*/true);
     }
 
     /**
@@ -139,7 +164,7 @@ public class RecordingTest extends Camera2SurfaceViewTestCase {
      * </p>
      */
     public void testBasicRecording() throws Exception {
-        doBasicRecording();
+        doBasicRecording(/*useVideoStab*/false);
     }
 
     /**
@@ -159,7 +184,7 @@ public class RecordingTest extends Camera2SurfaceViewTestCase {
         assertNotNull("Failed to create persistent input surface!", mPersistentSurface);
 
         try {
-            doBasicRecording();
+            doBasicRecording(/*useVideoStab*/false);
         } finally {
             mPersistentSurface.release();
             mPersistentSurface = null;
@@ -311,7 +336,7 @@ public class RecordingTest extends Camera2SurfaceViewTestCase {
                 }
 
                 int camcorderProfileList[] = new int[] {minFpsProfileId, maxFpsProfileId};
-                basicRecordingTestByCamera(camcorderProfileList);
+                basicRecordingTestByCamera(camcorderProfileList, /*useVideoStab*/false);
             } finally {
                 closeDevice();
                 releaseRecorder();
@@ -594,7 +619,8 @@ public class RecordingTest extends Camera2SurfaceViewTestCase {
      * Test camera recording by using each available CamcorderProfile for a
      * given camera. preview size is set to the video size.
      */
-    private void basicRecordingTestByCamera(int[] camcorderProfileList) throws Exception {
+    private void basicRecordingTestByCamera(int[] camcorderProfileList, boolean useVideoStab)
+            throws Exception {
         Size maxPreviewSize = mOrderedPreviewSizes.get(0);
         List<Range<Integer> > fpsRanges = Arrays.asList(
                 mStaticInfo.getAeAvailableTargetFpsRangesChecked());
@@ -639,7 +665,7 @@ public class RecordingTest extends Camera2SurfaceViewTestCase {
 
             // Start recording
             SimpleCaptureCallback resultListener = new SimpleCaptureCallback();
-            startRecording(/* useMediaRecorder */true, resultListener);
+            startRecording(/* useMediaRecorder */true, resultListener, useVideoStab);
 
             // Record certain duration.
             SystemClock.sleep(RECORDING_DURATION_MS);
@@ -689,7 +715,7 @@ public class RecordingTest extends Camera2SurfaceViewTestCase {
 
             // Start recording
             SimpleCaptureCallback resultListener = new SimpleCaptureCallback();
-            startRecording(/* useMediaRecorder */true, resultListener);
+            startRecording(/* useMediaRecorder */true, resultListener, /*useVideoStab*/false);
 
             // Record certain duration.
             SystemClock.sleep(RECORDING_DURATION_MS);
@@ -911,7 +937,7 @@ public class RecordingTest extends Camera2SurfaceViewTestCase {
                 CaptureRequest request = videoSnapshotRequestBuilder.build();
 
                 // Start recording
-                startRecording(/* useMediaRecorder */true, resultListener);
+                startRecording(/* useMediaRecorder */true, resultListener, /*useVideoStab*/false);
                 long startTime = SystemClock.elapsedRealtime();
 
                 // Record certain duration.
@@ -1102,7 +1128,11 @@ public class RecordingTest extends Camera2SurfaceViewTestCase {
     }
 
     private void startRecording(boolean useMediaRecorder,
-            CameraCaptureSession.CaptureCallback listener) throws Exception {
+            CameraCaptureSession.CaptureCallback listener, boolean useVideoStab) throws Exception {
+        if (!mStaticInfo.isVideoStabilizationSupported() && useVideoStab) {
+            throw new IllegalArgumentException("Video stabilization is not supported");
+        }
+
         List<Surface> outputSurfaces = new ArrayList<Surface>(2);
         assertTrue("Both preview and recording surfaces should be valid",
                 mPreviewSurface.isValid() && mRecordingSurface.isValid());
@@ -1120,6 +1150,10 @@ public class RecordingTest extends Camera2SurfaceViewTestCase {
         // Make sure camera output frame rate is set to correct value.
         Range<Integer> fpsRange = Range.create(mVideoFrameRate, mVideoFrameRate);
         recordingRequestBuilder.set(CaptureRequest.CONTROL_AE_TARGET_FPS_RANGE, fpsRange);
+        if (useVideoStab) {
+            recordingRequestBuilder.set(CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE,
+                    CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE_ON);
+        }
         recordingRequestBuilder.addTarget(mRecordingSurface);
         recordingRequestBuilder.addTarget(mPreviewSurface);
         mSession.setRepeatingRequest(recordingRequestBuilder.build(), listener, mHandler);
@@ -1133,7 +1167,7 @@ public class RecordingTest extends Camera2SurfaceViewTestCase {
     }
 
     private void startRecording(boolean useMediaRecorder)  throws Exception {
-        startRecording(useMediaRecorder, null);
+        startRecording(useMediaRecorder, /*listener*/null, /*useVideoStab*/false);
     }
 
     private void stopCameraStreaming() throws Exception {

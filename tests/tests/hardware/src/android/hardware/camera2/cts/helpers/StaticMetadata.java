@@ -1638,6 +1638,13 @@ public class StaticMetadata {
         return modes;
     }
 
+    public boolean isVideoStabilizationSupported() {
+        Integer[] videoStabModes =
+                CameraTestUtils.toObject(getAvailableVideoStabilizationModesChecked());
+        return Arrays.asList(videoStabModes).contains(
+                CameraMetadata.CONTROL_VIDEO_STABILIZATION_MODE_ON);
+    }
+
     /**
      * Get availableOpticalStabilization and do the sanity check.
      *
