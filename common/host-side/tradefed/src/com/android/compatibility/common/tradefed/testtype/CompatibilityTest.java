@@ -42,6 +42,7 @@ import com.android.tradefed.testtype.IDeviceTest;
 import com.android.tradefed.testtype.IRemoteTest;
 import com.android.tradefed.testtype.IShardableTest;
 import com.android.tradefed.util.AbiFormatter;
+import com.android.tradefed.util.ArrayUtil;
 
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
@@ -220,6 +221,7 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
             }
             // Get the tests to run in this shard
             List<IModuleDef> modules = moduleRepo.getModules(getDevice().getSerialNumber());
+
             listener = new FailureListener(listener, getDevice(), mBugReportOnFailure,
                     mLogcatOnFailure, mScreenshotOnFailure);
             int moduleCount = modules.size();
@@ -316,26 +318,39 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
         }
         if (mModuleName != null) {
             mIncludeFilters.clear();
-            mIncludeFilters.add(new TestFilter(mAbiName, mModuleName, mTestName).toString());
-            if (mTestName != null) {
-                // We're filtering it down to the lowest level, no need
-                // to give excludes
-                mExcludeFilters.clear();
-            } else {
-                // If we dont specify a test name, we want to run this module with any exclusions
-                // defined by the plan but only as long as they dont exclude the whole module.
-                List<String> excludeFilters = new ArrayList<>();
-                for (String excludeFilter : mExcludeFilters) {
-                    TestFilter filter = TestFilter.createFrom(excludeFilter);
-                    String name = filter.getName();
-                    // Add the filter if it applies to this module, and
-                    // it has a test name
-                    if ((mModuleName.equals(name) || mModuleName.matches(name) ||
-                            name.matches(mModuleName)) && filter.getTest() != null) {
-                        excludeFilters.add(excludeFilter);
+            try {
+                List<String> modules = ModuleRepo.getModuleNamesMatching(
+                        mBuildHelper.getTestsDir(), mModuleName);
+                if (modules.size() == 0) {
+                    throw new IllegalArgumentException(
+                            String.format("No modules found matching %s", mModuleName));
+                } else if (modules.size() > 1) {
+                    throw new IllegalArgumentException(String.format(
+                            "Multiple modules found matching %s:\n%s\nWhich one did you mean?\n",
+                            mModuleName, ArrayUtil.join("\n", modules)));
+                } else {
+                    String module = modules.get(0);
+                    mIncludeFilters.add(new TestFilter(mAbiName, module, mTestName).toString());
+                    if (mTestName != null) {
+                        // We're filtering it down to the lowest level, no need to give excludes
+                        mExcludeFilters.clear();
+                    } else {
+                        // If we dont specify a test name, we only want to run this module with any
+                        // previous exclusions as long as they dont exclude the whole module.
+                        List<String> excludeFilters = new ArrayList<>();
+                        for (String excludeFilter : mExcludeFilters) {
+                            TestFilter filter = TestFilter.createFrom(excludeFilter);
+                            String name = filter.getName();
+                            // Add the filter if it applies to this module, and it has a test name
+                            if (module.equals(name) && filter.getTest() != null) {
+                                excludeFilters.add(excludeFilter);
+                            }
+                        }
+                        mExcludeFilters = excludeFilters;
                     }
                 }
-                mExcludeFilters = excludeFilters;
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
             }
         }
     }

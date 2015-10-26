@@ -94,6 +94,26 @@ public class ModuleRepo implements IModuleRepo {
     }
 
     /**
+     * A {@link FilenameFilter} to find all modules in a directory who match the given pattern.
+     */
+    public static class NameFilter implements FilenameFilter {
+
+        private String mPattern;
+
+        public NameFilter(String pattern) {
+            mPattern = pattern;
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        @Override
+        public boolean accept(File dir, String name) {
+            return name.contains(mPattern) && name.endsWith(CONFIG_EXT);
+        }
+    }
+
+    /**
      * {@inheritDoc}
      */
     @Override
@@ -339,6 +359,21 @@ public class ModuleRepo implements IModuleRepo {
                 count--;
             } else {
                 mRemainingModules.add(module);
+            }
+        }
+        return modules;
+    }
+
+    /**
+     * @return the {@link List} of modules whose name contains the given pattern.
+     */
+    public static List<String> getModuleNamesMatching(File directory, String pattern) {
+        String[] names = directory.list(new NameFilter(pattern));
+        List<String> modules = new ArrayList<String>(names.length);
+        for (String name : names) {
+            int index = name.indexOf(CONFIG_EXT);
+            if (index > 0) {
+                modules.add(name.substring(0, index));
             }
         }
         return modules;
