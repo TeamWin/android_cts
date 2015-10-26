@@ -173,7 +173,6 @@ public class NotificationTest extends AndroidTestCase {
         assertEquals(2, topics.size());
         assertTrue(topics.contains(new Topic("id1", "label1")));
         assertTrue(topics.contains(new Topic("id2", "label2")));
-        assertNotNull(mNotification.contentView);
     }
 
     public void testWriteTopicsToParcel() {
