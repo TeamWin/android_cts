@@ -49,6 +49,11 @@ public interface IModuleDef extends Comparable<IModuleDef>, IBuildReceiver, IDev
     Set<String> getTokens();
 
     /**
+     * @return the {@link IRemoteTest} that runs the tests.
+     */
+    IRemoteTest getTest();
+
+    /**
      * Adds a filter to include a specific test
      *
      * @param name the name of the test. Can be <package>, <package>.<class>,
