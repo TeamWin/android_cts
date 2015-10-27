@@ -24,8 +24,8 @@ import com.android.compatibility.common.util.IModuleResult;
 import com.android.compatibility.common.util.ITestResult;
 import com.android.compatibility.common.util.TestStatus;
 import com.android.ddmlib.testrunner.TestIdentifier;
-import com.android.tradefed.build.FolderBuildInfo;
-import com.android.tradefed.build.IFolderBuildInfo;
+import com.android.tradefed.build.BuildInfo;
+import com.android.tradefed.build.IBuildInfo;
 import com.android.tradefed.config.OptionSetter;
 import com.android.tradefed.util.FileUtil;
 
@@ -66,7 +66,7 @@ public class ResultReporterTest extends TestCase {
         "newrule_green.png"};
 
     private ResultReporter mReporter;
-    private IFolderBuildInfo mBuildInfo;
+    private IBuildInfo mBuildInfo;
     private CompatibilityBuildHelper mBuildHelper;
 
     private File mRoot = null;
@@ -84,7 +84,7 @@ public class ResultReporterTest extends TestCase {
         mTests = new File(mBase, TESTCASES);
         mTests.mkdirs();
         System.setProperty(ROOT_PROPERTY, mRoot.getAbsolutePath());
-        mBuildInfo = new FolderBuildInfo(BUILD_NUMBER, "", "");
+        mBuildInfo = new BuildInfo(BUILD_NUMBER, "", "");
         mBuildHelper = new CompatibilityBuildHelper(mBuildInfo);
         mBuildHelper.init(SUITE_PLAN, DYNAMIC_CONFIG_URL);
     }

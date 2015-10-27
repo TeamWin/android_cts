@@ -23,7 +23,6 @@ import com.android.compatibility.common.tradefed.result.InvocationResultRepo;
 import com.android.compatibility.common.tradefed.testtype.ModuleRepo;
 import com.android.compatibility.common.util.IInvocationResult;
 import com.android.compatibility.common.util.TestStatus;
-import com.android.tradefed.build.IFolderBuildInfo;
 import com.android.tradefed.command.Console;
 import com.android.tradefed.config.ConfigurationException;
 import com.android.tradefed.util.ArrayUtil;
@@ -213,8 +212,7 @@ public class CompatibilityConsole extends Console {
     private CompatibilityBuildHelper getBuildHelper() {
         if (mBuildHelper == null) {
             CompatibilityBuildProvider buildProvider = new CompatibilityBuildProvider();
-            IFolderBuildInfo buildInfo = (IFolderBuildInfo) buildProvider.getBuild();
-            mBuildHelper = new CompatibilityBuildHelper(buildInfo);
+            mBuildHelper = new CompatibilityBuildHelper(buildProvider.getBuild());
             mBuildHelper.init("" /* suite plan */, "" /* dynamic config url */);
         }
         return mBuildHelper;

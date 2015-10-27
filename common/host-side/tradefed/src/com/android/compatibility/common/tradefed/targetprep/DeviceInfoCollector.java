@@ -20,13 +20,11 @@ import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
 import com.android.compatibility.common.tradefed.testtype.CompatibilityTest;
 import com.android.ddmlib.testrunner.TestIdentifier;
 import com.android.tradefed.build.IBuildInfo;
-import com.android.tradefed.build.IFolderBuildInfo;
 import com.android.tradefed.config.Option;
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.log.LogUtil.CLog;
 import com.android.tradefed.targetprep.BuildError;
-import com.android.tradefed.targetprep.ITargetPreparer;
 import com.android.tradefed.targetprep.TargetSetupError;
 
 import java.io.File;
@@ -87,8 +85,7 @@ public class DeviceInfoCollector extends ApkInstrumentationPreparer {
     }
 
     private void getDeviceInfoFiles(ITestDevice device, IBuildInfo buildInfo) {
-        CompatibilityBuildHelper buildHelper =
-                new CompatibilityBuildHelper((IFolderBuildInfo) buildInfo);
+        CompatibilityBuildHelper buildHelper = new CompatibilityBuildHelper(buildInfo);
         try {
             File resultDir = buildHelper.getResultDir();
             if (mDestDir != null) {

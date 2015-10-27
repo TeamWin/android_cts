@@ -2,7 +2,6 @@ package com.android.compatibility.common.tradefed.result;
 
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
 import com.android.compatibility.common.tradefed.testtype.CompatibilityTest;
-import com.android.compatibility.common.util.AbiUtils;
 import com.android.compatibility.common.util.ICaseResult;
 import com.android.compatibility.common.util.IInvocationResult;
 import com.android.compatibility.common.util.IModuleResult;
@@ -10,14 +9,13 @@ import com.android.compatibility.common.util.ITestResult;
 import com.android.compatibility.common.util.InvocationResult;
 import com.android.compatibility.common.util.MetricsStore;
 import com.android.compatibility.common.util.ReportLog;
+import com.android.compatibility.common.util.ResultHandler;
 import com.android.compatibility.common.util.ResultUploader;
 import com.android.compatibility.common.util.TestStatus;
-import com.android.compatibility.common.util.ResultHandler;
 import com.android.ddmlib.Log;
 import com.android.ddmlib.Log.LogLevel;
 import com.android.ddmlib.testrunner.TestIdentifier;
 import com.android.tradefed.build.IBuildInfo;
-import com.android.tradefed.build.IFolderBuildInfo;
 import com.android.tradefed.config.Option;
 import com.android.tradefed.config.Option.Importance;
 import com.android.tradefed.config.OptionClass;
@@ -92,7 +90,7 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
     private IModuleResult mCurrentModuleResult;
     private ICaseResult mCurrentCaseResult;
     private ITestResult mCurrentResult;
-    private IFolderBuildInfo mBuild;
+    private IBuildInfo mBuild;
     private CompatibilityBuildHelper mBuildHelper;
     private ILogSaver mLogSaver;
 
@@ -102,7 +100,7 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
     @Override
     public void invocationStarted(IBuildInfo buildInfo) {
         mInitialized = false;
-        mBuild = (IFolderBuildInfo) buildInfo;
+        mBuild = buildInfo;
         mBuildHelper = new CompatibilityBuildHelper(mBuild);
         mDeviceSerial = buildInfo.getDeviceSerial();
         if (mDeviceSerial == null) {

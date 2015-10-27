@@ -21,7 +21,6 @@ import com.android.cts.migration.MigrationHelper;
 import com.android.ddmlib.Log;
 import com.android.ddmlib.Log.LogLevel;
 import com.android.tradefed.build.IBuildInfo;
-import com.android.tradefed.build.IFolderBuildInfo;
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.testtype.DeviceTestCase;
@@ -73,7 +72,7 @@ public class ThemeHostTest extends DeviceTestCase implements IAbiReceiver, IBuil
     private IAbi mAbi;
 
     /** A reference to the build. */
-    private IFolderBuildInfo mBuildInfo;
+    private IBuildInfo mBuildInfo;
 
     /** A reference to the device under test. */
     private ITestDevice mDevice;
@@ -89,7 +88,7 @@ public class ThemeHostTest extends DeviceTestCase implements IAbiReceiver, IBuil
 
     @Override
     public void setBuild(IBuildInfo buildInfo) {
-        mBuildInfo = (IFolderBuildInfo) buildInfo;
+        mBuildInfo = buildInfo;
     }
 
     @Override

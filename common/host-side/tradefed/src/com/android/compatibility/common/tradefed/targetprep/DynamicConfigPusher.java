@@ -20,7 +20,6 @@ import com.android.compatibility.common.util.DynamicConfig;
 import com.android.compatibility.common.util.DynamicConfigHandler;
 import com.android.ddmlib.Log;
 import com.android.tradefed.build.IBuildInfo;
-import com.android.tradefed.build.IFolderBuildInfo;
 import com.android.tradefed.config.Option;
 import com.android.tradefed.config.OptionClass;
 import com.android.tradefed.device.DeviceNotAvailableException;
@@ -78,8 +77,7 @@ public class DynamicConfigPusher implements ITargetCleaner {
     public void setUp(ITestDevice device, IBuildInfo buildInfo) throws TargetSetupError, BuildError,
             DeviceNotAvailableException {
 
-        CompatibilityBuildHelper buildHelper =
-                new CompatibilityBuildHelper((IFolderBuildInfo) buildInfo);
+        CompatibilityBuildHelper buildHelper = new CompatibilityBuildHelper(buildInfo);
 
         File localConfigFile = null;
         try {

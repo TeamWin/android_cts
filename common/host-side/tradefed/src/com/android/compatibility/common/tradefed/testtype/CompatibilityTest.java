@@ -27,7 +27,6 @@ import com.android.compatibility.common.util.TestFilter;
 import com.android.compatibility.common.util.TestStatus;
 import com.android.ddmlib.Log.LogLevel;
 import com.android.tradefed.build.IBuildInfo;
-import com.android.tradefed.build.IFolderBuildInfo;
 import com.android.tradefed.config.Option;
 import com.android.tradefed.config.Option.Importance;
 import com.android.tradefed.config.OptionClass;
@@ -145,7 +144,7 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
     private int mShardAssignment;
     private int mTotalShards;
     private ITestDevice mDevice;
-    private IFolderBuildInfo mBuild;
+    private IBuildInfo mBuild;
     private CompatibilityBuildHelper mBuildHelper;
     private List<IModuleDef> mModules = new ArrayList<>();
     private int mLastModuleIndex = 0;
@@ -194,7 +193,7 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
      */
     @Override
     public void setBuild(IBuildInfo buildInfo) {
-        mBuild = (IFolderBuildInfo) buildInfo;
+        mBuild = buildInfo;
         mBuildHelper = new CompatibilityBuildHelper(mBuild);
         mBuildHelper.init(mSuitePlan, mURL);
     }

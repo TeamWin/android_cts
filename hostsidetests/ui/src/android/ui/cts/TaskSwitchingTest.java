@@ -24,7 +24,6 @@ import com.android.ddmlib.testrunner.RemoteAndroidTestRunner;
 import com.android.ddmlib.testrunner.TestIdentifier;
 import com.android.ddmlib.testrunner.TestRunResult;
 import com.android.tradefed.build.IBuildInfo;
-import com.android.tradefed.build.IFolderBuildInfo;
 import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.result.CollectingTestListener;
 import com.android.tradefed.testtype.DeviceTestCase;
@@ -47,7 +46,7 @@ public class TaskSwitchingTest extends DeviceTestCase implements IAbiReceiver, I
     private static final String TAG = "TaskSwitchingTest";
     private final static String RUNNER = "android.support.test.runner.AndroidJUnitRunner";
     private static final String RESULT_KEY = "COMPATIBILITY_TEST_RESULT";
-    private IFolderBuildInfo mBuild;
+    private IBuildInfo mBuild;
     private ITestDevice mDevice;
     private ReportLog mReport = null;
     private IAbi mAbi;
@@ -70,7 +69,7 @@ public class TaskSwitchingTest extends DeviceTestCase implements IAbiReceiver, I
 
     @Override
     public void setBuild(IBuildInfo buildInfo) {
-        mBuild = (IFolderBuildInfo) buildInfo;
+        mBuild = buildInfo;
     }
 
     @Override

@@ -17,7 +17,6 @@ package com.android.compatibility.common.tradefed.targetprep;
 
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
 import com.android.tradefed.build.IBuildInfo;
-import com.android.tradefed.build.IFolderBuildInfo;
 import com.android.tradefed.config.OptionClass;
 import com.android.tradefed.targetprep.TargetSetupError;
 import com.android.tradefed.targetprep.TestAppInstallSetup;
@@ -33,7 +32,7 @@ public class ApkInstaller extends TestAppInstallSetup {
 
     private CompatibilityBuildHelper mBuildHelper = null;
 
-    protected File getTestsDir(IFolderBuildInfo buildInfo) throws FileNotFoundException {
+    protected File getTestsDir(IBuildInfo buildInfo) throws FileNotFoundException {
         if (mBuildHelper == null) {
             mBuildHelper = new CompatibilityBuildHelper(buildInfo);
         }
@@ -48,7 +47,7 @@ public class ApkInstaller extends TestAppInstallSetup {
             throws TargetSetupError {
         File apkFile = null;
         try {
-            apkFile = new File(getTestsDir((IFolderBuildInfo) buildInfo), apkFileName);
+            apkFile = new File(getTestsDir(buildInfo), apkFileName);
             if (!apkFile.isFile()) {
                 throw new FileNotFoundException();
             }

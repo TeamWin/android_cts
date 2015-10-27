@@ -16,6 +16,7 @@
 package com.android.compatibility.common.tradefed.build;
 
 import com.android.compatibility.SuiteInfo;
+import com.android.tradefed.build.IBuildInfo;
 import com.android.tradefed.build.IFolderBuildInfo;
 
 import java.io.File;
@@ -24,7 +25,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * A simple helper that stores and retrieves information from a {@link IFolderBuildInfo}.
+ * A simple helper that stores and retrieves information from a {@link IBuildInfo}.
  */
 public class CompatibilityBuildHelper {
 
@@ -37,18 +38,18 @@ public class CompatibilityBuildHelper {
     private static final String RESULT_DIR = "RESULT_DIR";
     private static final String CONFIG_PATH_PREFIX = "DYNAMIC_CONFIG_FILE:";
     private static final String DYNAMIC_CONFIG_OVERRIDE_URL = "DYNAMIC_CONFIG_OVERRIDE_URL";
-    private final IFolderBuildInfo mBuildInfo;
+    private final IBuildInfo mBuildInfo;
     private boolean mInitialized = false;
 
     /**
-     * Creates a {@link CompatibilityBuildHelper} wrapping the given {@link IFolderBuildInfo}.
+     * Creates a {@link CompatibilityBuildHelper} wrapping the given {@link IBuildInfo}.
      */
-    public CompatibilityBuildHelper(IFolderBuildInfo buildInfo) {
+    public CompatibilityBuildHelper(IBuildInfo buildInfo) {
         mBuildInfo = buildInfo;
     }
 
     /**
-     * Initializes the {@link IFolderBuildInfo} from the manifest.
+     * Initializes the {@link IBuildInfo} from the manifest.
      */
     public void init(String suitePlan, String dynamicConfigUrl) {
         if (mInitialized) {
@@ -60,24 +61,24 @@ public class CompatibilityBuildHelper {
         mBuildInfo.addBuildAttribute(SUITE_FULL_NAME, SuiteInfo.FULLNAME);
         mBuildInfo.addBuildAttribute(SUITE_VERSION, SuiteInfo.VERSION);
         mBuildInfo.addBuildAttribute(SUITE_PLAN, suitePlan);
-        String mRootDirPath = System.getProperty(String.format("%s_ROOT", SuiteInfo.NAME));
-        if (mRootDirPath == null || mRootDirPath.trim().equals("")) {
-            File root = mBuildInfo.getRootDir();
-            if (root != null) {
-                mRootDirPath = root.getAbsolutePath();
-            }
-            if (mRootDirPath == null || mRootDirPath.trim().equals("")) {
-                throw new IllegalArgumentException(
-                        String.format("Missing install path property %s_ROOT", SuiteInfo.NAME));
+        String rootDirPath = null;
+        if (mBuildInfo instanceof IFolderBuildInfo) {
+            File rootDir = ((IFolderBuildInfo) mBuildInfo).getRootDir();
+            if (rootDir != null) {
+                rootDirPath = rootDir.getAbsolutePath();
             }
         }
-        File rootDir = new File(mRootDirPath);
+        rootDirPath = System.getProperty(String.format("%s_ROOT", SuiteInfo.NAME), rootDirPath);
+        if (rootDirPath == null || rootDirPath.trim().equals("")) {
+            throw new IllegalArgumentException(
+                    String.format("Missing install path property %s_ROOT", SuiteInfo.NAME));
+        }
+        File rootDir = new File(rootDirPath);
         if (!rootDir.exists()) {
             throw new IllegalArgumentException(
                     String.format("Root directory doesn't exist %s", rootDir.getAbsolutePath()));
         }
         mBuildInfo.addBuildAttribute(ROOT_DIR, rootDir.getAbsolutePath());
-        mBuildInfo.setRootDir(rootDir);
         if (dynamicConfigUrl != null && !dynamicConfigUrl.isEmpty()) {
             mBuildInfo.addBuildAttribute(DYNAMIC_CONFIG_OVERRIDE_URL,
                     dynamicConfigUrl.replace("{suite-name}", getSuiteName()));

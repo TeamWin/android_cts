@@ -17,7 +17,7 @@ package com.android.compatibility.tradefed;
 
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildProvider;
-import com.android.tradefed.build.IFolderBuildInfo;
+import com.android.tradefed.build.IBuildInfo;
 import com.android.tradefed.util.FileUtil;
 
 import junit.framework.TestCase;
@@ -44,7 +44,7 @@ public class CtsTradefedTest extends TestCase {
         File tests = new File(base, "testcases");
         tests.mkdirs();
         CompatibilityBuildProvider provider = new CompatibilityBuildProvider();
-        IFolderBuildInfo info = (IFolderBuildInfo) provider.getBuild();
+        IBuildInfo info = provider.getBuild();
         CompatibilityBuildHelper helper = new CompatibilityBuildHelper(info);
         helper.init(SUITE_PLAN, DYNAMIC_CONFIG_URL);
         assertEquals("Incorrect suite full name", SUITE_FULL_NAME, helper.getSuiteFullName());

@@ -15,7 +15,7 @@
  */
 package com.android.compatibility.common.tradefed.build;
 
-import com.android.tradefed.build.FolderBuildInfo;
+import com.android.tradefed.build.BuildInfo;
 import com.android.tradefed.build.IBuildInfo;
 import com.android.tradefed.build.IBuildProvider;
 import com.android.tradefed.config.OptionClass;
@@ -31,8 +31,8 @@ public class CompatibilityBuildProvider implements IBuildProvider {
      */
     @Override
     public IBuildInfo getBuild() {
-        // Create a blank FolderBuildInfo which will get populated later.
-        return new FolderBuildInfo("" /* buildId */, "" /* testTarget */, "" /* buildName */);
+        // Create a blank BuildInfo which will get populated later.
+        return new BuildInfo();
     }
 
     /**

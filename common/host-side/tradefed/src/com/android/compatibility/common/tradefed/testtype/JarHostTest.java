@@ -17,7 +17,6 @@ package com.android.compatibility.common.tradefed.testtype;
 
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
 import com.android.tradefed.build.IBuildInfo;
-import com.android.tradefed.build.IFolderBuildInfo;
 import com.android.tradefed.config.Option;
 import com.android.tradefed.config.Option.Importance;
 import com.android.tradefed.testtype.HostTest;
@@ -67,7 +66,7 @@ public class JarHostTest extends HostTest implements IAbiReceiver, IBuildReceive
     @Override
     public void setBuild(IBuildInfo build) {
         mBuild = build;
-        mHelper = new CompatibilityBuildHelper((IFolderBuildInfo) build);
+        mHelper = new CompatibilityBuildHelper(build);
     }
 
     /**

@@ -18,7 +18,6 @@ import com.android.compatibility.common.util.ResultType;
 import com.android.compatibility.common.util.ResultUnit;
 import com.android.cts.migration.MigrationHelper;
 import com.android.tradefed.build.IBuildInfo;
-import com.android.tradefed.build.IFolderBuildInfo;
 import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.testtype.IAbi;
 import com.android.tradefed.testtype.IAbiReceiver;
@@ -43,7 +42,7 @@ public abstract class CtsHostJankTest extends TestCase
     private final String mJarName;
     private final String mJarPath;
     protected ITestDevice mDevice;
-    protected IFolderBuildInfo mBuild;
+    protected IBuildInfo mBuild;
     protected IAbi mAbi;
 
     public CtsHostJankTest(String jarName, String deviceTestClass, String hostTestClass) {
@@ -66,7 +65,7 @@ public abstract class CtsHostJankTest extends TestCase
      */
     @Override
     public void setBuild(IBuildInfo buildInfo) {
-        mBuild = (IFolderBuildInfo) buildInfo;
+        mBuild = buildInfo;
     }
 
     /**

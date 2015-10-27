@@ -18,7 +18,6 @@ package android.jdwpsecurity.cts;
 
 import com.android.cts.migration.MigrationHelper;
 import com.android.tradefed.build.IBuildInfo;
-import com.android.tradefed.build.IFolderBuildInfo;
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.log.LogUtil.CLog;
 import com.android.tradefed.testtype.DeviceTestCase;
@@ -46,7 +45,7 @@ public class JdwpSecurityHostTest extends DeviceTestCase implements IBuildReceiv
     private static final String DEVICE_JAR_FILENAME = "CtsJdwpApp.jar";
     private static final String JAR_MAIN_CLASS_NAME = "com.android.cts.jdwpsecurity.JdwpTest";
 
-    private IFolderBuildInfo mBuildInfo;
+    private IBuildInfo mBuildInfo;
 
     private static String getDeviceScriptFilepath() {
         return DEVICE_LOCATION + File.separator + DEVICE_SCRIPT_FILENAME;
@@ -58,7 +57,7 @@ public class JdwpSecurityHostTest extends DeviceTestCase implements IBuildReceiv
 
     @Override
     public void setBuild(IBuildInfo buildInfo) {
-        mBuildInfo = (IFolderBuildInfo) buildInfo;
+        mBuildInfo = buildInfo;
     }
 
     @Override
