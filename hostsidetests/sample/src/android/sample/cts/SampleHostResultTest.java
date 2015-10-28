@@ -24,7 +24,6 @@ import com.android.compatibility.common.util.ResultType;
 import com.android.compatibility.common.util.ResultUnit;
 import com.android.compatibility.common.util.Stat;
 import com.android.tradefed.build.IBuildInfo;
-import com.android.tradefed.build.IFolderBuildInfo;
 import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.testtype.DeviceTestCase;
 import com.android.tradefed.testtype.IAbi;
@@ -84,7 +83,7 @@ public class SampleHostResultTest extends DeviceTestCase implements IAbiReceiver
     @Override
     public void setBuild(IBuildInfo buildInfo) {
         // Get the build, this is used to access the APK.
-        mBuildHelper = new CompatibilityBuildHelper((IFolderBuildInfo) buildInfo);
+        mBuildHelper = new CompatibilityBuildHelper(buildInfo);
     }
 
     @Override

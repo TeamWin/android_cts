@@ -21,7 +21,6 @@ import com.android.compatibility.common.tradefed.testtype.CompatibilityTest;
 import com.android.compatibility.common.tradefed.util.NoOpTestInvocationListener;
 import com.android.ddmlib.testrunner.TestIdentifier;
 import com.android.tradefed.build.IBuildInfo;
-import com.android.tradefed.build.IFolderBuildInfo;
 import com.android.tradefed.config.Option;
 import com.android.tradefed.config.Option.Importance;
 import com.android.tradefed.config.OptionClass;
@@ -115,8 +114,7 @@ public class ApkInstrumentationPreparer extends PreconditionPreparer implements 
     private boolean instrument(ITestDevice device, IBuildInfo buildInfo)
             throws DeviceNotAvailableException, FileNotFoundException {
         ITestInvocationListener listener = new TargetPreparerListener();
-        CompatibilityBuildHelper buildHelper = new CompatibilityBuildHelper(
-                (IFolderBuildInfo) buildInfo);
+        CompatibilityBuildHelper buildHelper = new CompatibilityBuildHelper(buildInfo);
 
         File testsDir = buildHelper.getTestsDir();
         File apkFile = new File(testsDir, mApkFileName);

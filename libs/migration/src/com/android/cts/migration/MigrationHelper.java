@@ -1,7 +1,6 @@
 package com.android.cts.migration;
 
 import com.android.tradefed.build.IBuildInfo;
-import com.android.tradefed.build.IFolderBuildInfo;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -19,11 +18,11 @@ public class MigrationHelper {
     private static final String CTS_BUILD_HELPER =
             "com.android.cts.tradefed.build.CtsBuildHelper";
 
-    public static File getTestFile(IFolderBuildInfo mBuild, String filename)
+    public static File getTestFile(IBuildInfo mBuild, String filename)
             throws FileNotFoundException {
         try {
             Class<?> cls = Class.forName(COMPATIBILITY_BUILD_HELPER);
-            Constructor<?> cons = cls.getConstructor(IFolderBuildInfo.class);
+            Constructor<?> cons = cls.getConstructor(IBuildInfo.class);
             Object instance = cons.newInstance(mBuild);
             Method method = cls.getMethod("getTestsDir");
             File dir = (File) method.invoke(instance);

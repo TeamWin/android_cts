@@ -18,7 +18,6 @@ package com.android.compatibility.common.tradefed.targetprep;
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
 import com.android.ddmlib.Log.LogLevel;
 import com.android.tradefed.build.IBuildInfo;
-import com.android.tradefed.build.IFolderBuildInfo;
 import com.android.tradefed.config.Option;
 import com.android.tradefed.config.OptionClass;
 import com.android.tradefed.log.LogUtil.CLog;
@@ -43,7 +42,7 @@ public class FilePusher extends PushFilePreparer implements IAbiReceiver {
 
     private IAbi mAbi;
 
-    protected File getTestsDir(IFolderBuildInfo buildInfo) throws FileNotFoundException {
+    protected File getTestsDir(IBuildInfo buildInfo) throws FileNotFoundException {
         if (mBuildHelper == null) {
             mBuildHelper = new CompatibilityBuildHelper(buildInfo);
         }
@@ -64,7 +63,7 @@ public class FilePusher extends PushFilePreparer implements IAbiReceiver {
     @Override
     public File resolveRelativeFilePath(IBuildInfo buildInfo, String fileName) {
         try {
-            File f = new File(getTestsDir((IFolderBuildInfo) buildInfo),
+            File f = new File(getTestsDir(buildInfo),
                     String.format("%s%s", fileName, mAppendBitness ? mAbi.getBitness() : ""));
             CLog.logAndDisplay(LogLevel.ERROR, "Copying from %s", f.getAbsolutePath());
             return f;

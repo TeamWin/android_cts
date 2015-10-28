@@ -16,7 +16,7 @@
 
 package com.android.compatibility.common.tradefed.build;
 
-import com.android.tradefed.build.IFolderBuildInfo;
+import com.android.tradefed.build.IBuildInfo;
 import com.android.tradefed.util.FileUtil;
 
 import junit.framework.TestCase;
@@ -40,14 +40,14 @@ public class CompatibilityBuildHelperTest extends TestCase {
     private File mRoot = null;
     private File mBase = null;
     private File mTests = null;
-    private IFolderBuildInfo mBuild;
+    private IBuildInfo mBuild;
     private CompatibilityBuildHelper mHelper;
 
     @Override
     public void setUp() throws Exception {
         mRoot = FileUtil.createTempDir(ROOT_DIR_NAME);
         CompatibilityBuildProvider provider = new CompatibilityBuildProvider();
-        mBuild = (IFolderBuildInfo) provider.getBuild();
+        mBuild = provider.getBuild();
         mHelper = new CompatibilityBuildHelper(mBuild);
     }
 
@@ -79,8 +79,7 @@ public class CompatibilityBuildHelperTest extends TestCase {
     public void testProperty() throws Exception {
         setProperty(null);
         CompatibilityBuildProvider provider = new CompatibilityBuildProvider();
-        IFolderBuildInfo info = (IFolderBuildInfo) provider.getBuild();
-        CompatibilityBuildHelper helper = new CompatibilityBuildHelper(info);
+        CompatibilityBuildHelper helper = new CompatibilityBuildHelper(provider.getBuild());
         try {
             // Should fail with root unset
             helper.init(SUITE_PLAN, DYNAMIC_CONFIG_URL);

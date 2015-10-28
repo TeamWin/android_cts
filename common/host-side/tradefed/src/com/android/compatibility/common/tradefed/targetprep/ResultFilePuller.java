@@ -17,7 +17,6 @@ package com.android.compatibility.common.tradefed.targetprep;
 
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
 import com.android.tradefed.build.IBuildInfo;
-import com.android.tradefed.build.IFolderBuildInfo;
 import com.android.tradefed.config.Option;
 import com.android.tradefed.config.OptionClass;
 import com.android.tradefed.device.DeviceNotAvailableException;
@@ -78,8 +77,7 @@ public class ResultFilePuller implements ITargetCleaner {
     @Override
     public void tearDown(ITestDevice device, IBuildInfo buildInfo, Throwable e)
             throws DeviceNotAvailableException {
-        CompatibilityBuildHelper buildHelper =
-                new CompatibilityBuildHelper((IFolderBuildInfo) buildInfo);
+        CompatibilityBuildHelper buildHelper = new CompatibilityBuildHelper(buildInfo);
         try {
             File resultDir = buildHelper.getResultDir();
             if (mDestDir != null) {

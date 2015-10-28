@@ -26,7 +26,7 @@ import com.android.compatibility.common.util.Stat;
 import com.android.cts.migration.MigrationHelper;
 import com.android.ddmlib.Log;
 import com.android.tradefed.build.IBuildInfo;
-import com.android.tradefed.build.IFolderBuildInfo;
+import com.android.tradefed.build.IBuildInfo;
 import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.testtype.DeviceTestCase;
 import com.android.tradefed.testtype.IAbi;
@@ -39,7 +39,7 @@ import java.io.File;
  * Test to measure installation time of a APK.
  */
 public class InstallTimeTest extends DeviceTestCase implements IAbiReceiver, IBuildReceiver {
-    private IFolderBuildInfo mBuild;
+    private IBuildInfo mBuild;
     private ITestDevice mDevice;
     private IAbi mAbi;
 
@@ -55,7 +55,7 @@ public class InstallTimeTest extends DeviceTestCase implements IAbiReceiver, IBu
 
     @Override
     public void setBuild(IBuildInfo buildInfo) {
-        mBuild = (IFolderBuildInfo) buildInfo;
+        mBuild = buildInfo;
     }
 
     @Override
@@ -75,7 +75,7 @@ public class InstallTimeTest extends DeviceTestCase implements IAbiReceiver, IBu
         MetricsReportLog report = new MetricsReportLog(mDevice.getSerialNumber(), mAbi.getName(),
                 String.format("%s#%s", getClass().getName(), "testInstallTime"));
         final int NUMBER_REPEAT = 10;
-        final IFolderBuildInfo build = mBuild;
+        final IBuildInfo build = mBuild;
         final ITestDevice device = mDevice;
         double[] result = MeasureTime.measure(NUMBER_REPEAT, new MeasureRun() {
             @Override

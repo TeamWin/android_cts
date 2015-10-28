@@ -18,7 +18,6 @@ package android.dumpsys.cts;
 
 import com.android.cts.migration.MigrationHelper;
 import com.android.tradefed.build.IBuildInfo;
-import com.android.tradefed.build.IFolderBuildInfo;
 import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.testtype.DeviceTestCase;
 import com.android.tradefed.testtype.IBuildReceiver;
@@ -873,7 +872,7 @@ public class DumpsysHostTest extends DeviceTestCase implements IBuildReceiver {
             getDevice().uninstallPackage(TEST_PKG);
 
             // install the test app
-            File testAppFile = MigrationHelper.getTestFile((IFolderBuildInfo) mCtsBuild, TEST_APK);
+            File testAppFile = MigrationHelper.getTestFile(mCtsBuild, TEST_APK);
             String installResult = getDevice().installPackage(testAppFile, false);
             assertNull(
                     String.format("failed to install atrace test app. Reason: %s", installResult),
