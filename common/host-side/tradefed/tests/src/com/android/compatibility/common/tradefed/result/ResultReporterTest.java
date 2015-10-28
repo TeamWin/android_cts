@@ -155,6 +155,69 @@ public class ResultReporterTest extends TestCase {
                 result3.getResultStatus());
     }
 
+    private void makeTestRun(String[] methods, boolean[] passes) {
+        mReporter.testRunStarted(ID, methods.length);
+
+        for (int i = 0; i < methods.length; i++) {
+            TestIdentifier test = new TestIdentifier(CLASS, methods[i]);
+            mReporter.testStarted(test);
+            if (!passes[i]) {
+                mReporter.testFailed(test, STACK_TRACE);
+            }
+            mReporter.testEnded(test, new HashMap<String, String>());
+        }
+
+        mReporter.testRunEnded(10, new HashMap<String, String>());
+    }
+
+    public void testRepeatedExecutions() throws Exception {
+        String[] methods = new String[] {METHOD_1, METHOD_2, METHOD_3};
+
+        mReporter.invocationStarted(mBuildInfo);
+
+        makeTestRun(methods, new boolean[] {true, false, true});
+        makeTestRun(methods, new boolean[] {true, false, false});
+        makeTestRun(methods, new boolean[] {true, true, true});
+
+        mReporter.invocationEnded(10);
+
+        // Verification
+
+        IInvocationResult result = mReporter.getResult();
+        assertEquals("Expected 1 pass", 1, result.countResults(TestStatus.PASS));
+        assertEquals("Expected 2 failures", 2, result.countResults(TestStatus.FAIL));
+        List<IModuleResult> modules = result.getModules();
+        assertEquals("Expected 1 module", 1, modules.size());
+        IModuleResult module = modules.get(0);
+        assertEquals("Incorrect ID", ID, module.getId());
+        List<ICaseResult> caseResults = module.getResults();
+        assertEquals("Expected 1 test case", 1, caseResults.size());
+        ICaseResult caseResult = caseResults.get(0);
+        List<ITestResult> testResults = caseResult.getResults();
+        assertEquals("Expected 3 tests", 3, testResults.size());
+
+        // Test 1 details
+        ITestResult result1 = caseResult.getResult(METHOD_1);
+        assertNotNull(String.format("Expected result for %s", TEST_1), result1);
+        assertEquals(String.format("Expected pass for %s", TEST_1), TestStatus.PASS,
+                result1.getResultStatus());
+
+        // Test 2 details
+        ITestResult result2 = caseResult.getResult(METHOD_2);
+        assertNotNull(String.format("Expected result for %s", TEST_2), result2);
+        assertEquals(String.format("Expected fail for %s", TEST_2), TestStatus.FAIL,
+                result2.getResultStatus());
+        // TODO: Define requirement. Should have both instances in any case.
+        assertEquals(result2.getStackTrace(), STACK_TRACE+"\n"+STACK_TRACE);
+
+        // Test 3 details
+        ITestResult result3 = caseResult.getResult(METHOD_3);
+        assertNotNull(String.format("Expected result for %s", TEST_3), result3);
+        assertEquals(String.format("Expected fail for %s", TEST_3), TestStatus.FAIL,
+                result3.getResultStatus());
+        assertEquals(result3.getStackTrace(), STACK_TRACE);
+    }
+
     public void testCopyFormattingFiles() throws Exception {
         File resultDir = new File(mBuildHelper.getResultsDir(), RESULT_DIR);
         resultDir.mkdirs();
