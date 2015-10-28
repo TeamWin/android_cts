@@ -88,7 +88,7 @@ public class WebViewClientTest extends ActivityInstrumentationTestCase2<WebViewC
             return;
         }
         final WebViewClient webViewClient = new WebViewClient();
-        assertFalse(webViewClient.shouldOverrideUrlLoading(mOnUiThread.getWebView(), null));
+        assertFalse(webViewClient.shouldOverrideUrlLoading(mOnUiThread.getWebView(), new String()));
     }
 
     // Verify shouldoverrideurlloading called on top level navigation
