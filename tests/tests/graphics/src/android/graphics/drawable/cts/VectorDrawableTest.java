@@ -16,7 +16,9 @@
 
 package android.graphics.drawable.cts;
 
-import android.content.res.Configuration;
+import org.xmlpull.v1.XmlPullParser;
+import org.xmlpull.v1.XmlPullParserException;
+
 import android.content.res.Resources;
 import android.content.res.Resources.Theme;
 import android.content.res.XmlResourceParser;
@@ -26,18 +28,13 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.PorterDuff.Mode;
 import android.graphics.PorterDuffColorFilter;
-import android.graphics.drawable.VectorDrawable;
+import android.graphics.cts.R;
 import android.graphics.drawable.Drawable.ConstantState;
+import android.graphics.drawable.VectorDrawable;
 import android.test.AndroidTestCase;
 import android.util.AttributeSet;
-import android.util.DisplayMetrics;
 import android.util.Log;
 import android.util.Xml;
-
-import android.graphics.cts.R;
-
-import org.xmlpull.v1.XmlPullParser;
-import org.xmlpull.v1.XmlPullParserException;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -369,67 +366,41 @@ public class VectorDrawableTest extends AndroidTestCase {
     }
 
     public void testPreloadDensity() throws XmlPullParserException, IOException {
-        final Configuration origConfig = new Configuration();
-        origConfig.setTo(mResources.getConfiguration());
-        final DisplayMetrics origMetrics = new DisplayMetrics();
-        origMetrics.setTo(mResources.getDisplayMetrics());
+        final Resources res = mResources;
+        final int densityDpi = res.getConfiguration().densityDpi;
 
-        final Configuration halfConfig = new Configuration();
-        halfConfig.setTo(origConfig);
-        final DisplayMetrics halfMetrics = new DisplayMetrics();
-        halfMetrics.setTo(origMetrics);
-        halfConfig.densityDpi /= 2;
-        halfMetrics.densityDpi /= 2;
-        halfMetrics.density *= 2;
-
-        final Configuration doubleConfig = new Configuration();
-        doubleConfig.setTo(origConfig);
-        final DisplayMetrics doubleMetrics = new DisplayMetrics();
-        doubleMetrics.setTo(origMetrics);
-        doubleConfig.densityDpi *= 2;
-        doubleMetrics.densityDpi *= 2;
-        doubleMetrics.density /= 2;
-
-        final XmlResourceParser parser = getResourceParser(R.drawable.vector_density);
+        // Capture initial state at default density.
+        final XmlResourceParser parser = DrawableTestUtils.getResourceParser(
+                res, R.drawable.vector_density);
         final VectorDrawable preloadedDrawable = new VectorDrawable();
         preloadedDrawable.inflate(mResources, parser, Xml.asAttributeSet(parser));
         final ConstantState preloadedConstantState = preloadedDrawable.getConstantState();
         final int origWidth = preloadedDrawable.getIntrinsicWidth();
 
-        // Set density to half of original.
-        mResources.updateConfiguration(halfConfig, halfMetrics);
+        // Set density to half of original. Unlike offsets, which are
+        // truncated, dimensions are rounded to the nearest pixel.
+        DrawableTestUtils.setResourcesDensity(res, densityDpi / 2);
         final VectorDrawable halfDrawable =
-                (VectorDrawable) preloadedConstantState.newDrawable(mResources);
-        assertEquals(origWidth / 2, halfDrawable.getIntrinsicWidth());
+                (VectorDrawable) preloadedConstantState.newDrawable(res);
+        assertEquals(Math.round(origWidth / 2f), halfDrawable.getIntrinsicWidth());
 
         // Set density to double original.
-        mResources.updateConfiguration(doubleConfig, doubleMetrics);
+        DrawableTestUtils.setResourcesDensity(res, densityDpi * 2);
         final VectorDrawable doubleDrawable =
-                (VectorDrawable) preloadedConstantState.newDrawable(mResources);
+                (VectorDrawable) preloadedConstantState.newDrawable(res);
         assertEquals(origWidth * 2, doubleDrawable.getIntrinsicWidth());
 
-        // Restore original configuration and metrics.
-        mResources.updateConfiguration(origConfig, origMetrics);
+        // Restore original density.
+        DrawableTestUtils.setResourcesDensity(res, densityDpi);
         final VectorDrawable origDrawable =
                 (VectorDrawable) preloadedConstantState.newDrawable();
         assertEquals(origWidth, origDrawable.getIntrinsicWidth());
 
         // Ensure theme density is applied correctly.
-        final Theme t = mResources.newTheme();
+        final Theme t = res.newTheme();
         halfDrawable.applyTheme(t);
         assertEquals(origWidth, halfDrawable.getIntrinsicWidth());
         doubleDrawable.applyTheme(t);
         assertEquals(origWidth, doubleDrawable.getIntrinsicWidth());
-    }
-
-    private XmlResourceParser getResourceParser(int resId)
-            throws XmlPullParserException, IOException {
-        final XmlResourceParser parser = getContext().getResources().getXml(resId);
-        int type;
-        while ((type = parser.next()) != XmlPullParser.START_TAG
-                && type != XmlPullParser.END_DOCUMENT) {
-            // Empty loop
-        }
-        return parser;
     }
 }
