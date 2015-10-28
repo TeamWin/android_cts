@@ -16,14 +16,16 @@
 
 package android.graphics.drawable.cts;
 
+import org.xmlpull.v1.XmlPullParser;
+import org.xmlpull.v1.XmlPullParserException;
+
+import android.content.res.Configuration;
+import android.content.res.Resources;
 import android.content.res.XmlResourceParser;
 import android.util.AttributeSet;
 import android.util.Xml;
 
 import java.io.IOException;
-
-import org.xmlpull.v1.XmlPullParser;
-import org.xmlpull.v1.XmlPullParserException;
 
 /**
  * The useful methods for graphics.drawable test.
@@ -84,5 +86,23 @@ public class DrawableTestUtils {
             }
         }
         return attrs;
+    }
+
+    public static XmlResourceParser getResourceParser(Resources res, int resId)
+            throws XmlPullParserException, IOException {
+        final XmlResourceParser parser = res.getXml(resId);
+        int type;
+        while ((type = parser.next()) != XmlPullParser.START_TAG
+                && type != XmlPullParser.END_DOCUMENT) {
+            // Empty loop
+        }
+        return parser;
+    }
+
+    public static void setResourcesDensity(Resources res, int densityDpi) {
+        final Configuration config = new Configuration();
+        config.setTo(res.getConfiguration());
+        config.densityDpi = densityDpi;
+        res.updateConfiguration(config, null);
     }
 }
