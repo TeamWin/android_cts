@@ -16,19 +16,18 @@
 
 package android.graphics.drawable.cts;
 
-import android.view.Gravity;
-import android.graphics.cts.R;
-
+import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
 
-import java.io.IOException;
-
+import android.content.res.Resources;
+import android.content.res.Resources.Theme;
 import android.content.res.XmlResourceParser;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.ColorFilter;
 import android.graphics.PixelFormat;
 import android.graphics.Rect;
+import android.graphics.cts.R;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
@@ -41,7 +40,11 @@ import android.graphics.drawable.StateListDrawable;
 import android.test.AndroidTestCase;
 import android.util.AttributeSet;
 import android.util.StateSet;
+import android.util.Xml;
+import android.view.Gravity;
 import android.view.View;
+
+import java.io.IOException;
 
 public class LayerDrawableTest extends AndroidTestCase {
 
@@ -1609,5 +1612,104 @@ public class LayerDrawableTest extends AndroidTestCase {
         assertEquals(50, ((BitmapDrawable) d2.getDrawable(0)).getPaint().getAlpha());
         assertEquals(50, ((BitmapDrawable) d3.getDrawable(0)).getPaint().getAlpha());
         assertEquals(50, ((BitmapDrawable) d3.getDrawable(0)).getPaint().getAlpha());
+    }
+
+    public void testPreloadDensity() throws XmlPullParserException, IOException {
+        final Resources res = getContext().getResources();
+        final int densityDpi = res.getConfiguration().densityDpi;
+
+        // Capture initial state at default density.
+        final XmlResourceParser parser = DrawableTestUtils.getResourceParser(
+                res, R.drawable.layer_drawable_density);
+        final LayerDrawable preloadedDrawable = new LayerDrawable(new Drawable[0]);
+        preloadedDrawable.inflate(res, parser, Xml.asAttributeSet(parser));
+        final ConstantState preloadedConstantState = preloadedDrawable.getConstantState();
+        final int initialWidth = preloadedDrawable.getIntrinsicWidth();
+        final int initialLeftPadding = preloadedDrawable.getLeftPadding();
+        final int initialRightPadding = preloadedDrawable.getRightPadding();
+        final int initialBottomPadding = preloadedDrawable.getBottomPadding();
+        final int initialTopPadding = preloadedDrawable.getTopPadding();
+        final int initialLayerInsetLeft = preloadedDrawable.getLayerInsetLeft(0);
+        final int initialLayerInsetRight = preloadedDrawable.getLayerInsetRight(0);
+        final int initialLayerInsetTop = preloadedDrawable.getLayerInsetTop(0);
+        final int initialLayerInsetBottom = preloadedDrawable.getLayerInsetBottom(0);
+        final int initialLayerWidth = preloadedDrawable.getLayerWidth(0);
+        final int initialLayerHeight = preloadedDrawable.getLayerHeight(0);
+
+        // Set density to half of original. Unlike offsets, which are
+        // truncated, dimensions are rounded to the nearest pixel.
+        DrawableTestUtils.setResourcesDensity(res, densityDpi / 2);
+        final LayerDrawable halfDrawable =
+                (LayerDrawable) preloadedConstantState.newDrawable(res);
+        assertEquals(Math.round(initialWidth / 2f), halfDrawable.getIntrinsicWidth());
+        assertEquals(Math.round(initialLeftPadding / 2f), halfDrawable.getLeftPadding());
+        assertEquals(Math.round(initialRightPadding / 2f), halfDrawable.getRightPadding());
+        assertEquals(Math.round(initialBottomPadding / 2f), halfDrawable.getBottomPadding());
+        assertEquals(Math.round(initialTopPadding / 2f), halfDrawable.getTopPadding());
+        assertEquals(Math.round(initialLayerInsetLeft / 2f),halfDrawable.getLayerInsetLeft(0));
+        assertEquals(Math.round(initialLayerInsetRight / 2f), halfDrawable.getLayerInsetRight(0));
+        assertEquals(Math.round(initialLayerInsetTop / 2f), halfDrawable.getLayerInsetTop(0));
+        assertEquals(Math.round(initialLayerInsetBottom / 2f), halfDrawable.getLayerInsetBottom(0));
+        assertEquals(Math.round(initialLayerWidth / 2f), halfDrawable.getLayerWidth(0));
+        assertEquals(Math.round(initialLayerHeight / 2f), halfDrawable.getLayerHeight(0));
+
+        // Set density to double original.
+        DrawableTestUtils.setResourcesDensity(res, densityDpi * 2);
+        final LayerDrawable doubleDrawable =
+                (LayerDrawable) preloadedConstantState.newDrawable(res);
+        assertEquals(initialWidth * 2, doubleDrawable.getIntrinsicWidth());
+        assertEquals(initialLeftPadding * 2, doubleDrawable.getLeftPadding());
+        assertEquals(initialRightPadding * 2, doubleDrawable.getRightPadding());
+        assertEquals(initialBottomPadding * 2, doubleDrawable.getBottomPadding());
+        assertEquals(initialTopPadding * 2, doubleDrawable.getTopPadding());
+        assertEquals(initialLayerInsetLeft * 2, doubleDrawable.getLayerInsetLeft(0));
+        assertEquals(initialLayerInsetRight * 2, doubleDrawable.getLayerInsetRight(0));
+        assertEquals(initialLayerInsetTop * 2, doubleDrawable.getLayerInsetTop(0));
+        assertEquals(initialLayerInsetBottom * 2, doubleDrawable.getLayerInsetBottom(0));
+        assertEquals(initialLayerWidth * 2, doubleDrawable.getLayerWidth(0));
+        assertEquals(initialLayerHeight * 2, doubleDrawable.getLayerHeight(0));
+
+        // Restore original configuration and metrics.
+        DrawableTestUtils.setResourcesDensity(res, densityDpi);
+        final LayerDrawable origDrawable =
+                (LayerDrawable) preloadedConstantState.newDrawable(res);
+        assertEquals(initialWidth, origDrawable.getIntrinsicWidth());
+        assertEquals(initialLeftPadding, origDrawable.getLeftPadding());
+        assertEquals(initialRightPadding, origDrawable.getRightPadding());
+        assertEquals(initialBottomPadding, origDrawable.getBottomPadding());
+        assertEquals(initialTopPadding, origDrawable.getTopPadding());
+        assertEquals(initialLayerInsetLeft, origDrawable.getLayerInsetLeft(0));
+        assertEquals(initialLayerInsetRight, origDrawable.getLayerInsetRight(0));
+        assertEquals(initialLayerInsetTop, origDrawable.getLayerInsetTop(0));
+        assertEquals(initialLayerInsetBottom, origDrawable.getLayerInsetBottom(0));
+        assertEquals(initialLayerWidth, origDrawable.getLayerWidth(0));
+        assertEquals(initialLayerHeight, origDrawable.getLayerHeight(0));
+
+        // Ensure theme density is applied correctly.
+        final Theme t = res.newTheme();
+        halfDrawable.applyTheme(t);
+        assertEquals(initialWidth, halfDrawable.getIntrinsicWidth());
+        assertEquals(initialLeftPadding, halfDrawable.getLeftPadding());
+        assertEquals(initialRightPadding, halfDrawable.getRightPadding());
+        assertEquals(initialBottomPadding, halfDrawable.getBottomPadding());
+        assertEquals(initialTopPadding, halfDrawable.getTopPadding());
+        assertEquals(initialLayerInsetLeft, halfDrawable.getLayerInsetLeft(0));
+        assertEquals(initialLayerInsetRight, halfDrawable.getLayerInsetRight(0));
+        assertEquals(initialLayerInsetTop, halfDrawable.getLayerInsetTop(0));
+        assertEquals(initialLayerInsetBottom, halfDrawable.getLayerInsetBottom(0));
+        assertEquals(initialLayerWidth, halfDrawable.getLayerWidth(0));
+        assertEquals(initialLayerHeight, halfDrawable.getLayerHeight(0));
+        doubleDrawable.applyTheme(t);
+        assertEquals(initialWidth, doubleDrawable.getIntrinsicWidth());
+        assertEquals(initialLeftPadding, doubleDrawable.getLeftPadding());
+        assertEquals(initialRightPadding, doubleDrawable.getRightPadding());
+        assertEquals(initialBottomPadding, doubleDrawable.getBottomPadding());
+        assertEquals(initialTopPadding, doubleDrawable.getTopPadding());
+        assertEquals(initialLayerInsetLeft, doubleDrawable.getLayerInsetLeft(0));
+        assertEquals(initialLayerInsetRight, doubleDrawable.getLayerInsetRight(0));
+        assertEquals(initialLayerInsetTop, doubleDrawable.getLayerInsetTop(0));
+        assertEquals(initialLayerInsetBottom, doubleDrawable.getLayerInsetBottom(0));
+        assertEquals(initialLayerWidth, doubleDrawable.getLayerWidth(0));
+        assertEquals(initialLayerHeight, doubleDrawable.getLayerHeight(0));
     }
 }
