@@ -16,4 +16,5 @@
  -->
 
 <inset xmlns:android="http://schemas.android.com/apk/res/android"
-       android:drawable="@drawable/inset_testimage" />
+       android:drawable="@drawable/inset_testimage"
+       android:insetLeft="16dp" />
