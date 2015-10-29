@@ -869,6 +869,13 @@ public class WindowTest extends ActivityInstrumentationTestCase2<WindowCtsActivi
         }
 
         @Override
+        public void setDecorView(View view) {
+        }
+
+        @Override
+        public void setDecorView(int layoutResID) {
+        }
+
         public void clearContentView() {
         }
 
