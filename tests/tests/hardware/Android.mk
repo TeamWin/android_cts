@@ -22,6 +22,11 @@ LOCAL_MODULE := cts-sensors-tests
 
 LOCAL_MODULE_TAGS := tests
 
+LOCAL_MODULE_PATH := $(TARGET_OUT_DATA_APPS)
+
+# Tag this module as a cts_v2 test artifact
+LOCAL_COMPATIBILITY_SUITE := cts_v2
+
 LOCAL_STATIC_JAVA_LIBRARIES := ctsdeviceutil compatibility-device-util
 
 LOCAL_SDK_VERSION := current
@@ -44,6 +49,11 @@ include $(BUILD_STATIC_JAVA_LIBRARY)
 include $(CLEAR_VARS)
 
 LOCAL_MODULE_TAGS := tests
+
+LOCAL_MODULE_PATH := $(TARGET_OUT_DATA_APPS)
+
+# Tag this module as a cts_v2 test artifact
+LOCAL_COMPATIBILITY_SUITE := cts_v2
 
 LOCAL_STATIC_JAVA_LIBRARIES := ctsdeviceutil compatibility-device-util ctstestrunner mockito-target android-ex-camera2
 
