@@ -1700,6 +1700,64 @@ public class TextViewTest extends ActivityInstrumentationTestCase2<TextViewCtsAc
         mInstrumentation.waitForIdleSync();
     }
 
+    public void testCopyAndPaste_byKey() {
+        initTextViewForTyping();
+
+        // Type "abc".
+        mInstrumentation.sendStringSync("abc");
+        mActivity.runOnUiThread(new Runnable() {
+            public void run() {
+                // Select "bc"
+                Selection.setSelection((Spannable) mTextView.getText(), 1, 3);
+            }
+        });
+        mInstrumentation.waitForIdleSync();
+        // Copy "bc"
+        sendKeys(KeyEvent.KEYCODE_COPY);
+
+        mActivity.runOnUiThread(new Runnable() {
+            public void run() {
+                // Set cursor between 'b' and 'c'.
+                Selection.setSelection((Spannable) mTextView.getText(), 2, 2);
+            }
+        });
+        mInstrumentation.waitForIdleSync();
+        // Paste "bc"
+        sendKeys(KeyEvent.KEYCODE_PASTE);
+        assertEquals("abbcc", mTextView.getText().toString());
+
+        mActivity.runOnUiThread(new Runnable() {
+            public void run() {
+                Selection.selectAll((Spannable) mTextView.getText());
+                KeyEvent copyWithMeta = new KeyEvent(0, 0, KeyEvent.ACTION_DOWN,
+                        KeyEvent.KEYCODE_COPY, 0, KeyEvent.META_SHIFT_LEFT_ON);
+                // Shift + copy doesn't perform copy.
+                mTextView.onKeyDown(KeyEvent.KEYCODE_COPY, copyWithMeta);
+                Selection.setSelection((Spannable) mTextView.getText(), 0, 0);
+                mTextView.onTextContextMenuItem(android.R.id.paste);
+                assertEquals("bcabbcc", mTextView.getText().toString());
+
+                Selection.selectAll((Spannable) mTextView.getText());
+                copyWithMeta = new KeyEvent(0, 0, KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_COPY, 0,
+                        KeyEvent.META_CTRL_LEFT_ON);
+                // Control + copy doesn't perform copy.
+                mTextView.onKeyDown(KeyEvent.KEYCODE_COPY, copyWithMeta);
+                Selection.setSelection((Spannable) mTextView.getText(), 0, 0);
+                mTextView.onTextContextMenuItem(android.R.id.paste);
+                assertEquals("bcbcabbcc", mTextView.getText().toString());
+
+                Selection.selectAll((Spannable) mTextView.getText());
+                copyWithMeta = new KeyEvent(0, 0, KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_COPY, 0,
+                        KeyEvent.META_SHIFT_LEFT_ON | KeyEvent.META_CTRL_LEFT_ON);
+                // Control + Shift + copy doesn't perform copy.
+                mTextView.onKeyDown(KeyEvent.KEYCODE_COPY, copyWithMeta);
+                Selection.setSelection((Spannable) mTextView.getText(), 0, 0);
+                mTextView.onTextContextMenuItem(android.R.id.paste);
+                assertEquals("bcbcbcabbcc", mTextView.getText().toString());
+            }
+        });
+    }
+
     public void testCutAndPaste() {
         initTextViewForTyping();
         mActivity.runOnUiThread(new Runnable() {
@@ -1723,6 +1781,57 @@ public class TextViewTest extends ActivityInstrumentationTestCase2<TextViewCtsAc
             }
         });
         mInstrumentation.waitForIdleSync();
+    }
+
+    public void testCutAndPaste_byKey() {
+        initTextViewForTyping();
+
+        // Type "abc".
+        mInstrumentation.sendStringSync("abc");
+        mActivity.runOnUiThread(new Runnable() {
+            public void run() {
+                // Select "bc"
+                Selection.setSelection((Spannable) mTextView.getText(), 1, 3);
+            }
+        });
+        mInstrumentation.waitForIdleSync();
+        // Cut "bc"
+        sendKeys(KeyEvent.KEYCODE_CUT);
+
+        mActivity.runOnUiThread(new Runnable() {
+            public void run() {
+                assertEquals("a", mTextView.getText().toString());
+                // Move cursor to the head
+                Selection.setSelection((Spannable) mTextView.getText(), 0, 0);
+            }
+        });
+        mInstrumentation.waitForIdleSync();
+        // Paste "bc"
+        sendKeys(KeyEvent.KEYCODE_PASTE);
+        assertEquals("bca", mTextView.getText().toString());
+
+        mActivity.runOnUiThread(new Runnable() {
+            public void run() {
+                Selection.selectAll((Spannable) mTextView.getText());
+                KeyEvent cutWithMeta = new KeyEvent(0, 0, KeyEvent.ACTION_DOWN,
+                        KeyEvent.KEYCODE_CUT, 0, KeyEvent.META_SHIFT_LEFT_ON);
+                // Shift + cut doesn't perform cut.
+                mTextView.onKeyDown(KeyEvent.KEYCODE_CUT, cutWithMeta);
+                assertEquals("bca", mTextView.getText().toString());
+
+                cutWithMeta = new KeyEvent(0, 0, KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_CUT, 0,
+                        KeyEvent.META_CTRL_LEFT_ON);
+                // Control + cut doesn't perform cut.
+                mTextView.onKeyDown(KeyEvent.KEYCODE_CUT, cutWithMeta);
+                assertEquals("bca", mTextView.getText().toString());
+
+                cutWithMeta = new KeyEvent(0, 0, KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_CUT, 0,
+                        KeyEvent.META_SHIFT_LEFT_ON | KeyEvent.META_CTRL_LEFT_ON);
+                // Control + Shift + cut doesn't perform cut.
+                mTextView.onKeyDown(KeyEvent.KEYCODE_CUT, cutWithMeta);
+                assertEquals("bca", mTextView.getText().toString());
+            }
+        });
     }
 
     private static boolean hasSpansAtMiddleOfText(final TextView textView, final Class<?> type) {
