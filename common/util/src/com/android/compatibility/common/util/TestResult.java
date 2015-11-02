@@ -36,7 +36,7 @@ public class TestResult implements ITestResult {
     public TestResult(ICaseResult parent, String name) {
         mParent = parent;
         mTestName = name;
-        resetResult();
+        reset();
     }
 
     /**
@@ -200,13 +200,14 @@ public class TestResult implements ITestResult {
      * {@inheritDoc}
      */
     @Override
-    public void resetResult() {
-        setResultStatus(TestStatus.NOT_EXECUTED);
-        setMessage(null);
-        setStackTrace(null);
-        setReportLog(null);
-        setBugReport(null);
-        setLog(null);
+    public void reset() {
+        mResult = TestStatus.NOT_EXECUTED;
+        mMessage = null;
+        mStackTrace = null;
+        mReport = null;
+        mBugReport = null;
+        mLog = null;
+        mScreenshot = null;
     }
 
     /**
