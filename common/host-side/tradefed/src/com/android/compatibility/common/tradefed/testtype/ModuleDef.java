@@ -129,6 +129,14 @@ public class ModuleDef implements IModuleDef {
      * {@inheritDoc}
      */
     @Override
+    public IRemoteTest getTest() {
+        return mTest;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
     public void addIncludeFilter(String filter) {
         mIncludeFilters.add(filter);
     }

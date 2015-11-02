@@ -36,7 +36,8 @@ public interface IModuleRepo {
      * Initializes the repository.
      */
     void initialize(int shards, File testsDir, Set<IAbi> abis, List<String> deviceTokens,
-            List<String> includeFilters, List<String> excludeFilters);
+            List<String> testArgs, List<String> moduleArgs, List<String> mIncludeFilters,
+            List<String> mExcludeFilters);
 
     /**
      * @return a {@link Map} of all modules to run on the device referenced by the given serial.

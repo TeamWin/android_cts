@@ -23,6 +23,7 @@ import com.android.tradefed.config.ConfigurationFactory;
 import com.android.tradefed.config.IConfiguration;
 import com.android.tradefed.config.IConfigurationFactory;
 import com.android.tradefed.log.LogUtil.CLog;
+import com.android.tradefed.targetprep.ITargetPreparer;
 import com.android.tradefed.testtype.IAbi;
 import com.android.tradefed.testtype.IRemoteTest;
 import com.android.tradefed.testtype.IShardableTest;
@@ -35,6 +36,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
 /**
@@ -50,6 +52,8 @@ public class ModuleRepo implements IModuleRepo {
     private int mModulesPerShard;
     private Set<String> mSerials = new HashSet<>();
     private Map<String, Set<String>> mDeviceTokens = new HashMap<>();
+    private Map<String, Map<String, String>> mTestArgs = new HashMap<>();
+    private Map<String, Map<String, String>> mModuleArgs = new HashMap<>();
     private boolean mIncludeAll;
     private Map<String, List<TestFilter>> mIncludeFilters = new HashMap<>();
     private Map<String, List<TestFilter>> mExcludeFilters = new HashMap<>();
@@ -92,7 +96,7 @@ public class ModuleRepo implements IModuleRepo {
     public Map<String, Set<String>> getDeviceTokens() {
         return mDeviceTokens;
     }
-
+        
     /**
      * A {@link FilenameFilter} to find all modules in a directory who match the given pattern.
      */
@@ -150,7 +154,8 @@ public class ModuleRepo implements IModuleRepo {
      */
     @Override
     public void initialize(int shards, File testsDir, Set<IAbi> abis, List<String> deviceTokens,
-            List<String> includeFilters, List<String> excludeFilters) {
+            List<String> testArgs, List<String> moduleArgs, List<String> includeFilters,
+            List<String> excludeFilters) {
         mInitialized = true;
         mShards = shards;
         for (String line : deviceTokens) {
@@ -169,6 +174,8 @@ public class ModuleRepo implements IModuleRepo {
                         String.format("Could not parse device token: %s", line));
             }
         }
+        putArgs(testArgs, mTestArgs);
+        putArgs(moduleArgs, mModuleArgs);
         mIncludeAll = includeFilters.isEmpty();
         // Include all the inclusions
         addFilters(includeFilters, mIncludeFilters, abis);
@@ -185,7 +192,34 @@ public class ModuleRepo implements IModuleRepo {
                 // configs are idempotent. This however means we parse the same file multiple times
                 for (IAbi abi : abis) {
                     IConfiguration config = mConfigFactory.createConfigurationFromArgs(pathArg);
+                    String id = AbiUtils.createId(abi.getName(), name);
+                    {
+                        Map<String, String> args = new HashMap<>();
+                        if (mModuleArgs.containsKey(name)) {
+                            args.putAll(mModuleArgs.get(name));
+                        }
+                        if (mModuleArgs.containsKey(id)) {
+                            args.putAll(mModuleArgs.get(id));
+                        }
+                        if (args != null && args.size() > 0) {
+                            for (Entry<String, String> entry : args.entrySet()) {
+                                config.injectOptionValue(entry.getKey(), entry.getValue());
+                            }
+                        }
+                    }
                     List<IRemoteTest> tests = config.getTests();
+                    for (IRemoteTest test : tests) {
+                        String className = test.getClass().getName();
+                        Map<String, String> args = new HashMap<>();
+                        if (mTestArgs.containsKey(className)) {
+                            args.putAll(mTestArgs.get(className));
+                        }
+                        if (args != null && args.size() > 0) {
+                            for (Entry<String, String> entry : args.entrySet()) {
+                                config.injectOptionValue(entry.getKey(), entry.getValue());
+                            }
+                        }
+                    }
                     int testCount = tests.size();
                     for (int i = 0; i < testCount; i++) {
                         IRemoteTest test = tests.get(i);
@@ -270,7 +304,7 @@ public class ModuleRepo implements IModuleRepo {
             } else {
                 mRemainingWithTokens.add(moduleDef);
             }
-            int numModules = mRemainingModules.size() + mRemainingWithTokens.size();
+            float numModules = mRemainingModules.size() + mRemainingWithTokens.size();
             mModulesPerShard = (int) ((numModules / mShards) + 0.5f); // Round up
         }
     }
@@ -377,5 +411,20 @@ public class ModuleRepo implements IModuleRepo {
             }
         }
         return modules;
+    }
+
+    private static void putArgs(List<String> args, Map<String, Map<String, String>> argsMap) {
+        for (String arg : args) {
+            String[] parts = arg.split(":");
+            String target = parts[0];
+            String key = parts[1];
+            String value = parts[2];
+            Map<String, String> map = argsMap.get(target);
+            if (map == null) {
+                map = new HashMap<>();
+                argsMap.put(target, map);
+            }
+            map.put(key, value);
+        }
     }
 }

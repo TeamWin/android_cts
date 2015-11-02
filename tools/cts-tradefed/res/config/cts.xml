@@ -17,13 +17,9 @@
 
     <include name="everything" />
 
-    <option name="enable-root" value="false" />
+    <option name="compatibility:plan" value="cts" />
 
-    <!-- Example Filters
-    <option name="compatibility-test:include-filter" value="arm64-v8a CtsSampleDeviceTestCases" />
-    <option name="compatibility-test:exclude-filter" value="CtsSampleHostTestCases" />
-    -->
-    <option name="compatibility-test:plan" value="cts" />
+    <option name="enable-root" value="false" />
 
     <target_preparer class="com.android.compatibility.common.tradefed.targetprep.SettingsPreparer">
         <option name="device-setting" value="install_non_market_apps"/>

@@ -17,14 +17,15 @@
 package com.android.compatibility.common.tradefed.testtype;
 
 import com.android.compatibility.common.tradefed.testtype.ModuleRepo.ConfigFilter;
+import com.android.compatibility.common.util.AbiUtils;
 import com.android.tradefed.testtype.IAbi;
-import com.android.tradefed.util.FileUtil;
+import com.android.tradefed.testtype.IRemoteTest;
+import com.android.tradefed.util.FileUtil;  
 
 import junit.framework.TestCase;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -38,10 +39,12 @@ public class ModuleRepoTest extends TestCase {
             + "<option name=\"token\" value=\"%s\" />\n"
             + "</target_preparer>\n";
     private static final String CONFIG =
-            "<configuration description=\"Auto Generated File\">\n"
-            + "%s"
-            + "<test class=\"com.android.tradefed.testtype.AndroidJUnitTest\" />\n"
-            + "</configuration>";
+            "<configuration description=\"Auto Generated File\">\n" +
+            "%s" +
+            "<test class=\"com.android.compatibility.common.tradefed.testtype.TestStub\">\n" +
+            "<option name=\"module\" value=\"%s\" />" +
+            "</test>\n" +
+            "</configuration>";
     private static final String FOOBAR_TOKEN = "foobar";
     private static final String SERIAL1 = "abc";
     private static final String SERIAL2 = "def";
@@ -49,28 +52,65 @@ public class ModuleRepoTest extends TestCase {
     private static final Set<String> SERIALS = new HashSet<>();
     private static final Set<IAbi> ABIS = new HashSet<>();
     private static final List<String> DEVICE_TOKENS = new ArrayList<>();
+    private static final List<String> TEST_ARGS= new ArrayList<>();
+    private static final List<String> MODULE_ARGS = new ArrayList<>();
     private static final List<String> INCLUDES = new ArrayList<>();
     private static final List<String> EXCLUDES = new ArrayList<>();
     private static final Set<String> FILES = new HashSet<>();
+    private static final String FILENAME = "%s.config";
+    private static final String ABI_32 = "armeabi-v7a";
+    private static final String ABI_64 = "arm64-v8a";
+    private static final String MODULE_NAME_A = "FooModuleA";
+    private static final String MODULE_NAME_B = "FooModuleB";
+    private static final String MODULE_NAME_C = "FooModuleC";
+    private static final String ID_A_32 = AbiUtils.createId(ABI_32, MODULE_NAME_A);
+    private static final String ID_A_64 = AbiUtils.createId(ABI_64, MODULE_NAME_A);
+    private static final String ID_B_32 = AbiUtils.createId(ABI_32, MODULE_NAME_B);
+    private static final String ID_B_64 = AbiUtils.createId(ABI_64, MODULE_NAME_B);
+    private static final String ID_C_32 = AbiUtils.createId(ABI_32, MODULE_NAME_C);
+    private static final String ID_C_64 = AbiUtils.createId(ABI_64, MODULE_NAME_C);
+    private static final String TEST_ARG = TestStub.class.getName() + ":foo:bar";
+    private static final String MODULE_ARG = "%s:blah:foobar";
     static {
         SERIALS.add(SERIAL1);
         SERIALS.add(SERIAL2);
         SERIALS.add(SERIAL3);
-        ABIS.add(new Abi("armeabi-v7a", "32"));
-        ABIS.add(new Abi("arm64-v8a", "64"));
+        ABIS.add(new Abi(ABI_32, "32"));
+        ABIS.add(new Abi(ABI_64, "64"));
         DEVICE_TOKENS.add(String.format("%s:%s", SERIAL3, FOOBAR_TOKEN));
-        FILES.add("One.config");
-        FILES.add("Two.config");
-        FILES.add("Three.config");
+        TEST_ARGS.add(TEST_ARG);
+        MODULE_ARGS.add(String.format(MODULE_ARG, MODULE_NAME_A));
+        MODULE_ARGS.add(String.format(MODULE_ARG, MODULE_NAME_B));
+        MODULE_ARGS.add(String.format(MODULE_ARG, MODULE_NAME_C));
+        FILES.add(String.format(FILENAME, MODULE_NAME_A));
+        FILES.add(String.format(FILENAME, MODULE_NAME_B));
+        FILES.add(String.format(FILENAME, MODULE_NAME_C));
     }
-    private IModuleRepo repo;
+    private IModuleRepo mRepo;
     private File mTestsDir;
 
     @Override
     public void setUp() throws Exception {
         mTestsDir = setUpConfigs();
         ModuleRepo.sInstance = null;// Clear the instance so it gets recreated.
-        repo = ModuleRepo.getInstance();
+        mRepo = ModuleRepo.getInstance();
+    }
+
+    private File setUpConfigs() throws IOException {
+        File testsDir = FileUtil.createNamedTempDir("testcases");
+        createConfig(testsDir, MODULE_NAME_A, null);
+        createConfig(testsDir, MODULE_NAME_B, null);
+        createConfig(testsDir, MODULE_NAME_C, FOOBAR_TOKEN);
+        return testsDir;
+    }
+
+    private void createConfig(File testsDir, String name, String token) throws IOException {
+        File config = new File(testsDir, String.format(FILENAME, name));
+        String preparer = "";
+        if (token != null) {
+            preparer = String.format(TOKEN, token);
+        }
+        FileUtil.writeToFile(String.format(CONFIG, preparer, name), config);
     }
 
     @Override
@@ -78,34 +118,40 @@ public class ModuleRepoTest extends TestCase {
         tearDownConfigs(mTestsDir);
     }
 
+    private void tearDownConfigs(File testsDir) {
+        FileUtil.recursiveDelete(testsDir);
+    }
+
     public void testInitialization() throws Exception {
-        repo.initialize(3, mTestsDir, ABIS, DEVICE_TOKENS, INCLUDES, EXCLUDES);
-        assertTrue("Should be initialized", repo.isInitialized());
-        assertEquals("Wrong number of shards", 3, repo.getNumberOfShards());
-        assertEquals("Wrong number of modules per shard", 2, repo.getModulesPerShard());
-        Set<IModuleDef> modules = repo.getRemainingModules();
-        Map<String, Set<String>> deviceTokens = repo.getDeviceTokens();
+        mRepo.initialize(3, mTestsDir, ABIS, DEVICE_TOKENS, TEST_ARGS, MODULE_ARGS, INCLUDES,
+                EXCLUDES);
+        assertTrue("Should be initialized", mRepo.isInitialized());
+        assertEquals("Wrong number of shards", 3, mRepo.getNumberOfShards());
+        assertEquals("Wrong number of modules per shard", 2, mRepo.getModulesPerShard());
+        Set<IModuleDef> modules = mRepo.getRemainingModules();
+        Map<String, Set<String>> deviceTokens = mRepo.getDeviceTokens();
         assertEquals("Wrong number of devices with tokens", 1, deviceTokens.size());
         Set<String> tokens = deviceTokens.get(SERIAL3);
         assertEquals("Wrong number of tokens", 1, tokens.size());
         assertTrue("Unexpected device token", tokens.contains(FOOBAR_TOKEN));
         assertEquals("Wrong number of modules", 4, modules.size());
-        Set<IModuleDef> tokenModules = repo.getRemainingWithTokens();
+        Set<IModuleDef> tokenModules = mRepo.getRemainingWithTokens();
         assertEquals("Wrong number of modules with tokens", 2, tokenModules.size());
-        List<IModuleDef> serial1Modules = repo.getModules(SERIAL1);
+        List<IModuleDef> serial1Modules = mRepo.getModules(SERIAL1);
         assertEquals("Wrong number of modules", 2, serial1Modules.size());
-        List<IModuleDef> serial2Modules = repo.getModules(SERIAL2);
+        List<IModuleDef> serial2Modules = mRepo.getModules(SERIAL2);
         assertEquals("Wrong number of modules", 2, serial2Modules.size());
-        List<IModuleDef> serial3Modules = repo.getModules(SERIAL3);
+        List<IModuleDef> serial3Modules = mRepo.getModules(SERIAL3);
         assertEquals("Wrong number of modules", 2, serial3Modules.size());
         // Serial 3 should have the modules with tokens
         for (IModuleDef module : serial3Modules) {
-            assertEquals("Wrong module", "Three", module.getName());
+            assertEquals("Wrong module", MODULE_NAME_C, module.getName());
         }
-        Set<String> serials = repo.getSerials();
+        Set<String> serials = mRepo.getSerials();
         assertEquals("Wrong number of serials", 3, serials.size());
         assertTrue("Unexpected device serial", serials.containsAll(SERIALS));
     }
+
     public void testConfigFilter() throws Exception {
         File[] configFiles = mTestsDir.listFiles(new ConfigFilter());
         assertEquals("Wrong number of config files found.", 3, configFiles.length);
@@ -115,33 +161,46 @@ public class ModuleRepoTest extends TestCase {
         }
     }
 
-    private File setUpConfigs() throws IOException {
-        File testsDir = FileUtil.createNamedTempDir("testcases");
-        createConfig(testsDir, "One", null);
-        createConfig(testsDir, "Two", null);
-        createConfig(testsDir, "Three", FOOBAR_TOKEN);
-        return testsDir;
+    public void testFiltering() throws Exception {
+        List<String> includeFilters = new ArrayList<>();
+        includeFilters.add(MODULE_NAME_A);
+        List<String> excludeFilters = new ArrayList<>();
+        excludeFilters.add(ID_A_32);
+        excludeFilters.add(MODULE_NAME_B);
+        mRepo.initialize(1, mTestsDir, ABIS, DEVICE_TOKENS, TEST_ARGS, MODULE_ARGS, includeFilters,
+                excludeFilters);
+        List<IModuleDef> modules = mRepo.getModules(SERIAL1);
+        assertEquals("Incorrect number of modules", 1, modules.size());
+        IModuleDef module = modules.get(0);
+        assertEquals("Incorrect ID", ID_A_64, module.getId());
+        checkArgs(module);
     }
 
-    private void tearDownConfigs(File testsDir) {
-        FileUtil.recursiveDelete(testsDir);
+    public void testParsing() throws Exception {
+        mRepo.initialize(1, mTestsDir, ABIS, DEVICE_TOKENS, TEST_ARGS, MODULE_ARGS, INCLUDES,
+                EXCLUDES);
+        List<IModuleDef> modules = mRepo.getModules(SERIAL3);
+        Set<String> idSet = new HashSet<>();
+        for (IModuleDef module : modules) {
+            idSet.add(module.getId());
+        }
+        assertEquals("Incorrect number of IDs", 6, idSet.size());
+        assertTrue("Missing ID_A_32", idSet.contains(ID_A_32));
+        assertTrue("Missing ID_A_64", idSet.contains(ID_A_64));
+        assertTrue("Missing ID_B_32", idSet.contains(ID_B_32));
+        assertTrue("Missing ID_B_64", idSet.contains(ID_B_64));
+        assertTrue("Missing ID_C_32", idSet.contains(ID_C_32));
+        assertTrue("Missing ID_C_64", idSet.contains(ID_C_64));
+        for (IModuleDef module : modules) {
+            checkArgs(module);
+        }
     }
 
-    private void createConfig(File testsDir, String name, String token) throws IOException {
-        File config = new File(testsDir, String.format("%s.config", name));
-        String preparer = "";
-        if (token != null) {
-            preparer = String.format(TOKEN, token);
-        }
-        PrintWriter writer = null;
-        try {
-            writer = new PrintWriter(config);
-            writer.format(CONFIG, preparer);
-            writer.flush();
-        } finally {
-            if (writer != null) {
-                writer.close();
-            }
-        }
+    private void checkArgs(IModuleDef module) {
+        IRemoteTest test = module.getTest();
+        assertTrue("Incorrect test type", test instanceof TestStub);
+        TestStub stub = (TestStub) test;
+        assertEquals("Incorrect test arg", "bar", stub.mFoo);
+        assertEquals("Incorrect module arg", "foobar", stub.mBlah);
     }
 }
