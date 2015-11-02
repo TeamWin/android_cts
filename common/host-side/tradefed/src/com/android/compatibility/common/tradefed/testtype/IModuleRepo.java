@@ -15,8 +15,9 @@
  */
 package com.android.compatibility.common.tradefed.testtype;
 
-import com.android.compatibility.common.util.AbiUtils;
+import com.android.tradefed.testtype.IAbi;
 
+import java.io.File;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -27,39 +28,48 @@ import java.util.Set;
 public interface IModuleRepo {
 
     /**
-     * Get a {@link IModuleDef} given an id.
-     *
-     * @param id the id of the module (created by {@link AbiUtils#createId(String, String)})
+     * @return true if this repository has been initialized.
      */
-    IModuleDef getModule(String id);
+    boolean isInitialized();
 
     /**
-     * @return a {@link Map} of all modules in repo.
+     * Initializes the repository.
      */
-    Map<String, IModuleDef> getModules();
+    void initialize(int shards, File testsDir, Set<IAbi> abis, List<String> deviceTokens,
+            List<String> includeFilters, List<String> excludeFilters);
 
     /**
-     * @return a sorted {@link List} of {@link IModuleDef}s given the filters.
+     * @return a {@link Map} of all modules to run on the device referenced by the given serial.
      */
-    List<IModuleDef> getModules(List<String> includeFilters, List<String> excludeFilters);
+    List<IModuleDef> getModules(String serial);
 
     /**
-     * @return a {@link Map} of all module in repo keyed by name.
+     * @return the number of shards this repo is initialized for.
      */
-    Map<String, List<IModuleDef>> getModulesByName();
+    int getNumberOfShards();
 
     /**
-     * @return a sorted {@link List} of module names.
+     * @return the maximum number of modules a shard will run.
      */
-    List<String> getModuleNames();
+    int getModulesPerShard();
 
     /**
-     * @return a {@link Set} of modules names that match the given regular expression.
+     * @return the {@link Map} of device serials to tokens.
      */
-    Set<String> getModulesMatching(String regex);
+    Map<String, Set<String>> getDeviceTokens();
 
     /**
-     * @return a sorted {@link List} of module ids.
+     * @return the {@link Set} of device serials that have taken their workload.
      */
-    List<String> getModuleIds();
+    Set<String> getSerials();
+
+    /**
+     * @return the modules which dont have prerequisites but have not been assigned to a device.
+     */
+    Set<IModuleDef> getRemainingModules();
+
+    /**
+     * @return the modules which have prerequisites and have not been assigned to a device.
+     */
+    Set<IModuleDef> getRemainingWithTokens();
 }
