@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-package android.cts.appsecurity;
+package android.appsecurity.cts;
 
-import com.android.cts.tradefed.build.CtsBuildHelper;
+import com.android.cts.migration.MigrationHelper;
 import com.android.ddmlib.Log;
 import com.android.ddmlib.Log.LogLevel;
 import com.android.ddmlib.testrunner.RemoteAndroidTestRunner;
@@ -101,7 +101,7 @@ public class KeySetHostTest extends DeviceTestCase implements IBuildReceiver {
     private static final String LOG_TAG = "AppsecurityHostTests";
 
     private File getTestAppFile(String fileName) throws FileNotFoundException {
-        return mCtsBuild.getTestApp(fileName);
+        return MigrationHelper.getTestFile(mCtsBuild, fileName);
     }
 
     /**
@@ -224,14 +224,14 @@ public class KeySetHostTest extends DeviceTestCase implements IBuildReceiver {
      */
     private ITestDevice mDevice;
 
-    private CtsBuildHelper mCtsBuild;
+    private IBuildInfo mCtsBuild;
 
     /**
      * {@inheritDoc}
      */
     @Override
     public void setBuild(IBuildInfo buildInfo) {
-        mCtsBuild = CtsBuildHelper.createBuildHelper(buildInfo);
+        mCtsBuild = buildInfo;
     }
 
     @Override

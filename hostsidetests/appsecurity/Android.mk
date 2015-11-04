@@ -19,11 +19,16 @@ include $(CLEAR_VARS)
 # Only compile source java files in this apk.
 LOCAL_SRC_FILES := $(call all-java-files-under, src)
 
-LOCAL_MODULE := CtsAppSecurityTests
+LOCAL_MODULE := CtsAppSecurityHostTestCases
 
-LOCAL_JAVA_LIBRARIES := cts-tradefed tradefed-prebuilt
+LOCAL_JAVA_LIBRARIES := cts-tradefed_v2 compatibility-host-util tradefed-prebuilt
 
-LOCAL_CTS_TEST_PACKAGE := android.tests.appsecurity
+LOCAL_STATIC_JAVA_LIBRARIES := cts-migration-lib
+
+LOCAL_CTS_TEST_PACKAGE := android.appsecurity
+
+# tag this module as a cts_v2 test artifact
+LOCAL_COMPATIBILITY_SUITE := cts_v2
 
 include $(BUILD_CTS_HOST_JAVA_LIBRARY)
 
