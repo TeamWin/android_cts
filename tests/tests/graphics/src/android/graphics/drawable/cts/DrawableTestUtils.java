@@ -105,4 +105,23 @@ public class DrawableTestUtils {
         config.densityDpi = densityDpi;
         res.updateConfiguration(config, null);
     }
+
+    /**
+     * Implements scaling as used by the Bitmap class. Resulting values are
+     * rounded up (as distinct from resource scaling, which truncates or rounds
+     * to the nearest pixel).
+     *
+     * @param size the pixel size to scale
+     * @param sdensity the source density that corresponds to the size
+     * @param tdensity the target density
+     * @return the pixel size scaled for the target density
+     */
+    public static int scaleBitmapFromDensity(int size, int sdensity, int tdensity) {
+        if (sdensity == 0 || tdensity == 0 || sdensity == tdensity) {
+            return size;
+        }
+
+        // Scale by tdensity / sdensity, rounding up.
+        return ((size * tdensity) + (sdensity >> 1)) / sdensity;
+    }
 }
