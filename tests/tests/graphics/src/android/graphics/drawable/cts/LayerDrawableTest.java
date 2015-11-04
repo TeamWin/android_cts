@@ -1408,7 +1408,29 @@ public class LayerDrawableTest extends AndroidTestCase {
         }
     }
 
+    public void testChildIntrinsicSize() {
+        LayerDrawable dr;
 
+        // Ensure that a child with no intrinsic size correctly reports bounds.
+        dr = (LayerDrawable) getContext().getDrawable(R.drawable.layer_drawable_intrinsic);
+        assertEquals(-1, dr.getIntrinsicWidth());
+        assertEquals(-1, dr.getIntrinsicHeight());
+
+        // Check when creating the drawble from code.
+        dr = new LayerDrawable(new Drawable[] { new ColorDrawable(Color.RED) });
+        dr.setLayerInset(0, 10, 10, 10, 10);
+        assertEquals(-1, dr.getIntrinsicWidth());
+        assertEquals(-1, dr.getIntrinsicHeight());
+
+        // Ensure mixed children report bounds correctly as well.
+        dr = (LayerDrawable) getContext().getDrawable(R.drawable.layer_drawable_intrinsic_mixed);
+        int width = dr.getLayerInsetLeft(0) + dr.getLayerInsetRight(0)
+                + dr.getDrawable(0).getIntrinsicWidth();
+        int height = dr.getLayerInsetTop(0) + dr.getLayerInsetBottom(0)
+                + dr.getDrawable(0).getIntrinsicHeight();
+        assertEquals(width, dr.getIntrinsicWidth());
+        assertEquals(height, dr.getIntrinsicHeight());
+    }
 
     private static class MockDrawable extends Drawable {
         private boolean mCalledSetDither = false;
