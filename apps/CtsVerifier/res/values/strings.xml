@@ -1133,6 +1133,23 @@
     <string name="nls_clear_all">Check that service can clear all notifications.</string>
     <string name="nls_service_stopped">Service should stop once disabled.</string>
     <string name="nls_note_missed">Check that notification was not received.</string>
+    <string name="cp_test">Condition Provider test</string>
+    <string name="cp_service_name">Condition Provider for CTS Verifier</string>
+    <string name="cp_info">This test checks that a ConditionProviderService can be enabled
+        and disabled, and that once enabled the service is able to create, query, edit, and delete
+        automatic zen rules.
+    </string>
+    <string name="cp_enable_service">Please enable \"CTS Verifier\" under Do Not Disturb access and return here.</string>
+    <string name="cp_disable_service">Please disable \"CTS Verifier\" under Do Not Disturb access and return here.</string>
+    <string name="cp_start_settings">Launch Settings</string>
+    <string name="cp_create_rule">Creating Automatic Zen Rule</string>
+    <string name="cp_subscribe_rule">Subscribing to Automatic Zen Rule</string>
+    <string name="cp_service_started">Service should start once enabled.</string>
+    <string name="cp_service_stopped">Service should stop once disabled.</string>
+    <string name="cp_unsubscribe_rule">Unsubscribing to Automatic Zen Rule</string>
+    <string name="cp_delete_rule">Deleting Automatic Zen Rule</string>
+    <string name="cp_get_rules">Retrieving Automatic Zen Rules</string>
+    <string name="cp_get_rule">Retrieving Automatic Zen Rule</string>
 
     <string name="location_mode_high_accuracy_test">High Accuracy Mode Test</string>
     <string name="location_mode_high_accuracy_info">
