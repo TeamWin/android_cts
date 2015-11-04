@@ -166,6 +166,9 @@ class XmlGenerator {
             StringBuilder nameCollector) {
         Collection<TestSuite> sorted = sortCollection(suites);
         for (TestSuite suite : sorted) {
+            if (suite.countTests() == 0) {
+                continue;
+            }
             writer.append("<TestSuite name=\"").append(suite.getName()).println("\">");
 
             String namePart = suite.getName();
@@ -187,6 +190,9 @@ class XmlGenerator {
             StringBuilder nameCollector) {
         Collection<TestCase> sorted = sortCollection(cases);
         for (TestCase testCase : sorted) {
+            if (testCase.countTests() == 0) {
+                continue;
+            }
             String name = testCase.getName();
             writer.append("<TestCase name=\"").append(name).println("\">");
             nameCollector.append('.').append(name);
