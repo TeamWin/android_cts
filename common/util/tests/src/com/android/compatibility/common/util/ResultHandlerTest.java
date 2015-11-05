@@ -68,6 +68,7 @@ public class ResultHandlerTest extends TestCase {
             "at four.big.insects.Marley.sing(Marley.java:10)";
     private static final long START_MS = 1431586801000L;
     private static final long END_MS = 1431673199000L;
+    private static final String REFERENCE_URL="http://android.com";
     private static final String JOIN = "%s%s";
     private static final String XML_BASE =
             "<?xml version='1.0' encoding='UTF-8' standalone='no' ?>" +
@@ -75,7 +76,7 @@ public class ResultHandlerTest extends TestCase {
             "<Result start=\"%d\" end=\"%d\" suite_name=\"%s\" suite_version=\"%s\" " +
             "suite_plan=\"%s\" report_version=\"%s\" devices=\"%s\" host_name=\"%s\"" +
             "os_name=\"%s\" os_version=\"%s\" os_arch=\"%s\" java_vendor=\"%s\"" +
-            "java_version=\"%s\">\n" +
+            "java_version=\"%s\" reference_url=\"%s\">\n" +
             "%s%s%s" +
             "</Result>";
     private static final String XML_DEVICE_INFO =
@@ -164,7 +165,7 @@ public class ResultHandlerTest extends TestCase {
 
         // Serialize to file
         ResultHandler.writeResults(SUITE_NAME, SUITE_VERSION, SUITE_PLAN, result, resultDir,
-                START_MS, END_MS);
+                START_MS, END_MS, REFERENCE_URL);
 
         // Parse the results and assert correctness
         checkResult(ResultHandler.getResults(resultsDir), resultDir);
@@ -203,7 +204,7 @@ public class ResultHandlerTest extends TestCase {
             } catch (UnknownHostException ignored) {}
             String output = String.format(XML_BASE, START_MS, END_MS, SUITE_NAME, SUITE_VERSION,
                     SUITE_PLAN, REPORT_VERSION, DEVICES, hostName, OS_NAME, OS_VERSION, OS_ARCH,
-                    JAVA_VENDOR, JAVA_VERSION, deviceInfo, summary, modules);
+                    JAVA_VENDOR, JAVA_VERSION, REFERENCE_URL, deviceInfo, summary, modules);
             writer.write(output);
             writer.flush();
 
