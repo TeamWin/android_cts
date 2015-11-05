@@ -66,6 +66,7 @@ public class ResultHandler {
     private static final String OS_VERSION_ATTR = "os_version";
     private static final String PASS_ATTR = "pass";
     private static final String REPORT_VERSION_ATTR = "report_version";
+    private static final String REFERENCE_URL_ATTR = "reference_url";
     private static final String RESULT_ATTR = "result";
     private static final String RESULT_TAG = "Result";
     private static final String SCREENSHOT_TAG = "Screenshot";
@@ -183,13 +184,14 @@ public class ResultHandler {
      * @param result
      * @param resultDir
      * @param startTime
+     * @param referenceUrl A nullable string that can contain a URL to a related data
      * @return The result file created.
      * @throws IOException
      * @throws XmlPullParserException
      */
     public static File writeResults(String suiteName, String suiteVersion, String suitePlan,
-            IInvocationResult result, File resultDir, long startTime, long endTime)
-                    throws IOException, XmlPullParserException {
+            IInvocationResult result, File resultDir, long startTime, long endTime,
+                    String referenceUrl) throws IOException, XmlPullParserException {
         int passed = result.countResults(TestStatus.PASS);
         int failed = result.countResults(TestStatus.FAIL);
         int notExecuted = result.countResults(TestStatus.NOT_EXECUTED);
@@ -208,6 +210,9 @@ public class ResultHandler {
         serializer.attribute(NS, SUITE_VERSION_ATTR, suiteVersion);
         serializer.attribute(NS, SUITE_PLAN_ATTR, suitePlan);
         serializer.attribute(NS, REPORT_VERSION_ATTR, RESULT_FILE_VERSION);
+        if (referenceUrl != null) {
+            serializer.attribute(NS, REFERENCE_URL_ATTR, referenceUrl);
+        }
 
         // Device Info
         Set<String> devices = result.getDeviceSerials();

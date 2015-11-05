@@ -310,7 +310,7 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
             try {
                 File resultFile = ResultHandler.writeResults(mBuildHelper.getSuiteName(),
                         mBuildHelper.getSuiteVersion(), mBuildHelper.getSuitePlan(), mResult,
-                        mResultDir, mStartTime, elapsedTime + mStartTime);
+                        mResultDir, mStartTime, elapsedTime + mStartTime, mReferenceUrl);
                 copyDynamicConfigFiles(mBuildHelper.getDynamicConfigFiles(), mResultDir);
                 copyFormattingFiles(mResultDir);
                 zipResults(mResultDir);
