@@ -122,6 +122,9 @@ public class PrintDocumentAdapterContractTest extends BasePrintTest {
         // Click the print button.
         clickPrintButton();
 
+        // Answer the dialog for the print service cloud warning
+        answerPrintServicesWarning(true);
+
         // Wait for finish.
         waitForAdapterFinishCallbackCalled();
 
@@ -363,6 +366,9 @@ public class PrintDocumentAdapterContractTest extends BasePrintTest {
         // Click the print button.
         clickPrintButton();
 
+        // Answer the dialog for the print service cloud warning
+        answerPrintServicesWarning(true);
+
         // Wait for a finish.
         waitForAdapterFinishCallbackCalled();
 
@@ -552,6 +558,9 @@ public class PrintDocumentAdapterContractTest extends BasePrintTest {
         // Click the print button.
         clickPrintButton();
 
+        // Answer the dialog for the print service cloud warning
+        answerPrintServicesWarning(true);
+
         // Wait for a finish.
         waitForAdapterFinishCallbackCalled();
 
@@ -699,6 +708,9 @@ public class PrintDocumentAdapterContractTest extends BasePrintTest {
         // Click the print button.
         clickPrintButton();
 
+        // Answer the dialog for the print service cloud warning
+        answerPrintServicesWarning(true);
+
         // Wait for a finish.
         waitForAdapterFinishCallbackCalled();
 
@@ -823,6 +835,9 @@ public class PrintDocumentAdapterContractTest extends BasePrintTest {
         // Click the print button.
         clickPrintButton();
 
+        // Answer the dialog for the print service cloud warning
+        answerPrintServicesWarning(true);
+
         // Wait for a finish.
         waitForAdapterFinishCallbackCalled();
 
@@ -931,6 +946,9 @@ public class PrintDocumentAdapterContractTest extends BasePrintTest {
 
         // Click the print button.
         clickPrintButton();
+
+        // Answer the dialog for the print service cloud warning
+        answerPrintServicesWarning(true);
 
         // Wait for a finish.
         waitForAdapterFinishCallbackCalled();
