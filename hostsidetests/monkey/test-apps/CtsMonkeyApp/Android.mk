@@ -30,4 +30,7 @@ LOCAL_MODULE_PATH := $(TARGET_OUT_DATA_APPS)
 
 LOCAL_DEX_PREOPT := false
 
+# tag this module as a cts_v2 test artifact
+LOCAL_COMPATIBILITY_SUITE := cts_v2
+
 include $(BUILD_CTS_SUPPORT_PACKAGE)

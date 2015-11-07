@@ -22,10 +22,15 @@ LOCAL_MODULE_TAGS := optional
 
 LOCAL_MODULE := CtsMonkeyTestCases
 
-LOCAL_JAVA_LIBRARIES := cts-tradefed tradefed-prebuilt
+LOCAL_JAVA_LIBRARIES := cts-tradefed_v2 compatibility-host-util tradefed-prebuilt
+
+LOCAL_STATIC_JAVA_LIBRARIES := cts-migration-lib
 
 # prefix zzz intentional to run this last
 LOCAL_CTS_TEST_PACKAGE := zzz.android.monkey
+
+# tag this module as a cts_v2 test artifact
+LOCAL_COMPATIBILITY_SUITE := cts_v2
 
 include $(BUILD_CTS_HOST_JAVA_LIBRARY)
 
