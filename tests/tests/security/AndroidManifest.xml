@@ -16,7 +16,7 @@
  -->
 
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.android.cts.security">
+    package="android.security.cts">
 
     <uses-permission android:name="android.permission.DISABLE_KEYGUARD" />
     <uses-permission android:name="android.permission.KILL_BACKGROUND_PROCESSES" />
@@ -39,8 +39,8 @@
     </application>
 
     <instrumentation android:name="android.support.test.runner.AndroidJUnitRunner"
-                     android:targetPackage="com.android.cts.security"
-                     android:label="CTS tests of com.android.cts.security">
+                     android:targetPackage="android.security.cts"
+                     android:label="CTS tests of android.security.cts">
         <meta-data android:name="listener"
             android:value="com.android.cts.runner.CtsTestRunListener" />
     </instrumentation>
