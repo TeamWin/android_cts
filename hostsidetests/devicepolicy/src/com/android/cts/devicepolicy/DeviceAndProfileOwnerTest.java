@@ -16,6 +16,7 @@
 
 package com.android.cts.devicepolicy;
 
+import com.android.cts.migration.MigrationHelper;
 import com.android.ddmlib.Log.LogLevel;
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.log.LogUtil.CLog;
@@ -223,7 +224,7 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
         final String DISALLOW_INSTALL_UNKNOWN_SOURCES = "no_install_unknown_sources";
         final String UNKNOWN_SOURCES_SETTING = "install_non_market_apps";
         final String SECURE_SETTING_CATEGORY = "secure";
-        final File apk = mCtsBuild.getTestApp(TEST_APP_APK);
+        final File apk = MigrationHelper.getTestFile(mCtsBuild, TEST_APP_APK);
         String unknownSourceSetting = null;
         try {
             // Install the test and prepare the test apk.
