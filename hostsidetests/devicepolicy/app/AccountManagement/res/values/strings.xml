@@ -16,5 +16,5 @@
 
 <resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
     <!-- Label for this package -->
-    <string name="authenticator_label">Android CTS - Device and Profile Owner</string>
+    <string name="authenticator_label">DevicePolicy mock account</string>
 </resources>

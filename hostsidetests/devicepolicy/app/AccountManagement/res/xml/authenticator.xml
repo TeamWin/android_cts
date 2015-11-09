@@ -17,6 +17,6 @@
 <!-- for the Account Manager. -->
 
 <account-authenticator xmlns:android="http://schemas.android.com/apk/res/android"
-    android:accountType="com.android.cts.deviceandprofileowner.account.type"
+    android:accountType="com.android.cts.devicepolicy.accountmanagement.account.type"
     android:label="@string/authenticator_label"
 />

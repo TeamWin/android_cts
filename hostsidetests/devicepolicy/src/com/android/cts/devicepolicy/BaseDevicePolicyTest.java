@@ -99,6 +99,7 @@ public class BaseDevicePolicyTest extends DeviceTestCase implements IBuildReceiv
 
     protected void installAppAsUser(String appFileName, int userId) throws FileNotFoundException,
             DeviceNotAvailableException {
+        CLog.logAndDisplay(LogLevel.INFO, "Installing app " + appFileName + " for user " + userId);
         final ITestDevice device = getDevice();
 
         final File apk = MigrationHelper.getTestFile(mCtsBuild, appFileName);

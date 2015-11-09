@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.android.cts.deviceandprofileowner;
+package com.android.cts.devicepolicy.accountmanagement;
 
 import android.accounts.AbstractAccountAuthenticator;
 import android.accounts.Account;
@@ -26,8 +26,10 @@ import android.os.Bundle;
 
 /* package */ class MockAccountAuthenticator extends AbstractAccountAuthenticator {
     private static MockAccountAuthenticator sMockAuthenticator = null;
-    private static final String ACCOUNT_NAME = "com.android.cts.deviceandprofileowner.account.name";
-    static final String ACCOUNT_TYPE = "com.android.cts.deviceandprofileowner.account.type";
+    private static final String ACCOUNT_NAME
+            = "com.android.cts.devicepolicy.accountmanagement.account.name";
+    static final String ACCOUNT_TYPE
+            = "com.android.cts.devicepolicy.accountmanagement.account.type";
     private static final String AUTH_TOKEN = "mockAuthToken";
     private static final String AUTH_TOKEN_LABEL = "mockAuthTokenLabel";
 

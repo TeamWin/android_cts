@@ -76,6 +76,7 @@ cts_account_support_packages := \
     CtsUnaffiliatedAccountAuthenticators
 
 cts_support_packages := \
+    CtsAccountManagementDevicePolicyApp \
     CtsAlarmClockService \
     CtsAppTestStubs \
     CtsAppUsageTestApp \
@@ -90,7 +91,7 @@ cts_support_packages := \
     CtsDeviceInfo \
     CtsDeviceOsTestApp \
     CtsDeviceOwnerApp \
-    CtsDeviceServicesTestApp \
+    CtsServicesTestApp \
     CtsDeviceTaskSwitchingAppA \
     CtsDeviceTaskSwitchingAppB \
     CtsDeviceTaskSwitchingControl \

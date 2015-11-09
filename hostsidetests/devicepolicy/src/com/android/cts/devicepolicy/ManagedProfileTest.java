@@ -303,7 +303,7 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
 
     // TODO: This test is not specific to managed profiles, but applies to multi-user in general.
     // Move it to a MultiUserTest class when there is one. Should probably move
-    // UserRestrictionActivity to a more generic apk too as it might be useful for different kinds
+    // SetPolicyActivity to a more generic apk too as it might be useful for different kinds
     // of tests (same applies to ComponentDisablingActivity).
     public void testNoDebuggingFeaturesRestriction() throws Exception {
         if (!mHasFeature) {

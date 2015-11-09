@@ -14,52 +14,55 @@
  * limitations under the License.
  */
 
-package com.android.cts.deviceandprofileowner;
+package com.android.cts.devicepolicy.accountmanagement;
 
 import android.accounts.Account;
 import android.accounts.AccountManager;
 import android.accounts.AccountManagerFuture;
+import android.accounts.AuthenticatorException;
+import android.accounts.OperationCanceledException;
 import android.content.Context;
 import android.os.Bundle;
 import android.test.AndroidTestCase;
 
+import java.io.IOException;
+
 /**
- * Utility class that allows adding and removing accounts.
+ * Functionality tests for
+ * {@link android.app.admin.DevicePolicyManager#setAccountManagementDisabled}
+ * and (@link android.os.UserManager#DISALLOW_MODIFY_ACCOUNTS}
  *
- * This test depend on {@link MockAccountService}, which provides authenticator of type
+ * This test depends on {@link MockAccountService}, which provides authenticator of type
  * {@link MockAccountService#ACCOUNT_TYPE}.
  */
 public class AccountUtilsTest extends AndroidTestCase {
 
-    private final static Account ACCOUNT_0 = new Account("user0",
+    // Account type for MockAccountAuthenticator
+    private final static Account ACCOUNT = new Account("user0",
             MockAccountAuthenticator.ACCOUNT_TYPE);
+
     private AccountManager mAccountManager;
 
     @Override
     protected void setUp() throws Exception {
         super.setUp();
-        mAccountManager = (AccountManager) getContext().getSystemService(Context.ACCOUNT_SERVICE);
+        mAccountManager = (AccountManager) mContext.getSystemService(Context.ACCOUNT_SERVICE);
     }
 
-    public void testAddAccount() throws Exception {
+    public void testAddAccountExplicitly() throws Exception {
         assertEquals(0, mAccountManager.getAccountsByType(MockAccountAuthenticator.ACCOUNT_TYPE)
                 .length);
-        assertTrue(mAccountManager.addAccountExplicitly(ACCOUNT_0, "password", null));
+        assertTrue(mAccountManager.addAccountExplicitly(ACCOUNT, "password", null));
         assertEquals(1, mAccountManager.getAccountsByType(MockAccountAuthenticator.ACCOUNT_TYPE)
                 .length);
     }
 
-    public void testRemoveAccounts() throws Exception {
-        removeAllAccountsForType(mAccountManager, MockAccountAuthenticator.ACCOUNT_TYPE);
-    }
-
-    static void removeAllAccountsForType(AccountManager am, String accountType)
-            throws Exception {
-        Account[] accounts = am.getAccountsByType(accountType);
-        for (Account account : accounts) {
-            AccountManagerFuture<Boolean> result = am.removeAccount(account, null, null);
-            assertTrue(result.getResult());
-        }
-        assertEquals(0, am.getAccountsByType(accountType).length);
+    public void testRemoveAccountExplicitly() throws Exception {
+        assertEquals(1, mAccountManager.getAccountsByType(MockAccountAuthenticator.ACCOUNT_TYPE)
+                .length);
+        mAccountManager.removeAccountExplicitly(ACCOUNT);
+        assertEquals(0, mAccountManager.getAccountsByType(MockAccountAuthenticator.ACCOUNT_TYPE)
+                .length);
     }
 }
+
