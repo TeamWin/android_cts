@@ -16,7 +16,7 @@
 
 package com.android.cts.devicepolicy;
 
-import com.android.cts.tradefed.build.CtsBuildHelper;
+import com.android.cts.migration.MigrationHelper;
 import com.android.ddmlib.Log.LogLevel;
 import com.android.ddmlib.testrunner.InstrumentationResultParser;
 import com.android.ddmlib.testrunner.RemoteAndroidTestRunner;
@@ -54,7 +54,7 @@ public class BaseDevicePolicyTest extends DeviceTestCase implements IBuildReceiv
 
     private static final int FLAG_PRIMARY = 1; // From the UserInfo class
 
-    protected CtsBuildHelper mCtsBuild;
+    protected IBuildInfo mCtsBuild;
 
     private String mPackageVerifier;
     private HashSet<String> mAvailableFeatures;
@@ -62,7 +62,7 @@ public class BaseDevicePolicyTest extends DeviceTestCase implements IBuildReceiv
 
     @Override
     public void setBuild(IBuildInfo buildInfo) {
-        mCtsBuild = CtsBuildHelper.createBuildHelper(buildInfo);
+        mCtsBuild = buildInfo;
     }
 
     @Override
@@ -88,7 +88,8 @@ public class BaseDevicePolicyTest extends DeviceTestCase implements IBuildReceiv
     protected void installApp(String fileName)
             throws FileNotFoundException, DeviceNotAvailableException {
         CLog.logAndDisplay(LogLevel.INFO, "Installing app " + fileName);
-        String installResult = getDevice().installPackage(mCtsBuild.getTestApp(fileName), true);
+        String installResult = getDevice().installPackage(
+            MigrationHelper.getTestFile(mCtsBuild, fileName), true);
         assertNull(String.format("Failed to install %s, Reason: %s", fileName, installResult),
                 installResult);
     }
@@ -97,7 +98,7 @@ public class BaseDevicePolicyTest extends DeviceTestCase implements IBuildReceiv
             DeviceNotAvailableException {
         final ITestDevice device = getDevice();
 
-        final File apk = mCtsBuild.getTestApp(appFileName);
+        final File apk = MigrationHelper.getTestFile(mCtsBuild, appFileName);
         final String remotePath = "/data/local/tmp/" + apk.getName();
         if (!device.pushFile(apk, remotePath)) {
             throw new IllegalStateException("Failed to push " + apk);
