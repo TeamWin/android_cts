@@ -19,7 +19,7 @@
         <option name="test-file-name" value="CtsRenderscriptLegacyTestCases.apk" />
     </target_preparer>
     <test class="com.android.tradefed.testtype.InstrumentationTest" >
-        <option name="package" value="android.renderscript.cts" />
+        <option name="package" value="android.renderscriptlegacy.cts" />
         <option name="runner" value="android.support.test.runner.AndroidJUnitRunner" />
     </test>
 </configuration>
