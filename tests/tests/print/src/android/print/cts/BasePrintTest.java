@@ -41,15 +41,14 @@ import android.print.PrintDocumentAdapter.LayoutResultCallback;
 import android.print.PrintDocumentAdapter.WriteResultCallback;
 import android.print.PrintManager;
 import android.print.PrinterId;
-import android.print.cts.services.FirstPrintService;
 import android.print.cts.services.PrintServiceCallbacks;
 import android.print.cts.services.PrinterDiscoverySessionCallbacks;
-import android.print.cts.services.SecondPrintService;
 import android.print.cts.services.StubbablePrinterDiscoverySession;
 import android.print.pdf.PrintedPdfDocument;
 import android.printservice.PrintJob;
 import android.printservice.PrintService;
 import android.support.test.uiautomator.UiAutomatorTestCase;
+import android.support.test.uiautomator.UiDevice;
 import android.support.test.uiautomator.UiObject;
 import android.support.test.uiautomator.UiObjectNotFoundException;
 import android.support.test.uiautomator.UiSelector;
@@ -155,7 +154,6 @@ public abstract class BasePrintTest extends UiAutomatorTestCase {
 
         // Make sure we start with a clean slate.
         clearPrintSpoolerData();
-        enablePrintServices();
         disableImes();
 
         // Workaround for dexmaker bug: https://code.google.com/p/dexmaker/issues/detail?id=2
@@ -207,9 +205,10 @@ public abstract class BasePrintTest extends UiAutomatorTestCase {
             resources.updateConfiguration(newConfiguration, displayMetrics);
         }
 
-        disablePrintServices();
         // Make sure the spooler is cleaned.
         clearPrintSpoolerData();
+
+        unapproveAllServices();
 
         super.tearDown();
     }
@@ -304,6 +303,17 @@ public abstract class BasePrintTest extends UiAutomatorTestCase {
         }
     }
 
+    protected void answerPrintServicesWarning(boolean confirm) throws UiObjectNotFoundException {
+        UiDevice uiDevice = UiDevice.getInstance(getInstrumentation());
+        UiObject button;
+        if (confirm) {
+            button = uiDevice.findObject(new UiSelector().resourceId("android:id/button1"));
+        } else {
+            button = uiDevice.findObject(new UiSelector().resourceId("android:id/button2"));
+        }
+        button.click();
+    }
+
     protected void changeOrientation(String orientation) throws UiObjectNotFoundException {
         try {
             UiObject orientationSpinner = new UiObject(new UiSelector().resourceId(
@@ -396,18 +406,8 @@ public abstract class BasePrintTest extends UiAutomatorTestCase {
                             .contains(PM_CLEAR_SUCCESS_OUTPUT));
     }
 
-    private void enablePrintServices() throws Exception {
-        String pkgName = getInstrumentation().getContext().getPackageName();
-        String enabledServicesValue = String.format("%s/%s:%s/%s",
-                pkgName, FirstPrintService.class.getCanonicalName(),
-                pkgName, SecondPrintService.class.getCanonicalName());
-        SystemUtil.runShellCommand(getInstrumentation(),
-                "settings put secure enabled_print_services " + enabledServicesValue);
-    }
-
-    private void disablePrintServices() throws Exception {
-        SystemUtil.runShellCommand(getInstrumentation(),
-                "settings put secure enabled_print_services \"\"");
+    private void unapproveAllServices() throws IOException {
+        SystemUtil.runShellCommand(getInstrumentation(), "pm clear com.android.printspooler");
     }
 
     protected void verifyLayoutCall(InOrder inOrder, PrintDocumentAdapter mock,
