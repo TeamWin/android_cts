@@ -2565,6 +2565,129 @@ public class TextViewTest extends ActivityInstrumentationTestCase2<TextViewCtsAc
         }
     }
 
+    @UiThreadTest
+    public void testAppend_doesNotAddLinksWhenAppendedTextDoesNotContainLinks() {
+        mTextView = new TextView(mActivity);
+        mTextView.setAutoLinkMask(Linkify.ALL);
+        mTextView.setText("text without URL");
+
+        mTextView.append(" another text without URL");
+
+        Spannable text = (Spannable) mTextView.getText();
+        URLSpan[] urlSpans = text.getSpans(0, text.length(), URLSpan.class);
+        assertEquals("URLSpan count should be zero", 0, urlSpans.length);
+        assertEquals("text without URL another text without URL", text.toString());
+    }
+
+    @UiThreadTest
+    public void testAppend_doesNotAddLinksWhenAutoLinkIsNotEnabled() {
+        mTextView = new TextView(mActivity);
+        mTextView.setText("text without URL");
+
+        mTextView.append(" text with URL http://android.com");
+
+        Spannable text = (Spannable) mTextView.getText();
+        URLSpan[] urlSpans = text.getSpans(0, text.length(), URLSpan.class);
+        assertEquals("URLSpan count should be zero", 0, urlSpans.length);
+        assertEquals("text without URL text with URL http://android.com", text.toString());
+    }
+
+    @UiThreadTest
+    public void testAppend_addsLinksWhenAutoLinkIsEnabled() {
+        mTextView = new TextView(mActivity);
+        mTextView.setAutoLinkMask(Linkify.ALL);
+        mTextView.setText("text without URL");
+
+        mTextView.append(" text with URL http://android.com");
+
+        Spannable text = (Spannable) mTextView.getText();
+        URLSpan[] urlSpans = text.getSpans(0, text.length(), URLSpan.class);
+        assertEquals("URLSpan count should be one after appending a URL", 1, urlSpans.length);
+        assertEquals("URLSpan URL should be same as the appended URL",
+                urlSpans[0].getURL(), "http://android.com");
+        assertEquals("text without URL text with URL http://android.com", text.toString());
+    }
+
+    @UiThreadTest
+    public void testAppend_addsLinksEvenWhenThereAreUrlsSetBefore() {
+        mTextView = new TextView(mActivity);
+        mTextView.setAutoLinkMask(Linkify.ALL);
+        mTextView.setText("text with URL http://android.com/before");
+
+        mTextView.append(" text with URL http://android.com");
+
+        Spannable text = (Spannable) mTextView.getText();
+        URLSpan[] urlSpans = text.getSpans(0, text.length(), URLSpan.class);
+        assertEquals("URLSpan count should be two after appending another URL", 2, urlSpans.length);
+        assertEquals("First URLSpan URL should be same",
+                urlSpans[0].getURL(), "http://android.com/before");
+        assertEquals("URLSpan URL should be same as the appended URL",
+                urlSpans[1].getURL(), "http://android.com");
+        assertEquals("text with URL http://android.com/before text with URL http://android.com",
+                text.toString());
+    }
+
+    @UiThreadTest
+    public void testAppend_setsMovementMethodWhenTextContainsUrlAndAutoLinkIsEnabled() {
+        mTextView = new TextView(mActivity);
+        mTextView.setAutoLinkMask(Linkify.ALL);
+        mTextView.setText("text without a URL");
+
+        mTextView.append(" text with a url: http://android.com");
+
+        assertNotNull("MovementMethod should not be null when text contains url",
+                mTextView.getMovementMethod());
+        assertTrue("MovementMethod should be instance of LinkMovementMethod when text contains url",
+                mTextView.getMovementMethod() instanceof LinkMovementMethod);
+    }
+
+    @UiThreadTest
+    public void testAppend_addsLinksWhenTextIsSpannableAndContainsUrlAndAutoLinkIsEnabled() {
+        mTextView = new TextView(mActivity);
+        mTextView.setAutoLinkMask(Linkify.ALL);
+        mTextView.setText("text without a URL");
+
+        mTextView.append(new SpannableString(" text with a url: http://android.com"));
+
+        Spannable text = (Spannable) mTextView.getText();
+        URLSpan[] urlSpans = text.getSpans(0, text.length(), URLSpan.class);
+        assertEquals("URLSpan count should be one after appending a URL", 1, urlSpans.length);
+        assertEquals("URLSpan URL should be same as the appended URL",
+                urlSpans[0].getURL(), "http://android.com");
+    }
+
+    @UiThreadTest
+    public void testAppend_addsLinkIfAppendedTextCompletesPartialUrlAtTheEndOfExistingText() {
+        mTextView = new TextView(mActivity);
+        mTextView.setAutoLinkMask(Linkify.ALL);
+        mTextView.setText("text with a partial url android.");
+
+        mTextView.append("com");
+
+        Spannable text = (Spannable) mTextView.getText();
+        URLSpan[] urlSpans = text.getSpans(0, text.length(), URLSpan.class);
+        assertEquals("URLSpan count should be one after appending to partial URL",
+                1, urlSpans.length);
+        assertEquals("URLSpan URL should be same as the appended URL",
+                urlSpans[0].getURL(), "http://android.com");
+    }
+
+    @UiThreadTest
+    public void testAppend_addsLinkIfAppendedTextUpdatesUrlAtTheEndOfExistingText() {
+        mTextView = new TextView(mActivity);
+        mTextView.setAutoLinkMask(Linkify.ALL);
+        mTextView.setText("text with a url http://android.com");
+
+        mTextView.append("/textview");
+
+        Spannable text = (Spannable) mTextView.getText();
+        URLSpan[] urlSpans = text.getSpans(0, text.length(), URLSpan.class);
+        assertEquals("URLSpan count should still be one after extending a URL", 1, urlSpans.length);
+        assertEquals("URLSpan URL should be same as the new URL",
+                urlSpans[0].getURL(), "http://android.com/textview");
+    }
+
+
     public void testAccessTransformationMethod() {
         // check the password attribute in xml
         mTextView = findTextView(R.id.textview_password);
