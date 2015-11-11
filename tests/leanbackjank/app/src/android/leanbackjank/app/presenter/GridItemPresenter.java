@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.cts.jank.leanback.presenter;
+package android.leanbackjank.app.presenter;
 
 import android.graphics.Color;
 import android.support.v17.leanback.widget.Presenter;
@@ -22,8 +22,8 @@ import android.view.Gravity;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
-import android.cts.jank.leanback.R;
-import android.cts.jank.leanback.ui.MainFragment;
+import android.leanbackjank.app.R;
+import android.leanbackjank.app.ui.MainFragment;
 
 public class GridItemPresenter extends Presenter {
     private static int GRID_ITEM_WIDTH = 200;

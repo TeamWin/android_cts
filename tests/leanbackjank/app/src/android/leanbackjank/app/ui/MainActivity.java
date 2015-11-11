@@ -12,11 +12,11 @@
  * the License.
  */
 
-package android.cts.jank.leanback.ui;
+package android.leanbackjank.app.ui;
 
 import android.app.Activity;
 import android.os.Bundle;
-import android.cts.jank.leanback.R;
+import android.leanbackjank.app.R;
 
 /**
  * MainActivity class that loads MainFragment

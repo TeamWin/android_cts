@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.cts.jank.leanback.model;
+package android.leanbackjank.app.model;
 
 import android.os.Parcel;
 import android.os.Parcelable;

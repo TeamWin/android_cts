@@ -12,17 +12,17 @@
  * the License.
  */
 
-package android.cts.jank.leanback.ui;
+package android.leanbackjank.app.ui;
 
 import android.content.Intent;
 import android.content.res.Resources.Theme;
-import android.cts.jank.leanback.IntentKeys;
-import android.cts.jank.leanback.R;
-import android.cts.jank.leanback.data.VideoProvider;
-import android.cts.jank.leanback.model.Movie;
-import android.cts.jank.leanback.presenter.CardPresenter;
-import android.cts.jank.leanback.presenter.GridItemPresenter;
-import android.cts.jank.leanback.presenter.IconHeaderItemPresenter;
+import android.leanbackjank.app.IntentKeys;
+import android.leanbackjank.app.R;
+import android.leanbackjank.app.data.VideoProvider;
+import android.leanbackjank.app.model.Movie;
+import android.leanbackjank.app.presenter.CardPresenter;
+import android.leanbackjank.app.presenter.GridItemPresenter;
+import android.leanbackjank.app.presenter.IconHeaderItemPresenter;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.v17.leanback.app.BackgroundManager;

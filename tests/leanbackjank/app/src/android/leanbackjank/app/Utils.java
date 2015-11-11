@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.cts.jank.leanback;
+package android.leanbackjank.app;
 
 import android.app.Activity;
 import android.content.Context;

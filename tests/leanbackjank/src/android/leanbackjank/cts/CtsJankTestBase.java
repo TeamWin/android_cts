@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.cts.leanbackjank;
+package android.leanbackjank.cts;
 
 import android.cts.util.DeviceReportLog;
 import android.os.Bundle;

@@ -12,12 +12,12 @@
  * the License.
  */
 
-package android.cts.leanbackjank;
+package android.leanbackjank.cts;
 
 import android.content.ComponentName;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.cts.jank.leanback.IntentKeys;
+import android.leanbackjank.app.IntentKeys;
 import android.os.SystemClock;
 import android.support.test.jank.GfxMonitor;
 import android.support.test.jank.JankTest;
@@ -37,8 +37,8 @@ public class CtsDeviceLeanback extends CtsJankTestBase {
     private static final int SAMPLING_DURATION_SECONDS = 3;
     private static final int SAMPLING_DURATION_MILLIS =
             SAMPLING_DURATION_SECONDS * MILLIS_PER_SECOND;
-    private final static String APP_PACKAGE = "android.cts.jank.leanback";
-    private final static String JAVA_PACKAGE = "android.cts.jank.leanback.ui";
+    private final static String APP_PACKAGE = "android.leanbackjank.app";
+    private final static String JAVA_PACKAGE = "android.leanbackjank.app.ui";
     private final static String CLASS = JAVA_PACKAGE + ".MainActivity";
 
     private boolean shouldSkip() {

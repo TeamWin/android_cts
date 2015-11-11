@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-package android.cts.jank.leanback.data;
+package android.leanbackjank.app.data;
 
-import android.cts.jank.leanback.model.Movie;
+import android.leanbackjank.app.model.Movie;
 
 import java.util.ArrayList;
 import java.util.HashMap;
