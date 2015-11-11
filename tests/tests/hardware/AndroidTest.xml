@@ -13,6 +13,17 @@
      limitations under the License.
 -->
 <configuration description="Config for CTS Hardware test cases">
+
+    <target_preparer class="com.android.compatibility.common.tradefed.targetprep.SettingsPreparer">
+        <option name="device-setting" value="location_providers_allowed"/>
+        <option name="setting-type" value="secure"/>
+        <!-- Conditions that enable location services to some degree -->
+        <option name="expected-values" value="gps"/> <!-- Location by GPS -->
+        <option name="expected-values" value="network"/> <!-- Location by Network -->
+        <option name="expected-values" value="network,gps"/> <!-- Location by GPS or Network -->
+        <option name="expected-values" value="gps,network"/> <!-- Location by GPS or Network -->
+    </target_preparer>
+
     <target_preparer class="com.android.compatibility.common.tradefed.targetprep.ApkInstaller">
         <option name="cleanup-apks" value="true" />
         <option name="test-file-name" value="CtsHardwareTestCases.apk" />
@@ -23,8 +34,8 @@
         <option name="run-command" value="dumpsys sensorservice restrict .cts." />
         <option name="teardown-command" value="dumpsys sensorservice enable" />
     </target_preparer>
-
     <test class="com.android.tradefed.testtype.AndroidJUnitTest" >
         <option name="package" value="com.android.cts.hardware" />
     </test>
+
 </configuration>

@@ -14,7 +14,18 @@
      limitations under the License.
 -->
 <configuration description="Config for CTS Webkit test cases">
+
     <target_preparer class="com.android.compatibility.common.tradefed.targetprep.WifiCheck" />
+    <target_preparer class="com.android.compatibility.common.tradefed.targetprep.SettingsPreparer">
+        <option name="device-setting" value="location_providers_allowed"/>
+        <option name="setting-type" value="secure"/>
+        <!-- Conditions that enable location services to some degree -->
+        <option name="expected-values" value="gps"/> <!-- Location by GPS -->
+        <option name="expected-values" value="network"/> <!-- Location by Network -->
+        <option name="expected-values" value="network,gps"/> <!-- Location by GPS or Network -->
+        <option name="expected-values" value="gps,network"/> <!-- Location by GPS or Network -->
+    </target_preparer>
+
     <target_preparer class="com.android.compatibility.common.tradefed.targetprep.ApkInstaller">
         <option name="cleanup-apks" value="true" />
         <option name="test-file-name" value="CtsWebkitTestCases.apk" />
@@ -22,4 +33,5 @@
     <test class="com.android.tradefed.testtype.AndroidJUnitTest" >
         <option name="package" value="android.webkit.cts" />
     </test>
+
 </configuration>
