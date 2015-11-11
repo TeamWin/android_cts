@@ -263,6 +263,8 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
         } catch (Error e) {
             CLog.logAndDisplay(LogLevel.ERROR, "Error: %s", e.getMessage());
             CLog.e(e);
+        } finally {
+            ModuleRepo.tearDown();
         }
     }
 
@@ -326,6 +328,8 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
                             TestFilter filter = new TestFilter(
                                     module.getAbi(), module.getName(), r.getFullName());
                             mIncludeFilters.add(filter.toString());
+                            // Reset the result so that the test gets retried.
+                            r.reset();
                         }
                     }
                 }

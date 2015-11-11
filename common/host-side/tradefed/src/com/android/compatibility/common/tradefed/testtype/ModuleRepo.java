@@ -23,7 +23,6 @@ import com.android.tradefed.config.ConfigurationFactory;
 import com.android.tradefed.config.IConfiguration;
 import com.android.tradefed.config.IConfigurationFactory;
 import com.android.tradefed.log.LogUtil.CLog;
-import com.android.tradefed.targetprep.ITargetPreparer;
 import com.android.tradefed.testtype.IAbi;
 import com.android.tradefed.testtype.IRemoteTest;
 import com.android.tradefed.testtype.IShardableTest;
@@ -71,6 +70,10 @@ public class ModuleRepo implements IModuleRepo {
             sInstance = new ModuleRepo();
         }
         return sInstance;
+    }
+
+    public static void tearDown() {
+        sInstance = null;
     }
 
     /**

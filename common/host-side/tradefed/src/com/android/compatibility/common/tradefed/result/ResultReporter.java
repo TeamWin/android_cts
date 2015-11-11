@@ -179,8 +179,6 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
     public void testStarted(TestIdentifier test) {
         mCurrentCaseResult = mCurrentModuleResult.getOrCreateResult(test.getClassName());
         mCurrentResult = mCurrentCaseResult.getOrCreateResult(test.getTestName());
-        // Reset the result
-        mCurrentResult.resetResult();
     }
 
     /**
