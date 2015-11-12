@@ -34,6 +34,7 @@ import android.test.AndroidTestCase;
 import android.util.AttributeSet;
 import android.util.StateSet;
 import android.util.Xml;
+import android.view.InflateException;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -58,23 +59,25 @@ public class InsetDrawableTest extends AndroidTestCase {
 
         try {
             insetDrawable.inflate(r, parser, attrs);
-            fail("There should be a XmlPullParserException thrown out.");
-        } catch (XmlPullParserException e) {
+            fail("There should be an InflateException thrown out.");
+        } catch (InflateException e) {
             // expected, test success
         } catch (IOException e) {
             fail("There should not be an IOException thrown out.");
+        } catch (XmlPullParserException e) {
+            fail("There should not be a XmlPullParserException thrown out.");
         }
 
         // input null as params
         try {
             insetDrawable.inflate(null, null, null);
             fail("There should be a NullPointerException thrown out.");
-        } catch (XmlPullParserException e) {
-            fail("There should not be a XmlPullParserException thrown out.");
-        } catch (IOException e) {
-            fail("There should not be an IOException thrown out.");
         } catch (NullPointerException e) {
             // expected, test success
+        } catch (IOException e) {
+            fail("There should not be an IOException thrown out.");
+        } catch (XmlPullParserException e) {
+            fail("There should not be a XmlPullParserException thrown out.");
         }
     }
 

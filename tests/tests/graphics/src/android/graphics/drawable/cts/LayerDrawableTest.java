@@ -261,7 +261,12 @@ public class LayerDrawableTest extends AndroidTestCase {
 
     @SuppressWarnings("deprecation")
     public void testSetLayerInset() {
-        Drawable[] array = new Drawable[] { new BitmapDrawable(), new ColorDrawable(Color.BLUE) };
+        MockDrawable firstLayer = new MockDrawable();
+        firstLayer.setIntrinsicSize(10, 10);
+        MockDrawable secondLayer = new MockDrawable();
+        secondLayer.setIntrinsicSize(-1, -1);
+
+        Drawable[] array = new Drawable[] { firstLayer, secondLayer };
         LayerDrawable layerDrawable = new LayerDrawable(array);
 
         // set inset for layer 0
@@ -275,15 +280,12 @@ public class LayerDrawableTest extends AndroidTestCase {
         assertEquals(layerDrawable.getDrawable(0).getIntrinsicHeight() + top + bottom,
                 layerDrawable.getIntrinsicHeight());
 
-        // set bigger inset for layer 1
-        left += 10;
-        top += 10;
-        right += 10;
-        bottom += 10;
-        layerDrawable.setLayerInset(1, left, top, right, bottom);
-        assertEquals(layerDrawable.getDrawable(1).getIntrinsicWidth() + left + right,
+        // The drawable at index 0 has no intrinsic width or height, so it
+        // won't be counted for the overall intrinsic width or height.
+        layerDrawable.setLayerInset(1, 10, 10, 10, 10);
+        assertEquals(layerDrawable.getDrawable(0).getIntrinsicWidth() + left + right,
                 layerDrawable.getIntrinsicWidth());
-        assertEquals(layerDrawable.getDrawable(1).getIntrinsicHeight() + top + bottom,
+        assertEquals(layerDrawable.getDrawable(0).getIntrinsicHeight() + top + bottom,
                 layerDrawable.getIntrinsicHeight());
 
         try {
@@ -738,11 +740,13 @@ public class LayerDrawableTest extends AndroidTestCase {
     }
 
     public void testGetIntrinsicWidth() {
-        MockDrawable mockDrawable1 = new MockDrawable();
-        MockDrawable mockDrawable2 = new MockDrawable();
-        Drawable[] array = new Drawable[] { mockDrawable1, mockDrawable2 };
+        MockDrawable largeMockDrawable = new MockDrawable();
+        largeMockDrawable.setIntrinsicSize(10, 10);
+        MockDrawable smallMockDrawable = new MockDrawable();
+        smallMockDrawable.setIntrinsicSize(1, 1);
+        Drawable[] array = new Drawable[] { largeMockDrawable, smallMockDrawable };
         LayerDrawable layerDrawable = new LayerDrawable(array);
-        assertEquals(mockDrawable1.getIntrinsicWidth(), layerDrawable.getIntrinsicWidth());
+        assertEquals(largeMockDrawable.getIntrinsicWidth(), layerDrawable.getIntrinsicWidth());
 
         Rect inset1 = new Rect(1, 2, 3, 4);
         Rect inset2 = new Rect(2, 4, 6, 7);
@@ -750,26 +754,28 @@ public class LayerDrawableTest extends AndroidTestCase {
         Rect padding2 = new Rect(21, 32, 43, 54);
         layerDrawable.setLayerInset(0, inset1.left, inset1.top, inset1.right, inset1.bottom);
         layerDrawable.setLayerInset(1, inset2.left, inset2.top, inset2.right, inset2.bottom);
-        mockDrawable1.setPadding(padding1);
-        mockDrawable2.setPadding(padding2);
+        largeMockDrawable.setPadding(padding1);
+        smallMockDrawable.setPadding(padding2);
         layerDrawable.getPadding(new Rect());
-        assertEquals(mockDrawable2.getIntrinsicWidth() + inset2.left
+        assertEquals(smallMockDrawable.getIntrinsicWidth() + inset2.left
                 + inset2.right + padding1.left + padding1.right,
                 layerDrawable.getIntrinsicWidth());
 
         inset1 = new Rect(inset2.left + padding1.left + 1, inset2.top + padding1.top + 1,
                 inset2.right + padding1.right + 1, inset2.bottom + padding1.bottom + 1);
         layerDrawable.setLayerInset(0, inset1.left, inset1.top, inset1.right, inset1.bottom);
-        assertEquals(mockDrawable1.getIntrinsicWidth() + inset1.left + inset1.right,
+        assertEquals(largeMockDrawable.getIntrinsicWidth() + inset1.left + inset1.right,
                 layerDrawable.getIntrinsicWidth());
     }
 
     public void testGetIntrinsicHeight() {
-        MockDrawable mockDrawable1 = new MockDrawable();
-        MockDrawable mockDrawable2 = new MockDrawable();
-        Drawable[] array = new Drawable[] { mockDrawable1, mockDrawable2 };
+        MockDrawable largeMockDrawable = new MockDrawable();
+        largeMockDrawable.setIntrinsicSize(10, 10);
+        MockDrawable smallMockDrawable = new MockDrawable();
+        smallMockDrawable.setIntrinsicSize(1, 1);
+        Drawable[] array = new Drawable[] { largeMockDrawable, smallMockDrawable };
         LayerDrawable layerDrawable = new LayerDrawable(array);
-        assertEquals(mockDrawable1.getIntrinsicHeight(), layerDrawable.getIntrinsicHeight());
+        assertEquals(largeMockDrawable.getIntrinsicHeight(), layerDrawable.getIntrinsicHeight());
 
         Rect inset1 = new Rect(1, 2, 3, 4);
         Rect inset2 = new Rect(2, 4, 6, 7);
@@ -777,17 +783,17 @@ public class LayerDrawableTest extends AndroidTestCase {
         Rect padding2 = new Rect(21, 32, 43, 54);
         layerDrawable.setLayerInset(0, inset1.left, inset1.top, inset1.right, inset1.bottom);
         layerDrawable.setLayerInset(1, inset2.left, inset2.top, inset2.right, inset2.bottom);
-        mockDrawable1.setPadding(padding1);
-        mockDrawable2.setPadding(padding2);
+        largeMockDrawable.setPadding(padding1);
+        smallMockDrawable.setPadding(padding2);
         layerDrawable.getPadding(new Rect());
-        assertEquals(mockDrawable2.getIntrinsicHeight() + inset2.top
+        assertEquals(smallMockDrawable.getIntrinsicHeight() + inset2.top
                 + inset2.bottom + padding1.top + padding1.bottom,
                 layerDrawable.getIntrinsicHeight());
 
         inset1 = new Rect(inset2.left + padding1.left + 1, inset2.top + padding1.top + 1,
                 inset2.right + padding1.right + 1, inset2.bottom + padding1.bottom + 1);
         layerDrawable.setLayerInset(0, inset1.left, inset1.top, inset1.right, inset1.bottom);
-        assertEquals(mockDrawable1.getIntrinsicHeight() + inset1.top + inset1.bottom,
+        assertEquals(largeMockDrawable.getIntrinsicHeight() + inset1.top + inset1.bottom,
                 layerDrawable.getIntrinsicHeight());
     }
 
@@ -1074,10 +1080,14 @@ public class LayerDrawableTest extends AndroidTestCase {
 
     @SuppressWarnings("deprecation")
     public void testSetLayerInsetRelative() {
-        Drawable[] array = new Drawable[] { new BitmapDrawable(), new ColorDrawable(Color.BLUE) };
+        MockDrawable firstLayer = new MockDrawable();
+        firstLayer.setIntrinsicSize(10, 10);
+        MockDrawable secondLayer = new MockDrawable();
+        secondLayer.setIntrinsicSize(-1, -1);
+
+        Drawable[] array = new Drawable[] { firstLayer, secondLayer };
         LayerDrawable layerDrawable = new LayerDrawable(array);
 
-        // set inset for layer 0
         int start = 10;
         int top = 20;
         int end = 30;
@@ -1087,24 +1097,20 @@ public class LayerDrawableTest extends AndroidTestCase {
                 layerDrawable.getIntrinsicWidth());
         assertEquals(layerDrawable.getDrawable(0).getIntrinsicHeight() + top + bottom,
                 layerDrawable.getIntrinsicHeight());
-        assertEquals(10, layerDrawable.getLayerInsetStart(0));
-        assertEquals(20, layerDrawable.getLayerInsetTop(0));
-        assertEquals(30, layerDrawable.getLayerInsetEnd(0));
-        assertEquals(40, layerDrawable.getLayerInsetBottom(0));
+        assertEquals(start, layerDrawable.getLayerInsetStart(0));
+        assertEquals(top, layerDrawable.getLayerInsetTop(0));
+        assertEquals(end, layerDrawable.getLayerInsetEnd(0));
+        assertEquals(bottom, layerDrawable.getLayerInsetBottom(0));
         assertEquals(0, layerDrawable.getLayerInsetLeft(0));
         assertEquals(0, layerDrawable.getLayerInsetRight(0));
 
-        // set bigger inset for layer 1
-        start += 10;
-        top += 10;
-        end += 10;
-        bottom += 10;
-        layerDrawable.setLayerInsetRelative(1, start, top, end, bottom);
-        assertEquals(layerDrawable.getDrawable(1).getIntrinsicWidth() + start + end,
+        // The drawable at index 1 has no intrinsic width or height, so it
+        // won't be counted for the overall intrinsic width or height.
+        layerDrawable.setLayerInsetRelative(1, 10, 10, 10, 10);
+        assertEquals(layerDrawable.getDrawable(0).getIntrinsicWidth() + start + end,
                 layerDrawable.getIntrinsicWidth());
-        assertEquals(layerDrawable.getDrawable(1).getIntrinsicHeight() + top + bottom,
+        assertEquals(layerDrawable.getDrawable(0).getIntrinsicHeight() + top + bottom,
                 layerDrawable.getIntrinsicHeight());
-
 
         try {
             layerDrawable.setLayerInsetRelative(-1, start, top, end, bottom);
@@ -1448,6 +1454,9 @@ public class LayerDrawableTest extends AndroidTestCase {
 
         private int mOpacity = PixelFormat.OPAQUE;
 
+        private int mIntrinsicWidth = -1;
+        private int mIntrinsicHeight = -1;
+
         private boolean mDither = false;
 
         Rect mPadding = null;
@@ -1492,6 +1501,21 @@ public class LayerDrawableTest extends AndroidTestCase {
         public void setDither(boolean dither) {
             mDither = dither;
             mCalledSetDither = true;
+        }
+
+        public void setIntrinsicSize(int width, int height) {
+            mIntrinsicWidth = width;
+            mIntrinsicHeight = height;
+        }
+
+        @Override
+        public int getIntrinsicWidth() {
+            return mIntrinsicWidth;
+        }
+
+        @Override
+        public int getIntrinsicHeight() {
+            return mIntrinsicHeight;
         }
 
         public boolean hasCalledSetDither() {

@@ -347,7 +347,7 @@ public class GradientDrawableTest extends AndroidTestCase {
         assertEquals(Math.round(origWidth / 2f), halfDrawable.getIntrinsicWidth());
         assertEquals(Math.round(origHeight / 2f), halfDrawable.getIntrinsicHeight());
         assertTrue(halfDrawable.getPadding(tempPadding));
-        assertEquals(Math.round(origPadding.left / 2f), tempPadding.left);
+        assertEquals((int) (origPadding.left / 2f), tempPadding.left);
 
         // Set density to double original.
         DrawableTestUtils.setResourcesDensity(res, densityDpi * 2);
