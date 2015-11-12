@@ -284,28 +284,48 @@ public class InsetDrawableTest extends AndroidTestCase {
         Drawable d = mContext.getDrawable(R.drawable.pass);
         InsetDrawable insetDrawable = new InsetDrawable(d, 0);
 
-        int expected = d.getIntrinsicWidth(); /* 31 */
+        int expected = d.getIntrinsicWidth();
         assertEquals(expected, insetDrawable.getIntrinsicWidth());
 
         d = mContext.getDrawable(R.drawable.scenery);
         insetDrawable = new InsetDrawable(d, 0);
 
-        expected = d.getIntrinsicWidth(); /* 170 */
+        expected = d.getIntrinsicWidth();
         assertEquals(expected, insetDrawable.getIntrinsicWidth());
+
+        d = mContext.getDrawable(R.drawable.scenery);
+        insetDrawable = new InsetDrawable(d, 20);
+
+        expected = d.getIntrinsicWidth() + 40;
+        assertEquals(expected, insetDrawable.getIntrinsicWidth());
+
+        d = mContext.getDrawable(R.drawable.inset_color);
+        expected = -1;
+        assertEquals(expected, d.getIntrinsicWidth());
     }
 
     public void testGetIntrinsicHeight() {
         Drawable d = mContext.getDrawable(R.drawable.pass);
         InsetDrawable insetDrawable = new InsetDrawable(d, 0);
 
-        int expected = d.getIntrinsicHeight(); /* 31 */
+        int expected = d.getIntrinsicHeight();
         assertEquals(expected, insetDrawable.getIntrinsicHeight());
 
         d = mContext.getDrawable(R.drawable.scenery);
         insetDrawable = new InsetDrawable(d, 0);
 
-        expected = d.getIntrinsicHeight(); /* 107 */
+        expected = d.getIntrinsicHeight();
         assertEquals(expected, insetDrawable.getIntrinsicHeight());
+
+        d = mContext.getDrawable(R.drawable.scenery);
+        insetDrawable = new InsetDrawable(d, 20);
+
+        expected = d.getIntrinsicHeight() + 40;
+        assertEquals(expected, insetDrawable.getIntrinsicHeight());
+
+        d = mContext.getDrawable(R.drawable.inset_color);
+        expected = -1;
+        assertEquals(expected, d.getIntrinsicHeight());
     }
 
     public void testGetConstantState() {
