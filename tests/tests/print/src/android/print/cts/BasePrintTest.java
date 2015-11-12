@@ -205,24 +205,26 @@ public abstract class BasePrintTest extends UiAutomatorTestCase {
             resources.updateConfiguration(newConfiguration, displayMetrics);
         }
 
-        // Make sure the spooler is cleaned.
+        // Make sure the spooler is cleaned, this also un-approves all services
         clearPrintSpoolerData();
-
-        unapproveAllServices();
 
         super.tearDown();
     }
 
-    protected void print(final PrintDocumentAdapter adapter) {
+    protected void print(final PrintDocumentAdapter adapter, final PrintAttributes attributes) {
         // Initiate printing as if coming from the app.
         getInstrumentation().runOnMainSync(new Runnable() {
             @Override
             public void run() {
                 PrintManager printManager = (PrintManager) getActivity()
                         .getSystemService(Context.PRINT_SERVICE);
-                printManager.print("Print job", adapter, null);
+                printManager.print("Print job", adapter, attributes);
             }
         });
+    }
+
+    protected void print(PrintDocumentAdapter adapter) {
+        print(adapter, null);
     }
 
     protected void onCancelOperationCalled() {
@@ -387,7 +389,7 @@ public abstract class BasePrintTest extends UiAutomatorTestCase {
         return mActivity;
     }
 
-    private void createActivity() {
+    protected void createActivity() {
         mActivity = launchActivity(
                 getInstrumentation().getTargetContext().getPackageName(),
                 PrintDocumentActivity.class, null);
@@ -404,10 +406,6 @@ public abstract class BasePrintTest extends UiAutomatorTestCase {
                 SystemUtil.runShellCommand(getInstrumentation(),
                         String.format("pm clear %s", PRINT_SPOOLER_PACKAGE_NAME))
                             .contains(PM_CLEAR_SUCCESS_OUTPUT));
-    }
-
-    private void unapproveAllServices() throws IOException {
-        SystemUtil.runShellCommand(getInstrumentation(), "pm clear com.android.printspooler");
     }
 
     protected void verifyLayoutCall(InOrder inOrder, PrintDocumentAdapter mock,

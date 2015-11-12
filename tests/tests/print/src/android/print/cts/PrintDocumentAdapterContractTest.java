@@ -145,6 +145,7 @@ public class PrintDocumentAdapterContractTest extends BasePrintTest {
                 .setResolution(new Resolution("PDF resolution", "PDF resolution", 300, 300))
                 .setMinMargins(Margins.NO_MARGINS)
                 .setColorMode(PrintAttributes.COLOR_MODE_COLOR)
+                .setDuplexMode(PrintAttributes.DUPLEX_MODE_NONE)
                 .build();
         verifyLayoutCall(inOrder, adapter, firstOldAttributes, firstNewAttributes, true);
 
@@ -259,6 +260,7 @@ public class PrintDocumentAdapterContractTest extends BasePrintTest {
                 .setResolution(new Resolution("PDF resolution", "PDF resolution", 300, 300))
                 .setMinMargins(Margins.NO_MARGINS)
                 .setColorMode(PrintAttributes.COLOR_MODE_COLOR)
+                .setDuplexMode(PrintAttributes.DUPLEX_MODE_NONE)
                 .build();
         verifyLayoutCall(inOrder, adapter, firstOldAttributes, firstNewAttributes, true);
 
@@ -389,6 +391,7 @@ public class PrintDocumentAdapterContractTest extends BasePrintTest {
                 .setResolution(new Resolution("PDF resolution", "PDF resolution", 300, 300))
                 .setMinMargins(Margins.NO_MARGINS)
                 .setColorMode(PrintAttributes.COLOR_MODE_COLOR)
+                .setDuplexMode(PrintAttributes.DUPLEX_MODE_NONE)
                 .build();
         verifyLayoutCall(inOrder, adapter, firstOldAttributes, firstNewAttributes, true);
 
@@ -581,6 +584,7 @@ public class PrintDocumentAdapterContractTest extends BasePrintTest {
                 .setResolution(new Resolution("PDF resolution", "PDF resolution", 300, 300))
                 .setMinMargins(Margins.NO_MARGINS)
                 .setColorMode(PrintAttributes.COLOR_MODE_COLOR)
+                .setDuplexMode(PrintAttributes.DUPLEX_MODE_NONE)
                 .build();
         verifyLayoutCall(inOrder, adapter, firstOldAttributes, firstNewAttributes, true);
 
@@ -622,6 +626,7 @@ public class PrintDocumentAdapterContractTest extends BasePrintTest {
                 .setResolution(new Resolution("PDF resolution", "PDF resolution", 300, 300))
                 .setMinMargins(new Margins(200, 200, 200, 200))
                 .setColorMode(PrintAttributes.COLOR_MODE_COLOR)
+                .setDuplexMode(PrintAttributes.DUPLEX_MODE_NONE)
                 .build();
         verifyLayoutCall(inOrder, adapter, fourthOldAttributes, fourthNewAttributes, true);
 
@@ -730,6 +735,7 @@ public class PrintDocumentAdapterContractTest extends BasePrintTest {
                 .setMediaSize(MediaSize.NA_LETTER)
                 .setResolution(new Resolution("PDF resolution", "PDF resolution", 300, 300))
                 .setMinMargins(Margins.NO_MARGINS).setColorMode(PrintAttributes.COLOR_MODE_COLOR)
+                .setDuplexMode(PrintAttributes.DUPLEX_MODE_NONE)
                 .build();
         verifyLayoutCall(inOrder, adapter, firstOldAttributes, firstNewAttributes, true);
 
@@ -857,6 +863,7 @@ public class PrintDocumentAdapterContractTest extends BasePrintTest {
                 .setMediaSize(MediaSize.NA_LETTER)
                 .setResolution(new Resolution("PDF resolution", "PDF resolution", 300, 300))
                 .setMinMargins(Margins.NO_MARGINS).setColorMode(PrintAttributes.COLOR_MODE_COLOR)
+                .setDuplexMode(PrintAttributes.DUPLEX_MODE_NONE)
                 .build();
         verifyLayoutCall(inOrder, adapter, firstOldAttributes, firstNewAttributes, true);
 
@@ -969,6 +976,7 @@ public class PrintDocumentAdapterContractTest extends BasePrintTest {
                 .setMediaSize(MediaSize.NA_LETTER)
                 .setResolution(new Resolution("PDF resolution", "PDF resolution", 300, 300))
                 .setMinMargins(Margins.NO_MARGINS).setColorMode(PrintAttributes.COLOR_MODE_COLOR)
+                .setDuplexMode(PrintAttributes.DUPLEX_MODE_NONE)
                 .build();
         verifyLayoutCall(inOrder, adapter, firstOldAttributes, firstNewAttributes, true);
 
@@ -1076,6 +1084,7 @@ public class PrintDocumentAdapterContractTest extends BasePrintTest {
                 .setMediaSize(MediaSize.NA_LETTER)
                 .setResolution(new Resolution("PDF resolution", "PDF resolution", 300, 300))
                 .setMinMargins(Margins.NO_MARGINS).setColorMode(PrintAttributes.COLOR_MODE_COLOR)
+                .setDuplexMode(PrintAttributes.DUPLEX_MODE_NONE)
                 .build();
         verifyLayoutCall(inOrder, adapter, firstOldAttributes, firstNewAttributes, true);
 
@@ -1170,6 +1179,7 @@ public class PrintDocumentAdapterContractTest extends BasePrintTest {
                 .setMediaSize(MediaSize.NA_LETTER)
                 .setResolution(new Resolution("PDF resolution", "PDF resolution", 300, 300))
                 .setMinMargins(Margins.NO_MARGINS).setColorMode(PrintAttributes.COLOR_MODE_COLOR)
+                .setDuplexMode(PrintAttributes.DUPLEX_MODE_NONE)
                 .build();
         verifyLayoutCall(inOrder, adapter, firstOldAttributes, firstNewAttributes, true);
 
@@ -1242,6 +1252,7 @@ public class PrintDocumentAdapterContractTest extends BasePrintTest {
                 .setMediaSize(MediaSize.NA_LETTER)
                 .setResolution(new Resolution("PDF resolution", "PDF resolution", 300, 300))
                 .setMinMargins(Margins.NO_MARGINS).setColorMode(PrintAttributes.COLOR_MODE_COLOR)
+                .setDuplexMode(PrintAttributes.DUPLEX_MODE_NONE)
                 .build();
         verifyLayoutCall(inOrder, adapter, firstOldAttributes, firstNewAttributes, true);
 
@@ -1324,6 +1335,7 @@ public class PrintDocumentAdapterContractTest extends BasePrintTest {
                 .setMediaSize(MediaSize.NA_LETTER)
                 .setResolution(new Resolution("PDF resolution", "PDF resolution", 300, 300))
                 .setMinMargins(Margins.NO_MARGINS).setColorMode(PrintAttributes.COLOR_MODE_COLOR)
+                .setDuplexMode(PrintAttributes.DUPLEX_MODE_NONE)
                 .build();
         verifyLayoutCall(inOrder, adapter, firstOldAttributes, firstNewAttributes, true);
 
@@ -1416,6 +1428,7 @@ public class PrintDocumentAdapterContractTest extends BasePrintTest {
                 .setMediaSize(MediaSize.NA_LETTER)
                 .setResolution(new Resolution("PDF resolution", "PDF resolution", 300, 300))
                 .setMinMargins(Margins.NO_MARGINS).setColorMode(PrintAttributes.COLOR_MODE_COLOR)
+                .setDuplexMode(PrintAttributes.DUPLEX_MODE_NONE)
                 .build();
         verifyLayoutCall(inOrder, adapter, firstOldAttributes, firstNewAttributes, true);
 
@@ -1487,6 +1500,7 @@ public class PrintDocumentAdapterContractTest extends BasePrintTest {
                 .setMediaSize(MediaSize.NA_LETTER)
                 .setResolution(new Resolution("PDF resolution", "PDF resolution", 300, 300))
                 .setMinMargins(Margins.NO_MARGINS).setColorMode(PrintAttributes.COLOR_MODE_COLOR)
+                .setDuplexMode(PrintAttributes.DUPLEX_MODE_NONE)
                 .build();
         verifyLayoutCall(inOrder, adapter, firstOldAttributes, firstNewAttributes, true);
 
@@ -1566,6 +1580,7 @@ public class PrintDocumentAdapterContractTest extends BasePrintTest {
                 .setMediaSize(MediaSize.NA_LETTER)
                 .setResolution(new Resolution("PDF resolution", "PDF resolution", 300, 300))
                 .setMinMargins(Margins.NO_MARGINS).setColorMode(PrintAttributes.COLOR_MODE_COLOR)
+                .setDuplexMode(PrintAttributes.DUPLEX_MODE_NONE)
                 .build();
         verifyLayoutCall(inOrder, adapter, firstOldAttributes, firstNewAttributes, true);
 
