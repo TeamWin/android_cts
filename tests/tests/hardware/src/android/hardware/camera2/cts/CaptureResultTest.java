@@ -775,6 +775,8 @@ public class CaptureResultTest extends Camera2AndroidTestCase {
         resultKeys.add(CaptureResult.SENSOR_TEST_PATTERN_DATA);
         resultKeys.add(CaptureResult.SENSOR_TEST_PATTERN_MODE);
         resultKeys.add(CaptureResult.SENSOR_ROLLING_SHUTTER_SKEW);
+        resultKeys.add(CaptureResult.SENSOR_DYNAMIC_BLACK_LEVEL);
+        resultKeys.add(CaptureResult.SENSOR_DYNAMIC_WHITE_LEVEL);
         resultKeys.add(CaptureResult.SHADING_MODE);
         resultKeys.add(CaptureResult.STATISTICS_FACE_DETECT_MODE);
         resultKeys.add(CaptureResult.STATISTICS_HOT_PIXEL_MAP_MODE);
