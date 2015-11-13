@@ -20,6 +20,7 @@ package android.text.util.cts;
 import android.test.AndroidTestCase;
 import android.text.Spannable;
 import android.text.SpannableString;
+import android.text.SpannableStringBuilder;
 import android.text.style.URLSpan;
 import android.text.util.Linkify;
 import android.text.util.Linkify.MatchFilter;
@@ -349,4 +350,19 @@ public class LinkifyTest extends AndroidTestCase {
 
         assertFalse(Linkify.addLinks((Spannable) null, 0));
     }
+
+    public void testAddLinks_acceptsUrlsWithCommasInRequestParameterValues() throws Exception {
+        String url = "https://android.com/path?ll=37.4221,-122.0836&z=17&pll=37.4221,-122.0836";
+        Spannable spannable = new SpannableString(url);
+
+        Linkify.addLinks(spannable, Linkify.WEB_URLS);
+
+        URLSpan[] urlSpans = spannable.getSpans(0, spannable.length(), URLSpan.class);
+        assertEquals("Web URL parsing should accept commas", url, urlSpans[0].getURL());
+        assertEquals("Spannable should start from beginning of the given URL", 0,
+                spannable.getSpanStart(urlSpans[0]));
+        assertEquals("Spannable should end at the end of the given URL", url.length(),
+                spannable.getSpanEnd(urlSpans[0]));
+    }
+
 }
