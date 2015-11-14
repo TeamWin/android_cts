@@ -40,6 +40,8 @@ import java.util.List;
 @OptionClass(alias="wifi-check")
 public class WifiCheck extends PreconditionPreparer {
 
+    private static final String WIFI_FEATURE = "android.hardware.wifi";
+
     @Option(name = "wifi-ssid", description = "Name of the WiFi network with which to connect")
     protected String mWifiSsid = null;
 
@@ -47,9 +49,19 @@ public class WifiCheck extends PreconditionPreparer {
             description = "The WPA-PSK associated with the wifi-ssid option")
     protected String mWifiPsk = null;
 
+    private boolean hasWifiFeature(ITestDevice device) throws DeviceNotAvailableException {
+        String pmFeatures = device.executeShellCommand("pm list features");
+        return pmFeatures.contains(WIFI_FEATURE);
+    }
+
     @Override
     public void run(ITestDevice device, IBuildInfo buildInfo) throws TargetSetupError,
             BuildError, DeviceNotAvailableException {
+
+        if(!hasWifiFeature(device)) {
+            return; // skip this precondition check if device doesn't support wifi
+        }
+
         if (mWifiSsid == null) { // no connection to create, check for existing connectivity
             if (!device.checkConnectivity()) {
                 throw new TargetSetupError("Device has no network connection, no ssid provided");

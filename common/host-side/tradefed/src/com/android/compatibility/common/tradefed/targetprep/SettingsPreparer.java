@@ -38,12 +38,15 @@ public class SettingsPreparer extends PreconditionPreparer {
         SYSTEM;
     }
 
-    @Option(name = "device-setting", description = "The setting on the device to be checked",
-            mandatory = true)
+    /* This option must be defined, but is not explicitly marked mandatory, as subclasses of
+     * the SettingsPreparer class can define mSettingName at runtime */
+    @Option(name = "device-setting", description = "The setting on the device to be checked")
     protected String mSettingName = null;
 
+    /* This option must be defined, but is not explicitly marked mandatory, as subclasses of
+     * the SettingsPreparer class can define mSettingType at runtime */
     @Option(name = "setting-type",
-            description = "If the setting is 'secure', 'global', or 'system'", mandatory = true)
+            description = "If the setting is 'secure', 'global', or 'system'")
     protected SettingType mSettingType = null;
 
     @Option(name = "set-value", description = "The value to be set for the setting")
@@ -52,9 +55,22 @@ public class SettingsPreparer extends PreconditionPreparer {
     @Option(name = "expected-values", description = "The set of expected values of the setting")
     protected List<String> mExpectedSettingValues = new ArrayList<String>();
 
+    @Option(name = "failure-message", description = "The text printed for an unexpected value")
+    protected String mFailureMessage = null;
+
     @Override
     public void run(ITestDevice device, IBuildInfo buildInfo) throws TargetSetupError,
             BuildError, DeviceNotAvailableException {
+
+        if (mSettingName == null) {
+            throw new TargetSetupError("The \"device-setting\" option must be defined for the " +
+                    "SettingsPreparer class");
+        }
+
+        if (mSettingType == null) {
+            throw new TargetSetupError("The \"setting-type\" option must be defined for the " +
+                    "SettingsPreparer class");
+        }
 
         /* At least one of the options "set-value" and "expected-values" must be set */
         if (mSetValue == null && mExpectedSettingValues.isEmpty()) {
@@ -93,9 +109,12 @@ public class SettingsPreparer extends PreconditionPreparer {
         /* Case 3: Only expected-values given */
         String currentSettingValue = device.executeShellCommand(shellCmdGet).trim();
         if (!mExpectedSettingValues.contains(currentSettingValue)) {
-            throw new TargetSetupError(
-                    String.format("Device setting \"%s\" returned \"%s\", not found in %s",
-                    mSettingName, currentSettingValue, mExpectedSettingValues.toString()));
+            if (mFailureMessage == null) {
+                mFailureMessage = String.format(
+                        "Device setting \"%s\" returned \"%s\", not found in %s",
+                        mSettingName, currentSettingValue, mExpectedSettingValues.toString());
+            }
+            throw new TargetSetupError(mFailureMessage);
         }
     }
 
