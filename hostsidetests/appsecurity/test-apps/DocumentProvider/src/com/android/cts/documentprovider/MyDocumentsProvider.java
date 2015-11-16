@@ -124,6 +124,13 @@ public class MyDocumentsProvider extends DocumentsProvider {
             mCreateRoot.children.add(file2);
         }
 
+        {
+            Doc virtualFile = buildDoc("doc:virtual-file", "VIRTUAL_FILE", "application/icecream");
+            virtualFile.flags = Document.FLAG_VIRTUAL_DOCUMENT;
+            mLocalRoot.children.add(virtualFile);
+            mCreateRoot.children.add(virtualFile);
+        }
+
         Doc dir1 = buildDoc("doc:dir1", "DIR1", Document.MIME_TYPE_DIR);
         mLocalRoot.children.add(dir1);
 

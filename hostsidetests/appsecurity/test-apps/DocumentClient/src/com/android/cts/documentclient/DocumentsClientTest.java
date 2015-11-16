@@ -138,15 +138,24 @@ public class DocumentsClientTest extends InstrumentationTestCase {
         assertTrue("CtsCreate root", findRoot("CtsCreate").exists());
         assertFalse("CtsGetContent root", findRoot("CtsGetContent").exists());
 
-        // Pick a specific file from our test provider
+        // Choose the local root.
         mDevice.waitForIdle();
         findRoot("CtsLocal").click();
 
+        // Try picking a virtual file. Virtual files must not be returned for CATEGORY_OPENABLE
+        // though, so the click should be ignored.
+        mDevice.waitForIdle();
+        findDocument("VIRTUAL_FILE").click();
+        mDevice.waitForIdle();
+
+        // Pick a regular file.
         mDevice.waitForIdle();
         findDocument("FILE1").click();
 
+        // Confirm that the returned file is a regular file caused by the second click.
         final Result result = mActivity.getResult();
         final Uri uri = result.data.getData();
+        assertEquals("file1", DocumentsContract.getDocumentId(uri));
 
         // We should now have permission to read/write
         MoreAsserts.assertEquals("fileone".getBytes(), readFully(uri));
@@ -154,6 +163,26 @@ public class DocumentsClientTest extends InstrumentationTestCase {
         writeFully(uri, "replaced!".getBytes());
         SystemClock.sleep(500);
         MoreAsserts.assertEquals("replaced!".getBytes(), readFully(uri));
+    }
+
+    public void testOpenVirtual() throws Exception {
+        if (!supportedHardware()) return;
+
+        final Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+        intent.setType("*/*");
+        mActivity.startActivityForResult(intent, 42);
+
+        // Pick a virtual file from the local root.
+        mDevice.waitForIdle();
+        findRoot("CtsLocal").click();
+
+        mDevice.waitForIdle();
+        findDocument("VIRTUAL_FILE").click();
+
+        // Confirm that the returned file is actually the selected one.
+        final Result result = mActivity.getResult();
+        final Uri uri = result.data.getData();
+        assertEquals("virtual-file", DocumentsContract.getDocumentId(uri));
     }
 
     public void testCreateNew() throws Exception {
