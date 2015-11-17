@@ -136,16 +136,21 @@ public class TestListActivity extends AbstractTestListActivity implements View.O
     }
 
     private boolean handleMenuItemSelected(int id) {
-        if (id == R.id.clear) {
-            handleClearItemSelected();
-        } else if (id == R.id.view) {
-            handleViewItemSelected();
-        } else if (id == R.id.export) {
-            handleExportItemSelected();
-        } else {
-            return false;
-        }
+        switch (id) {
+            case R.id.clear:
+                handleClearItemSelected();
+                return true;
 
-        return true;
+            case R.id.view:
+                handleViewItemSelected();
+                return true;
+
+            case R.id.export:
+                handleExportItemSelected();
+                return true;
+
+            default:
+                return false;
+        }
     }
 }
