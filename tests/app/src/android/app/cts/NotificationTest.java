@@ -162,33 +162,25 @@ public class NotificationTest extends AndroidTestCase {
                 .setContentTitle(CONTENT_TITLE)
                 .setContentText(CONTENT_TEXT)
                 .setContentIntent(contentIntent)
-                .addTopic(new Topic("id1", "label1"))
-                .addTopic(new Topic("id2", "label2"))
+                .setTopic(new Topic("id1", "label1"))
                 .build();
         assertEquals(CONTENT_TEXT, mNotification.extras.getString(Notification.EXTRA_TEXT));
         assertEquals(CONTENT_TITLE, mNotification.extras.getString(Notification.EXTRA_TITLE));
         assertEquals(1, mNotification.icon);
         assertEquals(contentIntent, mNotification.contentIntent);
-        List<Topic> topics = Arrays.asList(mNotification.getTopics());
-        assertEquals(2, topics.size());
-        assertTrue(topics.contains(new Topic("id1", "label1")));
-        assertTrue(topics.contains(new Topic("id2", "label2")));
+        assertEquals(new Topic("id1", "label1"), mNotification.getTopic());
     }
 
-    public void testWriteTopicsToParcel() {
+    public void testWriteTopicToParcel() {
         mNotification = new Notification.Builder(mContext)
-                .addTopic(new Topic("id1", "label1"))
-                .addTopic(new Topic("id2", "label2"))
+                .setTopic(new Topic("id2", "label2"))
                 .build();
         Parcel parcel = Parcel.obtain();
         mNotification.writeToParcel(parcel, 0);
         parcel.setDataPosition(0);
         // Test Notification(Parcel)
         Notification result = new Notification(parcel);
-        List<Topic> topics = Arrays.asList(result.getTopics());
-        assertEquals(2, topics.size());
-        assertTrue(topics.contains(new Topic("id1", "label1")));
-        assertTrue(topics.contains(new Topic("id2", "label2")));
+        assertEquals(new Topic("id2", "label2"), result.getTopic());
 
         mNotification = new Notification();
         parcel = Parcel.obtain();
@@ -196,7 +188,7 @@ public class NotificationTest extends AndroidTestCase {
         parcel.setDataPosition(0);
         // Test Notification(Parcel)
         result = new Notification(parcel);
-        assertNull(result.getTopics());
+        assertNull(result.getTopic());
     }
 
     public void testToString() {
