@@ -562,8 +562,7 @@ public class SignatureTest extends AndroidTestCase {
         }
     }
 
-    // TODO: Re-enable this test once Signature.initSign passes SecureRandom to SPI (Bug 22485587).
-    public void DISABLED_testEntropyConsumption() throws Exception {
+    public void testEntropyConsumption() throws Exception {
         // Assert that signature generation consumes the correct amount of entropy from the provided
         // SecureRandom. There is no need to check that Signature.verify does not consume entropy
         // because Signature.initVerify does not take a SecureRandom.
