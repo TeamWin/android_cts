@@ -42,6 +42,11 @@ public class DeviceAdminInfoTest extends AndroidTestCase {
                 mContext.getPackageManager().hasSystemFeature(PackageManager.FEATURE_DEVICE_ADMIN);
     }
 
+    static ComponentName getDeviceOwnerReceiverComponent() {
+        return new ComponentName("android.admin.app",
+                "android.admin.app.CtsDeviceAdminProfileOwner");
+    }
+
     static ComponentName getReceiverComponent() {
         return new ComponentName("android.admin.app", "android.admin.app.CtsDeviceAdminReceiver");
     }
