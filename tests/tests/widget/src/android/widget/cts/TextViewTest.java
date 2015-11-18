@@ -16,6 +16,8 @@
 
 package android.widget.cts;
 
+import android.text.Html;
+import android.text.Spanned;
 import android.widget.cts.R;
 
 import org.xmlpull.v1.XmlPullParserException;
@@ -1265,6 +1267,22 @@ public class TextViewTest extends ActivityInstrumentationTestCase2<TextViewCtsAc
             fail("Should throw exception with illegal id");
         } catch (NotFoundException e) {
         }
+    }
+
+    @UiThreadTest
+    public void testSetText_setsMovementMethodWhenLinksClickableAndTextContainsClickableSpans() {
+        Spanned text = Html.fromHtml("<a href='http://android.com'>link</a>");
+        mTextView = new TextView(mActivity);
+
+        mTextView.setLinksClickable(false);
+        mTextView.setText(text);
+        assertNull("TextView.setText should not set movement method if linksClickable is false",
+                mTextView.getMovementMethod());
+
+        mTextView.setLinksClickable(true);
+        mTextView.setText(text);
+        assertNotNull("TextView.setText should set movement method if linksClickable is true " +
+                "and text contains clickable spans", mTextView.getMovementMethod());
     }
 
     public void testRemoveSelectionWithSelectionHandles() {
@@ -2639,6 +2657,37 @@ public class TextViewTest extends ActivityInstrumentationTestCase2<TextViewCtsAc
                 mTextView.getMovementMethod());
         assertTrue("MovementMethod should be instance of LinkMovementMethod when text contains url",
                 mTextView.getMovementMethod() instanceof LinkMovementMethod);
+    }
+
+    @UiThreadTest
+    public void testAppend_setsMovementMethodWhenLinksClickableAndTextContainsClickableSpans() {
+        Spanned text = Html.fromHtml("<a href='http://android.com'>link</a>");
+        mTextView = new TextView(mActivity);
+
+        mTextView.setLinksClickable(false);
+        mTextView.append(text);
+        assertNull("TextView.append should not set movement method if linksClickable is false",
+                mTextView.getMovementMethod());
+
+        mTextView.setText("");
+        mTextView.setLinksClickable(true);
+        mTextView.append(text);
+        assertNotNull("TextView.append should set movement method if linksClickable is true " +
+                "and text contains clickable spans", mTextView.getMovementMethod());
+    }
+
+    @UiThreadTest
+    public void testAppend_setMovementMethodForExistingTextWhenLinksClickableIsTrueDuringAppend() {
+        Spanned text = Html.fromHtml("<a href='http://android.com'>link</a>");
+        mTextView = new TextView(mActivity);
+        mTextView.setLinksClickable(false);
+        mTextView.setText(text);
+
+        mTextView.setLinksClickable(true);
+        mTextView.append("");
+
+        assertNotNull("TextView.append should set movement method if existing text contains " +
+                "links but new text does not", mTextView.getMovementMethod());
     }
 
     @UiThreadTest
