@@ -16,7 +16,7 @@
 
 package android.widget.cts;
 
-import android.widget.cts.R;
+import static org.mockito.Mockito.*;
 
 import android.app.Activity;
 import android.app.Instrumentation;
@@ -24,6 +24,7 @@ import android.test.ActivityInstrumentationTestCase2;
 import android.view.Gravity;
 import android.widget.PopupMenu;
 
+import android.widget.cts.R;
 
 public class PopupMenuTest extends
         ActivityInstrumentationTestCase2<MockPopupWindowCtsActivity> {
@@ -45,6 +46,7 @@ public class PopupMenuTest extends
         PopupMenu popupMenu = new PopupMenu(mActivity,
                 mActivity.findViewById(R.id.anchor_middle_left));
         assertEquals(Gravity.NO_GRAVITY, popupMenu.getGravity());
+
         popupMenu.setGravity(Gravity.TOP);
         assertEquals(Gravity.TOP, popupMenu.getGravity());
     }
@@ -52,7 +54,7 @@ public class PopupMenuTest extends
     public void testOnDismissListener() {
         final PopupMenu popupMenu = new PopupMenu(mActivity,
                 mActivity.findViewById(R.id.anchor_middle_left));
-        TestPopupDismissListener listener = new TestPopupDismissListener();
+        PopupMenu.OnDismissListener listener = mock(PopupMenu.OnDismissListener.class);
         popupMenu.setOnDismissListener(listener);
 
         mInstrumentation.runOnMainSync(new Runnable() {
@@ -61,7 +63,7 @@ public class PopupMenuTest extends
             }
         });
         mInstrumentation.waitForIdleSync();
-        assertEquals(0, listener.getDismissCount());
+        verify(listener, never()).onDismiss(popupMenu);
 
         mInstrumentation.runOnMainSync(new Runnable() {
             public void run() {
@@ -69,7 +71,7 @@ public class PopupMenuTest extends
             }
         });
         mInstrumentation.waitForIdleSync();
-        assertEquals(1, listener.getDismissCount());
+        verify(listener, times(1)).onDismiss(popupMenu);
 
         mInstrumentation.runOnMainSync(new Runnable() {
             public void run() {
@@ -77,19 +79,6 @@ public class PopupMenuTest extends
             }
         });
         mInstrumentation.waitForIdleSync();
-        assertEquals(1, listener.getDismissCount());
-    }
-
-    private class TestPopupDismissListener implements PopupMenu.OnDismissListener {
-        int mDismissCount;
-
-        @Override
-        public void onDismiss(PopupMenu menu) {
-            mDismissCount++;
-        }
-
-        int getDismissCount() {
-            return mDismissCount;
-        }
+        verify(listener, times(1)).onDismiss(popupMenu);
     }
 }
