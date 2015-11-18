@@ -16,6 +16,7 @@
 
 package android.widget.cts;
 
+import android.os.Parcelable;
 import android.widget.cts.R;
 
 
@@ -275,6 +276,24 @@ public class CheckedTextViewTest extends
         checkedTextView.setCheckMarkDrawable(null);
         checkedTextView.setCheckMarkDrawable(R.drawable.scenery);
         assertNotNull(checkedTextView.getCheckMarkDrawable());
+    }
+
+    public void testAccessInstanceState() {
+        CheckedTextView checkedTextView = new MockCheckedTextView(mActivity);
+        Parcelable state;
+
+        assertFalse(checkedTextView.isChecked());
+        assertFalse(checkedTextView.getFreezesText());
+
+        state = checkedTextView.onSaveInstanceState();
+        assertNotNull(state);
+        assertFalse(checkedTextView.getFreezesText());
+
+        checkedTextView.setChecked(true);
+
+        checkedTextView.onRestoreInstanceState(state);
+        assertFalse(checkedTextView.isChecked());
+        assertTrue(checkedTextView.isLayoutRequested());
     }
 
     public void testOnDraw() {
