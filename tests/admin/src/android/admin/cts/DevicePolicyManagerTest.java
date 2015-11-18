@@ -29,6 +29,7 @@ import android.os.Build;
 import android.os.UserManager;
 import android.provider.Settings;
 import android.test.AndroidTestCase;
+import android.test.suitebuilder.annotation.Suppress;
 import android.util.Log;
 
 import java.util.List;
@@ -45,6 +46,7 @@ public class DevicePolicyManagerTest extends AndroidTestCase {
     private static final String TAG = DevicePolicyManagerTest.class.getSimpleName();
 
     private DevicePolicyManager mDevicePolicyManager;
+    private ComponentName mDeviceOwnerComponent;
     private ComponentName mComponent;
     private ComponentName mSecondComponent;
     private boolean mDeviceAdmin;
@@ -75,6 +77,7 @@ public class DevicePolicyManagerTest extends AndroidTestCase {
         super.setUp();
         mDevicePolicyManager = (DevicePolicyManager)
                 mContext.getSystemService(Context.DEVICE_POLICY_SERVICE);
+        mDeviceOwnerComponent = DeviceAdminInfoTest.getDeviceOwnerReceiverComponent();
         mComponent = DeviceAdminInfoTest.getReceiverComponent();
         mPackageManager = mContext.getPackageManager();
         mSecondComponent = DeviceAdminInfoTest.getSecondReceiverComponent();
@@ -98,6 +101,8 @@ public class DevicePolicyManagerTest extends AndroidTestCase {
         mDevicePolicyManager.setPasswordQuality(mComponent,
                 DevicePolicyManager.PASSWORD_QUALITY_UNSPECIFIED);
         mDevicePolicyManager.setPasswordMinimumLength(mComponent, 0);
+
+        // Note resetPassword() doesn't take "who", but because the caller package has
         assertTrue(mDevicePolicyManager.resetPassword("", 0));
     }
 
@@ -674,6 +679,9 @@ public class DevicePolicyManagerTest extends AndroidTestCase {
         }
     }
 
+    // This test registers itself as DO, so this is no longer testable.  We do a positive test
+    // for clearDeviceOwnerApp()
+    @Suppress
     public void testClearDeviceOwnerApp_failIfNotDeviceOwner() {
         if (!mDeviceAdmin) {
             Log.w(TAG, "Skipping testClearDeviceOwnerApp_failIfNotDeviceOwner");
