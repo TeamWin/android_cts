@@ -19,13 +19,13 @@
     android:layout_height="match_parent">
 
      <TextureView
-         app:layout_box="all"
+         app:ctsv_layout_box="all"
          android:id="@+id/texture_view"
          android:layout_width="match_parent"
          android:layout_height="match_parent" />
 
      <LinearLayout
-         app:layout_box="all"
+         app:ctsv_layout_box="all"
          android:layout_width="fill_parent"
          android:layout_height="wrap_content"
          android:orientation="vertical" >
