@@ -46,7 +46,6 @@ public class DevicePolicyManagerTest extends AndroidTestCase {
     private static final String TAG = DevicePolicyManagerTest.class.getSimpleName();
 
     private DevicePolicyManager mDevicePolicyManager;
-    private ComponentName mDeviceOwnerComponent;
     private ComponentName mComponent;
     private ComponentName mSecondComponent;
     private boolean mDeviceAdmin;
@@ -77,7 +76,6 @@ public class DevicePolicyManagerTest extends AndroidTestCase {
         super.setUp();
         mDevicePolicyManager = (DevicePolicyManager)
                 mContext.getSystemService(Context.DEVICE_POLICY_SERVICE);
-        mDeviceOwnerComponent = DeviceAdminInfoTest.getDeviceOwnerReceiverComponent();
         mComponent = DeviceAdminInfoTest.getReceiverComponent();
         mPackageManager = mContext.getPackageManager();
         mSecondComponent = DeviceAdminInfoTest.getSecondReceiverComponent();
