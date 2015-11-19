@@ -18,6 +18,8 @@ package android.widget.cts;
 
 import static org.mockito.Mockito.*;
 
+import org.mockito.InOrder;
+
 import android.app.Activity;
 import android.app.Instrumentation;
 import android.content.Context;
@@ -524,6 +526,10 @@ public class PopupWindowTest extends
         verify(enterListener, times(1)).onTransitionStart(enterTransition);
         verify(exitListener, times(1)).onTransitionStart(exitTransition);
         verify(dismissListener, times(1)).onDismiss();
+
+        InOrder inOrder = inOrder(exitListener, dismissListener);
+        inOrder.verify(exitListener).onTransitionEnd(exitTransition);
+        inOrder.verify(dismissListener).onDismiss();
     }
 
     public void testUpdatePositionAndDimension() {
