@@ -16,8 +16,7 @@
 
 package android.widget.cts;
 
-import android.widget.cts.R;
-
+import static org.mockito.Mockito.*;
 
 import android.app.Activity;
 import android.app.Instrumentation;
@@ -25,24 +24,26 @@ import android.content.Context;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
-import android.os.Debug;
 import android.os.SystemClock;
 import android.test.ActivityInstrumentationTestCase2;
 import android.test.UiThreadTest;
 import android.transition.Transition;
+import android.transition.Transition.TransitionListener;
 import android.transition.TransitionValues;
 import android.view.Display;
 import android.view.Gravity;
 import android.view.MotionEvent;
 import android.view.View;
-import android.view.ViewGroup;
-import android.view.WindowManager;
 import android.view.View.OnTouchListener;
+import android.view.ViewGroup;
 import android.view.ViewGroup.LayoutParams;
+import android.view.WindowManager;
 import android.widget.ImageView;
+import android.widget.PopupWindow.OnDismissListener;
 import android.widget.PopupWindow;
 import android.widget.TextView;
-import android.widget.PopupWindow.OnDismissListener;
+
+import android.widget.cts.R;
 
 public class PopupWindowTest extends
         ActivityInstrumentationTestCase2<MockPopupWindowCtsActivity> {
@@ -425,20 +426,20 @@ public class PopupWindowTest extends
         mPopupWindow = new PopupWindow(new TextView(mActivity));
         mPopupWindow.setOnDismissListener(null);
 
-        MockOnDismissListener onDismissListener = new MockOnDismissListener();
+        OnDismissListener onDismissListener = mock(OnDismissListener.class);
         mPopupWindow.setOnDismissListener(onDismissListener);
         showPopup();
         dismissPopup();
-        assertEquals(1, onDismissListener.getOnDismissCalledCount());
+        verify(onDismissListener, times(1)).onDismiss();
 
         showPopup();
         dismissPopup();
-        assertEquals(2, onDismissListener.getOnDismissCalledCount());
+        verify(onDismissListener, times(2)).onDismiss();
 
         mPopupWindow.setOnDismissListener(null);
         showPopup();
         dismissPopup();
-        assertEquals(2, onDismissListener.getOnDismissCalledCount());
+        verify(onDismissListener, times(2)).onDismiss();
     }
 
     public void testUpdate() {
@@ -485,23 +486,34 @@ public class PopupWindowTest extends
     }
 
     public void testEnterExitTransition() {
-        mPopupWindow = createPopupWindow(createPopupContent());
-        final View anchorView = mActivity.findViewById(R.id.anchor_upper);
+        TransitionListener enterListener = mock(TransitionListener.class);
+        Transition enterTransition = new BaseTransition();
+        enterTransition.addListener(enterListener);
 
-        final MockTransition enterTransition = new MockTransition();
-        final MockTransition exitTransition = new MockTransition();
+        TransitionListener exitListener = mock(TransitionListener.class);
+        Transition exitTransition = new BaseTransition();
+        enterTransition.addListener(enterListener);
+
+        OnDismissListener dismissListener = mock(OnDismissListener.class);
+
+        mPopupWindow = createPopupWindow(createPopupContent());
         mPopupWindow.setEnterTransition(enterTransition);
         mPopupWindow.setExitTransition(exitTransition);
+        mPopupWindow.setOnDismissListener(dismissListener);
+        verify(enterListener, never()).onTransitionStart(any(Transition.class));
+        verify(exitListener, never()).onTransitionStart(any(Transition.class));
+        verify(dismissListener, never()).onDismiss();
 
+        final View anchorView = mActivity.findViewById(R.id.anchor_upper);
         mInstrumentation.runOnMainSync(new Runnable() {
             public void run() {
                 mPopupWindow.showAsDropDown(anchorView, 0, 0);
             }
         });
         mInstrumentation.waitForIdleSync();
-
-        assertEquals(1, enterTransition.getTransitionCount());
-        assertEquals(0, exitTransition.getTransitionCount());
+        verify(enterListener, times(1)).onTransitionStart(enterTransition);
+        verify(exitListener, never()).onTransitionStart(any(Transition.class));
+        verify(dismissListener, never()).onDismiss();
 
         mInstrumentation.runOnMainSync(new Runnable() {
             public void run() {
@@ -509,9 +521,9 @@ public class PopupWindowTest extends
             }
         });
         mInstrumentation.waitForIdleSync();
-
-        assertEquals(1, enterTransition.getTransitionCount());
-        assertEquals(1, exitTransition.getTransitionCount());
+        verify(enterListener, times(1)).onTransitionStart(enterTransition);
+        verify(exitListener, times(1)).onTransitionStart(exitTransition);
+        verify(dismissListener, times(1)).onDismiss();
     }
 
     public void testUpdatePositionAndDimension() {
@@ -774,7 +786,9 @@ public class PopupWindowTest extends
     public void testSetTouchInterceptor() {
         mPopupWindow = new PopupWindow(new TextView(mActivity));
 
-        MockOnTouchListener onTouchListener = new MockOnTouchListener();
+        OnTouchListener onTouchListener = mock(OnTouchListener.class);
+        when(onTouchListener.onTouch(any(View.class), any(MotionEvent.class))).thenReturn(true);
+
         mPopupWindow.setTouchInterceptor(onTouchListener);
         mPopupWindow.setFocusable(true);
         mPopupWindow.setOutsideTouchable(true);
@@ -794,20 +808,20 @@ public class PopupWindowTest extends
         MotionEvent event = MotionEvent.obtain(downTime, eventTime,
                 MotionEvent.ACTION_DOWN, x, y, 0);
         getInstrumentation().sendPointerSync(event);
-        assertEquals(1, onTouchListener.getOnTouchCalledCount());
+        verify(onTouchListener, times(1)).onTouch(any(View.class), any(MotionEvent.class));
 
         downTime = SystemClock.uptimeMillis();
         eventTime = SystemClock.uptimeMillis();
         event = MotionEvent.obtain(downTime, eventTime, MotionEvent.ACTION_UP, x, y, 0);
         getInstrumentation().sendPointerSync(event);
-        assertEquals(2, onTouchListener.getOnTouchCalledCount());
+        verify(onTouchListener, times(2)).onTouch(any(View.class), any(MotionEvent.class));
 
         mPopupWindow.setTouchInterceptor(null);
         downTime = SystemClock.uptimeMillis();
         eventTime = SystemClock.uptimeMillis();
         event = MotionEvent.obtain(downTime, eventTime, MotionEvent.ACTION_DOWN, x, y, 0);
         getInstrumentation().sendPointerSync(event);
-        assertEquals(2, onTouchListener.getOnTouchCalledCount());
+        verify(onTouchListener, times(2)).onTouch(any(View.class), any(MotionEvent.class));
     }
 
     public void testSetWindowLayoutMode() {
@@ -829,107 +843,12 @@ public class PopupWindowTest extends
         assertEquals(LayoutParams.MATCH_PARENT, p.height);
     }
 
-    /**
-     * The listener interface for receiving OnDismiss events. The class that is
-     * interested in processing a OnDismiss event implements this interface, and
-     * the object created with that class is registered with a component using
-     * the component's <code>setOnDismissListener<code> method. When
-     * the OnDismiss event occurs, that object's appropriate
-     * method is invoked.
-     */
-    private static class MockOnDismissListener implements OnDismissListener {
+    private static class BaseTransition extends Transition {
+        @Override
+        public void captureStartValues(TransitionValues transitionValues) {}
 
-        /** The Ondismiss called count. */
-        private int mOnDismissCalledCount;
-
-        /**
-         * Gets the onDismiss() called count.
-         *
-         * @return the on dismiss called count
-         */
-        public int getOnDismissCalledCount() {
-            return mOnDismissCalledCount;
-        }
-
-        /*
-         * (non-Javadoc)
-         *
-         * @see android.widget.PopupWindow.OnDismissListener#onDismiss()
-         */
-        public void onDismiss() {
-            mOnDismissCalledCount++;
-        }
-
-    }
-
-    /**
-     * The listener interface for receiving touch events.
-     */
-    private static class MockOnTouchListener implements OnTouchListener {
-
-        /** The onTouch called count. */
-        private int mOnTouchCalledCount;
-
-        /**
-         * Gets the onTouch() called count.
-         *
-         * @return the onTouch() called count
-         */
-        public int getOnTouchCalledCount() {
-            return mOnTouchCalledCount;
-        }
-
-        /*
-         * (non-Javadoc)
-         *
-         * @see android.widget.PopupWindow.OnTouchListener#onDismiss()
-         */
-        public boolean onTouch(View v, MotionEvent event) {
-            mOnTouchCalledCount++;
-            return true;
-        }
-    }
-
-    private static class MockTransition extends Transition {
-        private int mTransitionCount;
-
-        private MockTransition() {
-            addListener(new Transition.TransitionListener() {
-                @Override
-                public void onTransitionStart(Transition transition) {
-
-                }
-
-                public void onTransitionEnd(Transition transition) {
-                    mTransitionCount++;
-                }
-
-                @Override
-                public void onTransitionCancel(Transition transition) {
-
-                }
-
-                @Override
-                public void onTransitionPause(Transition transition) {
-
-                }
-
-                @Override
-                public void onTransitionResume(Transition transition) {
-
-                }
-            });
-        }
-
-        public void captureStartValues(TransitionValues transitionValues) {
-        }
-
-        public void captureEndValues(TransitionValues transitionValues) {
-        }
-
-        int getTransitionCount() {
-            return mTransitionCount;
-        }
+        @Override
+        public void captureEndValues(TransitionValues transitionValues) {}
     }
 
     private View createPopupContent() {
@@ -953,11 +872,6 @@ public class PopupWindowTest extends
         return window;
     }
 
-    /**
-     * Show PopupWindow.
-     */
-    // FIXME: logcat info complains that there is window leakage due to that mPopupWindow is not
-    // clean up. Need to fix it.
     private void showPopup() {
         mInstrumentation.runOnMainSync(new Runnable() {
             public void run() {
@@ -972,14 +886,12 @@ public class PopupWindowTest extends
         mInstrumentation.waitForIdleSync();
     }
 
-    /**
-     * Dismiss PopupWindow.
-     */
     private void dismissPopup() {
         mInstrumentation.runOnMainSync(new Runnable() {
             public void run() {
-                if (mPopupWindow == null || !mPopupWindow.isShowing())
+                if (mPopupWindow == null || !mPopupWindow.isShowing()) {
                     return;
+                }
                 mPopupWindow.dismiss();
             }
         });
