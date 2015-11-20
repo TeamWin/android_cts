@@ -18,9 +18,9 @@ package android.text.util.cts;
 
 
 import android.test.AndroidTestCase;
+import android.test.suitebuilder.annotation.SmallTest;
 import android.text.Spannable;
 import android.text.SpannableString;
-import android.text.SpannableStringBuilder;
 import android.text.style.URLSpan;
 import android.text.util.Linkify;
 import android.text.util.Linkify.MatchFilter;
@@ -82,9 +82,9 @@ public class LinkifyTest extends AndroidTestCase {
                 "abcdefghijabcdefghijabcdefghijabcdefghijabcdefghijabcdefghijabc";
         SpannableString spannable = new SpannableString("name@gmail.com, "
                 + "www.google.com, http://www.google.com/language_tools?hl=en, "
-                + "a.bc, "   // a URL with accepted gTLD so should be linkified
+                + "a.bd, "   // a URL with accepted TLD so should be linkified
                 + "d.e, f.1, g.12, "  // not valid, so should not be linkified
-                + "h." + longGTLD + " "  // valid, should be linkified
+                + "http://h." + longGTLD + " "  // valid, should be linkified
                 + "j." + longGTLD + "a"); // not a valid URL (gtld too long), no linkify
 
         assertTrue(Linkify.addLinks(spannable, Linkify.WEB_URLS));
@@ -92,7 +92,7 @@ public class LinkifyTest extends AndroidTestCase {
         assertEquals(4, spans.length);
         assertEquals("http://www.google.com", spans[0].getURL());
         assertEquals("http://www.google.com/language_tools?hl=en", spans[1].getURL());
-        assertEquals("http://a.bc", spans[2].getURL());
+        assertEquals("http://a.bd", spans[2].getURL());
         assertEquals("http://h." + longGTLD, spans[3].getURL());
 
         assertTrue(Linkify.addLinks(spannable, Linkify.EMAIL_ADDRESSES));
@@ -351,18 +351,213 @@ public class LinkifyTest extends AndroidTestCase {
         assertFalse(Linkify.addLinks((Spannable) null, 0));
     }
 
-    public void testAddLinks_acceptsUrlsWithCommasInRequestParameterValues() throws Exception {
-        String url = "https://android.com/path?ll=37.4221,-122.0836&z=17&pll=37.4221,-122.0836";
-        Spannable spannable = new SpannableString(url);
-
-        Linkify.addLinks(spannable, Linkify.WEB_URLS);
-
-        URLSpan[] urlSpans = spannable.getSpans(0, spannable.length(), URLSpan.class);
-        assertEquals("Web URL parsing should accept commas", url, urlSpans[0].getURL());
-        assertEquals("Spannable should start from beginning of the given URL", 0,
-                spannable.getSpanStart(urlSpans[0]));
-        assertEquals("Spannable should end at the end of the given URL", url.length(),
-                spannable.getSpanEnd(urlSpans[0]));
+    @SmallTest
+    public void testAddLinks_doesNotAddLinksForUrlWithoutProtocolAndWithoutKnownTld()
+            throws Exception {
+        Spannable spannable = new SpannableString("hey man.its me");
+        boolean linksAdded = Linkify.addLinks(spannable, Linkify.ALL);
+        assertFalse("Should not add link with unknown TLD", linksAdded);
     }
 
+    @SmallTest
+    public void testAddLinks_shouldNotAddEmailAddressAsUrl() throws Exception {
+        String url = "name@gmail.com";
+        assertAddLinksWithWebUrlFails("Should not recognize email address as URL", url);
+    }
+
+    public void testAddLinks_acceptsUrlsWithCommasInRequestParameterValues() throws Exception {
+        String url = "https://android.com/path?ll=37.4221,-122.0836&z=17&pll=37.4221,-122.0836";
+        assertAddLinksWithWebUrlSucceeds("Should accept commas", url);
+    }
+
+    @SmallTest
+    public void testAddLinks_addsLinksForUrlWithProtocolWithoutTld() throws Exception {
+        String url = "http://android/#notld///a/n/d/r/o/i/d&p1=1&p2=2";
+        assertAddLinksWithWebUrlSucceeds("Should accept URL starting with protocol but does not" +
+                " have TLD", url);
+    }
+
+    @SmallTest
+    public void testAddLinks_matchesProtocolCaseInsensitive() throws Exception {
+        String url = "hTtP://android.com";
+        assertAddLinksWithWebUrlSucceeds("Protocol matching should be case insensitive", url);
+    }
+
+    @SmallTest
+    public void testAddLinks_matchesValidUrlWithSchemeAndHostname() throws Exception {
+        String url = "http://www.android.com";
+        assertAddLinksWithWebUrlSucceeds("Should match valid URL with scheme and hostname", url);
+    }
+
+    @SmallTest
+    public void testAddLinks_matchesValidUrlWithSchemeHostnameAndNewTld() throws Exception {
+        String url = "http://www.android.me";
+        assertAddLinksWithWebUrlSucceeds("Should match valid URL with scheme hostname and new TLD",
+                url);
+    }
+
+    @SmallTest
+    public void testAddLinks_matchesValidUrlWithHostnameAndNewTld() throws Exception {
+        String url = "android.camera";
+        assertAddLinksWithWebUrlSucceeds("Should match valid URL with hostname and new TLD", url);
+    }
+
+    @SmallTest
+    public void testAddLinks_matchesPunycodeUrl() throws Exception {
+        String url = "http://xn--fsqu00a.xn--unup4y";
+        assertAddLinksWithWebUrlSucceeds("Should match Punycode URL", url);
+    }
+
+    @SmallTest
+    public void testAddLinks_matchesPunycodeUrlWithoutProtocol() throws Exception {
+        String url = "xn--fsqu00a.xn--unup4y";
+        assertAddLinksWithWebUrlSucceeds("Should match Punycode URL without protocol", url);
+    }
+
+    @SmallTest
+    public void testAddLinks_doesNotMatchPunycodeTldThatStartsWithDash() throws Exception {
+        String url = "xn--fsqu00a.-xn--unup4y";
+        assertAddLinksWithWebUrlFails("Should not match Punycode TLD that starts with dash", url);
+    }
+
+    @SmallTest
+    public void testAddLinks_partiallyMatchesPunycodeTldThatEndsWithDash() throws Exception {
+        String url = "http://xn--fsqu00a.xn--unup4y-";
+        assertAddLinksWithWebUrlPartiallyMatches("Should partially match Punycode TLD that ends " +
+                "with dash", "http://xn--fsqu00a.xn--unup4y", url);
+    }
+
+    @SmallTest
+    public void testAddLinks_matchesUrlWithUnicodeDomainName() throws Exception {
+        String url = "http://\uD604\uAE08\uC601\uC218\uC99D.kr";
+        assertAddLinksWithWebUrlSucceeds("Should match URL with Unicode domain name", url);
+    }
+
+    @SmallTest
+    public void testAddLinks_matchesUrlWithUnicodeDomainNameWithoutProtocol() throws Exception {
+        String url = "\uD604\uAE08\uC601\uC218\uC99D.kr";
+        assertAddLinksWithWebUrlSucceeds("Should match URL without protocol and with Unicode " +
+                "domain name", url);
+    }
+
+    @SmallTest
+    public void testAddLinks_matchesUrlWithUnicodeDomainNameAndTld() throws Exception {
+        String url = "\uB3C4\uBA54\uC778.\uD55C\uAD6D";
+        assertAddLinksWithWebUrlSucceeds("Should match URL with Unicode domain name and TLD", url);
+    }
+
+    @SmallTest
+    public void testAddLinks_matchesUrlWithUnicodePath() throws Exception {
+        String url = "http://android.com/\u2019/a";
+        assertAddLinksWithWebUrlSucceeds("Should match URL with Unicode path", url);
+    }
+
+    @SmallTest
+    public void testAddLinks_matchesValidUrlWithPort() throws Exception {
+        String url = "http://www.example.com:8080";
+        assertAddLinksWithWebUrlSucceeds("Should match URL with port", url);
+    }
+
+    @SmallTest
+    public void testAddLinks_matchesUrlWithPortAndQuery() throws Exception {
+        String url = "http://www.example.com:8080/?foo=bar";
+        assertAddLinksWithWebUrlSucceeds("Should match URL with port and query", url);
+    }
+
+    @SmallTest
+    public void testAddLinks_matchesUrlWithTilde() throws Exception {
+        String url = "http://www.example.com:8080/~user/?foo=bar";
+        assertAddLinksWithWebUrlSucceeds("Should match URL with tilde", url);
+    }
+
+    @SmallTest
+    public void testAddLinks_matchesUrlStartingWithHttpAndDoesNotHaveTld() throws Exception {
+        String url = "http://android/#notld///a/n/d/r/o/i/d&p1=1&p2=2";
+        assertAddLinksWithWebUrlSucceeds("Should match URL without a TLD and starting with http",
+                url);
+    }
+
+    @SmallTest
+    public void testAddLinks_doesNotMatchUrlsWithoutProtocolAndWithUnknownTld() throws Exception {
+        String url = "thank.you";
+        assertAddLinksWithWebUrlFails("Should not match URL that does not start with a protocol " +
+                "and does not contain a known TLD", url);
+    }
+
+    @SmallTest
+    public void testAddLinks_partiallyMatchesUrlWithInvalidRequestParameter() throws Exception {
+        String url = "http://android.com?p=value";
+        assertAddLinksWithWebUrlPartiallyMatches("Should partially match URL with invalid " +
+                "request parameter", "http://android.com", url);
+    }
+
+    @SmallTest
+    public void testAddLinks_matchesValidUrlWithEmoji() throws Exception {
+        String url = "Thank\u263A.com";
+        assertAddLinksWithWebUrlSucceeds("Should match URL with emoji", url);
+    }
+
+    @SmallTest
+    public void testAddLinks_doesNotMatchUrlsWithEmojiWithoutProtocolAndWithoutKnownTld()
+            throws Exception {
+        String url = "Thank\u263A.you";
+        assertAddLinksWithWebUrlFails("Should not match URLs containing emoji and with unknown " +
+                "TLD", url);
+    }
+
+    @SmallTest
+    public void testAddLinks_matchesDomainNameWithSurrogatePairs() throws Exception {
+        String url = "android\uD83C\uDF38.com";
+        assertAddLinksWithWebUrlSucceeds("Should match domain name with Unicode surrogate pairs",
+                url);
+    }
+
+    @SmallTest
+    public void testAddLinks_matchesTldWithSurrogatePairs() throws Exception {
+        String url = "http://android.\uD83C\uDF38com";
+        assertAddLinksWithWebUrlSucceeds("Should match TLD with Unicode surrogate pairs", url);
+    }
+
+    @SmallTest
+    public void testAddLinks_doesNotMatchUrlWithExcludedSurrogate() throws Exception {
+        String url = "android\uD83F\uDFFE.com";
+        assertAddLinksWithWebUrlFails("Should not match URL with excluded Unicode surrogate" +
+                " pair",  url);
+    }
+
+    @SmallTest
+    public void testAddLinks_matchesPathWithSurrogatePairs() throws Exception {
+        String url = "http://android.com/path-with-\uD83C\uDF38?v=\uD83C\uDF38f";
+        assertAddLinksWithWebUrlSucceeds("Should match path and query with Unicode surrogate pairs",
+                url);
+    }
+
+    private static void assertAddLinksWithWebUrlSucceeds(String msg, String url) {
+        String str = "start " + url + " end";
+        Spannable spannable = new SpannableString(str);
+
+        boolean linksAdded = Linkify.addLinks(spannable, Linkify.WEB_URLS);
+        URLSpan[] spans = spannable.getSpans(0, str.length(), URLSpan.class);
+
+        assertTrue(msg, linksAdded);
+        assertEquals("Span should start from the beginning of the URL", "start ".length(),
+                spannable.getSpanStart(spans[0]));
+        assertEquals("Span should end at the end of the URL", str.length() - " end".length(),
+                spannable.getSpanEnd(spans[0]));
+    }
+
+    private static void assertAddLinksWithWebUrlFails(String msg, String url) {
+        Spannable spannable = new SpannableString("start " + url + " end");
+        boolean linksAdded = Linkify.addLinks(spannable, Linkify.WEB_URLS);
+        assertFalse(msg, linksAdded);
+    }
+
+    private static void assertAddLinksWithWebUrlPartiallyMatches(String msg, String expected,
+                                                                 String url) {
+        Spannable spannable = new SpannableString("start " + url + " end");
+        boolean linksAdded = Linkify.addLinks(spannable, Linkify.WEB_URLS);
+        URLSpan[] spans = spannable.getSpans(0, spannable.length(), URLSpan.class);
+        assertTrue(msg, linksAdded);
+        assertEquals(msg, expected, spans[0].getURL().toString());
+    }
 }
