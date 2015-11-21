@@ -34,10 +34,10 @@ import android.widget.FrameLayout;
 /**
  * BoxInsetLayout is a screen shape-aware FrameLayout that can box its children
  * in the center square of a round screen by using the
- * {@code layout_box} attribute. The values for this attribute specify the
+ * {@code ctsv_layout_box} attribute. The values for this attribute specify the
  * child's edges to be boxed in:
  * {@code left|top|right|bottom} or {@code all}.
- * The {@code layout_box} attribute is ignored on a device with a rectangular
+ * The {@code ctsv_layout_box} attribute is ignored on a device with a rectangular
  * screen.
  */
 @TargetApi(Build.VERSION_CODES.KITKAT_WATCH)
@@ -383,7 +383,7 @@ public class BoxInsetLayout extends FrameLayout {
     }
 
     /**
-     * adds {@code layout_box} attribute to layout parameters
+     * adds {@code ctsv_layout_box} attribute to layout parameters
      */
     public static class LayoutParams extends FrameLayout.LayoutParams {
 
@@ -399,7 +399,7 @@ public class BoxInsetLayout extends FrameLayout {
         public LayoutParams(Context context, AttributeSet attrs) {
             super(context, attrs);
             TypedArray a = context.obtainStyledAttributes(attrs,  R.styleable.BoxInsetLayout_Layout, 0, 0);
-            boxedEdges = a.getInt(R.styleable.BoxInsetLayout_Layout_layout_box, BOX_NONE);
+            boxedEdges = a.getInt(R.styleable.BoxInsetLayout_Layout_ctsv_layout_box, BOX_NONE);
             a.recycle();
         }
 

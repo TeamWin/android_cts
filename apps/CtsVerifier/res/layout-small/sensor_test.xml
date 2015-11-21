@@ -18,7 +18,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
     <ScrollView android:id="@+id/log_scroll_view"
-            app:layout_box="all"
+            app:ctsv_layout_box="all"
             android:fillViewport="true"
             android:layout_height="match_parent"
             android:layout_width="match_parent">
