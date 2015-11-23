@@ -16,6 +16,7 @@
 
 package android.view.cts;
 
+import android.view.ContextThemeWrapper;
 import android.view.cts.R;
 
 import android.app.Instrumentation;
@@ -292,7 +293,7 @@ public class WindowTest extends ActivityInstrumentationTestCase2<WindowCtsActivi
         int screenHeight = dm.heightPixels;
         assertTrue(decor.getWidth() >= screenWidth);
         assertTrue(decor.getHeight() >= screenHeight);
-        assertSame(mWindow.getContext(), decor.getContext());
+        assertTrue(decor.getContext() instanceof ContextThemeWrapper);
     }
 
     /**
