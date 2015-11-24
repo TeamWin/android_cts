@@ -50,4 +50,4 @@ $(cts_library_xml): $(CTS_EXPECTATIONS) $(CTS_UNSUPPORTED_ABIS) $(CTS_JAVA_TEST_
 						-o $@
 
 # Have the module name depend on the cts files; so the cts files get generated when you run mm/mmm/mma/mmma.
-$(my_register_name) : $(cts_library_jar) $(cts_library_xml $(cts_module_test_config))
+$(my_register_name) : $(cts_library_jar) $(cts_library_xml) $(cts_module_test_config)
