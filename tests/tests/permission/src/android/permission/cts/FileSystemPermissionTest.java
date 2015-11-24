@@ -263,6 +263,20 @@ public class FileSystemPermissionTest extends AndroidTestCase {
     }
 
     @MediumTest
+    public void testProcSelfPagemapNotAccessible() {
+        // Note: can't use f.canRead() here, since the security check is done
+        // during the open() process. access(R_OK) return OK even through
+        // open() eventually fails.
+        try {
+            new FileInputStream("/proc/self/pagemap");
+            fail("Device is missing the following kernel security patch: "
+                 + "https://git.kernel.org/cgit/linux/kernel/git/torvalds/linux.git/commit/?id=ab676b7d6fbf4b294bf198fb27ade5b0e865c7ce");
+        } catch (FileNotFoundException e) {
+            // expected
+        }
+    }
+
+    @MediumTest
     public void testTcpDefaultRwndSane() throws Exception {
         File f = new File("/proc/sys/net/ipv4/tcp_default_init_rwnd");
         assertTrue(f.canRead());
