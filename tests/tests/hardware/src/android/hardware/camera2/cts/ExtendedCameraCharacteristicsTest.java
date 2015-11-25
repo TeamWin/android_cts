@@ -24,6 +24,7 @@ import android.hardware.camera2.CameraCharacteristics;
 import android.hardware.camera2.CameraCharacteristics.Key;
 import android.hardware.camera2.CameraManager;
 import android.hardware.camera2.CaptureRequest;
+import android.hardware.camera2.CaptureResult;
 import android.hardware.camera2.cts.helpers.CameraErrorCollector;
 import android.hardware.camera2.params.BlackLevelPattern;
 import android.hardware.camera2.params.ColorSpaceTransform;
@@ -1180,6 +1181,62 @@ public class ExtendedCameraCharacteristicsTest extends AndroidTestCase {
         }
     }
 
+    /**
+     * Sanity check of optical black regions.
+     */
+    public void testOpticalBlackRegions() {
+        int counter = 0;
+        for (CameraCharacteristics c : mCharacteristics) {
+            if (c.getKeys().contains(CameraCharacteristics.SENSOR_OPTICAL_BLACK_REGIONS)) {
+                // Regions shouldn't be null or empty.
+                Rect[] regions = CameraTestUtils.getValueNotNull(c,
+                        CameraCharacteristics.SENSOR_OPTICAL_BLACK_REGIONS);
+                CameraTestUtils.assertArrayNotEmpty(regions, "Optical back region arrays must not"
+                        + " be empty");
+
+                // Capture result key should be advertised if the optical black region is
+                // advertised.
+                List<CaptureResult.Key<?>> resultKeys = c.getAvailableCaptureResultKeys();
+                mCollector.expectTrue("Dynamic black level key should be advertised in "
+                        + "available capture result key list",
+                        resultKeys.contains(CaptureResult.SENSOR_DYNAMIC_BLACK_LEVEL));
+                mCollector.expectTrue("Dynamic white level key should be advertised in "
+                        + "available capture result key list",
+                        resultKeys.contains(CaptureResult.SENSOR_DYNAMIC_WHITE_LEVEL));
+
+                // Range check.
+                for (Rect region : regions) {
+                    mCollector.expectTrue("Optical black region shouldn't be empty!",
+                            region.isEmpty());
+                    mCollector.expectGreaterOrEqual("Optical black region left", 0/*expected*/,
+                            region.left/*actual*/);
+                    mCollector.expectGreaterOrEqual("Optical black region top", 0/*expected*/,
+                            region.top/*actual*/);
+                    Size size = CameraTestUtils.getValueNotNull(c,
+                            CameraCharacteristics.SENSOR_INFO_PIXEL_ARRAY_SIZE);
+                    mCollector.expectLessOrEqual("Optical black region width",
+                            size.getWidth()/*expected*/, region.width());
+                    mCollector.expectLessOrEqual("Optical black region height",
+                            size.getHeight()/*expected*/, region.height());
+                    Rect activeArray = CameraTestUtils.getValueNotNull(c,
+                            CameraCharacteristics.SENSOR_INFO_PRE_CORRECTION_ACTIVE_ARRAY_SIZE);
+                    mCollector.expectTrue("Optical black region" + region + " should be outside of"
+                            + " active array " + activeArray,
+                            !region.intersect(activeArray));
+                    // Region need to be disjoint:
+                    for (Rect region2 : regions) {
+                        mCollector.expectTrue("Optical black region" + region + " should have no "
+                                + "overlap with " + region2,
+                                region == region2 || !region.intersect(region2));
+                    }
+                }
+            } else {
+                Log.i(TAG, "Camera " + mIds[counter] + " doesn't support optical black regions,"
+                        + " skip the test");
+            }
+            counter++;
+        }
+    }
     /**
      * Create an invalid size that's close to one of the good sizes in the list, but not one of them
      */

@@ -509,6 +509,12 @@ public class CaptureResultTest extends Camera2AndroidTestCase {
             waiverKeys.add(CaptureResult.CONTROL_AF_REGIONS);
         }
 
+        // Keys for dynamic black/white levels
+        if (!mStaticInfo.isDynamicBlackWhiteLevelSupported()) {
+            waiverKeys.add(CaptureResult.SENSOR_DYNAMIC_BLACK_LEVEL);
+            waiverKeys.add(CaptureResult.SENSOR_DYNAMIC_WHITE_LEVEL);
+        }
+
         if (mStaticInfo.isHardwareLevelFull()) {
             return waiverKeys;
         }

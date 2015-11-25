@@ -2214,6 +2214,14 @@ public class StaticMetadata {
     }
 
     /**
+     * Check if the dynamic black and white levels are supported.
+     */
+    public boolean isDynamicBlackWhiteLevelSupported() {
+        List<Key<?>> keys = mCharacteristics.getKeys();
+        return (keys.contains(CameraCharacteristics.SENSOR_OPTICAL_BLACK_REGIONS));
+    }
+
+    /**
      * Get the value in index for a fixed-size array from a given key.
      *
      * <p>If the camera device is incorrectly reporting values, log a warning and return
