@@ -441,12 +441,24 @@ public class CipherTest extends AndroidTestCase {
                         if (!"SHA-1".equalsIgnoreCase(
                                 ((MGF1ParameterSpec) spec.getMGFParameters())
                                         .getDigestAlgorithm())) {
+                            // Create a new instance of Cipher because Bouncy Castle's RSA Cipher
+                            // caches AlgorithmParameters returned by Cipher.getParameters and does
+                            // not invalidate the cache when reinitialized with different
+                            // parameters.
+                            cipher = Cipher.getInstance(algorithm, encryptionProvider);
                             cipher.init(Cipher.ENCRYPT_MODE, encryptionKey, new OAEPParameterSpec(
                                     spec.getDigestAlgorithm(),
                                     "MGF1",
                                     MGF1ParameterSpec.SHA1,
                                     PSource.PSpecified.DEFAULT));
                             params = cipher.getParameters();
+                            OAEPParameterSpec newSpec =
+                                    params.getParameterSpec(OAEPParameterSpec.class);
+                            assertEquals(spec.getDigestAlgorithm(), newSpec.getDigestAlgorithm());
+                            assertEquals(
+                                    "SHA-1",
+                                    ((MGF1ParameterSpec) newSpec.getMGFParameters())
+                                            .getDigestAlgorithm());
                         }
                     }
 
