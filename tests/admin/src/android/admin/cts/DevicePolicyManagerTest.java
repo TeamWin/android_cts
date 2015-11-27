@@ -721,6 +721,19 @@ public class DevicePolicyManagerTest extends AndroidTestCase {
         }
     }
 
+    public void testCreateAndManageUser_failIfNotDeviceOwner() {
+        if (!mDeviceAdmin) {
+            Log.w(TAG, "Skipping testCreateAndManageUser_failIfNotDeviceOwner");
+            return;
+        }
+        try {
+            mDevicePolicyManager.createAndManageUser(mComponent, "name", mComponent, null, 0);
+            fail("did not throw expected SecurityException");
+        } catch (SecurityException e) {
+            assertDeviceOwnerMessage(e.getMessage());
+        }
+    }
+
     public void testInstallCaCert_failIfNotProfileOwner() {
         if (!mDeviceAdmin) {
             Log.w(TAG, "Skipping testInstallCaCert_failIfNotProfileOwner");
