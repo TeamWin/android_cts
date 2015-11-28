@@ -1206,8 +1206,8 @@ public class ExtendedCameraCharacteristicsTest extends AndroidTestCase {
 
                 // Range check.
                 for (Rect region : regions) {
-                    mCollector.expectTrue("Optical black region shouldn't be empty!",
-                            region.isEmpty());
+                    mCollector.expectTrue("Camera " + mIds[counter] + ": optical black region" +
+                            " shouldn't be empty!", !region.isEmpty());
                     mCollector.expectGreaterOrEqual("Optical black region left", 0/*expected*/,
                             region.left/*actual*/);
                     mCollector.expectGreaterOrEqual("Optical black region top", 0/*expected*/,
