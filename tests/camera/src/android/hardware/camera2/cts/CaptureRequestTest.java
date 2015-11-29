@@ -29,18 +29,20 @@ import android.hardware.camera2.CaptureRequest;
 import android.hardware.camera2.CaptureResult;
 import android.hardware.camera2.cts.CameraTestUtils.SimpleCaptureCallback;
 import android.hardware.camera2.cts.testcases.Camera2SurfaceViewTestCase;
+import android.hardware.camera2.params.BlackLevelPattern;
 import android.hardware.camera2.params.ColorSpaceTransform;
 import android.hardware.camera2.params.Face;
 import android.hardware.camera2.params.LensShadingMap;
 import android.hardware.camera2.params.MeteringRectangle;
 import android.hardware.camera2.params.RggbChannelVector;
 import android.hardware.camera2.params.TonemapCurve;
-
+import android.media.Image;
 import android.util.Log;
 import android.util.Range;
 import android.util.Rational;
 import android.util.Size;
 
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -85,11 +87,12 @@ public class CaptureRequestTest extends Camera2SurfaceViewTestCase {
     private static final float FOCUS_DISTANCE_ERROR_PERCENT_APPROXIMATE = 0.10f;
     private static final int ANTI_FLICKERING_50HZ = 1;
     private static final int ANTI_FLICKERING_60HZ = 2;
-
     // 5 percent error margin for resulting crop regions
     private static final float CROP_REGION_ERROR_PERCENT_DELTA = 0.05f;
     // 1 percent error margin for centering the crop region
     private static final float CROP_REGION_ERROR_PERCENT_CENTERED = 0.01f;
+    private static final float DYNAMIC_VS_FIXED_BLK_WH_LVL_ERROR_MARGIN = 0.25f;
+    private static final float DYNAMIC_VS_OPTICAL_BLK_LVL_ERROR_MARGIN = 0.1f;
 
     // Linear tone mapping curve example.
     private static final float[] TONEMAP_CURVE_LINEAR = {0, 0, 1.0f, 1.0f};
@@ -171,6 +174,32 @@ public class CaptureRequestTest extends Camera2SurfaceViewTestCase {
                 verifyBlackLevelLockResults(listener, NUM_FRAMES_VERIFIED, /*maxLockOffCnt*/1);
 
                 stopPreview();
+            } finally {
+                closeDevice();
+            }
+        }
+    }
+
+    /**
+     * Test dynamic black/white levels if they are supported.
+     *
+     * <p>
+     * If the dynamic black and white levels are reported, test below:
+     *   1. the dynamic black and white levels shouldn't deviate from the global value too much
+     *   for different sensitivities.
+     *   2. If the RAW_SENSOR and optical black regions are supported, capture RAW images and
+     *   calculate the optical black level values. The reported dynamic black level should be
+     *   close enough to the optical black level values.
+     * </p>
+     */
+    public void testDynamicBlackWhiteLevel() throws Exception {
+        for (String id : mCameraIds) {
+            try {
+                openDevice(id);
+                if (!mStaticInfo.isDynamicBlackLevelSupported()) {
+                    continue;
+                }
+                dynamicBlackWhiteLevelTestByCamera();
             } finally {
                 closeDevice();
             }
@@ -629,6 +658,170 @@ public class CaptureRequestTest extends Camera2SurfaceViewTestCase {
     }
 
     // TODO: add 3A state machine test.
+
+    /**
+     * Per camera dynamic black and white level test.
+     */
+    private void dynamicBlackWhiteLevelTestByCamera() throws Exception {
+        SimpleCaptureCallback resultListener = new SimpleCaptureCallback();
+        SimpleImageReaderListener imageListener = null;
+        CaptureRequest.Builder previewBuilder =
+                mCamera.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW);
+        CaptureRequest.Builder rawBuilder = null;
+        Size previewSize =
+                getMaxPreviewSize(mCamera.getId(), mCameraManager,
+                getPreviewSizeBound(mWindowManager, PREVIEW_SIZE_BOUND));
+        Size rawSize = null;
+        boolean canCaptureBlackRaw =
+                mStaticInfo.isCapabilitySupported(
+                        CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES_RAW) &&
+                mStaticInfo.isOpticalBlackRegionSupported();
+        if (canCaptureBlackRaw) {
+            // Capture Raw16, then calculate the optical black, and use it to check with the dynamic
+            // black level.
+            rawBuilder =
+                    mCamera.createCaptureRequest(CameraDevice.TEMPLATE_STILL_CAPTURE);
+            rawSize = mStaticInfo.getRawDimensChecked();
+            imageListener = new SimpleImageReaderListener();
+            prepareRawCaptureAndStartPreview(previewBuilder, rawBuilder, previewSize, rawSize,
+                    resultListener, imageListener);
+        } else {
+            startPreview(previewBuilder, previewSize, resultListener);
+        }
+
+        // Capture a sequence of frames with different sensitivities and validate the black/white
+        // level values
+        int[] sensitivities = getSensitivityTestValues();
+        float[][] dynamicBlackLevels = new float[sensitivities.length][];
+        int[] dynamicWhiteLevels = new int[sensitivities.length];
+        float[][] opticalBlackLevels = new float[sensitivities.length][];
+        for (int i = 0; i < sensitivities.length; i++) {
+            CaptureResult result = null;
+            if (canCaptureBlackRaw) {
+                changeExposure(rawBuilder, DEFAULT_EXP_TIME_NS, sensitivities[i]);
+                CaptureRequest rawRequest = rawBuilder.build();
+                mSession.capture(rawRequest, resultListener, mHandler);
+                result = resultListener.getCaptureResultForRequest(rawRequest,
+                        NUM_RESULTS_WAIT_TIMEOUT);
+                Image rawImage = imageListener.getImage(CAPTURE_IMAGE_TIMEOUT_MS);
+
+                // Get max (area-wise) optical black region
+                Rect[] opticalBlackRegions = mStaticInfo.getCharacteristics().get(
+                        CameraCharacteristics.SENSOR_OPTICAL_BLACK_REGIONS);
+                Rect maxRegion = opticalBlackRegions[0];
+                for (Rect region : opticalBlackRegions) {
+                    if (region.width() * region.height() > maxRegion.width() * maxRegion.height()) {
+                        maxRegion = region;
+                    }
+                }
+
+                // Get average black pixel values in the region (region is multiple of 2x2)
+                Image.Plane rawPlane = rawImage.getPlanes()[0];
+                ByteBuffer rawBuffer = rawPlane.getBuffer();
+                float[] avgBlackLevels = {0, 0, 0, 0};
+                int rowSize = rawPlane.getRowStride() * rawPlane.getPixelStride();
+                int bytePerPixel = rawPlane.getPixelStride();
+                if (VERBOSE) {
+                    Log.v(TAG, "maxRegion: " + maxRegion + ", Row stride: " +
+                            rawPlane.getRowStride());
+                }
+                for (int row = maxRegion.left; row < maxRegion.right; row += 2) {
+                    for (int col = maxRegion.top; col < maxRegion.bottom; col += 2) {
+                        int startOffset = col * rawPlane.getRowStride() + row * bytePerPixel;
+                        avgBlackLevels[0] += rawBuffer.getShort(startOffset);
+                        avgBlackLevels[1] += rawBuffer.getShort(startOffset + bytePerPixel);
+                        startOffset += rowSize;
+                        avgBlackLevels[2] += rawBuffer.getShort(startOffset);
+                        avgBlackLevels[3] += rawBuffer.getShort(startOffset + bytePerPixel);
+                    }
+                }
+                int numBlackBlocks = maxRegion.width() * maxRegion.height() / (2 * 2);
+                for (int m = 0; m < avgBlackLevels.length; m++) {
+                    avgBlackLevels[m] /= numBlackBlocks;
+                }
+                opticalBlackLevels[i] = avgBlackLevels;
+
+                if (VERBOSE) {
+                    Log.v(TAG, String.format("Optical black level results for sensitivity (%d): %s",
+                            sensitivities[i], Arrays.toString(avgBlackLevels)));
+                }
+
+                rawImage.close();
+            } else {
+                changeExposure(previewBuilder, DEFAULT_EXP_TIME_NS, sensitivities[i]);
+                CaptureRequest previewRequest = previewBuilder.build();
+                mSession.capture(previewRequest, resultListener, mHandler);
+                result = resultListener.getCaptureResultForRequest(previewRequest,
+                        NUM_RESULTS_WAIT_TIMEOUT);
+            }
+
+            dynamicBlackLevels[i] = getValueNotNull(result,
+                    CaptureResult.SENSOR_DYNAMIC_BLACK_LEVEL);
+            dynamicWhiteLevels[i] = getValueNotNull(result,
+                    CaptureResult.SENSOR_DYNAMIC_WHITE_LEVEL);
+        }
+
+        if (VERBOSE) {
+            Log.v(TAG, "Different sensitivities tested: " + Arrays.toString(sensitivities));
+            Log.v(TAG, "Dynamic black level results: " + Arrays.deepToString(dynamicBlackLevels));
+            Log.v(TAG, "Dynamic white level results: " + Arrays.toString(dynamicWhiteLevels));
+            if (canCaptureBlackRaw) {
+                Log.v(TAG, "Optical black level results " +
+                        Arrays.deepToString(opticalBlackLevels));
+            }
+        }
+
+        // check the dynamic black level against global black level.
+        // Implicit guarantee: if the dynamic black level is supported, fixed black level must be
+        // supported as well (tested in ExtendedCameraCharacteristicsTest#testOpticalBlackRegions).
+        BlackLevelPattern blackPattern = mStaticInfo.getCharacteristics().get(
+                CameraCharacteristics.SENSOR_BLACK_LEVEL_PATTERN);
+        int[] fixedBlackLevels = new int[4];
+        int fixedWhiteLevel = mStaticInfo.getCharacteristics().get(
+                CameraCharacteristics.SENSOR_INFO_WHITE_LEVEL);
+        blackPattern.copyTo(fixedBlackLevels, 0);
+        float maxBlackDeviation = 0;
+        int maxWhiteDeviation = 0;
+        for (int i = 0; i < dynamicBlackLevels.length; i++) {
+            for (int j = 0; j < dynamicBlackLevels[i].length; j++) {
+                if (maxBlackDeviation < Math.abs(fixedBlackLevels[j] - dynamicBlackLevels[i][j])) {
+                    maxBlackDeviation = Math.abs(fixedBlackLevels[j] - dynamicBlackLevels[i][j]);
+                }
+            }
+            if (maxWhiteDeviation < Math.abs(dynamicWhiteLevels[i] - fixedWhiteLevel)) {
+                maxWhiteDeviation = Math.abs(dynamicWhiteLevels[i] - fixedWhiteLevel);
+            }
+        }
+        mCollector.expectLessOrEqual("Max deviation of the dynamic black level vs fixed black level"
+                + " exceed threshold."
+                + " Dynamic black level results: " + Arrays.deepToString(dynamicBlackLevels),
+                fixedBlackLevels[0] * DYNAMIC_VS_FIXED_BLK_WH_LVL_ERROR_MARGIN, maxBlackDeviation);
+        mCollector.expectLessOrEqual("Max deviation of the dynamic white level exceed threshold."
+                + " Dynamic white level results: " + Arrays.toString(dynamicWhiteLevels),
+                fixedWhiteLevel * DYNAMIC_VS_FIXED_BLK_WH_LVL_ERROR_MARGIN,
+                (float)maxWhiteDeviation);
+
+        // Validate against optical black levels if it is available
+        if (canCaptureBlackRaw) {
+            maxBlackDeviation = 0;
+            for (int i = 0; i < dynamicBlackLevels.length; i++) {
+                for (int j = 0; j < dynamicBlackLevels[i].length; j++) {
+                    if (maxBlackDeviation <
+                            Math.abs(opticalBlackLevels[i][j] - dynamicBlackLevels[i][j])) {
+                        maxBlackDeviation =
+                                Math.abs(opticalBlackLevels[i][j] - dynamicBlackLevels[i][j]);
+                    }
+                }
+            }
+
+            mCollector.expectLessOrEqual("Max deviation of the dynamic black level vs optical black"
+                    + " exceed threshold."
+                    + " Dynamic black level results: " + Arrays.deepToString(dynamicBlackLevels)
+                    + " Optical black level results: " + Arrays.deepToString(opticalBlackLevels),
+                    fixedBlackLevels[0] * DYNAMIC_VS_OPTICAL_BLK_LVL_ERROR_MARGIN,
+                    maxBlackDeviation);
+        }
+    }
 
     private void noiseReductionModeTestByCamera() throws Exception {
         Size maxPrevSize = mOrderedPreviewSizes.get(0);
@@ -2111,7 +2304,7 @@ public class CaptureRequestTest extends Camera2SurfaceViewTestCase {
      * @param result Result sensitivity
      */
     private void validateSensitivity(int request, int result) {
-        float sensitivityDelta = (float)(request - result);
+        float sensitivityDelta = request - result;
         float sensitivityErrorMargin = request * SENSITIVITY_ERROR_MARGIN_RATE;
         // First, round down not up, second, need close enough.
         mCollector.expectTrue("Sensitivity is invalid for AE manaul control test, request: "

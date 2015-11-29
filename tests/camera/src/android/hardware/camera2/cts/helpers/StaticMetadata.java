@@ -2214,11 +2214,22 @@ public class StaticMetadata {
     }
 
     /**
-     * Check if the dynamic black and white levels are supported.
+     * Check if optical black regions key is supported.
      */
-    public boolean isDynamicBlackWhiteLevelSupported() {
-        List<Key<?>> keys = mCharacteristics.getKeys();
-        return (keys.contains(CameraCharacteristics.SENSOR_OPTICAL_BLACK_REGIONS));
+    public boolean isOpticalBlackRegionSupported() {
+        return areKeysAvailable(CameraCharacteristics.SENSOR_OPTICAL_BLACK_REGIONS);
+    }
+
+    /**
+     * Check if the dynamic black level is supported.
+     *
+     * <p>
+     * Note that: This also indicates if the white level is supported, as dynamic black and white
+     * level must be all supported or none of them is supported.
+     * </p>
+     */
+    public boolean isDynamicBlackLevelSupported() {
+        return areKeysAvailable(CaptureResult.SENSOR_DYNAMIC_BLACK_LEVEL);
     }
 
     /**
