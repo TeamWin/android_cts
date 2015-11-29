@@ -35,6 +35,7 @@ import com.android.tradefed.testtype.IBuildReceiver;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.regex.Matcher;
@@ -59,6 +60,7 @@ public class BaseDevicePolicyTest extends DeviceTestCase implements IBuildReceiv
     private String mPackageVerifier;
     private HashSet<String> mAvailableFeatures;
     protected boolean mHasFeature;
+    private ArrayList<Integer> mOriginalUsers;
 
     @Override
     public void setBuild(IBuildInfo buildInfo) {
@@ -75,6 +77,7 @@ public class BaseDevicePolicyTest extends DeviceTestCase implements IBuildReceiv
         mPackageVerifier = getDevice().executeShellCommand(
                 "settings get global package_verifier_enable");
         getDevice().executeShellCommand("settings put global package_verifier_enable 0");
+        mOriginalUsers = listUsers();
     }
 
     @Override
@@ -140,6 +143,28 @@ public class BaseDevicePolicyTest extends DeviceTestCase implements IBuildReceiv
         return 0;
     }
 
+    protected int getUserFlags(int userId) throws DeviceNotAvailableException {
+        String command = "pm list users";
+        String commandOutput = getDevice().executeShellCommand(command);
+        CLog.i("Output for command " + command + ": " + commandOutput);
+
+        String[] lines = commandOutput.split("\\r?\\n");
+        assertTrue(commandOutput + " should contain at least one line", lines.length >= 1);
+        for (int i = 1; i < lines.length; i++) {
+            // Individual user is printed out like this:
+            // \tUserInfo{$id$:$name$:$Integer.toHexString(flags)$} [running]
+            String[] tokens = lines[i].split("\\{|\\}|:");
+            assertTrue(lines[i] + " doesn't contain 4 or 5 tokens",
+                    tokens.length == 4 || tokens.length == 5);
+            // If the user IDs match, return the flags.
+            if (Integer.parseInt(tokens[1]) == userId) {
+                return Integer.parseInt(tokens[3], 16);
+            }
+        }
+        fail("User not found");
+        return 0;
+    }
+
     protected ArrayList<Integer> listUsers() throws DeviceNotAvailableException {
         String command = "pm list users";
         String commandOutput = getDevice().executeShellCommand(command);
@@ -174,9 +199,8 @@ public class BaseDevicePolicyTest extends DeviceTestCase implements IBuildReceiv
     }
 
     protected void removeTestUsers() throws Exception {
-        int primaryUser = getPrimaryUser();
         for (int userId : listUsers()) {
-            if (userId != primaryUser && userId != USER_SYSTEM) {
+            if (!mOriginalUsers.contains(userId)) {
                 removeUser(userId);
             }
         }
@@ -220,6 +244,30 @@ public class BaseDevicePolicyTest extends DeviceTestCase implements IBuildReceiv
                         userId != null ? userId : 0, params != null ? params : "");
         printTestResult(runResult);
         return !runResult.hasFailedTests() && runResult.getNumTestsInState(TestStatus.PASSED) > 0;
+    }
+
+    /** Returns true if the system supports the split between system and primary user. */
+    protected boolean hasUserSplit() throws DeviceNotAvailableException {
+        return getBooleanSystemProperty("ro.fw.system_user_split", false);
+    }
+
+    /** Returns a boolean value of the system property with the specified key. */
+    protected boolean getBooleanSystemProperty(String key, boolean defaultValue)
+            throws DeviceNotAvailableException {
+        final String[] positiveValues = {"1", "y", "yes", "true", "on"};
+        final String[] negativeValues = {"0", "n", "no", "false", "off"};
+        String propertyValue = getDevice().getProperty(key);
+        if (propertyValue == null || propertyValue.isEmpty()) {
+            return defaultValue;
+        }
+        if (Arrays.asList(positiveValues).contains(propertyValue)) {
+            return true;
+        }
+        if (Arrays.asList(negativeValues).contains(propertyValue)) {
+            return false;
+        }
+        fail("Unexpected value of boolean system property '" + key + "': " + propertyValue);
+        return false;
     }
 
     /** Helper method to run tests and return the listener that collected the results. */
@@ -301,7 +349,12 @@ public class BaseDevicePolicyTest extends DeviceTestCase implements IBuildReceiv
     }
 
     protected int createUser() throws Exception {
-        String command ="pm create-user TestUser_"+ System.currentTimeMillis();
+        return createUser(false);
+    }
+
+    protected int createUser(boolean ephemeral) throws Exception {
+        String command ="pm create-user " + (ephemeral ? "--ephemeral " : "")
+                + "TestUser_" + System.currentTimeMillis();
         CLog.logAndDisplay(LogLevel.INFO, "Starting command " + command);
         String commandOutput = getDevice().executeShellCommand(command);
         CLog.logAndDisplay(LogLevel.INFO, "Output for command " + command + ": " + commandOutput);
