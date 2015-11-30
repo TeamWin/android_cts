@@ -125,7 +125,8 @@ public class AppSecurityTests extends DeviceTestCase implements IAbiReceiver, IB
                     false, options);
             assertNotNull("shared uid app with different cert than existing app installed " +
                     "successfully", installResult);
-            assertEquals("INSTALL_FAILED_SHARED_USER_INCOMPATIBLE", installResult);
+            assertEquals("INSTALL_FAILED_SHARED_USER_INCOMPATIBLE",
+                    installResult.substring(0, installResult.indexOf(':')));
         } finally {
             getDevice().uninstallPackage(SHARED_UI_PKG);
             getDevice().uninstallPackage(SHARED_UI_DIFF_CERT_PKG);
@@ -151,7 +152,8 @@ public class AppSecurityTests extends DeviceTestCase implements IAbiReceiver, IB
                     true /* reinstall */, options);
             assertNotNull("app upgrade with different cert than existing app installed " +
                     "successfully", installResult);
-            assertEquals("INSTALL_FAILED_UPDATE_INCOMPATIBLE", installResult);
+            assertEquals("INSTALL_FAILED_UPDATE_INCOMPATIBLE",
+                    installResult.substring(0, installResult.indexOf(':')));
         } finally {
             getDevice().uninstallPackage(SIMPLE_APP_PKG);
         }
