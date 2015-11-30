@@ -20,6 +20,7 @@ import glob
 import os
 import re
 import shutil
+import string
 import subprocess
 import sys
 import xml.dom.minidom as dom
@@ -34,6 +35,16 @@ def ReadFileLines(filePath):
   """Reads a file and returns its contents as a line list."""
   f = open(filePath, 'r');
   lines = [line.strip() for line in f.readlines()]
+  f.close()
+  return lines
+
+def ReadDeqpTestList(testRoot, file):
+  """Reads a file, converts test names from deqp to CTS format, and returns
+  its contents as a line list.
+  """
+  REPO_ROOT = os.path.join(testRoot, "../../..")
+  f = open(os.path.join(REPO_ROOT, "external/deqp/android/cts", file), 'r');
+  lines = [string.join(line.strip().rsplit('.',1),'#') for line in f.readlines()]
   f.close()
   return lines
 
@@ -261,7 +272,20 @@ class CtsBuilder(object):
     plan = tools.TestPlan(packages)
     plan.Exclude('.*')
     plan.Include(r'com\.drawelements\.')
+    plan.IncludeTests('com.drawelements.deqp.egl', ReadDeqpTestList(self.test_root, 'mnc/egl-master.txt'))
+    plan.IncludeTests('com.drawelements.deqp.gles2', ReadDeqpTestList(self.test_root, 'mnc/gles2-master.txt'))
+    plan.IncludeTests('com.drawelements.deqp.gles3', ReadDeqpTestList(self.test_root, 'mnc/gles3-master.txt'))
+    plan.IncludeTests('com.drawelements.deqp.gles31', ReadDeqpTestList(self.test_root, 'mnc/gles31-master.txt'))
     self.__WritePlan(plan, 'CTS-DEQP')
+
+    plan = tools.TestPlan(packages)
+    plan.Exclude('.*')
+    plan.Include(r'com\.drawelements\.')
+    plan.ExcludeTests('com.drawelements.deqp.egl', ReadDeqpTestList(self.test_root, 'mnc/egl-master.txt'))
+    plan.ExcludeTests('com.drawelements.deqp.gles2', ReadDeqpTestList(self.test_root, 'mnc/gles2-master.txt'))
+    plan.ExcludeTests('com.drawelements.deqp.gles3', ReadDeqpTestList(self.test_root, 'mnc/gles3-master.txt'))
+    plan.ExcludeTests('com.drawelements.deqp.gles31', ReadDeqpTestList(self.test_root, 'mnc/gles31-master.txt'))
+    self.__WritePlan(plan, 'CTS-DEQP-for-next-rel')
 
     # CTS - sub plan for new test packages added for staging
     plan = tools.TestPlan(packages)
