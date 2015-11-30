@@ -16,6 +16,7 @@
 
 package com.android.cts.verifier.managedprovisioning;
 
+import android.app.admin.DevicePolicyManager;
 import android.content.Intent;
 import android.database.DataSetObserver;
 import android.os.Bundle;
@@ -33,10 +34,8 @@ import com.android.cts.verifier.TestListAdapter.TestListItem;
  */
 public class DeviceOwnerNegativeTestActivity extends PassFailButtons.TestListActivity {
 
-    private static final String ACTION_PROVISION_MANAGED_DEVICE
-        = "com.android.managedprovisioning.ACTION_PROVISION_MANAGED_DEVICE";
     private static final Intent PROVISION_DEVICE_INTENT =
-            new Intent(ACTION_PROVISION_MANAGED_DEVICE);
+            new Intent(DevicePolicyManager.ACTION_PROVISION_MANAGED_DEVICE);
 
     private static final String DEVICE_OWNER_NEGATIVE_TEST = "DEVICE_OWNER_PROVISIONING_NEGATIVE";
     private static final TestInfo DEVICE_OWNER_NEGATIVE_TEST_INFO = new TestInfo(
