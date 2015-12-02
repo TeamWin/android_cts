@@ -141,6 +141,7 @@ cts_test_packages := \
     CtsBrowserTestCases \
     CtsCalendarcommon2TestCases \
     CtsCallLogTestCases \
+    CtsCameraTestCases \
     CtsContentTestCases \
     CtsDatabaseTestCases \
     CtsDisplayTestCases \
