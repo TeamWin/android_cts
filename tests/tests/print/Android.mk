@@ -29,6 +29,6 @@ LOCAL_PACKAGE_NAME := CtsPrintTestCases
 
 LOCAL_STATIC_JAVA_LIBRARIES := mockito-target ctstestrunner ub-uiautomator ctsdeviceutil
 
-LOCAL_SDK_VERSION := current
+LOCAL_SDK_VERSION := test_current
 
 include $(BUILD_CTS_PACKAGE)
