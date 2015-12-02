@@ -33,7 +33,6 @@ public class MigrationHelper {
         } catch (ClassNotFoundException | NoSuchMethodException | InstantiationException |
                 IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
             // Ignore and fall back to CtsBuildHelper
-            e.printStackTrace();
         }
         try {
             Class<?> cls = Class.forName(CTS_BUILD_HELPER);
@@ -47,7 +46,6 @@ public class MigrationHelper {
         } catch (ClassNotFoundException | NoSuchMethodException | IllegalAccessException |
                 IllegalArgumentException | InvocationTargetException e) {
             // Ignore
-            e.printStackTrace();
         }
         throw new FileNotFoundException("Couldn't load file " + filename);
     }
