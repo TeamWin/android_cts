@@ -97,7 +97,7 @@ public class LocalActivityManagerTestHelper extends ActivityGroup {
             return;
         }
 
-        if (!activity.getClass().getName().equals("android.app.cts."
+        if (!activity.getClass().getName().equals("android.app.stubs."
                     + "LocalActivityManagerStubActivity")) {
             fail();
             return;
