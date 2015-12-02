@@ -425,6 +425,7 @@ public class CameraDeviceTest extends Camera2AndroidTestCase {
         // method on the camera device or session.
 
         class ChainedCaptureCallback extends CameraCaptureSession.CaptureCallback {
+            @Override
             public void onCaptureCompleted(CameraCaptureSession session, CaptureRequest request,
                     TotalCaptureResult result) {
                 try {
@@ -450,6 +451,7 @@ public class CameraDeviceTest extends Camera2AndroidTestCase {
                 }
             }
 
+            @Override
             public void onCaptureFailed(CameraCaptureSession session, CaptureRequest request,
                     CaptureFailure failure) {
                 try {
@@ -466,6 +468,7 @@ public class CameraDeviceTest extends Camera2AndroidTestCase {
         class ChainedSessionListener extends CameraCaptureSession.StateCallback {
             private final ChainedCaptureCallback mCaptureCallback = new ChainedCaptureCallback();
 
+            @Override
             public void onConfigured(CameraCaptureSession session) {
                 try {
                     CaptureRequest.Builder request =
@@ -486,6 +489,7 @@ public class CameraDeviceTest extends Camera2AndroidTestCase {
                 }
             }
 
+            @Override
             public void onConfigureFailed(CameraCaptureSession session) {
                 try {
                     CameraDevice camera = session.getDevice();
@@ -503,6 +507,7 @@ public class CameraDeviceTest extends Camera2AndroidTestCase {
 
             public CameraDevice cameraDevice;
 
+            @Override
             public void onOpened(CameraDevice camera) {
 
                 cameraDevice = camera;
@@ -525,6 +530,7 @@ public class CameraDeviceTest extends Camera2AndroidTestCase {
                 }
             }
 
+            @Override
             public void onDisconnected(CameraDevice camera) {
                 try {
                     camera.close();
@@ -534,6 +540,7 @@ public class CameraDeviceTest extends Camera2AndroidTestCase {
                 }
             }
 
+            @Override
             public void onError(CameraDevice camera, int error) {
                 try {
                     camera.close();
@@ -1508,7 +1515,6 @@ public class CameraDeviceTest extends Camera2AndroidTestCase {
             }
         }
 
-        // Edge enhancement and noise reduction modes
         boolean supportReprocessing =
                 availableCaps.contains(REQUEST_AVAILABLE_CAPABILITIES_YUV_REPROCESSING) ||
                 availableCaps.contains(REQUEST_AVAILABLE_CAPABILITIES_PRIVATE_REPROCESSING);
@@ -1522,6 +1528,7 @@ public class CameraDeviceTest extends Camera2AndroidTestCase {
                         CaptureRequest.COLOR_CORRECTION_MODE_TRANSFORM_MATRIX);
             }
 
+            // Edge enhancement, noise reduction and aberration correction modes.
             mCollector.expectEquals("Edge mode must be present in request if " +
                             "available edge modes are present in metadata, and vice-versa.",
                     mStaticInfo.areKeysAvailable(CameraCharacteristics.
@@ -1530,12 +1537,10 @@ public class CameraDeviceTest extends Camera2AndroidTestCase {
             if (mStaticInfo.areKeysAvailable(EDGE_MODE)) {
                 List<Integer> availableEdgeModes =
                         Arrays.asList(toObject(mStaticInfo.getAvailableEdgeModesChecked()));
+                // Don't need check fast as fast or high quality must be both present or both not.
                 if (availableEdgeModes.contains(CaptureRequest.EDGE_MODE_HIGH_QUALITY)) {
                     mCollector.expectKeyValueEquals(request, EDGE_MODE,
                             CaptureRequest.EDGE_MODE_HIGH_QUALITY);
-                } else if (availableEdgeModes.contains(CaptureRequest.EDGE_MODE_FAST)) {
-                    mCollector.expectKeyValueEquals(request, EDGE_MODE,
-                            CaptureRequest.EDGE_MODE_FAST);
                 } else {
                     mCollector.expectKeyValueEquals(request, EDGE_MODE,
                             CaptureRequest.EDGE_MODE_OFF);
@@ -1551,18 +1556,38 @@ public class CameraDeviceTest extends Camera2AndroidTestCase {
                     CameraCharacteristics.NOISE_REDUCTION_AVAILABLE_NOISE_REDUCTION_MODES)) {
                 List<Integer> availableNoiseReductionModes =
                         Arrays.asList(toObject(mStaticInfo.getAvailableNoiseReductionModesChecked()));
+                // Don't need check fast as fast or high quality must be both present or both not.
                 if (availableNoiseReductionModes
                         .contains(CaptureRequest.NOISE_REDUCTION_MODE_HIGH_QUALITY)) {
                     mCollector.expectKeyValueEquals(
                             request, NOISE_REDUCTION_MODE,
                             CaptureRequest.NOISE_REDUCTION_MODE_HIGH_QUALITY);
-                } else if (availableNoiseReductionModes
-                        .contains(CaptureRequest.NOISE_REDUCTION_MODE_FAST)) {
-                    mCollector.expectKeyValueEquals(
-                            request, NOISE_REDUCTION_MODE, CaptureRequest.NOISE_REDUCTION_MODE_FAST);
                 } else {
                     mCollector.expectKeyValueEquals(
                             request, NOISE_REDUCTION_MODE, CaptureRequest.NOISE_REDUCTION_MODE_OFF);
+                }
+            }
+
+            boolean supportAvailableAberrationModes = mStaticInfo.areKeysAvailable(
+                    CameraCharacteristics.COLOR_CORRECTION_AVAILABLE_ABERRATION_MODES);
+            boolean supportAberrationRequestKey = mStaticInfo.areKeysAvailable(
+                    CaptureRequest.COLOR_CORRECTION_ABERRATION_MODE);
+            mCollector.expectEquals("Aberration correction mode must be present in request if " +
+                    "available aberration correction reductions are present in metadata, and "
+                    + "vice-versa.", supportAvailableAberrationModes, supportAberrationRequestKey);
+            if (supportAberrationRequestKey) {
+                List<Integer> availableAberrationModes = Arrays.asList(
+                        toObject(mStaticInfo.getAvailableColorAberrationModesChecked()));
+                // Don't need check fast as fast or high quality must be both present or both not.
+                if (availableAberrationModes
+                        .contains(CaptureRequest.COLOR_CORRECTION_ABERRATION_MODE_HIGH_QUALITY)) {
+                    mCollector.expectKeyValueEquals(
+                            request, COLOR_CORRECTION_ABERRATION_MODE,
+                            CaptureRequest.COLOR_CORRECTION_ABERRATION_MODE_HIGH_QUALITY);
+                } else {
+                    mCollector.expectKeyValueEquals(
+                            request, COLOR_CORRECTION_ABERRATION_MODE,
+                            CaptureRequest.COLOR_CORRECTION_ABERRATION_MODE_OFF);
                 }
             }
         } else if (template == CameraDevice.TEMPLATE_ZERO_SHUTTER_LAG && supportReprocessing) {
@@ -1570,6 +1595,47 @@ public class CameraDeviceTest extends Camera2AndroidTestCase {
                     CaptureRequest.EDGE_MODE_ZERO_SHUTTER_LAG);
             mCollector.expectKeyValueEquals(request, NOISE_REDUCTION_MODE,
                     CaptureRequest.NOISE_REDUCTION_MODE_ZERO_SHUTTER_LAG);
+        } else if (template == CameraDevice.TEMPLATE_PREVIEW ||
+                template == CameraDevice.TEMPLATE_RECORD){
+            List<Integer> availableEdgeModes =
+                    Arrays.asList(toObject(mStaticInfo.getAvailableEdgeModesChecked()));
+            if (availableEdgeModes.contains(CaptureRequest.EDGE_MODE_FAST)) {
+                mCollector.expectKeyValueEquals(request, EDGE_MODE,
+                        CaptureRequest.EDGE_MODE_FAST);
+            } else {
+                mCollector.expectKeyValueEquals(request, EDGE_MODE,
+                        CaptureRequest.EDGE_MODE_OFF);
+            }
+
+            if (mStaticInfo.areKeysAvailable(NOISE_REDUCTION_MODE)) {
+                List<Integer> availableNoiseReductionModes =
+                        Arrays.asList(toObject(
+                                mStaticInfo.getAvailableNoiseReductionModesChecked()));
+                if (availableNoiseReductionModes
+                        .contains(CaptureRequest.NOISE_REDUCTION_MODE_FAST)) {
+                    mCollector.expectKeyValueEquals(
+                            request, NOISE_REDUCTION_MODE,
+                            CaptureRequest.NOISE_REDUCTION_MODE_FAST);
+                } else {
+                    mCollector.expectKeyValueEquals(
+                            request, NOISE_REDUCTION_MODE, CaptureRequest.NOISE_REDUCTION_MODE_OFF);
+                }
+            }
+
+            if (mStaticInfo.areKeysAvailable(COLOR_CORRECTION_ABERRATION_MODE)) {
+                List<Integer> availableAberrationModes = Arrays.asList(
+                        toObject(mStaticInfo.getAvailableColorAberrationModesChecked()));
+                if (availableAberrationModes
+                        .contains(CaptureRequest.COLOR_CORRECTION_ABERRATION_MODE_FAST)) {
+                    mCollector.expectKeyValueEquals(
+                            request, COLOR_CORRECTION_ABERRATION_MODE,
+                            CaptureRequest.COLOR_CORRECTION_ABERRATION_MODE_FAST);
+                } else {
+                    mCollector.expectKeyValueEquals(
+                            request, COLOR_CORRECTION_ABERRATION_MODE,
+                            CaptureRequest.COLOR_CORRECTION_ABERRATION_MODE_OFF);
+                }
+            }
         } else {
             if (mStaticInfo.areKeysAvailable(EDGE_MODE)) {
                 mCollector.expectKeyValueNotNull(request, EDGE_MODE);
@@ -1577,6 +1643,10 @@ public class CameraDeviceTest extends Camera2AndroidTestCase {
 
             if (mStaticInfo.areKeysAvailable(NOISE_REDUCTION_MODE)) {
                 mCollector.expectKeyValueNotNull(request, NOISE_REDUCTION_MODE);
+            }
+
+            if (mStaticInfo.areKeysAvailable(COLOR_CORRECTION_ABERRATION_MODE)) {
+                mCollector.expectKeyValueNotNull(request, COLOR_CORRECTION_ABERRATION_MODE);
             }
         }
 
@@ -1681,6 +1751,7 @@ public class CameraDeviceTest extends Camera2AndroidTestCase {
      * @param listener The {@link #CaptureCallback} camera device used to notify callbacks.
      * @param handler The handler camera device used to post callbacks.
      */
+    @Override
     protected void startCapture(CaptureRequest request, boolean repeating,
             CameraCaptureSession.CaptureCallback listener, Handler handler)
                     throws CameraAccessException {
