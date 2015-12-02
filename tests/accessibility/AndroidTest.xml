@@ -20,12 +20,12 @@
         <option name="test-file-name" value="CtsSomeAccessibilityServices.apk" />
     </target_preparer>
     <target_preparer class="com.android.tradefed.targetprep.RunCommandTargetPreparer" >
-        <option name="run-command" value="settings put secure enabled_accessibility_services android.view.accessibility.services/.SpeakingAccessibilityService:android.view.accessibility.services/.VibratingAccessibilityService" />
-        <option name="run-command" value="settings put secure touch_exploration_granted_accessibility_services android.view.accessibility.services/.SpeakingAccessibilityService:android.view.accessibility.services/.VibratingAccessibilityService" />
-        <option name="run-command" value="settings put secure accessibility_enabled 1" />
-        <option name="teardown-command" value="settings put secure enabled_accessibility_services &quot;&quot;" />
-        <option name="teardown-command" value="settings put secure touch_exploration_granted_accessibility_services &quot;&quot;" />
-        <option name="teardown-command" value="settings put secure accessibility_enabled 0" />
+        <option name="run-command" value="settings --user cur put secure enabled_accessibility_services android.view.accessibility.services/.SpeakingAccessibilityService:android.view.accessibility.services/.VibratingAccessibilityService" />
+        <option name="run-command" value="settings --user cur put secure touch_exploration_granted_accessibility_services android.view.accessibility.services/.SpeakingAccessibilityService:android.view.accessibility.services/.VibratingAccessibilityService" />
+        <option name="run-command" value="settings --user cur put secure accessibility_enabled 1" />
+        <option name="teardown-command" value="settings --user cur put secure enabled_accessibility_services &quot;&quot;" />
+        <option name="teardown-command" value="settings --user cur put secure touch_exploration_granted_accessibility_services &quot;&quot;" />
+        <option name="teardown-command" value="settings --user cur put secure accessibility_enabled 0" />
     </target_preparer>
     <test class="com.android.tradefed.testtype.AndroidJUnitTest" >
         <option name="package" value="android.view.accessibility.cts" />
