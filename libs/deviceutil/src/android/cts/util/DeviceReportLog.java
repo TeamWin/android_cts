@@ -45,7 +45,7 @@ public class DeviceReportLog extends ReportLog {
     public void deliverReportToHost(Instrumentation instrumentation) {
         Log.i(TAG, "deliverReportToHost");
         String report = generateReport();
-        if (!report.equals("")) {
+        if (report != null && !report.isEmpty()) {
             Bundle output = new Bundle();
             output.putString(CTS_RESULT_KEY, report);
             instrumentation.sendStatus(INST_STATUS_IN_PROGRESS, output);
