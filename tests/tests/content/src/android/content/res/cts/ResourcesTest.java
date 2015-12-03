@@ -217,32 +217,59 @@ public class ResourcesTest extends AndroidTestCase {
         assertEquals(0xff00ff00, color);
     }
 
+    public Resources createNewResources() {
+        final DisplayMetrics dm = new DisplayMetrics();
+        dm.setToDefaults();
+        final Configuration cfg = new Configuration();
+        cfg.setToDefaults();
+        return new Resources(new AssetManager(), dm, cfg);
+    }
+
     public void testUpdateConfiguration() {
-        final Configuration cfg = mResources.getConfiguration();
+        Resources res = createNewResources();
+        final Configuration cfg = new Configuration(res.getConfiguration());
         assertTrue(cfg.fontScale != 5);
 
         cfg.fontScale = 5;
-        mResources.updateConfiguration(cfg, null);
-        Configuration cfgNew = mResources.getConfiguration();
-        assertEquals(5.0f, cfgNew.fontScale, 0.001f);
+        res.updateConfiguration(cfg, null);
+        assertEquals(5.0f, res.getConfiguration().fontScale, 0.001f);
     }
 
     public void testUpdateConfiguration_emptyLocaleIsOverridden() {
-        final Configuration cfg = mResources.getConfiguration();
-        cfg.setLocales(null);
+        Resources res = createNewResources();
+        res.getConfiguration().setLocales(null);
+        assertTrue(res.getConfiguration().getLocales().isEmpty());
+
+        final Configuration cfg = new Configuration();
+        cfg.setToDefaults();
         assertTrue(cfg.getLocales().isEmpty());
 
-        mResources.updateConfiguration(cfg, null);
-        Configuration cfgNew = mResources.getConfiguration();
-        assertEquals(LocaleList.getDefault(), cfgNew.getLocales());
+        res.updateConfiguration(cfg, null);
+        assertEquals(LocaleList.getDefault(), res.getConfiguration().getLocales());
     }
 
     public void testUpdateConfiguration_copyLocales() {
-        final Configuration cfg = mResources.getConfiguration();
+        Resources res = createNewResources();
+        final Configuration cfg = new Configuration(res.getConfiguration());
+
         cfg.setLocales(LocaleList.forLanguageTags("az-Arab,ru"));
-        mResources.updateConfiguration(cfg, null);
-        Configuration cfgNew = mResources.getConfiguration();
-        assertEquals(LocaleList.forLanguageTags("az-Arab,ru"), cfgNew.getLocales());
+
+        res.updateConfiguration(cfg, null);
+        assertEquals(LocaleList.forLanguageTags("az-Arab,ru"), res.getConfiguration().getLocales());
+    }
+
+    public void testUpdateConfiguration_emptyAfterUpdate() {
+        Resources res = createNewResources();
+        final Configuration cfg = new Configuration(res.getConfiguration());
+        cfg.setLocales(LocaleList.forLanguageTags("az-Arab"));
+
+        res.updateConfiguration(cfg, null);
+        assertEquals(LocaleList.forLanguageTags("az-Arab"), res.getConfiguration().getLocales());
+
+        res.getConfiguration().setLocales(null);
+        cfg.setLocales(null);
+        res.updateConfiguration(cfg, null);
+        assertEquals(LocaleList.getDefault(), res.getConfiguration().getLocales());
     }
 
     public void testGetDimensionPixelSize() {
