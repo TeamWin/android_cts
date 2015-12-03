@@ -1187,6 +1187,24 @@ public class ExtendedCameraCharacteristicsTest extends AndroidTestCase {
     public void testOpticalBlackRegions() {
         int counter = 0;
         for (CameraCharacteristics c : mCharacteristics) {
+            List<CaptureResult.Key<?>> resultKeys = c.getAvailableCaptureResultKeys();
+            boolean hasDynamicBlackLevel =
+                    resultKeys.contains(CaptureResult.SENSOR_DYNAMIC_BLACK_LEVEL);
+            boolean hasDynamicWhiteLevel =
+                    resultKeys.contains(CaptureResult.SENSOR_DYNAMIC_WHITE_LEVEL);
+            boolean hasFixedBlackLevel =
+                    c.getKeys().contains(CameraCharacteristics.SENSOR_BLACK_LEVEL_PATTERN);
+            boolean hasFixedWhiteLevel =
+                    c.getKeys().contains(CameraCharacteristics.SENSOR_INFO_WHITE_LEVEL);
+            // The black and white levels should be either all supported or none of them is
+            // supported.
+            mCollector.expectTrue("Dynamic black and white level should be all or none of them"
+                    + " be supported", hasDynamicWhiteLevel == hasDynamicBlackLevel);
+            mCollector.expectTrue("Fixed black and white level should be all or none of them"
+                    + " be supported", hasFixedBlackLevel == hasFixedWhiteLevel);
+            mCollector.expectTrue("Fixed black level should be supported if dynamic black"
+                    + " level is supported", !hasDynamicBlackLevel || hasFixedBlackLevel);
+
             if (c.getKeys().contains(CameraCharacteristics.SENSOR_OPTICAL_BLACK_REGIONS)) {
                 // Regions shouldn't be null or empty.
                 Rect[] regions = CameraTestUtils.getValueNotNull(c,
@@ -1194,15 +1212,10 @@ public class ExtendedCameraCharacteristicsTest extends AndroidTestCase {
                 CameraTestUtils.assertArrayNotEmpty(regions, "Optical back region arrays must not"
                         + " be empty");
 
-                // Capture result key should be advertised if the optical black region is
+                // Dynamic black level should be supported if the optical black region is
                 // advertised.
-                List<CaptureResult.Key<?>> resultKeys = c.getAvailableCaptureResultKeys();
-                mCollector.expectTrue("Dynamic black level key should be advertised in "
-                        + "available capture result key list",
-                        resultKeys.contains(CaptureResult.SENSOR_DYNAMIC_BLACK_LEVEL));
-                mCollector.expectTrue("Dynamic white level key should be advertised in "
-                        + "available capture result key list",
-                        resultKeys.contains(CaptureResult.SENSOR_DYNAMIC_WHITE_LEVEL));
+                mCollector.expectTrue("Dynamic black and white level keys should be advertised in "
+                        + "available capture result key list", hasDynamicWhiteLevel);
 
                 // Range check.
                 for (Rect region : regions) {
@@ -1210,6 +1223,13 @@ public class ExtendedCameraCharacteristicsTest extends AndroidTestCase {
                             " shouldn't be empty!", !region.isEmpty());
                     mCollector.expectGreaterOrEqual("Optical black region left", 0/*expected*/,
                             region.left/*actual*/);
+                    mCollector.expectGreaterOrEqual("Optical black region top", 0/*expected*/,
+                            region.top/*actual*/);
+                    mCollector.expectTrue("Optical black region left/right/width/height must be"
+                            + " even number, otherwise, the bayer CFA pattern in this region will"
+                            + " be messed up",
+                            region.left % 2 == 0 && region.top % 2 == 0 &&
+                            region.width() % 2 == 0 && region.height() % 2 == 0);
                     mCollector.expectGreaterOrEqual("Optical black region top", 0/*expected*/,
                             region.top/*actual*/);
                     Size size = CameraTestUtils.getValueNotNull(c,
@@ -1232,7 +1252,7 @@ public class ExtendedCameraCharacteristicsTest extends AndroidTestCase {
                 }
             } else {
                 Log.i(TAG, "Camera " + mIds[counter] + " doesn't support optical black regions,"
-                        + " skip the test");
+                        + " skip the region test");
             }
             counter++;
         }
