@@ -183,14 +183,6 @@
             </intent-filter>
         </activity>
 
-        <activity android:name="android.app.stubs.FragmentTestActivity"
-            android:label="FragmentTestActivity">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.FRAMEWORK_INSTRUMENTATION_TEST" />
-            </intent-filter>
-        </activity>
-
         <activity android:name="android.app.stubs.ChildTabActivity" android:label="ChildTabActivity" />
 
         <activity android:name="android.app.stubs.LauncherActivityStub"
