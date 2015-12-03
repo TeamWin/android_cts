@@ -16,6 +16,7 @@
 
 package android.util.cts;
 
+import android.os.Parcel;
 import android.util.LocaleList;
 import android.test.AndroidTestCase;
 
@@ -190,5 +191,29 @@ public class LocaleListTest extends AndroidTestCase {
         assertNotNull(ll);
         assertTrue(ll.size() >= 1);
         assertEquals(Locale.getDefault(), ll.getPrimary());
+    }
+
+    public void testParcelable() {
+        // Make sure an empty LocaleList can be marshalled/unmarshalled via Parcel.
+        assertEquals(LocaleList.getEmptyLocaleList(),
+                cloneViaParcel(LocaleList.getEmptyLocaleList()));
+
+        // Make sure a non-empty LocaleList can be marshalled/unmarshalled via Parcel.
+        LocaleList original = LocaleList.forLanguageTags("en-PH,en-US");
+        assertEquals(original, cloneViaParcel(original));
+    }
+
+    private static LocaleList cloneViaParcel(final LocaleList original) {
+        Parcel parcel = null;
+        try {
+            parcel = Parcel.obtain();
+            original.writeToParcel(parcel, 0);
+            parcel.setDataPosition(0);
+            return LocaleList.CREATOR.createFromParcel(parcel);
+        } finally {
+            if (parcel != null) {
+                parcel.recycle();
+            }
+        }
     }
 }
