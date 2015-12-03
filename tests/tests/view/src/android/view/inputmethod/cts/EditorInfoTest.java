@@ -21,6 +21,7 @@ import android.os.Bundle;
 import android.os.Parcel;
 import android.test.AndroidTestCase;
 import android.text.TextUtils;
+import android.util.LocaleList;
 import android.util.Printer;
 import android.view.inputmethod.EditorInfo;
 
@@ -48,6 +49,7 @@ public class EditorInfoTest extends AndroidTestCase {
         String value = "bundleValue";
         b.putString(key, value);
         info.extras = b;
+        info.locales = LocaleList.forLanguageTags("en-PH,en-US");
 
         assertEquals(0, info.describeContents());
 
@@ -70,6 +72,7 @@ public class EditorInfoTest extends AndroidTestCase {
         assertEquals(info.actionLabel.toString(), targetInfo.actionLabel.toString());
         assertEquals(info.label.toString(), targetInfo.label.toString());
         assertEquals(info.extras.getString(key), targetInfo.extras.getString(key));
+        assertEquals(info.locales, targetInfo.locales);
 
         TestPrinter printer = new TestPrinter();
         String prefix = "TestEditorInfo";
