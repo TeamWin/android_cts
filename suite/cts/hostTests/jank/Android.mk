@@ -33,7 +33,7 @@ cts_library_jar_ := $(CTS_TESTCASES_OUT)/$(LOCAL_DEVICE_JAR_).jar
 
 $(cts_library_jar_): $(call intermediates-dir-for,JAVA_LIBRARIES,$(LOCAL_DEVICE_JAR_))/javalib.jar | $(ACP)
 	$(hide) mkdir -p $(CTS_TESTCASES_OUT)
-	$(hide) $(ACP) -fp $(call intermediates-dir-for,JAVA_LIBRARIES,$(LOCAL_DEVICE_JAR_))/javalib.jar $@
+	$(hide) $(ACP) -fp $< $@
 
 $(CTS_TESTCASES_OUT)/CtsHostJank.xml: $(cts_library_jar_)
 
