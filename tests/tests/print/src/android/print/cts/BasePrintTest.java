@@ -45,6 +45,7 @@ import android.print.cts.services.PrintServiceCallbacks;
 import android.print.cts.services.PrinterDiscoverySessionCallbacks;
 import android.print.cts.services.StubbablePrinterDiscoverySession;
 import android.print.pdf.PrintedPdfDocument;
+import android.printservice.CustomPrinterIconCallback;
 import android.printservice.PrintJob;
 import android.printservice.PrintService;
 import android.support.test.uiautomator.UiDevice;
@@ -470,7 +471,8 @@ public abstract class BasePrintTest extends InstrumentationTestCase {
     protected PrinterDiscoverySessionCallbacks createMockPrinterDiscoverySessionCallbacks(
             Answer<Void> onStartPrinterDiscovery, Answer<Void> onStopPrinterDiscovery,
             Answer<Void> onValidatePrinters, Answer<Void> onStartPrinterStateTracking,
-            Answer<Void> onStopPrinterStateTracking, Answer<Void> onDestroy) {
+            Answer<Void> onRequestCustomPrinterIcon, Answer<Void> onStopPrinterStateTracking,
+            Answer<Void> onDestroy) {
         PrinterDiscoverySessionCallbacks callbacks = mock(PrinterDiscoverySessionCallbacks.class);
 
         doCallRealMethod().when(callbacks).setSession(any(StubbablePrinterDiscoverySession.class));
@@ -490,6 +492,10 @@ public abstract class BasePrintTest extends InstrumentationTestCase {
         if (onStartPrinterStateTracking != null) {
             doAnswer(onStartPrinterStateTracking).when(callbacks).onStartPrinterStateTracking(
                     any(PrinterId.class));
+        }
+        if (onRequestCustomPrinterIcon != null) {
+            doAnswer(onRequestCustomPrinterIcon).when(callbacks).onRequestCustomPrinterIcon(
+                    any(PrinterId.class), any(CustomPrinterIconCallback.class));
         }
         if (onStopPrinterStateTracking != null) {
             doAnswer(onStopPrinterStateTracking).when(callbacks).onStopPrinterStateTracking(

@@ -219,7 +219,7 @@ public class PrintAttributesTest extends BasePrintTest {
             public Void answer(InvocationOnMock invocation) throws Throwable {
                 return null;
             }
-        }, null, new Answer<Void>() {
+        }, null, null, new Answer<Void>() {
             @Override
             public Void answer(InvocationOnMock invocation) throws Throwable {
                 // Take a note onDestroy was called.

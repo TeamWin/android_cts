@@ -679,7 +679,7 @@ public class PageRangeAdjustmentTest extends BasePrintTest {
 
                 return null;
             }
-        }, null, null, null, null, null);
+        }, null, null, null, null, null, null);
     }
 
     private PrintServiceCallbacks createSecondMockPrintServiceCallbacks() {
