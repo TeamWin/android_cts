@@ -20,6 +20,7 @@ import android.content.pm.PackageManager;
 import android.os.IBinder;
 import android.inputmethodservice.InputMethodService;
 import android.test.InstrumentationTestCase;
+import android.test.suitebuilder.annotation.MediumTest;
 import android.view.inputmethod.InputMethodManager;
 
 import java.util.List;
@@ -93,6 +94,7 @@ public class InputMethodServiceTest extends InstrumentationTestCase {
      *   <li>{@link InputMethodService#onDestroy()}</li>
      * </ul>
      */
+    @MediumTest
     public void testCreateAndDestroy() {
         if (!getInstrumentation().getContext().getPackageManager().hasSystemFeature(
                 PackageManager.FEATURE_INPUT_METHODS)) {
