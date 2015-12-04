@@ -16,6 +16,7 @@
 
 package android.view.cts;
 
+import android.view.ViewTreeObserver;
 import android.view.cts.R;
 import com.android.internal.view.menu.ContextMenuBuilder;
 
@@ -90,6 +91,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Test {@link View}.
@@ -2262,6 +2264,68 @@ public class ViewTest extends ActivityInstrumentationTestCase2<ViewTestCtsActivi
         assertFalse(view.isPressed());
         assertTrue(view.hasCalledOnKeyUp());
         assertTrue(listener.hasOnClick());
+    }
+
+    private void checkValues(final ViewGroup viewGroup, final ViewGroup parent,
+            final CountDownLatch countDownLatch, final int width, final int height) {
+        viewGroup.getViewTreeObserver().addOnPreDrawListener(new ViewTreeObserver.OnPreDrawListener() {
+            @Override
+            public boolean onPreDraw() {
+                assertEquals(width, parent.getWidth());
+                assertEquals(height, parent.getHeight());
+                countDownLatch.countDown();
+                viewGroup.getViewTreeObserver().removeOnPreDrawListener(this);
+                return true;
+            }
+        });
+    }
+
+    public void testAddRemoveAffectsWrapContentLayout() throws Throwable {
+        final int childWidth = 100;
+        final int childHeight = 200;
+        final int parentHeight = 400;
+        final MockLinearLayout parent = new MockLinearLayout(mActivity);
+        ViewGroup.LayoutParams parentParams = new ViewGroup.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT, parentHeight);
+        parent.setLayoutParams(parentParams);
+        final MockView child = new MockView(mActivity);
+        child.setBackgroundColor(Color.GREEN);
+        ViewGroup.LayoutParams childParams = new ViewGroup.LayoutParams(childWidth, childHeight);
+        child.setLayoutParams(childParams);
+        final ViewGroup viewGroup = (ViewGroup) mActivity.findViewById(R.id.viewlayout_root);
+
+        // Idea:
+        // Add the wrap_content parent view to the hierarchy (removing other views as they
+        // are not needed), test that parent is 0xparentHeight
+        // Add the child view to the parent, test that parent has same width as child
+        // Remove the child view from the parent, test that parent is 0xparentHeight
+        final CountDownLatch countDownLatch1 = new CountDownLatch(1);
+        runTestOnUiThread(new Runnable() {
+            public void run() {
+                viewGroup.removeAllViews();
+                viewGroup.addView(parent);
+                checkValues(viewGroup, parent, countDownLatch1, 0, parentHeight);
+            }
+        });
+        countDownLatch1.await(500, TimeUnit.MILLISECONDS);
+
+        final CountDownLatch countDownLatch2 = new CountDownLatch(1);
+        runTestOnUiThread(new Runnable() {
+            public void run() {
+                parent.addView(child);
+                checkValues(viewGroup, parent, countDownLatch2, childWidth, parentHeight);
+            }
+        });
+        countDownLatch2.await(500, TimeUnit.MILLISECONDS);
+
+        final CountDownLatch countDownLatch3 = new CountDownLatch(1);
+        runTestOnUiThread(new Runnable() {
+            public void run() {
+                parent.removeView(child);
+                checkValues(viewGroup, parent, countDownLatch3, 0, parentHeight);
+            }
+        });
+        countDownLatch3.await(500, TimeUnit.MILLISECONDS);
     }
 
     @UiThreadTest
