@@ -170,6 +170,13 @@
         <provider android:name="android.content.cts.MockRemoteContentProvider"
             android:authorities="remotectstest"
             android:process=":remoteprovider" android:multiprocess="false" />
+        <provider android:name="android.support.v4.content.FileProvider"
+            android:authorities="android.content.cts.fileprovider"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths" />
+        </provider>
 
         <service android:name="android.content.cts.MockService" />
 
