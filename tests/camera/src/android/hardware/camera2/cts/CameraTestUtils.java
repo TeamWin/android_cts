@@ -818,7 +818,8 @@ public class CameraTestUtils extends Assert {
         ByteBuffer buffer = null;
         // JPEG doesn't have pixelstride and rowstride, treat it as 1D buffer.
         // Same goes for DEPTH_POINT_CLOUD
-        if (format == ImageFormat.JPEG || format == ImageFormat.DEPTH_POINT_CLOUD) {
+        if (format == ImageFormat.JPEG || format == ImageFormat.DEPTH_POINT_CLOUD ||
+                format == ImageFormat.RAW_PRIVATE) {
             buffer = planes[0].getBuffer();
             assertNotNull("Fail to get jpeg or depth ByteBuffer", buffer);
             data = new byte[buffer.remaining()];
@@ -898,6 +899,7 @@ public class CameraTestUtils extends Assert {
                 break;
             case ImageFormat.JPEG:
             case ImageFormat.RAW_SENSOR:
+            case ImageFormat.RAW_PRIVATE:
             case ImageFormat.DEPTH16:
             case ImageFormat.DEPTH_POINT_CLOUD:
                 assertEquals("JPEG/RAW/depth Images should have one plane", 1, planes.length);
@@ -1320,6 +1322,9 @@ public class CameraTestUtils extends Assert {
             case ImageFormat.DEPTH_POINT_CLOUD:
                 validateDepthPointCloudData(data, width, height, format, image.getTimestamp(), filePath);
                 break;
+            case ImageFormat.RAW_PRIVATE:
+                validateRawPrivateData(data, width, height, image.getTimestamp(), filePath);
+                break;
             default:
                 throw new UnsupportedOperationException("Unsupported format for validation: "
                         + format);
@@ -1410,6 +1415,26 @@ public class CameraTestUtils extends Assert {
         if (DEBUG && filePath != null) {
             String fileName =
                     filePath + "/" + width + "x" + height + "_" + ts / 1e6 + ".raw16";
+            dumpFile(fileName, rawData);
+        }
+
+        return;
+    }
+
+    private static void validateRawPrivateData(byte[] rawData, int width, int height,
+            long ts, String filePath) {
+        if (VERBOSE) Log.v(TAG, "Validating private raw data");
+        // Expect each RAW pixel should occupy at least one byte and no more than 2.5 bytes
+        int expectedSizeMin = width * height;
+        int expectedSizeMax = width * height * 5 / 2;
+
+        assertTrue("Opaque RAW size " + rawData.length + "out of normal bound [" +
+                expectedSizeMin + "," + expectedSizeMax + "]",
+                expectedSizeMin <= rawData.length && rawData.length <= expectedSizeMax);
+
+        if (DEBUG && filePath != null) {
+            String fileName =
+                    filePath + "/" + width + "x" + height + "_" + ts / 1e6 + ".rawPriv";
             dumpFile(fileName, rawData);
         }
 
