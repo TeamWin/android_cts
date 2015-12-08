@@ -740,6 +740,7 @@ public class ViewGroupTest extends InstrumentationTestCase implements CTSResult{
         LayoutParams p = new LayoutParams(LayoutParams.WRAP_CONTENT,
                 LayoutParams.MATCH_PARENT);
         LayoutParams generatedParams = vg.generateLayoutParams(p);
+        assertEquals(generatedParams.getClass(), p.getClass());
         assertEquals(p.width, generatedParams.width);
         assertEquals(p.height, generatedParams.height);
     }
