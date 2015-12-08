@@ -349,5 +349,12 @@
     "android.view.cts.MotionEventTest#testReadFromParcelWithInvalidSampleSize"
   ],
   bug: 25652250
+},
+{
+  description: "unit testing for MediaPreparer lives within mediastress module",
+  names: [
+    "android.mediastress.cts.preconditions.MediaPreparerTest"
+  ],
+  bug: 25850508
 }
 ]

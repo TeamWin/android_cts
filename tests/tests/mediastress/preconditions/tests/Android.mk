@@ -26,9 +26,6 @@ LOCAL_MODULE_TAGS := optional
 
 LOCAL_MODULE := compatibility-host-media-preconditions-tests
 
-# Tag this module as a cts_v2 test artifact
-LOCAL_COMPATIBILITY_SUITE := cts_v2
-
 LOCAL_SDK_VERSION := current
 
 include $(BUILD_HOST_JAVA_LIBRARY)
