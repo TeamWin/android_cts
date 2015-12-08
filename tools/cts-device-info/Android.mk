@@ -23,7 +23,8 @@ DEVICE_INFO_TARGET_SDK := 23
 
 DEVICE_INFO_PERMISSIONS :=
 
-DEVICE_INFO_ACTIVITIES :=
+DEVICE_INFO_ACTIVITIES := \
+    com.android.compatibility.common.deviceinfo.GlesStubActivity
 
 LOCAL_PACKAGE_NAME := CtsDeviceInfo
 

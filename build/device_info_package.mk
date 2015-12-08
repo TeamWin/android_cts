@@ -19,7 +19,22 @@
 DEVICE_INFO_PACKAGE := com.android.compatibility.common.deviceinfo
 DEVICE_INFO_INSTRUMENT := android.support.test.runner.AndroidJUnitRunner
 DEVICE_INFO_PERMISSIONS += android.permission.WRITE_EXTERNAL_STORAGE
-DEVICE_INFO_ACTIVITIES += $(DEVICE_INFO_PACKAGE).GenericDeviceInfo $(DEVICE_INFO_PACKAGE).PackageDeviceInfo
+DEVICE_INFO_ACTIVITIES += \
+  $(DEVICE_INFO_PACKAGE).CameraDeviceInfo \
+  $(DEVICE_INFO_PACKAGE).ConfigurationDeviceInfo \
+  $(DEVICE_INFO_PACKAGE).CpuDeviceInfo \
+  $(DEVICE_INFO_PACKAGE).FeatureDeviceInfo \
+  $(DEVICE_INFO_PACKAGE).GenericDeviceInfo \
+  $(DEVICE_INFO_PACKAGE).GraphicsDeviceInfo \
+  $(DEVICE_INFO_PACKAGE).LibraryDeviceInfo \
+  $(DEVICE_INFO_PACKAGE).LocaleDeviceInfo \
+  $(DEVICE_INFO_PACKAGE).MediaDeviceInfo \
+  $(DEVICE_INFO_PACKAGE).MemoryDeviceInfo \
+  $(DEVICE_INFO_PACKAGE).PackageDeviceInfo \
+  $(DEVICE_INFO_PACKAGE).PropertyDeviceInfo \
+  $(DEVICE_INFO_PACKAGE).ScreenDeviceInfo \
+  $(DEVICE_INFO_PACKAGE).StorageDeviceInfo \
+  $(DEVICE_INFO_PACKAGE).UserDeviceInfo
 
 ifeq ($(DEVICE_INFO_MIN_SDK),)
 DEVICE_INFO_MIN_SDK := 8
