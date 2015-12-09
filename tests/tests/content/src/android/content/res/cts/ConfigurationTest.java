@@ -419,6 +419,16 @@ public class ConfigurationTest extends AndroidTestCase {
         assertEquals(LocaleList.forLanguageTags("fr,en"), config.getLocales());
     }
 
+    public void testSetTo_nullLocale() {
+        Configuration config1 = new Configuration();
+        Configuration config2 = new Configuration();
+        assertEquals(null, config2.locale);
+
+        config1.setLocale(Locale.FRENCH);
+        config1.setTo(config2);
+        assertEquals(null, config1.locale);
+    }
+
     public void testSetTo_localeFixUp() {
         Configuration config1 = new Configuration();
         Configuration config2 = new Configuration();
