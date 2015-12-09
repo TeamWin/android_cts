@@ -160,6 +160,20 @@ public class ImageReaderTest extends Camera2AndroidTestCase {
         }
     }
 
+    public void testRawPrivate() throws Exception {
+        for (String id : mCameraIds) {
+            try {
+                Log.v(TAG, "Testing raw capture for camera " + id);
+                openDevice(id);
+
+                bufferFormatTestByCamera(ImageFormat.RAW_PRIVATE, /*repeating*/false);
+            } finally {
+                closeDevice(id);
+            }
+        }
+    }
+
+
     public void testRepeatingJpeg() throws Exception {
         for (String id : mCameraIds) {
             try {
@@ -179,6 +193,19 @@ public class ImageReaderTest extends Camera2AndroidTestCase {
                 openDevice(id);
 
                 bufferFormatTestByCamera(ImageFormat.RAW_SENSOR, /*repeating*/true);
+            } finally {
+                closeDevice(id);
+            }
+        }
+    }
+
+    public void testRepeatingRawPrivate() throws Exception {
+        for (String id : mCameraIds) {
+            try {
+                Log.v(TAG, "Testing repeating raw capture for camera " + id);
+                openDevice(id);
+
+                bufferFormatTestByCamera(ImageFormat.RAW_PRIVATE, /*repeating*/true);
             } finally {
                 closeDevice(id);
             }
