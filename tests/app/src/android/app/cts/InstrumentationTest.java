@@ -601,14 +601,6 @@ public class InstrumentationTest extends InstrumentationTestCase {
             }
 
             @Override
-            public void setDecorView(int layoutResID) {
-            }
-
-            @Override
-            public void setDecorView(View view) {
-            }
-
-            @Override
             public void setFeatureDrawable(int featureId, Drawable drawable) {
             }
 
