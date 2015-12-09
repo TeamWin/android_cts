@@ -49,7 +49,7 @@ public class BroadcastReceiverTest extends ActivityInstrumentationTestCase2<Mock
     private static final String ACTION_BROADCAST_DISABLED =
             "android.content.cts.BroadcastReceiverTest.BROADCAST_DISABLED";
 
-    private static final long SEND_BROADCAST_TIMEOUT = 5000;
+    private static final long SEND_BROADCAST_TIMEOUT = 15000;
     private static final long START_SERVICE_TIMEOUT  = 3000;
 
     private static final ComponentName DISABLEABLE_RECEIVER =
@@ -166,7 +166,8 @@ public class BroadcastReceiverTest extends ActivityInstrumentationTestCase2<Mock
         assertEquals(null, internalReceiver.getResultData());
         assertEquals(null, internalReceiver.getResultExtras(false));
 
-        activity.sendBroadcast(new Intent(ACTION_BROADCAST_INTERNAL));
+        activity.sendBroadcast(new Intent(ACTION_BROADCAST_INTERNAL)
+                .addFlags(Intent.FLAG_RECEIVER_FOREGROUND));
         internalReceiver.waitForReceiver(SEND_BROADCAST_TIMEOUT);
 
         activity.unregisterReceiver(internalReceiver);
@@ -181,7 +182,8 @@ public class BroadcastReceiverTest extends ActivityInstrumentationTestCase2<Mock
         map.putString(MockReceiver.RESULT_EXTRAS_REMOVE_KEY,
                 MockReceiver.RESULT_EXTRAS_REMOVE_VALUE);
         getInstrumentation().getContext().sendOrderedBroadcast(
-                new Intent(ACTION_BROADCAST_MOCKTEST), null, internalOrderReceiver,
+                new Intent(ACTION_BROADCAST_MOCKTEST).addFlags(Intent.FLAG_RECEIVER_FOREGROUND),
+                null, internalOrderReceiver,
                 null, RESULT_INITIAL_CODE, RESULT_INITIAL_DATA, map);
         internalOrderReceiver.waitForReceiver(SEND_BROADCAST_TIMEOUT);
 
@@ -212,7 +214,8 @@ public class BroadcastReceiverTest extends ActivityInstrumentationTestCase2<Mock
         // MockReceiverFirst --> MockReceiverAbort --> MockReceiver --> internalOrderReceiver.
         // And MockReceiver is the receiver which will be aborted.
         getInstrumentation().getContext().sendOrderedBroadcast(
-                new Intent(ACTION_BROADCAST_TESTABORT), null, internalOrderReceiver,
+                new Intent(ACTION_BROADCAST_TESTABORT).addFlags(Intent.FLAG_RECEIVER_FOREGROUND),
+                null, internalOrderReceiver,
                 null, RESULT_INITIAL_CODE, RESULT_INITIAL_DATA, map);
         internalOrderReceiver.waitForReceiver(SEND_BROADCAST_TIMEOUT);
 
@@ -242,7 +245,8 @@ public class BroadcastReceiverTest extends ActivityInstrumentationTestCase2<Mock
                 PackageManager.DONT_KILL_APP);
 
         context.sendOrderedBroadcast(
-                new Intent(ACTION_BROADCAST_DISABLED), null, lastReceiver,
+                new Intent(ACTION_BROADCAST_DISABLED).addFlags(Intent.FLAG_RECEIVER_FOREGROUND),
+                null, lastReceiver,
                 null, RESULT_INITIAL_CODE, RESULT_INITIAL_DATA, new Bundle());
         lastReceiver.waitForReceiver(SEND_BROADCAST_TIMEOUT);
 
@@ -257,7 +261,8 @@ public class BroadcastReceiverTest extends ActivityInstrumentationTestCase2<Mock
         filter.addAction(ACTION_BROADCAST_INTERNAL);
         activity.registerReceiver(internalReceiver, filter);
 
-        activity.sendBroadcast(new Intent(ACTION_BROADCAST_INTERNAL));
+        activity.sendBroadcast(new Intent(ACTION_BROADCAST_INTERNAL)
+                .addFlags(Intent.FLAG_RECEIVER_FOREGROUND));
         internalReceiver.waitForReceiver(SEND_BROADCAST_TIMEOUT);
         assertNull(internalReceiver.getIBinder());
 
@@ -267,7 +272,8 @@ public class BroadcastReceiverTest extends ActivityInstrumentationTestCase2<Mock
         assertTrue(msc.waitForService(START_SERVICE_TIMEOUT));
 
         internalReceiver.reset();
-        activity.sendBroadcast(new Intent(ACTION_BROADCAST_INTERNAL));
+        activity.sendBroadcast(new Intent(ACTION_BROADCAST_INTERNAL)
+                .addFlags(Intent.FLAG_RECEIVER_FOREGROUND));
         internalReceiver.waitForReceiver(SEND_BROADCAST_TIMEOUT);
         assertNotNull(internalReceiver.getIBinder());
         activity.unbindService(msc);
