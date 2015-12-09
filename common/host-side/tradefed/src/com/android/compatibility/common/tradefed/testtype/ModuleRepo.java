@@ -368,7 +368,6 @@ public class ModuleRepo implements IModuleRepo {
                 throw new IllegalArgumentException("Not all modules could be scheduled.");
             }
         }
-        CLog.logAndDisplay(LogLevel.INFO, "%s: %s", serial, modules);
         return modules;
     }
 
