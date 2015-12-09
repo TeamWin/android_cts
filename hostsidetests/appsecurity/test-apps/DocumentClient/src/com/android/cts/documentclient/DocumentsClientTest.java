@@ -155,7 +155,7 @@ public class DocumentsClientTest extends InstrumentationTestCase {
         // Confirm that the returned file is a regular file caused by the second click.
         final Result result = mActivity.getResult();
         final Uri uri = result.data.getData();
-        assertEquals("file1", DocumentsContract.getDocumentId(uri));
+        assertEquals("doc:file1", DocumentsContract.getDocumentId(uri));
 
         // We should now have permission to read/write
         MoreAsserts.assertEquals("fileone".getBytes(), readFully(uri));
