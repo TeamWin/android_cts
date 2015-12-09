@@ -15,6 +15,7 @@
  */
 package com.android.compatibility.common.tradefed.testtype;
 
+import com.android.tradefed.build.IBuildInfo;
 import com.android.tradefed.testtype.IAbi;
 
 import java.io.File;
@@ -37,7 +38,7 @@ public interface IModuleRepo {
      */
     void initialize(int shards, File testsDir, Set<IAbi> abis, List<String> deviceTokens,
             List<String> testArgs, List<String> moduleArgs, List<String> mIncludeFilters,
-            List<String> mExcludeFilters);
+            List<String> mExcludeFilters, IBuildInfo buildInfo);
 
     /**
      * @return a {@link Map} of all modules to run on the device referenced by the given serial.

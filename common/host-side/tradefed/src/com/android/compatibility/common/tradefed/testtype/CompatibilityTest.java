@@ -231,7 +231,7 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
                     // throw a {@link FileNotFoundException}
                     moduleRepo.initialize(mTotalShards, mBuildHelper.getTestsDir(), getAbis(),
                             mDeviceTokens, mTestArgs, mModuleArgs, mIncludeFilters,
-                            mExcludeFilters);
+                            mExcludeFilters, mBuild);
                 }
             }
             // Get the tests to run in this shard

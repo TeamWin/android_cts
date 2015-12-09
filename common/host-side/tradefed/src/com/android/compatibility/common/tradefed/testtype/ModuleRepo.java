@@ -18,12 +18,14 @@ package com.android.compatibility.common.tradefed.testtype;
 import com.android.compatibility.common.util.AbiUtils;
 import com.android.compatibility.common.util.TestFilter;
 import com.android.ddmlib.Log.LogLevel;
+import com.android.tradefed.build.IBuildInfo;
 import com.android.tradefed.config.ConfigurationException;
 import com.android.tradefed.config.ConfigurationFactory;
 import com.android.tradefed.config.IConfiguration;
 import com.android.tradefed.config.IConfigurationFactory;
 import com.android.tradefed.log.LogUtil.CLog;
 import com.android.tradefed.testtype.IAbi;
+import com.android.tradefed.testtype.IBuildReceiver;
 import com.android.tradefed.testtype.IRemoteTest;
 import com.android.tradefed.testtype.IShardableTest;
 
@@ -99,7 +101,7 @@ public class ModuleRepo implements IModuleRepo {
     public Map<String, Set<String>> getDeviceTokens() {
         return mDeviceTokens;
     }
-        
+
     /**
      * A {@link FilenameFilter} to find all modules in a directory who match the given pattern.
      */
@@ -158,7 +160,7 @@ public class ModuleRepo implements IModuleRepo {
     @Override
     public void initialize(int shards, File testsDir, Set<IAbi> abis, List<String> deviceTokens,
             List<String> testArgs, List<String> moduleArgs, List<String> includeFilters,
-            List<String> excludeFilters) {
+            List<String> excludeFilters, IBuildInfo buildInfo) {
         mInitialized = true;
         mShards = shards;
         for (String line : deviceTokens) {
@@ -223,17 +225,15 @@ public class ModuleRepo implements IModuleRepo {
                             }
                         }
                     }
-                    int testCount = tests.size();
-                    for (int i = 0; i < testCount; i++) {
-                        IRemoteTest test = tests.get(i);
-                        if (test instanceof IShardableTest) {
-                            Collection<IRemoteTest> ts = ((IShardableTest) test).split();
-                            for (IRemoteTest t : ts) {
-                                addModuleDef(name, abi, t, pathArg);
-                            }
-                        } else {
-                            addModuleDef(name, abi, test, pathArg);
+                    List<IRemoteTest> shardedTests = tests;
+                    if (mShards > 1) {
+                         shardedTests = splitShardableTests(tests, buildInfo);
+                    }
+                    for (IRemoteTest test : shardedTests) {
+                        if (test instanceof IBuildReceiver) {
+                            ((IBuildReceiver)test).setBuild(buildInfo);
                         }
+                        addModuleDef(name, abi, test, pathArg);
                     }
                 }
             } catch (ConfigurationException e) {
@@ -241,6 +241,22 @@ public class ModuleRepo implements IModuleRepo {
                         configFile.getName()), e);
             }
         }
+    }
+
+    private static List<IRemoteTest> splitShardableTests(List<IRemoteTest> tests,
+            IBuildInfo buildInfo) {
+        ArrayList<IRemoteTest> shardedList = new ArrayList<>(tests.size());
+        for (IRemoteTest test : tests) {
+            if (test instanceof IShardableTest) {
+                if (test instanceof IBuildReceiver) {
+                    ((IBuildReceiver)test).setBuild(buildInfo);
+                }
+                shardedList.addAll(((IShardableTest)test).split());
+            } else {
+                shardedList.add(test);
+            }
+        }
+        return shardedList;
     }
 
     private static void addFilters(List<String> stringFilters,

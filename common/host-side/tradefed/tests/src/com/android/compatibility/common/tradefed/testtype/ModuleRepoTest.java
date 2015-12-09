@@ -16,11 +16,15 @@
 
 package com.android.compatibility.common.tradefed.testtype;
 
+import com.android.compatibility.common.tradefed.build.CompatibilityBuildProvider;
 import com.android.compatibility.common.tradefed.testtype.ModuleRepo.ConfigFilter;
+import com.android.compatibility.common.tradefed.testtype.IModuleDef;
 import com.android.compatibility.common.util.AbiUtils;
+import com.android.tradefed.build.IBuildInfo;
 import com.android.tradefed.testtype.IAbi;
 import com.android.tradefed.testtype.IRemoteTest;
-import com.android.tradefed.util.FileUtil;  
+import com.android.tradefed.testtype.IShardableTest;
+import com.android.tradefed.util.FileUtil;
 
 import junit.framework.TestCase;
 
@@ -41,7 +45,7 @@ public class ModuleRepoTest extends TestCase {
     private static final String CONFIG =
             "<configuration description=\"Auto Generated File\">\n" +
             "%s" +
-            "<test class=\"com.android.compatibility.common.tradefed.testtype.TestStub\">\n" +
+            "<test class=\"com.android.compatibility.common.tradefed.testtype.%s\">\n" +
             "<option name=\"module\" value=\"%s\" />" +
             "</test>\n" +
             "</configuration>";
@@ -71,6 +75,8 @@ public class ModuleRepoTest extends TestCase {
     private static final String ID_C_64 = AbiUtils.createId(ABI_64, MODULE_NAME_C);
     private static final String TEST_ARG = TestStub.class.getName() + ":foo:bar";
     private static final String MODULE_ARG = "%s:blah:foobar";
+    private static final String TEST_STUB = "TestStub"; // Trivial test stub
+    private static final String SHARDABLE_TEST_STUB = "ShardableTestStub"; // Shardable and IBuildReceiver
     static {
         SERIALS.add(SERIAL1);
         SERIALS.add(SERIAL2);
@@ -88,12 +94,14 @@ public class ModuleRepoTest extends TestCase {
     }
     private IModuleRepo mRepo;
     private File mTestsDir;
+    private IBuildInfo mBuild;
 
     @Override
     public void setUp() throws Exception {
         mTestsDir = setUpConfigs();
         ModuleRepo.sInstance = null;// Clear the instance so it gets recreated.
         mRepo = ModuleRepo.getInstance();
+        mBuild = new CompatibilityBuildProvider().getBuild();
     }
 
     private File setUpConfigs() throws IOException {
@@ -105,12 +113,16 @@ public class ModuleRepoTest extends TestCase {
     }
 
     private void createConfig(File testsDir, String name, String token) throws IOException {
+        createConfig(testsDir, name, token, TEST_STUB);
+    }
+
+    private void createConfig(File testsDir, String name, String token, String moduleClass) throws IOException {
         File config = new File(testsDir, String.format(FILENAME, name));
         String preparer = "";
         if (token != null) {
             preparer = String.format(TOKEN, token);
         }
-        FileUtil.writeToFile(String.format(CONFIG, preparer, name), config);
+        FileUtil.writeToFile(String.format(CONFIG, preparer, moduleClass, name), config);
     }
 
     @Override
@@ -124,7 +136,7 @@ public class ModuleRepoTest extends TestCase {
 
     public void testInitialization() throws Exception {
         mRepo.initialize(3, mTestsDir, ABIS, DEVICE_TOKENS, TEST_ARGS, MODULE_ARGS, INCLUDES,
-                EXCLUDES);
+                EXCLUDES, mBuild);
         assertTrue("Should be initialized", mRepo.isInitialized());
         assertEquals("Wrong number of shards", 3, mRepo.getNumberOfShards());
         assertEquals("Wrong number of modules per shard", 2, mRepo.getModulesPerShard());
@@ -168,7 +180,7 @@ public class ModuleRepoTest extends TestCase {
         excludeFilters.add(ID_A_32);
         excludeFilters.add(MODULE_NAME_B);
         mRepo.initialize(1, mTestsDir, ABIS, DEVICE_TOKENS, TEST_ARGS, MODULE_ARGS, includeFilters,
-                excludeFilters);
+                excludeFilters, mBuild);
         List<IModuleDef> modules = mRepo.getModules(SERIAL1);
         assertEquals("Incorrect number of modules", 1, modules.size());
         IModuleDef module = modules.get(0);
@@ -178,7 +190,7 @@ public class ModuleRepoTest extends TestCase {
 
     public void testParsing() throws Exception {
         mRepo.initialize(1, mTestsDir, ABIS, DEVICE_TOKENS, TEST_ARGS, MODULE_ARGS, INCLUDES,
-                EXCLUDES);
+                EXCLUDES, mBuild);
         List<IModuleDef> modules = mRepo.getModules(SERIAL3);
         Set<String> idSet = new HashSet<>();
         for (IModuleDef module : modules) {
@@ -202,5 +214,29 @@ public class ModuleRepoTest extends TestCase {
         TestStub stub = (TestStub) test;
         assertEquals("Incorrect test arg", "bar", stub.mFoo);
         assertEquals("Incorrect module arg", "foobar", stub.mBlah);
+    }
+
+    public void testSplit() throws Exception {
+        createConfig(mTestsDir, "sharder_1", null, SHARDABLE_TEST_STUB);
+        createConfig(mTestsDir, "sharder_2", null, SHARDABLE_TEST_STUB);
+        createConfig(mTestsDir, "sharder_3", null, SHARDABLE_TEST_STUB);
+        Set<IAbi> abis = new HashSet<>();
+        abis.add(new Abi(ABI_64, "64"));
+        ArrayList<String> emptyList = new ArrayList<>();
+
+        mRepo.initialize(3, mTestsDir, abis, DEVICE_TOKENS, emptyList, emptyList, emptyList,
+                         emptyList, mBuild);
+
+        Set<IModuleDef> modules = mRepo.getRemainingModules();
+
+        int shardableCount = 0;
+        for (IModuleDef def : modules) {
+            IRemoteTest test = def.getTest();
+            if (test instanceof IShardableTest) {
+                assertNotNull("Build not set", ((ShardableTestStub)test).mBuildInfo);
+                shardableCount++;
+            }
+        }
+        assertEquals("Shards wrong", 3*3, shardableCount);
     }
 }
