@@ -2266,13 +2266,16 @@ public class ViewTest extends ActivityInstrumentationTestCase2<ViewTestCtsActivi
         assertTrue(listener.hasOnClick());
     }
 
-    private void checkValues(final ViewGroup viewGroup, final ViewGroup parent,
-            final CountDownLatch countDownLatch, final int width, final int height) {
+    private void checkBounds(final ViewGroup viewGroup, final View view,
+            final CountDownLatch countDownLatch, final int left, final int top,
+            final int width, final int height) {
         viewGroup.getViewTreeObserver().addOnPreDrawListener(new ViewTreeObserver.OnPreDrawListener() {
             @Override
             public boolean onPreDraw() {
-                assertEquals(width, parent.getWidth());
-                assertEquals(height, parent.getHeight());
+                assertEquals(left, view.getLeft());
+                assertEquals(top, view.getTop());
+                assertEquals(width, view.getWidth());
+                assertEquals(height, view.getHeight());
                 countDownLatch.countDown();
                 viewGroup.getViewTreeObserver().removeOnPreDrawListener(this);
                 return true;
@@ -2304,7 +2307,7 @@ public class ViewTest extends ActivityInstrumentationTestCase2<ViewTestCtsActivi
             public void run() {
                 viewGroup.removeAllViews();
                 viewGroup.addView(parent);
-                checkValues(viewGroup, parent, countDownLatch1, 0, parentHeight);
+                checkBounds(viewGroup, parent, countDownLatch1, 0, 0, 0, parentHeight);
             }
         });
         countDownLatch1.await(500, TimeUnit.MILLISECONDS);
@@ -2313,7 +2316,7 @@ public class ViewTest extends ActivityInstrumentationTestCase2<ViewTestCtsActivi
         runTestOnUiThread(new Runnable() {
             public void run() {
                 parent.addView(child);
-                checkValues(viewGroup, parent, countDownLatch2, childWidth, parentHeight);
+                checkBounds(viewGroup, parent, countDownLatch2, 0, 0, childWidth, parentHeight);
             }
         });
         countDownLatch2.await(500, TimeUnit.MILLISECONDS);
@@ -2322,7 +2325,7 @@ public class ViewTest extends ActivityInstrumentationTestCase2<ViewTestCtsActivi
         runTestOnUiThread(new Runnable() {
             public void run() {
                 parent.removeView(child);
-                checkValues(viewGroup, parent, countDownLatch3, 0, parentHeight);
+                checkBounds(viewGroup, parent, countDownLatch3, 0, 0, 0, parentHeight);
             }
         });
         countDownLatch3.await(500, TimeUnit.MILLISECONDS);
