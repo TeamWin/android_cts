@@ -869,14 +869,6 @@ public class WindowTest extends ActivityInstrumentationTestCase2<WindowCtsActivi
         public void addContentView(View view, ViewGroup.LayoutParams params) {
         }
 
-        @Override
-        public void setDecorView(View view) {
-        }
-
-        @Override
-        public void setDecorView(int layoutResID) {
-        }
-
         public void clearContentView() {
         }
 
