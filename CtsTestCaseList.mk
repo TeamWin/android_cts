@@ -85,6 +85,7 @@ cts_support_packages := \
     CtsDeviceInfo \
     CtsDeviceOsTestApp \
     CtsDeviceOwnerApp \
+    CtsServicesTestApp \
     CtsDeviceTaskSwitchingAppA \
     CtsDeviceTaskSwitchingAppB \
     CtsDeviceTaskSwitchingControl \
@@ -230,6 +231,7 @@ cts_host_libraries := \
     CtsMonkeyTestCases \
     CtsOsHostTestCases \
     CtsSecurityHostTestCases \
+    CtsServicesHostTestCases \
     CtsThemeHostTestCases \
     CtsUiHostTestCases \
     CtsUsbTests
