@@ -16,12 +16,12 @@
 
 # Helper script for running unit tests for compatibility libraries
 
-checkFile() {
-    if [ ! -f "$1" ]; then
-        echo "Unable to locate $1"
-        exit
-    fi;
-}
+CTS_DIR=$(dirname ${0})
+source ${CTS_DIR}/test_defs.sh
+
+echo
+echo "---- BUILD ---- "
+echo
 
 # check if in Android build env
 if [ ! -z ${ANDROID_BUILD_TOP} ]; then
@@ -36,115 +36,43 @@ if [ ! -z ${ANDROID_BUILD_TOP} ]; then
     fi;
 fi;
 
-############### Build the tests ###############
-make compatibility-common-util-tests compatibility-host-util-tests compatibility-device-util-tests compatibility-tradefed-tests cts-tradefed-tests_v2 compatibility-device-info-tests compatibility-manifest-generator-tests compatibility-host-media-preconditions-tests CompatibilityTestApp -j32
+BUILD_TARGETS="
+    compatibility-common-util-tests\
+    compatibility-host-util-tests\
+    compatibility-device-util-tests\
+    compatibility-tradefed-tests\
+    cts-tradefed-tests_v2\
+    compatibility-device-info-tests\
+    compatibility-manifest-generator-tests
+    compatibility-host-media-preconditions-tests\
+    CompatibilityTestApp"
 
-############### Run the device side tests ###############
-JAR_DIR=${ANDROID_HOST_OUT}/framework
-JARS="
-    ddmlib-prebuilt\
-    hosttestlib\
-    tradefed-prebuilt"
-JAR_PATH=
-for JAR in $JARS; do
-    checkFile ${JAR_DIR}/${JAR}.jar
-    JAR_PATH=${JAR_PATH}:${JAR_DIR}/${JAR}.jar
-done
+pushd ${CTS_DIR}/..
+make ${BUILD_TARGETS} -j32
+BUILD_STATUS=$?
+popd
+if [ "${BUILD_STATUS}" != "0" ]; then
+    echo "BUILD FAILED - EXIT"
+    exit 1;
+fi;
 
-APK=${ANDROID_PRODUCT_OUT}/data/app/CompatibilityTestApp/CompatibilityTestApp.apk
-checkFile ${APK}
 
-TF_CONSOLE=com.android.tradefed.command.Console
-COMMON_PACKAGE=com.android.compatibility.common
-RUNNER=android.support.test.runner.AndroidJUnitRunner
-adb install -r -g ${APK}
-java $RDBG_FLAG -cp ${JAR_PATH} ${TF_CONSOLE} run singleCommand instrument --package ${COMMON_PACKAGE} --runner ${RUNNER}
-adb uninstall ${COMMON_PACKAGE}
+echo
+echo "---- DEVICE-SIDE TESTS ---- "
+echo
+
+${CTS_DIR}/common/device-side/test-app/run_tests.sh
+
+echo
+echo "---- HOST TESTS ---- "
+echo
 
 ############### Run the host side tests ###############
-JARS="
-    compatibility-common-util-hostsidelib\
-    compatibility-common-util-tests\
-    compatibility-host-util\
-    compatibility-host-util-tests\
-    compatibility-mock-tradefed\
-    compatibility-tradefed-tests\
-    ddmlib-prebuilt\
-    hosttestlib\
-    tradefed-prebuilt"
-JAR_PATH=
-for JAR in $JARS; do
-    checkFile ${JAR_DIR}/${JAR}.jar
-    JAR_PATH=${JAR_PATH}:${JAR_DIR}/${JAR}.jar
-done
+${CTS_DIR}/common/host-side/tradefed/tests/run_tests.sh
+${CTS_DIR}/common/host-side/manifest-generator/tests/run_tests.sh
+${CTS_DIR}/common/host-side/util/tests/run_tests.sh
+${CTS_DIR}/common/util/tests/run_tests.sh
 
-TEST_CLASSES="
-    com.android.compatibility.common.tradefed.UnitTests\
-    com.android.compatibility.common.util.HostUnitTests\
-    com.android.compatibility.common.util.UnitTests"
+${CTS_DIR}/tools/cts-tradefed/tests/run_tests.sh
 
-for CLASS in ${TEST_CLASSES}; do
-    java $RDBG_FLAG -cp ${JAR_PATH} ${TF_CONSOLE} run singleCommand host -n --class ${CLASS} "$@"
-done
-
-############### Run the cts tests ###############
-JARS="
-    compatibility-common-util-hostsidelib\
-    compatibility-host-util\
-    cts-tradefed-tests_v2\
-    cts-tradefed_v2\
-    ddmlib-prebuilt\
-    hosttestlib\
-    tradefed-prebuilt"
-JAR_PATH=
-for JAR in $JARS; do
-    checkFile ${JAR_DIR}/${JAR}.jar
-    JAR_PATH=${JAR_PATH}:${JAR_DIR}/${JAR}.jar
-done
-
-TEST_CLASSES="
-    com.android.compatibility.tradefed.CtsTradefedTest"
-
-for CLASS in ${TEST_CLASSES}; do
-    java $RDBG_FLAG -cp ${JAR_PATH} ${TF_CONSOLE} run singleCommand host -n --class ${CLASS} "$@"
-done
-
-############### Run the manifest generator tests ###############
-JARS="
-    compatibility-manifest-generator\
-    compatibility-manifest-generator-tests\
-    ddmlib-prebuilt\
-    hosttestlib\
-    tradefed-prebuilt"
-JAR_PATH=
-for JAR in $JARS; do
-    checkFile ${JAR_DIR}/${JAR}.jar
-    JAR_PATH=${JAR_PATH}:${JAR_DIR}/${JAR}.jar
-done
-
-TEST_CLASSES="
-    com.android.compatibility.common.generator.ManifestGeneratorTest"
-
-for CLASS in ${TEST_CLASSES}; do
-    java $RDBG_FLAG -cp ${JAR_PATH} ${TF_CONSOLE} run singleCommand host -n --class ${CLASS} "$@"
-done
-
-############### Run precondition tests ###############
-JARS="
-    tradefed-prebuilt\
-    compatibility-host-util\
-    cts-tradefed_v2\
-    compatibility-host-media-preconditions\
-    compatibility-host-media-preconditions-tests"
-JAR_PATH=
-for JAR in $JARS; do
-    checkFile ${JAR_DIR}/${JAR}.jar
-    JAR_PATH=${JAR_PATH}:${JAR_DIR}/${JAR}.jar
-done
-
-TEST_CLASSES="
-    android.mediastress.cts.preconditions.MediaPreparerTest"
-
-for CLASS in ${TEST_CLASSES}; do
-    java $RDBG_FLAG -cp ${JAR_PATH} ${TF_CONSOLE} run singleCommand host -n --class ${CLASS} "$@"
-done
+${CTS_DIR}/tests/tests/mediastress/preconditions/tests/run_tests.sh
