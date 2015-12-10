@@ -64,12 +64,10 @@ public class BitmapFactoryTest extends InstrumentationTestCase {
     private static int HEIGHTS[] = new int[] { 960, 480, 240, 240, 480 };
 
     // Configurations for BitmapFactory.Options
-    private static Config[] COLOR_CONFIGS = new Config[] {Config.ARGB_8888, Config.RGB_565,
-        Config.ARGB_4444};
+    private static Config[] COLOR_CONFIGS = new Config[] {Config.ARGB_8888, Config.RGB_565};
     private static int[] COLOR_TOLS = new int[] {16, 49, 576};
 
-    private static Config[] COLOR_CONFIGS_RGBA = new Config[] {Config.ARGB_8888,
-        Config.ARGB_4444};
+    private static Config[] COLOR_CONFIGS_RGBA = new Config[] {Config.ARGB_8888};
     private static int[] COLOR_TOLS_RGBA = new int[] {72, 124};
 
     private static int[] RAW_COLORS = new int[] {
