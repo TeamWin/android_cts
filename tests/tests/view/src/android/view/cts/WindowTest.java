@@ -1029,6 +1029,16 @@ public class WindowTest extends ActivityInstrumentationTestCase2<WindowCtsActivi
         }
 
         @Override
+        public void setDecorCaptionShade(int decorCaptionShade) {
+
+        }
+
+        @Override
+        public void setResizingCaptionDrawable(Drawable drawable) {
+
+        }
+
+        @Override
         public int getNavigationBarColor() {
             return 0;
         }

@@ -200,7 +200,7 @@ public class InstrumentationTest extends InstrumentationTestCase {
         if (mActivity.getWindow().hasFeature(Window.FEATURE_OPTIONS_PANEL)) {
             mInstrumentation.invokeMenuActionSync(mActivity, resId, 0);
             mInstrumentation.waitForIdleSync();
-    
+
             assertEquals(resId, mActivity.getMenuID());
         }
     }
@@ -688,6 +688,14 @@ public class InstrumentationTest extends InstrumentationTestCase {
 
             @Override
             public void setNavigationBarColor(int color) {
+            }
+
+            @Override
+            public void setDecorCaptionShade(int decorCaptionShade) {
+            }
+
+            @Override
+            public void setResizingCaptionDrawable(Drawable drawable) {
             }
 
             @Override
