@@ -159,7 +159,7 @@ public class ByodFlowTestActivity extends DialogTestListActivity {
     public void finish() {
         // Pass and fail buttons are known to call finish() when clicked, and this is when we want to
         // clean up the provisioned profile.
-        requestDeleteProfileOwner();
+        Utils.requestDeleteManagedProfile(this);
         enableComponent(PackageManager.COMPONENT_ENABLED_STATE_DEFAULT);
         super.finish();
     }
@@ -491,8 +491,6 @@ public class ByodFlowTestActivity extends DialogTestListActivity {
                 mAdminReceiverComponent);
 
         if (sending.resolveActivity(getPackageManager()) != null) {
-            // ManagedProvisioning must be started with startActivityForResult, but we don't
-            // care about the result, so passing 0 as a requestCode
             startActivityForResult(sending, REQUEST_MANAGED_PROVISIONING);
         } else {
             showToast(R.string.provisioning_byod_disabled);
@@ -510,17 +508,6 @@ public class ByodFlowTestActivity extends DialogTestListActivity {
             if (showToast) {
                 showToast(R.string.provisioning_byod_no_activity);
             }
-        }
-    }
-
-    private void requestDeleteProfileOwner() {
-        try {
-            Intent intent = new Intent(ByodHelperActivity.ACTION_REMOVE_PROFILE_OWNER);
-            startActivity(intent);
-            showToast(R.string.provisioning_byod_delete_profile);
-        }
-        catch (ActivityNotFoundException e) {
-            Log.d(TAG, "requestDeleteProfileOwner: ActivityNotFoundException", e);
         }
     }
 

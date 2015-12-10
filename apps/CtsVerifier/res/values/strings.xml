@@ -1481,7 +1481,16 @@ You should be prompted to select credentials; choose the ones you just installed
     <!-- Strings common for BYOD and DO managed provisioning tests. -->
     <string name="afw_device_admin">CTS Verifier</string>
 
-    <!-- Strings for BYOD managed provisioning tests (ByodFlowTestActivity) -->
+    <string name="provisioning_tests_byod">BYOD Provisioning tests</string>
+
+    <string name="provisioning_tests_byod_custom_color"> Custom provisioning color </string>
+    <string name="provisioning_tests_byod_custom_color_info">
+        Please press the Go button to start the provisioning.
+        Check that the status bar is green.
+        Then hit back and stop the provisioning.
+    </string>
+
+    <!-- Strings for BYOD managed provisioning (ByodFlowTestActivity) -->
     <string name="test_category_managed_provisioning">Managed Provisioning</string>
     <string name="provisioning_byod">BYOD Managed Provisioning</string>
     <string name="provisioning_byod_info">
