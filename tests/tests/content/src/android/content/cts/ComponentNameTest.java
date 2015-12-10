@@ -92,7 +92,7 @@ public class ComponentNameTest extends AndroidTestCase {
     public void testGetShortClassName() {
         // set the expected value, test normal value
         String actual = getComponentName().getShortClassName();
-        assertEquals("android.content.cts.ComponentNameTest", actual);
+        assertEquals(".ComponentNameTest", actual);
 
         // Test class name which can be abbreviated
         ComponentName componentName = new ComponentName("com.android.view",
@@ -135,7 +135,7 @@ public class ComponentNameTest extends AndroidTestCase {
     public void testFlattenToShortString() {
         // Test normal
         String actual = getComponentName().flattenToShortString();
-        assertEquals("android.content.cts/android.content.cts.ComponentNameTest", actual);
+        assertEquals("android.content.cts/.ComponentNameTest", actual);
 
         // Test long class name
         final ComponentName componentName = new ComponentName("com.android.view",
@@ -152,12 +152,12 @@ public class ComponentNameTest extends AndroidTestCase {
         // new the ComponentName instances, both are the same.
         final ComponentName componentName1 = getComponentName();
         ComponentName componentName2 = new ComponentName(componentName1.getPackageName(),
-                componentName1.getShortClassName());
+                componentName1.getClassName());
         assertTrue(componentName1.equals(componentName2));
 
         // new the ComponentName instances, are not the same.
         componentName2 = new ComponentName(componentName1.getPackageName(),
-                componentName1.getShortClassName() + "different name");
+                componentName1.getClassName() + "different name");
         assertFalse(componentName1.equals(componentName2));
     }
 
