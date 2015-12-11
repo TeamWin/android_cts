@@ -1664,7 +1664,7 @@ public class WebViewTest extends ActivityInstrumentationTestCase2<WebViewCtsActi
         } while (mOnUiThread.pageDown(false));
 
         waitForFlingDone(mOnUiThread);
-        int bottomScrollY = mOnUiThread.getScrollY();
+        final int bottomScrollY = mOnUiThread.getScrollY();
 
         assertTrue(mOnUiThread.pageUp(false));
 
@@ -1673,17 +1673,25 @@ public class WebViewTest extends ActivityInstrumentationTestCase2<WebViewCtsActi
         } while (mOnUiThread.pageUp(false));
 
         waitForFlingDone(mOnUiThread);
-        int topScrollY = mOnUiThread.getScrollY();
+        final int topScrollY = mOnUiThread.getScrollY();
 
         // jump to the bottom
         assertTrue(mOnUiThread.pageDown(true));
-        waitForFlingDone(mOnUiThread);
-        assertEquals(bottomScrollY, mOnUiThread.getScrollY());
+        new PollingCheck() {
+            @Override
+            protected boolean check() {
+                return bottomScrollY == mOnUiThread.getScrollY();
+            }
+        }.run();
 
         // jump to the top
         assertTrue(mOnUiThread.pageUp(true));
-        waitForFlingDone(mOnUiThread);
-        assertEquals(topScrollY, mOnUiThread.getScrollY());
+         new PollingCheck() {
+            @Override
+            protected boolean check() {
+                return topScrollY == mOnUiThread.getScrollY();
+            }
+        }.run();
     }
 
     public void testGetContentHeight() throws Throwable {
