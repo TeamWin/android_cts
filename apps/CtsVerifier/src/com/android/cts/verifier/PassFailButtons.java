@@ -328,8 +328,7 @@ public class PassFailButtons {
         ContentResolver resolver = activity.getContentResolver();
         Cursor cursor = null;
         try {
-            cursor = resolver.query(
-                    TestResultsProvider.getTestNameUri(activity.getClass().getName()),
+            cursor = resolver.query(TestResultsProvider.getTestNameUri(activity),
                     new String[] {TestResultsProvider.COLUMN_TEST_INFO_SEEN}, null, null, null);
             return cursor.moveToFirst() && cursor.getInt(0) > 0;
         } finally {
@@ -392,10 +391,9 @@ public class PassFailButtons {
         values.put(TestResultsProvider.COLUMN_TEST_NAME, activity.getClass().getName());
         values.put(TestResultsProvider.COLUMN_TEST_INFO_SEEN, 1);
         int numUpdated = resolver.update(
-                TestResultsProvider.getTestNameUri(activity.getClass().getName()),
-                values, null, null);
+                TestResultsProvider.getTestNameUri(activity), values, null, null);
         if (numUpdated == 0) {
-            resolver.insert(TestResultsProvider.RESULTS_CONTENT_URI, values);
+            resolver.insert(TestResultsProvider.getResultContentUri(activity), values);
         }
     }
 
