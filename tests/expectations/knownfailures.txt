@@ -356,5 +356,12 @@
     "android.mediastress.cts.preconditions.MediaPreparerTest"
   ],
   bug: 25850508
+},
+{
+  description: "Tests for the signature tests should not be in CTS",
+  names: [
+    "android.signature.cts.tests"
+  ],
+  bug: 26150806
 }
 ]
