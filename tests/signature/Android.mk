@@ -25,30 +25,39 @@ LOCAL_PACKAGE_NAME := CtsSignatureTestCases
 # Tag this module as a cts_v2 test artifact
 LOCAL_COMPATIBILITY_SUITE := cts_v2
 
-cts_api_xml_rel := ../../../$(call intermediates-dir-for,APPS,CtsSignatureTestCases)/current.api
-cts_api_xml := $(LOCAL_PATH)/$(cts_api_xml_rel)
-$(cts_api_xml) : frameworks/base/api/current.txt | $(APICHECK)
-	@echo "Convert API file $@"
-	@mkdir -p $(dir $@)
-	$(hide) $(APICHECK_COMMAND) -convert2xml $< $@
-
-# Copy the current api file to CTS
-LOCAL_COMPATIBILITY_SUPPORT_FILES += $(cts_api_xml_rel):current.api
-
 # For CTS v1
 LOCAL_CTS_MODULE_CONFIG := $(LOCAL_PATH)/Old$(CTS_MODULE_TEST_CONFIG)
-
-cts_api_xml_v1 := $(CTS_TESTCASES_OUT)/current.api
-$(cts_api_xml_v1):  $(cts_api_xml) | $(ACP)
-	$(call copy-file-to-new-target)
-
-$(CTS_TESTCASES_OUT)/$(LOCAL_PACKAGE_NAME).xml: $(cts_api_xml_v1)
 
 LOCAL_SDK_VERSION := current
 
 LOCAL_STATIC_JAVA_LIBRARIES := ctstestrunner
 
 include $(BUILD_CTS_PACKAGE)
+
+# current api, in XML format.
+# ============================================================
+include $(CLEAR_VARS)
+LOCAL_MODULE := cts-current-api
+LOCAL_MODULE_STEM := current.api
+LOCAL_MODULE_CLASS := ETC
+LOCAL_MODULE_PATH := $(TARGET_OUT_DATA_ETC)
+
+# Tag this module as a cts_v2 test artifact
+LOCAL_COMPATIBILITY_SUITE := cts_v2
+
+include $(BUILD_SYSTEM)/base_rules.mk
+$(LOCAL_BUILT_MODULE) : frameworks/base/api/current.txt | $(APICHECK)
+	@echo "Convert API file $@"
+	@mkdir -p $(dir $@)
+	$(hide) $(APICHECK_COMMAND) -convert2xml $< $@
+
+# For CTS v1
+cts_api_xml_v1 := $(CTS_TESTCASES_OUT)/current.api
+$(cts_api_xml_v1):  $(LOCAL_BUILT_MODULE) | $(ACP)
+	$(call copy-file-to-new-target)
+
+$(CTS_TESTCASES_OUT)/CtsSignatureTestCases.xml: $(cts_api_xml_v1)
+
 
 # signature-hostside java library (for testing)
 # ============================================================
