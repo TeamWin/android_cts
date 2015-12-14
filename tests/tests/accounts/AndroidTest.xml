@@ -21,5 +21,6 @@
     </target_preparer>
     <test class="com.android.tradefed.testtype.AndroidJUnitTest" >
         <option name="package" value="android.accounts.cts" />
+        <option name="runtime-hint" value="1m25s" />
     </test>
 </configuration>

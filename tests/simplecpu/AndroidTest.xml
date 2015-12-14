@@ -20,5 +20,6 @@
     </target_preparer>
     <test class="com.android.tradefed.testtype.AndroidJUnitTest" >
         <option name="package" value="android.simplecpu.cts" />
+        <option name="runtime-hint" value="6m51s" />
     </test>
 </configuration>

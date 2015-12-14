@@ -16,5 +16,6 @@
 <configuration description="Config for the CTS aadb host tests">
     <test class="com.android.compatibility.common.tradefed.testtype.JarHostTest">
         <option name="jar" value="CtsAadbHostTestCases.jar" />
+        <option name="runtime-hint" value="5m30s" />
     </test>
 </configuration>

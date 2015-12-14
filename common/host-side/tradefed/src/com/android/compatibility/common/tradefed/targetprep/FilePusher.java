@@ -65,7 +65,7 @@ public class FilePusher extends PushFilePreparer implements IAbiReceiver {
         try {
             File f = new File(getTestsDir(buildInfo),
                     String.format("%s%s", fileName, mAppendBitness ? mAbi.getBitness() : ""));
-            CLog.logAndDisplay(LogLevel.ERROR, "Copying from %s", f.getAbsolutePath());
+            CLog.logAndDisplay(LogLevel.INFO, "Copying from %s", f.getAbsolutePath());
             return f;
         } catch (FileNotFoundException e) {
             e.printStackTrace();

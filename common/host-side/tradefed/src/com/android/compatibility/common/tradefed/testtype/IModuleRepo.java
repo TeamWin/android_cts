@@ -66,12 +66,22 @@ public interface IModuleRepo {
     Set<String> getSerials();
 
     /**
-     * @return the modules which dont have prerequisites but have not been assigned to a device.
+     * @return the small modules that don't have tokens but have not been assigned to a device.
      */
-    Set<IModuleDef> getRemainingModules();
+    List<IModuleDef> getSmallModules();
 
     /**
-     * @return the modules which have prerequisites and have not been assigned to a device.
+     * @return the medium modules that don't have tokens but have not been assigned to a device.
      */
-    Set<IModuleDef> getRemainingWithTokens();
+    List<IModuleDef> getMediumModules();
+
+    /**
+     * @return the large modules that don't have tokens but have not been assigned to a device.
+     */
+    List<IModuleDef> getLargeModules();
+
+    /**
+     * @return the modules which have token and have not been assigned to a device.
+     */
+    List<IModuleDef> getTokenModules();
 }

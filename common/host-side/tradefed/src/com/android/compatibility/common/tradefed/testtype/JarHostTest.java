@@ -24,6 +24,8 @@ import com.android.tradefed.testtype.IAbi;
 import com.android.tradefed.testtype.IAbiReceiver;
 import com.android.tradefed.testtype.IBuildReceiver;
 import com.android.tradefed.testtype.IRemoteTest;
+import com.android.tradefed.testtype.IRuntimeHintProvider;
+import com.android.tradefed.util.TimeVal;
 
 import junit.framework.Test;
 
@@ -42,11 +44,17 @@ import java.util.jar.JarFile;
 /**
  * Test runner for host-side JUnit tests.
  */
-public class JarHostTest extends HostTest implements IAbiReceiver, IBuildReceiver {
+public class JarHostTest extends HostTest implements IAbiReceiver, IBuildReceiver,
+        IRuntimeHintProvider {
 
     @Option(name="jar", description="The jars containing the JUnit test class to run.",
             importance = Importance.IF_UNSET)
     private Set<String> mJars = new HashSet<>();
+
+    @Option(name = "runtime-hint",
+            isTimeVal = true,
+            description="The hint about the test's runtime.")
+    private long mRuntimeHint = 60000;// 1 minute
 
     private IAbi mAbi;
     private IBuildInfo mBuild;
@@ -67,6 +75,14 @@ public class JarHostTest extends HostTest implements IAbiReceiver, IBuildReceive
     public void setBuild(IBuildInfo build) {
         mBuild = build;
         mHelper = new CompatibilityBuildHelper(build);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public long getRuntimeHint() {
+        return mRuntimeHint;
     }
 
     /**

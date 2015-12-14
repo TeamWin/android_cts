@@ -14,7 +14,7 @@
 
 LOCAL_PATH:= $(call my-dir)
 
-test_executable := CtsAslrMallocTest
+test_executable := CtsAslrMallocTestCases
 list_executable := $(test_executable)_list
 
 include $(CLEAR_VARS)

@@ -16,5 +16,6 @@
 <configuration description="Config for the CTS monkey host tests">
     <test class="com.android.compatibility.common.tradefed.testtype.JarHostTest" >
         <option name="jar" value="CtsMonkeyTestCases.jar" />
+        <option name="runtime-hint" value="5m7s" />
     </test>
 </configuration>

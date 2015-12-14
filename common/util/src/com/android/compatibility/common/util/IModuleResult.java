@@ -28,6 +28,10 @@ public interface IModuleResult extends Comparable<IModuleResult> {
 
     String getAbi();
 
+    void addRuntime(long elapsedTime);
+
+    long getRuntime();
+
     /**
      * Gets a {@link ICaseResult} for the given testcase, creating it if it doesn't exist.
      *

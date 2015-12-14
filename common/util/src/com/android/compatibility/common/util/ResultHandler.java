@@ -69,6 +69,7 @@ public class ResultHandler {
     private static final String REFERENCE_URL_ATTR = "reference_url";
     private static final String RESULT_ATTR = "result";
     private static final String RESULT_TAG = "Result";
+    private static final String RUNTIME_ATTR = "runtime";
     private static final String SCREENSHOT_TAG = "Screenshot";
     private static final String STACK_TAG = "StackTrace";
     private static final String START_TIME_ATTR = "start";
@@ -259,6 +260,7 @@ public class ResultHandler {
             serializer.startTag(NS, MODULE_TAG);
             serializer.attribute(NS, NAME_ATTR, module.getName());
             serializer.attribute(NS, ABI_ATTR, module.getAbi());
+            serializer.attribute(NS, RUNTIME_ATTR, String.valueOf(module.getRuntime()));
             for (ICaseResult cr : module.getResults()) {
                 serializer.startTag(NS, CASE_TAG);
                 serializer.attribute(NS, NAME_ATTR, cr.getName());

@@ -19,6 +19,6 @@
         <option name="test-file-name" value="CtsDeviceServicesTestApp.apk" />
     </target_preparer>
     <test class="com.android.compatibility.common.tradefed.testtype.JarHostTest" >
-        <option name="jar" value="CtsServivcesHostTestCases.jar" />
+        <option name="jar" value="CtsServicesHostTestCases.jar" />
     </test>
 </configuration>

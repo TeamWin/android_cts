@@ -27,6 +27,7 @@ import java.util.Map;
 public class ModuleResult implements IModuleResult {
 
     private String mId;
+    private long mRuntime = 0;
 
     private Map<String, ICaseResult> mResults = new HashMap<>();
 
@@ -60,6 +61,22 @@ public class ModuleResult implements IModuleResult {
     @Override
     public String getAbi() {
         return AbiUtils.parseAbi(mId);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void addRuntime(long elapsedTime) {
+        mRuntime += elapsedTime;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public long getRuntime() {
+        return mRuntime;
     }
 
     /**

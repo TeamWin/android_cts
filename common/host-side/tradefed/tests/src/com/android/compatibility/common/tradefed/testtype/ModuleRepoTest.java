@@ -140,14 +140,15 @@ public class ModuleRepoTest extends TestCase {
         assertTrue("Should be initialized", mRepo.isInitialized());
         assertEquals("Wrong number of shards", 3, mRepo.getNumberOfShards());
         assertEquals("Wrong number of modules per shard", 2, mRepo.getModulesPerShard());
-        Set<IModuleDef> modules = mRepo.getRemainingModules();
         Map<String, Set<String>> deviceTokens = mRepo.getDeviceTokens();
         assertEquals("Wrong number of devices with tokens", 1, deviceTokens.size());
         Set<String> tokens = deviceTokens.get(SERIAL3);
         assertEquals("Wrong number of tokens", 1, tokens.size());
         assertTrue("Unexpected device token", tokens.contains(FOOBAR_TOKEN));
-        assertEquals("Wrong number of modules", 4, modules.size());
-        Set<IModuleDef> tokenModules = mRepo.getRemainingWithTokens();
+        assertEquals("Wrong number of modules", 0, mRepo.getLargeModules().size());
+        assertEquals("Wrong number of modules", 0, mRepo.getMediumModules().size());
+        assertEquals("Wrong number of modules", 4, mRepo.getSmallModules().size());
+        List<IModuleDef> tokenModules = mRepo.getTokenModules();
         assertEquals("Wrong number of modules with tokens", 2, tokenModules.size());
         List<IModuleDef> serial1Modules = mRepo.getModules(SERIAL1);
         assertEquals("Wrong number of modules", 2, serial1Modules.size());
@@ -227,7 +228,11 @@ public class ModuleRepoTest extends TestCase {
         mRepo.initialize(3, mTestsDir, abis, DEVICE_TOKENS, emptyList, emptyList, emptyList,
                          emptyList, mBuild);
 
-        Set<IModuleDef> modules = mRepo.getRemainingModules();
+        List<IModuleDef> modules = new ArrayList<>();
+        modules.addAll(mRepo.getLargeModules());
+        modules.addAll(mRepo.getMediumModules());
+        modules.addAll(mRepo.getSmallModules());
+        modules.addAll(mRepo.getTokenModules());
 
         int shardableCount = 0;
         for (IModuleDef def : modules) {

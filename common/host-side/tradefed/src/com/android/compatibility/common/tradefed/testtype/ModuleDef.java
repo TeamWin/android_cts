@@ -36,6 +36,7 @@ import com.android.tradefed.testtype.IAbiReceiver;
 import com.android.tradefed.testtype.IBuildReceiver;
 import com.android.tradefed.testtype.IDeviceTest;
 import com.android.tradefed.testtype.IRemoteTest;
+import com.android.tradefed.testtype.IRuntimeHintProvider;
 import com.android.tradefed.testtype.ITestFilterReceiver;
 
 import java.util.ArrayList;
@@ -43,6 +44,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Container for Compatibility test module info.
@@ -123,6 +125,17 @@ public class ModuleDef implements IModuleDef {
     @Override
     public Set<String> getTokens() {
         return mTokens;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public long getRuntimeHint() {
+        if (mTest instanceof IRuntimeHintProvider) {
+            return ((IRuntimeHintProvider) mTest).getRuntimeHint();
+        }
+        return TimeUnit.MINUTES.toMillis(1); // Default 1 minute.
     }
 
     /**

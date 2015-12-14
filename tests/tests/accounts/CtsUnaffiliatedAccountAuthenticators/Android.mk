@@ -26,7 +26,7 @@ LOCAL_MODULE_PATH := $(TARGET_OUT_DATA_APPS)
 LOCAL_SDK_VERSION := current
 
 LOCAL_STATIC_JAVA_LIBRARIES := \
-        ctstestrunner \
+	ctstestrunner \
 	CtsAccountTestsCommon
 
 LOCAL_SRC_FILES := $(call all-java-files-under, src)
@@ -34,6 +34,9 @@ LOCAL_SRC_FILES := $(call all-java-files-under, src)
 LOCAL_RESOURCE_DIR += $(LOCAL_PATH)/res
 
 LOCAL_PACKAGE_NAME := CtsUnaffiliatedAccountAuthenticators
+
+# Tag this module as a cts_v2 test artifact
+LOCAL_COMPATIBILITY_SUITE := cts_v2
 
 LOCAL_SDK_VERSION := current
 

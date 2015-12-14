@@ -22,6 +22,7 @@
     </target_preparer>
     <test class="com.android.tradefed.testtype.AndroidJUnitTest" >
         <option name="package" value="android.webkit.cts" />
+        <option name="runtime-hint" value="6m39s" />
     </test>
 
 </configuration>

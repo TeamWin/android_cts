@@ -16,5 +16,6 @@
 <configuration description="Config for CTS UI host test cases">
     <test class="com.android.compatibility.common.tradefed.testtype.JarHostTest" >
         <option name="jar" value="CtsUiHostTestCases.jar" />
+        <option name="runtime-hint" value="2m" />
     </test>
 </configuration>

@@ -28,17 +28,21 @@ import com.android.tradefed.testtype.IAbi;
 import com.android.tradefed.testtype.IBuildReceiver;
 import com.android.tradefed.testtype.IRemoteTest;
 import com.android.tradefed.testtype.IShardableTest;
+import com.android.tradefed.util.TimeUtil;
 
 import java.io.File;
 import java.io.FilenameFilter;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Retrieves Compatibility test module definitions from the repository.
@@ -46,11 +50,17 @@ import java.util.Set;
 public class ModuleRepo implements IModuleRepo {
 
     private static final String CONFIG_EXT = ".config";
+    private static final long SMALL_TEST = TimeUnit.MINUTES.toMillis(2); // Small tests < 2mins
+    private static final long MEDIUM_TEST = TimeUnit.MINUTES.toMillis(10); // Medium tests < 10mins
 
     static IModuleRepo sInstance;
 
     private int mShards;
     private int mModulesPerShard;
+    private int mSmallModulesPerShard;
+    private int mMediumModulesPerShard;
+    private int mLargeModulesPerShard;
+    private int mModuleCount = 0;
     private Set<String> mSerials = new HashSet<>();
     private Map<String, Set<String>> mDeviceTokens = new HashMap<>();
     private Map<String, Map<String, String>> mTestArgs = new HashMap<>();
@@ -62,10 +72,14 @@ public class ModuleRepo implements IModuleRepo {
 
     private volatile boolean mInitialized = false;
 
-    // Holds all the 'normal' tests waiting to be run.
-    private Set<IModuleDef> mRemainingModules = new HashSet<>();
-    // Holds all the 'special' tests waiting to be run. Meaning the DUT must have a specific token.
-    private Set<IModuleDef> mRemainingWithTokens = new HashSet<>();
+    // Holds all the small tests waiting to be run.
+    private List<IModuleDef> mSmallModules = new ArrayList<>();
+    // Holds all the medium tests waiting to be run.
+    private List<IModuleDef> mMediumModules = new ArrayList<>();
+    // Holds all the large tests waiting to be run.
+    private List<IModuleDef> mLargeModules = new ArrayList<>();
+    // Holds all the tests with tokens waiting to be run. Meaning the DUT must have a specific token.
+    private List<IModuleDef> mTokenModules = new ArrayList<>();
 
     public static IModuleRepo getInstance() {
         if (sInstance == null) {
@@ -134,16 +148,32 @@ public class ModuleRepo implements IModuleRepo {
      * {@inheritDoc}
      */
     @Override
-    public Set<IModuleDef> getRemainingModules() {
-        return mRemainingModules;
+    public List<IModuleDef> getSmallModules() {
+        return mSmallModules;
     }
 
     /**
      * {@inheritDoc}
      */
     @Override
-    public Set<IModuleDef> getRemainingWithTokens() {
-        return mRemainingWithTokens;
+    public List<IModuleDef> getMediumModules() {
+        return mMediumModules;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public List<IModuleDef> getLargeModules() {
+        return mLargeModules;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public List<IModuleDef> getTokenModules() {
+        return mTokenModules;
     }
 
     /**
@@ -241,6 +271,13 @@ public class ModuleRepo implements IModuleRepo {
                         configFile.getName()), e);
             }
         }
+        mModulesPerShard = mModuleCount / shards;
+        if (mModuleCount % shards != 0) {
+            mModulesPerShard++; // Round up
+        }
+        mSmallModulesPerShard = mSmallModules.size() / shards;
+        mMediumModulesPerShard = mMediumModules.size() / shards;
+        mLargeModulesPerShard = mLargeModules.size() / shards;
     }
 
     private static List<IRemoteTest> splitShardableTests(List<IRemoteTest> tests,
@@ -318,13 +355,16 @@ public class ModuleRepo implements IModuleRepo {
         }
         if (includeModule) {
             Set<String> tokens = moduleDef.getTokens();
-            if (tokens == null || tokens.isEmpty()) {
-                mRemainingModules.add(moduleDef);
+            if (tokens != null && !tokens.isEmpty()) {
+                mTokenModules.add(moduleDef);
+            } else if (moduleDef.getRuntimeHint() < SMALL_TEST) {
+                mSmallModules.add(moduleDef);
+            } else if (moduleDef.getRuntimeHint() < MEDIUM_TEST) {
+                mMediumModules.add(moduleDef);
             } else {
-                mRemainingWithTokens.add(moduleDef);
+                mLargeModules.add(moduleDef);
             }
-            float numModules = mRemainingModules.size() + mRemainingWithTokens.size();
-            mModulesPerShard = (int) ((numModules / mShards) + 0.5f); // Round up
+            mModuleCount++;
         }
     }
 
@@ -348,26 +388,46 @@ public class ModuleRepo implements IModuleRepo {
     @Override
     public synchronized List<IModuleDef> getModules(String serial) {
         Set<String> tokens = mDeviceTokens.get(serial);
-        List<IModuleDef> modules = getModulesWithTokens(tokens);
-        int diff = mModulesPerShard - modules.size();
-        if (diff > 0) {
-            modules.addAll(getModules(diff));
+        List<IModuleDef> modules = new ArrayList<>(mModulesPerShard);
+        getModulesWithTokens(tokens, modules);
+        getModules(modules);
+        long estimatedTime = 0;
+        for (IModuleDef def : modules) {
+            estimatedTime += def.getRuntimeHint();
         }
         mSerials.add(serial);
         if (mSerials.size() == mShards) {
             // All shards have been given their workload.
-            if (!mRemainingWithTokens.isEmpty()) {
-                CLog.logAndDisplay(LogLevel.INFO, "Device Tokens:");
-                for (String s : mDeviceTokens.keySet()) {
-                    CLog.logAndDisplay(LogLevel.INFO, "%s: %s", s, mDeviceTokens.get(s));
+            if (!mTokenModules.isEmpty()) {
+                Set<String> deviceTokens = mDeviceTokens.keySet();
+                Set<String> moduleTokens = new HashSet<>();
+                for (IModuleDef module : mTokenModules) {
+                    moduleTokens.addAll(module.getTokens());
                 }
-                CLog.logAndDisplay(LogLevel.INFO, "Module Tokens:");
-                for (IModuleDef module : mRemainingWithTokens) {
-                    CLog.logAndDisplay(LogLevel.INFO, "%s: %s", module.getId(), module.getTokens());
+                StringBuilder sb = new StringBuilder("Not all modules could be scheduled.");
+                for (String token : moduleTokens) {
+                    if (!deviceTokens.contains(token)) {
+                        sb.append("\nNo devices found with token: ");
+                        sb.append(token);
+                    }
                 }
-                throw new IllegalArgumentException("Not all modules could be scheduled.");
+                sb.append("\nDeclare device tokens with \"--device-token <serial>:<token>\"");
+                throw new IllegalArgumentException(sb.toString());
+            }
+            if (!mLargeModules.isEmpty()) {
+                throw new IllegalArgumentException("Couldn't schedule: " + mLargeModules);
+            }
+            if (!mMediumModules.isEmpty()) {
+                throw new IllegalArgumentException("Couldn't schedule: " + mMediumModules);
+            }
+            if (!mSmallModules.isEmpty()) {
+                throw new IllegalArgumentException("Couldn't schedule: " + mSmallModules);
             }
         }
+        Collections.sort(modules, new RuntimeHintComparator());
+        CLog.logAndDisplay(LogLevel.INFO, String.format(
+                "%s running %s modules, expected to complete in %s",
+                serial, modules.size(), TimeUtil.formatElapsedTime(estimatedTime)));
         return modules;
     }
 
@@ -376,44 +436,54 @@ public class ModuleRepo implements IModuleRepo {
      * required tokens it will queue that module to run on that device, else the module gets put
      * back into the list.
      */
-    private List<IModuleDef> getModulesWithTokens(Set<String> tokens) {
-        List<IModuleDef> modules = new ArrayList<>();
+    private void getModulesWithTokens(Set<String> tokens, List<IModuleDef> modules) {
         if (tokens != null) {
-            Set<IModuleDef> copy = mRemainingWithTokens;
-            mRemainingWithTokens = new HashSet<>();
+            List<IModuleDef> copy = mTokenModules;
+            mTokenModules = new ArrayList<>();
             for (IModuleDef module : copy) {
                 // If a device has all the tokens required by the module then it can run it.
                 if (tokens.containsAll(module.getTokens())) {
                     modules.add(module);
                 } else {
-                    mRemainingWithTokens.add(module);
+                    mTokenModules.add(module);
                 }
             }
         }
-        return modules;
     }
 
     /**
-     * Returns a {@link List} of modules that do not require tokens.
+     * Adds count modules that do not require tokens, to run on a device.
      */
-    private List<IModuleDef> getModules(int count) {
-        int size = mRemainingModules.size();
-        if (count >= size) {
-            count = size;
+    private void getModules(List<IModuleDef> modules) {
+        // Take the normal share of modules unless the device already has token modules.
+        takeModule(mSmallModules, modules, mSmallModulesPerShard - modules.size());
+        takeModule(mMediumModules, modules, mMediumModulesPerShard);
+        takeModule(mLargeModules, modules, mLargeModulesPerShard);
+        // If one bucket runs out, take from any of the others.
+        boolean success = true;
+        while (success && modules.size() < mModulesPerShard) {
+            // Take modules from the buckets until it has enough, or there are no more modules.
+            success = takeModule(mSmallModules, modules, 1)
+                    || takeModule(mMediumModules, modules, 1)
+                    || takeModule(mLargeModules, modules, 1);
         }
-        Set<IModuleDef> copy = mRemainingModules;
-        mRemainingModules = new HashSet<>();
-        List<IModuleDef> modules = new ArrayList<>();
-        for (IModuleDef module : copy) {
-            // Give 'count' modules to this shard and then put the rest back in the queue.
-            if (count > 0) {
-                modules.add(module);
-                count--;
-            } else {
-                mRemainingModules.add(module);
-            }
+    }
+
+    /**
+     * Takes count modules from the first list and move it to the second.
+     */
+    private static boolean takeModule(
+            List<IModuleDef> source, List<IModuleDef> destination, int count) {
+        if (source.isEmpty()) {
+            return false;
         }
-        return modules;
+        if (count > source.size()) {
+            count = source.size();
+        }
+        for (int i = 0; i < count; i++) {
+            destination.add(source.remove(source.size() - 1));// Take from the end of the arraylist.
+        }
+        return true;
     }
 
     /**
@@ -443,6 +513,14 @@ public class ModuleRepo implements IModuleRepo {
                 argsMap.put(target, map);
             }
             map.put(key, value);
+        }
+    }
+
+    private static class RuntimeHintComparator implements Comparator<IModuleDef> {
+
+        @Override
+        public int compare(IModuleDef def1, IModuleDef def2) {
+            return (int) Math.signum(def2.getRuntimeHint() - def1.getRuntimeHint());
         }
     }
 }

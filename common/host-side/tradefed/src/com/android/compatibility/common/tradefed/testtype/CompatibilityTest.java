@@ -67,7 +67,7 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
     private static final String TEST_ARG_OPTION = "test-arg";
     public static final String RETRY_OPTION = "retry";
     private static final String ABI_OPTION = "abi";
-    private static final String SHARD_OPTION = "shard";
+    private static final String SHARD_OPTION = "shards";
     public static final String SKIP_DEVICE_INFO_OPTION = "skip-device-info";
     public static final String SKIP_PRECONDITIONS_OPTION = "skip-preconditions";
     public static final String DEVICE_TOKEN_OPTION = "device-token";
@@ -258,10 +258,8 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
             // Pass up
             throw e;
         } catch (FileNotFoundException | RuntimeException e) {
-            CLog.logAndDisplay(LogLevel.ERROR, "Exception: %s", e.getMessage());
             CLog.e(e);
         } catch (Error e) {
-            CLog.logAndDisplay(LogLevel.ERROR, "Error: %s", e.getMessage());
             CLog.e(e);
         } finally {
             ModuleRepo.tearDown();
