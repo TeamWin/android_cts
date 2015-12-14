@@ -164,15 +164,20 @@ public class ExternalStorageHostTest extends DeviceTestCase
             getDevice().uninstallPackage(NONE_PKG);
             getDevice().uninstallPackage(READ_PKG);
             getDevice().uninstallPackage(WRITE_PKG);
-            String[] options = {AbiUtils.createAbiFlag(mAbi.getName())};
+            final String[] options = {AbiUtils.createAbiFlag(mAbi.getName())};
+
+            // We purposefully delay the installation of the reading apps to
+            // verify that the daemon correctly invalidates any caches.
+            assertNull(getDevice().installPackage(getTestAppFile(WRITE_APK), false, options));
+            for (int user : users) {
+                runDeviceTests(WRITE_PKG, ".WriteGiftTest", user);
+            }
+
             assertNull(getDevice().installPackage(getTestAppFile(NONE_APK), false, options));
             assertNull(getDevice().installPackage(getTestAppFile(READ_APK), false, options));
-            assertNull(getDevice().installPackage(getTestAppFile(WRITE_APK), false, options));
-
             for (int user : users) {
-                runDeviceTests(WRITE_PKG, "WriteGiftTest", user);
-                runDeviceTests(READ_PKG, "ReadGiftTest", user);
-                runDeviceTests(NONE_PKG, "GiftTest", user);
+                runDeviceTests(READ_PKG, ".ReadGiftTest", user);
+                runDeviceTests(NONE_PKG, ".GiftTest", user);
             }
         } finally {
             getDevice().uninstallPackage(NONE_PKG);

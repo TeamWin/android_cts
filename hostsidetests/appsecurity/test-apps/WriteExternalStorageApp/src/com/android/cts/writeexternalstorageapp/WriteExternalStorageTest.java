@@ -16,6 +16,7 @@
 
 package com.android.cts.writeexternalstorageapp;
 
+import static android.test.MoreAsserts.assertNotEqual;
 import static com.android.cts.externalstorageapp.CommonExternalStorageTest.PACKAGE_NONE;
 import static com.android.cts.externalstorageapp.CommonExternalStorageTest.TAG;
 import static com.android.cts.externalstorageapp.CommonExternalStorageTest.assertDirNoWriteAccess;
@@ -31,7 +32,10 @@ import static com.android.cts.externalstorageapp.CommonExternalStorageTest.readI
 import static com.android.cts.externalstorageapp.CommonExternalStorageTest.writeInt;
 
 import android.os.Environment;
+import android.os.SystemClock;
+import android.system.Os;
 import android.test.AndroidTestCase;
+import android.text.format.DateUtils;
 import android.util.Log;
 
 import com.android.cts.externalstorageapp.CommonExternalStorageTest;
@@ -296,5 +300,30 @@ public class WriteExternalStorageTest extends AndroidTestCase {
                 assertDirNoWriteAccess(userPath);
             }
         }
+    }
+
+    /**
+     * Verify that moving around package-specific directories causes permissions
+     * to be updated.
+     */
+    public void testMovePackageSpecificPaths() throws Exception {
+        final File before = getContext().getExternalCacheDir();
+        final File beforeFile = new File(before, "test.probe");
+        assertTrue(beforeFile.createNewFile());
+        assertEquals(Os.getuid(), Os.stat(before.getAbsolutePath()).st_uid);
+        assertEquals(Os.getuid(), Os.stat(beforeFile.getAbsolutePath()).st_uid);
+
+        final File after = new File(before.getAbsolutePath()
+                .replace(getContext().getPackageName(), "com.example.does.not.exist"));
+        after.getParentFile().mkdirs();
+
+        Os.rename(before.getAbsolutePath(), after.getAbsolutePath());
+
+        // Sit around long enough for VFS cache to expire
+        SystemClock.sleep(15 * DateUtils.SECOND_IN_MILLIS);
+
+        final File afterFile = new File(after, "test.probe");
+        assertNotEqual(Os.getuid(), Os.stat(after.getAbsolutePath()).st_uid);
+        assertNotEqual(Os.getuid(), Os.stat(afterFile.getAbsolutePath()).st_uid);
     }
 }
