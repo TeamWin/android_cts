@@ -35,6 +35,8 @@ import java.util.Map;
  */
 public class CtsTestLogReporter extends StubTestInvocationListener implements IShardableListener {
 
+    private static final String DEVICE_INFO_ERROR = "DEVICE_INFO_ERROR_";
+
     @Option(name = "quiet-output", description = "Mute display of test results.")
     private boolean mQuietOutput = false;
 
@@ -119,6 +121,14 @@ public class CtsTestLogReporter extends StubTestInvocationListener implements IS
     @Override
     public void testEnded(TestIdentifier test, Map<String, String> testMetrics) {
         if (mIsExtendedDeviceInfoRun) {
+            for (Map.Entry<String, String> metricsEntry : testMetrics.entrySet()) {
+                String key = metricsEntry.getKey();
+                String value = metricsEntry.getValue();
+                if (key.startsWith(DEVICE_INFO_ERROR)) {
+                    throw new RuntimeException(String.format(
+                        "Error collecting extended device info: %s=%s", key, value));
+                }
+            }
             return;
         }
         mCurrentPkgResult.reportTestEnded(test, testMetrics);
