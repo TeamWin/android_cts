@@ -26,16 +26,21 @@ import android.media.MediaFormat;
 import android.test.AndroidTestCase;
 import android.util.Log;
 
+import java.nio.BufferOverflowException;
 import java.nio.ByteBuffer;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Random;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 public class EncoderTest extends AndroidTestCase {
     private static final String TAG = "EncoderTest";
     private static final boolean VERBOSE = false;
 
-    private static final int kNumInputBytes = 256 * 1024;
-    private static final long kTimeoutUs = 10000;
+    private static final int kNumInputBytes = 512 * 1024;
+    private static final long kTimeoutUs = 100;
 
     @Override
     public void setContext(Context context) {
@@ -121,14 +126,18 @@ public class EncoderTest extends AndroidTestCase {
     private void testEncoderWithFormats(
             String mime, List<MediaFormat> formats) {
         List<String> componentNames = getEncoderNamesForType(mime);
+        ExecutorService pool = Executors.newFixedThreadPool(3);
 
         for (String componentName : componentNames) {
-            Log.d(TAG, "testing component '" + componentName + "'");
             for (MediaFormat format : formats) {
-                Log.d(TAG, "  testing format '" + format + "'");
                 assertEquals(mime, format.getString(MediaFormat.KEY_MIME));
-                testEncoder(componentName, format);
+                pool.execute(new EncoderRun(componentName, format));
             }
+        }
+        try {
+            pool.shutdown();
+            pool.awaitTermination(5, TimeUnit.MINUTES);
+        } catch (InterruptedException e) {
         }
     }
 
@@ -151,15 +160,41 @@ public class EncoderTest extends AndroidTestCase {
         return names;
     }
 
-    private int queueInputBuffer(
-            MediaCodec codec, ByteBuffer[] inputBuffers, int index) {
-        ByteBuffer buffer = inputBuffers[index];
-        buffer.clear();
+    // See bug 25843966
+    private long[] mBadSeeds = {
+            101833462733980l, // fail @ 23680 in all-random mode
+            273262699095706l, // fail @ 58880 in all-random mode
+            137295510492957l, // fail @ 35840 in zero-lead mode
+            57821391502855l,  // fail @ 32000 in zero-lead mode
+    };
 
+    private Random mRandom = new Random(1);
+
+    private int queueInputBuffer(
+            MediaCodec codec, ByteBuffer[] inputBuffers, int index,
+            boolean random, boolean zeroLead) {
+        ByteBuffer buffer = inputBuffers[index];
+        buffer.rewind();
         int size = buffer.limit();
 
-        byte[] zeroes = new byte[size];
-        buffer.put(zeroes);
+        if (random) {
+            if (zeroLead) {
+                buffer.putInt(0);
+                buffer.putInt(0);
+                buffer.putInt(0);
+                buffer.putInt(0);
+            }
+            while (true) {
+                try {
+                    buffer.putInt(mRandom.nextInt());
+                } catch (BufferOverflowException ex) {
+                    break;
+                }
+            }
+        } else {
+            byte[] zeroes = new byte[size];
+            buffer.put(zeroes);
+        }
 
         codec.queueInputBuffer(index, 0 /* offset */, size, 0 /* timeUs */, 0);
 
@@ -172,7 +207,35 @@ public class EncoderTest extends AndroidTestCase {
         codec.releaseOutputBuffer(index, false /* render */);
     }
 
+    class EncoderRun implements Runnable {
+        String mComponentName;
+        MediaFormat mFormat;
+
+        EncoderRun(String componentName, MediaFormat format) {
+            mComponentName = componentName;
+            mFormat = format;
+        }
+        @Override
+        public void run() {
+            testEncoder(mComponentName, mFormat);
+        }
+    }
+
     private void testEncoder(String componentName, MediaFormat format) {
+        Log.i(TAG, "testEncoder " + componentName + "/" + format);
+        // test with all zeroes/silence
+        testEncoder(componentName, format, false, 0, false);
+
+        // test with random data, with and without a few leading zeroes
+        for (int i = 0; i < mBadSeeds.length; i++) {
+            testEncoder(componentName, format, true, mBadSeeds[i], false);
+            testEncoder(componentName, format, true, mBadSeeds[i], true);
+        }
+    }
+
+    private void testEncoder(String componentName, MediaFormat format, boolean random,
+            long startSeed, boolean zeroLead) {
+        mRandom.setSeed(startSeed);
         MediaCodec codec;
         try {
             codec = MediaCodec.createByCodecName(componentName);
@@ -220,7 +283,7 @@ public class EncoderTest extends AndroidTestCase {
                         doneSubmittingInput = true;
                     } else {
                         int size = queueInputBuffer(
-                                codec, codecInputBuffers, index);
+                                codec, codecInputBuffers, index, random, zeroLead);
 
                         numBytesSubmitted += size;
 
