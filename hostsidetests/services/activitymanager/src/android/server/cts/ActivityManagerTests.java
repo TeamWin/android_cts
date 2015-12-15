@@ -20,6 +20,7 @@ import com.android.ddmlib.Log.LogLevel;
 import com.android.tradefed.device.CollectingOutputReceiver;
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.device.ITestDevice;
+import com.android.tradefed.log.LogUtil;
 import com.android.tradefed.log.LogUtil.CLog;
 import com.android.tradefed.testtype.DeviceTestCase;
 
@@ -48,10 +49,15 @@ public class ActivityManagerTests extends DeviceTestCase {
     private static final String TASK_ID_PREFIX = "taskId";
 
     private static final String TEST_ACTIVITY_NAME = "TestActivity";
+    private static final String LAUNCH_TO_SIDE_ACTIVITY_NAME = "LaunchToSideActivity";
 
     private static final String AM_STACK_LIST = "am stack list";
-    private static final String AM_START_ACTIVITY = "am start -n android.server.app/.TestActivity";
-    private static final String AM_FORCE_STOP = "am force-stop android.server.app";
+    private static final String AM_START_TEST_ACTIVITY =
+            "am start -n android.server.app/.TestActivity";
+    private static final String AM_START_LAUNCH_TO_SIDE_ACTIVITY =
+            "am start -n android.server.app/.LaunchToSideActivity";
+    private static final String AM_FORCE_STOP_TEST = "am force-stop android.server.app";
+    private static final String AM_FORCE_STOP_SETTINGS = "com.android.settings";
     private static final String AM_MOVE_TASK = "am stack movetask ";
 
     /**
@@ -70,27 +76,17 @@ public class ActivityManagerTests extends DeviceTestCase {
     @Override
     protected void tearDown() {
         try {
-            mDevice.executeShellCommand(AM_FORCE_STOP);
+            mDevice.executeShellCommand(AM_FORCE_STOP_TEST);
+            mDevice.executeShellCommand(AM_FORCE_STOP_SETTINGS);
         } catch (DeviceNotAvailableException e) {
         }
     }
 
     public void testStackList() throws Exception {
-        mDevice.executeShellCommand(AM_START_ACTIVITY);
+        mDevice.executeShellCommand(AM_START_TEST_ACTIVITY);
         CollectingOutputReceiver outputReceiver = new CollectingOutputReceiver();
         mDevice.executeShellCommand(AM_STACK_LIST, outputReceiver);
-        String output = outputReceiver.getOutput();
-        HashSet<Integer> stacks = new HashSet<>();
-        for (String line : output.split("\\n")) {
-            CLog.logAndDisplay(LogLevel.INFO, line);
-            if (line.startsWith(STACK_ID_PREFIX)) {
-                final String sub = line.substring(STACK_ID_PREFIX.length());
-                final int index = sub.indexOf(" ");
-                final int currentStack = Integer.parseInt(sub.substring(0, index));
-                stacks.add(currentStack);
-            } else if (line.startsWith(TASK_ID_PREFIX)) {
-            }
-        }
+        HashSet<Integer> stacks = collectStacks(outputReceiver);
         assertTrue("At least two stacks expected, home and fullscreen.", stacks.size() >= 2);
         assertTrue("Stacks must contain home stack.", stacks.contains(HOME_STACK_ID));
         assertTrue("Stacks must contain fullscreen stack.", stacks.contains(
@@ -107,12 +103,12 @@ public class ActivityManagerTests extends DeviceTestCase {
         }
     }
 
-    private int getTestActivityTaskId() throws DeviceNotAvailableException {
+    private int getActivityTaskId(String name) throws DeviceNotAvailableException {
         CollectingOutputReceiver outputReceiver = new CollectingOutputReceiver();
         mDevice.executeShellCommand(AM_STACK_LIST, outputReceiver);
         final String output = outputReceiver.getOutput();
         for (String line : output.split("\\n")) {
-            if (line.contains(TEST_ACTIVITY_NAME)) {
+            if (line.contains(name)) {
                 for (String word : line.split("\\s+")) {
                     if (word.startsWith(TASK_ID_PREFIX)) {
                         final String withColon = word.split("=")[1];
@@ -125,12 +121,36 @@ public class ActivityManagerTests extends DeviceTestCase {
     }
 
     public void testDockActivity() throws Exception {
-        mDevice.executeShellCommand(AM_START_ACTIVITY);
-        final int taskId = getTestActivityTaskId();
+        mDevice.executeShellCommand(AM_START_TEST_ACTIVITY);
+        final int taskId = getActivityTaskId(TEST_ACTIVITY_NAME);
         final String cmd = AM_MOVE_TASK + taskId + " " + DOCKED_STACK_ID + " true";
         mDevice.executeShellCommand(cmd);
         CollectingOutputReceiver outputReceiver = new CollectingOutputReceiver();
         mDevice.executeShellCommand(AM_STACK_LIST, outputReceiver);
+        HashSet<Integer> stacks = collectStacks(outputReceiver);
+        assertTrue("At least two stacks expected, home and docked.", stacks.size() >= 2);
+        assertTrue("Stacks must contain home stack.", stacks.contains(HOME_STACK_ID));
+        assertTrue("Stacks must contain docked stack.", stacks.contains(DOCKED_STACK_ID));
+    }
+
+    public void testLaunchToSide() throws Exception {
+        mDevice.executeShellCommand(AM_START_LAUNCH_TO_SIDE_ACTIVITY);
+        final int taskId = getActivityTaskId(LAUNCH_TO_SIDE_ACTIVITY_NAME);
+        final String cmd = AM_MOVE_TASK + taskId + " " + DOCKED_STACK_ID + " true";
+        mDevice.executeShellCommand(cmd);
+        printStacksAndTasks();
+        mDevice.executeShellCommand(AM_START_LAUNCH_TO_SIDE_ACTIVITY
+                + " -f 0x20000000 --ez launch_to_the_side true");
+        CollectingOutputReceiver outputReceiver = new CollectingOutputReceiver();
+        mDevice.executeShellCommand(AM_STACK_LIST, outputReceiver);
+        HashSet<Integer> stacks = collectStacks(outputReceiver);
+        assertTrue("At least two stacks expected, docked and fullscreen.", stacks.size() >= 2);
+        assertTrue("Stacks must contain fullescreen stack.", stacks.contains(
+                FULLSCREEN_WORKSPACE_STACK_ID));
+        assertTrue("Stacks must contain docked stack.", stacks.contains(DOCKED_STACK_ID));
+    }
+
+    private HashSet<Integer> collectStacks(CollectingOutputReceiver outputReceiver) {
         final String output = outputReceiver.getOutput();
         HashSet<Integer> stacks = new HashSet<>();
         for (String line : output.split("\\n")) {
@@ -142,8 +162,6 @@ public class ActivityManagerTests extends DeviceTestCase {
                 stacks.add(currentStack);
             }
         }
-        assertTrue("At least two stacks expected, home and docked.", stacks.size() >= 2);
-        assertTrue("Stacks must contain home stack.", stacks.contains(HOME_STACK_ID));
-        assertTrue("Stacks must contain docked stack.", stacks.contains(DOCKED_STACK_ID));
+        return stacks;
     }
 }

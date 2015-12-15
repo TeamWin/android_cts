@@ -15,5 +15,6 @@
 -->
 <configuration description="CTS package preparer for install/uninstall of the apk used as a test operation target">
     <include name="common-config" />
-    <option name="cts-apk-installer:test-file-name" value="CtsDeviceServicesTestApp.apk" />
+    <!-- This will tell tradefed to install the test apk. -->
+    <option name="cts-apk-installer:test-file-name" value="CtsServicesTestApp.apk" />
 </configuration>
