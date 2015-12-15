@@ -68,15 +68,18 @@ public class GenericDeviceInfo extends DeviceInfo {
         addDeviceInfo(BUILD_FINGERPRINT, Build.FINGERPRINT);
         addDeviceInfo(BUILD_ABI, Build.CPU_ABI);
         addDeviceInfo(BUILD_ABI2, Build.CPU_ABI2);
-        addDeviceInfo(BUILD_ABIS, TextUtils.join(",", Build.SUPPORTED_ABIS));
-        addDeviceInfo(BUILD_ABIS_32, TextUtils.join(",", Build.SUPPORTED_32_BIT_ABIS));
-        addDeviceInfo(BUILD_ABIS_64, TextUtils.join(",", Build.SUPPORTED_64_BIT_ABIS));
         addDeviceInfo(BUILD_SERIAL, Build.SERIAL);
         addDeviceInfo(BUILD_VERSION_RELEASE, Build.VERSION.RELEASE);
         addDeviceInfo(BUILD_VERSION_SDK, Build.VERSION.SDK);
         addDeviceInfo(BUILD_VERSION_SDK_INT, Integer.toString(Build.VERSION.SDK_INT));
-        addDeviceInfo(BUILD_VERSION_BASE_OS, Build.VERSION.BASE_OS);
-        addDeviceInfo(BUILD_VERSION_SECURITY_PATH, Build.VERSION.SECURITY_PATCH);
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            addDeviceInfo(BUILD_ABIS, TextUtils.join(",", Build.SUPPORTED_ABIS));
+            addDeviceInfo(BUILD_ABIS_32, TextUtils.join(",", Build.SUPPORTED_32_BIT_ABIS));
+            addDeviceInfo(BUILD_ABIS_64, TextUtils.join(",", Build.SUPPORTED_64_BIT_ABIS));
+            addDeviceInfo(BUILD_VERSION_BASE_OS, Build.VERSION.BASE_OS);
+            addDeviceInfo(BUILD_VERSION_SECURITY_PATH, Build.VERSION.SECURITY_PATCH);
+        }
     }
 
     private void addDeviceInfo(String key, String value) {

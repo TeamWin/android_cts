@@ -70,7 +70,11 @@ public abstract class DeviceInfo extends InstrumentationTestCase {
         if (createFilePath()) {
             createJsonWriter();
             startJsonWriter();
-            collectDeviceInfo();
+            try {
+                collectDeviceInfo();
+            } catch(Exception | Error e) {
+                error(e.getMessage());
+            }
             closeJsonWriter();
 
             if (mResultCode == ResultCode.STARTED) {
