@@ -42,7 +42,7 @@ public class PluralResourcesTest extends AndroidTestCase {
     private Resources resourcesForLanguage(final String lang) {
         final Configuration config = new Configuration();
         config.updateFrom(mResources.getConfiguration());
-        config.locale = new Locale(lang);
+        config.setLocale(new Locale(lang));
         return new Resources(mResources.getAssets(), mResources.getDisplayMetrics(), config);
     }
 
