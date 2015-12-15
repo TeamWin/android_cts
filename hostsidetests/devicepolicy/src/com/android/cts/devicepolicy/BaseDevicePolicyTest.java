@@ -187,11 +187,15 @@ public class BaseDevicePolicyTest extends DeviceTestCase implements IBuildReceiv
         return users;
     }
 
-    protected void removeUser(int userId) throws Exception  {
+    protected void stopUser(int userId) throws Exception  {
         String stopUserCommand = "am stop-user -w " + userId;
         CLog.logAndDisplay(LogLevel.INFO, "starting command \"" + stopUserCommand + "\" and waiting.");
         CLog.logAndDisplay(LogLevel.INFO, "Output for command " + stopUserCommand + ": "
                 + getDevice().executeShellCommand(stopUserCommand));
+    }
+
+    protected void removeUser(int userId) throws Exception  {
+        stopUser(userId);
         String removeUserCommand = "pm remove-user " + userId;
         CLog.logAndDisplay(LogLevel.INFO, "starting command " + removeUserCommand);
         CLog.logAndDisplay(LogLevel.INFO, "Output for command " + removeUserCommand + ": "
