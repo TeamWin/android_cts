@@ -1042,6 +1042,10 @@ public class WindowTest extends ActivityInstrumentationTestCase2<WindowCtsActivi
         public int getNavigationBarColor() {
             return 0;
         }
+
+        @Override
+        public void onMultiWindowModeChanged() {
+        }
     }
 
     private class MockWindowCallback implements Window.Callback {
