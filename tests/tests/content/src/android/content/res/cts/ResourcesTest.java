@@ -272,6 +272,67 @@ public class ResourcesTest extends AndroidTestCase {
         assertEquals(LocaleList.getDefault(), res.getConfiguration().getLocales());
     }
 
+    public void testUpdateConfiguration_ResolvedLocaleIsRecalculated() {
+        final DisplayMetrics dm = new DisplayMetrics();
+        dm.setToDefaults();
+        final Configuration cfg = new Configuration();
+        cfg.setToDefaults();
+
+        // Avestan has no assets, but Czech does
+        cfg.setLocales(LocaleList.forLanguageTags("ae"));
+        Resources res = new Resources(mResources.getAssets(), dm, cfg);
+        cfg.setLocales(LocaleList.forLanguageTags("ae,cs"));
+        res.updateConfiguration(cfg, null);
+        assertEquals("cs", res.getResolvedLocale().toLanguageTag());
+    }
+
+    public void testGetResolvedLocale_unsupportedLocale() {
+        final DisplayMetrics dm = new DisplayMetrics();
+        dm.setToDefaults();
+        final Configuration cfg = new Configuration();
+        cfg.setToDefaults();
+        cfg.setLocales(LocaleList.forLanguageTags("ae"));  // Avestan has no assets
+
+        Resources res = new Resources(mResources.getAssets(), dm, cfg);
+        assertEquals("ae", res.getResolvedLocale().toLanguageTag());
+    }
+
+    public void testGetResolvedLocale_secondaryLocaleIsSupported() {
+        final DisplayMetrics dm = new DisplayMetrics();
+        dm.setToDefaults();
+        final Configuration cfg = new Configuration();
+        cfg.setToDefaults();
+        // Avestan has no assets, but Czech does
+        cfg.setLocales(LocaleList.forLanguageTags("ae,cs"));
+
+        Resources res = new Resources(mResources.getAssets(), dm, cfg);
+        assertEquals("cs", res.getResolvedLocale().toLanguageTag());
+    }
+
+    public void testGetResolvedLocale_secondaryLocaleIsPartiallySupported() {
+        final DisplayMetrics dm = new DisplayMetrics();
+        dm.setToDefaults();
+        final Configuration cfg = new Configuration();
+        cfg.setToDefaults();
+        // Avestan has no assets;
+        // Persian has assets for Iran, but not Afghanistan (partial match is accepted);
+        // Czech has assets (but we don't get to it)
+        cfg.setLocales(LocaleList.forLanguageTags("ae,fa-AF,cs"));
+
+        Resources res = new Resources(mResources.getAssets(), dm, cfg);
+        assertEquals("fa-AF", res.getResolvedLocale().toLanguageTag());
+    }
+
+    public void testGetResolvedLocale_SystemResourcesLocaleNonNull() {
+        Resources res = Resources.getSystem();
+        assertNotNull(res.getResolvedLocale());
+    }
+
+    public void testGetResolvedLocale_NonNull() {
+        Resources res = createNewResources();
+        assertNotNull(res.getResolvedLocale());
+    }
+
     public void testGetDimensionPixelSize() {
         try {
             mResources.getDimensionPixelSize(-1);
