@@ -4197,7 +4197,7 @@ public class ViewTest extends ActivityInstrumentationTestCase2<ViewTestCtsActivi
         }
     }
 
-    private static Class<?> ASYNC_INFLATE_VIEWS[] = {
+    private static final Class<?> ASYNC_INFLATE_VIEWS[] = {
         android.app.FragmentBreadCrumbs.class,
 // DISABLED because it doesn't have a AppWidgetHostView(Context, AttributeSet)
 // constructor, so it's not inflate-able
