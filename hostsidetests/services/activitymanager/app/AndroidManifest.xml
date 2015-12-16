@@ -23,6 +23,10 @@
                 android:resizeable="true"
                 android:supportsPictureInPicture="true"
                 />
+        <activity android:name=".LaunchToSideActivity"
+                android:resizeable="true"
+                android:supportsPictureInPicture="true"
+        />
     </application>
 </manifest>
 
