@@ -571,6 +571,116 @@ public class BitmapFactoryTest extends InstrumentationTestCase {
         verifyScaled(BitmapFactory.decodeStream(obtainInputStream(), null, scaledOpt));
     }
 
+    public void testConfigs() {
+        // The output Config of a BitmapFactory decode depends on the request from the
+        // client and the properties of the image to be decoded.
+        //
+        // Options.inPreferredConfig = Config.ARGB_8888
+        //     This is the default value of inPreferredConfig.  In this case, the image
+        //     will always be decoded to Config.ARGB_8888.
+        // Options.inPreferredConfig = Config.RGB_565
+        //     If the encoded image is opaque, we will decode to Config.RGB_565,
+        //     otherwise we will decode to whichever color type is the most natural match
+        //     for the encoded data.
+        // Options.inPreferredConfig = Config.ARGB_4444
+        //     This is deprecated and will always decode to Config.ARGB_8888.
+        // Options.inPreferredConfig = Config.ALPHA_8
+        //     If the encoded image is gray, we will decode to 8-bit grayscale values
+        //     and indicate that the output bitmap is Config.ALPHA_8.  This is somewhat
+        //     misleading because the image is really opaque and grayscale, but we are
+        //     labeling each pixel as if it is a translucency (alpha) value.  If the
+        //     encoded image is not gray, we will decode to whichever color type is the
+        //     most natural match for the encoded data.
+        // Options.inPreferredConfig = null
+        //     We will decode to whichever Config is the most natural match with the
+        //     encoded data.  This could be 8-bit indices into a color table (call this
+        //     INDEX_8), ALPHA_8 (gray), or ARGB_8888.
+        //
+        // This test ensures that images are decoded to the intended Config and that the
+        // decodes match regardless of the Config.
+        decodeConfigs(R.drawable.alpha, 31, 31, true, false, false);
+        decodeConfigs(R.drawable.baseline_jpeg, 1280, 960, false, false, false);
+        decodeConfigs(R.drawable.bmp_test, 320, 240, false, false, false);
+        decodeConfigs(R.drawable.scaled2, 6, 8, false, false, true);
+        decodeConfigs(R.drawable.grayscale_jpg, 128, 128, false, true, false);
+        decodeConfigs(R.drawable.grayscale_png, 128, 128, false, true, false);
+    }
+
+    private void decodeConfigs(int id, int width, int height, boolean hasAlpha, boolean isGray,
+            boolean hasColorTable) {
+        Options opts = new BitmapFactory.Options();
+        opts.inScaled = false;
+        assertEquals(Config.ARGB_8888, opts.inPreferredConfig);
+        Bitmap reference = BitmapFactory.decodeResource(mRes, id, opts);
+        assertNotNull(reference);
+        assertEquals(width, reference.getWidth());
+        assertEquals(height, reference.getHeight());
+        assertEquals(Config.ARGB_8888, reference.getConfig());
+
+        opts.inPreferredConfig = Config.ARGB_4444;
+        Bitmap argb4444 = BitmapFactory.decodeResource(mRes, id, opts);
+        assertNotNull(argb4444);
+        assertEquals(width, argb4444.getWidth());
+        assertEquals(height, argb4444.getHeight());
+        // ARGB_4444 is deprecated and we should decode to ARGB_8888.
+        assertEquals(Config.ARGB_8888, argb4444.getConfig());
+        compareBitmaps(reference, argb4444, 0, true, true);
+
+        opts.inPreferredConfig = Config.RGB_565;
+        Bitmap rgb565 = BitmapFactory.decodeResource(mRes, id, opts);
+        assertNotNull(rgb565);
+        assertEquals(width, rgb565.getWidth());
+        assertEquals(height, rgb565.getHeight());
+        if (!hasAlpha) {
+            assertEquals(Config.RGB_565, rgb565.getConfig());
+            // Convert the RGB_565 bitmap to ARGB_8888 and test that it is similar to
+            // the reference.  We lose information when decoding to 565, so there must
+            // be some tolerance.  The tolerance is intentionally loose to allow us some
+            // flexibility regarding if we dither and how we color convert.
+            compareBitmaps(reference, rgb565.copy(Config.ARGB_8888, false), 30, true, true);
+        }
+
+        opts.inPreferredConfig = Config.ALPHA_8;
+        Bitmap alpha8 = BitmapFactory.decodeResource(mRes, id, opts);
+        assertNotNull(alpha8);
+        assertEquals(width, reference.getWidth());
+        assertEquals(height, reference.getHeight());
+        if (isGray) {
+            assertEquals(Config.ALPHA_8, alpha8.getConfig());
+            // Convert the ALPHA_8 bitmap to ARGB_8888 and test that it is identical to
+            // the reference.  We must do this manually because we are abusing ALPHA_8
+            // in order to represent grayscale.
+            compareBitmaps(reference, grayToARGB(alpha8), 0, true, true);
+        }
+
+        // Setting inPreferredConfig to null selects the most natural color type for
+        // the encoded data.  If the image has a color table, this should be INDEX_8.
+        // If we decode to INDEX_8, the output bitmap will report that the Config is
+        // null.
+        opts.inPreferredConfig = null;
+        Bitmap index8 = BitmapFactory.decodeResource(mRes, id, opts);
+        assertNotNull(index8);
+        assertEquals(width, index8.getWidth());
+        assertEquals(height, index8.getHeight());
+        if (hasColorTable) {
+            assertEquals(null, index8.getConfig());
+            // Convert the INDEX_8 bitmap to ARGB_8888 and test that it is identical to
+            // the reference.
+            compareBitmaps(reference, index8.copy(Config.ARGB_8888, false), 0, true, true);
+        }
+    }
+
+    private Bitmap grayToARGB(Bitmap gray) {
+        Bitmap argb = Bitmap.createBitmap(gray.getWidth(), gray.getHeight(), Config.ARGB_8888);
+        for (int y = 0; y < argb.getHeight(); y++) {
+            for (int x = 0; x < argb.getWidth(); x++) {
+                int grayByte = Color.alpha(gray.getPixel(x, y));
+                argb.setPixel(x, y, Color.rgb(grayByte, grayByte, grayByte));
+            }
+        }
+        return argb;
+    }
+
     private byte[] obtainArray() {
         ByteArrayOutputStream stm = new ByteArrayOutputStream();
         Options opt = new BitmapFactory.Options();
