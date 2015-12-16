@@ -17,6 +17,10 @@ package com.android.compatibility.common.deviceinfo;
 
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
+import android.os.SystemProperties;
+import android.os.UserManager;
+import android.telephony.TelephonyManager;
 import android.text.TextUtils;
 
 import java.lang.Integer;
@@ -51,7 +55,7 @@ public class GenericDeviceInfo extends DeviceInfo {
     public static final String BUILD_VERSION_SDK = "build_version_sdk";
     public static final String BUILD_VERSION_SDK_INT = "build_version_sdk_int";
     public static final String BUILD_VERSION_BASE_OS = "build_version_base_os";
-    public static final String BUILD_VERSION_SECURITY_PATH = "build_version_security_patch";
+    public static final String BUILD_VERSION_SECURITY_PATCH = "build_version_security_patch";
 
     private final Map<String, String> mDeviceInfo = new HashMap<>();
 
@@ -73,12 +77,23 @@ public class GenericDeviceInfo extends DeviceInfo {
         addDeviceInfo(BUILD_VERSION_SDK, Build.VERSION.SDK);
         addDeviceInfo(BUILD_VERSION_SDK_INT, Integer.toString(Build.VERSION.SDK_INT));
 
+        // Collect build fields available in API level 21
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             addDeviceInfo(BUILD_ABIS, TextUtils.join(",", Build.SUPPORTED_ABIS));
             addDeviceInfo(BUILD_ABIS_32, TextUtils.join(",", Build.SUPPORTED_32_BIT_ABIS));
             addDeviceInfo(BUILD_ABIS_64, TextUtils.join(",", Build.SUPPORTED_64_BIT_ABIS));
+        }
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             addDeviceInfo(BUILD_VERSION_BASE_OS, Build.VERSION.BASE_OS);
-            addDeviceInfo(BUILD_VERSION_SECURITY_PATH, Build.VERSION.SECURITY_PATCH);
+            addDeviceInfo(BUILD_VERSION_SECURITY_PATCH, Build.VERSION.SECURITY_PATCH);
+        } else {
+            // Access system properties directly because Build.Version.BASE_OS and
+            // Build.Version.SECURITY_PATCH are not defined pre-M.
+            addDeviceInfo(BUILD_VERSION_BASE_OS,
+                    SystemProperties.get("ro.build.version.base_os", ""));
+            addDeviceInfo(BUILD_VERSION_SECURITY_PATCH,
+                    SystemProperties.get("ro.build.version.security_patch", ""));
         }
     }
 
