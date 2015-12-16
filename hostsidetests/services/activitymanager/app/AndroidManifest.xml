@@ -21,9 +21,11 @@
     <application>
         <activity android:name=".TestActivity"
                 android:resizeable="true"
-                android:supportsPictureInPicture="true"
-                />
+        />
         <activity android:name=".LaunchToSideActivity"
+                android:resizeable="true"
+        />
+        <activity android:name=".PipActivity"
                 android:resizeable="true"
                 android:supportsPictureInPicture="true"
         />

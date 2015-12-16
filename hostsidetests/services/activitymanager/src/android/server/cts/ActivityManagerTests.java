@@ -45,25 +45,31 @@ public class ActivityManagerTests extends DeviceTestCase {
     /** ID of stack that occupies a dedicated region of the screen. */
     public static final int DOCKED_STACK_ID = FREEFORM_WORKSPACE_STACK_ID + 1;
 
+    /** ID of stack that always on top (always visible) when it exist. */
+    public static final int PINNED_STACK_ID = DOCKED_STACK_ID + 1;
+
     private static final String STACK_ID_PREFIX = "Stack id=";
     private static final String TASK_ID_PREFIX = "taskId";
 
     private static final String TEST_ACTIVITY_NAME = "TestActivity";
     private static final String LAUNCH_TO_SIDE_ACTIVITY_NAME = "LaunchToSideActivity";
+    private static final String PIP_ACTIVITY_NAME = "PipActivity";
 
     private static final String AM_STACK_LIST = "am stack list";
     private static final String AM_START_TEST_ACTIVITY =
-            "am start -n android.server.app/.TestActivity";
+            "am start -n android.server.app/." + TEST_ACTIVITY_NAME;
     private static final String AM_START_LAUNCH_TO_SIDE_ACTIVITY =
-            "am start -n android.server.app/.LaunchToSideActivity";
+            "am start -n android.server.app/." + LAUNCH_TO_SIDE_ACTIVITY_NAME;
+    private static final String AM_START_PIP_ACTIVITY =
+            "am start -n android.server.app/." + PIP_ACTIVITY_NAME;
     private static final String AM_FORCE_STOP_TEST = "am force-stop android.server.app";
     private static final String AM_FORCE_STOP_SETTINGS = "com.android.settings";
     private static final String AM_MOVE_TASK = "am stack movetask ";
 
-    /**
-     * A reference to the device under test.
-     */
+    /** A reference to the device under test. */
     private ITestDevice mDevice;
+
+    private HashSet<String> mAvailableFeatures;
 
     @Override
     protected void setUp() throws Exception {
@@ -84,9 +90,7 @@ public class ActivityManagerTests extends DeviceTestCase {
 
     public void testStackList() throws Exception {
         mDevice.executeShellCommand(AM_START_TEST_ACTIVITY);
-        CollectingOutputReceiver outputReceiver = new CollectingOutputReceiver();
-        mDevice.executeShellCommand(AM_STACK_LIST, outputReceiver);
-        HashSet<Integer> stacks = collectStacks(outputReceiver);
+        HashSet<Integer> stacks = collectStacks();
         assertTrue("At least two stacks expected, home and fullscreen.", stacks.size() >= 2);
         assertTrue("Stacks must contain home stack.", stacks.contains(HOME_STACK_ID));
         assertTrue("Stacks must contain fullscreen stack.", stacks.contains(
@@ -125,9 +129,7 @@ public class ActivityManagerTests extends DeviceTestCase {
         final int taskId = getActivityTaskId(TEST_ACTIVITY_NAME);
         final String cmd = AM_MOVE_TASK + taskId + " " + DOCKED_STACK_ID + " true";
         mDevice.executeShellCommand(cmd);
-        CollectingOutputReceiver outputReceiver = new CollectingOutputReceiver();
-        mDevice.executeShellCommand(AM_STACK_LIST, outputReceiver);
-        HashSet<Integer> stacks = collectStacks(outputReceiver);
+        HashSet<Integer> stacks = collectStacks();
         assertTrue("At least two stacks expected, home and docked.", stacks.size() >= 2);
         assertTrue("Stacks must contain home stack.", stacks.contains(HOME_STACK_ID));
         assertTrue("Stacks must contain docked stack.", stacks.contains(DOCKED_STACK_ID));
@@ -141,16 +143,28 @@ public class ActivityManagerTests extends DeviceTestCase {
         printStacksAndTasks();
         mDevice.executeShellCommand(AM_START_LAUNCH_TO_SIDE_ACTIVITY
                 + " -f 0x20000000 --ez launch_to_the_side true");
-        CollectingOutputReceiver outputReceiver = new CollectingOutputReceiver();
-        mDevice.executeShellCommand(AM_STACK_LIST, outputReceiver);
-        HashSet<Integer> stacks = collectStacks(outputReceiver);
+        HashSet<Integer> stacks = collectStacks();
         assertTrue("At least two stacks expected, docked and fullscreen.", stacks.size() >= 2);
-        assertTrue("Stacks must contain fullescreen stack.", stacks.contains(
+        assertTrue("Stacks must contain fullscreen stack.", stacks.contains(
                 FULLSCREEN_WORKSPACE_STACK_ID));
         assertTrue("Stacks must contain docked stack.", stacks.contains(DOCKED_STACK_ID));
     }
 
-    private HashSet<Integer> collectStacks(CollectingOutputReceiver outputReceiver) {
+    public void testEnterPictureInPictureMode() throws Exception {
+        final boolean supportsPip = hasDeviceFeature("android.software.picture_in_picture");
+        mDevice.executeShellCommand(AM_START_PIP_ACTIVITY);
+        final HashSet<Integer> stacks = collectStacks();
+        final boolean containsPinnedStack = stacks.contains(PINNED_STACK_ID);
+        if (supportsPip) {
+            assertTrue("Stacks must contain pinned stack.", containsPinnedStack);
+        } else {
+            assertFalse("Stacks must not contain pinned stack.", containsPinnedStack);
+        }
+    }
+
+    private HashSet<Integer> collectStacks() throws DeviceNotAvailableException {
+        final CollectingOutputReceiver outputReceiver = new CollectingOutputReceiver();
+        mDevice.executeShellCommand(AM_STACK_LIST, outputReceiver);
         final String output = outputReceiver.getOutput();
         HashSet<Integer> stacks = new HashSet<>();
         for (String line : output.split("\\n")) {
@@ -163,5 +177,31 @@ public class ActivityManagerTests extends DeviceTestCase {
             }
         }
         return stacks;
+    }
+
+    private boolean hasDeviceFeature(String requiredFeature) throws DeviceNotAvailableException {
+        if (mAvailableFeatures == null) {
+            // TODO: Move this logic to ITestDevice.
+            String command = "pm list features";
+            String commandOutput = mDevice.executeShellCommand(command);
+            CLog.i("Output for command " + command + ": " + commandOutput);
+
+            // Extract the id of the new user.
+            mAvailableFeatures = new HashSet<>();
+            for (String feature: commandOutput.split("\\s+")) {
+                // Each line in the output of the command has the format "feature:{FEATURE_VALUE}".
+                String[] tokens = feature.split(":");
+                assertTrue("\"" + feature + "\" expected to have format feature:{FEATURE_VALUE}",
+                        tokens.length > 1);
+                assertEquals(feature, "feature", tokens[0]);
+                mAvailableFeatures.add(tokens[1]);
+            }
+        }
+        boolean result = mAvailableFeatures.contains(requiredFeature);
+        if (!result) {
+            CLog.logAndDisplay(LogLevel.INFO, "Device doesn't have required feature "
+                    + requiredFeature + ". Test won't run.");
+        }
+        return result;
     }
 }
