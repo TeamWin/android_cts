@@ -15,16 +15,14 @@
  */
 package android.transition.cts;
 
-import android.transition.cts.R;
-
 import android.animation.Animator;
 import android.animation.ObjectAnimator;
-import android.os.SystemClock;
 import android.test.ActivityInstrumentationTestCase2;
 import android.transition.Scene;
 import android.transition.TransitionManager;
 import android.transition.TransitionValues;
 import android.transition.Visibility;
+import android.transition.cts.R;
 import android.view.Choreographer;
 import android.view.Choreographer.FrameCallback;
 import android.view.View;
@@ -32,12 +30,14 @@ import android.view.ViewGroup;
 import android.widget.FrameLayout;
 
 import java.util.ArrayList;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 public class BaseTransitionTest extends ActivityInstrumentationTestCase2<TransitionActivity> {
     protected TransitionActivity mActivity;
     protected FrameLayout mSceneRoot;
     public float mAnimatedValue;
-    protected ArrayList<View> mTargets = new ArrayList<>();
+    protected ArrayList<View> mTargets = new ArrayList<View>();
     protected TestTransition mTransition;
 
     public BaseTransitionTest() {
@@ -58,18 +58,8 @@ public class BaseTransitionTest extends ActivityInstrumentationTestCase2<Transit
         waitForStart(mTransition.listener);
     }
 
-    protected static void waitForStart(SimpleTransitionListener listener) throws InterruptedException {
-        long endTime = SystemClock.uptimeMillis() + 50;
-        synchronized (listener) {
-            while (!listener.started) {
-                long now = SystemClock.uptimeMillis();
-                long waitTime = endTime - now;
-                if (waitTime <= 0) {
-                    throw new InterruptedException();
-                }
-                listener.wait(waitTime);
-            }
-        }
+    protected void waitForStart(SimpleTransitionListener listener) throws InterruptedException {
+        assertTrue(listener.startLatch.await(100, TimeUnit.MILLISECONDS));
     }
 
     protected void waitForEnd(long waitMillis) throws InterruptedException {
@@ -78,17 +68,7 @@ public class BaseTransitionTest extends ActivityInstrumentationTestCase2<Transit
 
     protected static void waitForEnd(SimpleTransitionListener listener, long waitMillis)
             throws InterruptedException {
-        long endTime = SystemClock.uptimeMillis() + waitMillis;
-        synchronized (listener) {
-            while (!listener.ended) {
-                long now = SystemClock.uptimeMillis();
-                long waitTime = endTime - now;
-                if (waitTime <= 0) {
-                    throw new InterruptedException();
-                }
-                listener.wait(waitTime);
-            }
-        }
+        listener.endLatch.await(waitMillis, TimeUnit.MILLISECONDS);
     }
 
     protected void startTransition(final int layoutId) throws Throwable {
@@ -125,31 +105,19 @@ public class BaseTransitionTest extends ActivityInstrumentationTestCase2<Transit
     // Waits at least one frame and it could be more. The animated values should have changed
     // from the previously recorded values by the end of this method.
     protected void waitForAnimationFrame() throws Throwable {
-        final boolean[] tripped = new boolean[] { false };
+        final CountDownLatch latch = new CountDownLatch(1);
         runTestOnUiThread(new Runnable() {
             @Override
             public void run() {
                 Choreographer.getInstance().postFrameCallbackDelayed(new FrameCallback() {
                     @Override
                     public void doFrame(long frameTimeNanos) {
-                        synchronized (tripped) {
-                            tripped[0] = true;
-                            tripped.notifyAll();
-                        }
+                        latch.countDown();
                     }
                 }, 16); // make sure it is the next animation frame.
             }
         });
-        synchronized (tripped) {
-            long endTime = SystemClock.uptimeMillis() + 60;
-            while (!tripped[0]) {
-                long waitTime = endTime - SystemClock.uptimeMillis();
-                if (waitTime <= 0) {
-                    throw new InterruptedException();
-                }
-                tripped.wait(waitTime);
-            }
-        }
+        assertTrue(latch.await(100, TimeUnit.MILLISECONDS));
     }
 
     public class TestTransition extends Visibility {
@@ -157,7 +125,7 @@ public class BaseTransitionTest extends ActivityInstrumentationTestCase2<Transit
 
         public TestTransition() {
             addListener(listener);
-            setDuration(100);
+            setDuration(200);
         }
 
         @Override
