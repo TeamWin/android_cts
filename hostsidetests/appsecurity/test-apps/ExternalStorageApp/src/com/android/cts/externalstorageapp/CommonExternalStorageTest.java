@@ -149,6 +149,22 @@ public class CommonExternalStorageTest extends AndroidTestCase {
         return paths;
     }
 
+    /**
+     * Return a set of several package-specific external storage paths pointing
+     * at "gift" files designed to be exchanged with the target package.
+     */
+    public static List<File> getAllPackageSpecificGiftPaths(Context context,
+            String targetPackageName) {
+        final List<File> files = getAllPackageSpecificPaths(context);
+        final List<File> targetFiles = new ArrayList<>();
+        for (File file : files) {
+            final File targetFile = new File(
+                    file.getAbsolutePath().replace(context.getPackageName(), targetPackageName));
+            targetFiles.add(new File(targetFile, targetPackageName + ".gift"));
+        }
+        return targetFiles;
+    }
+
     public static List<File> getPrimaryPackageSpecificPaths(Context context) {
         final List<File> paths = new ArrayList<File>();
         Collections.addAll(paths, context.getExternalCacheDir());
@@ -187,12 +203,6 @@ public class CommonExternalStorageTest extends AndroidTestCase {
         final File[] after = new File[before.length - 1];
         System.arraycopy(before, 1, after, 0, after.length);
         return after;
-    }
-
-    public static File buildGiftForPackage(Context context, String packageName) {
-        final File myCache = context.getExternalCacheDir();
-        return new File(myCache.getAbsolutePath().replace(context.getPackageName(), packageName),
-                packageName + ".gift");
     }
 
     public static File buildProbeFile(File dir) {
