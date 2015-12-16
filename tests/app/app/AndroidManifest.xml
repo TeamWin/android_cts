@@ -287,6 +287,39 @@
         <activity android:name="android.app.stubs.ActivityManagerMemoryClassTestActivity"
                 android:process=":memoryclass" />
 
+        <activity android:name="android.app.stubs.PipActivity"
+                  android:label="PipActivity"
+                  android:resizeable="true"
+                  android:supportsPictureInPicture="true"
+                  android:configChanges="smallestScreenSize|orientation|screenSize">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.FRAMEWORK_INSTRUMENTATION_TEST" />
+            </intent-filter>
+        </activity>
+
+        <activity android:name="android.app.stubs.PipNotResizeableActivity"
+                  android:label="PipNotResizeableActivity"
+                  android:resizeable="false"
+                  android:supportsPictureInPicture="true"
+                  android:configChanges="smallestScreenSize|orientation|screenSize">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.FRAMEWORK_INSTRUMENTATION_TEST" />
+            </intent-filter>
+        </activity>
+
+        <activity android:name="android.app.stubs.PipNotSupportedActivity"
+                  android:label="PipNotSupportedActivity"
+                  android:resizeable="true"
+                  android:supportsPictureInPicture="false"
+                  android:configChanges="smallestScreenSize|orientation|screenSize">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.FRAMEWORK_INSTRUMENTATION_TEST" />
+            </intent-filter>
+        </activity>
+
     </application>
 
 </manifest>
