@@ -75,10 +75,10 @@ public class RefocusTest extends RSBaseCompute {
         ImageCompare.CompareValue result = new ImageCompare.CompareValue();
 
         ImageCompare.compareBitmap(outputImage, refrenceImage, result);
-        if (result.diffPercent >= 0.0001) {
-            Log.v("RefocusTest", "% difference from reference =" + result.diffPercent);
+        if (result.diffPercent >= 0.0001 && result.aveDiff > 5) {
             MediaStoreSaver.savePNG(outputImage, "Errors", "RefocusErr" , ctx);
-            assertTrue("% difference from reference = " + result.diffPercent * 100, false);
+            assertTrue("% difference from reference = " + (result.diffPercent * 100) +
+                       " with avg. diff = " + result.aveDiff, false);
         }
         rs.destroy();
     }
