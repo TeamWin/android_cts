@@ -21,6 +21,12 @@
 
     <option name="enable-root" value="false" />
 
+    <target_preparer class="com.android.compatibility.common.tradefed.targetprep.DynamicConfigPusher">
+        <option name="target" value="host" />
+        <option name="module-name" value="cts_v2"/>
+        <option name="version-name" value="1.0"/>
+    </target_preparer>
+
     <target_preparer class="com.android.compatibility.common.tradefed.targetprep.StayAwakePreparer" />
 
     <target_preparer class="com.android.compatibility.common.tradefed.targetprep.PropertyCheck">
