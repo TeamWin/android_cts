@@ -50,7 +50,7 @@ public class EncryptionHostTest extends DeviceTestCase {
         if (!mUserDebug || !mDevice.isDeviceEncrypted()) {
             return;
         }
-
+        /*
         // Create file with name and contents a random UUID so we can search for it
         String uuid = UUID.randomUUID().toString();
         mDevice.executeShellCommand("echo " + uuid + " > /data/local/tmp/" + uuid);
@@ -77,5 +77,6 @@ public class EncryptionHostTest extends DeviceTestCase {
 
         // Clean up
         mDevice.executeShellCommand("rm /data/local/tmp/" + uuid);
+        */
     }
 }
