@@ -37,6 +37,7 @@ import java.util.List;
 import static android.app.admin.DevicePolicyManager.PASSWORD_QUALITY_COMPLEX;
 
 /**
+ * TODO: Make sure DO APIs are not called by PO.
  * Test that exercises {@link DevicePolicyManager}. The test requires that the
  * CtsDeviceAdminReceiver be installed via the CtsDeviceAdmin.apk and be
  * activated via "Settings > Location & security > Select device administrators".
@@ -1142,4 +1143,18 @@ public class DevicePolicyManagerTest extends AndroidTestCase {
             return false;
         }
     }
+
+    public void testReboot_failIfNotDeviceOwner() {
+        if (!mDeviceAdmin) {
+            Log.w(TAG, "Skipping testReboot_failIfNotDeviceOwner");
+            return;
+        }
+        try {
+            mDevicePolicyManager.reboot(mComponent);
+            fail("did not throw expected SecurityException");
+        } catch (SecurityException e) {
+            assertDeviceOwnerMessage(e.getMessage());
+        }
+    }
+
 }
