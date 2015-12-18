@@ -1144,9 +1144,10 @@ public class VideoEncoderDecoderTest extends CtsAndroidTestCase {
         }
 
         public double calcErrorSquared(YUVValue other) {
-            double yDelta = mY - other.mY;
-            double uDelta = mU - other.mU;
-            double vDelta = mV - other.mV;
+            // Java's byte is signed but here we want to calculate difference in unsigned bytes.
+            double yDelta = (mY & 0xFF) - (other.mY & 0xFF);
+            double uDelta = (mU & 0xFF) - (other.mU & 0xFF);
+            double vDelta = (mV & 0xFF) - (other.mV & 0xFF);
             return yDelta * yDelta + uDelta * uDelta + vDelta * vDelta;
         }
     }
