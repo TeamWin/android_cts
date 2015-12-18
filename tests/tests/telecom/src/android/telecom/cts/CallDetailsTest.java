@@ -53,12 +53,18 @@ public class CallDetailsTest extends BaseTelecomTestWithMockServices {
             Call.Details.PROPERTY_HIGH_DEF_AUDIO | Call.Details.PROPERTY_WIFI;
     public static final String CALLER_DISPLAY_NAME = "CTS test";
     public static final int CALLER_DISPLAY_NAME_PRESENTATION = TelecomManager.PRESENTATION_ALLOWED;
+    public static final String TEST_SUBJECT = "test";
+    public static final String TEST_CHILD_NUMBER = "650-555-1212";
+    public static final String TEST_FORWARDED_NUMBER = "650-555-1212";
+    public static final String TEST_EXTRA_KEY = "com.test.extra.TEST";
+    public static final int TEST_EXTRA_VALUE = 10;
 
     private StatusHints mStatusHints;
     private Bundle mExtras = new Bundle();
 
     private MockInCallService mInCallService;
     private Call mCall;
+    private Connection mConnection;
 
     @Override
     protected void setUp() throws Exception {
@@ -73,6 +79,7 @@ public class CallDetailsTest extends BaseTelecomTestWithMockServices {
                             Connection connection = super.onCreateOutgoingConnection(
                                     connectionManagerPhoneAccount,
                                     request);
+                            mConnection = connection;
                             // Modify the connection object created with local values.
                             connection.setConnectionCapabilities(CONNECTION_CAPABILITIES);
                             connection.setCallerDisplayName(
@@ -130,6 +137,95 @@ public class CallDetailsTest extends BaseTelecomTestWithMockServices {
         assertTrue(mCall.getDetails().can(Call.Details.CAPABILITY_MUTE));
         assertFalse(mCall.getDetails().can(Call.Details.CAPABILITY_MANAGE_CONFERENCE));
         assertFalse(mCall.getDetails().can(Call.Details.CAPABILITY_RESPOND_VIA_TEXT));
+    }
+
+    /**
+     * Tests propagation of the local video capabilities from telephony through to in-call.
+     */
+    public void testCallLocalVideoCapability() {
+        if (!mShouldTestTelecom) {
+            return;
+        }
+
+        // Note: Local support for video is disabled when a call is in dialing state.
+        mConnection.setConnectionCapabilities(
+                Connection.CAPABILITY_SUPPORTS_VT_LOCAL_BIDIRECTIONAL);
+        assertCallCapabilities(mCall, 0);
+
+        mConnection.setConnectionCapabilities(Connection.CAPABILITY_SUPPORTS_VT_LOCAL_RX);
+        assertCallCapabilities(mCall, 0);
+
+        mConnection.setConnectionCapabilities(Connection.CAPABILITY_SUPPORTS_VT_LOCAL_TX);
+        assertCallCapabilities(mCall, 0);
+
+        mConnection.setConnectionCapabilities(
+                Connection.CAPABILITY_SUPPORTS_VT_REMOTE_BIDIRECTIONAL);
+        assertCallCapabilities(mCall, 0);
+
+        mConnection.setConnectionCapabilities(Connection.CAPABILITY_SUPPORTS_VT_REMOTE_RX);
+        assertCallCapabilities(mCall, 0);
+
+        mConnection.setConnectionCapabilities(Connection.CAPABILITY_SUPPORTS_VT_REMOTE_TX);
+        assertCallCapabilities(mCall, 0);
+
+        // Set call active; we expect the capabilities to make it through now.
+        mConnection.setActive();
+
+        mConnection.setConnectionCapabilities(
+                Connection.CAPABILITY_SUPPORTS_VT_LOCAL_BIDIRECTIONAL);
+        assertCallCapabilities(mCall, Call.Details.CAPABILITY_SUPPORTS_VT_LOCAL_BIDIRECTIONAL);
+
+        mConnection.setConnectionCapabilities(Connection.CAPABILITY_SUPPORTS_VT_LOCAL_RX);
+        assertCallCapabilities(mCall, Call.Details.CAPABILITY_SUPPORTS_VT_LOCAL_RX);
+
+        mConnection.setConnectionCapabilities(Connection.CAPABILITY_SUPPORTS_VT_LOCAL_TX);
+        assertCallCapabilities(mCall, Call.Details.CAPABILITY_SUPPORTS_VT_LOCAL_TX);
+
+        mConnection.setConnectionCapabilities(
+                Connection.CAPABILITY_SUPPORTS_VT_REMOTE_BIDIRECTIONAL);
+        assertCallCapabilities(mCall, Call.Details.CAPABILITY_SUPPORTS_VT_REMOTE_BIDIRECTIONAL);
+
+        mConnection.setConnectionCapabilities(Connection.CAPABILITY_SUPPORTS_VT_REMOTE_RX);
+        assertCallCapabilities(mCall, Call.Details.CAPABILITY_SUPPORTS_VT_REMOTE_RX);
+
+        mConnection.setConnectionCapabilities(Connection.CAPABILITY_SUPPORTS_VT_REMOTE_TX);
+        assertCallCapabilities(mCall, Call.Details.CAPABILITY_SUPPORTS_VT_REMOTE_TX);
+    }
+
+    /**
+     * Tests passing call capabilities from Connections to Calls.
+     */
+    public void testCallCapabilityPropagation() {
+        if (!mShouldTestTelecom) {
+            return;
+        }
+
+        mConnection.setConnectionCapabilities(Connection.CAPABILITY_CAN_PAUSE_VIDEO);
+        assertCallCapabilities(mCall, Call.Details.CAPABILITY_CAN_PAUSE_VIDEO);
+
+        mConnection.setConnectionCapabilities(Connection.CAPABILITY_HOLD);
+        assertCallCapabilities(mCall, Call.Details.CAPABILITY_HOLD);
+
+        mConnection.setConnectionCapabilities(Connection.CAPABILITY_MANAGE_CONFERENCE);
+        assertCallCapabilities(mCall, Call.Details.CAPABILITY_MANAGE_CONFERENCE);
+
+        mConnection.setConnectionCapabilities(Connection.CAPABILITY_MERGE_CONFERENCE);
+        assertCallCapabilities(mCall, Call.Details.CAPABILITY_MERGE_CONFERENCE);
+
+        mConnection.setConnectionCapabilities(Connection.CAPABILITY_MUTE);
+        assertCallCapabilities(mCall, Call.Details.CAPABILITY_MUTE);
+
+        mConnection.setConnectionCapabilities(Connection.CAPABILITY_RESPOND_VIA_TEXT);
+        assertCallCapabilities(mCall, Call.Details.CAPABILITY_RESPOND_VIA_TEXT);
+
+        mConnection.setConnectionCapabilities(Connection.CAPABILITY_SEPARATE_FROM_CONFERENCE);
+        assertCallCapabilities(mCall, Call.Details.CAPABILITY_SEPARATE_FROM_CONFERENCE);
+
+        mConnection.setConnectionCapabilities(Connection.CAPABILITY_SUPPORT_HOLD);
+        assertCallCapabilities(mCall, Call.Details.CAPABILITY_SUPPORT_HOLD);
+
+        mConnection.setConnectionCapabilities(Connection.CAPABILITY_SWAP_CONFERENCE);
+        assertCallCapabilities(mCall, Call.Details.CAPABILITY_SWAP_CONFERENCE);
     }
 
     /**
@@ -276,5 +372,81 @@ public class CallDetailsTest extends BaseTelecomTestWithMockServices {
         }
 
         assertThat(mCall.getDetails().getVideoState(), is(Integer.class));
+    }
+
+    /**
+     * Tests communication of {@link Connection#setExtras(Bundle)} through to
+     * {@link Call.Details#getExtras()}.
+     */
+    public void testExtrasPropagation() {
+        if (!mShouldTestTelecom) {
+            return;
+        }
+
+        Bundle exampleExtras = new Bundle();
+        exampleExtras.putString(Connection.EXTRA_CALL_SUBJECT, TEST_SUBJECT);
+        exampleExtras.putString(Connection.EXTRA_CHILD_ADDRESS, TEST_CHILD_NUMBER);
+        exampleExtras.putString(Connection.EXTRA_LAST_FORWARDED_NUMBER, TEST_FORWARDED_NUMBER);
+        exampleExtras.putInt(TEST_EXTRA_KEY, TEST_EXTRA_VALUE);
+        mConnection.setExtras(exampleExtras);
+
+        // Make sure we got back a bundle with the call subject key set.
+        assertCallExtras(mCall, Connection.EXTRA_CALL_SUBJECT);
+
+        Bundle callExtras = mCall.getDetails().getExtras();
+        assertEquals(TEST_SUBJECT, callExtras.getString(Connection.EXTRA_CALL_SUBJECT));
+        assertEquals(TEST_CHILD_NUMBER, callExtras.getString(Connection.EXTRA_CHILD_ADDRESS));
+        assertEquals(TEST_FORWARDED_NUMBER,
+                callExtras.getString(Connection.EXTRA_LAST_FORWARDED_NUMBER));
+        assertEquals(TEST_EXTRA_VALUE, callExtras.getInt(TEST_EXTRA_KEY));
+    }
+
+    /**
+     * Asserts that a call's capabilities are as expected.
+     *
+     * @param call The call.
+     * @param capabilities The expected capabilities.
+     */
+    private void assertCallCapabilities(final Call call, final int capabilities) {
+        waitUntilConditionIsTrueOrTimeout(
+                new Condition() {
+                    @Override
+                    public Object expected() {
+                        return capabilities;
+                    }
+
+                    @Override
+                    public Object actual() {
+                        return call.getDetails().getCallCapabilities();
+                    }
+                },
+                TestUtils.WAIT_FOR_STATE_CHANGE_TIMEOUT_MS,
+                "Call should have capabilities " + capabilities
+        );
+    }
+
+    /**
+     * Asserts that a call's extras contain a specified key.
+     *
+     * @param call The call.
+     * @param expectedKey The expected extras key.
+     */
+    private void assertCallExtras(final Call call, final String expectedKey) {
+        waitUntilConditionIsTrueOrTimeout(
+                new Condition() {
+                    @Override
+                    public Object expected() {
+                        return expectedKey;
+                    }
+
+                    @Override
+                    public Object actual() {
+                        return call.getDetails().getExtras().containsKey(expectedKey) ? expectedKey
+                                : "";
+                    }
+                },
+                TestUtils.WAIT_FOR_STATE_CHANGE_TIMEOUT_MS,
+                "Call should have extras key " + expectedKey
+        );
     }
 }
