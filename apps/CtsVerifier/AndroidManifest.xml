@@ -45,6 +45,8 @@
                   android:required="false" />
     <uses-feature android:name="android.hardware.camera.autofocus"
                   android:required="false" />
+    <uses-feature android:name="android.software.vr.mode"
+                  android:required="false" />
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
@@ -1206,11 +1208,50 @@
         </activity>
 
         <service android:name=".notifications.MockListener"
-                 android:exported="true"
-                 android:label="@string/nls_service_name"
-                 android:permission="android.permission.BIND_NOTIFICATION_LISTENER_SERVICE">
+          android:exported="true"
+          android:label="@string/nls_service_name"
+          android:permission="android.permission.BIND_NOTIFICATION_LISTENER_SERVICE">
             <intent-filter>
                 <action android:name="android.service.notification.NotificationListenerService" />
+            </intent-filter>
+        </service>
+
+        <activity android:name=".vr.VrListenerVerifierActivity"
+            android:label="@string/vr_tests">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.cts.intent.category.MANUAL_TEST" />
+            </intent-filter>
+            <meta-data android:name="test_category" android:value="@string/test_category_vr" />
+        </activity>
+
+        <activity android:name=".vr.MockVrActivity"
+            android:label="@string/vr_tests"
+            android:exported="false"
+            android:process=":TestVrActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
+
+        <activity android:name=".vr.MockVrActivity2"
+            android:label="@string/vr_tests"
+            android:exported="false"
+            android:process=":TestVrActivity2">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
+
+        <service android:name=".vr.MockVrListenerService"
+            android:exported="true"
+            android:enabled="true"
+            android:label="@string/vr_service_name"
+            android:permission="android.permission.BIND_VR_LISTENER_SERVICE">
+            <intent-filter>
+                <action android:name="android.service.vr.VrListenerService" />
             </intent-filter>
         </service>
 

@@ -1217,6 +1217,23 @@
         and disabled, and that once enabled the service is able to receive notifications and
         dismiss them.
     </string>
+    <string name="vr_tests">VR Tests</string>
+    <string name="test_category_vr">VR</string>
+    <string name="vr_test_title">VR Listener Test</string>
+    <string name="vr_service_name">VR Listener for CTS Verifier</string>
+    <string name="vr_info">This test checks that a VrListenerService can be enabled and disabled, and
+        and that it receives the correct lifecycle callbacks when entering and exiting VR mode.
+    </string>
+    <string name="vr_start_settings">Launch Settings</string>
+    <string name="vr_start_vr_activity">Launch VR mode activity</string>
+    <string name="vr_start_double_vr_activity">Launch Two VR mode activities</string>
+    <string name="vr_start_vr_activity_desc">Click the button to launch the VR mode activity.</string>
+    <string name="vr_start_vr_double_activity_desc">Click the button to launch two consecutive VR mode activities.</string>
+    <string name="vr_check_disabled">Check that the CTS VR helper service is disabled by default.</string>
+    <string name="vr_enable_service">Please enable \"VR Listener for CTS Verifier\"
+        under Apps > Gear Icon > Special Access > VR Helper Services and return here.</string>
+        <string name="vr_disable_service">Please disable \"VR Listener for CTS Verifier\"
+        under Apps > Gear Icon > Special Access > VR Helper Services and return here.</string>
     <string name="nls_enable_service">Please enable \"Notification Listener for CTS Verifier\"
         under Security > Notification Access and return here.</string>
     <string name="nls_disable_service">Please disable \"Notification Listener for CTS Verifier\"
