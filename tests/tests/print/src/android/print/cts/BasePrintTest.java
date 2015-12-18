@@ -47,12 +47,13 @@ import android.print.cts.services.StubbablePrinterDiscoverySession;
 import android.print.pdf.PrintedPdfDocument;
 import android.printservice.PrintJob;
 import android.printservice.PrintService;
-import android.support.test.uiautomator.UiAutomatorTestCase;
 import android.support.test.uiautomator.UiDevice;
 import android.support.test.uiautomator.UiObject;
 import android.support.test.uiautomator.UiObjectNotFoundException;
 import android.support.test.uiautomator.UiSelector;
+import android.test.InstrumentationTestCase;
 import android.util.DisplayMetrics;
+import android.util.LocaleList;
 
 import org.hamcrest.BaseMatcher;
 import org.hamcrest.Description;
@@ -73,7 +74,7 @@ import java.util.concurrent.TimeoutException;
 /**
  * This is the base class for print tests.
  */
-public abstract class BasePrintTest extends UiAutomatorTestCase {
+public abstract class BasePrintTest extends InstrumentationTestCase {
 
     private static final long OPERATION_TIMEOUT = 100000000;
 
@@ -91,7 +92,18 @@ public abstract class BasePrintTest extends UiAutomatorTestCase {
 
     private PrintDocumentActivity mActivity;
 
-    private Locale mOldLocale;
+    private UiDevice mUiDevice;
+
+    /**
+     * Return the UI device
+     *
+     * @return the UI device
+     */
+    public UiDevice getUiDevice() {
+        return mUiDevice;
+    }
+
+    private LocaleList mOldLocale;
 
     private CallCounter mCancelOperationCounter;
     private CallCounter mLayoutCallCounter;
@@ -107,12 +119,13 @@ public abstract class BasePrintTest extends UiAutomatorTestCase {
 
         ParcelFileDescriptor pfd = getInstrumentation().getUiAutomation()
                 .executeShellCommand(COMMAND_LIST_ENABLED_IME_COMPONENTS);
-        BufferedReader reader = new BufferedReader(
-                new InputStreamReader(new FileInputStream(pfd.getFileDescriptor())));
+        try (BufferedReader reader = new BufferedReader(
+                new InputStreamReader(new FileInputStream(pfd.getFileDescriptor())))) {
 
-        String line;
-        while ((line = reader.readLine()) != null) {
-            imeList.add(line);
+            String line;
+            while ((line = reader.readLine()) != null) {
+                imeList.add(line);
+            }
         }
 
         String[] imeArray = new String[imeList.size()];
@@ -152,6 +165,8 @@ public abstract class BasePrintTest extends UiAutomatorTestCase {
             return;
         }
 
+        mUiDevice = UiDevice.getInstance(getInstrumentation());
+
         // Make sure we start with a clean slate.
         clearPrintSpoolerData();
         disableImes();
@@ -164,11 +179,11 @@ public abstract class BasePrintTest extends UiAutomatorTestCase {
         // Set to US locale.
         Resources resources = getInstrumentation().getTargetContext().getResources();
         Configuration oldConfiguration = resources.getConfiguration();
-        if (!oldConfiguration.locale.equals(Locale.US)) {
-            mOldLocale = oldConfiguration.locale;
+        if (!oldConfiguration.getLocales().getPrimary().equals(Locale.US)) {
+            mOldLocale = oldConfiguration.getLocales();
             DisplayMetrics displayMetrics = resources.getDisplayMetrics();
             Configuration newConfiguration = new Configuration(oldConfiguration);
-            newConfiguration.locale = Locale.US;
+            newConfiguration.setLocale(Locale.US);
             resources.updateConfiguration(newConfiguration, displayMetrics);
         }
 
@@ -200,7 +215,7 @@ public abstract class BasePrintTest extends UiAutomatorTestCase {
             Resources resources = getInstrumentation().getTargetContext().getResources();
             DisplayMetrics displayMetrics = resources.getDisplayMetrics();
             Configuration newConfiguration = new Configuration(resources.getConfiguration());
-            newConfiguration.locale = mOldLocale;
+            newConfiguration.setLocales(mOldLocale);
             mOldLocale = null;
             resources.updateConfiguration(newConfiguration, displayMetrics);
         }
@@ -292,12 +307,12 @@ public abstract class BasePrintTest extends UiAutomatorTestCase {
         }
     }
 
-    protected void selectPrinter(String printerName) throws UiObjectNotFoundException {
+    protected void selectPrinter(String printerName) throws UiObjectNotFoundException, IOException {
         try {
-            UiObject destinationSpinner = new UiObject(new UiSelector().resourceId(
+            UiObject destinationSpinner = mUiDevice.findObject(new UiSelector().resourceId(
                     "com.android.printspooler:id/destination_spinner"));
             destinationSpinner.click();
-            UiObject printerOption = new UiObject(new UiSelector().text(printerName));
+            UiObject printerOption = mUiDevice.findObject(new UiSelector().text(printerName));
             printerOption.click();
         } catch (UiObjectNotFoundException e) {
             dumpWindowHierarchy();
@@ -316,12 +331,13 @@ public abstract class BasePrintTest extends UiAutomatorTestCase {
         button.click();
     }
 
-    protected void changeOrientation(String orientation) throws UiObjectNotFoundException {
+    protected void changeOrientation(String orientation)
+            throws UiObjectNotFoundException, IOException {
         try {
-            UiObject orientationSpinner = new UiObject(new UiSelector().resourceId(
+            UiObject orientationSpinner = mUiDevice.findObject(new UiSelector().resourceId(
                     "com.android.printspooler:id/orientation_spinner"));
             orientationSpinner.click();
-            UiObject orientationOption = new UiObject(new UiSelector().text(orientation));
+            UiObject orientationOption = mUiDevice.findObject(new UiSelector().text(orientation));
             orientationOption.click();
         } catch (UiObjectNotFoundException e) {
             dumpWindowHierarchy();
@@ -329,12 +345,12 @@ public abstract class BasePrintTest extends UiAutomatorTestCase {
         }
     }
 
-    protected void changeMediaSize(String mediaSize) throws UiObjectNotFoundException {
+    protected void changeMediaSize(String mediaSize) throws UiObjectNotFoundException, IOException {
         try {
-            UiObject mediaSizeSpinner = new UiObject(new UiSelector().resourceId(
+            UiObject mediaSizeSpinner = mUiDevice.findObject(new UiSelector().resourceId(
                     "com.android.printspooler:id/paper_size_spinner"));
             mediaSizeSpinner.click();
-            UiObject mediaSizeOption = new UiObject(new UiSelector().text(mediaSize));
+            UiObject mediaSizeOption = mUiDevice.findObject(new UiSelector().text(mediaSize));
             mediaSizeOption.click();
         } catch (UiObjectNotFoundException e) {
             dumpWindowHierarchy();
@@ -342,12 +358,12 @@ public abstract class BasePrintTest extends UiAutomatorTestCase {
         }
     }
 
-    protected void changeColor(String color) throws UiObjectNotFoundException {
+    protected void changeColor(String color) throws UiObjectNotFoundException, IOException {
         try {
-            UiObject colorSpinner = new UiObject(new UiSelector().resourceId(
+            UiObject colorSpinner = mUiDevice.findObject(new UiSelector().resourceId(
                     "com.android.printspooler:id/color_spinner"));
             colorSpinner.click();
-            UiObject colorOption = new UiObject(new UiSelector().text(color));
+            UiObject colorOption = mUiDevice.findObject(new UiSelector().text(color));
             colorOption.click();
         } catch (UiObjectNotFoundException e) {
             dumpWindowHierarchy();
@@ -355,12 +371,12 @@ public abstract class BasePrintTest extends UiAutomatorTestCase {
         }
     }
 
-    protected void changeDuplex(String duplex) throws UiObjectNotFoundException {
+    protected void changeDuplex(String duplex) throws UiObjectNotFoundException, IOException {
         try {
-            UiObject duplexSpinner = new UiObject(new UiSelector().resourceId(
+            UiObject duplexSpinner = mUiDevice.findObject(new UiSelector().resourceId(
                     "com.android.printspooler:id/duplex_spinner"));
             duplexSpinner.click();
-            UiObject duplexOption = new UiObject(new UiSelector().text(duplex));
+            UiObject duplexOption = mUiDevice.findObject(new UiSelector().text(duplex));
             duplexOption.click();
         } catch (UiObjectNotFoundException e) {
             dumpWindowHierarchy();
@@ -368,9 +384,9 @@ public abstract class BasePrintTest extends UiAutomatorTestCase {
         }
     }
 
-    protected void clickPrintButton() throws UiObjectNotFoundException {
+    protected void clickPrintButton() throws UiObjectNotFoundException, IOException {
         try {
-            UiObject printButton = new UiObject(new UiSelector().resourceId(
+            UiObject printButton = mUiDevice.findObject(new UiSelector().resourceId(
                     "com.android.printspooler:id/print_button"));
             printButton.click();
         } catch (UiObjectNotFoundException e) {
@@ -379,10 +395,12 @@ public abstract class BasePrintTest extends UiAutomatorTestCase {
         }
     }
 
-    private void dumpWindowHierarchy() {
+    private void dumpWindowHierarchy() throws IOException {
         String name = "print-test-failure-" + System.currentTimeMillis() + ".xml";
         File file = new File(getActivity().getFilesDir(), name);
-        getUiDevice().dumpWindowHierarchy(file.toString());
+        try (FileOutputStream os = new FileOutputStream(file.toString())) {
+            mUiDevice.dumpWindowHierarchy(os);
+        }
     }
 
     protected PrintDocumentActivity getActivity() {
@@ -396,7 +414,7 @@ public abstract class BasePrintTest extends UiAutomatorTestCase {
     }
 
     protected void openPrintOptions() throws UiObjectNotFoundException {
-        UiObject expandHandle = new UiObject(new UiSelector().resourceId(
+        UiObject expandHandle = mUiDevice.findObject(new UiSelector().resourceId(
                 "com.android.printspooler:id/expand_collapse_handle"));
         expandHandle.click();
     }

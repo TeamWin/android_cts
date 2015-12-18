@@ -21,7 +21,12 @@ import android.os.Looper;
 import android.os.ParcelFileDescriptor;
 import android.print.PageRange;
 import android.print.PrintAttributes;
+import android.print.PrintAttributes.Margins;
+import android.print.PrintAttributes.MediaSize;
+import android.print.PrintAttributes.Resolution;
 import android.print.PrintDocumentAdapter;
+import android.print.PrintDocumentAdapter.LayoutResultCallback;
+import android.print.PrintDocumentAdapter.WriteResultCallback;
 import android.print.PrintDocumentInfo;
 import android.print.PrinterCapabilitiesInfo;
 import android.print.PrinterId;
@@ -31,11 +36,6 @@ import android.print.cts.services.PrintServiceCallbacks;
 import android.print.cts.services.PrinterDiscoverySessionCallbacks;
 import android.print.cts.services.SecondPrintService;
 import android.print.cts.services.StubbablePrinterDiscoverySession;
-import android.print.PrintAttributes.Margins;
-import android.print.PrintAttributes.MediaSize;
-import android.print.PrintAttributes.Resolution;
-import android.print.PrintDocumentAdapter.LayoutResultCallback;
-import android.print.PrintDocumentAdapter.WriteResultCallback;
 import android.printservice.PrintJob;
 
 import org.mockito.invocation.InvocationOnMock;
@@ -175,7 +175,7 @@ public class PrintServicesTest extends BasePrintTest {
      * Get the current progress of #mPrintJob
      *
      * @return The current progress
-     * @throws InterruptedException
+     * @throws InterruptedException If the thread was interrupted while setting the progress
      */
     private float getProgress() throws InterruptedException {
         final PrintServicesTest synchronizer = PrintServicesTest.this;
@@ -204,7 +204,7 @@ public class PrintServicesTest extends BasePrintTest {
      * Get the current status of #mPrintJob
      *
      * @return The current status
-     * @throws InterruptedException
+     * @throws InterruptedException If the thread was interrupted while getting the status
      */
     private CharSequence getStatus() throws InterruptedException {
         final PrintServicesTest synchronizer = PrintServicesTest.this;
@@ -257,7 +257,7 @@ public class PrintServicesTest extends BasePrintTest {
      *
      * @param progress The new progress to set
      * @param status The new status to set
-     * @throws InterruptedException
+     * @throws InterruptedException If the thread was interrupted while setting
      */
     private void setProgressAndStatus(final float progress, final CharSequence status)
             throws InterruptedException {
