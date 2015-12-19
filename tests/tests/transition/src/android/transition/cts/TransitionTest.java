@@ -28,6 +28,8 @@ import android.widget.ImageView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
+import java.util.concurrent.TimeUnit;
+
 public class TransitionTest extends BaseTransitionTest {
 
     public TransitionTest() {
@@ -52,17 +54,17 @@ public class TransitionTest extends BaseTransitionTest {
 
         waitForStart(listener2);
 
-        assertTrue(mTransition.listener.paused);
-        assertTrue(mTransition.listener.resumed);
-        assertFalse(mTransition.listener.canceled);
-        assertFalse(mTransition.listener.ended);
-        assertTrue(mTransition.listener.started);
+        assertEquals(0, mTransition.listener.pauseLatch.getCount());
+        assertEquals(0, mTransition.listener.resumeLatch.getCount());
+        assertEquals(1, mTransition.listener.cancelLatch.getCount());
+        assertEquals(1, mTransition.listener.endLatch.getCount());
+        assertEquals(0, mTransition.listener.startLatch.getCount());
 
-        assertFalse(listener2.paused);
-        assertFalse(listener2.resumed);
-        assertFalse(listener2.canceled);
-        assertFalse(listener2.ended);
-        assertTrue(listener2.started);
+        assertEquals(1, listener2.pauseLatch.getCount());
+        assertEquals(1, listener2.resumeLatch.getCount());
+        assertEquals(1, listener2.cancelLatch.getCount());
+        assertEquals(1, listener2.endLatch.getCount());
+        assertEquals(0, listener2.startLatch.getCount());
         endTransition();
     }
 
@@ -77,8 +79,7 @@ public class TransitionTest extends BaseTransitionTest {
             }
         });
 
-        Thread.sleep(150);
-        assertFalse(mTransition.listener.ended);
+        assertFalse(mTransition.listener.endLatch.await(250, TimeUnit.MILLISECONDS));
     }
 
     public void testAddTargetId() throws Throwable {

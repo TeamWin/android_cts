@@ -30,7 +30,7 @@ public class ChangeScrollTest extends BaseTransitionTest {
     public void testChangeScroll() throws Throwable {
         enterScene(R.layout.scene5);
         final Transition transition = new ChangeScroll();
-        transition.setDuration(100);
+        transition.setDuration(200);
         SimpleTransitionListener listener = new SimpleTransitionListener();
         transition.addListener(listener);
         runTestOnUiThread(new Runnable() {
@@ -59,7 +59,7 @@ public class ChangeScrollTest extends BaseTransitionTest {
                 assertTrue(scrollY < 300);
             }
         });
-        waitForEnd(listener, 100);
+        waitForEnd(listener, 250);
         runTestOnUiThread(new Runnable() {
             @Override
             public void run() {

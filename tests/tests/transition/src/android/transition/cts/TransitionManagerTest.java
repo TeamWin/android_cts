@@ -21,6 +21,9 @@ import android.transition.Scene;
 import android.transition.TransitionManager;
 import android.view.View;
 
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+
 public class TransitionManagerTest extends BaseTransitionTest {
 
     public TransitionManagerTest() {
@@ -38,10 +41,10 @@ public class TransitionManagerTest extends BaseTransitionTest {
         });
 
         waitForStart();
-        waitForEnd(150);
-        assertFalse(mTransition.listener.resumed);
-        assertFalse(mTransition.listener.paused);
-        assertFalse(mTransition.listener.canceled);
+        waitForEnd(300);
+        assertEquals(1, mTransition.listener.resumeLatch.getCount());
+        assertEquals(1, mTransition.listener.pauseLatch.getCount());
+        assertEquals(1, mTransition.listener.cancelLatch.getCount());
         assertNotNull(mTransition.listener.transition);
         assertEquals(TestTransition.class, mTransition.listener.transition.getClass());
         assertTrue(mTransition != mTransition.listener.transition);
@@ -57,11 +60,11 @@ public class TransitionManagerTest extends BaseTransitionTest {
     public void testGo() throws Throwable {
         startTransition(R.layout.scene1);
         waitForStart();
-        waitForEnd(150);
+        waitForEnd(300);
 
-        assertFalse(mTransition.listener.resumed);
-        assertFalse(mTransition.listener.paused);
-        assertFalse(mTransition.listener.canceled);
+        assertEquals(1, mTransition.listener.resumeLatch.getCount());
+        assertEquals(1, mTransition.listener.pauseLatch.getCount());
+        assertEquals(1, mTransition.listener.cancelLatch.getCount());
         assertNotNull(mTransition.listener.transition);
         assertEquals(TestTransition.class, mTransition.listener.transition.getClass());
         assertTrue(mTransition != mTransition.listener.transition);
@@ -87,26 +90,25 @@ public class TransitionManagerTest extends BaseTransitionTest {
         });
 
         waitForStart();
-        waitForEnd(150);
-        assertFalse(mTransition.listener.resumed);
-        assertFalse(mTransition.listener.paused);
-        assertFalse(mTransition.listener.canceled);
+        waitForEnd(300);
+        assertEquals(1, mTransition.listener.resumeLatch.getCount());
+        assertEquals(1, mTransition.listener.pauseLatch.getCount());
+        assertEquals(1, mTransition.listener.cancelLatch.getCount());
         assertNotNull(mTransition.listener.transition);
         assertEquals(TestTransition.class, mTransition.listener.transition.getClass());
         assertTrue(mTransition != mTransition.listener.transition);
         runTestOnUiThread(new Runnable() {
             @Override
             public void run() {
+                mTransition.listener.startLatch = new CountDownLatch(1);
+                mTransition.listener.endLatch = new CountDownLatch(1);
                 assertNotNull(mActivity.findViewById(R.id.redSquare));
                 assertNotNull(mActivity.findViewById(R.id.greenSquare));
-                mTransition.listener.started = false;
-                mTransition.listener.ended = false;
                 Scene scene = Scene.getSceneForLayout(mSceneRoot, R.layout.scene2, mActivity);
                 transitionManager.transitionTo(scene);
             }
         });
-        Thread.sleep(50);
-        assertFalse(mTransition.listener.started);
+        assertFalse(mTransition.listener.startLatch.await(50, TimeUnit.MILLISECONDS));
         endTransition();
     }
 
@@ -124,8 +126,7 @@ public class TransitionManagerTest extends BaseTransitionTest {
                 transitionManager.transitionTo(scenes[0]);
             }
         });
-        Thread.sleep(50);
-        assertFalse(mTransition.listener.started);
+        assertFalse(mTransition.listener.startLatch.await(100, TimeUnit.MILLISECONDS));
 
         runTestOnUiThread(new Runnable() {
             @Override
@@ -135,23 +136,22 @@ public class TransitionManagerTest extends BaseTransitionTest {
         });
 
         waitForStart();
-        waitForEnd(150);
-        assertFalse(mTransition.listener.resumed);
-        assertFalse(mTransition.listener.paused);
-        assertFalse(mTransition.listener.canceled);
+        waitForEnd(300);
+        assertEquals(1, mTransition.listener.resumeLatch.getCount());
+        assertEquals(1, mTransition.listener.pauseLatch.getCount());
+        assertEquals(1, mTransition.listener.cancelLatch.getCount());
         assertNotNull(mTransition.listener.transition);
         assertEquals(TestTransition.class, mTransition.listener.transition.getClass());
         assertTrue(mTransition != mTransition.listener.transition);
         runTestOnUiThread(new Runnable() {
             @Override
             public void run() {
-                mTransition.listener.started = false;
-                mTransition.listener.ended = false;
+                mTransition.listener.startLatch = new CountDownLatch(1);
+                mTransition.listener.endLatch = new CountDownLatch(1);
                 transitionManager.transitionTo(scenes[2]);
             }
         });
-        Thread.sleep(50);
-        assertFalse(mTransition.listener.started);
+        assertFalse(mTransition.listener.startLatch.await(50, TimeUnit.MILLISECONDS));
         endTransition();
     }
 
@@ -161,7 +161,7 @@ public class TransitionManagerTest extends BaseTransitionTest {
         startTransition(R.layout.scene1);
         waitForStart();
         endTransition();
-        waitForEnd(50);
+        waitForEnd(100);
     }
 
     public void testEndTransitionsBeforeStarted() throws Throwable {
@@ -175,9 +175,8 @@ public class TransitionManagerTest extends BaseTransitionTest {
                 TransitionManager.endTransitions(mSceneRoot);
             }
         });
-        Thread.sleep(50);
-        assertFalse(mTransition.listener.started);
-        assertFalse(mTransition.listener.ended);
+        assertFalse(mTransition.listener.startLatch.await(100, TimeUnit.MILLISECONDS));
+        assertFalse(mTransition.listener.endLatch.await(10, TimeUnit.MILLISECONDS));
     }
 }
 
