@@ -16,7 +16,6 @@
 package android.mediastress.cts.preconditions;
 
 import com.android.compatibility.common.tradefed.targetprep.PreconditionPreparer;
-import com.android.compatibility.common.util.DynamicConfigHostSide;
 import com.android.ddmlib.IDevice;
 import com.android.ddmlib.Log;
 import com.android.tradefed.build.IBuildInfo;
@@ -46,8 +45,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.zip.ZipFile;
 
-import org.xmlpull.v1.XmlPullParserException;
-
 /**
  * Ensures that the appropriate media files exist on the device
  */
@@ -69,11 +66,12 @@ public class MediaPreparer extends PreconditionPreparer {
      */
     protected static final String MEDIA_FOLDER_NAME = "android-cts-media";
 
-    /* The key used to retrieve the media files URL from the dynamic configuration */
-    private static final String MEDIA_FILES_URL_KEY = "MediaFilesUrl";
-
-    /* For a target preparer, the "module" of the configuration is the test suite */
-    private static final String DYNAMIC_CONFIG_MODULE = "cts_v2";
+    /*
+     * The URL from which to download the compressed media files
+     * TODO: Find a way to retrieve this programmatically
+     */
+    private static final String MEDIA_URL_STRING =
+            "https://dl.google.com/dl/android/cts/android-cts-media-1.1.zip";
 
     /*
      * The message printed when the maximum video playback resolution cannot be found in the
@@ -229,12 +227,10 @@ public class MediaPreparer extends PreconditionPreparer {
 
         URL url;
         try {
-            DynamicConfigHostSide config = new DynamicConfigHostSide(DYNAMIC_CONFIG_MODULE);
-            String mediaUrlString = config.getConfig(MEDIA_FILES_URL_KEY);
-            url = new URL(mediaUrlString);
-        } catch (MalformedURLExcpetion | IOException | XmlPullParserException e) {
-            throw new TargetSetupError("Trouble finding media file download location with " +
-                    "dynamic configuration");
+            url = new URL(MEDIA_URL_STRING);
+        } catch (MalformedURLException e) {
+            throw new TargetSetupError(
+                    String.format("Trouble finding android media files at %s", MEDIA_URL_STRING));
         }
 
         File mediaFolder = new File(mLocalMediaPath);
