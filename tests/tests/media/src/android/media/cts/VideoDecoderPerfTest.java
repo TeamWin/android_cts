@@ -475,16 +475,16 @@ public class VideoDecoderPerfTest extends MediaPlayerTestBase {
                352, 288, true /* isGoog */);
     }
 
-    public void testHEVC0720x0480Other() throws Exception {
+    public void testHEVC0640x0360Other() throws Exception {
         decode(VIDEO_HEVC,
-               R.raw.video_720x480_mp4_hevc_1638kbps_30fps_aac_stereo_128kbps_44100hz,
-               720, 480, false /* isGoog */);
+               R.raw.video_640x360_mp4_hevc_1638kbps_30fps_aac_stereo_128kbps_44100hz,
+               640, 360, false /* isGoog */);
     }
 
-    public void testHEVC0720x0480Goog() throws Exception {
+    public void testHEVC0640x0360Goog() throws Exception {
         decode(VIDEO_HEVC,
-               R.raw.video_720x480_mp4_hevc_1638kbps_30fps_aac_stereo_128kbps_44100hz,
-               720, 480, true /* isGoog */);
+               R.raw.video_640x360_mp4_hevc_1638kbps_30fps_aac_stereo_128kbps_44100hz,
+               640, 360, true /* isGoog */);
     }
 
     public void testHEVC1280x0720Other() throws Exception {
