@@ -39,7 +39,6 @@ import android.print.cts.services.StubbablePrinterDiscoverySession;
 import android.printservice.PrintJob;
 import android.printservice.PrinterDiscoverySession;
 
-import junit.framework.AssertionFailedError;
 import org.mockito.InOrder;
 import org.mockito.exceptions.verification.VerificationInOrderFailure;
 import org.mockito.invocation.InvocationOnMock;

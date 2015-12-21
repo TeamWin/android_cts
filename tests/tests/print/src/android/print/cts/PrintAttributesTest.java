@@ -19,7 +19,12 @@ package android.print.cts;
 import android.os.ParcelFileDescriptor;
 import android.print.PageRange;
 import android.print.PrintAttributes;
+import android.print.PrintAttributes.Margins;
+import android.print.PrintAttributes.MediaSize;
+import android.print.PrintAttributes.Resolution;
 import android.print.PrintDocumentAdapter;
+import android.print.PrintDocumentAdapter.LayoutResultCallback;
+import android.print.PrintDocumentAdapter.WriteResultCallback;
 import android.print.PrintDocumentInfo;
 import android.print.PrinterCapabilitiesInfo;
 import android.print.PrinterId;
@@ -29,13 +34,7 @@ import android.print.cts.services.PrintServiceCallbacks;
 import android.print.cts.services.PrinterDiscoverySessionCallbacks;
 import android.print.cts.services.SecondPrintService;
 import android.print.cts.services.StubbablePrinterDiscoverySession;
-import android.print.PrintAttributes.Margins;
-import android.print.PrintAttributes.MediaSize;
-import android.print.PrintAttributes.Resolution;
-import android.print.PrintDocumentAdapter.LayoutResultCallback;
-import android.print.PrintDocumentAdapter.WriteResultCallback;
 import android.printservice.PrintJob;
-import android.support.test.uiautomator.UiObjectNotFoundException;
 
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
@@ -122,12 +121,10 @@ public class PrintAttributesTest extends BasePrintTest {
      * printing once.
      *
      * @param adapter The {@link PrintDocumentAdapter} used
-     *
-     * @throws UiObjectNotFoundException If any UI element needed for this operation does not
-     *                                   appear
+     * @throws Exception If the printer could not be made default
      */
     private void makeDefaultPrinter(PrintDocumentAdapter adapter)
-            throws UiObjectNotFoundException {
+            throws Exception {
         // Perform a full print operation on the printer
         print(adapter);
         selectPrinter(PRINTER_NAME);

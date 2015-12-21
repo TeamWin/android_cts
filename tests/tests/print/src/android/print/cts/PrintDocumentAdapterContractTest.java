@@ -1380,7 +1380,6 @@ public class PrintDocumentAdapterContractTest extends BasePrintTest {
                 Object[] args = invocation.getArguments();
                 ParcelFileDescriptor fd = (ParcelFileDescriptor) args[1];
                 WriteResultCallback callback = (WriteResultCallback) args[3];
-                PageRange[] pages = (PageRange[]) args[0];
                 writeBlankPages(printAttributes[0], fd, Integer.MAX_VALUE, Integer.MAX_VALUE);
                 fd.close();
                 // Write wrong pages.
