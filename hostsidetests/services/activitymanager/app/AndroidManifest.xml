@@ -21,13 +21,16 @@
     <application>
         <activity android:name=".TestActivity"
                 android:resizeable="true"
+                android:exported="true"
         />
         <activity android:name=".LaunchToSideActivity"
                 android:resizeable="true"
+                android:exported="true"
         />
         <activity android:name=".PipActivity"
                 android:resizeable="true"
                 android:supportsPictureInPicture="true"
+                android:exported="true"
         />
     </application>
 </manifest>
