@@ -221,13 +221,11 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
     @Override
     public void run(ITestInvocationListener listener) throws DeviceNotAvailableException {
         try {
-            boolean isInitializer = false;
             IModuleRepo moduleRepo = ModuleRepo.getInstance();
             // Synchronized so only one shard enters and sets up the moduleRepo. When the other
             // shards enter after this, moduleRepo is already initialized so they dont do anything
             synchronized (moduleRepo) {
                 if (!moduleRepo.isInitialized()) {
-                    isInitializer = true;
                     setupFilters();
                     // Initialize the repository, {@link CompatibilityBuildHelper#getTestsDir} can
                     // throw a {@link FileNotFoundException}
@@ -264,9 +262,7 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
         } catch (Error e) {
             CLog.e(e);
         } finally {
-            if (isInitializer) {
-                ModuleRepo.tearDown();
-            }
+            ModuleRepo.tearDown();
         }
     }
 
