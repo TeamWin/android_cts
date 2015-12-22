@@ -276,7 +276,7 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
             }
         }
         mCurrentModuleResult.addRuntime(elapsedTime);
-        logResult("%s completed in %s. %d passed, %d failed, %d non executed",
+        logResult("%s completed in %s. %d passed, %d failed, %d not executed",
                 mCurrentModuleResult.getId(),
                 TimeUtil.formatElapsedTime(elapsedTime),
                 mCurrentModuleResult.countResults(TestStatus.PASS),
@@ -318,7 +318,7 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
     @Override
     public void invocationEnded(long elapsedTime) {
         if (mInitialized) {
-            logResult("Invocation completed in %ss. %d passed, %d failed, %d non executed",
+            logResult("Invocation completed in %s. %d passed, %d failed, %d not executed",
                     TimeUtil.formatElapsedTime(elapsedTime),
                     mResult.countResults(TestStatus.PASS),
                     mResult.countResults(TestStatus.FAIL),
