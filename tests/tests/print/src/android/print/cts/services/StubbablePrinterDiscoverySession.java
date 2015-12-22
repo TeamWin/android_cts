@@ -17,6 +17,7 @@
 package android.print.cts.services;
 
 import android.print.PrinterId;
+import android.printservice.CustomPrinterIconCallback;
 import android.printservice.PrintService;
 import android.printservice.PrinterDiscoverySession;
 
@@ -64,6 +65,14 @@ public class StubbablePrinterDiscoverySession extends PrinterDiscoverySession {
     public void onStartPrinterStateTracking(PrinterId printerId) {
         if (mCallbacks != null) {
             mCallbacks.onStartPrinterStateTracking(printerId);
+        }
+    }
+
+    @Override
+    public void onRequestCustomPrinterIcon(PrinterId printerId,
+            CustomPrinterIconCallback callback) {
+        if (mCallbacks != null) {
+            mCallbacks.onRequestCustomPrinterIcon(printerId, callback);
         }
     }
 

@@ -16,9 +16,22 @@
 
 package android.print.cts;
 
+import android.app.Activity;
+import android.app.PendingIntent;
+import android.content.ComponentName;
+import android.content.Intent;
+import android.content.pm.ApplicationInfo;
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.Canvas;
+import android.graphics.drawable.Drawable;
+import android.graphics.drawable.Icon;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.ParcelFileDescriptor;
+import android.os.SystemClock;
 import android.print.PageRange;
 import android.print.PrintAttributes;
 import android.print.PrintAttributes.Margins;
@@ -36,7 +49,13 @@ import android.print.cts.services.PrintServiceCallbacks;
 import android.print.cts.services.PrinterDiscoverySessionCallbacks;
 import android.print.cts.services.SecondPrintService;
 import android.print.cts.services.StubbablePrinterDiscoverySession;
+import android.printservice.CustomPrinterIconCallback;
 import android.printservice.PrintJob;
+import android.support.test.uiautomator.UiDevice;
+import android.support.test.uiautomator.UiObject;
+import android.support.test.uiautomator.UiSelector;
+
+import junit.framework.AssertionFailedError;
 
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
@@ -59,8 +78,17 @@ public class PrintServicesTest extends BasePrintTest {
     /** The current progress of #mPrintJob once read from the system */
     private static float mPrintProgress;
 
+    /** Printer under test */
+    private static PrinterInfo mPrinter;
+
+    /** The printer discovery session used in this test */
+    private static StubbablePrinterDiscoverySession mDiscoverySession;
+
     /** The current status of #mPrintJob once read from the system */
     private static CharSequence mPrintStatus;
+
+    /** The custom printer icon to use */
+    private Icon mIcon;
 
     /**
      * Create a mock {@link PrintDocumentAdapter} that provides {@link #NUM_PAGES} empty pages.
@@ -127,14 +155,15 @@ public class PrintServicesTest extends BasePrintTest {
             @Override
             public Void answer(InvocationOnMock invocation) {
                 // Get the session.
-                StubbablePrinterDiscoverySession session = ((PrinterDiscoverySessionCallbacks) invocation
-                        .getMock()).getSession();
+                mDiscoverySession = ((PrinterDiscoverySessionCallbacks) invocation.getMock())
+                        .getSession();
 
-                if (session.getPrinters().isEmpty()) {
+                if (mDiscoverySession.getPrinters().isEmpty()) {
                     List<PrinterInfo> printers = new ArrayList<PrinterInfo>();
 
                     // Add the printer.
-                    PrinterId printerId = session.getService().generatePrinterId(PRINTER_NAME);
+                    PrinterId printerId = mDiscoverySession.getService()
+                            .generatePrinterId(PRINTER_NAME);
 
                     PrinterCapabilitiesInfo capabilities = new PrinterCapabilitiesInfo.Builder(
                             printerId)
@@ -146,19 +175,36 @@ public class PrintServicesTest extends BasePrintTest {
                                             PrintAttributes.COLOR_MODE_COLOR)
                                     .build();
 
-                    PrinterInfo printer = new PrinterInfo.Builder(printerId, PRINTER_NAME,
+                    Intent infoIntent = new Intent(getActivity(), Activity.class);
+                    PendingIntent infoPendingIntent = PendingIntent.getActivity(getActivity(), 0,
+                            infoIntent, PendingIntent.FLAG_IMMUTABLE);
+
+                    mPrinter = new PrinterInfo.Builder(printerId, PRINTER_NAME,
                             PrinterInfo.STATUS_IDLE)
                                     .setCapabilities(capabilities)
+                                    .setDescription("Minimal capabilities")
+                                    .setInfoIntent(infoPendingIntent)
                                     .build();
-                    printers.add(printer);
+                    printers.add(mPrinter);
 
-                    session.addPrinters(printers);
+                    mDiscoverySession.addPrinters(printers);
                 }
                 return null;
             }
         }, null, null, new Answer<Void>() {
             @Override
             public Void answer(InvocationOnMock invocation) throws Throwable {
+                return null;
+            }
+        }, new Answer<Void>() {
+            @Override
+            public Void answer(InvocationOnMock invocation) throws Throwable {
+                CustomPrinterIconCallback callback = (CustomPrinterIconCallback) invocation
+                        .getArguments()[1];
+
+                if (mIcon != null) {
+                    callback.onCustomPrinterIconLoaded(mIcon);
+                }
                 return null;
             }
         }, null, new Answer<Void>() {
@@ -242,7 +288,7 @@ public class PrintServicesTest extends BasePrintTest {
 
         while ((new Date()).getTime() - start.getTime() < TIMEOUT) {
             if (desiredProgress == getProgress()
-                && desiredStatus.toString().equals(getStatus().toString())) {
+                    && desiredStatus.toString().equals(getStatus().toString())) {
                 return;
             }
 
@@ -297,20 +343,13 @@ public class PrintServicesTest extends BasePrintTest {
     }
 
     /**
-     * Test that the progress and status is propagated correctly.
+     * Create mock service callback for a session.
      *
-     * @throws Exception If anything is unexpected.
+     * @param sessionCallbacks The callbacks of the sessopm
      */
-    public void testProgress()
-            throws Exception {
-        if (!supportsPrinting()) {
-            return;
-        }
-        // Create the session callbacks that we will be checking.
-        final PrinterDiscoverySessionCallbacks sessionCallbacks = createFirstMockPrinterDiscoverySessionCallbacks();
-
-        // Create the service callbacks for the first print service.
-        PrintServiceCallbacks serviceCallbacks = createMockPrintServiceCallbacks(
+    private PrintServiceCallbacks createFirstMockPrinterServiceCallbacks(
+            final PrinterDiscoverySessionCallbacks sessionCallbacks) {
+        return createMockPrintServiceCallbacks(
                 new Answer<PrinterDiscoverySessionCallbacks>() {
                     @Override
                     public PrinterDiscoverySessionCallbacks answer(InvocationOnMock invocation) {
@@ -327,6 +366,25 @@ public class PrintServicesTest extends BasePrintTest {
                         return null;
                     }
                 }, null);
+    }
+
+    /**
+     * Test that the progress and status is propagated correctly.
+     *
+     * @throws Exception If anything is unexpected.
+     */
+    public void testProgress()
+            throws Exception {
+        if (!supportsPrinting()) {
+            return;
+        }
+        // Create the session callbacks that we will be checking.
+        PrinterDiscoverySessionCallbacks sessionCallbacks
+                = createFirstMockPrinterDiscoverySessionCallbacks();
+
+        // Create the service callbacks for the first print service.
+        PrintServiceCallbacks serviceCallbacks = createFirstMockPrinterServiceCallbacks(
+                sessionCallbacks);
 
         // Configure the print services.
         FirstPrintService.setCallbacks(serviceCallbacks);
@@ -374,5 +432,145 @@ public class PrintServicesTest extends BasePrintTest {
 
         // Wait for all print jobs to be handled after which the session destroyed.
         waitForPrinterDiscoverySessionDestroyCallbackCalled();
+    }
+
+    /**
+     * Render a {@link Drawable} into a {@link Bitmap}.
+     *
+     * @param d the drawable to be rendered
+     * @return the rendered bitmap
+     */
+    private static Bitmap renderDrawable(Drawable d) {
+        Bitmap bitmap = Bitmap.createBitmap(d.getIntrinsicWidth(), d.getIntrinsicHeight(),
+                Bitmap.Config.ARGB_8888);
+
+        Canvas canvas = new Canvas(bitmap);
+        d.setBounds(0, 0, canvas.getWidth(), canvas.getHeight());
+        d.draw(canvas);
+
+        return bitmap;
+    }
+
+    /**
+     * Update the printer
+     *
+     * @param printer the new printer to use
+     * @throws InterruptedException If we were interrupted while the printer was updated.
+     */
+    private void updatePrinter(final PrinterInfo printer)
+            throws InterruptedException {
+        final PrintServicesTest synchronizer = PrintServicesTest.this;
+
+        synchronized (synchronizer) {
+            Runnable updated = new Runnable() {
+                @Override
+                public void run() {
+                    synchronized (synchronizer) {
+                        ArrayList<PrinterInfo> printers = new ArrayList<>(1);
+                        printers.add(printer);
+                        mDiscoverySession.addPrinters(printers);
+
+                        synchronizer.notifyAll();
+                    }
+                }
+            };
+
+            (new Handler(Looper.getMainLooper())).post(updated);
+
+            synchronizer.wait();
+        }
+
+        // Update local copy of printer
+        mPrinter = printer;
+    }
+
+    /**
+     * Assert is the printer icon does not match the bitmap. As the icon update might take some time
+     * we try up to 5 seconds.
+     *
+     * @param bitmap The bitmap to match
+     */
+    private void assertThatIconIs(Bitmap bitmap) {
+        final long TIMEOUT = 5000;
+
+        final long startMillis = SystemClock.uptimeMillis();
+        while (true) {
+            try {
+                if (bitmap.sameAs(renderDrawable(mPrinter.loadIcon(getActivity())))) {
+                    return;
+                }
+                final long elapsedMillis = SystemClock.uptimeMillis() - startMillis;
+                final long waitMillis = TIMEOUT - elapsedMillis;
+                if (waitMillis <= 0) {
+                    throw new AssertionFailedError("Icon does not match bitmap");
+                }
+
+                // We do not get notified about the icon update, hence wait and try again.
+                Thread.sleep(1000);
+            } catch (InterruptedException ie) {
+               /* ignore */
+            }
+        }
+    }
+
+    /**
+     * Test that the icon get be updated.
+     *
+     * @throws Exception If anything is unexpected.
+     */
+    public void testUpdateIcon()
+            throws Exception {
+        if (!supportsPrinting()) {
+            return;
+        }
+        // Create the session callbacks that we will be checking.
+        final PrinterDiscoverySessionCallbacks sessionCallbacks
+                = createFirstMockPrinterDiscoverySessionCallbacks();
+
+        // Create the service callbacks for the first print service.
+        PrintServiceCallbacks serviceCallbacks = createFirstMockPrinterServiceCallbacks(
+                sessionCallbacks);
+
+        // Configure the print services.
+        FirstPrintService.setCallbacks(serviceCallbacks);
+
+        // We don't use the second service, but we have to still configure it
+        SecondPrintService.setCallbacks(createMockPrintServiceCallbacks(null, null, null));
+
+        // Create a print adapter that respects the print contract.
+        PrintDocumentAdapter adapter = createMockPrintDocumentAdapter();
+
+        // Start printing.
+        print(adapter);
+
+        // Open printer selection dropdown list to display icon on screen
+        UiObject destinationSpinner = UiDevice.getInstance(getInstrumentation())
+                .findObject(new UiSelector().resourceId(
+                        "com.android.printspooler:id/destination_spinner"));
+        destinationSpinner.click();
+
+        // Get the print service's icon
+        PackageManager packageManager = getActivity().getPackageManager();
+        PackageInfo packageInfo = packageManager.getPackageInfo(
+                new ComponentName(getActivity(), FirstPrintService.class).getPackageName(), 0);
+        ApplicationInfo appInfo = packageInfo.applicationInfo;
+        Drawable printServiceIcon = appInfo.loadIcon(packageManager);
+
+        assertThatIconIs(renderDrawable(printServiceIcon));
+
+        // Update icon to resource
+        updatePrinter((new PrinterInfo.Builder(mPrinter)).setIconResourceId(R.drawable.red_printer)
+                .build());
+
+        assertThatIconIs(renderDrawable(getActivity().getDrawable(R.drawable.red_printer)));
+
+        // Update icon to bitmap
+        Bitmap bm = BitmapFactory.decodeResource(getActivity().getResources(),
+                R.raw.yellow_printer);
+        // Icon will be picked up from the discovery session once setHasCustomPrinterIcon is set
+        mIcon = Icon.createWithBitmap(bm);
+        updatePrinter((new PrinterInfo.Builder(mPrinter)).setHasCustomPrinterIcon().build());
+
+        assertThatIconIs(renderDrawable(mIcon.loadDrawable(getActivity())));
     }
 }

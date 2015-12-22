@@ -17,6 +17,7 @@
 package android.print.cts.services;
 
 import android.print.PrinterId;
+import android.printservice.CustomPrinterIconCallback;
 
 import java.util.List;
 
@@ -39,6 +40,9 @@ public abstract class PrinterDiscoverySessionCallbacks {
     public abstract void onValidatePrinters(List<PrinterId> printerIds);
 
     public abstract void onStartPrinterStateTracking(PrinterId printerId);
+
+    public abstract void onRequestCustomPrinterIcon(PrinterId printerId,
+            CustomPrinterIconCallback callback);
 
     public abstract void onStopPrinterStateTracking(PrinterId printerId);
 

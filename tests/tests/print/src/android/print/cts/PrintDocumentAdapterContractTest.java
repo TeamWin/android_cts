@@ -1668,7 +1668,7 @@ public class PrintDocumentAdapterContractTest extends BasePrintTest {
                 }
                 return null;
             }
-        }, null, null, null, null, new Answer<Void>() {
+        }, null, null, null, null, null, new Answer<Void>() {
                 @Override
                 public Void answer(InvocationOnMock invocation) throws Throwable {
                     // Take a note onDestroy was called.
