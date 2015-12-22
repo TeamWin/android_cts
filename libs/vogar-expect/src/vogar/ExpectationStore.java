@@ -27,12 +27,14 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.regex.Pattern;
+
 import vogar.commands.Command;
 import vogar.util.Log;
 
@@ -268,5 +270,13 @@ public final class ExpectationStore {
                 expectation.setBugIsOpen(true);
             }
         }
+    }
+
+    public Map<String, Expectation> getAllOutComes() {
+        return outcomes;
+    }
+
+    public Map<String, Expectation> getAllFailures() {
+        return failures;
     }
 }
