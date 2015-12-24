@@ -100,8 +100,9 @@ $(vmteststf_jar) : $(vmteststf_dep_jars) $(JACK_JAR) $(JILL_JAR) $(HOST_OUT_JAVA
 	$(hide) cd $(dir $@) && zip -q -r android.core.vm-tests-tf.jar tests
 else # LOCAL_JACK_ENABLED
 libart_jack := $(call intermediates-dir-for,JAVA_LIBRARIES,core-libart,,COMMON)/classes.jack
-$(vmteststf_jar): PRIVATE_DALVIK_SUITE_CLASSPATH := $(libart_jack):$(cts-tf-dalvik-lib.jack):$(HOST_OUT_JAVA_LIBRARIES)/tradefed-prebuilt.jar
-$(vmteststf_jar) : $(vmteststf_dep_jars) $(JACK_JAR) $(JILL_JAR) $(libart_jack) $(HOST_OUT_JAVA_LIBRARIES)/tradefed-prebuilt.jar
+liboj_jack := $(call intermediates-dir-for,JAVA_LIBRARIES,core-oj,,COMMON)/classes.jack
+$(vmteststf_jar): PRIVATE_DALVIK_SUITE_CLASSPATH := $(libart_jack):$(liboj_jack):$(cts-tf-dalvik-lib.jack):$(HOST_OUT_JAVA_LIBRARIES)/tradefed-prebuilt.jar
+$(vmteststf_jar) : $(vmteststf_dep_jars) $(JACK_JAR) $(JILL_JAR) $(libcore_jack) $(liboj_jack) $(HOST_OUT_JAVA_LIBRARIES)/tradefed-prebuilt.jar
 	$(hide) rm -rf $(dir $@) && mkdir -p $(dir $@)
 	$(hide) mkdir -p $(PRIVATE_INTERMEDIATES_HOSTJUNIT_FILES)/dot/junit $(dir $(PRIVATE_INTERMEDIATES_DEXCORE_JAR))
 	# generated and compile the host side junit tests
