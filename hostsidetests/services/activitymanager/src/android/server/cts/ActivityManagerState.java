@@ -174,6 +174,15 @@ class ActivityManagerState {
         return false;
     }
 
+    ActivityStack getStackById(int stackId) {
+        for (ActivityStack stack : mStacks) {
+            if (stackId == stack.mStackId) {
+                return stack;
+            }
+        }
+        return null;
+    }
+
     List<ActivityStack> getStacks() {
         return new ArrayList(mStacks);
     }
@@ -193,6 +202,20 @@ class ActivityManagerState {
             }
         }
         return false;
+    }
+
+    ActivityTask getTaskByActivityName(String activityName) {
+        String fullName = ActivityManagerTestBase.getActivityComponentName(activityName);
+        for (ActivityStack stack : mStacks) {
+            for (ActivityTask task : stack.mTasks) {
+                for (Activity activity : task.mActivities) {
+                    if (activity.name.equals(fullName)) {
+                        return task;
+                    }
+                }
+            }
+        }
+        return null;
     }
 
     static class ActivityStack extends ActivityContainer {
