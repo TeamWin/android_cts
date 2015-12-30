@@ -192,6 +192,7 @@ class CtsBuilder(object):
       plan.IncludeTests(package, test_list)
     self.__WritePlan(plan, 'CTS-flaky')
 
+<<<<<<< HEAD
     small_tests = BuildAospSmallSizeTestList()
     medium_tests = BuildAospMediumSizeTestList()
     new_test_packages = BuildCtsVettedNewPackagesList()
@@ -334,6 +335,12 @@ class CtsBuilder(object):
     plan.Exclude('.*')
     self.__WritePlan(plan, 'CTS-webview')
 
+    # CTS - sub plan for Security
+    plan = tools.TestPlan(packages)
+    plan.Exclude('.*')
+    plan.Include(r'android\.security$')
+    plan.Include('android\.host\.jdwpsecurity$')
+    self.__WritePlan(plan, 'Security')
 
 def BuildAospMediumSizeTestList():
   """ Construct a defaultdic that lists package names of medium tests
