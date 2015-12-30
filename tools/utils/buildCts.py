@@ -181,7 +181,6 @@ class CtsBuilder(object):
       plan.IncludeTests(package, test_list)
     self.__WritePlan(plan, 'CTS-flaky')
 
-<<<<<<< HEAD
     small_tests = BuildAospSmallSizeTestList()
     medium_tests = BuildAospMediumSizeTestList()
     new_test_packages = BuildCtsVettedNewPackagesList()
