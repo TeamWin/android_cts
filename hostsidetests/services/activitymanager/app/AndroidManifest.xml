@@ -16,7 +16,8 @@
  -->
 
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="android.server.app">
+          xmlns:androidprv="http://schemas.android.com/apk/prv/res/android"
+          package="android.server.app">
 
     <application>
         <activity android:name=".TestActivity"
@@ -31,6 +32,23 @@
                 android:resizeable="true"
                 android:supportsPictureInPicture="true"
                 android:exported="true"
+        />
+        <activity android:name=".AutoEnterPipActivity"
+                  android:resizeable="true"
+                  android:supportsPictureInPicture="true"
+                  android:exported="true"
+        />
+        <activity android:name=".AlwaysFocusablePipActivity"
+                  android:resizeable="true"
+                  android:supportsPictureInPicture="true"
+                  androidprv:alwaysFocusable="true"
+                  android:exported="true"
+        />
+        <activity android:name=".LaunchIntoPinnedStackPipActivity"
+                  android:resizeable="true"
+                  android:supportsPictureInPicture="true"
+                  androidprv:alwaysFocusable="true"
+                  android:exported="true"
         />
     </application>
 </manifest>

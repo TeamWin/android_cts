@@ -18,5 +18,10 @@ package android.server.app;
 
 import android.app.Activity;
 
-public class PipActivity extends Activity {
+public class AutoEnterPipActivity extends Activity {
+    @Override
+    protected void onResume() {
+        super.onResume();
+        enterPictureInPictureMode();
+    }
 }
