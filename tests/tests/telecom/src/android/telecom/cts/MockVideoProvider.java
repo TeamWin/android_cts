@@ -170,6 +170,18 @@ public class MockVideoProvider extends VideoProvider {
         super.receiveSessionModifyRequest(request);
     }
 
+    /**
+     * Sends a mock session modify response from the provider.
+     *
+     * @param status The response status.
+     * @param requestProfile The request video profile.
+     * @param responseProfile The response video profile.
+     */
+    public void sendMockSessionModifyResponse(int status, VideoProfile requestProfile,
+            VideoProfile responseProfile) {
+        super.receiveSessionModifyResponse(status, requestProfile, responseProfile);
+    }
+
     public int getDeviceOrientation() {
         return mDeviceOrientation;
     }
@@ -188,5 +200,9 @@ public class MockVideoProvider extends VideoProvider {
 
     public VideoProfile getSessionModifyResponse() {
         return mSessionModifyResponse;
+    }
+
+    public Uri getPauseImageUri() {
+        return mPauseImageUri;
     }
 }
