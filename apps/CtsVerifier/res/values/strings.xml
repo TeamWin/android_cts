@@ -1927,6 +1927,17 @@ You should be prompted to select credentials; choose the ones you just installed
         \n
         Use the Back button to return to this page.
     </string>
+    <string name="device_owner_disallow_data_roaming">Disallow data roaming</string>
+    <string name="device_owner_disallow_data_roaming_info">
+        Please press the Set restriction button to set the user restriction.
+        Then press Go to open the Cellular network page in Settings.
+        Confirm that:\n
+        \n
+        - Data roaming is disabled.\n
+        - You cannot enable data roaming.\n
+        \n
+        Use the Back button to return to this page.
+    </string>
     <string name="device_owner_user_restriction_set">Set restriction</string>
     <string name="device_owner_settings_go">Go</string>
 
