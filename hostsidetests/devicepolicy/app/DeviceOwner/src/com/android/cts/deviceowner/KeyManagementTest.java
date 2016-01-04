@@ -77,17 +77,23 @@ public class KeyManagementTest extends
         super.tearDown();
     }
 
-    public void testCanInstallValidRsaKeypair()
+    public void testCanInstallAndRemoveValidRsaKeypair()
             throws CertificateException, NoSuchAlgorithmException, InvalidKeySpecException,
                     KeyChainException, InterruptedException, UnsupportedEncodingException {
         final String alias = "com.android.test.valid-rsa-key-1";
         final PrivateKey privKey = getPrivateKey(FAKE_RSA_1.privateKey , "RSA");
         final Certificate cert = getCertificate(FAKE_RSA_1.caCertificate);
+
+        // Install key
         assertTrue(mDevicePolicyManager.installKeyPair(getWho(), privKey, cert, alias));
 
+        // Request and retrieve by alias
         assertEquals(alias, new KeyChainAliasFuture(alias).get());
-        final PrivateKey retrievedKey = KeyChain.getPrivateKey(getActivity(), alias);
-        assertEquals(retrievedKey.getAlgorithm(), "RSA");
+        assertEquals(KeyChain.getPrivateKey(getActivity(), alias).getAlgorithm(), "RSA");
+
+        // Delete again
+        assertTrue(mDevicePolicyManager.removeKeyPair(getWho(), alias));
+        assertNull(KeyChain.getPrivateKey(getActivity(), alias));
     }
 
     public void testNullKeyParamsFailPredictably()
