@@ -1489,6 +1489,12 @@ You should be prompted to select credentials; choose the ones you just installed
         Check that the status bar is green.
         Then hit back and stop the provisioning.
     </string>
+    <string name="provisioning_tests_byod_custom_image"> Custom provisioning image </string>
+    <string name="provisioning_tests_byod_custom_image_info">
+        Please press the Go button to start the provisioning.
+        Check that the CtsVerifier logo is displayed at the top of the page.
+        Then hit back and stop the provisioning.
+    </string>
 
     <!-- Strings for BYOD managed provisioning (ByodFlowTestActivity) -->
     <string name="test_category_managed_provisioning">Managed Provisioning</string>

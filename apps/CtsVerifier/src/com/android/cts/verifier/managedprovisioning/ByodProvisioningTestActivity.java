@@ -18,8 +18,10 @@ package com.android.cts.verifier.managedprovisioning;
 import android.app.admin.DevicePolicyManager;
 import android.app.Activity;
 import android.content.ComponentName;
+import android.content.ContentResolver;
 import android.content.Intent;
 import android.graphics.Color;
+import android.net.Uri;
 import android.os.Bundle;
 
 import com.android.cts.verifier.ArrayTestListAdapter;
@@ -36,11 +38,20 @@ public class ByodProvisioningTestActivity extends PassFailButtons.TestListActivi
 
         final ArrayTestListAdapter adapter = new ArrayTestListAdapter(this);
 
+        Intent colorIntent = new Intent(this, ProvisioningStartingActivity.class)
+                .putExtra(DevicePolicyManager.EXTRA_PROVISIONING_MAIN_COLOR, Color.GREEN);
         adapter.add(Utils.createInteractiveTestItem(this, "BYOD_CustomColor",
                         R.string.provisioning_tests_byod_custom_color,
                         R.string.provisioning_tests_byod_custom_color_info,
-                        new ButtonInfo(R.string.go_button_text,
-                                new Intent(this, ProvisioningStartingActivity.class))));
+                        new ButtonInfo(R.string.go_button_text, colorIntent)));
+        Uri logoUri = Uri.parse(ContentResolver.SCHEME_ANDROID_RESOURCE + "://" + getPackageName()
+                + "/" + R.drawable.icon);
+        Intent imageIntent = new Intent(this, ProvisioningStartingActivity.class)
+                .putExtra(DevicePolicyManager.EXTRA_PROVISIONING_LOGO_URI, logoUri);
+        adapter.add(Utils.createInteractiveTestItem(this, "BYOD_CustomImage",
+                        R.string.provisioning_tests_byod_custom_image,
+                        R.string.provisioning_tests_byod_custom_image_info,
+                        new ButtonInfo(R.string.go_button_text, imageIntent)));
 
         setTestListAdapter(adapter);
     }
@@ -61,11 +72,11 @@ public class ByodProvisioningTestActivity extends PassFailButtons.TestListActivi
             super.onCreate(savedInstanceState);
             Intent provisioningIntent = new Intent(
                     DevicePolicyManager.ACTION_PROVISION_MANAGED_PROFILE);
+            // forward all the extras we received.
+            provisioningIntent.putExtras(getIntent().getExtras());
             provisioningIntent.putExtra(
                     DevicePolicyManager.EXTRA_PROVISIONING_DEVICE_ADMIN_COMPONENT_NAME,
                     new ComponentName(this, DeviceAdminTestReceiver.class.getName()));
-            provisioningIntent.putExtra(DevicePolicyManager.EXTRA_PROVISIONING_MAIN_COLOR,
-                    Color.GREEN);
             startActivityForResult(provisioningIntent, 0);
             finish();
         }
