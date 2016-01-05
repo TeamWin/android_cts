@@ -104,61 +104,36 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
             mDevice.executeShellCommand(command);
         }
 
-        mAmState.processActivities(mDevice);
-        final boolean containsPinnedStack = mAmState.containsStack(PINNED_STACK_ID);
-
-        mWmState.processVisibleAppWindows(mDevice);
-        assertNotNull("Must have front window.", mWmState.getFrontWindow());
-        assertNotNull("Must have focused window.", mWmState.getFocusedWindow());
-        assertNotNull("Must have app.", mWmState.getFocusedApp());
+        mAmWmState.computeState(mDevice);
+        mAmWmState.assertSanity();
 
         if (supportsPip) {
-            assertTrue("Stacks must contain pinned stack.", containsPinnedStack);
-            assertEquals("Pinned stack must be the front stack.",
-                    PINNED_STACK_ID, mAmState.getFrontStackId());
-            assertEquals("There should be one and only one resumed acivity in the system.",
-                        1, mAmState.getResumedActivitiesCount());
-
-            assertEquals("Pinned window must be the front window.",
-                    windowName, mWmState.getFrontWindow());
+            mAmWmState.assertContainsStack("Must contain pinned stack.", PINNED_STACK_ID);
+            mAmWmState.assertFrontStack("Pinned stack must be the front stack.", PINNED_STACK_ID);
+            mAmWmState.assertFrontWindow("Pinned window must be the front window.", windowName);
 
             if (isFocusable) {
-                assertEquals("Pinned stack must be the focused stack.",
-                        PINNED_STACK_ID, mAmState.getFocusedStackId());
-                assertEquals("Pinned activity must be focused activity.",
-                        activiyName, mAmState.getFocusedActivity());
-                assertEquals("Pinned activity must be the resumed activity.",
-                        activiyName, mAmState.getResumedActivity());
-
-                assertEquals("Pinned window must be focused window.",
-                        windowName, mWmState.getFocusedWindow());
-                assertEquals("Pinned app must be focused app.",
-                        activiyName, mWmState.getFocusedApp());
+                mAmWmState.assertFocusedStack(
+                        "Pinned stack must be the focused stack.", PINNED_STACK_ID);
+                mAmWmState.assertFocusedActivity(
+                        "Pinned activity must be focused activity.", activiyName);
+                mAmWmState.assertResumedActivity(
+                        "Pinned activity must be the resumed activity.", activiyName);
+                mAmWmState.assertFocusedWindow(
+                        "Pinned window must be focused window.", windowName);
             } else {
-                if (PINNED_STACK_ID == mAmState.getFocusedStackId()) {
-                    failNotEquals("Pinned stack can't be the focused stack.",
-                            PINNED_STACK_ID, mAmState.getFocusedStackId());
-                }
-                if (activiyName.equals(mAmState.getFocusedActivity())) {
-                    failNotEquals("Pinned stack can't be the focused activity.",
-                            activiyName, mAmState.getFocusedActivity());
-                }
-                if (activiyName.equals(mAmState.getResumedActivity())) {
-                    failNotEquals("Pinned stack can't be the resumed activity.",
-                            activiyName, mAmState.getResumedActivity());
-                }
-
-                if (windowName.equals(mWmState.getFocusedWindow())) {
-                    failNotEquals("Pinned window can't be focused window.",
-                            windowName, mWmState.getFocusedWindow());
-                }
-                if (activiyName.equals(mWmState.getFocusedApp())) {
-                    failNotEquals("Pinned window can't be focused app.",
-                            activiyName, mWmState.getFocusedApp());
-                }
+                mAmWmState.assertNotFocusedStack(
+                        "Pinned stack can't be the focused stack.", PINNED_STACK_ID);
+                mAmWmState.assertNotFocusedActivity(
+                        "Pinned stack can't be the focused activity.", activiyName);
+                mAmWmState.assertNotResumedActivity(
+                        "Pinned stack can't be the resumed activity.", activiyName);
+                mAmWmState.assertNotFocusedWindow(
+                        "Pinned window can't be focused window.", windowName);
             }
         } else {
-            assertFalse("Stacks must not contain pinned stack.", containsPinnedStack);
+            mAmWmState.assertDoesNotContainsStack(
+                    "Must not contain pinned stack.", PINNED_STACK_ID);
         }
     }
 }

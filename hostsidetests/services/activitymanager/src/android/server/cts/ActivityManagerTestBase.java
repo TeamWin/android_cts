@@ -59,8 +59,7 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
 
     private HashSet<String> mAvailableFeatures;
 
-    protected ActivityManagerState mAmState = new ActivityManagerState();
-    protected WindowManagerState mWmState = new WindowManagerState();
+    protected ActivityAndWindowManagersState mAmWmState = new ActivityAndWindowManagersState();
 
     @Override
     protected void setUp() throws Exception {
