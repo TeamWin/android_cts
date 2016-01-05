@@ -325,4 +325,36 @@ public class LocaleListTest extends AndroidTestCase {
                 Locale.forLanguageTag("hr-HR"),
                 LocaleList.forLanguageTags("hr-HR,sr-Latn-ME").getFirstMatch(oneSerbianAsset));
     }
+
+    public void testGetFirstMatch_LtrPseudoLocale() {
+        String[] onePseudoLocale = {"en-XA"};
+        // "en-XA" matches itself
+        assertEquals(
+                Locale.forLanguageTag("en-XA"),
+                LocaleList.forLanguageTags("sr,en-XA").getFirstMatch(onePseudoLocale));
+
+        // "en-XA" doesn't match "en" or "en-US"
+        assertEquals(
+                Locale.forLanguageTag("sr"),
+                LocaleList.forLanguageTags("sr,en").getFirstMatch(onePseudoLocale));
+        assertEquals(
+                Locale.forLanguageTag("sr"),
+                LocaleList.forLanguageTags("sr,en-US").getFirstMatch(onePseudoLocale));
+    }
+
+    public void testGetFirstMatch_RtlPseudoLocale() {
+        String[] onePseudoLocale = {"ar-XB"};
+        // "ar-XB" matches itself
+        assertEquals(
+                Locale.forLanguageTag("ar-XB"),
+                LocaleList.forLanguageTags("sr,ar-XB").getFirstMatch(onePseudoLocale));
+
+        // "ar-XB" doesn't match "ar" or "ar-EG"
+        assertEquals(
+                Locale.forLanguageTag("sr"),
+                LocaleList.forLanguageTags("sr,ar").getFirstMatch(onePseudoLocale));
+        assertEquals(
+                Locale.forLanguageTag("sr"),
+                LocaleList.forLanguageTags("sr,ar-EG").getFirstMatch(onePseudoLocale));
+    }
 }

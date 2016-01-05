@@ -32,6 +32,8 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.util.Arrays;
+import java.util.HashSet;
 
 
 public class AssetManagerTest extends AndroidTestCase{
@@ -113,6 +115,50 @@ public class AssetManagerTest extends AndroidTestCase{
 
         assertNotNull(mAssets.getLocales());
 
+    }
+
+
+    public void testGetNonSystemLocales() {
+        // This is the list of locales built into this test package. It is basically the locales
+        // specified in the Android.mk files (assuming they have corresponding resources), plus the
+        // special case for Filipino.
+        final String KNOWN_LOCALES[] = {
+            "cs",
+            "fa-IR",
+            "fil",
+            "fil-PH",
+            "fr",
+            "fr-FR",
+            "kok",
+            "kok-419",
+            "kok-419-variant",
+            "kok-IN",
+            "kok-Knda",
+            "kok-Knda-419",
+            "kok-Knda-419-variant",
+            "kok-variant",
+            "tgl",
+            "tgl-PH",
+            "xx",
+            "xx-YY"
+        };
+
+        final HashSet<String> KNOWN_LOCALES_SET =
+                new HashSet<String>(Arrays.asList(KNOWN_LOCALES));
+
+        final String PSEUDO_OR_EMPTY_LOCALES[] = {
+            "",
+            "en-XA",
+            "ar-XB"
+        };
+
+        String locales[] = mAssets.getNonSystemLocales();
+        HashSet<String> localesSet = new HashSet<String>(Arrays.asList(locales));
+        for (String l : PSEUDO_OR_EMPTY_LOCALES) {
+            localesSet.remove(l);
+        }
+
+        assertEquals(KNOWN_LOCALES_SET, localesSet);
     }
 
     private void assertContextEquals(final String expect, final InputStream inputStream)
