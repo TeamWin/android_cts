@@ -30,7 +30,7 @@ import java.util.concurrent.TimeUnit;
  * <p>To execute these test cases, the following command can be used:</p>
  * <pre>
  * adb shell am instrument -e class android.hardware.cts.SensorParameterRangeTest \
- *     -w com.android.cts.hardware/android.test.AndroidJUnitRunner
+ *     -w android.hardware.cts/android.test.AndroidJUnitRunner
  * </pre>
  */
 public class SensorParameterRangeTest extends SensorTestCase {

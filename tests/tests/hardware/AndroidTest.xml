@@ -25,7 +25,7 @@
         <option name="teardown-command" value="dumpsys sensorservice enable" />
     </target_preparer>
     <test class="com.android.tradefed.testtype.AndroidJUnitTest" >
-        <option name="package" value="com.android.cts.hardware" />
+        <option name="package" value="android.hardware.cts" />
     </test>
 
 </configuration>
