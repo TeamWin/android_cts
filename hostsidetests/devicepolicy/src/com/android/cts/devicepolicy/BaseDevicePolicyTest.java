@@ -55,6 +55,7 @@ public class BaseDevicePolicyTest extends DeviceTestCase implements IBuildReceiv
 
     // From the UserInfo class
     protected static final int FLAG_PRIMARY = 0x00000001;
+    protected static final int FLAG_GUEST = 0x00000004;
     protected static final int FLAG_EPHEMERAL = 0x00000100;
 
     protected IBuildInfo mCtsBuild;
@@ -362,12 +363,14 @@ public class BaseDevicePolicyTest extends DeviceTestCase implements IBuildReceiv
     }
 
     protected int createUser() throws Exception {
-        return createUser(false);
+        return createUser(0);
     }
 
-    protected int createUser(boolean ephemeral) throws Exception {
-        String command ="pm create-user " + (ephemeral ? "--ephemeral " : "")
-                + "TestUser_" + System.currentTimeMillis();
+    protected int createUser(int flags) throws Exception {
+        boolean guest = FLAG_GUEST == (flags & FLAG_GUEST);
+        boolean ephemeral = FLAG_EPHEMERAL == (flags & FLAG_EPHEMERAL);
+        String command ="pm create-user " + (guest ? "--guest " : "")
+                + (ephemeral ? "--ephemeral " : "") + "TestUser_" + System.currentTimeMillis();
         CLog.logAndDisplay(LogLevel.INFO, "Starting command " + command);
         String commandOutput = getDevice().executeShellCommand(command);
         CLog.logAndDisplay(LogLevel.INFO, "Output for command " + command + ": " + commandOutput);

@@ -39,7 +39,7 @@ public class EphemeralUserTest extends BaseDevicePolicyTest {
         if (!mHasFeature) {
             return;
         }
-        int userId = createUser(true);
+        int userId = createUser(FLAG_EPHEMERAL);
         int flags = getUserFlags(userId);
         assertTrue("ephemeral flag must be set", FLAG_EPHEMERAL == (flags & FLAG_EPHEMERAL));
     }
@@ -49,7 +49,7 @@ public class EphemeralUserTest extends BaseDevicePolicyTest {
         if (!mHasFeature) {
             return;
         }
-        int userId = createUser(false);
+        int userId = createUser();
         int flags = getUserFlags(userId);
         assertTrue("ephemeral flag must not be set", 0 == (flags & FLAG_EPHEMERAL));
     }
@@ -63,7 +63,7 @@ public class EphemeralUserTest extends BaseDevicePolicyTest {
                 || !hasUserSplit() || !canCreateAdditionalUsers(2)) {
             return;
         }
-        int userId = createUser(true);
+        int userId = createUser(FLAG_EPHEMERAL);
         int profileId = createManagedProfile(userId);
         int flags = getUserFlags(profileId);
         assertTrue("ephemeral flag must be set", FLAG_EPHEMERAL == (flags & FLAG_EPHEMERAL));
@@ -76,11 +76,43 @@ public class EphemeralUserTest extends BaseDevicePolicyTest {
         if (!mHasFeature) {
             return;
         }
-        int userId = createUser(true);
+        int userId = createUser(FLAG_EPHEMERAL);
         startUser(userId);
         assertTrue("ephemeral user must exists after start", listUsers().contains(userId));
         stopUser(userId);
         assertFalse("ephemeral user must be removed after stop", listUsers().contains(userId));
     }
 
+    /**
+     * The guest should be automatically created ephemeral when the ephemeral-guest feature is set
+     * and not ephemeral when the feature is not set.
+     */
+    public void testEphemeralGuestFeature() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
+        // Create a guest user.
+        int userId = createUser(FLAG_GUEST);
+        int flags = getUserFlags(userId);
+        if (getGuestUsersEphemeral()) {
+            // Check the guest was automatically created ephemeral.
+            assertTrue("ephemeral flag must be set for guest",
+                    FLAG_EPHEMERAL == (flags & FLAG_EPHEMERAL));
+        } else {
+            // The guest should not be ephemeral.
+            assertTrue("ephemeral flag must not be set for guest", 0 == (flags & FLAG_EPHEMERAL));
+        }
+    }
+
+    private boolean getGuestUsersEphemeral() throws Exception {
+        String commandOutput = getDevice().executeShellCommand("dumpsys user");
+        String[] outputLines = commandOutput.split("\n");
+        for (String line : outputLines) {
+            String[] lineParts = line.split(":");
+            if (lineParts.length == 2 && lineParts[0].trim().equals("All guests ephemeral")) {
+                return Boolean.parseBoolean(lineParts[1].trim());
+            }
+        }
+        return false;
+    }
 }
