@@ -22,7 +22,7 @@ import android.view.KeyEvent;
 import java.io.Writer;
 import java.util.List;
 
-import com.android.cts.hardware.R;
+import android.hardware.cts.R;
 
 public class GamepadTestCase extends InputTestCase {
     private static final String TAG = "GamepadTests";

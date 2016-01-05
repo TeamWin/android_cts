@@ -62,7 +62,7 @@ import javax.microedition.khronos.opengles.GL10;
 @LargeTest
 public class CameraGLTest extends ActivityInstrumentationTestCase2<GLSurfaceViewCtsActivity> {
     private static final String TAG = "CameraGLTest";
-    private static final String PACKAGE = "com.android.cts.hardware";
+    private static final String PACKAGE = "android.hardware.cts";
     private static final boolean LOGV = false;
     private static final boolean LOGVV = false;
     private static final int EGL_OPENGL_ES2_BIT = 0x0004;
