@@ -188,7 +188,7 @@ public class BaseDevicePolicyTest extends DeviceTestCase implements IBuildReceiv
     }
 
     protected void stopUser(int userId) throws Exception  {
-        String stopUserCommand = "am stop-user -w " + userId;
+        String stopUserCommand = "am stop-user -w -f " + userId;
         CLog.logAndDisplay(LogLevel.INFO, "starting command \"" + stopUserCommand + "\" and waiting.");
         CLog.logAndDisplay(LogLevel.INFO, "Output for command " + stopUserCommand + ": "
                 + getDevice().executeShellCommand(stopUserCommand));
