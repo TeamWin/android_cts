@@ -108,6 +108,8 @@ public class Resources_ThemeTest extends AndroidTestCase {
         Resources res = getContext().getResources();
         Configuration config = res.getConfiguration();
         config.setLocale(Locale.ENGLISH);
+        res.updateConfiguration(config, null);
+
         assertEquals("Theme will be created in LTR config",
                 View.LAYOUT_DIRECTION_LTR, config.getLayoutDirection());
 
