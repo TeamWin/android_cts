@@ -28,6 +28,7 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.io.FileInputStream;
 import java.io.InputStream;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.GregorianCalendar;
@@ -256,5 +257,37 @@ public class DateFormatTest extends InstrumentationTestCase {
         checkFormat( "0", "K", 24);
         checkFormat("12", "h", 24);
         checkFormat( "0", "H", 24);
+    }
+
+    public void test_bug_82144() {
+        for (Locale locale : Locale.getAvailableLocales()) {
+            if (locale.toString().startsWith("haw")) {
+                // http://b/26397197 - remove this when fixed.
+                continue;
+            }
+            Locale.setDefault(locale);
+            char[] order = DateFormat.getDateFormatOrder(mContext);
+            boolean seenDay = false, seenMonth = false, seenYear = false;
+            for (char c : order) {
+                switch (c) {
+                    case 'd':
+                        seenDay = true;
+                        break;
+                    case 'M':
+                        seenMonth = true;
+                        break;
+                    case 'y':
+                        seenYear = true;
+                        break;
+                    default:
+                        fail("Unknown character: " + c + " in " + Arrays.toString(order)
+                                + " for " + locale);
+                        break;
+                }
+            }
+            assertTrue(locale.toString() + " day not found", seenDay);
+            assertTrue(locale.toString() + " month not found", seenMonth);
+            assertTrue(locale.toString() + " year not found", seenYear);
+        }
     }
 }
