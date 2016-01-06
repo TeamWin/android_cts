@@ -363,6 +363,20 @@ public class ResourcesTest extends AndroidTestCase {
         assertEquals(142 * targetDensity / defaultDensity, draw.getIntrinsicHeight(), 1);
     }
 
+    public void testGetDrawableForDensity() {
+        final Drawable ldpi = mResources.getDrawableForDensity(
+                R.drawable.density_test, DisplayMetrics.DENSITY_LOW);
+        assertEquals(300, ldpi.getIntrinsicWidth());
+
+        final Drawable mdpi = mResources.getDrawableForDensity(
+                R.drawable.density_test, DisplayMetrics.DENSITY_MEDIUM);
+        assertEquals(200, mdpi.getIntrinsicWidth());
+
+        final Drawable hdpi = mResources.getDrawableForDensity(
+                R.drawable.density_test, DisplayMetrics.DENSITY_HIGH);
+        assertEquals(100, hdpi.getIntrinsicWidth());
+    }
+
     public void testGetAnimation() throws Exception {
         try {
             mResources.getAnimation(-1);
@@ -429,6 +443,22 @@ public class ResourcesTest extends AndroidTestCase {
         mResources.getValue("android.content.cts:raw/text", tv, false);
         assertNotNull(tv);
         assertEquals("res/raw/text.txt", tv.coerceToString());
+    }
+
+    public void testGetValueForDensity() {
+        final TypedValue tv = new TypedValue();
+
+        mResources.getValueForDensity(R.string.density_string,
+                DisplayMetrics.DENSITY_LOW, tv, false);
+        assertEquals("ldpi", tv.coerceToString());
+
+        mResources.getValueForDensity(R.string.density_string,
+                DisplayMetrics.DENSITY_MEDIUM, tv, false);
+        assertEquals("mdpi", tv.coerceToString());
+
+        mResources.getValueForDensity(R.string.density_string,
+                DisplayMetrics.DENSITY_HIGH, tv, false);
+        assertEquals("hdpi", tv.coerceToString());
     }
 
     public void testGetAssets() {
