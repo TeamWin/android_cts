@@ -406,6 +406,7 @@ def BuildAospSmallSizeTestList():
       'android.rscpp' : [],
       'android.rsg' : [],
       'android.sax' : [],
+      'android.server' : [],
       'android.signature' : [],
       'android.simplecpu' : [],
       'android.speech' : [],
