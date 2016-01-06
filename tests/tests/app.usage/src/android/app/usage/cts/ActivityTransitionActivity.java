@@ -31,6 +31,7 @@ import android.transition.Transition.TransitionListener;
 import android.view.View;
 
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
 
 /**
  * A simple activity containing the start state for an Activity Transition
@@ -41,6 +42,10 @@ public class ActivityTransitionActivity extends Activity {
     public static final String LAYOUT_ID = "layoutId";
     public static final String TEST = "test";
     public static final String RESULT_RECEIVER = "resultReceiver";
+    public static final String PAUSE_ON_RESTART = "pauseOnRestart";
+    public static final String QUICK_FINISH = "quickFinish";
+    public static final String ALLOW_OVERLAP = "allowOverlap";
+    public static final String NO_RETURN_TRANSITION = "noReturnTransition";
 
     public static final int NO_TEST = 0;
     public static final int TEST_ARRIVE = 1;
@@ -62,6 +67,13 @@ public class ActivityTransitionActivity extends Activity {
     public int resultCode = 0;
     public Bundle result = new Bundle();
 
+    public boolean mPauseOnRestart;
+    public boolean mQuickFinish;
+    public boolean mAllowOverlap;
+    public boolean mNoReturnTransition;
+
+    public CountDownLatch returnLatch = new CountDownLatch(1);
+
     @Override
     public void onCreate(Bundle icicle) {
         super.onCreate(icicle);
@@ -75,6 +87,10 @@ public class ActivityTransitionActivity extends Activity {
             mLayoutId =  icicle.getInt(LAYOUT_ID);
             mTest = icicle.getInt(TEST);
             mResultReceiver = icicle.getParcelable(RESULT_RECEIVER);
+            mPauseOnRestart = icicle.getBoolean(PAUSE_ON_RESTART);
+            mQuickFinish = icicle.getBoolean(QUICK_FINISH);
+            mAllowOverlap = icicle.getBoolean(ALLOW_OVERLAP, true);
+            mNoReturnTransition = icicle.getBoolean(NO_RETURN_TRANSITION);
         }
 
         if (mLayoutId == 0) {
@@ -82,9 +98,18 @@ public class ActivityTransitionActivity extends Activity {
             mLayoutId = intent.getIntExtra(LAYOUT_ID, R.layout.start);
             mTest = intent.getIntExtra(TEST, 0);
             mResultReceiver = intent.getParcelableExtra(RESULT_RECEIVER);
+            mPauseOnRestart = intent.getBooleanExtra(PAUSE_ON_RESTART, false);
+            mQuickFinish = intent.getBooleanExtra(QUICK_FINISH, false);
+            mAllowOverlap = intent.getBooleanExtra(ALLOW_OVERLAP, true);
+            mNoReturnTransition = intent.getBooleanExtra(NO_RETURN_TRANSITION, false);
         }
 
         setContentView(mLayoutId);
+        getWindow().setAllowReturnTransitionOverlap(mAllowOverlap);
+        if (mNoReturnTransition) {
+            getWindow().setReturnTransition(null);
+            getWindow().setSharedElementReturnTransition(null);
+        }
 
         startTest();
     }
@@ -94,6 +119,7 @@ public class ActivityTransitionActivity extends Activity {
         outState.putInt(LAYOUT_ID, mLayoutId);
         outState.putInt(TEST, mTest);
         outState.putParcelable(RESULT_RECEIVER, mResultReceiver);
+        outState.putBoolean(PAUSE_ON_RESTART, mPauseOnRestart);
     }
 
     private void startTest() {
@@ -129,44 +155,59 @@ public class ActivityTransitionActivity extends Activity {
                     }, SHARED_ELEMENT_READY_DELAY);
                 }
             });
-            getWindow().getEnterTransition().addListener(new TransitionListener() {
-                @Override
-                public void onTransitionStart(Transition transition) {
-                }
-
-                @Override
-                public void onTransitionEnd(Transition transition) {
-                    mEntering = false;
-                    setResult(RESULT_OK);
-                    getWindow().getDecorView().post(new Runnable() {
-                        @Override
-                        public void run() {
-                            finishAfterTransition();
-                        }
-                    });
-                }
-
-                @Override
-                public void onTransitionCancel(Transition transition) {
-                }
-
-                @Override
-                public void onTransitionPause(Transition transition) {
-                }
-
-                @Override
-                public void onTransitionResume(Transition transition) {
-                }
-            });
         }
+        getWindow().getEnterTransition().addListener(new TransitionListener() {
+            @Override
+            public void onTransitionStart(Transition transition) {
+            }
+
+            @Override
+            public void onTransitionEnd(Transition transition) {
+                mEntering = false;
+                setResult(RESULT_OK);
+                getWindow().getDecorView().post(new Runnable() {
+                    @Override
+                    public void run() {
+                        finishAfterTransition();
+                        if (mQuickFinish) {
+                            finish();
+                        }
+                    }
+                });
+            }
+
+            @Override
+            public void onTransitionCancel(Transition transition) {
+            }
+
+            @Override
+            public void onTransitionPause(Transition transition) {
+            }
+
+            @Override
+            public void onTransitionResume(Transition transition) {
+            }
+        });
     }
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        synchronized (this) {
-            super.onActivityResult(requestCode, resultCode, data);
-            this.resultCode = resultCode;
-            this.notifyAll();
+        super.onActivityResult(requestCode, resultCode, data);
+        this.resultCode = resultCode;
+        returnLatch.countDown();
+    }
+
+    @Override
+    protected void onRestart() {
+        super.onRestart();
+        if (mPauseOnRestart) {
+            postponeEnterTransition();
+            getWindow().getDecorView().postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    startPostponedEnterTransition();
+                }
+            }, 500);
         }
     }
 }
