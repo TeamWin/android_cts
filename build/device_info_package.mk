@@ -25,6 +25,7 @@ DEVICE_INFO_ACTIVITIES += \
   $(DEVICE_INFO_PACKAGE).CpuDeviceInfo \
   $(DEVICE_INFO_PACKAGE).FeatureDeviceInfo \
   $(DEVICE_INFO_PACKAGE).GenericDeviceInfo \
+  $(DEVICE_INFO_PACKAGE).GlesStubActivity \
   $(DEVICE_INFO_PACKAGE).GraphicsDeviceInfo \
   $(DEVICE_INFO_PACKAGE).LibraryDeviceInfo \
   $(DEVICE_INFO_PACKAGE).LocaleDeviceInfo \
