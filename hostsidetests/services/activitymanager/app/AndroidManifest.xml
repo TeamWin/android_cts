@@ -24,6 +24,15 @@
                 android:resizeable="true"
                 android:exported="true"
         />
+        <activity android:name=".NoRelaunchActivity"
+                android:resizeable="true"
+                android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout|layoutDirection"
+                android:exported="true"
+        />
+        <activity android:name=".SlowCreateActivity"
+                android:resizeable="true"
+                android:exported="true"
+        />
         <activity android:name=".LaunchToSideActivity"
                 android:resizeable="true"
                 android:exported="true"

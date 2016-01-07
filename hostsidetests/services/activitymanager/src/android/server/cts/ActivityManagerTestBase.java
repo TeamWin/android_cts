@@ -59,6 +59,14 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
 
     private HashSet<String> mAvailableFeatures;
 
+    protected static String getAmStartCmd(final String activityName) {
+        return "am start -n android.server.app/." + activityName;
+    }
+
+    protected static String getWindowName(final String activityName) {
+        return "android.server.app/android.server.app." + activityName;
+    }
+
     protected ActivityAndWindowManagersState mAmWmState = new ActivityAndWindowManagersState();
 
     @Override
