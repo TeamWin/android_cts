@@ -44,12 +44,14 @@ public class ActivityManagerDockedStackTests extends ActivityManagerTestBase {
         }
     }
 
+    // TODO: Add test for non-resizeable activity.
+
     public void testStackList() throws Exception {
         mDevice.executeShellCommand(AM_START_TEST_ACTIVITY);
-        mAmState.processActivities(mDevice);
-        assertTrue("Stacks must contain home stack.", mAmState.containsStack(HOME_STACK_ID));
-        assertTrue("Stacks must contain fullscreen stack.",
-                mAmState.containsStack(FULLSCREEN_WORKSPACE_STACK_ID));
+        mAmWmState.computeState(mDevice);
+        mAmWmState.assertContainsStack("Must contain home stack.", HOME_STACK_ID);
+        mAmWmState.assertContainsStack(
+                "Must contain fullscreen stack.", FULLSCREEN_WORKSPACE_STACK_ID);
     }
 
     public void testDockActivity() throws Exception {
@@ -57,9 +59,9 @@ public class ActivityManagerDockedStackTests extends ActivityManagerTestBase {
         final int taskId = getActivityTaskId(TEST_ACTIVITY_NAME);
         final String cmd = AM_MOVE_TASK + taskId + " " + DOCKED_STACK_ID + " true";
         mDevice.executeShellCommand(cmd);
-        mAmState.processActivities(mDevice);
-        assertTrue("Stacks must contain home stack.", mAmState.containsStack(HOME_STACK_ID));
-        assertTrue("Stacks must contain docked stack.", mAmState.containsStack(DOCKED_STACK_ID));
+        mAmWmState.computeState(mDevice);
+        mAmWmState.assertContainsStack("Must contain home stack.", HOME_STACK_ID);
+        mAmWmState.assertContainsStack("Must contain docked stack.", DOCKED_STACK_ID);
     }
 
     public void testLaunchToSide() throws Exception {
@@ -70,10 +72,9 @@ public class ActivityManagerDockedStackTests extends ActivityManagerTestBase {
         printStacksAndTasks();
         mDevice.executeShellCommand(AM_START_LAUNCH_TO_SIDE_ACTIVITY
                 + " -f 0x20000000 --ez launch_to_the_side true");
-        mAmState.processActivities(mDevice);
-        assertTrue("Stacks must contain fullscreen stack.",
-                mAmState.containsStack(FULLSCREEN_WORKSPACE_STACK_ID));
-        assertTrue("Stacks must contain docked stack.", mAmState.containsStack(DOCKED_STACK_ID));
-
+        mAmWmState.computeState(mDevice);
+        mAmWmState.assertContainsStack(
+                "Must contain fullscreen stack.", FULLSCREEN_WORKSPACE_STACK_ID);
+        mAmWmState.assertContainsStack("Must contain docked stack.", DOCKED_STACK_ID);
     }
 }
