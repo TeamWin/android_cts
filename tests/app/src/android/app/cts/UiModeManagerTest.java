@@ -26,53 +26,81 @@ public class UiModeManagerTest extends AndroidTestCase {
     private static final String TAG = "UiModeManagerTest";
 
     private UiModeManager mUiModeManager;
-    private boolean mIsAuto = false;
 
     @Override
     protected void setUp() throws Exception {
         super.setUp();
         mUiModeManager = (UiModeManager) getContext().getSystemService(Context.UI_MODE_SERVICE);
         assertNotNull(mUiModeManager);
-        mIsAuto = getContext().getPackageManager().hasSystemFeature(
-                PackageManager.FEATURE_AUTOMOTIVE);
     }
 
-    public void testCarMode() throws Exception {
-        if (mIsAuto) {
-            Log.i(TAG, "testCarMode automotive");
-            doTestCarModeAutomotive();
+    public void testUiMode() throws Exception {
+        if (isAutomotive()) {
+            Log.i(TAG, "testUiMode automotive");
+            doTestUiModeForAutomotive();
+        } else if (isTelevision()) {
+            assertEquals(Configuration.UI_MODE_TYPE_TELEVISION,
+                    mUiModeManager.getCurrentModeType());
+            doTestLockedUiMode();
+        } else if (isWatch()) {
+            assertEquals(Configuration.UI_MODE_TYPE_WATCH,
+                    mUiModeManager.getCurrentModeType());
+            doTestLockedUiMode();
         } else {
-            Log.i(TAG, "testCarMode generic");
-            doTestCarModeGeneric();
+            Log.i(TAG, "testUiMode generic");
+            doTestUiModeGeneric();
         }
     }
 
-    private void doTestCarModeAutomotive() throws Exception {
+    public void testNightMode() throws Exception {
+        if (isAutomotive()) {
+            assertTrue(mUiModeManager.isNightModeLocked());
+            doTestLockedNightMode();
+        } else {
+            if (mUiModeManager.isNightModeLocked()) {
+                doTestLockedNightMode();
+            } else {
+                doTestUnlockedNightMode();
+            }
+        }
+    }
+
+    private boolean isAutomotive() {
+        return getContext().getPackageManager().hasSystemFeature(
+                PackageManager.FEATURE_AUTOMOTIVE);
+    }
+
+    private boolean isTelevision() {
+        PackageManager pm = getContext().getPackageManager();
+        return pm.hasSystemFeature(PackageManager.FEATURE_TELEVISION)
+                || pm.hasSystemFeature(PackageManager.FEATURE_LEANBACK);
+    }
+
+    private boolean isWatch() {
+        return getContext().getPackageManager().hasSystemFeature(
+                PackageManager.FEATURE_WATCH);
+    }
+
+    private void doTestUiModeForAutomotive() throws Exception {
         assertEquals(Configuration.UI_MODE_TYPE_CAR, mUiModeManager.getCurrentModeType());
         assertTrue(mUiModeManager.isUiModeLocked());
         doTestLockedUiMode();
-        assertTrue(mUiModeManager.isNightModeLocked());
-        doTestLockedNightMode();
     }
 
-    private void doTestCarModeGeneric() throws Exception {
+    private void doTestUiModeGeneric() throws Exception {
         if (mUiModeManager.isUiModeLocked()) {
             doTestLockedUiMode();
         } else {
             doTestUnlockedUiMode();
         }
-        if (mUiModeManager.isNightModeLocked()) {
-            doTestLockedNightMode();
-        } else {
-            doTestUnlockedNightMode();
-        }
     }
 
     private void doTestLockedUiMode() throws Exception {
+        int originalMode = mUiModeManager.getCurrentModeType();
         mUiModeManager.enableCarMode(0);
-        assertEquals(Configuration.UI_MODE_TYPE_CAR, mUiModeManager.getCurrentModeType());
+        assertEquals(originalMode, mUiModeManager.getCurrentModeType());
         mUiModeManager.disableCarMode(0);
-        assertEquals(Configuration.UI_MODE_TYPE_CAR, mUiModeManager.getCurrentModeType());
+        assertEquals(originalMode, mUiModeManager.getCurrentModeType());
     }
 
     private void doTestUnlockedUiMode() throws Exception {
