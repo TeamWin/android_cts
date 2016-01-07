@@ -79,6 +79,7 @@ cts_support_packages := \
     CtsAssistApp \
     CtsAtraceTestApp \
     CtsCertInstallerApp \
+    CtsContactDirectoryProvider \
     CtsAdminApp \
     CtsWifiConfigCreator \
     CtsDeviceAndProfileOwnerApp \
