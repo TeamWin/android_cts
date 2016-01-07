@@ -102,6 +102,20 @@ public class LocaleListTest extends AndroidTestCase {
         }
     }
 
+    public void testIndexOf() {
+        final LocaleList empty = new LocaleList();
+        assertEquals(-1, empty.indexOf(Locale.US));
+
+        final LocaleList oneMember = new LocaleList(Locale.US);
+        assertEquals(0, oneMember.indexOf(Locale.US));
+        assertEquals(-1, oneMember.indexOf(Locale.ENGLISH));
+
+        final LocaleList twoMember = LocaleList.forLanguageTags("en,fr");
+        assertEquals(0, twoMember.indexOf(Locale.forLanguageTag("en")));
+        assertEquals(1, twoMember.indexOf(Locale.forLanguageTag("fr")));
+        assertEquals(-1, twoMember.indexOf(Locale.forLanguageTag("en-US")));
+    }
+
     public void testEquals() {
         final LocaleList empty = new LocaleList();
         final LocaleList anotherEmpty = new LocaleList();
@@ -187,10 +201,90 @@ public class LocaleListTest extends AndroidTestCase {
     }
 
     public void testGetDefault() {
-        LocaleList ll = LocaleList.getDefault();
+        final LocaleList ll = LocaleList.getDefault();
         assertNotNull(ll);
         assertTrue(ll.size() >= 1);
-        assertEquals(Locale.getDefault(), ll.getPrimary());
+
+        final Locale defaultLocale = Locale.getDefault();
+        assertTrue(ll.indexOf(defaultLocale) != -1);
+    }
+
+    public void testGetDefault_localeSetDefaultCalled() {
+        final Locale originalLocale = Locale.getDefault();
+        final LocaleList originalLocaleList = LocaleList.getDefault();
+
+        LocaleList.setDefault(LocaleList.forLanguageTags("ae,en,ja"));
+
+        try {
+            Locale.setDefault(Locale.forLanguageTag("fr"));
+            assertEquals("fr,ae,en,ja", LocaleList.getDefault().toLanguageTags());
+
+            Locale.setDefault(Locale.forLanguageTag("de"));
+            assertEquals("de,ae,en,ja", LocaleList.getDefault().toLanguageTags());
+
+            Locale.setDefault(Locale.forLanguageTag("en"));
+            assertEquals("en,ae,ja", LocaleList.getDefault().toLanguageTags());
+
+            Locale.setDefault(Locale.forLanguageTag("es"));
+            assertEquals("es,ae,en,ja", LocaleList.getDefault().toLanguageTags());
+
+            Locale.setDefault(Locale.forLanguageTag("ja"));
+            assertEquals("ja,ae,en", LocaleList.getDefault().toLanguageTags());
+
+            Locale.setDefault(Locale.forLanguageTag("ae"));
+            assertEquals("ae,en,ja", LocaleList.getDefault().toLanguageTags());
+        } finally {
+            // restore the original values
+            LocaleList.setDefault(originalLocaleList, originalLocaleList.indexOf(originalLocale));
+        }
+    }
+
+    public void testSetDefault_null() {
+        try {
+            LocaleList.setDefault(null);
+            fail("Setting the default locale list to null should throw.");
+        } catch (Throwable e) {
+            assertEquals(NullPointerException.class, e.getClass());
+        }
+    }
+
+    public void testSetDefault_empty() {
+        try {
+            LocaleList.setDefault(LocaleList.getEmptyLocaleList());
+            fail("Setting the default locale list to an empty list should throw.");
+        } catch (Throwable e) {
+            assertEquals(IllegalArgumentException.class, e.getClass());
+        }
+    }
+
+    public void testSetDefault_oneLocale() {
+        final Locale originalLocale = Locale.getDefault();
+        final LocaleList originalLocaleList = LocaleList.getDefault();
+
+        final LocaleList locales = LocaleList.forLanguageTags("ae");
+        LocaleList.setDefault(locales);
+        try {
+            assertEquals("ae", Locale.getDefault().toLanguageTag());
+            assertEquals(locales, LocaleList.getDefault());
+        } finally {
+            // restore the original values
+            LocaleList.setDefault(originalLocaleList, originalLocaleList.indexOf(originalLocale));
+        }
+    }
+
+    public void testSetDefault_twoLocales() {
+        final Locale originalLocale = Locale.getDefault();
+        final LocaleList originalLocaleList = LocaleList.getDefault();
+
+        final LocaleList locales = LocaleList.forLanguageTags("ae,en");
+        LocaleList.setDefault(locales);
+        try {
+            assertEquals("ae", Locale.getDefault().toLanguageTag());
+            assertEquals(locales, LocaleList.getDefault());
+        } finally {
+            // restore the original values
+            LocaleList.setDefault(originalLocaleList, originalLocaleList.indexOf(originalLocale));
+        }
     }
 
     public void testParcelable() {
