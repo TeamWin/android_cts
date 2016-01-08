@@ -547,6 +547,19 @@ public class DevicePolicyManagerTest extends AndroidTestCase {
         }
     }
 
+    public void testRequestRemoteBugreport_failIfNotDeviceOwner() {
+        if (!mDeviceAdmin) {
+            Log.w(TAG, "Skipping testRequestRemoteBugreport_failIfNotDeviceOwner");
+            return;
+        }
+        try {
+            mDevicePolicyManager.requestBugreport(mComponent);
+            fail("did not throw expected SecurityException");
+        } catch (SecurityException e) {
+            assertDeviceOwnerMessage(e.getMessage());
+        }
+    }
+
     public void testCreateUser_failIfNotDeviceOwner() {
         if (!mDeviceAdmin) {
             Log.w(TAG, "Skipping testCreateUser_failIfNotDeviceOwner");
