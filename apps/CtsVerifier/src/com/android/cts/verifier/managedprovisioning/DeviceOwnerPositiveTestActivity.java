@@ -80,6 +80,7 @@ public class DeviceOwnerPositiveTestActivity extends PassFailButtons.TestListAct
     private static final String DISALLOW_CONFIG_VPN_ID = "DISALLOW_CONFIG_VPN";
     //TODO(rgl): This symbol should be available in android.provider.settings
     private static final String ACTION_VPN_SETTINGS = "android.net.vpn.SETTINGS";
+    private static final String DISALLOW_DATA_ROAMING_ID = "DISALLOW_DATA_ROAMING";
     private static final String REMOVE_DEVICE_OWNER_TEST_ID = "REMOVE_DEVICE_OWNER";
 
     @Override
@@ -179,6 +180,19 @@ public class DeviceOwnerPositiveTestActivity extends PassFailButtons.TestListAct
                         new ButtonInfo(
                                 R.string.device_owner_vpn_test,
                                 new Intent(this, VpnTestActivity.class))}));
+
+        // DISALLOW_DATA_ROAMING
+        adapter.add(createInteractiveTestItem(this, DISALLOW_DATA_ROAMING_ID,
+                R.string.device_owner_disallow_data_roaming,
+                R.string.device_owner_disallow_data_roaming_info,
+                new ButtonInfo[] {
+                        new ButtonInfo(
+                                R.string.device_owner_user_restriction_set,
+                                createSetUserRestrictionIntent(
+                                        UserManager.DISALLOW_DATA_ROAMING)),
+                        new ButtonInfo(
+                                R.string.device_owner_settings_go,
+                                new Intent(Settings.ACTION_DATA_ROAMING_SETTINGS))}));
 
         // DISALLOW_CONFIG_BLUETOOTH
         if (packageManager.hasSystemFeature(PackageManager.FEATURE_BLUETOOTH)) {
@@ -325,6 +339,7 @@ public class DeviceOwnerPositiveTestActivity extends PassFailButtons.TestListAct
             dpm.clearUserRestriction(admin, UserManager.DISALLOW_CONFIG_BLUETOOTH);
             dpm.clearUserRestriction(admin, UserManager.DISALLOW_CONFIG_WIFI);
             dpm.clearUserRestriction(admin, UserManager.DISALLOW_CONFIG_VPN);
+            dpm.clearUserRestriction(admin, UserManager.DISALLOW_DATA_ROAMING);
             dpm.clearDeviceOwnerApp(getPackageName());
         }
     }
