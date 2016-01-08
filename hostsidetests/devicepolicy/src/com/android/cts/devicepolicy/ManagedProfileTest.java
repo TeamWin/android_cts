@@ -553,6 +553,42 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
             assertTrue(runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".ContactsTest",
                     "testPrimaryProfileEnterprisePhoneLookup_canAccessManagedDirectories",
                     mParentUserId));
+
+            assertTrue(runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".ContactsTest",
+                    "testPrimaryProfileEnterpriseCallableFilter_canAccessPrimaryDirectories",
+                    mParentUserId));
+
+            assertTrue(runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".ContactsTest",
+                    "testPrimaryProfileEnterpriseCallableFilter_canAccessManagedDirectories",
+                    mParentUserId));
+
+            assertTrue(runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".ContactsTest",
+                    "testPrimaryProfileEnterpriseEmailFilter_canAccessPrimaryDirectories",
+                    mParentUserId));
+
+            assertTrue(runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".ContactsTest",
+                    "testPrimaryProfileEnterpriseEmailFilter_canAccessManagedDirectories",
+                    mParentUserId));
+
+            assertTrue(runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".ContactsTest",
+                    "testPrimaryProfileEnterpriseContactFilter_canAccessPrimaryDirectories",
+                    mParentUserId));
+
+            assertTrue(runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".ContactsTest",
+                    "testPrimaryProfileEnterpriseContactFilter_canAccessManagedDirectories",
+                    mParentUserId));
+
+            assertTrue(runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".ContactsTest",
+                    "testPrimaryProfileEnterprisePhoneFilter_canAccessPrimaryDirectories",
+                    mParentUserId));
+
+            assertTrue(runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".ContactsTest",
+                    "testPrimaryProfileEnterprisePhoneFilter_canAccessManagedDirectories",
+                    mParentUserId));
+
+            assertTrue(runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".ContactsTest",
+                    "testFilterUriWhenDirectoryParamMissing",
+                    mParentUserId));
         } finally {
             // Clean up in managed profile and primary profile
             runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".ContactsTest",
