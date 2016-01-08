@@ -21,6 +21,7 @@ import android.content.Context;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.ParcelFileDescriptor;
+import android.os.Process;
 import android.telecom.PhoneAccountHandle;
 
 import java.io.BufferedReader;
@@ -58,6 +59,7 @@ public class TestUtils {
 
     public static final String MERGE_CALLER_NAME = "calls-merged";
     public static final String SWAP_CALLER_NAME = "calls-swapped";
+    private static final String PRIMARY_USER_SN = "0";
 
     public static boolean shouldTestTelecom(Context context) {
         if (!HAS_TELECOM) {
@@ -86,7 +88,7 @@ public class TestUtils {
         final ComponentName component = handle.getComponentName();
         executeShellCommand(instrumentation, COMMAND_ENABLE
                 + component.getPackageName() + "/" + component.getClassName() + " "
-                + handle.getId());
+                + handle.getId() + " " + PRIMARY_USER_SN);
     }
 
     public static void registerSimPhoneAccount(Instrumentation instrumentation,
@@ -94,7 +96,7 @@ public class TestUtils {
         final ComponentName component = handle.getComponentName();
         executeShellCommand(instrumentation, COMMAND_REGISTER_SIM
                 + component.getPackageName() + "/" + component.getClassName() + " "
-                + handle.getId() + " " + label + " " + address);
+                + handle.getId() + " " + PRIMARY_USER_SN);
     }
 
     /**
