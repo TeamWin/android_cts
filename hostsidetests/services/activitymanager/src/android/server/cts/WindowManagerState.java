@@ -34,14 +34,15 @@ import java.util.regex.Matcher;
 import static com.android.ddmlib.Log.LogLevel.INFO;
 
 class WindowManagerState {
+    private static final String DUMPSYS_WINDOWS_APPS = "dumpsys window apps";
     private static final String DUMPSYS_WINDOWS_VISIBLE_APPS = "dumpsys window visible-apps";
 
     private final Pattern mWindowPattern =
-            Pattern.compile("Window #(\\d+) Window\\{(.+) u(\\d+) (.+)\\}\\:");
+            Pattern.compile("Window #(\\d+) Window\\{([0-9a-fA-F]+) u(\\d+) (.+)\\}\\:");
     private final Pattern mStartingWindowPattern =
-            Pattern.compile("Window #(\\d+) Window\\{(.+) u(\\d+) Starting (.+)\\}\\:");
+            Pattern.compile("Window #(\\d+) Window\\{([0-9a-fA-F]+) u(\\d+) Starting (.+)\\}\\:");
     private final Pattern mExitingWindowPattern =
-            Pattern.compile("Window #(\\d+) Window\\{(.+) u(\\d+) (.+) EXITING\\}\\:");
+            Pattern.compile("Window #(\\d+) Window\\{([0-9a-fA-F]+) u(\\d+) (.+) EXITING\\}\\:");
 
     private final Pattern mFocusedWindowPattern =
             Pattern.compile("mCurrentFocus=Window\\{(.+) u(\\d+) (\\S+)\\}");
@@ -57,12 +58,13 @@ class WindowManagerState {
 
     // Windows in z-order with the top most at the front of the list.
     private List<String> mWindows = new ArrayList();
+    private List<String> mRawWindows = new ArrayList();
     private List<WindowStack> mStacks = new ArrayList();
     private String mFocusedWindow = null;
     private String mFocusedApp = null;
     private final LinkedList<String> mSysDump = new LinkedList();
 
-    void computeState(ITestDevice device) throws DeviceNotAvailableException {
+    void computeState(ITestDevice device, boolean visibleOnly) throws DeviceNotAvailableException {
         // It is possible the system is in the middle of transition to the right state when we get
         // the dump. We try a few times to get the information we need before giving up.
         int retriesLeft = 3;
@@ -82,9 +84,11 @@ class WindowManagerState {
             }
 
             final CollectingOutputReceiver outputReceiver = new CollectingOutputReceiver();
-            device.executeShellCommand(DUMPSYS_WINDOWS_VISIBLE_APPS, outputReceiver);
+            final String dumpsysCmd = visibleOnly ?
+                    DUMPSYS_WINDOWS_VISIBLE_APPS : DUMPSYS_WINDOWS_APPS;
+            device.executeShellCommand(dumpsysCmd, outputReceiver);
             dump = outputReceiver.getOutput();
-            parseSysDump(dump);
+            parseSysDump(dump, visibleOnly);
 
             retry = mWindows.isEmpty() || mFocusedWindow == null || mFocusedApp == null;
         } while (retry && retriesLeft-- > 0);
@@ -104,7 +108,7 @@ class WindowManagerState {
         }
     }
 
-    private void parseSysDump(String sysDump) {
+    private void parseSysDump(String sysDump,boolean visibleOnly) {
         reset();
 
         Collections.addAll(mSysDump, sysDump.split("\\n"));
@@ -125,7 +129,7 @@ class WindowManagerState {
                 CLog.logAndDisplay(INFO, line);
                 final String window = matcher.group(4);
 
-                if (mWindows.isEmpty()) {
+                if (visibleOnly && mWindows.isEmpty()) {
                     // This is the front window. Check to see if we are in the middle of
                     // transitioning. If we are, we want to skip dumping until window manager is
                     // done transitioning the top window.
@@ -146,6 +150,7 @@ class WindowManagerState {
 
                 CLog.logAndDisplay(INFO, window);
                 mWindows.add(window);
+                mRawWindows.add(line);
                 continue;
             }
 
@@ -165,6 +170,20 @@ class WindowManagerState {
                 CLog.logAndDisplay(INFO, focusedApp);
                 mFocusedApp = focusedApp;
                 continue;
+            }
+        }
+    }
+
+    void getMatchingWindowTokens(final String windowName, List<String> tokenList) {
+        tokenList.clear();
+
+        for (String line : mRawWindows) {
+            if (line.contains(windowName)) {
+                Matcher matcher = mWindowPattern.matcher(line);
+                if (matcher.matches()) {
+                    CLog.logAndDisplay(INFO, "Found activity window: " + line);
+                    tokenList.add(matcher.group(2));
+                }
             }
         }
     }
@@ -195,8 +214,10 @@ class WindowManagerState {
     }
 
     private void reset() {
+        mSysDump.clear();
         mStacks.clear();
         mWindows.clear();
+        mRawWindows.clear();
         mFocusedWindow = null;
         mFocusedApp = null;
     }

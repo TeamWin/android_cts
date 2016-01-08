@@ -29,8 +29,20 @@ class ActivityAndWindowManagersState extends Assert {
     private WindowManagerState mWmState = new WindowManagerState();
 
     void computeState(ITestDevice device) throws Exception {
+        computeState(device, true);
+    }
+
+    void computeState(ITestDevice device, boolean visibleOnly) throws Exception {
         mAmState.computeState(device);
-        mWmState.computeState(device);
+        mWmState.computeState(device, visibleOnly);
+    }
+
+    ActivityManagerState getAmState() {
+        return mAmState;
+    }
+
+    WindowManagerState getWmState() {
+        return mWmState;
     }
 
     void assertSanity() throws Exception {
