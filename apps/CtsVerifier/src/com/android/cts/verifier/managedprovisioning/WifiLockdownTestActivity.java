@@ -132,22 +132,22 @@ public class WifiLockdownTestActivity extends PassFailButtons.TestListActivity {
     }
 
     private void addTestsToAdapter(final ArrayTestListAdapter adapter) {
-        adapter.add(DeviceOwnerPositiveTestActivity.createInteractiveTestItem(this,
+        adapter.add(Utils.createInteractiveTestItem(this,
                 CONFIG_MODIFIABLE_WHEN_UNLOCKED_TEST_ID,
                 R.string.device_owner_wifi_config_unlocked_modification_test,
                 R.string.device_owner_wifi_config_unlocked_modification_test_info,
                 mSwitchLockdownOffButtonInfos));
-        adapter.add(DeviceOwnerPositiveTestActivity.createInteractiveTestItem(this,
+        adapter.add(Utils.createInteractiveTestItem(this,
                 CONFIG_NOT_MODIFIABLE_WHEN_LOCKED_TEST_ID,
                 R.string.device_owner_wifi_config_locked_modification_test,
                 R.string.device_owner_wifi_config_locked_modification_test_info,
                 mSwitchLockdownOnButtonInfos));
-        adapter.add(DeviceOwnerPositiveTestActivity.createInteractiveTestItem(this,
+        adapter.add(Utils.createInteractiveTestItem(this,
                 CONFIG_CONNECTABLE_WHEN_LOCKED_TEST_ID,
                 R.string.device_owner_wifi_config_locked_connection_test,
                 R.string.device_owner_wifi_config_locked_connection_test_info,
                 mSwitchLockdownOnButtonInfos));
-        adapter.add(DeviceOwnerPositiveTestActivity.createInteractiveTestItem(this,
+        adapter.add(Utils.createInteractiveTestItem(this,
                 CONFIG_REMOVABLE_WHEN_UNLOCKED_TEST_ID,
                 R.string.device_owner_wifi_config_unlocked_removal_test,
                 R.string.device_owner_wifi_config_unlocked_removal_test_info,

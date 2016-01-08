@@ -1475,6 +1475,18 @@
             <meta-data android:name="test_required_features" android:value="android.software.managed_users:android.software.device_admin" />
         </activity>
 
+        <activity android:name=".managedprovisioning.ByodProvisioningTestActivity"
+                android:label="@string/provisioning_tests_byod">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.cts.intent.category.MANUAL_TEST" />
+            </intent-filter>
+            <meta-data android:name="test_category" android:value="@string/test_category_managed_provisioning" />
+            <meta-data android:name="test_required_features" android:value="android.software.managed_users:android.software.device_admin" />
+        </activity>
+
+        <activity android:name=".managedprovisioning.ByodProvisioningTestActivity$ProvisioningStartingActivity" />
+
         <activity android:name=".managedprovisioning.ByodHelperActivity">
             <intent-filter>
                 <action android:name="com.android.cts.verifier.managedprovisioning.BYOD_QUERY" />

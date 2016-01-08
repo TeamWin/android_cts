@@ -16,6 +16,8 @@
 
 package com.android.cts.verifier.managedprovisioning;
 
+import static com.android.cts.verifier.managedprovisioning.Utils.createInteractiveTestItem;
+
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.admin.DevicePolicyManager;
@@ -235,27 +237,11 @@ public class DeviceOwnerPositiveTestActivity extends PassFailButtons.TestListAct
                         createTearDownIntent())));
     }
 
-    static TestListItem createInteractiveTestItem(Activity activity, String id, int titleRes,
-            int infoRes, ButtonInfo buttonInfo) {
-        return createInteractiveTestItem(activity, id, titleRes, infoRes,
-                new ButtonInfo[] { buttonInfo });
-    }
-
-    static TestListItem createInteractiveTestItem(Activity activity, String id, int titleRes,
-            int infoRes, ButtonInfo[] buttonInfos) {
-        return TestListItem.newTest(activity, titleRes,
-                id, new Intent(activity, IntentDrivenTestActivity.class)
-                .putExtra(IntentDrivenTestActivity.EXTRA_ID, id)
-                .putExtra(IntentDrivenTestActivity.EXTRA_TITLE, titleRes)
-                .putExtra(IntentDrivenTestActivity.EXTRA_INFO, infoRes)
-                .putExtra(IntentDrivenTestActivity.EXTRA_BUTTONS, buttonInfos),
-                null);
-    }
 
     static TestListItem createTestItem(Activity activity, String id, int titleRes,
             Intent intent) {
-        return TestListItem.newTest(activity, titleRes, id, intent.putExtra(EXTRA_TEST_ID, id),
-                null);
+        intent.putExtra(EXTRA_TEST_ID, id);
+        return TestListItem.newTest(activity, titleRes, id, intent, null);
     }
 
     private Intent createTearDownIntent() {

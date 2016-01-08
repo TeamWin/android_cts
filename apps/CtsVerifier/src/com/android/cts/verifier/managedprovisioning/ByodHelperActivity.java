@@ -66,7 +66,7 @@ public class ByodHelperActivity extends Activity implements DialogCallback, Hand
     // Managed -> primary intent: update profile owner test status in primary's CtsVerifer
     public static final String ACTION_PROFILE_OWNER_STATUS = "com.android.cts.verifier.managedprovisioning.BYOD_STATUS";
     // Primary -> managed intent: request to delete the current profile
-    public static final String ACTION_REMOVE_PROFILE_OWNER = "com.android.cts.verifier.managedprovisioning.BYOD_REMOVE";
+    public static final String ACTION_REMOVE_MANAGED_PROFILE = "com.android.cts.verifier.managedprovisioning.BYOD_REMOVE";
     // Managed -> managed intent: provisioning completed successfully
     public static final String ACTION_PROFILE_PROVISIONED = "com.android.cts.verifier.managedprovisioning.BYOD_PROVISIONED";
     // Primage -> managed intent: request to capture and check an image
@@ -188,7 +188,7 @@ public class ByodHelperActivity extends Activity implements DialogCallback, Hand
             response.putExtra(EXTRA_PROVISIONED, isProfileOwner());
             setResult(RESULT_OK, response);
             // Request to delete work profile.
-        } else if (action.equals(ACTION_REMOVE_PROFILE_OWNER)) {
+        } else if (action.equals(ACTION_REMOVE_MANAGED_PROFILE)) {
             if (isProfileOwner()) {
                 Log.d(TAG, "Clearing cross profile intents");
                 mDevicePolicyManager.clearCrossProfileIntentFilters(mAdminReceiverComponent);

@@ -56,7 +56,7 @@ public class DeviceAdminTestReceiver extends DeviceAdminReceiver {
             // Primary -> work direction
             IntentFilter filter = new IntentFilter();
             filter.addAction(ByodHelperActivity.ACTION_QUERY_PROFILE_OWNER);
-            filter.addAction(ByodHelperActivity.ACTION_REMOVE_PROFILE_OWNER);
+            filter.addAction(ByodHelperActivity.ACTION_REMOVE_MANAGED_PROFILE);
             filter.addAction(ByodHelperActivity.ACTION_INSTALL_APK);
             filter.addAction(ByodHelperActivity.ACTION_CHECK_INTENT_FILTERS);
             filter.addAction(ByodHelperActivity.ACTION_CAPTURE_AND_CHECK_IMAGE);
