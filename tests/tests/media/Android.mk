@@ -32,9 +32,12 @@ include $(CLEAR_VARS)
 
 # don't include this package in any target
 LOCAL_MODULE_TAGS := optional
+
 # and when built explicitly put it in the data partition
 LOCAL_MODULE_PATH := $(TARGET_OUT_DATA_APPS)
+
 LOCAL_DEX_PREOPT := false
+
 LOCAL_PROGUARD_ENABLED := disabled
 
 # include both the 32 and 64 bit versions
@@ -50,11 +53,12 @@ LOCAL_PACKAGE_NAME := CtsMediaTestCases
 
 # uncomment when b/13249737 is fixed
 #LOCAL_SDK_VERSION := current
+
 LOCAL_JAVA_LIBRARIES += android.test.runner org.apache.http.legacy
 
 # Tag this module as a cts_v2 test artifact
 LOCAL_COMPATIBILITY_SUITE := cts_v2
 
-include $(BUILD_PACKAGE)
+include $(BUILD_CTS_PACKAGE)
 
 include $(call all-makefiles-under,$(LOCAL_PATH))
