@@ -393,6 +393,44 @@ public class ContactsTest extends AndroidTestCase {
         assertNull(contactInfo);
     }
 
+    public void testPrimaryProfileEnterprisePhoneLookup_canNotAccessManagedDirectories() {
+        assertFalse(isManagedProfile());
+
+        // local directory
+        final ContactInfo defaultContactInfo =
+                getContactInfoFromEnterprisePhoneLookupUriInDirectory(MANAGED_CONTACT_PHONE,
+                        Directory.ENTERPRISE_DEFAULT);
+        assertNull(defaultContactInfo);
+
+        // remote directory
+        final long directoryId = getEnterpriseRemoteDirectoryIdSliently();
+        if (directoryId != 0) { // if directoryId == 0, it means it can't access managed directory
+            final ContactInfo directoryContactInfo =
+                    getContactInfoFromEnterprisePhoneLookupUriInDirectory(MANAGED_CONTACT_PHONE,
+                            directoryId);
+            assertNull(directoryContactInfo);
+        }
+    }
+
+    public void testPrimaryProfileEnterpriseEmailLookup_canNotAccessManagedDirectories() {
+        assertFalse(isManagedProfile());
+
+        // local directory
+        final ContactInfo defaultContactInfo =
+                getContactInfoFromEnterpriseEmailLookupUriInDirectory(MANAGED_CONTACT_EMAIL,
+                        Directory.ENTERPRISE_DEFAULT);
+        assertNull(defaultContactInfo);
+
+        // remote directory
+        final long directoryId = getEnterpriseRemoteDirectoryIdSliently();
+        if (directoryId != 0) { // if directoryId == 0, it means it can't access managed directory
+            final ContactInfo directoryContactInfo =
+                    getContactInfoFromEnterpriseEmailLookupUriInDirectory(MANAGED_CONTACT_EMAIL,
+                            directoryId);
+            assertNull(directoryContactInfo);
+        }
+    }
+
     public void testSetCrossProfileCallerIdDisabled_true() {
         assertTrue(isManagedProfile());
         mDevicePolicyManager.setCrossProfileCallerIdDisabled(
@@ -403,6 +441,22 @@ public class ContactsTest extends AndroidTestCase {
         assertTrue(isManagedProfile());
         mDevicePolicyManager.setCrossProfileCallerIdDisabled(
                 BaseManagedProfileTest.ADMIN_RECEIVER_COMPONENT, false);
+    }
+
+    public void testSetCrossProfileContactsSearchDisabled_true() {
+        assertTrue(isManagedProfile());
+        mDevicePolicyManager.setCrossProfileContactsSearchDisabled(
+                BaseManagedProfileTest.ADMIN_RECEIVER_COMPONENT, true);
+        assertTrue(mDevicePolicyManager.getCrossProfileContactsSearchDisabled(
+                BaseManagedProfileTest.ADMIN_RECEIVER_COMPONENT));
+    }
+
+    public void testSetCrossProfileContactsSearchDisabled_false() {
+        assertTrue(isManagedProfile());
+        mDevicePolicyManager.setCrossProfileContactsSearchDisabled(
+                BaseManagedProfileTest.ADMIN_RECEIVER_COMPONENT, false);
+        assertFalse(mDevicePolicyManager.getCrossProfileContactsSearchDisabled(
+                BaseManagedProfileTest.ADMIN_RECEIVER_COMPONENT));
     }
 
     public void testCurrentProfileContacts_removeContacts() {
@@ -580,6 +634,28 @@ public class ContactsTest extends AndroidTestCase {
         assertEquals(MANAGED_DIRECTORY_CONTACT_NAME, directoryContactInfo.displayName);
     }
 
+    public void testPrimaryProfileEnterpriseCallableFilter_canNotAccessManagedDirectories() {
+        assertFalse(isManagedProfile());
+
+        // local directory
+        final ContactInfo defaultContactInfo
+                = getContactInfoFromEnterpriseCallableFilterUriInDirectory(
+                MANAGED_CONTACT_PHONE, Directory.ENTERPRISE_DEFAULT);
+        assertNull(defaultContactInfo);
+
+        // remote directory
+        final long directoryId = getEnterpriseRemoteDirectoryIdSliently();
+        if (directoryId == 0L) {
+            // if no enterprise directory id is found, the test succeeds.
+            return;
+        } else {
+            final ContactInfo directoryContactInfo =
+                    getContactInfoFromEnterpriseCallableFilterUriInDirectory(MANAGED_CONTACT_PHONE,
+                            directoryId);
+            assertNull(directoryContactInfo);
+        }
+    }
+
     public void testPrimaryProfileEnterpriseEmailFilter_canAccessPrimaryDirectories() {
         assertFalse(isManagedProfile());
 
@@ -616,6 +692,28 @@ public class ContactsTest extends AndroidTestCase {
                 MANAGED_CONTACT_EMAIL, directoryId);
         assertNotNull(directoryContactInfo);
         assertEquals(MANAGED_DIRECTORY_CONTACT_NAME, directoryContactInfo.displayName);
+    }
+
+    public void testPrimaryProfileEnterpriseEmailFilter_canNotAccessManagedDirectories() {
+        assertFalse(isManagedProfile());
+
+        // local directory
+        final ContactInfo defaultContactInfo =
+                getContactInfoFromEnterpriseEmailFilterUriInDirectory(MANAGED_CONTACT_EMAIL,
+                        Directory.ENTERPRISE_DEFAULT);
+        assertNull(defaultContactInfo);
+
+        // remote directory
+        final long directoryId = getEnterpriseRemoteDirectoryIdSliently();
+        if (directoryId == 0L) {
+            // if no enterprise directory id is found, the test succeeds.
+            return;
+        } else {
+            final ContactInfo directoryContactInfo =
+                    getContactInfoFromEnterpriseEmailFilterUriInDirectory(MANAGED_CONTACT_EMAIL,
+                            directoryId);
+            assertNull(directoryContactInfo);
+        }
     }
 
     public void testPrimaryProfileEnterpriseContactFilter_canAccessPrimaryDirectories() {
@@ -656,6 +754,28 @@ public class ContactsTest extends AndroidTestCase {
         assertEquals(MANAGED_DIRECTORY_CONTACT_NAME, directoryContactInfo.displayName);
     }
 
+    public void testPrimaryProfileEnterpriseContactFilter_canNotAccessManagedDirectories() {
+        assertFalse(isManagedProfile());
+
+        // local directory
+        final ContactInfo defaultContactInfo
+                = getContactInfoFromEnterpriseContactFilterUriInDirectory(
+                MANAGED_CONTACT_DISPLAY_NAME, Directory.ENTERPRISE_DEFAULT);
+        assertNull(defaultContactInfo);
+
+        // remote directory
+        final long directoryId = getEnterpriseRemoteDirectoryIdSliently();
+        if (directoryId == 0L) {
+            // if no enterprise directory id is found, the test succeeds.
+            return;
+        } else {
+            final ContactInfo directoryContactInfo =
+                    getContactInfoFromEnterpriseEmailFilterUriInDirectory(
+                            MANAGED_CONTACT_DISPLAY_NAME, directoryId);
+            assertNull(directoryContactInfo);
+        }
+    }
+
     public void testPrimaryProfileEnterprisePhoneFilter_canAccessPrimaryDirectories() {
         assertFalse(isManagedProfile());
 
@@ -693,6 +813,46 @@ public class ContactsTest extends AndroidTestCase {
         assertNotNull(directoryContactInfo);
         assertEquals(MANAGED_DIRECTORY_CONTACT_NAME, directoryContactInfo.displayName);
     }
+
+    public void testPrimaryProfileEnterprisePhoneFilter_canNotAccessManagedDirectories() {
+        assertFalse(isManagedProfile());
+
+        // local directory
+        final ContactInfo defaultContactInfo
+                = getContactInfoFromEnterprisePhoneFilterUriInDirectory(
+                MANAGED_CONTACT_PHONE, Directory.ENTERPRISE_DEFAULT);
+        assertNull(defaultContactInfo);
+
+        // remote directory
+        final long directoryId = getEnterpriseRemoteDirectoryIdSliently();
+        if (directoryId == 0L) {
+            // if no enterprise directory id is found, the test succeeds.
+            return;
+        } else {
+            final ContactInfo directoryContactInfo =
+                    getContactInfoFromEnterprisePhoneFilterUriInDirectory(
+                            MANAGED_CONTACT_PHONE, directoryId);
+            assertNull(directoryContactInfo);
+        }
+    }
+
+    public void testPrimaryProfileEnterpriseDirectories_canNotAccessManagedDirectories() {
+        assertFalse(isManagedProfile());
+
+        final Cursor cursor = mResolver.query(Directory.ENTERPRISE_CONTENT_URI,
+                new String[] { Directory._ID }, null, null, null);
+        try {
+            while (cursor.moveToNext()) {
+                final long directoryId = cursor.getLong(0);
+                if (Directory.isEnterpriseDirectoryId(directoryId)) {
+                    fail("found enterprise directories");
+                }
+            }
+        } finally {
+            cursor.close();
+        }
+    }
+
 
     public void testFilterUriWhenDirectoryParamMissing() {
         assertFailWhenDirectoryParamMissing(Phone.ENTERPRISE_CONTENT_FILTER_URI);
@@ -760,6 +920,12 @@ public class ContactsTest extends AndroidTestCase {
     }
 
     private long getEnterpriseRemoteDirectoryId() {
+        final long enterpriseDirectoryId = getEnterpriseRemoteDirectoryIdSliently();
+        assertNotSame("Cannot find enterprise directory id", 0L, enterpriseDirectoryId);
+        return enterpriseDirectoryId;
+    }
+
+    private long getEnterpriseRemoteDirectoryIdSliently() {
         assertFalse(isManagedProfile());
         final Cursor cursor = mResolver.query(Directory.ENTERPRISE_CONTENT_URI,
                 new String[] {
@@ -776,7 +942,6 @@ public class ContactsTest extends AndroidTestCase {
         } finally {
             cursor.close();
         }
-        fail("Cannot find enterprise directory id");
         return 0;
     }
 
