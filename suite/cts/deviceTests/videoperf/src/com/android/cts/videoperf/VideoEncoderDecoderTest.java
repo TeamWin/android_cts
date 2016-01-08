@@ -912,7 +912,7 @@ public class VideoEncoderDecoderTest extends CtsAndroidTestCase {
     }
 
     /**
-     * run encoder benchmarking with encoded stream stored from encoding phase
+     * run decoder benchmarking with encoded stream stored from encoding phase
      * @param decoderName decoder name
      * @param format format of media to decode
      * @return returns length-2 array with 0: time for decoding, 1 : rms error of pixels
