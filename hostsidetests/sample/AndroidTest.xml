@@ -21,9 +21,4 @@
     <test class="com.android.compatibility.common.tradefed.testtype.JarHostTest" >
         <option name="jar" value="CtsSampleHostTestCases.jar" />
     </test>
-    <target_preparer class="com.android.compatibility.common.tradefed.targetprep.DynamicConfigPusher">
-        <option name="target" value="host" />
-        <option name="module-name" value="CtsSampleHostTestCases"/>
-        <option name="version-name" value="1.0"/>
-    </target_preparer>
 </configuration>
