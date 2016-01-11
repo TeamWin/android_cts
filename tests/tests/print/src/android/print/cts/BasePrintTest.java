@@ -78,21 +78,15 @@ import java.util.concurrent.TimeoutException;
 public abstract class BasePrintTest extends InstrumentationTestCase {
 
     private static final long OPERATION_TIMEOUT = 100000000;
-
     private static final String PRINT_SPOOLER_PACKAGE_NAME = "com.android.printspooler";
-
     protected static final String PRINT_JOB_NAME = "Test";
-
     private static final String PM_CLEAR_SUCCESS_OUTPUT = "Success";
-
     private static final String COMMAND_LIST_ENABLED_IME_COMPONENTS = "ime list -s";
-
     private static final String COMMAND_PREFIX_ENABLE_IME = "ime enable ";
-
     private static final String COMMAND_PREFIX_DISABLE_IME = "ime disable ";
+    private static final int CURRENT_USER_ID = -2; // Mirrors UserHandle.USER_CURRENT
 
     private PrintDocumentActivity mActivity;
-
     private UiDevice mUiDevice;
 
     /**
@@ -422,9 +416,9 @@ public abstract class BasePrintTest extends InstrumentationTestCase {
 
     protected void clearPrintSpoolerData() throws Exception {
         assertTrue("failed to clear print spooler data",
-                SystemUtil.runShellCommand(getInstrumentation(),
-                        String.format("pm clear %s", PRINT_SPOOLER_PACKAGE_NAME))
-                            .contains(PM_CLEAR_SUCCESS_OUTPUT));
+                SystemUtil.runShellCommand(getInstrumentation(), String.format(
+                        "pm clear --user -d %s", CURRENT_USER_ID, PRINT_SPOOLER_PACKAGE_NAME))
+                        .contains(PM_CLEAR_SUCCESS_OUTPUT));
     }
 
     protected void verifyLayoutCall(InOrder inOrder, PrintDocumentAdapter mock,
