@@ -417,7 +417,7 @@ public abstract class BasePrintTest extends InstrumentationTestCase {
     protected void clearPrintSpoolerData() throws Exception {
         assertTrue("failed to clear print spooler data",
                 SystemUtil.runShellCommand(getInstrumentation(), String.format(
-                        "pm clear --user -d %s", CURRENT_USER_ID, PRINT_SPOOLER_PACKAGE_NAME))
+                        "pm clear --user %d %s", CURRENT_USER_ID, PRINT_SPOOLER_PACKAGE_NAME))
                         .contains(PM_CLEAR_SUCCESS_OUTPUT));
     }
 
