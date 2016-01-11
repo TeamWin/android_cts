@@ -35,6 +35,7 @@ import android.view.inputmethod.BaseInputConnection;
 import android.view.inputmethod.CompletionInfo;
 import android.view.inputmethod.ExtractedTextRequest;
 import android.view.inputmethod.InputMethodManager;
+import android.view.inputmethod.cts.util.InputConnectionTestUtils;
 import android.widget.EditText;
 
 public class BaseInputConnectionTest extends
@@ -261,14 +262,13 @@ public class BaseInputConnectionTest extends
      * an initial text and selection range.
      * @param view the {@link View} to be associated with the {@link BaseInputConnection}.
      * @param source the initial text.
-     * @param selectionStart the initial selection start index.
-     * @param selectionEnd the initial selection end index.
      * @return {@link BaseInputConnection} instantiated in dummy mode with {@code source} and
      * selection range from {@code selectionStart} to {@code selectionEnd}
      */
     private static BaseInputConnection createDummyConnectionWithSelection(
-            final View view, final CharSequence source, final int selectionStart,
-            final int selectionEnd) {
+            final View view, final CharSequence source) {
+        final int selectionStart = Selection.getSelectionStart(source);
+        final int selectionEnd = Selection.getSelectionEnd(source);
         final Editable editable = Editable.Factory.getInstance().newEditable(source);
         Selection.setSelection(editable, selectionStart, selectionEnd);
         return new BaseInputConnection(view, false) {
@@ -279,216 +279,80 @@ public class BaseInputConnectionTest extends
         };
     }
 
+    private void testDeleteSurroundingTextMain(final String initialState,
+            final int deleteBefore, final int deleteAfter, final String expectedState) {
+        final CharSequence source = InputConnectionTestUtils.formatString(initialState);
+        final BaseInputConnection ic = createDummyConnectionWithSelection(mView, source);
+        ic.deleteSurroundingText(deleteBefore, deleteAfter);
+
+        final CharSequence expectedString = InputConnectionTestUtils.formatString(expectedState);
+        final int expectedSelectionStart = Selection.getSelectionStart(expectedString);
+        final int expectedSelectionEnd = Selection.getSelectionEnd(expectedString);
+
+        // It is sufficient to check the surrounding text up to source.length() characters, because
+        // InputConnection.deleteSurroundingText() is not supposed to increase the text length.
+        final int retrievalLength = source.length();
+        if (expectedSelectionStart == 0) {
+            assertTrue(TextUtils.isEmpty(ic.getTextBeforeCursor(retrievalLength, 0)));
+        } else {
+            assertEquals(expectedString.subSequence(0, expectedSelectionStart).toString(),
+                    ic.getTextBeforeCursor(retrievalLength, 0).toString());
+        }
+        if (expectedSelectionStart == expectedSelectionEnd) {
+            assertTrue(TextUtils.isEmpty(ic.getSelectedText(0)));  // null is allowed.
+        } else {
+            assertEquals(expectedString.subSequence(expectedSelectionStart,
+                    expectedSelectionEnd).toString(), ic.getSelectedText(0).toString());
+        }
+        if (expectedSelectionEnd == expectedString.length()) {
+            assertTrue(TextUtils.isEmpty(ic.getTextAfterCursor(retrievalLength, 0)));
+        } else {
+            assertEquals(expectedString.subSequence(expectedSelectionEnd,
+                    expectedString.length()).toString(),
+                    ic.getTextAfterCursor(retrievalLength, 0).toString());
+        }
+    }
+
     /**
      * Tests {@link BaseInputConnection#deleteSurroundingText(int, int)} comprehensively.
      */
     public void testDeleteSurroundingText() throws Throwable {
-        // For text "012[]3456789", calling deleteSurroundingText(0, 0) must produce "012[]3456789",
-        // where '[' and ']' indicate the text selection range.
-        {
-            final BaseInputConnection dummyConnection = createDummyConnectionWithSelection(
-                    mView, "0123456789", 3, 3);
+        testDeleteSurroundingTextMain("012[]3456789", 0, 0, "012[]3456789");
+        testDeleteSurroundingTextMain("012[]3456789", -1, -1, "012[]3456789");
+        testDeleteSurroundingTextMain("012[]3456789", 1, 2, "01[]56789");
+        testDeleteSurroundingTextMain("012[]3456789", 10, 1, "[]456789");
+        testDeleteSurroundingTextMain("012[]3456789", 1, 10, "01[]");
+        testDeleteSurroundingTextMain("[]0123456789", 3, 3, "[]3456789");
+        testDeleteSurroundingTextMain("0123456789[]", 3, 3, "0123456[]");
+        testDeleteSurroundingTextMain("012[345]6789", 0, 0, "012[345]6789");
+        testDeleteSurroundingTextMain("012[345]6789", -1, -1, "012[345]6789");
+        testDeleteSurroundingTextMain("012[345]6789", 1, 2, "01[345]89");
+        testDeleteSurroundingTextMain("012[345]6789", 10, 1, "[345]789");
+        testDeleteSurroundingTextMain("012[345]6789", 1, 10, "01[345]");
+        testDeleteSurroundingTextMain("[012]3456789", 3, 3, "[012]6789");
+        testDeleteSurroundingTextMain("0123456[789]", 3, 3, "0123[789]");
+        testDeleteSurroundingTextMain("[0123456789]", 0, 0, "[0123456789]");
+        testDeleteSurroundingTextMain("[0123456789]", 1, 1, "[0123456789]");
 
-            dummyConnection.deleteSurroundingText(0, 0);
-            assertEquals("012", dummyConnection.getTextBeforeCursor(10, 0).toString());
-            assertTrue(TextUtils.isEmpty(dummyConnection.getSelectedText(0)));  // null is allowed.
-            assertEquals("3456789", dummyConnection.getTextAfterCursor(10, 0).toString());
-            assertEquals("0123456789", dummyConnection.getEditable().toString());
-        }
-
-        // For text "012[]3456789", calling deleteSurroundingText(-1, -1) must produce
-        // "012[]3456789", where '[' and ']' indicate the text selection range.
-        {
-            final BaseInputConnection dummyConnection = createDummyConnectionWithSelection(
-                    mView, "0123456789", 3, 3);
-
-            dummyConnection.deleteSurroundingText(-1, -1);
-            assertEquals("012", dummyConnection.getTextBeforeCursor(10, 0).toString());
-            assertTrue(TextUtils.isEmpty(dummyConnection.getSelectedText(0)));  // null is allowed.
-            assertEquals("3456789", dummyConnection.getTextAfterCursor(10, 0).toString());
-            assertEquals("0123456789", dummyConnection.getEditable().toString());
-        }
-
-        // For text "012[]3456789", calling deleteSurroundingText(1, 2) must produce
-        // "01[]56789", where '[' and ']' indicate the text selection range.
-        {
-            final BaseInputConnection dummyConnection = createDummyConnectionWithSelection(
-                    mView, "0123456789", 3, 3);
-
-            dummyConnection.deleteSurroundingText(1, 2);
-            assertEquals("01", dummyConnection.getTextBeforeCursor(10, 0).toString());
-            assertTrue(TextUtils.isEmpty(dummyConnection.getSelectedText(0)));  // null is allowed.
-            assertEquals("56789", dummyConnection.getTextAfterCursor(10, 0).toString());
-            assertEquals("0156789", dummyConnection.getEditable().toString());
-        }
-
-        // For text "012[]3456789", calling deleteSurroundingText(10, 1) must produce "[]456789",
-        // where '[' and ']' indicate the text selection range.
-        {
-            final BaseInputConnection dummyConnection = createDummyConnectionWithSelection(
-                    mView, "0123456789", 3, 3);
-
-            assertTrue(dummyConnection.deleteSurroundingText(10, 1));
-            assertEquals("", dummyConnection.getTextBeforeCursor(10, 0).toString());
-            assertTrue(TextUtils.isEmpty(dummyConnection.getSelectedText(0)));  // null is allowed.
-            assertEquals("456789", dummyConnection.getTextAfterCursor(10, 0).toString());
-            assertEquals("456789", dummyConnection.getEditable().toString());
-        }
-
-        // For text "012[]3456789", calling deleteSurroundingText(1, 10) must produce "01[]",
-        // where '[' and ']' indicate the text selection range.
-        {
-            final BaseInputConnection dummyConnection = createDummyConnectionWithSelection(
-                    mView, "0123456789", 3, 3);
-
-            assertTrue(dummyConnection.deleteSurroundingText(1, 10));
-            assertEquals("01", dummyConnection.getTextBeforeCursor(10, 0).toString());
-            assertTrue(TextUtils.isEmpty(dummyConnection.getSelectedText(0)));  // null is allowed.
-            assertEquals("", dummyConnection.getTextAfterCursor(10, 0).toString());
-            assertEquals("01", dummyConnection.getEditable().toString());
-        }
-
-        // For text "[]0123456789", calling deleteSurroundingText(3, 3) must produce "[]3456789",
-        // where '[' and ']' indicate the text selection range.
-        {
-            final BaseInputConnection dummyConnection = createDummyConnectionWithSelection(
-                    mView, "0123456789", 0, 0);
-
-            assertTrue(dummyConnection.deleteSurroundingText(3, 3));
-            assertEquals("", dummyConnection.getTextBeforeCursor(10, 0).toString());
-            assertTrue(TextUtils.isEmpty(dummyConnection.getSelectedText(0)));  // null is allowed.
-            assertEquals("3456789", dummyConnection.getTextAfterCursor(10, 0).toString());
-            assertEquals("3456789", dummyConnection.getEditable().toString());
-        }
-
-        // For text "0123456789[]", calling deleteSurroundingText(3, 3) must produce "0123456[]",
-        // where '[' and ']' indicate the text selection range.
-        {
-            final BaseInputConnection dummyConnection = createDummyConnectionWithSelection(
-                    mView, "0123456789", 10, 10);
-
-            assertTrue(dummyConnection.deleteSurroundingText(3, 3));
-            assertEquals("0123456", dummyConnection.getTextBeforeCursor(10, 0).toString());
-            assertTrue(TextUtils.isEmpty(dummyConnection.getSelectedText(0)));  // null is allowed.
-            assertEquals("", dummyConnection.getTextAfterCursor(10, 0).toString());
-            assertEquals("0123456", dummyConnection.getEditable().toString());
-        }
-
-        // For text "012[345]6789", calling deleteSurroundingText(0, 0) must produce "012[345]6789",
-        // where '[' and ']' indicate the text selection range.
-        {
-            final BaseInputConnection dummyConnection = createDummyConnectionWithSelection(
-                    mView, "0123456789", 3, 6);
-
-            dummyConnection.deleteSurroundingText(0, 0);
-            assertEquals("012", dummyConnection.getTextBeforeCursor(10, 0).toString());
-            assertEquals("345", dummyConnection.getSelectedText(0).toString());
-            assertEquals("6789", dummyConnection.getTextAfterCursor(10, 0).toString());
-            assertEquals("0123456789", dummyConnection.getEditable().toString());
-        }
-
-        // For text "012[345]6789", calling deleteSurroundingText(-1, -1) must produce
-        // "012[345]6789", where '[' and ']' indicate the text selection range.
-        {
-            final BaseInputConnection dummyConnection = createDummyConnectionWithSelection(
-                    mView, "0123456789", 3, 6);
-
-            dummyConnection.deleteSurroundingText(-1, -1);
-            assertEquals("012", dummyConnection.getTextBeforeCursor(10, 0).toString());
-            assertEquals("345", dummyConnection.getSelectedText(0).toString());
-            assertEquals("6789", dummyConnection.getTextAfterCursor(10, 0).toString());
-            assertEquals("0123456789", dummyConnection.getEditable().toString());
-        }
-
-        // For text "012[345]6789", calling deleteSurroundingText(1, 2) must produce
-        // "01[345]89", where '[' and ']' indicate the text selection range.
-        {
-            final BaseInputConnection dummyConnection = createDummyConnectionWithSelection(
-                    mView, "0123456789", 3, 6);
-
-            dummyConnection.deleteSurroundingText(1, 2);
-            assertEquals("01", dummyConnection.getTextBeforeCursor(10, 0).toString());
-            assertEquals("345", dummyConnection.getSelectedText(0).toString());
-            assertEquals("89", dummyConnection.getTextAfterCursor(10, 0).toString());
-            assertEquals("0134589", dummyConnection.getEditable().toString());
-        }
-
-        // For text "012[345]6789", calling deleteSurroundingText(10, 1) must produce
-        // "[345]789", where '[' and ']' indicate the text selection range.
-        {
-            final BaseInputConnection dummyConnection = createDummyConnectionWithSelection(
-                    mView, "0123456789", 3, 6);
-
-            dummyConnection.deleteSurroundingText(10, 1);
-            assertEquals("", dummyConnection.getTextBeforeCursor(10, 0).toString());
-            assertEquals("345", dummyConnection.getSelectedText(0).toString());
-            assertEquals("789", dummyConnection.getTextAfterCursor(10, 0).toString());
-            assertEquals("345789", dummyConnection.getEditable().toString());
-        }
-
-        // For text "012[345]6789", calling deleteSurroundingText(1, 10) must produce
-        // "[345]789", where '[' and ']' indicate the text selection range.
-        {
-            final BaseInputConnection dummyConnection = createDummyConnectionWithSelection(
-                    mView, "0123456789", 3, 6);
-
-            dummyConnection.deleteSurroundingText(1, 10);
-            assertEquals("01", dummyConnection.getTextBeforeCursor(10, 0).toString());
-            assertEquals("345", dummyConnection.getSelectedText(0).toString());
-            assertEquals("", dummyConnection.getTextAfterCursor(10, 0).toString());
-            assertEquals("01345", dummyConnection.getEditable().toString());
-        }
-
-        // For text "[012]3456789", calling deleteSurroundingText(3, 3) must produce "[012]6789",
-        // where '[' and ']' indicate the text selection range.
-        {
-            final BaseInputConnection dummyConnection = createDummyConnectionWithSelection(
-                    mView, "0123456789", 0, 3);
-
-            assertTrue(dummyConnection.deleteSurroundingText(3, 3));
-            assertEquals("", dummyConnection.getTextBeforeCursor(10, 0).toString());
-            assertEquals("012", dummyConnection.getSelectedText(0).toString());
-            assertEquals("6789", dummyConnection.getTextAfterCursor(10, 0).toString());
-            assertEquals("0126789", dummyConnection.getEditable().toString());
-        }
-
-        // For text "0123456[789]", calling deleteSurroundingText(3, 3) must produce "0123[789]",
-        // where '[' and ']' indicate the text selection range.
-        {
-            final BaseInputConnection dummyConnection = createDummyConnectionWithSelection(
-                    mView, "0123456789", 7, 10);
-
-            assertTrue(dummyConnection.deleteSurroundingText(3, 3));
-            assertEquals("0123", dummyConnection.getTextBeforeCursor(10, 0).toString());
-            assertEquals("789", dummyConnection.getSelectedText(0).toString());
-            assertEquals("", dummyConnection.getTextAfterCursor(10, 0).toString());
-            assertEquals("0123789", dummyConnection.getEditable().toString());
-        }
-
-        // For text "[0123456789]", calling deleteSurroundingText(0, 0) must produce "[0123456789]",
-        // where '[' and ']' indicate the text selection range.
-        {
-            final BaseInputConnection dummyConnection = createDummyConnectionWithSelection(
-                    mView, "0123456789", 0, 10);
-
-            assertTrue(dummyConnection.deleteSurroundingText(0, 0));
-            assertEquals("", dummyConnection.getTextBeforeCursor(10, 0).toString());
-            assertEquals("0123456789", dummyConnection.getSelectedText(0).toString());
-            assertEquals("", dummyConnection.getTextAfterCursor(10, 0).toString());
-            assertEquals("0123456789", dummyConnection.getEditable().toString());
-        }
-
-        // For text "[0123456789]", calling deleteSurroundingText(1, 1) must produce "[0123456789]",
-        // where '[' and ']' indicate the text selection range.
-        {
-            final BaseInputConnection dummyConnection = createDummyConnectionWithSelection(
-                    mView, "0123456789", 0, 10);
-
-            assertTrue(dummyConnection.deleteSurroundingText(1, 1));
-            assertEquals("", dummyConnection.getTextBeforeCursor(10, 0).toString());
-            assertEquals("0123456789", dummyConnection.getSelectedText(0).toString());
-            assertEquals("", dummyConnection.getTextAfterCursor(10, 0).toString());
-            assertEquals("0123456789", dummyConnection.getEditable().toString());
-        }
+        // Surrogate characters do not have any special meanings.  Validating the character sequence
+        // is beyond the goal of this API.
+        testDeleteSurroundingTextMain("0<>[]3456789", 1, 0, "0<[]3456789");
+        testDeleteSurroundingTextMain("0<>[]3456789", 2, 0, "0[]3456789");
+        testDeleteSurroundingTextMain("0<>[]3456789", 3, 0, "[]3456789");
+        testDeleteSurroundingTextMain("012[]<>56789", 0, 1, "012[]>56789");
+        testDeleteSurroundingTextMain("012[]<>56789", 0, 2, "012[]56789");
+        testDeleteSurroundingTextMain("012[]<>56789", 0, 3, "012[]6789");
+        testDeleteSurroundingTextMain("0<<[]3456789", 1, 0, "0<[]3456789");
+        testDeleteSurroundingTextMain("0<<[]3456789", 2, 0, "0[]3456789");
+        testDeleteSurroundingTextMain("0<<[]3456789", 3, 0, "[]3456789");
+        testDeleteSurroundingTextMain("012[]<<56789", 0, 1, "012[]<56789");
+        testDeleteSurroundingTextMain("012[]<<56789", 0, 2, "012[]56789");
+        testDeleteSurroundingTextMain("012[]<<56789", 0, 3, "012[]6789");
+        testDeleteSurroundingTextMain("0>>[]3456789", 1, 0, "0>[]3456789");
+        testDeleteSurroundingTextMain("0>>[]3456789", 2, 0, "0[]3456789");
+        testDeleteSurroundingTextMain("0>>[]3456789", 3, 0, "[]3456789");
+        testDeleteSurroundingTextMain("012[]>>56789", 0, 1, "012[]>56789");
+        testDeleteSurroundingTextMain("012[]>>56789", 0, 2, "012[]56789");
+        testDeleteSurroundingTextMain("012[]>>56789", 0, 3, "012[]6789");
     }
 }
