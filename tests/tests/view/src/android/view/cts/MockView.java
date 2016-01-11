@@ -55,6 +55,7 @@ public class MockView extends View {
     private boolean mCalledOnSetAlpha = false;
     private boolean mCalledOnTouchEvent = false;
     private boolean mCalledOnTrackballEvent = false;
+    private boolean mCalledOnHoverEvent = false;
     private boolean mCalledOnWindowFocusChanged = false;
     private boolean mCalledDispatchRestoreInstanceState = false;
     private boolean mCalledDispatchSaveInstanceState = false;
@@ -209,12 +210,22 @@ public class MockView extends View {
         return super.onTrackballEvent(event);
     }
 
+    @Override
+    public boolean onHoverEvent(MotionEvent event) {
+        mCalledOnHoverEvent = true;
+        return super.onHoverEvent(event);
+    }
+
     public boolean hasCalledOnTouchEvent() {
         return mCalledOnTouchEvent;
     }
 
     public boolean hasCalledOnTrackballEvent() {
         return mCalledOnTrackballEvent;
+    }
+
+    public boolean hasCalledOnHoverEvent() {
+        return mCalledOnHoverEvent;
     }
 
     @Override
@@ -618,6 +629,7 @@ public class MockView extends View {
         mCalledOnSetAlpha = false;
         mCalledOnTouchEvent = false;
         mCalledOnTrackballEvent = false;
+        mCalledOnHoverEvent = false;
         mCalledOnWindowFocusChanged = false;
         mCalledDispatchRestoreInstanceState = false;
         mCalledDispatchSaveInstanceState = false;
