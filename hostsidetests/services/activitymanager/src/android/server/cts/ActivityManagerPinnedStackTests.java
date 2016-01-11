@@ -22,8 +22,6 @@ import java.lang.Exception;
 import java.lang.String;
 
 public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
-    private static final boolean PRETEND_DEVICE_SUPPORTS_PIP = false;
-
     private static final String PIP_ACTIVITY_COMPONENT_NAME = "android.server.app/.PipActivity";
     private static final String PIP_WINDOW_NAME =
             "android.server.app/android.server.app.PipActivity";
@@ -45,24 +43,12 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
 
     private static final String AM_START_PIP_ACTIVITY =
             "am start -n " + PIP_ACTIVITY_COMPONENT_NAME;
-    private static final String AM_MOVE_TOP_ACTIVITY_TO_PINNED_STACK =
-            "am stack move-top-activity-to-pinned-stack 1 0 0 500 500";
     private static final String AM_START_AUTO_ENTER_PIP_ACTIVITY =
             "am start -n " + AUTO_ENTER_PIP_ACTIVITY_COMPONENT_NAME;
     private static final String AM_START_ALWAYS_FOCUSABLE_PIP_ACTIVITY =
             "am start -n " + ALWAYS_FOCUSABLE_PIP_ACTIVITY_COMPONENT_NAME;
     private static final String AM_START_LAUNCH_INTO_PINNED_STACK_PIP_ACTIVITY =
             "am start -n " + LAUNCH_INTO_PINNED_STACK_PIP_ACTIVITY_COMPONENT_NAME;
-
-    private static final String AM_FORCE_STOP_TEST_PACKAGE = "am force-stop android.server.app";
-
-    @Override
-    protected void tearDown() {
-        try {
-            mDevice.executeShellCommand(AM_FORCE_STOP_TEST_PACKAGE);
-        } catch (DeviceNotAvailableException e) {
-        }
-    }
 
     public void testEnterPictureInPictureMode() throws Exception {
         final String[] commands = { AM_START_AUTO_ENTER_PIP_ACTIVITY };
@@ -71,13 +57,14 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
     }
 
     public void testMoveTopActivityToPinnedStack() throws Exception {
-        final String[] commands = { AM_START_PIP_ACTIVITY, AM_MOVE_TOP_ACTIVITY_TO_PINNED_STACK };
+        final String[] commands = { AM_START_PIP_ACTIVITY,
+                AM_MOVE_TOP_ACTIVITY_TO_PINNED_STACK_COMMAND };
         pinnedStackTester(PIP_ACTIVITY_COMPONENT_NAME, PIP_WINDOW_NAME, commands, false);
     }
 
     public void testAlwaysFocusablePipActivity() throws Exception {
-        final String[] commands =
-                { AM_START_ALWAYS_FOCUSABLE_PIP_ACTIVITY, AM_MOVE_TOP_ACTIVITY_TO_PINNED_STACK };
+        final String[] commands = { AM_START_ALWAYS_FOCUSABLE_PIP_ACTIVITY,
+                AM_MOVE_TOP_ACTIVITY_TO_PINNED_STACK_COMMAND };
         pinnedStackTester(ALWAYS_FOCUSABLE_PIP_ACTIVITY_COMPONENT_NAME,
                 ALWAYS_FOCUSABLE_PIP_WINDOW_NAME, commands, true);
     }
@@ -97,8 +84,6 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
 
     private void pinnedStackTester(String activiyName, String windowName, String[] commands,
             boolean isFocusable) throws Exception {
-        final boolean supportsPip = hasDeviceFeature("android.software.picture_in_picture")
-                || PRETEND_DEVICE_SUPPORTS_PIP;
 
         for (String command : commands) {
             mDevice.executeShellCommand(command);
@@ -107,7 +92,7 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
         mAmWmState.computeState(mDevice);
         mAmWmState.assertSanity();
 
-        if (supportsPip) {
+        if (supportsPip()) {
             mAmWmState.assertContainsStack("Must contain pinned stack.", PINNED_STACK_ID);
             mAmWmState.assertFrontStack("Pinned stack must be the front stack.", PINNED_STACK_ID);
             mAmWmState.assertFrontWindow("Pinned window must be the front window.", windowName);

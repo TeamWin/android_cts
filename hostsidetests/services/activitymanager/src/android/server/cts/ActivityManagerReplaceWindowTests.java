@@ -34,18 +34,9 @@ public class ActivityManagerReplaceWindowTests extends ActivityManagerTestBase {
     private static final String SLOW_CREATE_ACTIVITY_NAME = "SlowCreateActivity";
     private static final String NO_RELAUNCH_ACTIVITY_NAME = "NoRelaunchActivity";
 
-    private static final String AM_FORCE_STOP_TEST = "am force-stop android.server.app";
     private static final String AM_MOVE_TASK = "am stack movetask ";
 
     private List<String> mTempWindowTokens = new ArrayList();
-
-    @Override
-    protected void tearDown() {
-        try {
-            mDevice.executeShellCommand(AM_FORCE_STOP_TEST);
-        } catch (DeviceNotAvailableException e) {
-        }
-    }
 
     public void testReplaceWindow_Dock_Relaunch() throws Exception {
         testReplaceWindow_Dock(true);

@@ -182,6 +182,19 @@ class ActivityManagerState {
         return mStacks.size();
     }
 
+    boolean isActivityVisible(String activityName) {
+        for (ActivityStack stack : mStacks) {
+            for (ActivityTask task : stack.mTasks) {
+               for (Activity activity : task.mActivities) {
+                   if (activity.name.equals(activityName)) {
+                       return activity.visible;
+                   }
+               }
+            }
+        }
+        return false;
+    }
+
     static class ActivityStack extends ActivityContainer {
 
         private static final Pattern TASK_ID_PATTERN = Pattern.compile("Task id #(\\d+)");
@@ -269,11 +282,21 @@ class ActivityManagerState {
         private static final Pattern ORIG_ACTIVITY_PATTERN = Pattern.compile("origActivity=(\\S+)");
         private static final Pattern REAL_ACTIVITY_PATTERN = Pattern.compile("realActivity=(\\S+)");
 
+        private static final Pattern ACTIVITY_NAME_PATTERN = Pattern.compile(
+                "\\* Hist #(\\d+)\\: ActivityRecord\\{(\\S+) u(\\d+) (\\S+) t(\\d+)\\}");
+
+        private static final Pattern TASK_TYPE_PATTERN = Pattern.compile("autoRemoveRecents=(\\S+) "
+                + "isPersistable=(\\S+) numFullscreen=(\\d+) taskType=(\\d+) "
+                + "mTaskToReturnTo=(\\d+)");
+
         int mTaskId;
         int mStackId;
         Rectangle mLastNonFullscreenBounds;
         String mRealActivity;
         String mOrigActivity;
+        ArrayList<Activity> mActivities = new ArrayList();
+        int mTaskType = -1;
+        int mReturnToType = -1;
 
         private ActivityTask() {
         }
@@ -300,8 +323,21 @@ class ActivityManagerState {
         }
 
         private void extract(LinkedList<String> dump, Pattern[] exitPatterns) {
+            final List<Pattern> activityExitPatterns = new ArrayList();
+            Collections.addAll(activityExitPatterns, exitPatterns);
+            activityExitPatterns.add(ACTIVITY_NAME_PATTERN);
+            final Pattern[] activityExitPatternsArray =
+                    activityExitPatterns.toArray(new Pattern[activityExitPatterns.size()]);
 
             while (!doneExtracting(dump, exitPatterns)) {
+                final Activity activity =
+                        Activity.create(dump, ACTIVITY_NAME_PATTERN, activityExitPatternsArray);
+
+                if (activity != null) {
+                    mActivities.add(activity);
+                    continue;
+                }
+
                 final String line = dump.pop().trim();
 
                 if (extractFullscreen(line)) {
@@ -346,6 +382,73 @@ class ActivityManagerState {
                     }
                     continue;
                 }
+
+                matcher = TASK_TYPE_PATTERN.matcher(line);
+                if (matcher.matches()) {
+                    CLog.logAndDisplay(INFO, line);
+                    mTaskType = Integer.valueOf(matcher.group(4));
+                    mReturnToType = Integer.valueOf(matcher.group(5));
+                    continue;
+                }
+            }
+        }
+    }
+
+    static class Activity {
+        private static final Pattern VISIBILITY_PATTERN = Pattern.compile(
+                "keysPaused=(\\S+) inHistory=(\\S+) visible=(\\S+) sleeping=(\\S+) idle=(\\S+)");
+        private static final Pattern FRONT_OF_TASK_PATTERN = Pattern.compile("frontOfTask=(\\S+) "
+                + "task=TaskRecord\\{(\\S+) #(\\d+) A=(\\S+) U=(\\d+) StackId=(\\d+) sz=(\\d+)\\}");
+
+        String name;
+        boolean visible;
+        boolean frontOfTask;
+
+        private Activity() {
+        }
+
+        static Activity create(
+                LinkedList<String> dump, Pattern activityNamePattern, Pattern[] exitPatterns) {
+            final String line = dump.peek().trim();
+
+            final Matcher matcher = activityNamePattern.matcher(line);
+            if (!matcher.matches()) {
+                // Not an activity.
+                return null;
+            }
+            // For the activity name line we just read.
+            dump.pop();
+
+            final Activity activity = new Activity();
+            CLog.logAndDisplay(INFO, line);
+            activity.name = matcher.group(4);
+            CLog.logAndDisplay(INFO, activity.name);
+            activity.extract(dump, exitPatterns);
+            return activity;
+        }
+
+        private void extract(LinkedList<String> dump, Pattern[] exitPatterns) {
+
+            while (!doneExtracting(dump, exitPatterns)) {
+                final String line = dump.pop().trim();
+
+                Matcher matcher = VISIBILITY_PATTERN.matcher(line);
+                if (matcher.matches()) {
+                    CLog.logAndDisplay(INFO, line);
+                    final String visibleString = matcher.group(3);
+                    visible = Boolean.valueOf(visibleString);
+                    CLog.logAndDisplay(INFO, visibleString);
+                    continue;
+                }
+
+                matcher = FRONT_OF_TASK_PATTERN.matcher(line);
+                if (matcher.matches()) {
+                    CLog.logAndDisplay(INFO, line);
+                    final String frontOfTaskString = matcher.group(1);
+                    frontOfTask = Boolean.valueOf(frontOfTaskString);
+                    CLog.logAndDisplay(INFO, frontOfTaskString);
+                    continue;
+                }
             }
         }
     }
@@ -357,20 +460,6 @@ class ActivityManagerState {
 
         protected boolean mFullscreen;
         protected Rectangle mBounds;
-
-        static boolean doneExtracting(LinkedList<String> dump, Pattern[] exitPatterns) {
-            if (dump.isEmpty()) {
-                return true;
-            }
-            final String line = dump.peek().trim();
-
-            for (Pattern pattern : exitPatterns) {
-                if (pattern.matcher(line).matches()) {
-                    return true;
-                }
-            }
-            return false;
-        }
 
         boolean extractFullscreen(String line) {
             final Matcher matcher = FULLSCREEN_PATTERN.matcher(line);
@@ -404,5 +493,19 @@ class ActivityManagerState {
             CLog.logAndDisplay(INFO, rect.toString());
             return rect;
         }
+    }
+
+    static boolean doneExtracting(LinkedList<String> dump, Pattern[] exitPatterns) {
+        if (dump.isEmpty()) {
+            return true;
+        }
+        final String line = dump.peek().trim();
+
+        for (Pattern pattern : exitPatterns) {
+            if (pattern.matcher(line).matches()) {
+                return true;
+            }
+        }
+        return false;
     }
 }
