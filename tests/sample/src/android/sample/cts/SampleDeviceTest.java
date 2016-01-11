@@ -84,14 +84,4 @@ public class SampleDeviceTest extends ActivityInstrumentationTestCase2<SampleDev
         DynamicConfigDeviceSide config = new DynamicConfigDeviceSide("CtsSampleDeviceTestCases");
         assertEquals("local-config-val", config.getConfig("local-config"));
     }
-
-    /**
-     * Test if Dynamic Config override on the device side works
-     * @throws Exception
-     */
-    public void testDynamicConfigOverride() throws Exception {
-        DynamicConfigDeviceSide config = new DynamicConfigDeviceSide("CtsSampleDeviceTestCases");
-        assertEquals("device-1.0-cts-keyone", config.getConfig("sample_device_key_one"));
-
-    }
 }

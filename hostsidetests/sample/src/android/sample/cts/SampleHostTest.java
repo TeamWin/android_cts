@@ -62,15 +62,6 @@ public class SampleHostTest extends DeviceTestCase {
     }
 
     /**
-     * Test if dynamic config override on the host side works
-     * @throws Exception
-     */
-    public void testDynamicConfigOverride() throws Exception {
-        DynamicConfigHostSide config = new DynamicConfigHostSide("CtsSampleHostTestCases");
-        assertEquals("host-1.0-cts-keyone", config.getConfig("sample_host_key_one"));
-    }
-
-    /**
      * Tests the string was successfully logged to Logcat from the activity.
      *
      * @throws Exception
