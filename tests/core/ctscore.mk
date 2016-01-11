@@ -23,7 +23,7 @@ LOCAL_MODULE_PATH := $(TARGET_OUT_DATA_APPS)
 # Don't delete META-INF from the core-tests jar
 LOCAL_DONT_DELETE_JAR_META_INF := true
 
-LOCAL_JNI_SHARED_LIBRARIES := libjavacoretests
+LOCAL_JNI_SHARED_LIBRARIES := libjavacoretests libsqlite_jni
 
 # Include both the 32 and 64 bit versions of libjavacoretests,
 # where applicable.
