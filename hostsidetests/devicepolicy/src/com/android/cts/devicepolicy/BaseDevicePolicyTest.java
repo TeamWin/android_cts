@@ -53,7 +53,9 @@ public class BaseDevicePolicyTest extends DeviceTestCase implements IBuildReceiv
 
     static final int USER_SYSTEM = 0; // From the UserHandle class.
 
-    private static final int FLAG_PRIMARY = 1; // From the UserInfo class
+    // From the UserInfo class
+    protected static final int FLAG_PRIMARY = 0x00000001;
+    protected static final int FLAG_EPHEMERAL = 0x00000100;
 
     protected IBuildInfo mCtsBuild;
 
@@ -273,6 +275,12 @@ public class BaseDevicePolicyTest extends DeviceTestCase implements IBuildReceiv
         }
         fail("Unexpected value of boolean system property '" + key + "': " + propertyValue);
         return false;
+    }
+
+    /** Checks whether it is possible to create the desired number of users. */
+    protected boolean canCreateAdditionalUsers(int numberOfUsers)
+            throws DeviceNotAvailableException {
+        return listUsers().size() + numberOfUsers <= getMaxNumberOfUsersSupported();
     }
 
     /** Helper method to run tests and return the listener that collected the results. */

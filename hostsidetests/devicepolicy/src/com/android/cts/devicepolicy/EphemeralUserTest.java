@@ -16,22 +16,16 @@
 
 package com.android.cts.devicepolicy;
 
-import com.android.ddmlib.Log.LogLevel;
-import com.android.tradefed.device.DeviceNotAvailableException;
-import com.android.tradefed.log.LogUtil.CLog;
-
 /**
  * Tests for emphemeral users and profiles.
  */
 public class EphemeralUserTest extends BaseDevicePolicyTest {
 
-    private static final int FLAG_EPHEMERAL = 0x00000100;
-
     @Override
     protected void setUp() throws Exception {
         super.setUp();
         mHasFeature = getDevice().getApiLevel() >= 24 /* Build.VERSION_CODES.N */
-                && canCreateUsers(1);
+                && canCreateAdditionalUsers(1);
     }
 
     @Override
@@ -66,7 +60,7 @@ public class EphemeralUserTest extends BaseDevicePolicyTest {
      */
     public void testProfileInheritsEphemeral() throws Exception {
         if (!mHasFeature || !hasDeviceFeature("android.software.managed_users")
-                || !hasUserSplit() || !canCreateUsers(2)) {
+                || !hasUserSplit() || !canCreateAdditionalUsers(2)) {
             return;
         }
         int userId = createUser(true);
@@ -87,11 +81,6 @@ public class EphemeralUserTest extends BaseDevicePolicyTest {
         assertTrue("ephemeral user must exists after start", listUsers().contains(userId));
         stopUser(userId);
         assertFalse("ephemeral user must be removed after stop", listUsers().contains(userId));
-    }
-
-    /** Checks whether it is possible to create the desired number of users. */
-    private boolean canCreateUsers(int numberOfUsers) throws DeviceNotAvailableException {
-        return listUsers().size() + numberOfUsers <= getMaxNumberOfUsersSupported();
     }
 
 }
