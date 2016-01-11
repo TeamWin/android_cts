@@ -48,6 +48,15 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
     private static final String WIDGET_PROVIDER_APK = "CtsWidgetProviderApp.apk";
     private static final String WIDGET_PROVIDER_PKG = "com.android.cts.widgetprovider";
 
+    private static final String DIRECTORY_PROVIDER_APK = "CtsContactDirectoryProvider.apk";
+    private static final String DIRECTORY_PROVIDER_PKG
+            = "com.android.cts.contactdirectoryprovider";
+    private static final String PRIMARY_DIRECTORY_PREFIX = "Primary";
+    private static final String MANAGED_DIRECTORY_PREFIX = "Managed";
+    private static final String DIRECTORY_PRIVOIDER_URI
+            = "content://com.android.cts.contact.directory.provider/";
+    private static final String SET_CUSTOM_DIRECTORY_PREFIX_METHOD = "set_prefix";
+
     private static final String ADMIN_RECEIVER_TEST_CLASS =
             MANAGED_PROFILE_PKG + ".BaseManagedProfileTest$BasicAdminReceiver";
 
@@ -394,6 +403,16 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
         }
 
         try {
+            // Install directory provider to both primary and managed profile
+            installAppAsUser(DIRECTORY_PROVIDER_APK, mProfileUserId);
+            installAppAsUser(DIRECTORY_PROVIDER_APK, mParentUserId);
+            setDirectoryPrefix(PRIMARY_DIRECTORY_PREFIX, mParentUserId);
+            setDirectoryPrefix(MANAGED_DIRECTORY_PREFIX, mProfileUserId);
+
+            // Check enterprise directory API works
+            assertTrue(runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".ContactsTest",
+                    "testGetDirectoryListInPrimaryProfile", mParentUserId));
+
             // Insert Primary profile Contacts
             assertTrue(runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".ContactsTest",
                     "testPrimaryProfilePhoneAndEmailLookup_insertedAndfound", mParentUserId));
@@ -408,7 +427,6 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
             assertTrue(runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".ContactsTest",
                     "testManagedProfileDuplicatedPhoneEmailContact_insertedAndfound",
                     mProfileUserId));
-
 
             // Set cross profile caller id to enabled
             assertTrue(runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".ContactsTest",
@@ -512,6 +530,11 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
             assertTrue(runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".ContactsTest",
                     "testManagedProfileEnterpriseEmailLookup_canNotAccessPrimaryContact",
                     mProfileUserId));
+
+            // Set cross profile caller id to enabled
+            assertTrue(runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".ContactsTest",
+                    "testSetCrossProfileCallerIdDisabled_false", mProfileUserId));
+
             // When there exist contacts with the same phone/email in primary & enterprise,
             // managed user can use ENTERPRISE_CONTENT_FILTER_URI to access enterprise contacts
             assertTrue(runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".ContactsTest",
@@ -520,12 +543,23 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
             assertTrue(runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".ContactsTest",
                     "testManagedProfileEnterprisePhoneLookupDuplicated_canAccessEnterpriseContact",
                     mProfileUserId));
+
+            // Check if phone lookup can access primary directories
+            assertTrue(runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".ContactsTest",
+                    "testPrimaryProfileEnterprisePhoneLookup_canAccessPrimaryDirectories",
+                    mParentUserId));
+
+            // Check if phone lookup can access enterprise directories
+            assertTrue(runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".ContactsTest",
+                    "testPrimaryProfileEnterprisePhoneLookup_canAccessManagedDirectories",
+                    mParentUserId));
         } finally {
             // Clean up in managed profile and primary profile
             runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".ContactsTest",
                     "testCurrentProfileContacts_removeContacts", mProfileUserId);
             runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".ContactsTest",
                     "testCurrentProfileContacts_removeContacts", mParentUserId);
+            getDevice().uninstallPackage(DIRECTORY_PROVIDER_PKG);
         }
     }
 
@@ -628,6 +662,16 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
                     mProfileUserId);
             getDevice().uninstallPackage(WIDGET_PROVIDER_PKG);
         }
+    }
+
+    private void setDirectoryPrefix(String directoryName, int userId)
+            throws DeviceNotAvailableException {
+        String command = "content call --uri " + DIRECTORY_PRIVOIDER_URI
+                + " --user " + userId
+                + " --method " + SET_CUSTOM_DIRECTORY_PREFIX_METHOD
+                + " --arg " + directoryName;
+        CLog.logAndDisplay(LogLevel.INFO, "Output for command " + command + ": "
+                + getDevice().executeShellCommand(command));
     }
 
     private void disableActivityForUser(String activityName, int userId)

@@ -32,9 +32,11 @@ import android.provider.ContactsContract.CommonDataKinds.Email;
 import android.provider.ContactsContract.CommonDataKinds.Phone;
 import android.provider.ContactsContract.CommonDataKinds.Photo;
 import android.provider.ContactsContract.Data;
+import android.provider.ContactsContract.Directory;
 import android.provider.ContactsContract.PhoneLookup;
 import android.provider.ContactsContract.RawContacts;
 import android.test.AndroidTestCase;
+import android.text.TextUtils;
 
 import java.io.ByteArrayOutputStream;
 import java.io.FileNotFoundException;
@@ -65,6 +67,12 @@ public class ContactsTest extends AndroidTestCase {
     private static final String SHARED_CONTACT_PHONE = "00000002";
     private static final String SHARED_CONTACT_EMAIL = "shared@shared.com";
     private static final String SHARED_CONTACT_SIP = "baz@sip";
+
+    // Directory display name
+    private static final String PRIMARY_DIRECTORY_NAME = "PrimaryDirectory";
+    private static final String MANAGED_DIRECTORY_NAME = "ManagedDirectory";
+    private static final String PRIMARY_DIRECTORY_CONTACT_NAME = "PrimaryDirectoryContact";
+    private static final String MANAGED_DIRECTORY_CONTACT_NAME = "ManagedDirectoryContact";
 
     private DevicePolicyManager mDevicePolicyManager;
     private ContentResolver mResolver;
@@ -97,7 +105,7 @@ public class ContactsTest extends AndroidTestCase {
         }
 
         private boolean hasPhotoId() {
-            return photoId != null;
+            return photoId != null && Long.parseLong(photoId) > 0;
         }
     }
 
@@ -387,6 +395,124 @@ public class ContactsTest extends AndroidTestCase {
                 BaseManagedProfileTest.ADMIN_RECEIVER_COMPONENT));
     }
 
+    public void testGetDirectoryListInPrimaryProfile() {
+        assertFalse(isManagedProfile());
+        final Cursor cursor = mResolver.query(Directory.ENTERPRISE_CONTENT_URI,
+                new String[] {
+                        Directory._ID,
+                        Directory.DISPLAY_NAME
+        }, null, null, null);
+
+        boolean hasPrimaryDefault = false;
+        boolean hasPrimaryInvisible = false;
+        boolean hasManagedDefault = false;
+        boolean hasManagedInvisible = false;
+        boolean hasPrimaryDirectory = false;
+        boolean hasManagedDirectory = false;
+
+        while(cursor.moveToNext()) {
+            final long directoryId = cursor.getLong(0);
+            if (directoryId == Directory.DEFAULT) {
+                hasPrimaryDefault = true;
+            } else if (directoryId == Directory.LOCAL_INVISIBLE) {
+                hasPrimaryInvisible = true;
+            } else if (directoryId == Directory.ENTERPRISE_DEFAULT) {
+                hasManagedDefault = true;
+            } else if (directoryId == Directory.ENTERPRISE_LOCAL_INVISIBLE) {
+                hasManagedInvisible = true;
+            } else {
+                final String displayName = cursor.getString(1);
+                if (Directory.isEnterpriseDirectoryId(directoryId)
+                        && displayName.equals(MANAGED_DIRECTORY_NAME)) {
+                    hasManagedDirectory = true;
+                }
+                if (!Directory.isEnterpriseDirectoryId(directoryId)
+                        && displayName.equals(PRIMARY_DIRECTORY_NAME)) {
+                    hasPrimaryDirectory = true;
+                }
+            }
+        }
+        cursor.close();
+        assertTrue(hasPrimaryDefault);
+        assertTrue(hasPrimaryInvisible);
+        assertTrue(hasManagedDefault);
+        assertTrue(hasManagedInvisible);
+        assertTrue(hasPrimaryDirectory);
+        assertTrue(hasManagedDirectory);
+    }
+
+    public void testPrimaryProfileEnterprisePhoneLookup_canAccessPrimaryDirectories() {
+        assertFalse(isManagedProfile());
+
+        final ContactInfo defaultContactInfo = getEnterpriseContactInfoWithDirectoryId(
+                PRIMARY_CONTACT_PHONE, Directory.DEFAULT);
+        assertNotNull(defaultContactInfo);
+        assertEquals(PRIMARY_CONTACT_DISPLAY_NAME, defaultContactInfo.displayName);
+
+        final long directoryId = getPrimaryRemoteDirectoryId();
+        final ContactInfo directoryContactInfo = getEnterpriseContactInfoWithDirectoryId(
+                PRIMARY_CONTACT_PHONE, directoryId);
+        assertNotNull(directoryContactInfo);
+        assertEquals(PRIMARY_DIRECTORY_CONTACT_NAME, directoryContactInfo.displayName);
+    }
+
+    public void testPrimaryProfileEnterprisePhoneLookup_canAccessManagedDirectories() {
+        assertFalse(isManagedProfile());
+
+        final ContactInfo defaultContactInfo = getEnterpriseContactInfoWithDirectoryId(
+                MANAGED_CONTACT_PHONE, Directory.ENTERPRISE_DEFAULT);
+        assertNotNull(defaultContactInfo);
+        assertEquals(MANAGED_CONTACT_DISPLAY_NAME, defaultContactInfo.displayName);
+
+        final long directoryId = getEnterpriseRemoteDirectoryId();
+        final ContactInfo directoryContactInfo = getEnterpriseContactInfoWithDirectoryId(
+                MANAGED_CONTACT_PHONE, directoryId);
+        assertNotNull(directoryContactInfo);
+        assertEquals(MANAGED_DIRECTORY_CONTACT_NAME, directoryContactInfo.displayName);
+    }
+
+    private long getPrimaryRemoteDirectoryId() {
+        assertFalse(isManagedProfile());
+        final Cursor cursor = mResolver.query(Directory.ENTERPRISE_CONTENT_URI,
+                new String[] {
+                    Directory._ID
+                }, null, null, null);
+        try {
+            while (cursor.moveToNext()) {
+                final long directoryId = cursor.getLong(0);
+                if (!Directory.isEnterpriseDirectoryId(directoryId)
+                        && Directory.isRemoteDirectory(directoryId)) {
+                    return directoryId;
+                }
+            }
+        } finally {
+            cursor.close();
+        }
+        fail("Cannot find primary directory id");
+        return 0;
+    }
+
+    private long getEnterpriseRemoteDirectoryId() {
+        assertFalse(isManagedProfile());
+        final Cursor cursor = mResolver.query(Directory.ENTERPRISE_CONTENT_URI,
+                new String[] {
+                    Directory._ID
+                }, null, null, null);
+        try {
+            while (cursor.moveToNext()) {
+                final long directoryId = cursor.getLong(0);
+                if (Directory.isEnterpriseDirectoryId(directoryId)
+                        && Directory.isRemoteDirectory(directoryId)) {
+                    return directoryId;
+                }
+            }
+        } finally {
+            cursor.close();
+        }
+        fail("Cannot find enterprise directory id");
+        return 0;
+    }
+
     private boolean isManagedProfile() {
         String adminPackage = BaseManagedProfileTest.ADMIN_RECEIVER_COMPONENT.getPackageName();
         return mDevicePolicyManager.isProfileOwnerApp(adminPackage);
@@ -463,6 +589,15 @@ public class ContactsTest extends AndroidTestCase {
         }
 
         mResolver.applyBatch(ContactsContract.AUTHORITY, ops);
+    }
+
+    private ContactInfo getContactInfoFromUriWithDirectoryId(Uri phoneLookupUri,
+            String phoneNumber, long directoryId) {
+        final Uri.Builder builder = Uri.withAppendedPath(phoneLookupUri,
+                Uri.encode(phoneNumber)).buildUpon();
+        builder.appendQueryParameter(
+                ContactsContract.DIRECTORY_PARAM_KEY, String.valueOf(directoryId));
+        return getContactInfoFromPhoneLookup(builder.build(), /* forSip = */false);
     }
 
     private ContactInfo getContactInfoFromUri(Uri phoneLookupUri, String phoneNumber) {
@@ -542,6 +677,13 @@ public class ContactsTest extends AndroidTestCase {
         return getContactInfoFromUri(
                 PhoneLookup.ENTERPRISE_CONTENT_FILTER_URI,
                 phoneNumber);
+    }
+
+    private ContactInfo getEnterpriseContactInfoWithDirectoryId(String phoneNumber,
+            long directoryId) {
+        return getContactInfoFromUriWithDirectoryId(
+                PhoneLookup.ENTERPRISE_CONTENT_FILTER_URI,
+                phoneNumber, directoryId);
     }
 
     private ContactInfo getEnterpriseContactInfoFromSipAddress(String phoneNumber) {
