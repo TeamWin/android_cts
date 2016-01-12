@@ -18,5 +18,10 @@ package android.server.app;
 
 import android.app.Activity;
 
-public class TranslucentActivity extends Activity {
+public class LaunchPipOnPipActivity extends Activity {
+    @Override
+    public void onPictureInPictureModeChanged(boolean pictureInPictureMode) {
+        super.onPictureInPictureModeChanged(pictureInPictureMode);
+        AlwaysFocusablePipActivity.launchAlwaysFocusablePipActivity(this);
+    }
 }
