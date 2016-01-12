@@ -21,6 +21,10 @@
 
     <option name="enable-root" value="false" />
 
+    <!-- Exclude sample test cases -->
+    <option name="compatibility:exclude-filter" value="CtsSampleDeviceTestCases" />
+    <option name="compatibility:exclude-filter" value="CtsSampleHostTestCases" />
+
     <target_preparer class="com.android.compatibility.common.tradefed.targetprep.DynamicConfigPusher">
         <option name="target" value="host" />
         <option name="module-name" value="cts_v2"/>
