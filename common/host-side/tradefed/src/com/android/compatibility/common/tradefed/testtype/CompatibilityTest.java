@@ -256,13 +256,8 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
             for (int i = 0; i < moduleCount; i++) {
                 modules.get(i).run(listener);
             }
-        } catch (DeviceNotAvailableException e) {
-            // Pass up
-            throw e;
-        } catch (FileNotFoundException | RuntimeException e) {
-            CLog.e(e);
-        } catch (Error e) {
-            CLog.e(e);
+        } catch (FileNotFoundException fnfe) {
+            throw new RuntimeException("Failed to initialize modules", fnfe);
         } finally {
             if (isInitializer) {
                 ModuleRepo.tearDown();
