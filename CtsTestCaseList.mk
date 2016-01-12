@@ -17,6 +17,7 @@ cts_security_apps_list := \
     CtsAppWithData \
     CtsDocumentProvider \
     CtsDocumentClient \
+    CtsEncryptionApp \
     CtsExternalStorageApp \
     CtsInstrumentationAppDiffCert \
     CtsNetSecPolicyUsesCleartextTrafficFalse \
