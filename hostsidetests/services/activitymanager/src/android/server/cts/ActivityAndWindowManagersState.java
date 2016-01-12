@@ -125,4 +125,23 @@ class ActivityAndWindowManagersState extends Assert {
     void assertFrontWindow(String msg, String windowName) {
         assertEquals(msg, windowName, mWmState.getFrontWindow());
     }
+
+    void assertVisibility(String activityName, boolean visible) {
+        final String activityComponentName =
+                ActivityManagerTestBase.getActivityComponentName(activityName);
+        final String windowName =
+                ActivityManagerTestBase.getWindowName(activityName);
+
+        final boolean activityVisible = mAmState.isActivityVisible(activityComponentName);
+        final boolean windowVisible = mWmState.isWindowVisible(windowName);
+
+        if (visible) {
+            assertTrue("Activity=" + activityComponentName + " must be visible.", activityVisible);
+            assertTrue("Window=" + windowName + " must be visible.", windowVisible);
+        } else {
+            assertFalse("Activity=" + activityComponentName + " must NOT be visible.",
+                    activityVisible);
+            assertFalse("Window=" + windowName + " must NOT be visible.", windowVisible);
+        }
+    }
 }

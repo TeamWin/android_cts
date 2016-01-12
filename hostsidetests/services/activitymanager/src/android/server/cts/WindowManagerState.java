@@ -213,6 +213,15 @@ class WindowManagerState {
         return false;
     }
 
+    boolean isWindowVisible(String windowName) {
+        for (String window : mWindows) {
+            if (window.equals(windowName)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     private void reset() {
         mSysDump.clear();
         mStacks.clear();

@@ -31,14 +31,13 @@ public class ActivityManagerDockedStackTests extends ActivityManagerTestBase {
     private static final String AM_START_LAUNCH_TO_SIDE_ACTIVITY =
             "am start -n android.server.app/." + LAUNCH_TO_SIDE_ACTIVITY_NAME;
 
-    private static final String AM_FORCE_STOP_TEST = "am force-stop android.server.app";
     private static final String AM_FORCE_STOP_SETTINGS = "am force-stop com.android.settings";
     private static final String AM_MOVE_TASK = "am stack movetask ";
 
     @Override
-    protected void tearDown() {
+    protected void tearDown() throws Exception {
+        super.tearDown();
         try {
-            mDevice.executeShellCommand(AM_FORCE_STOP_TEST);
             mDevice.executeShellCommand(AM_FORCE_STOP_SETTINGS);
         } catch (DeviceNotAvailableException e) {
         }

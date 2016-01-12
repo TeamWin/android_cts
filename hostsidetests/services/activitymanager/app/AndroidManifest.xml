@@ -59,6 +59,19 @@
                   androidprv:alwaysFocusable="true"
                   android:exported="true"
         />
+        <activity android:name=".TranslucentActivity"
+                  android:theme="@style/Theme.Transparent"
+                  android:resizeable="true"
+                  android:supportsPictureInPicture="true"
+                  android:exported="true"
+                  android:taskAffinity="nobody.but.TranslucentActivity"
+        />
+        <activity android:name=".VisibleBehindActivity"
+                  android:resizeable="true"
+                  android:supportsPictureInPicture="true"
+                  android:exported="true"
+                  android:taskAffinity="nobody.but.VisibleBehindActivity"
+        />
     </application>
 </manifest>
 

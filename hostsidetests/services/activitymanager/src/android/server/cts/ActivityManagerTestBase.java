@@ -29,6 +29,7 @@ import java.lang.String;
 import java.util.HashSet;
 
 public abstract class ActivityManagerTestBase extends DeviceTestCase {
+    private static final boolean PRETEND_DEVICE_SUPPORTS_PIP = false;
 
     // Constants copied from ActivityManager.StackId. If they are changed there, these must be
     // updated.
@@ -54,16 +55,32 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
 
     private static final String AM_STACK_LIST = "am stack list";
 
+    private static final String AM_FORCE_STOP_TEST_PACKAGE = "am force-stop android.server.app";
+
+    protected static final String AM_START_HOME_ACTIVITY_COMMAND =
+            "am start -a android.intent.action.MAIN -c android.intent.category.HOME";
+
+    protected static final String AM_MOVE_TOP_ACTIVITY_TO_PINNED_STACK_COMMAND =
+            "am stack move-top-activity-to-pinned-stack 1 0 0 500 500";
+
     /** A reference to the device under test. */
     protected ITestDevice mDevice;
 
     private HashSet<String> mAvailableFeatures;
 
     protected static String getAmStartCmd(final String activityName) {
-        return "am start -n android.server.app/." + activityName;
+        return "am start -n " + getActivityComponentName(activityName);
     }
 
-    protected static String getWindowName(final String activityName) {
+    protected static String getAmStartCmdOverHome(final String activityName) {
+        return "am start --activity-task-on-home -n " + getActivityComponentName(activityName);
+    }
+
+    static String getActivityComponentName(final String activityName) {
+        return "android.server.app/." + activityName;
+    }
+
+    static String getWindowName(final String activityName) {
         return "android.server.app/android.server.app." + activityName;
     }
 
@@ -75,6 +92,15 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
 
         // Get the device, this gives a handle to run commands and install APKs.
         mDevice = getDevice();
+    }
+
+    @Override
+    protected void tearDown() throws Exception {
+        super.tearDown();
+        try {
+            mDevice.executeShellCommand(AM_FORCE_STOP_TEST_PACKAGE);
+        } catch (DeviceNotAvailableException e) {
+        }
     }
 
     // Utility method for debugging, not used directly here, but useful, so kept around.
@@ -102,6 +128,11 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
             }
         }
         return -1;
+    }
+
+    protected boolean supportsPip() throws DeviceNotAvailableException {
+        return hasDeviceFeature("android.software.picture_in_picture")
+                || PRETEND_DEVICE_SUPPORTS_PIP;
     }
 
     protected boolean hasDeviceFeature(String requiredFeature) throws DeviceNotAvailableException {
