@@ -74,7 +74,7 @@ LOCAL_STATIC_JAVA_LIBRARIES := ctstestserver ctstestrunner ctsdeviceutil compati
 
 LOCAL_JAVA_LIBRARIES := android.test.runner org.apache.http.legacy
 
-LOCAL_JNI_SHARED_LIBRARIES := libctssecurity_jni libcts_jni
+LOCAL_JNI_SHARED_LIBRARIES := libctssecurity_jni libcts_jni libnativehelper_compat_libc++
 
 LOCAL_SRC_FILES := $(call all-java-files-under, src)\
                    src/android/security/cts/activity/ISecureRandomService.aidl

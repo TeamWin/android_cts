@@ -34,7 +34,7 @@ LOCAL_JAVA_LIBRARIES := android.test.runner telephony-common
 
 LOCAL_STATIC_JAVA_LIBRARIES := ctsdeviceutil ctstestrunner
 
-LOCAL_JNI_SHARED_LIBRARIES := libcts_jni
+LOCAL_JNI_SHARED_LIBRARIES := libcts_jni libnativehelper_compat_libc++
 
 LOCAL_SRC_FILES := $(call all-java-files-under, src)
 
