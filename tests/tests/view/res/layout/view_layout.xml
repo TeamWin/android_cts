@@ -102,4 +102,22 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content" />
 
+    <LinearLayout
+        android:id="@+id/pointer_icon_layout"
+        android:orientation="vertical"
+        android:layout_width="100px"
+        android:layout_height="100px">
+      <LinearLayout
+          android:orientation="vertical"
+          android:layout_width="match_parent"
+          android:layout_height="50px"
+          android:pointerShape="crosshair">
+        <View android:layout_width="match_parent"
+              android:layout_height="20px"
+              android:pointerShape="help"/>
+        <View android:layout_width="match_parent"
+              android:layout_height="20px"/>
+      </LinearLayout>
+    </LinearLayout>
+
 </LinearLayout>

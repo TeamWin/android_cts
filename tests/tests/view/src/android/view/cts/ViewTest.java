@@ -59,6 +59,7 @@ import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MotionEvent;
+import android.view.PointerIcon;
 import android.view.SoundEffectConstants;
 import android.view.TouchDelegate;
 import android.view.View;
@@ -345,6 +346,29 @@ public class ViewTest extends ActivityInstrumentationTestCase2<ViewTestCtsActivi
 
         view.setTouchDelegate(null);
         assertNull(view.getTouchDelegate());
+    }
+
+    public void testAccessPointerShape() {
+        View view = mActivity.findViewById(R.id.pointer_icon_layout);
+        MotionEvent event = MotionEvent.obtain(0, 0, MotionEvent.ACTION_HOVER_MOVE,
+                                               view.getX(), view.getY(), 0);
+
+        assertEquals(PointerIcon.getSystemIcon(mActivity, PointerIcon.STYLE_HELP),
+                     view.getPointerIcon(event, 0, 0));
+
+        event.setLocation(0, 21);
+        assertEquals(PointerIcon.getSystemIcon(mActivity, PointerIcon.STYLE_CROSSHAIR),
+                     view.getPointerIcon(event, 0, 21));
+        event.setLocation(0, 41);
+        assertEquals(PointerIcon.getSystemIcon(mActivity, PointerIcon.STYLE_CROSSHAIR),
+                     view.getPointerIcon(event, 0, 41));
+        event.setLocation(0, 51);
+        assertNull(view.getPointerIcon(event, 0, 51));
+
+        view.setPointerIcon(PointerIcon.getSystemIcon(mActivity, PointerIcon.STYLE_TEXT));
+        assertEquals(PointerIcon.getSystemIcon(mActivity, PointerIcon.STYLE_TEXT),
+                     view.getPointerIcon(event, 0, 51));
+        event.recycle();
     }
 
     @UiThreadTest
