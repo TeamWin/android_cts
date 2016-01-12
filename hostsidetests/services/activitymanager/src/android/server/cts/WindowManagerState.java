@@ -44,8 +44,11 @@ class WindowManagerState {
     private final Pattern mExitingWindowPattern =
             Pattern.compile("Window #(\\d+) Window\\{([0-9a-fA-F]+) u(\\d+) (.+) EXITING\\}\\:");
 
-    private final Pattern mFocusedWindowPattern =
-            Pattern.compile("mCurrentFocus=Window\\{(.+) u(\\d+) (\\S+)\\}");
+    private final Pattern mFocusedWindowPattern = Pattern.compile(
+            "mCurrentFocus=Window\\{([0-9a-fA-F]+) u(\\d+) (\\S+)\\}");
+    private final Pattern mAppErrorFocusedWindowPattern = Pattern.compile(
+            "mCurrentFocus=Window\\{([0-9a-fA-F]+) u(\\d+) Application Error\\: (\\S+)\\}");
+
     private final Pattern mFocusedAppPattern =
             Pattern.compile("mFocusedApp=AppWindowToken\\{(.+) token=Token\\{(.+) "
                     + "ActivityRecord\\{(.+) u(\\d+) (\\S+) (\\S+)");
@@ -54,7 +57,7 @@ class WindowManagerState {
 
     private final Pattern[] mExtractStackExitPatterns = { mStackIdPattern, mWindowPattern,
             mStartingWindowPattern, mExitingWindowPattern, mFocusedWindowPattern,
-            mFocusedAppPattern };
+            mAppErrorFocusedWindowPattern, mFocusedAppPattern };
 
     // Windows in z-order with the top most at the front of the list.
     private List<String> mWindows = new ArrayList();
@@ -155,6 +158,15 @@ class WindowManagerState {
             }
 
             matcher = mFocusedWindowPattern.matcher(line);
+            if (matcher.matches()) {
+                CLog.logAndDisplay(INFO, line);
+                final String focusedWindow = matcher.group(3);
+                CLog.logAndDisplay(INFO, focusedWindow);
+                mFocusedWindow = focusedWindow;
+                continue;
+            }
+
+            matcher = mAppErrorFocusedWindowPattern.matcher(line);
             if (matcher.matches()) {
                 CLog.logAndDisplay(INFO, line);
                 final String focusedWindow = matcher.group(3);
