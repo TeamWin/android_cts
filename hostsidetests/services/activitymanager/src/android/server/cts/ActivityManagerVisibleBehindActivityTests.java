@@ -22,9 +22,9 @@ import java.lang.Exception;
 import java.lang.String;
 
 public class ActivityManagerVisibleBehindActivityTests extends ActivityManagerTestBase {
-    private static final String TRANSLUCENT_ACTIVITY = "TranslucentActivity";
+    private static final String TRANSLUCENT_ACTIVITY = "AlwaysFocusablePipActivity";
     private static final String VISIBLE_BEHIND_ACTIVITY = "VisibleBehindActivity";
-    private static final String PIP_ACTIVITY = "PipActivity";
+    private static final String PIP_ON_PIP_ACTIVITY = "LaunchPipOnPipActivity";
 
     public void testVisibleBehindHomeActivity() throws Exception {
         mDevice.executeShellCommand(getAmStartCmd(VISIBLE_BEHIND_ACTIVITY));
@@ -64,15 +64,15 @@ public class ActivityManagerVisibleBehindActivityTests extends ActivityManagerTe
             return;
         }
 
-        mDevice.executeShellCommand(getAmStartCmdOverHome(PIP_ACTIVITY));
-        mDevice.executeShellCommand(AM_MOVE_TOP_ACTIVITY_TO_PINNED_STACK_COMMAND);
-        mDevice.executeShellCommand(getAmStartCmdOverHome(TRANSLUCENT_ACTIVITY));
+        mDevice.executeShellCommand(getAmStartCmdOverHome(PIP_ON_PIP_ACTIVITY));
+        // NOTE: moving to pinned stack will trigger the pip-on-pip activity to launch the
+        // translucent activity.
         mDevice.executeShellCommand(AM_MOVE_TOP_ACTIVITY_TO_PINNED_STACK_COMMAND);
 
         mAmWmState.computeState(mDevice);
         mAmWmState.assertSanity();
         mAmWmState.assertFrontStack("Pinned stack must be the front stack.", PINNED_STACK_ID);
-        mAmWmState.assertVisibility(PIP_ACTIVITY, true);
+        mAmWmState.assertVisibility(PIP_ON_PIP_ACTIVITY, true);
         mAmWmState.assertVisibility(TRANSLUCENT_ACTIVITY, true);
     }
 }

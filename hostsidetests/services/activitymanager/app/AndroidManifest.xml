@@ -48,10 +48,12 @@
                   android:exported="true"
         />
         <activity android:name=".AlwaysFocusablePipActivity"
+                  android:theme="@style/Theme.Transparent"
                   android:resizeable="true"
                   android:supportsPictureInPicture="true"
                   androidprv:alwaysFocusable="true"
                   android:exported="true"
+                  android:taskAffinity="nobody.but.AlwaysFocusablePipActivity"
         />
         <activity android:name=".LaunchIntoPinnedStackPipActivity"
                   android:resizeable="true"
@@ -59,18 +61,18 @@
                   androidprv:alwaysFocusable="true"
                   android:exported="true"
         />
-        <activity android:name=".TranslucentActivity"
-                  android:theme="@style/Theme.Transparent"
-                  android:resizeable="true"
-                  android:supportsPictureInPicture="true"
-                  android:exported="true"
-                  android:taskAffinity="nobody.but.TranslucentActivity"
-        />
         <activity android:name=".VisibleBehindActivity"
                   android:resizeable="true"
                   android:supportsPictureInPicture="true"
                   android:exported="true"
                   android:taskAffinity="nobody.but.VisibleBehindActivity"
+        />
+        <activity android:name=".LaunchPipOnPipActivity"
+                  android:resizeable="true"
+                  android:supportsPictureInPicture="true"
+                  android:taskAffinity="nobody.but.LaunchPipOnPipActivity"
+                  android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout|layoutDirection"
+                  android:exported="true"
         />
     </application>
 </manifest>
