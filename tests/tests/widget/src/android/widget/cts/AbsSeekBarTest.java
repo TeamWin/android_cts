@@ -284,12 +284,6 @@ public class AbsSeekBarTest extends ActivityInstrumentationTestCase2<ProgressBar
                 tickMark.hasCalledSetTint());
     }
 
-    public void testFoo() {
-        // Do not test these APIs. They are callbacks which:
-        // 1. The callback machanism has been tested in super class
-        // 2. The functionality is implmentation details, no need to test
-    }
-
     private static class MyAbsSeekBar extends AbsSeekBar {
         public MyAbsSeekBar(Context context) {
             super(context);
