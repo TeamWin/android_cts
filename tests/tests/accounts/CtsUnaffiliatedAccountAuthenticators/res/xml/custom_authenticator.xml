@@ -21,7 +21,7 @@
 <!-- for the Account Manager. -->
 
 <account-authenticator xmlns:android="http://schemas.android.com/apk/res/android"
-    android:accountType="android.accounts.test.custom.unaffiliated"
+    android:accountType="android.accounts.test.custom"
     android:icon="@drawable/ic_cts_selected_custom_account"
     android:smallIcon="@drawable/ic_cts_minitab_selected_custom_account"
     android:customTokens="true"

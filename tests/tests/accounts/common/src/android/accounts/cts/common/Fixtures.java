@@ -31,12 +31,9 @@ public final class Fixtures {
 
     public static final String TYPE_STANDARD_UNAFFILIATED =
             "android.accounts.test.standard.unaffiliated";
-    public static final String TYPE_CUSTOM_UNAFFILIATED =
-            "android.accounts.test.custom.unaffiliated";
 
     public static final String PREFIX_TOKEN = "token:";
     public static final String PREFIX_PASSWORD = "password:";
-    public static final String PREFIX_STATUS_TOKEN = "status_token:";
 
     public static final String SUFFIX_NAME_FIXTURE = "fixture.com";
     public static final String SUFFIX_NAME_TEST = "test.com";
@@ -54,10 +51,6 @@ public final class Fixtures {
     public static final Account ACCOUNT_UNAFFILIATED_FIXTURE_SUCCESS = new Account(
             PREFIX_NAME_SUCCESS + "@" + SUFFIX_NAME_FIXTURE,
             TYPE_STANDARD_UNAFFILIATED);
-
-    public static final Account ACCOUNT_CUSTOM_UNAFFILIATED_FIXTURE_SUCCESS = new Account(
-            PREFIX_NAME_SUCCESS + "@" + SUFFIX_NAME_FIXTURE,
-            TYPE_CUSTOM_UNAFFILIATED);
 
     public static List<String> getFixtureAccountNames() {
         List<String> accountNames = new ArrayList<>(accountNamePrefixes.length);
