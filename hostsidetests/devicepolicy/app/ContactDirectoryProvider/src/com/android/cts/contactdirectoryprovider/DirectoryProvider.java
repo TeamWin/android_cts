@@ -47,6 +47,7 @@ public class DirectoryProvider extends ContentProvider {
     private static final int GAL_PHONE_FILTER = GAL_BASE + 5;
     private static final int GAL_PHONE_LOOKUP = GAL_BASE + 6;
     private static final int GAL_CALLABLES_FILTER = GAL_BASE + 7;
+    private static final int GAL_EMAIL_LOOKUP = GAL_BASE + 8;
 
     private final UriMatcher mURIMatcher = new UriMatcher(UriMatcher.NO_MATCH);
 
@@ -62,6 +63,7 @@ public class DirectoryProvider extends ContentProvider {
         mURIMatcher.addURI(AUTHORITY, "data/phones/filter/*", GAL_PHONE_FILTER);
         mURIMatcher.addURI(AUTHORITY, "phone_lookup/*", GAL_PHONE_LOOKUP);
         mURIMatcher.addURI(AUTHORITY, "data/callables/filter/*", GAL_CALLABLES_FILTER);
+        mURIMatcher.addURI(AUTHORITY, "data/emails/lookup/*", GAL_EMAIL_LOOKUP);
         mSharedPrefs = getContext().getSharedPreferences(CONFIG_NAME, Context.MODE_PRIVATE);
         return true;
     }
@@ -101,7 +103,8 @@ public class DirectoryProvider extends ContentProvider {
             case GAL_EMAIL_FILTER:
             case GAL_PHONE_FILTER:
             case GAL_PHONE_LOOKUP:
-            case GAL_CALLABLES_FILTER: {
+            case GAL_CALLABLES_FILTER:
+            case GAL_EMAIL_LOOKUP: {
                 // TODO: Add all CTS tests for these APIs
                 final MatrixCursor cursor = new MatrixCursor(projection);
                 final Object[] row = new Object[projection.length];
