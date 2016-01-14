@@ -19,7 +19,6 @@ package android.permission.cts;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.os.Environment;
-import android.os.SystemProperties;
 import android.system.Os;
 import android.system.OsConstants;
 import android.system.StructStatVfs;
@@ -360,7 +359,6 @@ public class FileSystemPermissionTest extends AndroidTestCase {
     @MediumTest
     public void testDeviceTreeCpuCurrent() throws Exception {
         String arch = System.getProperty("os.arch");
-        String flavor = SystemProperties.get("ro.build.flavor");
         String[] osVersion = System.getProperty("os.version").split("\\.");
         /*
          * Perform the test for only arm-based architecture and
