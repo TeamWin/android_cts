@@ -30,11 +30,11 @@
 
 #include <android/native_window_jni.h>
 
-#include "ndk/NdkMediaExtractor.h"
-#include "ndk/NdkMediaCodec.h"
-#include "ndk/NdkMediaCrypto.h"
-#include "ndk/NdkMediaFormat.h"
-#include "ndk/NdkMediaMuxer.h"
+#include "media/NdkMediaExtractor.h"
+#include "media/NdkMediaCodec.h"
+#include "media/NdkMediaCrypto.h"
+#include "media/NdkMediaFormat.h"
+#include "media/NdkMediaMuxer.h"
 
 template <class T>
 class simplevector {
