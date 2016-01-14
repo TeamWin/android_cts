@@ -86,12 +86,15 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
 
     protected ActivityAndWindowManagersState mAmWmState = new ActivityAndWindowManagersState();
 
+    private int mInitialAccelerometerRotation;
+
     @Override
     protected void setUp() throws Exception {
         super.setUp();
 
         // Get the device, this gives a handle to run commands and install APKs.
         mDevice = getDevice();
+        mInitialAccelerometerRotation = getAccelerometerRotation();
     }
 
     @Override
@@ -99,6 +102,7 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
         super.tearDown();
         try {
             mDevice.executeShellCommand(AM_FORCE_STOP_TEST_PACKAGE);
+            setAccelerometerRotation(mInitialAccelerometerRotation);
         } catch (DeviceNotAvailableException e) {
         }
     }
@@ -138,13 +142,11 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
     protected boolean hasDeviceFeature(String requiredFeature) throws DeviceNotAvailableException {
         if (mAvailableFeatures == null) {
             // TODO: Move this logic to ITestDevice.
-            String command = "pm list features";
-            String commandOutput = mDevice.executeShellCommand(command);
-            CLog.i("Output for command " + command + ": " + commandOutput);
+            final String output = runCommandAndPrintOutput("pm list features");
 
             // Extract the id of the new user.
             mAvailableFeatures = new HashSet<>();
-            for (String feature: commandOutput.split("\\s+")) {
+            for (String feature: output.split("\\s+")) {
                 // Each line in the output of the command has the format "feature:{FEATURE_VALUE}".
                 String[] tokens = feature.split(":");
                 assertTrue("\"" + feature + "\" expected to have format feature:{FEATURE_VALUE}",
@@ -158,5 +160,28 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
             CLog.logAndDisplay(LogLevel.INFO, "Device doesn't support " + requiredFeature);
         }
         return result;
+    }
+
+    protected void setDeviceRotation(int rotation) throws DeviceNotAvailableException {
+        setAccelerometerRotation(0);
+        runCommandAndPrintOutput("settings put system user_rotation " + rotation);
+    }
+
+    private int getAccelerometerRotation() throws DeviceNotAvailableException {
+        final String rotation =
+                runCommandAndPrintOutput("settings get system accelerometer_rotation");
+        return Integer.valueOf(rotation.trim());
+    }
+
+    private void setAccelerometerRotation(int rotation) throws DeviceNotAvailableException {
+        runCommandAndPrintOutput(
+                "settings put system accelerometer_rotation " + rotation);
+    }
+
+    private String runCommandAndPrintOutput(String command) throws DeviceNotAvailableException {
+        final String output = mDevice.executeShellCommand(command);
+        CLog.logAndDisplay(LogLevel.INFO, command);
+        CLog.logAndDisplay(LogLevel.INFO, output);
+        return output;
     }
 }
