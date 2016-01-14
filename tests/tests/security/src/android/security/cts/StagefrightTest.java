@@ -116,6 +116,10 @@ public class StagefrightTest extends InstrumentationTestCase {
         doStagefrightTest(R.raw.bug_25765591);
     }
 
+    public void testStagefright_bug_25812590() throws Exception {
+        doStagefrightTest(R.raw.bug_25812590);
+    }
+
     private void doStagefrightTest(final int rid) throws Exception {
         doStagefrightTestMediaPlayer(rid);
         doStagefrightTestMediaCodec(rid);
@@ -300,6 +304,10 @@ public class StagefrightTest extends InstrumentationTestCase {
                     int status = codec.dequeueOutputBuffer(info, 5000);
                     if (status >= 0) {
                         if ((info.flags & MediaCodec.BUFFER_FLAG_END_OF_STREAM) != 0) {
+                            break;
+                        }
+                        if (info.presentationTimeUs > TIMEOUT_NS / 1000) {
+                            Log.d(TAG, "stopping after 10 seconds worth of data");
                             break;
                         }
                         codec.releaseOutputBuffer(status, true);
