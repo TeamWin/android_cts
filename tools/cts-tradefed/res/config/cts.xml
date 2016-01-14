@@ -24,6 +24,8 @@
     <!-- Exclude sample test cases -->
     <option name="compatibility:exclude-filter" value="CtsSampleDeviceTestCases" />
     <option name="compatibility:exclude-filter" value="CtsSampleHostTestCases" />
+    <!-- Exclude automotive only test cases for now -->
+    <option name="compatibility:exclude-filter" value="CtsAutomotiveTestCases" />
 
     <target_preparer class="com.android.compatibility.common.tradefed.targetprep.DynamicConfigPusher">
         <option name="target" value="host" />
