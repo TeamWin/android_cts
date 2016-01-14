@@ -360,7 +360,7 @@ class ActivityManagerState {
                 matcher = LAST_NON_FULLSCREEN_BOUNDS_PATTERN.matcher(line);
                 if (matcher.matches()) {
                     CLog.logAndDisplay(INFO, line);
-                    mLastNonFullscreenBounds = getBounds(matcher);
+                    mLastNonFullscreenBounds = extractBounds(matcher);
                 }
 
                 matcher = REAL_ACTIVITY_PATTERN.matcher(line);
@@ -479,11 +479,11 @@ class ActivityManagerState {
                 return false;
             }
             CLog.logAndDisplay(INFO, line);
-            mBounds = getBounds(matcher);
+            mBounds = extractBounds(matcher);
             return true;
         }
 
-        static Rectangle getBounds(Matcher matcher) {
+        static Rectangle extractBounds(Matcher matcher) {
             final int left = Integer.valueOf(matcher.group(1));
             final int top = Integer.valueOf(matcher.group(2));
             final int right = Integer.valueOf(matcher.group(3));
@@ -492,6 +492,14 @@ class ActivityManagerState {
 
             CLog.logAndDisplay(INFO, rect.toString());
             return rect;
+        }
+
+        Rectangle getBounds() {
+            return mBounds;
+        }
+
+        boolean isFullscreen() {
+            return mFullscreen;
         }
     }
 

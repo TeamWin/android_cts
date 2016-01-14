@@ -234,6 +234,15 @@ class WindowManagerState {
         return false;
     }
 
+    WindowStack getStack(int stackId) {
+        for (WindowStack stack : mStacks) {
+            if (stackId == stack.mStackId) {
+                return stack;
+            }
+        }
+        return null;
+    }
+
     private void reset() {
         mSysDump.clear();
         mStacks.clear();
@@ -303,6 +312,15 @@ class WindowManagerState {
                 }
             }
         }
+
+        WindowTask getTask(int taskId) {
+            for (WindowTask task : mTasks) {
+                if (taskId == task.mTaskId) {
+                    return task;
+                }
+            }
+            return null;
+        }
     }
 
     static class WindowTask extends WindowContainer {
@@ -358,7 +376,7 @@ class WindowManagerState {
                 Matcher matcher = TEMP_INSET_BOUNDS_PATTERN.matcher(line);
                 if (matcher.matches()) {
                     CLog.logAndDisplay(INFO, line);
-                    mTempInsetBounds = getBounds(matcher);
+                    mTempInsetBounds = extractBounds(matcher);
                 }
 
                 matcher = APP_TOKEN_PATTERN.matcher(line);
@@ -413,11 +431,11 @@ class WindowManagerState {
                 return false;
             }
             CLog.logAndDisplay(INFO, line);
-            mBounds = getBounds(matcher);
+            mBounds = extractBounds(matcher);
             return true;
         }
 
-        static Rectangle getBounds(Matcher matcher) {
+        static Rectangle extractBounds(Matcher matcher) {
             final int left = Integer.valueOf(matcher.group(1));
             final int top = Integer.valueOf(matcher.group(2));
             final int right = Integer.valueOf(matcher.group(3));
@@ -426,6 +444,14 @@ class WindowManagerState {
 
             CLog.logAndDisplay(INFO, rect.toString());
             return rect;
+        }
+
+        Rectangle getBounds() {
+            return mBounds;
+        }
+
+        boolean isFullscreen() {
+            return mFullscreen;
         }
     }
 }

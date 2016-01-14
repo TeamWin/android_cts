@@ -26,54 +26,88 @@ public class ActivityManagerDockedStackTests extends ActivityManagerTestBase {
     private static final String TEST_ACTIVITY_NAME = "TestActivity";
     private static final String LAUNCH_TO_SIDE_ACTIVITY_NAME = "LaunchToSideActivity";
 
-    private static final String AM_START_TEST_ACTIVITY =
-            "am start -n android.server.app/." + TEST_ACTIVITY_NAME;
-    private static final String AM_START_LAUNCH_TO_SIDE_ACTIVITY =
-            "am start -n android.server.app/." + LAUNCH_TO_SIDE_ACTIVITY_NAME;
-
-    private static final String AM_FORCE_STOP_SETTINGS = "am force-stop com.android.settings";
     private static final String AM_MOVE_TASK = "am stack movetask ";
-
-    @Override
-    protected void tearDown() throws Exception {
-        super.tearDown();
-        try {
-            mDevice.executeShellCommand(AM_FORCE_STOP_SETTINGS);
-        } catch (DeviceNotAvailableException e) {
-        }
-    }
 
     // TODO: Add test for non-resizeable activity.
 
     public void testStackList() throws Exception {
-        mDevice.executeShellCommand(AM_START_TEST_ACTIVITY);
+        mDevice.executeShellCommand(getAmStartCmd(TEST_ACTIVITY_NAME));
         mAmWmState.computeState(mDevice);
+        mAmWmState.assertSanity();
         mAmWmState.assertContainsStack("Must contain home stack.", HOME_STACK_ID);
         mAmWmState.assertContainsStack(
                 "Must contain fullscreen stack.", FULLSCREEN_WORKSPACE_STACK_ID);
     }
 
     public void testDockActivity() throws Exception {
-        mDevice.executeShellCommand(AM_START_TEST_ACTIVITY);
-        final int taskId = getActivityTaskId(TEST_ACTIVITY_NAME);
-        final String cmd = AM_MOVE_TASK + taskId + " " + DOCKED_STACK_ID + " true";
-        mDevice.executeShellCommand(cmd);
+        launchActivityInDockStack(TEST_ACTIVITY_NAME);
         mAmWmState.computeState(mDevice);
+        mAmWmState.assertSanity();
         mAmWmState.assertContainsStack("Must contain home stack.", HOME_STACK_ID);
         mAmWmState.assertContainsStack("Must contain docked stack.", DOCKED_STACK_ID);
     }
 
     public void testLaunchToSide() throws Exception {
-        mDevice.executeShellCommand(AM_START_LAUNCH_TO_SIDE_ACTIVITY);
-        final int taskId = getActivityTaskId(LAUNCH_TO_SIDE_ACTIVITY_NAME);
-        final String cmd = AM_MOVE_TASK + taskId + " " + DOCKED_STACK_ID + " true";
-        mDevice.executeShellCommand(cmd);
+        launchActivityInDockStack(LAUNCH_TO_SIDE_ACTIVITY_NAME);
         printStacksAndTasks();
-        mDevice.executeShellCommand(AM_START_LAUNCH_TO_SIDE_ACTIVITY
-                + " -f 0x20000000 --ez launch_to_the_side true");
+        launchActivityToSide(LAUNCH_TO_SIDE_ACTIVITY_NAME);
         mAmWmState.computeState(mDevice);
+        mAmWmState.assertSanity();
         mAmWmState.assertContainsStack(
                 "Must contain fullscreen stack.", FULLSCREEN_WORKSPACE_STACK_ID);
         mAmWmState.assertContainsStack("Must contain docked stack.", DOCKED_STACK_ID);
+    }
+
+    public void testRotationWhenDocked() throws Exception {
+        launchActivityInDockStack(LAUNCH_TO_SIDE_ACTIVITY_NAME);
+        launchActivityToSide(LAUNCH_TO_SIDE_ACTIVITY_NAME);
+        mAmWmState.computeState(mDevice);
+        mAmWmState.assertSanity();
+        mAmWmState.assertContainsStack(
+                "Must contain fullscreen stack.", FULLSCREEN_WORKSPACE_STACK_ID);
+        mAmWmState.assertContainsStack("Must contain docked stack.", DOCKED_STACK_ID);
+
+        // Rotate device single steps (90°) 0-1-2-3
+        setDeviceRotation(0);
+        mAmWmState.computeState(mDevice);
+        mAmWmState.assertValidBounds();
+        setDeviceRotation(1);
+        mAmWmState.computeState(mDevice);
+        mAmWmState.assertValidBounds();
+        setDeviceRotation(2);
+        mAmWmState.computeState(mDevice);
+        mAmWmState.assertValidBounds();
+        setDeviceRotation(3);
+        mAmWmState.computeState(mDevice);
+        mAmWmState.assertValidBounds();
+        // Double steps (180°) We ended the single step at 3. So, we jump directly to 1 for double
+        // step. So, we are testing 3-1-3 for one side and 0-2-0 for the other side.
+        setDeviceRotation(1);
+        mAmWmState.computeState(mDevice);
+        mAmWmState.assertValidBounds();
+        setDeviceRotation(3);
+        mAmWmState.computeState(mDevice);
+        mAmWmState.assertValidBounds();
+        setDeviceRotation(0);
+        mAmWmState.computeState(mDevice);
+        mAmWmState.assertValidBounds();
+        setDeviceRotation(2);
+        mAmWmState.computeState(mDevice);
+        mAmWmState.assertValidBounds();
+        setDeviceRotation(0);
+        mAmWmState.computeState(mDevice);
+        mAmWmState.assertValidBounds();
+    }
+
+    private void launchActivityInDockStack(String activityName) throws Exception {
+        mDevice.executeShellCommand(getAmStartCmd(activityName));
+        final int taskId = getActivityTaskId(activityName);
+        final String cmd = AM_MOVE_TASK + taskId + " " + DOCKED_STACK_ID + " true";
+        mDevice.executeShellCommand(cmd);
+    }
+
+    private void launchActivityToSide(String activityName) throws Exception {
+        mDevice.executeShellCommand(
+                getAmStartCmd(activityName) + " -f 0x20000000 --ez launch_to_the_side true");
     }
 }

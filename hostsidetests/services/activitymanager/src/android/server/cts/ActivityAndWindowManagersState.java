@@ -20,7 +20,14 @@ import com.android.tradefed.device.ITestDevice;
 
 import junit.framework.Assert;
 
-import java.util.List;
+import android.server.cts.ActivityManagerState.ActivityStack;
+import android.server.cts.ActivityManagerState.ActivityTask;
+import android.server.cts.WindowManagerState.WindowStack;
+import android.server.cts.WindowManagerState.WindowTask;
+
+import java.awt.Rectangle;
+
+import static android.server.cts.ActivityManagerTestBase.FREEFORM_WORKSPACE_STACK_ID;
 
 /** Combined state of the activity manager and window manager. */
 class ActivityAndWindowManagersState extends Assert {
@@ -51,9 +58,9 @@ class ActivityAndWindowManagersState extends Assert {
                 1, mAmState.getResumedActivitiesCount());
         assertNotNull("Must have focus activity.", mAmState.getFocusedActivity());
 
-        for (ActivityManagerState.ActivityStack aStack : mAmState.getStacks()) {
+        for (ActivityStack aStack : mAmState.getStacks()) {
             final int stackId = aStack.mStackId;
-            for (ActivityManagerState.ActivityTask aTask : aStack.getTasks()) {
+            for (ActivityTask aTask : aStack.getTasks()) {
                 assertEquals("Stack can only contain its own tasks", stackId, aTask.mStackId);
             }
         }
@@ -142,6 +149,50 @@ class ActivityAndWindowManagersState extends Assert {
             assertFalse("Activity=" + activityComponentName + " must NOT be visible.",
                     activityVisible);
             assertFalse("Window=" + windowName + " must NOT be visible.", windowVisible);
+        }
+    }
+
+    void assertValidBounds() {
+        for (ActivityStack aStack : mAmState.getStacks()) {
+            final int stackId = aStack.mStackId;
+            final WindowStack wStack = mWmState.getStack(stackId);
+            assertNotNull("stackId=" + stackId + " in AM but not in WM?", wStack);
+
+            assertEquals("Stack fullscreen state in AM and WM must be equal stackId=" + stackId,
+                    aStack.isFullscreen(), wStack.isFullscreen());
+
+            final Rectangle aStackBounds = aStack.getBounds();
+            final Rectangle wStackBounds = wStack.getBounds();
+            assertEquals("Stack bounds in AM and WM must be equal stackId=" + stackId,
+                    aStackBounds, wStackBounds);
+
+            for (ActivityTask aTask : aStack.getTasks()) {
+                final int taskId = aTask.mTaskId;
+                final WindowTask wTask = wStack.getTask(taskId);
+                assertNotNull(
+                        "taskId=" + taskId + " in AM but not in WM? stackId=" + stackId, wTask);
+
+                final boolean aTaskIsFullscreen = aTask.isFullscreen();
+                final boolean wTaskIsFullscreen = wTask.isFullscreen();
+                assertEquals("Task fullscreen state in AM and WM must be equal taskId=" + taskId
+                                + ", stackId=" + stackId, aTaskIsFullscreen, wTaskIsFullscreen);
+
+                final Rectangle aTaskBounds = aTask.getBounds();
+                final Rectangle wTaskBounds = wTask.getBounds();
+
+                if (aTaskIsFullscreen) {
+                    assertNull("Task bounds in AM must be null for fullscreen taskId=" + taskId,
+                            aTaskBounds);
+                } else {
+                    assertEquals("Task bounds in AM and WM must be equal taskId=" + taskId
+                            + ", stackId=" + stackId, aTaskBounds, wTaskBounds);
+
+                    if (stackId != FREEFORM_WORKSPACE_STACK_ID) {
+                        assertEquals("Task bounds must be equal to stack bounds taskId=" + taskId
+                                + ", stackId=" + stackId, aStackBounds, wTaskBounds);
+                    }
+                }
+            }
         }
     }
 }
