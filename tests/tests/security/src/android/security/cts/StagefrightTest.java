@@ -132,6 +132,10 @@ public class StagefrightTest extends InstrumentationTestCase {
         doStagefrightTest(R.raw.bug_25812590);
     }
 
+    public void testStagefright_bug_26070014() throws Exception {
+        doStagefrightTest(R.raw.bug_26070014);
+    }
+
     private void doStagefrightTest(final int rid) throws Exception {
         class MediaPlayerCrashListener
                 implements MediaPlayer.OnErrorListener,
@@ -208,80 +212,5 @@ public class StagefrightTest extends InstrumentationTestCase {
         assertFalse("Device *IS* vulnerable to " + cve,
                     mpcl.waitForError() == MediaPlayer.MEDIA_ERROR_SERVER_DIED);
         t.interrupt();
-    }
-
-    private void doStagefrightTestMediaCodec(final int rid) throws Exception {
-        Resources resources =  getInstrumentation().getContext().getResources();
-        AssetFileDescriptor fd = resources.openRawResourceFd(rid);
-        MediaExtractor ex = new MediaExtractor();
-        ex.setDataSource(fd.getFileDescriptor(), fd.getStartOffset(), fd.getLength());
-        MediaCodecList codecList = new MediaCodecList(MediaCodecList.REGULAR_CODECS);
-        int numtracks = ex.getTrackCount();
-        String rname = resources.getResourceEntryName(rid);
-        Log.i(TAG, "start mediacodec test for: " + rname + ", which has " + numtracks + " tracks");
-        for (int t = 0; t < numtracks; t++) {
-            // find all the available decoders for this format
-            ArrayList<String> matchingCodecs = new ArrayList<String>();
-            MediaFormat format = ex.getTrackFormat(t);
-            String mime = format.getString(MediaFormat.KEY_MIME);
-            for (MediaCodecInfo info: codecList.getCodecInfos()) {
-                if (info.isEncoder()) {
-                    continue;
-                }
-                try {
-                    MediaCodecInfo.CodecCapabilities caps = info.getCapabilitiesForType(mime);
-                    if (caps != null && caps.isFormatSupported(format)) {
-                        matchingCodecs.add(info.getName());
-                    }
-                } catch (IllegalArgumentException e) {
-                    // type is not supported
-                }
-            }
-
-            if (matchingCodecs.size() == 0) {
-                Log.w(TAG, "no codecs for track " + t + ", type " + mime);
-            }
-            // decode this track once with each matching codec
-            ex.selectTrack(t);
-            for (String codecName: matchingCodecs) {
-                Log.i(TAG, "Decoding track " + t + " using codec " + codecName);
-                ex.seekTo(0, MediaExtractor.SEEK_TO_CLOSEST_SYNC);
-                MediaCodec codec = MediaCodec.createByCodecName(codecName);
-                Surface surface = null;
-                if (mime.startsWith("video/")) {
-                    surface = getDummySurface();
-                }
-                codec.configure(format, surface, null, 0);
-                codec.start();
-                MediaCodec.BufferInfo info = new MediaCodec.BufferInfo();
-                while (true) {
-                    int flags = ex.getSampleFlags();
-                    long time = ex.getSampleTime();
-                    int bufidx = codec.dequeueInputBuffer(5000);
-                    if (bufidx >= 0) {
-                        int n = ex.readSampleData(codec.getInputBuffer(bufidx), 0);
-                        if (n < 0) {
-                            flags = MediaCodec.BUFFER_FLAG_END_OF_STREAM;
-                            time = 0;
-                            n = 0;
-                        }
-                        codec.queueInputBuffer(bufidx, 0, n, time, flags);
-                        ex.advance();
-                    }
-                    int status = codec.dequeueOutputBuffer(info, 5000);
-                    if (status >= 0) {
-                        if ((info.flags & MediaCodec.BUFFER_FLAG_END_OF_STREAM) != 0) {
-                            break;
-                        }
-                        if (info.presentationTimeUs > TIMEOUT_NS / 1000) {
-                            Log.d(TAG, "stopping after 10 seconds worth of data");
-                            break;
-                        }
-                        codec.releaseOutputBuffer(status, true);
-                    }
-                }
-                codec.release();
-            }
-        }
     }
 }
