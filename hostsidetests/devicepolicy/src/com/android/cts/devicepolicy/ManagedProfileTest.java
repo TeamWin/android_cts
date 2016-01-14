@@ -554,6 +554,16 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
                     "testPrimaryProfileEnterprisePhoneLookup_canAccessManagedDirectories",
                     mParentUserId));
 
+            // Check if email lookup can access primary directories
+            assertTrue(runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".ContactsTest",
+                    "testPrimaryProfileEnterpriseEmailLookup_canAccessPrimaryDirectories",
+                    mParentUserId));
+
+            // Check if email lookup can access enterprise directories
+            assertTrue(runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".ContactsTest",
+                    "testPrimaryProfileEnterpriseEmailLookup_canAccessManagedDirectories",
+                    mParentUserId));
+
             assertTrue(runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".ContactsTest",
                     "testPrimaryProfileEnterpriseCallableFilter_canAccessPrimaryDirectories",
                     mParentUserId));

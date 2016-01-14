@@ -465,6 +465,44 @@ public class ContactsTest extends AndroidTestCase {
         assertTrue(hasManagedDirectory);
     }
 
+    public void testPrimaryProfileEnterpriseEmailLookup_canAccessPrimaryDirectories() {
+        assertFalse(isManagedProfile());
+
+        // local directory
+        final ContactInfo defaultContactInfo
+                = getContactInfoFromEnterpriseEmailLookupUriInDirectory(PRIMARY_CONTACT_EMAIL,
+                Directory.DEFAULT);
+        assertNotNull(defaultContactInfo);
+        assertEquals(PRIMARY_CONTACT_DISPLAY_NAME, defaultContactInfo.displayName);
+
+        // remote directory
+        final long directoryId = getPrimaryRemoteDirectoryId();
+        final ContactInfo directoryContactInfo
+                = getContactInfoFromEnterpriseEmailLookupUriInDirectory(PRIMARY_CONTACT_EMAIL,
+                directoryId);
+        assertNotNull(directoryContactInfo);
+        assertEquals(PRIMARY_DIRECTORY_CONTACT_NAME, directoryContactInfo.displayName);
+    }
+
+    public void testPrimaryProfileEnterpriseEmailLookup_canAccessManagedDirectories() {
+        assertFalse(isManagedProfile());
+
+        // local directory
+        final ContactInfo defaultContactInfo
+                = getContactInfoFromEnterpriseEmailLookupUriInDirectory(MANAGED_CONTACT_EMAIL,
+                Directory.ENTERPRISE_DEFAULT);
+        assertNotNull(defaultContactInfo);
+        assertEquals(MANAGED_CONTACT_DISPLAY_NAME, defaultContactInfo.displayName);
+
+        // remote directory
+        final long directoryId = getEnterpriseRemoteDirectoryId();
+        final ContactInfo directoryContactInfo
+                = getContactInfoFromEnterpriseEmailLookupUriInDirectory(MANAGED_CONTACT_EMAIL,
+                directoryId);
+        assertNotNull(directoryContactInfo);
+        assertEquals(MANAGED_DIRECTORY_CONTACT_NAME, directoryContactInfo.displayName);
+    }
+
     public void testPrimaryProfileEnterprisePhoneLookup_canAccessPrimaryDirectories() {
         assertFalse(isManagedProfile());
 
@@ -813,6 +851,15 @@ public class ContactsTest extends AndroidTestCase {
         Uri baseUri = (isEnterprise) ? Email.ENTERPRISE_CONTENT_LOOKUP_URI
                 : Email.CONTENT_LOOKUP_URI;
         Uri uri = Uri.withAppendedPath(baseUri, email);
+        return getContactInfoFromUri(uri, Email.CONTACT_ID, Email.DISPLAY_NAME_PRIMARY,
+                Email.PHOTO_URI, Email.PHOTO_THUMBNAIL_URI, Email.PHOTO_ID);
+    }
+
+    private ContactInfo getContactInfoFromEnterpriseEmailLookupUriInDirectory(String email,
+            long directoryId) {
+        Uri uri = Email.ENTERPRISE_CONTENT_LOOKUP_URI.buildUpon().appendPath(email)
+                .appendQueryParameter(ContactsContract.DIRECTORY_PARAM_KEY,
+                        String.valueOf(directoryId)).build();
         return getContactInfoFromUri(uri, Email.CONTACT_ID, Email.DISPLAY_NAME_PRIMARY,
                 Email.PHOTO_URI, Email.PHOTO_THUMBNAIL_URI, Email.PHOTO_ID);
     }
