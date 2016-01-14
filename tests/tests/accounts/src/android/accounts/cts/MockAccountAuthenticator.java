@@ -58,7 +58,6 @@ public class MockAccountAuthenticator extends AbstractAccountAuthenticator {
     public Bundle mOptionsGetAuthToken;
     public Bundle mOptionsStartAddAccountSession;
     public Bundle mOptionsStartUpdateCredentialsSession;
-    public Bundle mOptionsFinishSession;
     Account mAccount;
     String[] mFeatures;
 
@@ -121,7 +120,6 @@ public class MockAccountAuthenticator extends AbstractAccountAuthenticator {
         mOptionsConfirmCredentials = null;
         mOptionsStartAddAccountSession = null;
         mOptionsStartUpdateCredentialsSession = null;
-        mOptionsFinishSession = null;
         mAccount = null;
         mFeatures = null;
     }
@@ -430,71 +428,6 @@ public class MockAccountAuthenticator extends AbstractAccountAuthenticator {
             if (options != null) {
                 errorCode = options.getInt(AccountManager.KEY_ERROR_CODE);
                 errorMsg = options.getString(AccountManager.KEY_ERROR_MESSAGE);
-            }
-            result.putInt(AccountManager.KEY_ERROR_CODE, errorCode);
-            result.putString(AccountManager.KEY_ERROR_MESSAGE, errorMsg);
-        }
-
-        try {
-            return (isCallbackRequired) ? null : result;
-        } finally {
-            if (isCallbackRequired) {
-                response.onResult(result);
-            }
-        }
-    }
-
-    /**
-     * Finishes account session started by adding the account to device or updating the local
-     * credentials.
-     */
-    @Override
-    public Bundle finishSession(
-            AccountAuthenticatorResponse response,
-            String accountType,
-            Bundle sessionBundle) throws NetworkErrorException {
-
-        this.mResponse = response;
-        this.mAccountType = accountType;
-        this.mOptionsFinishSession = sessionBundle;
-
-        String accountName = null;
-        boolean isCallbackRequired = false;
-        if (sessionBundle != null) {
-            accountName = sessionBundle.getString(Fixtures.KEY_ACCOUNT_NAME);
-            isCallbackRequired = sessionBundle.getBoolean(Fixtures.KEY_CALLBACK_REQUIRED, false);
-        }
-
-        Bundle result = new Bundle();
-        if (accountName.startsWith(Fixtures.PREFIX_NAME_SUCCESS)) {
-            // fill bundle with a success result.
-            result.putString(AccountManager.KEY_ACCOUNT_NAME, AccountManagerTest.ACCOUNT_NAME);
-            result.putString(AccountManager.KEY_ACCOUNT_TYPE, AccountManagerTest.ACCOUNT_TYPE);
-            result.putString(AccountManager.KEY_AUTHTOKEN,
-                    Integer.toString(mTokenCounter.incrementAndGet()));
-        } else if (accountName.startsWith(Fixtures.PREFIX_NAME_INTERVENE)) {
-            // Specify data to be returned by the eventual activity.
-            Intent eventualActivityResultData = new Intent();
-            eventualActivityResultData.putExtra(AccountManager.KEY_ACCOUNT_NAME,
-                    AccountManagerTest.ACCOUNT_NAME);
-            eventualActivityResultData.putExtra(AccountManager.KEY_ACCOUNT_TYPE,
-                    AccountManagerTest.ACCOUNT_TYPE);
-            eventualActivityResultData.putExtra(AccountManager.KEY_AUTHTOKEN,
-                    Integer.toString(mTokenCounter.incrementAndGet()));
-
-            // Fill result with Intent.
-            Intent intent = new Intent(mContext, AccountAuthenticatorDummyActivity.class);
-            intent.putExtra(Fixtures.KEY_RESULT, eventualActivityResultData);
-            intent.putExtra(Fixtures.KEY_CALLBACK, response);
-
-            result.putParcelable(AccountManager.KEY_INTENT, intent);
-        } else {
-            // fill with error
-            int errorCode = AccountManager.ERROR_CODE_INVALID_RESPONSE;
-            String errorMsg = "Default Error Message";
-            if (sessionBundle != null) {
-                errorCode = sessionBundle.getInt(AccountManager.KEY_ERROR_CODE);
-                errorMsg = sessionBundle.getString(AccountManager.KEY_ERROR_MESSAGE);
             }
             result.putInt(AccountManager.KEY_ERROR_CODE, errorCode);
             result.putString(AccountManager.KEY_ERROR_MESSAGE, errorMsg);
