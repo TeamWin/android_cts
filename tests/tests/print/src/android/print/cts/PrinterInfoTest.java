@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015 The Android Open Source Project
+ * Copyright (C) 2016 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -199,16 +199,39 @@ public class PrinterInfoTest extends BasePrintTest {
                                             for (PendingIntent infoIntent : infoIntents) {
                                                 for (PrinterCapabilitiesInfo capabilities
                                                         : capabilityList) {
+                                                    // printerId
+                                                    RuntimeException e = null;
                                                     PrinterId printerId = null;
-                                                    if (localPrinterId != null) {
-                                                        printerId = mDiscoverySession.getService()
-                                                                .generatePrinterId(localPrinterId
-                                                                        + printers.size());
+                                                    try {
+                                                        if (localPrinterId == null) {
+                                                            printerId = mDiscoverySession
+                                                                    .getService()
+                                                                    .generatePrinterId(
+                                                                            localPrinterId);
+                                                        } else {
+                                                            printerId = mDiscoverySession
+                                                                    .getService()
+                                                                    .generatePrinterId(
+                                                                            localPrinterId
+                                                                                    + printers
+                                                                                            .size());
+                                                        }
+                                                    } catch (RuntimeException ex) {
+                                                        e = ex;
+                                                    }
+
+                                                    // Expect exception if localId is null
+                                                    if (localPrinterId == null) {
+                                                        if (e == null) {
+                                                            throw new IllegalStateException();
+                                                        }
+                                                    } else if (e != null) {
+                                                        throw e;
                                                     }
 
                                                     // Constructor
                                                     PrinterInfo.Builder b = null;
-                                                    RuntimeException e = null;
+                                                    e = null;
                                                     try {
                                                         b = new PrinterInfo.Builder(
                                                                 printerId, name, status);
