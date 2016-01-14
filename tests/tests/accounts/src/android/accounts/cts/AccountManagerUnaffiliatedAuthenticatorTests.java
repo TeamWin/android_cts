@@ -235,17 +235,11 @@ public class AccountManagerUnaffiliatedAuthenticatorTests extends AndroidTestCas
         options.putString(Fixtures.KEY_ACCOUNT_NAME, accountName);
 
         AccountManagerFuture<Bundle> future = mAccountManager.startAddAccountSession(
-                Fixtures.TYPE_STANDARD_UNAFFILIATED,
-                null /* authTokenType */,
-                null /* requiredFeatures */,
-                options,
-                null /* activity */,
-                null /* callback */,
+                Fixtures.TYPE_STANDARD_UNAFFILIATED, null /* authTokenType */,
+                null /* requiredFeatures */, options, null /* activity */, null /* callback */,
                 null /* handler */);
 
         Bundle result = future.getResult();
-        assertTrue(future.isDone());
-        assertNotNull(result);
 
         // Validate that auth token was stripped from result.
         assertNull(result.get(AccountManager.KEY_AUTHTOKEN));
@@ -264,42 +258,6 @@ public class AccountManagerUnaffiliatedAuthenticatorTests extends AndroidTestCas
     private void validateNullPasswordAndStatusToken(Bundle result) {
         assertNull(result.getString(AccountManager.KEY_PASSWORD));
         assertNull(result.getString(AccountManager.KEY_ACCOUNT_STATUS_TOKEN));
-    }
-
-    /**
-     * Tests startUpdateCredentialsSession default implementation. An encrypted session
-     * bundle should always be returned without password or status token.
-     */
-    public void testStartUpdateCredentialsSessionDefaultImpl()
-            throws OperationCanceledException, AuthenticatorException, IOException {
-        Bundle options = new Bundle();
-        String accountName = Fixtures.PREFIX_NAME_SUCCESS + "@" + Fixtures.SUFFIX_NAME_FIXTURE;
-        options.putString(Fixtures.KEY_ACCOUNT_NAME, accountName);
-
-        AccountManagerFuture<Bundle> future = mAccountManager.startUpdateCredentialsSession(
-                Fixtures.ACCOUNT_UNAFFILIATED_FIXTURE_SUCCESS,
-                null /* authTokenType */,
-                options,
-                null /* activity */,
-                null /* callback */,
-                null /* handler */);
-
-        Bundle result = future.getResult();
-        assertTrue(future.isDone());
-        assertNotNull(result);
-
-        // Validate no auth token in result.
-        assertNull(result.get(AccountManager.KEY_AUTHTOKEN));
-
-        // Validate that no password nor status token is returned in the result
-        // for default implementation.
-        validateNullPasswordAndStatusToken(result);
-
-        Bundle sessionBundle = result.getBundle(AccountManager.KEY_ACCOUNT_SESSION_BUNDLE);
-        // Validate session bundle is returned but data in the bundle is
-        // encrypted and hence not visible.
-        assertNotNull(sessionBundle);
-        assertNull(sessionBundle.getString(Fixtures.KEY_ACCOUNT_NAME));
     }
 }
 
