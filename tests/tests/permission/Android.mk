@@ -31,7 +31,7 @@ LOCAL_JAVA_LIBRARIES := telephony-common
 
 LOCAL_STATIC_JAVA_LIBRARIES := ctstestrunner guava android-ex-camera2
 
-LOCAL_JNI_SHARED_LIBRARIES := libctspermission_jni
+LOCAL_JNI_SHARED_LIBRARIES := libctspermission_jni libnativehelper_compat_libc++
 
 LOCAL_SRC_FILES := $(call all-java-files-under, src)
 
