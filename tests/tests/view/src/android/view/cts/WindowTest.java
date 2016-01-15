@@ -1048,6 +1048,10 @@ public class WindowTest extends ActivityInstrumentationTestCase2<WindowCtsActivi
         @Override
         public void onMultiWindowModeChanged() {
         }
+
+        @Override
+        public void reportActivityRelaunched() {
+        }
     }
 
     private class MockWindowCallback implements Window.Callback {
