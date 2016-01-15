@@ -162,6 +162,15 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
         return result;
     }
 
+    protected void lockDevice() throws DeviceNotAvailableException {
+        runCommandAndPrintOutput("input keyevent 26");
+    }
+
+    protected void unlockDevice() throws DeviceNotAvailableException {
+        runCommandAndPrintOutput("input keyevent 26");
+        runCommandAndPrintOutput("input keyevent 82");
+    }
+
     protected void setDeviceRotation(int rotation) throws DeviceNotAvailableException {
         setAccelerometerRotation(0);
         runCommandAndPrintOutput("settings put system user_rotation " + rotation);
