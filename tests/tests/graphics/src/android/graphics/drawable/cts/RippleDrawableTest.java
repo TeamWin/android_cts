@@ -16,6 +16,8 @@
 
 package android.graphics.drawable.cts;
 
+import static org.mockito.Mockito.*;
+
 import org.xmlpull.v1.XmlPullParserException;
 
 import android.content.res.ColorStateList;
@@ -24,6 +26,7 @@ import android.content.res.Resources.Theme;
 import android.content.res.XmlResourceParser;
 import android.graphics.Color;
 import android.graphics.cts.R;
+import android.graphics.drawable.Drawable;
 import android.graphics.drawable.Drawable.ConstantState;
 import android.graphics.drawable.RippleDrawable;
 import android.test.AndroidTestCase;
@@ -88,5 +91,14 @@ public class RippleDrawableTest extends AndroidTestCase {
         assertEquals(initialRadius, halfDrawable.getRadius());
         doubleDrawable.applyTheme(t);
         assertEquals(initialRadius, doubleDrawable.getRadius());
+    }
+
+    public void testSetColor() {
+        Drawable.Callback cb = mock(Drawable.Callback.class);
+        RippleDrawable dr = new RippleDrawable(ColorStateList.valueOf(Color.RED), null, null);
+        dr.setCallback(cb);
+
+        dr.setColor(ColorStateList.valueOf(Color.BLACK));
+        verify(cb, times(1)).invalidateDrawable(dr);
     }
 }
