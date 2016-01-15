@@ -30,6 +30,8 @@ LOCAL_C_INCLUDES := \
 
 LOCAL_C_INCLUDES += $(call include-path-for, mediandk)
 
-LOCAL_SHARED_LIBRARIES := libandroid libnativehelper liblog libmediandk
+LOCAL_SHARED_LIBRARIES := libandroid libnativehelper_compat_libc++ liblog libmediandk
+
+LOCAL_SDK_VERSION := 23
 
 include $(BUILD_SHARED_LIBRARY)

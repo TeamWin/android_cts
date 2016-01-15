@@ -25,7 +25,7 @@ LOCAL_MULTILIB := both
 
 LOCAL_STATIC_JAVA_LIBRARIES := ctsmediautil ctsdeviceutil ctstestrunner
 
-LOCAL_JNI_SHARED_LIBRARIES := libctsmediacodec_jni
+LOCAL_JNI_SHARED_LIBRARIES := libctsmediacodec_jni libnativehelper_compat_libc++
 
 LOCAL_SRC_FILES := $(call all-java-files-under, src)
 
