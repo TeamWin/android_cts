@@ -25,6 +25,8 @@ import android.content.IntentFilter;
 import android.provider.Settings;
 import android.util.Log;
 
+import com.android.cts.verifier.location.LocationListenerActivity;
+
 /**
  * Profile owner receiver for BYOD flow test.
  * Setup cross-profile intent filter after successful provisioning.
@@ -78,7 +80,7 @@ public class DeviceAdminTestReceiver extends DeviceAdminReceiver {
             filter.addAction(
                     PermissionLockdownTestActivity.ACTION_MANAGED_PROFILE_CHECK_PERMISSION_LOCKDOWN);
             filter.addAction(AuthenticationBoundKeyTestActivity.ACTION_AUTH_BOUND_KEY_TEST);
-            filter.addAction(ByodHelperActivity.ACTION_SET_LOCATION_AND_CHECK_UPDATES);
+            filter.addAction(ByodHelperActivity.ACTION_BYOD_SET_LOCATION_AND_CHECK_UPDATES);
             filter.addAction(VpnTestActivity.ACTION_VPN);
             dpm.addCrossProfileIntentFilter(getWho(context), filter,
                     DevicePolicyManager.FLAG_MANAGED_CAN_ACCESS_PARENT);
@@ -87,6 +89,7 @@ public class DeviceAdminTestReceiver extends DeviceAdminReceiver {
             filter = new IntentFilter();
             filter.addAction(ByodHelperActivity.ACTION_PROFILE_OWNER_STATUS);
             filter.addAction(CrossProfileTestActivity.ACTION_CROSS_PROFILE_TO_PERSONAL);
+            filter.addAction(LocationListenerActivity.ACTION_SET_LOCATION_AND_CHECK_UPDATES);
             dpm.addCrossProfileIntentFilter(getWho(context), filter,
                     DevicePolicyManager.FLAG_PARENT_CAN_ACCESS_MANAGED);
 

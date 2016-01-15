@@ -35,6 +35,7 @@ import com.android.cts.verifier.R;
 import com.android.cts.verifier.TestListActivity;
 import com.android.cts.verifier.TestListAdapter.TestListItem;
 import com.android.cts.verifier.TestResult;
+import com.android.cts.verifier.location.LocationListenerActivity;
 
 /**
  * CTS verifier test for BYOD managed provisioning flow.
@@ -83,7 +84,9 @@ public class ByodFlowTestActivity extends DialogTestListActivity {
     private DialogTestListItem mDisableNfcBeamTest;
     private TestListItem mAuthenticationBoundKeyTest;
     private DialogTestListItem mEnableLocationModeTest;
-    private DialogTestListItem mDisableLocationModeTest;
+    private DialogTestListItem mDisableLocationModeThroughMainSwitchTest;
+    private DialogTestListItem mDisableLocationModeThroughWorkSwitchTest;
+    private DialogTestListItem mPrimaryLocationWhenWorkDisabledTest;
     private TestListItem mVpnTest;
     private TestListItem mDisallowAppsControlTest;
 
@@ -458,15 +461,26 @@ public class ByodFlowTestActivity extends DialogTestListActivity {
                     R.string.provisioning_byod_location_mode_enable,
                     "BYOD_LocationModeEnableTest",
                     R.string.provisioning_byod_location_mode_enable_instruction,
-                    new Intent(ByodHelperActivity.ACTION_SET_LOCATION_AND_CHECK_UPDATES));
-            mDisableLocationModeTest = new DialogTestListItem(this,
+                    new Intent(ByodHelperActivity.ACTION_BYOD_SET_LOCATION_AND_CHECK_UPDATES));
+            mDisableLocationModeThroughMainSwitchTest = new DialogTestListItem(this,
                     R.string.provisioning_byod_location_mode_disable,
-                    "BYOD_LocationModeDisableTest",
+                    "BYOD_LocationModeDisableMainTest",
                     R.string.provisioning_byod_location_mode_disable_instruction,
-                    new Intent(ByodHelperActivity.ACTION_SET_LOCATION_AND_CHECK_UPDATES));
-
+                    new Intent(ByodHelperActivity.ACTION_BYOD_SET_LOCATION_AND_CHECK_UPDATES));
+            mDisableLocationModeThroughWorkSwitchTest = new DialogTestListItem(this,
+                    R.string.provisioning_byod_work_location_mode_disable,
+                    "BYOD_LocationModeDisableWorkTest",
+                    R.string.provisioning_byod_work_location_mode_disable_instruction,
+                    new Intent(ByodHelperActivity.ACTION_BYOD_SET_LOCATION_AND_CHECK_UPDATES));
+            mPrimaryLocationWhenWorkDisabledTest = new DialogTestListItem(this,
+                    R.string.provisioning_byod_primary_location_when_work_disabled,
+                    "BYOD_PrimaryLocationWhenWorkDisabled",
+                    R.string.provisioning_byod_primary_location_when_work_disabled_instruction,
+                    new Intent(LocationListenerActivity.ACTION_SET_LOCATION_AND_CHECK_UPDATES));
             adapter.add(mEnableLocationModeTest);
-            adapter.add(mDisableLocationModeTest);
+            adapter.add(mDisableLocationModeThroughMainSwitchTest);
+            adapter.add(mDisableLocationModeThroughWorkSwitchTest);
+            adapter.add(mPrimaryLocationWhenWorkDisabledTest);
         } else {
             // The system does not support GPS feature, so skip test.
             Toast.makeText(ByodFlowTestActivity.this,

@@ -27,9 +27,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
-import android.location.Location;
-import android.location.LocationListener;
-import android.location.LocationManager;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
@@ -46,6 +43,7 @@ import static android.provider.Settings.Secure.INSTALL_NON_MARKET_APPS;
 import java.io.File;
 import java.util.ArrayList;
 
+import com.android.cts.verifier.location.LocationListenerActivity;
 import com.android.cts.verifier.R;
 import com.android.cts.verifier.managedprovisioning.ByodPresentMediaDialog.DialogCallback;
 
@@ -58,7 +56,8 @@ import com.android.cts.verifier.managedprovisioning.ByodPresentMediaDialog.Dialo
  *
  * Note: We have to use a dummy activity because cross-profile intents only work for activities.
  */
-public class ByodHelperActivity extends Activity implements DialogCallback, Handler.Callback {
+public class ByodHelperActivity extends LocationListenerActivity
+        implements DialogCallback {
     static final String TAG = "ByodHelperActivity";
 
     // Primary -> managed intent: query if the profile owner has been set up.
@@ -105,7 +104,7 @@ public class ByodHelperActivity extends Activity implements DialogCallback, Hand
             "com.android.cts.verifier.managedprovisioning.action.TEST_APP_LINKING_DIALOG";
 
     // Primary -> managed intent: request to goto the location settings page and listen to updates.
-    public static final String ACTION_SET_LOCATION_AND_CHECK_UPDATES =
+    public static final String ACTION_BYOD_SET_LOCATION_AND_CHECK_UPDATES =
             "com.android.cts.verifier.managedprovisioning.BYOD_SET_LOCATION_AND_CHECK";
     public static final String ACTION_NOTIFICATION =
             "com.android.cts.verifier.managedprovisioning.NOTIFICATION";
@@ -124,11 +123,10 @@ public class ByodHelperActivity extends Activity implements DialogCallback, Hand
 
     public static final int RESULT_FAILED = RESULT_FIRST_USER;
 
-    private static final int REQUEST_INSTALL_PACKAGE = 1;
-    private static final int REQUEST_IMAGE_CAPTURE = 2;
-    private static final int REQUEST_VIDEO_CAPTURE = 3;
-    private static final int REQUEST_AUDIO_CAPTURE = 4;
-    private static final int REQUEST_LOCATION_UPDATE = 5;
+    private static final int REQUEST_INSTALL_PACKAGE = 2;
+    private static final int REQUEST_IMAGE_CAPTURE = 3;
+    private static final int REQUEST_VIDEO_CAPTURE = 4;
+    private static final int REQUEST_AUDIO_CAPTURE = 5;
 
     private static final String ORIGINAL_SETTINGS_NAME = "original settings";
 
@@ -137,15 +135,8 @@ public class ByodHelperActivity extends Activity implements DialogCallback, Hand
     private NotificationManager mNotificationManager;
     private Bundle mOriginalSettings;
 
-    private static final int MSG_TIMEOUT = 1;
-
-    private static final long MSG_TIMEOUT_MILLISEC = 15 * 1000;
-
     private ComponentName mAdminReceiverComponent;
     private DevicePolicyManager mDevicePolicyManager;
-    private LocationManager mLocationManager;
-    private Handler mHandler;
-    private boolean mIsLocationUpdated;
 
     private Uri mImageUri;
     private Uri mVideoUri;
@@ -176,9 +167,6 @@ public class ByodHelperActivity extends Activity implements DialogCallback, Hand
         mAdminReceiverComponent = new ComponentName(this, DeviceAdminTestReceiver.class.getName());
         mDevicePolicyManager = (DevicePolicyManager) getSystemService(
                 Context.DEVICE_POLICY_SERVICE);
-        mLocationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
-        mHandler = new Handler(this);
-        mIsLocationUpdated = false;
         mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
         Intent intent = getIntent();
         String action = intent.getAction();
@@ -300,21 +288,8 @@ public class ByodHelperActivity extends Activity implements DialogCallback, Hand
                 mDevicePolicyManager.clearUserRestriction(
                         DeviceAdminTestReceiver.getReceiverComponentName(), restriction);
             }
-        } else if (action.equals(ACTION_SET_LOCATION_AND_CHECK_UPDATES)) {
-            // Grant the locaiton permission to the provile owner on cts-verifier.
-            // The permission state does not have to be reverted at the end since the profile onwer
-            // is going to be deleted when BYOD tests ends.
-            grantLocationPermissionToSelf();
-            Intent locationSettingsIntent = getLocationSettingsIntent();
-            if (locationSettingsIntent.resolveActivity(getPackageManager()) != null) {
-                startActivityForResult(locationSettingsIntent, REQUEST_LOCATION_UPDATE);
-                scheduleTimeout();
-            } else {
-                Log.e(TAG, "BYOD settings could not be resolved in managed profile");
-                finish();
-            }
-            mLocationManager.requestLocationUpdates(
-                    LocationManager.GPS_PROVIDER, 0, 0, mLocationListener);
+        } else if (action.equals(ACTION_BYOD_SET_LOCATION_AND_CHECK_UPDATES)) {
+            handleLocationAction();
             return;
         } else if (action.equals(ACTION_NOTIFICATION)) {
             showNotification(Notification.VISIBILITY_PUBLIC);
@@ -380,15 +355,8 @@ public class ByodHelperActivity extends Activity implements DialogCallback, Hand
                 }
                 break;
             }
-            case REQUEST_LOCATION_UPDATE: {
-                Log.d(TAG, "BYOD exit location settings:OK");
-                mLocationManager.removeUpdates(mLocationListener);
-                mHandler.removeMessages(MSG_TIMEOUT);
-                finish();
-                break;
-            }
             default: {
-                Log.wtf(TAG, "Unknown requestCode " + requestCode + "; data = " + data);
+                super.onActivityResult(requestCode, resultCode, data);
                 break;
             }
         }
@@ -410,10 +378,6 @@ public class ByodHelperActivity extends Activity implements DialogCallback, Hand
 
     public static Intent getCaptureAudioIntent() {
         return new Intent(MediaStore.Audio.Media.RECORD_SOUND_ACTION);
-    }
-
-    public static Intent getLocationSettingsIntent() {
-        return new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS);
     }
 
     public static Intent createLockIntent() {
@@ -460,11 +424,6 @@ public class ByodHelperActivity extends Activity implements DialogCallback, Hand
         startActivity(intent);
     }
 
-    private void showToast(int messageId) {
-        String message = getString(messageId);
-        Toast.makeText(this, message, Toast.LENGTH_SHORT).show();
-    }
-
     private void grantCameraPermissionToSelf() {
         mDevicePolicyManager.setPermissionGrantState(mAdminReceiverComponent, getPackageName(),
                 android.Manifest.permission.CAMERA,
@@ -478,36 +437,19 @@ public class ByodHelperActivity extends Activity implements DialogCallback, Hand
         startActivity(chooser);
     }
 
+    @Override
+    protected void handleLocationAction() {
+        // Grant the locaiton permission to the provile owner on cts-verifier.
+        // The permission state does not have to be reverted at the end since the profile onwer
+        // is going to be deleted when BYOD tests ends.
+        grantLocationPermissionToSelf();
+        super.handleLocationAction();
+    }
+
     private void grantLocationPermissionToSelf() {
         mDevicePolicyManager.setPermissionGrantState(mAdminReceiverComponent, getPackageName(),
                 android.Manifest.permission.ACCESS_FINE_LOCATION,
                 DevicePolicyManager.PERMISSION_GRANT_STATE_GRANTED);
-    }
-
-    private final LocationListener mLocationListener = new LocationListener() {
-        @Override
-        public void onLocationChanged(Location location) {
-            if (mIsLocationUpdated) return;
-            showToast(R.string.provisioning_byod_location_mode_enable_toast_location_change);
-            mIsLocationUpdated = true;
-        }
-
-        @Override
-        public void onProviderDisabled(String provider) {
-        }
-
-        @Override
-        public void onProviderEnabled(String provider) {
-        }
-
-        @Override
-        public void onStatusChanged(String provider, int status, Bundle extras) {
-        }
-    };
-
-    private void scheduleTimeout() {
-        mHandler.removeMessages(MSG_TIMEOUT);
-        mHandler.sendMessageDelayed(mHandler.obtainMessage(MSG_TIMEOUT), MSG_TIMEOUT_MILLISEC);
     }
 
     @Override
@@ -516,11 +458,7 @@ public class ByodHelperActivity extends Activity implements DialogCallback, Hand
     }
 
     @Override
-    public boolean handleMessage(Message msg) {
-        if (msg.what == MSG_TIMEOUT) {
-            if (mIsLocationUpdated) return true;
-            showToast(R.string.provisioning_byod_location_mode_time_out_toast);
-        }
-        return true;
+    protected String getLogTag() {
+        return TAG;
     }
 }

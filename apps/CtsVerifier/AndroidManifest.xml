@@ -437,6 +437,15 @@
             <meta-data android:name="test_required_features" android:value="android.hardware.location.gps" />
         </activity>
 
+        <activity android:name=".location.LocationListenerActivity"
+                android:label="@string/location_listener_activity"
+                android:configChanges="keyboardHidden|orientation|screenSize">
+            <intent-filter>
+                <action android:name="com.android.cts.verifier.location.SET_LOCATION_AND_CHECK" />
+                <category android:name="android.intent.category.DEFAULT"></category>
+                </intent-filter>
+        </activity>
+
         <activity android:name=".net.ConnectivityScreenOffTestActivity"
                 android:label="@string/network_screen_off_test"
                 android:screenOrientation="portrait">
