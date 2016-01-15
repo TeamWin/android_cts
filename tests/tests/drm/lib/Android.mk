@@ -28,12 +28,10 @@ LOCAL_C_INCLUDES := \
 	$(TOP)/frameworks/av/drm/libdrmframework/plugins/common/include
 
 LOCAL_SHARED_LIBRARIES := \
-	liblog
-
-LOCAL_CXX_STL := libc++_static
+	liblog \
+	libutils
 
 LOCAL_STATIC_LIBRARIES := \
-	libdrmframeworkcommon \
-	libutils
+	libdrmframeworkcommon
 
 include $(BUILD_SHARED_LIBRARY)
