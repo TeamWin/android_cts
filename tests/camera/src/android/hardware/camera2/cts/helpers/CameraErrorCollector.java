@@ -502,19 +502,11 @@ public class CameraErrorCollector extends ErrorCollector {
                 errorPercent)) return false;
 
         if (!expectSimilarValues(
-                formattedMsg, "left pt too right", "left pt too left", actual.left, expected.left,
+                formattedMsg, "too low", "too high", actual.centerY(), expected.centerY(),
                 errorPercent)) return false;
 
         if (!expectSimilarValues(
-                formattedMsg, "right pt too right", "right pt too left",
-                actual.right, expected.right, errorPercent)) return false;
-
-        if (!expectSimilarValues(
-                formattedMsg, "top pt too low", "top pt too high", actual.top, expected.top,
-                errorPercent)) return false;
-
-        if (!expectSimilarValues(
-                formattedMsg, "bottom pt too low", "bottom pt too high", actual.top, expected.top,
+                formattedMsg, "too right", "too left", actual.centerX(), expected.centerX(),
                 errorPercent)) return false;
 
         return true;
