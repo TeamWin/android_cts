@@ -254,7 +254,9 @@ public class BaseInputConnectionTest extends
         mConnection.reportFullscreenMode(false);
         assertFalse(imManager.isFullscreenMode());
         mConnection.reportFullscreenMode(true);
-        assertTrue(imManager.isFullscreenMode());
+        // Only IMEs are allowed to report full-screen mode.  Calling this method from the
+        // application should have no effect.
+        assertFalse(imManager.isFullscreenMode());
     }
 
     /**
