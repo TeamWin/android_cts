@@ -26,7 +26,7 @@ LOCAL_MULTILIB := both
 
 LOCAL_STATIC_JAVA_LIBRARIES := ctstestrunner ctsdeviceutil
 
-LOCAL_JNI_SHARED_LIBRARIES := libctsopenglperf_jni
+LOCAL_JNI_SHARED_LIBRARIES := libctsopenglperf_jni libnativehelper_compat_libc++
 
 LOCAL_SRC_FILES := $(call all-java-files-under, src)
 
