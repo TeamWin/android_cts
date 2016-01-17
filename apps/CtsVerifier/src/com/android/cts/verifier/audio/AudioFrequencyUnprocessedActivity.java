@@ -22,8 +22,11 @@ import com.android.cts.verifier.audio.wavelib.*;
 import com.android.compatibility.common.util.ReportLog;
 import com.android.compatibility.common.util.ResultType;
 import com.android.compatibility.common.util.ResultUnit;
-
 import android.content.Context;
+import android.content.BroadcastReceiver;
+import android.content.Intent;
+import android.content.IntentFilter;
+
 import android.media.AudioDeviceCallback;
 import android.media.AudioDeviceInfo;
 import android.media.AudioFormat;
@@ -31,13 +34,17 @@ import android.media.AudioManager;
 import android.media.AudioTrack;
 import android.media.AudioRecord;
 import android.media.MediaRecorder;
+
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.os.SystemClock;
+
 import android.util.Log;
+
 import android.view.View;
 import android.view.View.OnClickListener;
+
 import android.widget.Button;
 import android.widget.TextView;
 import android.widget.SeekBar;
@@ -45,30 +52,33 @@ import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 
 /**
- * Tests Audio Device roundtrip latency by using a loopback plug.
+ * Tests Audio built in Microphone response for Unprocessed audio source feature.
  */
-public class AudioFrequencyLineActivity extends PassFailButtons.Activity implements Runnable,
+public class AudioFrequencyUnprocessedActivity extends PassFailButtons.Activity implements Runnable,
     AudioRecord.OnRecordPositionUpdateListener {
-    private static final String TAG = "AudioFrequencyLineActivity";
+    private static final String TAG = "AudioFrequencyUnprocessedActivity";
 
-    static final int TEST_STARTED = 900;
-    static final int TEST_ENDED = 901;
-    static final int TEST_MESSAGE = 902;
-    static final double MIN_ENERGY_BAND_1 = -20.0;
-    static final double MIN_FRACTION_POINTS_IN_BAND = 0.3;
+    private static final int TEST_STARTED = 900;
+    private static final int TEST_ENDED = 901;
+    private static final int TEST_MESSAGE = 902;
+    private static final int TEST1_MESSAGE = 903;
+    private static final int TEST1_ENDED = 904;
+    private static final double MIN_ENERGY_BAND_1 = -50.0;          //dB Full Scale
+    private static final double MAX_ENERGY_BAND_1_BASE = -60.0;     //dB Full Scale
+    private static final double MIN_FRACTION_POINTS_IN_BAND = 0.3;
+    private static final double MAX_VAL = Math.pow(2, 15);
+    private static final double CLIP_LEVEL = (MAX_VAL-10) / MAX_VAL;
 
-    OnBtnClickListener mBtnClickListener = new OnBtnClickListener();
+    final OnBtnClickListener mBtnClickListener = new OnBtnClickListener();
     Context mContext;
 
-    Button mHeadsetPortYes;
-    Button mHeadsetPortNo;
-
-    Button mLoopbackPlugReady;
-    LinearLayout mLinearLayout;
-    Button mTestButton;
-    TextView mResultText;
+    Button mTest1Button;                //execute test 1
+    Button mTest2Button;                 //user to start test
+    String mUsbDevicesInfo;             //usb device info for report
+    LinearLayout mLayoutTest1;
+    TextView mTest1Result;
     ProgressBar mProgressBar;
-    //recording
+
     private boolean mIsRecording = false;
     private final Object mRecordingLock = new Object();
     private AudioRecord mRecorder;
@@ -76,16 +86,16 @@ public class AudioFrequencyLineActivity extends PassFailButtons.Activity impleme
     private short[] mAudioShortArray;
     private short[] mAudioShortArray2;
 
-    private final int mBlockSizeSamples = 1024;
+    private final int mBlockSizeSamples = 4096;
     private final int mSamplingRate = 48000;
-    private final int mSelectedRecordSource = MediaRecorder.AudioSource.UNPROCESSED;//VOICE_RECOGNITION;// UNPROCESSED;
+    private final int mSelectedRecordSource = MediaRecorder.AudioSource.UNPROCESSED;
     private final int mChannelConfig = AudioFormat.CHANNEL_IN_MONO;
     private final int mAudioFormat = AudioFormat.ENCODING_PCM_16BIT;
-    private volatile Thread mRecordThread;
-    private boolean mRecordThreadShutdown = false;
+    private Thread mRecordThread;
 
     PipeShort mPipe = new PipeShort(65536);
-    SoundPlayerObject mSPlayer;
+
+    private boolean mSupportsUnprocessed = false;
 
     private DspBufferComplex mC;
     private DspBufferDouble mData;
@@ -93,42 +103,20 @@ public class AudioFrequencyLineActivity extends PassFailButtons.Activity impleme
     private DspWindow mWindow;
     private DspFftServer mFftServer;
     private VectorAverage mFreqAverageMain = new VectorAverage();
+    private VectorAverage mFreqAverageBuiltIn = new VectorAverage();
 
-    private VectorAverage mFreqAverage0 = new VectorAverage();
-    private VectorAverage mFreqAverage1 = new VectorAverage();
-
-    private int mCurrentTest = -1;
     int mBands = 4;
     AudioBandSpecs[] bandSpecsArray = new AudioBandSpecs[mBands];
+    private TextView mTextViewUnprocessedStatus;
 
     int mMaxLevel;
     private class OnBtnClickListener implements OnClickListener {
         @Override
         public void onClick(View v) {
             switch (v.getId()) {
-                case R.id.audio_frequency_line_plug_ready_btn:
-                    Log.i(TAG, "audio loopback plug ready");
-                    //enable all the other views.
-                    enableLayout(true);
-                    break;
-                case R.id.audio_frequency_line_test_btn:
-                    Log.i(TAG, "audio loopback test");
-                    startAudioTest();
-                    break;
-                case R.id.audio_general_headset_yes:
-                    Log.i(TAG, "User confirms Headset Port existence");
-                    mLoopbackPlugReady.setEnabled(true);
-                    recordHeasetPortFound(true);
-                    mHeadsetPortYes.setEnabled(false);
-                    mHeadsetPortNo.setEnabled(false);
-                    break;
-                case R.id.audio_general_headset_no:
-                    Log.i(TAG, "User denies Headset Port existence");
-                    recordHeasetPortFound(false);
-                    getPassButton().setEnabled(true);
-                    mHeadsetPortYes.setEnabled(false);
-                    mHeadsetPortNo.setEnabled(false);
-                    break;
+            case R.id.audio_frequency_unprocessed_test1_btn:
+                startTest1();
+                break;
             }
         }
     }
@@ -136,29 +124,27 @@ public class AudioFrequencyLineActivity extends PassFailButtons.Activity impleme
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.audio_frequency_line_activity);
-
+        setContentView(R.layout.audio_frequency_unprocessed_activity);
         mContext = this;
+        mTextViewUnprocessedStatus = (TextView) findViewById(
+                R.id.audio_frequency_unprocessed_defined);
+        //unprocessed test
+        mSupportsUnprocessed = supportsUnprocessed();
+        if (mSupportsUnprocessed) {
+            mTextViewUnprocessedStatus.setText(
+                    getResources().getText(R.string.audio_frequency_unprocessed_defined));
+        } else {
+            mTextViewUnprocessedStatus.setText(
+                    getResources().getText(R.string.audio_frequency_unprocessed_not_defined));
+        }
 
-        mHeadsetPortYes = (Button)findViewById(R.id.audio_general_headset_yes);
-        mHeadsetPortYes.setOnClickListener(mBtnClickListener);
-        mHeadsetPortNo = (Button)findViewById(R.id.audio_general_headset_no);
-        mHeadsetPortNo.setOnClickListener(mBtnClickListener);
-
-        mLoopbackPlugReady = (Button)findViewById(R.id.audio_frequency_line_plug_ready_btn);
-        mLoopbackPlugReady.setOnClickListener(mBtnClickListener);
-        mLoopbackPlugReady.setEnabled(false);
-        mLinearLayout = (LinearLayout)findViewById(R.id.audio_frequency_line_layout);
-        mTestButton = (Button)findViewById(R.id.audio_frequency_line_test_btn);
-        mTestButton.setOnClickListener(mBtnClickListener);
-        mResultText = (TextView)findViewById(R.id.audio_frequency_line_results_text);
-        mProgressBar = (ProgressBar)findViewById(R.id.audio_frequency_line_progress_bar);
+        mTest1Button = (Button)findViewById(R.id.audio_frequency_unprocessed_test1_btn);
+        mTest1Button.setOnClickListener(mBtnClickListener);
+        mTest1Result = (TextView)findViewById(R.id.audio_frequency_unprocessed_results1_text);
+        mLayoutTest1 = (LinearLayout) findViewById(R.id.audio_frequency_unprocessed_layout_test1);
+        mProgressBar = (ProgressBar)findViewById(R.id.audio_frequency_unprocessed_progress_bar);
         showWait(false);
-        enableLayout(false);         //disabled all content
-
-        mSPlayer = new SoundPlayerObject();
-        mSPlayer.setSoundWithResId(getApplicationContext(), R.raw.stereo_mono_white_noise_48);
-        mSPlayer.setBalance(0.5f);
+        enableLayout(mLayoutTest1, true);
 
         //Init FFT stuff
         mAudioShortArray2 = new short[mBlockSizeSamples*2];
@@ -172,14 +158,14 @@ public class AudioFrequencyLineActivity extends PassFailButtons.Activity impleme
 
         setPassFailButtonClickListeners();
         getPassButton().setEnabled(false);
-        setInfoResources(R.string.audio_frequency_line_test,
-                R.string.audio_frequency_line_info, -1);
+        setInfoResources(R.string.audio_frequency_unprocessed_test,
+                R.string.audio_frequency_unprocessed_info, -1);
 
-        //Init bands
+        //Init bands for BuiltIn/Reference test
         bandSpecsArray[0] = new AudioBandSpecs(
-                50, 500,        /* frequency start,stop */
-                -20.0, -50,     /* start top,bottom value */
-                4.0, -4.0       /* stop top,bottom value */);
+                2, 500,         /* frequency start,stop */
+                30.0, -50,     /* start top,bottom value */
+                30.0, -4.0       /* stop top,bottom value */);
 
         bandSpecsArray[1] = new AudioBandSpecs(
                 500,4000,       /* frequency start,stop */
@@ -195,14 +181,17 @@ public class AudioFrequencyLineActivity extends PassFailButtons.Activity impleme
                 12000, 20000,   /* frequency start,stop */
                 5.0, -5.0,      /* start top,bottom value */
                 5.0, -30.0      /* stop top,bottom value */);
+
+        mSupportsUnprocessed = supportsUnprocessed();
+        Log.v(TAG, "Supports unprocessed: " + mSupportsUnprocessed);
     }
 
     /**
      * enable test ui elements
      */
-    private void enableLayout(boolean enable) {
-        for (int i = 0; i < mLinearLayout.getChildCount(); i++) {
-            View view = mLinearLayout.getChildAt(i);
+    private void enableLayout(LinearLayout layout, boolean enable) {
+        for (int i = 0; i < layout.getChildCount(); i++) {
+            View view = layout.getChildAt(i);
             view.setEnabled(enable);
         }
     }
@@ -224,20 +213,38 @@ public class AudioFrequencyLineActivity extends PassFailButtons.Activity impleme
         am.setStreamVolume(AudioManager.STREAM_MUSIC, (int)(mMaxLevel), 0);
     }
 
+    private void setMinLevel() {
+        AudioManager am = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
+        am.setStreamVolume(AudioManager.STREAM_MUSIC, 0, 0);
+    }
+
+    private boolean supportsUnprocessed() {
+        boolean unprocessedSupport = false;
+        AudioManager am = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
+        String unprocessedSupportString = am.getProperty(
+                AudioManager.PROPERTY_SUPPORT_AUDIO_SOURCE_UNPROCESSED);
+        Log.v(TAG,"unprocessed support: " + unprocessedSupportString);
+        if (unprocessedSupportString == null ||
+                unprocessedSupportString.equalsIgnoreCase(getResources().getString(
+                        R.string.audio_general_default_false_string))) {
+            unprocessedSupport = false;
+        } else {
+            unprocessedSupport = true;
+        }
+        return unprocessedSupport;
+    }
+
     /**
      *  Start the loopback audio test
      */
-    private void startAudioTest() {
+    private void startTest1() {
         if (mTestThread != null && !mTestThread.isAlive()) {
             mTestThread = null; //kill it.
         }
 
         if (mTestThread == null) {
             Log.v(TAG,"Executing test Thread");
-            mTestThread = new Thread(mPlayRunnable);
-            getPassButton().setEnabled(false);
-            if (!mSPlayer.isAlive())
-                mSPlayer.start();
+            mTestThread = new Thread(mTest1Runnable);
             mTestThread.start();
         } else {
             Log.v(TAG,"test Thread already running.");
@@ -245,50 +252,41 @@ public class AudioFrequencyLineActivity extends PassFailButtons.Activity impleme
     }
 
     Thread mTestThread;
-    Runnable mPlayRunnable = new Runnable() {
+    Runnable mTest1Runnable = new Runnable() {
         public void run() {
             Message msg = Message.obtain();
             msg.what = TEST_STARTED;
             mMessageHandler.sendMessage(msg);
+
             setMaxLevel();
-
-            sendMessage("Testing Left Capture");
-            mCurrentTest = 0;
-            mFreqAverage0.reset();
-            mSPlayer.setBalance(0.0f);
+            sendMessage("Testing Built in Microphone");
+            mFreqAverageBuiltIn.reset();
+            mFreqAverageBuiltIn.setCaptureType(VectorAverage.CAPTURE_TYPE_MAX);
             play();
 
-            sendMessage("Testing Right Capture");
-            mCurrentTest = 1;
-            mFreqAverage1.reset();
-            mSPlayer.setBalance(1.0f);
-            play();
-
-            mCurrentTest = -1;
             sendMessage("Testing Completed");
 
             Message msg2 = Message.obtain();
-            msg2.what = TEST_ENDED;
+            msg2.what = TEST1_ENDED;
             mMessageHandler.sendMessage(msg2);
         }
 
         private void play() {
             startRecording();
-            mSPlayer.play(true);
 
             try {
-                Thread.sleep(2000);
+                Thread.sleep(5000);
             } catch (InterruptedException e) {
                 e.printStackTrace();
+                //restore interrupted status
+                Thread.currentThread().interrupt();
             }
-
-            mSPlayer.play(false);
             stopRecording();
         }
 
         private void sendMessage(String str) {
             Message msg = Message.obtain();
-            msg.what = TEST_MESSAGE;
+            msg.what = TEST1_MESSAGE;
             msg.obj = str;
             mMessageHandler.sendMessage(msg);
         }
@@ -304,12 +302,20 @@ public class AudioFrequencyLineActivity extends PassFailButtons.Activity impleme
                 break;
             case TEST_ENDED:
                 showWait(false);
-                computeResults();
+//                computeTest2Results();
                 break;
-            case TEST_MESSAGE:
-                String str = (String)msg.obj;
-                if (str != null) {
-                    mResultText.setText(str);
+            case TEST1_MESSAGE: {
+                    String str = (String)msg.obj;
+                    if (str != null) {
+                        mTest1Result.setText(str);
+                    }
+                }
+                break;
+            case TEST1_ENDED:
+                showWait(false);
+                computeTest1Results();
+                break;
+            case TEST_MESSAGE: {
                 }
                 break;
             default:
@@ -332,11 +338,11 @@ public class AudioFrequencyLineActivity extends PassFailButtons.Activity impleme
         public String toString() {
             StringBuilder sb = new StringBuilder();
             sb.append(String.format("Channel %s\n", mLabel));
-            sb.append("Level in Band 1 : " + (testLevel() ? "OK" :"FAILED") +"\n");
+            sb.append("Level in Band 1 : " + (testLevel() ? "OK" :"FAILED") + "\n");
             for (int b = 0; b < mBands; b++) {
                 double percent = 0;
                 if (mPointsPerBand[b] > 0) {
-                    percent = 100.0 * (double)mInBoundPointsPerBand[b] / mPointsPerBand[b];
+                    percent = 100.0 * (double) mInBoundPointsPerBand[b] / mPointsPerBand[b];
                 }
                 sb.append(String.format(
                         " Band %d: Av. Level: %.1f dB InBand: %d/%d (%.1f%%) %s\n",
@@ -358,9 +364,10 @@ public class AudioFrequencyLineActivity extends PassFailButtons.Activity impleme
 
         public boolean testInBand(int b) {
             if (b >= 0 && b < mBands && mPointsPerBand[b] > 0) {
-                if ((double)mInBoundPointsPerBand[b] / mPointsPerBand[b] >
-                MIN_FRACTION_POINTS_IN_BAND)
-                    return true;
+                if ((double) mInBoundPointsPerBand[b] / mPointsPerBand[b] >
+                    MIN_FRACTION_POINTS_IN_BAND) {
+                        return true;
+                }
             }
             return false;
         }
@@ -378,27 +385,39 @@ public class AudioFrequencyLineActivity extends PassFailButtons.Activity impleme
         }
     }
 
+
     /**
-     * compute test results
+     * compute test1 results
      */
-    private void computeResults() {
-        Results resultsLeft = new Results("Left");
-        computeResultsForVector(mFreqAverage0, resultsLeft);
-        Results resultsRight = new Results("Right");
-        computeResultsForVector(mFreqAverage1, resultsRight);
-        if (resultsLeft.testAll() && resultsRight.testAll()) {
-            String strSuccess = getResources().getString(R.string.audio_general_test_passed);
-            appendResultsToScreen(strSuccess);
-        } else {
-            String strFailed = getResources().getString(R.string.audio_general_test_failed);
-            appendResultsToScreen(strFailed + "\n");
-            String strWarning = getResources().getString(R.string.audio_general_deficiency_found);
-            appendResultsToScreen(strWarning);
+    private void computeTest1Results() {
+        Results resultsBuiltIn = new Results("BuiltIn");
+        if (computeResultsForVector(mFreqAverageBuiltIn, resultsBuiltIn, bandSpecsArray)) {
+            appendResultsToScreen(resultsBuiltIn.toString(), mTest1Result);
+            recordTestResults(resultsBuiltIn);
         }
-        getPassButton().setEnabled(true); //Everybody passes! (for now...)
+        if (mSupportsUnprocessed) { //test is mandatory
+            appendResultsToScreen(getResources().getText(
+                    R.string.audio_frequency_unprocessed_defined).toString(), mTest1Result);
+            if (resultsBuiltIn.testAll()) {
+                //tst passed
+                getPassButton().setEnabled(true);
+                String strSuccess = getResources().getString(R.string.audio_general_test_passed);
+                appendResultsToScreen(strSuccess, mTest1Result);
+            } else {
+                getPassButton().setEnabled(false);
+                String strFailed = getResources().getString(R.string.audio_general_test_failed);
+                appendResultsToScreen(strFailed, mTest1Result);
+            }
+        } else {
+            //test optional
+            appendResultsToScreen(getResources().getText(
+                    R.string.audio_frequency_unprocessed_not_defined).toString(), mTest1Result);
+            getPassButton().setEnabled(true);
+        }
     }
 
-    private void computeResultsForVector(VectorAverage freqAverage,Results results) {
+    private boolean computeResultsForVector(VectorAverage freqAverage, Results results,
+            AudioBandSpecs[] bandSpecs) {
 
         int points = freqAverage.getSize();
         if (points > 0) {
@@ -413,13 +432,13 @@ public class AudioFrequencyLineActivity extends PassFailButtons.Activity impleme
             int currentBand = 0;
             for (int i = 0; i < points; i++) {
                 double freq = (double)mSamplingRate * i / (double)mBlockSizeSamples;
-                if (freq > bandSpecsArray[currentBand].mFreqStop) {
+                if (freq > bandSpecs[currentBand].mFreqStop) {
                     currentBand++;
                     if (currentBand >= mBands)
                         break;
                 }
 
-                if (freq >= bandSpecsArray[currentBand].mFreqStart) {
+                if (freq >= bandSpecs[currentBand].mFreqStart) {
                     results.mAverageEnergyPerBand[currentBand] += results.mValuesLog[i];
                     results.mPointsPerBand[currentBand]++;
                 }
@@ -434,39 +453,36 @@ public class AudioFrequencyLineActivity extends PassFailButtons.Activity impleme
 
             //set offset relative to band 1 level
             for (int b = 0; b < mBands; b++) {
-                bandSpecsArray[b].setOffset(results.mAverageEnergyPerBand[1]);
+                bandSpecs[b].setOffset(results.mAverageEnergyPerBand[1]);
             }
 
             //test points in band.
             currentBand = 0;
             for (int i = 0; i < points; i++) {
                 double freq = (double)mSamplingRate * i / (double)mBlockSizeSamples;
-                if (freq >  bandSpecsArray[currentBand].mFreqStop) {
+                if (freq >  bandSpecs[currentBand].mFreqStop) {
                     currentBand++;
                     if (currentBand >= mBands)
                         break;
                 }
 
-                if (freq >= bandSpecsArray[currentBand].mFreqStart) {
+                if (freq >= bandSpecs[currentBand].mFreqStart) {
                     double value = results.mValuesLog[i];
-                    if (bandSpecsArray[currentBand].isInBounds(freq, value)) {
+                    if (bandSpecs[currentBand].isInBounds(freq, value)) {
                         results.mInBoundPointsPerBand[currentBand]++;
                     }
                 }
             }
-
-            appendResultsToScreen(results.toString());
-            //store results
-            recordTestResults(results);
+            return true;
         } else {
-            appendResultsToScreen("Failed testing channel " + results.mLabel);
+            return false;
         }
     }
 
     //append results
-    private void appendResultsToScreen(String str) {
-        String currentText = mResultText.getText().toString();
-        mResultText.setText(currentText + "\n" + str);
+    private void appendResultsToScreen(String str, TextView text) {
+        String currentText = text.getText().toString();
+        text.setText(currentText + "\n" + str);
     }
 
     /**
@@ -531,9 +547,8 @@ public class AudioFrequencyLineActivity extends PassFailButtons.Activity impleme
     private void startRecordingForReal() {
         // start streaming
         if (mRecordThread == null) {
-            mRecordThread = new Thread(AudioFrequencyLineActivity.this);
+            mRecordThread = new Thread(AudioFrequencyUnprocessedActivity.this);
             mRecordThread.setName("FrequencyAnalyzerThread");
-            mRecordThreadShutdown = false;
         }
         if (!mRecordThread.isAlive()) {
             mRecordThread.start();
@@ -562,14 +577,13 @@ public class AudioFrequencyLineActivity extends PassFailButtons.Activity impleme
         // stop streaming
         Thread zeThread = mRecordThread;
         mRecordThread = null;
-        mRecordThreadShutdown = true;
         if (zeThread != null) {
             zeThread.interrupt();
             try {
                 zeThread.join();
             } catch(InterruptedException e) {
-                Log.v(TAG,"Error shutting down recording thread " + e);
-                //we don't really care about this error, just logging it.
+                //restore interrupted status of recording thread
+                zeThread.interrupt();
             }
         }
          // release recording resources
@@ -601,13 +615,11 @@ public class AudioFrequencyLineActivity extends PassFailButtons.Activity impleme
             mRecorder = new AudioRecord(mSelectedRecordSource, mSamplingRate,
                     mChannelConfig, mAudioFormat, 2 * minRecordBuffSizeInBytes);
         } catch (IllegalArgumentException e) {
-            Log.v(TAG, "Error: " + e.toString());
             return false;
         }
         if (mRecorder.getState() != AudioRecord.STATE_INITIALIZED) {
             mRecorder.release();
             mRecorder = null;
-            Log.v(TAG, "Error: mRecorder not initialized");
             return false;
         }
         mRecorder.setRecordPositionUpdateListener(this);
@@ -625,32 +637,26 @@ public class AudioFrequencyLineActivity extends PassFailButtons.Activity impleme
             mPipe.read(mAudioShortArray2, 0, samplesNeeded);
 
             //compute stuff.
-            double maxval = Math.pow(2, 15);
             int clipcount = 0;
-            double cliplevel = (maxval-10) / maxval;
             double sum = 0;
             double maxabs = 0;
             int i;
-            int index = 0;
 
             for (i = 0; i < samplesNeeded; i++) {
-                double value = mAudioShortArray2[i] / maxval;
+                double value = mAudioShortArray2[i] / MAX_VAL;
                 double valueabs = Math.abs(value);
 
                 if (valueabs > maxabs) {
                     maxabs = valueabs;
                 }
 
-                if (valueabs > cliplevel) {
+                if (valueabs > CLIP_LEVEL) {
                     clipcount++;
                 }
 
                 sum += value * value;
                 //fft stuff
-                if (index < mBlockSizeSamples) {
-                    mData.mData[index] = value;
-                }
-                index++;
+                mData.mData[i] = value;
             }
 
             //for the current frame, compute FFT and send to the viewer.
@@ -666,15 +672,7 @@ public class AudioFrequencyLineActivity extends PassFailButtons.Activity impleme
             }
 
             mFreqAverageMain.setData(halfMagnitude, false); //average all of them!
-
-            switch(mCurrentTest) {
-                case 0:
-                    mFreqAverage0.setData(halfMagnitude, false);
-                    break;
-                case 1:
-                    mFreqAverage1.setData(halfMagnitude, false);
-                    break;
-            }
+            mFreqAverageBuiltIn.setData(halfMagnitude, false);
         }
     }
 
@@ -685,12 +683,10 @@ public class AudioFrequencyLineActivity extends PassFailButtons.Activity impleme
     // Implementation of Runnable for the audio recording + playback
     // --------------------
     public void run() {
-        int nSamplesRead = 0;
-
         Thread thisThread = Thread.currentThread();
-        while (mRecordThread == thisThread && !mRecordThreadShutdown) {
+        while (!thisThread.isInterrupted()) {
             // read from native recorder
-            nSamplesRead = mRecorder.read(mAudioShortArray, 0, mMinRecordBufferSizeInSamples);
+            int nSamplesRead = mRecorder.read(mAudioShortArray, 0, mMinRecordBufferSizeInSamples);
             if (nSamplesRead > 0) {
                 mPipe.write(mAudioShortArray, 0, nSamplesRead);
             }

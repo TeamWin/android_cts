@@ -2229,6 +2229,8 @@ You should be prompted to select credentials; choose the ones you just installed
     Please consider addressing them for a future release.</string>
     <string name="audio_general_test_passed">Test Successful</string>
     <string name="audio_general_test_failed">Test Failed</string>
+    <string name="audio_general_default_false_string">false</string>
+    <string name="audio_general_default_true_string">true</string>
 
     <!-- Audio Loopback Latency Test -->
     <string name="audio_loopback_test">Audio Loopback Latency Test</string>
@@ -2311,5 +2313,21 @@ You should be prompted to select credentials; choose the ones you just installed
     <string name="audio_frequency_mic_mic_not_ready_text">"No USB Audio device detected. Please reconnect."</string>
     <string name="audio_frequency_mic_test2_btn">Test 2</string>
     <string name="audio_frequency_mic_results_text">Results...</string>
+
+     <!-- Audio Frequency Unprocessed Test -->
+    <string name="audio_frequency_unprocessed_test">Audio Frequency Unprocessed Test</string>
+    <string name="audio_frequency_unprocessed_info">
+   This test requires an external broadband noise source (or click/impulse).
+   Please be prepared to activate the noise source when asked to.
+   The system will measure frequency response of the built in microphone using the UNPROCESSED
+   audio source.
+       </string>
+    <string name="audio_frequency_unprocessed_defined">Audio Frequency Unprocessed feature is defined. Test is mandatory</string>
+    <string name="audio_frequency_unprocessed_not_defined">Audio Frequency Unprocessed feature is NOT defined. Test is optional</string>
+     <string name="audio_frequency_unprocessed_instructions2">
+          Once you press the [TEST] button, you have 5 seconds to play a broadband sound (click or white noise).
+    </string>
+    <string name="audio_frequency_unprocessed_test1_btn">Test 1</string>
+    <string name="audio_frequency_unprocessed_results_text">Results...</string>
 
 </resources>
