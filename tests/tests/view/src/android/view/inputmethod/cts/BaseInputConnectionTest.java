@@ -357,4 +357,134 @@ public class BaseInputConnectionTest extends
         testDeleteSurroundingTextMain("012[]>>56789", 0, 2, "012[]56789");
         testDeleteSurroundingTextMain("012[]>>56789", 0, 3, "012[]6789");
     }
+
+    private void testDeleteSurroundingTextInCodePointsMain(final String initialState,
+            final int deleteBeforeInCodePoints, final int deleteAfterInCodePoints,
+            final String expectedState) {
+        final CharSequence source = InputConnectionTestUtils.formatString(initialState);
+        final BaseInputConnection ic = createDummyConnectionWithSelection(mView, source);
+        ic.deleteSurroundingTextInCodePoints(deleteBeforeInCodePoints, deleteAfterInCodePoints);
+
+        final CharSequence expectedString = InputConnectionTestUtils.formatString(expectedState);
+        final int expectedSelectionStart = Selection.getSelectionStart(expectedString);
+        final int expectedSelectionEnd = Selection.getSelectionEnd(expectedString);
+
+        // It is sufficient to check the surrounding text up to source.length() characters, because
+        // InputConnection.deleteSurroundingTextInCodePoints() is not supposed to increase the text
+        // length.
+        final int retrievalLength = source.length();
+        if (expectedSelectionStart == 0) {
+            assertTrue(TextUtils.isEmpty(ic.getTextBeforeCursor(retrievalLength, 0)));
+        } else {
+            assertEquals(expectedString.subSequence(0, expectedSelectionStart).toString(),
+                    ic.getTextBeforeCursor(retrievalLength, 0).toString());
+        }
+        if (expectedSelectionStart == expectedSelectionEnd) {
+            assertTrue(TextUtils.isEmpty(ic.getSelectedText(0)));  // null is allowed.
+        } else {
+            assertEquals(expectedString.subSequence(expectedSelectionStart,
+                    expectedSelectionEnd).toString(), ic.getSelectedText(0).toString());
+        }
+        if (expectedSelectionEnd == expectedString.length()) {
+            assertTrue(TextUtils.isEmpty(ic.getTextAfterCursor(retrievalLength, 0)));
+        } else {
+            assertEquals(expectedString.subSequence(expectedSelectionEnd,
+                    expectedString.length()).toString(),
+                    ic.getTextAfterCursor(retrievalLength, 0).toString());
+        }
+    }
+
+    /**
+     * Tests {@link BaseInputConnection#deleteSurroundingTextInCodePoints(int, int)}
+     * comprehensively.
+     */
+    public void testDeleteSurroundingTextInCodePoints() throws Throwable {
+        testDeleteSurroundingTextInCodePointsMain("012[]3456789", 0, 0, "012[]3456789");
+        testDeleteSurroundingTextInCodePointsMain("012[]3456789", -1, -1, "012[]3456789");
+        testDeleteSurroundingTextInCodePointsMain("012[]3456789", 1, 2, "01[]56789");
+        testDeleteSurroundingTextInCodePointsMain("012[]3456789", 10, 1, "[]456789");
+        testDeleteSurroundingTextInCodePointsMain("012[]3456789", 1, 10, "01[]");
+        testDeleteSurroundingTextInCodePointsMain("[]0123456789", 3, 3, "[]3456789");
+        testDeleteSurroundingTextInCodePointsMain("0123456789[]", 3, 3, "0123456[]");
+        testDeleteSurroundingTextInCodePointsMain("012[345]6789", 0, 0, "012[345]6789");
+        testDeleteSurroundingTextInCodePointsMain("012[345]6789", -1, -1, "012[345]6789");
+        testDeleteSurroundingTextInCodePointsMain("012[345]6789", 1, 2, "01[345]89");
+        testDeleteSurroundingTextInCodePointsMain("012[345]6789", 10, 1, "[345]789");
+        testDeleteSurroundingTextInCodePointsMain("012[345]6789", 1, 10, "01[345]");
+        testDeleteSurroundingTextInCodePointsMain("[012]3456789", 3, 3, "[012]6789");
+        testDeleteSurroundingTextInCodePointsMain("0123456[789]", 3, 3, "0123[789]");
+        testDeleteSurroundingTextInCodePointsMain("[0123456789]", 0, 0, "[0123456789]");
+        testDeleteSurroundingTextInCodePointsMain("[0123456789]", 1, 1, "[0123456789]");
+
+        testDeleteSurroundingTextInCodePointsMain("0<>[]3456789", 1, 0, "0[]3456789");
+        testDeleteSurroundingTextInCodePointsMain("0<>[]3456789", 2, 0, "[]3456789");
+        testDeleteSurroundingTextInCodePointsMain("0<>[]3456789", 3, 0, "[]3456789");
+        testDeleteSurroundingTextInCodePointsMain("012[]<>56789", 0, 1, "012[]56789");
+        testDeleteSurroundingTextInCodePointsMain("012[]<>56789", 0, 2, "012[]6789");
+        testDeleteSurroundingTextInCodePointsMain("012[]<>56789", 0, 3, "012[]789");
+
+        testDeleteSurroundingTextInCodePointsMain("[]<><><><><>", 0, 0, "[]<><><><><>");
+        testDeleteSurroundingTextInCodePointsMain("[]<><><><><>", 0, 1, "[]<><><><>");
+        testDeleteSurroundingTextInCodePointsMain("[]<><><><><>", 0, 2, "[]<><><>");
+        testDeleteSurroundingTextInCodePointsMain("[]<><><><><>", 0, 3, "[]<><>");
+        testDeleteSurroundingTextInCodePointsMain("[]<><><><><>", 0, 4, "[]<>");
+        testDeleteSurroundingTextInCodePointsMain("[]<><><><><>", 0, 5, "[]");
+        testDeleteSurroundingTextInCodePointsMain("[]<><><><><>", 0, 6, "[]");
+        testDeleteSurroundingTextInCodePointsMain("[]<><><><><>", 0, 1000, "[]");
+        testDeleteSurroundingTextInCodePointsMain("<><><><><>[]", 0, 0, "<><><><><>[]");
+        testDeleteSurroundingTextInCodePointsMain("<><><><><>[]", 1, 0, "<><><><>[]");
+        testDeleteSurroundingTextInCodePointsMain("<><><><><>[]", 2, 0, "<><><>[]");
+        testDeleteSurroundingTextInCodePointsMain("<><><><><>[]", 3, 0, "<><>[]");
+        testDeleteSurroundingTextInCodePointsMain("<><><><><>[]", 4, 0, "<>[]");
+        testDeleteSurroundingTextInCodePointsMain("<><><><><>[]", 5, 0, "[]");
+        testDeleteSurroundingTextInCodePointsMain("<><><><><>[]", 6, 0, "[]");
+        testDeleteSurroundingTextInCodePointsMain("<><><><><>[]", 1000, 0, "[]");
+
+        testDeleteSurroundingTextInCodePointsMain("0<<[]3456789", 1, 0, "0<<[]3456789");
+        testDeleteSurroundingTextInCodePointsMain("0<<[]3456789", 2, 0, "0<<[]3456789");
+        testDeleteSurroundingTextInCodePointsMain("0<<[]3456789", 3, 0, "0<<[]3456789");
+        testDeleteSurroundingTextInCodePointsMain("012[]<<56789", 0, 1, "012[]<<56789");
+        testDeleteSurroundingTextInCodePointsMain("012[]<<56789", 0, 2, "012[]<<56789");
+        testDeleteSurroundingTextInCodePointsMain("012[]<<56789", 0, 3, "012[]<<56789");
+        testDeleteSurroundingTextInCodePointsMain("0>>[]3456789", 1, 0, "0>>[]3456789");
+        testDeleteSurroundingTextInCodePointsMain("0>>[]3456789", 2, 0, "0>>[]3456789");
+        testDeleteSurroundingTextInCodePointsMain("0>>[]3456789", 3, 0, "0>>[]3456789");
+        testDeleteSurroundingTextInCodePointsMain("012[]>>56789", 0, 1, "012[]>>56789");
+        testDeleteSurroundingTextInCodePointsMain("012[]>>56789", 0, 2, "012[]>>56789");
+        testDeleteSurroundingTextInCodePointsMain("012[]>>56789", 0, 3, "012[]>>56789");
+        testDeleteSurroundingTextInCodePointsMain("01<[]>456789", 1, 0, "01<[]>456789");
+        testDeleteSurroundingTextInCodePointsMain("01<[]>456789", 0, 1, "01<[]>456789");
+        testDeleteSurroundingTextInCodePointsMain("<12[]3456789", 1, 0, "<1[]3456789");
+        testDeleteSurroundingTextInCodePointsMain("<12[]3456789", 2, 0, "<[]3456789");
+        testDeleteSurroundingTextInCodePointsMain("<12[]3456789", 3, 0, "<12[]3456789");
+        testDeleteSurroundingTextInCodePointsMain("<<>[]3456789", 1, 0, "<[]3456789");
+        testDeleteSurroundingTextInCodePointsMain("<<>[]3456789", 2, 0, "<<>[]3456789");
+        testDeleteSurroundingTextInCodePointsMain("<<>[]3456789", 3, 0, "<<>[]3456789");
+        testDeleteSurroundingTextInCodePointsMain("012[]34>6789", 0, 1, "012[]4>6789");
+        testDeleteSurroundingTextInCodePointsMain("012[]34>6789", 0, 2, "012[]>6789");
+        testDeleteSurroundingTextInCodePointsMain("012[]34>6789", 0, 3, "012[]34>6789");
+        testDeleteSurroundingTextInCodePointsMain("012[]<>>6789", 0, 1, "012[]>6789");
+        testDeleteSurroundingTextInCodePointsMain("012[]<>>6789", 0, 2, "012[]<>>6789");
+        testDeleteSurroundingTextInCodePointsMain("012[]<>>6789", 0, 3, "012[]<>>6789");
+
+        // Atomicity test.
+        testDeleteSurroundingTextInCodePointsMain("0<<[]3456789", 1, 1, "0<<[]3456789");
+        testDeleteSurroundingTextInCodePointsMain("0<<[]3456789", 2, 1, "0<<[]3456789");
+        testDeleteSurroundingTextInCodePointsMain("0<<[]3456789", 3, 1, "0<<[]3456789");
+        testDeleteSurroundingTextInCodePointsMain("012[]<<56789", 1, 1, "012[]<<56789");
+        testDeleteSurroundingTextInCodePointsMain("012[]<<56789", 1, 2, "012[]<<56789");
+        testDeleteSurroundingTextInCodePointsMain("012[]<<56789", 1, 3, "012[]<<56789");
+        testDeleteSurroundingTextInCodePointsMain("0>>[]3456789", 1, 1, "0>>[]3456789");
+        testDeleteSurroundingTextInCodePointsMain("0>>[]3456789", 2, 1, "0>>[]3456789");
+        testDeleteSurroundingTextInCodePointsMain("0>>[]3456789", 3, 1, "0>>[]3456789");
+        testDeleteSurroundingTextInCodePointsMain("012[]>>56789", 1, 1, "012[]>>56789");
+        testDeleteSurroundingTextInCodePointsMain("012[]>>56789", 1, 2, "012[]>>56789");
+        testDeleteSurroundingTextInCodePointsMain("012[]>>56789", 1, 3, "012[]>>56789");
+        testDeleteSurroundingTextInCodePointsMain("01<[]>456789", 1, 1, "01<[]>456789");
+
+        // Do not verify the character sequences in the selected region.
+        testDeleteSurroundingTextInCodePointsMain("01[><]456789", 1, 0, "0[><]456789");
+        testDeleteSurroundingTextInCodePointsMain("01[><]456789", 0, 1, "01[><]56789");
+        testDeleteSurroundingTextInCodePointsMain("01[><]456789", 1, 1, "0[><]56789");
+    }
 }

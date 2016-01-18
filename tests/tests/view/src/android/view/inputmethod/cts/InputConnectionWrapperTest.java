@@ -54,6 +54,8 @@ public class InputConnectionWrapperTest extends AndroidTestCase {
         assertTrue(inputConnection.isCommitTextCalled);
         wrapper.deleteSurroundingText(10, 100);
         assertTrue(inputConnection.isDeleteSurroundingTextCalled);
+        wrapper.deleteSurroundingTextInCodePoints(10, 100);
+        assertTrue(inputConnection.isDeleteSurroundingTextInCodePointsCalled);
         wrapper.endBatchEdit();
         assertTrue(inputConnection.isEndBatchEditCalled);
         wrapper.finishComposingText();
@@ -95,6 +97,7 @@ public class InputConnectionWrapperTest extends AndroidTestCase {
         public boolean isCommitCorrectionCalled;
         public boolean isCommitTextCalled;
         public boolean isDeleteSurroundingTextCalled;
+        public boolean isDeleteSurroundingTextInCodePointsCalled;
         public boolean isEndBatchEditCalled;
         public boolean isFinishComposingTextCalled;
         public boolean isGetCursorCapsModeCalled;
@@ -139,6 +142,11 @@ public class InputConnectionWrapperTest extends AndroidTestCase {
 
         public boolean deleteSurroundingText(int beforeLength, int afterLength) {
             isDeleteSurroundingTextCalled = true;
+            return false;
+        }
+
+        public boolean deleteSurroundingTextInCodePoints(int beforeLength, int afterLength) {
+            isDeleteSurroundingTextInCodePointsCalled = true;
             return false;
         }
 
