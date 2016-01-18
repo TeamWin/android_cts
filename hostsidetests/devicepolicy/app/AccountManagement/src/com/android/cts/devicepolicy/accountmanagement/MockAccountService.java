@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-package com.android.cts.deviceandprofileowner;
+package com.android.cts.devicepolicy.accountmanagement;
 
 import android.app.Service;
 import android.content.Intent;
 import android.os.IBinder;
 
 /**
- * a basic Mock Service for wrapping the MockAccountAuthenticator
+ * Service for wrapping the {@link MockAccountAuthenticator}
  */
 public class MockAccountService extends Service {
 

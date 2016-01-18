@@ -24,17 +24,20 @@ import android.os.Process;
 import android.util.Log;
 
 /**
- * Simple activity that adds or clears a user restriction depending on the value of the extras.
+ * Simple activity that sets or unsets a policy depending on the value of the extras.
  */
-public class UserRestrictionActivity extends Activity {
+public class SetPolicyActivity extends Activity {
 
-    private static final String TAG = UserRestrictionActivity.class.getName();
+    private static final String TAG = SetPolicyActivity.class.getName();
 
     private static final String EXTRA_RESTRICTION_KEY = "extra-restriction-key";
     private static final String EXTRA_COMMAND = "extra-command";
+    private static final String EXTRA_ACCOUNT_TYPE = "extra-account-type";
 
-    private static final String ADD_COMMAND = "add-restriction";
-    private static final String CLEAR_COMMAND = "clear-restriction";
+    private static final String COMMAND_ADD_USER_RESTRICTION = "add-restriction";
+    private static final String COMMAND_CLEAR_USER_RESTRICTION = "clear-restriction";
+    private static final String COMMAND_BLOCK_ACCOUNT_TYPE = "block-accounttype";
+    private static final String COMMAND_UNBLOCK_ACCOUNT_TYPE = "unblock-accounttype";
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -60,22 +63,35 @@ public class UserRestrictionActivity extends Activity {
     private void handleIntent(Intent intent) {
         DevicePolicyManager dpm = (DevicePolicyManager)
                 getSystemService(Context.DEVICE_POLICY_SERVICE);
-        String restrictionKey = intent.getStringExtra(EXTRA_RESTRICTION_KEY);
         String command = intent.getStringExtra(EXTRA_COMMAND);
-        Log.i(TAG, "Command: \"" + command + "\". Restriction: \"" + restrictionKey + "\"");
+        Log.i(TAG, "Command: " + command);
 
-        if (ADD_COMMAND.equals(command)) {
+        if (COMMAND_ADD_USER_RESTRICTION.equals(command)) {
+            String restrictionKey = intent.getStringExtra(EXTRA_RESTRICTION_KEY);
             dpm.addUserRestriction(BaseDeviceAdminTest.ADMIN_RECEIVER_COMPONENT, restrictionKey);
             Log.i(TAG, "Added user restriction " + restrictionKey
                     + " for user " + Process.myUserHandle());
-        } else if (CLEAR_COMMAND.equals(command)) {
+        } else if (COMMAND_CLEAR_USER_RESTRICTION.equals(command)) {
+            String restrictionKey = intent.getStringExtra(EXTRA_RESTRICTION_KEY);
             dpm.clearUserRestriction(
                     BaseDeviceAdminTest.ADMIN_RECEIVER_COMPONENT, restrictionKey);
             Log.i(TAG, "Cleared user restriction " + restrictionKey
+                    + " for user " + Process.myUserHandle());
+        } else if (COMMAND_BLOCK_ACCOUNT_TYPE.equals(command)) {
+            String accountType = intent.getStringExtra(EXTRA_ACCOUNT_TYPE);
+            dpm.setAccountManagementDisabled(BaseDeviceAdminTest.ADMIN_RECEIVER_COMPONENT,
+                    accountType, true);
+            Log.i(TAG, "Blocking account management for account type: " + accountType
+                    + " for user " + Process.myUserHandle());
+        } else if (COMMAND_UNBLOCK_ACCOUNT_TYPE.equals(command)) {
+            String accountType = intent.getStringExtra(EXTRA_ACCOUNT_TYPE);
+            dpm.setAccountManagementDisabled(BaseDeviceAdminTest.ADMIN_RECEIVER_COMPONENT,
+                    accountType, false);
+            Log.i(TAG, "Unblocking account management for account type: " + accountType
                     + " for user " + Process.myUserHandle());
         } else {
             Log.e(TAG, "Invalid command: " + command);
         }
     }
-
 }
+

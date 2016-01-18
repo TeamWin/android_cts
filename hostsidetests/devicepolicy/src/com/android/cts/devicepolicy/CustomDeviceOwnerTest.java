@@ -36,16 +36,6 @@ public class CustomDeviceOwnerTest extends BaseDevicePolicyTest {
     private static final String DEVICE_OWNER_CLEAR
             = DEVICE_OWNER_PKG + ".ClearDeviceOwnerTest";
 
-    private static final String DEVICE_AND_PROFILE_OWNER_PKG
-            = "com.android.cts.deviceandprofileowner";
-    protected static final String DEVICE_AND_PROFILE_OWNER_APK = "CtsDeviceAndProfileOwnerApp.apk";
-    protected static final String DEVICE_AND_PROFILE_OWNER_ADMIN
-            = ".BaseDeviceAdminTest$BasicAdminReceiver";
-    protected static final String DEVICE_AND_PROFILE_OWNER_ADMIN_COMPONENT
-            = DEVICE_AND_PROFILE_OWNER_PKG + "/" + DEVICE_AND_PROFILE_OWNER_ADMIN;
-    protected static final String DEVICE_AND_PROFILE_OWNER_CLEAR
-            = DEVICE_AND_PROFILE_OWNER_PKG + ".ClearDeviceOwnerTest";
-
     private static final String INTENT_RECEIVER_PKG = "com.android.cts.intent.receiver";
     private static final String INTENT_RECEIVER_APK = "CtsIntentReceiverApp.apk";
 
@@ -60,11 +50,16 @@ public class CustomDeviceOwnerTest extends BaseDevicePolicyTest {
     private static final String PACKAGE_INSTALLER_CLEAR_DEVICE_OWNER_TEST_CLASS =
             PACKAGE_INSTALLER_PKG + ".ClearDeviceOwnerTest";
 
+    private static final String ACCOUNT_MANAGEMENT_PKG
+            = "com.android.cts.devicepolicy.accountmanagement";
+    protected static final String ACCOUNT_MANAGEMENT_APK
+            = "CtsAccountManagementDevicePolicyApp.apk";
+
     @Override
     public void tearDown() throws Exception {
         if (mHasFeature) {
             getDevice().uninstallPackage(DEVICE_OWNER_PKG);
-            getDevice().uninstallPackage(DEVICE_AND_PROFILE_OWNER_PKG);
+            getDevice().uninstallPackage(ACCOUNT_MANAGEMENT_PKG);
         }
 
         super.tearDown();
@@ -117,16 +112,17 @@ public class CustomDeviceOwnerTest extends BaseDevicePolicyTest {
         if (!mHasFeature) {
             return;
         }
-        installApp(DEVICE_AND_PROFILE_OWNER_APK);
+        installApp(ACCOUNT_MANAGEMENT_APK);
+        installApp(DEVICE_OWNER_APK);
         try {
-            assertTrue(runDeviceTestsAsUser(DEVICE_AND_PROFILE_OWNER_PKG, ".AccountUtilsTest",
-                    "testAddAccount", 0));
-            assertFalse(setDeviceOwner(DEVICE_AND_PROFILE_OWNER_ADMIN_COMPONENT));
+            assertTrue(runDeviceTestsAsUser(ACCOUNT_MANAGEMENT_PKG, ".AccountUtilsTest",
+                    "testAddAccountExplicitly", 0));
+            assertFalse(setDeviceOwner(DEVICE_OWNER_ADMIN_COMPONENT));
         } finally {
             // make sure we clean up in case we succeeded in setting the device owner
-            runDeviceTests(DEVICE_AND_PROFILE_OWNER_PKG, DEVICE_AND_PROFILE_OWNER_CLEAR);
-            assertTrue(runDeviceTestsAsUser(DEVICE_AND_PROFILE_OWNER_PKG, ".AccountUtilsTest",
-                    "testRemoveAccounts", 0));
+            runDeviceTests(DEVICE_OWNER_PKG, DEVICE_OWNER_CLEAR);
+            assertTrue(runDeviceTestsAsUser(ACCOUNT_MANAGEMENT_PKG, ".AccountUtilsTest",
+                    "testRemoveAccountExplicitly", 0));
         }
     }
 

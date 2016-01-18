@@ -62,16 +62,7 @@
             </intent-filter>
         </activity>
 
-        <service android:name=".MockAccountService" android:exported="true">
-            <intent-filter>
-                <action android:name="android.accounts.AccountAuthenticator" />
-            </intent-filter>
-
-            <meta-data android:name="android.accounts.AccountAuthenticator"
-                       android:resource="@xml/authenticator" />
-        </service>
-
-        <activity android:name=".UserRestrictionActivity" >
+        <activity android:name=".SetPolicyActivity" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.DEFAULT"/>
