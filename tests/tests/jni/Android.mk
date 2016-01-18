@@ -32,7 +32,7 @@ LOCAL_COMPATIBILITY_SUITE := cts_v2
 
 LOCAL_STATIC_JAVA_LIBRARIES := ctstestrunner
 
-LOCAL_JNI_SHARED_LIBRARIES := libjnitest
+LOCAL_JNI_SHARED_LIBRARIES := libjnitest libnativehelper_compat_libc++
 
 LOCAL_SRC_FILES := $(call all-java-files-under, src)
 
