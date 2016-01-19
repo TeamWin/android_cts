@@ -54,11 +54,11 @@ public class TransitionTest extends BaseTransitionTest {
 
         waitForStart(listener2);
 
-        assertEquals(0, mTransition.listener.pauseLatch.getCount());
-        assertEquals(0, mTransition.listener.resumeLatch.getCount());
-        assertEquals(1, mTransition.listener.cancelLatch.getCount());
-        assertEquals(1, mTransition.listener.endLatch.getCount());
-        assertEquals(0, mTransition.listener.startLatch.getCount());
+        assertEquals(0, mListener.pauseLatch.getCount());
+        assertEquals(0, mListener.resumeLatch.getCount());
+        assertEquals(1, mListener.cancelLatch.getCount());
+        assertEquals(1, mListener.endLatch.getCount());
+        assertEquals(0, mListener.startLatch.getCount());
 
         assertEquals(1, listener2.pauseLatch.getCount());
         assertEquals(1, listener2.resumeLatch.getCount());
@@ -75,11 +75,11 @@ public class TransitionTest extends BaseTransitionTest {
         runTestOnUiThread(new Runnable() {
             @Override
             public void run() {
-                mTransition.removeListener(mTransition.listener);
+                mTransition.removeListener(mListener);
             }
         });
 
-        assertFalse(mTransition.listener.endLatch.await(250, TimeUnit.MILLISECONDS));
+        assertFalse(mListener.endLatch.await(250, TimeUnit.MILLISECONDS));
     }
 
     public void testAddTargetId() throws Throwable {

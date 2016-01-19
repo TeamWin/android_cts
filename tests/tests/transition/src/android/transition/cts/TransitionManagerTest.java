@@ -42,12 +42,12 @@ public class TransitionManagerTest extends BaseTransitionTest {
 
         waitForStart();
         waitForEnd(300);
-        assertEquals(1, mTransition.listener.resumeLatch.getCount());
-        assertEquals(1, mTransition.listener.pauseLatch.getCount());
-        assertEquals(1, mTransition.listener.cancelLatch.getCount());
-        assertNotNull(mTransition.listener.transition);
-        assertEquals(TestTransition.class, mTransition.listener.transition.getClass());
-        assertTrue(mTransition != mTransition.listener.transition);
+        assertEquals(1, mListener.resumeLatch.getCount());
+        assertEquals(1, mListener.pauseLatch.getCount());
+        assertEquals(1, mListener.cancelLatch.getCount());
+        assertNotNull(mListener.transition);
+        assertEquals(TestTransition.class, mListener.transition.getClass());
+        assertTrue(mTransition != mListener.transition);
         runTestOnUiThread(new Runnable() {
             @Override
             public void run() {
@@ -62,12 +62,12 @@ public class TransitionManagerTest extends BaseTransitionTest {
         waitForStart();
         waitForEnd(300);
 
-        assertEquals(1, mTransition.listener.resumeLatch.getCount());
-        assertEquals(1, mTransition.listener.pauseLatch.getCount());
-        assertEquals(1, mTransition.listener.cancelLatch.getCount());
-        assertNotNull(mTransition.listener.transition);
-        assertEquals(TestTransition.class, mTransition.listener.transition.getClass());
-        assertTrue(mTransition != mTransition.listener.transition);
+        assertEquals(1, mListener.resumeLatch.getCount());
+        assertEquals(1, mListener.pauseLatch.getCount());
+        assertEquals(1, mListener.cancelLatch.getCount());
+        assertNotNull(mListener.transition);
+        assertEquals(TestTransition.class, mListener.transition.getClass());
+        assertTrue(mTransition != mListener.transition);
         runTestOnUiThread(new Runnable() {
             @Override
             public void run() {
@@ -91,24 +91,24 @@ public class TransitionManagerTest extends BaseTransitionTest {
 
         waitForStart();
         waitForEnd(300);
-        assertEquals(1, mTransition.listener.resumeLatch.getCount());
-        assertEquals(1, mTransition.listener.pauseLatch.getCount());
-        assertEquals(1, mTransition.listener.cancelLatch.getCount());
-        assertNotNull(mTransition.listener.transition);
-        assertEquals(TestTransition.class, mTransition.listener.transition.getClass());
-        assertTrue(mTransition != mTransition.listener.transition);
+        assertEquals(1, mListener.resumeLatch.getCount());
+        assertEquals(1, mListener.pauseLatch.getCount());
+        assertEquals(1, mListener.cancelLatch.getCount());
+        assertNotNull(mListener.transition);
+        assertEquals(TestTransition.class, mListener.transition.getClass());
+        assertTrue(mTransition != mListener.transition);
         runTestOnUiThread(new Runnable() {
             @Override
             public void run() {
-                mTransition.listener.startLatch = new CountDownLatch(1);
-                mTransition.listener.endLatch = new CountDownLatch(1);
+                mListener.startLatch = new CountDownLatch(1);
+                mListener.endLatch = new CountDownLatch(1);
                 assertNotNull(mActivity.findViewById(R.id.redSquare));
                 assertNotNull(mActivity.findViewById(R.id.greenSquare));
                 Scene scene = Scene.getSceneForLayout(mSceneRoot, R.layout.scene2, mActivity);
                 transitionManager.transitionTo(scene);
             }
         });
-        assertFalse(mTransition.listener.startLatch.await(50, TimeUnit.MILLISECONDS));
+        assertFalse(mListener.startLatch.await(50, TimeUnit.MILLISECONDS));
         endTransition();
     }
 
@@ -126,7 +126,7 @@ public class TransitionManagerTest extends BaseTransitionTest {
                 transitionManager.transitionTo(scenes[0]);
             }
         });
-        assertFalse(mTransition.listener.startLatch.await(100, TimeUnit.MILLISECONDS));
+        assertFalse(mListener.startLatch.await(100, TimeUnit.MILLISECONDS));
 
         runTestOnUiThread(new Runnable() {
             @Override
@@ -137,21 +137,21 @@ public class TransitionManagerTest extends BaseTransitionTest {
 
         waitForStart();
         waitForEnd(300);
-        assertEquals(1, mTransition.listener.resumeLatch.getCount());
-        assertEquals(1, mTransition.listener.pauseLatch.getCount());
-        assertEquals(1, mTransition.listener.cancelLatch.getCount());
-        assertNotNull(mTransition.listener.transition);
-        assertEquals(TestTransition.class, mTransition.listener.transition.getClass());
-        assertTrue(mTransition != mTransition.listener.transition);
+        assertEquals(1, mListener.resumeLatch.getCount());
+        assertEquals(1, mListener.pauseLatch.getCount());
+        assertEquals(1, mListener.cancelLatch.getCount());
+        assertNotNull(mListener.transition);
+        assertEquals(TestTransition.class, mListener.transition.getClass());
+        assertTrue(mTransition != mListener.transition);
         runTestOnUiThread(new Runnable() {
             @Override
             public void run() {
-                mTransition.listener.startLatch = new CountDownLatch(1);
-                mTransition.listener.endLatch = new CountDownLatch(1);
+                mListener.startLatch = new CountDownLatch(1);
+                mListener.endLatch = new CountDownLatch(1);
                 transitionManager.transitionTo(scenes[2]);
             }
         });
-        assertFalse(mTransition.listener.startLatch.await(50, TimeUnit.MILLISECONDS));
+        assertFalse(mListener.startLatch.await(50, TimeUnit.MILLISECONDS));
         endTransition();
     }
 
@@ -175,8 +175,8 @@ public class TransitionManagerTest extends BaseTransitionTest {
                 TransitionManager.endTransitions(mSceneRoot);
             }
         });
-        assertFalse(mTransition.listener.startLatch.await(100, TimeUnit.MILLISECONDS));
-        assertFalse(mTransition.listener.endLatch.await(10, TimeUnit.MILLISECONDS));
+        assertFalse(mListener.startLatch.await(100, TimeUnit.MILLISECONDS));
+        assertFalse(mListener.endLatch.await(10, TimeUnit.MILLISECONDS));
     }
 }
 
