@@ -19,6 +19,7 @@
 #include <android/log.h>
 
 #include <stdarg.h>
+#include <stdio.h>
 #include <stdlib.h>
 
 #define LOG_TAG "cts"
