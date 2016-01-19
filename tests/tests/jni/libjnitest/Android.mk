@@ -36,6 +36,9 @@ LOCAL_SRC_FILES := \
 
 LOCAL_C_INCLUDES := $(JNI_H_INCLUDE)
 
-LOCAL_SHARED_LIBRARIES := libnativehelper liblog
+LOCAL_SHARED_LIBRARIES := liblog libnativehelper_compat_libc++
+
+LOCAL_SDK_VERSION := 23
+LOCAL_NDK_STL_VARIANT := c++_static
 
 include $(BUILD_SHARED_LIBRARY)
