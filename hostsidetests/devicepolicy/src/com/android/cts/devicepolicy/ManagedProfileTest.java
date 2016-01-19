@@ -599,6 +599,9 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
             assertTrue(runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".ContactsTest",
                     "testFilterUriWhenDirectoryParamMissing",
                     mParentUserId));
+
+            assertTrue(runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".ContactsTest",
+                    "testQuickContact", mParentUserId));
         } finally {
             // Clean up in managed profile and primary profile
             runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".ContactsTest",

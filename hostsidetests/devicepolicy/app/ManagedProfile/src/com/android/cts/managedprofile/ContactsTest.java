@@ -24,6 +24,7 @@ import android.content.Context;
 import android.content.OperationApplicationException;
 import android.content.res.Resources.NotFoundException;
 import android.database.Cursor;
+import android.graphics.Rect;
 import android.net.Uri;
 import android.os.Build;
 import android.os.RemoteException;
@@ -698,6 +699,43 @@ public class ContactsTest extends AndroidTestCase {
         assertFailWhenDirectoryParamMissing(Email.ENTERPRISE_CONTENT_FILTER_URI);
         assertFailWhenDirectoryParamMissing(Contacts.ENTERPRISE_CONTENT_FILTER_URI);
         assertFailWhenDirectoryParamMissing(Callable.ENTERPRISE_CONTENT_FILTER_URI);
+    }
+
+    public void testQuickContact() throws Exception {
+        showQuickContactInternal(null);
+        showQuickContactInternal(Directory.ENTERPRISE_DEFAULT);
+        showQuickContactInternal(getEnterpriseRemoteDirectoryId());
+    }
+
+    private void showQuickContactInternal(Long directoryId) throws Exception {
+        final Uri phoneLookupUri =
+                Uri.withAppendedPath(
+                        PhoneLookup.ENTERPRISE_CONTENT_FILTER_URI, MANAGED_CONTACT_PHONE);
+        if (directoryId != null) {
+            phoneLookupUri.buildUpon().appendQueryParameter(ContactsContract.DIRECTORY_PARAM_KEY,
+                    String.valueOf(directoryId)).build();
+        }
+        final Cursor cursor =
+                getContext().getContentResolver().query(phoneLookupUri, null, null, null, null);
+        try {
+            assertTrue(cursor.moveToFirst());
+            final long contactId =
+                    cursor.getLong(cursor.getColumnIndex(ContactsContract.PhoneLookup._ID));
+            final String lookupKey =
+                    cursor.getString(
+                            cursor.getColumnIndex(ContactsContract.PhoneLookup.LOOKUP_KEY));
+            final Uri lookupUri = Contacts.getLookupUri(contactId, lookupKey);
+            // TODO: It is better to verify the uri received by quick contacts, but it is difficult
+            // to verify it as the quick contacts in managed profile is started. We now just make
+            // sure no exception is thrown due to invalid uri (eg: directory id is missing).
+            // Also, consider using UiAutomator to verify the activtiy is started.
+            ContactsContract.QuickContact.showQuickContact(getContext(), (Rect) null, lookupUri,
+                    ContactsContract.QuickContact.MODE_LARGE, null);
+        } finally {
+            if (cursor != null) {
+                cursor.close();
+            }
+        }
     }
 
     private long getPrimaryRemoteDirectoryId() {
