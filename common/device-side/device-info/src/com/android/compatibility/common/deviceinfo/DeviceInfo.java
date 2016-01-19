@@ -73,7 +73,7 @@ public abstract class DeviceInfo extends InstrumentationTestCase {
             try {
                 collectDeviceInfo();
             } catch(Exception | Error e) {
-                error(e.getMessage());
+                error("Error collecting device info: ", e);
             }
             closeJsonWriter();
 
@@ -141,10 +141,10 @@ public abstract class DeviceInfo extends InstrumentationTestCase {
         return mResultFilePath;
     }
 
-    private void error(String message) {
+    private void error(String message, Throwable exception) {
         mResultCode = ResultCode.ERROR;
         mErrorMessage = message;
-        Log.e(LOG_TAG, message);
+        Log.e(LOG_TAG, message, exception);
     }
 
     private void failed(String message) {
@@ -211,7 +211,7 @@ public abstract class DeviceInfo extends InstrumentationTestCase {
         try {
             mJsonWriter.beginObject();
         } catch (Exception e) {
-            error("Failed to begin JSON group: " + e.getMessage());
+            error("Failed to begin JSON group: ", e);
         }
     }
 
@@ -223,7 +223,7 @@ public abstract class DeviceInfo extends InstrumentationTestCase {
             mJsonWriter.name(name);
             mJsonWriter.beginObject();
         } catch (Exception e) {
-            error("Failed to begin JSON group: " + e.getMessage());
+            error("Failed to begin JSON group: ", e);
         }
     }
 
@@ -234,7 +234,7 @@ public abstract class DeviceInfo extends InstrumentationTestCase {
         try {
             mJsonWriter.endObject();
         } catch (Exception e) {
-            error("Failed to end JSON group: " + e.getMessage());
+            error("Failed to end JSON group: ", e);
         }
     }
 
@@ -245,7 +245,7 @@ public abstract class DeviceInfo extends InstrumentationTestCase {
         try {
             mJsonWriter.beginArray();
         } catch (Exception e) {
-            error("Failed to begin JSON array: " + e.getMessage());
+            error("Failed to begin JSON array: ", e);
         }
     }
 
@@ -258,7 +258,7 @@ public abstract class DeviceInfo extends InstrumentationTestCase {
             mJsonWriter.name(name);
             mJsonWriter.beginArray();
         } catch (Exception e) {
-            error("Failed to begin JSON array: " + e.getMessage());
+            error("Failed to begin JSON array: ", e);
         }
     }
 
@@ -269,7 +269,7 @@ public abstract class DeviceInfo extends InstrumentationTestCase {
         try {
             mJsonWriter.endArray();
         } catch (Exception e) {
-            error("Failed to end JSON group: " + e.getMessage());
+            error("Failed to end JSON group: ", e);
         }
     }
 
@@ -281,7 +281,7 @@ public abstract class DeviceInfo extends InstrumentationTestCase {
         try {
             mJsonWriter.name(name).value(value);
         } catch (Exception e) {
-            error("Failed to add result for type double: " + e.getMessage());
+            error("Failed to add result for type double: ", e);
         }
     }
 
@@ -293,7 +293,7 @@ public abstract class DeviceInfo extends InstrumentationTestCase {
         try {
             mJsonWriter.name(name).value(value);
         } catch (Exception e) {
-            error("Failed to add result for type long: " + e.getMessage());
+            error("Failed to add result for type long: ", e);
         }
     }
 
@@ -305,7 +305,7 @@ public abstract class DeviceInfo extends InstrumentationTestCase {
         try {
             mJsonWriter.name(name).value((Number) value);
         } catch (Exception e) {
-            error("Failed to add result for type int: " + e.getMessage());
+            error("Failed to add result for type int: ", e);
         }
     }
 
@@ -317,7 +317,7 @@ public abstract class DeviceInfo extends InstrumentationTestCase {
         try {
             mJsonWriter.name(name).value(value);
         } catch (Exception e) {
-            error("Failed to add result for type boolean: " + e.getMessage());
+            error("Failed to add result for type boolean: ", e);
         }
     }
 
@@ -329,7 +329,7 @@ public abstract class DeviceInfo extends InstrumentationTestCase {
         try {
             mJsonWriter.name(name).value(checkString(value));
         } catch (Exception e) {
-            error("Failed to add result for type String: " + e.getMessage());
+            error("Failed to add result for type String: ", e);
         }
     }
 
@@ -346,7 +346,7 @@ public abstract class DeviceInfo extends InstrumentationTestCase {
             }
             mJsonWriter.endArray();
         } catch (Exception e) {
-            error("Failed to add result array for type double: " + e.getMessage());
+            error("Failed to add result array for type double: ", e);
         }
     }
 
@@ -363,7 +363,7 @@ public abstract class DeviceInfo extends InstrumentationTestCase {
         }
             mJsonWriter.endArray();
         } catch (Exception e) {
-            error("Failed to add result array for type long: " + e.getMessage());
+            error("Failed to add result array for type long: ", e);
         }
     }
 
@@ -380,7 +380,7 @@ public abstract class DeviceInfo extends InstrumentationTestCase {
             }
             mJsonWriter.endArray();
         } catch (Exception e) {
-            error("Failed to add result array for type int: " + e.getMessage());
+            error("Failed to add result array for type int: ", e);
         }
     }
 
@@ -397,7 +397,7 @@ public abstract class DeviceInfo extends InstrumentationTestCase {
             }
             mJsonWriter.endArray();
         } catch (Exception e) {
-            error("Failed to add result array for type boolean: " + e.getMessage());
+            error("Failed to add result array for type boolean: ", e);
         }
     }
 
@@ -414,7 +414,7 @@ public abstract class DeviceInfo extends InstrumentationTestCase {
             }
             mJsonWriter.endArray();
         } catch (Exception e) {
-            error("Failed to add result array for type Sting: " + e.getMessage());
+            error("Failed to add result array for type Sting: ", e);
         }
     }
 
