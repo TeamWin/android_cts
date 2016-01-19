@@ -182,6 +182,12 @@ cts_test_packages := \
     CtsNetTestCases \
     CtsNetTestCasesLegacyApi22 \
     CtsNetTestCasesLegacyPermission22 \
+    CtsNetSecConfigAttributeTestCases \
+    CtsNetSecConfigBasicDebugDisabledTestCases \
+    CtsNetSecConfigBasicDebugEnabledTestCases \
+    CtsNetSecConfigBasicDomainConfigTestCases \
+    CtsNetSecConfigInvalidPinTestCases \
+    CtsNetSecConfigNestedDomainConfigTestCases \
     CtsOpenGLTestCases \
     CtsOpenGlPerfTestCases \
     CtsOpenGlPerf2TestCases \
