@@ -99,6 +99,40 @@ public class ActivityManagerDockedStackTests extends ActivityManagerTestBase {
         mAmWmState.assertValidBounds();
     }
 
+    public void testRotationWhenDockedWhileLocked() throws Exception {
+        launchActivityInDockStack(LAUNCH_TO_SIDE_ACTIVITY_NAME);
+        launchActivityToSide(LAUNCH_TO_SIDE_ACTIVITY_NAME);
+        mAmWmState.computeState(mDevice);
+        mAmWmState.assertSanity();
+        mAmWmState.assertContainsStack(
+                "Must contain fullscreen stack.", FULLSCREEN_WORKSPACE_STACK_ID);
+        mAmWmState.assertContainsStack("Must contain docked stack.", DOCKED_STACK_ID);
+
+        lockDevice();
+        setDeviceRotation(0);
+        unlockDevice();
+        mAmWmState.computeState(mDevice);
+        mAmWmState.assertValidBounds();
+
+        lockDevice();
+        setDeviceRotation(1);
+        unlockDevice();
+        mAmWmState.computeState(mDevice);
+        mAmWmState.assertValidBounds();
+
+        lockDevice();
+        setDeviceRotation(2);
+        unlockDevice();
+        mAmWmState.computeState(mDevice);
+        mAmWmState.assertValidBounds();
+
+        lockDevice();
+        setDeviceRotation(3);
+        unlockDevice();
+        mAmWmState.computeState(mDevice);
+        mAmWmState.assertValidBounds();
+    }
+
     private void launchActivityInDockStack(String activityName) throws Exception {
         mDevice.executeShellCommand(getAmStartCmd(activityName));
         final int taskId = getActivityTaskId(activityName);
