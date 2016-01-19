@@ -68,6 +68,7 @@ public class VideoEncoderDecoderTest extends CtsAndroidTestCase {
     private static final String VIDEO_VP8 = MediaFormat.MIMETYPE_VIDEO_VP8;
     private static final String VIDEO_H263 = MediaFormat.MIMETYPE_VIDEO_H263;
     private static final String VIDEO_MPEG4 = MediaFormat.MIMETYPE_VIDEO_MPEG4;
+    private static final String VIDEO_HEVC = MediaFormat.MIMETYPE_VIDEO_HEVC;
     private int mCurrentTestRound = 0;
     private double[][] mEncoderFrameTimeDiff = null;
     private double[][] mDecoderFrameTimeDiff = null;
@@ -342,6 +343,53 @@ public class VideoEncoderDecoderTest extends CtsAndroidTestCase {
         doTestGoog(VIDEO_MPEG4, 1280, 720);
     }
 
+    // Hevc tests
+    public void testHevc0320x0240Other() throws Exception {
+        doTestOther(VIDEO_HEVC, 320, 240);
+    }
+
+    public void testHevc0320x0240Goog() throws Exception {
+        doTestGoog(VIDEO_HEVC, 320, 240);
+    }
+
+    public void testHevc0720x0480Other() throws Exception {
+        doTestOther(VIDEO_HEVC, 720, 480);
+    }
+
+    public void testHevc0720x0480Goog() throws Exception {
+        doTestGoog(VIDEO_HEVC, 720, 480);
+    }
+
+    @TimeoutReq(minutes = 10)
+    public void testHevc1280x0720Other() throws Exception {
+        doTestOther(VIDEO_HEVC, 1280, 720);
+    }
+
+    @TimeoutReq(minutes = 10)
+    public void testHevc1280x0720Goog() throws Exception {
+        doTestGoog(VIDEO_HEVC, 1280, 720);
+    }
+
+    @TimeoutReq(minutes = 10)
+    public void testHevc1920x1080Other() throws Exception {
+        doTestOther(VIDEO_HEVC, 1920, 1080);
+    }
+
+    @TimeoutReq(minutes = 10)
+    public void testHevc1920x1080Goog() throws Exception {
+        doTestGoog(VIDEO_HEVC, 1920, 1080);
+    }
+
+    @TimeoutReq(minutes = 10)
+    public void testHevc3840x2160Other() throws Exception {
+        doTestOther(VIDEO_HEVC, 3840, 2160);
+    }
+
+    @TimeoutReq(minutes = 10)
+    public void testHevc3840x2160Goog() throws Exception {
+        doTestGoog(VIDEO_HEVC, 3840, 2160);
+    }
+
     private boolean isSrcSemiPlanar() {
         return mSrcColorFormat == CodecCapabilities.COLOR_FormatYUV420SemiPlanar;
     }
@@ -451,6 +499,14 @@ public class VideoEncoderDecoderTest extends CtsAndroidTestCase {
                    ", dec format " + mDstColorFormat);
 
         initYUVPlane(w + YUV_PLANE_ADDITIONAL_LENGTH, h + YUV_PLANE_ADDITIONAL_LENGTH);
+        // Adjust total number of frames to prevent OOM.
+        Runtime rt = Runtime.getRuntime();
+        long usedMemory = rt.totalMemory() - rt.freeMemory();
+        mTestConfig.mTotalFrames = Math.min(mTestConfig.mTotalFrames,
+                (int) (rt.maxMemory() - usedMemory) /
+                (infoEnc.mBitRate / 8 / infoEnc.mFps + 1));
+        Log.i(TAG, "Total testing frames " + mTestConfig.mTotalFrames);
+
         mEncoderFrameTimeDiff =
                 new double[mTestConfig.mNumberOfRepeat][mTestConfig.mTotalFrames - 1];
         mDecoderFrameTimeDiff =
