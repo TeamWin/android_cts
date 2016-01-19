@@ -16,6 +16,7 @@
 <configuration description="Runs CTS from a pre-existing CTS installation">
 
     <include name="everything" />
+    <include name="cts-preconditions" />
 
     <option name="compatibility:plan" value="cts" />
 
@@ -24,16 +25,9 @@
     <!-- Exclude sample test cases -->
     <option name="compatibility:exclude-filter" value="CtsSampleDeviceTestCases" />
     <option name="compatibility:exclude-filter" value="CtsSampleHostTestCases" />
+
     <!-- Exclude automotive only test cases for now -->
     <option name="compatibility:exclude-filter" value="CtsAutomotiveTestCases" />
-
-    <target_preparer class="com.android.compatibility.common.tradefed.targetprep.DynamicConfigPusher">
-        <option name="target" value="host" />
-        <option name="module-name" value="cts_v2"/>
-        <option name="version-name" value="1.0"/>
-    </target_preparer>
-
-    <target_preparer class="com.android.compatibility.common.tradefed.targetprep.StayAwakePreparer" />
 
     <target_preparer class="com.android.compatibility.common.tradefed.targetprep.PropertyCheck">
         <option name="property-name" value="ro.build.type" />
@@ -45,22 +39,6 @@
         <option name="property-name" value="ro.product.locale" />
         <option name="expected-value" value="en-US"/> <!-- Device locale should be US English -->
         <option name="throw-error" value="false"/> <!-- Only print warning if not en-US -->
-    </target_preparer>
-
-    <target_preparer class="com.android.compatibility.common.tradefed.targetprep.ApkPreconditionCheck">
-        <option name="apk" value="CtsPreconditions.apk"/>
-        <option name="package" value="com.android.preconditions.cts"/>
-    </target_preparer>
-
-    <target_preparer class="com.android.tradefed.targetprep.RunCommandTargetPreparer">
-        <option name="run-command" value="rm -rf /sdcard/device-info-files" />
-    </target_preparer>
-
-    <target_preparer class="com.android.compatibility.common.tradefed.targetprep.DeviceInfoCollector">
-        <option name="apk" value="CtsDeviceInfo.apk"/>
-        <option name="package" value="com.android.compatibility.common.deviceinfo"/>
-        <option name="src-dir" value="/sdcard/device-info-files/"/>
-        <option name="dest-dir" value="device-info-files/"/>
     </target_preparer>
 
 </configuration>
