@@ -723,6 +723,68 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
                 + getDevice().executeShellCommand(command));
     }
 
+    public void testPhoneAccountVisibility() throws Exception  {
+        if (!mHasFeature) {
+            return;
+        }
+        try {
+            // Register phone account in parent user.
+            assertTrue(runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".PhoneAccountTest",
+                    "testRegisterPhoneAccount",
+                    mParentUserId));
+            // The phone account should not be visible in managed user.
+            assertTrue(runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".PhoneAccountTest",
+                    "testPhoneAccountNotRegistered",
+                    mProfileUserId));
+        } finally {
+            // Unregister the phone account.
+            assertTrue(runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".PhoneAccountTest",
+                    "testUnregisterPhoneAccount",
+                    mParentUserId));
+        }
+
+        try {
+            // Register phone account in profile user.
+            assertTrue(runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".PhoneAccountTest",
+                    "testRegisterPhoneAccount",
+                    mProfileUserId));
+            // The phone account should not be visible in parent user.
+            assertTrue(runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".PhoneAccountTest",
+                    "testPhoneAccountNotRegistered",
+                    mParentUserId));
+        } finally {
+            // Unregister the phone account.
+            assertTrue(runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".PhoneAccountTest",
+                    "testUnregisterPhoneAccount",
+                    mProfileUserId));
+        }
+    }
+
+    public void testManagedCall() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
+        // Place a outgoing call through work phone account and verify the call is inserted
+        // properly.
+        assertTrue(runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".PhoneAccountTest",
+                "testOutgoingCall",
+                mProfileUserId));
+        // Make sure the call is not inserted into parent user.
+        assertTrue(runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".PhoneAccountTest",
+                "testEnsureCallNotInserted",
+                mParentUserId));
+
+        // Add an incoming call with parent user's phone account and verify the call is inserted
+        // properly.
+        assertTrue(runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".PhoneAccountTest",
+                "testIncomingCall",
+                mProfileUserId));
+        // Make sure the call is not inserted into parent user.
+        assertTrue(runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".PhoneAccountTest",
+                "testEnsureCallNotInserted",
+                mParentUserId));
+    }
+
     private void disableActivityForUser(String activityName, int userId)
             throws DeviceNotAvailableException {
         String command = "am start -W --user " + userId
