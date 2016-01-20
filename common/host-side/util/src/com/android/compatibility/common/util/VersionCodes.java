@@ -39,5 +39,6 @@ public class VersionCodes {
     public static final int KITKAT_WATCH = 20;
     public static final int LOLLIPOP = 21;
     public static final int LOLLIPOP_MR1 = 22;
-    public static final int MNC = CUR_DEVELOPMENT;
+    public static final int M = 23;
+    public static final int N = CUR_DEVELOPMENT;
 }
