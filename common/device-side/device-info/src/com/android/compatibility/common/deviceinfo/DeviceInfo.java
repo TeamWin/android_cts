@@ -219,6 +219,7 @@ public abstract class DeviceInfo extends InstrumentationTestCase {
      * Start a new group of result with specified name.
      */
     public void startGroup(String name) {
+        checkName(name);
         try {
             mJsonWriter.name(name);
             mJsonWriter.beginObject();
@@ -459,6 +460,9 @@ public abstract class DeviceInfo extends InstrumentationTestCase {
     }
 
     private static String checkString(String value) {
+        if (TextUtils.isEmpty(value)) {
+            return "";
+        }
         if (value.length() > MAX_STRING_VALUE_LENGTH) {
             return value.substring(0, MAX_STRING_VALUE_LENGTH);
         }
