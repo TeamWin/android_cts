@@ -440,6 +440,7 @@ public class RecordingTest extends Camera2SurfaceViewTestCase {
                 openDevice(id);
 
                 if (!mStaticInfo.isConstrainedHighSpeedVideoSupported()) {
+                    Log.i(TAG, "Camera " + id + " doesn't support high speed recording, skipping.");
                     continue;
                 }
 
