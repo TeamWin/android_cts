@@ -163,8 +163,13 @@ class ActivityAndWindowManagersState extends Assert {
 
             final Rectangle aStackBounds = aStack.getBounds();
             final Rectangle wStackBounds = wStack.getBounds();
-            assertEquals("Stack bounds in AM and WM must be equal stackId=" + stackId,
-                    aStackBounds, wStackBounds);
+
+            if (aStack.isFullscreen()) {
+                assertNull("Stack bounds in AM must be null stackId=" + stackId, aStackBounds);
+            } else {
+                assertEquals("Stack bounds in AM and WM must be equal stackId=" + stackId,
+                        aStackBounds, wStackBounds);
+            }
 
             for (ActivityTask aTask : aStack.getTasks()) {
                 final int taskId = aTask.mTaskId;

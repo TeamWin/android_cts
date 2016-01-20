@@ -16,8 +16,6 @@
 
 package android.server.cts;
 
-import com.android.tradefed.device.DeviceNotAvailableException;
-
 import java.lang.Exception;
 import java.lang.String;
 
@@ -91,6 +89,7 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
 
         mAmWmState.computeState(mDevice);
         mAmWmState.assertSanity();
+        mAmWmState.assertValidBounds();
 
         if (supportsPip()) {
             mAmWmState.assertContainsStack("Must contain pinned stack.", PINNED_STACK_ID);
