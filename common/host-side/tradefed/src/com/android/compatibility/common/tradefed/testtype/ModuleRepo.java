@@ -50,6 +50,10 @@ import java.util.concurrent.TimeUnit;
 public class ModuleRepo implements IModuleRepo {
 
     private static final String CONFIG_EXT = ".config";
+    private static final Map<String, Integer> ENDING_MODULES = new HashMap<>();
+    static {
+        ENDING_MODULES.put("CtsMonkeyTestCases", 1);
+    }
     private static final long SMALL_TEST = TimeUnit.MINUTES.toMillis(2); // Small tests < 2mins
     private static final long MEDIUM_TEST = TimeUnit.MINUTES.toMillis(10); // Medium tests < 10mins
 
@@ -387,44 +391,28 @@ public class ModuleRepo implements IModuleRepo {
      */
     @Override
     public synchronized List<IModuleDef> getModules(String serial) {
-        Set<String> tokens = mDeviceTokens.get(serial);
         List<IModuleDef> modules = new ArrayList<>(mModulesPerShard);
+        Set<String> tokens = mDeviceTokens.get(serial);
         getModulesWithTokens(tokens, modules);
         getModules(modules);
+        mSerials.add(serial);
+        if (mSerials.size() == mShards) {
+            for (IModuleDef def : mTokenModules) {
+                CLog.logAndDisplay(LogLevel.WARN,
+                        String.format("No devices found with %s, running %s on %s",
+                                def.getTokens(), def.getId(), serial));
+                modules.add(def);
+            }
+            // Add left over modules
+            modules.addAll(mLargeModules);
+            modules.addAll(mMediumModules);
+            modules.addAll(mSmallModules);
+        }
         long estimatedTime = 0;
         for (IModuleDef def : modules) {
             estimatedTime += def.getRuntimeHint();
         }
-        mSerials.add(serial);
-        if (mSerials.size() == mShards) {
-            // All shards have been given their workload.
-            if (!mTokenModules.isEmpty()) {
-                Set<String> deviceTokens = mDeviceTokens.keySet();
-                Set<String> moduleTokens = new HashSet<>();
-                for (IModuleDef module : mTokenModules) {
-                    moduleTokens.addAll(module.getTokens());
-                }
-                StringBuilder sb = new StringBuilder("Not all modules could be scheduled.");
-                for (String token : moduleTokens) {
-                    if (!deviceTokens.contains(token)) {
-                        sb.append("\nNo devices found with token: ");
-                        sb.append(token);
-                    }
-                }
-                sb.append("\nDeclare device tokens with \"--device-token <serial>:<token>\"");
-                throw new IllegalArgumentException(sb.toString());
-            }
-            if (!mLargeModules.isEmpty()) {
-                throw new IllegalArgumentException("Couldn't schedule: " + mLargeModules);
-            }
-            if (!mMediumModules.isEmpty()) {
-                throw new IllegalArgumentException("Couldn't schedule: " + mMediumModules);
-            }
-            if (!mSmallModules.isEmpty()) {
-                throw new IllegalArgumentException("Couldn't schedule: " + mSmallModules);
-            }
-        }
-        Collections.sort(modules, new RuntimeHintComparator());
+        Collections.sort(modules, new ExecutionOrderComparator());
         CLog.logAndDisplay(LogLevel.INFO, String.format(
                 "%s running %s modules, expected to complete in %s",
                 serial, modules.size(), TimeUtil.formatElapsedTime(estimatedTime)));
@@ -516,11 +504,22 @@ public class ModuleRepo implements IModuleRepo {
         }
     }
 
-    private static class RuntimeHintComparator implements Comparator<IModuleDef> {
+    private static class ExecutionOrderComparator implements Comparator<IModuleDef> {
 
         @Override
         public int compare(IModuleDef def1, IModuleDef def2) {
-            return (int) Math.signum(def2.getRuntimeHint() - def1.getRuntimeHint());
+            int value1 = 0;
+            int value2 = 0;
+            if (ENDING_MODULES.containsKey(def1.getName())) {
+                value1 = ENDING_MODULES.get(def1.getName());
+            }
+            if (ENDING_MODULES.containsKey(def2.getName())) {
+                value2 = ENDING_MODULES.get(def2.getName());
+            }
+            if (value1 == 0 && value2 == 0) {
+                return (int) Math.signum(def2.getRuntimeHint() - def1.getRuntimeHint());
+            }
+            return (int) Math.signum(value2 - value1);
         }
     }
 }
