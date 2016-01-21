@@ -451,4 +451,31 @@ public class LocaleListTest extends AndroidTestCase {
                 Locale.forLanguageTag("sr"),
                 LocaleList.forLanguageTags("sr,ar-EG").getFirstMatch(onePseudoLocale));
     }
+
+    public void testGetFirstMatch_privateUseWithoutCountry() {
+        String[] onePrivateLocale = {"qaa"};
+        // "qaa" supports itself and "qaa-CA"
+        assertEquals(
+                Locale.forLanguageTag("qaa"),
+                LocaleList.forLanguageTags("sr,qaa").getFirstMatch(onePrivateLocale));
+        assertEquals(
+                Locale.forLanguageTag("qaa-CA"),
+                LocaleList.forLanguageTags("sr,qaa-CA").getFirstMatch(onePrivateLocale));
+    }
+
+    public void testGetFirstMatch_privateUseWithCountry() {
+        String[] onePrivateLocale = {"qaa-US"};
+        // "qaa-US" supports itself
+        assertEquals(
+                Locale.forLanguageTag("qaa-US"),
+                LocaleList.forLanguageTags("sr,qaa-US").getFirstMatch(onePrivateLocale));
+
+        // "qaa-US" doesn't support "qaa" or "qaa-CA"
+        assertEquals(
+                Locale.forLanguageTag("sr"),
+                LocaleList.forLanguageTags("sr,qaa-CA").getFirstMatch(onePrivateLocale));
+        assertEquals(
+                Locale.forLanguageTag("sr"),
+                LocaleList.forLanguageTags("sr,qaa").getFirstMatch(onePrivateLocale));
+    }
 }
