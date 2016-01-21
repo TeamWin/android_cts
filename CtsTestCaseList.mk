@@ -95,6 +95,7 @@ cts_support_packages := \
     CtsDeviceTaskSwitchingAppA \
     CtsDeviceTaskSwitchingAppB \
     CtsDeviceTaskSwitchingControl \
+    CtsExternalServiceService \
     CtsHostsideNetworkTestsApp \
     CtsIntentReceiverApp \
     CtsIntentSenderApp \
@@ -159,6 +160,7 @@ cts_test_packages := \
     CtsDreamsTestCases \
     CtsDrmTestCases \
     CtsEffectTestCases \
+    CtsExternalServiceTestCases \
     CtsFileSystemTestCases \
     CtsGestureTestCases \
     CtsGraphicsTestCases \
