@@ -19,11 +19,13 @@ package android.text.cts;
 import android.graphics.Typeface;
 import android.test.AndroidTestCase;
 import android.text.Html;
+import android.text.Layout;
 import android.text.Spannable;
 import android.text.SpannableString;
 import android.text.Spanned;
 import android.text.Html.ImageGetter;
 import android.text.Html.TagHandler;
+import android.text.style.AlignmentSpan;
 import android.text.style.BackgroundColorSpan;
 import android.text.style.ForegroundColorSpan;
 import android.text.style.QuoteSpan;
@@ -155,6 +157,7 @@ public class HtmlTest extends AndroidTestCase {
 
     public void testMarkup() throws Exception {
         final int start = 6;
+
         SpannableString s = new SpannableString("Hello bold world");
         int end = s.length() - start;
         s.setSpan(new StyleSpan(Typeface.BOLD), start, end, SPAN_EXCLUSIVE_INCLUSIVE);
@@ -215,7 +218,6 @@ public class HtmlTest extends AndroidTestCase {
     }
 
     public void testMarkupFromHtml() throws Exception {
-        Spanned s;
         final int expectedStart = 6;
         final int expectedEnd = expectedStart + 6;
 
@@ -229,6 +231,128 @@ public class HtmlTest extends AndroidTestCase {
             assertEquals(expectedStart, spanned.getSpanStart(spans[0]));
             assertEquals(expectedEnd, spanned.getSpanEnd(spans[0]));
         }
+    }
+
+    /**
+     * Tests if text alignments encoded as CSS TEXT-ALIGN property are correctly converted into
+     * {@link AlignmentSpan}s. Note that the span will also cover the first newline character after
+     * the text.
+     */
+    public void testTextAlignCssFromHtml() throws Exception {
+        String tags[] = {"p", "h1", "h2", "h3", "h4", "h5", "h6", "div", "blockquote"};
+
+        for (String tag : tags) {
+            String source = String.format("<%s style=\"text-align:start\">TEXT</%s>"
+                    + "<%s style=\"text-align:center\">TEXT</%s>"
+                    + "<%s style=\"text-align:end\">TEXT</%s>",
+                    tag, tag, tag, tag, tag, tag);
+            Spanned spanned = Html.fromHtml(source);
+            AlignmentSpan[] spans = spanned.getSpans(0, spanned.length(), AlignmentSpan.class);
+            assertEquals(3, spans.length);
+
+            assertEquals(Layout.Alignment.ALIGN_NORMAL, spans[0].getAlignment());
+            assertEquals(0, spanned.getSpanStart(spans[0]));
+            assertEquals(5, spanned.getSpanEnd(spans[0]));
+
+            assertEquals(Layout.Alignment.ALIGN_CENTER, spans[1].getAlignment());
+            assertEquals(6, spanned.getSpanStart(spans[1]));
+            assertEquals(11, spanned.getSpanEnd(spans[1]));
+
+            assertEquals(Layout.Alignment.ALIGN_OPPOSITE, spans[2].getAlignment());
+            assertEquals(12, spanned.getSpanStart(spans[2]));
+            assertEquals(17, spanned.getSpanEnd(spans[2]));
+
+            // Other valid TEXT-ALIGN property encodings
+            source = String.format("<%s style=\'text-align:center\''>TEXT</%s>"
+                    + "<%s style=\"text-align:center;\">TEXT</%s>"
+                    + "<%s style=\"text-align  :  center  ;  \">TEXT</%s>",
+                    tag, tag, tag, tag, tag, tag);
+            spanned = Html.fromHtml(source);
+            spans = spanned.getSpans(0, spanned.length(), AlignmentSpan.class);
+            assertEquals(3, spans.length);
+
+            // Invalid TEXT-ALIGN property encodings
+            source = String.format("<%s style=\"text-align:centre\">TEXT</%s>"
+                    + "<%s style=\"text-alignment:center\">TEXT</%s>"
+                    + "<%s style=\"align:center\">TEXT</%s>"
+                    + "<%s style=\"text-align:gibberish\">TEXT</%s>",
+                    tag, tag, tag, tag, tag, tag, tag, tag);
+            spanned = Html.fromHtml(source);
+            spans = spanned.getSpans(0, spanned.length(), AlignmentSpan.class);
+            assertEquals(0, spans.length);
+        }
+    }
+
+    public void testBlockLevelElementsFromHtml() throws Exception {
+        String source = "<blockquote>BLOCKQUOTE</blockquote>"
+                + "<div>DIV</div>"
+                + "<p>P</p>"
+                + "<h1>HEADING</h1>";
+
+        int flags = Html.FROM_HTML_SEPARATOR_LINE_BREAK_BLOCKQUOTE
+                | Html.FROM_HTML_SEPARATOR_LINE_BREAK_DIV;
+        assertEquals("BLOCKQUOTE\nDIV\n\nP\n\nHEADING\n\n",
+                Html.fromHtml(source, flags, null, null).toString());
+
+        flags = Html.FROM_HTML_SEPARATOR_LINE_BREAK_DIV
+                | Html.FROM_HTML_SEPARATOR_LINE_BREAK_PARAGRAPH;
+        assertEquals("BLOCKQUOTE\n\nDIV\nP\n\nHEADING\n\n",
+                Html.fromHtml(source, flags, null, null).toString());
+
+        flags = Html.FROM_HTML_SEPARATOR_LINE_BREAK_PARAGRAPH
+                | Html.FROM_HTML_SEPARATOR_LINE_BREAK_HEADING;
+        assertEquals("BLOCKQUOTE\n\nDIV\n\nP\nHEADING\n",
+                Html.fromHtml(source, flags, null, null).toString());
+    }
+
+    public void testParagraphFromHtml() throws Exception {
+        final int flags = Html.FROM_HTML_SEPARATOR_LINE_BREAK_PARAGRAPH;
+
+        String source = "<p>Line 1</p><p>Line 2</p>";
+        assertEquals("Line 1\nLine 2\n",
+                Html.fromHtml(source, flags).toString());
+        assertEquals("Line 1\n\nLine 2\n\n",
+                Html.fromHtml(source).toString());
+
+        source = "<br>Line 1<br>Line 2<br>";
+        assertEquals("\nLine 1\nLine 2\n",
+                Html.fromHtml(source, flags).toString());
+        assertEquals("\nLine 1\nLine 2\n",
+                Html.fromHtml(source).toString());
+
+        source = "<br><p>Line 1</p><br><p>Line 2</p><br>";
+        assertEquals("\nLine 1\n\nLine 2\n\n",
+                Html.fromHtml(source, flags).toString());
+        assertEquals("\n\nLine 1\n\n\nLine 2\n\n\n",
+                Html.fromHtml(source).toString());
+
+        source = "<p>Line 1<br>Line 2</p><p>Line 3</p>";
+        assertEquals("Line 1\nLine 2\nLine 3\n",
+                Html.fromHtml(source, flags).toString());
+        assertEquals("Line 1\nLine 2\n\nLine 3\n\n",
+                Html.fromHtml(source).toString());
+    }
+
+    public void testHeadingFromHtml() throws Exception {
+        final int flags = Html.FROM_HTML_SEPARATOR_LINE_BREAK_HEADING;
+
+        String source = "<h1>Heading 1</h1><h1>Heading 2</h1>";
+        assertEquals("Heading 1\nHeading 2\n",
+                Html.fromHtml(source, flags).toString());
+        assertEquals("Heading 1\n\nHeading 2\n\n",
+                Html.fromHtml(source).toString());
+
+        source = "<br><h1>Heading 1</h1><br><h1>Heading 2</h1><br>";
+        assertEquals("\nHeading 1\n\nHeading 2\n\n",
+                Html.fromHtml(source, flags).toString());
+        assertEquals("\n\nHeading 1\n\n\nHeading 2\n\n\n",
+                Html.fromHtml(source).toString());
+
+        source = "<h1>Heading 1<br>Heading 2</h1><h1>Heading 3</h1>";
+        assertEquals("Heading 1\nHeading 2\nHeading 3\n",
+                Html.fromHtml(source, flags).toString());
+        assertEquals("Heading 1\nHeading 2\n\nHeading 3\n\n",
+                Html.fromHtml(source).toString());
     }
 
     public void testImg() throws Exception {
