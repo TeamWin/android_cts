@@ -1637,6 +1637,15 @@ public class ViewGroupTest extends InstrumentationTestCase implements CTSResult{
         assertTrue(parent.isShowContextMenuForChildCalled);
     }
 
+    public void testShowContextMenuForChild_WithXYCoords() {
+        MockViewGroup parent = new MockViewGroup(mContext);
+        MockViewGroup child = new MockViewGroup(mContext);
+        parent.addView(child);
+
+        child.showContextMenuForChild(null, 48, 48);
+        assertTrue(parent.isShowContextMenuForChildCalledWithXYCoords);
+    }
+
     public void testStartLayoutAnimation() {
         MockViewGroup vg = new MockViewGroup(mContext);
         RotateAnimation animation = new RotateAnimation(0.1f, 0.1f);
@@ -1994,6 +2003,7 @@ public class ViewGroupTest extends InstrumentationTestCase implements CTSResult{
 
         public boolean isRecomputeViewAttributesCalled;
         public boolean isShowContextMenuForChildCalled;
+        public boolean isShowContextMenuForChildCalledWithXYCoords;
         public boolean isRefreshDrawableStateCalled;
         public boolean isOnRestoreInstanceStateCalled;
         public boolean isOnCreateDrawableStateCalled;
@@ -2252,6 +2262,12 @@ public class ViewGroupTest extends InstrumentationTestCase implements CTSResult{
         public boolean showContextMenuForChild(View originalView) {
             isShowContextMenuForChildCalled = true;
             return super.showContextMenuForChild(originalView);
+        }
+
+        @Override
+        public boolean showContextMenuForChild(View originalView, float x, float y) {
+            isShowContextMenuForChildCalledWithXYCoords = true;
+            return super.showContextMenuForChild(originalView, x, y);
         }
 
         @Override
