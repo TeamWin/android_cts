@@ -3822,6 +3822,28 @@ public class TextViewTest extends ActivityInstrumentationTestCase2<TextViewCtsAc
         assertEquals(1, mTextView.getImeActionId());
     }
 
+    public void testAccessImeHintLocales() {
+        final TextView textView = new TextView(mActivity);
+        textView.setText("", BufferType.EDITABLE);
+        textView.setKeyListener(null);
+        textView.setRawInputType(InputType.TYPE_CLASS_TEXT);
+        assertNull(textView.getImeHintLocales());
+        {
+            final EditorInfo editorInfo = new EditorInfo();
+            textView.onCreateInputConnection(editorInfo);
+            assertNull(editorInfo.hintLocales);
+        }
+
+        final LocaleList localeList = LocaleList.forLanguageTags("en-PH,en-US");
+        textView.setImeHintLocales(localeList);
+        assertEquals(localeList, textView.getImeHintLocales());
+        {
+            final EditorInfo editorInfo = new EditorInfo();
+            textView.onCreateInputConnection(editorInfo);
+            assertEquals(localeList, editorInfo.hintLocales);
+        }
+    }
+
     @UiThreadTest
     public void testSetExtractedText() {
         mTextView = findTextView(R.id.textview_text);
