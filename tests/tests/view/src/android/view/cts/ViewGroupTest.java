@@ -16,19 +16,16 @@
 
 package android.view.cts;
 
-import android.view.cts.util.XmlUtils;
-
-
 import android.content.Context;
 import android.content.Intent;
-import android.cts.util.CTSResult;
 import android.content.res.XmlResourceParser;
+import android.cts.util.CTSResult;
 import android.graphics.Bitmap;
+import android.graphics.Bitmap.Config;
 import android.graphics.Canvas;
 import android.graphics.Point;
 import android.graphics.Rect;
 import android.graphics.Region;
-import android.graphics.Bitmap.Config;
 import android.graphics.drawable.BitmapDrawable;
 import android.os.Parcelable;
 import android.os.SystemClock;
@@ -44,22 +41,22 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
-import android.view.ViewGroup;
-import android.view.WindowManager;
 import android.view.View.BaseSavedState;
 import android.view.View.MeasureSpec;
 import android.view.View.OnTouchListener;
+import android.view.ViewGroup;
 import android.view.ViewGroup.LayoutParams;
 import android.view.ViewGroup.OnHierarchyChangeListener;
+import android.view.WindowManager;
 import android.view.animation.AlphaAnimation;
 import android.view.animation.Animation;
+import android.view.animation.Animation.AnimationListener;
 import android.view.animation.LayoutAnimationController;
 import android.view.animation.RotateAnimation;
 import android.view.animation.Transformation;
-import android.view.animation.Animation.AnimationListener;
+import android.view.cts.util.XmlUtils;
 import android.widget.TextView;
 
-import java.lang.IndexOutOfBoundsException;
 import java.util.ArrayList;
 
 public class ViewGroupTest extends InstrumentationTestCase implements CTSResult{
@@ -536,6 +533,7 @@ public class ViewGroupTest extends InstrumentationTestCase implements CTSResult{
         MockTextView textView = new MockTextView(mContext);
         mMotionEvent = null;
         textView.setOnTouchListener(new OnTouchListener() {
+            @Override
             public boolean onTouch(View v, MotionEvent event) {
                 mMotionEvent = event;
                 return true;
@@ -812,12 +810,15 @@ public class ViewGroupTest extends InstrumentationTestCase implements CTSResult{
 
         AnimationListener al = new AnimationListener() {
 
+            @Override
             public void onAnimationEnd(Animation animation) {
             }
 
+            @Override
             public void onAnimationRepeat(Animation animation) {
             }
 
+            @Override
             public void onAnimationStart(Animation animation) {
             }
         };
@@ -1172,9 +1173,11 @@ public class ViewGroupTest extends InstrumentationTestCase implements CTSResult{
         public View sParent;
         public View sChild;
 
+        @Override
         public void onChildViewAdded(View parent, View child) {
         }
 
+        @Override
         public void onChildViewRemoved(View parent, View child) {
             sParent = parent;
             sChild = child;
@@ -2021,7 +2024,6 @@ public class ViewGroupTest extends InstrumentationTestCase implements CTSResult{
         public int debugDepth;
         public int drawChildCalledTime;
         public Canvas canvas;
-        public boolean isInvalidateChildInParentCalled;
         public boolean isDrawableStateChangedCalled;
         public boolean isRequestLayoutCalled;
         public boolean isOnLayoutCalled;
@@ -2420,6 +2422,7 @@ public class ViewGroupTest extends InstrumentationTestCase implements CTSResult{
         }
     }
 
+    @Override
     public void setResult(int resultCode) {
         synchronized (mSync) {
             mSync.mHasNotify = true;
