@@ -22,6 +22,8 @@ import com.android.tradefed.log.LogUtil.CLog;
 
 import junit.framework.AssertionFailedError;
 
+import java.util.concurrent.Callable;
+
 /**
  * Set of tests for Managed Profile use cases.
  */
@@ -397,219 +399,65 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
         }
     }
 
-    public void testManagedContacts() throws Exception {
-        if (!mHasFeature) {
-            return;
-        }
 
-        try {
-            // Install directory provider to both primary and managed profile
-            installAppAsUser(DIRECTORY_PROVIDER_APK, mProfileUserId);
-            installAppAsUser(DIRECTORY_PROVIDER_APK, mParentUserId);
-            setDirectoryPrefix(PRIMARY_DIRECTORY_PREFIX, mParentUserId);
-            setDirectoryPrefix(MANAGED_DIRECTORY_PREFIX, mProfileUserId);
+    public void testManagedContactsUris() throws Exception {
+        runManagedContactsTest(new Callable<Void>() {
+            @Override
+            public Void call() throws Exception {
+                ContactsTestSet contactsTestSet = new ContactsTestSet(ManagedProfileTest.this,
+                        MANAGED_PROFILE_PKG, mParentUserId, mProfileUserId);
 
-            // Check enterprise directory API works
-            assertTrue(runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".ContactsTest",
-                    "testGetDirectoryListInPrimaryProfile", mParentUserId));
+                contactsTestSet.setCallerIdEnabled(true);
+                contactsTestSet.setContactsSearchEnabled(true);
+                contactsTestSet.checkIfCanLookupEnterpriseContacts(true);
+                contactsTestSet.checkIfCanFilterEnterpriseContacts(true);
+                return null;
+            }
+        });
+    }
 
-            // Insert Primary profile Contacts
-            assertTrue(runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".ContactsTest",
-                    "testPrimaryProfilePhoneAndEmailLookup_insertedAndfound", mParentUserId));
-            // Insert Managed profile Contacts
-            assertTrue(runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".ContactsTest",
-                    "testManagedProfilePhoneAndEmailLookup_insertedAndfound", mProfileUserId));
-            // Insert a primary contact with same phone & email as other enterprise contacts
-            assertTrue(runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".ContactsTest",
-                    "testPrimaryProfileDuplicatedPhoneEmailContact_insertedAndfound",
-                    mParentUserId));
-            // Insert a enterprise contact with same phone & email as other primary contacts
-            assertTrue(runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".ContactsTest",
-                    "testManagedProfileDuplicatedPhoneEmailContact_insertedAndfound",
-                    mProfileUserId));
+    public void testManagedQuickContacts() throws Exception {
+        runManagedContactsTest(new Callable<Void>() {
+            @Override
+            public Void call() throws Exception {
+                assertTrue(runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".ContactsTest",
+                        "testQuickContact", mParentUserId));
+                return null;
+            }
+        });
+    }
 
-            // Set cross profile caller id to enabled
-            assertTrue(runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".ContactsTest",
-                    "testSetCrossProfileCallerIdDisabled_false", mProfileUserId));
+    public void testManagedContactsPolicies() throws Exception {
+        runManagedContactsTest(new Callable<Void>() {
+            @Override
+            public Void call() throws Exception {
+                ContactsTestSet contactsTestSet = new ContactsTestSet(ManagedProfileTest.this,
+                        MANAGED_PROFILE_PKG, mParentUserId, mProfileUserId);
+                try {
+                    contactsTestSet.setCallerIdEnabled(true);
+                    contactsTestSet.setContactsSearchEnabled(false);
+                    contactsTestSet.checkIfCanLookupEnterpriseContacts(true);
+                    contactsTestSet.checkIfCanFilterEnterpriseContacts(false);
 
-            // Primary user cannot use ordinary phone/email lookup api to access managed contacts
-            assertTrue(runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".ContactsTest",
-                    "testPrimaryProfilePhoneLookup_canNotAccessEnterpriseContact", mParentUserId));
-            assertTrue(runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".ContactsTest",
-                    "testPrimaryProfileEmailLookup_canNotAccessEnterpriseContact", mParentUserId));
-            // Primary user can use ENTERPRISE_CONTENT_FILTER_URI to access primary contacts
-            assertTrue(runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".ContactsTest",
-                    "testPrimaryProfileEnterprisePhoneLookup_canAccessPrimaryContact",
-                    mParentUserId));
-            assertTrue(runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".ContactsTest",
-                    "testPrimaryProfileEnterpriseEmailLookup_canAccessPrimaryContact",
-                    mParentUserId));
-            // Primary user can use ENTERPRISE_CONTENT_FILTER_URI to access managed profile contacts
-            assertTrue(runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".ContactsTest",
-                    "testPrimaryProfileEnterprisePhoneLookup_canAccessEnterpriseContact",
-                    mParentUserId));
-            assertTrue(runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".ContactsTest",
-                    "testPrimaryProfileEnterpriseEmailLookup_canAccessEnterpriseContact",
-                    mParentUserId));
-            // When there exist contacts with the same phone/email in primary & enterprise,
-            // primary user can use ENTERPRISE_CONTENT_FILTER_URI to access the primary contact.
-            assertTrue(runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".ContactsTest",
-                    "testPrimaryProfileEnterpriseEmailLookupDuplicated_canAccessPrimaryContact",
-                    mParentUserId));
-            assertTrue(runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".ContactsTest",
-                    "testPrimaryProfileEnterprisePhoneLookupDuplicated_canAccessPrimaryContact",
-                    mParentUserId));
+                    contactsTestSet.setCallerIdEnabled(false);
+                    contactsTestSet.setContactsSearchEnabled(true);
+                    contactsTestSet.checkIfCanLookupEnterpriseContacts(false);
+                    contactsTestSet.checkIfCanFilterEnterpriseContacts(true);
 
-            // Make sure SIP enterprise lookup works too.
-            assertTrue(runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".ContactsTest",
-                    "testPrimaryProfileEnterpriseSipLookup_canAccessEnterpriseContact",
-                    mParentUserId));
+                    contactsTestSet.setCallerIdEnabled(false);
+                    contactsTestSet.setContactsSearchEnabled(false);
+                    contactsTestSet.checkIfCanLookupEnterpriseContacts(false);
+                    contactsTestSet.checkIfCanFilterEnterpriseContacts(false);
+                    contactsTestSet.checkIfNoEnterpriseDirectoryFound();
 
-            // Managed user cannot use ordinary phone/email lookup api to access primary contacts
-            assertTrue(runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".ContactsTest",
-                    "testManagedProfilePhoneLookup_canNotAccessPrimaryContact", mProfileUserId));
-            assertTrue(runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".ContactsTest",
-                    "testManagedProfileEmailLookup_canNotAccessPrimaryContact", mProfileUserId));
-            // Managed user can use ENTERPRISE_CONTENT_FILTER_URI to access enterprise contacts
-            assertTrue(runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".ContactsTest",
-                    "testManagedProfileEnterprisePhoneLookup_canAccessEnterpriseContact",
-                    mProfileUserId));
-            assertTrue(runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".ContactsTest",
-                    "testManagedProfileEnterpriseEmailLookup_canAccessEnterpriseContact",
-                    mProfileUserId));
-            // Managed user cannot use ENTERPRISE_CONTENT_FILTER_URI to access primary contacts
-            assertTrue(runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".ContactsTest",
-                    "testManagedProfileEnterprisePhoneLookup_canNotAccessPrimaryContact",
-                    mProfileUserId));
-            assertTrue(runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".ContactsTest",
-                    "testManagedProfileEnterpriseEmailLookup_canNotAccessPrimaryContact",
-                    mProfileUserId));
-            // When there exist contacts with the same phone/email in primary & enterprise,
-            // managed user can use ENTERPRISE_CONTENT_FILTER_URI to access the enterprise contact.
-            assertTrue(runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".ContactsTest",
-                    "testManagedProfileEnterpriseEmailLookupDuplicated_canAccessEnterpriseContact",
-                    mProfileUserId));
-            assertTrue(runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".ContactsTest",
-                    "testManagedProfileEnterprisePhoneLookupDuplicated_canAccessEnterpriseContact",
-                    mProfileUserId));
-
-            // Set cross profile caller id to disabled
-            assertTrue(runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".ContactsTest",
-                    "testSetCrossProfileCallerIdDisabled_true", mProfileUserId));
-
-            // Primary user cannot use ordinary phone/email lookup api to access managed contacts
-            assertTrue(runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".ContactsTest",
-                    "testPrimaryProfilePhoneLookup_canNotAccessEnterpriseContact", mParentUserId));
-            assertTrue(runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".ContactsTest",
-                    "testPrimaryProfileEmailLookup_canNotAccessEnterpriseContact", mParentUserId));
-            // Primary user cannot use ENTERPRISE_CONTENT_FILTER_URI to access managed contacts
-            assertTrue(runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".ContactsTest",
-                    "testPrimaryProfileEnterprisePhoneLookup_canNotAccessEnterpriseContact",
-                    mParentUserId));
-            assertTrue(runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".ContactsTest",
-                    "testPrimaryProfileEnterpriseEmailLookup_canNotAccessEnterpriseContact",
-                    mParentUserId));
-            // When there exist contacts with the same phone/email in primary & enterprise,
-            // primary user can use ENTERPRISE_CONTENT_FILTER_URI to access primary contacts
-            assertTrue(runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".ContactsTest",
-                    "testPrimaryProfileEnterpriseEmailLookupDuplicated_canAccessPrimaryContact",
-                    mParentUserId));
-            assertTrue(runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".ContactsTest",
-                    "testPrimaryProfileEnterprisePhoneLookupDuplicated_canAccessPrimaryContact",
-                    mParentUserId));
-
-            // Managed user cannot use ordinary phone/email lookup api to access primary contacts
-            assertTrue(runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".ContactsTest",
-                    "testManagedProfilePhoneLookup_canNotAccessPrimaryContact", mProfileUserId));
-            assertTrue(runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".ContactsTest",
-                    "testManagedProfileEmailLookup_canNotAccessPrimaryContact", mProfileUserId));
-            // Managed user cannot use ENTERPRISE_CONTENT_FILTER_URI to access primary contacts
-            assertTrue(runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".ContactsTest",
-                    "testManagedProfileEnterprisePhoneLookup_canNotAccessPrimaryContact",
-                    mProfileUserId));
-            assertTrue(runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".ContactsTest",
-                    "testManagedProfileEnterpriseEmailLookup_canNotAccessPrimaryContact",
-                    mProfileUserId));
-
-            // Set cross profile caller id to enabled
-            assertTrue(runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".ContactsTest",
-                    "testSetCrossProfileCallerIdDisabled_false", mProfileUserId));
-
-            // When there exist contacts with the same phone/email in primary & enterprise,
-            // managed user can use ENTERPRISE_CONTENT_FILTER_URI to access enterprise contacts
-            assertTrue(runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".ContactsTest",
-                    "testManagedProfileEnterpriseEmailLookupDuplicated_canAccessEnterpriseContact",
-                    mProfileUserId));
-            assertTrue(runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".ContactsTest",
-                    "testManagedProfileEnterprisePhoneLookupDuplicated_canAccessEnterpriseContact",
-                    mProfileUserId));
-
-            // Check if phone lookup can access primary directories
-            assertTrue(runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".ContactsTest",
-                    "testPrimaryProfileEnterprisePhoneLookup_canAccessPrimaryDirectories",
-                    mParentUserId));
-
-            // Check if phone lookup can access enterprise directories
-            assertTrue(runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".ContactsTest",
-                    "testPrimaryProfileEnterprisePhoneLookup_canAccessManagedDirectories",
-                    mParentUserId));
-
-            // Check if email lookup can access primary directories
-            assertTrue(runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".ContactsTest",
-                    "testPrimaryProfileEnterpriseEmailLookup_canAccessPrimaryDirectories",
-                    mParentUserId));
-
-            // Check if email lookup can access enterprise directories
-            assertTrue(runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".ContactsTest",
-                    "testPrimaryProfileEnterpriseEmailLookup_canAccessManagedDirectories",
-                    mParentUserId));
-
-            assertTrue(runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".ContactsTest",
-                    "testPrimaryProfileEnterpriseCallableFilter_canAccessPrimaryDirectories",
-                    mParentUserId));
-
-            assertTrue(runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".ContactsTest",
-                    "testPrimaryProfileEnterpriseCallableFilter_canAccessManagedDirectories",
-                    mParentUserId));
-
-            assertTrue(runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".ContactsTest",
-                    "testPrimaryProfileEnterpriseEmailFilter_canAccessPrimaryDirectories",
-                    mParentUserId));
-
-            assertTrue(runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".ContactsTest",
-                    "testPrimaryProfileEnterpriseEmailFilter_canAccessManagedDirectories",
-                    mParentUserId));
-
-            assertTrue(runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".ContactsTest",
-                    "testPrimaryProfileEnterpriseContactFilter_canAccessPrimaryDirectories",
-                    mParentUserId));
-
-            assertTrue(runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".ContactsTest",
-                    "testPrimaryProfileEnterpriseContactFilter_canAccessManagedDirectories",
-                    mParentUserId));
-
-            assertTrue(runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".ContactsTest",
-                    "testPrimaryProfileEnterprisePhoneFilter_canAccessPrimaryDirectories",
-                    mParentUserId));
-
-            assertTrue(runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".ContactsTest",
-                    "testPrimaryProfileEnterprisePhoneFilter_canAccessManagedDirectories",
-                    mParentUserId));
-
-            assertTrue(runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".ContactsTest",
-                    "testFilterUriWhenDirectoryParamMissing",
-                    mParentUserId));
-
-            assertTrue(runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".ContactsTest",
-                    "testQuickContact", mParentUserId));
-        } finally {
-            // Clean up in managed profile and primary profile
-            runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".ContactsTest",
-                    "testCurrentProfileContacts_removeContacts", mProfileUserId);
-            runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".ContactsTest",
-                    "testCurrentProfileContacts_removeContacts", mParentUserId);
-            getDevice().uninstallPackage(DIRECTORY_PROVIDER_PKG);
-        }
+                    return null;
+                } finally {
+                    // reset policies
+                    contactsTestSet.setCallerIdEnabled(true);
+                    contactsTestSet.setContactsSearchEnabled(true);
+                }
+            }
+        });
     }
 
     public void testBluetoothContactSharingDisabled() throws Exception {
@@ -841,5 +689,262 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
     private void assertAppLinkResult(String methodName) throws DeviceNotAvailableException {
         assertTrue(runDeviceTestsAsUser(INTENT_SENDER_PKG, ".AppLinkTest", methodName,
                 mProfileUserId));
+    }
+
+    private void runManagedContactsTest(Callable<Void> callable) throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
+
+        try {
+            // Install directory provider to both primary and managed profile
+            installAppAsUser(DIRECTORY_PROVIDER_APK, mProfileUserId);
+            installAppAsUser(DIRECTORY_PROVIDER_APK, mParentUserId);
+            setDirectoryPrefix(PRIMARY_DIRECTORY_PREFIX, mParentUserId);
+            setDirectoryPrefix(MANAGED_DIRECTORY_PREFIX, mProfileUserId);
+
+            // Check enterprise directory API works
+            assertTrue(runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".ContactsTest",
+                    "testGetDirectoryListInPrimaryProfile", mParentUserId));
+
+            // Insert Primary profile Contacts
+            assertTrue(runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".ContactsTest",
+                    "testPrimaryProfilePhoneAndEmailLookup_insertedAndfound", mParentUserId));
+            // Insert Managed profile Contacts
+            assertTrue(runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".ContactsTest",
+                    "testManagedProfilePhoneAndEmailLookup_insertedAndfound", mProfileUserId));
+            // Insert a primary contact with same phone & email as other
+            // enterprise contacts
+            assertTrue(runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".ContactsTest",
+                    "testPrimaryProfileDuplicatedPhoneEmailContact_insertedAndfound",
+                    mParentUserId));
+            // Insert a enterprise contact with same phone & email as other
+            // primary contacts
+            assertTrue(runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".ContactsTest",
+                    "testManagedProfileDuplicatedPhoneEmailContact_insertedAndfound",
+                    mProfileUserId));
+
+            callable.call();
+
+        } finally {
+            // Clean up in managed profile and primary profile
+            runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".ContactsTest",
+                    "testCurrentProfileContacts_removeContacts", mProfileUserId);
+            runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".ContactsTest",
+                    "testCurrentProfileContacts_removeContacts", mParentUserId);
+            getDevice().uninstallPackage(DIRECTORY_PROVIDER_PKG);
+        }
+    }
+
+
+    /*
+     * Container for running ContactsTest under multi-user environment
+     */
+    private static class ContactsTestSet {
+
+        private ManagedProfileTest mManagedProfileTest;
+        private String mManagedProfilePackage;
+        private int mParentUserId;
+        private int mProfileUserId;
+
+        public ContactsTestSet(ManagedProfileTest managedProfileTest, String managedProfilePackage,
+                int parentUserId, int profileUserId) {
+            mManagedProfileTest = managedProfileTest;
+            mManagedProfilePackage = managedProfilePackage;
+            mParentUserId = parentUserId;
+            mProfileUserId = profileUserId;
+        }
+
+        private boolean runDeviceTestsAsUser(String pkgName, String testClassName,
+                String testMethodName, Integer userId) throws DeviceNotAvailableException {
+            return mManagedProfileTest.runDeviceTestsAsUser(pkgName, testClassName, testMethodName,
+                    userId);
+        }
+
+        // Enable / Disable cross profile caller id
+        public void setCallerIdEnabled(boolean enabled) throws DeviceNotAvailableException {
+            if (enabled) {
+                assertTrue(runDeviceTestsAsUser(mManagedProfilePackage, ".ContactsTest",
+                        "testSetCrossProfileCallerIdDisabled_false", mProfileUserId));
+            } else {
+                assertTrue(runDeviceTestsAsUser(mManagedProfilePackage, ".ContactsTest",
+                        "testSetCrossProfileCallerIdDisabled_true", mProfileUserId));
+            }
+        }
+
+        // Enable / Disable cross profile contacts search
+        public void setContactsSearchEnabled(boolean enabled) throws DeviceNotAvailableException {
+            if (enabled) {
+                assertTrue(runDeviceTestsAsUser(mManagedProfilePackage, ".ContactsTest",
+                        "testSetCrossProfileContactsSearchDisabled_false", mProfileUserId));
+            } else {
+                assertTrue(runDeviceTestsAsUser(mManagedProfilePackage, ".ContactsTest",
+                        "testSetCrossProfileContactsSearchDisabled_true", mProfileUserId));
+            }
+        }
+
+        public void checkIfCanLookupEnterpriseContacts(boolean expected)
+                throws DeviceNotAvailableException {
+            // Primary user cannot use ordinary phone/email lookup api to access
+            // managed contacts
+            assertTrue(runDeviceTestsAsUser(mManagedProfilePackage, ".ContactsTest",
+                    "testPrimaryProfilePhoneLookup_canNotAccessEnterpriseContact", mParentUserId));
+            assertTrue(runDeviceTestsAsUser(mManagedProfilePackage, ".ContactsTest",
+                    "testPrimaryProfileEmailLookup_canNotAccessEnterpriseContact", mParentUserId));
+            // Primary user can use ENTERPRISE_CONTENT_FILTER_URI to access
+            // primary contacts
+            assertTrue(runDeviceTestsAsUser(mManagedProfilePackage, ".ContactsTest",
+                    "testPrimaryProfileEnterprisePhoneLookup_canAccessPrimaryContact",
+                    mParentUserId));
+            assertTrue(runDeviceTestsAsUser(mManagedProfilePackage, ".ContactsTest",
+                    "testPrimaryProfileEnterpriseEmailLookup_canAccessPrimaryContact",
+                    mParentUserId));
+            // When there exist contacts with the same phone/email in primary &
+            // enterprise,
+            // primary user can use ENTERPRISE_CONTENT_FILTER_URI to access the
+            // primary contact.
+            assertTrue(runDeviceTestsAsUser(mManagedProfilePackage, ".ContactsTest",
+                    "testPrimaryProfileEnterpriseEmailLookupDuplicated_canAccessPrimaryContact",
+                    mParentUserId));
+            assertTrue(runDeviceTestsAsUser(mManagedProfilePackage, ".ContactsTest",
+                    "testPrimaryProfileEnterprisePhoneLookupDuplicated_canAccessPrimaryContact",
+                    mParentUserId));
+
+            // Managed user cannot use ordinary phone/email lookup api to access
+            // primary contacts
+            assertTrue(runDeviceTestsAsUser(mManagedProfilePackage, ".ContactsTest",
+                    "testManagedProfilePhoneLookup_canNotAccessPrimaryContact", mProfileUserId));
+            assertTrue(runDeviceTestsAsUser(mManagedProfilePackage, ".ContactsTest",
+                    "testManagedProfileEmailLookup_canNotAccessPrimaryContact", mProfileUserId));
+            // Managed user can use ENTERPRISE_CONTENT_FILTER_URI to access
+            // enterprise contacts
+            assertTrue(runDeviceTestsAsUser(mManagedProfilePackage, ".ContactsTest",
+                    "testManagedProfileEnterprisePhoneLookup_canAccessEnterpriseContact",
+                    mProfileUserId));
+            assertTrue(runDeviceTestsAsUser(mManagedProfilePackage, ".ContactsTest",
+                    "testManagedProfileEnterpriseEmailLookup_canAccessEnterpriseContact",
+                    mProfileUserId));
+            // Managed user cannot use ENTERPRISE_CONTENT_FILTER_URI to access
+            // primary contacts
+            assertTrue(runDeviceTestsAsUser(mManagedProfilePackage, ".ContactsTest",
+                    "testManagedProfileEnterprisePhoneLookup_canNotAccessPrimaryContact",
+                    mProfileUserId));
+            assertTrue(runDeviceTestsAsUser(mManagedProfilePackage, ".ContactsTest",
+                    "testManagedProfileEnterpriseEmailLookup_canNotAccessPrimaryContact",
+                    mProfileUserId));
+            // When there exist contacts with the same phone/email in primary &
+            // enterprise,
+            // managed user can use ENTERPRISE_CONTENT_FILTER_URI to access the
+            // enterprise contact.
+            assertTrue(runDeviceTestsAsUser(mManagedProfilePackage, ".ContactsTest",
+                    "testManagedProfileEnterpriseEmailLookupDuplicated_canAccessEnterpriseContact",
+                    mProfileUserId));
+            assertTrue(runDeviceTestsAsUser(mManagedProfilePackage, ".ContactsTest",
+                    "testManagedProfileEnterprisePhoneLookupDuplicated_canAccessEnterpriseContact",
+                    mProfileUserId));
+
+            // Check if phone lookup can access primary directories
+            assertTrue(runDeviceTestsAsUser(mManagedProfilePackage, ".ContactsTest",
+                    "testPrimaryProfileEnterprisePhoneLookup_canAccessPrimaryDirectories",
+                    mParentUserId));
+
+            // Check if email lookup can access primary directories
+            assertTrue(runDeviceTestsAsUser(mManagedProfilePackage, ".ContactsTest",
+                    "testPrimaryProfileEnterpriseEmailLookup_canAccessPrimaryDirectories",
+                    mParentUserId));
+
+            if (expected) {
+                // Primary user can use ENTERPRISE_CONTENT_FILTER_URI to access
+                // managed profile contacts
+                assertTrue(runDeviceTestsAsUser(mManagedProfilePackage, ".ContactsTest",
+                        "testPrimaryProfileEnterprisePhoneLookup_canAccessEnterpriseContact",
+                        mParentUserId));
+                assertTrue(runDeviceTestsAsUser(mManagedProfilePackage, ".ContactsTest",
+                        "testPrimaryProfileEnterpriseEmailLookup_canAccessEnterpriseContact",
+                        mParentUserId));
+
+                // Make sure SIP enterprise lookup works too.
+                assertTrue(runDeviceTestsAsUser(mManagedProfilePackage, ".ContactsTest",
+                        "testPrimaryProfileEnterpriseSipLookup_canAccessEnterpriseContact",
+                        mParentUserId));
+
+                // Check if phone lookup can access enterprise directories
+                assertTrue(runDeviceTestsAsUser(mManagedProfilePackage, ".ContactsTest",
+                        "testPrimaryProfileEnterprisePhoneLookup_canAccessManagedDirectories",
+                        mParentUserId));
+
+                // Check if email lookup can access enterprise directories
+                assertTrue(runDeviceTestsAsUser(mManagedProfilePackage, ".ContactsTest",
+                        "testPrimaryProfileEnterpriseEmailLookup_canAccessManagedDirectories",
+                        mParentUserId));
+            } else {
+                // Primary user cannot use ENTERPRISE_CONTENT_FILTER_URI to
+                // access managed contacts
+                assertTrue(runDeviceTestsAsUser(mManagedProfilePackage, ".ContactsTest",
+                        "testPrimaryProfileEnterprisePhoneLookup_canNotAccessEnterpriseContact",
+                        mParentUserId));
+                assertTrue(runDeviceTestsAsUser(mManagedProfilePackage, ".ContactsTest",
+                        "testPrimaryProfileEnterprisePhoneLookup_canNotAccessManagedDirectories",
+                        mParentUserId));
+
+                assertTrue(runDeviceTestsAsUser(mManagedProfilePackage, ".ContactsTest",
+                        "testPrimaryProfileEnterpriseEmailLookup_canNotAccessManagedDirectories",
+                        mParentUserId));
+                assertTrue(runDeviceTestsAsUser(mManagedProfilePackage, ".ContactsTest",
+                        "testPrimaryProfileEnterprisePhoneLookup_canNotAccessManagedDirectories",
+                        mParentUserId));
+            }
+        }
+
+        public void checkIfCanFilterEnterpriseContacts(boolean expected)
+                throws DeviceNotAvailableException {
+            assertTrue(runDeviceTestsAsUser(mManagedProfilePackage, ".ContactsTest",
+                    "testPrimaryProfileEnterpriseCallableFilter_canAccessPrimaryDirectories",
+                    mParentUserId));
+            assertTrue(runDeviceTestsAsUser(mManagedProfilePackage, ".ContactsTest",
+                    "testPrimaryProfileEnterpriseEmailFilter_canAccessPrimaryDirectories",
+                    mParentUserId));
+            assertTrue(runDeviceTestsAsUser(mManagedProfilePackage, ".ContactsTest",
+                    "testPrimaryProfileEnterpriseContactFilter_canAccessPrimaryDirectories",
+                    mParentUserId));
+            assertTrue(runDeviceTestsAsUser(mManagedProfilePackage, ".ContactsTest",
+                    "testPrimaryProfileEnterprisePhoneFilter_canAccessPrimaryDirectories",
+                    mParentUserId));
+            assertTrue(runDeviceTestsAsUser(mManagedProfilePackage, ".ContactsTest",
+                    "testFilterUriWhenDirectoryParamMissing", mParentUserId));
+            if (expected) {
+                assertTrue(runDeviceTestsAsUser(mManagedProfilePackage, ".ContactsTest",
+                        "testPrimaryProfileEnterpriseCallableFilter_canAccessManagedDirectories",
+                        mParentUserId));
+                assertTrue(runDeviceTestsAsUser(mManagedProfilePackage, ".ContactsTest",
+                        "testPrimaryProfileEnterpriseEmailFilter_canAccessManagedDirectories",
+                        mParentUserId));
+                assertTrue(runDeviceTestsAsUser(mManagedProfilePackage, ".ContactsTest",
+                        "testPrimaryProfileEnterpriseContactFilter_canAccessManagedDirectories",
+                        mParentUserId));
+                assertTrue(runDeviceTestsAsUser(mManagedProfilePackage, ".ContactsTest",
+                        "testPrimaryProfileEnterprisePhoneFilter_canAccessManagedDirectories",
+                        mParentUserId));
+            } else {
+                assertTrue(runDeviceTestsAsUser(mManagedProfilePackage, ".ContactsTest",
+                        "testPrimaryProfileEnterpriseCallableFilter_canNotAccessManagedDirectories",
+                        mParentUserId));
+                assertTrue(runDeviceTestsAsUser(mManagedProfilePackage, ".ContactsTest",
+                        "testPrimaryProfileEnterpriseEmailFilter_canNotAccessManagedDirectories",
+                        mParentUserId));
+                assertTrue(runDeviceTestsAsUser(mManagedProfilePackage, ".ContactsTest",
+                        "testPrimaryProfileEnterpriseContactFilter_canNotAccessManagedDirectories",
+                        mParentUserId));
+                assertTrue(runDeviceTestsAsUser(mManagedProfilePackage, ".ContactsTest",
+                        "testPrimaryProfileEnterprisePhoneFilter_canNotAccessManagedDirectories",
+                        mParentUserId));
+            }
+        }
+
+        public void checkIfNoEnterpriseDirectoryFound() throws DeviceNotAvailableException {
+            assertTrue(runDeviceTestsAsUser(mManagedProfilePackage, ".ContactsTest",
+                    "testPrimaryProfileEnterpriseDirectories_canNotAccessManagedDirectories",
+                    mParentUserId));
+        }
     }
 }
