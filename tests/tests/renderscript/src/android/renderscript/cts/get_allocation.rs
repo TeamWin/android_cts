@@ -6,11 +6,11 @@ rs_script script;
 rs_allocation alloc_in;
 rs_allocation alloc_out;
 
-void root(const int* in, int *out) {
-    *out = *in;
+int __attribute__((kernel)) copy(int in) {
+    return in;
 }
 
 void start() {
     alloc_in = rsGetAllocation(pointer);
-    rsForEach(script, alloc_in, alloc_out);
+    rsForEach(copy, alloc_in, alloc_out);
 }
