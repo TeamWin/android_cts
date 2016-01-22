@@ -475,8 +475,9 @@ public class JDiffClassDescription {
 
         // Mask off NATIVE since it is a don't care.  Also mask off
         // SYNCHRONIZED since we've already handled that check.
-        int mod1 = reflectedMethod.getModifiers() & ~(Modifier.NATIVE | Modifier.SYNCHRONIZED);
-        int mod2 = apiMethod.mModifier & ~(Modifier.NATIVE | Modifier.SYNCHRONIZED);
+        int ignoredMods = (Modifier.NATIVE | Modifier.SYNCHRONIZED | Modifier.STRICT);
+        int mod1 = reflectedMethod.getModifiers() & ~ignoredMods;
+        int mod2 = apiMethod.mModifier & ~ignoredMods;
 
         // We can ignore FINAL for final classes
         if ((mModifier & Modifier.FINAL) != 0) {
