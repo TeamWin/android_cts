@@ -16,8 +16,8 @@
 
 package android.view.cts;
 
-import android.view.ViewTreeObserver;
-import android.view.cts.R;
+import static org.mockito.Mockito.*;
+
 import com.android.internal.view.menu.ContextMenuBuilder;
 
 import android.content.Context;
@@ -74,10 +74,12 @@ import android.view.View.OnTouchListener;
 import android.view.ViewConfiguration;
 import android.view.ViewGroup;
 import android.view.ViewParent;
+import android.view.ViewTreeObserver;
 import android.view.WindowManager;
 import android.view.accessibility.AccessibilityEvent;
 import android.view.animation.AlphaAnimation;
 import android.view.animation.Animation;
+import android.view.cts.R;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputConnection;
 import android.view.inputmethod.InputMethodManager;
@@ -1307,6 +1309,24 @@ public class ViewTest extends ActivityInstrumentationTestCase2<ViewTestCtsActivi
         assertTrue(mMockParent.hasShowContextMenuForChild());
     }
 
+    public void testShowContextMenuXY() {
+        MockViewParent parent = new MockViewParent(mActivity);
+        MockView view = new MockView(mActivity);
+
+        assertNull(view.getParent());
+        try {
+            view.showContextMenu(0, 0);
+            fail("should throw NullPointerException");
+        } catch (NullPointerException e) {
+        }
+
+        view.setParent(parent);
+        assertFalse(parent.hasShowContextMenuForChildXY());
+
+        assertFalse(view.showContextMenu(0, 0));
+        assertTrue(parent.hasShowContextMenuForChildXY());
+    }
+
     public void testFitSystemWindows() {
         final XmlResourceParser parser = mResources.getLayout(R.layout.view_layout);
         final AttributeSet attrs = Xml.asAttributeSet(parser);
@@ -1373,6 +1393,41 @@ public class ViewTest extends ActivityInstrumentationTestCase2<ViewTestCtsActivi
         assertTrue(view.performLongClick());
         assertFalse(mMockParent.hasShowContextMenuForChild());
         assertTrue(listener.hasOnLongClick());
+    }
+
+    public void testPerformLongClickXY() {
+        MockViewParent parent = new MockViewParent(mActivity);
+        MockView view = new MockView(mActivity);
+
+        try {
+            view.performLongClick(0, 0);
+            fail("should throw NullPointerException");
+        } catch (NullPointerException e) {
+        }
+
+        parent.addView(view);
+        assertFalse(parent.hasShowContextMenuForChildXY());
+
+        // Verify default context menu behavior.
+        assertFalse(view.performLongClick(0, 0));
+        assertTrue(parent.hasShowContextMenuForChildXY());
+    }
+
+    public void testPerformLongClickXY_WithListener() {
+        OnLongClickListener listener = mock(OnLongClickListener.class);
+        MockViewParent parent = new MockViewParent(mActivity);
+        MockView view = new MockView(mActivity);
+
+        view.setOnLongClickListener(listener);
+        verify(listener, never()).onLongClick(any(View.class));
+
+        parent.addView(view);
+        assertFalse(parent.hasShowContextMenuForChildXY());
+
+        // Verify listener is preferred over default context menu.
+        assertTrue(view.performLongClick(0, 0));
+        assertFalse(parent.hasShowContextMenuForChildXY());
+        verify(listener).onLongClick(view);
     }
 
     public void testSetOnLongClickListener() {
@@ -3877,6 +3932,7 @@ public class ViewTest extends ActivityInstrumentationTestCase2<ViewTestCtsActivi
         private boolean mHasRequestLayout = false;
         private boolean mHasCreateContextMenu = false;
         private boolean mHasShowContextMenuForChild = false;
+        private boolean mHasShowContextMenuForChildXY = false;
         private boolean mHasGetChildVisibleRect = false;
         private boolean mHasInvalidateChild = false;
         private boolean mHasOnCreateDrawableState = false;
@@ -3997,6 +4053,12 @@ public class ViewTest extends ActivityInstrumentationTestCase2<ViewTestCtsActivi
             return false;
         }
 
+        @Override
+        public boolean showContextMenuForChild(View originalView, float x, float y) {
+            mHasShowContextMenuForChildXY = true;
+            return false;
+        }
+
         public ActionMode startActionModeForChild(View originalView,
                 ActionMode.Callback callback) {
             return null;
@@ -4009,6 +4071,10 @@ public class ViewTest extends ActivityInstrumentationTestCase2<ViewTestCtsActivi
 
         public boolean hasShowContextMenuForChild() {
             return mHasShowContextMenuForChild;
+        }
+
+        public boolean hasShowContextMenuForChildXY() {
+            return mHasShowContextMenuForChildXY;
         }
 
         @Override
@@ -4034,6 +4100,7 @@ public class ViewTest extends ActivityInstrumentationTestCase2<ViewTestCtsActivi
             mHasRequestLayout = false;
             mHasCreateContextMenu = false;
             mHasShowContextMenuForChild = false;
+            mHasShowContextMenuForChildXY = false;
             mHasGetChildVisibleRect = false;
             mHasInvalidateChild = false;
             mHasOnCreateDrawableState = false;
