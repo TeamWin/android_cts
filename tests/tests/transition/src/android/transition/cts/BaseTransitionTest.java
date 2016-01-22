@@ -19,6 +19,7 @@ import android.animation.Animator;
 import android.animation.ObjectAnimator;
 import android.test.ActivityInstrumentationTestCase2;
 import android.transition.Scene;
+import android.transition.Transition;
 import android.transition.TransitionManager;
 import android.transition.TransitionValues;
 import android.transition.Visibility;
@@ -38,7 +39,8 @@ public class BaseTransitionTest extends ActivityInstrumentationTestCase2<Transit
     protected FrameLayout mSceneRoot;
     public float mAnimatedValue;
     protected ArrayList<View> mTargets = new ArrayList<View>();
-    protected TestTransition mTransition;
+    protected Transition mTransition;
+    protected SimpleTransitionListener mListener;
 
     public BaseTransitionTest() {
         super(TransitionActivity.class);
@@ -52,18 +54,21 @@ public class BaseTransitionTest extends ActivityInstrumentationTestCase2<Transit
         mSceneRoot = (FrameLayout) mActivity.findViewById(R.id.container);
         mTargets.clear();
         mTransition = new TestTransition();
+        mListener = new SimpleTransitionListener();
+        mTransition.addListener(mListener);
     }
 
     protected void waitForStart() throws InterruptedException {
-        waitForStart(mTransition.listener);
+        waitForStart(mListener);
     }
 
     protected void waitForStart(SimpleTransitionListener listener) throws InterruptedException {
-        assertTrue(listener.startLatch.await(100, TimeUnit.MILLISECONDS));
+        assertTrue(listener.startLatch.await(4000, TimeUnit.MILLISECONDS));
     }
 
     protected void waitForEnd(long waitMillis) throws InterruptedException {
-        waitForEnd(mTransition.listener, waitMillis);
+        waitForEnd(mListener, waitMillis);
+        getInstrumentation().waitForIdleSync();
     }
 
     protected static void waitForEnd(SimpleTransitionListener listener, long waitMillis)
@@ -121,10 +126,8 @@ public class BaseTransitionTest extends ActivityInstrumentationTestCase2<Transit
     }
 
     public class TestTransition extends Visibility {
-        public final SimpleTransitionListener listener = new SimpleTransitionListener();
 
         public TestTransition() {
-            addListener(listener);
             setDuration(200);
         }
 
