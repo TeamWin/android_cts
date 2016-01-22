@@ -96,6 +96,29 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
         executeDeviceTestMethod(".RemoteBugreportTest", "testSubsequentRemoteBugreportThrottled");
     }
 
+    public void testDeviceLoggingWithTwoUsers() throws Exception {
+        if (!mHasFeature || getMaxNumberOfUsersSupported() < 2) {
+            return;
+        }
+        int userId = -1;
+        try {
+            userId = createUser();
+            executeDeviceTestMethod(".DeviceLoggingTest",
+                    "testSetDeviceLoggingEnabledNotPossibleIfMoreThanOneUserPresent");
+            executeDeviceTestMethod(".DeviceLoggingTest",
+                    "testRetrievingDeviceLogsNotPossibleIfMoreThanOneUserPresent");
+            executeDeviceTestMethod(".DeviceLoggingTest",
+                    "testRetrievingPreviousDeviceLogsNotPossibleIfMoreThanOneUserPresent");
+        } finally {
+            removeUser(userId);
+        }
+    }
+
+    public void testDeviceLoggingWithSingleUser() throws Exception {
+        executeDeviceTestMethod(".DeviceLoggingTest",
+                "testRetrievingDeviceLogsNotPossibleImmediatelyAfterPreviousSuccessfulRetrieval");
+    }
+
     public void testLockTask() throws Exception {
         try {
             installApp(INTENT_RECEIVER_APK);
@@ -147,6 +170,6 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
 
     private void executeDeviceTestMethod(String className, String testName) throws Exception {
         assertTrue(runDeviceTestsAsUser(DEVICE_OWNER_PKG, className, testName,
-                /* deviceOwnerUserId */0));
+                /* deviceOwnerUserId */ 0));
     }
 }

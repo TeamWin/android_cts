@@ -567,6 +567,58 @@ public class DevicePolicyManagerTest extends AndroidTestCase {
         }
     }
 
+    public void testSetDeviceLoggingEnabled_failIfNotDeviceOwner() {
+        if (!mDeviceAdmin) {
+            Log.w(TAG, "Skipping testSetDeviceLoggingEnabled_failIfNotDeviceOwner");
+            return;
+        }
+        try {
+            mDevicePolicyManager.setDeviceLoggingEnabled(mComponent, true);
+            fail("did not throw expected SecurityException");
+        } catch (SecurityException e) {
+            assertDeviceOwnerMessage(e.getMessage());
+        }
+    }
+
+    public void testGetDeviceLoggingEnabled_failIfNotDeviceOwner() {
+        if (!mDeviceAdmin) {
+            Log.w(TAG, "Skipping testGetDeviceLoggingEnabled_failIfNotDeviceOwner");
+            return;
+        }
+        try {
+            mDevicePolicyManager.getDeviceLoggingEnabled(mComponent);
+            fail("did not throw expected SecurityException");
+        } catch (SecurityException e) {
+            assertDeviceOwnerMessage(e.getMessage());
+        }
+    }
+
+    public void testRetrieveDeviceLogs_failIfNotDeviceOwner() {
+        if (!mDeviceAdmin) {
+            Log.w(TAG, "Skipping testRetrieveDeviceLogs_failIfNotDeviceOwner");
+            return;
+        }
+        try {
+            mDevicePolicyManager.retrieveDeviceLogs(mComponent);
+            fail("did not throw expected SecurityException");
+        } catch (SecurityException e) {
+            assertDeviceOwnerMessage(e.getMessage());
+        }
+    }
+
+    public void testRetrievePreviousDeviceLogs_failIfNotDeviceOwner() {
+        if (!mDeviceAdmin) {
+            Log.w(TAG, "Skipping testRetrievePreviousDeviceLogs_failIfNotDeviceOwner");
+            return;
+        }
+        try {
+            mDevicePolicyManager.retrievePreviousDeviceLogs(mComponent);
+            fail("did not throw expected SecurityException");
+        } catch (SecurityException e) {
+            assertDeviceOwnerMessage(e.getMessage());
+        }
+    }
+
     public void testCreateUser_failIfNotDeviceOwner() {
         if (!mDeviceAdmin) {
             Log.w(TAG, "Skipping testCreateUser_failIfNotDeviceOwner");
