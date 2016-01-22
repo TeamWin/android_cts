@@ -15,6 +15,8 @@
  */
 package android.media.cts;
 
+import android.content.res.Resources;
+import android.content.res.AssetFileDescriptor;
 import android.media.AudioManager;
 import android.media.MediaCodec;
 import android.media.MediaCodecInfo;
@@ -28,6 +30,7 @@ import android.util.Log;
 import android.view.SurfaceHolder;
 
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
@@ -41,8 +44,8 @@ import java.util.UUID;
  * {@link MediaDrm} can be used to obtain keys for decrypting protected media streams,
  * in conjunction with MediaCrypto.
  */
-public class MediaCodecCencPlayer implements MediaTimeProvider {
-    private static final String TAG = MediaCodecCencPlayer.class.getSimpleName();
+public class MediaCodecClearKeyPlayer implements MediaTimeProvider {
+    private static final String TAG = MediaCodecClearKeyPlayer.class.getSimpleName();
 
     private static final int STATE_IDLE = 1;
     private static final int STATE_PREPARING = 2;
@@ -74,6 +77,8 @@ public class MediaCodecCencPlayer implements MediaTimeProvider {
     private Thread mThread;
     private Uri mAudioUri;
     private Uri mVideoUri;
+    private String mDrmInitDataType;
+    private Resources mResources;
 
     private static final byte[] PSSH = hexStringToByteArray(
             "0000003470737368" +  // BMFF box header (4 bytes size + 'pssh')
@@ -102,9 +107,12 @@ public class MediaCodecCencPlayer implements MediaTimeProvider {
     /*
      * Media player class to stream CENC content using MediaCodec class.
      */
-    public MediaCodecCencPlayer(SurfaceHolder holder, byte[] sessionId) {
+    public MediaCodecClearKeyPlayer(
+            SurfaceHolder holder, byte[] sessionId, String initDataType, Resources resources) {
         mSessionId = sessionId;
         mSurfaceHolder = holder;
+        mDrmInitDataType = initDataType;
+        mResources = resources;
         mState = STATE_IDLE;
         mThread = new Thread(new Runnable() {
             @Override
@@ -145,6 +153,9 @@ public class MediaCodecCencPlayer implements MediaTimeProvider {
     }
 
     public final Map<UUID, byte[]> getPsshInfo() {
+        if (mVideoExtractor != null) {
+            mPsshInitData = mVideoExtractor.getPsshInfo();
+        }
         // TODO (edwinwong@)
         // Remove the if statement when we get content that has the clear key system id.
         if (mPsshInitData == null ||
@@ -155,11 +166,37 @@ public class MediaCodecCencPlayer implements MediaTimeProvider {
         return mPsshInitData;
     }
 
+    public final byte[] getDrmInitData() {
+        if ("cenc".equals(mDrmInitDataType)) {
+            return getPsshInfo().get(CLEARKEY_SCHEME_UUID);
+        } else if ("webm".equals(mDrmInitDataType)) {
+            for (MediaExtractor ex: new MediaExtractor[] {mVideoExtractor, mAudioExtractor}) {
+                for (int i = ex.getTrackCount(); i-- > 0;) {
+                    MediaFormat format = ex.getTrackFormat(i);
+                    // TODO use public api if possible
+                    ByteBuffer cryptoKey = format.getByteBuffer("crypto-key");
+                    if (cryptoKey != null) {
+                        byte[] dst = new byte[cryptoKey.remaining()];
+                        cryptoKey.get(dst);
+                        return dst;
+                    }
+                }
+            }
+            return new byte[0];
+        } else {
+          throw new IllegalArgumentException(
+                  "initDataType must be one of {\"cenc\", \"webm\"}: " + mDrmInitDataType);
+        }
+    }
+
     private void prepareAudio() throws IOException {
         boolean hasAudio = false;
         for (int i = mAudioExtractor.getTrackCount(); i-- > 0;) {
             MediaFormat format = mAudioExtractor.getTrackFormat(i);
             String mime = format.getString(MediaFormat.KEY_MIME);
+            if (!mime.startsWith("audio/")) {
+                continue;
+            }
 
             Log.d(TAG, "audio track #" + i + " " + format + " " + mime +
                   " Is ADTS:" + getMediaFormatInteger(format, MediaFormat.KEY_IS_ADTS) +
@@ -195,6 +232,9 @@ public class MediaCodecCencPlayer implements MediaTimeProvider {
         for (int i = mVideoExtractor.getTrackCount(); i-- > 0;) {
             MediaFormat format = mVideoExtractor.getTrackFormat(i);
             String mime = format.getString(MediaFormat.KEY_MIME);
+            if (!mime.startsWith("video/")) {
+                continue;
+            }
 
             mMediaFormatHeight = getMediaFormatInteger(format, MediaFormat.KEY_HEIGHT);
             mMediaFormatWidth = getMediaFormatInteger(format, MediaFormat.KEY_WIDTH);
@@ -225,6 +265,20 @@ public class MediaCodecCencPlayer implements MediaTimeProvider {
         return;
     }
 
+    private void setDataSource(MediaExtractor extractor, Uri uri, Map<String, String> headers)
+            throws IOException {
+        String scheme = uri.getScheme();
+        if (scheme.startsWith("http")) {
+            extractor.setDataSource(uri.toString(), headers);
+        } else if (scheme.equals("android.resource")) {
+            int res = Integer.parseInt(uri.getLastPathSegment());
+            AssetFileDescriptor fd = mResources.openRawResourceFd(res);
+            extractor.setDataSource(fd.getFileDescriptor(), fd.getStartOffset(), fd.getLength());
+        } else {
+            throw new IllegalArgumentException(uri.toString());
+        }
+    }
+
     public void prepare() throws IOException, MediaCryptoException {
         if (null == mAudioExtractor) {
             mAudioExtractor = new MediaExtractor();
@@ -242,9 +296,8 @@ public class MediaCodecCencPlayer implements MediaTimeProvider {
             }
         }
 
-        mAudioExtractor.setDataSource(mAudioUri.toString(), mAudioHeaders);
-        mVideoExtractor.setDataSource(mVideoUri.toString(), mVideoHeaders);
-        mPsshInitData = mVideoExtractor.getPsshInfo();
+        setDataSource(mAudioExtractor, mAudioUri, mAudioHeaders);
+        setDataSource(mVideoExtractor, mVideoUri, mVideoHeaders);
 
         if (null == mCrypto && (mEncryptedVideo || mEncryptedAudio)) {
             try {
