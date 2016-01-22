@@ -20,7 +20,7 @@
       android:versionCode="5"
       android:versionName="6.0_r2">
 
-    <uses-sdk android:minSdkVersion="19" android:targetSdkVersion="23"/>
+    <uses-sdk android:minSdkVersion="19" android:targetSdkVersion="24"/>
 
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
@@ -1528,6 +1528,8 @@
                 <action android:name="com.android.cts.verifier.managedprovisioning.NOTIFICATION" />
                 <action android:name="com.android.cts.verifier.managedprovisioning.LOCKSCREEN_NOTIFICATION" />
                 <action android:name="com.android.cts.verifier.managedprovisioning.CLEAR_NOTIFICATION" />
+                <action android:name="com.android.cts.verifier.managedprovisioning.TEST_SELECT_WORK_CHALLENGE" />
+                <action android:name="com.android.cts.verifier.managedprovisioning.TEST_CONFIRM_WORK_CREDENTIALS" />
                 <category android:name="android.intent.category.DEFAULT"></category>
             </intent-filter>
         </activity>
