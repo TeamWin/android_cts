@@ -25,10 +25,11 @@ import java.io.IOException;
  * Load dynamic config for device side test cases
  */
 public class DynamicConfigHostSide extends DynamicConfig {
+
     private static String LOG_TAG = DynamicConfigHostSide.class.getSimpleName();
 
     public DynamicConfigHostSide(String moduleName) throws IOException, XmlPullParserException {
         File configFile = getConfigFile(new File(CONFIG_FOLDER_ON_HOST), moduleName);
-        initConfigFromXml(configFile);
+        initializeConfig(configFile);
     }
 }

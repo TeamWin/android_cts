@@ -88,11 +88,11 @@ public class DynamicConfigPusher implements ITargetCleaner {
         }
 
         String apfeConfigInJson = null;
-        String OriginUrl = buildHelper.getDynamicConfigUrl();
+        String originUrl = buildHelper.getDynamicConfigUrl();
 
-        if (OriginUrl != null) {
+        if (originUrl != null) {
             try {
-                String requestUrl = OriginUrl
+                String requestUrl = originUrl
                         .replace("{module-name}", mModuleName).replace("{version-name}", mVersion);
                 java.net.URL request = new URL(requestUrl);
                 apfeConfigInJson = StreamUtil.getStringFromStream(request.openStream());
@@ -128,7 +128,9 @@ public class DynamicConfigPusher implements ITargetCleaner {
 
             case HOST:
                 File storageDir = new File(DynamicConfig.CONFIG_FOLDER_ON_HOST);
-                if (!storageDir.exists()) storageDir.mkdir();
+                if (!storageDir.exists()) {
+                    storageDir.mkdir();
+                }
                 File hostDest = new File(DynamicConfig.CONFIG_FOLDER_ON_HOST + src.getName());
                 try {
                     FileUtil.copyFile(src, hostDest);

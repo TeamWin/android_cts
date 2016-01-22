@@ -13,6 +13,8 @@
      limitations under the License.
 -->
 
-<DynamicConfig>
-    <Config key="MediaFilesUrl">https://dl.google.com/dl/android/cts/android-cts-media-1.1.zip</Config>
-</DynamicConfig>
+<dynamicConfig>
+    <entry key="MediaFilesUrl">
+         <value>https://dl.google.com/dl/android/cts/android-cts-media-1.1.zip</value>
+    </entry>
+</dynamicConfig>

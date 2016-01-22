@@ -34,14 +34,14 @@ import java.util.Map;
  * Load dynamic config for test cases
  */
 public class DynamicConfig {
+
     public final static String MODULE_NAME = "module-name";
 
     //XML constant
     public static final String NS = null;
-    public static final String DYNAMIC_CONFIG_TAG = "DynamicConfig";
-    public static final String CONFIG_TAG = "Config";
-    public static final String CONFIG_LIST_TAG = "ConfigList";
-    public static final String ITEM_TAG = "Item";
+    public static final String CONFIG_TAG = "dynamicConfig";
+    public static final String ENTRY_TAG = "entry";
+    public static final String VALUE_TAG = "value";
     public static final String KEY_ATTR = "key";
 
     public final static String CONFIG_FOLDER_ON_DEVICE = "/sdcard/dynamic-config-files/";
@@ -50,19 +50,18 @@ public class DynamicConfig {
     public final static String MERGED_CONFIG_FILE_FOLDER =
             System.getProperty("java.io.tmpdir") + "/dynamic-config-files/merged";
 
+    protected Map<String, List<String>> mDynamicConfigMap = new HashMap<String, List<String>>();
 
-    protected Params params;
-
-    protected void initConfigFromXml(File file) throws XmlPullParserException, IOException {
-        params = genParamsFromFile(file);
+    protected void initializeConfig(File file) throws XmlPullParserException, IOException {
+        mDynamicConfigMap = createConfigMap(file);
     }
 
-    public String getConfig(String key) {
-        return params.mDynamicParams.get(key);
+    public String getValue(String key) {
+        return mDynamicConfigMap.get(key).get(0);
     }
 
-    public List<String> getConfigList(String key) {
-        return params.mDynamicArrayParams.get(key);
+    public List<String> getValues(String key) {
+        return mDynamicConfigMap.get(key);
     }
 
     public static File getConfigFile(File configFolder, String moduleName)
@@ -74,44 +73,31 @@ public class DynamicConfig {
         return config;
     }
 
-    public static class Params {
-        public Map<String, String> mDynamicParams = new HashMap<>();
-        public Map<String, List<String>> mDynamicArrayParams = new HashMap<>();
-    }
+    public static Map<String, List<String>> createConfigMap(File file)
+            throws XmlPullParserException, IOException {
 
-    public static Params genParamsFromFile(File file) throws XmlPullParserException, IOException {
-        Params param = new Params();
-
+        Map<String, List<String>> dynamicConfigMap = new HashMap<String, List<String>>();
         XmlPullParser parser = XmlPullParserFactory.newInstance().newPullParser();
         parser.setInput(new InputStreamReader(new FileInputStream(file)));
-
         parser.nextTag();
-        parser.require(XmlPullParser.START_TAG, NS, DYNAMIC_CONFIG_TAG);
+        parser.require(XmlPullParser.START_TAG, NS, CONFIG_TAG);
 
         while (parser.nextTag() == XmlPullParser.START_TAG) {
-            if (parser.getName().equals(CONFIG_TAG)) {
-                String key = parser.getAttributeValue(NS, KEY_ATTR);
-                String value = parser.nextText();
-                parser.require(XmlPullParser.END_TAG, NS, CONFIG_TAG);
-                if (key != null && !key.isEmpty()) {
-                    param.mDynamicParams.put(key, value);
-                }
-            } else {
-                List<String> arrayValue = new ArrayList<>();
-                parser.require(XmlPullParser.START_TAG, NS, CONFIG_LIST_TAG);
-                String key = parser.getAttributeValue(NS, KEY_ATTR);
-                while (parser.nextTag() == XmlPullParser.START_TAG) {
-                    parser.require(XmlPullParser.START_TAG, NS, ITEM_TAG);
-                    arrayValue.add(parser.nextText());
-                    parser.require(XmlPullParser.END_TAG, NS, ITEM_TAG);
-                }
-                parser.require(XmlPullParser.END_TAG, NS, CONFIG_LIST_TAG);
-                if (key != null && !key.isEmpty()) {
-                    param.mDynamicArrayParams.put(key, arrayValue);
-                }
+            parser.require(XmlPullParser.START_TAG, NS, ENTRY_TAG);
+            String key = parser.getAttributeValue(NS, KEY_ATTR);
+            List<String> valueList = new ArrayList<String>();
+            while (parser.nextTag() == XmlPullParser.START_TAG) {
+                parser.require(XmlPullParser.START_TAG, NS, VALUE_TAG);
+                valueList.add(parser.nextText());
+                parser.require(XmlPullParser.END_TAG, NS, VALUE_TAG);
+            }
+            parser.require(XmlPullParser.END_TAG, NS, ENTRY_TAG);
+            if (key != null && !key.isEmpty() && !valueList.isEmpty()) {
+                dynamicConfigMap.put(key, valueList);
             }
         }
-        parser.require(XmlPullParser.END_TAG, NS, DYNAMIC_CONFIG_TAG);
-        return param;
+
+        parser.require(XmlPullParser.END_TAG, NS, CONFIG_TAG);
+        return dynamicConfigMap;
     }
 }
