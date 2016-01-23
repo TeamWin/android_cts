@@ -463,6 +463,9 @@ public class CaptureResultTest extends Camera2AndroidTestCase {
         waiverKeys.add(CaptureResult.JPEG_QUALITY);
         waiverKeys.add(CaptureResult.JPEG_THUMBNAIL_QUALITY);
         waiverKeys.add(CaptureResult.JPEG_THUMBNAIL_SIZE);
+        // Waived until framework implemented deriving logic for this key
+        // b/26625646
+        waiverKeys.add(CaptureResult.CONTROL_POST_RAW_SENSITIVITY_BOOST);
 
         // Keys only present when corresponding control is on are being
         // verified in its own functional test
@@ -748,6 +751,7 @@ public class CaptureResultTest extends Camera2AndroidTestCase {
         resultKeys.add(CaptureResult.CONTROL_AE_STATE);
         resultKeys.add(CaptureResult.CONTROL_AF_STATE);
         resultKeys.add(CaptureResult.CONTROL_AWB_STATE);
+        resultKeys.add(CaptureResult.CONTROL_POST_RAW_SENSITIVITY_BOOST);
         resultKeys.add(CaptureResult.EDGE_MODE);
         resultKeys.add(CaptureResult.FLASH_MODE);
         resultKeys.add(CaptureResult.FLASH_STATE);
