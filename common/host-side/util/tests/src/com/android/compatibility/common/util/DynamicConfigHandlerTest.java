@@ -22,6 +22,9 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 
+import java.util.List;
+import java.util.Map;
+
 /**
  * Unit tests for {@link DynamicConfigHandler}
  */
@@ -29,63 +32,76 @@ public class DynamicConfigHandlerTest extends TestCase {
 
     private static final String localConfig =
             "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
-            "<DynamicConfig>\n" +
-            "    <Config key=\"test-config-1\">test config 1</Config>\n" +
-            "    <Config key=\"test-config-2\">test config 2</Config>\n" +
-            "    <Config key=\"override-config-2\">test config 3</Config>\n" +
-            "    <ConfigList key=\"config-list\">\n" +
-            "        <Item>config0</Item>\n" +
-            "        <Item>config1</Item>\n" +
-            "        <Item>config2</Item>\n" +
-            "        <Item>config3</Item>\n" +
-            "        <Item>config4</Item>\n" +
-            "    </ConfigList>\n" +
-            "    <ConfigList key=\"override-config-list-2\">\n" +
-            "        <Item>A</Item>\n" +
-            "        <Item>B</Item>\n" +
-            "        <Item>C</Item>\n" +
-            "        <Item>D</Item>\n" +
-            "        <Item>E</Item>\n" +
-            "    </ConfigList>\n" +
-            "</DynamicConfig>\n";
+            "<dynamicConfig>\n" +
+            "    <entry key=\"test-config-1\">\n" +
+            "        <value>test config 1</value>\n" +
+            "    </entry>\n" +
+            "    <entry key=\"test-config-2\">\n" +
+            "        <value>test config 2</value>\n" +
+            "    </entry>\n" +
+            "    <entry key=\"override-config-2\">\n" +
+            "        <value>test config 3</value>\n" +
+            "    </entry>\n" +
+            "    <entry key=\"config-list\">\n" +
+            "        <value>config0</value>\n" +
+            "        <value>config1</value>\n" +
+            "        <value>config2</value>\n" +
+            "        <value>config3</value>\n" +
+            "        <value>config4</value>\n" +
+            "    </entry>\n" +
+            "    <entry key=\"override-config-list-2\">\n" +
+            "        <value>A</value>\n" +
+            "        <value>B</value>\n" +
+            "        <value>C</value>\n" +
+            "        <value>D</value>\n" +
+            "        <value>E</value>\n" +
+            "    </entry>\n" +
+            "</dynamicConfig>\n";
 
     private static final String overrideJson =
             "{\n" +
-            "  \"config\": [\n" +
+            "  \"dynamicConfigEntries\": [\n" +
             "    {\n" +
-            "      \"key\": \"version\",\n" +
-            "      \"value\": \"1.0\"\n" +
+            "      \"configAttribute\": \"version\",\n" +
+            "      \"configValues\": [\n" +
+            "        \"1.0\"\n" +
+            "      ]\n" +
             "    },\n" +
             "    {\n" +
-            "      \"key\": \"suite\",\n" +
-            "      \"value\": \"CTS_V2\"\n" +
+            "      \"configAttribute\": \"suite\",\n" +
+            "      \"configValues\": [\n" +
+            "        \"CTS_V2\"\n" +
+            "      ]\n" +
             "    },\n" +
             "    {\n" +
-            "      \"key\": \"override-config-1\",\n" +
-            "      \"value\": \"override-config-val-1\"\n" +
+            "      \"configAttribute\": \"override-config-1\",\n" +
+            "      \"configValues\": [\n" +
+            "        \"override-config-val-1\"\n" +
+            "      ]\n" +
             "    },\n" +
             "    {\n" +
-            "      \"key\": \"override-config-2\",\n" +
-            "      \"value\": \"override-config-val-2\"\n" +
-            "    }\n" +
-            "  ],\n" +
-            "  \"configList\": [\n" +
+            "      \"configAttribute\": \"override-config-2\",\n" +
+            "      \"configValues\": [\n" +
+            "        \"override-config-val-2\"\n" +
+            "      ]\n" +
+            "    },\n" +
             "    {\n" +
-            "      \"key\": \"override-config-list-1\",\n" +
-            "      \"value\": [\n" +
+            "      \"configAttribute\": \"override-config-list-1\",\n" +
+            "      \"configValues\": [\n" +
             "        \"override-config-list-val-1-1\",\n" +
             "        \"override-config-list-val-1-2\"\n" +
             "      ]\n" +
             "    },\n" +
             "    {\n" +
-            "      \"key\": \"override-config-list-2\",\n" +
-            "      \"value\": [\n" +
+            "      \"configAttribute\": \"override-config-list-2\",\n" +
+            "      \"configValues\": [\n" +
             "        \"override-config-list-val-2-1\"\n" +
             "      ]\n" +
             "    },\n" +
             "    {\n" +
-            "      \"key\": \"override-config-list-3\",\n" +
-            "      \"value\": []\n" +
+            "      \"configAttribute\": \"override-config-list-3\",\n" +
+            "      \"configValues\": [\n" +
+            "      ]\n" +
             "    }\n" +
             "  ]\n" +
             "}";
@@ -97,21 +113,21 @@ public class DynamicConfigHandlerTest extends TestCase {
         File mergedFile = DynamicConfigHandler
                 .getMergedDynamicConfigFile(localConfigFile, overrideJson, module);
 
-        DynamicConfig.Params params = DynamicConfig.genParamsFromFile(mergedFile);
+        Map<String, List<String>> configMap = DynamicConfig.createConfigMap(mergedFile);
 
-        assertEquals("override-config-val-1", params.mDynamicParams.get("override-config-1"));
-        assertTrue(params.mDynamicArrayParams.get("override-config-list-1")
+        assertEquals("override-config-val-1", configMap.get("override-config-1").get(0));
+        assertTrue(configMap.get("override-config-list-1")
                 .contains("override-config-list-val-1-1"));
-        assertTrue(params.mDynamicArrayParams.get("override-config-list-1")
+        assertTrue(configMap.get("override-config-list-1")
                 .contains("override-config-list-val-1-2"));
-        assertTrue(params.mDynamicArrayParams.get("override-config-list-3").size() == 0);
+        assertTrue(configMap.get("override-config-list-3").size() == 0);
 
-        assertEquals("test config 1", params.mDynamicParams.get("test-config-1"));
-        assertTrue(params.mDynamicArrayParams.get("config-list").contains("config2"));
+        assertEquals("test config 1", configMap.get("test-config-1").get(0));
+        assertTrue(configMap.get("config-list").contains("config2"));
 
-        assertEquals("override-config-val-2", params.mDynamicParams.get("override-config-2"));
-        assertEquals(1, params.mDynamicArrayParams.get("override-config-list-2").size());
-        assertTrue(params.mDynamicArrayParams.get("override-config-list-2")
+        assertEquals("override-config-val-2", configMap.get("override-config-2").get(0));
+        assertEquals(1, configMap.get("override-config-list-2").size());
+        assertTrue(configMap.get("override-config-list-2")
                 .contains("override-config-list-val-2-1"));
     }
 

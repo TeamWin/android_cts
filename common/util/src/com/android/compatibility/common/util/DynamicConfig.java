@@ -92,7 +92,7 @@ public class DynamicConfig {
                 parser.require(XmlPullParser.END_TAG, NS, VALUE_TAG);
             }
             parser.require(XmlPullParser.END_TAG, NS, ENTRY_TAG);
-            if (key != null && !key.isEmpty() && !valueList.isEmpty()) {
+            if (key != null && !key.isEmpty()) {
                 dynamicConfigMap.put(key, valueList);
             }
         }
