@@ -243,7 +243,7 @@ public class Test_invoke_super_range extends DxTestCase {
     public void testVFE18() {
         //@uses dot.junit.opcodes.invoke_super_range.d.T_invoke_super_range_24
         loadAndRun("dot.junit.opcodes.invoke_super_range.d.T_invoke_super_range_24",
-                   IncompatibleClassChangeError.class);
+                   AbstractMethodError.class);
     }
 
     /**

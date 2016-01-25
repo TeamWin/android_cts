@@ -236,8 +236,8 @@ public class Test_invoke_super extends DxTestCase {
      * @title attempt to invoke interface method
      */
     public void testVFE18() {
-        loadAndRun("dot.junit.opcodes.invoke_super.d.T_invoke_super_24", 
-                   IncompatibleClassChangeError.class);
+        loadAndRun("dot.junit.opcodes.invoke_super.d.T_invoke_super_24",
+                   AbstractMethodError.class);
     }
 
     /**
