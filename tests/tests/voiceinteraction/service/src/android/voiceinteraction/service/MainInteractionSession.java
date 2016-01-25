@@ -60,7 +60,16 @@ public class MainInteractionSession extends VoiceInteractionSession {
     public void onShow(Bundle args, int showFlags) {
         super.onShow(args, showFlags);
         mStartIntent = args.getParcelable("intent");
-        startVoiceActivity(mStartIntent);
+        if (mStartIntent != null) {
+            startVoiceActivity(mStartIntent);
+        } else if ((showFlags & SHOW_SOURCE_ACTIVITY) == SHOW_SOURCE_ACTIVITY) {
+            // Verify args
+            if (args == null
+                    || !Utils.PRIVATE_OPTIONS_VALUE.equals(
+                            args.getString(Utils.PRIVATE_OPTIONS_KEY))) {
+                throw new IllegalArgumentException("Incorrect arguments for SHOW_SOURCE_ACTIVITY");
+            }
+        }
     }
 
     void assertPromptFromTestApp(CharSequence prompt, Bundle extras) {
