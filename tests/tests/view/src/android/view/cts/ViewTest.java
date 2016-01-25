@@ -2843,15 +2843,7 @@ public class ViewTest extends ActivityInstrumentationTestCase2<ViewTestCtsActivi
         Rect rectangle = new Rect();
         MockViewGroupParent parent = new MockViewGroupParent(mActivity);
 
-        final Rect requestedRect = new Rect();
-        MockViewGroupParent grandparent = new MockViewGroupParent(mActivity) {
-            @Override
-            public boolean requestChildRectangleOnScreen(View child, Rect rectangle,
-                    boolean immediate) {
-                requestedRect.set(rectangle);
-                return super.requestChildRectangleOnScreen(child, rectangle, immediate);
-            }
-        };
+        MockViewGroupParent grandparent = new MockViewGroupParent(mActivity);
 
         // parent is null
         assertFalse(view.requestRectangleOnScreen(rectangle));
@@ -2873,16 +2865,82 @@ public class ViewTest extends ActivityInstrumentationTestCase2<ViewTestCtsActivi
         assertTrue(parent.hasRequestChildRectangleOnScreen());
         assertTrue(grandparent.hasRequestChildRectangleOnScreen());
 
-        assertEquals(-1, requestedRect.left);
-        assertEquals(-2, requestedRect.top);
-        assertEquals(-1, requestedRect.right);
-        assertEquals(-2, requestedRect.bottom);
+        // it is grand parent's responsibility to check parent's scroll offset
+        final Rect requestedRect = grandparent.getLastRequestedChildRectOnScreen();
+        assertEquals(0, requestedRect.left);
+        assertEquals(0, requestedRect.top);
+        assertEquals(0, requestedRect.right);
+        assertEquals(0, requestedRect.bottom);
 
         try {
             view.requestRectangleOnScreen(null);
             fail("should throw NullPointerException");
         } catch (NullPointerException e) {
         }
+    }
+
+    public void testRequestRectangleOnScreen3() {
+        requestRectangleOnScreenTest(false);
+    }
+
+    public void testRequestRectangleOnScreen4() {
+        requestRectangleOnScreenTest(true);
+    }
+
+    public void testRequestRectangleOnScreen5() {
+        MockView child = new MockView(mActivity);
+
+        MockViewGroupParent parent = new MockViewGroupParent(mActivity);
+        MockViewGroupParent grandParent = new MockViewGroupParent(mActivity);
+        parent.addView(child);
+        grandParent.addView(parent);
+
+        child.layout(5, 6, 7, 9);
+        child.requestRectangleOnScreen(new Rect(10, 10, 12, 13));
+        assertEquals(new Rect(10, 10, 12, 13), parent.getLastRequestedChildRectOnScreen());
+        assertEquals(new Rect(15, 16, 17, 19), grandParent.getLastRequestedChildRectOnScreen());
+
+        child.scrollBy(1, 2);
+        child.requestRectangleOnScreen(new Rect(10, 10, 12, 13));
+        assertEquals(new Rect(10, 10, 12, 13), parent.getLastRequestedChildRectOnScreen());
+        assertEquals(new Rect(14, 14, 16, 17), grandParent.getLastRequestedChildRectOnScreen());
+    }
+
+    private void requestRectangleOnScreenTest(boolean scrollParent) {
+        MockView child = new MockView(mActivity);
+
+        MockViewGroupParent parent = new MockViewGroupParent(mActivity);
+        MockViewGroupParent grandParent = new MockViewGroupParent(mActivity);
+        parent.addView(child);
+        grandParent.addView(parent);
+
+        child.requestRectangleOnScreen(new Rect(10, 10, 12, 13));
+        assertEquals(new Rect(10, 10, 12, 13), parent.getLastRequestedChildRectOnScreen());
+        assertEquals(new Rect(10, 10, 12, 13), grandParent.getLastRequestedChildRectOnScreen());
+
+        child.scrollBy(1, 2);
+        if (scrollParent) {
+            // should not affect anything
+            parent.scrollBy(25, 30);
+            parent.layout(3, 5, 7, 9);
+        }
+        child.requestRectangleOnScreen(new Rect(10, 10, 12, 13));
+        assertEquals(new Rect(10, 10, 12, 13), parent.getLastRequestedChildRectOnScreen());
+        assertEquals(new Rect(9, 8, 11, 11), grandParent.getLastRequestedChildRectOnScreen());
+    }
+
+    public void testRequestRectangleOnScreenWithScale() {
+        // scale should not affect the rectangle
+        MockView child = new MockView(mActivity);
+        child.setScaleX(2);
+        child.setScaleX(3);
+        MockViewGroupParent parent = new MockViewGroupParent(mActivity);
+        MockViewGroupParent grandParent = new MockViewGroupParent(mActivity);
+        parent.addView(child);
+        grandParent.addView(parent);
+        child.requestRectangleOnScreen(new Rect(10, 10, 12, 13));
+        assertEquals(new Rect(10, 10, 12, 13), parent.getLastRequestedChildRectOnScreen());
+        assertEquals(new Rect(10, 10, 12, 13), grandParent.getLastRequestedChildRectOnScreen());
     }
 
     /**
@@ -4236,6 +4294,8 @@ public class ViewTest extends ActivityInstrumentationTestCase2<ViewTestCtsActivi
 
     private static class MockViewGroupParent extends ViewGroup implements ViewParent {
         private boolean mHasRequestChildRectangleOnScreen = false;
+        private Rect mLastRequestedChildRectOnScreen = new Rect(
+                Integer.MIN_VALUE, Integer.MIN_VALUE, Integer.MIN_VALUE, Integer.MIN_VALUE);
 
         public MockViewGroupParent(Context context) {
             super(context);
@@ -4250,7 +4310,12 @@ public class ViewTest extends ActivityInstrumentationTestCase2<ViewTestCtsActivi
         public boolean requestChildRectangleOnScreen(View child,
                 Rect rectangle, boolean immediate) {
             mHasRequestChildRectangleOnScreen = true;
+            mLastRequestedChildRectOnScreen.set(rectangle);
             return super.requestChildRectangleOnScreen(child, rectangle, immediate);
+        }
+
+        public Rect getLastRequestedChildRectOnScreen() {
+            return mLastRequestedChildRectOnScreen;
         }
 
         public boolean hasRequestChildRectangleOnScreen() {
