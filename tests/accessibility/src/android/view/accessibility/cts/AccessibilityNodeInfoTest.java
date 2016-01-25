@@ -35,7 +35,7 @@ import java.util.List;
 public class AccessibilityNodeInfoTest extends AndroidTestCase {
 
     /** The number of properties of the {@link AccessibilityNodeInfo} class. */
-    private static final int NON_STATIC_FIELD_COUNT = 30;
+    private static final int NON_STATIC_FIELD_COUNT = 31;
 
     @SmallTest
     public void testMarshaling() throws Exception {
@@ -198,6 +198,7 @@ public class AccessibilityNodeInfoTest extends AndroidTestCase {
         info.setLabeledBy(new View(getContext()));
         info.setLabelFor(new View(getContext()));
         info.setViewIdResourceName("foo.bar:id/baz");
+        info.setDrawingOrder(5);
     }
 
     /**
@@ -260,6 +261,8 @@ public class AccessibilityNodeInfoTest extends AndroidTestCase {
                 receivedInfo.getMovementGranularities());
         assertEquals("viewId has incorrect value", expectedInfo.getViewIdResourceName(),
                 receivedInfo.getViewIdResourceName());
+        assertEquals("drawing order has incorrect value", expectedInfo.getDrawingOrder(),
+                receivedInfo.getDrawingOrder());
     }
 
     /**
@@ -293,5 +296,6 @@ public class AccessibilityNodeInfoTest extends AndroidTestCase {
         assertSame("movementGranularities not properly recycled", 0,
                 info.getMovementGranularities());
         assertNull("viewId not properly recycled", info.getViewIdResourceName());
+        assertEquals(0, info.getDrawingOrder());
     }
 }
