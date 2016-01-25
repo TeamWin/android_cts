@@ -26,7 +26,7 @@
         />
         <activity android:name=".NoRelaunchActivity"
                 android:resizeable="true"
-                android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout|layoutDirection"
+                android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout"
                 android:exported="true"
         />
         <activity android:name=".SlowCreateActivity"
@@ -72,7 +72,7 @@
                   android:resizeable="true"
                   android:supportsPictureInPicture="true"
                   android:taskAffinity="nobody.but.LaunchPipOnPipActivity"
-                  android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout|layoutDirection"
+                  android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout"
                   android:exported="true"
         />
     </application>
