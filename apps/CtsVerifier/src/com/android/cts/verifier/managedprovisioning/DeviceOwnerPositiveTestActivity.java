@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015 The Android Open Source Project
+ * Copyright (C) 2016 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -65,6 +65,9 @@ public class DeviceOwnerPositiveTestActivity extends PassFailButtons.TestListAct
     static final String COMMAND_SET_GLOBAL_SETTING = "set-global-setting";
     static final String COMMAND_SET_STATUSBAR_DISABLED = "set-statusbar-disabled";
     static final String COMMAND_SET_KEYGUARD_DISABLED = "set-keyguard-disabled";
+    static final String COMMAND_SET_KEYGUARD_DISABLED_FEATURE = "set-keyguard-disabled-feature";
+    static final String COMMAND_SET_MAXIMUM_TIME_TO_LOCK = "set-maximum-time-to-lock";
+    static final String COMMAND_SET_PASSWORD_QUALITY = "set-password-quality";
     static final String COMMAND_CHECK_PERMISSION_LOCKDOWN = "check-permission-lockdown";
     static final String EXTRA_SETTING = "extra-setting";
 
@@ -82,6 +85,7 @@ public class DeviceOwnerPositiveTestActivity extends PassFailButtons.TestListAct
     //TODO(rgl): This symbol should be available in android.provider.settings
     private static final String ACTION_VPN_SETTINGS = "android.net.vpn.SETTINGS";
     private static final String DISALLOW_DATA_ROAMING_ID = "DISALLOW_DATA_ROAMING";
+    private static final String POLICY_TRANSPARENCY_ID = PolicyTransparencyActivity.class.getName();
     private static final String REMOVE_DEVICE_OWNER_TEST_ID = "REMOVE_DEVICE_OWNER";
 
     @Override
@@ -254,6 +258,11 @@ public class DeviceOwnerPositiveTestActivity extends PassFailButtons.TestListAct
                 R.string.device_profile_owner_permission_lockdown_test,
                 new Intent(PermissionLockdownTestActivity.ACTION_CHECK_PERMISSION_LOCKDOWN)));
 
+        // Policy Transparency
+        adapter.add(createTestItem(this, POLICY_TRANSPARENCY_ID,
+                R.string.device_owner_policy_transparency_test,
+                new Intent(this, PolicyTransparencyActivity.class)));
+
         // removeDeviceOwner
         adapter.add(createInteractiveTestItem(this, REMOVE_DEVICE_OWNER_TEST_ID,
                 R.string.device_owner_remove_device_owner_test,
@@ -322,6 +331,15 @@ public class DeviceOwnerPositiveTestActivity extends PassFailButtons.TestListAct
                         dpm.resetPassword(null, 0);
                     }
                     dpm.setKeyguardDisabled(admin, value);
+                } else if (COMMAND_SET_KEYGUARD_DISABLED_FEATURE.equals(command)) {
+                    final int value = intent.getIntExtra(EXTRA_PARAMETER_1, 0);
+                    dpm.setKeyguardDisabledFeatures(admin, value);
+                } else if (COMMAND_SET_MAXIMUM_TIME_TO_LOCK.equals(command)) {
+                    final int value = intent.getIntExtra(EXTRA_PARAMETER_1, 0);
+                    dpm.setMaximumTimeToLock(admin, value);
+                } else if (COMMAND_SET_PASSWORD_QUALITY.equals(command)) {
+                    final int value = intent.getIntExtra(EXTRA_PARAMETER_1, 0);
+                    dpm.setPasswordQuality(admin, value);
                 } else if (COMMAND_CHECK_DEVICE_OWNER.equals(command)) {
                     if (dpm.isDeviceOwnerApp(getPackageName())) {
                         TestResult.setPassedResult(this, intent.getStringExtra(EXTRA_TEST_ID),
@@ -352,6 +370,19 @@ public class DeviceOwnerPositiveTestActivity extends PassFailButtons.TestListAct
             dpm.clearUserRestriction(admin, UserManager.DISALLOW_CONFIG_WIFI);
             dpm.clearUserRestriction(admin, UserManager.DISALLOW_CONFIG_VPN);
             dpm.clearUserRestriction(admin, UserManager.DISALLOW_DATA_ROAMING);
+
+            // Policy transparency tear down.
+            dpm.clearUserRestriction(admin, UserManager.DISALLOW_ADD_USER);
+            dpm.clearUserRestriction(admin, UserManager.DISALLOW_ADJUST_VOLUME);
+            dpm.clearUserRestriction(admin, UserManager.DISALLOW_APPS_CONTROL);
+            dpm.clearUserRestriction(admin, UserManager.DISALLOW_FUN);
+            dpm.clearUserRestriction(admin, UserManager.DISALLOW_MODIFY_ACCOUNTS);
+            dpm.clearUserRestriction(admin, UserManager.DISALLOW_SHARE_LOCATION);
+            dpm.clearUserRestriction(admin, UserManager.DISALLOW_USB_FILE_TRANSFER);
+            dpm.setKeyguardDisabledFeatures(admin, 0);
+            dpm.setMaximumTimeToLock(admin, 0);
+            dpm.setPasswordQuality(admin, 0);
+
             dpm.clearDeviceOwnerApp(getPackageName());
         }
     }

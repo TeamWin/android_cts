@@ -1448,6 +1448,14 @@
             </intent-filter>
         </activity>
 
+        <activity android:name=".managedprovisioning.PolicyTransparencyActivity"
+                android:label="@string/device_owner_policy_transparency_test">
+        </activity>
+
+        <activity android:name=".managedprovisioning.SetMaximumTimeToLockActivity"
+                android:label="@string/maximum_time_to_lock">
+        </activity>
+
         <activity-alias
                 android:name=".managedprovisioning.ManagedProfilePermissionLockdownTestActivity"
                 android:targetActivity=".managedprovisioning.PermissionLockdownTestActivity">

@@ -2033,6 +2033,115 @@ You should be prompted to select credentials; choose the ones you just installed
     </string>
     <string name="device_owner_user_vpn_restriction_set">Set VPN restriction</string>
 
+    <!-- Policy transparency -->
+    <string name="device_owner_policy_transparency_test">Policy transparency</string>
+    <string name="device_owner_policy_transparency_test_instructions">
+        1. Go through the list of tests.\n
+        2. Mark the overall test pass or fail.\n
+    </string>
+
+    <string name="disallow_add_user">Disallow add user</string>
+    <string name="disallow_adjust_volume">Disallow adjust volume</string>
+    <string name="disallow_app_control">Disallow app control</string>
+    <string name="disallow_config_wifi">Disallow config wifi</string>
+    <string name="disallow_fun">Disallow fun</string>
+    <string name="disallow_modify_accounts">Disallow modify accounts</string>
+    <string name="disallow_share_location">Disallow share location</string>
+    <string name="disallow_usb_file_transfer">Disallow usb file transfer</string>
+    <string name="keyguard_disable_unredacted_notifications">Disable unredacted notifications</string>
+    <string name="maximum_time_to_lock">Maximum time to lock</string>
+    <string name="password_quality">Password quality</string>
+
+    <string name="disallow_add_user_instructions">
+        Please press the Set restriction button to set the user restriction.\n
+        Then go to quick settings -> owners and\n\n
+        Confirm that:\n
+        - No new user/guest can be added.\n
+        - Pressing Add user/Add guest opens up a "Disabled by policy" dialog.\n
+    </string>
+    <string name="disallow_adjust_volume_instructions">
+        Please press the Set restriction button to set the user restriction.\n
+        Then go to quick settings -> Do not disturb.\n\n
+        Confirm that:\n
+        - Do not disturb is disabled.\n
+        - Pressing DnD opens a disabled by policy dialog.\n
+    </string>
+    <string name="disallow_app_control_instructions">
+        Please press the Set restriction button to set the user restriction.\n
+        Then press Go button to open apps settings page.\n\n
+        Confirm that:\n
+        - Pressing DISABLE/UNINSTALL/FORCE STOP on any app opens a disabled by policy dialog.\n
+    </string>
+    <string name="disallow_config_wifi_instructions">
+        Please press the Set restriction button to set the user restriction.\n
+        Then press Go button to open Wifi settings page.\n\n
+        Confirm that:\n
+        - You cannot see any wifi options.\n
+        - You see a disabled by your organizations\'s administrator message.\n
+    </string>
+    <string name="disallow_fun_instructions">
+        Please press the Set restriction button to set the user restriction.\n
+        Then press Go button to open about phone settings page.\n
+        Click multiple times on the Android version tab.\n\n
+        Confirm that:\n
+        - Disabled by policy dialog comes up.\n
+        - You cannot open the game.\n
+    </string>
+    <string name="disallow_modify_accounts_instructions">
+        Please Press Go button and Add an Account.\n
+        Come back to this test and press the Set restriction button to set the user restriction.\n
+        Then press Go button to open the accounts page.\n\n
+        Confirm that:\n
+        - You cannot add an account.\n
+        - You cannot remove account using overflow menu in account page.\n
+        - Attempting to remove an account opens a disabled by policy dialog.\n
+    </string>
+    <string name="disallow_share_location_instructions">
+        Please press the Set restriction button to set the user restriction.\n
+        Then press Go button to open the Location\'s setting page.\n\n
+        Confirm that:\n
+        - You cannot trigger location mode.\n
+        - Pressing "Off" opens a disabled by policy dialog\n
+    </string>
+    <string name="disallow_usb_file_transfer_instructions">
+        Please press the Set restriction button to set the user restriction.\n
+        Then connect you device using usb.\n
+        Press "USB for charging" notification.\n\n
+        Confirm that:\n
+        - File transfer and photo transfer options are disabled.\n
+        - Pressing on them opens a disabled by policy dialog.\n
+    </string>
+    <string name="keyguard_disable_unredacted_notifications_instructions">
+        Please press the Set restriction button.\n
+        Then go to Notifications setting page.\n
+        Go to configure notifications. Press "When device is locked".\n\n
+        Confirm that:\n
+        - "Show all notification content" is disabled.\n
+        - Pressing on it opens a disabled by policy dialog.\n
+    </string>
+    <string name="set_max_time_to_lock_instructions">
+        Enter non zero maximum time to lock in Seconds.\n
+        Please press the Set restriction button.\n
+        Then press Go button to open the display settings page.\n\n
+        Confirm that:\n
+        - If the value set by you is less than 15, the sleep option is disabled.\n
+        - Pressing on it opens a disabled by policy dialog.\n
+        - For values from 15, All the invalid options are disabled.\n
+        - Pressing on them opens a disabled by policy dialog.\n
+    </string>
+    <string name="password_quality_instructions">
+        Please press the Set restriction button.\n
+        Then press Go button to open the security settings page.\n
+        Go to Choose screen lock.\n\n
+        Confirm that:\n
+        - All options other than "Password" are disabled.\n
+        - Pressing on them opens a disabled by policy dialog.\n
+        - You cannot set an only numeric password.\n
+        - You cannot set an only alpha password.\n
+        - You cannot set an alpha-numeric password.\n
+        - You can only set a password which contains at least a number, a letter and a special character.\n
+    </string>
+
     <!-- Strings for JobScheduler Tests -->
     <string name="js_test_description">This test is mostly automated, but requires some user interaction. You can pass this test once the list items below are checked.</string>
 
