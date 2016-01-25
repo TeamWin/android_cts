@@ -411,6 +411,7 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
                 contactsTestSet.setContactsSearchEnabled(true);
                 contactsTestSet.checkIfCanLookupEnterpriseContacts(true);
                 contactsTestSet.checkIfCanFilterEnterpriseContacts(true);
+                contactsTestSet.checkIfCanFilterSelfContacts();
                 return null;
             }
         });
@@ -438,18 +439,18 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
                     contactsTestSet.setContactsSearchEnabled(false);
                     contactsTestSet.checkIfCanLookupEnterpriseContacts(true);
                     contactsTestSet.checkIfCanFilterEnterpriseContacts(false);
-
+                    contactsTestSet.checkIfCanFilterSelfContacts();
                     contactsTestSet.setCallerIdEnabled(false);
                     contactsTestSet.setContactsSearchEnabled(true);
                     contactsTestSet.checkIfCanLookupEnterpriseContacts(false);
                     contactsTestSet.checkIfCanFilterEnterpriseContacts(true);
-
+                    contactsTestSet.checkIfCanFilterSelfContacts();
                     contactsTestSet.setCallerIdEnabled(false);
                     contactsTestSet.setContactsSearchEnabled(false);
                     contactsTestSet.checkIfCanLookupEnterpriseContacts(false);
                     contactsTestSet.checkIfCanFilterEnterpriseContacts(false);
+                    contactsTestSet.checkIfCanFilterSelfContacts();
                     contactsTestSet.checkIfNoEnterpriseDirectoryFound();
-
                     return null;
                 } finally {
                     // reset policies
@@ -896,20 +897,38 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
             }
         }
 
-        public void checkIfCanFilterEnterpriseContacts(boolean expected)
-                throws DeviceNotAvailableException {
+        public void checkIfCanFilterSelfContacts() throws DeviceNotAvailableException {
             assertTrue(runDeviceTestsAsUser(mManagedProfilePackage, ".ContactsTest",
                     "testPrimaryProfileEnterpriseCallableFilter_canAccessPrimaryDirectories",
                     mParentUserId));
             assertTrue(runDeviceTestsAsUser(mManagedProfilePackage, ".ContactsTest",
+                    "testManagedProfileEnterpriseCallableFilter_canAccessManagedDirectories",
+                    mProfileUserId));
+
+            assertTrue(runDeviceTestsAsUser(mManagedProfilePackage, ".ContactsTest",
                     "testPrimaryProfileEnterpriseEmailFilter_canAccessPrimaryDirectories",
                     mParentUserId));
+            assertTrue(runDeviceTestsAsUser(mManagedProfilePackage, ".ContactsTest",
+                    "testEnterpriseProfileEnterpriseEmailFilter_canAccessManagedDirectories",
+                    mProfileUserId));
+
             assertTrue(runDeviceTestsAsUser(mManagedProfilePackage, ".ContactsTest",
                     "testPrimaryProfileEnterpriseContactFilter_canAccessPrimaryDirectories",
                     mParentUserId));
             assertTrue(runDeviceTestsAsUser(mManagedProfilePackage, ".ContactsTest",
+                    "testManagedProfileEnterpriseContactFilter_canAccessManagedDirectories",
+                    mProfileUserId));
+
+            assertTrue(runDeviceTestsAsUser(mManagedProfilePackage, ".ContactsTest",
                     "testPrimaryProfileEnterprisePhoneFilter_canAccessPrimaryDirectories",
                     mParentUserId));
+            assertTrue(runDeviceTestsAsUser(mManagedProfilePackage, ".ContactsTest",
+                    "testManagedProfileEnterprisePhoneFilter_canAccessManagedDirectories",
+                    mProfileUserId));
+        }
+
+        public void checkIfCanFilterEnterpriseContacts(boolean expected)
+                throws DeviceNotAvailableException {
             assertTrue(runDeviceTestsAsUser(mManagedProfilePackage, ".ContactsTest",
                     "testFilterUriWhenDirectoryParamMissing", mParentUserId));
             if (expected) {

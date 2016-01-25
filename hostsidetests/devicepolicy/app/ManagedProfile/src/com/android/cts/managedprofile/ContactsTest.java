@@ -598,21 +598,33 @@ public class ContactsTest extends AndroidTestCase {
 
     public void testPrimaryProfileEnterpriseCallableFilter_canAccessPrimaryDirectories() {
         assertFalse(isManagedProfile());
+        callableFilterAccessDirectoryInternal(PRIMARY_CONTACT_PHONE,
+                PRIMARY_CONTACT_DISPLAY_NAME, getPrimaryRemoteDirectoryId(),
+                PRIMARY_DIRECTORY_CONTACT_NAME);
+    }
 
+    public void testManagedProfileEnterpriseCallableFilter_canAccessManagedDirectories() {
+        assertTrue(isManagedProfile());
+        callableFilterAccessDirectoryInternal(MANAGED_CONTACT_PHONE, MANAGED_CONTACT_DISPLAY_NAME,
+                getEnterpriseRemoteDirectoryIdInManagedProfile(), MANAGED_DIRECTORY_CONTACT_NAME);
+    }
+
+    private void callableFilterAccessDirectoryInternal(String phone, String displayName,
+                                                       long remoteDirectoryId,
+                                                       String directoryDisplayName) {
         // local directory
         final ContactInfo defaultContactInfo
                 = getContactInfoFromEnterpriseCallableFilterUriInDirectory(
-                PRIMARY_CONTACT_PHONE, Directory.DEFAULT);
+                phone, Directory.DEFAULT);
         assertNotNull(defaultContactInfo);
-        assertEquals(PRIMARY_CONTACT_DISPLAY_NAME, defaultContactInfo.displayName);
+        assertEquals(displayName, defaultContactInfo.displayName);
 
         // remote directory
-        final long directoryId = getPrimaryRemoteDirectoryId();
         final ContactInfo directoryContactInfo
                 = getContactInfoFromEnterpriseCallableFilterUriInDirectory(
-                PRIMARY_CONTACT_PHONE, directoryId);
+                displayName, remoteDirectoryId);
         assertNotNull(directoryContactInfo);
-        assertEquals(PRIMARY_DIRECTORY_CONTACT_NAME, directoryContactInfo.displayName);
+        assertEquals(directoryDisplayName, directoryContactInfo.displayName);
     }
 
     public void testPrimaryProfileEnterpriseCallableFilter_canAccessManagedDirectories() {
@@ -658,21 +670,32 @@ public class ContactsTest extends AndroidTestCase {
 
     public void testPrimaryProfileEnterpriseEmailFilter_canAccessPrimaryDirectories() {
         assertFalse(isManagedProfile());
+        emailFilterCanAccessDirectoriesInternal(
+                PRIMARY_CONTACT_EMAIL, PRIMARY_CONTACT_DISPLAY_NAME,
+                getPrimaryRemoteDirectoryId(), PRIMARY_DIRECTORY_CONTACT_NAME);
+    }
 
+    public void testEnterpriseProfileEnterpriseEmailFilter_canAccessManagedDirectories() {
+        assertTrue(isManagedProfile());
+        emailFilterCanAccessDirectoriesInternal(
+                MANAGED_CONTACT_EMAIL, MANAGED_CONTACT_DISPLAY_NAME,
+                getEnterpriseRemoteDirectoryIdInManagedProfile(), MANAGED_DIRECTORY_CONTACT_NAME);
+    }
+
+    public void emailFilterCanAccessDirectoriesInternal(String email, String displayName,
+                                                        long remoteDirectoryId,
+                                                        String directoryDisplayName) {
         // local directory
         final ContactInfo defaultContactInfo
-                = getContactInfoFromEnterpriseEmailFilterUriInDirectory(
-                PRIMARY_CONTACT_EMAIL, Directory.DEFAULT);
+                = getContactInfoFromEnterpriseEmailFilterUriInDirectory(email, Directory.DEFAULT);
         assertNotNull(defaultContactInfo);
-        assertEquals(PRIMARY_CONTACT_DISPLAY_NAME, defaultContactInfo.displayName);
+        assertEquals(displayName, defaultContactInfo.displayName);
 
         // remote directory
-        final long directoryId = getPrimaryRemoteDirectoryId();
         final ContactInfo directoryContactInfo
-                = getContactInfoFromEnterpriseEmailFilterUriInDirectory(
-                PRIMARY_CONTACT_EMAIL, directoryId);
+                = getContactInfoFromEnterpriseEmailFilterUriInDirectory(email, remoteDirectoryId);
         assertNotNull(directoryContactInfo);
-        assertEquals(PRIMARY_DIRECTORY_CONTACT_NAME, directoryContactInfo.displayName);
+        assertEquals(directoryDisplayName, directoryContactInfo.displayName);
     }
 
     public void testPrimaryProfileEnterpriseEmailFilter_canAccessManagedDirectories() {
@@ -716,23 +739,34 @@ public class ContactsTest extends AndroidTestCase {
         }
     }
 
-    public void testPrimaryProfileEnterpriseContactFilter_canAccessPrimaryDirectories() {
+    public void testPrimaryProfileEnterpriseContactFilter_primaryies() {
         assertFalse(isManagedProfile());
+        contactFilterCanAccessPrimaryDirectoriesInternal(PRIMARY_CONTACT_DISPLAY_NAME,
+                getPrimaryRemoteDirectoryId(), PRIMARY_DIRECTORY_CONTACT_NAME);
+    }
 
+    public void testManagedProfileEnterpriseContactFilter_canAccessManagedDirectories() {
+        assertTrue(isManagedProfile());
+        contactFilterCanAccessPrimaryDirectoriesInternal(MANAGED_CONTACT_DISPLAY_NAME,
+                getEnterpriseRemoteDirectoryIdInManagedProfile(), MANAGED_DIRECTORY_CONTACT_NAME);
+    }
+
+    public void contactFilterCanAccessPrimaryDirectoriesInternal(String displayName,
+                                                                 long remoteDirectoryId,
+                                                                 String directoryDisplayName) {
         // local directory
         final ContactInfo defaultContactInfo
                 = getContactInfoFromEnterpriseContactFilterUriInDirectory(
-                PRIMARY_CONTACT_DISPLAY_NAME, Directory.DEFAULT);
+                displayName, Directory.DEFAULT);
         assertNotNull(defaultContactInfo);
-        assertEquals(PRIMARY_CONTACT_DISPLAY_NAME, defaultContactInfo.displayName);
+        assertEquals(displayName, defaultContactInfo.displayName);
 
         // remote directory
-        final long directoryId = getPrimaryRemoteDirectoryId();
         final ContactInfo directoryContactInfo
                 = getContactInfoFromEnterpriseEmailFilterUriInDirectory(
-                PRIMARY_CONTACT_DISPLAY_NAME, directoryId);
+                displayName, remoteDirectoryId);
         assertNotNull(directoryContactInfo);
-        assertEquals(PRIMARY_DIRECTORY_CONTACT_NAME, directoryContactInfo.displayName);
+        assertEquals(directoryDisplayName, directoryContactInfo.displayName);
     }
 
     public void testPrimaryProfileEnterpriseContactFilter_canAccessManagedDirectories() {
@@ -778,21 +812,32 @@ public class ContactsTest extends AndroidTestCase {
 
     public void testPrimaryProfileEnterprisePhoneFilter_canAccessPrimaryDirectories() {
         assertFalse(isManagedProfile());
+        phoneFilterCanAccessPrimaryDirectoriesInternal(
+                PRIMARY_CONTACT_PHONE, PRIMARY_CONTACT_DISPLAY_NAME,
+                getPrimaryRemoteDirectoryId(), PRIMARY_DIRECTORY_CONTACT_NAME);
+    }
 
+    public void testManagedProfileEnterprisePhoneFilter_canAccesManagedDirectories() {
+        assertTrue(isManagedProfile());
+        phoneFilterCanAccessPrimaryDirectoriesInternal(
+                MANAGED_CONTACT_PHONE, MANAGED_CONTACT_DISPLAY_NAME,
+                getEnterpriseRemoteDirectoryIdInManagedProfile(), MANAGED_DIRECTORY_CONTACT_NAME);
+    }
+
+    public void phoneFilterCanAccessPrimaryDirectoriesInternal(String phone, String displayName,
+                                                               long remoteDirectoryId,
+                                                               String directoryDisplayName) {
         // local directory
         final ContactInfo defaultContactInfo
-                = getContactInfoFromEnterprisePhoneFilterUriInDirectory(
-                PRIMARY_CONTACT_PHONE, Directory.DEFAULT);
+                = getContactInfoFromEnterprisePhoneFilterUriInDirectory(phone, Directory.DEFAULT);
         assertNotNull(defaultContactInfo);
-        assertEquals(PRIMARY_CONTACT_DISPLAY_NAME, defaultContactInfo.displayName);
+        assertEquals(displayName, defaultContactInfo.displayName);
 
         // remote directory
-        final long directoryId = getPrimaryRemoteDirectoryId();
         final ContactInfo directoryContactInfo
-                = getContactInfoFromEnterprisePhoneFilterUriInDirectory(
-                PRIMARY_CONTACT_PHONE, directoryId);
+                = getContactInfoFromEnterprisePhoneFilterUriInDirectory(phone, remoteDirectoryId);
         assertNotNull(directoryContactInfo);
-        assertEquals(PRIMARY_DIRECTORY_CONTACT_NAME, directoryContactInfo.displayName);
+        assertEquals(directoryDisplayName, directoryContactInfo.displayName);
     }
 
     public void testPrimaryProfileEnterprisePhoneFilter_canAccessManagedDirectories() {
@@ -840,7 +885,7 @@ public class ContactsTest extends AndroidTestCase {
         assertFalse(isManagedProfile());
 
         final Cursor cursor = mResolver.query(Directory.ENTERPRISE_CONTENT_URI,
-                new String[] { Directory._ID }, null, null, null);
+                new String[]{Directory._ID}, null, null, null);
         try {
             while (cursor.moveToNext()) {
                 final long directoryId = cursor.getLong(0);
@@ -900,6 +945,15 @@ public class ContactsTest extends AndroidTestCase {
 
     private long getPrimaryRemoteDirectoryId() {
         assertFalse(isManagedProfile());
+        return getRemoteDirectoryIdInternal();
+    }
+
+    private long getEnterpriseRemoteDirectoryIdInManagedProfile() {
+        assertTrue(isManagedProfile());
+        return getRemoteDirectoryIdInternal();
+    }
+
+    private long getRemoteDirectoryIdInternal() {
         final Cursor cursor = mResolver.query(Directory.ENTERPRISE_CONTENT_URI,
                 new String[]{
                         Directory._ID
