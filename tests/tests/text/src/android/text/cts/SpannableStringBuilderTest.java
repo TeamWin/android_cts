@@ -673,8 +673,12 @@ public class SpannableStringBuilderTest extends AndroidTestCase {
 
         assertNotNull(spans);
         assertEquals(4, spans.length);
+        // priority spans are first
         assertEquals(fourth, spans[0]);
         assertEquals(third, spans[1]);
+        // other spans should be there
+        assertEquals(second, spans[2]);
+        assertEquals(first, spans[3]);
     }
 
     public void testLength() {
