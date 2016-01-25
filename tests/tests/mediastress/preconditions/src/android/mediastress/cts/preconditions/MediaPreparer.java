@@ -229,7 +229,7 @@ public class MediaPreparer extends PreconditionPreparer {
         URL url;
         try {
             DynamicConfigHostSide config = new DynamicConfigHostSide(DYNAMIC_CONFIG_MODULE);
-            String mediaUrlString = config.getConfig(MEDIA_FILES_URL_KEY);
+            String mediaUrlString = config.getValue(MEDIA_FILES_URL_KEY);
             url = new URL(mediaUrlString);
         } catch (IOException | XmlPullParserException e) {
             throw new TargetSetupError("Trouble finding media file download location with " +

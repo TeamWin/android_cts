@@ -37,90 +37,66 @@ public class DynamicConfigHandler {
 
     private static final String LOG_TAG = DynamicConfigHandler.class.getSimpleName();
 
-    // xml constant
-    private static final String NS = null; //representing null namespace
+    private static final String NS = null; //xml constant representing null namespace
     private static final String ENCODING = "UTF-8";
 
-    public static File getMergedDynamicConfigFile(File localConfigFile, String apfeConfigJson,
+    public static File getMergedDynamicConfigFile(File localConfigFile, String apbsConfigJson,
             String moduleName) throws IOException, XmlPullParserException, JSONException {
 
-        DynamicConfig.Params localConfig = DynamicConfig.genParamsFromFile(localConfigFile);
-        DynamicConfig.Params apfeOverride = parseJsonToParam(apfeConfigJson);
-
-        localConfig.mDynamicParams.putAll(apfeOverride.mDynamicParams);
-        localConfig.mDynamicArrayParams.putAll(apfeOverride.mDynamicArrayParams);
-
-        File mergedConfigFile = storeMergedConfigFile(localConfig, moduleName);
-        return mergedConfigFile;
+        Map<String, List<String>> localConfig = DynamicConfig.createConfigMap(localConfigFile);
+        Map<String, List<String>> apbsConfig = parseJsonToConfigMap(apbsConfigJson);
+        localConfig.putAll(apbsConfig);
+        return storeMergedConfigFile(localConfig, moduleName);
     }
 
-    private static DynamicConfig.Params parseJsonToParam(String apfeConfigJson)
+    private static Map<String, List<String>> parseJsonToConfigMap(String apbsConfigJson)
             throws JSONException {
-        if (apfeConfigJson == null) return new DynamicConfig.Params();
 
-        Map<String, String> configMap = new HashMap<>();
-        Map<String, List<String>> configListMap = new HashMap<>();
-
-        JSONObject rootObj  = new JSONObject(new JSONTokener(apfeConfigJson));
-        if (rootObj.has("config")) {
-            JSONArray configArr = rootObj.getJSONArray("config");
-            for (int i = 0; i < configArr.length(); i++) {
-                JSONObject config = configArr.getJSONObject(i);
-                configMap.put(config.getString("key"), config.getString("value"));
-            }
-        }
-        if (rootObj.has("configList")) {
-            JSONArray configListArr = rootObj.getJSONArray("configList");
-            for (int i = 0; i < configListArr.length(); i++) {
-                JSONObject configList = configListArr.getJSONObject(i);
-                String key = configList.getString("key");
-                List<String> values = new ArrayList<>();
-                JSONArray configListValuesArr = configList.getJSONArray("value");
-                for (int j = 0; j < configListValuesArr.length(); j++) {
-                    values.add(configListValuesArr.getString(j));
-                }
-                configListMap.put(key, values);
-            }
+        Map<String, List<String>> configMap = new HashMap<String, List<String>>();
+        if (apbsConfigJson == null) {
+            return configMap;
         }
 
-        DynamicConfig.Params param = new DynamicConfig.Params();
-        param.mDynamicParams = configMap;
-        param.mDynamicArrayParams = configListMap;
-        return param;
+        JSONObject rootObj  = new JSONObject(new JSONTokener(apbsConfigJson));
+        JSONArray configEntries = rootObj.getJSONArray("dynamicConfigEntries");
+        for (int i = 0; i < configEntries.length(); i++) {
+            JSONObject configEntry = configEntries.getJSONObject(i);
+            String key = configEntry.getString("configAttribute");
+            JSONArray configValues = configEntry.getJSONArray("configValues");
+            List<String> values = new ArrayList<>();
+            for (int j = 0; j < configValues.length(); j++) {
+                values.add(configValues.getString(j));
+            }
+            configMap.put(key, values);
+        }
+        return configMap;
     }
 
-    private static File storeMergedConfigFile(DynamicConfig.Params p, String moduleName)
-            throws XmlPullParserException, IOException {
-        XmlSerializer serializer = XmlPullParserFactory.newInstance().newSerializer();
+    private static File storeMergedConfigFile(Map<String, List<String>> configMap,
+            String moduleName) throws XmlPullParserException, IOException {
 
-        File parentFolder = new File(DynamicConfig.CONFIG_FOLDER_ON_HOST);
-        if (!parentFolder.exists()) parentFolder.mkdir();
         File folder = new File(DynamicConfig.MERGED_CONFIG_FILE_FOLDER);
-        if (!folder.exists()) folder.mkdir();
-        File mergedConfigFile = new File(folder, moduleName+".dynamic");
+        folder.mkdirs();
+
+        File mergedConfigFile = new File(folder, moduleName + ".dynamic");
         OutputStream stream = new FileOutputStream(mergedConfigFile);
+        XmlSerializer serializer = XmlPullParserFactory.newInstance().newSerializer();
         serializer.setOutput(stream, ENCODING);
         serializer.setFeature("http://xmlpull.org/v1/doc/features.html#indent-output", true);
         serializer.startDocument(ENCODING, false);
 
-        serializer.startTag(NS, DynamicConfig.DYNAMIC_CONFIG_TAG);
-        for (String key : p.mDynamicParams.keySet()) {
-            serializer.startTag(NS, DynamicConfig.CONFIG_TAG);
+        serializer.startTag(NS, DynamicConfig.CONFIG_TAG);
+        for (String key : configMap.keySet()) {
+            serializer.startTag(NS, DynamicConfig.ENTRY_TAG);
             serializer.attribute(NS, DynamicConfig.KEY_ATTR, key);
-            serializer.text(p.mDynamicParams.get(key));
-            serializer.endTag(NS, DynamicConfig.CONFIG_TAG);
-        }
-        for (String key : p.mDynamicArrayParams.keySet()) {
-            serializer.startTag(NS, DynamicConfig.CONFIG_LIST_TAG);
-            serializer.attribute(NS, DynamicConfig.KEY_ATTR, key);
-            for (String item: p.mDynamicArrayParams.get(key)) {
-                serializer.startTag(NS, DynamicConfig.ITEM_TAG);
-                serializer.text(item);
-                serializer.endTag(NS, DynamicConfig.ITEM_TAG);
+            for (String value : configMap.get(key)) {
+                serializer.startTag(NS, DynamicConfig.VALUE_TAG);
+                serializer.text(value);
+                serializer.endTag(NS, DynamicConfig.VALUE_TAG);
             }
-            serializer.endTag(NS, DynamicConfig.CONFIG_LIST_TAG);
+            serializer.endTag(NS, DynamicConfig.ENTRY_TAG);
         }
-        serializer.endTag(NS, DynamicConfig.DYNAMIC_CONFIG_TAG);
+        serializer.endTag(NS, DynamicConfig.CONFIG_TAG);
         serializer.endDocument();
         return mergedConfigFile;
     }

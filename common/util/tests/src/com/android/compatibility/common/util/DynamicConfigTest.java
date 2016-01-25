@@ -30,56 +30,64 @@ import java.io.IOException;
 public class DynamicConfigTest extends TestCase {
     private static final String correctConfig =
             "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
-            "<DynamicConfig>\n" +
-            "    <Config key=\"test-config-1\">test config 1</Config>\n" +
-            "    <Config key=\"test-config-2\">testconfig2</Config>\n" +
-            "    <ConfigList key=\"config-list\">\n" +
-            "        <Item>config0</Item>\n" +
-            "        <Item>config1</Item>\n" +
-            "        <Item>config2</Item>\n" +
-            "        <Item>config3</Item>\n" +
-            "        <Item>config4</Item>\n" +
-            "    </ConfigList>\n" +
-            "    <ConfigList key=\"config-list-2\">\n" +
-            "        <Item>A</Item>\n" +
-            "        <Item>B</Item>\n" +
-            "        <Item>C</Item>\n" +
-            "        <Item>D</Item>\n" +
-            "        <Item>E</Item>\n" +
-            "    </ConfigList>\n" +
-            "</DynamicConfig>\n";
+            "<dynamicConfig>\n" +
+            "    <entry key=\"test-config-1\">\n" +
+            "        <value>test config 1</value>\n" +
+            "    </entry>\n" +
+            "    <entry key=\"test-config-2\">\n" +
+            "        <value>testconfig2</value>\n" +
+            "    </entry>\n" +
+            "    <entry key=\"config-list\">\n" +
+            "        <value>config0</value>\n" +
+            "        <value>config1</value>\n" +
+            "        <value>config2</value>\n" +
+            "        <value>config3</value>\n" +
+            "        <value>config4</value>\n" +
+            "    </entry>\n" +
+            "    <entry key=\"config-list-2\">\n" +
+            "        <value>A</value>\n" +
+            "        <value>B</value>\n" +
+            "        <value>C</value>\n" +
+            "        <value>D</value>\n" +
+            "        <value>E</value>\n" +
+            "    </entry>\n" +
+            "</dynamicConfig>\n";
 
     private static final String configWrongNodeName =
             "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
-            "<DynamicCsonfig>\n" +  //The node name DynamicConfig is intentionally mistyped
-            "    <Config key=\"test-config-1\">test config 1</Config>\n" +
-            "    <Config key=\"test-config-2\">testconfig2</Config>\n" +
-            "    <ConfigList key=\"config-list\">\n" +
-            "        <Item>Nevermore</Item>\n" +
-            "        <Item>Puck</Item>\n" +
-            "        <Item>Zeus</Item>\n" +
-            "        <Item>Earth Shaker</Item>\n" +
-            "        <Item>Vengeful Spirit</Item>\n" +
-            "    </ConfigList>\n" +
-            "    <ConfigList key=\"config-list-2\">\n" +
-            "        <Item>A</Item>\n" +
-            "        <Item>B</Item>\n" +
-            "        <Item>C</Item>\n" +
-            "        <Item>D</Item>\n" +
-            "        <Item>E</Item>\n" +
-            "    </ConfigList>\n" +
-            "</DynamicConfig>\n";
+            "<dynamicCsonfig>\n" +  //The node name dynamicConfig is intentionally mistyped
+            "    <entry key=\"test-config-1\">\n" +
+            "        <value>test config 1</value>\n" +
+            "    </entry>\n" +
+            "    <entry key=\"test-config-2\">\n" +
+            "        <value>testconfig2</value>\n" +
+            "    </entry>\n" +
+            "    <entry key=\"config-list\">\n" +
+            "        <value>Nevermore</value>\n" +
+            "        <value>Puck</value>\n" +
+            "        <value>Zeus</value>\n" +
+            "        <value>Earth Shaker</value>\n" +
+            "        <value>Vengeful Spirit</value>\n" +
+            "    </entry>\n" +
+            "    <entry key=\"config-list-2\">\n" +
+            "        <value>A</value>\n" +
+            "        <value>B</value>\n" +
+            "        <value>C</value>\n" +
+            "        <value>D</value>\n" +
+            "        <value>E</value>\n" +
+            "    </entry>\n" +
+            "</dynamicConfig>\n";
 
     public void testCorrectConfig() throws Exception {
         DynamicConfig config = new DynamicConfig();
         File file = createFileFromStr(correctConfig);
-        config.initConfigFromXml(file);
+        config.initializeConfig(file);
 
-        assertEquals("Wrong Config", config.getConfig("test-config-1"), "test config 1");
-        assertEquals("Wrong Config", config.getConfig("test-config-2"), "testconfig2");
-        assertEquals("Wrong Config List", config.getConfigList("config-list").get(0), "config0");
-        assertEquals("Wrong Config List", config.getConfigList("config-list").get(2), "config2");
-        assertEquals("Wrong Config List", config.getConfigList("config-list-2").get(2), "C");
+        assertEquals("Wrong Config", config.getValue("test-config-1"), "test config 1");
+        assertEquals("Wrong Config", config.getValue("test-config-2"), "testconfig2");
+        assertEquals("Wrong Config List", config.getValues("config-list").get(0), "config0");
+        assertEquals("Wrong Config List", config.getValues("config-list").get(2), "config2");
+        assertEquals("Wrong Config List", config.getValues("config-list-2").get(2), "C");
     }
 
     public void testConfigWithWrongNodeName() throws Exception {
@@ -87,7 +95,7 @@ public class DynamicConfigTest extends TestCase {
         File file = createFileFromStr(configWrongNodeName);
 
         try {
-            config.initConfigFromXml(file);
+            config.initializeConfig(file);
             fail("Cannot detect error when config file has wrong node name");
         } catch (XmlPullParserException e) {
             //expected

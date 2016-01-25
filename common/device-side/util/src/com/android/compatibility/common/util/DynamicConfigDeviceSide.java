@@ -28,6 +28,7 @@ import java.io.IOException;
  * Load dynamic config for device side test cases
  */
 public class DynamicConfigDeviceSide extends DynamicConfig {
+
     private static String LOG_TAG = DynamicConfigDeviceSide.class.getSimpleName();
 
     public DynamicConfigDeviceSide(String moduleName) throws XmlPullParserException, IOException {
@@ -35,6 +36,6 @@ public class DynamicConfigDeviceSide extends DynamicConfig {
             throw new IOException("External storage is not mounted");
         }
         File configFile = getConfigFile(new File(CONFIG_FOLDER_ON_DEVICE), moduleName);
-        initConfigFromXml(configFile);
+        initializeConfig(configFile);
     }
 }
