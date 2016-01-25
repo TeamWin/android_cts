@@ -183,6 +183,13 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
         }
     }
 
+    public void testSupportMessage() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
+        executeDeviceTestClass(".SupportMessageTest");
+    }
+
     public void testApplicationHidden() throws Exception {
         if (!mHasFeature) {
             return;
