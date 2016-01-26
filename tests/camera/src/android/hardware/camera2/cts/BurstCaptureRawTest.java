@@ -437,8 +437,7 @@ public class BurstCaptureRawTest extends Camera2SurfaceViewTestCase {
      */
     private boolean checkCapability(ArrayList<Integer> supportedRawList, int[] testedFormats) {
         // make sure the sensor has manual support
-        if (!mStaticInfo.isCapabilitySupported(
-                CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL_FULL)) {
+        if (!mStaticInfo.isHardwareLevelAtLeastFull()) {
             Log.w(TAG, "Full hardware level is not supported");
             return false;
         }

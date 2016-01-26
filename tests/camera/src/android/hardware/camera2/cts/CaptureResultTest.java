@@ -518,7 +518,7 @@ public class CaptureResultTest extends Camera2AndroidTestCase {
             waiverKeys.add(CaptureResult.SENSOR_DYNAMIC_WHITE_LEVEL);
         }
 
-        if (mStaticInfo.isHardwareLevelFull()) {
+        if (mStaticInfo.isHardwareLevelAtLeastFull()) {
             return waiverKeys;
         }
 
