@@ -83,7 +83,14 @@ public class DevicePolicyManagerTest extends AndroidTestCase {
         mDeviceAdmin = mPackageManager.hasSystemFeature(PackageManager.FEATURE_DEVICE_ADMIN);
         mManagedProfiles = mDeviceAdmin
                 && mPackageManager.hasSystemFeature(PackageManager.FEATURE_MANAGED_USERS);
-        setBlankPassword();
+        if (mDeviceAdmin) {
+            assertTrue("Device owner hasn't been set properly." +
+                            "  Make sure the device doesn't have multiple users and" +
+                            " the primary user has no accounts (and use CTS v2).",
+                    mDevicePolicyManager.isDeviceOwnerApp("android.admin.app"));
+
+            setBlankPassword();
+        }
     }
 
     @Override
