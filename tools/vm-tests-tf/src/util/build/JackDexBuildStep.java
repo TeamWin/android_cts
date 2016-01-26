@@ -16,6 +16,10 @@
 
 package util.build;
 
+import com.android.jack.Jack;
+import com.android.jack.Main;
+import com.android.jack.Options;
+
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -65,12 +69,8 @@ public class JackDexBuildStep extends BuildStep {
                 commandLine.add("--import");
                 commandLine.add(inputFile.fileName.getAbsolutePath());
 
-                ExecuteFile exec = new ExecuteFile("jack", commandLine.toArray(new String[commandLine.size()]));
-                exec.setErr(System.err);
-                exec.setOut(System.out);
-                if (!exec.run()) {
-                  return false;
-                }
+                Options options = Main.parseCommandLine(commandLine);
+                Jack.checkAndRun(options);
 
                 JarBuildStep jarStep = new JarBuildStep(
                     new BuildFile(tmpDex),
