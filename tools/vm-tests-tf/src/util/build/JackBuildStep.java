@@ -16,16 +16,30 @@
 
 package util.build;
 
+import com.android.jack.CLILogConfiguration;
+import com.android.jack.CLILogConfiguration.LogConfigurationException;
+
+import util.build.BuildStep.BuildFile;
+
+import com.android.jack.Jack;
+import com.android.jack.Main;
+import com.android.jack.Options;
 import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
-import java.io.Writer;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
 public class JackBuildStep extends SourceBuildStep {
+
+    static {
+        try {
+              CLILogConfiguration.setupLogs();
+            } catch (LogConfigurationException e) {
+              throw new Error("Failed to setup logs", e);
+            }
+    }
 
     private final String destPath;
     private final String classPath;
@@ -64,18 +78,7 @@ public class JackBuildStep extends SourceBuildStep {
             }
             File tmpDex = new File(tmpOutDir, "classes.dex");
 
-            File tmpArgs = new File(outDir, outputFile.fileName.getName() + ".args");
-
-            Writer argsOut = null;
             try {
-                argsOut = new FileWriter(tmpArgs);
-                for (String source : sourceFiles) {
-                    argsOut.append(source);
-                    argsOut.append('\n');
-                }
-                argsOut.close();
-                argsOut = null;
-
                 List<String> commandLine = new ArrayList<String>(6 + sourceFiles.size());
                 commandLine.add("--verbose");
                 commandLine.add("error");
@@ -83,14 +86,10 @@ public class JackBuildStep extends SourceBuildStep {
                 commandLine.add(classPath);
                 commandLine.add("--output-dex");
                 commandLine.add(tmpOutDir.getAbsolutePath());
-                commandLine.add("@" + tmpArgs.getPath());
+                commandLine.addAll(sourceFiles);
 
-                ExecuteFile exec = new ExecuteFile("jack", commandLine.toArray(new String[commandLine.size()]));
-                exec.setErr(System.err);
-                exec.setOut(System.out);
-                if (!exec.run()) {
-                    return false;
-                }
+                Options options = Main.parseCommandLine(commandLine);
+                Jack.checkAndRun(options);
 
                 JarBuildStep jarStep = new JarBuildStep(
                     new BuildFile(tmpDex),
@@ -105,16 +104,8 @@ public class JackBuildStep extends SourceBuildStep {
                 ex.printStackTrace();
                 return false;
             } finally {
-                tmpDex.delete();
-                tmpArgs.delete();
-                tmpOutDir.delete();
-                if (argsOut != null) {
-                    try {
-                        argsOut.close();
-                    } catch (IOException io) {
-                        // Ignore, don't override already thrown exception
-                    }
-                }
+              tmpDex.delete();
+              tmpOutDir.delete();
             }
         }
         return false;
