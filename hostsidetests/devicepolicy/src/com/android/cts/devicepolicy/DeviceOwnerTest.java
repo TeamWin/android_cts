@@ -74,6 +74,10 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
         executeDeviceOwnerTest("KeyManagementTest");
     }
 
+    public void testLockScreenInfo() throws Exception {
+        executeDeviceOwnerTest("LockScreenInfoTest");
+    }
+
     public void testLockTask() throws Exception {
         try {
             installApp(INTENT_RECEIVER_APK);
