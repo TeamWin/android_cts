@@ -16,6 +16,8 @@
 
 package com.android.cts.devicepolicy;
 
+import java.util.ArrayList;
+
 /**
  * Set of tests for Device Owner use cases.
  */
@@ -185,6 +187,39 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
 
         int userId = createUser();
         assertTrue("User must be ephemeral", 0 != (getUserFlags(userId) & FLAG_EPHEMERAL));
+    }
+
+    /**
+     * Test creating an epehemeral user using the DevicePolicyManager's createAndManageUser method.
+     */
+    public void testCreateAndManageEphemeralUser() throws Exception {
+        if (!mHasFeature || getDevice().getApiLevel() < 24 /* Build.VERSION_CODES.N */
+                || !canCreateAdditionalUsers(1)) {
+            return;
+        }
+
+        ArrayList<Integer> originalUsers = listUsers();
+        assertTrue(runDeviceTests(DEVICE_OWNER_PKG, ".CreateAndManageUserTest",
+                "testCreateAndManageEphemeralUser", 0));
+
+        ArrayList<Integer> newUsers = listUsers();
+
+        // Check that exactly one new user was created.
+        assertEquals(
+                "One user should have been created", originalUsers.size() + 1, newUsers.size());
+
+        // Get the id of the newly created user.
+        int newUserId = -1;
+        for (int userId : newUsers) {
+            if (!originalUsers.contains(userId)) {
+                newUserId = userId;
+                break;
+            }
+        }
+
+        // Get the flags of the new user and check the user is ephemeral.
+        int flags = getUserFlags(newUserId);
+        assertEquals("Ephemeral flag must be set", FLAG_EPHEMERAL, flags & FLAG_EPHEMERAL);
     }
 
     public void testLockTask() throws Exception {
