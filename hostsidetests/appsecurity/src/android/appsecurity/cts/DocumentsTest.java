@@ -88,6 +88,28 @@ public class DocumentsTest extends DeviceTestCase implements IAbiReceiver, IBuil
         runDeviceTests(CLIENT_PKG, ".DocumentsClientTest", "testTree");
     }
 
+    public void testOpenExternalDirectory_invalidPath() throws Exception {
+        runDeviceTests(CLIENT_PKG, ".DocumentsClientTest", "testOpenExternalDirectory_invalidPath");
+    }
+
+    public void testOpenExternalDirectory_userRejects() throws Exception {
+        runDeviceTests(CLIENT_PKG, ".DocumentsClientTest", "testOpenExternalDirectory_userRejects");
+    }
+
+    public void testOpenExternalDirectory_userAccepts() throws Exception {
+        runDeviceTests(CLIENT_PKG, ".DocumentsClientTest", "testOpenExternalDirectory_userAccepts");
+    }
+
+    public void testOpenExternalDirectory_userAcceptsNewDirectory() throws Exception {
+        // TODO: figure out a better way to remove the directory.
+        final String command = "rm -rf /sdcard/Pictures";
+        final String output = getDevice().executeShellCommand(command);
+        if (!output.trim().isEmpty()) {
+            fail("Command '" + command + "' failed: '" + output + "'");
+        }
+        runDeviceTests(CLIENT_PKG, ".DocumentsClientTest", "testOpenExternalDirectory_userAccepts");
+    }
+
     public void testGetContent() throws Exception {
         runDeviceTests(CLIENT_PKG, ".DocumentsClientTest", "testGetContent");
     }
