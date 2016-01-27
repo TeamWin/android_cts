@@ -78,6 +78,24 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
         executeDeviceOwnerTest("LockScreenInfoTest");
     }
 
+    public void testRemoteBugreportWithTwoUsers() throws Exception {
+        if (!mHasFeature || getMaxNumberOfUsersSupported() < 2) {
+            return;
+        }
+        int userId = -1;
+        try {
+            userId = createUser();
+            executeDeviceTestMethod(".RemoteBugreportTest",
+                    "testRequestBugreportNotStartedIfMoreThanOneUserPresent");
+        } finally {
+            removeUser(userId);
+        }
+    }
+
+    public void testRemoteBugreportWithSingleUser() throws Exception {
+        executeDeviceTestMethod(".RemoteBugreportTest", "testSubsequentRemoteBugreportThrottled");
+    }
+
     public void testLockTask() throws Exception {
         try {
             installApp(INTENT_RECEIVER_APK);
@@ -125,5 +143,10 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
         }
         String testClass = DEVICE_OWNER_PKG + "." + testClassName;
         assertTrue(testClass + " failed.", runDeviceTests(DEVICE_OWNER_PKG, testClass));
+    }
+
+    private void executeDeviceTestMethod(String className, String testName) throws Exception {
+        assertTrue(runDeviceTestsAsUser(DEVICE_OWNER_PKG, className, testName,
+                /* deviceOwnerUserId */0));
     }
 }
