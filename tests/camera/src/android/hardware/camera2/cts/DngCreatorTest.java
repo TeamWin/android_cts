@@ -46,13 +46,16 @@ import android.util.Size;
 import android.view.Surface;
 
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.FileOutputStream;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Calendar;
 import java.util.Collections;
 import java.util.List;
+import java.util.TimeZone;
 
 import static android.hardware.camera2.cts.helpers.AssertHelpers.*;
 
@@ -67,6 +70,19 @@ public class DngCreatorTest extends Camera2AndroidTestCase {
     private static final double IMAGE_DIFFERENCE_TOLERANCE = 65;
     private static final int DEFAULT_PATCH_DIMEN = 512;
     private static final int AE_TIMEOUT_MS = 2000;
+
+    // Constants used for GPS testing.
+    private static final double GPS_DIFFERENCE_TOLERANCE = 0.0001;
+    private static final double GPS_LATITUDE = 37.420016;
+    private static final double GPS_LONGITUDE = -122.081987;
+    private static final String GPS_DATESTAMP = "2015:01:27";
+    private static final String GPS_TIMESTAMP = "02:12:01";
+    private static final Calendar GPS_CALENDAR =
+            Calendar.getInstance(TimeZone.getTimeZone("GMT+0"));
+
+    static {
+        GPS_CALENDAR.set(2015, 0, 27, 2, 12, 01);
+    }
 
     @Override
     protected void setUp() throws Exception {
@@ -165,8 +181,8 @@ public class DngCreatorTest extends Camera2AndroidTestCase {
      *
      * <p>
      * For each camera, capture a single RAW16 image at the first capture size reported for
-     * the raw format on that device, and save that image as a DNG file.  No further validation
-     * is done.
+     * the raw format on that device, and save that image as a DNG file. GPS information validation
+     * is done via ExifInterface.
      * </p>
      *
      * <p>
@@ -222,9 +238,9 @@ public class DngCreatorTest extends Camera2AndroidTestCase {
                 DngCreator dngCreator = new DngCreator(characteristics, resultPair.second);
                 Location l = new Location("test");
                 l.reset();
-                l.setLatitude(37.420016);
-                l.setLongitude(-122.081987);
-                l.setTime(System.currentTimeMillis());
+                l.setLatitude(GPS_LATITUDE);
+                l.setLongitude(GPS_LONGITUDE);
+                l.setTime(GPS_CALENDAR.getTimeInMillis());
                 dngCreator.setLocation(l);
 
                 dngCreator.setDescription("helloworld");
@@ -233,15 +249,31 @@ public class DngCreatorTest extends Camera2AndroidTestCase {
                 outputStream = new ByteArrayOutputStream();
                 dngCreator.writeImage(outputStream, resultPair.first.get(0));
 
+                String filePath = DEBUG_FILE_NAME_BASE + "/camera_thumb_" + deviceId + "_" +
+                        DEBUG_DNG_FILE;
+                // Write out captured DNG file for the first camera device if setprop is enabled
+                fileStream = new FileOutputStream(filePath);
+                fileStream.write(outputStream.toByteArray());
+                fileStream.flush();
+                fileStream.close();
                 if (VERBOSE) {
-                    String filePath = DEBUG_FILE_NAME_BASE + "/camera_thumb_" + deviceId + "_" +
-                            DEBUG_DNG_FILE;
-                    // Write out captured DNG file for the first camera device if setprop is enabled
-                    fileStream = new FileOutputStream(filePath);
-                    fileStream.write(outputStream.toByteArray());
-                    fileStream.flush();
-                    fileStream.close();
                     Log.v(TAG, "Test DNG file for camera " + deviceId + " saved to " + filePath);
+                }
+
+                ExifInterface exifInterface = new ExifInterface(filePath);
+                float[] latLong = new float[2];
+                assertTrue(exifInterface.getLatLong(latLong));
+                assertEquals(GPS_LATITUDE, latLong[0], GPS_DIFFERENCE_TOLERANCE);
+                assertEquals(GPS_LONGITUDE, latLong[1], GPS_DIFFERENCE_TOLERANCE);
+                assertEquals(GPS_DATESTAMP,
+                        exifInterface.getAttribute(ExifInterface.TAG_GPS_DATESTAMP));
+                assertEquals(GPS_TIMESTAMP,
+                        exifInterface.getAttribute(ExifInterface.TAG_GPS_TIMESTAMP));
+
+                if (!VERBOSE) {
+                    // Delete the captured DNG file.
+                    File dngFile = new File(filePath);
+                    assertTrue(dngFile.delete());
                 }
             } finally {
                 closeDevice(deviceId);
