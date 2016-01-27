@@ -50,7 +50,7 @@ import com.android.compatibility.common.deviceinfo.DeviceInfoActivity;
 /**
  * Generic device info collector.
  */
-public class GenericDeviceInfo extends DeviceInfoActivity {
+public class GenericDeviceInfo extends DeviceInfo {
 
     public static final String BUILD_ID = "build_id";
     public static final String BUILD_PRODUCT = "build_product";
