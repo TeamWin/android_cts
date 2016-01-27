@@ -24,6 +24,7 @@ import android.text.SpannableString;
 import android.text.Spanned;
 import android.text.Html.ImageGetter;
 import android.text.Html.TagHandler;
+import android.text.style.BackgroundColorSpan;
 import android.text.style.ForegroundColorSpan;
 import android.text.style.QuoteSpan;
 import android.text.style.StrikethroughSpan;
@@ -154,7 +155,6 @@ public class HtmlTest extends AndroidTestCase {
 
     public void testMarkup() throws Exception {
         final int start = 6;
-
         SpannableString s = new SpannableString("Hello bold world");
         int end = s.length() - start;
         s.setSpan(new StyleSpan(Typeface.BOLD), start, end, SPAN_EXCLUSIVE_INCLUSIVE);
@@ -188,14 +188,30 @@ public class HtmlTest extends AndroidTestCase {
         s = new SpannableString("Hello struck world");
         end = s.length() - start;
         s.setSpan(new StrikethroughSpan(), start, end, SPAN_EXCLUSIVE_INCLUSIVE);
-        assertEquals("<p dir=\"ltr\">Hello <strike>struck</strike> world</p>\n", Html.toHtml(s));
+        assertEquals("<p dir=\"ltr\">Hello "
+                + "<span style=\"text-decoration:line-through;\">struck</span> world</p>\n",
+                Html.toHtml(s));
 
         s = new SpannableString("Hello linky world");
         end = s.length() - start;
         s.setSpan(new URLSpan("http://www.google.com"), start, end, SPAN_EXCLUSIVE_INCLUSIVE);
-        String ret = Html.toHtml(s);
-        assertEquals("<p dir=\"ltr\">Hello <a href=\"http://www.google.com\">linky</a> world</p>\n",
-                ret);
+        assertEquals("<p dir=\"ltr\">Hello "
+                + "<a href=\"http://www.google.com\">linky</a> world</p>\n",
+                Html.toHtml(s));
+
+        s = new SpannableString("Hello foreground world");
+        end = s.length() - start;
+        s.setSpan(new ForegroundColorSpan(0x00FF00), start, end, SPAN_EXCLUSIVE_INCLUSIVE);
+        assertEquals("<p dir=\"ltr\">Hello "
+                + "<span style=\"color:#00FF00;\">foreground</span> world</p>\n",
+                Html.toHtml(s));
+
+        s = new SpannableString("Hello background world");
+        end = s.length() - start;
+        s.setSpan(new BackgroundColorSpan(0x00FF00), start, end, SPAN_EXCLUSIVE_INCLUSIVE);
+        assertEquals("<p dir=\"ltr\">Hello "
+                + "<span style=\"background-color:#00FF00;\">background</span> world</p>\n",
+                Html.toHtml(s));
     }
 
     public void testMarkupFromHtml() throws Exception {
