@@ -817,7 +817,7 @@ public class ContactsTest extends AndroidTestCase {
                 getPrimaryRemoteDirectoryId(), PRIMARY_DIRECTORY_CONTACT_NAME);
     }
 
-    public void testManagedProfileEnterprisePhoneFilter_canAccesManagedDirectories() {
+    public void testManagedProfileEnterprisePhoneFilter_canAccessManagedDirectories() {
         assertTrue(isManagedProfile());
         phoneFilterCanAccessPrimaryDirectoriesInternal(
                 MANAGED_CONTACT_PHONE, MANAGED_CONTACT_DISPLAY_NAME,
