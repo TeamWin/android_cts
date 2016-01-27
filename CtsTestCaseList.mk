@@ -78,6 +78,8 @@ cts_account_support_packages := \
 cts_support_packages := \
     CtsAccountManagementDevicePolicyApp \
     CtsAlarmClockService \
+    CtsAppRestrictionsManagingApp \
+    CtsAppRestrictionsTargetApp \
     CtsAppTestStubs \
     CtsAppUsageTestApp \
     CtsAssistService \

@@ -24,7 +24,7 @@ import com.android.tradefed.log.LogUtil.CLog;
 import java.io.File;
 
 /**
- * Set of tests for usecases that apply to profile and device owner.
+ * Set of tests for use cases that apply to profile and device owner.
  * This class is the base class of MixedProfileOwnerTest and MixedDeviceOwnerTest and is abstract
  * to avoid running spurious tests.
  */
@@ -40,6 +40,14 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
 
     private static final String SIMPLE_PRE_M_APP_PKG = "com.android.cts.launcherapps.simplepremapp";
     private static final String SIMPLE_PRE_M_APP_APK = "CtsSimplePreMApp.apk";
+
+    private static final String APP_RESTRICTIONS_MANAGING_APP_PKG
+            = "com.android.cts.apprestrictions.managingapp";
+    private static final String APP_RESTRICTIONS_MANAGING_APP_APK
+            = "CtsAppRestrictionsManagingApp.apk";
+    private static final String APP_RESTRICTIONS_TARGET_APP_PKG
+            = "com.android.cts.apprestrictions.targetapp";
+    private static final String APP_RESTRICTIONS_TARGET_APP_APK = "CtsAppRestrictionsTargetApp.apk";
 
     private static final String CERT_INSTALLER_PKG = "com.android.cts.certinstaller";
     private static final String CERT_INSTALLER_APK = "CtsCertInstallerApp.apk";
@@ -76,6 +84,8 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
             getDevice().uninstallPackage(DEVICE_ADMIN_PKG);
             getDevice().uninstallPackage(PERMISSIONS_APP_PKG);
             getDevice().uninstallPackage(SIMPLE_PRE_M_APP_PKG);
+            getDevice().uninstallPackage(APP_RESTRICTIONS_MANAGING_APP_PKG);
+            getDevice().uninstallPackage(APP_RESTRICTIONS_TARGET_APP_PKG);
             getDevice().uninstallPackage(CERT_INSTALLER_PKG);
             getDevice().uninstallPackage(ACCOUNT_MANAGEMENT_PKG);
         }
@@ -86,7 +96,42 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
         if (!mHasFeature) {
             return;
         }
-        executeDeviceTestClass(".ApplicationRestrictionsTest");
+
+        installAppAsUser(APP_RESTRICTIONS_MANAGING_APP_APK, mUserId);
+        installAppAsUser(APP_RESTRICTIONS_TARGET_APP_APK, mUserId);
+
+        try {
+            // Only the DPC can manage app restrictions by default.
+            executeDeviceTestClass(".ApplicationRestrictionsTest");
+            executeAppRestrictionsManagingPackageTest("testCannotManageAppRestrictions");
+
+            // Letting the APP_RESTRICTIONS_MANAGING_APP_PKG manage app restrictions too.
+            changeApplicationRestrictionsManagingPackage(APP_RESTRICTIONS_MANAGING_APP_PKG);
+            executeAppRestrictionsManagingPackageTest("testCanManageAppRestrictions");
+            executeAppRestrictionsManagingPackageTest("testSettingComponentNameThrowsException");
+
+            // The DPC should still be able to manage app restrictions normally.
+            executeDeviceTestClass(".ApplicationRestrictionsTest");
+
+            // The app shouldn't be able to manage app restrictions for other users.
+            int parentUserId = getPrimaryUser();
+            if (parentUserId != mUserId) {
+                installAppAsUser(APP_RESTRICTIONS_MANAGING_APP_APK, parentUserId);
+                installAppAsUser(APP_RESTRICTIONS_TARGET_APP_APK, parentUserId);
+                assertTrue(runDeviceTestsAsUser(
+                        APP_RESTRICTIONS_MANAGING_APP_PKG, ".ApplicationRestrictionsManagerTest",
+                        "testCannotManageAppRestrictions", parentUserId));
+            }
+
+            // Revoking the permission for APP_RESTRICTIONS_MANAGING_APP_PKG to manage restrictions.
+            changeApplicationRestrictionsManagingPackage(null);
+            executeAppRestrictionsManagingPackageTest("testCannotManageAppRestrictions");
+
+            // The DPC should still be able to manage app restrictions normally.
+            executeDeviceTestClass(".ApplicationRestrictionsTest");
+        } finally {
+            changeApplicationRestrictionsManagingPackage(null);
+        }
     }
 
     public void testPermissionGrant() throws Exception {
@@ -354,6 +399,11 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
         CLog.i("Output for command " + command + ": " + getDevice().executeShellCommand(command));
     }
 
+    private void executeAppRestrictionsManagingPackageTest(String testName) throws Exception {
+        assertTrue(runDeviceTestsAsUser(APP_RESTRICTIONS_MANAGING_APP_PKG,
+                ".ApplicationRestrictionsManagerTest", testName, mUserId));
+    }
+
     private void changeUserRestrictionForUser(String key, String command, int userId)
             throws DeviceNotAvailableException {
         changePolicy(command, "--es extra-restriction-key " + key, userId);
@@ -362,6 +412,13 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
     private void changeAccountManagement(String command, String accountType, int userId)
             throws DeviceNotAvailableException {
         changePolicy(command, "--es extra-account-type " + accountType, userId);
+    }
+
+    private void changeApplicationRestrictionsManagingPackage(String packageName)
+            throws DeviceNotAvailableException {
+        String packageNameExtra = (packageName != null)
+                ? "--es extra-package-name " + packageName : "";
+        changePolicy("set-app-restrictions-manager", packageNameExtra, mUserId);
     }
 
     private void changePolicy(String command, String extras, int userId)
