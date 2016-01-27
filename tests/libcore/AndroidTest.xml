@@ -27,11 +27,6 @@
     <test class="com.android.compatibility.testtype.DalvikTest" >
         <option name="run-name" value="CtsLibcoreTestCases" />
         <option name="classpath" value="/data/local/tmp/ctslibcore/cts-dalvik-device-test-runner.jar" />
-        <option name="expectations" value="CtsLibcoreTestCases.brokentests.expectations" />
-        <option name="expectations" value="CtsLibcoreTestCases.icebox.expectations" />
-        <option name="expectations" value="CtsLibcoreTestCases.knownfailures.expectations" />
-        <option name="expectations" value="CtsLibcoreTestCases.taggedtests.expectations" />
-        <option name="expectations" value="CtsLibcoreTestCases.failures.expectations" />
         <option name="dalvik-arg" value="-Djava.io.tmpdir=/data/local/tmp/ctslibcore/java.io.tmpdir" />
         <option name="dalvik-arg" value="-Duser.home=/data/local/tmp/ctslibcore/user.home" />
         <option name="dalvik-arg" value="-Duser.name=shell" />
@@ -40,5 +35,6 @@
         <option name="dalvik-arg" value="-Xcheck:jni" />
         <option name="dalvik-arg" value="-Xjnigreflimit:2000" />
         <option name="runner-arg" value="--apk=/data/local/tmp/ctslibcore/CtsLibcoreTestCases.apk" />
+        <option name="runtime-hint" value="12m" />
     </test>
 </configuration>
