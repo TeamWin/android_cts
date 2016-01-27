@@ -739,7 +739,7 @@ public class ContactsTest extends AndroidTestCase {
         }
     }
 
-    public void testPrimaryProfileEnterpriseContactFilter_primaryies() {
+    public void testPrimaryProfileEnterpriseContactFilter_canAccessPrimaryDirectories() {
         assertFalse(isManagedProfile());
         contactFilterCanAccessPrimaryDirectoriesInternal(PRIMARY_CONTACT_DISPLAY_NAME,
                 getPrimaryRemoteDirectoryId(), PRIMARY_DIRECTORY_CONTACT_NAME);
