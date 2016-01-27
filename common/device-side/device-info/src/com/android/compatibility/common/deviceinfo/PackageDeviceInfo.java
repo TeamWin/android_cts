@@ -24,7 +24,7 @@ import com.android.compatibility.common.deviceinfo.DeviceInfoActivity;
 /**
  * PackageDeviceInfo collector.
  */
-public class PackageDeviceInfo extends DeviceInfoActivity {
+public class PackageDeviceInfo extends DeviceInfo {
 
     private static final String PACKAGE = "package";
     private static final String NAME = "name";
