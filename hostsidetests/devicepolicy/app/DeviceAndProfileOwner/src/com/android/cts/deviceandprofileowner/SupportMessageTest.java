@@ -20,24 +20,33 @@ import java.lang.Character;
 
 public class SupportMessageTest extends BaseDeviceAdminTest {
 
-    // Longest allowed length of a support message before the system may truncate it.
-    private static final int MAX_LENGTH = 200;
+    /**
+     * Longest allowed length of a short support message before the system may truncate it.
+     *
+     * Taken from documentation for
+     * {@link DevicePolicyManager#setShortSupportMessage(android.content.ComponentName, String)}.
+     */
+    private static final int MAX_SHORT_MSG_LENGTH = 200;
+
+    private static final int REASONABLE_LONG_MSG_LENGTH = 4000;
 
     // Declare a different string of the same type for both long and short messages, so we can be
     // sure they aren't mixed up by any API calls.
     private static class ShortMessage {
         static final String EMPTY = "";
         static final String SIMPLE = "short-message-short";
-        static final String MAX_LEN = new String(new char[200]).replace('\0', 'X');
-        static final String TOO_LONG = new String(new char[MAX_LENGTH + 10]).replace('\0', 'A');
+        static final String MAX_LENGTH =
+                new String(new char[MAX_SHORT_MSG_LENGTH]).replace('\0', 'X');
+        static final String TOO_LONG =
+                new String(new char[MAX_SHORT_MSG_LENGTH + 10]).replace('\0', 'A');
         static final String UNICODE = new String(Character.toChars(0x1F634)) + " zzz";
         static final String CONTAINS_NULL = "short\0null";
     }
     private static class LongMessage {
         static final String EMPTY = "";
         static final String SIMPLE = "long-message-long";
-        static final String MAX_LEN = new String(new char[MAX_LENGTH]).replace('\0', 'Y');
-        static final String TOO_LONG = new String(new char[MAX_LENGTH + 10]).replace('\0', 'B');
+        static final String LONG =
+                new String(new char[REASONABLE_LONG_MSG_LENGTH]).replace('\0', 'B');
         static final String UNICODE = new String(Character.toChars(0x1F609)) + " ;)";
         static final String CONTAINS_NULL = "long\0null";
     }
@@ -68,19 +77,21 @@ public class SupportMessageTest extends BaseDeviceAdminTest {
 
     public void testMaximumLengthPrefixIsSaved() {
         // Save and restore a string of exactly the maximum length
-        setShortMessage(ShortMessage.MAX_LEN);
-        setLongMessage(LongMessage.MAX_LEN);
+        setShortMessage(ShortMessage.MAX_LENGTH);
 
         /*
-         * Save and restore a string that is too large -- this may only store the first N
-         * characters, not the whole thing, so we need to use {@link String#startsWith} here.
+         * Save and restore a "short message" string that is too large -- this may only store the
+         * first N characters, not the whole thing, so we need to use {@link String#startsWith}
+         * here.
          */
         mDevicePolicyManager.setShortSupportMessage(ADMIN_RECEIVER_COMPONENT,
                 ShortMessage.TOO_LONG);
-        assertStartsWith(ShortMessage.TOO_LONG.substring(0, MAX_LENGTH), getShortMessage());
+        assertStartsWith(ShortMessage.TOO_LONG.substring(0, MAX_SHORT_MSG_LENGTH),
+                getShortMessage());
 
-        mDevicePolicyManager.setLongSupportMessage(ADMIN_RECEIVER_COMPONENT, LongMessage.TOO_LONG);
-        assertStartsWith(LongMessage.TOO_LONG.substring(0, MAX_LENGTH), getLongMessage());
+        // Long support messages should not be affected; verify that.
+        mDevicePolicyManager.setLongSupportMessage(ADMIN_RECEIVER_COMPONENT, LongMessage.LONG);
+        assertEquals(LongMessage.LONG, getLongMessage());
     }
 
     public void testEmptySupportMessage() {
