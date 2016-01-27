@@ -15,14 +15,6 @@
 -->
 
 <resources>
-
-     <string name="dont_grant_label">Do not grant permissions</string>
-     <string name="disallow_global_label">Disallow global drag</string>
-     <string name="cancel_soon_label">Cancel soon after start</string>
-     <string name="grant_read_label">Grant read permissions</string>
-     <string name="grant_write_label">Grant write permissions</string>
-     <string name="grant_read_prefix_label">Grant read+prefix permissions</string>
-     <string name="grant_read_noprefix_label">Grant read, no prefix permissions</string>
-     <string name="grant_read_persistable_label">Grant read+persistable</string>
-
+    <dimen name="item_margin">6dp</dimen>
+    <dimen name="item_padding">6dp</dimen>
 </resources>
