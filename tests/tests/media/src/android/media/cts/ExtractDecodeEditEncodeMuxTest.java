@@ -18,6 +18,7 @@ package android.media.cts;
 
 import android.annotation.TargetApi;
 import android.content.res.AssetFileDescriptor;
+import android.content.Context;
 import android.media.MediaCodec;
 import android.media.MediaCodecInfo;
 import android.media.MediaCodecInfo.CodecCapabilities;
@@ -26,8 +27,9 @@ import android.media.MediaCodecList;
 import android.media.MediaExtractor;
 import android.media.MediaFormat;
 import android.media.MediaMuxer;
+import android.media.MediaPlayer;
 import android.os.Environment;
-import android.test.AndroidTestCase;
+import android.test.ActivityInstrumentationTestCase2;
 import android.util.Log;
 import android.view.Surface;
 
@@ -41,6 +43,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.CountDownLatch;
 
 /**
  * Test for the integration of MediaMuxer and MediaCodec's encoder.
@@ -56,7 +59,8 @@ import java.util.concurrent.atomic.AtomicReference;
  * MediaMuxer.
  */
 @TargetApi(18)
-public class ExtractDecodeEditEncodeMuxTest extends AndroidTestCase {
+public class ExtractDecodeEditEncodeMuxTest
+        extends ActivityInstrumentationTestCase2<MediaStubActivity> {
 
     private static final String TAG = ExtractDecodeEditEncodeMuxTest.class.getSimpleName();
     private static final boolean VERBOSE = false; // lots of logging
@@ -68,8 +72,6 @@ public class ExtractDecodeEditEncodeMuxTest extends AndroidTestCase {
     private static final File OUTPUT_FILENAME_DIR = Environment.getExternalStorageDirectory();
 
     // parameters for the video encoder
-                                                                // H.264 Advanced Video Coding
-    private static final String OUTPUT_VIDEO_MIME_TYPE = MediaFormat.MIMETYPE_VIDEO_AVC;
     private static final int OUTPUT_VIDEO_BIT_RATE = 2000000;   // 2Mbps
     private static final int OUTPUT_VIDEO_FRAME_RATE = 15;      // 15fps
     private static final int OUTPUT_VIDEO_IFRAME_INTERVAL = 10; // 10 seconds between I-frames
@@ -116,10 +118,17 @@ public class ExtractDecodeEditEncodeMuxTest extends AndroidTestCase {
     /** The destination file for the encoded output. */
     private String mOutputFile;
 
+    private String mOutputVideoMimeType;
+
+    public ExtractDecodeEditEncodeMuxTest() {
+        super(MediaStubActivity.class);
+    }
+
     public void testExtractDecodeEditEncodeMuxQCIF() throws Throwable {
         if(!setSize(176, 144)) return;
         setSource(R.raw.video_480x360_mp4_h264_500kbps_30fps_aac_stereo_128kbps_44100hz);
         setCopyVideo();
+        setVideoMimeType(MediaFormat.MIMETYPE_VIDEO_AVC);
         TestWrapper.runTest(this);
     }
 
@@ -127,6 +136,7 @@ public class ExtractDecodeEditEncodeMuxTest extends AndroidTestCase {
         if(!setSize(320, 240)) return;
         setSource(R.raw.video_480x360_mp4_h264_500kbps_30fps_aac_stereo_128kbps_44100hz);
         setCopyVideo();
+        setVideoMimeType(MediaFormat.MIMETYPE_VIDEO_AVC);
         TestWrapper.runTest(this);
     }
 
@@ -134,6 +144,15 @@ public class ExtractDecodeEditEncodeMuxTest extends AndroidTestCase {
         if(!setSize(1280, 720)) return;
         setSource(R.raw.video_480x360_mp4_h264_500kbps_30fps_aac_stereo_128kbps_44100hz);
         setCopyVideo();
+        setVideoMimeType(MediaFormat.MIMETYPE_VIDEO_AVC);
+        TestWrapper.runTest(this);
+    }
+
+    public void testExtractDecodeEditEncodeMux2160pHevc() throws Throwable {
+        if(!setSize(3840, 2160)) return;
+        setSource(R.raw.video_480x360_mp4_h264_500kbps_30fps_aac_stereo_128kbps_44100hz);
+        setCopyVideo();
+        setVideoMimeType(MediaFormat.MIMETYPE_VIDEO_HEVC);
         TestWrapper.runTest(this);
     }
 
@@ -222,7 +241,7 @@ public class ExtractDecodeEditEncodeMuxTest extends AndroidTestCase {
         mWidth = width;
         mHeight = height;
 
-	// TODO: remove this logic in setSize as it is now handled when configuring codecs
+        // TODO: remove this logic in setSize as it is now handled when configuring codecs
         return true;
     }
 
@@ -264,6 +283,10 @@ public class ExtractDecodeEditEncodeMuxTest extends AndroidTestCase {
         mOutputFile = sb.toString();
     }
 
+    private void setVideoMimeType(String mimeType) {
+        mOutputVideoMimeType = mimeType;
+    }
+
     /**
      * Tests encoding and subsequently decoding video from frames generated into a buffer.
      * <p>
@@ -279,7 +302,7 @@ public class ExtractDecodeEditEncodeMuxTest extends AndroidTestCase {
         // We avoid the device-specific limitations on width and height by using values
         // that are multiples of 16, which all tested devices seem to be able to handle.
         MediaFormat outputVideoFormat =
-                MediaFormat.createVideoFormat(OUTPUT_VIDEO_MIME_TYPE, mWidth, mHeight);
+                MediaFormat.createVideoFormat(mOutputVideoMimeType, mWidth, mHeight);
 
         // Set some properties. Failing to specify some of these can cause the MediaCodec
         // configure() call to throw an unhelpful exception.
@@ -304,7 +327,8 @@ public class ExtractDecodeEditEncodeMuxTest extends AndroidTestCase {
                         OUTPUT_AUDIO_MIME_TYPE, OUTPUT_AUDIO_SAMPLE_RATE_HZ,
                         OUTPUT_AUDIO_CHANNEL_COUNT);
         outputAudioFormat.setInteger(MediaFormat.KEY_BIT_RATE, OUTPUT_AUDIO_BIT_RATE);
-        outputAudioFormat.setInteger(MediaFormat.KEY_AAC_PROFILE, OUTPUT_AUDIO_AAC_PROFILE);
+        // TODO: Bug workaround --- uncomment once fixed.
+        // outputAudioFormat.setInteger(MediaFormat.KEY_AAC_PROFILE, OUTPUT_AUDIO_AAC_PROFILE);
 
         String audioEncoderName = mcl.findEncoderForFormat(outputAudioFormat);
         if (audioEncoderName == null) {
@@ -514,6 +538,42 @@ public class ExtractDecodeEditEncodeMuxTest extends AndroidTestCase {
         }
 
         // TODO: Check the generated output file's video format and sample data.
+
+        MediaStubActivity activity = getActivity();
+        final MediaPlayer mp = new MediaPlayer();
+        final Exception[] exceptionHolder = { null };
+        final CountDownLatch playbackEndSignal = new CountDownLatch(1);
+        mp.setOnErrorListener(new MediaPlayer.OnErrorListener() {
+            @Override
+            public boolean onError(MediaPlayer origin, int what, int extra) {
+                exceptionHolder[0] = new RuntimeException("error playing output file: what=" + what
+                        + " extra=" + extra);
+                // Returning false would trigger onCompletion() so that
+                // playbackEndSignal.await() can stop waiting.
+                return false;
+            }
+        });
+        mp.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
+            @Override
+            public void onCompletion(MediaPlayer origin) {
+                playbackEndSignal.countDown();
+            }
+        });
+        try {
+            mp.setDataSource(mOutputFile);
+            mp.setDisplay(activity.getSurfaceHolder());
+            mp.prepare();
+            mp.start();
+            playbackEndSignal.await();
+        } catch (Exception e) {
+            exceptionHolder[0] = e;
+        } finally {
+            mp.release();
+        }
+
+        if (exceptionHolder[0] != null) {
+            throw exceptionHolder[0];
+        }
     }
 
     /**
@@ -521,7 +581,8 @@ public class ExtractDecodeEditEncodeMuxTest extends AndroidTestCase {
      */
     private MediaExtractor createExtractor() throws IOException {
         MediaExtractor extractor;
-        AssetFileDescriptor srcFd = getContext().getResources().openRawResourceFd(mSourceResId);
+        Context context = getInstrumentation().getTargetContext();
+        AssetFileDescriptor srcFd = context.getResources().openRawResourceFd(mSourceResId);
         extractor = new MediaExtractor();
         extractor.setDataSource(srcFd.getFileDescriptor(), srcFd.getStartOffset(),
                 srcFd.getLength());
@@ -1165,65 +1226,5 @@ public class ExtractDecodeEditEncodeMuxTest extends AndroidTestCase {
             }
         }
         return null;
-    }
-
-  /**
-   * Checks whether the given resolution is supported by the AVC codec.
-   */
-    private static boolean isAvcSupportedSize(int width, int height) {
-        MediaCodecInfo mediaCodecInfo = selectCodec(OUTPUT_VIDEO_MIME_TYPE);
-        CodecCapabilities cap = mediaCodecInfo.getCapabilitiesForType(OUTPUT_VIDEO_MIME_TYPE);
-        if (cap == null) { // not supported
-            return false;
-        }
-        int highestLevel = 0;
-        for (CodecProfileLevel lvl : cap.profileLevels) {
-            if (lvl.level > highestLevel) {
-                highestLevel = lvl.level;
-            }
-        }
-        int maxW = 0;
-        int maxH = 0;
-        int bitRate = 0;
-        int fps = 0; // frame rate for the max resolution
-        switch(highestLevel) {
-            // Do not support Level 1 to 2.
-            case CodecProfileLevel.AVCLevel1:
-            case CodecProfileLevel.AVCLevel11:
-            case CodecProfileLevel.AVCLevel12:
-            case CodecProfileLevel.AVCLevel13:
-            case CodecProfileLevel.AVCLevel1b:
-            case CodecProfileLevel.AVCLevel2:
-                return false;
-            case CodecProfileLevel.AVCLevel21:
-                maxW = 352;
-                maxH = 576;
-                break;
-            case CodecProfileLevel.AVCLevel22:
-                maxW = 720;
-                maxH = 480;
-                break;
-            case CodecProfileLevel.AVCLevel3:
-                maxW = 720;
-                maxH = 480;
-                break;
-            case CodecProfileLevel.AVCLevel31:
-                maxW = 1280;
-                maxH = 720;
-                break;
-            case CodecProfileLevel.AVCLevel32:
-                maxW = 1280;
-                maxH = 720;
-                break;
-            case CodecProfileLevel.AVCLevel4: // only try up to 1080p
-            default:
-                maxW = 1920;
-                maxH = 1080;
-                break;
-        }
-        if(maxW*maxH < width*height)
-            return false;
-        else
-            return true;
     }
 }
