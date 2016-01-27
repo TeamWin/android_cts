@@ -58,8 +58,6 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
             = "com.android.cts.devicepolicy.accountmanagement";
     private static final String ACCOUNT_MANAGEMENT_APK = "CtsAccountManagementDevicePolicyApp.apk";
 
-    protected static final int USER_OWNER = 0;
-
     private static final String COMMAND_ADD_USER_RESTRICTION = "add-restriction";
     private static final String COMMAND_CLEAR_USER_RESTRICTION = "clear-restriction";
     private static final String COMMAND_BLOCK_ACCOUNT_TYPE = "block-accounttype";
