@@ -74,7 +74,7 @@ public class CarrierConfigManagerTest extends AndroidTestCase {
 
     public void testGetConfigForSubId() {
         PersistableBundle config =
-                mConfigManager.getConfigForSubId(SubscriptionManager.getDefaultSubId());
+                mConfigManager.getConfigForSubId(SubscriptionManager.getDefaultSubscriptionId());
         checkConfig(config);
     }
 
@@ -86,7 +86,8 @@ public class CarrierConfigManagerTest extends AndroidTestCase {
     public void testNotifyConfigChangedForSubId() {
         try {
             if (isSimCardPresent()) {
-                mConfigManager.notifyConfigChangedForSubId(SubscriptionManager.getDefaultSubId());
+                mConfigManager.notifyConfigChangedForSubId(
+                        SubscriptionManager.getDefaultSubscriptionId());
                 fail("Expected SecurityException. App doesn't have carrier privileges.");
             }
         } catch (SecurityException expected) {
