@@ -183,6 +183,7 @@ cts_test_packages := \
     CtsNetTestCasesLegacyApi22 \
     CtsNetTestCasesLegacyPermission22 \
     CtsNetSecConfigAttributeTestCases \
+    CtsNetSecConfigCleartextTrafficTestCases \
     CtsNetSecConfigBasicDebugDisabledTestCases \
     CtsNetSecConfigBasicDebugEnabledTestCases \
     CtsNetSecConfigBasicDomainConfigTestCases \
