@@ -82,7 +82,7 @@ public class DragAndDropTest extends InstrumentationTestCase {
     }
 
     private void drag(Point srcPosition, Point tgtPosition) {
-        mDevice.drag(srcPosition.x, srcPosition.y, tgtPosition.x, tgtPosition.y, 50);
+        mDevice.drag(srcPosition.x, srcPosition.y, tgtPosition.x, tgtPosition.y, 100);
     }
 
     private void doCrossAppDrag(String sourceViewId, String targetViewId, String expectedResult) {
@@ -102,22 +102,75 @@ public class DragAndDropTest extends InstrumentationTestCase {
         mDevice.click(tgtPosition.x, tgtPosition.y);
 
         UiObject2 result = findObject(DROP_TARGET_PKG, "result");
+        assertNotNull("Result widget not found", result);
         assertEquals(expectedResult, result.getText());
+    }
+
+    private void assertDragStarted(String expectedResult) {
+        UiObject2 drag_started = findObject(DROP_TARGET_PKG, "drag_started");
+        assertEquals(expectedResult, drag_started.getText());
+    }
+
+    public void testLocal() {
+        doCrossAppDrag("disallow_global", "dont_request", "N/A");
+        assertDragStarted("N/A");
+    }
+
+    public void testCancel() {
+        doCrossAppDrag("cancel_soon", "dont_request", "N/A");
+        assertDragStarted("DRAG_STARTED");
     }
 
     public void testDontGrantDontRequest() {
         doCrossAppDrag("dont_grant", "dont_request", "Exception");
+        assertDragStarted("DRAG_STARTED");
     }
 
-    public void testDoGrantDontRequest() {
-        doCrossAppDrag("do_grant", "dont_request", "Exception");
+    public void testDontGrantRequestRead() {
+        doCrossAppDrag("dont_grant", "request_read", "Null DropPermissions");
     }
 
-    public void testDontGrantDoRequest() {
-        doCrossAppDrag("dont_grant", "do_request", "Null DropPermissions");
+    public void testDontGrantRequestWrite() {
+        doCrossAppDrag("dont_grant", "request_write", "Null DropPermissions");
     }
 
-    public void testDoGrantDoRequest() {
-        doCrossAppDrag("do_grant", "do_request", "OK");
+    public void testGrantReadDontRequest() {
+        doCrossAppDrag("grant_read", "dont_request", "Exception");
+    }
+
+    public void testGrantReadRequestRead() {
+        doCrossAppDrag("grant_read", "request_read", "OK");
+    }
+
+    public void testGrantReadRequestWrite() {
+        doCrossAppDrag("grant_read", "request_write", "Exception");
+    }
+
+    public void testGrantWriteDontRequest() {
+        doCrossAppDrag("grant_write", "dont_request", "Exception");
+    }
+
+    public void testGrantWriteRequestRead() {
+        doCrossAppDrag("grant_write", "request_write", "OK");
+    }
+
+    public void testGrantWriteRequestWrite() {
+        doCrossAppDrag("grant_write", "request_write", "OK");
+    }
+
+    public void testGrantReadPrefixRequestReadNested() {
+        doCrossAppDrag("grant_read_prefix", "request_read_nested", "OK");
+    }
+
+    public void testGrantReadNoPrefixRequestReadNested() {
+        doCrossAppDrag("grant_read_noprefix", "request_read_nested", "Exception");
+    }
+
+    public void testGrantPersistableRequestTakePersistable() {
+        doCrossAppDrag("grant_read_persistable", "request_take_persistable", "OK");
+    }
+
+    public void testGrantReadRequestTakePersistable() {
+        doCrossAppDrag("grant_read", "request_take_persistable", "Exception");
     }
 }

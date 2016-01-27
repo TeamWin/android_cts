@@ -21,39 +21,81 @@
         android:orientation="vertical">
 
     <TextView
-            android:id="@+id/do_request"
+            android:id="@+id/dont_request"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:gravity="center"
-            android:layout_margin="10dp"
-            android:padding="20dp"
-            android:background="#ccc"
-            android:text="@string/do_request_label">
+            android:layout_margin="@dimen/item_margin"
+            android:padding="@dimen/item_padding"
+            android:background="#ddd"
+            android:text="@string/dont_request_label">
     </TextView>
 
     <TextView
-        android:id="@+id/dont_request"
+        android:id="@+id/request_read"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:gravity="center"
-        android:layout_margin="10dp"
-        android:padding="20dp"
-        android:background="#aaa"
-        android:text="@string/dont_request_label">
+        android:layout_margin="@dimen/item_margin"
+        android:padding="@dimen/item_padding"
+        android:background="#ddd"
+        android:text="@string/request_read_label">
+    </TextView>
+
+    <TextView
+        android:id="@+id/request_write"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:layout_margin="@dimen/item_margin"
+        android:padding="@dimen/item_padding"
+        android:background="#ddd"
+        android:text="@string/request_write_label">
+    </TextView>
+
+    <TextView
+        android:id="@+id/request_read_nested"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:layout_margin="@dimen/item_margin"
+        android:padding="@dimen/item_padding"
+        android:background="#ddd"
+        android:text="@string/request_read_nested_label">
+    </TextView>
+
+    <TextView
+        android:id="@+id/request_take_persistable"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:layout_margin="@dimen/item_margin"
+        android:padding="@dimen/item_padding"
+        android:background="#ddd"
+        android:text="@string/request_take_persistable_label">
     </TextView>
 
     <TextView
             android:id="@+id/result"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_margin="10dp">
+            android:layout_marginLeft="10dp"
+            android:text="@string/not_available_label">
+    </TextView>
+
+    <TextView
+            android:id="@+id/drag_started"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="10dp"
+            android:text="@string/not_available_label">
     </TextView>
 
     <TextView
             android:id="@+id/details"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_margin="10dp">
+            android:layout_marginLeft="10dp">
     </TextView>
 
 </LinearLayout>
