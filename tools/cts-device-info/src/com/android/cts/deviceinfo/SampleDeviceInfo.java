@@ -17,12 +17,12 @@ package com.android.cts.deviceinfo;
 
 import android.os.Bundle;
 
-import com.android.compatibility.common.deviceinfo.DeviceInfoActivity;
+import com.android.compatibility.common.deviceinfo.DeviceInfo;
 
 /**
  * Sample device info collector.
  */
-public class SampleDeviceInfo extends DeviceInfoActivity {
+public class SampleDeviceInfo extends DeviceInfo {
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
