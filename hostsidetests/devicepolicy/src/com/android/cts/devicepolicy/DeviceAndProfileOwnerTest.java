@@ -27,6 +27,9 @@ import java.io.File;
  * Set of tests for usecases that apply to profile and device owner.
  * This class is the base class of MixedProfileOwnerTest and MixedDeviceOwnerTest and is abstract
  * to avoid running spurious tests.
+ *
+ * NOTE: Not all tests are executed in the subclasses.  Sometimes, if a test is not applicable to
+ * a subclass, they override it with an empty method.
  */
 public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
 
@@ -80,6 +83,13 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
             getDevice().uninstallPackage(ACCOUNT_MANAGEMENT_PKG);
         }
         super.tearDown();
+    }
+
+    public void testResetPassword() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
+        executeDeviceTestClass(".ResetPasswordTest");
     }
 
     public void testApplicationRestrictions() throws Exception {
