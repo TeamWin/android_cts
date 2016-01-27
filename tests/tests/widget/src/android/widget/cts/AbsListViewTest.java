@@ -16,6 +16,7 @@
 
 package android.widget.cts;
 
+import android.test.suitebuilder.annotation.MediumTest;
 import android.widget.cts.R;
 
 import org.xmlpull.v1.XmlPullParser;
@@ -646,6 +647,98 @@ public class AbsListViewTest extends ActivityInstrumentationTestCase2<ListViewCt
         assertTrue(listView.isTextFilterEnabled());
         assertFalse(listView.hasTextFilter());
         assertFalse(listView.isInFilterMode());
+    }
+
+    @MediumTest
+    public void testSetItemChecked_multipleModeSameValue()
+            throws Throwable {
+        // Calling setItemChecked with the same value in multiple choice mode should not cause
+        // requestLayout
+        mListView.setChoiceMode(ListView.CHOICE_MODE_MULTIPLE);
+        runTestOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                mListView.setItemChecked(0, false);
+            }
+        });
+        mInstrumentation.waitForIdleSync();
+        assertFalse(mListView.isLayoutRequested());
+        runTestOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                mListView.setItemChecked(0, false);
+            }
+        });
+        assertFalse(mListView.isLayoutRequested());
+    }
+
+    @MediumTest
+    public void testSetItemChecked_singleModeSameValue()
+            throws Throwable {
+        // Calling setItemChecked with the same value in single choice mode should not cause
+        // requestLayout
+        mListView.setChoiceMode(ListView.CHOICE_MODE_SINGLE);
+        runTestOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                mListView.setItemChecked(0, false);
+            }
+        });
+        mInstrumentation.waitForIdleSync();
+        assertFalse(mListView.isLayoutRequested());
+        runTestOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                mListView.setItemChecked(0, false);
+            }
+        });
+        assertFalse(mListView.isLayoutRequested());
+    }
+
+    @MediumTest
+    public void testSetItemChecked_multipleModeDifferentValue()
+            throws Throwable {
+        // Calling setItemChecked with a different value in multiple choice mode should cause
+        // requestLayout
+        mListView.setChoiceMode(ListView.CHOICE_MODE_MULTIPLE);
+        runTestOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                mListView.setItemChecked(0, false);
+            }
+        });
+        mInstrumentation.waitForIdleSync();
+        assertFalse(mListView.isLayoutRequested());
+        runTestOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                mListView.setItemChecked(0, true);
+            }
+        });
+        assertTrue(mListView.isLayoutRequested());
+    }
+
+    @MediumTest
+    public void testSetItemChecked_singleModeDifferentValue()
+            throws Throwable {
+        // Calling setItemChecked with a different value in single choice mode should cause
+        // requestLayout
+        mListView.setChoiceMode(ListView.CHOICE_MODE_SINGLE);
+        runTestOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                mListView.setItemChecked(0, false);
+            }
+        });
+        mInstrumentation.waitForIdleSync();
+        assertFalse(mListView.isLayoutRequested());
+        runTestOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                mListView.setItemChecked(0, true);
+            }
+        });
+        assertTrue(mListView.isLayoutRequested());
     }
 
     public void testLayoutChildren() {
