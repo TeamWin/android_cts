@@ -103,6 +103,18 @@ public class VectorDrawableTest extends AndroidTestCase {
             R.drawable.vector_icon_arcto_golden,
     };
 
+    private static final int[] GRADIENT_ICON_RES_IDS = new int[] {
+            R.drawable.vector_icon_gradient_1,
+            R.drawable.vector_icon_gradient_2,
+            R.drawable.vector_icon_gradient_3,
+    };
+
+    private static final int[] GRADIENT_GOLDEN_IMAGES = new int[] {
+            R.drawable.vector_icon_gradient_1_golden,
+            R.drawable.vector_icon_gradient_2_golden,
+            R.drawable.vector_icon_gradient_3_golden,
+    };
+
     private static final int[] STATEFUL_RES_IDS = new int[] {
             R.drawable.vector_icon_state_list
     };
@@ -151,6 +163,10 @@ public class VectorDrawableTest extends AndroidTestCase {
         verifyVectorDrawables(ICON_RES_IDS, GOLDEN_IMAGES, null);
     }
 
+    public void testVectorDrawableGradient() throws XmlPullParserException, IOException {
+        verifyVectorDrawables(GRADIENT_ICON_RES_IDS, GRADIENT_GOLDEN_IMAGES, null);
+    }
+
     public void testColorStateList() throws XmlPullParserException, IOException {
         for (int i = 0; i < STATEFUL_STATE_SETS.length; i++) {
             verifyVectorDrawables(
@@ -175,7 +191,7 @@ public class VectorDrawableTest extends AndroidTestCase {
                 throw new XmlPullParserException("No start tag found");
             }
 
-            mVectorDrawable.inflate(mResources, parser, attrs);
+            mVectorDrawable.inflate(mResources, parser, attrs, mContext.getTheme());
 
             if (stateSet != null) {
                 mVectorDrawable.setState(stateSet);
