@@ -22,6 +22,7 @@ import android.content.ContentValues;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.PersistableBundle;
 import android.view.DragEvent;
 import android.view.DropPermissions;
 import android.view.View;
@@ -50,6 +51,19 @@ public class DropTarget extends Activity {
         findViewById(targetResourceId).setOnDragListener(listener);
     }
 
+    private String checkExtraValue(DragEvent event) {
+        PersistableBundle extras = event.getClipDescription().getExtras();
+        if (extras == null) {
+            return "Null";
+        }
+
+        final String value = extras.getString("extraKey");
+        if ("extraValue".equals(value)) {
+            return RESULT_OK;
+        }
+        return value;
+    }
+
     private abstract class OnDragUriListener implements View.OnDragListener {
         private final boolean requestPermissions;
 
@@ -62,6 +76,7 @@ public class DropTarget extends Activity {
             switch (event.getAction()) {
                 case DragEvent.ACTION_DRAG_STARTED:
                     ((TextView) findViewById(R.id.drag_started)).setText("DRAG_STARTED");
+                    ((TextView) findViewById(R.id.extra_value)).setText(checkExtraValue(event));
                     return true;
 
                 case DragEvent.ACTION_DRAG_ENTERED:

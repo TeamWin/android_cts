@@ -111,19 +111,27 @@ public class DragAndDropTest extends InstrumentationTestCase {
         assertEquals(expectedResult, drag_started.getText());
     }
 
+    private void assertExtraValue(String expectedResult) {
+        UiObject2 extra_value = findObject(DROP_TARGET_PKG, "extra_value");
+        assertEquals(expectedResult, extra_value.getText());
+    }
+
     public void testLocal() {
         doCrossAppDrag("disallow_global", "dont_request", "N/A");
         assertDragStarted("N/A");
+        assertExtraValue("N/A");
     }
 
     public void testCancel() {
         doCrossAppDrag("cancel_soon", "dont_request", "N/A");
         assertDragStarted("DRAG_STARTED");
+        assertExtraValue("OK");
     }
 
     public void testDontGrantDontRequest() {
         doCrossAppDrag("dont_grant", "dont_request", "Exception");
         assertDragStarted("DRAG_STARTED");
+        assertExtraValue("OK");
     }
 
     public void testDontGrantRequestRead() {

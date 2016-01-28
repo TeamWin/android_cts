@@ -18,9 +18,11 @@ package android.dnd.cts.dragsource;
 
 import android.app.Activity;
 import android.content.ClipData;
+import android.content.ClipDescription;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.PersistableBundle;
 import android.view.View;
 
 public class DragSource extends Activity{
@@ -65,8 +67,14 @@ public class DragSource extends Activity{
         findViewById(resourceId).setOnLongClickListener(new View.OnLongClickListener() {
             @Override
             public boolean onLongClick(final View v) {
+                final ClipDescription clipDescription = new ClipDescription("", new String[] {
+                        ClipDescription.MIMETYPE_TEXT_URILIST });
+                PersistableBundle extras = new PersistableBundle(1);
+                extras.putString("extraKey", "extraValue");
+                clipDescription.setExtras(extras);
+                final ClipData clipData = new ClipData(clipDescription, new ClipData.Item(uri));
                 v.startDragAndDrop(
-                        ClipData.newUri(getContentResolver(), "", uri),
+                        clipData,
                         new View.DragShadowBuilder(v),
                         null,
                         flags);
