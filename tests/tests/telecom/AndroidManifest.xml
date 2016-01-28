@@ -47,6 +47,14 @@
             </intent-filter>
         </service>
 
+        <service android:name="android.telecom.cts.MockCallScreeningService"
+            android:permission="android.permission.BIND_SCREENING_SERVICE"
+            android:enabled="false" >
+            <intent-filter>
+                <action android:name="android.telecom.CallScreeningService"/>
+            </intent-filter>
+        </service>
+
         <activity android:name="android.telecom.cts.MockDialerActivity">
             <intent-filter>
                 <action android:name="android.intent.action.DIAL" />
