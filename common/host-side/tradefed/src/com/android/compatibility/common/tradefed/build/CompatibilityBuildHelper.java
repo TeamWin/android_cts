@@ -30,6 +30,7 @@ import java.util.Map;
 public class CompatibilityBuildHelper {
 
     private static final String ROOT_DIR = "ROOT_DIR";
+    private static final String ROOT_DIR2 = "ROOT_DIR2";
     private static final String SUITE_BUILD = "SUITE_BUILD";
     private static final String SUITE_NAME = "SUITE_NAME";
     private static final String SUITE_FULL_NAME = "SUITE_FULL_NAME";
@@ -129,7 +130,13 @@ public class CompatibilityBuildHelper {
      * @throws FileNotFoundException if the directory does not exist
      */
     public File getRootDir() throws FileNotFoundException {
-        File dir = new File(mBuildInfo.getBuildAttributes().get(ROOT_DIR));
+        File dir = ((IFolderBuildInfo) mBuildInfo).getRootDir();
+        if (!dir.exists()) {
+            dir = new File(mBuildInfo.getBuildAttributes().get(ROOT_DIR));
+            if (!dir.exists()) {
+                dir = new File(mBuildInfo.getBuildAttributes().get(ROOT_DIR2));
+            }
+        }
         if (!dir.exists()) {
             throw new FileNotFoundException(String.format(
                     "Compatibility root directory %s does not exist",
