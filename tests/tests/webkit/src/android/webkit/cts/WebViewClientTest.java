@@ -105,6 +105,10 @@ public class WebViewClientTest extends ActivityInstrumentationTestCase2<WebViewC
         mOnUiThread.loadDataAndWaitForCompletion(data, "text/html", null);
         clickOnLinkUsingJs("link", mOnUiThread);
         assertEquals(TEST_URL, webViewClient.getLastShouldOverrideUrl());
+        assertNotNull(webViewClient.getLastShouldOverrideResourceRequest());
+        assertTrue(webViewClient.getLastShouldOverrideResourceRequest().isForMainFrame());
+        assertFalse(webViewClient.getLastShouldOverrideResourceRequest().isRedirect());
+        assertFalse(webViewClient.getLastShouldOverrideResourceRequest().hasGesture());
     }
 
     // Verify shouldoverrideurlloading called on webview called via onCreateWindow
@@ -586,6 +590,7 @@ public class WebViewClientTest extends ActivityInstrumentationTestCase2<WebViewC
         private boolean mOnScaleChangedCalled;
         private int mShouldOverrideUrlLoadingCallCount;
         private String mLastShouldOverrideUrl;
+        private WebResourceRequest mLastShouldOverrideResourceRequest;
 
         public MockWebViewClient() {
             super(mOnUiThread);
@@ -645,6 +650,10 @@ public class WebViewClientTest extends ActivityInstrumentationTestCase2<WebViewC
 
         public String getLastShouldOverrideUrl() {
             return mLastShouldOverrideUrl;
+        }
+
+        public WebResourceRequest getLastShouldOverrideResourceRequest() {
+            return mLastShouldOverrideResourceRequest;
         }
 
         public String getLoginRequestRealm() {
@@ -745,6 +754,15 @@ public class WebViewClientTest extends ActivityInstrumentationTestCase2<WebViewC
         @Override
         public boolean shouldOverrideUrlLoading(WebView view, String url) {
             mLastShouldOverrideUrl = url;
+            mLastShouldOverrideResourceRequest = null;
+            mShouldOverrideUrlLoadingCallCount++;
+            return false;
+        }
+
+        @Override
+        public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
+            mLastShouldOverrideUrl = request.getUrl().toString();
+            mLastShouldOverrideResourceRequest = request;
             mShouldOverrideUrlLoadingCallCount++;
             return false;
         }
