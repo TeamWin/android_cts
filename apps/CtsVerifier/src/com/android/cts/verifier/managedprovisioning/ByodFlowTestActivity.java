@@ -77,6 +77,9 @@ public class ByodFlowTestActivity extends DialogTestListActivity {
     private DialogTestListItem mPrintSettingsVisibleTest;
     private DialogTestListItem mIntentFiltersTest;
     private DialogTestListItem mPermissionLockdownTest;
+    private DialogTestListItem mTurnOffWorkIcon;
+    private DialogTestListItem mTurnOffWorkLauncher;
+    private DialogTestListItem mTurnOffWorkNotifications;
     private DialogTestListItem mCrossProfileImageCaptureSupportTest;
     private DialogTestListItem mCrossProfileVideoCaptureSupportTest;
     private DialogTestListItem mCrossProfileAudioCaptureSupportTest;
@@ -338,6 +341,24 @@ public class ByodFlowTestActivity extends DialogTestListActivity {
                 R.string.profile_owner_permission_lockdown_test_info,
                 permissionCheckIntent);
 
+        mTurnOffWorkIcon = new DialogTestListItem(this,
+                R.string.provisioning_byod_turn_off_work_icon,
+                "BYOD_TurnOffWorkIcon",
+                R.string.provisioning_byod_turn_off_work_icon_instruction,
+                new Intent(Settings.ACTION_SETTINGS));
+
+        mTurnOffWorkLauncher = new DialogTestListItem(this,
+                R.string.provisioning_byod_turn_off_work_launcher,
+                "BYOD_TurnOffWorkStartApps",
+                R.string.provisioning_byod_turn_off_work_launcher_instruction,
+                new Intent(Settings.ACTION_SETTINGS));
+
+        mTurnOffWorkNotifications = new DialogTestListItem(this,
+                R.string.provisioning_byod_turn_off_work_notifications,
+                "BYOD_TurnOffWorkNotifications",
+                R.string.provisioning_byod_turn_off_work_notifications_instruction,
+                new Intent(ByodHelperActivity.ACTION_NOTIFICATION));
+
         adapter.add(mProfileOwnerInstalled);
 
         // Badge related tests
@@ -366,6 +387,9 @@ public class ByodFlowTestActivity extends DialogTestListActivity {
         adapter.add(mKeyguardDisabledFeaturesTest);
         adapter.add(mAuthenticationBoundKeyTest);
         adapter.add(mVpnTest);
+        adapter.add(mTurnOffWorkIcon);
+        adapter.add(mTurnOffWorkLauncher);
+        adapter.add(mTurnOffWorkNotifications);
         if (canResolveIntent(new Intent(Settings.ACTION_APPLICATION_SETTINGS))) {
             adapter.add(mDisallowAppsControlTest);
         }
