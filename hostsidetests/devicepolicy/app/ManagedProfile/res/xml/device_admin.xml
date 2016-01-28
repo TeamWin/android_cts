@@ -16,5 +16,6 @@
     <uses-policies>
         <wipe-data />
         <disable-camera />
+        <limit-password />
     </uses-policies>
 </device-admin>
