@@ -36,6 +36,7 @@ import android.hardware.camera2.params.InputConfiguration;
 import android.hardware.camera2.TotalCaptureResult;
 import android.hardware.cts.helpers.CameraUtils;
 import android.hardware.camera2.params.MeteringRectangle;
+import android.hardware.camera2.params.OutputConfiguration;
 import android.hardware.camera2.params.StreamConfigurationMap;
 import android.location.Location;
 import android.location.LocationManager;
@@ -721,6 +722,26 @@ public class CameraTestUtils extends Assert {
     }
 
     /**
+     * Configure a new camera session with output configurations.
+     *
+     * @param camera The CameraDevice to be configured.
+     * @param outputs The OutputConfiguration list that is used for camera output.
+     * @param listener The callback CameraDevice will notify when capture results are available.
+     */
+    public static CameraCaptureSession configureCameraSessionWithConfig(CameraDevice camera,
+            List<OutputConfiguration> outputs,
+            CameraCaptureSession.StateCallback listener, Handler handler)
+            throws CameraAccessException {
+        BlockingSessionCallback sessionListener = new BlockingSessionCallback(listener);
+        camera.createCaptureSessionByOutputConfiguration(outputs, sessionListener, handler);
+        CameraCaptureSession session =
+                sessionListener.waitAndGetSession(SESSION_CONFIGURE_TIMEOUT_MS);
+        assertFalse("Camera session should not be a reprocessable session",
+                session.isReprocessable());
+        return session;
+    }
+
+    /**
      * Configure a new camera session with output surfaces.
      *
      * @param camera The CameraDevice to be configured.
@@ -742,6 +763,40 @@ public class CameraTestUtils extends Assert {
             throws CameraAccessException {
         BlockingSessionCallback sessionListener = new BlockingSessionCallback(listener);
         camera.createReprocessableCaptureSession(inputConfiguration, outputSurfaces,
+                sessionListener, handler);
+
+        Integer[] sessionStates = {BlockingSessionCallback.SESSION_READY,
+                                   BlockingSessionCallback.SESSION_CONFIGURE_FAILED};
+        int state = sessionListener.getStateWaiter().waitForAnyOfStates(
+                Arrays.asList(sessionStates), SESSION_CONFIGURE_TIMEOUT_MS);
+
+        assertTrue("Creating a reprocessable session failed.",
+                state == BlockingSessionCallback.SESSION_READY);
+
+        CameraCaptureSession session =
+                sessionListener.waitAndGetSession(SESSION_CONFIGURE_TIMEOUT_MS);
+        assertTrue("Camera session should be a reprocessable session", session.isReprocessable());
+
+        return session;
+    }
+
+    /**
+     * Create a reprocessable camera session with input and output configurations.
+     *
+     * @param camera The CameraDevice to be configured.
+     * @param inputConfiguration The input configuration used to create this session.
+     * @param outputs The output configurations used to create this session.
+     * @param listener The callback CameraDevice will notify when capture results are available.
+     * @param handler The handler used to notify callbacks.
+     * @return The session ready to use.
+     * @throws CameraAccessException
+     */
+    public static CameraCaptureSession configureReprocCameraSessionWithConfig(CameraDevice camera,
+            InputConfiguration inputConfiguration, List<OutputConfiguration> outputs,
+            CameraCaptureSession.StateCallback listener, Handler handler)
+            throws CameraAccessException {
+        BlockingSessionCallback sessionListener = new BlockingSessionCallback(listener);
+        camera.createReprocessableCaptureSessionWithConfigurations(inputConfiguration, outputs,
                 sessionListener, handler);
 
         Integer[] sessionStates = {BlockingSessionCallback.SESSION_READY,

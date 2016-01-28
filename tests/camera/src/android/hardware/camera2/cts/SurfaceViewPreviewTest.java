@@ -20,6 +20,9 @@ import static android.hardware.camera2.cts.CameraTestUtils.*;
 
 import android.graphics.ImageFormat;
 import android.view.Surface;
+
+import com.android.ex.camera2.blocking.BlockingSessionCallback;
+
 import android.hardware.camera2.CameraCaptureSession;
 import android.hardware.camera2.CameraCaptureSession.CaptureCallback;
 import android.hardware.camera2.CameraDevice;
@@ -30,6 +33,7 @@ import android.hardware.camera2.TotalCaptureResult;
 import android.util.Size;
 import android.hardware.camera2.cts.CameraTestUtils.SimpleCaptureCallback;
 import android.hardware.camera2.cts.testcases.Camera2SurfaceViewTestCase;
+import android.hardware.camera2.params.OutputConfiguration;
 import android.util.Log;
 import android.util.Pair;
 import android.util.Range;
@@ -53,6 +57,7 @@ public class SurfaceViewPreviewTest extends Camera2SurfaceViewTestCase {
     private static final int NUM_FRAMES_VERIFIED = 30;
     private static final int NUM_TEST_PATTERN_FRAMES_VERIFIED = 60;
     private static final float FRAME_DURATION_ERROR_MARGIN = 0.005f; // 0.5 percent error margin.
+    private static final int PREPARE_TIMEOUT_MS = 10000; // 10 s
 
     @Override
     protected void setUp() throws Exception {
@@ -133,6 +138,31 @@ public class SurfaceViewPreviewTest extends Camera2SurfaceViewTestCase {
     }
 
     /**
+     * Test surface set streaming use cases.
+     *
+     * <p>
+     * The test sets output configuration with increasing surface set IDs for preview and YUV
+     * streams. The max supported preview size is selected for preview stream, and the max
+     * supported YUV size (depending on hw supported level) is selected for YUV stream. This test
+     * also exercises the prepare API.
+     * </p>
+     */
+    public void testSurfaceSet() throws Exception {
+        for (String id : mCameraIds) {
+            try {
+                openDevice(id);
+                if (!mStaticInfo.isColorOutputSupported()) {
+                    Log.i(TAG, "Camera " + id + " does not support color outputs, skipping");
+                    continue;
+                }
+                surfaceSetTestByCamera(id);
+            } finally {
+                closeDevice();
+            }
+        }
+    }
+
+    /**
      * Test to verify the {@link CameraCaptureSession#prepare} method works correctly, and has the
      * expected effects on performance.
      *
@@ -163,7 +193,6 @@ public class SurfaceViewPreviewTest extends Camera2SurfaceViewTestCase {
         final int UNKNOWN_LATENCY_RESULT_WAIT = 5;
         final int MAX_RESULTS_TO_WAIT = 10;
         final int FRAMES_FOR_AVERAGING = 100;
-        final int PREPARE_TIMEOUT_MS = 10000; // 10 s
         final float PREPARE_FRAME_RATE_BOUNDS = 0.05f; // fraction allowed difference
         final float PREPARE_PEAK_RATE_BOUNDS = 0.5f; // fraction allowed difference
 
@@ -330,7 +359,6 @@ public class SurfaceViewPreviewTest extends Camera2SurfaceViewTestCase {
      * validated.
      */
     private void previewFpsRangeTestByCamera() throws Exception {
-        final int FPS_RANGE_SIZE = 2;
         Size maxPreviewSz = mOrderedPreviewSizes.get(0);
         Range<Integer>[] fpsRanges = mStaticInfo.getAeAvailableTargetFpsRangesChecked();
         boolean antiBandingOffIsSupported = mStaticInfo.isAntiBandingOffModeSupported();
@@ -448,6 +476,72 @@ public class SurfaceViewPreviewTest extends Camera2SurfaceViewTestCase {
         }
 
         stopPreview();
+    }
+
+    private void surfaceSetTestByCamera(String cameraId) throws Exception {
+        final int MAX_SURFACE_SET_ID = 10;
+        Size maxPreviewSz = mOrderedPreviewSizes.get(0);
+        Size yuvSizeBound = maxPreviewSz; // Default case: legacy device
+        if (mStaticInfo.isHardwareLevelLimited()) {
+            yuvSizeBound = mOrderedVideoSizes.get(0);
+        } else if (mStaticInfo.isHardwareLevelAtLeastFull()) {
+            yuvSizeBound = null;
+        }
+        Size maxYuvSize = getSupportedPreviewSizes(cameraId, mCameraManager, yuvSizeBound).get(0);
+
+        CaptureRequest.Builder requestBuilder =
+                mCamera.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW);
+        ImageDropperListener imageListener = new ImageDropperListener();
+
+        updatePreviewSurface(maxPreviewSz);
+        createImageReader(maxYuvSize, ImageFormat.YUV_420_888, MAX_READER_IMAGES, imageListener);
+        List<OutputConfiguration> outputConfigs = new ArrayList<OutputConfiguration>();
+        OutputConfiguration previewConfig = new OutputConfiguration(mPreviewSurface);
+        OutputConfiguration yuvConfig = new OutputConfiguration(mReaderSurface);
+        assertEquals(OutputConfiguration.SURFACE_SET_ID_INVALID, previewConfig.getSurfaceSetId());
+        assertEquals(OutputConfiguration.SURFACE_SET_ID_INVALID, yuvConfig.getSurfaceSetId());
+        assertEquals(mPreviewSurface, previewConfig.getSurface());
+        assertEquals(mReaderSurface, yuvConfig.getSurface());
+        outputConfigs.add(previewConfig);
+        outputConfigs.add(yuvConfig);
+        requestBuilder.addTarget(mPreviewSurface);
+        requestBuilder.addTarget(mReaderSurface);
+
+        // Test different stream set ID.
+        for (int surfaceSetId = OutputConfiguration.SURFACE_SET_ID_INVALID;
+                surfaceSetId < MAX_SURFACE_SET_ID; surfaceSetId++) {
+            if (VERBOSE) {
+                Log.v(TAG, "test preview with surface set id: ");
+            }
+            for (OutputConfiguration config : outputConfigs) {
+                config.setSurfaceSetId(surfaceSetId);
+                assertEquals(surfaceSetId, config.getSurfaceSetId());
+            }
+
+            CameraCaptureSession.StateCallback mockSessionListener =
+                    mock(CameraCaptureSession.StateCallback.class);
+
+            mSession = configureCameraSessionWithConfig(mCamera, outputConfigs,
+                    mockSessionListener, mHandler);
+
+
+            mSession.prepare(mPreviewSurface);
+            verify(mockSessionListener,
+                    timeout(PREPARE_TIMEOUT_MS).times(1)).
+                    onSurfacePrepared(eq(mSession), eq(mPreviewSurface));
+
+            mSession.prepare(mReaderSurface);
+            verify(mockSessionListener,
+                    timeout(PREPARE_TIMEOUT_MS).times(1)).
+                    onSurfacePrepared(eq(mSession), eq(mReaderSurface));
+
+            CaptureRequest request = requestBuilder.build();
+            CaptureCallback mockCaptureCallback =
+                    mock(CameraCaptureSession.CaptureCallback.class);
+            mSession.setRepeatingRequest(request, mockCaptureCallback, mHandler);
+            verifyCaptureResults(mSession, mockCaptureCallback, NUM_FRAMES_VERIFIED,
+                    NUM_FRAMES_VERIFIED * FRAME_TIMEOUT_MS);
+        }
     }
 
     private class IsCaptureResultValid extends ArgumentMatcher<TotalCaptureResult> {
