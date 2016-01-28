@@ -15,7 +15,6 @@
  */
 package android.media.cts;
 
-
 import android.content.pm.PackageManager;
 import android.cts.util.MediaUtils;
 import android.graphics.Canvas;
@@ -209,20 +208,28 @@ public class MediaRecorderTest extends ActivityInstrumentationTestCase2<MediaStu
 
     @UiThreadTest
     public void testSetCamera() throws Exception {
-        recordVideoUsingCamera(false);
+        recordVideoUsingCamera(false, false);
     }
 
     public void testRecorderTimelapsedVideo() throws Exception {
-        recordVideoUsingCamera(true);
+        recordVideoUsingCamera(true, false);
     }
 
-    private void recordVideoUsingCamera(boolean timelapse) throws Exception {
+    public void testRecorderPauseResume() throws Exception {
+        recordVideoUsingCamera(false, true);
+    }
+
+    public void testRecorderPauseResumeOnTimeLapse() throws Exception {
+        recordVideoUsingCamera(true, true);
+    }
+
+    private void recordVideoUsingCamera(boolean timelapse, boolean pause) throws Exception {
         int nCamera = Camera.getNumberOfCameras();
         int durMs = timelapse? RECORD_TIME_LAPSE_MS: RECORD_TIME_MS;
         for (int cameraId = 0; cameraId < nCamera; cameraId++) {
             mCamera = Camera.open(cameraId);
             setSupportedResolution(mCamera);
-            recordVideoUsingCamera(mCamera, OUTPUT_PATH, durMs, timelapse);
+            recordVideoUsingCamera(mCamera, OUTPUT_PATH, durMs, timelapse, pause);
             mCamera.release();
             mCamera = null;
             assertTrue(checkLocationInFile(OUTPUT_PATH));
@@ -245,7 +252,8 @@ public class MediaRecorderTest extends ActivityInstrumentationTestCase2<MediaStu
     }
 
     private void recordVideoUsingCamera(
-            Camera camera, String fileName, int durMs, boolean timelapse) throws Exception {
+            Camera camera, String fileName, int durMs, boolean timelapse, boolean pause)
+        throws Exception {
         // FIXME:
         // We should add some test case to use Camera.Parameters.getPreviewFpsRange()
         // to get the supported video frame rate range.
@@ -271,7 +279,15 @@ public class MediaRecorderTest extends ActivityInstrumentationTestCase2<MediaStu
 
         mMediaRecorder.prepare();
         mMediaRecorder.start();
-        Thread.sleep(durMs);
+        if (pause) {
+            Thread.sleep(durMs / 2);
+            mMediaRecorder.pause();
+            Thread.sleep(durMs / 2);
+            mMediaRecorder.resume();
+            Thread.sleep(durMs / 2);
+        } else {
+            Thread.sleep(durMs);
+        }
         mMediaRecorder.stop();
         assertTrue(mOutFile.exists());
 
