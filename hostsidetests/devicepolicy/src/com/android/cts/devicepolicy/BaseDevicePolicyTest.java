@@ -51,7 +51,9 @@ public class BaseDevicePolicyTest extends DeviceTestCase implements IBuildReceiv
 
     private static final String RUNNER = "android.support.test.runner.AndroidJUnitRunner";
 
-    static final int USER_SYSTEM = 0; // From the UserHandle class.
+    protected static final int USER_SYSTEM = 0; // From the UserHandle class.
+
+    protected static final int USER_OWNER = 0;
 
     // From the UserInfo class
     protected static final int FLAG_PRIMARY = 0x00000001;
@@ -316,7 +318,7 @@ public class BaseDevicePolicyTest extends DeviceTestCase implements IBuildReceiv
         }
         String command = "am instrument --user " + userId + " " + params + " -w -r "
                 + testsToRun + " " + pkgName + "/" + RUNNER;
-        CLog.i("Running " + command);
+        CLog.logAndDisplay(LogLevel.INFO, "Running " + command);
 
         CollectingTestListener listener = new CollectingTestListener();
         InstrumentationResultParser parser = new InstrumentationResultParser(pkgName, listener);
@@ -452,13 +454,28 @@ public class BaseDevicePolicyTest extends DeviceTestCase implements IBuildReceiv
         }
     }
 
-    protected void setDeviceAdmin(String componentName, int userId)
+    private String setDeviceAdminInner(String componentName, int userId)
             throws DeviceNotAvailableException {
         String command = "dpm set-active-admin --user " + userId + " '" + componentName + "'";
         String commandOutput = getDevice().executeShellCommand(command);
-        CLog.logAndDisplay(LogLevel.INFO, "Output for command " + command + ": " + commandOutput);
+        return commandOutput;
+    }
+
+    protected void setDeviceAdmin(String componentName, int userId)
+            throws DeviceNotAvailableException {
+        String commandOutput = setDeviceAdminInner(componentName, userId);
+        CLog.logAndDisplay(LogLevel.INFO, "Output for command " + commandOutput
+                + ": " + commandOutput);
         assertTrue(commandOutput + " expected to start with \"Success:\"",
                 commandOutput.startsWith("Success:"));
+    }
+
+    protected void setDeviceAdminExpectingFailure(String componentName, int userId,
+            String errorMessage) throws DeviceNotAvailableException {
+        String commandOutput = setDeviceAdminInner(componentName, userId);
+        if (!commandOutput.contains(errorMessage)) {
+            fail(commandOutput + " expected to contain \"" + errorMessage + "\"");
+        }
     }
 
     protected boolean setDeviceOwner(String componentName) throws DeviceNotAvailableException {
