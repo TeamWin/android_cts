@@ -485,7 +485,7 @@ public class Camera2SurfaceViewTestCase extends
             int numResultWaitForUnknownLatency) {
         waitForSettingsApplied(resultListener, numResultWaitForUnknownLatency);
 
-        if (!mStaticInfo.isHardwareLevelLimitedOrBetter()) {
+        if (!mStaticInfo.isHardwareLevelAtLeastLimited()) {
             // No-op for metadata
             return;
         }
@@ -515,7 +515,7 @@ public class Camera2SurfaceViewTestCase extends
 
         waitForSettingsApplied(resultListener, numResultWaitForUnknownLatency);
 
-        if (!mStaticInfo.isHardwareLevelLimitedOrBetter()) {
+        if (!mStaticInfo.isHardwareLevelAtLeastLimited()) {
             // No-op for legacy devices
             return;
         }

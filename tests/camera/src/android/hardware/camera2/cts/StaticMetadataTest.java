@@ -78,7 +78,15 @@ public class StaticMetadataTest extends Camera2AndroidTestCase {
                     availableCaps.contains(REQUEST_AVAILABLE_CAPABILITIES_BACKWARD_COMPATIBLE) ||
                     availableCaps.contains(REQUEST_AVAILABLE_CAPABILITIES_DEPTH_OUTPUT) );
 
-            if (mStaticInfo.isHardwareLevelFull()) {
+            if (mStaticInfo.isHardwareLevelAtLeast(
+                    CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL_3)) {
+                mCollector.expectTrue("Level 3 device must contain YUV_REPROCESSING capability",
+                        availableCaps.contains(REQUEST_AVAILABLE_CAPABILITIES_YUV_REPROCESSING));
+                mCollector.expectTrue("Level 3 device must contain RAW capability",
+                        availableCaps.contains(REQUEST_AVAILABLE_CAPABILITIES_RAW));
+            }
+
+            if (mStaticInfo.isHardwareLevelAtLeastFull()) {
                 // Capability advertisement must be right.
                 mCollector.expectTrue("Full device must contain MANUAL_SENSOR capability",
                         availableCaps.contains(REQUEST_AVAILABLE_CAPABILITIES_MANUAL_SENSOR));
@@ -132,7 +140,7 @@ public class StaticMetadataTest extends Camera2AndroidTestCase {
             mCollector.expectTrue("max number of processed (stalling) output streams must be >= 1",
                     maxNumStreamsProcStall >= 1);
 
-            if (mStaticInfo.isHardwareLevelFull()) {
+            if (mStaticInfo.isHardwareLevelAtLeastFull()) {
                 mCollector.expectTrue("max number of processed (non-stalling) output streams" +
                         "must be >= 3 for FULL device",
                         maxNumStreamsProc >= 3);
@@ -328,7 +336,7 @@ public class StaticMetadataTest extends Camera2AndroidTestCase {
                 Boolean contrastCurveModeSupported = false;
                 Boolean gammaAndPresetModeSupported = false;
                 Boolean offColorAberrationModeSupported = false;
-                if (mStaticInfo.isHardwareLevelLimitedOrBetter() && mStaticInfo.isColorOutputSupported()) {
+                if (mStaticInfo.isHardwareLevelAtLeastLimited() && mStaticInfo.isColorOutputSupported()) {
                     int[] tonemapModes = mStaticInfo.getAvailableToneMapModesChecked();
                     List<Integer> modeList = (tonemapModes.length == 0) ?
                             new ArrayList<Integer>() :

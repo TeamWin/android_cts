@@ -168,50 +168,86 @@ public class RobustnessTest extends Camera2AndroidTestCase {
 
         // Enum values are defined in MaxStreamSizes
         final int[][] LEGACY_COMBINATIONS = {
-            {PRIV, MAXIMUM}, // Simple preview, GPU video processing, or no-preview video recording
-            {JPEG, MAXIMUM}, // No-viewfinder still image capture
-            {YUV,  MAXIMUM}, // In-application video/image processing
-            {PRIV, PREVIEW,  JPEG, MAXIMUM}, // Standard still imaging.
-            {YUV,  PREVIEW,  JPEG, MAXIMUM}, // In-app processing plus still capture.
-            {PRIV, PREVIEW,  PRIV, PREVIEW}, // Standard recording.
-            {PRIV, PREVIEW,  YUV,  PREVIEW}, // Preview plus in-app processing.
-            {PRIV, PREVIEW,  YUV,  PREVIEW,  JPEG, MAXIMUM} // Still capture plus in-app processing.
+            // Simple preview, GPU video processing, or no-preview video recording
+            {PRIV, MAXIMUM},
+            // No-viewfinder still image capture
+            {JPEG, MAXIMUM},
+            // In-application video/image processing
+            {YUV,  MAXIMUM},
+            // Standard still imaging.
+            {PRIV, PREVIEW,  JPEG, MAXIMUM},
+            // In-app processing plus still capture.
+            {YUV,  PREVIEW,  JPEG, MAXIMUM},
+            // Standard recording.
+            {PRIV, PREVIEW,  PRIV, PREVIEW},
+            // Preview plus in-app processing.
+            {PRIV, PREVIEW,  YUV,  PREVIEW},
+            // Still capture plus in-app processing.
+            {PRIV, PREVIEW,  YUV,  PREVIEW,  JPEG, MAXIMUM}
         };
 
         final int[][] LIMITED_COMBINATIONS = {
-            {PRIV, PREVIEW,  PRIV, RECORD }, // High-resolution video recording with preview.
-            {PRIV, PREVIEW,  YUV , RECORD }, // High-resolution in-app video processing with preview.
-            {YUV , PREVIEW,  YUV , RECORD }, // Two-input in-app video processing.
-            {PRIV, PREVIEW,  PRIV, RECORD,   JPEG, RECORD  }, // High-resolution recording with video snapshot.
-            {PRIV, PREVIEW,  YUV,  RECORD,   JPEG, RECORD  }, // High-resolution in-app processing with video snapshot.
-            {YUV , PREVIEW,  YUV,  PREVIEW,  JPEG, MAXIMUM }  // Two-input in-app processing with still capture.
+            // High-resolution video recording with preview.
+            {PRIV, PREVIEW,  PRIV, RECORD },
+            // High-resolution in-app video processing with preview.
+            {PRIV, PREVIEW,  YUV , RECORD },
+            // Two-input in-app video processing.
+            {YUV , PREVIEW,  YUV , RECORD },
+            // High-resolution recording with video snapshot.
+            {PRIV, PREVIEW,  PRIV, RECORD,   JPEG, RECORD  },
+            // High-resolution in-app processing with video snapshot.
+            {PRIV, PREVIEW,  YUV,  RECORD,   JPEG, RECORD  },
+            // Two-input in-app processing with still capture.
+            {YUV , PREVIEW,  YUV,  PREVIEW,  JPEG, MAXIMUM }
         };
 
         final int[][] BURST_COMBINATIONS = {
-            {PRIV, PREVIEW,  PRIV, MAXIMUM }, // Maximum-resolution GPU processing with preview.
-            {PRIV, PREVIEW,  YUV,  MAXIMUM }, // Maximum-resolution in-app processing with preview.
-            {YUV,  PREVIEW,  YUV,  MAXIMUM }, // Maximum-resolution two-input in-app processsing.
+            // Maximum-resolution GPU processing with preview.
+            {PRIV, PREVIEW,  PRIV, MAXIMUM },
+            // Maximum-resolution in-app processing with preview.
+            {PRIV, PREVIEW,  YUV,  MAXIMUM },
+            // Maximum-resolution two-input in-app processsing.
+            {YUV,  PREVIEW,  YUV,  MAXIMUM },
         };
 
         final int[][] FULL_COMBINATIONS = {
-            {PRIV, PREVIEW,  PRIV, PREVIEW,  JPEG, MAXIMUM }, //Video recording with maximum-size video snapshot.
-            {YUV,  VGA,      PRIV, PREVIEW,  YUV,  MAXIMUM }, // Standard video recording plus maximum-resolution in-app processing.
-            {YUV,  VGA,      YUV,  PREVIEW,  YUV,  MAXIMUM } // Preview plus two-input maximum-resolution in-app processing.
+            // Video recording with maximum-size video snapshot.
+            {PRIV, PREVIEW,  PRIV, PREVIEW,  JPEG, MAXIMUM },
+            // Standard video recording plus maximum-resolution in-app processing.
+            {YUV,  VGA,      PRIV, PREVIEW,  YUV,  MAXIMUM },
+            // Preview plus two-input maximum-resolution in-app processing.
+            {YUV,  VGA,      YUV,  PREVIEW,  YUV,  MAXIMUM }
         };
 
         final int[][] RAW_COMBINATIONS = {
-            {RAW,  MAXIMUM }, // No-preview DNG capture.
-            {PRIV, PREVIEW,  RAW,  MAXIMUM }, // Standard DNG capture.
-            {YUV,  PREVIEW,  RAW,  MAXIMUM }, // In-app processing plus DNG capture.
-            {PRIV, PREVIEW,  PRIV, PREVIEW,  RAW, MAXIMUM}, // Video recording with DNG capture.
-            {PRIV, PREVIEW,  YUV,  PREVIEW,  RAW, MAXIMUM}, // Preview with in-app processing and DNG capture.
-            {YUV,  PREVIEW,  YUV,  PREVIEW,  RAW, MAXIMUM}, // Two-input in-app processing plus DNG capture.
-            {PRIV, PREVIEW,  JPEG, MAXIMUM,  RAW, MAXIMUM}, // Still capture with simultaneous JPEG and DNG.
-            {YUV,  PREVIEW,  JPEG, MAXIMUM,  RAW, MAXIMUM}  // In-app processing with simultaneous JPEG and DNG.
+            // No-preview DNG capture.
+            {RAW,  MAXIMUM },
+            // Standard DNG capture.
+            {PRIV, PREVIEW,  RAW,  MAXIMUM },
+            // In-app processing plus DNG capture.
+            {YUV,  PREVIEW,  RAW,  MAXIMUM },
+            // Video recording with DNG capture.
+            {PRIV, PREVIEW,  PRIV, PREVIEW,  RAW, MAXIMUM},
+            // Preview with in-app processing and DNG capture.
+            {PRIV, PREVIEW,  YUV,  PREVIEW,  RAW, MAXIMUM},
+            // Two-input in-app processing plus DNG capture.
+            {YUV,  PREVIEW,  YUV,  PREVIEW,  RAW, MAXIMUM},
+            // Still capture with simultaneous JPEG and DNG.
+            {PRIV, PREVIEW,  JPEG, MAXIMUM,  RAW, MAXIMUM},
+            // In-app processing with simultaneous JPEG and DNG.
+            {YUV,  PREVIEW,  JPEG, MAXIMUM,  RAW, MAXIMUM}
+        };
+
+        final int[][] LEVEL_3_COMBINATIONS = {
+            // In-app viewfinder analysis with dynamic selection of output format
+            {PRIV, PREVIEW, PRIV, VGA, YUV, MAXIMUM, RAW, MAXIMUM},
+            // In-app viewfinder analysis with dynamic selection of output format
+            {PRIV, PREVIEW, PRIV, VGA, JPEG, MAXIMUM, RAW, MAXIMUM}
         };
 
         final int[][][] TABLES =
-            { LEGACY_COMBINATIONS, LIMITED_COMBINATIONS, BURST_COMBINATIONS, FULL_COMBINATIONS, RAW_COMBINATIONS };
+                { LEGACY_COMBINATIONS, LIMITED_COMBINATIONS, BURST_COMBINATIONS, FULL_COMBINATIONS,
+                  RAW_COMBINATIONS, LEVEL_3_COMBINATIONS };
 
         sanityCheckConfigurationTables(TABLES);
 
@@ -257,7 +293,7 @@ public class RobustnessTest extends Camera2AndroidTestCase {
                     }
                 }
 
-                if (mStaticInfo.isHardwareLevelFull()) {
+                if (mStaticInfo.isHardwareLevelAtLeastFull()) {
                     for (int[] config : FULL_COMBINATIONS) {
                         testOutputCombination(id, config, maxSizes);
                     }
@@ -266,6 +302,13 @@ public class RobustnessTest extends Camera2AndroidTestCase {
                 if (mStaticInfo.isCapabilitySupported(
                         CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES_RAW)) {
                     for (int[] config : RAW_COMBINATIONS) {
+                        testOutputCombination(id, config, maxSizes);
+                    }
+                }
+
+                if (mStaticInfo.isHardwareLevelAtLeast(
+                        CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL_3)) {
+                    for (int[] config: LEVEL_3_COMBINATIONS) {
                         testOutputCombination(id, config, maxSizes);
                     }
                 }
@@ -287,45 +330,55 @@ public class RobustnessTest extends Camera2AndroidTestCase {
          *    2. Reprocess capture requests targeting YUV and JPEG outputs are successful.
          */
         final int[][] LIMITED_COMBINATIONS = {
-            // Input        Outputs
-            {PRIV, MAXIMUM, JPEG, MAXIMUM},
-            {YUV , MAXIMUM, JPEG, MAXIMUM},
-            {PRIV, MAXIMUM, PRIV, PREVIEW, JPEG, MAXIMUM},
-            {YUV , MAXIMUM, PRIV, PREVIEW, JPEG, MAXIMUM},
-            {PRIV, MAXIMUM, YUV , PREVIEW, JPEG, MAXIMUM},
-            {YUV , MAXIMUM, YUV , PREVIEW, JPEG, MAXIMUM},
-            {PRIV, MAXIMUM, YUV , PREVIEW, YUV , PREVIEW, JPEG, MAXIMUM},
-            {YUV,  MAXIMUM, YUV , PREVIEW, YUV , PREVIEW, JPEG, MAXIMUM},
+            // Input           Outputs
+            {PRIV, MAXIMUM,    JPEG, MAXIMUM},
+            {YUV , MAXIMUM,    JPEG, MAXIMUM},
+            {PRIV, MAXIMUM,    PRIV, PREVIEW, JPEG, MAXIMUM},
+            {YUV , MAXIMUM,    PRIV, PREVIEW, JPEG, MAXIMUM},
+            {PRIV, MAXIMUM,    YUV , PREVIEW, JPEG, MAXIMUM},
+            {YUV , MAXIMUM,    YUV , PREVIEW, JPEG, MAXIMUM},
+            {PRIV, MAXIMUM,    YUV , PREVIEW, YUV , PREVIEW, JPEG, MAXIMUM},
+            {YUV,  MAXIMUM,    YUV , PREVIEW, YUV , PREVIEW, JPEG, MAXIMUM},
         };
 
         final int[][] FULL_COMBINATIONS = {
-            // Input        Outputs
-            {YUV , MAXIMUM, PRIV, PREVIEW},
-            {YUV , MAXIMUM, YUV , PREVIEW},
-            {PRIV, MAXIMUM, PRIV, PREVIEW, YUV , RECORD},
-            {YUV , MAXIMUM, PRIV, PREVIEW, YUV , RECORD},
-            {PRIV, MAXIMUM, PRIV, PREVIEW, YUV , MAXIMUM},
-            {PRIV, MAXIMUM, YUV , PREVIEW, YUV , MAXIMUM},
-            {PRIV, MAXIMUM, PRIV, PREVIEW, YUV , PREVIEW, JPEG, MAXIMUM},
-            {YUV , MAXIMUM, PRIV, PREVIEW, YUV , PREVIEW, JPEG, MAXIMUM},
+            // Input           Outputs
+            {YUV , MAXIMUM,    PRIV, PREVIEW},
+            {YUV , MAXIMUM,    YUV , PREVIEW},
+            {PRIV, MAXIMUM,    PRIV, PREVIEW, YUV , RECORD},
+            {YUV , MAXIMUM,    PRIV, PREVIEW, YUV , RECORD},
+            {PRIV, MAXIMUM,    PRIV, PREVIEW, YUV , MAXIMUM},
+            {PRIV, MAXIMUM,    YUV , PREVIEW, YUV , MAXIMUM},
+            {PRIV, MAXIMUM,    PRIV, PREVIEW, YUV , PREVIEW, JPEG, MAXIMUM},
+            {YUV , MAXIMUM,    PRIV, PREVIEW, YUV , PREVIEW, JPEG, MAXIMUM},
         };
 
         final int[][] RAW_COMBINATIONS = {
-            // Input        Outputs
-            {PRIV, MAXIMUM, YUV , PREVIEW, RAW , MAXIMUM},
-            {YUV , MAXIMUM, YUV , PREVIEW, RAW , MAXIMUM},
-            {PRIV, MAXIMUM, PRIV, PREVIEW, YUV , PREVIEW, RAW , MAXIMUM},
-            {YUV , MAXIMUM, PRIV, PREVIEW, YUV , PREVIEW, RAW , MAXIMUM},
-            {PRIV, MAXIMUM, YUV , PREVIEW, YUV , PREVIEW, RAW , MAXIMUM},
-            {YUV , MAXIMUM, YUV , PREVIEW, YUV , PREVIEW, RAW , MAXIMUM},
-            {PRIV, MAXIMUM, PRIV, PREVIEW, JPEG, MAXIMUM, RAW , MAXIMUM},
-            {YUV , MAXIMUM, PRIV, PREVIEW, JPEG, MAXIMUM, RAW , MAXIMUM},
-            {PRIV, MAXIMUM, YUV , PREVIEW, JPEG, MAXIMUM, RAW , MAXIMUM},
-            {YUV , MAXIMUM, YUV , PREVIEW, JPEG, MAXIMUM, RAW , MAXIMUM},
+            // Input           Outputs
+            {PRIV, MAXIMUM,    YUV , PREVIEW, RAW , MAXIMUM},
+            {YUV , MAXIMUM,    YUV , PREVIEW, RAW , MAXIMUM},
+            {PRIV, MAXIMUM,    PRIV, PREVIEW, YUV , PREVIEW, RAW , MAXIMUM},
+            {YUV , MAXIMUM,    PRIV, PREVIEW, YUV , PREVIEW, RAW , MAXIMUM},
+            {PRIV, MAXIMUM,    YUV , PREVIEW, YUV , PREVIEW, RAW , MAXIMUM},
+            {YUV , MAXIMUM,    YUV , PREVIEW, YUV , PREVIEW, RAW , MAXIMUM},
+            {PRIV, MAXIMUM,    PRIV, PREVIEW, JPEG, MAXIMUM, RAW , MAXIMUM},
+            {YUV , MAXIMUM,    PRIV, PREVIEW, JPEG, MAXIMUM, RAW , MAXIMUM},
+            {PRIV, MAXIMUM,    YUV , PREVIEW, JPEG, MAXIMUM, RAW , MAXIMUM},
+            {YUV , MAXIMUM,    YUV , PREVIEW, JPEG, MAXIMUM, RAW , MAXIMUM},
+        };
+
+        final int[][] LEVEL_3_COMBINATIONS = {
+            // Input          Outputs
+            // In-app viewfinder analysis with YUV->YUV ZSL and RAW
+            {YUV , MAXIMUM,   PRIV, PREVIEW, PRIV, VGA, RAW, MAXIMUM},
+            // In-app viewfinder analysis with PRIV->JPEG ZSL and RAW
+            {PRIV, MAXIMUM,   PRIV, PREVIEW, PRIV, VGA, RAW, MAXIMUM, JPEG, MAXIMUM},
+            // In-app viewfinder analysis with YUV->JPEG ZSL and RAW
+            {YUV , MAXIMUM,   PRIV, PREVIEW, PRIV, VGA, RAW, MAXIMUM, JPEG, MAXIMUM},
         };
 
         final int[][][] TABLES =
-                { LIMITED_COMBINATIONS, FULL_COMBINATIONS, RAW_COMBINATIONS };
+                { LIMITED_COMBINATIONS, FULL_COMBINATIONS, RAW_COMBINATIONS, LEVEL_3_COMBINATIONS };
 
         sanityCheckConfigurationTables(TABLES);
 
@@ -347,7 +400,7 @@ public class RobustnessTest extends Camera2AndroidTestCase {
                 }
 
                 // Check FULL devices
-                if (staticInfo.isHardwareLevelFull()) {
+                if (staticInfo.isHardwareLevelAtLeastFull()) {
                     for (int[] config : FULL_COMBINATIONS) {
                         testReprocessStreamCombination(id, config, maxSizes, staticInfo);
                     }
@@ -357,6 +410,13 @@ public class RobustnessTest extends Camera2AndroidTestCase {
                 if (staticInfo.isCapabilitySupported(
                         CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES_RAW)) {
                     for (int[] config : RAW_COMBINATIONS) {
+                        testReprocessStreamCombination(id, config, maxSizes, staticInfo);
+                    }
+                }
+
+                if (mStaticInfo.isHardwareLevelAtLeast(
+                        CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL_3)) {
+                    for (int[] config: LEVEL_3_COMBINATIONS) {
                         testReprocessStreamCombination(id, config, maxSizes, staticInfo);
                     }
                 }

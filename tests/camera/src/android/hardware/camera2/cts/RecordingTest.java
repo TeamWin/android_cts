@@ -887,7 +887,7 @@ public class RecordingTest extends Camera2SurfaceViewTestCase {
              *    When full res jpeg stream cannot keep up to video stream speed, search
              *    the largest jpeg size that can susptain video speed instead.
              */
-            if (mStaticInfo.isHardwareLevelFull() &&
+            if (mStaticInfo.isHardwareLevelAtLeastFull() &&
                     videoSz.getWidth() <= maxPreviewSize.getWidth() &&
                     videoSz.getHeight() <= maxPreviewSize.getHeight()) {
                 for (Size jpegSize : mOrderedStillSizes) {

@@ -1136,7 +1136,7 @@ public class CaptureRequestTest extends Camera2SurfaceViewTestCase {
         }
 
         // Test flash SINGLE mode control. Wait for flash state to be READY first.
-        if (mStaticInfo.isHardwareLevelLimitedOrBetter()) {
+        if (mStaticInfo.isHardwareLevelAtLeastLimited()) {
             waitForResultValue(listener, CaptureResult.FLASH_STATE, CaptureResult.FLASH_STATE_READY,
                     NUM_RESULTS_WAIT_TIMEOUT);
         } // else the settings were already waited on earlier
@@ -1886,7 +1886,7 @@ public class CaptureRequestTest extends Camera2SurfaceViewTestCase {
             // In LEGACY mode, a transition to one of the continuous AF modes does not necessarily
             // result in a passive AF call if the camera has already been focused, and the scene has
             // not changed enough to trigger an AF pass.  Skip this constraint for LEGACY.
-            if (mStaticInfo.isHardwareLevelLimitedOrBetter() &&
+            if (mStaticInfo.isHardwareLevelAtLeastLimited() &&
                     (mode == CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_PICTURE ||
                     mode == CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_VIDEO)) {
                 List<Integer> afStateList = new ArrayList<Integer>();
@@ -2054,7 +2054,7 @@ public class CaptureRequestTest extends Camera2SurfaceViewTestCase {
                                  previousCrop.height() > currentCrop.height()));
                 }
 
-                if (mStaticInfo.isHardwareLevelLimitedOrBetter()) {
+                if (mStaticInfo.isHardwareLevelAtLeastLimited()) {
                     mCollector.expectRectsAreSimilar(
                             "Request and result crop region should be similar",
                             cropRegions[i], cropRegion, CROP_REGION_ERROR_PERCENT_DELTA);

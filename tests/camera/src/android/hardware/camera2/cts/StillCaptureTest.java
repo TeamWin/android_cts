@@ -527,7 +527,7 @@ public class StillCaptureTest extends Camera2SurfaceViewTestCase {
             stillRequest.set(CaptureRequest.CONTROL_AWB_REGIONS, awbRegions);
         }
         mSession.setRepeatingRequest(previewRequest.build(), resultListener, mHandler);
-        if (mStaticInfo.isHardwareLevelLimitedOrBetter()) {
+        if (mStaticInfo.isHardwareLevelAtLeastLimited()) {
             waitForResultValue(resultListener, CaptureResult.CONTROL_AWB_STATE,
                     CaptureResult.CONTROL_AWB_STATE_CONVERGED, NUM_RESULTS_WAIT_TIMEOUT);
         } else {

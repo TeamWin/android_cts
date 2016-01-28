@@ -206,7 +206,7 @@ public class SurfaceViewPreviewTest extends Camera2SurfaceViewTestCase {
             // Lock AE if possible to improve stability
             previewRequest.set(CaptureRequest.CONTROL_AE_LOCK, true);
             mSession.setRepeatingRequest(previewRequest.build(), resultListener, mHandler);
-            if (mStaticInfo.isHardwareLevelLimitedOrBetter()) {
+            if (mStaticInfo.isHardwareLevelAtLeastLimited()) {
                 // Legacy mode doesn't output AE state
                 waitForResultValue(resultListener, CaptureResult.CONTROL_AE_STATE,
                         CaptureResult.CONTROL_AE_STATE_LOCKED, MAX_RESULTS_TO_WAIT);
@@ -241,7 +241,7 @@ public class SurfaceViewPreviewTest extends Camera2SurfaceViewTestCase {
                             whilePreparingFrameDurationStats.first / 1e6,
                             whilePreparingFrameDurationStats.second / 1e6));
 
-            if (mStaticInfo.isHardwareLevelLimitedOrBetter()) {
+            if (mStaticInfo.isHardwareLevelAtLeastLimited()) {
                 mCollector.expectTrue(
                     String.format("Camera %s: Preview peak frame interval affected by prepare " +
                             "call: preview avg frame duration: %f ms, peak during prepare: %f ms",
@@ -279,7 +279,7 @@ public class SurfaceViewPreviewTest extends Camera2SurfaceViewTestCase {
                         preparedFrameDurationStats.first / 1e6,
                         preparedFrameDurationStats.second / 1e6));
 
-        if (mStaticInfo.isHardwareLevelLimitedOrBetter()) {
+        if (mStaticInfo.isHardwareLevelAtLeastLimited()) {
             mCollector.expectTrue(
                 String.format("Camera %s: Preview peak frame interval affected by use of new " +
                         " stream: preview avg frame duration: %f ms, peak with new stream: %f ms",

@@ -146,7 +146,8 @@ public class SystemFeaturesTest extends InstrumentationTestCase {
             CameraCharacteristics chars = mCameraManager.getCameraCharacteristics(cameraId);
             Integer hwLevel = chars.get(CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL);
             int[] capabilities = chars.get(CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES);
-            if (hwLevel == CameraMetadata.INFO_SUPPORTED_HARDWARE_LEVEL_FULL) {
+            if (hwLevel == CameraMetadata.INFO_SUPPORTED_HARDWARE_LEVEL_FULL ||
+                    hwLevel >= CameraMetadata.INFO_SUPPORTED_HARDWARE_LEVEL_3) {
                 fullCamera = true;
             }
             for (int capability : capabilities) {

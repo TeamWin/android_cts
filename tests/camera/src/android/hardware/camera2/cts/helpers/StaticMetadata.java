@@ -191,15 +191,28 @@ public class StaticMetadata {
 
     /**
      * Whether or not the hardware level reported by android.info.supportedHardwareLevel
-     * is {@value CameraMetadata#INFO_SUPPORTED_HARDWARE_LEVEL_FULL}.
+     * is at least {@value CameraMetadata#INFO_SUPPORTED_HARDWARE_LEVEL_FULL}.
      *
      * <p>If the camera device is not reporting the hardwareLevel, this
      * will cause the test to fail.</p>
      *
      * @return {@code true} if the device is {@code FULL}, {@code false} otherwise.
      */
-    public boolean isHardwareLevelFull() {
-        return getHardwareLevelChecked() == CameraMetadata.INFO_SUPPORTED_HARDWARE_LEVEL_FULL;
+    public boolean isHardwareLevelAtLeastFull() {
+        return isHardwareLevelAtLeast(CameraMetadata.INFO_SUPPORTED_HARDWARE_LEVEL_FULL);
+    }
+
+    /**
+     * Whether or not the hardware level reported by android.info.supportedHardwareLevel is
+     * at least the desired one (but could be higher)
+     */
+    public boolean isHardwareLevelAtLeast(int level) {
+        int deviceLevel = getHardwareLevelChecked();
+        if (deviceLevel == CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL_LEGACY) {
+            return level == deviceLevel;
+        }
+        // deviceLevel is not LEGACY, can use numerical sort
+        return level <= deviceLevel;
     }
 
     /**
@@ -279,18 +292,8 @@ public class StaticMetadata {
      *          {@code true} if the device is {@code LIMITED} or {@code FULL},
      *          {@code false} otherwise (i.e. LEGACY).
      */
-    public boolean isHardwareLevelLimitedOrBetter() {
-        Integer hwLevel = getValueFromKeyNonNull(
-                CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL);
-
-        if (hwLevel == null) {
-            return false;
-        }
-
-        // Normal. Device could be limited.
-        int hwLevelInt = hwLevel;
-        return hwLevelInt == CameraMetadata.INFO_SUPPORTED_HARDWARE_LEVEL_FULL ||
-                hwLevelInt == CameraMetadata.INFO_SUPPORTED_HARDWARE_LEVEL_LIMITED;
+    public boolean isHardwareLevelAtLeastLimited() {
+        return isHardwareLevelAtLeast(CameraMetadata.INFO_SUPPORTED_HARDWARE_LEVEL_LIMITED);
     }
 
     /**
@@ -391,7 +394,7 @@ public class StaticMetadata {
          * android.lens.info.minimumFocusDistance - required for FULL and MANUAL_SENSOR-capable
          *   devices; optional for all other devices.
          */
-        if (isHardwareLevelFull() || isCapabilitySupported(
+        if (isHardwareLevelAtLeastFull() || isCapabilitySupported(
                 CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES_MANUAL_SENSOR)) {
             minFocusDistance = getValueFromKeyNonNull(key);
         } else {
@@ -625,12 +628,12 @@ public class StaticMetadata {
         }
 
         List<Integer> modeList = Arrays.asList(CameraTestUtils.toObject(modes));
-        if (isHardwareLevelFull()) {
+        if (isHardwareLevelAtLeastFull()) {
             checkTrueForKey(key, "Full-capability camera devices must support FAST mode",
                     modeList.contains(CameraMetadata.HOT_PIXEL_MODE_FAST));
         }
 
-        if (isHardwareLevelLimitedOrBetter()) {
+        if (isHardwareLevelAtLeastLimited()) {
             // FAST and HIGH_QUALITY mode must be both present or both not present
             List<Integer> coupledModes = Arrays.asList(new Integer[] {
                     CameraMetadata.HOT_PIXEL_MODE_FAST,
@@ -723,7 +726,7 @@ public class StaticMetadata {
         // Qualification check for MANUAL_POSTPROCESSING capability is in
         // StaticMetadataTest#testCapabilities
 
-        if (isHardwareLevelLimitedOrBetter()) {
+        if (isHardwareLevelAtLeastLimited()) {
             // FAST and HIGH_QUALITY mode must be both present or both not present
             List<Integer> coupledModes = Arrays.asList(new Integer[] {
                     CameraMetadata.TONEMAP_MODE_FAST,
@@ -887,7 +890,7 @@ public class StaticMetadata {
         Key<Integer> key = CameraCharacteristics.SENSOR_MAX_ANALOG_SENSITIVITY;
         Integer maxAnalogsensitivity = mCharacteristics.get(key);
         if (maxAnalogsensitivity == null) {
-            if (isHardwareLevelFull()) {
+            if (isHardwareLevelAtLeastFull()) {
                 Assert.fail("Full device should report max analog sensitivity");
             }
             return 0;
@@ -1170,7 +1173,7 @@ public class StaticMetadata {
 
         // FULL mode camera devices always support OFF mode.
         boolean condition =
-                !isHardwareLevelFull() || modeList.contains(CameraMetadata.CONTROL_AE_MODE_OFF);
+                !isHardwareLevelAtLeastFull() || modeList.contains(CameraMetadata.CONTROL_AE_MODE_OFF);
         checkTrueForKey(modesKey, "Full capability device must have OFF mode", condition);
 
         // Boundary check.
@@ -1201,7 +1204,7 @@ public class StaticMetadata {
         List<Integer> modesList = Arrays.asList(CameraTestUtils.toObject(awbModes));
         checkTrueForKey(key, " All camera devices must support AUTO mode",
                 modesList.contains(CameraMetadata.CONTROL_AWB_MODE_AUTO));
-        if (isHardwareLevelFull()) {
+        if (isHardwareLevelAtLeastFull()) {
             checkTrueForKey(key, " Full capability camera devices must support OFF mode",
                     modesList.contains(CameraMetadata.CONTROL_AWB_MODE_OFF));
         }
@@ -1225,7 +1228,7 @@ public class StaticMetadata {
         }
 
         List<Integer> modesList = Arrays.asList(CameraTestUtils.toObject(afModes));
-        if (isHardwareLevelLimitedOrBetter()) {
+        if (isHardwareLevelAtLeastLimited()) {
             // Some LEGACY mode devices do not support AF OFF
             checkTrueForKey(key, " All camera devices must support OFF mode",
                     modesList.contains(CameraMetadata.CONTROL_AF_MODE_OFF));
@@ -1496,13 +1499,13 @@ public class StaticMetadata {
 
         List<Integer> modeList = Arrays.asList(CameraTestUtils.toObject(edgeModes));
         // Full device should always include OFF and FAST
-        if (isHardwareLevelFull()) {
+        if (isHardwareLevelAtLeastFull()) {
             checkTrueForKey(key, "Full device must contain OFF and FAST edge modes",
                     modeList.contains(CameraMetadata.EDGE_MODE_OFF) &&
                     modeList.contains(CameraMetadata.EDGE_MODE_FAST));
         }
 
-        if (isHardwareLevelLimitedOrBetter()) {
+        if (isHardwareLevelAtLeastLimited()) {
             // FAST and HIGH_QUALITY mode must be both present or both not present
             List<Integer> coupledModes = Arrays.asList(new Integer[] {
                     CameraMetadata.EDGE_MODE_FAST,
@@ -1527,14 +1530,14 @@ public class StaticMetadata {
 
         List<Integer> modeList = Arrays.asList(CameraTestUtils.toObject(noiseReductionModes));
         // Full device should always include OFF and FAST
-        if (isHardwareLevelFull()) {
+        if (isHardwareLevelAtLeastFull()) {
 
             checkTrueForKey(key, "Full device must contain OFF and FAST noise reduction modes",
                     modeList.contains(CameraMetadata.NOISE_REDUCTION_MODE_OFF) &&
                     modeList.contains(CameraMetadata.NOISE_REDUCTION_MODE_FAST));
         }
 
-        if (isHardwareLevelLimitedOrBetter()) {
+        if (isHardwareLevelAtLeastLimited()) {
             // FAST and HIGH_QUALITY mode must be both present or both not present
             List<Integer> coupledModes = Arrays.asList(new Integer[] {
                     CameraMetadata.NOISE_REDUCTION_MODE_FAST,
@@ -1563,7 +1566,7 @@ public class StaticMetadata {
         }
 
         // Legacy devices don't have a minimum step requirement
-        if (isHardwareLevelLimitedOrBetter()) {
+        if (isHardwareLevelAtLeastLimited()) {
             float compensationStepF =
                     (float) compensationStep.getNumerator() / compensationStep.getDenominator();
             checkTrueForKey(key, " value must be no more than 1/2", compensationStepF <= 0.5f);
@@ -1592,7 +1595,7 @@ public class StaticMetadata {
         }
 
         // Legacy devices don't have a minimum range requirement
-        if (isHardwareLevelLimitedOrBetter() && !compensationRange.equals(ZERO_RANGE)) {
+        if (isHardwareLevelAtLeastLimited() && !compensationRange.equals(ZERO_RANGE)) {
             checkTrueForKey(key, " range value must be at least " + DEFAULT_RANGE
                     + ", actual " + compensationRange + ", compensation step " + compensationStep,
                    compensationRange.getLower() <= DEFAULT_RANGE.getLower() &&
@@ -1729,7 +1732,7 @@ public class StaticMetadata {
                 modeList.contains(CameraMetadata.COLOR_CORRECTION_ABERRATION_MODE_OFF) ||
                 modeList.contains(CameraMetadata.COLOR_CORRECTION_ABERRATION_MODE_FAST));
 
-        if (isHardwareLevelLimitedOrBetter()) {
+        if (isHardwareLevelAtLeastLimited()) {
             // FAST and HIGH_QUALITY mode must be both present or both not present
             List<Integer> coupledModes = Arrays.asList(new Integer[] {
                     CameraMetadata.COLOR_CORRECTION_ABERRATION_MODE_FAST,

@@ -717,7 +717,7 @@ public class AllocationTest extends AndroidTestCase {
                 CameraCharacteristics properties =
                         mCameraManager.getCameraCharacteristics(mCameraIds[i]);
                 StaticMetadata staticInfo = new StaticMetadata(properties);
-                if (fullHwLevel && !staticInfo.isHardwareLevelFull()) {
+                if (fullHwLevel && !staticInfo.isHardwareLevelAtLeastFull()) {
                     Log.i(TAG, String.format(
                             "Skipping this test for camera %s, needs FULL hw level",
                             mCameraIds[i]));

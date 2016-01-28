@@ -1797,7 +1797,7 @@ public class CameraTestUtils extends Assert {
         int orientationTested = expectedExifData.jpegOrientation;
         // Legacy shim always doesn't rotate thumbnail size
         if ((orientationTested == 90 || orientationTested == 270) &&
-                staticInfo.isHardwareLevelLimitedOrBetter()) {
+                staticInfo.isHardwareLevelAtLeastLimited()) {
             int exifOrientation = exif.getAttributeInt(ExifInterface.TAG_ORIENTATION,
                     /*defaultValue*/-1);
             if (exifOrientation == ExifInterface.ORIENTATION_UNDEFINED) {

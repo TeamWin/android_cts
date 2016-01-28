@@ -758,7 +758,7 @@ public class CameraDeviceTest extends Camera2AndroidTestCase {
         try {
             mSession.prepare(output3Surface);
             // Legacy camera prepare always succeed
-            if (mStaticInfo.isHardwareLevelLimitedOrBetter()) {
+            if (mStaticInfo.isHardwareLevelAtLeastLimited()) {
                 fail("Preparing surface not part of session must throw IllegalArgumentException");
             }
         } catch (IllegalArgumentException e) {
@@ -782,7 +782,7 @@ public class CameraDeviceTest extends Camera2AndroidTestCase {
         try {
             mSession.prepare(output1Surface);
             // Legacy camera prepare always succeed
-            if (mStaticInfo.isHardwareLevelLimitedOrBetter()) {
+            if (mStaticInfo.isHardwareLevelAtLeastLimited()) {
                 fail("Preparing already-used surface must throw IllegalArgumentException");
             }
         } catch (IllegalArgumentException e) {
@@ -803,7 +803,7 @@ public class CameraDeviceTest extends Camera2AndroidTestCase {
         try {
             mSession.prepare(output1Surface);
             // Legacy camera prepare always succeed
-            if (mStaticInfo.isHardwareLevelLimitedOrBetter()) {
+            if (mStaticInfo.isHardwareLevelAtLeastLimited()) {
                 fail("Preparing surface used in previous session must throw " +
                         "IllegalArgumentException");
             }
@@ -824,7 +824,7 @@ public class CameraDeviceTest extends Camera2AndroidTestCase {
         try {
             mSession.prepare(output3Surface);
             // Legacy camera prepare always succeed
-            if (mStaticInfo.isHardwareLevelLimitedOrBetter()) {
+            if (mStaticInfo.isHardwareLevelAtLeastLimited()) {
                 fail("Preparing already-used surface must throw IllegalArgumentException");
             }
         } catch (IllegalArgumentException e) {
@@ -849,7 +849,7 @@ public class CameraDeviceTest extends Camera2AndroidTestCase {
         try {
             mSession.prepare(output1Surface);
             // Legacy camera prepare always succeed
-            if (mStaticInfo.isHardwareLevelLimitedOrBetter()) {
+            if (mStaticInfo.isHardwareLevelAtLeastLimited()) {
                 fail("Preparing surface used in previous session must throw " +
                         "IllegalArgumentException");
             }
@@ -1260,7 +1260,7 @@ public class CameraDeviceTest extends Camera2AndroidTestCase {
             }
 
             // Relax framerate constraints on legacy mode
-            if (mStaticInfo.isHardwareLevelLimitedOrBetter()) {
+            if (mStaticInfo.isHardwareLevelAtLeastLimited()) {
                 // Need give fixed frame rate for video recording template.
                 if (template == CameraDevice.TEMPLATE_RECORD) {
                     if (maxFps != minFps) {

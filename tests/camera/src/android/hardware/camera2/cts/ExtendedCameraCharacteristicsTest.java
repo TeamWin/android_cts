@@ -77,6 +77,7 @@ public class ExtendedCameraCharacteristicsTest extends AndroidTestCase {
     private static final int LEGACY = CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL_LEGACY;
     private static final int LIMITED = CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL_LIMITED;
     private static final int FULL = CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL_FULL;
+    private static final int LEVEL_3 = CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL_3;
     private static final int OPT = Integer.MAX_VALUE;  // For keys that are optional on all hardware levels.
 
     /*
@@ -216,7 +217,7 @@ public class ExtendedCameraCharacteristicsTest extends AndroidTestCase {
 
             // Handle FullHD special case first
             if (jpegSizesList.contains(FULLHD)) {
-                if (hwLevel == FULL || (hwLevel == LIMITED &&
+                if (hwLevel >= LEVEL_3 || hwLevel == FULL || (hwLevel == LIMITED &&
                         maxVideoSize.getWidth() >= FULLHD.getWidth() &&
                         maxVideoSize.getHeight() >= FULLHD.getHeight())) {
                     boolean yuvSupportFullHD = yuvSizesList.contains(FULLHD) ||
@@ -244,7 +245,7 @@ public class ExtendedCameraCharacteristicsTest extends AndroidTestCase {
                 jpegSizesList.removeAll(toBeRemoved);
             }
 
-            if (hwLevel == FULL || hwLevel == LIMITED) {
+            if (hwLevel >= LEVEL_3 || hwLevel == FULL || hwLevel == LIMITED) {
                 if (!yuvSizesList.containsAll(jpegSizesList)) {
                     for (Size s : jpegSizesList) {
                         if (!yuvSizesList.contains(s)) {
@@ -1419,7 +1420,7 @@ public class ExtendedCameraCharacteristicsTest extends AndroidTestCase {
         return remapHardwareLevel(left) - remapHardwareLevel(right);
     }
 
-    /** Remap HW levels worst<->best, 0 = worst, 2 = best */
+    /** Remap HW levels worst<->best, 0 = LEGACY, 1 = LIMITED, 2 = FULL, ..., N = LEVEL_N */
     private static int remapHardwareLevel(int level) {
         switch (level) {
             case OPT:
@@ -1429,7 +1430,11 @@ public class ExtendedCameraCharacteristicsTest extends AndroidTestCase {
             case LIMITED:
                 return 1; // second lowest
             case FULL:
-                return 2; // best
+                return 2; // good
+            default:
+                if (level >= LEVEL_3) {
+                    return level; // higher levels map directly
+                }
         }
 
         fail("Unknown HW level: " + level);
@@ -1444,6 +1449,10 @@ public class ExtendedCameraCharacteristicsTest extends AndroidTestCase {
                 return "LIMITED";
             case FULL:
                 return "FULL";
+            default:
+                if (level >= LEVEL_3) {
+                    return String.format("LEVEL_%d", level);
+                }
         }
 
         // unknown
