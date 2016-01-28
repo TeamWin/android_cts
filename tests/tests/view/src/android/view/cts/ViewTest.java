@@ -1435,6 +1435,8 @@ public class ViewTest extends ActivityInstrumentationTestCase2<ViewTestCtsActivi
 
     public void testPerformLongClickXY_WithListener() {
         OnLongClickListener listener = mock(OnLongClickListener.class);
+        when(listener.onLongClick(any(View.class))).thenReturn(true);
+
         MockViewParent parent = new MockViewParent(mActivity);
         MockView view = new MockView(mActivity);
 
