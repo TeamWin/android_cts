@@ -124,7 +124,7 @@ public class PermissionPolicyTest extends AndroidTestCase {
         List<PermissionInfo> permissions = new ArrayList<>();
         try (
                 InputStream in = getContext().getResources()
-                        .openRawResource(com.android.cts.permission2.R.raw.android_manifest)
+                        .openRawResource(android.permission2.cts.R.raw.android_manifest)
         ) {
             XmlPullParser parser = Xml.newPullParser();
             parser.setInput(in, null);
