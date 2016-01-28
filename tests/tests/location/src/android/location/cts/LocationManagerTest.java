@@ -897,8 +897,8 @@ public class LocationManagerTest extends BaseMockLocationTest {
         mManager.addNmeaListener(listener);
         mManager.removeNmeaListener(listener);
 
-        mManager.addNmeaListener(null);
-        mManager.removeNmeaListener(null);
+        mManager.addNmeaListener((NmeaListener) null);
+        mManager.removeNmeaListener((NmeaListener) null);
     }
 
     public void testIsProviderEnabled() {
