@@ -15,14 +15,14 @@
 -->
 
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-        package="com.android.cts.deviceadmin" >
+        package="com.android.cts.deviceadmin23" >
 
-    <uses-sdk android:minSdkVersion="23"/>
+    <uses-sdk android:minSdkVersion="23" android:targetSdkVersion="23"/>
 
     <application>
         <uses-library android:name="android.test.runner" />
         <receiver
-                android:name="com.android.cts.deviceadmin.DeviceAdminTest$AdminReceiver"
+                android:name="com.android.cts.deviceadmin.BaseDeviceAdminTest$AdminReceiver"
                 android:permission="android.permission.BIND_DEVICE_ADMIN"
                 >
             <meta-data android:name="android.app.device_admin"
@@ -45,6 +45,6 @@
     </application>
 
     <instrumentation android:name="android.support.test.runner.AndroidJUnitRunner"
-            android:targetPackage="com.android.cts.deviceadmin"
+            android:targetPackage="com.android.cts.deviceadmin23"
             android:label="Device Admin CTS tests"/>
 </manifest>

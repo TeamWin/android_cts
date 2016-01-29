@@ -15,19 +15,38 @@
  */
 package com.android.cts.deviceadmin;
 
-import android.app.admin.DeviceAdminReceiver;
 import android.app.admin.DevicePolicyManager;
-import android.content.ComponentName;
-import android.test.AndroidTestCase;
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
+import android.os.Build;
 import android.test.MoreAsserts;
 
-public class DeviceAdminTest extends AndroidTestCase {
-    public static class AdminReceiver extends DeviceAdminReceiver {
+public class DeviceAdminTest extends BaseDeviceAdminTest {
+
+    /**
+     * @return the target API level.  Note we don't get it from the package manager information
+     * but we just parse the last two digits of the package name.  This is to catch a potential
+     * issue where we forget to change the target API level in the manifest.  (Conversely,
+     * if we forget to change the package name, we'll catch that in the caller side.)
+     *
+     * And we check the target sdk level in {@link #testTargetApiLevel}.
+     */
+    private int getTargetApiLevel() {
+        final String packageName = getContext().getPackageName();
+        return Integer.parseInt(packageName.substring(packageName.length() - 2));
     }
 
-    public static final String ADMIN_PACKAGE = "com.android.cts.deviceadmin";
-    public static final ComponentName ADMIN_COMPONENT = new ComponentName(ADMIN_PACKAGE,
-            AdminReceiver.class.getName());
+    public void testTargetApiLevel() throws Exception {
+        final PackageManager pm = mContext.getPackageManager();
+
+        final PackageInfo pi = pm.getPackageInfo(mContext.getPackageName(), /* flags =*/ 0);
+
+        assertEquals(getTargetApiLevel(), pi.applicationInfo.targetSdkVersion);
+    }
+
+    private boolean shouldResetPasswordThrow() {
+        return getTargetApiLevel() > Build.VERSION_CODES.M;
+    }
 
     public void testSetPassword_success() {
         final DevicePolicyManager dpm = getContext().getSystemService(DevicePolicyManager.class);
@@ -40,7 +59,13 @@ public class DeviceAdminTest extends AndroidTestCase {
 
         try {
             assertFalse(dpm.resetPassword("1234", /* flags= */ 0));
+            if (shouldResetPasswordThrow()) {
+                fail("Didn't throw");
+            }
         } catch (SecurityException e) {
+            if (!shouldResetPasswordThrow()) {
+                fail("Shouldn't throw");
+            }
             MoreAsserts.assertContainsRegex("Admin cannot change current password", e.getMessage());
         }
     }
@@ -56,7 +81,13 @@ public class DeviceAdminTest extends AndroidTestCase {
 
         try {
             assertFalse(dpm.resetPassword("", /* flags= */ 0));
+            if (shouldResetPasswordThrow()) {
+                fail("Didn't throw");
+            }
         } catch (SecurityException e) {
+            if (!shouldResetPasswordThrow()) {
+                fail("Shouldn't throw");
+            }
             MoreAsserts.assertContainsRegex("Cannot call with null password", e.getMessage());
         }
     }

@@ -16,17 +16,27 @@
 package com.android.cts.deviceadmin;
 
 import android.app.admin.DevicePolicyManager;
+import android.content.ComponentName;
+import android.test.AndroidTestCase;
 
 /**
- * Remove myself as DO.
+ * Remove {@link DeviceAdminReceiverWithNoProtection} as active admin.
  */
-public class ClearDeviceOwnerTest extends BaseDeviceAdminTest {
+public class ClearDeviceAdminWithNoProtectionTest extends AndroidTestCase {
 
     public void testRemoveActiveAdmin() throws Exception {
 
+        final ComponentName cn = new ComponentName(getContext(),
+                DeviceAdminReceiverWithNoProtection.class);
+
         final DevicePolicyManager dpm = getContext().getSystemService(DevicePolicyManager.class);
 
-        dpm.clearDeviceOwnerApp(mPackageName);
-        assertFalse("Still device owner", dpm.isDeviceOwnerApp(mPackageName));
+        if (dpm.isAdminActive(cn)) {
+            dpm.removeActiveAdmin(cn);
+            for (int i = 0; i < 1000 && dpm.isAdminActive(cn); i++) {
+                Thread.sleep(10);
+            }
+        }
+        assertFalse("Still active admin", dpm.isAdminActive(cn));
     }
 }

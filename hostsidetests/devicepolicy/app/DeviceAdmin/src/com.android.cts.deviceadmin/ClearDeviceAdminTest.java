@@ -21,18 +21,18 @@ import android.test.AndroidTestCase;
 /**
  * Remove myself as active admin.
  */
-public class ClearDeviceAdminTest extends AndroidTestCase {
+public class ClearDeviceAdminTest extends BaseDeviceAdminTest {
 
     public void testRemoveActiveAdmin() throws Exception {
 
         final DevicePolicyManager dpm = getContext().getSystemService(DevicePolicyManager.class);
 
-        if (dpm.isAdminActive(DeviceAdminTest.ADMIN_COMPONENT)) {
-            dpm.removeActiveAdmin(DeviceAdminTest.ADMIN_COMPONENT);
-            for (int i = 0; i < 1000 && dpm.isAdminActive(DeviceAdminTest.ADMIN_COMPONENT); i++) {
-                Thread.sleep(100);
+        if (dpm.isAdminActive(mAdminComponent)) {
+            dpm.removeActiveAdmin(mAdminComponent);
+            for (int i = 0; i < 1000 && dpm.isAdminActive(mAdminComponent); i++) {
+                Thread.sleep(10);
             }
         }
-        assertFalse("Still active admin", dpm.isAdminActive(DeviceAdminTest.ADMIN_COMPONENT));
+        assertFalse("Still active admin", dpm.isAdminActive(mAdminComponent));
     }
 }
