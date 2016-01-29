@@ -77,11 +77,8 @@ public class ActivityManagerReplaceWindowTests extends ActivityManagerTestBase {
         CLog.logAndDisplay(INFO, "==========After Docking========");
         final String newToken = getFocusedWindowToken(windowName, false);
 
-        if (relaunch) {
-            Assert.assertFalse("Window not replaced after relaunch.", oldToken.equals(newToken));
-        } else {
-            Assert.assertEquals("Window replaced without relaunch.", oldToken, newToken);
-        }
+        // For both relaunch and not relaunch case, we'd like the window to be kept.
+        Assert.assertEquals("Window replaced while docking.", oldToken, newToken);
     }
 
     private String getFocusedWindowToken(String windowName, boolean visibleOnly)
