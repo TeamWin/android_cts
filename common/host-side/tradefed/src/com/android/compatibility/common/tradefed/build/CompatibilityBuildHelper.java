@@ -130,8 +130,11 @@ public class CompatibilityBuildHelper {
      * @throws FileNotFoundException if the directory does not exist
      */
     public File getRootDir() throws FileNotFoundException {
-        File dir = ((IFolderBuildInfo) mBuildInfo).getRootDir();
-        if (!dir.exists()) {
+        File dir = null;
+        if (mBuildInfo instanceof IFolderBuildInfo) {
+            dir = ((IFolderBuildInfo) mBuildInfo).getRootDir();
+        }
+        if (dir == null || !dir.exists()) {
             dir = new File(mBuildInfo.getBuildAttributes().get(ROOT_DIR));
             if (!dir.exists()) {
                 dir = new File(mBuildInfo.getBuildAttributes().get(ROOT_DIR2));
