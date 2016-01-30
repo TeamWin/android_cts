@@ -1597,14 +1597,16 @@ public class CameraDeviceTest extends Camera2AndroidTestCase {
                     CaptureRequest.NOISE_REDUCTION_MODE_ZERO_SHUTTER_LAG);
         } else if (template == CameraDevice.TEMPLATE_PREVIEW ||
                 template == CameraDevice.TEMPLATE_RECORD){
-            List<Integer> availableEdgeModes =
-                    Arrays.asList(toObject(mStaticInfo.getAvailableEdgeModesChecked()));
-            if (availableEdgeModes.contains(CaptureRequest.EDGE_MODE_FAST)) {
-                mCollector.expectKeyValueEquals(request, EDGE_MODE,
-                        CaptureRequest.EDGE_MODE_FAST);
-            } else {
-                mCollector.expectKeyValueEquals(request, EDGE_MODE,
-                        CaptureRequest.EDGE_MODE_OFF);
+            if (mStaticInfo.areKeysAvailable(EDGE_MODE)) {
+                List<Integer> availableEdgeModes =
+                        Arrays.asList(toObject(mStaticInfo.getAvailableEdgeModesChecked()));
+                if (availableEdgeModes.contains(CaptureRequest.EDGE_MODE_FAST)) {
+                    mCollector.expectKeyValueEquals(request, EDGE_MODE,
+                            CaptureRequest.EDGE_MODE_FAST);
+                } else {
+                    mCollector.expectKeyValueEquals(request, EDGE_MODE,
+                            CaptureRequest.EDGE_MODE_OFF);
+                }
             }
 
             if (mStaticInfo.areKeysAvailable(NOISE_REDUCTION_MODE)) {
