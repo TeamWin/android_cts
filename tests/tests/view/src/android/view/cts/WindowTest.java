@@ -1046,7 +1046,7 @@ public class WindowTest extends ActivityInstrumentationTestCase2<WindowCtsActivi
         }
 
         @Override
-        public void onMultiWindowModeChanged() {
+        public void onMultiWindowChanged() {
         }
 
         @Override

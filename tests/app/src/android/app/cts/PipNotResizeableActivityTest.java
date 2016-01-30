@@ -42,7 +42,7 @@ public class PipNotResizeableActivityTest
                 public void run() {
                     boolean pipSupportDisabled = false;
                     try {
-                        mActivity.enterPictureInPictureMode();
+                        mActivity.enterPictureInPicture();
                     } catch (IllegalStateException e) {
                         // Pip not supported
                         pipSupportDisabled = true;
@@ -51,8 +51,8 @@ public class PipNotResizeableActivityTest
                         pipSupportDisabled = true;
                     }
                     assertTrue(pipSupportDisabled);
-                    assertFalse(mActivity.inMultiWindowMode());
-                    assertFalse(mActivity.inPictureInPictureMode());
+                    assertFalse(mActivity.inMultiWindow());
+                    assertFalse(mActivity.inPictureInPicture());
                 }
             });
             mInstrumentation.waitForIdleSync();
