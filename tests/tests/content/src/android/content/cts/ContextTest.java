@@ -27,11 +27,14 @@ import android.content.res.Resources.NotFoundException;
 import android.content.res.Resources.Theme;
 import android.content.res.TypedArray;
 import android.content.res.XmlResourceParser;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
 import android.test.AndroidTestCase;
 import android.util.AttributeSet;
 import android.util.Xml;
 import android.view.WindowManager;
 
+import java.io.File;
 import java.io.IOException;
 
 public class ContextTest extends AndroidTestCase {
@@ -79,6 +82,108 @@ public class ContextTest extends AndroidTestCase {
             fail("Wrong resource id should not be accepted.");
         } catch (NotFoundException e) {
         }
+    }
+
+    /**
+     * Ensure that default and device encrypted storage areas are stored
+     * separately on disk. All devices must support these storage areas, even if
+     * they don't have file-based encryption, so that apps can go through a
+     * backup/restore cycle between FBE and non-FBE devices.
+     */
+    public void testCreateDeviceEncryptedStorageContext() throws Exception {
+        final Context deviceContext = mContext.createDeviceEncryptedStorageContext();
+
+        assertFalse(mContext.isDeviceEncryptedStorage());
+        assertTrue(deviceContext.isDeviceEncryptedStorage());
+
+        final File defaultFile = new File(mContext.getFilesDir(), "test");
+        final File deviceFile = new File(deviceContext.getFilesDir(), "test");
+
+        assertFalse(deviceFile.equals(defaultFile));
+
+        deviceFile.createNewFile();
+
+        // Make sure storage areas are mutually exclusive
+        assertFalse(defaultFile.exists());
+        assertTrue(deviceFile.exists());
+    }
+
+    public void testMigrateSharedPreferencesFrom() throws Exception {
+        final Context deviceContext = mContext.createDeviceEncryptedStorageContext();
+
+        mContext.getSharedPreferences("test", Context.MODE_PRIVATE).edit().putInt("answer", 42)
+                .commit();
+
+        // Verify that we can migrate
+        assertTrue(deviceContext.migrateSharedPreferencesFrom(mContext, "test"));
+        assertEquals(0, mContext.getSharedPreferences("test", Context.MODE_PRIVATE)
+                .getInt("answer", 0));
+        assertEquals(42, deviceContext.getSharedPreferences("test", Context.MODE_PRIVATE)
+                .getInt("answer", 0));
+
+        // Trying to migrate again when already done is a no-op
+        assertTrue(deviceContext.migrateSharedPreferencesFrom(mContext, "test"));
+        assertEquals(0, mContext.getSharedPreferences("test", Context.MODE_PRIVATE)
+                .getInt("answer", 0));
+        assertEquals(42, deviceContext.getSharedPreferences("test", Context.MODE_PRIVATE)
+                .getInt("answer", 0));
+
+        // Add a new value and verify that we can migrate back
+        deviceContext.getSharedPreferences("test", Context.MODE_PRIVATE).edit()
+                .putInt("question", 24).commit();
+
+        assertTrue(mContext.migrateSharedPreferencesFrom(deviceContext, "test"));
+        assertEquals(42, mContext.getSharedPreferences("test", Context.MODE_PRIVATE)
+                .getInt("answer", 0));
+        assertEquals(24, mContext.getSharedPreferences("test", Context.MODE_PRIVATE)
+                .getInt("question", 0));
+        assertEquals(0, deviceContext.getSharedPreferences("test", Context.MODE_PRIVATE)
+                .getInt("answer", 0));
+        assertEquals(0, deviceContext.getSharedPreferences("test", Context.MODE_PRIVATE)
+                .getInt("question", 0));
+    }
+
+    public void testMigrateDatabaseFrom() throws Exception {
+        final Context deviceContext = mContext.createDeviceEncryptedStorageContext();
+
+        SQLiteDatabase db = mContext.openOrCreateDatabase("test.db",
+                Context.MODE_PRIVATE | Context.MODE_ENABLE_WRITE_AHEAD_LOGGING, null);
+        db.execSQL("CREATE TABLE list(item TEXT);");
+        db.execSQL("INSERT INTO list VALUES ('cat')");
+        db.execSQL("INSERT INTO list VALUES ('dog')");
+        db.close();
+
+        // Verify that we can migrate
+        assertTrue(deviceContext.migrateDatabaseFrom(mContext, "test.db"));
+        db = deviceContext.openOrCreateDatabase("test.db",
+                Context.MODE_PRIVATE | Context.MODE_ENABLE_WRITE_AHEAD_LOGGING, null);
+        Cursor c = db.query("list", null, null, null, null, null, null);
+        assertEquals(2, c.getCount());
+        assertTrue(c.moveToFirst());
+        assertEquals("cat", c.getString(0));
+        assertTrue(c.moveToNext());
+        assertEquals("dog", c.getString(0));
+        c.close();
+        db.execSQL("INSERT INTO list VALUES ('mouse')");
+        db.close();
+
+        // Trying to migrate again when already done is a no-op
+        assertTrue(deviceContext.migrateDatabaseFrom(mContext, "test.db"));
+
+        // Verify that we can migrate back
+        assertTrue(mContext.migrateDatabaseFrom(deviceContext, "test.db"));
+        db = mContext.openOrCreateDatabase("test.db",
+                Context.MODE_PRIVATE | Context.MODE_ENABLE_WRITE_AHEAD_LOGGING, null);
+        c = db.query("list", null, null, null, null, null, null);
+        assertEquals(3, c.getCount());
+        assertTrue(c.moveToFirst());
+        assertEquals("cat", c.getString(0));
+        assertTrue(c.moveToNext());
+        assertEquals("dog", c.getString(0));
+        assertTrue(c.moveToNext());
+        assertEquals("mouse", c.getString(0));
+        c.close();
+        db.close();
     }
 
     public void testAccessTheme() {
