@@ -184,6 +184,7 @@ public class AccessibilityNodeInfoTest extends AndroidTestCase {
         info.setEnabled(true);
         info.setFocusable(true);
         info.setFocused(true);
+        info.setImportantForAccessibility(true);
         info.setLongClickable(true);
         info.setContextClickable(true);
         info.setPassword(true);
@@ -235,6 +236,9 @@ public class AccessibilityNodeInfoTest extends AndroidTestCase {
                 receivedInfo.isFocusable());
         assertSame("focused has incorrect value", expectedInfo.isFocused(),
                 receivedInfo.isFocused());
+        assertSame("importantForAccessibility has incorrect value",
+                expectedInfo.isImportantForAccessibility(),
+                receivedInfo.isImportantForAccessibility());
         assertSame("longClickable has incorrect value", expectedInfo.isLongClickable(),
                 receivedInfo.isLongClickable());
         assertSame("contextClickable has incorrect value", expectedInfo.isContextClickable(),
@@ -286,6 +290,8 @@ public class AccessibilityNodeInfoTest extends AndroidTestCase {
         assertFalse("enabled not properly recycled", info.isEnabled());
         assertFalse("focusable not properly recycled", info.isFocusable());
         assertFalse("focused not properly recycled", info.isFocused());
+        assertFalse("importantForAccessibility not properly recycled",
+                info.isImportantForAccessibility());
         assertFalse("longClickable not properly recycled", info.isLongClickable());
         assertFalse("contextClickable not properly recycled", info.isContextClickable());
         assertFalse("password not properly recycled", info.isPassword());
