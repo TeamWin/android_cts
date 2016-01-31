@@ -474,9 +474,9 @@ public class DownloadManagerTest extends AndroidTestCase {
     }
 
     private boolean hasInternetConnection() {
-        // TODO: expand this to include devices with ethernet
         final PackageManager pm = getContext().getPackageManager();
         return pm.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)
-                || pm.hasSystemFeature(PackageManager.FEATURE_WIFI);
+                || pm.hasSystemFeature(PackageManager.FEATURE_WIFI)
+                || pm.hasSystemFeature(PackageManager.FEATURE_ETHERNET);
     }
 }
