@@ -23,9 +23,12 @@ import android.media.MediaCodec;
 import android.media.MediaCodecInfo;
 import android.media.MediaCodecList;
 import android.media.MediaFormat;
+import android.media.MediaMuxer;
 import android.test.AndroidTestCase;
 import android.util.Log;
 
+import java.io.File;
+import java.io.InputStream;
 import java.nio.BufferOverflowException;
 import java.nio.ByteBuffer;
 import java.util.LinkedList;
@@ -41,6 +44,20 @@ public class EncoderTest extends AndroidTestCase {
 
     private static final int kNumInputBytes = 512 * 1024;
     private static final long kTimeoutUs = 100;
+
+    // not all combinations are valid
+    private static final int MODE_SILENT = 0;
+    private static final int MODE_RANDOM = 1;
+    private static final int MODE_RESOURCE = 2;
+    private static final int MODE_QUIET = 4;
+    private static final int MODE_SILENTLEAD = 8;
+
+    /*
+     * Set this to true to save the encoding results to /data/local/tmp
+     * You will need to make /data/local/tmp writeable, run "setenforce 0",
+     * and remove files left from a previous run.
+     */
+    private static boolean sSaveResults = false;
 
     @Override
     public void setContext(Context context) {
@@ -172,13 +189,26 @@ public class EncoderTest extends AndroidTestCase {
 
     private int queueInputBuffer(
             MediaCodec codec, ByteBuffer[] inputBuffers, int index,
-            boolean random, boolean zeroLead) {
+            InputStream istream, int mode) {
         ByteBuffer buffer = inputBuffers[index];
         buffer.rewind();
         int size = buffer.limit();
 
-        if (random) {
-            if (zeroLead) {
+        if ((mode & MODE_RESOURCE) != 0 && istream != null) {
+            while (buffer.hasRemaining()) {
+                try {
+                    int next = istream.read();
+                    if (next < 0) {
+                        break;
+                    }
+                    buffer.put((byte) next);
+                } catch (Exception ex) {
+                    Log.i(TAG, "caught exception writing: " + ex);
+                    break;
+                }
+            }
+        } else if ((mode & MODE_RANDOM) != 0) {
+            if ((mode & MODE_SILENTLEAD) != 0) {
                 buffer.putInt(0);
                 buffer.putInt(0);
                 buffer.putInt(0);
@@ -186,6 +216,7 @@ public class EncoderTest extends AndroidTestCase {
             }
             while (true) {
                 try {
+                    int next = mRandom.nextInt();
                     buffer.putInt(mRandom.nextInt());
                 } catch (BufferOverflowException ex) {
                     break;
@@ -194,6 +225,15 @@ public class EncoderTest extends AndroidTestCase {
         } else {
             byte[] zeroes = new byte[size];
             buffer.put(zeroes);
+        }
+
+        if ((mode & MODE_QUIET) != 0) {
+            int n = buffer.limit();
+            for (int i = 0; i < n; i += 2) {
+                short s = buffer.getShort(i);
+                s /= 8;
+                buffer.putShort(i, s);
+            }
         }
 
         codec.queueInputBuffer(index, 0 /* offset */, size, 0 /* timeUs */, 0);
@@ -224,17 +264,47 @@ public class EncoderTest extends AndroidTestCase {
     private void testEncoder(String componentName, MediaFormat format) {
         Log.i(TAG, "testEncoder " + componentName + "/" + format);
         // test with all zeroes/silence
-        testEncoder(componentName, format, false, 0, false);
+        testEncoder(componentName, format, 0, -1, MODE_SILENT);
+
+        // test with pcm input file
+        testEncoder(componentName, format, 0, R.raw.okgoogle123_good, MODE_RESOURCE);
+        testEncoder(componentName, format, 0, R.raw.okgoogle123_good, MODE_RESOURCE | MODE_QUIET);
 
         // test with random data, with and without a few leading zeroes
         for (int i = 0; i < mBadSeeds.length; i++) {
-            testEncoder(componentName, format, true, mBadSeeds[i], false);
-            testEncoder(componentName, format, true, mBadSeeds[i], true);
+            testEncoder(componentName, format, mBadSeeds[i], -1, MODE_RANDOM);
+            testEncoder(componentName, format, mBadSeeds[i], -1, MODE_RANDOM | MODE_SILENTLEAD);
         }
     }
 
-    private void testEncoder(String componentName, MediaFormat format, boolean random,
-            long startSeed, boolean zeroLead) {
+    private void testEncoder(String componentName, MediaFormat format,
+            long startSeed, int resid, int mode) {
+
+        int sampleRate = format.getInteger(MediaFormat.KEY_SAMPLE_RATE);
+        int channelCount = format.getInteger(MediaFormat.KEY_CHANNEL_COUNT);
+        int inBitrate = sampleRate * channelCount * 16;  // bit/sec
+        int outBitrate = format.getInteger(MediaFormat.KEY_BIT_RATE);
+
+        MediaMuxer muxer = null;
+        int muxidx = -1;
+        if (sSaveResults) {
+            try {
+                String outFile = "/data/local/tmp/transcoded-" + componentName + "-" + outBitrate +
+                        "-" + mode + "-" + startSeed + ".mp4";
+                new File("outFile").delete();
+                muxer = new MediaMuxer(outFile, MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4);
+                muxidx = muxer.addTrack(format);
+                muxer.start();
+            } catch (Exception e) {
+                Log.i(TAG, "couldn't create muxer: " + e);
+            }
+        }
+
+        InputStream istream = null;
+        if ((mode & MODE_RESOURCE) != 0) {
+            istream = mContext.getResources().openRawResource(resid);
+        }
+
         mRandom.setSeed(startSeed);
         MediaCodec codec;
         try {
@@ -283,7 +353,7 @@ public class EncoderTest extends AndroidTestCase {
                         doneSubmittingInput = true;
                     } else {
                         int size = queueInputBuffer(
-                                codec, codecInputBuffers, index, random, zeroLead);
+                                codec, codecInputBuffers, index, istream, mode);
 
                         numBytesSubmitted += size;
 
@@ -302,6 +372,10 @@ public class EncoderTest extends AndroidTestCase {
             } else if (index == MediaCodec.INFO_OUTPUT_BUFFERS_CHANGED) {
                 codecOutputBuffers = codec.getOutputBuffers();
             } else {
+                if (muxer != null) {
+                    muxer.writeSampleData(muxidx, codec.getOutputBuffer(index), info);
+                }
+
                 dequeueOutputBuffer(codec, codecOutputBuffers, index, info);
 
                 numBytesDequeued += info.size;
@@ -324,11 +398,6 @@ public class EncoderTest extends AndroidTestCase {
                     + "dequeued " + numBytesDequeued + " bytes.");
         }
 
-        int sampleRate = format.getInteger(MediaFormat.KEY_SAMPLE_RATE);
-        int channelCount = format.getInteger(MediaFormat.KEY_CHANNEL_COUNT);
-        int inBitrate = sampleRate * channelCount * 16;  // bit/sec
-        int outBitrate = format.getInteger(MediaFormat.KEY_BIT_RATE);
-
         float desiredRatio = (float)outBitrate / (float)inBitrate;
         float actualRatio = (float)numBytesDequeued / (float)numBytesSubmitted;
 
@@ -339,6 +408,11 @@ public class EncoderTest extends AndroidTestCase {
 
         codec.release();
         codec = null;
+        if (muxer != null) {
+            muxer.stop();
+            muxer.release();
+            muxer = null;
+        }
     }
 }
 
