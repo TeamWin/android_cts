@@ -16,15 +16,22 @@
 
 package android.text.cts;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+import org.hamcrest.Description;
+import org.hamcrest.BaseMatcher;
+
 import android.graphics.Typeface;
 import android.test.AndroidTestCase;
 import android.text.Html;
+import android.text.Layout;
 import android.text.Spannable;
 import android.text.SpannableString;
 import android.text.Spanned;
 import android.text.Html.ImageGetter;
 import android.text.Html.TagHandler;
+import android.text.style.AlignmentSpan;
 import android.text.style.BackgroundColorSpan;
+import android.text.style.BulletSpan;
 import android.text.style.ForegroundColorSpan;
 import android.text.style.QuoteSpan;
 import android.text.style.StrikethroughSpan;
@@ -113,18 +120,70 @@ public class HtmlTest extends AndroidTestCase {
 
     public void testParagraphs() throws Exception {
         SpannableString s = new SpannableString("Hello world");
-        assertEquals("<p dir=\"ltr\">Hello world</p>\n", Html.toHtml(s));
+        assertThat(Html.toHtml(s), matchesIgnoringTrailingWhitespace(
+                "<p dir=\"ltr\">Hello world</p>"));
 
         s = new SpannableString("Hello world\nor something");
-        assertEquals("<p dir=\"ltr\">Hello world<br>\nor something</p>\n", Html.toHtml(s));
+        assertThat(Html.toHtml(s), matchesIgnoringTrailingWhitespace(
+                "<p dir=\"ltr\">Hello world<br>\nor something</p>"));
+        assertThat(Html.toHtml(s, Html.TO_HTML_PARAGRAPH_LINES_INDIVIDUAL),
+                matchesIgnoringTrailingWhitespace(
+                "<p dir=\"ltr\" style=\"margin-top:0; margin-bottom:0;\">Hello world</p>\n"
+                + "<p dir=\"ltr\" style=\"margin-top:0; margin-bottom:0;\">or something</p>"));
 
         s = new SpannableString("Hello world\n\nor something");
-        assertEquals("<p dir=\"ltr\">Hello world</p>\n<p dir=\"ltr\">or something</p>\n",
-                Html.toHtml(s));
+        assertThat(Html.toHtml(s), matchesIgnoringTrailingWhitespace(
+                "<p dir=\"ltr\">Hello world</p>\n<p dir=\"ltr\">or something</p>"));
 
         s = new SpannableString("Hello world\n\n\nor something");
-        assertEquals("<p dir=\"ltr\">Hello world<br></p>\n<p dir=\"ltr\">or something</p>\n",
-                Html.toHtml(s));
+        assertThat(Html.toHtml(s), matchesIgnoringTrailingWhitespace(
+                "<p dir=\"ltr\">Hello world<br></p>\n<p dir=\"ltr\">or something</p>"));
+        assertThat(Html.toHtml(s, Html.TO_HTML_PARAGRAPH_LINES_INDIVIDUAL),
+                matchesIgnoringTrailingWhitespace(
+                "<p dir=\"ltr\" style=\"margin-top:0; margin-bottom:0;\">Hello world</p>\n"
+                + "<br>\n"
+                + "<br>\n"
+                + "<p dir=\"ltr\" style=\"margin-top:0; margin-bottom:0;\">or something</p>"));
+    }
+
+    public void testParagraphStyles() throws Exception {
+        SpannableString s = new SpannableString("Hello world");
+        s.setSpan(new AlignmentSpan.Standard(Layout.Alignment.ALIGN_CENTER),
+                0, s.length(), Spanned.SPAN_PARAGRAPH);
+        assertThat(Html.toHtml(s, Html.TO_HTML_PARAGRAPH_LINES_INDIVIDUAL),
+                matchesIgnoringTrailingWhitespace(
+                "<p dir=\"ltr\" style=\"margin-top:0; margin-bottom:0; text-align:center;\">"
+                + "Hello world</p>"));
+
+        // Set another AlignmentSpan of a different alignment. Only the last one should be encoded.
+        s.setSpan(new AlignmentSpan.Standard(Layout.Alignment.ALIGN_OPPOSITE),
+                0, s.length(), Spanned.SPAN_PARAGRAPH);
+        assertThat(Html.toHtml(s, Html.TO_HTML_PARAGRAPH_LINES_INDIVIDUAL),
+                matchesIgnoringTrailingWhitespace(
+                "<p dir=\"ltr\" style=\"margin-top:0; margin-bottom:0; text-align:end;\">"
+                + "Hello world</p>"));
+
+        // Set another AlignmentSpan without SPAN_PARAGRAPH flag.
+        // This will be ignored and the previous alignment should be encoded.
+        s.setSpan(new AlignmentSpan.Standard(Layout.Alignment.ALIGN_NORMAL),
+                0, s.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        assertThat(Html.toHtml(s, Html.TO_HTML_PARAGRAPH_LINES_INDIVIDUAL),
+                matchesIgnoringTrailingWhitespace(
+                "<p dir=\"ltr\" style=\"margin-top:0; margin-bottom:0; text-align:end;\">"
+                + "Hello world</p>"));
+    }
+
+    public void testBulletSpan() throws Exception {
+        SpannableString s = new SpannableString("Bullet1\nBullet2\nNormal paragraph");
+        s.setSpan(new BulletSpan(), 0, 8, Spanned.SPAN_PARAGRAPH);
+        s.setSpan(new BulletSpan(), 8, 16, Spanned.SPAN_PARAGRAPH);
+        assertThat(Html.toHtml(s, Html.TO_HTML_PARAGRAPH_LINES_INDIVIDUAL),
+                matchesIgnoringTrailingWhitespace(
+                "<ul style=\"margin-top:0; margin-bottom:0;\">\n"
+                + "<li dir=\"ltr\">Bullet1</li>\n"
+                + "<li dir=\"ltr\">Bullet2</li>\n"
+                + "</ul>\n"
+                + "<p dir=\"ltr\" style=\"margin-top:0; margin-bottom:0;\">Normal paragraph</p>"));
     }
 
     public void testBlockquote() throws Exception {
@@ -133,24 +192,28 @@ public class HtmlTest extends AndroidTestCase {
         SpannableString s = new SpannableString("Hello world");
         int end = s.length();
         s.setSpan(new QuoteSpan(), start, end, Spannable.SPAN_PARAGRAPH);
-        assertEquals("<blockquote><p dir=\"ltr\">Hello world</p>\n</blockquote>\n", Html.toHtml(s));
+        assertThat(Html.toHtml(s), matchesIgnoringTrailingWhitespace(
+                "<blockquote><p dir=\"ltr\">Hello world</p>\n</blockquote>"));
 
         s = new SpannableString("Hello\n\nworld");
         end = 7;
         s.setSpan(new QuoteSpan(), start, end, Spannable.SPAN_PARAGRAPH);
-        assertEquals("<blockquote><p dir=\"ltr\">Hello</p>\n</blockquote>\n" +
-        		"<p dir=\"ltr\">world</p>\n", Html.toHtml(s));
+        assertThat(Html.toHtml(s), matchesIgnoringTrailingWhitespace(
+                "<blockquote><p dir=\"ltr\">Hello</p>\n</blockquote>\n<p dir=\"ltr\">world</p>"));
     }
 
     public void testEntities() throws Exception {
         SpannableString s = new SpannableString("Hello <&> world");
-        assertEquals("<p dir=\"ltr\">Hello &lt;&amp;&gt; world</p>\n", Html.toHtml(s));
+        assertThat(Html.toHtml(s), matchesIgnoringTrailingWhitespace(
+                "<p dir=\"ltr\">Hello &lt;&amp;&gt; world</p>"));
 
         s = new SpannableString("Hello \u03D5 world");
-        assertEquals("<p dir=\"ltr\">Hello &#981; world</p>\n", Html.toHtml(s));
+        assertThat(Html.toHtml(s), matchesIgnoringTrailingWhitespace(
+                "<p dir=\"ltr\">Hello &#981; world</p>"));
 
         s = new SpannableString("Hello  world");
-        assertEquals("<p dir=\"ltr\">Hello&nbsp; world</p>\n", Html.toHtml(s));
+        assertThat(Html.toHtml(s), matchesIgnoringTrailingWhitespace(
+                "<p dir=\"ltr\">Hello&nbsp; world</p>"));
     }
 
     public void testMarkup() throws Exception {
@@ -158,60 +221,62 @@ public class HtmlTest extends AndroidTestCase {
         SpannableString s = new SpannableString("Hello bold world");
         int end = s.length() - start;
         s.setSpan(new StyleSpan(Typeface.BOLD), start, end, SPAN_EXCLUSIVE_INCLUSIVE);
-        assertEquals("<p dir=\"ltr\">Hello <b>bold</b> world</p>\n", Html.toHtml(s));
+        assertThat(Html.toHtml(s), matchesIgnoringTrailingWhitespace(
+                "<p dir=\"ltr\">Hello <b>bold</b> world</p>"));
 
         s = new SpannableString("Hello italic world");
         end = s.length() - start;
         s.setSpan(new StyleSpan(Typeface.ITALIC), start, end, SPAN_EXCLUSIVE_INCLUSIVE);
-        assertEquals("<p dir=\"ltr\">Hello <i>italic</i> world</p>\n", Html.toHtml(s));
+        assertThat(Html.toHtml(s), matchesIgnoringTrailingWhitespace(
+                "<p dir=\"ltr\">Hello <i>italic</i> world</p>"));
 
         s = new SpannableString("Hello monospace world");
         end = s.length() - start;
         s.setSpan(new TypefaceSpan("monospace"), start, end, SPAN_EXCLUSIVE_INCLUSIVE);
-        assertEquals("<p dir=\"ltr\">Hello <tt>monospace</tt> world</p>\n", Html.toHtml(s));
+        assertThat(Html.toHtml(s), matchesIgnoringTrailingWhitespace(
+                "<p dir=\"ltr\">Hello <tt>monospace</tt> world</p>"));
 
         s = new SpannableString("Hello superscript world");
         end = s.length() - start;
         s.setSpan(new SuperscriptSpan(), start, end, SPAN_EXCLUSIVE_INCLUSIVE);
-        assertEquals("<p dir=\"ltr\">Hello <sup>superscript</sup> world</p>\n", Html.toHtml(s));
+        assertThat(Html.toHtml(s), matchesIgnoringTrailingWhitespace(
+                "<p dir=\"ltr\">Hello <sup>superscript</sup> world</p>"));
 
         s = new SpannableString("Hello subscript world");
         end = s.length() - start;
         s.setSpan(new SubscriptSpan(), start, end, SPAN_EXCLUSIVE_INCLUSIVE);
-        assertEquals("<p dir=\"ltr\">Hello <sub>subscript</sub> world</p>\n", Html.toHtml(s));
+        assertThat(Html.toHtml(s), matchesIgnoringTrailingWhitespace(
+                "<p dir=\"ltr\">Hello <sub>subscript</sub> world</p>"));
 
         s = new SpannableString("Hello underline world");
         end = s.length() - start;
         s.setSpan(new UnderlineSpan(), start, end, SPAN_EXCLUSIVE_INCLUSIVE);
-        assertEquals("<p dir=\"ltr\">Hello <u>underline</u> world</p>\n", Html.toHtml(s));
+        assertThat(Html.toHtml(s), matchesIgnoringTrailingWhitespace(
+                "<p dir=\"ltr\">Hello <u>underline</u> world</p>"));
 
         s = new SpannableString("Hello struck world");
         end = s.length() - start;
         s.setSpan(new StrikethroughSpan(), start, end, SPAN_EXCLUSIVE_INCLUSIVE);
-        assertEquals("<p dir=\"ltr\">Hello "
-                + "<span style=\"text-decoration:line-through;\">struck</span> world</p>\n",
-                Html.toHtml(s));
+        assertThat(Html.toHtml(s), matchesIgnoringTrailingWhitespace("<p dir=\"ltr\">Hello "
+                + "<span style=\"text-decoration:line-through;\">struck</span> world</p>"));
 
         s = new SpannableString("Hello linky world");
         end = s.length() - start;
         s.setSpan(new URLSpan("http://www.google.com"), start, end, SPAN_EXCLUSIVE_INCLUSIVE);
-        assertEquals("<p dir=\"ltr\">Hello "
-                + "<a href=\"http://www.google.com\">linky</a> world</p>\n",
-                Html.toHtml(s));
+        assertThat(Html.toHtml(s), matchesIgnoringTrailingWhitespace("<p dir=\"ltr\">Hello "
+                + "<a href=\"http://www.google.com\">linky</a> world</p>"));
 
         s = new SpannableString("Hello foreground world");
         end = s.length() - start;
         s.setSpan(new ForegroundColorSpan(0x00FF00), start, end, SPAN_EXCLUSIVE_INCLUSIVE);
-        assertEquals("<p dir=\"ltr\">Hello "
-                + "<span style=\"color:#00FF00;\">foreground</span> world</p>\n",
-                Html.toHtml(s));
+        assertThat(Html.toHtml(s), matchesIgnoringTrailingWhitespace("<p dir=\"ltr\">Hello "
+                + "<span style=\"color:#00FF00;\">foreground</span> world</p>"));
 
         s = new SpannableString("Hello background world");
         end = s.length() - start;
         s.setSpan(new BackgroundColorSpan(0x00FF00), start, end, SPAN_EXCLUSIVE_INCLUSIVE);
-        assertEquals("<p dir=\"ltr\">Hello "
-                + "<span style=\"background-color:#00FF00;\">background</span> world</p>\n",
-                Html.toHtml(s));
+        assertThat(Html.toHtml(s), matchesIgnoringTrailingWhitespace("<p dir=\"ltr\">Hello "
+                + "<span style=\"background-color:#00FF00;\">background</span> world</p>"));
     }
 
     public void testMarkupFromHtml() throws Exception {
@@ -233,22 +298,55 @@ public class HtmlTest extends AndroidTestCase {
 
     public void testImg() throws Exception {
         Spanned s = Html.fromHtml("yes<img src=\"http://example.com/foo.gif\">no");
-        assertEquals("<p dir=\"ltr\">yes<img src=\"http://example.com/foo.gif\">no</p>\n",
-                Html.toHtml(s));
+        assertThat(Html.toHtml(s), matchesIgnoringTrailingWhitespace(
+                "<p dir=\"ltr\">yes<img src=\"http://example.com/foo.gif\">no</p>"));
     }
 
     public void testUtf8() throws Exception {
         Spanned s = Html.fromHtml("<p>\u0124\u00eb\u0142\u0142o, world!</p>");
-        assertEquals("<p dir=\"ltr\">&#292;&#235;&#322;&#322;o, world!</p>\n", Html.toHtml(s));
+        assertThat(Html.toHtml(s), matchesIgnoringTrailingWhitespace(
+                "<p dir=\"ltr\">&#292;&#235;&#322;&#322;o, world!</p>"));
     }
 
     public void testSurrogates() throws Exception {
         Spanned s = Html.fromHtml("\ud83d\udc31");
-        assertEquals("<p dir=\"ltr\">&#128049;</p>\n", Html.toHtml(s));
+        assertThat(Html.toHtml(s), matchesIgnoringTrailingWhitespace(
+                "<p dir=\"ltr\">&#128049;</p>"));
     }
 
     public void testBadSurrogates() throws Exception {
         Spanned s = Html.fromHtml("\udc31\ud83d");
-        assertEquals("<p dir=\"ltr\"></p>\n", Html.toHtml(s));
+        assertThat(Html.toHtml(s), matchesIgnoringTrailingWhitespace("<p dir=\"ltr\"></p>"));
+    }
+
+    private static StringIgnoringTrailingWhitespaceMatcher matchesIgnoringTrailingWhitespace(
+            String expected) {
+        return new StringIgnoringTrailingWhitespaceMatcher(expected);
+    }
+
+    private static final class StringIgnoringTrailingWhitespaceMatcher extends
+            BaseMatcher<String> {
+        private final String mStrippedString;
+
+        public StringIgnoringTrailingWhitespaceMatcher(String string) {
+            mStrippedString = stripTrailingWhitespace(string);
+        }
+
+        @Override
+        public boolean matches(Object item) {
+            final String string = (String) item;
+            return mStrippedString.equals(stripTrailingWhitespace(string));
+        }
+
+        private String stripTrailingWhitespace(String text) {
+            return text.replaceFirst("\\s+$", "");
+        }
+
+        @Override
+        public void describeTo(Description description) {
+            description.appendText("is equal to ")
+                    .appendText(mStrippedString)
+                    .appendText(" ignoring tailing whitespaces");
+        }
     }
 }
