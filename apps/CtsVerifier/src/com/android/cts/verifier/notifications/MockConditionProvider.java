@@ -144,11 +144,6 @@ public class MockConditionProvider extends ConditionProviderService {
     }
 
     @Override
-    public void onRequestConditions(int relevance) {
-
-    }
-
-    @Override
     public void onSubscribe(Uri conditionId) {
         Log.d(TAG, "subscribed to " + conditionId);
         mSubscriptions.add(conditionId);
