@@ -187,7 +187,7 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
                 "settings put system accelerometer_rotation " + rotation);
     }
 
-    private String runCommandAndPrintOutput(String command) throws DeviceNotAvailableException {
+    protected String runCommandAndPrintOutput(String command) throws DeviceNotAvailableException {
         final String output = mDevice.executeShellCommand(command);
         CLog.logAndDisplay(LogLevel.INFO, command);
         CLog.logAndDisplay(LogLevel.INFO, output);

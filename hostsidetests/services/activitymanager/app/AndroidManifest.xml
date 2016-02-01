@@ -24,6 +24,11 @@
                 android:resizeable="true"
                 android:exported="true"
         />
+        <activity android:name=".DockedActivity"
+                android:resizeable="true"
+                android:exported="true"
+                android:taskAffinity="nobody.but.DockedActivity"
+        />
         <activity android:name=".NoRelaunchActivity"
                 android:resizeable="true"
                 android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout"

@@ -16,17 +16,23 @@
 
 package android.server.cts;
 
-import com.android.tradefed.device.DeviceNotAvailableException;
+import com.android.tradefed.log.LogUtil.CLog;
 
-import java.lang.Exception;
-import java.lang.String;
+import java.awt.Rectangle;
+
+import static com.android.ddmlib.Log.LogLevel.*;
 
 public class ActivityManagerDockedStackTests extends ActivityManagerTestBase {
 
     private static final String TEST_ACTIVITY_NAME = "TestActivity";
+    private static final String DOCKED_ACTIVITY_NAME = "DockedActivity";
     private static final String LAUNCH_TO_SIDE_ACTIVITY_NAME = "LaunchToSideActivity";
 
     private static final String AM_MOVE_TASK = "am stack movetask ";
+    private static final String AM_RESIZE_DOCKED_STACK = "am stack resize-docked-stack ";
+
+    private static final int TASK_SIZE = 600;
+    private static final int STACK_SIZE = 300;
 
     // TODO: Add test for non-resizeable activity.
 
@@ -138,6 +144,27 @@ public class ActivityManagerDockedStackTests extends ActivityManagerTestBase {
         final int taskId = getActivityTaskId(activityName);
         final String cmd = AM_MOVE_TASK + taskId + " " + DOCKED_STACK_ID + " true";
         mDevice.executeShellCommand(cmd);
+    }
+
+    public void testResizeDockedStack() throws Exception {
+        mDevice.executeShellCommand(getAmStartCmd(TEST_ACTIVITY_NAME));
+        mDevice.executeShellCommand(getAmStartCmd(DOCKED_ACTIVITY_NAME));
+        mDevice.executeShellCommand(AM_MOVE_TASK + getActivityTaskId(DOCKED_ACTIVITY_NAME) + " "
+                + DOCKED_STACK_ID + " true");
+        mDevice.executeShellCommand(AM_RESIZE_DOCKED_STACK
+                + "0 0 " + STACK_SIZE + " " + STACK_SIZE
+                + " 0 0 " + TASK_SIZE + " " + TASK_SIZE);
+        mAmWmState.computeState(mDevice);
+        mAmWmState.assertSanity();
+        mAmWmState.assertContainsStack("Must contain docked stack", DOCKED_STACK_ID);
+        mAmWmState.assertContainsStack("Must contain fullscreen stack",
+                FULLSCREEN_WORKSPACE_STACK_ID);
+        assertEquals(new Rectangle(0, 0, STACK_SIZE, STACK_SIZE),
+                mAmWmState.getAmState().getStackById(DOCKED_STACK_ID).getBounds());
+        assertEquals(new Rectangle(0, 0, TASK_SIZE, TASK_SIZE),
+                mAmWmState.getAmState().getTaskByActivityName(DOCKED_ACTIVITY_NAME).getBounds());
+        mAmWmState.assertVisibility(DOCKED_ACTIVITY_NAME, true);
+        mAmWmState.assertVisibility(TEST_ACTIVITY_NAME, true);
     }
 
     private void launchActivityToSide(String activityName) throws Exception {
