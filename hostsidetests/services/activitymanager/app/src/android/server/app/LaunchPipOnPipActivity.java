@@ -20,8 +20,8 @@ import android.app.Activity;
 
 public class LaunchPipOnPipActivity extends Activity {
     @Override
-    public void onPictureInPictureModeChanged(boolean pictureInPictureMode) {
-        super.onPictureInPictureModeChanged(pictureInPictureMode);
+    public void onPictureInPictureChanged(boolean inPictureInPicture) {
+        super.onPictureInPictureChanged(inPictureInPicture);
         AlwaysFocusablePipActivity.launchAlwaysFocusablePipActivity(this);
     }
 }
