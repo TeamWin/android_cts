@@ -111,7 +111,6 @@ cts_support_packages := \
     CtsSimpleApp \
     CtsSimplePreMApp \
     CtsSomeAccessibilityServices \
-    CtsSysUiDeviceApp \
     CtsThemeDeviceApp \
     TestDeviceSetup \
     CtsUiAutomatorTestApp \
@@ -255,8 +254,7 @@ cts_host_libraries := \
     CtsServicesHostTestCases \
     CtsThemeHostTestCases \
     CtsUiHostTestCases \
-    CtsUsbTests \
-    CtsSysUiHostTestCases \
+    CtsUsbTests
 
 # List of native tests. For 32 bit targets, assumes that there will be
 # one test executable, and it will end in 32. For 64 bit targets, assumes
