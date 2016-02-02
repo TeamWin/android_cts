@@ -25,7 +25,7 @@ import android.util.LocaleList;
 
 public class LocaleSpanTest extends TestCase {
 
-    public void testGetLocalesMain(@NonNull final LocaleList locales) {
+    private void checkGetLocales(@NonNull final LocaleList locales) {
         final LocaleSpan span = new LocaleSpan(locales);
         assertEquals(locales.getPrimary(), span.getLocale());
         assertEquals(locales, span.getLocales());
@@ -36,10 +36,10 @@ public class LocaleSpanTest extends TestCase {
     }
 
     public void testGetLocales() {
-        testGetLocalesMain(LocaleList.getEmptyLocaleList());
-        testGetLocalesMain(LocaleList.forLanguageTags("en"));
-        testGetLocalesMain(LocaleList.forLanguageTags("en-GB,en"));
-        testGetLocalesMain(LocaleList.forLanguageTags("de-DE-u-co-phonebk,en-GB,en"));
+        checkGetLocales(LocaleList.getEmptyLocaleList());
+        checkGetLocales(LocaleList.forLanguageTags("en"));
+        checkGetLocales(LocaleList.forLanguageTags("en-GB,en"));
+        checkGetLocales(LocaleList.forLanguageTags("de-DE-u-co-phonebk,en-GB,en"));
     }
 
     public void testConstructorWithLocaleList() {
