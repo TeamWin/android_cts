@@ -261,6 +261,7 @@ public class DngCreatorTest extends Camera2AndroidTestCase {
                 }
 
                 ExifInterface exifInterface = new ExifInterface(filePath);
+                // Verify GPS data.
                 float[] latLong = new float[2];
                 assertTrue(exifInterface.getLatLong(latLong));
                 assertEquals(GPS_LATITUDE, latLong[0], GPS_DIFFERENCE_TOLERANCE);
@@ -269,6 +270,11 @@ public class DngCreatorTest extends Camera2AndroidTestCase {
                         exifInterface.getAttribute(ExifInterface.TAG_GPS_DATESTAMP));
                 assertEquals(GPS_TIMESTAMP,
                         exifInterface.getAttribute(ExifInterface.TAG_GPS_TIMESTAMP));
+
+                // Verify the orientation.
+                assertEquals(ExifInterface.ORIENTATION_FLIP_VERTICAL,
+                        exifInterface.getAttributeInt(ExifInterface.TAG_ORIENTATION,
+                                ExifInterface.ORIENTATION_UNDEFINED));
 
                 if (!VERBOSE) {
                     // Delete the captured DNG file.
