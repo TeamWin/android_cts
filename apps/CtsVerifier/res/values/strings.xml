@@ -468,8 +468,13 @@
     <string name="nfc_ndef_content">Id: %1$s\nMime: %2$s\nPayload: %3$s</string>
 
     <string name="nfc_hce">Host-based card emulation</string>
+    <string name="nfc_hce_f">Host-based Felica card emulation</string>
     <string name="nfc_hce_reader_tests">HCE reader tests</string>
+    <string name="nfc_hce_f_reader_tests">HCE Felica reader tests</string>
     <string name="nfc_hce_emulator_tests">HCE emulator tests</string>
+    <string name="nfc_hce_f_emulator_tests">HCE Felica emulator tests</string>
+    <string name="nfc_hce_f_emulator">HCE Felica emulator</string>
+    <string name="nfc_hce_f_reader">HCE Felica reader</string>
     <string name="nfc_hce_emulator_test_info">The host-based card emulation
         tests require two devices to be completed. The HCE emulator tests are used
         to actually test the host-based card emulation feature of the device-under-test. So the
@@ -577,6 +582,7 @@
     <string name="transportService2">TransportService #2</string>
     <string name="accessService">AccessService</string>
     <string name="offhostService">OffhostService</string>
+    <string name="felicaservice">Felica Service</string>
 
     <!-- Strings for Sensor Test Activities -->
     <string name="snsr_device_admin_receiver">Sensor Tests Device Admin Receiver</string>
