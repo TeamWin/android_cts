@@ -172,7 +172,7 @@ public class CompoundButtonTest extends AndroidTestCase {
         compoundButton.drawableStateChanged();
 
         // drawableStateChanged when CheckMarkDrawable is not null.
-        Drawable drawable = mResources.getDrawable(R.drawable.scenery);
+        Drawable drawable = mResources.getDrawable(R.drawable.statelistdrawable);
         compoundButton.setButtonDrawable(drawable);
         drawable.setState(null);
         assertNull(drawable.getState());
