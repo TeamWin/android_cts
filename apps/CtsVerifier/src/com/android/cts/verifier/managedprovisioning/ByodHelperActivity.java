@@ -19,6 +19,7 @@ package com.android.cts.verifier.managedprovisioning;
 import android.app.Activity;
 import android.app.admin.DevicePolicyManager;
 import android.app.Dialog;
+import android.app.KeyguardManager;
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.content.BroadcastReceiver;
@@ -27,6 +28,10 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
+import android.graphics.Color;
+import android.location.Location;
+import android.location.LocationListener;
+import android.location.LocationManager;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
@@ -120,6 +125,14 @@ public class ByodHelperActivity extends LocationListenerActivity
     // Primary -> managed intent: reset a user restriction
     public static final String ACTION_CLEAR_USER_RESTRICTION =
             "com.android.cts.verifier.managedprovisioning.BYOD_CLEAR_USER_RESTRICTION";
+
+    // Primary -> managed intent: Start the selection of a work challenge
+    public static final String ACTION_TEST_SELECT_WORK_CHALLENGE =
+            "com.android.cts.verifier.managedprovisioning.TEST_SELECT_WORK_CHALLENGE";
+
+    // Primary -> managed intent: Start the confirm credentials screen for the managed profile
+    public static final String ACTION_TEST_CONFIRM_WORK_CREDENTIALS =
+            "com.android.cts.verifier.managedprovisioning.TEST_CONFIRM_WORK_CREDENTIALS";
 
     public static final int RESULT_FAILED = RESULT_FIRST_USER;
 
@@ -255,8 +268,7 @@ public class ByodHelperActivity extends LocationListenerActivity
         } else if (ACTION_KEYGUARD_DISABLED_FEATURES.equals(action)) {
             final int value = intent.getIntExtra(EXTRA_PARAMETER_1,
                     DevicePolicyManager.KEYGUARD_DISABLE_FEATURES_NONE);
-            ComponentName admin = DeviceAdminTestReceiver.getReceiverComponentName();
-            mDevicePolicyManager.setKeyguardDisabledFeatures(admin, value);
+            mDevicePolicyManager.setKeyguardDisabledFeatures(mAdminReceiverComponent, value);
         } else if (ACTION_LOCKNOW.equals(action)) {
             mDevicePolicyManager.lockNow();
             setResult(RESULT_OK);
@@ -294,12 +306,20 @@ public class ByodHelperActivity extends LocationListenerActivity
         } else if (action.equals(ACTION_NOTIFICATION)) {
             showNotification(Notification.VISIBILITY_PUBLIC);
         } else if (ACTION_NOTIFICATION_ON_LOCKSCREEN.equals(action)) {
-            DevicePolicyManager dpm = (DevicePolicyManager) getSystemService(
-                    Context.DEVICE_POLICY_SERVICE);
-            dpm.lockNow();
+            mDevicePolicyManager.lockNow();
             showNotification(Notification.VISIBILITY_PRIVATE);
         } else if (ACTION_CLEAR_NOTIFICATION.equals(action)) {
             mNotificationManager.cancel(NOTIFICATION_ID);
+        } else if (ACTION_TEST_SELECT_WORK_CHALLENGE.equals(action)) {
+            mDevicePolicyManager.setOrganizationColor(mAdminReceiverComponent, Color.BLUE);
+            mDevicePolicyManager.setOrganizationName(mAdminReceiverComponent, getResources()
+                    .getString(R.string.provisioning_byod_confirm_work_credentials_header));
+            startActivity(new Intent(DevicePolicyManager.ACTION_SET_NEW_PASSWORD));
+        } else if (ACTION_TEST_CONFIRM_WORK_CREDENTIALS.equals(action)) {
+            KeyguardManager keyguardManager =
+                    (KeyguardManager) getSystemService(Context.KEYGUARD_SERVICE);
+            Intent launchIntent = keyguardManager.createConfirmDeviceCredentialIntent(null, null);
+            startActivity(launchIntent);
         }
         // This activity has no UI and is only used to respond to CtsVerifier in the primary side.
         finish();

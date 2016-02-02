@@ -90,6 +90,8 @@ public class ByodFlowTestActivity extends DialogTestListActivity {
     private DialogTestListItem mDisableLocationModeThroughMainSwitchTest;
     private DialogTestListItem mDisableLocationModeThroughWorkSwitchTest;
     private DialogTestListItem mPrimaryLocationWhenWorkDisabledTest;
+    private DialogTestListItem mSelectWorkChallenge;
+    private DialogTestListItem mConfirmWorkCredentials;
     private TestListItem mVpnTest;
     private TestListItem mDisallowAppsControlTest;
 
@@ -359,6 +361,18 @@ public class ByodFlowTestActivity extends DialogTestListActivity {
                 R.string.provisioning_byod_turn_off_work_notifications_instruction,
                 new Intent(ByodHelperActivity.ACTION_NOTIFICATION));
 
+        mSelectWorkChallenge = new DialogTestListItem(this,
+                R.string.provisioning_byod_select_work_challenge,
+                "BYOD_SelectWorkChallenge",
+                R.string.provisioning_byod_select_work_challenge_description,
+                new Intent(ByodHelperActivity.ACTION_TEST_SELECT_WORK_CHALLENGE));
+
+        mConfirmWorkCredentials = new DialogTestListItem(this,
+                R.string.provisioning_byod_confirm_work_credentials,
+                "BYOD_ConfirmWorkCredentials",
+                R.string.provisioning_byod_confirm_work_credentials_description,
+                new Intent(ByodHelperActivity.ACTION_TEST_CONFIRM_WORK_CREDENTIALS));
+
         adapter.add(mProfileOwnerInstalled);
 
         // Badge related tests
@@ -390,6 +404,9 @@ public class ByodFlowTestActivity extends DialogTestListActivity {
         adapter.add(mTurnOffWorkIcon);
         adapter.add(mTurnOffWorkLauncher);
         adapter.add(mTurnOffWorkNotifications);
+        adapter.add(mSelectWorkChallenge);
+        adapter.add(mConfirmWorkCredentials);
+
         if (canResolveIntent(new Intent(Settings.ACTION_APPLICATION_SETTINGS))) {
             adapter.add(mDisallowAppsControlTest);
         }
