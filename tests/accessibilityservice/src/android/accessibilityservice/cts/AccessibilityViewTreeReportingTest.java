@@ -240,6 +240,40 @@ public class AccessibilityViewTreeReportingTest
         assertEquals(0, getUiAutomation(false).getRootInActiveWindow().getDrawingOrder());
     }
 
+    @MediumTest
+    public void testAccessibilityImportanceReportingForImportantView() throws Exception {
+        getInstrumentation().runOnMainSync(new Runnable() {
+            @Override
+            public void run() {
+                // Manually control importance for firstButton
+                AccessibilityViewTreeReportingActivity activity = getActivity();
+                View firstButton = activity.findViewById(R.id.firstButton);
+                firstButton.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_YES);
+            }
+        });
+
+        UiAutomation uiAutomation = getUiAutomation(true);
+        AccessibilityNodeInfo firstButtonNode = getNodeByText(uiAutomation, R.string.firstButton);
+        assertTrue(firstButtonNode.isImportantForAccessibility());
+    }
+
+    @MediumTest
+    public void testAccessibilityImportanceReportingForUnimportantView() throws Exception {
+        getInstrumentation().runOnMainSync(new Runnable() {
+            @Override
+            public void run() {
+                // Manually control importance for firstButton
+                AccessibilityViewTreeReportingActivity activity = getActivity();
+                View firstButton = activity.findViewById(R.id.firstButton);
+                firstButton.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
+            }
+        });
+
+        UiAutomation uiAutomation = getUiAutomation(true);
+        AccessibilityNodeInfo firstButtonNode = getNodeByText(uiAutomation, R.string.firstButton);
+        assertFalse(firstButtonNode.isImportantForAccessibility());
+    }
+
     private UiAutomation getUiAutomation(boolean getNonImportantViews) {
         UiAutomation uiAutomation = getInstrumentation().getUiAutomation();
         AccessibilityServiceInfo serviceInfo = uiAutomation.getServiceInfo();
