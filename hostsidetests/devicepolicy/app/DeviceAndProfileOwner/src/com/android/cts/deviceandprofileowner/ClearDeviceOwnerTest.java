@@ -30,13 +30,12 @@ public class ClearDeviceOwnerTest extends AndroidTestCase {
         mDevicePolicyManager = (DevicePolicyManager)
                 mContext.getSystemService(Context.DEVICE_POLICY_SERVICE);
         if (mDevicePolicyManager != null) {
-            removeActiveAdmin(BaseDeviceAdminTest.ADMIN_RECEIVER_COMPONENT);
             if (mDevicePolicyManager.isDeviceOwnerApp(BaseDeviceAdminTest.PACKAGE_NAME)) {
                 mDevicePolicyManager.clearDeviceOwnerApp(BaseDeviceAdminTest.PACKAGE_NAME);
             }
-            assertFalse(mDevicePolicyManager.isAdminActive(
-                    BaseDeviceAdminTest.ADMIN_RECEIVER_COMPONENT));
             assertFalse(mDevicePolicyManager.isDeviceOwnerApp(BaseDeviceAdminTest.PACKAGE_NAME));
+
+            Utils.removeActiveAdmin(getContext(), BaseDeviceAdminTest.ADMIN_RECEIVER_COMPONENT);
         }
 
         super.tearDown();
@@ -45,14 +44,5 @@ public class ClearDeviceOwnerTest extends AndroidTestCase {
     // This test clears the device owner and active admin on tearDown(). To be called from the host
     // side test once a test case is finished.
     public void testClearDeviceOwner() {
-    }
-
-    private void removeActiveAdmin(ComponentName cn) throws InterruptedException {
-        if (mDevicePolicyManager.isAdminActive(cn)) {
-            mDevicePolicyManager.removeActiveAdmin(cn);
-            for (int i = 0; i < 1000 && mDevicePolicyManager.isAdminActive(cn); i++) {
-                Thread.sleep(100);
-            }
-        }
     }
 }

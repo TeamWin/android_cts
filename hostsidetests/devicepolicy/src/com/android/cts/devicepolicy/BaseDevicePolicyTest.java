@@ -64,7 +64,13 @@ public class BaseDevicePolicyTest extends DeviceTestCase implements IBuildReceiv
 
     private String mPackageVerifier;
     private HashSet<String> mAvailableFeatures;
+
+    /** Whether DPM is supported. */
     protected boolean mHasFeature;
+
+    /** Whether multi-user is supported. */
+    protected boolean mSupportsMultiUser;
+
     private ArrayList<Integer> mOriginalUsers;
 
     @Override
@@ -78,6 +84,8 @@ public class BaseDevicePolicyTest extends DeviceTestCase implements IBuildReceiv
         assertNotNull(mCtsBuild);  // ensure build has been set before test is run.
         mHasFeature = getDevice().getApiLevel() >= 21 /* Build.VERSION_CODES.L */
                 && hasDeviceFeature("android.software.device_admin");
+        mSupportsMultiUser = getMaxNumberOfUsersSupported() > 1;
+
         // disable the package verifier to avoid the dialog when installing an app
         mPackageVerifier = getDevice().executeShellCommand(
                 "settings get global package_verifier_enable");
@@ -204,8 +212,11 @@ public class BaseDevicePolicyTest extends DeviceTestCase implements IBuildReceiv
         stopUser(userId);
         String removeUserCommand = "pm remove-user " + userId;
         CLog.logAndDisplay(LogLevel.INFO, "starting command " + removeUserCommand);
+
+        String removeUserOutput = getDevice().executeShellCommand(removeUserCommand);
         CLog.logAndDisplay(LogLevel.INFO, "Output for command " + removeUserCommand + ": "
-                + getDevice().executeShellCommand(removeUserCommand));
+                + removeUserOutput);
+        assertTrue("Couldn't remove user", removeUserOutput.startsWith("Success:"));
     }
 
     protected void removeTestUsers() throws Exception {

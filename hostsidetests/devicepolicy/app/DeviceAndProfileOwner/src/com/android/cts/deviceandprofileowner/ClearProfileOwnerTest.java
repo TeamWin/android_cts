@@ -34,8 +34,9 @@ public class ClearProfileOwnerTest extends AndroidTestCase {
                 mDevicePolicyManager.clearProfileOwner(
                         BaseDeviceAdminTest.ADMIN_RECEIVER_COMPONENT);
             }
-            removeActiveAdmin(BaseDeviceAdminTest.ADMIN_RECEIVER_COMPONENT);
             assertFalse(mDevicePolicyManager.isProfileOwnerApp(BaseDeviceAdminTest.PACKAGE_NAME));
+
+            Utils.removeActiveAdmin(getContext(), BaseDeviceAdminTest.ADMIN_RECEIVER_COMPONENT);
         }
 
         super.tearDown();
@@ -44,14 +45,5 @@ public class ClearProfileOwnerTest extends AndroidTestCase {
     // This test clears the profile owner and active admin on tearDown(). To be called from the host
     // side test once a test case is finished.
     public void testClearProfileOwner() {
-    }
-
-    private void removeActiveAdmin(ComponentName cn) throws InterruptedException {
-        if (mDevicePolicyManager.isAdminActive(cn)) {
-            mDevicePolicyManager.removeActiveAdmin(cn);
-            for (int i = 0; i < 1000 && mDevicePolicyManager.isAdminActive(cn); i++) {
-                Thread.sleep(100);
-            }
-        }
     }
 }
