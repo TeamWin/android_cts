@@ -153,8 +153,10 @@ public class EncoderTest extends AndroidTestCase {
         }
         try {
             pool.shutdown();
-            pool.awaitTermination(5, TimeUnit.MINUTES);
+            assertTrue("timed out waiting for encoder threads",
+                    pool.awaitTermination(5, TimeUnit.MINUTES));
         } catch (InterruptedException e) {
+            fail("interrupted while waiting for encoder threads");
         }
     }
 
@@ -280,6 +282,7 @@ public class EncoderTest extends AndroidTestCase {
     private void testEncoder(String componentName, MediaFormat format,
             long startSeed, int resid, int mode) {
 
+        Log.i(TAG, "testEncoder " + componentName + "/" + mode + "/" + format);
         int sampleRate = format.getInteger(MediaFormat.KEY_SAMPLE_RATE);
         int channelCount = format.getInteger(MediaFormat.KEY_CHANNEL_COUNT);
         int inBitrate = sampleRate * channelCount * 16;  // bit/sec
@@ -293,8 +296,7 @@ public class EncoderTest extends AndroidTestCase {
                         "-" + mode + "-" + startSeed + ".mp4";
                 new File("outFile").delete();
                 muxer = new MediaMuxer(outFile, MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4);
-                muxidx = muxer.addTrack(format);
-                muxer.start();
+                // The track can't be added until we have the codec specific data
             } catch (Exception e) {
                 Log.i(TAG, "couldn't create muxer: " + e);
             }
@@ -373,7 +375,13 @@ public class EncoderTest extends AndroidTestCase {
                 codecOutputBuffers = codec.getOutputBuffers();
             } else {
                 if (muxer != null) {
-                    muxer.writeSampleData(muxidx, codec.getOutputBuffer(index), info);
+                    ByteBuffer buffer = codec.getOutputBuffer(index);
+                    if (muxidx < 0) {
+                        MediaFormat trackFormat = codec.getOutputFormat();
+                        muxidx = muxer.addTrack(trackFormat);
+                        muxer.start();
+                    }
+                    muxer.writeSampleData(muxidx, buffer, info);
                 }
 
                 dequeueOutputBuffer(codec, codecOutputBuffers, index, info);
