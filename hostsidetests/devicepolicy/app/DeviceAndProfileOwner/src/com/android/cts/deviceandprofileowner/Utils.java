@@ -29,10 +29,16 @@ public class Utils {
         final DevicePolicyManager dpm = context.getSystemService(DevicePolicyManager.class);
         if (dpm.isAdminActive(cn)) {
             dpm.removeActiveAdmin(cn);
-            for (int i = 0; i < 1000 && dpm.isAdminActive(cn); i++) {
-                Thread.sleep(100);
-            }
-            Assert.assertFalse(dpm.isAdminActive(cn));
+            assertNotActiveAdmin(context, cn);
         }
+    }
+
+    public static void assertNotActiveAdmin(Context context, ComponentName cn) throws Exception {
+        final DevicePolicyManager dpm = context.getSystemService(DevicePolicyManager.class);
+
+        for (int i = 0; i < 1000 && dpm.isAdminActive(cn); i++) {
+            Thread.sleep(100);
+        }
+        Assert.assertFalse(dpm.isAdminActive(cn));
     }
 }

@@ -35,7 +35,7 @@ public class ClearDeviceOwnerTest extends AndroidTestCase {
             }
             assertFalse(mDevicePolicyManager.isDeviceOwnerApp(BaseDeviceAdminTest.PACKAGE_NAME));
 
-            Utils.removeActiveAdmin(getContext(), BaseDeviceAdminTest.ADMIN_RECEIVER_COMPONENT);
+            Utils.assertNotActiveAdmin(getContext(), BaseDeviceAdminTest.ADMIN_RECEIVER_COMPONENT);
         }
 
         super.tearDown();
