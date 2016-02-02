@@ -89,6 +89,14 @@ public class MockConnectionService extends ConnectionService {
                     (MockConnection)connection1, (MockConnection)connection2);
             CtsConnectionService.addConferenceToTelecom(conference);
             conferences.add(conference);
+
+            if (connection1.getState() == Connection.STATE_HOLDING){
+                connection1.setActive();
+            }
+            if(connection2.getState() == Connection.STATE_HOLDING){
+                connection2.setActive();
+            }
+
             lock.release();
         }
     }
