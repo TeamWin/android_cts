@@ -96,7 +96,7 @@ public class TestUtils {
         final ComponentName component = handle.getComponentName();
         executeShellCommand(instrumentation, COMMAND_REGISTER_SIM
                 + component.getPackageName() + "/" + component.getClassName() + " "
-                + handle.getId() + " " + PRIMARY_USER_SN);
+                + handle.getId() + " " + PRIMARY_USER_SN + " " + label + " " + address);
     }
 
     /**
