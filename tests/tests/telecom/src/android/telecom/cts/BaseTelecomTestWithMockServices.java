@@ -890,7 +890,7 @@ public class BaseTelecomTestWithMockServices extends InstrumentationTestCase {
      * was invoked with. This class is prefixed Invoke rather than the more typical Call for
      * disambiguation purposes.
      */
-    protected static final class InvokeCounter {
+    public static final class InvokeCounter {
         private final String mName;
         private final Object mLock = new Object();
         private final ArrayList<Object[]> mInvokeArgs = new ArrayList<>();

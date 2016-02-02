@@ -619,6 +619,7 @@ public class RemoteConnectionTest extends BaseRemoteTelecomTest {
         };
         remoteVideoProvider.registerCallback(videoCallback);
         VideoProfile videoProfile = new VideoProfile(VideoProfile.STATE_BIDIRECTIONAL);
+        mockVideoProvider.waitForVideoProviderHandler(remoteVideoProvider);
         mockVideoProvider.sendMockSessionModifyRequest(videoProfile);
         callbackInvoker.waitForCount(1, WAIT_FOR_STATE_CHANGE_TIMEOUT_MS);
         assertEquals(remoteVideoProvider, callbackInvoker.getArgs(0)[0]);
@@ -647,6 +648,7 @@ public class RemoteConnectionTest extends BaseRemoteTelecomTest {
             }
         };
         remoteVideoProvider.registerCallback(videoCallback);
+        mockVideoProvider.waitForVideoProviderHandler(remoteVideoProvider);
         mockVideoProvider.handleCallSessionEvent(Connection.VideoProvider.SESSION_EVENT_RX_PAUSE);
         callbackInvoker.waitForCount(1, WAIT_FOR_STATE_CHANGE_TIMEOUT_MS);
         assertEquals(remoteVideoProvider, callbackInvoker.getArgs(0)[0]);
@@ -677,6 +679,7 @@ public class RemoteConnectionTest extends BaseRemoteTelecomTest {
         };
         remoteVideoProvider.registerCallback(videoCallback);
         final int width = 100, heigth = 20;
+        mockVideoProvider.waitForVideoProviderHandler(remoteVideoProvider);
         mockVideoProvider.changePeerDimensions(width, heigth);
         callbackInvoker.waitForCount(1, WAIT_FOR_STATE_CHANGE_TIMEOUT_MS);
         assertEquals(remoteVideoProvider, callbackInvoker.getArgs(0)[0]);
@@ -707,6 +710,7 @@ public class RemoteConnectionTest extends BaseRemoteTelecomTest {
         };
         remoteVideoProvider.registerCallback(videoCallback);
         long callDataUsage = 10000;
+        mockVideoProvider.waitForVideoProviderHandler(remoteVideoProvider);
         mockVideoProvider.setCallDataUsage(callDataUsage);
         callbackInvoker.waitForCount(1, WAIT_FOR_STATE_CHANGE_TIMEOUT_MS);
         assertEquals(remoteVideoProvider, callbackInvoker.getArgs(0)[0]);
@@ -738,6 +742,7 @@ public class RemoteConnectionTest extends BaseRemoteTelecomTest {
         };
         remoteVideoProvider.registerCallback(videoCallback);
         VideoProfile.CameraCapabilities capabilities = new VideoProfile.CameraCapabilities(100, 200);
+        mockVideoProvider.waitForVideoProviderHandler(remoteVideoProvider);
         mockVideoProvider.changeCameraCapabilities(capabilities);
         callbackInvoker.waitForCount(1, WAIT_FOR_STATE_CHANGE_TIMEOUT_MS);
         assertEquals(remoteVideoProvider, callbackInvoker.getArgs(0)[0]);
@@ -767,6 +772,7 @@ public class RemoteConnectionTest extends BaseRemoteTelecomTest {
         };
         remoteVideoProvider.registerCallback(videoCallback);
         final int videoQuality = 10;
+        mockVideoProvider.waitForVideoProviderHandler(remoteVideoProvider);
         mockVideoProvider.changeVideoQuality(videoQuality);
         callbackInvoker.waitForCount(1, WAIT_FOR_STATE_CHANGE_TIMEOUT_MS);
         assertEquals(remoteVideoProvider, callbackInvoker.getArgs(0)[0]);
