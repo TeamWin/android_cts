@@ -33,11 +33,14 @@ public class SetPolicyActivity extends Activity {
     private static final String EXTRA_RESTRICTION_KEY = "extra-restriction-key";
     private static final String EXTRA_COMMAND = "extra-command";
     private static final String EXTRA_ACCOUNT_TYPE = "extra-account-type";
+    private static final String EXTRA_PACKAGE_NAME = "extra-package-name";
 
     private static final String COMMAND_ADD_USER_RESTRICTION = "add-restriction";
     private static final String COMMAND_CLEAR_USER_RESTRICTION = "clear-restriction";
     private static final String COMMAND_BLOCK_ACCOUNT_TYPE = "block-accounttype";
     private static final String COMMAND_UNBLOCK_ACCOUNT_TYPE = "unblock-accounttype";
+    private static final String COMMAND_SET_APP_RESTRICTIONS_MANAGER =
+            "set-app-restrictions-manager";
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -89,6 +92,11 @@ public class SetPolicyActivity extends Activity {
                     accountType, false);
             Log.i(TAG, "Unblocking account management for account type: " + accountType
                     + " for user " + Process.myUserHandle());
+        } else if (COMMAND_SET_APP_RESTRICTIONS_MANAGER.equals(command)) {
+            String packageName = intent.getStringExtra(EXTRA_PACKAGE_NAME);
+            dpm.setApplicationRestrictionsManagingPackage(
+                    BaseDeviceAdminTest.ADMIN_RECEIVER_COMPONENT, packageName);
+            Log.i(TAG, "Setting the application restrictions managing package to " + packageName);
         } else {
             Log.e(TAG, "Invalid command: " + command);
         }
