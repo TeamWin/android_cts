@@ -17,6 +17,8 @@ package com.android.compatibility.common.deviceinfo;
 
 import android.util.Log;
 
+import com.android.compatibility.common.util.InfoStore;
+
 import java.io.Closeable;
 import java.io.File;
 import java.io.FileInputStream;
@@ -35,31 +37,31 @@ public final class LibraryDeviceInfo extends DeviceInfo {
     private static final int BUFFER_SIZE_BYTES = 4096;
 
     @Override
-    protected void collectDeviceInfo() {
-        collectSystemLibs();
-        collectVendorLibs();
-        collectFrameworkJars();
+    protected void collectDeviceInfo(InfoStore store) throws Exception {
+        collectSystemLibs(store);
+        collectVendorLibs(store);
+        collectFrameworkJars(store);
     }
 
-    private void collectSystemLibs() {
-        startArray("lib");
-        collectFileDetails("/system/lib", ".so");
-        endArray();
+    private void collectSystemLibs(InfoStore store) throws Exception {
+        store.startArray("lib");
+        collectFileDetails(store, "/system/lib", ".so");
+        store.endArray();
     }
 
-    private void collectVendorLibs() {
-        startArray("vendor_lib");
-        collectFileDetails("/system/vendor/lib", ".so");
-        endArray();
+    private void collectVendorLibs(InfoStore store) throws Exception {
+        store.startArray("vendor_lib");
+        collectFileDetails(store, "/system/vendor/lib", ".so");
+        store.endArray();
     }
 
-    private void collectFrameworkJars() {
-        startArray("framework_jar");
-        collectFileDetails("/system/framework", ".jar");
-        endArray();
+    private void collectFrameworkJars(InfoStore store) throws Exception {
+        store.startArray("framework_jar");
+        collectFileDetails(store, "/system/framework", ".jar");
+        store.endArray();
     }
 
-    private void collectFileDetails(String path, String suffix) {
+    private void collectFileDetails(InfoStore store, String path, String suffix) throws Exception {
         File dir = new File(path);
         for (File file : dir.listFiles()) {
             String name = file.getName();
@@ -70,10 +72,10 @@ public final class LibraryDeviceInfo extends DeviceInfo {
                 } catch (IOException e) {
                     Log.e(TAG, "Failed to hash " + file + ": ", e);
                 }
-                startGroup();
-                addResult("name", name);
-                addResult("sha1", sha1);
-                endGroup();
+                store.startGroup();
+                store.addResult("name", name);
+                store.addResult("sha1", sha1);
+                store.endGroup();
             }
         }
     }

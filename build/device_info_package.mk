@@ -46,7 +46,7 @@ DEVICE_INFO_TARGET_SDK := 8
 endif
 
 # Add the base device info
-LOCAL_STATIC_JAVA_LIBRARIES += compatibility-device-info
+LOCAL_STATIC_JAVA_LIBRARIES += compatibility-device-info compatibility-device-util
 
 # Generator of APK manifests.
 MANIFEST_GENERATOR_JAR := $(HOST_OUT_JAVA_LIBRARIES)/compatibility-manifest-generator.jar

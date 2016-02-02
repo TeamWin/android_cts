@@ -21,30 +21,31 @@ import android.util.DisplayMetrics;
 import android.view.Display;
 import android.view.WindowManager;
 
+import com.android.compatibility.common.util.InfoStore;
+
 /**
  * Screen device info collector.
  */
 public final class ScreenDeviceInfo extends DeviceInfo {
 
     @Override
-    protected void collectDeviceInfo() {
-
+    protected void collectDeviceInfo(InfoStore store) throws Exception {
         DisplayMetrics metrics = new DisplayMetrics();
         WindowManager windowManager =
                 (WindowManager) getContext().getSystemService(Context.WINDOW_SERVICE);
         Display display = windowManager.getDefaultDisplay();
         display.getRealMetrics(metrics);
 
-        addResult("width_pixels", metrics.widthPixels);
-        addResult("height_pixels", metrics.heightPixels);
-        addResult("x_dpi", metrics.xdpi);
-        addResult("y_dpi", metrics.ydpi);
-        addResult("density", metrics.density);
-        addResult("density_dpi", metrics.densityDpi);
+        store.addResult("width_pixels", metrics.widthPixels);
+        store.addResult("height_pixels", metrics.heightPixels);
+        store.addResult("x_dpi", metrics.xdpi);
+        store.addResult("y_dpi", metrics.ydpi);
+        store.addResult("density", metrics.density);
+        store.addResult("density_dpi", metrics.densityDpi);
 
         Configuration configuration = getContext().getResources().getConfiguration();
-        addResult("screen_size", getScreenSize(configuration));
-        addResult("smallest_screen_width_dp", configuration.smallestScreenWidthDp);
+        store.addResult("screen_size", getScreenSize(configuration));
+        store.addResult("smallest_screen_width_dp", configuration.smallestScreenWidthDp);
     }
 
     private static String getScreenSize(Configuration configuration) {

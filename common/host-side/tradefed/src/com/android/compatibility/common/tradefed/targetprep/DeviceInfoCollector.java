@@ -26,20 +26,42 @@ import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.log.LogUtil.CLog;
 import com.android.tradefed.targetprep.BuildError;
 import com.android.tradefed.targetprep.TargetSetupError;
+import com.android.tradefed.util.ArrayUtil;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.util.HashMap;
 import java.util.Map;
+import java.util.Map.Entry;
 
 /**
  * An {@link ApkInstrumentationPreparer} that collects device info.
  */
 public class DeviceInfoCollector extends ApkInstrumentationPreparer {
 
-    private static String LOG_TAG = "DeviceInfoCollector";
-    private static String DEVICE_INFO_CLASS = "com.android.compatibility.common.deviceinfo";
-    private static String DEVICE_INFO_GENERIC = "DEVICE_INFO_GENERIC_";
-    private static String DEVICE_INFO_ERROR = "DEVICE_INFO_ERROR_";
+    private static final String LOG_TAG = "DeviceInfoCollector";
+    private static final String DEVICE_INFO = "DEVICE_INFO_%s";
+    private static final Map<String, String> BUILD_KEYS = new HashMap<>();
+    static {
+        BUILD_KEYS.put("build_id", "ro.build.id");
+        BUILD_KEYS.put("build_product", "ro.product.name");
+        BUILD_KEYS.put("build_device", "ro.product.device");
+        BUILD_KEYS.put("build_board", "ro.product.board");
+        BUILD_KEYS.put("build_manufacturer", "ro.product.manufacturer");
+        BUILD_KEYS.put("build_brand", "ro.product.brand");
+        BUILD_KEYS.put("build_model", "ro.product.model");
+        BUILD_KEYS.put("build_type", "ro.build.type");
+        BUILD_KEYS.put("build_tags", "ro.build.tags");
+        BUILD_KEYS.put("build_fingerprint", "ro.build.fingerprint");
+        BUILD_KEYS.put("build_abis", "ro.product.cpu.abilist");
+        BUILD_KEYS.put("build_abis_32", "ro.product.cpu.abilist32");
+        BUILD_KEYS.put("build_abis_64", "ro.product.cpu.abilist64");
+        BUILD_KEYS.put("build_serial", "ro.serialno");
+        BUILD_KEYS.put("build_version_release", "ro.build.version.release");
+        BUILD_KEYS.put("build_version_sdk", "ro.build.version.sdk");
+        BUILD_KEYS.put("build_version_base_os", "ro.build.version.base_os");
+        BUILD_KEYS.put("build_version_security_patch", "ro.build.version.security_patch");
+    }
 
     @Option(name = CompatibilityTest.SKIP_DEVICE_INFO_OPTION, description =
             "Whether device info collection should be skipped")
@@ -61,27 +83,16 @@ public class DeviceInfoCollector extends ApkInstrumentationPreparer {
         if (mSkipDeviceInfo) {
             return;
         }
-
-        run(device, buildInfo);
-
-        // Check test metrics for errors and copy generic device info results to build attribute.
-        for (Map.Entry<TestIdentifier, Map<String, String>> metricEntry : testMetrics.entrySet()) {
-            if (!metricEntry.getKey().getClassName().startsWith(DEVICE_INFO_CLASS)) {
-                continue;
-            }
-            for (Map.Entry<String, String> testEntry : metricEntry.getValue().entrySet()) {
-                String key = testEntry.getKey();
-                String value = testEntry.getValue();
-                if (key.startsWith(DEVICE_INFO_ERROR)) {
-                    throw new TargetSetupError(String.format("[%s] %s", key, value));
-                }
-                if (key.startsWith(DEVICE_INFO_GENERIC)) {
-                    buildInfo.addBuildAttribute(key, value);
-                }
-            }
+        for (Entry<String, String> entry : BUILD_KEYS.entrySet()) {
+            buildInfo.addBuildAttribute(String.format(DEVICE_INFO, entry.getKey()),
+                    ArrayUtil.join(",", device.getProperty(entry.getValue())));
         }
-
+        run(device, buildInfo);
         getDeviceInfoFiles(device, buildInfo);
+    }
+
+    private void addBuildInfo(ITestDevice device, IBuildInfo buildInfo, String key, String value)
+            throws DeviceNotAvailableException {
     }
 
     private void getDeviceInfoFiles(ITestDevice device, IBuildInfo buildInfo) {

@@ -15,20 +15,24 @@
  */
 package com.android.compatibility.common.deviceinfo;
 
+import com.android.compatibility.common.util.InfoStore;
+
+import java.util.Arrays;
+import java.util.List;
+
 /**
  * Locale device info collector.
  */
 public final class LocaleDeviceInfo extends DeviceInfo {
 
     @Override
-    protected void collectDeviceInfo() {
-
-        String[] locales = getInstrumentation().getContext().getAssets().getLocales();
-        if (locales.length == 0) {
+    protected void collectDeviceInfo(InfoStore store) throws Exception {
+        List<String> locales = Arrays.asList(
+                getInstrumentation().getContext().getAssets().getLocales());
+        if (locales.isEmpty()) {
             // default locale
-            addArray("locale", new String[] {"en_US"});
-        } else {
-            addArray("locale", locales);
+            locales.add("en_US");
         }
+        store.addListResult("locale", locales);
     }
 }

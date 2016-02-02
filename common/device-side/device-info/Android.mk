@@ -20,14 +20,12 @@ LOCAL_SRC_FILES := $(call all-java-files-under, src)
 
 LOCAL_MODULE_TAGS := optional
 
-LOCAL_STATIC_JAVA_LIBRARIES := compatibility-device-util_v2
+LOCAL_STATIC_JAVA_LIBRARIES := compatibility-device-util android-support-test
 
 LOCAL_MODULE := compatibility-device-info
 
 # uncomment when b/13282254 is fixed
 #LOCAL_SDK_VERSION := current
-
-LOCAL_STATIC_JAVA_LIBRARIES := android-support-test
 
 include $(BUILD_STATIC_JAVA_LIBRARY)
 

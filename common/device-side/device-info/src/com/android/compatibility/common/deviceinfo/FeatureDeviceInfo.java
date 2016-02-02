@@ -18,6 +18,8 @@ package com.android.compatibility.common.deviceinfo;
 import android.content.pm.FeatureInfo;
 import android.content.pm.PackageManager;
 
+import com.android.compatibility.common.util.InfoStore;
+
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -32,27 +34,27 @@ import java.util.Set;
 public final class FeatureDeviceInfo extends DeviceInfo {
 
     @Override
-    protected void collectDeviceInfo() {
+    protected void collectDeviceInfo(InfoStore store) throws Exception {
         PackageManager packageManager = getInstrumentation().getContext().getPackageManager();
-        startArray("feature");
+        store.startArray("feature");
 
         Set<String> checkedFeatures = new HashSet<String>();
         for (String featureName : getPackageManagerFeatures()) {
             checkedFeatures.add(featureName);
             boolean hasFeature = packageManager.hasSystemFeature(featureName);
-            addFeature(featureName, "sdk", hasFeature);
+            addFeature(store, featureName, "sdk", hasFeature);
         }
 
         FeatureInfo[] featureInfos = packageManager.getSystemAvailableFeatures();
         if (featureInfos != null) {
             for (FeatureInfo featureInfo : featureInfos) {
                 if (featureInfo.name != null && !checkedFeatures.contains(featureInfo.name)) {
-                    addFeature(featureInfo.name, "other", true);
+                    addFeature(store, featureInfo.name, "other", true);
                 }
             }
         }
 
-        endArray();
+        store.endArray();
     }
 
     /**
@@ -78,11 +80,12 @@ public final class FeatureDeviceInfo extends DeviceInfo {
         }
     }
 
-    private void addFeature(String name, String type, boolean available) {
-        startGroup();
-        addResult("name", name);
-        addResult("type", type);
-        addResult("available", available);
-        endGroup();
+    private void addFeature(InfoStore store, String name, String type, boolean available)
+            throws Exception {
+        store.startGroup();
+        store.addResult("name", name);
+        store.addResult("type", type);
+        store.addResult("available", available);
+        store.endGroup();
     }
 }

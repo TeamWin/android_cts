@@ -33,6 +33,7 @@ public class PackageDeviceInfo extends DeviceInfo {
     private static final String SYSTEM_PRIV = "system_priv";
     private static final String PRIV_APP_DIR = "/system/priv-app";
 
+    @Override
     protected void collectDeviceInfo(InfoStore store) throws Exception {
         PackageManager pm = getContext().getPackageManager();
         store.startArray(PACKAGE);

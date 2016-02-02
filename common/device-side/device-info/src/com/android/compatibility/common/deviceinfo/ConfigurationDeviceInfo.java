@@ -17,16 +17,18 @@ package com.android.compatibility.common.deviceinfo;
 
 import android.content.res.Configuration;
 
+import com.android.compatibility.common.util.InfoStore;
+
 /**
  * Configuration device info collector.
  */
 public final class ConfigurationDeviceInfo extends DeviceInfo {
 
     @Override
-    protected void collectDeviceInfo() {
+    protected void collectDeviceInfo(InfoStore store) throws Exception {
         Configuration con = getInstrumentation().getContext().getResources().getConfiguration();
-        addResult("touchscreen", con.touchscreen);
-        addResult("navigation", con.navigation);
-        addResult("keyboard", con.keyboard);
+        store.addResult("touchscreen", con.touchscreen);
+        store.addResult("navigation", con.navigation);
+        store.addResult("keyboard", con.keyboard);
     }
 }

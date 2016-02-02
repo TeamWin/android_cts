@@ -29,6 +29,8 @@ import android.opengl.GLES30;
 import android.opengl.GLSurfaceView;
 import android.util.Log;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Locale;
 import java.util.HashSet;
 import java.util.Scanner;
@@ -111,16 +113,16 @@ public final class GlesStubActivity extends Activity {
         return mVersion;
     }
 
-    String[] getOpenGlExtensions() {
-        return mOpenGlExtensions.toArray(new String[mOpenGlExtensions.size()]);
+    List<String> getOpenGlExtensions() {
+        return new ArrayList<>(mOpenGlExtensions);
     }
 
     void addOpenGlExtension(String openGlExtension) {
         mOpenGlExtensions.add(openGlExtension);
     }
 
-    String[] getCompressedTextureFormats() {
-        return mFormats.toArray(new String[mFormats.size()]);
+    List<String> getCompressedTextureFormats() {
+        return new ArrayList<>(mFormats);
     }
 
     void addCompressedTextureFormat(String format) {

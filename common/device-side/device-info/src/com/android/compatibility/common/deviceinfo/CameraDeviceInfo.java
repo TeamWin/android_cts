@@ -17,18 +17,20 @@ package com.android.compatibility.common.deviceinfo;
 
 import android.media.CamcorderProfile;
 
+import com.android.compatibility.common.util.InfoStore;
+
 /**
  * Camera information collector.
  */
 public final class CameraDeviceInfo extends DeviceInfo {
 
     @Override
-    protected void collectDeviceInfo() {
-        addResult("profile_480p", CamcorderProfile.hasProfile(CamcorderProfile.QUALITY_480P));
-        addResult("profile_720p", CamcorderProfile.hasProfile(CamcorderProfile.QUALITY_720P));
-        addResult("profile_1080p", CamcorderProfile.hasProfile(CamcorderProfile.QUALITY_1080P));
-        addResult("profile_cif", CamcorderProfile.hasProfile(CamcorderProfile.QUALITY_CIF));
-        addResult("profile_qcif", CamcorderProfile.hasProfile(CamcorderProfile.QUALITY_QCIF));
-        addResult("profile_qvga", CamcorderProfile.hasProfile(CamcorderProfile.QUALITY_QVGA));
+    protected void collectDeviceInfo(InfoStore store) throws Exception {
+        store.addResult("profile_480p", CamcorderProfile.hasProfile(CamcorderProfile.QUALITY_480P));
+        store.addResult("profile_720p", CamcorderProfile.hasProfile(CamcorderProfile.QUALITY_720P));
+        store.addResult("profile_1080p", CamcorderProfile.hasProfile(CamcorderProfile.QUALITY_1080P));
+        store.addResult("profile_cif", CamcorderProfile.hasProfile(CamcorderProfile.QUALITY_CIF));
+        store.addResult("profile_qcif", CamcorderProfile.hasProfile(CamcorderProfile.QUALITY_QCIF));
+        store.addResult("profile_qvga", CamcorderProfile.hasProfile(CamcorderProfile.QUALITY_QVGA));
     }
 }
