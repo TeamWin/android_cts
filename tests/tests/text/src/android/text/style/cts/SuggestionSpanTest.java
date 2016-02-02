@@ -48,7 +48,7 @@ public class SuggestionSpanTest extends TestCase {
         return original.toString();
     }
 
-    public void testGetLocaleObjectMain(final Locale locale) {
+    private void checkGetLocaleObject(final Locale locale) {
         final SuggestionSpan span = new SuggestionSpan(locale, new String[0],
                 SuggestionSpan.FLAG_AUTO_CORRECTION);
         // In the context of SuggestionSpan#getLocaleObject(), we do care only about subtags that
@@ -63,16 +63,16 @@ public class SuggestionSpanTest extends TestCase {
     }
 
     public void testGetLocaleObject() {
-        testGetLocaleObjectMain(Locale.forLanguageTag("en"));
-        testGetLocaleObjectMain(Locale.forLanguageTag("en-GB"));
-        testGetLocaleObjectMain(Locale.forLanguageTag("EN-GB"));
-        testGetLocaleObjectMain(Locale.forLanguageTag("en-gb"));
-        testGetLocaleObjectMain(Locale.forLanguageTag("En-gB"));
-        testGetLocaleObjectMain(Locale.forLanguageTag("und"));
-        testGetLocaleObjectMain(Locale.forLanguageTag("de-DE-u-co-phonebk"));
-        testGetLocaleObjectMain(Locale.forLanguageTag(""));
-        testGetLocaleObjectMain(null);
-        testGetLocaleObjectMain(new Locale(" an  ", " i n v a l i d ", "data"));
+        checkGetLocaleObject(Locale.forLanguageTag("en"));
+        checkGetLocaleObject(Locale.forLanguageTag("en-GB"));
+        checkGetLocaleObject(Locale.forLanguageTag("EN-GB"));
+        checkGetLocaleObject(Locale.forLanguageTag("en-gb"));
+        checkGetLocaleObject(Locale.forLanguageTag("En-gB"));
+        checkGetLocaleObject(Locale.forLanguageTag("und"));
+        checkGetLocaleObject(Locale.forLanguageTag("de-DE-u-co-phonebk"));
+        checkGetLocaleObject(Locale.forLanguageTag(""));
+        checkGetLocaleObject(null);
+        checkGetLocaleObject(new Locale(" an  ", " i n v a l i d ", "data"));
     }
 
     @NonNull
