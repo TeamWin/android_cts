@@ -96,7 +96,7 @@ public class CursorTreeAdapterTest extends InstrumentationTestCase {
     protected void setUp() throws Exception {
         super.setUp();
         mContext = getInstrumentation().getTargetContext();
-        File dbDir = mContext.getDir("tests", Context.MODE_WORLD_WRITEABLE);
+        File dbDir = mContext.getDir("tests", Context.MODE_PRIVATE);
         mDatabaseFile = new File(dbDir, "database_test.db");
         if (mDatabaseFile.exists()) {
             mDatabaseFile.delete();

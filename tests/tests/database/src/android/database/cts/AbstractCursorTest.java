@@ -403,7 +403,7 @@ public class AbstractCursorTest extends InstrumentationTestCase {
 
     private void setupDatabase() {
         File dbDir = getInstrumentation().getTargetContext().getDir("tests",
-                Context.MODE_WORLD_WRITEABLE);
+                Context.MODE_PRIVATE);
         mDatabaseFile = new File(dbDir, "database_test.db");
         if (mDatabaseFile.exists()) {
             mDatabaseFile.delete();

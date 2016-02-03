@@ -372,7 +372,7 @@ public class ParcelFileDescriptorTest extends AndroidTestCase {
 
         FileOutputStream fout = null;
 
-        fout = con.openFileOutput(fileName, Context.MODE_WORLD_WRITEABLE);
+        fout = con.openFileOutput(fileName, Context.MODE_PRIVATE);
 
         try {
             fout.write(new byte[] { 0x0, 0x1, 0x2, 0x3 });

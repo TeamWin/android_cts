@@ -346,11 +346,11 @@ public class ContextWrapperTest extends AndroidTestCase {
 
         // Test openOrCreateDatabase with null and actual factory
         mDatabase = mContextWrapper.openOrCreateDatabase(DATABASE_NAME1,
-                ContextWrapper.MODE_WORLD_READABLE | ContextWrapper.MODE_WORLD_WRITEABLE, factory);
+                ContextWrapper.MODE_PRIVATE, factory);
         assertNotNull(mDatabase);
         mDatabase.close();
         mDatabase = mContextWrapper.openOrCreateDatabase(DATABASE_NAME2,
-                ContextWrapper.MODE_WORLD_READABLE | ContextWrapper.MODE_WORLD_WRITEABLE, factory);
+                ContextWrapper.MODE_PRIVATE, factory);
         assertNotNull(mDatabase);
         mDatabase.close();
 
@@ -634,7 +634,7 @@ public class ContextWrapperTest extends AndroidTestCase {
     }
 
     public void testGetDir() {
-        File dir = mContextWrapper.getDir("testpath", Context.MODE_WORLD_WRITEABLE);
+        File dir = mContextWrapper.getDir("testpath", Context.MODE_PRIVATE);
         assertNotNull(dir);
         dir.delete();
     }

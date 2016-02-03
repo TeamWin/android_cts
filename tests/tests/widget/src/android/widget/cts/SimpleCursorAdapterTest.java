@@ -436,7 +436,7 @@ public class SimpleCursorAdapterTest extends InstrumentationTestCase {
 
         try {
             source = context.getResources().openRawResource(resId);
-            target = context.openFileOutput(fileName, Context.MODE_WORLD_WRITEABLE);
+            target = context.openFileOutput(fileName, Context.MODE_PRIVATE);
 
             byte[] buffer = new byte[1024];
             for (int len = source.read(buffer); len > 0; len = source.read(buffer)) {

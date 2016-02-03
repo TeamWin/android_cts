@@ -166,7 +166,7 @@ public class MediaControllerTest extends
 
         try {
             source = mActivity.getResources().openRawResource(R.raw.testvideo);
-            target = mActivity.openFileOutput(VIDEO_NAME, Context.MODE_WORLD_READABLE);
+            target = mActivity.openFileOutput(VIDEO_NAME, Context.MODE_PRIVATE);
 
             final byte[] buffer = new byte[1024];
             for (int len = source.read(buffer); len > 0; len = source.read(buffer)) {
