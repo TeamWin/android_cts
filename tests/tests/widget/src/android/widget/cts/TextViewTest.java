@@ -16,6 +16,7 @@
 
 package android.widget.cts;
 
+import android.graphics.drawable.ColorDrawable;
 import android.text.Html;
 import android.text.Spanned;
 import android.widget.cts.R;
@@ -3330,6 +3331,23 @@ public class TextViewTest extends ActivityInstrumentationTestCase2<TextViewCtsAc
         ColorStateList colors = ColorStateList.valueOf(Color.RED);
         mTextView.setCompoundDrawableTintList(colors);
         mTextView.setCompoundDrawableTintMode(PorterDuff.Mode.XOR);
+        assertSame(colors, mTextView.getCompoundDrawableTintList());
+        assertEquals(PorterDuff.Mode.XOR, mTextView.getCompoundDrawableTintMode());
+
+        // Ensure the tint is preserved across drawable changes.
+        mTextView.setCompoundDrawablesRelative(null, null, null, null);
+        assertSame(colors, mTextView.getCompoundDrawableTintList());
+        assertEquals(PorterDuff.Mode.XOR, mTextView.getCompoundDrawableTintMode());
+
+        mTextView.setCompoundDrawables(null, null, null, null);
+        assertSame(colors, mTextView.getCompoundDrawableTintList());
+        assertEquals(PorterDuff.Mode.XOR, mTextView.getCompoundDrawableTintMode());
+
+        ColorDrawable dr1 = new ColorDrawable(Color.RED);
+        ColorDrawable dr2 = new ColorDrawable(Color.GREEN);
+        ColorDrawable dr3 = new ColorDrawable(Color.BLUE);
+        ColorDrawable dr4 = new ColorDrawable(Color.YELLOW);
+        mTextView.setCompoundDrawables(dr1, dr2, dr3, dr4);
         assertSame(colors, mTextView.getCompoundDrawableTintList());
         assertEquals(PorterDuff.Mode.XOR, mTextView.getCompoundDrawableTintMode());
     }
