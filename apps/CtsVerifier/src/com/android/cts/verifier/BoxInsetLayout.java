@@ -14,9 +14,7 @@
  * limitations under the License
  */
 
-package android.support.wearable.view;
-
-import com.android.cts.verifier.R;
+package com.android.cts.verifier;
 
 import android.annotation.TargetApi;
 import android.os.Build;
