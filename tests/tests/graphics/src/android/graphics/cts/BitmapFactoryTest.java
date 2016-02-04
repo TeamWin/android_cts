@@ -27,6 +27,7 @@ import android.graphics.Rect;
 import android.graphics.Bitmap.CompressFormat;
 import android.graphics.Bitmap.Config;
 import android.graphics.BitmapFactory.Options;
+import android.os.Parcel;
 import android.os.ParcelFileDescriptor;
 import android.test.InstrumentationTestCase;
 import android.util.DisplayMetrics;
@@ -569,6 +570,32 @@ public class BitmapFactoryTest extends InstrumentationTestCase {
         // scaling should only occur if Options are passed with inScaled=true
         verifyScaled(BitmapFactory.decodeByteArray(bytes, 0, bytes.length, scaledOpt));
         verifyScaled(BitmapFactory.decodeStream(obtainInputStream(), null, scaledOpt));
+    }
+
+    // Test that writing an index8 bitmap to a Parcel succeeds.
+    public void testParcel() {
+        // Turn off scaling, which would convert to an 8888 bitmap, which does not expose
+        // the bug.
+        BitmapFactory.Options opts = new BitmapFactory.Options();
+        opts.inScaled = false;
+        Bitmap b = BitmapFactory.decodeResource(mRes, R.drawable.gif_test, opts);
+        assertNotNull(b);
+
+        // index8 has no Java equivalent, so the Config will be null.
+        assertNull(b.getConfig());
+
+        Parcel p = Parcel.obtain();
+        b.writeToParcel(p, 0);
+
+        p.setDataPosition(0);
+        Bitmap b2 = Bitmap.CREATOR.createFromParcel(p);
+        compareBitmaps(b, b2, 0, true, true);
+
+        // When this failed previously, the bitmap was missing a colortable, resulting in a crash
+        // attempting to compress by dereferencing a null pointer. Compress to verify that we do
+        // not crash, but succeed instead.
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        assertTrue(b2.compress(Bitmap.CompressFormat.JPEG, 50, baos));
     }
 
     public void testConfigs() {
