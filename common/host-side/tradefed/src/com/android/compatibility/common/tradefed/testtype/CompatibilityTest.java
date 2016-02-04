@@ -43,6 +43,7 @@ import com.android.tradefed.testtype.IRemoteTest;
 import com.android.tradefed.testtype.IShardableTest;
 import com.android.tradefed.util.AbiFormatter;
 import com.android.tradefed.util.ArrayUtil;
+import com.android.tradefed.util.TimeUtil;
 
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
@@ -51,6 +52,7 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 /**
  * A Test for running Compatibility Suites
@@ -254,7 +256,20 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
             }
             // Run the tests
             for (int i = 0; i < moduleCount; i++) {
-                modules.get(i).run(listener);
+                IModuleDef module = modules.get(i);
+                long start = System.currentTimeMillis();
+                module.run(listener);
+                long duration = System.currentTimeMillis() - start;
+                long expected = module.getRuntimeHint();
+                long delta = Math.abs(duration - expected);
+                // Show warning if delta is more than 10% of expected
+                if ((delta / expected) > 0.1f) {
+                    CLog.logAndDisplay(LogLevel.WARN,
+                            "Inaccurate runtime hint for %s, expected %s was %s",
+                            module.getId(),
+                            TimeUtil.formatElapsedTime(expected),
+                            TimeUtil.formatElapsedTime(duration));
+                }
             }
         } catch (FileNotFoundException fnfe) {
             throw new RuntimeException("Failed to initialize modules", fnfe);
