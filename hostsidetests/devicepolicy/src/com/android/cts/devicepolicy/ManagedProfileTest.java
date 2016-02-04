@@ -469,6 +469,14 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
                 mProfileUserId));
     }
 
+    public void testPasswordMinimumRestrictions() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
+        assertTrue(runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".PasswordMinimumRestrictionsTest",
+                mProfileUserId));
+    }
+
     public void testBluetoothContactSharingDisabled() throws Exception {
         if (!mHasFeature) {
             return;
