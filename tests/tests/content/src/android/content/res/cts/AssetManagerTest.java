@@ -124,7 +124,6 @@ public class AssetManagerTest extends AndroidTestCase{
         // special case for Filipino.
         final String KNOWN_LOCALES[] = {
             "cs",
-            "fa-IR",
             "fil",
             "fil-PH",
             "fr",
