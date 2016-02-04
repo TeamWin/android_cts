@@ -171,3 +171,70 @@ static void modeOutConvert(int2 *result, const Histogram *h) {
   result->x = mode;
   result->y = (*h)[mode];
 }
+
+/////////////////////////////////////////////////////////////////////////
+
+// Simple test case where there are two inputs
+#pragma rs reduce(sumxor) accumulator(sxAccum) combiner(sxCombine)
+
+static void sxAccum(int *accum, int inVal1, int inVal2) { *accum += (inVal1 ^ inVal2); }
+
+static void sxCombine(int *accum, const int *accum2) { *accum += *accum2; }
+
+/////////////////////////////////////////////////////////////////////////
+
+// Test case where inputs are of different types
+#pragma rs reduce(sillysum) accumulator(ssAccum) combiner(ssCombine)
+
+static void ssAccum(long *accum, char c, float f, int3 i3) {
+  *accum += ((((c + (long)ceil(log(f))) + i3.x) + i3.y) + i3.z);
+}
+
+static void ssCombine(long *accum, const long *accum2) { *accum += *accum2; }
+
+/////////////////////////////////////////////////////////////////////////
+
+// Test out-of-range result.
+// We don't care about the input at all.
+// We use these globals to configure the generation of the result.
+ulong oorrGoodResult;     // the value of a good result
+ulong oorrBadResultHalf;  // half the value of a bad result
+                          //   ("half" because Java can only set the global from long not from ulong)
+int   oorrBadPos;         // position of bad result
+
+#define oorrBadResult (2*oorrBadResultHalf)
+
+static void oorrAccum(int *accum, int val) { }
+
+#pragma rs reduce(oorrSca) accumulator(oorrAccum) outconverter(oorrScaOut)
+static void oorrScaOut(ulong *out, const int *accum) {
+  *out = (oorrBadPos ? oorrGoodResult : oorrBadResult);
+}
+
+#pragma rs reduce(oorrVec4) accumulator(oorrAccum) outconverter(oorrVec4Out)
+static void oorrVec4Out(ulong4 *out, const int *accum) {
+  out->x = (oorrBadPos==0 ? oorrBadResult : oorrGoodResult);
+  out->y = (oorrBadPos==1 ? oorrBadResult : oorrGoodResult);
+  out->z = (oorrBadPos==2 ? oorrBadResult : oorrGoodResult);
+  out->w = (oorrBadPos==3 ? oorrBadResult : oorrGoodResult);
+}
+
+#pragma rs reduce(oorrArr9) accumulator(oorrAccum) outconverter(oorrArr9Out)
+typedef ulong Arr9[9];
+static void oorrArr9Out(Arr9 *out, const int *accum) {
+  for (int i = 0; i < 9; ++i)
+    (*out)[i] = (i == oorrBadPos ? oorrBadResult : oorrGoodResult);
+}
+
+#pragma rs reduce(oorrArr9Vec4) accumulator(oorrAccum) outconverter(oorrArr9Vec4Out)
+typedef ulong4 Arr9Vec4[9];
+static void oorrArr9Vec4Out(Arr9Vec4 *out, const int *accum) {
+  const int badIdx = (oorrBadPos >= 0 ? oorrBadPos / 4: -1);
+  const int badComp = (oorrBadPos >= 0 ? oorrBadPos % 4: -1);
+  for (int i = 0; i < 9; ++i) {
+    (*out)[i].x = ((i==badIdx) && (0==badComp)) ? oorrBadResult : oorrGoodResult;
+    (*out)[i].y = ((i==badIdx) && (1==badComp)) ? oorrBadResult : oorrGoodResult;
+    (*out)[i].z = ((i==badIdx) && (2==badComp)) ? oorrBadResult : oorrGoodResult;
+    (*out)[i].w = ((i==badIdx) && (3==badComp)) ? oorrBadResult : oorrGoodResult;
+  }
+}
