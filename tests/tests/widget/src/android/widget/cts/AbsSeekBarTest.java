@@ -138,21 +138,18 @@ public class AbsSeekBarTest extends ActivityInstrumentationTestCase2<ProgressBar
         assertFalse(myAbsSeekBar.verifyDrawable(drawable2));
         assertFalse(myAbsSeekBar.verifyDrawable(drawable3));
         assertFalse(myAbsSeekBar.verifyDrawable(drawable4));
-        assertTrue(myAbsSeekBar.verifyDrawable(null));
 
         myAbsSeekBar.setThumb(drawable1);
         assertTrue(myAbsSeekBar.verifyDrawable(drawable1));
         assertFalse(myAbsSeekBar.verifyDrawable(drawable2));
         assertFalse(myAbsSeekBar.verifyDrawable(drawable3));
         assertFalse(myAbsSeekBar.verifyDrawable(drawable4));
-        assertTrue(myAbsSeekBar.verifyDrawable(null));
 
         myAbsSeekBar.setThumb(drawable2);
         assertFalse(myAbsSeekBar.verifyDrawable(drawable1));
         assertTrue(myAbsSeekBar.verifyDrawable(drawable2));
         assertFalse(myAbsSeekBar.verifyDrawable(drawable3));
         assertFalse(myAbsSeekBar.verifyDrawable(drawable4));
-        assertTrue(myAbsSeekBar.verifyDrawable(null));
 
         myAbsSeekBar.setBackgroundDrawable(drawable2);
         myAbsSeekBar.setProgressDrawable(drawable3);
@@ -161,7 +158,6 @@ public class AbsSeekBarTest extends ActivityInstrumentationTestCase2<ProgressBar
         assertTrue(myAbsSeekBar.verifyDrawable(drawable2));
         assertTrue(myAbsSeekBar.verifyDrawable(drawable3));
         assertTrue(myAbsSeekBar.verifyDrawable(drawable4));
-        assertFalse(myAbsSeekBar.verifyDrawable(null));
     }
 
     public void testAccessKeyProgressIncrement() throws Throwable {
