@@ -203,6 +203,7 @@ public class TvInputServiceTest extends ActivityInstrumentationTestCase2<TvViewS
         verifyCommandTimeShiftResume();
         verifyCommandTimeShiftSeekTo();
         verifyCommandTimeShiftSetPlaybackParams();
+        verifyCommandTimeShiftPlay();
         verifyCommandSetTimeShiftPositionCallback();
         verifyCommandOverlayViewSizeChanged();
         verifyCallbackChannelRetuned();
@@ -529,6 +530,20 @@ public class TvInputServiceTest extends ActivityInstrumentationTestCase2<TvViewS
         }.run();
     }
 
+    public void verifyCommandTimeShiftPlay() {
+        resetCounts();
+        Uri fakeRecordedProgramUri = TvContract.buildRecordedProgramUri(0);
+        mTvView.timeShiftPlay(mStubInfo.getId(), fakeRecordedProgramUri);
+        mInstrumentation.waitForIdleSync();
+        new PollingCheck(TIME_OUT) {
+            @Override
+            protected boolean check() {
+                CountingSession session = CountingTvInputService.sSession;
+                return session != null && session.mTimeShiftPlayCount > 0;
+            }
+        }.run();
+    }
+
     public void verifyCommandSetTimeShiftPositionCallback() {
         resetCounts();
         mTvView.setTimeShiftPositionCallback(mTimeShiftPositionCallback);
@@ -755,6 +770,7 @@ public class TvInputServiceTest extends ActivityInstrumentationTestCase2<TvViewS
             public volatile int mTimeShiftResumeCount;
             public volatile int mTimeShiftSeekToCount;
             public volatile int mTimeShiftSetPlaybackParamsCount;
+            public volatile int mTimeShiftPlayCount;
             public volatile long mTimeShiftGetCurrentPositionCount;
             public volatile long mTimeShiftGetStartPositionCount;
 
@@ -780,6 +796,7 @@ public class TvInputServiceTest extends ActivityInstrumentationTestCase2<TvViewS
                 mTimeShiftResumeCount = 0;
                 mTimeShiftSeekToCount = 0;
                 mTimeShiftSetPlaybackParamsCount = 0;
+                mTimeShiftPlayCount = 0;
                 mTimeShiftGetCurrentPositionCount = 0;
                 mTimeShiftGetStartPositionCount = 0;
             }
@@ -881,6 +898,11 @@ public class TvInputServiceTest extends ActivityInstrumentationTestCase2<TvViewS
             @Override
             public void onTimeShiftSetPlaybackParams(PlaybackParams param) {
                 mTimeShiftSetPlaybackParamsCount++;
+            }
+
+            @Override
+            public void onTimeShiftPlay(Uri recordedProgramUri) {
+                mTimeShiftPlayCount++;
             }
 
             @Override

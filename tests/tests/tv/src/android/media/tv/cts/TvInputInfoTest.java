@@ -157,4 +157,23 @@ public class TvInputInfoTest extends AndroidTestCase {
         assertEquals(mStubInfo.loadLabel(getContext()),
                 mStubInfo.getServiceInfo().loadLabel(mPackageManager));
     }
+
+    public void testBuilder() throws Exception {
+        if (!Utils.hasTvInputFramework(getContext())) {
+            return;
+        }
+        TvInputInfo defaultInfo = new TvInputInfo.Builder(getContext(),
+                StubTunerTvInputService.class).build();
+        assertEquals(1, defaultInfo.getTunerCount());
+        assertFalse(defaultInfo.canRecord());
+        assertEquals(mStubInfo.getId(), defaultInfo.getId());
+        assertEquals(mStubInfo.getTunerCount(), defaultInfo.getTunerCount());
+        assertEquals(mStubInfo.canRecord(), defaultInfo.canRecord());
+
+        TvInputInfo updatedInfo = new TvInputInfo.Builder(getContext(),
+                StubTunerTvInputService.class).setTunerCount(10).setCanRecord(true).build();
+        assertEquals(mStubInfo.getId(), updatedInfo.getId());
+        assertEquals(10, updatedInfo.getTunerCount());
+        assertTrue(updatedInfo.canRecord());
+    }
 }
