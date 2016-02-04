@@ -27,11 +27,11 @@ public class LocaleSpanTest extends TestCase {
 
     private void checkGetLocales(@NonNull final LocaleList locales) {
         final LocaleSpan span = new LocaleSpan(locales);
-        assertEquals(locales.getPrimary(), span.getLocale());
+        assertEquals(locales.get(0), span.getLocale());
         assertEquals(locales, span.getLocales());
 
         final LocaleSpan cloned = cloneViaParcel(span);
-        assertEquals(locales.getPrimary(), cloned.getLocale());
+        assertEquals(locales.get(0), cloned.getLocale());
         assertEquals(locales, cloned.getLocales());
     }
 

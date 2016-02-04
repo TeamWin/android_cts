@@ -28,7 +28,7 @@ public class LocaleListTest extends AndroidTestCase {
         assertNotNull(ll);
         assertTrue(ll.isEmpty());
         assertEquals(0, ll.size());
-        assertNull(ll.getPrimary());
+        assertNull(ll.get(0));
         assertNull(ll.get(1));
         assertNull(ll.get(10));
 
@@ -36,7 +36,7 @@ public class LocaleListTest extends AndroidTestCase {
         assertNotNull(ll);
         assertTrue(ll.isEmpty());
         assertEquals(0, ll.size());
-        assertNull(ll.getPrimary());
+        assertNull(ll.get(0));
         assertNull(ll.get(1));
         assertNull(ll.get(10));
 
@@ -44,7 +44,7 @@ public class LocaleListTest extends AndroidTestCase {
         assertNotNull(ll);
         assertTrue(ll.isEmpty());
         assertEquals(0, ll.size());
-        assertNull(ll.getPrimary());
+        assertNull(ll.get(0));
         assertNull(ll.get(1));
         assertNull(ll.get(10));
 
@@ -52,7 +52,7 @@ public class LocaleListTest extends AndroidTestCase {
         assertNotNull(ll);
         assertTrue(ll.isEmpty());
         assertEquals(0, ll.size());
-        assertNull(ll.getPrimary());
+        assertNull(ll.get(0));
         assertNull(ll.get(1));
         assertNull(ll.get(10));
     }
@@ -62,7 +62,6 @@ public class LocaleListTest extends AndroidTestCase {
         assertNotNull(ll);
         assertFalse(ll.isEmpty());
         assertEquals(1, ll.size());
-        assertEquals(Locale.US, ll.getPrimary());
         assertEquals(Locale.US, ll.get(0));
         assertNull(ll.get(10));
     }
@@ -74,7 +73,6 @@ public class LocaleListTest extends AndroidTestCase {
         assertNotNull(ll);
         assertFalse(ll.isEmpty());
         assertEquals(2, ll.size());
-        assertEquals(enPH, ll.getPrimary());
         assertEquals(enPH, ll.get(0));
         assertEquals(Locale.US, ll.get(1));
         assertNull(ll.get(10));
