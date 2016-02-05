@@ -326,6 +326,15 @@ public class GradientDrawableTest extends AndroidTestCase {
     public void testPreloadDensity() throws XmlPullParserException, IOException {
         final Resources res = getContext().getResources();
         final int densityDpi = res.getConfiguration().densityDpi;
+        try {
+            testPreloadDensityInner(res, densityDpi);
+        } finally {
+            DrawableTestUtils.setResourcesDensity(res, densityDpi);
+        }
+    }
+
+    private void testPreloadDensityInner(Resources res, int densityDpi)
+            throws XmlPullParserException, IOException {
         final Rect tempPadding = new Rect();
 
         // Capture initial state at default density.
