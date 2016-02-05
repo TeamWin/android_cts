@@ -63,9 +63,18 @@ public class AudioFlingerBinderTest extends TestCase {
         assertTrue(native_test_createEffect());
     }
 
+    /**
+     * Checks that passing a sample rate of 0 to IAudioFlinger::getInputBufferSize()
+     * does not cause a crash in audioserver.
+     */
+    public void test_getInputBufferSize() throws Exception {
+        assertTrue(native_test_getInputBufferSize());
+    }
+
     private static native boolean native_test_setMasterMute();
     private static native boolean native_test_setMasterVolume();
     private static native boolean native_test_listAudioPorts();
     private static native boolean native_test_listAudioPatches();
     private static native boolean native_test_createEffect();
+    private static native boolean native_test_getInputBufferSize();
 }
