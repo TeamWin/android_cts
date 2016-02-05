@@ -1660,10 +1660,19 @@ public class LayerDrawableTest extends AndroidTestCase {
         assertEquals(50, ((BitmapDrawable) d3.getDrawable(0)).getPaint().getAlpha());
     }
 
+
     public void testPreloadDensity() throws XmlPullParserException, IOException {
         final Resources res = getContext().getResources();
         final int densityDpi = res.getConfiguration().densityDpi;
+        try {
+            testPreloadDensityInner(res, densityDpi);
+        } finally {
+            DrawableTestUtils.setResourcesDensity(res, densityDpi);
+        }
+    }
 
+    private void testPreloadDensityInner(Resources res, int densityDpi)
+            throws XmlPullParserException, IOException {
         // Capture initial state at default density.
         final XmlResourceParser parser = DrawableTestUtils.getResourceParser(
                 res, R.drawable.layer_drawable_density);
