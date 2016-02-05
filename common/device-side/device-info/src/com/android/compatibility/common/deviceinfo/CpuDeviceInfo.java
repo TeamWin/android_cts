@@ -15,13 +15,15 @@
  */
 package com.android.compatibility.common.deviceinfo;
 
+import com.android.compatibility.common.util.InfoStore;
+
 /**
  * CPU device info collector.
  */
 public final class CpuDeviceInfo extends DeviceInfo {
 
     @Override
-    protected void collectDeviceInfo() {
-        addResult("available_processors", Runtime.getRuntime().availableProcessors());
+    protected void collectDeviceInfo(InfoStore store) throws Exception {
+        store.addResult("available_processors", Runtime.getRuntime().availableProcessors());
     }
 }

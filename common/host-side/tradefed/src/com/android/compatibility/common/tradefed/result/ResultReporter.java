@@ -59,6 +59,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 
 /**
  * Reporter for Compatibility test results.
@@ -68,7 +69,7 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
        ITestSummaryListener {
 
     private static final String RESULT_KEY = "COMPATIBILITY_TEST_RESULT";
-    private static final String DEVICE_INFO_GENERIC = "DEVICE_INFO_GENERIC_";
+    private static final String DEVICE_INFO = "DEVICE_INFO_";
     private static final String[] RESULT_RESOURCES = {
         "compatibility_result.css",
         "compatibility_result.xsd",
@@ -266,13 +267,11 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
      */
     @Override
     public void testRunEnded(long elapsedTime, Map<String, String> metrics) {
-        // Check build attributes to add generic device info to report.
-        Map<String, String> buildAttributes = mBuild.getBuildAttributes();
-        for (Map.Entry<String, String> attributeEntry : buildAttributes.entrySet()) {
-            String key = attributeEntry.getKey();
-            String value = attributeEntry.getValue();
-            if (key.startsWith(DEVICE_INFO_GENERIC)) {
-                mResult.addBuildInfo(key.substring(DEVICE_INFO_GENERIC.length()), value);
+        // Get device info from build attributes
+        for (Entry<String, String> entry : mBuild.getBuildAttributes().entrySet()) {
+            String key = entry.getKey();
+            if (key.startsWith(DEVICE_INFO)) {
+                mResult.addBuildInfo(key.substring(DEVICE_INFO.length()), entry.getValue());
             }
         }
         mCurrentModuleResult.addRuntime(elapsedTime);

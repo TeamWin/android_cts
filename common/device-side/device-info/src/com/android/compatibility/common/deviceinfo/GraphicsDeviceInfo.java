@@ -17,6 +17,8 @@ package com.android.compatibility.common.deviceinfo;
 
 import android.os.Bundle;
 
+import com.android.compatibility.common.util.InfoStore;
+
 /**
  * Graphics device info collector.
  */
@@ -25,18 +27,18 @@ public final class GraphicsDeviceInfo extends DeviceInfo {
     private static final String LOG_TAG = "GraphicsDeviceInfo";
 
     @Override
-    protected void collectDeviceInfo() {
+    protected void collectDeviceInfo(InfoStore store) throws Exception {
         GlesStubActivity stubActivity = GraphicsDeviceInfo.this.launchActivity(
                 "com.android.compatibility.common.deviceinfo",
                 GlesStubActivity.class,
                 new Bundle());
         stubActivity.waitForActivityToFinish();
 
-        addResult("gl_version", stubActivity.getGlVersion());
-        addResult("vendor", stubActivity.getVendor());
-        addResult("renderer", stubActivity.getRenderer());
+        store.addResult("gl_version", stubActivity.getGlVersion());
+        store.addResult("vendor", stubActivity.getVendor());
+        store.addResult("renderer", stubActivity.getRenderer());
 
-        addArray("gl_texture", stubActivity.getCompressedTextureFormats());
-        addArray("gl_extension", stubActivity.getOpenGlExtensions());
+        store.addListResult("gl_texture", stubActivity.getCompressedTextureFormats());
+        store.addListResult("gl_extension", stubActivity.getOpenGlExtensions());
     }
 }

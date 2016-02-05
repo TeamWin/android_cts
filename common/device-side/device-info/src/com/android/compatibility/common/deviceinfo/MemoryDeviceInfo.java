@@ -21,6 +21,7 @@ import android.content.Context;
 import android.os.Bundle;
 
 import com.android.compatibility.common.deviceinfo.DeviceInfo;
+import com.android.compatibility.common.util.InfoStore;
 
 /**
  * MemoryDeviceInfo collector.
@@ -28,15 +29,15 @@ import com.android.compatibility.common.deviceinfo.DeviceInfo;
 public final class MemoryDeviceInfo extends DeviceInfo {
 
     @Override
-    protected void collectDeviceInfo() {
+    protected void collectDeviceInfo(InfoStore store) throws Exception {
         ActivityManager activityManager = (ActivityManager)getInstrumentation()
                 .getTargetContext().getSystemService(Context.ACTIVITY_SERVICE);
-        addResult("low_ram_device", activityManager.isLowRamDevice());
-        addResult("memory_class", activityManager.getMemoryClass());
-        addResult("large_memory_class", activityManager.getLargeMemoryClass());
+        store.addResult("low_ram_device", activityManager.isLowRamDevice());
+        store.addResult("memory_class", activityManager.getMemoryClass());
+        store.addResult("large_memory_class", activityManager.getLargeMemoryClass());
 
         MemoryInfo memoryInfo = new MemoryInfo();
         activityManager.getMemoryInfo(memoryInfo);
-        addResult("total_memory", memoryInfo.totalMem);
+        store.addResult("total_memory", memoryInfo.totalMem);
     }
 }

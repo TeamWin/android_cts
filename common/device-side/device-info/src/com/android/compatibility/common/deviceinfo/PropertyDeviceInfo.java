@@ -17,6 +17,8 @@ package com.android.compatibility.common.deviceinfo;
 
 import android.util.Log;
 
+import com.android.compatibility.common.util.InfoStore;
+
 import java.io.IOException;
 import java.util.List;
 import java.util.Scanner;
@@ -31,16 +33,16 @@ public final class PropertyDeviceInfo extends DeviceInfo {
     private static final String LOG_TAG = "PropertyDeviceInfo";
 
     @Override
-    protected void collectDeviceInfo() {
+    protected void collectDeviceInfo(InfoStore store) throws Exception {
         try {
-            collectRoProperties();
+            collectRoProperties(store);
         } catch (IOException e) {
             Log.w(LOG_TAG, "Failed to collect properties", e);
         }
     }
 
-    private void collectRoProperties() throws IOException {
-        startArray("ro_property");
+    private void collectRoProperties(InfoStore store) throws IOException {
+        store.startArray("ro_property");
         Pattern pattern = Pattern.compile("\\[(ro.+)\\]: \\[(.+)\\]");
         Scanner scanner = null;
         try {
@@ -53,14 +55,14 @@ public final class PropertyDeviceInfo extends DeviceInfo {
                     String name = matcher.group(1);
                     String value = matcher.group(2);
 
-                    startGroup();
-                    addResult("name", name);
-                    addResult("value", value);
-                    endGroup();
+                    store.startGroup();
+                    store.addResult("name", name);
+                    store.addResult("value", value);
+                    store.endGroup();
                 }
             }
         } finally {
-            endArray();
+            store.endArray();
             if (scanner != null) {
                 scanner.close();
             }

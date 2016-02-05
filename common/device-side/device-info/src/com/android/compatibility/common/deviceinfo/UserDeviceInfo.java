@@ -17,6 +17,8 @@ package com.android.compatibility.common.deviceinfo;
 
 import android.os.UserManager;
 
+import com.android.compatibility.common.util.InfoStore;
+
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -27,8 +29,8 @@ import java.lang.reflect.Method;
 public final class UserDeviceInfo extends DeviceInfo {
 
     @Override
-    protected void collectDeviceInfo() {
-        addResult("max_supported_users", getMaxSupportedUsers());
+    protected void collectDeviceInfo(InfoStore store) throws Exception {
+        store.addResult("max_supported_users", getMaxSupportedUsers());
     }
 
     private int getMaxSupportedUsers() {

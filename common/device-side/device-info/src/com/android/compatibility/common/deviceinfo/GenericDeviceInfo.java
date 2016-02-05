@@ -36,7 +36,6 @@ import com.android.compatibility.common.util.InfoStore;
  */
 public class GenericDeviceInfo extends DeviceInfo {
 
-    public static final String DEVICE_INFO_GENERIC = "DEVICE_INFO_GENERIC_%s";
     public static final String BUILD_ID = "build_id";
     public static final String BUILD_PRODUCT = "build_product";
     public static final String BUILD_DEVICE = "build_device";
@@ -94,17 +93,6 @@ public class GenericDeviceInfo extends DeviceInfo {
                     SystemProperties.get("ro.build.version.base_os", ""));
             store.addResult(BUILD_VERSION_SECURITY_PATCH,
                     SystemProperties.get("ro.build.version.security_patch", ""));
-        }
-    }
-
-    private void addDeviceInfo(String key, String value) {
-        mDeviceInfo.put(key, value);
-        addResult(key, value);
-    }
-
-    protected void putDeviceInfo(Bundle bundle) {
-        for (Entry<String, String> entry : mDeviceInfo.entrySet()) {
-            bundle.putString(String.format(DEVICE_INFO_GENERIC, entry.getKey()), entry.getValue());
         }
     }
 }

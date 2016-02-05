@@ -26,6 +26,8 @@ import android.media.MediaCodecInfo;
 import android.media.MediaCodecInfo.CodecProfileLevel;
 import android.media.MediaCodecList;
 
+import com.android.compatibility.common.util.InfoStore;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -35,51 +37,37 @@ import java.util.List;
 public final class MediaDeviceInfo extends DeviceInfo {
 
     @Override
-    protected void collectDeviceInfo() {
-
-        startArray("media_codec_info");
-
+    protected void collectDeviceInfo(InfoStore store) throws Exception {
+        store.startArray("media_codec_info");
         for (int i = 0; i < MediaCodecList.getCodecCount(); i++) {
             MediaCodecInfo info = MediaCodecList.getCodecInfoAt(i);
 
-            startGroup();
-            addResult("name", info.getName());
-            addResult("encoder", info.isEncoder());
+            store.startGroup();
+            store.addResult("name", info.getName());
+            store.addResult("encoder", info.isEncoder());
 
-            startArray("supported_type");
+            store.startArray("supported_type");
             for (String type : info.getSupportedTypes()) {
 
-                startGroup();
-                addResult("type", type);
+                store.startGroup();
+                store.addResult("type", type);
                 if (info.getCapabilitiesForType(type).profileLevels.length > 0) {
-
-                    List<Integer> levelList = new ArrayList<>();
-                    List<Integer> profileList = new ArrayList<>();
-                    startArray("codec_profile_level");
-
+                    store.startArray("codec_profile_level");
                     for (CodecProfileLevel profileLevel :
                              info.getCapabilitiesForType(type).profileLevels) {
-                        startGroup();
-                        addResult("level", profileLevel.level);
-                        addResult("profile", profileLevel.profile);
-                        endGroup();
+                        store.startGroup();
+                        store.addResult("level", profileLevel.level);
+                        store.addResult("profile", profileLevel.profile);
+                        store.endGroup();
                     }
-                    endArray(); // codec_profile_level
+                    store.endArray(); // codec_profile_level
                 }
-                endGroup();
+                store.endGroup();
             }
-            endArray();
-            endGroup();
+            store.endArray();
+            store.endGroup();
         }
 
-        endArray(); // media_codec_profile
-    }
-
-    static int[] toIntArray(List<Integer> integerList) {
-        int[] intArray = new int[integerList.size()];
-        for (int i = 0; i < integerList.size(); i++) {
-            intArray[i] = integerList.get(i);
-        }
-        return intArray;
+        store.endArray(); // media_codec_profile
     }
 }

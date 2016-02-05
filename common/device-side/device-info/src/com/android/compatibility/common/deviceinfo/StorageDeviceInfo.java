@@ -18,6 +18,8 @@ package com.android.compatibility.common.deviceinfo;
 import android.os.Environment;
 import android.util.Log;
 
+import com.android.compatibility.common.util.InfoStore;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -30,7 +32,7 @@ public class StorageDeviceInfo extends DeviceInfo {
     private static final String TAG = "StorageDeviceInfo";
 
     @Override
-    protected void collectDeviceInfo() {
+    protected void collectDeviceInfo(InfoStore store) throws Exception {
         int total = 0;
         total = Math.max(total, getContext().getExternalCacheDirs().length);
         total = Math.max(total, getContext().getExternalFilesDirs(null).length);
@@ -51,20 +53,20 @@ public class StorageDeviceInfo extends DeviceInfo {
             physical = total;
         }
 
-        addResult("num_physical", physical);
-        addResult("num_emulated", emulated);
+        store.addResult("num_physical", physical);
+        store.addResult("num_emulated", emulated);
 
-        addArray("raw_partition", scanPartitions());
+        store.addListResult("raw_partition", scanPartitions());
     }
 
-    private String[] scanPartitions() {
+    private List<String> scanPartitions() {
         List<String> partitionList = new ArrayList<>();
         try {
             Process df = new ProcessBuilder("df").start();
             Scanner scanner = new Scanner(df.getInputStream());
             try {
                 while (scanner.hasNextLine()) {
-                   partitionList.add(scanner.nextLine());
+                    partitionList.add(scanner.nextLine());
                 }
             } finally {
                 scanner.close();
@@ -72,7 +74,7 @@ public class StorageDeviceInfo extends DeviceInfo {
         } catch (Exception e) {
             Log.w(TAG, Log.getStackTraceString(e));
         }
-        return partitionList.toArray(new String[partitionList.size()]);
+        return partitionList;
     }
 
 }
