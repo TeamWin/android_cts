@@ -727,7 +727,7 @@ public class SELinuxHostTest extends DeviceTestCase {
             tDevice.executeShellCommand("toybox ps -A -o label,user,pid,ppid,cmdline", psOut);
             String psOutString = psOut.getOutput();
             Pattern p = Pattern.compile(
-                    "^([\\w_:]+)\\s+([\\w_]+)\\s+(\\d+)\\s+(\\d+)\\s+(\\p{Graph}+)\\s*$",
+                    "^([\\w_:]+)\\s+([\\w_]+)\\s+(\\d+)\\s+(\\d+)\\s+(\\p{Graph}+)(\\s\\p{Graph}+)*\\s*$",
                     Pattern.MULTILINE);
             Matcher m = p.matcher(psOutString);
             procMap = new HashMap<String, ArrayList<ProcessDetails>>();
