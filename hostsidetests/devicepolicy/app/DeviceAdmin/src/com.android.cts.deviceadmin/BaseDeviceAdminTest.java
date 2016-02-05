@@ -16,10 +16,22 @@
 package com.android.cts.deviceadmin;
 
 import android.app.admin.DeviceAdminReceiver;
+import android.content.ComponentName;
+import android.test.AndroidTestCase;
 
-/**
- * Active admin with no android:permission="android.permission.BIND_DEVICE_ADMIN".  It can still
- * be activated if the target API level <= 23, but not >= 24.
- */
-public class DeviceAdminReceiverWithNoProtection extends DeviceAdminReceiver {
+public class BaseDeviceAdminTest extends AndroidTestCase {
+
+    public static class AdminReceiver extends DeviceAdminReceiver {
+    }
+
+    protected String mPackageName;
+    protected ComponentName mAdminComponent;
+
+    @Override
+    protected void setUp() throws Exception {
+        super.setUp();
+
+        mPackageName = getContext().getPackageName();
+        mAdminComponent = new ComponentName(getContext(), AdminReceiver.class);
+    }
 }
