@@ -29,6 +29,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import com.android.compatibility.common.deviceinfo.DeviceInfo;
+import com.android.compatibility.common.util.InfoStore;
 
 /**
  * Generic device info collector.
@@ -60,39 +61,38 @@ public class GenericDeviceInfo extends DeviceInfo {
     private final Map<String, String> mDeviceInfo = new HashMap<>();
 
     @Override
-    protected void collectDeviceInfo() {
-        addDeviceInfo(BUILD_ID, Build.ID);
-        addDeviceInfo(BUILD_PRODUCT, Build.PRODUCT);
-        addDeviceInfo(BUILD_DEVICE, Build.DEVICE);
-        addDeviceInfo(BUILD_BOARD, Build.BOARD);
-        addDeviceInfo(BUILD_MANUFACTURER, Build.MANUFACTURER);
-        addDeviceInfo(BUILD_BRAND, Build.BRAND);
-        addDeviceInfo(BUILD_MODEL, Build.MODEL);
-        addDeviceInfo(BUILD_TYPE, Build.TYPE);
-        addDeviceInfo(BUILD_FINGERPRINT, Build.FINGERPRINT);
-        addDeviceInfo(BUILD_ABI, Build.CPU_ABI);
-        addDeviceInfo(BUILD_ABI2, Build.CPU_ABI2);
-        addDeviceInfo(BUILD_SERIAL, Build.SERIAL);
-        addDeviceInfo(BUILD_VERSION_RELEASE, Build.VERSION.RELEASE);
-        addDeviceInfo(BUILD_VERSION_SDK, Build.VERSION.SDK);
-        addDeviceInfo(BUILD_VERSION_SDK_INT, Integer.toString(Build.VERSION.SDK_INT));
+    protected void collectDeviceInfo(InfoStore store) throws Exception {
+        store.addResult(BUILD_ID, Build.ID);
+        store.addResult(BUILD_PRODUCT, Build.PRODUCT);
+        store.addResult(BUILD_DEVICE, Build.DEVICE);
+        store.addResult(BUILD_BOARD, Build.BOARD);
+        store.addResult(BUILD_MANUFACTURER, Build.MANUFACTURER);
+        store.addResult(BUILD_BRAND, Build.BRAND);
+        store.addResult(BUILD_MODEL, Build.MODEL);
+        store.addResult(BUILD_TYPE, Build.TYPE);
+        store.addResult(BUILD_FINGERPRINT, Build.FINGERPRINT);
+        store.addResult(BUILD_ABI, Build.CPU_ABI);
+        store.addResult(BUILD_ABI2, Build.CPU_ABI2);
+        store.addResult(BUILD_SERIAL, Build.SERIAL);
+        store.addResult(BUILD_VERSION_RELEASE, Build.VERSION.RELEASE);
+        store.addResult(BUILD_VERSION_SDK, Build.VERSION.SDK);
 
         // Collect build fields available in API level 21
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            addDeviceInfo(BUILD_ABIS, TextUtils.join(",", Build.SUPPORTED_ABIS));
-            addDeviceInfo(BUILD_ABIS_32, TextUtils.join(",", Build.SUPPORTED_32_BIT_ABIS));
-            addDeviceInfo(BUILD_ABIS_64, TextUtils.join(",", Build.SUPPORTED_64_BIT_ABIS));
+            store.addResult(BUILD_ABIS, TextUtils.join(",", Build.SUPPORTED_ABIS));
+            store.addResult(BUILD_ABIS_32, TextUtils.join(",", Build.SUPPORTED_32_BIT_ABIS));
+            store.addResult(BUILD_ABIS_64, TextUtils.join(",", Build.SUPPORTED_64_BIT_ABIS));
         }
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            addDeviceInfo(BUILD_VERSION_BASE_OS, Build.VERSION.BASE_OS);
-            addDeviceInfo(BUILD_VERSION_SECURITY_PATCH, Build.VERSION.SECURITY_PATCH);
+            store.addResult(BUILD_VERSION_BASE_OS, Build.VERSION.BASE_OS);
+            store.addResult(BUILD_VERSION_SECURITY_PATCH, Build.VERSION.SECURITY_PATCH);
         } else {
             // Access system properties directly because Build.Version.BASE_OS and
             // Build.Version.SECURITY_PATCH are not defined pre-M.
-            addDeviceInfo(BUILD_VERSION_BASE_OS,
+            store.addResult(BUILD_VERSION_BASE_OS,
                     SystemProperties.get("ro.build.version.base_os", ""));
-            addDeviceInfo(BUILD_VERSION_SECURITY_PATCH,
+            store.addResult(BUILD_VERSION_SECURITY_PATCH,
                     SystemProperties.get("ro.build.version.security_patch", ""));
         }
     }
