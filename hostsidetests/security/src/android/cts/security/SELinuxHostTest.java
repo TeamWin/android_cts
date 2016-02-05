@@ -34,7 +34,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.lang.String;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -724,7 +723,8 @@ public class SELinuxHostTest extends DeviceTestCase {
 
             /* take the output of a ps -Z to do our analysis */
             CollectingOutputReceiver psOut = new CollectingOutputReceiver();
-            tDevice.executeShellCommand("ps -Z", psOut);
+            // TODO: remove "toybox" below and just run "ps"
+            tDevice.executeShellCommand("toybox ps -A -o label,user,pid,ppid,cmdline", psOut);
             String psOutString = psOut.getOutput();
             Pattern p = Pattern.compile(
                     "^([\\w_:]+)\\s+([\\w_]+)\\s+(\\d+)\\s+(\\d+)\\s+(\\p{Graph}+)\\s*$",
@@ -743,7 +743,7 @@ public class SELinuxHostTest extends DeviceTestCase {
                     procMap.put(domainLabel, new ArrayList<ProcessDetails>());
                 }
                 procMap.get(domainLabel).add(proc);
-                if (procTitle.equals("kthreadd") && ppid == 0) {
+                if (procTitle.equals("[kthreadd]") && ppid == 0) {
                     kernelParentThreadpid = pid;
                 }
                 if (exeMap.get(procTitle) == null) {
