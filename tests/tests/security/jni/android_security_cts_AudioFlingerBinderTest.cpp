@@ -18,6 +18,8 @@
 
 #include <jni.h>
 #include <binder/IServiceManager.h>
+#include <binder/IPCThreadState.h>
+#include <binder/ProcessState.h>
 #include <media/IAudioFlinger.h>
 #include <media/AudioSystem.h>
 #include <system/audio.h>
@@ -71,6 +73,9 @@ static bool connectAudioFlinger(sp<IAudioFlinger>& af, sp<MyDeathClient> &dr)
             binder->linkToDeath(dr);
         }
     }
+    // Allow binderDied() to be called on MyDeathClient
+    sp<ProcessState> proc(ProcessState::self());
+    ProcessState::self()->startThreadPool();
     return true;
 }
 
@@ -289,6 +294,31 @@ jboolean android_security_cts_AudioFlinger_test_createEffect(JNIEnv* env __unuse
     return true;
 }
 
+
+#define NUM_ATTEMPTS 5
+
+jboolean android_security_cts_AudioFlinger_test_getInputBufferSize(JNIEnv* env __unused,
+                                                             jobject thiz __unused)
+{
+    sp<IAudioFlinger> af;
+    sp<MyDeathClient> dr;
+
+    if (!connectAudioFlinger(af, dr)) {
+        return false;
+    }
+
+    for (size_t i = 0; i < NUM_ATTEMPTS; i++) {
+        af->getInputBufferSize(0, AUDIO_FORMAT_PCM_16_BIT, AUDIO_CHANNEL_IN_MONO);
+        sleep(1);
+        // Check that mediaserver did not crash
+        if (dr->afIsDead()) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
 static JNINativeMethod gMethods[] = {
     {  "native_test_setMasterMute", "()Z",
             (void *) android_security_cts_AudioFlinger_test_setMasterMute },
@@ -300,6 +330,8 @@ static JNINativeMethod gMethods[] = {
             (void *) android_security_cts_AudioFlinger_test_listAudioPatches },
     {  "native_test_createEffect", "()Z",
             (void *) android_security_cts_AudioFlinger_test_createEffect },
+    {  "native_test_getInputBufferSize", "()Z",
+            (void *) android_security_cts_AudioFlinger_test_getInputBufferSize },
 };
 
 int register_android_security_cts_AudioFlingerBinderTest(JNIEnv* env)
