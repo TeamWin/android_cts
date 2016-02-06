@@ -181,6 +181,7 @@ cts_test_packages := \
     CtsMediaStressTestCases \
     CtsMediaTestCases \
     CtsMidiTestCases \
+    CtsMultiUserTestCases \
     CtsNdefTestCases \
     CtsNetSecPolicyUsesCleartextTrafficFalseTestCases \
     CtsNetSecPolicyUsesCleartextTrafficTrueTestCases \
