@@ -44,17 +44,39 @@ public class DeviceAdminTest extends BaseDeviceAdminTest {
         assertEquals(getTargetApiLevel(), pi.applicationInfo.targetSdkVersion);
     }
 
+    private void assertHasPassword() {
+        final DevicePolicyManager dpm = getContext().getSystemService(DevicePolicyManager.class);
+
+        dpm.setPasswordMinimumLength(mAdminComponent, 1);
+        try {
+            assertTrue("No password set", dpm.isActivePasswordSufficient());
+        } finally {
+            dpm.setPasswordMinimumLength(mAdminComponent, 0);
+        }
+    }
+
+    private void assertNoPassword() {
+        final DevicePolicyManager dpm = getContext().getSystemService(DevicePolicyManager.class);
+
+        dpm.setPasswordMinimumLength(mAdminComponent, 1);
+        try {
+            assertFalse("Password is set", dpm.isActivePasswordSufficient());
+        } finally {
+            dpm.setPasswordMinimumLength(mAdminComponent, 0);
+        }
+    }
+
     private boolean shouldResetPasswordThrow() {
         return getTargetApiLevel() > Build.VERSION_CODES.M;
     }
 
-    public void testSetPassword_success() {
+    private void checkSetPassword_nycRestrictions_success() {
         final DevicePolicyManager dpm = getContext().getSystemService(DevicePolicyManager.class);
 
         assertTrue(dpm.resetPassword("1234", /* flags= */ 0));
     }
 
-    public void testSetPassword_failure() {
+    private void checkSetPassword_nycRestrictions_failure() {
         final DevicePolicyManager dpm = getContext().getSystemService(DevicePolicyManager.class);
 
         try {
@@ -70,13 +92,7 @@ public class DeviceAdminTest extends BaseDeviceAdminTest {
         }
     }
 
-    public void testClearPassword_success() {
-        final DevicePolicyManager dpm = getContext().getSystemService(DevicePolicyManager.class);
-
-        assertTrue(dpm.resetPassword("", /* flags= */ 0));
-    }
-
-    public void testClearPassword_failure() {
+    private void checkClearPassword_nycRestrictions_failure() {
         final DevicePolicyManager dpm = getContext().getSystemService(DevicePolicyManager.class);
 
         try {
@@ -90,5 +106,34 @@ public class DeviceAdminTest extends BaseDeviceAdminTest {
             }
             MoreAsserts.assertContainsRegex("Cannot call with null password", e.getMessage());
         }
+    }
+
+    /**
+     * Tests for the new restrictions on {@link DevicePolicyManager#resetPassword} introduced
+     * on NYC.
+     */
+    public void testResetPassword_nycRestrictions() throws Exception {
+
+        assertNoPassword();
+
+        // Can't clear the password, even if there's no password set currently.
+        checkClearPassword_nycRestrictions_failure();
+
+        assertNoPassword();
+
+        // No password -> setting one is okay.
+        checkSetPassword_nycRestrictions_success();
+
+        assertHasPassword();
+
+        // But once set, DA can't change the password.
+        checkSetPassword_nycRestrictions_failure();
+
+        assertHasPassword();
+
+        // Still can't clear the password.
+        checkClearPassword_nycRestrictions_failure();
+
+        assertHasPassword();
     }
 }

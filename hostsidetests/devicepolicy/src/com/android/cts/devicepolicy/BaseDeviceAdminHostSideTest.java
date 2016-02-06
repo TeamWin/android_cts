@@ -90,35 +90,23 @@ public abstract class BaseDeviceAdminHostSideTest extends BaseDevicePolicyTest {
             if (mClearPasswordInTearDown) {
                 setDeviceOwner(getAdminReceiverComponent());
 
-                assertTrue("Failed to clear password", runTests(getDeviceAdminApkPackage(),
-                        "DeviceAdminTest", "testClearPassword_success"));
+                assertTrue("Failed to clear password",
+                        runTests(getDeviceAdminApkPackage(), "ClearPasswordTest"));
 
                 assertTrue("Failed to clear device owner",
                         runTests(getDeviceAdminApkPackage(), "ClearDeviceOwnerTest"));
             }
 
             if (mDeactivateInTearDown) {
-                assertTrue("Failed to remove device admin", runTests(
-                        getDeviceAdminApkPackage(), "ClearDeviceAdminTest"));
+                assertTrue("Failed to remove device admin",
+                        runTests(getDeviceAdminApkPackage(), "ClearDeviceAdminTest"));
             }
         }
 
         super.tearDown();
     }
 
-    public void testTargetApiLevel() throws Exception {
-        if (!mHasFeature) {
-            return;
-        }
-
-        installApp(getDeviceAdminApkFileName());
-
-        assertTrue(runTests(getDeviceAdminApkPackage(),
-                "DeviceAdminTest", "testTargetApiLevel"));
-    }
-
-    /** DA can only set a password when there's none, and can't clear it. */
-    public void testResetPassword() throws Exception {
+    public void testRunAllTests() throws Exception {
         if (!mHasFeature) {
             return;
         }
@@ -129,21 +117,7 @@ public abstract class BaseDeviceAdminHostSideTest extends BaseDevicePolicyTest {
         installApp(getDeviceAdminApkFileName());
         setDeviceAdmin(getAdminReceiverComponent(), mUserId);
 
-        // Can't clear the password, even if there's no password set currently.
-        assertTrue(runTests(getDeviceAdminApkPackage(),
-                "DeviceAdminTest", "testClearPassword_failure"));
-
-        // No password -> setting one is okay.
-        assertTrue(runTests(getDeviceAdminApkPackage(),
-                "DeviceAdminTest", "testSetPassword_success"));
-
-        // But once set, DA can't change the password.
-        assertTrue(runTests(getDeviceAdminApkPackage(),
-                "DeviceAdminTest", "testSetPassword_failure"));
-
-        // Still can't clear the password.
-        assertTrue(runTests(getDeviceAdminApkPackage(),
-                "DeviceAdminTest", "testClearPassword_failure"));
+        assertTrue(runTests(getDeviceAdminApkPackage(), "DeviceAdminTest"));
     }
 
     protected boolean runTests(@Nonnull String apk, @Nonnull String className,
