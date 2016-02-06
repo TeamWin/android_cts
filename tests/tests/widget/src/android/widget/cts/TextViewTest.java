@@ -17,6 +17,7 @@
 package android.widget.cts;
 
 import android.graphics.drawable.ColorDrawable;
+import android.test.suitebuilder.annotation.SmallTest;
 import android.text.Html;
 import android.text.Spanned;
 import android.widget.cts.R;
@@ -46,7 +47,6 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.Parcelable;
 import android.test.ActivityInstrumentationTestCase2;
-import android.test.MoreAsserts;
 import android.test.TouchUtils;
 import android.test.UiThreadTest;
 import android.text.Editable;
@@ -1923,6 +1923,7 @@ public class TextViewTest extends ActivityInstrumentationTestCase2<TextViewCtsAc
 
     @UiThreadTest
     public void testSaveInstanceState() {
+        // should save text when freezesText=true
         TextView originalTextView = new TextView(mActivity);
         final String text = "This is a string";
         originalTextView.setText(text);
@@ -1935,23 +1936,104 @@ public class TextViewTest extends ActivityInstrumentationTestCase2<TextViewCtsAc
     }
 
     @UiThreadTest
-    public void testSaveInstanceStateSelection() {
-        TextView originalTextView = new TextView(mActivity);
+    public void testOnSaveInstanceState_whenFreezesTextIsFalse() {
         final String text = "This is a string";
-        final Spannable spannable = new SpannableString(text);
-        originalTextView.setText(spannable);
-        originalTextView.setTextIsSelectable(true);
-        Selection.setSelection((Spannable) originalTextView.getText(), 5, 7);
-        originalTextView.setFreezesText(true);  // needed to actually save state
-        Parcelable state = originalTextView.onSaveInstanceState();
+        { // should not save text when freezesText=false
+            // prepare TextView for before saveInstanceState
+            TextView textView1 = new TextView(mActivity);
+            textView1.setFreezesText(false);
+            textView1.setText(text);
 
-        TextView restoredTextView = new TextView(mActivity);
-        // Setting a selection only has an effect on a TextView when it is selectable.
-        restoredTextView.setTextIsSelectable(true);
-        restoredTextView.onRestoreInstanceState(state);
-        assertEquals(text, restoredTextView.getText().toString());
-        assertEquals(5, restoredTextView.getSelectionStart());
-        assertEquals(7, restoredTextView.getSelectionEnd());
+            // prepare TextView for after saveInstanceState
+            TextView textView2 = new TextView(mActivity);
+            textView2.setFreezesText(false);
+
+            textView2.onRestoreInstanceState(textView1.onSaveInstanceState());
+
+            assertEquals("", textView2.getText().toString());
+        }
+
+        { // should not save text even when textIsSelectable=true
+            // prepare TextView for before saveInstanceState
+            TextView textView1 = new TextView(mActivity);
+            textView1.setFreezesText(false);
+            textView1.setTextIsSelectable(true);
+            textView1.setText(text);
+
+            // prepare TextView for after saveInstanceState
+            TextView textView2 = new TextView(mActivity);
+            textView2.setFreezesText(false);
+            textView2.setTextIsSelectable(true);
+
+            textView2.onRestoreInstanceState(textView1.onSaveInstanceState());
+
+            assertEquals("", textView2.getText().toString());
+        }
+    }
+
+    @UiThreadTest
+    @SmallTest
+    public void testOnSaveInstanceState_doesNotSaveSelectionWhenDoesNotExist() {
+        // prepare TextView for before saveInstanceState
+        final String text = "This is a string";
+        TextView textView1 = new TextView(mActivity);
+        textView1.setFreezesText(true);
+        textView1.setText(text);
+
+        // prepare TextView for after saveInstanceState
+        TextView textView2 = new TextView(mActivity);
+        textView2.setFreezesText(true);
+
+        textView2.onRestoreInstanceState(textView1.onSaveInstanceState());
+
+        assertEquals(-1, textView2.getSelectionStart());
+        assertEquals(-1, textView2.getSelectionEnd());
+    }
+
+    @UiThreadTest
+    @SmallTest
+    public void testOnSaveInstanceState_doesNotRestoreSelectionWhenTextIsAbsent() {
+        // prepare TextView for before saveInstanceState
+        final String text = "This is a string";
+        TextView textView1 = new TextView(mActivity);
+        textView1.setFreezesText(false);
+        textView1.setTextIsSelectable(true);
+        textView1.setText(text);
+        Selection.setSelection((Spannable) textView1.getText(), 2, text.length() - 2);
+
+        // prepare TextView for after saveInstanceState
+        TextView textView2 = new TextView(mActivity);
+        textView2.setFreezesText(false);
+        textView2.setTextIsSelectable(true);
+
+        textView2.onRestoreInstanceState(textView1.onSaveInstanceState());
+
+        assertEquals("", textView2.getText().toString());
+        //when textIsSelectable, selection start and end are initialized to 0
+        assertEquals(0, textView2.getSelectionStart());
+        assertEquals(0, textView2.getSelectionEnd());
+    }
+
+    @UiThreadTest
+    @SmallTest
+    public void testOnSaveInstanceState_savesSelectionWhenExists() {
+        final String text = "This is a string";
+        // prepare TextView for before saveInstanceState
+        TextView textView1 = new TextView(mActivity);
+        textView1.setFreezesText(true);
+        textView1.setTextIsSelectable(true);
+        textView1.setText(text);
+        Selection.setSelection((Spannable) textView1.getText(), 2, text.length() - 2);
+
+        // prepare TextView for after saveInstanceState
+        TextView textView2 = new TextView(mActivity);
+        textView2.setFreezesText(true);
+        textView2.setTextIsSelectable(true);
+
+        textView2.onRestoreInstanceState(textView1.onSaveInstanceState());
+
+        assertEquals(textView1.getSelectionStart(), textView2.getSelectionStart());
+        assertEquals(textView1.getSelectionEnd(), textView2.getSelectionEnd());
     }
 
     @UiThreadTest
