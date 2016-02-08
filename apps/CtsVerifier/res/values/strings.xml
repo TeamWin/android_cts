@@ -13,7 +13,7 @@
      See the License for the specific language governing permissions and
      limitations under the License.
 -->
-<resources>
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
     <string name="app_name">CTS Verifier</string>
 
     <string name="title_version">CTS Verifier %1$s</string>
@@ -2108,113 +2108,98 @@ You should be prompted to select credentials; choose the ones you just installed
     </string>
     <string name="device_owner_user_vpn_restriction_set">Set VPN restriction</string>
 
-    <!-- Policy transparency -->
-    <string name="device_owner_policy_transparency_test">Policy transparency</string>
-    <string name="device_owner_policy_transparency_test_instructions">
-        1. Go through the list of tests.\n
-        2. Mark the overall test pass or fail.\n
+    <!-- Strings used for policy transparency test -->
+    <string name="device_profile_owner_policy_transparency_test">Policy transparency test</string>
+    <string name="device_profile_owner_policy_transparency_test_info">
+        This test checks that if an admin has enforced a policy, we let the user know about this.\nSet the short and long support messages before proceeding with the tests.
     </string>
-
+    <string name="policy_transparency_open_settings_label">Open settings</string>
+    <string name="policy_transparency_short_support_msg_label">Set short support message</string>
+    <string name="policy_transparency_long_support_msg_label">Set long support message</string>
+    <string name="policy_transparency_set_msg">Set message</string>
+    <string name="policy_transparency_clear_msg">Clear message</string>
+    <string name="policy_transparency_set_default_msg">Set default message</string>
+    <string name="policy_transparency_default_short_msg">
+        This action is disabled by your administrator. Contact someone@example.com for support.
+    </string>
+    <string name="policy_transparency_default_long_msg">
+        This profile or device is managed by CtsVerifier. You can contact tech
+        support on:\n\n
+        America: +1 555-0100\n\n
+        APAC: +1 555-0100\n\n
+        Europe: +1 555-0100\n\n
+        Email: someone@example.com
+    </string>
+    <string name="policy_transparency_update_button_label">Update</string>
+    <string name="dummy_input_method_label">Dummy input method</string>
+    <string name="dummy_accessibility_service_label">Dummy accessibility service</string>
+    <string name="policy_transparency_test_instructions">
+        1. <xliff:g id="set_step" example="Set policy by turning the switch on">%1$s</xliff:g>\n
+        2. Open Settings app by clicking the "Open settings" button below.\n
+        3. Verify that performing the following action will trigger a support dialog:\n
+           <xliff:g id="user_action" example="Adding an account">%2$s</xliff:g>.\n
+        4. Verify that the support dialog displays the short support message set earlier.\n
+        5. Verify that clicking the "More details" link will redirect to Device administrators
+           page in Settings app which displays the long support message set earlier.\n
+    </string>
+    <string name="user_restriction_set_step">
+        Set \'%s\' user restriction by turning on the switch below.
+    </string>
     <string name="disallow_add_user">Disallow add user</string>
+    <string name="disallow_add_user_action">Adding a new user</string>
     <string name="disallow_adjust_volume">Disallow adjust volume</string>
-    <string name="disallow_app_control">Disallow app control</string>
-    <string name="disallow_config_wifi">Disallow config wifi</string>
+    <string name="disallow_adjust_volume_action">Adjusting the volume</string>
+    <string name="disallow_apps_control">Disallow controlling apps</string>
+    <string name="disallow_apps_control_action">DISABLE/UNINSTALL/FORCE STOP-ing any app in the managed device/profile other than CtsVerifier</string>
+    <string name="disallow_config_wifi">Disallow config Wi-Fi</string>
+    <string name="disallow_config_wifi_action">Modifying Wi-Fi configuration</string>
     <string name="disallow_fun">Disallow fun</string>
+    <string name="disallow_fun_action">Opening android easter egg game by tapping repeatedly on the \'Android version\' option</string>
     <string name="disallow_modify_accounts">Disallow modify accounts</string>
+    <string name="disallow_modify_accounts_action">Adding an account or removing an account (if you have already added one)</string>
     <string name="disallow_share_location">Disallow share location</string>
-    <string name="disallow_usb_file_transfer">Disallow usb file transfer</string>
-    <string name="keyguard_disable_unredacted_notifications">Disable unredacted notifications</string>
-    <string name="maximum_time_to_lock">Maximum time to lock</string>
-    <string name="password_quality">Password quality</string>
-
-    <string name="disallow_add_user_instructions">
-        Please press the Set restriction button to set the user restriction.\n
-        Then go to quick settings -> owners and\n\n
-        Confirm that:\n
-        - No new user/guest can be added.\n
-        - Pressing Add user/Add guest opens up a "Disabled by policy" dialog.\n
+    <string name="disallow_share_location_action">Turning on location sharing</string>
+    <string name="disallow_keyguard_unredacted_notifications">Disallow lockscreen unredacted notification</string>
+    <string name="disallow_keyguard_unredacted_notifications_set_step">Disallow unredacted notifications when device is locked by turning on the switch below</string>
+    <string name="disallow_keyguard_unredacted_notifications_action">Selecting show all notification content when device is locked</string>
+    <string name="disallow_keyguard_unredacted_notifications_widget_label">@string/disallow_keyguard_unredacted_notifications</string>
+    <string name="set_maximum_time_to_lock">Set maximum time to lock</string>
+    <string name="maximum_time_to_lock_set_step">
+        Select a non-zero maximum time to lock value by setting a value in the edittext box below.
     </string>
-    <string name="disallow_adjust_volume_instructions">
-        Please press the Set restriction button to set the user restriction.\n
-        Then go to quick settings -> Do not disturb.\n\n
-        Confirm that:\n
-        - Do not disturb is disabled.\n
-        - Pressing DnD opens a disabled by policy dialog.\n
+    <string name="set_maximum_time_to_lock_action">Selecting maximum time to lock greater than the set value below</string>
+    <string name="set_maximum_time_to_lock_widget_label">Set maximum time to lock (in Sec):</string>
+    <string name="set_password_quality">Set password quality</string>
+    <string name="password_quality_set_step">Set minimum password quality by selecting an option in the spinner below.</string>
+    <string name="set_password_quality_action">Setting a password which does not meet the requirements of the password quality selected</string>
+    <string name="set_password_quality_widget_label">@string/set_password_quality</string>
+    <string name="password_quality_unspecified">Unspecified</string>
+    <string name="password_quality_something">Something</string>
+    <string name="password_quality_numeric">Numeric</string>
+    <string name="password_quality_numeric_complex">Numeric (Complex)</string>
+    <string name="password_quality_alphabetic">Alphabetic</string>
+    <string name="password_quality_alphanumeric">Alphanumeric</string>
+    <string name="password_quality_complex">Complex</string>
+    <string name="set_permitted_accessibility_services">Set permitted accessibility services</string>
+    <string name="permitted_accessibility_services_set_step">
+        Disallow \'Dummy Accessibility service\' from permitted accessibility services by turning on
+        the switch below.
     </string>
-    <string name="disallow_app_control_instructions">
-        Please press the Set restriction button to set the user restriction.\n
-        Then press Go button to open apps settings page.\n\n
-        Confirm that:\n
-        - Pressing DISABLE/UNINSTALL/FORCE STOP on any app opens a disabled by policy dialog.\n
+    <string name="set_permitted_accessibility_services_action">
+        Enabling \'Dummy Accessibility service\' in the list of accessibility services
     </string>
-    <string name="disallow_config_wifi_instructions">
-        Please press the Set restriction button to set the user restriction.\n
-        Then press Go button to open Wifi settings page.\n\n
-        Confirm that:\n
-        - You cannot see any wifi options.\n
-        - You see a disabled by your organizations\'s administrator message.\n
+    <string name="set_permitted_accessibility_services_widget_label">
+        Allow only system accessibility services:
     </string>
-    <string name="disallow_fun_instructions">
-        Please press the Set restriction button to set the user restriction.\n
-        Then press Go button to open about phone settings page.\n
-        Click multiple times on the Android version tab.\n\n
-        Confirm that:\n
-        - Disabled by policy dialog comes up.\n
-        - You cannot open the game.\n
+    <string name="set_permitted_input_methods">Set permitted input methods</string>
+    <string name="permitted_input_methods_set_step">
+        Disallow \'Dummy Input method\' from permitted input methods by turning on the switch below.
     </string>
-    <string name="disallow_modify_accounts_instructions">
-        Please Press Go button and Add an Account.\n
-        Come back to this test and press the Set restriction button to set the user restriction.\n
-        Then press Go button to open the accounts page.\n\n
-        Confirm that:\n
-        - You cannot add an account.\n
-        - You cannot remove account using overflow menu in account page.\n
-        - Attempting to remove an account opens a disabled by policy dialog.\n
+    <string name="set_permitted_input_methods_action">
+        Enabling \'Dummy Input Method\' in the list of accessibility services
     </string>
-    <string name="disallow_share_location_instructions">
-        Please press the Set restriction button to set the user restriction.\n
-        Then press Go button to open the Location\'s setting page.\n\n
-        Confirm that:\n
-        - You cannot trigger location mode.\n
-        - Pressing "Off" opens a disabled by policy dialog\n
-    </string>
-    <string name="disallow_usb_file_transfer_instructions">
-        Please press the Set restriction button to set the user restriction.\n
-        Then connect you device using usb.\n
-        Press "USB for charging" notification.\n\n
-        Confirm that:\n
-        - File transfer and photo transfer options are disabled.\n
-        - Pressing on them opens a disabled by policy dialog.\n
-    </string>
-    <string name="keyguard_disable_unredacted_notifications_instructions">
-        Please press the Set restriction button.\n
-        Then go to Notifications setting page.\n
-        Go to configure notifications. Press "When device is locked".\n\n
-        Confirm that:\n
-        - "Show all notification content" is disabled.\n
-        - Pressing on it opens a disabled by policy dialog.\n
-    </string>
-    <string name="set_max_time_to_lock_instructions">
-        Enter non zero maximum time to lock in Seconds.\n
-        Please press the Set restriction button.\n
-        Then press Go button to open the display settings page.\n\n
-        Confirm that:\n
-        - If the value set by you is less than 15, the sleep option is disabled.\n
-        - Pressing on it opens a disabled by policy dialog.\n
-        - For values from 15, All the invalid options are disabled.\n
-        - Pressing on them opens a disabled by policy dialog.\n
-    </string>
-    <string name="password_quality_instructions">
-        Please press the Set restriction button.\n
-        Then press Go button to open the security settings page.\n
-        Go to Choose screen lock.\n\n
-        Confirm that:\n
-        - All options other than "Password" are disabled.\n
-        - Pressing on them opens a disabled by policy dialog.\n
-        - You cannot set an only numeric password.\n
-        - You cannot set an only alpha password.\n
-        - You cannot set an alpha-numeric password.\n
-        - You can only set a password which contains at least a number, a letter and a special character.\n
+    <string name="set_permitted_input_methods_widget_label">
+        Allow only system input methods:
     </string>
 
     <!-- Strings for JobScheduler Tests -->

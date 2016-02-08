@@ -94,6 +94,7 @@ public class ByodFlowTestActivity extends DialogTestListActivity {
     private DialogTestListItem mConfirmWorkCredentials;
     private TestListItem mVpnTest;
     private TestListItem mDisallowAppsControlTest;
+    private TestListItem mPolicyTransparencyTest;
 
     public ByodFlowTestActivity() {
         super(R.layout.provisioning_byod,
@@ -373,6 +374,17 @@ public class ByodFlowTestActivity extends DialogTestListActivity {
                 R.string.provisioning_byod_confirm_work_credentials_description,
                 new Intent(ByodHelperActivity.ACTION_TEST_CONFIRM_WORK_CREDENTIALS));
 
+        final Intent policyTransparencyTestIntent = new Intent(this,
+                PolicyTransparencyTestListActivity.class);
+        policyTransparencyTestIntent.putExtra(
+                PolicyTransparencyTestListActivity.EXTRA_IS_DEVICE_OWNER, false);
+        policyTransparencyTestIntent.putExtra(
+                PolicyTransparencyTestActivity.EXTRA_TEST_ID, "BYOD_PolicyTransparency");
+        mPolicyTransparencyTest = TestListItem.newTest(this,
+                R.string.device_profile_owner_policy_transparency_test,
+                "BYOD_PolicyTransparency",
+                policyTransparencyTestIntent, null);
+
         adapter.add(mProfileOwnerInstalled);
 
         // Badge related tests
@@ -406,6 +418,7 @@ public class ByodFlowTestActivity extends DialogTestListActivity {
         adapter.add(mTurnOffWorkNotifications);
         adapter.add(mSelectWorkChallenge);
         adapter.add(mConfirmWorkCredentials);
+        adapter.add(mPolicyTransparencyTest);
 
         if (canResolveIntent(new Intent(Settings.ACTION_APPLICATION_SETTINGS))) {
             adapter.add(mDisallowAppsControlTest);
@@ -622,7 +635,9 @@ public class ByodFlowTestActivity extends DialogTestListActivity {
             WorkStatusTestActivity.class.getName(),
             PermissionLockdownTestActivity.ACTIVITY_ALIAS,
             AuthenticationBoundKeyTestActivity.class.getName(),
-            VpnTestActivity.class.getName()
+            VpnTestActivity.class.getName(),
+            CommandReceiverActivity.class.getName(),
+            SetSupportMessageActivity.class.getName()
         };
         for (String component : components) {
             getPackageManager().setComponentEnabledSetting(new ComponentName(this, component),
