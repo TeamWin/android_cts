@@ -91,7 +91,7 @@ public class LoudnessEnhancerTest extends PostProcTestBase {
         try {
             // this test will play a 1kHz sine wave with peaks at -40dB, and apply 6 db gain
             // using loudness enhancement
-            mp = MediaPlayer.create(getContext(), R.raw.sine1khzm40db);
+            mp = MediaPlayer.create(getContext(), R.raw.sine1khzs40dblong);
             final int LOUDNESS_GAIN = 600;
             final int MAX_MEASUREMENT_ERROR_MB = 200;
             assertNotNull("null MediaPlayer", mp);
@@ -122,6 +122,7 @@ public class LoudnessEnhancerTest extends PostProcTestBase {
             assertTrue("visualizer not enabled", visualizer.getEnabled());
             Thread.sleep(100);
             int status = visualizer.setMeasurementMode(Visualizer.MEASUREMENT_MODE_PEAK_RMS);
+            Thread.sleep(500);
             assertEquals("setMeasurementMode() for PEAK_RMS doesn't report success",
                     Visualizer.SUCCESS, status);
             // make sure we're playing long enough so the measurement is valid
@@ -147,7 +148,7 @@ public class LoudnessEnhancerTest extends PostProcTestBase {
 
             visualizer.setMeasurementMode(Visualizer.MEASUREMENT_MODE_PEAK_RMS);
             currentPosition = mp.getCurrentPosition();
-            maxTry = 5;
+            maxTry = 10;
             tryCount = 0;
             while (tryCount < maxTry) {
                 Thread.sleep(50);
