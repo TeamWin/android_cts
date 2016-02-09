@@ -30,13 +30,14 @@ LOCAL_SRC_FILES := \
 	android_jni_cts_JniCTest.c \
 	android_jni_cts_JniCppTest.cpp \
 	android_jni_cts_JniStaticTest.cpp \
+	android_jni_cts_LinkerNamespacesTest.cpp \
 	android_jni_cts_StaticNonce.c \
 	helper.c \
 	register.c
 
 LOCAL_C_INCLUDES := $(JNI_H_INCLUDE)
 
-LOCAL_SHARED_LIBRARIES := liblog libnativehelper_compat_libc++
+LOCAL_SHARED_LIBRARIES := libdl liblog libnativehelper_compat_libc++
 
 LOCAL_SDK_VERSION := 23
 LOCAL_NDK_STL_VARIANT := c++_static
