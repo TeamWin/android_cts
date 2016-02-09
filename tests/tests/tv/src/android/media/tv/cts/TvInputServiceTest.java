@@ -266,7 +266,7 @@ public class TvInputServiceTest extends ActivityInstrumentationTestCase2<TvViewS
 
     public void verifyCommandStartRecording() {
         resetCounts();
-        mTvRecordingClient.startRecording();
+        mTvRecordingClient.startRecording(null);
         new PollingCheck(TIME_OUT) {
             @Override
             protected boolean check() {
@@ -956,7 +956,7 @@ public class TvInputServiceTest extends ActivityInstrumentationTestCase2<TvViewS
             }
 
             @Override
-            public void onStartRecording() {
+            public void onStartRecording(Uri programHint) {
                 mStartRecordingCount++;
             }
 
