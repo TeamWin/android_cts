@@ -19,6 +19,7 @@
 #include <graphics/GLUtils.h>
 #include <graphics/ProgramNode.h>
 
+#include <android/log.h>
 #include <Trace.h>
 
 ReferenceRenderer::ReferenceRenderer(ANativeWindow* window) :
@@ -95,6 +96,6 @@ void ReferenceRenderer::drawWorkload() {
 
     glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
     if (!mCurrentScene->draw()) {
-        ALOGE("Error when rendering scene");
+        __android_log_print(ANDROID_LOG_ERROR, "ReferenceRenderer", "Error when rendering scene");
     }
 }

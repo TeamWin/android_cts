@@ -14,7 +14,7 @@
 #ifndef SCENEGRAPHNODE_H
 #define SCENEGRAPHNODE_H
 
-#include <utils/Vector.h>
+#include <vector>
 #include "Matrix.h"
 #include "Program.h"
 
@@ -28,7 +28,7 @@ protected:
     virtual void after(Program& program, Matrix& model, Matrix& view, Matrix& projection) = 0;
     void draw(Program& program, Matrix& model, Matrix& view, Matrix& projection);
 private:
-    android::Vector<SceneGraphNode*> mChildren;
+    std::vector<SceneGraphNode*> mChildren;
 };
 
 #endif
