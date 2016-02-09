@@ -16,6 +16,7 @@
 
 package android.graphics.drawable.cts;
 
+import android.content.res.Resources.Theme;
 import android.graphics.cts.R;
 
 import org.xmlpull.v1.XmlPullParserException;
@@ -38,6 +39,7 @@ import android.graphics.drawable.Drawable.ConstantState;
 import android.test.InstrumentationTestCase;
 import android.util.AttributeSet;
 import android.util.DisplayMetrics;
+import android.util.Xml;
 import android.view.Gravity;
 
 import java.io.ByteArrayInputStream;
@@ -458,5 +460,42 @@ public class BitmapDrawableTest extends InstrumentationTestCase {
         assertEquals(200, d1.getPaint().getAlpha());
         assertEquals(50, d2.getPaint().getAlpha());
         assertEquals(50, d3.getPaint().getAlpha());
+    }
+
+    private void testPreloadDensityInner(Resources res, int densityDpi)
+            throws XmlPullParserException, IOException {
+        // Capture initial state at default density.
+        final XmlResourceParser parser = DrawableTestUtils.getResourceParser(
+                res, R.drawable.bitmap_density);
+        final BitmapDrawable preloadedDrawable = new BitmapDrawable();
+        preloadedDrawable.inflate(res, parser, Xml.asAttributeSet(parser));
+        final ConstantState preloadedConstantState = preloadedDrawable.getConstantState();
+        final int origWidth = preloadedDrawable.getIntrinsicWidth();
+
+        // Set density to half of original. Unlike offsets, which are
+        // truncated, dimensions are rounded to the nearest pixel.
+        DrawableTestUtils.setResourcesDensity(res, densityDpi / 2);
+        final BitmapDrawable halfDrawable =
+                (BitmapDrawable) preloadedConstantState.newDrawable(res);
+        assertEquals(Math.round(origWidth / 2f), halfDrawable.getIntrinsicWidth());
+
+        // Set density to double original.
+        DrawableTestUtils.setResourcesDensity(res, densityDpi * 2);
+        final BitmapDrawable doubleDrawable =
+                (BitmapDrawable) preloadedConstantState.newDrawable(res);
+        assertEquals(origWidth * 2, doubleDrawable.getIntrinsicWidth());
+
+        // Restore original density.
+        DrawableTestUtils.setResourcesDensity(res, densityDpi);
+        final BitmapDrawable origDrawable =
+                (BitmapDrawable) preloadedConstantState.newDrawable();
+        assertEquals(origWidth, origDrawable.getIntrinsicWidth());
+
+        // Ensure theme density is applied correctly.
+        final Theme t = res.newTheme();
+        halfDrawable.applyTheme(t);
+        assertEquals(origWidth, halfDrawable.getIntrinsicWidth());
+        doubleDrawable.applyTheme(t);
+        assertEquals(origWidth, doubleDrawable.getIntrinsicWidth());
     }
 }
