@@ -53,6 +53,8 @@ public class DeviceInfoCollector extends ApkInstrumentationPreparer {
         BUILD_KEYS.put("build_type", "ro.build.type");
         BUILD_KEYS.put("build_tags", "ro.build.tags");
         BUILD_KEYS.put("build_fingerprint", "ro.build.fingerprint");
+        BUILD_KEYS.put("build_abi", "ro.product.cpu.abi");
+        BUILD_KEYS.put("build_abi2", "ro.product.cpu.abi2");
         BUILD_KEYS.put("build_abis", "ro.product.cpu.abilist");
         BUILD_KEYS.put("build_abis_32", "ro.product.cpu.abilist32");
         BUILD_KEYS.put("build_abis_64", "ro.product.cpu.abilist64");

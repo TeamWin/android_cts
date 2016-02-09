@@ -284,7 +284,7 @@ public class InfoStore {
 
     private static String checkString(String value) {
         if (value == null || value.isEmpty()) {
-            return "null";
+            return "";
         }
         if (value.length() > MAX_STRING_LENGTH) {
             return value.substring(0, MAX_STRING_LENGTH);
