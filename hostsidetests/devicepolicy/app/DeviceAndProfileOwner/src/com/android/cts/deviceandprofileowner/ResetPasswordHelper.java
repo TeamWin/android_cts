@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015 The Android Open Source Project
+ * Copyright (C) 2016 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,15 +16,14 @@
 package com.android.cts.deviceandprofileowner;
 
 import android.app.admin.DevicePolicyManager;
-import android.content.ComponentName;
 import android.content.Context;
 import android.test.AndroidTestCase;
 
 /**
- * This test executes helper tasks as active device admin in the primary user. Current tasks are
- * setting and clearing lockscreen password used by the host side delegated cert installer test.
+ * This test is used to set and clear the lockscreen password. This is required to use the keystore
+ * by the host side delegated cert installer test.
  */
-public class PrimaryUserAdminHelper extends AndroidTestCase {
+public class ResetPasswordHelper extends AndroidTestCase {
 
     private DevicePolicyManager mDpm;
 
@@ -32,22 +31,6 @@ public class PrimaryUserAdminHelper extends AndroidTestCase {
     protected void setUp() throws Exception {
         super.setUp();
         mDpm = (DevicePolicyManager) mContext.getSystemService(Context.DEVICE_POLICY_SERVICE);
-    }
-
-    /**
-     * Device admin can only be deactivated by itself and this test should be executed before the
-     * device admin package can be uninstalled.
-     */
-    public void testClearDeviceAdmin() throws Exception {
-        ComponentName cn = PrimaryUserDeviceAdmin.ADMIN_RECEIVER_COMPONENT;
-        if (mDpm.isAdminActive(cn)) {
-            mDpm.removeActiveAdmin(cn);
-            // Wait until device admin is not active (with 2 minutes timeout).
-            for (int i = 0; i < 2 * 60 && mDpm.isAdminActive(cn); i++) {
-                Thread.sleep(1000);  // 1 second.
-            }
-        }
-        assertFalse(mDpm.isAdminActive(cn));
     }
 
     /**
@@ -62,10 +45,10 @@ public class PrimaryUserAdminHelper extends AndroidTestCase {
      * Clear lockscreen password.
      */
     public void testClearPassword() {
-        mDpm.setPasswordQuality(PrimaryUserDeviceAdmin.ADMIN_RECEIVER_COMPONENT,
+        mDpm.setPasswordQuality(BaseDeviceAdminTest.ADMIN_RECEIVER_COMPONENT,
                 DevicePolicyManager.PASSWORD_QUALITY_UNSPECIFIED);
         mDpm.setPasswordMinimumLength(
-                PrimaryUserDeviceAdmin.ADMIN_RECEIVER_COMPONENT, 0);
+                BaseDeviceAdminTest.ADMIN_RECEIVER_COMPONENT, 0);
         assertTrue(mDpm.resetPassword("", 0));
     }
 }
