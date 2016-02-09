@@ -116,13 +116,14 @@ cts_support_packages := \
     CtsSomeAccessibilityServices \
     CtsSystemUiDeviceApp \
     CtsThemeDeviceApp \
-    TestDeviceSetup \
     CtsUiAutomatorTestApp \
     CtsUsbSerialTestApp \
     CtsVoiceInteractionService \
     CtsVoiceInteractionApp \
     CtsVoiceSettingsService \
+    CtsVpnFirewallApp \
     CtsWidgetProviderApp \
+    TestDeviceSetup \
     $(cts_account_support_packages) \
     $(cts_security_apps_list) \
     $(cts_security_keysets_list)

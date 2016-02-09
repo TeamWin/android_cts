@@ -66,6 +66,9 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
             = "com.android.cts.devicepolicy.accountmanagement";
     private static final String ACCOUNT_MANAGEMENT_APK = "CtsAccountManagementDevicePolicyApp.apk";
 
+    private static final String VPN_APP_PKG = "com.android.cts.vpnfirewall";
+    private static final String VPN_APP_APK = "CtsVpnFirewallApp.apk";
+
     private static final String COMMAND_ADD_USER_RESTRICTION = "add-restriction";
     private static final String COMMAND_CLEAR_USER_RESTRICTION = "clear-restriction";
     private static final String COMMAND_BLOCK_ACCOUNT_TYPE = "block-accounttype";
@@ -89,6 +92,7 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
             getDevice().uninstallPackage(APP_RESTRICTIONS_TARGET_APP_PKG);
             getDevice().uninstallPackage(CERT_INSTALLER_PKG);
             getDevice().uninstallPackage(ACCOUNT_MANAGEMENT_PKG);
+            getDevice().uninstallPackage(VPN_APP_PKG);
         }
         super.tearDown();
     }
@@ -148,6 +152,14 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
         }
         installAppAsUser(PERMISSIONS_APP_APK, mUserId);
         executeDeviceTestMethod(".PermissionsTest", "testPermissionGrantState");
+    }
+
+    public void testAlwaysOnVpn() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
+        installAppAsUser(VPN_APP_APK, mUserId);
+        executeDeviceTestClass(".AlwaysOnVpnTest");
     }
 
     public void testPermissionPolicy() throws Exception {
