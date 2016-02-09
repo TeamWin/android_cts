@@ -31,6 +31,17 @@ public class JniStaticTest extends JniTestCase {
     }
 
     /**
+     * Test library accessibility. Internal platform libraries should not
+     * be accessible from the jni code.
+     */
+    public void test_linker_namespaces() {
+        String error = LinkerNamespacesHelper.runAccessibilityTest();
+        if (error != null) {
+            fail(error);
+        }
+    }
+
+    /**
      * Test that accessing classes true JNI works as expected. b/19382130
      */
     public void test_classload() {
