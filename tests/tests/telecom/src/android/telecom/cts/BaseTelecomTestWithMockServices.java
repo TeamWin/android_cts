@@ -867,12 +867,12 @@ public class BaseTelecomTestWithMockServices extends InstrumentationTestCase {
                 new Condition() {
                     @Override
                     public Object expected() {
-                        return true;
+                        return false;
                     }
 
                     @Override
                     public Object actual() {
-                        return MockInCallService.isServiceUnbound();
+                        return MockInCallService.isServiceBound();
                     }
                 },
                 WAIT_FOR_STATE_CHANGE_TIMEOUT_MS,
