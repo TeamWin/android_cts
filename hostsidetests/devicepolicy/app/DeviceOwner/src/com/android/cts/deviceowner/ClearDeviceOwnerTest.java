@@ -30,12 +30,12 @@ public class ClearDeviceOwnerTest extends AndroidTestCase {
         mDevicePolicyManager = (DevicePolicyManager)
                 mContext.getSystemService(Context.DEVICE_POLICY_SERVICE);
         if (mDevicePolicyManager != null) {
-            removeActiveAdmin(BaseDeviceOwnerTest.getWho());
             if (mDevicePolicyManager.isDeviceOwnerApp(BaseDeviceOwnerTest.PACKAGE_NAME)) {
                 mDevicePolicyManager.clearDeviceOwnerApp(BaseDeviceOwnerTest.PACKAGE_NAME);
             }
-            assertFalse(mDevicePolicyManager.isAdminActive(BaseDeviceOwnerTest.getWho()));
             assertFalse(mDevicePolicyManager.isDeviceOwnerApp(BaseDeviceOwnerTest.PACKAGE_NAME));
+
+            waitForActiveAdminRemoved(BaseDeviceOwnerTest.getWho());
         }
 
         super.tearDown();
@@ -46,12 +46,10 @@ public class ClearDeviceOwnerTest extends AndroidTestCase {
     public void testClearDeviceOwner() {
     }
 
-    private void removeActiveAdmin(ComponentName cn) throws InterruptedException {
-        if (mDevicePolicyManager.isAdminActive(cn)) {
-            mDevicePolicyManager.removeActiveAdmin(cn);
-            for (int i = 0; i < 1000 && mDevicePolicyManager.isAdminActive(cn); i++) {
-                Thread.sleep(100);
-            }
+    private void waitForActiveAdminRemoved(ComponentName cn) throws InterruptedException {
+        for (int i = 0; i < 1000 && mDevicePolicyManager.isAdminActive(cn); i++) {
+            Thread.sleep(100);
         }
+        assertFalse(mDevicePolicyManager.isAdminActive(cn));
     }
 }
