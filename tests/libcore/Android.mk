@@ -32,7 +32,7 @@ LOCAL_DEX_PREOPT := false
 
 LOCAL_PROGUARD_ENABLED := disabled
 
-LOCAL_JNI_SHARED_LIBRARIES := libjavacoretests
+LOCAL_JNI_SHARED_LIBRARIES := libjavacoretests libsqlite_jni libnativehelper_compat_libc++
 
 # Include both the 32 and 64 bit versions of libjavacoretests,
 # where applicable.
