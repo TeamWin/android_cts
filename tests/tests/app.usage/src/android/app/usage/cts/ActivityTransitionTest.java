@@ -28,6 +28,7 @@ import android.transition.Transition;
 import android.transition.Transition.TransitionListener;
 import android.view.View;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -50,6 +51,7 @@ public class ActivityTransitionTest extends
     @Override
     protected void setUp() throws Exception {
         super.setUp();
+        Arrays.fill(ActivityTransitionActivity.sVisibility, -1);
         setActivityInitialTouchMode(false);
         mActivity = getActivity();
         mNumArrivedCalls = 0;
@@ -100,6 +102,7 @@ public class ActivityTransitionTest extends
 
         assertTrue("Activity didn't finish!",
                 mActivity.returnLatch.await(1500, TimeUnit.MILLISECONDS));
+        assertTrue(mActivity.reenterLatch.await(300, TimeUnit.MILLISECONDS));
         assertNotNull(mReceiver.resultData);
         assertEquals(2, mReceiver.resultData.getInt(
                 ActivityTransitionActivity.ARRIVE_COUNT, -1));
@@ -124,6 +127,7 @@ public class ActivityTransitionTest extends
         assertTrue(returnTime < returnTimeReady);
         assertTrue(returnTimeReady <= mReenterTime);
         assertTrue(mReenterTime < mReenterTimeReady);
+        checkNormalTransitionVisibility();
     }
 
     public void testFinishPostponed() throws Throwable {
@@ -145,7 +149,9 @@ public class ActivityTransitionTest extends
         assertTrue("Activity didn't finish!",
                 mActivity.returnLatch.await(2000, TimeUnit.MILLISECONDS));
         assertTrue("Reenter transition didn't finish", latch.await(1000, TimeUnit.MILLISECONDS));
+        assertTrue(mActivity.reenterLatch.await(300, TimeUnit.MILLISECONDS));
         getInstrumentation().waitForIdleSync();
+        checkNormalTransitionVisibility();
         runTestOnUiThread(new Runnable() {
             @Override
             public void run() {
@@ -174,7 +180,9 @@ public class ActivityTransitionTest extends
 
         assertTrue("Activity didn't finish!",
                 mActivity.returnLatch.await(1500, TimeUnit.MILLISECONDS));
+        assertTrue(mActivity.reenterLatch.await(300, TimeUnit.MILLISECONDS));
         getInstrumentation().waitForIdleSync();
+        checkNormalTransitionVisibility();
         runTestOnUiThread(new Runnable() {
             @Override
             public void run() {
@@ -205,7 +213,9 @@ public class ActivityTransitionTest extends
         assertTrue("Activity didn't finish!",
                 mActivity.returnLatch.await(1500, TimeUnit.MILLISECONDS));
         assertTrue("Reenter transition didn't finish", latch.await(1000, TimeUnit.MILLISECONDS));
+        assertTrue(mActivity.reenterLatch.await(300, TimeUnit.MILLISECONDS));
         getInstrumentation().waitForIdleSync();
+        checkNormalTransitionVisibility();
         runTestOnUiThread(new Runnable() {
             @Override
             public void run() {
@@ -235,7 +245,9 @@ public class ActivityTransitionTest extends
 
         assertTrue("Activity didn't finish!",
                 mActivity.returnLatch.await(1500, TimeUnit.MILLISECONDS));
+        assertTrue(mActivity.reenterLatch.await(300, TimeUnit.MILLISECONDS));
         getInstrumentation().waitForIdleSync();
+        checkNoReturnTransitionVisibility();
         runTestOnUiThread(new Runnable() {
             @Override
             public void run() {
@@ -245,6 +257,23 @@ public class ActivityTransitionTest extends
                 assertEquals(View.VISIBLE, hello.getVisibility());
             }
         });
+    }
+
+    private void checkNormalTransitionVisibility() {
+        checkNoReturnTransitionVisibility();
+        final int[]  visibilities = ActivityTransitionActivity.sVisibility;
+        assertEquals(View.INVISIBLE,
+                visibilities[ActivityTransitionActivity.RETURN_TRANSITION_INDEX]);
+    }
+
+    private void checkNoReturnTransitionVisibility() {
+        final int[]  visibilities = ActivityTransitionActivity.sVisibility;
+        assertEquals(View.VISIBLE,
+                visibilities[ActivityTransitionActivity.ENTER_TRANSITION_INDEX]);
+        assertEquals(View.INVISIBLE,
+                visibilities[ActivityTransitionActivity.EXIT_TRANSITION_INDEX]);
+        assertEquals(View.VISIBLE,
+                visibilities[ActivityTransitionActivity.REENTER_TRANSITION_INDEX]);
     }
 
     private CountDownLatch setReenterLatch() {

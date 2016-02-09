@@ -28,6 +28,7 @@ import android.transition.Explode;
 import android.transition.Fade;
 import android.transition.Transition;
 import android.transition.Transition.TransitionListener;
+import android.transition.Transition.TransitionListenerAdapter;
 import android.view.View;
 
 import java.util.List;
@@ -73,15 +74,17 @@ public class ActivityTransitionActivity extends Activity {
     public boolean mNoReturnTransition;
 
     public CountDownLatch returnLatch = new CountDownLatch(1);
+    public CountDownLatch reenterLatch = new CountDownLatch(1);
+
+    public static final int EXIT_TRANSITION_INDEX = 0;
+    public static final int ENTER_TRANSITION_INDEX = 1;
+    public static final int RETURN_TRANSITION_INDEX = 2;
+    public static final int REENTER_TRANSITION_INDEX = 3;
+    public static final int sVisibility[] = new int[4];
 
     @Override
     public void onCreate(Bundle icicle) {
         super.onCreate(icicle);
-        getWindow().setSharedElementEnterTransition(new ChangeBounds().setDuration(DURATION));
-        getWindow().setSharedElementReturnTransition(new ChangeBounds().setDuration(DURATION));
-        getWindow().setEnterTransition(new Explode().setDuration(DURATION));
-        getWindow().setReturnTransition(new Explode().setDuration(DURATION));
-        getWindow().setExitTransition(new Fade().setDuration(DURATION));
         mLayoutId = 0;
         if (icicle != null) {
             mLayoutId =  icicle.getInt(LAYOUT_ID);
@@ -104,6 +107,20 @@ public class ActivityTransitionActivity extends Activity {
             mNoReturnTransition = intent.getBooleanExtra(NO_RETURN_TRANSITION, false);
         }
 
+        getWindow().setSharedElementEnterTransition(new ChangeBounds().setDuration(DURATION));
+        getWindow().setSharedElementReturnTransition(new ChangeBounds().setDuration(DURATION));
+        getWindow().setEnterTransition(createVisibilityTransition(true, ENTER_TRANSITION_INDEX));
+        getWindow().setReturnTransition(createVisibilityTransition(true, RETURN_TRANSITION_INDEX));
+        getWindow().setExitTransition(createVisibilityTransition(false, EXIT_TRANSITION_INDEX));
+        getWindow().setReenterTransition(createVisibilityTransition(false,
+                REENTER_TRANSITION_INDEX));
+        getWindow().getReenterTransition().addListener(new TransitionListenerAdapter() {
+            @Override
+            public void onTransitionEnd(Transition transition) {
+                reenterLatch.countDown();
+            }
+        });
+
         setContentView(mLayoutId);
         getWindow().setAllowReturnTransitionOverlap(mAllowOverlap);
         if (mNoReturnTransition) {
@@ -112,6 +129,13 @@ public class ActivityTransitionActivity extends Activity {
         }
 
         startTest();
+    }
+
+    private Transition createVisibilityTransition(boolean isExplode, int startIndex) {
+        final Transition transition = isExplode ? new Explode() : new Fade();
+        transition.setDuration(DURATION);
+        transition.addListener(new VisibilityCheck(R.id.redSquare, startIndex));
+        return transition;
     }
 
     @Override
@@ -208,6 +232,22 @@ public class ActivityTransitionActivity extends Activity {
                     startPostponedEnterTransition();
                 }
             }, 500);
+        }
+    }
+
+    private class VisibilityCheck extends TransitionListenerAdapter {
+        private final int mViewId;
+        private final int mStartIndex;
+
+        public VisibilityCheck(int viewId, int startIndex) {
+            mViewId = viewId;
+            this.mStartIndex = startIndex;
+        }
+
+        @Override
+        public void onTransitionEnd(Transition transition) {
+            final View view = findViewById(mViewId);
+            sVisibility[mStartIndex ] = view.getVisibility();
         }
     }
 }
