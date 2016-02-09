@@ -16,7 +16,7 @@
 
 package android.telecom.cts;
 
-import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 import android.content.Intent;
 import android.telecom.Call;
@@ -39,7 +39,7 @@ public class MockInCallService extends InCallService {
             new ArrayMap<Call, MockVideoCallCallback>();
 
     private static final Object sLock = new Object();
-    private static boolean mIsServiceUnbound;
+    private static boolean mIsServiceBound = false;
 
     public static abstract class InCallServiceCallbacks {
         private MockInCallService mService;
@@ -162,7 +162,7 @@ public class MockInCallService extends InCallService {
         if (getCallbacks() != null) {
             getCallbacks().setService(this);
         }
-        mIsServiceUnbound = false;
+        mIsServiceBound = true;
         return super.onBind(intent);
     }
 
@@ -323,13 +323,13 @@ public class MockInCallService extends InCallService {
 
     @Override
     public boolean onUnbind(Intent intent) {
-        Log.i(LOG_TAG, "Service unbounded");
-        assertFalse(mIsServiceUnbound);
-        mIsServiceUnbound = true;
+        Log.i(LOG_TAG, "Service has been unbound");
+        assertTrue(mIsServiceBound);
+        mIsServiceBound = false;
         return super.onUnbind(intent);
     }
 
-    public static boolean isServiceUnbound() {
-        return mIsServiceUnbound;
+    public static boolean isServiceBound() {
+        return mIsServiceBound;
     }
 }
