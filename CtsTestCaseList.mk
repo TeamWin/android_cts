@@ -140,6 +140,7 @@ CTS_TEST_CASE_LIST := \
 # Test packages that require an associated test package XML.
 cts_test_packages := \
     CtsIcuTestCases \
+    CtsAbiOverrideTestCases \
     CtsAccelerationTestCases \
     CtsAccountManagerTestCases \
     CtsAccessibilityServiceTestCases \
