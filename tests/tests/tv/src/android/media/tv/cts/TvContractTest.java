@@ -31,6 +31,7 @@ import android.media.tv.TvContract.Programs.Genres;
 import android.media.tv.TvContract.RecordedPrograms;
 import android.net.Uri;
 import android.test.AndroidTestCase;
+import android.test.MoreAsserts;
 import android.tv.cts.R;
 
 import java.io.InputStream;
@@ -817,5 +818,52 @@ public class TvContractTest extends AndroidTestCase {
                 assertEquals(original, decoded[decodedIndex++]);
             }
         }
+    }
+
+    private Uri insertProgramWithBroadcastGenre(String[] broadcastGenre) {
+        ContentValues values = createDummyChannelValues(mInputId);
+        Uri channelUri = mContentResolver.insert(mChannelsUri, values);
+        long channelId = ContentUris.parseId(channelUri);
+        long curTime = System.currentTimeMillis();
+        values = createDummyProgramValues(channelId);
+        values.put(TvContract.Programs.COLUMN_BROADCAST_GENRE, Genres.encode(broadcastGenre));
+        values.put(TvContract.Programs.COLUMN_START_TIME_UTC_MILLIS, curTime - 60000);
+        values.put(TvContract.Programs.COLUMN_END_TIME_UTC_MILLIS, curTime + 60000);
+        Uri programUri = mContentResolver.insert(TvContract.Programs.CONTENT_URI, values);
+        assertNotNull(programUri);
+        return programUri;
+    }
+
+    private void verifyChannelCountWithCanonicalGenre(String canonicalGenre, int expectedCount) {
+        Uri channelUri = TvContract.buildChannelsUriForInput(mInputId, canonicalGenre, false);
+        try (Cursor c = mContentResolver.query(channelUri, new String[] {Channels._ID}, null, null,
+                null)) {
+            assertNotNull(c);
+            assertEquals("Query:{Uri=" + channelUri + "}", expectedCount, c.getCount());
+        }
+    }
+
+    public void testBroadcastGenreEncodeDecode() {
+        String[] broadcastGenre = new String[] {"Animation", "Classic, opera"};
+        insertProgramWithBroadcastGenre(broadcastGenre);
+        try (Cursor c = mContentResolver.query(TvContract.Programs.CONTENT_URI,
+                new String[] {TvContract.Programs.COLUMN_BROADCAST_GENRE}, null, null, null)) {
+            assertNotNull(c);
+            assertEquals(1, c.getCount());
+            c.moveToNext();
+            MoreAsserts.assertEquals(broadcastGenre, Genres.decode(c.getString(0)));
+        }
+    }
+
+    public void testBroadcastGenreQueryChannel() {
+        // "Animation" is mapped to Genres.MOVIES
+        // "Classic, opera" is mapped to Genres.MUSIC
+        insertProgramWithBroadcastGenre(new String[] {"Animation"});
+        insertProgramWithBroadcastGenre(new String[] {"Classic, opera"});
+        insertProgramWithBroadcastGenre(new String[]{"Animation", "Classic, opera"});
+        // There are two channels which belong to MOVIES genre - channel 1 and 3.
+        verifyChannelCountWithCanonicalGenre(Genres.MOVIES, 2);
+        // There are two channels which belong to MUSIC genre - channel 2 and 3.
+        verifyChannelCountWithCanonicalGenre(Genres.MUSIC, 2);
     }
 }
