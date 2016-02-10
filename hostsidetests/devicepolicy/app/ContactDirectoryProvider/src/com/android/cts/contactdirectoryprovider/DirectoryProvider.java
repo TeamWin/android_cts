@@ -21,22 +21,46 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.UriMatcher;
+import android.content.res.AssetFileDescriptor;
+import android.content.res.Resources;
 import android.database.Cursor;
 import android.database.MatrixCursor;
 import android.net.Uri;
 import android.os.Binder;
 import android.os.Bundle;
+import android.os.ParcelFileDescriptor;
 import android.provider.ContactsContract.Contacts;
 import android.provider.ContactsContract.Directory;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Arrays;
+import java.util.concurrent.Callable;
+import java.util.concurrent.TimeUnit;
+
 public class DirectoryProvider extends ContentProvider {
-    private final String CONFIG_NAME = "config";
-    private final String SET_CUSTOM_PREFIX = "set_prefix";
-    private final String AUTHORITY = "com.android.cts.contact.directory.provider";
-    private final String TEST_ACCOUNT_NAME = "cts@android.com";
-    private final String TEST_ACCOUNT_TYPE = "com.android.cts";
-    private final String DEFAULT_DISPLAY_NAME = "Directory";
-    private final String DEFAULT_CONTACT_NAME = "DirectoryContact";
+    private static final String CONFIG_NAME = "config";
+    private static final String SET_CUSTOM_PREFIX = "set_prefix";
+    private static final String AUTHORITY = "com.android.cts.contact.directory.provider";
+    private static final String TEST_ACCOUNT_NAME = "cts@android.com";
+    private static final String TEST_ACCOUNT_TYPE = "com.android.cts";
+    private static final String DEFAULT_DISPLAY_NAME = "Directory";
+    private static final String DEFAULT_CONTACT_NAME = "DirectoryContact";
+
+    private static final Uri AUTHORITY_URI = Uri.parse("content://" + AUTHORITY);
+    private static final String PRIMARY_THUMBNAIL = "photo/primary_thumbnail";
+    private static final String PRIMARY_PHOTO = "photo/primary_photo";
+    private static final String MANAGED_THUMBNAIL = "photo/managed_thumbnail";
+    private static final String MANAGED_PHOTO = "photo/managed_photo";
+    private static final Uri PRIMARY_THUMBNAIL_URI = Uri.withAppendedPath(AUTHORITY_URI,
+            PRIMARY_THUMBNAIL);
+    private static final Uri PRIMARY_PHOTO_URI = Uri.withAppendedPath(AUTHORITY_URI,
+            PRIMARY_PHOTO);
+    private static final Uri MANAGED_THUMBNAIL_URI = Uri.withAppendedPath(AUTHORITY_URI,
+            MANAGED_THUMBNAIL);
+    private static final Uri MANAGED_PHOTO_URI = Uri.withAppendedPath(AUTHORITY_URI,
+            MANAGED_PHOTO);
 
     private static final int GAL_BASE = 0;
     private static final int GAL_DIRECTORIES = GAL_BASE;
@@ -48,6 +72,10 @@ public class DirectoryProvider extends ContentProvider {
     private static final int GAL_PHONE_LOOKUP = GAL_BASE + 6;
     private static final int GAL_CALLABLES_FILTER = GAL_BASE + 7;
     private static final int GAL_EMAIL_LOOKUP = GAL_BASE + 8;
+    private static final int GAL_PRIMARY_THUMBNAIL = GAL_BASE + 9;
+    private static final int GAL_PRIMARY_PHOTO = GAL_BASE + 10;
+    private static final int GAL_MANAGED_THUMBNAIL = GAL_BASE + 11;
+    private static final int GAL_MANAGED_PHOTO = GAL_BASE + 12;
 
     private final UriMatcher mURIMatcher = new UriMatcher(UriMatcher.NO_MATCH);
 
@@ -64,6 +92,10 @@ public class DirectoryProvider extends ContentProvider {
         mURIMatcher.addURI(AUTHORITY, "phone_lookup/*", GAL_PHONE_LOOKUP);
         mURIMatcher.addURI(AUTHORITY, "data/callables/filter/*", GAL_CALLABLES_FILTER);
         mURIMatcher.addURI(AUTHORITY, "data/emails/lookup/*", GAL_EMAIL_LOOKUP);
+        mURIMatcher.addURI(AUTHORITY, PRIMARY_THUMBNAIL, GAL_PRIMARY_THUMBNAIL);
+        mURIMatcher.addURI(AUTHORITY, PRIMARY_PHOTO, GAL_PRIMARY_PHOTO);
+        mURIMatcher.addURI(AUTHORITY, MANAGED_THUMBNAIL, GAL_MANAGED_THUMBNAIL);
+        mURIMatcher.addURI(AUTHORITY, MANAGED_PHOTO, GAL_MANAGED_PHOTO);
         mSharedPrefs = getContext().getSharedPreferences(CONFIG_NAME, Context.MODE_PRIVATE);
         return true;
     }
@@ -72,7 +104,7 @@ public class DirectoryProvider extends ContentProvider {
     public Cursor query(Uri uri, String[] projection, String selection, String[] selectionArgs,
             String sortOrder) {
 
-        final String prefix = mSharedPrefs.getString(SET_CUSTOM_PREFIX, "");
+        final String prefix = getPrefix();
         final int match = mURIMatcher.match(uri);
         switch (match) {
             case GAL_DIRECTORIES: {
@@ -114,6 +146,13 @@ public class DirectoryProvider extends ContentProvider {
                         row[i] = -1;
                     } else if (column.equals(Contacts.DISPLAY_NAME)) {
                         row[i] = prefix + DEFAULT_CONTACT_NAME;
+
+                    } else if (column.equals(Contacts.PHOTO_THUMBNAIL_URI)) {
+                        row[i] = isManagedProfile() ? MANAGED_THUMBNAIL_URI.toString()
+                                : PRIMARY_THUMBNAIL_URI.toString();
+                    } else if (column.equals(Contacts.PHOTO_URI)) {
+                        row[i] = isManagedProfile() ? MANAGED_PHOTO_URI.toString()
+                                : PRIMARY_PHOTO_URI.toString();
                     } else {
                         row[i] = null;
                     }
@@ -158,5 +197,42 @@ public class DirectoryProvider extends ContentProvider {
             Binder.restoreCallingIdentity(token);
         }
         return new Bundle();
+    }
+
+    @Override
+    public AssetFileDescriptor openAssetFile(final Uri uri, String mode) {
+        if (!mode.equals("r")) {
+            throw new IllegalArgumentException("mode must be \"r\"");
+        }
+
+        final int match = mURIMatcher.match(uri);
+        final int resId;
+        switch (match) {
+            case GAL_PRIMARY_THUMBNAIL:
+                resId = isManagedProfile() ? 0 : R.raw.primary_thumbnail;
+                break;
+            case GAL_PRIMARY_PHOTO:
+                resId = isManagedProfile() ? 0 : R.raw.primary_photo;
+                break;
+            case GAL_MANAGED_THUMBNAIL:
+                resId = isManagedProfile() ? R.raw.managed_thumbnail : 0;
+                break;
+            case GAL_MANAGED_PHOTO:
+                resId = isManagedProfile() ? R.raw.managed_photo : 0;
+                break;
+            default:
+                resId = 0;
+                break;
+        }
+
+        return resId == 0 ? null : getContext().getResources().openRawResourceFd(resId);
+    }
+
+    private String getPrefix() {
+        return mSharedPrefs.getString(SET_CUSTOM_PREFIX, "");
+    }
+
+    private boolean isManagedProfile() {
+        return "Managed".equals(getPrefix());
     }
 }
