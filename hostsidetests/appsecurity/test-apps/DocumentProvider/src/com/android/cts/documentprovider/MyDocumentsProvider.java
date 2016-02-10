@@ -147,8 +147,14 @@ public class MyDocumentsProvider extends DocumentsProvider {
         {
             Doc file4 = buildDoc("doc:file4", "FILE4", "mime4/file4");
             file4.contents = "filefour".getBytes();
-            file4.flags = Document.FLAG_SUPPORTS_WRITE;
+            file4.flags = Document.FLAG_SUPPORTS_WRITE |
+                    Document.FLAG_SUPPORTS_COPY |
+                    Document.FLAG_SUPPORTS_MOVE |
+                    Document.FLAG_SUPPORTS_REMOVE;
             dir2.children.add(file4);
+
+            Doc subDir2 = buildDoc("doc:sub_dir2", "SUB_DIR2", Document.MIME_TYPE_DIR);
+            dir2.children.add(subDir2);
         }
     }
 
@@ -205,10 +211,45 @@ public class MyDocumentsProvider extends DocumentsProvider {
 
     @Override
     public void deleteDocument(String documentId) throws FileNotFoundException {
-        mDocs.remove(documentId);
-        for (Doc doc : mDocs.values()) {
-            doc.children.remove(documentId);
+        final Doc doc = mDocs.get(documentId);
+        mDocs.remove(doc);
+        for (Doc parentDoc : mDocs.values()) {
+            parentDoc.children.remove(doc);
         }
+    }
+
+    @Override
+    public boolean removeDocument(String documentId, String parentDocumentId)
+            throws FileNotFoundException {
+        // There are no multi-parented documents in this provider, so it's safe to remove the
+        // document from mDocs.
+        final Doc doc = mDocs.get(documentId);
+        mDocs.remove(doc);
+        mDocs.get(parentDocumentId).children.remove(doc);
+        return true;
+    }
+
+    @Override
+    public String copyDocument(String sourceDocumentId, String targetParentDocumentId)
+            throws FileNotFoundException {
+        final Doc doc = mDocs.get(sourceDocumentId);
+        if (doc.children.size() > 0) {
+            throw new UnsupportedOperationException("Recursive copy not supported for tests.");
+        }
+
+        final Doc docCopy = buildDoc(doc.docId + "_copy", doc.displayName + "_COPY", doc.mimeType);
+        mDocs.get(targetParentDocumentId).children.add(docCopy);
+        return docCopy.docId;
+    }
+
+    @Override
+    public String moveDocument(String sourceDocumentId, String sourceParentDocumentId,
+            String targetParentDocumentId)
+            throws FileNotFoundException {
+        final Doc doc = mDocs.get(sourceDocumentId);
+        mDocs.get(sourceParentDocumentId).children.remove(doc);
+        mDocs.get(targetParentDocumentId).children.add(doc);
+        return doc.docId;
     }
 
     @Override
