@@ -31,7 +31,6 @@ import android.media.tv.TvContract.Programs.Genres;
 import android.media.tv.TvContract.RecordedPrograms;
 import android.net.Uri;
 import android.test.AndroidTestCase;
-
 import android.tv.cts.R;
 
 import java.io.InputStream;
@@ -89,6 +88,15 @@ public class TvContractTest extends AndroidTestCase {
             + "," + Genres.DRAMA + "," + Genres.EDUCATION + "," + Genres.FAMILY_KIDS + ","
             + Genres.GAMING + "," + Genres.MOVIES + "," + Genres.NEWS + "," + Genres.SHOPPING + ","
             + Genres.SPORTS + "," + Genres.TRAVEL;
+
+    // Delimiter for genre.
+    private static final String DELIMITER = ",";
+    private static final String EMPTY_GENRE = "";
+    private static final String COMMA = ",";
+    private static final String COMMA_ENCODED = "\",";
+    private static final String QUOTE = "\"";
+    private static final String QUOTE_ENCODED = "\"\"";
+    private static final String WHITE_SPACES = " \r \n \t \f ";
 
     private String mInputId;
     private ContentResolver mContentResolver;
@@ -707,5 +715,107 @@ public class TvContractTest extends AndroidTestCase {
         assertEquals(ENCODED_GENRE_STRING, Genres.encode(Genres.ANIMAL_WILDLIFE,
                 Genres.COMEDY, Genres.DRAMA, Genres.EDUCATION, Genres.FAMILY_KIDS, Genres.GAMING,
                 Genres.MOVIES, Genres.NEWS, Genres.SHOPPING, Genres.SPORTS, Genres.TRAVEL));
+    }
+
+    public void testProgramsGenresEncodeDecode_empty() {
+        if (!Utils.hasTvInputFramework(getContext())) {
+            return;
+        }
+        String[] genres = new String[] {EMPTY_GENRE};
+        String expectedEncoded = EMPTY_GENRE;
+        checkGenreEncodeDecode(genres, expectedEncoded, 0);
+
+        genres = new String[] {EMPTY_GENRE, EMPTY_GENRE, EMPTY_GENRE};
+        expectedEncoded = DELIMITER + DELIMITER;
+        checkGenreEncodeDecode(genres, expectedEncoded, 0);
+    }
+
+    public void testProgramsGenresEncodeDecode_simpleDelimiter() {
+        if (!Utils.hasTvInputFramework(getContext())) {
+            return;
+        }
+        String[] genres = new String[] {EMPTY_GENRE,
+                COMMA,
+                QUOTE,
+                COMMA + QUOTE,
+                QUOTE + COMMA,
+                COMMA + COMMA,
+                QUOTE + QUOTE,
+                COMMA + QUOTE + COMMA,
+                QUOTE + COMMA + QUOTE};
+        String expectedEncoded =
+                DELIMITER + COMMA_ENCODED
+                + DELIMITER + QUOTE_ENCODED
+                + DELIMITER + COMMA_ENCODED + QUOTE_ENCODED
+                + DELIMITER + QUOTE_ENCODED + COMMA_ENCODED
+                + DELIMITER + COMMA_ENCODED + COMMA_ENCODED
+                + DELIMITER + QUOTE_ENCODED + QUOTE_ENCODED
+                + DELIMITER + COMMA_ENCODED + QUOTE_ENCODED + COMMA_ENCODED
+                + DELIMITER + QUOTE_ENCODED + COMMA_ENCODED + QUOTE_ENCODED;
+        checkGenreEncodeDecode(genres, expectedEncoded, genres.length - 1);
+    }
+
+    public void testProgramsGenresEncodeDecode_delimiterWithWhiteSpace() {
+        if (!Utils.hasTvInputFramework(getContext())) {
+            return;
+        }
+        String[] genres = new String[] {EMPTY_GENRE,
+                COMMA + WHITE_SPACES,
+                QUOTE + WHITE_SPACES,
+                WHITE_SPACES + COMMA,
+                WHITE_SPACES + QUOTE,
+                WHITE_SPACES + COMMA + WHITE_SPACES,
+                WHITE_SPACES + QUOTE + WHITE_SPACES};
+        String expectedEncoded =
+                DELIMITER + COMMA_ENCODED + WHITE_SPACES
+                + DELIMITER + QUOTE_ENCODED + WHITE_SPACES
+                + DELIMITER + WHITE_SPACES + COMMA_ENCODED
+                + DELIMITER + WHITE_SPACES + QUOTE_ENCODED
+                + DELIMITER + WHITE_SPACES + COMMA_ENCODED + WHITE_SPACES
+                + DELIMITER + WHITE_SPACES + QUOTE_ENCODED + WHITE_SPACES;
+        checkGenreEncodeDecode(genres, expectedEncoded, genres.length - 1);
+    }
+
+    public void testProgramsGenresEncodeDecode_all() {
+        if (!Utils.hasTvInputFramework(getContext())) {
+            return;
+        }
+        String[] genres = new String[] {EMPTY_GENRE,
+                Genres.COMEDY,
+                Genres.COMEDY + COMMA,
+                Genres.COMEDY + COMMA + Genres.COMEDY,
+                COMMA + Genres.COMEDY + COMMA,
+                QUOTE + Genres.COMEDY + QUOTE,
+                Genres.COMEDY + COMMA + WHITE_SPACES,
+                Genres.COMEDY + COMMA + Genres.COMEDY + WHITE_SPACES,
+                COMMA + Genres.COMEDY + COMMA + WHITE_SPACES,
+                QUOTE + Genres.COMEDY + QUOTE + WHITE_SPACES
+        };
+        String expectedEncoded =
+                DELIMITER + Genres.COMEDY
+                + DELIMITER + Genres.COMEDY + COMMA_ENCODED
+                + DELIMITER + Genres.COMEDY + COMMA_ENCODED + Genres.COMEDY
+                + DELIMITER + COMMA_ENCODED + Genres.COMEDY + COMMA_ENCODED
+                + DELIMITER + QUOTE_ENCODED + Genres.COMEDY + QUOTE_ENCODED
+                + DELIMITER + Genres.COMEDY + COMMA_ENCODED + WHITE_SPACES
+                + DELIMITER + Genres.COMEDY + COMMA_ENCODED + Genres.COMEDY + WHITE_SPACES
+                + DELIMITER + COMMA_ENCODED + Genres.COMEDY + COMMA_ENCODED + WHITE_SPACES
+                + DELIMITER + QUOTE_ENCODED + Genres.COMEDY + QUOTE_ENCODED + WHITE_SPACES;
+        checkGenreEncodeDecode(genres, expectedEncoded, genres.length - 1);
+    }
+
+    private void checkGenreEncodeDecode(String[] genres, String expectedEncoded,
+            int expectedDecodedLength) {
+        String encoded = Genres.encode(genres);
+        assertEquals(expectedEncoded, encoded);
+        String[] decoded = Genres.decode(encoded);
+        assertEquals(expectedDecodedLength, decoded.length);
+        int decodedIndex = 0;
+        for (int i = 0; i < genres.length; ++i) {
+            String original = genres[i].trim();
+            if (!original.isEmpty()) {
+                assertEquals(original, decoded[decodedIndex++]);
+            }
+        }
     }
 }
