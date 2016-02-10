@@ -229,37 +229,36 @@ public class TvInputServiceTest extends ActivityInstrumentationTestCase2<TvViewS
         if (!Utils.hasTvInputFramework(getActivity())) {
             return;
         }
-        verifyCommandConnect();
+        verifyCommandTuneForRecording();
         verifyCommandStartRecording();
         verifyCommandStopRecording();
-        verifyCallbackConnected();
+        verifyCallbackTuned();
         verifyCallbackError();
-        verifyCallbackRecordingStarted();
         verifyCallbackRecordingStopped();
-        verifyCommandDisconnect();
+        verifyCommandRelease();
     }
 
-    public void verifyCommandConnect() {
+    public void verifyCommandTuneForRecording() {
         resetCounts();
         Uri fakeChannelUri = TvContract.buildChannelUri(0);
-        mTvRecordingClient.connect(mStubInfo.getId(), fakeChannelUri);
+        mTvRecordingClient.tune(mStubInfo.getId(), fakeChannelUri);
         new PollingCheck(TIME_OUT) {
             @Override
             protected boolean check() {
                 CountingRecordingSession session = CountingTvInputService.sRecordingSession;
-                return session != null && session.mConnectCount > 0;
+                return session != null && session.mTuneCount > 0;
             }
         }.run();
     }
 
-    public void verifyCommandDisconnect() {
+    public void verifyCommandRelease() {
         resetCounts();
-        mTvRecordingClient.disconnect();
+        mTvRecordingClient.release();
         new PollingCheck(TIME_OUT) {
             @Override
             protected boolean check() {
                 CountingRecordingSession session = CountingTvInputService.sRecordingSession;
-                return session != null && session.mDisconnectCount > 0;
+                return session != null && session.mReleaseCount > 0;
             }
         }.run();
     }
@@ -288,15 +287,15 @@ public class TvInputServiceTest extends ActivityInstrumentationTestCase2<TvViewS
         }.run();
     }
 
-    public void verifyCallbackConnected() {
+    public void verifyCallbackTuned() {
         resetCounts();
         CountingRecordingSession session = CountingTvInputService.sRecordingSession;
         assertNotNull(session);
-        session.notifyConnected();
+        session.notifyTuned();
         new PollingCheck(TIME_OUT) {
             @Override
             protected boolean check() {
-                return mRecordingCallback.mConnectedCount > 0;
+                return mRecordingCallback.mTunedCount > 0;
             }
         }.run();
     }
@@ -310,19 +309,6 @@ public class TvInputServiceTest extends ActivityInstrumentationTestCase2<TvViewS
             @Override
             protected boolean check() {
                 return mRecordingCallback.mErrorCount > 0;
-            }
-        }.run();
-    }
-
-    public void verifyCallbackRecordingStarted() {
-        resetCounts();
-        CountingRecordingSession session = CountingTvInputService.sRecordingSession;
-        assertNotNull(session);
-        session.notifyRecordingStarted();
-        new PollingCheck(TIME_OUT) {
-            @Override
-            protected boolean check() {
-                return mRecordingCallback.mRecordingStartedCount > 0;
             }
         }.run();
     }
@@ -929,8 +915,8 @@ public class TvInputServiceTest extends ActivityInstrumentationTestCase2<TvViewS
         }
 
         public static class CountingRecordingSession extends RecordingSession {
-            public volatile int mConnectCount;
-            public volatile int mDisconnectCount;
+            public volatile int mTuneCount;
+            public volatile int mReleaseCount;
             public volatile int mStartRecordingCount;
             public volatile int mStopRecordingCount;
 
@@ -939,20 +925,20 @@ public class TvInputServiceTest extends ActivityInstrumentationTestCase2<TvViewS
             }
 
             public void resetCounts() {
-                mConnectCount = 0;
-                mDisconnectCount = 0;
+                mTuneCount = 0;
+                mReleaseCount = 0;
                 mStartRecordingCount = 0;
                 mStopRecordingCount = 0;
             }
 
             @Override
-            public void onConnect(Uri recordedProgramUri) {
-                mConnectCount++;
+            public void onTune(Uri channelUri) {
+                mTuneCount++;
             }
 
             @Override
-            public void onDisconnect() {
-                mDisconnectCount++;
+            public void onRelease() {
+                mReleaseCount++;
             }
 
             @Override
@@ -968,25 +954,13 @@ public class TvInputServiceTest extends ActivityInstrumentationTestCase2<TvViewS
     }
 
     private static class StubRecordingCallback extends TvRecordingClient.RecordingCallback {
-        private int mConnectedCount;
-        private int mDisconnectedCount;
-        private int mRecordingStartedCount;
+        private int mTunedCount;
         private int mRecordingStoppedCount;
         private int mErrorCount;
 
         @Override
-        public void onConnected() {
-            mConnectedCount++;
-        }
-
-        @Override
-        public void onDisconnected() {
-            mDisconnectedCount++;
-        }
-
-        @Override
-        public void onRecordingStarted() {
-            mRecordingStartedCount++;
+        public void onTuned() {
+            mTunedCount++;
         }
 
         @Override
@@ -1000,9 +974,7 @@ public class TvInputServiceTest extends ActivityInstrumentationTestCase2<TvViewS
         }
 
         public void resetCounts() {
-            mConnectedCount = 0;
-            mDisconnectedCount = 0;
-            mRecordingStartedCount = 0;
+            mTunedCount = 0;
             mRecordingStoppedCount = 0;
             mErrorCount = 0;
         }
