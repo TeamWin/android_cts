@@ -17,5 +17,8 @@
     <uses-policies>
         <reset-password />
         <limit-password />
+        <wipe-data />
+        <expire-password />
+        <watch-login />
     </uses-policies>
 </device-admin>

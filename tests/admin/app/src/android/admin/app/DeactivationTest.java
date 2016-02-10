@@ -31,21 +31,13 @@ public class DeactivationTest extends AndroidTestCase {
     private static final ComponentName RECEIVER2 = new ComponentName(PACKAGE,
             CtsDeviceAdminReceiver2.class.getName());
 
-    // Device admin we use to reset password.  Note profile owner can do this too,
-    // but DPM.clearProfileOwner() is hidden, so we just use a device owner.
-    private static final ComponentName DEVICE_OWNER = new ComponentName(PACKAGE,
-            CtsDeviceAdminDeviceOwner.class.getName());
-
     public void testDeactivateAdmins() throws Exception {
         DevicePolicyManager manager = (DevicePolicyManager)
                 getContext().getSystemService(Context.DEVICE_POLICY_SERVICE);
         assertNotNull(manager);
 
-        manager.clearDeviceOwnerApp(PACKAGE);
-
         manager.removeActiveAdmin(RECEIVER1);
         manager.removeActiveAdmin(RECEIVER2);
-        manager.removeActiveAdmin(DEVICE_OWNER);
 
         for (int i = 0; i < 1000 && isActive(manager); i++) {
             try {
@@ -59,7 +51,6 @@ public class DeactivationTest extends AndroidTestCase {
 
     private boolean isActive(DevicePolicyManager manager) {
         return manager.isAdminActive(RECEIVER1) ||
-                manager.isAdminActive(RECEIVER2) ||
-                manager.isAdminActive(DEVICE_OWNER);
+                manager.isAdminActive(RECEIVER2);
     }
 }

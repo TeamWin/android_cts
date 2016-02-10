@@ -23,7 +23,6 @@
     <target_preparer class="com.android.tradefed.targetprep.RunCommandTargetPreparer">
         <option name="run-command" value="dpm set-active-admin --user cur android.admin.app/.CtsDeviceAdminReceiver" />
         <option name="run-command" value="dpm set-active-admin --user cur android.admin.app/.CtsDeviceAdminReceiver2" />
-        <option name="run-command" value="dpm set-device-owner --user cur android.admin.app/.CtsDeviceAdminDeviceOwner" />
     </target_preparer>
 
     <test class="com.android.tradefed.testtype.AndroidJUnitTest" >
