@@ -365,6 +365,7 @@ def BuildAospSmallSizeTestList():
       already published to aosp. """
   return {
       'android.aadb' : [],
+      'android.abioverride' : [],
       'android.acceleration' : [],
       'android.accessibility' : [],
       'android.accessibilityservice' : [],
@@ -574,4 +575,3 @@ if __name__ == '__main__':
   if result != 0:
     sys.exit(result)
   builder.GenerateTestPlans()
-
