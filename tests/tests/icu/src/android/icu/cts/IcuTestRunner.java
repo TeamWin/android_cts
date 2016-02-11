@@ -20,9 +20,7 @@ import android.app.Activity;
 import android.app.Instrumentation;
 import android.os.Bundle;
 import android.os.Debug;
-import android.test.InstrumentationTestRunner;
 import android.util.Log;
-
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
@@ -34,6 +32,15 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 
+import static android.test.InstrumentationTestRunner.REPORT_KEY_NAME_CLASS;
+import static android.test.InstrumentationTestRunner.REPORT_KEY_NAME_TEST;
+import static android.test.InstrumentationTestRunner.REPORT_KEY_NUM_CURRENT;
+import static android.test.InstrumentationTestRunner.REPORT_KEY_NUM_TOTAL;
+import static android.test.InstrumentationTestRunner.REPORT_KEY_STACK;
+import static android.test.InstrumentationTestRunner.REPORT_VALUE_RESULT_ERROR;
+import static android.test.InstrumentationTestRunner.REPORT_VALUE_RESULT_OK;
+import static android.test.InstrumentationTestRunner.REPORT_VALUE_RESULT_START;
+
 /**
  * A drop-in replacement for AndroidJUnitTestRunner, which understands the same arguments, and has
  * similar functionality, but runs ICU tests instead of calling the JUnit wrapper.
@@ -42,39 +49,68 @@ public final class IcuTestRunner extends Instrumentation {
 
     private static final String TAG = "IcuTestRunner";
 
-    /** Bundle parameter names to be sent to the host. */
-    public static final String ARGUMENT_TEST_CLASS       = "class";
-    public static final String ARGUMENT_TEST_FILE        = "testFile";
+    /**
+     * The names of the file containing the names of the tests to run.
+     *
+     * <p>This is an internal constant used within
+     * {@code android.support.test.internal.runner.RunnerArgs}, which is used on both the server
+     * and client side. The constant is used when there are too many test names to pass on the
+     * command line, in which case they are stored in a file that is pushed to the device and then
+     * the location of that file is passed in this argument. The {@code RunnerArgs} on the client
+     * will read the contents of that file in order to retrieve the list of names and then return
+     * that to its client without the client being aware of how that was done.
+     */
+    private static final String ARGUMENT_TEST_FILE = "testFile";
 
-    /** Token to identify results sent by this class. */
-    public static final String REPORT_KEY_ID             = "id";
-    /** This token is use to identify the ICU test class when sending results back to the host. */
-    public static final String REPORT_KEY_NAME_CLASS     = "class";
-    /** We need to have a "method" to run. We use this token to send the placeholder method. */
-    public static final String REPORT_KEY_NAME_TEST      = "test";
-    /** Token for the current test number being run. */
-    public static final String REPORT_KEY_NUM_CURRENT    = "current";
-    /** Token for the total number of tests. Must be consistent with the host side and sent
-     * otherwise the host will assume something went wrong and run each test individually.
+    /**
+     * A comma separated list of the names of test classes to run.
+     *
+     * <p>The equivalent constant in {@code InstrumentationTestRunner} is hidden and so not
+     * available through the public API.
      */
-    public static final String REPORT_KEY_NUMTOTAL       = "numtests";
-    /** Token representing how long (in seconds) the current test took to execute. */
-    public static final String REPORT_KEY_RUNTIME        = "runtime";
-    /** Token for sending stack traces back to the host. This is displayed in the final report, so
-     * we put the ICU detailed breakdown of tests run so it is clear which test method failed.
+    private static final String ARGUMENT_TEST_CLASS = "class";
+
+    /**
+     * Log the results as if the tests were executed but don't actually run the tests.
+     *
+     * <p>The equivalent constant in {@code InstrumentationTestRunner} is private.
      */
-    public static final String REPORT_KEY_STACK          = "stack";
-    /** Indicates to the host monitoring this test that a particular test has started. This token is
-     * required to be sent for the host to pickup that the test was run.
+    private static final String ARGUMENT_LOG_ONLY = "log";
+
+    /**
+     * Wait for the debugger before starting.
+     *
+     * <p>There is no equivalent constant in {@code InstrumentationTestRunner} but the string is
+     * used within that class.
      */
-    public static final int    REPORT_VALUE_RESULT_START = 1;
-    /** An identifier for tests run using this class. */
-    public static final String REPORT_VALUE_ID           = "IcuTestRunner";
-    /** The name of a non-existent method for the sake of having a method name. This is required
+    private static final String ARGUMENT_DEBUG = "debug";
+
+    /**
+     * Only count the number of tests to run.
+     *
+     * <p>There is no equivalent constant in {@code InstrumentationTestRunner} but the string is
+     * used within that class.
+     */
+    private static final String ARGUMENT_COUNT = "count";
+
+    /**
+     * Token representing how long (in seconds) the current test took to execute.
+     *
+     * <p>The equivalent constant in {@code InstrumentationTestRunner} is private.
+     */
+    private static final String REPORT_KEY_RUNTIME = "runtime";
+
+    /**
+     * An identifier for tests run using this class.
+     */
+    private static final String REPORT_VALUE_ID = "IcuTestRunner";
+
+    /**
+     * The name of a non-existent method for the sake of having a method name. This is required
      * because cts-tradefed needs to know which method on the test framework to run, but we don't
      * have that information, so we use this placeholder instead.
      */
-    public static final String DUMMY_METHOD_NAME         = "run-everything";
+    private static final String DUMMY_METHOD_NAME = "run-everything";
 
     /** Wait for the debugger before starting the tests. */
     private boolean debug;
@@ -82,35 +118,36 @@ public final class IcuTestRunner extends Instrumentation {
     /** Only count the number of tests, and not run them. */
     private boolean testCountOnly;
 
-    /** Only log the number of tests, and not run them. */
-    private boolean log;
+    /** Only logOnly the number of tests, and not run them. */
+    private boolean logOnly;
 
     /** Contains all the wrapped ICU tests to be run in this invocation. */
     private Set<IcuTestUtils.IcuTestWrapper> tests;
 
-
     @Override
     public void onCreate(Bundle args) {
+        super.onCreate(args);
         Log.d(TAG, "In OnCreate");
 
-        this.debug = args.getBoolean("debug");
-        this.testCountOnly = args.getBoolean("count");
-        this.log = "true".equalsIgnoreCase(args.getString("log"));
+        this.debug = args.getBoolean(ARGUMENT_DEBUG);
+        this.testCountOnly = args.getBoolean(ARGUMENT_COUNT);
+        this.logOnly = "true".equalsIgnoreCase(args.getString(ARGUMENT_LOG_ONLY));
 
         // The test can be run specifying a list of classes to run, or as cts-tradefed does it,
         // by passing a fileName with a test to run on each line.
         List<String> classList;
-        if (args.getString(ARGUMENT_TEST_FILE) != null) {
+        String arg;
+        if ((arg = args.getString(ARGUMENT_TEST_FILE)) != null) {
             // The tests are specified in a file.
             try {
-                classList = readTestsFromFile(args.getString(ARGUMENT_TEST_FILE));
+                classList = readTestsFromFile(arg);
             } catch (IOException err) {
                 finish(Activity.RESULT_CANCELED, new Bundle());
                 return;
             }
-        } else if (args.getString(ARGUMENT_TEST_CLASS) != null) {
+        } else if ((arg = args.getString(ARGUMENT_TEST_CLASS)) != null) {
             // The tests are specified in a String passed in the bundle.
-            String[] classes = args.getString(ARGUMENT_TEST_CLASS).split(",");
+            String[] classes = args.getString(arg).split(",");
             classList = new ArrayList<>(Arrays.asList(classes));
         } else {
             // null means the runner should run all tests.
@@ -134,11 +171,12 @@ public final class IcuTestRunner extends Instrumentation {
             Debug.waitForDebugger();
         }
 
-        int testCount = this.tests.size();
+        int testCount = tests.size();
         if (testCountOnly) {
             Log.d(TAG, "test count only: " + testCount);
             Bundle testCountResult = new Bundle();
-            testCountResult.putInt(REPORT_KEY_NUMTOTAL, testCount);
+            testCountResult.putString(REPORT_KEY_IDENTIFIER, REPORT_VALUE_ID);
+            testCountResult.putInt(REPORT_KEY_NUM_TOTAL, testCount);
             finish(Activity.RESULT_OK, testCountResult);
             return;
         }
@@ -149,7 +187,7 @@ public final class IcuTestRunner extends Instrumentation {
         int totalFailures = 0;
         List<String> failedClasses = new LinkedList<>();
 
-        for (IcuTestUtils.IcuTestWrapper testWrapper : this.tests) {
+        for (IcuTestUtils.IcuTestWrapper testWrapper : tests) {
             String className = testWrapper.getTestClassName() + '\n';
 
             Bundle currentTestResult = sendStartTestInfo(className, totalSuccess + totalFailures);
@@ -160,36 +198,38 @@ public final class IcuTestRunner extends Instrumentation {
                 Log.d(TAG, "Executing test: " + className);
                 long startTime = System.currentTimeMillis();
                 int resultCode;
-                if (log) {
+                if (logOnly) {
                     resultCode = 0;
                 } else {
                     resultCode = testWrapper.call(new PrintWriter(logs));
                 }
                 long timeTaken = System.currentTimeMillis() - startTime;
                 currentTestResult.putFloat(REPORT_KEY_RUNTIME, timeTaken / 1000);
+                String logString = logs.toString();
                 if (resultCode != 0) {
                     totalFailures++;
                     failedClasses.add(className);
                     // Include the detailed logs from ICU as the stack trace.
-                    currentTestResult.putString(REPORT_KEY_STACK, logs.toString());
+                    currentTestResult.putString(REPORT_KEY_STACK, logString);
                     // Also append the logs to the console output.
-                    result.append("Failure: ").append(className).append(logs.toString());
+                    result.append("Failure: ").append(className).append(logString);
                     currentTestResult.putString(REPORT_KEY_STREAMRESULT, result.toString());
-                    sendStatus(InstrumentationTestRunner.REPORT_VALUE_RESULT_ERROR,
-                            currentTestResult);
+                    sendStatus(REPORT_VALUE_RESULT_ERROR, currentTestResult);
                 } else {
                     totalSuccess++;
-                    result.append("Success: ").append(className).append(logs.toString());
+                    result.append("Success: ").append(className).append(logString);
                     currentTestResult.putString(REPORT_KEY_STREAMRESULT, result.toString());
-                    sendStatus(InstrumentationTestRunner.REPORT_VALUE_RESULT_OK, currentTestResult);
+                    sendStatus(REPORT_VALUE_RESULT_OK, currentTestResult);
                 }
                 result.append("Total time taken: ").append(timeTaken).append("ms\n");
             } catch (Exception e) {
-                currentTestResult.putString(REPORT_KEY_STACK,
-                        "Test code threw exception: " + e.getMessage() + '\n');
-                result.append(e.getMessage());
-                sendStatus(InstrumentationTestRunner.REPORT_VALUE_RESULT_ERROR,
-                        currentTestResult);
+                StringWriter stackTraceWriter = new StringWriter();
+                e.printStackTrace(new PrintWriter(stackTraceWriter));
+                String stackTrace = stackTraceWriter.toString();
+                String message = "Test code threw exception: " + stackTrace + '\n';
+                currentTestResult.putString(REPORT_KEY_STACK, message);
+                result.append(message);
+                sendStatus(REPORT_VALUE_RESULT_ERROR, currentTestResult);
             }
         }
         Bundle results = new Bundle();
@@ -218,11 +258,12 @@ public final class IcuTestRunner extends Instrumentation {
      */
     private Bundle sendStartTestInfo(String className, int testNum) {
         Bundle data = new Bundle();
-        data.putString(REPORT_KEY_ID, REPORT_VALUE_ID);
-        data.putInt(REPORT_KEY_NUMTOTAL, 1);
+        data.putString(REPORT_KEY_IDENTIFIER, REPORT_VALUE_ID);
+        data.putInt(REPORT_KEY_NUM_TOTAL, 1);
         data.putInt(REPORT_KEY_NUM_CURRENT, testNum);
         data.putString(REPORT_KEY_NAME_CLASS, className);
-        data.putString(REPORT_KEY_NAME_TEST, DUMMY_METHOD_NAME);  // Dummy method to work with cts.
+        // Dummy method to work with cts.
+        data.putString(REPORT_KEY_NAME_TEST, DUMMY_METHOD_NAME);
         sendStatus(REPORT_VALUE_RESULT_START, data);
         return data;
     }
@@ -244,5 +285,4 @@ public final class IcuTestRunner extends Instrumentation {
             throw err;
         }
     }
-
 }
