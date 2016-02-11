@@ -595,8 +595,20 @@ class ItsSession(object):
             formats = ['yuv']
         ncap = len(cmd["captureRequests"])
         nsurf = 1 if out_surfaces is None else len(cmd["outputSurfaces"])
+        # Only allow yuv output to multiple targets
+        yuv_surfaces = [s for s in cmd["outputSurfaces"] if s["format"]=="yuv"]
+        n_yuv = len(yuv_surfaces)
+        # Compute the buffer size of YUV targets
+        yuv_sizes = [c["width"]*c["height"]*3/2 for c in yuv_surfaces]
+        # Currently we don't pass enough metadta from ItsService to distinguish
+        # different yuv stream of same buffer size
+        if len(yuv_sizes) != len(set(yuv_sizes)):
+            raise its.error.Error(
+                    'ITS does not support yuv outputs of same buffer size')
         if len(formats) > len(set(formats)):
-            raise its.error.Error('Duplicate format requested')
+            if n_yuv != len(formats) - len(set(formats)) + 1:
+                raise its.error.Error('Duplicate format requested')
+
         raw_formats = 0;
         raw_formats += 1 if "dng" in formats else 0
         raw_formats += 1 if "raw" in formats else 0
@@ -627,18 +639,23 @@ class ItsSession(object):
         # the burst, however individual images of different formats can come
         # out in any order for that capture.
         nbufs = 0
-        bufs = {"yuv":[], "raw":[], "raw10":[], "raw12":[],
+        bufs = {"raw":[], "raw10":[], "raw12":[],
                 "rawStats":[], "dng":[], "jpeg":[]}
+        yuv_bufs = {size:[] for size in yuv_sizes}
         mds = []
         widths = None
         heights = None
         while nbufs < ncap*nsurf or len(mds) < ncap:
             jsonObj,buf = self.__read_response_from_socket()
-            if jsonObj['tag'] in ['jpegImage', 'yuvImage', 'rawImage', \
+            if jsonObj['tag'] in ['jpegImage', 'rawImage', \
                     'raw10Image', 'raw12Image', 'rawStatsImage', 'dngImage'] \
                     and buf is not None:
                 fmt = jsonObj['tag'][:-5]
                 bufs[fmt].append(buf)
+                nbufs += 1
+            elif jsonObj['tag'] == 'yuvImage':
+                buf_size = numpy.product(buf.shape)
+                yuv_bufs[buf_size].append(buf)
                 nbufs += 1
             elif jsonObj['tag'] == 'captureResults':
                 mds.append(jsonObj['objValue']['captureResult'])
@@ -653,11 +670,15 @@ class ItsSession(object):
             objs = []
             for i in range(ncap):
                 obj = {}
-                obj["data"] = bufs[fmt][i]
                 obj["width"] = widths[j]
                 obj["height"] = heights[j]
                 obj["format"] = fmt
                 obj["metadata"] = mds[i]
+                if fmt == 'yuv':
+                    buf_size = widths[j] * heights[j] * 3 / 2
+                    obj["data"] = yuv_bufs[buf_size][i]
+                else:
+                    obj["data"] = bufs[fmt][i]
                 objs.append(obj)
             rets.append(objs if ncap>1 else objs[0])
         self.sock.settimeout(self.SOCK_TIMEOUT)

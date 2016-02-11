@@ -36,6 +36,17 @@ def skip_unless(cond):
         print "Test skipped"
         sys.exit(SKIP_RET_CODE)
 
+def level3(props):
+    """Returns whether a device is a LEVEL3 capability camera2 device.
+
+    Args:
+        props: Camera properties object.
+
+    Returns:
+        Boolean.
+    """
+    return props.has_key("android.info.supportedHardwareLevel") and \
+           props["android.info.supportedHardwareLevel"] == 3
 
 def full(props):
     """Returns whether a device is a FULL capability camera2 device.
@@ -72,6 +83,19 @@ def legacy(props):
     """
     return props.has_key("android.info.supportedHardwareLevel") and \
            props["android.info.supportedHardwareLevel"] == 2
+
+def radial_distortion_correction(props):
+    """Returns whether a device supports RADIAL_DISTORTION_CORRECTION
+    capabilities.
+
+    Args:
+        props: Camera properties object.
+
+    Returns:
+        Boolean.
+    """
+    return props.has_key("android.lens.radialDistortion") and \
+           props["android.lens.radialDistortion"] is not None
 
 def manual_sensor(props):
     """Returns whether a device supports MANUAL_SENSOR capabilities.
