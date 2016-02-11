@@ -82,16 +82,20 @@ public final class IcuTestRunner extends Instrumentation {
     /** Only count the number of tests, and not run them. */
     private boolean testCountOnly;
 
+    /** Only log the number of tests, and not run them. */
+    private boolean log;
+
     /** Contains all the wrapped ICU tests to be run in this invocation. */
     private Set<IcuTestUtils.IcuTestWrapper> tests;
 
 
     @Override
     public void onCreate(Bundle args) {
-        Log.d("IcuTestRunner", "In OnCreate");
+        Log.d(TAG, "In OnCreate");
 
         this.debug = args.getBoolean("debug");
         this.testCountOnly = args.getBoolean("count");
+        this.log = "true".equalsIgnoreCase(args.getString("log"));
 
         // The test can be run specifying a list of classes to run, or as cts-tradefed does it,
         // by passing a fileName with a test to run on each line.
@@ -104,7 +108,7 @@ public final class IcuTestRunner extends Instrumentation {
                 finish(Activity.RESULT_CANCELED, new Bundle());
                 return;
             }
-        } else if (args.getString(ARGUMENT_TEST_FILE) != null) {
+        } else if (args.getString(ARGUMENT_TEST_CLASS) != null) {
             // The tests are specified in a String passed in the bundle.
             String[] classes = args.getString(ARGUMENT_TEST_CLASS).split(",");
             classList = new ArrayList<>(Arrays.asList(classes));
@@ -130,12 +134,16 @@ public final class IcuTestRunner extends Instrumentation {
             Debug.waitForDebugger();
         }
 
+        int testCount = this.tests.size();
         if (testCountOnly) {
+            Log.d(TAG, "test count only: " + testCount);
             Bundle testCountResult = new Bundle();
-            testCountResult.putInt(REPORT_KEY_NUMTOTAL, this.tests.size());
+            testCountResult.putInt(REPORT_KEY_NUMTOTAL, testCount);
             finish(Activity.RESULT_OK, testCountResult);
             return;
         }
+
+        Log.d(TAG, "Running " + testCount + " tests");
 
         int totalSuccess = 0;
         int totalFailures = 0;
@@ -149,9 +157,14 @@ public final class IcuTestRunner extends Instrumentation {
             StringBuilder result = new StringBuilder();
             try {
                 StringWriter logs = new StringWriter();
-                Log.d("IcuTestRunner", "Executing test: " + className);
+                Log.d(TAG, "Executing test: " + className);
                 long startTime = System.currentTimeMillis();
-                int resultCode = testWrapper.call(new PrintWriter(logs));
+                int resultCode;
+                if (log) {
+                    resultCode = 0;
+                } else {
+                    resultCode = testWrapper.call(new PrintWriter(logs));
+                }
                 long timeTaken = System.currentTimeMillis() - startTime;
                 currentTestResult.putFloat(REPORT_KEY_RUNTIME, timeTaken / 1000);
                 if (resultCode != 0) {
@@ -190,6 +203,7 @@ public final class IcuTestRunner extends Instrumentation {
             results.putString(REPORT_KEY_STREAMRESULT, report);
         }
 
+        Log.d(TAG, "Finished");
         finish(Activity.RESULT_OK, results);
     }
 
