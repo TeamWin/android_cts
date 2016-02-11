@@ -1803,6 +1803,7 @@ public class TextViewTest extends ActivityInstrumentationTestCase2<TextViewCtsAc
                 assertEquals("bcbcbcabbcc", mTextView.getText().toString());
             }
         });
+        mInstrumentation.waitForIdleSync();
     }
 
     public void testCutAndPaste() {
