@@ -16,6 +16,7 @@
 
 package android.graphics.drawable.cts;
 
+import android.content.res.Resources.Theme;
 import android.graphics.cts.R;
 
 import org.xmlpull.v1.XmlPullParser;
@@ -357,6 +358,53 @@ public class NinePatchDrawableTest extends InstrumentationTestCase {
 
         // cannot test if mutate worked, since state was not shared before
         d1.mutate();
+    }
+
+    public void testPreloadDensity() throws XmlPullParserException, IOException {
+        final Resources res = mResources;
+        final int densityDpi = res.getConfiguration().densityDpi;
+        try {
+            testPreloadDensityInner(res, densityDpi);
+        } finally {
+            DrawableTestUtils.setResourcesDensity(res, densityDpi);
+        }
+    }
+
+    private void testPreloadDensityInner(Resources res, int densityDpi)
+            throws XmlPullParserException, IOException {
+        // Capture initial state at default density.
+        final XmlResourceParser parser = DrawableTestUtils.getResourceParser(
+                res, R.drawable.nine_patch_density);
+        final NinePatchDrawable preloadedDrawable = new NinePatchDrawable(null);
+        preloadedDrawable.inflate(res, parser, Xml.asAttributeSet(parser));
+        final ConstantState preloadedConstantState = preloadedDrawable.getConstantState();
+        final int origWidth = preloadedDrawable.getIntrinsicWidth();
+
+        // Set density to half of original. Unlike offsets, which are
+        // truncated, dimensions are rounded to the nearest pixel.
+        DrawableTestUtils.setResourcesDensity(res, densityDpi / 2);
+        final NinePatchDrawable halfDrawable =
+                (NinePatchDrawable) preloadedConstantState.newDrawable(res);
+        assertEquals(Math.round(origWidth / 2f), halfDrawable.getIntrinsicWidth());
+
+        // Set density to double original.
+        DrawableTestUtils.setResourcesDensity(res, densityDpi * 2);
+        final NinePatchDrawable doubleDrawable =
+                (NinePatchDrawable) preloadedConstantState.newDrawable(res);
+        assertEquals(origWidth * 2, doubleDrawable.getIntrinsicWidth());
+
+        // Restore original density.
+        DrawableTestUtils.setResourcesDensity(res, densityDpi);
+        final NinePatchDrawable origDrawable =
+                (NinePatchDrawable) preloadedConstantState.newDrawable();
+        assertEquals(origWidth, origDrawable.getIntrinsicWidth());
+
+        // Ensure theme density is applied correctly.
+        final Theme t = res.newTheme();
+        halfDrawable.applyTheme(t);
+        assertEquals(origWidth, halfDrawable.getIntrinsicWidth());
+        doubleDrawable.applyTheme(t);
+        assertEquals(origWidth, doubleDrawable.getIntrinsicWidth());
     }
 
     private void assertColorFillRect(Bitmap bmp, int x, int y, int w, int h, int color) {
