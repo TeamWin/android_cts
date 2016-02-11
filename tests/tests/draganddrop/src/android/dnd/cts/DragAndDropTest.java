@@ -20,18 +20,14 @@ import android.app.ActivityOptions;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Point;
-import android.graphics.Rect;
 import android.support.test.uiautomator.By;
 import android.support.test.uiautomator.UiDevice;
 import android.support.test.uiautomator.UiObject2;
 import android.support.test.uiautomator.Until;
 import android.test.InstrumentationTestCase;
-import android.view.Display;
-import android.view.WindowManager;
 
+import java.lang.reflect.Method;
 import java.util.concurrent.TimeoutException;
-
-import static android.content.pm.PackageManager.FEATURE_FREEFORM_WINDOW_MANAGEMENT;
 
 public class DragAndDropTest extends InstrumentationTestCase {
 
@@ -40,34 +36,37 @@ public class DragAndDropTest extends InstrumentationTestCase {
 
     private static final int TIMEOUT = 5000;
 
+    // Constants copied from ActivityManager.StackId. If they are changed there, these must be
+    // updated.
+    public static final int FREEFORM_WORKSPACE_STACK_ID = 1;
+    public static final int DOCKED_STACK_ID = 3;
+
     private UiDevice mDevice;
-    private Context mContext;
-    private int mDisplayWidth;
-    private int mDisplayHeight;
 
     public void setUp() throws TimeoutException {
         mDevice = UiDevice.getInstance(getInstrumentation());
-        mContext = getInstrumentation().getContext();
-        WindowManager wm = (WindowManager) mContext.getSystemService(Context.WINDOW_SERVICE);
-        Display display = wm.getDefaultDisplay();
-        Point size = new Point();
-        display.getSize(size);
-        mDisplayWidth = size.x;
-        mDisplayHeight = size.y;
     }
 
-    private void startAppOnHalfScreen(String packageName, boolean rightHalf) {
-        Intent intent = mContext.getPackageManager().getLaunchIntentForPackage(packageName);
+    /** ActivityOptions#setLaunchStackId is a @hidden API so we access it through reflection. */
+    private static void setLaunchStackId(ActivityOptions options, int stackId) throws Exception {
+        final Method method = options.getClass().getDeclaredMethod("setLaunchStackId", int.class);
+
+        method.setAccessible(true);
+        method.invoke(options, stackId);
+    }
+
+    private void startAppInStack(String packageName, int stackId) {
+        Context context = getInstrumentation().getContext();
+        Intent intent = context.getPackageManager().getLaunchIntentForPackage(packageName);
         intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK);
 
-        int left = (int)(mDisplayWidth * (rightHalf ? 0.55 : 0.1));
-        int right = left + (int) (mDisplayWidth * 0.35);
-        int top = (int) (mDisplayHeight * 0.1) ;
-        int bottom = mDisplayHeight - top;
-
         ActivityOptions options = ActivityOptions.makeBasic();
-        options.setLaunchBounds( new Rect(left, top, right, bottom));
-        mContext.startActivity(intent, options.toBundle());
+        try {
+            setLaunchStackId(options, stackId);
+        } catch (Exception e) {
+            fail(e.getMessage());
+        }
+        context.startActivity(intent, options.toBundle());
 
         // Wait for the app to appear
         mDevice.wait(Until.hasObject(By.pkg(packageName).depth(0)), TIMEOUT);
@@ -86,14 +85,10 @@ public class DragAndDropTest extends InstrumentationTestCase {
     }
 
     private void doCrossAppDrag(String sourceViewId, String targetViewId, String expectedResult) {
-        if (!mContext.getPackageManager().hasSystemFeature(FEATURE_FREEFORM_WINDOW_MANAGEMENT)) {
-            return;
-        }
-
-        startAppOnHalfScreen(DRAG_SOURCE_PKG, false);
+        startAppInStack(DRAG_SOURCE_PKG, DOCKED_STACK_ID);
         Point srcPosition = getVisibleCenter(DRAG_SOURCE_PKG, sourceViewId);
 
-        startAppOnHalfScreen(DROP_TARGET_PKG, true);
+        startAppInStack(DROP_TARGET_PKG, FREEFORM_WORKSPACE_STACK_ID);
         Point tgtPosition = getVisibleCenter(DROP_TARGET_PKG, targetViewId);
 
         drag(srcPosition, tgtPosition);
