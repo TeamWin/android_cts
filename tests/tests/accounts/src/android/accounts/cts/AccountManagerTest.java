@@ -26,6 +26,7 @@ import android.accounts.OnAccountsUpdateListener;
 import android.accounts.OperationCanceledException;
 import android.app.Activity;
 import android.content.Context;
+import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.HandlerThread;
@@ -89,6 +90,8 @@ public class AccountManagerTest extends ActivityInstrumentationTestCase2<Account
     public static final Account ACCOUNT = new Account(ACCOUNT_NAME, ACCOUNT_TYPE);
     public static final Account ACCOUNT_FOR_NEW_REMOVE_ACCOUNT_API = new Account(
             MockAccountAuthenticator.ACCOUNT_NAME_FOR_NEW_REMOVE_API, ACCOUNT_TYPE);
+    public static final Account ACCOUNT_FOR_DEFAULT_IMPL = new Account(
+            MockAccountAuthenticator.ACCOUNT_NAME_FOR_DEFAULT_IMPL, ACCOUNT_TYPE);
     public static final Account ACCOUNT_SAME_TYPE = new Account(ACCOUNT_NAME_OTHER, ACCOUNT_TYPE);
 
     public static final Account CUSTOM_TOKEN_ACCOUNT =
@@ -406,6 +409,26 @@ public class AccountManagerTest extends ActivityInstrumentationTestCase2<Account
     }
 
     /**
+     * Test creation of intent
+     */
+    public void testNewChooseAccountIntent() {
+        Intent intent = AccountManager.newChooseAccountIntent(null, null, null,
+                null, null,
+                null, null);
+        assertNotNull(intent);
+    }
+
+    /**
+     * Test creation of intent
+     */
+    public void testNewChooseAccountIntentDepracated() {
+        Intent intent = AccountManager.newChooseAccountIntent(null, null, null, false,
+                null, null,
+                null, null);
+        assertNotNull(intent);
+    }
+
+    /**
      * Test a basic addAccount()
      */
     public void testAddAccount() throws IOException, AuthenticatorException,
@@ -441,6 +464,29 @@ public class AccountManagerTest extends ActivityInstrumentationTestCase2<Account
 
         testAddAccountWithCallbackAndHandler(null /* handler */);
         testAddAccountWithCallbackAndHandler(new Handler(Looper.getMainLooper()));
+    }
+
+    /**
+     * Test addAccount() with no associated account authenticator
+     */
+    public void testAddAccountWithNoAuthenticator() throws IOException,
+            AuthenticatorException, OperationCanceledException {
+
+        try {
+            AccountManagerFuture<Bundle> futureBundle = am.addAccount(
+                    "nonExistingAccountType",
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null);
+
+            futureBundle.getResult();
+            fail();
+        } catch (AuthenticatorException expectedException) {
+            return;
+        }
     }
 
     private void testAddAccountWithCallbackAndHandler(Handler handler) throws IOException,
@@ -542,6 +588,31 @@ public class AccountManagerTest extends ActivityInstrumentationTestCase2<Account
         assertTrue(isAccountPresent(am.getAccounts(), ACCOUNT_FOR_NEW_REMOVE_ACCOUNT_API));
         // Check removal of account
         assertTrue(removeAccountWithIntentLaunch(am, ACCOUNT_FOR_NEW_REMOVE_ACCOUNT_API, mActivity, null /* callback */)
+                .getBoolean(AccountManager.KEY_BOOLEAN_RESULT));
+        // and verify that we go back to the initial state
+        accounts = am.getAccounts();
+        assertNotNull(accounts);
+        assertEquals(expectedAccountsCount, accounts.length);
+    }
+
+    /**
+     * Test addAccountExplicitly(), renameAccount() and removeAccount() calling
+     * into default implementations.
+     */
+    public void testAddAccountExplicitlyAndRemoveAccountWithDefaultImpl() throws IOException,
+            AuthenticatorException, OperationCanceledException {
+
+        final int expectedAccountsCount = getAccountsCount();
+
+        addAccountExplicitly(ACCOUNT_FOR_DEFAULT_IMPL, ACCOUNT_PASSWORD, null /* userData */);
+
+        // Assert that we have one more account
+        Account[] accounts = am.getAccounts();
+        assertNotNull(accounts);
+        assertEquals(1 + expectedAccountsCount, accounts.length);
+        assertTrue(isAccountPresent(am.getAccounts(), ACCOUNT_FOR_DEFAULT_IMPL));
+        // Check removal of account
+        assertTrue(removeAccountWithIntentLaunch(am, ACCOUNT_FOR_DEFAULT_IMPL, mActivity, null /* callback */)
                 .getBoolean(AccountManager.KEY_BOOLEAN_RESULT));
         // and verify that we go back to the initial state
         accounts = am.getAccounts();
