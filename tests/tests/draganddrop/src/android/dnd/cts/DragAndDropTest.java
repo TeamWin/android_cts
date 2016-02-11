@@ -159,7 +159,7 @@ public class DragAndDropTest extends InstrumentationTestCase {
     }
 
     public void testGrantWriteRequestRead() {
-        doCrossAppDrag("grant_write", "request_write", "OK");
+        doCrossAppDrag("grant_write", "request_read", "Exception");
     }
 
     public void testGrantWriteRequestWrite() {
