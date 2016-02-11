@@ -44,21 +44,27 @@ public class PolicyTransparencyTestListActivity extends PassFailButtons.TestList
     private static final Pair<Intent, Integer>[] POLICIES;
     static {
         final String[] policyTests = new String[] {
+            PolicyTransparencyTestActivity.TEST_CHECK_AUTO_TIME_REQUIRED,
             PolicyTransparencyTestActivity.TEST_CHECK_KEYGURAD_UNREDACTED_NOTIFICATION,
+            PolicyTransparencyTestActivity.TEST_CHECK_LOCK_SCREEN_INFO,
             PolicyTransparencyTestActivity.TEST_CHECK_MAXIMUM_TIME_TO_LOCK,
             PolicyTransparencyTestActivity.TEST_CHECK_PASSWORD_QUALITY,
             PolicyTransparencyTestActivity.TEST_CHECK_PERMITTED_ACCESSIBILITY_SERVICE,
             PolicyTransparencyTestActivity.TEST_CHECK_PERMITTED_INPUT_METHOD
         };
         final String[] settingsIntentActions = new String[] {
+            Settings.ACTION_DATE_SETTINGS,
             Settings.ACTION_SETTINGS,
+            Settings.ACTION_SECURITY_SETTINGS,
             Settings.ACTION_DISPLAY_SETTINGS,
             DevicePolicyManager.ACTION_SET_NEW_PASSWORD,
             Settings.ACTION_ACCESSIBILITY_SETTINGS,
             Settings.ACTION_INPUT_METHOD_SETTINGS
         };
         final int[] policyLabels = new int[] {
+            R.string.set_auto_time_required,
             R.string.disallow_keyguard_unredacted_notifications,
+            R.string.set_lock_screen_info,
             R.string.set_maximum_time_to_lock,
             R.string.set_password_quality,
             R.string.set_permitted_accessibility_services,

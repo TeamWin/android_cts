@@ -1621,7 +1621,7 @@ You should be prompted to select credentials; choose the ones you just installed
     <string name="provisioning_byod_disable_unredacted_notifications_instruction">
         Please press the Go button to lock the screen. Wait a couple of seconds and look out for a
         notification from CtsVerifier.\n
-        Expected result is the notification is shown as \"Contents hidden\", you can not see the contents
+        Expected result is the notification is shown as \"Contents hidden by policy\", you can not see the contents
         (Which would read \"This is a notification\"). You should be seeing a work badge.\n
         After you log back in, please navigate back to CtsVerifier and mark the test as \"Pass\" or \"Fail\".
     </string>
@@ -1645,20 +1645,17 @@ You should be prompted to select credentials; choose the ones you just installed
     <string name="provisioning_byod_disallow_apps_control_prepare_button">Prepare test</string>
     <string name="provisioning_byod_disabled_uninstall_button">Disabled uninstall button</string>
     <string name="provisioning_byod_disabled_uninstall_button_instruction">
-        Please press the Go button to go to Settings > Apps. Choose a managed app. Check if the button that says
-        either \"Uninstall\" or \"Disable\" is greyed out and disabled, i.e. nothing happens when you tap on it.
+        Please press the Go button to go to Settings > Apps. Choose a managed app. Check that performing either \"Uninstall\" or \"Disable\" is not possible and triggers a support message when trying to do so.
         Then please press Back and mark the test as \"Pass\" or \"Fail\".
     </string>
     <string name="provisioning_byod_disabled_force_stop_button">Disabled force stop button</string>
     <string name="provisioning_byod_disabled_force_stop_button_instruction">
-        Please press the Go button to go to Settings > Apps. Choose a managed app. Check if the button that says
-        \"Force stop\" is greyed out and disabled, i.e. nothing happens when you tap on it.
+        Please press the Go button to go to Settings > Apps. Choose a managed app. Check that performing \"Force stop\" is not possible and triggers a support message when trying to do so.
         Then please press Back and mark the test as \"Pass\" or \"Fail\".
     </string>
     <string name="provisioning_byod_disabled_app_storage_buttons">Disabled app storage buttons</string>
     <string name="provisioning_byod_disabled_app_storage_buttons_instruction">
-        Please press the Go button to go to Settings > Apps. Choose a managed (badged) app. Select \"Storage\". Check that the buttons
-        \"Clear Data\" and \"Clear Cache\" are disabled, i.e. nothing happens when you tap on them.
+        Please press the Go button to go to Settings > Apps. Choose a managed (badged) app. Select \"Storage\". Check that performing \"Clear Data\" and \"Clear Cache\" is not possible and triggers a support message when trying to do so.
         Note: if an app has no data then tapping the clear data button has no effect anyway. Make sure you have selected
         the badged version of app with non-zero app data. Badged \"Settings\" may be a good candidate.
         Then please press Back and mark the test as \"Pass\" or \"Fail\".
@@ -1994,9 +1991,9 @@ You should be prompted to select credentials; choose the ones you just installed
     <string name="device_profile_owner_permission_lockdown_test_instructions">
             Select each of the three grant states for the permission shown below in turn.\n
             Now open application settings, select Permissions, and verify if the following behaviour is observed.\n
-            <b>Allow:</b> Permission is granted to the app and cannot be changed through the settings UI.\n
+            <b>Allow:</b> Permission is granted to the app and cannot be changed through the settings UI. Trying to change it triggers a support message.\n
             <b>Let user decide:</b> Permission state can be changed through the settings UI.\n
-            <b>Deny:</b> Permission is denied to the app and cannot be changed through the settings UI.\n
+            <b>Deny:</b> Permission is denied to the app and cannot be changed through the settings UI. Trying to change it triggers a support message.\n
             Please mark the test accordingly.
     </string>
     <string name="device_owner_permission_lockdown_test_info">
@@ -2004,11 +2001,10 @@ You should be prompted to select credentials; choose the ones you just installed
     </string>
     <string name="device_owner_disallow_usb_file_transfer_test">Disallow USB file transfer</string>
     <string name="device_owner_disallow_usb_file_transfer_test_info">
-            Please press below button to set the \"disallow USB file transfer\" restriction.
+            Please press below button to set the \"disallow USB file transfer\" restriction.\n
             Next, connect your device to your desktop computer through USB, open the USB notification from the status bar
-            and check that the \"Transfer files (MTP)\" and \"Transfer photos (PTP)\" options are not present. Also, check
-            that you can download files from your phone to the desktop computer. The test is successful if the files from
-            your phone are not and cannot be downloaded through USB.\n
+            and check that the \"Transfer files (MTP)\" and \"Transfer photos (PTP)\" cannot be selected and triggers a support message when trying to select them.\n
+            Also, check that if you can download files from your phone to the desktop computer. The test is successful if the files from your phone are not and cannot be downloaded through USB.\n
             Please mark the test accordingly.
     </string>
     <string name="profile_owner_permission_lockdown_test_info">
@@ -2043,7 +2039,7 @@ You should be prompted to select credentials; choose the ones you just installed
         Confirm that:\n
         \n
         - You cannot view Bluetooth devices in range.\n
-        - You cannot edit, add or remove any already paired devices.\n
+        - Trying to edit, add or remove any already paired devices triggers a support message.\n
         \n
         Use the Back button to return to this page.
     </string>
@@ -2054,7 +2050,7 @@ You should be prompted to select credentials; choose the ones you just installed
         Confirm that:\n
         \n
         - You cannot view WiFi networks in range.\n
-        - You cannot edit, add or remove any existing WiFi configs.\n
+        - Trying to edit, add or remove any existing WiFi configs triggers a support message.\n
         \n
         Use the Back button to return to this page.
     </string>
@@ -2065,7 +2061,7 @@ You should be prompted to select credentials; choose the ones you just installed
         Confirm that:\n
         \n
         - Data roaming is disabled.\n
-        - You cannot enable data roaming.\n
+        - Enabling data roaming is not possible and triggers a support message.\n
         \n
         Use the Back button to return to this page.
     </string>
@@ -2101,7 +2097,8 @@ You should be prompted to select credentials; choose the ones you just installed
         1. Press Go to open the Vpn settings page.\n
         Confirm that:\n
         - You cannot add a new VPN network.\n
-        - You cannot edit, add or remove any existing VPNs.\n\n
+        - You cannot edit, add or remove any existing VPNs.\n
+        - Trying to perform any of the above actions will trigger a support message.\n\n
         2. Press Check VPN to check programmatic Vpn test.\n
         - Check Vpn setup\n\n
         Use the Back button to return to this page.
@@ -2151,18 +2148,48 @@ You should be prompted to select credentials; choose the ones you just installed
     <string name="disallow_adjust_volume_action">Adjusting the volume</string>
     <string name="disallow_apps_control">Disallow controlling apps</string>
     <string name="disallow_apps_control_action">DISABLE/UNINSTALL/FORCE STOP-ing any app in the managed device/profile other than CtsVerifier</string>
+    <string name="disallow_config_cell_broadcasts">Disallow config cell broadcasts</string>
+    <string name="disallow_config_cell_broadcasts_action">Configuring cell broadcasts</string>
+    <string name="disallow_config_credentials">Disallow config credentials</string>
+    <string name="disallow_config_credentials_action">Configuring user credentials</string>
+    <string name="disallow_config_mobile_networks">Disallow config mobile networks</string>
+    <string name="disallow_config_mobile_networks_action">Configuring mobile networks</string>
+    <string name="disallow_config_tethering">Disallow config tethering</string>
+    <string name="disallow_config_tethering_action">Configuring tethering and portable hotspots</string>
     <string name="disallow_config_wifi">Disallow config Wi-Fi</string>
     <string name="disallow_config_wifi_action">Modifying Wi-Fi configuration</string>
+    <string name="disallow_debugging_features">Disallow debugging features</string>
+    <string name="disallow_debugging_features_action">Enabling developer options</string>
+    <string name="disallow_factory_reset">Disallow factory reset</string>
+    <string name="disallow_factory_reset_action">Factory resetting the device</string>
     <string name="disallow_fun">Disallow fun</string>
     <string name="disallow_fun_action">Opening android easter egg game by tapping repeatedly on the \'Android version\' option</string>
+    <string name="disallow_install_unknown_sources">Disallow install unknown sources</string>
+    <string name="disallow_install_unknown_sources_action">Enabling \'Unknown sources\' setting</string>
     <string name="disallow_modify_accounts">Disallow modify accounts</string>
     <string name="disallow_modify_accounts_action">Adding an account or removing an account (if you have already added one)</string>
+    <string name="disallow_network_reset">Disallow network reset</string>
+    <string name="disallow_network_reset_action">Resetting network settings</string>
+    <string name="disallow_outgoing_beam">Disallow outgoing beam</string>
+    <string name="disallow_outgoing_beam_action">Switching on android beam</string>
+    <string name="disallow_remove_user">Disallow remove user</string>
+    <string name="disallow_remove_user_action">Removing other users</string>
     <string name="disallow_share_location">Disallow share location</string>
     <string name="disallow_share_location_action">Turning on location sharing</string>
+    <string name="disallow_uninstall_apps">Disallow uninstall apps</string>
+    <string name="disallow_uninstall_apps_action">Uninstalling applications other CtsVerifier</string>
     <string name="disallow_keyguard_unredacted_notifications">Disallow lockscreen unredacted notification</string>
     <string name="disallow_keyguard_unredacted_notifications_set_step">Disallow unredacted notifications when device is locked by turning on the switch below</string>
     <string name="disallow_keyguard_unredacted_notifications_action">Selecting show all notification content when device is locked</string>
     <string name="disallow_keyguard_unredacted_notifications_widget_label">@string/disallow_keyguard_unredacted_notifications</string>
+    <string name="set_auto_time_required">Set auto (network) time required</string>
+    <string name="auto_time_required_set_step">Set auto time required policy by turning on the switch below</string>
+    <string name="set_auto_time_required_action">Modifying date and time</string>
+    <string name="set_auto_time_required_widget_label">@string/set_auto_time_required</string>
+    <string name="set_lock_screen_info">Set lock screen info</string>
+    <string name="lock_screen_info_set_step">Select a lock screen info by setting a non-empty message in the edittext below.</string>
+    <string name="set_lock_screen_info_action">Modifying lock screen message</string>
+    <string name="set_lock_screen_info_widget_label">@string/set_lock_screen_info</string>
     <string name="set_maximum_time_to_lock">Set maximum time to lock</string>
     <string name="maximum_time_to_lock_set_step">
         Select a non-zero maximum time to lock value by setting a value in the edittext box below.
