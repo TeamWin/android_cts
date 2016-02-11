@@ -22,6 +22,9 @@ import android.os.Build.VERSION_CODES;
 import android.os.Bundle;
 import android.test.ActivityInstrumentationTestCase2;
 import android.test.UiThreadTest;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -52,17 +55,87 @@ public class FragmentTest extends ActivityInstrumentationTestCase2<FragmentTestA
         assertEquals(1, fragment2.createOrder);
     }
 
+    public void testChildFragmentManagerGone() throws Throwable {
+        final FragmentA fragmentA = new FragmentA();
+        final FragmentB fragmentB = new FragmentB();
+        runTestOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                mActivity.getFragmentManager().beginTransaction()
+                        .add(R.id.container, fragmentA)
+                        .commitNow();
+            }
+        });
+        getInstrumentation().waitForIdleSync();
+        runTestOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                mActivity.getFragmentManager().beginTransaction()
+                        .setCustomAnimations(R.animator.long_fade_in, R.animator.long_fade_out,
+                                R.animator.long_fade_in, R.animator.long_fade_out)
+                        .replace(R.id.container, fragmentB)
+                        .addToBackStack(null)
+                        .commit();
+            }
+        });
+        // Wait for the middle of the animation
+        Thread.sleep(150);
+        runTestOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                mActivity.getFragmentManager().beginTransaction()
+                        .setCustomAnimations(R.animator.long_fade_in, R.animator.long_fade_out,
+                                R.animator.long_fade_in, R.animator.long_fade_out)
+                        .replace(R.id.container, fragmentA)
+                        .addToBackStack(null)
+                        .commit();
+            }
+        });
+        // Wait for the middle of the animation
+        Thread.sleep(150);
+        getInstrumentation().waitForIdleSync();
+        runTestOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                mActivity.getFragmentManager().popBackStack();
+            }
+        });
+        // Wait for the middle of the animation
+        Thread.sleep(150);
+        getInstrumentation().waitForIdleSync();
+        runTestOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                mActivity.getFragmentManager().popBackStack();
+            }
+        });
+    }
+
     @TargetApi(VERSION_CODES.HONEYCOMB)
     public static class TestFragment extends Fragment {
         private static AtomicInteger sOrder = new AtomicInteger();
         public int createOrder = -1;
 
-        public TestFragment() {}
-
         @Override
         public void onCreate(Bundle savedInstanceState) {
             createOrder = sOrder.getAndIncrement();
             super.onCreate(savedInstanceState);
+        }
+    }
+
+    public static class FragmentA extends Fragment {
+        @Override
+        public View onCreateView(LayoutInflater inflater, ViewGroup container,
+                Bundle savedInstanceState) {
+            return inflater.inflate(R.layout.fragment_a, container, false);
+        }
+    }
+
+    public static class FragmentB extends Fragment {
+        @Override
+        public View onCreateView(LayoutInflater inflater, ViewGroup container,
+                Bundle savedInstanceState) {
+            return inflater.inflate(R.layout.fragment_b, container, false);
         }
     }
 }
