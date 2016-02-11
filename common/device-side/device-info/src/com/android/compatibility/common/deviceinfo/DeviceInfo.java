@@ -20,4 +20,6 @@ package com.android.compatibility.common.deviceinfo;
  * class instead of DeviceInfoActivity.
  */
 public abstract class DeviceInfo extends DeviceInfoActivity {
+
 }
+
