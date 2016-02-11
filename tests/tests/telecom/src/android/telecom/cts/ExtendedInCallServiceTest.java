@@ -18,7 +18,11 @@ package android.telecom.cts;
 
 import static android.telecom.cts.TestUtils.*;
 
+import android.content.ContentValues;
 import android.content.Context;
+import android.net.Uri;
+import android.os.Bundle;
+import android.provider.BlockedNumberContract;
 import android.telecom.CallAudioState;
 import android.telecom.Call;
 import android.telecom.Connection;
@@ -202,6 +206,39 @@ public class ExtendedInCallServiceTest extends BaseTelecomTestWithMockServices {
 
         assertCallState(call, Call.STATE_ACTIVE);
         assertConnectionState(connection, Connection.STATE_ACTIVE);
+    }
+
+    public void testIncomingCallFromBlockedNumber_IsRejected() throws Exception {
+        if (!mShouldTestTelecom) {
+            return;
+        }
+
+        Uri blockedUri = null;
+
+        try {
+            Uri testNumberUri = createTestNumber();
+            blockedUri = blockNumber(testNumberUri);
+
+            final Bundle extras = new Bundle();
+            extras.putParcelable(TelecomManager.EXTRA_INCOMING_CALL_ADDRESS, testNumberUri);
+            mTelecomManager.addNewIncomingCall(TEST_PHONE_ACCOUNT_HANDLE, extras);
+
+            final MockConnection connection = verifyConnectionForIncomingCall();
+            assertConnectionState(connection, Connection.STATE_DISCONNECTED);
+            assertNull(mInCallCallbacks.getService());
+        } finally {
+            if (blockedUri != null) {
+                mContext.getContentResolver().delete(blockedUri, null, null);
+            }
+        }
+    }
+
+    private Uri blockNumber(Uri phoneNumberUri) {
+        ContentValues cv = new ContentValues();
+        cv.put(BlockedNumberContract.BlockedNumbers.COLUMN_ORIGINAL_NUMBER,
+                phoneNumberUri.getSchemeSpecificPart());
+        return mContext.getContentResolver().insert(
+                BlockedNumberContract.BlockedNumbers.CONTENT_URI, cv);
     }
 
     public void testAnswerIncomingCallAsVideo_SendsCorrectVideoState() {
