@@ -20,6 +20,7 @@
         package="android.app.uiautomation.cts">
 
   <uses-permission android:name="android.permission.DISABLE_KEYGUARD" />
+  <uses-permission android:name="android.permission.WRITE_SECURE_SETTINGS" />
 
   <application android:theme="@android:style/Theme.Holo.NoActionBar" >
 
@@ -34,6 +35,20 @@
           android:name="android.app.uiautomation.cts.UiAutomationTestSecondActivity"
           android:exported="true">
       </activity>
+
+      <service
+              android:name="android.app.uiautomation.cts.UiAutomationTestA11yService"
+              android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE" >
+          <intent-filter>
+              <action android:name="android.accessibilityservice.AccessibilityService" />
+
+              <category android:name="android.accessibilityservice.category.FEEDBACK_GENERIC" />
+          </intent-filter>
+
+          <meta-data
+                  android:name="android.accessibilityservice"
+                  android:resource="@xml/ui_automation_test_a11y_service" />
+      </service>
 
   </application>
 
