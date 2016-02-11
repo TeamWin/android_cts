@@ -15,17 +15,15 @@
  */
 package com.android.cts.deviceadmin;
 
-import android.app.admin.DevicePolicyManager;
-
 public class ClearPasswordTest extends BaseDeviceAdminTest {
-    public void testClearPassword_success() {
-        final DevicePolicyManager dpm = getContext().getSystemService(DevicePolicyManager.class);
+    @Override
+    protected void setUp() throws Exception {
+        super.setUp();
 
-        // Reset the password to nothing for future tests...
-        dpm.setPasswordQuality(mAdminComponent,
-                DevicePolicyManager.PASSWORD_QUALITY_UNSPECIFIED);
-        dpm.setPasswordMinimumLength(mAdminComponent, 0);
+        assertDeviceOwner();
+    }
 
-        assertTrue(dpm.resetPassword("", /* flags= */ 0));
+    public void testClearPassword() {
+        clearPassword();
     }
 }
