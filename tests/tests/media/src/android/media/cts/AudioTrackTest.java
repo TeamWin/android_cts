@@ -2019,7 +2019,11 @@ public class AudioTrackTest extends CtsAndroidTestCase {
             lastFramesPresentedAt = framesPresentedAt;
         }
         // Full drain.
-        Thread.sleep(WAIT_MSEC);
+        Thread.sleep(1000 /* millis */);
+        // check that we are really at the end of playback.
+        assertTrue(TEST_NAME, track.getTimestamp(timestamp));
+        assertEquals(framesWritten, timestamp.framePosition);
+
         track.stop();
         Thread.sleep(WAIT_MSEC);
         track.release();
