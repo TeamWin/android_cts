@@ -16,7 +16,9 @@
 package com.android.cts.deviceadmin;
 
 import android.app.admin.DeviceAdminReceiver;
+import android.app.admin.DevicePolicyManager;
 import android.content.ComponentName;
+import android.os.Build;
 import android.test.AndroidTestCase;
 
 public class BaseDeviceAdminTest extends AndroidTestCase {
@@ -27,11 +29,67 @@ public class BaseDeviceAdminTest extends AndroidTestCase {
     protected String mPackageName;
     protected ComponentName mAdminComponent;
 
+    public DevicePolicyManager dpm;
+
     @Override
     protected void setUp() throws Exception {
         super.setUp();
 
-        mPackageName = getContext().getPackageName();
-        mAdminComponent = new ComponentName(getContext(), AdminReceiver.class);
+        dpm = mContext.getSystemService(DevicePolicyManager.class);
+        mPackageName = mContext.getPackageName();
+        mAdminComponent = new ComponentName(mContext, AdminReceiver.class);
+    }
+
+    /**
+     * @return the target API level.  Note we don't get it from the package manager information
+     * but we just parse the last two digits of the package name.  This is to catch a potential
+     * issue where we forget to change the target API level in the manifest.  (Conversely,
+     * if we forget to change the package name, we'll catch that in the caller side.)
+     */
+    protected int getTargetApiLevel() {
+        final String packageName = mContext.getPackageName();
+        return Integer.parseInt(packageName.substring(packageName.length() - 2));
+    }
+
+    protected boolean isDeviceOwner() {
+        return dpm.isDeviceOwnerApp(mAdminComponent.getPackageName());
+    }
+
+    protected void assertDeviceOwner() {
+        assertTrue("Not device owner", isDeviceOwner());
+    }
+
+    protected void assertNotDeviceOwner() {
+        assertFalse("Must not be device owner", isDeviceOwner());
+    }
+
+    protected void assertNotActiveAdmin() throws Exception {
+        for (int i = 0; i < 1000 && dpm.isAdminActive(mAdminComponent); i++) {
+            Thread.sleep(10);
+        }
+        assertFalse("Still active admin", dpm.isAdminActive(mAdminComponent));
+    }
+
+    protected boolean shouldResetPasswordThrow() {
+        return getTargetApiLevel() > Build.VERSION_CODES.M;
+    }
+
+    protected void resetComplexPasswordRestrictions() {
+        dpm.setPasswordMinimumLength(mAdminComponent, 0);
+        dpm.setPasswordMinimumUpperCase(mAdminComponent, 0);
+        dpm.setPasswordMinimumLowerCase(mAdminComponent, 0);
+        dpm.setPasswordMinimumLetters(mAdminComponent, 0);
+        dpm.setPasswordMinimumNumeric(mAdminComponent, 0);
+        dpm.setPasswordMinimumSymbols(mAdminComponent, 0);
+        dpm.setPasswordMinimumNonLetter(mAdminComponent, 0);
+    }
+
+    protected void clearPassword() {
+        assertDeviceOwner();
+
+        resetComplexPasswordRestrictions();
+
+        dpm.setPasswordQuality(mAdminComponent, DevicePolicyManager.PASSWORD_QUALITY_UNSPECIFIED);
+        assertTrue(dpm.resetPassword("", /* flags =*/ 0));
     }
 }

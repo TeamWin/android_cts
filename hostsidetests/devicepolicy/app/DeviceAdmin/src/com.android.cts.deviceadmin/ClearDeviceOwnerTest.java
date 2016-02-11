@@ -22,11 +22,14 @@ import android.app.admin.DevicePolicyManager;
  */
 public class ClearDeviceOwnerTest extends BaseDeviceAdminTest {
 
-    public void testRemoveActiveAdmin() throws Exception {
+    public void testRemoveDeviceOwner() throws Exception {
 
         final DevicePolicyManager dpm = getContext().getSystemService(DevicePolicyManager.class);
 
         dpm.clearDeviceOwnerApp(mPackageName);
-        assertFalse("Still device owner", dpm.isDeviceOwnerApp(mPackageName));
+
+        assertNotDeviceOwner();
+
+        assertNotActiveAdmin(); // Wait until DA is deactivated too.
     }
 }
