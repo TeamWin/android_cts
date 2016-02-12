@@ -51,6 +51,8 @@ LOCAL_SDK_VERSION := current
 
 LOCAL_DEX_PREOPT := false
 
+LOCAL_JAVA_LANGUAGE_VERSION := 1.8
+
 include $(BUILD_PACKAGE)
 
 
