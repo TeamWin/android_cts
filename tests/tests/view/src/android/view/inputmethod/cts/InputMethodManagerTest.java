@@ -98,10 +98,11 @@ public class InputMethodManagerTest
         assertTrue(imManager.isAcceptingText());
         assertTrue(imManager.isActive(view));
 
-        connection.reportFullscreenMode(false);
         assertFalse(imManager.isFullscreenMode());
         connection.reportFullscreenMode(true);
-        assertTrue(imManager.isFullscreenMode());
+        // Only IMEs are allowed to report full-screen mode.  Calling this method from the
+        // application should have no effect.
+        assertFalse(imManager.isFullscreenMode());
 
         runTestOnUiThread(new Runnable() {
             @Override
