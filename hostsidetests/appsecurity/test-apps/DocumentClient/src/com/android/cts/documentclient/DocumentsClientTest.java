@@ -41,6 +41,8 @@ import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.content.res.AssetFileDescriptor.AutoCloseInputStream;
+import android.content.res.AssetFileDescriptor;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Environment;
@@ -216,7 +218,24 @@ public class DocumentsClientTest extends InstrumentationTestCase {
         // Confirm that the returned file is actually the selected one.
         final Result result = mActivity.getResult();
         final Uri uri = result.data.getData();
-        assertEquals("virtual-file", DocumentsContract.getDocumentId(uri));
+        assertEquals("doc:virtual-file", DocumentsContract.getDocumentId(uri));
+
+        final ContentResolver resolver = getInstrumentation().getContext().getContentResolver();
+        final String streamTypes[] = resolver.getStreamTypes(uri, "*/*");
+        assertEquals(1, streamTypes.length);
+        assertEquals("text/plain", streamTypes[0]);
+
+        // Virtual files are not readable unless an alternative MIME type is specified.
+        try {
+            readFully(uri);
+            fail("Unexpected success in reading a virtual file. It should've failed.");
+        } catch (IllegalArgumentException e) {
+            // Expected.
+        }
+
+        // However, they are readable using an alternative MIME type from getStreamTypes().
+        MoreAsserts.assertEquals(
+                "Converted contents.".getBytes(), readTypedFully(uri, streamTypes[0]));
     }
 
     public void testCreateNew() throws Exception {
@@ -304,7 +323,7 @@ public class DocumentsClientTest extends InstrumentationTestCase {
         Cursor cursor = resolver.query(children, new String[] {
                 Document.COLUMN_DISPLAY_NAME }, null, null, null);
         try {
-            assertEquals(1, cursor.getCount());
+            assertEquals(2, cursor.getCount());
             assertTrue(cursor.moveToFirst());
             assertEquals("FILE4", cursor.getString(0));
         } finally {
@@ -590,8 +609,21 @@ public class DocumentsClientTest extends InstrumentationTestCase {
     }
 
     private byte[] readFully(Uri uri) throws IOException {
-        InputStream in = getInstrumentation().getContext().getContentResolver()
+        final InputStream in = getInstrumentation().getContext().getContentResolver()
                 .openInputStream(uri);
+        return readFully(in);
+    }
+
+    private byte[] readTypedFully(Uri uri, String mimeType) throws IOException {
+        final AssetFileDescriptor descriptor =
+                getInstrumentation().getContext().getContentResolver()
+                        .openTypedAssetFileDescriptor(uri, mimeType, null, null);
+        try (AutoCloseInputStream in = new AutoCloseInputStream(descriptor)) {
+            return readFully(in);
+        }
+    }
+
+    private byte[] readFully(InputStream in) throws IOException {
         try {
             ByteArrayOutputStream bytes = new ByteArrayOutputStream();
             byte[] buffer = new byte[1024];
