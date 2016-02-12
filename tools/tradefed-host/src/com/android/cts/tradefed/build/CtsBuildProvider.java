@@ -31,6 +31,9 @@ public class CtsBuildProvider implements IBuildProvider {
     @Option(name="cts-install-path", description="the path to the cts installation to use")
     private String mCtsRootDirPath = System.getProperty("CTS_ROOT");
 
+    @Option(name="branch", description="build branch name to supply.")
+    private String mBranch = null;
+
     public static final String CTS_BUILD_VERSION = "5.0_r1.91";
     public static final String CTS_PACKAGE = "com.android.cts.tradefed.testtype";
 
@@ -46,6 +49,9 @@ public class CtsBuildProvider implements IBuildProvider {
             Package.getPackage(CTS_PACKAGE).getImplementationVersion(),
             "cts", "cts");
         ctsBuild.setRootDir(new File(mCtsRootDirPath));
+        if (mBranch  != null) {
+            ctsBuild.setBuildBranch(mBranch);
+        }
         return ctsBuild;
     }
 
