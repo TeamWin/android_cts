@@ -465,6 +465,119 @@ public class DocumentsClientTest extends InstrumentationTestCase {
         assertEquals("ReSuLt", result.data.getAction());
     }
 
+    public void testTransferDocument() throws Exception {
+        if (!supportedHardware()) return;
+
+        try {
+            // Opening without permission should fail.
+            readFully(Uri.parse("content://com.android.cts.documentprovider/document/doc:file1"));
+            fail("Able to read data before opened!");
+        } catch (SecurityException expected) {
+        }
+
+        final Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE);
+        mActivity.startActivityForResult(intent, REQUEST_CODE);
+
+        mDevice.waitForIdle();
+        findRoot("CtsCreate").click();
+
+        findDocument("DIR2").click();
+        mDevice.waitForIdle();
+        findSaveButton().click();
+
+        final Result result = mActivity.getResult();
+        final Uri uri = result.data.getData();
+
+        // We should have selected DIR2.
+        final Uri docUri = DocumentsContract.buildDocumentUriUsingTree(uri,
+                DocumentsContract.getTreeDocumentId(uri));
+
+        assertEquals("DIR2", getColumn(docUri, Document.COLUMN_DISPLAY_NAME));
+
+        final ContentResolver resolver = getInstrumentation().getContext().getContentResolver();
+        final Cursor cursor = resolver.query(
+                DocumentsContract.buildChildDocumentsUriUsingTree(
+                        docUri, DocumentsContract.getDocumentId(docUri)),
+                new String[] { Document.COLUMN_DOCUMENT_ID, Document.COLUMN_DISPLAY_NAME,
+                        Document.COLUMN_FLAGS },
+                null, null, null);
+
+        Uri sourceFileUri = null;
+        Uri targetDirUri = null;
+
+        try {
+            assertEquals(2, cursor.getCount());
+            assertTrue(cursor.moveToFirst());
+            sourceFileUri = DocumentsContract.buildDocumentUriUsingTree(
+                    docUri, cursor.getString(0));
+            assertEquals("FILE4", cursor.getString(1));
+            assertEquals(Document.FLAG_SUPPORTS_WRITE |
+                    Document.FLAG_SUPPORTS_COPY |
+                    Document.FLAG_SUPPORTS_MOVE |
+                    Document.FLAG_SUPPORTS_REMOVE, cursor.getInt(2));
+
+            assertTrue(cursor.moveToNext());
+            targetDirUri = DocumentsContract.buildDocumentUriUsingTree(
+                    docUri, cursor.getString(0));
+            assertEquals("SUB_DIR2", cursor.getString(1));
+        } finally {
+            cursor.close();
+        }
+
+        // Move, copy then remove.
+        final Uri movedFileUri = DocumentsContract.moveDocument(
+                resolver, sourceFileUri, docUri, targetDirUri);
+        assertTrue(movedFileUri != null);
+        final Uri copiedFileUri = DocumentsContract.copyDocument(
+                resolver, movedFileUri, targetDirUri);
+        assertTrue(copiedFileUri != null);
+
+        // Confirm that the files are at the destinations.
+        Cursor cursorDst = resolver.query(
+                DocumentsContract.buildChildDocumentsUriUsingTree(
+                        targetDirUri, DocumentsContract.getDocumentId(targetDirUri)),
+                new String[] { Document.COLUMN_DOCUMENT_ID },
+                null, null, null);
+        try {
+            assertEquals(2, cursorDst.getCount());
+            assertTrue(cursorDst.moveToFirst());
+            assertEquals("doc:file4", cursorDst.getString(0));
+            assertTrue(cursorDst.moveToNext());
+            assertEquals("doc:file4_copy", cursorDst.getString(0));
+        } finally {
+            cursorDst.close();
+        }
+
+        // ... and gone from the source.
+        final Cursor cursorSrc = resolver.query(
+                DocumentsContract.buildChildDocumentsUriUsingTree(
+                        docUri, DocumentsContract.getDocumentId(docUri)),
+                new String[] { Document.COLUMN_DOCUMENT_ID },
+                null, null, null);
+        try {
+            assertEquals(1, cursorSrc.getCount());
+            assertTrue(cursorSrc.moveToFirst());
+            assertEquals("doc:sub_dir2", cursorSrc.getString(0));
+        } finally {
+            cursorSrc.close();
+        }
+
+        assertTrue(DocumentsContract.removeDocument(resolver, movedFileUri, targetDirUri));
+        assertTrue(DocumentsContract.removeDocument(resolver, copiedFileUri, targetDirUri));
+
+        // Finally, confirm that removing actually removed the files from the destination.
+        cursorDst = resolver.query(
+                DocumentsContract.buildChildDocumentsUriUsingTree(
+                        targetDirUri, DocumentsContract.getDocumentId(targetDirUri)),
+                new String[] { Document.COLUMN_DOCUMENT_ID },
+                null, null, null);
+        try {
+            assertEquals(0, cursorDst.getCount());
+        } finally {
+            cursorDst.close();
+        }
+    }
+
     private String getColumn(Uri uri, String column) {
         final ContentResolver resolver = getInstrumentation().getContext().getContentResolver();
         final Cursor cursor = resolver.query(uri, new String[] { column }, null, null, null);
