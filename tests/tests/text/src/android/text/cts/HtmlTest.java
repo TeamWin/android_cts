@@ -96,26 +96,97 @@ public class HtmlTest extends AndroidTestCase {
     }
 
     public void testColor() throws Exception {
-        final int start = 0;
+        final Class<ForegroundColorSpan> type = ForegroundColorSpan.class;
 
-        Class<ForegroundColorSpan> type = ForegroundColorSpan.class;
-        ForegroundColorSpan[] colors;
         Spanned s = Html.fromHtml("<font color=\"#00FF00\">something</font>");
-        int end = s.length();
-        colors = s.getSpans(start, end, type);
-        int expectedColor = 0xFF00FF00;
-        assertEquals(expectedColor, colors[0].getForegroundColor());
+        ForegroundColorSpan[] colors = s.getSpans(0, s.length(), type);
+        assertEquals(0xFF00FF00, colors[0].getForegroundColor());
 
-        s = Html.fromHtml("<font color=\"navy\">something</font>");
-        end = s.length();
-        colors = s.getSpans(start, end, type);
-        expectedColor = 0xFF000080;
+        s = Html.fromHtml("<font color=\"navy\">NAVY</font>");
+        colors = s.getSpans(0, s.length(), type);
         assertEquals(0xFF000080, colors[0].getForegroundColor());
 
         s = Html.fromHtml("<font color=\"gibberish\">something</font>");
-        end = s.length();
-        colors = s.getSpans(start, end, type);
+        colors = s.getSpans(0, s.length(), type);
         assertEquals(0, colors.length);
+
+        // By default use the color values from android.graphics.Color instead of HTML/CSS
+        s = Html.fromHtml("<font color=\"green\">GREEN</font>");
+        colors = s.getSpans(0, s.length(), type);
+        assertEquals(0xFF00FF00, colors[0].getForegroundColor());
+
+        s = Html.fromHtml("<font color=\"gray\">GRAY</font>");
+        colors = s.getSpans(0, s.length(), type);
+        assertEquals(0xFF888888, colors[0].getForegroundColor());
+
+        s = Html.fromHtml("<font color=\"grey\">GREY</font>");
+        colors = s.getSpans(0, s.length(), type);
+        assertEquals(0xFF888888, colors[0].getForegroundColor());
+
+        s = Html.fromHtml("<font color=\"lightgray\">LIGHTGRAY</font>");
+        colors = s.getSpans(0, s.length(), type);
+        assertEquals(0xFFCCCCCC, colors[0].getForegroundColor());
+
+        s = Html.fromHtml("<font color=\"lightgrey\">LIGHTGREY</font>");
+        colors = s.getSpans(0, s.length(), type);
+        assertEquals(0xFFCCCCCC, colors[0].getForegroundColor());
+
+        s = Html.fromHtml("<font color=\"darkgray\">DARKGRAY</font>");
+        colors = s.getSpans(0, s.length(), type);
+        assertEquals(0xFF444444, colors[0].getForegroundColor());
+
+        s = Html.fromHtml("<font color=\"darkgrey\">DARKGREY</font>");
+        colors = s.getSpans(0, s.length(), type);
+        assertEquals(0xFF444444, colors[0].getForegroundColor());
+    }
+
+    public void testUseCssColor() throws Exception {
+        final Class<ForegroundColorSpan> type = ForegroundColorSpan.class;
+        final int flags = Html.FROM_HTML_OPTION_USE_CSS_COLORS;
+
+        Spanned s = Html.fromHtml("<font color=\"green\">GREEN</font>", flags);
+        ForegroundColorSpan[] colors = s.getSpans(0, s.length(), type);
+        assertEquals(0xFF008000, colors[0].getForegroundColor());
+
+        s = Html.fromHtml("<font color=\"gray\">GRAY</font>", flags);
+        colors = s.getSpans(0, s.length(), type);
+        assertEquals(0xFF808080, colors[0].getForegroundColor());
+
+        s = Html.fromHtml("<font color=\"grey\">GREY</font>", flags);
+        colors = s.getSpans(0, s.length(), type);
+        assertEquals(0xFF808080, colors[0].getForegroundColor());
+
+        s = Html.fromHtml("<font color=\"lightgray\">LIGHTGRAY</font>", flags);
+        colors = s.getSpans(0, s.length(), type);
+        assertEquals(0xFFD3D3D3, colors[0].getForegroundColor());
+
+        s = Html.fromHtml("<font color=\"lightgrey\">LIGHTGREY</font>", flags);
+        colors = s.getSpans(0, s.length(), type);
+        assertEquals(0xFFD3D3D3, colors[0].getForegroundColor());
+
+        s = Html.fromHtml("<font color=\"darkgray\">DARKGRAY</font>", flags);
+        colors = s.getSpans(0, s.length(), type);
+        assertEquals(0xFFA9A9A9, colors[0].getForegroundColor());
+
+        s = Html.fromHtml("<font color=\"darkgrey\">DARKGREY</font>", flags);
+        colors = s.getSpans(0, s.length(), type);
+        assertEquals(0xFFA9A9A9, colors[0].getForegroundColor());
+    }
+
+    public void testStylesFromHtml() {
+        Spanned s = Html.fromHtml("<span style=\"color:#FF0000; background-color:#00FF00; "
+                + "text-decoration:line-through;\">style</span>");
+
+        ForegroundColorSpan[] foreground = s.getSpans(0, s.length(), ForegroundColorSpan.class);
+        assertEquals(1, foreground.length);
+        assertEquals(0xFFFF0000, foreground[0].getForegroundColor());
+
+        BackgroundColorSpan[] background = s.getSpans(0, s.length(), BackgroundColorSpan.class);
+        assertEquals(1, background.length);
+        assertEquals(0xFF00FF00, background[0].getBackgroundColor());
+
+        StrikethroughSpan[] strike = s.getSpans(0, s.length(), StrikethroughSpan.class);
+        assertEquals(1, strike.length);
     }
 
     public void testParagraphs() throws Exception {
@@ -365,6 +436,26 @@ public class HtmlTest extends AndroidTestCase {
         flags = Html.FROM_HTML_SEPARATOR_LINE_BREAK_PARAGRAPH
                 | Html.FROM_HTML_SEPARATOR_LINE_BREAK_HEADING;
         assertEquals("BLOCKQUOTE\n\nDIV\n\nP\nHEADING\n",
+                Html.fromHtml(source, flags, null, null).toString());
+    }
+
+    public void testListFromHtml() throws Exception {
+        String source = "CITRUS FRUITS:<ul><li>LEMON</li><li>LIME</li><li>ORANGE</li></ul>";
+        assertEquals("CITRUS FRUITS:\n\nLEMON\n\nLIME\n\nORANGE\n\n",
+                Html.fromHtml(source).toString());
+
+        int flags = Html.FROM_HTML_SEPARATOR_LINE_BREAK_LIST;
+        // The <li> still has to be separated by two newline characters
+        assertEquals("CITRUS FRUITS:\n\nLEMON\n\nLIME\n\nORANGE\n\n",
+                Html.fromHtml(source, flags, null, null).toString());
+
+        flags = Html.FROM_HTML_SEPARATOR_LINE_BREAK_LIST_ITEM;
+        assertEquals("CITRUS FRUITS:\n\nLEMON\nLIME\nORANGE\n\n",
+                Html.fromHtml(source, flags, null, null).toString());
+
+        flags = Html.FROM_HTML_SEPARATOR_LINE_BREAK_LIST
+                | Html.FROM_HTML_SEPARATOR_LINE_BREAK_LIST_ITEM;
+        assertEquals("CITRUS FRUITS:\nLEMON\nLIME\nORANGE\n",
                 Html.fromHtml(source, flags, null, null).toString());
     }
 
