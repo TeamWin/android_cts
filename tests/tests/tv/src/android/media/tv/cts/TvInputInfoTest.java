@@ -158,6 +158,20 @@ public class TvInputInfoTest extends AndroidTestCase {
                 mStubInfo.getServiceInfo().loadLabel(mPackageManager));
     }
 
+    public void testIsHidden() throws Exception {
+        if (!Utils.hasTvInputFramework(getContext())) {
+            return;
+        }
+        assertFalse(mStubInfo.isHidden(getContext()));
+    }
+
+    public void testLoadCustomLabel() throws Exception {
+        if (!Utils.hasTvInputFramework(getContext())) {
+            return;
+        }
+        assertNull(mStubInfo.loadCustomLabel(getContext()));
+    }
+
     public void testBuilder() throws Exception {
         if (!Utils.hasTvInputFramework(getContext())) {
             return;
