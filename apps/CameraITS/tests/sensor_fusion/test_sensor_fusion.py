@@ -31,11 +31,11 @@ import sys
 
 NAME = os.path.basename(__file__).split(".")[0]
 
-# Capture 210 QVGA frames (which is 7s at 30fps)
+# Capture 210 VGA frames (which is 7s at 30fps)
 N = 210
-W,H = 320,240
+W,H = 640,480
 
-FEATURE_PARAMS = dict( maxCorners = 50,
+FEATURE_PARAMS = dict( maxCorners = 80,
                        qualityLevel = 0.3,
                        minDistance = 7,
                        blockSize = 7 )
@@ -273,7 +273,7 @@ def get_cam_rotations(frames):
             frame = frames[i]
             for x,y in p0[st==1]:
                 cv2.circle(frame, (x,y), 3, (100,100,255), -1)
-            its.image.write_image(frame, "%s_features.jpg"%(NAME))
+            its.image.write_image(frame, "%s_features.png"%(NAME))
     return numpy.array(rots)
 
 def get_cam_times(cam_events):
@@ -307,7 +307,7 @@ def load_data():
     n = len(events["cam"])
     frames = []
     for i in range(n):
-        img = Image.open("%s_frame%03d.jpg"%(NAME,i))
+        img = Image.open("%s_frame%03d.png"%(NAME,i))
         w,h = img.size[0:2]
         frames.append(numpy.array(img).reshape(h,w,3) / 255.0)
     return events, frames
@@ -360,7 +360,7 @@ def collect_data():
         for i,c in enumerate(caps):
             img = its.image.convert_capture_to_rgb_image(c)
             frames.append(img)
-            its.image.write_image(img, "%s_frame%03d.jpg"%(NAME,i))
+            its.image.write_image(img, "%s_frame%03d.png"%(NAME,i))
 
         return events, frames
 
