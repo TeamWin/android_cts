@@ -32,12 +32,19 @@ final class IcuTestUtils {
     /**
      *  The field on TestGroup which has the list of classes in it.
      */
-    private static final Field classesToTest;
-    static {
-        // Find the field, and complain if it is not where we expected it to be.
+    private static final Field classesToTestField = getField("names");
+
+    /**
+     *  The field on TestGroup which has the default package in it.
+     */
+    private static final Field defaultPackageField = getField("defaultPackage");
+
+    private static Field getField(String name) {
+        // Find the field, and complain if it is not where it's expected to be.
         try {
-            classesToTest = TestFmwk.TestGroup.class.getDeclaredField("names");
-            classesToTest.setAccessible(true);  // It's private by default.
+            Field field = TestFmwk.TestGroup.class.getDeclaredField(name);
+            field.setAccessible(true);  // It's private by default.
+            return field;
         } catch (NoSuchFieldException nsfe) {
             throw new RuntimeException("Class structure of ICU tests have changed.", nsfe);
         }
@@ -63,27 +70,23 @@ final class IcuTestUtils {
         // recursively call this method which will resolve the base classes from the classes we
         // have discovered in that field.
         if (TestFmwk.TestGroup.class.isAssignableFrom(parent)) {
+            TestFmwk.TestGroup testGroup = (TestFmwk.TestGroup) parent.newInstance();
+            String[] classNames = (String[]) classesToTestField.get(testGroup);
+            String defaultPackage = (String) defaultPackageField.get(testGroup);
 
-            String[] children = (String[]) classesToTest.get(parent.newInstance());
-
-            for (String child : children) {
+            for (String className : classNames) {
+                // Handle relative class names.
+                if (!className.contains(".")) {
+                    className = defaultPackage + className;
+                }
                 try {
                     /* Get the children through a recursive call, and add to sets. */
-                    tests.addAll(getBaseTests(Class.forName(child)));
+                    tests.addAll(getBaseTests(Class.forName(className)));
                 } catch (ClassNotFoundException cnfe) {
-                    // Try to extract the full class name by prepending the parent package.
-                    // (In case the class name was specified relative to the TestGroup).
-                    String fixed = parent.getCanonicalName().replaceAll("[a-zA-Z0-9]+$", child);
-
-                    try {
-                        tests.addAll(getBaseTests(Class.forName(fixed)));
-                    } catch (ClassNotFoundException unused) {
-                        // We make sure to add any failures to find a test, in a way that will cause
-                        // that test to fail. This is to make sure that the user is properly
-                        // informed that the test was not run. Use parent exception because that
-                        // has the actual classname and not our /guess/ to normalise the class name.
-                        tests.add(new FailTest(child, cnfe));
-                    }
+                    // We make sure to add any failures to find a test, in a way that will cause
+                    // that test to fail. This is to make sure that the user is properly
+                    // informed that the test was not run.
+                    tests.add(new FailTest(className, cnfe));
                 }
             }
 
