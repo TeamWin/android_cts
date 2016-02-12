@@ -114,6 +114,10 @@ public class DocumentsTest extends DeviceTestCase implements IAbiReceiver, IBuil
         runDeviceTests(CLIENT_PKG, ".DocumentsClientTest", "testGetContent");
     }
 
+    public void testTransferDocument() throws Exception {
+        runDeviceTests(CLIENT_PKG, ".DocumentsClientTest", "testTransferDocument");
+    }
+
     public void runDeviceTests(String packageName, String testClassName, String testMethodName)
             throws DeviceNotAvailableException {
         Utils.runDeviceTests(getDevice(), packageName, testClassName, testMethodName);
