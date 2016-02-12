@@ -17,6 +17,7 @@
 package android.server.cts;
 
 import com.android.tradefed.device.ITestDevice;
+import com.android.tradefed.log.LogUtil;
 
 import junit.framework.Assert;
 
@@ -28,6 +29,7 @@ import android.server.cts.WindowManagerState.WindowTask;
 import java.awt.Rectangle;
 
 import static android.server.cts.ActivityManagerTestBase.FREEFORM_WORKSPACE_STACK_ID;
+import static com.android.ddmlib.Log.LogLevel.INFO;
 
 /** Combined state of the activity manager and window manager. */
 class ActivityAndWindowManagersState extends Assert {
@@ -35,13 +37,41 @@ class ActivityAndWindowManagersState extends Assert {
     private ActivityManagerState mAmState = new ActivityManagerState();
     private WindowManagerState mWmState = new WindowManagerState();
 
-    void computeState(ITestDevice device) throws Exception {
-        computeState(device, true);
+    void computeState(ITestDevice device, String[] waitForActivitiesVisible) throws Exception {
+        computeState(device, true, waitForActivitiesVisible);
     }
 
-    void computeState(ITestDevice device, boolean visibleOnly) throws Exception {
+    void computeState(ITestDevice device, boolean visibleOnly, String[] waitForActivitiesVisible)
+            throws Exception {
+        int retriesLeft = 5;
+        boolean retry = waitForActivitiesVisible != null && waitForActivitiesVisible.length > 0;
+        do {
+            mWmState.computeState(device, visibleOnly);
+            if (retry) {
+                // caller is interested in us waiting for some particular activity windows to be
+                // visible before compute the state. Check for the visibility of those activity
+                // windows.
+                boolean allActivityWindowsVisible = true;
+                for (String activityName : waitForActivitiesVisible) {
+                    final String windowName =
+                            ActivityManagerTestBase.getWindowName(activityName);
+                    allActivityWindowsVisible &= mWmState.isWindowVisible(windowName);
+                }
+                if (allActivityWindowsVisible) {
+                    retry = false;
+                } else {
+                    LogUtil.CLog.logAndDisplay(INFO, "***Waiting for Activities to be visible...");
+                    try {
+                        Thread.sleep(1000);
+                    } catch (InterruptedException e) {
+                        LogUtil.CLog.logAndDisplay(INFO, e.toString());
+                        // Well I guess we are not waiting...
+                    }
+                }
+            }
+        } while (retry && retriesLeft-- > 0);
+
         mAmState.computeState(device);
-        mWmState.computeState(device, visibleOnly);
     }
 
     ActivityManagerState getAmState() {

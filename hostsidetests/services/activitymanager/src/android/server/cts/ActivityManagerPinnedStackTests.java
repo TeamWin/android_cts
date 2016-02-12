@@ -87,7 +87,7 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
             mDevice.executeShellCommand(command);
         }
 
-        mAmWmState.computeState(mDevice);
+        mAmWmState.computeState(mDevice, new String[] {activiyName});
         mAmWmState.assertSanity();
         mAmWmState.assertValidBounds();
 
