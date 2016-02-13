@@ -62,8 +62,8 @@ public class GeolocationTest extends ActivityInstrumentationTestCase2<WebViewCts
 
     // The URLs does not matter since the tests will intercept the load, but it has to be a real
     // url, and different domains.
-    private static final String URL_1 = "http://www.example.com";
-    private static final String URL_2 = "http://www.example.org";
+    private static final String URL_1 = "https://www.example.com";
+    private static final String URL_2 = "https://www.example.org";
 
     private static final String JS_INTERFACE_NAME = "Android";
     private static final int POLLING_TIMEOUT = 60 * 1000;
