@@ -29,4 +29,6 @@ LOCAL_PACKAGE_NAME := android.core.tests.runner
 
 LOCAL_STATIC_JAVA_LIBRARIES := core-tests android-support-test
 
+LOCAL_JAVA_LANGUAGE_VERSION := 1.8
+
 include $(BUILD_CTSCORE_PACKAGE)
