@@ -27,6 +27,7 @@ import android.server.cts.WindowManagerState.WindowStack;
 import android.server.cts.WindowManagerState.WindowTask;
 
 import java.awt.Rectangle;
+import java.util.Objects;
 
 import static android.server.cts.ActivityManagerTestBase.FREEFORM_WORKSPACE_STACK_ID;
 import static com.android.ddmlib.Log.LogLevel.INFO;
@@ -46,32 +47,40 @@ class ActivityAndWindowManagersState extends Assert {
         int retriesLeft = 5;
         boolean retry = waitForActivitiesVisible != null && waitForActivitiesVisible.length > 0;
         do {
+            mAmState.computeState(device);
             mWmState.computeState(device, visibleOnly);
-            if (retry) {
-                // caller is interested in us waiting for some particular activity windows to be
-                // visible before compute the state. Check for the visibility of those activity
-                // windows.
-                boolean allActivityWindowsVisible = true;
-                for (String activityName : waitForActivitiesVisible) {
-                    final String windowName =
-                            ActivityManagerTestBase.getWindowName(activityName);
-                    allActivityWindowsVisible &= mWmState.isWindowVisible(windowName);
+            if (retry && shouldRetry(waitForActivitiesVisible)) {
+                LogUtil.CLog.logAndDisplay(INFO, "***Waiting for Activities to be visible...");
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException e) {
+                    LogUtil.CLog.logAndDisplay(INFO, e.toString());
+                    // Well I guess we are not waiting...
                 }
-                if (allActivityWindowsVisible) {
-                    retry = false;
-                } else {
-                    LogUtil.CLog.logAndDisplay(INFO, "***Waiting for Activities to be visible...");
-                    try {
-                        Thread.sleep(1000);
-                    } catch (InterruptedException e) {
-                        LogUtil.CLog.logAndDisplay(INFO, e.toString());
-                        // Well I guess we are not waiting...
-                    }
-                }
+            } else {
+                retry = false;
             }
         } while (retry && retriesLeft-- > 0);
+    }
 
-        mAmState.computeState(device);
+    private boolean shouldRetry(String[] waitForActivitiesVisible) {
+        if (!stackInAMAndWMAreEqual()) {
+            // We want to wait a little for the stacks in AM and WM to have equal values as there
+            // might be a transition animation ongoing when we got the states from WM AM separately.
+            LogUtil.CLog.logAndDisplay(INFO, "***stackInAMAndWMAreEqual=false");
+            return true;
+        }
+        // If the caller is interested in us waiting for some particular activity windows to be
+        // visible before compute the state. Check for the visibility of those activity windows.
+        boolean allActivityWindowsVisible = true;
+        for (String activityName : waitForActivitiesVisible) {
+            final String windowName =
+                    ActivityManagerTestBase.getWindowName(activityName);
+            allActivityWindowsVisible &= mWmState.isWindowVisible(windowName);
+        }
+        LogUtil.CLog.logAndDisplay(INFO,
+                "***allActivityWindowsVisible=" + allActivityWindowsVisible);
+        return !allActivityWindowsVisible;
     }
 
     ActivityManagerState getAmState() {
@@ -126,26 +135,30 @@ class ActivityAndWindowManagersState extends Assert {
     }
 
     void assertFocusedActivity(String msg, String activityName) throws Exception {
-        assertEquals(msg, activityName, mAmState.getFocusedActivity());
-        assertEquals(msg, activityName, mWmState.getFocusedApp());
+        final String componentName = ActivityManagerTestBase.getActivityComponentName(activityName);
+        assertEquals(msg, componentName, mAmState.getFocusedActivity());
+        assertEquals(msg, componentName, mWmState.getFocusedApp());
     }
 
     void assertNotFocusedActivity(String msg, String activityName) throws Exception {
-        if (mAmState.getFocusedActivity().equals(activityName)) {
-            failNotEquals(msg, mAmState.getFocusedActivity(), activityName);
+        final String componentName = ActivityManagerTestBase.getActivityComponentName(activityName);
+        if (mAmState.getFocusedActivity().equals(componentName)) {
+            failNotEquals(msg, mAmState.getFocusedActivity(), componentName);
         }
-        if (mWmState.getFocusedApp().equals(activityName)) {
-            failNotEquals(msg, mWmState.getFocusedApp(), activityName);
+        if (mWmState.getFocusedApp().equals(componentName)) {
+            failNotEquals(msg, mWmState.getFocusedApp(), componentName);
         }
     }
 
     void assertResumedActivity(String msg, String activityName) throws Exception {
-        assertEquals(msg, activityName, mAmState.getResumedActivity());
+        final String componentName = ActivityManagerTestBase.getActivityComponentName(activityName);
+        assertEquals(msg, componentName, mAmState.getResumedActivity());
     }
 
     void assertNotResumedActivity(String msg, String activityName) throws Exception {
-        if (mAmState.getResumedActivity().equals(activityName)) {
-            failNotEquals(msg, mAmState.getResumedActivity(), activityName);
+        final String componentName = ActivityManagerTestBase.getActivityComponentName(activityName);
+        if (mAmState.getResumedActivity().equals(componentName)) {
+            failNotEquals(msg, mAmState.getResumedActivity(), componentName);
         }
     }
 
@@ -180,6 +193,26 @@ class ActivityAndWindowManagersState extends Assert {
                     activityVisible);
             assertFalse("Window=" + windowName + " must NOT be visible.", windowVisible);
         }
+    }
+
+    boolean stackInAMAndWMAreEqual() {
+        for (ActivityStack aStack : mAmState.getStacks()) {
+            final int stackId = aStack.mStackId;
+            final WindowStack wStack = mWmState.getStack(stackId);
+            if (wStack == null || aStack.isFullscreen() != wStack.isFullscreen()) {
+                return false;
+            }
+
+            final Rectangle aStackBounds = aStack.getBounds();
+            final Rectangle wStackBounds = wStack.getBounds();
+
+            if ((aStack.isFullscreen() && aStackBounds != null)
+                    || !Objects.equals(aStackBounds, wStackBounds)) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     void assertValidBounds() {
