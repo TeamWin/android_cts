@@ -49,6 +49,8 @@ LOCAL_COMPATIBILITY_SUPPORT_FILES += \
     ../../../libcore/expectations/knownfailures.txt:$(LOCAL_PACKAGE_NAME).knownfailures.expectations \
     ../../../libcore/expectations/taggedtests.txt:$(LOCAL_PACKAGE_NAME).taggedtests.expectations
 
+LOCAL_JAVA_LANGUAGE_VERSION := 1.8
+
 include $(BUILD_PACKAGE)
 
 include $(call all-makefiles-under,$(LOCAL_PATH))
