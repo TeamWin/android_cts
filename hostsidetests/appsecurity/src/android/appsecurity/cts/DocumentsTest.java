@@ -76,6 +76,10 @@ public class DocumentsTest extends DeviceTestCase implements IAbiReceiver, IBuil
         runDeviceTests(CLIENT_PKG, ".DocumentsClientTest", "testOpenSimple");
     }
 
+    public void testOpenVirtual() throws Exception {
+        runDeviceTests(CLIENT_PKG, ".DocumentsClientTest", "testOpenVirtual");
+    }
+
     public void testCreateNew() throws Exception {
         runDeviceTests(CLIENT_PKG, ".DocumentsClientTest", "testCreateNew");
     }
