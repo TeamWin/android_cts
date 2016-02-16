@@ -28,6 +28,31 @@ import junit.framework.Assert;
  */
 public class Target {
     /**
+     * Broad classification of the type of function being tested.
+     */
+    public enum FunctionType {
+        NORMAL,
+        HALF,
+        NATIVE,
+        FAST,
+    }
+
+    /**
+     * Floating point precision of the result of the function being tested.
+     */
+    public enum ReturnType {
+        HALF,
+        FLOAT,
+        DOUBLE
+    }
+
+    /* The classification of the function being tested */
+    private FunctionType mFunctionType;
+
+    /* The floating point precision of the result of the function being tested */
+    private ReturnType mReturnType;
+
+    /*
      * In relaxed precision mode, we allow:
      * - less precision in the computation
      * - using only normalized values
@@ -36,18 +61,8 @@ public class Target {
      */
     private boolean mIsRelaxedPrecision;
 
-    /*
-     * The following two fields are set just before the expected values are computed for a specific
-     * RenderScript function.  Hence, we can't use one instance of this class to test two APIs
-     * in parallel.  The generated Test*.java code uses one instance of Target per test, so we're
-     * safe.
-     */
-
-    /**
-     * For native, we allow the same things as relaxed precision, plus:
-     * - operations don't have to return +/- infinity
-     */
-    private boolean mIsNative;
+    /* If false, zero or the closest normal value are also accepted for subnormal results. */
+    private boolean mHandleSubnormal;
 
     /**
      * How much we'll allow the values tested to diverge from the values
@@ -55,16 +70,30 @@ public class Target {
      */
     private int mUlpFactor;
 
-    Target(boolean relaxed) {
+    Target(FunctionType functionType, ReturnType returnType, boolean relaxed) {
+        mFunctionType = functionType;
+        mReturnType = returnType;
         mIsRelaxedPrecision = relaxed;
+
+        if (mReturnType == ReturnType.HALF) {
+            // Subnormal numbers need not be handled for HALF.
+            mHandleSubnormal = false;
+        } else if (mReturnType == ReturnType.FLOAT) {
+            // NORMAL functions, when in non-relaxed mode, need to handle subnormals.  Subnormals
+            // need not be handled in any other mode.
+            mHandleSubnormal = (mFunctionType == FunctionType.NORMAL) && !relaxed;
+        } else if (mReturnType == ReturnType.DOUBLE) {
+            // We only have NORMAL functions for DOUBLE and they need to handle subnormal values.
+            assert(mFunctionType == FunctionType.NORMAL);
+            mHandleSubnormal = true;
+        }
     }
 
     /**
      * Sets whether we are testing a native_* function and how many ulp we allow
      * for full and relaxed precision.
      */
-    void setPrecision(int fullUlpFactor, int relaxedUlpFactor, boolean isNative) {
-        mIsNative = isNative;
+    void setPrecision(int fullUlpFactor, int relaxedUlpFactor) {
         mUlpFactor = mIsRelaxedPrecision ? relaxedUlpFactor : fullUlpFactor;
     }
 
@@ -287,7 +316,7 @@ public class Target {
                 // For relaxed mode, we don't require support of subnormal values.
                 // If we have a subnormal value, we'll allow both the normalized value and zero,
                 // to cover the two ways this small value might be handled.
-                if (mIsRelaxedPrecision || mIsNative) {
+                if (!mHandleSubnormal) {
                     if (IsSubnormal(f)) {
                         updateMinAndMax(0.f);
                         updateMinAndMax(smallestNormal(f));
@@ -349,7 +378,7 @@ public class Target {
                 mMinValue = newValue;
             }
             // If subnormal, also allow the normalized value if it's smaller.
-            if ((mIsRelaxedPrecision || mIsNative) && IsSubnormal(mMinValue)) {
+            if (!mHandleSubnormal && IsSubnormal(mMinValue)) {
                 if (mMinValue < 0) {
                     mMinValue = smallestNormal(-1.0f);
                 } else {
@@ -384,7 +413,7 @@ public class Target {
                 mMaxValue = newValue;
             }
             // If subnormal, also allow the normalized value if it's smaller.
-            if ((mIsRelaxedPrecision || mIsNative) && IsSubnormal(mMaxValue)) {
+            if (!mHandleSubnormal && IsSubnormal(mMaxValue)) {
                 if (mMaxValue > 0) {
                     mMaxValue = smallestNormal(1.0f);
                 } else {
@@ -423,7 +452,7 @@ public class Target {
             } else {
                 u = Math.ulp(mMaxValue);
             }
-            if (mIsRelaxedPrecision || mIsNative) {
+            if (!mHandleSubnormal) {
                 u = Math.max(u, smallestNormal(1.f));
             }
             return u;
@@ -437,7 +466,7 @@ public class Target {
             } else {
                 u = -Math.ulp(mMinValue);
             }
-            if (mIsRelaxedPrecision || mIsNative) {
+            if (!mHandleSubnormal) {
                 u = Math.min(u, smallestNormal(-1.f));
             }
             return u;
@@ -469,7 +498,7 @@ public class Target {
             }
             // For native, we don't require returning +/- infinity.  If that's what we expect,
             // allow all answers.
-            if (mIsNative) {
+            if (mFunctionType == FunctionType.NATIVE) {
                 if (mMinValue == Double.NEGATIVE_INFINITY &&
                     mMaxValue == Double.NEGATIVE_INFINITY) {
                     return true;
