@@ -114,7 +114,7 @@ public class DocumentsClientTest extends InstrumentationTestCase {
     private UiObject findRoot(String label) throws UiObjectNotFoundException {
         final UiSelector rootsList = new UiSelector().resourceId(
                 "com.android.documentsui:id/container_roots").childSelector(
-                new UiSelector().resourceId("android:id/list"));
+                new UiSelector().resourceId("com.android.documentsui:id/roots_list"));
 
         // We might need to expand drawer if not visible
         if (!new UiObject(rootsList).waitForExists(TIMEOUT)) {
@@ -137,7 +137,7 @@ public class DocumentsClientTest extends InstrumentationTestCase {
     private UiObject findDocument(String label) throws UiObjectNotFoundException {
         final UiSelector docList = new UiSelector().resourceId(
                 "com.android.documentsui:id/container_directory").childSelector(
-                new UiSelector().resourceId("com.android.documentsui:id/list"));
+                new UiSelector().resourceId("com.android.documentsui:id/dir_list"));
 
         // Wait for the first list item to appear
         assertTrue("First list item",
