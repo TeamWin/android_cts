@@ -64,7 +64,7 @@ public class ActivityManagerReplaceWindowTests extends ActivityManagerTestBase {
         }
 
         CLog.logAndDisplay(INFO, "==========Before Docking========");
-        final String oldToken = getFocusedWindowToken(windowName, true);
+        final String oldToken = getFocusedWindowToken(windowName, activityName, true);
 
         // Move to docked stack
         final int taskId = getActivityTaskId(activityName);
@@ -75,15 +75,16 @@ public class ActivityManagerReplaceWindowTests extends ActivityManagerTestBase {
         Thread.sleep(5000);
 
         CLog.logAndDisplay(INFO, "==========After Docking========");
-        final String newToken = getFocusedWindowToken(windowName, false);
+        final String newToken = getFocusedWindowToken(windowName, activityName, false);
 
         // For both relaunch and not relaunch case, we'd like the window to be kept.
         Assert.assertEquals("Window replaced while docking.", oldToken, newToken);
     }
 
-    private String getFocusedWindowToken(String windowName, boolean visibleOnly)
+    private String getFocusedWindowToken(
+            String windowName, String activityName, boolean visibleOnly)
             throws Exception {
-        mAmWmState.computeState(mDevice, visibleOnly);
+        mAmWmState.computeState(mDevice, visibleOnly, new String[] {activityName});
 
         mAmWmState.assertSanity();
 
