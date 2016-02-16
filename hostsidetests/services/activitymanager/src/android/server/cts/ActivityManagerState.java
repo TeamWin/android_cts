@@ -296,8 +296,8 @@ class ActivityManagerState {
     }
 
     static class ActivityTask extends ActivityContainer {
-        private static final Pattern TASK_RECORD_PATTERN = Pattern.compile(
-                "\\* TaskRecord\\{(\\S+) #(\\d+) A=(\\S+) U=(\\d+) StackId=(\\d+) sz=(\\d+)\\}");
+        private static final Pattern TASK_RECORD_PATTERN = Pattern.compile("\\* TaskRecord\\"
+                + "{(\\S+) #(\\d+) (\\S+)=(\\S+) U=(\\d+) StackId=(\\d+) sz=(\\d+)\\}");
 
         private static final Pattern LAST_NON_FULLSCREEN_BOUNDS_PATTERN = Pattern.compile(
                 "mLastNonFullscreenBounds=Rect\\((\\d+), (\\d+) - (\\d+), (\\d+)\\)");
@@ -374,7 +374,7 @@ class ActivityManagerState {
                 Matcher matcher = TASK_RECORD_PATTERN.matcher(line);
                 if (matcher.matches()) {
                     CLog.logAndDisplay(INFO, line);
-                    final String stackId = matcher.group(5);
+                    final String stackId = matcher.group(6);
                     mStackId = Integer.valueOf(stackId);
                     CLog.logAndDisplay(INFO, stackId);
                     continue;

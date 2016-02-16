@@ -57,6 +57,8 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
 
     private static final String AM_FORCE_STOP_TEST_PACKAGE = "am force-stop android.server.app";
 
+    private static final String AM_REMOVE_STACK = "am stack remove ";
+
     protected static final String AM_START_HOME_ACTIVITY_COMMAND =
             "am start -a android.intent.action.MAIN -c android.intent.category.HOME";
 
@@ -103,6 +105,10 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
         try {
             mDevice.executeShellCommand(AM_FORCE_STOP_TEST_PACKAGE);
             setAccelerometerRotation(mInitialAccelerometerRotation);
+            // Remove special stacks.
+            mDevice.executeShellCommand(AM_REMOVE_STACK + PINNED_STACK_ID);
+            mDevice.executeShellCommand(AM_REMOVE_STACK + DOCKED_STACK_ID);
+            mDevice.executeShellCommand(AM_REMOVE_STACK + FREEFORM_WORKSPACE_STACK_ID);
         } catch (DeviceNotAvailableException e) {
         }
     }
