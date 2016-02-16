@@ -105,7 +105,10 @@ public class BuildDalvikSuite {
      */
     public static void main(String[] args) throws IOException {
 
-        parseArgs(args);
+        if (!parseArgs(args)) {
+          printUsage();
+          System.exit(-1);
+        }
 
         long start = System.currentTimeMillis();
         BuildDalvikSuite cat = new BuildDalvikSuite(false);
@@ -115,7 +118,7 @@ public class BuildDalvikSuite {
         System.out.println("elapsed seconds: " + (end - start) / 1000);
     }
 
-    public static void parseArgs(String[] args) {
+    public static boolean parseArgs(String[] args) {
       if (args.length > 5) {
           JAVASRC_FOLDER = args[0];
           OUTPUT_FOLDER = args[1];
@@ -133,13 +136,16 @@ public class BuildDalvikSuite {
               restrictTo = args[6];
               System.out.println("restricting build to: " + restrictTo);
           }
-
+          return true;
       } else {
-          System.out.println("usage: java-src-folder output-folder classpath " +
-                  "generated-main-files compiled_output generated-main-files " +
-          "[restrict-to-opcode]");
-          System.exit(-1);
+          return false;
       }
+    }
+
+    private static void printUsage() {
+        System.out.println("usage: java-src-folder output-folder classpath " +
+                           "generated-main-files compiled_output generated-main-files " +
+                           "[restrict-to-opcode]");
     }
 
     public BuildDalvikSuite(boolean useJack) {
