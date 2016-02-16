@@ -20,98 +20,63 @@ import java.lang.Exception;
 import java.lang.String;
 
 public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
-    private static final String PIP_ACTIVITY_COMPONENT_NAME = "android.server.app/.PipActivity";
-    private static final String PIP_WINDOW_NAME =
-            "android.server.app/android.server.app.PipActivity";
-
-    private static final String AUTO_ENTER_PIP_ACTIVITY_COMPONENT_NAME =
-            "android.server.app/.AutoEnterPipActivity";
-    private static final String AUTO_ENTER_PIP_WINDOW_NAME =
-            "android.server.app/android.server.app.AutoEnterPipActivity";
-
-    private static final String ALWAYS_FOCUSABLE_PIP_ACTIVITY_COMPONENT_NAME =
-            "android.server.app/.AlwaysFocusablePipActivity";
-    private static final String ALWAYS_FOCUSABLE_PIP_WINDOW_NAME =
-            "android.server.app/android.server.app.AlwaysFocusablePipActivity";
-
-    private static final String LAUNCH_INTO_PINNED_STACK_PIP_ACTIVITY_COMPONENT_NAME =
-            "android.server.app/.LaunchIntoPinnedStackPipActivity";
-    private static final String LAUNCH_INTO_PINNED_STACK_PIP_WINDOW_NAME =
-            "android.server.app/android.server.app.LaunchIntoPinnedStackPipActivity";
-
-    private static final String AM_START_PIP_ACTIVITY =
-            "am start -n " + PIP_ACTIVITY_COMPONENT_NAME;
-    private static final String AM_START_AUTO_ENTER_PIP_ACTIVITY =
-            "am start -n " + AUTO_ENTER_PIP_ACTIVITY_COMPONENT_NAME;
-    private static final String AM_START_ALWAYS_FOCUSABLE_PIP_ACTIVITY =
-            "am start -n " + ALWAYS_FOCUSABLE_PIP_ACTIVITY_COMPONENT_NAME;
-    private static final String AM_START_LAUNCH_INTO_PINNED_STACK_PIP_ACTIVITY =
-            "am start -n " + LAUNCH_INTO_PINNED_STACK_PIP_ACTIVITY_COMPONENT_NAME;
+    private static final String PIP_ACTIVITY = "PipActivity";
+    private static final String AUTO_ENTER_PIP_ACTIVITY = "AutoEnterPipActivity";
+    private static final String ALWAYS_FOCUSABLE_PIP_ACTIVITY = "AlwaysFocusablePipActivity";
+    private static final String LAUNCH_INTO_PINNED_STACK_PIP_ACTIVITY =
+            "LaunchIntoPinnedStackPipActivity";
 
     public void testEnterPictureInPictureMode() throws Exception {
-        final String[] commands = { AM_START_AUTO_ENTER_PIP_ACTIVITY };
-        pinnedStackTester(AUTO_ENTER_PIP_ACTIVITY_COMPONENT_NAME,
-                AUTO_ENTER_PIP_WINDOW_NAME, commands, false);
+        pinnedStackTester(AUTO_ENTER_PIP_ACTIVITY, AUTO_ENTER_PIP_ACTIVITY, false, false);
     }
 
     public void testMoveTopActivityToPinnedStack() throws Exception {
-        final String[] commands = { AM_START_PIP_ACTIVITY,
-                AM_MOVE_TOP_ACTIVITY_TO_PINNED_STACK_COMMAND };
-        pinnedStackTester(PIP_ACTIVITY_COMPONENT_NAME, PIP_WINDOW_NAME, commands, false);
+        pinnedStackTester(PIP_ACTIVITY, PIP_ACTIVITY, true, false);
     }
 
     public void testAlwaysFocusablePipActivity() throws Exception {
-        final String[] commands = { AM_START_ALWAYS_FOCUSABLE_PIP_ACTIVITY,
-                AM_MOVE_TOP_ACTIVITY_TO_PINNED_STACK_COMMAND };
-        pinnedStackTester(ALWAYS_FOCUSABLE_PIP_ACTIVITY_COMPONENT_NAME,
-                ALWAYS_FOCUSABLE_PIP_WINDOW_NAME, commands, true);
+        pinnedStackTester(ALWAYS_FOCUSABLE_PIP_ACTIVITY, ALWAYS_FOCUSABLE_PIP_ACTIVITY, true, true);
     }
 
     public void testLaunchIntoPinnedStack() throws Exception {
-        final String[] commands = { AM_START_LAUNCH_INTO_PINNED_STACK_PIP_ACTIVITY };
         pinnedStackTester(
-                ALWAYS_FOCUSABLE_PIP_ACTIVITY_COMPONENT_NAME,
-                ALWAYS_FOCUSABLE_PIP_WINDOW_NAME, commands, true);
-        // TODO:
-        // - Verify size of pinned stack
-        // - Verify that LAUNCH_INTO_PINNED_STACK_PIP_ACTIVITY_COMPONENT_NAME is on fullscreen
-        //   stack as we don't want the fact that it launched
-        //   ALWAYS_FOCUSABLE_PIP_ACTIVITY_COMPONENT_NAME to move it to the pinned stack just
-        //   bacause they have the same task affinity due to package.
+                LAUNCH_INTO_PINNED_STACK_PIP_ACTIVITY, ALWAYS_FOCUSABLE_PIP_ACTIVITY, false, true);
     }
 
-    private void pinnedStackTester(String activiyName, String windowName, String[] commands,
-            boolean isFocusable) throws Exception {
+    private void pinnedStackTester(String startActivity, String topActiviyName,
+            boolean moveTopToPinnedStack, boolean isFocusable) throws Exception {
 
-        for (String command : commands) {
-            mDevice.executeShellCommand(command);
+        mDevice.executeShellCommand(getAmStartCmd(startActivity));
+        if (moveTopToPinnedStack) {
+            mDevice.executeShellCommand(AM_MOVE_TOP_ACTIVITY_TO_PINNED_STACK_COMMAND);
         }
 
-        mAmWmState.computeState(mDevice);
+        mAmWmState.computeState(mDevice, new String[] {topActiviyName});
         mAmWmState.assertSanity();
         mAmWmState.assertValidBounds();
 
         if (supportsPip()) {
+            final String windowName = getWindowName(topActiviyName);
             mAmWmState.assertContainsStack("Must contain pinned stack.", PINNED_STACK_ID);
             mAmWmState.assertFrontStack("Pinned stack must be the front stack.", PINNED_STACK_ID);
-            mAmWmState.assertFrontWindow("Pinned window must be the front window.", windowName);
+            mAmWmState.assertVisibility(topActiviyName, true);
 
             if (isFocusable) {
                 mAmWmState.assertFocusedStack(
                         "Pinned stack must be the focused stack.", PINNED_STACK_ID);
                 mAmWmState.assertFocusedActivity(
-                        "Pinned activity must be focused activity.", activiyName);
+                        "Pinned activity must be focused activity.", topActiviyName);
                 mAmWmState.assertResumedActivity(
-                        "Pinned activity must be the resumed activity.", activiyName);
+                        "Pinned activity must be the resumed activity.", topActiviyName);
                 mAmWmState.assertFocusedWindow(
                         "Pinned window must be focused window.", windowName);
             } else {
                 mAmWmState.assertNotFocusedStack(
                         "Pinned stack can't be the focused stack.", PINNED_STACK_ID);
                 mAmWmState.assertNotFocusedActivity(
-                        "Pinned stack can't be the focused activity.", activiyName);
+                        "Pinned stack can't be the focused activity.", topActiviyName);
                 mAmWmState.assertNotResumedActivity(
-                        "Pinned stack can't be the resumed activity.", activiyName);
+                        "Pinned stack can't be the resumed activity.", topActiviyName);
                 mAmWmState.assertNotFocusedWindow(
                         "Pinned window can't be focused window.", windowName);
             }

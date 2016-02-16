@@ -46,11 +46,13 @@
         <activity android:name=".PipActivity"
                 android:resizeable="true"
                 android:supportsPictureInPicture="true"
+                android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout"
                 android:exported="true"
         />
         <activity android:name=".AutoEnterPipActivity"
                   android:resizeable="true"
                   android:supportsPictureInPicture="true"
+                  android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout"
                   android:exported="true"
         />
         <activity android:name=".AlwaysFocusablePipActivity"
@@ -65,6 +67,7 @@
                   android:resizeable="true"
                   android:supportsPictureInPicture="true"
                   androidprv:alwaysFocusable="true"
+                  android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout"
                   android:exported="true"
         />
         <activity android:name=".VisibleBehindActivity"
