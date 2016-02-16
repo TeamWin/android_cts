@@ -25,6 +25,7 @@ import android.media.tv.TvInputInfo;
 import android.media.tv.TvInputManager;
 import android.os.Parcel;
 import android.test.AndroidTestCase;
+import android.text.TextUtils;
 
 /**
  * Test for {@link android.media.tv.TvInputInfo}.
@@ -32,6 +33,22 @@ import android.test.AndroidTestCase;
 public class TvInputInfoTest extends AndroidTestCase {
     private TvInputInfo mStubInfo;
     private PackageManager mPackageManager;
+
+    public static boolean compareTvInputInfos(Context context, TvInputInfo info1,
+            TvInputInfo info2) {
+        return TextUtils.equals(info1.getId(), info2.getId())
+                && TextUtils.equals(info1.getParentId(), info2.getParentId())
+                && TextUtils.equals(info1.getServiceInfo().packageName,
+                        info2.getServiceInfo().packageName)
+                && TextUtils.equals(info1.getServiceInfo().name, info2.getServiceInfo().name)
+                && TextUtils.equals(info1.createSetupIntent().toString(),
+                         info2.createSetupIntent().toString())
+                && info1.getType() == info2.getType()
+                && info1.getTunerCount() == info2.getTunerCount()
+                && info1.canRecord() == info2.canRecord()
+                && info1.isPassthroughInput() == info2.isPassthroughInput()
+                && TextUtils.equals(info1.loadLabel(context), info2.loadLabel(context));
+    }
 
     @Override
     public void setUp() throws Exception {
@@ -83,7 +100,8 @@ public class TvInputInfoTest extends AndroidTestCase {
         assertEquals(mStubInfo.createSetupIntent().getComponent(),
                 infoFromParcel.createSetupIntent().getComponent());
         assertEquals(mStubInfo.describeContents(), infoFromParcel.describeContents());
-        assertTrue(mStubInfo.equals(infoFromParcel));
+        assertTrue("expected=" + mStubInfo + " actual=" + infoFromParcel,
+                TvInputInfoTest.compareTvInputInfos(getContext(), mStubInfo, infoFromParcel));
         assertEquals(mStubInfo.getId(), infoFromParcel.getId());
         assertEquals(mStubInfo.getParentId(), infoFromParcel.getParentId());
         assertEquals(mStubInfo.getServiceInfo().name, infoFromParcel.getServiceInfo().name);
