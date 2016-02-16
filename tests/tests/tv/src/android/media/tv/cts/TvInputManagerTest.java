@@ -86,8 +86,11 @@ public class TvInputManagerTest extends ActivityInstrumentationTestCase2<TvViewS
         if (!Utils.hasTvInputFramework(getActivity())) {
             return;
         }
-        assertEquals(mManager.getTvInputInfo(mStubId), getInfoForClassName(
-                mManager.getTvInputList(), StubTvInputService2.class.getName()));
+        TvInputInfo expected = mManager.getTvInputInfo(mStubId);
+        TvInputInfo actual = getInfoForClassName(mManager.getTvInputList(),
+                StubTvInputService2.class.getName());
+        assertTrue("expected=" + expected + " actual=" + actual,
+                TvInputInfoTest.compareTvInputInfos(getActivity(), expected, actual));
     }
 
     public void testGetTvInputList() throws Exception {
@@ -211,12 +214,22 @@ public class TvInputManagerTest extends ActivityInstrumentationTestCase2<TvViewS
                 StubTunerTvInputService.class).build();
         TvInputInfo updatedInfo = new TvInputInfo.Builder(getActivity(),
                 StubTunerTvInputService.class).setTunerCount(10).setCanRecord(true).build();
+
         StubTunerTvInputService.setTvInputInfo(getActivity(), updatedInfo);
         new PollingCheck(TIME_OUT_MS) {
             @Override
             protected boolean check() {
                 TvInputInfo info = mCallabck.getLastChangedTvInputInfo();
                 return info !=  null && info.getTunerCount() == 10 && info.canRecord();
+            }
+        }.run();
+
+        StubTunerTvInputService.setTvInputInfo(getActivity(), defaultInfo);
+        new PollingCheck(TIME_OUT_MS) {
+            @Override
+            protected boolean check() {
+                TvInputInfo info = mCallabck.getLastChangedTvInputInfo();
+                return info !=  null && info.getTunerCount() == 1 && !info.canRecord();
             }
         }.run();
 

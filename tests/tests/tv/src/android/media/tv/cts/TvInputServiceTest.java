@@ -230,11 +230,11 @@ public class TvInputServiceTest extends ActivityInstrumentationTestCase2<TvViewS
             return;
         }
         verifyCommandTuneForRecording();
+        verifyCallbackTuned();
         verifyCommandStartRecording();
         verifyCommandStopRecording();
-        verifyCallbackTuned();
-        verifyCallbackError();
         verifyCallbackRecordingStopped();
+        verifyCallbackError();
         verifyCommandRelease();
     }
 
