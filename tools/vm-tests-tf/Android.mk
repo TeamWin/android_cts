@@ -66,7 +66,6 @@ LOCAL_JACK_ENABLED := $(strip $(LOCAL_JACK_ENABLED))
 intermediates := $(call intermediates-dir-for,JAVA_LIBRARIES,vm-tests-tf,HOST)
 vmteststf_jar := $(intermediates)/android.core.vm-tests-tf.jar
 vmteststf_dep_jars := $(addprefix $(HOST_OUT_JAVA_LIBRARIES)/, cts-tf-dalvik-buildutil.jar dasm.jar dx.jar cfassembler.jar junit.jar)
-vmteststf_dep_jars += $(addprefix $(HOST_OUT_JAVA_LIBRARIES)/, jack.jar)
 vmteststf_dep_jars += $(private_jill_jarjar_asm)
 
 $(vmteststf_jar): PRIVATE_JACK_EXTRA_ARGS := $(LOCAL_JACK_EXTRA_ARGS)
@@ -83,7 +82,7 @@ $(vmteststf_jar): PRIVATE_INTERMEDIATES_MAIN_FILES := $(intermediates)/main_file
 $(vmteststf_jar): PRIVATE_INTERMEDIATES_HOSTJUNIT_FILES := $(intermediates)/hostjunit_files
 $(vmteststf_jar): PRIVATE_CLASS_PATH := $(subst $(space),:,$(vmteststf_dep_jars)):$(HOST_JDK_TOOLS_JAR)
 ifndef LOCAL_JACK_ENABLED
-$(vmteststf_jar) : $(vmteststf_dep_jars) $(JACK_JAR) $(JILL_JAR) $(HOST_OUT_JAVA_LIBRARIES)/tradefed-prebuilt.jar
+$(vmteststf_jar) : $(vmteststf_dep_jars) $(JILL_JAR) $(HOST_OUT_JAVA_LIBRARIES)/tradefed-prebuilt.jar
 	$(hide) rm -rf $(dir $@) && mkdir -p $(dir $@)
 	$(hide) mkdir -p $(PRIVATE_INTERMEDIATES_HOSTJUNIT_FILES)/dot/junit $(dir $(PRIVATE_INTERMEDIATES_DEXCORE_JAR))
 	# generated and compile the host side junit tests
@@ -102,12 +101,12 @@ else # LOCAL_JACK_ENABLED
 oj_jack := $(call intermediates-dir-for,JAVA_LIBRARIES,core-oj,,COMMON)/classes.jack
 libart_jack := $(call intermediates-dir-for,JAVA_LIBRARIES,core-libart,,COMMON)/classes.jack
 $(vmteststf_jar): PRIVATE_DALVIK_SUITE_CLASSPATH := $(oj_jack):$(libart_jack):$(cts-tf-dalvik-lib.jack):$(HOST_OUT_JAVA_LIBRARIES)/tradefed-prebuilt.jar
-$(vmteststf_jar) : $(vmteststf_dep_jars) $(JACK_JAR) $(JILL_JAR) $(oj_jack) $(libart_jack) $(HOST_OUT_JAVA_LIBRARIES)/tradefed-prebuilt.jar
+$(vmteststf_jar) : $(vmteststf_dep_jars) $(JACK) $(JILL_JAR) $(oj_jack) $(libart_jack) $(HOST_OUT_JAVA_LIBRARIES)/tradefed-prebuilt.jar | setup-jack-server
 	$(hide) rm -rf $(dir $@) && mkdir -p $(dir $@)
 	$(hide) mkdir -p $(PRIVATE_INTERMEDIATES_HOSTJUNIT_FILES)/dot/junit $(dir $(PRIVATE_INTERMEDIATES_DEXCORE_JAR))
 	# generated and compile the host side junit tests
 	@echo "Write generated Main_*.java files to $(PRIVATE_INTERMEDIATES_MAIN_FILES)"
-	$(hide) java -cp $(PRIVATE_CLASS_PATH) util.build.JackBuildDalvikSuite $(PRIVATE_SRC_FOLDER) $(PRIVATE_INTERMEDIATES) \
+	$(hide) JACK_VERSION=$(JACK_DEFAULT_VERSION) java -cp $(PRIVATE_CLASS_PATH) util.build.JackBuildDalvikSuite $(JACK) $(PRIVATE_SRC_FOLDER) $(PRIVATE_INTERMEDIATES) \
 		$(PRIVATE_DALVIK_SUITE_CLASSPATH) \
 		$(PRIVATE_INTERMEDIATES_MAIN_FILES) $(PRIVATE_INTERMEDIATES_CLASSES) $(PRIVATE_INTERMEDIATES_HOSTJUNIT_FILES) $$RUN_VM_TESTS_RTO
 	@echo "Generate $(PRIVATE_INTERMEDIATES_DEXCORE_JAR)"
