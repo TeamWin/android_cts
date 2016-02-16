@@ -19,7 +19,6 @@
     package="com.android.cts.devicepolicy.accountmanagement">
 
     <uses-permission android:name="android.permission.AUTHENTICATE_ACCOUNTS" />
-    <uses-permission android:name="android.permission.GET_ACCOUNTS" />
     <uses-permission android:name="android.permission.MANAGE_ACCOUNTS" />
 
     <application>
