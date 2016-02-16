@@ -2508,6 +2508,81 @@ public class TextViewTest extends ActivityInstrumentationTestCase2<TextViewCtsAc
         // there is no method to check if '...yLongVeryLongWord' is painted in the screen.
     }
 
+    public void testEllipsizeEndAndNoEllipsizeHasSameBaselineForSingleLine() {
+        int textWidth = calculateTextWidth(LONG_TEXT);
+
+        TextView tvEllipsizeEnd = new TextView(getActivity());
+        tvEllipsizeEnd.setEllipsize(TruncateAt.END);
+        tvEllipsizeEnd.setMaxLines(1);
+        tvEllipsizeEnd.setWidth(textWidth >> 2);
+        tvEllipsizeEnd.setText(LONG_TEXT);
+
+        TextView tvEllipsizeNone = new TextView(getActivity());
+        tvEllipsizeNone.setWidth(textWidth >> 2);
+        tvEllipsizeNone.setText("a");
+
+        final FrameLayout layout = new FrameLayout(mActivity);
+        ViewGroup.LayoutParams layoutParams = new ViewGroup.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT);
+        layout.addView(tvEllipsizeEnd, layoutParams);
+        layout.addView(tvEllipsizeNone, layoutParams);
+        layout.setLayoutParams(layoutParams);
+
+        mActivity.runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                getActivity().setContentView(layout);
+            }
+        });
+        getInstrumentation().waitForIdleSync();
+
+        assertEquals("Ellipsized and non ellipsized single line texts should have the same " +
+                        "baseline",
+                tvEllipsizeEnd.getLayout().getLineBaseline(0),
+                tvEllipsizeNone.getLayout().getLineBaseline(0));
+    }
+
+    public void testEllipsizeEndAndNoEllipsizeHasSameBaselineForMultiLine() {
+        int textWidth = calculateTextWidth(LONG_TEXT);
+
+        TextView tvEllipsizeEnd = new TextView(getActivity());
+        tvEllipsizeEnd.setEllipsize(TruncateAt.END);
+        tvEllipsizeEnd.setMaxLines(2);
+        tvEllipsizeEnd.setWidth(textWidth >> 2);
+        tvEllipsizeEnd.setText(LONG_TEXT);
+
+        TextView tvEllipsizeNone = new TextView(getActivity());
+        tvEllipsizeNone.setMaxLines(2);
+        tvEllipsizeNone.setWidth(textWidth >> 2);
+        tvEllipsizeNone.setText(LONG_TEXT);
+
+        final FrameLayout layout = new FrameLayout(mActivity);
+        ViewGroup.LayoutParams layoutParams = new ViewGroup.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT);
+
+        layout.addView(tvEllipsizeEnd, layoutParams);
+        layout.addView(tvEllipsizeNone, layoutParams);
+        layout.setLayoutParams(layoutParams);
+
+        mActivity.runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                getActivity().setContentView(layout);
+            }
+        });
+        getInstrumentation().waitForIdleSync();
+
+        assertEquals(tvEllipsizeEnd.getLineCount(), tvEllipsizeNone.getLineCount());
+        for (int i = 0; i < tvEllipsizeEnd.getLineCount(); i++) {
+            assertEquals("Ellipsized and non ellipsized multi line texts should have the same " +
+                            "baseline for line " + i,
+                    tvEllipsizeEnd.getLayout().getLineBaseline(i),
+                    tvEllipsizeNone.getLayout().getLineBaseline(i));
+        }
+    }
+
     public void testSetCursorVisible() {
         mTextView = new TextView(mActivity);
 
