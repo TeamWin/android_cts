@@ -18,7 +18,7 @@
 
 #define LOG_TAG "CTS_OPENGL"
 #define LOG_NDEBUG 0
-#include "utils/Log.h"
+#include "android/log.h"
 
 Matrix::Matrix() {
     identity();
@@ -29,10 +29,10 @@ Matrix::Matrix(const Matrix& src) {
 }
 
 void Matrix::print(const char* label) {
-    ALOGI("%c", *label);
+    __android_log_print(ANDROID_LOG_INFO, LOG_TAG, "%c", *label);
     for (int i = 0; i < 4; i++) {
         const float* d = &(mData[i * 4]);
-        ALOGI("%f %f %f %f\n", d[0], d[1], d[2], d[3]);
+        __android_log_print(ANDROID_LOG_INFO, LOG_TAG, "%f %f %f %f\n", d[0], d[1], d[2], d[3]);
     }
 }
 
