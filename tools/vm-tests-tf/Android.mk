@@ -30,12 +30,6 @@ include $(BUILD_JAVA_LIBRARY)
 
 cts-tf-dalvik-lib.jack := $(full_classes_jack)
 
-private_jill_jarjar_asm := $(addprefix $(HOST_OUT_JAVA_LIBRARIES)/,jill-jarjar-asm.jar)
-$(private_jill_jarjar_asm) : PRIVATE_JARJAR_RULES := $(LOCAL_PATH)/jill-jarjar-rules.txt
-$(private_jill_jarjar_asm) : $(addprefix $(HOST_OUT_JAVA_LIBRARIES)/,jill.jar) | $(JARJAR)
-	@echo JarJar: $@
-	$(hide) java -jar $(JARJAR) process $(PRIVATE_JARJAR_RULES) $< $@
-
 # buildutil java library
 # ============================================================
 include $(CLEAR_VARS)
@@ -53,7 +47,7 @@ LOCAL_MODULE_TAGS := optional
 LOCAL_JAVA_LIBRARIES := dx dasm cfassembler junit
 LOCAL_JAVA_LIBRARIES += jack
 
-LOCAL_CLASSPATH := $(HOST_JDK_TOOLS_JAR) $(private_jill_jarjar_asm)
+LOCAL_CLASSPATH := $(HOST_JDK_TOOLS_JAR)
 
 include $(BUILD_HOST_JAVA_LIBRARY)
 
@@ -66,7 +60,6 @@ LOCAL_JACK_ENABLED := $(strip $(LOCAL_JACK_ENABLED))
 intermediates := $(call intermediates-dir-for,JAVA_LIBRARIES,vm-tests-tf,HOST)
 vmteststf_jar := $(intermediates)/android.core.vm-tests-tf.jar
 vmteststf_dep_jars := $(addprefix $(HOST_OUT_JAVA_LIBRARIES)/, cts-tf-dalvik-buildutil.jar dasm.jar dx.jar cfassembler.jar junit.jar)
-vmteststf_dep_jars += $(private_jill_jarjar_asm)
 
 $(vmteststf_jar): PRIVATE_JACK_EXTRA_ARGS := $(LOCAL_JACK_EXTRA_ARGS)
 
@@ -82,7 +75,7 @@ $(vmteststf_jar): PRIVATE_INTERMEDIATES_MAIN_FILES := $(intermediates)/main_file
 $(vmteststf_jar): PRIVATE_INTERMEDIATES_HOSTJUNIT_FILES := $(intermediates)/hostjunit_files
 $(vmteststf_jar): PRIVATE_CLASS_PATH := $(subst $(space),:,$(vmteststf_dep_jars)):$(HOST_JDK_TOOLS_JAR)
 ifndef LOCAL_JACK_ENABLED
-$(vmteststf_jar) : $(vmteststf_dep_jars) $(JILL_JAR) $(HOST_OUT_JAVA_LIBRARIES)/tradefed-prebuilt.jar
+$(vmteststf_jar) : $(vmteststf_dep_jars) $(HOST_OUT_JAVA_LIBRARIES)/tradefed-prebuilt.jar
 	$(hide) rm -rf $(dir $@) && mkdir -p $(dir $@)
 	$(hide) mkdir -p $(PRIVATE_INTERMEDIATES_HOSTJUNIT_FILES)/dot/junit $(dir $(PRIVATE_INTERMEDIATES_DEXCORE_JAR))
 	# generated and compile the host side junit tests
@@ -101,7 +94,7 @@ else # LOCAL_JACK_ENABLED
 oj_jack := $(call intermediates-dir-for,JAVA_LIBRARIES,core-oj,,COMMON)/classes.jack
 libart_jack := $(call intermediates-dir-for,JAVA_LIBRARIES,core-libart,,COMMON)/classes.jack
 $(vmteststf_jar): PRIVATE_DALVIK_SUITE_CLASSPATH := $(oj_jack):$(libart_jack):$(cts-tf-dalvik-lib.jack):$(HOST_OUT_JAVA_LIBRARIES)/tradefed-prebuilt.jar
-$(vmteststf_jar) : $(vmteststf_dep_jars) $(JACK) $(JILL_JAR) $(oj_jack) $(libart_jack) $(HOST_OUT_JAVA_LIBRARIES)/tradefed-prebuilt.jar | setup-jack-server
+$(vmteststf_jar) : $(vmteststf_dep_jars) $(JACK) $(oj_jack) $(libart_jack) $(HOST_OUT_JAVA_LIBRARIES)/tradefed-prebuilt.jar | setup-jack-server
 	$(hide) rm -rf $(dir $@) && mkdir -p $(dir $@)
 	$(hide) mkdir -p $(PRIVATE_INTERMEDIATES_HOSTJUNIT_FILES)/dot/junit $(dir $(PRIVATE_INTERMEDIATES_DEXCORE_JAR))
 	# generated and compile the host side junit tests
@@ -112,7 +105,7 @@ $(vmteststf_jar) : $(vmteststf_dep_jars) $(JACK) $(JILL_JAR) $(oj_jack) $(libart
 	@echo "Generate $(PRIVATE_INTERMEDIATES_DEXCORE_JAR)"
 	$(hide) jar -cf $(PRIVATE_INTERMEDIATES_DEXCORE_JAR)-class.jar \
 		$(addprefix -C $(PRIVATE_INTERMEDIATES_CLASSES) , dot/junit/DxUtil.class dot/junit/DxAbstractMain.class)
-	$(hide) $(JILL) --output $(PRIVATE_INTERMEDIATES_DEXCORE_JAR).jack $(PRIVATE_INTERMEDIATES_DEXCORE_JAR)-class.jar
+	$(hide) $(JACK) --import $(PRIVATE_INTERMEDIATES_DEXCORE_JAR)-class.jar --output-jack $(PRIVATE_INTERMEDIATES_DEXCORE_JAR).jack
 	$(hide) mkdir -p $(PRIVATE_INTERMEDIATES_DEXCORE_JAR).tmp
 	$(hide) $(call call-jack,$(PRIVATE_JACK_EXTRA_ARGS)) --output-dex $(PRIVATE_INTERMEDIATES_DEXCORE_JAR).tmp \
 		$(if $(NO_OPTIMIZE_DX), -D jack.dex.optimize "false") --import $(PRIVATE_INTERMEDIATES_DEXCORE_JAR).jack && rm -f $(PRIVATE_INTERMEDIATES_DEXCORE_JAR).jack
