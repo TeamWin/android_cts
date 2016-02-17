@@ -16,7 +16,7 @@
 
 #define LOG_TAG "CTS_OPENGL"
 #define LOG_NDEBUG 0
-#include <utils/Log.h>
+#include <android/log.h>
 
 #include <Trace.h>
 
@@ -26,7 +26,8 @@
 #define EGL_RESULT_CHECK(X) do { \
                                    EGLint error = eglGetError(); \
                                    if (!(X) || error != EGL_SUCCESS) { \
-                                       ALOGE("EGL error '%d' at %s:%d", error, __FILE__, __LINE__);\
+                                       __android_log_print(ANDROID_LOG_ERROR, LOG_TAG, \
+                                          "EGL error '%d' at %s:%d", error, __FILE__, __LINE__);\
                                        return false; \
                                     } \
                             } while (0)
@@ -160,13 +161,13 @@ bool Renderer::setUp(int /*workload*/) {
 
         GLuint err = glGetError();
         if (err != GL_NO_ERROR) {
-            ALOGE("GLError %d", err);
+            __android_log_print(ANDROID_LOG_ERROR, LOG_TAG, "GLError %d", err);
             return false;
         }
 
         GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
         if (status != GL_FRAMEBUFFER_COMPLETE) {
-            ALOGE("Framebuffer not complete: %d", status);
+           __android_log_print(ANDROID_LOG_ERROR, LOG_TAG, "Framebuffer not complete: %d", status);
             return false;
         }
         // Create fbo program.
@@ -190,7 +191,7 @@ bool Renderer::setUp(int /*workload*/) {
 
     GLuint err = glGetError();
     if (err != GL_NO_ERROR) {
-        ALOGE("GLError %d in setUp", err);
+        __android_log_print(ANDROID_LOG_ERROR, LOG_TAG, "GLError %d in setUp", err);
         return false;
     }
 
@@ -215,7 +216,7 @@ bool Renderer::tearDown() {
     }
     GLuint err = glGetError();
     if (err != GL_NO_ERROR) {
-        ALOGE("GLError %d in tearDown", err);
+        __android_log_print(ANDROID_LOG_ERROR, LOG_TAG, "GLError %d in tearDown", err);
         return false;
     }
 
@@ -284,7 +285,7 @@ bool Renderer::draw() {
 
     GLuint err = glGetError();
     if (err != GL_NO_ERROR) {
-        ALOGE("GLError %d in draw", err);
+        __android_log_print(ANDROID_LOG_ERROR, LOG_TAG, "GLError %d in draw", err);
         return false;
     }
 
