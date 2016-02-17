@@ -230,14 +230,13 @@ public class MyDocumentsProvider extends DocumentsProvider {
     }
 
     @Override
-    public boolean removeDocument(String documentId, String parentDocumentId)
+    public void removeDocument(String documentId, String parentDocumentId)
             throws FileNotFoundException {
         // There are no multi-parented documents in this provider, so it's safe to remove the
         // document from mDocs.
         final Doc doc = mDocs.get(documentId);
         mDocs.remove(doc);
         mDocs.get(parentDocumentId).children.remove(doc);
-        return true;
     }
 
     @Override
