@@ -259,9 +259,7 @@ public class ContactsTest extends AndroidTestCase {
         assertManagedLocalContact(contactInfo);
         contactInfo.assertPhotoUrisReadable();
         assertFalse(contactInfo.hasPhotoId());
-
-        // Quirk: the _id column from the SIP lookup is actually of the data id, not the contact id.
-        // assertTrue(isEnterpriseContactId(contactInfo.contactId));
+        assertTrue(isEnterpriseContactId(contactInfo.contactId));
     }
 
     public void testPrimaryProfileEnterpriseEmailLookup_canAccessEnterpriseContact()
@@ -1093,12 +1091,32 @@ public class ContactsTest extends AndroidTestCase {
         contactInfo.assertPhotoUri(R.raw.managed_photo);
     }
 
+    private void assertContactInfoEquals(ContactInfo lhs, ContactInfo rhs) {
+        if (lhs == null) {
+            assertNull(rhs);
+        } else {
+            assertNotNull(rhs);
+            assertEquals(lhs.contactId, rhs.contactId);
+            assertEquals(lhs.displayName, rhs.displayName);
+            assertEquals(lhs.photoId, rhs.photoId);
+            assertEquals(lhs.photoThumbnailUri, rhs.photoThumbnailUri);
+            assertEquals(lhs.photoUri, rhs.photoUri);
+        }
+    }
+
     private ContactInfo getContactInfoFromPhoneLookupUri(boolean isEnterprise, String phoneNumber) {
         Uri baseUri = (isEnterprise) ? PhoneLookup.ENTERPRISE_CONTENT_FILTER_URI
                 : PhoneLookup.CONTENT_FILTER_URI;
         Uri uri = baseUri.buildUpon().appendPath(phoneNumber).build();
-        return getContactInfoFromUri(uri, PhoneLookup._ID, PhoneLookup.DISPLAY_NAME,
+        ContactInfo contactInfo = getContactInfoFromUri(uri, PhoneLookup._ID,
+                PhoneLookup.DISPLAY_NAME,
                 PhoneLookup.PHOTO_URI, PhoneLookup.PHOTO_THUMBNAIL_URI, PhoneLookup.PHOTO_ID);
+
+        ContactInfo contactInfo2 = getContactInfoFromUri(uri, PhoneLookup.CONTACT_ID,
+                PhoneLookup.DISPLAY_NAME,
+                PhoneLookup.PHOTO_URI, PhoneLookup.PHOTO_THUMBNAIL_URI, PhoneLookup.PHOTO_ID);
+        assertContactInfoEquals(contactInfo, contactInfo2);
+        return contactInfo;
     }
 
     private ContactInfo getContactInfoFromEnterprisePhoneLookupUriWithSipAddress(
@@ -1107,7 +1125,7 @@ public class ContactsTest extends AndroidTestCase {
                 : PhoneLookup.CONTENT_FILTER_URI;
         Uri uri = baseUri.buildUpon().appendPath(sipAddress)
                 .appendQueryParameter(PhoneLookup.QUERY_PARAMETER_SIP_ADDRESS, "1").build();
-        return getContactInfoFromUri(uri, PhoneLookup._ID, PhoneLookup.DISPLAY_NAME,
+        return getContactInfoFromUri(uri, PhoneLookup.CONTACT_ID, PhoneLookup.DISPLAY_NAME,
                 PhoneLookup.PHOTO_URI, PhoneLookup.PHOTO_THUMBNAIL_URI, PhoneLookup.PHOTO_ID);
     }
 
