@@ -20,6 +20,7 @@ import android.net.http.AndroidHttpClient;
 
 import java.io.InputStream;
 import java.io.IOException;
+import java.net.HttpURLConnection;
 import java.net.Socket;
 import java.net.URL;
 import java.security.KeyStore;
@@ -28,7 +29,6 @@ import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.util.List;
 import java.util.ArrayList;
-import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLHandshakeException;
 import javax.net.ssl.TrustManager;
@@ -45,17 +45,26 @@ public final class TestUtils extends Assert {
     private TestUtils() {
     }
 
-
     public static void assertTlsConnectionSucceeds(String host, int port) throws Exception {
         assertSslSocketSucceeds(host, port);
-        assertHttpClientHttpsSucceeds(host, port);
-        assertUrlConnectionHttpsSucceeds(host, port);
+        assertHttpClientSucceeds(host, port, true /* https */);
+        assertUrlConnectionSucceeds(host, port, true /* https */);
     }
 
     public static void assertTlsConnectionFails(String host, int port) throws Exception {
         assertSslSocketFails(host, port);
-        assertHttpClientHttpsFails(host, port);
-        assertUrlConnectionHttpsFails(host, port);
+        assertHttpClientFails(host, port, true /* https */);
+        assertUrlConnectionFails(host, port, true /* https */);
+    }
+
+    public static void assertCleartextConnectionSucceeds(String host, int port) throws Exception {
+        assertHttpClientSucceeds(host, port, false /* http */);
+        assertUrlConnectionSucceeds(host, port, false /* http */);
+    }
+
+    public static void assertCleartextConnectionFails(String host, int port) throws Exception {
+        assertHttpClientFails(host, port, false /* http */);
+        assertUrlConnectionFails(host, port, false /* http */);
     }
 
     public static X509TrustManager getDefaultTrustManager() throws Exception {
@@ -95,26 +104,27 @@ public final class TestUtils extends Assert {
         s.getInputStream();
     }
 
-    private static void assertUrlConnectionHttpsFails(String host, int port)
+    private static void assertUrlConnectionFails(String host, int port, boolean https)
             throws Exception {
-        URL url = new URL("https://" + host + ":" + port);
-        HttpsURLConnection connection = (HttpsURLConnection) url.openConnection();
+        URL url = new URL((https ? "https://" : "http://") + host + ":" + port);
+        HttpURLConnection connection = (HttpURLConnection) url.openConnection();
         try {
             connection.getInputStream();
             fail("Connection to " + host + ":" + port + " succeeded");
-        } catch (SSLHandshakeException expected) {
+        } catch (IOException expected) {
         }
     }
 
-    private static void assertUrlConnectionHttpsSucceeds(String host, int port)
+    private static void assertUrlConnectionSucceeds(String host, int port, boolean https)
             throws Exception {
-        URL url = new URL("https://" + host + ":" + port);
-        HttpsURLConnection connection = (HttpsURLConnection) url.openConnection();
+        URL url = new URL((https ? "https://" : "http://") + host + ":" + port);
+        HttpURLConnection connection = (HttpURLConnection) url.openConnection();
         connection.getInputStream();
     }
 
-    private static void assertHttpClientHttpsSucceeds(String host, int port) throws Exception {
-        URL url = new URL("https://" + host + ":" + port);
+    private static void assertHttpClientSucceeds(String host, int port, boolean https)
+            throws Exception {
+        URL url = new URL((https ? "https://" : "http://") + host + ":" + port);
         AndroidHttpClient httpClient = AndroidHttpClient.newInstance(null);
         try {
             HttpResponse response = httpClient.execute(new HttpGet(url.toString()));
@@ -123,8 +133,9 @@ public final class TestUtils extends Assert {
         }
     }
 
-    private static void assertHttpClientHttpsFails(String host, int port) throws Exception {
-        URL url = new URL("https://" + host + ":" + port);
+    private static void assertHttpClientFails(String host, int port, boolean https)
+            throws Exception {
+        URL url = new URL((https ? "https://" : "http://") + host + ":" + port);
         AndroidHttpClient httpClient = AndroidHttpClient.newInstance(null);
         try {
             HttpResponse response = httpClient.execute(new HttpGet(url.toString()));
