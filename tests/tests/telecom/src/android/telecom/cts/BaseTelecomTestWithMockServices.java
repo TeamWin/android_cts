@@ -246,7 +246,8 @@ public class BaseTelecomTestWithMockServices extends InstrumentationTestCase {
         mTelecomManager.addNewIncomingCall(TEST_PHONE_ACCOUNT_HANDLE, extras);
 
         try {
-            if (!mInCallCallbacks.lock.tryAcquire(3, TimeUnit.SECONDS)) {
+            if (!mInCallCallbacks.lock.tryAcquire(TestUtils.WAIT_FOR_CALL_ADDED_TIMEOUT_S,
+                        TimeUnit.SECONDS)) {
                 fail("No call added to InCallService.");
             }
         } catch (InterruptedException e) {
@@ -297,7 +298,8 @@ public class BaseTelecomTestWithMockServices extends InstrumentationTestCase {
         placeNewCallWithPhoneAccount(extras, videoState);
 
         try {
-            if (!mInCallCallbacks.lock.tryAcquire(3, TimeUnit.SECONDS)) {
+            if (!mInCallCallbacks.lock.tryAcquire(TestUtils.WAIT_FOR_CALL_ADDED_TIMEOUT_S,
+                        TimeUnit.SECONDS)) {
                 fail("No call added to InCallService.");
             }
         } catch (InterruptedException e) {
@@ -587,6 +589,25 @@ public class BaseTelecomTestWithMockServices extends InstrumentationTestCase {
                 },
                 WAIT_FOR_STATE_CHANGE_TIMEOUT_MS,
                 "Phone's audio route should be: " + route
+        );
+    }
+
+    void assertNotAudioRoute(final InCallService incallService, final int route) {
+        waitUntilConditionIsTrueOrTimeout(
+                new Condition() {
+                    @Override
+                    public Object expected() {
+                        return new Boolean(true);
+                    }
+
+                    @Override
+                    public Object actual() {
+                        final CallAudioState state = incallService.getCallAudioState();
+                        return route != state.getRoute();
+                    }
+                },
+                WAIT_FOR_STATE_CHANGE_TIMEOUT_MS,
+                "Phone's audio route should not be: " + route
         );
     }
 

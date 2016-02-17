@@ -31,6 +31,7 @@ import android.hardware.cts.helpers.TestSensorEventListener;
 import android.hardware.cts.helpers.TestSensorManager;
 import android.hardware.cts.helpers.SuspendStateMonitor;
 import android.hardware.cts.helpers.reporting.ISensorTestNode;
+import android.hardware.cts.helpers.sensorverification.EventBasicVerification;
 import android.hardware.cts.helpers.sensorverification.EventGapVerification;
 import android.hardware.cts.helpers.sensorverification.EventOrderingVerification;
 import android.hardware.cts.helpers.sensorverification.EventTimestampSynchronizationVerification;
@@ -145,9 +146,9 @@ public class TestSensorOperation extends SensorOperation {
         for (ISensorVerification verification : mVerifications) {
             failed |= evaluateResults(collectedEvents, verification, sb);
         }
+
         if (failed) {
             trySaveCollectedEvents(parent, listener);
-
             String msg = SensorCtsHelper
                     .formatAssertionMessage("VerifySensorOperation", mEnvironment, sb.toString());
             getStats().addValue(SensorStats.ERROR, msg);
@@ -362,15 +363,41 @@ public class TestSensorOperation extends SensorOperation {
             TestSensorEnvironment environment,
             final long duration,
             final TimeUnit timeUnit) {
+
+        return createFlushOperation(environment, new int[] {(int)timeUnit.toMillis(duration)}, 0);
+    }
+
+    /**
+     * Creates an operation that make a series of flush (by calling
+     * {@link TestSensorManager#requestFlush()}) with predefined interval after registerListener.
+     *
+     * @param environment The test environment.
+     * @param flushIntervalMs intervals between calls to {@link TestSensorManager#requestFlush()}.
+     * @param clearEventIndex the index of interval which
+     *        {@link TestSensorEventListerner#clearEvent} is called (-1 for never).
+     */
+    public static TestSensorOperation createFlushOperation(
+            TestSensorEnvironment environment,
+            final int [] flushIntervalMs,
+            final int    clearEventIndex) {
+
+        Assert.assertTrue(clearEventIndex >= -1 && flushIntervalMs.length > clearEventIndex);
+
         Executor executor = new Executor() {
             @Override
             public void execute(TestSensorManager sensorManager, TestSensorEventListener listener)
                     throws InterruptedException {
                 try {
                     sensorManager.registerListener(listener);
-                    SensorCtsHelper.sleep(duration, timeUnit);
-                    CountDownLatch latch = sensorManager.requestFlush();
-                    listener.waitForFlushComplete(latch, true);
+
+                    int i = 0;
+                    for (int interval: flushIntervalMs) {
+                        SensorCtsHelper.sleep(interval, TimeUnit.MILLISECONDS);
+                        listener.waitForFlushComplete(
+                                sensorManager.requestFlush(),
+                                i <= clearEventIndex);
+                        ++i;
+                    }
                 } finally {
                     sensorManager.unregisterListener();
                 }

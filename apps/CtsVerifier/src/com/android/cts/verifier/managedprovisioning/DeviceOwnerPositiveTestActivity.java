@@ -126,13 +126,6 @@ public class DeviceOwnerPositiveTestActivity extends PassFailButtons.TestListAct
         super.finish();
     }
 
-    /**
-     * Enable Pass Button when all tests passed.
-     */
-    private void updatePassButton() {
-        getPassButton().setEnabled(mAdapter.allTestsPassed());
-    }
-
     private void addTestsToAdapter(final ArrayTestListAdapter adapter) {
         adapter.add(createTestItem(this, CHECK_DEVICE_OWNER_TEST_ID,
                 R.string.device_owner_check_device_owner_test,
@@ -180,7 +173,10 @@ public class DeviceOwnerPositiveTestActivity extends PassFailButtons.TestListAct
                                         UserManager.DISALLOW_CONFIG_VPN)),
                         new ButtonInfo(
                                 R.string.device_owner_settings_go,
-                                new Intent(ACTION_VPN_SETTINGS))}));
+                                new Intent(ACTION_VPN_SETTINGS)),
+                        new ButtonInfo(
+                                R.string.device_owner_vpn_test,
+                                new Intent(this, VpnTestActivity.class))}));
 
         // DISALLOW_CONFIG_BLUETOOTH
         if (packageManager.hasSystemFeature(PackageManager.FEATURE_BLUETOOTH)) {

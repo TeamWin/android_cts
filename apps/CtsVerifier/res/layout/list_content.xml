@@ -22,7 +22,7 @@
 
     <ListView
         android:id="@android:id/list"
-        app:layout_box="all"
+        app:ctsv_layout_box="all"
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
 </android.support.wearable.view.BoxInsetLayout>

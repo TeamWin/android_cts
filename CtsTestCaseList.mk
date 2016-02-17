@@ -19,6 +19,9 @@ cts_security_apps_list := \
     CtsDocumentClient \
     CtsExternalStorageApp \
     CtsInstrumentationAppDiffCert \
+    CtsNetSecPolicyUsesCleartextTrafficFalse \
+    CtsNetSecPolicyUsesCleartextTrafficTrue \
+    CtsNetSecPolicyUsesCleartextTrafficUnspecified \
     CtsUsePermissionApp \
     CtsUsePermissionAppCompat \
     CtsPermissionDeclareApp \
@@ -150,6 +153,7 @@ cts_test_packages := \
     CtsBluetoothTestCases \
     CtsCalendarcommon2TestCases \
     CtsCallLogTestCases \
+    CtsCameraTestCases \
     CtsContentTestCases \
     CtsDatabaseTestCases \
     CtsDisplayTestCases \
@@ -175,6 +179,9 @@ cts_test_packages := \
     CtsMidiTestCases \
     CtsNativeOpenGLTestCases \
     CtsNdefTestCases \
+    CtsNetSecPolicyUsesCleartextTrafficFalseTestCases \
+    CtsNetSecPolicyUsesCleartextTrafficTrueTestCases \
+    CtsNetSecPolicyUsesCleartextTrafficUnspecifiedTestCases \
     CtsNetTestCases \
     CtsNetTestCasesLegacyApi22 \
     CtsNetTestCasesLegacyPermission22 \

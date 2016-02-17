@@ -124,6 +124,8 @@
         settings that may specify a timeout.\n\nClick the \"Force Lock\" button to lock the screen.
         Your screen should be locked and require the password to be entered.
     </string>
+    <string name="da_kg_disabled_features_test">Keyguard Disabled Features Test</string>
+    <string name="rn_kg_disabled_features_test">Redacted Notifications Keyguard Disabled Features Test</string>
     <string name="da_force_lock">Force Lock</string>
     <string name="da_lock_success">It appears the screen was locked successfully!</string>
     <string name="da_lock_error">It does not look like the screen was locked...</string>
@@ -372,6 +374,21 @@
         Make sure the device has line of sight to GPS satellites
         (for example, outside, or near a window)
         and then press OK to run the automated tests.</string>
+
+    <!-- Strings for net.ConnectivityScreenOffTestActivity -->
+    <string name="network_screen_off_test">Network Connectivity Screen Off Test</string>
+    <string name="network_screen_off_test_instructions">
+        This test verifies that IPv6 network connectivity continues to work
+        when the screen is off.\n\n
+
+        1. Join a Wi-Fi network with IPv6 Internet access.\n
+        2. If the device has battery power, disconnect all power connectors.\n
+        3. Turn the screen off.\n
+        4. Wait until the screen turns on (it will take at least two minutes).\n
+        5. If necessary, unlock the device.\n
+        6. Please mark the test according to the result status indicated.\n
+    </string>
+    <string name="network_screen_off_test_start">Start</string>
 
     <!-- Strings for NfcTestActivity -->
     <string name="nfc_test">NFC Test</string>
@@ -1294,6 +1311,7 @@ You should be prompted to select credentials; choose the ones you just installed
     <string name="provisioning_byod_auth_bound_key_set_up">Set up</string>
     <string name="provisioning_byod_lockscreen_bound_key">Lockscreen-bound key test</string>
     <string name="provisioning_byod_fingerprint_bound_key">Fingerprint-bound key test</string>
+    <string name="provisioning_byod_vpn">Vpn test</string>
     <!-- Strings for DeskClock -->
     <string name="deskclock_tests">Alarms and Timers Tests</string>
     <string name="deskclock_tests_info">
@@ -1339,8 +1357,8 @@ You should be prompted to select credentials; choose the ones you just installed
         1. Press the "Create Alarm" button.\n
         2. Verify that you see one alarm with the following information:\n
            Name of alarm: Create Alarm Test. \n
-           Vibrate: on.\n
-           Ringtone: silent.\n
+           Vibrate: on. (if the device supports vibrate).\n
+           Ringtone: silent. (if the device has a speaker).\n
            Time:  01:23. \n
            Repeating on: Monday and Wednesday. \n
     </string>
@@ -1422,8 +1440,29 @@ You should be prompted to select credentials; choose the ones you just installed
     <string name="snsr_rotation_vector_set_final">Place the device back to the reference position.</string>
     <string name="snsr_rotation_vector_verification">Angular deviation [%1$4.1f %2$4.1f %3$4.1f]. Current: %4$f deg. Max tolerated: %5$f.</string>
 
+    <!-- Strings for device admin tests -->
+    <string name="device_admin_notification">This is device admin notification</string>
+    <string name="device_admin_keyguard_disable_camera">Disable camera</string>
+    <string name="device_admin_keyguard_disable_camera_instruction">
+        Please press the Go button to lock the screen. Then try to open the camera
+        from the lower right corner of the screen. Expected result is you cannot
+        open the camera from lock screen and it will ask for password instead.
+    </string>
+    <string name="device_admin_disable_notifications">Disable notifications</string>
+    <string name="device_admin_disable_notifications_instruction">
+        Please press the Go button to lock the screen. Wait a few seconds to see
+        if a notification appears. Expected result is no notifications appear.
+        You should be able to see one after unlocking.
+    </string>
+    <string name="device_admin_disable_unredacted_notifications">Disable unredacted notifications</string>
+    <string name="device_admin_disable_unredacted_notifications_instruction">
+        Please press the Go button to lock the screen. Wait a few seconds to see
+        if a notification appears. Expected result is a notification appear with
+        its content hidden. You should be able to see the content after unlocking.
+    </string>
+
     <!-- Strings common for BYOD and DO managed provisioning tests. -->
-    <string name="afw_device_admin">CTS Verifier - AfW Admin</string>
+    <string name="afw_device_admin">CTS Verifier</string>
 
     <!-- Strings for BYOD managed provisioning tests (ByodFlowTestActivity) -->
     <string name="test_category_managed_provisioning">Managed Provisioning</string>
@@ -1491,7 +1530,7 @@ You should be prompted to select credentials; choose the ones you just installed
     </string>
     <string name="provisioning_byod_keyguard_disabled_features_instruction">
         Please go to Settings &gt; Security &gt; Device administrators and set
-        \"CTS Verifier - AfW Admin\" as active admin.\n
+        \"CTS Verifier\" as active admin.\n
         After that please press the \"Prepare test\" button to disable trust agents.\n
         Then please press through the following verification steps.\n
         Note: Device password will be set to \"testpassword\". After leaving the screen device
@@ -1508,8 +1547,9 @@ You should be prompted to select credentials; choose the ones you just installed
     <string name="provisioning_byod_fingerprint_disabled_in_settings">Fingerprint is disabled in Settings</string>
     <string name="provisioning_byod_fingerprint_disabled_in_settings_instruction">
         Please press the Go button to go to Settings > Security. Then go to Fingerprint and\n
-        check if the screen is shown as disabled by the administrator.
-        Then please press Back and mark the test as \"Pass\" or \"Fail\".
+        check if the disclaimer at the bottom of screen is altered to warn the users for\n
+        fingerprint being disabled in lock screen. Then please press Back and mark the \n
+        test as \"Pass\" or \"Fail\".
     </string>
     <string name="provisioning_byod_disable_fingerprint">Fingerprint disabled on keyguard</string>
     <string name="provisioning_byod_disable_fingerprint_instruction">
@@ -1517,12 +1557,12 @@ You should be prompted to select credentials; choose the ones you just installed
         Expected result is you cannot log in using your fingerprint.\n
         After you log back in, please navigate back to CtsVerifier and mark the test as \"Pass\" or \"Fail\".
     </string>
-    <string name="provisioning_byod_disable_notifications">Notifications disabled on keyguard</string>
-    <string name="provisioning_byod_disable_notifications_instruction">
+    <string name="provisioning_byod_disable_unredacted_notifications">Unredacted notifications disabled on keyguard</string>
+    <string name="provisioning_byod_disable_unredacted_notifications_instruction">
         Please press the Go button to lock the screen. Wait a couple of seconds and look out for a
         notification from CtsVerifier.\n
         Expected result is the notification is shown as \"Contents hidden\", you can not see the contents
-        (Which would read \"This is a work notification\").\n
+        (Which would read \"This is a notification\"). You should be seeing a work badge.\n
         After you log back in, please navigate back to CtsVerifier and mark the test as \"Pass\" or \"Fail\".
     </string>
     <string name="provisioning_byod_work_notification">Work notification is badged</string>
@@ -1531,7 +1571,7 @@ You should be prompted to select credentials; choose the ones you just installed
         \n
         Verify that the notification is badged (see sample badge below). Then mark this test accordingly.
     </string>
-    <string name="provisioning_byod_work_notification_title">This is a work notification</string>
+    <string name="provisioning_byod_notification_title">This is a notification</string>
     <string name="provisioning_byod_work_status_icon">Work status icon is displayed</string>
     <string name="provisioning_byod_work_status_icon_instruction">
         Verify that the current status bar does not have a work status icon (see sample icon below).
@@ -1576,7 +1616,7 @@ You should be prompted to select credentials; choose the ones you just installed
         Navigate to Device administrators and confirm that:\n
         \n
         - Both Personal and Work categories exist.\n
-        - \"CTS Verifier - AfW Admin\" exists under the Work category, and is activated.\n
+        - \"CTS Verifier\" exists under the Work category, and is activated.\n
         \n
         Use the Back button to return to this page.
     </string>
@@ -1683,6 +1723,27 @@ You should be prompted to select credentials; choose the ones you just installed
     <string name="provisioning_byod_disabled">Device provisioning is not enabled.</string>
     <string name="provisioning_button_finish">Finish</string>
     <string name="provisioning_cross_profile_chooser">Choose an app to complete action</string>
+
+    <string name="provisioning_byod_no_gps_location_feature">No GPS feature present. Skip test.</string>
+    <string name="provisioning_byod_location_mode_enable">Enable location</string>
+    <string name="provisioning_byod_location_mode_enable_toast_location_change">Location changed</string>
+    <string name="provisioning_byod_location_mode_enable_instruction">
+        This test verifies that the location updates can be enabled for the managed profile apps.\n
+        1. Press the go button to go to the location settings page, set the location switch enabled.\n
+        2. Move your position a little bit, verify that location updates toast comes up.\n
+        Please wait until the location updates or timeout toast message shows up before going back to the cts-verifier tests.\n
+        3. Go back to the cts-verifier tests using the back button, then mark the test accordingly.\n
+    </string>
+
+    <string name="provisioning_byod_location_mode_disable">Disable location</string>
+    <string name="provisioning_byod_location_mode_time_out_toast">Timeout waiting for gps location change</string>
+    <string name="provisioning_byod_location_mode_disable_instruction">
+        This test verifies that the location updates can be disabled for the managed profile apps.\n
+        1. Press the go button to go to the location settings page, set the location switch disabled.\n
+        2. Move your position a little bit, verify that no location updates toast come up and that the timeout message show up after around 15 seconds. 
+        Please wait until the timeout or location updates toast message shows up before going back to the cts-verifier tests.\n
+        3. Go back to the cts-verifier tests using the back button, then mark the test accordingly.\n
+    </string>
 
     <!-- Strings for DeviceOwnerProvisioningTest -->
     <string name="provisioning_device_owner">Device Owner Provisioning</string>
@@ -1822,8 +1883,8 @@ You should be prompted to select credentials; choose the ones you just installed
         Please press the Go button to open the Security page in Settings.
         Navigate to Device administrators and confirm that:\n
         \n
-        - \"CTS Verifier - AfW Admin\" exists and is activated.\n
-        - \"CTS Verifier - AfW Admin\" cannot be disabled.\n
+        - \"CTS Verifier\" exists and is activated.\n
+        - \"CTS Verifier\" cannot be disabled.\n
         \n
         Use the Back button to return to this page.
     </string>
@@ -1852,14 +1913,38 @@ You should be prompted to select credentials; choose the ones you just installed
     <string name="device_owner_user_restriction_set">Set restriction</string>
     <string name="device_owner_settings_go">Go</string>
 
+    <string name="device_owner_vpn_connection">
+        Vpn connection has been established.\n
+        This is not as expected.\n
+        Mark this test as failed.\n
+    </string>
+    <string name="device_owner_vpn_connection_close_failed">
+        Established vpn connection cannot be closed.\n
+        This is not as expected.\n
+        Mark this test as failed.\n
+    </string>
+    <string name="device_owner_no_vpn_connection">
+        Cannot establish a VPN connection.\n
+        This was expected.\n
+        Mark this test as passed.\n
+    </string>
+    <string name="device_owner_vpn_connection_canceled">
+        Cannot establish a VPN connection.\n
+        Connection canceled by user.\n
+    </string>
+    <string name="device_owner_vpn_test">Check VPN</string>
+    <string name="device_owner_vpn_info_default">Vpn test message</string>
+
     <string name="device_owner_disallow_config_vpn">Disallow configuring VPN</string>
     <string name="device_owner_disallow_config_vpn_info">
         Please press the Set VPN restriction button to set the VPN restriction.
-        Then press Go to open the VPN page.\n\n
+        Perform tests in order. Mark test as passed if both test cases pass\n\n
+        1. Press Go to open the Vpn settings page.\n
         Confirm that:\n
         - You cannot add a new VPN network.\n
-        - You cannot edit, add or remove any existing VPNs.\n
-        \n
+        - You cannot edit, add or remove any existing VPNs.\n\n
+        2. Press Check VPN to check programmatic Vpn test.\n
+        - Check Vpn setup\n\n
         Use the Back button to return to this page.
     </string>
     <string name="device_owner_user_vpn_restriction_set">Set VPN restriction</string>
@@ -1871,15 +1956,20 @@ You should be prompted to select credentials; choose the ones you just installed
     <string name="js_start_test_text">Start test</string>
     <string name="js_idle_instructions">Verify the behaviour of the JobScheduler API for when the device is in idle mode. Simply follow the on-screen instructions.</string>
     <string name="js_idle_description_1">Turn the screen off and then back on in order to begin.</string>
+    <string name="js_idle_continue_instruction">
+        Switch off screen and wait for it to turn on to continue.
+    </string>
     <string name="js_idle_item_idle_off">Idle job does not execute when device is not idle.</string>
     <string name="js_idle_item_idle_on">Idle job does execute when device is forced into idle.</string>
 
     <string name="js_charging_test">Charging Constraints</string>
     <string name="js_charging_instructions">Verify the behaviour of the JobScheduler API for when the device is on power and unplugged from power. Simply follow the on-screen instructions.</string>
-    <string name="js_charging_description_1">Unplug the device in order to begin.</string>
+    <string name="js_charging_description_1">Plug in the charger if it isn\'t already plugged in.</string>
     <string name="js_charging_off_test">Device not charging will not execute a job with a charging constraint.</string>
     <string name="js_charging_on_test">Device when charging will execute a job with a charging constraint.</string>
-    <string name="js_charging_description_2">After the above test has passed, plug the device back in to continue. If the above failed, you can simply fail this test.</string>
+    <string name="js_charging_description_2">After the above test has passed, remove the charger to continue. If the above failed, you can simply fail this test.</string>
+    <string name="js_charging_description_3">Device is plugged in. Please wait while it get\s into stable charging state.</string>
+    <string name="js_charging_description_4">There seems to be a problem with your charger. Pleasy try again.</string>
 
     <string name="js_connectivity_test">Connectivity Constraints</string>
     <string name="js_connectivity_instructions">Verify the behaviour of the JobScheduler API for when the device has no access to data connectivity. Simply follow the on-screen instructions.</string>
@@ -1986,7 +2076,7 @@ You should be prompted to select credentials; choose the ones you just installed
     Pause the playback and then resume it.
     </string>
     <string name="tv_time_shift_test_verify_resume_after_pause">
-    The playback should be resumed after pause.
+    The playback should resume after pause.
     </string>
     <string name="tv_time_shift_test_verify_position_tracking">
     The playback position tracking should be activated.
@@ -1996,10 +2086,10 @@ You should be prompted to select credentials; choose the ones you just installed
     Rewind the playback and in a few seconds fast-forward it.
     </string>
     <string name="tv_time_shift_test_verify_rewind">
-    The playback should be rewinded.
+    The playback should rewind.
     </string>
     <string name="tv_time_shift_test_verify_fast_forward">
-    The playback should be fast-forwarded.
+    The playback should fast-forward.
     </string>
     <string name="tv_time_shift_test_seek">
     Press the \"Launch TV app\" button. Verify that the playback control is available.
@@ -2014,8 +2104,8 @@ You should be prompted to select credentials; choose the ones you just installed
 
     <string name="tv_app_link_test">TV app app-link test</string>
     <string name="tv_app_link_test_info">
-    Verify that the bundled TV app supports linking to channel apps. If TV input service provides
-    links for its specific channels, TV app should show the links in a proper format.
+    Verify that the bundled TV app supports linking to channel apps. If a TV input service provides
+    links for its specific channels, the TV app should show the links in a proper format.
     </string>
     <string name="tv_app_link_test_select_app_link">
     Select the \"Launch TV app\" button, then check if you can see a menu with \"Cts App-Link Text\"
@@ -2026,7 +2116,7 @@ You should be prompted to select credentials; choose the ones you just installed
     </string>
     <string name="tv_input_link_test_verify_link_interface">
     Do you see the app-link card similar to the image on the left?\n
-    1) You should see the poster art image, but the color could be differ.\n
+    1) You should see the poster art image, but the color may be different.\n
     2) You should see the text \"Cts App-Link Text\".\n
     </string>
 
@@ -2092,6 +2182,10 @@ You should be prompted to select credentials; choose the ones you just installed
     <string name="audio_general_headset_port_exists">Does this device have a headset port?</string>
     <string name="audio_general_headset_no">No</string>
     <string name="audio_general_headset_yes">Yes</string>
+    <string name="audio_general_deficiency_found">WARNING: Some results show potential deficiencies on the system.
+    Please consider addressing them for a future release.</string>
+    <string name="audio_general_test_passed">Test Successful</string>
+    <string name="audio_general_test_failed">Test Failed</string>
 
     <!-- Audio Loopback Latency Test -->
     <string name="audio_loopback_test">Audio Loopback Latency Test</string>

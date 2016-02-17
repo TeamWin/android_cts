@@ -41,9 +41,7 @@ LOCAL_STATIC_JAVA_LIBRARIES := android-ex-camera2 \
 
 LOCAL_PACKAGE_NAME := CtsVerifier
 
-LOCAL_AAPT_FLAGS += --version-name "6.0_r1.5 $(BUILD_NUMBER_FROM_FILE)"
-
-LOCAL_JNI_SHARED_LIBRARIES := libctsverifier_jni libaudioloopback_jni
+LOCAL_JNI_SHARED_LIBRARIES := libctsverifier_jni
 
 LOCAL_PROGUARD_FLAG_FILES := proguard.flags
 
@@ -53,6 +51,32 @@ LOCAL_DEX_PREOPT := false
 
 include $(BUILD_PACKAGE)
 
+# Build CTS verifier framework as a libary.
+
+include $(CLEAR_VARS)
+
+define java-files-in
+$(sort $(patsubst ./%,%, \
+  $(shell cd $(LOCAL_PATH) ; \
+          find -L $(1) -maxdepth 1 -name *.java -and -not -name ".*") \
+ ))
+endef
+
+LOCAL_MODULE := cts-verifier-framework
+LOCAL_AAPT_FLAGS := --auto-add-overlay --extra-packages android.support.v4
+LOCAL_SDK_VERSION := current
+LOCAL_RESOURCE_DIR := $(LOCAL_PATH)/res
+LOCAL_SRC_FILES := \
+    $(call java-files-in, src/com/android/cts/verifier) \
+    $(call java-files-in, src/com/android/cts/verifier/backup) \
+    $(call all-java-files-under, src/android) \
+    $(call all-Iaidl-files-under, src)
+
+LOCAL_STATIC_JAVA_LIBRARIES := android-support-v4 \
+                               compatibility-common-util-devicesidelib_v2 \
+                               compatibility-device-util_v2 \
+
+include $(BUILD_STATIC_JAVA_LIBRARY)
 
 # opencv library
 include $(CLEAR_VARS)

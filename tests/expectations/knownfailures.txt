@@ -338,18 +338,31 @@
    bug: 23827982
 },
 {
-  description: "tests not yet ready",
-  names: [
-    "android.telecom.cts.OutgoingCallTest#testStartCallWithSpeakerphoneFalse_SpeakerphoneOffInCall",
-    "android.telecom.cts.OutgoingCallTest#testStartCallWithSpeakerphoneNotProvided_SpeakerphoneOffByDefault"
-  ],
-  bug: 24067587
-},
-{
   description: "protected broadcast not working",
   names: [
    "android.permission2.cts.ProtectedBroadcastsTest#testSendProtectedBroadcasts"
   ],
   bug: 23192492
+},
+{
+  description: "restricted network is not working",
+  names: [
+    "android.net.cts.ConnectivityManagerTest#testRestrictedNetworks"
+  ],
+  bug: 25651805
+},
+{
+  description: "Read from invalid parcel not working",
+  names: [
+    "android.view.cts.MotionEventTest#testReadFromParcelWithInvalidSampleSize"
+  ],
+  bug: 25652250
+},
+{
+  description: "Wired headset tests are no longer a requirement per CDD",
+  names: [
+    "android.telecom.cts.WiredHeadsetTest"
+  ],
+  bug: 26149528
 }
 ]

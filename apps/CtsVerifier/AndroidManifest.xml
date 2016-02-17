@@ -17,7 +17,8 @@
 
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
       package="com.android.cts.verifier"
-      android:versionCode="5">
+      android:versionCode="5"
+      android:versionName="6.0_r2">
 
     <uses-sdk android:minSdkVersion="19" android:targetSdkVersion="23"/>
 
@@ -109,6 +110,26 @@
         <!-- A generic activity for intent based tests -->
         <activity android:name=".IntentDrivenTestActivity"/>
 
+        <activity android:name=".admin.DeviceAdminKeyguardDisabledFeaturesActivity"
+                android:label="@string/da_kg_disabled_features_test"
+                android:configChanges="keyboardHidden|orientation|screenSize">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.cts.intent.category.MANUAL_TEST" />
+            </intent-filter>
+            <meta-data android:name="test_category" android:value="@string/test_category_device_admin" />
+        </activity>
+
+        <activity android:name=".admin.RedactedNotificationKeyguardDisabledFeaturesActivity"
+                android:label="@string/rn_kg_disabled_features_test"
+                android:configChanges="keyboardHidden|orientation|screenSize">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.cts.intent.category.MANUAL_TEST" />
+            </intent-filter>
+            <meta-data android:name="test_category" android:value="@string/test_category_device_admin" />
+        </activity>
+
         <activity android:name=".admin.ScreenLockTestActivity"
                 android:label="@string/da_screen_lock_test"
                 android:configChanges="keyboardHidden|orientation|screenSize">
@@ -120,15 +141,6 @@
             <meta-data android:name="test_excluded_features"
                        android:value="android.hardware.type.television:android.software.leanback:android.hardware.type.watch" />
         </activity>
-
-        <receiver android:name=".admin.TestDeviceAdminReceiver"
-                android:permission="android.permission.BIND_DEVICE_ADMIN">
-            <meta-data android:name="android.app.device_admin"
-                    android:resource="@xml/device_admin" />
-            <intent-filter>
-                <action android:name="android.app.action.DEVICE_ADMIN_ENABLED" />
-            </intent-filter>
-        </receiver>
 
         <activity android:name=".backup.BackupTestActivity" android:label="@string/backup_test">
             <intent-filter>
@@ -422,6 +434,17 @@
             </intent-filter>
             <meta-data android:name="test_category" android:value="@string/test_category_hardware" />
             <meta-data android:name="test_required_features" android:value="android.hardware.location.gps" />
+        </activity>
+
+        <activity android:name=".net.ConnectivityScreenOffTestActivity"
+                android:label="@string/network_screen_off_test"
+                android:screenOrientation="portrait">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.cts.intent.category.MANUAL_TEST" />
+            </intent-filter>
+            <meta-data android:name="test_category" android:value="@string/test_category_networking" />
+            <meta-data android:name="test_required_features" android:value="android.hardware.wifi" />
         </activity>
 
         <activity android:name=".nfc.NfcTestActivity"
@@ -1379,6 +1402,21 @@
                 android:label="@string/device_owner_wifi_lockdown_test">
         </activity>
 
+        <activity android:name=".managedprovisioning.VpnTestActivity"
+                android:label="@string/device_owner_vpn_test">
+            <intent-filter>
+                <action android:name="com.android.cts.verifier.managedprovisioning.VPN" />
+                <category android:name="android.intent.category.DEFAULT"></category>
+            </intent-filter>
+        </activity>
+
+        <service android:name=".managedprovisioning.VpnTestActivity$MyTestVpnService"
+                android:permission="android.permission.BIND_VPN_SERVICE">
+            <intent-filter>
+                <action android:name="android.net.VpnService"/>
+            </intent-filter>
+        </service>
+
         <activity android:name=".managedprovisioning.PermissionLockdownTestActivity"
                 android:label="@string/device_profile_owner_permission_lockdown_test">
             <intent-filter>
@@ -1432,6 +1470,10 @@
                 <action android:name="com.android.cts.verifier.managedprovisioning.TEST_NFC_BEAM" />
                 <action android:name="com.android.cts.verifier.managedprovisioning.action.TEST_CROSS_PROFILE_INTENTS_DIALOG" />
                 <action android:name="com.android.cts.verifier.managedprovisioning.action.TEST_APP_LINKING_DIALOG" />
+                <action android:name="com.android.cts.verifier.managedprovisioning.BYOD_SET_LOCATION_AND_CHECK" />
+                <action android:name="com.android.cts.verifier.managedprovisioning.NOTIFICATION" />
+                <action android:name="com.android.cts.verifier.managedprovisioning.LOCKSCREEN_NOTIFICATION" />
+                <action android:name="com.android.cts.verifier.managedprovisioning.CLEAR_NOTIFICATION" />
                 <category android:name="android.intent.category.DEFAULT"></category>
             </intent-filter>
         </activity>
@@ -1457,10 +1499,9 @@
             </intent-filter>
         </activity>
 
-        <activity android:name=".managedprovisioning.CrossProfileTestActivity">
+        <activity android:name=".managedprovisioning.HandleIntentActivity"
+                android:enabled="false">
             <intent-filter>
-                <action android:name="com.android.cts.verifier.managedprovisioning.CROSS_PROFILE_TO_PERSONAL" />
-                <action android:name="com.android.cts.verifier.managedprovisioning.CROSS_PROFILE_TO_WORK" />
                 <!-- We need to have at least one activity listening to these intents on the device
                      to test if these are forwarded from the managed profile to the parent or
                      the other way around. -->
@@ -1543,19 +1584,18 @@
             </intent-filter>
         </activity>
 
+        <activity android:name=".managedprovisioning.CrossProfileTestActivity">
+            <intent-filter>
+                <action android:name="com.android.cts.verifier.managedprovisioning.CROSS_PROFILE_TO_PERSONAL" />
+                <action android:name="com.android.cts.verifier.managedprovisioning.CROSS_PROFILE_TO_WORK" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
+
         <activity android:name=".managedprovisioning.WorkStatusTestActivity">
             <intent-filter>
                 <action android:name="com.android.cts.verifier.managedprovisioning.WORK_STATUS_ICON" />
                 <action android:name="com.android.cts.verifier.managedprovisioning.WORK_STATUS_TOAST" />
-                <category android:name="android.intent.category.DEFAULT"></category>
-            </intent-filter>
-        </activity>
-
-        <activity android:name=".managedprovisioning.WorkNotificationTestActivity">
-            <intent-filter>
-                <action android:name="com.android.cts.verifier.managedprovisioning.WORK_NOTIFICATION" />
-                <action android:name="com.android.cts.verifier.managedprovisioning.LOCKSCREEN_NOTIFICATION" />
-                <action android:name="com.android.cts.verifier.managedprovisioning.CLEAR_WORK_NOTIFICATION" />
                 <category android:name="android.intent.category.DEFAULT"></category>
             </intent-filter>
         </activity>
@@ -1705,7 +1745,7 @@
                 <category android:name="android.cts.intent.category.MANUAL_TEST" />
             </intent-filter>
             <meta-data android:name="test_category" android:value="@string/test_category_audio" />
-            <meta-data android:name="test_required_features" android:value="android.hardware.microphone" />
+            <meta-data android:name="test_required_features" android:value="android.hardware.audio.output" />
         </activity>
 
         <activity android:name=".audio.AudioOutputDeviceNotificationsActivity"
