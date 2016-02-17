@@ -37,6 +37,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 
 import android.app.Activity;
+import android.app.Instrumentation;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
@@ -47,6 +48,8 @@ import android.database.Cursor;
 import android.net.Uri;
 import android.os.Environment;
 import android.os.SystemClock;
+import android.os.storage.StorageManager;
+import android.os.storage.StorageVolume;
 import android.provider.DocumentsContract;
 import android.provider.DocumentsContract.Document;
 import android.provider.DocumentsProvider;
@@ -375,11 +378,12 @@ public class DocumentsClientTest extends InstrumentationTestCase {
     public void testOpenExternalDirectory_invalidPath() throws Exception {
         if (!supportedHardware()) return;
 
-        final String externalRoot = getExternalStorageDirectory().getPath();
-        openExternalDirectoryInvalidPath("");
-        openExternalDirectoryInvalidPath("/dev/null");
-        openExternalDirectoryInvalidPath(externalRoot + "/../");
-        openExternalDirectoryInvalidPath(externalRoot + "/HiddenStuff");
+        for (StorageVolume volume : getVolumes()) {
+            openExternalDirectoryInvalidPath(volume, "");
+            openExternalDirectoryInvalidPath(volume, "/dev/null");
+            openExternalDirectoryInvalidPath(volume, "/../");
+            openExternalDirectoryInvalidPath(volume, "/HiddenStuff");
+        }
     }
 
     public void testOpenExternalDirectory_userRejects() throws Exception {
@@ -387,17 +391,19 @@ public class DocumentsClientTest extends InstrumentationTestCase {
 
         final String externalRoot = getExternalStorageDirectory().getPath();
 
+        final StorageVolume primaryVolume = getPrimaryVolume();
+
         // Tests user clicking DENY button, for all valid directories.
         for (String directory : STANDARD_DIRECTORIES) {
             final Uri uri = Uri.fromFile(new File(externalRoot, directory));
 
-            final UiAlertDialog dialog = openExternalDirectoryValidPath(uri);
+            final UiAlertDialog dialog = openExternalDirectoryValidPath(primaryVolume, directory);
             dialog.noButton.click();
             assertActivityFailed();
         }
 
         // Also test user clicking back button - one directory is enough.
-        openExternalDirectoryValidPath(Uri.fromFile(new File(externalRoot, DIRECTORY_PICTURES)));
+        openExternalDirectoryValidPath(primaryVolume, DIRECTORY_PICTURES);
         mDevice.pressBack();
         assertActivityFailed();
     }
@@ -406,18 +412,14 @@ public class DocumentsClientTest extends InstrumentationTestCase {
         if (!supportedHardware())
             return;
 
-        // TODO: once there is an API to get all volumes, use a for loop to call method below
-        // to all of them (rather than hard-coding).
-        userAcceptsOpenExternalDirectoryTest(getExternalStorageDirectory().getPath(),
-                "Internal storage");
+        for (StorageVolume volume : getVolumes()) {
+            userAcceptsOpenExternalDirectoryTest(volume);
+        }
     }
 
-    private void userAcceptsOpenExternalDirectoryTest(String rootPath, String rootDescription)
-            throws Exception {
-        final Uri requestedUri = Uri.fromFile(new File(rootPath, DIRECTORY_PICTURES));
-
+    private void userAcceptsOpenExternalDirectoryTest(StorageVolume volume) throws Exception {
         // Asserts dialog contain the proper message.
-        final UiAlertDialog dialog = openExternalDirectoryValidPath(requestedUri);
+        final UiAlertDialog dialog = openExternalDirectoryValidPath(volume, DIRECTORY_PICTURES);
         final String message = dialog.messageText.getText();
         Log.v(TAG, "request permission message: " + message);
         final Context context = getInstrumentation().getTargetContext();
@@ -425,7 +427,7 @@ public class DocumentsClientTest extends InstrumentationTestCase {
                 context.getApplicationInfo()).toString();
         assertContainsRegex("missing app label", appLabel, message);
         assertContainsRegex("missing folder", DIRECTORY_PICTURES, message);
-        assertContainsRegex("missing root", rootDescription, message);
+        assertContainsRegex("missing root", volume.getDescription(context), message);
 
         // Call API...
         dialog.yesButton.click();
@@ -671,21 +673,35 @@ public class DocumentsClientTest extends InstrumentationTestCase {
         return result.data;
     }
 
-    private void openExternalDirectoryInvalidPath(String path) {
-        sendOpenExternalDirectoryIntent(Uri.fromFile(new File(path)));
+    private void openExternalDirectoryInvalidPath(StorageVolume volume, String path) {
+        sendOpenExternalDirectoryIntent(volume, path);
         assertActivityFailed();
     }
 
-    private UiAlertDialog openExternalDirectoryValidPath(Uri uri) throws UiObjectNotFoundException {
-        sendOpenExternalDirectoryIntent(uri);
+    private UiAlertDialog openExternalDirectoryValidPath(StorageVolume volume, String path)
+            throws UiObjectNotFoundException {
+        sendOpenExternalDirectoryIntent(volume, path);
         return new UiAlertDialog();
     }
 
-    private void sendOpenExternalDirectoryIntent(Uri uri) {
-        final Intent intent = new Intent(Intent.ACTION_OPEN_EXTERNAL_DIRECTORY);
-        intent.setData(uri);
+    private void sendOpenExternalDirectoryIntent(StorageVolume volume, String directoryName) {
+        final Intent intent = volume.createAccessIntent(directoryName);
         mActivity.startActivityForResult(intent, REQUEST_CODE);
         mDevice.waitForIdle();
+    }
+
+    private StorageVolume[] getVolumes() {
+        final StorageManager sm = (StorageManager)
+                getInstrumentation().getTargetContext().getSystemService(Context.STORAGE_SERVICE);
+        final StorageVolume[] volumes = sm.getVolumeList();
+        assertTrue("empty volumes", volumes.length > 0);
+        return volumes;
+    }
+
+    private StorageVolume getPrimaryVolume() {
+        final StorageManager sm = (StorageManager)
+                getInstrumentation().getTargetContext().getSystemService(Context.STORAGE_SERVICE);
+        return sm.getPrimaryVolume();
     }
 
     private final class UiAlertDialog {
