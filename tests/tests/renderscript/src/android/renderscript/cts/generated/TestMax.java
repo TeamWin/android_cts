@@ -21,6 +21,7 @@ package android.renderscript.cts;
 import android.renderscript.Allocation;
 import android.renderscript.RSRuntimeException;
 import android.renderscript.Element;
+import android.renderscript.cts.Target;
 
 import java.util.Arrays;
 
@@ -82,7 +83,7 @@ public class TestMax extends RSBaseCompute {
                 args.inA = arrayInA[i];
                 args.inB = arrayInB[i];
                 // Figure out what the outputs should have been.
-                Target target = new Target(relaxed);
+                Target target = new Target(Target.FunctionType.NORMAL, Target.ReturnType.FLOAT, relaxed);
                 CoreMathVerifier.computeMax(args, target);
                 // Validate the outputs.
                 boolean valid = true;
@@ -161,7 +162,7 @@ public class TestMax extends RSBaseCompute {
                 args.inA = arrayInA[i * 2 + j];
                 args.inB = arrayInB[i * 2 + j];
                 // Figure out what the outputs should have been.
-                Target target = new Target(relaxed);
+                Target target = new Target(Target.FunctionType.NORMAL, Target.ReturnType.FLOAT, relaxed);
                 CoreMathVerifier.computeMax(args, target);
                 // Validate the outputs.
                 boolean valid = true;
@@ -240,7 +241,7 @@ public class TestMax extends RSBaseCompute {
                 args.inA = arrayInA[i * 4 + j];
                 args.inB = arrayInB[i * 4 + j];
                 // Figure out what the outputs should have been.
-                Target target = new Target(relaxed);
+                Target target = new Target(Target.FunctionType.NORMAL, Target.ReturnType.FLOAT, relaxed);
                 CoreMathVerifier.computeMax(args, target);
                 // Validate the outputs.
                 boolean valid = true;
@@ -319,7 +320,7 @@ public class TestMax extends RSBaseCompute {
                 args.inA = arrayInA[i * 4 + j];
                 args.inB = arrayInB[i * 4 + j];
                 // Figure out what the outputs should have been.
-                Target target = new Target(relaxed);
+                Target target = new Target(Target.FunctionType.NORMAL, Target.ReturnType.FLOAT, relaxed);
                 CoreMathVerifier.computeMax(args, target);
                 // Validate the outputs.
                 boolean valid = true;
@@ -398,7 +399,7 @@ public class TestMax extends RSBaseCompute {
                 args.inA = arrayInA[i * 2 + j];
                 args.inB = arrayInB[i];
                 // Figure out what the outputs should have been.
-                Target target = new Target(relaxed);
+                Target target = new Target(Target.FunctionType.NORMAL, Target.ReturnType.FLOAT, relaxed);
                 CoreMathVerifier.computeMax(args, target);
                 // Validate the outputs.
                 boolean valid = true;
@@ -477,7 +478,7 @@ public class TestMax extends RSBaseCompute {
                 args.inA = arrayInA[i * 4 + j];
                 args.inB = arrayInB[i];
                 // Figure out what the outputs should have been.
-                Target target = new Target(relaxed);
+                Target target = new Target(Target.FunctionType.NORMAL, Target.ReturnType.FLOAT, relaxed);
                 CoreMathVerifier.computeMax(args, target);
                 // Validate the outputs.
                 boolean valid = true;
@@ -556,7 +557,7 @@ public class TestMax extends RSBaseCompute {
                 args.inA = arrayInA[i * 4 + j];
                 args.inB = arrayInB[i];
                 // Figure out what the outputs should have been.
-                Target target = new Target(relaxed);
+                Target target = new Target(Target.FunctionType.NORMAL, Target.ReturnType.FLOAT, relaxed);
                 CoreMathVerifier.computeMax(args, target);
                 // Validate the outputs.
                 boolean valid = true;

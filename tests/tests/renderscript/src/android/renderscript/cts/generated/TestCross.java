@@ -21,6 +21,7 @@ package android.renderscript.cts;
 import android.renderscript.Allocation;
 import android.renderscript.RSRuntimeException;
 import android.renderscript.Element;
+import android.renderscript.cts.Target;
 
 import java.util.Arrays;
 
@@ -88,7 +89,7 @@ public class TestCross extends RSBaseCompute {
             for (int j = 0; j < 3 ; j++) {
                 args.inRightVector[j] = arrayInRightVector[i * 4 + j];
             }
-            Target target = new Target(relaxed);
+            Target target = new Target(Target.FunctionType.NORMAL, Target.ReturnType.FLOAT, relaxed);
             CoreMathVerifier.computeCross(args, target);
 
             // Compare the expected outputs to the actual values returned by RS.
@@ -179,7 +180,7 @@ public class TestCross extends RSBaseCompute {
             for (int j = 0; j < 4 ; j++) {
                 args.inRightVector[j] = arrayInRightVector[i * 4 + j];
             }
-            Target target = new Target(relaxed);
+            Target target = new Target(Target.FunctionType.NORMAL, Target.ReturnType.FLOAT, relaxed);
             CoreMathVerifier.computeCross(args, target);
 
             // Compare the expected outputs to the actual values returned by RS.
