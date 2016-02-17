@@ -197,7 +197,7 @@ public class TvInputManagerTest extends ActivityInstrumentationTestCase2<TvViewS
         getInstrumentation().waitForIdleSync();
     }
 
-    public void testTvInputInfoChanged() throws IOException, XmlPullParserException {
+    public void testTvInputInfoUpdated() throws IOException, XmlPullParserException {
         if (!Utils.hasTvInputFramework(getActivity())) {
             return;
         }
@@ -215,20 +215,20 @@ public class TvInputManagerTest extends ActivityInstrumentationTestCase2<TvViewS
         TvInputInfo updatedInfo = new TvInputInfo.Builder(getActivity(),
                 StubTunerTvInputService.class).setTunerCount(10).setCanRecord(true).build();
 
-        StubTunerTvInputService.setTvInputInfo(getActivity(), updatedInfo);
+        StubTunerTvInputService.updateTvInputInfo(getActivity(), updatedInfo);
         new PollingCheck(TIME_OUT_MS) {
             @Override
             protected boolean check() {
-                TvInputInfo info = mCallabck.getLastChangedTvInputInfo();
+                TvInputInfo info = mCallabck.getLastUpdatedTvInputInfo();
                 return info !=  null && info.getTunerCount() == 10 && info.canRecord();
             }
         }.run();
 
-        StubTunerTvInputService.setTvInputInfo(getActivity(), defaultInfo);
+        StubTunerTvInputService.updateTvInputInfo(getActivity(), defaultInfo);
         new PollingCheck(TIME_OUT_MS) {
             @Override
             protected boolean check() {
-                TvInputInfo info = mCallabck.getLastChangedTvInputInfo();
+                TvInputInfo info = mCallabck.getLastUpdatedTvInputInfo();
                 return info !=  null && info.getTunerCount() == 1 && !info.canRecord();
             }
         }.run();
@@ -245,7 +245,7 @@ public class TvInputManagerTest extends ActivityInstrumentationTestCase2<TvViewS
     private static class LoggingCallback extends TvInputManager.TvInputCallback {
         private final List<String> mAddedInputs = new ArrayList<>();
         private final List<String> mRemovedInputs = new ArrayList<>();
-        private TvInputInfo mLastChangedTvInputInfo;
+        private TvInputInfo mLastUpdatedTvInputInfo;
 
         @Override
         public synchronized void onInputAdded(String inputId) {
@@ -258,14 +258,14 @@ public class TvInputManagerTest extends ActivityInstrumentationTestCase2<TvViewS
         }
 
         @Override
-        public synchronized void onTvInputInfoChanged(TvInputInfo info) {
-            mLastChangedTvInputInfo = info;
+        public synchronized void onTvInputInfoUpdated(TvInputInfo info) {
+            mLastUpdatedTvInputInfo = info;
         }
 
         public synchronized void resetLogs() {
             mAddedInputs.clear();
             mRemovedInputs.clear();
-            mLastChangedTvInputInfo = null;
+            mLastUpdatedTvInputInfo = null;
         }
 
         public synchronized boolean isInputAdded(String inputId) {
@@ -278,8 +278,8 @@ public class TvInputManagerTest extends ActivityInstrumentationTestCase2<TvViewS
                     inputId);
         }
 
-        public synchronized TvInputInfo getLastChangedTvInputInfo() {
-            return mLastChangedTvInputInfo;
+        public synchronized TvInputInfo getLastUpdatedTvInputInfo() {
+            return mLastUpdatedTvInputInfo;
         }
     }
 
