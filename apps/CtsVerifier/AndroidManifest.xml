@@ -1435,6 +1435,8 @@
                 android:label="@string/positive_device_owner">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
+                <action android:name="com.android.cts.verifier.managedprovisioning.action.CHECK_DEVICE_OWNER" />
+                <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.cts.intent.category.MANUAL_TEST" />
             </intent-filter>
             <meta-data android:name="test_category" android:value="@string/test_category_managed_provisioning" />
@@ -1484,14 +1486,6 @@
             </intent-filter>
         </activity>
 
-        <activity android:name=".managedprovisioning.PolicyTransparencyActivity"
-                android:label="@string/device_owner_policy_transparency_test">
-        </activity>
-
-        <activity android:name=".managedprovisioning.SetMaximumTimeToLockActivity"
-                android:label="@string/maximum_time_to_lock">
-        </activity>
-
         <activity-alias
                 android:name=".managedprovisioning.ManagedProfilePermissionLockdownTestActivity"
                 android:targetActivity=".managedprovisioning.PermissionLockdownTestActivity">
@@ -1500,6 +1494,54 @@
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity-alias>
+
+        <activity android:name=".managedprovisioning.PolicyTransparencyTestListActivity"
+                android:label="@string/device_profile_owner_policy_transparency_test">
+            <intent-filter>
+                <action android:name="com.android.cts.verifier.managedprovisioning.action.CHECK_POLICY_TRANSPARENCY" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
+
+        <activity android:name=".managedprovisioning.PolicyTransparencyTestActivity">
+            <intent-filter>
+                <action android:name="com.android.cts.verifier.managedprovisioning.action.SHOW_POLICY_TRANSPARENCY_TEST" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
+
+        <activity android:name=".managedprovisioning.CommandReceiverActivity"
+                android:theme="@android:style/Theme.NoDisplay"
+                android:noHistory="true">
+            <intent-filter>
+                <action android:name="com.android.cts.verifier.managedprovisioning.action.EXECUTE_COMMAND" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
+
+        <activity android:name=".managedprovisioning.SetSupportMessageActivity">
+            <intent-filter>
+                <action android:name="com.android.cts.verifier.managedprovisioning.action.SET_SUPPORT_MSG" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
+
+        <service android:name=".managedprovisioning.PolicyTransparencyTestActivity$DummyInputMethod"
+                android:label="@string/dummy_input_method_label"
+                android:permission="android.permission.BIND_INPUT_METHOD">
+            <intent-filter>
+                <action android:name="android.view.InputMethod" />
+            </intent-filter>
+            <meta-data android:name="android.view.im" android:resource="@xml/dummy_method" />
+        </service>
+
+        <service android:name=".managedprovisioning.PolicyTransparencyTestActivity$DummyAccessibilityService"
+                android:label="@string/dummy_accessibility_service_label"
+                android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">
+            <intent-filter>
+                <action android:name="android.accessibilityservice.AccessibilityService" />
+            </intent-filter>
+        </service>
 
         <activity android:name=".managedprovisioning.AuthenticationBoundKeyTestActivity">
             <intent-filter>

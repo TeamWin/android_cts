@@ -84,6 +84,8 @@ public class DeviceAdminTestReceiver extends DeviceAdminReceiver {
             filter.addAction(VpnTestActivity.ACTION_VPN);
             filter.addAction(ByodHelperActivity.ACTION_TEST_SELECT_WORK_CHALLENGE);
             filter.addAction(ByodHelperActivity.ACTION_TEST_CONFIRM_WORK_CREDENTIALS);
+            filter.addAction(SetSupportMessageActivity.ACTION_SET_SUPPORT_MSG);
+            filter.addAction(CommandReceiverActivity.ACTION_EXECUTE_COMMAND);
             dpm.addCrossProfileIntentFilter(getWho(context), filter,
                     DevicePolicyManager.FLAG_MANAGED_CAN_ACCESS_PARENT);
 
