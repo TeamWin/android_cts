@@ -49,8 +49,10 @@ public class PolicyTransparencyTestActivity extends PassFailButtons.Activity imp
             "com.android.cts.verifier.managedprovisioning.extra.TEST";
 
     public static final String TEST_CHECK_USER_RESTRICTION = "check-user-restriction";
+    public static final String TEST_CHECK_AUTO_TIME_REQUIRED = "check-auto-time-required";
     public static final String TEST_CHECK_KEYGURAD_UNREDACTED_NOTIFICATION =
             "check-keyguard-unredacted-notification";
+    public static final String TEST_CHECK_LOCK_SCREEN_INFO = "check-lock-screen-info";
     public static final String TEST_CHECK_MAXIMUM_TIME_TO_LOCK = "check-maximum-time-to-lock";
     public static final String TEST_CHECK_PASSWORD_QUALITY = "check-password-quality";
     public static final String TEST_CHECK_PERMITTED_ACCESSIBILITY_SERVICE =
@@ -66,12 +68,24 @@ public class PolicyTransparencyTestActivity extends PassFailButtons.Activity imp
 
     private static final Map<String, PolicyTestItem> POLICY_TEST_ITEMS = new ArrayMap<>();
     static {
+        POLICY_TEST_ITEMS.put(TEST_CHECK_AUTO_TIME_REQUIRED, new PolicyTestItem(
+                R.string.auto_time_required_set_step,
+                R.string.set_auto_time_required_action,
+                R.string.set_auto_time_required_widget_label,
+                R.id.switch_widget,
+                CommandReceiverActivity.COMMAND_SET_AUTO_TIME_REQUIRED));
         POLICY_TEST_ITEMS.put(TEST_CHECK_KEYGURAD_UNREDACTED_NOTIFICATION, new PolicyTestItem(
                 R.string.disallow_keyguard_unredacted_notifications_set_step,
                 R.string.disallow_keyguard_unredacted_notifications_action,
                 R.string.disallow_keyguard_unredacted_notifications_widget_label,
                 R.id.switch_widget,
                 CommandReceiverActivity.COMMAND_DISALLOW_KEYGUARD_UNREDACTED_NOTIFICATIONS));
+        POLICY_TEST_ITEMS.put(TEST_CHECK_LOCK_SCREEN_INFO, new PolicyTestItem(
+                R.string.lock_screen_info_set_step,
+                R.string.set_lock_screen_info_action,
+                R.string.set_lock_screen_info_widget_label,
+                R.id.edit_text_widget,
+                CommandReceiverActivity.COMMAND_SET_LOCK_SCREEN_INFO));
         POLICY_TEST_ITEMS.put(TEST_CHECK_MAXIMUM_TIME_TO_LOCK, new PolicyTestItem(
                 R.string.maximum_time_to_lock_set_step,
                 R.string.set_maximum_time_to_lock_action,

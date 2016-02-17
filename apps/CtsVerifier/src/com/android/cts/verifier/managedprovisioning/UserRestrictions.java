@@ -31,10 +31,21 @@ public class UserRestrictions {
         UserManager.DISALLOW_ADD_USER,
         UserManager.DISALLOW_ADJUST_VOLUME,
         UserManager.DISALLOW_APPS_CONTROL,
+        UserManager.DISALLOW_CONFIG_CELL_BROADCASTS,
+        UserManager.DISALLOW_CONFIG_CREDENTIALS,
+        UserManager.DISALLOW_CONFIG_MOBILE_NETWORKS,
+        UserManager.DISALLOW_CONFIG_TETHERING,
         UserManager.DISALLOW_CONFIG_WIFI,
+        UserManager.DISALLOW_DEBUGGING_FEATURES,
+        UserManager.DISALLOW_FACTORY_RESET,
         UserManager.DISALLOW_FUN,
+        UserManager.DISALLOW_INSTALL_UNKNOWN_SOURCES,
         UserManager.DISALLOW_MODIFY_ACCOUNTS,
-        UserManager.DISALLOW_SHARE_LOCATION
+        UserManager.DISALLOW_NETWORK_RESET,
+        UserManager.DISALLOW_OUTGOING_BEAM,
+        UserManager.DISALLOW_REMOVE_USER,
+        UserManager.DISALLOW_SHARE_LOCATION,
+        UserManager.DISALLOW_UNINSTALL_APPS
     };
 
     private static final ArrayMap<String, UserRestrictionItem> USER_RESTRICTION_ITEMS;
@@ -43,30 +54,63 @@ public class UserRestrictions {
             R.string.disallow_add_user,
             R.string.disallow_adjust_volume,
             R.string.disallow_apps_control,
+            R.string.disallow_config_cell_broadcasts,
+            R.string.disallow_config_credentials,
+            R.string.disallow_config_mobile_networks,
+            R.string.disallow_config_tethering,
             R.string.disallow_config_wifi,
+            R.string.disallow_debugging_features,
+            R.string.disallow_factory_reset,
             R.string.disallow_fun,
+            R.string.disallow_install_unknown_sources,
             R.string.disallow_modify_accounts,
+            R.string.disallow_network_reset,
+            R.string.disallow_outgoing_beam,
+            R.string.disallow_remove_user,
             R.string.disallow_share_location,
+            R.string.disallow_uninstall_apps
         };
 
         final int[] restrictionActions = new int[] {
             R.string.disallow_add_user_action,
             R.string.disallow_adjust_volume_action,
             R.string.disallow_apps_control_action,
+            R.string.disallow_config_cell_broadcasts_action,
+            R.string.disallow_config_credentials_action,
+            R.string.disallow_config_mobile_networks_action,
+            R.string.disallow_config_tethering_action,
             R.string.disallow_config_wifi_action,
+            R.string.disallow_debugging_features_action,
+            R.string.disallow_factory_reset_action,
             R.string.disallow_fun_action,
+            R.string.disallow_install_unknown_sources_action,
             R.string.disallow_modify_accounts_action,
-            R.string.disallow_share_location_action
+            R.string.disallow_network_reset_action,
+            R.string.disallow_outgoing_beam_action,
+            R.string.disallow_remove_user_action,
+            R.string.disallow_share_location_action,
+            R.string.disallow_uninstall_apps_action
         };
 
         final String[] settingsIntentActions = new String[] {
             Settings.ACTION_SETTINGS,
             Settings.ACTION_SOUND_SETTINGS,
             Settings.ACTION_APPLICATION_SETTINGS,
+            Settings.ACTION_SOUND_SETTINGS,
+            Settings.ACTION_SECURITY_SETTINGS,
+            Settings.ACTION_WIRELESS_SETTINGS,
+            Settings.ACTION_WIRELESS_SETTINGS,
             Settings.ACTION_WIFI_SETTINGS,
             Settings.ACTION_DEVICE_INFO_SETTINGS,
+            Settings.ACTION_PRIVACY_SETTINGS,
+            Settings.ACTION_DEVICE_INFO_SETTINGS,
+            Settings.ACTION_SECURITY_SETTINGS,
             Settings.ACTION_SYNC_SETTINGS,
-            Settings.ACTION_LOCATION_SOURCE_SETTINGS
+            Settings.ACTION_PRIVACY_SETTINGS,
+            Settings.ACTION_WIRELESS_SETTINGS,
+            Settings.ACTION_SETTINGS,
+            Settings.ACTION_LOCATION_SOURCE_SETTINGS,
+            Settings.ACTION_APPLICATION_SETTINGS,
         };
 
         if (RESTRICTION_IDS.length != restrictionLabels.length
@@ -88,6 +132,7 @@ public class UserRestrictions {
             new ArrayList<String>();
     static {
         ALSO_VALID_FOR_PO.add(UserManager.DISALLOW_APPS_CONTROL);
+        ALSO_VALID_FOR_PO.add(UserManager.DISALLOW_UNINSTALL_APPS);
         ALSO_VALID_FOR_PO.add(UserManager.DISALLOW_MODIFY_ACCOUNTS);
         ALSO_VALID_FOR_PO.add(UserManager.DISALLOW_SHARE_LOCATION);
     }
