@@ -845,6 +845,9 @@ public class TvContractTest extends AndroidTestCase {
     }
 
     public void testBroadcastGenreEncodeDecode() {
+        if (!Utils.hasTvInputFramework(getContext())) {
+            return;
+        }
         String[] broadcastGenre = new String[] {"Animation", "Classic, opera"};
         insertProgramWithBroadcastGenre(broadcastGenre);
         try (Cursor c = mContentResolver.query(TvContract.Programs.CONTENT_URI,
@@ -857,6 +860,9 @@ public class TvContractTest extends AndroidTestCase {
     }
 
     public void testBroadcastGenreQueryChannel() {
+        if (!Utils.hasTvInputFramework(getContext())) {
+            return;
+        }
         // "Animation" is mapped to Genres.MOVIES
         // "Classic, opera" is mapped to Genres.MUSIC
         insertProgramWithBroadcastGenre(new String[]{"Animation"});
