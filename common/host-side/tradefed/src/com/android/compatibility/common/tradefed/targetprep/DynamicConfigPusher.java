@@ -51,16 +51,18 @@ public class DynamicConfigPusher implements ITargetCleaner {
 
     private static final String LOG_TAG = DynamicConfigPusher.class.getSimpleName();
 
-    @Option(name = "cleanup", description = "Whether to clean up config files after test is done.")
+    @Option(name = "cleanup", description = "Whether to remove config files from the test " +
+            "target after test completion.")
     private boolean mCleanup = true;
 
-    @Option(name="module-name", description = "Specify the module name")
+    @Option(name="module", description = "The test suite module using dynamic configuration")
     private String mModuleName;
 
-    @Option(name = "target", description = "Specify the target, 'device' or 'host'")
+    @Option(name = "target", description = "The test target, \"device\" or \"host\"")
     private TestTarget mTarget;
 
-    @Option(name = "version-name", description = "Specify the version for override config")
+    @Option(name = "version", description = "The version of the configuration to retrieve " +
+            "from the server, e.g. \"1\"")
     private static String mVersion;
 
 
@@ -93,16 +95,16 @@ public class DynamicConfigPusher implements ITargetCleaner {
         if (originUrl != null) {
             try {
                 String requestUrl = originUrl
-                        .replace("{module-name}", mModuleName).replace("{version-name}", mVersion);
+                        .replace("{module}", mModuleName).replace("{version}", mVersion);
                 java.net.URL request = new URL(requestUrl);
                 apfeConfigInJson = StreamUtil.getStringFromStream(request.openStream());
             } catch (IOException e) {
                 LogUtil.printLog(Log.LogLevel.WARN, LOG_TAG,
-                        "Cannot download and parse json config from Url");
+                        "Cannot download and parse json config from URL");
             }
         } else {
             LogUtil.printLog(Log.LogLevel.INFO, LOG_TAG,
-                    "Dynamic config override Url is not set");
+                    "Dynamic config override URL is not set, using local configuration values");
         }
 
         File src = null;
