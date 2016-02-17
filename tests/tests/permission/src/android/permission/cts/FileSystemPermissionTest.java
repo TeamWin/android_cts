@@ -284,6 +284,40 @@ public class FileSystemPermissionTest extends AndroidTestCase {
         assertFileOwnedByGroup(dir, "root");
     }
 
+
+    @MediumTest
+    public void testProcfsMmapRndBitsExistsAndSane() throws Exception {
+        String arch = System.getProperty("os.arch");
+        boolean supported = false;
+        boolean supported_64 = false;
+
+        if (arch.equals("aarch64") || arch.equals("x86_64"))
+            supported_64 = true;
+        else if (arch.startsWith("arm") || arch.endsWith("86"))
+            supported = true;
+
+        /* 64-bit OS should support running 32-bit applications */
+        if (supported_64) {
+            File f = new File("/proc/sys/vm/mmap_rnd_compat_bits");
+            assertTrue(f.exists());
+            assertFalse(f.canRead());
+            assertFalse(f.canWrite());
+            assertFalse(f.canExecute());
+            assertFileOwnedBy(f, "root");
+            assertFileOwnedByGroup(f, "root");
+        }
+
+        if (supported_64 || supported) {
+            File f = new File("/proc/sys/vm/mmap_rnd_bits");
+            assertTrue(f.exists());
+            assertFalse(f.canRead());
+            assertFalse(f.canWrite());
+            assertFalse(f.canExecute());
+            assertFileOwnedBy(f, "root");
+            assertFileOwnedByGroup(f, "root");
+        }
+    }
+
     /**
      * Assert that a file is owned by a specific owner. This is a noop if the
      * file does not exist.
