@@ -72,21 +72,21 @@ public class WifiLockdownTestActivity extends PassFailButtons.TestListActivity {
                 new Intent(Settings.ACTION_WIFI_SETTINGS));
         mSwitchLockdownOffButtonInfos = new ButtonInfo[] { new ButtonInfo(
                 R.string.switch_wifi_lockdown_off_button,
-                new Intent(this, DeviceOwnerPositiveTestActivity.CommandReceiver.class)
-                        .putExtra(DeviceOwnerPositiveTestActivity.EXTRA_COMMAND,
-                                DeviceOwnerPositiveTestActivity.COMMAND_SET_GLOBAL_SETTING)
-                        .putExtra(DeviceOwnerPositiveTestActivity.EXTRA_SETTING,
+                new Intent(this, CommandReceiverActivity.class)
+                        .putExtra(CommandReceiverActivity.EXTRA_COMMAND,
+                                CommandReceiverActivity.COMMAND_SET_GLOBAL_SETTING)
+                        .putExtra(CommandReceiverActivity.EXTRA_SETTING,
                                 Settings.Global.WIFI_DEVICE_OWNER_CONFIGS_LOCKDOWN)
-                        .putExtra(DeviceOwnerPositiveTestActivity.EXTRA_PARAMETER_1, "0"
+                        .putExtra(CommandReceiverActivity.EXTRA_VALUE, "0"
                 )), goToWifiSettings };
         mSwitchLockdownOnButtonInfos = new ButtonInfo[] { new ButtonInfo(
                 R.string.switch_wifi_lockdown_on_button,
-                new Intent(this, DeviceOwnerPositiveTestActivity.CommandReceiver.class)
-                        .putExtra(DeviceOwnerPositiveTestActivity.EXTRA_COMMAND,
-                                DeviceOwnerPositiveTestActivity.COMMAND_SET_GLOBAL_SETTING)
-                        .putExtra(DeviceOwnerPositiveTestActivity.EXTRA_SETTING,
+                new Intent(this, CommandReceiverActivity.class)
+                        .putExtra(CommandReceiverActivity.EXTRA_COMMAND,
+                                CommandReceiverActivity.COMMAND_SET_GLOBAL_SETTING)
+                        .putExtra(CommandReceiverActivity.EXTRA_SETTING,
                                 Settings.Global.WIFI_DEVICE_OWNER_CONFIGS_LOCKDOWN)
-                        .putExtra(DeviceOwnerPositiveTestActivity.EXTRA_PARAMETER_1, "1"
+                        .putExtra(CommandReceiverActivity.EXTRA_VALUE, "1"
                 )), goToWifiSettings };
 
         addTestsToAdapter(adapter);
