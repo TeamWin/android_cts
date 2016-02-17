@@ -26,7 +26,7 @@
 
 #define LOG_TAG "CTS_OPENGL"
 #define LOG_NDEBUG 0
-#include <utils/Log.h>
+#include <android/log.h>
 #include <Trace.h>
 
 static const EGLint contextAttribs[] = {
@@ -127,7 +127,7 @@ bool ContextSwitchRenderer::setUp(int workload) {
                                    GL_TEXTURE_2D, mFboTexId, 0);
             GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
             if (status != GL_FRAMEBUFFER_COMPLETE) {
-                ALOGE("Framebuffer not complete: %d", status);
+                __android_log_print(ANDROID_LOG_ERROR, LOG_TAG, "Framebuffer not complete: %d", status);
                 return false;
             }
         }
@@ -218,7 +218,7 @@ void ContextSwitchRenderer::drawWorkload() {
         }
         GLuint err = glGetError();
         if (err != GL_NO_ERROR) {
-            ALOGE("GLError %d in drawWorkload", err);
+            __android_log_print(ANDROID_LOG_ERROR, LOG_TAG, "GLError %d in drawWorkload", err);
             break;
         }
     }
