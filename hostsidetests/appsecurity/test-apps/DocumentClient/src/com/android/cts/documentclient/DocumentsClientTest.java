@@ -345,7 +345,7 @@ public class DocumentsClientTest extends InstrumentationTestCase {
         try {
             MoreAsserts.assertEquals("filefour".getBytes(), readFully(file4));
             fail("Expected file to be gone");
-        } catch (FileNotFoundException expected) {
+        } catch (SecurityException expected) {
         }
 
         // And rename something
