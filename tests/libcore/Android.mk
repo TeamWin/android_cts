@@ -43,11 +43,11 @@ LOCAL_COMPATIBILITY_SUITE := cts_v2
 
 # Copy the expectation files to CTS
 LOCAL_COMPATIBILITY_SUPPORT_FILES += \
-    ../../../art/tools/libcore_failures.txt:$(LOCAL_PACKAGE_NAME).failures.expectations \
-    ../../../libcore/expectations/brokentests.txt:$(LOCAL_PACKAGE_NAME).brokentests.expectations \
-    ../../../libcore/expectations/icebox.txt:$(LOCAL_PACKAGE_NAME).icebox.expectations \
-    ../../../libcore/expectations/knownfailures.txt:$(LOCAL_PACKAGE_NAME).knownfailures.expectations \
-    ../../../libcore/expectations/taggedtests.txt:$(LOCAL_PACKAGE_NAME).taggedtests.expectations
+    art/tools/libcore_failures.txt:$(LOCAL_PACKAGE_NAME).failures.expectations \
+    libcore/expectations/brokentests.txt:$(LOCAL_PACKAGE_NAME).brokentests.expectations \
+    libcore/expectations/icebox.txt:$(LOCAL_PACKAGE_NAME).icebox.expectations \
+    libcore/expectations/knownfailures.txt:$(LOCAL_PACKAGE_NAME).knownfailures.expectations \
+    libcore/expectations/taggedtests.txt:$(LOCAL_PACKAGE_NAME).taggedtests.expectations
 
 LOCAL_JAVA_LANGUAGE_VERSION := 1.8
 
