@@ -195,7 +195,9 @@ public class MyDocumentsProvider extends DocumentsProvider {
                 return true;
             }
             if (Document.MIME_TYPE_DIR.equals(doc.mimeType)) {
-                return isChildDocument(doc.docId, documentId);
+                if (isChildDocument(doc.docId, documentId)) {
+                    return true;
+                }
             }
         }
         return false;
