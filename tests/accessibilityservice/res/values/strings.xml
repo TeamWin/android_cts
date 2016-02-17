@@ -145,5 +145,16 @@
         unveiling\n\n</string>
 
     <string name="full_screen_text_view">Full Screen Text View</string>
+    <!-- Soft Keyboard Modes tests -->
+
+    <!-- String title for the accessibility service -->
+    <string name="accessibility_soft_keyboard_modes_activity">
+        Soft Keyboard Modes Activity</string>
+
+    <string name="title_soft_keyboard_modes_accessibility_service">
+        Stub Soft Keyboard Modes Accessibility Service</string>
+
+    <!-- Description of the accessibility service -->
+    <string name="soft_keyboard_modes_accessibility_service_description">This Accessibility Service was installed for testing purposes. It can be uninstalled by going to Settings > Apps > android.view.accessibilityservice.services and selecting \"Uninstall\".</string>
 
 </resources>
