@@ -100,13 +100,15 @@ public class RotateDrawableTest extends AndroidTestCase {
     public void testSetDegrees() {
         RotateDrawable d = new RotateDrawable();
         assertEquals(0.0f, d.getFromDegrees(), 0.01f);
-        assertEquals(0.0f, d.getFromDegrees(), 0.01f);
+        assertEquals(0.0f, d.getToDegrees(), 0.01f);
 
         d.setFromDegrees(-10.0f);
         assertEquals(-10.0f, d.getFromDegrees(), 0.01f);
+        assertEquals(0.0f, d.getToDegrees(), 0.01f);
 
         d.setToDegrees(10.0f);
-        assertEquals(10.0f, d.getFromDegrees(), 0.01f);
+        assertEquals(10.0f, d.getToDegrees(), 0.01f);
+        assertEquals(-10.0f, d.getFromDegrees(), 0.01f);
     }
 
     public void testGetChangingConfigurations() {
