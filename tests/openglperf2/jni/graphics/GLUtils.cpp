@@ -20,7 +20,7 @@
 
 #define LOG_TAG "CTS_OPENGL"
 #define LOG_NDEBUG 0
-#include <utils/Log.h>
+#include <android/log.h>
 
 static JNIEnv* sEnv = NULL;
 static jobject sAssetManager = NULL;
@@ -41,7 +41,7 @@ static AAsset* loadAsset(const char* path) {
 char* GLUtils::openTextFile(const char* path) {
     AAsset* asset = loadAsset(path);
     if (asset == NULL) {
-        ALOGE("Couldn't load %s", path);
+        __android_log_print(ANDROID_LOG_ERROR, LOG_TAG, "Couldn't load %s", path);
         return NULL;
     }
     off_t length = AAsset_getLength(asset);
@@ -49,7 +49,7 @@ char* GLUtils::openTextFile(const char* path) {
     int num = AAsset_read(asset, buffer, length);
     AAsset_close(asset);
     if (num != length) {
-        ALOGE("Couldn't read %s", path);
+        __android_log_print(ANDROID_LOG_ERROR, LOG_TAG, "Couldn't read %s", path);
         delete[] buffer;
         return NULL;
     }
@@ -61,13 +61,13 @@ GLuint GLUtils::loadTexture(const char* path) {
     GLuint textureId = 0;
     jclass activityClass = sEnv->FindClass("android/opengl2/cts/reference/GLGameActivity");
     if (activityClass == NULL) {
-        ALOGE("Couldn't find activity class");
+        __android_log_print(ANDROID_LOG_ERROR, LOG_TAG, "Couldn't find activity class");
         return -1;
     }
     jmethodID loadTexture = sEnv->GetStaticMethodID(activityClass, "loadTexture",
             "(Landroid/content/res/AssetManager;Ljava/lang/String;)I");
     if (loadTexture == NULL) {
-        ALOGE("Couldn't find loadTexture method");
+        __android_log_print(ANDROID_LOG_ERROR, LOG_TAG, "Couldn't find loadTexture method");
         return -1;
     }
     jstring pathStr = sEnv->NewStringUTF(path);
@@ -141,7 +141,8 @@ static GLuint loadShader(GLenum shaderType, const char** source) {
             if (infoLen > 0) {
                 char* infoLog = (char*) malloc(sizeof(char) * infoLen);
                 glGetShaderInfoLog(shader, infoLen, NULL, infoLog);
-                ALOGE("Error compiling shader:\n%s\n", infoLog);
+                __android_log_print(ANDROID_LOG_ERROR, LOG_TAG,
+                                    "Error compiling shader:\n%s\n", infoLog);
                 free(infoLog);
             }
             glDeleteShader(shader);
@@ -177,7 +178,8 @@ GLuint GLUtils::createProgram(const char** vertexSource, const char** fragmentSo
             if (infoLen > 0) {
                 char* infoLog = (char*) malloc(sizeof(char) * infoLen);
                 glGetProgramInfoLog(program, infoLen, NULL, infoLog);
-                ALOGE("Error linking program:\n%s\n", infoLog);
+                __android_log_print(ANDROID_LOG_ERROR, LOG_TAG,
+                                    "Error linking program:\n%s\n", infoLog);
                 free(infoLog);
             }
             glDeleteProgram(program);
