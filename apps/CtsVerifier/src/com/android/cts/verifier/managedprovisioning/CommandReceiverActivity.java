@@ -39,11 +39,13 @@ public class CommandReceiverActivity extends Activity {
     public static final String COMMAND_SET_USER_RESTRICTION = "set-user_restriction";
     public static final String COMMAND_DISALLOW_KEYGUARD_UNREDACTED_NOTIFICATIONS =
             "disallow-keyguard-unredacted-notifications";
+    public static final String COMMAND_SET_AUTO_TIME_REQUIRED = "set-auto-time-required";
     public static final String COMMAND_SET_GLOBAL_SETTING =
             "set-global-setting";
     public static final String COMMAND_SET_MAXIMUM_TO_LOCK = "set-maximum-time-to-lock";
     public static final String COMMAND_SET_PASSWORD_QUALITY = "set-password-quality";
     public static final String COMMAND_SET_KEYGUARD_DISABLED = "set-keyguard-disabled";
+    public static final String COMMAND_SET_LOCK_SCREEN_INFO = "set-lock-screen-info";
     public static final String COMMAND_SET_STATUSBAR_DISABLED = "set-statusbar-disabled";
     public static final String COMMAND_ALLOW_ONLY_SYSTEM_INPUT_METHODS =
             "allow-only-system-input-methods";
@@ -92,6 +94,13 @@ public class CommandReceiverActivity extends Activity {
                     mDpm.setKeyguardDisabledFeatures(mAdmin,
                             DevicePolicyManager.KEYGUARD_DISABLE_UNREDACTED_NOTIFICATIONS);
                 } break;
+                case COMMAND_SET_AUTO_TIME_REQUIRED: {
+                    mDpm.setAutoTimeRequired(mAdmin,
+                            intent.getBooleanExtra(EXTRA_ENFORCED, false));
+                }
+                case COMMAND_SET_LOCK_SCREEN_INFO: {
+                    mDpm.setDeviceOwnerLockScreenInfo(mAdmin, intent.getStringExtra(EXTRA_VALUE));
+                }
                 case COMMAND_SET_MAXIMUM_TO_LOCK: {
                     final long timeInSeconds = Long.parseLong(intent.getStringExtra(EXTRA_VALUE));
                     mDpm.setMaximumTimeToLock(mAdmin,
@@ -159,19 +168,32 @@ public class CommandReceiverActivity extends Activity {
         mDpm.clearUserRestriction(mAdmin, UserManager.DISALLOW_ADD_USER);
         mDpm.clearUserRestriction(mAdmin, UserManager.DISALLOW_ADJUST_VOLUME);
         mDpm.clearUserRestriction(mAdmin, UserManager.DISALLOW_CONFIG_BLUETOOTH);
+        mDpm.clearUserRestriction(mAdmin, UserManager.DISALLOW_CONFIG_CELL_BROADCASTS);
+        mDpm.clearUserRestriction(mAdmin, UserManager.DISALLOW_CONFIG_MOBILE_NETWORKS);
+        mDpm.clearUserRestriction(mAdmin, UserManager.DISALLOW_CONFIG_TETHERING);
         mDpm.clearUserRestriction(mAdmin, UserManager.DISALLOW_CONFIG_VPN);
         mDpm.clearUserRestriction(mAdmin, UserManager.DISALLOW_CONFIG_WIFI);
         mDpm.clearUserRestriction(mAdmin, UserManager.DISALLOW_DATA_ROAMING);
+        mDpm.clearUserRestriction(mAdmin, UserManager.DISALLOW_DEBUGGING_FEATURES);
+        mDpm.clearUserRestriction(mAdmin, UserManager.DISALLOW_FACTORY_RESET);
         mDpm.clearUserRestriction(mAdmin, UserManager.DISALLOW_FUN);
+        mDpm.clearUserRestriction(mAdmin, UserManager.DISALLOW_INSTALL_UNKNOWN_SOURCES);
+        mDpm.clearUserRestriction(mAdmin, UserManager.DISALLOW_NETWORK_RESET);
+        mDpm.clearUserRestriction(mAdmin, UserManager.DISALLOW_OUTGOING_BEAM);
+        mDpm.clearUserRestriction(mAdmin, UserManager.DISALLOW_REMOVE_USER);
 
+        mDpm.setDeviceOwnerLockScreenInfo(mAdmin, null);
         mDpm.setKeyguardDisabled(mAdmin, false);
+        mDpm.setAutoTimeRequired(mAdmin, false);
         mDpm.setStatusBarDisabled(mAdmin, false);
     }
 
     private void clearProfileOwnerRelatedPolicies() {
         mDpm.clearUserRestriction(mAdmin, UserManager.DISALLOW_APPS_CONTROL);
+        mDpm.clearUserRestriction(mAdmin, UserManager.DISALLOW_CONFIG_CREDENTIALS);
         mDpm.clearUserRestriction(mAdmin, UserManager.DISALLOW_MODIFY_ACCOUNTS);
         mDpm.clearUserRestriction(mAdmin, UserManager.DISALLOW_SHARE_LOCATION);
+        mDpm.clearUserRestriction(mAdmin, UserManager.DISALLOW_UNINSTALL_APPS);
 
         mDpm.setKeyguardDisabledFeatures(mAdmin, 0);
         mDpm.setPasswordQuality(mAdmin, 0);
