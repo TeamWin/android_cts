@@ -35,8 +35,6 @@ import java.util.Map;
  */
 public class DynamicConfig {
 
-    public final static String MODULE_NAME = "module-name";
-
     //XML constant
     public static final String NS = null;
     public static final String CONFIG_TAG = "dynamicConfig";
@@ -57,7 +55,12 @@ public class DynamicConfig {
     }
 
     public String getValue(String key) {
-        return mDynamicConfigMap.get(key).get(0);
+        List<String> singleValue = mDynamicConfigMap.get(key);
+        if (singleValue == null || singleValue.size() == 0 || singleValue.size() > 1) {
+            // key must exist in the map, and map to a list containing exactly one string
+            return null;
+        }
+        return singleValue.get(0);
     }
 
     public List<String> getValues(String key) {
