@@ -629,10 +629,20 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
         if (!mHasFeature) {
             return;
         }
-        // Place a outgoing call through work phone account and verify the call is inserted
-        // properly.
+        // Place a outgoing call through work phone account using TelecomManager and verify the
+        // call is inserted properly.
         assertTrue(runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".PhoneAccountTest",
-                "testOutgoingCall",
+                "testOutgoingCallUsingTelecomManager",
+                mProfileUserId));
+        // Make sure the call is not inserted into parent user.
+        assertTrue(runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".PhoneAccountTest",
+                "testEnsureCallNotInserted",
+                mParentUserId));
+
+        // Place a outgoing call through work phone account using ACTION_CALL and verify the call
+        // is inserted properly.
+        assertTrue(runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".PhoneAccountTest",
+                "testOutgoingCallUsingActionCall",
                 mProfileUserId));
         // Make sure the call is not inserted into parent user.
         assertTrue(runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".PhoneAccountTest",
