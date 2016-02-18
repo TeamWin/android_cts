@@ -55,7 +55,8 @@ public class DynamicConfigPusher implements ITargetCleaner {
             "target after test completion.")
     private boolean mCleanup = true;
 
-    @Option(name="module", description = "The test suite module using dynamic configuration")
+    @Option(name="config-filename", description = "The module name for module-level " +
+            "configurations, or the suite name for suite-level configurations")
     private String mModuleName;
 
     @Option(name = "target", description = "The test target, \"device\" or \"host\"")

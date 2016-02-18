@@ -19,7 +19,7 @@
 
     <target_preparer class="com.android.compatibility.common.tradefed.targetprep.DynamicConfigPusher">
         <option name="target" value="host" />
-        <option name="module" value="cts_v2"/>
+        <option name="config-filename" value="cts_v2"/>
         <option name="version" value="1.0"/>
     </target_preparer>
 
