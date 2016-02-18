@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-package android.support.car.cts;
+package android.car.cts;
 
-import android.support.car.Car;
-import android.support.car.hardware.CarSensorEvent;
-import android.support.car.hardware.CarSensorManager;
+import android.car.Car;
+import android.car.hardware.CarSensorEvent;
+import android.car.hardware.CarSensorManager;
 
 public class CarSensorManagerTest extends CarApiTestBase {
 

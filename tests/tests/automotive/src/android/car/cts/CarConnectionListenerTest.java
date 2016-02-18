@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-package android.support.car.cts;
+package android.car.cts;
 
-import android.support.car.Car;
-import android.support.car.CarConnectionListener;
+import android.car.Car;
+import android.car.CarConnectionListener;
 import android.util.Log;
 
 import java.util.concurrent.Semaphore;
