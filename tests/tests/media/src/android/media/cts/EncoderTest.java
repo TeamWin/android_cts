@@ -191,7 +191,7 @@ public class EncoderTest extends AndroidTestCase {
 
     private int queueInputBuffer(
             MediaCodec codec, ByteBuffer[] inputBuffers, int index,
-            InputStream istream, int mode) {
+            InputStream istream, int mode, long timeUs) {
         ByteBuffer buffer = inputBuffers[index];
         buffer.rewind();
         int size = buffer.limit();
@@ -238,7 +238,7 @@ public class EncoderTest extends AndroidTestCase {
             }
         }
 
-        codec.queueInputBuffer(index, 0 /* offset */, size, 0 /* timeUs */, 0);
+        codec.queueInputBuffer(index, 0 /* offset */, size, timeUs, 0 /* flags */);
 
         return size;
     }
@@ -292,7 +292,8 @@ public class EncoderTest extends AndroidTestCase {
         int muxidx = -1;
         if (sSaveResults) {
             try {
-                String outFile = "/data/local/tmp/transcoded-" + componentName + "-" + outBitrate +
+                String outFile = "/data/local/tmp/transcoded-" + componentName +
+                        "-" + sampleRate + "-" + channelCount + "-" + outBitrate +
                         "-" + mode + "-" + startSeed + ".mp4";
                 new File("outFile").delete();
                 muxer = new MediaMuxer(outFile, MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4);
@@ -340,12 +341,14 @@ public class EncoderTest extends AndroidTestCase {
                 index = codec.dequeueInputBuffer(kTimeoutUs /* timeoutUs */);
 
                 if (index != MediaCodec.INFO_TRY_AGAIN_LATER) {
+                    long timeUs =
+                            (long)numBytesSubmitted * 1000000 / (2 * channelCount * sampleRate);
                     if (numBytesSubmitted >= kNumInputBytes) {
                         codec.queueInputBuffer(
                                 index,
                                 0 /* offset */,
                                 0 /* size */,
-                                0 /* timeUs */,
+                                timeUs,
                                 MediaCodec.BUFFER_FLAG_END_OF_STREAM);
 
                         if (VERBOSE) {
@@ -355,7 +358,7 @@ public class EncoderTest extends AndroidTestCase {
                         doneSubmittingInput = true;
                     } else {
                         int size = queueInputBuffer(
-                                codec, codecInputBuffers, index, istream, mode);
+                                codec, codecInputBuffers, index, istream, mode, timeUs);
 
                         numBytesSubmitted += size;
 
