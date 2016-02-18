@@ -33,14 +33,17 @@ public class FailureListener extends ResultForwarder {
     private boolean mBugReportOnFailure;
     private boolean mLogcatOnFailure;
     private boolean mScreenshotOnFailure;
+    private boolean mRebootOnFailure;
 
     public FailureListener(ITestInvocationListener listener, ITestDevice device,
-            boolean bugReportOnFailure, boolean logcatOnFailure, boolean screenshotOnFailure) {
+            boolean bugReportOnFailure, boolean logcatOnFailure, boolean screenshotOnFailure,
+            boolean rebootOnFailure) {
         super(listener);
         mDevice = device;
         mBugReportOnFailure = bugReportOnFailure;
         mLogcatOnFailure = logcatOnFailure;
         mScreenshotOnFailure = screenshotOnFailure;
+        mRebootOnFailure = rebootOnFailure;
     }
 
     /**
@@ -73,6 +76,22 @@ public class FailureListener extends ResultForwarder {
             } catch (DeviceNotAvailableException e) {
                 CLog.e(e);
                 CLog.e("Device %s became unavailable while capturing screenshot",
+                        mDevice.getSerialNumber());
+            }
+        }
+        if (mRebootOnFailure) {
+            try {
+                // Rebooting on all failures can hide legitimate issues and platform instabilities,
+                // therefore only allowed on "user-debug" and "eng" builds.
+                if ("user".equals(mDevice.getProperty("ro.build.type"))) {
+                    CLog.e("Reboot-on-failure should only be used during development," +
+                            " this is a\" user\" build device");
+                } else {
+                    mDevice.reboot();
+                }
+            } catch (DeviceNotAvailableException e) {
+                CLog.e(e);
+                CLog.e("Device %s became unavailable while rebooting",
                         mDevice.getSerialNumber());
             }
         }
