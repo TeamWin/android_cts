@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
-package android.support.car.cts;
+package android.car.cts;
 
+import android.car.Car;
 import android.content.ComponentName;
+import android.content.ServiceConnection;
 import android.os.IBinder;
 import android.os.Looper;
-import android.support.car.Car;
-import android.support.car.ServiceConnectionListener;
 import android.test.AndroidTestCase;
 
 import java.util.concurrent.Semaphore;
@@ -50,13 +50,11 @@ public class CarApiTestBase extends AndroidTestCase {
     protected void tearDown() throws Exception {
         super.tearDown();
         mCar.disconnect();
-    }
-
-    protected synchronized Car getCar() {
+    }    protected synchronized Car getCar() {
         return mCar;
     }
 
-    protected class DefaultServiceConnectionListener implements ServiceConnectionListener {
+    protected class DefaultServiceConnectionListener implements ServiceConnection {
         private final Semaphore mConnectionWait = new Semaphore(0);
 
         public void waitForConnection(long timeoutMs) throws InterruptedException {
@@ -64,17 +62,7 @@ public class CarApiTestBase extends AndroidTestCase {
         }
 
         @Override
-        public void onServiceSuspended(int cause) {
-            assertMainThread();
-        }
-
-        @Override
         public void onServiceDisconnected(ComponentName name) {
-            assertMainThread();
-        }
-
-        @Override
-        public void onServiceConnectionFailed(int cause) {
             assertMainThread();
         }
 

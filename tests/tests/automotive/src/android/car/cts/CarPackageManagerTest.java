@@ -13,13 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package android.support.car.cts;
+package android.car.cts;
 
-import android.support.car.Car;
-import android.support.car.CarNotConnectedException;
-import android.support.car.content.pm.AppBlockingPackageInfo;
-import android.support.car.content.pm.CarAppBlockingPolicy;
-import android.support.car.content.pm.CarPackageManager;
+import android.car.Car;
+import android.car.CarNotConnectedException;
+import android.car.content.pm.CarPackageManager;
 import android.telecom.TelecomManager;
 import android.util.Log;
 
