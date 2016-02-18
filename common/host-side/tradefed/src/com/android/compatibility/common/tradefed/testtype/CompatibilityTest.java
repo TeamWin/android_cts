@@ -166,6 +166,10 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
             description = "Take a screenshot on every test failure.")
     private boolean mScreenshotOnFailure = false;
 
+    @Option(name = "reboot-on-failure",
+            description = "Reboot the device after every test failure.")
+    private boolean mRebootOnFailure = false;
+
     private int mTotalShards;
     private ITestDevice mDevice;
     private IBuildInfo mBuild;
@@ -242,7 +246,7 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
             List<IModuleDef> modules = moduleRepo.getModules(getDevice().getSerialNumber());
 
             listener = new FailureListener(listener, getDevice(), mBugReportOnFailure,
-                    mLogcatOnFailure, mScreenshotOnFailure);
+                    mLogcatOnFailure, mScreenshotOnFailure, mRebootOnFailure);
             int moduleCount = modules.size();
             CLog.logAndDisplay(LogLevel.INFO, "Starting %d module%s on %s", moduleCount,
                     (moduleCount > 1) ? "s" : "", mDevice.getSerialNumber());
