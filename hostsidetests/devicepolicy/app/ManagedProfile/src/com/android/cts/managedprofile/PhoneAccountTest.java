@@ -20,6 +20,7 @@ package com.android.cts.managedprofile;
 import android.app.Instrumentation;
 import android.content.ComponentName;
 import android.content.Context;
+import android.content.Intent;
 import android.database.ContentObserver;
 import android.database.Cursor;
 import android.net.Uri;
@@ -81,11 +82,19 @@ public class PhoneAccountTest extends InstrumentationTestCase {
         super.tearDown();
     }
 
+    public void testOutgoingCallUsingTelecomManager() throws Exception {
+        internalTestOutgoingCall(true /* usingTelecomManager */);
+    }
+
+    public void testOutgoingCallUsingActionCall() throws Exception {
+        internalTestOutgoingCall(false /* usingTelecomManager */);
+    }
+
     /**
      *  Placing an outgoing call through our phone account and verify the call is inserted
      *  properly.
      */
-    public void testOutgoingCall() throws Exception {
+    private void internalTestOutgoingCall(boolean usingTelecomManager) throws Exception {
         // Make sure no lingering values from previous runs.
         cleanupCall(false);
         final Context context = getInstrumentation().getContext();
@@ -102,10 +111,11 @@ public class PhoneAccountTest extends InstrumentationTestCase {
                             countDownLatch));
 
             // Place the call.
-            Uri phoneUri = Uri.fromParts(PhoneAccount.SCHEME_TEL, PHONE_NUMBER, null);
-            Bundle extras = new Bundle();
-            extras.putParcelable(TelecomManager.EXTRA_PHONE_ACCOUNT_HANDLE, phoneAccountHandle);
-            mTelecomManager.placeCall(phoneUri, extras);
+            if (usingTelecomManager) {
+                placeCallUsingTelecomManager(phoneAccountHandle);
+            } else {
+                placeCallUsingActionCall(phoneAccountHandle);
+            }
 
             // Make sure the call inserted is correct.
             boolean calllogProviderChanged = countDownLatch.await(1, TimeUnit.MINUTES);
@@ -116,6 +126,21 @@ public class PhoneAccountTest extends InstrumentationTestCase {
             cleanupCall(true /* verifyDeletion */ );
             unregisterPhoneAccount();
         }
+    }
+
+    private void placeCallUsingTelecomManager(PhoneAccountHandle phoneAccountHandle) {
+        Uri phoneUri = Uri.fromParts(PhoneAccount.SCHEME_TEL, PHONE_NUMBER, null);
+        Bundle extras = new Bundle();
+        extras.putParcelable(TelecomManager.EXTRA_PHONE_ACCOUNT_HANDLE, phoneAccountHandle);
+        mTelecomManager.placeCall(phoneUri, extras);
+    }
+
+    private void placeCallUsingActionCall(PhoneAccountHandle phoneAccountHandle) {
+        Intent intent = new Intent(Intent.ACTION_CALL);
+        intent.setData(Uri.parse("tel:" + PHONE_NUMBER));
+        intent.putExtra(TelecomManager.EXTRA_PHONE_ACCOUNT_HANDLE, phoneAccountHandle);
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        mContext.startActivity(intent);
     }
 
     /**
