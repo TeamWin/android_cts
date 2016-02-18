@@ -15,14 +15,14 @@
 -->
 
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="android.support.car.cts">
+    package="android.car.cts">
     <uses-feature android:name="android.hardware.type.automotive" />
     <application>
         <uses-library android:name="android.test.runner" />
     </application>
 
     <instrumentation android:name="android.support.test.runner.AndroidJUnitRunner"
-                     android:targetPackage="android.support.car.cts"
+                     android:targetPackage="android.car.cts"
                      android:label="CTS tests for Automotive">
         <meta-data android:name="listener"
             android:value="com.android.cts.runner.CtsTestRunListener" />
