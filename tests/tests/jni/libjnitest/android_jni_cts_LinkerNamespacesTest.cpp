@@ -44,6 +44,7 @@ static std::vector<std::string> kDefaultLibraryPaths = {
 
 static std::unordered_set<std::string> kPublicLibraries = {
     "libandroid.so",
+    "libcamera2ndk.so",
     "libc.so",
     "libdl.so",
     "libEGL.so",
