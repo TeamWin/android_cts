@@ -354,6 +354,37 @@ public class ViewTest extends ActivityInstrumentationTestCase2<ViewTestCtsActivi
         assertNull(view.getTouchDelegate());
     }
 
+    public void testMouseEventCallsGetPointerIcon() {
+        final MockView view = (MockView) mActivity.findViewById(R.id.mock_view);
+
+        final int[] xy = new int[2];
+        view.getLocationOnScreen(xy);
+        final int viewWidth = view.getWidth();
+        final int viewHeight = view.getHeight();
+        float x = xy[0] + viewWidth / 2.0f;
+        float y = xy[1] + viewHeight / 2.0f;
+
+        long eventTime = SystemClock.uptimeMillis();
+
+        MotionEvent.PointerCoords[] pointerCoords = new MotionEvent.PointerCoords[1];
+        pointerCoords[0] = new MotionEvent.PointerCoords();
+        pointerCoords[0].x = x;
+        pointerCoords[0].y = y;
+
+        final int[] pointerIds = new int[1];
+        pointerIds[0] = 0;
+
+        MotionEvent event = MotionEvent.obtain(0, eventTime, MotionEvent.ACTION_HOVER_MOVE,
+                1, pointerIds, pointerCoords, 0, 0, 0, 0, 0, InputDevice.SOURCE_MOUSE, 0);
+        getInstrumentation().sendPointerSync(event);
+        getInstrumentation().waitForIdleSync();
+
+        assertTrue(view.hasCalledGetPointerIcon());
+
+        final MockView view2 = (MockView) mActivity.findViewById(R.id.scroll_view);
+        assertFalse(view2.hasCalledGetPointerIcon());
+    }
+
     public void testAccessPointerShape() {
         View view = mActivity.findViewById(R.id.pointer_icon_layout);
         MotionEvent event = MotionEvent.obtain(0, 0, MotionEvent.ACTION_HOVER_MOVE,

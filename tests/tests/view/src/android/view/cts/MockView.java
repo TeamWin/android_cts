@@ -17,7 +17,6 @@
 package android.view.cts;
 
 import android.content.Context;
-import android.content.res.TypedArray;
 import android.graphics.Canvas;
 import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
@@ -28,9 +27,9 @@ import android.util.SparseArray;
 import android.view.ContextMenu;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
+import android.view.PointerIcon;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.ViewParent;
 import android.view.ContextMenu.ContextMenuInfo;
 
 public class MockView extends View {
@@ -70,6 +69,7 @@ public class MockView extends View {
     private boolean mCalledComputeScroll = false;
     private boolean mCalledDispatchKeyEventPreIme = false;
     private boolean mCalledOnKeyPreIme = false;
+    private boolean mCalledGetPointerIcon = false;
 
     private int mOldWidth = -1;
     private int mOldHeight = -1;
@@ -606,6 +606,16 @@ public class MockView extends View {
         return mCalledOnKeyPreIme;
     }
 
+    @Override
+    public PointerIcon getPointerIcon(MotionEvent event, float x, float y) {
+        mCalledGetPointerIcon = true;
+        return super.getPointerIcon(event, x, y);
+    }
+
+    public boolean hasCalledGetPointerIcon() {
+        return mCalledGetPointerIcon;
+    }
+
     public void reset() {
         mCalledOnCreateContextMenu = false;
 
@@ -644,6 +654,7 @@ public class MockView extends View {
         mCalledComputeScroll = false;
         mCalledDispatchKeyEventPreIme = false;
         mCalledOnKeyPreIme = false;
+        mCalledGetPointerIcon = false;
 
         mOldWidth = -1;
         mOldHeight = -1;
