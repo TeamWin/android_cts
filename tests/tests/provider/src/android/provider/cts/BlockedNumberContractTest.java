@@ -95,8 +95,8 @@ public class BlockedNumberContractTest extends TestCaseThatRunsIfTelephonyIsEnab
         try {
             mContentResolver.update(
                     BlockedNumbers.CONTENT_URI, getContentValues("123"), null, null);
-            fail("Should throw UnsupportedOperationException");
-        } catch (UnsupportedOperationException expected) {
+            fail("Should throw SecurityException");
+        } catch (SecurityException expected) {
         }
     }
 
