@@ -377,12 +377,13 @@ public class GradientDrawableTest extends AndroidTestCase {
         assertEquals(origPadding, tempPadding);
 
         // Some precision is lost when scaling the half-density
-        // drawable back up to the original density.
+        // drawable back up to the original density. Padding is
+        // always truncated, rather than rounded.
         final Rect sloppyOrigPadding = new Rect();
-        sloppyOrigPadding.left = 2 * Math.round(origPadding.left / 2f);
-        sloppyOrigPadding.top = 2 * Math.round(origPadding.top / 2f);
-        sloppyOrigPadding.right = 2 * Math.round(origPadding.right / 2f);
-        sloppyOrigPadding.bottom = 2 * Math.round(origPadding.bottom / 2f);
+        sloppyOrigPadding.left = 2 * (origPadding.left / 2);
+        sloppyOrigPadding.top = 2 * (origPadding.top / 2);
+        sloppyOrigPadding.right = 2 * (origPadding.right / 2);
+        sloppyOrigPadding.bottom = 2 * (origPadding.bottom / 2);
 
         // Ensure theme density is applied correctly.
         final Theme t = res.newTheme();

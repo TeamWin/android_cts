@@ -1691,20 +1691,20 @@ public class LayerDrawableTest extends AndroidTestCase {
         final int initialLayerWidth = preloadedDrawable.getLayerWidth(0);
         final int initialLayerHeight = preloadedDrawable.getLayerHeight(0);
 
-        // Set density to half of original. Unlike offsets, which are
+        // Set density to half of original. Padding and insets are
         // truncated, dimensions are rounded to the nearest pixel.
         DrawableTestUtils.setResourcesDensity(res, densityDpi / 2);
         final LayerDrawable halfDrawable =
                 (LayerDrawable) preloadedConstantState.newDrawable(res);
         assertEquals(Math.round(initialWidth / 2f), halfDrawable.getIntrinsicWidth());
-        assertEquals(Math.round(initialLeftPadding / 2f), halfDrawable.getLeftPadding());
-        assertEquals(Math.round(initialRightPadding / 2f), halfDrawable.getRightPadding());
-        assertEquals(Math.round(initialBottomPadding / 2f), halfDrawable.getBottomPadding());
-        assertEquals(Math.round(initialTopPadding / 2f), halfDrawable.getTopPadding());
-        assertEquals(Math.round(initialLayerInsetLeft / 2f),halfDrawable.getLayerInsetLeft(0));
-        assertEquals(Math.round(initialLayerInsetRight / 2f), halfDrawable.getLayerInsetRight(0));
-        assertEquals(Math.round(initialLayerInsetTop / 2f), halfDrawable.getLayerInsetTop(0));
-        assertEquals(Math.round(initialLayerInsetBottom / 2f), halfDrawable.getLayerInsetBottom(0));
+        assertEquals(initialLeftPadding / 2, halfDrawable.getLeftPadding());
+        assertEquals(initialRightPadding / 2, halfDrawable.getRightPadding());
+        assertEquals(initialBottomPadding / 2, halfDrawable.getBottomPadding());
+        assertEquals(initialTopPadding / 2, halfDrawable.getTopPadding());
+        assertEquals(initialLayerInsetLeft / 2,halfDrawable.getLayerInsetLeft(0));
+        assertEquals(initialLayerInsetRight / 2, halfDrawable.getLayerInsetRight(0));
+        assertEquals(initialLayerInsetTop / 2, halfDrawable.getLayerInsetTop(0));
+        assertEquals(initialLayerInsetBottom / 2, halfDrawable.getLayerInsetBottom(0));
         assertEquals(Math.round(initialLayerWidth / 2f), halfDrawable.getLayerWidth(0));
         assertEquals(Math.round(initialLayerHeight / 2f), halfDrawable.getLayerHeight(0));
 
