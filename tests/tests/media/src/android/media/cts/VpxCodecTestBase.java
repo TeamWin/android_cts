@@ -262,8 +262,10 @@ public class VpxCodecTestBase extends AndroidTestCase {
             params.scaledYuvFilename = SDCARD_DIR + File.separator +
                     outputIvfBaseName + resolutionScales[i]+ ".yuv";
             params.inputResourceId = R.raw.football_qvga;
+            params.codecMimeType = codecMimeType;
+            String codecSuffix = VP8_MIME.equals(codecMimeType) ? "vp8" : "vp9";
             params.outputIvfFilename = SDCARD_DIR + File.separator +
-                    outputIvfBaseName + resolutionScales[i] + ".ivf";
+                    outputIvfBaseName + resolutionScales[i] + "_" + codecSuffix + ".ivf";
             params.forceGoogleEncoder = false;
             params.frameCount = encodeSeconds * frameRate;
             params.frameRate = frameRate;
@@ -1288,7 +1290,8 @@ public class VpxCodecTestBase extends AndroidTestCase {
         InputStream yuvStream = OpenFileOrResourceId(
                 streamParams.inputYuvFilename, streamParams.inputResourceId);
         IvfWriter ivf = new IvfWriter(
-                streamParams.outputIvfFilename, streamParams.frameWidth, streamParams.frameHeight);
+                streamParams.outputIvfFilename, streamParams.codecMimeType,
+                streamParams.frameWidth, streamParams.frameHeight);
 
         // Create a media format signifying desired output.
         if (streamParams.bitrateType == VIDEO_ControlRateConstant) {
@@ -1462,7 +1465,8 @@ public class VpxCodecTestBase extends AndroidTestCase {
 
         // Open input/output
         IvfWriter ivf = new IvfWriter(
-                streamParams.outputIvfFilename, streamParams.frameWidth, streamParams.frameHeight);
+                streamParams.outputIvfFilename, streamParams.codecMimeType,
+                streamParams.frameWidth, streamParams.frameHeight);
 
         // Create a media format signifying desired output.
         if (streamParams.bitrateType == VIDEO_ControlRateConstant) {
@@ -1582,7 +1586,9 @@ public class VpxCodecTestBase extends AndroidTestCase {
             yuvStream[i] = new FileInputStream(params.scaledYuvFilename);
 
             // Create IVF writer
-            ivf[i] = new IvfWriter(params.outputIvfFilename, params.frameWidth, params.frameHeight);
+            ivf[i] = new IvfWriter(
+                    params.outputIvfFilename, params.codecMimeType,
+                    params.frameWidth, params.frameHeight);
 
             // Frame buffer
             int frameSize = params.frameWidth * params.frameHeight * 3 / 2;
