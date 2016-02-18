@@ -73,12 +73,6 @@ public class SELinuxTest extends AndroidTestCase {
         assertFalse(checkSELinuxAccess("u:r:zygote:s0", "u:object_r:runas_exec:s0", "file", "getattr", "/system/bin/run-as"));
     }
 
-    public void testNoBooleans() throws Exception {
-        // Intentionally not using JNI bindings to keep things simple
-        File[] files = new File("/sys/fs/selinux/booleans/").listFiles();
-        assertEquals(0, files.length);
-    }
-
     public void testCTSIsUntrustedApp() throws IOException {
         String found = KernelSettingsTest.getFile("/proc/self/attr/current");
         String expected = "u:r:untrusted_app:s0";
