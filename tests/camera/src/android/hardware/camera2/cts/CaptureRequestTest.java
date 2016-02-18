@@ -79,6 +79,7 @@ public class CaptureRequestTest extends Camera2SurfaceViewTestCase {
     private static final int NUM_RESULTS_WAIT_TIMEOUT = 100;
     private static final int NUM_FRAMES_WAITED_FOR_UNKNOWN_LATENCY = 8;
     private static final int NUM_TEST_FOCUS_DISTANCES = 10;
+    private static final int NUM_FOCUS_DISTANCES_REPEAT = 3;
     // 5 percent error margin for calibrated device
     private static final float FOCUS_DISTANCE_ERROR_PERCENT_CALIBRATED = 0.05f;
     // 25 percent error margin for uncalibrated device
@@ -851,36 +852,66 @@ public class CaptureRequestTest extends Camera2SurfaceViewTestCase {
     }
 
     private void focusDistanceTestByCamera() throws Exception {
-        Size maxPrevSize = mOrderedPreviewSizes.get(0);
-        float[] testDistances = getFocusDistanceTestValuesInOrder();
         CaptureRequest.Builder requestBuilder =
                 mCamera.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW);
         requestBuilder.set(CaptureRequest.CONTROL_AF_MODE, CaptureRequest.CONTROL_AF_MODE_OFF);
+        int calibrationStatus = mStaticInfo.getFocusDistanceCalibrationChecked();
+        float errorMargin = FOCUS_DISTANCE_ERROR_PERCENT_UNCALIBRATED;
+        if (calibrationStatus ==
+                CameraMetadata.LENS_INFO_FOCUS_DISTANCE_CALIBRATION_CALIBRATED) {
+            errorMargin = FOCUS_DISTANCE_ERROR_PERCENT_CALIBRATED;
+        } else if (calibrationStatus ==
+                CameraMetadata.LENS_INFO_FOCUS_DISTANCE_CALIBRATION_APPROXIMATE) {
+            errorMargin = FOCUS_DISTANCE_ERROR_PERCENT_APPROXIMATE;
+        }
+
+        // Test changing focus distance with repeating request
+        focusDistanceTestRepeating(requestBuilder, errorMargin);
+
+        if (calibrationStatus ==
+                CameraMetadata.LENS_INFO_FOCUS_DISTANCE_CALIBRATION_CALIBRATED)  {
+            // Test changing focus distance with burst request
+            focusDistanceTestBurst(requestBuilder, errorMargin);
+        }
+    }
+
+    private void focusDistanceTestRepeating(CaptureRequest.Builder requestBuilder,
+            float errorMargin) throws Exception {
+        CaptureRequest request;
+        float[] testDistances = getFocusDistanceTestValuesInOrder(0, 0);
+        Size maxPrevSize = mOrderedPreviewSizes.get(0);
         SimpleCaptureCallback resultListener = new SimpleCaptureCallback();
         startPreview(requestBuilder, maxPrevSize, resultListener);
 
-        CaptureRequest request;
         float[] resultDistances = new float[testDistances.length];
+        int[] resultLensStates = new int[testDistances.length];
+
+        // Collect results
         for (int i = 0; i < testDistances.length; i++) {
             requestBuilder.set(CaptureRequest.LENS_FOCUS_DISTANCE, testDistances[i]);
             request = requestBuilder.build();
             resultListener = new SimpleCaptureCallback();
             mSession.setRepeatingRequest(request, resultListener, mHandler);
             waitForSettingsApplied(resultListener, NUM_FRAMES_WAITED_FOR_UNKNOWN_LATENCY);
-            resultDistances[i] = verifyFocusDistanceControl(testDistances[i], request,
-                    resultListener);
+            waitForResultValue(resultListener, CaptureResult.LENS_STATE,
+                    CaptureResult.LENS_STATE_STATIONARY, NUM_RESULTS_WAIT_TIMEOUT);
+            CaptureResult result = resultListener.getCaptureResultForRequest(request,
+                    NUM_RESULTS_WAIT_TIMEOUT);
+
+            resultDistances[i] = getValueNotNull(result, CaptureResult.LENS_FOCUS_DISTANCE);
+            resultLensStates[i] = getValueNotNull(result, CaptureResult.LENS_STATE);
+
             if (VERBOSE) {
-                Log.v(TAG, "Capture request focus distance: " + testDistances[i] + " result: "
-                        + resultDistances[i]);
+                Log.v(TAG, "Capture repeating request focus distance: " + testDistances[i]
+                        + " result: " + resultDistances[i] + " lens state " + resultLensStates[i]);
             }
         }
 
-        // Verify the monotonicity
-        mCollector.checkArrayMonotonicityAndNotAllEqual(CameraTestUtils.toObject(resultDistances),
-                /*ascendingOrder*/true);
+        verifyFocusDistance(testDistances, resultDistances, resultLensStates,
+                /*ascendingOrder*/true, /*noOvershoot*/false, /*repeatStart*/0, /*repeatEnd*/0,
+                errorMargin);
 
-        if (mStaticInfo.getCharacteristics().getKeys().
-                contains(CameraCharacteristics.LENS_INFO_HYPERFOCAL_DISTANCE)) {
+        if (mStaticInfo.areKeysAvailable(CameraCharacteristics.LENS_INFO_HYPERFOCAL_DISTANCE)) {
 
             // Test hyperfocal distance optionally
             float hyperFocalDistance = mStaticInfo.getHyperfocalDistanceChecked();
@@ -894,57 +925,157 @@ public class CaptureRequestTest extends Camera2SurfaceViewTestCase {
                 // Then wait for the lens.state to be stationary.
                 waitForResultValue(resultListener, CaptureResult.LENS_STATE,
                         CaptureResult.LENS_STATE_STATIONARY, NUM_RESULTS_WAIT_TIMEOUT);
-                // Need get reasonably accurate value.
                 CaptureResult result = resultListener.getCaptureResult(WAIT_FOR_RESULT_TIMEOUT_MS);
                 Float focusDistance = getValueNotNull(result, CaptureResult.LENS_FOCUS_DISTANCE);
-                float errorMargin = FOCUS_DISTANCE_ERROR_PERCENT_UNCALIBRATED;
-                int calibrationStatus = mStaticInfo.getFocusDistanceCalibrationChecked();
-                if (calibrationStatus ==
-                        CameraMetadata.LENS_INFO_FOCUS_DISTANCE_CALIBRATION_CALIBRATED) {
-                    errorMargin = FOCUS_DISTANCE_ERROR_PERCENT_CALIBRATED;
-                } else if (calibrationStatus ==
-                        CameraMetadata.LENS_INFO_FOCUS_DISTANCE_CALIBRATION_APPROXIMATE) {
-                    errorMargin = FOCUS_DISTANCE_ERROR_PERCENT_APPROXIMATE;
-                }
                 mCollector.expectInRange("Focus distance for hyper focal should be close enough to" +
-                                "requested value", focusDistance,
+                        " requested value", focusDistance,
                         hyperFocalDistance * (1.0f - errorMargin),
-                        hyperFocalDistance * (1.0f + errorMargin)
-                );
+                        hyperFocalDistance * (1.0f + errorMargin));
             }
         }
+    }
+
+    private void focusDistanceTestBurst(CaptureRequest.Builder requestBuilder,
+            float errorMargin) throws Exception {
+
+        Size maxPrevSize = mOrderedPreviewSizes.get(0);
+        float[] testDistances = getFocusDistanceTestValuesInOrder(NUM_FOCUS_DISTANCES_REPEAT,
+                NUM_FOCUS_DISTANCES_REPEAT);
+        SimpleCaptureCallback resultListener = new SimpleCaptureCallback();
+        startPreview(requestBuilder, maxPrevSize, resultListener);
+
+        float[] resultDistances = new float[testDistances.length];
+        int[] resultLensStates = new int[testDistances.length];
+
+        final int maxPipelineDepth = mStaticInfo.getCharacteristics().get(
+            CameraCharacteristics.REQUEST_PIPELINE_MAX_DEPTH);
+
+        // Move lens to starting position, and wait for the lens.state to be stationary.
+        CaptureRequest request;
+        requestBuilder.set(CaptureRequest.LENS_FOCUS_DISTANCE, testDistances[0]);
+        request = requestBuilder.build();
+        mSession.setRepeatingRequest(request, resultListener, mHandler);
+        waitForResultValue(resultListener, CaptureResult.LENS_STATE,
+                CaptureResult.LENS_STATE_STATIONARY, NUM_RESULTS_WAIT_TIMEOUT);
+
+        // Submit burst of requests with different focus distances
+        List<CaptureRequest> burst = new ArrayList<>();
+        for (int i = 0; i < testDistances.length; i ++) {
+            requestBuilder.set(CaptureRequest.LENS_FOCUS_DISTANCE, testDistances[i]);
+            burst.add(requestBuilder.build());
+        }
+        mSession.captureBurst(burst, resultListener, mHandler);
+
+        for (int i = 0; i < testDistances.length; i++) {
+            CaptureResult result = resultListener.getCaptureResultForRequest(
+                    burst.get(i), maxPipelineDepth+1);
+
+            resultDistances[i] = getValueNotNull(result, CaptureResult.LENS_FOCUS_DISTANCE);
+            resultLensStates[i] = getValueNotNull(result, CaptureResult.LENS_STATE);
+
+            if (VERBOSE) {
+                Log.v(TAG, "Capture burst request focus distance: " + testDistances[i]
+                        + " result: " + resultDistances[i] + " lens state " + resultLensStates[i]);
+            }
+        }
+
+        verifyFocusDistance(testDistances, resultDistances, resultLensStates,
+                /*ascendingOrder*/true, /*noOvershoot*/true,
+                /*repeatStart*/NUM_FOCUS_DISTANCES_REPEAT, /*repeatEnd*/NUM_FOCUS_DISTANCES_REPEAT,
+                errorMargin);
+
     }
 
     /**
      * Verify focus distance control.
      *
-     * @param distance The focus distance requested
-     * @param request The capture request to control the manual focus distance
-     * @param resultListener The capture listener to recieve capture result callbacks
-     * @return the result focus distance
+     * Assumption:
+     * - First repeatStart+1 elements of requestedDistances share the same value
+     * - Last repeatEnd+1 elements of requestedDistances share the same value
+     * - All elements in between are monotonically increasing/decreasing depending on ascendingOrder.
+     * - Focuser is at requestedDistances[0] at the beginning of the test.
+     *
+     * @param requestedDistances The requested focus distances
+     * @param resultDistances The result focus distances
+     * @param lensStates The result lens states
+     * @param ascendingOrder The order of the expected focus distance request/output
+     * @param noOvershoot Assert that focus control doesn't overshoot the requested value
+     * @param repeatStart The number of times the starting focus distance is repeated
+     * @param repeatEnd The number of times the ending focus distance is repeated
+     * @param errorMargin The error margin between request and result
      */
-    private float verifyFocusDistanceControl(float distance, CaptureRequest request,
-            SimpleCaptureCallback resultListener) {
-        // Need make sure the result corresponding to the request is back, then check.
-        CaptureResult result =
-                resultListener.getCaptureResultForRequest(request, NUM_RESULTS_WAIT_TIMEOUT);
-        // Then wait for the lens.state to be stationary.
-        waitForResultValue(resultListener, CaptureResult.LENS_STATE,
-                CaptureResult.LENS_STATE_STATIONARY, NUM_RESULTS_WAIT_TIMEOUT);
-        // Then check the focus distance.
-        result = resultListener.getCaptureResultForRequest(request, NUM_RESULTS_WAIT_TIMEOUT);
-        Float resultDistance = getValueNotNull(result, CaptureResult.LENS_FOCUS_DISTANCE);
-        if (mStaticInfo.getFocusDistanceCalibrationChecked() ==
-                CameraCharacteristics.LENS_INFO_FOCUS_DISTANCE_CALIBRATION_CALIBRATED) {
-            // TODO: what's more to test for CALIBRATED devices?
-        }
+    private void verifyFocusDistance(float[] requestedDistances, float[] resultDistances,
+            int[] lensStates, boolean ascendingOrder, boolean noOvershoot, int repeatStart,
+            int repeatEnd, float errorMargin) {
 
         float minValue = 0;
         float maxValue = mStaticInfo.getMinimumFocusDistanceChecked();
-        mCollector.expectInRange("Result focus distance is out of range",
-                resultDistance, minValue, maxValue);
+        float hyperfocalDistance = 0;
+        if (mStaticInfo.areKeysAvailable(CameraCharacteristics.LENS_INFO_HYPERFOCAL_DISTANCE)) {
+            hyperfocalDistance = mStaticInfo.getHyperfocalDistanceChecked();
+        }
 
-        return resultDistance;
+        // Verify lens and focus distance do not change for first repeatStart
+        // results.
+        for (int i = 0; i < repeatStart; i ++) {
+            float marginMin = requestedDistances[i] * (1.0f - errorMargin);
+            // HAL may choose to use hyperfocal distance for all distances between [0, hyperfocal].
+            float marginMax =
+                    Math.max(requestedDistances[i], hyperfocalDistance) * (1.0f + errorMargin);
+
+            mCollector.expectEquals("Lens moves even though focus_distance didn't change",
+                    lensStates[i], CaptureResult.LENS_STATE_STATIONARY);
+            if (noOvershoot) {
+                mCollector.expectInRange("Focus distance in result should be close enough to " +
+                        "requested value", resultDistances[i], marginMin, marginMax);
+            }
+            mCollector.expectInRange("Result focus distance is out of range",
+                    resultDistances[i], minValue, maxValue);
+        }
+
+        for (int i = repeatStart; i < resultDistances.length-1; i ++) {
+            float marginMin = requestedDistances[i] * (1.0f - errorMargin);
+            // HAL may choose to use hyperfocal distance for all distances between [0, hyperfocal].
+            float marginMax =
+                    Math.max(requestedDistances[i], hyperfocalDistance) * (1.0f + errorMargin);
+            if (noOvershoot) {
+                // Result focus distance shouldn't overshoot the request
+                boolean condition;
+                if (ascendingOrder) {
+                    condition = resultDistances[i] <= marginMax;
+               } else {
+                    condition = resultDistances[i] >= marginMin;
+                }
+                mCollector.expectTrue(String.format(
+                      "Lens shouldn't move past request focus distance. result " +
+                      resultDistances[i] + " vs target of " +
+                      (ascendingOrder ? marginMax : marginMin)), condition);
+            }
+
+            // Verify monotonically increased focus distance setting
+            boolean condition;
+            float compareDistance = resultDistances[i+1] - resultDistances[i];
+            if (i < resultDistances.length-1-repeatEnd) {
+                condition = (ascendingOrder ? compareDistance > 0 : compareDistance < 0);
+            } else {
+                condition = (ascendingOrder ? compareDistance >= 0 : compareDistance <= 0);
+            }
+            mCollector.expectTrue(String.format("Adjacent [resultDistances, lens_state] results ["
+                  + resultDistances[i] + "," + lensStates[i] + "], [" + resultDistances[i+1] + ","
+                  + lensStates[i+1] + "] monotonicity is broken"), condition);
+        }
+
+        mCollector.expectTrue(String.format("All values of this array are equal: " +
+                resultDistances[0] + " " + resultDistances[resultDistances.length-1]),
+                resultDistances[0] != resultDistances[resultDistances.length-1]);
+
+        // Verify lens moved to destination location.
+        mCollector.expectInRange("Focus distance " + resultDistances[resultDistances.length-1] +
+                " for minFocusDistance should be closed enough to requested value " +
+                requestedDistances[requestedDistances.length-1],
+                resultDistances[resultDistances.length-1],
+                requestedDistances[requestedDistances.length-1] * (1.0f - errorMargin),
+                requestedDistances[requestedDistances.length-1] * (1.0f + errorMargin));
     }
 
     /**
@@ -2232,16 +2363,28 @@ public class CaptureRequestTest extends Camera2SurfaceViewTestCase {
 
     /**
      * Generate test focus distances in range of [0, minFocusDistance] in increasing order.
+     *
+     * @param repeatMin number of times minValue will be repeated.
+     * @param repeatMax number of times maxValue will be repeated.
      */
-    private float[] getFocusDistanceTestValuesInOrder() {
-        float[] testValues = new float[NUM_TEST_FOCUS_DISTANCES + 1];
+    private float[] getFocusDistanceTestValuesInOrder(int repeatMin, int repeatMax) {
+        int totalCount = NUM_TEST_FOCUS_DISTANCES + 1 + repeatMin + repeatMax;
+        float[] testValues = new float[totalCount];
         float minValue = 0;
         float maxValue = mStaticInfo.getMinimumFocusDistanceChecked();
 
         float range = maxValue - minValue;
         float stepSize = range / NUM_TEST_FOCUS_DISTANCES;
-        for (int i = 0; i < testValues.length; i++) {
-            testValues[i] = minValue + stepSize * i;
+
+        for (int i = 0; i < repeatMin; i++) {
+            testValues[i] = minValue;
+        }
+        for (int i = 0; i <= NUM_TEST_FOCUS_DISTANCES; i++) {
+            testValues[repeatMin+i] = minValue + stepSize * i;
+        }
+        for (int i = 0; i < repeatMax; i++) {
+            testValues[repeatMin+NUM_TEST_FOCUS_DISTANCES+1+i] =
+                    maxValue;
         }
 
         return testValues;
