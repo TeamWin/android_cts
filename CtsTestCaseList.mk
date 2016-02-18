@@ -95,6 +95,7 @@ cts_support_packages := \
     CtsDeviceInfo \
     CtsDeviceOsTestApp \
     CtsDeviceOwnerApp \
+    CtsProfileOwnerApp \
     CtsDeviceServicesTestApp \
     CtsDeviceTaskSwitchingAppA \
     CtsDeviceTaskSwitchingAppB \

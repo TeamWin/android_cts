@@ -82,6 +82,13 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
         executeDeviceOwnerTest("LockScreenInfoTest");
     }
 
+    public void testWifi() throws Exception {
+        if (hasDeviceFeature("android.hardware.wifi")) {
+            return;
+        }
+        executeDeviceOwnerTest("WifiTest");
+    }
+
     public void testRemoteBugreportWithTwoUsers() throws Exception {
         if (!mHasFeature || getMaxNumberOfUsersSupported() < 2) {
             return;

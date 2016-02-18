@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014 The Android Open Source Project
+ * Copyright (C) 2016 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,39 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.android.cts.deviceowner;
+package com.android.cts.profileowner;
 
 import android.app.admin.DeviceAdminReceiver;
 import android.app.admin.DevicePolicyManager;
 import android.content.ComponentName;
 import android.content.Context;
-import android.content.Intent;
-import android.net.Uri;
-import android.os.Process;
 import android.test.AndroidTestCase;
 
-/**
- * Base class for device-owner based tests.
- *
- * This class handles making sure that the test is the device owner
- * and that it has an active admin registered, so that all tests may
- * assume these are done. The admin component can be accessed through
- * {@link #getWho()}.
- */
-public abstract class BaseDeviceOwnerTest extends AndroidTestCase {
+public abstract class BaseProfileOwnerTest extends AndroidTestCase {
 
     public static class BasicAdminReceiver extends DeviceAdminReceiver {
-        @Override
-        public String onChoosePrivateKeyAlias(Context context, Intent intent, int uid, Uri uri,
-                String suggestedAlias) {
-            if (uid != Process.myUid() || uri == null) {
-                return null;
-            }
-            return uri.getQueryParameter("alias");
-        }
     }
 
-    public static final String PACKAGE_NAME = BaseDeviceOwnerTest.class.getPackage().getName();
+    public static final String PACKAGE_NAME = BaseProfileOwnerTest.class.getPackage().getName();
 
     protected DevicePolicyManager mDevicePolicyManager;
 
@@ -55,13 +36,13 @@ public abstract class BaseDeviceOwnerTest extends AndroidTestCase {
 
         mDevicePolicyManager = (DevicePolicyManager)
                 mContext.getSystemService(Context.DEVICE_POLICY_SERVICE);
-        assertDeviceOwner(mDevicePolicyManager);
+        assertProfileOwner(mDevicePolicyManager);
     }
 
-    static void assertDeviceOwner(DevicePolicyManager dpm) {
+    static void assertProfileOwner(DevicePolicyManager dpm) {
         assertNotNull(dpm);
         assertTrue(dpm.isAdminActive(getWho()));
-        assertTrue(dpm.isDeviceOwnerApp(PACKAGE_NAME));
+        assertTrue(dpm.isProfileOwnerApp(PACKAGE_NAME));
     }
 
     protected static ComponentName getWho() {
