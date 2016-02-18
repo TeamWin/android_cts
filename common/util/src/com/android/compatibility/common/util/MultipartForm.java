@@ -77,21 +77,19 @@ class MultipartForm {
      *
      * This will handle a redirection from the server.
      *
+     * @return response code
      * @throws IOException
      */
-    public void submit() throws IOException {
-        String redirectUrl = submitForm(mServerUrl);
-        if (redirectUrl != null) {
-            submitForm(redirectUrl);
-        }
+    public int submit() throws IOException {
+        return submitForm(mServerUrl);
     }
 
     /**
      * @param serverUrl to post the data to
-     * @return a url if the server redirected to another url
+     * @return response code
      * @throws IOException
      */
-    private String submitForm(String serverUrl) throws IOException {
+    private int submitForm(String serverUrl) throws IOException {
         HttpURLConnection connection = null;
         try {
             URL url = new URL(serverUrl);
@@ -116,16 +114,16 @@ class MultipartForm {
             InputStream input = connection.getInputStream();
             input.close();
 
-            if (connection.getResponseCode() == 302) {
-                return connection.getHeaderField("Location");
+            int response = connection.getResponseCode();
+            if (response == 302) {
+                return submitForm(connection.getHeaderField("Location"));
             }
+            return response;
         } finally {
             if (connection != null) {
                 connection.disconnect();
             }
         }
-
-        return null;
     }
 
     /* package */ byte[] getContentBody() throws IOException {

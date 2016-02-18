@@ -44,7 +44,7 @@ public class ResultUploader {
      * @param referenceUrl A reference url to use.
      * @throws IOException
      */
-    public void uploadResult(File reportFile, String referenceUrl) throws IOException {
+    public int uploadResult(File reportFile, String referenceUrl) throws IOException {
         InputStream input = new FileInputStream(reportFile);
         try {
             byte[] data = getBytes(input);
@@ -52,7 +52,7 @@ public class ResultUploader {
             if (referenceUrl == null || referenceUrl.trim().isEmpty()) {
                 mMultipartForm.addFormValue("reference-url", referenceUrl);
             }
-            mMultipartForm.submit();
+            return mMultipartForm.submit();
         } finally {
             input.close();
         }
