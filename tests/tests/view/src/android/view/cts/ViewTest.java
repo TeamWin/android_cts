@@ -18,6 +18,7 @@ package android.view.cts;
 
 import static org.mockito.Mockito.*;
 
+import android.graphics.BitmapFactory;
 import com.android.internal.view.menu.ContextMenuBuilder;
 
 import android.content.Context;
@@ -358,22 +359,66 @@ public class ViewTest extends ActivityInstrumentationTestCase2<ViewTestCtsActivi
         MotionEvent event = MotionEvent.obtain(0, 0, MotionEvent.ACTION_HOVER_MOVE,
                                                view.getX(), view.getY(), 0);
 
+        // First view has pointerShape="help"
         assertEquals(PointerIcon.getSystemIcon(mActivity, PointerIcon.STYLE_HELP),
                      view.getPointerIcon(event, 0, 0));
 
+        // Second view inherits pointerShape="crosshair" from the parent
         event.setLocation(0, 21);
         assertEquals(PointerIcon.getSystemIcon(mActivity, PointerIcon.STYLE_CROSSHAIR),
                      view.getPointerIcon(event, 0, 21));
+
+        // Third view has custom pointer shape defined in a resource.
         event.setLocation(0, 41);
+        assertNotNull(view.getPointerIcon(event, 0, 41));
+
+        // Parent view has pointerShape="crosshair"
+        event.setLocation(0, 61);
         assertEquals(PointerIcon.getSystemIcon(mActivity, PointerIcon.STYLE_CROSSHAIR),
-                     view.getPointerIcon(event, 0, 41));
-        event.setLocation(0, 51);
-        assertNull(view.getPointerIcon(event, 0, 51));
+                     view.getPointerIcon(event, 0, 61));
+
+        // Outside of the parent view, no pointer shape defined.
+        event.setLocation(0, 71);
+        assertNull(view.getPointerIcon(event, 0, 71));
 
         view.setPointerIcon(PointerIcon.getSystemIcon(mActivity, PointerIcon.STYLE_TEXT));
         assertEquals(PointerIcon.getSystemIcon(mActivity, PointerIcon.STYLE_TEXT),
-                     view.getPointerIcon(event, 0, 51));
+                     view.getPointerIcon(event, 0,71));
         event.recycle();
+    }
+
+    public void testCreatePointerIcons() {
+        assertSystemPointerIcon(PointerIcon.STYLE_NULL);
+        assertSystemPointerIcon(PointerIcon.STYLE_DEFAULT);
+        assertSystemPointerIcon(PointerIcon.STYLE_ARROW);
+        assertSystemPointerIcon(PointerIcon.STYLE_CONTEXT_MENU);
+        assertSystemPointerIcon(PointerIcon.STYLE_HAND);
+        assertSystemPointerIcon(PointerIcon.STYLE_HELP);
+        assertSystemPointerIcon(PointerIcon.STYLE_WAIT);
+        assertSystemPointerIcon(PointerIcon.STYLE_CELL);
+        assertSystemPointerIcon(PointerIcon.STYLE_CROSSHAIR);
+        assertSystemPointerIcon(PointerIcon.STYLE_TEXT);
+        assertSystemPointerIcon(PointerIcon.STYLE_VERTICAL_TEXT);
+        assertSystemPointerIcon(PointerIcon.STYLE_ALIAS);
+        assertSystemPointerIcon(PointerIcon.STYLE_COPY);
+        assertSystemPointerIcon(PointerIcon.STYLE_NO_DROP);
+        assertSystemPointerIcon(PointerIcon.STYLE_ALL_SCROLL);
+        assertSystemPointerIcon(PointerIcon.STYLE_HORIZONTAL_DOUBLE_ARROW);
+        assertSystemPointerIcon(PointerIcon.STYLE_VERTICAL_DOUBLE_ARROW);
+        assertSystemPointerIcon(PointerIcon.STYLE_TOP_RIGHT_DIAGONAL_DOUBLE_ARROW);
+        assertSystemPointerIcon(PointerIcon.STYLE_TOP_LEFT_DIAGONAL_DOUBLE_ARROW);
+        assertSystemPointerIcon(PointerIcon.STYLE_ZOOM_IN);
+        assertSystemPointerIcon(PointerIcon.STYLE_ZOOM_OUT);
+        assertSystemPointerIcon(PointerIcon.STYLE_GRAB);
+
+        assertNotNull(PointerIcon.loadCustomIcon(mResources, R.drawable.custom_pointer_icon));
+
+        Bitmap bitmap = BitmapFactory.decodeResource(mResources, R.drawable.icon_blue);
+        assertNotNull(PointerIcon.createCustomIcon(bitmap, 0, 0));
+    }
+
+    private void assertSystemPointerIcon(int style) {
+        assertNotNull(PointerIcon.getSystemIcon(mActivity, style));
     }
 
     @UiThreadTest
