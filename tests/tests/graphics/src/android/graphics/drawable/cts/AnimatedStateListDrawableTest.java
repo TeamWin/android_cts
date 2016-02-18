@@ -188,7 +188,7 @@ public class AnimatedStateListDrawableTest extends InstrumentationTestCase {
                 (StateListDrawable) cs.newDrawable(res);
         for (int i = 0; i < count; i++) {
             halfDrawable.selectDrawable(i);
-            assertEquals(origWidth[i] / 2, halfDrawable.getIntrinsicWidth());
+            assertEquals(Math.round(origWidth[i] / 2f), halfDrawable.getIntrinsicWidth());
         }
 
         // Set density to double original.

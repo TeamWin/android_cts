@@ -206,9 +206,9 @@ public class StateListDrawableTest extends InstrumentationTestCase {
         final StateListDrawable halfDrawable =
                 (StateListDrawable) preloadedConstantState.newDrawable(res);
         halfDrawable.selectDrawable(0);
-        assertEquals(origWidth0 / 2, halfDrawable.getIntrinsicWidth());
+        assertEquals(Math.round(origWidth0 / 2f), halfDrawable.getIntrinsicWidth());
         halfDrawable.selectDrawable(1);
-        assertEquals(origWidth1 / 2, halfDrawable.getIntrinsicWidth());
+        assertEquals(Math.round(origWidth1 / 2f), halfDrawable.getIntrinsicWidth());
 
         // Set density to double original.
         DrawableTestUtils.setResourcesDensity(res, densityDpi * 2);

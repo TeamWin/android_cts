@@ -396,7 +396,7 @@ public class NinePatchDrawableTest extends InstrumentationTestCase {
         // Restore original density.
         DrawableTestUtils.setResourcesDensity(res, densityDpi);
         final NinePatchDrawable origDrawable =
-                (NinePatchDrawable) preloadedConstantState.newDrawable();
+                (NinePatchDrawable) preloadedConstantState.newDrawable(res);
         assertEquals(origWidth, origDrawable.getIntrinsicWidth());
 
         // Ensure theme density is applied correctly.
