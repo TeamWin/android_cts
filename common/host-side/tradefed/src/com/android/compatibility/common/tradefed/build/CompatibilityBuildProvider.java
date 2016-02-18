@@ -18,13 +18,16 @@ package com.android.compatibility.common.tradefed.build;
 import com.android.tradefed.build.BuildInfo;
 import com.android.tradefed.build.IBuildInfo;
 import com.android.tradefed.build.IBuildProvider;
+import com.android.tradefed.config.Option;
 import com.android.tradefed.config.OptionClass;
-
 /**
  * A simple {@link IBuildProvider} that uses a pre-existing Compatibility install.
  */
 @OptionClass(alias="compatibility-build-provider")
 public class CompatibilityBuildProvider implements IBuildProvider {
+
+    @Option(name="branch", description="build branch name to supply.")
+    private String mBranch = null;
 
     /**
      * {@inheritDoc}
@@ -32,7 +35,12 @@ public class CompatibilityBuildProvider implements IBuildProvider {
     @Override
     public IBuildInfo getBuild() {
         // Create a blank BuildInfo which will get populated later.
-        return new BuildInfo();
+        IBuildInfo ctsBuild = new BuildInfo();
+        if (mBranch  != null) {
+            ctsBuild.setBuildBranch(mBranch);
+        }
+
+        return ctsBuild;
     }
 
     /**
