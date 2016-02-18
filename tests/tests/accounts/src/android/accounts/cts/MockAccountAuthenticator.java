@@ -147,7 +147,6 @@ public class MockAccountAuthenticator extends AbstractAccountAuthenticator {
     public Bundle addAccount(AccountAuthenticatorResponse response, String accountType,
             String authTokenType, String[] requiredFeatures, Bundle options)
             throws NetworkErrorException {
-        super.addAccountFromCredentials(null, null, null);
         this.mResponse = response;
         this.mAccountType = accountType;
         this.mAuthTokenType = authTokenType;
