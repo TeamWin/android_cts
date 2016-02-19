@@ -55,6 +55,7 @@ static bool failed = false;
         _RS_ASSERT_EQU(in.w, (CT) (val + 3));                                  \
     }                                                                          \
 
+VERIFY_KERNEL(half)
 VERIFY_KERNEL(float)
 VERIFY_KERNEL(double)
 VERIFY_KERNEL(char)
@@ -182,6 +183,7 @@ static void CreateAndTestAlloc(rs_data_type dt, int vecSize, int dimX, int dimY,
                 // Store to a cell based on the type, vector size and
                 // dimensionality
                 switch (dt) {
+                    STORE_TO_ALLOC(RS_TYPE_FLOAT_16, half);
                     STORE_TO_ALLOC(RS_TYPE_FLOAT_32, float);
                     STORE_TO_ALLOC(RS_TYPE_FLOAT_64, double);
                     STORE_TO_ALLOC(RS_TYPE_SIGNED_8, char);
@@ -203,6 +205,7 @@ static void CreateAndTestAlloc(rs_data_type dt, int vecSize, int dimX, int dimY,
 
     // Launch the appropriate verify_ kernel
     switch (dt) {
+        LAUNCH_VERIFY_KERNEL(RS_TYPE_FLOAT_16, half);
         LAUNCH_VERIFY_KERNEL(RS_TYPE_FLOAT_32, float);
         LAUNCH_VERIFY_KERNEL(RS_TYPE_FLOAT_64, double);
         LAUNCH_VERIFY_KERNEL(RS_TYPE_SIGNED_8, char);
@@ -224,8 +227,7 @@ static void CreateAndTestAlloc(rs_data_type dt, int vecSize, int dimX, int dimY,
 void TestAllocationCreationAndAccess() {
     rs_data_type all_types[] = {
         RS_TYPE_BOOLEAN,
-        // Bug 24862914: Uncomment the following line to add half once the bug is fixed
-        // RS_TYPE_FLOAT_16,
+        RS_TYPE_FLOAT_16,
         RS_TYPE_FLOAT_32,
         RS_TYPE_FLOAT_64,
         RS_TYPE_SIGNED_8,
@@ -447,7 +449,7 @@ void TestAllocationCreationWithUsage() {
 void TestHelperFunctions() {
     failed = false;
 
-    // Bug: 24862914: Add half once the bug is fixed
+    TEST_HELPER(half);
     TEST_HELPERS(float);
     TEST_HELPERS(double);
     TEST_HELPERS(char);
