@@ -638,6 +638,50 @@ public class AccessibilityWindowQueryTest
         }
     }
 
+    @MediumTest
+    public void testWindowDockAndUndock_dividerWindowAppearsAndDisappears() throws Exception {
+        setAccessInteractiveWindowsFlag();
+        final UiAutomation uiAutomation = getInstrumentation().getUiAutomation();
+        assertFalse(isDividerWindowPresent(uiAutomation));
+        Runnable toggleSplitScreenRunnable = new Runnable() {
+            @Override
+            public void run() {
+                assertTrue(uiAutomation.performGlobalAction(
+                        AccessibilityService.GLOBAL_ACTION_TOGGLE_SPLIT_SCREEN));
+            }
+        };
+        UiAutomation.AccessibilityEventFilter windowsChangedFilter =
+                new UiAutomation.AccessibilityEventFilter() {
+            @Override
+            public boolean accept(AccessibilityEvent event) {
+                return (event.getEventType() == AccessibilityEvent.TYPE_WINDOWS_CHANGED);
+            }
+        };
+
+        uiAutomation.executeAndWaitForEvent(toggleSplitScreenRunnable, windowsChangedFilter,
+                TIMEOUT_ASYNC_PROCESSING);
+        waitForIdle();
+        assertTrue(isDividerWindowPresent(uiAutomation));
+        uiAutomation.executeAndWaitForEvent(toggleSplitScreenRunnable, windowsChangedFilter,
+                TIMEOUT_ASYNC_PROCESSING);
+        waitForIdle();
+        assertFalse(isDividerWindowPresent(uiAutomation));
+    }
+
+    private boolean isDividerWindowPresent(UiAutomation uiAutomation) {
+        List<AccessibilityWindowInfo> windows = uiAutomation.getWindows();
+        final int windowCount = windows.size();
+        for (int i = 0; i < windowCount; i++) {
+            AccessibilityWindowInfo window = windows.get(i);
+            Rect bounds = new Rect();
+            window.getBoundsInScreen(bounds);
+            if (window.getType() == AccessibilityWindowInfo.TYPE_SPLIT_SCREEN_DIVIDER) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     private void assertSingleAccessibilityFocus() {
         UiAutomation uiAutomation = getInstrumentation().getUiAutomation();
         List<AccessibilityWindowInfo> windows = uiAutomation.getWindows();
