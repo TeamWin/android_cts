@@ -84,6 +84,10 @@ class ItsSession(object):
     CAP_RAW_YUV_JPEG = [{"format":"raw"}, {"format":"yuv"}, {"format":"jpeg"}]
     CAP_DNG_YUV_JPEG = [{"format":"dng"}, {"format":"yuv"}, {"format":"jpeg"}]
 
+    # Predefine camera props. Save props extracted from the function,
+    # "get_camera_properties".
+    props = None
+
     # Initialize the socket port for the host to forward requests to the device.
     # This method assumes localhost's LOCK_PORT is available and will try to
     # use ports between CLIENT_PORT_START and CLIENT_PORT_START+MAX_NUM_PORTS-1
@@ -170,7 +174,7 @@ class ItsSession(object):
                 if len(s) > 7 and s[6] == "=":
                     duration = int(s[7:])
                 print "Rebooting device"
-                _run("%s reboot" % (self.adb));
+                _run("%s reboot" % (self.adb))
                 _run("%s wait-for-device" % (self.adb))
                 time.sleep(duration)
                 print "Reboot complete"
@@ -349,6 +353,7 @@ class ItsSession(object):
         data,_ = self.__read_response_from_socket()
         if data['tag'] != 'cameraProperties':
             raise its.error.Error('Invalid command response')
+        self.props = data['objValue']['cameraProperties']
         return data['objValue']['cameraProperties']
 
     def do_3a(self, regions_ae=[[0,0,1,1,1]],
@@ -588,7 +593,7 @@ class ItsSession(object):
                 cmd["outputSurfaces"] = [out_surfaces]
             else:
                 cmd["outputSurfaces"] = out_surfaces
-            formats = [c["format"] if c.has_key("format") else "yuv"
+            formats = [c["format"] if "format" in c else "yuv"
                        for c in cmd["outputSurfaces"]]
             formats = [s if s != "jpg" else "jpeg" for s in formats]
         else:
@@ -599,7 +604,19 @@ class ItsSession(object):
         yuv_surfaces = [s for s in cmd["outputSurfaces"] if s["format"]=="yuv"]
         n_yuv = len(yuv_surfaces)
         # Compute the buffer size of YUV targets
-        yuv_sizes = [c["width"]*c["height"]*3/2 for c in yuv_surfaces]
+        yuv_maxsize_1d = 0
+        for s in yuv_surfaces:
+            if not ("width" in s and "height" in s):
+                if self.props is None:
+                    raise its.error.Error('Camera props are unavailable')
+                yuv_maxsize_2d = its.objects.get_available_output_sizes(
+                    "yuv", self.props)[0]
+                yuv_maxsize_1d = yuv_maxsize_2d[0] * yuv_maxsize_2d[1] * 3 / 2
+                break
+        yuv_sizes = [c["width"]*c["height"]*3/2
+                     if "width" in c and "height" in c
+                     else yuv_maxsize_1d
+                     for c in yuv_surfaces]
         # Currently we don't pass enough metadta from ItsService to distinguish
         # different yuv stream of same buffer size
         if len(yuv_sizes) != len(set(yuv_sizes)):
