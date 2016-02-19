@@ -17,7 +17,6 @@
 package android.app.cts;
 
 import android.app.Notification;
-import android.app.Notification.Topic;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
@@ -25,9 +24,6 @@ import android.net.Uri;
 import android.os.Parcel;
 import android.test.AndroidTestCase;
 import android.widget.RemoteViews;
-
-import java.util.Arrays;
-import java.util.List;
 
 public class NotificationTest extends AndroidTestCase {
 
@@ -162,33 +158,11 @@ public class NotificationTest extends AndroidTestCase {
                 .setContentTitle(CONTENT_TITLE)
                 .setContentText(CONTENT_TEXT)
                 .setContentIntent(contentIntent)
-                .setTopic(new Topic("id1", "label1"))
                 .build();
         assertEquals(CONTENT_TEXT, mNotification.extras.getString(Notification.EXTRA_TEXT));
         assertEquals(CONTENT_TITLE, mNotification.extras.getString(Notification.EXTRA_TITLE));
         assertEquals(1, mNotification.icon);
         assertEquals(contentIntent, mNotification.contentIntent);
-        assertEquals(new Topic("id1", "label1"), mNotification.getTopic());
-    }
-
-    public void testWriteTopicToParcel() {
-        mNotification = new Notification.Builder(mContext)
-                .setTopic(new Topic("id2", "label2"))
-                .build();
-        Parcel parcel = Parcel.obtain();
-        mNotification.writeToParcel(parcel, 0);
-        parcel.setDataPosition(0);
-        // Test Notification(Parcel)
-        Notification result = new Notification(parcel);
-        assertEquals(new Topic("id2", "label2"), result.getTopic());
-
-        mNotification = new Notification();
-        parcel = Parcel.obtain();
-        mNotification.writeToParcel(parcel, 0);
-        parcel.setDataPosition(0);
-        // Test Notification(Parcel)
-        result = new Notification(parcel);
-        assertNull(result.getTopic());
     }
 
     public void testToString() {
