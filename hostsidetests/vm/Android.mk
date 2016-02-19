@@ -27,9 +27,6 @@ LOCAL_COMPATIBILITY_SUITE := cts_v2
 
 LOCAL_MODULE := CtsVmHostTestCases
 
-# Copy the test jar to CTS
-LOCAL_COMPATIBILITY_SUPPORT_FILES += $(call intermediates-dir-for,JAVA_LIBRARIES,vm-tests-tf,HOST)/android.core.vm-tests-tf.jar:android.core.vm-tests-tf.jar
-
 include $(BUILD_HOST_JAVA_LIBRARY)
 
 include $(call all-makefiles-under,$(LOCAL_PATH))
