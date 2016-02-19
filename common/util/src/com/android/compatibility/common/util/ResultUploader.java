@@ -48,7 +48,7 @@ public class ResultUploader {
         InputStream input = new FileInputStream(reportFile);
         try {
             byte[] data = getBytes(input);
-            mMultipartForm.addFormFile("result-xml", "test-result.xml.gz", data);
+            mMultipartForm.addFormFile("resultXml", "test-result.xml.gz", data);
             if (referenceUrl == null || referenceUrl.trim().isEmpty()) {
                 mMultipartForm.addFormValue("reference-url", referenceUrl);
             }
