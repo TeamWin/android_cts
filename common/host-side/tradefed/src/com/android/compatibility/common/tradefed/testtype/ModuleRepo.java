@@ -222,6 +222,10 @@ public class ModuleRepo implements IModuleRepo {
         addFilters(excludeFilters, mExcludeFilters, abis);
 
         File[] configFiles = testsDir.listFiles(new ConfigFilter());
+        if (configFiles.length == 0) {
+            throw new IllegalArgumentException(
+                    String.format("No config files found in %s", testsDir.getAbsolutePath()));
+        }
         for (File configFile : configFiles) {
             final String name = configFile.getName().replace(CONFIG_EXT, "");
             final String[] pathArg = new String[] { configFile.getAbsolutePath() };
@@ -382,6 +386,7 @@ public class ModuleRepo implements IModuleRepo {
          */
         @Override
         public boolean accept(File dir, String name) {
+            CLog.d(String.format("%s/%s", dir.getAbsolutePath(), name));
             return name.endsWith(CONFIG_EXT);
         }
     }
@@ -519,7 +524,7 @@ public class ModuleRepo implements IModuleRepo {
             if (value1 == 0 && value2 == 0) {
                 return (int) Math.signum(def2.getRuntimeHint() - def1.getRuntimeHint());
             }
-            return (int) Math.signum(value2 - value1);
+            return (int) Math.signum(value1 - value2);
         }
     }
 }
