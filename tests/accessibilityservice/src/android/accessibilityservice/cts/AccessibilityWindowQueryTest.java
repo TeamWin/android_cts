@@ -91,7 +91,7 @@ public class AccessibilityWindowQueryTest
         // Find a button to click on.
         final AccessibilityNodeInfo button1 = uiAutomation.getRootInActiveWindow()
                 .findAccessibilityNodeInfosByViewId(
-                        "com.android.cts.accessibilityservice:id/button1").get(0);
+                        "android.accessibilityservice.cts:id/button1").get(0);
 
         // Argh...
         final List<AccessibilityEvent> events = new ArrayList<AccessibilityEvent>();
@@ -163,7 +163,7 @@ public class AccessibilityWindowQueryTest
             // Find a button to click on.
             final AccessibilityNodeInfo button1 = uiAutomation.getRootInActiveWindow()
                     .findAccessibilityNodeInfosByViewId(
-                            "com.android.cts.accessibilityservice:id/button1").get(0);
+                            "android.accessibilityservice.cts:id/button1").get(0);
 
             // Argh...
             final List<AccessibilityEvent> events = new ArrayList<AccessibilityEvent>();
@@ -218,7 +218,7 @@ public class AccessibilityWindowQueryTest
             // Find a button to click on.
             final AccessibilityNodeInfo button1 = uiAutomation.getRootInActiveWindow()
                     .findAccessibilityNodeInfosByViewId(
-                            "com.android.cts.accessibilityservice:id/button1").get(0);
+                            "android.accessibilityservice.cts:id/button1").get(0);
 
             // Argh...
             final List<AccessibilityEvent> events = new ArrayList<AccessibilityEvent>();
@@ -249,7 +249,7 @@ public class AccessibilityWindowQueryTest
             // Find a another button from the event's window.
             final AccessibilityNodeInfo button2 = window.getRoot()
                     .findAccessibilityNodeInfosByViewId(
-                            "com.android.cts.accessibilityservice:id/button2").get(0);
+                            "android.accessibilityservice.cts:id/button2").get(0);
 
             // Click the second button.
             uiAutomation.executeAndWaitForEvent(new Runnable() {
@@ -858,7 +858,7 @@ public class AccessibilityWindowQueryTest
             classNameAndTextList.add("android.widget.ButtonB8");
             classNameAndTextList.add("android.widget.ButtonB9");
 
-            String contentViewIdResName = "com.android.cts.accessibilityservice:id/added_content";
+            String contentViewIdResName = "android.accessibilityservice.cts:id/added_content";
             boolean verifyContent = false;
 
             Queue<AccessibilityNodeInfo> fringe = new LinkedList<AccessibilityNodeInfo>();
