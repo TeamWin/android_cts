@@ -40,10 +40,10 @@ LOCAL_SRC_FILES := \
 LOCAL_C_INCLUDES := $(JNI_H_INCLUDE) \
 										$(TOP)/frameworks/native/include/media/openmax
 
-LOCAL_SHARED_LIBRARIES := libnativehelper_compat_libc++ liblog libdl libmedia libcrypto
+LOCAL_SHARED_LIBRARIES := libbinder libnativehelper_compat_libc++ liblog libdl libmedia libcrypto
 
 LOCAL_C_INCLUDES += ndk/sources/cpufeatures
-LOCAL_STATIC_LIBRARIES := cpufeatures libbinder libselinux libutils libcutils
+LOCAL_STATIC_LIBRARIES := cpufeatures libselinux libutils libcutils
 LOCAL_CXX_STL := libc++_static
 
 include $(BUILD_SHARED_LIBRARY)
