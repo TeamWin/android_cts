@@ -25,6 +25,12 @@
 
     <target_preparer class="com.android.compatibility.common.tradefed.targetprep.StayAwakePreparer" />
 
+    <target_preparer class="com.android.compatibility.common.tradefed.targetprep.SettingsPreparer">
+        <option name="device-setting" value="verifier_verify_adb_installs"/>
+        <option name="setting-type" value="global"/>
+        <option name="set-value" value="0"/>
+    </target_preparer>
+
     <target_preparer class="com.android.compatibility.common.tradefed.targetprep.ApkPreconditionCheck">
         <option name="apk" value="CtsPreconditions.apk"/>
         <option name="package" value="com.android.preconditions.cts"/>
