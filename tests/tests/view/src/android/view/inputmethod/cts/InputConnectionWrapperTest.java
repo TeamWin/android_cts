@@ -18,6 +18,7 @@ package android.view.inputmethod.cts;
 
 
 import android.os.Bundle;
+import android.os.Handler;
 import android.test.AndroidTestCase;
 import android.text.TextUtils;
 import android.view.KeyEvent;
@@ -88,6 +89,9 @@ public class InputConnectionWrapperTest extends AndroidTestCase {
         assertTrue(inputConnection.isSetComposingRegionCalled);
         wrapper.requestCursorUpdates(InputConnection.CURSOR_UPDATE_IMMEDIATE);
         assertTrue(inputConnection.isRequestCursorUpdatesCalled);
+        assertFalse(inputConnection.isGetHandlerCalled);
+        assertNull(inputConnection.getHandler());
+        assertTrue(inputConnection.isGetHandlerCalled);
     }
 
     private class MockInputConnection implements InputConnection {
@@ -114,6 +118,7 @@ public class InputConnectionWrapperTest extends AndroidTestCase {
         public boolean isSetComposingRegionCalled;
         public boolean isSetSelectionCalled;
         public boolean isRequestCursorUpdatesCalled;
+        public boolean isGetHandlerCalled;
 
         public boolean beginBatchEdit() {
             isBeginBatchEditCalled = true;
@@ -228,6 +233,11 @@ public class InputConnectionWrapperTest extends AndroidTestCase {
         public boolean requestCursorUpdates(int cursorUpdateMode) {
             isRequestCursorUpdatesCalled = true;
             return false;
+        }
+
+        public Handler getHandler() {
+            isGetHandlerCalled = true;
+            return null;
         }
     }
 }
