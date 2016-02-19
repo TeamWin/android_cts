@@ -342,7 +342,12 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
                     }
                 }
                 if (mResultServer != null && !mResultServer.trim().isEmpty()) {
-                    mUploader.uploadResult(resultFile, mReferenceUrl);
+                    try {
+                        logResult("Result Server Response: %d",
+                                mUploader.uploadResult(resultFile, mReferenceUrl));
+                    } catch (IOException ioe) {
+                        Log.e(mDeviceSerial, ioe);
+                    }
                 }
             } catch (IOException | XmlPullParserException e) {
                 CLog.e(e);
