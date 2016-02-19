@@ -873,4 +873,12 @@ public class TvContractTest extends AndroidTestCase {
         // There are two channels which belong to MUSIC genre - channel 2 and 3.
         verifyChannelCountWithCanonicalGenre(Genres.MUSIC, 2);
     }
+
+    public void testGenresIsCanonical() {
+        if (!Utils.hasTvInputFramework(getContext())) {
+            return;
+        }
+        assertTrue(Genres.isCanonical(Genres.DRAMA));
+        assertFalse(Genres.isCanonical("Not a genre"));
+    }
 }
