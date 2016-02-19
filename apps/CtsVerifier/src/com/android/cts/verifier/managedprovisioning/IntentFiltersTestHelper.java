@@ -283,15 +283,9 @@ public class IntentFiltersTestHelper {
         }
 
         // Check for intents which can be forwarded to the managed profile.
-        Intent intent = checkForIntentsNotHandled(forwardedIntentsFromPrimary,
-                forwarderActivityInfo, true);
-        if (intent != null) {
-            Log.d(TAG, intent + " from primary profile should be forwarded to the " +
-                    "managed profile but is not.");
-            return false;
-        }
-
-        return true;
+        return checkForIntentsNotHandled(forwardedIntentsFromPrimary,
+                forwarderActivityInfo, "from primary profile should be forwarded to the " +
+                "managed profile but is not.", true);
     }
 
     /**
@@ -307,25 +301,17 @@ public class IntentFiltersTestHelper {
             return false;
         }
 
+        boolean success = true;
         // Check for intents which can be forwarded to the primary profile.
-        Intent intent = checkForIntentsNotHandled(forwardedIntentsFromManaged,
-                forwarderActivityInfo, true);
-        if (intent != null) {
-            Log.d(TAG, intent + " from managed profile should be forwarded to the " +
-                    "primary profile but is not.");
-            return false;
-        }
+        success &= checkForIntentsNotHandled(forwardedIntentsFromManaged,
+                forwarderActivityInfo, " from managed profile should be forwarded to the " +
+                "primary profile but is not.", true);
 
         // Check for intents which cannot be forwarded to the primary profile.
-        intent = checkForIntentsNotHandled(notForwardedIntentsFromManaged,
-                forwarderActivityInfo, false);
-        if (intent != null) {
-            Log.d(TAG, intent + " from managed profile should not be forwarded to the " +
-                    "primary profile but it is.");
-            return false;
-        }
-
-        return true;
+        success &= checkForIntentsNotHandled(notForwardedIntentsFromManaged,
+                forwarderActivityInfo, "from managed profile should not be forwarded to the " +
+                "primary profile but it is.", false);
+        return success;
     }
 
     /**
@@ -365,17 +351,18 @@ public class IntentFiltersTestHelper {
 
     /**
      * Checks if the intents passed are correctly handled.
-     * @return {@code null} if all the intents are correctly handled
-     *         otherwise, the first intent in the list which is not handled correctly.
+     * @return {@code false} if at least one intent is not handled correctly.
      */
-    private Intent checkForIntentsNotHandled(ArrayList<Intent> intentList,
-            ActivityInfo expectedForwarderActivityInfo, boolean canResolve) {
+    private boolean checkForIntentsNotHandled(ArrayList<Intent> intentList,
+            ActivityInfo expectedForwarderActivityInfo, String errorMessage, boolean canResolve) {
+        boolean success = true;
         for (Intent intent : intentList) {
             if (canForwarderActivityHandleIntent(intent,
                     expectedForwarderActivityInfo) != canResolve) {
-                return intent;
+                Log.e(TAG, intent + " " + errorMessage);
+                success = false;
             }
         }
-        return null;
+        return success;
     }
 }
