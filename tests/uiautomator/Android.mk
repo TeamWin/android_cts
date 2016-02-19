@@ -28,8 +28,8 @@ LOCAL_CTS_TEST_APK := CtsUiAutomatorTestApp
 LOCAL_CTS_TEST_APP_PACKAGE := com.android.uiautomator.app
 LOCAL_CTS_TEST_PACKAGE := com.android.uiautomator.cts
 
-# Tag this module as a cts_v2 test artifact
-LOCAL_COMPATIBILITY_SUITE := cts_v2
+# Tag this module as a cts test artifact
+LOCAL_COMPATIBILITY_SUITE := cts
 
 include $(BUILD_CTS_UI_JAVA_LIBRARY)
 

@@ -36,8 +36,8 @@ LOCAL_AAPT_FLAGS = -c land -c xx_YY -c cs -c small -c normal -c large -c xlarge 
 
 LOCAL_PACKAGE_NAME := CtsThemeDeviceApp
 
-# Tag this module as a cts_v2 test artifact
-LOCAL_COMPATIBILITY_SUITE := cts_v2
+# Tag this module as a cts test artifact
+LOCAL_COMPATIBILITY_SUITE := cts
 
 LOCAL_SDK_VERSION := current
 

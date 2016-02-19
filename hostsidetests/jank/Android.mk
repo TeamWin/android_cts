@@ -22,7 +22,7 @@ LOCAL_SRC_FILES := $(call all-java-files-under, src)
 
 LOCAL_MODULE := CtsJankHostTestCases
 
-LOCAL_JAVA_LIBRARIES := cts-tradefed_v2 compatibility-host-util tradefed-prebuilt
+LOCAL_JAVA_LIBRARIES := cts-tradefed tradefed-prebuilt compatibility-host-util
 
 LOCAL_STATIC_JAVA_LIBRARIES := cts-migration-lib
 
@@ -30,8 +30,8 @@ LOCAL_ADDITIONAL_DEPENDENCIES := $(LOCAL_PATH)/Android.mk
 
 LOCAL_CTS_TEST_PACKAGE := android.jank.cts
 
-# Tag this module as a cts_v2 test artifact
-LOCAL_COMPATIBILITY_SUITE := cts_v2
+# Tag this module as a cts test artifact
+LOCAL_COMPATIBILITY_SUITE := cts
 
 LOCAL_DEVICE_JAR_ := CtsJankTestJar
 cts_library_jar_ := $(CTS_TESTCASES_OUT)/$(LOCAL_DEVICE_JAR_).jar
@@ -44,7 +44,7 @@ $(CTS_TESTCASES_OUT)/CtsJankHostTestCases.xml: $(cts_library_jar_)
 
 include $(BUILD_CTS_HOST_JAVA_LIBRARY)
 
-$(COMPATIBILITY_TESTCASES_OUT_cts_v2)/CtsJankHostTestCases.jar : $(COMPATIBILITY_TESTCASES_OUT_cts_v2)/CtsOpenGlPerf2TestCases.apk
+$(COMPATIBILITY_TESTCASES_OUT_cts)/CtsJankHostTestCases.jar : $(COMPATIBILITY_TESTCASES_OUT_cts)/CtsOpenGlPerf2TestCases.apk
 
 # Build the library using its own makefile
 include $(call all-makefiles-under,$(LOCAL_PATH))

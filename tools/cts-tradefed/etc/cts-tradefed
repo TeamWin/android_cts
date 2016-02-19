@@ -63,26 +63,26 @@ fi
 # check if in Android build env
 if [ ! -z "${ANDROID_BUILD_TOP}" ]; then
     if [ ! -z "${ANDROID_HOST_OUT}" ]; then
-      CTS_V2_ROOT=${ANDROID_HOST_OUT}/cts_v2
+      CTS_ROOT=${ANDROID_HOST_OUT}/cts
     else
-      CTS_V2_ROOT=${ANDROID_BUILD_TOP}/${OUT_DIR:-out}/host/${OS}/cts_v2
+      CTS_ROOT=${ANDROID_BUILD_TOP}/${OUT_DIR:-out}/host/${OS}/cts
     fi
-    if [ ! -d ${CTS_V2_ROOT} ]; then
-        echo "Could not find $CTS_V2_ROOT in Android build environment. Try 'make cts_v2'"
+    if [ ! -d ${CTS_ROOT} ]; then
+        echo "Could not find $CTS_ROOT in Android build environment. Try 'make cts'"
         exit
     fi;
 fi;
 
-if [ -z ${CTS_V2_ROOT} ]; then
+if [ -z ${CTS_ROOT} ]; then
     # assume we're in an extracted cts install
-    CTS_V2_ROOT="$(dirname $0)/../.."
+    CTS_ROOT="$(dirname $0)/../.."
 fi;
 
-JAR_DIR=${CTS_V2_ROOT}/android-cts_v2/tools
+JAR_DIR=${CTS_ROOT}/android-cts/tools
 JARS="tradefed-prebuilt
   hosttestlib
   compatibility-host-util
-  cts-tradefed_v2"
+  cts-tradefed"
 
 for JAR in $JARS; do
     checkFile ${JAR_DIR}/${JAR}.jar
@@ -101,7 +101,7 @@ for JAR in $OPTIONAL_JARS; do
 done
 
 # load any shared libraries for host-side executables
-LIB_DIR=${CTS_V2_ROOT}/android-cts_v2/lib
+LIB_DIR=${CTS_ROOT}/android-cts/lib
 if [ "$HOST" == "Linux" ]; then
     LD_LIBRARY_PATH=${LIB_DIR}:${LIB_DIR}64:${LD_LIBRARY_PATH}
     export LD_LIBRARY_PATH
@@ -111,9 +111,9 @@ elif [ "$HOST" == "Darwin" ]; then
 fi
 
 # include any host-side test jars
-for j in ${CTS_V2_ROOT}/android-cts_v2/testcases/*.jar; do
+for j in ${CTS_ROOT}/android-cts/testcases/*.jar; do
     JAR_PATH=${JAR_PATH}:$j
 done
 
-java $RDBG_FLAG -cp ${JAR_PATH} -DCTS_V2_ROOT=${CTS_V2_ROOT} com.android.compatibility.common.tradefed.command.CompatibilityConsole "$@"
+java $RDBG_FLAG -cp ${JAR_PATH} -DCTS_ROOT=${CTS_ROOT} com.android.compatibility.common.tradefed.command.CompatibilityConsole "$@"
 

@@ -22,8 +22,8 @@ LOCAL_STATIC_JAVA_LIBRARIES := android-support-test
 LOCAL_PACKAGE_NAME := CtsKeySetSigningAUpgradeA
 LOCAL_CERTIFICATE := cts/hostsidetests/appsecurity/certs/keysets/cts-keyset-test-a
 LOCAL_DEX_PREOPT := false
-# tag this module as a cts_v2 test artifact
-LOCAL_COMPATIBILITY_SUITE := cts_v2
+# tag this module as a cts test artifact
+LOCAL_COMPATIBILITY_SUITE := cts
 
 include $(BUILD_CTS_SUPPORT_PACKAGE)
 
@@ -35,8 +35,8 @@ LOCAL_STATIC_JAVA_LIBRARIES := android-support-test
 LOCAL_PACKAGE_NAME := CtsKeySetSigningBUpgradeA
 LOCAL_CERTIFICATE := cts/hostsidetests/appsecurity/certs/keysets/cts-keyset-test-b
 LOCAL_DEX_PREOPT := false
-# tag this module as a cts_v2 test artifact
-LOCAL_COMPATIBILITY_SUITE := cts_v2
+# tag this module as a cts test artifact
+LOCAL_COMPATIBILITY_SUITE := cts
 
 include $(BUILD_CTS_SUPPORT_PACKAGE)
 
@@ -48,8 +48,8 @@ LOCAL_STATIC_JAVA_LIBRARIES := android-support-test
 LOCAL_PACKAGE_NAME := CtsKeySetSigningEcAUpgradeA
 LOCAL_CERTIFICATE := cts/hostsidetests/appsecurity/certs/keysets/cts-keyset-test-ec-a
 LOCAL_DEX_PREOPT := false
-# tag this module as a cts_v2 test artifact
-LOCAL_COMPATIBILITY_SUITE := cts_v2
+# tag this module as a cts test artifact
+LOCAL_COMPATIBILITY_SUITE := cts
 
 include $(BUILD_CTS_SUPPORT_PACKAGE)
 
@@ -62,7 +62,7 @@ LOCAL_PACKAGE_NAME := CtsKeySetSigningAAndBUpgradeA
 LOCAL_CERTIFICATE := cts/hostsidetests/appsecurity/certs/keysets/cts-keyset-test-a
 LOCAL_ADDITIONAL_CERTIFICATES := cts/hostsidetests/appsecurity/certs/keysets/cts-keyset-test-b
 LOCAL_DEX_PREOPT := false
-# tag this module as a cts_v2 test artifact
-LOCAL_COMPATIBILITY_SUITE := cts_v2
+# tag this module as a cts test artifact
+LOCAL_COMPATIBILITY_SUITE := cts
 
 include $(BUILD_CTS_SUPPORT_PACKAGE)

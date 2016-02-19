@@ -28,8 +28,8 @@ LOCAL_AAPT_FLAGS := --version-code 100 --version-name OneHundred --replace-versi
 
 LOCAL_MODULE_TAGS := tests
 
-# tag this module as a cts_v2 test artifact
-LOCAL_COMPATIBILITY_SUITE := cts_v2
+# tag this module as a cts test artifact
+LOCAL_COMPATIBILITY_SUITE := cts
 
 featureOf := CtsSplitApp
 featureOfApk := $(call intermediates-dir-for,APPS,$(featureOf))/package.apk

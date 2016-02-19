@@ -36,7 +36,7 @@ cts-combined-xml-coverage-report := $(coverage_out)/combined-coverage.xml
 
 cts_api_coverage_dependencies := $(cts_api_coverage_exe) $(dexdeps_exe) $(api_xml_description)
 
-android_cts_zip := $(HOST_OUT)/cts/android-cts.zip
+android_cts_zip := $(HOST_OUT)/old-cts/old-android-cts.zip
 cts_verifier_apk := $(call intermediates-dir-for,APPS,CtsVerifier)/package.apk
 
 $(cts-test-coverage-report): PRIVATE_TEST_CASES := $(CTS_TESTCASES_OUT)

@@ -20,14 +20,14 @@ LOCAL_SRC_FILES := $(call all-java-files-under, src)
 
 LOCAL_MODULE := cts-dalvik-host-test-runner
 
-LOCAL_JAVA_LIBRARIES := cts-tradefed_v2 tradefed-prebuilt compatibility-host-util
+LOCAL_JAVA_LIBRARIES := cts-tradefed tradefed-prebuilt compatibility-host-util
 
 LOCAL_STATIC_JAVA_LIBRARIES := vogarexpectlib
 
 # don't include these packages in any target
 LOCAL_MODULE_TAGS := optional
 
-# Tag this module as a cts_v2 test artifact
-LOCAL_COMPATIBILITY_SUITE := cts_v2
+# Tag this module as a cts test artifact
+LOCAL_COMPATIBILITY_SUITE := cts
 
 include $(BUILD_HOST_JAVA_LIBRARY)

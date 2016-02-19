@@ -67,7 +67,8 @@ intermediates := $(call local-intermediates-dir)
 LOCAL_INSTALLED_MODULE_STEM := android.core.vm-tests-tf.jar
 LOCAL_MODULE_PATH := $(intermediates)
 
-LOCAL_COMPATIBILITY_SUITE := cts_v2
+# Tag this module as a cts test artifact
+LOCAL_COMPATIBILITY_SUITE := cts
 
 include $(BUILD_SYSTEM)/base_rules.mk
 

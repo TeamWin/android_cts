@@ -72,7 +72,7 @@ public class MediaPreparer extends PreconditionPreparer {
     private static final String MEDIA_FILES_URL_KEY = "MediaFilesUrl";
 
     /* For a target preparer, the "module" of the configuration is the test suite */
-    private static final String DYNAMIC_CONFIG_MODULE = "cts_v2";
+    private static final String DYNAMIC_CONFIG_MODULE = "cts";
 
     /*
      * The message printed when the maximum video playback resolution cannot be found in the

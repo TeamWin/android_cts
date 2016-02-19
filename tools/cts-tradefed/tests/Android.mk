@@ -18,8 +18,8 @@ include $(CLEAR_VARS)
 
 LOCAL_SRC_FILES := $(call all-java-files-under, src)
 
-LOCAL_MODULE := cts-tradefed-tests_v2
+LOCAL_MODULE := cts-tradefed-tests
 LOCAL_MODULE_TAGS := optional
-LOCAL_JAVA_LIBRARIES := tradefed-prebuilt cts-tradefed_v2
+LOCAL_JAVA_LIBRARIES := tradefed-prebuilt cts-tradefed
 
 include $(BUILD_HOST_JAVA_LIBRARY)
