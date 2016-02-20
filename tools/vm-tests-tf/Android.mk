@@ -34,6 +34,10 @@ cts-tf-dalvik-lib.jack := $(full_classes_jack)
 # ============================================================
 include $(CLEAR_VARS)
 
+# custom variables used by cts/tools/utils/CollectAllTests.java to generate test description. do not touch!
+LOCAL_TEST_TYPE := vmHostTest
+LOCAL_JAR_PATH := android.core.vm-tests-tf.jar
+
 LOCAL_SRC_FILES := $(call all-java-files-under, src)
 
 LOCAL_MODULE := cts-tf-dalvik-buildutil
@@ -127,3 +131,5 @@ endif # LOCAL_JACK_ENABLED
 # Clean up temp vars
 intermediates :=
 vmteststf_dep_jars :=
+
+include $(call all-makefiles-under,$(LOCAL_PATH))
