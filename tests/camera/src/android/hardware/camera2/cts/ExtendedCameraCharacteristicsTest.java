@@ -392,6 +392,18 @@ public class ExtendedCameraCharacteristicsTest extends AndroidTestCase {
                 expectKeyAvailable(c, CameraCharacteristics.SENSOR_FORWARD_MATRIX2                          , OPT      ,   RAW                  );
             }
 
+            // Required key if any of RAW format output is supported
+            StreamConfigurationMap config =
+                    c.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
+            assertNotNull(String.format("No stream configuration map found for: ID %s",
+                    mIds[counter]), config);
+            if (config.isOutputSupportedFor(ImageFormat.RAW_SENSOR) ||
+                    config.isOutputSupportedFor(ImageFormat.RAW10)  ||
+                    config.isOutputSupportedFor(ImageFormat.RAW12)  ||
+                    config.isOutputSupportedFor(ImageFormat.RAW_PRIVATE)) {
+                expectKeyAvailable(c,
+                        CameraCharacteristics.CONTROL_POST_RAW_SENSITIVITY_BOOST_RANGE, OPT, BC);
+            }
             counter++;
         }
     }
