@@ -114,16 +114,18 @@ public class PerformanceTest extends Camera2SurfaceViewTestCase {
      * </p>
      */
     public void testCameraLaunch() throws Exception {
-        double[] cameraOpenTimes = new double[NUM_TEST_LOOPS];
-        double[] configureStreamTimes = new double[NUM_TEST_LOOPS];
-        double[] startPreviewTimes = new double[NUM_TEST_LOOPS];
-        double[] stopPreviewTimes = new double[NUM_TEST_LOOPS];
-        double[] cameraCloseTimes = new double[NUM_TEST_LOOPS];
-        double[] cameraLaunchTimes = new double[NUM_TEST_LOOPS];
         double[] avgCameraLaunchTimes = new double[mCameraIds.length];
 
         int counter = 0;
         for (String id : mCameraIds) {
+            // Do NOT move these variables to outer scope
+            // They will be passed to DeviceReportLog and their references will be stored
+            double[] cameraOpenTimes = new double[NUM_TEST_LOOPS];
+            double[] configureStreamTimes = new double[NUM_TEST_LOOPS];
+            double[] startPreviewTimes = new double[NUM_TEST_LOOPS];
+            double[] stopPreviewTimes = new double[NUM_TEST_LOOPS];
+            double[] cameraCloseTimes = new double[NUM_TEST_LOOPS];
+            double[] cameraLaunchTimes = new double[NUM_TEST_LOOPS];
             try {
                 mStaticInfo = new StaticMetadata(mCameraManager.getCameraCharacteristics(id));
                 if (mStaticInfo.isColorOutputSupported()) {
@@ -224,13 +226,15 @@ public class PerformanceTest extends Camera2SurfaceViewTestCase {
      * </p>
      */
     public void testSingleCapture() throws Exception {
-        double[] captureTimes = new double[NUM_TEST_LOOPS];
-        double[] getPartialTimes = new double[NUM_TEST_LOOPS];
-        double[] getResultTimes = new double[NUM_TEST_LOOPS];
         double[] avgResultTimes = new double[mCameraIds.length];
 
         int counter = 0;
         for (String id : mCameraIds) {
+            // Do NOT move these variables to outer scope
+            // They will be passed to DeviceReportLog and their references will be stored
+            double[] captureTimes = new double[NUM_TEST_LOOPS];
+            double[] getPartialTimes = new double[NUM_TEST_LOOPS];
+            double[] getResultTimes = new double[NUM_TEST_LOOPS];
             try {
                 openDevice(id);
 
