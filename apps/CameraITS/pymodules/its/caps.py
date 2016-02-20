@@ -168,6 +168,29 @@ def raw12(props):
     """
     return len(its.objects.get_available_output_sizes("raw12", props)) > 0
 
+def raw_output(props):
+    """Returns whether a device supports any of RAW output format.
+
+    Args:
+        props: Camera properties object.
+
+    Returns:
+        Boolean.
+    """
+    return raw16(props) or raw10(props) or raw12(props)
+
+def post_raw_sensitivity_boost(props):
+    """Returns whether a device supports post RAW sensitivity boost..
+
+    Args:
+        props: Camera properties object.
+
+    Returns:
+        Boolean.
+    """
+    return props.has_key("android.control.postRawSensitivityBoostRange") and \
+            props["android.control.postRawSensitivityBoostRange"] != [100, 100]
+
 def sensor_fusion(props):
     """Returns whether the camera and motion sensor timestamps for the device
     are in the same time domain and can be compared directly.
