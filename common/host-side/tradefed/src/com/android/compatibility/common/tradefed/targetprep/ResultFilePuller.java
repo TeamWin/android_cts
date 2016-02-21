@@ -37,8 +37,6 @@ import java.util.List;
 @OptionClass(alias="result-file-puller")
 public class ResultFilePuller implements ITargetCleaner {
 
-    private static final String LOG_TAG = ResultFilePuller.class.getSimpleName();
-
     @Option(name="clear", description = "Whether to clear the src files and dirs before running the test")
     private boolean mClearSrc = true;
 
@@ -85,7 +83,7 @@ public class ResultFilePuller implements ITargetCleaner {
             }
             resultDir.mkdirs();
             if (!resultDir.isDirectory()) {
-                CLog.e(LOG_TAG, String.format("% is not a directory", resultDir.getAbsolutePath()));
+                CLog.e("%s is not a directory", resultDir.getAbsolutePath());
                 return;
             }
             String resultPath = resultDir.getAbsolutePath();
@@ -105,10 +103,11 @@ public class ResultFilePuller implements ITargetCleaner {
         try {
             Process p = Runtime.getRuntime().exec(new String[] {"/bin/bash", "-c", command});
             if (p.waitFor() != 0) {
-                CLog.e(LOG_TAG, String.format("Failed to run %s", command));
+                CLog.e("Failed to run %s", command);
             }
         } catch (Exception e) {
-            CLog.e(LOG_TAG, e);
+            CLog.e("Caught exception during pull.");
+            CLog.e(e);
         }
     }
 }
