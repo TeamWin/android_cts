@@ -39,7 +39,6 @@ import java.util.Map.Entry;
  */
 public class DeviceInfoCollector extends ApkInstrumentationPreparer {
 
-    private static final String LOG_TAG = "DeviceInfoCollector";
     private static final String DEVICE_INFO = "DEVICE_INFO_%s";
     private static final Map<String, String> BUILD_KEYS = new HashMap<>();
     static {
@@ -106,7 +105,7 @@ public class DeviceInfoCollector extends ApkInstrumentationPreparer {
             }
             resultDir.mkdirs();
             if (!resultDir.isDirectory()) {
-                CLog.e(LOG_TAG, String.format("% is not a directory", resultDir.getAbsolutePath()));
+                CLog.e("%s is not a directory", resultDir.getAbsolutePath());
                 return;
             }
             String resultPath = resultDir.getAbsolutePath();
@@ -121,10 +120,11 @@ public class DeviceInfoCollector extends ApkInstrumentationPreparer {
         try {
             Process p = Runtime.getRuntime().exec(new String[] {"/bin/bash", "-c", command});
             if (p.waitFor() != 0) {
-                CLog.e(LOG_TAG, String.format("Failed to run %s", command));
+                CLog.e("Failed to run %s", command);
             }
         } catch (Exception e) {
-            CLog.e(LOG_TAG, e);
+            CLog.e("Caught exception during pull.");
+            CLog.e(e);
         }
     }
 }

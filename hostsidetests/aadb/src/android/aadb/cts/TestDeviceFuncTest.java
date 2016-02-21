@@ -16,7 +16,6 @@
 package android.aadb.cts;
 
 import com.android.ddmlib.IDevice;
-import com.android.ddmlib.Log;
 import com.android.ddmlib.testrunner.RemoteAndroidTestRunner;
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.device.IFileEntry;
@@ -49,7 +48,6 @@ import javax.imageio.ImageIO;
  */
 public class TestDeviceFuncTest extends DeviceTestCase {
 
-    private static final String LOG_TAG = "TestDeviceFuncTest";
     private ITestDevice mTestDevice;
     /** Expect bugreports to be at least a meg. */
     private static final int mMinBugreportBytes = 1024 * 1024;
@@ -78,7 +76,7 @@ public class TestDeviceFuncTest extends DeviceTestCase {
      * Do a 'shell ls' command, and verify /data and /system are listed in result.
      */
     public void testExecuteShellCommand() throws IOException, DeviceNotAvailableException {
-        Log.i(LOG_TAG, "testExecuteShellCommand");
+        CLog.i("testExecuteShellCommand");
         assertSimpleShellCommand();
     }
 
@@ -97,7 +95,7 @@ public class TestDeviceFuncTest extends DeviceTestCase {
      * Push and then pull a file from device, and verify contents are as expected.
      */
     public void testPushPull_normal() throws IOException, DeviceNotAvailableException {
-        Log.i(LOG_TAG, "testPushPull");
+        CLog.i("testPushPull");
         File tmpFile = null;
         File tmpDestFile = null;
         String deviceFilePath = null;
@@ -133,7 +131,7 @@ public class TestDeviceFuncTest extends DeviceTestCase {
      * This variant of the test uses "${EXTERNAL_STORAGE}" in the pathname.
      */
     public void testPushPull_extStorageVariable() throws IOException, DeviceNotAvailableException {
-        Log.i(LOG_TAG, "testPushPull");
+        CLog.i("testPushPull");
         File tmpFile = null;
         File tmpDestFile = null;
         File tmpDestFile2 = null;
@@ -178,7 +176,7 @@ public class TestDeviceFuncTest extends DeviceTestCase {
      * Expect {@link TestDevice#pullFile(String)} to return <code>false</code>
      */
     public void testPull_noexist() throws IOException, DeviceNotAvailableException {
-        Log.i(LOG_TAG, "testPull_noexist");
+        CLog.i("testPull_noexist");
 
         // make sure the root path is valid
         String externalStorePath =  mTestDevice.getMountPoint(IDevice.MNT_EXTERNAL_STORAGE);
@@ -354,7 +352,7 @@ public class TestDeviceFuncTest extends DeviceTestCase {
         InputStream inputStream = source.createInputStream();
         try {
             BufferedImage screenshotImage = ImageIO.read(inputStream);
-            CLog.i(LOG_TAG, "testGetScreenshot w=%d, h=%d",
+            CLog.i("testGetScreenshot w=%d, h=%d",
                     screenshotImage.getWidth(), screenshotImage.getHeight());
             assertTrue(screenshotImage.getWidth() > 0);
             assertTrue(screenshotImage.getHeight() > 0);
@@ -371,7 +369,7 @@ public class TestDeviceFuncTest extends DeviceTestCase {
      * equal to provided data.
      */
     public void testGetLogcat_size() throws DeviceNotAvailableException, IOException {
-        CLog.i(LOG_TAG, "testGetLogcat_size");
+        CLog.i("testGetLogcat_size");
         for (int i = 0; i < 100; i++) {
             getDevice().executeShellCommand(String.format("log testGetLogcat_size log dump %d", i));
         }
