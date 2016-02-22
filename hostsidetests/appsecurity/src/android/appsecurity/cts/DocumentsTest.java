@@ -104,6 +104,11 @@ public class DocumentsTest extends DeviceTestCase implements IAbiReceiver, IBuil
         runDeviceTests(CLIENT_PKG, ".DocumentsClientTest", "testOpenExternalDirectory_userAccepts");
     }
 
+    public void testOpenExternalDirectory_notAskedAgain() throws Exception {
+        runDeviceTests(CLIENT_PKG, ".DocumentsClientTest",
+                "testOpenExternalDirectory_notAskedAgain");
+    }
+
     public void testOpenExternalDirectory_userAcceptsNewDirectory() throws Exception {
         // TODO: figure out a better way to remove the directory.
         final String command = "rm -rf /sdcard/Pictures";
