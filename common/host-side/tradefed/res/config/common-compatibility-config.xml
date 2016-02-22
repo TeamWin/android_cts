@@ -14,7 +14,6 @@
      limitations under the License.
 -->
 <configuration description="Common config for Compatibility suites">
-
     <device_recovery class="com.android.tradefed.device.WaitDeviceRecovery" />
     <build_provider class="com.android.compatibility.common.tradefed.build.CompatibilityBuildProvider" />
     <test class="com.android.compatibility.common.tradefed.testtype.CompatibilityTest" />

@@ -182,6 +182,10 @@ public class ModuleRepo implements IModuleRepo {
     public void initialize(int shards, File testsDir, Set<IAbi> abis, List<String> deviceTokens,
             List<String> testArgs, List<String> moduleArgs, List<String> includeFilters,
             List<String> excludeFilters, IBuildInfo buildInfo) {
+        CLog.d("Initializing ModuleRepo\nShards:%d\nTests Dir:%s\nABIs:%s\nDevice Tokens:%s\n" +
+                "Test Args:%s\nModule Args:%s\nIncludes:%s\nExcludes:%s",
+                shards, testsDir.getAbsolutePath(), abis, deviceTokens, testArgs, moduleArgs,
+                includeFilters, excludeFilters);
         mInitialized = true;
         mShards = shards;
         for (String line : deviceTokens) {
@@ -373,7 +377,7 @@ public class ModuleRepo implements IModuleRepo {
          */
         @Override
         public boolean accept(File dir, String name) {
-            CLog.d(String.format("%s/%s", dir.getAbsolutePath(), name));
+            CLog.d("%s/%s", dir.getAbsolutePath(), name);
             return name.endsWith(CONFIG_EXT);
         }
     }
