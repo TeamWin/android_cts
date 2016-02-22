@@ -16,23 +16,26 @@
 
 package android.text.cts;
 
+import android.graphics.Typeface;
 import android.test.AndroidTestCase;
 import android.text.Editable;
-import android.text.GetChars;
-import android.text.GraphicsOperations;
+import android.text.Layout;
 import android.text.Layout.Alignment;
-import android.text.TextUtils.TruncateAt;
 import android.text.SpannableString;
 import android.text.SpannableStringBuilder;
+import android.text.Spanned;
 import android.text.SpannedString;
 import android.text.StaticLayout;
 import android.text.TextDirectionHeuristics;
 import android.text.TextPaint;
 import android.text.TextUtils;
+import android.text.TextUtils.TruncateAt;
+import android.text.style.StyleSpan;
 
 import java.text.Normalizer;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 public class StaticLayoutTest extends AndroidTestCase {
     private static final float SPACE_MULTI = 1.0f;
@@ -1013,5 +1016,21 @@ public class StaticLayoutTest extends AndroidTestCase {
         StaticLayout layout = new StaticLayout(longTextString, paint, DEFAULT_OUTER_WIDTH,
                 DEFAULT_ALIGN, SPACE_MULTI, SPACE_ADD, true);
         assertNotNull(layout);
+    }
+
+    public void testDoesntCrashWhenWordStyleOverlap() {
+       // test case where word boundary overlaps multiple style spans
+       SpannableStringBuilder text = new SpannableStringBuilder("word boundaries, overlap style");
+       // span covers "boundaries"
+       text.setSpan(new StyleSpan(Typeface.BOLD),
+                   "word ".length(), "word boundaries".length(),
+                   Spanned.SPAN_INCLUSIVE_INCLUSIVE);
+       mDefaultPaint.setTextLocale(Locale.US);
+       StaticLayout layout = StaticLayout.Builder.obtain(text, 0, text.length(),
+               mDefaultPaint, DEFAULT_OUTER_WIDTH)
+               .setBreakStrategy(Layout.BREAK_STRATEGY_HIGH_QUALITY)  // enable hyphenation
+               .setHyphenationFrequency(Layout.HYPHENATION_FREQUENCY_NORMAL)
+               .build();
+       assertNotNull(layout);
     }
 }
