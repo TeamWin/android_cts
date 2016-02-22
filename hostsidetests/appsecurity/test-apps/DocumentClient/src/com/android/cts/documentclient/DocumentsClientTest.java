@@ -28,6 +28,7 @@ import static android.os.Environment.DIRECTORY_PODCASTS;
 import static android.os.Environment.DIRECTORY_RINGTONES;
 import static android.os.Environment.getExternalStorageDirectory;
 import static android.test.MoreAsserts.assertContainsRegex;
+import static android.test.MoreAsserts.assertNotEqual;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -37,6 +38,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 
 import android.app.Activity;
+import android.app.ActivityManager;
 import android.app.Instrumentation;
 import android.content.ContentResolver;
 import android.content.Context;
@@ -368,13 +370,6 @@ public class DocumentsClientTest extends InstrumentationTestCase {
         }
     }
 
-    // Not called by hostside tests, but useful during development...
-    public void testOpenExternalDirectory() throws Exception {
-        testOpenExternalDirectory_invalidPath();
-        testOpenExternalDirectory_userRejects();
-        testOpenExternalDirectory_userAccepts();
-    }
-
     public void testOpenExternalDirectory_invalidPath() throws Exception {
         if (!supportedHardware()) return;
 
@@ -413,20 +408,39 @@ public class DocumentsClientTest extends InstrumentationTestCase {
             return;
 
         for (StorageVolume volume : getVolumes()) {
-            userAcceptsOpenExternalDirectoryTest(volume);
+            userAcceptsOpenExternalDirectoryTest(volume, DIRECTORY_PICTURES);
         }
     }
 
-    private void userAcceptsOpenExternalDirectoryTest(StorageVolume volume) throws Exception {
+    public void testOpenExternalDirectory_notAskedAgain() throws Exception {
+        if (!supportedHardware())
+            return;
+
+        final StorageVolume volume = getPrimaryVolume();
+        final Uri grantedUri = userAcceptsOpenExternalDirectoryTest(volume, DIRECTORY_PICTURES);
+
+        // Calls it again - since the permission has been granted, it should return right away,
+        // without popping up the permissions dialog.
+        sendOpenExternalDirectoryIntent(volume, DIRECTORY_PICTURES);
+        final Intent newData = assertActivitySucceeded();
+        assertEquals(grantedUri, newData.getData());
+
+        // Make sure other directories still require user permission.
+        final Uri grantedUri2 = userAcceptsOpenExternalDirectoryTest(volume, DIRECTORY_ALARMS);
+        assertNotEqual(grantedUri, grantedUri2);
+    }
+
+    private Uri userAcceptsOpenExternalDirectoryTest(StorageVolume volume, String directoryName)
+            throws Exception {
         // Asserts dialog contain the proper message.
-        final UiAlertDialog dialog = openExternalDirectoryValidPath(volume, DIRECTORY_PICTURES);
+        final UiAlertDialog dialog = openExternalDirectoryValidPath(volume, directoryName);
         final String message = dialog.messageText.getText();
         Log.v(TAG, "request permission message: " + message);
         final Context context = getInstrumentation().getTargetContext();
         final String appLabel = context.getPackageManager().getApplicationLabel(
                 context.getApplicationInfo()).toString();
         assertContainsRegex("missing app label", appLabel, message);
-        assertContainsRegex("missing folder", DIRECTORY_PICTURES, message);
+        assertContainsRegex("missing folder", directoryName, message);
         assertContainsRegex("missing root", volume.getDescription(context), message);
 
         // Call API...
@@ -446,7 +460,7 @@ public class DocumentsClientTest extends InstrumentationTestCase {
         // ...and indirectly by creating some documents
         final Uri doc = DocumentsContract.buildDocumentUriUsingTree(grantedUri,
                 DocumentsContract.getTreeDocumentId(grantedUri));
-        assertNotNull("could not get tree UURI", doc);
+        assertNotNull("could not get tree URI", doc);
         final Uri pic = DocumentsContract.createDocument(resolver, doc, "image/png", "pic.png");
         assertNotNull("could not create file (pic.png) on tree root", pic);
         final Uri dir = DocumentsContract.createDocument(resolver, doc, Document.MIME_TYPE_DIR,
@@ -462,6 +476,8 @@ public class DocumentsClientTest extends InstrumentationTestCase {
         assertTrue("delete", DocumentsContract.deleteDocument(resolver, pic));
         assertTrue("delete", DocumentsContract.deleteDocument(resolver, dirPic));
         assertTrue("delete", DocumentsContract.deleteDocument(resolver, dir));
+
+        return grantedUri;
     }
 
     public void testGetContent() throws Exception {
