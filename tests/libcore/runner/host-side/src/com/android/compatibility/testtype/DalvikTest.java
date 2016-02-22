@@ -25,6 +25,7 @@ import com.android.ddmlib.MultiLineReceiver;
 import com.android.ddmlib.testrunner.TestIdentifier;
 import com.android.tradefed.build.IBuildInfo;
 import com.android.tradefed.config.Option;
+import com.android.tradefed.config.OptionCopier;
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.result.ITestInvocationListener;
@@ -33,15 +34,21 @@ import com.android.tradefed.testtype.IAbiReceiver;
 import com.android.tradefed.testtype.IBuildReceiver;
 import com.android.tradefed.testtype.IDeviceTest;
 import com.android.tradefed.testtype.IRemoteTest;
+import com.android.tradefed.testtype.IRuntimeHintProvider;
+import com.android.tradefed.testtype.IShardableTest;
 import com.android.tradefed.testtype.ITestFilterReceiver;
 import com.android.tradefed.util.ArrayUtil;
+import com.android.tradefed.util.TimeVal;
 
 import vogar.ExpectationStore;
 import vogar.ModeId;
 
 import java.io.File;
+import java.io.FilenameFilter;
 import java.io.PrintWriter;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -52,10 +59,47 @@ import java.util.concurrent.TimeUnit;
  * A wrapper to run tests against Dalvik.
  */
 public class DalvikTest implements IAbiReceiver, IBuildReceiver, IDeviceTest, IRemoteTest,
-        ITestFilterReceiver {
+        IRuntimeHintProvider, IShardableTest, ITestFilterReceiver {
 
     private static final String TAG = DalvikTest.class.getSimpleName();
+    private static final String LIBCORE_PACKAGE = "android.core.tests.libcore.package.%s";
+    private static final Set<String> PACKAGES = new HashSet<>();
+    static {
+        PACKAGES.add(String.format(LIBCORE_PACKAGE, "com"));// Has 0 tests
+        PACKAGES.add(String.format(LIBCORE_PACKAGE, "conscrypt"));// Has 0 tests
+        PACKAGES.add(String.format(LIBCORE_PACKAGE, "dalvik"));// Has 0 tests
+        PACKAGES.add(String.format(LIBCORE_PACKAGE, "jsr166"));// Has 0 tests
+        PACKAGES.add(String.format(LIBCORE_PACKAGE, "libcore"));// Has 0 tests
+        PACKAGES.add(String.format(LIBCORE_PACKAGE, "okhttp"));// Has 0 tests
+        PACKAGES.add(String.format(LIBCORE_PACKAGE, "org"));// Has 0 tests
+        PACKAGES.add(String.format(LIBCORE_PACKAGE, "sun"));// Has 0 tests
+        PACKAGES.add(String.format(LIBCORE_PACKAGE, "tests"));
+        PACKAGES.add(String.format(LIBCORE_PACKAGE, "tzdata"));// Has 0 tests
+        PACKAGES.add("com.android.org.apache.harmony.beans");// Has 0 tests
+        PACKAGES.add("com.android.org.apache.harmony.logging");// Has 0 tests
+        PACKAGES.add("com.android.org.apache.harmony.prefs");// Has 0 tests
+        PACKAGES.add("com.android.org.apache.harmony.sql");// Has 0 tests
+        PACKAGES.add("org.apache.harmony.annotation.tests");// Has 0 tests
+        PACKAGES.add("org.apache.harmony.crypto.tests");// Has 0 tests
+        PACKAGES.add("org.apache.harmony.luni.tests");// Has 0 tests
+        PACKAGES.add("org.apache.harmony.nio.tests");// Has 0 tests
+        PACKAGES.add("org.apache.harmony.regex.tests");// Has 0 tests
+        PACKAGES.add("org.apache.harmony.security.tests");// Has 0 tests
+        PACKAGES.add("org.apache.harmony.tests.internal.net.www.protocol");// Has 0 tests
+        PACKAGES.add("org.apache.harmony.tests.java.io");
+        PACKAGES.add("org.apache.harmony.tests.java.lang");
+        PACKAGES.add("org.apache.harmony.tests.java.math");
+        PACKAGES.add("org.apache.harmony.tests.java.net");
+        PACKAGES.add("org.apache.harmony.tests.java.nio");
+        PACKAGES.add("org.apache.harmony.tests.java.text");
+        PACKAGES.add("org.apache.harmony.tests.java.util");
+        PACKAGES.add("org.apache.harmony.tests.javax.net");
+        PACKAGES.add("org.apache.harmony.tests.javax.security");
+        PACKAGES.add("org.json");
+        PACKAGES.add("org.w3c.domts");
+    }
 
+    private static final String EXPECTATIONS_EXT = ".expectations";
     // Command to run the VM, args are bitness, classpath, dalvik-args, abi, runner-args,
     // include and exclude filters, and exclude filters file.
     private static final String COMMAND = "dalvikvm%s -classpath %s %s "
@@ -70,9 +114,6 @@ public class DalvikTest implements IAbiReceiver, IBuildReceiver, IDeviceTest, IR
 
     @Option(name = "run-name", description = "The name to use when reporting results")
     private String mRunName;
-
-    @Option(name = "expectations", description = "The names of the expectation files")
-    private Set<String> mExpectations = new HashSet<>();
 
     @Option(name = "classpath", description = "Holds the paths to search when loading tests")
     private List<String> mClasspath = new ArrayList<>();
@@ -91,6 +132,11 @@ public class DalvikTest implements IAbiReceiver, IBuildReceiver, IDeviceTest, IR
     @Option(name = "exclude-filter",
             description = "The exclude filters of the test name to run.")
     private List<String> mExcludeFilters = new ArrayList<>();
+
+    @Option(name = "runtime-hint",
+            isTimeVal = true,
+            description="The hint about the test's runtime.")
+    private long mRuntimeHint = 60000;// 1 minute
 
     private IAbi mAbi;
     private CompatibilityBuildHelper mBuildHelper;
@@ -164,6 +210,14 @@ public class DalvikTest implements IAbiReceiver, IBuildReceiver, IDeviceTest, IR
      * {@inheritDoc}
      */
     @Override
+    public long getRuntimeHint() {
+        return mRuntimeHint;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
     public void run(final ITestInvocationListener listener) throws DeviceNotAvailableException {
         String abiName = mAbi.getName();
         String bitness = AbiUtils.getBitness(abiName);
@@ -172,8 +226,9 @@ public class DalvikTest implements IAbiReceiver, IBuildReceiver, IDeviceTest, IR
         PrintWriter out = null;
         try {
             Set<File> expectationFiles = new HashSet<>();
-            for (String file : mExpectations) {
-                expectationFiles.add(new File(mBuildHelper.getTestsDir(), file));
+            for (File f : mBuildHelper.getTestsDir().listFiles(
+                    new ExpectationFileFilter(mRunName))) {
+                expectationFiles.add(f);
             }
             ExpectationStore store = ExpectationStore.parse(expectationFiles, ModeId.DEVICE);
 
@@ -200,7 +255,13 @@ public class DalvikTest implements IAbiReceiver, IBuildReceiver, IDeviceTest, IR
         }
 
         // Create command
+        mDalvikArgs.add("-Duser.name=shell");
+        mDalvikArgs.add("-Duser.language=en");
+        mDalvikArgs.add("-Duser.region=US");
+        mDalvikArgs.add("-Xcheck:jni");
+        mDalvikArgs.add("-Xjnigreflimit:2000");
         String dalvikArgs = ArrayUtil.join(" ", mDalvikArgs);
+
         String runnerArgs = ArrayUtil.join(" ", mRunnerArgs);
         // Filters
         StringBuilder includeFilters = new StringBuilder();
@@ -216,7 +277,7 @@ public class DalvikTest implements IAbiReceiver, IBuildReceiver, IDeviceTest, IR
         // Filter files
         String includeFile = ""; // String.format("--include-filter-file=%s", INCLUDE);
         String excludeFile = String.format("--exclude-filter-file=%s", EXCLUDE_FILE);
-        String command = String.format(COMMAND, bitness,
+        final String command = String.format(COMMAND, bitness,
                 ArrayUtil.join(File.pathSeparator, mClasspath),
                 dalvikArgs, abiName, runnerArgs,
                 includeFilters, excludeFilters, includeFile, excludeFile);
@@ -235,9 +296,12 @@ public class DalvikTest implements IAbiReceiver, IBuildReceiver, IDeviceTest, IR
                     String tag = parts[0];
                     if (tag.equals(START_RUN)) {
                         listener.testRunStarted(mRunName, Integer.parseInt(parts[1]));
+                        Log.logAndDisplay(LogLevel.INFO, TAG, command);
+                        Log.logAndDisplay(LogLevel.INFO, TAG, line);
                     } else if (tag.equals(END_RUN)) {
                         listener.testRunEnded(Integer.parseInt(parts[1]),
                                 new HashMap<String, String>());
+                        Log.logAndDisplay(LogLevel.INFO, TAG, line);
                     } else if (tag.equals(START_TEST)) {
                         test = getTestIdentifier(parts[1]);
                         listener.testStarted(test);
@@ -266,4 +330,45 @@ public class DalvikTest implements IAbiReceiver, IBuildReceiver, IDeviceTest, IR
         mDevice.executeShellCommand(command, receiver, 1, TimeUnit.HOURS, 1);
     }
 
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public Collection<IRemoteTest> split() {
+        List<IRemoteTest> shards = new ArrayList<>();
+        // Test to catch all packages that aren't in PACKAGES
+        DalvikTest catchAll = new DalvikTest();
+        OptionCopier.copyOptionsNoThrow(this, catchAll);
+        shards.add(catchAll);
+        long runtimeHint = mRuntimeHint / PACKAGES.size();
+        catchAll.mRuntimeHint = runtimeHint;
+        for (String entry: PACKAGES) {
+            catchAll.addExcludeFilter(entry);
+            DalvikTest test = new DalvikTest();
+            OptionCopier.copyOptionsNoThrow(this, test);
+            test.addIncludeFilter(entry);
+            test.mRuntimeHint = runtimeHint;
+            shards.add(test);
+        }
+        return shards;
+    }
+
+    /**
+     * A {@link FilenameFilter} to find all the expectation files in a directory.
+     */
+    public static class ExpectationFileFilter implements FilenameFilter {
+
+        private String mName;
+
+        public ExpectationFileFilter(String name) {
+            mName = name;
+        }
+        /**
+         * {@inheritDoc}
+         */
+        @Override
+        public boolean accept(File dir, String name) {
+            return name.startsWith(mName) && name.endsWith(EXPECTATIONS_EXT);
+        }
+    }
 }
