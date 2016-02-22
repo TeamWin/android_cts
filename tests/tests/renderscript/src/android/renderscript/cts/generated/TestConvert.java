@@ -21,6 +21,7 @@ package android.renderscript.cts;
 import android.renderscript.Allocation;
 import android.renderscript.RSRuntimeException;
 import android.renderscript.Element;
+import android.renderscript.cts.Target;
 
 import java.util.Arrays;
 
@@ -74,7 +75,7 @@ public class TestConvert extends RSBaseCompute {
                 ArgumentsFloatFloat args = new ArgumentsFloatFloat();
                 args.inV = arrayInV[i * 2 + j];
                 // Figure out what the outputs should have been.
-                Target target = new Target(relaxed);
+                Target target = new Target(Target.FunctionType.NORMAL, Target.ReturnType.FLOAT, relaxed);
                 CoreMathVerifier.computeConvert(args, target);
                 // Validate the outputs.
                 boolean valid = true;
@@ -143,7 +144,7 @@ public class TestConvert extends RSBaseCompute {
                 ArgumentsFloatFloat args = new ArgumentsFloatFloat();
                 args.inV = arrayInV[i * 4 + j];
                 // Figure out what the outputs should have been.
-                Target target = new Target(relaxed);
+                Target target = new Target(Target.FunctionType.NORMAL, Target.ReturnType.FLOAT, relaxed);
                 CoreMathVerifier.computeConvert(args, target);
                 // Validate the outputs.
                 boolean valid = true;
@@ -212,7 +213,7 @@ public class TestConvert extends RSBaseCompute {
                 ArgumentsFloatFloat args = new ArgumentsFloatFloat();
                 args.inV = arrayInV[i * 4 + j];
                 // Figure out what the outputs should have been.
-                Target target = new Target(relaxed);
+                Target target = new Target(Target.FunctionType.NORMAL, Target.ReturnType.FLOAT, relaxed);
                 CoreMathVerifier.computeConvert(args, target);
                 // Validate the outputs.
                 boolean valid = true;
@@ -286,7 +287,7 @@ public class TestConvert extends RSBaseCompute {
                 ArgumentsCharFloat args = new ArgumentsCharFloat();
                 args.inV = arrayInV[i * 2 + j];
                 // Figure out what the outputs should have been.
-                Target target = new Target(relaxed);
+                Target target = new Target(Target.FunctionType.NORMAL, Target.ReturnType.FLOAT, relaxed);
                 CoreMathVerifier.computeConvert(args, target);
                 // Validate the outputs.
                 boolean valid = true;
@@ -355,7 +356,7 @@ public class TestConvert extends RSBaseCompute {
                 ArgumentsCharFloat args = new ArgumentsCharFloat();
                 args.inV = arrayInV[i * 4 + j];
                 // Figure out what the outputs should have been.
-                Target target = new Target(relaxed);
+                Target target = new Target(Target.FunctionType.NORMAL, Target.ReturnType.FLOAT, relaxed);
                 CoreMathVerifier.computeConvert(args, target);
                 // Validate the outputs.
                 boolean valid = true;
@@ -424,7 +425,7 @@ public class TestConvert extends RSBaseCompute {
                 ArgumentsCharFloat args = new ArgumentsCharFloat();
                 args.inV = arrayInV[i * 4 + j];
                 // Figure out what the outputs should have been.
-                Target target = new Target(relaxed);
+                Target target = new Target(Target.FunctionType.NORMAL, Target.ReturnType.FLOAT, relaxed);
                 CoreMathVerifier.computeConvert(args, target);
                 // Validate the outputs.
                 boolean valid = true;
@@ -498,7 +499,7 @@ public class TestConvert extends RSBaseCompute {
                 ArgumentsUcharFloat args = new ArgumentsUcharFloat();
                 args.inV = arrayInV[i * 2 + j];
                 // Figure out what the outputs should have been.
-                Target target = new Target(relaxed);
+                Target target = new Target(Target.FunctionType.NORMAL, Target.ReturnType.FLOAT, relaxed);
                 CoreMathVerifier.computeConvert(args, target);
                 // Validate the outputs.
                 boolean valid = true;
@@ -567,7 +568,7 @@ public class TestConvert extends RSBaseCompute {
                 ArgumentsUcharFloat args = new ArgumentsUcharFloat();
                 args.inV = arrayInV[i * 4 + j];
                 // Figure out what the outputs should have been.
-                Target target = new Target(relaxed);
+                Target target = new Target(Target.FunctionType.NORMAL, Target.ReturnType.FLOAT, relaxed);
                 CoreMathVerifier.computeConvert(args, target);
                 // Validate the outputs.
                 boolean valid = true;
@@ -636,7 +637,7 @@ public class TestConvert extends RSBaseCompute {
                 ArgumentsUcharFloat args = new ArgumentsUcharFloat();
                 args.inV = arrayInV[i * 4 + j];
                 // Figure out what the outputs should have been.
-                Target target = new Target(relaxed);
+                Target target = new Target(Target.FunctionType.NORMAL, Target.ReturnType.FLOAT, relaxed);
                 CoreMathVerifier.computeConvert(args, target);
                 // Validate the outputs.
                 boolean valid = true;
@@ -710,7 +711,7 @@ public class TestConvert extends RSBaseCompute {
                 ArgumentsShortFloat args = new ArgumentsShortFloat();
                 args.inV = arrayInV[i * 2 + j];
                 // Figure out what the outputs should have been.
-                Target target = new Target(relaxed);
+                Target target = new Target(Target.FunctionType.NORMAL, Target.ReturnType.FLOAT, relaxed);
                 CoreMathVerifier.computeConvert(args, target);
                 // Validate the outputs.
                 boolean valid = true;
@@ -779,7 +780,7 @@ public class TestConvert extends RSBaseCompute {
                 ArgumentsShortFloat args = new ArgumentsShortFloat();
                 args.inV = arrayInV[i * 4 + j];
                 // Figure out what the outputs should have been.
-                Target target = new Target(relaxed);
+                Target target = new Target(Target.FunctionType.NORMAL, Target.ReturnType.FLOAT, relaxed);
                 CoreMathVerifier.computeConvert(args, target);
                 // Validate the outputs.
                 boolean valid = true;
@@ -848,7 +849,7 @@ public class TestConvert extends RSBaseCompute {
                 ArgumentsShortFloat args = new ArgumentsShortFloat();
                 args.inV = arrayInV[i * 4 + j];
                 // Figure out what the outputs should have been.
-                Target target = new Target(relaxed);
+                Target target = new Target(Target.FunctionType.NORMAL, Target.ReturnType.FLOAT, relaxed);
                 CoreMathVerifier.computeConvert(args, target);
                 // Validate the outputs.
                 boolean valid = true;
@@ -922,7 +923,7 @@ public class TestConvert extends RSBaseCompute {
                 ArgumentsUshortFloat args = new ArgumentsUshortFloat();
                 args.inV = arrayInV[i * 2 + j];
                 // Figure out what the outputs should have been.
-                Target target = new Target(relaxed);
+                Target target = new Target(Target.FunctionType.NORMAL, Target.ReturnType.FLOAT, relaxed);
                 CoreMathVerifier.computeConvert(args, target);
                 // Validate the outputs.
                 boolean valid = true;
@@ -991,7 +992,7 @@ public class TestConvert extends RSBaseCompute {
                 ArgumentsUshortFloat args = new ArgumentsUshortFloat();
                 args.inV = arrayInV[i * 4 + j];
                 // Figure out what the outputs should have been.
-                Target target = new Target(relaxed);
+                Target target = new Target(Target.FunctionType.NORMAL, Target.ReturnType.FLOAT, relaxed);
                 CoreMathVerifier.computeConvert(args, target);
                 // Validate the outputs.
                 boolean valid = true;
@@ -1060,7 +1061,7 @@ public class TestConvert extends RSBaseCompute {
                 ArgumentsUshortFloat args = new ArgumentsUshortFloat();
                 args.inV = arrayInV[i * 4 + j];
                 // Figure out what the outputs should have been.
-                Target target = new Target(relaxed);
+                Target target = new Target(Target.FunctionType.NORMAL, Target.ReturnType.FLOAT, relaxed);
                 CoreMathVerifier.computeConvert(args, target);
                 // Validate the outputs.
                 boolean valid = true;
@@ -1134,7 +1135,7 @@ public class TestConvert extends RSBaseCompute {
                 ArgumentsIntFloat args = new ArgumentsIntFloat();
                 args.inV = arrayInV[i * 2 + j];
                 // Figure out what the outputs should have been.
-                Target target = new Target(relaxed);
+                Target target = new Target(Target.FunctionType.NORMAL, Target.ReturnType.FLOAT, relaxed);
                 CoreMathVerifier.computeConvert(args, target);
                 // Validate the outputs.
                 boolean valid = true;
@@ -1203,7 +1204,7 @@ public class TestConvert extends RSBaseCompute {
                 ArgumentsIntFloat args = new ArgumentsIntFloat();
                 args.inV = arrayInV[i * 4 + j];
                 // Figure out what the outputs should have been.
-                Target target = new Target(relaxed);
+                Target target = new Target(Target.FunctionType.NORMAL, Target.ReturnType.FLOAT, relaxed);
                 CoreMathVerifier.computeConvert(args, target);
                 // Validate the outputs.
                 boolean valid = true;
@@ -1272,7 +1273,7 @@ public class TestConvert extends RSBaseCompute {
                 ArgumentsIntFloat args = new ArgumentsIntFloat();
                 args.inV = arrayInV[i * 4 + j];
                 // Figure out what the outputs should have been.
-                Target target = new Target(relaxed);
+                Target target = new Target(Target.FunctionType.NORMAL, Target.ReturnType.FLOAT, relaxed);
                 CoreMathVerifier.computeConvert(args, target);
                 // Validate the outputs.
                 boolean valid = true;
@@ -1346,7 +1347,7 @@ public class TestConvert extends RSBaseCompute {
                 ArgumentsUintFloat args = new ArgumentsUintFloat();
                 args.inV = arrayInV[i * 2 + j];
                 // Figure out what the outputs should have been.
-                Target target = new Target(relaxed);
+                Target target = new Target(Target.FunctionType.NORMAL, Target.ReturnType.FLOAT, relaxed);
                 CoreMathVerifier.computeConvert(args, target);
                 // Validate the outputs.
                 boolean valid = true;
@@ -1415,7 +1416,7 @@ public class TestConvert extends RSBaseCompute {
                 ArgumentsUintFloat args = new ArgumentsUintFloat();
                 args.inV = arrayInV[i * 4 + j];
                 // Figure out what the outputs should have been.
-                Target target = new Target(relaxed);
+                Target target = new Target(Target.FunctionType.NORMAL, Target.ReturnType.FLOAT, relaxed);
                 CoreMathVerifier.computeConvert(args, target);
                 // Validate the outputs.
                 boolean valid = true;
@@ -1484,7 +1485,7 @@ public class TestConvert extends RSBaseCompute {
                 ArgumentsUintFloat args = new ArgumentsUintFloat();
                 args.inV = arrayInV[i * 4 + j];
                 // Figure out what the outputs should have been.
-                Target target = new Target(relaxed);
+                Target target = new Target(Target.FunctionType.NORMAL, Target.ReturnType.FLOAT, relaxed);
                 CoreMathVerifier.computeConvert(args, target);
                 // Validate the outputs.
                 boolean valid = true;
@@ -10336,7 +10337,7 @@ public class TestConvert extends RSBaseCompute {
                 ArgumentsDoubleDouble args = new ArgumentsDoubleDouble();
                 args.inV = arrayInV[i * 2 + j];
                 // Figure out what the outputs should have been.
-                Target target = new Target(relaxed);
+                Target target = new Target(Target.FunctionType.NORMAL, Target.ReturnType.DOUBLE, relaxed);
                 CoreMathVerifier.computeConvert(args, target);
                 // Validate the outputs.
                 boolean valid = true;
@@ -10405,7 +10406,7 @@ public class TestConvert extends RSBaseCompute {
                 ArgumentsDoubleDouble args = new ArgumentsDoubleDouble();
                 args.inV = arrayInV[i * 4 + j];
                 // Figure out what the outputs should have been.
-                Target target = new Target(relaxed);
+                Target target = new Target(Target.FunctionType.NORMAL, Target.ReturnType.DOUBLE, relaxed);
                 CoreMathVerifier.computeConvert(args, target);
                 // Validate the outputs.
                 boolean valid = true;
@@ -10474,7 +10475,7 @@ public class TestConvert extends RSBaseCompute {
                 ArgumentsDoubleDouble args = new ArgumentsDoubleDouble();
                 args.inV = arrayInV[i * 4 + j];
                 // Figure out what the outputs should have been.
-                Target target = new Target(relaxed);
+                Target target = new Target(Target.FunctionType.NORMAL, Target.ReturnType.DOUBLE, relaxed);
                 CoreMathVerifier.computeConvert(args, target);
                 // Validate the outputs.
                 boolean valid = true;
@@ -10548,7 +10549,7 @@ public class TestConvert extends RSBaseCompute {
                 ArgumentsLongDouble args = new ArgumentsLongDouble();
                 args.inV = arrayInV[i * 2 + j];
                 // Figure out what the outputs should have been.
-                Target target = new Target(relaxed);
+                Target target = new Target(Target.FunctionType.NORMAL, Target.ReturnType.DOUBLE, relaxed);
                 CoreMathVerifier.computeConvert(args, target);
                 // Validate the outputs.
                 boolean valid = true;
@@ -10617,7 +10618,7 @@ public class TestConvert extends RSBaseCompute {
                 ArgumentsLongDouble args = new ArgumentsLongDouble();
                 args.inV = arrayInV[i * 4 + j];
                 // Figure out what the outputs should have been.
-                Target target = new Target(relaxed);
+                Target target = new Target(Target.FunctionType.NORMAL, Target.ReturnType.DOUBLE, relaxed);
                 CoreMathVerifier.computeConvert(args, target);
                 // Validate the outputs.
                 boolean valid = true;
@@ -10686,7 +10687,7 @@ public class TestConvert extends RSBaseCompute {
                 ArgumentsLongDouble args = new ArgumentsLongDouble();
                 args.inV = arrayInV[i * 4 + j];
                 // Figure out what the outputs should have been.
-                Target target = new Target(relaxed);
+                Target target = new Target(Target.FunctionType.NORMAL, Target.ReturnType.DOUBLE, relaxed);
                 CoreMathVerifier.computeConvert(args, target);
                 // Validate the outputs.
                 boolean valid = true;
@@ -10760,7 +10761,7 @@ public class TestConvert extends RSBaseCompute {
                 ArgumentsUlongDouble args = new ArgumentsUlongDouble();
                 args.inV = arrayInV[i * 2 + j];
                 // Figure out what the outputs should have been.
-                Target target = new Target(relaxed);
+                Target target = new Target(Target.FunctionType.NORMAL, Target.ReturnType.DOUBLE, relaxed);
                 CoreMathVerifier.computeConvert(args, target);
                 // Validate the outputs.
                 boolean valid = true;
@@ -10829,7 +10830,7 @@ public class TestConvert extends RSBaseCompute {
                 ArgumentsUlongDouble args = new ArgumentsUlongDouble();
                 args.inV = arrayInV[i * 4 + j];
                 // Figure out what the outputs should have been.
-                Target target = new Target(relaxed);
+                Target target = new Target(Target.FunctionType.NORMAL, Target.ReturnType.DOUBLE, relaxed);
                 CoreMathVerifier.computeConvert(args, target);
                 // Validate the outputs.
                 boolean valid = true;
@@ -10898,7 +10899,7 @@ public class TestConvert extends RSBaseCompute {
                 ArgumentsUlongDouble args = new ArgumentsUlongDouble();
                 args.inV = arrayInV[i * 4 + j];
                 // Figure out what the outputs should have been.
-                Target target = new Target(relaxed);
+                Target target = new Target(Target.FunctionType.NORMAL, Target.ReturnType.DOUBLE, relaxed);
                 CoreMathVerifier.computeConvert(args, target);
                 // Validate the outputs.
                 boolean valid = true;
@@ -12226,7 +12227,7 @@ public class TestConvert extends RSBaseCompute {
                 ArgumentsDoubleFloat args = new ArgumentsDoubleFloat();
                 args.inV = arrayInV[i * 2 + j];
                 // Figure out what the outputs should have been.
-                Target target = new Target(relaxed);
+                Target target = new Target(Target.FunctionType.NORMAL, Target.ReturnType.FLOAT, relaxed);
                 CoreMathVerifier.computeConvert(args, target);
                 // Validate the outputs.
                 boolean valid = true;
@@ -12295,7 +12296,7 @@ public class TestConvert extends RSBaseCompute {
                 ArgumentsDoubleFloat args = new ArgumentsDoubleFloat();
                 args.inV = arrayInV[i * 4 + j];
                 // Figure out what the outputs should have been.
-                Target target = new Target(relaxed);
+                Target target = new Target(Target.FunctionType.NORMAL, Target.ReturnType.FLOAT, relaxed);
                 CoreMathVerifier.computeConvert(args, target);
                 // Validate the outputs.
                 boolean valid = true;
@@ -12364,7 +12365,7 @@ public class TestConvert extends RSBaseCompute {
                 ArgumentsDoubleFloat args = new ArgumentsDoubleFloat();
                 args.inV = arrayInV[i * 4 + j];
                 // Figure out what the outputs should have been.
-                Target target = new Target(relaxed);
+                Target target = new Target(Target.FunctionType.NORMAL, Target.ReturnType.FLOAT, relaxed);
                 CoreMathVerifier.computeConvert(args, target);
                 // Validate the outputs.
                 boolean valid = true;
@@ -12438,7 +12439,7 @@ public class TestConvert extends RSBaseCompute {
                 ArgumentsLongFloat args = new ArgumentsLongFloat();
                 args.inV = arrayInV[i * 2 + j];
                 // Figure out what the outputs should have been.
-                Target target = new Target(relaxed);
+                Target target = new Target(Target.FunctionType.NORMAL, Target.ReturnType.FLOAT, relaxed);
                 CoreMathVerifier.computeConvert(args, target);
                 // Validate the outputs.
                 boolean valid = true;
@@ -12507,7 +12508,7 @@ public class TestConvert extends RSBaseCompute {
                 ArgumentsLongFloat args = new ArgumentsLongFloat();
                 args.inV = arrayInV[i * 4 + j];
                 // Figure out what the outputs should have been.
-                Target target = new Target(relaxed);
+                Target target = new Target(Target.FunctionType.NORMAL, Target.ReturnType.FLOAT, relaxed);
                 CoreMathVerifier.computeConvert(args, target);
                 // Validate the outputs.
                 boolean valid = true;
@@ -12576,7 +12577,7 @@ public class TestConvert extends RSBaseCompute {
                 ArgumentsLongFloat args = new ArgumentsLongFloat();
                 args.inV = arrayInV[i * 4 + j];
                 // Figure out what the outputs should have been.
-                Target target = new Target(relaxed);
+                Target target = new Target(Target.FunctionType.NORMAL, Target.ReturnType.FLOAT, relaxed);
                 CoreMathVerifier.computeConvert(args, target);
                 // Validate the outputs.
                 boolean valid = true;
@@ -12650,7 +12651,7 @@ public class TestConvert extends RSBaseCompute {
                 ArgumentsUlongFloat args = new ArgumentsUlongFloat();
                 args.inV = arrayInV[i * 2 + j];
                 // Figure out what the outputs should have been.
-                Target target = new Target(relaxed);
+                Target target = new Target(Target.FunctionType.NORMAL, Target.ReturnType.FLOAT, relaxed);
                 CoreMathVerifier.computeConvert(args, target);
                 // Validate the outputs.
                 boolean valid = true;
@@ -12719,7 +12720,7 @@ public class TestConvert extends RSBaseCompute {
                 ArgumentsUlongFloat args = new ArgumentsUlongFloat();
                 args.inV = arrayInV[i * 4 + j];
                 // Figure out what the outputs should have been.
-                Target target = new Target(relaxed);
+                Target target = new Target(Target.FunctionType.NORMAL, Target.ReturnType.FLOAT, relaxed);
                 CoreMathVerifier.computeConvert(args, target);
                 // Validate the outputs.
                 boolean valid = true;
@@ -12788,7 +12789,7 @@ public class TestConvert extends RSBaseCompute {
                 ArgumentsUlongFloat args = new ArgumentsUlongFloat();
                 args.inV = arrayInV[i * 4 + j];
                 // Figure out what the outputs should have been.
-                Target target = new Target(relaxed);
+                Target target = new Target(Target.FunctionType.NORMAL, Target.ReturnType.FLOAT, relaxed);
                 CoreMathVerifier.computeConvert(args, target);
                 // Validate the outputs.
                 boolean valid = true;
@@ -16624,7 +16625,7 @@ public class TestConvert extends RSBaseCompute {
                 ArgumentsFloatDouble args = new ArgumentsFloatDouble();
                 args.inV = arrayInV[i * 2 + j];
                 // Figure out what the outputs should have been.
-                Target target = new Target(relaxed);
+                Target target = new Target(Target.FunctionType.NORMAL, Target.ReturnType.DOUBLE, relaxed);
                 CoreMathVerifier.computeConvert(args, target);
                 // Validate the outputs.
                 boolean valid = true;
@@ -16693,7 +16694,7 @@ public class TestConvert extends RSBaseCompute {
                 ArgumentsFloatDouble args = new ArgumentsFloatDouble();
                 args.inV = arrayInV[i * 4 + j];
                 // Figure out what the outputs should have been.
-                Target target = new Target(relaxed);
+                Target target = new Target(Target.FunctionType.NORMAL, Target.ReturnType.DOUBLE, relaxed);
                 CoreMathVerifier.computeConvert(args, target);
                 // Validate the outputs.
                 boolean valid = true;
@@ -16762,7 +16763,7 @@ public class TestConvert extends RSBaseCompute {
                 ArgumentsFloatDouble args = new ArgumentsFloatDouble();
                 args.inV = arrayInV[i * 4 + j];
                 // Figure out what the outputs should have been.
-                Target target = new Target(relaxed);
+                Target target = new Target(Target.FunctionType.NORMAL, Target.ReturnType.DOUBLE, relaxed);
                 CoreMathVerifier.computeConvert(args, target);
                 // Validate the outputs.
                 boolean valid = true;
@@ -16836,7 +16837,7 @@ public class TestConvert extends RSBaseCompute {
                 ArgumentsCharDouble args = new ArgumentsCharDouble();
                 args.inV = arrayInV[i * 2 + j];
                 // Figure out what the outputs should have been.
-                Target target = new Target(relaxed);
+                Target target = new Target(Target.FunctionType.NORMAL, Target.ReturnType.DOUBLE, relaxed);
                 CoreMathVerifier.computeConvert(args, target);
                 // Validate the outputs.
                 boolean valid = true;
@@ -16905,7 +16906,7 @@ public class TestConvert extends RSBaseCompute {
                 ArgumentsCharDouble args = new ArgumentsCharDouble();
                 args.inV = arrayInV[i * 4 + j];
                 // Figure out what the outputs should have been.
-                Target target = new Target(relaxed);
+                Target target = new Target(Target.FunctionType.NORMAL, Target.ReturnType.DOUBLE, relaxed);
                 CoreMathVerifier.computeConvert(args, target);
                 // Validate the outputs.
                 boolean valid = true;
@@ -16974,7 +16975,7 @@ public class TestConvert extends RSBaseCompute {
                 ArgumentsCharDouble args = new ArgumentsCharDouble();
                 args.inV = arrayInV[i * 4 + j];
                 // Figure out what the outputs should have been.
-                Target target = new Target(relaxed);
+                Target target = new Target(Target.FunctionType.NORMAL, Target.ReturnType.DOUBLE, relaxed);
                 CoreMathVerifier.computeConvert(args, target);
                 // Validate the outputs.
                 boolean valid = true;
@@ -17048,7 +17049,7 @@ public class TestConvert extends RSBaseCompute {
                 ArgumentsUcharDouble args = new ArgumentsUcharDouble();
                 args.inV = arrayInV[i * 2 + j];
                 // Figure out what the outputs should have been.
-                Target target = new Target(relaxed);
+                Target target = new Target(Target.FunctionType.NORMAL, Target.ReturnType.DOUBLE, relaxed);
                 CoreMathVerifier.computeConvert(args, target);
                 // Validate the outputs.
                 boolean valid = true;
@@ -17117,7 +17118,7 @@ public class TestConvert extends RSBaseCompute {
                 ArgumentsUcharDouble args = new ArgumentsUcharDouble();
                 args.inV = arrayInV[i * 4 + j];
                 // Figure out what the outputs should have been.
-                Target target = new Target(relaxed);
+                Target target = new Target(Target.FunctionType.NORMAL, Target.ReturnType.DOUBLE, relaxed);
                 CoreMathVerifier.computeConvert(args, target);
                 // Validate the outputs.
                 boolean valid = true;
@@ -17186,7 +17187,7 @@ public class TestConvert extends RSBaseCompute {
                 ArgumentsUcharDouble args = new ArgumentsUcharDouble();
                 args.inV = arrayInV[i * 4 + j];
                 // Figure out what the outputs should have been.
-                Target target = new Target(relaxed);
+                Target target = new Target(Target.FunctionType.NORMAL, Target.ReturnType.DOUBLE, relaxed);
                 CoreMathVerifier.computeConvert(args, target);
                 // Validate the outputs.
                 boolean valid = true;
@@ -17260,7 +17261,7 @@ public class TestConvert extends RSBaseCompute {
                 ArgumentsShortDouble args = new ArgumentsShortDouble();
                 args.inV = arrayInV[i * 2 + j];
                 // Figure out what the outputs should have been.
-                Target target = new Target(relaxed);
+                Target target = new Target(Target.FunctionType.NORMAL, Target.ReturnType.DOUBLE, relaxed);
                 CoreMathVerifier.computeConvert(args, target);
                 // Validate the outputs.
                 boolean valid = true;
@@ -17329,7 +17330,7 @@ public class TestConvert extends RSBaseCompute {
                 ArgumentsShortDouble args = new ArgumentsShortDouble();
                 args.inV = arrayInV[i * 4 + j];
                 // Figure out what the outputs should have been.
-                Target target = new Target(relaxed);
+                Target target = new Target(Target.FunctionType.NORMAL, Target.ReturnType.DOUBLE, relaxed);
                 CoreMathVerifier.computeConvert(args, target);
                 // Validate the outputs.
                 boolean valid = true;
@@ -17398,7 +17399,7 @@ public class TestConvert extends RSBaseCompute {
                 ArgumentsShortDouble args = new ArgumentsShortDouble();
                 args.inV = arrayInV[i * 4 + j];
                 // Figure out what the outputs should have been.
-                Target target = new Target(relaxed);
+                Target target = new Target(Target.FunctionType.NORMAL, Target.ReturnType.DOUBLE, relaxed);
                 CoreMathVerifier.computeConvert(args, target);
                 // Validate the outputs.
                 boolean valid = true;
@@ -17472,7 +17473,7 @@ public class TestConvert extends RSBaseCompute {
                 ArgumentsUshortDouble args = new ArgumentsUshortDouble();
                 args.inV = arrayInV[i * 2 + j];
                 // Figure out what the outputs should have been.
-                Target target = new Target(relaxed);
+                Target target = new Target(Target.FunctionType.NORMAL, Target.ReturnType.DOUBLE, relaxed);
                 CoreMathVerifier.computeConvert(args, target);
                 // Validate the outputs.
                 boolean valid = true;
@@ -17541,7 +17542,7 @@ public class TestConvert extends RSBaseCompute {
                 ArgumentsUshortDouble args = new ArgumentsUshortDouble();
                 args.inV = arrayInV[i * 4 + j];
                 // Figure out what the outputs should have been.
-                Target target = new Target(relaxed);
+                Target target = new Target(Target.FunctionType.NORMAL, Target.ReturnType.DOUBLE, relaxed);
                 CoreMathVerifier.computeConvert(args, target);
                 // Validate the outputs.
                 boolean valid = true;
@@ -17610,7 +17611,7 @@ public class TestConvert extends RSBaseCompute {
                 ArgumentsUshortDouble args = new ArgumentsUshortDouble();
                 args.inV = arrayInV[i * 4 + j];
                 // Figure out what the outputs should have been.
-                Target target = new Target(relaxed);
+                Target target = new Target(Target.FunctionType.NORMAL, Target.ReturnType.DOUBLE, relaxed);
                 CoreMathVerifier.computeConvert(args, target);
                 // Validate the outputs.
                 boolean valid = true;
@@ -17684,7 +17685,7 @@ public class TestConvert extends RSBaseCompute {
                 ArgumentsIntDouble args = new ArgumentsIntDouble();
                 args.inV = arrayInV[i * 2 + j];
                 // Figure out what the outputs should have been.
-                Target target = new Target(relaxed);
+                Target target = new Target(Target.FunctionType.NORMAL, Target.ReturnType.DOUBLE, relaxed);
                 CoreMathVerifier.computeConvert(args, target);
                 // Validate the outputs.
                 boolean valid = true;
@@ -17753,7 +17754,7 @@ public class TestConvert extends RSBaseCompute {
                 ArgumentsIntDouble args = new ArgumentsIntDouble();
                 args.inV = arrayInV[i * 4 + j];
                 // Figure out what the outputs should have been.
-                Target target = new Target(relaxed);
+                Target target = new Target(Target.FunctionType.NORMAL, Target.ReturnType.DOUBLE, relaxed);
                 CoreMathVerifier.computeConvert(args, target);
                 // Validate the outputs.
                 boolean valid = true;
@@ -17822,7 +17823,7 @@ public class TestConvert extends RSBaseCompute {
                 ArgumentsIntDouble args = new ArgumentsIntDouble();
                 args.inV = arrayInV[i * 4 + j];
                 // Figure out what the outputs should have been.
-                Target target = new Target(relaxed);
+                Target target = new Target(Target.FunctionType.NORMAL, Target.ReturnType.DOUBLE, relaxed);
                 CoreMathVerifier.computeConvert(args, target);
                 // Validate the outputs.
                 boolean valid = true;
@@ -17896,7 +17897,7 @@ public class TestConvert extends RSBaseCompute {
                 ArgumentsUintDouble args = new ArgumentsUintDouble();
                 args.inV = arrayInV[i * 2 + j];
                 // Figure out what the outputs should have been.
-                Target target = new Target(relaxed);
+                Target target = new Target(Target.FunctionType.NORMAL, Target.ReturnType.DOUBLE, relaxed);
                 CoreMathVerifier.computeConvert(args, target);
                 // Validate the outputs.
                 boolean valid = true;
@@ -17965,7 +17966,7 @@ public class TestConvert extends RSBaseCompute {
                 ArgumentsUintDouble args = new ArgumentsUintDouble();
                 args.inV = arrayInV[i * 4 + j];
                 // Figure out what the outputs should have been.
-                Target target = new Target(relaxed);
+                Target target = new Target(Target.FunctionType.NORMAL, Target.ReturnType.DOUBLE, relaxed);
                 CoreMathVerifier.computeConvert(args, target);
                 // Validate the outputs.
                 boolean valid = true;
@@ -18034,7 +18035,7 @@ public class TestConvert extends RSBaseCompute {
                 ArgumentsUintDouble args = new ArgumentsUintDouble();
                 args.inV = arrayInV[i * 4 + j];
                 // Figure out what the outputs should have been.
-                Target target = new Target(relaxed);
+                Target target = new Target(Target.FunctionType.NORMAL, Target.ReturnType.DOUBLE, relaxed);
                 CoreMathVerifier.computeConvert(args, target);
                 // Validate the outputs.
                 boolean valid = true;

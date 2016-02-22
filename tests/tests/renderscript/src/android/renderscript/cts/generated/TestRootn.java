@@ -21,6 +21,7 @@ package android.renderscript.cts;
 import android.renderscript.Allocation;
 import android.renderscript.RSRuntimeException;
 import android.renderscript.Element;
+import android.renderscript.cts.Target;
 
 import java.util.Arrays;
 
@@ -82,7 +83,7 @@ public class TestRootn extends RSBaseCompute {
                 args.inV = arrayInV[i];
                 args.inN = arrayInN[i];
                 // Figure out what the outputs should have been.
-                Target target = new Target(relaxed);
+                Target target = new Target(Target.FunctionType.NORMAL, Target.ReturnType.FLOAT, relaxed);
                 CoreMathVerifier.computeRootn(args, target);
                 // Validate the outputs.
                 boolean valid = true;
@@ -161,7 +162,7 @@ public class TestRootn extends RSBaseCompute {
                 args.inV = arrayInV[i * 2 + j];
                 args.inN = arrayInN[i * 2 + j];
                 // Figure out what the outputs should have been.
-                Target target = new Target(relaxed);
+                Target target = new Target(Target.FunctionType.NORMAL, Target.ReturnType.FLOAT, relaxed);
                 CoreMathVerifier.computeRootn(args, target);
                 // Validate the outputs.
                 boolean valid = true;
@@ -240,7 +241,7 @@ public class TestRootn extends RSBaseCompute {
                 args.inV = arrayInV[i * 4 + j];
                 args.inN = arrayInN[i * 4 + j];
                 // Figure out what the outputs should have been.
-                Target target = new Target(relaxed);
+                Target target = new Target(Target.FunctionType.NORMAL, Target.ReturnType.FLOAT, relaxed);
                 CoreMathVerifier.computeRootn(args, target);
                 // Validate the outputs.
                 boolean valid = true;
@@ -319,7 +320,7 @@ public class TestRootn extends RSBaseCompute {
                 args.inV = arrayInV[i * 4 + j];
                 args.inN = arrayInN[i * 4 + j];
                 // Figure out what the outputs should have been.
-                Target target = new Target(relaxed);
+                Target target = new Target(Target.FunctionType.NORMAL, Target.ReturnType.FLOAT, relaxed);
                 CoreMathVerifier.computeRootn(args, target);
                 // Validate the outputs.
                 boolean valid = true;
