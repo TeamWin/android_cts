@@ -57,8 +57,6 @@ public class ModuleRepo implements IModuleRepo {
     private static final long SMALL_TEST = TimeUnit.MINUTES.toMillis(2); // Small tests < 2mins
     private static final long MEDIUM_TEST = TimeUnit.MINUTES.toMillis(10); // Medium tests < 10mins
 
-    static IModuleRepo sInstance;
-
     private int mShards;
     private int mModulesPerShard;
     private int mSmallModulesPerShard;
@@ -84,17 +82,6 @@ public class ModuleRepo implements IModuleRepo {
     private List<IModuleDef> mLargeModules = new ArrayList<>();
     // Holds all the tests with tokens waiting to be run. Meaning the DUT must have a specific token.
     private List<IModuleDef> mTokenModules = new ArrayList<>();
-
-    public static IModuleRepo getInstance() {
-        if (sInstance == null) {
-            sInstance = new ModuleRepo();
-        }
-        return sInstance;
-    }
-
-    public static void tearDown() {
-        sInstance = null;
-    }
 
     /**
      * {@inheritDoc}
