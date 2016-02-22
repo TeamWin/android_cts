@@ -21,6 +21,7 @@ package android.renderscript.cts;
 import android.renderscript.Allocation;
 import android.renderscript.RSRuntimeException;
 import android.renderscript.Element;
+import android.renderscript.cts.Target;
 
 import java.util.Arrays;
 
@@ -90,7 +91,7 @@ public class TestMad extends RSBaseCompute {
                 args.inMultiplicand2 = arrayInMultiplicand2[i];
                 args.inOffset = arrayInOffset[i];
                 // Figure out what the outputs should have been.
-                Target target = new Target(relaxed);
+                Target target = new Target(Target.FunctionType.NORMAL, Target.ReturnType.FLOAT, relaxed);
                 CoreMathVerifier.computeMad(args, target);
                 // Validate the outputs.
                 boolean valid = true;
@@ -179,7 +180,7 @@ public class TestMad extends RSBaseCompute {
                 args.inMultiplicand2 = arrayInMultiplicand2[i * 2 + j];
                 args.inOffset = arrayInOffset[i * 2 + j];
                 // Figure out what the outputs should have been.
-                Target target = new Target(relaxed);
+                Target target = new Target(Target.FunctionType.NORMAL, Target.ReturnType.FLOAT, relaxed);
                 CoreMathVerifier.computeMad(args, target);
                 // Validate the outputs.
                 boolean valid = true;
@@ -268,7 +269,7 @@ public class TestMad extends RSBaseCompute {
                 args.inMultiplicand2 = arrayInMultiplicand2[i * 4 + j];
                 args.inOffset = arrayInOffset[i * 4 + j];
                 // Figure out what the outputs should have been.
-                Target target = new Target(relaxed);
+                Target target = new Target(Target.FunctionType.NORMAL, Target.ReturnType.FLOAT, relaxed);
                 CoreMathVerifier.computeMad(args, target);
                 // Validate the outputs.
                 boolean valid = true;
@@ -357,7 +358,7 @@ public class TestMad extends RSBaseCompute {
                 args.inMultiplicand2 = arrayInMultiplicand2[i * 4 + j];
                 args.inOffset = arrayInOffset[i * 4 + j];
                 // Figure out what the outputs should have been.
-                Target target = new Target(relaxed);
+                Target target = new Target(Target.FunctionType.NORMAL, Target.ReturnType.FLOAT, relaxed);
                 CoreMathVerifier.computeMad(args, target);
                 // Validate the outputs.
                 boolean valid = true;

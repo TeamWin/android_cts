@@ -21,6 +21,7 @@ package android.renderscript.cts;
 import android.renderscript.Allocation;
 import android.renderscript.RSRuntimeException;
 import android.renderscript.Element;
+import android.renderscript.cts.Target;
 
 import java.util.Arrays;
 
@@ -82,7 +83,7 @@ public class TestFrexp extends RSBaseCompute {
                 ArgumentsFloatIntFloat args = new ArgumentsFloatIntFloat();
                 args.inV = arrayInV[i];
                 // Figure out what the outputs should have been.
-                Target target = new Target(relaxed);
+                Target target = new Target(Target.FunctionType.NORMAL, Target.ReturnType.FLOAT, relaxed);
                 CoreMathVerifier.computeFrexp(args, target);
                 // Validate the outputs.
                 boolean valid = true;
@@ -170,7 +171,7 @@ public class TestFrexp extends RSBaseCompute {
                 ArgumentsFloatIntFloat args = new ArgumentsFloatIntFloat();
                 args.inV = arrayInV[i * 2 + j];
                 // Figure out what the outputs should have been.
-                Target target = new Target(relaxed);
+                Target target = new Target(Target.FunctionType.NORMAL, Target.ReturnType.FLOAT, relaxed);
                 CoreMathVerifier.computeFrexp(args, target);
                 // Validate the outputs.
                 boolean valid = true;
@@ -258,7 +259,7 @@ public class TestFrexp extends RSBaseCompute {
                 ArgumentsFloatIntFloat args = new ArgumentsFloatIntFloat();
                 args.inV = arrayInV[i * 4 + j];
                 // Figure out what the outputs should have been.
-                Target target = new Target(relaxed);
+                Target target = new Target(Target.FunctionType.NORMAL, Target.ReturnType.FLOAT, relaxed);
                 CoreMathVerifier.computeFrexp(args, target);
                 // Validate the outputs.
                 boolean valid = true;
@@ -346,7 +347,7 @@ public class TestFrexp extends RSBaseCompute {
                 ArgumentsFloatIntFloat args = new ArgumentsFloatIntFloat();
                 args.inV = arrayInV[i * 4 + j];
                 // Figure out what the outputs should have been.
-                Target target = new Target(relaxed);
+                Target target = new Target(Target.FunctionType.NORMAL, Target.ReturnType.FLOAT, relaxed);
                 CoreMathVerifier.computeFrexp(args, target);
                 // Validate the outputs.
                 boolean valid = true;
