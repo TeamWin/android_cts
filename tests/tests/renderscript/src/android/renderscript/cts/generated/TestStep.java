@@ -21,6 +21,7 @@ package android.renderscript.cts;
 import android.renderscript.Allocation;
 import android.renderscript.RSRuntimeException;
 import android.renderscript.Element;
+import android.renderscript.cts.Target;
 
 import java.util.Arrays;
 
@@ -82,7 +83,7 @@ public class TestStep extends RSBaseCompute {
                 args.inEdge = arrayInEdge[i];
                 args.inV = arrayInV[i];
                 // Figure out what the outputs should have been.
-                Target target = new Target(relaxed);
+                Target target = new Target(Target.FunctionType.NORMAL, Target.ReturnType.FLOAT, relaxed);
                 CoreMathVerifier.computeStep(args, target);
                 // Validate the outputs.
                 boolean valid = true;
@@ -161,7 +162,7 @@ public class TestStep extends RSBaseCompute {
                 args.inEdge = arrayInEdge[i * 2 + j];
                 args.inV = arrayInV[i * 2 + j];
                 // Figure out what the outputs should have been.
-                Target target = new Target(relaxed);
+                Target target = new Target(Target.FunctionType.NORMAL, Target.ReturnType.FLOAT, relaxed);
                 CoreMathVerifier.computeStep(args, target);
                 // Validate the outputs.
                 boolean valid = true;
@@ -240,7 +241,7 @@ public class TestStep extends RSBaseCompute {
                 args.inEdge = arrayInEdge[i * 4 + j];
                 args.inV = arrayInV[i * 4 + j];
                 // Figure out what the outputs should have been.
-                Target target = new Target(relaxed);
+                Target target = new Target(Target.FunctionType.NORMAL, Target.ReturnType.FLOAT, relaxed);
                 CoreMathVerifier.computeStep(args, target);
                 // Validate the outputs.
                 boolean valid = true;
@@ -319,7 +320,7 @@ public class TestStep extends RSBaseCompute {
                 args.inEdge = arrayInEdge[i * 4 + j];
                 args.inV = arrayInV[i * 4 + j];
                 // Figure out what the outputs should have been.
-                Target target = new Target(relaxed);
+                Target target = new Target(Target.FunctionType.NORMAL, Target.ReturnType.FLOAT, relaxed);
                 CoreMathVerifier.computeStep(args, target);
                 // Validate the outputs.
                 boolean valid = true;
@@ -398,7 +399,7 @@ public class TestStep extends RSBaseCompute {
                 args.inEdge = arrayInEdge[i * 2 + j];
                 args.inV = arrayInV[i];
                 // Figure out what the outputs should have been.
-                Target target = new Target(relaxed);
+                Target target = new Target(Target.FunctionType.NORMAL, Target.ReturnType.FLOAT, relaxed);
                 CoreMathVerifier.computeStep(args, target);
                 // Validate the outputs.
                 boolean valid = true;
@@ -477,7 +478,7 @@ public class TestStep extends RSBaseCompute {
                 args.inEdge = arrayInEdge[i * 4 + j];
                 args.inV = arrayInV[i];
                 // Figure out what the outputs should have been.
-                Target target = new Target(relaxed);
+                Target target = new Target(Target.FunctionType.NORMAL, Target.ReturnType.FLOAT, relaxed);
                 CoreMathVerifier.computeStep(args, target);
                 // Validate the outputs.
                 boolean valid = true;
@@ -556,7 +557,7 @@ public class TestStep extends RSBaseCompute {
                 args.inEdge = arrayInEdge[i * 4 + j];
                 args.inV = arrayInV[i];
                 // Figure out what the outputs should have been.
-                Target target = new Target(relaxed);
+                Target target = new Target(Target.FunctionType.NORMAL, Target.ReturnType.FLOAT, relaxed);
                 CoreMathVerifier.computeStep(args, target);
                 // Validate the outputs.
                 boolean valid = true;
@@ -635,7 +636,7 @@ public class TestStep extends RSBaseCompute {
                 args.inEdge = arrayInEdge[i];
                 args.inV = arrayInV[i * 2 + j];
                 // Figure out what the outputs should have been.
-                Target target = new Target(relaxed);
+                Target target = new Target(Target.FunctionType.NORMAL, Target.ReturnType.FLOAT, relaxed);
                 CoreMathVerifier.computeStep(args, target);
                 // Validate the outputs.
                 boolean valid = true;
@@ -714,7 +715,7 @@ public class TestStep extends RSBaseCompute {
                 args.inEdge = arrayInEdge[i];
                 args.inV = arrayInV[i * 4 + j];
                 // Figure out what the outputs should have been.
-                Target target = new Target(relaxed);
+                Target target = new Target(Target.FunctionType.NORMAL, Target.ReturnType.FLOAT, relaxed);
                 CoreMathVerifier.computeStep(args, target);
                 // Validate the outputs.
                 boolean valid = true;
@@ -793,7 +794,7 @@ public class TestStep extends RSBaseCompute {
                 args.inEdge = arrayInEdge[i];
                 args.inV = arrayInV[i * 4 + j];
                 // Figure out what the outputs should have been.
-                Target target = new Target(relaxed);
+                Target target = new Target(Target.FunctionType.NORMAL, Target.ReturnType.FLOAT, relaxed);
                 CoreMathVerifier.computeStep(args, target);
                 // Validate the outputs.
                 boolean valid = true;
