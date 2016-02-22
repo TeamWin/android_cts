@@ -40,5 +40,5 @@
         <option name="expected-value" value="en-US"/> <!-- Device locale should be US English -->
         <option name="throw-error" value="false"/> <!-- Only print warning if not en-US -->
     </target_preparer>
-
+    <template-include name="reporters" default="basic-reporters" />
 </configuration>
