@@ -33,11 +33,11 @@ import android.media.MediaPlayer.OnErrorListener;
 import android.media.MediaRecorder;
 import android.media.MediaTimestamp;
 import android.media.PlaybackParams;
+import android.media.SubtitleData;
 import android.media.SyncParams;
 import android.media.TimedText;
 import android.media.audiofx.AudioEffect;
 import android.media.audiofx.Visualizer;
-import android.media.cts.MediaPlayerTestBase.Monitor;
 import android.net.Uri;
 import android.os.Environment;
 import android.os.IBinder;
@@ -74,9 +74,13 @@ public class MediaPlayerTest extends MediaPlayerTestBase {
     private static final long RECORDED_DURATION_MS  = 3000;
     private static final float FLOAT_TOLERANCE = .0001f;
 
-    private Vector<Integer> mTimedTextTrackIndex = new Vector<Integer>();
+    private final Vector<Integer> mTimedTextTrackIndex = new Vector<>();
+    private final Monitor mOnTimedTextCalled = new Monitor();
     private int mSelectedTimedTextIndex;
-    private Monitor mOnTimedTextCalled = new Monitor();
+
+    private final Vector<Integer> mSubtitleTrackIndex = new Vector<>();
+    private final Monitor mOnSubtitleDataCalled = new Monitor();
+    private int mSelectedSubtitleIndex;
 
     private File mOutFile;
 
@@ -919,7 +923,7 @@ public class MediaPlayerTest extends MediaPlayerTestBase {
         MediaMetadataRetriever retriever = new MediaMetadataRetriever();
         retriever.setDataSource(file);
         String rotation = retriever.extractMetadata(
-                    MediaMetadataRetriever.METADATA_KEY_VIDEO_ROTATION);
+                MediaMetadataRetriever.METADATA_KEY_VIDEO_ROTATION);
         retriever.release();
         retriever = null;
         assertNotNull(rotation);
@@ -1206,6 +1210,194 @@ public class MediaPlayerTest extends MediaPlayerTestBase {
                 R.raw.video_176x144_3gp_h263_300kbps_25fps_aac_stereo_128kbps_22050hz, 176, 144);
     }
 
+    private void readSubtitleTracks() throws Exception {
+        mSubtitleTrackIndex.clear();
+        MediaPlayer.TrackInfo[] trackInfos = mMediaPlayer.getTrackInfo();
+        if (trackInfos == null || trackInfos.length == 0) {
+            return;
+        }
+
+        Vector<Integer> subtitleTrackIndex = new Vector<>();
+        for (int i = 0; i < trackInfos.length; ++i) {
+            assertTrue(trackInfos[i] != null);
+            if (trackInfos[i].getTrackType() == MediaPlayer.TrackInfo.MEDIA_TRACK_TYPE_SUBTITLE) {
+                subtitleTrackIndex.add(i);
+            }
+        }
+
+        mSubtitleTrackIndex.addAll(subtitleTrackIndex);
+    }
+
+    private void selectSubtitleTrack(int index) throws Exception {
+        int trackIndex = mSubtitleTrackIndex.get(index);
+        mMediaPlayer.selectTrack(trackIndex);
+        mSelectedSubtitleIndex = index;
+    }
+
+    private void deselectSubtitleTrack(int index) throws Exception {
+        int trackIndex = mSubtitleTrackIndex.get(index);
+        mMediaPlayer.deselectTrack(trackIndex);
+        if (mSelectedSubtitleIndex == index) {
+            mSelectedSubtitleIndex = -1;
+        }
+    }
+
+    public void testDeselectTrackForSubtitleTracks() throws Throwable {
+        if (!checkLoadResource(R.raw.testvideo_with_2_subtitle_tracks)) {
+            return; // skip;
+        }
+
+        getInstrumentation().waitForIdleSync();
+
+        mMediaPlayer.setOnSubtitleDataListener(new MediaPlayer.OnSubtitleDataListener() {
+            @Override
+            public void onSubtitleData(MediaPlayer mp, SubtitleData data) {
+                if (data != null && data.getData() != null) {
+                    mOnSubtitleDataCalled.signal();
+                }
+            }
+        });
+        mMediaPlayer.setOnInfoListener(new MediaPlayer.OnInfoListener() {
+            @Override
+            public boolean onInfo(MediaPlayer mp, int what, int extra) {
+                if (what == MediaPlayer.MEDIA_INFO_METADATA_UPDATE) {
+                    mOnInfoCalled.signal();
+                }
+                return false;
+            }
+        });
+
+        mMediaPlayer.setDisplay(getActivity().getSurfaceHolder());
+        mMediaPlayer.setScreenOnWhilePlaying(true);
+        mMediaPlayer.setWakeMode(mContext, PowerManager.PARTIAL_WAKE_LOCK);
+
+        mMediaPlayer.prepare();
+        mMediaPlayer.start();
+        assertTrue(mMediaPlayer.isPlaying());
+
+        // Closed caption tracks are in-band.
+        // So, those tracks will be found after processing a number of frames.
+        mOnInfoCalled.waitForSignal(1500);
+
+        mOnInfoCalled.reset();
+        mOnInfoCalled.waitForSignal(1500);
+
+        readSubtitleTracks();
+
+        // Run twice to check if repeated selection-deselection on the same track works well.
+        for (int i = 0; i < 2; i++) {
+            // Waits until at least one subtitle is fired. Timeout is 1.5 sec.
+            selectSubtitleTrack(i);
+            mOnSubtitleDataCalled.reset();
+            assertTrue(mOnSubtitleDataCalled.waitForSignal(1500));
+
+            // Try deselecting track.
+            deselectSubtitleTrack(i);
+            mOnSubtitleDataCalled.reset();
+            assertFalse(mOnSubtitleDataCalled.waitForSignal(1500));
+        }
+
+        try {
+            deselectSubtitleTrack(0);
+            fail("Deselecting unselected track: expected RuntimeException, " +
+                 "but no exception has been triggered.");
+        } catch (RuntimeException e) {
+            // expected
+        }
+
+        mMediaPlayer.stop();
+    }
+
+    public void testChangeSubtitleTrack() throws Throwable {
+        if (!checkLoadResource(R.raw.testvideo_with_2_subtitle_tracks)) {
+            return; // skip;
+        }
+
+        mMediaPlayer.setOnSubtitleDataListener(new MediaPlayer.OnSubtitleDataListener() {
+            @Override
+            public void onSubtitleData(MediaPlayer mp, SubtitleData data) {
+                if (data != null && data.getData() != null) {
+                    mOnSubtitleDataCalled.signal();
+                }
+            }
+        });
+        mMediaPlayer.setOnInfoListener(new MediaPlayer.OnInfoListener() {
+            @Override
+            public boolean onInfo(MediaPlayer mp, int what, int extra) {
+                if (what == MediaPlayer.MEDIA_INFO_METADATA_UPDATE) {
+                    mOnInfoCalled.signal();
+                }
+                return false;
+            }
+        });
+
+        mMediaPlayer.setDisplay(getActivity().getSurfaceHolder());
+        mMediaPlayer.setScreenOnWhilePlaying(true);
+        mMediaPlayer.setWakeMode(mContext, PowerManager.PARTIAL_WAKE_LOCK);
+
+        mMediaPlayer.prepare();
+        mMediaPlayer.start();
+        assertTrue(mMediaPlayer.isPlaying());
+
+        // Closed caption tracks are in-band.
+        // So, those tracks will be found after processing a number of frames.
+        mOnInfoCalled.waitForSignal(1500);
+
+        mOnInfoCalled.reset();
+        mOnInfoCalled.waitForSignal(1500);
+
+        readSubtitleTracks();
+
+        // Waits until at least two captions are fired. Timeout is 2.5 sec.
+        selectSubtitleTrack(0);
+        assertTrue(mOnSubtitleDataCalled.waitForCountedSignals(2, 2500) >= 2);
+
+        mOnSubtitleDataCalled.reset();
+        selectSubtitleTrack(1);
+        assertTrue(mOnSubtitleDataCalled.waitForCountedSignals(2, 2500) >= 2);
+
+        mMediaPlayer.stop();
+    }
+
+    public void testGetTrackInfoForVideoWithSubtitleTracks() throws Throwable {
+        if (!checkLoadResource(R.raw.testvideo_with_2_subtitle_tracks)) {
+            return; // skip;
+        }
+
+        getInstrumentation().waitForIdleSync();
+
+        mMediaPlayer.setOnInfoListener(new MediaPlayer.OnInfoListener() {
+            @Override
+            public boolean onInfo(MediaPlayer mp, int what, int extra) {
+                if (what == MediaPlayer.MEDIA_INFO_METADATA_UPDATE) {
+                    mOnInfoCalled.signal();
+                }
+                return false;
+            }
+        });
+
+        mMediaPlayer.setDisplay(getActivity().getSurfaceHolder());
+        mMediaPlayer.setScreenOnWhilePlaying(true);
+        mMediaPlayer.setWakeMode(mContext, PowerManager.PARTIAL_WAKE_LOCK);
+
+        mMediaPlayer.prepare();
+        mMediaPlayer.start();
+        assertTrue(mMediaPlayer.isPlaying());
+
+        // The media metadata will be changed while playing since closed caption tracks are in-band
+        // and those tracks will be found after processing a number of frames. These tracks will be
+        // found within one second.
+        mOnInfoCalled.waitForSignal(1500);
+
+        mOnInfoCalled.reset();
+        mOnInfoCalled.waitForSignal(1500);
+
+        readSubtitleTracks();
+        assertEquals(2, mSubtitleTrackIndex.size());
+
+        mMediaPlayer.stop();
+    }
+
     private void readTimedTextTracks() throws Exception {
         mTimedTextTrackIndex.clear();
         MediaPlayer.TrackInfo[] trackInfos = mMediaPlayer.getTrackInfo();
@@ -1234,13 +1426,13 @@ public class MediaPlayerTest extends MediaPlayerTestBase {
         return mTimedTextTrackIndex.size();
     }
 
-    private void selectSubtitleTrack(int index) throws Exception {
+    private void selectTimedTextTrack(int index) throws Exception {
         int trackIndex = mTimedTextTrackIndex.get(index);
         mMediaPlayer.selectTrack(trackIndex);
         mSelectedTimedTextIndex = index;
     }
 
-    private void deselectSubtitleTrack(int index) throws Exception {
+    private void deselectTimedTextTrack(int index) throws Exception {
         int trackIndex = mTimedTextTrackIndex.get(index);
         mMediaPlayer.deselectTrack(trackIndex);
         if (mSelectedTimedTextIndex == index) {
@@ -1248,8 +1440,8 @@ public class MediaPlayerTest extends MediaPlayerTestBase {
         }
     }
 
-    public void testDeselectTrack() throws Throwable {
-        if (!checkLoadResource(R.raw.testvideo_with_2_subtitles)) {
+    public void testDeselectTrackForTimedTextTrack() throws Throwable {
+        if (!checkLoadResource(R.raw.testvideo_with_2_timedtext_tracks)) {
             return; // skip;
         }
         runTestOnUiThread(new Runnable() {
@@ -1287,31 +1479,31 @@ public class MediaPlayerTest extends MediaPlayerTestBase {
 
         // Run twice to check if repeated selection-deselection on the same track works well.
         for (int i = 0; i < 2; i++) {
-            // Waits until at least one subtitle is fired. Timeout is 1 sec.
-            selectSubtitleTrack(0);
+            // Waits until at least one subtitle is fired. Timeout is 1.5 sec.
+            selectTimedTextTrack(0);
             mOnTimedTextCalled.reset();
             assertTrue(mOnTimedTextCalled.waitForSignal(1500));
 
             // Try deselecting track.
-            deselectSubtitleTrack(0);
+            deselectTimedTextTrack(0);
             mOnTimedTextCalled.reset();
             assertFalse(mOnTimedTextCalled.waitForSignal(1500));
         }
 
         // Run the same test for external subtitle track.
         for (int i = 0; i < 2; i++) {
-            selectSubtitleTrack(2);
+            selectTimedTextTrack(2);
             mOnTimedTextCalled.reset();
             assertTrue(mOnTimedTextCalled.waitForSignal(1500));
 
             // Try deselecting track.
-            deselectSubtitleTrack(2);
+            deselectTimedTextTrack(2);
             mOnTimedTextCalled.reset();
             assertFalse(mOnTimedTextCalled.waitForSignal(1500));
         }
 
         try {
-            deselectSubtitleTrack(0);
+            deselectTimedTextTrack(0);
             fail("Deselecting unselected track: expected RuntimeException, " +
                  "but no exception has been triggered.");
         } catch (RuntimeException e) {
@@ -1321,8 +1513,8 @@ public class MediaPlayerTest extends MediaPlayerTestBase {
         mMediaPlayer.stop();
     }
 
-    public void testChangeSubtitleTrack() throws Throwable {
-        if (!checkLoadResource(R.raw.testvideo_with_2_subtitles)) {
+    public void testChangeTimedTextTrack() throws Throwable {
+        if (!checkLoadResource(R.raw.testvideo_with_2_timedtext_tracks)) {
             return; // skip;
         }
 
@@ -1394,26 +1586,26 @@ public class MediaPlayerTest extends MediaPlayerTestBase {
         getInstrumentation().waitForIdleSync();
         assertEquals(getTimedTextTrackCount(), 4);
 
-        selectSubtitleTrack(0);
+        selectTimedTextTrack(0);
         mOnTimedTextCalled.reset();
 
         mMediaPlayer.start();
         assertTrue(mMediaPlayer.isPlaying());
 
-        // Waits until at least two subtitles are fired. Timeout is 2 sec.
+        // Waits until at least two subtitles are fired. Timeout is 2.5 sec.
         // Please refer the test srt files:
         // test_subtitle1_srt.3gp and test_subtitle2_srt.3gp
         assertTrue(mOnTimedTextCalled.waitForCountedSignals(2, 2500) >= 2);
 
-        selectSubtitleTrack(1);
+        selectTimedTextTrack(1);
         mOnTimedTextCalled.reset();
         assertTrue(mOnTimedTextCalled.waitForCountedSignals(2, 2500) >= 2);
 
-        selectSubtitleTrack(2);
+        selectTimedTextTrack(2);
         mOnTimedTextCalled.reset();
         assertTrue(mOnTimedTextCalled.waitForCountedSignals(2, 2500) >= 2);
 
-        selectSubtitleTrack(3);
+        selectTimedTextTrack(3);
         mOnTimedTextCalled.reset();
         assertTrue(mOnTimedTextCalled.waitForCountedSignals(2, 2500) >= 2);
         mMediaPlayer.stop();
@@ -1421,8 +1613,8 @@ public class MediaPlayerTest extends MediaPlayerTestBase {
         assertEquals("Wrong bounds count", 2, mBoundsCount);
     }
 
-    public void testGetTrackInfo() throws Throwable {
-        if (!checkLoadResource(R.raw.testvideo_with_2_subtitles)) {
+    public void testGetTrackInfoForVideoWithTimedText() throws Throwable {
+        if (!checkLoadResource(R.raw.testvideo_with_2_timedtext_tracks)) {
             return; // skip;
         }
         runTestOnUiThread(new Runnable() {
@@ -1440,7 +1632,7 @@ public class MediaPlayerTest extends MediaPlayerTestBase {
         mMediaPlayer.start();
 
         readTimedTextTracks();
-        selectSubtitleTrack(2);
+        selectTimedTextTrack(2);
 
         int count = 0;
         MediaPlayer.TrackInfo[] trackInfos = mMediaPlayer.getTrackInfo();
