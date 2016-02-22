@@ -99,8 +99,7 @@ public class ModuleRepoTest extends TestCase {
     @Override
     public void setUp() throws Exception {
         mTestsDir = setUpConfigs();
-        ModuleRepo.sInstance = null;// Clear the instance so it gets recreated.
-        mRepo = ModuleRepo.getInstance();
+        mRepo = new ModuleRepo();
         mBuild = new CompatibilityBuildProvider().getBuild();
     }
 

@@ -171,6 +171,7 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
     private boolean mRebootOnFailure = false;
 
     private int mTotalShards;
+    private IModuleRepo mModuleRepo;
     private ITestDevice mDevice;
     private IBuildInfo mBuild;
     private CompatibilityBuildHelper mBuildHelper;
@@ -180,19 +181,20 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
      * modules.
      */
     public CompatibilityTest() {
-        this(1 /* totalShards */);
+        this(1 /* totalShards */, new ModuleRepo());
     }
 
     /**
      * Create a new {@link CompatibilityTest} that will run a sublist of
      * modules.
      */
-    public CompatibilityTest(int totalShards) {
+    public CompatibilityTest(int totalShards, IModuleRepo moduleRepo) {
         if (totalShards < 1) {
             throw new IllegalArgumentException(
                     "Must be at least 1 shard. Given:" + totalShards);
         }
         mTotalShards = totalShards;
+        mModuleRepo = moduleRepo;
     }
 
     /**
@@ -226,24 +228,21 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
      */
     @Override
     public void run(ITestInvocationListener listener) throws DeviceNotAvailableException {
-        boolean isInitializer = false;
         try {
-            IModuleRepo moduleRepo = ModuleRepo.getInstance();
             // Synchronized so only one shard enters and sets up the moduleRepo. When the other
             // shards enter after this, moduleRepo is already initialized so they dont do anything
-            synchronized (moduleRepo) {
-                if (!moduleRepo.isInitialized()) {
-                    isInitializer = true;
+            synchronized (mModuleRepo) {
+                if (!mModuleRepo.isInitialized()) {
                     setupFilters();
                     // Initialize the repository, {@link CompatibilityBuildHelper#getTestsDir} can
                     // throw a {@link FileNotFoundException}
-                    moduleRepo.initialize(mTotalShards, mBuildHelper.getTestsDir(), getAbis(),
+                    mModuleRepo.initialize(mTotalShards, mBuildHelper.getTestsDir(), getAbis(),
                             mDeviceTokens, mTestArgs, mModuleArgs, mIncludeFilters,
                             mExcludeFilters, mBuild);
                 }
             }
             // Get the tests to run in this shard
-            List<IModuleDef> modules = moduleRepo.getModules(getDevice().getSerialNumber());
+            List<IModuleDef> modules = mModuleRepo.getModules(getDevice().getSerialNumber());
 
             listener = new FailureListener(listener, getDevice(), mBugReportOnFailure,
                     mLogcatOnFailure, mScreenshotOnFailure, mRebootOnFailure);
@@ -277,10 +276,6 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
             }
         } catch (FileNotFoundException fnfe) {
             throw new RuntimeException("Failed to initialize modules", fnfe);
-        } finally {
-            if (isInitializer) {
-                ModuleRepo.tearDown();
-            }
         }
     }
 
@@ -405,7 +400,7 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
 
         List<IRemoteTest> shardQueue = new LinkedList<>();
         for (int i = 0; i < mShards; i++) {
-            CompatibilityTest test = new CompatibilityTest(mShards);
+            CompatibilityTest test = new CompatibilityTest(mShards, mModuleRepo);
             OptionCopier.copyOptionsNoThrow(this, test);
             // Set the shard count because the copy option on the previous line
             // copies over the mShard value
