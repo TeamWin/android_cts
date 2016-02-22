@@ -14,5 +14,4 @@
      limitations under the License.
 -->
 <configuration description="Configuration with basic cts v2 reporters" >
-    <result_reporter class="com.android.compatibility.common.tradefed.result.ResultReporter" />
 </configuration>
