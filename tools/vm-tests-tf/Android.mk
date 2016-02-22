@@ -86,6 +86,7 @@ $(LOCAL_BUILT_MODULE): PRIVATE_INTERMEDIATES_DEXCORE_JAR := $(intermediates)/tes
 $(LOCAL_BUILT_MODULE): PRIVATE_INTERMEDIATES_MAIN_FILES := $(intermediates)/main_files
 $(LOCAL_BUILT_MODULE): PRIVATE_INTERMEDIATES_HOSTJUNIT_FILES := $(intermediates)/hostjunit_files
 $(LOCAL_BUILT_MODULE): PRIVATE_CLASS_PATH := $(subst $(space),:,$(vmteststf_dep_jars)):$(HOST_JDK_TOOLS_JAR)
+$(LOCAL_BUILT_MODULE): PRIVATE_JACK_VERSION := $(LOCAL_JACK_VERSION)
 ifndef LOCAL_JACK_ENABLED
 $(LOCAL_BUILT_MODULE) : $(vmteststf_dep_jars) $(HOST_OUT_JAVA_LIBRARIES)/tradefed-prebuilt.jar
 	$(hide) rm -rf $(dir $@) && mkdir -p $(dir $@)
@@ -111,13 +112,13 @@ $(LOCAL_BUILT_MODULE) : $(vmteststf_dep_jars) $(JACK) $(oj_jack) $(libart_jack) 
 	$(hide) mkdir -p $(PRIVATE_INTERMEDIATES_HOSTJUNIT_FILES)/dot/junit $(dir $(PRIVATE_INTERMEDIATES_DEXCORE_JAR))
 	# generated and compile the host side junit tests
 	@echo "Write generated Main_*.java files to $(PRIVATE_INTERMEDIATES_MAIN_FILES)"
-	$(hide) JACK_VERSION=$(JACK_DEFAULT_VERSION) java -cp $(PRIVATE_CLASS_PATH) util.build.JackBuildDalvikSuite $(JACK) $(PRIVATE_SRC_FOLDER) $(PRIVATE_INTERMEDIATES) \
+	$(hide) JACK_VERSION=$(PRIVATE_JACK_VERSION) java -cp $(PRIVATE_CLASS_PATH) util.build.JackBuildDalvikSuite $(JACK) $(PRIVATE_SRC_FOLDER) $(PRIVATE_INTERMEDIATES) \
 		$(PRIVATE_DALVIK_SUITE_CLASSPATH) \
 		$(PRIVATE_INTERMEDIATES_MAIN_FILES) $(PRIVATE_INTERMEDIATES_CLASSES) $(PRIVATE_INTERMEDIATES_HOSTJUNIT_FILES) $$RUN_VM_TESTS_RTO
 	@echo "Generate $(PRIVATE_INTERMEDIATES_DEXCORE_JAR)"
 	$(hide) jar -cf $(PRIVATE_INTERMEDIATES_DEXCORE_JAR)-class.jar \
 		$(addprefix -C $(PRIVATE_INTERMEDIATES_CLASSES) , dot/junit/DxUtil.class dot/junit/DxAbstractMain.class)
-	$(hide) $(JACK) --import $(PRIVATE_INTERMEDIATES_DEXCORE_JAR)-class.jar --output-jack $(PRIVATE_INTERMEDIATES_DEXCORE_JAR).jack
+	$(hide) $(call call-jack) --import $(PRIVATE_INTERMEDIATES_DEXCORE_JAR)-class.jar --output-jack $(PRIVATE_INTERMEDIATES_DEXCORE_JAR).jack
 	$(hide) mkdir -p $(PRIVATE_INTERMEDIATES_DEXCORE_JAR).tmp
 	$(hide) $(call call-jack,$(PRIVATE_JACK_EXTRA_ARGS)) --output-dex $(PRIVATE_INTERMEDIATES_DEXCORE_JAR).tmp \
 		$(if $(NO_OPTIMIZE_DX), -D jack.dex.optimize "false") --import $(PRIVATE_INTERMEDIATES_DEXCORE_JAR).jack && rm -f $(PRIVATE_INTERMEDIATES_DEXCORE_JAR).jack
