@@ -15,7 +15,7 @@
  */
 package com.android.compatibility.common.deviceinfo;
 
-import com.android.compatibility.common.util.InfoStore;
+import com.android.compatibility.common.util.DeviceInfoStore;
 
 /**
  * CPU device info collector.
@@ -23,7 +23,7 @@ import com.android.compatibility.common.util.InfoStore;
 public final class CpuDeviceInfo extends DeviceInfo {
 
     @Override
-    protected void collectDeviceInfo(InfoStore store) throws Exception {
+    protected void collectDeviceInfo(DeviceInfoStore store) throws Exception {
         store.addResult("available_processors", Runtime.getRuntime().availableProcessors());
     }
 }

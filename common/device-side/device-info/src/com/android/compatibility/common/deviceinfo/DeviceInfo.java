@@ -26,7 +26,7 @@ import android.text.TextUtils;
 import android.util.JsonWriter;
 import android.util.Log;
 
-import com.android.compatibility.common.util.InfoStore;
+import com.android.compatibility.common.util.DeviceInfoStore;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -79,7 +79,7 @@ public abstract class DeviceInfo extends InstrumentationTestCase {
                 File jsonFile = new File(dir, getClass().getSimpleName() + ".deviceinfo.json");
                 jsonFile.createNewFile();
                 mResultFilePath = jsonFile.getAbsolutePath();
-                InfoStore store = new InfoStore(jsonFile);
+                DeviceInfoStore store = new DeviceInfoStore(jsonFile);
                 store.open();
                 collectDeviceInfo(store);
                 store.close();
@@ -117,7 +117,7 @@ public abstract class DeviceInfo extends InstrumentationTestCase {
     /**
      * Method to collect device information.
      */
-    protected abstract void collectDeviceInfo(InfoStore store) throws Exception;
+    protected abstract void collectDeviceInfo(DeviceInfoStore store) throws Exception;
 
     protected Context getContext() {
         return getInstrumentation().getContext();

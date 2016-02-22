@@ -22,7 +22,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 
-import com.android.compatibility.common.util.InfoStore;
+import com.android.compatibility.common.util.DeviceInfoStore;
 
 /**
  * Collector for testing DeviceInfo
@@ -36,7 +36,7 @@ public class TestDeviceInfo extends DeviceInfo {
     }
 
     @Override
-    protected void collectDeviceInfo(InfoStore store) throws Exception {
+    protected void collectDeviceInfo(DeviceInfoStore store) throws Exception {
 
         // Test primitive results
         store.addResult("test_boolean", true);

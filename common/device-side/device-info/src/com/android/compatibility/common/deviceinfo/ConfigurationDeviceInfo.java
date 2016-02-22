@@ -17,7 +17,7 @@ package com.android.compatibility.common.deviceinfo;
 
 import android.content.res.Configuration;
 
-import com.android.compatibility.common.util.InfoStore;
+import com.android.compatibility.common.util.DeviceInfoStore;
 
 /**
  * Configuration device info collector.
@@ -25,7 +25,7 @@ import com.android.compatibility.common.util.InfoStore;
 public final class ConfigurationDeviceInfo extends DeviceInfo {
 
     @Override
-    protected void collectDeviceInfo(InfoStore store) throws Exception {
+    protected void collectDeviceInfo(DeviceInfoStore store) throws Exception {
         Configuration con = getInstrumentation().getContext().getResources().getConfiguration();
         store.addResult("touchscreen", con.touchscreen);
         store.addResult("navigation", con.navigation);

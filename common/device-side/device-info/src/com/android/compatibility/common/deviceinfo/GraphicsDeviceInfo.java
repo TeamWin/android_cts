@@ -17,7 +17,7 @@ package com.android.compatibility.common.deviceinfo;
 
 import android.os.Bundle;
 
-import com.android.compatibility.common.util.InfoStore;
+import com.android.compatibility.common.util.DeviceInfoStore;
 
 /**
  * Graphics device info collector.
@@ -27,7 +27,7 @@ public final class GraphicsDeviceInfo extends DeviceInfo {
     private static final String LOG_TAG = "GraphicsDeviceInfo";
 
     @Override
-    protected void collectDeviceInfo(InfoStore store) throws Exception {
+    protected void collectDeviceInfo(DeviceInfoStore store) throws Exception {
         GlesStubActivity stubActivity = GraphicsDeviceInfo.this.launchActivity(
                 "com.android.compatibility.common.deviceinfo",
                 GlesStubActivity.class,

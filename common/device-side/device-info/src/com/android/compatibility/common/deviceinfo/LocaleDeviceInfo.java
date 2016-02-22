@@ -15,7 +15,7 @@
  */
 package com.android.compatibility.common.deviceinfo;
 
-import com.android.compatibility.common.util.InfoStore;
+import com.android.compatibility.common.util.DeviceInfoStore;
 
 import java.util.Arrays;
 import java.util.List;
@@ -26,7 +26,7 @@ import java.util.List;
 public final class LocaleDeviceInfo extends DeviceInfo {
 
     @Override
-    protected void collectDeviceInfo(InfoStore store) throws Exception {
+    protected void collectDeviceInfo(DeviceInfoStore store) throws Exception {
         List<String> locales = Arrays.asList(
                 getInstrumentation().getContext().getAssets().getLocales());
         if (locales.isEmpty()) {
