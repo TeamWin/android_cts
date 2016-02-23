@@ -21,7 +21,7 @@ LOCAL_SRC_FILES := $(call all-java-files-under, ../../common/host-side/tradefed/
 LOCAL_JAVA_RESOURCE_DIRS := res
 LOCAL_JAVA_RESOURCE_DIRS += ../../common/host-side/tradefed/res
 
-LOCAL_SUITE_BUILD_NUMBER := $(BUILD_NUMBER)
+LOCAL_SUITE_BUILD_NUMBER := $(BUILD_NUMBER_FROM_FILE)
 LOCAL_SUITE_NAME := CTS_V2
 LOCAL_SUITE_FULLNAME := "Compatibility Test Suite"
 LOCAL_SUITE_VERSION := 5.0
