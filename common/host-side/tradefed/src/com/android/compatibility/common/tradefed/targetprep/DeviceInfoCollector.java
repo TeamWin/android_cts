@@ -39,7 +39,6 @@ import java.util.Map.Entry;
  */
 public class DeviceInfoCollector extends ApkInstrumentationPreparer {
 
-    private static final String DEVICE_INFO = "DEVICE_INFO_%s";
     private static final Map<String, String> BUILD_KEYS = new HashMap<>();
     static {
         BUILD_KEYS.put("build_id", "ro.build.id");
@@ -85,7 +84,7 @@ public class DeviceInfoCollector extends ApkInstrumentationPreparer {
             return;
         }
         for (Entry<String, String> entry : BUILD_KEYS.entrySet()) {
-            buildInfo.addBuildAttribute(String.format(DEVICE_INFO, entry.getKey()),
+            buildInfo.addBuildAttribute(entry.getKey(),
                     ArrayUtil.join(",", device.getProperty(entry.getValue())));
         }
         run(device, buildInfo);
