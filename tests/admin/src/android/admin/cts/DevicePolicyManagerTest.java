@@ -174,19 +174,6 @@ public class DevicePolicyManagerTest extends AndroidTestCase {
         }
     }
 
-    public void testCreateUser_failIfNotDeviceOwner() {
-        if (!mDeviceAdmin) {
-            Log.w(TAG, "Skipping testCreateUser_failIfNotDeviceOwner");
-            return;
-        }
-        try {
-            mDevicePolicyManager.createUser(mComponent, "user name");
-            fail("did not throw expected SecurityException");
-        } catch (SecurityException e) {
-            assertDeviceOwnerMessage(e.getMessage());
-        }
-    }
-
     public void testRemoveUser_failIfNotDeviceOwner() {
         if (!mDeviceAdmin) {
             Log.w(TAG, "Skipping testRemoveUser_failIfNotDeviceOwner");
@@ -328,20 +315,6 @@ public class DevicePolicyManagerTest extends AndroidTestCase {
         }
         try {
             mDevicePolicyManager.switchUser(mComponent, null);
-            fail("did not throw expected SecurityException");
-        } catch (SecurityException e) {
-            assertDeviceOwnerMessage(e.getMessage());
-        }
-    }
-
-    public void testCreateAndInitializeUser_failIfNotDeviceOwner() {
-        if (!mDeviceAdmin) {
-            Log.w(TAG, "Skipping testCreateAndInitializeUser_failIfNotDeviceOwner");
-            return;
-        }
-        try {
-            mDevicePolicyManager.createAndInitializeUser(mComponent, "name", "admin name",
-                        mComponent, null);
             fail("did not throw expected SecurityException");
         } catch (SecurityException e) {
             assertDeviceOwnerMessage(e.getMessage());
