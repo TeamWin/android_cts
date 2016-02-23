@@ -200,6 +200,14 @@ public class TestResult implements ITestResult {
      * {@inheritDoc}
      */
     @Override
+    public void notExecuted() {
+        setResultStatus(TestStatus.NOT_EXECUTED);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
     public void reset() {
         mResult = TestStatus.NOT_EXECUTED;
         mMessage = null;

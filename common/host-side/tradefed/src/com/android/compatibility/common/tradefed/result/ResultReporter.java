@@ -196,6 +196,7 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
     public void testStarted(TestIdentifier test) {
         mCurrentCaseResult = mCurrentModuleResult.getOrCreateResult(test.getClassName());
         mCurrentResult = mCurrentCaseResult.getOrCreateResult(test.getTestName());
+        mCurrentResult.reset();
     }
 
     /**
@@ -204,6 +205,7 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
     @Override
     public void testEnded(TestIdentifier test, Map<String, String> metrics) {
         if (mCurrentResult.getResultStatus() == TestStatus.FAIL) {
+            logResult("%s has already failed", test);
             // Test has already failed.
             return;
         }
@@ -230,8 +232,8 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
      */
     @Override
     public void testIgnored(TestIdentifier test) {
+        mCurrentResult.notExecuted();
         logResult("%s ignored", test);
-        // ignore
     }
 
     /**
@@ -248,7 +250,7 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
      */
     @Override
     public void testAssumptionFailure(TestIdentifier test, String trace) {
-        mCurrentResult.failed(trace);
+        mCurrentResult.notExecuted();
         logResult("%s failed assumption: %s", test, trace);
     }
 

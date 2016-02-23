@@ -345,6 +345,10 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
                     }
                 }
             }
+            if (mIncludeFilters.isEmpty()) {
+                throw new IllegalArgumentException(String.format(
+                        "No tests to retry in session %d", mRetrySessionId));
+            }
         } else if (mModuleName != null) {
             mIncludeFilters.clear();
             try {

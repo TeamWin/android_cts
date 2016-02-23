@@ -118,6 +118,11 @@ public interface ITestResult extends Comparable<ITestResult> {
     void passed(ReportLog report);
 
     /**
+     * Report that the test was not executed.
+     */
+    void notExecuted();
+
+    /**
      * Resets the result.
      */
     void reset();
