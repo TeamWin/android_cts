@@ -402,6 +402,7 @@ public class NinePatchDrawableTest extends InstrumentationTestCase {
 
     private void testPreloadDensityInner(Resources res, int sourceResId, int[] densities,
             int[] goldenResIds) throws XmlPullParserException, IOException {
+        final Rect tempOutlineRect = new Rect();
         final Rect tempPadding = new Rect();
         final Outline tempOutline = new Outline();
 
@@ -420,7 +421,8 @@ public class NinePatchDrawableTest extends InstrumentationTestCase {
         preloadedDrawable.getPadding(origPadding);
         final Outline origOutline = new Outline();
         preloadedDrawable.getOutline(origOutline);
-        final Rect origOutlineRect = origOutline.getRect();
+        final Rect origOutlineRect = new Rect();
+        origOutline.getRect(origOutlineRect);
         final float origOutlineRadius = origOutline.getRadius();
 
         compareOrSave(preloadedDrawable, preloadDensityDpi, sourceResId, goldenResIds[0]);
@@ -441,8 +443,7 @@ public class NinePatchDrawableTest extends InstrumentationTestCase {
             // TODO: Uncomment this once outlines are working.
             /*
             scaledDrawable.getOutline(tempOutline);
-            final Rect tempOutlineRect = tempOutline.getRect();
-            assertNotNull(tempOutlineRect);
+            assertTrue(tempOutline.getRect(tempOutlineRect));
             assertEquals((int) (origOutlineRect.left * scale), tempOutlineRect.left);
             assertEquals((int) (origOutlineRect.top * scale), tempOutlineRect.top);
             assertEquals((int) (origOutlineRect.right * scale), tempOutlineRect.right);
