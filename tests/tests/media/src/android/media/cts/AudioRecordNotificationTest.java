@@ -113,8 +113,8 @@ public class AudioRecordNotificationTest extends CtsAndroidTestCase {
 
         // verify our recording shows as one of the recording configs
         assertTrue("Test source/session not amongst active record configurations",
-                verifyAudioSourceSession(TEST_AUDIO_SOURCE, mAudioRecord.getAudioSessionId(),
-                        configs));
+                verifyAudioConfig(TEST_AUDIO_SOURCE, mAudioRecord.getAudioSessionId(),
+                        mAudioRecord.getFormat(), configs));
 
         // stopping recording: verify there are less active record configurations
         mAudioRecord.stop();
@@ -179,16 +179,29 @@ public class AudioRecordNotificationTest extends CtsAndroidTestCase {
         @Override
         public void onRecordConfigChanged() {
             mCalled = true;
-            mParamMatch = verifyAudioSourceSession(mTestSource, mTestSession,
+            mParamMatch = verifyAudioConfig(mTestSource, mTestSession, mAudioRecord.getFormat(),
                     mAM.getActiveRecordConfigurations());
         }
     }
 
-    private static boolean verifyAudioSourceSession(int source, int session,
+    private static boolean verifyAudioConfig(int source, int session, AudioFormat format,
             AudioRecordConfiguration[] configs) {
         for (int i = 0 ; i < configs.length ; i++) {
-            if ((configs[i].getClientAudioSource() == source) &&
-                    (configs[i].getClientAudioSessionId() == session)) {
+            if ((configs[i].getClientAudioSource() == source)
+                    && (configs[i].getClientAudioSessionId() == session)
+                    // test the client format matches that requested (same as the AudioRecord's)
+                    && (configs[i].getClientFormat().getEncoding() == format.getEncoding())
+                    && (configs[i].getClientFormat().getSampleRate() == format.getSampleRate())
+                    && (configs[i].getClientFormat().getChannelMask() == format.getChannelMask())
+                    && (configs[i].getClientFormat().getChannelIndexMask() ==
+                            format.getChannelIndexMask())
+                    // test the device format is configured
+                    && (configs[i].getFormat().getEncoding() != AudioFormat.ENCODING_INVALID)
+                    && (configs[i].getFormat().getSampleRate() > 0)
+                    //  for the channel mask, either the position or index-based value must be valid
+                    && ((configs[i].getFormat().getChannelMask() != AudioFormat.CHANNEL_INVALID)
+                            || (configs[i].getFormat().getChannelIndexMask() !=
+                                    AudioFormat.CHANNEL_INVALID))) {
                 return true;
             }
         }
