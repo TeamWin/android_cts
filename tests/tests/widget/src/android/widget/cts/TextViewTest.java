@@ -3618,46 +3618,6 @@ public class TextViewTest extends ActivityInstrumentationTestCase2<TextViewCtsAc
         assertEquals(-1, textView.getFrameBottom());
     }
 
-    public void testGetFadingEdgeStrength() {
-        final MockTextView textViewLeft = (MockTextView) mActivity.findViewById(
-                R.id.mock_textview_left);
-        mActivity.runOnUiThread(new Runnable() {
-            public void run() {
-                textViewLeft.setEllipsize(null);
-            }
-        });
-        mInstrumentation.waitForIdleSync();
-
-        // fading is shown on right side if the text aligns left
-        assertEquals(0.0f, textViewLeft.getLeftFadingEdgeStrength(), 0.01f);
-        assertEquals(1.0f, textViewLeft.getRightFadingEdgeStrength(), 0.01f);
-
-        final MockTextView textViewRight = (MockTextView) mActivity.findViewById(
-                R.id.mock_textview_right);
-        mActivity.runOnUiThread(new Runnable() {
-            public void run() {
-                textViewRight.setEllipsize(null);
-            }
-        });
-        mInstrumentation.waitForIdleSync();
-        // fading is shown on left side if the text aligns right
-        assertEquals(1.0f, textViewRight.getLeftFadingEdgeStrength(), 0.01f);
-        assertEquals(0.0f, textViewRight.getRightFadingEdgeStrength(), 0.01f);
-
-        final MockTextView textViewCenter = (MockTextView) mActivity.findViewById(
-                R.id.mock_textview_center);
-        mActivity.runOnUiThread(new Runnable() {
-            public void run() {
-                textViewCenter.setEllipsize(null);
-            }
-        });
-        mInstrumentation.waitForIdleSync();
-        // fading is shown on both sides if the text aligns center
-        assertEquals(1.0f, textViewCenter.getLeftFadingEdgeStrength(), 0.01f);
-        assertEquals(1.0f, textViewCenter.getRightFadingEdgeStrength(), 0.01f);
-    }
-
-
     public void testMarquee() {
         final MockTextView textView = new MockTextView(mActivity);
         textView.setText(LONG_TEXT);
@@ -3699,17 +3659,11 @@ public class TextViewTest extends ActivityInstrumentationTestCase2<TextViewCtsAc
             }
         }.run();
 
-        final float leftFadingEdgeStrength = textView.getLeftFadingEdgeStrength();
-        final float rightFadingEdgeStrength = textView.getRightFadingEdgeStrength();
-
-        // wait for the marquee to continue
-        // the left fading becomes thicker while the right fading becomes thiner
-        // as the text moves towards left
+        // wait for left marquee to fully apply
         new PollingCheck(TIMEOUT) {
             @Override
             protected boolean check() {
-                return leftFadingEdgeStrength < textView.getLeftFadingEdgeStrength()
-                        && rightFadingEdgeStrength > textView.getRightFadingEdgeStrength();
+                return textView.getLeftFadingEdgeStrength() > 0.99f;
             }
         }.run();
         assertFalse(runnable.getIsSelected1());
