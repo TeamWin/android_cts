@@ -16,12 +16,16 @@
 
 package android.graphics.drawable.cts;
 
+import junit.framework.Assert;
+
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
 
 import android.content.res.Configuration;
 import android.content.res.Resources;
 import android.content.res.XmlResourceParser;
+import android.graphics.Bitmap;
+import android.graphics.Color;
 import android.util.AttributeSet;
 import android.util.Xml;
 
@@ -123,5 +127,49 @@ public class DrawableTestUtils {
 
         // Scale by tdensity / sdensity, rounding up.
         return ((size * tdensity) + (sdensity >> 1)) / sdensity;
+    }
+
+    /**
+     * Asserts that two images are similar within the given thresholds.
+     *
+     * @param message
+     * @param expected
+     * @param actual
+     * @param pixelThreshold
+     * @param pixelCountThreshold
+     */
+    public static void compareImages(String message, Bitmap expected, Bitmap actual,
+            float pixelThreshold, float pixelCountThreshold) {
+        int idealWidth = expected.getWidth();
+        int idealHeight = expected.getHeight();
+
+        Assert.assertTrue(idealWidth == actual.getWidth());
+        Assert.assertTrue(idealHeight == actual.getHeight());
+
+        int totalDiffPixelCount = 0;
+        float totalPixelCount = idealWidth * idealHeight;
+        for (int x = 0; x < idealWidth; x++) {
+            for (int y = 0; y < idealHeight; y++) {
+                int idealColor = expected.getPixel(x, y);
+                int givenColor = actual.getPixel(x, y);
+                if (idealColor == givenColor)
+                    continue;
+
+                float totalError = 0;
+                totalError += Math.abs(Color.red(idealColor) - Color.red(givenColor));
+                totalError += Math.abs(Color.green(idealColor) - Color.green(givenColor));
+                totalError += Math.abs(Color.blue(idealColor) - Color.blue(givenColor));
+                totalError += Math.abs(Color.alpha(idealColor) - Color.alpha(givenColor));
+
+                if ((totalError / 1024.0f) >= pixelThreshold) {
+                    Assert.fail((message + ": totalError is " + totalError));
+                }
+
+                totalDiffPixelCount++;
+            }
+        }
+        if ((totalDiffPixelCount / totalPixelCount) >= pixelCountThreshold) {
+            Assert.fail((message +": totalDiffPixelCount is " + totalDiffPixelCount));
+        }
     }
 }

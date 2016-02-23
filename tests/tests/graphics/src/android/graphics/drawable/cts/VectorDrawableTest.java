@@ -205,7 +205,9 @@ public class VectorDrawableTest extends AndroidTestCase {
             } else {
                 // Start to compare
                 Bitmap golden = BitmapFactory.decodeResource(mResources, goldenImages[i]);
-                compareImages(mBitmap, golden, mResources.getString(resIds[i]));
+                DrawableTestUtils.compareImages(mResources.getString(resIds[i]), mBitmap, golden,
+                        VectorDrawableTest.PIXEL_ERROR_THRESHOLD,
+                        VectorDrawableTest.PIXEL_ERROR_COUNT_THRESHOLD);
             }
         }
     }
@@ -274,41 +276,6 @@ public class VectorDrawableTest extends AndroidTestCase {
         }
 
         return builder.toString();
-    }
-
-    private void compareImages(Bitmap ideal, Bitmap given, String filename) {
-        int idealWidth = ideal.getWidth();
-        int idealHeight = ideal.getHeight();
-
-        assertTrue(idealWidth == given.getWidth());
-        assertTrue(idealHeight == given.getHeight());
-
-        int totalDiffPixelCount = 0;
-        float totalPixelCount = idealWidth * idealHeight;
-        for (int x = 0; x < idealWidth; x++) {
-            for (int y = 0; y < idealHeight; y++) {
-                int idealColor = ideal.getPixel(x, y);
-                int givenColor = given.getPixel(x, y);
-                if (idealColor == givenColor)
-                    continue;
-
-                float totalError = 0;
-                totalError += Math.abs(Color.red(idealColor) - Color.red(givenColor));
-                totalError += Math.abs(Color.green(idealColor) - Color.green(givenColor));
-                totalError += Math.abs(Color.blue(idealColor) - Color.blue(givenColor));
-                totalError += Math.abs(Color.alpha(idealColor) - Color.alpha(givenColor));
-
-                if ((totalError / 1024.0f) >= PIXEL_ERROR_THRESHOLD) {
-                    fail((filename + ": totalError is " + totalError));
-                }
-
-                totalDiffPixelCount++;
-            }
-        }
-        if ((totalDiffPixelCount / totalPixelCount) >= PIXEL_ERROR_COUNT_THRESHOLD) {
-            fail((filename +": totalDiffPixelCount is " + totalDiffPixelCount));
-        }
-
     }
 
     public void testGetChangingConfigurations() {
