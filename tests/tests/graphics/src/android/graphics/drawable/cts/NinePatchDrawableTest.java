@@ -17,6 +17,7 @@
 package android.graphics.drawable.cts;
 
 import android.content.res.Resources.Theme;
+import android.graphics.Outline;
 import android.graphics.cts.R;
 
 import org.xmlpull.v1.XmlPullParser;
@@ -36,16 +37,29 @@ import android.graphics.Rect;
 import android.graphics.Region;
 import android.graphics.Bitmap.Config;
 import android.graphics.PorterDuff.Mode;
+import android.graphics.drawable.Drawable;
 import android.graphics.drawable.NinePatchDrawable;
 import android.graphics.drawable.Drawable.ConstantState;
 import android.test.InstrumentationTestCase;
 import android.util.AttributeSet;
 import android.util.Xml;
 
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 
 public class NinePatchDrawableTest extends InstrumentationTestCase {
+    // A small value is actually making sure that the values are matching
+    // exactly with the golden image.
+    // We can increase the threshold if the Skia is drawing with some variance
+    // on different devices. So far, the tests show they are matching correctly.
+    private static final float PIXEL_ERROR_THRESHOLD = 0.03f;
+    private static final float PIXEL_ERROR_COUNT_THRESHOLD = 0.005f;
+
     private static final int MIN_CHUNK_SIZE = 32;
+
+    // Set true to generate golden images, false for normal tests.
+    private static final boolean DBG_DUMP_PNG = false;
 
     private NinePatchDrawable mNinePatchDrawable;
 
@@ -360,51 +374,103 @@ public class NinePatchDrawableTest extends InstrumentationTestCase {
         d1.mutate();
     }
 
+    private static final int[] DENSITY_VALUES = new int[] {
+            160, 80, 320
+    };
+
+    private static final int[] DENSITY_IMAGES = new int[] {
+            R.drawable.nine_patch_density
+    };
+
+    private static final int[][] DENSITY_GOLDEN_IMAGES = new int[][] {
+            {
+                    R.drawable.nine_patch_density_golden_160,
+                    R.drawable.nine_patch_density_golden_80,
+                    R.drawable.nine_patch_density_golden_320,
+            }
+    };
+
     public void testPreloadDensity() throws XmlPullParserException, IOException {
         final Resources res = mResources;
         final int densityDpi = res.getConfiguration().densityDpi;
         try {
-            testPreloadDensityInner(res, densityDpi);
+            testPreloadDensityInner(res, DENSITY_IMAGES[0], DENSITY_VALUES, DENSITY_GOLDEN_IMAGES[0]);
         } finally {
             DrawableTestUtils.setResourcesDensity(res, densityDpi);
         }
     }
 
-    private void testPreloadDensityInner(Resources res, int densityDpi)
-            throws XmlPullParserException, IOException {
-        // Capture initial state at default density.
-        final XmlResourceParser parser = DrawableTestUtils.getResourceParser(
-                res, R.drawable.nine_patch_density);
+    private void testPreloadDensityInner(Resources res, int sourceResId, int[] densities,
+            int[] goldenResIds) throws XmlPullParserException, IOException {
+        final Rect tempPadding = new Rect();
+        final Outline tempOutline = new Outline();
+
+        // Capture initial state at preload density.
+        final int preloadDensityDpi = densities[0];
+        DrawableTestUtils.setResourcesDensity(res, preloadDensityDpi);
+
+        final XmlResourceParser parser = DrawableTestUtils.getResourceParser(res, sourceResId);
         final NinePatchDrawable preloadedDrawable = new NinePatchDrawable(null);
         preloadedDrawable.inflate(res, parser, Xml.asAttributeSet(parser));
+
         final ConstantState preloadedConstantState = preloadedDrawable.getConstantState();
         final int origWidth = preloadedDrawable.getIntrinsicWidth();
+        final int origHeight = preloadedDrawable.getIntrinsicHeight();
+        final Rect origPadding = new Rect();
+        preloadedDrawable.getPadding(origPadding);
+        final Outline origOutline = new Outline();
+        preloadedDrawable.getOutline(origOutline);
+        final Rect origOutlineRect = origOutline.getRect();
+        final float origOutlineRadius = origOutline.getRadius();
 
-        // Set density to half of original. Unlike offsets, which are
-        // truncated, dimensions are rounded to the nearest pixel.
-        DrawableTestUtils.setResourcesDensity(res, densityDpi / 2);
-        final NinePatchDrawable halfDrawable =
-                (NinePatchDrawable) preloadedConstantState.newDrawable(res);
-        assertEquals(Math.round(origWidth / 2f), halfDrawable.getIntrinsicWidth());
+        compareOrSave(preloadedDrawable, preloadDensityDpi, sourceResId, goldenResIds[0]);
 
-        // Set density to double original.
-        DrawableTestUtils.setResourcesDensity(res, densityDpi * 2);
-        final NinePatchDrawable doubleDrawable =
-                (NinePatchDrawable) preloadedConstantState.newDrawable(res);
-        assertEquals(origWidth * 2, doubleDrawable.getIntrinsicWidth());
+        for (int i = 1; i < densities.length; i++) {
+            final int scaledDensityDpi = densities[i];
+            final float scale = scaledDensityDpi / (float) preloadDensityDpi;
+            DrawableTestUtils.setResourcesDensity(res, scaledDensityDpi);
 
-        // Restore original density.
-        DrawableTestUtils.setResourcesDensity(res, densityDpi);
-        final NinePatchDrawable origDrawable =
-                (NinePatchDrawable) preloadedConstantState.newDrawable(res);
-        assertEquals(origWidth, origDrawable.getIntrinsicWidth());
+            final NinePatchDrawable scaledDrawable =
+                    (NinePatchDrawable) preloadedConstantState.newDrawable(res);
 
-        // Ensure theme density is applied correctly.
-        final Theme t = res.newTheme();
-        halfDrawable.applyTheme(t);
-        assertEquals(origWidth, halfDrawable.getIntrinsicWidth());
-        doubleDrawable.applyTheme(t);
-        assertEquals(origWidth, doubleDrawable.getIntrinsicWidth());
+            // Sizes are rounded.
+            assertEquals(Math.round(origWidth * scale), scaledDrawable.getIntrinsicWidth());
+            assertEquals(Math.round(origHeight * scale), scaledDrawable.getIntrinsicHeight());
+
+            // Outlines are truncated, but radius is precise.
+            // TODO: Uncomment this once outlines are working.
+            /*
+            scaledDrawable.getOutline(tempOutline);
+            final Rect tempOutlineRect = tempOutline.getRect();
+            assertNotNull(tempOutlineRect);
+            assertEquals((int) (origOutlineRect.left * scale), tempOutlineRect.left);
+            assertEquals((int) (origOutlineRect.top * scale), tempOutlineRect.top);
+            assertEquals((int) (origOutlineRect.right * scale), tempOutlineRect.right);
+            assertEquals((int) (origOutlineRect.bottom * scale), tempOutlineRect.bottom);
+            assertEquals(origOutlineRadius * scale, tempOutline.getRadius());
+            */
+
+            // Padding is truncated.
+            assertTrue(scaledDrawable.getPadding(tempPadding));
+            assertEquals((int) (origPadding.left * scale), tempPadding.left);
+            assertEquals((int) (origPadding.top * scale), tempPadding.top);
+            assertEquals((int) (origPadding.right * scale), tempPadding.right);
+            assertEquals((int) (origPadding.bottom * scale), tempPadding.bottom);
+
+            compareOrSave(scaledDrawable, scaledDensityDpi, sourceResId, goldenResIds[i]);
+
+            // Ensure theme density is applied correctly. Unlike most
+            // drawables, we don't have any loss of accuracy because density
+            // changes are re-computed from the source every time.
+            DrawableTestUtils.setResourcesDensity(res, preloadDensityDpi);
+
+            final Theme t = res.newTheme();
+            scaledDrawable.applyTheme(t);
+            assertEquals(origWidth, scaledDrawable.getIntrinsicWidth());
+            assertEquals(origHeight, scaledDrawable.getIntrinsicHeight());
+            assertTrue(scaledDrawable.getPadding(tempPadding));
+            assertEquals(origPadding, tempPadding);
+        }
     }
 
     private void assertColorFillRect(Bitmap bmp, int x, int y, int w, int h, int color) {
@@ -428,6 +494,60 @@ public class NinePatchDrawableTest extends InstrumentationTestCase {
         opts.inDensity = opts.inTargetDensity = mResources.getDisplayMetrics().densityDpi;
         Bitmap bitmap = BitmapFactory.decodeResource(mResources, resId, opts);
         return bitmap;
+    }
+
+    private void compareOrSave(Drawable dr, int densityDpi, int sourceResId, int goldenResId) {
+        final int width = dr.getIntrinsicWidth();
+        final int height = dr.getIntrinsicHeight();
+        final Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
+        bitmap.setDensity(0);
+
+        final Canvas canvas = new Canvas(bitmap);
+        dr.setBounds(0, 0, width, height);
+        dr.draw(canvas);
+
+        if (DBG_DUMP_PNG) {
+            saveGoldenImage(bitmap, sourceResId, densityDpi);
+        } else {
+            final Bitmap golden = BitmapFactory.decodeResource(mResources, goldenResId);
+            DrawableTestUtils.compareImages(densityDpi + " dpi", golden, bitmap,
+                    PIXEL_ERROR_THRESHOLD, PIXEL_ERROR_COUNT_THRESHOLD);
+        }
+    }
+
+    private void saveGoldenImage(Bitmap bitmap, int sourceResId, int densityDpi) {
+        // Save the image to the disk.
+        FileOutputStream out = null;
+
+        try {
+            final String outputFolder = "/sdcard/temp/";
+            final File folder = new File(outputFolder);
+            if (!folder.exists()) {
+                folder.mkdir();
+            }
+
+            final String sourceFilename = new File(mResources.getString(sourceResId)).getName();
+            final String sourceTitle = sourceFilename.substring(0, sourceFilename.lastIndexOf("."));
+            final String outputTitle = sourceTitle + "_golden_" + densityDpi;
+            final String outputFilename = outputFolder + outputTitle + ".png";
+            final File outputFile = new File(outputFilename);
+            if (!outputFile.exists()) {
+                outputFile.createNewFile();
+            }
+
+            out = new FileOutputStream(outputFile, false);
+            bitmap.compress(Bitmap.CompressFormat.PNG, 100, out);
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            if (out != null) {
+                try {
+                    out.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
     }
 
     private class MockColorFilter extends ColorFilter {
