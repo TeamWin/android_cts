@@ -14,30 +14,18 @@
 
 package android.accessibilityservice.cts;
 
-import android.accessibilityservice.AccessibilityService;
 import android.accessibilityservice.AccessibilityServiceInfo;
 import android.accessibilityservice.AccessibilityService.SoftKeyboardController;
 import android.app.UiAutomation;
 import android.content.ContentResolver;
 import android.content.Context;
-import android.content.Intent;
-import android.content.pm.PackageManager;
-import android.content.pm.ResolveInfo;
 import android.os.Bundle;
 import android.os.ParcelFileDescriptor;
 import android.os.SystemClock;
 import android.provider.Settings;
 import android.test.ActivityInstrumentationTestCase2;
-import android.test.suitebuilder.annotation.MediumTest;
-import android.text.Selection;
-import android.text.TextUtils;
-import android.view.View;
 import android.view.accessibility.AccessibilityEvent;
 import android.view.accessibility.AccessibilityManager;
-import android.view.accessibility.AccessibilityNodeInfo;
-import android.view.WindowManager;
-import android.widget.EditText;
-import android.widget.TextView;
 
 import android.accessibilityservice.cts.R;
 
@@ -63,10 +51,20 @@ public class AccessibilitySoftKeyboardModesTest extends ActivityInstrumentationT
 
     private static final long TIMEOUT_PROPAGATE_SETTING = 5000;
 
+    /**
+     * Timeout required for pending Binder calls or event processing to
+     * complete.
+     */
+    private static final long TIMEOUT_ASYNC_PROCESSING = 5000;
+
+    /**
+     * The timeout since the last accessibility event to consider the device idle.
+     */
+    private static final long TIMEOUT_ACCESSIBILITY_STATE_IDLE = 500;
+
     private static final int SHOW_MODE_AUTO = 0;
     private static final int SHOW_MODE_HIDDEN = 1;
 
-    private int mCallbackCount;
     private int mLastCallbackValue;
 
     private Context mContext;
@@ -162,6 +160,7 @@ public class AccessibilitySoftKeyboardModesTest extends ActivityInstrumentationT
         // Request the keyboard be hidden.
         assertTrue(mKeyboardController.setShowMode(SHOW_MODE_HIDDEN));
         waitForWindowStateChanged();
+        waitForIdle();
 
         // Make sure the keyboard is hidden.
         assertEquals(numWindowsWithIme - 1, mService.getTestWindowsListSize());
@@ -169,6 +168,7 @@ public class AccessibilitySoftKeyboardModesTest extends ActivityInstrumentationT
         // Request the default keyboard mode.
         assertTrue(mKeyboardController.setShowMode(SHOW_MODE_AUTO));
         waitForWindowStateChanged();
+        waitForIdle();
 
         // Make sure the keyboard is visible.
         assertEquals(numWindowsWithIme, mService.getTestWindowsListSize());
@@ -186,6 +186,7 @@ public class AccessibilitySoftKeyboardModesTest extends ActivityInstrumentationT
         // Set the show mode to SHOW_MODE_HIDDEN.
         assertTrue(mKeyboardController.setShowMode(SHOW_MODE_HIDDEN));
         waitForWindowStateChanged();
+        waitForIdle();
 
         // Make sure the keyboard is hidden.
         assertEquals(numWindowsWithIme - 1, mService.getTestWindowsListSize());
@@ -193,6 +194,7 @@ public class AccessibilitySoftKeyboardModesTest extends ActivityInstrumentationT
         // Make sure we can see the soft keyboard once all Accessibility Services are disabled.
         disableAllServices();
         waitForWindowStateChanged();
+        waitForIdle();
 
         // Enable our test service,.
         enableTestService();
@@ -259,7 +261,8 @@ public class AccessibilitySoftKeyboardModesTest extends ActivityInstrumentationT
             },
             TIMEOUT_PROPAGATE_SETTING);
         } catch (TimeoutException ignored) {
-            // Ignore since the event could have occured before this method was called. There should            // be a check after this method returns to catch incorrect values.
+            // Ignore since the event could have occured before this method was called. There should
+            // be a check after this method returns to catch incorrect values.
         } finally {
             uiAutomation.destroy();
         }
@@ -343,6 +346,10 @@ public class AccessibilitySoftKeyboardModesTest extends ActivityInstrumentationT
             }
         }
         throw new IllegalStateException("Stub accessiblity service not found");
+    }
+
+    private void waitForIdle() throws TimeoutException {
+        getUiAutomation().waitForIdle(TIMEOUT_ACCESSIBILITY_STATE_IDLE, TIMEOUT_ASYNC_PROCESSING);
     }
 
     /**
