@@ -35,7 +35,7 @@ import java.util.Arrays;
  * The stream is later decoded by vp8 decoder to verify frames are decodable and to
  * calculate PSNR values for various bitrates.
  */
-public class Vp8EncoderTest extends Vp8CodecTestBase {
+public class Vp8EncoderTest extends VpxCodecTestBase {
 
     private static final String ENCODED_IVF_BASE = "football";
     private static final String INPUT_YUV = null;
@@ -89,6 +89,7 @@ public class Vp8EncoderTest extends Vp8CodecTestBase {
             EncoderOutputStreamParameters params = getDefaultEncodingParameters(
                     INPUT_YUV,
                     ENCODED_IVF_BASE,
+                    VP8_MIME,
                     encodeSeconds,
                     WIDTH,
                     HEIGHT,
@@ -102,14 +103,14 @@ public class Vp8EncoderTest extends Vp8CodecTestBase {
             }
             skipped = false;
 
-            Vp8EncodingStatistics statistics = computeEncodingStatistics(bufInfo);
+            VpxEncodingStatistics statistics = computeEncodingStatistics(bufInfo);
 
             assertEquals("Stream bitrate " + statistics.mAverageBitrate +
                     " is different from the target " + targetBitrate,
                     targetBitrate, statistics.mAverageBitrate,
                     MAX_BITRATE_VARIATION * targetBitrate);
 
-            decode(params.outputIvfFilename, null, FPS, params.forceGoogleEncoder);
+            decode(params.outputIvfFilename, null, VP8_MIME, FPS, params.forceGoogleEncoder);
         }
 
         if (skipped) {
@@ -132,6 +133,7 @@ public class Vp8EncoderTest extends Vp8CodecTestBase {
         EncoderOutputStreamParameters params = getDefaultEncodingParameters(
                 INPUT_YUV,
                 ENCODED_IVF_BASE,
+                VP8_MIME,
                 encodeSeconds,
                 WIDTH,
                 HEIGHT,
@@ -145,8 +147,8 @@ public class Vp8EncoderTest extends Vp8CodecTestBase {
             return;
         }
         computeEncodingStatistics(bufInfos);
-        decode(params.outputIvfFilename, OUTPUT_YUV, FPS, params.forceGoogleEncoder);
-        Vp8DecodingStatistics statisticsAsync = computeDecodingStatistics(
+        decode(params.outputIvfFilename, OUTPUT_YUV, VP8_MIME, FPS, params.forceGoogleEncoder);
+        VpxDecodingStatistics statisticsAsync = computeDecodingStatistics(
                 params.inputYuvFilename, R.raw.football_qvga, OUTPUT_YUV,
                 params.frameWidth, params.frameHeight);
 
@@ -156,6 +158,7 @@ public class Vp8EncoderTest extends Vp8CodecTestBase {
         params = getDefaultEncodingParameters(
                 INPUT_YUV,
                 ENCODED_IVF_BASE,
+                VP8_MIME,
                 encodeSeconds,
                 WIDTH,
                 HEIGHT,
@@ -169,8 +172,8 @@ public class Vp8EncoderTest extends Vp8CodecTestBase {
             return;
         }
         computeEncodingStatistics(bufInfos);
-        decode(params.outputIvfFilename, OUTPUT_YUV, FPS, params.forceGoogleEncoder);
-        Vp8DecodingStatistics statisticsSync = computeDecodingStatistics(
+        decode(params.outputIvfFilename, OUTPUT_YUV, VP8_MIME, FPS, params.forceGoogleEncoder);
+        VpxDecodingStatistics statisticsSync = computeDecodingStatistics(
                 params.inputYuvFilename, R.raw.football_qvga, OUTPUT_YUV,
                 params.frameWidth, params.frameHeight);
 
@@ -199,6 +202,7 @@ public class Vp8EncoderTest extends Vp8CodecTestBase {
         EncoderOutputStreamParameters params = getDefaultEncodingParameters(
                 INPUT_YUV,
                 ENCODED_IVF_BASE,
+                VP8_MIME,
                 encodeSeconds,
                 WIDTH,
                 HEIGHT,
@@ -214,7 +218,7 @@ public class Vp8EncoderTest extends Vp8CodecTestBase {
             return;
         }
 
-        Vp8EncodingStatistics statistics = computeEncodingStatistics(bufInfo);
+        VpxEncodingStatistics statistics = computeEncodingStatistics(bufInfo);
 
         // First check if we got expected number of key frames.
         int actualKeyFrames = statistics.mKeyFrames.size();
@@ -249,6 +253,7 @@ public class Vp8EncoderTest extends Vp8CodecTestBase {
         EncoderOutputStreamParameters params = getDefaultEncodingParameters(
                 INPUT_YUV,
                 ENCODED_IVF_BASE,
+                VP8_MIME,
                 encodeSeconds,
                 WIDTH,
                 HEIGHT,
@@ -274,7 +279,7 @@ public class Vp8EncoderTest extends Vp8CodecTestBase {
             return;
         }
 
-        Vp8EncodingStatistics statistics = computeEncodingStatistics(bufInfo);
+        VpxEncodingStatistics statistics = computeEncodingStatistics(bufInfo);
 
         // Calculate actual average bitrates  for every [stepSeconds] second.
         int[] bitrateActualValues = new int[bitrateTargetValues.length];
@@ -327,6 +332,7 @@ public class Vp8EncoderTest extends Vp8CodecTestBase {
          final EncoderOutputStreamParameters params = getDefaultEncodingParameters(
                  INPUT_YUV,
                  ENCODED_IVF_BASE,
+                 VP8_MIME,
                  encodeSeconds,
                  WIDTH,
                  HEIGHT,
@@ -340,7 +346,7 @@ public class Vp8EncoderTest extends Vp8CodecTestBase {
              public void run() {
                  try {
                      ArrayList<MediaCodec.BufferInfo> bufInfo = encode(params);
-                     Vp8EncodingStatistics statistics = computeEncodingStatistics(bufInfo);
+                     VpxEncodingStatistics statistics = computeEncodingStatistics(bufInfo);
                      bitrate[0] = statistics.mAverageBitrate;
                  } catch (Exception e) {
                      Log.e(TAG, "Encoder error: " + e.toString());
@@ -351,8 +357,8 @@ public class Vp8EncoderTest extends Vp8CodecTestBase {
          Runnable runDecoder = new Runnable() {
              public void run() {
                  try {
-                     decode(inputIvfFilename, OUTPUT_YUV, FPS, params.forceGoogleEncoder);
-                     Vp8DecodingStatistics statistics = computeDecodingStatistics(
+                     decode(inputIvfFilename, OUTPUT_YUV, VP8_MIME, FPS, params.forceGoogleEncoder);
+                     VpxDecodingStatistics statistics = computeDecodingStatistics(
                             params.inputYuvFilename, R.raw.football_qvga, OUTPUT_YUV,
                             params.frameWidth, params.frameHeight);
                      psnr[0] = statistics.mAveragePSNR;
@@ -423,6 +429,7 @@ public class Vp8EncoderTest extends Vp8CodecTestBase {
             EncoderOutputStreamParameters params = getDefaultEncodingParameters(
                     INPUT_YUV,
                     ENCODED_IVF_BASE,
+                    VP8_MIME,
                     encodeSeconds,
                     WIDTH,
                     HEIGHT,
@@ -438,8 +445,8 @@ public class Vp8EncoderTest extends Vp8CodecTestBase {
             completed[i] = true;
             skipped = false;
 
-            decode(params.outputIvfFilename, OUTPUT_YUV, FPS, params.forceGoogleEncoder);
-            Vp8DecodingStatistics statistics = computeDecodingStatistics(
+            decode(params.outputIvfFilename, OUTPUT_YUV, VP8_MIME, FPS, params.forceGoogleEncoder);
+            VpxDecodingStatistics statistics = computeDecodingStatistics(
                     params.inputYuvFilename, R.raw.football_qvga, OUTPUT_YUV,
                     params.frameWidth, params.frameHeight);
             psnrPlatformCodecAverage[i] = statistics.mAveragePSNR;
