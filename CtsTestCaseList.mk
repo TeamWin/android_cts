@@ -82,6 +82,7 @@ cts_support_packages := \
     CtsAssistApp \
     CtsAtraceTestApp \
     CtsCertInstallerApp \
+    CtsCppToolsApp \
     CtsDeviceAdmin \
     CtsDeviceOpenGl \
     CtsWifiConfigCreator \
@@ -230,6 +231,7 @@ cts_host_libraries := \
     CtsAdbTests \
     CtsAppSecurityTests \
     CtsAtraceHostTestCases \
+    CtsCppToolsTestCases \
     CtsDevicePolicyManagerTestCases \
     CtsDumpsysHostTestCases \
     CtsHostJank \
