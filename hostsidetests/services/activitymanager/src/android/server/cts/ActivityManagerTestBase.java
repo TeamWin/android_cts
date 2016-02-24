@@ -30,6 +30,7 @@ import java.util.HashSet;
 
 public abstract class ActivityManagerTestBase extends DeviceTestCase {
     private static final boolean PRETEND_DEVICE_SUPPORTS_PIP = false;
+    private static final boolean PRETEND_DEVICE_SUPPORTS_FREEFORM = false;
 
     // Constants copied from ActivityManager.StackId. If they are changed there, these must be
     // updated.
@@ -113,6 +114,10 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
         }
     }
 
+    protected void launchActivityInStack(String activityName, int stackId) throws Exception {
+        mDevice.executeShellCommand(getAmStartCmd(activityName) + " --stack " + stackId);
+    }
+
     // Utility method for debugging, not used directly here, but useful, so kept around.
     protected void printStacksAndTasks() throws DeviceNotAvailableException {
         CollectingOutputReceiver outputReceiver = new CollectingOutputReceiver();
@@ -143,6 +148,11 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
     protected boolean supportsPip() throws DeviceNotAvailableException {
         return hasDeviceFeature("android.software.picture_in_picture")
                 || PRETEND_DEVICE_SUPPORTS_PIP;
+    }
+
+    protected boolean supportsFreeform() throws DeviceNotAvailableException {
+        return hasDeviceFeature("android.software.freeform_window_management")
+                || PRETEND_DEVICE_SUPPORTS_FREEFORM;
     }
 
     protected boolean hasDeviceFeature(String requiredFeature) throws DeviceNotAvailableException {
