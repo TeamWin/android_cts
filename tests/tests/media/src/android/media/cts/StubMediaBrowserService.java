@@ -32,10 +32,13 @@ import junit.framework.Assert;
  * Stub implementation of (@link android.service.media.MediaBrowserService}.
  */
 public class StubMediaBrowserService extends MediaBrowserService {
-    static final String MEDIA_ID_ROOT = "test_media_id_root";
     static final String EXTRAS_KEY = "test_extras_key";
     static final String EXTRAS_VALUE = "test_extras_value";
+
+    static final String MEDIA_ID_INVALID = "test_media_id_invalid";
+    static final String MEDIA_ID_ROOT = "test_media_id_root";
     static final String MEDIA_ID_CHILDREN_DELAYED = "test_media_id_children_delayed";
+
     static final String[] MEDIA_ID_CHILDREN = new String[] {
         "test_media_id_children_0", "test_media_id_children_1",
         "test_media_id_children_2", "test_media_id_children_3",
@@ -77,6 +80,8 @@ public class StubMediaBrowserService extends MediaBrowserService {
             Assert.assertNull(mPendingLoadChildrenResult);
             mPendingLoadChildrenResult = result;
             result.detach();
+        } else if (MEDIA_ID_INVALID.equals(parentMediaId)){
+            result.sendResult(null);
         }
     }
 
