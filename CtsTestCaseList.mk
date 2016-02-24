@@ -88,6 +88,7 @@ cts_support_packages := \
     CtsCertInstallerApp \
     CtsContactDirectoryProvider \
     CtsAdminApp \
+    CtsCppToolsApp \
     CtsWifiConfigCreator \
     CtsDeviceAdminApp23 \
     CtsDeviceAdminApp24 \
@@ -250,6 +251,7 @@ cts_host_libraries := \
     CtsAppSecurityHostTestCases \
     CtsAppUsageHostTestCases \
     CtsAtraceHostTestCases \
+    CtsCppToolsTestCases \
     CtsDevicePolicyManagerTestCases \
     CtsDumpsysHostTestCases \
     CtsJankHostTestCases \
