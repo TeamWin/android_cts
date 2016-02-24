@@ -16,8 +16,6 @@
 
 package android.server.cts;
 
-import com.android.tradefed.log.LogUtil.CLog;
-
 import java.awt.Rectangle;
 
 import static com.android.ddmlib.Log.LogLevel.*;
@@ -27,6 +25,7 @@ public class ActivityManagerDockedStackTests extends ActivityManagerTestBase {
     private static final String TEST_ACTIVITY_NAME = "TestActivity";
     private static final String DOCKED_ACTIVITY_NAME = "DockedActivity";
     private static final String LAUNCH_TO_SIDE_ACTIVITY_NAME = "LaunchToSideActivity";
+    private static final String NO_RELAUNCH_ACTIVITY_NAME = "NoRelaunchActivity";
 
     private static final String AM_MOVE_TASK = "am stack movetask ";
     private static final String AM_RESIZE_DOCKED_STACK = "am stack resize-docked-stack ";
@@ -141,18 +140,9 @@ public class ActivityManagerDockedStackTests extends ActivityManagerTestBase {
         mAmWmState.assertValidBounds();
     }
 
-    private void launchActivityInDockStack(String activityName) throws Exception {
-        mDevice.executeShellCommand(getAmStartCmd(activityName));
-        final int taskId = getActivityTaskId(activityName);
-        final String cmd = AM_MOVE_TASK + taskId + " " + DOCKED_STACK_ID + " true";
-        mDevice.executeShellCommand(cmd);
-    }
-
     public void testResizeDockedStack() throws Exception {
         mDevice.executeShellCommand(getAmStartCmd(TEST_ACTIVITY_NAME));
-        mDevice.executeShellCommand(getAmStartCmd(DOCKED_ACTIVITY_NAME));
-        mDevice.executeShellCommand(AM_MOVE_TASK + getActivityTaskId(DOCKED_ACTIVITY_NAME) + " "
-                + DOCKED_STACK_ID + " true");
+        launchActivityInDockStack(DOCKED_ACTIVITY_NAME);
         mDevice.executeShellCommand(AM_RESIZE_DOCKED_STACK
                 + "0 0 " + STACK_SIZE + " " + STACK_SIZE
                 + " 0 0 " + TASK_SIZE + " " + TASK_SIZE);
@@ -167,6 +157,34 @@ public class ActivityManagerDockedStackTests extends ActivityManagerTestBase {
                 mAmWmState.getAmState().getTaskByActivityName(DOCKED_ACTIVITY_NAME).getBounds());
         mAmWmState.assertVisibility(DOCKED_ACTIVITY_NAME, true);
         mAmWmState.assertVisibility(TEST_ACTIVITY_NAME, true);
+    }
+
+    public void testActivityLifeCycleOnResizeDockedStack() throws Exception {
+        mDevice.executeShellCommand(getAmStartCmd(TEST_ACTIVITY_NAME));
+        launchActivityInDockStack(NO_RELAUNCH_ACTIVITY_NAME);
+
+        mAmWmState.computeState(mDevice,
+                new String[]{TEST_ACTIVITY_NAME, NO_RELAUNCH_ACTIVITY_NAME});
+        mAmWmState.assertSanity();
+
+        clearLogcat();
+        mDevice.executeShellCommand(AM_RESIZE_DOCKED_STACK
+                + "0 0 " + STACK_SIZE + " " + STACK_SIZE
+                + " 0 0 " + TASK_SIZE + " " + TASK_SIZE);
+
+        mAmWmState.computeState(mDevice,
+                new String[]{TEST_ACTIVITY_NAME, NO_RELAUNCH_ACTIVITY_NAME});
+        mAmWmState.assertSanity();
+
+        assertActivityLifecycle(TEST_ACTIVITY_NAME, true);
+        assertActivityLifecycle(NO_RELAUNCH_ACTIVITY_NAME, false);
+    }
+
+    private void launchActivityInDockStack(String activityName) throws Exception {
+        mDevice.executeShellCommand(getAmStartCmd(activityName));
+        final int taskId = getActivityTaskId(activityName);
+        final String cmd = AM_MOVE_TASK + taskId + " " + DOCKED_STACK_ID + " true";
+        mDevice.executeShellCommand(cmd);
     }
 
     private void launchActivityToSide(String activityName) throws Exception {

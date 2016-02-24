@@ -26,7 +26,11 @@ import com.android.tradefed.testtype.DeviceTestCase;
 import java.lang.Exception;
 import java.lang.Integer;
 import java.lang.String;
+import java.util.Collections;
 import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public abstract class ActivityManagerTestBase extends DeviceTestCase {
     private static final boolean PRETEND_DEVICE_SUPPORTS_PIP = false;
@@ -208,5 +212,81 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
         CLog.logAndDisplay(LogLevel.INFO, command);
         CLog.logAndDisplay(LogLevel.INFO, output);
         return output;
+    }
+
+    protected void clearLogcat() throws DeviceNotAvailableException {
+        mDevice.executeAdbCommand("logcat", "-c");
+    }
+
+    protected void assertActivityLifecycle(String activityName, boolean relaunched)
+            throws DeviceNotAvailableException {
+        final ActivityLifecycleCounts lifecycleCounts = new ActivityLifecycleCounts(activityName);
+
+        if (relaunched) {
+            if (lifecycleCounts.mDestroyCount < 1) {
+                fail(activityName + " must have been destroyed. mDestroyCount="
+                        + lifecycleCounts.mDestroyCount);
+            }
+            if (lifecycleCounts.mCreateCount < 1) {
+                fail(activityName + " must have been (re)created. mCreateCount="
+                        + lifecycleCounts.mCreateCount);
+            }
+        } else {
+            if (lifecycleCounts.mDestroyCount > 0) {
+                fail(activityName + " must *NOT* have been destroyed. mDestroyCount="
+                        + lifecycleCounts.mDestroyCount);
+            }
+            if (lifecycleCounts.mCreateCount > 0) {
+                fail(activityName + " must *NOT* have been (re)created. mCreateCount="
+                        + lifecycleCounts.mCreateCount);
+            }
+            if (lifecycleCounts.mConfigurationChangedCount < 1) {
+                fail(activityName + " must have received configuration changed. "
+                        + "mConfigurationChangedCount="
+                        + lifecycleCounts.mConfigurationChangedCount);
+            }
+        }
+    }
+
+    private class ActivityLifecycleCounts {
+
+        private final Pattern mCreatePattern = Pattern.compile("(.+): onCreate");
+        private final Pattern mConfigurationChangedPattern =
+                Pattern.compile("(.+): onConfigurationChanged");
+        private final Pattern mDestroyPattern = Pattern.compile("(.+): onDestroy");
+
+        private final LinkedList<String> mLogs = new LinkedList();
+        int mCreateCount;
+        int mConfigurationChangedCount;
+        int mDestroyCount;
+
+        public ActivityLifecycleCounts(String activityName) throws DeviceNotAvailableException {
+
+            final String logs = mDevice.executeAdbCommand(
+                    "logcat", "-v", "brief", "-d", activityName + ":I", "*:S");
+            Collections.addAll(mLogs, logs.split("\\n"));
+
+            while (!mLogs.isEmpty()) {
+                final String line = mLogs.pop().trim();
+
+                Matcher matcher = mCreatePattern.matcher(line);
+                if (matcher.matches()) {
+                    mCreateCount++;
+                    continue;
+                }
+
+                matcher = mConfigurationChangedPattern.matcher(line);
+                if (matcher.matches()) {
+                    mConfigurationChangedCount++;
+                    continue;
+                }
+
+                matcher = mDestroyPattern.matcher(line);
+                if (matcher.matches()) {
+                    mDestroyCount++;
+                    continue;
+                }
+            }
+        }
     }
 }

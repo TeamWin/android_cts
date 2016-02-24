@@ -21,10 +21,12 @@ import java.awt.Rectangle;
 public class ActivityManagerFreeformStackTests extends ActivityManagerTestBase {
 
     private static final String TEST_ACTIVITY = "TestActivity";
-    private static final int TEST_ACTIVITY_SIZE = 500;
+    private static final int TEST_TASK_SIZE_1 = 500;
+    private static final int TEST_TASK_SIZE_2 = TEST_TASK_SIZE_1 * 2;
     // NOTE: Launching the FreeformActivity will automatically launch the TestActivity
     // with bounds (0, 0, 500, 500)
     private static final String FREEFORM_ACTIVITY = "FreeformActivity";
+    private static final String NO_RELAUNCH_ACTIVITY = "NoRelaunchActivity";
 
     public void testFreeformWindowManagementSupport() throws Exception {
 
@@ -41,11 +43,44 @@ public class ActivityManagerFreeformStackTests extends ActivityManagerTestBase {
             mAmWmState.assertVisibility(TEST_ACTIVITY, true);
             mAmWmState.assertFocusedActivity(
                     TEST_ACTIVITY + " must be focused Activity", TEST_ACTIVITY);
-            assertEquals(new Rectangle(0, 0, TEST_ACTIVITY_SIZE, TEST_ACTIVITY_SIZE),
+            assertEquals(new Rectangle(0, 0, TEST_TASK_SIZE_1, TEST_TASK_SIZE_1),
                     mAmWmState.getAmState().getTaskByActivityName(TEST_ACTIVITY).getBounds());
         } else {
             mAmWmState.assertDoesNotContainsStack(
                     "Must not contain freeform stack.", FREEFORM_WORKSPACE_STACK_ID);
         }
+    }
+
+    public void testActivityLifeCycleOnResizeFreeformTask() throws Exception {
+        launchActivityInStack(TEST_ACTIVITY, FREEFORM_WORKSPACE_STACK_ID);
+        launchActivityInStack(NO_RELAUNCH_ACTIVITY, FREEFORM_WORKSPACE_STACK_ID);
+
+        mAmWmState.computeState(mDevice, new String[]{TEST_ACTIVITY, NO_RELAUNCH_ACTIVITY});
+        mAmWmState.assertSanity();
+
+        resizeActivityTask(TEST_ACTIVITY, 0, 0, TEST_TASK_SIZE_1, TEST_TASK_SIZE_2);
+        resizeActivityTask(NO_RELAUNCH_ACTIVITY,
+                TEST_TASK_SIZE_1, TEST_TASK_SIZE_1, TEST_TASK_SIZE_1, TEST_TASK_SIZE_2);
+
+        mAmWmState.computeState(mDevice, new String[]{TEST_ACTIVITY, NO_RELAUNCH_ACTIVITY});
+        mAmWmState.assertSanity();
+
+        clearLogcat();
+        resizeActivityTask(TEST_ACTIVITY, 0, 0, TEST_TASK_SIZE_2, TEST_TASK_SIZE_1);
+        resizeActivityTask(NO_RELAUNCH_ACTIVITY,
+                TEST_TASK_SIZE_1, TEST_TASK_SIZE_1, TEST_TASK_SIZE_2, TEST_TASK_SIZE_1);
+        mAmWmState.computeState(mDevice, new String[]{TEST_ACTIVITY, NO_RELAUNCH_ACTIVITY});
+        mAmWmState.assertSanity();
+
+        assertActivityLifecycle(TEST_ACTIVITY, true);
+        assertActivityLifecycle(NO_RELAUNCH_ACTIVITY, false);
+    }
+
+    private void resizeActivityTask(String activityName, int left, int top, int right, int bottom)
+            throws Exception {
+        final int taskId = getActivityTaskId(activityName);
+        final String cmd = "am task resize "
+                + taskId + " " + left + " " + top + " " + right + " " + bottom;
+        mDevice.executeShellCommand(cmd);
     }
 }
