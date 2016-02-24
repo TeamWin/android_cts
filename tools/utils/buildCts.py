@@ -339,6 +339,7 @@ class CtsBuilder(object):
     plan.Exclude('.*')
     plan.Include(r'android\.security$')
     plan.Include('android\.host\.jdwpsecurity$')
+    plan.Include('android\.host\.abioverride$')
     self.__WritePlan(plan, 'Security')
 
 def BuildAospMediumSizeTestList():
@@ -365,7 +366,6 @@ def BuildAospSmallSizeTestList():
       already published to aosp. """
   return {
       'android.aadb' : [],
-      'android.abioverride' : [],
       'android.acceleration' : [],
       'android.accessibility' : [],
       'android.accessibilityservice' : [],

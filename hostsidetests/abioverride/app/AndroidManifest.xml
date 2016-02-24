@@ -16,22 +16,14 @@
  -->
 
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="android.abioverride.cts">
+    package="android.abioverride.app">
 
     <application android:use32bitAbi="true" android:multiArch="true">
-        <uses-library android:name="android.test.runner" />
-        <activity android:name="android.abioverride.AbiOverrideActivity" >
+        <activity android:name=".AbiOverrideActivity" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
     </application>
-
-    <!--  self-instrumenting test package. -->
-    <instrumentation
-        android:name="android.support.test.runner.AndroidJUnitRunner"
-        android:label="AbiOverride tests"
-        android:targetPackage="android.abioverride.cts" >
-    </instrumentation>
 </manifest>

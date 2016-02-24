@@ -14,24 +14,25 @@
  * limitations under the License.
  */
 
-package android.abioverride;
+package android.abioverride.app;
 
 import android.app.Activity;
 import android.os.Bundle;
 import android.os.Process;
-
-import java.lang.Override;
+import android.util.Log;
 
 /**
  * A simple activity for testing abioverride manifest flag.
  */
 public class AbiOverrideActivity extends Activity {
+
+    public static final String TEST_STRING = "Is64bit ";
+
+    private static final String TAG = AbiOverrideActivity.class.getSimpleName();
+
     @Override
     public void onCreate(Bundle icicle) {
         super.onCreate(icicle);
-    }
-
-    public boolean is64Bit()  {
-        return Process.is64Bit();
+        Log.i(TAG, TEST_STRING + Process.is64Bit());
     }
 }

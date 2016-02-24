@@ -12,20 +12,25 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-LOCAL_PATH:= $(call my-dir)
+LOCAL_PATH := $(call my-dir)
 
 include $(CLEAR_VARS)
 
-LOCAL_MODULE := libctsabioverride
+LOCAL_SRC_FILES := $(call all-java-files-under, src)
 
-# Don't include this package in any configuration by default.
-LOCAL_MODULE_TAGS := optional
+LOCAL_MODULE := CtsAbiOverrideHostTestCases
 
-LOCAL_SRC_FILES := CtsAbiOverrideJniOnLoad.cpp
+LOCAL_MODULE_TAGS := tests
 
-LOCAL_C_INCLUDES := $(JNI_H_INCLUDE)
+# tag this module as a cts_v2 test artifact
+LOCAL_COMPATIBILITY_SUITE := cts_v2
 
-LOCAL_SHARED_LIBRARIES := libnativehelper_compat_libc++ liblog libdl
-LOCAL_CXX_STL := none
+LOCAL_CTS_TEST_PACKAGE := android.host.abioverride
 
-include $(BUILD_SHARED_LIBRARY)
+LOCAL_STATIC_JAVA_LIBRARIES := cts-migration-lib
+
+LOCAL_JAVA_LIBRARIES := compatibility-host-util cts-tradefed_v2 tradefed-prebuilt
+
+include $(BUILD_CTS_HOST_JAVA_LIBRARY)
+
+include $(call all-makefiles-under,$(LOCAL_PATH))
