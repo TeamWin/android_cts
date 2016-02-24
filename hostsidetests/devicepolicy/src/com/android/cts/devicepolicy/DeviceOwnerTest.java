@@ -43,6 +43,15 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
     private static final String CLEAR_DEVICE_OWNER_TEST_CLASS =
             DEVICE_OWNER_PKG + ".ClearDeviceOwnerTest";
 
+    /** The ephemeral users are implemented and supported on the device. */
+    private boolean mHasEphemeralUserFeature;
+
+    /**
+     * Ephemeral users are implemented, but unsupported on the device (because of missing split
+     * system user).
+     */
+    private boolean mHasDisabledEphemeralUserFeature;
+
     @Override
     protected void setUp() throws Exception {
         super.setUp();
@@ -51,6 +60,9 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
             assertTrue("Failed to set device owner",
                     setDeviceOwner(DEVICE_OWNER_PKG + "/" + ADMIN_RECEIVER_TEST_CLASS));
         }
+        mHasEphemeralUserFeature = mHasFeature && canCreateAdditionalUsers(1) && hasUserSplit();
+        mHasDisabledEphemeralUserFeature =
+                mHasFeature && canCreateAdditionalUsers(1) && !hasUserSplit();
     }
 
     @Override
@@ -109,12 +121,20 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
 
     /** Tries to toggle the force-ephemeral-users on and checks it was really set. */
     public void testSetForceEphemeralUsers() throws Exception {
-        if (!mHasFeature || getDevice().getApiLevel() < 24 /* Build.VERSION_CODES.N */
-                || !canCreateAdditionalUsers(1)) {
+        if (!mHasEphemeralUserFeature) {
             return;
         }
         // Set force-ephemeral-users policy and verify it was set.
-        executeDeviceOwnerTest("ForceEphemeralUsersTest");
+        executeDeviceTestMethod(".ForceEphemeralUsersTest", "testSetForceEphemeralUsers");
+    }
+
+    /**
+     * Setting force-ephemeral-users policy to true without a split system user should fail.
+     */
+    public void testSetForceEphemeralUsersFailsWithoutSplitSystemUser() throws Exception {
+        if (mHasDisabledEphemeralUserFeature) {
+            executeDeviceTestMethod(".ForceEphemeralUsersTest", "testSetForceEphemeralUsersFails");
+        }
     }
 
     /**
@@ -124,8 +144,7 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
      * <p>If the current user is the system user, the other users are removed straight away.
      */
     public void testRemoveUsersOnSetForceEphemeralUsers() throws Exception {
-        if (!mHasFeature || getDevice().getApiLevel() < 24 /* Build.VERSION_CODES.N */
-                || !canCreateAdditionalUsers(1)) {
+        if (!mHasEphemeralUserFeature) {
             return;
         }
 
@@ -134,7 +153,7 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
         assertTrue("User must have been created", listUsers().contains(userId));
 
         // Set force-ephemeral-users policy and verify it was set.
-        executeDeviceOwnerTest("ForceEphemeralUsersTest");
+        executeDeviceTestMethod(".ForceEphemeralUsersTest", "testSetForceEphemeralUsers");
 
         // Users have to be removed when force-ephemeral-users is toggled on.
         assertFalse("User must have been removed", listUsers().contains(userId));
@@ -148,8 +167,7 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
      * before all other users are removed.
      */
     public void testRemoveUsersOnSetForceEphemeralUsersWithUserSwitch() throws Exception {
-        if (!mHasFeature || getDevice().getApiLevel() < 24 /* Build.VERSION_CODES.N */
-                || !canCreateAdditionalUsers(1)) {
+        if (!mHasEphemeralUserFeature) {
             return;
         }
 
@@ -161,7 +179,7 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
         switchUser(userId);
 
         // Set force-ephemeral-users policy and verify it was set.
-        executeDeviceOwnerTestAsUser("ForceEphemeralUsersTest", 0);
+        executeDeviceTestMethod(".ForceEphemeralUsersTest", "testSetForceEphemeralUsers");
 
         // Make sure the user has been removed. As it is not a synchronous operation - switching to
         // the system user must happen first - give the system a little bit of time for finishing
@@ -184,13 +202,12 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
 
     /** The users created after setting force-ephemeral-users policy to true must be ephemeral. */
     public void testCreateUserAfterSetForceEphemeralUsers() throws Exception {
-        if (!mHasFeature || getDevice().getApiLevel() < 24 /* Build.VERSION_CODES.N */
-                || !canCreateAdditionalUsers(1)) {
+        if (!mHasEphemeralUserFeature) {
             return;
         }
 
         // Set force-ephemeral-users policy and verify it was set.
-        executeDeviceOwnerTest("ForceEphemeralUsersTest");
+        executeDeviceTestMethod(".ForceEphemeralUsersTest", "testSetForceEphemeralUsers");
 
         int userId = createUser();
         assertTrue("User must be ephemeral", 0 != (getUserFlags(userId) & FLAG_EPHEMERAL));
@@ -200,14 +217,12 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
      * Test creating an epehemeral user using the DevicePolicyManager's createAndManageUser method.
      */
     public void testCreateAndManageEphemeralUser() throws Exception {
-        if (!mHasFeature || getDevice().getApiLevel() < 24 /* Build.VERSION_CODES.N */
-                || !canCreateAdditionalUsers(1)) {
+        if (!mHasEphemeralUserFeature) {
             return;
         }
 
         ArrayList<Integer> originalUsers = listUsers();
-        assertTrue(runDeviceTests(DEVICE_OWNER_PKG, ".CreateAndManageUserTest",
-                "testCreateAndManageEphemeralUser", 0));
+        executeDeviceTestMethod(".CreateAndManageUserTest", "testCreateAndManageEphemeralUser");
 
         ArrayList<Integer> newUsers = listUsers();
 
@@ -227,6 +242,17 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
         // Get the flags of the new user and check the user is ephemeral.
         int flags = getUserFlags(newUserId);
         assertEquals("Ephemeral flag must be set", FLAG_EPHEMERAL, flags & FLAG_EPHEMERAL);
+    }
+
+    /**
+     * Test that creating an epehemeral user using the DevicePolicyManager's createAndManageUser
+     * method fails on systems without the split system user.
+     */
+    public void testCreateAndManageEphemeralUserFailsWithoutSplitSystemUser() throws Exception {
+        if (mHasDisabledEphemeralUserFeature) {
+            executeDeviceTestMethod(
+                    ".CreateAndManageUserTest", "testCreateAndManageEphemeralUserFails");
+        }
     }
 
     public void testDeviceLoggingWithTwoUsers() throws Exception {
@@ -304,13 +330,5 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
     private void executeDeviceTestMethod(String className, String testName) throws Exception {
         assertTrue(runDeviceTestsAsUser(DEVICE_OWNER_PKG, className, testName,
                 /* deviceOwnerUserId */ 0));
-    }
-
-    private void executeDeviceOwnerTestAsUser(String testClassName, int userId) throws Exception {
-        if (!mHasFeature) {
-            return;
-        }
-        String testClass = DEVICE_OWNER_PKG + "." + testClassName;
-        assertTrue(testClass + " failed.", runDeviceTestsAsUser(DEVICE_OWNER_PKG, testClass, userId));
     }
 }
