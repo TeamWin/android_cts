@@ -122,6 +122,14 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
         mDevice.executeShellCommand(getAmStartCmd(activityName) + " --stack " + stackId);
     }
 
+    protected void resizeActivityTask(String activityName, int left, int top, int right, int bottom)
+            throws Exception {
+        final int taskId = getActivityTaskId(activityName);
+        final String cmd = "am task resize "
+                + taskId + " " + left + " " + top + " " + right + " " + bottom;
+        mDevice.executeShellCommand(cmd);
+    }
+
     // Utility method for debugging, not used directly here, but useful, so kept around.
     protected void printStacksAndTasks() throws DeviceNotAvailableException {
         CollectingOutputReceiver outputReceiver = new CollectingOutputReceiver();

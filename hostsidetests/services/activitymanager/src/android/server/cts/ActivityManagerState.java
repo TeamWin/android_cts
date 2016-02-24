@@ -60,6 +60,10 @@ class ActivityManagerState {
         boolean retry = false;
         String dump = null;
 
+        CLog.logAndDisplay(INFO, "==============================");
+        CLog.logAndDisplay(INFO, "     ActivityManagerState     ");
+        CLog.logAndDisplay(INFO, "==============================");
+
         do {
             if (retry) {
                 CLog.logAndDisplay(INFO, "***Incomplete AM state. Retrying...");
