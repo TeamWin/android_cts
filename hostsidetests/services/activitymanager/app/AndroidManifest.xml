@@ -21,66 +21,71 @@
 
     <application>
         <activity android:name=".TestActivity"
-                android:resizeable="true"
+                android:resizeableActivity="true"
                 android:exported="true"
         />
         <activity android:name=".DockedActivity"
-                android:resizeable="true"
+                android:resizeableActivity="true"
                 android:exported="true"
                 android:taskAffinity="nobody.but.DockedActivity"
         />
         <activity android:name=".NoRelaunchActivity"
-                android:resizeable="true"
+                android:resizeableActivity="true"
                 android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout"
                 android:exported="true"
         />
         <activity android:name=".SlowCreateActivity"
-                android:resizeable="true"
+                android:resizeableActivity="true"
                 android:exported="true"
         />
         <activity android:name=".LaunchToSideActivity"
-                android:resizeable="true"
+                android:resizeableActivity="true"
                 android:exported="true"
                 android:taskAffinity="nobody.but.LaunchToSideActivity"
         />
         <activity android:name=".PipActivity"
-                android:resizeable="true"
+                android:resizeableActivity="true"
                 android:supportsPictureInPicture="true"
                 android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout"
                 android:exported="true"
         />
         <activity android:name=".AutoEnterPipActivity"
-                  android:resizeable="true"
+                  android:resizeableActivity="true"
                   android:supportsPictureInPicture="true"
                   android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout"
                   android:exported="true"
         />
         <activity android:name=".AlwaysFocusablePipActivity"
                   android:theme="@style/Theme.Transparent"
-                  android:resizeable="true"
+                  android:resizeableActivity="true"
                   android:supportsPictureInPicture="true"
                   androidprv:alwaysFocusable="true"
                   android:exported="true"
                   android:taskAffinity="nobody.but.AlwaysFocusablePipActivity"
         />
         <activity android:name=".LaunchIntoPinnedStackPipActivity"
-                  android:resizeable="true"
+                  android:resizeableActivity="true"
                   android:supportsPictureInPicture="true"
                   androidprv:alwaysFocusable="true"
                   android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout"
                   android:exported="true"
         />
         <activity android:name=".VisibleBehindActivity"
-                  android:resizeable="true"
+                  android:resizeableActivity="true"
                   android:supportsPictureInPicture="true"
                   android:exported="true"
                   android:taskAffinity="nobody.but.VisibleBehindActivity"
         />
         <activity android:name=".LaunchPipOnPipActivity"
-                  android:resizeable="true"
+                  android:resizeableActivity="true"
                   android:supportsPictureInPicture="true"
                   android:taskAffinity="nobody.but.LaunchPipOnPipActivity"
                   android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout"
+                  android:exported="true"
+        />
+        <activity android:name=".FreeformActivity"
+                  android:resizeableActivity="true"
+                  android:taskAffinity="nobody.but.FreeformActivity"
                   android:exported="true"
         />
     </application>
