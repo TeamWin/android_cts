@@ -47,7 +47,7 @@ public class ToolbarTest extends AndroidTestCase {
 
     @UiThreadTest
     public void testSetTitleMargins() {
-        Toolbar toolbar = new Toolbar(mContext);
+        Toolbar toolbar = new Toolbar(mContext, null, 0, 0);
         assertEquals(0, toolbar.getTitleMarginStart());
         assertEquals(0, toolbar.getTitleMarginTop());
         assertEquals(0, toolbar.getTitleMarginEnd());
