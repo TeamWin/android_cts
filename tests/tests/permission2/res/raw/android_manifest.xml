@@ -237,12 +237,21 @@
 
     <protected-broadcast android:name="android.net.nsd.STATE_CHANGED" />
 
-    <protected-broadcast android:name="android.nfc.action.LLCP_LINK_STATE_CHANGED" />
+    <protected-broadcast android:name="android.nfc.action.ADAPTER_STATE_CHANGED" />
+    <protected-broadcast android:name="android.nfc.action.TRANSACTION_DETECTED" />
+    <protected-broadcast android:name="com.android.nfc.action.LLCP_UP" />
+    <protected-broadcast android:name="com.android.nfc.action.LLCP_DOWN" />
+    <protected-broadcast android:name="com.android.nfc.cardemulation.action.CLOSE_TAP_DIALOG" />
+    <protected-broadcast android:name="com.android.nfc.handover.action.ALLOW_CONNECT" />
+    <protected-broadcast android:name="com.android.nfc.handover.action.DENY_CONNECT" />
     <protected-broadcast android:name="com.android.nfc_extras.action.RF_FIELD_ON_DETECTED" />
     <protected-broadcast android:name="com.android.nfc_extras.action.RF_FIELD_OFF_DETECTED" />
     <protected-broadcast android:name="com.android.nfc_extras.action.AID_SELECTED" />
-
-    <protected-broadcast android:name="android.nfc.action.TRANSACTION_DETECTED" />
+    <!-- For NFC to BT handover -->
+    <protected-broadcast android:name="android.btopp.intent.action.WHITELIST_DEVICE" />
+    <protected-broadcast android:name="android.btopp.intent.action.STOP_HANDOVER_TRANSFER" />
+    <protected-broadcast android:name="android.nfc.handover.intent.action.HANDOVER_SEND" />
+    <protected-broadcast android:name="android.nfc.handover.intent.action.HANDOVER_SEND_MULTIPLE" />
 
     <protected-broadcast android:name="android.intent.action.CLEAR_DNS_CACHE" />
     <protected-broadcast android:name="android.intent.action.PROXY_CHANGE" />
@@ -287,10 +296,6 @@
     <protected-broadcast android:name="android.intent.action.AIRPLANE_MODE" />
     <protected-broadcast android:name="android.intent.action.ADVANCED_SETTINGS" />
     <protected-broadcast android:name="android.intent.action.APPLICATION_RESTRICTIONS_CHANGED" />
-    <protected-broadcast android:name="android.intent.action.BUGREPORT_STARTED" />
-    <protected-broadcast android:name="android.intent.action.BUGREPORT_FINISHED" />
-    <protected-broadcast android:name="android.intent.action.REMOTE_BUGREPORT_FINISHED" />
-    <protected-broadcast android:name="android.intent.action.REMOTE_BUGREPORT_DISPATCH" />
 
     <!-- Legacy -->
     <protected-broadcast android:name="android.intent.action.ACTION_IDLE_MAINTENANCE_START" />
@@ -397,6 +402,7 @@
     <protected-broadcast android:name="com.android.settings.location.MODE_CHANGING" />
 
     <protected-broadcast android:name="ScheduleConditionProvider.EVALUATE" />
+    <protected-broadcast android:name="EventConditionProvider.EVALUATE" />
     <protected-broadcast android:name="wifi_scan_available" />
 
     <protected-broadcast android:name="action.cne.started" />
@@ -426,6 +432,23 @@
     <protected-broadcast android:name="android.intent.action.DYNAMIC_SENSOR_CHANGED" />
 
     <protected-broadcast android:name="android.intent.action.ACTION_RADIO_OFF" />
+    <protected-broadcast android:name="android.intent.action.MANAGED_PROFILE_UNLOCKED" />
+
+    <protected-broadcast android:name="android.accounts.LOGIN_ACCOUNTS_CHANGED" />
+    <protected-broadcast android:name="com.android.sync.SYNC_CONN_STATUS_CHANGED" />
+
+    <protected-broadcast android:name="com.android.phone.SIP_INCOMING_CALL" />
+    <protected-broadcast android:name="com.android.phone.SIP_ADD_PHONE" />
+    <protected-broadcast android:name="com.android.phone.SIP_REMOVE_PHONE" />
+    <protected-broadcast android:name="com.android.phone.SIP_CALL_OPTION_CHANGED" />
+
+    <protected-broadcast android:name="android.bluetooth.adapter.action.BLE_ACL_CONNECTED" />
+    <protected-broadcast android:name="android.bluetooth.adapter.action.BLE_ACL_DISCONNECTED" />
+
+    <protected-broadcast android:name="android.bluetooth.input.profile.action.HANDSHAKE" />
+    <protected-broadcast android:name="android.bluetooth.input.profile.action.REPORT" />
+
+    <protected-broadcast android:name="android.intent.action.TWILIGHT_CHANGED" />
 
     <!-- ====================================================================== -->
     <!--                          RUNTIME PERMISSIONS                           -->
@@ -866,77 +889,77 @@
     <!-- @hide We need to keep this around for backwards compatibility -->
     <permission android:name="android.permission.READ_PROFILE"
                 android:protectionLevel="normal"
-                android:permissionFlags="hidden"/>
+                android:permissionFlags="removed"/>
 
     <!-- @hide We need to keep this around for backwards compatibility -->
     <permission android:name="android.permission.WRITE_PROFILE"
                 android:protectionLevel="normal"
-                android:permissionFlags="hidden"/>
+                android:permissionFlags="removed"/>
 
     <!-- @hide We need to keep this around for backwards compatibility -->
     <permission android:name="android.permission.READ_SOCIAL_STREAM"
                 android:protectionLevel="normal"
-                android:permissionFlags="hidden"/>
+                android:permissionFlags="removed"/>
 
     <!-- @hide We need to keep this around for backwards compatibility -->
     <permission android:name="android.permission.WRITE_SOCIAL_STREAM"
                 android:protectionLevel="normal"
-                android:permissionFlags="hidden"/>
+                android:permissionFlags="removed"/>
 
     <!-- @hide We need to keep this around for backwards compatibility -->
     <permission android:name="android.permission.READ_USER_DICTIONARY"
                 android:protectionLevel="normal"
-                android:permissionFlags="hidden"/>
+                android:permissionFlags="removed"/>
 
     <!-- @hide We need to keep this around for backwards compatibility -->
     <permission android:name="android.permission.WRITE_USER_DICTIONARY"
                 android:protectionLevel="normal"
-                android:permissionFlags="hidden"/>
+                android:permissionFlags="removed"/>
 
     <!-- @hide We need to keep this around for backwards compatibility -->
     <permission android:name="android.permission.WRITE_SMS"
                 android:protectionLevel="normal"
-                android:permissionFlags="hidden"/>
+                android:permissionFlags="removed"/>
 
     <!-- @hide We need to keep this around for backwards compatibility -->
     <permission android:name="com.android.browser.permission.READ_HISTORY_BOOKMARKS"
                 android:protectionLevel="normal"
-                android:permissionFlags="hidden"/>
+                android:permissionFlags="removed"/>
 
     <!-- @hide We need to keep this around for backwards compatibility -->
     <permission android:name="com.android.browser.permission.WRITE_HISTORY_BOOKMARKS"
                 android:protectionLevel="normal"
-                android:permissionFlags="hidden"/>
+                android:permissionFlags="removed"/>
 
     <!-- @hide We need to keep this around for backwards compatibility -->
     <permission android:name="android.permission.AUTHENTICATE_ACCOUNTS"
                 android:protectionLevel="normal"
-                android:permissionFlags="hidden"/>
+                android:permissionFlags="removed"/>
 
     <!-- @hide We need to keep this around for backwards compatibility -->
     <permission android:name="android.permission.MANAGE_ACCOUNTS"
                 android:protectionLevel="normal"
-                android:permissionFlags="hidden"/>
+                android:permissionFlags="removed"/>
 
     <!-- @hide We need to keep this around for backwards compatibility -->
     <permission android:name="android.permission.USE_CREDENTIALS"
                 android:protectionLevel="normal"
-                android:permissionFlags="hidden"/>
+                android:permissionFlags="removed"/>
 
     <!-- @hide We need to keep this around for backwards compatibility -->
     <permission android:name="android.permission.SUBSCRIBED_FEEDS_READ"
                 android:protectionLevel="normal"
-                android:permissionFlags="hidden"/>
+                android:permissionFlags="removed"/>
 
     <!-- @hide We need to keep this around for backwards compatibility -->
     <permission android:name="android.permission.SUBSCRIBED_FEEDS_WRITE"
                 android:protectionLevel="normal"
-                android:permissionFlags="hidden"/>
+                android:permissionFlags="removed"/>
 
     <!-- @hide We need to keep this around for backwards compatibility -->
     <permission android:name="android.permission.FLASHLIGHT"
                 android:protectionLevel="normal"
-                android:permissionFlags="hidden"/>
+                android:permissionFlags="removed"/>
 
     <!-- ====================================================================== -->
     <!-- INSTALL PERMISSIONS                                                    -->
@@ -1980,6 +2003,12 @@
          use by third party apps. @hide -->
     <permission android:name="android.permission.UPDATE_APP_OPS_STATS"
                 android:protectionLevel="signature|privileged|installer" />
+
+    <!-- Allows an application to update the user app op restrictions.
+         Not for use by third party apps.
+         @hide -->
+    <permission android:name="android.permission.MANAGE_APP_OPS_RESTRICTIONS"
+                android:protectionLevel="signature|installer" />
 
     <!-- @SystemApi Allows an application to open windows that are for use by parts
          of the system user interface.
