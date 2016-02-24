@@ -33,6 +33,7 @@
                 android:resizeableActivity="true"
                 android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout"
                 android:exported="true"
+                android:taskAffinity="nobody.but.NoRelaunchActivity"
         />
         <activity android:name=".SlowCreateActivity"
                 android:resizeableActivity="true"

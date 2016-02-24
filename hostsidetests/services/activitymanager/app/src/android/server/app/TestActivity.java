@@ -16,7 +16,12 @@
 
 package android.server.app;
 
-import android.app.Activity;
+public class TestActivity extends AbstractLifecycleLogActivity {
 
-public class TestActivity extends Activity {
+    private static final String TAG = TestActivity.class.getSimpleName();
+
+    @Override
+    protected String getTag() {
+        return TAG;
+    }
 }
