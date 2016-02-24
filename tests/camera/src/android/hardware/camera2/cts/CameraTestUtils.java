@@ -310,7 +310,11 @@ public class CameraTestUtils extends Assert {
         @Override
         public void onImageAvailable(ImageReader reader) {
             try {
-                mQueue.put(reader.acquireNextImage());
+                Image imge = reader.acquireNextImage();
+                if (imge == null) {
+                    return;
+                }
+                mQueue.put(imge);
                 if (mAsyncMode && mQueue.size() >= mMaxImages) {
                     Image img = mQueue.poll();
                     img.close();
