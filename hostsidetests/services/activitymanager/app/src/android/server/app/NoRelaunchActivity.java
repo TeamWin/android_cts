@@ -16,7 +16,12 @@
 
 package android.server.app;
 
-import android.app.Activity;
+public class NoRelaunchActivity extends AbstractLifecycleLogActivity {
 
-public class NoRelaunchActivity extends Activity {
+    private static final String TAG = NoRelaunchActivity.class.getSimpleName();
+
+    @Override
+    protected String getTag() {
+        return TAG;
+    }
 }
