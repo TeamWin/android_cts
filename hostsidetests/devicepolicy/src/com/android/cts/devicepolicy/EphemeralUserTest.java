@@ -24,8 +24,7 @@ public class EphemeralUserTest extends BaseDevicePolicyTest {
     @Override
     protected void setUp() throws Exception {
         super.setUp();
-        mHasFeature = getDevice().getApiLevel() >= 24 /* Build.VERSION_CODES.N */
-                && canCreateAdditionalUsers(1);
+        mHasFeature = canCreateAdditionalUsers(1);
     }
 
     @Override
@@ -36,7 +35,7 @@ public class EphemeralUserTest extends BaseDevicePolicyTest {
 
     /** The user should have the ephemeral flag set if it was created as ephemeral. */
     public void testCreateEphemeralUser() throws Exception {
-        if (!mHasFeature) {
+        if (!mHasFeature || !hasUserSplit()) {
             return;
         }
         int userId = createUser(FLAG_EPHEMERAL);
@@ -73,7 +72,7 @@ public class EphemeralUserTest extends BaseDevicePolicyTest {
      * Ephemeral user should be automatically removed after it is stopped.
      */
     public void testRemoveEphemeralOnStop() throws Exception {
-        if (!mHasFeature) {
+        if (!mHasFeature || !hasUserSplit()) {
             return;
         }
         int userId = createUser(FLAG_EPHEMERAL);
@@ -88,7 +87,7 @@ public class EphemeralUserTest extends BaseDevicePolicyTest {
      * and not ephemeral when the feature is not set.
      */
     public void testEphemeralGuestFeature() throws Exception {
-        if (!mHasFeature) {
+        if (!mHasFeature || !hasUserSplit()) {
             return;
         }
         // Create a guest user.
@@ -102,6 +101,20 @@ public class EphemeralUserTest extends BaseDevicePolicyTest {
             // The guest should not be ephemeral.
             assertTrue("ephemeral flag must not be set for guest", 0 == (flags & FLAG_EPHEMERAL));
         }
+    }
+
+    /**
+     * Test that creating an ephemeral user fails on systems without the split system user.
+     */
+    public void testCreateEphemeralWithoutUserSplitFails() throws Exception {
+        if (!mHasFeature || hasUserSplit()) {
+            return;
+        }
+        String command ="pm create-user --ephemeral " + "TestUser_" + System.currentTimeMillis();
+        String commandOutput = getDevice().executeShellCommand(command);
+
+        assertEquals("Creating the epehemeral user should fail.",
+                "Error: couldn't create User.", commandOutput.trim());
     }
 
     private boolean getGuestUsersEphemeral() throws Exception {

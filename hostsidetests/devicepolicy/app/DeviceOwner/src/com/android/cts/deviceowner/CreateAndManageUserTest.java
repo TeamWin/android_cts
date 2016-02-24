@@ -50,4 +50,31 @@ public class CreateAndManageUserTest extends BaseDeviceOwnerTest {
                 makeEphemeralFlag);
     }
 
+    /**
+     * Test creating an ephemeral user using the {@link DevicePolicyManager#createAndManageUser}
+     * method fails on systems without the split system user.
+     *
+     * <p>To be used by host-side test on systems without the split system user.
+     */
+    public void testCreateAndManageEphemeralUserFails() throws Exception {
+        String testUserName = "TestUser_" + System.currentTimeMillis();
+
+        // Use reflection to get the value of the hidden flag to make the new user ephemeral.
+        Field field = DevicePolicyManager.class.getField("MAKE_USER_EPHEMERAL");
+        int makeEphemeralFlag = field.getInt(null);
+
+        try {
+            mDevicePolicyManager.createAndManageUser(
+                    getWho(),
+                    testUserName,
+                    getWho(),
+                    null,
+                    makeEphemeralFlag);
+        } catch (IllegalArgumentException e) {
+            // Success, the expected exception was thrown.
+            return;
+        }
+        fail("createAndManageUser should have thrown IllegalArgumentException");
+    }
+
 }
