@@ -64,8 +64,9 @@ public class TvContractTest extends AndroidTestCase {
         TvContract.Programs._ID,
         TvContract.Programs.COLUMN_CHANNEL_ID,
         TvContract.Programs.COLUMN_TITLE,
-        TvContract.Programs.COLUMN_SEASON_NUMBER,
-        TvContract.Programs.COLUMN_EPISODE_NUMBER,
+        TvContract.Programs.COLUMN_SEASON_DISPLAY_NUMBER,
+        TvContract.Programs.COLUMN_SEASON_TITLE,
+        TvContract.Programs.COLUMN_EPISODE_DISPLAY_NUMBER,
         TvContract.Programs.COLUMN_EPISODE_TITLE,
         TvContract.Programs.COLUMN_START_TIME_UTC_MILLIS,
         TvContract.Programs.COLUMN_END_TIME_UTC_MILLIS,
@@ -154,7 +155,10 @@ public class TvContractTest extends AndroidTestCase {
     private static ContentValues createDummyProgramValues(long channelId) {
         ContentValues values = new ContentValues();
         values.put(TvContract.Programs.COLUMN_CHANNEL_ID, channelId);
-        values.put(TvContract.Programs.COLUMN_EPISODE_TITLE, "Title");
+        values.put(TvContract.Programs.COLUMN_EPISODE_DISPLAY_NUMBER , "1A");
+        values.put(TvContract.Programs.COLUMN_EPISODE_TITLE, "episode_title");
+        values.put(TvContract.Programs.COLUMN_SEASON_DISPLAY_NUMBER , "2B");
+        values.put(TvContract.Programs.COLUMN_SEASON_TITLE, "season_title");
         values.put(TvContract.Programs.COLUMN_CANONICAL_GENRE, TvContract.Programs.Genres.encode(
                 TvContract.Programs.Genres.MOVIES, TvContract.Programs.Genres.DRAMA));
         TvContentRating rating = TvContentRating.createRating("android.media.tv", "US_TVPG",
@@ -164,11 +168,13 @@ public class TvContractTest extends AndroidTestCase {
         return values;
     }
 
-    private static ContentValues createDummyRecordedProgramValues(long channelId) {
+    private static ContentValues createDummyRecordedProgramValues(String inputId, long channelId) {
         ContentValues values = new ContentValues();
+        values.put(TvContract.RecordedPrograms.COLUMN_INPUT_ID, inputId);
         values.put(TvContract.RecordedPrograms.COLUMN_CHANNEL_ID, channelId);
-        values.put(TvContract.RecordedPrograms.COLUMN_SEASON_NUMBER, 6);
-        values.put(TvContract.RecordedPrograms.COLUMN_EPISODE_NUMBER, 3);
+        values.put(TvContract.RecordedPrograms.COLUMN_SEASON_DISPLAY_NUMBER , "3B");
+        values.put(TvContract.RecordedPrograms.COLUMN_SEASON_TITLE, "season_title");
+        values.put(TvContract.RecordedPrograms.COLUMN_EPISODE_DISPLAY_NUMBER , "2A");
         values.put(TvContract.RecordedPrograms.COLUMN_EPISODE_TITLE, "episode_title");
         values.put(TvContract.RecordedPrograms.COLUMN_START_TIME_UTC_MILLIS, 1000);
         values.put(TvContract.RecordedPrograms.COLUMN_END_TIME_UTC_MILLIS, 2000);
@@ -301,8 +307,11 @@ public class TvContractTest extends AndroidTestCase {
             assertEquals(programId, cursor.getLong(cursor.getColumnIndex(TvContract.Programs._ID)));
             verifyLongColumn(cursor, expectedValues, TvContract.Programs.COLUMN_CHANNEL_ID);
             verifyStringColumn(cursor, expectedValues, TvContract.Programs.COLUMN_TITLE);
-            verifyIntegerColumn(cursor, expectedValues, TvContract.Programs.COLUMN_SEASON_NUMBER);
-            verifyIntegerColumn(cursor, expectedValues, TvContract.Programs.COLUMN_EPISODE_NUMBER);
+            verifyStringColumn(cursor, expectedValues,
+                    TvContract.Programs.COLUMN_SEASON_DISPLAY_NUMBER);
+            verifyStringColumn(cursor, expectedValues, TvContract.Programs.COLUMN_SEASON_TITLE);
+            verifyStringColumn(cursor, expectedValues,
+                    TvContract.Programs.COLUMN_EPISODE_DISPLAY_NUMBER);
             verifyStringColumn(cursor, expectedValues, TvContract.Programs.COLUMN_EPISODE_TITLE);
             verifyLongColumn(cursor, expectedValues,
                     TvContract.Programs.COLUMN_START_TIME_UTC_MILLIS);
@@ -322,6 +331,21 @@ public class TvContractTest extends AndroidTestCase {
             verifyBlobColumn(cursor, expectedValues,
                     TvContract.Programs.COLUMN_INTERNAL_PROVIDER_DATA);
             verifyIntegerColumn(cursor, expectedValues, TvContract.Programs.COLUMN_VERSION_NUMBER);
+        }
+    }
+
+    private void verifyDeprecatedColumsInProgram(Uri programUri, ContentValues expectedValues) {
+        final String[] DEPRECATED_COLUMNS_PROJECTION = {
+            TvContract.Programs.COLUMN_SEASON_NUMBER,
+            TvContract.Programs.COLUMN_EPISODE_NUMBER,
+        };
+        try (Cursor cursor = mContentResolver.query(
+                programUri, DEPRECATED_COLUMNS_PROJECTION, null, null, null)) {
+            assertNotNull(cursor);
+            assertEquals(cursor.getCount(), 1);
+            assertTrue(cursor.moveToNext());
+            verifyIntegerColumn(cursor, expectedValues, TvContract.Programs.COLUMN_SEASON_NUMBER);
+            verifyIntegerColumn(cursor, expectedValues, TvContract.Programs.COLUMN_EPISODE_NUMBER);
         }
     }
 
@@ -389,6 +413,45 @@ public class TvContractTest extends AndroidTestCase {
         }
     }
 
+    public void verifyProgramsTableWithDeprecatedColumns(Uri programsUri, long channelId) {
+        if (!Utils.hasTvInputFramework(getContext())) {
+            return;
+        }
+        // Test: insert
+        ContentValues expected = createDummyProgramValues(channelId);
+        expected.put(TvContract.Programs.COLUMN_SEASON_DISPLAY_NUMBER, "3");
+        expected.put(TvContract.Programs.COLUMN_EPISODE_DISPLAY_NUMBER, "9");
+
+        ContentValues input = new ContentValues(expected);
+        input.remove(TvContract.Programs.COLUMN_SEASON_DISPLAY_NUMBER);
+        input.remove(TvContract.Programs.COLUMN_EPISODE_DISPLAY_NUMBER);
+        input.put(TvContract.Programs.COLUMN_SEASON_NUMBER, 3);
+        input.put(TvContract.Programs.COLUMN_EPISODE_NUMBER, 9);
+
+        Uri rowUri = mContentResolver.insert(programsUri, input);
+        long programId = ContentUris.parseId(rowUri);
+        Uri programUri = TvContract.buildProgramUri(programId);
+        verifyProgram(programUri, expected, programId);
+        verifyDeprecatedColumsInProgram(programUri, input);
+
+        // Test: update
+        expected.put(TvContract.Programs.COLUMN_SEASON_DISPLAY_NUMBER, "4");
+        expected.put(TvContract.Programs.COLUMN_EPISODE_DISPLAY_NUMBER, "10");
+        input.put(TvContract.Programs.COLUMN_SEASON_NUMBER, 4);
+        input.put(TvContract.Programs.COLUMN_EPISODE_NUMBER, 10);
+
+        mContentResolver.update(programUri, input, null, null);
+        verifyProgram(programUri, expected, programId);
+        verifyDeprecatedColumsInProgram(programUri, input);
+
+        // Test: delete
+        mContentResolver.delete(programsUri, null, null);
+        try (Cursor cursor = mContentResolver.query(
+                programsUri, PROGRAMS_PROJECTION, null, null, null)) {
+            assertEquals(0, cursor.getCount());
+        }
+    }
+
     public void testProgramsTable() throws Exception {
         if (!Utils.hasTvInputFramework(getContext())) {
             return;
@@ -400,6 +463,10 @@ public class TvContractTest extends AndroidTestCase {
 
         verifyProgramsTable(TvContract.buildProgramsUriForChannel(channelId), channelId);
         verifyProgramsTable(TvContract.buildProgramsUriForChannel(channelUri), channelId);
+        verifyProgramsTableWithDeprecatedColumns(TvContract.buildProgramsUriForChannel(channelId),
+                channelId);
+        verifyProgramsTableWithDeprecatedColumns(TvContract.buildProgramsUriForChannel(channelUri),
+                channelId);
     }
 
     private void verifyOverlap(long startMillis, long endMillis, int expectedCount,
@@ -463,8 +530,11 @@ public class TvContractTest extends AndroidTestCase {
             assertEquals(recordedProgramId, cursor.getLong(cursor.getColumnIndex(
                     RecordedPrograms._ID)));
             verifyLongColumn(cursor, expectedValues, RecordedPrograms.COLUMN_CHANNEL_ID);
-            verifyIntegerColumn(cursor, expectedValues, RecordedPrograms.COLUMN_SEASON_NUMBER);
-            verifyIntegerColumn(cursor, expectedValues, RecordedPrograms.COLUMN_EPISODE_NUMBER);
+            verifyStringColumn(cursor, expectedValues,
+                    RecordedPrograms.COLUMN_SEASON_DISPLAY_NUMBER);
+            verifyStringColumn(cursor, expectedValues, RecordedPrograms.COLUMN_SEASON_TITLE);
+            verifyStringColumn(cursor, expectedValues,
+                    RecordedPrograms.COLUMN_EPISODE_DISPLAY_NUMBER);
             verifyStringColumn(cursor, expectedValues, RecordedPrograms.COLUMN_EPISODE_TITLE);
             verifyLongColumn(cursor, expectedValues, RecordedPrograms.COLUMN_START_TIME_UTC_MILLIS);
             verifyLongColumn(cursor, expectedValues, RecordedPrograms.COLUMN_END_TIME_UTC_MILLIS);
@@ -502,7 +572,7 @@ public class TvContractTest extends AndroidTestCase {
 
     private void verifyRecordedProgramsTable(Uri recordedProgramsUri, long channelId) {
         // Test: insert
-        ContentValues values = createDummyRecordedProgramValues(channelId);
+        ContentValues values = createDummyRecordedProgramValues(mInputId, channelId);
 
         Uri rowUri = mContentResolver.insert(recordedProgramsUri, values);
         long recordedProgramId = ContentUris.parseId(rowUri);
