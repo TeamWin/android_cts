@@ -142,7 +142,6 @@ CTS_TEST_CASE_LIST := \
 # Test packages that require an associated test package XML.
 cts_test_packages := \
     CtsIcuTestCases \
-    CtsAbiOverrideTestCases \
     CtsAccelerationTestCases \
     CtsAccountManagerTestCases \
     CtsAccessibilityServiceTestCases \
@@ -248,6 +247,7 @@ CTS_COVERAGE_TEST_CASE_LIST := \
 # Host side only tests
 cts_host_libraries := \
     CtsAadbHostTestCases \
+    CtsAbiOverrideHostTestCases \
     CtsAppSecurityHostTestCases \
     CtsAppUsageHostTestCases \
     CtsAtraceHostTestCases \
