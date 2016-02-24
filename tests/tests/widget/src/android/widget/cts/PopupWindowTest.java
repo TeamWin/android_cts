@@ -494,7 +494,7 @@ public class PopupWindowTest extends
 
         TransitionListener exitListener = mock(TransitionListener.class);
         Transition exitTransition = new BaseTransition();
-        enterTransition.addListener(enterListener);
+        exitTransition.addListener(exitListener);
 
         OnDismissListener dismissListener = mock(OnDismissListener.class);
 
@@ -513,7 +513,7 @@ public class PopupWindowTest extends
             }
         });
         mInstrumentation.waitForIdleSync();
-        verify(enterListener, times(1)).onTransitionStart(enterTransition);
+        verify(enterListener, times(1)).onTransitionStart(any(Transition.class));
         verify(exitListener, never()).onTransitionStart(any(Transition.class));
         verify(dismissListener, never()).onDismiss();
 
@@ -523,12 +523,12 @@ public class PopupWindowTest extends
             }
         });
         mInstrumentation.waitForIdleSync();
-        verify(enterListener, times(1)).onTransitionStart(enterTransition);
-        verify(exitListener, times(1)).onTransitionStart(exitTransition);
+        verify(enterListener, times(1)).onTransitionStart(any(Transition.class));
+        verify(exitListener, times(1)).onTransitionStart(any(Transition.class));
         verify(dismissListener, times(1)).onDismiss();
 
         InOrder inOrder = inOrder(exitListener, dismissListener);
-        inOrder.verify(exitListener).onTransitionEnd(exitTransition);
+        inOrder.verify(exitListener).onTransitionEnd(any(Transition.class));
         inOrder.verify(dismissListener).onDismiss();
     }
 
@@ -860,7 +860,7 @@ public class PopupWindowTest extends
     private View createPopupContent() {
         View popupView = new View(mActivity);
         popupView.setLayoutParams(new ViewGroup.LayoutParams(50, 50));
-        popupView.setBackgroundColor(Color.WHITE);
+        popupView.setBackgroundColor(Color.MAGENTA);
 
         return popupView;
     }
