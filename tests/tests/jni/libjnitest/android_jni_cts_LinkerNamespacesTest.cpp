@@ -61,6 +61,7 @@ static std::unordered_set<std::string> kPublicLibraries = {
     "libOpenSLES.so",
     "libRS.so",
     "libstdc++.so",
+    "libvulkan.so",
     "libwebviewchromium_plat_support.so",
     "libz.so"
   };
