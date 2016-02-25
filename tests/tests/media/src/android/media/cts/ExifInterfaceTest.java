@@ -34,7 +34,7 @@ public class ExifInterfaceTest extends AndroidTestCase {
     private static final String TAG = ExifInterface.class.getSimpleName();
     private static final boolean VERBOSE = false;  // lots of logging
 
-    private static final double DIFFERENCE_TOLERANCE = .0001;
+    private static final double DIFFERENCE_TOLERANCE = .001;
     private static final int BUFFER_SIZE = 32768;
 
     // List of files.
