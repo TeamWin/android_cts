@@ -21,7 +21,6 @@ import static com.android.cts.deviceowner.FakeKeys.FAKE_RSA_1;
 import android.app.Activity;
 import android.app.admin.DevicePolicyManager;
 import android.net.Uri;
-import android.os.Handler;
 import android.security.KeyChain;
 import android.security.KeyChainAliasCallback;
 import android.security.KeyChainException;
@@ -44,10 +43,9 @@ import java.util.concurrent.TimeUnit;
 import android.content.ComponentName;
 import android.content.Context;
 
-public class KeyManagementTest extends
-        ActivityInstrumentationTestCase2<KeyManagementActivity> {
+public class KeyManagementTest extends ActivityInstrumentationTestCase2<KeyManagementActivity> {
 
-    private static final int KEYCHAIN_TIMEOUT_MS = 6 * 60 * 1000;
+    private static final long KEYCHAIN_TIMEOUT_MINS = 6;
     private DevicePolicyManager mDevicePolicyManager;
 
     public KeyManagementTest() {
@@ -77,27 +75,81 @@ public class KeyManagementTest extends
         super.tearDown();
     }
 
-    public void testCanInstallAndRemoveValidRsaKeypair()
-            throws CertificateException, NoSuchAlgorithmException, InvalidKeySpecException,
-                    KeyChainException, InterruptedException, UnsupportedEncodingException {
+    public void testCanInstallAndRemoveValidRsaKeypair() throws Exception {
         final String alias = "com.android.test.valid-rsa-key-1";
         final PrivateKey privKey = getPrivateKey(FAKE_RSA_1.privateKey , "RSA");
         final Certificate cert = getCertificate(FAKE_RSA_1.caCertificate);
 
-        // Install key
+        // Install keypair.
         assertTrue(mDevicePolicyManager.installKeyPair(getWho(), privKey, cert, alias));
+        try {
+            // Request and retrieve using the alias.
+            assertGranted(alias, false);
+            assertEquals(alias, new KeyChainAliasFuture(alias).get());
+            assertGranted(alias, true);
 
-        // Request and retrieve by alias
-        assertEquals(alias, new KeyChainAliasFuture(alias).get());
-        assertEquals(KeyChain.getPrivateKey(getActivity(), alias).getAlgorithm(), "RSA");
-
-        // Delete again
-        assertTrue(mDevicePolicyManager.removeKeyPair(getWho(), alias));
-        assertNull(KeyChain.getPrivateKey(getActivity(), alias));
+            // Verify key is at least something like the one we put in.
+            assertEquals(KeyChain.getPrivateKey(getActivity(), alias).getAlgorithm(), "RSA");
+        } finally {
+            // Delete regardless of whether the test succeeded.
+            assertTrue(mDevicePolicyManager.removeKeyPair(getWho(), alias));
+        }
+        // Verify alias is actually deleted.
+        assertGranted(alias, false);
     }
 
-    public void testNullKeyParamsFailPredictably()
-            throws CertificateException, NoSuchAlgorithmException, InvalidKeySpecException {
+    public void testCanInstallWithAutomaticAccess() throws Exception {
+        final String grant = "com.android.test.autogrant-key-1";
+        final String withhold = "com.android.test.nongrant-key-1";
+        final PrivateKey privKey = getPrivateKey(FAKE_RSA_1.privateKey , "RSA");
+        final Certificate cert = getCertificate(FAKE_RSA_1.caCertificate);
+
+        // Install keypairs.
+        assertTrue(mDevicePolicyManager.installKeyPair(getWho(), privKey, cert, grant, true));
+        assertTrue(mDevicePolicyManager.installKeyPair(getWho(), privKey, cert, withhold, false));
+        try {
+            // Verify only the requested key was actually granted.
+            assertGranted(grant, true);
+            assertGranted(withhold, false);
+
+            // Verify the granted key is actually obtainable in PrivateKey form.
+            assertEquals(KeyChain.getPrivateKey(getActivity(), grant).getAlgorithm(), "RSA");
+        } finally {
+            // Delete both keypairs.
+            assertTrue(mDevicePolicyManager.removeKeyPair(getWho(), grant));
+            assertTrue(mDevicePolicyManager.removeKeyPair(getWho(), withhold));
+        }
+        // Verify they're actually gone.
+        assertGranted(grant, false);
+        assertGranted(withhold, false);
+    }
+
+    public void testGrantsDoNotPersistBetweenInstallations() throws Exception {
+        final String alias = "com.android.test.persistent-key-1";
+        final PrivateKey privKey = getPrivateKey(FAKE_RSA_1.privateKey , "RSA");
+        final Certificate cert = getCertificate(FAKE_RSA_1.caCertificate);
+
+        // Install keypair.
+        assertTrue(mDevicePolicyManager.installKeyPair(getWho(), privKey, cert, alias, true));
+        try {
+            assertGranted(alias, true);
+        } finally {
+            // Delete and verify.
+            assertTrue(mDevicePolicyManager.removeKeyPair(getWho(), alias));
+        }
+        assertGranted(alias, false);
+
+        // Install again.
+        assertTrue(mDevicePolicyManager.installKeyPair(getWho(), privKey, cert, alias, false));
+        try {
+            assertGranted(alias, false);
+        } finally {
+            // Delete.
+            assertTrue(mDevicePolicyManager.removeKeyPair(getWho(), alias));
+        }
+    }
+
+    public void testNullKeyParamsFailPredictably() throws Exception {
         final String alias = "com.android.test.null-key-1";
         final PrivateKey privKey = getPrivateKey(FAKE_RSA_1.privateKey, "RSA");
         final Certificate cert = getCertificate(FAKE_RSA_1.caCertificate);
@@ -113,8 +165,7 @@ public class KeyManagementTest extends
         }
     }
 
-    public void testNullAdminComponentIsDenied()
-            throws CertificateException, NoSuchAlgorithmException, InvalidKeySpecException {
+    public void testNullAdminComponentIsDenied() throws Exception {
         final String alias = "com.android.test.null-admin-1";
         final PrivateKey privKey = getPrivateKey(FAKE_RSA_1.privateKey, "RSA");
         final Certificate cert = getCertificate(FAKE_RSA_1.caCertificate);
@@ -123,6 +174,15 @@ public class KeyManagementTest extends
             fail("Exception should have been thrown for null ComponentName");
         } catch (SecurityException expected) {
         }
+    }
+
+    private void assertGranted(String alias, boolean expected) throws InterruptedException {
+        boolean granted = false;
+        try {
+            granted = (KeyChain.getPrivateKey(getActivity(), alias) != null);
+        } catch (KeyChainException e) {
+        }
+        assertEquals("Grant for alias: \"" + alias + "\"", expected, granted);
     }
 
     private static PrivateKey getPrivateKey(final byte[] key, String type)
@@ -157,7 +217,7 @@ public class KeyManagementTest extends
         }
 
         public String get() throws InterruptedException {
-            assertTrue("Chooser timeout", mLatch.await(KEYCHAIN_TIMEOUT_MS, TimeUnit.MILLISECONDS));
+            assertTrue("Chooser timeout", mLatch.await(KEYCHAIN_TIMEOUT_MINS, TimeUnit.MINUTES));
             return mChosenAlias;
         }
     };
