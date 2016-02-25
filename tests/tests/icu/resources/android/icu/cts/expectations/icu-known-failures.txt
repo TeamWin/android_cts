@@ -1,0 +1,45 @@
+/*
+ * This file contains expectations for tests that are known to fail.
+ */
+[
+{
+  description: "Fails when running the tests from ant in external/icu/icu4j",
+  name: "com.ibm.icu.dev.test.format.NumberFormatTest#TestDataDrivenICU",
+  bug: "27310195"
+},
+{
+  description: "Class cannot be instantiated, cannot find resources com/ibm/icu/dev/test/serializable/data",
+  name: "com.ibm.icu.dev.test.serializable.CompatibilityTest",
+  bug: "27310873"
+},
+{
+  description: "Broken and not yet triaged",
+  names: [
+    "com.ibm.icu.dev.test.bidi.TestCompatibility#testCompatibility",
+    "com.ibm.icu.dev.test.calendar.ChineseTest#TestCoverage",
+    "com.ibm.icu.dev.test.calendar.ChineseTest#TestInitWithCurrentTime",
+    "com.ibm.icu.dev.test.calendar.IBMCalendarTest#TestAddRollEra0AndEraBounds",
+    "com.ibm.icu.dev.test.duration.ICUDurationTest#TestBasics",
+    "com.ibm.icu.dev.test.format.DataDrivenFormatTest#run-everything",
+    "com.ibm.icu.dev.test.format.DateFormatRegressionTest#Test4073003",
+    "com.ibm.icu.dev.test.format.DateFormatRegressionTest#Test4151706",
+    "com.ibm.icu.dev.test.format.DateFormatRegressionTest#Test4182066",
+    "com.ibm.icu.dev.test.format.DateFormatTest#TestBadInput135",
+    "com.ibm.icu.dev.test.format.DateFormatTest#TestDotAndAtLeniency",
+    "com.ibm.icu.dev.test.format.DateFormatTest#TestGenericTime",
+    "com.ibm.icu.dev.test.format.DateFormatTest#TestPartialParse994",
+    "com.ibm.icu.dev.test.format.DateFormatTest#TestQuarters",
+    "com.ibm.icu.dev.test.format.DateFormatTest#TestSpaceParsing",
+    "com.ibm.icu.dev.test.format.DateFormatTest#TestTwoDigitYear",
+    "com.ibm.icu.dev.test.format.DateFormatTest#TestWhiteSpaceParsing",
+    "com.ibm.icu.dev.test.format.NumberFormatTest#TestDataDrivenJDK",
+    "com.ibm.icu.dev.test.format.NumberFormatTest#TestNonpositiveMultiplier",
+    "com.ibm.icu.dev.test.format.PluralRulesTest#testOverUnderflow",
+    "com.ibm.icu.dev.test.timezone.TimeZoneBoundaryTest#TestStepwise",
+    "com.ibm.icu.dev.test.timezone.TimeZoneTest#TestObservesDaylightTime",
+    "com.ibm.icu.dev.test.translit.TransliteratorTest#TestSourceTargetSet2",
+    "com.ibm.icu.dev.test.translit.TransliteratorTest#TestSourceTargetSetFilter",
+    "com.ibm.icu.dev.test.util.CurrencyTest#TestGetKeywordValues"
+  ]
+}
+]

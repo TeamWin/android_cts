@@ -26,14 +26,22 @@ LOCAL_DEX_PREOPT := false
 LOCAL_PROGUARD_ENABLED := disabled
 
 LOCAL_SRC_FILES := $(call all-java-files-under, src)
+LOCAL_JAVA_RESOURCE_DIRS := resources
 
 # The aim of this package is to run tests against the default packaging of ICU as a standalone
 # java library, and not as the implementation in use by the current android system. For this
 # reason, all the required ICU resources are included into the APK by the following rules.
 # icu4j contains ICU's implementation classes, icu4j-tests contains the test classes,
 # and icudata/icutzdata contain data files and timezone data files respectively.
-LOCAL_STATIC_JAVA_LIBRARIES := compatibility-device-util android-support-test icu4j icu4j-tests \
-	icu4j-icudata icu4j-icutzdata icu4j-testdata
+LOCAL_STATIC_JAVA_LIBRARIES := \
+	compatibility-device-util \
+	android-support-test \
+	vogarexpect \
+	icu4j \
+	icu4j-tests \
+	icu4j-icudata \
+	icu4j-icutzdata \
+	icu4j-testdata
 
 # Tag this module as a cts_v2 test artifact
 LOCAL_COMPATIBILITY_SUITE := cts_v2
@@ -44,23 +52,38 @@ LOCAL_SDK_VERSION := current
 
 include $(BUILD_CTS_SUPPORT_PACKAGE)
 
-# The CTS framework has it's own logic for generating XML files based on scanning the source
-# for test methods and classes. Since the classes that we are testing are not actually in this
-# package we must provide an alternative. Here we define a specially crafted XML file which
-# conforms to what CTS and particularly, the cts-tradefed tool understands. This file contains
-# lists of classes in ICU4J that we know are used in libcore and should be tested as part of CTS.
-# The following rule uses the Android CoPy (ACP) tool to copy this file to where it is expected.
+# Version 1 of the CTS framework has it's own logic for generating XML files based on scanning the
+# source for test methods and classes written using JUnit 3 (doesn't work for JUnit 4 @RunWith
+# tests). Since the ICU tests are not written using JUnit (although they are run with a custom JUnit
+# RunnerBuilder) this provides an alternative. This generates an XML representation based off a
+# list of the tests that are run by version 2 of the CTS framework (which doesn't require the list
+# in advance). The tools/update-test-list.sh script will take a host_log_[0-9]+.zip created by
+# CTSv1 and extract the list of tests run and update the test-list.txt file.
 
-ifeq ($(TARGET_ARCH),arm64)
-	LOCAL_ARCH := arm
-else ifeq ($(TARGET_ARCH),mips64)
-	LOCAL_ARCH := mips
-else ifeq ($(TARGET_ARCH),x86_64)
-	LOCAL_ARCH := x86
-else
-	LOCAL_ARCH := $(TARGET_ARCH)
-endif
-
+CTS_ICU_TEST_LIST_PATH := $(LOCAL_PATH)/test-list.txt
 cts_package_xml := $(CTS_TESTCASES_OUT)/CtsIcuTestCases.xml
-$(cts_package_xml): $(call intermediates-dir-for,APPS,$(LOCAL_PACKAGE_NAME))/package.apk | $(ACP)
-	$(ACP) -fp cts/tests/tests/icu/CtsIcuTestCases_$(LOCAL_ARCH).xml $@
+$(cts_package_xml): $(HOST_OUT_JAVA_LIBRARIES)/cts-icu-tools.jar $(CTS_ICU_TEST_LIST_PATH) \
+	$(call intermediates-dir-for,APPS,$(LOCAL_PACKAGE_NAME))/package.apk
+	java -Xmx256M -classpath $(HOST_OUT_JAVA_LIBRARIES)/cts-icu-tools.jar \
+		android.icu.cts.tools.GenerateTestCaseXML \
+		$(CTS_ICU_TEST_LIST_PATH) \
+		$(TARGET_ARCH) \
+		$@
+
+# build cts-icu-tools tool
+# ============================================================
+include $(CLEAR_VARS)
+
+# Don't include this package in any target
+LOCAL_MODULE_TAGS := optional
+
+LOCAL_SRC_FILES := $(call all-java-files-under, tools)
+LOCAL_JAVA_RESOURCE_DIRS := resources
+
+LOCAL_STATIC_JAVA_LIBRARIES := \
+	descGen \
+	jsr305lib
+
+LOCAL_MODULE := cts-icu-tools
+
+include $(BUILD_HOST_JAVA_LIBRARY)
