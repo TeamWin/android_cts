@@ -351,6 +351,8 @@ public class LinkifyTest extends AndroidTestCase {
         assertFalse(Linkify.addLinks((Spannable) null, 0));
     }
 
+    // WEB_URLS Related Tests
+
     @SmallTest
     public void testAddLinks_doesNotAddLinksForUrlWithoutProtocolAndWithoutKnownTld()
             throws Exception {
@@ -532,30 +534,257 @@ public class LinkifyTest extends AndroidTestCase {
                 url);
     }
 
+    // EMAIL_ADDRESSES Related Tests
+
+    public void testAddLinks_email_matchesShortValidEmail() throws Exception {
+        String email = "a@a.co";
+        assertAddLinksWithEmailSucceeds("Should match email: " + email, email);
+    }
+
+    public void testAddLinks_email_matchesRegularEmail() throws Exception {
+        String email = "email@android.com";
+        assertAddLinksWithEmailSucceeds("Should match email: " + email, email);
+    }
+
+    public void testAddLinks_email_matchesEmailWithMultipleSubdomains() throws Exception {
+        String email = "email@e.somelongdomainnameforandroid.abc.uk";
+        assertAddLinksWithEmailSucceeds("Should match email: " + email, email);
+    }
+
+    public void testAddLinks_email_matchesLocalPartWithDot() throws Exception {
+        String email = "e.mail@android.com";
+        assertAddLinksWithEmailSucceeds("Should match email: " + email, email);
+    }
+
+    public void testAddLinks_email_matchesLocalPartWithPlus() throws Exception {
+        String email = "e+mail@android.com";
+        assertAddLinksWithEmailSucceeds("Should match email: " + email, email);
+    }
+
+    public void testAddLinks_email_matchesLocalPartWithUnderscore() throws Exception {
+        String email = "e_mail@android.com";
+        assertAddLinksWithEmailSucceeds("Should match email: " + email, email);
+    }
+
+    public void testAddLinks_email_matchesLocalPartWithDash() throws Exception {
+        String email = "e-mail@android.com";
+        assertAddLinksWithEmailSucceeds("Should match email: " + email, email);
+    }
+
+    public void testAddLinks_email_matchesLocalPartWithApostrophe() throws Exception {
+        String email = "e'mail@android.com";
+        assertAddLinksWithEmailSucceeds("Should match email: " + email, email);
+    }
+
+    public void testAddLinks_email_matchesLocalPartWithDigits() throws Exception {
+        String email = "123@android.com";
+        assertAddLinksWithEmailSucceeds("Should match email: " + email, email);
+    }
+
+    public void testAddLinks_email_matchesUnicodeLocalPart() throws Exception {
+        String email = "\uD604\uAE08\uC601\uC218\uC99D@android.kr";
+        assertAddLinksWithEmailSucceeds("Should match email: " + email, email);
+    }
+
+    public void testAddLinks_email_matchesLocalPartWithEmoji() throws Exception {
+        String email = "smiley\u263A@android.com";
+        assertAddLinksWithEmailSucceeds("Should match email: " + email, email);
+    }
+
+    public void testAddLinks_email_matchesLocalPartWithSurrogatePairs()
+            throws Exception {
+        String email = "a\uD83C\uDF38a@android.com";
+        assertAddLinksWithEmailSucceeds("Should match email: " + email, email);
+    }
+
+    public void testAddLinks_email_matchesDomainWithDash() throws Exception {
+        String email = "email@an-droid.com";
+        assertAddLinksWithEmailSucceeds("Should match email: " + email, email);
+    }
+
+    public void testAddLinks_email_matchesUnicodeDomain() throws Exception {
+        String email = "email@\uD604\uAE08\uC601\uC218\uC99D.kr";
+        assertAddLinksWithEmailSucceeds("Should match email: " + email, email);
+    }
+
+    public void testAddLinks_email_matchesUnicodeLocalPartAndDomain()
+            throws Exception {
+        String email = "\uD604\uAE08\uC601\uC218\uC99D@\uD604\uAE08\uC601\uC218\uC99D.kr";
+        assertAddLinksWithEmailSucceeds("Should match email: " + email, email);
+    }
+
+    public void testAddLinks_email_matchesDomainWithEmoji() throws Exception {
+        String email = "smiley@\u263Aandroid.com";
+        assertAddLinksWithEmailSucceeds("Should match email: " + email, email);
+    }
+
+    public void testAddLinks_email_matchesDomainWithSurrogatePairs()
+            throws Exception {
+        String email = "email@\uD83C\uDF38android.com";
+        assertAddLinksWithEmailSucceeds("Should match email: " + email, email);
+    }
+
+    public void testAddLinks_email_matchesLocalPartAndDomainWithSurrogatePairs()
+            throws Exception {
+        String email = "a\uD83C\uDF38a@\uD83C\uDF38android.com";
+        assertAddLinksWithEmailSucceeds("Should match email: " + email, email);
+    }
+
+    public void testAddLinks_partiallyMatchesEmailEndingWithDot() throws Exception {
+        String email = "email@android.co.uk.";
+        assertAddLinksWithEmailPartiallyMatches("Should partially match email ending with dot",
+                "mailto:email@android.co.uk", email);
+    }
+
+    public void testAddLinks_email_partiallyMatchesLocalPartStartingWithDot()
+            throws Exception {
+        String email = ".email@android.com";
+        assertAddLinksWithEmailPartiallyMatches("Should partially match email starting " +
+                "with dot", "mailto:email@android.com", email);
+    }
+
+    public void testAddLinks_email_doesNotMatchStringWithoutAtSign() throws Exception {
+        String email = "android.com";
+        assertAddLinksWithEmailFails("Should not match email: " + email, email);
+    }
+
+    public void testAddLinks_email_doesNotMatchPlainString() throws Exception {
+        String email = "email";
+        assertAddLinksWithEmailFails("Should not match email: " + email, email);
+    }
+
+    public void testAddLinks_email_doesNotMatchEmailWithoutTld() throws Exception {
+        String email = "email@android";
+        assertAddLinksWithEmailFails("Should not match email: " + email, email);
+    }
+
+    public void testAddLinks_email_doesNotMatchLocalPartEndingWithDot()
+            throws Exception {
+        String email = "email.@android.com";
+        assertAddLinksWithEmailFails("Should not match email: " + email, email);
+    }
+
+    public void testAddLinks_email_doesNotMatchDomainStartingWithDash()
+            throws Exception {
+        String email = "email@-android.com";
+        assertAddLinksWithEmailFails("Should not match email: " + email, email);
+    }
+
+    public void testAddLinks_email_doesNotMatchDomainWithConsecutiveDots()
+            throws Exception {
+        String email = "email@android..com";
+        assertAddLinksWithEmailFails("Should not match email: " + email, email);
+    }
+
+    public void testAddLinks_email_doesNotMatchEmailWithIp() throws Exception {
+        String email = "email@127.0.0.1";
+        assertAddLinksWithEmailFails("Should not match email: " + email, email);
+    }
+
+    public void testAddLinks_email_doesNotMatchEmailWithInvalidTld()
+            throws Exception {
+        String email = "email@android.c";
+        assertAddLinksWithEmailFails("Should not match email: " + email, email);
+    }
+
+    public void testAddLinks_email_matchesLocalPartUpTo64Chars() throws Exception {
+        String localPart = "";
+        for (int i = 0; i < 64; i++) {
+            localPart += "a";
+        }
+        String email = localPart + "@android.com";
+        assertAddLinksWithEmailSucceeds("Should match email local part of length: " +
+                localPart.length(), email);
+
+        email = localPart + "a@android.com";
+        assertAddLinksWithEmailFails("Should not match email local part of length:" +
+                localPart.length(), email);
+    }
+
+    public void testAddLinks_email_matchesSubdomainUpTo63Chars() throws Exception {
+        String subdomain = "";
+        for (int i = 0; i < 63; i++) {
+            subdomain += "a";
+        }
+        String email = "email@" + subdomain + ".com";
+
+        assertAddLinksWithEmailSucceeds("Should match email subdomain of length: " +
+                subdomain.length(), email);
+
+        subdomain += "a";
+        email = "email@" + subdomain + ".com";
+
+        assertAddLinksWithEmailFails("Should not match email subdomain of length:" +
+                subdomain.length(), email);
+    }
+
+    public void testAddLinks_email_matchesDomainUpTo255Chars() throws Exception {
+        String domain = "";
+        while (domain.length() <= 250) {
+            domain += "d.";
+        }
+        domain += "com";
+        assertEquals(255, domain.length());
+        String email = "a@" + domain;
+        assertAddLinksWithEmailSucceeds("Should match email domain of length: " +
+                domain.length(), email);
+
+        email = email + "m";
+        assertAddLinksWithEmailFails("Should not match email domain of length:" +
+                domain.length(), email);
+    }
+
+    // Utility functions
     private static void assertAddLinksWithWebUrlSucceeds(String msg, String url) {
-        String str = "start " + url + " end";
-        Spannable spannable = new SpannableString(str);
-
-        boolean linksAdded = Linkify.addLinks(spannable, Linkify.WEB_URLS);
-        URLSpan[] spans = spannable.getSpans(0, str.length(), URLSpan.class);
-
-        assertTrue(msg, linksAdded);
-        assertEquals("Span should start from the beginning of the URL", "start ".length(),
-                spannable.getSpanStart(spans[0]));
-        assertEquals("Span should end at the end of the URL", str.length() - " end".length(),
-                spannable.getSpanEnd(spans[0]));
+        assertAddLinksSucceeds(msg, url, Linkify.WEB_URLS);
     }
 
     private static void assertAddLinksWithWebUrlFails(String msg, String url) {
-        Spannable spannable = new SpannableString("start " + url + " end");
-        boolean linksAdded = Linkify.addLinks(spannable, Linkify.WEB_URLS);
-        assertFalse(msg, linksAdded);
+        assertAddLinksFails(msg, url, Linkify.WEB_URLS);
     }
 
     private static void assertAddLinksWithWebUrlPartiallyMatches(String msg, String expected,
-                                                                 String url) {
-        Spannable spannable = new SpannableString("start " + url + " end");
-        boolean linksAdded = Linkify.addLinks(spannable, Linkify.WEB_URLS);
+            String url) {
+        assertAddLinksPartiallyMatches(msg, expected, url, Linkify.WEB_URLS);
+    }
+
+    private static void assertAddLinksWithEmailSucceeds(String msg, String url) {
+        assertAddLinksSucceeds(msg, url, Linkify.EMAIL_ADDRESSES);
+    }
+
+    private static void assertAddLinksWithEmailFails(String msg, String url) {
+        assertAddLinksFails(msg, url, Linkify.EMAIL_ADDRESSES);
+    }
+
+    private static void assertAddLinksWithEmailPartiallyMatches(String msg, String expected,
+            String url) {
+        assertAddLinksPartiallyMatches(msg, expected, url, Linkify.EMAIL_ADDRESSES);
+    }
+
+    private static void assertAddLinksSucceeds(String msg, String string, int type) {
+        String str = "start " + string + " end";
+        Spannable spannable = new SpannableString(str);
+
+        boolean linksAdded = Linkify.addLinks(spannable, type);
+        URLSpan[] spans = spannable.getSpans(0, str.length(), URLSpan.class);
+
+        assertTrue(msg, linksAdded);
+        assertEquals("Span should start from the beginning of: " + string,
+                "start ".length(), spannable.getSpanStart(spans[0]));
+        assertEquals("Span should end at the end of: " + string,
+                str.length() - " end".length(), spannable.getSpanEnd(spans[0]));
+    }
+
+    private static void assertAddLinksFails(String msg, String string, int type) {
+        Spannable spannable = new SpannableString("start " + string + " end");
+        boolean linksAdded = Linkify.addLinks(spannable, type);
+        assertFalse(msg, linksAdded);
+    }
+
+    private static void assertAddLinksPartiallyMatches(String msg, String expected,
+                                                       String string, int type) {
+        Spannable spannable = new SpannableString("start " + string + " end");
+        boolean linksAdded = Linkify.addLinks(spannable, type);
         URLSpan[] spans = spannable.getSpans(0, spannable.length(), URLSpan.class);
         assertTrue(msg, linksAdded);
         assertEquals(msg, expected, spans[0].getURL().toString());
