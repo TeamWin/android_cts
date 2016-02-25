@@ -17,7 +17,7 @@
 CTS_DIR=$(dirname ${0})/../../..
 source ${CTS_DIR}/test_defs.sh
 
-if [ `adb devices | wc -l` -lt 2 ]; then
+if [ `adb devices | wc -l` -lt 3 ]; then
     echo "NO DEVICES/EMULATORS AVAILABLE. CONNECT ONE."
     exit 1
 fi
