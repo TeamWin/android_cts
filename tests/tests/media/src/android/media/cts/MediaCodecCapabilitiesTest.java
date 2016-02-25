@@ -52,12 +52,8 @@ public class MediaCodecCapabilitiesTest extends MediaPlayerTestBase {
     private static final int TIMEOUT_US = 1000000;  // 1 sec
     private static final int IFRAME_INTERVAL = 10;          // 10 seconds between I-frames
 
-    private final MediaCodecList mRegularCodecs =
-            new MediaCodecList(MediaCodecList.REGULAR_CODECS);
     private final MediaCodecList mAllCodecs =
             new MediaCodecList(MediaCodecList.ALL_CODECS);
-    private final MediaCodecInfo[] mRegularInfos =
-            mRegularCodecs.getCodecInfos();
     private final MediaCodecInfo[] mAllInfos =
             mAllCodecs.getCodecInfos();
 
@@ -391,7 +387,7 @@ public class MediaCodecCapabilitiesTest extends MediaPlayerTestBase {
         // check if there is an adaptive decoder for each
         for (String mime : supportedFormats) {
             skipped = false;
-            // implicit assumption that QVGA video is always valid.
+            // implicit assumption that QCIF video is always valid.
             MediaFormat format = MediaFormat.createVideoFormat(mime, 176, 144);
             format.setFeatureEnabled(CodecCapabilities.FEATURE_AdaptivePlayback, true);
             String codec = mAllCodecs.findDecoderForFormat(format);
@@ -501,7 +497,7 @@ public class MediaCodecCapabilitiesTest extends MediaPlayerTestBase {
                 MediaFormat format = null;
                 try {
                     codec = MediaCodec.createByCodecName(info.getName());
-                    // implicit assumption that QVGA video is always valid.
+                    // implicit assumption that QCIF video is always valid.
                     format = createReasonableVideoFormat(caps, mime, isEncoder, 176, 144);
                     format.setInteger(
                             MediaFormat.KEY_COLOR_FORMAT,
