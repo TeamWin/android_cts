@@ -75,12 +75,4 @@ public class ActivityManagerFreeformStackTests extends ActivityManagerTestBase {
         assertActivityLifecycle(TEST_ACTIVITY, true);
         assertActivityLifecycle(NO_RELAUNCH_ACTIVITY, false);
     }
-
-    private void resizeActivityTask(String activityName, int left, int top, int right, int bottom)
-            throws Exception {
-        final int taskId = getActivityTaskId(activityName);
-        final String cmd = "am task resize "
-                + taskId + " " + left + " " + top + " " + right + " " + bottom;
-        mDevice.executeShellCommand(cmd);
-    }
 }

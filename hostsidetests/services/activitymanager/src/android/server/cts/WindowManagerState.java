@@ -37,32 +37,33 @@ class WindowManagerState {
     private static final String DUMPSYS_WINDOWS_APPS = "dumpsys window apps";
     private static final String DUMPSYS_WINDOWS_VISIBLE_APPS = "dumpsys window visible-apps";
 
-    private final Pattern mWindowPattern =
+    private static final Pattern sWindowPattern =
             Pattern.compile("Window #(\\d+) Window\\{([0-9a-fA-F]+) u(\\d+) (.+)\\}\\:");
-    private final Pattern mStartingWindowPattern =
+    private static final Pattern sStartingWindowPattern =
             Pattern.compile("Window #(\\d+) Window\\{([0-9a-fA-F]+) u(\\d+) Starting (.+)\\}\\:");
-    private final Pattern mExitingWindowPattern =
+    private static final Pattern sExitingWindowPattern =
             Pattern.compile("Window #(\\d+) Window\\{([0-9a-fA-F]+) u(\\d+) (.+) EXITING\\}\\:");
 
-    private final Pattern mFocusedWindowPattern = Pattern.compile(
+    private static final Pattern sFocusedWindowPattern = Pattern.compile(
             "mCurrentFocus=Window\\{([0-9a-fA-F]+) u(\\d+) (\\S+)\\}");
-    private final Pattern mAppErrorFocusedWindowPattern = Pattern.compile(
+    private static final Pattern sAppErrorFocusedWindowPattern = Pattern.compile(
             "mCurrentFocus=Window\\{([0-9a-fA-F]+) u(\\d+) Application Error\\: (\\S+)\\}");
 
-    private final Pattern mFocusedAppPattern =
+    private static final Pattern sFocusedAppPattern =
             Pattern.compile("mFocusedApp=AppWindowToken\\{(.+) token=Token\\{(.+) "
                     + "ActivityRecord\\{(.+) u(\\d+) (\\S+) (\\S+)");
 
-    private final Pattern mStackIdPattern = Pattern.compile("mStackId=(\\d+)");
+    private static final Pattern sStackIdPattern = Pattern.compile("mStackId=(\\d+)");
 
-    private final Pattern[] mExtractStackExitPatterns = { mStackIdPattern, mWindowPattern,
-            mStartingWindowPattern, mExitingWindowPattern, mFocusedWindowPattern,
-            mAppErrorFocusedWindowPattern, mFocusedAppPattern };
+    private static final Pattern[] sExtractStackExitPatterns = {
+            sStackIdPattern, sWindowPattern, sStartingWindowPattern, sExitingWindowPattern,
+            sFocusedWindowPattern, sAppErrorFocusedWindowPattern, sFocusedAppPattern };
 
     // Windows in z-order with the top most at the front of the list.
     private List<String> mWindows = new ArrayList();
-    private List<String> mRawWindows = new ArrayList();
+    private List<WindowState> mWindowStates = new ArrayList();
     private List<WindowStack> mStacks = new ArrayList();
+    private List<Display> mDisplays = new ArrayList();
     private String mFocusedWindow = null;
     private String mFocusedApp = null;
     private final LinkedList<String> mSysDump = new LinkedList();
@@ -74,6 +75,9 @@ class WindowManagerState {
         boolean retry = false;
         String dump = null;
 
+        CLog.logAndDisplay(INFO, "==============================");
+        CLog.logAndDisplay(INFO, "      WindowManagerState      ");
+        CLog.logAndDisplay(INFO, "==============================");
         do {
             if (retry) {
                 CLog.logAndDisplay(INFO, "***Incomplete WM state. Retrying...");
@@ -117,47 +121,52 @@ class WindowManagerState {
         Collections.addAll(mSysDump, sysDump.split("\\n"));
 
         while (!mSysDump.isEmpty()) {
+            final Display display =
+                    Display.create(mSysDump, sExtractStackExitPatterns);
+            if (display != null) {
+                CLog.logAndDisplay(INFO, display.toString());
+                mDisplays.add(display);
+                continue;
+            }
+
             final WindowStack stack =
-                    WindowStack.create(mSysDump, mStackIdPattern, mExtractStackExitPatterns);
+                    WindowStack.create(mSysDump, sStackIdPattern, sExtractStackExitPatterns);
 
             if (stack != null) {
                 mStacks.add(stack);
                 continue;
             }
 
-            final String line = mSysDump.pop().trim();
 
-            Matcher matcher = mWindowPattern.matcher(line);
-            if (matcher.matches()) {
-                CLog.logAndDisplay(INFO, line);
-                final String window = matcher.group(4);
+            final WindowState ws = WindowState.create(mSysDump, sExtractStackExitPatterns);
+            if (ws != null) {
+                CLog.logAndDisplay(INFO, ws.toString());
 
                 if (visibleOnly && mWindows.isEmpty()) {
                     // This is the front window. Check to see if we are in the middle of
                     // transitioning. If we are, we want to skip dumping until window manager is
                     // done transitioning the top window.
-                    matcher = mStartingWindowPattern.matcher(line);
-                    if (matcher.matches()) {
+                    if (ws.isStartingWindow()) {
                         CLog.logAndDisplay(INFO,
                                 "Skipping dump due to starting window transition...");
                         return;
                     }
 
-                    matcher = mExitingWindowPattern.matcher(line);
-                    if (matcher.matches()) {
+                    if (ws.isExitingWindow()) {
                         CLog.logAndDisplay(INFO,
                                 "Skipping dump due to exiting window transition...");
                         return;
                     }
                 }
 
-                CLog.logAndDisplay(INFO, window);
-                mWindows.add(window);
-                mRawWindows.add(line);
+                mWindows.add(ws.getName());
+                mWindowStates.add(ws);
                 continue;
             }
 
-            matcher = mFocusedWindowPattern.matcher(line);
+            final String line = mSysDump.pop().trim();
+
+            Matcher matcher = sFocusedWindowPattern.matcher(line);
             if (matcher.matches()) {
                 CLog.logAndDisplay(INFO, line);
                 final String focusedWindow = matcher.group(3);
@@ -166,7 +175,7 @@ class WindowManagerState {
                 continue;
             }
 
-            matcher = mAppErrorFocusedWindowPattern.matcher(line);
+            matcher = sAppErrorFocusedWindowPattern.matcher(line);
             if (matcher.matches()) {
                 CLog.logAndDisplay(INFO, line);
                 final String focusedWindow = matcher.group(3);
@@ -175,7 +184,7 @@ class WindowManagerState {
                 continue;
             }
 
-            matcher = mFocusedAppPattern.matcher(line);
+            matcher = sFocusedAppPattern.matcher(line);
             if (matcher.matches()) {
                 CLog.logAndDisplay(INFO, line);
                 final String focusedApp = matcher.group(5);
@@ -189,15 +198,29 @@ class WindowManagerState {
     void getMatchingWindowTokens(final String windowName, List<String> tokenList) {
         tokenList.clear();
 
-        for (String line : mRawWindows) {
-            if (line.contains(windowName)) {
-                Matcher matcher = mWindowPattern.matcher(line);
-                if (matcher.matches()) {
-                    CLog.logAndDisplay(INFO, "Found activity window: " + line);
-                    tokenList.add(matcher.group(2));
-                }
+        for (WindowState ws : mWindowStates) {
+            if (windowName.equals(ws.getName())) {
+                tokenList.add(ws.getToken());
             }
         }
+    }
+
+    void getMatchingWindowState(final String windowName, List<WindowState> windowList) {
+        windowList.clear();
+        for (WindowState ws : mWindowStates) {
+            if (windowName.equals(ws.getName())) {
+                windowList.add(ws);
+            }
+        }
+    }
+
+    Display getDisplay(int displayId) {
+        for (Display display : mDisplays) {
+            if (displayId == display.getDisplayId()) {
+                return display;
+            }
+        }
+        return null;
     }
 
     String getFrontWindow() {
@@ -246,15 +269,16 @@ class WindowManagerState {
     private void reset() {
         mSysDump.clear();
         mStacks.clear();
+        mDisplays.clear();
         mWindows.clear();
-        mRawWindows.clear();
+        mWindowStates.clear();
         mFocusedWindow = null;
         mFocusedApp = null;
     }
 
     static class WindowStack extends WindowContainer {
 
-        private static final Pattern TASK_ID_PATTERN = Pattern.compile("taskId=(\\d+)");
+        private static final Pattern sTaskIdPattern = Pattern.compile("taskId=(\\d+)");
 
         int mStackId;
         ArrayList<WindowTask> mTasks = new ArrayList();
@@ -288,13 +312,13 @@ class WindowManagerState {
 
             final List<Pattern> taskExitPatterns = new ArrayList();
             Collections.addAll(taskExitPatterns, exitPatterns);
-            taskExitPatterns.add(TASK_ID_PATTERN);
+            taskExitPatterns.add(sTaskIdPattern);
             final Pattern[] taskExitPatternsArray =
                     taskExitPatterns.toArray(new Pattern[taskExitPatterns.size()]);
 
             while (!doneExtracting(dump, exitPatterns)) {
                 final WindowTask task =
-                        WindowTask.create(dump, TASK_ID_PATTERN, taskExitPatternsArray);
+                        WindowTask.create(dump, sTaskIdPattern, taskExitPatternsArray);
 
                 if (task != null) {
                     mTasks.add(task);
@@ -324,10 +348,10 @@ class WindowManagerState {
     }
 
     static class WindowTask extends WindowContainer {
-        private static final Pattern TEMP_INSET_BOUNDS_PATTERN =
+        private static final Pattern sTempInsetBoundsPattern =
                 Pattern.compile("mTempInsetBounds=\\[(\\d+),(\\d+)\\]\\[(\\d+),(\\d+)\\]");
 
-        private static final Pattern APP_TOKEN_PATTERN = Pattern.compile(
+        private static final Pattern sAppTokenPattern = Pattern.compile(
                 "Activity #(\\d+) AppWindowToken\\{(\\S+) token=Token\\{(\\S+) "
                 + "ActivityRecord\\{(\\S+) u(\\d+) (\\S+) t(\\d+)\\}\\}\\}");
 
@@ -373,13 +397,13 @@ class WindowManagerState {
                     continue;
                 }
 
-                Matcher matcher = TEMP_INSET_BOUNDS_PATTERN.matcher(line);
+                Matcher matcher = sTempInsetBoundsPattern.matcher(line);
                 if (matcher.matches()) {
                     CLog.logAndDisplay(INFO, line);
                     mTempInsetBounds = extractBounds(matcher);
                 }
 
-                matcher = APP_TOKEN_PATTERN.matcher(line);
+                matcher = sAppTokenPattern.matcher(line);
                 if (matcher.matches()) {
                     CLog.logAndDisplay(INFO, line);
                     final String appToken = matcher.group(6);
@@ -392,8 +416,8 @@ class WindowManagerState {
     }
 
     static abstract class WindowContainer {
-        protected static final Pattern FULLSCREEN_PATTERN = Pattern.compile("mFullscreen=(\\S+)");
-        protected static final Pattern BOUNDS_PATTERN =
+        protected static final Pattern sFullscreenPattern = Pattern.compile("mFullscreen=(\\S+)");
+        protected static final Pattern sBoundsPattern =
                 Pattern.compile("mBounds=\\[(\\d+),(\\d+)\\]\\[(\\d+),(\\d+)\\]");
 
         protected boolean mFullscreen;
@@ -414,7 +438,7 @@ class WindowManagerState {
         }
 
         boolean extractFullscreen(String line) {
-            final Matcher matcher = FULLSCREEN_PATTERN.matcher(line);
+            final Matcher matcher = sFullscreenPattern.matcher(line);
             if (!matcher.matches()) {
                 return false;
             }
@@ -426,7 +450,7 @@ class WindowManagerState {
         }
 
         boolean extractBounds(String line) {
-            final Matcher matcher = BOUNDS_PATTERN.matcher(line);
+            final Matcher matcher = sBoundsPattern.matcher(line);
             if (!matcher.matches()) {
                 return false;
             }
@@ -446,12 +470,219 @@ class WindowManagerState {
             return rect;
         }
 
+        static void extractMultipleBounds(Matcher matcher, int groupIndex, Rectangle... rectList) {
+            for (Rectangle rect : rectList) {
+                if (rect == null) {
+                    return;
+                }
+                final int left = Integer.valueOf(matcher.group(groupIndex++));
+                final int top = Integer.valueOf(matcher.group(groupIndex++));
+                final int right = Integer.valueOf(matcher.group(groupIndex++));
+                final int bottom = Integer.valueOf(matcher.group(groupIndex++));
+                rect.setBounds(left, top, right - left, bottom - top);
+            }
+        }
+
         Rectangle getBounds() {
             return mBounds;
         }
 
         boolean isFullscreen() {
             return mFullscreen;
+        }
+    }
+
+    static class Display extends WindowContainer {
+        private static final String TAG = "[Display] ";
+
+        private static final Pattern sDisplayIdPattern =
+                Pattern.compile("Display: mDisplayId=(\\d+)");
+        private static final Pattern sDisplayInfoPattern =
+                Pattern.compile("(.+) (\\d+)dpi cur=(\\d+)x(\\d+) app=(\\d+)x(\\d+) (.+)");
+
+        private final int mDisplayId;
+        private Rectangle mDisplayRect = new Rectangle();
+        private Rectangle mAppRect = new Rectangle();
+        private int mDpi;
+
+        private Display(int displayId) {
+            mDisplayId = displayId;
+        }
+
+        int getDisplayId() {
+            return mDisplayId;
+        }
+
+        int getDpi() {
+            return mDpi;
+        }
+
+        Rectangle getDisplayRect() {
+            return mDisplayRect;
+        }
+
+        Rectangle getAppRect() {
+            return mAppRect;
+        }
+
+        static Display create(LinkedList<String> dump, Pattern[] exitPatterns) {
+            // TODO: exit pattern for displays?
+            final String line = dump.peek().trim();
+
+            Matcher matcher = sDisplayIdPattern.matcher(line);
+            if (!matcher.matches()) {
+                return null;
+            }
+
+            CLog.logAndDisplay(INFO, TAG + "DISPLAY_ID: " + line);
+            dump.pop();
+
+            final int displayId = Integer.valueOf(matcher.group(1));
+            final Display display = new Display(displayId);
+            display.extract(dump, exitPatterns);
+            return display;
+        }
+
+        private void extract(LinkedList<String> dump, Pattern[] exitPatterns) {
+            while (!doneExtracting(dump, exitPatterns)) {
+                final String line = dump.pop().trim();
+
+                final Matcher matcher = sDisplayInfoPattern.matcher(line);
+                if (matcher.matches()) {
+                    CLog.logAndDisplay(INFO, TAG + "DISPLAY_INFO: " + line);
+                    mDpi = Integer.valueOf(matcher.group(2));
+
+                    final int displayWidth = Integer.valueOf(matcher.group(3));
+                    final int displayHeight = Integer.valueOf(matcher.group(4));
+                    mDisplayRect.setBounds(0, 0, displayWidth, displayHeight);
+
+                    final int appWidth = Integer.valueOf(matcher.group(5));
+                    final int appHeight = Integer.valueOf(matcher.group(6));
+                    mAppRect.setBounds(0, 0, appWidth, appHeight);
+
+                    // break as we don't need other info for now
+                    break;
+                }
+                // Extract other info here if needed
+            }
+        }
+
+        @Override
+        public String toString() {
+            return "Display #" + mDisplayId + ": mDisplayRect=" + mDisplayRect
+                    + " mAppRect=" + mAppRect;
+        }
+    }
+
+    static class WindowState extends WindowContainer {
+        private static final String TAG = "[WindowState] ";
+
+        private static final String RECT_STR = "\\[(\\d+),(\\d+)\\]\\[(\\d+),(\\d+)\\]";
+        private static final Pattern sFramePattern =
+                Pattern.compile("Frames: containing=" + RECT_STR + " parent=" + RECT_STR);
+        private static final Pattern sWindowAssociationPattern =
+                Pattern.compile("mDisplayId=(\\d+) stackId=(\\d+) (.+)");
+
+        private final String mName;
+        private final String mAppToken;
+        private final boolean mStarting;
+        private final boolean mExiting;
+        private int mDisplayId = 0;
+        private Rectangle mContainingFrame = new Rectangle();
+        private Rectangle mParentFrame = new Rectangle();
+
+        private WindowState(Matcher matcher, boolean starting, boolean exiting) {
+            mName = matcher.group(4);
+            mAppToken = matcher.group(2);
+            mStarting = starting;
+            mExiting = exiting;
+        }
+
+        String getName() {
+            return mName;
+        }
+
+        String getToken() {
+            return mAppToken;
+        }
+
+        boolean isStartingWindow() {
+            return mStarting;
+        }
+
+        boolean isExitingWindow() {
+            return mExiting;
+        }
+
+        int getDisplayId() {
+            return mDisplayId;
+        }
+
+        Rectangle getContainingFrame() {
+            return mContainingFrame;
+        }
+
+        Rectangle getParentFrame() {
+            return mParentFrame;
+        }
+
+        static WindowState create(LinkedList<String> dump, Pattern[] exitPatterns) {
+            final String line = dump.peek().trim();
+
+            Matcher matcher = sWindowPattern.matcher(line);
+            if (!matcher.matches()) {
+                return null;
+            }
+
+            CLog.logAndDisplay(INFO, TAG + "WINDOW: " + line);
+            dump.pop();
+
+            final WindowState window;
+            Matcher specialMatcher = sStartingWindowPattern.matcher(line);
+            if (specialMatcher.matches()) {
+                CLog.logAndDisplay(INFO, TAG + "STARTING: " + line);
+                window = new WindowState(specialMatcher, true, false);
+            } else {
+                specialMatcher = sExitingWindowPattern.matcher(line);
+                if (specialMatcher.matches()) {
+                    CLog.logAndDisplay(INFO, TAG + "EXITING: " + line);
+                    window = new WindowState(specialMatcher, false, true);
+                } else {
+                    window = new WindowState(matcher, false, false);
+                }
+            }
+
+            window.extract(dump, exitPatterns);
+            return window;
+        }
+
+        private void extract(LinkedList<String> dump, Pattern[] exitPatterns) {
+            while (!doneExtracting(dump, exitPatterns)) {
+                final String line = dump.pop().trim();
+
+                Matcher matcher = sWindowAssociationPattern.matcher(line);
+                if (matcher.matches()) {
+                    CLog.logAndDisplay(INFO, TAG + "WINDOW_ASSOCIATION: " + line);
+                    mDisplayId = Integer.valueOf(matcher.group(1));
+                    continue;
+                }
+
+                matcher = sFramePattern.matcher(line);
+                if (matcher.matches()) {
+                    CLog.logAndDisplay(INFO, TAG + "FRAME: " + line);
+                    extractMultipleBounds(matcher, 1, mContainingFrame, mParentFrame);
+                    continue;
+                }
+
+                // Extract other info here if needed
+            }
+        }
+
+        @Override
+        public String toString() {
+            return "WindowState: {" + mAppToken + " " + mName
+                    + (mStarting ? " STARTING" : "") + (mExiting ? " EXITING" : "") + "}"
+                    + " cf=" + mContainingFrame + " pf=" + mParentFrame;
         }
     }
 }
