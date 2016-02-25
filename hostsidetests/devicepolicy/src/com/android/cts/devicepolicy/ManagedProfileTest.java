@@ -465,6 +465,10 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
         if (!mHasFeature) {
             return;
         }
+        assertTrue(runDeviceTests(MANAGED_PROFILE_PKG, ".OrganizationInfoTest",
+                "testDefaultOrganizationColorIsGray", mProfileUserId));
+        assertTrue(runDeviceTests(MANAGED_PROFILE_PKG, ".OrganizationInfoTest",
+                "testDefaultOrganizationNameIsNull", mProfileUserId));
         assertTrue(runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".OrganizationInfoTest",
                 mProfileUserId));
     }

@@ -53,13 +53,44 @@ public class OrganizationInfoTest extends BaseManagedProfileTest {
         try {
             mDevicePolicyManager.setOrganizationColor(null, Color.GRAY);
             fail("Exception should have been thrown for null admin ComponentName");
-        } catch (NullPointerException expected) {
+        } catch (Exception expected) {
         }
 
         try {
             int color = mDevicePolicyManager.getOrganizationColor(null);
             fail("Exception should have been thrown for null admin ComponentName");
-        } catch (NullPointerException expected) {
+        } catch (Exception expected) {
+        }
+    }
+
+    public void testDefaultOrganizationNameIsNull() {
+        final String name = mDevicePolicyManager.getOrganizationName(ADMIN_RECEIVER_COMPONENT);
+        assertNull(name);
+    }
+
+    public void testSetOrganizationName() {
+        String previousName = mDevicePolicyManager.getOrganizationName(ADMIN_RECEIVER_COMPONENT);
+
+        try {
+            final String name = "test-set-name";
+            mDevicePolicyManager.setOrganizationName(ADMIN_RECEIVER_COMPONENT, name);
+            assertEquals(name, mDevicePolicyManager.getOrganizationName(ADMIN_RECEIVER_COMPONENT));
+        } finally {
+            mDevicePolicyManager.setOrganizationName(ADMIN_RECEIVER_COMPONENT, previousName);
+        }
+    }
+
+    public void testSetOrGetOrganizationNameWithNullAdminFails() {
+        try {
+            mDevicePolicyManager.setOrganizationName(null, "null-admin-fails");
+            fail("Exception should have been thrown for null admin ComponentName");
+        } catch (Exception expected) {
+        }
+
+        try {
+            String name = mDevicePolicyManager.getOrganizationName(null);
+            fail("Exception should have been thrown for null admin ComponentName");
+        } catch (Exception expected) {
         }
     }
 }
