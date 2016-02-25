@@ -66,6 +66,9 @@ public class SmsMessageTest extends AndroidTestCase{
         "Long dkkshsh jdjsusj kbsksbdf jfkhcu hhdiwoqiwyrygrvn?*?*!\";:'/,."
         + "__?9#9292736&4;\"$+$+((]\\[\\℅©℅™^®°¥°¥=¢£}}£∆~¶~÷|√×."
         + " 😯😆😉😇😂😀👕🎓😀👙🐕🐀🐶🐰🐩⛪⛲ ";
+    private static final String LONG_TEXT_WITH_FLAGS =
+        "🇦🇫🇦🇽🇦🇱🇩🇿🇦🇸🇦🇩🇦🇴🇦🇮🇦🇶🇦🇬🇦🇷🇦🇲🇦🇼🇦🇨"
+        + "🇦🇺🇦🇹🇦🇿🇧🇸🇧🇭🇧🇩🇧🇧🇧🇾🇧🇪🇧🇿🇧🇯🇧🇲🇧🇹🇧🇴🇧🇦";
 
     @Override
     protected void setUp() throws Exception {
@@ -315,6 +318,14 @@ public class SmsMessageTest extends AndroidTestCase{
         assertRemaining(LONG_TEXT_WITH_32BIT_CHARS.length(), result[2],
                 maxChars);
         assertEquals(SmsMessage.ENCODING_16BIT, result[3]);
+    }
+
+    public void testCalculateLengthFlags() throws Exception {
+        if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
+            return;
+        }
+        int[] result = SmsMessage.calculateLength(LONG_TEXT_WITH_FLAGS, false);
+        assertEquals(2, result[0]);
     }
 
     private final static char[] HEX_DIGITS = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
