@@ -526,10 +526,6 @@ public class PopupWindowTest extends
         verify(enterListener, times(1)).onTransitionStart(any(Transition.class));
         verify(exitListener, times(1)).onTransitionStart(any(Transition.class));
         verify(dismissListener, times(1)).onDismiss();
-
-        InOrder inOrder = inOrder(exitListener, dismissListener);
-        inOrder.verify(exitListener).onTransitionEnd(any(Transition.class));
-        inOrder.verify(dismissListener).onDismiss();
     }
 
     public void testUpdatePositionAndDimension() {
