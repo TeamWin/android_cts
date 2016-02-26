@@ -74,6 +74,17 @@ class TestFmwkUtils {
     }
 
     public static TestFmwk.Target getTargets(TestFmwk testFmwk) {
+        return test_for_TestFmwk_GetTargets(testFmwk);
+    }
+
+    /**
+     * A special method to avoid the TestFmwk from throwing an InternalError when an error occurs
+     * during execution of the test but outside the actual test method, e.g. in a
+     * {@link TestFmwk#validate()} method. See http://bugs.icu-project.org/trac/ticket/12183
+     *
+     * <p>DO NOT CHANGE THE NAME
+     */
+    private static TestFmwk.Target test_for_TestFmwk_GetTargets(TestFmwk testFmwk) {
         try {
             return (TestFmwk.Target) getTargetsMethod.invoke(testFmwk, new Object[] {null});
         } catch (InvocationTargetException | IllegalAccessException e) {

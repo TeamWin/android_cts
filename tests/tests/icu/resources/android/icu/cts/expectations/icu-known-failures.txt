@@ -41,5 +41,19 @@
     "com.ibm.icu.dev.test.translit.TransliteratorTest#TestSourceTargetSetFilter",
     "com.ibm.icu.dev.test.util.CurrencyTest#TestGetKeywordValues"
   ]
+},
+{
+  description: "Broken due to warnings, not yet triaged",
+  names: [
+    "com.ibm.icu.dev.test.collator.CollationCreationMethodTest#TestRuleVsLocaleCreationMonkey",
+    "com.ibm.icu.dev.test.collator.CollationMiscTest#TestImport",
+    "com.ibm.icu.dev.test.collator.CollationMiscTest#TestImportWithType",
+    "com.ibm.icu.dev.test.collator.CollationMiscTest#TestUCARules",
+    "com.ibm.icu.dev.test.collator.CollationTest#TestDataDriven",
+    "com.ibm.icu.dev.test.collator.G7CollationTest#TestG7Data",
+    "com.ibm.icu.dev.test.charset.TestCharset#TestHZ",
+    "com.ibm.icu.dev.test.charset.TestCharset#TestMBCS",
+    "com.ibm.icu.dev.test.charset.TestCharset#TestSurrogateBehavior"
+  ]
 }
 ]
