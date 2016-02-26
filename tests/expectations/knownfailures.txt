@@ -334,5 +334,12 @@
     "android.hardware.cts.helpers.sensorverification.EventOrderingVerificationTest#testSameTimestamp"
   ],
   bug: 23792027
+},
+{
+  description: "Security CVE 2015_3826 test not working.",
+  names: [
+    "android.security.cts.StagefrightTest#testStagefright_cve_2015_3826"
+  ],
+  bug: 27368229
 }
 ]
