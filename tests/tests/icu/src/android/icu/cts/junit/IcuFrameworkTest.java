@@ -34,6 +34,9 @@ class IcuFrameworkTest {
     private static final Pattern EXTRACT_ERROR_INFO = Pattern.compile(
             "^[A-Za-z0-9_]+ \\{\n  [A-Za-z0-9_]+ \\{\n    (.*)\n  \\}.*", Pattern.DOTALL);
 
+    private static final Pattern CONTAINS_WARNING = Pattern.compile(
+            "^ *Warning: ", Pattern.MULTILINE);
+
     /**
      * The {@link TestFmwk} instance on which the tests will be run.
      */
@@ -59,6 +62,17 @@ class IcuFrameworkTest {
      * Runs the target.
      */
     public void run() throws ICUTestFailedException {
+        test_for_TestFmwk_Run();
+    }
+
+    /**
+     * A special method to avoid the TestFmwk from throwing an InternalError when an error occurs
+     * during execution of the test but outside the actual test method, e.g. in a
+     * {@link TestFmwk#validate()} method. See http://bugs.icu-project.org/trac/ticket/12183
+     *
+     * <p>DO NOT CHANGE THE NAME
+     */
+    private void test_for_TestFmwk_Run() throws ICUTestFailedException {
         String[] args;
         if (methodName != null) {
             args = new String[] {methodName};
@@ -69,11 +83,13 @@ class IcuFrameworkTest {
         StringWriter stringWriter = new StringWriter();
         PrintWriter log = new PrintWriter(stringWriter);
         int errorCount = testFmwk.run(args, log);
-        if (errorCount != 0) {
-            // Ensure that all data is written to the StringWriter.
-            log.flush();
 
-            String information = stringWriter.toString();
+        // Ensure that all data is written to the StringWriter.
+        log.flush();
+
+        // Treat warnings as errors.
+        String information = stringWriter.toString();
+        if (errorCount != 0 || CONTAINS_WARNING.matcher(information).find()) {
             if (methodName != null) {
                 Matcher matcher = EXTRACT_ERROR_INFO.matcher(information);
                 if (matcher.matches()) {
@@ -81,7 +97,7 @@ class IcuFrameworkTest {
                 }
             }
             throw new ICUTestFailedException("ICU test failed: " + getDescription(),
-                    errorCount, information);
+                    Math.min(1, errorCount), information);
         }
     }
 

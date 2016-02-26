@@ -19,7 +19,6 @@ package android.icu.cts.junit;
 import com.ibm.icu.dev.test.TestFmwk;
 import java.util.ArrayList;
 import java.util.List;
-import org.junit.internal.runners.ErrorReportingRunner;
 import org.junit.runner.Description;
 import org.junit.runner.Runner;
 import org.junit.runner.notification.RunNotifier;
@@ -55,7 +54,7 @@ public class IcuTestGroupRunner extends IcuTestParentRunner<Runner> {
                 Class<?> childTestClass = Class.forName(className, false, classLoader);
                 runner = runnerBuilder.safeRunnerForClass(childTestClass);
             } catch (ClassNotFoundException e) {
-                runner = new ErrorReportingRunner(testGroupClass, e);
+                runner = new ErrorReportingRunner(className, e);
             }
 
             runners.add(runner);
