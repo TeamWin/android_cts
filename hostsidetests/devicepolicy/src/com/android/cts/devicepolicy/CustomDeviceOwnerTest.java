@@ -16,6 +16,7 @@
 
 package com.android.cts.devicepolicy;
 
+import com.android.cts.devicepolicy.BaseDevicePolicyTest.Settings;
 import com.android.cts.migration.MigrationHelper;
 
 import java.io.File;
@@ -147,6 +148,20 @@ public class CustomDeviceOwnerTest extends BaseDevicePolicyTest {
             String commandOutput = getDevice().executeShellCommand(command);
             getDevice().uninstallPackage(TEST_APP_PKG);
             getDevice().uninstallPackage(PACKAGE_INSTALLER_PKG);
+        }
+    }
+
+    public void testIsProvisioningAllowed() throws Exception {
+        // Must install the apk since the test runs in the DO apk.
+        installAppAsUser(DEVICE_OWNER_APK, mPrimaryUserId);
+        try {
+            // When CTS runs, setupwizard is complete. Expects it has to return false as DO can
+            // only be provisioned before setupwizard is completed.
+
+            assertTrue(runDeviceTestsAsUser(DEVICE_OWNER_PKG, ".PreDeviceOwnerTest",
+                    "testIsProvisioningAllowedFalse", /* deviceOwnerUserId */ 0));
+        } finally {
+            getDevice().uninstallPackage(DEVICE_OWNER_PKG);
         }
     }
 }
