@@ -15,14 +15,16 @@
  */
 package android.car.cts;
 
+import android.car.app.menu.CarMenuCallbacks;
+import android.car.app.menu.SearchBoxEditListener;
 import android.content.Context;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.os.Bundle;
-import android.os.IBinder;
 import android.test.AndroidTestCase;
 import android.util.Log;
+import android.view.View;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -38,7 +40,7 @@ import java.util.Map;
 public class CarUiProviderTest extends AndroidTestCase {
     private static final String TAG = "CarUiProviderTest";
     private static final String UI_ENTRY_CLASS_NAME = ".CarUiEntry";
-    private static final String CAR_UI_PROVIDER_PKG = "android.support.car.ui.provider";
+    private static final String CAR_UI_PROVIDER_PKG = "android.car.ui.provider";
 
     private static final Map<String, Class<?>[]> COMPATIBILITY_APIS =
             new HashMap<String, Class<?>[]>();
@@ -49,7 +51,7 @@ public class CarUiProviderTest extends AndroidTestCase {
         COMPATIBILITY_APIS.put("onPause", new Class<?>[]{});
         COMPATIBILITY_APIS.put("onStop", new Class<?>[]{});
         COMPATIBILITY_APIS.put("getContentView", new Class<?>[]{});
-        COMPATIBILITY_APIS.put("setCarMenuBinder", new Class<?>[]{IBinder.class});
+        COMPATIBILITY_APIS.put("setCarMenuCallbacks", new Class<?>[]{CarMenuCallbacks.class});
         COMPATIBILITY_APIS.put("getFragmentContainerId", new Class<?>[]{});
         COMPATIBILITY_APIS.put("setBackground", new Class<?>[]{Bitmap.class});
         COMPATIBILITY_APIS.put("setBackgroundResource", new Class<?>[]{int.class});
@@ -70,6 +72,17 @@ public class CarUiProviderTest extends AndroidTestCase {
         COMPATIBILITY_APIS.put("setAutoLightDarkMode", new Class<?>[]{});
         COMPATIBILITY_APIS.put("onRestoreInstanceState", new Class<?>[]{Bundle.class});
         COMPATIBILITY_APIS.put("onSaveInstanceState", new Class<?>[]{Bundle.class});
+        COMPATIBILITY_APIS.put("showSearchBox", new Class<?>[]{View.OnClickListener.class});
+        COMPATIBILITY_APIS.put("setSearchBoxEndView", new Class<?>[]{View.class});
+        COMPATIBILITY_APIS.put("getSearchBoxText", new Class<?>[]{});
+        COMPATIBILITY_APIS.put("showToast", new Class<?>[]{String.class, long.class});
+        COMPATIBILITY_APIS.put("stopInput", new Class<?>[]{});
+        COMPATIBILITY_APIS.put("startInput", new Class<?>[]{String.class,
+                View.OnClickListener.class});
+        COMPATIBILITY_APIS.put("setSearchBoxEditListener",
+                new Class<?>[]{SearchBoxEditListener.class});
+        COMPATIBILITY_APIS.put("setSearchBoxColors", new Class<?>[]{int.class, int.class, int.class,
+                int.class});
     }
 
     private boolean mIsCar = false;
