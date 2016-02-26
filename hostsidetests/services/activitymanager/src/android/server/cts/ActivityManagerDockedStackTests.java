@@ -27,9 +27,6 @@ public class ActivityManagerDockedStackTests extends ActivityManagerTestBase {
     private static final String LAUNCH_TO_SIDE_ACTIVITY_NAME = "LaunchToSideActivity";
     private static final String NO_RELAUNCH_ACTIVITY_NAME = "NoRelaunchActivity";
 
-    private static final String AM_MOVE_TASK = "am stack movetask ";
-    private static final String AM_RESIZE_DOCKED_STACK = "am stack resize-docked-stack ";
-
     private static final int TASK_SIZE = 600;
     private static final int STACK_SIZE = 300;
 
@@ -143,9 +140,7 @@ public class ActivityManagerDockedStackTests extends ActivityManagerTestBase {
     public void testResizeDockedStack() throws Exception {
         mDevice.executeShellCommand(getAmStartCmd(TEST_ACTIVITY_NAME));
         launchActivityInDockStack(DOCKED_ACTIVITY_NAME);
-        mDevice.executeShellCommand(AM_RESIZE_DOCKED_STACK
-                + "0 0 " + STACK_SIZE + " " + STACK_SIZE
-                + " 0 0 " + TASK_SIZE + " " + TASK_SIZE);
+        resizeDockedStack(STACK_SIZE, STACK_SIZE, TASK_SIZE, TASK_SIZE);
         mAmWmState.computeState(mDevice, new String[] {TEST_ACTIVITY_NAME, DOCKED_ACTIVITY_NAME});
         mAmWmState.assertSanity();
         mAmWmState.assertContainsStack("Must contain docked stack", DOCKED_STACK_ID);
@@ -168,9 +163,7 @@ public class ActivityManagerDockedStackTests extends ActivityManagerTestBase {
         mAmWmState.assertSanity();
 
         clearLogcat();
-        mDevice.executeShellCommand(AM_RESIZE_DOCKED_STACK
-                + "0 0 " + STACK_SIZE + " " + STACK_SIZE
-                + " 0 0 " + TASK_SIZE + " " + TASK_SIZE);
+        resizeDockedStack(STACK_SIZE, STACK_SIZE, TASK_SIZE, TASK_SIZE);
 
         mAmWmState.computeState(mDevice,
                 new String[]{TEST_ACTIVITY_NAME, NO_RELAUNCH_ACTIVITY_NAME});
@@ -178,13 +171,6 @@ public class ActivityManagerDockedStackTests extends ActivityManagerTestBase {
 
         assertActivityLifecycle(TEST_ACTIVITY_NAME, true);
         assertActivityLifecycle(NO_RELAUNCH_ACTIVITY_NAME, false);
-    }
-
-    private void launchActivityInDockStack(String activityName) throws Exception {
-        mDevice.executeShellCommand(getAmStartCmd(activityName));
-        final int taskId = getActivityTaskId(activityName);
-        final String cmd = AM_MOVE_TASK + taskId + " " + DOCKED_STACK_ID + " true";
-        mDevice.executeShellCommand(cmd);
     }
 
     private void launchActivityToSide(String activityName) throws Exception {

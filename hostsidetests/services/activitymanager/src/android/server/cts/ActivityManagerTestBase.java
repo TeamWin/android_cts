@@ -70,6 +70,10 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
     protected static final String AM_MOVE_TOP_ACTIVITY_TO_PINNED_STACK_COMMAND =
             "am stack move-top-activity-to-pinned-stack 1 0 0 500 500";
 
+    private static final String AM_RESIZE_DOCKED_STACK = "am stack resize-docked-stack ";
+
+    private static final String AM_MOVE_TASK = "am stack movetask ";
+
     /** A reference to the device under test. */
     protected ITestDevice mDevice;
 
@@ -122,12 +126,27 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
         mDevice.executeShellCommand(getAmStartCmd(activityName) + " --stack " + stackId);
     }
 
+    protected void launchActivityInDockStack(String activityName) throws Exception {
+        mDevice.executeShellCommand(getAmStartCmd(activityName));
+        final int taskId = getActivityTaskId(activityName);
+        final String cmd = AM_MOVE_TASK + taskId + " " + DOCKED_STACK_ID + " true";
+        mDevice.executeShellCommand(cmd);
+    }
+
     protected void resizeActivityTask(String activityName, int left, int top, int right, int bottom)
             throws Exception {
         final int taskId = getActivityTaskId(activityName);
         final String cmd = "am task resize "
                 + taskId + " " + left + " " + top + " " + right + " " + bottom;
         mDevice.executeShellCommand(cmd);
+    }
+
+    protected void resizeDockedStack(
+            int stackWidth, int stackHeight, int taskWidth, int taskHeight)
+                    throws DeviceNotAvailableException {
+        mDevice.executeShellCommand(AM_RESIZE_DOCKED_STACK
+                + "0 0 " + stackWidth + " " + stackHeight
+                + " 0 0 " + taskWidth + " " + taskHeight);
     }
 
     // Utility method for debugging, not used directly here, but useful, so kept around.
