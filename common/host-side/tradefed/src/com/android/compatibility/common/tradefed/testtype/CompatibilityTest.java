@@ -16,6 +16,7 @@
 
 package com.android.compatibility.common.tradefed.testtype;
 
+import com.android.compatibility.SuiteInfo;
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
 import com.android.compatibility.common.tradefed.result.IInvocationResultRepo;
 import com.android.compatibility.common.tradefed.result.InvocationResultRepo;
@@ -287,10 +288,11 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
      */
     Set<IAbi> getAbis() throws DeviceNotAvailableException {
         Set<IAbi> abis = new HashSet<>();
+        Set<String> archAbis = AbiUtils.getAbisForArch(SuiteInfo.TARGET_ARCH);
         for (String abi : AbiFormatter.getSupportedAbis(mDevice, "")) {
             // Only test against ABIs supported by Compatibility, and if the
             // --abi option was given, it must match.
-            if (AbiUtils.isAbiSupportedByCompatibility(abi)
+            if (AbiUtils.isAbiSupportedByCompatibility(abi) && archAbis.contains(abi)
                     && (mAbiName == null || mAbiName.equals(abi))) {
                 abis.add(new Abi(abi, AbiUtils.getBitness(abi)));
             }
