@@ -66,6 +66,7 @@ public class DngCreatorTest extends Camera2AndroidTestCase {
     private static final String TAG = "DngCreatorTest";
     private static final boolean VERBOSE = Log.isLoggable(TAG, Log.VERBOSE);
     private static final String DEBUG_DNG_FILE = "raw16.dng";
+    private static final String TEST_DNG_FILE = "test.dng";
 
     private static final double IMAGE_DIFFERENCE_TOLERANCE = 65;
     private static final int DEFAULT_PATCH_DIMEN = 512;
@@ -82,6 +83,11 @@ public class DngCreatorTest extends Camera2AndroidTestCase {
 
     static {
         GPS_CALENDAR.set(2015, 0, 27, 2, 12, 01);
+    }
+
+    class CapturedData {
+        public Pair<List<Image>, CaptureResult> imagePair;
+        public CameraCharacteristics characteristics;
     }
 
     @Override
@@ -320,61 +326,21 @@ public class DngCreatorTest extends Camera2AndroidTestCase {
      * </p>
      */
     public void testRaw16JpegConsistency() throws Exception {
-        for (int i = 0; i < mCameraIds.length; i++) {
-            String deviceId = mCameraIds[i];
-            List<ImageReader> captureReaders = new ArrayList<ImageReader>();
-            List<CameraTestUtils.SimpleImageReaderListener> captureListeners =
-                    new ArrayList<CameraTestUtils.SimpleImageReaderListener>();
+        for (String deviceId : mCameraIds) {
+            List<ImageReader> captureReaders = new ArrayList<>();
             FileOutputStream fileStream = null;
             ByteArrayOutputStream outputStream = null;
             FileChannel fileChannel = null;
             try {
-                openDevice(deviceId);
-
-                if (!mStaticInfo.isCapabilitySupported(
-                        CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES_RAW)) {
-                    Log.i(TAG, "RAW capability is not supported in camera " + mCameraIds[i] +
-                            ". Skip the test.");
+                CapturedData data = captureRawJpegImagePair(deviceId, captureReaders);
+                if (data == null) {
                     continue;
                 }
-
-                Size activeArraySize = mStaticInfo.getRawDimensChecked();
-
-                // Get largest jpeg size
-                Size[] targetJpegSizes =
-                        mStaticInfo.getAvailableSizesForFormatChecked(ImageFormat.JPEG,
-                                StaticMetadata.StreamDirection.Output);
-
-                Size largestJpegSize = Collections.max(Arrays.asList(targetJpegSizes),
-                        new CameraTestUtils.SizeComparator());
-
-                // Create raw image reader and capture listener
-                CameraTestUtils.SimpleImageReaderListener rawListener
-                        = new CameraTestUtils.SimpleImageReaderListener();
-                captureReaders.add(createImageReader(activeArraySize, ImageFormat.RAW_SENSOR, 2,
-                        rawListener));
-                captureListeners.add(rawListener);
-
-
-                // Create jpeg image reader and capture listener
-                CameraTestUtils.SimpleImageReaderListener jpegListener
-                        = new CameraTestUtils.SimpleImageReaderListener();
-                captureReaders.add(createImageReader(largestJpegSize, ImageFormat.JPEG, 2,
-                        jpegListener));
-                captureListeners.add(jpegListener);
-
-                Pair<List<Image>, CaptureResult> resultPair = captureSingleRawShot(activeArraySize,
-                        captureReaders, /*waitForAe*/true, captureListeners);
-                CameraCharacteristics characteristics = mStaticInfo.getCharacteristics();
-                Image raw = resultPair.first.get(0);
-                Image jpeg = resultPair.first.get(1);
+                Image raw = data.imagePair.first.get(0);
+                Image jpeg = data.imagePair.first.get(1);
 
                 Bitmap rawBitmap = Bitmap.createBitmap(raw.getWidth(), raw.getHeight(),
                         Bitmap.Config.ARGB_8888);
-
-                Size rawBitmapSize = new Size(rawBitmap.getWidth(), rawBitmap.getHeight());
-                assertTrue("Raw bitmap size must be equal to either pre-correction active array" +
-                        " size or pixel array size.", rawBitmapSize.equals(activeArraySize));
 
                 byte[] rawPlane = new byte[raw.getPlanes()[0].getRowStride() * raw.getHeight()];
 
@@ -384,15 +350,16 @@ public class DngCreatorTest extends Camera2AndroidTestCase {
 
                 RawConverter.convertToSRGB(RenderScriptSingleton.getRS(), raw.getWidth(),
                         raw.getHeight(), raw.getPlanes()[0].getRowStride(), rawPlane,
-                        characteristics, resultPair.second, /*offsetX*/0, /*offsetY*/0,
-                        /*out*/rawBitmap);
+                        data.characteristics, data.imagePair.second, /*offsetX*/ 0, /*offsetY*/ 0,
+                        /*out*/ rawBitmap);
 
                 rawPlane = null;
                 System.gc(); // Hint to VM
 
                 if (VERBOSE) {
                     // Generate DNG file
-                    DngCreator dngCreator = new DngCreator(characteristics, resultPair.second);
+                    DngCreator dngCreator =
+                            new DngCreator(data.characteristics, data.imagePair.second);
 
                     // Write DNG to file
                     String dngFilePath = DEBUG_FILE_NAME_BASE + "/camera_" + deviceId + "_" +
@@ -426,82 +393,8 @@ public class DngCreatorTest extends Camera2AndroidTestCase {
                             rawFilePath);
                 }
 
-                raw.close();
-
-                // Decompress JPEG image to a bitmap
-                byte[] compressedJpegData = CameraTestUtils.getDataFromImage(jpeg);
-
-                jpeg.close();
-
-                // Get JPEG dimensions without decoding
-                BitmapFactory.Options opt0 = new BitmapFactory.Options();
-                opt0.inJustDecodeBounds = true;
-                BitmapFactory.decodeByteArray(compressedJpegData, /*offset*/0,
-                        compressedJpegData.length, /*inout*/opt0);
-                Rect jpegDimens = new Rect(0, 0, opt0.outWidth, opt0.outHeight);
-
-                // Find square center patch from JPEG and RAW bitmaps
-                RectF jpegRect = new RectF(jpegDimens);
-                RectF rawRect = new RectF(0, 0, rawBitmap.getWidth(), rawBitmap.getHeight());
-                int sideDimen = Math.min(Math.min(Math.min(Math.min(DEFAULT_PATCH_DIMEN,
-                        jpegDimens.width()), jpegDimens.height()), rawBitmap.getWidth()),
-                        rawBitmap.getHeight());
-
-                RectF jpegIntermediate = new RectF(0, 0, sideDimen, sideDimen);
-                jpegIntermediate.offset(jpegRect.centerX() - jpegIntermediate.centerX(),
-                        jpegRect.centerY() - jpegIntermediate.centerY());
-
-                RectF rawIntermediate = new RectF(0, 0, sideDimen, sideDimen);
-                rawIntermediate.offset(rawRect.centerX() - rawIntermediate.centerX(),
-                        rawRect.centerY() - rawIntermediate.centerY());
-                Rect jpegFinal = new Rect();
-                jpegIntermediate.roundOut(jpegFinal);
-                Rect rawFinal = new Rect();
-                rawIntermediate.roundOut(rawFinal);
-
-                // Get RAW center patch, and free up rest of RAW image
-                Bitmap rawPatch = Bitmap.createBitmap(rawBitmap, rawFinal.left, rawFinal.top,
-                        rawFinal.width(), rawFinal.height());
-                rawBitmap.recycle();
-                rawBitmap = null;
-                System.gc(); // Hint to VM
-
-                BitmapFactory.Options opt = new BitmapFactory.Options();
-                opt.inPreferredConfig = Bitmap.Config.ARGB_8888;
-                Bitmap jpegPatch = BitmapRegionDecoder.newInstance(compressedJpegData,
-                        /*offset*/0, compressedJpegData.length, /*isShareable*/true).
-                        decodeRegion(jpegFinal, opt);
-
-                // Compare center patch from JPEG and rendered RAW bitmap
-                double difference = BitmapUtils.calcDifferenceMetric(jpegPatch, rawPatch);
-                if (difference > IMAGE_DIFFERENCE_TOLERANCE) {
-                    // Write JPEG patch to file
-                    String jpegFilePath = DEBUG_FILE_NAME_BASE + "/camera_" + deviceId +
-                            "_jpeg_patch.jpg";
-                    fileStream = new FileOutputStream(jpegFilePath);
-                    jpegPatch.compress(Bitmap.CompressFormat.JPEG, 90, fileStream);
-                    fileStream.flush();
-                    fileStream.close();
-                    Log.e(TAG, "Failed JPEG patch file for camera " + deviceId + " saved to " +
-                            jpegFilePath);
-
-                    // Write RAW patch to file
-                    String rawFilePath = DEBUG_FILE_NAME_BASE + "/camera_" + deviceId +
-                            "_raw_patch.jpg";
-                    fileStream = new FileOutputStream(rawFilePath);
-                    rawPatch.compress(Bitmap.CompressFormat.JPEG, 90, fileStream);
-                    fileStream.flush();
-                    fileStream.close();
-                    Log.e(TAG, "Failed RAW patch file for camera " + deviceId + " saved to " +
-                            rawFilePath);
-
-                    fail("Camera " + mCamera.getId() + ": RAW and JPEG image at  for the same " +
-                            "frame are not similar, center patches have difference metric of " +
-                            difference);
-                }
-
+                validateRawJpegImagePair(rawBitmap, jpeg, deviceId);
             } finally {
-                closeDevice(deviceId);
                 for (ImageReader r : captureReaders) {
                     closeImageReader(r);
                 }
@@ -514,6 +407,184 @@ public class DngCreatorTest extends Camera2AndroidTestCase {
                     outputStream.close();
                 }
 
+                if (fileStream != null) {
+                    fileStream.close();
+                }
+            }
+        }
+    }
+
+    /**
+     * Test basic DNG creation, ensure that the DNG image can be rendered by BitmapFactory.
+     */
+    public void testDngRenderingByBitmapFactor() throws Exception {
+        for (String deviceId : mCameraIds) {
+            List<ImageReader> captureReaders = new ArrayList<>();
+
+            CapturedData data = captureRawJpegImagePair(deviceId, captureReaders);
+            if (data == null) {
+                continue;
+            }
+            Image raw = data.imagePair.first.get(0);
+            Image jpeg = data.imagePair.first.get(1);
+
+            // Generate DNG file
+            DngCreator dngCreator = new DngCreator(data.characteristics, data.imagePair.second);
+
+            // Write DNG to file
+            String dngFilePath = DEBUG_FILE_NAME_BASE + "/camera_" + deviceId + "_"
+                    + TEST_DNG_FILE;
+            // Write out captured DNG file for the first camera device if setprop is enabled
+            try (FileOutputStream fileStream = new FileOutputStream(dngFilePath)) {
+                dngCreator.writeImage(fileStream, raw);
+
+                // Render the DNG file using BitmapFactory.
+                Bitmap rawBitmap = BitmapFactory.decodeFile(dngFilePath);
+                assertNotNull(rawBitmap);
+
+                validateRawJpegImagePair(rawBitmap, jpeg, deviceId);
+            } finally {
+                for (ImageReader r : captureReaders) {
+                    closeImageReader(r);
+                }
+
+                System.gc(); // Hint to VM
+            }
+        }
+    }
+
+    /*
+     * Create RAW + JPEG image pair with characteristics info.
+     */
+    private CapturedData captureRawJpegImagePair(String deviceId, List<ImageReader> captureReaders)
+            throws Exception {
+        CapturedData data = new CapturedData();
+        List<CameraTestUtils.SimpleImageReaderListener> captureListeners = new ArrayList<>();
+        try {
+            openDevice(deviceId);
+
+            if (!mStaticInfo.isCapabilitySupported(
+                    CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES_RAW)) {
+                Log.i(TAG, "RAW capability is not supported in camera " + deviceId
+                        + ". Skip the test.");
+                return null;
+            }
+
+            Size activeArraySize = mStaticInfo.getRawDimensChecked();
+
+            // Get largest jpeg size
+            Size[] targetJpegSizes = mStaticInfo.getAvailableSizesForFormatChecked(
+                    ImageFormat.JPEG, StaticMetadata.StreamDirection.Output);
+
+            Size largestJpegSize = Collections.max(Arrays.asList(targetJpegSizes),
+                    new CameraTestUtils.SizeComparator());
+
+            // Create raw image reader and capture listener
+            CameraTestUtils.SimpleImageReaderListener rawListener =
+                    new CameraTestUtils.SimpleImageReaderListener();
+            captureReaders.add(createImageReader(activeArraySize, ImageFormat.RAW_SENSOR, 2,
+                    rawListener));
+            captureListeners.add(rawListener);
+
+
+            // Create jpeg image reader and capture listener
+            CameraTestUtils.SimpleImageReaderListener jpegListener =
+                    new CameraTestUtils.SimpleImageReaderListener();
+            captureReaders.add(createImageReader(largestJpegSize, ImageFormat.JPEG, 2,
+                    jpegListener));
+            captureListeners.add(jpegListener);
+
+            data.imagePair = captureSingleRawShot(activeArraySize,
+                    captureReaders, /*waitForAe*/ true, captureListeners);
+            data.characteristics = mStaticInfo.getCharacteristics();
+
+            Image raw = data.imagePair.first.get(0);
+            Size rawBitmapSize = new Size(raw.getWidth(), raw.getHeight());
+            assertTrue("Raw bitmap size must be equal to either pre-correction active array" +
+                    " size or pixel array size.", rawBitmapSize.equals(activeArraySize));
+
+            return data;
+        } finally {
+            closeDevice(deviceId);
+        }
+    }
+
+    /*
+     * Verify the image pair by comparing the center patch.
+     */
+    private void validateRawJpegImagePair(Bitmap rawBitmap, Image jpeg, String deviceId)
+            throws Exception {
+        // Decompress JPEG image to a bitmap
+        byte[] compressedJpegData = CameraTestUtils.getDataFromImage(jpeg);
+
+        // Get JPEG dimensions without decoding
+        BitmapFactory.Options opt0 = new BitmapFactory.Options();
+        opt0.inJustDecodeBounds = true;
+        BitmapFactory.decodeByteArray(compressedJpegData, /*offset*/0,
+                compressedJpegData.length, /*inout*/opt0);
+        Rect jpegDimens = new Rect(0, 0, opt0.outWidth, opt0.outHeight);
+
+        // Find square center patch from JPEG and RAW bitmaps
+        RectF jpegRect = new RectF(jpegDimens);
+        RectF rawRect = new RectF(0, 0, rawBitmap.getWidth(), rawBitmap.getHeight());
+        int sideDimen = Math.min(Math.min(Math.min(Math.min(DEFAULT_PATCH_DIMEN,
+                jpegDimens.width()), jpegDimens.height()), rawBitmap.getWidth()),
+                rawBitmap.getHeight());
+
+        RectF jpegIntermediate = new RectF(0, 0, sideDimen, sideDimen);
+        jpegIntermediate.offset(jpegRect.centerX() - jpegIntermediate.centerX(),
+                jpegRect.centerY() - jpegIntermediate.centerY());
+
+        RectF rawIntermediate = new RectF(0, 0, sideDimen, sideDimen);
+        rawIntermediate.offset(rawRect.centerX() - rawIntermediate.centerX(),
+                rawRect.centerY() - rawIntermediate.centerY());
+        Rect jpegFinal = new Rect();
+        jpegIntermediate.roundOut(jpegFinal);
+        Rect rawFinal = new Rect();
+        rawIntermediate.roundOut(rawFinal);
+
+        // Get RAW center patch, and free up rest of RAW image
+        Bitmap rawPatch = Bitmap.createBitmap(rawBitmap, rawFinal.left, rawFinal.top,
+                rawFinal.width(), rawFinal.height());
+        rawBitmap.recycle();
+        rawBitmap = null;
+        System.gc(); // Hint to VM
+
+        BitmapFactory.Options opt = new BitmapFactory.Options();
+        opt.inPreferredConfig = Bitmap.Config.ARGB_8888;
+        Bitmap jpegPatch = BitmapRegionDecoder.newInstance(compressedJpegData,
+                /*offset*/0, compressedJpegData.length, /*isShareable*/true).
+                decodeRegion(jpegFinal, opt);
+
+        // Compare center patch from JPEG and rendered RAW bitmap
+        double difference = BitmapUtils.calcDifferenceMetric(jpegPatch, rawPatch);
+        if (difference > IMAGE_DIFFERENCE_TOLERANCE) {
+            FileOutputStream fileStream = null;
+            try {
+                // Write JPEG patch to file
+                String jpegFilePath = DEBUG_FILE_NAME_BASE + "/camera_" + deviceId +
+                        "_jpeg_patch.jpg";
+                fileStream = new FileOutputStream(jpegFilePath);
+                jpegPatch.compress(Bitmap.CompressFormat.JPEG, 90, fileStream);
+                fileStream.flush();
+                fileStream.close();
+                Log.e(TAG, "Failed JPEG patch file for camera " + deviceId + " saved to " +
+                        jpegFilePath);
+
+                // Write RAW patch to file
+                String rawFilePath = DEBUG_FILE_NAME_BASE + "/camera_" + deviceId +
+                        "_raw_patch.jpg";
+                fileStream = new FileOutputStream(rawFilePath);
+                rawPatch.compress(Bitmap.CompressFormat.JPEG, 90, fileStream);
+                fileStream.flush();
+                fileStream.close();
+                Log.e(TAG, "Failed RAW patch file for camera " + deviceId + " saved to " +
+                        rawFilePath);
+
+                fail("Camera " + mCamera.getId() + ": RAW and JPEG image at  for the same " +
+                        "frame are not similar, center patches have difference metric of " +
+                        difference);
+            } finally {
                 if (fileStream != null) {
                     fileStream.close();
                 }
