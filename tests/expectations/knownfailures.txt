@@ -330,13 +330,6 @@
   bug: 25651805
 },
 {
-  description: "Read from invalid parcel not working",
-  names: [
-    "android.view.cts.MotionEventTest#testReadFromParcelWithInvalidSampleSize"
-  ],
-  bug: 25652250
-},
-{
   description: "unit testing for MediaPreparer lives within mediastress module",
   names: [
     "android.mediastress.cts.preconditions.MediaPreparerTest"
