@@ -19,6 +19,7 @@
 # Generate the SuiteInfo.java
 suite_info_java := $(call intermediates-dir-for,JAVA_LIBRARIES,$(LOCAL_MODULE),true,COMMON)/com/android/compatibility/SuiteInfo.java
 $(suite_info_java): PRIVATE_SUITE_BUILD_NUMBER := $(LOCAL_SUITE_BUILD_NUMBER)
+$(suite_info_java): PRIVATE_SUITE_TARGET_ARCH := $(LOCAL_SUITE_TARGET_ARCH)
 $(suite_info_java): PRIVATE_SUITE_NAME := $(LOCAL_SUITE_NAME)
 $(suite_info_java): PRIVATE_SUITE_FULLNAME := $(LOCAL_SUITE_FULLNAME)
 $(suite_info_java): PRIVATE_SUITE_VERSION := $(LOCAL_SUITE_VERSION)
@@ -29,6 +30,7 @@ $(suite_info_java): cts/build/compatibility_test_suite.mk $(LOCAL_MODULE_MAKEFIL
 	$(hide) echo "package com.android.compatibility;" >> $@
 	$(hide) echo "public class SuiteInfo {" >> $@
 	$(hide) echo "    public static final String BUILD_NUMBER = \"$(PRIVATE_SUITE_BUILD_NUMBER)\";" >> $@
+	$(hide) echo "    public static final String TARGET_ARCH = \"$(PRIVATE_SUITE_TARGET_ARCH)\";" >> $@
 	$(hide) echo "    public static final String NAME = \"$(PRIVATE_SUITE_NAME)\";" >> $@
 	$(hide) echo "    public static final String FULLNAME = \"$(PRIVATE_SUITE_FULLNAME)\";" >> $@
 	$(hide) echo "    public static final String VERSION = \"$(PRIVATE_SUITE_VERSION)\";" >> $@
