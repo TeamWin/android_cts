@@ -26,8 +26,7 @@ public class ICUTestFailedException extends Exception {
      * The number of errors found within the test.
      *
      * <p>The ICU test framework differs from JUnit as an individual test can continue after an
-     * error
-     * is encountered, this field keeps track of the number of errors encountered.
+     * error is encountered, this field keeps track of the number of errors encountered.
      */
     private final int errorCount;
 
