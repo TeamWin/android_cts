@@ -18,6 +18,7 @@ package android.media.cts;
 
 import android.content.pm.PackageManager;
 import android.cts.util.CtsAndroidTestCase;
+import android.media.AudioDeviceInfo;
 import android.media.AudioFormat;
 import android.media.AudioManager;
 import android.media.AudioRecord;
@@ -114,7 +115,7 @@ public class AudioRecordNotificationTest extends CtsAndroidTestCase {
         // verify our recording shows as one of the recording configs
         assertTrue("Test source/session not amongst active record configurations",
                 verifyAudioConfig(TEST_AUDIO_SOURCE, mAudioRecord.getAudioSessionId(),
-                        mAudioRecord.getFormat(), configs));
+                        mAudioRecord.getFormat(), mAudioRecord.getRoutedDevice(), configs));
 
         // stopping recording: verify there are less active record configurations
         mAudioRecord.stop();
@@ -180,12 +181,18 @@ public class AudioRecordNotificationTest extends CtsAndroidTestCase {
         public void onRecordConfigChanged() {
             mCalled = true;
             mParamMatch = verifyAudioConfig(mTestSource, mTestSession, mAudioRecord.getFormat(),
-                    mAM.getActiveRecordConfigurations());
+                    mAudioRecord.getRoutedDevice(), mAM.getActiveRecordConfigurations());
         }
     }
 
+    private static boolean deviceMatch(AudioDeviceInfo devJoe, AudioDeviceInfo devJeff) {
+        return ((devJoe.getId() == devJeff.getId()
+                && (devJoe.getAddress() == devJeff.getAddress())
+                && (devJoe.getType() == devJeff.getType())));
+    }
+
     private static boolean verifyAudioConfig(int source, int session, AudioFormat format,
-            AudioRecordConfiguration[] configs) {
+            AudioDeviceInfo device, AudioRecordConfiguration[] configs) {
         for (int i = 0 ; i < configs.length ; i++) {
             if ((configs[i].getClientAudioSource() == source)
                     && (configs[i].getClientAudioSessionId() == session)
@@ -201,7 +208,8 @@ public class AudioRecordNotificationTest extends CtsAndroidTestCase {
                     //  for the channel mask, either the position or index-based value must be valid
                     && ((configs[i].getFormat().getChannelMask() != AudioFormat.CHANNEL_INVALID)
                             || (configs[i].getFormat().getChannelIndexMask() !=
-                                    AudioFormat.CHANNEL_INVALID))) {
+                                    AudioFormat.CHANNEL_INVALID))
+                    && deviceMatch(device, configs[i].getAudioDevice())) {
                 return true;
             }
         }
