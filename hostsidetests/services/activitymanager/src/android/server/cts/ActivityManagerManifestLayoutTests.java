@@ -54,29 +54,61 @@ public class ActivityManagerManifestLayoutTests extends ActivityManagerTestBase 
     private static final int GRAVITY_HOR_RIGHT  = 0x40;
 
     private List<WindowState> mTempWindowList = new ArrayList();
+    private Display mDisplay;
+    private WindowState mWindowState;
 
     public void testGravityAndDefaultSizeTopLeft() throws Exception {
-        testLayout(GRAVITY_VER_TOP, GRAVITY_HOR_LEFT, false /*fraction*/, false /*minimize*/);
+        testLayout(GRAVITY_VER_TOP, GRAVITY_HOR_LEFT, false /*fraction*/);
     }
 
     public void testGravityAndDefaultSizeTopRight() throws Exception {
-        testLayout(GRAVITY_VER_TOP, GRAVITY_HOR_RIGHT, true /*fraction*/, false /*minimize*/);
+        testLayout(GRAVITY_VER_TOP, GRAVITY_HOR_RIGHT, true /*fraction*/);
     }
 
     public void testGravityAndDefaultSizeBottomLeft() throws Exception {
-        testLayout(GRAVITY_VER_BOTTOM, GRAVITY_HOR_LEFT, true /*fraction*/, false /*minimize*/);
+        testLayout(GRAVITY_VER_BOTTOM, GRAVITY_HOR_LEFT, true /*fraction*/);
     }
 
     public void testGravityAndDefaultSizeBottomRight() throws Exception {
-        testLayout(GRAVITY_VER_BOTTOM, GRAVITY_HOR_RIGHT, false /*fraction*/, false /*minimize*/);
+        testLayout(GRAVITY_VER_BOTTOM, GRAVITY_HOR_RIGHT, false /*fraction*/);
     }
 
-    public void testMinimalSize() throws Exception {
-        testLayout(GRAVITY_VER_TOP, GRAVITY_HOR_LEFT, false /*fraction*/, true /*minimize*/);
+    public void testMinimalSizeFreeform() throws Exception {
+        if (!supportsFreeform()) {
+            CLog.logAndDisplay(INFO, "Skipping test: no freeform support");
+            return;
+        }
+        testMinimalSize(FREEFORM_WORKSPACE_STACK_ID);
+    }
+
+    public void testMinimalSizeDocked() throws Exception {
+        testMinimalSize(DOCKED_STACK_ID);
+    }
+
+    private void testMinimalSize(int stackId) throws Exception {
+        final String activityName = "BottomRightLayoutActivity";
+
+        // Issue command to resize to <0,0,1,1>. We expect the size to be floored at
+        // MINIMAL_SIZE_DPxMINIMAL_SIZE_DP.
+        if (stackId == FREEFORM_WORKSPACE_STACK_ID) {
+            launchActivityInStack(activityName, stackId);
+            resizeActivityTask(activityName, 0, 0, 1, 1);
+        } else { // stackId == DOCKED_STACK_ID
+            launchActivityInDockStack(activityName);
+            resizeDockedStack(1, 1, 1, 1);
+        }
+        getDisplayAndWindowState(activityName);
+
+        final int minimalSize = dpToPx(MINIMAL_SIZE_DP, mDisplay.getDpi());
+        final Rectangle containingRect = mWindowState.getContainingFrame();
+        final int actualSize = Math.min(containingRect.width, containingRect.height);
+
+        // The shorter of width, height should be the minimal size.
+        Assert.assertEquals("Minimum size is incorrect", minimalSize, actualSize);
     }
 
     private void testLayout(
-            int vGravity, int hGravity, boolean fraction, boolean minimize) throws Exception {
+            int vGravity, int hGravity, boolean fraction) throws Exception {
         if (!supportsFreeform()) {
             CLog.logAndDisplay(INFO, "Skipping test: no freeform support");
             return;
@@ -88,27 +120,28 @@ public class ActivityManagerManifestLayoutTests extends ActivityManagerTestBase 
         // Launch in freeform stack
         launchActivityInStack(activityName, FREEFORM_WORKSPACE_STACK_ID);
 
-        int expectedWidthDp = DEFAULT_WIDTH_DP;
-        int expectedHeightDp = DEFAULT_HEIGHT_DP;
+        getDisplayAndWindowState(activityName);
 
-        // If we're testing fraction dimensions, set the expected to -1. The expected value
-        // depends on the display size, and will be evaluated when we have display info.
+        final Rectangle containingRect = mWindowState.getContainingFrame();
+        final Rectangle appRect = mDisplay.getAppRect();
+        final int expectedWidthPx, expectedHeightPx;
+        // Evaluate the expected window size in px. If we're using fraction dimensions,
+        // calculate the size based on the app rect size. Otherwise, convert the expected
+        // size in dp to px.
         if (fraction) {
-            expectedWidthDp = expectedHeightDp = -1;
+            expectedWidthPx = (int) (appRect.width * DEFAULT_WIDTH_FRACTION);
+            expectedHeightPx = (int) (appRect.height * DEFAULT_HEIGHT_FRACTION);
+        } else {
+            final int densityDpi = mDisplay.getDpi();
+            expectedWidthPx = dpToPx(DEFAULT_WIDTH_DP, densityDpi);
+            expectedHeightPx = dpToPx(DEFAULT_HEIGHT_DP, densityDpi);
         }
 
-        // If we're testing minimal size, issue command to resize to <0,0,1,1>. We expect
-        // the size to be floored at MINIMAL_SIZE_DPxMINIMAL_SIZE_DP.
-        if (minimize) {
-            resizeActivityTask(activityName, 0, 0, 1, 1);
-            expectedWidthDp = expectedHeightDp = MINIMAL_SIZE_DP;
-        }
-
-        verifyWindowState(activityName, vGravity, hGravity, expectedWidthDp, expectedHeightDp);
+        verifyFrameSizeAndPosition(
+                vGravity, hGravity, expectedWidthPx, expectedHeightPx, containingRect, appRect);
     }
 
-    private void verifyWindowState(String activityName, int vGravity, int hGravity,
-            int expectedWidthDp, int expectedHeightDp) throws Exception {
+    private void getDisplayAndWindowState(String activityName) throws Exception {
         final String windowName = getWindowName(activityName);
 
         mAmWmState.computeState(mDevice, true /* visibleOnly */, new String[] {activityName});
@@ -122,27 +155,11 @@ public class ActivityManagerManifestLayoutTests extends ActivityManagerTestBase 
         Assert.assertEquals("Should have exactly one window state for the activity.",
                 1, mTempWindowList.size());
 
-        WindowState ws = mTempWindowList.get(0);
+        mWindowState = mTempWindowList.get(0);
+        Assert.assertNotNull("Should have a valid window", mWindowState);
 
-        Display display = mAmWmState.getWmState().getDisplay(ws.getDisplayId());
-        Assert.assertNotNull("Should be on a display", display);
-
-        final Rectangle containingRect = ws.getContainingFrame();
-        final Rectangle appRect = display.getAppRect();
-        final int expectedWidthPx, expectedHeightPx;
-        // Evaluate the expected window size in px. If we're using fraction dimensions,
-        // calculate the size based on the app rect size. Otherwise, convert the expected
-        // size in dp to px.
-        if (expectedWidthDp < 0 || expectedHeightDp < 0) {
-            expectedWidthPx = (int) (appRect.width * DEFAULT_WIDTH_FRACTION);
-            expectedHeightPx = (int) (appRect.height * DEFAULT_HEIGHT_FRACTION);
-        } else {
-            final int densityDpi = display.getDpi();
-            expectedWidthPx = dpToPx(expectedWidthDp, densityDpi);
-            expectedHeightPx = dpToPx(expectedHeightDp, densityDpi);
-        }
-        verifyFrameSizeAndPosition(
-                vGravity, hGravity, expectedWidthPx, expectedHeightPx, containingRect, appRect);
+        mDisplay = mAmWmState.getWmState().getDisplay(mWindowState.getDisplayId());
+        Assert.assertNotNull("Should be on a display", mDisplay);
     }
 
     private void verifyFrameSizeAndPosition(
@@ -153,14 +170,14 @@ public class ActivityManagerManifestLayoutTests extends ActivityManagerTestBase 
 
         if (vGravity == GRAVITY_VER_TOP) {
             Assert.assertEquals("Should be on the top", parentFrame.y, containingFrame.y);
-        } else {
+        } else if (vGravity == GRAVITY_VER_BOTTOM) {
             Assert.assertEquals("Should be on the bottom",
                     parentFrame.y + parentFrame.height, containingFrame.y + containingFrame.height);
         }
 
         if (hGravity == GRAVITY_HOR_LEFT) {
             Assert.assertEquals("Should be on the left", parentFrame.x, containingFrame.x);
-        } else {
+        } else if (hGravity == GRAVITY_HOR_RIGHT){
             Assert.assertEquals("Should be on the right",
                     parentFrame.x + parentFrame.width, containingFrame.x + containingFrame.width);
         }
