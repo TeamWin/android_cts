@@ -312,6 +312,14 @@ public class CoreMathVerifier {
             cbrt(in.max32()));
     }
 
+    static private Target.Floaty cos(double d, Target t) {
+        Target.Floaty in = t.newFloaty(d);
+        return t.newFloaty(
+                   Math.cos(in.mid()),
+                   Math.cos(in.min()),
+                   Math.cos(in.max()));
+    }
+
     static private Target.Floaty cos(float f, Target t) {
         Target.Floaty in = t.new32(f);
         return t.new32(
@@ -334,6 +342,22 @@ public class CoreMathVerifier {
             cos(in.mid32()),
             cos(in.min32()),
             cos(in.max32()));
+    }
+
+    // Computes the cross product of two double-precision 3D vectors.
+    static private void cross(double[] v1, double[] v2, Target.Floaty[] out, Target t) {
+        Target.Floaty a12 = t.multiply(t.newFloaty(v1[1]), t.newFloaty(v2[2]));
+        Target.Floaty a21 = t.multiply(t.newFloaty(v1[2]), t.newFloaty(v2[1]));
+        out[0] = t.subtract(a12, a21);
+        Target.Floaty a02 = t.multiply(t.newFloaty(v1[0]), t.newFloaty(v2[2]));
+        Target.Floaty a20 = t.multiply(t.newFloaty(v1[2]), t.newFloaty(v2[0]));
+        out[1] = t.subtract(a20, a02);
+        Target.Floaty a01 = t.multiply(t.newFloaty(v1[0]), t.newFloaty(v2[1]));
+        Target.Floaty a10 = t.multiply(t.newFloaty(v1[1]), t.newFloaty(v2[0]));
+        out[2] = t.subtract(a01, a10);
+        if (out.length == 4) {
+            out[3] = t.newFloaty(0.f);
+        }
     }
 
     // Computes the cross product of two 3D vectors.
@@ -393,6 +417,14 @@ public class CoreMathVerifier {
             expm1(in.mid32()),
             expm1(in.min32()),
             expm1(in.max32()));
+    }
+
+    static private Target.Floaty floor(double d, Target t) {
+        Target.Floaty in = t.newFloaty(d);
+        return t.newFloaty(
+                    Math.floor(in.mid()),
+                    Math.floor(in.min()),
+                    Math.floor(in.max()));
     }
 
     static private Target.Floaty hypot(float x, float y, Target t) {
@@ -497,6 +529,11 @@ public class CoreMathVerifier {
         } else {
             return t.new32(value);
         }
+    }
+
+    static private Target.Floaty rsqrt(double d, Target t) {
+        Target.Floaty in = t.newFloaty(d);
+        return t.divide(t.newFloaty(1.), t.sqrt(in));
     }
 
     static private Target.Floaty rsqrt(float f, Target t) {
@@ -1050,6 +1087,15 @@ public class CoreMathVerifier {
         args.out = t.new32(Math.copySign(args.inMagnitudeValue, args.inSignValue));
     }
 
+    static public void computeCos(TestCos.ArgumentsHalfHalf args, Target t) {
+        t.setPrecision(4, 128);
+        Target.Floaty in = t.newFloaty(args.inVDouble);
+        args.out =  t.newFloaty(
+                        Math.cos(in.mid()),
+                        Math.cos(in.min()),
+                        Math.cos(in.max()));
+    }
+
     static public void computeCos(TestCos.ArgumentsFloatFloat args, Target t) {
         t.setPrecision(4, 128);
         args.out = cos(args.inV, t);
@@ -1063,6 +1109,11 @@ public class CoreMathVerifier {
     static public void computeCospi(TestCospi.ArgumentsFloatFloat args, Target t) {
         t.setPrecision(4, 128);
         args.out = cospi(args.inV, t);
+    }
+
+    static public void computeCross(TestCross.ArgumentsHalfNHalfNHalfN args, Target t) {
+        t.setPrecision(1, 4);
+        cross(args.inLeftVectorDouble, args.inRightVectorDouble, args.out, t);
     }
 
     static public void computeCross(TestCross.ArgumentsFloatNFloatNFloatN args, Target t) {
@@ -1193,6 +1244,11 @@ public class CoreMathVerifier {
             Math.max(0.f, r.mid32()),
             Math.max(0.f, r.min32()),
             Math.max(0.f, r.max32()));
+    }
+
+    static public void computeFloor(TestFloor.ArgumentsHalfHalf args, Target t) {
+        t.setPrecision(0, 0);
+        args.out = floor(args.inVDouble, t);
     }
 
     static public void computeFloor(TestFloor.ArgumentsFloatFloat args, Target t) {
@@ -1864,6 +1920,11 @@ public class CoreMathVerifier {
             round(in.mid32()),
             round(in.min32()),
             round(in.max32()));
+    }
+
+    static public void computeRsqrt(TestRsqrt.ArgumentsHalfHalf args, Target t) {
+        t.setPrecision(2, 2);
+        args.out = rsqrt(args.inVDouble, t);
     }
 
     static public void computeRsqrt(TestRsqrt.ArgumentsFloatFloat args, Target t) {
