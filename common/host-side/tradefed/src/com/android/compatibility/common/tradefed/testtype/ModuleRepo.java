@@ -479,7 +479,14 @@ public class ModuleRepo implements IModuleRepo {
         for (String name : names) {
             int index = name.indexOf(CONFIG_EXT);
             if (index > 0) {
-                modules.add(name.substring(0, index));
+                String module = name.substring(0, index);
+                if (module.equals(pattern)) {
+                    // Pattern represents a single module, just return a single-item list
+                    modules = new ArrayList<>(1);
+                    modules.add(module);
+                    return modules;
+                }
+                modules.add(module);
             }
         }
         return modules;
