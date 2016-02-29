@@ -35,3 +35,19 @@ float3 __attribute__((kernel)) testCosFloat3Float3(float3 inV) {
 float4 __attribute__((kernel)) testCosFloat4Float4(float4 inV) {
     return cos(inV);
 }
+
+half __attribute__((kernel)) testCosHalfHalf(half inV) {
+    return cos(inV);
+}
+
+half2 __attribute__((kernel)) testCosHalf2Half2(half2 inV) {
+    return cos(inV);
+}
+
+half3 __attribute__((kernel)) testCosHalf3Half3(half3 inV) {
+    return cos(inV);
+}
+
+half4 __attribute__((kernel)) testCosHalf4Half4(half4 inV) {
+    return cos(inV);
+}
