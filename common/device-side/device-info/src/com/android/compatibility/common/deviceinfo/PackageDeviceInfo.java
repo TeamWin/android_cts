@@ -20,7 +20,7 @@ import android.content.pm.PackageManager;
 import android.os.Bundle;
 
 import com.android.compatibility.common.deviceinfo.DeviceInfo;
-import com.android.compatibility.common.util.InfoStore;
+import com.android.compatibility.common.util.DeviceInfoStore;
 
 /**
  * PackageDeviceInfo collector.
@@ -34,7 +34,7 @@ public class PackageDeviceInfo extends DeviceInfo {
     private static final String PRIV_APP_DIR = "/system/priv-app";
 
     @Override
-    protected void collectDeviceInfo(InfoStore store) throws Exception {
+    protected void collectDeviceInfo(DeviceInfoStore store) throws Exception {
         PackageManager pm = getContext().getPackageManager();
         store.startArray(PACKAGE);
         for (PackageInfo pkg : pm.getInstalledPackages(0)) {

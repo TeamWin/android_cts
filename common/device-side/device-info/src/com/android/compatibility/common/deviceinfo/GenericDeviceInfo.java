@@ -29,7 +29,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import com.android.compatibility.common.deviceinfo.DeviceInfo;
-import com.android.compatibility.common.util.InfoStore;
+import com.android.compatibility.common.util.DeviceInfoStore;
 
 /**
  * Generic device info collector.
@@ -60,7 +60,7 @@ public class GenericDeviceInfo extends DeviceInfo {
     private final Map<String, String> mDeviceInfo = new HashMap<>();
 
     @Override
-    protected void collectDeviceInfo(InfoStore store) throws Exception {
+    protected void collectDeviceInfo(DeviceInfoStore store) throws Exception {
         store.addResult(BUILD_ID, Build.ID);
         store.addResult(BUILD_PRODUCT, Build.PRODUCT);
         store.addResult(BUILD_DEVICE, Build.DEVICE);

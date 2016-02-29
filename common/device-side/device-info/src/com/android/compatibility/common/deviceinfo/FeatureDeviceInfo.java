@@ -18,7 +18,7 @@ package com.android.compatibility.common.deviceinfo;
 import android.content.pm.FeatureInfo;
 import android.content.pm.PackageManager;
 
-import com.android.compatibility.common.util.InfoStore;
+import com.android.compatibility.common.util.DeviceInfoStore;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
@@ -34,7 +34,7 @@ import java.util.Set;
 public final class FeatureDeviceInfo extends DeviceInfo {
 
     @Override
-    protected void collectDeviceInfo(InfoStore store) throws Exception {
+    protected void collectDeviceInfo(DeviceInfoStore store) throws Exception {
         PackageManager packageManager = getInstrumentation().getContext().getPackageManager();
         store.startArray("feature");
 
@@ -80,7 +80,7 @@ public final class FeatureDeviceInfo extends DeviceInfo {
         }
     }
 
-    private void addFeature(InfoStore store, String name, String type, boolean available)
+    private void addFeature(DeviceInfoStore store, String name, String type, boolean available)
             throws Exception {
         store.startGroup();
         store.addResult("name", name);

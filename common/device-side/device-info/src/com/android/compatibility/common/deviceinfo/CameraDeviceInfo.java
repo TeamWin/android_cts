@@ -17,7 +17,7 @@ package com.android.compatibility.common.deviceinfo;
 
 import android.media.CamcorderProfile;
 
-import com.android.compatibility.common.util.InfoStore;
+import com.android.compatibility.common.util.DeviceInfoStore;
 
 /**
  * Camera information collector.
@@ -25,7 +25,7 @@ import com.android.compatibility.common.util.InfoStore;
 public final class CameraDeviceInfo extends DeviceInfo {
 
     @Override
-    protected void collectDeviceInfo(InfoStore store) throws Exception {
+    protected void collectDeviceInfo(DeviceInfoStore store) throws Exception {
         store.addResult("profile_480p", CamcorderProfile.hasProfile(CamcorderProfile.QUALITY_480P));
         store.addResult("profile_720p", CamcorderProfile.hasProfile(CamcorderProfile.QUALITY_720P));
         store.addResult("profile_1080p", CamcorderProfile.hasProfile(CamcorderProfile.QUALITY_1080P));
