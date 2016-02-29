@@ -17,7 +17,7 @@ package com.android.compatibility.common.deviceinfo;
 
 import android.util.Log;
 
-import com.android.compatibility.common.util.InfoStore;
+import com.android.compatibility.common.util.DeviceInfoStore;
 
 import java.io.Closeable;
 import java.io.File;
@@ -37,31 +37,32 @@ public final class LibraryDeviceInfo extends DeviceInfo {
     private static final int BUFFER_SIZE_BYTES = 4096;
 
     @Override
-    protected void collectDeviceInfo(InfoStore store) throws Exception {
+    protected void collectDeviceInfo(DeviceInfoStore store) throws Exception {
         collectSystemLibs(store);
         collectVendorLibs(store);
         collectFrameworkJars(store);
     }
 
-    private void collectSystemLibs(InfoStore store) throws Exception {
+    private void collectSystemLibs(DeviceInfoStore store) throws Exception {
         store.startArray("lib");
         collectFileDetails(store, "/system/lib", ".so");
         store.endArray();
     }
 
-    private void collectVendorLibs(InfoStore store) throws Exception {
+    private void collectVendorLibs(DeviceInfoStore store) throws Exception {
         store.startArray("vendor_lib");
         collectFileDetails(store, "/system/vendor/lib", ".so");
         store.endArray();
     }
 
-    private void collectFrameworkJars(InfoStore store) throws Exception {
+    private void collectFrameworkJars(DeviceInfoStore store) throws Exception {
         store.startArray("framework_jar");
         collectFileDetails(store, "/system/framework", ".jar");
         store.endArray();
     }
 
-    private void collectFileDetails(InfoStore store, String path, String suffix) throws Exception {
+    private void collectFileDetails(DeviceInfoStore store, String path, String suffix)
+            throws Exception {
         File dir = new File(path);
         for (File file : dir.listFiles()) {
             String name = file.getName();

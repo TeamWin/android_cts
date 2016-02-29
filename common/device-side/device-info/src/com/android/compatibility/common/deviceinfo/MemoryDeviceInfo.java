@@ -21,7 +21,7 @@ import android.content.Context;
 import android.os.Bundle;
 
 import com.android.compatibility.common.deviceinfo.DeviceInfo;
-import com.android.compatibility.common.util.InfoStore;
+import com.android.compatibility.common.util.DeviceInfoStore;
 
 /**
  * MemoryDeviceInfo collector.
@@ -29,7 +29,7 @@ import com.android.compatibility.common.util.InfoStore;
 public final class MemoryDeviceInfo extends DeviceInfo {
 
     @Override
-    protected void collectDeviceInfo(InfoStore store) throws Exception {
+    protected void collectDeviceInfo(DeviceInfoStore store) throws Exception {
         ActivityManager activityManager = (ActivityManager)getInstrumentation()
                 .getTargetContext().getSystemService(Context.ACTIVITY_SERVICE);
         store.addResult("low_ram_device", activityManager.isLowRamDevice());

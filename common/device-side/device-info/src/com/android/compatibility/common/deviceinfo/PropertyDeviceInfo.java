@@ -17,7 +17,7 @@ package com.android.compatibility.common.deviceinfo;
 
 import android.util.Log;
 
-import com.android.compatibility.common.util.InfoStore;
+import com.android.compatibility.common.util.DeviceInfoStore;
 
 import java.io.IOException;
 import java.util.List;
@@ -33,7 +33,7 @@ public final class PropertyDeviceInfo extends DeviceInfo {
     private static final String LOG_TAG = "PropertyDeviceInfo";
 
     @Override
-    protected void collectDeviceInfo(InfoStore store) throws Exception {
+    protected void collectDeviceInfo(DeviceInfoStore store) throws Exception {
         try {
             collectRoProperties(store);
         } catch (IOException e) {
@@ -41,7 +41,7 @@ public final class PropertyDeviceInfo extends DeviceInfo {
         }
     }
 
-    private void collectRoProperties(InfoStore store) throws IOException {
+    private void collectRoProperties(DeviceInfoStore store) throws IOException {
         store.startArray("ro_property");
         Pattern pattern = Pattern.compile("\\[(ro.+)\\]: \\[(.+)\\]");
         Scanner scanner = null;
