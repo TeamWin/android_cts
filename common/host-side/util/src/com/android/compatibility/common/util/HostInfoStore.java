@@ -15,33 +15,29 @@
  */
 package com.android.compatibility.common.util;
 
-import android.util.JsonWriter;
+import com.android.json.stream.JsonWriter;
 
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.nio.charset.StandardCharsets;
-import java.io.Serializable;
 import java.util.Arrays;
 import java.util.List;
 
-public class InfoStore {
-
-    private static final int MAX_STRING_LENGTH = 1000;
-    private static final int MAX_ARRAY_LENGTH = 1000;
-    private static final int MAX_LIST_LENGTH = 1000;
+public class HostInfoStore extends InfoStore {
 
     private final File mJsonFile;
     private JsonWriter mJsonWriter = null;
 
-    public InfoStore(File file) throws Exception {
+    public HostInfoStore(File file) throws Exception {
         mJsonFile = file;
     }
 
     /**
      * Opens the file for storage and creates the writer.
      */
+    @Override
     public void open() throws IOException {
         FileOutputStream out = new FileOutputStream(mJsonFile);
         mJsonWriter = new JsonWriter(new OutputStreamWriter(out, StandardCharsets.UTF_8));
@@ -53,6 +49,7 @@ public class InfoStore {
     /**
      * Closes the writer.
      */
+    @Override
     public void close() throws IOException {
         mJsonWriter.endObject();
         mJsonWriter.close();
@@ -61,6 +58,7 @@ public class InfoStore {
     /**
      * Start a new group of result.
      */
+    @Override
     public void startGroup() throws IOException {
         mJsonWriter.beginObject();
     }
@@ -68,6 +66,7 @@ public class InfoStore {
     /**
      * Start a new group of result with specified name.
      */
+    @Override
     public void startGroup(String name) throws IOException {
         mJsonWriter.name(name);
         mJsonWriter.beginObject();
@@ -76,6 +75,7 @@ public class InfoStore {
     /**
      * Complete adding result to the last started group.
      */
+    @Override
     public void endGroup() throws IOException {
         mJsonWriter.endObject();
     }
@@ -83,6 +83,7 @@ public class InfoStore {
     /**
      * Start a new array of result.
      */
+    @Override
     public void startArray() throws IOException {
         mJsonWriter.beginArray();
     }
@@ -90,6 +91,7 @@ public class InfoStore {
     /**
      * Start a new array of result with specified name.
      */
+    @Override
     public void startArray(String name) throws IOException {
         checkName(name);
         mJsonWriter.name(name);
@@ -99,6 +101,7 @@ public class InfoStore {
     /**
      * Complete adding result to the last started array.
      */
+    @Override
     public void endArray() throws IOException {
         mJsonWriter.endArray();
     }
@@ -106,6 +109,7 @@ public class InfoStore {
     /**
      * Adds a int value to the InfoStore
      */
+    @Override
     public void addResult(String name, int value) throws IOException {
         checkName(name);
         mJsonWriter.name(name);
@@ -115,6 +119,7 @@ public class InfoStore {
     /**
      * Adds a long value to the InfoStore
      */
+    @Override
     public void addResult(String name, long value) throws IOException {
         checkName(name);
         mJsonWriter.name(name);
@@ -124,6 +129,7 @@ public class InfoStore {
     /**
      * Adds a float value to the InfoStore
      */
+    @Override
     public void addResult(String name, float value) throws IOException {
         checkName(name);
         mJsonWriter.name(name);
@@ -133,6 +139,7 @@ public class InfoStore {
     /**
      * Adds a double value to the InfoStore
      */
+    @Override
     public void addResult(String name, double value) throws IOException {
         checkName(name);
         mJsonWriter.name(name);
@@ -142,6 +149,7 @@ public class InfoStore {
     /**
      * Adds a boolean value to the InfoStore
      */
+    @Override
     public void addResult(String name, boolean value) throws IOException {
         checkName(name);
         mJsonWriter.name(name);
@@ -151,6 +159,7 @@ public class InfoStore {
     /**
      * Adds a String value to the InfoStore
      */
+    @Override
     public void addResult(String name, String value) throws IOException {
         checkName(name);
         mJsonWriter.name(name);
@@ -160,6 +169,7 @@ public class InfoStore {
     /**
      * Adds a int array to the InfoStore
      */
+    @Override
     public void addArrayResult(String name, int[] array) throws IOException {
         checkName(name);
         mJsonWriter.name(name);
@@ -173,6 +183,7 @@ public class InfoStore {
     /**
      * Adds a long array to the InfoStore
      */
+    @Override
     public void addArrayResult(String name, long[] array) throws IOException {
         checkName(name);
         mJsonWriter.name(name);
@@ -186,6 +197,7 @@ public class InfoStore {
     /**
      * Adds a float array to the InfoStore
      */
+    @Override
     public void addArrayResult(String name, float[] array) throws IOException {
         checkName(name);
         mJsonWriter.name(name);
@@ -199,6 +211,7 @@ public class InfoStore {
     /**
      * Adds a double array to the InfoStore
      */
+    @Override
     public void addArrayResult(String name, double[] array) throws IOException {
         checkName(name);
         mJsonWriter.name(name);
@@ -212,6 +225,7 @@ public class InfoStore {
     /**
      * Adds a boolean array to the InfoStore
      */
+    @Override
     public void addArrayResult(String name, boolean[] array) throws IOException {
         checkName(name);
         mJsonWriter.name(name);
@@ -225,6 +239,7 @@ public class InfoStore {
     /**
      * Adds a List of String to the InfoStore
      */
+    @Override
     public void addListResult(String name, List<String> list) throws IOException {
         checkName(name);
         mJsonWriter.name(name);
@@ -233,69 +248,5 @@ public class InfoStore {
             mJsonWriter.value(checkString(value));
         }
         mJsonWriter.endArray();
-    }
-
-    private static int[] checkArray(int[] values) {
-        if (values.length > MAX_ARRAY_LENGTH) {
-            return Arrays.copyOf(values, MAX_ARRAY_LENGTH);
-        } else {
-            return values;
-        }
-    }
-
-    private static long[] checkArray(long[] values) {
-        if (values.length > MAX_ARRAY_LENGTH) {
-            return Arrays.copyOf(values, MAX_ARRAY_LENGTH);
-        } else {
-            return values;
-        }
-    }
-
-    private static float[] checkArray(float[] values) {
-        if (values.length > MAX_ARRAY_LENGTH) {
-            return Arrays.copyOf(values, MAX_ARRAY_LENGTH);
-        } else {
-            return values;
-        }
-    }
-
-    private static double[] checkArray(double[] values) {
-        if (values.length > MAX_ARRAY_LENGTH) {
-            return Arrays.copyOf(values, MAX_ARRAY_LENGTH);
-        } else {
-            return values;
-        }
-    }
-
-    private static boolean[] checkArray(boolean[] values) {
-        if (values.length > MAX_ARRAY_LENGTH) {
-            return Arrays.copyOf(values, MAX_ARRAY_LENGTH);
-        } else {
-            return values;
-        }
-    }
-
-    private static List<String> checkStringList(List<String> list) {
-        if (list.size() > MAX_LIST_LENGTH) {
-            return list.subList(0, MAX_LIST_LENGTH);
-        }
-        return list;
-    }
-
-    private static String checkString(String value) {
-        if (value == null || value.isEmpty()) {
-            return "";
-        }
-        if (value.length() > MAX_STRING_LENGTH) {
-            return value.substring(0, MAX_STRING_LENGTH);
-        }
-        return value;
-    }
-
-    private static String checkName(String value) {
-        if (value == null || value.isEmpty()) {
-            throw new NullPointerException();
-        }
-        return value;
     }
 }

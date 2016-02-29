@@ -18,7 +18,7 @@ package com.android.compatibility.common.deviceinfo;
 import android.os.Environment;
 import android.util.Log;
 
-import com.android.compatibility.common.util.InfoStore;
+import com.android.compatibility.common.util.DeviceInfoStore;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -32,7 +32,7 @@ public class StorageDeviceInfo extends DeviceInfo {
     private static final String TAG = "StorageDeviceInfo";
 
     @Override
-    protected void collectDeviceInfo(InfoStore store) throws Exception {
+    protected void collectDeviceInfo(DeviceInfoStore store) throws Exception {
         int total = 0;
         total = Math.max(total, getContext().getExternalCacheDirs().length);
         total = Math.max(total, getContext().getExternalFilesDirs(null).length);

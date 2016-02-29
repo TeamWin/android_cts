@@ -18,7 +18,7 @@ package com.android.cts.deviceinfo;
 import android.os.Bundle;
 
 import com.android.compatibility.common.deviceinfo.DeviceInfo;
-import com.android.compatibility.common.util.InfoStore;
+import com.android.compatibility.common.util.DeviceInfoStore;
 
 import java.util.Arrays;
 
@@ -28,7 +28,7 @@ import java.util.Arrays;
 public class SampleDeviceInfo extends DeviceInfo {
 
     @Override
-    protected void collectDeviceInfo(InfoStore store) throws Exception {
+    protected void collectDeviceInfo(DeviceInfoStore store) throws Exception {
         boolean[] booleans = {Boolean.TRUE, Boolean.FALSE};
         double[] doubles = {Double.MAX_VALUE, Double.MIN_VALUE};
         int[] ints = {Integer.MAX_VALUE, Integer.MIN_VALUE};
