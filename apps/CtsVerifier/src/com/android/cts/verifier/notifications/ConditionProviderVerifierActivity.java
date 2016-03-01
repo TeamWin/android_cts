@@ -33,6 +33,7 @@ import android.view.ViewGroup;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 public class ConditionProviderVerifierActivity extends InteractiveVerifierActivity
@@ -292,7 +293,7 @@ public class ConditionProviderVerifierActivity extends InteractiveVerifierActivi
 
         @Override
         void test() {
-            List<AutomaticZenRule> rules = mNm.getAutomaticZenRules();
+            Map<String, AutomaticZenRule> rules = mNm.getAutomaticZenRules();
 
             if (rules == null || rules.size() != 2) {
                 logFail();
@@ -301,7 +302,7 @@ public class ConditionProviderVerifierActivity extends InteractiveVerifierActivi
                 return;
             }
 
-            for (AutomaticZenRule createdRule : rules) {
+            for (AutomaticZenRule createdRule : rules.values()) {
                 if (!compareRules(createdRule, rule1) && !compareRules(createdRule, rule2)) {
                     logFail();
                     status = FAIL;
@@ -314,8 +315,9 @@ public class ConditionProviderVerifierActivity extends InteractiveVerifierActivi
 
         @Override
         void tearDown() {
-            mNm.removeAutomaticZenRule(id1);
-            mNm.removeAutomaticZenRule(id2);
+            for (String id : ids) {
+                mNm.removeAutomaticZenRule(id);
+            }
             MockConditionProvider.resetData(mContext);
             delay();
         }
