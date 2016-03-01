@@ -15,6 +15,7 @@
  */
 package android.icu.cts;
 
+import android.icu.cts.junit.TestFmwkUtils;
 import android.util.Log;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
@@ -26,8 +27,6 @@ import javax.annotation.Nullable;
  * A list of the tests to run.
  */
 class IcuTestList {
-
-    private static final String ROOT_TEST_GROUP_NAME = "com.ibm.icu.dev.test.TestAll";
 
     /**
      * The names of the set of tests to run, if null then all tests should be run.
@@ -45,14 +44,14 @@ class IcuTestList {
     public IcuTestList(@Nullable List<String> testNameList) {
 
         // Populate a set with the unique class names of all the tests.
-        Set<String> classNamesToRun = new LinkedHashSet<>();
+        Set<String> classNamesToRun;
         if (testNameList == null) {
             // Run from the root test class.
-            String rootTestClassName = ROOT_TEST_GROUP_NAME;
-            Log.d(IcuTestRunner.TAG, "Running all tests rooted at " + rootTestClassName);
-            classNamesToRun.add(rootTestClassName);
+            classNamesToRun = TestFmwkUtils.getRootClassNames();
+            Log.d(IcuTestRunner.TAG, "Running all tests rooted at " + classNamesToRun);
             testsToRun = null;
         } else {
+            classNamesToRun = new LinkedHashSet<>();
             testsToRun = new LinkedHashSet<>(testNameList);
 
             for (String testName : testNameList) {

@@ -4,56 +4,61 @@
 [
 {
   description: "Fails when running the tests from ant in external/icu/icu4j",
-  name: "com.ibm.icu.dev.test.format.NumberFormatTest#TestDataDrivenICU",
+  name: "android.icu.dev.test.format.NumberFormatTest#TestDataDrivenICU",
   bug: "27310195"
 },
 {
-  description: "Class cannot be instantiated, cannot find resources com/ibm/icu/dev/test/serializable/data",
-  name: "com.ibm.icu.dev.test.serializable.CompatibilityTest",
+  description: "Class cannot be instantiated, cannot find resources android/icu/dev/test/serializable/data",
+  name: "android.icu.dev.test.serializable.CompatibilityTest",
   bug: "27310873"
+},
+{
+  description: "Serialized forms have not been converted to use repackaged classes",
+  name: "android.icu.dev.test.format.NumberFormatRegressionTest#TestSerialization",
+  bug: "27374606"
+},
+{
+  description: "android.icu.charset package not available in repackaged Android library",
+  name: "android.icu.dev.test.charset.TestAll#initializationError",
+  bug: "27373370"
 },
 {
   description: "Broken and not yet triaged",
   names: [
-    "com.ibm.icu.dev.test.bidi.TestCompatibility#testCompatibility",
-    "com.ibm.icu.dev.test.calendar.ChineseTest#TestCoverage",
-    "com.ibm.icu.dev.test.calendar.ChineseTest#TestInitWithCurrentTime",
-    "com.ibm.icu.dev.test.calendar.IBMCalendarTest#TestAddRollEra0AndEraBounds",
-    "com.ibm.icu.dev.test.duration.ICUDurationTest#TestBasics",
-    "com.ibm.icu.dev.test.format.DataDrivenFormatTest#run-everything",
-    "com.ibm.icu.dev.test.format.DateFormatRegressionTest#Test4073003",
-    "com.ibm.icu.dev.test.format.DateFormatRegressionTest#Test4151706",
-    "com.ibm.icu.dev.test.format.DateFormatRegressionTest#Test4182066",
-    "com.ibm.icu.dev.test.format.DateFormatTest#TestBadInput135",
-    "com.ibm.icu.dev.test.format.DateFormatTest#TestDotAndAtLeniency",
-    "com.ibm.icu.dev.test.format.DateFormatTest#TestGenericTime",
-    "com.ibm.icu.dev.test.format.DateFormatTest#TestPartialParse994",
-    "com.ibm.icu.dev.test.format.DateFormatTest#TestQuarters",
-    "com.ibm.icu.dev.test.format.DateFormatTest#TestSpaceParsing",
-    "com.ibm.icu.dev.test.format.DateFormatTest#TestTwoDigitYear",
-    "com.ibm.icu.dev.test.format.DateFormatTest#TestWhiteSpaceParsing",
-    "com.ibm.icu.dev.test.format.NumberFormatTest#TestDataDrivenJDK",
-    "com.ibm.icu.dev.test.format.NumberFormatTest#TestNonpositiveMultiplier",
-    "com.ibm.icu.dev.test.format.PluralRulesTest#testOverUnderflow",
-    "com.ibm.icu.dev.test.timezone.TimeZoneBoundaryTest#TestStepwise",
-    "com.ibm.icu.dev.test.timezone.TimeZoneTest#TestObservesDaylightTime",
-    "com.ibm.icu.dev.test.translit.TransliteratorTest#TestSourceTargetSet2",
-    "com.ibm.icu.dev.test.translit.TransliteratorTest#TestSourceTargetSetFilter",
-    "com.ibm.icu.dev.test.util.CurrencyTest#TestGetKeywordValues"
+    "android.icu.dev.test.bidi.TestCompatibility#testCompatibility",
+    "android.icu.dev.test.calendar.ChineseTest#TestCoverage",
+    "android.icu.dev.test.calendar.ChineseTest#TestInitWithCurrentTime",
+    "android.icu.dev.test.calendar.IBMCalendarTest#TestAddRollEra0AndEraBounds",
+    "android.icu.dev.test.duration.ICUDurationTest#TestBasics",
+    "android.icu.dev.test.format.DataDrivenFormatTest#run-everything",
+    "android.icu.dev.test.format.DateFormatRegressionTest#Test4073003",
+    "android.icu.dev.test.format.DateFormatRegressionTest#Test4151706",
+    "android.icu.dev.test.format.DateFormatRegressionTest#Test4182066",
+    "android.icu.dev.test.format.DateFormatTest#TestBadInput135",
+    "android.icu.dev.test.format.DateFormatTest#TestDotAndAtLeniency",
+    "android.icu.dev.test.format.DateFormatTest#TestGenericTime",
+    "android.icu.dev.test.format.DateFormatTest#TestPartialParse994",
+    "android.icu.dev.test.format.DateFormatTest#TestQuarters",
+    "android.icu.dev.test.format.DateFormatTest#TestSpaceParsing",
+    "android.icu.dev.test.format.DateFormatTest#TestTwoDigitYear",
+    "android.icu.dev.test.format.DateFormatTest#TestWhiteSpaceParsing",
+    "android.icu.dev.test.format.NumberFormatTest#TestDataDrivenJDK",
+    "android.icu.dev.test.format.NumberFormatTest#TestNonpositiveMultiplier",
+    "android.icu.dev.test.format.PluralRulesTest#testOverUnderflow",
+    "android.icu.dev.test.timezone.TimeZoneBoundaryTest#TestStepwise",
+    "android.icu.dev.test.timezone.TimeZoneTest#TestObservesDaylightTime",
+    "android.icu.dev.test.util.CurrencyTest#TestGetKeywordValues"
   ]
 },
 {
   description: "Broken due to warnings, not yet triaged",
   names: [
-    "com.ibm.icu.dev.test.collator.CollationCreationMethodTest#TestRuleVsLocaleCreationMonkey",
-    "com.ibm.icu.dev.test.collator.CollationMiscTest#TestImport",
-    "com.ibm.icu.dev.test.collator.CollationMiscTest#TestImportWithType",
-    "com.ibm.icu.dev.test.collator.CollationMiscTest#TestUCARules",
-    "com.ibm.icu.dev.test.collator.CollationTest#TestDataDriven",
-    "com.ibm.icu.dev.test.collator.G7CollationTest#TestG7Data",
-    "com.ibm.icu.dev.test.charset.TestCharset#TestHZ",
-    "com.ibm.icu.dev.test.charset.TestCharset#TestMBCS",
-    "com.ibm.icu.dev.test.charset.TestCharset#TestSurrogateBehavior"
+    "android.icu.dev.test.collator.CollationCreationMethodTest#TestRuleVsLocaleCreationMonkey",
+    "android.icu.dev.test.collator.CollationMiscTest#TestImport",
+    "android.icu.dev.test.collator.CollationMiscTest#TestImportWithType",
+    "android.icu.dev.test.collator.CollationMiscTest#TestUCARules",
+    "android.icu.dev.test.collator.CollationTest#TestDataDriven",
+    "android.icu.dev.test.collator.G7CollationTest#TestG7Data"
   ]
 }
 ]

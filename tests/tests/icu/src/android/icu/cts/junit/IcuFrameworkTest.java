@@ -16,7 +16,7 @@
 
 package android.icu.cts.junit;
 
-import com.ibm.icu.dev.test.TestFmwk;
+import android.icu.dev.test.TestFmwk;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.regex.Matcher;

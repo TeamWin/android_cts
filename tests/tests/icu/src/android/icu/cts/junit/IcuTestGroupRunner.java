@@ -16,7 +16,7 @@
 
 package android.icu.cts.junit;
 
-import com.ibm.icu.dev.test.TestFmwk;
+import android.icu.dev.test.TestFmwk;
 import java.util.ArrayList;
 import java.util.List;
 import org.junit.runner.Description;

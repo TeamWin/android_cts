@@ -16,7 +16,7 @@
 
 package android.icu.cts.junit;
 
-import com.ibm.icu.dev.test.TestFmwk;
+import android.icu.dev.test.TestFmwk;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -27,7 +27,7 @@ import org.junit.runners.model.Statement;
 
 /**
  * A {@link org.junit.runner.Runner} that can be used to run a class that is a {@link TestFmwk}
- * but not a {@link com.ibm.icu.dev.test.TestFmwk.TestGroup}
+ * but not a {@link android.icu.dev.test.TestFmwk.TestGroup}
  */
 public class IcuTestFmwkRunner extends IcuTestParentRunner<IcuFrameworkTest> {
 
