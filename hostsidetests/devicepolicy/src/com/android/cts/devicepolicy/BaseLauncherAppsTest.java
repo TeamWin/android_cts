@@ -28,6 +28,8 @@ public class BaseLauncherAppsTest extends BaseDevicePolicyTest {
     protected static final String SIMPLE_APP_APK = "CtsSimpleApp.apk";
     protected static final String LAUNCHER_TESTS_PKG = "com.android.cts.launchertests";
     protected static final String LAUNCHER_TESTS_CLASS = LAUNCHER_TESTS_PKG + ".LauncherAppsTests";
+    protected static final String PARAM_TEST_USER = "testUser";
+
     private static final String LAUNCHER_TESTS_APK = "CtsLauncherAppsTests.apk";
     private static final String LAUNCHER_TESTS_SUPPORT_PKG =
             "com.android.cts.launchertests.support";

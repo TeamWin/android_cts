@@ -465,9 +465,9 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
         if (!mHasFeature) {
             return;
         }
-        assertTrue(runDeviceTests(MANAGED_PROFILE_PKG, ".OrganizationInfoTest",
+        assertTrue(runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".OrganizationInfoTest",
                 "testDefaultOrganizationColorIsGray", mProfileUserId));
-        assertTrue(runDeviceTests(MANAGED_PROFILE_PKG, ".OrganizationInfoTest",
+        assertTrue(runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".OrganizationInfoTest",
                 "testDefaultOrganizationNameIsNull", mProfileUserId));
         assertTrue(runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".OrganizationInfoTest",
                 mProfileUserId));
@@ -557,11 +557,13 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
             assertTrue("Command was expected to succeed " + commandOutput,
                     commandOutput.contains("Status: ok"));
 
-            assertTrue(runDeviceTests(MANAGED_PROFILE_PKG, ".CrossProfileWidgetTest",
+            assertTrue(runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".CrossProfileWidgetTest",
                     "testCrossProfileWidgetProviderAdded", mProfileUserId));
-            assertTrue(runDeviceTests(MANAGED_PROFILE_PKG, ".CrossProfileWidgetPrimaryUserTest",
+            assertTrue(runDeviceTestsAsUser(MANAGED_PROFILE_PKG,
+                    ".CrossProfileWidgetPrimaryUserTest",
                     "testHasCrossProfileWidgetProvider_true", mParentUserId));
-            assertTrue(runDeviceTests(MANAGED_PROFILE_PKG, ".CrossProfileWidgetPrimaryUserTest",
+            assertTrue(runDeviceTestsAsUser(MANAGED_PROFILE_PKG,
+                    ".CrossProfileWidgetPrimaryUserTest",
                     "testHostReceivesWidgetUpdates_true", mParentUserId));
 
             commandOutput = changeCrossProfileWidgetForUser(WIDGET_PROVIDER_PKG,
@@ -569,11 +571,13 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
             assertTrue("Command was expected to succeed " + commandOutput,
                     commandOutput.contains("Status: ok"));
 
-            assertTrue(runDeviceTests(MANAGED_PROFILE_PKG, ".CrossProfileWidgetTest",
+            assertTrue(runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".CrossProfileWidgetTest",
                     "testCrossProfileWidgetProviderRemoved", mProfileUserId));
-            assertTrue(runDeviceTests(MANAGED_PROFILE_PKG, ".CrossProfileWidgetPrimaryUserTest",
+            assertTrue(runDeviceTestsAsUser(MANAGED_PROFILE_PKG,
+                    ".CrossProfileWidgetPrimaryUserTest",
                     "testHasCrossProfileWidgetProvider_false", mParentUserId));
-            assertTrue(runDeviceTests(MANAGED_PROFILE_PKG, ".CrossProfileWidgetPrimaryUserTest",
+            assertTrue(runDeviceTestsAsUser(MANAGED_PROFILE_PKG,
+                    ".CrossProfileWidgetPrimaryUserTest",
                     "testHostReceivesWidgetUpdates_false", mParentUserId));
         } finally {
             changeCrossProfileWidgetForUser(WIDGET_PROVIDER_PKG, "remove-cross-profile-widget",
