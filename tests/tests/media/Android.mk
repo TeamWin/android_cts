@@ -56,8 +56,8 @@ LOCAL_PACKAGE_NAME := CtsMediaTestCases
 
 LOCAL_JAVA_LIBRARIES += android.test.runner org.apache.http.legacy
 
-# Tag this module as a cts_v2 test artifact
-LOCAL_COMPATIBILITY_SUITE := cts_v2
+# Tag this module as a cts test artifact
+LOCAL_COMPATIBILITY_SUITE := cts
 
 include $(BUILD_CTS_PACKAGE)
 

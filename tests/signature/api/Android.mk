@@ -25,8 +25,8 @@ LOCAL_MODULE_STEM := current.api
 LOCAL_MODULE_CLASS := ETC
 LOCAL_MODULE_PATH := $(TARGET_OUT_DATA_ETC)
 
-# Tag this module as a cts_v2 test artifact
-LOCAL_COMPATIBILITY_SUITE := cts_v2
+# Tag this module as a cts test artifact
+LOCAL_COMPATIBILITY_SUITE := cts
 
 include $(BUILD_SYSTEM)/base_rules.mk
 $(LOCAL_BUILT_MODULE) : frameworks/base/api/current.txt | $(APICHECK)

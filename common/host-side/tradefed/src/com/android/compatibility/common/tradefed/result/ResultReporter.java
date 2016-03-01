@@ -205,8 +205,8 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
     @Override
     public void testEnded(TestIdentifier test, Map<String, String> metrics) {
         if (mCurrentResult.getResultStatus() == TestStatus.FAIL) {
-            logResult("%s has already failed", test);
-            // Test has already failed.
+            logResult("%s has previously failed", test);
+            // Test has previously failed.
             return;
         }
         // device test can have performance results in test metrics

@@ -29,7 +29,7 @@ LOCAL_STATIC_JAVA_LIBRARIES := compatibility-device-util
 # don't include these packages in any target
 LOCAL_MODULE_TAGS := optional
 
-# Tag this module as a cts_v2 test artifact
-LOCAL_COMPATIBILITY_SUITE := cts_v2
+# Tag this module as a cts test artifact
+LOCAL_COMPATIBILITY_SUITE := cts
 
 include $(BUILD_JAVA_LIBRARY)

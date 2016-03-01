@@ -14,7 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# launcher script for cts-tradefed harness
+# launcher script for old-cts-tradefed harness
 # can be used from an Android build environment, or a standalone cts zip
 
 checkFile() {
@@ -63,23 +63,23 @@ fi
 # check if in Android build env
 if [ ! -z "${ANDROID_BUILD_TOP}" ]; then
     if [ ! -z "${ANDROID_HOST_OUT}" ]; then
-      CTS_ROOT=${ANDROID_HOST_OUT}/cts
+      OLD_CTS_ROOT=${ANDROID_HOST_OUT}/old-cts
     else
-      CTS_ROOT=${ANDROID_BUILD_TOP}/${OUT_DIR:-out}/host/${OS}/cts
+      OLD_CTS_ROOT=${ANDROID_BUILD_TOP}/${OUT_DIR:-out}/host/${OS}/old-cts
     fi
-    if [ ! -d ${CTS_ROOT} ]; then
-        echo "Could not find $CTS_ROOT in Android build environment. Try 'make cts'"
+    if [ ! -d ${OLD_CTS_ROOT} ]; then
+        echo "Could not find $OLD_CTS_ROOT in Android build environment. Try 'make old-cts'"
         exit
     fi;
 fi;
 
-if [ -z ${CTS_ROOT} ]; then
+if [ -z ${OLD_CTS_ROOT} ]; then
     # assume we're in an extracted cts install
-    CTS_ROOT="$(dirname $0)/../.."
+    OLD_CTS_ROOT="$(dirname $0)/../.."
 fi;
 
-JAR_DIR=${CTS_ROOT}/android-cts/tools
-JARS="tradefed-prebuilt.jar hosttestlib.jar cts-tradefed.jar"
+JAR_DIR=${OLD_CTS_ROOT}/old-android-cts/tools
+JARS="tradefed-prebuilt.jar hosttestlib.jar old-cts-tradefed.jar"
 
 for JAR in $JARS; do
     checkFile ${JAR_DIR}/${JAR}
@@ -87,7 +87,7 @@ for JAR in $JARS; do
 done
 
 # load any shared libraries for host-side executables
-LIB_DIR=${CTS_ROOT}/android-cts/lib
+LIB_DIR=${OLD_CTS_ROOT}/old-android-cts/lib
 if [ "$HOST" == "Linux" ]; then
     LD_LIBRARY_PATH=${LIB_DIR}:${LIB_DIR}64:${LD_LIBRARY_PATH}
     export LD_LIBRARY_PATH
@@ -97,5 +97,5 @@ elif [ "$HOST" == "Darwin" ]; then
 fi
 
 java $RDBG_FLAG \
-  -cp ${JAR_PATH} -DCTS_ROOT=${CTS_ROOT} com.android.cts.tradefed.command.CtsConsole "$@"
+  -cp ${JAR_PATH} -DCTS_ROOT=${OLD_CTS_ROOT} com.android.cts.tradefed.command.CtsConsole "$@"
 

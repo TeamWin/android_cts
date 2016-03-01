@@ -22,8 +22,8 @@ LOCAL_PACKAGE_NAME := CtsSplitApp_x86
 
 LOCAL_JAVA_RESOURCE_DIRS := raw
 
-# tag this module as a cts_v2 test artifact
-LOCAL_COMPATIBILITY_SUITE := cts_v2
+# tag this module as a cts test artifact
+LOCAL_COMPATIBILITY_SUITE := cts
 
 LOCAL_CERTIFICATE := cts/hostsidetests/appsecurity/certs/cts-testkey1
 LOCAL_AAPT_FLAGS := --version-code 100 --replace-version

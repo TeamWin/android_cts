@@ -22,7 +22,7 @@ source ${CTS_DIR}/test_defs.sh
 JARS="
     compatibility-common-util-hostsidelib\
     compatibility-host-util\
-    cts-tradefed-tests_v2\
-    cts-tradefed_v2"
+    cts-tradefed-tests\
+    cts-tradefed"
 
 run_tests "com.android.compatibility.tradefed.CtsTradefedTest" "${JARS}" "${@}"

@@ -22,18 +22,18 @@ LOCAL_MODULE_TAGS := optional
 
 LOCAL_MODULE := CtsUiHostTestCases
 
-LOCAL_JAVA_LIBRARIES := cts-tradefed_v2 compatibility-host-util tradefed-prebuilt
+LOCAL_JAVA_LIBRARIES := cts-tradefed tradefed-prebuilt compatibility-host-util
 
 LOCAL_STATIC_JAVA_LIBRARIES := cts-migration-lib
 
 LOCAL_ADDITIONAL_DEPENDENCIES := $(LOCAL_PATH)/Android.mk
 
-$(COMPATIBILITY_TESTCASES_OUT_cts_v2)/CtsUiHostTestCases.jar : $(COMPATIBILITY_TESTCASES_OUT_cts_v2)/com.replica.replicaisland.apk
+$(COMPATIBILITY_TESTCASES_OUT_cts)/CtsUiHostTestCases.jar : $(COMPATIBILITY_TESTCASES_OUT_cts)/com.replica.replicaisland.apk
 
 LOCAL_CTS_TEST_PACKAGE := android.ui.cts
 
-# Tag this module as a cts_v2 test artifact
-LOCAL_COMPATIBILITY_SUITE := cts_v2
+# Tag this module as a cts test artifact
+LOCAL_COMPATIBILITY_SUITE := cts
 
 include $(BUILD_CTS_HOST_JAVA_LIBRARY)
 

@@ -43,8 +43,8 @@ LOCAL_STATIC_JAVA_LIBRARIES := \
 	icu4j-icutzdata \
 	icu4j-testdata
 
-# Tag this module as a cts_v2 test artifact
-LOCAL_COMPATIBILITY_SUITE := cts_v2
+# Tag this module as a cts test artifact
+LOCAL_COMPATIBILITY_SUITE := cts
 
 LOCAL_PACKAGE_NAME := CtsIcuTestCases
 

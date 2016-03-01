@@ -29,9 +29,9 @@ import java.io.File;
  */
 public class CtsTradefedTest extends TestCase {
 
-    private static final String PROPERTY_NAME = "CTS_V2_ROOT";
+    private static final String PROPERTY_NAME = "CTS_ROOT";
     private static final String SUITE_FULL_NAME = "Compatibility Test Suite";
-    private static final String SUITE_NAME = "CTS_V2";
+    private static final String SUITE_NAME = "CTS";
     private static final String SUITE_PLAN = "cts";
     private static final String DYNAMIC_CONFIG_URL = "";
 
@@ -39,7 +39,7 @@ public class CtsTradefedTest extends TestCase {
         // Test the values in the manifest can be loaded
         File root = FileUtil.createTempDir("root");
         System.setProperty(PROPERTY_NAME, root.getAbsolutePath());
-        File base = new File(root, "android-cts_v2");
+        File base = new File(root, "android-cts");
         base.mkdirs();
         File tests = new File(base, "testcases");
         tests.mkdirs();
