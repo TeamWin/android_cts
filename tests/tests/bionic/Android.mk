@@ -26,8 +26,8 @@ LOCAL_STATIC_LIBRARIES += \
     liblog \
     libgtest \
 
-# Tag this module as a cts_v2 test artifact
-LOCAL_COMPATIBILITY_SUITE := cts_v2
+# Tag this module as a cts test artifact
+LOCAL_COMPATIBILITY_SUITE := cts
 
 LOCAL_CTS_TEST_PACKAGE := android.bionic
 include $(BUILD_CTS_EXECUTABLE)

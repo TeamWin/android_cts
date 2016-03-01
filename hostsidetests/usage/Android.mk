@@ -25,8 +25,8 @@ LOCAL_JAVA_LIBRARIES := cts-tradefed tradefed-prebuilt
 
 LOCAL_CTS_TEST_PACKAGE := android.host.app.usage
 
-# tag this module as a cts_v2 test artifact
-LOCAL_COMPATIBILITY_SUITE := cts_v2
+# tag this module as a cts test artifact
+LOCAL_COMPATIBILITY_SUITE := cts
 
 include $(BUILD_CTS_HOST_JAVA_LIBRARY)
 

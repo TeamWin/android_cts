@@ -14,6 +14,6 @@
 # limitations under the License.
 #
 
-include cts/CtsBuild.mk
+include cts/OldCtsBuild.mk
 include cts/CtsCoverage.mk
 include $(call all-subdir-makefiles)

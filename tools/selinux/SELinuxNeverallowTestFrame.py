@@ -18,7 +18,6 @@ src_header = """/*
 
 package android.cts.security;
 
-import com.android.cts.tradefed.build.CtsBuildHelper;
 import com.android.tradefed.build.IBuildInfo;
 import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.testtype.DeviceTestCase;

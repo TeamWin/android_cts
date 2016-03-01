@@ -341,8 +341,6 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
                             TestFilter filter = new TestFilter(
                                     module.getAbi(), module.getName(), r.getFullName());
                             mIncludeFilters.add(filter.toString());
-                            // Reset the result so that the test gets retried.
-                            r.reset();
                         }
                     }
                 }

@@ -21,7 +21,7 @@ source ${CTS_DIR}/test_defs.sh
 
 JARS="
     compatibility-host-util\
-    cts-tradefed_v2\
+    cts-tradefed\
     compatibility-host-media-preconditions\
     compatibility-host-media-preconditions-tests"
 

@@ -17,6 +17,6 @@ include $(CLEAR_VARS)
 
 LOCAL_MODULE_TAGS := optional
 
-LOCAL_PREBUILT_EXECUTABLES := cts-tradefed_v2
+LOCAL_PREBUILT_EXECUTABLES := cts-tradefed
 include $(BUILD_HOST_PREBUILT)
 

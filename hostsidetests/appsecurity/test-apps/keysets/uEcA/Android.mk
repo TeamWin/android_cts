@@ -17,8 +17,8 @@ LOCAL_PATH:= $(call my-dir)
 #apks signed by cts-keyset-test-a
 include $(CLEAR_VARS)
 
-# tag this module as a cts_v2 test artifact
-LOCAL_COMPATIBILITY_SUITE := cts_v2
+# tag this module as a cts test artifact
+LOCAL_COMPATIBILITY_SUITE := cts
 
 LOCAL_MODULE_TAGS := tests
 LOCAL_SDK_VERSION := current

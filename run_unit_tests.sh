@@ -41,7 +41,7 @@ BUILD_TARGETS="
     compatibility-host-util-tests\
     compatibility-device-util-tests\
     compatibility-tradefed-tests\
-    cts-tradefed-tests_v2\
+    cts-tradefed-tests\
     compatibility-device-info-tests\
     compatibility-manifest-generator-tests
     compatibility-host-media-preconditions-tests\
