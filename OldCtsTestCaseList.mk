@@ -199,6 +199,7 @@ cts_test_packages := \
     CtsNetSecConfigBasicDomainConfigTestCases \
     CtsNetSecConfigInvalidPinTestCases \
     CtsNetSecConfigNestedDomainConfigTestCases \
+    CtsNetSecConfigResourcesSrcTestCases \
     CtsOpenGLTestCases \
     CtsOpenGlPerfTestCases \
     CtsOpenGlPerf2TestCases \
