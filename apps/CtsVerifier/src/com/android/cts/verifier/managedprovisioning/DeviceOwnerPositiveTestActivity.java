@@ -24,6 +24,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.database.DataSetObserver;
+import android.graphics.BitmapFactory;
 import android.os.Bundle;
 import android.os.UserManager;
 import android.provider.Settings;
@@ -64,6 +65,7 @@ public class DeviceOwnerPositiveTestActivity extends PassFailButtons.TestListAct
     static final String COMMAND_SET_STATUSBAR_DISABLED = "set-statusbar-disabled";
     static final String COMMAND_SET_KEYGUARD_DISABLED = "set-keyguard-disabled";
     static final String COMMAND_CHECK_PERMISSION_LOCKDOWN = "check-permission-lockdown";
+    static final String COMMAND_SET_USER_ICON = "set-user-icon";
     static final String EXTRA_SETTING = "extra-setting";
 
     private static final String CHECK_DEVICE_OWNER_TEST_ID = "CHECK_DEVICE_OWNER";
@@ -77,6 +79,7 @@ public class DeviceOwnerPositiveTestActivity extends PassFailButtons.TestListAct
     private static final String DISALLOW_CONFIG_WIFI_ID = "DISALLOW_CONFIG_WIFI";
     private static final String DISALLOW_CONFIG_VPN_ID = "DISALLOW_CONFIG_VPN";
     private static final String DISALLOW_USB_FILE_TRANSFER_ID = "DISALLOW_USB_FILE_TRANSFER";
+    private static final String SET_USER_ICON_TEST_ID = "SET_USER_ICON";
     //TODO(rgl): This symbol should be available in android.provider.settings
     private static final String ACTION_VPN_SETTINGS = "android.net.vpn.SETTINGS";
     private static final String REMOVE_DEVICE_OWNER_TEST_ID = "REMOVE_DEVICE_OWNER";
@@ -233,6 +236,17 @@ public class DeviceOwnerPositiveTestActivity extends PassFailButtons.TestListAct
                                 createDeviceOwnerIntentWithBooleanParameter(
                                         COMMAND_SET_KEYGUARD_DISABLED, false))}));
 
+        adapter.add(createInteractiveTestItem(this, SET_USER_ICON_TEST_ID,
+                R.string.device_owner_set_user_icon,
+                R.string.device_owner_set_user_icon_instruction,
+                new ButtonInfo[] {
+                        new ButtonInfo(
+                                R.string.device_owner_set_user_icon_button,
+                                createSetUserIconIntent()),
+                        new ButtonInfo(
+                                R.string.device_owner_settings_go,
+                                new Intent(Settings.ACTION_SETTINGS))}));
+
         // setPermissionGrantState
         adapter.add(createTestItem(this, CHECK_PERMISSION_LOCKDOWN_TEST_ID,
                 R.string.device_profile_owner_permission_lockdown_test,
@@ -287,6 +301,11 @@ public class DeviceOwnerPositiveTestActivity extends PassFailButtons.TestListAct
                 .putExtra(EXTRA_RESTRICTION, restriction);
     }
 
+    private Intent createSetUserIconIntent() {
+        return new Intent(this, CommandReceiver.class)
+                .putExtra(EXTRA_COMMAND, COMMAND_SET_USER_ICON);
+    }
+
     public static class CommandReceiver extends Activity {
         @Override
         public void onCreate(Bundle savedInstanceState) {
@@ -330,6 +349,12 @@ public class DeviceOwnerPositiveTestActivity extends PassFailButtons.TestListAct
                         TestResult.setFailedResult(this, intent.getStringExtra(EXTRA_TEST_ID),
                                 getString(R.string.device_owner_incorrect_device_owner), null);
                     }
+                } else if (COMMAND_SET_USER_ICON.equals(command)) {
+                    if (!dpm.isDeviceOwnerApp(getPackageName())) {
+                        return;
+                    }
+                    dpm.setUserIcon(admin, BitmapFactory.decodeResource(getResources(),
+                            com.android.cts.verifier.R.drawable.icon));
                 } else {
                     Log.e(TAG, "Invalid command: " + command);
                 }
