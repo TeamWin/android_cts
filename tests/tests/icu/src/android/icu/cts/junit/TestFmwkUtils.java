@@ -16,13 +16,15 @@
 
 package android.icu.cts.junit;
 
-import com.ibm.icu.dev.test.TestFmwk;
+import android.icu.dev.test.TestFmwk;
+import com.google.common.collect.ImmutableSet;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Abstracts away reflection code that accesses various hidden fields and methods in the ICU test
@@ -32,7 +34,7 @@ import java.util.List;
  * framework will itself be modified to remove the need for this reflection at which point this
  * class can be removed.
  */
-class TestFmwkUtils {
+public class TestFmwkUtils {
 
     /**
      * The field on TestGroup which has the list of classes in it.
@@ -46,11 +48,13 @@ class TestFmwkUtils {
             getField(TestFmwk.TestGroup.class, "defaultPackage");
 
     /**
-     * The field on TestFmwk which has the {@link com.ibm.icu.dev.test.TestFmwk.TestParams} in it.
+     * The field on TestFmwk which has the {@link android.icu.dev.test.TestFmwk.TestParams} in it.
      */
     private static final Field paramsField = getField(TestFmwk.class, "params");
 
     private static final Method getTargetsMethod = getTargetsMethod();
+
+    private static final String REPACKAGED_ROOT_TEST_GROUP_NAME = "android.icu.dev.test.TestAll";
 
     private static Field getField(Class<?> theClass, String name) {
         // Find the field, and complain if it is not where it's expected to be.
@@ -148,5 +152,9 @@ class TestFmwkUtils {
         } catch (IllegalAccessException e) {
             throw new IllegalStateException("Problem getting class names from " + testGroup, e);
         }
+    }
+
+    public static Set<String> getRootClassNames() {
+        return ImmutableSet.of(REPACKAGED_ROOT_TEST_GROUP_NAME);
     }
 }

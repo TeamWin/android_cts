@@ -28,20 +28,13 @@ LOCAL_PROGUARD_ENABLED := disabled
 LOCAL_SRC_FILES := $(call all-java-files-under, src)
 LOCAL_JAVA_RESOURCE_DIRS := resources
 
-# The aim of this package is to run tests against the default packaging of ICU as a standalone
-# java library, and not as the implementation in use by the current android system. For this
-# reason, all the required ICU resources are included into the APK by the following rules.
-# icu4j contains ICU's implementation classes, icu4j-tests contains the test classes,
-# and icudata/icutzdata contain data files and timezone data files respectively.
+# The aim of this package is to run tests against the implementation in use by
+# the current android system.
 LOCAL_STATIC_JAVA_LIBRARIES := \
 	compatibility-device-util \
 	android-support-test \
 	vogarexpect \
-	icu4j \
-	icu4j-tests \
-	icu4j-icudata \
-	icu4j-icutzdata \
-	icu4j-testdata
+	android-icu4j-tests
 
 # Tag this module as a cts test artifact
 LOCAL_COMPATIBILITY_SUITE := cts

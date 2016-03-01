@@ -23,7 +23,7 @@ import org.junit.runners.model.InitializationError;
  * Extends {@link ParentRunner} to prevent it from trying to create an instance of
  * {@link org.junit.runners.model.TestClass} for the supplied {@code testClass} because that
  * requires that the {@code testClass} has only a single constructor and at least one ICU test
- * ({@code com.ibm.icu.dev.test.serializable.CoverageTest}) has more than one constructor.
+ * ({@code android.icu.dev.test.serializable.CoverageTest}) has more than one constructor.
  *
  * <p>This provides a dummy class and overrides the {@link #getName()} method to return the
  * correct name. The consequence of this is that it is not possible to use JUnit 4 annotations
