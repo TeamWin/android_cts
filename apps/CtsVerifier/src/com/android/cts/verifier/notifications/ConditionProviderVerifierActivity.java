@@ -33,6 +33,7 @@ import android.view.ViewGroup;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 public class ConditionProviderVerifierActivity extends InteractiveVerifierActivity
         implements Runnable {
@@ -148,16 +149,9 @@ public class ConditionProviderVerifierActivity extends InteractiveVerifierActivi
             long now = System.currentTimeMillis();
             AutomaticZenRule ruleToCreate =
                     createRule("Rule", "value", NotificationManager.INTERRUPTION_FILTER_ALARMS);
-            AutomaticZenRule createdRule = mNm.addAutomaticZenRule(ruleToCreate);
+            id = mNm.addAutomaticZenRule(ruleToCreate);
 
-            if (createdRule != null
-                    && ruleToCreate.getName().equals(createdRule.getName())
-                    && ruleToCreate.getOwner().equals(createdRule.getOwner())
-                    && ruleToCreate.getConditionId().equals(createdRule.getConditionId())
-                    && ruleToCreate.isEnabled() == createdRule.isEnabled()
-                    && !TextUtils.isEmpty(createdRule.getId())
-                    && createdRule.getCreationTime() > now) {
-                id = createdRule.getId();
+            if (!TextUtils.isEmpty(id)) {
                 status = PASS;
             } else {
                 logFail();
@@ -189,8 +183,7 @@ public class ConditionProviderVerifierActivity extends InteractiveVerifierActivi
         void setUp() {
             ruleToCreate = createRule("RuleSubscribe", "Subscribevalue",
                     NotificationManager.INTERRUPTION_FILTER_ALARMS);
-            AutomaticZenRule createdRule = mNm.addAutomaticZenRule(ruleToCreate);
-            id = createdRule == null ? null : createdRule.getId();
+            id = mNm.addAutomaticZenRule(ruleToCreate);
             status = READY;
             delay();
         }
@@ -236,7 +229,6 @@ public class ConditionProviderVerifierActivity extends InteractiveVerifierActivi
     private class GetAutomaticZenRuleTest extends InteractiveTestCase {
         private String id = null;
         private AutomaticZenRule ruleToCreate;
-        private AutomaticZenRule createdRule;
 
         @Override
         View inflate(ViewGroup parent) {
@@ -247,29 +239,20 @@ public class ConditionProviderVerifierActivity extends InteractiveVerifierActivi
         void setUp() {
             ruleToCreate = createRule("RuleGet", "valueGet",
                     NotificationManager.INTERRUPTION_FILTER_ALARMS);
-            createdRule = mNm.addAutomaticZenRule(ruleToCreate);
-            id = createdRule == null ? null : createdRule.getId();
+            id = mNm.addAutomaticZenRule(ruleToCreate);
             status = READY;
             delay();
         }
 
         @Override
         void test() {
-            if (createdRule != null) {
-                id = createdRule.getId();
-                AutomaticZenRule queriedRule = mNm.getAutomaticZenRule(id);
-                if (queriedRule != null
-                        && ruleToCreate.getName().equals(queriedRule.getName())
-                        && ruleToCreate.getOwner().equals(queriedRule.getOwner())
-                        && ruleToCreate.getConditionId().equals(queriedRule.getConditionId())
-                        && ruleToCreate.isEnabled() == queriedRule.isEnabled()
-                        && queriedRule.getId().equals(id)
-                        && createdRule.getCreationTime() == queriedRule.getCreationTime()) {
-                    status = PASS;
-                } else {
-                    logFail();
-                    status = FAIL;
-                }
+            AutomaticZenRule queriedRule = mNm.getAutomaticZenRule(id);
+            if (queriedRule != null
+                    && ruleToCreate.getName().equals(queriedRule.getName())
+                    && ruleToCreate.getOwner().equals(queriedRule.getOwner())
+                    && ruleToCreate.getConditionId().equals(queriedRule.getConditionId())
+                    && ruleToCreate.isEnabled() == queriedRule.isEnabled()) {
+                status = PASS;
             } else {
                 logFail();
                 status = FAIL;
@@ -289,8 +272,8 @@ public class ConditionProviderVerifierActivity extends InteractiveVerifierActivi
 
     private class GetAutomaticZenRulesTest extends InteractiveTestCase {
         private List<String> ids = new ArrayList<>();
-        AutomaticZenRule createdRule1;
-        AutomaticZenRule createdRule2;
+        private AutomaticZenRule rule1;
+        private AutomaticZenRule rule2;
 
         @Override
         View inflate(ViewGroup parent) {
@@ -299,14 +282,10 @@ public class ConditionProviderVerifierActivity extends InteractiveVerifierActivi
 
         @Override
         void setUp() {
-            AutomaticZenRule rule1 =
-                    createRule("Rule1", "value1", NotificationManager.INTERRUPTION_FILTER_ALARMS);
-            AutomaticZenRule rule2 =
-                    createRule("Rule2", "value2", NotificationManager.INTERRUPTION_FILTER_NONE);
-            createdRule1 = mNm.addAutomaticZenRule(rule1);
-            createdRule2 = mNm.addAutomaticZenRule(rule2);
-            ids.add(createdRule1.getId());
-            ids.add(createdRule2.getId());
+            rule1 = createRule("Rule1", "value1", NotificationManager.INTERRUPTION_FILTER_ALARMS);
+            rule2 = createRule("Rule2", "value2", NotificationManager.INTERRUPTION_FILTER_NONE);
+            ids.add(mNm.addAutomaticZenRule(rule1));
+            ids.add(mNm.addAutomaticZenRule(rule2));
             status = READY;
             delay();
         }
@@ -315,27 +294,28 @@ public class ConditionProviderVerifierActivity extends InteractiveVerifierActivi
         void test() {
             List<AutomaticZenRule> rules = mNm.getAutomaticZenRules();
 
-            if (rules == null || rules.size() < 2) {
+            if (rules == null || rules.size() != 2) {
                 logFail();
                 status = FAIL;
                 next();
                 return;
             }
 
-            if (rules.contains(createdRule1) && rules.contains(createdRule2)) {
-                status = PASS;
-            } else {
-                logFail();
-                status = FAIL;
+            for (AutomaticZenRule createdRule : rules) {
+                if (!compareRules(createdRule, rule1) && !compareRules(createdRule, rule2)) {
+                    logFail();
+                    status = FAIL;
+                    break;
+                }
             }
+            status = PASS;
             next();
         }
 
         @Override
         void tearDown() {
-            for (String id : ids) {
-                mNm.removeAutomaticZenRule(id);
-            }
+            mNm.removeAutomaticZenRule(id1);
+            mNm.removeAutomaticZenRule(id2);
             MockConditionProvider.resetData(mContext);
             delay();
         }
@@ -353,10 +333,9 @@ public class ConditionProviderVerifierActivity extends InteractiveVerifierActivi
         void test() {
             AutomaticZenRule ruleToCreate = createRule("RuleDelete", "Deletevalue",
                     NotificationManager.INTERRUPTION_FILTER_ALARMS);
-            AutomaticZenRule createdRule = mNm.addAutomaticZenRule(ruleToCreate);
+            id = mNm.addAutomaticZenRule(ruleToCreate);
 
-            if (createdRule != null) {
-                id = createdRule.getId();
+            if (id != null) {
                 if (mNm.removeAutomaticZenRule(id)) {
                     if (mNm.getAutomaticZenRule(id) == null) {
                         status = PASS;
@@ -385,7 +364,6 @@ public class ConditionProviderVerifierActivity extends InteractiveVerifierActivi
     private class UnsubscribeAutomaticZenRuleTest extends InteractiveTestCase {
         private String id = null;
         private AutomaticZenRule ruleToCreate;
-        private AutomaticZenRule createdRule;
 
         @Override
         View inflate(ViewGroup parent) {
@@ -396,8 +374,7 @@ public class ConditionProviderVerifierActivity extends InteractiveVerifierActivi
         void setUp() {
             ruleToCreate = createRule("RuleUnsubscribe", "valueUnsubscribe",
                     NotificationManager.INTERRUPTION_FILTER_PRIORITY);
-            createdRule = mNm.addAutomaticZenRule(ruleToCreate);
-            id = createdRule == null ? null : createdRule.getId();
+            id = mNm.addAutomaticZenRule(ruleToCreate);
             status = READY;
             delay();
         }
@@ -529,6 +506,14 @@ public class ConditionProviderVerifierActivity extends InteractiveVerifierActivi
                 MockConditionProvider.toConditionId(queryValue),
                 status,
                 true);
+    }
+
+    private boolean compareRules(AutomaticZenRule rule1, AutomaticZenRule rule2) {
+        return rule1.isEnabled() == rule2.isEnabled()
+                && Objects.equals(rule1.getName(), rule2.getName())
+                && rule1.getInterruptionFilter() == rule2.getInterruptionFilter()
+                && Objects.equals(rule1.getConditionId(), rule2.getConditionId())
+                && Objects.equals(rule1.getOwner(), rule2.getOwner());
     }
 
     protected View createSettingsItem(ViewGroup parent, int messageId) {
