@@ -38,8 +38,8 @@ LOCAL_JNI_SHARED_LIBRARIES := libjavacoretests libsqlite_jni libnativehelper_com
 # where applicable.
 LOCAL_MULTILIB := both
 
-# Tag this module as a cts_v2 test artifact
-LOCAL_COMPATIBILITY_SUITE := cts_v2
+# Tag this module as a cts test artifact
+LOCAL_COMPATIBILITY_SUITE := cts
 
 # Copy the expectation files to CTS
 LOCAL_COMPATIBILITY_SUPPORT_FILES += \

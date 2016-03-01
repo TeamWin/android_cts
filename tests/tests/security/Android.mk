@@ -41,8 +41,8 @@ LOCAL_STATIC_LIBRARIES := \
 
 LOCAL_CTS_TEST_PACKAGE := android.security.cts
 
-# Tag this module as a cts_v2 test artifact
-LOCAL_COMPATIBILITY_SUITE := cts_v2
+# Tag this module as a cts test artifact
+LOCAL_COMPATIBILITY_SUITE := cts
 
 include $(BUILD_CTS_EXECUTABLE)
 
@@ -83,8 +83,8 @@ LOCAL_PACKAGE_NAME := CtsSecurityTestCases
 
 LOCAL_SDK_VERSION := 23
 
-# Tag this module as a cts_v2 test artifact
-LOCAL_COMPATIBILITY_SUITE := cts_v2
+# Tag this module as a cts test artifact
+LOCAL_COMPATIBILITY_SUITE := cts
 
 include $(BUILD_CTS_PACKAGE)
 

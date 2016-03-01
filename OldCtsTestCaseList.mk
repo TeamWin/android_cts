@@ -77,6 +77,7 @@ cts_account_support_packages := \
 
 cts_support_packages := \
     CtsAccountManagementDevicePolicyApp \
+    CtsAdminApp \
     CtsAlarmClockService \
     CtsAppRestrictionsManagingApp \
     CtsAppRestrictionsTargetApp \
@@ -87,16 +88,13 @@ cts_support_packages := \
     CtsAtraceTestApp \
     CtsCertInstallerApp \
     CtsContactDirectoryProvider \
-    CtsAdminApp \
     CtsCppToolsApp \
-    CtsWifiConfigCreator \
     CtsDeviceAdminApp23 \
     CtsDeviceAdminApp24 \
     CtsDeviceAndProfileOwnerApp \
     CtsDeviceInfo \
     CtsDeviceOsTestApp \
     CtsDeviceOwnerApp \
-    CtsProfileOwnerApp \
     CtsDeviceServicesTestApp \
     CtsDeviceTaskSwitchingAppA \
     CtsDeviceTaskSwitchingAppB \
@@ -113,6 +111,7 @@ cts_support_packages := \
     CtsMonkeyApp2 \
     CtsPackageInstallerApp \
     CtsPermissionApp \
+    CtsProfileOwnerApp \
     CtsSimpleApp \
     CtsSimplePreMApp \
     CtsSomeAccessibilityServices \
@@ -125,6 +124,7 @@ cts_support_packages := \
     CtsVoiceSettingsService \
     CtsVpnFirewallApp \
     CtsWidgetProviderApp \
+    CtsWifiConfigCreator \
     TestDeviceSetup \
     $(cts_account_support_packages) \
     $(cts_security_apps_list) \

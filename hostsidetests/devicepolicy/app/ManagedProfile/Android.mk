@@ -31,7 +31,7 @@ LOCAL_STATIC_JAVA_LIBRARIES = android-support-v4 ctstestrunner compatibility-dev
 
 LOCAL_SDK_VERSION := current
 
-# tag this module as a cts_v2 test artifact
-LOCAL_COMPATIBILITY_SUITE := cts_v2
+# tag this module as a cts test artifact
+LOCAL_COMPATIBILITY_SUITE := cts
 
 include $(BUILD_CTS_PACKAGE)

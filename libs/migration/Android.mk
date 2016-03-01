@@ -18,15 +18,17 @@ include $(CLEAR_VARS)
 
 LOCAL_SRC_FILES := $(call all-java-files-under, src)
 
+LOCAL_JAVA_LIBRARIES := cts-tradefed tradefed-prebuilt
+
 LOCAL_JAVA_LIBRARIES := tradefed-prebuilt
 
 LOCAL_MODULE_TAGS := optional
 
 LOCAL_MODULE := cts-migration-lib
 
-LOCAL_SDK_VERSION := current
+# Tag this module as a cts test artifact
+LOCAL_COMPATIBILITY_SUITE := cts
 
-# Tag this module as a cts_v2 test artifact
-LOCAL_COMPATIBILITY_SUITE := cts_v2
+LOCAL_SDK_VERSION := current
 
 include $(BUILD_HOST_JAVA_LIBRARY)
