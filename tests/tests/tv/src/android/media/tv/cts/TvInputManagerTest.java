@@ -211,9 +211,10 @@ public class TvInputManagerTest extends ActivityInstrumentationTestCase2<TvViewS
 
         mCallabck.resetLogs();
         TvInputInfo defaultInfo = new TvInputInfo.Builder(getActivity(),
-                StubTunerTvInputService.class).build();
+                new ComponentName(getActivity(), StubTunerTvInputService.class)).build();
         TvInputInfo updatedInfo = new TvInputInfo.Builder(getActivity(),
-                StubTunerTvInputService.class).setTunerCount(10).setCanRecord(true).build();
+                new ComponentName(getActivity(), StubTunerTvInputService.class))
+                        .setTunerCount(10).setCanRecord(true).build();
 
         StubTunerTvInputService.updateTvInputInfo(getActivity(), updatedInfo);
         new PollingCheck(TIME_OUT_MS) {
