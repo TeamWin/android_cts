@@ -120,7 +120,8 @@ android.icu.dev.test.calendar.CopticTest#TestCoverage
 android.icu.dev.test.calendar.CopticTest#TestEraStart
 android.icu.dev.test.calendar.CopticTest#TestLimits
 android.icu.dev.test.calendar.CopticTest#TestYear
-android.icu.dev.test.calendar.DataDrivenCalendarTest#run-everything
+android.icu.dev.test.calendar.DataDrivenCalendarTest#TestCalendarConversion
+android.icu.dev.test.calendar.DataDrivenCalendarTest#TestCalendarOperations
 android.icu.dev.test.calendar.EthiopicTest#TestAddSet
 android.icu.dev.test.calendar.EthiopicTest#TestBasic
 android.icu.dev.test.calendar.EthiopicTest#TestCases
@@ -612,6 +613,10 @@ android.icu.dev.test.format.CompactDecimalFormatTest#TestSerbianShort
 android.icu.dev.test.format.CompactDecimalFormatTest#TestSkLong
 android.icu.dev.test.format.CompactDecimalFormatTest#TestSwahiliShort
 android.icu.dev.test.format.CompactDecimalFormatTest#TestSwahiliShortNegative
+android.icu.dev.test.format.DataDrivenFormatTest#TestFormatRelative
+android.icu.dev.test.format.DataDrivenFormatTest#TestHebrew
+android.icu.dev.test.format.DataDrivenFormatTest#TestMoreDateParse
+android.icu.dev.test.format.DataDrivenFormatTest#TestYearLengths
 android.icu.dev.test.format.DateFormatMiscTests#Test4097450
 android.icu.dev.test.format.DateFormatMiscTests#Test4099975new
 android.icu.dev.test.format.DateFormatMiscTests#Test4117335
@@ -1594,7 +1599,6 @@ android.icu.dev.test.search.SearchTest#TestTextCanonical
 android.icu.dev.test.search.SearchTest#TestUsingSearchCollator
 android.icu.dev.test.search.SearchTest#TestVariable
 android.icu.dev.test.search.SearchTest#TestVariableCanonical
-android.icu.dev.test.serializable.CoverageTest#run-everything
 android.icu.dev.test.shaping.ArabicShapingRegTest#TestEquals
 android.icu.dev.test.shaping.ArabicShapingRegTest#TestError
 android.icu.dev.test.shaping.ArabicShapingRegTest#TestPreflight

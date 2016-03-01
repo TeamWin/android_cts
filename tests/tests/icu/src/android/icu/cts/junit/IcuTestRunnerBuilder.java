@@ -33,13 +33,18 @@ public class IcuTestRunnerBuilder extends RunnerBuilder {
 
     @Override
     public Runner runnerForClass(Class<?> testClass) throws Throwable {
-        // Check for a TestGroup before a TestFmwk class as TestGroup is a subclass of TestFmwk
-        if (TestFmwk.TestGroup.class.isAssignableFrom(testClass)) {
-            return new IcuTestGroupRunner(testClass.asSubclass(TestFmwk.TestGroup.class), this);
-        }
+        try {
+            // Check for a TestGroup before a TestFmwk class as TestGroup is a subclass of TestFmwk
+            if (TestFmwk.TestGroup.class.isAssignableFrom(testClass)) {
+                return new IcuTestGroupRunner(testClass.asSubclass(TestFmwk.TestGroup.class), this);
+            }
 
-        if (TestFmwk.class.isAssignableFrom(testClass)) {
-            return new IcuTestFmwkRunner(testClass.asSubclass(TestFmwk.class), icuRunnerParams);
+            if (TestFmwk.class.isAssignableFrom(testClass)) {
+                // Make sure that in the event of an error the resulting Runner an be filtered out.
+                return new IcuTestFmwkRunner(testClass.asSubclass(TestFmwk.class), icuRunnerParams);
+            }
+        } catch (Exception e) {
+            return new ErrorReportingRunner(testClass.getName(), e);
         }
 
         return null;
