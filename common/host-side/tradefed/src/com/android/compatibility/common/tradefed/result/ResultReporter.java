@@ -89,6 +89,9 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
     @Option(name = "result-server", description = "Server to publish test results.")
     private String mResultServer;
 
+    @Option(name = "disable-result-posting", description = "Disable result posting into report server.")
+    private boolean mDisableResultPosting = false;
+
     @Option(name = "include-test-log-tags", description = "Include test log tags in report.")
     private boolean mIncludeTestLogTags = false;
 
@@ -343,7 +346,7 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
                         StreamUtil.close(fis);
                     }
                 }
-                if (mResultServer != null && !mResultServer.trim().isEmpty()) {
+                if (mResultServer != null && !mResultServer.trim().isEmpty() && !mDisableResultPosting) {
                     try {
                         logResult("Result Server Response: %d",
                                 mUploader.uploadResult(resultFile, mReferenceUrl));
