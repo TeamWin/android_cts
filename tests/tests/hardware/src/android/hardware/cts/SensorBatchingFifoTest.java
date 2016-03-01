@@ -34,11 +34,13 @@ import java.util.concurrent.TimeUnit;
  *
  */
 public class SensorBatchingFifoTest extends SensorTestCase {
+    // Note these FIFO minimum constants come from the CCD.  In version
+    // 6.0 of the CCD, these are in section 7.3.9.
     private static final int ACCELEROMETER_MIN_FIFO_LENGTH = 3000;
     private static final int UNCAL_MAGNETOMETER_MIN_FIFO_LENGTH = 600;
     private static final int PRESSURE_MIN_FIFO_LENGTH = 300;
     private static final int GAME_ROTATION_VECTOR_MIN_FIFO_LENGTH = 300;
-    private static final int PROXIMITY_SENSOR_MIN_FIFO_LENGTH = 300;
+    private static final int PROXIMITY_SENSOR_MIN_FIFO_LENGTH = 100;
     private static final int STEP_DETECTOR_MIN_FIFO_LENGTH = 100;
 
     private static final int SAMPLING_INTERVAL = 1000; /* every 1ms */
@@ -86,10 +88,7 @@ public class SensorBatchingFifoTest extends SensorTestCase {
 
     public void testProximityFifoLength() throws Throwable {
         if (!mHasHifiSensors) return;
-        Sensor sensor = mSensorManager.getDefaultSensor(Sensor.TYPE_PROXIMITY);
-        if (sensor != null) {
-            assertTrue(sensor.getFifoReservedEventCount() <= PROXIMITY_SENSOR_MIN_FIFO_LENGTH);
-        }
+        checkMinFifoLength(Sensor.TYPE_PROXIMITY, PROXIMITY_SENSOR_MIN_FIFO_LENGTH);
     }
 
     public void testStepDetectorFifoLength() throws Throwable {
