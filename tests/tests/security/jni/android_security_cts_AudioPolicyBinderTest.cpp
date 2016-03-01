@@ -74,7 +74,7 @@ static bool init(sp<IAudioPolicyService>& aps, audio_io_handle_t *output, int *s
     }
     if (session != NULL) {
         //get a valid session
-        *session = AudioSystem::newAudioUniqueId();
+        *session = AudioSystem::newAudioUniqueId(AUDIO_UNIQUE_ID_USE_SESSION);
         if (*session == AUDIO_UNIQUE_ID_ALLOCATE) {
             ALOGE("cannot get valid audio session");
             return false;
