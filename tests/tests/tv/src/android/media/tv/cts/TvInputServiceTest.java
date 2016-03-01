@@ -291,7 +291,8 @@ public class TvInputServiceTest extends ActivityInstrumentationTestCase2<TvViewS
         resetCounts();
         CountingRecordingSession session = CountingTvInputService.sRecordingSession;
         assertNotNull(session);
-        session.notifyTuned();
+        Uri fakeChannelUri = TvContract.buildChannelUri(0);
+        session.notifyTuned(fakeChannelUri);
         new PollingCheck(TIME_OUT) {
             @Override
             protected boolean check() {
@@ -959,7 +960,7 @@ public class TvInputServiceTest extends ActivityInstrumentationTestCase2<TvViewS
         private int mErrorCount;
 
         @Override
-        public void onTuned() {
+        public void onTuned(Uri channelUri) {
             mTunedCount++;
         }
 
