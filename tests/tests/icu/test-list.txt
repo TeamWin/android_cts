@@ -935,6 +935,7 @@ android.icu.dev.test.format.NumberFormatTest#TestCurrencySign
 android.icu.dev.test.format.NumberFormatTest#TestCurrencyUsage
 android.icu.dev.test.format.NumberFormatTest#TestCurrFmtNegSameAsPositive
 android.icu.dev.test.format.NumberFormatTest#TestCustomCurrencySignAndSeparator
+android.icu.dev.test.format.NumberFormatTest#TestDataDrivenICU
 android.icu.dev.test.format.NumberFormatTest#TestDecimalFormatCurrencyParse
 android.icu.dev.test.format.NumberFormatTest#TestExplicitParents
 android.icu.dev.test.format.NumberFormatTest#TestExponent
