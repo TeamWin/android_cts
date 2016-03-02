@@ -21,39 +21,36 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import javax.annotation.Nullable;
 import org.junit.runner.Description;
 
 /**
  * Represents a test within a {@link TestFmwk} class.
  */
-class IcuFrameworkTest {
+final class IcuFrameworkTest implements Comparable<IcuFrameworkTest> {
 
     private static final String[] EMPTY_ARGS = new String[0];
 
     private static final Pattern EXTRACT_ERROR_INFO = Pattern.compile(
-            "^[A-Za-z0-9_]+ \\{\n  [A-Za-z0-9_]+ \\{\n    (.*)\n  \\}.*", Pattern.DOTALL);
-
-    private static final Pattern CONTAINS_WARNING = Pattern.compile(
-            "^ *Warning: ", Pattern.MULTILINE);
+            "^[A-Za-z0-9_]+ \\{(\n.*)\n\\}.*", Pattern.DOTALL);
 
     /**
      * The {@link TestFmwk} instance on which the tests will be run.
      */
     private final TestFmwk testFmwk;
 
+    private final TestFmwk.Target target;
+
     /**
-     * The name of the individual test to run, if null then all tests in the class will be run.
+     * The name of the individual target to run.
      */
-    @Nullable
     private final String methodName;
 
-    IcuFrameworkTest(TestFmwk testFmwk, @Nullable String methodName) {
+    IcuFrameworkTest(TestFmwk testFmwk, TestFmwk.Target target, String methodName) {
         this.testFmwk = testFmwk;
+        this.target = target;
         this.methodName = methodName;
     }
 
-    @Nullable
     public String getMethodName() {
         return methodName;
     }
@@ -73,31 +70,46 @@ class IcuFrameworkTest {
      * <p>DO NOT CHANGE THE NAME
      */
     private void test_for_TestFmwk_Run() throws ICUTestFailedException {
-        String[] args;
-        if (methodName != null) {
-            args = new String[] {methodName};
-        } else {
-            args = EMPTY_ARGS;
-        }
-
         StringWriter stringWriter = new StringWriter();
         PrintWriter log = new PrintWriter(stringWriter);
-        int errorCount = testFmwk.run(args, log);
+
+        TestFmwk.TestParams localParams = TestFmwk.TestParams.create(EMPTY_ARGS, log);
+        if (localParams == null) {
+            throw new IllegalStateException("Could not create params");
+        }
+
+        // We don't want an error summary as we are only running one test.
+        localParams.errorSummary = null;
+
+        try {
+            // Make sure that the TestFmwk is initialized with the correct parameters. This method
+            // is being called solely for its side effect of updating the TestFmwk.params field.
+            testFmwk.resolveTarget(localParams);
+
+            // Run the target.
+            target.run();
+        } catch (Exception e) {
+            // Output the exception to the log and make sure it is treated as an error.
+            e.printStackTrace(log);
+            localParams.errorCount++;
+        }
+
+        // Treat warnings as errors.
+        int errorCount = localParams.errorCount + localParams.warnCount;
 
         // Ensure that all data is written to the StringWriter.
         log.flush();
 
         // Treat warnings as errors.
         String information = stringWriter.toString();
-        if (errorCount != 0 || CONTAINS_WARNING.matcher(information).find()) {
-            if (methodName != null) {
-                Matcher matcher = EXTRACT_ERROR_INFO.matcher(information);
-                if (matcher.matches()) {
-                    information = matcher.group(1).replace("\n    ", "\n");
-                }
+        if (errorCount != 0) {
+            // Remove unnecessary formatting.
+            Matcher matcher = EXTRACT_ERROR_INFO.matcher(information);
+            if (matcher.matches()) {
+                information = matcher.group(1)/*.replace("\n    ", "\n")*/;
             }
             throw new ICUTestFailedException("ICU test failed: " + getDescription(),
-                    Math.min(1, errorCount), information);
+                    errorCount, information);
         }
     }
 
@@ -105,14 +117,12 @@ class IcuFrameworkTest {
      * Get the JUnit {@link Description}
      */
     public Description getDescription() {
-        if (methodName == null) {
-            // Get a description for all the targets. Use a fake method name to differentiate the
-            // description from one for the whole class and allow the tests to be matched by
-            // expectations.
-            return Description.createTestDescription(testFmwk.getClass(), "run-everything");
-        } else {
-            // Get a description for the specific method within the class.
-            return Description.createTestDescription(testFmwk.getClass(), methodName);
-        }
+        // Get a description for the specific method within the class.
+        return Description.createTestDescription(testFmwk.getClass(), methodName);
+    }
+
+    @Override
+    public int compareTo(IcuFrameworkTest o) {
+        return methodName.compareTo(o.methodName);
     }
 }

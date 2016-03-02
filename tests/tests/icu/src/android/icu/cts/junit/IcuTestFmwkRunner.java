@@ -83,37 +83,23 @@ public class IcuTestFmwkRunner extends IcuTestParentRunner<IcuFrameworkTest> {
 
         tests = new ArrayList<>();
 
-        if (TestFmwkUtils.overridesGetTargetsMethod(testFmwkClass)) {
-            // A test that overrides the getTargets method cannot be trusted to run a single target
-            // at once so treat the whole class as a single test.
-            tests.add(new IcuFrameworkTest(testFmwk, null));
-        } else {
-            TestFmwk.Target target = TestFmwkUtils.getTargets(testFmwk);
-            while (target != null) {
-                String name = target.name;
-                // Just ignore targets that do not have a name, they are do nothing place holders.
-                if (name != null) {
-                    tests.add(new IcuFrameworkTest(testFmwk, name));
-                }
-
-                target = target.getNext();
+        TestFmwk.Target target = TestFmwkUtils.getTargets(testFmwk);
+        while (target != null) {
+            String name = target.name;
+            // Just ignore targets that do not have a name, they are do nothing place holders.
+            if (name != null) {
+                tests.add(new IcuFrameworkTest(testFmwk, target, name));
             }
+            target = target.getNext();
+        }
+
+        // If the class has no tests then fail.
+        if (tests.isEmpty()) {
+            throw new IllegalStateException("Cannot find any tests for " + testFmwkClass);
         }
 
         // Sort the methods to ensure consistent ordering.
-        Collections.sort(tests, new Comparator<IcuFrameworkTest>() {
-            @Override
-            public int compare(IcuFrameworkTest ft1, IcuFrameworkTest ft2) {
-                String m1 = ft1.getMethodName();
-                String m2 = ft2.getMethodName();
-                if (m1 == null || m2 == null) {
-                    // This should never happen as there will only be one entry in the list if it is
-                    // not a method target.
-                    throw new IllegalStateException("Cannot compare two non method targets");
-                }
-                return m1.compareTo(m2);
-            }
-        });
+        Collections.sort(tests);
     }
 
     @Override

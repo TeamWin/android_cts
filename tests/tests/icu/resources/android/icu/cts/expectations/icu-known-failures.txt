@@ -2,9 +2,22 @@
  * This file contains expectations for tests that are known to fail.
  */
 [
+// Uncomment this to exclude all tests and then add result: "SUCCESS" to any specific tests that
+// need to be run.
+/*
+{
+  description: "Exclude all tests",
+  name: "android.icu.dev.test"
+},
+*/
 {
   description: "Class cannot be instantiated, cannot find resources android/icu/dev/test/serializable/data",
   name: "android.icu.dev.test.serializable.CompatibilityTest",
+  bug: "27310873"
+},
+{
+  description: "Cannot find any classes to test because APK doesn't have entries for directories, android/icu/",
+  name: "android.icu.dev.test.serializable.CoverageTest",
   bug: "27310873"
 },
 {
@@ -14,8 +27,12 @@
 },
 {
   description: "android.icu.charset package not available in repackaged Android library",
-  name: "android.icu.dev.test.charset.TestAll#initializationError",
+  name: "android.icu.dev.test.charset.TestAll",
   bug: "27373370"
+},
+{
+  description: "A completely empty test case",
+  name: "android.icu.dev.test.duration.PeriodBuilderTest"
 },
 {
   description: "Broken and not yet triaged",
@@ -25,7 +42,8 @@
     "android.icu.dev.test.calendar.ChineseTest#TestInitWithCurrentTime",
     "android.icu.dev.test.calendar.IBMCalendarTest#TestAddRollEra0AndEraBounds",
     "android.icu.dev.test.duration.ICUDurationTest#TestBasics",
-    "android.icu.dev.test.format.DataDrivenFormatTest#run-everything",
+    "android.icu.dev.test.format.DataDrivenFormatTest#TestConsistentPivot",
+    "android.icu.dev.test.format.DataDrivenFormatTest#TestDateFormatBasic",
     "android.icu.dev.test.format.DateFormatRegressionTest#Test4073003",
     "android.icu.dev.test.format.DateFormatRegressionTest#Test4151706",
     "android.icu.dev.test.format.DateFormatRegressionTest#Test4182066",
