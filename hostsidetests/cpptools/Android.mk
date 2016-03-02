@@ -27,6 +27,9 @@ LOCAL_JAVA_LIBRARIES := old-cts-tradefed ddmlib-prebuilt tradefed-prebuilt
 
 LOCAL_CTS_TEST_PACKAGE := android.tests.cpptools
 
+# Tag this module as a cts test artifact
+LOCAL_COMPATIBILITY_SUITE := cts
+
 include $(BUILD_CTS_HOST_JAVA_LIBRARY)
 
 include $(call all-makefiles-under,$(LOCAL_PATH))
