@@ -170,8 +170,9 @@ public class MmsTest extends AndroidTestCase {
     }
 
     public void testSendMmsMessage() {
-        if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
-            Log.i(TAG, "testSendMmsMessage skipped: no telephony available");
+        if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)
+             || !doesSupportMMS()) {
+            Log.i(TAG, "testSendMmsMessage skipped: no telephony available or MMS not supported");
             return;
         }
 
@@ -316,4 +317,12 @@ public class MmsTest extends AndroidTestCase {
                 .getCarrierConfigValues()
                 .getBoolean(SmsManager.MMS_CONFIG_SUPPORT_MMS_CONTENT_DISPOSITION, true);
     }
+
+    private static boolean doesSupportMMS() {
+        return SmsManager
+                .getDefault()
+                .getCarrierConfigValues()
+                .getBoolean(SmsManager.MMS_CONFIG_MMS_ENABLED, true);
+    }
+
 }
