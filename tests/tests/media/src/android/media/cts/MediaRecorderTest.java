@@ -57,6 +57,7 @@ public class MediaRecorderTest extends ActivityInstrumentationTestCase2<MediaStu
     private static final int RECORD_TIME_LAPSE_MS = 4000;
     private static final int RECORD_TIME_LONG_MS = 20000;
     private static final int RECORDED_DUR_TOLERANCE_MS = 1000;
+    private static final float RECORDED_DUR_TOLERANCE = 0.1f;
     private static final int VIDEO_WIDTH = 176;
     private static final int VIDEO_HEIGHT = 144;
     private static int mVideoWidth = VIDEO_WIDTH;
@@ -311,6 +312,10 @@ public class MediaRecorderTest extends ActivityInstrumentationTestCase2<MediaStu
         String durStr = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION);
         assertTrue(durStr != null);
         assertTrue(Integer.parseInt(durStr) > 0);
+        if (targetMs != 0) {
+            assertTrue(Integer.parseInt(durStr) <= targetMs * (1.0f + RECORDED_DUR_TOLERANCE));
+        }
+
         retriever.release();
         retriever = null;
     }
