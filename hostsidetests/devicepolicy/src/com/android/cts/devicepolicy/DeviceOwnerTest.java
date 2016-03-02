@@ -52,6 +52,9 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
      */
     private boolean mHasDisabledEphemeralUserFeature;
 
+    /** CreateAndManageUser is available and an additional user can be created. */
+    private boolean mHasCreateAndManageUserFeature;
+
     @Override
     protected void setUp() throws Exception {
         super.setUp();
@@ -63,6 +66,7 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
         mHasEphemeralUserFeature = mHasFeature && canCreateAdditionalUsers(1) && hasUserSplit();
         mHasDisabledEphemeralUserFeature =
                 mHasFeature && canCreateAdditionalUsers(1) && !hasUserSplit();
+        mHasCreateAndManageUserFeature = mHasFeature && canCreateAdditionalUsers(1);
     }
 
     @Override
@@ -252,6 +256,34 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
         if (mHasDisabledEphemeralUserFeature) {
             executeDeviceTestMethod(
                     ".CreateAndManageUserTest", "testCreateAndManageEphemeralUserFails");
+        }
+    }
+
+    public void testCreateAndManageUser_SkipSetupWizard() throws Exception {
+        if (mHasCreateAndManageUserFeature) {
+            executeDeviceTestMethod(".CreateAndManageUserTest",
+                "testCreateAndManageUser_SkipSetupWizard");
+        }
+    }
+
+    public void testCreateAndManageUser_DontSkipSetupWizard() throws Exception {
+        if (mHasCreateAndManageUserFeature) {
+            executeDeviceTestMethod(".CreateAndManageUserTest",
+                "testCreateAndManageUser_DontSkipSetupWizard");
+        }
+    }
+
+    public void testCreateAndManageUser_AddRestrictionSet() throws Exception {
+        if (mHasCreateAndManageUserFeature) {
+            executeDeviceTestMethod(".CreateAndManageUserTest",
+                "testCreateAndManageUser_AddRestrictionSet");
+        }
+    }
+
+    public void testCreateAndManageUser_RemoveRestrictionSet() throws Exception {
+        if (mHasCreateAndManageUserFeature) {
+            executeDeviceTestMethod(".CreateAndManageUserTest",
+                "testCreateAndManageUser_RemoveRestrictionSet");
         }
     }
 
