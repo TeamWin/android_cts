@@ -709,6 +709,7 @@ public class RemoteConnectionTest extends BaseRemoteTelecomTest {
             }
         };
         remoteVideoProvider.registerCallback(videoCallback);
+        callbackInvoker.waitForCount(WAIT_FOR_STATE_CHANGE_TIMEOUT_CALLBACK);
         long callDataUsage = 10000;
         mockVideoProvider.waitForVideoProviderHandler(remoteVideoProvider);
         mockVideoProvider.setCallDataUsage(callDataUsage);
