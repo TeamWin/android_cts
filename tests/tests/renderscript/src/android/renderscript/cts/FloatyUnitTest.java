@@ -17,6 +17,9 @@
 package android.renderscript.cts;
 
 import android.renderscript.cts.Target;
+import android.renderscript.cts.Float16Utils;
+import android.renderscript.RSRuntimeException;
+import android.util.Log;
 
 public class FloatyUnitTest extends RSBaseCompute {
     static float subnormalFloat = 10000 * Float.MIN_VALUE;
@@ -25,6 +28,18 @@ public class FloatyUnitTest extends RSBaseCompute {
 
     static double subnormalDouble = 10000 * Double.MIN_VALUE;
     static double normalDouble = 1.7833920e+16;
+
+    // Some double values that are precisely representable in half-precision.
+    static double[] preciseFloat16Values = {Double.NaN,
+                                            Double.POSITIVE_INFINITY,
+                                            Double.NEGATIVE_INFINITY,
+                                            0., 1, 2, 74.0625, 3000, 65504,
+                                            Float16Utils.MIN_VALUE,
+                                            Float16Utils.MIN_VALUE * 100,
+                                            -0., -1, -2, -74.0625, -3000, -65504,
+                                            -Float16Utils.MIN_VALUE,
+                                            -Float16Utils.MIN_VALUE * 100,
+                                           };
 
     // Fail if Floaty f doesn't accept value
     private void shouldAccept(Target.Floaty f, double value) {
@@ -223,5 +238,160 @@ public class FloatyUnitTest extends RSBaseCompute {
         shouldAccept(floaty, -Double.MIN_VALUE - 4 * Double.MIN_VALUE);
         shouldAccept(floaty, 0.f);
         shouldNotAccept(floaty, 0.f + Double.MIN_VALUE);
+    }
+
+    // Validate float16Ulp for a double value that is precisely representable in half-precision.
+    private void validateFloat16Ulp(double value) {
+        double absoluteValue = Math.abs(value);
+        double ulp = Float16Utils.float16Ulp(value);
+
+        if (absoluteValue == 0.) {
+            assertEquals(Float16Utils.MIN_VALUE, ulp);
+            return;
+        }
+        if (Double.isNaN(absoluteValue)) {
+            assertTrue("Ulp for NaN is not NaN", Double.isNaN(ulp));
+            return;
+        }
+        if (absoluteValue == Double.POSITIVE_INFINITY ||
+            absoluteValue == Double.NEGATIVE_INFINITY) {
+            assertEquals(Double.POSITIVE_INFINITY, ulp);
+            return;
+        }
+
+        if (absoluteValue < Math.scalb(1., -24)) {
+            assertTrue("Input double value smaller than MIN_VALUE for Float16", false);
+        }
+
+        if (absoluteValue < Math.scalb(1., -14)) {
+            // Input is subnormal Float16.  Ulp should be 2^-24
+            assertEquals(Math.scalb(1., -24), ulp);
+            return;
+        }
+
+        boolean tested = false;
+        int exponent = -13;
+        double limit = Math.scalb(1., exponent);
+        for (; exponent <= 16; exponent ++, limit *= 2) {
+            if (absoluteValue < limit) {
+                assertEquals(ulp, Math.scalb(1., exponent - 11));
+                tested = true;
+                break;
+            }
+        }
+        assertTrue("Ulp not validated.  Absolute value " + Double.toString(absoluteValue), tested);
+    }
+
+    // Test float16Ulp for all valid inputs (i.e. all Float16 values represented as Double) and test
+    // that assertions fire for Double values that are not representable in Float16.
+    public void testFloat16Ulp() {
+        // Test float16Ulp for all short values.
+        for (short s = Short.MIN_VALUE; ; s ++) {
+            validateFloat16Ulp(Float16Utils.convertFloat16ToDouble(s));
+            // Detect loop termination here.  Doing so in the for statement creates an infinite
+            // loop.
+            if (s == Short.MAX_VALUE) {
+                break;
+            }
+        }
+
+        // Test float16Ulp for some known values
+        for (double value: preciseFloat16Values) {
+            validateFloat16Ulp(value);
+        }
+
+        // Expect an exception for values not representable in Float16.  The loop below tests this
+        // for all values in this array and their negation.
+        double valuesOutOfFloat16Range[] = {Math.scalb(1., -100),
+                                            Double.valueOf("0x1.8p-24"),
+                                            Double.valueOf("0x1.ffffffffp-20"),
+                                            1024.55, 65520., 66000.
+                                           };
+
+        for (double value: valuesOutOfFloat16Range) {
+            try {
+                Float16Utils.float16Ulp(value);
+                assertTrue("Expected exception not thrown for: " + Double.toString(value), false);
+            } catch (RSRuntimeException e) {
+                // Ignore the expected exception.
+                // Log.w("testFloat16Ulp", "Received expected exception: " + e.getMessage());
+            }
+
+            try {
+                Float16Utils.float16Ulp(-value);
+                assertTrue("Expected exception not thrown for: " + Double.toString(value), false);
+            } catch (RSRuntimeException e) {
+                // Ignore the expected exception.
+                // Log.w("testFloat16Ulp", "Received expected exception: " + e.getMessage());
+            }
+        }
+    }
+
+    private void validateRoundToFloat16(double argument, double low, double high) {
+        double[] result = Float16Utils.roundToFloat16(argument);
+        double[] expected = new double[]{low, high};
+
+        for (int i = 0; i < 2; i ++) {
+            if (result[i] == expected[i])
+                continue;
+            if (Double.isNaN(result[i]) && Double.isNaN(expected[i]))
+                continue;
+
+            StringBuilder message = new StringBuilder();
+            message.append("For input ");
+            appendVariableToMessage(message, argument);
+            message.append("\n");
+            message.append("For field " + Integer.toString(i) + ": Expected output: ");
+            appendVariableToMessage(message, expected[i]);
+            message.append("\n");
+            message.append("Actual output: ");
+            appendVariableToMessage(message, result[i]);
+            message.append("\n");
+            assertTrue("roundToFloat16 error:\n" + message.toString(), false);
+        }
+    }
+
+    public void testRoundToFloat16() {
+        // Validate values that are precisely representable in Float16.  The bounds have to be the
+        // same as the input.
+        for (double value: preciseFloat16Values) {
+            validateRoundToFloat16(value, value, value);
+        }
+
+        // Validate for special cases:
+        //   Double.MIN_VALUE is between Float16 0 and MIN_VALUE
+        //   Double.MAX_VALUE is between Float16 MAX_VALUE and +Infinity
+        //   65519 and 65520 are between Float16 MAX_VALUE and +Infinity (but their exponent is
+        //       within Float16's range).
+        //   3001.5 and 3000.5 are between Float16 3000 and 3002
+        validateRoundToFloat16(Double.MIN_VALUE, 0.0, Float16Utils.MIN_VALUE);
+        validateRoundToFloat16(Double.MAX_VALUE, Double.POSITIVE_INFINITY,
+                               Double.POSITIVE_INFINITY);
+        validateRoundToFloat16(65519., 65504., Double.POSITIVE_INFINITY);
+        validateRoundToFloat16(65520., 65504., Double.POSITIVE_INFINITY);
+        validateRoundToFloat16(3001.5, 3000., 3002.);
+        validateRoundToFloat16(3000.5, 3000., 3002.);
+
+        validateRoundToFloat16(-Double.MIN_VALUE, -Float16Utils.MIN_VALUE, -0.0);
+        validateRoundToFloat16(-Double.MAX_VALUE, Double.NEGATIVE_INFINITY,
+                               Double.NEGATIVE_INFINITY);
+        validateRoundToFloat16(-65519., Double.NEGATIVE_INFINITY, -65504.);
+        validateRoundToFloat16(-65520., Double.NEGATIVE_INFINITY, -65504.);
+        validateRoundToFloat16(-3001.5, -3002., -3000.);
+        validateRoundToFloat16(-3000.5, -3002., -3000.);
+
+        // Validate that values precisely between two Float16 values get handled properly.
+        double[] float16Sample = {0., 1., 100.,
+                                  Float16Utils.MIN_VALUE,
+                                  Float16Utils.MIN_VALUE * 100,
+                                  Float16Utils.MIN_NORMAL * 100
+                                 };
+
+        for (double value: float16Sample) {
+            double ulp = Float16Utils.float16Ulp(value);
+
+            validateRoundToFloat16(value + 0.5 * ulp, value, value + ulp);
+            validateRoundToFloat16(-value - 0.5 * ulp, -value - ulp, -value);
+        }
     }
 }
