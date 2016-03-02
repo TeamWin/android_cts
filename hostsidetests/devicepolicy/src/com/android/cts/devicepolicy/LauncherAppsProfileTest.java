@@ -20,6 +20,8 @@ import com.android.ddmlib.Log.LogLevel;
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.log.LogUtil.CLog;
 
+import java.util.Collections;
+
 /**
  * Set of tests for LauncherApps with managed profiles.
  */
@@ -32,8 +34,8 @@ public class LauncherAppsProfileTest extends BaseLauncherAppsTest {
 
     private int mProfileUserId;
     private int mParentUserId;
-    private int mProfileSerialNumber;
-    private int mMainUserSerialNumber;
+    private String mProfileSerialNumber;
+    private String mMainUserSerialNumber;
 
     @Override
     protected void setUp() throws Exception {
@@ -48,8 +50,8 @@ public class LauncherAppsProfileTest extends BaseLauncherAppsTest {
             installApp(MANAGED_PROFILE_APK);
             setProfileOwnerOrFail(MANAGED_PROFILE_PKG + "/" + ADMIN_RECEIVER_TEST_CLASS,
                     mProfileUserId);
-            mProfileSerialNumber = getUserSerialNumber(mProfileUserId);
-            mMainUserSerialNumber = getUserSerialNumber(mParentUserId);
+            mProfileSerialNumber = Integer.toString(getUserSerialNumber(mProfileUserId));
+            mMainUserSerialNumber = Integer.toString(getUserSerialNumber(mParentUserId));
             startUser(mProfileUserId);
         }
     }
@@ -70,18 +72,15 @@ public class LauncherAppsProfileTest extends BaseLauncherAppsTest {
         }
         // Install app for all users.
         installApp(SIMPLE_APP_APK);
-        try {
-            // Run tests to check SimpleApp exists in both profile and main user.
-            assertTrue(runDeviceTests(LAUNCHER_TESTS_PKG,
-                    LAUNCHER_TESTS_CLASS,
-                    "testSimpleAppInstalledForUser",
-                            mParentUserId, "-e testUser " + mProfileSerialNumber));
-            assertTrue(runDeviceTests(LAUNCHER_TESTS_PKG,
-                    LAUNCHER_TESTS_PKG + ".LauncherAppsTests", "testSimpleAppInstalledForUser",
-                            mParentUserId, "-e testUser " + mMainUserSerialNumber));
-        } finally {
-            getDevice().uninstallPackage(SIMPLE_APP_PKG);
-        }
+
+        // Run tests to check SimpleApp exists in both profile and main user.
+        assertTrue(runDeviceTestsAsUser(LAUNCHER_TESTS_PKG,
+                LAUNCHER_TESTS_CLASS,
+                "testSimpleAppInstalledForUser",
+                mParentUserId, Collections.singletonMap(PARAM_TEST_USER, mProfileSerialNumber)));
+        assertTrue(runDeviceTestsAsUser(LAUNCHER_TESTS_PKG,
+                LAUNCHER_TESTS_PKG + ".LauncherAppsTests", "testSimpleAppInstalledForUser",
+                mParentUserId, Collections.singletonMap(PARAM_TEST_USER, mMainUserSerialNumber)));
     }
 
     public void testLauncherCallbackPackageAddedProfile() throws Exception {
@@ -90,14 +89,10 @@ public class LauncherAppsProfileTest extends BaseLauncherAppsTest {
         }
         startCallbackService();
         installApp(SIMPLE_APP_APK);
-        try {
-            assertTrue(runDeviceTests(LAUNCHER_TESTS_PKG,
-                    LAUNCHER_TESTS_CLASS,
-                            "testPackageAddedCallbackForUser",
-                            mParentUserId, "-e testUser " + mProfileSerialNumber));
-        } finally {
-            getDevice().uninstallPackage(SIMPLE_APP_PKG);
-        }
+        assertTrue(runDeviceTestsAsUser(LAUNCHER_TESTS_PKG,
+                LAUNCHER_TESTS_CLASS,
+                "testPackageAddedCallbackForUser",
+                mParentUserId, Collections.singletonMap(PARAM_TEST_USER, mProfileSerialNumber)));
     }
 
     public void testLauncherCallbackPackageRemovedProfile() throws Exception {
@@ -105,16 +100,12 @@ public class LauncherAppsProfileTest extends BaseLauncherAppsTest {
             return;
         }
         installApp(SIMPLE_APP_APK);
-        try {
-            startCallbackService();
-            getDevice().uninstallPackage(SIMPLE_APP_PKG);
-            assertTrue(runDeviceTests(LAUNCHER_TESTS_PKG,
-                    LAUNCHER_TESTS_CLASS,
-                            "testPackageRemovedCallbackForUser",
-                            mParentUserId, "-e testUser " + mProfileSerialNumber));
-        } finally {
-            getDevice().uninstallPackage(SIMPLE_APP_PKG);
-        }
+        startCallbackService();
+        getDevice().uninstallPackage(SIMPLE_APP_PKG);
+        assertTrue(runDeviceTestsAsUser(LAUNCHER_TESTS_PKG,
+                LAUNCHER_TESTS_CLASS,
+                "testPackageRemovedCallbackForUser",
+                mParentUserId, Collections.singletonMap(PARAM_TEST_USER, mProfileSerialNumber)));
     }
 
     public void testLauncherCallbackPackageChangedProfile() throws Exception {
@@ -122,15 +113,11 @@ public class LauncherAppsProfileTest extends BaseLauncherAppsTest {
             return;
         }
         installApp(SIMPLE_APP_APK);
-        try {
-            startCallbackService();
-            installApp(SIMPLE_APP_APK);
-            assertTrue(runDeviceTests(LAUNCHER_TESTS_PKG,
-                    LAUNCHER_TESTS_CLASS,
-                            "testPackageChangedCallbackForUser",
-                            mParentUserId, "-e testUser " + mProfileSerialNumber));
-        } finally {
-            getDevice().uninstallPackage(SIMPLE_APP_PKG);
-        }
+        startCallbackService();
+        installApp(SIMPLE_APP_APK);
+        assertTrue(runDeviceTestsAsUser(LAUNCHER_TESTS_PKG,
+                LAUNCHER_TESTS_CLASS,
+                "testPackageChangedCallbackForUser",
+                mParentUserId, Collections.singletonMap(PARAM_TEST_USER, mProfileSerialNumber)));
     }
 }
