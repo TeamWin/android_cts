@@ -117,6 +117,21 @@ public class MediaBrowserTest extends InstrumentationTestCase {
         }
     }
 
+    public void testSubscribeInvalidItem() {
+        resetCallbacks();
+        createMediaBrowser(TEST_BROWSER_SERVICE);
+        connectMediaBrowserService();
+        mMediaBrowser.subscribe(StubMediaBrowserService.MEDIA_ID_INVALID, mSubscriptionCallback);
+        new PollingCheck(TIME_OUT_MS) {
+            @Override
+            protected boolean check() {
+                return mSubscriptionCallback.mLastErrorId != null;
+            }
+        }.run();
+
+        assertEquals(StubMediaBrowserService.MEDIA_ID_INVALID, mSubscriptionCallback.mLastErrorId);
+    }
+
     public void testGetItem() {
         resetCallbacks();
         createMediaBrowser(TEST_BROWSER_SERVICE);
@@ -137,7 +152,7 @@ public class MediaBrowserTest extends InstrumentationTestCase {
         resetCallbacks();
         createMediaBrowser(TEST_BROWSER_SERVICE);
         connectMediaBrowserService();
-        mMediaBrowser.getItem("does-not-exist", mItemCallback);
+        mMediaBrowser.getItem(StubMediaBrowserService.MEDIA_ID_INVALID, mItemCallback);
         new PollingCheck(TIME_OUT_MS) {
             @Override
             protected boolean check() {
@@ -145,7 +160,7 @@ public class MediaBrowserTest extends InstrumentationTestCase {
             }
         }.run();
 
-        assertEquals("does-not-exist", mItemCallback.mLastErrorId);
+        assertEquals(StubMediaBrowserService.MEDIA_ID_INVALID, mItemCallback.mLastErrorId);
     }
 
     private void createMediaBrowser(final ComponentName component) {
