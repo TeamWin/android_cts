@@ -77,14 +77,14 @@ public class CustomDeviceOwnerTest extends BaseDevicePolicyTest {
 
             // Running this test also gets the intent receiver app out of the stopped state, so it
             // can receive broadcast intents.
-            assertTrue(runDeviceTests(INTENT_RECEIVER_PKG, testClass,
-                    "testOwnerChangedBroadcastNotReceived", 0));
+            assertTrue(runDeviceTestsAsUser(INTENT_RECEIVER_PKG, testClass,
+                    "testOwnerChangedBroadcastNotReceived", USER_OWNER));
 
             // Setting the device owner should send the owner changed broadcast.
             assertTrue(setDeviceOwner(DEVICE_OWNER_ADMIN_COMPONENT));
 
-            assertTrue(runDeviceTests(INTENT_RECEIVER_PKG, testClass,
-                    "testOwnerChangedBroadcastReceived", 0));
+            assertTrue(runDeviceTestsAsUser(INTENT_RECEIVER_PKG, testClass,
+                    "testOwnerChangedBroadcastReceived", USER_OWNER));
         } finally {
             getDevice().uninstallPackage(INTENT_RECEIVER_PKG);
             assertTrue("Failed to remove device owner.",

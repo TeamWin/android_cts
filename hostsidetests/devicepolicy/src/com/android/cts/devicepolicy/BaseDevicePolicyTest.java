@@ -36,6 +36,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.regex.Matcher;
@@ -230,39 +231,54 @@ public class BaseDevicePolicyTest extends DeviceTestCase implements IBuildReceiv
     /** Returns true if the specified tests passed. Tests are run as user owner. */
     protected boolean runDeviceTests(String pkgName, @Nullable String testClassName)
             throws DeviceNotAvailableException {
-        return runDeviceTests(pkgName, testClassName, null /*testMethodName*/, null /*userId*/);
+        Map<String, String> params = Collections.emptyMap();
+        return runDeviceTestsAsUser(
+                pkgName, testClassName, null /*testMethodName*/, null /*userId*/, params);
     }
 
     /** Returns true if the specified tests passed. Tests are run as given user. */
     protected boolean runDeviceTestsAsUser(
             String pkgName, @Nullable String testClassName, int userId)
             throws DeviceNotAvailableException {
-        return runDeviceTestsAsUser(pkgName, testClassName, null, userId);
+        return runDeviceTestsAsUser(pkgName, testClassName, null /*testMethodName*/, userId);
     }
 
     /** Returns true if the specified tests passed. Tests are run as given user. */
     protected boolean runDeviceTestsAsUser(
             String pkgName, @Nullable String testClassName, String testMethodName, int userId)
             throws DeviceNotAvailableException {
-        return runDeviceTests(pkgName, testClassName, testMethodName, userId);
+        Map<String, String> params = Collections.emptyMap();
+        return runDeviceTestsAsUser(pkgName, testClassName, testMethodName, userId, params);
     }
 
-    protected boolean runDeviceTests(String pkgName, @Nullable String testClassName,
-            @Nullable String testMethodName, @Nullable Integer userId)
-            throws DeviceNotAvailableException {
-        return runDeviceTests(pkgName, testClassName, testMethodName, userId, /*params*/ null);
-    }
-
-    protected boolean runDeviceTests(String pkgName, @Nullable String testClassName,
-            @Nullable String testMethodName, @Nullable Integer userId, @Nullable String params)
-                   throws DeviceNotAvailableException {
+    protected boolean runDeviceTestsAsUser(String pkgName, @Nullable String testClassName,
+            @Nullable String testMethodName, @Nullable Integer userId,
+            Map<String, String> params) throws DeviceNotAvailableException {
         if (testClassName != null && testClassName.startsWith(".")) {
             testClassName = pkgName + testClassName;
         }
-        TestRunResult runResult = (userId == null && params == null)
-                ? doRunTests(pkgName, testClassName, testMethodName)
-                : doRunTestsAsUser(pkgName, testClassName, testMethodName,
-                        userId != null ? userId : 0, params != null ? params : "");
+
+        RemoteAndroidTestRunner testRunner = new RemoteAndroidTestRunner(
+                pkgName, RUNNER, getDevice().getIDevice());
+        if (testClassName != null && testMethodName != null) {
+            testRunner.setMethodName(testClassName, testMethodName);
+        } else if (testClassName != null) {
+            testRunner.setClassName(testClassName);
+        }
+
+        for (Map.Entry<String, String> param : params.entrySet()) {
+            testRunner.addInstrumentationArg(param.getKey(), param.getValue());
+        }
+
+        CollectingTestListener listener = new CollectingTestListener();
+        if (userId == null) {
+            assertTrue(getDevice().runInstrumentationTests(testRunner, listener));
+        } else {
+            assertTrue(getDevice().runInstrumentationTestsAsUser(
+                    testRunner, userId, listener));
+        }
+
+        TestRunResult runResult = listener.getCurrentRunResults();
         printTestResult(runResult);
         return !runResult.hasFailedTests() && runResult.getNumTestsInState(TestStatus.PASSED) > 0;
     }
@@ -295,46 +311,6 @@ public class BaseDevicePolicyTest extends DeviceTestCase implements IBuildReceiv
     protected boolean canCreateAdditionalUsers(int numberOfUsers)
             throws DeviceNotAvailableException {
         return listUsers().size() + numberOfUsers <= getMaxNumberOfUsersSupported();
-    }
-
-    /** Helper method to run tests and return the listener that collected the results. */
-    private TestRunResult doRunTests(
-            String pkgName, String testClassName,
-            String testMethodName) throws DeviceNotAvailableException {
-        RemoteAndroidTestRunner testRunner = new RemoteAndroidTestRunner(
-                pkgName, RUNNER, getDevice().getIDevice());
-        if (testClassName != null && testMethodName != null) {
-            testRunner.setMethodName(testClassName, testMethodName);
-        } else if (testClassName != null) {
-            testRunner.setClassName(testClassName);
-        }
-
-        CollectingTestListener listener = new CollectingTestListener();
-        assertTrue(getDevice().runInstrumentationTests(testRunner, listener));
-        return listener.getCurrentRunResults();
-    }
-
-    private TestRunResult doRunTestsAsUser(String pkgName, @Nullable String testClassName,
-            @Nullable String testMethodName, int userId, String params)
-            throws DeviceNotAvailableException {
-        // TODO: move this to RemoteAndroidTestRunner once it supports users. Should be straight
-        // forward to add a RemoteAndroidTestRunner.setUser(userId) method. Then we can merge both
-        // doRunTests* methods.
-        StringBuilder testsToRun = new StringBuilder();
-        if (testClassName != null) {
-            testsToRun.append("-e class " + testClassName);
-            if (testMethodName != null) {
-                testsToRun.append("#" + testMethodName);
-            }
-        }
-        String command = "am instrument --user " + userId + " " + params + " -w -r "
-                + testsToRun + " " + pkgName + "/" + RUNNER;
-        CLog.logAndDisplay(LogLevel.INFO, "Running " + command);
-
-        CollectingTestListener listener = new CollectingTestListener();
-        InstrumentationResultParser parser = new InstrumentationResultParser(pkgName, listener);
-        getDevice().executeShellCommand(command, parser);
-        return listener.getCurrentRunResults();
     }
 
     private void printTestResult(TestRunResult runResult) {
