@@ -17,7 +17,7 @@
 -->
 
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-          package="com.android.cts.inputmethod">
+          package="android.inputmethod.cts">
 
     <application >
         <uses-library android:name="android.test.runner"/>
@@ -33,7 +33,7 @@
     </application>
 
     <instrumentation android:name="android.support.test.runner.AndroidJUnitRunner"
-                     android:targetPackage="com.android.cts.inputmethod"
+                     android:targetPackage="android.inputmethod.cts"
                      android:label="Tests for the InputMethod APIs."/>
 
 </manifest>
