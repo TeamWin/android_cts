@@ -42,7 +42,7 @@ public class StayAwakePreparer extends SettingsPreparer {
      * 7 - Stay awake while charging via USB or AC or Wireless
      */
     private static final String[] STAY_AWAKE_VALUES = new String[] {"2", "3", "6", "7"};
-    private static final String DEFAULT_VALUE = "2";
+    private static final String DEFAULT_VALUE = "7";
 
     @Override
     public void run(ITestDevice device, IBuildInfo buildInfo) throws TargetSetupError,
