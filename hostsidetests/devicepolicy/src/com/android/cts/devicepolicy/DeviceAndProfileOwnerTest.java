@@ -84,8 +84,8 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
     private static final String ACCOUNT_TYPE
             = "com.android.cts.devicepolicy.accountmanagement.account.type";
 
-    // ID of the user all tests are run as. For device owner this will be 0, for profile owner it
-    // is the user id of the created profile.
+    // ID of the user all tests are run as. For device owner this will be the primary user, for
+    // profile owner it is the user id of the created profile.
     protected int mUserId;
 
     @Override
@@ -356,29 +356,29 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
 
         installAppAsUser(CERT_INSTALLER_APK, mUserId);
 
-        int parentUserId = getPrimaryUser();
-        boolean installProfileOwnerForPassword = (parentUserId != mUserId);
+        boolean installProfileOwnerForPassword = (mPrimaryUserId != mUserId);
         if (installProfileOwnerForPassword) {
             // This is a managed profile test. We need to set a profile owner on the primary user in
             // order to be able to set and clear the lockscreen password.
-            installAppAsUser(DEVICE_ADMIN_APK, parentUserId);
-            setProfileOwnerOrFail(DEVICE_ADMIN_PKG + "/" + ADMIN_RECEIVER_TEST_CLASS, parentUserId);
+            installAppAsUser(DEVICE_ADMIN_APK, mPrimaryUserId);
+            setProfileOwnerOrFail(DEVICE_ADMIN_PKG + "/" + ADMIN_RECEIVER_TEST_CLASS,
+                    mPrimaryUserId);
         }
 
         try {
             // Set a non-empty device lockscreen password, which is a precondition for installing
             // private key pairs.
             assertTrue("Set lockscreen password failed", runDeviceTestsAsUser(DEVICE_ADMIN_PKG,
-                    ".ResetPasswordHelper", "testSetPassword", parentUserId));
+                    ".ResetPasswordHelper", "testSetPassword", mPrimaryUserId));
             assertTrue("DelegatedCertInstaller failed", runDeviceTestsAsUser(DEVICE_ADMIN_PKG,
                     ".DelegatedCertInstallerTest", mUserId));
         } finally {
             // Reset lockscreen password and remove profile owner if required
             assertTrue("Clear lockscreen password failed", runDeviceTestsAsUser(DEVICE_ADMIN_PKG,
-                    ".ResetPasswordHelper", "testClearPassword", parentUserId));
+                    ".ResetPasswordHelper", "testClearPassword", mPrimaryUserId));
             if (installProfileOwnerForPassword) {
                 assertTrue("Failed to remove profile owner.", runDeviceTestsAsUser(DEVICE_ADMIN_PKG,
-                        DEVICE_ADMIN_PKG + ".ClearProfileOwnerTest", parentUserId));
+                        DEVICE_ADMIN_PKG + ".ClearProfileOwnerTest", mPrimaryUserId));
             }
         }
     }
@@ -392,7 +392,7 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
         String unknownSourceSetting = null;
         try {
             // Install the test and prepare the test apk.
-            installApp(PACKAGE_INSTALLER_APK);
+            installAppAsUser(PACKAGE_INSTALLER_APK, mUserId);
             assertTrue(getDevice().pushFile(apk, TEST_APP_LOCATION + apk.getName()));
 
             // Add restrictions and test if we can install the apk.

@@ -77,13 +77,13 @@ public abstract class BaseDeviceAdminHostSideTest extends BaseDevicePolicyTest {
     protected void setUp() throws Exception {
         super.setUp();
 
-        mUserId = USER_OWNER;
+        mUserId = mPrimaryUserId;
 
         mClearDeviceOwnerInTearDown = false;
         mDeactivateInTearDown = false;
 
         if (mHasFeature) {
-            installApp(getDeviceAdminApkFileName());
+            installAppAsUser(getDeviceAdminApkFileName(), mUserId);
             setDeviceAdmin(getAdminReceiverComponent(), mUserId);
         }
     }
@@ -135,7 +135,7 @@ public abstract class BaseDeviceAdminHostSideTest extends BaseDevicePolicyTest {
 
     private void makeDoAndClearPassword() throws Exception {
         // Clear the password.  We do it by promoting the DA to DO.
-        setDeviceOwner(getAdminReceiverComponent());
+        setDeviceOwner(getAdminReceiverComponent(), mUserId);
 
         clearPasswordForDeviceOwner();
 
@@ -179,7 +179,7 @@ public abstract class BaseDeviceAdminHostSideTest extends BaseDevicePolicyTest {
 
         mClearDeviceOwnerInTearDown = true;
 
-        setDeviceOwner(getAdminReceiverComponent());
+        setDeviceOwner(getAdminReceiverComponent(), mUserId);
 
         clearPasswordForDeviceOwner();
 

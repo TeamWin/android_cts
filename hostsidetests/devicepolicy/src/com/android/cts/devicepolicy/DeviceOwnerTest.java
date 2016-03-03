@@ -59,9 +59,13 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
     protected void setUp() throws Exception {
         super.setUp();
         if (mHasFeature) {
-            installApp(DEVICE_OWNER_APK);
-            assertTrue("Failed to set device owner",
-                    setDeviceOwner(DEVICE_OWNER_PKG + "/" + ADMIN_RECEIVER_TEST_CLASS));
+            installAppAsUser(DEVICE_OWNER_APK, mPrimaryUserId);
+            if (!setDeviceOwner(DEVICE_OWNER_PKG + "/" + ADMIN_RECEIVER_TEST_CLASS, mPrimaryUserId))
+            {
+                runDeviceTestsAsUser(
+                        DEVICE_OWNER_PKG, CLEAR_DEVICE_OWNER_TEST_CLASS, mPrimaryUserId);
+                fail("Failed to set device owner");
+            }
         }
         mHasEphemeralUserFeature = mHasFeature && canCreateAdditionalUsers(1) && hasUserSplit();
         mHasDisabledEphemeralUserFeature =
@@ -72,10 +76,10 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
     @Override
     protected void tearDown() throws Exception {
         if (mHasFeature) {
-            assertTrue("Failed to remove device owner.",
-                    runDeviceTests(DEVICE_OWNER_PKG, CLEAR_DEVICE_OWNER_TEST_CLASS));
+            assertTrue("Failed to remove device owner.", runDeviceTestsAsUser(
+                    DEVICE_OWNER_PKG, CLEAR_DEVICE_OWNER_TEST_CLASS, mPrimaryUserId));
             getDevice().uninstallPackage(DEVICE_OWNER_PKG);
-            switchUser(0);
+            switchUser(USER_SYSTEM);
             removeTestUsers();
         }
 
@@ -312,7 +316,7 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
 
     public void testLockTask() throws Exception {
         try {
-            installApp(INTENT_RECEIVER_APK);
+            installAppAsUser(INTENT_RECEIVER_APK, mPrimaryUserId);
             executeDeviceOwnerTest("LockTaskTest");
         } finally {
             getDevice().uninstallPackage(INTENT_RECEIVER_PKG);
@@ -327,7 +331,7 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
         final boolean hasWifi = hasDeviceFeature("android.hardware.wifi");
         if (hasWifi && mHasFeature) {
             try {
-                installApp(WIFI_CONFIG_CREATOR_APK);
+                installAppAsUser(WIFI_CONFIG_CREATOR_APK, mPrimaryUserId);
                 executeDeviceOwnerTest("WifiConfigLockdownTest");
             } finally {
                 getDevice().uninstallPackage(WIFI_CONFIG_CREATOR_PKG);
@@ -340,12 +344,14 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
             return;
         }
         // verify that we can't set the same admin receiver as device owner again
-        assertFalse(setDeviceOwner(DEVICE_OWNER_PKG + "/" + ADMIN_RECEIVER_TEST_CLASS));
+        assertFalse(setDeviceOwner(
+                DEVICE_OWNER_PKG + "/" + ADMIN_RECEIVER_TEST_CLASS, mPrimaryUserId));
 
         // verify that we can't set a different admin receiver as device owner
         try {
-            installApp(MANAGED_PROFILE_APK);
-            assertFalse(setDeviceOwner(MANAGED_PROFILE_PKG + "/" + MANAGED_PROFILE_ADMIN));
+            installAppAsUser(MANAGED_PROFILE_APK, mPrimaryUserId);
+            assertFalse(setDeviceOwner(
+                    MANAGED_PROFILE_PKG + "/" + MANAGED_PROFILE_ADMIN, mPrimaryUserId));
         } finally {
             getDevice().uninstallPackage(MANAGED_PROFILE_PKG);
         }
@@ -356,11 +362,12 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
             return;
         }
         String testClass = DEVICE_OWNER_PKG + "." + testClassName;
-        assertTrue(testClass + " failed.", runDeviceTests(DEVICE_OWNER_PKG, testClass));
+        assertTrue(testClass + " failed.",
+                runDeviceTestsAsUser(DEVICE_OWNER_PKG, testClass, mPrimaryUserId));
     }
 
     private void executeDeviceTestMethod(String className, String testName) throws Exception {
         assertTrue(runDeviceTestsAsUser(DEVICE_OWNER_PKG, className, testName,
-                /* deviceOwnerUserId */ 0));
+                /* deviceOwnerUserId */ mPrimaryUserId));
     }
 }

@@ -87,13 +87,13 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
 
         if (mHasFeature) {
             removeTestUsers();
-            mParentUserId = getPrimaryUser();
+            mParentUserId = mPrimaryUserId;
             mProfileUserId = createManagedProfile(mParentUserId);
 
-            installApp(MANAGED_PROFILE_APK);
+            installAppAsUser(MANAGED_PROFILE_APK, mParentUserId);
+            installAppAsUser(MANAGED_PROFILE_APK, mProfileUserId);
             setProfileOwnerOrFail(MANAGED_PROFILE_PKG + "/" + ADMIN_RECEIVER_TEST_CLASS,
                     mProfileUserId);
-            switchUser(mParentUserId);
             startUser(mProfileUserId);
         }
     }
@@ -155,19 +155,16 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
         }
         assertTrue("WiFi config already exists and could not be removed", runDeviceTestsAsUser(
                 MANAGED_PROFILE_PKG, ".WifiTest", "testRemoveWifiNetworkIfExists", mParentUserId));
-        try {
-            installApp(WIFI_CONFIG_CREATOR_APK);
-            assertTrue("Failed to add WiFi config", runDeviceTestsAsUser(
-                    MANAGED_PROFILE_PKG, ".WifiTest", "testAddWifiNetwork", mProfileUserId));
 
-            // Now delete the user - should undo the effect of testAddWifiNetwork.
-            removeUser(mProfileUserId);
-            assertTrue("WiFi config not removed after deleting profile", runDeviceTestsAsUser(
-                    MANAGED_PROFILE_PKG, ".WifiTest", "testWifiNetworkDoesNotExist",
-                    mParentUserId));
-        } finally {
-            getDevice().uninstallPackage(WIFI_CONFIG_CREATOR_APK);
-        }
+        installAppAsUser(WIFI_CONFIG_CREATOR_APK, mProfileUserId);
+        assertTrue("Failed to add WiFi config", runDeviceTestsAsUser(
+                MANAGED_PROFILE_PKG, ".WifiTest", "testAddWifiNetwork", mProfileUserId));
+
+        // Now delete the user - should undo the effect of testAddWifiNetwork.
+        removeUser(mProfileUserId);
+        assertTrue("WiFi config not removed after deleting profile", runDeviceTestsAsUser(
+                MANAGED_PROFILE_PKG, ".WifiTest", "testWifiNetworkDoesNotExist",
+                mParentUserId));
     }
 
     public void testCrossProfileIntentFilters() throws Exception {
@@ -187,7 +184,8 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
                 + "/.PrimaryUserFilterSetterActivity";
         CLog.logAndDisplay(LogLevel.INFO, "Output for command " + command + ": "
               + getDevice().executeShellCommand(command));
-        assertTrue(runDeviceTests(MANAGED_PROFILE_PKG, MANAGED_PROFILE_PKG + ".PrimaryUserTest"));
+        assertTrue(runDeviceTestsAsUser(
+                MANAGED_PROFILE_PKG, MANAGED_PROFILE_PKG + ".PrimaryUserTest", mParentUserId));
         // TODO: Test with startActivity
     }
 
@@ -199,8 +197,10 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
         // intents resolution.
         assertTrue(runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".CrossProfileUtils",
                 "testDisableAllBrowsers", mProfileUserId));
-        installApp(INTENT_RECEIVER_APK);
-        installApp(INTENT_SENDER_APK);
+        installAppAsUser(INTENT_RECEIVER_APK, mParentUserId);
+        installAppAsUser(INTENT_SENDER_APK, mParentUserId);
+        installAppAsUser(INTENT_RECEIVER_APK, mProfileUserId);
+        installAppAsUser(INTENT_SENDER_APK, mProfileUserId);
 
         changeVerificationStatus(mParentUserId, INTENT_RECEIVER_PKG, "ask");
         changeVerificationStatus(mProfileUserId, INTENT_RECEIVER_PKG, "ask");
@@ -242,8 +242,10 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
         if (!mHasFeature) {
             return;
         }
-        installApp(INTENT_RECEIVER_APK);
-        installApp(INTENT_SENDER_APK);
+        installAppAsUser(INTENT_RECEIVER_APK, mParentUserId);
+        installAppAsUser(INTENT_SENDER_APK, mParentUserId);
+        installAppAsUser(INTENT_RECEIVER_APK, mProfileUserId);
+        installAppAsUser(INTENT_SENDER_APK, mProfileUserId);
 
         // Test from parent to managed
         assertTrue(runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".CrossProfileUtils",
@@ -265,8 +267,10 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
         if (!mHasFeature) {
             return;
         }
-        installApp(INTENT_RECEIVER_APK);
-        installApp(INTENT_SENDER_APK);
+        installAppAsUser(INTENT_RECEIVER_APK, mParentUserId);
+        installAppAsUser(INTENT_SENDER_APK, mParentUserId);
+        installAppAsUser(INTENT_RECEIVER_APK, mProfileUserId);
+        installAppAsUser(INTENT_SENDER_APK, mProfileUserId);
 
         assertTrue(runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".CrossProfileUtils",
                 "testAllowCrossProfileCopyPaste", mProfileUserId));
@@ -508,11 +512,11 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
         }
 
         try {
-            installApp(DEVICE_OWNER_APK);
-            assertFalse(setDeviceOwner(DEVICE_OWNER_PKG + "/" + DEVICE_OWNER_ADMIN));
+            installAppAsUser(DEVICE_OWNER_APK, mParentUserId);
+            assertFalse(setDeviceOwner(DEVICE_OWNER_PKG + "/" + DEVICE_OWNER_ADMIN, mParentUserId));
         } finally {
             // make sure we clean up in case we succeeded in setting the device owner
-            runDeviceTests(DEVICE_OWNER_PKG, DEVICE_OWNER_CLEAR);
+            runDeviceTestsAsUser(DEVICE_OWNER_PKG, DEVICE_OWNER_CLEAR, mParentUserId);
             getDevice().uninstallPackage(DEVICE_OWNER_PKG);
         }
     }
@@ -547,7 +551,8 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
         }
 
         try {
-            installApp(WIDGET_PROVIDER_APK);
+            installAppAsUser(WIDGET_PROVIDER_APK, mProfileUserId);
+            installAppAsUser(WIDGET_PROVIDER_APK, mParentUserId);
             getDevice().executeShellCommand("appwidget grantbind --user " + mParentUserId
                     + " --package " + WIDGET_PROVIDER_PKG);
             startWidgetHostService();

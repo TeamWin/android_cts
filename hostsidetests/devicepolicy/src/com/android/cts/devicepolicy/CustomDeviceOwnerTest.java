@@ -69,26 +69,26 @@ public class CustomDeviceOwnerTest extends BaseDevicePolicyTest {
         if (!mHasFeature) {
             return;
         }
-        installApp(DEVICE_OWNER_APK);
+        installAppAsUser(DEVICE_OWNER_APK, mPrimaryUserId);
         try {
-            installApp(INTENT_RECEIVER_APK);
+            installAppAsUser(INTENT_RECEIVER_APK, mPrimaryUserId);
 
             String testClass = INTENT_RECEIVER_PKG + ".OwnerChangedBroadcastTest";
 
             // Running this test also gets the intent receiver app out of the stopped state, so it
             // can receive broadcast intents.
             assertTrue(runDeviceTestsAsUser(INTENT_RECEIVER_PKG, testClass,
-                    "testOwnerChangedBroadcastNotReceived", USER_OWNER));
+                    "testOwnerChangedBroadcastNotReceived", mPrimaryUserId));
 
             // Setting the device owner should send the owner changed broadcast.
-            assertTrue(setDeviceOwner(DEVICE_OWNER_ADMIN_COMPONENT));
+            assertTrue(setDeviceOwner(DEVICE_OWNER_ADMIN_COMPONENT, mPrimaryUserId));
 
             assertTrue(runDeviceTestsAsUser(INTENT_RECEIVER_PKG, testClass,
-                    "testOwnerChangedBroadcastReceived", USER_OWNER));
+                    "testOwnerChangedBroadcastReceived", mPrimaryUserId));
         } finally {
             getDevice().uninstallPackage(INTENT_RECEIVER_PKG);
             assertTrue("Failed to remove device owner.",
-                    runDeviceTests(DEVICE_OWNER_PKG, DEVICE_OWNER_CLEAR));
+                    runDeviceTestsAsUser(DEVICE_OWNER_PKG, DEVICE_OWNER_CLEAR, mPrimaryUserId));
         }
     }
 
@@ -97,14 +97,14 @@ public class CustomDeviceOwnerTest extends BaseDevicePolicyTest {
             return;
         }
         int userId = -1;
-        installApp(DEVICE_OWNER_APK);
+        installAppAsUser(DEVICE_OWNER_APK, mPrimaryUserId);
         try {
             userId = createUser();
-            assertFalse(setDeviceOwner(DEVICE_OWNER_ADMIN_COMPONENT));
+            assertFalse(setDeviceOwner(DEVICE_OWNER_ADMIN_COMPONENT, mPrimaryUserId));
         } finally {
             removeUser(userId);
             // make sure we clean up in case we succeeded in setting the device owner
-            runDeviceTests(DEVICE_OWNER_PKG, DEVICE_OWNER_CLEAR);
+            runDeviceTestsAsUser(DEVICE_OWNER_PKG, DEVICE_OWNER_CLEAR, mPrimaryUserId);
         }
     }
 
@@ -112,17 +112,17 @@ public class CustomDeviceOwnerTest extends BaseDevicePolicyTest {
         if (!mHasFeature) {
             return;
         }
-        installApp(ACCOUNT_MANAGEMENT_APK);
-        installApp(DEVICE_OWNER_APK);
+        installAppAsUser(ACCOUNT_MANAGEMENT_APK, mPrimaryUserId);
+        installAppAsUser(DEVICE_OWNER_APK, mPrimaryUserId);
         try {
             assertTrue(runDeviceTestsAsUser(ACCOUNT_MANAGEMENT_PKG, ".AccountUtilsTest",
-                    "testAddAccountExplicitly", 0));
-            assertFalse(setDeviceOwner(DEVICE_OWNER_ADMIN_COMPONENT));
+                    "testAddAccountExplicitly", mPrimaryUserId));
+            assertFalse(setDeviceOwner(DEVICE_OWNER_ADMIN_COMPONENT, mPrimaryUserId));
         } finally {
             // make sure we clean up in case we succeeded in setting the device owner
-            runDeviceTests(DEVICE_OWNER_PKG, DEVICE_OWNER_CLEAR);
+            runDeviceTestsAsUser(DEVICE_OWNER_PKG, DEVICE_OWNER_CLEAR, mPrimaryUserId);
             assertTrue(runDeviceTestsAsUser(ACCOUNT_MANAGEMENT_PKG, ".AccountUtilsTest",
-                    "testRemoveAccountExplicitly", 0));
+                    "testRemoveAccountExplicitly", mPrimaryUserId));
         }
     }
 
@@ -133,16 +133,16 @@ public class CustomDeviceOwnerTest extends BaseDevicePolicyTest {
         final File apk = MigrationHelper.getTestFile(mCtsBuild, TEST_APP_APK);
         try {
             // Install the test and prepare the test apk.
-            installApp(PACKAGE_INSTALLER_APK);
-            assertTrue(setDeviceOwner(PACKAGE_INSTALLER_ADMIN_COMPONENT));
+            installAppAsUser(PACKAGE_INSTALLER_APK, mPrimaryUserId);
+            assertTrue(setDeviceOwner(PACKAGE_INSTALLER_ADMIN_COMPONENT, mPrimaryUserId));
 
             getDevice().uninstallPackage(TEST_APP_PKG);
             assertTrue(getDevice().pushFile(apk, TEST_APP_LOCATION + apk.getName()));
-            assertTrue(runDeviceTests(PACKAGE_INSTALLER_PKG,
-                    PACKAGE_INSTALLER_PKG + ".SilentPackageInstallTest"));
+            assertTrue(runDeviceTestsAsUser(PACKAGE_INSTALLER_PKG,
+                    PACKAGE_INSTALLER_PKG + ".SilentPackageInstallTest", mPrimaryUserId));
         } finally {
-            assertTrue("Failed to remove device owner.", runDeviceTests(PACKAGE_INSTALLER_PKG,
-                    PACKAGE_INSTALLER_CLEAR_DEVICE_OWNER_TEST_CLASS));
+            assertTrue("Failed to remove device owner.", runDeviceTestsAsUser(PACKAGE_INSTALLER_PKG,
+                    PACKAGE_INSTALLER_CLEAR_DEVICE_OWNER_TEST_CLASS, mPrimaryUserId));
             String command = "rm " + TEST_APP_LOCATION + apk.getName();
             String commandOutput = getDevice().executeShellCommand(command);
             getDevice().uninstallPackage(TEST_APP_PKG);

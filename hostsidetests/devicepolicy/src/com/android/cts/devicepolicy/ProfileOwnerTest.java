@@ -37,7 +37,7 @@ public class ProfileOwnerTest extends BaseDevicePolicyTest {
 
 
         if (mHasFeature) {
-            installApp(PROFILE_OWNER_APK);
+            installAppAsUser(PROFILE_OWNER_APK, mUserId);
             assertTrue("Failed to set profile owner",
                     setProfileOwner(PROFILE_OWNER_PKG + "/" + ADMIN_RECEIVER_TEST_CLASS, mUserId));
         }
@@ -47,7 +47,8 @@ public class ProfileOwnerTest extends BaseDevicePolicyTest {
     protected void tearDown() throws Exception {
         if (mHasFeature) {
             assertTrue("Failed to remove profile owner.",
-                    runDeviceTests(PROFILE_OWNER_PKG, CLEAR_PROFILE_OWNER_TEST_CLASS));
+                    runDeviceTestsAsUser(PROFILE_OWNER_PKG, CLEAR_PROFILE_OWNER_TEST_CLASS,
+                            mUserId));
             getDevice().uninstallPackage(PROFILE_OWNER_PKG);
         }
 
@@ -66,6 +67,7 @@ public class ProfileOwnerTest extends BaseDevicePolicyTest {
             return;
         }
         String testClass = PROFILE_OWNER_PKG + "." + testClassName;
-        assertTrue(testClass + " failed.", runDeviceTests(PROFILE_OWNER_PKG, testClass));
+        assertTrue(testClass + " failed.", runDeviceTestsAsUser(PROFILE_OWNER_PKG, testClass,
+                mPrimaryUserId));
     }
 }

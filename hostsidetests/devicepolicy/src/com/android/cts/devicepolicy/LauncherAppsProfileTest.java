@@ -45,9 +45,9 @@ public class LauncherAppsProfileTest extends BaseLauncherAppsTest {
             removeTestUsers();
             installTestApps();
             // Create a managed profile
-            mParentUserId = getPrimaryUser();
+            mParentUserId = mPrimaryUserId;
             mProfileUserId = createManagedProfile(mParentUserId);
-            installApp(MANAGED_PROFILE_APK);
+            installAppAsUser(MANAGED_PROFILE_APK, mProfileUserId);
             setProfileOwnerOrFail(MANAGED_PROFILE_PKG + "/" + ADMIN_RECEIVER_TEST_CLASS,
                     mProfileUserId);
             mProfileSerialNumber = Integer.toString(getUserSerialNumber(mProfileUserId));
@@ -61,7 +61,6 @@ public class LauncherAppsProfileTest extends BaseLauncherAppsTest {
         if (mHasFeature) {
             removeUser(mProfileUserId);
             uninstallTestApps();
-            getDevice().uninstallPackage(MANAGED_PROFILE_PKG);
         }
         super.tearDown();
     }
@@ -71,7 +70,8 @@ public class LauncherAppsProfileTest extends BaseLauncherAppsTest {
             return;
         }
         // Install app for all users.
-        installApp(SIMPLE_APP_APK);
+        installAppAsUser(SIMPLE_APP_APK, mParentUserId);
+        installAppAsUser(SIMPLE_APP_APK, mProfileUserId);
 
         // Run tests to check SimpleApp exists in both profile and main user.
         assertTrue(runDeviceTestsAsUser(LAUNCHER_TESTS_PKG,
@@ -88,7 +88,7 @@ public class LauncherAppsProfileTest extends BaseLauncherAppsTest {
             return;
         }
         startCallbackService();
-        installApp(SIMPLE_APP_APK);
+        installAppAsUser(SIMPLE_APP_APK, mProfileUserId);
         assertTrue(runDeviceTestsAsUser(LAUNCHER_TESTS_PKG,
                 LAUNCHER_TESTS_CLASS,
                 "testPackageAddedCallbackForUser",
@@ -99,7 +99,7 @@ public class LauncherAppsProfileTest extends BaseLauncherAppsTest {
         if (!mHasFeature) {
             return;
         }
-        installApp(SIMPLE_APP_APK);
+        installAppAsUser(SIMPLE_APP_APK, mProfileUserId);
         startCallbackService();
         getDevice().uninstallPackage(SIMPLE_APP_PKG);
         assertTrue(runDeviceTestsAsUser(LAUNCHER_TESTS_PKG,
@@ -112,9 +112,9 @@ public class LauncherAppsProfileTest extends BaseLauncherAppsTest {
         if (!mHasFeature) {
             return;
         }
-        installApp(SIMPLE_APP_APK);
+        installAppAsUser(SIMPLE_APP_APK, mProfileUserId);
         startCallbackService();
-        installApp(SIMPLE_APP_APK);
+        installAppAsUser(SIMPLE_APP_APK, mProfileUserId);
         assertTrue(runDeviceTestsAsUser(LAUNCHER_TESTS_PKG,
                 LAUNCHER_TESTS_CLASS,
                 "testPackageChangedCallbackForUser",
