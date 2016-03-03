@@ -254,6 +254,7 @@ cts_native_tests := \
 
 ifeq ($(HOST_OS)-$(HOST_ARCH),$(filter $(HOST_OS)-$(HOST_ARCH),linux-x86 linux-x86_64))
 cts_native_tests += bionic-unit-tests-cts
+cts_native_tests += simpleperf-unit-test-cts
 endif
 
 cts_ui_tests := \
