@@ -41,6 +41,23 @@ public class RSUtils {
         -Math.PI * 2.0,
     };
 
+    // Constants E, PI etc. are set to their nearest representations in Float16.
+    private static final short[] sInterestingFloat16s = {
+        (short) 0x0, // zero
+        (short) 0x3c00, // one
+        (short) 0x4170, // E, 2.71875000000
+        (short) 0x4248, // PI, 3.14062500000
+        (short) 0x3e48, // PI / 2, 1.57031250000
+        (short) 0x4648, // PI * 2, 6.28125000000
+
+        (short) 0x8000, // negative zero
+        (short) 0xbc00, // negative one
+        (short) 0xc170, // -E, -2.71875000000
+        (short) 0xc248, // -PI, -3.14062500000
+        (short) 0xbe48, // -PI / 2, -1.57031250000
+        (short) 0xc648, // -PI * 2, -6.28125000000
+    };
+
     /**
      * Fills the array with random doubles.  Values will be between min (inclusive) and
      * max (inclusive).
@@ -140,6 +157,37 @@ public class RSUtils {
             array[r.nextInt(array.length)] = -Float.MIN_VALUE;
             array[r.nextInt(array.length)] = -Float.MIN_NORMAL;
             array[r.nextInt(array.length)] = -Float.MAX_VALUE;
+        }
+    }
+
+    public static void genRandomFloat16s(long seed, short min, short max, short array[],
+            boolean includeExtremes) {
+        Random r = new Random(seed);
+        short range = (short) (max - min + 1);
+        for (int i = 0; i < array.length; i ++) {
+            array[i] = (short) (min + r.nextInt(range));
+        }
+        array[r.nextInt(array.length)] = min;
+        array[r.nextInt(array.length)] = max;
+
+        // Negate approximately half of the elements.
+        for (int i = 0; i < array.length; i ++) {
+            if (r.nextBoolean()) {
+                array[i] = (short) (0x8000 | array[i]);
+            }
+        }
+
+        for (short s : sInterestingFloat16s) {
+            array[r.nextInt(array.length)] = s;
+        }
+        if (includeExtremes) {
+            array[r.nextInt(array.length)] = (short) 0x7c01; // NaN
+            array[r.nextInt(array.length)] = (short) 0x7c00; // POSITIVE_INFINITY
+            array[r.nextInt(array.length)] = (short) 0xfc00; // NEGATIVE_INFINITY
+            array[r.nextInt(array.length)] = (short) 0x0400; // MIN_NORMAL, 0.00006103516
+            array[r.nextInt(array.length)] = (short) 0x7bff; // MAX_VALUE, 65504
+            array[r.nextInt(array.length)] = (short) 0x8400; // -MIN_NORMAL, -0.00006103516
+            array[r.nextInt(array.length)] = (short) 0xfbff; // -MAX_VALUE, -65504
         }
     }
 
