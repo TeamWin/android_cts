@@ -77,7 +77,7 @@ import java.util.concurrent.TimeoutException;
  */
 public abstract class BasePrintTest extends InstrumentationTestCase {
 
-    private static final long OPERATION_TIMEOUT = 100000000;
+    protected static final long OPERATION_TIMEOUT_MILLIS = 20000;
     private static final String PRINT_SPOOLER_PACKAGE_NAME = "com.android.printspooler";
     protected static final String PRINT_JOB_NAME = "Test";
     private static final String PM_CLEAR_SUCCESS_OUTPUT = "Success";
@@ -296,7 +296,7 @@ public abstract class BasePrintTest extends InstrumentationTestCase {
 
     private void waitForCallbackCallCount(CallCounter counter, int count, String message) {
         try {
-            counter.waitForCount(count, OPERATION_TIMEOUT);
+            counter.waitForCount(count, OPERATION_TIMEOUT_MILLIS);
         } catch (TimeoutException te) {
             fail(message);
         }
@@ -340,6 +340,17 @@ public abstract class BasePrintTest extends InstrumentationTestCase {
         }
     }
 
+    protected String getOrientation() throws UiObjectNotFoundException, IOException {
+        try {
+            UiObject orientationSpinner = mUiDevice.findObject(new UiSelector().resourceId(
+                    "com.android.printspooler:id/orientation_spinner"));
+            return orientationSpinner.getText();
+        } catch (UiObjectNotFoundException e) {
+            dumpWindowHierarchy();
+            throw new UiObjectNotFoundException(e);
+        }
+    }
+
     protected void changeMediaSize(String mediaSize) throws UiObjectNotFoundException, IOException {
         try {
             UiObject mediaSizeSpinner = mUiDevice.findObject(new UiSelector().resourceId(
@@ -347,6 +358,17 @@ public abstract class BasePrintTest extends InstrumentationTestCase {
             mediaSizeSpinner.click();
             UiObject mediaSizeOption = mUiDevice.findObject(new UiSelector().text(mediaSize));
             mediaSizeOption.click();
+        } catch (UiObjectNotFoundException e) {
+            dumpWindowHierarchy();
+            throw new UiObjectNotFoundException(e);
+        }
+    }
+
+    protected String getMediaSize() throws UiObjectNotFoundException, IOException {
+        try {
+            UiObject mediaSizeSpinner = mUiDevice.findObject(new UiSelector().resourceId(
+                    "com.android.printspooler:id/paper_size_spinner"));
+            return mediaSizeSpinner.getText();
         } catch (UiObjectNotFoundException e) {
             dumpWindowHierarchy();
             throw new UiObjectNotFoundException(e);
@@ -366,6 +388,17 @@ public abstract class BasePrintTest extends InstrumentationTestCase {
         }
     }
 
+    protected String getColor() throws UiObjectNotFoundException, IOException {
+        try {
+            UiObject colorSpinner = mUiDevice.findObject(new UiSelector().resourceId(
+                    "com.android.printspooler:id/color_spinner"));
+            return colorSpinner.getText();
+        } catch (UiObjectNotFoundException e) {
+            dumpWindowHierarchy();
+            throw new UiObjectNotFoundException(e);
+        }
+    }
+
     protected void changeDuplex(String duplex) throws UiObjectNotFoundException, IOException {
         try {
             UiObject duplexSpinner = mUiDevice.findObject(new UiSelector().resourceId(
@@ -373,6 +406,28 @@ public abstract class BasePrintTest extends InstrumentationTestCase {
             duplexSpinner.click();
             UiObject duplexOption = mUiDevice.findObject(new UiSelector().text(duplex));
             duplexOption.click();
+        } catch (UiObjectNotFoundException e) {
+            dumpWindowHierarchy();
+            throw new UiObjectNotFoundException(e);
+        }
+    }
+
+    protected String getDuplex() throws UiObjectNotFoundException, IOException {
+        try {
+            UiObject duplexSpinner = mUiDevice.findObject(new UiSelector().resourceId(
+                    "com.android.printspooler:id/duplex_spinner"));
+            return duplexSpinner.getText();
+        } catch (UiObjectNotFoundException e) {
+            dumpWindowHierarchy();
+            throw new UiObjectNotFoundException(e);
+        }
+    }
+
+    protected String getCopies() throws UiObjectNotFoundException, IOException {
+        try {
+            UiObject copies = mUiDevice.findObject(new UiSelector().resourceId(
+                    "com.android.printspooler:id/copies_edittext"));
+            return copies.getText();
         } catch (UiObjectNotFoundException e) {
             dumpWindowHierarchy();
             throw new UiObjectNotFoundException(e);
@@ -411,6 +466,12 @@ public abstract class BasePrintTest extends InstrumentationTestCase {
     protected void openPrintOptions() throws UiObjectNotFoundException {
         UiObject expandHandle = mUiDevice.findObject(new UiSelector().resourceId(
                 "com.android.printspooler:id/expand_collapse_handle"));
+        expandHandle.click();
+    }
+
+    protected void openCustomPrintOptions() throws UiObjectNotFoundException {
+        UiObject expandHandle = mUiDevice.findObject(new UiSelector().resourceId(
+                "com.android.printspooler:id/more_options_button"));
         expandHandle.click();
     }
 
