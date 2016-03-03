@@ -36,7 +36,7 @@ public class MixedManagedProfileOwnerTest extends DeviceAndProfileOwnerTest {
 
         if (mHasFeature) {
             removeTestUsers();
-            mParentUserId = getPrimaryUser();
+            mParentUserId = mPrimaryUserId;
             mUserId = createManagedProfile(mParentUserId);
             switchUser(mParentUserId);
             startUser(mUserId);
@@ -82,7 +82,8 @@ public class MixedManagedProfileOwnerTest extends DeviceAndProfileOwnerTest {
     public void testCannotClearProfileOwner() throws Exception {
         if (mHasFeature) {
             assertTrue("Managed profile owner shouldn't be removed",
-                    runDeviceTests(DEVICE_ADMIN_PKG, CLEAR_PROFILE_OWNER_NEGATIVE_TEST_CLASS));
+                    runDeviceTestsAsUser(DEVICE_ADMIN_PKG, CLEAR_PROFILE_OWNER_NEGATIVE_TEST_CLASS,
+                            mPrimaryUserId));
         }
     }
 }

@@ -32,7 +32,7 @@ public class DeviceAdminHostSideTestApi24 extends BaseDeviceAdminHostSideTest {
             return;
         }
 
-        installApp(getDeviceAdminApkFileName());
+        installAppAsUser(getDeviceAdminApkFileName(), mUserId);
         setDeviceAdminExpectingFailure(getUnprotectedAdminReceiverComponent(), mUserId,
                 "must be protected with android.permission.BIND_DEVICE_ADMIN");
     }

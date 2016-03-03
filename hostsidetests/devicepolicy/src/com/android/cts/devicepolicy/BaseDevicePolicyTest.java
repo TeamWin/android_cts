@@ -68,6 +68,7 @@ public class BaseDevicePolicyTest extends DeviceTestCase implements IBuildReceiv
 
     /** Whether DPM is supported. */
     protected boolean mHasFeature;
+    protected int mPrimaryUserId;
 
     /** Whether multi-user is supported. */
     protected boolean mSupportsMultiUser;
@@ -91,7 +92,10 @@ public class BaseDevicePolicyTest extends DeviceTestCase implements IBuildReceiv
         mPackageVerifier = getDevice().executeShellCommand(
                 "settings get global package_verifier_enable");
         getDevice().executeShellCommand("settings put global package_verifier_enable 0");
+
         mOriginalUsers = listUsers();
+        mPrimaryUserId = getPrimaryUser();
+        switchUser(mPrimaryUserId);
     }
 
     @Override
@@ -102,42 +106,22 @@ public class BaseDevicePolicyTest extends DeviceTestCase implements IBuildReceiv
         super.tearDown();
     }
 
-    protected void installApp(String fileName)
-            throws FileNotFoundException, DeviceNotAvailableException {
-        CLog.logAndDisplay(LogLevel.INFO, "Installing app " + fileName);
-        String installResult = getDevice().installPackage(
-            MigrationHelper.getTestFile(mCtsBuild, fileName), true);
-        assertNull(String.format("Failed to install %s, Reason: %s", fileName, installResult),
-                installResult);
-    }
-
     protected void installAppAsUser(String appFileName, int userId) throws FileNotFoundException,
             DeviceNotAvailableException {
         CLog.logAndDisplay(LogLevel.INFO, "Installing app " + appFileName + " for user " + userId);
-        final ITestDevice device = getDevice();
-
-        final File apk = MigrationHelper.getTestFile(mCtsBuild, appFileName);
-        final String remotePath = "/data/local/tmp/" + apk.getName();
-        if (!device.pushFile(apk, remotePath)) {
-            throw new IllegalStateException("Failed to push " + apk);
-        }
-
-        final String result = device.executeShellCommand(
-                "pm install -r -g --user " + userId + " " + remotePath);
-        assertTrue(result, result.contains("Success"));
+        String result = getDevice().installPackageForUser(
+                MigrationHelper.getTestFile(mCtsBuild, appFileName), true, userId);
+        assertNull("Failed to install " + appFileName + " for user " + userId + ": " + result,
+                result);
     }
 
     /** Initializes the user with the given id. This is required so that apps can run on it. */
     protected void startUser(int userId) throws Exception {
-        String command = "am start-user " + userId;
-        CLog.logAndDisplay(LogLevel.INFO, "Starting command " + command);
-        String commandOutput = getDevice().executeShellCommand(command);
-        CLog.logAndDisplay(LogLevel.INFO, "Output for command " + command + ": " + commandOutput);
-        assertTrue(commandOutput + " expected to start with \"Success:\"",
-                commandOutput.startsWith("Success:"));
+        getDevice().startUser(userId);
     }
 
     protected void switchUser(int userId) throws Exception {
+        // TODO Move this logic to ITestDevice
         String command = "am switch-user " + userId;
         CLog.logAndDisplay(LogLevel.INFO, "Starting command " + command);
         String commandOutput = getDevice().executeShellCommand(command);
@@ -145,17 +129,7 @@ public class BaseDevicePolicyTest extends DeviceTestCase implements IBuildReceiv
     }
 
     protected int getMaxNumberOfUsersSupported() throws DeviceNotAvailableException {
-        // TODO: move this to ITestDevice once it supports users
-        String command = "pm get-max-users";
-        String commandOutput = getDevice().executeShellCommand(command);
-        CLog.i("Output for command " + command + ": " + commandOutput);
-
-        try {
-            return Integer.parseInt(commandOutput.substring(commandOutput.lastIndexOf(" ")).trim());
-        } catch (NumberFormatException e) {
-            fail("Failed to parse result: " + commandOutput);
-        }
-        return 0;
+        return getDevice().getMaxNumberOfUsersSupported();
     }
 
     protected int getUserFlags(int userId) throws DeviceNotAvailableException {
@@ -181,25 +155,7 @@ public class BaseDevicePolicyTest extends DeviceTestCase implements IBuildReceiv
     }
 
     protected ArrayList<Integer> listUsers() throws DeviceNotAvailableException {
-        String command = "pm list users";
-        String commandOutput = getDevice().executeShellCommand(command);
-        CLog.i("Output for command " + command + ": " + commandOutput);
-
-        // Extract the id of all existing users.
-        String[] lines = commandOutput.split("\\r?\\n");
-        assertTrue(commandOutput + " should contain at least one line", lines.length >= 1);
-        assertEquals(commandOutput, lines[0], "Users:");
-
-        ArrayList<Integer> users = new ArrayList<Integer>();
-        for (int i = 1; i < lines.length; i++) {
-            // Individual user is printed out like this:
-            // \tUserInfo{$id$:$name$:$Integer.toHexString(flags)$} [running]
-            String[] tokens = lines[i].split("\\{|\\}|:");
-            assertTrue(lines[i] + " doesn't contain 4 or 5 tokens",
-                    tokens.length == 4 || tokens.length == 5);
-            users.add(Integer.parseInt(tokens[1]));
-        }
-        return users;
+        return getDevice().listUsers();
     }
 
     protected void stopUser(int userId) throws Exception  {
@@ -210,14 +166,7 @@ public class BaseDevicePolicyTest extends DeviceTestCase implements IBuildReceiv
     }
 
     protected void removeUser(int userId) throws Exception  {
-        stopUser(userId);
-        String removeUserCommand = "pm remove-user " + userId;
-        CLog.logAndDisplay(LogLevel.INFO, "starting command " + removeUserCommand);
-
-        String removeUserOutput = getDevice().executeShellCommand(removeUserCommand);
-        CLog.logAndDisplay(LogLevel.INFO, "Output for command " + removeUserCommand + ": "
-                + removeUserOutput);
-        assertTrue("Couldn't remove user", removeUserOutput.startsWith("Success:"));
+        assertTrue("Couldn't remove user", getDevice().removeUser(userId));
     }
 
     protected void removeTestUsers() throws Exception {
@@ -226,14 +175,6 @@ public class BaseDevicePolicyTest extends DeviceTestCase implements IBuildReceiv
                 removeUser(userId);
             }
         }
-    }
-
-    /** Returns true if the specified tests passed. Tests are run as user owner. */
-    protected boolean runDeviceTests(String pkgName, @Nullable String testClassName)
-            throws DeviceNotAvailableException {
-        Map<String, String> params = Collections.emptyMap();
-        return runDeviceTestsAsUser(
-                pkgName, testClassName, null /*testMethodName*/, null /*userId*/, params);
     }
 
     /** Returns true if the specified tests passed. Tests are run as given user. */
@@ -252,7 +193,7 @@ public class BaseDevicePolicyTest extends DeviceTestCase implements IBuildReceiv
     }
 
     protected boolean runDeviceTestsAsUser(String pkgName, @Nullable String testClassName,
-            @Nullable String testMethodName, @Nullable Integer userId,
+            @Nullable String testMethodName, int userId,
             Map<String, String> params) throws DeviceNotAvailableException {
         if (testClassName != null && testClassName.startsWith(".")) {
             testClassName = pkgName + testClassName;
@@ -271,12 +212,7 @@ public class BaseDevicePolicyTest extends DeviceTestCase implements IBuildReceiv
         }
 
         CollectingTestListener listener = new CollectingTestListener();
-        if (userId == null) {
-            assertTrue(getDevice().runInstrumentationTests(testRunner, listener));
-        } else {
-            assertTrue(getDevice().runInstrumentationTestsAsUser(
-                    testRunner, userId, listener));
-        }
+        assertTrue(getDevice().runInstrumentationTestsAsUser(testRunner, userId, listener));
 
         TestRunResult runResult = listener.getCurrentRunResults();
         printTestResult(runResult);
@@ -358,6 +294,7 @@ public class BaseDevicePolicyTest extends DeviceTestCase implements IBuildReceiv
     protected int createUser(int flags) throws Exception {
         boolean guest = FLAG_GUEST == (flags & FLAG_GUEST);
         boolean ephemeral = FLAG_EPHEMERAL == (flags & FLAG_EPHEMERAL);
+        // TODO Use ITestDevice.createUser() when guest and ephemeral is available
         String command ="pm create-user " + (guest ? "--guest " : "")
                 + (ephemeral ? "--ephemeral " : "") + "TestUser_" + System.currentTimeMillis();
         CLog.logAndDisplay(LogLevel.INFO, "Starting command " + command);
@@ -386,27 +323,12 @@ public class BaseDevicePolicyTest extends DeviceTestCase implements IBuildReceiv
         return Integer.parseInt(tokens[tokens.length-1]);
     }
 
-    // TODO: use the method from Device.java once it is available.
     protected int getPrimaryUser() throws DeviceNotAvailableException {
-        final String command = "pm list users";
-        final String commandOutput = getDevice().executeShellCommand(command);
-        CLog.logAndDisplay(LogLevel.INFO, "Output for command " + command + ": " + commandOutput);
-        final String[] lines = commandOutput.split("\\n");
-        final Pattern p = Pattern.compile("\\{(\\d+):.*:(\\d+)");
-        for (String line : lines) {
-            Matcher m = p.matcher(line);
-            if (m.find()) {
-                final int flag = Integer.parseInt(m.group(2));
-                if ((flag & FLAG_PRIMARY) != 0) {
-                    return Integer.parseInt(m.group(1));
-                }
-            }
-        }
-        fail("There is no primary user on this device?");
-        return -1;
+        return getDevice().getPrimaryUserId();
     }
 
     protected int getUserSerialNumber(int userId) throws DeviceNotAvailableException{
+        // TODO: Move this logic to ITestDevice.
         // dumpsys user return lines like "UserInfo{0:Owner:13} serialNo=0"
         String commandOutput = getDevice().executeShellCommand("dumpsys user");
         String[] tokens = commandOutput.split("\\n");
@@ -465,8 +387,9 @@ public class BaseDevicePolicyTest extends DeviceTestCase implements IBuildReceiv
         }
     }
 
-    protected boolean setDeviceOwner(String componentName) throws DeviceNotAvailableException {
-        String command = "dpm set-device-owner '" + componentName + "'";
+    protected boolean setDeviceOwner(String componentName, int userId)
+            throws DeviceNotAvailableException {
+        String command = "dpm set-device-owner --user " + userId + " '" + componentName + "'";
         String commandOutput = getDevice().executeShellCommand(command);
         CLog.logAndDisplay(LogLevel.INFO, "Output for command " + command + ": " + commandOutput);
         return commandOutput.startsWith("Success:");
