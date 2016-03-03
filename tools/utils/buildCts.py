@@ -410,6 +410,7 @@ def BuildAospSmallSizeTestList():
       'android.server' : [],
       'android.signature' : [],
       'android.simplecpu' : [],
+      'android.simpleperf' : [],
       'android.speech' : [],
       'android.text' : [],
       'android.textureview' : [],

@@ -279,6 +279,7 @@ cts_native_tests := \
 
 ifeq ($(HOST_OS)-$(HOST_ARCH),$(filter $(HOST_OS)-$(HOST_ARCH),linux-x86 linux-x86_64))
 cts_native_tests += CtsBionicTestCases
+cts_native_tests += CtsSimpleperfTestCases
 endif
 
 cts_ui_tests := \
