@@ -2215,4 +2215,20 @@ public class CameraTestUtils extends Assert {
         else
             return new Size(width, height);
     }
+
+    /**
+     * Check if a particular stream configuration is supported by configuring it
+     * to the device.
+     */
+    public static boolean isStreamConfigurationSupported(CameraDevice camera,
+            List<Surface> outputSurfaces,
+            CameraCaptureSession.StateCallback listener, Handler handler) {
+        try {
+            configureCameraSession(camera, outputSurfaces, listener, handler);
+            return true;
+        } catch (Exception e) {
+            Log.i(TAG, "This stream configuration is not supported due to " + e.getMessage());
+            return false;
+        }
+    }
 }

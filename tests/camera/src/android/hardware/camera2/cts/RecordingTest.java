@@ -878,16 +878,17 @@ public class RecordingTest extends Camera2SurfaceViewTestCase {
                     }
                 }
             }
+            Size defaultvideoSnapshotSz = videoSnapshotSz;
 
             /**
              * Only test full res snapshot when below conditions are all true.
-             * 1. Camera is a FULL device
+             * 1. Camera is at least a LIMITED device.
              * 2. video size is up to max preview size, which will be bounded by 1080p.
              * 3. Full resolution jpeg stream can keep up to video stream speed.
              *    When full res jpeg stream cannot keep up to video stream speed, search
              *    the largest jpeg size that can susptain video speed instead.
              */
-            if (mStaticInfo.isHardwareLevelAtLeastFull() &&
+            if (mStaticInfo.isHardwareLevelAtLeastLimited() &&
                     videoSz.getWidth() <= maxPreviewSize.getWidth() &&
                     videoSz.getHeight() <= maxPreviewSize.getHeight()) {
                 for (Size jpegSize : mOrderedStillSizes) {
@@ -914,6 +915,23 @@ public class RecordingTest extends Camera2SurfaceViewTestCase {
             createImageReader(
                     videoSnapshotSz, ImageFormat.JPEG,
                     MAX_VIDEO_SNAPSHOT_IMAGES, /*listener*/null);
+
+            // Full or better devices should support whatever video snapshot size calculated above.
+            // Limited devices may only be able to support the default one.
+            if (mStaticInfo.isHardwareLevelLimited()) {
+                List<Surface> outputs = new ArrayList<Surface>();
+                outputs.add(mPreviewSurface);
+                outputs.add(mRecordingSurface);
+                outputs.add(mReaderSurface);
+                boolean isSupported = isStreamConfigurationSupported(
+                        mCamera, outputs, mSessionListener, mHandler);
+                if (!isSupported) {
+                    videoSnapshotSz = defaultvideoSnapshotSz;
+                    createImageReader(
+                            videoSnapshotSz, ImageFormat.JPEG,
+                            MAX_VIDEO_SNAPSHOT_IMAGES, /*listener*/null);
+                }
+            }
 
             if (VERBOSE) {
                 Log.v(TAG, "Testing camera recording with video size " + videoSz.toString());
