@@ -1084,9 +1084,22 @@ public class CameraDeviceTest extends Camera2AndroidTestCase {
         if (repeating) {
             if (abort) {
                 mSession.abortCaptures();
-            } else {
-                mSession.stopRepeating();
+                // Have to make sure abort and new requests aren't interleave together.
+                waitForSessionState(SESSION_READY, SESSION_READY_TIMEOUT_MS);
+
+                // Capture a single capture, and verify the result.
+                SimpleCaptureCallback resultCallback = new SimpleCaptureCallback();
+                CaptureRequest singleRequest = requestBuilder.build();
+                mSession.capture(singleRequest, resultCallback, mHandler);
+                resultCallback.getCaptureResultForRequest(singleRequest, CAPTURE_RESULT_TIMEOUT_MS);
+
+                // Resume the repeating, and verify that results are returned.
+                mSession.setRepeatingRequest(singleRequest, resultCallback, mHandler);
+                for (int i = 0; i < REPEATING_CAPTURE_EXPECTED_RESULT_COUNT; i++) {
+                    resultCallback.getCaptureResult(CAPTURE_RESULT_TIMEOUT_MS);
+                }
             }
+            mSession.stopRepeating();
         }
         waitForSessionState(SESSION_READY, SESSION_READY_TIMEOUT_MS);
     }
@@ -1103,6 +1116,7 @@ public class CameraDeviceTest extends Camera2AndroidTestCase {
 
         assertTrue("Invalid args to capture function", len <= templates.length);
         List<CaptureRequest> requests = new ArrayList<CaptureRequest>();
+        List<CaptureRequest> postAbortRequests = new ArrayList<CaptureRequest>();
         for (int i = 0; i < len; i++) {
             // Skip video snapshots for LEGACY mode
             if (mStaticInfo.isHardwareLevelLegacy() &&
@@ -1118,6 +1132,9 @@ public class CameraDeviceTest extends Camera2AndroidTestCase {
             assertNotNull("Failed to create capture request", requestBuilder);
             requestBuilder.addTarget(mReaderSurface);
             requests.add(requestBuilder.build());
+            if (abort) {
+                postAbortRequests.add(requestBuilder.build());
+            }
         }
         CameraCaptureSession.CaptureCallback mockCaptureCallback =
                 mock(CameraCaptureSession.CaptureCallback.class);
@@ -1144,9 +1161,25 @@ public class CameraDeviceTest extends Camera2AndroidTestCase {
         if (repeating) {
             if (abort) {
                 mSession.abortCaptures();
-            } else {
-                mSession.stopRepeating();
+                // Have to make sure abort and new requests aren't interleave together.
+                waitForSessionState(SESSION_READY, SESSION_READY_TIMEOUT_MS);
+
+                // Capture a burst of captures, and verify the results.
+                SimpleCaptureCallback resultCallback = new SimpleCaptureCallback();
+                mSession.captureBurst(postAbortRequests, resultCallback, mHandler);
+                // Verify that the results are returned.
+                for (int i = 0; i < postAbortRequests.size(); i++) {
+                    resultCallback.getCaptureResultForRequest(
+                            postAbortRequests.get(i), CAPTURE_RESULT_TIMEOUT_MS);
+                }
+
+                // Resume the repeating, and verify that results are returned.
+                mSession.setRepeatingBurst(requests, resultCallback, mHandler);
+                for (int i = 0; i < REPEATING_CAPTURE_EXPECTED_RESULT_COUNT; i++) {
+                    resultCallback.getCaptureResult(CAPTURE_RESULT_TIMEOUT_MS);
+                }
             }
+            mSession.stopRepeating();
         }
         waitForSessionState(SESSION_READY, SESSION_READY_TIMEOUT_MS);
     }
