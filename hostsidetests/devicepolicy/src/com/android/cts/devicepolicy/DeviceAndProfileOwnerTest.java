@@ -38,6 +38,12 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
     protected static final String ADMIN_RECEIVER_TEST_CLASS
             = ".BaseDeviceAdminTest$BasicAdminReceiver";
 
+    private static final String INTENT_RECEIVER_PKG = "com.android.cts.intent.receiver";
+    private static final String INTENT_RECEIVER_APK = "CtsIntentReceiverApp.apk";
+
+    private static final String INTENT_SENDER_PKG = "com.android.cts.intent.sender";
+    private static final String INTENT_SENDER_APK = "CtsIntentSenderApp.apk";
+
     private static final String PERMISSIONS_APP_PKG = "com.android.cts.permissionapp";
     private static final String PERMISSIONS_APP_APK = "CtsPermissionApp.apk";
 
@@ -93,6 +99,8 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
             getDevice().uninstallPackage(CERT_INSTALLER_PKG);
             getDevice().uninstallPackage(ACCOUNT_MANAGEMENT_PKG);
             getDevice().uninstallPackage(VPN_APP_PKG);
+            getDevice().uninstallPackage(INTENT_RECEIVER_PKG);
+            getDevice().uninstallPackage(INTENT_SENDER_PKG);
         }
         super.tearDown();
     }
@@ -252,6 +260,7 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
         if (!mHasFeature) {
             return;
         }
+        installAppAsUser(APP_RESTRICTIONS_MANAGING_APP_APK, mUserId);
         executeDeviceTestClass(".SupportMessageTest");
     }
 
@@ -424,12 +433,35 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
         executeDeviceTestClass(".AudioRestrictionTest");
     }
 
+    public void testSuspendPackage() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
+        installAppAsUser(INTENT_SENDER_APK, mUserId);
+        installAppAsUser(INTENT_RECEIVER_APK, mUserId);
+        // Suspend a testing package.
+        executeDeviceTestMethod(".SuspendPackageTest", "testSetPackagesSuspended");
+        // Verify that the package is suspended.
+        executeSuspendPackageTestMethod("testPackageSuspended");
+        // Undo the suspend.
+        executeDeviceTestMethod(".SuspendPackageTest", "testSetPackagesNotSuspended");
+        // Verify that the package is not suspended.
+        executeSuspendPackageTestMethod("testPackageNotSuspended");
+        // Verify we cannot suspend not suspendable packages.
+        executeDeviceTestMethod(".SuspendPackageTest", "testSuspendNotSuspendablePackages");
+    }
+
     protected void executeDeviceTestClass(String className) throws Exception {
         assertTrue(runDeviceTestsAsUser(DEVICE_ADMIN_PKG, className, mUserId));
     }
 
     protected void executeDeviceTestMethod(String className, String testName) throws Exception {
         assertTrue(runDeviceTestsAsUser(DEVICE_ADMIN_PKG, className, testName, mUserId));
+    }
+
+    private void executeSuspendPackageTestMethod(String testName) throws Exception {
+        assertTrue(runDeviceTestsAsUser(INTENT_SENDER_PKG, ".SuspendPackageTest",
+                testName, mUserId));
     }
 
     private void executeAccountTest(String testName) throws DeviceNotAvailableException {
