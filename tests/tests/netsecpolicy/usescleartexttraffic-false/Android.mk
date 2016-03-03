@@ -30,6 +30,9 @@ LOCAL_PACKAGE_NAME := CtsNetSecPolicyUsesCleartextTrafficFalseTestCases
 
 LOCAL_INSTRUMENTATION_FOR := CtsNetSecPolicyUsesCleartextTrafficFalse
 
+# Tag this module as a cts test artifact
+LOCAL_COMPATIBILITY_SUITE := cts
+
 LOCAL_SDK_VERSION := current
 
 include $(BUILD_CTS_PACKAGE)
