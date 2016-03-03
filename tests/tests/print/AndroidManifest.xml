@@ -53,13 +53,11 @@
 
         <activity
             android:name="android.print.cts.services.SettingsActivity"
-            android:permission="android.permission.START_PRINT_SERVICE_CONFIG_ACTIVITY"
             android:exported="true">
         </activity>
 
         <activity
             android:name="android.print.cts.services.AddPrintersActivity"
-            android:permission="android.permission.START_PRINT_SERVICE_CONFIG_ACTIVITY"
             android:exported="true">
         </activity>
 
