@@ -17,7 +17,7 @@
  -->
 
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-        package="android.security.net.config.cts.CtsNetSecConfigCleartextTestCases">
+        package="android.security.net.config.cts.CtsNetSecConfigCleartextTrafficTestCases">
   <application>
       <uses-library android:name="android.test.runner"/>
       <meta-data android:name="android.security.net.config"
@@ -26,7 +26,7 @@
 
   <uses-permission android:name="android.permission.INTERNET" />
   <instrumentation android:name="android.support.test.runner.AndroidJUnitRunner"
-                   android:targetPackage="android.security.net.config.cts.CtsNetSecConfigCleartextTestCases"
+                   android:targetPackage="android.security.net.config.cts.CtsNetSecConfigCleartextTrafficTestCases"
                    android:label="">
         <meta-data android:name="listener"
             android:value="com.android.cts.runner.CtsTestRunListener" />
