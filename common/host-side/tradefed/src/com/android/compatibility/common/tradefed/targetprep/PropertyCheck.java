@@ -50,8 +50,10 @@ public class PropertyCheck extends PreconditionPreparer {
             BuildError, DeviceNotAvailableException {
         String propertyValue = device.getProperty(mPropertyName);
         if (propertyValue == null) {
-            throw new TargetSetupError(String.format(
-                    "Device property \"%s\" not found.", mPropertyName));
+            LogUtil.printLog(Log.LogLevel.WARN, LOG_TAG, String.format(
+                    "Property \"%s\" not found on device, cannot verify value \"%s\" ",
+                    mPropertyName, mExpectedPropertyValue));
+            return;
         }
 
         if (!mExpectedPropertyValue.equalsIgnoreCase(propertyValue)) {
