@@ -16,11 +16,11 @@
  -->
 
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="android.sample.app">
+    package="android.cpptools.app">
 
     <uses-permission android:name="android.permission.DISABLE_KEYGUARD" />
     <application android:debuggable="true">
-        <activity android:name=".SampleDeviceActivity" >
+        <activity android:name=".CppToolsDeviceActivity" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
