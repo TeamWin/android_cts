@@ -30,7 +30,7 @@ public class MixedProfileOwnerTest extends DeviceAndProfileOwnerTest {
         super.setUp();
 
         if (mHasFeature) {
-            mUserId = USER_OWNER;
+            mUserId = mPrimaryUserId;
 
             installAppAsUser(DEVICE_ADMIN_APK, mUserId);
             setProfileOwnerOrFail(DEVICE_ADMIN_PKG + "/" + ADMIN_RECEIVER_TEST_CLASS, mUserId);
@@ -41,7 +41,8 @@ public class MixedProfileOwnerTest extends DeviceAndProfileOwnerTest {
     protected void tearDown() throws Exception {
         if (mHasFeature) {
             assertTrue("Failed to remove profile owner.",
-                    runDeviceTests(DEVICE_ADMIN_PKG, CLEAR_PROFILE_OWNER_TEST_CLASS));
+                    runDeviceTestsAsUser(DEVICE_ADMIN_PKG, CLEAR_PROFILE_OWNER_TEST_CLASS,
+                            mUserId));
         }
         super.tearDown();
     }

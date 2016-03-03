@@ -53,10 +53,10 @@ public class LauncherAppsSingleUserTest extends BaseLauncherAppsTest {
         if (!mHasLauncherApps) {
             return;
         }
-        installApp(SIMPLE_APP_APK);
+        installAppAsUser(SIMPLE_APP_APK, mPrimaryUserId);
         assertTrue(runDeviceTestsAsUser(LAUNCHER_TESTS_PKG,
                 LAUNCHER_TESTS_CLASS, "testSimpleAppInstalledForUser",
-                USER_SYSTEM, Collections.singletonMap(PARAM_TEST_USER, mSerialNumber)));
+                mPrimaryUserId, Collections.singletonMap(PARAM_TEST_USER, mSerialNumber)));
     }
 
     public void testLauncherCallbackPackageAddedMainUser() throws Exception {
@@ -64,67 +64,67 @@ public class LauncherAppsSingleUserTest extends BaseLauncherAppsTest {
             return;
         }
         startCallbackService();
-        installApp(SIMPLE_APP_APK);
+        installAppAsUser(SIMPLE_APP_APK, mPrimaryUserId);
 
         assertTrue(runDeviceTestsAsUser(LAUNCHER_TESTS_PKG,
                 LAUNCHER_TESTS_CLASS,
                 "testPackageAddedCallbackForUser",
-                USER_SYSTEM, Collections.singletonMap(PARAM_TEST_USER, mSerialNumber)));
+                mPrimaryUserId, Collections.singletonMap(PARAM_TEST_USER, mSerialNumber)));
     }
 
     public void testLauncherCallbackPackageRemovedMainUser() throws Exception {
         if (!mHasLauncherApps) {
             return;
         }
-        installApp(SIMPLE_APP_APK);
+        installAppAsUser(SIMPLE_APP_APK, mPrimaryUserId);
         startCallbackService();
         getDevice().uninstallPackage(SIMPLE_APP_PKG);
         assertTrue(runDeviceTestsAsUser(LAUNCHER_TESTS_PKG,
                 LAUNCHER_TESTS_CLASS,
                 "testPackageRemovedCallbackForUser",
-                USER_SYSTEM, Collections.singletonMap(PARAM_TEST_USER, mSerialNumber)));
+                mPrimaryUserId, Collections.singletonMap(PARAM_TEST_USER, mSerialNumber)));
     }
 
     public void testLauncherCallbackPackageChangedMainUser() throws Exception {
         if (!mHasLauncherApps) {
             return;
         }
-        installApp(SIMPLE_APP_APK);
+        installAppAsUser(SIMPLE_APP_APK, mPrimaryUserId);
         startCallbackService();
-        installApp(SIMPLE_APP_APK);
+        installAppAsUser(SIMPLE_APP_APK, mPrimaryUserId);
         assertTrue(runDeviceTestsAsUser(LAUNCHER_TESTS_PKG,
                 LAUNCHER_TESTS_CLASS,
                 "testPackageChangedCallbackForUser",
-                USER_SYSTEM, Collections.singletonMap(PARAM_TEST_USER, mSerialNumber)));
+                mPrimaryUserId, Collections.singletonMap(PARAM_TEST_USER, mSerialNumber)));
     }
 
     public void testLauncherNonExportedAppFails() throws Exception {
         if (!mHasLauncherApps) {
             return;
         }
-        installApp(SIMPLE_APP_APK);
+        installAppAsUser(SIMPLE_APP_APK, mPrimaryUserId);
         assertTrue(runDeviceTestsAsUser(LAUNCHER_TESTS_PKG,
                 LAUNCHER_TESTS_CLASS, "testLaunchNonExportActivityFails",
-                USER_SYSTEM, Collections.singletonMap(PARAM_TEST_USER, mSerialNumber)));
+                mPrimaryUserId, Collections.singletonMap(PARAM_TEST_USER, mSerialNumber)));
     }
 
     public void testLaunchNonExportActivityFails() throws Exception {
         if (!mHasLauncherApps) {
             return;
         }
-        installApp(SIMPLE_APP_APK);
+        installAppAsUser(SIMPLE_APP_APK, mPrimaryUserId);
         assertTrue(runDeviceTestsAsUser(LAUNCHER_TESTS_PKG,
                 LAUNCHER_TESTS_CLASS, "testLaunchNonExportLauncherFails",
-                USER_SYSTEM, Collections.singletonMap(PARAM_TEST_USER, mSerialNumber)));
+                mPrimaryUserId, Collections.singletonMap(PARAM_TEST_USER, mSerialNumber)));
     }
 
     public void testLaunchMainActivity() throws Exception {
         if (!mHasLauncherApps) {
             return;
         }
-        installApp(SIMPLE_APP_APK);
+        installAppAsUser(SIMPLE_APP_APK, mPrimaryUserId);
         assertTrue(runDeviceTestsAsUser(LAUNCHER_TESTS_PKG,
                 LAUNCHER_TESTS_CLASS, "testLaunchMainActivity",
-                USER_SYSTEM, Collections.singletonMap(PARAM_TEST_USER, mSerialNumber)));
+                mPrimaryUserId, Collections.singletonMap(PARAM_TEST_USER, mSerialNumber)));
     }
 }

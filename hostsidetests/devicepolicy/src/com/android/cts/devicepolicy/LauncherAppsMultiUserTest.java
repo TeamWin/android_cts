@@ -63,11 +63,11 @@ public class LauncherAppsMultiUserTest extends BaseLauncherAppsTest {
         if (!mMultiUserSupported) {
             return;
         }
-        installApp(SIMPLE_APP_APK);
+        installAppAsUser(SIMPLE_APP_APK, mPrimaryUserId);
         assertTrue(runDeviceTestsAsUser(LAUNCHER_TESTS_PKG,
                 LAUNCHER_TESTS_CLASS,
                 "testGetActivitiesForUserFails",
-                USER_SYSTEM,
+                mPrimaryUserId,
                 Collections.singletonMap(PARAM_TEST_USER, mSecondaryUserSerialNumber)));
     }
 
@@ -76,11 +76,11 @@ public class LauncherAppsMultiUserTest extends BaseLauncherAppsTest {
             return;
         }
         startCallbackService();
-        installApp(SIMPLE_APP_APK);
+        installAppAsUser(SIMPLE_APP_APK, mPrimaryUserId);
         assertTrue(runDeviceTestsAsUser(LAUNCHER_TESTS_PKG,
                 LAUNCHER_TESTS_CLASS,
                 "testNoPackageAddedCallbackForUser",
-                USER_SYSTEM,
+                mPrimaryUserId,
                 Collections.singletonMap(PARAM_TEST_USER, mSecondaryUserSerialNumber)));
     }
 }
