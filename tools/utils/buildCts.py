@@ -361,6 +361,7 @@ def BuildAospSmallSizeTestList():
       'android.rsg' : [],
       'android.sax' : [],
       'android.signature' : [],
+      'android.simpleperf' : [],
       'android.speech' : [],
       'android.tests.appsecurity' : [],
       'android.text' : [],
