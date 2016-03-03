@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.sample.app;
+package android.cpptools.app;
 
 import android.app.Activity;
 import android.os.Bundle;
@@ -25,9 +25,9 @@ import java.lang.Override;
 /**
  * A simple activity which logs to Logcat.
  */
-public class SampleDeviceActivity extends Activity {
+public class CppToolsDeviceActivity extends Activity {
 
-    private static final String TAG = SampleDeviceActivity.class.getSimpleName();
+    private static final String TAG = CppToolsDeviceActivity.class.getSimpleName();
 
     /**
      * The test string to log.
