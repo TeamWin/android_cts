@@ -80,6 +80,8 @@ public class RSBaseCompute extends RSBase {
                 element = Element.F64(rs);
             } else if (dataType == Element.DataType.FLOAT_32) {
                 element = Element.F32(rs);
+            } else if (dataType == Element.DataType.FLOAT_16) {
+                element = Element.F16(rs);
             } else if (dataType == Element.DataType.SIGNED_64) {
                 element = Element.I64(rs);
             } else if (dataType == Element.DataType.UNSIGNED_64) {
@@ -125,6 +127,12 @@ public class RSBaseCompute extends RSBase {
             float max = 4.0f * (float) Math.PI;
             RSUtils.genRandomFloats(seed, min, max, inArray, includeExtremes);
             alloc.copy1DRangeFrom(0, INPUTSIZE, inArray);
+        } else if (dataType == Element.DataType.FLOAT_16) {
+            short[] inArray = new short[INPUTSIZE * width];
+            short min = 1024; // 0x0400 in hex, 2^-14, i.e. float16 MIN_NORMAL
+            short max = 19456; // 0x4c00 in hex, 16.0 in float16
+            RSUtils.genRandomFloat16s(seed, min, max, inArray, includeExtremes);
+            alloc.copyFrom(inArray);
         } else if (dataType == Element.DataType.SIGNED_64) {
             long[] inArray = new long[INPUTSIZE * width];
             RSUtils.genRandomLongs(seed, inArray, true, 63);
