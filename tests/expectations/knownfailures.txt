@@ -334,5 +334,13 @@
     "android.signature.cts.tests"
   ],
   bug: 26150806
+},
+{
+  description: "android.security.cts is using a Non-NDK library, libmedia_jni.so",
+  names: [
+      "android.security.cts.MediaCryptoTest#testMediaCryptoClearKey",
+      "android.security.cts.MediaCryptoTest#testMediaCryptoWidevine"
+  ],
+  bug: 27218502
 }
 ]
