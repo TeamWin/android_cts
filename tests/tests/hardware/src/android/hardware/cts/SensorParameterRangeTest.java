@@ -51,6 +51,15 @@ public class SensorParameterRangeTest extends SensorTestCase {
     private static final double PRESSURE_MIN_FREQUENCY = 1.0;
     private static final double PRESSURE_MAX_FREQUENCY = 10.0;
 
+    // Note these FIFO minimum constants come from the CCD.  In version
+    // 6.0 of the CCD, these are in section 7.3.9.
+    private static final int ACCELEROMETER_MIN_FIFO_LENGTH = 3000;
+    private static final int UNCAL_MAGNETOMETER_MIN_FIFO_LENGTH = 600;
+    private static final int PRESSURE_MIN_FIFO_LENGTH = 300;
+    private static final int GAME_ROTATION_VECTOR_MIN_FIFO_LENGTH = 300;
+    private static final int PROXIMITY_SENSOR_MIN_FIFO_LENGTH = 100;
+    private static final int STEP_DETECTOR_MIN_FIFO_LENGTH = 100;
+
     private boolean mHasHifiSensors;
     private SensorManager mSensorManager;
 
@@ -111,5 +120,46 @@ public class SensorParameterRangeTest extends SensorTestCase {
         assertTrue(String.format("%s Max Frequency actual=%.2f expected=%.2fHz",
                     sensor.getName(), actualMaxFrequency, maxFrequency), actualMaxFrequency >=
                 maxFrequency - 0.1);
+    }
+
+    public void testAccelerometerFifoLength() throws Throwable {
+        if (!mHasHifiSensors) return;
+        checkMinFifoLength(Sensor.TYPE_ACCELEROMETER, ACCELEROMETER_MIN_FIFO_LENGTH);
+    }
+
+    public void testUncalMagnetometerFifoLength() throws Throwable {
+        if (!mHasHifiSensors) return;
+        checkMinFifoLength(
+                Sensor.TYPE_MAGNETIC_FIELD_UNCALIBRATED,
+                UNCAL_MAGNETOMETER_MIN_FIFO_LENGTH);
+    }
+
+    public void testPressureFifoLength() throws Throwable {
+        if (!mHasHifiSensors) return;
+        checkMinFifoLength(Sensor.TYPE_PRESSURE, PRESSURE_MIN_FIFO_LENGTH);
+    }
+
+    public void testGameRotationVectorFifoLength() throws Throwable {
+        if (!mHasHifiSensors) return;
+        checkMinFifoLength(Sensor.TYPE_GAME_ROTATION_VECTOR, GAME_ROTATION_VECTOR_MIN_FIFO_LENGTH);
+    }
+
+    public void testProximityFifoLength() throws Throwable {
+        if (!mHasHifiSensors) return;
+        checkMinFifoLength(Sensor.TYPE_PROXIMITY, PROXIMITY_SENSOR_MIN_FIFO_LENGTH);
+    }
+
+    public void testStepDetectorFifoLength() throws Throwable {
+        if (!mHasHifiSensors) return;
+        checkMinFifoLength(Sensor.TYPE_STEP_DETECTOR, STEP_DETECTOR_MIN_FIFO_LENGTH);
+    }
+
+    private void checkMinFifoLength(int sensorType, int minRequiredLength) {
+        Sensor sensor = mSensorManager.getDefaultSensor(sensorType);
+        assertTrue(String.format("sensor of type=%d (null)", sensorType), sensor != null);
+        int reservedLength = sensor.getFifoReservedEventCount();
+        assertTrue(String.format("Sensor=%s, min required fifo length=%d actual=%d",
+                    sensor.getName(), minRequiredLength, reservedLength),
+                    reservedLength >= minRequiredLength);
     }
 }
