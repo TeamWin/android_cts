@@ -16,7 +16,9 @@
 package com.android.preconditions.cts;
 
 import android.content.Context;
+import android.content.pm.PackageManager;
 import android.test.AndroidTestCase;
+import android.util.Log;
 
 import com.android.compatibility.common.preconditions.ExternalStorageHelper;
 import com.android.compatibility.common.preconditions.ScreenLockHelper;
@@ -26,11 +28,20 @@ import com.android.compatibility.common.preconditions.ScreenLockHelper;
  */
 public class PreconditionsTest extends AndroidTestCase {
 
+    private static final String TAG = "PreconditionsTest";
+
     /**
      * Test if device has no screen lock
      * @throws Exception
      */
     public void testScreenUnlocked() throws Exception {
+        PackageManager pm = this.getContext().getPackageManager();
+        if (pm.hasSystemFeature(PackageManager.FEATURE_LEANBACK)
+                || pm.hasSystemFeature(PackageManager.FEATURE_WATCH)
+                || pm.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE)) {
+            Log.i(TAG, "Skipping screen lock precondition for this device type");
+            return; // do not test for unlocked screen on devices with no screen lock
+        }
         assertFalse("Device must have screen lock disabled",
                 ScreenLockHelper.isDeviceSecure(this.getContext()));
     }
