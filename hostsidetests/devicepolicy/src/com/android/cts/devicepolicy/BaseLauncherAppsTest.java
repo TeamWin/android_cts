@@ -37,8 +37,8 @@ public class BaseLauncherAppsTest extends BaseDevicePolicyTest {
 
     protected void installTestApps() throws Exception {
         uninstallTestApps();
-        installApp(LAUNCHER_TESTS_APK);
-        installApp(LAUNCHER_TESTS_SUPPORT_APK);
+        installAppAsUser(LAUNCHER_TESTS_APK, mPrimaryUserId);
+        installAppAsUser(LAUNCHER_TESTS_SUPPORT_APK, mPrimaryUserId);
     }
 
     protected void uninstallTestApps() throws Exception {
@@ -48,8 +48,8 @@ public class BaseLauncherAppsTest extends BaseDevicePolicyTest {
     }
 
     protected void startCallbackService() throws Exception {
-        String command = "am startservice --user 0 "
-                + "-a " + LAUNCHER_TESTS_SUPPORT_PKG + ".REGISTER_CALLBACK "
+        String command = "am startservice --user " + mPrimaryUserId
+                + " -a " + LAUNCHER_TESTS_SUPPORT_PKG + ".REGISTER_CALLBACK "
                 + LAUNCHER_TESTS_SUPPORT_PKG + "/.LauncherCallbackTestsService";
         CLog.logAndDisplay(LogLevel.INFO, "Output for command " + command + ": "
               + getDevice().executeShellCommand(command));
