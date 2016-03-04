@@ -22,21 +22,10 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.security.KeyChain;
+import android.os.Build;
 import android.security.KeyChainException;
-import android.test.AndroidTestCase;
-import android.util.Base64;
-import android.util.Base64InputStream;
+import android.test.MoreAsserts;
 
-import java.io.ByteArrayInputStream;
-import java.security.KeyFactory;
-import java.security.NoSuchAlgorithmException;
-import java.security.PrivateKey;
-import java.security.cert.Certificate;
-import java.security.cert.CertificateException;
-import java.security.cert.CertificateFactory;
-import java.security.spec.InvalidKeySpecException;
-import java.security.spec.PKCS8EncodedKeySpec;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
@@ -48,6 +37,8 @@ import java.util.concurrent.TimeUnit;
 public class DelegatedCertInstallerTest extends BaseDeviceAdminTest {
 
     private static final String CERT_INSTALLER_PACKAGE = "com.android.cts.certinstaller";
+    private static final String NOT_EXIST_CERT_INSTALLER_PACKAGE
+            = "com.android.cts.certinstaller.not_exist";
 
     private static final String ACTION_INSTALL_CERT = "com.android.cts.certinstaller.install_cert";
     private static final String ACTION_REMOVE_CERT = "com.android.cts.certinstaller.remove_cert";
@@ -224,6 +215,27 @@ public class DelegatedCertInstallerTest extends BaseDeviceAdminTest {
         checkKeyguardPrecondition();
         installKeyPair(TEST_KEY, TEST_CERT, alias);
         assertResult("installKeyPair", true);
+    }
+
+    /**
+     * If DPC is targeting N+, @{link IllegalArgumentException } should be thrown if the package
+     * is missing.
+     */
+    public void testSetNotExistCertInstallerPackage() throws Exception {
+        boolean shouldThrowException = getTargetApiLevel() >= Build.VERSION_CODES.N;
+        try {
+            mDpm.setCertInstallerPackage(
+                    ADMIN_RECEIVER_COMPONENT, NOT_EXIST_CERT_INSTALLER_PACKAGE);
+            if (shouldThrowException) {
+                fail("Did not throw IllegalArgumentException");
+            }
+        } catch (IllegalArgumentException ex) {
+            if (!shouldThrowException) {
+                fail("Should not throw exception");
+            }
+            MoreAsserts.assertContainsRegex("is not installed on the current user",
+                        ex.getMessage());
+        }
     }
 
     /**

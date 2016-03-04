@@ -12,9 +12,25 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-LOCAL_PATH := $(call my-dir)
+LOCAL_PATH:= $(call my-dir)
 
 include $(CLEAR_VARS)
 
-# Build the test APKs using their own makefiles
-include $(call all-makefiles-under,$(LOCAL_PATH))
+LOCAL_PACKAGE_NAME := CtsDeviceAndProfileOwnerApp23
+
+LOCAL_MODULE_TAGS := optional
+
+LOCAL_MODULE_PATH := $(TARGET_OUT_DATA_APPS)
+
+LOCAL_SRC_FILES := $(call all-java-files-under, ../src)
+
+LOCAL_STATIC_JAVA_LIBRARIES = android-support-v4 ctstestrunner ub-uiautomator
+
+LOCAL_SDK_VERSION := current
+
+LOCAL_RESOURCE_DIR := $(LOCAL_PATH)/../res
+
+# tag this module as a cts test artifact
+LOCAL_COMPATIBILITY_SUITE := cts
+
+include $(BUILD_CTS_PACKAGE)
