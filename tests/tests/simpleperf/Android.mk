@@ -28,10 +28,10 @@ LOCAL_STATIC_LIBRARIES += \
   libz \
 
 LOCAL_POST_LINK_CMD =  \
-  TMP_FILE=`mktemp` && \
-  (cd $(simpleperf_src_path)/testdata && \
-  zip - -0 -r . >$$TMP_FILE) && \
-  $($(LOCAL_2ND_ARCH_VAR_PREFIX)TARGET_OBJCOPY) --add-section .testzipdata=$$TMP_FILE $(linked_module)
+  TMP_FILE=`mktemp $(OUT_DIR)/simpleperf-post-link-XXXXXXXXXX` && \
+  (cd $(simpleperf_src_path)/testdata && zip - -0 -r .) > $$TMP_FILE && \
+  $($(LOCAL_2ND_ARCH_VAR_PREFIX)TARGET_OBJCOPY) --add-section .testzipdata=$$TMP_FILE $(linked_module) && \
+  rm -f $$TMP_FILE
 
 LOCAL_CTS_TEST_PACKAGE := android.simpleperf
 include $(BUILD_CTS_EXECUTABLE)
