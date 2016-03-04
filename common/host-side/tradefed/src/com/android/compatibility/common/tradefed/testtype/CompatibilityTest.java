@@ -141,10 +141,12 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
     private String mURL;
 
     @Option(name = SKIP_DEVICE_INFO_OPTION,
+            shortName = 'd',
             description = "Whether device info collection should be skipped")
     private boolean mSkipDeviceInfo = false;
 
     @Option(name = SKIP_PRECONDITIONS_OPTION,
+            shortName = 'o',
             description = "Whether preconditions should be skipped")
     private boolean mSkipPreconditions = false;
 
