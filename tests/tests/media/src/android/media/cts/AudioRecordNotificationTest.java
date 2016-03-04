@@ -178,10 +178,10 @@ public class AudioRecordNotificationTest extends CtsAndroidTestCase {
         }
 
         @Override
-        public void onRecordConfigChanged() {
+        public void onRecordConfigChanged(AudioRecordConfiguration[] configs) {
             mCalled = true;
             mParamMatch = verifyAudioConfig(mTestSource, mTestSession, mAudioRecord.getFormat(),
-                    mAudioRecord.getRoutedDevice(), mAM.getActiveRecordConfigurations());
+                    mAudioRecord.getRoutedDevice(), configs);
         }
     }
 
