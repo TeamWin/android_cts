@@ -34,6 +34,10 @@
   description: "A completely empty test case",
   name: "android.icu.dev.test.duration.PeriodBuilderTest"
 },
+// The following are known to be broken but the reason is not yet known. They are expected to
+// succeed and so will be run and will fail but that is intentional so that they do not get
+// forgotten and are investigated to determine whether it is correct behavior on Android or a bug
+// that needs fixing.
 {
   description: "Broken and not yet triaged",
   names: [
@@ -61,7 +65,8 @@
     "android.icu.dev.test.timezone.TimeZoneBoundaryTest#TestStepwise",
     "android.icu.dev.test.timezone.TimeZoneTest#TestObservesDaylightTime",
     "android.icu.dev.test.util.CurrencyTest#TestGetKeywordValues"
-  ]
+  ],
+  result: "SUCCESS"
 },
 {
   description: "Broken due to warnings, not yet triaged",
@@ -72,6 +77,7 @@
     "android.icu.dev.test.collator.CollationMiscTest#TestUCARules",
     "android.icu.dev.test.collator.CollationTest#TestDataDriven",
     "android.icu.dev.test.collator.G7CollationTest#TestG7Data"
-  ]
+  ],
+  result: "SUCCESS"
 }
 ]
