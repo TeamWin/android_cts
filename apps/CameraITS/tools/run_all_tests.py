@@ -44,12 +44,13 @@ def main():
         ],
         "scene2":[],
         "scene3":[],
-        "scene4":[]
+        "scene4":[],
+        "scene5":[]
     }
 
     # Get all the scene0 and scene1 tests, which can be run using the same
     # physical setup.
-    scenes = ["scene0", "scene1", "scene2", "scene3", "scene4"]
+    scenes = ["scene0", "scene1", "scene2", "scene3", "scene4", "scene5"]
     scene_req = {
         "scene0" : None,
         "scene1" : "A grey card covering at least the middle 30% of the scene",
@@ -57,7 +58,9 @@ def main():
         "scene3" : "A chart containing sharp edges like ISO 12233",
         "scene4" : "A specific test page of a circle covering at least the "
                    "middle 50% of the scene. See CameraITS.pdf section 2.3.4 "
-                   "for more detail"
+                   "for more details",
+        "scene5" : "Capture images with a diffuser attached to the camera. See "
+                   "CameraITS.pdf section 2.3.4 for more details"
     }
     tests = []
     for d in scenes:
