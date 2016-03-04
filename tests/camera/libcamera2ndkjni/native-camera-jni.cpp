@@ -1026,6 +1026,24 @@ testCameraManagerCharacteristicsNative(
             goto cleanup;
         }
 
+        int32_t numTags = 0;
+        const uint32_t* tags = nullptr;
+        ret = ACameraMetadata_getAllTags(chars, &numTags, &tags);
+        if (ret != ACAMERA_OK) {
+            LOG_ERROR(errorString, "Get camera characteristics tags failed: ret %d", ret);
+            goto cleanup;
+        }
+
+        for (int tid = 0; tid < numTags; tid++) {
+            uint32_t tagId = tags[tid];
+            ALOGV("%s capture request contains key %u", __FUNCTION__, tagId);
+            uint32_t sectionId = tagId >> 16;
+            if (sectionId >= ACAMERA_SECTION_COUNT && sectionId < ACAMERA_VENDOR) {
+                LOG_ERROR(errorString, "Unknown tagId %u, sectionId %u", tagId, sectionId);
+                goto cleanup;
+            }
+        }
+
         ACameraMetadata_const_entry entry;
         ret = ACameraMetadata_getConstEntry(chars, ACAMERA_REQUEST_AVAILABLE_CAPABILITIES, &entry);
         if (ret != ACAMERA_OK) {
@@ -1203,6 +1221,24 @@ testCameraDeviceCreateCaptureRequestNative(
             if (ret != ACAMERA_OK) {
                 LOG_ERROR(errorString, "Create capture request failed!: ret %d", ret);
                 goto cleanup;
+            }
+
+            int32_t numTags = 0;
+            const uint32_t* tags = nullptr;
+            ret = ACaptureRequest_getAllTags(request, &numTags, &tags);
+            if (ret != ACAMERA_OK) {
+                LOG_ERROR(errorString, "Get capture request tags failed: ret %d", ret);
+                goto cleanup;
+            }
+
+            for (int tid = 0; tid < numTags; tid++) {
+                uint32_t tagId = tags[tid];
+                ALOGV("%s capture request contains key %u", __FUNCTION__, tagId);
+                uint32_t sectionId = tagId >> 16;
+                if (sectionId >= ACAMERA_SECTION_COUNT && sectionId < ACAMERA_VENDOR) {
+                    LOG_ERROR(errorString, "Unknown tagId %u, sectionId %u", tagId, sectionId);
+                    goto cleanup;
+                }
             }
 
             // try get/set capture request fields
