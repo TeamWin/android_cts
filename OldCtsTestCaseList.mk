@@ -91,6 +91,7 @@ cts_support_packages := \
     CtsCppToolsApp \
     CtsDeviceAdminApp23 \
     CtsDeviceAdminApp24 \
+    CtsDeviceAndProfileOwnerApp23 \
     CtsDeviceAndProfileOwnerApp \
     CtsDeviceInfo \
     CtsDeviceOsTestApp \

@@ -19,6 +19,8 @@ import android.app.admin.DeviceAdminReceiver;
 import android.app.admin.DevicePolicyManager;
 import android.content.ComponentName;
 import android.content.Context;
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
 import android.os.UserManager;
 import android.test.InstrumentationTestCase;
 
@@ -56,5 +58,11 @@ public class BaseDeviceAdminTest extends InstrumentationTestCase {
         assertTrue("App is neither device nor profile owner",
                 mDevicePolicyManager.isProfileOwnerApp(PACKAGE_NAME) ||
                 mDevicePolicyManager.isDeviceOwnerApp(PACKAGE_NAME));
+    }
+
+    protected int getTargetApiLevel() throws Exception {
+        final PackageManager pm = mContext.getPackageManager();
+        final PackageInfo pi = pm.getPackageInfo(mContext.getPackageName(), /* flags =*/ 0);
+        return pi.applicationInfo.targetSdkVersion;
     }
 }
