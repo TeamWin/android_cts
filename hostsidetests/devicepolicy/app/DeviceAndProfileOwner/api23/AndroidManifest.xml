@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Copyright (C) 2015 The Android Open Source Project
+<!-- Copyright (C) 2016 The Android Open Source Project
 
      Licensed under the Apache License, Version 2.0 (the "License");
      you may not use this file except in compliance with the License.
@@ -17,13 +17,14 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.android.cts.deviceandprofileowner">
 
-    <uses-sdk android:minSdkVersion="23"/>
+    <uses-sdk android:minSdkVersion="23" android:targetSdkVersion="23"/>
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
     <uses-permission android:name="android.permission.AUTHENTICATE_ACCOUNTS" />
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.MANAGE_ACCOUNTS" />
 
     <application>
+        <uses-library android:name="android.test.runner" />
         <receiver
             android:name="com.android.cts.deviceandprofileowner.BaseDeviceAdminTest$BasicAdminReceiver"
             android:permission="android.permission.BIND_DEVICE_ADMIN">
@@ -33,34 +34,9 @@
                 <action android:name="android.app.action.DEVICE_ADMIN_ENABLED" />
             </intent-filter>
         </receiver>
-        <activity
-            android:name="com.android.cts.deviceandprofileowner.ScreenCaptureDisabledActivity" />
-        <activity
-            android:name="com.android.cts.deviceandprofileowner.ExampleIntentReceivingActivity1">
-            <intent-filter>
-                <action android:name="com.android.cts.deviceandprofileowner.EXAMPLE_ACTION" />
-                <category android:name="android.intent.category.DEFAULT" />
-            </intent-filter>
-        </activity>
-
-        <activity
-            android:name="com.android.cts.deviceandprofileowner.ExampleIntentReceivingActivity2">
-            <intent-filter>
-                <action android:name="com.android.cts.deviceandprofileowner.EXAMPLE_ACTION" />
-                <category android:name="android.intent.category.DEFAULT" />
-            </intent-filter>
-        </activity>
-
-        <activity android:name=".SetPolicyActivity" >
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.DEFAULT"/>
-            </intent-filter>
-        </activity>
-
     </application>
 
     <instrumentation android:name="android.support.test.runner.AndroidJUnitRunner"
                      android:targetPackage="com.android.cts.deviceandprofileowner"
-                     android:label="Profile and Device Owner CTS Tests"/>
+                     android:label="Profile and Device Owner CTS Tests API 23"/>
 </manifest>
