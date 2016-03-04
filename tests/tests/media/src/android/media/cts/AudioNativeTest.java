@@ -16,11 +16,19 @@
 
 package android.media.cts;
 
+import android.content.Context;
 import android.content.pm.PackageManager;
 import android.cts.util.CtsAndroidTestCase;
-import android.util.Log;
+import android.media.AudioDeviceInfo;
+import android.media.AudioManager;
 
 public class AudioNativeTest extends CtsAndroidTestCase {
+    // Assume stereo here until b/23899814 is fixed.
+    public static final int MAX_CHANNEL_COUNT = 2;
+    public static final int MAX_INDEX_MASK = (1 << MAX_CHANNEL_COUNT) - 1;
+
+    private static final int CHANNEL_INDEX_MASK_MAGIC = 0x80000000;
+
     public void testAppendixBBufferQueue() {
         nativeAppendixBBufferQueue();
     }
@@ -187,6 +195,56 @@ public class AudioNativeTest extends CtsAndroidTestCase {
         AudioRecordNative record = new AudioHelper.AudioRecordAuditNative();
         doRecordTest(record, 4 /* numChannels */, 44100 /* sampleRate */, false /* useFloat */,
                 1000 /* segmentDurationMs */, 10 /* numSegments */);
+    }
+
+    public void testOutputChannelMasks() {
+        AudioTrackNative track = new AudioTrackNative();
+
+        // TODO: when b/23899814 is fixed, use AudioManager.getDevices() to enumerate
+        // actual devices and their channel counts instead of assuming stereo.
+        //
+        int maxOutputChannels = 2;
+
+        int validIndexMask = (1 << maxOutputChannels) - 1;
+
+        for (int mask = 0; mask <= MAX_INDEX_MASK; ++mask) {
+            int channelCount = Long.bitCount(mask);
+            boolean expectSuccess = (channelCount > 0)
+                && ((mask & validIndexMask) != 0);
+
+            // TODO: uncomment this line when b/27484181 is fixed.
+            // expectSuccess &&= ((mask & ~validIndexMask) == 0);
+
+            boolean ok = track.open(channelCount,
+                mask | CHANNEL_INDEX_MASK_MAGIC, 48000, false, 2);
+            track.close();
+            assertEquals(expectSuccess, ok);
+        }
+    }
+
+    public void testInputChannelMasks() {
+        AudioRecordNative recorder = new AudioRecordNative();
+
+        // TODO: when b/23899814 is fixed, use AudioManager.getDevices() to enumerate
+        // actual devices and their channel counts instead of assuming stereo.
+        //
+        int maxInputChannels = 2;
+
+        int validIndexMask = (1 << maxInputChannels) -1;
+
+        for (int mask = 0; mask <= MAX_INDEX_MASK; ++mask) {
+            int channelCount = Long.bitCount(mask);
+            boolean expectSuccess = (channelCount > 0)
+                && ((mask & validIndexMask) != 0);
+
+            // TODO: uncomment this line when b/27484181 is fixed.
+            // expectSuccess &&= ((mask & ~validIndexMask) == 0);
+
+            boolean ok = recorder.open(channelCount,
+                mask | CHANNEL_INDEX_MASK_MAGIC, 48000, false, 2);
+            recorder.close();
+            assertEquals(expectSuccess, ok);
+        }
     }
 
     static {
