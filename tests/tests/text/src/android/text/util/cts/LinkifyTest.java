@@ -25,6 +25,7 @@ import android.text.style.URLSpan;
 import android.text.util.Linkify;
 import android.text.util.Linkify.MatchFilter;
 import android.text.util.Linkify.TransformFilter;
+import android.util.Patterns;
 import android.widget.TextView;
 
 import java.util.Locale;
@@ -349,6 +350,110 @@ public class LinkifyTest extends AndroidTestCase {
         }
 
         assertFalse(Linkify.addLinks((Spannable) null, 0));
+    }
+
+    @SmallTest
+    public void testAddLinks_addsLinksWhenDefaultSchemeIsNull() {
+        Spannable spannable = new SpannableString("any https://android.com any android.com any");
+        Linkify.addLinks(spannable, Patterns.AUTOLINK_WEB_URL, null, null, null);
+
+        URLSpan[] spans = spannable.getSpans(0, spannable.length(), URLSpan.class);
+        assertEquals("android.com and https://android.com should be linkified", 2, spans.length);
+        assertEquals("https://android.com", spans[0].getURL());
+        assertEquals("android.com", spans[1].getURL());
+    }
+
+    @SmallTest
+    public void testAddLinks_addsLinksWhenSchemesArrayIsNull() {
+        Spannable spannable = new SpannableString("any https://android.com any android.com any");
+        Linkify.addLinks(spannable, Patterns.AUTOLINK_WEB_URL, "http://", null, null);
+
+        URLSpan[] spans = spannable.getSpans(0, spannable.length(), URLSpan.class);
+        assertEquals("android.com and https://android.com should be linkified", 2, spans.length);
+        // expected behavior, passing null schemes array means: prepend defaultScheme to all links.
+        assertEquals("http://https://android.com", spans[0].getURL());
+        assertEquals("http://android.com", spans[1].getURL());
+    }
+
+    @SmallTest
+    public void testAddLinks_prependsDefaultSchemeToBeginingOfLink() {
+        Spannable spannable = new SpannableString("any android.com any");
+        Linkify.addLinks(spannable, Patterns.AUTOLINK_WEB_URL, "http://",
+                new String[] { "http://", "https://"}, null, null);
+
+        URLSpan[] spans = spannable.getSpans(0, spannable.length(), URLSpan.class);
+        assertEquals("android.com should be linkified", 1, spans.length);
+        assertEquals("http://android.com", spans[0].getURL());
+    }
+
+    @SmallTest
+    public void testAddLinks_doesNotPrependSchemeIfSchemeExists() {
+        Spannable spannable = new SpannableString("any https://android.com any");
+        Linkify.addLinks(spannable, Patterns.AUTOLINK_WEB_URL, "http://",
+                new String[] { "http://", "https://"}, null, null);
+
+        URLSpan[] spans = spannable.getSpans(0, spannable.length(), URLSpan.class);
+        assertEquals("android.com should be linkified", 1, spans.length);
+        assertEquals("https://android.com", spans[0].getURL());
+    }
+
+    // Add links with scheme (array)
+
+    @SmallTest
+    public void testAddLinks_withTextView_addsLinksWhenDefaultSchemeIsNull() {
+        Pattern pattern = Pattern.compile("\\b((http|https)://)?android\\.com+\\b");
+        TextView textView = new TextView(mContext);
+        textView.setText("any https://android.com any android.com any");
+
+        Linkify.addLinks(textView, pattern, null, null, null);
+
+        URLSpan[] spans = textView.getUrls();
+        assertEquals("android.com and https://android.com should be linkified", 2, spans.length);
+        assertEquals("https://android.com", spans[0].getURL());
+        assertEquals("android.com", spans[1].getURL());
+    }
+
+    @SmallTest
+    public void testAddLinks_withTextView_addsLinksWhenSchemesArrayIsNull() {
+        Pattern pattern = Pattern.compile("\\b((http|https)://)?android\\.com+\\b");
+        TextView textView = new TextView(mContext);
+        textView.setText("any https://android.com any android.com any");
+
+        Linkify.addLinks(textView, pattern, "http://", null, null);
+
+        URLSpan[] spans = textView.getUrls();
+        assertEquals("android.com and https://android.com should be linkified", 2, spans.length);
+        // expected behavior, passing null schemes array means: prepend defaultScheme to all links.
+        assertEquals("http://https://android.com", spans[0].getURL());
+        assertEquals("http://android.com", spans[1].getURL());
+    }
+
+    @SmallTest
+    public void testAddLinks_withTextView_prependsDefaultSchemeToBeginingOfLink() {
+        Pattern pattern = Pattern.compile("\\b((http|https)://)?android\\.com+\\b");
+        TextView textView = new TextView(mContext);
+        textView.setText("any android.com any");
+
+        Linkify.addLinks(textView, pattern, "http://", new String[] { "http://", "https://"},
+                null, null);
+
+        URLSpan[] spans = textView.getUrls();
+        assertEquals("android.com should be linkified", 1, spans.length);
+        assertEquals("http://android.com", spans[0].getURL());
+    }
+
+    @SmallTest
+    public void testAddLinks_withTextView_doesNotPrependSchemeIfSchemeExists() {
+        Pattern pattern = Pattern.compile("\\b((http|https)://)?android\\.com+\\b");
+        TextView textView = new TextView(mContext);
+        textView.setText("any https://android.com any");
+
+        Linkify.addLinks(textView, pattern, "http://", new String[] { "http://", "https://"},
+                null, null);
+
+        URLSpan[] spans = textView.getUrls();
+        assertEquals("android.com should be linkified", 1, spans.length);
+        assertEquals("https://android.com", spans[0].getURL());
     }
 
     // WEB_URLS Related Tests
