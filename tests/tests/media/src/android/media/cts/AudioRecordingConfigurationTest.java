@@ -25,6 +25,7 @@ import android.media.AudioRecord;
 import android.media.AudioRecordingConfiguration;
 import android.media.MediaRecorder;
 import android.os.Looper;
+import android.os.Parcel;
 import android.util.Log;
 
 public class AudioRecordingConfigurationTest extends CtsAndroidTestCase {
@@ -157,6 +158,41 @@ public class AudioRecordingConfigurationTest extends CtsAndroidTestCase {
         mAudioRecord.startRecording();
         Thread.sleep(TEST_TIMING_TOLERANCE_MS);
         assertFalse("Unregistered callback was called", callback.mCalled);
+
+        // just call the callback once directly so it's marked as tested
+        callback.onRecordConfigChanged(new AudioRecordingConfiguration[0]);
+    }
+
+    public void testParcel() throws Exception {
+        if (!hasMicrophone()) {
+            return;
+        }
+        AudioManager am = new AudioManager(getContext());
+        assertNotNull("Could not create AudioManager", am);
+
+        assertEquals(AudioRecord.STATE_INITIALIZED, mAudioRecord.getState());
+        mAudioRecord.startRecording();
+        assertEquals(AudioRecord.RECORDSTATE_RECORDING, mAudioRecord.getRecordingState());
+        Thread.sleep(TEST_TIMING_TOLERANCE_MS);
+
+        AudioRecordingConfiguration[] configs = am.getActiveRecordingConfigurations();
+        assertTrue("Empty array of record configs during recording", configs.length > 0);
+        assertEquals(0, configs[0].describeContents());
+
+        // marshall a AudioRecordingConfiguration and compare to unmarshalled
+        final Parcel srcParcel = Parcel.obtain();
+        final Parcel dstParcel = Parcel.obtain();
+
+        configs[0].writeToParcel(srcParcel, 0 /*no public flags for marshalling*/);
+        final byte[] mbytes = srcParcel.marshall();
+        dstParcel.unmarshall(mbytes, 0, mbytes.length);
+        dstParcel.setDataPosition(0);
+        final AudioRecordingConfiguration unmarshalledConf =
+                AudioRecordingConfiguration.CREATOR.createFromParcel(dstParcel);
+
+        assertNotNull("Failure to unmarshall AudioRecordingConfiguration", unmarshalledConf);
+        assertEquals("Source and destination AudioRecordingConfiguration not equal",
+                configs[0], unmarshalledConf);
     }
 
     class MyAudioRecordingCallback extends AudioManager.AudioRecordingCallback {
