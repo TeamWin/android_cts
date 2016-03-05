@@ -13,51 +13,46 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package android.car.cts;
 
 import android.car.Car;
 import android.content.ComponentName;
 import android.content.ServiceConnection;
 import android.os.IBinder;
-import android.os.Looper;
 import android.test.AndroidTestCase;
 
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
-public class CarApiTestBase extends AndroidTestCase {
-    protected static final long DEFAULT_WAIT_TIMEOUT_MS = 1000;
+public class CarTest extends AndroidTestCase {
+
+    private static final long DEFAULT_WAIT_TIMEOUT_MS = 2000;
 
     private Car mCar;
+    private DefaultServiceConnectionListener mServiceConnectionListener;
 
-    private final DefaultServiceConnectionListener mConnectionListener =
-            new DefaultServiceConnectionListener();
-
-    protected void assertMainThread() {
-        assertTrue(Looper.getMainLooper().isCurrentThread());
-    }
-
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
-        mCar = Car.createCar(getContext(), mConnectionListener, null);
+    public void testConnection() throws Exception {
+        mServiceConnectionListener = new DefaultServiceConnectionListener();
+        mCar = Car.createCar(getContext(), mServiceConnectionListener);
+        assertFalse(mCar.isConnected());
+        assertFalse(mCar.isConnecting());
         mCar.connect();
-        mConnectionListener.waitForConnection(DEFAULT_WAIT_TIMEOUT_MS);
-    }
-
-    @Override
-    protected void tearDown() throws Exception {
-        super.tearDown();
+        mServiceConnectionListener.waitForConnection(DEFAULT_WAIT_TIMEOUT_MS);
+        assertTrue(mServiceConnectionListener.isConnected());
+        assertEquals(Car.CONNECTION_TYPE_EMBEDDED, mCar.getCarConnectionType());
         mCar.disconnect();
-    }
-
-    protected synchronized Car getCar() {
-        return mCar;
+        assertFalse(mCar.isConnected());
+        assertFalse(mCar.isConnecting());
     }
 
     protected class DefaultServiceConnectionListener implements ServiceConnection {
         private final Semaphore mConnectionWait = new Semaphore(0);
+
+        private boolean mIsconnected = false;
+
+        public synchronized boolean isConnected() {
+            return mIsconnected;
+        }
 
         public void waitForConnection(long timeoutMs) throws InterruptedException {
             mConnectionWait.tryAcquire(timeoutMs, TimeUnit.MILLISECONDS);
@@ -65,12 +60,16 @@ public class CarApiTestBase extends AndroidTestCase {
 
         @Override
         public void onServiceDisconnected(ComponentName name) {
-            assertMainThread();
+            synchronized (this) {
+                mIsconnected = false;
+            }
         }
 
         @Override
         public void onServiceConnected(ComponentName name, IBinder service) {
-            assertMainThread();
+            synchronized (this) {
+                mIsconnected = true;
+            }
             mConnectionWait.release();
         }
     }
