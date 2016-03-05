@@ -33,10 +33,17 @@ import android.accessibilityservice.cts.R;
  * a View at several granularities.
  */
 public class AccessibilityTextTraversalTest
-        extends AccessibilityActivityTestCase<AccessibilityTextTraversalActivity>{
+        extends AccessibilityActivityTestCase<AccessibilityTextTraversalActivity> {
+    // The number of characters per page may vary with font, so this number is slightly uncertain.
+    // We need some threshold, however, to make sure moving by a page isn't just moving by a line.
+    private static final int[] CHARACTER_INDICES_OF_PAGE_START = {0, 53, 122, 178};
 
     public AccessibilityTextTraversalTest() {
         super(AccessibilityTextTraversalActivity.class);
+    }
+
+    public void tearDown() {
+        getInstrumentation().getUiAutomation().destroy();
     }
 
     @MediumTest
@@ -2994,231 +3001,55 @@ public class AccessibilityTextTraversalTest
         arguments.putInt(AccessibilityNodeInfo.ACTION_ARGUMENT_MOVEMENT_GRANULARITY_INT,
                 AccessibilityNodeInfo.MOVEMENT_GRANULARITY_PAGE);
 
-        // Move to the next page and wait for an event.
-        AccessibilityEvent firstExpected = getInstrumentation().getUiAutomation()
-                .executeAndWaitForEvent(new Runnable() {
-            @Override
-            public void run() {
-                text.performAction(
-                        AccessibilityNodeInfo.ACTION_NEXT_AT_MOVEMENT_GRANULARITY, arguments);
-            }
-        }, new UiAutomation.AccessibilityEventFilter() {
-            @Override
-            public boolean accept(AccessibilityEvent event) {
-                return
-                (event.getEventType() ==
-                    AccessibilityEvent.TYPE_VIEW_TEXT_TRAVERSED_AT_MOVEMENT_GRANULARITY
-                        && event.getAction() ==
-                                AccessibilityNodeInfo.ACTION_NEXT_AT_MOVEMENT_GRANULARITY
-                        && event.getPackageName().equals(getActivity().getPackageName())
-                        && event.getClassName().equals(EditText.class.getName())
-                        && event.getText().size() > 0
-                        && event.getText().get(0).toString().equals(getString(
-                                R.string.android_wiki))
-                        && event.getFromIndex() == 0
-                        && event.getToIndex() == 53
-                        && event.getMovementGranularity() ==
-                                AccessibilityNodeInfo.MOVEMENT_GRANULARITY_PAGE);
-            }
-        }, TIMEOUT_ASYNC_PROCESSING);
+        // Move forward a few pages
+        for (int i = 0; i < CHARACTER_INDICES_OF_PAGE_START.length - 1; i++) {
+            AccessibilityEvent event = performMovementActionAndGetEvent(
+                    text,
+                    AccessibilityNodeInfo.ACTION_NEXT_AT_MOVEMENT_GRANULARITY,
+                    AccessibilityNodeInfo.MOVEMENT_GRANULARITY_PAGE,
+                    false);
+            assertEquals(event.getClassName(), EditText.class.getName());
+            assertTrue("Event should contain text", event.getText().size() > 0);
+            assertTrue("Event text doesn't match. Expected: " + getString(R.string.android_wiki)
+                    + ". Received:" + event.getText().get(0),
+                    TextUtils.equals(event.getText().get(0), getString(R.string.android_wiki)));
+            assertEquals("Event from should be start of text skipped.",
+                    CHARACTER_INDICES_OF_PAGE_START[i], event.getFromIndex());
+            assertEquals("Event to should be end of text skipped.",
+                    CHARACTER_INDICES_OF_PAGE_START[i + 1], event.getToIndex());
+            // Verify the selection position has changed.
+            assertEquals("Event selection start should match position it moved to.",
+                    CHARACTER_INDICES_OF_PAGE_START[i + 1],
+                    Selection.getSelectionStart(editText.getText()));
+            assertEquals("Event selection end should match position it moved to.",
+                    CHARACTER_INDICES_OF_PAGE_START[i + 1],
+                    Selection.getSelectionEnd(editText.getText()));
+        }
 
-        // Make sure we got the expected event.
-        assertNotNull(firstExpected);
-
-        // Verify the selection position.
-        assertEquals(53, Selection.getSelectionStart(editText.getText()));
-        assertEquals(53, Selection.getSelectionEnd(editText.getText()));
-
-        // Move to the next page and wait for an event.
-        AccessibilityEvent secondExpected = getInstrumentation().getUiAutomation()
-                .executeAndWaitForEvent(new Runnable() {
-            @Override
-            public void run() {
-                text.performAction(
-                        AccessibilityNodeInfo.ACTION_NEXT_AT_MOVEMENT_GRANULARITY, arguments);
-            }
-        }, new UiAutomation.AccessibilityEventFilter() {
-            @Override
-            public boolean accept(AccessibilityEvent event) {
-                return
-                (event.getEventType() ==
-                    AccessibilityEvent.TYPE_VIEW_TEXT_TRAVERSED_AT_MOVEMENT_GRANULARITY
-                        && event.getAction() ==
-                                AccessibilityNodeInfo.ACTION_NEXT_AT_MOVEMENT_GRANULARITY
-                        && event.getPackageName().equals(getActivity().getPackageName())
-                        && event.getClassName().equals(EditText.class.getName())
-                        && event.getText().size() > 0
-                        && event.getText().get(0).toString().equals(getString(
-                                R.string.android_wiki))
-                        && event.getFromIndex() == 53
-                        && event.getToIndex() == 103
-                        && event.getMovementGranularity() ==
-                                AccessibilityNodeInfo.MOVEMENT_GRANULARITY_PAGE);
-            }
-        }, TIMEOUT_ASYNC_PROCESSING);
-
-        // Make sure we got the expected event.
-        assertNotNull(secondExpected);
-
-        // Verify the selection position.
-        assertEquals(103, Selection.getSelectionStart(editText.getText()));
-        assertEquals(103, Selection.getSelectionEnd(editText.getText()));
-
-        // Move to the next page and wait for an event.
-        AccessibilityEvent thirdExpected = getInstrumentation().getUiAutomation()
-                .executeAndWaitForEvent(new Runnable() {
-            @Override
-            public void run() {
-                text.performAction(
-                        AccessibilityNodeInfo.ACTION_NEXT_AT_MOVEMENT_GRANULARITY, arguments);
-            }
-        }, new UiAutomation.AccessibilityEventFilter() {
-            @Override
-            public boolean accept(AccessibilityEvent event) {
-                return
-                (event.getEventType() ==
-                    AccessibilityEvent.TYPE_VIEW_TEXT_TRAVERSED_AT_MOVEMENT_GRANULARITY
-                        && event.getAction() ==
-                                AccessibilityNodeInfo.ACTION_NEXT_AT_MOVEMENT_GRANULARITY
-                        && event.getPackageName().equals(getActivity().getPackageName())
-                        && event.getClassName().equals(EditText.class.getName())
-                        && event.getText().size() > 0
-                        && event.getText().get(0).toString().equals(getString(
-                                R.string.android_wiki))
-                        && event.getFromIndex() == 103
-                        && event.getToIndex() == 153
-                        && event.getMovementGranularity() ==
-                                AccessibilityNodeInfo.MOVEMENT_GRANULARITY_PAGE);
-            }
-        }, TIMEOUT_ASYNC_PROCESSING);
-
-        // Make sure we got the expected event.
-        assertNotNull(thirdExpected);
-
-        // Verify the selection position.
-        assertEquals(153, Selection.getSelectionStart(editText.getText()));
-        assertEquals(153, Selection.getSelectionEnd(editText.getText()));
-
-        // Make sure there is no next.
-        assertFalse(text.performAction(
-                AccessibilityNodeInfo.ACTION_NEXT_AT_MOVEMENT_GRANULARITY, arguments));
-
-        // Verify the selection position.
-        assertEquals(153, Selection.getSelectionStart(editText.getText()));
-        assertEquals(153, Selection.getSelectionEnd(editText.getText()));
-
-        // Move to the previous page and wait for an event.
-        AccessibilityEvent fourthExpected = getInstrumentation().getUiAutomation()
-                .executeAndWaitForEvent(new Runnable() {
-            @Override
-            public void run() {
-                text.performAction(
-                        AccessibilityNodeInfo.ACTION_PREVIOUS_AT_MOVEMENT_GRANULARITY, arguments);
-            }
-        }, new UiAutomation.AccessibilityEventFilter() {
-            @Override
-            public boolean accept(AccessibilityEvent event) {
-                return
-                (event.getEventType() ==
-                    AccessibilityEvent.TYPE_VIEW_TEXT_TRAVERSED_AT_MOVEMENT_GRANULARITY
-                        && event.getAction() ==
-                                AccessibilityNodeInfo.ACTION_PREVIOUS_AT_MOVEMENT_GRANULARITY
-                        && event.getPackageName().equals(getActivity().getPackageName())
-                        && event.getClassName().equals(EditText.class.getName())
-                        && event.getText().size() > 0
-                        && event.getText().get(0).toString().equals(getString(
-                                R.string.android_wiki))
-                        && event.getFromIndex() == 103
-                        && event.getToIndex() == 153
-                        && event.getMovementGranularity() ==
-                                AccessibilityNodeInfo.MOVEMENT_GRANULARITY_PAGE);
-            }
-        }, TIMEOUT_ASYNC_PROCESSING);
-
-        // Make sure we got the expected event.
-        assertNotNull(fourthExpected);
-
-        // Verify the selection position.
-        assertEquals(103, Selection.getSelectionStart(editText.getText()));
-        assertEquals(103, Selection.getSelectionEnd(editText.getText()));
-
-        // Move to the previous page and wait for an event.
-        AccessibilityEvent fifthExpected = getInstrumentation().getUiAutomation()
-                .executeAndWaitForEvent(new Runnable() {
-            @Override
-            public void run() {
-                text.performAction(
-                        AccessibilityNodeInfo.ACTION_PREVIOUS_AT_MOVEMENT_GRANULARITY, arguments);
-            }
-        }, new UiAutomation.AccessibilityEventFilter() {
-            @Override
-            public boolean accept(AccessibilityEvent event) {
-                return
-                (event.getEventType() ==
-                    AccessibilityEvent.TYPE_VIEW_TEXT_TRAVERSED_AT_MOVEMENT_GRANULARITY
-                        && event.getAction() ==
-                                AccessibilityNodeInfo.ACTION_PREVIOUS_AT_MOVEMENT_GRANULARITY
-                        && event.getPackageName().equals(getActivity().getPackageName())
-                        && event.getClassName().equals(EditText.class.getName())
-                        && event.getText().size() > 0
-                        && event.getText().get(0).toString().equals(getString(
-                                R.string.android_wiki))
-                        && event.getFromIndex() == 53
-                        && event.getToIndex() == 103
-                        && event.getMovementGranularity() ==
-                                AccessibilityNodeInfo.MOVEMENT_GRANULARITY_PAGE);
-            }
-        }, TIMEOUT_ASYNC_PROCESSING);
-
-        // Make sure we got the expected event.
-        assertNotNull(fifthExpected);
-
-        // Verify the selection position.
-        assertEquals(53, Selection.getSelectionStart(editText.getText()));
-        assertEquals(53, Selection.getSelectionEnd(editText.getText()));
-
-        // Move to the previous page and wait for an event.
-        AccessibilityEvent sixthExpected = getInstrumentation().getUiAutomation()
-                .executeAndWaitForEvent(new Runnable() {
-            @Override
-            public void run() {
-                text.performAction(
-                        AccessibilityNodeInfo.ACTION_PREVIOUS_AT_MOVEMENT_GRANULARITY, arguments);
-            }
-        }, new UiAutomation.AccessibilityEventFilter() {
-            @Override
-            public boolean accept(AccessibilityEvent event) {
-                return
-                (event.getEventType() ==
-                    AccessibilityEvent.TYPE_VIEW_TEXT_TRAVERSED_AT_MOVEMENT_GRANULARITY
-                        && event.getAction() ==
-                                AccessibilityNodeInfo.ACTION_PREVIOUS_AT_MOVEMENT_GRANULARITY
-                        && event.getPackageName().equals(getActivity().getPackageName())
-                        && event.getClassName().equals(EditText.class.getName())
-                        && event.getText().size() > 0
-                        && event.getText().get(0).toString().equals(getString(
-                                R.string.android_wiki))
-                        && event.getFromIndex() == 0
-                        && event.getToIndex() == 53
-                        && event.getMovementGranularity() ==
-                                AccessibilityNodeInfo.MOVEMENT_GRANULARITY_PAGE);
-            }
-        }, TIMEOUT_ASYNC_PROCESSING);
-
-        // Make sure we got the expected event.
-        assertNotNull(sixthExpected);
-
-        // Verify the selection position.
-        assertEquals(0, Selection.getSelectionStart(editText.getText()));
-        assertEquals(0, Selection.getSelectionEnd(editText.getText()));
-
-        // Make sure there is no previous.
-        assertFalse(text.performAction(
-                AccessibilityNodeInfo.ACTION_PREVIOUS_AT_MOVEMENT_GRANULARITY, arguments));
-
-        // Verify the selection position.
-        assertEquals(0, Selection.getSelectionStart(editText.getText()));
-        assertEquals(0, Selection.getSelectionEnd(editText.getText()));
+        // Move back to the beginning
+        for (int i = CHARACTER_INDICES_OF_PAGE_START.length - 2; i >= 0; i--) {
+            AccessibilityEvent event = performMovementActionAndGetEvent(
+                    text,
+                    AccessibilityNodeInfo.ACTION_PREVIOUS_AT_MOVEMENT_GRANULARITY,
+                    AccessibilityNodeInfo.MOVEMENT_GRANULARITY_PAGE,
+                    false);
+            assertEquals(event.getClassName(), EditText.class.getName());
+            assertTrue("Event should contain text", event.getText().size() > 0);
+            assertTrue("Event text doesn't match. Expected: " + getString(R.string.android_wiki)
+                            + ". Received:" + event.getText().get(0),
+                    TextUtils.equals(event.getText().get(0), getString(R.string.android_wiki)));
+            assertEquals("Event from should be start of text skipped.",
+                    CHARACTER_INDICES_OF_PAGE_START[i], event.getFromIndex());
+            assertEquals("Event to should be end of text skipped.",
+                    CHARACTER_INDICES_OF_PAGE_START[i + 1], event.getToIndex());
+            // Verify the selection position has changed.
+            assertEquals("Event selection start should match position it moved to.",
+                    CHARACTER_INDICES_OF_PAGE_START[i],
+                    Selection.getSelectionStart(editText.getText()));
+            assertEquals("Event selection end should match position it moved to.",
+                    CHARACTER_INDICES_OF_PAGE_START[i],
+                    Selection.getSelectionEnd(editText.getText()));
+        }
     }
 
     @MediumTest
@@ -3248,476 +3079,54 @@ public class AccessibilityTextTraversalTest
         final Bundle arguments = new Bundle();
         arguments.putInt(AccessibilityNodeInfo.ACTION_ARGUMENT_MOVEMENT_GRANULARITY_INT,
                 AccessibilityNodeInfo.MOVEMENT_GRANULARITY_PAGE);
-        arguments.putBoolean(AccessibilityNodeInfo.ACTION_ARGUMENT_EXTEND_SELECTION_BOOLEAN, true);
 
-        // Move to the next page and wait for an event.
-        AccessibilityEvent firstExpected = getInstrumentation().getUiAutomation()
-                .executeAndWaitForEvent(new Runnable() {
-            @Override
-            public void run() {
-                text.performAction(
-                        AccessibilityNodeInfo.ACTION_NEXT_AT_MOVEMENT_GRANULARITY, arguments);
-            }
-        }, new UiAutomation.AccessibilityEventFilter() {
-            @Override
-            public boolean accept(AccessibilityEvent event) {
-                return
-                (event.getEventType() ==
-                    AccessibilityEvent.TYPE_VIEW_TEXT_TRAVERSED_AT_MOVEMENT_GRANULARITY
-                        && event.getAction() ==
-                                AccessibilityNodeInfo.ACTION_NEXT_AT_MOVEMENT_GRANULARITY
-                        && event.getPackageName().equals(getActivity().getPackageName())
-                        && event.getClassName().equals(EditText.class.getName())
-                        && event.getText().size() > 0
-                        && event.getText().get(0).toString().equals(getString(
-                                R.string.android_wiki))
-                        && event.getFromIndex() == 0
-                        && event.getToIndex() == 53
-                        && event.getMovementGranularity() ==
-                                AccessibilityNodeInfo.MOVEMENT_GRANULARITY_PAGE);
-            }
-        }, TIMEOUT_ASYNC_PROCESSING);
+        // Move forward a few pages
+        for (int i = 0; i < CHARACTER_INDICES_OF_PAGE_START.length - 1; i++) {
+            AccessibilityEvent event = performMovementActionAndGetEvent(
+                    text,
+                    AccessibilityNodeInfo.ACTION_NEXT_AT_MOVEMENT_GRANULARITY,
+                    AccessibilityNodeInfo.MOVEMENT_GRANULARITY_PAGE,
+                    true);
+            assertEquals(event.getClassName(), EditText.class.getName());
+            assertTrue("Event should contain text", event.getText().size() > 0);
+            assertTrue("Event text doesn't match. Expected: " + getString(R.string.android_wiki)
+                            + ". Received:" + event.getText().get(0),
+                    TextUtils.equals(event.getText().get(0), getString(R.string.android_wiki)));
+            assertEquals("Event from should be start of text skipped",
+                    CHARACTER_INDICES_OF_PAGE_START[i], event.getFromIndex());
+            assertEquals("Event to should be end of text skipped",
+                    CHARACTER_INDICES_OF_PAGE_START[i + 1], event.getToIndex());
+            // Verify the selection position has changed.
+            assertEquals("Event selection start should stay at beginning",
+                    0, Selection.getSelectionStart(editText.getText()));
+            assertEquals("Event selection end should match current position",
+                    CHARACTER_INDICES_OF_PAGE_START[i + 1],
+                    Selection.getSelectionEnd(editText.getText()));
+        }
 
-        // Make sure we got the expected event.
-        assertNotNull(firstExpected);
-
-        // Verify the selection position.
-        assertEquals(0, Selection.getSelectionStart(editText.getText()));
-        assertEquals(53, Selection.getSelectionEnd(editText.getText()));
-
-        // Move to the next page and wait for an event.
-        AccessibilityEvent secondExpected = getInstrumentation().getUiAutomation()
-                .executeAndWaitForEvent(new Runnable() {
-            @Override
-            public void run() {
-                text.performAction(
-                        AccessibilityNodeInfo.ACTION_NEXT_AT_MOVEMENT_GRANULARITY, arguments);
-            }
-        }, new UiAutomation.AccessibilityEventFilter() {
-            @Override
-            public boolean accept(AccessibilityEvent event) {
-                return
-                (event.getEventType() ==
-                    AccessibilityEvent.TYPE_VIEW_TEXT_TRAVERSED_AT_MOVEMENT_GRANULARITY
-                        && event.getAction() ==
-                                AccessibilityNodeInfo.ACTION_NEXT_AT_MOVEMENT_GRANULARITY
-                        && event.getPackageName().equals(getActivity().getPackageName())
-                        && event.getClassName().equals(EditText.class.getName())
-                        && event.getText().size() > 0
-                        && event.getText().get(0).toString().equals(getString(
-                                R.string.android_wiki))
-                        && event.getFromIndex() == 53
-                        && event.getToIndex() == 103
-                        && event.getMovementGranularity() ==
-                                AccessibilityNodeInfo.MOVEMENT_GRANULARITY_PAGE);
-            }
-        }, TIMEOUT_ASYNC_PROCESSING);
-
-        // Make sure we got the expected event.
-        assertNotNull(secondExpected);
-
-        // Verify the selection position.
-        assertEquals(0, Selection.getSelectionStart(editText.getText()));
-        assertEquals(103, Selection.getSelectionEnd(editText.getText()));
-
-        // Move to the next page and wait for an event.
-        AccessibilityEvent thirdExpected = getInstrumentation().getUiAutomation()
-                .executeAndWaitForEvent(new Runnable() {
-            @Override
-            public void run() {
-                text.performAction(
-                        AccessibilityNodeInfo.ACTION_NEXT_AT_MOVEMENT_GRANULARITY, arguments);
-            }
-        }, new UiAutomation.AccessibilityEventFilter() {
-            @Override
-            public boolean accept(AccessibilityEvent event) {
-                return
-                (event.getEventType() ==
-                    AccessibilityEvent.TYPE_VIEW_TEXT_TRAVERSED_AT_MOVEMENT_GRANULARITY
-                        && event.getAction() ==
-                                AccessibilityNodeInfo.ACTION_NEXT_AT_MOVEMENT_GRANULARITY
-                        && event.getPackageName().equals(getActivity().getPackageName())
-                        && event.getClassName().equals(EditText.class.getName())
-                        && event.getText().size() > 0
-                        && event.getText().get(0).toString().equals(getString(
-                                R.string.android_wiki))
-                        && event.getFromIndex() == 103
-                        && event.getToIndex() == 153
-                        && event.getMovementGranularity() ==
-                                AccessibilityNodeInfo.MOVEMENT_GRANULARITY_PAGE);
-            }
-        }, TIMEOUT_ASYNC_PROCESSING);
-
-        // Make sure we got the expected event.
-        assertNotNull(thirdExpected);
-
-        // Verify the selection position.
-        assertEquals(0, Selection.getSelectionStart(editText.getText()));
-        assertEquals(153, Selection.getSelectionEnd(editText.getText()));
-
-        // Make sure there is no next.
-        assertFalse(text.performAction(
-                AccessibilityNodeInfo.ACTION_NEXT_AT_MOVEMENT_GRANULARITY, arguments));
-
-        // Move to the previous page and wait for an event.
-        AccessibilityEvent fourthExpected = getInstrumentation().getUiAutomation()
-                .executeAndWaitForEvent(new Runnable() {
-            @Override
-            public void run() {
-                text.performAction(
-                        AccessibilityNodeInfo.ACTION_PREVIOUS_AT_MOVEMENT_GRANULARITY, arguments);
-            }
-        }, new UiAutomation.AccessibilityEventFilter() {
-            @Override
-            public boolean accept(AccessibilityEvent event) {
-                return
-                (event.getEventType() ==
-                    AccessibilityEvent.TYPE_VIEW_TEXT_TRAVERSED_AT_MOVEMENT_GRANULARITY
-                        && event.getAction() ==
-                                 AccessibilityNodeInfo.ACTION_PREVIOUS_AT_MOVEMENT_GRANULARITY
-                        && event.getPackageName().equals(getActivity().getPackageName())
-                        && event.getClassName().equals(EditText.class.getName())
-                        && event.getText().size() > 0
-                        && event.getText().get(0).toString().equals(getString(
-                                R.string.android_wiki))
-                        && event.getFromIndex() == 103
-                        && event.getToIndex() == 153
-                        && event.getMovementGranularity() ==
-                                AccessibilityNodeInfo.MOVEMENT_GRANULARITY_PAGE);
-            }
-        }, TIMEOUT_ASYNC_PROCESSING);
-
-        // Make sure we got the expected event.
-        assertNotNull(fourthExpected);
-
-        // Verify the selection position.
-        assertEquals(0, Selection.getSelectionStart(editText.getText()));
-        assertEquals(103, Selection.getSelectionEnd(editText.getText()));
-
-        // Move to the previous page and wait for an event.
-        AccessibilityEvent fifthExpected = getInstrumentation().getUiAutomation()
-                .executeAndWaitForEvent(new Runnable() {
-            @Override
-            public void run() {
-                text.performAction(
-                        AccessibilityNodeInfo.ACTION_PREVIOUS_AT_MOVEMENT_GRANULARITY, arguments);
-            }
-        }, new UiAutomation.AccessibilityEventFilter() {
-            @Override
-            public boolean accept(AccessibilityEvent event) {
-                return
-                (event.getEventType() ==
-                    AccessibilityEvent.TYPE_VIEW_TEXT_TRAVERSED_AT_MOVEMENT_GRANULARITY
-                        && event.getAction() ==
-                                AccessibilityNodeInfo.ACTION_PREVIOUS_AT_MOVEMENT_GRANULARITY
-                        && event.getPackageName().equals(getActivity().getPackageName())
-                        && event.getClassName().equals(EditText.class.getName())
-                        && event.getText().size() > 0
-                        && event.getText().get(0).toString().equals(getString(
-                                R.string.android_wiki))
-                        && event.getFromIndex() == 53
-                        && event.getToIndex() == 103
-                        && event.getMovementGranularity() ==
-                                AccessibilityNodeInfo.MOVEMENT_GRANULARITY_PAGE);
-            }
-        }, TIMEOUT_ASYNC_PROCESSING);
-
-        // Make sure we got the expected event.
-        assertNotNull(fifthExpected);
-
-        // Verify the selection position.
-        assertEquals(0, Selection.getSelectionStart(editText.getText()));
-        assertEquals(53, Selection.getSelectionEnd(editText.getText()));
-
-        // Move to the previous page and wait for an event.
-        AccessibilityEvent sixthExpected = getInstrumentation().getUiAutomation()
-                .executeAndWaitForEvent(new Runnable() {
-            @Override
-            public void run() {
-                text.performAction(
-                        AccessibilityNodeInfo.ACTION_PREVIOUS_AT_MOVEMENT_GRANULARITY, arguments);
-            }
-        }, new UiAutomation.AccessibilityEventFilter() {
-            @Override
-            public boolean accept(AccessibilityEvent event) {
-                return
-                (event.getEventType() ==
-                    AccessibilityEvent.TYPE_VIEW_TEXT_TRAVERSED_AT_MOVEMENT_GRANULARITY
-                        && event.getAction() ==
-                                AccessibilityNodeInfo.ACTION_PREVIOUS_AT_MOVEMENT_GRANULARITY
-                        && event.getPackageName().equals(getActivity().getPackageName())
-                        && event.getClassName().equals(EditText.class.getName())
-                        && event.getText().size() > 0
-                        && event.getText().get(0).toString().equals(getString(
-                                R.string.android_wiki))
-                        && event.getFromIndex() == 0
-                        && event.getToIndex() == 53
-                        && event.getMovementGranularity() ==
-                                AccessibilityNodeInfo.MOVEMENT_GRANULARITY_PAGE);
-            }
-        }, TIMEOUT_ASYNC_PROCESSING);
-
-        // Make sure we got the expected event.
-        assertNotNull(sixthExpected);
-
-        // Verify the selection position.
-        assertEquals(0, Selection.getSelectionStart(editText.getText()));
-        assertEquals(0, Selection.getSelectionEnd(editText.getText()));
-
-        // Make sure there is no previous.
-        assertFalse(text.performAction(
-                AccessibilityNodeInfo.ACTION_PREVIOUS_AT_MOVEMENT_GRANULARITY, arguments));
-
-        // Verify the selection position.
-        assertEquals(0, Selection.getSelectionStart(editText.getText()));
-        assertEquals(0, Selection.getSelectionEnd(editText.getText()));
-
-        // Focus the view so we can change selection.
-        getInstrumentation().runOnMainSync(new Runnable() {
-            @Override
-            public void run() {
-                editText.setFocusable(true);
-                editText.requestFocus();
-            }
-        });
-
-        // Put selection at the end of the text.
-        Bundle setSelectionArgs = new Bundle();
-        setSelectionArgs.putInt(AccessibilityNodeInfo.ACTION_ARGUMENT_SELECTION_START_INT, 153);
-        setSelectionArgs.putInt(AccessibilityNodeInfo.ACTION_ARGUMENT_SELECTION_END_INT, 153);
-        assertTrue(text.performAction(
-                AccessibilityNodeInfo.ACTION_SET_SELECTION, setSelectionArgs));
-
-        // Verify the selection position.
-        assertEquals(153, Selection.getSelectionStart(editText.getText()));
-        assertEquals(153, Selection.getSelectionEnd(editText.getText()));
-
-        // Unfocus the view so we can hide the soft-keyboard.
-        getInstrumentation().runOnMainSync(new Runnable() {
-            @Override
-            public void run() {
-                editText.clearFocus();
-                editText.setFocusable(false);
-            }
-        });
-
-        // Move to the previous page and wait for an event.
-        AccessibilityEvent seventhExpected = getInstrumentation().getUiAutomation()
-                .executeAndWaitForEvent(new Runnable() {
-            @Override
-            public void run() {
-                text.performAction(
-                        AccessibilityNodeInfo.ACTION_PREVIOUS_AT_MOVEMENT_GRANULARITY, arguments);
-            }
-        }, new UiAutomation.AccessibilityEventFilter() {
-            @Override
-            public boolean accept(AccessibilityEvent event) {
-                return
-                (event.getEventType() ==
-                    AccessibilityEvent.TYPE_VIEW_TEXT_TRAVERSED_AT_MOVEMENT_GRANULARITY
-                        && event.getAction() ==
-                                 AccessibilityNodeInfo.ACTION_PREVIOUS_AT_MOVEMENT_GRANULARITY
-                        && event.getPackageName().equals(getActivity().getPackageName())
-                        && event.getClassName().equals(EditText.class.getName())
-                        && event.getText().size() > 0
-                        && event.getText().get(0).toString().equals(getString(
-                                R.string.android_wiki))
-                        && event.getFromIndex() == 103
-                        && event.getToIndex() == 153
-                        && event.getMovementGranularity() ==
-                                AccessibilityNodeInfo.MOVEMENT_GRANULARITY_PAGE);
-            }
-        }, TIMEOUT_ASYNC_PROCESSING);
-
-        // Make sure we got the expected event.
-        assertNotNull(seventhExpected);
-
-        // Verify the selection position.
-        assertEquals(153, Selection.getSelectionStart(editText.getText()));
-        assertEquals(103, Selection.getSelectionEnd(editText.getText()));
-
-        // Move to the previous page and wait for an event.
-        AccessibilityEvent eightExpected = getInstrumentation().getUiAutomation()
-                .executeAndWaitForEvent(new Runnable() {
-            @Override
-            public void run() {
-                text.performAction(
-                        AccessibilityNodeInfo.ACTION_PREVIOUS_AT_MOVEMENT_GRANULARITY, arguments);
-            }
-        }, new UiAutomation.AccessibilityEventFilter() {
-            @Override
-            public boolean accept(AccessibilityEvent event) {
-                return
-                (event.getEventType() ==
-                    AccessibilityEvent.TYPE_VIEW_TEXT_TRAVERSED_AT_MOVEMENT_GRANULARITY
-                        && event.getAction() ==
-                                AccessibilityNodeInfo.ACTION_PREVIOUS_AT_MOVEMENT_GRANULARITY
-                        && event.getPackageName().equals(getActivity().getPackageName())
-                        && event.getClassName().equals(EditText.class.getName())
-                        && event.getText().size() > 0
-                        && event.getText().get(0).toString().equals(getString(
-                                R.string.android_wiki))
-                        && event.getFromIndex() == 53
-                        && event.getToIndex() == 103
-                        && event.getMovementGranularity() ==
-                                AccessibilityNodeInfo.MOVEMENT_GRANULARITY_PAGE);
-            }
-        }, TIMEOUT_ASYNC_PROCESSING);
-
-        // Make sure we got the expected event.
-        assertNotNull(eightExpected);
-
-        // Verify the selection position.
-        assertEquals(153, Selection.getSelectionStart(editText.getText()));
-        assertEquals(53, Selection.getSelectionEnd(editText.getText()));
-
-        // Move to the previous page and wait for an event.
-        AccessibilityEvent ninethExpected = getInstrumentation().getUiAutomation()
-                .executeAndWaitForEvent(new Runnable() {
-            @Override
-            public void run() {
-                text.performAction(
-                        AccessibilityNodeInfo.ACTION_PREVIOUS_AT_MOVEMENT_GRANULARITY, arguments);
-            }
-        }, new UiAutomation.AccessibilityEventFilter() {
-            @Override
-            public boolean accept(AccessibilityEvent event) {
-                return
-                (event.getEventType() ==
-                    AccessibilityEvent.TYPE_VIEW_TEXT_TRAVERSED_AT_MOVEMENT_GRANULARITY
-                        && event.getAction() ==
-                                AccessibilityNodeInfo.ACTION_PREVIOUS_AT_MOVEMENT_GRANULARITY
-                        && event.getPackageName().equals(getActivity().getPackageName())
-                        && event.getClassName().equals(EditText.class.getName())
-                        && event.getText().size() > 0
-                        && event.getText().get(0).toString().equals(getString(
-                                R.string.android_wiki))
-                        && event.getFromIndex() == 0
-                        && event.getToIndex() == 53
-                        && event.getMovementGranularity() ==
-                                AccessibilityNodeInfo.MOVEMENT_GRANULARITY_PAGE);
-            }
-        }, TIMEOUT_ASYNC_PROCESSING);
-
-        // Make sure we got the expected event.
-        assertNotNull(ninethExpected);
-
-        // Verify the selection position.
-        assertEquals(153, Selection.getSelectionStart(editText.getText()));
-        assertEquals(0, Selection.getSelectionEnd(editText.getText()));
-
-        // Make sure there is no previous.
-        assertFalse(text.performAction(
-                AccessibilityNodeInfo.ACTION_PREVIOUS_AT_MOVEMENT_GRANULARITY, arguments));
-
-        // Verify the selection position.
-        assertEquals(153, Selection.getSelectionStart(editText.getText()));
-        assertEquals(0, Selection.getSelectionEnd(editText.getText()));
-
-        // Move to the next page and wait for an event.
-        AccessibilityEvent tenthExpected = getInstrumentation().getUiAutomation()
-                .executeAndWaitForEvent(new Runnable() {
-            @Override
-            public void run() {
-                text.performAction(
-                        AccessibilityNodeInfo.ACTION_NEXT_AT_MOVEMENT_GRANULARITY, arguments);
-            }
-        }, new UiAutomation.AccessibilityEventFilter() {
-            @Override
-            public boolean accept(AccessibilityEvent event) {
-                return
-                (event.getEventType() ==
-                    AccessibilityEvent.TYPE_VIEW_TEXT_TRAVERSED_AT_MOVEMENT_GRANULARITY
-                        && event.getAction() ==
-                                AccessibilityNodeInfo.ACTION_NEXT_AT_MOVEMENT_GRANULARITY
-                        && event.getPackageName().equals(getActivity().getPackageName())
-                        && event.getClassName().equals(EditText.class.getName())
-                        && event.getText().size() > 0
-                        && event.getText().get(0).toString().equals(getString(
-                                R.string.android_wiki))
-                        && event.getFromIndex() == 0
-                        && event.getToIndex() == 53
-                        && event.getMovementGranularity() ==
-                                AccessibilityNodeInfo.MOVEMENT_GRANULARITY_PAGE);
-            }
-        }, TIMEOUT_ASYNC_PROCESSING);
-
-        // Make sure we got the expected event.
-        assertNotNull(tenthExpected);
-
-        // Verify the selection position.
-        assertEquals(153, Selection.getSelectionStart(editText.getText()));
-        assertEquals(53, Selection.getSelectionEnd(editText.getText()));
-
-        // Move to the next page and wait for an event.
-        AccessibilityEvent eleventhExpected = getInstrumentation().getUiAutomation()
-                .executeAndWaitForEvent(new Runnable() {
-            @Override
-            public void run() {
-                text.performAction(
-                        AccessibilityNodeInfo.ACTION_NEXT_AT_MOVEMENT_GRANULARITY, arguments);
-            }
-        }, new UiAutomation.AccessibilityEventFilter() {
-            @Override
-            public boolean accept(AccessibilityEvent event) {
-                return
-                (event.getEventType() ==
-                    AccessibilityEvent.TYPE_VIEW_TEXT_TRAVERSED_AT_MOVEMENT_GRANULARITY
-                        && event.getAction() ==
-                                AccessibilityNodeInfo.ACTION_NEXT_AT_MOVEMENT_GRANULARITY
-                        && event.getPackageName().equals(getActivity().getPackageName())
-                        && event.getClassName().equals(EditText.class.getName())
-                        && event.getText().size() > 0
-                        && event.getText().get(0).toString().equals(getString(
-                                R.string.android_wiki))
-                        && event.getFromIndex() == 53
-                        && event.getToIndex() == 103
-                        && event.getMovementGranularity() ==
-                                AccessibilityNodeInfo.MOVEMENT_GRANULARITY_PAGE);
-            }
-        }, TIMEOUT_ASYNC_PROCESSING);
-
-        // Make sure we got the expected event.
-        assertNotNull(eleventhExpected);
-
-        // Verify the selection position.
-        assertEquals(153, Selection.getSelectionStart(editText.getText()));
-        assertEquals(103, Selection.getSelectionEnd(editText.getText()));
-
-        // Move to the next page and wait for an event.
-        AccessibilityEvent twelvethExpected = getInstrumentation().getUiAutomation()
-                .executeAndWaitForEvent(new Runnable() {
-            @Override
-            public void run() {
-                text.performAction(
-                        AccessibilityNodeInfo.ACTION_NEXT_AT_MOVEMENT_GRANULARITY, arguments);
-            }
-        }, new UiAutomation.AccessibilityEventFilter() {
-            @Override
-            public boolean accept(AccessibilityEvent event) {
-                return
-                (event.getEventType() ==
-                    AccessibilityEvent.TYPE_VIEW_TEXT_TRAVERSED_AT_MOVEMENT_GRANULARITY
-                        && event.getAction() ==
-                                AccessibilityNodeInfo.ACTION_NEXT_AT_MOVEMENT_GRANULARITY
-                        && event.getPackageName().equals(getActivity().getPackageName())
-                        && event.getClassName().equals(EditText.class.getName())
-                        && event.getText().size() > 0
-                        && event.getText().get(0).toString().equals(getString(
-                                R.string.android_wiki))
-                        && event.getFromIndex() == 103
-                        && event.getToIndex() == 153
-                        && event.getMovementGranularity() ==
-                                AccessibilityNodeInfo.MOVEMENT_GRANULARITY_PAGE);
-            }
-        }, TIMEOUT_ASYNC_PROCESSING);
-
-        // Make sure we got the expected event.
-        assertNotNull(twelvethExpected);
-
-        // Verify the selection position.
-        assertEquals(153, Selection.getSelectionStart(editText.getText()));
-        assertEquals(153, Selection.getSelectionEnd(editText.getText()));
+        // Move back to the beginning
+        for (int i = CHARACTER_INDICES_OF_PAGE_START.length - 2; i >= 0; i--) {
+            AccessibilityEvent event = performMovementActionAndGetEvent(
+                    text,
+                    AccessibilityNodeInfo.ACTION_PREVIOUS_AT_MOVEMENT_GRANULARITY,
+                    AccessibilityNodeInfo.MOVEMENT_GRANULARITY_PAGE,
+                    true);
+            assertEquals(event.getClassName(), EditText.class.getName());
+            assertTrue("Event should contain text", event.getText().size() > 0);
+            assertTrue("Event text doesn't match. Expected: " + getString(R.string.android_wiki)
+                            + ". Received:" + event.getText().get(0),
+                    TextUtils.equals(event.getText().get(0), getString(R.string.android_wiki)));
+            assertEquals("Event from should be start of text skipped",
+                    CHARACTER_INDICES_OF_PAGE_START[i], event.getFromIndex());
+            assertEquals("Event to should be end of text skipped",
+                    CHARACTER_INDICES_OF_PAGE_START[i + 1], event.getToIndex());
+            // Verify the selection position has changed.
+            assertEquals("Event selection start should stay at beginning",
+                    0, Selection.getSelectionStart(editText.getText()));
+            assertEquals("Event selection end should match current position",
+                    CHARACTER_INDICES_OF_PAGE_START[i],
+                    Selection.getSelectionEnd(editText.getText()));
+        }
     }
 
     @MediumTest
@@ -4642,5 +4051,37 @@ public class AccessibilityTextTraversalTest
         assertFalse(refreshedText.isEditable());
         assertSame(refreshedText.getTextSelectionStart(), 4);
         assertSame(refreshedText.getTextSelectionEnd(), 4);
+    }
+
+    private AccessibilityEvent performMovementActionAndGetEvent(final AccessibilityNodeInfo target,
+            final int action, final int granularity, final boolean extendSelection)
+            throws Exception {
+        final Bundle arguments = new Bundle();
+        arguments.putInt(AccessibilityNodeInfo.ACTION_ARGUMENT_MOVEMENT_GRANULARITY_INT,
+                granularity);
+        if (extendSelection) {
+            arguments.putBoolean(
+                    AccessibilityNodeInfo.ACTION_ARGUMENT_EXTEND_SELECTION_BOOLEAN, true);
+        }
+        Runnable performActionRunnable = new Runnable() {
+            @Override
+            public void run() {
+                target.performAction(action, arguments);
+            }
+        };
+        UiAutomation.AccessibilityEventFilter filter = new UiAutomation.AccessibilityEventFilter() {
+            @Override
+            public boolean accept(AccessibilityEvent event) {
+                boolean isMovementEvent = event.getEventType()
+                        == AccessibilityEvent.TYPE_VIEW_TEXT_TRAVERSED_AT_MOVEMENT_GRANULARITY;
+                boolean actionMatches = event.getAction() == action;
+                boolean packageMatches =
+                        event.getPackageName().equals(getActivity().getPackageName());
+                boolean granularityMatches = event.getMovementGranularity() == granularity;
+                return isMovementEvent && actionMatches && packageMatches && granularityMatches;
+            }
+        };
+        return getInstrumentation().getUiAutomation()
+                .executeAndWaitForEvent(performActionRunnable, filter, TIMEOUT_ASYNC_PROCESSING);
     }
 }
