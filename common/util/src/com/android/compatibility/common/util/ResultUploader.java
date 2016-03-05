@@ -50,7 +50,7 @@ public class ResultUploader {
             byte[] data = getBytes(input);
             mMultipartForm.addFormFile("resultXml", "test-result.xml.gz", data);
             if (referenceUrl == null || referenceUrl.trim().isEmpty()) {
-                mMultipartForm.addFormValue("reference-url", referenceUrl);
+                mMultipartForm.addFormValue("referenceUrl", referenceUrl);
             }
             return mMultipartForm.submit();
         } finally {
