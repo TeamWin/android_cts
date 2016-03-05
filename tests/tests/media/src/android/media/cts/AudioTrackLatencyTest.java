@@ -54,7 +54,8 @@ import java.nio.ShortBuffer;
 public class AudioTrackLatencyTest extends CtsAndroidTestCase {
     private String TAG = "AudioTrackLatencyTest";
     private final static long NANOS_PER_MILLISECOND = 1000000L;
-    private final static long NANOS_PER_SECOND = NANOS_PER_MILLISECOND * 1000L;
+    private final static int MILLIS_PER_SECOND = 1000;
+    private final static long NANOS_PER_SECOND = NANOS_PER_MILLISECOND * MILLIS_PER_SECOND;
 
     private void log(String testName, String message) {
         Log.i(TAG, "[" + testName + "] " + message);
@@ -97,8 +98,9 @@ public class AudioTrackLatencyTest extends CtsAndroidTestCase {
                 initialBufferSize, track.getBufferSizeInFrames());
 
         int resultZero = track.setBufferSizeInFrames(0);
-        assertTrue(TEST_NAME + ": zero size OK", resultZero > 0);
-        assertTrue(TEST_NAME + ": zero size < original", resultZero < initialBufferSize);
+        assertTrue(TEST_NAME + ": should be >0, but got " + resultZero, resultZero > 0);
+        assertTrue(TEST_NAME + ": zero size < original, but got " + resultZero,
+                resultZero < initialBufferSize);
         assertEquals(TEST_NAME + ": should match resultZero",
                 resultZero, track.getBufferSizeInFrames());
 
@@ -115,6 +117,148 @@ public class AudioTrackLatencyTest extends CtsAndroidTestCase {
                 resultMiddle, track.getBufferSizeInFrames());
 
         // -------- tear down --------------
+        track.release();
+    }
+
+    // Helper class for tests
+    private static class TestSetup {
+        public int sampleRate = 48000;
+        public int samplesPerFrame = 2;
+        public int bytesPerSample = 2;
+        public int config = AudioFormat.CHANNEL_OUT_STEREO;
+        public int format = AudioFormat.ENCODING_PCM_16BIT;
+        public int mode = AudioTrack.MODE_STREAM;
+        public int streamType = AudioManager.STREAM_MUSIC;
+        public int framesPerBuffer = 256;
+        public double amplitude = 0.5;
+
+        private AudioTrack mTrack;
+        private short[] mData;
+        private int mActualSizeInFrames;
+
+        AudioTrack createTrack() {
+            mData = AudioHelper.createSineWavesShort(framesPerBuffer,
+                    samplesPerFrame, 1, amplitude);
+            int minBufferSize = AudioTrack.getMinBufferSize(sampleRate, config, format);
+            // Create a buffer that is 3/2 times bigger than the minimum.
+            // This gives me room to cut it in half and play without glitching.
+            // This is an arbitrary scaling factor.
+            int bufferSize = (minBufferSize * 3) / 2;
+            mTrack = new AudioTrack(streamType, sampleRate, config, format,
+                    bufferSize, mode);
+
+            // Calculate and use a smaller buffer size
+            int smallBufferSize = bufferSize / 2; // arbitrary, smaller might underflow
+            int smallBuffSizeInFrames = smallBufferSize / (samplesPerFrame * bytesPerSample);
+            mActualSizeInFrames = mTrack.setBufferSizeInFrames(smallBuffSizeInFrames);
+            return mTrack;
+
+        }
+
+        int primeAudioTrack(String testName) {
+            // Prime the buffer.
+            int samplesWrittenTotal = 0;
+            int samplesWritten;
+            do{
+                samplesWritten = mTrack.write(mData, 0, mData.length);
+                if (samplesWritten > 0) {
+                    samplesWrittenTotal += samplesWritten;
+                }
+            } while (samplesWritten == mData.length);
+            int framesWrittenTotal = samplesWrittenTotal / samplesPerFrame;
+            assertTrue(testName + ": framesWrittenTotal = " + framesWrittenTotal
+                    + ", size = " + mActualSizeInFrames,
+                    framesWrittenTotal >= mActualSizeInFrames);
+            return framesWrittenTotal;
+        }
+
+        /**
+         * @param seconds
+         */
+        public void writeSeconds(double seconds) throws InterruptedException {
+            long msecEnd = System.currentTimeMillis() + (long)(seconds * 1000);
+            while (System.currentTimeMillis() < msecEnd) {
+                // Use non-blocking mode in case the track is hung.
+                int samplesWritten = mTrack.write(mData, 0, mData.length, AudioTrack.WRITE_NON_BLOCKING);
+                if (samplesWritten < mData.length) {
+                    int samplesRemaining = mData.length - samplesWritten;
+                    int framesRemaining = samplesRemaining / samplesPerFrame;
+                    int millis = (framesRemaining * 1000) / sampleRate;
+                    Thread.sleep(millis);
+                }
+            }
+        }
+    }
+
+    // Try to play an AudioTrack when the initial size is less than capacity.
+    // We want to make sure the track starts properly and is not stuck.
+    public void testPlaySmallBuffer() throws Exception {
+        final String TEST_NAME = "testPlaySmallBuffer";
+        TestSetup setup = new TestSetup();
+        AudioTrack track = setup.createTrack();
+
+        // Prime the buffer.
+        int framesWrittenTotal = setup.primeAudioTrack(TEST_NAME);
+
+        // Start playing and let it drain.
+        int position1 = track.getPlaybackHeadPosition();
+        assertEquals(TEST_NAME + ": initial position", 0, position1);
+        track.play();
+
+        // Make sure it starts within a reasonably short time.
+        final long MAX_TIME_TO_START_MSEC =  500; // arbitrary
+        long giveUpAt = System.currentTimeMillis() + MAX_TIME_TO_START_MSEC;
+        int position2 = track.getPlaybackHeadPosition();
+        while ((position1 == position2)
+                && (System.currentTimeMillis() < giveUpAt)) {
+            Thread.sleep(20); // arbitrary interval
+            position2 = track.getPlaybackHeadPosition();
+        }
+        assertTrue(TEST_NAME + ": did it start?, position after start = " + position2,
+                position2 > position1);
+
+        // Make sure it finishes playing the data.
+        // Wait several times longer than it should take to play the data.
+        final int several = 3; // arbitrary
+        Thread.sleep(several * framesWrittenTotal * MILLIS_PER_SECOND / setup.sampleRate);
+        position2 = track.getPlaybackHeadPosition();
+        assertEquals(TEST_NAME + ": did it play all the data?",
+                framesWrittenTotal, position2);
+
+        track.release();
+    }
+
+    // Try to play and pause an AudioTrack when the initial size is less than capacity.
+    // We want to make sure the track starts properly and is not stuck.
+    public void testPlayPauseSmallBuffer() throws Exception {
+        final String TEST_NAME = "testPlayPauseSmallBuffer";
+        TestSetup setup = new TestSetup();
+        AudioTrack track = setup.createTrack();
+
+        // Prime the buffer.
+        setup.primeAudioTrack(TEST_NAME);
+
+        // Start playing then pause and play in a loop.
+        int position1 = track.getPlaybackHeadPosition();
+        assertEquals(TEST_NAME + ": initial position", 0, position1);
+        track.play();
+        // try pausing several times to see it if it fails
+        final int several = 4; // arbitrary
+        for (int i = 0; i < several; i++) {
+            // write data in non-blocking mode for a few seconds
+            setup.writeSeconds(2.0); // arbitrary, long enough for audio to get to the device
+            // Did position advance as we were playing? Or was the track stuck?
+            int position2 = track.getPlaybackHeadPosition();
+            int delta = position2 - position1; // safe from wrapping
+            assertTrue(TEST_NAME + ": [" + i + "] did it advance? p1 = " + position1
+                    + ", p2 = " + position2, delta > 0);
+            position1 = position2;
+            // pause for a second
+            track.pause();
+            Thread.sleep(MILLIS_PER_SECOND);
+            track.play();
+        }
+
         track.release();
     }
 
@@ -303,7 +447,7 @@ public class AudioTrackLatencyTest extends CtsAndroidTestCase {
         // Play with ridiculously small size. We want to get underruns so we know that an app
         // can get to the edge of underrunning.
         int resultZero = track.setBufferSizeInFrames(0);
-        assertTrue(TEST_NAME + ": zero size OK", resultZero > 0);
+        assertTrue(TEST_NAME + ": should return > 0, got " + resultZero, resultZero > 0);
         assertTrue(TEST_NAME + ": zero size < original", resultZero < initialBufferSize);
         numSeconds = TEST_NUM_SECONDS / 2; // cuz test takes longer when underflowing
         numBuffers = numSeconds * TEST_SR / TEST_FRAMES_PER_BUFFER;
