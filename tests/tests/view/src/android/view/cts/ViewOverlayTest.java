@@ -172,4 +172,86 @@ public class ViewOverlayTest extends ActivityInstrumentationTestCase2<ViewOverla
         DrawingUtils.assertAllPixelsOfColor("Back to default fill", mViewWithOverlay,
                 Color.WHITE, null);
     }
+
+    public void testOverlayDynamicChangesToDrawable() throws Throwable {
+        // Add one colored drawable to the overlay
+        final ColorDrawable drawable = new ColorDrawable(Color.RED);
+        drawable.setBounds(20, 30, 40, 50);
+        runTestOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                mViewOverlay.add(drawable);
+            }
+        });
+
+        final List<Pair<Rect, Integer>> colorRectangles = new ArrayList<>();
+        colorRectangles.add(new Pair<>(new Rect(20, 30, 40, 50), Color.RED));
+        DrawingUtils.assertAllPixelsOfColor("Overlay with one red drawable", mViewWithOverlay,
+                Color.WHITE, colorRectangles);
+
+        // Update the bounds of our red drawable. Note that ideally we want to verify that
+        // ViewOverlay's internal implementation tracks the changes to the drawables and kicks
+        // off a redraw pass at some point. Here we are testing a subset of that - that the
+        // next time a redraw of View / ViewOverlay happens, it catches the new state of our
+        // original drawable.
+        runTestOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                drawable.setBounds(50, 10, 80, 90);
+            }
+        });
+        colorRectangles.clear();
+        colorRectangles.add(new Pair<>(new Rect(50, 10, 80, 90), Color.RED));
+        DrawingUtils.assertAllPixelsOfColor("Red drawable moved", mViewWithOverlay,
+                Color.WHITE, colorRectangles);
+
+        // Update the color of our drawable. Same (partial) testing as before.
+        runTestOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                drawable.setColor(Color.GREEN);
+            }
+        });
+        colorRectangles.clear();
+        colorRectangles.add(new Pair<>(new Rect(50, 10, 80, 90), Color.GREEN));
+        DrawingUtils.assertAllPixelsOfColor("Drawable is green now", mViewWithOverlay,
+                Color.WHITE, colorRectangles);
+    }
+
+    public void testOverlayDynamicChangesToOverlappingDrawables() throws Throwable {
+        // Add two overlapping color drawables to the overlay
+        final ColorDrawable redDrawable = new ColorDrawable(Color.RED);
+        redDrawable.setBounds(10, 20, 60, 40);
+        final ColorDrawable greenDrawable = new ColorDrawable(Color.GREEN);
+        greenDrawable.setBounds(30, 20, 80, 40);
+
+        runTestOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                mViewOverlay.add(redDrawable);
+                mViewOverlay.add(greenDrawable);
+            }
+        });
+
+        // Our overlay drawables overlap in horizontal 30-60 range. This is the same test as
+        // in testOverlayWithOverlappingDrawables
+        final List<Pair<Rect, Integer>> colorRectangles = new ArrayList<>();
+        colorRectangles.add(new Pair<>(new Rect(10, 20, 30, 40), Color.RED));
+        colorRectangles.add(new Pair<>(new Rect(30, 20, 80, 40), Color.GREEN));
+        DrawingUtils.assertAllPixelsOfColor("Overlay with two drawables", mViewWithOverlay,
+                Color.WHITE, colorRectangles);
+
+        // Now change the color of the first drawable and verify that it didn't "bump" it up
+        // in the drawing order.
+        runTestOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                redDrawable.setColor(Color.BLUE);
+            }
+        });
+        colorRectangles.add(new Pair<>(new Rect(10, 20, 30, 40), Color.BLUE));
+        colorRectangles.add(new Pair<>(new Rect(30, 20, 80, 40), Color.GREEN));
+        DrawingUtils.assertAllPixelsOfColor("Overlay with two drawables", mViewWithOverlay,
+                Color.WHITE, colorRectangles);
+    }
 }
