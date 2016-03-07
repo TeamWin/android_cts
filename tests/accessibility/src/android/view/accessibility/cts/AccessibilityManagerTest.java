@@ -20,8 +20,7 @@ import android.accessibilityservice.AccessibilityServiceInfo;
 import android.app.Service;
 import android.content.pm.ServiceInfo;
 import android.cts.util.PollingCheck;
-import android.provider.Settings;
-import android.test.AndroidTestCase;
+import android.test.InstrumentationTestCase;
 import android.view.accessibility.AccessibilityEvent;
 import android.view.accessibility.AccessibilityManager;
 import android.view.accessibility.AccessibilityManager.AccessibilityStateChangeListener;
@@ -31,27 +30,28 @@ import java.util.List;
 /**
  * Class for testing {@link AccessibilityManager}.
  */
-public class AccessibilityManagerTest extends AndroidTestCase {
-
-    private static final String SOME_ACCESSIBLITY_SERVICES_PACKAGE_NAME =
-        "android.view.accessibility.services";
+public class AccessibilityManagerTest extends InstrumentationTestCase {
 
     private static final String SPEAKING_ACCESSIBLITY_SERVICE_NAME =
-        "android.view.accessibility.services.SpeakingAccessibilityService";
+        "android.view.accessibility.cts.SpeakingAccessibilityService";
 
     private static final String VIBRATING_ACCESSIBLITY_SERVICE_NAME =
-        "android.view.accessibility.services.VibratingAccessibilityService";
+        "android.view.accessibility.cts.VibratingAccessibilityService";
+
+    private static final long WAIT_FOR_ACCESSIBILITY_ENABLED_TIMEOUT = 3000; // 3s
 
     private AccessibilityManager mAccessibilityManager;
 
     @Override
     public void setUp() throws Exception {
         mAccessibilityManager = (AccessibilityManager)
-            getContext().getSystemService(Service.ACCESSIBILITY_SERVICE);
+                getInstrumentation().getContext().getSystemService(Service.ACCESSIBILITY_SERVICE);
+        ServiceControlUtils.enableSpeakingAndVibratingServices(getInstrumentation());
+    }
 
-        assertEquals("Accessibility should have been enabled by the test runner.",
-                1, Settings.Secure.getInt(mContext.getContentResolver(),
-                        Settings.Secure.ACCESSIBILITY_ENABLED));
+    @Override
+    public void tearDown() throws Exception {
+        ServiceControlUtils.turnAccessibilityOff(getInstrumentation());
     }
 
     public void testAddAndRemoveAccessibilityStateChangeListener() throws Exception {
@@ -84,11 +84,11 @@ public class AccessibilityManagerTest extends AndroidTestCase {
         for (int i = 0; i < serviceCount; i++) {
             AccessibilityServiceInfo installedService = installedServices.get(i);
             ServiceInfo serviceInfo = installedService.getResolveInfo().serviceInfo;
-            if (SOME_ACCESSIBLITY_SERVICES_PACKAGE_NAME.equals(serviceInfo.packageName)
+            if (getClass().getPackage().getName().equals(serviceInfo.packageName)
                     && SPEAKING_ACCESSIBLITY_SERVICE_NAME.equals(serviceInfo.name)) {
                 speakingServiceInstalled = true;
             }
-            if (SOME_ACCESSIBLITY_SERVICES_PACKAGE_NAME.equals(serviceInfo.packageName)
+            if (getClass().getPackage().getName().equals(serviceInfo.packageName)
                     && VIBRATING_ACCESSIBLITY_SERVICE_NAME.equals(serviceInfo.name)) {
                 vibratingServiceInstalled = true;
             }
@@ -107,11 +107,11 @@ public class AccessibilityManagerTest extends AndroidTestCase {
         for (int i = 0; i < serviceCount; i++) {
             AccessibilityServiceInfo enabledService = enabledServices.get(i);
             ServiceInfo serviceInfo = enabledService.getResolveInfo().serviceInfo;
-            if (SOME_ACCESSIBLITY_SERVICES_PACKAGE_NAME.equals(serviceInfo.packageName)
+            if (getClass().getPackage().getName().equals(serviceInfo.packageName)
                     && SPEAKING_ACCESSIBLITY_SERVICE_NAME.equals(serviceInfo.name)) {
                 speakingServiceEnabled = true;
             }
-            if (SOME_ACCESSIBLITY_SERVICES_PACKAGE_NAME.equals(serviceInfo.packageName)
+            if (getClass().getPackage().getName().equals(serviceInfo.packageName)
                     && VIBRATING_ACCESSIBLITY_SERVICE_NAME.equals(serviceInfo.name)) {
                 vibratingServiceEnabled = true;
             }
@@ -129,7 +129,7 @@ public class AccessibilityManagerTest extends AndroidTestCase {
         for (int i = 0; i < serviceCount; i++) {
             AccessibilityServiceInfo enabledService = enabledServices.get(i);
             ServiceInfo serviceInfo = enabledService.getResolveInfo().serviceInfo;
-            if (SOME_ACCESSIBLITY_SERVICES_PACKAGE_NAME.equals(serviceInfo.packageName)
+            if (getClass().getPackage().getName().equals(serviceInfo.packageName)
                     && SPEAKING_ACCESSIBLITY_SERVICE_NAME.equals(serviceInfo.name)) {
                 return;
             }
@@ -145,11 +145,11 @@ public class AccessibilityManagerTest extends AndroidTestCase {
         final int serviceCount = services.size();
         for (int i = 0; i < serviceCount; i++) {
             ServiceInfo serviceInfo = services.get(i);
-            if (SOME_ACCESSIBLITY_SERVICES_PACKAGE_NAME.equals(serviceInfo.packageName)
+            if (getClass().getPackage().getName().equals(serviceInfo.packageName)
                     && SPEAKING_ACCESSIBLITY_SERVICE_NAME.equals(serviceInfo.name)) {
                 speakingServiceInstalled = true;
             }
-            if (SOME_ACCESSIBLITY_SERVICES_PACKAGE_NAME.equals(serviceInfo.packageName)
+            if (getClass().getPackage().getName().equals(serviceInfo.packageName)
                     && VIBRATING_ACCESSIBLITY_SERVICE_NAME.equals(serviceInfo.name)) {
                 vibratingServiceInstalled = true;
             }
@@ -161,13 +161,37 @@ public class AccessibilityManagerTest extends AndroidTestCase {
     public void testInterrupt() throws Exception {
         // The APIs are heavily tested in the android.accessibiliyservice package.
         // This just makes sure the call does not throw an exception.
+        waitForAccessibilityEnabled();
         mAccessibilityManager.interrupt();
     }
 
     public void testSendAccessibilityEvent() throws Exception {
         // The APIs are heavily tested in the android.accessibiliyservice package.
         // This just makes sure the call does not throw an exception.
+        waitForAccessibilityEnabled();
         mAccessibilityManager.sendAccessibilityEvent(AccessibilityEvent.obtain(
                 AccessibilityEvent.TYPE_VIEW_CLICKED));
+    }
+
+    private void waitForAccessibilityEnabled() throws InterruptedException {
+        final Object waitObject = new Object();
+
+        AccessibilityStateChangeListener listener = new AccessibilityStateChangeListener() {
+            @Override
+            public void onAccessibilityStateChanged(boolean b) {
+                synchronized (waitObject) {
+                    waitObject.notifyAll();
+                }
+            }
+        };
+        mAccessibilityManager.addAccessibilityStateChangeListener(listener);
+        long timeoutTime = System.currentTimeMillis() + WAIT_FOR_ACCESSIBILITY_ENABLED_TIMEOUT;
+        synchronized (waitObject) {
+            if (!mAccessibilityManager.isEnabled() && (System.currentTimeMillis() < timeoutTime)) {
+                waitObject.wait(timeoutTime - System.currentTimeMillis());
+            }
+        }
+        mAccessibilityManager.removeAccessibilityStateChangeListener(listener);
+        assertTrue("Time out enabling accessibility", mAccessibilityManager.isEnabled());
     }
 }
