@@ -28,7 +28,6 @@ my_src_dir := ../standalone/jni
 
 LOCAL_C_INCLUDES := \
     $(LOCAL_PATH)/$(my_src_dir) \
-    external/gtest/include
 
 # The sources are in ../standalone/jni/
 LOCAL_SRC_FILES := $(addprefix $(my_src_dir)/, \
