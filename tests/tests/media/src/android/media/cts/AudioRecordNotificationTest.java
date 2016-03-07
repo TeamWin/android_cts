@@ -22,7 +22,7 @@ import android.media.AudioDeviceInfo;
 import android.media.AudioFormat;
 import android.media.AudioManager;
 import android.media.AudioRecord;
-import android.media.AudioRecordingConfiguration;
+import android.media.AudioRecordConfiguration;
 import android.media.MediaRecorder;
 import android.os.Looper;
 import android.util.Log;
@@ -97,7 +97,7 @@ public class AudioRecordNotificationTest extends CtsAndroidTestCase {
         AudioManager am = new AudioManager(getContext());
         assertNotNull("Could not create AudioManager", am);
 
-        AudioRecordingConfiguration[] configs = am.getActiveRecordingConfigurations();
+        AudioRecordConfiguration[] configs = am.getActiveRecordConfigurations();
         assertNotNull("Invalid null array of record configurations before recording", configs);
 
         assertEquals(AudioRecord.STATE_INITIALIZED, mAudioRecord.getState());
@@ -106,7 +106,7 @@ public class AudioRecordNotificationTest extends CtsAndroidTestCase {
         Thread.sleep(TEST_TIMING_TOLERANCE_MS);
 
         // recording is active, verify there is an active record configuration
-        configs = am.getActiveRecordingConfigurations();
+        configs = am.getActiveRecordConfigurations();
         assertNotNull("Invalid null array of record configurations during recording", configs);
         assertTrue("no active record configurations (empty array) during recording",
                 configs.length > 0);
@@ -120,7 +120,7 @@ public class AudioRecordNotificationTest extends CtsAndroidTestCase {
         // stopping recording: verify there are less active record configurations
         mAudioRecord.stop();
         Thread.sleep(TEST_TIMING_TOLERANCE_MS);
-        configs = am.getActiveRecordingConfigurations();
+        configs = am.getActiveRecordConfigurations();
         assertTrue("end of recording not reported in record configs",
                 configs.length < nbConfigsDuringRecording);
     }
@@ -178,7 +178,7 @@ public class AudioRecordNotificationTest extends CtsAndroidTestCase {
         }
 
         @Override
-        public void onRecordConfigChanged(AudioRecordingConfiguration[] configs) {
+        public void onRecordConfigChanged(AudioRecordConfiguration[] configs) {
             mCalled = true;
             mParamMatch = verifyAudioConfig(mTestSource, mTestSession, mAudioRecord.getFormat(),
                     mAudioRecord.getRoutedDevice(), configs);
@@ -192,7 +192,7 @@ public class AudioRecordNotificationTest extends CtsAndroidTestCase {
     }
 
     private static boolean verifyAudioConfig(int source, int session, AudioFormat format,
-            AudioDeviceInfo device, AudioRecordingConfiguration[] configs) {
+            AudioDeviceInfo device, AudioRecordConfiguration[] configs) {
         for (int i = 0 ; i < configs.length ; i++) {
             if ((configs[i].getClientAudioSource() == source)
                     && (configs[i].getClientAudioSessionId() == session)
