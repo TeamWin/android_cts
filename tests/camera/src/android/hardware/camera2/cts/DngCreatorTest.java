@@ -81,6 +81,11 @@ public class DngCreatorTest extends Camera2AndroidTestCase {
     private static final Calendar GPS_CALENDAR =
             Calendar.getInstance(TimeZone.getTimeZone("GMT+0"));
 
+    /** Load DNG validation jni on initialization */
+    static {
+        System.loadLibrary("ctscamera2_jni");
+    }
+
     static {
         GPS_CALENDAR.set(2015, 0, 27, 2, 12, 01);
     }
@@ -166,6 +171,8 @@ public class DngCreatorTest extends Camera2AndroidTestCase {
                     fileStream.close();
                     Log.v(TAG, "Test DNG file for camera " + deviceId + " saved to " + dngFilePath);
                 }
+                assertTrue("Generated DNG file does not pass validation",
+                        validateDngNative(outputStream.toByteArray()));
             } finally {
                 closeDevice(deviceId);
                 closeImageReader(captureReader);
@@ -265,6 +272,9 @@ public class DngCreatorTest extends Camera2AndroidTestCase {
                 if (VERBOSE) {
                     Log.v(TAG, "Test DNG file for camera " + deviceId + " saved to " + filePath);
                 }
+
+                assertTrue("Generated DNG file does not pass validation",
+                        validateDngNative(outputStream.toByteArray()));
 
                 ExifInterface exifInterface = new ExifInterface(filePath);
                 // Verify GPS data.
@@ -740,4 +750,12 @@ public class DngCreatorTest extends Camera2AndroidTestCase {
 
         return ret;
     }
+
+    /**
+     * Use the DNG SDK to validate a DNG file stored in the buffer.
+     *
+     * Returns false if the DNG has validation errors. Validation warnings/errors
+     * will be printed to logcat.
+     */
+    private static native boolean validateDngNative(byte[] dngBuffer);
 }
