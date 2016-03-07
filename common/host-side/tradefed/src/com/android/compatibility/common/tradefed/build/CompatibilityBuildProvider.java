@@ -37,8 +37,11 @@ public class CompatibilityBuildProvider implements IBuildProvider {
     @Override
     public IBuildInfo getBuild() {
         // Create a blank BuildInfo which will get populated later.
-        IBuildInfo ctsBuild = new BuildInfo(
-                Package.getPackage(PACKAGE_NAME).getImplementationVersion(), "cts", "cts");
+        String version = Package.getPackage(PACKAGE_NAME).getImplementationVersion();
+        if (version == null) {
+            version = IBuildInfo.UNKNOWN_BUILD_ID;
+        }
+        IBuildInfo ctsBuild = new BuildInfo(version, "cts", "cts");
         if (mBranch  != null) {
             ctsBuild.setBuildBranch(mBranch);
         }
