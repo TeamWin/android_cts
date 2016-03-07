@@ -951,4 +951,38 @@ public class TvContractTest extends AndroidTestCase {
         assertTrue(Genres.isCanonical(Genres.DRAMA));
         assertFalse(Genres.isCanonical("Not a genre"));
     }
+
+    public void testUriUtils() {
+        if (!Utils.hasTvInputFramework(getContext())) {
+            return;
+        }
+        final Uri CHANNEL_URI_FOR_TUNER = TvContract.buildChannelUri(0);
+        final Uri CHANNEL_URI_FOR_PASSTHROUGH_INPUT =
+                TvContract.buildChannelUriForPassthroughInput("inputId");
+        final Uri PROGRAM_URI = TvContract.buildProgramUri(0);
+
+        // Test isChannelUri
+        assertTrue(TvContract.isChannelUri(CHANNEL_URI_FOR_TUNER));
+        assertTrue(TvContract.isChannelUri(CHANNEL_URI_FOR_PASSTHROUGH_INPUT));
+        assertFalse(TvContract.isChannelUri(PROGRAM_URI));
+        assertFalse(TvContract.isChannelUri(null));
+
+        // Test isChannelUriForPassthroughInput
+        assertFalse(TvContract.isChannelUriForPassthroughInput(CHANNEL_URI_FOR_TUNER));
+        assertTrue(TvContract.isChannelUriForPassthroughInput(CHANNEL_URI_FOR_PASSTHROUGH_INPUT));
+        assertFalse(TvContract.isChannelUriForPassthroughInput(PROGRAM_URI));
+        assertFalse(TvContract.isChannelUriForPassthroughInput(null));
+
+        // Test isChannelUriForTunerInput
+        assertTrue(TvContract.isChannelUriForTunerInput(CHANNEL_URI_FOR_TUNER));
+        assertFalse(TvContract.isChannelUriForTunerInput(CHANNEL_URI_FOR_PASSTHROUGH_INPUT));
+        assertFalse(TvContract.isChannelUriForTunerInput(PROGRAM_URI));
+        assertFalse(TvContract.isChannelUriForTunerInput(null));
+
+        // Test isProgramUri
+        assertFalse(TvContract.isProgramUri(CHANNEL_URI_FOR_TUNER));
+        assertFalse(TvContract.isProgramUri(CHANNEL_URI_FOR_PASSTHROUGH_INPUT));
+        assertTrue(TvContract.isProgramUri(PROGRAM_URI));
+        assertFalse(TvContract.isProgramUri(null));
+    }
 }
