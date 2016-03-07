@@ -51,6 +51,32 @@ public class ViewOverlayTest extends ActivityInstrumentationTestCase2<ViewOverla
         assertNotNull("Overlay is not null", mViewOverlay);
     }
 
+    public void testAddNullDrawable() throws Throwable {
+        try {
+            runTestOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    mViewOverlay.add(null);
+                }
+            });
+            fail("should throw IllegalArgumentException");
+        } catch (IllegalArgumentException e) {
+        }
+    }
+
+    public void testRemoveNullDrawable() throws Throwable {
+        try {
+            runTestOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    mViewOverlay.remove(null);
+                }
+            });
+            fail("should throw IllegalArgumentException");
+        } catch (IllegalArgumentException e) {
+        }
+    }
+
     public void testOverlayWithOneDrawable() throws Throwable {
         // Add one colored drawable to the overlay
         final Drawable redDrawable = new ColorDrawable(Color.RED);
@@ -71,6 +97,63 @@ public class ViewOverlayTest extends ActivityInstrumentationTestCase2<ViewOverla
         runTestOnUiThread(new Runnable() {
             @Override
             public void run() {
+                mViewOverlay.remove(redDrawable);
+            }
+        });
+        DrawingUtils.assertAllPixelsOfColor("Back to default fill", mViewWithOverlay,
+                Color.WHITE, null);
+    }
+
+    public void testAddTheSameDrawableTwice() throws Throwable {
+        final Drawable redDrawable = new ColorDrawable(Color.RED);
+        redDrawable.setBounds(20, 30, 40, 50);
+        runTestOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                // Add the same drawable twice
+                mViewOverlay.add(redDrawable);
+                mViewOverlay.add(redDrawable);
+            }
+        });
+
+        final List<Pair<Rect, Integer>> colorRectangles = new ArrayList<>();
+        colorRectangles.add(new Pair<>(new Rect(20, 30, 40, 50), Color.RED));
+        DrawingUtils.assertAllPixelsOfColor("Overlay with one red drawable", mViewWithOverlay,
+                Color.WHITE, colorRectangles);
+
+        // Now remove that drawable from the overlay and test that we're back to pure white fill
+        runTestOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                mViewOverlay.remove(redDrawable);
+            }
+        });
+        DrawingUtils.assertAllPixelsOfColor("Back to default fill", mViewWithOverlay,
+                Color.WHITE, null);
+    }
+
+    public void testRemoveTheSameDrawableTwice() throws Throwable {
+        // Add one colored drawable to the overlay
+        final Drawable redDrawable = new ColorDrawable(Color.RED);
+        redDrawable.setBounds(20, 30, 40, 50);
+        runTestOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                mViewOverlay.add(redDrawable);
+            }
+        });
+
+        final List<Pair<Rect, Integer>> colorRectangles = new ArrayList<>();
+        colorRectangles.add(new Pair<>(new Rect(20, 30, 40, 50), Color.RED));
+        DrawingUtils.assertAllPixelsOfColor("Overlay with one red drawable", mViewWithOverlay,
+                Color.WHITE, colorRectangles);
+
+        // Now remove that drawable from the overlay and test that we're back to pure white fill
+        runTestOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                // Remove the drawable twice. The second should be a no-op
+                mViewOverlay.remove(redDrawable);
                 mViewOverlay.remove(redDrawable);
             }
         });
