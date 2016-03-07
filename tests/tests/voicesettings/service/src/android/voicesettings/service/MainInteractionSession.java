@@ -27,13 +27,12 @@ import static android.provider.Settings.EXTRA_BATTERY_SAVER_MODE_ENABLED;
 import android.app.VoiceInteractor;
 import android.content.Context;
 import android.content.Intent;
+import android.cts.util.BroadcastUtils;
+import android.cts.util.BroadcastUtils.TestcaseType;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.service.voice.VoiceInteractionSession;
 import android.util.Log;
-
-import common.src.android.voicesettings.common.Utils;
-import common.src.android.voicesettings.common.Utils.TestcaseType;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -67,7 +66,7 @@ public class MainInteractionSession extends VoiceInteractionSession {
     @Override
     public void onShow(Bundle args, int showFlags) {
         super.onShow(args, showFlags);
-        String testCaseType = args.getString(Utils.TESTCASE_TYPE);
+        String testCaseType = args.getString(BroadcastUtils.TESTCASE_TYPE);
         Log.i(TAG, "received_testcasetype = " + testCaseType);
         try {
             mTestType = TestcaseType.valueOf(testCaseType);
@@ -83,7 +82,8 @@ public class MainInteractionSession extends VoiceInteractionSession {
             case ZEN_MODE_ON:
                 intent = new Intent(ACTION_VOICE_CONTROL_DO_NOT_DISTURB_MODE);
                 intent.putExtra(EXTRA_DO_NOT_DISTURB_MODE_ENABLED, true);
-                intent.putExtra(EXTRA_DO_NOT_DISTURB_MODE_MINUTES, Utils.NUM_MINUTES_FOR_ZENMODE);
+                intent.putExtra(EXTRA_DO_NOT_DISTURB_MODE_MINUTES,
+                                BroadcastUtils.NUM_MINUTES_FOR_ZENMODE);
                 break;
             case ZEN_MODE_OFF:
                 intent = new Intent(ACTION_VOICE_CONTROL_DO_NOT_DISTURB_MODE);
@@ -119,14 +119,15 @@ public class MainInteractionSession extends VoiceInteractionSession {
         // we probably could verify this also.
         Bundle extras = intent.getExtras();
         Log.i(TAG, "in onTaskFinished: testcasetype = " + mTestType + ", intent: " +
-                intent.toString() + Utils.toBundleString(extras));
-        Intent broadcastIntent = new Intent(Utils.BROADCAST_INTENT + mTestType.toString());
+                intent.toString() + BroadcastUtils.toBundleString(extras));
+        Intent broadcastIntent = new Intent(BroadcastUtils.BROADCAST_INTENT +
+                                            mTestType.toString());
         if (extras == null) {
             extras = new Bundle();
         }
-        extras.putString(Utils.TESTCASE_TYPE, mTestType.toString());
+        extras.putString(BroadcastUtils.TESTCASE_TYPE, mTestType.toString());
         broadcastIntent.putExtras(extras);
-        Log.i(TAG, "sending_broadcast: Bundle = " + Utils.toBundleString(extras) +
+        Log.i(TAG, "sending_broadcast: Bundle = " + BroadcastUtils.toBundleString(extras) +
                 ", intent = " + broadcastIntent.toString());
         mContext.sendBroadcast(broadcastIntent);
     }

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.voicesettings.cts;
+package android.cts.util;
 
 import android.app.Activity;
 import android.content.Intent;
@@ -22,10 +22,10 @@ import android.content.ComponentName;
 import android.os.Bundle;
 import android.util.Log;
 
-import common.src.android.voicesettings.common.Utils;
+import android.cts.util.BroadcastUtils;
 
-public class TestStartActivity extends Activity {
-    static final String TAG = "TestStartActivity";
+public class BroadcastTestStartActivity extends Activity {
+    static final String TAG = "BroadcastTestStartActivity";
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -39,13 +39,12 @@ public class TestStartActivity extends Activity {
         Log.i(TAG, " in onResume");
     }
 
-    void startTest(String testCaseType) {
+    void startTest(String testCaseType, String pkg, String cls) {
         Intent intent = new Intent();
         Log.i(TAG, "received_testcasetype = " + testCaseType);
-        intent.putExtra(Utils.TESTCASE_TYPE, testCaseType);
+        intent.putExtra(BroadcastUtils.TESTCASE_TYPE, testCaseType);
         intent.setAction("android.intent.action.VIMAIN_" + testCaseType);
-        intent.setComponent(new ComponentName("android.voicesettings.service",
-                "android.voicesettings.service.VoiceInteractionMain"));
+        intent.setComponent(new ComponentName(pkg, cls));
         startActivity(intent);
     }
 
