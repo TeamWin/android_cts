@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.voicesettings.cts;
+package android.cts.util;
 
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
@@ -23,36 +23,35 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
+import android.cts.util.BroadcastTestStartActivity;
+import android.cts.util.BroadcastUtils;
 import android.test.ActivityInstrumentationTestCase2;
 import android.util.Log;
-
-import common.src.android.voicesettings.common.Utils;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
-public class VoiceSettingsTestBase extends ActivityInstrumentationTestCase2<TestStartActivity> {
-    static final String TAG = "VoiceSettingsTestBase";
+public class BroadcastTestBase extends ActivityInstrumentationTestCase2<
+                                       BroadcastTestStartActivity> {
+    static final String TAG = "BroadcastTestBase";
     protected static final int TIMEOUT_MS = 20 * 1000;
 
     protected Context mContext;
     protected Bundle mResultExtras;
     private CountDownLatch mLatch;
-    private ActivityDoneReceiver mActivityDoneReceiver = null;
-    private TestStartActivity mActivity;
-    private Utils.TestcaseType mTestCaseType;
+    protected ActivityDoneReceiver mActivityDoneReceiver = null;
+    private BroadcastTestStartActivity mActivity;
+    private BroadcastUtils.TestcaseType mTestCaseType;
     protected boolean mHasFeature;
-    protected static final String FEATURE_VOICE_RECOGNIZERS = "android.software.voice_recognizers";
 
-    public VoiceSettingsTestBase() {
-        super(TestStartActivity.class);
+    public BroadcastTestBase() {
+        super(BroadcastTestStartActivity.class);
     }
 
     @Override
     protected void setUp() throws Exception {
         super.setUp();
-        mContext = getInstrumentation().getTargetContext();
-        mHasFeature = mContext.getPackageManager().hasSystemFeature(FEATURE_VOICE_RECOGNIZERS);
+        mHasFeature = false;
     }
 
     @Override
@@ -75,7 +74,7 @@ public class VoiceSettingsTestBase extends ActivityInstrumentationTestCase2<Test
         final PackageManager manager = mContext.getPackageManager();
         assertNotNull(manager);
         if (manager.resolveActivity(intent, 0) == null) {
-            Log.i(TAG, "No Voice Activity found for the intent: " + intentStr);
+            Log.i(TAG, "No Activity found for the intent: " + intentStr);
             return false;
         }
         return true;
@@ -85,24 +84,24 @@ public class VoiceSettingsTestBase extends ActivityInstrumentationTestCase2<Test
         Intent intent = new Intent();
         intent.setAction("android.intent.action.TEST_START_ACTIVITY_" + intentSuffix);
         intent.setComponent(new ComponentName(getInstrumentation().getContext(),
-                TestStartActivity.class));
+                BroadcastTestStartActivity.class));
         setActivityIntent(intent);
         mActivity = getActivity();
     }
 
-    protected void registerBroadcastReceiver(Utils.TestcaseType testCaseType) throws Exception {
+    protected void registerBroadcastReceiver(BroadcastUtils.TestcaseType testCaseType) throws Exception {
         mTestCaseType = testCaseType;
         mLatch = new CountDownLatch(1);
         mActivityDoneReceiver = new ActivityDoneReceiver();
         mContext.registerReceiver(mActivityDoneReceiver,
-                new IntentFilter(Utils.BROADCAST_INTENT + testCaseType.toString()));
+                new IntentFilter(BroadcastUtils.BROADCAST_INTENT + testCaseType.toString()));
     }
 
-    protected boolean startTestAndWaitForBroadcast(Utils.TestcaseType testCaseType)
-            throws Exception {
+    protected boolean startTestAndWaitForBroadcast(BroadcastUtils.TestcaseType testCaseType,
+                                                   String pkg, String cls) throws Exception {
         Log.i(TAG, "Begin Testing: " + testCaseType);
         registerBroadcastReceiver(testCaseType);
-        mActivity.startTest(testCaseType.toString());
+        mActivity.startTest(testCaseType.toString(), pkg, cls);
         if (!mLatch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS)) {
             fail("Failed to receive broadcast in " + TIMEOUT_MS + "msec");
             return false;
@@ -114,11 +113,11 @@ public class VoiceSettingsTestBase extends ActivityInstrumentationTestCase2<Test
         @Override
         public void onReceive(Context context, Intent intent) {
             if (intent.getAction().equals(
-                    Utils.BROADCAST_INTENT +
-                        VoiceSettingsTestBase.this.mTestCaseType.toString())) {
+                    BroadcastUtils.BROADCAST_INTENT +
+                        BroadcastTestBase.this.mTestCaseType.toString())) {
                 Bundle extras = intent.getExtras();
-                Log.i(TAG, "received_broadcast for " + Utils.toBundleString(extras));
-                VoiceSettingsTestBase.this.mResultExtras = extras;
+                Log.i(TAG, "received_broadcast for " + BroadcastUtils.toBundleString(extras));
+                BroadcastTestBase.this.mResultExtras = extras;
                 mLatch.countDown();
             }
         }
