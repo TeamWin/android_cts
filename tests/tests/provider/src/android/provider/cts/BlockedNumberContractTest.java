@@ -98,6 +98,18 @@ public class BlockedNumberContractTest extends TestCaseThatRunsIfTelephonyIsEnab
             fail("Should throw SecurityException");
         } catch (SecurityException expected) {
         }
+
+        try {
+            BlockedNumberContract.isBlocked(mContext, "123");
+            fail("Should throw SecurityException");
+        } catch (SecurityException expected) {
+        }
+
+        try {
+            BlockedNumberContract.canCurrentUserBlockNumbers(mContext);
+            fail("Should throw SecurityException");
+        } catch (SecurityException expected) {
+        }
     }
 
     public void testGetType() throws Exception {
@@ -112,6 +124,9 @@ public class BlockedNumberContractTest extends TestCaseThatRunsIfTelephonyIsEnab
 
     public void testInsertAndBlockCheck_succeeds() throws Exception {
         setDefaultSmsApp(true);
+
+        assertTrue(BlockedNumberContract.canCurrentUserBlockNumbers(mContext));
+
         assertInsertBlockedNumberSucceeds("1234567890", null);
         assertTrue(BlockedNumberContract.isBlocked(mContext, "1234567890"));
         assertFalse(BlockedNumberContract.isBlocked(mContext, "2234567890"));
