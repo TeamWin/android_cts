@@ -16,6 +16,8 @@
 
 package android.graphics.drawable.cts;
 
+import android.graphics.Canvas;
+import android.graphics.drawable.Drawable;
 import junit.framework.Assert;
 
 import org.xmlpull.v1.XmlPullParser;
@@ -171,5 +173,21 @@ public class DrawableTestUtils {
         if ((totalDiffPixelCount / totalPixelCount) >= pixelCountThreshold) {
             Assert.fail((message +": totalDiffPixelCount is " + totalDiffPixelCount));
         }
+    }
+
+    /**
+     * Returns the {@link Color} at the specified location in the {@link Drawable}.
+     */
+    public static int getPixel(Drawable d, int x, int y) {
+        final int w = Math.max(d.getIntrinsicWidth(), x + 1);
+        final int h = Math.max(d.getIntrinsicHeight(), y + 1);
+        final Bitmap b = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888);
+        final Canvas c = new Canvas(b);
+        d.setBounds(0, 0, w, h);
+        d.draw(c);
+
+        final int pixel = b.getPixel(x, y);
+        b.recycle();
+        return pixel;
     }
 }

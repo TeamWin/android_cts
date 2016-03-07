@@ -279,7 +279,7 @@ public class BitmapDrawableTest extends InstrumentationTestCase {
 
         d.setTint(Color.BLACK);
         d.setTintMode(Mode.SRC_OVER);
-        assertEquals("Nine-patch is tinted", Color.BLACK, DrawableTestingUtils.getPixel(d, 0, 0));
+        assertEquals("Nine-patch is tinted", Color.BLACK, DrawableTestUtils.getPixel(d, 0, 0));
 
         d.setTintList(null);
         d.setTintMode(null);

@@ -16,7 +16,6 @@
 
 package android.graphics.drawable.cts;
 
-import android.content.res.ColorStateList;
 import android.content.res.XmlResourceParser;
 import android.graphics.Color;
 import android.graphics.PixelFormat;
@@ -120,19 +119,19 @@ public class ColorDrawableTest extends AndroidTestCase {
 
     public void testSetColorFilter() {
         final ColorDrawable d = new ColorDrawable(Color.WHITE);
-        assertEquals(Color.WHITE, DrawableTestingUtils.getPixel(d, 0, 0));
+        assertEquals(Color.WHITE, DrawableTestUtils.getPixel(d, 0, 0));
 
         d.setColorFilter(Color.BLACK, Mode.SRC_OVER);
-        assertEquals(Color.BLACK, DrawableTestingUtils.getPixel(d, 0, 0));
+        assertEquals(Color.BLACK, DrawableTestUtils.getPixel(d, 0, 0));
 
     }
 
     public void testSetTint() {
         final ColorDrawable d = new ColorDrawable(Color.WHITE);
-        assertEquals(Color.WHITE, DrawableTestingUtils.getPixel(d, 0, 0));
+        assertEquals(Color.WHITE, DrawableTestUtils.getPixel(d, 0, 0));
 
         d.setTint(Color.BLACK);
         d.setTintMode(Mode.SRC_OVER);
-        assertEquals(Color.BLACK, DrawableTestingUtils.getPixel(d, 0, 0));
+        assertEquals(Color.BLACK, DrawableTestUtils.getPixel(d, 0, 0));
     }
 }
