@@ -19,6 +19,8 @@ package android.hardware.camera2.cts;
 import static android.hardware.camera2.cts.CameraTestUtils.*;
 import static android.hardware.camera2.cts.helpers.AssertHelpers.assertArrayContains;
 
+import android.graphics.Bitmap;
+import android.graphics.Bitmap.Config;
 import android.graphics.ImageFormat;
 import android.graphics.Point;
 import android.graphics.Rect;
@@ -64,6 +66,8 @@ public class StillCaptureTest extends Camera2SurfaceViewTestCase {
     private static final int NUM_FRAMES_WAITED = 30;
     // 5 percent error margin for resulting metering regions
     private static final float METERING_REGION_ERROR_PERCENT_DELTA = 0.05f;
+    // Android CDD (5.0 and newer) required number of simultenous bitmap allocations for camera
+    private static final int MAX_ALLOCATED_BITMAPS = 3;
 
     @Override
     protected void setUp() throws Exception {
@@ -372,12 +376,39 @@ public class StillCaptureTest extends Camera2SurfaceViewTestCase {
                     continue;
                 }
                 takePictureTestByCamera(/*aeRegions*/null, /*awbRegions*/null, /*afRegions*/null,
-                        /*addAeTriggerCancel*/true);
+                        /*addAeTriggerCancel*/true, /*allocateBitmap*/false);
             } finally {
                 closeDevice();
                 closeImageReader();
             }
         }
+    }
+
+    /**
+     * Test allocate some bitmaps while taking picture.
+     * <p>
+     * Per android CDD (5.0 and newer), android devices should support allocation of at least 3
+     * bitmaps equal to the size of the images produced by the largest resolution camera sensor on
+     * the devices.
+     * </p>
+     */
+    public void testAllocateBitmap() throws Exception {
+        for (String id : mCameraIds) {
+            try {
+                Log.i(TAG, "Testing bitmap allocations for Camera " + id);
+                openDevice(id);
+                if (!mStaticInfo.isColorOutputSupported()) {
+                    Log.i(TAG, "Camera " + id + " does not support color outputs, skipping");
+                    continue;
+                }
+                takePictureTestByCamera(/*aeRegions*/null, /*awbRegions*/null, /*afRegions*/null,
+                        /*addAeTriggerCancel*/true, /*allocateBitmap*/true);
+            } finally {
+                closeDevice();
+                closeImageReader();
+            }
+        }
+
     }
 
     /**
@@ -438,7 +469,7 @@ public class StillCaptureTest extends Camera2SurfaceViewTestCase {
             MeteringRectangle[] aeRegions, MeteringRectangle[] awbRegions,
             MeteringRectangle[] afRegions) throws Exception {
         takePictureTestByCamera(aeRegions, awbRegions, afRegions,
-                /*addAeTriggerCancel*/false);
+                /*addAeTriggerCancel*/false, /*allocateBitmap*/false);
     }
 
     /**
@@ -456,10 +487,12 @@ public class StillCaptureTest extends Camera2SurfaceViewTestCase {
      * @param awbRegions AWB regions for this capture
      * @param afRegions AF regions for this capture
      * @param addAeTriggerCancel If a AE precapture trigger cancel is sent after the trigger.
+     * @param allocateBitmap If a set of bitmaps are allocated during the test for memory test.
      */
     private void takePictureTestByCamera(
             MeteringRectangle[] aeRegions, MeteringRectangle[] awbRegions,
-            MeteringRectangle[] afRegions, boolean addAeTriggerCancel) throws Exception {
+            MeteringRectangle[] afRegions, boolean addAeTriggerCancel, boolean allocateBitmap)
+                    throws Exception {
 
         boolean hasFocuser = mStaticInfo.hasFocuser();
 
@@ -628,6 +661,16 @@ public class StillCaptureTest extends Camera2SurfaceViewTestCase {
         // validate image
         Image image = imageListener.getImage(CAPTURE_IMAGE_TIMEOUT_MS);
         validateJpegCapture(image, maxStillSz);
+        // Test if the system can allocate 3 bitmap successfully, per android CDD camera memory
+        // requirements added by CDD 5.0
+        if (allocateBitmap) {
+            Bitmap bm[] = new Bitmap[MAX_ALLOCATED_BITMAPS];
+            for (int i = 0; i < MAX_ALLOCATED_BITMAPS; i++) {
+                bm[i] = Bitmap.createBitmap(
+                        maxStillSz.getWidth(), maxStillSz.getHeight(), Config.ARGB_8888);
+                assertNotNull("Created bitmap #" + i + " shouldn't be null", bm[i]);
+            }
+        }
 
         // Free image resources
         image.close();
