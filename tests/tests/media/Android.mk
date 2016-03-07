@@ -17,8 +17,9 @@ LOCAL_PATH:= $(call my-dir)
 include $(CLEAR_VARS)
 
 LOCAL_SRC_FILES := \
-	src/android/media/cts/CodecImage.java \
-	src/android/media/cts/CodecUtils.java
+  src/android/media/cts/CodecImage.java \
+  src/android/media/cts/YUVImage.java \
+  src/android/media/cts/CodecUtils.java
 
 LOCAL_MODULE_TAGS := optional
 
