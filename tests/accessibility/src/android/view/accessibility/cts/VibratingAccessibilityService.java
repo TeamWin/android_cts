@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.view.accessibility.services;
+package android.view.accessibility.cts;
 
 import android.accessibilityservice.AccessibilityService;
 import android.view.accessibility.AccessibilityEvent;
@@ -23,6 +23,22 @@ import android.view.accessibility.AccessibilityEvent;
  * Stub accessibility service that reports itself as providing haptic feedback.
  */
 public class VibratingAccessibilityService extends AccessibilityService {
+    public static Object sWaitObjectForConnecting = new Object();
+
+    public static VibratingAccessibilityService sConnectedInstance;
+
+    @Override
+    public void onDestroy() {
+        sConnectedInstance = null;
+    }
+
+    @Override
+    protected void onServiceConnected() {
+        synchronized (sWaitObjectForConnecting) {
+            sConnectedInstance = this;
+            sWaitObjectForConnecting.notifyAll();
+        }
+    }
 
     @Override
     public void onAccessibilityEvent(AccessibilityEvent event) {

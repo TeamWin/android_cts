@@ -26,8 +26,6 @@ LOCAL_PACKAGE_NAME := CtsAccessibilityTestCases
 
 LOCAL_STATIC_JAVA_LIBRARIES := ctsdeviceutil ctstestrunner
 
-LOCAL_CTS_MODULE_CONFIG := $(LOCAL_PATH)/Old$(CTS_MODULE_TEST_CONFIG)
-
 # Tag this module as a cts test artifact
 LOCAL_COMPATIBILITY_SUITE := cts
 
