@@ -47,6 +47,11 @@ public class CaptioningManagerTest extends InstrumentationTestCase {
         mUiAutomation = getInstrumentation().getUiAutomation();
     }
 
+    @Override
+    public void tearDown() {
+        mUiAutomation.destroy();
+    }
+
     /**
      * Tests whether a client can observe changes in caption properties.
      */

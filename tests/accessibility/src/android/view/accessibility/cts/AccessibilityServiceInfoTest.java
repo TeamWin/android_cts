@@ -18,7 +18,7 @@ package android.view.accessibility.cts;
 
 import android.accessibilityservice.AccessibilityServiceInfo;
 import android.app.Service;
-import android.test.AndroidTestCase;
+import android.test.InstrumentationTestCase;
 import android.test.suitebuilder.annotation.MediumTest;
 import android.view.accessibility.AccessibilityEvent;
 import android.view.accessibility.AccessibilityManager;
@@ -32,7 +32,17 @@ import java.util.List;
  * accessibility service and the fake service used for implementing the UI
  * automation is not reported through the APIs.
  */
-public class AccessibilityServiceInfoTest  extends AndroidTestCase {
+public class AccessibilityServiceInfoTest  extends InstrumentationTestCase {
+
+    @Override
+    public void setUp() throws Exception {
+        ServiceControlUtils.enableSpeakingAndVibratingServices(getInstrumentation());
+    }
+
+    @Override
+    public void tearDown() {
+        ServiceControlUtils.turnAccessibilityOff(getInstrumentation());
+    }
 
     /**
      * Tests whether a service can that requested it can retrieve
@@ -42,7 +52,7 @@ public class AccessibilityServiceInfoTest  extends AndroidTestCase {
     @SuppressWarnings("deprecation")
     public void testAccessibilityServiceInfoForEnabledService() {
         AccessibilityManager accessibilityManager = (AccessibilityManager)
-            getContext().getSystemService(Service.ACCESSIBILITY_SERVICE);
+                getInstrumentation().getContext().getSystemService(Service.ACCESSIBILITY_SERVICE);
         List<AccessibilityServiceInfo> enabledServices =
             accessibilityManager.getEnabledAccessibilityServiceList(
                     AccessibilityServiceInfo.FEEDBACK_SPOKEN);
@@ -68,7 +78,7 @@ public class AccessibilityServiceInfoTest  extends AndroidTestCase {
                 | AccessibilityServiceInfo.CAPABILITY_CAN_RETRIEVE_WINDOW_CONTENT);
         assertEquals("foo.bar.Activity", speakingService.getSettingsActivityName());
         assertEquals("Some description", speakingService.loadDescription(
-                getContext().getPackageManager()));
+                getInstrumentation().getContext().getPackageManager()));
         assertNotNull(speakingService.getResolveInfo());
     }
 }
