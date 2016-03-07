@@ -387,6 +387,9 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
             } catch (FileNotFoundException e) {
                 e.printStackTrace();
             }
+        } else if (mTestName != null) {
+            throw new IllegalArgumentException(
+                    "Test name given without module name. Add --module <module-name>");
         } else {
             // If a module has an arg, assume it's included
             for (String arg : mModuleArgs) {
