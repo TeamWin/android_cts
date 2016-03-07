@@ -13,11 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package common.src.android.voicesettings.common;
+package android.cts.util;
 
 import android.os.Bundle;
 
-public class Utils {
+public class BroadcastUtils {
     public enum TestcaseType {
         ZEN_MODE_ON,
         ZEN_MODE_OFF,
@@ -25,10 +25,12 @@ public class Utils {
         AIRPLANE_MODE_OFF,
         BATTERYSAVER_MODE_ON,
         BATTERYSAVER_MODE_OFF,
+        THEATER_MODE_ON,
+        THEATER_MODE_OFF
     }
     public static final String TESTCASE_TYPE = "Testcase_type";
     public static final String BROADCAST_INTENT =
-            "android.intent.action.FROM_VOICESETTINGS_CTS_TEST_";
+            "android.intent.action.FROM_UTIL_CTS_TEST_";
     public static final int NUM_MINUTES_FOR_ZENMODE = 10;
 
     public static final String toBundleString(Bundle bundle) {
