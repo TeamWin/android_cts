@@ -29,13 +29,16 @@ public class CompatibilityBuildProvider implements IBuildProvider {
     @Option(name="branch", description="build branch name to supply.")
     private String mBranch = null;
 
+    private static final String PACKAGE_NAME = "com.android.compatibility.common.tradefed.build";
+
     /**
      * {@inheritDoc}
      */
     @Override
     public IBuildInfo getBuild() {
         // Create a blank BuildInfo which will get populated later.
-        IBuildInfo ctsBuild = new BuildInfo();
+        IBuildInfo ctsBuild = new BuildInfo(
+                Package.getPackage(PACKAGE_NAME).getImplementationVersion(), "cts", "cts");
         if (mBranch  != null) {
             ctsBuild.setBuildBranch(mBranch);
         }

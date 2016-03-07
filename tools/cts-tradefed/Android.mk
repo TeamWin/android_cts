@@ -29,6 +29,8 @@ LOCAL_SUITE_VERSION := 5.0
 
 LOCAL_MODULE := cts-tradefed
 
+LOCAL_JAR_MANIFEST := MANIFEST.mf
+
 include $(BUILD_COMPATIBILITY_SUITE)
 
 # Build all sub-directories
