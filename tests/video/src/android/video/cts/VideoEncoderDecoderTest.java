@@ -30,6 +30,7 @@ import android.media.MediaCodecList;
 import android.media.MediaFormat;
 import android.media.cts.CodecImage;
 import android.media.cts.CodecUtils;
+import android.media.cts.YUVImage;
 import android.util.Log;
 import android.util.Pair;
 import android.util.Range;
@@ -801,118 +802,6 @@ public class VideoEncoderDecoderTest extends CtsAndroidTestCase {
             printByteArray("UV ", mUVBuffer.array(), mBufferWidth * 60, 20);
         }
         return size;
-    }
-
-    class YUVImage extends CodecImage {
-        private final int mImageWidth;
-        private final int mImageHeight;
-        private final Plane[] mPlanes;
-
-        YUVImage(
-                Point origin,
-                int imageWidth, int imageHeight,
-                int arrayWidth, int arrayHeight,
-                boolean semiPlanar,
-                ByteBuffer bufferY, ByteBuffer bufferUV) {
-            mImageWidth = imageWidth;
-            mImageHeight = imageHeight;
-            ByteBuffer dupY = bufferY.duplicate();
-            ByteBuffer dupUV = bufferUV.duplicate();
-            mPlanes = new Plane[3];
-
-            int srcOffsetY = origin.x + origin.y * arrayWidth;
-
-            mPlanes[0] = new YUVPlane(
-                        mImageWidth, mImageHeight, arrayWidth, 1,
-                        dupY, srcOffsetY);
-
-            if (semiPlanar) {
-                int srcOffsetUV = origin.y / 2 * arrayWidth + origin.x / 2 * 2;
-
-                mPlanes[1] = new YUVPlane(
-                        mImageWidth / 2, mImageHeight / 2, arrayWidth, 2,
-                        dupUV, srcOffsetUV);
-                mPlanes[2] = new YUVPlane(
-                        mImageWidth / 2, mImageHeight / 2, arrayWidth, 2,
-                        dupUV, srcOffsetUV + 1);
-            } else {
-                int srcOffsetU = origin.y / 2 * arrayWidth / 2 + origin.x / 2;
-                int srcOffsetV = srcOffsetU + arrayWidth / 2 * arrayHeight / 2;
-
-                mPlanes[1] = new YUVPlane(
-                        mImageWidth / 2, mImageHeight / 2, arrayWidth / 2, 1,
-                        dupUV, srcOffsetU);
-                mPlanes[2] = new YUVPlane(
-                        mImageWidth / 2, mImageHeight / 2, arrayWidth / 2, 1,
-                        dupUV, srcOffsetV);
-            }
-        }
-
-        @Override
-        public int getFormat() {
-            return ImageFormat.YUV_420_888;
-        }
-
-        @Override
-        public int getWidth() {
-            return mImageWidth;
-        }
-
-        @Override
-        public int getHeight() {
-            return mImageHeight;
-        }
-
-        @Override
-        public long getTimestamp() {
-            return 0;
-        }
-
-        @Override
-        public Plane[] getPlanes() {
-            return mPlanes;
-        }
-
-        @Override
-        public void close() {
-            mPlanes[0] = null;
-            mPlanes[1] = null;
-            mPlanes[2] = null;
-        }
-
-        class YUVPlane extends CodecImage.Plane {
-            private final int mRowStride;
-            private final int mPixelStride;
-            private final ByteBuffer mByteBuffer;
-
-            YUVPlane(int w, int h, int rowStride, int pixelStride,
-                    ByteBuffer buffer, int offset) {
-                mRowStride = rowStride;
-                mPixelStride = pixelStride;
-
-                // only safe to access length bytes starting from buffer[offset]
-                int length = (h - 1) * rowStride + (w - 1) * pixelStride + 1;
-
-                buffer.position(offset);
-                mByteBuffer = buffer.slice();
-                mByteBuffer.limit(length);
-            }
-
-            @Override
-            public int getRowStride() {
-                return mRowStride;
-            }
-
-            @Override
-            public int getPixelStride() {
-                return mPixelStride;
-            }
-
-            @Override
-            public ByteBuffer getBuffer() {
-                return mByteBuffer;
-            }
-        }
     }
 
     /**
