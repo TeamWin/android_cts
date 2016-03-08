@@ -23,7 +23,6 @@ import android.transition.Transition;
 import android.transition.TransitionManager;
 import android.transition.TransitionValues;
 import android.transition.Visibility;
-import android.transition.cts.R;
 import android.view.Choreographer;
 import android.view.Choreographer.FrameCallback;
 import android.view.View;
@@ -76,11 +75,50 @@ public class BaseTransitionTest extends ActivityInstrumentationTestCase2<Transit
         listener.endLatch.await(waitMillis, TimeUnit.MILLISECONDS);
     }
 
-    protected void startTransition(final int layoutId) throws Throwable {
+    protected View loadLayout(final int layout) throws Throwable {
+        View[] root = new View[1];
+
         runTestOnUiThread(new Runnable() {
             @Override
             public void run() {
-                Scene scene = Scene.getSceneForLayout(mSceneRoot, layoutId, mActivity);
+                root[0] = mActivity.getLayoutInflater().inflate(layout, mSceneRoot, false);
+            }
+        });
+
+        return root[0];
+    }
+
+    protected Scene loadScene(final View layout) throws Throwable {
+        Scene[] scene = new Scene[1];
+        runTestOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                scene[0] = new Scene(mSceneRoot, layout);
+            }
+        });
+
+        return scene[0];
+    }
+
+    protected Scene loadScene(final int layoutId) throws Throwable {
+        Scene scene[] = new Scene[1];
+        runTestOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                scene[0] = Scene.getSceneForLayout(mSceneRoot, layoutId, mActivity);
+            }
+        });
+        return scene[0];
+    }
+
+    protected void startTransition(final int layoutId) throws Throwable {
+        startTransition(loadScene(layoutId));
+    }
+
+    protected void startTransition(final Scene scene) throws Throwable {
+        runTestOnUiThread(new Runnable() {
+            @Override
+            public void run() {
                 TransitionManager.go(scene, mTransition);
             }
         });
@@ -97,14 +135,23 @@ public class BaseTransitionTest extends ActivityInstrumentationTestCase2<Transit
     }
 
     protected void enterScene(final int layoutId) throws Throwable {
+        enterScene(loadScene(layoutId));
+    }
+
+    protected void enterScene(final Scene scene) throws Throwable {
         runTestOnUiThread(new Runnable() {
             @Override
             public void run() {
-                Scene scene = Scene.getSceneForLayout(mSceneRoot, layoutId, mActivity);
                 scene.enter();
             }
         });
         getInstrumentation().waitForIdleSync();
+    }
+
+    protected void resetListener() {
+        mTransition.removeListener(mListener);
+        mListener = new SimpleTransitionListener();
+        mTransition.addListener(mListener);
     }
 
     // Waits at least one frame and it could be more. The animated values should have changed
@@ -128,7 +175,6 @@ public class BaseTransitionTest extends ActivityInstrumentationTestCase2<Transit
     public class TestTransition extends Visibility {
 
         public TestTransition() {
-            setDuration(200);
         }
 
         @Override
