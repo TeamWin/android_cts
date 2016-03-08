@@ -29,6 +29,8 @@ public class FloatyUnitTest extends RSBaseCompute {
     static double subnormalDouble = 10000 * Double.MIN_VALUE;
     static double normalDouble = 1.7833920e+16;
 
+    static double normalHalf = 1985; // 2048 - 63.  Magic number chosen for use in testHalf128Ulp
+
     // Some double values that are precisely representable in half-precision.
     static double[] preciseFloat16Values = {Double.NaN,
                                             Double.POSITIVE_INFINITY,
@@ -173,8 +175,8 @@ public class FloatyUnitTest extends RSBaseCompute {
         shouldAccept(normalFloaty, normalDouble);
         shouldAccept(normalFloaty, normalDouble + Math.ulp(normalDouble));
         shouldAccept(normalFloaty, normalDouble - Math.ulp(normalDouble));
-        shouldNotAccept(normalFloaty, subnormalDouble + 2 * Math.ulp(normalDouble));
-        shouldNotAccept(normalFloaty, subnormalDouble - 2 * Math.ulp(normalDouble));
+        shouldNotAccept(normalFloaty, normalDouble + 2 * Math.ulp(normalDouble));
+        shouldNotAccept(normalFloaty, normalDouble - 2 * Math.ulp(normalDouble));
         shouldNotAccept(normalFloaty, subnormalDouble);
     }
 
@@ -198,13 +200,45 @@ public class FloatyUnitTest extends RSBaseCompute {
         shouldAccept(normalFloaty, normalDouble);
         shouldAccept(normalFloaty, normalDouble + 8192 * Math.ulp(normalDouble));
         shouldAccept(normalFloaty, normalDouble - 8192 * Math.ulp(normalDouble));
-        shouldNotAccept(normalFloaty, subnormalDouble + 8193 * Math.ulp(normalDouble));
-        shouldNotAccept(normalFloaty, subnormalDouble - 8193 * Math.ulp(normalDouble));
+        shouldNotAccept(normalFloaty, normalDouble + 8193 * Math.ulp(normalDouble));
+        shouldNotAccept(normalFloaty, normalDouble - 8193 * Math.ulp(normalDouble));
         shouldNotAccept(normalFloaty, subnormalDouble);
     }
 
+    // Test Target that accepts precise 1ulp error for half values.
+    public void testHalf1Ulp() {
+        Target t = new Target(Target.FunctionType.NORMAL, Target.ReturnType.HALF, false);
+        t.setPrecision(1, 1);
+
+        Target.Floaty normalFloaty = t.newFloaty(normalHalf);
+        shouldAccept(normalFloaty, normalHalf);
+        shouldAccept(normalFloaty, normalHalf + Float16Utils.float16Ulp(normalHalf));
+        shouldAccept(normalFloaty, normalHalf - Float16Utils.float16Ulp(normalHalf));
+        shouldNotAccept(normalFloaty, normalHalf + 2 * Float16Utils.float16Ulp(normalHalf));
+        shouldNotAccept(normalFloaty, normalHalf - 2 * Float16Utils.float16Ulp(normalHalf));
+        shouldNotAccept(normalFloaty, 2500);
+    }
+
+    // Test Target that accepts precise 128ulp error for half values.
+    public void testHalf128Ulp() {
+        Target t = new Target(Target.FunctionType.NORMAL, Target.ReturnType.HALF, false);
+        t.setPrecision(128, 128);
+
+        Target.Floaty normalFloaty = t.newFloaty(normalHalf);
+        shouldAccept(normalFloaty, normalHalf);
+        shouldAccept(normalFloaty, normalHalf + 128 * Float16Utils.float16Ulp(normalHalf));
+        shouldAccept(normalFloaty, normalHalf - 128 * Float16Utils.float16Ulp(normalHalf));
+        shouldNotAccept(normalFloaty, normalHalf - 129 * Float16Utils.float16Ulp(normalHalf));
+
+        // Since normalHalf + 128ULP has a higher exponent, Floaty accepts an extra ULP to maintin
+        // the invariant that the range is always precisely representable in Float16.
+        shouldAccept(normalFloaty, normalHalf + 129 * Float16Utils.float16Ulp(normalHalf));
+        shouldNotAccept(normalFloaty, normalHalf + 130 * Float16Utils.float16Ulp(normalHalf));
+        shouldNotAccept(normalFloaty, 2500);
+    }
+
     // Test that range of allowed error is trimmed at the zero boundary.  This function tests both
-    // float and double Targets.
+    // float, double, and half Targets.
     public void testRangeDoesNotAcrossZero() {
         Target t;
         Target.Floaty floaty;
@@ -230,14 +264,30 @@ public class FloatyUnitTest extends RSBaseCompute {
         floaty = t.new64(Double.MIN_VALUE);
         shouldAccept(floaty, Double.MIN_VALUE);
         shouldAccept(floaty, Double.MIN_VALUE + 4 * Double.MIN_VALUE);
-        shouldAccept(floaty, 0.f);
-        shouldNotAccept(floaty, 0.f - Double.MIN_VALUE);
+        shouldAccept(floaty, 0.);
+        shouldNotAccept(floaty, 0. - Double.MIN_VALUE);
 
         floaty = t.new64(-Double.MIN_VALUE);
         shouldAccept(floaty, -Double.MIN_VALUE);
         shouldAccept(floaty, -Double.MIN_VALUE - 4 * Double.MIN_VALUE);
+        shouldAccept(floaty, 0.);
+        shouldNotAccept(floaty, 0. + Double.MIN_VALUE);
+
+        t = new Target(Target.FunctionType.NORMAL, Target.ReturnType.HALF, false);
+        t.setPrecision(4, 4);
+
+        // Subnormals are not required to be handled for Float16.  Test with MIN_NORMAL instead.
+        floaty = t.newFloaty(Float16Utils.MIN_NORMAL);
+        shouldAccept(floaty, Float16Utils.MIN_NORMAL);
+        shouldAccept(floaty, Float16Utils.MIN_NORMAL+ 4 * Double.MIN_NORMAL);
+        shouldAccept(floaty, 0.);
+        shouldNotAccept(floaty, 0. - Float16Utils.MIN_NORMAL);
+
+        floaty = t.newFloaty(-Float16Utils.MIN_NORMAL);
+        shouldAccept(floaty, -Float16Utils.MIN_NORMAL);
+        shouldAccept(floaty, -Float16Utils.MIN_NORMAL- 4 * Float16Utils.MIN_NORMAL);
         shouldAccept(floaty, 0.f);
-        shouldNotAccept(floaty, 0.f + Double.MIN_VALUE);
+        shouldNotAccept(floaty, 0. + Float16Utils.MIN_NORMAL);
     }
 
     // Validate float16Ulp for a double value that is precisely representable in half-precision.
