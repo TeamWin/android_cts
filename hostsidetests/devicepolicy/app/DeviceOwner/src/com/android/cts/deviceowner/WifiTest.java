@@ -27,7 +27,7 @@ public class WifiTest extends BaseDeviceOwnerTest {
             // wifi not supported.
             return;
         }
-        final String macAddress = mDevicePolicyManager.getWifiMacAddress();
+        final String macAddress = mDevicePolicyManager.getWifiMacAddress(getWho());
 
         assertFalse("Device owner should be able to get the real MAC address",
                 "02:00:00:00:00:00".equals(macAddress));
