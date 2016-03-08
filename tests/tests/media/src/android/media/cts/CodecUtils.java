@@ -105,8 +105,10 @@ public class CodecUtils  {
         }
     }
 
+    /* two native image checksum functions */
+    public native static int getImageChecksumAdler32(CodecImage image);
+    public native static String getImageChecksumMD5(CodecImage image);
 
-    public native static int getImageChecksum(CodecImage image);
     public native static void copyFlexYUVImage(CodecImage target, CodecImage source);
 
     public static void copyFlexYUVImage(Image target, CodecImage source) {
