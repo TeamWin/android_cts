@@ -681,16 +681,23 @@ public class ExtendedCameraCharacteristicsTest extends AndroidTestCase {
 
             boolean supportZslEdgeMode = false;
             boolean supportZslNoiseReductionMode = false;
+            boolean supportHiQNoiseReductionMode = false;
+            boolean supportHiQEdgeMode = false;
 
             if (availableEdgeModes != null) {
                 supportZslEdgeMode = Arrays.asList(CameraTestUtils.toObject(availableEdgeModes)).
                         contains(CaptureRequest.EDGE_MODE_ZERO_SHUTTER_LAG);
+                supportHiQEdgeMode = Arrays.asList(CameraTestUtils.toObject(availableEdgeModes)).
+                        contains(CaptureRequest.EDGE_MODE_HIGH_QUALITY);
             }
 
             if (availableNoiseReductionModes != null) {
                 supportZslNoiseReductionMode = Arrays.asList(
                         CameraTestUtils.toObject(availableNoiseReductionModes)).contains(
                         CaptureRequest.NOISE_REDUCTION_MODE_ZERO_SHUTTER_LAG);
+                supportHiQNoiseReductionMode = Arrays.asList(
+                        CameraTestUtils.toObject(availableNoiseReductionModes)).contains(
+                        CaptureRequest.NOISE_REDUCTION_MODE_HIGH_QUALITY);
             }
 
             if (supportYUV || supportOpaque) {
@@ -701,6 +708,15 @@ public class ExtendedCameraCharacteristicsTest extends AndroidTestCase {
                 mCollector.expectTrue("Support reprocessing but " +
                         "NOISE_REDUCTION_MODE_ZERO_SHUTTER_LAG is not supported",
                         supportZslNoiseReductionMode);
+
+                // For reprocessing, if we only require OFF and ZSL mode, it will be just like jpeg
+                // encoding. We implicitly require FAST to make reprocessing meaningful, which means
+                // that we also require HIGH_QUALITY.
+                mCollector.expectTrue("Support reprocessing but EDGE_MODE_HIGH_QUALITY is " +
+                        "not supported", supportHiQEdgeMode);
+                mCollector.expectTrue("Support reprocessing but " +
+                        "NOISE_REDUCTION_MODE_HIGH_QUALITY is not supported",
+                        supportHiQNoiseReductionMode);
 
                 // Verify mandatory input formats are supported
                 mCollector.expectTrue("YUV_420_888 input must be supported for YUV reprocessing",
