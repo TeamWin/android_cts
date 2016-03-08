@@ -36,6 +36,11 @@ public class MockTextView extends TextView {
     private boolean mHasCalledOnWindowFocusChanged;
     private boolean mHasCalledOnPrivateIMECommand;
     private boolean mHasCalledOnKeyMultiple;
+    private boolean mHasCalledOnSelectionChanged;
+    private int mSelectionChangedStart;
+    private int mSelectionChangedEnd;
+    private boolean mHasCalledOnBeginBatchEdit;
+    private boolean mHasCalledOnEndBatchEdit;
 
     public MockTextView(Context context) {
         super(context);
@@ -81,6 +86,26 @@ public class MockTextView extends TextView {
         return mHasCalledOnKeyMultiple;
     }
 
+    public boolean hasCalledOnSelectionChanged() {
+        return mHasCalledOnSelectionChanged;
+    }
+
+    public boolean hasCalledOnBeginBatchEdit() {
+        return mHasCalledOnBeginBatchEdit;
+    }
+
+    public boolean hasCalledOnEndBatchEdit() {
+        return mHasCalledOnEndBatchEdit;
+    }
+
+    public int getSelectionChangedStart() {
+        return mSelectionChangedStart;
+    }
+
+    public int getSelectionChangedEnd() {
+        return mSelectionChangedEnd;
+    }
+
     public void reset() {
         mHasCalledOnWindowFocusChanged = false;
         mHasCalledDrawableStateChanged = false;
@@ -90,6 +115,11 @@ public class MockTextView extends TextView {
         mHasCalledOnTextChanged = false;
         mHasCalledOnPrivateIMECommand = false;
         mHasCalledOnKeyMultiple = false;
+        mHasCalledOnSelectionChanged = false;
+        mSelectionChangedStart = -1;
+        mSelectionChangedEnd = -1;
+        mHasCalledOnBeginBatchEdit = false;
+        mHasCalledOnEndBatchEdit = false;
     }
 
     public int computeHorizontalScrollRange() {
@@ -178,6 +208,14 @@ public class MockTextView extends TextView {
         return super.onPrivateIMECommand(action, data);
     }
 
+    @Override
+    protected void onSelectionChanged(int selStart, int selEnd) {
+        super.onSelectionChanged(selStart, selEnd);
+        mHasCalledOnSelectionChanged = true;
+        mSelectionChangedStart = selStart;
+        mSelectionChangedEnd = selEnd;
+    }
+
     public int getFrameLeft() {
         return getLeft();
     }
@@ -220,5 +258,17 @@ public class MockTextView extends TextView {
 
     public int computeVerticalScrollExtent() {
         return super.computeVerticalScrollExtent();
+    }
+
+    @Override
+    public void onBeginBatchEdit() {
+        super.onBeginBatchEdit();
+        mHasCalledOnBeginBatchEdit = true;
+    }
+
+    @Override
+    public void onEndBatchEdit() {
+        super.onEndBatchEdit();
+        mHasCalledOnEndBatchEdit = true;
     }
 }
