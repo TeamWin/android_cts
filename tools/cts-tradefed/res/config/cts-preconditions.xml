@@ -38,6 +38,7 @@
 
     <target_preparer class="com.android.tradefed.targetprep.RunCommandTargetPreparer">
         <option name="run-command" value="rm -rf /sdcard/device-info-files" />
+        <option name="run-command" value="rm -rf /sdcard/report-log-files" />
     </target_preparer>
 
     <target_preparer class="com.android.compatibility.common.tradefed.targetprep.DeviceInfoCollector">
@@ -45,6 +46,11 @@
         <option name="package" value="com.android.compatibility.common.deviceinfo"/>
         <option name="src-dir" value="/sdcard/device-info-files/"/>
         <option name="dest-dir" value="device-info-files/"/>
+    </target_preparer>
+
+    <target_preparer class="com.android.compatibility.common.tradefed.targetprep.ReportLogCollector">
+        <option name="src-dir" value="/sdcard/report-log-files/"/>
+        <option name="dest-dir" value="report-log-files/"/>
     </target_preparer>
 
 </configuration>

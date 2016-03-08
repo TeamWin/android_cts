@@ -27,8 +27,12 @@ import java.util.List;
 
 public class DeviceInfoStore extends InfoStore {
 
-    private final File mJsonFile;
-    private JsonWriter mJsonWriter = null;
+    protected File mJsonFile;
+    protected JsonWriter mJsonWriter = null;
+
+    public DeviceInfoStore() {
+        mJsonFile = null;
+    }
 
     public DeviceInfoStore(File file) throws Exception {
         mJsonFile = file;

@@ -14,6 +14,12 @@
      limitations under the License.
 -->
 <configuration description="Config for CTS Sample test cases">
+    <target_preparer class=
+        "com.android.compatibility.common.tradefed.targetprep.DynamicConfigPusher">
+        <option name="target" value="device" />
+        <option name="config-filename" value="CtsSampleDeviceTestCases" />
+        <option name="version" value="1.0" />
+    </target_preparer>
     <target_preparer class="com.android.compatibility.common.tradefed.targetprep.ApkInstaller">
         <option name="cleanup-apks" value="true" />
         <option name="test-file-name" value="CtsSampleDeviceTestCases.apk" />
