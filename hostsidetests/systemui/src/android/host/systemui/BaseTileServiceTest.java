@@ -26,12 +26,10 @@ import com.android.tradefed.testtype.IBuildReceiver;
 
 import java.io.File;
 
-public class BaseTileServiceTest extends DeviceTestCase implements IBuildReceiver {
+public class BaseTileServiceTest extends DeviceTestCase {
     // Constants for generating commands below.
     private static final String PACKAGE = "android.systemui.cts";
     private static final String ACTION_SHOW_DIALOG = "android.sysui.testtile.action.SHOW_DIALOG";
-
-    private static final String APK_NAME = "CtsSystemUiDeviceApp";
 
     // Commands used on the device.
     private static final String ADD_TILE   = "cmd statusbar add-tile ";
@@ -54,8 +52,9 @@ public class BaseTileServiceTest extends DeviceTestCase implements IBuildReceive
     private final String mService;
     private final String mComponent;
 
-    /** A reference to the build. */
-    private IBuildInfo mBuildInfo;
+    public BaseTileServiceTest() {
+        this("");
+    }
 
     public BaseTileServiceTest(String service) {
         mService = service;
@@ -63,19 +62,8 @@ public class BaseTileServiceTest extends DeviceTestCase implements IBuildReceive
     }
 
     @Override
-    public void setBuild(IBuildInfo buildInfo) {
-        mBuildInfo = buildInfo;
-    }
-
-    @Override
     protected void setUp() throws Exception {
         super.setUp();
-
-        assertNotNull(mBuildInfo);  // ensure build has been set before test is run.
-        // Get the APK from the build.
-        final File app = MigrationHelper.getTestFile(mBuildInfo, String.format("%s.apk", APK_NAME));
-
-        getDevice().installPackage(app, true);
 
         clearLogcat();
     }
@@ -88,9 +76,6 @@ public class BaseTileServiceTest extends DeviceTestCase implements IBuildReceive
         remTile();
         // Try to wait for a onTileRemoved.
         waitFor("onTileRemoved");
-
-        ITestDevice device = getDevice();
-        device.uninstallPackage(PACKAGE);
     }
 
     protected void showDialog() throws Exception {
