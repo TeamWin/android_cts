@@ -38,5 +38,6 @@ LOCAL_WHOLE_STATIC_LIBRARIES := libcts_audio_quality
 LOCAL_CFLAGS:= -g -fno-exceptions
 LOCAL_LDFLAGS:= -g -lrt -ldl -lm -fno-exceptions -lpthread
 LOCAL_MODULE_HOST_OS := linux
-LOCAL_MODULE:= cts_audio_quality_test
+LOCAL_MODULE := cts_audio_quality_test
+LOCAL_MULTILIB := first
 include $(BUILD_HOST_NATIVE_TEST)
