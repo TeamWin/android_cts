@@ -23,6 +23,7 @@ import android.cts.util.PollingCheck;
 import android.media.tv.TvContentRating;
 import android.media.tv.TvInputInfo;
 import android.media.tv.TvInputManager;
+import android.media.tv.TvInputService;
 import android.os.Handler;
 import android.test.ActivityInstrumentationTestCase2;
 
@@ -216,7 +217,7 @@ public class TvInputManagerTest extends ActivityInstrumentationTestCase2<TvViewS
                 new ComponentName(getActivity(), StubTunerTvInputService.class))
                         .setTunerCount(10).setCanRecord(true).build();
 
-        StubTunerTvInputService.updateTvInputInfo(getActivity(), updatedInfo);
+        TvInputService.updateTvInputInfo(getActivity(), updatedInfo);
         new PollingCheck(TIME_OUT_MS) {
             @Override
             protected boolean check() {
@@ -225,7 +226,7 @@ public class TvInputManagerTest extends ActivityInstrumentationTestCase2<TvViewS
             }
         }.run();
 
-        StubTunerTvInputService.updateTvInputInfo(getActivity(), defaultInfo);
+        TvInputService.updateTvInputInfo(getActivity(), defaultInfo);
         new PollingCheck(TIME_OUT_MS) {
             @Override
             protected boolean check() {
