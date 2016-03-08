@@ -100,7 +100,6 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
 
     private String mDeviceSerial;
 
-    private boolean mInitialized;
     private IInvocationResult mResult;
     private File mResultDir = null;
     private File mLogDir = null;
@@ -119,7 +118,6 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
      */
     @Override
     public void invocationStarted(IBuildInfo buildInfo) {
-        mInitialized = false;
         mBuild = buildInfo;
         mBuildHelper = new CompatibilityBuildHelper(mBuild);
         mDeviceSerial = buildInfo.getDeviceSerial();
@@ -172,7 +170,6 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
             throw new IllegalArgumentException(String.format("Could not create log dir %s",
                     mLogDir.getAbsolutePath()));
         }
-        mInitialized = true;
     }
 
     /**
@@ -321,42 +318,40 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
      */
     @Override
     public void invocationEnded(long elapsedTime) {
-        if (mInitialized) {
-            logResult("Invocation completed in %s. %d passed, %d failed, %d not executed",
-                    TimeUtil.formatElapsedTime(elapsedTime),
-                    mResult.countResults(TestStatus.PASS),
-                    mResult.countResults(TestStatus.FAIL),
-                    mResult.countResults(TestStatus.NOT_EXECUTED));
-            try {
-                File resultFile = ResultHandler.writeResults(mBuildHelper.getSuiteName(),
-                        mBuildHelper.getSuiteVersion(), mBuildHelper.getSuitePlan(), mResult,
-                        mResultDir, mStartTime, elapsedTime + mStartTime, mReferenceUrl);
-                copyDynamicConfigFiles(mBuildHelper.getDynamicConfigFiles(), mResultDir);
-                copyFormattingFiles(mResultDir);
-                zipResults(mResultDir);
-                if (mUseLogSaver) {
-                    FileInputStream fis = null;
-                    try {
-                        fis = new FileInputStream(resultFile);
-                        mLogSaver.saveLogData("log-result", LogDataType.XML, fis);
-                    } catch (IOException ioe) {
-                        Log.e(mDeviceSerial, "error saving XML with log saver");
-                        Log.e(mDeviceSerial, ioe);
-                    } finally {
-                        StreamUtil.close(fis);
-                    }
+        logResult("Invocation completed in %s. %d passed, %d failed, %d not executed",
+                TimeUtil.formatElapsedTime(elapsedTime),
+                mResult.countResults(TestStatus.PASS),
+                mResult.countResults(TestStatus.FAIL),
+                mResult.countResults(TestStatus.NOT_EXECUTED));
+        try {
+            File resultFile = ResultHandler.writeResults(mBuildHelper.getSuiteName(),
+                    mBuildHelper.getSuiteVersion(), mBuildHelper.getSuitePlan(), mResult,
+                    mResultDir, mStartTime, elapsedTime + mStartTime, mReferenceUrl);
+            copyDynamicConfigFiles(mBuildHelper.getDynamicConfigFiles(), mResultDir);
+            copyFormattingFiles(mResultDir);
+            zipResults(mResultDir);
+            if (mUseLogSaver) {
+                FileInputStream fis = null;
+                try {
+                    fis = new FileInputStream(resultFile);
+                    mLogSaver.saveLogData("log-result", LogDataType.XML, fis);
+                } catch (IOException ioe) {
+                    Log.e(mDeviceSerial, "error saving XML with log saver");
+                    Log.e(mDeviceSerial, ioe);
+                } finally {
+                    StreamUtil.close(fis);
                 }
-                if (mResultServer != null && !mResultServer.trim().isEmpty() && !mDisableResultPosting) {
-                    try {
-                        logResult("Result Server Response: %d",
-                                mUploader.uploadResult(resultFile, mReferenceUrl));
-                    } catch (IOException ioe) {
-                        Log.e(mDeviceSerial, ioe);
-                    }
-                }
-            } catch (IOException | XmlPullParserException e) {
-                CLog.e(e);
             }
+            if (mResultServer != null && !mResultServer.trim().isEmpty() && !mDisableResultPosting) {
+                try {
+                    logResult("Result Server Response: %d",
+                            mUploader.uploadResult(resultFile, mReferenceUrl));
+                } catch (IOException ioe) {
+                    Log.e(mDeviceSerial, ioe);
+                }
+            }
+        } catch (IOException | XmlPullParserException e) {
+            CLog.e(e);
         }
     }
 
@@ -365,13 +360,7 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
      */
     @Override
     public void invocationFailed(Throwable cause) {
-        logResult("ResultReporter.invocationFailed(%s)", cause);
-        mInitialized = false;
-        // Clean up
-        mResultDir.delete();
-        mResultDir = null;
-        mLogDir.delete();
-        mLogDir = null;
+        logResult("Invocation failed: %s", cause);
     }
 
     /**
