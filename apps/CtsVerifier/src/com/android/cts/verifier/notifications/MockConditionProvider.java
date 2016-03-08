@@ -17,6 +17,7 @@ package com.android.cts.verifier.notifications;
 
 
 import android.app.Activity;
+import android.app.AutomaticZenRule;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -130,8 +131,7 @@ public class MockConditionProvider extends ConditionProviderService {
     }
 
     public static Uri toConditionId(String queryValue) {
-        return new Uri.Builder().scheme(Condition.SCHEME)
-                .authority(PACKAGE_NAME)
+        return new Uri.Builder().scheme("scheme")
                 .appendPath(PATH)
                 .appendQueryParameter(QUERY, queryValue)
                 .build();
