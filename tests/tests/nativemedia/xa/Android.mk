@@ -30,7 +30,6 @@ LOCAL_MODULE_STEM_32 := $(LOCAL_MODULE)32
 LOCAL_MODULE_STEM_64 := $(LOCAL_MODULE)64
 
 LOCAL_C_INCLUDES := \
-    external/gtest/include \
     $(call include-path-for, wilhelm) \
     $(call include-path-for, wilhelm-ut)
 
