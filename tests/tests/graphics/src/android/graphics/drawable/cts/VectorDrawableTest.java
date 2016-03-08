@@ -26,12 +26,15 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.PixelFormat;
 import android.graphics.PorterDuff.Mode;
 import android.graphics.PorterDuffColorFilter;
 import android.graphics.cts.R;
 import android.graphics.drawable.Drawable.ConstantState;
 import android.graphics.drawable.VectorDrawable;
 import android.test.AndroidTestCase;
+import android.test.suitebuilder.annotation.MediumTest;
+import android.test.suitebuilder.annotation.SmallTest;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.util.Xml;
@@ -159,14 +162,17 @@ public class VectorDrawableTest extends AndroidTestCase {
         mResources = mContext.getResources();
     }
 
+    @MediumTest
     public void testSimpleVectorDrawables() throws XmlPullParserException, IOException {
         verifyVectorDrawables(ICON_RES_IDS, GOLDEN_IMAGES, null);
     }
 
+    @MediumTest
     public void testVectorDrawableGradient() throws XmlPullParserException, IOException {
         verifyVectorDrawables(GRADIENT_ICON_RES_IDS, GRADIENT_GOLDEN_IMAGES, null);
     }
 
+    @MediumTest
     public void testColorStateList() throws XmlPullParserException, IOException {
         for (int i = 0; i < STATEFUL_STATE_SETS.length; i++) {
             verifyVectorDrawables(
@@ -278,6 +284,7 @@ public class VectorDrawableTest extends AndroidTestCase {
         return builder.toString();
     }
 
+    @SmallTest
     public void testGetChangingConfigurations() {
         VectorDrawable vectorDrawable = new VectorDrawable();
         ConstantState constantState = vectorDrawable.getConstantState();
@@ -301,6 +308,7 @@ public class VectorDrawableTest extends AndroidTestCase {
         assertEquals(0xffff,  vectorDrawable.getChangingConfigurations());
     }
 
+    @SmallTest
     public void testGetConstantState() {
         VectorDrawable vectorDrawable = new VectorDrawable();
         ConstantState constantState = vectorDrawable.getConstantState();
@@ -313,6 +321,7 @@ public class VectorDrawableTest extends AndroidTestCase {
         assertEquals(1, constantState.getChangingConfigurations());
     }
 
+    @SmallTest
     public void testMutate() {
         Resources resources = mContext.getResources();
         // d1 will be mutated, while d2 / d3 will not.
@@ -340,6 +349,7 @@ public class VectorDrawableTest extends AndroidTestCase {
         d2.setAlpha(originalAlpha);
     }
 
+    @SmallTest
     public void testColorFilter() {
         PorterDuffColorFilter filter = new PorterDuffColorFilter(Color.RED, Mode.SRC_IN);
         VectorDrawable vectorDrawable = new VectorDrawable();
@@ -348,6 +358,7 @@ public class VectorDrawableTest extends AndroidTestCase {
         assertEquals(filter, vectorDrawable.getColorFilter());
     }
 
+    @SmallTest
     public void testPreloadDensity() throws XmlPullParserException, IOException {
         final Resources res = getContext().getResources();
         final int densityDpi = res.getConfiguration().densityDpi;
@@ -356,6 +367,12 @@ public class VectorDrawableTest extends AndroidTestCase {
         } finally {
             DrawableTestUtils.setResourcesDensity(res, densityDpi);
         }
+    }
+
+    @SmallTest
+    public void testGetOpacity () throws XmlPullParserException, IOException {
+        VectorDrawable vectorDrawable = new VectorDrawable();
+        assertEquals(PixelFormat.TRANSLUCENT, vectorDrawable.getOpacity());
     }
 
     private void testPreloadDensityInner(Resources res, int densityDpi)
