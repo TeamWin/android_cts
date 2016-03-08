@@ -20997,6 +20997,4352 @@ public class TestConvert extends RSBaseCompute {
                 (relaxed ? "_relaxed" : "") + ":\n" + message.toString(), errorFound);
     }
 
+    public class ArgumentsHalfFloat {
+        public short inV;
+        public double inVDouble;
+        public Target.Floaty out;
+    }
+
+    private void checkConvertHalf2Float2() {
+        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_16, 2, 0xbbc7b5dbl, -3.1129599999999998545e+04, 3.1129599999999998545e+04);
+        try {
+            Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 2), INPUTSIZE);
+            script.forEach_testConvertFloat2Half2Float2(inV, out);
+            verifyResultsConvertHalf2Float2(inV, out, false);
+        } catch (Exception e) {
+            throw new RSRuntimeException("RenderScript. Can't invoke forEach_testConvertFloat2Half2Float2: " + e.toString());
+        }
+        try {
+            Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 2), INPUTSIZE);
+            scriptRelaxed.forEach_testConvertFloat2Half2Float2(inV, out);
+            verifyResultsConvertHalf2Float2(inV, out, true);
+        } catch (Exception e) {
+            throw new RSRuntimeException("RenderScript. Can't invoke forEach_testConvertFloat2Half2Float2: " + e.toString());
+        }
+    }
+
+    private void verifyResultsConvertHalf2Float2(Allocation inV, Allocation out, boolean relaxed) {
+        short[] arrayInV = new short[INPUTSIZE * 2];
+        Arrays.fill(arrayInV, (short) 42);
+        inV.copyTo(arrayInV);
+        float[] arrayOut = new float[INPUTSIZE * 2];
+        Arrays.fill(arrayOut, (float) 42);
+        out.copyTo(arrayOut);
+        StringBuilder message = new StringBuilder();
+        boolean errorFound = false;
+        for (int i = 0; i < INPUTSIZE; i++) {
+            for (int j = 0; j < 2 ; j++) {
+                // Extract the inputs.
+                ArgumentsHalfFloat args = new ArgumentsHalfFloat();
+                args.inV = arrayInV[i * 2 + j];
+                args.inVDouble = Float16Utils.convertFloat16ToDouble(args.inV);
+                // Figure out what the outputs should have been.
+                Target target = new Target(Target.FunctionType.NORMAL, Target.ReturnType.FLOAT, relaxed);
+                CoreMathVerifier.computeConvert(args, target);
+                // Validate the outputs.
+                boolean valid = true;
+                if (!args.out.couldBe(arrayOut[i * 2 + j])) {
+                    valid = false;
+                }
+                if (!valid) {
+                    if (!errorFound) {
+                        errorFound = true;
+                        message.append("Input inV: ");
+                        appendVariableToMessage(message, args.inV);
+                        message.append("\n");
+                        message.append("Expected output out: ");
+                        appendVariableToMessage(message, args.out);
+                        message.append("\n");
+                        message.append("Actual   output out: ");
+                        appendVariableToMessage(message, arrayOut[i * 2 + j]);
+                        if (!args.out.couldBe(arrayOut[i * 2 + j])) {
+                            message.append(" FAIL");
+                        }
+                        message.append("\n");
+                        message.append("Errors at");
+                    }
+                    message.append(" [");
+                    message.append(Integer.toString(i));
+                    message.append(", ");
+                    message.append(Integer.toString(j));
+                    message.append("]");
+                }
+            }
+        }
+        assertFalse("Incorrect output for checkConvertHalf2Float2" +
+                (relaxed ? "_relaxed" : "") + ":\n" + message.toString(), errorFound);
+    }
+
+    private void checkConvertHalf3Float3() {
+        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_16, 3, 0xb1e2d6b9l, -3.1129599999999998545e+04, 3.1129599999999998545e+04);
+        try {
+            Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 3), INPUTSIZE);
+            script.forEach_testConvertFloat3Half3Float3(inV, out);
+            verifyResultsConvertHalf3Float3(inV, out, false);
+        } catch (Exception e) {
+            throw new RSRuntimeException("RenderScript. Can't invoke forEach_testConvertFloat3Half3Float3: " + e.toString());
+        }
+        try {
+            Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 3), INPUTSIZE);
+            scriptRelaxed.forEach_testConvertFloat3Half3Float3(inV, out);
+            verifyResultsConvertHalf3Float3(inV, out, true);
+        } catch (Exception e) {
+            throw new RSRuntimeException("RenderScript. Can't invoke forEach_testConvertFloat3Half3Float3: " + e.toString());
+        }
+    }
+
+    private void verifyResultsConvertHalf3Float3(Allocation inV, Allocation out, boolean relaxed) {
+        short[] arrayInV = new short[INPUTSIZE * 4];
+        Arrays.fill(arrayInV, (short) 42);
+        inV.copyTo(arrayInV);
+        float[] arrayOut = new float[INPUTSIZE * 4];
+        Arrays.fill(arrayOut, (float) 42);
+        out.copyTo(arrayOut);
+        StringBuilder message = new StringBuilder();
+        boolean errorFound = false;
+        for (int i = 0; i < INPUTSIZE; i++) {
+            for (int j = 0; j < 3 ; j++) {
+                // Extract the inputs.
+                ArgumentsHalfFloat args = new ArgumentsHalfFloat();
+                args.inV = arrayInV[i * 4 + j];
+                args.inVDouble = Float16Utils.convertFloat16ToDouble(args.inV);
+                // Figure out what the outputs should have been.
+                Target target = new Target(Target.FunctionType.NORMAL, Target.ReturnType.FLOAT, relaxed);
+                CoreMathVerifier.computeConvert(args, target);
+                // Validate the outputs.
+                boolean valid = true;
+                if (!args.out.couldBe(arrayOut[i * 4 + j])) {
+                    valid = false;
+                }
+                if (!valid) {
+                    if (!errorFound) {
+                        errorFound = true;
+                        message.append("Input inV: ");
+                        appendVariableToMessage(message, args.inV);
+                        message.append("\n");
+                        message.append("Expected output out: ");
+                        appendVariableToMessage(message, args.out);
+                        message.append("\n");
+                        message.append("Actual   output out: ");
+                        appendVariableToMessage(message, arrayOut[i * 4 + j]);
+                        if (!args.out.couldBe(arrayOut[i * 4 + j])) {
+                            message.append(" FAIL");
+                        }
+                        message.append("\n");
+                        message.append("Errors at");
+                    }
+                    message.append(" [");
+                    message.append(Integer.toString(i));
+                    message.append(", ");
+                    message.append(Integer.toString(j));
+                    message.append("]");
+                }
+            }
+        }
+        assertFalse("Incorrect output for checkConvertHalf3Float3" +
+                (relaxed ? "_relaxed" : "") + ":\n" + message.toString(), errorFound);
+    }
+
+    private void checkConvertHalf4Float4() {
+        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_16, 4, 0xa7fdf797l, -3.1129599999999998545e+04, 3.1129599999999998545e+04);
+        try {
+            Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 4), INPUTSIZE);
+            script.forEach_testConvertFloat4Half4Float4(inV, out);
+            verifyResultsConvertHalf4Float4(inV, out, false);
+        } catch (Exception e) {
+            throw new RSRuntimeException("RenderScript. Can't invoke forEach_testConvertFloat4Half4Float4: " + e.toString());
+        }
+        try {
+            Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 4), INPUTSIZE);
+            scriptRelaxed.forEach_testConvertFloat4Half4Float4(inV, out);
+            verifyResultsConvertHalf4Float4(inV, out, true);
+        } catch (Exception e) {
+            throw new RSRuntimeException("RenderScript. Can't invoke forEach_testConvertFloat4Half4Float4: " + e.toString());
+        }
+    }
+
+    private void verifyResultsConvertHalf4Float4(Allocation inV, Allocation out, boolean relaxed) {
+        short[] arrayInV = new short[INPUTSIZE * 4];
+        Arrays.fill(arrayInV, (short) 42);
+        inV.copyTo(arrayInV);
+        float[] arrayOut = new float[INPUTSIZE * 4];
+        Arrays.fill(arrayOut, (float) 42);
+        out.copyTo(arrayOut);
+        StringBuilder message = new StringBuilder();
+        boolean errorFound = false;
+        for (int i = 0; i < INPUTSIZE; i++) {
+            for (int j = 0; j < 4 ; j++) {
+                // Extract the inputs.
+                ArgumentsHalfFloat args = new ArgumentsHalfFloat();
+                args.inV = arrayInV[i * 4 + j];
+                args.inVDouble = Float16Utils.convertFloat16ToDouble(args.inV);
+                // Figure out what the outputs should have been.
+                Target target = new Target(Target.FunctionType.NORMAL, Target.ReturnType.FLOAT, relaxed);
+                CoreMathVerifier.computeConvert(args, target);
+                // Validate the outputs.
+                boolean valid = true;
+                if (!args.out.couldBe(arrayOut[i * 4 + j])) {
+                    valid = false;
+                }
+                if (!valid) {
+                    if (!errorFound) {
+                        errorFound = true;
+                        message.append("Input inV: ");
+                        appendVariableToMessage(message, args.inV);
+                        message.append("\n");
+                        message.append("Expected output out: ");
+                        appendVariableToMessage(message, args.out);
+                        message.append("\n");
+                        message.append("Actual   output out: ");
+                        appendVariableToMessage(message, arrayOut[i * 4 + j]);
+                        if (!args.out.couldBe(arrayOut[i * 4 + j])) {
+                            message.append(" FAIL");
+                        }
+                        message.append("\n");
+                        message.append("Errors at");
+                    }
+                    message.append(" [");
+                    message.append(Integer.toString(i));
+                    message.append(", ");
+                    message.append(Integer.toString(j));
+                    message.append("]");
+                }
+            }
+        }
+        assertFalse("Incorrect output for checkConvertHalf4Float4" +
+                (relaxed ? "_relaxed" : "") + ":\n" + message.toString(), errorFound);
+    }
+
+    public class ArgumentsHalfDouble {
+        public short inV;
+        public double inVDouble;
+        public Target.Floaty out;
+    }
+
+    private void checkConvertHalf2Double2() {
+        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_16, 2, 0xb2251ea8l, -3.1129599999999998545e+04, 3.1129599999999998545e+04);
+        try {
+            Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_64, 2), INPUTSIZE);
+            script.forEach_testConvertDouble2Half2Double2(inV, out);
+            verifyResultsConvertHalf2Double2(inV, out, false);
+        } catch (Exception e) {
+            throw new RSRuntimeException("RenderScript. Can't invoke forEach_testConvertDouble2Half2Double2: " + e.toString());
+        }
+        try {
+            Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_64, 2), INPUTSIZE);
+            scriptRelaxed.forEach_testConvertDouble2Half2Double2(inV, out);
+            verifyResultsConvertHalf2Double2(inV, out, true);
+        } catch (Exception e) {
+            throw new RSRuntimeException("RenderScript. Can't invoke forEach_testConvertDouble2Half2Double2: " + e.toString());
+        }
+    }
+
+    private void verifyResultsConvertHalf2Double2(Allocation inV, Allocation out, boolean relaxed) {
+        short[] arrayInV = new short[INPUTSIZE * 2];
+        Arrays.fill(arrayInV, (short) 42);
+        inV.copyTo(arrayInV);
+        double[] arrayOut = new double[INPUTSIZE * 2];
+        Arrays.fill(arrayOut, (double) 42);
+        out.copyTo(arrayOut);
+        StringBuilder message = new StringBuilder();
+        boolean errorFound = false;
+        for (int i = 0; i < INPUTSIZE; i++) {
+            for (int j = 0; j < 2 ; j++) {
+                // Extract the inputs.
+                ArgumentsHalfDouble args = new ArgumentsHalfDouble();
+                args.inV = arrayInV[i * 2 + j];
+                args.inVDouble = Float16Utils.convertFloat16ToDouble(args.inV);
+                // Figure out what the outputs should have been.
+                Target target = new Target(Target.FunctionType.NORMAL, Target.ReturnType.DOUBLE, relaxed);
+                CoreMathVerifier.computeConvert(args, target);
+                // Validate the outputs.
+                boolean valid = true;
+                if (!args.out.couldBe(arrayOut[i * 2 + j])) {
+                    valid = false;
+                }
+                if (!valid) {
+                    if (!errorFound) {
+                        errorFound = true;
+                        message.append("Input inV: ");
+                        appendVariableToMessage(message, args.inV);
+                        message.append("\n");
+                        message.append("Expected output out: ");
+                        appendVariableToMessage(message, args.out);
+                        message.append("\n");
+                        message.append("Actual   output out: ");
+                        appendVariableToMessage(message, arrayOut[i * 2 + j]);
+                        if (!args.out.couldBe(arrayOut[i * 2 + j])) {
+                            message.append(" FAIL");
+                        }
+                        message.append("\n");
+                        message.append("Errors at");
+                    }
+                    message.append(" [");
+                    message.append(Integer.toString(i));
+                    message.append(", ");
+                    message.append(Integer.toString(j));
+                    message.append("]");
+                }
+            }
+        }
+        assertFalse("Incorrect output for checkConvertHalf2Double2" +
+                (relaxed ? "_relaxed" : "") + ":\n" + message.toString(), errorFound);
+    }
+
+    private void checkConvertHalf3Double3() {
+        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_16, 3, 0x880afd4l, -3.1129599999999998545e+04, 3.1129599999999998545e+04);
+        try {
+            Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_64, 3), INPUTSIZE);
+            script.forEach_testConvertDouble3Half3Double3(inV, out);
+            verifyResultsConvertHalf3Double3(inV, out, false);
+        } catch (Exception e) {
+            throw new RSRuntimeException("RenderScript. Can't invoke forEach_testConvertDouble3Half3Double3: " + e.toString());
+        }
+        try {
+            Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_64, 3), INPUTSIZE);
+            scriptRelaxed.forEach_testConvertDouble3Half3Double3(inV, out);
+            verifyResultsConvertHalf3Double3(inV, out, true);
+        } catch (Exception e) {
+            throw new RSRuntimeException("RenderScript. Can't invoke forEach_testConvertDouble3Half3Double3: " + e.toString());
+        }
+    }
+
+    private void verifyResultsConvertHalf3Double3(Allocation inV, Allocation out, boolean relaxed) {
+        short[] arrayInV = new short[INPUTSIZE * 4];
+        Arrays.fill(arrayInV, (short) 42);
+        inV.copyTo(arrayInV);
+        double[] arrayOut = new double[INPUTSIZE * 4];
+        Arrays.fill(arrayOut, (double) 42);
+        out.copyTo(arrayOut);
+        StringBuilder message = new StringBuilder();
+        boolean errorFound = false;
+        for (int i = 0; i < INPUTSIZE; i++) {
+            for (int j = 0; j < 3 ; j++) {
+                // Extract the inputs.
+                ArgumentsHalfDouble args = new ArgumentsHalfDouble();
+                args.inV = arrayInV[i * 4 + j];
+                args.inVDouble = Float16Utils.convertFloat16ToDouble(args.inV);
+                // Figure out what the outputs should have been.
+                Target target = new Target(Target.FunctionType.NORMAL, Target.ReturnType.DOUBLE, relaxed);
+                CoreMathVerifier.computeConvert(args, target);
+                // Validate the outputs.
+                boolean valid = true;
+                if (!args.out.couldBe(arrayOut[i * 4 + j])) {
+                    valid = false;
+                }
+                if (!valid) {
+                    if (!errorFound) {
+                        errorFound = true;
+                        message.append("Input inV: ");
+                        appendVariableToMessage(message, args.inV);
+                        message.append("\n");
+                        message.append("Expected output out: ");
+                        appendVariableToMessage(message, args.out);
+                        message.append("\n");
+                        message.append("Actual   output out: ");
+                        appendVariableToMessage(message, arrayOut[i * 4 + j]);
+                        if (!args.out.couldBe(arrayOut[i * 4 + j])) {
+                            message.append(" FAIL");
+                        }
+                        message.append("\n");
+                        message.append("Errors at");
+                    }
+                    message.append(" [");
+                    message.append(Integer.toString(i));
+                    message.append(", ");
+                    message.append(Integer.toString(j));
+                    message.append("]");
+                }
+            }
+        }
+        assertFalse("Incorrect output for checkConvertHalf3Double3" +
+                (relaxed ? "_relaxed" : "") + ":\n" + message.toString(), errorFound);
+    }
+
+    private void checkConvertHalf4Double4() {
+        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_16, 4, 0x5edc4100l, -3.1129599999999998545e+04, 3.1129599999999998545e+04);
+        try {
+            Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_64, 4), INPUTSIZE);
+            script.forEach_testConvertDouble4Half4Double4(inV, out);
+            verifyResultsConvertHalf4Double4(inV, out, false);
+        } catch (Exception e) {
+            throw new RSRuntimeException("RenderScript. Can't invoke forEach_testConvertDouble4Half4Double4: " + e.toString());
+        }
+        try {
+            Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_64, 4), INPUTSIZE);
+            scriptRelaxed.forEach_testConvertDouble4Half4Double4(inV, out);
+            verifyResultsConvertHalf4Double4(inV, out, true);
+        } catch (Exception e) {
+            throw new RSRuntimeException("RenderScript. Can't invoke forEach_testConvertDouble4Half4Double4: " + e.toString());
+        }
+    }
+
+    private void verifyResultsConvertHalf4Double4(Allocation inV, Allocation out, boolean relaxed) {
+        short[] arrayInV = new short[INPUTSIZE * 4];
+        Arrays.fill(arrayInV, (short) 42);
+        inV.copyTo(arrayInV);
+        double[] arrayOut = new double[INPUTSIZE * 4];
+        Arrays.fill(arrayOut, (double) 42);
+        out.copyTo(arrayOut);
+        StringBuilder message = new StringBuilder();
+        boolean errorFound = false;
+        for (int i = 0; i < INPUTSIZE; i++) {
+            for (int j = 0; j < 4 ; j++) {
+                // Extract the inputs.
+                ArgumentsHalfDouble args = new ArgumentsHalfDouble();
+                args.inV = arrayInV[i * 4 + j];
+                args.inVDouble = Float16Utils.convertFloat16ToDouble(args.inV);
+                // Figure out what the outputs should have been.
+                Target target = new Target(Target.FunctionType.NORMAL, Target.ReturnType.DOUBLE, relaxed);
+                CoreMathVerifier.computeConvert(args, target);
+                // Validate the outputs.
+                boolean valid = true;
+                if (!args.out.couldBe(arrayOut[i * 4 + j])) {
+                    valid = false;
+                }
+                if (!valid) {
+                    if (!errorFound) {
+                        errorFound = true;
+                        message.append("Input inV: ");
+                        appendVariableToMessage(message, args.inV);
+                        message.append("\n");
+                        message.append("Expected output out: ");
+                        appendVariableToMessage(message, args.out);
+                        message.append("\n");
+                        message.append("Actual   output out: ");
+                        appendVariableToMessage(message, arrayOut[i * 4 + j]);
+                        if (!args.out.couldBe(arrayOut[i * 4 + j])) {
+                            message.append(" FAIL");
+                        }
+                        message.append("\n");
+                        message.append("Errors at");
+                    }
+                    message.append(" [");
+                    message.append(Integer.toString(i));
+                    message.append(", ");
+                    message.append(Integer.toString(j));
+                    message.append("]");
+                }
+            }
+        }
+        assertFalse("Incorrect output for checkConvertHalf4Double4" +
+                (relaxed ? "_relaxed" : "") + ":\n" + message.toString(), errorFound);
+    }
+
+    public class ArgumentsHalfChar {
+        public short inV;
+        public double inVDouble;
+        public byte out;
+    }
+
+    private void checkConvertHalf2Char2() {
+        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_16, 2, 0xf6709821l, -1.2800000000000000000e+02, 1.2700000000000000000e+02);
+        try {
+            Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.SIGNED_8, 2), INPUTSIZE);
+            script.forEach_testConvertChar2Half2Char2(inV, out);
+            verifyResultsConvertHalf2Char2(inV, out, false);
+        } catch (Exception e) {
+            throw new RSRuntimeException("RenderScript. Can't invoke forEach_testConvertChar2Half2Char2: " + e.toString());
+        }
+        try {
+            Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.SIGNED_8, 2), INPUTSIZE);
+            scriptRelaxed.forEach_testConvertChar2Half2Char2(inV, out);
+            verifyResultsConvertHalf2Char2(inV, out, true);
+        } catch (Exception e) {
+            throw new RSRuntimeException("RenderScript. Can't invoke forEach_testConvertChar2Half2Char2: " + e.toString());
+        }
+    }
+
+    private void verifyResultsConvertHalf2Char2(Allocation inV, Allocation out, boolean relaxed) {
+        short[] arrayInV = new short[INPUTSIZE * 2];
+        Arrays.fill(arrayInV, (short) 42);
+        inV.copyTo(arrayInV);
+        byte[] arrayOut = new byte[INPUTSIZE * 2];
+        Arrays.fill(arrayOut, (byte) 42);
+        out.copyTo(arrayOut);
+        StringBuilder message = new StringBuilder();
+        boolean errorFound = false;
+        for (int i = 0; i < INPUTSIZE; i++) {
+            for (int j = 0; j < 2 ; j++) {
+                // Extract the inputs.
+                ArgumentsHalfChar args = new ArgumentsHalfChar();
+                args.inV = arrayInV[i * 2 + j];
+                args.inVDouble = Float16Utils.convertFloat16ToDouble(args.inV);
+                // Figure out what the outputs should have been.
+                CoreMathVerifier.computeConvert(args);
+                // Validate the outputs.
+                boolean valid = true;
+                if (args.out != arrayOut[i * 2 + j]) {
+                    valid = false;
+                }
+                if (!valid) {
+                    if (!errorFound) {
+                        errorFound = true;
+                        message.append("Input inV: ");
+                        appendVariableToMessage(message, args.inV);
+                        message.append("\n");
+                        message.append("Expected output out: ");
+                        appendVariableToMessage(message, args.out);
+                        message.append("\n");
+                        message.append("Actual   output out: ");
+                        appendVariableToMessage(message, arrayOut[i * 2 + j]);
+                        if (args.out != arrayOut[i * 2 + j]) {
+                            message.append(" FAIL");
+                        }
+                        message.append("\n");
+                        message.append("Errors at");
+                    }
+                    message.append(" [");
+                    message.append(Integer.toString(i));
+                    message.append(", ");
+                    message.append(Integer.toString(j));
+                    message.append("]");
+                }
+            }
+        }
+        assertFalse("Incorrect output for checkConvertHalf2Char2" +
+                (relaxed ? "_relaxed" : "") + ":\n" + message.toString(), errorFound);
+    }
+
+    private void checkConvertHalf3Char3() {
+        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_16, 3, 0x55785d15l, -1.2800000000000000000e+02, 1.2700000000000000000e+02);
+        try {
+            Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.SIGNED_8, 3), INPUTSIZE);
+            script.forEach_testConvertChar3Half3Char3(inV, out);
+            verifyResultsConvertHalf3Char3(inV, out, false);
+        } catch (Exception e) {
+            throw new RSRuntimeException("RenderScript. Can't invoke forEach_testConvertChar3Half3Char3: " + e.toString());
+        }
+        try {
+            Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.SIGNED_8, 3), INPUTSIZE);
+            scriptRelaxed.forEach_testConvertChar3Half3Char3(inV, out);
+            verifyResultsConvertHalf3Char3(inV, out, true);
+        } catch (Exception e) {
+            throw new RSRuntimeException("RenderScript. Can't invoke forEach_testConvertChar3Half3Char3: " + e.toString());
+        }
+    }
+
+    private void verifyResultsConvertHalf3Char3(Allocation inV, Allocation out, boolean relaxed) {
+        short[] arrayInV = new short[INPUTSIZE * 4];
+        Arrays.fill(arrayInV, (short) 42);
+        inV.copyTo(arrayInV);
+        byte[] arrayOut = new byte[INPUTSIZE * 4];
+        Arrays.fill(arrayOut, (byte) 42);
+        out.copyTo(arrayOut);
+        StringBuilder message = new StringBuilder();
+        boolean errorFound = false;
+        for (int i = 0; i < INPUTSIZE; i++) {
+            for (int j = 0; j < 3 ; j++) {
+                // Extract the inputs.
+                ArgumentsHalfChar args = new ArgumentsHalfChar();
+                args.inV = arrayInV[i * 4 + j];
+                args.inVDouble = Float16Utils.convertFloat16ToDouble(args.inV);
+                // Figure out what the outputs should have been.
+                CoreMathVerifier.computeConvert(args);
+                // Validate the outputs.
+                boolean valid = true;
+                if (args.out != arrayOut[i * 4 + j]) {
+                    valid = false;
+                }
+                if (!valid) {
+                    if (!errorFound) {
+                        errorFound = true;
+                        message.append("Input inV: ");
+                        appendVariableToMessage(message, args.inV);
+                        message.append("\n");
+                        message.append("Expected output out: ");
+                        appendVariableToMessage(message, args.out);
+                        message.append("\n");
+                        message.append("Actual   output out: ");
+                        appendVariableToMessage(message, arrayOut[i * 4 + j]);
+                        if (args.out != arrayOut[i * 4 + j]) {
+                            message.append(" FAIL");
+                        }
+                        message.append("\n");
+                        message.append("Errors at");
+                    }
+                    message.append(" [");
+                    message.append(Integer.toString(i));
+                    message.append(", ");
+                    message.append(Integer.toString(j));
+                    message.append("]");
+                }
+            }
+        }
+        assertFalse("Incorrect output for checkConvertHalf3Char3" +
+                (relaxed ? "_relaxed" : "") + ":\n" + message.toString(), errorFound);
+    }
+
+    private void checkConvertHalf4Char4() {
+        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_16, 4, 0xb4802209l, -1.2800000000000000000e+02, 1.2700000000000000000e+02);
+        try {
+            Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.SIGNED_8, 4), INPUTSIZE);
+            script.forEach_testConvertChar4Half4Char4(inV, out);
+            verifyResultsConvertHalf4Char4(inV, out, false);
+        } catch (Exception e) {
+            throw new RSRuntimeException("RenderScript. Can't invoke forEach_testConvertChar4Half4Char4: " + e.toString());
+        }
+        try {
+            Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.SIGNED_8, 4), INPUTSIZE);
+            scriptRelaxed.forEach_testConvertChar4Half4Char4(inV, out);
+            verifyResultsConvertHalf4Char4(inV, out, true);
+        } catch (Exception e) {
+            throw new RSRuntimeException("RenderScript. Can't invoke forEach_testConvertChar4Half4Char4: " + e.toString());
+        }
+    }
+
+    private void verifyResultsConvertHalf4Char4(Allocation inV, Allocation out, boolean relaxed) {
+        short[] arrayInV = new short[INPUTSIZE * 4];
+        Arrays.fill(arrayInV, (short) 42);
+        inV.copyTo(arrayInV);
+        byte[] arrayOut = new byte[INPUTSIZE * 4];
+        Arrays.fill(arrayOut, (byte) 42);
+        out.copyTo(arrayOut);
+        StringBuilder message = new StringBuilder();
+        boolean errorFound = false;
+        for (int i = 0; i < INPUTSIZE; i++) {
+            for (int j = 0; j < 4 ; j++) {
+                // Extract the inputs.
+                ArgumentsHalfChar args = new ArgumentsHalfChar();
+                args.inV = arrayInV[i * 4 + j];
+                args.inVDouble = Float16Utils.convertFloat16ToDouble(args.inV);
+                // Figure out what the outputs should have been.
+                CoreMathVerifier.computeConvert(args);
+                // Validate the outputs.
+                boolean valid = true;
+                if (args.out != arrayOut[i * 4 + j]) {
+                    valid = false;
+                }
+                if (!valid) {
+                    if (!errorFound) {
+                        errorFound = true;
+                        message.append("Input inV: ");
+                        appendVariableToMessage(message, args.inV);
+                        message.append("\n");
+                        message.append("Expected output out: ");
+                        appendVariableToMessage(message, args.out);
+                        message.append("\n");
+                        message.append("Actual   output out: ");
+                        appendVariableToMessage(message, arrayOut[i * 4 + j]);
+                        if (args.out != arrayOut[i * 4 + j]) {
+                            message.append(" FAIL");
+                        }
+                        message.append("\n");
+                        message.append("Errors at");
+                    }
+                    message.append(" [");
+                    message.append(Integer.toString(i));
+                    message.append(", ");
+                    message.append(Integer.toString(j));
+                    message.append("]");
+                }
+            }
+        }
+        assertFalse("Incorrect output for checkConvertHalf4Char4" +
+                (relaxed ? "_relaxed" : "") + ":\n" + message.toString(), errorFound);
+    }
+
+    public class ArgumentsHalfUchar {
+        public short inV;
+        public double inVDouble;
+        public byte out;
+    }
+
+    private void checkConvertHalf2Uchar2() {
+        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_16, 2, 0x6869a68el, 0.0000000000000000000e+00, 2.5500000000000000000e+02);
+        try {
+            Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.UNSIGNED_8, 2), INPUTSIZE);
+            script.forEach_testConvertUchar2Half2Uchar2(inV, out);
+            verifyResultsConvertHalf2Uchar2(inV, out, false);
+        } catch (Exception e) {
+            throw new RSRuntimeException("RenderScript. Can't invoke forEach_testConvertUchar2Half2Uchar2: " + e.toString());
+        }
+        try {
+            Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.UNSIGNED_8, 2), INPUTSIZE);
+            scriptRelaxed.forEach_testConvertUchar2Half2Uchar2(inV, out);
+            verifyResultsConvertHalf2Uchar2(inV, out, true);
+        } catch (Exception e) {
+            throw new RSRuntimeException("RenderScript. Can't invoke forEach_testConvertUchar2Half2Uchar2: " + e.toString());
+        }
+    }
+
+    private void verifyResultsConvertHalf2Uchar2(Allocation inV, Allocation out, boolean relaxed) {
+        short[] arrayInV = new short[INPUTSIZE * 2];
+        Arrays.fill(arrayInV, (short) 42);
+        inV.copyTo(arrayInV);
+        byte[] arrayOut = new byte[INPUTSIZE * 2];
+        Arrays.fill(arrayOut, (byte) 42);
+        out.copyTo(arrayOut);
+        StringBuilder message = new StringBuilder();
+        boolean errorFound = false;
+        for (int i = 0; i < INPUTSIZE; i++) {
+            for (int j = 0; j < 2 ; j++) {
+                // Extract the inputs.
+                ArgumentsHalfUchar args = new ArgumentsHalfUchar();
+                args.inV = arrayInV[i * 2 + j];
+                args.inVDouble = Float16Utils.convertFloat16ToDouble(args.inV);
+                // Figure out what the outputs should have been.
+                CoreMathVerifier.computeConvert(args);
+                // Validate the outputs.
+                boolean valid = true;
+                if (args.out != arrayOut[i * 2 + j]) {
+                    valid = false;
+                }
+                if (!valid) {
+                    if (!errorFound) {
+                        errorFound = true;
+                        message.append("Input inV: ");
+                        appendVariableToMessage(message, args.inV);
+                        message.append("\n");
+                        message.append("Expected output out: ");
+                        appendVariableToMessage(message, args.out);
+                        message.append("\n");
+                        message.append("Actual   output out: ");
+                        appendVariableToMessage(message, arrayOut[i * 2 + j]);
+                        if (args.out != arrayOut[i * 2 + j]) {
+                            message.append(" FAIL");
+                        }
+                        message.append("\n");
+                        message.append("Errors at");
+                    }
+                    message.append(" [");
+                    message.append(Integer.toString(i));
+                    message.append(", ");
+                    message.append(Integer.toString(j));
+                    message.append("]");
+                }
+            }
+        }
+        assertFalse("Incorrect output for checkConvertHalf2Uchar2" +
+                (relaxed ? "_relaxed" : "") + ":\n" + message.toString(), errorFound);
+    }
+
+    private void checkConvertHalf3Uchar3() {
+        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_16, 3, 0x5e84c76cl, 0.0000000000000000000e+00, 2.5500000000000000000e+02);
+        try {
+            Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.UNSIGNED_8, 3), INPUTSIZE);
+            script.forEach_testConvertUchar3Half3Uchar3(inV, out);
+            verifyResultsConvertHalf3Uchar3(inV, out, false);
+        } catch (Exception e) {
+            throw new RSRuntimeException("RenderScript. Can't invoke forEach_testConvertUchar3Half3Uchar3: " + e.toString());
+        }
+        try {
+            Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.UNSIGNED_8, 3), INPUTSIZE);
+            scriptRelaxed.forEach_testConvertUchar3Half3Uchar3(inV, out);
+            verifyResultsConvertHalf3Uchar3(inV, out, true);
+        } catch (Exception e) {
+            throw new RSRuntimeException("RenderScript. Can't invoke forEach_testConvertUchar3Half3Uchar3: " + e.toString());
+        }
+    }
+
+    private void verifyResultsConvertHalf3Uchar3(Allocation inV, Allocation out, boolean relaxed) {
+        short[] arrayInV = new short[INPUTSIZE * 4];
+        Arrays.fill(arrayInV, (short) 42);
+        inV.copyTo(arrayInV);
+        byte[] arrayOut = new byte[INPUTSIZE * 4];
+        Arrays.fill(arrayOut, (byte) 42);
+        out.copyTo(arrayOut);
+        StringBuilder message = new StringBuilder();
+        boolean errorFound = false;
+        for (int i = 0; i < INPUTSIZE; i++) {
+            for (int j = 0; j < 3 ; j++) {
+                // Extract the inputs.
+                ArgumentsHalfUchar args = new ArgumentsHalfUchar();
+                args.inV = arrayInV[i * 4 + j];
+                args.inVDouble = Float16Utils.convertFloat16ToDouble(args.inV);
+                // Figure out what the outputs should have been.
+                CoreMathVerifier.computeConvert(args);
+                // Validate the outputs.
+                boolean valid = true;
+                if (args.out != arrayOut[i * 4 + j]) {
+                    valid = false;
+                }
+                if (!valid) {
+                    if (!errorFound) {
+                        errorFound = true;
+                        message.append("Input inV: ");
+                        appendVariableToMessage(message, args.inV);
+                        message.append("\n");
+                        message.append("Expected output out: ");
+                        appendVariableToMessage(message, args.out);
+                        message.append("\n");
+                        message.append("Actual   output out: ");
+                        appendVariableToMessage(message, arrayOut[i * 4 + j]);
+                        if (args.out != arrayOut[i * 4 + j]) {
+                            message.append(" FAIL");
+                        }
+                        message.append("\n");
+                        message.append("Errors at");
+                    }
+                    message.append(" [");
+                    message.append(Integer.toString(i));
+                    message.append(", ");
+                    message.append(Integer.toString(j));
+                    message.append("]");
+                }
+            }
+        }
+        assertFalse("Incorrect output for checkConvertHalf3Uchar3" +
+                (relaxed ? "_relaxed" : "") + ":\n" + message.toString(), errorFound);
+    }
+
+    private void checkConvertHalf4Uchar4() {
+        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_16, 4, 0x549fe84al, 0.0000000000000000000e+00, 2.5500000000000000000e+02);
+        try {
+            Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.UNSIGNED_8, 4), INPUTSIZE);
+            script.forEach_testConvertUchar4Half4Uchar4(inV, out);
+            verifyResultsConvertHalf4Uchar4(inV, out, false);
+        } catch (Exception e) {
+            throw new RSRuntimeException("RenderScript. Can't invoke forEach_testConvertUchar4Half4Uchar4: " + e.toString());
+        }
+        try {
+            Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.UNSIGNED_8, 4), INPUTSIZE);
+            scriptRelaxed.forEach_testConvertUchar4Half4Uchar4(inV, out);
+            verifyResultsConvertHalf4Uchar4(inV, out, true);
+        } catch (Exception e) {
+            throw new RSRuntimeException("RenderScript. Can't invoke forEach_testConvertUchar4Half4Uchar4: " + e.toString());
+        }
+    }
+
+    private void verifyResultsConvertHalf4Uchar4(Allocation inV, Allocation out, boolean relaxed) {
+        short[] arrayInV = new short[INPUTSIZE * 4];
+        Arrays.fill(arrayInV, (short) 42);
+        inV.copyTo(arrayInV);
+        byte[] arrayOut = new byte[INPUTSIZE * 4];
+        Arrays.fill(arrayOut, (byte) 42);
+        out.copyTo(arrayOut);
+        StringBuilder message = new StringBuilder();
+        boolean errorFound = false;
+        for (int i = 0; i < INPUTSIZE; i++) {
+            for (int j = 0; j < 4 ; j++) {
+                // Extract the inputs.
+                ArgumentsHalfUchar args = new ArgumentsHalfUchar();
+                args.inV = arrayInV[i * 4 + j];
+                args.inVDouble = Float16Utils.convertFloat16ToDouble(args.inV);
+                // Figure out what the outputs should have been.
+                CoreMathVerifier.computeConvert(args);
+                // Validate the outputs.
+                boolean valid = true;
+                if (args.out != arrayOut[i * 4 + j]) {
+                    valid = false;
+                }
+                if (!valid) {
+                    if (!errorFound) {
+                        errorFound = true;
+                        message.append("Input inV: ");
+                        appendVariableToMessage(message, args.inV);
+                        message.append("\n");
+                        message.append("Expected output out: ");
+                        appendVariableToMessage(message, args.out);
+                        message.append("\n");
+                        message.append("Actual   output out: ");
+                        appendVariableToMessage(message, arrayOut[i * 4 + j]);
+                        if (args.out != arrayOut[i * 4 + j]) {
+                            message.append(" FAIL");
+                        }
+                        message.append("\n");
+                        message.append("Errors at");
+                    }
+                    message.append(" [");
+                    message.append(Integer.toString(i));
+                    message.append(", ");
+                    message.append(Integer.toString(j));
+                    message.append("]");
+                }
+            }
+        }
+        assertFalse("Incorrect output for checkConvertHalf4Uchar4" +
+                (relaxed ? "_relaxed" : "") + ":\n" + message.toString(), errorFound);
+    }
+
+    public class ArgumentsHalfShort {
+        public short inV;
+        public double inVDouble;
+        public short out;
+    }
+
+    private void checkConvertHalf2Short2() {
+        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_16, 2, 0xfd7771a7l, -3.2753000000000000000e+04, 3.2752000000000000000e+04);
+        try {
+            Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.SIGNED_16, 2), INPUTSIZE);
+            script.forEach_testConvertShort2Half2Short2(inV, out);
+            verifyResultsConvertHalf2Short2(inV, out, false);
+        } catch (Exception e) {
+            throw new RSRuntimeException("RenderScript. Can't invoke forEach_testConvertShort2Half2Short2: " + e.toString());
+        }
+        try {
+            Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.SIGNED_16, 2), INPUTSIZE);
+            scriptRelaxed.forEach_testConvertShort2Half2Short2(inV, out);
+            verifyResultsConvertHalf2Short2(inV, out, true);
+        } catch (Exception e) {
+            throw new RSRuntimeException("RenderScript. Can't invoke forEach_testConvertShort2Half2Short2: " + e.toString());
+        }
+    }
+
+    private void verifyResultsConvertHalf2Short2(Allocation inV, Allocation out, boolean relaxed) {
+        short[] arrayInV = new short[INPUTSIZE * 2];
+        Arrays.fill(arrayInV, (short) 42);
+        inV.copyTo(arrayInV);
+        short[] arrayOut = new short[INPUTSIZE * 2];
+        Arrays.fill(arrayOut, (short) 42);
+        out.copyTo(arrayOut);
+        StringBuilder message = new StringBuilder();
+        boolean errorFound = false;
+        for (int i = 0; i < INPUTSIZE; i++) {
+            for (int j = 0; j < 2 ; j++) {
+                // Extract the inputs.
+                ArgumentsHalfShort args = new ArgumentsHalfShort();
+                args.inV = arrayInV[i * 2 + j];
+                args.inVDouble = Float16Utils.convertFloat16ToDouble(args.inV);
+                // Figure out what the outputs should have been.
+                CoreMathVerifier.computeConvert(args);
+                // Validate the outputs.
+                boolean valid = true;
+                if (args.out != arrayOut[i * 2 + j]) {
+                    valid = false;
+                }
+                if (!valid) {
+                    if (!errorFound) {
+                        errorFound = true;
+                        message.append("Input inV: ");
+                        appendVariableToMessage(message, args.inV);
+                        message.append("\n");
+                        message.append("Expected output out: ");
+                        appendVariableToMessage(message, args.out);
+                        message.append("\n");
+                        message.append("Actual   output out: ");
+                        appendVariableToMessage(message, arrayOut[i * 2 + j]);
+                        if (args.out != arrayOut[i * 2 + j]) {
+                            message.append(" FAIL");
+                        }
+                        message.append("\n");
+                        message.append("Errors at");
+                    }
+                    message.append(" [");
+                    message.append(Integer.toString(i));
+                    message.append(", ");
+                    message.append(Integer.toString(j));
+                    message.append("]");
+                }
+            }
+        }
+        assertFalse("Incorrect output for checkConvertHalf2Short2" +
+                (relaxed ? "_relaxed" : "") + ":\n" + message.toString(), errorFound);
+    }
+
+    private void checkConvertHalf3Short3() {
+        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_16, 3, 0xf3929285l, -3.2753000000000000000e+04, 3.2752000000000000000e+04);
+        try {
+            Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.SIGNED_16, 3), INPUTSIZE);
+            script.forEach_testConvertShort3Half3Short3(inV, out);
+            verifyResultsConvertHalf3Short3(inV, out, false);
+        } catch (Exception e) {
+            throw new RSRuntimeException("RenderScript. Can't invoke forEach_testConvertShort3Half3Short3: " + e.toString());
+        }
+        try {
+            Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.SIGNED_16, 3), INPUTSIZE);
+            scriptRelaxed.forEach_testConvertShort3Half3Short3(inV, out);
+            verifyResultsConvertHalf3Short3(inV, out, true);
+        } catch (Exception e) {
+            throw new RSRuntimeException("RenderScript. Can't invoke forEach_testConvertShort3Half3Short3: " + e.toString());
+        }
+    }
+
+    private void verifyResultsConvertHalf3Short3(Allocation inV, Allocation out, boolean relaxed) {
+        short[] arrayInV = new short[INPUTSIZE * 4];
+        Arrays.fill(arrayInV, (short) 42);
+        inV.copyTo(arrayInV);
+        short[] arrayOut = new short[INPUTSIZE * 4];
+        Arrays.fill(arrayOut, (short) 42);
+        out.copyTo(arrayOut);
+        StringBuilder message = new StringBuilder();
+        boolean errorFound = false;
+        for (int i = 0; i < INPUTSIZE; i++) {
+            for (int j = 0; j < 3 ; j++) {
+                // Extract the inputs.
+                ArgumentsHalfShort args = new ArgumentsHalfShort();
+                args.inV = arrayInV[i * 4 + j];
+                args.inVDouble = Float16Utils.convertFloat16ToDouble(args.inV);
+                // Figure out what the outputs should have been.
+                CoreMathVerifier.computeConvert(args);
+                // Validate the outputs.
+                boolean valid = true;
+                if (args.out != arrayOut[i * 4 + j]) {
+                    valid = false;
+                }
+                if (!valid) {
+                    if (!errorFound) {
+                        errorFound = true;
+                        message.append("Input inV: ");
+                        appendVariableToMessage(message, args.inV);
+                        message.append("\n");
+                        message.append("Expected output out: ");
+                        appendVariableToMessage(message, args.out);
+                        message.append("\n");
+                        message.append("Actual   output out: ");
+                        appendVariableToMessage(message, arrayOut[i * 4 + j]);
+                        if (args.out != arrayOut[i * 4 + j]) {
+                            message.append(" FAIL");
+                        }
+                        message.append("\n");
+                        message.append("Errors at");
+                    }
+                    message.append(" [");
+                    message.append(Integer.toString(i));
+                    message.append(", ");
+                    message.append(Integer.toString(j));
+                    message.append("]");
+                }
+            }
+        }
+        assertFalse("Incorrect output for checkConvertHalf3Short3" +
+                (relaxed ? "_relaxed" : "") + ":\n" + message.toString(), errorFound);
+    }
+
+    private void checkConvertHalf4Short4() {
+        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_16, 4, 0xe9adb363l, -3.2753000000000000000e+04, 3.2752000000000000000e+04);
+        try {
+            Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.SIGNED_16, 4), INPUTSIZE);
+            script.forEach_testConvertShort4Half4Short4(inV, out);
+            verifyResultsConvertHalf4Short4(inV, out, false);
+        } catch (Exception e) {
+            throw new RSRuntimeException("RenderScript. Can't invoke forEach_testConvertShort4Half4Short4: " + e.toString());
+        }
+        try {
+            Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.SIGNED_16, 4), INPUTSIZE);
+            scriptRelaxed.forEach_testConvertShort4Half4Short4(inV, out);
+            verifyResultsConvertHalf4Short4(inV, out, true);
+        } catch (Exception e) {
+            throw new RSRuntimeException("RenderScript. Can't invoke forEach_testConvertShort4Half4Short4: " + e.toString());
+        }
+    }
+
+    private void verifyResultsConvertHalf4Short4(Allocation inV, Allocation out, boolean relaxed) {
+        short[] arrayInV = new short[INPUTSIZE * 4];
+        Arrays.fill(arrayInV, (short) 42);
+        inV.copyTo(arrayInV);
+        short[] arrayOut = new short[INPUTSIZE * 4];
+        Arrays.fill(arrayOut, (short) 42);
+        out.copyTo(arrayOut);
+        StringBuilder message = new StringBuilder();
+        boolean errorFound = false;
+        for (int i = 0; i < INPUTSIZE; i++) {
+            for (int j = 0; j < 4 ; j++) {
+                // Extract the inputs.
+                ArgumentsHalfShort args = new ArgumentsHalfShort();
+                args.inV = arrayInV[i * 4 + j];
+                args.inVDouble = Float16Utils.convertFloat16ToDouble(args.inV);
+                // Figure out what the outputs should have been.
+                CoreMathVerifier.computeConvert(args);
+                // Validate the outputs.
+                boolean valid = true;
+                if (args.out != arrayOut[i * 4 + j]) {
+                    valid = false;
+                }
+                if (!valid) {
+                    if (!errorFound) {
+                        errorFound = true;
+                        message.append("Input inV: ");
+                        appendVariableToMessage(message, args.inV);
+                        message.append("\n");
+                        message.append("Expected output out: ");
+                        appendVariableToMessage(message, args.out);
+                        message.append("\n");
+                        message.append("Actual   output out: ");
+                        appendVariableToMessage(message, arrayOut[i * 4 + j]);
+                        if (args.out != arrayOut[i * 4 + j]) {
+                            message.append(" FAIL");
+                        }
+                        message.append("\n");
+                        message.append("Errors at");
+                    }
+                    message.append(" [");
+                    message.append(Integer.toString(i));
+                    message.append(", ");
+                    message.append(Integer.toString(j));
+                    message.append("]");
+                }
+            }
+        }
+        assertFalse("Incorrect output for checkConvertHalf4Short4" +
+                (relaxed ? "_relaxed" : "") + ":\n" + message.toString(), errorFound);
+    }
+
+    public class ArgumentsHalfUshort {
+        public short inV;
+        public double inVDouble;
+        public short out;
+    }
+
+    private void checkConvertHalf2Ushort2() {
+        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_16, 2, 0x224cddf6l, 0.0000000000000000000e+00, 6.5504000000000000000e+04);
+        try {
+            Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.UNSIGNED_16, 2), INPUTSIZE);
+            script.forEach_testConvertUshort2Half2Ushort2(inV, out);
+            verifyResultsConvertHalf2Ushort2(inV, out, false);
+        } catch (Exception e) {
+            throw new RSRuntimeException("RenderScript. Can't invoke forEach_testConvertUshort2Half2Ushort2: " + e.toString());
+        }
+        try {
+            Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.UNSIGNED_16, 2), INPUTSIZE);
+            scriptRelaxed.forEach_testConvertUshort2Half2Ushort2(inV, out);
+            verifyResultsConvertHalf2Ushort2(inV, out, true);
+        } catch (Exception e) {
+            throw new RSRuntimeException("RenderScript. Can't invoke forEach_testConvertUshort2Half2Ushort2: " + e.toString());
+        }
+    }
+
+    private void verifyResultsConvertHalf2Ushort2(Allocation inV, Allocation out, boolean relaxed) {
+        short[] arrayInV = new short[INPUTSIZE * 2];
+        Arrays.fill(arrayInV, (short) 42);
+        inV.copyTo(arrayInV);
+        short[] arrayOut = new short[INPUTSIZE * 2];
+        Arrays.fill(arrayOut, (short) 42);
+        out.copyTo(arrayOut);
+        StringBuilder message = new StringBuilder();
+        boolean errorFound = false;
+        for (int i = 0; i < INPUTSIZE; i++) {
+            for (int j = 0; j < 2 ; j++) {
+                // Extract the inputs.
+                ArgumentsHalfUshort args = new ArgumentsHalfUshort();
+                args.inV = arrayInV[i * 2 + j];
+                args.inVDouble = Float16Utils.convertFloat16ToDouble(args.inV);
+                // Figure out what the outputs should have been.
+                CoreMathVerifier.computeConvert(args);
+                // Validate the outputs.
+                boolean valid = true;
+                if (args.out != arrayOut[i * 2 + j]) {
+                    valid = false;
+                }
+                if (!valid) {
+                    if (!errorFound) {
+                        errorFound = true;
+                        message.append("Input inV: ");
+                        appendVariableToMessage(message, args.inV);
+                        message.append("\n");
+                        message.append("Expected output out: ");
+                        appendVariableToMessage(message, args.out);
+                        message.append("\n");
+                        message.append("Actual   output out: ");
+                        appendVariableToMessage(message, arrayOut[i * 2 + j]);
+                        if (args.out != arrayOut[i * 2 + j]) {
+                            message.append(" FAIL");
+                        }
+                        message.append("\n");
+                        message.append("Errors at");
+                    }
+                    message.append(" [");
+                    message.append(Integer.toString(i));
+                    message.append(", ");
+                    message.append(Integer.toString(j));
+                    message.append("]");
+                }
+            }
+        }
+        assertFalse("Incorrect output for checkConvertHalf2Ushort2" +
+                (relaxed ? "_relaxed" : "") + ":\n" + message.toString(), errorFound);
+    }
+
+    private void checkConvertHalf3Ushort3() {
+        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_16, 3, 0x78a86f22l, 0.0000000000000000000e+00, 6.5504000000000000000e+04);
+        try {
+            Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.UNSIGNED_16, 3), INPUTSIZE);
+            script.forEach_testConvertUshort3Half3Ushort3(inV, out);
+            verifyResultsConvertHalf3Ushort3(inV, out, false);
+        } catch (Exception e) {
+            throw new RSRuntimeException("RenderScript. Can't invoke forEach_testConvertUshort3Half3Ushort3: " + e.toString());
+        }
+        try {
+            Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.UNSIGNED_16, 3), INPUTSIZE);
+            scriptRelaxed.forEach_testConvertUshort3Half3Ushort3(inV, out);
+            verifyResultsConvertHalf3Ushort3(inV, out, true);
+        } catch (Exception e) {
+            throw new RSRuntimeException("RenderScript. Can't invoke forEach_testConvertUshort3Half3Ushort3: " + e.toString());
+        }
+    }
+
+    private void verifyResultsConvertHalf3Ushort3(Allocation inV, Allocation out, boolean relaxed) {
+        short[] arrayInV = new short[INPUTSIZE * 4];
+        Arrays.fill(arrayInV, (short) 42);
+        inV.copyTo(arrayInV);
+        short[] arrayOut = new short[INPUTSIZE * 4];
+        Arrays.fill(arrayOut, (short) 42);
+        out.copyTo(arrayOut);
+        StringBuilder message = new StringBuilder();
+        boolean errorFound = false;
+        for (int i = 0; i < INPUTSIZE; i++) {
+            for (int j = 0; j < 3 ; j++) {
+                // Extract the inputs.
+                ArgumentsHalfUshort args = new ArgumentsHalfUshort();
+                args.inV = arrayInV[i * 4 + j];
+                args.inVDouble = Float16Utils.convertFloat16ToDouble(args.inV);
+                // Figure out what the outputs should have been.
+                CoreMathVerifier.computeConvert(args);
+                // Validate the outputs.
+                boolean valid = true;
+                if (args.out != arrayOut[i * 4 + j]) {
+                    valid = false;
+                }
+                if (!valid) {
+                    if (!errorFound) {
+                        errorFound = true;
+                        message.append("Input inV: ");
+                        appendVariableToMessage(message, args.inV);
+                        message.append("\n");
+                        message.append("Expected output out: ");
+                        appendVariableToMessage(message, args.out);
+                        message.append("\n");
+                        message.append("Actual   output out: ");
+                        appendVariableToMessage(message, arrayOut[i * 4 + j]);
+                        if (args.out != arrayOut[i * 4 + j]) {
+                            message.append(" FAIL");
+                        }
+                        message.append("\n");
+                        message.append("Errors at");
+                    }
+                    message.append(" [");
+                    message.append(Integer.toString(i));
+                    message.append(", ");
+                    message.append(Integer.toString(j));
+                    message.append("]");
+                }
+            }
+        }
+        assertFalse("Incorrect output for checkConvertHalf3Ushort3" +
+                (relaxed ? "_relaxed" : "") + ":\n" + message.toString(), errorFound);
+    }
+
+    private void checkConvertHalf4Ushort4() {
+        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_16, 4, 0xcf04004el, 0.0000000000000000000e+00, 6.5504000000000000000e+04);
+        try {
+            Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.UNSIGNED_16, 4), INPUTSIZE);
+            script.forEach_testConvertUshort4Half4Ushort4(inV, out);
+            verifyResultsConvertHalf4Ushort4(inV, out, false);
+        } catch (Exception e) {
+            throw new RSRuntimeException("RenderScript. Can't invoke forEach_testConvertUshort4Half4Ushort4: " + e.toString());
+        }
+        try {
+            Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.UNSIGNED_16, 4), INPUTSIZE);
+            scriptRelaxed.forEach_testConvertUshort4Half4Ushort4(inV, out);
+            verifyResultsConvertHalf4Ushort4(inV, out, true);
+        } catch (Exception e) {
+            throw new RSRuntimeException("RenderScript. Can't invoke forEach_testConvertUshort4Half4Ushort4: " + e.toString());
+        }
+    }
+
+    private void verifyResultsConvertHalf4Ushort4(Allocation inV, Allocation out, boolean relaxed) {
+        short[] arrayInV = new short[INPUTSIZE * 4];
+        Arrays.fill(arrayInV, (short) 42);
+        inV.copyTo(arrayInV);
+        short[] arrayOut = new short[INPUTSIZE * 4];
+        Arrays.fill(arrayOut, (short) 42);
+        out.copyTo(arrayOut);
+        StringBuilder message = new StringBuilder();
+        boolean errorFound = false;
+        for (int i = 0; i < INPUTSIZE; i++) {
+            for (int j = 0; j < 4 ; j++) {
+                // Extract the inputs.
+                ArgumentsHalfUshort args = new ArgumentsHalfUshort();
+                args.inV = arrayInV[i * 4 + j];
+                args.inVDouble = Float16Utils.convertFloat16ToDouble(args.inV);
+                // Figure out what the outputs should have been.
+                CoreMathVerifier.computeConvert(args);
+                // Validate the outputs.
+                boolean valid = true;
+                if (args.out != arrayOut[i * 4 + j]) {
+                    valid = false;
+                }
+                if (!valid) {
+                    if (!errorFound) {
+                        errorFound = true;
+                        message.append("Input inV: ");
+                        appendVariableToMessage(message, args.inV);
+                        message.append("\n");
+                        message.append("Expected output out: ");
+                        appendVariableToMessage(message, args.out);
+                        message.append("\n");
+                        message.append("Actual   output out: ");
+                        appendVariableToMessage(message, arrayOut[i * 4 + j]);
+                        if (args.out != arrayOut[i * 4 + j]) {
+                            message.append(" FAIL");
+                        }
+                        message.append("\n");
+                        message.append("Errors at");
+                    }
+                    message.append(" [");
+                    message.append(Integer.toString(i));
+                    message.append(", ");
+                    message.append(Integer.toString(j));
+                    message.append("]");
+                }
+            }
+        }
+        assertFalse("Incorrect output for checkConvertHalf4Ushort4" +
+                (relaxed ? "_relaxed" : "") + ":\n" + message.toString(), errorFound);
+    }
+
+    public class ArgumentsHalfInt {
+        public short inV;
+        public double inVDouble;
+        public int out;
+    }
+
+    private void checkConvertHalf2Int2() {
+        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_16, 2, 0xdcfe841al, -2.1464350730000000000e+09, 2.1464350720000000000e+09);
+        try {
+            Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.SIGNED_32, 2), INPUTSIZE);
+            script.forEach_testConvertInt2Half2Int2(inV, out);
+            verifyResultsConvertHalf2Int2(inV, out, false);
+        } catch (Exception e) {
+            throw new RSRuntimeException("RenderScript. Can't invoke forEach_testConvertInt2Half2Int2: " + e.toString());
+        }
+        try {
+            Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.SIGNED_32, 2), INPUTSIZE);
+            scriptRelaxed.forEach_testConvertInt2Half2Int2(inV, out);
+            verifyResultsConvertHalf2Int2(inV, out, true);
+        } catch (Exception e) {
+            throw new RSRuntimeException("RenderScript. Can't invoke forEach_testConvertInt2Half2Int2: " + e.toString());
+        }
+    }
+
+    private void verifyResultsConvertHalf2Int2(Allocation inV, Allocation out, boolean relaxed) {
+        short[] arrayInV = new short[INPUTSIZE * 2];
+        Arrays.fill(arrayInV, (short) 42);
+        inV.copyTo(arrayInV);
+        int[] arrayOut = new int[INPUTSIZE * 2];
+        Arrays.fill(arrayOut, (int) 42);
+        out.copyTo(arrayOut);
+        StringBuilder message = new StringBuilder();
+        boolean errorFound = false;
+        for (int i = 0; i < INPUTSIZE; i++) {
+            for (int j = 0; j < 2 ; j++) {
+                // Extract the inputs.
+                ArgumentsHalfInt args = new ArgumentsHalfInt();
+                args.inV = arrayInV[i * 2 + j];
+                args.inVDouble = Float16Utils.convertFloat16ToDouble(args.inV);
+                // Figure out what the outputs should have been.
+                CoreMathVerifier.computeConvert(args);
+                // Validate the outputs.
+                boolean valid = true;
+                if (args.out != arrayOut[i * 2 + j]) {
+                    valid = false;
+                }
+                if (!valid) {
+                    if (!errorFound) {
+                        errorFound = true;
+                        message.append("Input inV: ");
+                        appendVariableToMessage(message, args.inV);
+                        message.append("\n");
+                        message.append("Expected output out: ");
+                        appendVariableToMessage(message, args.out);
+                        message.append("\n");
+                        message.append("Actual   output out: ");
+                        appendVariableToMessage(message, arrayOut[i * 2 + j]);
+                        if (args.out != arrayOut[i * 2 + j]) {
+                            message.append(" FAIL");
+                        }
+                        message.append("\n");
+                        message.append("Errors at");
+                    }
+                    message.append(" [");
+                    message.append(Integer.toString(i));
+                    message.append(", ");
+                    message.append(Integer.toString(j));
+                    message.append("]");
+                }
+            }
+        }
+        assertFalse("Incorrect output for checkConvertHalf2Int2" +
+                (relaxed ? "_relaxed" : "") + ":\n" + message.toString(), errorFound);
+    }
+
+    private void checkConvertHalf3Int3() {
+        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_16, 3, 0x26a69450l, -2.1464350730000000000e+09, 2.1464350720000000000e+09);
+        try {
+            Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.SIGNED_32, 3), INPUTSIZE);
+            script.forEach_testConvertInt3Half3Int3(inV, out);
+            verifyResultsConvertHalf3Int3(inV, out, false);
+        } catch (Exception e) {
+            throw new RSRuntimeException("RenderScript. Can't invoke forEach_testConvertInt3Half3Int3: " + e.toString());
+        }
+        try {
+            Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.SIGNED_32, 3), INPUTSIZE);
+            scriptRelaxed.forEach_testConvertInt3Half3Int3(inV, out);
+            verifyResultsConvertHalf3Int3(inV, out, true);
+        } catch (Exception e) {
+            throw new RSRuntimeException("RenderScript. Can't invoke forEach_testConvertInt3Half3Int3: " + e.toString());
+        }
+    }
+
+    private void verifyResultsConvertHalf3Int3(Allocation inV, Allocation out, boolean relaxed) {
+        short[] arrayInV = new short[INPUTSIZE * 4];
+        Arrays.fill(arrayInV, (short) 42);
+        inV.copyTo(arrayInV);
+        int[] arrayOut = new int[INPUTSIZE * 4];
+        Arrays.fill(arrayOut, (int) 42);
+        out.copyTo(arrayOut);
+        StringBuilder message = new StringBuilder();
+        boolean errorFound = false;
+        for (int i = 0; i < INPUTSIZE; i++) {
+            for (int j = 0; j < 3 ; j++) {
+                // Extract the inputs.
+                ArgumentsHalfInt args = new ArgumentsHalfInt();
+                args.inV = arrayInV[i * 4 + j];
+                args.inVDouble = Float16Utils.convertFloat16ToDouble(args.inV);
+                // Figure out what the outputs should have been.
+                CoreMathVerifier.computeConvert(args);
+                // Validate the outputs.
+                boolean valid = true;
+                if (args.out != arrayOut[i * 4 + j]) {
+                    valid = false;
+                }
+                if (!valid) {
+                    if (!errorFound) {
+                        errorFound = true;
+                        message.append("Input inV: ");
+                        appendVariableToMessage(message, args.inV);
+                        message.append("\n");
+                        message.append("Expected output out: ");
+                        appendVariableToMessage(message, args.out);
+                        message.append("\n");
+                        message.append("Actual   output out: ");
+                        appendVariableToMessage(message, arrayOut[i * 4 + j]);
+                        if (args.out != arrayOut[i * 4 + j]) {
+                            message.append(" FAIL");
+                        }
+                        message.append("\n");
+                        message.append("Errors at");
+                    }
+                    message.append(" [");
+                    message.append(Integer.toString(i));
+                    message.append(", ");
+                    message.append(Integer.toString(j));
+                    message.append("]");
+                }
+            }
+        }
+        assertFalse("Incorrect output for checkConvertHalf3Int3" +
+                (relaxed ? "_relaxed" : "") + ":\n" + message.toString(), errorFound);
+    }
+
+    private void checkConvertHalf4Int4() {
+        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_16, 4, 0x704ea486l, -2.1464350730000000000e+09, 2.1464350720000000000e+09);
+        try {
+            Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.SIGNED_32, 4), INPUTSIZE);
+            script.forEach_testConvertInt4Half4Int4(inV, out);
+            verifyResultsConvertHalf4Int4(inV, out, false);
+        } catch (Exception e) {
+            throw new RSRuntimeException("RenderScript. Can't invoke forEach_testConvertInt4Half4Int4: " + e.toString());
+        }
+        try {
+            Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.SIGNED_32, 4), INPUTSIZE);
+            scriptRelaxed.forEach_testConvertInt4Half4Int4(inV, out);
+            verifyResultsConvertHalf4Int4(inV, out, true);
+        } catch (Exception e) {
+            throw new RSRuntimeException("RenderScript. Can't invoke forEach_testConvertInt4Half4Int4: " + e.toString());
+        }
+    }
+
+    private void verifyResultsConvertHalf4Int4(Allocation inV, Allocation out, boolean relaxed) {
+        short[] arrayInV = new short[INPUTSIZE * 4];
+        Arrays.fill(arrayInV, (short) 42);
+        inV.copyTo(arrayInV);
+        int[] arrayOut = new int[INPUTSIZE * 4];
+        Arrays.fill(arrayOut, (int) 42);
+        out.copyTo(arrayOut);
+        StringBuilder message = new StringBuilder();
+        boolean errorFound = false;
+        for (int i = 0; i < INPUTSIZE; i++) {
+            for (int j = 0; j < 4 ; j++) {
+                // Extract the inputs.
+                ArgumentsHalfInt args = new ArgumentsHalfInt();
+                args.inV = arrayInV[i * 4 + j];
+                args.inVDouble = Float16Utils.convertFloat16ToDouble(args.inV);
+                // Figure out what the outputs should have been.
+                CoreMathVerifier.computeConvert(args);
+                // Validate the outputs.
+                boolean valid = true;
+                if (args.out != arrayOut[i * 4 + j]) {
+                    valid = false;
+                }
+                if (!valid) {
+                    if (!errorFound) {
+                        errorFound = true;
+                        message.append("Input inV: ");
+                        appendVariableToMessage(message, args.inV);
+                        message.append("\n");
+                        message.append("Expected output out: ");
+                        appendVariableToMessage(message, args.out);
+                        message.append("\n");
+                        message.append("Actual   output out: ");
+                        appendVariableToMessage(message, arrayOut[i * 4 + j]);
+                        if (args.out != arrayOut[i * 4 + j]) {
+                            message.append(" FAIL");
+                        }
+                        message.append("\n");
+                        message.append("Errors at");
+                    }
+                    message.append(" [");
+                    message.append(Integer.toString(i));
+                    message.append(", ");
+                    message.append(Integer.toString(j));
+                    message.append("]");
+                }
+            }
+        }
+        assertFalse("Incorrect output for checkConvertHalf4Int4" +
+                (relaxed ? "_relaxed" : "") + ":\n" + message.toString(), errorFound);
+    }
+
+    public class ArgumentsHalfUint {
+        public short inV;
+        public double inVDouble;
+        public int out;
+    }
+
+    private void checkConvertHalf2Uint2() {
+        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_16, 2, 0xf45cbe1l, 0.0000000000000000000e+00, 4.2928701440000000000e+09);
+        try {
+            Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.UNSIGNED_32, 2), INPUTSIZE);
+            script.forEach_testConvertUint2Half2Uint2(inV, out);
+            verifyResultsConvertHalf2Uint2(inV, out, false);
+        } catch (Exception e) {
+            throw new RSRuntimeException("RenderScript. Can't invoke forEach_testConvertUint2Half2Uint2: " + e.toString());
+        }
+        try {
+            Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.UNSIGNED_32, 2), INPUTSIZE);
+            scriptRelaxed.forEach_testConvertUint2Half2Uint2(inV, out);
+            verifyResultsConvertHalf2Uint2(inV, out, true);
+        } catch (Exception e) {
+            throw new RSRuntimeException("RenderScript. Can't invoke forEach_testConvertUint2Half2Uint2: " + e.toString());
+        }
+    }
+
+    private void verifyResultsConvertHalf2Uint2(Allocation inV, Allocation out, boolean relaxed) {
+        short[] arrayInV = new short[INPUTSIZE * 2];
+        Arrays.fill(arrayInV, (short) 42);
+        inV.copyTo(arrayInV);
+        int[] arrayOut = new int[INPUTSIZE * 2];
+        Arrays.fill(arrayOut, (int) 42);
+        out.copyTo(arrayOut);
+        StringBuilder message = new StringBuilder();
+        boolean errorFound = false;
+        for (int i = 0; i < INPUTSIZE; i++) {
+            for (int j = 0; j < 2 ; j++) {
+                // Extract the inputs.
+                ArgumentsHalfUint args = new ArgumentsHalfUint();
+                args.inV = arrayInV[i * 2 + j];
+                args.inVDouble = Float16Utils.convertFloat16ToDouble(args.inV);
+                // Figure out what the outputs should have been.
+                CoreMathVerifier.computeConvert(args);
+                // Validate the outputs.
+                boolean valid = true;
+                if (args.out != arrayOut[i * 2 + j]) {
+                    valid = false;
+                }
+                if (!valid) {
+                    if (!errorFound) {
+                        errorFound = true;
+                        message.append("Input inV: ");
+                        appendVariableToMessage(message, args.inV);
+                        message.append("\n");
+                        message.append("Expected output out: ");
+                        appendVariableToMessage(message, args.out);
+                        message.append("\n");
+                        message.append("Actual   output out: ");
+                        appendVariableToMessage(message, arrayOut[i * 2 + j]);
+                        if (args.out != arrayOut[i * 2 + j]) {
+                            message.append(" FAIL");
+                        }
+                        message.append("\n");
+                        message.append("Errors at");
+                    }
+                    message.append(" [");
+                    message.append(Integer.toString(i));
+                    message.append(", ");
+                    message.append(Integer.toString(j));
+                    message.append("]");
+                }
+            }
+        }
+        assertFalse("Incorrect output for checkConvertHalf2Uint2" +
+                (relaxed ? "_relaxed" : "") + ":\n" + message.toString(), errorFound);
+    }
+
+    private void checkConvertHalf3Uint3() {
+        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_16, 3, 0x6e4d90d5l, 0.0000000000000000000e+00, 4.2928701440000000000e+09);
+        try {
+            Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.UNSIGNED_32, 3), INPUTSIZE);
+            script.forEach_testConvertUint3Half3Uint3(inV, out);
+            verifyResultsConvertHalf3Uint3(inV, out, false);
+        } catch (Exception e) {
+            throw new RSRuntimeException("RenderScript. Can't invoke forEach_testConvertUint3Half3Uint3: " + e.toString());
+        }
+        try {
+            Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.UNSIGNED_32, 3), INPUTSIZE);
+            scriptRelaxed.forEach_testConvertUint3Half3Uint3(inV, out);
+            verifyResultsConvertHalf3Uint3(inV, out, true);
+        } catch (Exception e) {
+            throw new RSRuntimeException("RenderScript. Can't invoke forEach_testConvertUint3Half3Uint3: " + e.toString());
+        }
+    }
+
+    private void verifyResultsConvertHalf3Uint3(Allocation inV, Allocation out, boolean relaxed) {
+        short[] arrayInV = new short[INPUTSIZE * 4];
+        Arrays.fill(arrayInV, (short) 42);
+        inV.copyTo(arrayInV);
+        int[] arrayOut = new int[INPUTSIZE * 4];
+        Arrays.fill(arrayOut, (int) 42);
+        out.copyTo(arrayOut);
+        StringBuilder message = new StringBuilder();
+        boolean errorFound = false;
+        for (int i = 0; i < INPUTSIZE; i++) {
+            for (int j = 0; j < 3 ; j++) {
+                // Extract the inputs.
+                ArgumentsHalfUint args = new ArgumentsHalfUint();
+                args.inV = arrayInV[i * 4 + j];
+                args.inVDouble = Float16Utils.convertFloat16ToDouble(args.inV);
+                // Figure out what the outputs should have been.
+                CoreMathVerifier.computeConvert(args);
+                // Validate the outputs.
+                boolean valid = true;
+                if (args.out != arrayOut[i * 4 + j]) {
+                    valid = false;
+                }
+                if (!valid) {
+                    if (!errorFound) {
+                        errorFound = true;
+                        message.append("Input inV: ");
+                        appendVariableToMessage(message, args.inV);
+                        message.append("\n");
+                        message.append("Expected output out: ");
+                        appendVariableToMessage(message, args.out);
+                        message.append("\n");
+                        message.append("Actual   output out: ");
+                        appendVariableToMessage(message, arrayOut[i * 4 + j]);
+                        if (args.out != arrayOut[i * 4 + j]) {
+                            message.append(" FAIL");
+                        }
+                        message.append("\n");
+                        message.append("Errors at");
+                    }
+                    message.append(" [");
+                    message.append(Integer.toString(i));
+                    message.append(", ");
+                    message.append(Integer.toString(j));
+                    message.append("]");
+                }
+            }
+        }
+        assertFalse("Incorrect output for checkConvertHalf3Uint3" +
+                (relaxed ? "_relaxed" : "") + ":\n" + message.toString(), errorFound);
+    }
+
+    private void checkConvertHalf4Uint4() {
+        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_16, 4, 0xcd5555c9l, 0.0000000000000000000e+00, 4.2928701440000000000e+09);
+        try {
+            Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.UNSIGNED_32, 4), INPUTSIZE);
+            script.forEach_testConvertUint4Half4Uint4(inV, out);
+            verifyResultsConvertHalf4Uint4(inV, out, false);
+        } catch (Exception e) {
+            throw new RSRuntimeException("RenderScript. Can't invoke forEach_testConvertUint4Half4Uint4: " + e.toString());
+        }
+        try {
+            Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.UNSIGNED_32, 4), INPUTSIZE);
+            scriptRelaxed.forEach_testConvertUint4Half4Uint4(inV, out);
+            verifyResultsConvertHalf4Uint4(inV, out, true);
+        } catch (Exception e) {
+            throw new RSRuntimeException("RenderScript. Can't invoke forEach_testConvertUint4Half4Uint4: " + e.toString());
+        }
+    }
+
+    private void verifyResultsConvertHalf4Uint4(Allocation inV, Allocation out, boolean relaxed) {
+        short[] arrayInV = new short[INPUTSIZE * 4];
+        Arrays.fill(arrayInV, (short) 42);
+        inV.copyTo(arrayInV);
+        int[] arrayOut = new int[INPUTSIZE * 4];
+        Arrays.fill(arrayOut, (int) 42);
+        out.copyTo(arrayOut);
+        StringBuilder message = new StringBuilder();
+        boolean errorFound = false;
+        for (int i = 0; i < INPUTSIZE; i++) {
+            for (int j = 0; j < 4 ; j++) {
+                // Extract the inputs.
+                ArgumentsHalfUint args = new ArgumentsHalfUint();
+                args.inV = arrayInV[i * 4 + j];
+                args.inVDouble = Float16Utils.convertFloat16ToDouble(args.inV);
+                // Figure out what the outputs should have been.
+                CoreMathVerifier.computeConvert(args);
+                // Validate the outputs.
+                boolean valid = true;
+                if (args.out != arrayOut[i * 4 + j]) {
+                    valid = false;
+                }
+                if (!valid) {
+                    if (!errorFound) {
+                        errorFound = true;
+                        message.append("Input inV: ");
+                        appendVariableToMessage(message, args.inV);
+                        message.append("\n");
+                        message.append("Expected output out: ");
+                        appendVariableToMessage(message, args.out);
+                        message.append("\n");
+                        message.append("Actual   output out: ");
+                        appendVariableToMessage(message, arrayOut[i * 4 + j]);
+                        if (args.out != arrayOut[i * 4 + j]) {
+                            message.append(" FAIL");
+                        }
+                        message.append("\n");
+                        message.append("Errors at");
+                    }
+                    message.append(" [");
+                    message.append(Integer.toString(i));
+                    message.append(", ");
+                    message.append(Integer.toString(j));
+                    message.append("]");
+                }
+            }
+        }
+        assertFalse("Incorrect output for checkConvertHalf4Uint4" +
+                (relaxed ? "_relaxed" : "") + ":\n" + message.toString(), errorFound);
+    }
+
+    public class ArgumentsHalfLong {
+        public short inV;
+        public double inVDouble;
+        public long out;
+    }
+
+    private void checkConvertHalf2Long2() {
+        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_16, 2, 0x4a740c9fl, -9.2188684372274053120e+18, 9.2188684372274053120e+18);
+        try {
+            Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.SIGNED_64, 2), INPUTSIZE);
+            script.forEach_testConvertLong2Half2Long2(inV, out);
+            verifyResultsConvertHalf2Long2(inV, out, false);
+        } catch (Exception e) {
+            throw new RSRuntimeException("RenderScript. Can't invoke forEach_testConvertLong2Half2Long2: " + e.toString());
+        }
+        try {
+            Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.SIGNED_64, 2), INPUTSIZE);
+            scriptRelaxed.forEach_testConvertLong2Half2Long2(inV, out);
+            verifyResultsConvertHalf2Long2(inV, out, true);
+        } catch (Exception e) {
+            throw new RSRuntimeException("RenderScript. Can't invoke forEach_testConvertLong2Half2Long2: " + e.toString());
+        }
+    }
+
+    private void verifyResultsConvertHalf2Long2(Allocation inV, Allocation out, boolean relaxed) {
+        short[] arrayInV = new short[INPUTSIZE * 2];
+        Arrays.fill(arrayInV, (short) 42);
+        inV.copyTo(arrayInV);
+        long[] arrayOut = new long[INPUTSIZE * 2];
+        Arrays.fill(arrayOut, (long) 42);
+        out.copyTo(arrayOut);
+        StringBuilder message = new StringBuilder();
+        boolean errorFound = false;
+        for (int i = 0; i < INPUTSIZE; i++) {
+            for (int j = 0; j < 2 ; j++) {
+                // Extract the inputs.
+                ArgumentsHalfLong args = new ArgumentsHalfLong();
+                args.inV = arrayInV[i * 2 + j];
+                args.inVDouble = Float16Utils.convertFloat16ToDouble(args.inV);
+                // Figure out what the outputs should have been.
+                CoreMathVerifier.computeConvert(args);
+                // Validate the outputs.
+                boolean valid = true;
+                if (args.out != arrayOut[i * 2 + j]) {
+                    valid = false;
+                }
+                if (!valid) {
+                    if (!errorFound) {
+                        errorFound = true;
+                        message.append("Input inV: ");
+                        appendVariableToMessage(message, args.inV);
+                        message.append("\n");
+                        message.append("Expected output out: ");
+                        appendVariableToMessage(message, args.out);
+                        message.append("\n");
+                        message.append("Actual   output out: ");
+                        appendVariableToMessage(message, arrayOut[i * 2 + j]);
+                        if (args.out != arrayOut[i * 2 + j]) {
+                            message.append(" FAIL");
+                        }
+                        message.append("\n");
+                        message.append("Errors at");
+                    }
+                    message.append(" [");
+                    message.append(Integer.toString(i));
+                    message.append(", ");
+                    message.append(Integer.toString(j));
+                    message.append("]");
+                }
+            }
+        }
+        assertFalse("Incorrect output for checkConvertHalf2Long2" +
+                (relaxed ? "_relaxed" : "") + ":\n" + message.toString(), errorFound);
+    }
+
+    private void checkConvertHalf3Long3() {
+        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_16, 3, 0xa97bd193l, -9.2188684372274053120e+18, 9.2188684372274053120e+18);
+        try {
+            Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.SIGNED_64, 3), INPUTSIZE);
+            script.forEach_testConvertLong3Half3Long3(inV, out);
+            verifyResultsConvertHalf3Long3(inV, out, false);
+        } catch (Exception e) {
+            throw new RSRuntimeException("RenderScript. Can't invoke forEach_testConvertLong3Half3Long3: " + e.toString());
+        }
+        try {
+            Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.SIGNED_64, 3), INPUTSIZE);
+            scriptRelaxed.forEach_testConvertLong3Half3Long3(inV, out);
+            verifyResultsConvertHalf3Long3(inV, out, true);
+        } catch (Exception e) {
+            throw new RSRuntimeException("RenderScript. Can't invoke forEach_testConvertLong3Half3Long3: " + e.toString());
+        }
+    }
+
+    private void verifyResultsConvertHalf3Long3(Allocation inV, Allocation out, boolean relaxed) {
+        short[] arrayInV = new short[INPUTSIZE * 4];
+        Arrays.fill(arrayInV, (short) 42);
+        inV.copyTo(arrayInV);
+        long[] arrayOut = new long[INPUTSIZE * 4];
+        Arrays.fill(arrayOut, (long) 42);
+        out.copyTo(arrayOut);
+        StringBuilder message = new StringBuilder();
+        boolean errorFound = false;
+        for (int i = 0; i < INPUTSIZE; i++) {
+            for (int j = 0; j < 3 ; j++) {
+                // Extract the inputs.
+                ArgumentsHalfLong args = new ArgumentsHalfLong();
+                args.inV = arrayInV[i * 4 + j];
+                args.inVDouble = Float16Utils.convertFloat16ToDouble(args.inV);
+                // Figure out what the outputs should have been.
+                CoreMathVerifier.computeConvert(args);
+                // Validate the outputs.
+                boolean valid = true;
+                if (args.out != arrayOut[i * 4 + j]) {
+                    valid = false;
+                }
+                if (!valid) {
+                    if (!errorFound) {
+                        errorFound = true;
+                        message.append("Input inV: ");
+                        appendVariableToMessage(message, args.inV);
+                        message.append("\n");
+                        message.append("Expected output out: ");
+                        appendVariableToMessage(message, args.out);
+                        message.append("\n");
+                        message.append("Actual   output out: ");
+                        appendVariableToMessage(message, arrayOut[i * 4 + j]);
+                        if (args.out != arrayOut[i * 4 + j]) {
+                            message.append(" FAIL");
+                        }
+                        message.append("\n");
+                        message.append("Errors at");
+                    }
+                    message.append(" [");
+                    message.append(Integer.toString(i));
+                    message.append(", ");
+                    message.append(Integer.toString(j));
+                    message.append("]");
+                }
+            }
+        }
+        assertFalse("Incorrect output for checkConvertHalf3Long3" +
+                (relaxed ? "_relaxed" : "") + ":\n" + message.toString(), errorFound);
+    }
+
+    private void checkConvertHalf4Long4() {
+        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_16, 4, 0x8839687l, -9.2188684372274053120e+18, 9.2188684372274053120e+18);
+        try {
+            Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.SIGNED_64, 4), INPUTSIZE);
+            script.forEach_testConvertLong4Half4Long4(inV, out);
+            verifyResultsConvertHalf4Long4(inV, out, false);
+        } catch (Exception e) {
+            throw new RSRuntimeException("RenderScript. Can't invoke forEach_testConvertLong4Half4Long4: " + e.toString());
+        }
+        try {
+            Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.SIGNED_64, 4), INPUTSIZE);
+            scriptRelaxed.forEach_testConvertLong4Half4Long4(inV, out);
+            verifyResultsConvertHalf4Long4(inV, out, true);
+        } catch (Exception e) {
+            throw new RSRuntimeException("RenderScript. Can't invoke forEach_testConvertLong4Half4Long4: " + e.toString());
+        }
+    }
+
+    private void verifyResultsConvertHalf4Long4(Allocation inV, Allocation out, boolean relaxed) {
+        short[] arrayInV = new short[INPUTSIZE * 4];
+        Arrays.fill(arrayInV, (short) 42);
+        inV.copyTo(arrayInV);
+        long[] arrayOut = new long[INPUTSIZE * 4];
+        Arrays.fill(arrayOut, (long) 42);
+        out.copyTo(arrayOut);
+        StringBuilder message = new StringBuilder();
+        boolean errorFound = false;
+        for (int i = 0; i < INPUTSIZE; i++) {
+            for (int j = 0; j < 4 ; j++) {
+                // Extract the inputs.
+                ArgumentsHalfLong args = new ArgumentsHalfLong();
+                args.inV = arrayInV[i * 4 + j];
+                args.inVDouble = Float16Utils.convertFloat16ToDouble(args.inV);
+                // Figure out what the outputs should have been.
+                CoreMathVerifier.computeConvert(args);
+                // Validate the outputs.
+                boolean valid = true;
+                if (args.out != arrayOut[i * 4 + j]) {
+                    valid = false;
+                }
+                if (!valid) {
+                    if (!errorFound) {
+                        errorFound = true;
+                        message.append("Input inV: ");
+                        appendVariableToMessage(message, args.inV);
+                        message.append("\n");
+                        message.append("Expected output out: ");
+                        appendVariableToMessage(message, args.out);
+                        message.append("\n");
+                        message.append("Actual   output out: ");
+                        appendVariableToMessage(message, arrayOut[i * 4 + j]);
+                        if (args.out != arrayOut[i * 4 + j]) {
+                            message.append(" FAIL");
+                        }
+                        message.append("\n");
+                        message.append("Errors at");
+                    }
+                    message.append(" [");
+                    message.append(Integer.toString(i));
+                    message.append(", ");
+                    message.append(Integer.toString(j));
+                    message.append("]");
+                }
+            }
+        }
+        assertFalse("Incorrect output for checkConvertHalf4Long4" +
+                (relaxed ? "_relaxed" : "") + ":\n" + message.toString(), errorFound);
+    }
+
+    public class ArgumentsHalfUlong {
+        public short inV;
+        public double inVDouble;
+        public long out;
+    }
+
+    private void checkConvertHalf2Ulong2() {
+        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_16, 2, 0xbc6d1b0cl, 0.0000000000000000000e+00, 1.8437736874454810624e+19);
+        try {
+            Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.UNSIGNED_64, 2), INPUTSIZE);
+            script.forEach_testConvertUlong2Half2Ulong2(inV, out);
+            verifyResultsConvertHalf2Ulong2(inV, out, false);
+        } catch (Exception e) {
+            throw new RSRuntimeException("RenderScript. Can't invoke forEach_testConvertUlong2Half2Ulong2: " + e.toString());
+        }
+        try {
+            Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.UNSIGNED_64, 2), INPUTSIZE);
+            scriptRelaxed.forEach_testConvertUlong2Half2Ulong2(inV, out);
+            verifyResultsConvertHalf2Ulong2(inV, out, true);
+        } catch (Exception e) {
+            throw new RSRuntimeException("RenderScript. Can't invoke forEach_testConvertUlong2Half2Ulong2: " + e.toString());
+        }
+    }
+
+    private void verifyResultsConvertHalf2Ulong2(Allocation inV, Allocation out, boolean relaxed) {
+        short[] arrayInV = new short[INPUTSIZE * 2];
+        Arrays.fill(arrayInV, (short) 42);
+        inV.copyTo(arrayInV);
+        long[] arrayOut = new long[INPUTSIZE * 2];
+        Arrays.fill(arrayOut, (long) 42);
+        out.copyTo(arrayOut);
+        StringBuilder message = new StringBuilder();
+        boolean errorFound = false;
+        for (int i = 0; i < INPUTSIZE; i++) {
+            for (int j = 0; j < 2 ; j++) {
+                // Extract the inputs.
+                ArgumentsHalfUlong args = new ArgumentsHalfUlong();
+                args.inV = arrayInV[i * 2 + j];
+                args.inVDouble = Float16Utils.convertFloat16ToDouble(args.inV);
+                // Figure out what the outputs should have been.
+                CoreMathVerifier.computeConvert(args);
+                // Validate the outputs.
+                boolean valid = true;
+                if (args.out != arrayOut[i * 2 + j]) {
+                    valid = false;
+                }
+                if (!valid) {
+                    if (!errorFound) {
+                        errorFound = true;
+                        message.append("Input inV: ");
+                        appendVariableToMessage(message, args.inV);
+                        message.append("\n");
+                        message.append("Expected output out: ");
+                        appendVariableToMessage(message, args.out);
+                        message.append("\n");
+                        message.append("Actual   output out: ");
+                        appendVariableToMessage(message, arrayOut[i * 2 + j]);
+                        if (args.out != arrayOut[i * 2 + j]) {
+                            message.append(" FAIL");
+                        }
+                        message.append("\n");
+                        message.append("Errors at");
+                    }
+                    message.append(" [");
+                    message.append(Integer.toString(i));
+                    message.append(", ");
+                    message.append(Integer.toString(j));
+                    message.append("]");
+                }
+            }
+        }
+        assertFalse("Incorrect output for checkConvertHalf2Ulong2" +
+                (relaxed ? "_relaxed" : "") + ":\n" + message.toString(), errorFound);
+    }
+
+    private void checkConvertHalf3Ulong3() {
+        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_16, 3, 0xb2883beal, 0.0000000000000000000e+00, 1.8437736874454810624e+19);
+        try {
+            Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.UNSIGNED_64, 3), INPUTSIZE);
+            script.forEach_testConvertUlong3Half3Ulong3(inV, out);
+            verifyResultsConvertHalf3Ulong3(inV, out, false);
+        } catch (Exception e) {
+            throw new RSRuntimeException("RenderScript. Can't invoke forEach_testConvertUlong3Half3Ulong3: " + e.toString());
+        }
+        try {
+            Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.UNSIGNED_64, 3), INPUTSIZE);
+            scriptRelaxed.forEach_testConvertUlong3Half3Ulong3(inV, out);
+            verifyResultsConvertHalf3Ulong3(inV, out, true);
+        } catch (Exception e) {
+            throw new RSRuntimeException("RenderScript. Can't invoke forEach_testConvertUlong3Half3Ulong3: " + e.toString());
+        }
+    }
+
+    private void verifyResultsConvertHalf3Ulong3(Allocation inV, Allocation out, boolean relaxed) {
+        short[] arrayInV = new short[INPUTSIZE * 4];
+        Arrays.fill(arrayInV, (short) 42);
+        inV.copyTo(arrayInV);
+        long[] arrayOut = new long[INPUTSIZE * 4];
+        Arrays.fill(arrayOut, (long) 42);
+        out.copyTo(arrayOut);
+        StringBuilder message = new StringBuilder();
+        boolean errorFound = false;
+        for (int i = 0; i < INPUTSIZE; i++) {
+            for (int j = 0; j < 3 ; j++) {
+                // Extract the inputs.
+                ArgumentsHalfUlong args = new ArgumentsHalfUlong();
+                args.inV = arrayInV[i * 4 + j];
+                args.inVDouble = Float16Utils.convertFloat16ToDouble(args.inV);
+                // Figure out what the outputs should have been.
+                CoreMathVerifier.computeConvert(args);
+                // Validate the outputs.
+                boolean valid = true;
+                if (args.out != arrayOut[i * 4 + j]) {
+                    valid = false;
+                }
+                if (!valid) {
+                    if (!errorFound) {
+                        errorFound = true;
+                        message.append("Input inV: ");
+                        appendVariableToMessage(message, args.inV);
+                        message.append("\n");
+                        message.append("Expected output out: ");
+                        appendVariableToMessage(message, args.out);
+                        message.append("\n");
+                        message.append("Actual   output out: ");
+                        appendVariableToMessage(message, arrayOut[i * 4 + j]);
+                        if (args.out != arrayOut[i * 4 + j]) {
+                            message.append(" FAIL");
+                        }
+                        message.append("\n");
+                        message.append("Errors at");
+                    }
+                    message.append(" [");
+                    message.append(Integer.toString(i));
+                    message.append(", ");
+                    message.append(Integer.toString(j));
+                    message.append("]");
+                }
+            }
+        }
+        assertFalse("Incorrect output for checkConvertHalf3Ulong3" +
+                (relaxed ? "_relaxed" : "") + ":\n" + message.toString(), errorFound);
+    }
+
+    private void checkConvertHalf4Ulong4() {
+        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_16, 4, 0xa8a35cc8l, 0.0000000000000000000e+00, 1.8437736874454810624e+19);
+        try {
+            Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.UNSIGNED_64, 4), INPUTSIZE);
+            script.forEach_testConvertUlong4Half4Ulong4(inV, out);
+            verifyResultsConvertHalf4Ulong4(inV, out, false);
+        } catch (Exception e) {
+            throw new RSRuntimeException("RenderScript. Can't invoke forEach_testConvertUlong4Half4Ulong4: " + e.toString());
+        }
+        try {
+            Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.UNSIGNED_64, 4), INPUTSIZE);
+            scriptRelaxed.forEach_testConvertUlong4Half4Ulong4(inV, out);
+            verifyResultsConvertHalf4Ulong4(inV, out, true);
+        } catch (Exception e) {
+            throw new RSRuntimeException("RenderScript. Can't invoke forEach_testConvertUlong4Half4Ulong4: " + e.toString());
+        }
+    }
+
+    private void verifyResultsConvertHalf4Ulong4(Allocation inV, Allocation out, boolean relaxed) {
+        short[] arrayInV = new short[INPUTSIZE * 4];
+        Arrays.fill(arrayInV, (short) 42);
+        inV.copyTo(arrayInV);
+        long[] arrayOut = new long[INPUTSIZE * 4];
+        Arrays.fill(arrayOut, (long) 42);
+        out.copyTo(arrayOut);
+        StringBuilder message = new StringBuilder();
+        boolean errorFound = false;
+        for (int i = 0; i < INPUTSIZE; i++) {
+            for (int j = 0; j < 4 ; j++) {
+                // Extract the inputs.
+                ArgumentsHalfUlong args = new ArgumentsHalfUlong();
+                args.inV = arrayInV[i * 4 + j];
+                args.inVDouble = Float16Utils.convertFloat16ToDouble(args.inV);
+                // Figure out what the outputs should have been.
+                CoreMathVerifier.computeConvert(args);
+                // Validate the outputs.
+                boolean valid = true;
+                if (args.out != arrayOut[i * 4 + j]) {
+                    valid = false;
+                }
+                if (!valid) {
+                    if (!errorFound) {
+                        errorFound = true;
+                        message.append("Input inV: ");
+                        appendVariableToMessage(message, args.inV);
+                        message.append("\n");
+                        message.append("Expected output out: ");
+                        appendVariableToMessage(message, args.out);
+                        message.append("\n");
+                        message.append("Actual   output out: ");
+                        appendVariableToMessage(message, arrayOut[i * 4 + j]);
+                        if (args.out != arrayOut[i * 4 + j]) {
+                            message.append(" FAIL");
+                        }
+                        message.append("\n");
+                        message.append("Errors at");
+                    }
+                    message.append(" [");
+                    message.append(Integer.toString(i));
+                    message.append(", ");
+                    message.append(Integer.toString(j));
+                    message.append("]");
+                }
+            }
+        }
+        assertFalse("Incorrect output for checkConvertHalf4Ulong4" +
+                (relaxed ? "_relaxed" : "") + ":\n" + message.toString(), errorFound);
+    }
+
+    public class ArgumentsFloatHalf {
+        public float inV;
+        public Target.Floaty out;
+    }
+
+    private void checkConvertFloat2Half2() {
+        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_32, 2, 0xaa314c6fl, -3.1129599999999998545e+04, 3.1129599999999998545e+04);
+        try {
+            Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 2), INPUTSIZE);
+            script.forEach_testConvertHalf2Float2Half2(inV, out);
+            verifyResultsConvertFloat2Half2(inV, out, false);
+        } catch (Exception e) {
+            throw new RSRuntimeException("RenderScript. Can't invoke forEach_testConvertHalf2Float2Half2: " + e.toString());
+        }
+        try {
+            Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 2), INPUTSIZE);
+            scriptRelaxed.forEach_testConvertHalf2Float2Half2(inV, out);
+            verifyResultsConvertFloat2Half2(inV, out, true);
+        } catch (Exception e) {
+            throw new RSRuntimeException("RenderScript. Can't invoke forEach_testConvertHalf2Float2Half2: " + e.toString());
+        }
+    }
+
+    private void verifyResultsConvertFloat2Half2(Allocation inV, Allocation out, boolean relaxed) {
+        float[] arrayInV = new float[INPUTSIZE * 2];
+        Arrays.fill(arrayInV, (float) 42);
+        inV.copyTo(arrayInV);
+        short[] arrayOut = new short[INPUTSIZE * 2];
+        Arrays.fill(arrayOut, (short) 42);
+        out.copyTo(arrayOut);
+        StringBuilder message = new StringBuilder();
+        boolean errorFound = false;
+        for (int i = 0; i < INPUTSIZE; i++) {
+            for (int j = 0; j < 2 ; j++) {
+                // Extract the inputs.
+                ArgumentsFloatHalf args = new ArgumentsFloatHalf();
+                args.inV = arrayInV[i * 2 + j];
+                // Figure out what the outputs should have been.
+                Target target = new Target(Target.FunctionType.NORMAL, Target.ReturnType.HALF, relaxed);
+                CoreMathVerifier.computeConvert(args, target);
+                // Validate the outputs.
+                boolean valid = true;
+                if (!args.out.couldBe(Float16Utils.convertFloat16ToDouble(arrayOut[i * 2 + j]))) {
+                    valid = false;
+                }
+                if (!valid) {
+                    if (!errorFound) {
+                        errorFound = true;
+                        message.append("Input inV: ");
+                        appendVariableToMessage(message, args.inV);
+                        message.append("\n");
+                        message.append("Expected output out: ");
+                        appendVariableToMessage(message, args.out);
+                        message.append("\n");
+                        message.append("Actual   output out: ");
+                        appendVariableToMessage(message, arrayOut[i * 2 + j]);
+                        message.append("\n");
+                        message.append("Actual   output out (in double): ");
+                        appendVariableToMessage(message, Float16Utils.convertFloat16ToDouble(arrayOut[i * 2 + j]));
+                        if (!args.out.couldBe(Float16Utils.convertFloat16ToDouble(arrayOut[i * 2 + j]))) {
+                            message.append(" FAIL");
+                        }
+                        message.append("\n");
+                        message.append("Errors at");
+                    }
+                    message.append(" [");
+                    message.append(Integer.toString(i));
+                    message.append(", ");
+                    message.append(Integer.toString(j));
+                    message.append("]");
+                }
+            }
+        }
+        assertFalse("Incorrect output for checkConvertFloat2Half2" +
+                (relaxed ? "_relaxed" : "") + ":\n" + message.toString(), errorFound);
+    }
+
+    private void checkConvertFloat3Half3() {
+        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_32, 3, 0x9391163l, -3.1129599999999998545e+04, 3.1129599999999998545e+04);
+        try {
+            Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 3), INPUTSIZE);
+            script.forEach_testConvertHalf3Float3Half3(inV, out);
+            verifyResultsConvertFloat3Half3(inV, out, false);
+        } catch (Exception e) {
+            throw new RSRuntimeException("RenderScript. Can't invoke forEach_testConvertHalf3Float3Half3: " + e.toString());
+        }
+        try {
+            Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 3), INPUTSIZE);
+            scriptRelaxed.forEach_testConvertHalf3Float3Half3(inV, out);
+            verifyResultsConvertFloat3Half3(inV, out, true);
+        } catch (Exception e) {
+            throw new RSRuntimeException("RenderScript. Can't invoke forEach_testConvertHalf3Float3Half3: " + e.toString());
+        }
+    }
+
+    private void verifyResultsConvertFloat3Half3(Allocation inV, Allocation out, boolean relaxed) {
+        float[] arrayInV = new float[INPUTSIZE * 4];
+        Arrays.fill(arrayInV, (float) 42);
+        inV.copyTo(arrayInV);
+        short[] arrayOut = new short[INPUTSIZE * 4];
+        Arrays.fill(arrayOut, (short) 42);
+        out.copyTo(arrayOut);
+        StringBuilder message = new StringBuilder();
+        boolean errorFound = false;
+        for (int i = 0; i < INPUTSIZE; i++) {
+            for (int j = 0; j < 3 ; j++) {
+                // Extract the inputs.
+                ArgumentsFloatHalf args = new ArgumentsFloatHalf();
+                args.inV = arrayInV[i * 4 + j];
+                // Figure out what the outputs should have been.
+                Target target = new Target(Target.FunctionType.NORMAL, Target.ReturnType.HALF, relaxed);
+                CoreMathVerifier.computeConvert(args, target);
+                // Validate the outputs.
+                boolean valid = true;
+                if (!args.out.couldBe(Float16Utils.convertFloat16ToDouble(arrayOut[i * 4 + j]))) {
+                    valid = false;
+                }
+                if (!valid) {
+                    if (!errorFound) {
+                        errorFound = true;
+                        message.append("Input inV: ");
+                        appendVariableToMessage(message, args.inV);
+                        message.append("\n");
+                        message.append("Expected output out: ");
+                        appendVariableToMessage(message, args.out);
+                        message.append("\n");
+                        message.append("Actual   output out: ");
+                        appendVariableToMessage(message, arrayOut[i * 4 + j]);
+                        message.append("\n");
+                        message.append("Actual   output out (in double): ");
+                        appendVariableToMessage(message, Float16Utils.convertFloat16ToDouble(arrayOut[i * 4 + j]));
+                        if (!args.out.couldBe(Float16Utils.convertFloat16ToDouble(arrayOut[i * 4 + j]))) {
+                            message.append(" FAIL");
+                        }
+                        message.append("\n");
+                        message.append("Errors at");
+                    }
+                    message.append(" [");
+                    message.append(Integer.toString(i));
+                    message.append(", ");
+                    message.append(Integer.toString(j));
+                    message.append("]");
+                }
+            }
+        }
+        assertFalse("Incorrect output for checkConvertFloat3Half3" +
+                (relaxed ? "_relaxed" : "") + ":\n" + message.toString(), errorFound);
+    }
+
+    private void checkConvertFloat4Half4() {
+        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_32, 4, 0x6840d657l, -3.1129599999999998545e+04, 3.1129599999999998545e+04);
+        try {
+            Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 4), INPUTSIZE);
+            script.forEach_testConvertHalf4Float4Half4(inV, out);
+            verifyResultsConvertFloat4Half4(inV, out, false);
+        } catch (Exception e) {
+            throw new RSRuntimeException("RenderScript. Can't invoke forEach_testConvertHalf4Float4Half4: " + e.toString());
+        }
+        try {
+            Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 4), INPUTSIZE);
+            scriptRelaxed.forEach_testConvertHalf4Float4Half4(inV, out);
+            verifyResultsConvertFloat4Half4(inV, out, true);
+        } catch (Exception e) {
+            throw new RSRuntimeException("RenderScript. Can't invoke forEach_testConvertHalf4Float4Half4: " + e.toString());
+        }
+    }
+
+    private void verifyResultsConvertFloat4Half4(Allocation inV, Allocation out, boolean relaxed) {
+        float[] arrayInV = new float[INPUTSIZE * 4];
+        Arrays.fill(arrayInV, (float) 42);
+        inV.copyTo(arrayInV);
+        short[] arrayOut = new short[INPUTSIZE * 4];
+        Arrays.fill(arrayOut, (short) 42);
+        out.copyTo(arrayOut);
+        StringBuilder message = new StringBuilder();
+        boolean errorFound = false;
+        for (int i = 0; i < INPUTSIZE; i++) {
+            for (int j = 0; j < 4 ; j++) {
+                // Extract the inputs.
+                ArgumentsFloatHalf args = new ArgumentsFloatHalf();
+                args.inV = arrayInV[i * 4 + j];
+                // Figure out what the outputs should have been.
+                Target target = new Target(Target.FunctionType.NORMAL, Target.ReturnType.HALF, relaxed);
+                CoreMathVerifier.computeConvert(args, target);
+                // Validate the outputs.
+                boolean valid = true;
+                if (!args.out.couldBe(Float16Utils.convertFloat16ToDouble(arrayOut[i * 4 + j]))) {
+                    valid = false;
+                }
+                if (!valid) {
+                    if (!errorFound) {
+                        errorFound = true;
+                        message.append("Input inV: ");
+                        appendVariableToMessage(message, args.inV);
+                        message.append("\n");
+                        message.append("Expected output out: ");
+                        appendVariableToMessage(message, args.out);
+                        message.append("\n");
+                        message.append("Actual   output out: ");
+                        appendVariableToMessage(message, arrayOut[i * 4 + j]);
+                        message.append("\n");
+                        message.append("Actual   output out (in double): ");
+                        appendVariableToMessage(message, Float16Utils.convertFloat16ToDouble(arrayOut[i * 4 + j]));
+                        if (!args.out.couldBe(Float16Utils.convertFloat16ToDouble(arrayOut[i * 4 + j]))) {
+                            message.append(" FAIL");
+                        }
+                        message.append("\n");
+                        message.append("Errors at");
+                    }
+                    message.append(" [");
+                    message.append(Integer.toString(i));
+                    message.append(", ");
+                    message.append(Integer.toString(j));
+                    message.append("]");
+                }
+            }
+        }
+        assertFalse("Incorrect output for checkConvertFloat4Half4" +
+                (relaxed ? "_relaxed" : "") + ":\n" + message.toString(), errorFound);
+    }
+
+    public class ArgumentsDoubleHalf {
+        public double inV;
+        public Target.Floaty out;
+    }
+
+    private void checkConvertDouble2Half2() {
+        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_64, 2, 0x6fc20024l, -3.1129599999999998545e+04, 3.1129599999999998545e+04);
+        try {
+            Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 2), INPUTSIZE);
+            script.forEach_testConvertHalf2Double2Half2(inV, out);
+            verifyResultsConvertDouble2Half2(inV, out, false);
+        } catch (Exception e) {
+            throw new RSRuntimeException("RenderScript. Can't invoke forEach_testConvertHalf2Double2Half2: " + e.toString());
+        }
+        try {
+            Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 2), INPUTSIZE);
+            scriptRelaxed.forEach_testConvertHalf2Double2Half2(inV, out);
+            verifyResultsConvertDouble2Half2(inV, out, true);
+        } catch (Exception e) {
+            throw new RSRuntimeException("RenderScript. Can't invoke forEach_testConvertHalf2Double2Half2: " + e.toString());
+        }
+    }
+
+    private void verifyResultsConvertDouble2Half2(Allocation inV, Allocation out, boolean relaxed) {
+        double[] arrayInV = new double[INPUTSIZE * 2];
+        Arrays.fill(arrayInV, (double) 42);
+        inV.copyTo(arrayInV);
+        short[] arrayOut = new short[INPUTSIZE * 2];
+        Arrays.fill(arrayOut, (short) 42);
+        out.copyTo(arrayOut);
+        StringBuilder message = new StringBuilder();
+        boolean errorFound = false;
+        for (int i = 0; i < INPUTSIZE; i++) {
+            for (int j = 0; j < 2 ; j++) {
+                // Extract the inputs.
+                ArgumentsDoubleHalf args = new ArgumentsDoubleHalf();
+                args.inV = arrayInV[i * 2 + j];
+                // Figure out what the outputs should have been.
+                Target target = new Target(Target.FunctionType.NORMAL, Target.ReturnType.HALF, relaxed);
+                CoreMathVerifier.computeConvert(args, target);
+                // Validate the outputs.
+                boolean valid = true;
+                if (!args.out.couldBe(Float16Utils.convertFloat16ToDouble(arrayOut[i * 2 + j]))) {
+                    valid = false;
+                }
+                if (!valid) {
+                    if (!errorFound) {
+                        errorFound = true;
+                        message.append("Input inV: ");
+                        appendVariableToMessage(message, args.inV);
+                        message.append("\n");
+                        message.append("Expected output out: ");
+                        appendVariableToMessage(message, args.out);
+                        message.append("\n");
+                        message.append("Actual   output out: ");
+                        appendVariableToMessage(message, arrayOut[i * 2 + j]);
+                        message.append("\n");
+                        message.append("Actual   output out (in double): ");
+                        appendVariableToMessage(message, Float16Utils.convertFloat16ToDouble(arrayOut[i * 2 + j]));
+                        if (!args.out.couldBe(Float16Utils.convertFloat16ToDouble(arrayOut[i * 2 + j]))) {
+                            message.append(" FAIL");
+                        }
+                        message.append("\n");
+                        message.append("Errors at");
+                    }
+                    message.append(" [");
+                    message.append(Integer.toString(i));
+                    message.append(", ");
+                    message.append(Integer.toString(j));
+                    message.append("]");
+                }
+            }
+        }
+        assertFalse("Incorrect output for checkConvertDouble2Half2" +
+                (relaxed ? "_relaxed" : "") + ":\n" + message.toString(), errorFound);
+    }
+
+    private void checkConvertDouble3Half3() {
+        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_64, 3, 0xcec9c518l, -3.1129599999999998545e+04, 3.1129599999999998545e+04);
+        try {
+            Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 3), INPUTSIZE);
+            script.forEach_testConvertHalf3Double3Half3(inV, out);
+            verifyResultsConvertDouble3Half3(inV, out, false);
+        } catch (Exception e) {
+            throw new RSRuntimeException("RenderScript. Can't invoke forEach_testConvertHalf3Double3Half3: " + e.toString());
+        }
+        try {
+            Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 3), INPUTSIZE);
+            scriptRelaxed.forEach_testConvertHalf3Double3Half3(inV, out);
+            verifyResultsConvertDouble3Half3(inV, out, true);
+        } catch (Exception e) {
+            throw new RSRuntimeException("RenderScript. Can't invoke forEach_testConvertHalf3Double3Half3: " + e.toString());
+        }
+    }
+
+    private void verifyResultsConvertDouble3Half3(Allocation inV, Allocation out, boolean relaxed) {
+        double[] arrayInV = new double[INPUTSIZE * 4];
+        Arrays.fill(arrayInV, (double) 42);
+        inV.copyTo(arrayInV);
+        short[] arrayOut = new short[INPUTSIZE * 4];
+        Arrays.fill(arrayOut, (short) 42);
+        out.copyTo(arrayOut);
+        StringBuilder message = new StringBuilder();
+        boolean errorFound = false;
+        for (int i = 0; i < INPUTSIZE; i++) {
+            for (int j = 0; j < 3 ; j++) {
+                // Extract the inputs.
+                ArgumentsDoubleHalf args = new ArgumentsDoubleHalf();
+                args.inV = arrayInV[i * 4 + j];
+                // Figure out what the outputs should have been.
+                Target target = new Target(Target.FunctionType.NORMAL, Target.ReturnType.HALF, relaxed);
+                CoreMathVerifier.computeConvert(args, target);
+                // Validate the outputs.
+                boolean valid = true;
+                if (!args.out.couldBe(Float16Utils.convertFloat16ToDouble(arrayOut[i * 4 + j]))) {
+                    valid = false;
+                }
+                if (!valid) {
+                    if (!errorFound) {
+                        errorFound = true;
+                        message.append("Input inV: ");
+                        appendVariableToMessage(message, args.inV);
+                        message.append("\n");
+                        message.append("Expected output out: ");
+                        appendVariableToMessage(message, args.out);
+                        message.append("\n");
+                        message.append("Actual   output out: ");
+                        appendVariableToMessage(message, arrayOut[i * 4 + j]);
+                        message.append("\n");
+                        message.append("Actual   output out (in double): ");
+                        appendVariableToMessage(message, Float16Utils.convertFloat16ToDouble(arrayOut[i * 4 + j]));
+                        if (!args.out.couldBe(Float16Utils.convertFloat16ToDouble(arrayOut[i * 4 + j]))) {
+                            message.append(" FAIL");
+                        }
+                        message.append("\n");
+                        message.append("Errors at");
+                    }
+                    message.append(" [");
+                    message.append(Integer.toString(i));
+                    message.append(", ");
+                    message.append(Integer.toString(j));
+                    message.append("]");
+                }
+            }
+        }
+        assertFalse("Incorrect output for checkConvertDouble3Half3" +
+                (relaxed ? "_relaxed" : "") + ":\n" + message.toString(), errorFound);
+    }
+
+    private void checkConvertDouble4Half4() {
+        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_64, 4, 0x2dd18a0cl, -3.1129599999999998545e+04, 3.1129599999999998545e+04);
+        try {
+            Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 4), INPUTSIZE);
+            script.forEach_testConvertHalf4Double4Half4(inV, out);
+            verifyResultsConvertDouble4Half4(inV, out, false);
+        } catch (Exception e) {
+            throw new RSRuntimeException("RenderScript. Can't invoke forEach_testConvertHalf4Double4Half4: " + e.toString());
+        }
+        try {
+            Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 4), INPUTSIZE);
+            scriptRelaxed.forEach_testConvertHalf4Double4Half4(inV, out);
+            verifyResultsConvertDouble4Half4(inV, out, true);
+        } catch (Exception e) {
+            throw new RSRuntimeException("RenderScript. Can't invoke forEach_testConvertHalf4Double4Half4: " + e.toString());
+        }
+    }
+
+    private void verifyResultsConvertDouble4Half4(Allocation inV, Allocation out, boolean relaxed) {
+        double[] arrayInV = new double[INPUTSIZE * 4];
+        Arrays.fill(arrayInV, (double) 42);
+        inV.copyTo(arrayInV);
+        short[] arrayOut = new short[INPUTSIZE * 4];
+        Arrays.fill(arrayOut, (short) 42);
+        out.copyTo(arrayOut);
+        StringBuilder message = new StringBuilder();
+        boolean errorFound = false;
+        for (int i = 0; i < INPUTSIZE; i++) {
+            for (int j = 0; j < 4 ; j++) {
+                // Extract the inputs.
+                ArgumentsDoubleHalf args = new ArgumentsDoubleHalf();
+                args.inV = arrayInV[i * 4 + j];
+                // Figure out what the outputs should have been.
+                Target target = new Target(Target.FunctionType.NORMAL, Target.ReturnType.HALF, relaxed);
+                CoreMathVerifier.computeConvert(args, target);
+                // Validate the outputs.
+                boolean valid = true;
+                if (!args.out.couldBe(Float16Utils.convertFloat16ToDouble(arrayOut[i * 4 + j]))) {
+                    valid = false;
+                }
+                if (!valid) {
+                    if (!errorFound) {
+                        errorFound = true;
+                        message.append("Input inV: ");
+                        appendVariableToMessage(message, args.inV);
+                        message.append("\n");
+                        message.append("Expected output out: ");
+                        appendVariableToMessage(message, args.out);
+                        message.append("\n");
+                        message.append("Actual   output out: ");
+                        appendVariableToMessage(message, arrayOut[i * 4 + j]);
+                        message.append("\n");
+                        message.append("Actual   output out (in double): ");
+                        appendVariableToMessage(message, Float16Utils.convertFloat16ToDouble(arrayOut[i * 4 + j]));
+                        if (!args.out.couldBe(Float16Utils.convertFloat16ToDouble(arrayOut[i * 4 + j]))) {
+                            message.append(" FAIL");
+                        }
+                        message.append("\n");
+                        message.append("Errors at");
+                    }
+                    message.append(" [");
+                    message.append(Integer.toString(i));
+                    message.append(", ");
+                    message.append(Integer.toString(j));
+                    message.append("]");
+                }
+            }
+        }
+        assertFalse("Incorrect output for checkConvertDouble4Half4" +
+                (relaxed ? "_relaxed" : "") + ":\n" + message.toString(), errorFound);
+    }
+
+    public class ArgumentsCharHalf {
+        public byte inV;
+        public Target.Floaty out;
+    }
+
+    private void checkConvertChar2Half2() {
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_8, 2, 0x55c123afl, true, 7);
+        try {
+            Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 2), INPUTSIZE);
+            script.forEach_testConvertHalf2Char2Half2(inV, out);
+            verifyResultsConvertChar2Half2(inV, out, false);
+        } catch (Exception e) {
+            throw new RSRuntimeException("RenderScript. Can't invoke forEach_testConvertHalf2Char2Half2: " + e.toString());
+        }
+        try {
+            Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 2), INPUTSIZE);
+            scriptRelaxed.forEach_testConvertHalf2Char2Half2(inV, out);
+            verifyResultsConvertChar2Half2(inV, out, true);
+        } catch (Exception e) {
+            throw new RSRuntimeException("RenderScript. Can't invoke forEach_testConvertHalf2Char2Half2: " + e.toString());
+        }
+    }
+
+    private void verifyResultsConvertChar2Half2(Allocation inV, Allocation out, boolean relaxed) {
+        byte[] arrayInV = new byte[INPUTSIZE * 2];
+        Arrays.fill(arrayInV, (byte) 42);
+        inV.copyTo(arrayInV);
+        short[] arrayOut = new short[INPUTSIZE * 2];
+        Arrays.fill(arrayOut, (short) 42);
+        out.copyTo(arrayOut);
+        StringBuilder message = new StringBuilder();
+        boolean errorFound = false;
+        for (int i = 0; i < INPUTSIZE; i++) {
+            for (int j = 0; j < 2 ; j++) {
+                // Extract the inputs.
+                ArgumentsCharHalf args = new ArgumentsCharHalf();
+                args.inV = arrayInV[i * 2 + j];
+                // Figure out what the outputs should have been.
+                Target target = new Target(Target.FunctionType.NORMAL, Target.ReturnType.HALF, relaxed);
+                CoreMathVerifier.computeConvert(args, target);
+                // Validate the outputs.
+                boolean valid = true;
+                if (!args.out.couldBe(Float16Utils.convertFloat16ToDouble(arrayOut[i * 2 + j]))) {
+                    valid = false;
+                }
+                if (!valid) {
+                    if (!errorFound) {
+                        errorFound = true;
+                        message.append("Input inV: ");
+                        appendVariableToMessage(message, args.inV);
+                        message.append("\n");
+                        message.append("Expected output out: ");
+                        appendVariableToMessage(message, args.out);
+                        message.append("\n");
+                        message.append("Actual   output out: ");
+                        appendVariableToMessage(message, arrayOut[i * 2 + j]);
+                        message.append("\n");
+                        message.append("Actual   output out (in double): ");
+                        appendVariableToMessage(message, Float16Utils.convertFloat16ToDouble(arrayOut[i * 2 + j]));
+                        if (!args.out.couldBe(Float16Utils.convertFloat16ToDouble(arrayOut[i * 2 + j]))) {
+                            message.append(" FAIL");
+                        }
+                        message.append("\n");
+                        message.append("Errors at");
+                    }
+                    message.append(" [");
+                    message.append(Integer.toString(i));
+                    message.append(", ");
+                    message.append(Integer.toString(j));
+                    message.append("]");
+                }
+            }
+        }
+        assertFalse("Incorrect output for checkConvertChar2Half2" +
+                (relaxed ? "_relaxed" : "") + ":\n" + message.toString(), errorFound);
+    }
+
+    private void checkConvertChar3Half3() {
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_8, 3, 0xb4c8e8a3l, true, 7);
+        try {
+            Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 3), INPUTSIZE);
+            script.forEach_testConvertHalf3Char3Half3(inV, out);
+            verifyResultsConvertChar3Half3(inV, out, false);
+        } catch (Exception e) {
+            throw new RSRuntimeException("RenderScript. Can't invoke forEach_testConvertHalf3Char3Half3: " + e.toString());
+        }
+        try {
+            Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 3), INPUTSIZE);
+            scriptRelaxed.forEach_testConvertHalf3Char3Half3(inV, out);
+            verifyResultsConvertChar3Half3(inV, out, true);
+        } catch (Exception e) {
+            throw new RSRuntimeException("RenderScript. Can't invoke forEach_testConvertHalf3Char3Half3: " + e.toString());
+        }
+    }
+
+    private void verifyResultsConvertChar3Half3(Allocation inV, Allocation out, boolean relaxed) {
+        byte[] arrayInV = new byte[INPUTSIZE * 4];
+        Arrays.fill(arrayInV, (byte) 42);
+        inV.copyTo(arrayInV);
+        short[] arrayOut = new short[INPUTSIZE * 4];
+        Arrays.fill(arrayOut, (short) 42);
+        out.copyTo(arrayOut);
+        StringBuilder message = new StringBuilder();
+        boolean errorFound = false;
+        for (int i = 0; i < INPUTSIZE; i++) {
+            for (int j = 0; j < 3 ; j++) {
+                // Extract the inputs.
+                ArgumentsCharHalf args = new ArgumentsCharHalf();
+                args.inV = arrayInV[i * 4 + j];
+                // Figure out what the outputs should have been.
+                Target target = new Target(Target.FunctionType.NORMAL, Target.ReturnType.HALF, relaxed);
+                CoreMathVerifier.computeConvert(args, target);
+                // Validate the outputs.
+                boolean valid = true;
+                if (!args.out.couldBe(Float16Utils.convertFloat16ToDouble(arrayOut[i * 4 + j]))) {
+                    valid = false;
+                }
+                if (!valid) {
+                    if (!errorFound) {
+                        errorFound = true;
+                        message.append("Input inV: ");
+                        appendVariableToMessage(message, args.inV);
+                        message.append("\n");
+                        message.append("Expected output out: ");
+                        appendVariableToMessage(message, args.out);
+                        message.append("\n");
+                        message.append("Actual   output out: ");
+                        appendVariableToMessage(message, arrayOut[i * 4 + j]);
+                        message.append("\n");
+                        message.append("Actual   output out (in double): ");
+                        appendVariableToMessage(message, Float16Utils.convertFloat16ToDouble(arrayOut[i * 4 + j]));
+                        if (!args.out.couldBe(Float16Utils.convertFloat16ToDouble(arrayOut[i * 4 + j]))) {
+                            message.append(" FAIL");
+                        }
+                        message.append("\n");
+                        message.append("Errors at");
+                    }
+                    message.append(" [");
+                    message.append(Integer.toString(i));
+                    message.append(", ");
+                    message.append(Integer.toString(j));
+                    message.append("]");
+                }
+            }
+        }
+        assertFalse("Incorrect output for checkConvertChar3Half3" +
+                (relaxed ? "_relaxed" : "") + ":\n" + message.toString(), errorFound);
+    }
+
+    private void checkConvertChar4Half4() {
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_8, 4, 0x13d0ad97l, true, 7);
+        try {
+            Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 4), INPUTSIZE);
+            script.forEach_testConvertHalf4Char4Half4(inV, out);
+            verifyResultsConvertChar4Half4(inV, out, false);
+        } catch (Exception e) {
+            throw new RSRuntimeException("RenderScript. Can't invoke forEach_testConvertHalf4Char4Half4: " + e.toString());
+        }
+        try {
+            Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 4), INPUTSIZE);
+            scriptRelaxed.forEach_testConvertHalf4Char4Half4(inV, out);
+            verifyResultsConvertChar4Half4(inV, out, true);
+        } catch (Exception e) {
+            throw new RSRuntimeException("RenderScript. Can't invoke forEach_testConvertHalf4Char4Half4: " + e.toString());
+        }
+    }
+
+    private void verifyResultsConvertChar4Half4(Allocation inV, Allocation out, boolean relaxed) {
+        byte[] arrayInV = new byte[INPUTSIZE * 4];
+        Arrays.fill(arrayInV, (byte) 42);
+        inV.copyTo(arrayInV);
+        short[] arrayOut = new short[INPUTSIZE * 4];
+        Arrays.fill(arrayOut, (short) 42);
+        out.copyTo(arrayOut);
+        StringBuilder message = new StringBuilder();
+        boolean errorFound = false;
+        for (int i = 0; i < INPUTSIZE; i++) {
+            for (int j = 0; j < 4 ; j++) {
+                // Extract the inputs.
+                ArgumentsCharHalf args = new ArgumentsCharHalf();
+                args.inV = arrayInV[i * 4 + j];
+                // Figure out what the outputs should have been.
+                Target target = new Target(Target.FunctionType.NORMAL, Target.ReturnType.HALF, relaxed);
+                CoreMathVerifier.computeConvert(args, target);
+                // Validate the outputs.
+                boolean valid = true;
+                if (!args.out.couldBe(Float16Utils.convertFloat16ToDouble(arrayOut[i * 4 + j]))) {
+                    valid = false;
+                }
+                if (!valid) {
+                    if (!errorFound) {
+                        errorFound = true;
+                        message.append("Input inV: ");
+                        appendVariableToMessage(message, args.inV);
+                        message.append("\n");
+                        message.append("Expected output out: ");
+                        appendVariableToMessage(message, args.out);
+                        message.append("\n");
+                        message.append("Actual   output out: ");
+                        appendVariableToMessage(message, arrayOut[i * 4 + j]);
+                        message.append("\n");
+                        message.append("Actual   output out (in double): ");
+                        appendVariableToMessage(message, Float16Utils.convertFloat16ToDouble(arrayOut[i * 4 + j]));
+                        if (!args.out.couldBe(Float16Utils.convertFloat16ToDouble(arrayOut[i * 4 + j]))) {
+                            message.append(" FAIL");
+                        }
+                        message.append("\n");
+                        message.append("Errors at");
+                    }
+                    message.append(" [");
+                    message.append(Integer.toString(i));
+                    message.append(", ");
+                    message.append(Integer.toString(j));
+                    message.append("]");
+                }
+            }
+        }
+        assertFalse("Incorrect output for checkConvertChar4Half4" +
+                (relaxed ? "_relaxed" : "") + ":\n" + message.toString(), errorFound);
+    }
+
+    public class ArgumentsUcharHalf {
+        public byte inV;
+        public Target.Floaty out;
+    }
+
+    private void checkConvertUchar2Half2() {
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_8, 2, 0xe8433030l, false, 8);
+        try {
+            Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 2), INPUTSIZE);
+            script.forEach_testConvertHalf2Uchar2Half2(inV, out);
+            verifyResultsConvertUchar2Half2(inV, out, false);
+        } catch (Exception e) {
+            throw new RSRuntimeException("RenderScript. Can't invoke forEach_testConvertHalf2Uchar2Half2: " + e.toString());
+        }
+        try {
+            Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 2), INPUTSIZE);
+            scriptRelaxed.forEach_testConvertHalf2Uchar2Half2(inV, out);
+            verifyResultsConvertUchar2Half2(inV, out, true);
+        } catch (Exception e) {
+            throw new RSRuntimeException("RenderScript. Can't invoke forEach_testConvertHalf2Uchar2Half2: " + e.toString());
+        }
+    }
+
+    private void verifyResultsConvertUchar2Half2(Allocation inV, Allocation out, boolean relaxed) {
+        byte[] arrayInV = new byte[INPUTSIZE * 2];
+        Arrays.fill(arrayInV, (byte) 42);
+        inV.copyTo(arrayInV);
+        short[] arrayOut = new short[INPUTSIZE * 2];
+        Arrays.fill(arrayOut, (short) 42);
+        out.copyTo(arrayOut);
+        StringBuilder message = new StringBuilder();
+        boolean errorFound = false;
+        for (int i = 0; i < INPUTSIZE; i++) {
+            for (int j = 0; j < 2 ; j++) {
+                // Extract the inputs.
+                ArgumentsUcharHalf args = new ArgumentsUcharHalf();
+                args.inV = arrayInV[i * 2 + j];
+                // Figure out what the outputs should have been.
+                Target target = new Target(Target.FunctionType.NORMAL, Target.ReturnType.HALF, relaxed);
+                CoreMathVerifier.computeConvert(args, target);
+                // Validate the outputs.
+                boolean valid = true;
+                if (!args.out.couldBe(Float16Utils.convertFloat16ToDouble(arrayOut[i * 2 + j]))) {
+                    valid = false;
+                }
+                if (!valid) {
+                    if (!errorFound) {
+                        errorFound = true;
+                        message.append("Input inV: ");
+                        appendVariableToMessage(message, args.inV);
+                        message.append("\n");
+                        message.append("Expected output out: ");
+                        appendVariableToMessage(message, args.out);
+                        message.append("\n");
+                        message.append("Actual   output out: ");
+                        appendVariableToMessage(message, arrayOut[i * 2 + j]);
+                        message.append("\n");
+                        message.append("Actual   output out (in double): ");
+                        appendVariableToMessage(message, Float16Utils.convertFloat16ToDouble(arrayOut[i * 2 + j]));
+                        if (!args.out.couldBe(Float16Utils.convertFloat16ToDouble(arrayOut[i * 2 + j]))) {
+                            message.append(" FAIL");
+                        }
+                        message.append("\n");
+                        message.append("Errors at");
+                    }
+                    message.append(" [");
+                    message.append(Integer.toString(i));
+                    message.append(", ");
+                    message.append(Integer.toString(j));
+                    message.append("]");
+                }
+            }
+        }
+        assertFalse("Incorrect output for checkConvertUchar2Half2" +
+                (relaxed ? "_relaxed" : "") + ":\n" + message.toString(), errorFound);
+    }
+
+    private void checkConvertUchar3Half3() {
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_8, 3, 0x474af524l, false, 8);
+        try {
+            Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 3), INPUTSIZE);
+            script.forEach_testConvertHalf3Uchar3Half3(inV, out);
+            verifyResultsConvertUchar3Half3(inV, out, false);
+        } catch (Exception e) {
+            throw new RSRuntimeException("RenderScript. Can't invoke forEach_testConvertHalf3Uchar3Half3: " + e.toString());
+        }
+        try {
+            Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 3), INPUTSIZE);
+            scriptRelaxed.forEach_testConvertHalf3Uchar3Half3(inV, out);
+            verifyResultsConvertUchar3Half3(inV, out, true);
+        } catch (Exception e) {
+            throw new RSRuntimeException("RenderScript. Can't invoke forEach_testConvertHalf3Uchar3Half3: " + e.toString());
+        }
+    }
+
+    private void verifyResultsConvertUchar3Half3(Allocation inV, Allocation out, boolean relaxed) {
+        byte[] arrayInV = new byte[INPUTSIZE * 4];
+        Arrays.fill(arrayInV, (byte) 42);
+        inV.copyTo(arrayInV);
+        short[] arrayOut = new short[INPUTSIZE * 4];
+        Arrays.fill(arrayOut, (short) 42);
+        out.copyTo(arrayOut);
+        StringBuilder message = new StringBuilder();
+        boolean errorFound = false;
+        for (int i = 0; i < INPUTSIZE; i++) {
+            for (int j = 0; j < 3 ; j++) {
+                // Extract the inputs.
+                ArgumentsUcharHalf args = new ArgumentsUcharHalf();
+                args.inV = arrayInV[i * 4 + j];
+                // Figure out what the outputs should have been.
+                Target target = new Target(Target.FunctionType.NORMAL, Target.ReturnType.HALF, relaxed);
+                CoreMathVerifier.computeConvert(args, target);
+                // Validate the outputs.
+                boolean valid = true;
+                if (!args.out.couldBe(Float16Utils.convertFloat16ToDouble(arrayOut[i * 4 + j]))) {
+                    valid = false;
+                }
+                if (!valid) {
+                    if (!errorFound) {
+                        errorFound = true;
+                        message.append("Input inV: ");
+                        appendVariableToMessage(message, args.inV);
+                        message.append("\n");
+                        message.append("Expected output out: ");
+                        appendVariableToMessage(message, args.out);
+                        message.append("\n");
+                        message.append("Actual   output out: ");
+                        appendVariableToMessage(message, arrayOut[i * 4 + j]);
+                        message.append("\n");
+                        message.append("Actual   output out (in double): ");
+                        appendVariableToMessage(message, Float16Utils.convertFloat16ToDouble(arrayOut[i * 4 + j]));
+                        if (!args.out.couldBe(Float16Utils.convertFloat16ToDouble(arrayOut[i * 4 + j]))) {
+                            message.append(" FAIL");
+                        }
+                        message.append("\n");
+                        message.append("Errors at");
+                    }
+                    message.append(" [");
+                    message.append(Integer.toString(i));
+                    message.append(", ");
+                    message.append(Integer.toString(j));
+                    message.append("]");
+                }
+            }
+        }
+        assertFalse("Incorrect output for checkConvertUchar3Half3" +
+                (relaxed ? "_relaxed" : "") + ":\n" + message.toString(), errorFound);
+    }
+
+    private void checkConvertUchar4Half4() {
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_8, 4, 0xa652ba18l, false, 8);
+        try {
+            Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 4), INPUTSIZE);
+            script.forEach_testConvertHalf4Uchar4Half4(inV, out);
+            verifyResultsConvertUchar4Half4(inV, out, false);
+        } catch (Exception e) {
+            throw new RSRuntimeException("RenderScript. Can't invoke forEach_testConvertHalf4Uchar4Half4: " + e.toString());
+        }
+        try {
+            Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 4), INPUTSIZE);
+            scriptRelaxed.forEach_testConvertHalf4Uchar4Half4(inV, out);
+            verifyResultsConvertUchar4Half4(inV, out, true);
+        } catch (Exception e) {
+            throw new RSRuntimeException("RenderScript. Can't invoke forEach_testConvertHalf4Uchar4Half4: " + e.toString());
+        }
+    }
+
+    private void verifyResultsConvertUchar4Half4(Allocation inV, Allocation out, boolean relaxed) {
+        byte[] arrayInV = new byte[INPUTSIZE * 4];
+        Arrays.fill(arrayInV, (byte) 42);
+        inV.copyTo(arrayInV);
+        short[] arrayOut = new short[INPUTSIZE * 4];
+        Arrays.fill(arrayOut, (short) 42);
+        out.copyTo(arrayOut);
+        StringBuilder message = new StringBuilder();
+        boolean errorFound = false;
+        for (int i = 0; i < INPUTSIZE; i++) {
+            for (int j = 0; j < 4 ; j++) {
+                // Extract the inputs.
+                ArgumentsUcharHalf args = new ArgumentsUcharHalf();
+                args.inV = arrayInV[i * 4 + j];
+                // Figure out what the outputs should have been.
+                Target target = new Target(Target.FunctionType.NORMAL, Target.ReturnType.HALF, relaxed);
+                CoreMathVerifier.computeConvert(args, target);
+                // Validate the outputs.
+                boolean valid = true;
+                if (!args.out.couldBe(Float16Utils.convertFloat16ToDouble(arrayOut[i * 4 + j]))) {
+                    valid = false;
+                }
+                if (!valid) {
+                    if (!errorFound) {
+                        errorFound = true;
+                        message.append("Input inV: ");
+                        appendVariableToMessage(message, args.inV);
+                        message.append("\n");
+                        message.append("Expected output out: ");
+                        appendVariableToMessage(message, args.out);
+                        message.append("\n");
+                        message.append("Actual   output out: ");
+                        appendVariableToMessage(message, arrayOut[i * 4 + j]);
+                        message.append("\n");
+                        message.append("Actual   output out (in double): ");
+                        appendVariableToMessage(message, Float16Utils.convertFloat16ToDouble(arrayOut[i * 4 + j]));
+                        if (!args.out.couldBe(Float16Utils.convertFloat16ToDouble(arrayOut[i * 4 + j]))) {
+                            message.append(" FAIL");
+                        }
+                        message.append("\n");
+                        message.append("Errors at");
+                    }
+                    message.append(" [");
+                    message.append(Integer.toString(i));
+                    message.append(", ");
+                    message.append(Integer.toString(j));
+                    message.append("]");
+                }
+            }
+        }
+        assertFalse("Incorrect output for checkConvertUchar4Half4" +
+                (relaxed ? "_relaxed" : "") + ":\n" + message.toString(), errorFound);
+    }
+
+    public class ArgumentsShortHalf {
+        public short inV;
+        public Target.Floaty out;
+    }
+
+    private void checkConvertShort2Half2() {
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_16, 2, 0x967ebe73l, true, 15);
+        try {
+            Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 2), INPUTSIZE);
+            script.forEach_testConvertHalf2Short2Half2(inV, out);
+            verifyResultsConvertShort2Half2(inV, out, false);
+        } catch (Exception e) {
+            throw new RSRuntimeException("RenderScript. Can't invoke forEach_testConvertHalf2Short2Half2: " + e.toString());
+        }
+        try {
+            Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 2), INPUTSIZE);
+            scriptRelaxed.forEach_testConvertHalf2Short2Half2(inV, out);
+            verifyResultsConvertShort2Half2(inV, out, true);
+        } catch (Exception e) {
+            throw new RSRuntimeException("RenderScript. Can't invoke forEach_testConvertHalf2Short2Half2: " + e.toString());
+        }
+    }
+
+    private void verifyResultsConvertShort2Half2(Allocation inV, Allocation out, boolean relaxed) {
+        short[] arrayInV = new short[INPUTSIZE * 2];
+        Arrays.fill(arrayInV, (short) 42);
+        inV.copyTo(arrayInV);
+        short[] arrayOut = new short[INPUTSIZE * 2];
+        Arrays.fill(arrayOut, (short) 42);
+        out.copyTo(arrayOut);
+        StringBuilder message = new StringBuilder();
+        boolean errorFound = false;
+        for (int i = 0; i < INPUTSIZE; i++) {
+            for (int j = 0; j < 2 ; j++) {
+                // Extract the inputs.
+                ArgumentsShortHalf args = new ArgumentsShortHalf();
+                args.inV = arrayInV[i * 2 + j];
+                // Figure out what the outputs should have been.
+                Target target = new Target(Target.FunctionType.NORMAL, Target.ReturnType.HALF, relaxed);
+                CoreMathVerifier.computeConvert(args, target);
+                // Validate the outputs.
+                boolean valid = true;
+                if (!args.out.couldBe(Float16Utils.convertFloat16ToDouble(arrayOut[i * 2 + j]))) {
+                    valid = false;
+                }
+                if (!valid) {
+                    if (!errorFound) {
+                        errorFound = true;
+                        message.append("Input inV: ");
+                        appendVariableToMessage(message, args.inV);
+                        message.append("\n");
+                        message.append("Expected output out: ");
+                        appendVariableToMessage(message, args.out);
+                        message.append("\n");
+                        message.append("Actual   output out: ");
+                        appendVariableToMessage(message, arrayOut[i * 2 + j]);
+                        message.append("\n");
+                        message.append("Actual   output out (in double): ");
+                        appendVariableToMessage(message, Float16Utils.convertFloat16ToDouble(arrayOut[i * 2 + j]));
+                        if (!args.out.couldBe(Float16Utils.convertFloat16ToDouble(arrayOut[i * 2 + j]))) {
+                            message.append(" FAIL");
+                        }
+                        message.append("\n");
+                        message.append("Errors at");
+                    }
+                    message.append(" [");
+                    message.append(Integer.toString(i));
+                    message.append(", ");
+                    message.append(Integer.toString(j));
+                    message.append("]");
+                }
+            }
+        }
+        assertFalse("Incorrect output for checkConvertShort2Half2" +
+                (relaxed ? "_relaxed" : "") + ":\n" + message.toString(), errorFound);
+    }
+
+    private void checkConvertShort3Half3() {
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_16, 3, 0xf5868367l, true, 15);
+        try {
+            Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 3), INPUTSIZE);
+            script.forEach_testConvertHalf3Short3Half3(inV, out);
+            verifyResultsConvertShort3Half3(inV, out, false);
+        } catch (Exception e) {
+            throw new RSRuntimeException("RenderScript. Can't invoke forEach_testConvertHalf3Short3Half3: " + e.toString());
+        }
+        try {
+            Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 3), INPUTSIZE);
+            scriptRelaxed.forEach_testConvertHalf3Short3Half3(inV, out);
+            verifyResultsConvertShort3Half3(inV, out, true);
+        } catch (Exception e) {
+            throw new RSRuntimeException("RenderScript. Can't invoke forEach_testConvertHalf3Short3Half3: " + e.toString());
+        }
+    }
+
+    private void verifyResultsConvertShort3Half3(Allocation inV, Allocation out, boolean relaxed) {
+        short[] arrayInV = new short[INPUTSIZE * 4];
+        Arrays.fill(arrayInV, (short) 42);
+        inV.copyTo(arrayInV);
+        short[] arrayOut = new short[INPUTSIZE * 4];
+        Arrays.fill(arrayOut, (short) 42);
+        out.copyTo(arrayOut);
+        StringBuilder message = new StringBuilder();
+        boolean errorFound = false;
+        for (int i = 0; i < INPUTSIZE; i++) {
+            for (int j = 0; j < 3 ; j++) {
+                // Extract the inputs.
+                ArgumentsShortHalf args = new ArgumentsShortHalf();
+                args.inV = arrayInV[i * 4 + j];
+                // Figure out what the outputs should have been.
+                Target target = new Target(Target.FunctionType.NORMAL, Target.ReturnType.HALF, relaxed);
+                CoreMathVerifier.computeConvert(args, target);
+                // Validate the outputs.
+                boolean valid = true;
+                if (!args.out.couldBe(Float16Utils.convertFloat16ToDouble(arrayOut[i * 4 + j]))) {
+                    valid = false;
+                }
+                if (!valid) {
+                    if (!errorFound) {
+                        errorFound = true;
+                        message.append("Input inV: ");
+                        appendVariableToMessage(message, args.inV);
+                        message.append("\n");
+                        message.append("Expected output out: ");
+                        appendVariableToMessage(message, args.out);
+                        message.append("\n");
+                        message.append("Actual   output out: ");
+                        appendVariableToMessage(message, arrayOut[i * 4 + j]);
+                        message.append("\n");
+                        message.append("Actual   output out (in double): ");
+                        appendVariableToMessage(message, Float16Utils.convertFloat16ToDouble(arrayOut[i * 4 + j]));
+                        if (!args.out.couldBe(Float16Utils.convertFloat16ToDouble(arrayOut[i * 4 + j]))) {
+                            message.append(" FAIL");
+                        }
+                        message.append("\n");
+                        message.append("Errors at");
+                    }
+                    message.append(" [");
+                    message.append(Integer.toString(i));
+                    message.append(", ");
+                    message.append(Integer.toString(j));
+                    message.append("]");
+                }
+            }
+        }
+        assertFalse("Incorrect output for checkConvertShort3Half3" +
+                (relaxed ? "_relaxed" : "") + ":\n" + message.toString(), errorFound);
+    }
+
+    private void checkConvertShort4Half4() {
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_16, 4, 0x548e485bl, true, 15);
+        try {
+            Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 4), INPUTSIZE);
+            script.forEach_testConvertHalf4Short4Half4(inV, out);
+            verifyResultsConvertShort4Half4(inV, out, false);
+        } catch (Exception e) {
+            throw new RSRuntimeException("RenderScript. Can't invoke forEach_testConvertHalf4Short4Half4: " + e.toString());
+        }
+        try {
+            Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 4), INPUTSIZE);
+            scriptRelaxed.forEach_testConvertHalf4Short4Half4(inV, out);
+            verifyResultsConvertShort4Half4(inV, out, true);
+        } catch (Exception e) {
+            throw new RSRuntimeException("RenderScript. Can't invoke forEach_testConvertHalf4Short4Half4: " + e.toString());
+        }
+    }
+
+    private void verifyResultsConvertShort4Half4(Allocation inV, Allocation out, boolean relaxed) {
+        short[] arrayInV = new short[INPUTSIZE * 4];
+        Arrays.fill(arrayInV, (short) 42);
+        inV.copyTo(arrayInV);
+        short[] arrayOut = new short[INPUTSIZE * 4];
+        Arrays.fill(arrayOut, (short) 42);
+        out.copyTo(arrayOut);
+        StringBuilder message = new StringBuilder();
+        boolean errorFound = false;
+        for (int i = 0; i < INPUTSIZE; i++) {
+            for (int j = 0; j < 4 ; j++) {
+                // Extract the inputs.
+                ArgumentsShortHalf args = new ArgumentsShortHalf();
+                args.inV = arrayInV[i * 4 + j];
+                // Figure out what the outputs should have been.
+                Target target = new Target(Target.FunctionType.NORMAL, Target.ReturnType.HALF, relaxed);
+                CoreMathVerifier.computeConvert(args, target);
+                // Validate the outputs.
+                boolean valid = true;
+                if (!args.out.couldBe(Float16Utils.convertFloat16ToDouble(arrayOut[i * 4 + j]))) {
+                    valid = false;
+                }
+                if (!valid) {
+                    if (!errorFound) {
+                        errorFound = true;
+                        message.append("Input inV: ");
+                        appendVariableToMessage(message, args.inV);
+                        message.append("\n");
+                        message.append("Expected output out: ");
+                        appendVariableToMessage(message, args.out);
+                        message.append("\n");
+                        message.append("Actual   output out: ");
+                        appendVariableToMessage(message, arrayOut[i * 4 + j]);
+                        message.append("\n");
+                        message.append("Actual   output out (in double): ");
+                        appendVariableToMessage(message, Float16Utils.convertFloat16ToDouble(arrayOut[i * 4 + j]));
+                        if (!args.out.couldBe(Float16Utils.convertFloat16ToDouble(arrayOut[i * 4 + j]))) {
+                            message.append(" FAIL");
+                        }
+                        message.append("\n");
+                        message.append("Errors at");
+                    }
+                    message.append(" [");
+                    message.append(Integer.toString(i));
+                    message.append(", ");
+                    message.append(Integer.toString(j));
+                    message.append("]");
+                }
+            }
+        }
+        assertFalse("Incorrect output for checkConvertShort4Half4" +
+                (relaxed ? "_relaxed" : "") + ":\n" + message.toString(), errorFound);
+    }
+
+    public class ArgumentsUshortHalf {
+        public short inV;
+        public Target.Floaty out;
+    }
+
+    private void checkConvertUshort2Half2() {
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_16, 2, 0x3256d81el, false, 16);
+        try {
+            Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 2), INPUTSIZE);
+            script.forEach_testConvertHalf2Ushort2Half2(inV, out);
+            verifyResultsConvertUshort2Half2(inV, out, false);
+        } catch (Exception e) {
+            throw new RSRuntimeException("RenderScript. Can't invoke forEach_testConvertHalf2Ushort2Half2: " + e.toString());
+        }
+        try {
+            Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 2), INPUTSIZE);
+            scriptRelaxed.forEach_testConvertHalf2Ushort2Half2(inV, out);
+            verifyResultsConvertUshort2Half2(inV, out, true);
+        } catch (Exception e) {
+            throw new RSRuntimeException("RenderScript. Can't invoke forEach_testConvertHalf2Ushort2Half2: " + e.toString());
+        }
+    }
+
+    private void verifyResultsConvertUshort2Half2(Allocation inV, Allocation out, boolean relaxed) {
+        short[] arrayInV = new short[INPUTSIZE * 2];
+        Arrays.fill(arrayInV, (short) 42);
+        inV.copyTo(arrayInV);
+        short[] arrayOut = new short[INPUTSIZE * 2];
+        Arrays.fill(arrayOut, (short) 42);
+        out.copyTo(arrayOut);
+        StringBuilder message = new StringBuilder();
+        boolean errorFound = false;
+        for (int i = 0; i < INPUTSIZE; i++) {
+            for (int j = 0; j < 2 ; j++) {
+                // Extract the inputs.
+                ArgumentsUshortHalf args = new ArgumentsUshortHalf();
+                args.inV = arrayInV[i * 2 + j];
+                // Figure out what the outputs should have been.
+                Target target = new Target(Target.FunctionType.NORMAL, Target.ReturnType.HALF, relaxed);
+                CoreMathVerifier.computeConvert(args, target);
+                // Validate the outputs.
+                boolean valid = true;
+                if (!args.out.couldBe(Float16Utils.convertFloat16ToDouble(arrayOut[i * 2 + j]))) {
+                    valid = false;
+                }
+                if (!valid) {
+                    if (!errorFound) {
+                        errorFound = true;
+                        message.append("Input inV: ");
+                        appendVariableToMessage(message, args.inV);
+                        message.append("\n");
+                        message.append("Expected output out: ");
+                        appendVariableToMessage(message, args.out);
+                        message.append("\n");
+                        message.append("Actual   output out: ");
+                        appendVariableToMessage(message, arrayOut[i * 2 + j]);
+                        message.append("\n");
+                        message.append("Actual   output out (in double): ");
+                        appendVariableToMessage(message, Float16Utils.convertFloat16ToDouble(arrayOut[i * 2 + j]));
+                        if (!args.out.couldBe(Float16Utils.convertFloat16ToDouble(arrayOut[i * 2 + j]))) {
+                            message.append(" FAIL");
+                        }
+                        message.append("\n");
+                        message.append("Errors at");
+                    }
+                    message.append(" [");
+                    message.append(Integer.toString(i));
+                    message.append(", ");
+                    message.append(Integer.toString(j));
+                    message.append("]");
+                }
+            }
+        }
+        assertFalse("Incorrect output for checkConvertUshort2Half2" +
+                (relaxed ? "_relaxed" : "") + ":\n" + message.toString(), errorFound);
+    }
+
+    private void checkConvertUshort3Half3() {
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_16, 3, 0x915e9d12l, false, 16);
+        try {
+            Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 3), INPUTSIZE);
+            script.forEach_testConvertHalf3Ushort3Half3(inV, out);
+            verifyResultsConvertUshort3Half3(inV, out, false);
+        } catch (Exception e) {
+            throw new RSRuntimeException("RenderScript. Can't invoke forEach_testConvertHalf3Ushort3Half3: " + e.toString());
+        }
+        try {
+            Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 3), INPUTSIZE);
+            scriptRelaxed.forEach_testConvertHalf3Ushort3Half3(inV, out);
+            verifyResultsConvertUshort3Half3(inV, out, true);
+        } catch (Exception e) {
+            throw new RSRuntimeException("RenderScript. Can't invoke forEach_testConvertHalf3Ushort3Half3: " + e.toString());
+        }
+    }
+
+    private void verifyResultsConvertUshort3Half3(Allocation inV, Allocation out, boolean relaxed) {
+        short[] arrayInV = new short[INPUTSIZE * 4];
+        Arrays.fill(arrayInV, (short) 42);
+        inV.copyTo(arrayInV);
+        short[] arrayOut = new short[INPUTSIZE * 4];
+        Arrays.fill(arrayOut, (short) 42);
+        out.copyTo(arrayOut);
+        StringBuilder message = new StringBuilder();
+        boolean errorFound = false;
+        for (int i = 0; i < INPUTSIZE; i++) {
+            for (int j = 0; j < 3 ; j++) {
+                // Extract the inputs.
+                ArgumentsUshortHalf args = new ArgumentsUshortHalf();
+                args.inV = arrayInV[i * 4 + j];
+                // Figure out what the outputs should have been.
+                Target target = new Target(Target.FunctionType.NORMAL, Target.ReturnType.HALF, relaxed);
+                CoreMathVerifier.computeConvert(args, target);
+                // Validate the outputs.
+                boolean valid = true;
+                if (!args.out.couldBe(Float16Utils.convertFloat16ToDouble(arrayOut[i * 4 + j]))) {
+                    valid = false;
+                }
+                if (!valid) {
+                    if (!errorFound) {
+                        errorFound = true;
+                        message.append("Input inV: ");
+                        appendVariableToMessage(message, args.inV);
+                        message.append("\n");
+                        message.append("Expected output out: ");
+                        appendVariableToMessage(message, args.out);
+                        message.append("\n");
+                        message.append("Actual   output out: ");
+                        appendVariableToMessage(message, arrayOut[i * 4 + j]);
+                        message.append("\n");
+                        message.append("Actual   output out (in double): ");
+                        appendVariableToMessage(message, Float16Utils.convertFloat16ToDouble(arrayOut[i * 4 + j]));
+                        if (!args.out.couldBe(Float16Utils.convertFloat16ToDouble(arrayOut[i * 4 + j]))) {
+                            message.append(" FAIL");
+                        }
+                        message.append("\n");
+                        message.append("Errors at");
+                    }
+                    message.append(" [");
+                    message.append(Integer.toString(i));
+                    message.append(", ");
+                    message.append(Integer.toString(j));
+                    message.append("]");
+                }
+            }
+        }
+        assertFalse("Incorrect output for checkConvertUshort3Half3" +
+                (relaxed ? "_relaxed" : "") + ":\n" + message.toString(), errorFound);
+    }
+
+    private void checkConvertUshort4Half4() {
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_16, 4, 0xf0666206l, false, 16);
+        try {
+            Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 4), INPUTSIZE);
+            script.forEach_testConvertHalf4Ushort4Half4(inV, out);
+            verifyResultsConvertUshort4Half4(inV, out, false);
+        } catch (Exception e) {
+            throw new RSRuntimeException("RenderScript. Can't invoke forEach_testConvertHalf4Ushort4Half4: " + e.toString());
+        }
+        try {
+            Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 4), INPUTSIZE);
+            scriptRelaxed.forEach_testConvertHalf4Ushort4Half4(inV, out);
+            verifyResultsConvertUshort4Half4(inV, out, true);
+        } catch (Exception e) {
+            throw new RSRuntimeException("RenderScript. Can't invoke forEach_testConvertHalf4Ushort4Half4: " + e.toString());
+        }
+    }
+
+    private void verifyResultsConvertUshort4Half4(Allocation inV, Allocation out, boolean relaxed) {
+        short[] arrayInV = new short[INPUTSIZE * 4];
+        Arrays.fill(arrayInV, (short) 42);
+        inV.copyTo(arrayInV);
+        short[] arrayOut = new short[INPUTSIZE * 4];
+        Arrays.fill(arrayOut, (short) 42);
+        out.copyTo(arrayOut);
+        StringBuilder message = new StringBuilder();
+        boolean errorFound = false;
+        for (int i = 0; i < INPUTSIZE; i++) {
+            for (int j = 0; j < 4 ; j++) {
+                // Extract the inputs.
+                ArgumentsUshortHalf args = new ArgumentsUshortHalf();
+                args.inV = arrayInV[i * 4 + j];
+                // Figure out what the outputs should have been.
+                Target target = new Target(Target.FunctionType.NORMAL, Target.ReturnType.HALF, relaxed);
+                CoreMathVerifier.computeConvert(args, target);
+                // Validate the outputs.
+                boolean valid = true;
+                if (!args.out.couldBe(Float16Utils.convertFloat16ToDouble(arrayOut[i * 4 + j]))) {
+                    valid = false;
+                }
+                if (!valid) {
+                    if (!errorFound) {
+                        errorFound = true;
+                        message.append("Input inV: ");
+                        appendVariableToMessage(message, args.inV);
+                        message.append("\n");
+                        message.append("Expected output out: ");
+                        appendVariableToMessage(message, args.out);
+                        message.append("\n");
+                        message.append("Actual   output out: ");
+                        appendVariableToMessage(message, arrayOut[i * 4 + j]);
+                        message.append("\n");
+                        message.append("Actual   output out (in double): ");
+                        appendVariableToMessage(message, Float16Utils.convertFloat16ToDouble(arrayOut[i * 4 + j]));
+                        if (!args.out.couldBe(Float16Utils.convertFloat16ToDouble(arrayOut[i * 4 + j]))) {
+                            message.append(" FAIL");
+                        }
+                        message.append("\n");
+                        message.append("Errors at");
+                    }
+                    message.append(" [");
+                    message.append(Integer.toString(i));
+                    message.append(", ");
+                    message.append(Integer.toString(j));
+                    message.append("]");
+                }
+            }
+        }
+        assertFalse("Incorrect output for checkConvertUshort4Half4" +
+                (relaxed ? "_relaxed" : "") + ":\n" + message.toString(), errorFound);
+    }
+
+    public class ArgumentsIntHalf {
+        public int inV;
+        public Target.Floaty out;
+    }
+
+    private void checkConvertInt2Half2() {
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_32, 2, 0xb6fb0cecl, true, 31);
+        try {
+            Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 2), INPUTSIZE);
+            script.forEach_testConvertHalf2Int2Half2(inV, out);
+            verifyResultsConvertInt2Half2(inV, out, false);
+        } catch (Exception e) {
+            throw new RSRuntimeException("RenderScript. Can't invoke forEach_testConvertHalf2Int2Half2: " + e.toString());
+        }
+        try {
+            Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 2), INPUTSIZE);
+            scriptRelaxed.forEach_testConvertHalf2Int2Half2(inV, out);
+            verifyResultsConvertInt2Half2(inV, out, true);
+        } catch (Exception e) {
+            throw new RSRuntimeException("RenderScript. Can't invoke forEach_testConvertHalf2Int2Half2: " + e.toString());
+        }
+    }
+
+    private void verifyResultsConvertInt2Half2(Allocation inV, Allocation out, boolean relaxed) {
+        int[] arrayInV = new int[INPUTSIZE * 2];
+        Arrays.fill(arrayInV, (int) 42);
+        inV.copyTo(arrayInV);
+        short[] arrayOut = new short[INPUTSIZE * 2];
+        Arrays.fill(arrayOut, (short) 42);
+        out.copyTo(arrayOut);
+        StringBuilder message = new StringBuilder();
+        boolean errorFound = false;
+        for (int i = 0; i < INPUTSIZE; i++) {
+            for (int j = 0; j < 2 ; j++) {
+                // Extract the inputs.
+                ArgumentsIntHalf args = new ArgumentsIntHalf();
+                args.inV = arrayInV[i * 2 + j];
+                // Figure out what the outputs should have been.
+                Target target = new Target(Target.FunctionType.NORMAL, Target.ReturnType.HALF, relaxed);
+                CoreMathVerifier.computeConvert(args, target);
+                // Validate the outputs.
+                boolean valid = true;
+                if (!args.out.couldBe(Float16Utils.convertFloat16ToDouble(arrayOut[i * 2 + j]))) {
+                    valid = false;
+                }
+                if (!valid) {
+                    if (!errorFound) {
+                        errorFound = true;
+                        message.append("Input inV: ");
+                        appendVariableToMessage(message, args.inV);
+                        message.append("\n");
+                        message.append("Expected output out: ");
+                        appendVariableToMessage(message, args.out);
+                        message.append("\n");
+                        message.append("Actual   output out: ");
+                        appendVariableToMessage(message, arrayOut[i * 2 + j]);
+                        message.append("\n");
+                        message.append("Actual   output out (in double): ");
+                        appendVariableToMessage(message, Float16Utils.convertFloat16ToDouble(arrayOut[i * 2 + j]));
+                        if (!args.out.couldBe(Float16Utils.convertFloat16ToDouble(arrayOut[i * 2 + j]))) {
+                            message.append(" FAIL");
+                        }
+                        message.append("\n");
+                        message.append("Errors at");
+                    }
+                    message.append(" [");
+                    message.append(Integer.toString(i));
+                    message.append(", ");
+                    message.append(Integer.toString(j));
+                    message.append("]");
+                }
+            }
+        }
+        assertFalse("Incorrect output for checkConvertInt2Half2" +
+                (relaxed ? "_relaxed" : "") + ":\n" + message.toString(), errorFound);
+    }
+
+    private void checkConvertInt3Half3() {
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_32, 3, 0x1602d1e0l, true, 31);
+        try {
+            Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 3), INPUTSIZE);
+            script.forEach_testConvertHalf3Int3Half3(inV, out);
+            verifyResultsConvertInt3Half3(inV, out, false);
+        } catch (Exception e) {
+            throw new RSRuntimeException("RenderScript. Can't invoke forEach_testConvertHalf3Int3Half3: " + e.toString());
+        }
+        try {
+            Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 3), INPUTSIZE);
+            scriptRelaxed.forEach_testConvertHalf3Int3Half3(inV, out);
+            verifyResultsConvertInt3Half3(inV, out, true);
+        } catch (Exception e) {
+            throw new RSRuntimeException("RenderScript. Can't invoke forEach_testConvertHalf3Int3Half3: " + e.toString());
+        }
+    }
+
+    private void verifyResultsConvertInt3Half3(Allocation inV, Allocation out, boolean relaxed) {
+        int[] arrayInV = new int[INPUTSIZE * 4];
+        Arrays.fill(arrayInV, (int) 42);
+        inV.copyTo(arrayInV);
+        short[] arrayOut = new short[INPUTSIZE * 4];
+        Arrays.fill(arrayOut, (short) 42);
+        out.copyTo(arrayOut);
+        StringBuilder message = new StringBuilder();
+        boolean errorFound = false;
+        for (int i = 0; i < INPUTSIZE; i++) {
+            for (int j = 0; j < 3 ; j++) {
+                // Extract the inputs.
+                ArgumentsIntHalf args = new ArgumentsIntHalf();
+                args.inV = arrayInV[i * 4 + j];
+                // Figure out what the outputs should have been.
+                Target target = new Target(Target.FunctionType.NORMAL, Target.ReturnType.HALF, relaxed);
+                CoreMathVerifier.computeConvert(args, target);
+                // Validate the outputs.
+                boolean valid = true;
+                if (!args.out.couldBe(Float16Utils.convertFloat16ToDouble(arrayOut[i * 4 + j]))) {
+                    valid = false;
+                }
+                if (!valid) {
+                    if (!errorFound) {
+                        errorFound = true;
+                        message.append("Input inV: ");
+                        appendVariableToMessage(message, args.inV);
+                        message.append("\n");
+                        message.append("Expected output out: ");
+                        appendVariableToMessage(message, args.out);
+                        message.append("\n");
+                        message.append("Actual   output out: ");
+                        appendVariableToMessage(message, arrayOut[i * 4 + j]);
+                        message.append("\n");
+                        message.append("Actual   output out (in double): ");
+                        appendVariableToMessage(message, Float16Utils.convertFloat16ToDouble(arrayOut[i * 4 + j]));
+                        if (!args.out.couldBe(Float16Utils.convertFloat16ToDouble(arrayOut[i * 4 + j]))) {
+                            message.append(" FAIL");
+                        }
+                        message.append("\n");
+                        message.append("Errors at");
+                    }
+                    message.append(" [");
+                    message.append(Integer.toString(i));
+                    message.append(", ");
+                    message.append(Integer.toString(j));
+                    message.append("]");
+                }
+            }
+        }
+        assertFalse("Incorrect output for checkConvertInt3Half3" +
+                (relaxed ? "_relaxed" : "") + ":\n" + message.toString(), errorFound);
+    }
+
+    private void checkConvertInt4Half4() {
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_32, 4, 0x750a96d4l, true, 31);
+        try {
+            Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 4), INPUTSIZE);
+            script.forEach_testConvertHalf4Int4Half4(inV, out);
+            verifyResultsConvertInt4Half4(inV, out, false);
+        } catch (Exception e) {
+            throw new RSRuntimeException("RenderScript. Can't invoke forEach_testConvertHalf4Int4Half4: " + e.toString());
+        }
+        try {
+            Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 4), INPUTSIZE);
+            scriptRelaxed.forEach_testConvertHalf4Int4Half4(inV, out);
+            verifyResultsConvertInt4Half4(inV, out, true);
+        } catch (Exception e) {
+            throw new RSRuntimeException("RenderScript. Can't invoke forEach_testConvertHalf4Int4Half4: " + e.toString());
+        }
+    }
+
+    private void verifyResultsConvertInt4Half4(Allocation inV, Allocation out, boolean relaxed) {
+        int[] arrayInV = new int[INPUTSIZE * 4];
+        Arrays.fill(arrayInV, (int) 42);
+        inV.copyTo(arrayInV);
+        short[] arrayOut = new short[INPUTSIZE * 4];
+        Arrays.fill(arrayOut, (short) 42);
+        out.copyTo(arrayOut);
+        StringBuilder message = new StringBuilder();
+        boolean errorFound = false;
+        for (int i = 0; i < INPUTSIZE; i++) {
+            for (int j = 0; j < 4 ; j++) {
+                // Extract the inputs.
+                ArgumentsIntHalf args = new ArgumentsIntHalf();
+                args.inV = arrayInV[i * 4 + j];
+                // Figure out what the outputs should have been.
+                Target target = new Target(Target.FunctionType.NORMAL, Target.ReturnType.HALF, relaxed);
+                CoreMathVerifier.computeConvert(args, target);
+                // Validate the outputs.
+                boolean valid = true;
+                if (!args.out.couldBe(Float16Utils.convertFloat16ToDouble(arrayOut[i * 4 + j]))) {
+                    valid = false;
+                }
+                if (!valid) {
+                    if (!errorFound) {
+                        errorFound = true;
+                        message.append("Input inV: ");
+                        appendVariableToMessage(message, args.inV);
+                        message.append("\n");
+                        message.append("Expected output out: ");
+                        appendVariableToMessage(message, args.out);
+                        message.append("\n");
+                        message.append("Actual   output out: ");
+                        appendVariableToMessage(message, arrayOut[i * 4 + j]);
+                        message.append("\n");
+                        message.append("Actual   output out (in double): ");
+                        appendVariableToMessage(message, Float16Utils.convertFloat16ToDouble(arrayOut[i * 4 + j]));
+                        if (!args.out.couldBe(Float16Utils.convertFloat16ToDouble(arrayOut[i * 4 + j]))) {
+                            message.append(" FAIL");
+                        }
+                        message.append("\n");
+                        message.append("Errors at");
+                    }
+                    message.append(" [");
+                    message.append(Integer.toString(i));
+                    message.append(", ");
+                    message.append(Integer.toString(j));
+                    message.append("]");
+                }
+            }
+        }
+        assertFalse("Incorrect output for checkConvertInt4Half4" +
+                (relaxed ? "_relaxed" : "") + ":\n" + message.toString(), errorFound);
+    }
+
+    public class ArgumentsUintHalf {
+        public int inV;
+        public Target.Floaty out;
+    }
+
+    private void checkConvertUint2Half2() {
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_32, 2, 0xb46f30efl, false, 32);
+        try {
+            Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 2), INPUTSIZE);
+            script.forEach_testConvertHalf2Uint2Half2(inV, out);
+            verifyResultsConvertUint2Half2(inV, out, false);
+        } catch (Exception e) {
+            throw new RSRuntimeException("RenderScript. Can't invoke forEach_testConvertHalf2Uint2Half2: " + e.toString());
+        }
+        try {
+            Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 2), INPUTSIZE);
+            scriptRelaxed.forEach_testConvertHalf2Uint2Half2(inV, out);
+            verifyResultsConvertUint2Half2(inV, out, true);
+        } catch (Exception e) {
+            throw new RSRuntimeException("RenderScript. Can't invoke forEach_testConvertHalf2Uint2Half2: " + e.toString());
+        }
+    }
+
+    private void verifyResultsConvertUint2Half2(Allocation inV, Allocation out, boolean relaxed) {
+        int[] arrayInV = new int[INPUTSIZE * 2];
+        Arrays.fill(arrayInV, (int) 42);
+        inV.copyTo(arrayInV);
+        short[] arrayOut = new short[INPUTSIZE * 2];
+        Arrays.fill(arrayOut, (short) 42);
+        out.copyTo(arrayOut);
+        StringBuilder message = new StringBuilder();
+        boolean errorFound = false;
+        for (int i = 0; i < INPUTSIZE; i++) {
+            for (int j = 0; j < 2 ; j++) {
+                // Extract the inputs.
+                ArgumentsUintHalf args = new ArgumentsUintHalf();
+                args.inV = arrayInV[i * 2 + j];
+                // Figure out what the outputs should have been.
+                Target target = new Target(Target.FunctionType.NORMAL, Target.ReturnType.HALF, relaxed);
+                CoreMathVerifier.computeConvert(args, target);
+                // Validate the outputs.
+                boolean valid = true;
+                if (!args.out.couldBe(Float16Utils.convertFloat16ToDouble(arrayOut[i * 2 + j]))) {
+                    valid = false;
+                }
+                if (!valid) {
+                    if (!errorFound) {
+                        errorFound = true;
+                        message.append("Input inV: ");
+                        appendVariableToMessage(message, args.inV);
+                        message.append("\n");
+                        message.append("Expected output out: ");
+                        appendVariableToMessage(message, args.out);
+                        message.append("\n");
+                        message.append("Actual   output out: ");
+                        appendVariableToMessage(message, arrayOut[i * 2 + j]);
+                        message.append("\n");
+                        message.append("Actual   output out (in double): ");
+                        appendVariableToMessage(message, Float16Utils.convertFloat16ToDouble(arrayOut[i * 2 + j]));
+                        if (!args.out.couldBe(Float16Utils.convertFloat16ToDouble(arrayOut[i * 2 + j]))) {
+                            message.append(" FAIL");
+                        }
+                        message.append("\n");
+                        message.append("Errors at");
+                    }
+                    message.append(" [");
+                    message.append(Integer.toString(i));
+                    message.append(", ");
+                    message.append(Integer.toString(j));
+                    message.append("]");
+                }
+            }
+        }
+        assertFalse("Incorrect output for checkConvertUint2Half2" +
+                (relaxed ? "_relaxed" : "") + ":\n" + message.toString(), errorFound);
+    }
+
+    private void checkConvertUint3Half3() {
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_32, 3, 0x1376f5e3l, false, 32);
+        try {
+            Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 3), INPUTSIZE);
+            script.forEach_testConvertHalf3Uint3Half3(inV, out);
+            verifyResultsConvertUint3Half3(inV, out, false);
+        } catch (Exception e) {
+            throw new RSRuntimeException("RenderScript. Can't invoke forEach_testConvertHalf3Uint3Half3: " + e.toString());
+        }
+        try {
+            Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 3), INPUTSIZE);
+            scriptRelaxed.forEach_testConvertHalf3Uint3Half3(inV, out);
+            verifyResultsConvertUint3Half3(inV, out, true);
+        } catch (Exception e) {
+            throw new RSRuntimeException("RenderScript. Can't invoke forEach_testConvertHalf3Uint3Half3: " + e.toString());
+        }
+    }
+
+    private void verifyResultsConvertUint3Half3(Allocation inV, Allocation out, boolean relaxed) {
+        int[] arrayInV = new int[INPUTSIZE * 4];
+        Arrays.fill(arrayInV, (int) 42);
+        inV.copyTo(arrayInV);
+        short[] arrayOut = new short[INPUTSIZE * 4];
+        Arrays.fill(arrayOut, (short) 42);
+        out.copyTo(arrayOut);
+        StringBuilder message = new StringBuilder();
+        boolean errorFound = false;
+        for (int i = 0; i < INPUTSIZE; i++) {
+            for (int j = 0; j < 3 ; j++) {
+                // Extract the inputs.
+                ArgumentsUintHalf args = new ArgumentsUintHalf();
+                args.inV = arrayInV[i * 4 + j];
+                // Figure out what the outputs should have been.
+                Target target = new Target(Target.FunctionType.NORMAL, Target.ReturnType.HALF, relaxed);
+                CoreMathVerifier.computeConvert(args, target);
+                // Validate the outputs.
+                boolean valid = true;
+                if (!args.out.couldBe(Float16Utils.convertFloat16ToDouble(arrayOut[i * 4 + j]))) {
+                    valid = false;
+                }
+                if (!valid) {
+                    if (!errorFound) {
+                        errorFound = true;
+                        message.append("Input inV: ");
+                        appendVariableToMessage(message, args.inV);
+                        message.append("\n");
+                        message.append("Expected output out: ");
+                        appendVariableToMessage(message, args.out);
+                        message.append("\n");
+                        message.append("Actual   output out: ");
+                        appendVariableToMessage(message, arrayOut[i * 4 + j]);
+                        message.append("\n");
+                        message.append("Actual   output out (in double): ");
+                        appendVariableToMessage(message, Float16Utils.convertFloat16ToDouble(arrayOut[i * 4 + j]));
+                        if (!args.out.couldBe(Float16Utils.convertFloat16ToDouble(arrayOut[i * 4 + j]))) {
+                            message.append(" FAIL");
+                        }
+                        message.append("\n");
+                        message.append("Errors at");
+                    }
+                    message.append(" [");
+                    message.append(Integer.toString(i));
+                    message.append(", ");
+                    message.append(Integer.toString(j));
+                    message.append("]");
+                }
+            }
+        }
+        assertFalse("Incorrect output for checkConvertUint3Half3" +
+                (relaxed ? "_relaxed" : "") + ":\n" + message.toString(), errorFound);
+    }
+
+    private void checkConvertUint4Half4() {
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_32, 4, 0x727ebad7l, false, 32);
+        try {
+            Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 4), INPUTSIZE);
+            script.forEach_testConvertHalf4Uint4Half4(inV, out);
+            verifyResultsConvertUint4Half4(inV, out, false);
+        } catch (Exception e) {
+            throw new RSRuntimeException("RenderScript. Can't invoke forEach_testConvertHalf4Uint4Half4: " + e.toString());
+        }
+        try {
+            Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 4), INPUTSIZE);
+            scriptRelaxed.forEach_testConvertHalf4Uint4Half4(inV, out);
+            verifyResultsConvertUint4Half4(inV, out, true);
+        } catch (Exception e) {
+            throw new RSRuntimeException("RenderScript. Can't invoke forEach_testConvertHalf4Uint4Half4: " + e.toString());
+        }
+    }
+
+    private void verifyResultsConvertUint4Half4(Allocation inV, Allocation out, boolean relaxed) {
+        int[] arrayInV = new int[INPUTSIZE * 4];
+        Arrays.fill(arrayInV, (int) 42);
+        inV.copyTo(arrayInV);
+        short[] arrayOut = new short[INPUTSIZE * 4];
+        Arrays.fill(arrayOut, (short) 42);
+        out.copyTo(arrayOut);
+        StringBuilder message = new StringBuilder();
+        boolean errorFound = false;
+        for (int i = 0; i < INPUTSIZE; i++) {
+            for (int j = 0; j < 4 ; j++) {
+                // Extract the inputs.
+                ArgumentsUintHalf args = new ArgumentsUintHalf();
+                args.inV = arrayInV[i * 4 + j];
+                // Figure out what the outputs should have been.
+                Target target = new Target(Target.FunctionType.NORMAL, Target.ReturnType.HALF, relaxed);
+                CoreMathVerifier.computeConvert(args, target);
+                // Validate the outputs.
+                boolean valid = true;
+                if (!args.out.couldBe(Float16Utils.convertFloat16ToDouble(arrayOut[i * 4 + j]))) {
+                    valid = false;
+                }
+                if (!valid) {
+                    if (!errorFound) {
+                        errorFound = true;
+                        message.append("Input inV: ");
+                        appendVariableToMessage(message, args.inV);
+                        message.append("\n");
+                        message.append("Expected output out: ");
+                        appendVariableToMessage(message, args.out);
+                        message.append("\n");
+                        message.append("Actual   output out: ");
+                        appendVariableToMessage(message, arrayOut[i * 4 + j]);
+                        message.append("\n");
+                        message.append("Actual   output out (in double): ");
+                        appendVariableToMessage(message, Float16Utils.convertFloat16ToDouble(arrayOut[i * 4 + j]));
+                        if (!args.out.couldBe(Float16Utils.convertFloat16ToDouble(arrayOut[i * 4 + j]))) {
+                            message.append(" FAIL");
+                        }
+                        message.append("\n");
+                        message.append("Errors at");
+                    }
+                    message.append(" [");
+                    message.append(Integer.toString(i));
+                    message.append(", ");
+                    message.append(Integer.toString(j));
+                    message.append("]");
+                }
+            }
+        }
+        assertFalse("Incorrect output for checkConvertUint4Half4" +
+                (relaxed ? "_relaxed" : "") + ":\n" + message.toString(), errorFound);
+    }
+
+    public class ArgumentsLongHalf {
+        public long inV;
+        public Target.Floaty out;
+    }
+
+    private void checkConvertLong2Half2() {
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_64, 2, 0xf4d265b9l, true, 63);
+        try {
+            Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 2), INPUTSIZE);
+            script.forEach_testConvertHalf2Long2Half2(inV, out);
+            verifyResultsConvertLong2Half2(inV, out, false);
+        } catch (Exception e) {
+            throw new RSRuntimeException("RenderScript. Can't invoke forEach_testConvertHalf2Long2Half2: " + e.toString());
+        }
+        try {
+            Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 2), INPUTSIZE);
+            scriptRelaxed.forEach_testConvertHalf2Long2Half2(inV, out);
+            verifyResultsConvertLong2Half2(inV, out, true);
+        } catch (Exception e) {
+            throw new RSRuntimeException("RenderScript. Can't invoke forEach_testConvertHalf2Long2Half2: " + e.toString());
+        }
+    }
+
+    private void verifyResultsConvertLong2Half2(Allocation inV, Allocation out, boolean relaxed) {
+        long[] arrayInV = new long[INPUTSIZE * 2];
+        Arrays.fill(arrayInV, (long) 42);
+        inV.copyTo(arrayInV);
+        short[] arrayOut = new short[INPUTSIZE * 2];
+        Arrays.fill(arrayOut, (short) 42);
+        out.copyTo(arrayOut);
+        StringBuilder message = new StringBuilder();
+        boolean errorFound = false;
+        for (int i = 0; i < INPUTSIZE; i++) {
+            for (int j = 0; j < 2 ; j++) {
+                // Extract the inputs.
+                ArgumentsLongHalf args = new ArgumentsLongHalf();
+                args.inV = arrayInV[i * 2 + j];
+                // Figure out what the outputs should have been.
+                Target target = new Target(Target.FunctionType.NORMAL, Target.ReturnType.HALF, relaxed);
+                CoreMathVerifier.computeConvert(args, target);
+                // Validate the outputs.
+                boolean valid = true;
+                if (!args.out.couldBe(Float16Utils.convertFloat16ToDouble(arrayOut[i * 2 + j]))) {
+                    valid = false;
+                }
+                if (!valid) {
+                    if (!errorFound) {
+                        errorFound = true;
+                        message.append("Input inV: ");
+                        appendVariableToMessage(message, args.inV);
+                        message.append("\n");
+                        message.append("Expected output out: ");
+                        appendVariableToMessage(message, args.out);
+                        message.append("\n");
+                        message.append("Actual   output out: ");
+                        appendVariableToMessage(message, arrayOut[i * 2 + j]);
+                        message.append("\n");
+                        message.append("Actual   output out (in double): ");
+                        appendVariableToMessage(message, Float16Utils.convertFloat16ToDouble(arrayOut[i * 2 + j]));
+                        if (!args.out.couldBe(Float16Utils.convertFloat16ToDouble(arrayOut[i * 2 + j]))) {
+                            message.append(" FAIL");
+                        }
+                        message.append("\n");
+                        message.append("Errors at");
+                    }
+                    message.append(" [");
+                    message.append(Integer.toString(i));
+                    message.append(", ");
+                    message.append(Integer.toString(j));
+                    message.append("]");
+                }
+            }
+        }
+        assertFalse("Incorrect output for checkConvertLong2Half2" +
+                (relaxed ? "_relaxed" : "") + ":\n" + message.toString(), errorFound);
+    }
+
+    private void checkConvertLong3Half3() {
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_64, 3, 0x53da2aadl, true, 63);
+        try {
+            Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 3), INPUTSIZE);
+            script.forEach_testConvertHalf3Long3Half3(inV, out);
+            verifyResultsConvertLong3Half3(inV, out, false);
+        } catch (Exception e) {
+            throw new RSRuntimeException("RenderScript. Can't invoke forEach_testConvertHalf3Long3Half3: " + e.toString());
+        }
+        try {
+            Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 3), INPUTSIZE);
+            scriptRelaxed.forEach_testConvertHalf3Long3Half3(inV, out);
+            verifyResultsConvertLong3Half3(inV, out, true);
+        } catch (Exception e) {
+            throw new RSRuntimeException("RenderScript. Can't invoke forEach_testConvertHalf3Long3Half3: " + e.toString());
+        }
+    }
+
+    private void verifyResultsConvertLong3Half3(Allocation inV, Allocation out, boolean relaxed) {
+        long[] arrayInV = new long[INPUTSIZE * 4];
+        Arrays.fill(arrayInV, (long) 42);
+        inV.copyTo(arrayInV);
+        short[] arrayOut = new short[INPUTSIZE * 4];
+        Arrays.fill(arrayOut, (short) 42);
+        out.copyTo(arrayOut);
+        StringBuilder message = new StringBuilder();
+        boolean errorFound = false;
+        for (int i = 0; i < INPUTSIZE; i++) {
+            for (int j = 0; j < 3 ; j++) {
+                // Extract the inputs.
+                ArgumentsLongHalf args = new ArgumentsLongHalf();
+                args.inV = arrayInV[i * 4 + j];
+                // Figure out what the outputs should have been.
+                Target target = new Target(Target.FunctionType.NORMAL, Target.ReturnType.HALF, relaxed);
+                CoreMathVerifier.computeConvert(args, target);
+                // Validate the outputs.
+                boolean valid = true;
+                if (!args.out.couldBe(Float16Utils.convertFloat16ToDouble(arrayOut[i * 4 + j]))) {
+                    valid = false;
+                }
+                if (!valid) {
+                    if (!errorFound) {
+                        errorFound = true;
+                        message.append("Input inV: ");
+                        appendVariableToMessage(message, args.inV);
+                        message.append("\n");
+                        message.append("Expected output out: ");
+                        appendVariableToMessage(message, args.out);
+                        message.append("\n");
+                        message.append("Actual   output out: ");
+                        appendVariableToMessage(message, arrayOut[i * 4 + j]);
+                        message.append("\n");
+                        message.append("Actual   output out (in double): ");
+                        appendVariableToMessage(message, Float16Utils.convertFloat16ToDouble(arrayOut[i * 4 + j]));
+                        if (!args.out.couldBe(Float16Utils.convertFloat16ToDouble(arrayOut[i * 4 + j]))) {
+                            message.append(" FAIL");
+                        }
+                        message.append("\n");
+                        message.append("Errors at");
+                    }
+                    message.append(" [");
+                    message.append(Integer.toString(i));
+                    message.append(", ");
+                    message.append(Integer.toString(j));
+                    message.append("]");
+                }
+            }
+        }
+        assertFalse("Incorrect output for checkConvertLong3Half3" +
+                (relaxed ? "_relaxed" : "") + ":\n" + message.toString(), errorFound);
+    }
+
+    private void checkConvertLong4Half4() {
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_64, 4, 0xb2e1efa1l, true, 63);
+        try {
+            Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 4), INPUTSIZE);
+            script.forEach_testConvertHalf4Long4Half4(inV, out);
+            verifyResultsConvertLong4Half4(inV, out, false);
+        } catch (Exception e) {
+            throw new RSRuntimeException("RenderScript. Can't invoke forEach_testConvertHalf4Long4Half4: " + e.toString());
+        }
+        try {
+            Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 4), INPUTSIZE);
+            scriptRelaxed.forEach_testConvertHalf4Long4Half4(inV, out);
+            verifyResultsConvertLong4Half4(inV, out, true);
+        } catch (Exception e) {
+            throw new RSRuntimeException("RenderScript. Can't invoke forEach_testConvertHalf4Long4Half4: " + e.toString());
+        }
+    }
+
+    private void verifyResultsConvertLong4Half4(Allocation inV, Allocation out, boolean relaxed) {
+        long[] arrayInV = new long[INPUTSIZE * 4];
+        Arrays.fill(arrayInV, (long) 42);
+        inV.copyTo(arrayInV);
+        short[] arrayOut = new short[INPUTSIZE * 4];
+        Arrays.fill(arrayOut, (short) 42);
+        out.copyTo(arrayOut);
+        StringBuilder message = new StringBuilder();
+        boolean errorFound = false;
+        for (int i = 0; i < INPUTSIZE; i++) {
+            for (int j = 0; j < 4 ; j++) {
+                // Extract the inputs.
+                ArgumentsLongHalf args = new ArgumentsLongHalf();
+                args.inV = arrayInV[i * 4 + j];
+                // Figure out what the outputs should have been.
+                Target target = new Target(Target.FunctionType.NORMAL, Target.ReturnType.HALF, relaxed);
+                CoreMathVerifier.computeConvert(args, target);
+                // Validate the outputs.
+                boolean valid = true;
+                if (!args.out.couldBe(Float16Utils.convertFloat16ToDouble(arrayOut[i * 4 + j]))) {
+                    valid = false;
+                }
+                if (!valid) {
+                    if (!errorFound) {
+                        errorFound = true;
+                        message.append("Input inV: ");
+                        appendVariableToMessage(message, args.inV);
+                        message.append("\n");
+                        message.append("Expected output out: ");
+                        appendVariableToMessage(message, args.out);
+                        message.append("\n");
+                        message.append("Actual   output out: ");
+                        appendVariableToMessage(message, arrayOut[i * 4 + j]);
+                        message.append("\n");
+                        message.append("Actual   output out (in double): ");
+                        appendVariableToMessage(message, Float16Utils.convertFloat16ToDouble(arrayOut[i * 4 + j]));
+                        if (!args.out.couldBe(Float16Utils.convertFloat16ToDouble(arrayOut[i * 4 + j]))) {
+                            message.append(" FAIL");
+                        }
+                        message.append("\n");
+                        message.append("Errors at");
+                    }
+                    message.append(" [");
+                    message.append(Integer.toString(i));
+                    message.append(", ");
+                    message.append(Integer.toString(j));
+                    message.append("]");
+                }
+            }
+        }
+        assertFalse("Incorrect output for checkConvertLong4Half4" +
+                (relaxed ? "_relaxed" : "") + ":\n" + message.toString(), errorFound);
+    }
+
+    public class ArgumentsUlongHalf {
+        public long inV;
+        public Target.Floaty out;
+    }
+
+    private void checkConvertUlong2Half2() {
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_64, 2, 0x8754723al, false, 64);
+        try {
+            Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 2), INPUTSIZE);
+            script.forEach_testConvertHalf2Ulong2Half2(inV, out);
+            verifyResultsConvertUlong2Half2(inV, out, false);
+        } catch (Exception e) {
+            throw new RSRuntimeException("RenderScript. Can't invoke forEach_testConvertHalf2Ulong2Half2: " + e.toString());
+        }
+        try {
+            Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 2), INPUTSIZE);
+            scriptRelaxed.forEach_testConvertHalf2Ulong2Half2(inV, out);
+            verifyResultsConvertUlong2Half2(inV, out, true);
+        } catch (Exception e) {
+            throw new RSRuntimeException("RenderScript. Can't invoke forEach_testConvertHalf2Ulong2Half2: " + e.toString());
+        }
+    }
+
+    private void verifyResultsConvertUlong2Half2(Allocation inV, Allocation out, boolean relaxed) {
+        long[] arrayInV = new long[INPUTSIZE * 2];
+        Arrays.fill(arrayInV, (long) 42);
+        inV.copyTo(arrayInV);
+        short[] arrayOut = new short[INPUTSIZE * 2];
+        Arrays.fill(arrayOut, (short) 42);
+        out.copyTo(arrayOut);
+        StringBuilder message = new StringBuilder();
+        boolean errorFound = false;
+        for (int i = 0; i < INPUTSIZE; i++) {
+            for (int j = 0; j < 2 ; j++) {
+                // Extract the inputs.
+                ArgumentsUlongHalf args = new ArgumentsUlongHalf();
+                args.inV = arrayInV[i * 2 + j];
+                // Figure out what the outputs should have been.
+                Target target = new Target(Target.FunctionType.NORMAL, Target.ReturnType.HALF, relaxed);
+                CoreMathVerifier.computeConvert(args, target);
+                // Validate the outputs.
+                boolean valid = true;
+                if (!args.out.couldBe(Float16Utils.convertFloat16ToDouble(arrayOut[i * 2 + j]))) {
+                    valid = false;
+                }
+                if (!valid) {
+                    if (!errorFound) {
+                        errorFound = true;
+                        message.append("Input inV: ");
+                        appendVariableToMessage(message, args.inV);
+                        message.append("\n");
+                        message.append("Expected output out: ");
+                        appendVariableToMessage(message, args.out);
+                        message.append("\n");
+                        message.append("Actual   output out: ");
+                        appendVariableToMessage(message, arrayOut[i * 2 + j]);
+                        message.append("\n");
+                        message.append("Actual   output out (in double): ");
+                        appendVariableToMessage(message, Float16Utils.convertFloat16ToDouble(arrayOut[i * 2 + j]));
+                        if (!args.out.couldBe(Float16Utils.convertFloat16ToDouble(arrayOut[i * 2 + j]))) {
+                            message.append(" FAIL");
+                        }
+                        message.append("\n");
+                        message.append("Errors at");
+                    }
+                    message.append(" [");
+                    message.append(Integer.toString(i));
+                    message.append(", ");
+                    message.append(Integer.toString(j));
+                    message.append("]");
+                }
+            }
+        }
+        assertFalse("Incorrect output for checkConvertUlong2Half2" +
+                (relaxed ? "_relaxed" : "") + ":\n" + message.toString(), errorFound);
+    }
+
+    private void checkConvertUlong3Half3() {
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_64, 3, 0xe65c372el, false, 64);
+        try {
+            Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 3), INPUTSIZE);
+            script.forEach_testConvertHalf3Ulong3Half3(inV, out);
+            verifyResultsConvertUlong3Half3(inV, out, false);
+        } catch (Exception e) {
+            throw new RSRuntimeException("RenderScript. Can't invoke forEach_testConvertHalf3Ulong3Half3: " + e.toString());
+        }
+        try {
+            Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 3), INPUTSIZE);
+            scriptRelaxed.forEach_testConvertHalf3Ulong3Half3(inV, out);
+            verifyResultsConvertUlong3Half3(inV, out, true);
+        } catch (Exception e) {
+            throw new RSRuntimeException("RenderScript. Can't invoke forEach_testConvertHalf3Ulong3Half3: " + e.toString());
+        }
+    }
+
+    private void verifyResultsConvertUlong3Half3(Allocation inV, Allocation out, boolean relaxed) {
+        long[] arrayInV = new long[INPUTSIZE * 4];
+        Arrays.fill(arrayInV, (long) 42);
+        inV.copyTo(arrayInV);
+        short[] arrayOut = new short[INPUTSIZE * 4];
+        Arrays.fill(arrayOut, (short) 42);
+        out.copyTo(arrayOut);
+        StringBuilder message = new StringBuilder();
+        boolean errorFound = false;
+        for (int i = 0; i < INPUTSIZE; i++) {
+            for (int j = 0; j < 3 ; j++) {
+                // Extract the inputs.
+                ArgumentsUlongHalf args = new ArgumentsUlongHalf();
+                args.inV = arrayInV[i * 4 + j];
+                // Figure out what the outputs should have been.
+                Target target = new Target(Target.FunctionType.NORMAL, Target.ReturnType.HALF, relaxed);
+                CoreMathVerifier.computeConvert(args, target);
+                // Validate the outputs.
+                boolean valid = true;
+                if (!args.out.couldBe(Float16Utils.convertFloat16ToDouble(arrayOut[i * 4 + j]))) {
+                    valid = false;
+                }
+                if (!valid) {
+                    if (!errorFound) {
+                        errorFound = true;
+                        message.append("Input inV: ");
+                        appendVariableToMessage(message, args.inV);
+                        message.append("\n");
+                        message.append("Expected output out: ");
+                        appendVariableToMessage(message, args.out);
+                        message.append("\n");
+                        message.append("Actual   output out: ");
+                        appendVariableToMessage(message, arrayOut[i * 4 + j]);
+                        message.append("\n");
+                        message.append("Actual   output out (in double): ");
+                        appendVariableToMessage(message, Float16Utils.convertFloat16ToDouble(arrayOut[i * 4 + j]));
+                        if (!args.out.couldBe(Float16Utils.convertFloat16ToDouble(arrayOut[i * 4 + j]))) {
+                            message.append(" FAIL");
+                        }
+                        message.append("\n");
+                        message.append("Errors at");
+                    }
+                    message.append(" [");
+                    message.append(Integer.toString(i));
+                    message.append(", ");
+                    message.append(Integer.toString(j));
+                    message.append("]");
+                }
+            }
+        }
+        assertFalse("Incorrect output for checkConvertUlong3Half3" +
+                (relaxed ? "_relaxed" : "") + ":\n" + message.toString(), errorFound);
+    }
+
+    private void checkConvertUlong4Half4() {
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_64, 4, 0x4563fc22l, false, 64);
+        try {
+            Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 4), INPUTSIZE);
+            script.forEach_testConvertHalf4Ulong4Half4(inV, out);
+            verifyResultsConvertUlong4Half4(inV, out, false);
+        } catch (Exception e) {
+            throw new RSRuntimeException("RenderScript. Can't invoke forEach_testConvertHalf4Ulong4Half4: " + e.toString());
+        }
+        try {
+            Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 4), INPUTSIZE);
+            scriptRelaxed.forEach_testConvertHalf4Ulong4Half4(inV, out);
+            verifyResultsConvertUlong4Half4(inV, out, true);
+        } catch (Exception e) {
+            throw new RSRuntimeException("RenderScript. Can't invoke forEach_testConvertHalf4Ulong4Half4: " + e.toString());
+        }
+    }
+
+    private void verifyResultsConvertUlong4Half4(Allocation inV, Allocation out, boolean relaxed) {
+        long[] arrayInV = new long[INPUTSIZE * 4];
+        Arrays.fill(arrayInV, (long) 42);
+        inV.copyTo(arrayInV);
+        short[] arrayOut = new short[INPUTSIZE * 4];
+        Arrays.fill(arrayOut, (short) 42);
+        out.copyTo(arrayOut);
+        StringBuilder message = new StringBuilder();
+        boolean errorFound = false;
+        for (int i = 0; i < INPUTSIZE; i++) {
+            for (int j = 0; j < 4 ; j++) {
+                // Extract the inputs.
+                ArgumentsUlongHalf args = new ArgumentsUlongHalf();
+                args.inV = arrayInV[i * 4 + j];
+                // Figure out what the outputs should have been.
+                Target target = new Target(Target.FunctionType.NORMAL, Target.ReturnType.HALF, relaxed);
+                CoreMathVerifier.computeConvert(args, target);
+                // Validate the outputs.
+                boolean valid = true;
+                if (!args.out.couldBe(Float16Utils.convertFloat16ToDouble(arrayOut[i * 4 + j]))) {
+                    valid = false;
+                }
+                if (!valid) {
+                    if (!errorFound) {
+                        errorFound = true;
+                        message.append("Input inV: ");
+                        appendVariableToMessage(message, args.inV);
+                        message.append("\n");
+                        message.append("Expected output out: ");
+                        appendVariableToMessage(message, args.out);
+                        message.append("\n");
+                        message.append("Actual   output out: ");
+                        appendVariableToMessage(message, arrayOut[i * 4 + j]);
+                        message.append("\n");
+                        message.append("Actual   output out (in double): ");
+                        appendVariableToMessage(message, Float16Utils.convertFloat16ToDouble(arrayOut[i * 4 + j]));
+                        if (!args.out.couldBe(Float16Utils.convertFloat16ToDouble(arrayOut[i * 4 + j]))) {
+                            message.append(" FAIL");
+                        }
+                        message.append("\n");
+                        message.append("Errors at");
+                    }
+                    message.append(" [");
+                    message.append(Integer.toString(i));
+                    message.append(", ");
+                    message.append(Integer.toString(j));
+                    message.append("]");
+                }
+            }
+        }
+        assertFalse("Incorrect output for checkConvertUlong4Half4" +
+                (relaxed ? "_relaxed" : "") + ":\n" + message.toString(), errorFound);
+    }
+
     public void testConvert() {
         checkConvertFloat2Float2();
         checkConvertFloat3Float3();
@@ -21298,5 +25644,65 @@ public class TestConvert extends RSBaseCompute {
         checkConvertUint2Ulong2();
         checkConvertUint3Ulong3();
         checkConvertUint4Ulong4();
+        checkConvertHalf2Float2();
+        checkConvertHalf3Float3();
+        checkConvertHalf4Float4();
+        checkConvertHalf2Double2();
+        checkConvertHalf3Double3();
+        checkConvertHalf4Double4();
+        checkConvertHalf2Char2();
+        checkConvertHalf3Char3();
+        checkConvertHalf4Char4();
+        checkConvertHalf2Uchar2();
+        checkConvertHalf3Uchar3();
+        checkConvertHalf4Uchar4();
+        checkConvertHalf2Short2();
+        checkConvertHalf3Short3();
+        checkConvertHalf4Short4();
+        checkConvertHalf2Ushort2();
+        checkConvertHalf3Ushort3();
+        checkConvertHalf4Ushort4();
+        checkConvertHalf2Int2();
+        checkConvertHalf3Int3();
+        checkConvertHalf4Int4();
+        checkConvertHalf2Uint2();
+        checkConvertHalf3Uint3();
+        checkConvertHalf4Uint4();
+        checkConvertHalf2Long2();
+        checkConvertHalf3Long3();
+        checkConvertHalf4Long4();
+        checkConvertHalf2Ulong2();
+        checkConvertHalf3Ulong3();
+        checkConvertHalf4Ulong4();
+        checkConvertFloat2Half2();
+        checkConvertFloat3Half3();
+        checkConvertFloat4Half4();
+        checkConvertDouble2Half2();
+        checkConvertDouble3Half3();
+        checkConvertDouble4Half4();
+        checkConvertChar2Half2();
+        checkConvertChar3Half3();
+        checkConvertChar4Half4();
+        checkConvertUchar2Half2();
+        checkConvertUchar3Half3();
+        checkConvertUchar4Half4();
+        checkConvertShort2Half2();
+        checkConvertShort3Half3();
+        checkConvertShort4Half4();
+        checkConvertUshort2Half2();
+        checkConvertUshort3Half3();
+        checkConvertUshort4Half4();
+        checkConvertInt2Half2();
+        checkConvertInt3Half3();
+        checkConvertInt4Half4();
+        checkConvertUint2Half2();
+        checkConvertUint3Half3();
+        checkConvertUint4Half4();
+        checkConvertLong2Half2();
+        checkConvertLong3Half3();
+        checkConvertLong4Half4();
+        checkConvertUlong2Half2();
+        checkConvertUlong3Half3();
+        checkConvertUlong4Half4();
     }
 }
