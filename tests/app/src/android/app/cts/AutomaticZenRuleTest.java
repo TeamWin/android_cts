@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008 The Android Open Source Project
+ * Copyright (C) 2016 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,14 +21,13 @@ import android.app.NotificationManager;
 import android.content.ComponentName;
 import android.net.Uri;
 import android.os.Parcel;
-import android.service.notification.Condition;
 import android.test.AndroidTestCase;
 
 public class AutomaticZenRuleTest extends AndroidTestCase {
 
     private final String mName = "name";
     private final ComponentName mOwner = new ComponentName("pkg", "cls");
-    private final Uri mConditionId = new Uri.Builder().scheme(Condition.SCHEME)
+    private final Uri mConditionId = new Uri.Builder().scheme("scheme")
             .authority("authority")
             .appendPath("path")
             .appendPath("test")
@@ -70,7 +69,7 @@ public class AutomaticZenRuleTest extends AndroidTestCase {
     }
 
     public void testSetConditionId() {
-        final Uri newConditionId = new Uri.Builder().scheme(Condition.SCHEME)
+        final Uri newConditionId = new Uri.Builder().scheme("scheme")
                 .authority("authority2")
                 .appendPath("3path")
                 .appendPath("test4")
