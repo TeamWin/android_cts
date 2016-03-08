@@ -809,6 +809,10 @@ public class CoreMathVerifier {
     static public void computeConvert(TestConvert.ArgumentsCharUlong args) {
         args.out = convertCharToUlong(args.inV);
     }
+    static public void computeConvert(TestConvert.ArgumentsCharHalf args, Target t) {
+        t.setPrecision(0, 0);
+        args.out = t.newFloaty(convertCharToDouble(args.inV));
+    }
     static public void computeConvert(TestConvert.ArgumentsCharFloat args, Target t) {
         t.setPrecision(0, 0);
         args.out = t.new32(convertCharToFloat(args.inV));
@@ -841,6 +845,10 @@ public class CoreMathVerifier {
     }
     static public void computeConvert(TestConvert.ArgumentsUcharUlong args) {
         args.out = convertUcharToUlong(args.inV);
+    }
+    static public void computeConvert(TestConvert.ArgumentsUcharHalf args, Target t) {
+        t.setPrecision(0, 0);
+        args.out = t.newFloaty(convertUcharToDouble(args.inV));
     }
     static public void computeConvert(TestConvert.ArgumentsUcharFloat args, Target t) {
         t.setPrecision(0, 0);
@@ -875,6 +883,10 @@ public class CoreMathVerifier {
     static public void computeConvert(TestConvert.ArgumentsShortUlong args) {
         args.out = convertShortToUlong(args.inV);
     }
+    static public void computeConvert(TestConvert.ArgumentsShortHalf args, Target t) {
+        t.setPrecision(1, 1);
+        args.out = t.newFloaty(convertShortToDouble(args.inV));
+    }
     static public void computeConvert(TestConvert.ArgumentsShortFloat args, Target t) {
         t.setPrecision(0, 0);
         args.out = t.new32(convertShortToFloat(args.inV));
@@ -907,6 +919,10 @@ public class CoreMathVerifier {
     }
     static public void computeConvert(TestConvert.ArgumentsUshortUlong args) {
         args.out = convertUshortToUlong(args.inV);
+    }
+    static public void computeConvert(TestConvert.ArgumentsUshortHalf args, Target t) {
+        t.setPrecision(1, 1);
+        args.out = t.newFloaty(convertUshortToDouble(args.inV));
     }
     static public void computeConvert(TestConvert.ArgumentsUshortFloat args, Target t) {
         t.setPrecision(0, 0);
@@ -941,6 +957,10 @@ public class CoreMathVerifier {
     static public void computeConvert(TestConvert.ArgumentsIntUlong args) {
         args.out = convertIntToUlong(args.inV);
     }
+    static public void computeConvert(TestConvert.ArgumentsIntHalf args, Target t) {
+        t.setPrecision(1, 1);
+        args.out = t.newFloaty(convertIntToDouble(args.inV));
+    }
     static public void computeConvert(TestConvert.ArgumentsIntFloat args, Target t) {
         t.setPrecision(1, 1);
         args.out = t.new32(convertIntToFloat(args.inV));
@@ -973,6 +993,10 @@ public class CoreMathVerifier {
     }
     static public void computeConvert(TestConvert.ArgumentsUintUlong args) {
         args.out = convertUintToUlong(args.inV);
+    }
+    static public void computeConvert(TestConvert.ArgumentsUintHalf args, Target t) {
+        t.setPrecision(1, 1);
+        args.out = t.newFloaty(convertUintToDouble(args.inV));
     }
     static public void computeConvert(TestConvert.ArgumentsUintFloat args, Target t) {
         t.setPrecision(1, 1);
@@ -1007,6 +1031,10 @@ public class CoreMathVerifier {
     static public void computeConvert(TestConvert.ArgumentsLongUlong args) {
         args.out = convertLongToUlong(args.inV);
     }
+    static public void computeConvert(TestConvert.ArgumentsLongHalf args, Target t) {
+        t.setPrecision(1, 1);
+        args.out = t.newFloaty(convertLongToDouble(args.inV));
+    }
     static public void computeConvert(TestConvert.ArgumentsLongFloat args, Target t) {
         t.setPrecision(1, 1);
         args.out = t.new32(convertLongToFloat(args.inV));
@@ -1040,6 +1068,10 @@ public class CoreMathVerifier {
     static public void computeConvert(TestConvert.ArgumentsUlongUlong args) {
         args.out = convertUlongToUlong(args.inV);
     }
+    static public void computeConvert(TestConvert.ArgumentsUlongHalf args, Target t) {
+        t.setPrecision(1, 1);
+        args.out = t.newFloaty(convertUlongToDouble(args.inV));
+    }
     static public void computeConvert(TestConvert.ArgumentsUlongFloat args, Target t) {
         t.setPrecision(1, 1);
         args.out = t.new32(convertUlongToFloat(args.inV));
@@ -1047,6 +1079,39 @@ public class CoreMathVerifier {
     static public void computeConvert(TestConvert.ArgumentsUlongDouble args, Target t) {
         t.setPrecision(1, 1);
         args.out = t.new64(convertUlongToDouble(args.inV));
+    }
+
+    static public void computeConvert(TestConvert.ArgumentsHalfChar args) {
+        args.out = convertDoubleToChar(args.inVDouble);
+    }
+    static public void computeConvert(TestConvert.ArgumentsHalfUchar args) {
+        args.out = convertDoubleToUchar(args.inVDouble);
+    }
+    static public void computeConvert(TestConvert.ArgumentsHalfShort args) {
+        args.out = convertDoubleToShort(args.inVDouble);
+    }
+    static public void computeConvert(TestConvert.ArgumentsHalfUshort args) {
+        args.out = convertDoubleToUshort(args.inVDouble);
+    }
+    static public void computeConvert(TestConvert.ArgumentsHalfInt args) {
+        args.out = convertDoubleToInt(args.inVDouble);
+    }
+    static public void computeConvert(TestConvert.ArgumentsHalfUint args) {
+        args.out = convertDoubleToUint(args.inVDouble);
+    }
+    static public void computeConvert(TestConvert.ArgumentsHalfLong args) {
+        args.out = convertDoubleToLong(args.inVDouble);
+    }
+    static public void computeConvert(TestConvert.ArgumentsHalfUlong args) {
+        args.out = convertDoubleToUlong(args.inVDouble);
+    }
+    static public void computeConvert(TestConvert.ArgumentsHalfFloat args, Target t) {
+        t.setPrecision(0, 0);
+        args.out = t.newFloaty(convertDoubleToFloat(args.inVDouble));
+    }
+    static public void computeConvert(TestConvert.ArgumentsHalfDouble args, Target t) {
+        t.setPrecision(0, 0);
+        args.out = t.newFloaty(args.inVDouble);
     }
 
     static public void computeConvert(TestConvert.ArgumentsFloatChar args) {
@@ -1072,6 +1137,10 @@ public class CoreMathVerifier {
     }
     static public void computeConvert(TestConvert.ArgumentsFloatUlong args) {
         args.out = convertFloatToUlong(args.inV);
+    }
+    static public void computeConvert(TestConvert.ArgumentsFloatHalf args, Target t) {
+        t.setPrecision(1, 1);
+        args.out = t.newFloaty(args.inV);
     }
     static public void computeConvert(TestConvert.ArgumentsFloatFloat args, Target t) {
         t.setPrecision(0, 0);
@@ -1105,6 +1174,10 @@ public class CoreMathVerifier {
     }
     static public void computeConvert(TestConvert.ArgumentsDoubleUlong args) {
         args.out = convertDoubleToUlong(args.inV);
+    }
+    static public void computeConvert(TestConvert.ArgumentsDoubleHalf args, Target t) {
+        t.setPrecision(1, 1);
+        args.out = t.newFloaty(args.inV);
     }
     static public void computeConvert(TestConvert.ArgumentsDoubleFloat args, Target t) {
         t.setPrecision(1, 1);
