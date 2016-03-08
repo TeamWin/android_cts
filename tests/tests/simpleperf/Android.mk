@@ -33,6 +33,8 @@ LOCAL_POST_LINK_CMD =  \
   $($(LOCAL_2ND_ARCH_VAR_PREFIX)TARGET_OBJCOPY) --add-section .testzipdata=$$TMP_FILE $(linked_module) && \
   rm -f $$TMP_FILE
 
+LOCAL_COMPATIBILITY_SUITE := cts
+
 LOCAL_CTS_TEST_PACKAGE := android.simpleperf
 include $(BUILD_CTS_EXECUTABLE)
 
