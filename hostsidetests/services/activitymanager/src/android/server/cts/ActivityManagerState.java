@@ -422,8 +422,9 @@ class ActivityManagerState {
     }
 
     static class Activity {
-        private static final Pattern VISIBILITY_PATTERN = Pattern.compile(
-                "keysPaused=(\\S+) inHistory=(\\S+) visible=(\\S+) sleeping=(\\S+) idle=(\\S+)");
+        private static final Pattern VISIBILITY_PATTERN = Pattern.compile("keysPaused=(\\S+) "
+                + "inHistory=(\\S+) visible=(\\S+) sleeping=(\\S+) idle=(\\S+) "
+                + "mStartingWindowState=(\\S+)");
         private static final Pattern FRONT_OF_TASK_PATTERN = Pattern.compile("frontOfTask=(\\S+) "
                 + "task=TaskRecord\\{(\\S+) #(\\d+) A=(\\S+) U=(\\d+) StackId=(\\d+) sz=(\\d+)\\}");
 

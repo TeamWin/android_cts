@@ -21,6 +21,8 @@ import java.awt.Rectangle;
 public class ActivityManagerFreeformStackTests extends ActivityManagerTestBase {
 
     private static final String TEST_ACTIVITY = "TestActivity";
+    private static final int TEST_TASK_OFFSET = 20;
+    private static final int TEST_TASK_OFFSET_2 = 100;
     private static final int TEST_TASK_SIZE_1 = 500;
     private static final int TEST_TASK_SIZE_2 = TEST_TASK_SIZE_1 * 2;
     // NOTE: Launching the FreeformActivity will automatically launch the TestActivity
@@ -36,19 +38,20 @@ public class ActivityManagerFreeformStackTests extends ActivityManagerTestBase {
         mAmWmState.assertSanity();
         mAmWmState.assertValidBounds();
 
-        if (supportsFreeform()) {
-            mAmWmState.assertFrontStack(
-                    "Freeform stack must be the front stack.", FREEFORM_WORKSPACE_STACK_ID);
-            mAmWmState.assertVisibility(FREEFORM_ACTIVITY, true);
-            mAmWmState.assertVisibility(TEST_ACTIVITY, true);
-            mAmWmState.assertFocusedActivity(
-                    TEST_ACTIVITY + " must be focused Activity", TEST_ACTIVITY);
-            assertEquals(new Rectangle(0, 0, TEST_TASK_SIZE_1, TEST_TASK_SIZE_1),
-                    mAmWmState.getAmState().getTaskByActivityName(TEST_ACTIVITY).getBounds());
-        } else {
+        if (!supportsFreeform()) {
             mAmWmState.assertDoesNotContainsStack(
                     "Must not contain freeform stack.", FREEFORM_WORKSPACE_STACK_ID);
+            return;
         }
+
+        mAmWmState.assertFrontStack(
+                "Freeform stack must be the front stack.", FREEFORM_WORKSPACE_STACK_ID);
+        mAmWmState.assertVisibility(FREEFORM_ACTIVITY, true);
+        mAmWmState.assertVisibility(TEST_ACTIVITY, true);
+        mAmWmState.assertFocusedActivity(
+                TEST_ACTIVITY + " must be focused Activity", TEST_ACTIVITY);
+        assertEquals(new Rectangle(0, 0, TEST_TASK_SIZE_1, TEST_TASK_SIZE_1),
+                mAmWmState.getAmState().getTaskByActivityName(TEST_ACTIVITY).getBounds());
     }
 
     public void testActivityLifeCycleOnResizeFreeformTask() throws Exception {
@@ -58,17 +61,25 @@ public class ActivityManagerFreeformStackTests extends ActivityManagerTestBase {
         mAmWmState.computeState(mDevice, new String[]{TEST_ACTIVITY, NO_RELAUNCH_ACTIVITY});
         mAmWmState.assertSanity();
 
-        resizeActivityTask(TEST_ACTIVITY, 0, 0, TEST_TASK_SIZE_1, TEST_TASK_SIZE_2);
+        if (!supportsFreeform()) {
+            mAmWmState.assertDoesNotContainsStack(
+                    "Must not contain freeform stack.", FREEFORM_WORKSPACE_STACK_ID);
+            return;
+        }
+
+        resizeActivityTask(TEST_ACTIVITY,
+                TEST_TASK_OFFSET, TEST_TASK_OFFSET, TEST_TASK_SIZE_1, TEST_TASK_SIZE_2);
         resizeActivityTask(NO_RELAUNCH_ACTIVITY,
-                TEST_TASK_SIZE_1, TEST_TASK_SIZE_1, TEST_TASK_SIZE_1, TEST_TASK_SIZE_2);
+                TEST_TASK_OFFSET_2, TEST_TASK_OFFSET_2, TEST_TASK_SIZE_1, TEST_TASK_SIZE_2);
 
         mAmWmState.computeState(mDevice, new String[]{TEST_ACTIVITY, NO_RELAUNCH_ACTIVITY});
         mAmWmState.assertSanity();
 
         clearLogcat();
-        resizeActivityTask(TEST_ACTIVITY, 0, 0, TEST_TASK_SIZE_2, TEST_TASK_SIZE_1);
+        resizeActivityTask(TEST_ACTIVITY,
+                TEST_TASK_OFFSET, TEST_TASK_OFFSET, TEST_TASK_SIZE_2, TEST_TASK_SIZE_1);
         resizeActivityTask(NO_RELAUNCH_ACTIVITY,
-                TEST_TASK_SIZE_1, TEST_TASK_SIZE_1, TEST_TASK_SIZE_2, TEST_TASK_SIZE_1);
+                TEST_TASK_OFFSET_2, TEST_TASK_OFFSET_2, TEST_TASK_SIZE_2, TEST_TASK_SIZE_1);
         mAmWmState.computeState(mDevice, new String[]{TEST_ACTIVITY, NO_RELAUNCH_ACTIVITY});
         mAmWmState.assertSanity();
 
