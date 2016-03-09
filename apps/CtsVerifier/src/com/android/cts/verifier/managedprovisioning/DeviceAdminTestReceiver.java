@@ -16,6 +16,8 @@
 
 package com.android.cts.verifier.managedprovisioning;
 
+import android.app.Notification;
+import android.app.NotificationManager;
 import android.app.admin.DeviceAdminReceiver;
 import android.app.admin.DevicePolicyManager;
 import android.content.ComponentName;
@@ -25,6 +27,7 @@ import android.content.IntentFilter;
 import android.provider.Settings;
 import android.util.Log;
 
+import com.android.cts.verifier.R;
 import com.android.cts.verifier.location.LocationListenerActivity;
 
 /**
@@ -39,6 +42,7 @@ public class DeviceAdminTestReceiver extends DeviceAdminReceiver {
                 DEVICE_OWNER_PKG + ".managedprovisioning.DeviceAdminTestReceiver";
         private static final ComponentName RECEIVER_COMPONENT_NAME = new ComponentName(
                 DEVICE_OWNER_PKG, ADMIN_RECEIVER_TEST_CLASS);
+        private static final int BUGREPORT_NOTIFICATION_ID = 12345;
 
         public static ComponentName getReceiverComponentName() {
             return RECEIVER_COMPONENT_NAME;
@@ -48,6 +52,20 @@ public class DeviceAdminTestReceiver extends DeviceAdminReceiver {
         public void onProfileProvisioningComplete(Context context, Intent intent) {
             Log.d(TAG, "Provisioning complete intent received");
             setupProfile(context);
+        }
+
+        @Override
+        public void onBugreportSharingDeclined(Context context, Intent intent) {
+            Log.i(TAG, "Bugreport sharing declined");
+            showBugreportNotification(context, "Bugreport sharing declined",
+                    BUGREPORT_NOTIFICATION_ID);
+        }
+
+        @Override
+        public void onBugreportShared(Context context, Intent intent, String bugreportFileHash) {
+            Log.i(TAG, "Bugreport shared");
+            showBugreportNotification(context, "Bugreport shared successfully",
+                    BUGREPORT_NOTIFICATION_ID);
         }
 
         private void setupProfile(Context context) {
@@ -101,5 +119,19 @@ public class DeviceAdminTestReceiver extends DeviceAdminReceiver {
             intent.setAction(ByodHelperActivity.ACTION_PROFILE_PROVISIONED);
             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
             context.startActivity(intent);
+        }
+
+        private void showBugreportNotification(Context context, String msg,
+                int notificationId) {
+            NotificationManager mNotificationManager =
+                    (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
+            Notification notification = new Notification.Builder(context)
+                    .setSmallIcon(R.drawable.icon)
+                    .setContentTitle(context.getString(
+                            R.string.device_owner_requesting_bugreport_tests))
+                    .setContentText(msg)
+                    .setStyle(new Notification.BigTextStyle().bigText(msg))
+                    .build();
+            mNotificationManager.notify(notificationId, notification);
         }
 }

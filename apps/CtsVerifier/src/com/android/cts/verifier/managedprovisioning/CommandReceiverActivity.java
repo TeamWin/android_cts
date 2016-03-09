@@ -54,6 +54,7 @@ public class CommandReceiverActivity extends Activity {
     public static final String COMMAND_DEVICE_OWNER_CLEAR_POLICIES = "do-clear-policies";
     public static final String COMMAND_PROFILE_OWNER_CLEAR_POLICIES = "po-clear-policies";
     public static final String COMMAND_REMOVE_DEVICE_OWNER = "remove-device-owner";
+    public static final String COMMAND_REQUEST_BUGREPORT = "request-bugreport";
 
     public static final String EXTRA_USER_RESTRICTION =
             "com.android.cts.verifier.managedprovisioning.extra.USER_RESTRICTION";
@@ -141,6 +142,12 @@ public class CommandReceiverActivity extends Activity {
                     }
                     clearAllPolicies();
                     mDpm.clearDeviceOwnerApp(getPackageName());
+                } break;
+                case COMMAND_REQUEST_BUGREPORT: {
+                    if (!mDpm.isDeviceOwnerApp(getPackageName())) {
+                        return;
+                    }
+                    mDpm.requestBugreport(mAdmin);
                 } break;
                 case COMMAND_DEVICE_OWNER_CLEAR_POLICIES: {
                     if (!mDpm.isDeviceOwnerApp(getPackageName())) {
