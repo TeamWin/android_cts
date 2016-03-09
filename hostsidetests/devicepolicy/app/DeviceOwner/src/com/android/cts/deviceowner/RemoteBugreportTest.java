@@ -43,6 +43,7 @@ public class RemoteBugreportTest extends InstrumentationTestCase {
             "There should only be one user, managed by Device Owner";
 
     private static final String TAKING_BUG_REPORT = "Taking bug report";
+    private static final String DECLINE = "DECLINE";
 
     private DevicePolicyManager mDevicePolicyManager;
     private Context mContext;
@@ -91,14 +92,15 @@ public class RemoteBugreportTest extends InstrumentationTestCase {
     }
 
     /**
-     * Clicks on "Taking bugreport..." notification to cancel the whole
-     * remote bugreport flow (including stopping the dumpstate service).
+     * Clicks on "Taking bugreport..." notification, and then DECLINE button on the consent dialog
+     * to cancel the whole remote bugreport flow (including stopping the dumpstate service).
      */
     private void cancelRemoteBugreportFlowIfStartedSuccessfully(boolean startedSuccessfully) {
         if (!startedSuccessfully) {
             return;
         }
         mUiDevice.openNotification();
+
         // give it max 5 seconds to find the notification
         boolean notificationPresent = mUiDevice.wait(
                 Until.hasObject(By.textStartsWith(TAKING_BUG_REPORT)), UI_TIMEOUT);
@@ -111,7 +113,20 @@ public class RemoteBugreportTest extends InstrumentationTestCase {
             bugreportNotification.click();
         } catch (UiObjectNotFoundException e) {
             throw new IllegalStateException(
-                    "Exception when clicking on 'taking bugreport' notification", e);
+                    "Exception when clicking on 'Taking bugreport' notification", e);
+        }
+
+        // give it max 5 seconds to find the DECLINE button on the dialog
+        boolean declineButtonPresent = mUiDevice.wait(
+                Until.hasObject(By.text(DECLINE)), UI_TIMEOUT);
+        assertTrue(declineButtonPresent);
+
+        UiObject declineButton = mUiDevice.findObject(new UiSelector().text(DECLINE));
+        assertNotNull(declineButton);
+        try {
+            declineButton.click();
+        } catch (UiObjectNotFoundException e) {
+            throw new IllegalStateException("Exception when clicking on 'DECLINE' button", e);
         }
     }
 }
