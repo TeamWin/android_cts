@@ -146,7 +146,8 @@ extern "C" JNIEXPORT jstring JNICALL Java_android_jni_cts_LinkerNamespacesHelper
         // Check the error message
         std::string err = dlerror();
 
-        if (err != "dlopen failed: library \"" + path + "\" is not accessible for the namespace \"classloader-namespace\"") {
+        if (err.find("dlopen failed: library \"" + path + "\"") != 0 ||
+            err.find("is not accessible for the namespace \"classloader-namespace\"") == std::string::npos) {
           *error_msg = "unexpected dlerror: " + err;
           return false;
         }
