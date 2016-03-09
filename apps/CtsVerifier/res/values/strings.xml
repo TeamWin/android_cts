@@ -2146,6 +2146,34 @@ You should be prompted to select credentials; choose the ones you just installed
     </string>
     <string name="device_owner_user_vpn_restriction_set">Set VPN restriction</string>
 
+    <!-- Strings for DeviceOwnerBugreportTest -->
+    <string name="device_owner_requesting_bugreport_tests">Device Owner Requesting Bugreport Tests</string>
+    <string name="device_owner_requesting_bugreport_category">Device Owner Requesting Bugreport Tests</string>
+    <string name="device_owner_requesting_bugreport_tests_info">
+            The device owner requesting bugreport tests verify that a bugreport can be requested on a corporate owned device.\n
+            Press below button first, follow steps described in the dialog that pops up,
+            then proceed to the test cases.\n
+            Pressing \'back\', \'pass\' or \'fail\' on this test page will remove the device owner.\n
+            Alternatively, you can run the \'Remove device owner\' test. Ideally, that test should
+            be run last so that it does not interfere with other tests.
+    </string>
+    <string name="device_owner_request_bugreport">Request bugreport</string>
+    <string name="device_owner_bugreport_sharing_declined_while_being_taken">Sharing of requested bugreport declined while being taken</string>
+    <string name="device_owner_bugreport_sharing_declined_while_being_taken_info">
+        Please press the \"Request bugreport\" button to invoke the bugreport sharing operation.
+        Open the notifications panel and verify that:\n
+        \n
+        - Notification titled \"Taking bugreport...\" with an indefinite progress bar is present.\n
+        - Tapping on the \"Taking bugreport...\" notification opens a dialog titled \"Share bug report?\", that contains a message \"Your IT admin requested a bug report to help troubleshoot this device. Apps and data may be shared, and your device may temporarily slow down\" and two buttons - \"DECLINE\" and \"SHARE\".\n
+        \n
+        Tap the \"DECLINE\" button and verify that:\n
+        \n
+        - \"Taking bugreport...\" notification with an indefinite progress bar is no longer present.\n
+        - Notification titled \"Device Owner Requesting Bugreport Tests\" with message \"Bugreport sharing declined\" is present.\n
+        \n
+        Dismiss the notifications and mark test as passed or failed.
+    </string>
+
     <!-- Strings used for policy transparency test -->
     <string name="device_profile_owner_policy_transparency_test">Policy transparency test</string>
     <string name="device_profile_owner_policy_transparency_test_info">

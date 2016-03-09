@@ -1457,6 +1457,18 @@
             <meta-data android:name="test_required_features" android:value="android.software.device_admin" />
         </activity>
 
+        <activity android:name=".managedprovisioning.DeviceOwnerRequestingBugreportTestActivity"
+                android:label="@string/device_owner_requesting_bugreport_tests">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <action android:name="com.android.cts.verifier.managedprovisioning.action.CHECK_DEVICE_OWNER_FOR_REQUESTING_BUGREPORT" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.cts.intent.category.MANUAL_TEST" />
+            </intent-filter>
+            <meta-data android:name="test_category" android:value="@string/test_category_managed_provisioning" />
+            <meta-data android:name="test_required_features" android:value="android.software.device_admin" />
+        </activity>
+
         <activity android:name=".managedprovisioning.DeviceOwnerPositiveTestActivity$CommandReceiver"
                 android:exported="false"
                 android:theme="@android:style/Theme.NoDisplay"
