@@ -29,7 +29,7 @@ import android.util.Log;
 import junit.framework.Assert;
 
 /**
- * A {@code LocationManager} wrapper that logs GPS turn-on and turn-off.
+ * A {@code LocationManager} wrapper that logs GNSS turn-on and turn-off.
  */
 public class TestLocationManager {
 
@@ -58,9 +58,27 @@ public class TestLocationManager {
      * @param callback the listener to add
      */
     public void registerGnssMeasurementCallback(GnssMeasurementsEvent.Callback callback) {
-        Log.i(TAG, "Add Gps Measurement Callback.");
+        Log.i(TAG, "Add Gnss Measurement Callback.");
         boolean measurementListenerAdded =
                 mLocationManager.registerGnssMeasurementsCallback(callback);
+        if (!measurementListenerAdded) {
+            // Registration of GnssMeasurements listener has failed, this indicates a platform bug.
+            Log.i(TAG, TestMeasurementUtil.REGISTRATION_ERROR_MESSAGE);
+            Assert.fail(TestMeasurementUtil.REGISTRATION_ERROR_MESSAGE);
+        }
+    }
+
+    /**
+     * See {@link android.location.LocationManager#registerGnssMeasurementsCallback(GnssMeasurementsEvent.Callback callback)}
+     *
+     * @param callback the listener to add
+     * @param handler the handler that the callback runs at.
+     */
+    public void registerGnssMeasurementCallback(GnssMeasurementsEvent.Callback callback,
+            Handler handler) {
+        Log.i(TAG, "Add Gnss Measurement Callback.");
+        boolean measurementListenerAdded =
+                mLocationManager.registerGnssMeasurementsCallback(callback, handler);
         if (!measurementListenerAdded) {
             // Registration of GnssMeasurements listener has failed, this indicates a platform bug.
             Log.i(TAG, TestMeasurementUtil.REGISTRATION_ERROR_MESSAGE);
@@ -75,7 +93,7 @@ public class TestLocationManager {
      * @param callback the listener to remove
      */
     public void unregisterGnssMeasurementCallback(GnssMeasurementsEvent.Callback callback) {
-        Log.i(TAG, "Remove Gps Measurement Callback.");
+        Log.i(TAG, "Remove Gnss Measurement Callback.");
         mLocationManager.unregisterGnssMeasurementsCallback(callback);
     }
 
@@ -97,7 +115,6 @@ public class TestLocationManager {
 
     /**
      * See {@link android.location.LocationManager#addGpsStatusListener (GpsStatus.Listener)}.
-     *
      * @param listener the GpsStatus.Listener to add
      */
     public void addGpsStatusListener(final GpsStatus.Listener listener) {
@@ -139,23 +156,37 @@ public class TestLocationManager {
     }
 
     /**
-     * Add a GPS Navigation Message callback.
+     * Add a GNSS Navigation Message callback.
      *
      * @param callback a {@link GnssNavigationMessageEvent.Callback} object to register.
      * @return {@code true} if the listener was added successfully, {@code false} otherwise.
      */
-    public boolean registerGnssNavigationMessageCallback(GnssNavigationMessageEvent.Callback callback) {
-        Log.i(TAG, "Add Gps Navigation Message Callback.");
+    public boolean registerGnssNavigationMessageCallback(
+            GnssNavigationMessageEvent.Callback callback) {
+        Log.i(TAG, "Add Gnss Navigation Message Callback.");
         return mLocationManager.registerGnssNavigationMessageCallback(callback);
     }
 
     /**
-     * Removes a GPS Navigation Message callback.
+     * Add a GNSS Navigation Message callback.
+     *
+     * @param callback a {@link GnssNavigationMessageEvent.Callback} object to register.
+     * @param handler the handler that the callback runs at.
+     * @return {@code true} if the listener was added successfully, {@code false} otherwise.
+     */
+    public boolean registerGnssNavigationMessageCallback(
+            GnssNavigationMessageEvent.Callback callback, Handler handler) {
+        Log.i(TAG, "Add Gnss Navigation Message Callback.");
+        return mLocationManager.registerGnssNavigationMessageCallback(callback, handler);
+    }
+
+    /**
+     * Removes a GNSS Navigation Message callback.
      *
      * @param callback a {@link GnssNavigationMessageEvent.Callback} object to remove.
      */
     public void unregisterGnssNavigationMessageCallback(GnssNavigationMessageEvent.Callback callback) {
-        Log.i(TAG, "Remove Gps Navigation Message Callback.");
+        Log.i(TAG, "Remove Gnss Navigation Message Callback.");
         mLocationManager.unregisterGnssNavigationMessageCallback(callback);
     }
 
