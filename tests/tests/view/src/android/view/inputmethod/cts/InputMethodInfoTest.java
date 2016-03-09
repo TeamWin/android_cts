@@ -244,7 +244,7 @@ public class InputMethodInfoTest extends AndroidTestCase {
             return;
         }
 
-        if (!StorageManager.isFileBasedEncryptionEnabled()) {
+        if (!StorageManager.isFileEncryptedNativeOrEmulated()) {
             return;
         }
 
