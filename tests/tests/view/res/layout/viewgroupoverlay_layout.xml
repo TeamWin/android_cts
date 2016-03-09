@@ -26,6 +26,22 @@
         android:layout_width="100px"
         android:layout_height="100px"
         android:layout_centerInParent="true"
-        android:background="#FFF"/>
+        android:background="#FFF">
+
+        <RelativeLayout
+            android:id="@+id/level2"
+            android:layout_width="50px"
+            android:layout_height="50px"
+            android:layout_gravity="bottom|right">
+
+            <FrameLayout
+                android:id="@+id/level3"
+                android:layout_width="20px"
+                android:layout_height="30px"
+                android:layout_centerInParent="true" />
+
+        </RelativeLayout>
+
+    </FrameLayout>
 
 </RelativeLayout>

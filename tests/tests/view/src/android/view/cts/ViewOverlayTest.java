@@ -21,6 +21,7 @@ import android.graphics.Rect;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.test.ActivityInstrumentationTestCase2;
+import android.test.suitebuilder.annotation.SmallTest;
 import android.util.Pair;
 import android.view.View;
 import android.view.ViewOverlay;
@@ -29,6 +30,7 @@ import android.view.cts.util.DrawingUtils;
 import java.util.ArrayList;
 import java.util.List;
 
+@SmallTest
 public class ViewOverlayTest extends ActivityInstrumentationTestCase2<ViewOverlayCtsActivity> {
     private View mViewWithOverlay;
     private ViewOverlay mViewOverlay;
