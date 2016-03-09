@@ -172,7 +172,9 @@ public class BaseDevicePolicyTest extends DeviceTestCase implements IBuildReceiv
     }
 
     protected void removeUser(int userId) throws Exception  {
-        assertTrue("Couldn't remove user", getDevice().removeUser(userId));
+        if (listUsers().contains(userId) && userId != 0) {
+            assertTrue("Couldn't remove user", getDevice().removeUser(userId));
+        }
     }
 
     protected void removeTestUsers() throws Exception {
