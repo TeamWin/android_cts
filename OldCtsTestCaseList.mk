@@ -127,7 +127,6 @@ cts_support_packages := \
     CtsWidgetProviderApp \
     CtsWifiConfigCreator \
     TestDeviceSetup \
-    CtsTrustedVoiceApp \
     $(cts_account_support_packages) \
     $(cts_security_apps_list) \
     $(cts_security_keysets_list)
@@ -268,8 +267,7 @@ cts_host_libraries := \
     CtsThemeHostTestCases \
     CtsUiHostTestCases \
     CtsUsbTests \
-    CtsSystemUiHostTestCases \
-    CtsTrustedVoiceHostTestCases
+    CtsSystemUiHostTestCases
 
 # List of native tests. For 32 bit targets, assumes that there will be
 # one test executable, and it will end in 32. For 64 bit targets, assumes
