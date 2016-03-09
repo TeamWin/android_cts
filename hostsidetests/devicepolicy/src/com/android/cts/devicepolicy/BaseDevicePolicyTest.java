@@ -108,9 +108,15 @@ public class BaseDevicePolicyTest extends DeviceTestCase implements IBuildReceiv
 
     protected void installAppAsUser(String appFileName, int userId) throws FileNotFoundException,
             DeviceNotAvailableException {
+        installAppAsUser(appFileName, true, userId);
+    }
+
+    protected void installAppAsUser(String appFileName, boolean grantPermissions, int userId)
+            throws FileNotFoundException, DeviceNotAvailableException {
         CLog.logAndDisplay(LogLevel.INFO, "Installing app " + appFileName + " for user " + userId);
         String result = getDevice().installPackageForUser(
-                MigrationHelper.getTestFile(mCtsBuild, appFileName), true, userId);
+                MigrationHelper.getTestFile(mCtsBuild, appFileName), true, grantPermissions,
+                userId);
         assertNull("Failed to install " + appFileName + " for user " + userId + ": " + result,
                 result);
     }
