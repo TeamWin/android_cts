@@ -148,6 +148,16 @@ public class BaseTransitionTest extends ActivityInstrumentationTestCase2<Transit
         getInstrumentation().waitForIdleSync();
     }
 
+    protected void exitScene(final Scene scene) throws Throwable {
+        runTestOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                scene.exit();
+            }
+        });
+        getInstrumentation().waitForIdleSync();
+    }
+
     protected void resetListener() {
         mTransition.removeListener(mListener);
         mListener = new SimpleTransitionListener();
