@@ -16,22 +16,28 @@
 
 package android.view.cts;
 
+import android.app.Instrumentation;
 import android.content.Context;
 import android.graphics.Color;
 import android.graphics.Rect;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
+import android.os.SystemClock;
 import android.test.ActivityInstrumentationTestCase2;
+import android.test.suitebuilder.annotation.SmallTest;
 import android.util.Pair;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewGroupOverlay;
-import android.view.ViewOverlay;
 import android.view.cts.util.DrawingUtils;
 
 import java.util.ArrayList;
 import java.util.List;
 
+import static org.mockito.Mockito.*;
+
+@SmallTest
 public class ViewGroupOverlayTest extends
         ActivityInstrumentationTestCase2<ViewGroupOverlayCtsActivity> {
     private ViewGroup mViewGroupWithOverlay;
@@ -304,5 +310,90 @@ public class ViewGroupOverlayTest extends
         });
         DrawingUtils.assertAllPixelsOfColor("Back to default fill", mViewGroupWithOverlay,
                 Color.WHITE, null);
+    }
+
+    public void testOverlayViewNoClicks() throws Throwable {
+        // Add one colored view with mock click listener to the overlay
+        final View redView = new View(mContext);
+        redView.setBackgroundColor(Color.RED);
+        final View.OnClickListener mockClickListener = mock(View.OnClickListener.class);
+        redView.setOnClickListener(mockClickListener);
+        redView.layout(10, 20, 30, 40);
+
+        runTestOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                mViewGroupOverlay.add(redView);
+            }
+        });
+
+        // If we call performClick or dispatchTouchEvent on the view that we've added to the
+        // overlay, that will invoke the listener that we've registered. But here we need to
+        // test that such a view doesn't get clicks in the regular event processing pipeline
+        // that handles individual events at the screen level. Use Instrumentation to emulate
+        // the high-level sequence of events instead.
+        final int[] viewGroupOnScreenXY = new int[2];
+        mViewGroupWithOverlay.getLocationOnScreen(viewGroupOnScreenXY);
+
+        // Compute the coordinates for emulating a tap in the center of the view we've added
+        // to the overlay.
+        final int emulatedTapX = viewGroupOnScreenXY[0] + redView.getLeft()
+                + redView.getWidth() / 2;
+        final int emulatedTapY = viewGroupOnScreenXY[1] + redView.getTop()
+                + redView.getHeight() / 2;
+        final Instrumentation instrumentation = getInstrumentation();
+
+        // Inject DOWN event
+        long downTime = SystemClock.uptimeMillis();
+        MotionEvent eventDown = MotionEvent.obtain(
+                downTime, downTime, MotionEvent.ACTION_DOWN, emulatedTapX, emulatedTapY, 1);
+        instrumentation.sendPointerSync(eventDown);
+
+        // Inject MOVE event
+        long moveTime = SystemClock.uptimeMillis();
+        MotionEvent eventMove = MotionEvent.obtain(
+                moveTime, moveTime, MotionEvent.ACTION_MOVE, emulatedTapX, emulatedTapY, 1);
+        instrumentation.sendPointerSync(eventMove);
+
+        // Inject UP event
+        long upTime = SystemClock.uptimeMillis();
+        MotionEvent eventUp = MotionEvent.obtain(
+                upTime, upTime, MotionEvent.ACTION_UP, emulatedTapX, emulatedTapY, 1);
+        instrumentation.sendPointerSync(eventUp);
+
+        // Wait for the system to process all events in the queue
+        instrumentation.waitForIdleSync();
+
+        // Verify that our mock listener hasn't been called
+        verify(mockClickListener, never()).onClick(any(View.class));
+    }
+
+    public void testOverlayReparenting() throws Throwable {
+        // Find the view that we're about to add to our overlay
+        final View level2View = mViewGroupWithOverlay.findViewById(R.id.level2);
+        final View level3View = level2View.findViewById(R.id.level3);
+
+        assertTrue(level2View == level3View.getParent());
+
+        // Set the fill of this view to red
+        runTestOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                level3View.setBackgroundColor(Color.RED);
+                mViewGroupOverlay.add(level3View);
+            }
+        });
+
+        // At this point we expect the view that was added to the overlay to have been removed
+        // from its original parent
+        assertFalse(level2View == level3View.getParent());
+
+        // Check the expected visual appearance of our view group. We expect that the view that
+        // was added to the overlay to maintain its relative location inside the activity.
+        final List<Pair<Rect, Integer>> colorRectangles = new ArrayList<>();
+        colorRectangles.add(new Pair<>(new Rect(65, 60, 85, 90), Color.RED));
+        DrawingUtils.assertAllPixelsOfColor("Empty overlay before adding grandchild",
+                mViewGroupWithOverlay, Color.WHITE, colorRectangles);
+
     }
 }
