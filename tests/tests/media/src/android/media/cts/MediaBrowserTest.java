@@ -118,21 +118,6 @@ public class MediaBrowserTest extends InstrumentationTestCase {
         }
     }
 
-    public void testSubscribeInvalidItem() {
-        resetCallbacks();
-        createMediaBrowser(TEST_BROWSER_SERVICE);
-        connectMediaBrowserService();
-        mMediaBrowser.subscribe(StubMediaBrowserService.MEDIA_ID_INVALID, mSubscriptionCallback);
-        new PollingCheck(TIME_OUT_MS) {
-            @Override
-            protected boolean check() {
-                return mSubscriptionCallback.mLastErrorId != null;
-            }
-        }.run();
-
-        assertEquals(StubMediaBrowserService.MEDIA_ID_INVALID, mSubscriptionCallback.mLastErrorId);
-    }
-
     public void testSubscribeWithOptions() {
         createMediaBrowser(TEST_BROWSER_SERVICE);
         connectMediaBrowserService();
@@ -166,6 +151,46 @@ public class MediaBrowserTest extends InstrumentationTestCase {
                         mSubscriptionCallback.mLastChildMediaItems.get(i).getMediaId());
             }
         }
+    }
+
+    public void testSubscribeInvalidItem() {
+        resetCallbacks();
+        createMediaBrowser(TEST_BROWSER_SERVICE);
+        connectMediaBrowserService();
+        mMediaBrowser.subscribe(StubMediaBrowserService.MEDIA_ID_INVALID, mSubscriptionCallback);
+        new PollingCheck(TIME_OUT_MS) {
+            @Override
+            protected boolean check() {
+                return mSubscriptionCallback.mLastErrorId != null;
+            }
+        }.run();
+
+        assertEquals(StubMediaBrowserService.MEDIA_ID_INVALID, mSubscriptionCallback.mLastErrorId);
+    }
+
+    public void testSubscribeInvalidItemWithOptions() {
+        resetCallbacks();
+        createMediaBrowser(TEST_BROWSER_SERVICE);
+        connectMediaBrowserService();
+
+        final int pageSize = 5;
+        final int page = 2;
+        Bundle options = new Bundle();
+        options.putInt(MediaBrowser.EXTRA_PAGE_SIZE, pageSize);
+        options.putInt(MediaBrowser.EXTRA_PAGE, page);
+        mMediaBrowser.subscribe(StubMediaBrowserService.MEDIA_ID_INVALID, options,
+                mSubscriptionCallback);
+        new PollingCheck(TIME_OUT_MS) {
+            @Override
+            protected boolean check() {
+                return mSubscriptionCallback.mLastErrorId != null;
+            }
+        }.run();
+
+        assertEquals(StubMediaBrowserService.MEDIA_ID_INVALID, mSubscriptionCallback.mLastErrorId);
+        assertEquals(page, mSubscriptionCallback.mLastOptions.getInt(MediaBrowser.EXTRA_PAGE));
+        assertEquals(pageSize,
+                mSubscriptionCallback.mLastOptions.getInt(MediaBrowser.EXTRA_PAGE_SIZE));
     }
 
     public void testGetItem() {
@@ -289,7 +314,13 @@ public class MediaBrowserTest extends InstrumentationTestCase {
         public void onError(String id) {
             mLastErrorId = id;
         }
-    }
+
+        @Override
+        public void onError(String id, Bundle options) {
+            mLastErrorId = id;
+            mLastOptions = options;
+        }
+}
 
     private static class StubItemCallback extends MediaBrowser.ItemCallback {
         private volatile MediaBrowser.MediaItem mLastMediaItem;
