@@ -21,6 +21,7 @@ import android.app.AlertDialog;
 import android.app.AlertDialog.Builder;
 import android.app.Instrumentation;
 import android.app.stubs.DialogStubActivity;
+import android.app.stubs.R;
 import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.Context;
@@ -35,20 +36,19 @@ import android.database.CursorWrapper;
 import android.graphics.drawable.Drawable;
 import android.provider.Contacts.People;
 import android.test.ActivityInstrumentationTestCase2;
+import android.test.suitebuilder.annotation.SmallTest;
 import android.view.KeyEvent;
 import android.view.View;
-import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemSelectedListener;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
-import android.widget.FrameLayout;
 import android.widget.ListAdapter;
 import android.widget.ListView;
+import org.mockito.ArgumentCaptor;
 
-import android.app.stubs.R;
+import static org.mockito.Mockito.*;
 
-import java.util.ArrayList;
-
+@SmallTest
 public class AlertDialog_BuilderTest extends ActivityInstrumentationTestCase2<DialogStubActivity> {
     private Builder mBuilder;
     private Context mContext;
@@ -57,8 +57,6 @@ public class AlertDialog_BuilderTest extends ActivityInstrumentationTestCase2<Di
     private Drawable mDrawable;
     private AlertDialog mDialog;
     private Button mButton;
-    private boolean mResult;
-    private boolean mItemSelected;
     private CharSequence mSelectedItem;
     private final String[] mPROJECTION = new String[] {
             People._ID, People.NAME
@@ -66,45 +64,17 @@ public class AlertDialog_BuilderTest extends ActivityInstrumentationTestCase2<Di
 
     private View mView;
     private ListView mListView;
-    private ArrayList<Integer> mSelectedItems;
-    private FrameLayout mFrameLayout;
 
-    private OnClickListener mOnClickListener = new OnClickListener() {
-        public void onClick(DialogInterface dialog, int which) {
-            mResult = true;
-        }
-    };
+    private OnClickListener mOnClickListener = mock(OnClickListener.class);
 
-    private OnCancelListener mOnCancelListener = new OnCancelListener() {
-        public void onCancel(DialogInterface dialog) {
-            mResult = true;
-        }
-    };
+    private OnCancelListener mOnCancelListener = mock(OnCancelListener.class);
 
-    private OnKeyListener mOnKeyListener = new OnKeyListener() {
-        public boolean onKey(DialogInterface dialog, int key, KeyEvent envnt) {
-            mResult = true;
-            return true;
-        }
-    };
+    private OnKeyListener mOnKeyListener = mock(OnKeyListener.class);
 
-    private OnItemSelectedListener mOnItemSelectedListener = new OnItemSelectedListener() {
-        public void onItemSelected(AdapterView parent, View v, int position, long id) {
-            mItemSelected = true;
-        }
-
-        public void onNothingSelected(AdapterView parent) {
-        }
-
-    };
+    private OnItemSelectedListener mOnItemSelectedListener = mock(OnItemSelectedListener.class);
 
     private OnMultiChoiceClickListener mOnMultiChoiceClickListener =
-        new OnMultiChoiceClickListener() {
-        public void onClick(DialogInterface dialog, int which, boolean isChecked) {
-            mSelectedItems.add(which);
-            mResult = true;
-        }
-    };
+            mock(OnMultiChoiceClickListener.class);
 
     @Override
     protected void setUp() throws Exception {
@@ -123,9 +93,7 @@ public class AlertDialog_BuilderTest extends ActivityInstrumentationTestCase2<Di
         mView = null;
         mListView = null;
         mDialog = null;
-        mItemSelected = false;
         mSelectedItem = null;
-        mSelectedItems = new ArrayList<Integer>();
     }
 
     public AlertDialog_BuilderTest() {
@@ -173,7 +141,8 @@ public class AlertDialog_BuilderTest extends ActivityInstrumentationTestCase2<Di
         mInstrumentation.waitForIdleSync();
 
         assertEquals(mContext.getText(android.R.string.yes), mButton.getText());
-        assertTrue(mResult);
+        verify(mOnClickListener, times(1)).onClick(mDialog, DialogInterface.BUTTON_POSITIVE);
+        verifyNoMoreInteractions(mOnClickListener);
     }
 
     public void testSetPositiveButtonWithParamCharSequence() throws Throwable {
@@ -188,7 +157,8 @@ public class AlertDialog_BuilderTest extends ActivityInstrumentationTestCase2<Di
         });
         mInstrumentation.waitForIdleSync();
         assertEquals(mContext.getText(android.R.string.yes), mButton.getText());
-        assertTrue(mResult);
+        verify(mOnClickListener, times(1)).onClick(mDialog, DialogInterface.BUTTON_POSITIVE);
+        verifyNoMoreInteractions(mOnClickListener);
     }
 
     public void testSetNegativeButtonWithParamCharSequence() throws Throwable {
@@ -203,7 +173,8 @@ public class AlertDialog_BuilderTest extends ActivityInstrumentationTestCase2<Di
         });
         mInstrumentation.waitForIdleSync();
         assertEquals(mTitle, mButton.getText());
-        assertTrue(mResult);
+        verify(mOnClickListener, times(1)).onClick(mDialog, DialogInterface.BUTTON_NEGATIVE);
+        verifyNoMoreInteractions(mOnClickListener);
     }
 
     public void testSetNegativeButtonWithParamInt() throws Throwable {
@@ -218,7 +189,8 @@ public class AlertDialog_BuilderTest extends ActivityInstrumentationTestCase2<Di
         });
         mInstrumentation.waitForIdleSync();
         assertEquals(mContext.getText(R.string.notify), mButton.getText());
-        assertTrue(mResult);
+        verify(mOnClickListener, times(1)).onClick(mDialog, DialogInterface.BUTTON_NEGATIVE);
+        verifyNoMoreInteractions(mOnClickListener);
     }
 
     public void testSetNeutralButtonWithParamInt() throws Throwable {
@@ -233,7 +205,8 @@ public class AlertDialog_BuilderTest extends ActivityInstrumentationTestCase2<Di
         });
         mInstrumentation.waitForIdleSync();
         assertEquals(mContext.getText(R.string.notify), mButton.getText());
-        assertTrue(mResult);
+        verify(mOnClickListener, times(1)).onClick(mDialog, DialogInterface.BUTTON_NEUTRAL);
+        verifyNoMoreInteractions(mOnClickListener);
     }
 
     public void testSetNeutralButtonWithParamCharSequence() throws Throwable {
@@ -248,7 +221,8 @@ public class AlertDialog_BuilderTest extends ActivityInstrumentationTestCase2<Di
         });
         mInstrumentation.waitForIdleSync();
         assertEquals(mTitle, mButton.getText());
-        assertTrue(mResult);
+        verify(mOnClickListener, times(1)).onClick(mDialog, DialogInterface.BUTTON_NEUTRAL);
+        verifyNoMoreInteractions(mOnClickListener);
     }
 
     private void testCancelable(final boolean cancelable) throws Throwable {
@@ -303,7 +277,8 @@ public class AlertDialog_BuilderTest extends ActivityInstrumentationTestCase2<Di
             }
         });
         mInstrumentation.waitForIdleSync();
-        assertTrue(mResult);
+        verify(mOnCancelListener, times(1)).onCancel(mDialog);
+        verifyNoMoreInteractions(mOnCancelListener);
     }
 
     public void testSetOnKeyListener() throws Throwable {
@@ -315,8 +290,20 @@ public class AlertDialog_BuilderTest extends ActivityInstrumentationTestCase2<Di
             }
         });
         mInstrumentation.waitForIdleSync();
-        sendKeys(KeyEvent.ACTION_DOWN, KeyEvent.ACTION_DOWN);
-        assertTrue(mResult);
+        sendKeys(KeyEvent.KEYCODE_0, KeyEvent.KEYCODE_1);
+        // Use Mockito captures so that we can verify that each "sent" key code resulted
+        // in one DOWN event and one UP event.
+        ArgumentCaptor<KeyEvent> keyEvent0Captor = ArgumentCaptor.forClass(KeyEvent.class);
+        ArgumentCaptor<KeyEvent> keyEvent1Captor = ArgumentCaptor.forClass(KeyEvent.class);
+        verify(mOnKeyListener, times(2)).onKey(eq(mDialog), eq(KeyEvent.KEYCODE_0),
+                keyEvent0Captor.capture());
+        verify(mOnKeyListener, times(2)).onKey(eq(mDialog), eq(KeyEvent.KEYCODE_1),
+                keyEvent1Captor.capture());
+        verifyNoMoreInteractions(mOnKeyListener);
+        assertEquals(KeyEvent.ACTION_DOWN, keyEvent0Captor.getAllValues().get(0).getAction());
+        assertEquals(KeyEvent.ACTION_UP, keyEvent0Captor.getAllValues().get(1).getAction());
+        assertEquals(KeyEvent.ACTION_DOWN, keyEvent1Captor.getAllValues().get(0).getAction());
+        assertEquals(KeyEvent.ACTION_UP, keyEvent1Captor.getAllValues().get(1).getAction());
     }
 
     public void testSetItemsWithParamInt() throws Throwable {
@@ -382,7 +369,8 @@ public class AlertDialog_BuilderTest extends ActivityInstrumentationTestCase2<Di
         mInstrumentation.waitForIdleSync();
         final CursorWrapper selected = (CursorWrapper)mListView.getSelectedItem();
         assertEquals(c.getString(1), selected.getString(1));
-        assertTrue(mResult);
+        verify(mOnClickListener, times(1)).onClick(mDialog, 0);
+        verifyNoMoreInteractions(mOnClickListener);
     }
 
     public void testSetMultiChoiceItemsWithParamInt() throws Throwable {
@@ -404,9 +392,10 @@ public class AlertDialog_BuilderTest extends ActivityInstrumentationTestCase2<Di
         });
         mInstrumentation.waitForIdleSync();
         assertEquals(items[0], mSelectedItem);
-        assertEquals(2, mSelectedItems.size());
+        verify(mOnMultiChoiceClickListener, times(1)).onClick(mDialog, 0, true);
+        verify(mOnMultiChoiceClickListener, times(1)).onClick(mDialog, 1, true);
+        verifyNoMoreInteractions(mOnMultiChoiceClickListener);
         assertEquals(items[0], mListView.getItemAtPosition(0));
-        assertTrue(mResult);
     }
 
     public void testSetMultiChoiceItemsWithParamCharSequence() throws Throwable {
@@ -426,9 +415,10 @@ public class AlertDialog_BuilderTest extends ActivityInstrumentationTestCase2<Di
         });
         mInstrumentation.waitForIdleSync();
         assertEquals(items[0], mSelectedItem);
-        assertEquals(2, mSelectedItems.size());
+        verify(mOnMultiChoiceClickListener, times(1)).onClick(mDialog, 0, true);
+        verify(mOnMultiChoiceClickListener, times(1)).onClick(mDialog, 1, true);
+        verifyNoMoreInteractions(mOnMultiChoiceClickListener);
         assertEquals(items[0], mListView.getItemAtPosition(0));
-        assertTrue(mResult);
     }
 
     public void testSetMultiChoiceItemsWithParamCursor() throws Throwable {
@@ -450,8 +440,9 @@ public class AlertDialog_BuilderTest extends ActivityInstrumentationTestCase2<Di
         mInstrumentation.waitForIdleSync();
         final CursorWrapper selected = (CursorWrapper)mListView.getSelectedItem();
         assertEquals(c.getString(1), selected.getString(1));
-        assertEquals(2, mSelectedItems.size());
-        assertTrue(mResult);
+        verify(mOnMultiChoiceClickListener, times(1)).onClick(mDialog, 0, true);
+        verify(mOnMultiChoiceClickListener, times(1)).onClick(mDialog, 1, true);
+        verifyNoMoreInteractions(mOnMultiChoiceClickListener);
     }
 
     public void testSetSingleChoiceItemsWithParamInt() throws Throwable {
@@ -472,16 +463,17 @@ public class AlertDialog_BuilderTest extends ActivityInstrumentationTestCase2<Di
         mInstrumentation.waitForIdleSync();
         assertEquals(items[0], mSelectedItem);
         assertEquals(items[0], mListView.getItemAtPosition(0));
-        assertTrue(mResult);
+        verify(mOnClickListener, times(1)).onClick(mDialog, 0);
+        verifyNoMoreInteractions(mOnClickListener);
     }
 
     private void preparePeople() {
         final ContentResolver mResolver = mContext.getContentResolver();
         mResolver.delete(People.CONTENT_URI, null, null);
-        final ContentValues valuse = new ContentValues();
-        valuse.put(People._ID, "1");
-        valuse.put(People.NAME, "name");
-        mResolver.insert(People.CONTENT_URI, valuse);
+        final ContentValues values = new ContentValues();
+        values.put(People._ID, "1");
+        values.put(People.NAME, "name");
+        mResolver.insert(People.CONTENT_URI, values);
     }
 
     public void testSetSingleChoiceItemsWithParamCursor() throws Throwable {
@@ -504,7 +496,8 @@ public class AlertDialog_BuilderTest extends ActivityInstrumentationTestCase2<Di
         mInstrumentation.waitForIdleSync();
         final CursorWrapper selected = (CursorWrapper)mListView.getSelectedItem();
         assertEquals(c.getString(1), selected.getString(1));
-        assertTrue(mResult);
+        verify(mOnClickListener, times(1)).onClick(mDialog, 0);
+        verifyNoMoreInteractions(mOnClickListener);
     }
 
     public void testSetSingleChoiceItemsWithParamCharSequence() throws Throwable {
@@ -524,7 +517,8 @@ public class AlertDialog_BuilderTest extends ActivityInstrumentationTestCase2<Di
         mInstrumentation.waitForIdleSync();
         assertEquals(items[0], mSelectedItem);
         assertEquals(items[0], mListView.getItemAtPosition(0));
-        assertTrue(mResult);
+        verify(mOnClickListener, times(1)).onClick(mDialog, 0);
+        verifyNoMoreInteractions(mOnClickListener);
     }
 
     public void testSetSingleChoiceItems() throws Throwable {
@@ -546,7 +540,8 @@ public class AlertDialog_BuilderTest extends ActivityInstrumentationTestCase2<Di
         mInstrumentation.waitForIdleSync();
         assertEquals(items[0], mSelectedItem);
         assertEquals(items[0], mListView.getItemAtPosition(0));
-        assertTrue(mResult);
+        verify(mOnClickListener, times(1)).onClick(mDialog, 0);
+        verifyNoMoreInteractions(mOnClickListener);
     }
 
     public void testSetOnItemSelectedListener() throws Throwable {
@@ -561,7 +556,9 @@ public class AlertDialog_BuilderTest extends ActivityInstrumentationTestCase2<Di
             }
         });
         mInstrumentation.waitForIdleSync();
-        assertTrue(mItemSelected);
+        verify(mOnItemSelectedListener, times(1)).onItemSelected(eq(mListView), any(View.class),
+                eq(0), any(Long.class));
+        verifyNoMoreInteractions(mOnItemSelectedListener);
     }
 
     public void testSetView() throws Throwable {
