@@ -16,14 +16,6 @@
 
 package android.widget.cts;
 
-import android.graphics.drawable.ColorDrawable;
-import android.test.suitebuilder.annotation.SmallTest;
-import android.text.Html;
-import android.text.Spanned;
-import android.widget.cts.R;
-
-import org.xmlpull.v1.XmlPullParserException;
-
 import android.app.Activity;
 import android.app.Instrumentation;
 import android.app.Instrumentation.ActivityMonitor;
@@ -42,6 +34,7 @@ import android.graphics.Rect;
 import android.graphics.RectF;
 import android.graphics.Typeface;
 import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
@@ -49,13 +42,16 @@ import android.os.Parcelable;
 import android.test.ActivityInstrumentationTestCase2;
 import android.test.TouchUtils;
 import android.test.UiThreadTest;
+import android.test.suitebuilder.annotation.SmallTest;
 import android.text.Editable;
+import android.text.Html;
 import android.text.InputFilter;
 import android.text.InputType;
 import android.text.Layout;
 import android.text.Selection;
 import android.text.Spannable;
 import android.text.SpannableString;
+import android.text.Spanned;
 import android.text.TextPaint;
 import android.text.TextUtils;
 import android.text.TextUtils.TruncateAt;
@@ -80,9 +76,9 @@ import android.text.util.Linkify;
 import android.util.DisplayMetrics;
 import android.util.LocaleList;
 import android.util.TypedValue;
+import android.view.ActionMode;
 import android.view.ContextMenu;
 import android.view.ContextMenu.ContextMenuInfo;
-import android.view.ActionMode;
 import android.view.Gravity;
 import android.view.KeyEvent;
 import android.view.Menu;
@@ -104,6 +100,8 @@ import android.widget.Scroller;
 import android.widget.TextView;
 import android.widget.TextView.BufferType;
 import android.widget.TextView.OnEditorActionListener;
+
+import org.xmlpull.v1.XmlPullParserException;
 
 import java.io.IOException;
 import java.util.Locale;
@@ -822,6 +820,39 @@ public class TextViewTest extends ActivityInstrumentationTestCase2<TextViewCtsAc
         mult = Float.MAX_VALUE;
         setLineSpacing(add, mult);
         assertEquals(0, mTextView.getLineHeight());
+    }
+
+    public void testSetElegantLineHeight() {
+        mTextView = findTextView(R.id.textview_text);
+        assertFalse(mTextView.getPaint().isElegantTextHeight());
+        mActivity.runOnUiThread(new Runnable() {
+            public void run() {
+                mTextView.setWidth(mTextView.getWidth() / 3);
+                mTextView.setPadding(1, 2, 3, 4);
+                mTextView.setGravity(Gravity.BOTTOM);
+            }
+        });
+        mInstrumentation.waitForIdleSync();
+
+        int oldHeight = mTextView.getHeight();
+        mActivity.runOnUiThread(new Runnable() {
+            public void run() {
+                mTextView.setElegantTextHeight(true);
+            }
+        });
+        mInstrumentation.waitForIdleSync();
+
+        assertTrue(mTextView.getPaint().isElegantTextHeight());
+        assertTrue(mTextView.getHeight() > oldHeight);
+
+        mActivity.runOnUiThread(new Runnable() {
+            public void run() {
+                mTextView.setElegantTextHeight(false);
+            }
+        });
+        mInstrumentation.waitForIdleSync();
+        assertFalse(mTextView.getPaint().isElegantTextHeight());
+        assertTrue(mTextView.getHeight() == oldHeight);
     }
 
     public void testInstanceState() {
@@ -2391,6 +2422,7 @@ public class TextViewTest extends ActivityInstrumentationTestCase2<TextViewCtsAc
 
     public void testSetIncludeFontPadding() {
         mTextView = findTextView(R.id.textview_text);
+        assertTrue(mTextView.getIncludeFontPadding());
         mActivity.runOnUiThread(new Runnable() {
             public void run() {
                 mTextView.setWidth(mTextView.getWidth() / 3);
@@ -2409,6 +2441,7 @@ public class TextViewTest extends ActivityInstrumentationTestCase2<TextViewCtsAc
         mInstrumentation.waitForIdleSync();
 
         assertTrue(mTextView.getHeight() < oldHeight);
+        assertFalse(mTextView.getIncludeFontPadding());
     }
 
     public void testScroll() {
