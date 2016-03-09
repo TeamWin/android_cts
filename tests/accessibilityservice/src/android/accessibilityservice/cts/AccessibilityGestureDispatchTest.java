@@ -17,16 +17,19 @@ package android.accessibilityservice.cts;
 import android.accessibilityservice.AccessibilityService;
 import android.accessibilityservice.AccessibilityServiceInfo;
 import android.accessibilityservice.GestureDescription;
+import android.accessibilityservice.GestureDescription.Builder;
+import android.accessibilityservice.GestureDescription.StrokeDescription;
 import android.app.UiAutomation;
 import android.content.ContentResolver;
 import android.content.Context;
+import android.graphics.Matrix;
+import android.graphics.Path;
 import android.graphics.Rect;
 import android.os.Bundle;
 import android.os.ParcelFileDescriptor;
 import android.os.SystemClock;
 import android.provider.Settings;
 import android.test.ActivityInstrumentationTestCase2;
-import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewConfiguration;
@@ -96,7 +99,7 @@ public class AccessibilityGestureDispatchTest extends
         final int clickYInsideView = 20;
         int clickX = clickXInsideView + mViewBounds.left;
         int clickY = clickYInsideView + mViewBounds.top;
-        GestureDescription click = GestureDescription.createClick(clickX, clickY);
+        GestureDescription click = createClick(clickX, clickY);
         assertTrue(StubGestureAccessibilityService.sConnectedInstance
                 .doDispatchGesture(click, mCallback, null));
         mCallback.assertGestureCompletes(GESTURE_COMPLETION_TIMEOUT);
@@ -144,7 +147,7 @@ public class AccessibilityGestureDispatchTest extends
         final int clickYInsideView = 20;
         int clickX = clickXInsideView + mViewBounds.left;
         int clickY = clickYInsideView + mViewBounds.top;
-        GestureDescription longClick = GestureDescription.createLongClick(clickX, clickY);
+        GestureDescription longClick = createLongClick(clickX, clickY);
         assertTrue(StubGestureAccessibilityService.sConnectedInstance
                 .doDispatchGesture(longClick, mCallback, null));
         mCallback.assertGestureCompletes(
@@ -186,8 +189,7 @@ public class AccessibilityGestureDispatchTest extends
         int gestureTime = 500;
         float swipeTolerance = 2.0f;
 
-        GestureDescription swipe = GestureDescription
-                .createSwipe(startX, startY, endX, endY, gestureTime);
+        GestureDescription swipe = createSwipe(startX, startY, endX, endY, gestureTime);
         assertTrue(StubGestureAccessibilityService.sConnectedInstance
                 .doDispatchGesture(swipe, mCallback, null));
         mCallback.assertGestureCompletes(gestureTime + GESTURE_COMPLETION_TIMEOUT);
@@ -231,8 +233,7 @@ public class AccessibilityGestureDispatchTest extends
         int endY = endYInsideView + mViewBounds.top;
         int gestureTime = 1000;
 
-        GestureDescription swipe = GestureDescription
-                .createSwipe(startX, startY, endX, endY, gestureTime);
+        GestureDescription swipe = createSwipe(startX, startY, endX, endY, gestureTime);
         assertTrue(StubGestureAccessibilityService.sConnectedInstance
                 .doDispatchGesture(swipe, mCallback, null));
         mCallback.assertGestureCompletes(gestureTime + GESTURE_COMPLETION_TIMEOUT);
@@ -269,7 +270,7 @@ public class AccessibilityGestureDispatchTest extends
         int gestureTime = 500;
         float pinchTolerance = 2.0f;
 
-        GestureDescription pinch = GestureDescription.createPinch(centerX, centerY, startSpacing,
+        GestureDescription pinch = createPinch(centerX, centerY, startSpacing,
                 endSpacing, 45.0F, gestureTime);
         assertTrue(StubGestureAccessibilityService.sConnectedInstance
                 .doDispatchGesture(pinch, mCallback, null));
@@ -480,5 +481,85 @@ public class AccessibilityGestureDispatchTest extends
                 return true;
             }
         }
+    }
+
+    private GestureDescription createClick(int x, int y) {
+        Path clickPath = new Path();
+        clickPath.moveTo(x, y);
+        clickPath.lineTo(x + 1, y);
+        GestureDescription.StrokeDescription clickStroke =
+                new GestureDescription.StrokeDescription(clickPath, 0, ViewConfiguration.getTapTimeout());
+        GestureDescription.Builder clickBuilder = new GestureDescription.Builder();
+        clickBuilder.addStroke(clickStroke);
+        return clickBuilder.build();
+    }
+
+    private GestureDescription createLongClick(int x, int y) {
+        Path clickPath = new Path();
+        clickPath.moveTo(x, y);
+        clickPath.lineTo(x + 1, y);
+        int longPressTime = ViewConfiguration.getLongPressTimeout();
+
+        GestureDescription.StrokeDescription longClickStroke =
+                new GestureDescription.StrokeDescription(clickPath, 0, longPressTime + (longPressTime / 2));
+        GestureDescription.Builder longClickBuilder = new GestureDescription.Builder();
+        longClickBuilder.addStroke(longClickStroke);
+        return longClickBuilder.build();
+    }
+
+    private GestureDescription createSwipe(
+            int startX, int startY, int endX, int endY, long duration) {
+        Path swipePath = new Path();
+        swipePath.moveTo(startX, startY);
+        swipePath.lineTo(endX, endY);
+
+        GestureDescription.StrokeDescription swipeStroke = new GestureDescription.StrokeDescription(swipePath, 0, duration);
+        GestureDescription.Builder swipeBuilder = new GestureDescription.Builder();
+        swipeBuilder.addStroke(swipeStroke);
+        return swipeBuilder.build();
+    }
+
+    private GestureDescription createPinch(int centerX, int centerY, int startSpacing,
+            int endSpacing, float orientation, long duration) {
+        if ((startSpacing < 0) || (endSpacing < 0)) {
+            throw new IllegalArgumentException("Pinch spacing cannot be negative");
+        }
+        float[] startPoint1 = new float[2];
+        float[] endPoint1 = new float[2];
+        float[] startPoint2 = new float[2];
+        float[] endPoint2 = new float[2];
+
+        /* Build points for a horizontal gesture centered at the origin */
+        startPoint1[0] = startSpacing / 2;
+        startPoint1[1] = 0;
+        endPoint1[0] = endSpacing / 2;
+        endPoint1[1] = 0;
+        startPoint2[0] = -startSpacing / 2;
+        startPoint2[1] = 0;
+        endPoint2[0] = -endSpacing / 2;
+        endPoint2[1] = 0;
+
+        /* Rotate and translate the points */
+        Matrix matrix = new Matrix();
+        matrix.setRotate(orientation);
+        matrix.postTranslate(centerX, centerY);
+        matrix.mapPoints(startPoint1);
+        matrix.mapPoints(endPoint1);
+        matrix.mapPoints(startPoint2);
+        matrix.mapPoints(endPoint2);
+
+        Path path1 = new Path();
+        path1.moveTo(startPoint1[0], startPoint1[1]);
+        path1.lineTo(endPoint1[0], endPoint1[1]);
+        Path path2 = new Path();
+        path2.moveTo(startPoint2[0], startPoint2[1]);
+        path2.lineTo(endPoint2[0], endPoint2[1]);
+
+        GestureDescription.StrokeDescription path1Stroke = new GestureDescription.StrokeDescription(path1, 0, duration);
+        GestureDescription.StrokeDescription path2Stroke = new GestureDescription.StrokeDescription(path2, 0, duration);
+        GestureDescription.Builder swipeBuilder = new GestureDescription.Builder();
+        swipeBuilder.addStroke(path1Stroke);
+        swipeBuilder.addStroke(path2Stroke);
+        return swipeBuilder.build();
     }
 }
