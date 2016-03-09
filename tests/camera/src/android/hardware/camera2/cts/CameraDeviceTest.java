@@ -90,6 +90,11 @@ public class CameraDeviceTest extends Camera2AndroidTestCase {
             CameraDevice.TEMPLATE_VIDEO_SNAPSHOT
     };
 
+    private static int[] sInvalidTemplates = new int[] {
+            CameraDevice.TEMPLATE_PREVIEW - 1,
+            CameraDevice.TEMPLATE_MANUAL + 1,
+    };
+
     // Request templates that are unsupported by LEGACY mode.
     private static Set<Integer> sLegacySkipTemplates = new HashSet<>();
     static {
@@ -297,6 +302,20 @@ public class CameraDeviceTest extends Camera2AndroidTestCase {
                     if (mStaticInfo.areKeysAvailable(CaptureRequest.SENSOR_SENSITIVITY)) {
                         assertNotNull("Missing field: SENSOR_SENSITIVITY",
                                 capReq.get(CaptureRequest.SENSOR_SENSITIVITY));
+                    }
+                }
+
+                /**
+                 * Test: creating capture requests with an invalid template ID should throw
+                 * IllegalArgumentException.
+                 */
+                for (int j = 0; j < sInvalidTemplates.length; j++) {
+                    try {
+                        CaptureRequest.Builder capReq =
+                                mCamera.createCaptureRequest(sInvalidTemplates[j]);
+                        fail("Should get IllegalArgumentException due to an invalid template ID.");
+                    } catch (IllegalArgumentException e) {
+                        // Expected exception.
                     }
                 }
             }
