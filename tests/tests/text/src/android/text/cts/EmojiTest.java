@@ -53,6 +53,26 @@ public class EmojiTest extends ActivityInstrumentationTestCase2<EmojiCtsActivity
         }
     }
 
+    private String describeBitmap(final Bitmap bmp) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("[ID:0x" + Integer.toHexString(System.identityHashCode(bmp)));
+        sb.append(" " + Integer.toString(bmp.getWidth()) + "x" + Integer.toString(bmp.getHeight()));
+        sb.append(" Config:");
+        if (bmp.getConfig() == Bitmap.Config.ALPHA_8) {
+            sb.append("ALPHA_8");
+        } else if (bmp.getConfig() == Bitmap.Config.RGB_565) {
+            sb.append("RGB_565");
+        } else if (bmp.getConfig() == Bitmap.Config.ARGB_4444) {
+            sb.append("ARGB_4444");
+        } else if (bmp.getConfig() == Bitmap.Config.ARGB_8888) {
+            sb.append("ARGB_8888");
+        } else {
+            sb.append("UNKNOWN");
+        }
+        sb.append("]");
+        return sb.toString();
+    }
+
     /**
      * Tests Emoji has different glyph for different meaning characters.
      * Test on Canvas, TextView, EditText and WebView
@@ -71,11 +91,15 @@ public class EmojiTest extends ActivityInstrumentationTestCase2<EmojiCtsActivity
         };
 
         for (int i = 0; i < comparedCodePoints.length; i++) {
+            String baseMessage = "Glyph for U+" + Integer.toHexString(comparedCodePoints[i][0]) +
+                " should be different from glyph for U+" +
+                Integer.toHexString(comparedCodePoints[i][1]) + ". ";
 
             mBitmapA = ccanvas.capture(Character.toChars(comparedCodePoints[i][0]));
             mBitmapB = ccanvas.capture(Character.toChars(comparedCodePoints[i][1]));
 
-            assertFalse(mBitmapA.sameAs(mBitmapB));
+            String bmpDiffMessage = describeBitmap(mBitmapA) + "vs" + describeBitmap(mBitmapB);
+            assertFalse(baseMessage + bmpDiffMessage, mBitmapA.sameAs(mBitmapB));
 
             // cannot reuse CaptureTextView as 2nd setText call throws NullPointerException
             CaptureTextView cviewA = new CaptureTextView(getInstrumentation().getContext());
@@ -83,14 +107,16 @@ public class EmojiTest extends ActivityInstrumentationTestCase2<EmojiCtsActivity
             CaptureTextView cviewB = new CaptureTextView(getInstrumentation().getContext());
             mBitmapB = cviewB.capture(Character.toChars(comparedCodePoints[i][1]));
 
-            assertFalse(mBitmapA.sameAs(mBitmapB));
+            bmpDiffMessage = describeBitmap(mBitmapA) + "vs" + describeBitmap(mBitmapB);
+            assertFalse(baseMessage + bmpDiffMessage, mBitmapA.sameAs(mBitmapB));
 
             CaptureEditText cedittextA = new CaptureEditText(getInstrumentation().getContext());
             mBitmapA = cedittextA.capture(Character.toChars(comparedCodePoints[i][0]));
             CaptureEditText cedittextB = new CaptureEditText(getInstrumentation().getContext());
             mBitmapB = cedittextB.capture(Character.toChars(comparedCodePoints[i][1]));
 
-            assertFalse(mBitmapA.sameAs(mBitmapB));
+            bmpDiffMessage = describeBitmap(mBitmapA) + "vs" + describeBitmap(mBitmapB);
+            assertFalse(baseMessage + bmpDiffMessage, mBitmapA.sameAs(mBitmapB));
 
             // Trigger activity bringup so we can determine if a WebView is available on this
             // device.
@@ -99,7 +125,8 @@ public class EmojiTest extends ActivityInstrumentationTestCase2<EmojiCtsActivity
                 CaptureWebView cwebview = new CaptureWebView(getInstrumentation().getContext());
                 mBitmapA = cwebview.capture(Character.toChars(comparedCodePoints[i][0]));
                 mBitmapB = cwebview.capture(Character.toChars(comparedCodePoints[i][1]));
-                assertFalse(mBitmapA.sameAs(mBitmapB));
+                bmpDiffMessage = describeBitmap(mBitmapA) + "vs" + describeBitmap(mBitmapB);
+                assertFalse(baseMessage + bmpDiffMessage, mBitmapA.sameAs(mBitmapB));
             }
         }
     }
