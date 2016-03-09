@@ -22,6 +22,7 @@ import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.log.LogUtil.CLog;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 
 /**
  * Set of tests for use cases that apply to profile and device owner.
@@ -158,7 +159,7 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
         if (!mHasFeature) {
             return;
         }
-        installAppAsUser(PERMISSIONS_APP_APK, mUserId);
+        installAppPermissionAppAsUser();
         executeDeviceTestMethod(".PermissionsTest", "testPermissionGrantState");
     }
 
@@ -174,7 +175,7 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
         if (!mHasFeature) {
             return;
         }
-        installAppAsUser(PERMISSIONS_APP_APK, mUserId);
+        installAppPermissionAppAsUser();
         executeDeviceTestMethod(".PermissionsTest", "testPermissionPolicy");
     }
 
@@ -182,7 +183,7 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
         if (!mHasFeature) {
             return;
         }
-        installAppAsUser(PERMISSIONS_APP_APK, mUserId);
+        installAppPermissionAppAsUser();
         executeDeviceTestMethod(".PermissionsTest", "testPermissionMixedPolicies");
     }
 
@@ -190,7 +191,7 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
         if (!mHasFeature) {
             return;
         }
-        installAppAsUser(PERMISSIONS_APP_APK, mUserId);
+        installAppPermissionAppAsUser();
         executeDeviceTestMethod(".PermissionsTest", "testPermissionPrompts");
     }
 
@@ -198,31 +199,31 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
         if (!mHasFeature) {
             return;
         }
-        installAppAsUser(PERMISSIONS_APP_APK, mUserId);
+        installAppPermissionAppAsUser();
         executeDeviceTestMethod(".PermissionsTest", "testPermissionUpdate_setDeniedState");
         executeDeviceTestMethod(".PermissionsTest", "testPermissionUpdate_checkDenied");
-        installAppAsUser(PERMISSIONS_APP_APK, mUserId);
+        installAppPermissionAppAsUser();
         executeDeviceTestMethod(".PermissionsTest", "testPermissionUpdate_checkDenied");
 
         assertNull(getDevice().uninstallPackage(PERMISSIONS_APP_PKG));
-        installAppAsUser(PERMISSIONS_APP_APK, mUserId);
+        installAppPermissionAppAsUser();
         executeDeviceTestMethod(".PermissionsTest", "testPermissionUpdate_setGrantedState");
         executeDeviceTestMethod(".PermissionsTest", "testPermissionUpdate_checkGranted");
-        installAppAsUser(PERMISSIONS_APP_APK, mUserId);
+        installAppPermissionAppAsUser();
         executeDeviceTestMethod(".PermissionsTest", "testPermissionUpdate_checkGranted");
 
         assertNull(getDevice().uninstallPackage(PERMISSIONS_APP_PKG));
-        installAppAsUser(PERMISSIONS_APP_APK, mUserId);
+        installAppPermissionAppAsUser();
         executeDeviceTestMethod(".PermissionsTest", "testPermissionUpdate_setAutoDeniedPolicy");
         executeDeviceTestMethod(".PermissionsTest", "testPermissionUpdate_checkDenied");
-        installAppAsUser(PERMISSIONS_APP_APK, mUserId);
+        installAppPermissionAppAsUser();
         executeDeviceTestMethod(".PermissionsTest", "testPermissionUpdate_checkDenied");
 
         assertNull(getDevice().uninstallPackage(PERMISSIONS_APP_PKG));
-        installAppAsUser(PERMISSIONS_APP_APK, mUserId);
+        installAppPermissionAppAsUser();
         executeDeviceTestMethod(".PermissionsTest", "testPermissionUpdate_setAutoGrantedPolicy");
         executeDeviceTestMethod(".PermissionsTest", "testPermissionUpdate_checkGranted");
-        installAppAsUser(PERMISSIONS_APP_APK, mUserId);
+        installAppPermissionAppAsUser();
         executeDeviceTestMethod(".PermissionsTest", "testPermissionUpdate_checkGranted");
     }
 
@@ -268,7 +269,7 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
         if (!mHasFeature) {
             return;
         }
-        installAppAsUser(PERMISSIONS_APP_APK, mUserId);
+        installAppPermissionAppAsUser();
         executeDeviceTestClass(".ApplicationHiddenTest");
     }
 
@@ -457,6 +458,11 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
 
     protected void executeDeviceTestMethod(String className, String testName) throws Exception {
         assertTrue(runDeviceTestsAsUser(DEVICE_ADMIN_PKG, className, testName, mUserId));
+    }
+
+    private void installAppPermissionAppAsUser()
+            throws FileNotFoundException, DeviceNotAvailableException {
+        installAppAsUser(PERMISSIONS_APP_APK, false, mUserId);
     }
 
     private void executeSuspendPackageTestMethod(String testName) throws Exception {
