@@ -372,7 +372,15 @@ public class VectorDrawableTest extends AndroidTestCase {
     @SmallTest
     public void testGetOpacity () throws XmlPullParserException, IOException {
         VectorDrawable vectorDrawable = new VectorDrawable();
-        assertEquals(PixelFormat.TRANSLUCENT, vectorDrawable.getOpacity());
+
+        assertEquals("Default alpha should be 255", 255, vectorDrawable.getAlpha());
+        assertEquals("Default opacity should be TRANSLUCENT", PixelFormat.TRANSLUCENT,
+                vectorDrawable.getOpacity());
+
+        vectorDrawable.setAlpha(0);
+        assertEquals("Alpha should be 0 now", 0, vectorDrawable.getAlpha());
+        assertEquals("Opacity should be TRANSPARENT now", PixelFormat.TRANSPARENT,
+                vectorDrawable.getOpacity());
     }
 
     private void testPreloadDensityInner(Resources res, int densityDpi)
