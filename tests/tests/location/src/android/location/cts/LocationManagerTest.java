@@ -24,6 +24,9 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.location.Criteria;
+import android.location.GnssNmeaListener;
+import android.location.GnssStatus;
+import android.location.GnssStatusCallback;
 import android.location.GpsStatus;
 import android.location.GpsStatus.Listener;
 import android.location.GpsStatus.NmeaListener;
@@ -32,6 +35,7 @@ import android.location.LocationListener;
 import android.location.LocationManager;
 import android.location.LocationProvider;
 import android.os.Bundle;
+import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Looper;
 import android.os.SystemClock;
@@ -562,6 +566,8 @@ public class LocationManagerTest extends BaseMockLocationTest {
         updateLocation(latitude3, longitude3);
         assertFalse(listener.hasCalledOnLocationChanged(TEST_TIME_OUT));
 
+        mManager.requestSingleUpdate(LocationManager.GPS_PROVIDER, mPendingIntent);
+
         try {
             mManager.requestSingleUpdate(LocationManager.GPS_PROVIDER, (LocationListener) null,
                     Looper.myLooper());
@@ -899,6 +905,18 @@ public class LocationManagerTest extends BaseMockLocationTest {
 
         mManager.addNmeaListener((NmeaListener) null);
         mManager.removeNmeaListener((NmeaListener) null);
+
+        MockGnssNmeaListener gnssListener = new MockGnssNmeaListener();
+        mManager.addNmeaListener(gnssListener);
+        mManager.removeNmeaListener(gnssListener);
+
+        HandlerThread handlerThread = new HandlerThread("testNmeaListener");
+        handlerThread.start();
+        mManager.addNmeaListener(gnssListener, new Handler(handlerThread.getLooper()));
+        mManager.removeNmeaListener(gnssListener);
+
+        mManager.addNmeaListener((GnssNmeaListener) null);
+        mManager.removeNmeaListener((GnssNmeaListener) null);
     }
 
     public void testIsProviderEnabled() {
@@ -985,6 +1003,22 @@ public class LocationManagerTest extends BaseMockLocationTest {
         GpsStatus status = mManager.getGpsStatus(null);
         assertNotNull(status);
         assertSame(status, mManager.getGpsStatus(status));
+    }
+
+    @UiThreadTest
+    public void testGnssStatusListener() {
+        MockGnssStatusCallback callback = new MockGnssStatusCallback();
+        mManager.registerGnssStatusCallback(callback);
+        mManager.unregisterGnssStatusCallback(callback);
+
+        mManager.registerGnssStatusCallback(null);
+        mManager.unregisterGnssStatusCallback(null);
+
+        HandlerThread handlerThread = new HandlerThread("testStatusUpdates");
+        handlerThread.start();
+
+        mManager.registerGnssStatusCallback(callback, new Handler(handlerThread.getLooper()));
+        mManager.unregisterGnssStatusCallback(callback);
     }
 
     public void testSendExtraCommand() {
@@ -1390,6 +1424,23 @@ public class LocationManagerTest extends BaseMockLocationTest {
         }
     }
 
+    private static class MockGnssNmeaListener implements GnssNmeaListener {
+        private boolean mIsNmeaReceived;
+
+        @Override
+        public void onNmeaReceived(long timestamp, String nmea) {
+            mIsNmeaReceived = true;
+        }
+
+        public boolean isNmeaRecevied() {
+            return mIsNmeaReceived;
+        }
+
+        public void reset() {
+            mIsNmeaReceived = false;
+        }
+    }
+
     private static class MockGpsStatusListener implements Listener {
         private boolean mHasCallOnGpsStatusChanged;
 
@@ -1403,6 +1454,22 @@ public class LocationManagerTest extends BaseMockLocationTest {
 
         public void onGpsStatusChanged(int event) {
             mHasCallOnGpsStatusChanged = true;
+        }
+    }
+
+    private static class MockGnssStatusCallback extends GnssStatusCallback {
+        @Override
+        public void onSatelliteStatusChanged(GnssStatus status) {
+            for (int i = 0; i < status.getNumSatellites(); ++i) {
+                status.getAzimuthDegrees(i);
+                status.getCn0DbHz(i);
+                status.getConstellationType(i);
+                status.getElevationDegrees(i);
+                status.getSvid(i);
+                status.hasAlmanac(i);
+                status.hasEphemeris(i);
+                status.usedInFix(i);
+            }
         }
     }
 }

@@ -19,6 +19,7 @@ package android.location.cts;
 import android.location.GnssNavigationMessage;
 import android.location.GnssNavigationMessageEvent;
 import android.test.AndroidTestCase;
+import android.os.Parcel;
 import android.util.Log;
 
 import java.util.List;
@@ -87,5 +88,56 @@ public class GnssNavigationMessageTest extends AndroidTestCase {
 
         // Verify mandatory GnssNavigationMessage field values.
         TestMeasurementUtil.verifyGnssNavMessageMandatoryField(events);
+    }
+
+    private static void setTestValues(GnssNavigationMessage message) {
+        message.setData(new byte[] {1, 2, 3, 4});
+        message.setMessageId(5);
+        message.setStatus(GnssNavigationMessage.PARCELABLE_WRITE_RETURN_VALUE);
+        message.setSubmessageId(6);
+        message.setSvid(7);
+        message.setType(GnssNavigationMessage.TYPE_GPS_L2CNAV);
+    }
+
+    private static void verifyTestValues(GnssNavigationMessage message) {
+        byte[] data = message.getData();
+        assertEquals(1, data[0]);
+        assertEquals(2, data[1]);
+        assertEquals(3, data[2]);
+        assertEquals(4, data[3]);
+        assertEquals(5, message.getMessageId());
+        assertEquals(GnssNavigationMessage.PARCELABLE_WRITE_RETURN_VALUE, message.getStatus());
+        assertEquals(6, message.getSubmessageId());
+        assertEquals(7, message.getSvid());
+        assertEquals(GnssNavigationMessage.TYPE_GPS_L2CNAV, message.getType());
+    }
+
+    public void testDescribeContents() {
+        GnssNavigationMessage message = new GnssNavigationMessage();
+        message.describeContents();
+    }
+
+    public void testWriteToParcel() {
+        GnssNavigationMessage message = new GnssNavigationMessage();
+        setTestValues(message);
+        Parcel parcel = Parcel.obtain();
+        message.writeToParcel(parcel, 0);
+        parcel.setDataPosition(0);
+        GnssNavigationMessage newMessage =
+                GnssNavigationMessage.CREATOR.createFromParcel(parcel);
+        verifyTestValues(newMessage);
+    }
+
+    public void testReset() {
+        GnssNavigationMessage message = new GnssNavigationMessage();
+        message.reset();
+    }
+
+    public void testSet() {
+        GnssNavigationMessage message = new GnssNavigationMessage();
+        setTestValues(message);
+        GnssNavigationMessage newMessage = new GnssNavigationMessage();
+        newMessage.set(message);
+        verifyTestValues(newMessage);
     }
 }
