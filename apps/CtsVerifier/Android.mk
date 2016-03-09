@@ -33,7 +33,7 @@ LOCAL_STATIC_JAVA_LIBRARIES := android-ex-camera2 \
                                apache-commons-math \
                                androidplot \
                                ctsverifier-opencv \
-                               core-tests \
+                               core-tests-support \
                                android-support-v4  \
                                mockito-target \
                                mockwebserver \
