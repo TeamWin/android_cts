@@ -155,15 +155,28 @@ public class ActivityManagerDockedStackTests extends ActivityManagerTestBase {
     }
 
     public void testActivityLifeCycleOnResizeDockedStack() throws Exception {
-        mDevice.executeShellCommand(getAmStartCmd(TEST_ACTIVITY_NAME));
-        launchActivityInDockStack(NO_RELAUNCH_ACTIVITY_NAME);
+        mDevice.executeShellCommand(getAmStartCmd(NO_RELAUNCH_ACTIVITY_NAME));
+        mAmWmState.computeState(mDevice, new String[]{NO_RELAUNCH_ACTIVITY_NAME});
+        final Rectangle fullScreenBounds =
+                mAmWmState.getWmState().getStack(FULLSCREEN_WORKSPACE_STACK_ID).getBounds();
+
+        launchActivityInDockStack(TEST_ACTIVITY_NAME);
 
         mAmWmState.computeState(mDevice,
                 new String[]{TEST_ACTIVITY_NAME, NO_RELAUNCH_ACTIVITY_NAME});
         mAmWmState.assertSanity();
+        final Rectangle initialDockBounds =
+                mAmWmState.getWmState().getStack(DOCKED_STACK_ID).getBounds();
 
         clearLogcat();
-        resizeDockedStack(STACK_SIZE, STACK_SIZE, TASK_SIZE, TASK_SIZE);
+
+        Rectangle newBounds = computeNewDockBounds(fullScreenBounds, initialDockBounds, true);
+        resizeDockedStack(newBounds.width, newBounds.height, newBounds.width, newBounds.height);
+
+        // We resize twice to make sure we cross an orientation change threshold for both
+        // activities.
+        newBounds = computeNewDockBounds(fullScreenBounds, initialDockBounds, false);
+        resizeDockedStack(newBounds.width, newBounds.height, newBounds.width, newBounds.height);
 
         mAmWmState.computeState(mDevice,
                 new String[]{TEST_ACTIVITY_NAME, NO_RELAUNCH_ACTIVITY_NAME});
@@ -171,6 +184,23 @@ public class ActivityManagerDockedStackTests extends ActivityManagerTestBase {
 
         assertActivityLifecycle(TEST_ACTIVITY_NAME, true);
         assertActivityLifecycle(NO_RELAUNCH_ACTIVITY_NAME, false);
+    }
+
+    private Rectangle computeNewDockBounds(
+            Rectangle fullscreenBounds, Rectangle dockBounds, boolean reduceSize) {
+        final boolean inLandscape = fullscreenBounds.width > dockBounds.width;
+        // We are either increasing size or reducing it.
+        final float sizeChangeFactor = reduceSize ? 0.5f : 1.5f;
+        final Rectangle newBounds = new Rectangle(dockBounds);
+        if (inLandscape) {
+            // In landscape we change the width.
+            newBounds.width *= sizeChangeFactor;
+        } else {
+            // In portrait we change the height
+            newBounds.height *= sizeChangeFactor;
+        }
+
+        return newBounds;
     }
 
     private void launchActivityToSide(String activityName) throws Exception {
