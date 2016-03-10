@@ -55,6 +55,12 @@ public class DeviceOwnerRequestingBugreportTestActivity extends PassFailButtons.
     private static final String DEVICE_ADMIN_SETTINGS_ID = "DEVICE_ADMIN_SETTINGS";
     private static final String BUGREPORT_SHARING_DECLINED_WHILE_BEING_TAKEN =
             "BUGREPORT_SHARING_DECLINED_WHILE_RUNNING";
+    private static final String BUGREPORT_SHARING_ACCEPTED_WHILE_BEING_TAKEN =
+            "BUGREPORT_SHARING_ACCEPTED_WHILE_RUNNING";
+    private static final String BUGREPORT_SHARING_DECLINED_AFTER_HAVING_BEEN_TAKEN =
+            "BUGREPORT_SHARING_DECLINED_AFTER_HAVING_BEEN_TAKEN";
+    private static final String BUGREPORT_SHARING_ACCEPTED_AFTER_HAVING_BEEN_TAKEN =
+            "BUGREPORT_SHARING_ACCEPTED_AFTER_HAVING_BEEN_TAKEN";
     private static final String REMOVE_DEVICE_OWNER_TEST_ID = "REMOVE_DEVICE_OWNER";
 
     @Override
@@ -127,10 +133,36 @@ public class DeviceOwnerRequestingBugreportTestActivity extends PassFailButtons.
                 new Intent(ACTION_CHECK_DEVICE_OWNER_FOR_REQUESTING_BUGREPORT)
                         .putExtra(EXTRA_TEST_ID, getIntent().getStringExtra(EXTRA_TEST_ID))));
 
-        // bugreport declined while running test
+        // bugreport sharing declined while running test
         adapter.add(createInteractiveTestItem(this, BUGREPORT_SHARING_DECLINED_WHILE_BEING_TAKEN,
                 R.string.device_owner_bugreport_sharing_declined_while_being_taken,
                 R.string.device_owner_bugreport_sharing_declined_while_being_taken_info,
+                new ButtonInfo(
+                        R.string.device_owner_request_bugreport,
+                        createRequestBugreportIntent())));
+
+        // bugreport sharing accepted while running test
+        adapter.add(createInteractiveTestItem(this, BUGREPORT_SHARING_ACCEPTED_WHILE_BEING_TAKEN,
+                R.string.device_owner_bugreport_sharing_accepted_while_being_taken,
+                R.string.device_owner_bugreport_sharing_accepted_while_being_taken_info,
+                new ButtonInfo(
+                        R.string.device_owner_request_bugreport,
+                        createRequestBugreportIntent())));
+
+        // bugreport sharing declined after having been taken test
+        adapter.add(createInteractiveTestItem(this,
+                BUGREPORT_SHARING_DECLINED_AFTER_HAVING_BEEN_TAKEN,
+                R.string.device_owner_bugreport_sharing_declined_after_having_been_taken,
+                R.string.device_owner_bugreport_sharing_declined_after_having_been_taken_info,
+                new ButtonInfo(
+                        R.string.device_owner_request_bugreport,
+                        createRequestBugreportIntent())));
+
+        // bugreport sharing accepted after having been taken test
+        adapter.add(createInteractiveTestItem(this,
+                BUGREPORT_SHARING_ACCEPTED_AFTER_HAVING_BEEN_TAKEN,
+                R.string.device_owner_bugreport_sharing_accepted_after_having_been_taken,
+                R.string.device_owner_bugreport_sharing_accepted_after_having_been_taken_info,
                 new ButtonInfo(
                         R.string.device_owner_request_bugreport,
                         createRequestBugreportIntent())));
