@@ -164,24 +164,6 @@ public class BaseTransitionTest extends ActivityInstrumentationTestCase2<Transit
         mTransition.addListener(mListener);
     }
 
-    // Waits at least one frame and it could be more. The animated values should have changed
-    // from the previously recorded values by the end of this method.
-    protected void waitForAnimationFrame() throws Throwable {
-        final CountDownLatch latch = new CountDownLatch(1);
-        runTestOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                Choreographer.getInstance().postFrameCallbackDelayed(new FrameCallback() {
-                    @Override
-                    public void doFrame(long frameTimeNanos) {
-                        latch.countDown();
-                    }
-                }, 16); // make sure it is the next animation frame.
-            }
-        });
-        assertTrue(latch.await(100, TimeUnit.MILLISECONDS));
-    }
-
     public class TestTransition extends Visibility {
 
         public TestTransition() {
