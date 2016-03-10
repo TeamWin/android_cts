@@ -16,7 +16,6 @@
 
 package android.graphics.drawable.cts;
 
-import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
 
 import android.content.res.Resources;
@@ -444,7 +443,7 @@ public class LayerDrawableTest extends AndroidTestCase {
         assertEquals(superConfig | childConfig, layerDrawable.getChangingConfigurations());
     }
 
-    public void testGetPadding() {
+    public void testAccessPadding() {
         Drawable[] array = new Drawable[] { new ShapeDrawable(), new ShapeDrawable() };
         LayerDrawable layerDrawable = new LayerDrawable(array);
 
@@ -470,6 +469,27 @@ public class LayerDrawableTest extends AndroidTestCase {
         assertEquals(padding0.top + padding1.top, rc.top);
         assertEquals(padding0.right + padding1.right, rc.right);
         assertEquals(padding0.bottom + padding1.bottom, rc.bottom);
+    }
+
+    public void testAccessPaddingMode() {
+        Rect padding = new Rect();
+        Drawable dr0 = new IntrinsicSizeDrawable(20, 30, new Rect(1, 2, 3, 4));
+        Drawable dr1 = new IntrinsicSizeDrawable(30, 40, new Rect(9, 8, 7, 6));
+        LayerDrawable layerDrawable = new LayerDrawable(new Drawable[] { dr0, dr1 });
+
+        assertEquals("Default padding mode is NEST",
+                LayerDrawable.PADDING_MODE_NEST, layerDrawable.getPaddingMode());
+        assertEquals(34, layerDrawable.getIntrinsicWidth());
+        assertEquals(46, layerDrawable.getIntrinsicHeight());
+        assertTrue(layerDrawable.getPadding(padding));
+        assertEquals(new Rect(10, 10, 10, 10), padding);
+
+        layerDrawable.setPaddingMode(LayerDrawable.PADDING_MODE_STACK);
+        assertEquals(LayerDrawable.PADDING_MODE_STACK, layerDrawable.getPaddingMode());
+        assertEquals(30, layerDrawable.getIntrinsicWidth());
+        assertEquals(40, layerDrawable.getIntrinsicHeight());
+        assertTrue(layerDrawable.getPadding(padding));
+        assertEquals(new Rect(9, 8, 7, 6), padding);
     }
 
     @SuppressWarnings("deprecation")
@@ -567,7 +587,7 @@ public class LayerDrawableTest extends AndroidTestCase {
         assertTrue(mockDrawable2.hasCalledColorFilter());
     }
 
-    public void testGetOpacity() {
+    public void testAccessOpacity() {
         Drawable[] array = new Drawable[0];
         LayerDrawable layerDrawable = new LayerDrawable(array);
         assertEquals(PixelFormat.TRANSPARENT, layerDrawable.getOpacity());
@@ -591,6 +611,13 @@ public class LayerDrawableTest extends AndroidTestCase {
         mockDrawable1.setOpacity(PixelFormat.TRANSLUCENT);
         mockDrawable2.setOpacity(PixelFormat.UNKNOWN);
         assertEquals(PixelFormat.UNKNOWN, layerDrawable.getOpacity());
+
+        layerDrawable = new LayerDrawable(array);
+        layerDrawable.setOpacity(PixelFormat.OPAQUE);
+        mockDrawable1.setOpacity(PixelFormat.TRANSLUCENT);
+        mockDrawable2.setOpacity(PixelFormat.UNKNOWN);
+        assertEquals(PixelFormat.OPAQUE, layerDrawable.getOpacity());
+
     }
 
     @SuppressWarnings("deprecation")
@@ -1682,6 +1709,7 @@ public class LayerDrawableTest extends AndroidTestCase {
         final int initialWidth = preloadedDrawable.getIntrinsicWidth();
         final int initialLeftPadding = preloadedDrawable.getLeftPadding();
         final int initialRightPadding = preloadedDrawable.getRightPadding();
+        final int initialContentWidth = initialWidth - initialLeftPadding - initialRightPadding;
         final int initialBottomPadding = preloadedDrawable.getBottomPadding();
         final int initialTopPadding = preloadedDrawable.getTopPadding();
         final int initialLayerInsetLeft = preloadedDrawable.getLayerInsetLeft(0);
@@ -1692,13 +1720,19 @@ public class LayerDrawableTest extends AndroidTestCase {
         final int initialLayerHeight = preloadedDrawable.getLayerHeight(0);
 
         // Set density to half of original. Padding and insets are
-        // truncated, dimensions are rounded to the nearest pixel.
+        // truncated, dimensions are rounded to the nearest pixel. Because
+        // LayerDrawable's intrinsic width is a combination of padding and
+        // dimensions, some computation is necessary.
         DrawableTestUtils.setResourcesDensity(res, densityDpi / 2);
         final LayerDrawable halfDrawable =
                 (LayerDrawable) preloadedConstantState.newDrawable(res);
-        assertEquals(Math.round(initialWidth / 2f), halfDrawable.getIntrinsicWidth());
-        assertEquals(initialLeftPadding / 2, halfDrawable.getLeftPadding());
-        assertEquals(initialRightPadding / 2, halfDrawable.getRightPadding());
+        final int halfContentWidth = Math.round(initialContentWidth / 2f);
+        final int halfLeftPadding = initialLeftPadding / 2;
+        final int halfRightPadding = initialRightPadding / 2;
+        final int halfIntrinsicWidth = halfContentWidth + halfLeftPadding + halfRightPadding;
+        assertEquals(halfIntrinsicWidth, halfDrawable.getIntrinsicWidth());
+        assertEquals(halfLeftPadding, halfDrawable.getLeftPadding());
+        assertEquals(halfRightPadding, halfDrawable.getRightPadding());
         assertEquals(initialBottomPadding / 2, halfDrawable.getBottomPadding());
         assertEquals(initialTopPadding / 2, halfDrawable.getTopPadding());
         assertEquals(initialLayerInsetLeft / 2,halfDrawable.getLayerInsetLeft(0));
@@ -1742,18 +1776,24 @@ public class LayerDrawableTest extends AndroidTestCase {
 
         // Ensure theme density is applied correctly.
         final Theme t = res.newTheme();
+
+        // The half-density drawable will scale-up all of the values that were
+        // previously scaled-down, so we need to capture the rounding errors.
         halfDrawable.applyTheme(t);
-        assertEquals(initialWidth, halfDrawable.getIntrinsicWidth());
-        assertEquals(initialLeftPadding, halfDrawable.getLeftPadding());
-        assertEquals(initialRightPadding, halfDrawable.getRightPadding());
-        assertEquals(initialBottomPadding, halfDrawable.getBottomPadding());
-        assertEquals(initialTopPadding, halfDrawable.getTopPadding());
-        assertEquals(initialLayerInsetLeft, halfDrawable.getLayerInsetLeft(0));
-        assertEquals(initialLayerInsetRight, halfDrawable.getLayerInsetRight(0));
-        assertEquals(initialLayerInsetTop, halfDrawable.getLayerInsetTop(0));
-        assertEquals(initialLayerInsetBottom, halfDrawable.getLayerInsetBottom(0));
-        assertEquals(initialLayerWidth, halfDrawable.getLayerWidth(0));
-        assertEquals(initialLayerHeight, halfDrawable.getLayerHeight(0));
+        assertEquals(halfIntrinsicWidth * 2, halfDrawable.getIntrinsicWidth());
+        assertEquals(halfLeftPadding * 2, halfDrawable.getLeftPadding());
+        assertEquals(halfRightPadding * 2, halfDrawable.getRightPadding());
+        assertEquals(2 * (initialBottomPadding / 2), halfDrawable.getBottomPadding());
+        assertEquals(2 * (initialTopPadding / 2), halfDrawable.getTopPadding());
+        assertEquals(2 * (initialLayerInsetLeft / 2), halfDrawable.getLayerInsetLeft(0));
+        assertEquals(2 * (initialLayerInsetRight / 2), halfDrawable.getLayerInsetRight(0));
+        assertEquals(2 * (initialLayerInsetTop / 2), halfDrawable.getLayerInsetTop(0));
+        assertEquals(2 * (initialLayerInsetBottom / 2), halfDrawable.getLayerInsetBottom(0));
+        assertEquals(2 * Math.round(initialLayerWidth / 2f), halfDrawable.getLayerWidth(0));
+        assertEquals(2 * Math.round(initialLayerHeight / 2f), halfDrawable.getLayerHeight(0));
+
+        // The double-density drawable will scale-down all of the values that
+        // were previously scaled-up, so we don't need to worry about rounding.
         doubleDrawable.applyTheme(t);
         assertEquals(initialWidth, doubleDrawable.getIntrinsicWidth());
         assertEquals(initialLeftPadding, doubleDrawable.getLeftPadding());
@@ -1766,5 +1806,50 @@ public class LayerDrawableTest extends AndroidTestCase {
         assertEquals(initialLayerInsetBottom, doubleDrawable.getLayerInsetBottom(0));
         assertEquals(initialLayerWidth, doubleDrawable.getLayerWidth(0));
         assertEquals(initialLayerHeight, doubleDrawable.getLayerHeight(0));
+    }
+
+    private static class IntrinsicSizeDrawable extends Drawable {
+        private final int mIntrinsicWidth;
+        private final int mIntrinsicHeight;
+        private final Rect mPadding;
+
+        public IntrinsicSizeDrawable(int intrinsicWidth, int intrinsicHeight, Rect padding) {
+            mIntrinsicWidth = intrinsicWidth;
+            mIntrinsicHeight = intrinsicHeight;
+            mPadding = new Rect(padding);
+        }
+
+        @Override
+        public boolean getPadding(Rect padding) {
+            padding.set(mPadding);
+            return true;
+        }
+
+        @Override
+        public int getIntrinsicHeight() {
+            return mIntrinsicHeight;
+        }
+
+        @Override
+        public int getIntrinsicWidth() {
+            return mIntrinsicWidth;
+        }
+
+        @Override
+        public void draw(Canvas canvas) {
+        }
+
+        @Override
+        public void setAlpha(int alpha) {
+        }
+
+        @Override
+        public void setColorFilter(ColorFilter colorFilter) {
+        }
+
+        @Override
+        public int getOpacity() {
+            return 0;
+        }
     }
 }

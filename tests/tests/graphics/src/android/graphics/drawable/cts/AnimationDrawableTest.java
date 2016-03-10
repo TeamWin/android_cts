@@ -153,8 +153,22 @@ public class AnimationDrawableTest extends ActivityInstrumentationTestCase2<Imag
         assertStoppedAnimation(THIRD_FRAME_INDEX, THIRD_FRAME_DURATION);
     }
 
-    public void testRun() {
-        // This method should not be called directly.
+    public void testRun() throws Throwable {
+        assertFalse(mAnimationDrawable.isRunning());
+        runTestOnUiThread(new Runnable() {
+            public void run() {
+                mAnimationDrawable.run();
+            }
+        });
+
+        assertTrue(mAnimationDrawable.isRunning());
+        pollingCheckDrawable(SECOND_FRAME_INDEX, FIRST_FRAME_DURATION);
+
+        runTestOnUiThread(new Runnable() {
+            public void run() {
+                mAnimationDrawable.unscheduleSelf(mAnimationDrawable);
+            }
+        });
     }
 
     public void testUnscheduleSelf() throws Throwable {
