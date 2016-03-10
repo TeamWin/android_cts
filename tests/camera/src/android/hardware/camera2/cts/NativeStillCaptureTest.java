@@ -31,7 +31,7 @@ public class NativeStillCaptureTest extends Camera2SurfaceViewTestCase {
     /** Load jni on initialization */
     static {
         Log.i("NativeStillCaptureTest", "before loadlibrary");
-        System.loadLibrary("ctscamera2ndk_jni");
+        System.loadLibrary("ctscamera2_jni");
         Log.i("NativeStillCaptureTest", "after loadlibrary");
     }
 

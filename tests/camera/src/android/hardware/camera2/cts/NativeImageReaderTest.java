@@ -29,7 +29,7 @@ public class NativeImageReaderTest extends Camera2AndroidTestCase {
     /** Load jni on initialization */
     static {
         Log.i("NativeImageReaderTest", "before loadlibrary");
-        System.loadLibrary("ctscamera2ndk_jni");
+        System.loadLibrary("ctscamera2_jni");
         Log.i("NativeImageReaderTest", "after loadlibrary");
     }
 
