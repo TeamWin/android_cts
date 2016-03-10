@@ -32,6 +32,11 @@ public class SuspendPackageTest extends BaseDeviceAdminTest {
                         {INTENT_RECEIVER_PKG}, true);
         // all packages should be handled.
         assertEquals(0, notHandledPackages.length);
+        // test getPackageSuspended
+        boolean isSuspended =
+                mDevicePolicyManager.getPackageSuspended(
+                        ADMIN_RECEIVER_COMPONENT, INTENT_RECEIVER_PKG);
+        assertTrue(isSuspended);
     }
 
     public void testSetPackagesNotSuspended() {
@@ -41,6 +46,11 @@ public class SuspendPackageTest extends BaseDeviceAdminTest {
                 false);
         // all packages should be handled.
         assertEquals(0, notHandledPackages.length);
+        // test getPackageSuspended
+        boolean isSuspended =
+                mDevicePolicyManager.getPackageSuspended(
+                        ADMIN_RECEIVER_COMPONENT, INTENT_RECEIVER_PKG);
+        assertFalse(isSuspended);
     }
 
     /**
