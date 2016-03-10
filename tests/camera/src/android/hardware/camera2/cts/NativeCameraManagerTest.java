@@ -29,7 +29,7 @@ public class NativeCameraManagerTest extends AndroidTestCase {
     /** Load jni on initialization */
     static {
         Log.i("NativeCameraManagerTest", "before loadlibrary");
-        System.loadLibrary("ctscamera2ndk_jni");
+        System.loadLibrary("ctscamera2_jni");
         Log.i("NativeCameraManagerTest", "after loadlibrary");
     }
 

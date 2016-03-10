@@ -16,12 +16,13 @@ LOCAL_PATH := $(call my-dir)
 
 include $(CLEAR_VARS)
 
-LOCAL_MODULE    := libctscamera2ndk_jni
+LOCAL_MODULE    := libctscamera2_jni
 
 LOCAL_MODULE_TAGS := optional
 
 LOCAL_SRC_FILES := \
-	native-camera-jni.cpp
+	native-camera-jni.cpp \
+	dng-validate-jni.cpp
 
 LOCAL_C_INCLUDES := \
 	$(JNI_H_INCLUDE) \
@@ -29,12 +30,24 @@ LOCAL_C_INCLUDES := \
 	frameworks/av/include/camera/ndk \
 	frameworks/av/include/ndk \
 
+# Flags needed by DNG SDK
+LOCAL_CFLAGS := -DUNIX_ENV=1 -DqDNGBigEndian=0 -DqDNGThreadSafe=1 -DqDNGUseLibJPEG=1 -DqDNGUseXMP=0 -DqDNGValidate=1 -DqDNGValidateTarget=1 -DqAndroid=1 -fexceptions -Wsign-compare -Wno-reorder -Wframe-larger-than=20000
+
+# Flags to avoid warnings from DNG SDK
+LOCAL_CFLAGS += -Wno-unused-parameter
+
+LOCAL_STATIC_LIBRARIES := libdng_sdk_validate libjpeg_static libz
 LOCAL_SHARED_LIBRARIES := libandroid \
     libnativehelper_compat_libc++ \
     liblog \
     libcamera2ndk \
     libmediandk
 
+# NDK build, shared C++ runtime
+#LOCAL_SDK_VERSION := current
+#LOCAL_NDK_STL_VARIANT := c++_shared
+
+# Temporary workaround until camera2 NDK is active. See b/27102995.
 LOCAL_CXX_STL := libc++_static
 
 include $(BUILD_SHARED_LIBRARY)
