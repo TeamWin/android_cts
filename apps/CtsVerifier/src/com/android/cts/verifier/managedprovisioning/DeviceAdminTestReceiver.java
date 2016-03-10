@@ -57,15 +57,15 @@ public class DeviceAdminTestReceiver extends DeviceAdminReceiver {
         @Override
         public void onBugreportSharingDeclined(Context context, Intent intent) {
             Log.i(TAG, "Bugreport sharing declined");
-            showBugreportNotification(context, "Bugreport sharing declined",
-                    BUGREPORT_NOTIFICATION_ID);
+            showBugreportNotification(context, context.getString(
+                    R.string.bugreport_sharing_declined), BUGREPORT_NOTIFICATION_ID);
         }
 
         @Override
         public void onBugreportShared(Context context, Intent intent, String bugreportFileHash) {
             Log.i(TAG, "Bugreport shared");
-            showBugreportNotification(context, "Bugreport shared successfully",
-                    BUGREPORT_NOTIFICATION_ID);
+            showBugreportNotification(context, context.getString(
+                    R.string.bugreport_shared_successfully), BUGREPORT_NOTIFICATION_ID);
         }
 
         private void setupProfile(Context context) {

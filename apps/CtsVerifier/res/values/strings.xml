@@ -2158,18 +2158,74 @@ You should be prompted to select credentials; choose the ones you just installed
             be run last so that it does not interfere with other tests.
     </string>
     <string name="device_owner_request_bugreport">Request bugreport</string>
+    <string name="bugreport_sharing_declined">Bugreport sharing declined</string>
+    <string name="bugreport_shared_successfully">Bugreport shared successfully</string>
     <string name="device_owner_bugreport_sharing_declined_while_being_taken">Sharing of requested bugreport declined while being taken</string>
     <string name="device_owner_bugreport_sharing_declined_while_being_taken_info">
         Please press the \"Request bugreport\" button to invoke the bugreport sharing operation.
         Open the notifications panel and verify that:\n
         \n
         - Notification titled \"Taking bugreport...\" with an indefinite progress bar is present.\n
-        - Tapping on the \"Taking bugreport...\" notification opens a dialog titled \"Share bug report?\", that contains a message \"Your IT admin requested a bug report to help troubleshoot this device. Apps and data may be shared, and your device may temporarily slow down\" and two buttons - \"DECLINE\" and \"SHARE\".\n
+        - Tapping on the \"Taking bugreport...\" notification opens a dialog titled \"Share bug report?\", that contains a message \"Your IT admin requested a bug report to help troubleshoot this device. Apps and data may be shared, and your device may temporarily slow down.\" and two buttons - \"DECLINE\" and \"SHARE\".\n
         \n
         Tap the \"DECLINE\" button and verify that:\n
         \n
         - \"Taking bugreport...\" notification with an indefinite progress bar is no longer present.\n
         - Notification titled \"Device Owner Requesting Bugreport Tests\" with message \"Bugreport sharing declined\" is present.\n
+        \n
+        Dismiss the notifications and mark test as passed or failed.
+    </string>
+    <string name="device_owner_bugreport_sharing_accepted_while_being_taken">Sharing of requested bugreport accepted while being taken</string>
+    <string name="device_owner_bugreport_sharing_accepted_while_being_taken_info">
+        Please press the \"Request bugreport\" button to invoke the bugreport sharing operation.
+        Open the notifications panel and verify that:\n
+        \n
+        - Notification titled \"Taking bugreport...\" with an indefinite progress bar is present.\n
+        - Tapping on the \"Taking bugreport...\" notification opens a dialog titled \"Share bug report?\", that contains a message \"Your IT admin requested a bug report to help troubleshoot this device. Apps and data may be shared, and your device may temporarily slow down.\" and two buttons - \"DECLINE\" and \"SHARE\".\n
+        \n
+        Tap the \"SHARE\" button and verify that:\n
+        \n
+        - \"Taking bugreport...\" notification with an indefinite progress bar is no longer present.\n
+        - Notification titled \"Sharing bugreport...\" with an indefinite progress bar is present.\n
+        - After a few minutes (time necessary to wait for bugreport being collected) notification titled \"Sharing bugreport...\" is automatically dismissed and notification titled \"Device Owner Requesting Bugreport Tests\" with message \"Bugreport shared successfully\" is present.\n
+        \n
+        Dismiss the notifications and mark test as passed or failed.
+    </string>
+    <string name="device_owner_bugreport_sharing_declined_after_having_been_taken">Sharing of requested bugreport declined after having been taken</string>
+    <string name="device_owner_bugreport_sharing_declined_after_having_been_taken_info">
+        Please press the \"Request bugreport\" button to invoke the bugreport sharing operation.
+        Open the notifications panel and verify that:\n
+        \n
+        - Notification titled \"Taking bugreport...\" with an indefinite progress bar is present.\n
+        \n
+        Wait for a few minutes (time necessary for bugreport to be collected) and verify that:\n
+        \n
+        - \"Taking bugreport...\" notification with an indefinite progress bar is dismissed.\n
+        - Notification titled \"Share bug report?\", that contains a message \"Your IT admin requested a bug report to help troubleshoot this device. Apps and data may be shared.\" and two buttons - \"DECLINE\" and \"SHARE\" is shown.\n
+        \n
+        Tap the \"DECLINE\" button and verify that:\n
+        \n
+        - Notification titled \"Share bug report?\" is dismissed.\n
+        - Notification titled \"Device Owner Requesting Bugreport Tests\" with message \"Bugreport sharing declined\" is present.\n
+        \n
+        Dismiss the notifications and mark test as passed or failed.
+    </string>
+    <string name="device_owner_bugreport_sharing_accepted_after_having_been_taken">Sharing of requested bugreport accepted after having been taken</string>
+    <string name="device_owner_bugreport_sharing_accepted_after_having_been_taken_info">
+        Please press the \"Request bugreport\" button to invoke the bugreport sharing operation.
+        Open the notifications panel and verify that:\n
+        \n
+        - Notification titled \"Taking bugreport...\" with an indefinite progress bar is present.\n
+        \n
+        Wait for a few minutes (time necessary for bugreport to be collected) and verify that:\n
+        \n
+        - \"Taking bugreport...\" notification with an indefinite progress bar is dismissed.\n
+        - Notification titled \"Share bug report?\", that contains a message \"Your IT admin requested a bug report to help troubleshoot this device. Apps and data may be shared.\" and two buttons - \"DECLINE\" and \"SHARE\" is shown.\n
+        \n
+        Tap the \"SHARE\" button and verify that:\n
+        \n
+        - Notification titled \"Share bug report?\" is dismissed.\n
+        - Notification titled \"Device Owner Requesting Bugreport Tests\" with message \"Bugreport shared successfully\" is present.\n
         \n
         Dismiss the notifications and mark test as passed or failed.
     </string>
