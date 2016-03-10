@@ -18,6 +18,19 @@
 
 float negInf, posInf;
 
+static half negInfHalf, posInfHalf;
+
+// At present, no support for global of type half, or for invokable
+// taking an argument of type half.
+static void translate(half *tgt, const short src) {
+  for (int i = 0; i < sizeof(half); ++i)
+    ((char *)tgt)[i] = ((const char *)&src)[i];
+}
+void setInfsHalf(short forNegInfHalf, short forPosInfHalf) {
+  translate(&negInfHalf, forNegInfHalf);
+  translate(&posInfHalf, forPosInfHalf);
+}
+
 /////////////////////////////////////////////////////////////////////////
 
 #pragma rs reduce(addint) \
@@ -27,17 +40,7 @@ static void aiAccum(int *accum, int val) { *accum += val; }
 
 /////////////////////////////////////////////////////////////////////////
 
-#pragma rs reduce(dp) \
-  accumulator(dpAccum) combiner(dpSum)
-
-static void dpAccum(float *accum, float in1, float in2) {
-  *accum += in1*in2;
-}
-
-// combiner function
-static void dpSum(float *accum, const float *val) { *accum += *val; }
-
-/////////////////////////////////////////////////////////////////////////
+// Finds LOCATION of min and max float values
 
 #pragma rs reduce(findMinAndMax) \
   initializer(fMMInit) accumulator(fMMAccumulator) \
@@ -80,6 +83,225 @@ static void fMMOutConverter(int2 *result,
                             const MinAndMax *val) {
   result->x = val->min.idx;
   result->y = val->max.idx;
+}
+
+/////////////////////////////////////////////////////////////////////////
+
+// finds min and max half values (not their locations)
+
+// tests half input and half2 result
+
+// .. reduction form
+
+#pragma rs reduce(findMinAndMaxHalf) \
+  initializer(fMMHalfInit) accumulator(fMMHalfAccumulator) \
+  combiner(fMMHalfCombiner) outconverter(fMMHalfOutConverter)
+
+typedef struct {
+  half min, max;
+} MinAndMaxHalf;
+
+static void fMMHalfInit(MinAndMaxHalf *accum) {
+  accum->min = posInfHalf;
+  accum->max = negInfHalf;
+}
+
+static void fMMHalfAccumulator(MinAndMaxHalf *accum, half in) {
+  accum->min = fmin(accum->min, in);
+  accum->max = fmax(accum->max, in);
+}
+
+static void fMMHalfCombiner(MinAndMaxHalf *accum,
+                            const MinAndMaxHalf *val) {
+  fMMHalfAccumulator(accum, val->min);
+  fMMHalfAccumulator(accum, val->max);
+}
+
+static void fMMHalfOutConverter(half2 *result,
+                                const MinAndMaxHalf *val) {
+  result->x = val->min;
+  result->y = val->max;
+}
+
+// .. invokable (non reduction) form (no support for half computations in Java)
+
+void findMinAndMaxHalf(rs_allocation out, rs_allocation in) {
+  half min = posInfHalf, max = negInfHalf;
+
+  const uint32_t len = rsAllocationGetDimX(in);
+  for (uint32_t idx = 0; idx < len; ++idx) {
+    const half val = rsGetElementAt_half(in, idx);
+    min = fmin(min, val);
+    max = fmax(max, val);
+  }
+
+  half2 result;
+  result.x = min;
+  result.y = max;
+  rsSetElementAt_half2(out, result, 0);
+}
+
+// tests half input and array of half result;
+//   reuses functions of findMinAndMaxHalf reduction kernel
+
+#pragma rs reduce(findMinAndMaxHalfIntoArray) \
+  initializer(fMMHalfInit) accumulator(fMMHalfAccumulator) \
+  combiner(fMMHalfCombiner) outconverter(fMMHalfOutConverterIntoArray)
+
+static void fMMHalfOutConverterIntoArray(half (*result)[2],
+                                         const MinAndMaxHalf *val) {
+  (*result)[0] = val->min;
+  (*result)[1] = val->max;
+}
+
+/////////////////////////////////////////////////////////////////////////
+
+// finds min and max half2 values (not their locations), element-wise:
+//   result[0].x = fmin(input[...].x)
+//   result[0].y = fmin(input[...].y)
+//   result[1].x = fmax(input[...].x)
+//   result[1].y = fmax(input[...].y)
+
+// tests half2 input and half2[] result
+
+// .. reduction form
+
+#pragma rs reduce(findMinAndMaxHalf2) \
+  initializer(fMMHalf2Init) accumulator(fMMHalf2Accumulator) \
+  combiner(fMMHalf2Combiner) outconverter(fMMHalf2OutConverter)
+
+typedef struct {
+  half2 min, max;
+} MinAndMaxHalf2;
+
+static void fMMHalf2Init(MinAndMaxHalf2 *accum) {
+  accum->min.x = posInfHalf;
+  accum->min.y = posInfHalf;
+  accum->max.x = negInfHalf;
+  accum->max.y = negInfHalf;
+}
+
+static void fMMHalf2Accumulator(MinAndMaxHalf2 *accum, half2 in) {
+  accum->min.x = fmin(accum->min.x, in.x);
+  accum->min.y = fmin(accum->min.y, in.y);
+  accum->max.x = fmax(accum->max.x, in.x);
+  accum->max.y = fmax(accum->max.y, in.y);
+}
+
+static void fMMHalf2Combiner(MinAndMaxHalf2 *accum,
+                            const MinAndMaxHalf2 *val) {
+  fMMHalf2Accumulator(accum, val->min);
+  fMMHalf2Accumulator(accum, val->max);
+}
+
+typedef half2 ArrayOf2Half2[2];
+
+static void fMMHalf2OutConverter(ArrayOf2Half2 *result,
+                                const MinAndMaxHalf2 *val) {
+  (*result)[0] = val->min;
+  (*result)[1] = val->max;
+}
+
+// .. invokable (non reduction) form (no support for half computations in Java)
+
+void findMinAndMaxHalf2(rs_allocation out, rs_allocation in) {
+  half2 min = { posInfHalf, posInfHalf }, max = { negInfHalf, negInfHalf };
+
+  const uint32_t len = rsAllocationGetDimX(in);
+  for (uint32_t idx = 0; idx < len; ++idx) {
+    const half2 val = rsGetElementAt_half2(in, idx);
+    min.x = fmin(min.x, val.x);
+    min.y = fmin(min.y, val.y);
+    max.x = fmax(max.x, val.x);
+    max.y = fmax(max.y, val.y);
+  }
+
+  rsSetElementAt_half2(out, min, 0);
+  rsSetElementAt_half2(out, max, 1);
+}
+
+/////////////////////////////////////////////////////////////////////////
+
+// finds min values (not their locations) from matrix input
+
+// tests matrix input and matrix accumulator
+
+#pragma rs reduce(findMinMat) \
+  initializer(fMinMatInit) accumulator(fMinMatAccumulator) \
+  outconverter(fMinMatOutConverter)
+
+static void fMinMatInit(rs_matrix2x2 *accum) {
+  for (int i = 0; i < 2; ++i)
+    for (int j = 0; j < 2; ++j)
+      rsMatrixSet(accum, i, j, posInf);
+}
+
+static void fMinMatAccumulator(rs_matrix2x2 *accum, rs_matrix2x2 val) {
+  for (int i = 0; i < 2; ++i) {
+    for (int j = 0; j < 2; ++j) {
+      const float accumElt = rsMatrixGet(accum, i, j);
+      const float valElt = rsMatrixGet(&val, i, j);
+      if (valElt < accumElt)
+        rsMatrixSet(accum, i, j, valElt);
+    }
+  }
+}
+
+// reduction does not support matrix result, so use array instead
+static void fMinMatOutConverter(float (*result)[4],  const rs_matrix2x2 *accum) {
+  for (int i = 0; i < 4; ++i)
+    (*result)[i] = accum->m[i];
+}
+
+/////////////////////////////////////////////////////////////////////////
+
+// finds min and max values (not their locations) from matrix input
+
+// tests matrix input and array of matrix accumulator (0 = min, 1 = max)
+
+#pragma rs reduce(findMinAndMaxMat) \
+  initializer(fMinMaxMatInit) accumulator(fMinMaxMatAccumulator) \
+  combiner(fMinMaxMatCombiner) outconverter(fMinMaxMatOutConverter)
+
+typedef rs_matrix2x2 MatrixPair[2];
+enum MatrixPairEntry { MPE_Min = 0, MPE_Max = 1 };  // indices into MatrixPair
+
+static void fMinMaxMatInit(MatrixPair *accum) {
+  for (int i = 0; i < 2; ++i) {
+    for (int j = 0; j < 2; ++j) {
+      rsMatrixSet(&(*accum)[MPE_Min], i, j, posInf);
+      rsMatrixSet(&(*accum)[MPE_Max], i, j, negInf);
+    }
+  }
+}
+
+static void fMinMaxMatAccumulator(MatrixPair *accum, rs_matrix2x2 val) {
+  for (int i = 0; i < 2; ++i) {
+    for (int j = 0; j < 2; ++j) {
+      const float valElt = rsMatrixGet(&val, i, j);
+
+      const float minElt = rsMatrixGet(&(*accum)[MPE_Min], i, j);
+      if (valElt < minElt)
+        rsMatrixSet(&(*accum)[MPE_Min], i, j, valElt);
+
+      const float maxElt = rsMatrixGet(&(*accum)[MPE_Max], i, j);
+      if (valElt > maxElt)
+        rsMatrixSet(&(*accum)[MPE_Max], i, j, valElt);
+    }
+  }
+}
+
+static void fMinMaxMatCombiner(MatrixPair *accum, const MatrixPair *other) {
+  fMinMaxMatAccumulator(accum, (*other)[MPE_Min]);
+  fMinMaxMatAccumulator(accum, (*other)[MPE_Max]);
+}
+
+// reduction does not support matrix result, so use array instead
+static void fMinMaxMatOutConverter(float (*result)[8],  const MatrixPair *accum) {
+  for (int i = 0; i < 4; ++i) {
+    (*result)[i+0] = (*accum)[MPE_Min].m[i];
+    (*result)[i+4] = (*accum)[MPE_Max].m[i];
+  }
 }
 
 /////////////////////////////////////////////////////////////////////////
