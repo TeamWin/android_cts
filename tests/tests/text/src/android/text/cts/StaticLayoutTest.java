@@ -1004,6 +1004,53 @@ public class StaticLayoutTest extends AndroidTestCase {
         assertEquals(testString.length(), layout.getOffsetForHorizontal(lineCount - 1, width * 2));
     }
 
+    public void testIsRtlCharAt() {
+        {
+            String testString = "ab(\u0623\u0624)c\u0625";
+            StaticLayout layout = new StaticLayout(testString, mDefaultPaint,
+                    DEFAULT_OUTER_WIDTH, DEFAULT_ALIGN, SPACE_MULTI, SPACE_ADD, true);
+
+            assertFalse(layout.isRtlCharAt(0));
+            assertFalse(layout.isRtlCharAt(1));
+            assertFalse(layout.isRtlCharAt(2));
+            assertTrue(layout.isRtlCharAt(3));
+            assertTrue(layout.isRtlCharAt(4));
+            assertFalse(layout.isRtlCharAt(5));
+            assertFalse(layout.isRtlCharAt(6));
+            assertTrue(layout.isRtlCharAt(7));
+        }
+        {
+            String testString = "\u0623\u0624(ab)\u0625c";
+            StaticLayout layout = new StaticLayout(testString, mDefaultPaint,
+                    DEFAULT_OUTER_WIDTH, DEFAULT_ALIGN, SPACE_MULTI, SPACE_ADD, true);
+
+            assertTrue(layout.isRtlCharAt(0));
+            assertTrue(layout.isRtlCharAt(1));
+            assertTrue(layout.isRtlCharAt(2));
+            assertFalse(layout.isRtlCharAt(3));
+            assertFalse(layout.isRtlCharAt(4));
+            assertTrue(layout.isRtlCharAt(5));
+            assertTrue(layout.isRtlCharAt(6));
+            assertFalse(layout.isRtlCharAt(7));
+            assertFalse(layout.isRtlCharAt(8));
+        }
+    }
+
+    public void testGetHorizontal() {
+        String testString = "abc\u0623\u0624\u0625def";
+        StaticLayout layout = new StaticLayout(testString, mDefaultPaint,
+                DEFAULT_OUTER_WIDTH, DEFAULT_ALIGN, SPACE_MULTI, SPACE_ADD, true);
+
+        assertEquals(layout.getPrimaryHorizontal(0), layout.getSecondaryHorizontal(0));
+        assertTrue(layout.getPrimaryHorizontal(0) < layout.getPrimaryHorizontal(3));
+        assertTrue(layout.getPrimaryHorizontal(3) < layout.getSecondaryHorizontal(3));
+        assertTrue(layout.getPrimaryHorizontal(4) < layout.getSecondaryHorizontal(3));
+        assertEquals(layout.getPrimaryHorizontal(4), layout.getSecondaryHorizontal(4));
+        assertEquals(layout.getPrimaryHorizontal(3), layout.getSecondaryHorizontal(6));
+        assertEquals(layout.getPrimaryHorizontal(6), layout.getSecondaryHorizontal(3));
+        assertEquals(layout.getPrimaryHorizontal(7), layout.getSecondaryHorizontal(7));
+    }
+
     public void testVeryLargeString() {
         final int MAX_COUNT = 1 << 21;
         final int WORD_SIZE = 32;
