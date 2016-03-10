@@ -124,6 +124,17 @@ public class BitmapDrawableTest extends InstrumentationTestCase {
         assertEquals(Integer.MAX_VALUE, bitmapDrawable.getGravity());
     }
 
+    public void testAccessMipMap() {
+        Bitmap source = BitmapFactory.decodeResource(mContext.getResources(), R.raw.testimage);
+        BitmapDrawable bitmapDrawable = new BitmapDrawable(source);
+
+        bitmapDrawable.setMipMap(true);
+        assertTrue(source.hasMipMap());
+
+        bitmapDrawable.setMipMap(false);
+        assertFalse(source.hasMipMap());
+    }
+
     public void testSetAntiAlias() {
         InputStream source = mContext.getResources().openRawResource(R.raw.testimage);
         BitmapDrawable bitmapDrawable = new BitmapDrawable(source);
@@ -352,7 +363,21 @@ public class BitmapDrawableTest extends InstrumentationTestCase {
         bitmapDrawable = new BitmapDrawable(bitmap);
         sourceDensity = bitmap.getDensity();
         targetDensity = canvas.getDensity();
-        bitmapDrawable.setTargetDensity(targetDensity);
+        bitmapDrawable.setTargetDensity(canvas);
+        targetWidth = DrawableTestUtils.scaleBitmapFromDensity(
+                sourceWidth, sourceDensity, targetDensity);
+        targetHeight = DrawableTestUtils.scaleBitmapFromDensity(
+                sourceHeight, sourceDensity, targetDensity);
+        assertEquals(targetWidth, bitmapDrawable.getIntrinsicWidth());
+        assertEquals(targetHeight, bitmapDrawable.getIntrinsicHeight());
+
+        sourceWidth = 200;
+        sourceHeight = 300;
+        bitmap = Bitmap.createBitmap(sourceWidth, sourceHeight, Config.RGB_565);
+        bitmapDrawable = new BitmapDrawable(bitmap);
+        sourceDensity = bitmap.getDensity();
+        targetDensity = mContext.getResources().getDisplayMetrics().densityDpi;
+        bitmapDrawable.setTargetDensity(mContext.getResources().getDisplayMetrics());
         targetWidth = DrawableTestUtils.scaleBitmapFromDensity(
                 sourceWidth, sourceDensity, targetDensity);
         targetHeight = DrawableTestUtils.scaleBitmapFromDensity(
