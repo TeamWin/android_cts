@@ -32,6 +32,8 @@ import android.widget.ListPopupWindow;
 import android.widget.PopupWindow;
 import android.widget.PopupWindow.OnDismissListener;
 
+import static org.mockito.Mockito.*;
+
 public class ListPopupWindowTest extends
         ActivityInstrumentationTestCase2<MockPopupWindowCtsActivity> {
     private Instrumentation mInstrumentation;
@@ -221,20 +223,22 @@ public class ListPopupWindowTest extends
         mPopupWindow = new ListPopupWindow(mActivity);
         mPopupWindow.setOnDismissListener(null);
 
-        MockOnDismissListener onDismissListener = new MockOnDismissListener();
+        OnDismissListener onDismissListener = mock(OnDismissListener.class);
         mPopupWindow.setOnDismissListener(onDismissListener);
         showPopup();
         dismissPopup();
-        assertEquals(1, onDismissListener.getOnDismissCalledCount());
+        verify(onDismissListener, times(1)).onDismiss();
 
         showPopup();
         dismissPopup();
-        assertEquals(2, onDismissListener.getOnDismissCalledCount());
+        verify(onDismissListener, times(2)).onDismiss();
 
         mPopupWindow.setOnDismissListener(null);
         showPopup();
         dismissPopup();
-        assertEquals(2, onDismissListener.getOnDismissCalledCount());
+        // Since we've reset the listener to null, we are not expecting any more interactions
+        // on the previously registered listener.
+        verifyNoMoreInteractions(onDismissListener);
     }
 
     public void testAccessInputMethodMode() {
