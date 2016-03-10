@@ -1595,6 +1595,76 @@ public class PrintDocumentAdapterContractTest extends BasePrintTest {
         verifyNoMoreInteractions(adapter);
     }
 
+    /**
+     * Pretend to have written two pages, but only actually write one page
+     *
+     * @throws Exception If anything is unexpected
+     */
+    public void testNotEnoughPages() throws Exception {
+        if (!supportsPrinting()) {
+            return;
+        }
+
+        FirstPrintService.setCallbacks(createFirstMockPrintServiceCallbacks());
+        SecondPrintService.setCallbacks(createSecondMockPrintServiceCallbacks());
+
+        final PrintAttributes[] printAttributes = new PrintAttributes[1];
+
+        final PrintDocumentAdapter adapter = createMockPrintDocumentAdapter(
+                new Answer<Void>() {
+                    @Override
+                    public Void answer(InvocationOnMock invocation) throws Throwable {
+                        printAttributes[0] = (PrintAttributes) invocation.getArguments()[1];
+                        LayoutResultCallback callback = (LayoutResultCallback) invocation
+                                .getArguments()[3];
+
+                        // Lay out two pages
+                        PrintDocumentInfo info = new PrintDocumentInfo.Builder(PRINT_JOB_NAME)
+                                .setContentType(PrintDocumentInfo.CONTENT_TYPE_DOCUMENT)
+                                .setPageCount(2)
+                                .build();
+                        callback.onLayoutFinished(info, true);
+                        return null;
+                    }
+                }, new Answer<Void>() {
+                    @Override
+                    public Void answer(InvocationOnMock invocation) throws Throwable {
+                        Object[] args = invocation.getArguments();
+                        PageRange[] pages = (PageRange[]) args[0];
+                        ParcelFileDescriptor fd = (ParcelFileDescriptor) args[1];
+                        WriteResultCallback callback = (WriteResultCallback) args[3];
+
+                        // Write only one pages
+                        writeBlankPages(printAttributes[0], fd, 0, 0);
+                        fd.close();
+
+                        // Break the contract and report that two pages were written
+                        callback.onWriteFinished(pages);
+                        onWriteCalled();
+                        return null;
+                    }
+                }, new Answer<Void>() {
+                    @Override
+                    public Void answer(InvocationOnMock invocation) throws Throwable {
+                        onFinishCalled();
+                        return null;
+                    }
+                });
+
+        print(adapter);
+        waitForWriteAdapterCallback();
+        selectPrinter("First printer");
+        clickPrintButton();
+
+        // Answer the dialog for the print service cloud warning
+        answerPrintServicesWarning(true);
+
+        waitForAdapterFinishCallbackCalled();
+
+        // Wait for the session to be destroyed to isolate tests.
+        waitForPrinterDiscoverySessionDestroyCallbackCalled();
+    }
+
     private PrintServiceCallbacks createFirstMockPrintServiceCallbacks() {
         final PrinterDiscoverySessionCallbacks callbacks =
                 createMockPrinterDiscoverySessionCallbacks(new Answer<Void>() {
