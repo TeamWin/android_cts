@@ -334,9 +334,8 @@ public class PerformanceTest extends Camera2SurfaceViewTestCase {
     }
 
     /**
-     * Test reprocessing shot-to-shot latency, i.e., from the time a reprocess
-     * request is issued to the time the reprocess image is returned.
-     *
+     * Test reprocessing shot-to-shot latency with default NR and edge options, i.e., from the time
+     * a reprocess request is issued to the time the reprocess image is returned.
      */
     public void testReprocessingLatency() throws Exception {
         for (String id : mCameraIds) {
@@ -348,7 +347,8 @@ public class PerformanceTest extends Camera2SurfaceViewTestCase {
                 try {
                     openDevice(id);
 
-                    reprocessingPerformanceTestByCamera(format, /*asyncMode*/false);
+                    reprocessingPerformanceTestByCamera(format, /*asyncMode*/false,
+                            /*highQuality*/false);
                 } finally {
                     closeReaderWriters();
                     closeDevice();
@@ -358,7 +358,7 @@ public class PerformanceTest extends Camera2SurfaceViewTestCase {
     }
 
     /**
-     * Test reprocessing throughput, i.e., how many frames can be reprocessed
+     * Test reprocessing throughput with default NR and edge options, i.e., how many frames can be reprocessed
      * during a given amount of time.
      *
      */
@@ -372,7 +372,57 @@ public class PerformanceTest extends Camera2SurfaceViewTestCase {
                 try {
                     openDevice(id);
 
-                    reprocessingPerformanceTestByCamera(format, /*asyncMode*/true);
+                    reprocessingPerformanceTestByCamera(format, /*asyncMode*/true,
+                            /*highQuality*/false);
+                } finally {
+                    closeReaderWriters();
+                    closeDevice();
+                }
+            }
+        }
+    }
+
+    /**
+     * Test reprocessing shot-to-shot latency with High Quality NR and edge options, i.e., from the
+     * time a reprocess request is issued to the time the reprocess image is returned.
+     */
+    public void testHighQualityReprocessingLatency() throws Exception {
+        for (String id : mCameraIds) {
+            for (int format : REPROCESS_FORMATS) {
+                if (!isReprocessSupported(id, format)) {
+                    continue;
+                }
+
+                try {
+                    openDevice(id);
+
+                    reprocessingPerformanceTestByCamera(format, /*asyncMode*/false,
+                            /*requireHighQuality*/true);
+                } finally {
+                    closeReaderWriters();
+                    closeDevice();
+                }
+            }
+        }
+    }
+
+    /**
+     * Test reprocessing throughput with high quality NR and edge options, i.e., how many frames can
+     * be reprocessed during a given amount of time.
+     *
+     */
+    public void testHighQualityReprocessingThroughput() throws Exception {
+        for (String id : mCameraIds) {
+            for (int format : REPROCESS_FORMATS) {
+                if (!isReprocessSupported(id, format)) {
+                    continue;
+                }
+
+                try {
+                    openDevice(id);
+
+                    reprocessingPerformanceTestByCamera(format, /*asyncMode*/true,
+                            /*requireHighQuality*/true);
                 } finally {
                     closeReaderWriters();
                     closeDevice();
@@ -422,6 +472,10 @@ public class PerformanceTest extends Camera2SurfaceViewTestCase {
                             WAIT_FOR_RESULT_TIMEOUT_MS, inputImages[i].getTimestamp());
             reprocessReqs[i] = mCamera.createReprocessCaptureRequest(zslResult);
             reprocessReqs[i].addTarget(mJpegReader.getSurface());
+            reprocessReqs[i].set(CaptureRequest.NOISE_REDUCTION_MODE,
+                    CaptureRequest.NOISE_REDUCTION_MODE_HIGH_QUALITY);
+            reprocessReqs[i].set(CaptureRequest.EDGE_MODE,
+                    CaptureRequest.EDGE_MODE_HIGH_QUALITY);
             mWriter.queueInputImage(inputImages[i]);
         }
 
@@ -506,7 +560,8 @@ public class PerformanceTest extends Camera2SurfaceViewTestCase {
         }
     }
 
-    private void reprocessingPerformanceTestByCamera(int reprocessInputFormat, boolean asyncMode)
+    private void reprocessingPerformanceTestByCamera(int reprocessInputFormat, boolean asyncMode,
+            boolean requireHighQuality)
             throws Exception {
         // Prepare the reprocessing capture
         prepareReprocessCapture(reprocessInputFormat);
@@ -526,6 +581,13 @@ public class PerformanceTest extends Camera2SurfaceViewTestCase {
                     mZslResultListener.getCaptureResult(
                             WAIT_FOR_RESULT_TIMEOUT_MS, inputImages[i].getTimestamp());
             reprocessReqs[i] = mCamera.createReprocessCaptureRequest(zslResult);
+            if (requireHighQuality) {
+                // Reprocessing should support high quality for NR and edge modes.
+                reprocessReqs[i].set(CaptureRequest.NOISE_REDUCTION_MODE,
+                        CaptureRequest.NOISE_REDUCTION_MODE_HIGH_QUALITY);
+                reprocessReqs[i].set(CaptureRequest.EDGE_MODE,
+                        CaptureRequest.EDGE_MODE_HIGH_QUALITY);
+            }
             reprocessReqs[i].addTarget(mJpegReader.getSurface());
         }
 
@@ -578,16 +640,25 @@ public class PerformanceTest extends Camera2SurfaceViewTestCase {
         }
 
         // Report the performance data
+        String captureMsg;
         if (asyncMode) {
+            captureMsg = "capture latency";
+            if (requireHighQuality) {
+                captureMsg += " for High Quality noise reduction and edge modes";
+            }
             mReportLog.addValues("Camera " + mCamera.getId()
-                    + ":" + reprocessType + "capture latency", getImageLatenciesMs,
+                    + ":" + reprocessType + captureMsg, getImageLatenciesMs,
                     ResultType.LOWER_BETTER, ResultUnit.MS);
             mReportLog.setSummary("Camera reprocessing average latency for Camera " +
                     mCamera.getId(), Stat.getAverage(getImageLatenciesMs), ResultType.LOWER_BETTER,
                     ResultUnit.MS);
         } else {
+            captureMsg = "shot to shot latency";
+            if (requireHighQuality) {
+                captureMsg += " for High Quality noise reduction and edge modes";
+            }
             mReportLog.addValues("Camera " + mCamera.getId()
-                    + ":" + reprocessType + "shot to shot latency", getImageLatenciesMs,
+                    + ":" + reprocessType + captureMsg, getImageLatenciesMs,
                     ResultType.LOWER_BETTER, ResultUnit.MS);
             mReportLog.setSummary("Camera reprocessing shot to shot average latency for Camera " +
                     mCamera.getId(), Stat.getAverage(getImageLatenciesMs), ResultType.LOWER_BETTER,
