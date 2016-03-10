@@ -687,8 +687,9 @@ public class DngCreatorTest extends Camera2AndroidTestCase {
                 @Override
                 public void onCaptureProgressed(CameraCaptureSession session,
                         CaptureRequest request, CaptureResult partialResult) {
-                    if (partialResult.get(CaptureResult.CONTROL_AE_STATE) ==
-                            CaptureRequest.CONTROL_AE_STATE_CONVERGED) {
+                    int aeState = partialResult.get(CaptureResult.CONTROL_AE_STATE);
+                    if (aeState == CaptureRequest.CONTROL_AE_STATE_CONVERGED ||
+                            aeState == CaptureRequest.CONTROL_AE_STATE_FLASH_REQUIRED) {
                         waitForAeCondition.open();
                     }
                 }
@@ -696,8 +697,9 @@ public class DngCreatorTest extends Camera2AndroidTestCase {
                 @Override
                 public void onCaptureCompleted(CameraCaptureSession session,
                         CaptureRequest request, TotalCaptureResult result) {
-                    if (result.get(CaptureResult.CONTROL_AE_STATE) ==
-                            CaptureRequest.CONTROL_AE_STATE_CONVERGED) {
+                    int aeState = result.get(CaptureResult.CONTROL_AE_STATE);
+                    if (aeState == CaptureRequest.CONTROL_AE_STATE_CONVERGED ||
+                            aeState == CaptureRequest.CONTROL_AE_STATE_FLASH_REQUIRED) {
                         waitForAeCondition.open();
                     }
                 }
