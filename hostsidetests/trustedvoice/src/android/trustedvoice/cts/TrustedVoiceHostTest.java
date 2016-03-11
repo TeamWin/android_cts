@@ -16,12 +16,7 @@
 
 package android.trustedvoice.cts;
 
-import com.android.cts.tradefed.build.CtsBuildHelper;
-import com.android.tradefed.build.IBuildInfo;
-import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.testtype.DeviceTestCase;
-import com.android.tradefed.testtype.IBuildReceiver;
-
 
 import java.io.File;
 import java.lang.String;
@@ -37,7 +32,7 @@ import java.util.Scanner;
  * into an APK which it then installs at runtime. TrustedVoiceActivity sets the
  * FLAG_DISMISS_KEYGUARD, prints a message to Logcat and then gets uninstalled.
  */
-public class TrustedVoiceHostTest extends DeviceTestCase implements IBuildReceiver {
+public class TrustedVoiceHostTest extends DeviceTestCase {
 
     /**
      * The package name of the APK.
@@ -77,55 +72,19 @@ public class TrustedVoiceHostTest extends DeviceTestCase implements IBuildReceiv
     private static final String TEST_STRING = "TrustedVoiceTestString";
 
     /**
-     * A reference to the build.
-     */
-    private CtsBuildHelper mBuild;
-
-    /**
-     * A reference to the device under test.
-     */
-    private ITestDevice mDevice;
-
-    @Override
-    public void setBuild(IBuildInfo buildInfo) {
-        // Get the build, this is used to access the APK.
-        mBuild = CtsBuildHelper.createBuildHelper(buildInfo);
-    }
-
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
-        // Get the device, this gives a handle to run commands and install APKs.
-        mDevice = getDevice();
-        // Remove any previously installed versions of this APK.
-        mDevice.uninstallPackage(PACKAGE);
-        // Get the APK from the build.
-        File app = mBuild.getTestApp(APK);
-        // Install the APK on the device.
-        mDevice.installPackage(app, false);
-    }
-
-    @Override
-    protected void tearDown() throws Exception {
-        // Remove the package once complete.
-        mDevice.uninstallPackage(PACKAGE);
-        super.tearDown();
-    }
-
-    /**
      * Tests the string was successfully logged to Logcat from the activity.
      *
      * @throws Exception
      */
     public void testLogcat() throws Exception {
         // Clear logcat.
-        mDevice.executeAdbCommand("logcat", "-c");
+        getDevice().executeAdbCommand("logcat", "-c");
         // Lock the device
-        mDevice.executeShellCommand(LOCKSCREEN_COMMAND);
+        getDevice().executeShellCommand(LOCKSCREEN_COMMAND);
         // Start the APK and wait for it to complete.
-        mDevice.executeShellCommand(START_COMMAND);
+        getDevice().executeShellCommand(START_COMMAND);
         // Dump logcat.
-        String logs = mDevice.executeAdbCommand("logcat", "-v", "brief", "-d", CLASS + ":I", "*S");
+        String logs = getDevice().executeAdbCommand("logcat", "-v", "brief", "-d", CLASS + ":I", "*S");
         // Search for string.
         Scanner in = new Scanner(logs);
         String testString = "";
