@@ -21,10 +21,11 @@ import com.android.tradefed.device.DeviceNotAvailableException;
 import java.lang.Exception;
 import java.lang.String;
 
-public class ActivityManagerVisibleBehindActivityTests extends ActivityManagerTestBase {
+public class ActivityManagerActivityVisiblityTests extends ActivityManagerTestBase {
     private static final String TRANSLUCENT_ACTIVITY = "AlwaysFocusablePipActivity";
     private static final String VISIBLE_BEHIND_ACTIVITY = "VisibleBehindActivity";
     private static final String PIP_ON_PIP_ACTIVITY = "LaunchPipOnPipActivity";
+    private static final String TEST_ACTIVITY_NAME = "TestActivity";
 
     public void testVisibleBehindHomeActivity() throws Exception {
         mDevice.executeShellCommand(getAmStartCmd(VISIBLE_BEHIND_ACTIVITY));
@@ -76,5 +77,44 @@ public class ActivityManagerVisibleBehindActivityTests extends ActivityManagerTe
         mAmWmState.assertFrontStack("Pinned stack must be the front stack.", PINNED_STACK_ID);
         mAmWmState.assertVisibility(PIP_ON_PIP_ACTIVITY, true);
         mAmWmState.assertVisibility(TRANSLUCENT_ACTIVITY, true);
+    }
+
+    /**
+     * Asserts that the home activity is visible when a translucent activity is launched in the
+     * fullscreen stack over the home activity.
+     */
+    public void testTranslucentActivityOnTopOfHome() throws Exception {
+        mDevice.executeShellCommand(AM_START_HOME_ACTIVITY_COMMAND);
+        mDevice.executeShellCommand(getAmStartCmd(TRANSLUCENT_ACTIVITY));
+
+        mAmWmState.computeState(mDevice, new String[]{TRANSLUCENT_ACTIVITY});
+        mAmWmState.assertSanity();
+        mAmWmState.assertFrontStack(
+                "Fullscreen stack must be the front stack.", FULLSCREEN_WORKSPACE_STACK_ID);
+        mAmWmState.assertVisibility(TRANSLUCENT_ACTIVITY, true);
+        mAmWmState.assertHomeActivityVisible(true);
+    }
+
+    /**
+     * Assert that the home activity is visible if a task that was launched from home is pinned
+     * and also assert the next task in the fullscreen stack isn't visible.
+     */
+    public void testHomeVisibleOnActivityTaskPinned() throws Exception {
+        if (!supportsPip()) {
+            return;
+        }
+
+        mDevice.executeShellCommand(AM_START_HOME_ACTIVITY_COMMAND);
+        mDevice.executeShellCommand(getAmStartCmd(TEST_ACTIVITY_NAME));
+        mDevice.executeShellCommand(AM_START_HOME_ACTIVITY_COMMAND);
+        mDevice.executeShellCommand(getAmStartCmd(TRANSLUCENT_ACTIVITY));
+        mDevice.executeShellCommand(AM_MOVE_TOP_ACTIVITY_TO_PINNED_STACK_COMMAND);
+
+        mAmWmState.computeState(mDevice, new String[]{TRANSLUCENT_ACTIVITY});
+        mAmWmState.assertSanity();
+
+        mAmWmState.assertVisibility(TRANSLUCENT_ACTIVITY, true);
+        mAmWmState.assertVisibility(TEST_ACTIVITY_NAME, false);
+        mAmWmState.assertHomeActivityVisible(true);
     }
 }
