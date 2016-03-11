@@ -40,6 +40,7 @@ import android.widget.ListPopupWindow;
 import android.widget.ListView;
 import android.widget.PopupWindow;
 import android.widget.TextView;
+import android.widget.cts.util.ViewTestUtils;
 
 import static org.mockito.Mockito.*;
 
@@ -509,6 +510,65 @@ public class ListPopupWindowTest extends
         assertTrue(lastChildOnScreenXY[1] + lastListChild.getHeight() <= promptViewOnScreenXY[1]);
     }
 
+    public void testAccessSelection() throws Throwable {
+        mPopupWindowBuilder = new Builder().withItemSelectedListener();
+        mPopupWindowBuilder.show();
+
+        final ListView listView = mPopupWindow.getListView();
+
+        // Select an item
+        ViewTestUtils.runOnMainAndDrawSync(mInstrumentation, listView, new Runnable() {
+            public void run() {
+                mPopupWindow.setSelection(1);
+            }
+        });
+
+        // And verify the current selection state + selection listener invocation
+        verify(mPopupWindowBuilder.mOnItemSelectedListener, times(1)).onItemSelected(
+                any(AdapterView.class), any(View.class), eq(1), eq(1L));
+        assertEquals(1, mPopupWindow.getSelectedItemId());
+        assertEquals(1, mPopupWindow.getSelectedItemPosition());
+        assertEquals("Bob", mPopupWindow.getSelectedItem());
+        View selectedView = mPopupWindow.getSelectedView();
+        assertNotNull(selectedView);
+        assertEquals("Bob",
+                ((TextView) selectedView.findViewById(android.R.id.text1)).getText());
+
+        // Select another item
+        ViewTestUtils.runOnMainAndDrawSync(mInstrumentation, listView, new Runnable() {
+            public void run() {
+                mPopupWindow.setSelection(3);
+            }
+        });
+
+        // And verify the new selection state + selection listener invocation
+        verify(mPopupWindowBuilder.mOnItemSelectedListener, times(1)).onItemSelected(
+                any(AdapterView.class), any(View.class), eq(3), eq(3L));
+        assertEquals(3, mPopupWindow.getSelectedItemId());
+        assertEquals(3, mPopupWindow.getSelectedItemPosition());
+        assertEquals("Deirdre", mPopupWindow.getSelectedItem());
+        selectedView = mPopupWindow.getSelectedView();
+        assertNotNull(selectedView);
+        assertEquals("Deirdre",
+                ((TextView) selectedView.findViewById(android.R.id.text1)).getText());
+
+        // Clear selection
+        ViewTestUtils.runOnMainAndDrawSync(mInstrumentation, listView, new Runnable() {
+            public void run() {
+                mPopupWindow.clearListSelection();
+            }
+        });
+
+        // And verify empty selection state + no more selection listener invocation
+        verify(mPopupWindowBuilder.mOnItemSelectedListener, times(1)).onNothingSelected(
+                any(AdapterView.class));
+        assertEquals(AdapterView.INVALID_ROW_ID, mPopupWindow.getSelectedItemId());
+        assertEquals(AdapterView.INVALID_POSITION, mPopupWindow.getSelectedItemPosition());
+        assertEquals(null, mPopupWindow.getSelectedItem());
+        assertEquals(null, mPopupWindow.getSelectedView());
+        verifyNoMoreInteractions(mPopupWindowBuilder.mOnItemSelectedListener);
+    }
+
     /**
      * Inner helper class to configure an instance of <code>ListPopupWindow</code> for the
      * specific test. The main reason for its existence is that once a popup window is shown
@@ -520,6 +580,7 @@ public class ListPopupWindowTest extends
         private boolean mIsModal;
         private boolean mHasDismissListener;
         private boolean mHasItemClickListener;
+        private boolean mHasItemSelectedListener;
         private boolean mIgnoreContentWidth;
         private int mHorizontalOffset;
         private int mVerticalOffset;
@@ -532,6 +593,7 @@ public class ListPopupWindowTest extends
         private int mPromptPosition;
 
         private AdapterView.OnItemClickListener mOnItemClickListener;
+        private AdapterView.OnItemSelectedListener mOnItemSelectedListener;
         private PopupWindow.OnDismissListener mOnDismissListener;
 
         public Builder() {
@@ -550,6 +612,11 @@ public class ListPopupWindowTest extends
 
         public Builder withItemClickListener() {
             mHasItemClickListener = true;
+            return this;
+        }
+
+        public Builder withItemSelectedListener() {
+            mHasItemSelectedListener = true;
             return this;
         }
 
@@ -674,6 +741,12 @@ public class ListPopupWindowTest extends
                 // window, and track the invocations of onItemClick with Mockito APIs.
                 doCallRealMethod().when(mOnItemClickListener).onItemClick(
                         any(AdapterView.class), any(View.class), any(int.class), any(int.class));
+            }
+
+            if (mHasItemSelectedListener) {
+                mOnItemSelectedListener = mock(AdapterView.OnItemSelectedListener.class);
+                mPopupWindow.setOnItemSelectedListener(mOnItemSelectedListener);
+                mPopupWindow.setListSelector(mActivity.getDrawable(R.drawable.red_fill));
             }
 
             if (mHasDismissListener) {
