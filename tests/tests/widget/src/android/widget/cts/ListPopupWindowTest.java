@@ -27,6 +27,7 @@ import android.support.test.InstrumentationRegistry;
 import android.test.ActivityInstrumentationTestCase2;
 import android.test.suitebuilder.annotation.SmallTest;
 import android.view.Display;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
@@ -36,6 +37,7 @@ import android.widget.AdapterView;
 import android.widget.BaseAdapter;
 import android.widget.ListAdapter;
 import android.widget.ListPopupWindow;
+import android.widget.ListView;
 import android.widget.PopupWindow;
 import android.widget.TextView;
 
@@ -188,21 +190,30 @@ public class ListPopupWindowTest extends
         assertEquals(width, mPopupWindow.getWidth());
     }
 
-    private void verifyAnchoring(int horizontalOffset, int verticalOffset) {
+    private void verifyAnchoring(int horizontalOffset, int verticalOffset, int gravity) {
         final View upperAnchor = mActivity.findViewById(R.id.anchor_upper);
+        final ListView listView = mPopupWindow.getListView();
         int[] anchorXY = new int[2];
-        int[] viewOnScreenXY = new int[2];
-        int[] viewInWindowXY = new int[2];
+        int[] listViewOnScreenXY = new int[2];
+        int[] listViewInWindowXY = new int[2];
 
         assertTrue(mPopupWindow.isShowing());
         assertEquals(upperAnchor, mPopupWindow.getAnchorView());
 
-        mPopupWindow.getListView().getLocationOnScreen(viewOnScreenXY);
+        listView.getLocationOnScreen(listViewOnScreenXY);
         upperAnchor.getLocationOnScreen(anchorXY);
-        mPopupWindow.getListView().getLocationInWindow(viewInWindowXY);
-        assertEquals(anchorXY[0] + viewInWindowXY[0] + horizontalOffset, viewOnScreenXY[0]);
-        assertEquals(anchorXY[1] + viewInWindowXY[1] + upperAnchor.getHeight() + verticalOffset,
-                viewOnScreenXY[1]);
+        listView.getLocationInWindow(listViewInWindowXY);
+
+        int expectedListViewOnScreenX = anchorXY[0] + listViewInWindowXY[0] + horizontalOffset;
+        final int absoluteGravity =
+                Gravity.getAbsoluteGravity(gravity, upperAnchor.getLayoutDirection());
+        if (absoluteGravity == Gravity.RIGHT) {
+            expectedListViewOnScreenX -= (listView.getWidth() - upperAnchor.getWidth());
+        }
+        int expectedListViewOnScreenY = anchorXY[1] + listViewInWindowXY[1]
+                + upperAnchor.getHeight() + verticalOffset;
+        assertEquals(expectedListViewOnScreenX, listViewOnScreenXY[0]);
+        assertEquals(expectedListViewOnScreenY, listViewOnScreenXY[1]);
     }
 
     public void testAnchoring() {
@@ -212,7 +223,7 @@ public class ListPopupWindowTest extends
         assertEquals(0, mPopupWindow.getHorizontalOffset());
         assertEquals(0, mPopupWindow.getVerticalOffset());
 
-        verifyAnchoring(0, 0);
+        verifyAnchoring(0, 0, Gravity.NO_GRAVITY);
     }
 
     public void testAnchoringWithHorizontalOffset() {
@@ -222,7 +233,7 @@ public class ListPopupWindowTest extends
         assertEquals(50, mPopupWindow.getHorizontalOffset());
         assertEquals(0, mPopupWindow.getVerticalOffset());
 
-        verifyAnchoring(50, 0);
+        verifyAnchoring(50, 0, Gravity.NO_GRAVITY);
     }
 
     public void testAnchoringWithVerticalOffset() {
@@ -232,7 +243,27 @@ public class ListPopupWindowTest extends
         assertEquals(0, mPopupWindow.getHorizontalOffset());
         assertEquals(60, mPopupWindow.getVerticalOffset());
 
-        verifyAnchoring(0, 60);
+        verifyAnchoring(0, 60, Gravity.NO_GRAVITY);
+    }
+
+    public void testAnchoringWithRightGravity() {
+        mPopupWindowBuilder = new Builder().withDropDownGravity(Gravity.RIGHT);
+        mPopupWindowBuilder.show();
+
+        assertEquals(0, mPopupWindow.getHorizontalOffset());
+        assertEquals(0, mPopupWindow.getVerticalOffset());
+
+        verifyAnchoring(0, 0, Gravity.RIGHT);
+    }
+
+    public void testAnchoringWithEndGravity() {
+        mPopupWindowBuilder = new Builder().withDropDownGravity(Gravity.END);
+        mPopupWindowBuilder.show();
+
+        assertEquals(0, mPopupWindow.getHorizontalOffset());
+        assertEquals(0, mPopupWindow.getVerticalOffset());
+
+        verifyAnchoring(0, 0, Gravity.END);
     }
 
     public void testSetWindowLayoutType() {
@@ -395,6 +426,89 @@ public class ListPopupWindowTest extends
         verifyDismissalViaTouch(true);
     }
 
+    public void testItemClicks() throws Throwable {
+        mPopupWindowBuilder = new Builder().withItemClickListener().withDismissListener();
+        mPopupWindowBuilder.show();
+
+        runTestOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                mPopupWindow.performItemClick(2);
+            }
+        });
+        mInstrumentation.waitForIdleSync();
+
+        verify(mPopupWindowBuilder.mOnItemClickListener, times(1)).onItemClick(
+                any(AdapterView.class), any(View.class), eq(2), eq(2L));
+        // Also verify that the popup window has been dismissed
+        assertFalse(mPopupWindow.isShowing());
+        verify(mPopupWindowBuilder.mOnDismissListener, times(1)).onDismiss();
+
+        mPopupWindowBuilder.showAgain();
+        runTestOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                mPopupWindow.getListView().performItemClick(null, 1, 1);
+            }
+        });
+        mInstrumentation.waitForIdleSync();
+
+        verify(mPopupWindowBuilder.mOnItemClickListener, times(1)).onItemClick(
+                any(AdapterView.class), any(View.class), eq(1), eq(1L));
+        // Also verify that the popup window has been dismissed
+        assertFalse(mPopupWindow.isShowing());
+        verify(mPopupWindowBuilder.mOnDismissListener, times(2)).onDismiss();
+
+        // Finally verify that our item click listener has only been called twice
+        verifyNoMoreInteractions(mPopupWindowBuilder.mOnItemClickListener);
+    }
+
+    public void testPromptViewAbove() throws Throwable {
+        final View promptView = LayoutInflater.from(mActivity).inflate(
+                R.layout.popupwindow_prompt, null);
+        mPopupWindowBuilder = new Builder().withPrompt(
+                promptView, ListPopupWindow.POSITION_PROMPT_ABOVE);
+        mPopupWindowBuilder.show();
+
+        // Verify that our prompt is displayed on the screen and is above the first list item
+        assertTrue(promptView.isAttachedToWindow());
+        assertTrue(promptView.isShown());
+        assertEquals(ListPopupWindow.POSITION_PROMPT_ABOVE, mPopupWindow.getPromptPosition());
+
+        final int[] promptViewOnScreenXY = new int[2];
+        promptView.getLocationOnScreen(promptViewOnScreenXY);
+
+        final ListView listView = mPopupWindow.getListView();
+        final View firstListChild = listView.getChildAt(0);
+        final int[] firstChildOnScreenXY = new int[2];
+        firstListChild.getLocationOnScreen(firstChildOnScreenXY);
+
+        assertTrue(promptViewOnScreenXY[1] + promptView.getHeight() <= firstChildOnScreenXY[1]);
+    }
+
+    public void testPromptViewBelow() throws Throwable {
+        final View promptView = LayoutInflater.from(mActivity).inflate(
+                R.layout.popupwindow_prompt, null);
+        mPopupWindowBuilder = new Builder().withPrompt(
+                promptView, ListPopupWindow.POSITION_PROMPT_BELOW);
+        mPopupWindowBuilder.show();
+
+        // Verify that our prompt is displayed on the screen and is below the last list item
+        assertTrue(promptView.isAttachedToWindow());
+        assertTrue(promptView.isShown());
+        assertEquals(ListPopupWindow.POSITION_PROMPT_BELOW, mPopupWindow.getPromptPosition());
+
+        final int[] promptViewOnScreenXY = new int[2];
+        promptView.getLocationOnScreen(promptViewOnScreenXY);
+
+        final ListView listView = mPopupWindow.getListView();
+        final View lastListChild = listView.getChildAt(listView.getChildCount() - 1);
+        final int[] lastChildOnScreenXY = new int[2];
+        lastListChild.getLocationOnScreen(lastChildOnScreenXY);
+
+        assertTrue(lastChildOnScreenXY[1] + lastListChild.getHeight() <= promptViewOnScreenXY[1]);
+    }
+
     /**
      * Inner helper class to configure an instance of <code>ListPopupWindow</code> for the
      * specific test. The main reason for its existence is that once a popup window is shown
@@ -409,9 +523,13 @@ public class ListPopupWindowTest extends
         private boolean mIgnoreContentWidth;
         private int mHorizontalOffset;
         private int mVerticalOffset;
+        private int mDropDownGravity;
 
         private boolean mHasWindowLayoutType;
         private int mWindowLayoutType;
+
+        private View mPromptView;
+        private int mPromptPosition;
 
         private AdapterView.OnItemClickListener mOnItemClickListener;
         private PopupWindow.OnDismissListener mOnDismissListener;
@@ -453,6 +571,17 @@ public class ListPopupWindowTest extends
 
         public Builder withVerticalOffset(int verticalOffset) {
             mVerticalOffset = verticalOffset;
+            return this;
+        }
+
+        public Builder withDropDownGravity(int dropDownGravity) {
+            mDropDownGravity = dropDownGravity;
+            return this;
+        }
+
+        public Builder withPrompt(View promptView, int promptPosition) {
+            mPromptView = promptView;
+            mPromptPosition = promptPosition;
             return this;
         }
 
@@ -568,6 +697,15 @@ public class ListPopupWindowTest extends
 
             if (mVerticalOffset != 0) {
                 mPopupWindow.setVerticalOffset(mVerticalOffset);
+            }
+
+            if (mDropDownGravity != Gravity.NO_GRAVITY) {
+                mPopupWindow.setDropDownGravity(mDropDownGravity);
+            }
+
+            if (mPromptView != null) {
+                mPopupWindow.setPromptPosition(mPromptPosition);
+                mPopupWindow.setPromptView(mPromptView);
             }
 
             mInstrumentation.runOnMainSync(new Runnable() {
