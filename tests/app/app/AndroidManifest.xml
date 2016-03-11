@@ -203,6 +203,8 @@
 
         <activity android:name="android.app.stubs.MockTabActivity" android:label="MockTabActivity" />
 
+        <activity android:name="android.app.stubs.MockListActivity" android:label="MockListActivity" />
+
         <activity android:name="android.app.stubs.AppStubActivity" android:label="AppStubActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
