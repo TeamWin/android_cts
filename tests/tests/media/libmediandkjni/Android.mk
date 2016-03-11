@@ -22,7 +22,8 @@ LOCAL_MODULE_TAGS := optional
 
 LOCAL_SRC_FILES := \
 	native-media-jni.cpp \
-	codec-utils-jni.cpp
+	codec-utils-jni.cpp  \
+	md5_utils.cpp
 
 LOCAL_C_INCLUDES := \
 	$(JNI_H_INCLUDE) \
