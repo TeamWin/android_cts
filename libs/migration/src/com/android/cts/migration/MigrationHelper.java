@@ -1,9 +1,11 @@
 package com.android.cts.migration;
 
 import com.android.tradefed.build.IBuildInfo;
+import com.android.tradefed.log.LogUtil.CLog;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -27,7 +29,9 @@ public class MigrationHelper {
             Method method = cls.getMethod("getTestsDir");
             File dir = (File) method.invoke(instance);
             File file = new File(dir, filename);
+            CLog.i("Looking for test file %s in dir %s", filename, dir.getAbsolutePath());
             if (file.exists()) {
+                CLog.i("File %s found", filename);
                 return file;
             }
         } catch (ClassNotFoundException | NoSuchMethodException | InstantiationException |
@@ -40,7 +44,9 @@ public class MigrationHelper {
             Object helper = builder.invoke(null, mBuild);
             Method method = cls.getMethod("getTestApp", String.class);
             File file = (File) method.invoke(helper, filename);
+            CLog.i("Looking for test file %s as %s", filename, file.getAbsolutePath());
             if (file.exists()) {
+                CLog.i("File %s found", filename);
                 return file;
             }
         } catch (ClassNotFoundException | NoSuchMethodException | IllegalAccessException |
