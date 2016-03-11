@@ -17,9 +17,13 @@
 package android.graphics.drawable.cts;
 
 import android.content.res.XmlResourceParser;
+import android.graphics.Bitmap;
+import android.graphics.Bitmap.Config;
+import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.PixelFormat;
 import android.graphics.PorterDuff.Mode;
+import android.graphics.PorterDuffColorFilter;
 import android.graphics.drawable.ColorDrawable;
 import android.test.AndroidTestCase;
 import android.util.AttributeSet;
@@ -37,9 +41,6 @@ public class ColorDrawableTest extends AndroidTestCase {
         new ColorDrawable();
         new ColorDrawable(0);
         new ColorDrawable(1);
-    }
-
-    public void testDraw() {
     }
 
     public void testAccessAlpha() {
@@ -124,6 +125,8 @@ public class ColorDrawableTest extends AndroidTestCase {
         d.setColorFilter(Color.BLACK, Mode.SRC_OVER);
         assertEquals(Color.BLACK, DrawableTestUtils.getPixel(d, 0, 0));
 
+        d.setColorFilter(new PorterDuffColorFilter(Color.BLACK, Mode.SRC_OVER));
+        assertEquals(Color.BLACK, DrawableTestingUtils.getPixel(d, 0, 0));
     }
 
     public void testSetTint() {
@@ -133,5 +136,16 @@ public class ColorDrawableTest extends AndroidTestCase {
         d.setTint(Color.BLACK);
         d.setTintMode(Mode.SRC_OVER);
         assertEquals(Color.BLACK, DrawableTestUtils.getPixel(d, 0, 0));
+    }
+
+    public void testDraw() {
+        final ColorDrawable d = new ColorDrawable(Color.WHITE);
+        final Bitmap b = Bitmap.createBitmap(1, 1, Config.ARGB_8888);
+        final Canvas c = new Canvas(b);
+        d.setBounds(0, 0, 1, 1);
+        d.draw(c);
+        final int pixel = b.getPixel(0, 0);
+        b.recycle();
+        assertEquals(Color.WHITE, pixel);
     }
 }
