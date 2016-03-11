@@ -169,4 +169,8 @@
         <item name="android:windowSwipeToDismiss">false</item>
     </style>
 
+    <style name="DialogTheme_Test" parent="@android:style/Theme.Material.Dialog">
+        <item name="themeInteger">20</item>
+    </style>
+
 </resources>

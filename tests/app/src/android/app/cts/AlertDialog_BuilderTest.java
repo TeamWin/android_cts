@@ -28,8 +28,10 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.DialogInterface.OnCancelListener;
 import android.content.DialogInterface.OnClickListener;
+import android.content.DialogInterface.OnDismissListener;
 import android.content.DialogInterface.OnKeyListener;
 import android.content.DialogInterface.OnMultiChoiceClickListener;
+import android.content.res.TypedArray;
 import android.cts.util.PollingCheck;
 import android.database.Cursor;
 import android.database.CursorWrapper;
@@ -38,6 +40,7 @@ import android.provider.Contacts.People;
 import android.test.ActivityInstrumentationTestCase2;
 import android.test.suitebuilder.annotation.SmallTest;
 import android.view.KeyEvent;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.AdapterView.OnItemSelectedListener;
 import android.widget.ArrayAdapter;
@@ -68,6 +71,8 @@ public class AlertDialog_BuilderTest extends ActivityInstrumentationTestCase2<Di
     private OnClickListener mOnClickListener = mock(OnClickListener.class);
 
     private OnCancelListener mOnCancelListener = mock(OnCancelListener.class);
+
+    private OnDismissListener mOnDismissListener = mock(OnDismissListener.class);
 
     private OnKeyListener mOnKeyListener = mock(OnKeyListener.class);
 
@@ -104,6 +109,18 @@ public class AlertDialog_BuilderTest extends ActivityInstrumentationTestCase2<Di
         new AlertDialog.Builder(mContext);
     }
 
+    public void testConstructorWithThemeId() {
+        mBuilder = new AlertDialog.Builder(mContext, R.style.DialogTheme_Test);
+
+        // Get the context from the builder and attempt to resolve a custom attribute
+        // set on our theme. This way we verify that our theme has been applied to the
+        // builder.
+        final Context themedContext = mBuilder.getContext();
+        int[] attrs = new int[] { R.attr.themeInteger };
+        TypedArray ta = themedContext.obtainStyledAttributes(attrs);
+        assertEquals(20, ta.getInt(0, 0));
+    }
+
     public void testSetIconWithParamInt() throws Throwable {
         runTestOnUiThread(new Runnable() {
             public void run() {
@@ -128,11 +145,24 @@ public class AlertDialog_BuilderTest extends ActivityInstrumentationTestCase2<Di
         mInstrumentation.waitForIdleSync();
     }
 
+    public void testSetIconAttribute() throws Throwable {
+        runTestOnUiThread(new Runnable() {
+            public void run() {
+                mDrawable = mContext.getResources().getDrawable(android.R.drawable.btn_default);
+                mBuilder = new AlertDialog.Builder(mContext);
+                mBuilder.setIconAttribute(android.R.attr.alertDialogIcon);
+                mDialog = mBuilder.show();
+            }
+        });
+        mInstrumentation.waitForIdleSync();
+    }
+
     public void testSetPositiveButtonWithParamInt() throws Throwable {
        runTestOnUiThread(new Runnable() {
             public void run() {
                 mBuilder = new AlertDialog.Builder(mContext);
                 mBuilder.setPositiveButton(android.R.string.yes, mOnClickListener);
+                mBuilder.setOnDismissListener(mOnDismissListener);
                 mDialog = mBuilder.show();
                 mButton = mDialog.getButton(DialogInterface.BUTTON_POSITIVE);
                 mButton.performClick();
@@ -143,6 +173,9 @@ public class AlertDialog_BuilderTest extends ActivityInstrumentationTestCase2<Di
         assertEquals(mContext.getText(android.R.string.yes), mButton.getText());
         verify(mOnClickListener, times(1)).onClick(mDialog, DialogInterface.BUTTON_POSITIVE);
         verifyNoMoreInteractions(mOnClickListener);
+        // Button click should also dismiss the dialog and notify the listener
+        verify(mOnDismissListener, times(1)).onDismiss(mDialog);
+        verifyNoMoreInteractions(mOnDismissListener);
     }
 
     public void testSetPositiveButtonWithParamCharSequence() throws Throwable {
@@ -150,6 +183,7 @@ public class AlertDialog_BuilderTest extends ActivityInstrumentationTestCase2<Di
             public void run() {
                 mBuilder = new AlertDialog.Builder(mContext);
                 mBuilder.setPositiveButton(android.R.string.yes, mOnClickListener);
+                mBuilder.setOnDismissListener(mOnDismissListener);
                 mDialog = mBuilder.show();
                 mButton = mDialog.getButton(DialogInterface.BUTTON_POSITIVE);
                 mButton.performClick();
@@ -159,6 +193,9 @@ public class AlertDialog_BuilderTest extends ActivityInstrumentationTestCase2<Di
         assertEquals(mContext.getText(android.R.string.yes), mButton.getText());
         verify(mOnClickListener, times(1)).onClick(mDialog, DialogInterface.BUTTON_POSITIVE);
         verifyNoMoreInteractions(mOnClickListener);
+        // Button click should also dismiss the dialog and notify the listener
+        verify(mOnDismissListener, times(1)).onDismiss(mDialog);
+        verifyNoMoreInteractions(mOnDismissListener);
     }
 
     public void testSetNegativeButtonWithParamCharSequence() throws Throwable {
@@ -166,6 +203,7 @@ public class AlertDialog_BuilderTest extends ActivityInstrumentationTestCase2<Di
             public void run() {
                 mBuilder = new AlertDialog.Builder(mContext);
                 mBuilder.setNegativeButton(mTitle, mOnClickListener);
+                mBuilder.setOnDismissListener(mOnDismissListener);
                 mDialog = mBuilder.show();
                 mButton = mDialog.getButton(DialogInterface.BUTTON_NEGATIVE);
                 mButton.performClick();
@@ -175,6 +213,9 @@ public class AlertDialog_BuilderTest extends ActivityInstrumentationTestCase2<Di
         assertEquals(mTitle, mButton.getText());
         verify(mOnClickListener, times(1)).onClick(mDialog, DialogInterface.BUTTON_NEGATIVE);
         verifyNoMoreInteractions(mOnClickListener);
+        // Button click should also dismiss the dialog and notify the listener
+        verify(mOnDismissListener, times(1)).onDismiss(mDialog);
+        verifyNoMoreInteractions(mOnDismissListener);
     }
 
     public void testSetNegativeButtonWithParamInt() throws Throwable {
@@ -182,6 +223,7 @@ public class AlertDialog_BuilderTest extends ActivityInstrumentationTestCase2<Di
             public void run() {
                 mBuilder = new AlertDialog.Builder(mContext);
                 mBuilder.setNegativeButton(R.string.notify, mOnClickListener);
+                mBuilder.setOnDismissListener(mOnDismissListener);
                 mDialog = mBuilder.show();
                 mButton = mDialog.getButton(DialogInterface.BUTTON_NEGATIVE);
                 mButton.performClick();
@@ -191,6 +233,9 @@ public class AlertDialog_BuilderTest extends ActivityInstrumentationTestCase2<Di
         assertEquals(mContext.getText(R.string.notify), mButton.getText());
         verify(mOnClickListener, times(1)).onClick(mDialog, DialogInterface.BUTTON_NEGATIVE);
         verifyNoMoreInteractions(mOnClickListener);
+        // Button click should also dismiss the dialog and notify the listener
+        verify(mOnDismissListener, times(1)).onDismiss(mDialog);
+        verifyNoMoreInteractions(mOnDismissListener);
     }
 
     public void testSetNeutralButtonWithParamInt() throws Throwable {
@@ -198,6 +243,7 @@ public class AlertDialog_BuilderTest extends ActivityInstrumentationTestCase2<Di
             public void run() {
                 mBuilder = new AlertDialog.Builder(mContext);
                 mBuilder.setNeutralButton(R.string.notify, mOnClickListener);
+                mBuilder.setOnDismissListener(mOnDismissListener);
                 mDialog = mBuilder.show();
                 mButton = mDialog.getButton(DialogInterface.BUTTON_NEUTRAL);
                 mButton.performClick();
@@ -207,6 +253,9 @@ public class AlertDialog_BuilderTest extends ActivityInstrumentationTestCase2<Di
         assertEquals(mContext.getText(R.string.notify), mButton.getText());
         verify(mOnClickListener, times(1)).onClick(mDialog, DialogInterface.BUTTON_NEUTRAL);
         verifyNoMoreInteractions(mOnClickListener);
+        // Button click should also dismiss the dialog and notify the listener
+        verify(mOnDismissListener, times(1)).onDismiss(mDialog);
+        verifyNoMoreInteractions(mOnDismissListener);
     }
 
     public void testSetNeutralButtonWithParamCharSequence() throws Throwable {
@@ -214,6 +263,7 @@ public class AlertDialog_BuilderTest extends ActivityInstrumentationTestCase2<Di
             public void run() {
                 mBuilder = new AlertDialog.Builder(mContext);
                 mBuilder.setNeutralButton(mTitle, mOnClickListener);
+                mBuilder.setOnDismissListener(mOnDismissListener);
                 mDialog = mBuilder.show();
                 mButton = mDialog.getButton(DialogInterface.BUTTON_NEUTRAL);
                 mButton.performClick();
@@ -223,6 +273,9 @@ public class AlertDialog_BuilderTest extends ActivityInstrumentationTestCase2<Di
         assertEquals(mTitle, mButton.getText());
         verify(mOnClickListener, times(1)).onClick(mDialog, DialogInterface.BUTTON_NEUTRAL);
         verifyNoMoreInteractions(mOnClickListener);
+        // Button click should also dismiss the dialog and notify the listener
+        verify(mOnDismissListener, times(1)).onDismiss(mDialog);
+        verifyNoMoreInteractions(mOnDismissListener);
     }
 
     private void testCancelable(final boolean cancelable) throws Throwable {
@@ -279,6 +332,20 @@ public class AlertDialog_BuilderTest extends ActivityInstrumentationTestCase2<Di
         mInstrumentation.waitForIdleSync();
         verify(mOnCancelListener, times(1)).onCancel(mDialog);
         verifyNoMoreInteractions(mOnCancelListener);
+    }
+
+    public void testSetOnDismissListener() throws Throwable {
+        runTestOnUiThread(new Runnable() {
+            public void run() {
+                mBuilder = new AlertDialog.Builder(mContext);
+                mBuilder.setOnDismissListener(mOnDismissListener);
+                mDialog = mBuilder.show();
+                mDialog.dismiss();
+            }
+        });
+        mInstrumentation.waitForIdleSync();
+        verify(mOnDismissListener, times(1)).onDismiss(mDialog);
+        verifyNoMoreInteractions(mOnDismissListener);
     }
 
     public void testSetOnKeyListener() throws Throwable {
@@ -574,6 +641,49 @@ public class AlertDialog_BuilderTest extends ActivityInstrumentationTestCase2<Di
         });
         mInstrumentation.waitForIdleSync();
         assertEquals(view, mView);
+    }
+
+    public void testSetViewFromInflater() throws Throwable {
+        runTestOnUiThread(new Runnable() {
+            public void run() {
+                mBuilder = new AlertDialog.Builder(mContext);
+                mBuilder.setView(LayoutInflater.from(mBuilder.getContext()).inflate(
+                        R.layout.alert_dialog_text_entry_2, null, false));
+                mDialog = mBuilder.show();
+                mView = mDialog.getWindow().findViewById(R.id.username_form);
+            }
+        });
+        mInstrumentation.waitForIdleSync();
+        assertNotNull(mView);
+        assertNotNull(mView.findViewById(R.id.username_view));
+        assertNotNull(mView.findViewById(R.id.username_edit));
+    }
+
+    public void testSetViewById() throws Throwable {
+        runTestOnUiThread(new Runnable() {
+            public void run() {
+                mBuilder = new AlertDialog.Builder(mContext);
+                mBuilder.setView(R.layout.alert_dialog_text_entry_2);
+                mDialog = mBuilder.show();
+                mView = mDialog.getWindow().findViewById(R.id.username_form);
+            }
+        });
+        mInstrumentation.waitForIdleSync();
+        assertNotNull(mView);
+        assertNotNull(mView.findViewById(R.id.username_view));
+        assertNotNull(mView.findViewById(R.id.username_edit));
+    }
+
+    public void testSetCustomTitle() throws Throwable {
+        runTestOnUiThread(new Runnable() {
+            public void run() {
+                mBuilder = new AlertDialog.Builder(mContext);
+                mBuilder.setCustomTitle(LayoutInflater.from(mBuilder.getContext()).inflate(
+                        R.layout.alertdialog_custom_title, null, false));
+                mDialog = mBuilder.show();
+            }
+        });
+        mInstrumentation.waitForIdleSync();
     }
 
     public void testSetInverseBackgroundForced() throws Throwable {
