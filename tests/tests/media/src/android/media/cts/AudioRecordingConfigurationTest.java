@@ -160,7 +160,9 @@ public class AudioRecordingConfigurationTest extends CtsAndroidTestCase {
         assertFalse("Unregistered callback was called", callback.mCalled);
 
         // just call the callback once directly so it's marked as tested
-        callback.onRecordConfigChanged(new AudioRecordingConfiguration[0]);
+        final AudioManager.AudioRecordingCallback arc =
+                (AudioManager.AudioRecordingCallback) callback;
+        arc.onRecordConfigChanged(new AudioRecordingConfiguration[0]);
     }
 
     public void testParcel() throws Exception {
