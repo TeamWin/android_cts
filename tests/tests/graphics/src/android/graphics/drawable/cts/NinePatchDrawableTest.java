@@ -42,6 +42,7 @@ import android.graphics.drawable.NinePatchDrawable;
 import android.graphics.drawable.Drawable.ConstantState;
 import android.test.InstrumentationTestCase;
 import android.util.AttributeSet;
+import android.util.DisplayMetrics;
 import android.util.Xml;
 
 import java.io.File;
@@ -390,11 +391,111 @@ public class NinePatchDrawableTest extends InstrumentationTestCase {
             }
     };
 
+    private interface TargetDensitySetter {
+        void setTargetDensity(NinePatchDrawable dr, int density);
+    }
+
+    private void testSetTargetDensityOuter(TargetDensitySetter densitySetter) {
+        final Resources res = mResources;
+        final int densityDpi = res.getConfiguration().densityDpi;
+        try {
+            testSetTargetDensityInner(res, DENSITY_IMAGES[0], DENSITY_VALUES, densitySetter);
+        } catch (IOException | XmlPullParserException e) {
+            throw new RuntimeException(e);
+        } finally {
+            DrawableTestUtils.setResourcesDensity(res, densityDpi);
+        }
+    }
+
+    private void testSetTargetDensityInner(Resources res, int sourceResId, int[] densities,
+            TargetDensitySetter densitySetter) throws XmlPullParserException, IOException {
+        final Rect tempPadding = new Rect();
+
+        // Capture initial state at preload density.
+        final int preloadDensityDpi = densities[0];
+        DrawableTestUtils.setResourcesDensity(res, preloadDensityDpi);
+
+        final NinePatchDrawable preloadedDrawable =
+                (NinePatchDrawable) res.getDrawable(sourceResId).mutate();
+        final int origWidth = preloadedDrawable.getIntrinsicWidth();
+        final int origHeight = preloadedDrawable.getIntrinsicHeight();
+        final Rect origPadding = new Rect();
+        preloadedDrawable.getPadding(origPadding);
+
+        for (int i = 1; i < densities.length; i++) {
+            final int scaledDensityDpi = densities[i];
+            final float scale = scaledDensityDpi / (float) preloadDensityDpi;
+
+            final NinePatchDrawable scaledDrawable =
+                    (NinePatchDrawable) res.getDrawable(sourceResId).mutate();
+            densitySetter.setTargetDensity(scaledDrawable, scaledDensityDpi);
+
+            // Sizes are rounded.
+            assertEquals(Math.round(origWidth * scale), scaledDrawable.getIntrinsicWidth());
+            assertEquals(Math.round(origHeight * scale), scaledDrawable.getIntrinsicHeight());
+
+            // Padding is truncated.
+            assertTrue(scaledDrawable.getPadding(tempPadding));
+            assertEquals((int) (origPadding.left * scale), tempPadding.left);
+            assertEquals((int) (origPadding.top * scale), tempPadding.top);
+            assertEquals((int) (origPadding.right * scale), tempPadding.right);
+            assertEquals((int) (origPadding.bottom * scale), tempPadding.bottom);
+
+            // Ensure theme density is applied correctly. Unlike most
+            // drawables, we don't have any loss of accuracy because density
+            // changes are re-computed from the source every time.
+            DrawableTestUtils.setResourcesDensity(res, preloadDensityDpi);
+
+            final Theme t = res.newTheme();
+            scaledDrawable.applyTheme(t);
+            assertEquals(origWidth, scaledDrawable.getIntrinsicWidth());
+            assertEquals(origHeight, scaledDrawable.getIntrinsicHeight());
+            assertTrue(scaledDrawable.getPadding(tempPadding));
+            assertEquals(origPadding, tempPadding);
+        }
+    }
+
+    public void testSetTargetDensity() {
+        testSetTargetDensityOuter(new TargetDensitySetter() {
+            @Override
+            public void setTargetDensity(NinePatchDrawable dr, int density) {
+                dr.setTargetDensity(density);
+            }
+        });
+    }
+
+    public void testSetTargetDensity_Canvas() {
+        // This should be identical to calling setTargetDensity(int) with the
+        // value returned by Canvas.getDensity().
+        testSetTargetDensityOuter(new TargetDensitySetter() {
+            @Override
+            public void setTargetDensity(NinePatchDrawable dr, int density) {
+                Canvas c = new Canvas();
+                c.setDensity(density);
+                dr.setTargetDensity(c);
+            }
+        });
+    }
+
+    public void testSetTargetDensity_DisplayMetrics() {
+        // This should be identical to calling setTargetDensity(int) with the
+        // value of DisplayMetrics.densityDpi.
+        testSetTargetDensityOuter(new TargetDensitySetter() {
+            @Override
+            public void setTargetDensity(NinePatchDrawable dr, int density) {
+                DisplayMetrics dm = new DisplayMetrics();
+                dm.densityDpi = density;
+                dr.setTargetDensity(dm);
+            }
+        });
+    }
+
     public void testPreloadDensity() throws XmlPullParserException, IOException {
         final Resources res = mResources;
         final int densityDpi = res.getConfiguration().densityDpi;
         try {
-            testPreloadDensityInner(res, DENSITY_IMAGES[0], DENSITY_VALUES, DENSITY_GOLDEN_IMAGES[0]);
+            testPreloadDensityInner(res, DENSITY_IMAGES[0], DENSITY_VALUES,
+                    DENSITY_GOLDEN_IMAGES[0]);
         } finally {
             DrawableTestUtils.setResourcesDensity(res, densityDpi);
         }

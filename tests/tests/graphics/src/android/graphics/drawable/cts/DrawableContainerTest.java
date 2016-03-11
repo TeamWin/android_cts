@@ -34,18 +34,22 @@ import android.graphics.drawable.LevelListDrawable;
 public class DrawableContainerTest extends TestCase {
     private DrawableContainerState mDrawableContainerState;
 
-    private MockDrawableContainer mDrawableContainer;
+    private MockDrawableContainer mMockDrawableContainer;
+    private DrawableContainer mDrawableContainer;
 
     @Override
     protected void setUp() throws Exception {
         super.setUp();
+
         // DrawableContainerState has no public constructor. Obtain an instance through
         // LevelListDrawable.getConstants(). This is fine for testing the final methods of
         // DrawableContainerState.
         mDrawableContainerState =
             (DrawableContainerState) new LevelListDrawable().getConstantState();
         assertNotNull(mDrawableContainerState);
-        mDrawableContainer = new MockDrawableContainer();
+
+        mMockDrawableContainer = new MockDrawableContainer();
+        mDrawableContainer = mMockDrawableContainer;
     }
 
     public void testDraw() {
@@ -55,7 +59,7 @@ public class DrawableContainerTest extends TestCase {
         mDrawableContainer.draw(null);
         mDrawableContainer.draw(new Canvas());
 
-        mDrawableContainer.setConstantState(mDrawableContainerState);
+        mMockDrawableContainer.setConstantState(mDrawableContainerState);
         MockDrawable dr = new MockDrawable();
         addAndSelectDrawable(dr);
 
@@ -66,6 +70,30 @@ public class DrawableContainerTest extends TestCase {
         dr.reset();
         mDrawableContainer.draw(new Canvas());
         assertTrue(dr.hasDrawCalled());
+    }
+
+    public void testSetEnterFadeDuration() {
+        helpTestSetEnterFadeDuration(1000);
+        helpTestSetEnterFadeDuration(0);
+    }
+
+    private void helpTestSetEnterFadeDuration(int enterFadeDuration) {
+        DrawableContainer container = new MockDrawableContainer();
+        DrawableContainerState cs = ((DrawableContainerState) container.getConstantState());
+        container.setEnterFadeDuration(enterFadeDuration);
+        assertEquals(enterFadeDuration, cs.getEnterFadeDuration());
+    }
+
+    public void testSetExitFadeDuration() {
+        helpTestSetExitFadeDuration(1000);
+        helpTestSetExitFadeDuration(0);
+    }
+
+    private void helpTestSetExitFadeDuration(int exitFadeDuration) {
+        DrawableContainer container = new MockDrawableContainer();
+        DrawableContainerState cs = ((DrawableContainerState) container.getConstantState());
+        container.setExitFadeDuration(exitFadeDuration);
+        assertEquals(exitFadeDuration, cs.getExitFadeDuration());
     }
 
     public void testGetChangingConfigurations() {
@@ -80,7 +108,7 @@ public class DrawableContainerTest extends TestCase {
         } catch (NullPointerException e) {
         }
 
-        mDrawableContainer.setConstantState(mDrawableContainerState);
+        mMockDrawableContainer.setConstantState(mDrawableContainerState);
         MockDrawable dr0 = new MockDrawable();
         dr0.setChangingConfigurations(0x001);
         mDrawableContainerState.addChild(dr0);
@@ -110,7 +138,7 @@ public class DrawableContainerTest extends TestCase {
         } catch (NullPointerException e) {
         }
 
-        mDrawableContainer.setConstantState(mDrawableContainerState);
+        mMockDrawableContainer.setConstantState(mDrawableContainerState);
         MockDrawable dr0 = new MockDrawable();
         dr0.setPadding(new Rect(1, 2, 0, 0));
         mDrawableContainerState.addChild(dr0);
@@ -156,7 +184,7 @@ public class DrawableContainerTest extends TestCase {
 
         dr.setAlpha(0);
 
-        mDrawableContainer.setConstantState(mDrawableContainerState);
+        mMockDrawableContainer.setConstantState(mDrawableContainerState);
         MockDrawable mockDrawable = new MockDrawable();
         addAndSelectDrawable(mockDrawable);
 
@@ -175,7 +203,7 @@ public class DrawableContainerTest extends TestCase {
         assertConstantStateNotSet();
         assertNull(mDrawableContainer.getCurrent());
 
-        mDrawableContainer.setConstantState(mDrawableContainerState);
+        mMockDrawableContainer.setConstantState(mDrawableContainerState);
         mDrawableContainer.setDither(false);
         mDrawableContainer.setDither(true);
 
@@ -198,7 +226,7 @@ public class DrawableContainerTest extends TestCase {
         assertConstantStateNotSet();
         assertNull(mDrawableContainer.getCurrent());
 
-        mDrawableContainer.setConstantState(mDrawableContainerState);
+        mMockDrawableContainer.setConstantState(mDrawableContainerState);
 
         MockDrawable dr = new MockDrawable();
         addAndSelectDrawable(dr);
@@ -217,7 +245,7 @@ public class DrawableContainerTest extends TestCase {
         assertConstantStateNotSet();
         assertNull(mDrawableContainer.getCurrent());
 
-        mDrawableContainer.setConstantState(mDrawableContainerState);
+        mMockDrawableContainer.setConstantState(mDrawableContainerState);
 
         MockDrawable dr = new MockDrawable();
         addAndSelectDrawable(dr);
@@ -238,7 +266,7 @@ public class DrawableContainerTest extends TestCase {
         assertConstantStateNotSet();
         assertNull(mDrawableContainer.getCurrent());
 
-        mDrawableContainer.setConstantState(mDrawableContainerState);
+        mMockDrawableContainer.setConstantState(mDrawableContainerState);
         dr.setColorFilter(null);
         dr.setColorFilter(new ColorFilter());
 
@@ -260,7 +288,7 @@ public class DrawableContainerTest extends TestCase {
         assertConstantStateNotSet();
         assertNull(mDrawableContainer.getCurrent());
 
-        mDrawableContainer.setConstantState(mDrawableContainerState);
+        mMockDrawableContainer.setConstantState(mDrawableContainerState);
         mDrawableContainer.setTint(Color.BLACK);
         mDrawableContainer.setTintMode(Mode.SRC_OVER);
 
@@ -279,10 +307,10 @@ public class DrawableContainerTest extends TestCase {
         assertConstantStateNotSet();
         assertNull(mDrawableContainer.getCurrent());
 
-        mDrawableContainer.onBoundsChange(new Rect());
-        mDrawableContainer.onBoundsChange(null);
+        mMockDrawableContainer.onBoundsChange(new Rect());
+        mMockDrawableContainer.onBoundsChange(null);
 
-        mDrawableContainer.setConstantState(mDrawableContainerState);
+        mMockDrawableContainer.setConstantState(mDrawableContainerState);
         MockDrawable dr = new MockDrawable();
         dr.setBounds(new Rect());
         addAndSelectDrawable(dr);
@@ -290,17 +318,17 @@ public class DrawableContainerTest extends TestCase {
         // set current drawable's bounds.
         dr.reset();
         assertEquals(new Rect(), dr.getBounds());
-        mDrawableContainer.onBoundsChange(new Rect(1, 1, 1, 1));
+        mMockDrawableContainer.onBoundsChange(new Rect(1, 1, 1, 1));
         assertTrue(dr.hasOnBoundsChangedCalled());
         assertEquals(new Rect(1, 1, 1, 1), dr.getBounds());
 
         dr.reset();
-        mDrawableContainer.onBoundsChange(new Rect(1, 1, 1, 1));
+        mMockDrawableContainer.onBoundsChange(new Rect(1, 1, 1, 1));
         assertFalse(dr.hasOnBoundsChangedCalled());
         assertEquals(new Rect(1, 1, 1, 1), dr.getBounds());
 
         try {
-            mDrawableContainer.onBoundsChange(null);
+            mMockDrawableContainer.onBoundsChange(null);
             fail("Should throw NullPointerException if the bounds is null.");
         } catch (NullPointerException e) {
         }
@@ -315,7 +343,7 @@ public class DrawableContainerTest extends TestCase {
         } catch (NullPointerException e) {
         }
 
-        mDrawableContainer.setConstantState(mDrawableContainerState);
+        mMockDrawableContainer.setConstantState(mDrawableContainerState);
         MockDrawable dr0 = new MockDrawable();
         dr0.setStateful(true);
         mDrawableContainerState.addChild(dr0);
@@ -336,10 +364,10 @@ public class DrawableContainerTest extends TestCase {
         assertConstantStateNotSet();
         assertNull(mDrawableContainer.getCurrent());
 
-        assertFalse(mDrawableContainer.onStateChange(new int[] { 0 }));
-        assertFalse(mDrawableContainer.onStateChange(null));
+        assertFalse(mMockDrawableContainer.onStateChange(new int[] { 0 }));
+        assertFalse(mMockDrawableContainer.onStateChange(null));
 
-        mDrawableContainer.setConstantState(mDrawableContainerState);
+        mMockDrawableContainer.setConstantState(mDrawableContainerState);
         MockDrawable dr = new MockDrawable();
         dr.setState(new int[] { 0 });
         addAndSelectDrawable(dr);
@@ -347,17 +375,17 @@ public class DrawableContainerTest extends TestCase {
         // set current drawable's state.
         dr.reset();
         assertNotNull(dr.getState());
-        mDrawableContainer.onStateChange(null);
+        mMockDrawableContainer.onStateChange(null);
         assertTrue(dr.hasOnStateChangedCalled());
         assertNull(dr.getState());
 
         dr.reset();
-        mDrawableContainer.onStateChange(new int[] { 0 });
+        mMockDrawableContainer.onStateChange(new int[] { 0 });
         assertTrue(dr.hasOnStateChangedCalled());
         assertTrue(Arrays.equals(new int[] { 0 }, dr.getState()));
 
         dr.reset();
-        assertFalse(mDrawableContainer.onStateChange(new int[] { 0 }));
+        assertFalse(mMockDrawableContainer.onStateChange(new int[] { 0 }));
         assertFalse(dr.hasOnStateChangedCalled());
         assertTrue(Arrays.equals(new int[] { 0 }, dr.getState()));
     }
@@ -366,10 +394,10 @@ public class DrawableContainerTest extends TestCase {
         assertConstantStateNotSet();
         assertNull(mDrawableContainer.getCurrent());
 
-        assertFalse(mDrawableContainer.onLevelChange(Integer.MAX_VALUE));
-        assertFalse(mDrawableContainer.onLevelChange(Integer.MIN_VALUE));
+        assertFalse(mMockDrawableContainer.onLevelChange(Integer.MAX_VALUE));
+        assertFalse(mMockDrawableContainer.onLevelChange(Integer.MIN_VALUE));
 
-        mDrawableContainer.setConstantState(mDrawableContainerState);
+        mMockDrawableContainer.setConstantState(mDrawableContainerState);
         MockDrawable dr = new MockDrawable();
         dr.setLevel(0);
         addAndSelectDrawable(dr);
@@ -377,19 +405,19 @@ public class DrawableContainerTest extends TestCase {
         // set current drawable's level.
         dr.reset();
         assertEquals(0, dr.getLevel());
-        mDrawableContainer.onLevelChange(Integer.MAX_VALUE);
+        mMockDrawableContainer.onLevelChange(Integer.MAX_VALUE);
         assertEquals(Integer.MAX_VALUE, dr.getLevel());
         assertTrue(dr.hasOnLevelChangedCalled());
 
         dr.reset();
         assertEquals(Integer.MAX_VALUE, dr.getLevel());
-        mDrawableContainer.onLevelChange(Integer.MIN_VALUE);
+        mMockDrawableContainer.onLevelChange(Integer.MIN_VALUE);
         assertEquals(Integer.MIN_VALUE, dr.getLevel());
         assertTrue(dr.hasOnLevelChangedCalled());
 
         dr.reset();
         assertEquals(Integer.MIN_VALUE, dr.getLevel());
-        assertFalse(mDrawableContainer.onLevelChange(Integer.MIN_VALUE));
+        assertFalse(mMockDrawableContainer.onLevelChange(Integer.MIN_VALUE));
         assertEquals(Integer.MIN_VALUE, dr.getLevel());
         assertFalse(dr.hasOnLevelChangedCalled());
     }
@@ -403,7 +431,7 @@ public class DrawableContainerTest extends TestCase {
         } catch (NullPointerException e) {
         }
 
-        mDrawableContainer.setConstantState(mDrawableContainerState);
+        mMockDrawableContainer.setConstantState(mDrawableContainerState);
         MockDrawable dr0 = new MockDrawable();
         dr0.setIntrinsicWidth(1);
         mDrawableContainerState.addChild(dr0);
@@ -437,7 +465,7 @@ public class DrawableContainerTest extends TestCase {
         } catch (NullPointerException e) {
         }
 
-        mDrawableContainer.setConstantState(mDrawableContainerState);
+        mMockDrawableContainer.setConstantState(mDrawableContainerState);
         MockDrawable dr0 = new MockDrawable();
         dr0.setIntrinsicHeight(1);
         mDrawableContainerState.addChild(dr0);
@@ -471,7 +499,7 @@ public class DrawableContainerTest extends TestCase {
         } catch (NullPointerException e) {
         }
 
-        mDrawableContainer.setConstantState(mDrawableContainerState);
+        mMockDrawableContainer.setConstantState(mDrawableContainerState);
         MockDrawable dr0 = new MockDrawable();
         dr0.setMinimumWidth(1);
         mDrawableContainerState.addChild(dr0);
@@ -505,7 +533,7 @@ public class DrawableContainerTest extends TestCase {
         } catch (NullPointerException e) {
         }
 
-        mDrawableContainer.setConstantState(mDrawableContainerState);
+        mMockDrawableContainer.setConstantState(mDrawableContainerState);
         MockDrawable dr0 = new MockDrawable();
         dr0.setMinimumHeight(1);
         mDrawableContainerState.addChild(dr0);
@@ -554,7 +582,7 @@ public class DrawableContainerTest extends TestCase {
         dr.invalidateDrawable(null);
         assertTrue(callback.hasInvalidateDrawableCalled());
 
-        mDrawableContainer.setConstantState(mDrawableContainerState);
+        mMockDrawableContainer.setConstantState(mDrawableContainerState);
         MockDrawable mockDrawable = new MockDrawable();
         addAndSelectDrawable(mockDrawable);
 
@@ -602,7 +630,7 @@ public class DrawableContainerTest extends TestCase {
             }, 0);
         assertTrue(callback.hasScheduleDrawableCalled());
 
-        mDrawableContainer.setConstantState(mDrawableContainerState);
+        mMockDrawableContainer.setConstantState(mDrawableContainerState);
         MockDrawable mockDrawable = new MockDrawable();
         addAndSelectDrawable(mockDrawable);
 
@@ -653,7 +681,7 @@ public class DrawableContainerTest extends TestCase {
             });
         assertTrue(callback.hasUnscheduleDrawableCalled());
 
-        mDrawableContainer.setConstantState(mDrawableContainerState);
+        mMockDrawableContainer.setConstantState(mDrawableContainerState);
         MockDrawable mockDrawable = new MockDrawable();
         addAndSelectDrawable(mockDrawable);
 
@@ -684,7 +712,7 @@ public class DrawableContainerTest extends TestCase {
         assertFalse(mDrawableContainer.setVisible(false, false));
         assertTrue(mDrawableContainer.setVisible(true, false));
 
-        mDrawableContainer.setConstantState(mDrawableContainerState);
+        mMockDrawableContainer.setConstantState(mDrawableContainerState);
         MockDrawable dr = new MockDrawable();
         addAndSelectDrawable(dr);
 
@@ -705,7 +733,7 @@ public class DrawableContainerTest extends TestCase {
         // there is no child, so the container is transparent
         assertEquals(PixelFormat.TRANSPARENT, dr.getOpacity());
 
-        mDrawableContainer.setConstantState(mDrawableContainerState);
+        mMockDrawableContainer.setConstantState(mDrawableContainerState);
         MockDrawable dr0 = new MockDrawable();
         dr0.setOpacity(PixelFormat.OPAQUE);
         mDrawableContainerState.addChild(dr0);
@@ -738,7 +766,7 @@ public class DrawableContainerTest extends TestCase {
         } catch (NullPointerException e) {
         }
 
-        mDrawableContainer.setConstantState(mDrawableContainerState);
+        mMockDrawableContainer.setConstantState(mDrawableContainerState);
         MockDrawable dr0 = new MockDrawable();
         dr0.setVisible(false, false);
         assertFalse(dr0.isVisible());
@@ -779,10 +807,10 @@ public class DrawableContainerTest extends TestCase {
         } catch (NullPointerException e) {
         }
 
-        mDrawableContainer.setConstantState(mDrawableContainerState);
+        mMockDrawableContainer.setConstantState(mDrawableContainerState);
         assertSame(mDrawableContainerState, mDrawableContainer.getConstantState());
 
-        mDrawableContainer.setConstantState(null);
+        mMockDrawableContainer.setConstantState(null);
         assertConstantStateNotSet();
     }
 
@@ -794,7 +822,7 @@ public class DrawableContainerTest extends TestCase {
         } catch (NullPointerException e) {
         }
 
-        mDrawableContainer.setConstantState(mDrawableContainerState);
+        mMockDrawableContainer.setConstantState(mDrawableContainerState);
         MockDrawable dr0 = new MockDrawable();
         mDrawableContainerState.addChild(dr0);
         mDrawableContainer.mutate();
