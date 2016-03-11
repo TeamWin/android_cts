@@ -751,6 +751,12 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
         }
 
         try {
+            // Add test account
+            assertTrue(runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".ContactsTest",
+                    "testAddTestAccount", mParentUserId));
+            assertTrue(runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".ContactsTest",
+                    "testAddTestAccount", mProfileUserId));
+
             // Install directory provider to both primary and managed profile
             installAppAsUser(DIRECTORY_PROVIDER_APK, mProfileUserId);
             installAppAsUser(DIRECTORY_PROVIDER_APK, mParentUserId);
