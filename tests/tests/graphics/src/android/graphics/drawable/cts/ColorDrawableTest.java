@@ -126,7 +126,7 @@ public class ColorDrawableTest extends AndroidTestCase {
         assertEquals(Color.BLACK, DrawableTestUtils.getPixel(d, 0, 0));
 
         d.setColorFilter(new PorterDuffColorFilter(Color.BLACK, Mode.SRC_OVER));
-        assertEquals(Color.BLACK, DrawableTestingUtils.getPixel(d, 0, 0));
+        assertEquals(Color.BLACK, DrawableTestUtils.getPixel(d, 0, 0));
     }
 
     public void testSetTint() {
