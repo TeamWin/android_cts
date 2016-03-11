@@ -60,6 +60,9 @@ public class DialogStubActivity extends Activity {
     public static final int TEST_ALERTDIALOG_NOT_CANCELABLE = 15;
     public static final int TEST_PROTECTED_CANCELABLE = 16;
     public static final int TEST_PROTECTED_NOT_CANCELABLE = 17;
+    public static final int TEST_ALERT_DIALOG_ICON_DRAWABLE = 18;
+    public static final int TEST_ALERT_DIALOG_ICON_ATTRIBUTE = 19;
+    public static final int TEST_ALERTDIALOG_WITH_MESSAGE = 20;
 
     public static final int SPACING_LEFT = 10;
     public static final int SPACING_TOP = 20;
@@ -163,6 +166,7 @@ public class DialogStubActivity extends Activity {
                 break;
 
             case TEST_ALERTDIALOG_DEPRECATED_WITH_MESSAGE:
+            case TEST_ALERTDIALOG_WITH_MESSAGE:
                 final Handler handler = new Handler() {
                     @Override
                     public void handleMessage(Message msg) {
@@ -182,9 +186,21 @@ public class DialogStubActivity extends Activity {
                 neutralMessage.setTarget(handler);
                 neutralMessage.what = DialogInterface.BUTTON_NEUTRAL;
                 mAlertDialog = getAlertDialogInstance(false);
-                mAlertDialog.setButton(getString(R.string.alert_dialog_positive), positiveMessage);
-                mAlertDialog.setButton2(getString(R.string.alert_dialog_negative), negativeMessage);
-                mAlertDialog.setButton3(getString(R.string.alert_dialog_neutral), neutralMessage);
+                if (id == TEST_ALERTDIALOG_DEPRECATED_WITH_MESSAGE) {
+                    mAlertDialog.setButton(getString(R.string.alert_dialog_positive),
+                            positiveMessage);
+                    mAlertDialog.setButton2(getString(R.string.alert_dialog_negative),
+                            negativeMessage);
+                    mAlertDialog.setButton3(getString(R.string.alert_dialog_neutral),
+                            neutralMessage);
+                } else {
+                    mAlertDialog.setButton(AlertDialog.BUTTON_POSITIVE,
+                            getString(R.string.alert_dialog_positive), positiveMessage);
+                    mAlertDialog.setButton(AlertDialog.BUTTON_NEUTRAL,
+                            getString(R.string.alert_dialog_neutral), neutralMessage);
+                    mAlertDialog.setButton(AlertDialog.BUTTON_NEGATIVE,
+                            getString(R.string.alert_dialog_negative), negativeMessage);
+                }
                 mDialog = mAlertDialog;
                 break;
 
@@ -195,10 +211,10 @@ public class DialogStubActivity extends Activity {
                 mDialog = new MockAlertDialog(this, R.style.Theme_AlertDialog);
                 break;
             case TEST_ALERTDIALOG_CANCELABLE:
-                mDialog = getAlertDialogCancelablInstance(true);
+                mDialog = getAlertDialogCancelableInstance(true);
                 break;
             case TEST_ALERTDIALOG_NOT_CANCELABLE:
-                mDialog = getAlertDialogCancelablInstance(false);
+                mDialog = getAlertDialogCancelableInstance(false);
                 break;
             case TEST_PROTECTED_CANCELABLE:
                 mDialog = new TestDialog(this, true, new OnCancelListener() {
@@ -214,6 +230,17 @@ public class DialogStubActivity extends Activity {
                     }
                 });
                 break;
+            case TEST_ALERT_DIALOG_ICON_DRAWABLE:
+                mAlertDialog = getAlertDialogInstance(false);
+                mAlertDialog.setIcon(mAlertDialog.getContext().getDrawable(R.drawable.robot));
+                mDialog = mAlertDialog;
+                break;
+            case TEST_ALERT_DIALOG_ICON_ATTRIBUTE:
+                mAlertDialog = getAlertDialogInstance(false);
+                mAlertDialog.setIconAttribute(android.R.attr.alertDialogIcon);
+                mDialog = mAlertDialog;
+                break;
+
             default:
                 break;
         }
@@ -222,7 +249,7 @@ public class DialogStubActivity extends Activity {
         return mDialog;
     }
 
-    private AlertDialog getAlertDialogCancelablInstance(boolean cancelable) {
+    private AlertDialog getAlertDialogCancelableInstance(boolean cancelable) {
         OnCancelListener cancelListener = new OnCancelListener() {
             public void onCancel(DialogInterface dialog) {
                 onCancelCalled = true;
