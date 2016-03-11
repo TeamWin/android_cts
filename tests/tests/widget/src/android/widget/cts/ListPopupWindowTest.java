@@ -28,6 +28,7 @@ import android.test.ActivityInstrumentationTestCase2;
 import android.test.suitebuilder.annotation.SmallTest;
 import android.view.Display;
 import android.view.Gravity;
+import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
@@ -569,6 +570,44 @@ public class ListPopupWindowTest extends
         verifyNoMoreInteractions(mPopupWindowBuilder.mOnItemSelectedListener);
     }
 
+    public void testNoDefaultDismissalWithBackButton() throws Throwable {
+        mPopupWindowBuilder = new Builder().withDismissListener();
+        mPopupWindowBuilder.show();
+
+        // Send BACK key event. As we don't have any custom code that dismisses ListPopupWindow,
+        // and ListPopupWindow doesn't track that system-level key event on its own, ListPopupWindow
+        // should stay visible
+        mInstrumentation.sendKeyDownUpSync(KeyEvent.KEYCODE_BACK);
+        verify(mPopupWindowBuilder.mOnDismissListener, never()).onDismiss();
+        assertTrue(mPopupWindow.isShowing());
+    }
+
+    public void testCustomDismissalWithBackButton() throws Throwable {
+        mPopupWindowBuilder = new Builder().withAnchor(R.id.anchor_upper_left)
+                .withDismissListener();
+        mPopupWindowBuilder.show();
+
+        // "Point" our custom extension of EditText to our ListPopupWindow
+        final MockViewForListPopupWindow anchor =
+                (MockViewForListPopupWindow) mPopupWindow.getAnchorView();
+        anchor.wireTo(mPopupWindow);
+        // Request focus on our EditText
+        runTestOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                anchor.requestFocus();
+            }
+        });
+        mInstrumentation.waitForIdleSync();
+
+        // Send BACK key event. As our custom extension of EditText calls
+        // ListPopupWindow.onKeyPreIme, the end result should be the dismissal of the
+        // ListPopupWindow
+        mInstrumentation.sendKeyDownUpSync(KeyEvent.KEYCODE_BACK);
+        verify(mPopupWindowBuilder.mOnDismissListener, times(1)).onDismiss();
+        assertFalse(mPopupWindow.isShowing());
+    }
+
     /**
      * Inner helper class to configure an instance of <code>ListPopupWindow</code> for the
      * specific test. The main reason for its existence is that once a popup window is shown
@@ -585,6 +624,7 @@ public class ListPopupWindowTest extends
         private int mHorizontalOffset;
         private int mVerticalOffset;
         private int mDropDownGravity;
+        private int mAnchorId = R.id.anchor_upper;
 
         private boolean mHasWindowLayoutType;
         private int mWindowLayoutType;
@@ -598,6 +638,11 @@ public class ListPopupWindowTest extends
 
         public Builder() {
             mPopupWindow = new ListPopupWindow(mActivity);
+        }
+
+        public Builder withAnchor(int anchorId) {
+            mAnchorId = anchorId;
+            return this;
         }
 
         public Builder ignoreContentWidth() {
@@ -727,7 +772,7 @@ public class ListPopupWindowTest extends
             };
 
             mPopupWindow.setAdapter(listPopupAdapter);
-            mPopupWindow.setAnchorView(mActivity.findViewById(R.id.anchor_upper));
+            mPopupWindow.setAnchorView(mActivity.findViewById(mAnchorId));
 
             // The following mock listeners have to be set before the call to show() as
             // they are set on the internally constructed drop down.
