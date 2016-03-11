@@ -24,7 +24,8 @@
         <uses-library android:name="android.test.runner" />
 
         <activity android:name="android.text.cts.EmojiCtsActivity"
-            android:label="AvailableIntentsActivity">
+            android:label="AvailableIntentsActivity"
+            android:screenOrientation="nosensor">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.FRAMEWORK_INSTRUMENTATION_TEST" />
@@ -32,10 +33,12 @@
         </activity>
 
         <activity android:name="android.text.method.cts.KeyListenerCtsActivity"
-            android:label="KeyListenerCtsActivity"/>
+            android:label="KeyListenerCtsActivity"
+            android:screenOrientation="nosensor"/>
 
         <activity android:name="android.text.method.cts.CtsActivity"
-            android:label="CtsActivity">
+            android:label="CtsActivity"
+            android:screenOrientation="nosensor">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.FRAMEWORK_INSTRUMENTATION_TEST" />
@@ -43,7 +46,8 @@
         </activity>
 
         <activity android:name="android.text.style.cts.URLSpanCtsActivity"
-            android:label="URLSpanCtsActivity">
+            android:label="URLSpanCtsActivity"
+            android:screenOrientation="nosensor">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.FRAMEWORK_INSTRUMENTATION_TEST" />
@@ -54,7 +58,8 @@
             android:label="MockURLSpanTestActivity"
             android:launchMode="singleTask"
             android:alwaysRetainTaskState="true"
-            android:configChanges="orientation|keyboardHidden">
+            android:configChanges="orientation|keyboardHidden"
+            android:screenOrientation="nosensor">
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
