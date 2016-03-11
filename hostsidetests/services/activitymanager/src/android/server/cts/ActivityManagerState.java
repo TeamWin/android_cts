@@ -34,8 +34,15 @@ import java.util.regex.Matcher;
 
 import static com.android.ddmlib.Log.LogLevel.INFO;
 
+import static android.server.cts.ActivityManagerTestBase.HOME_STACK_ID;
+
 class ActivityManagerState {
     private static final String DUMPSYS_ACTIVITY_ACTIVITIES = "dumpsys activity activities";
+
+    // Copied from ActivityRecord.java
+    private static final int APPLICATION_ACTIVITY_TYPE = 0;
+    private static final int HOME_ACTIVITY_TYPE = 1;
+    private static final int RECENTS_ACTIVITY_TYPE = 2;
 
     private final Pattern mStackIdPattern = Pattern.compile("Stack #(\\d+)\\:");
     private final Pattern mFocusedActivityPattern =
@@ -206,6 +213,29 @@ class ActivityManagerState {
             }
         }
         return false;
+    }
+
+    boolean isHomeActivityVisible() {
+        final Activity homeActivity = getHomeActivity();
+        return homeActivity != null && homeActivity.visible;
+    }
+
+    private Activity getHomeActivity() {
+        for (ActivityStack stack : mStacks) {
+            if (stack.mStackId != HOME_STACK_ID) {
+                continue;
+            }
+
+            for (ActivityTask task : stack.mTasks) {
+                if (task.mTaskType != HOME_ACTIVITY_TYPE) {
+                    continue;
+                }
+                return task.mActivities.get(task.mActivities.size() - 1);
+            }
+
+            return null;
+        }
+        return null;
     }
 
     ActivityTask getTaskByActivityName(String activityName) {

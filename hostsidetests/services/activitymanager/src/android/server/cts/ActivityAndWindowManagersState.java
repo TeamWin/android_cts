@@ -195,6 +195,16 @@ class ActivityAndWindowManagersState extends Assert {
         }
     }
 
+    void assertHomeActivityVisible(boolean visible) {
+        final boolean activityVisible = mAmState.isHomeActivityVisible();
+
+        if (visible) {
+            assertTrue("Home activity must be visible.", activityVisible);
+        } else {
+            assertFalse("Home activity must NOT be visible.", activityVisible);
+        }
+    }
+
     boolean stackInAMAndWMAreEqual() {
         for (ActivityStack aStack : mAmState.getStacks()) {
             final int stackId = aStack.mStackId;
