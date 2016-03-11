@@ -102,6 +102,7 @@ cts_support_packages := \
     CtsDeviceTaskSwitchingControl \
     CtsExternalServiceService \
     CtsHostsideNetworkTestsApp \
+    CtsHostsideNetworkTestsApp2 \
     CtsIntentReceiverApp \
     CtsIntentSenderApp \
     CtsLauncherAppsTests \
