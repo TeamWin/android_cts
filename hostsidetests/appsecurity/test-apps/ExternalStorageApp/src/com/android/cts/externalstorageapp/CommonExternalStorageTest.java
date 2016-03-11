@@ -137,6 +137,7 @@ public class CommonExternalStorageTest extends AndroidTestCase {
         Collections.addAll(paths, context.getExternalCacheDirs());
         Collections.addAll(paths, context.getExternalFilesDirs(null));
         Collections.addAll(paths, context.getExternalFilesDirs(Environment.DIRECTORY_PICTURES));
+        Collections.addAll(paths, context.getExternalMediaDirs());
         Collections.addAll(paths, context.getObbDirs());
         return paths;
     }
@@ -146,6 +147,7 @@ public class CommonExternalStorageTest extends AndroidTestCase {
         Collections.addAll(paths, context.getExternalCacheDirs());
         Collections.addAll(paths, context.getExternalFilesDirs(null));
         Collections.addAll(paths, context.getExternalFilesDirs(Environment.DIRECTORY_PICTURES));
+        Collections.addAll(paths, context.getExternalMediaDirs());
         return paths;
     }
 
