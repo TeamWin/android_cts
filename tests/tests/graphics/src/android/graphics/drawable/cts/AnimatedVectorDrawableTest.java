@@ -19,11 +19,17 @@ package android.graphics.drawable.cts;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.PixelFormat;
+import android.graphics.PorterDuff;
+import android.graphics.PorterDuffColorFilter;
 import android.graphics.drawable.Animatable2;
 import android.graphics.drawable.AnimatedVectorDrawable;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.Drawable.ConstantState;
 import android.test.ActivityInstrumentationTestCase2;
+import android.test.suitebuilder.annotation.MediumTest;
+import android.test.suitebuilder.annotation.SmallTest;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.util.Xml;
@@ -99,6 +105,7 @@ public class AnimatedVectorDrawableTest extends ActivityInstrumentationTestCase2
         }
     }
 
+    @MediumTest
     public void testInflate() throws Exception {
         // Setup AnimatedVectorDrawable from xml file
         XmlPullParser parser = mResources.getXml(mResId);
@@ -128,6 +135,7 @@ public class AnimatedVectorDrawableTest extends ActivityInstrumentationTestCase2
         }
     }
 
+    @SmallTest
     public void testGetChangingConfigurations() {
         AnimatedVectorDrawable avd = new AnimatedVectorDrawable();
         ConstantState constantState = avd.getConstantState();
@@ -151,6 +159,7 @@ public class AnimatedVectorDrawableTest extends ActivityInstrumentationTestCase2
         assertEquals(0xffff,  avd.getChangingConfigurations());
     }
 
+    @SmallTest
     public void testGetConstantState() {
         AnimatedVectorDrawable AnimatedVectorDrawable = new AnimatedVectorDrawable();
         ConstantState constantState = AnimatedVectorDrawable.getConstantState();
@@ -163,6 +172,7 @@ public class AnimatedVectorDrawableTest extends ActivityInstrumentationTestCase2
         assertEquals(1, constantState.getChangingConfigurations());
     }
 
+    @SmallTest
     public void testMutate() {
         AnimatedVectorDrawable d1 = (AnimatedVectorDrawable) mResources.getDrawable(mResId);
         AnimatedVectorDrawable d2 = (AnimatedVectorDrawable) mResources.getDrawable(mResId);
@@ -190,20 +200,57 @@ public class AnimatedVectorDrawableTest extends ActivityInstrumentationTestCase2
         assertEquals(originalAlpha, d3.getAlpha());
     }
 
+    @SmallTest
+    public void testGetOpacity() {
+        AnimatedVectorDrawable d1 = (AnimatedVectorDrawable) mResources.getDrawable(mResId);
+        assertEquals("Default is translucent", PixelFormat.TRANSLUCENT, d1.getOpacity());
+        d1.setAlpha(0);
+        assertEquals("Still translucent", PixelFormat.TRANSLUCENT, d1.getOpacity());
+    }
+
+    @SmallTest
+    public void testColorFilter() {
+        PorterDuffColorFilter filter = new PorterDuffColorFilter(Color.RED, PorterDuff.Mode.SRC_IN);
+        AnimatedVectorDrawable d1 = (AnimatedVectorDrawable) mResources.getDrawable(mResId);
+        d1.setColorFilter(filter);
+
+        assertEquals(filter, d1.getColorFilter());
+    }
+
+    @MediumTest
     public void testReset() {
         final AnimatedVectorDrawable d1 = (AnimatedVectorDrawable) mResources.getDrawable(mResId);
         // The AVD has a duration as 100ms.
         mActivity.runOnUiThread(new Runnable() {
             @Override
             public void run() {
+                d1.start();
                 d1.reset();
-                assertFalse(d1.isRunning());
             }
         });
+        getInstrumentation().waitForIdleSync();
+        assertFalse(d1.isRunning());
 
     }
 
-    public void testAddCallback() throws InterruptedException {
+    @MediumTest
+    public void testStop() {
+        final AnimatedVectorDrawable d1 = (AnimatedVectorDrawable) mResources.getDrawable(mResId);
+        // The AVD has a duration as 100ms.
+        mActivity.runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                d1.start();
+                d1.stop();
+
+            }
+        });
+        getInstrumentation().waitForIdleSync();
+        assertFalse(d1.isRunning());
+    }
+
+    @MediumTest
+    public void testAddCallback()  {
         MyCallback callback = new MyCallback();
         final AnimatedVectorDrawable d1 = (AnimatedVectorDrawable) mResources.getDrawable(mResId);
 
@@ -216,13 +263,14 @@ public class AnimatedVectorDrawableTest extends ActivityInstrumentationTestCase2
             }
         });
 
-        Thread.sleep(200);
+        getInstrumentation().waitForIdleSync();
 
         assertTrue(callback.mStart);
         assertTrue(callback.mEnd);
     }
 
-    public void testRemoveCallback() throws InterruptedException {
+    @MediumTest
+    public void testRemoveCallback() {
         MyCallback callback = new MyCallback();
         final AnimatedVectorDrawable d1 = (AnimatedVectorDrawable) mResources.getDrawable(mResId);
 
@@ -235,14 +283,14 @@ public class AnimatedVectorDrawableTest extends ActivityInstrumentationTestCase2
                 d1.start();
             }
         });
-
-        Thread.sleep(200);
+        getInstrumentation().waitForIdleSync();
 
         assertFalse(callback.mStart);
         assertFalse(callback.mEnd);
     }
 
-    public void testClearCallback() throws InterruptedException {
+    @MediumTest
+    public void testClearCallback() {
         MyCallback callback = new MyCallback();
         final AnimatedVectorDrawable d1 = (AnimatedVectorDrawable) mResources.getDrawable(mResId);
 
@@ -256,7 +304,7 @@ public class AnimatedVectorDrawableTest extends ActivityInstrumentationTestCase2
             }
         });
 
-        Thread.sleep(200);
+        getInstrumentation().waitForIdleSync();
 
         assertFalse(callback.mStart);
         assertFalse(callback.mEnd);
