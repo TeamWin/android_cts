@@ -16,31 +16,56 @@
 
 package android.widget.cts;
 
-import android.widget.cts.R;
-
 import android.app.Activity;
 import android.app.Instrumentation;
 import android.content.Context;
+import android.graphics.Rect;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
+import android.os.SystemClock;
+import android.support.test.InstrumentationRegistry;
 import android.test.ActivityInstrumentationTestCase2;
-import android.test.UiThreadTest;
+import android.test.suitebuilder.annotation.SmallTest;
 import android.view.Display;
+import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.WindowManager;
+import android.widget.AdapterView;
+import android.widget.BaseAdapter;
+import android.widget.ListAdapter;
 import android.widget.ListPopupWindow;
 import android.widget.PopupWindow;
-import android.widget.PopupWindow.OnDismissListener;
+import android.widget.TextView;
 
 import static org.mockito.Mockito.*;
 
+@SmallTest
 public class ListPopupWindowTest extends
         ActivityInstrumentationTestCase2<MockPopupWindowCtsActivity> {
     private Instrumentation mInstrumentation;
     private Activity mActivity;
 
+    private Builder mPopupWindowBuilder;
+
     /** The list popup window. */
     private ListPopupWindow mPopupWindow;
+
+    private AdapterView.OnItemClickListener mItemClickListener;
+
+    /**
+     * Item click listener that dismisses our <code>ListPopupWindow</code> when any item
+     * is clicked. Note that this needs to be a separate class that is also protected (not
+     * private) so that Mockito can "spy" on it.
+     */
+    protected class PopupItemClickListener implements AdapterView.OnItemClickListener {
+        @Override
+        public void onItemClick(AdapterView<?> parent, View view, int position,
+                long id) {
+            mPopupWindow.dismiss();
+        }
+    }
 
     /**
      * Instantiates a new popup window test.
@@ -49,16 +74,21 @@ public class ListPopupWindowTest extends
         super(MockPopupWindowCtsActivity.class);
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see android.test.ActivityInstrumentationTestCase#setUp()
-     */
     @Override
     protected void setUp() throws Exception {
         super.setUp();
         mInstrumentation = getInstrumentation();
         mActivity = getActivity();
+        mItemClickListener = new PopupItemClickListener();
+    }
+
+    @Override
+    protected void tearDown() throws Exception {
+        if ((mPopupWindowBuilder != null) && (mPopupWindow != null)) {
+            mPopupWindowBuilder.dismiss();
+        }
+
+        super.tearDown();
     }
 
     public void testConstructor() {
@@ -72,7 +102,8 @@ public class ListPopupWindowTest extends
     }
 
     public void testAccessBackground() {
-        mPopupWindow = new ListPopupWindow(mActivity);
+        mPopupWindowBuilder = new Builder();
+        mPopupWindowBuilder.show();
 
         Drawable drawable = new ColorDrawable();
         mPopupWindow.setBackgroundDrawable(drawable);
@@ -83,7 +114,8 @@ public class ListPopupWindowTest extends
     }
 
     public void testAccessAnimationStyle() {
-        mPopupWindow = new ListPopupWindow(mActivity);
+        mPopupWindowBuilder = new Builder();
+        mPopupWindowBuilder.show();
         assertEquals(0, mPopupWindow.getAnimationStyle());
 
         mPopupWindow.setAnimationStyle(android.R.style.Animation_Toast);
@@ -95,7 +127,9 @@ public class ListPopupWindowTest extends
     }
 
     public void testAccessHeight() {
-        mPopupWindow = new ListPopupWindow(mActivity);
+        mPopupWindowBuilder = new Builder();
+        mPopupWindowBuilder.show();
+
         assertEquals(WindowManager.LayoutParams.WRAP_CONTENT, mPopupWindow.getHeight());
 
         int height = getDisplay().getHeight() / 2;
@@ -129,7 +163,9 @@ public class ListPopupWindowTest extends
     }
 
     public void testAccessWidth() {
-        mPopupWindow = new ListPopupWindow(mActivity);
+        mPopupWindowBuilder = new Builder().ignoreContentWidth();
+        mPopupWindowBuilder.show();
+
         assertEquals(WindowManager.LayoutParams.WRAP_CONTENT, mPopupWindow.getWidth());
 
         int width = getDisplay().getWidth() / 2;
@@ -152,176 +188,419 @@ public class ListPopupWindowTest extends
         assertEquals(width, mPopupWindow.getWidth());
     }
 
-    public void testShow() {
+    private void verifyAnchoring(int horizontalOffset, int verticalOffset) {
+        final View upperAnchor = mActivity.findViewById(R.id.anchor_upper);
         int[] anchorXY = new int[2];
         int[] viewOnScreenXY = new int[2];
         int[] viewInWindowXY = new int[2];
 
-        mPopupWindow = new ListPopupWindow(mActivity);
-
-        final View upperAnchor = mActivity.findViewById(R.id.anchor_upper);
-        mPopupWindow.setAnchorView(upperAnchor);
-
-        mInstrumentation.runOnMainSync(new Runnable() {
-            public void run() {
-                mPopupWindow.show();
-            }
-        });
-        mInstrumentation.waitForIdleSync();
-
         assertTrue(mPopupWindow.isShowing());
+        assertEquals(upperAnchor, mPopupWindow.getAnchorView());
 
         mPopupWindow.getListView().getLocationOnScreen(viewOnScreenXY);
         upperAnchor.getLocationOnScreen(anchorXY);
         mPopupWindow.getListView().getLocationInWindow(viewInWindowXY);
-        assertEquals(anchorXY[0] + viewInWindowXY[0], viewOnScreenXY[0]);
-        assertEquals(anchorXY[1] + viewInWindowXY[1] + upperAnchor.getHeight(), viewOnScreenXY[1]);
+        assertEquals(anchorXY[0] + viewInWindowXY[0] + horizontalOffset, viewOnScreenXY[0]);
+        assertEquals(anchorXY[1] + viewInWindowXY[1] + upperAnchor.getHeight() + verticalOffset,
+                viewOnScreenXY[1]);
+    }
 
-        dismissPopup();
+    public void testAnchoring() {
+        mPopupWindowBuilder = new Builder();
+        mPopupWindowBuilder.show();
+
+        assertEquals(0, mPopupWindow.getHorizontalOffset());
+        assertEquals(0, mPopupWindow.getVerticalOffset());
+
+        verifyAnchoring(0, 0);
+    }
+
+    public void testAnchoringWithHorizontalOffset() {
+        mPopupWindowBuilder = new Builder().withHorizontalOffset(50);
+        mPopupWindowBuilder.show();
+
+        assertEquals(50, mPopupWindow.getHorizontalOffset());
+        assertEquals(0, mPopupWindow.getVerticalOffset());
+
+        verifyAnchoring(50, 0);
+    }
+
+    public void testAnchoringWithVerticalOffset() {
+        mPopupWindowBuilder = new Builder().withVerticalOffset(60);
+        mPopupWindowBuilder.show();
+
+        assertEquals(0, mPopupWindow.getHorizontalOffset());
+        assertEquals(60, mPopupWindow.getVerticalOffset());
+
+        verifyAnchoring(0, 60);
     }
 
     public void testSetWindowLayoutType() {
-        mPopupWindow = new ListPopupWindow(mActivity);
-
-        final View upperAnchor = mActivity.findViewById(R.id.anchor_upper);
-        mPopupWindow.setAnchorView(upperAnchor);
-        mPopupWindow.setWindowLayoutType(
+        mPopupWindowBuilder = new Builder().withWindowLayoutType(
                 WindowManager.LayoutParams.TYPE_APPLICATION_SUB_PANEL);
-
-        mInstrumentation.runOnMainSync(new Runnable() {
-            public void run() {
-                mPopupWindow.show();
-            }
-        });
-        mInstrumentation.waitForIdleSync();
-
+        mPopupWindowBuilder.show();
         assertTrue(mPopupWindow.isShowing());
 
         WindowManager.LayoutParams p = (WindowManager.LayoutParams)
                 mPopupWindow.getListView().getRootView().getLayoutParams();
         assertEquals(WindowManager.LayoutParams.TYPE_APPLICATION_SUB_PANEL, p.type);
-
-        dismissPopup();
     }
 
-    @UiThreadTest
     public void testDismiss() {
-        mPopupWindow = new ListPopupWindow(mActivity);
-        assertFalse(mPopupWindow.isShowing());
-        View anchorView = mActivity.findViewById(R.id.anchor_upper);
-        mPopupWindow.setAnchorView(anchorView);
-        mPopupWindow.show();
-
-        mPopupWindow.dismiss();
+        mPopupWindowBuilder = new Builder();
         assertFalse(mPopupWindow.isShowing());
 
-        mPopupWindow.dismiss();
+        mPopupWindowBuilder.show();
+        assertTrue(mPopupWindow.isShowing());
+
+        mPopupWindowBuilder.dismiss();
+        assertFalse(mPopupWindow.isShowing());
+
+        mPopupWindowBuilder.dismiss();
         assertFalse(mPopupWindow.isShowing());
     }
 
     public void testSetOnDismissListener() {
-        mPopupWindow = new ListPopupWindow(mActivity);
-        mPopupWindow.setOnDismissListener(null);
+        mPopupWindowBuilder = new Builder().withDismissListener();
+        mPopupWindowBuilder.show();
+        mPopupWindowBuilder.dismiss();
+        verify(mPopupWindowBuilder.mOnDismissListener, times(1)).onDismiss();
 
-        OnDismissListener onDismissListener = mock(OnDismissListener.class);
-        mPopupWindow.setOnDismissListener(onDismissListener);
-        showPopup();
-        dismissPopup();
-        verify(onDismissListener, times(1)).onDismiss();
-
-        showPopup();
-        dismissPopup();
-        verify(onDismissListener, times(2)).onDismiss();
+        mPopupWindowBuilder.showAgain();
+        mPopupWindowBuilder.dismiss();
+        verify(mPopupWindowBuilder.mOnDismissListener, times(2)).onDismiss();
 
         mPopupWindow.setOnDismissListener(null);
-        showPopup();
-        dismissPopup();
+        mPopupWindowBuilder.showAgain();
+        mPopupWindowBuilder.dismiss();
         // Since we've reset the listener to null, we are not expecting any more interactions
         // on the previously registered listener.
-        verifyNoMoreInteractions(onDismissListener);
+        verifyNoMoreInteractions(mPopupWindowBuilder.mOnDismissListener);
     }
 
     public void testAccessInputMethodMode() {
-        mPopupWindow = new ListPopupWindow(mActivity);
+        mPopupWindowBuilder = new Builder().withDismissListener();
+        mPopupWindowBuilder.show();
+
         assertEquals(PopupWindow.INPUT_METHOD_NEEDED, mPopupWindow.getInputMethodMode());
+        assertFalse(mPopupWindow.isInputMethodNotNeeded());
 
         mPopupWindow.setInputMethodMode(PopupWindow.INPUT_METHOD_FROM_FOCUSABLE);
         assertEquals(PopupWindow.INPUT_METHOD_FROM_FOCUSABLE, mPopupWindow.getInputMethodMode());
+        assertFalse(mPopupWindow.isInputMethodNotNeeded());
 
         mPopupWindow.setInputMethodMode(PopupWindow.INPUT_METHOD_NEEDED);
         assertEquals(PopupWindow.INPUT_METHOD_NEEDED, mPopupWindow.getInputMethodMode());
+        assertFalse(mPopupWindow.isInputMethodNotNeeded());
 
         mPopupWindow.setInputMethodMode(PopupWindow.INPUT_METHOD_NOT_NEEDED);
         assertEquals(PopupWindow.INPUT_METHOD_NOT_NEEDED, mPopupWindow.getInputMethodMode());
+        assertTrue(mPopupWindow.isInputMethodNotNeeded());
 
         mPopupWindow.setInputMethodMode(-1);
         assertEquals(-1, mPopupWindow.getInputMethodMode());
+        assertFalse(mPopupWindow.isInputMethodNotNeeded());
+    }
+
+    public void testAccessSoftInputMethodMode() {
+        mPopupWindowBuilder = new Builder().withDismissListener();
+        mPopupWindowBuilder.show();
+
+        mPopupWindow = new ListPopupWindow(mActivity);
+        assertEquals(WindowManager.LayoutParams.SOFT_INPUT_STATE_UNCHANGED,
+                mPopupWindow.getSoftInputMode());
+
+        mPopupWindow.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
+        assertEquals(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE,
+                mPopupWindow.getSoftInputMode());
+
+        mPopupWindow.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_VISIBLE);
+        assertEquals(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_VISIBLE,
+                mPopupWindow.getSoftInputMode());
+    }
+
+    private void verifyDismissalViaTouch(boolean setupAsModal) throws Throwable {
+        // Register a click listener on the top-level container
+        final View mainContainer = mActivity.findViewById(R.id.main_container);
+        View.OnClickListener mockContainerClickListener = mock(View.OnClickListener.class);
+        mainContainer.setOnClickListener(mockContainerClickListener);
+
+        // Configure a list popup window with requested modality
+        mPopupWindowBuilder = new Builder().setModal(setupAsModal).withDismissListener();
+        mPopupWindowBuilder.show();
+
+        assertTrue("Popup window showing", mPopupWindow.isShowing());
+        // Make sure that the modality of the popup window is set up correctly
+        assertEquals("Popup window modality", setupAsModal, mPopupWindow.isModal());
+
+        // Determine the location of the popup on the screen so that we can emulate
+        // a tap outside of its bounds to dismiss it
+        final int[] popupOnScreenXY = new int[2];
+        final Rect rect = new Rect();
+        mPopupWindow.getListView().getLocationOnScreen(popupOnScreenXY);
+        mPopupWindow.getBackground().getPadding(rect);
+
+        int emulatedTapX = popupOnScreenXY[0] - rect.left - 20;
+        int emulatedTapY = popupOnScreenXY[1] + mPopupWindow.getListView().getHeight() +
+                rect.top + rect.bottom + 20;
+
+        // The logic below uses Instrumentation to emulate a tap outside the bounds of the
+        // displayed list popup window. This tap is then treated by the framework to be "split" as
+        // the ACTION_OUTSIDE for the popup itself, as well as DOWN / MOVE / UP for the underlying
+        // view root if the popup is not modal.
+        // It is not correct to emulate these two sequences separately in the test, as it
+        // wouldn't emulate the user-facing interaction for this test. Note that usage
+        // of Instrumentation is necessary here since Espresso's actions operate at the level
+        // of view or data. Also, we don't want to use View.dispatchTouchEvent directly as
+        // that would require emulation of two separate sequences as well.
+
+        Instrumentation instrumentation = InstrumentationRegistry.getInstrumentation();
+
+        // Inject DOWN event
+        long downTime = SystemClock.uptimeMillis();
+        MotionEvent eventDown = MotionEvent.obtain(
+                downTime, downTime, MotionEvent.ACTION_DOWN, emulatedTapX, emulatedTapY, 1);
+        instrumentation.sendPointerSync(eventDown);
+
+        // Inject MOVE event
+        long moveTime = SystemClock.uptimeMillis();
+        MotionEvent eventMove = MotionEvent.obtain(
+                moveTime, moveTime, MotionEvent.ACTION_MOVE, emulatedTapX, emulatedTapY, 1);
+        instrumentation.sendPointerSync(eventMove);
+
+        // Inject UP event
+        long upTime = SystemClock.uptimeMillis();
+        MotionEvent eventUp = MotionEvent.obtain(
+                upTime, upTime, MotionEvent.ACTION_UP, emulatedTapX, emulatedTapY, 1);
+        instrumentation.sendPointerSync(eventUp);
+
+        // Wait for the system to process all events in the queue
+        instrumentation.waitForIdleSync();
+
+        // At this point our popup should not be showing and should have notified its
+        // dismiss listener
+        verify(mPopupWindowBuilder.mOnDismissListener, times(1)).onDismiss();
+        assertFalse("Popup window not showing after outside click", mPopupWindow.isShowing());
+
+        // Also test that the click outside the popup bounds has been "delivered" to the main
+        // container only if the popup is not modal
+        verify(mockContainerClickListener, times(setupAsModal ? 0 : 1)).onClick(mainContainer);
+    }
+
+    public void testDismissalOutsideNonModal() throws Throwable {
+        verifyDismissalViaTouch(false);
+    }
+
+    public void testDismissalOutsideModal() throws Throwable {
+        verifyDismissalViaTouch(true);
     }
 
     /**
-     * The listener interface for receiving OnDismiss events. The class that is
-     * interested in processing a OnDismiss event implements this interface, and
-     * the object created with that class is registered with a component using
-     * the component's <code>setOnDismissListener<code> method. When
-     * the OnDismiss event occurs, that object's appropriate
-     * method is invoked.
+     * Inner helper class to configure an instance of <code>ListPopupWindow</code> for the
+     * specific test. The main reason for its existence is that once a popup window is shown
+     * with the show() method, most of its configuration APIs are no-ops. This means that
+     * we can't add logic that is specific to a certain test (such as dismissing a non-modal
+     * popup window) once it's shown and we have a reference to a displayed ListPopupWindow.
      */
-    private static class MockOnDismissListener implements OnDismissListener {
+    public class Builder {
+        private boolean mIsModal;
+        private boolean mHasDismissListener;
+        private boolean mHasItemClickListener;
+        private boolean mIgnoreContentWidth;
+        private int mHorizontalOffset;
+        private int mVerticalOffset;
 
-        /** The Ondismiss called count. */
-        private int mOnDismissCalledCount;
+        private boolean mHasWindowLayoutType;
+        private int mWindowLayoutType;
 
-        /**
-         * Gets the onDismiss() called count.
-         *
-         * @return the on dismiss called count
-         */
-        public int getOnDismissCalledCount() {
-            return mOnDismissCalledCount;
+        private AdapterView.OnItemClickListener mOnItemClickListener;
+        private PopupWindow.OnDismissListener mOnDismissListener;
+
+        public Builder() {
+            mPopupWindow = new ListPopupWindow(mActivity);
         }
 
-        /*
-         * (non-Javadoc)
-         *
-         * @see android.widget.PopupWindow.OnDismissListener#onDismiss()
-         */
-        public void onDismiss() {
-            mOnDismissCalledCount++;
+        public Builder ignoreContentWidth() {
+            mIgnoreContentWidth = true;
+            return this;
         }
 
-    }
+        public Builder setModal(boolean isModal) {
+            mIsModal = isModal;
+            return this;
+        }
 
-    /**
-     * Show PopupWindow.
-     */
-    // FIXME: logcat info complains that there is window leakage due to that mPopupWindow is not
-    // clean up. Need to fix it.
-    private void showPopup() {
-        mInstrumentation.runOnMainSync(new Runnable() {
-            public void run() {
-                if (mPopupWindow == null || mPopupWindow.isShowing()) {
-                    return;
+        public Builder withItemClickListener() {
+            mHasItemClickListener = true;
+            return this;
+        }
+
+        public Builder withDismissListener() {
+            mHasDismissListener = true;
+            return this;
+        }
+
+        public Builder withWindowLayoutType(int windowLayoutType) {
+            mHasWindowLayoutType = true;
+            mWindowLayoutType = windowLayoutType;
+            return this;
+        }
+
+        public Builder withHorizontalOffset(int horizontalOffset) {
+            mHorizontalOffset = horizontalOffset;
+            return this;
+        }
+
+        public Builder withVerticalOffset(int verticalOffset) {
+            mVerticalOffset = verticalOffset;
+            return this;
+        }
+
+        private int getContentWidth(ListAdapter listAdapter, Drawable background) {
+            if (listAdapter == null) {
+                return 0;
+            }
+
+            int width = 0;
+            View itemView = null;
+            int itemType = 0;
+
+            for (int i = 0; i < listAdapter.getCount(); i++) {
+                final int positionType = listAdapter.getItemViewType(i);
+                if (positionType != itemType) {
+                    itemType = positionType;
+                    itemView = null;
                 }
-                View anchor = mActivity.findViewById(R.id.anchor_upper);
-                mPopupWindow.setAnchorView(anchor);
-                mPopupWindow.show();
-                assertTrue(mPopupWindow.isShowing());
+                itemView = listAdapter.getView(i, itemView, null);
+                if (itemView.getLayoutParams() == null) {
+                    itemView.setLayoutParams(new ViewGroup.LayoutParams(
+                            ViewGroup.LayoutParams.WRAP_CONTENT,
+                            ViewGroup.LayoutParams.WRAP_CONTENT));
+                }
+                itemView.measure(View.MeasureSpec.UNSPECIFIED, View.MeasureSpec.UNSPECIFIED);
+                width = Math.max(width, itemView.getMeasuredWidth());
             }
-        });
-        mInstrumentation.waitForIdleSync();
-    }
 
-    /**
-     * Dismiss PopupWindow.
-     */
-    private void dismissPopup() {
-        mInstrumentation.runOnMainSync(new Runnable() {
-            public void run() {
-                if (mPopupWindow == null || !mPopupWindow.isShowing())
-                    return;
-                mPopupWindow.dismiss();
+            // Add background padding to measured width
+            if (background != null) {
+                final Rect rect = new Rect();
+                background.getPadding(rect);
+                width += rect.left + rect.right;
             }
-        });
-        mInstrumentation.waitForIdleSync();
+
+            return width;
+        }
+
+        private void show() {
+            final String[] POPUP_CONTENT =
+                    new String[]{"Alice", "Bob", "Charlie", "Deirdre", "El"};
+            final BaseAdapter listPopupAdapter = new BaseAdapter() {
+                class ViewHolder {
+                    private TextView title;
+                }
+
+                @Override
+                public int getCount() {
+                    return POPUP_CONTENT.length;
+                }
+
+                @Override
+                public Object getItem(int position) {
+                    return POPUP_CONTENT[position];
+                }
+
+                @Override
+                public long getItemId(int position) {
+                    return position;
+                }
+
+                @Override
+                public View getView(int position, View convertView, ViewGroup parent) {
+                    if (convertView == null) {
+                        convertView = LayoutInflater.from(mActivity).inflate(
+                                android.R.layout.simple_list_item_1, parent, false);
+                        ViewHolder viewHolder = new ViewHolder();
+                        viewHolder.title = (TextView) convertView.findViewById(android.R.id.text1);
+                        convertView.setTag(viewHolder);
+                    }
+
+                    ViewHolder viewHolder = (ViewHolder) convertView.getTag();
+                    viewHolder.title.setText(POPUP_CONTENT[position]);
+                    return convertView;
+                }
+            };
+
+            mPopupWindow.setAdapter(listPopupAdapter);
+            mPopupWindow.setAnchorView(mActivity.findViewById(R.id.anchor_upper));
+
+            // The following mock listeners have to be set before the call to show() as
+            // they are set on the internally constructed drop down.
+            if (mHasItemClickListener) {
+                // Wrap our item click listener with a Mockito spy
+                mOnItemClickListener = spy(mItemClickListener);
+                // Register that spy as the item click listener on the ListPopupWindow
+                mPopupWindow.setOnItemClickListener(mOnItemClickListener);
+                // And configure Mockito to call our original listener with onItemClick.
+                // This way we can have both our item click listener running to dismiss the popup
+                // window, and track the invocations of onItemClick with Mockito APIs.
+                doCallRealMethod().when(mOnItemClickListener).onItemClick(
+                        any(AdapterView.class), any(View.class), any(int.class), any(int.class));
+            }
+
+            if (mHasDismissListener) {
+                mOnDismissListener = mock(PopupWindow.OnDismissListener.class);
+                mPopupWindow.setOnDismissListener(mOnDismissListener);
+            }
+
+            mPopupWindow.setModal(mIsModal);
+            if (mHasWindowLayoutType) {
+                mPopupWindow.setWindowLayoutType(mWindowLayoutType);
+            }
+
+            if (!mIgnoreContentWidth) {
+                mPopupWindow.setContentWidth(
+                        getContentWidth(listPopupAdapter, mPopupWindow.getBackground()));
+            }
+
+            if (mHorizontalOffset != 0) {
+                mPopupWindow.setHorizontalOffset(mHorizontalOffset);
+            }
+
+            if (mVerticalOffset != 0) {
+                mPopupWindow.setVerticalOffset(mVerticalOffset);
+            }
+
+            mInstrumentation.runOnMainSync(new Runnable() {
+                public void run() {
+                    mPopupWindow.show();
+                    assertTrue(mPopupWindow.isShowing());
+                }
+            });
+            mInstrumentation.waitForIdleSync();
+        }
+
+        private void showAgain() {
+            mInstrumentation.runOnMainSync(new Runnable() {
+                public void run() {
+                    if (mPopupWindow == null || mPopupWindow.isShowing()) {
+                        return;
+                    }
+                    mPopupWindow.show();
+                    assertTrue(mPopupWindow.isShowing());
+                }
+            });
+            mInstrumentation.waitForIdleSync();
+        }
+
+        private void dismiss() {
+            mInstrumentation.runOnMainSync(new Runnable() {
+                public void run() {
+                    if (mPopupWindow == null || !mPopupWindow.isShowing())
+                        return;
+                    mPopupWindow.dismiss();
+                }
+            });
+            mInstrumentation.waitForIdleSync();
+        }
     }
 }
