@@ -22,6 +22,7 @@ import android.app.stubs.DialogStubActivity;
 import android.content.DialogInterface;
 import android.cts.util.PollingCheck;
 import android.test.ActivityInstrumentationTestCase2;
+import android.test.suitebuilder.annotation.SmallTest;
 import android.view.KeyEvent;
 import android.widget.Button;
 
@@ -29,9 +30,8 @@ import android.app.stubs.R;
 /*
  * Test AlertDialog
  */
+@SmallTest
 public class AlertDialogTest extends ActivityInstrumentationTestCase2<DialogStubActivity> {
-    private static final String ALERTDIALOG_CUSTOM_TITLE = "Hello, World!";
-
     private Instrumentation mInstrumentation;
     private DialogStubActivity mActivity;
     private Button mPositiveButton;
@@ -99,8 +99,11 @@ public class AlertDialogTest extends ActivityInstrumentationTestCase2<DialogStub
         doTestAlertDialog(DialogStubActivity.TEST_ALERTDIALOG_DEPRECATED);
     }
 
-    public void testAlertDialogDeprecatedAPIWithMessage() throws Throwable {
-        startDialogActivity(DialogStubActivity.TEST_ALERTDIALOG_DEPRECATED_WITH_MESSAGE);
+    private void testAlertDialogAPIWithMessage(final boolean useDeprecatedAPIs) throws Throwable {
+        startDialogActivity(useDeprecatedAPIs
+                ? DialogStubActivity.TEST_ALERTDIALOG_DEPRECATED_WITH_MESSAGE
+                : DialogStubActivity.TEST_ALERTDIALOG_WITH_MESSAGE);
+
         assertTrue(mActivity.getDialog().isShowing());
 
         mPositiveButton = ((AlertDialog) (mActivity.getDialog())).getButton(
@@ -132,6 +135,14 @@ public class AlertDialogTest extends ActivityInstrumentationTestCase2<DialogStub
         assertEquals(DialogInterface.BUTTON_NEGATIVE, DialogStubActivity.buttonIndex);
     }
 
+    public void testAlertDialogAPIWithMessageDeprecated() throws Throwable {
+        testAlertDialogAPIWithMessage(true);
+    }
+
+    public void testAlertDialogAPIWithMessageNotDeprecated() throws Throwable {
+        testAlertDialogAPIWithMessage(false);
+    }
+
     private void performClick(final Button button) throws Throwable {
         runTestOnUiThread(new Runnable() {
             public void run() {
@@ -150,7 +161,6 @@ public class AlertDialogTest extends ActivityInstrumentationTestCase2<DialogStub
         startDialogActivity(DialogStubActivity.TEST_CUSTOM_ALERTDIALOG_VIEW);
         assertTrue(mActivity.getDialog().isShowing());
     }
-
 
     public void testCallback() {
         startDialogActivity(DialogStubActivity.TEST_ALERTDIALOG_CALLBACK);
@@ -182,5 +192,15 @@ public class AlertDialogTest extends ActivityInstrumentationTestCase2<DialogStub
         assertFalse(mActivity.onCancelCalled);
         mInstrumentation.sendKeyDownUpSync(KeyEvent.KEYCODE_BACK);
         assertFalse(mActivity.onCancelCalled);
+    }
+
+    public void testAlertDialogIconDrawable() {
+        startDialogActivity(DialogStubActivity.TEST_ALERT_DIALOG_ICON_DRAWABLE);
+        assertTrue(mActivity.getDialog().isShowing());
+    }
+
+    public void testAlertDialogIconAttribute() {
+        startDialogActivity(DialogStubActivity.TEST_ALERT_DIALOG_ICON_ATTRIBUTE);
+        assertTrue(mActivity.getDialog().isShowing());
     }
 }
