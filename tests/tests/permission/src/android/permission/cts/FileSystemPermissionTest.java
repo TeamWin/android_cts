@@ -290,7 +290,6 @@ public class FileSystemPermissionTest extends AndroidTestCase {
     public void testIdletimerDirectoryExistsAndSane() throws Exception {
         File dir = new File("/sys/class/xt_idletimer");
         assertTrue(dir.isDirectory());
-        assertTrue(dir.canRead());
         assertFalse(dir.canWrite());
         assertTrue(dir.canExecute());
 
