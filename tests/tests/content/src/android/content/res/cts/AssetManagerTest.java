@@ -26,6 +26,7 @@ import android.content.res.AssetManager;
 import android.content.res.Resources;
 import android.content.res.XmlResourceParser;
 import android.test.AndroidTestCase;
+import android.test.suitebuilder.annotation.SmallTest;
 import android.util.TypedValue;
 
 import java.io.BufferedReader;
@@ -45,6 +46,7 @@ public class AssetManagerTest extends AndroidTestCase{
         mAssets = mContext.getAssets();
     }
 
+    @SmallTest
     public void testAssetOperations() throws IOException, XmlPullParserException {
         final Resources res = getContext().getResources();
         final TypedValue value = new TypedValue();
@@ -117,7 +119,23 @@ public class AssetManagerTest extends AndroidTestCase{
 
     }
 
+    @SmallTest
+    public void testClose() throws IOException, XmlPullParserException {
+        final AssetManager assets = new AssetManager();
+        assets.close();
 
+        // Should no-op.
+        assets.close();
+
+        try {
+            assets.openXmlResourceParser("AndroidManifest.xml");
+            fail("Expected RuntimeException");
+        } catch (RuntimeException e) {
+            // Expected.
+        }
+    }
+
+    @SmallTest
     public void testGetNonSystemLocales() {
         // This is the list of locales built into this test package. It is basically the locales
         // specified in the Android.mk files (assuming they have corresponding resources), plus the
