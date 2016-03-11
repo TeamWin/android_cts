@@ -32,7 +32,7 @@ public class ExtendedAndroidRunnerBuilder extends AndroidRunnerBuilder {
      * @param runnerParams {@link AndroidRunnerParams} that stores common runner parameters
      */
     public ExtendedAndroidRunnerBuilder(AndroidRunnerParams runnerParams) {
-        super(runnerParams);
+        super(runnerParams, false /* CTSv1 filtered out Test suite() classes. */);
         mAndroidAnnotatedBuilder = new ExtendedAndroidAnnotatedBuilder(this, runnerParams);
     }
 

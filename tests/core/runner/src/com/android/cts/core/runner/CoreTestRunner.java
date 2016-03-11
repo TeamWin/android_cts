@@ -18,17 +18,20 @@ package com.android.cts.core.runner;
 
 import android.app.Activity;
 import android.app.Instrumentation;
-import com.android.cts.core.runner.support.ExtendedAndroidRunnerBuilder;
 import android.os.Bundle;
 import android.os.Debug;
+import android.support.test.internal.runner.listener.InstrumentationRunListener;
 import android.support.test.internal.util.AndroidRunnerParams;
 import android.util.Log;
+import com.android.cts.core.runner.support.ExtendedAndroidRunnerBuilder;
 import com.google.common.base.Splitter;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
@@ -40,6 +43,7 @@ import org.junit.runner.Runner;
 import org.junit.runner.manipulation.Filter;
 import org.junit.runner.manipulation.Filterable;
 import org.junit.runner.manipulation.NoTestsRemainException;
+import org.junit.runner.notification.RunListener;
 import org.junit.runners.model.InitializationError;
 import org.junit.runners.model.RunnerBuilder;
 import vogar.ExpectationStore;
@@ -64,6 +68,8 @@ public class CoreTestRunner extends Instrumentation {
 
     private static final String ARGUMENT_EXPECTATIONS = "core-expectations";
 
+    private static final String ARGUMENT_CORE_LISTENER = "core-listener";
+
     private static final Splitter CLASS_LIST_SPLITTER = Splitter.on(',').trimResults();
 
     /** The args for the runner. */
@@ -85,6 +91,11 @@ public class CoreTestRunner extends Instrumentation {
      * The list of tests to run.
      */
     private TestList testList;
+
+    /**
+     * The list of {@link RunListener} classes to create.
+     */
+    private List<Class<? extends RunListener>> listenerClasses;
 
     @Override
     public void onCreate(final Bundle args) {
@@ -139,14 +150,29 @@ public class CoreTestRunner extends Instrumentation {
         if (testNameList == null) {
             String rootClasses = args.getString(ARGUMENT_ROOT_CLASSES);
             if (rootClasses == null) {
-                throw new IllegalStateException(
-                        "No tests specified, neither exclusive list or root class");
+                // Find all test classes
+                testList = getAllTestClasses();
             } else {
                 List<String> roots = CLASS_LIST_SPLITTER.splitToList(rootClasses);
                 testList = TestList.rootList(roots);
             }
         } else {
             testList = TestList.exclusiveList(testNameList);
+        }
+
+        listenerClasses = new ArrayList<>();
+        String listenerArg = args.getString(ARGUMENT_CORE_LISTENER);
+        if (listenerArg != null) {
+            List<String> listenerClassNames = CLASS_LIST_SPLITTER.splitToList(listenerArg);
+            for (String listenerClassName : listenerClassNames) {
+                try {
+                    Class<? extends RunListener> listenerClass = Class.forName(listenerClassName)
+                            .asSubclass(RunListener.class);
+                    listenerClasses.add(listenerClass);
+                } catch (ClassNotFoundException e) {
+                    Log.e(TAG, "Could not load listener class: " + listenerClassName, e);
+                }
+            }
         }
 
         start();
@@ -197,6 +223,19 @@ public class CoreTestRunner extends Instrumentation {
         StatusUpdaterRunListener statusUpdaterRunListener =
                 new StatusUpdaterRunListener(this, runnerParams, totalTestCount);
         core.addListener(statusUpdaterRunListener);
+
+        for (Class<? extends RunListener> listenerClass : listenerClasses) {
+            try {
+                RunListener runListener = listenerClass.newInstance();
+                if (runListener instanceof InstrumentationRunListener) {
+                    ((InstrumentationRunListener) runListener).setInstrumentation(this);
+                }
+                core.addListener(runListener);
+            } catch (InstantiationException | IllegalAccessException e) {
+                Log.e(TAG, "Could not create instance of listener: " + listenerClass, e);
+            }
+        }
+
         core.run(request);
 
         Bundle results;
@@ -230,4 +269,13 @@ public class CoreTestRunner extends Instrumentation {
             throw err;
         }
     }
+
+    private TestList getAllTestClasses() {
+        Collection<Class<?>> classes = TestClassFinder.getClasses(
+                Collections.singletonList(getContext().getPackageCodePath()),
+                getClass().getClassLoader());
+
+        return TestList.classList(classes);
+    }
+
 }
