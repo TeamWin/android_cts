@@ -62,6 +62,7 @@ public class ClearKeySystemTest extends MediaPlayerTestBase {
 
     private static final byte[] CLEAR_KEY_WEBM = "_CLEAR_KEY_WEBM_".getBytes();
 
+    private static final int CONNECTION_RETRIES = 10;
     private static final int SLEEP_TIME_MS = 1000;
     private static final int VIDEO_WIDTH_CENC = 1280;
     private static final int VIDEO_HEIGHT_CENC = 720;
@@ -342,6 +343,25 @@ public class ClearKeySystemTest extends MediaPlayerTestBase {
                     videoWidth + "x" + videoHeight + " resolution for " + videoMime);
             return;
         }
+
+        IConnectionStatus wifiStatus = new WifiStatus(mContext);
+        if (!wifiStatus.isEnabled()) {
+            throw new Error("Wifi is not enabled, please enable Wifi to run tests.");
+        }
+        // If Wifi is not connected, recheck the status a few times.
+        int retries = 0;
+        while (!wifiStatus.isConnected()) {
+            if (retries++ >= CONNECTION_RETRIES) {
+                wifiStatus.printConnectionInfo();
+                throw new Error("Wifi is not connected, reason: " +
+                        wifiStatus.getNotConnectedReason());
+            }
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException e) {
+            }
+        }
+        wifiStatus.testConnection(videoUrl);
 
         mSessionId = openSession(drm);
         mMediaCodecPlayer = new MediaCodecClearKeyPlayer(
