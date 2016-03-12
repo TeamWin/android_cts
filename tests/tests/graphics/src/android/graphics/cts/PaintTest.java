@@ -28,6 +28,7 @@ import android.graphics.Paint.Style;
 import android.graphics.Path;
 import android.graphics.PathEffect;
 import android.graphics.Rasterizer;
+import android.graphics.Rect;
 import android.graphics.Shader;
 import android.graphics.Bitmap;
 import android.graphics.BitmapShader;
@@ -850,6 +851,57 @@ public class PaintTest extends AndroidTestCase {
         // set value must greater or equal to 0, set -10.0f has no effect
         p.setStrokeWidth(-10.0f);
         assertEquals(10.0f, p.getStrokeWidth());
+    }
+
+    public void testSetFontFeatureSettings() {
+        Paint p = new Paint();
+        // Roboto font (system default) has "fi" ligature
+        String text = "fi";
+        float[] widths = new float[text.length()];
+        p.getTextWidths(text, widths);
+        assertTrue(widths[0] > 0.0f);
+        assertEquals(0.0f, widths[1]);
+
+        // Disable ligature using OpenType feature
+        p.setFontFeatureSettings("'liga' off");
+        p.getTextWidths(text, widths);
+        assertTrue(widths[0] > 0.0f);
+        assertTrue(widths[1] > 0.0f);
+
+        // Re-enable ligature
+        p.setFontFeatureSettings("'liga' on");
+        p.getTextWidths(text, widths);
+        assertTrue(widths[0] > 0.0f);
+        assertEquals(0.0f, widths[1]);
+    }
+
+    public void testGetTextBounds() {
+        Paint p = new Paint();
+        p.setTextSize(10);
+        String text1 = "hello";
+        Rect bounds1 = new Rect();
+        Rect bounds2 = new Rect();
+        p.getTextBounds(text1, 0, text1.length(), bounds1);
+        char[] textChars1 = text1.toCharArray();
+        p.getTextBounds(textChars1, 0, textChars1.length, bounds2);
+        // verify that string and char array methods produce consistent results
+        assertEquals(bounds1, bounds2);
+        String text2 = "hello world";
+
+        // verify substring produces consistent results
+        p.getTextBounds(text2, 0, text1.length(), bounds2);
+        assertEquals(bounds1, bounds2);
+
+        // longer string is expected to have same left edge but be wider
+        p.getTextBounds(text2, 0, text2.length(), bounds2);
+        assertEquals(bounds1.left, bounds2.left);
+        assertTrue(bounds2.right > bounds1.right);
+
+        // bigger size implies bigger bounding rect
+        p.setTextSize(20);
+        p.getTextBounds(text1, 0, text1.length(), bounds2);
+        assertTrue(bounds2.right > bounds1.right);
+        assertTrue(bounds2.bottom - bounds2.top > bounds1.bottom - bounds1.top);
     }
 
     public void testReset() {
