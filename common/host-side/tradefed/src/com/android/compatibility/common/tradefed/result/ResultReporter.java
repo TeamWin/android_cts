@@ -127,7 +127,7 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
         long time = System.currentTimeMillis();
         String dirSuffix = getDirSuffix(time);
         if (mRetrySessionId != null) {
-            Log.d(mDeviceSerial, String.format("Retrying session %d", mRetrySessionId));
+            CLog.d("[%s] Retrying session %d", mDeviceSerial, mRetrySessionId);
             List<IInvocationResult> results = null;
             try {
                 results = ResultHandler.getResults(mBuildHelper.getResultsDir());
@@ -327,6 +327,7 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
             File resultFile = ResultHandler.writeResults(mBuildHelper.getSuiteName(),
                     mBuildHelper.getSuiteVersion(), mBuildHelper.getSuitePlan(), mResult,
                     mResultDir, mStartTime, elapsedTime + mStartTime, mReferenceUrl);
+            logResult("Result saved at: %s", resultFile.getCanonicalPath());
             copyDynamicConfigFiles(mBuildHelper.getDynamicConfigFiles(), mResultDir);
             copyFormattingFiles(mResultDir);
             zipResults(mResultDir);
@@ -336,8 +337,8 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
                     fis = new FileInputStream(resultFile);
                     mLogSaver.saveLogData("log-result", LogDataType.XML, fis);
                 } catch (IOException ioe) {
-                    Log.e(mDeviceSerial, "error saving XML with log saver");
-                    Log.e(mDeviceSerial, ioe);
+                    CLog.e("[%s] error saving XML with log saver", mDeviceSerial);
+                    CLog.e(ioe);
                 } finally {
                     StreamUtil.close(fis);
                 }
@@ -347,10 +348,12 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
                     logResult("Result Server Response: %d",
                             mUploader.uploadResult(resultFile, mReferenceUrl));
                 } catch (IOException ioe) {
-                    Log.e(mDeviceSerial, ioe);
+                    CLog.e("[%s] IOException while uploading result.", mDeviceSerial);
+                    CLog.e(ioe);
                 }
             }
         } catch (IOException | XmlPullParserException e) {
+            CLog.e("[%s] Exception while saving result XML.", mDeviceSerial);
             CLog.e(e);
         }
     }
@@ -477,10 +480,11 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
     }
 
     private void logResult(String format, Object... args) {
+        format = String.format("[%s] %s", mDeviceSerial, format);
         if (mQuietOutput) {
             CLog.i(format, args);
         } else {
-            Log.logAndDisplay(LogLevel.INFO, mDeviceSerial, String.format(format, args));
+            CLog.logAndDisplay(LogLevel.INFO, format, args);
         }
     }
 }
