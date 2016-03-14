@@ -535,17 +535,6 @@ public class BaseKeyListenerTest extends KeyListenerTestCase {
         listener.forwardDelete(mTextView, content, KeyEvent.KEYCODE_FORWARD_DEL, delKeyEvent);
     }
 
-    private KeyEvent getKey(int keycode, int metaState) {
-        long currentTime = System.currentTimeMillis();
-        return new KeyEvent(
-                currentTime,
-                currentTime,
-                KeyEvent.ACTION_DOWN,
-                keycode,
-                0 /* repeat */,
-                metaState);
-    }
-
     /**
      * Prepares mTextView state for tests by synchronously setting the content and key listener, on
      * the UI thread.
