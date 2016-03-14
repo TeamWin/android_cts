@@ -51,7 +51,6 @@ public class GnssMeasurementTest extends AndroidTestCase {
         measurement.setState(14);
         measurement.setSvid(15);
         measurement.setTimeOffsetNanos(16.0);
-        measurement.setPseudorangeRateCorrected(true);
     }
 
     private static void verifyTestValues(GnssMeasurement measurement) {
@@ -74,7 +73,6 @@ public class GnssMeasurementTest extends AndroidTestCase {
         assertEquals(14, measurement.getState());
         assertEquals(15, measurement.getSvid());
         assertEquals(16.0, measurement.getTimeOffsetNanos());
-        assertTrue(measurement.isPseudorangeRateCorrected());
     }
 
     public void testWriteToParcel() {
@@ -93,11 +91,6 @@ public class GnssMeasurementTest extends AndroidTestCase {
         GnssMeasurement newMeasurement = new GnssMeasurement();
         newMeasurement.set(measurement);
         verifyTestValues(newMeasurement);
-    }
-
-    public void testPseudorangeRateCorrected() {
-        GnssMeasurement measurement = new GnssMeasurement();
-        measurement.isPseudorangeRateCorrected();
     }
 
     public void testSetReset() {
