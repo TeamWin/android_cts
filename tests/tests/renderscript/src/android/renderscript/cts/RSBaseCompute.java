@@ -129,7 +129,7 @@ public class RSBaseCompute extends RSBase {
             alloc.copy1DRangeFrom(0, INPUTSIZE, inArray);
         } else if (dataType == Element.DataType.FLOAT_16) {
             short[] inArray = new short[INPUTSIZE * width];
-            short min = 1024; // 0x0400 in hex, 2^-14, i.e. float16 MIN_NORMAL
+            short min = RSUtils.FLOAT16_MIN_NORMAL;
             short max = 19456; // 0x4c00 in hex, 16.0 in float16
             RSUtils.genRandomFloat16s(seed, min, max, inArray, includeExtremes);
             alloc.copyFrom(inArray);

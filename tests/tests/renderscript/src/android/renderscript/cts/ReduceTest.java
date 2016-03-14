@@ -31,13 +31,45 @@ public class ReduceTest extends RSBaseCompute {
         mScript = new ScriptC_reduce(mRS);
         mScript.set_negInf(Float.NEGATIVE_INFINITY);
         mScript.set_posInf(Float.POSITIVE_INFINITY);
+        mScript.invoke_setInfsHalf(RSUtils.FLOAT16_NEGATIVE_INFINITY, RSUtils.FLOAT16_POSITIVE_INFINITY);
     }
 
     ///////////////////////////////////////////////////////////////////
 
-    private void assertEquals(Int2 javaRslt, Int2 rsRslt) {
-        assertEquals("x", javaRslt.x, rsRslt.x);
-        assertEquals("y", javaRslt.y, rsRslt.y);
+    private void assertEquals(final float[] javaRslt, final float[] rsRslt) {
+        assertEquals("length", javaRslt.length, rsRslt.length);
+        for (int i = 0; i < javaRslt.length; ++i)
+            assertEquals(String.valueOf(i), javaRslt[i], rsRslt[i]);
+    }
+
+    private void assertEquals(final short[] javaRslt, final short[] rsRslt) {
+        assertEquals("length", javaRslt.length, rsRslt.length);
+        for (int i = 0; i < javaRslt.length; ++i)
+            assertEquals(String.valueOf(i), javaRslt[i], rsRslt[i]);
+    }
+
+    private void assertEquals(final Short2[] javaRslt, final Short2[] rsRslt) {
+        assertEquals("length", javaRslt.length, rsRslt.length);
+        for (int i = 0; i < javaRslt.length; ++i)
+            assertEquals(String.valueOf(i), javaRslt[i], rsRslt[i]);
+    }
+
+    private void assertEquals(final String msg, final Int2 javaRslt, final Int2 rsRslt) {
+        assertEquals(msg + "(x)", javaRslt.x, rsRslt.x);
+        assertEquals(msg + "(y)", javaRslt.y, rsRslt.y);
+    }
+
+    private void assertEquals(final Int2 javaRslt, final Int2 rsRslt) {
+        assertEquals("", javaRslt, rsRslt);
+    }
+
+    private void assertEquals(final String msg, final Short2 javaRslt, final Short2 rsRslt) {
+        assertEquals(msg + "(x)", javaRslt.x, rsRslt.x);
+        assertEquals(msg + "(y)", javaRslt.y, rsRslt.y);
+    }
+
+    private void assertEquals(final Short2 javaRslt, final Short2 rsRslt) {
+        assertEquals("", javaRslt, rsRslt);
     }
 
     // Create a zero-initialized Allocation.
@@ -91,6 +123,12 @@ public class ReduceTest extends RSBaseCompute {
         return array;
     }
 
+    private static short[] createInputArrayHalf(int len, int seed) {
+        short[] array = new short[len];
+        RSUtils.genRandomFloat16s(seed, RSUtils.FLOAT16_MIN_NORMAL, RSUtils.FLOAT16_MAX_VALUE, array, false);
+        return array;
+    }
+
     private static float[] createInputArrayFloat(int len, int seed) {
         Random rand = new Random(seed);
         float[] array = new float[len];
@@ -117,7 +155,7 @@ public class ReduceTest extends RSBaseCompute {
 
     ///////////////////////////////////////////////////////////////////
 
-    private int addint(int[] input) {
+    private int addint(final int[] input) {
         int rslt = 0;
         for (int idx = 0; idx < input.length; ++idx)
             rslt += input[idx];
@@ -150,7 +188,7 @@ public class ReduceTest extends RSBaseCompute {
 
     ///////////////////////////////////////////////////////////////////
 
-    private Int2 findMinAndMax(float[] input) {
+    private Int2 findMinAndMax(final float[] input) {
         float minVal = Float.POSITIVE_INFINITY;
         int minIdx = -1;
         float maxVal = Float.NEGATIVE_INFINITY;
@@ -175,6 +213,129 @@ public class ReduceTest extends RSBaseCompute {
 
         final Int2 javaRslt = findMinAndMax(input);
         final Int2 rsRslt = mScript.reduce_findMinAndMax(input).get();
+
+        assertEquals(javaRslt, rsRslt);
+    }
+
+    ///////////////////////////////////////////////////////////////////
+
+    private Short2 findMinAndMaxHalf(final short[] inputArray) {
+        Allocation inputAllocation = Allocation.createSized(mRS, Element.F16(mRS), inputArray.length);
+        inputAllocation.copyFrom(inputArray);
+
+        Allocation outputAllocation = Allocation.createSized(mRS, Element.F16_2(mRS), 1);
+
+        mScript.invoke_findMinAndMaxHalf(outputAllocation, inputAllocation);
+
+        short[] outputArray = new short[2];
+        outputAllocation.copyTo(outputArray);
+        return new Short2(outputArray[0], outputArray[1]);
+    }
+
+    private short[] findMinAndMaxHalfIntoArray(final short[] inputArray) {
+        final Short2 vectorResult = findMinAndMaxHalf(inputArray);
+        final short[] arrayResult = new short[] { vectorResult.x, vectorResult.y };
+        return arrayResult;
+    }
+
+    public void testFindMinAndMaxHalf() {
+        // fewer members in the array than there are distinct half values
+        final short[] input = createInputArrayHalf(1000, 23);
+
+        // test Short2 result
+        final Short2 javaRslt = findMinAndMaxHalf(input);
+        final Short2 rsRslt = mScript.reduce_findMinAndMaxHalf(input).get();
+        assertEquals(javaRslt, rsRslt);
+
+        // test short[2] result
+        final short[] javaRsltIntoArray = findMinAndMaxHalfIntoArray(input);
+        final short[] rsRsltIntoArray = mScript.reduce_findMinAndMaxHalfIntoArray(input).get();
+        assertEquals(javaRsltIntoArray, rsRsltIntoArray);
+    }
+
+    ///////////////////////////////////////////////////////////////////
+
+    // The input is a flattened representation of an array of 2-vector
+    private Short2[] findMinAndMaxHalf2(final short[] inputArray) {
+        assertEquals(inputArray.length % 2, 0);
+
+        Allocation inputAllocation = Allocation.createSized(mRS, Element.F16_2(mRS), inputArray.length / 2);
+        inputAllocation.copyFrom(inputArray);
+
+        Allocation outputAllocation = Allocation.createSized(mRS, Element.F16_2(mRS), 2);
+
+        mScript.invoke_findMinAndMaxHalf2(outputAllocation, inputAllocation);
+
+        short[] outputArray = new short[4];
+        outputAllocation.copyTo(outputArray);
+        return new Short2[] { new Short2(outputArray[0], outputArray[1]),
+                              new Short2(outputArray[2], outputArray[3]) };
+    }
+
+    public void testFindMinAndMaxHalf2() {
+        // fewer members in the array than there are distinct half values
+        final short[] input = createInputArrayHalf(1000, 25);
+
+        final Short2[] javaRslt = findMinAndMaxHalf2(input);
+        final Short2[] rsRslt = mScript.reduce_findMinAndMaxHalf2(input).get();
+
+        assertEquals(javaRslt, rsRslt);
+    }
+
+    ///////////////////////////////////////////////////////////////////
+
+    // Both the input and the result are linearized representations of 2x2 matrices.
+    private float[] findMinMat(final float[] inputArray) {
+        float[] result = new float[4];
+        for (int i = 0; i < 4; ++i)
+            result[i] = Float.POSITIVE_INFINITY;
+
+        for (int i = 0; i < inputArray.length; ++i)
+            result[i % 4] = Math.min(result[i % 4], inputArray[i]);
+
+        return result;
+    }
+
+    public void testFindMinMat() {
+        final int length = 100000;
+
+        final float[] inputArray = createInputArrayFloat(4 * length, 24);
+        Allocation inputAllocation = Allocation.createSized(mRS, Element.MATRIX_2X2(mRS), length);
+        inputAllocation.copyFromUnchecked(inputArray);
+
+        final float[] javaRslt = findMinMat(inputArray);
+        final float[] rsRslt = mScript.reduce_findMinMat(inputAllocation).get();
+
+        assertEquals(javaRslt, rsRslt);
+    }
+
+    ///////////////////////////////////////////////////////////////////
+
+    // Both the input and the result are linearized representations of 2x2 matrices.
+    private float[] findMinAndMaxMat(final float[] inputArray) {
+        float[] result = new float[8];
+        for (int i = 0; i < 4; ++i) {
+            result[i+0] = Float.POSITIVE_INFINITY;
+            result[i+4] = Float.NEGATIVE_INFINITY;
+        }
+
+        for (int i = 0; i < inputArray.length; ++i) {
+            result[0 + i % 4] = Math.min(result[0 + i % 4], inputArray[i]);
+            result[4 + i % 4] = Math.max(result[4 + i % 4], inputArray[i]);
+        }
+
+        return result;
+    }
+
+    public void testFindMinAndMaxMat() {
+        final int length = 100000;
+
+        final float[] inputArray = createInputArrayFloat(4 * length, 26);
+        Allocation inputAllocation = Allocation.createSized(mRS, Element.MATRIX_2X2(mRS), length);
+        inputAllocation.copyFromUnchecked(inputArray);
+
+        final float[] javaRslt = findMinAndMaxMat(inputArray);
+        final float[] rsRslt = mScript.reduce_findMinAndMaxMat(inputAllocation).get();
 
         assertEquals(javaRslt, rsRslt);
     }
