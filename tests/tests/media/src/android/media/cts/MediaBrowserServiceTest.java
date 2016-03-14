@@ -47,7 +47,7 @@ public class MediaBrowserServiceTest extends InstrumentationTestCase {
         }
     };
 
-    private final MediaBrowser.SubscriptionCallback mSubscriptionCallback  =
+    private final MediaBrowser.SubscriptionCallback mSubscriptionCallback =
             new MediaBrowser.SubscriptionCallback() {
             @Override
             public void onChildrenLoaded(String parentId, List<MediaItem> children) {
@@ -56,10 +56,18 @@ public class MediaBrowserServiceTest extends InstrumentationTestCase {
                     mWaitLock.notify();
                 }
             }
+
+            @Override
+            public void onChildrenLoaded(String parentId, List<MediaItem> children,
+                    Bundle options) {
+                synchronized (mWaitLock) {
+                    mOnChildrenLoadedWithOptions = true;
+                    mWaitLock.notify();
+                }
+            }
         };
 
-    private final MediaBrowser.ItemCallback mItemCallback  =
-            new MediaBrowser.ItemCallback() {
+    private final MediaBrowser.ItemCallback mItemCallback = new MediaBrowser.ItemCallback() {
         @Override
         public void onItemLoaded(MediaItem item) {
             synchronized (mWaitLock) {
@@ -72,6 +80,7 @@ public class MediaBrowserServiceTest extends InstrumentationTestCase {
     private MediaBrowser mMediaBrowser;
     private StubMediaBrowserService mMediaBrowserService;
     private boolean mOnChildrenLoaded;
+    private boolean mOnChildrenLoadedWithOptions;
     private boolean mOnItemLoaded;
 
     @Override
@@ -105,6 +114,26 @@ public class MediaBrowserServiceTest extends InstrumentationTestCase {
             mMediaBrowserService.notifyChildrenChanged(StubMediaBrowserService.MEDIA_ID_ROOT);
             mWaitLock.wait(TIME_OUT_MS);
             assertTrue(mOnChildrenLoaded);
+        }
+    }
+
+    public void testNotifyChildrenChangedWithPagination() throws Exception {
+        synchronized (mWaitLock) {
+            final int pageSize = 5;
+            final int page = 2;
+            Bundle options = new Bundle();
+            options.putInt(MediaBrowser.EXTRA_PAGE_SIZE, pageSize);
+            options.putInt(MediaBrowser.EXTRA_PAGE, page);
+
+            mMediaBrowser.subscribe(StubMediaBrowserService.MEDIA_ID_ROOT, options,
+                    mSubscriptionCallback);
+            mWaitLock.wait(TIME_OUT_MS);
+            assertTrue(mOnChildrenLoadedWithOptions);
+
+            mOnChildrenLoadedWithOptions = false;
+            mMediaBrowserService.notifyChildrenChanged(StubMediaBrowserService.MEDIA_ID_ROOT);
+            mWaitLock.wait(TIME_OUT_MS);
+            assertTrue(mOnChildrenLoadedWithOptions);
         }
     }
 
