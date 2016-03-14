@@ -25,7 +25,6 @@ import android.content.pm.ResolveInfo;
 import android.content.pm.ServiceInfo;
 import android.content.res.Resources;
 import android.os.Parcel;
-import android.os.storage.StorageManager;
 import android.test.AndroidTestCase;
 import android.util.Printer;
 import android.view.inputmethod.InputMethod;
@@ -241,10 +240,6 @@ public class InputMethodInfoTest extends AndroidTestCase {
     public void testAtLeastOneEncryptionAwareInputMethodIsAvailable() {
         if (!getContext().getPackageManager().hasSystemFeature(
                 PackageManager.FEATURE_INPUT_METHODS)) {
-            return;
-        }
-
-        if (!StorageManager.isFileEncryptedNativeOrEmulated()) {
             return;
         }
 
