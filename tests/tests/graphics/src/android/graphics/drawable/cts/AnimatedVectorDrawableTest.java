@@ -23,6 +23,7 @@ import android.graphics.Color;
 import android.graphics.PixelFormat;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffColorFilter;
+import android.graphics.cts.R;
 import android.graphics.drawable.Animatable2;
 import android.graphics.drawable.AnimatedVectorDrawable;
 import android.graphics.drawable.Drawable;
@@ -33,8 +34,7 @@ import android.test.suitebuilder.annotation.SmallTest;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.util.Xml;
-
-import android.graphics.cts.R;
+import android.widget.ImageView;
 
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
@@ -42,6 +42,8 @@ import org.xmlpull.v1.XmlPullParserException;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+
+import static java.lang.Thread.sleep;
 
 public class AnimatedVectorDrawableTest extends ActivityInstrumentationTestCase2<DrawableStubActivity> {
     private static final String LOGTAG = AnimatedVectorDrawableTest.class.getSimpleName();
@@ -55,7 +57,10 @@ public class AnimatedVectorDrawableTest extends ActivityInstrumentationTestCase2
     private Bitmap mBitmap;
     private Canvas mCanvas;
     private static final boolean DBG_DUMP_PNG = false;
-    private int mResId = R.drawable.animation_vector_drawable_grouping_1;
+    private final int mResId = R.drawable.animation_vector_drawable_grouping_1;
+    private final int mLayoutId = R.layout.animated_vector_drawable_source;
+    private final int mImageViewId = R.id.avd_view;
+
 
     public AnimatedVectorDrawableTest() {
         super(DrawableStubActivity.class);
@@ -250,36 +255,37 @@ public class AnimatedVectorDrawableTest extends ActivityInstrumentationTestCase2
     }
 
     @MediumTest
-    public void testAddCallback()  {
-        MyCallback callback = new MyCallback();
-        final AnimatedVectorDrawable d1 = (AnimatedVectorDrawable) mResources.getDrawable(mResId);
-
-        d1.registerAnimationCallback(callback);
+    public void testAddCallback() throws InterruptedException {
+        final MyCallback callback = new MyCallback();
         // The AVD has a duration as 100ms.
         mActivity.runOnUiThread(new Runnable() {
             @Override
             public void run() {
+                mActivity.setContentView(mLayoutId);
+                ImageView imageView = (ImageView) mActivity.findViewById(mImageViewId);
+                AnimatedVectorDrawable d1 = (AnimatedVectorDrawable) imageView.getDrawable();
+                d1.registerAnimationCallback(callback);
                 d1.start();
             }
         });
-
         getInstrumentation().waitForIdleSync();
-
+        sleep(200);
         assertTrue(callback.mStart);
         assertTrue(callback.mEnd);
     }
 
     @MediumTest
     public void testRemoveCallback() {
-        MyCallback callback = new MyCallback();
-        final AnimatedVectorDrawable d1 = (AnimatedVectorDrawable) mResources.getDrawable(mResId);
-
-        d1.registerAnimationCallback(callback);
-        assertTrue(d1.unregisterAnimationCallback(callback));
+        final MyCallback callback = new MyCallback();
         // The AVD has a duration as 100ms.
         mActivity.runOnUiThread(new Runnable() {
             @Override
             public void run() {
+                mActivity.setContentView(mLayoutId);
+                ImageView imageView = (ImageView) mActivity.findViewById(mImageViewId);
+                AnimatedVectorDrawable d1 = (AnimatedVectorDrawable) imageView.getDrawable();
+                d1.registerAnimationCallback(callback);
+                assertTrue(d1.unregisterAnimationCallback(callback));
                 d1.start();
             }
         });
@@ -291,15 +297,17 @@ public class AnimatedVectorDrawableTest extends ActivityInstrumentationTestCase2
 
     @MediumTest
     public void testClearCallback() {
-        MyCallback callback = new MyCallback();
-        final AnimatedVectorDrawable d1 = (AnimatedVectorDrawable) mResources.getDrawable(mResId);
+        final MyCallback callback = new MyCallback();
 
-        d1.registerAnimationCallback(callback);
-        d1.clearAnimationCallbacks();
         // The AVD has a duration as 100ms.
         mActivity.runOnUiThread(new Runnable() {
             @Override
             public void run() {
+                mActivity.setContentView(mLayoutId);
+                ImageView imageView = (ImageView) mActivity.findViewById(mImageViewId);
+                AnimatedVectorDrawable d1 = (AnimatedVectorDrawable) imageView.getDrawable();
+                d1.registerAnimationCallback(callback);
+                d1.clearAnimationCallbacks();
                 d1.start();
             }
         });
