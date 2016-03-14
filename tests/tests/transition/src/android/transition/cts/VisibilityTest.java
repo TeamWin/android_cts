@@ -15,15 +15,9 @@
  */
 package android.transition.cts;
 
-import android.animation.Animator;
-import android.animation.AnimatorListenerAdapter;
 import android.transition.TransitionValues;
 import android.transition.Visibility;
 import android.view.View;
-import android.view.ViewGroup;
-
-import java.util.HashMap;
-import java.util.concurrent.CountDownLatch;
 
 public class VisibilityTest extends BaseTransitionTest {
     Visibility mVisibilityTransition;
@@ -41,20 +35,31 @@ public class VisibilityTest extends BaseTransitionTest {
         assertEquals(Visibility.MODE_IN | Visibility.MODE_OUT, mVisibilityTransition.getMode());
 
         // Should animate in and out
+        enterScene(R.layout.scene4);
+        startTransition(R.layout.scene1);
+        assertEquals(1, mListener.endLatch.getCount());
+        waitForEnd(400);
+
+        resetListener();
         startTransition(R.layout.scene4);
         assertEquals(1, mListener.endLatch.getCount());
-        endTransition();
-        waitForEnd(100);
+        waitForEnd(400);
 
+        // Now only animate in
         resetListener();
         mVisibilityTransition.setMode(Visibility.MODE_IN);
         startTransition(R.layout.scene1);
         assertEquals(1, mListener.endLatch.getCount());
-        endTransition();
-        waitForEnd(100);
+        waitForEnd(400);
 
+        // No animation since it should only animate in
         resetListener();
-        mVisibilityTransition.setMode(Visibility.MODE_OUT); // now it shouldn't do any animation
+        startTransition(R.layout.scene4);
+        waitForEnd(0);
+
+        // Now animate out, but no animation should happen since we're animating in.
+        resetListener();
+        mVisibilityTransition.setMode(Visibility.MODE_OUT);
         startTransition(R.layout.scene1);
         waitForEnd(0);
 
@@ -62,20 +67,7 @@ public class VisibilityTest extends BaseTransitionTest {
         resetListener();
         startTransition(R.layout.scene4);
         assertEquals(1, mListener.endLatch.getCount());
-        endTransition();
-        waitForEnd(100);
-
-        // switch the mode to only animate in
-        resetListener();
-        mVisibilityTransition.setMode(Visibility.MODE_IN);
-        startTransition(R.layout.scene1);
-        assertEquals(1, mListener.endLatch.getCount());
-        endTransition();
-        waitForEnd(100);
-
-        // but it shouldn't animate out
-        startTransition(R.layout.scene1);
-        waitForEnd(0);
+        waitForEnd(400);
     }
 
     public void testIsVisible() throws Throwable {
