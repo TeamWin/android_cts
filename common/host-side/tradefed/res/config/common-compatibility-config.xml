@@ -17,6 +17,8 @@
     <device_recovery class="com.android.tradefed.device.WaitDeviceRecovery" />
     <build_provider class="com.android.compatibility.common.tradefed.build.CompatibilityBuildProvider" />
     <test class="com.android.compatibility.common.tradefed.testtype.CompatibilityTest" />
-    <logger class="com.android.tradefed.log.FileLogger" />
+    <logger class="com.android.tradefed.log.FileLogger">
+        <option name="log-level-display" value="WARN" />
+    </logger>
     <result_reporter class="com.android.compatibility.common.tradefed.result.ResultReporter" />
 </configuration>
