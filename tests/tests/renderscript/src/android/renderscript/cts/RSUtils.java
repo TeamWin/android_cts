@@ -26,6 +26,11 @@ import java.util.Random;
  * This class supplies some utils for renderscript tests
  */
 public class RSUtils {
+    public static final short FLOAT16_POSITIVE_INFINITY = (short) 0x7c00;
+    public static final short FLOAT16_NEGATIVE_INFINITY = (short) 0xfc00;
+    public static final short FLOAT16_MIN_NORMAL        = (short) 0x0400;  // 0.00006103516
+    public static final short FLOAT16_MAX_VALUE         = (short) 0x7bff;  // 65504
+
     private static final double[] sInterestingDoubles = {
         0.0,
         1.0,
@@ -182,10 +187,10 @@ public class RSUtils {
         }
         if (includeExtremes) {
             array[r.nextInt(array.length)] = (short) 0x7c01; // NaN
-            array[r.nextInt(array.length)] = (short) 0x7c00; // POSITIVE_INFINITY
-            array[r.nextInt(array.length)] = (short) 0xfc00; // NEGATIVE_INFINITY
-            array[r.nextInt(array.length)] = (short) 0x0400; // MIN_NORMAL, 0.00006103516
-            array[r.nextInt(array.length)] = (short) 0x7bff; // MAX_VALUE, 65504
+            array[r.nextInt(array.length)] = FLOAT16_POSITIVE_INFINITY;
+            array[r.nextInt(array.length)] = FLOAT16_NEGATIVE_INFINITY;
+            array[r.nextInt(array.length)] = FLOAT16_MIN_NORMAL;
+            array[r.nextInt(array.length)] = FLOAT16_MAX_VALUE;
             array[r.nextInt(array.length)] = (short) 0x8400; // -MIN_NORMAL, -0.00006103516
             array[r.nextInt(array.length)] = (short) 0xfbff; // -MAX_VALUE, -65504
         }
