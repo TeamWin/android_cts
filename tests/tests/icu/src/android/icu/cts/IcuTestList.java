@@ -15,7 +15,6 @@
  */
 package android.icu.cts;
 
-import android.icu.cts.junit.TestFmwkUtils;
 import android.util.Log;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
@@ -34,49 +33,59 @@ class IcuTestList {
     @Nullable
     private final Set<String> testsToRun;
 
-    private final List<Class> classesToRun;
+    private final List<Class<?>> classesToRun;
 
-    /**
-     * @param testNameList
-     *         The list of test names (i.e. {@code <class>#<method>}). If null then all
-     *         tests should be run.
-     */
-    public IcuTestList(@Nullable List<String> testNameList) {
+    public static IcuTestList exclusiveList(List<String> testNameList) {
+        Set<String> classNamesToRun = new LinkedHashSet<>();
+        Set<String> testsToRun = new LinkedHashSet<>(testNameList);
 
-        // Populate a set with the unique class names of all the tests.
-        Set<String> classNamesToRun;
-        if (testNameList == null) {
-            // Run from the root test class.
-            classNamesToRun = TestFmwkUtils.getRootClassNames();
-            Log.d(IcuTestRunner.TAG, "Running all tests rooted at " + classNamesToRun);
-            testsToRun = null;
-        } else {
-            classNamesToRun = new LinkedHashSet<>();
-            testsToRun = new LinkedHashSet<>(testNameList);
-
-            for (String testName : testNameList) {
-                int index = testName.indexOf('#');
-                String className;
-                if (index == -1) {
-                    className = testName;
-                } else {
-                    className = testName.substring(0, index);
-                }
-                classNamesToRun.add(className);
+        for (String testName : testNameList) {
+            int index = testName.indexOf('#');
+            String className;
+            if (index == -1) {
+                className = testName;
+            } else {
+                className = testName.substring(0, index);
             }
-
-            Log.d(IcuTestRunner.TAG, "Running only the following tests: " + testsToRun);
+            classNamesToRun.add(className);
         }
 
+        Log.d(IcuTestRunner.TAG, "Running only the following tests: " + testsToRun);
+        return new IcuTestList(getClasses(classNamesToRun), testsToRun);
+    }
+
+    public static IcuTestList rootList(List<String> rootList) {
+
+        // Run from the root test class.
+        Set<String> classNamesToRun = new LinkedHashSet<>(rootList);
+        Log.d(IcuTestRunner.TAG, "Running all tests rooted at " + classNamesToRun);
+
+        List<Class<?>> classesToRun1 = getClasses(classNamesToRun);
+
+        return new IcuTestList(classesToRun1, null);
+    }
+
+    private static List<Class<?>> getClasses(Set<String> classNames) {
         // Populate the list of classes to run.
-        classesToRun = new ArrayList<>();
-        for (String className : classNamesToRun) {
+        List<Class<?>> classesToRun = new ArrayList<>();
+        for (String className : classNames) {
             try {
                 classesToRun.add(Class.forName(className));
             } catch (ClassNotFoundException e) {
                 throw new IllegalStateException("Could not load class '" + className, e);
             }
         }
+        return classesToRun;
+    }
+
+    /**
+     * @param classes The list of classes to run.
+     * @param testsToRun The exclusive set of tests to run or null if all tests reachable from the
+     * classes are to be run.
+     */
+    private IcuTestList(List<Class<?>> classes, Set<String> testsToRun) {
+        this.testsToRun = testsToRun;
+        this.classesToRun = classes;
     }
 
     /**

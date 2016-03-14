@@ -18,10 +18,10 @@ package android.icu.cts;
 
 import android.app.Activity;
 import android.app.Instrumentation;
-import android.icu.cts.junit.IcuRunnerParams;
-import android.icu.cts.junit.IcuTestRunnerBuilder;
+import android.icu.junit.IcuTestRunnerBuilder;
 import android.os.Bundle;
 import android.os.Debug;
+import android.support.test.internal.util.AndroidRunnerParams;
 import android.util.Log;
 import java.io.BufferedReader;
 import java.io.FileReader;
@@ -62,6 +62,9 @@ public final class IcuTestRunner extends Instrumentation {
     private static final List<String> EXPECTATIONS_PATHS =
             Collections.singletonList("expectations/icu-known-failures.txt");
 
+    /** The args for the runner. */
+    private Bundle args;
+
     /** Only count the number of tests, and not run them. */
     private boolean testCountOnly;
 
@@ -82,8 +85,9 @@ public final class IcuTestRunner extends Instrumentation {
     @Override
     public void onCreate(Bundle args) {
         super.onCreate(args);
+        this.args = args;
 
-        boolean debug = args.getBoolean(ARGUMENT_DEBUG);
+        boolean debug = "true".equalsIgnoreCase(args.getString(ARGUMENT_DEBUG));
         if (debug) {
             Log.i(TAG, "Waiting for debugger to connect...");
             Debug.waitForDebugger();
@@ -126,28 +130,34 @@ public final class IcuTestRunner extends Instrumentation {
             testNameList = null;
         }
 
-        icuTestList = new IcuTestList(testNameList);
+        if (testNameList == null) {
+            icuTestList = IcuTestList.rootList(Arrays.asList(
+                    "android.icu.cts.coverage.TestAll",
+                    "android.icu.dev.test.TestAll"));
+        } else {
+            icuTestList = IcuTestList.exclusiveList(testNameList);
+        }
 
         start();
     }
 
     @Override
     public void onStart() {
-
         if (logOnly || testCountOnly) {
             Log.d(TAG, "Counting/logging tests only");
         } else {
             Log.d(TAG, "Running tests");
         }
 
-        IcuRunnerParams icuRunnerParams = new IcuRunnerParams(logOnly || testCountOnly);
+        AndroidRunnerParams runnerParams = new AndroidRunnerParams(this, args,
+                logOnly || testCountOnly, -1, false);
 
         JUnitCore core = new JUnitCore();
 
         Request request;
         int totalTestCount;
         try {
-            RunnerBuilder runnerBuilder = new IcuTestRunnerBuilder(icuRunnerParams);
+            RunnerBuilder runnerBuilder = new IcuTestRunnerBuilder(runnerParams);
             Class[] classes = icuTestList.getClassesToRun();
             Runner suite = new Computer().getSuite(runnerBuilder, classes);
 
@@ -173,7 +183,7 @@ public final class IcuTestRunner extends Instrumentation {
             throw new RuntimeException("Could not create a suite", e);
         }
 
-        IcuRunListener icuRunListener = new IcuRunListener(this, icuRunnerParams, totalTestCount);
+        IcuRunListener icuRunListener = new IcuRunListener(this, runnerParams, totalTestCount);
         core.addListener(icuRunListener);
         core.run(request);
 
