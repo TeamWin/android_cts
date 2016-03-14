@@ -23,8 +23,22 @@ import android.uirendering.cts.R;
 
 import android.test.suitebuilder.annotation.SmallTest;
 import android.uirendering.cts.testinfrastructure.ActivityTestBase;
+import android.uirendering.cts.util.CompareUtils;
 
 public class ShadowTests extends ActivityTestBase {
+
+    private class GrayScaleVerifier extends SamplePointVerifier {
+        public GrayScaleVerifier(Point[] testPoints, int[] expectedColors, int tolerance) {
+            super(testPoints, expectedColors, tolerance) ;
+        }
+
+        @Override
+        protected boolean verifyPixel(int color, int expectedColor) {
+            return super.verifyPixel(color, expectedColor)
+                    && CompareUtils.verifyPixelGrayScale(color, 1);
+        }
+    }
+
     @SmallTest
     public void testShadowLayout() {
         int shadowColorValue = 0xDB;
@@ -32,8 +46,9 @@ public class ShadowTests extends ActivityTestBase {
         if (getActivity().getOnTv()) {
             shadowColorValue = 0xBB;
         }
-        // Use a higher threshold (36) than default value (20);
-        SamplePointVerifier verifier = new SamplePointVerifier(
+
+        // Use a higher threshold than default value (20), since we also double check gray scale;
+        GrayScaleVerifier verifier = new GrayScaleVerifier(
                 new Point[] {
                         // view area
                         new Point(25, 64),
@@ -48,7 +63,8 @@ public class ShadowTests extends ActivityTestBase {
                         Color.rgb(shadowColorValue, shadowColorValue, shadowColorValue),
                         Color.rgb(shadowColorValue, shadowColorValue, shadowColorValue),
                 },
-                36);
+                48);
+
         createTest()
                 .addLayout(R.layout.simple_shadow_layout, null, true/* HW only */)
                 .runWithVerifier(verifier);
