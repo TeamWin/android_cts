@@ -17,8 +17,10 @@
 #define LOG_TAG "AudioEffectBinderTest-JNI"
 
 #include <jni.h>
+#include <binder/IServiceManager.h>
 #include <media/AudioEffect.h>
 #include <media/IEffect.h>
+#include <utils/SystemClock.h>
 
 using namespace android;
 
@@ -44,6 +46,28 @@ struct DeathRecipient : public IBinder::DeathRecipient {
     bool died() const { return mDied; }
     bool mDied;
 };
+
+// TODO extract to a common utility file and unify with other tests.
+static bool connectAudioFlinger(sp<IAudioFlinger>& af)
+{
+    int64_t startTime = 0;
+    while (af == 0) {
+        sp<IBinder> binder =
+                defaultServiceManager()->checkService(String16("media.audio_flinger"));
+        if (binder == 0) {
+            if (startTime == 0) {
+                startTime = uptimeMillis();
+            } else if ((uptimeMillis()-startTime) > 10000) {
+                ALOGE("timeout while getting audio flinger service");
+                return false;
+            }
+            sleep(1);
+        } else {
+            af = interface_cast<IAudioFlinger>(binder);
+        }
+    }
+    return true;
+}
 
 static bool isIEffectCommandSecure(IEffect *effect)
 {
@@ -105,8 +129,8 @@ static bool isIEffectCommandSecure(IEffect *effect)
 
 static jboolean android_security_cts_AudioEffect_test_isCommandSecure()
 {
-    const sp<IAudioFlinger> &audioFlinger = AudioSystem::get_audio_flinger();
-    if (audioFlinger.get() == NULL) {
+    sp<IAudioFlinger> audioFlinger;
+    if (!connectAudioFlinger(audioFlinger)) {
         ALOGE("could not get audioflinger");
         return JNI_FALSE;
     }
