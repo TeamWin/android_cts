@@ -21,7 +21,7 @@ import android.transition.ArcMotion;
 
 import junit.framework.TestCase;
 
-public class ArcMotionTest extends TestCase {
+public class ArcMotionTest extends PathMotionTest {
 
     public void test90Quadrants() throws Throwable {
         ArcMotion arcMotion = new ArcMotion();
@@ -94,29 +94,6 @@ public class ArcMotionTest extends TestCase {
         path.moveTo(startX, startY);
         path.cubicTo(c1x, c1y, c2x, c2y, endX, endY);
         return path;
-    }
-
-    private void assertPathMatches(Path expectedPath, Path path) {
-        PathMeasure expectedMeasure = new PathMeasure(expectedPath, false);
-        PathMeasure pathMeasure = new PathMeasure(path, false);
-
-        float expectedLength = expectedMeasure.getLength();
-        assertEquals(expectedLength, pathMeasure.getLength(), 0.01f);
-
-        float minLength = Math.min(expectedLength, pathMeasure.getLength());
-
-        float pos[] = new float[2];
-
-        float increment = minLength / 5f;
-        for (float along = 0; along <= minLength; along += increment) {
-            expectedMeasure.getPosTan(along, pos, null);
-            float expectedX = pos[0];
-            float expectedY = pos[1];
-
-            pathMeasure.getPosTan(along, pos, null);
-            assertEquals(expectedX, pos[0], 0.01f);
-            assertEquals(expectedY, pos[1], 0.01f);
-        }
     }
 
     public void testMaximumAngle() throws Throwable {

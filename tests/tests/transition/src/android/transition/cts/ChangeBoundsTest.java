@@ -18,7 +18,6 @@ package android.transition.cts;
 import android.content.res.Resources;
 import android.graphics.Rect;
 import android.transition.ChangeBounds;
-import android.transition.cts.R;
 import android.util.TypedValue;
 import android.view.View;
 
@@ -62,7 +61,9 @@ public class ChangeBoundsTest extends BaseTransitionTest {
     }
 
     public void testResizeClip() throws Throwable {
+        assertEquals(false, mChangeBounds.getResizeClip());
         mChangeBounds.setResizeClip(true);
+        assertEquals(true, mChangeBounds.getResizeClip());
         enterScene(R.layout.scene1);
 
         validateInScene1();

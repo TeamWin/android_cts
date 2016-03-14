@@ -39,10 +39,13 @@ public class TransitionSetTest extends BaseTransitionTest {
         assertEquals(TransitionSet.ORDERING_TOGETHER, transitionSet.getOrdering());
         enterScene(R.layout.scene1);
         startTransition(R.layout.scene3);
-        assertTrue(fadeListener.startLatch.await(0, TimeUnit.MILLISECONDS));
-        assertTrue(changeBoundsListener.startLatch.await(0, TimeUnit.MILLISECONDS));
-
-        endTransition();
+        runTestOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                assertEquals(0, fadeListener.startLatch.getCount());
+                assertEquals(0, changeBoundsListener.startLatch.getCount());
+            }
+        });
     }
 
     public void testTransitionSequentially() throws Throwable {
@@ -64,11 +67,20 @@ public class TransitionSetTest extends BaseTransitionTest {
 
         enterScene(R.layout.scene1);
         startTransition(R.layout.scene3);
-        assertTrue(fadeListener.startLatch.await(0, TimeUnit.MILLISECONDS));
-        assertEquals(1, changeBoundsListener.startLatch.getCount());
+        runTestOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                assertEquals(0, fadeListener.startLatch.getCount());
+                assertEquals(1, changeBoundsListener.startLatch.getCount());
+            }
+        });
         assertTrue(fadeListener.endLatch.await(400, TimeUnit.MILLISECONDS));
-        assertTrue(changeBoundsListener.startLatch.await(0, TimeUnit.MILLISECONDS));
-        endTransition();
+        runTestOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                assertEquals(0, changeBoundsListener.startLatch.getCount());
+            }
+        });
     }
 
     public void testTransitionCount() throws Throwable {
