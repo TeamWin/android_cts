@@ -124,6 +124,10 @@ public class ForwardDeleteTest extends KeyListenerTestCase {
         state.setByString("| '1' U+20E3");
         forwardDelete(state, 0);
         state.assertEquals("|");
+
+        state.setByString("| '1' U+FE0F U+20E3");
+        forwardDelete(state, 0);
+        state.assertEquals("|");
     }
 
     @SmallTest
@@ -142,20 +146,6 @@ public class ForwardDeleteTest extends KeyListenerTestCase {
     }
 
     @SmallTest
-    public void testEmojiZeroWidthJoinerSequence() {
-        EditorState state = new EditorState();
-
-        // U+200D is ZERO WIDTH JOINER.
-        state.setByString("| U+1F441 U+200D U+1F5E8");
-        forwardDelete(state, 0);
-        state.assertEquals("|");
-
-        state.setByString("| U+1F468 U+200D U+2764 U+FE0F U+200D U+1F48B U+200D U+1F468");
-        forwardDelete(state, 0);
-        state.assertEquals("|");
-    }
-
-    @SmallTest
     public void testFlags() {
         EditorState state = new EditorState();
 
@@ -168,16 +158,6 @@ public class ForwardDeleteTest extends KeyListenerTestCase {
         state.setByString("| U+1F1FA U+1F1F8 U+1F1FA U+1F1F8");
         forwardDelete(state, 0);
         state.assertEquals("| U+1F1FA U+1F1F8");
-        forwardDelete(state, 0);
-        state.assertEquals("|");
-    }
-
-    @SmallTest
-    public void testEmojiModifier() {
-        EditorState state = new EditorState();
-
-        // U+1F3FB is EMOJI MODIFIER FITZPATRICK TYPE-1-2.
-        state.setByString("| U+1F466 U+1F3FB");
         forwardDelete(state, 0);
         state.assertEquals("|");
     }

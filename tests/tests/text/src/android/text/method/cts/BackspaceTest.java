@@ -132,10 +132,6 @@ public class BackspaceTest extends KeyListenerTestCase {
         state.setByString("'1' U+FE0E U+20E3 |");
         backspace(state, 0);
         state.assertEquals("|");
-
-        state.setByString("'1' U+E0101 U+20E3 |");
-        backspace(state, 0);
-        state.assertEquals("|");
     }
 
     @SmallTest
@@ -149,24 +145,6 @@ public class BackspaceTest extends KeyListenerTestCase {
 
         // U+E0100 is VARIATION SELECTOR-17.
         state.setByString("U+845B U+E0100 |");
-        backspace(state, 0);
-        state.assertEquals("|");
-    }
-
-    @SmallTest
-    public void testEmojiZWJSequence() {
-        EditorState state = new EditorState();
-
-        // U+200D is ZERO WIDTH JOINER.
-        state.setByString("U+1F441 U+200D U+1F5E8 |");
-        backspace(state, 0);
-        state.assertEquals("|");
-
-        state.setByString("U+1F441 U+200D U+1F5E8 U+FE0E |");
-        backspace(state, 0);
-        state.assertEquals("|");
-
-        state.setByString("U+1F468 U+200D U+2764 U+FE0F U+200D U+1F48B U+200D U+1F468 |");
         backspace(state, 0);
         state.assertEquals("|");
     }
@@ -200,16 +178,6 @@ public class BackspaceTest extends KeyListenerTestCase {
         state.assertEquals("'a' U+1F1FA U+1F1F8 |");
         backspace(state, 0);
         state.assertEquals("'a' |");
-        backspace(state, 0);
-        state.assertEquals("|");
-    }
-
-    @SmallTest
-    public void testEmojiModifier() {
-        EditorState state = new EditorState();
-
-        // U+1F3FB is EMOJI MODIFIER FITZPATRICK TYPE-1-2.
-        state.setByString("U+1F466 U+1F3FB |");
         backspace(state, 0);
         state.assertEquals("|");
     }
