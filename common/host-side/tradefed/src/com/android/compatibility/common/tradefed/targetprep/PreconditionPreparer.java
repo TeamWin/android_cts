@@ -31,8 +31,9 @@ import com.android.tradefed.targetprep.TargetSetupError;
  */
 public abstract class PreconditionPreparer implements ITargetPreparer {
 
-    @Option(name = CompatibilityTest.SKIP_PRECONDITIONS_OPTION, description =
-            "Whether preconditions should be skipped")
+    @Option(name = CompatibilityTest.SKIP_PRECONDITIONS_OPTION,
+            shortName = 'o',
+            description = "Whether preconditions should be skipped")
     private boolean mSkipPreconditions = false;
 
     @Override

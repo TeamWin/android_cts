@@ -18,7 +18,6 @@ package com.android.compatibility.common.tradefed.targetprep;
 
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
 import com.android.compatibility.common.tradefed.testtype.CompatibilityTest;
-import com.android.ddmlib.testrunner.TestIdentifier;
 import com.android.tradefed.build.IBuildInfo;
 import com.android.tradefed.config.Option;
 import com.android.tradefed.device.DeviceNotAvailableException;
@@ -63,8 +62,9 @@ public class DeviceInfoCollector extends ApkInstrumentationPreparer {
         BUILD_KEYS.put("build_version_security_patch", "ro.build.version.security_patch");
     }
 
-    @Option(name = CompatibilityTest.SKIP_DEVICE_INFO_OPTION, description =
-            "Whether device info collection should be skipped")
+    @Option(name = CompatibilityTest.SKIP_DEVICE_INFO_OPTION,
+            shortName = 'd',
+            description = "Whether device info collection should be skipped")
     private boolean mSkipDeviceInfo = false;
 
     @Option(name= "src-dir", description = "The directory to copy to the results dir")
@@ -89,10 +89,6 @@ public class DeviceInfoCollector extends ApkInstrumentationPreparer {
         }
         run(device, buildInfo);
         getDeviceInfoFiles(device, buildInfo);
-    }
-
-    private void addBuildInfo(ITestDevice device, IBuildInfo buildInfo, String key, String value)
-            throws DeviceNotAvailableException {
     }
 
     private void getDeviceInfoFiles(ITestDevice device, IBuildInfo buildInfo) {
