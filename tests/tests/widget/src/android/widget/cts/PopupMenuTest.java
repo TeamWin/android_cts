@@ -124,6 +124,17 @@ public class PopupMenuTest extends
         assertEquals(Gravity.TOP, mPopupMenu.getGravity());
     }
 
+    public void testConstructorWithGravity() throws Throwable {
+        mBuilder = new Builder().withGravity(Gravity.TOP);
+        runTestOnUiThread(new Runnable() {
+            public void run() {
+                mBuilder.show();
+            }
+        });
+
+        assertEquals(Gravity.TOP, mPopupMenu.getGravity());
+    }
+
     public void testDismissalViaAPI() throws Throwable {
         mBuilder = new Builder().withDismissListener();
         runTestOnUiThread(new Runnable() {
@@ -134,6 +145,56 @@ public class PopupMenuTest extends
 
         mInstrumentation.waitForIdleSync();
         verify(mBuilder.mOnDismissListener, never()).onDismiss(mPopupMenu);
+
+        runTestOnUiThread(new Runnable() {
+            public void run() {
+                mPopupMenu.dismiss();
+            }
+        });
+        mInstrumentation.waitForIdleSync();
+        verify(mBuilder.mOnDismissListener, times(1)).onDismiss(mPopupMenu);
+
+        runTestOnUiThread(new Runnable() {
+            public void run() {
+                mPopupMenu.dismiss();
+            }
+        });
+        mInstrumentation.waitForIdleSync();
+        // Shouldn't have any more interactions with our dismiss listener since the menu was
+        // already dismissed when we called dismiss()
+        verifyNoMoreInteractions(mBuilder.mOnDismissListener);
+    }
+
+    public void testNestedDismissalViaAPI() throws Throwable {
+        // Use empty popup style to remove all transitions from the popup. That way we don't
+        // need to synchronize with the popup window enter transition before proceeding to
+        // "click" a submenu item.
+        mBuilder = new Builder().withDismissListener()
+                .withPopupStyleAttr(R.style.PopupEmptyStyle);
+        runTestOnUiThread(new Runnable() {
+            public void run() {
+                mBuilder.show();
+            }
+        });
+        mInstrumentation.waitForIdleSync();
+        verify(mBuilder.mOnDismissListener, never()).onDismiss(mPopupMenu);
+
+        runTestOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                mPopupMenu.getMenu().performIdentifierAction(R.id.action_share, 0);
+            }
+        });
+        mInstrumentation.waitForIdleSync();
+
+        runTestOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                mPopupMenu.getMenu().findItem(R.id.action_share).getSubMenu().
+                        performIdentifierAction(R.id.action_share_email, 0);
+            }
+        });
+        mInstrumentation.waitForIdleSync();
 
         runTestOnUiThread(new Runnable() {
             public void run() {
@@ -234,6 +295,52 @@ public class PopupMenuTest extends
 
         // Popup menu should be automatically dismissed on selecting an item
         verify(mBuilder.mOnDismissListener, times(1)).onDismiss(mPopupMenu);
+        verifyNoMoreInteractions(mBuilder.mOnDismissListener);
+    }
+
+    public void testSubMenuClickViaAPI() throws Throwable {
+        // Use empty popup style to remove all transitions from the popup. That way we don't
+        // need to synchronize with the popup window enter transition before proceeding to
+        // "click" a submenu item.
+        mBuilder = new Builder().withDismissListener().withMenuItemClickListener()
+                .withPopupStyleAttr(R.style.PopupEmptyStyle);
+        runTestOnUiThread(new Runnable() {
+            public void run() {
+                mBuilder.show();
+            }
+        });
+        mInstrumentation.waitForIdleSync();
+
+        // Verify that our menu item click listener hasn't been called yet
+        verify(mBuilder.mOnMenuItemClickListener, never()).onMenuItemClick(any(MenuItem.class));
+
+        runTestOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                mPopupMenu.getMenu().performIdentifierAction(R.id.action_share, 0);
+            }
+        });
+        // Verify that our menu item click listener has been called on "share" action
+        verify(mBuilder.mOnMenuItemClickListener, times(1)).onMenuItemClick(
+                mPopupMenu.getMenu().findItem(R.id.action_share));
+
+        runTestOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                mPopupMenu.getMenu().findItem(R.id.action_share).getSubMenu().
+                        performIdentifierAction(R.id.action_share_email, 0);
+            }
+        });
+
+        // Verify that out menu item click listener has been called with the expected menu item
+        verify(mBuilder.mOnMenuItemClickListener, times(1)).onMenuItemClick(
+                mPopupMenu.getMenu().findItem(R.id.action_share).getSubMenu()
+                        .findItem(R.id.action_share_email));
+        verifyNoMoreInteractions(mBuilder.mOnMenuItemClickListener);
+
+        // Popup menu should be automatically dismissed on selecting an item
+        verify(mBuilder.mOnDismissListener, times(1)).onDismiss(mPopupMenu);
+        verifyNoMoreInteractions(mBuilder.mOnDismissListener);
     }
 
     /**
@@ -247,7 +354,12 @@ public class PopupMenuTest extends
         private boolean mHasDismissListener;
         private boolean mHasMenuItemClickListener;
         private boolean mInflateWithInflater;
+
+        private boolean mUseCustomPopupStyle;
         private int mPopupStyleAttr = android.R.attr.popupMenuStyle;
+
+        private boolean mUseCustomGravity;
+        private int mGravity = Gravity.NO_GRAVITY;
 
         private PopupMenu.OnMenuItemClickListener mOnMenuItemClickListener;
         private PopupMenu.OnDismissListener mOnDismissListener;
@@ -270,13 +382,28 @@ public class PopupMenuTest extends
         }
 
         public Builder withPopupStyleAttr(int popupStyleAttr) {
+            mUseCustomPopupStyle = true;
             mPopupStyleAttr = popupStyleAttr;
+            return this;
+        }
+
+        public Builder withGravity(int gravity) {
+            mUseCustomGravity = true;
+            mGravity = gravity;
             return this;
         }
 
         private void configure() {
             mAnchor = mActivity.findViewById(R.id.anchor_middle_left);
-            mPopupMenu = new PopupMenu(mActivity, mAnchor, Gravity.NO_GRAVITY, mPopupStyleAttr, 0);
+            if (!mUseCustomGravity && !mUseCustomPopupStyle) {
+                mPopupMenu = new PopupMenu(mActivity, mAnchor);
+            } else if (!mUseCustomPopupStyle) {
+                mPopupMenu = new PopupMenu(mActivity, mAnchor, mGravity);
+            } else {
+                mPopupMenu = new PopupMenu(mActivity, mAnchor, Gravity.NO_GRAVITY,
+                        mPopupStyleAttr, 0);
+            }
+
             if (mInflateWithInflater) {
                 final MenuInflater menuInflater = mPopupMenu.getMenuInflater();
                 menuInflater.inflate(R.menu.popup_menu, mPopupMenu.getMenu());
