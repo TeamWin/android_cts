@@ -18,10 +18,10 @@
 -->
 <gradient xmlns:android="http://schemas.android.com/apk/res/android"
           android:centerColor="#ff0000"
-          android:endColor="?android:attr/colorControlActivated"
+          android:endColor="#0f0"
           android:centerX="300"
           android:centerY="300"
           android:gradientRadius="100"
-          android:startColor="?android:attr/colorPrimary"
+          android:startColor="?attr/themeColor"
           android:type="radial">
 </gradient>
