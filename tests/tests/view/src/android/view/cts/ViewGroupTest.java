@@ -27,7 +27,6 @@ import android.graphics.Point;
 import android.graphics.Rect;
 import android.graphics.Region;
 import android.graphics.drawable.BitmapDrawable;
-import android.os.Build;
 import android.os.Parcelable;
 import android.os.SystemClock;
 import android.test.InstrumentationTestCase;
@@ -1011,18 +1010,6 @@ public class ViewGroupTest extends InstrumentationTestCase implements CTSResult{
         assertEquals(2, rect.top);
         assertEquals(1, rect.left);
         assertEquals(1, rect.right);
-
-        if (Build.VERSION.SDK_INT > Build.VERSION_CODES.M || Build.VERSION.CODENAME.equals("N")) {
-            textView.setTranslationX(2);
-            textView.setTranslationY(1);
-
-            rect.setEmpty();
-            vg.offsetDescendantRectToMyCoords(textView, rect);
-            assertEquals(3, rect.bottom);
-            assertEquals(3, rect.top);
-            assertEquals(3, rect.left);
-            assertEquals(3, rect.right);
-        }
     }
 
     public void testOffsetRectIntoDescendantCoords() {
@@ -1046,18 +1033,6 @@ public class ViewGroupTest extends InstrumentationTestCase implements CTSResult{
         assertEquals(4, rect.top);
         assertEquals(4, rect.left);
         assertEquals(6, rect.right);
-
-        if (Build.VERSION.SDK_INT > Build.VERSION_CODES.M || Build.VERSION.CODENAME.equals("N")) {
-            textView.setTranslationX(2);
-            textView.setTranslationY(1);
-
-            rect.set(5, 6, 7, 8);
-            vg.offsetRectIntoDescendantCoords(textView, rect);
-            assertEquals(5, rect.bottom);
-            assertEquals(3, rect.top);
-            assertEquals(2, rect.left);
-            assertEquals(4, rect.right);
-        }
     }
 
     public void testOnAnimationEnd() {
