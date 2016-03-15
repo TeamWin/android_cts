@@ -23,7 +23,7 @@ import android.view.View;
 import android.view.ViewTreeObserver;
 import android.view.ViewTreeObserver.OnDrawListener;
 
-import java.util.concurrent.Semaphore;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -41,34 +41,25 @@ public class ViewTestUtils {
      */
     public static void runOnMainAndDrawSync(Instrumentation instrumentation,
             final View view, final Runnable runner) {
-        final Semaphore token = new Semaphore(0);
-        final Runnable releaseToken = new Runnable() {
-            @Override
-            public void run() {
-                token.release();
-            }
-        };
+        final CountDownLatch latch = new CountDownLatch(1);
 
-        instrumentation.runOnMainSync(new Runnable() {
-            @Override
-            public void run() {
-                final ViewTreeObserver observer = view.getViewTreeObserver();
-                final OnDrawListener listener = new OnDrawListener() {
-                    @Override
-                    public void onDraw() {
-                        observer.removeOnDrawListener(this);
-                        view.post(releaseToken);
-                    }
-                };
+        instrumentation.runOnMainSync(() -> {
+            final ViewTreeObserver observer = view.getViewTreeObserver();
+            final OnDrawListener listener = new OnDrawListener() {
+                @Override
+                public void onDraw() {
+                    observer.removeOnDrawListener(this);
+                    view.post(() -> latch.countDown());
+                }
+            };
 
-                observer.addOnDrawListener(listener);
-                runner.run();
-            }
+            observer.addOnDrawListener(listener);
+            runner.run();
         });
 
         try {
             Assert.assertTrue("Expected draw pass occurred within 5 seconds",
-                    token.tryAcquire(5, TimeUnit.SECONDS));
+                    latch.await(5, TimeUnit.SECONDS));
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }
