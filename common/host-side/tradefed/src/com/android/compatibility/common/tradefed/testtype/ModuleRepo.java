@@ -25,13 +25,9 @@ import com.android.tradefed.config.IConfiguration;
 import com.android.tradefed.config.IConfigurationFactory;
 import com.android.tradefed.log.LogUtil.CLog;
 import com.android.tradefed.testtype.IAbi;
-import com.android.tradefed.testtype.IAbiReceiver;
 import com.android.tradefed.testtype.IBuildReceiver;
 import com.android.tradefed.testtype.IRemoteTest;
-import com.android.tradefed.testtype.IRuntimeHintProvider;
 import com.android.tradefed.testtype.IShardableTest;
-//import com.android.tradefed.testtype.ITestCollector;
-import com.android.tradefed.testtype.ITestFilterReceiver;
 import com.android.tradefed.util.TimeUtil;
 
 import java.io.File;
@@ -266,7 +262,6 @@ public class ModuleRepo implements IModuleRepo {
                         if (test instanceof IBuildReceiver) {
                             ((IBuildReceiver)test).setBuild(buildInfo);
                         }
-                        enforceInterfaces(test);
                         addModuleDef(name, abi, test, pathArg);
                     }
                 }
@@ -282,32 +277,6 @@ public class ModuleRepo implements IModuleRepo {
         mSmallModulesPerShard = mSmallModules.size() / shards;
         mMediumModulesPerShard = mMediumModules.size() / shards;
         mLargeModulesPerShard = mLargeModules.size() / shards;
-    }
-
-    private static void enforceInterfaces(IRemoteTest test) {
-        // Required interfaces:
-        if (!(test instanceof IAbiReceiver)) {
-            throw new IllegalArgumentException(test
-                    + "does not implement IAbiReceiver"
-                    + " - for multi-abi testing (64bit)");
-        }
-        /*
-        if (!(test instanceof ITestCollector)) {
-            throw new IllegalArgumentException(test
-                    + " does not implement ITestCollector"
-                    + " - for test list collection");
-        }
-        */
-        if (!(test instanceof ITestFilterReceiver)) {
-            throw new IllegalArgumentException(test
-                    + " does not implement ITestFilterReceiver"
-                    + " - to allow tests to be filtered");
-        }
-        if (!(test instanceof IRuntimeHintProvider)) {
-            throw new IllegalArgumentException(test
-                    + " does not implement IRuntimeHintProvider"
-                    + " - to provide estimates of test invocation time");
-        }
     }
 
     private static List<IRemoteTest> splitShardableTests(List<IRemoteTest> tests,
