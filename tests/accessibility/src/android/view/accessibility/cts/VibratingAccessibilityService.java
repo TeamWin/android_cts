@@ -17,6 +17,7 @@
 package android.view.accessibility.cts;
 
 import android.accessibilityservice.AccessibilityService;
+import android.accessibilityservice.AccessibilityServiceInfo;
 import android.view.accessibility.AccessibilityEvent;
 
 /**
@@ -34,6 +35,10 @@ public class VibratingAccessibilityService extends AccessibilityService {
 
     @Override
     protected void onServiceConnected() {
+        final AccessibilityServiceInfo info = getServiceInfo();
+        info.flags |= AccessibilityServiceInfo.FLAG_REQUEST_TOUCH_EXPLORATION_MODE;
+        setServiceInfo(info);
+
         synchronized (sWaitObjectForConnecting) {
             sConnectedInstance = this;
             sWaitObjectForConnecting.notifyAll();
