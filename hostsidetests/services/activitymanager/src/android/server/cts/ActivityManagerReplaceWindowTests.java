@@ -86,8 +86,6 @@ public class ActivityManagerReplaceWindowTests extends ActivityManagerTestBase {
             throws Exception {
         mAmWmState.computeState(mDevice, visibleOnly, new String[] {activityName});
 
-        mAmWmState.assertSanity();
-
         mAmWmState.assertFocusedWindow("Test window must be the front window.",
                 windowName);
 

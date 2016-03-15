@@ -35,7 +35,6 @@ public class ActivityManagerDockedStackTests extends ActivityManagerTestBase {
     public void testStackList() throws Exception {
         mDevice.executeShellCommand(getAmStartCmd(TEST_ACTIVITY_NAME));
         mAmWmState.computeState(mDevice, new String[] {TEST_ACTIVITY_NAME});
-        mAmWmState.assertSanity();
         mAmWmState.assertContainsStack("Must contain home stack.", HOME_STACK_ID);
         mAmWmState.assertContainsStack(
                 "Must contain fullscreen stack.", FULLSCREEN_WORKSPACE_STACK_ID);
@@ -45,7 +44,6 @@ public class ActivityManagerDockedStackTests extends ActivityManagerTestBase {
     public void testDockActivity() throws Exception {
         launchActivityInDockStack(TEST_ACTIVITY_NAME);
         mAmWmState.computeState(mDevice, new String[] {TEST_ACTIVITY_NAME});
-        mAmWmState.assertSanity();
         mAmWmState.assertContainsStack("Must contain home stack.", HOME_STACK_ID);
         mAmWmState.assertContainsStack("Must contain docked stack.", DOCKED_STACK_ID);
     }
@@ -53,7 +51,6 @@ public class ActivityManagerDockedStackTests extends ActivityManagerTestBase {
     public void testNonResizeableNotDocked() throws Exception {
         launchActivityInDockStack(NON_RESIZEABLE_ACTIVITY_NAME);
         mAmWmState.computeState(mDevice, new String[] {NON_RESIZEABLE_ACTIVITY_NAME});
-        mAmWmState.assertSanity();
 
         mAmWmState.assertContainsStack("Must contain home stack.", HOME_STACK_ID);
         mAmWmState.assertDoesNotContainStack("Must not contain docked stack.", DOCKED_STACK_ID);
@@ -66,7 +63,7 @@ public class ActivityManagerDockedStackTests extends ActivityManagerTestBase {
         printStacksAndTasks();
         launchActivityToSide(LAUNCH_TO_SIDE_ACTIVITY_NAME);
         mAmWmState.computeState(mDevice, new String[] {LAUNCH_TO_SIDE_ACTIVITY_NAME});
-        mAmWmState.assertSanity();
+
         mAmWmState.assertContainsStack(
                 "Must contain fullscreen stack.", FULLSCREEN_WORKSPACE_STACK_ID);
         mAmWmState.assertContainsStack("Must contain docked stack.", DOCKED_STACK_ID);
@@ -77,41 +74,32 @@ public class ActivityManagerDockedStackTests extends ActivityManagerTestBase {
         launchActivityToSide(LAUNCH_TO_SIDE_ACTIVITY_NAME);
         final String[] waitForActivitiesVisible = new String[] {LAUNCH_TO_SIDE_ACTIVITY_NAME};
         mAmWmState.computeState(mDevice, waitForActivitiesVisible);
-        mAmWmState.assertSanity();
         mAmWmState.assertContainsStack(
                 "Must contain fullscreen stack.", FULLSCREEN_WORKSPACE_STACK_ID);
         mAmWmState.assertContainsStack("Must contain docked stack.", DOCKED_STACK_ID);
 
-        // Rotate device single steps (90°) 0-1-2-3
+        // Rotate device single steps (90°) 0-1-2-3.
+        // Each time we compute the state we implicitly assert valid bounds.
         setDeviceRotation(0);
         mAmWmState.computeState(mDevice, waitForActivitiesVisible);
-        mAmWmState.assertValidBounds();
         setDeviceRotation(1);
         mAmWmState.computeState(mDevice, waitForActivitiesVisible);
-        mAmWmState.assertValidBounds();
         setDeviceRotation(2);
         mAmWmState.computeState(mDevice, waitForActivitiesVisible);
-        mAmWmState.assertValidBounds();
         setDeviceRotation(3);
         mAmWmState.computeState(mDevice, waitForActivitiesVisible);
-        mAmWmState.assertValidBounds();
         // Double steps (180°) We ended the single step at 3. So, we jump directly to 1 for double
         // step. So, we are testing 3-1-3 for one side and 0-2-0 for the other side.
         setDeviceRotation(1);
         mAmWmState.computeState(mDevice, waitForActivitiesVisible);
-        mAmWmState.assertValidBounds();
         setDeviceRotation(3);
         mAmWmState.computeState(mDevice, waitForActivitiesVisible);
-        mAmWmState.assertValidBounds();
         setDeviceRotation(0);
         mAmWmState.computeState(mDevice, waitForActivitiesVisible);
-        mAmWmState.assertValidBounds();
         setDeviceRotation(2);
         mAmWmState.computeState(mDevice, waitForActivitiesVisible);
-        mAmWmState.assertValidBounds();
         setDeviceRotation(0);
         mAmWmState.computeState(mDevice, waitForActivitiesVisible);
-        mAmWmState.assertValidBounds();
     }
 
     public void testRotationWhenDockedWhileLocked() throws Exception {
@@ -128,25 +116,21 @@ public class ActivityManagerDockedStackTests extends ActivityManagerTestBase {
         setDeviceRotation(0);
         unlockDevice();
         mAmWmState.computeState(mDevice, waitForActivitiesVisible);
-        mAmWmState.assertValidBounds();
 
         lockDevice();
         setDeviceRotation(1);
         unlockDevice();
         mAmWmState.computeState(mDevice, waitForActivitiesVisible);
-        mAmWmState.assertValidBounds();
 
         lockDevice();
         setDeviceRotation(2);
         unlockDevice();
         mAmWmState.computeState(mDevice, waitForActivitiesVisible);
-        mAmWmState.assertValidBounds();
 
         lockDevice();
         setDeviceRotation(3);
         unlockDevice();
         mAmWmState.computeState(mDevice, waitForActivitiesVisible);
-        mAmWmState.assertValidBounds();
     }
 
     public void testResizeDockedStack() throws Exception {
@@ -154,7 +138,6 @@ public class ActivityManagerDockedStackTests extends ActivityManagerTestBase {
         launchActivityInDockStack(DOCKED_ACTIVITY_NAME);
         resizeDockedStack(STACK_SIZE, STACK_SIZE, TASK_SIZE, TASK_SIZE);
         mAmWmState.computeState(mDevice, new String[] {TEST_ACTIVITY_NAME, DOCKED_ACTIVITY_NAME});
-        mAmWmState.assertSanity();
         mAmWmState.assertContainsStack("Must contain docked stack", DOCKED_STACK_ID);
         mAmWmState.assertContainsStack("Must contain fullscreen stack",
                 FULLSCREEN_WORKSPACE_STACK_ID);
@@ -176,7 +159,6 @@ public class ActivityManagerDockedStackTests extends ActivityManagerTestBase {
 
         mAmWmState.computeState(mDevice,
                 new String[]{TEST_ACTIVITY_NAME, NO_RELAUNCH_ACTIVITY_NAME});
-        mAmWmState.assertSanity();
         final Rectangle initialDockBounds =
                 mAmWmState.getWmState().getStack(DOCKED_STACK_ID).getBounds();
 
@@ -192,7 +174,6 @@ public class ActivityManagerDockedStackTests extends ActivityManagerTestBase {
 
         mAmWmState.computeState(mDevice,
                 new String[]{TEST_ACTIVITY_NAME, NO_RELAUNCH_ACTIVITY_NAME});
-        mAmWmState.assertSanity();
 
         assertActivityLifecycle(TEST_ACTIVITY_NAME, true);
         assertActivityLifecycle(NO_RELAUNCH_ACTIVITY_NAME, false);

@@ -61,6 +61,9 @@ class ActivityAndWindowManagersState extends Assert {
                 retry = false;
             }
         } while (retry && retriesLeft-- > 0);
+
+        assertSanity();
+        assertValidBounds();
     }
 
     private boolean shouldRetry(String[] waitForActivitiesVisible) {

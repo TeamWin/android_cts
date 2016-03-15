@@ -52,8 +52,6 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
         }
 
         mAmWmState.computeState(mDevice, new String[] {topActiviyName});
-        mAmWmState.assertSanity();
-        mAmWmState.assertValidBounds();
 
         if (supportsPip()) {
             final String windowName = getWindowName(topActiviyName);
