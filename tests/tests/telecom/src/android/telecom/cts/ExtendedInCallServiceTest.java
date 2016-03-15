@@ -285,6 +285,29 @@ public class ExtendedInCallServiceTest extends BaseTelecomTestWithMockServices {
         assertConnectionState(connection, Connection.STATE_DISCONNECTED);
     }
 
+    public void testRejectIncomingCallWithMessage() {
+        if (!mShouldTestTelecom) {
+            return;
+        }
+        String disconnectReason = "Test reason for disconnect";
+
+        addAndVerifyNewIncomingCall(createTestNumber(), null);
+        final MockConnection connection = verifyConnectionForIncomingCall();
+
+        final MockInCallService inCallService = mInCallCallbacks.getService();
+
+        final Call call = inCallService.getLastCall();
+
+        assertCallState(call, Call.STATE_RINGING);
+        assertConnectionState(connection, Connection.STATE_RINGING);
+
+        call.reject(true, disconnectReason);
+
+        assertCallState(call, Call.STATE_DISCONNECTED);
+        assertConnectionState(connection, Connection.STATE_DISCONNECTED);
+        assertDisconnectReason(connection, disconnectReason);
+    }
+
     public void testCanAddCall_CannotAddForExistingDialingCall() {
         if (!mShouldTestTelecom) {
             return;
