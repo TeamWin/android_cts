@@ -17,6 +17,7 @@
 package android.server.cts;
 
 import java.awt.Rectangle;
+import java.util.ArrayList;
 
 public class ActivityManagerFreeformStackTests extends ActivityManagerTestBase {
 
@@ -28,6 +29,7 @@ public class ActivityManagerFreeformStackTests extends ActivityManagerTestBase {
     // NOTE: Launching the FreeformActivity will automatically launch the TestActivity
     // with bounds (0, 0, 500, 500)
     private static final String FREEFORM_ACTIVITY = "FreeformActivity";
+    private static final String NON_RESIZEABLE_ACTIVITY = "NonResizeableActivity";
     private static final String NO_RELAUNCH_ACTIVITY = "NoRelaunchActivity";
 
     public void testFreeformWindowManagementSupport() throws Exception {
@@ -52,6 +54,19 @@ public class ActivityManagerFreeformStackTests extends ActivityManagerTestBase {
                 TEST_ACTIVITY + " must be focused Activity", TEST_ACTIVITY);
         assertEquals(new Rectangle(0, 0, TEST_TASK_SIZE_1, TEST_TASK_SIZE_1),
                 mAmWmState.getAmState().getTaskByActivityName(TEST_ACTIVITY).getBounds());
+    }
+
+    public void testNonResizeableActivityNotLaunchedToFreeform() throws Exception {
+        launchActivityInStack(NON_RESIZEABLE_ACTIVITY, FREEFORM_WORKSPACE_STACK_ID);
+
+        mAmWmState.computeState(mDevice, new String[] {NON_RESIZEABLE_ACTIVITY});
+        mAmWmState.assertSanity();
+        mAmWmState.assertValidBounds();
+
+        mAmWmState.assertFrontStack(
+                "Fullscreen stack must be the front stack.", FULLSCREEN_WORKSPACE_STACK_ID);
+        mAmWmState.assertDoesNotContainStack(
+                "Must not contain freeform stack.", FREEFORM_WORKSPACE_STACK_ID);
     }
 
     public void testActivityLifeCycleOnResizeFreeformTask() throws Exception {

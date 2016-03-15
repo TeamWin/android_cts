@@ -17,20 +17,20 @@
 package android.server.cts;
 
 import java.awt.Rectangle;
+import java.util.ArrayList;
 
 import static com.android.ddmlib.Log.LogLevel.*;
 
 public class ActivityManagerDockedStackTests extends ActivityManagerTestBase {
 
     private static final String TEST_ACTIVITY_NAME = "TestActivity";
+    private static final String NON_RESIZEABLE_ACTIVITY_NAME = "NonResizeableActivity";
     private static final String DOCKED_ACTIVITY_NAME = "DockedActivity";
     private static final String LAUNCH_TO_SIDE_ACTIVITY_NAME = "LaunchToSideActivity";
     private static final String NO_RELAUNCH_ACTIVITY_NAME = "NoRelaunchActivity";
 
     private static final int TASK_SIZE = 600;
     private static final int STACK_SIZE = 300;
-
-    // TODO: Add test for non-resizeable activity.
 
     public void testStackList() throws Exception {
         mDevice.executeShellCommand(getAmStartCmd(TEST_ACTIVITY_NAME));
@@ -39,6 +39,7 @@ public class ActivityManagerDockedStackTests extends ActivityManagerTestBase {
         mAmWmState.assertContainsStack("Must contain home stack.", HOME_STACK_ID);
         mAmWmState.assertContainsStack(
                 "Must contain fullscreen stack.", FULLSCREEN_WORKSPACE_STACK_ID);
+        mAmWmState.assertDoesNotContainStack("Must not contain docked stack.", DOCKED_STACK_ID);
     }
 
     public void testDockActivity() throws Exception {
@@ -47,6 +48,17 @@ public class ActivityManagerDockedStackTests extends ActivityManagerTestBase {
         mAmWmState.assertSanity();
         mAmWmState.assertContainsStack("Must contain home stack.", HOME_STACK_ID);
         mAmWmState.assertContainsStack("Must contain docked stack.", DOCKED_STACK_ID);
+    }
+
+    public void testNonResizeableNotDocked() throws Exception {
+        launchActivityInDockStack(NON_RESIZEABLE_ACTIVITY_NAME);
+        mAmWmState.computeState(mDevice, new String[] {NON_RESIZEABLE_ACTIVITY_NAME});
+        mAmWmState.assertSanity();
+
+        mAmWmState.assertContainsStack("Must contain home stack.", HOME_STACK_ID);
+        mAmWmState.assertDoesNotContainStack("Must not contain docked stack.", DOCKED_STACK_ID);
+        mAmWmState.assertFrontStack(
+                "Fullscreen stack must be front stack.", FULLSCREEN_WORKSPACE_STACK_ID);
     }
 
     public void testLaunchToSide() throws Exception {

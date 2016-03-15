@@ -114,7 +114,7 @@ class ActivityAndWindowManagersState extends Assert {
         assertTrue(msg, mWmState.containsStack(stackId));
     }
 
-    void assertDoesNotContainsStack(String msg, int stackId) throws Exception {
+    void assertDoesNotContainStack(String msg, int stackId) throws Exception {
         assertFalse(msg, mAmState.containsStack(stackId));
         assertFalse(msg, mWmState.containsStack(stackId));
     }

@@ -81,7 +81,7 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
                         "Pinned window can't be focused window.", windowName);
             }
         } else {
-            mAmWmState.assertDoesNotContainsStack(
+            mAmWmState.assertDoesNotContainStack(
                     "Must not contain pinned stack.", PINNED_STACK_ID);
         }
     }
