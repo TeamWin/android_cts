@@ -16,7 +16,7 @@ LOCAL_PATH:= $(call my-dir)
 
 include $(CLEAR_VARS)
 
-LOCAL_PACKAGE_NAME := CtsAutomotiveTestCases
+LOCAL_PACKAGE_NAME := CtsCarTestCases
 
 # Don't include this package in any target.
 LOCAL_MODULE_TAGS := optional
