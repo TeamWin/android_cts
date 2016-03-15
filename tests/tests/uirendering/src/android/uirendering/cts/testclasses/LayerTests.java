@@ -23,15 +23,20 @@ import android.graphics.ColorMatrixColorFilter;
 import android.graphics.Paint;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffXfermode;
-import android.test.suitebuilder.annotation.SmallTest;
+import android.support.test.runner.AndroidJUnit4;
+import android.test.suitebuilder.annotation.MediumTest;
 import android.uirendering.cts.bitmapverifiers.ColorVerifier;
 import android.uirendering.cts.testinfrastructure.ActivityTestBase;
 import android.uirendering.cts.testinfrastructure.ViewInitializer;
 import android.view.View;
 import android.uirendering.cts.R;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
+@MediumTest
+@RunWith(AndroidJUnit4.class)
 public class LayerTests extends ActivityTestBase {
-    @SmallTest
+    @Test
     public void testLayerPaintAlpha() {
         // red channel full strength, other channels 75% strength
         // (since 25% alpha red subtracts from them)
@@ -53,7 +58,7 @@ public class LayerTests extends ActivityTestBase {
                 .runWithVerifier(new ColorVerifier(expectedColor));
     }
 
-    @SmallTest
+    @Test
     public void testLayerPaintColorFilter() {
         // Red, fully desaturated. Note that it's not 255/3 in each channel.
         // See ColorMatrix#setSaturation()
@@ -73,7 +78,7 @@ public class LayerTests extends ActivityTestBase {
                 .runWithVerifier(new ColorVerifier(expectedColor));
     }
 
-    @SmallTest
+    @Test
     public void testLayerPaintBlend() {
         // Red, drawn underneath opaque white, so output should be white.
         // TODO: consider doing more interesting blending test here
