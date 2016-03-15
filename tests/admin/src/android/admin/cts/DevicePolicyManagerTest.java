@@ -122,52 +122,52 @@ public class DevicePolicyManagerTest extends AndroidTestCase {
         }
     }
 
-    public void testSetDeviceLoggingEnabled_failIfNotDeviceOwner() {
+    public void testSetSecurityLoggingEnabled_failIfNotDeviceOwner() {
         if (!mDeviceAdmin) {
-            Log.w(TAG, "Skipping testSetDeviceLoggingEnabled_failIfNotDeviceOwner");
+            Log.w(TAG, "Skipping testSetSecurityLoggingEnabled_failIfNotDeviceOwner");
             return;
         }
         try {
-            mDevicePolicyManager.setDeviceLoggingEnabled(mComponent, true);
+            mDevicePolicyManager.setSecurityLoggingEnabled(mComponent, true);
             fail("did not throw expected SecurityException");
         } catch (SecurityException e) {
             assertDeviceOwnerMessage(e.getMessage());
         }
     }
 
-    public void testGetDeviceLoggingEnabled_failIfNotDeviceOwner() {
+    public void testIsSecurityLoggingEnabled_failIfNotDeviceOwner() {
         if (!mDeviceAdmin) {
-            Log.w(TAG, "Skipping testGetDeviceLoggingEnabled_failIfNotDeviceOwner");
+            Log.w(TAG, "Skipping testIsSecurityLoggingEnabled_failIfNotDeviceOwner");
             return;
         }
         try {
-            mDevicePolicyManager.getDeviceLoggingEnabled(mComponent);
+            mDevicePolicyManager.isSecurityLoggingEnabled(mComponent);
             fail("did not throw expected SecurityException");
         } catch (SecurityException e) {
             assertDeviceOwnerMessage(e.getMessage());
         }
     }
 
-    public void testRetrieveDeviceLogs_failIfNotDeviceOwner() {
+    public void testRetrieveSecurityLogs_failIfNotDeviceOwner() {
         if (!mDeviceAdmin) {
-            Log.w(TAG, "Skipping testRetrieveDeviceLogs_failIfNotDeviceOwner");
+            Log.w(TAG, "Skipping testRetrieveSecurityLogs_failIfNotDeviceOwner");
             return;
         }
         try {
-            mDevicePolicyManager.retrieveDeviceLogs(mComponent);
+            mDevicePolicyManager.retrieveSecurityLogs(mComponent);
             fail("did not throw expected SecurityException");
         } catch (SecurityException e) {
             assertDeviceOwnerMessage(e.getMessage());
         }
     }
 
-    public void testRetrievePreviousDeviceLogs_failIfNotDeviceOwner() {
+    public void testRetrievePreRebootSecurityLogs_failIfNotDeviceOwner() {
         if (!mDeviceAdmin) {
-            Log.w(TAG, "Skipping testRetrievePreviousDeviceLogs_failIfNotDeviceOwner");
+            Log.w(TAG, "Skipping testRetrievePreRebootSecurityLogs_failIfNotDeviceOwner");
             return;
         }
         try {
-            mDevicePolicyManager.retrievePreviousDeviceLogs(mComponent);
+            mDevicePolicyManager.retrievePreRebootSecurityLogs(mComponent);
             fail("did not throw expected SecurityException");
         } catch (SecurityException e) {
             assertDeviceOwnerMessage(e.getMessage());

@@ -291,27 +291,27 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
         }
     }
 
-    public void testDeviceLoggingWithTwoUsers() throws Exception {
+    public void testSecurityLoggingWithTwoUsers() throws Exception {
         if (!mHasFeature || getMaxNumberOfUsersSupported() < 2) {
             return;
         }
         int userId = -1;
         try {
             userId = createUser();
-            executeDeviceTestMethod(".DeviceLoggingTest",
-                    "testSetDeviceLoggingEnabledNotPossibleIfMoreThanOneUserPresent");
-            executeDeviceTestMethod(".DeviceLoggingTest",
-                    "testRetrievingDeviceLogsNotPossibleIfMoreThanOneUserPresent");
-            executeDeviceTestMethod(".DeviceLoggingTest",
-                    "testRetrievingPreviousDeviceLogsNotPossibleIfMoreThanOneUserPresent");
+            executeDeviceTestMethod(".SecurityLoggingTest",
+                    "testSetSecurityLoggingEnabledNotPossibleIfMoreThanOneUserPresent");
+            executeDeviceTestMethod(".SecurityLoggingTest",
+                    "testRetrievingSecurityLogsNotPossibleIfMoreThanOneUserPresent");
+            executeDeviceTestMethod(".SecurityLoggingTest",
+                    "testRetrievingPreviousSecurityLogsNotPossibleIfMoreThanOneUserPresent");
         } finally {
             removeUser(userId);
         }
     }
 
-    public void testDeviceLoggingWithSingleUser() throws Exception {
-        executeDeviceTestMethod(".DeviceLoggingTest",
-                "testRetrievingDeviceLogsNotPossibleImmediatelyAfterPreviousSuccessfulRetrieval");
+    public void testSecurityLoggingWithSingleUser() throws Exception {
+        executeDeviceTestMethod(".SecurityLoggingTest",
+                "testRetrievingSecurityLogsNotPossibleImmediatelyAfterPreviousSuccessfulRetrieval");
     }
 
     public void testLockTask() throws Exception {

@@ -15,22 +15,22 @@
  */
 package com.android.cts.deviceowner;
 
-import android.auditing.SecurityLog.SecurityEvent;
+import android.app.admin.SecurityLog.SecurityEvent;
 import android.os.UserHandle;
 
 import java.util.List;
 
-public class DeviceLoggingTest extends BaseDeviceOwnerTest {
+public class SecurityLoggingTest extends BaseDeviceOwnerTest {
 
     private static final String MESSAGE_ONLY_ONE_MANAGED_USER_ALLOWED =
             "There should only be one user, managed by Device Owner";
 
     /**
-     * Test: setting device logging can only be done if there's one user on the device.
+     * Test: setting security logging can only be done if there's one user on the device.
      */
-    public void testSetDeviceLoggingEnabledNotPossibleIfMoreThanOneUserPresent() {
+    public void testSetSecurityLoggingEnabledNotPossibleIfMoreThanOneUserPresent() {
         try {
-            mDevicePolicyManager.setDeviceLoggingEnabled(getWho(), true);
+            mDevicePolicyManager.setSecurityLoggingEnabled(getWho(), true);
             fail("did not throw expected SecurityException");
         } catch (SecurityException e) {
             assertEquals(e.getMessage(), MESSAGE_ONLY_ONE_MANAGED_USER_ALLOWED);
@@ -38,11 +38,11 @@ public class DeviceLoggingTest extends BaseDeviceOwnerTest {
     }
 
     /**
-     * Test: retrieving device logs can only be done if there's one user on the device.
+     * Test: retrieving security logs can only be done if there's one user on the device.
      */
-    public void testRetrievingDeviceLogsNotPossibleIfMoreThanOneUserPresent() {
+    public void testRetrievingSecurityLogsNotPossibleIfMoreThanOneUserPresent() {
         try {
-            mDevicePolicyManager.retrieveDeviceLogs(getWho());
+            mDevicePolicyManager.retrieveSecurityLogs(getWho());
             fail("did not throw expected SecurityException");
         } catch (SecurityException e) {
             assertEquals(e.getMessage(), MESSAGE_ONLY_ONE_MANAGED_USER_ALLOWED);
@@ -50,11 +50,11 @@ public class DeviceLoggingTest extends BaseDeviceOwnerTest {
     }
 
     /**
-     * Test: retrieving previous device logs can only be done if there's one user on the device.
+     * Test: retrieving previous security logs can only be done if there's one user on the device.
      */
-    public void testRetrievingPreviousDeviceLogsNotPossibleIfMoreThanOneUserPresent() {
+    public void testRetrievingPreviousSecurityLogsNotPossibleIfMoreThanOneUserPresent() {
         try {
-            mDevicePolicyManager.retrievePreviousDeviceLogs(getWho());
+            mDevicePolicyManager.retrievePreRebootSecurityLogs(getWho());
             fail("did not throw expected SecurityException");
         } catch (SecurityException e) {
             assertEquals(e.getMessage(), MESSAGE_ONLY_ONE_MANAGED_USER_ALLOWED);
@@ -62,15 +62,15 @@ public class DeviceLoggingTest extends BaseDeviceOwnerTest {
     }
 
     /**
-     * Test: retrieving device logs should be rate limited - subsequent attempts should return null.
-     * TODO(mkarpinski): consider how we can test that the rate limiting is set to 2 hours.
+     * Test: retrieving security logs should be rate limited - subsequent attempts should return
+     * null.
      */
-    public void testRetrievingDeviceLogsNotPossibleImmediatelyAfterPreviousSuccessfulRetrieval() {
-        List<SecurityEvent> logs = mDevicePolicyManager.retrieveDeviceLogs(getWho());
+    public void testRetrievingSecurityLogsNotPossibleImmediatelyAfterPreviousSuccessfulRetrieval() {
+        List<SecurityEvent> logs = mDevicePolicyManager.retrieveSecurityLogs(getWho());
         // if logs is null it means that that attempt was rate limited => test PASS
         if (logs != null) {
-            assertNull(mDevicePolicyManager.retrieveDeviceLogs(getWho()));
-            assertNull(mDevicePolicyManager.retrieveDeviceLogs(getWho()));
+            assertNull(mDevicePolicyManager.retrieveSecurityLogs(getWho()));
+            assertNull(mDevicePolicyManager.retrieveSecurityLogs(getWho()));
         }
     }
 }
