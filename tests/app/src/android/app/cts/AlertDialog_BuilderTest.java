@@ -22,8 +22,6 @@ import android.app.AlertDialog.Builder;
 import android.app.Instrumentation;
 import android.app.stubs.DialogStubActivity;
 import android.app.stubs.R;
-import android.content.ContentResolver;
-import android.content.ContentValues;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.DialogInterface.OnCancelListener;
@@ -33,10 +31,7 @@ import android.content.DialogInterface.OnKeyListener;
 import android.content.DialogInterface.OnMultiChoiceClickListener;
 import android.content.res.TypedArray;
 import android.cts.util.PollingCheck;
-import android.database.Cursor;
-import android.database.CursorWrapper;
 import android.graphics.drawable.Drawable;
-import android.provider.Contacts.People;
 import android.test.ActivityInstrumentationTestCase2;
 import android.test.suitebuilder.annotation.SmallTest;
 import android.view.KeyEvent;
@@ -61,9 +56,6 @@ public class AlertDialog_BuilderTest extends ActivityInstrumentationTestCase2<Di
     private AlertDialog mDialog;
     private Button mButton;
     private CharSequence mSelectedItem;
-    private final String[] mPROJECTION = new String[] {
-            People._ID, People.NAME
-    };
 
     private View mView;
     private ListView mListView;
@@ -419,27 +411,6 @@ public class AlertDialog_BuilderTest extends ActivityInstrumentationTestCase2<Di
         assertEquals(adapter, mListView.getAdapter());
     }
 
-    public void testSetCursor() throws Throwable {
-        preparePeople();
-        final Cursor c = mContext.getContentResolver().query(People.CONTENT_URI, mPROJECTION, null,
-                null, null);
-
-        runTestOnUiThread(new Runnable() {
-            public void run() {
-                mBuilder = new AlertDialog.Builder(mContext);
-                mBuilder.setCursor(c, mOnClickListener, People.NAME);
-                mDialog = mBuilder.show();
-                mListView = mDialog.getListView();
-                mListView.performItemClick(null, 0, 0);
-            }
-        });
-        mInstrumentation.waitForIdleSync();
-        final CursorWrapper selected = (CursorWrapper)mListView.getSelectedItem();
-        assertEquals(c.getString(1), selected.getString(1));
-        verify(mOnClickListener, times(1)).onClick(mDialog, 0);
-        verifyNoMoreInteractions(mOnClickListener);
-    }
-
     public void testSetMultiChoiceItemsWithParamInt() throws Throwable {
 
         final CharSequence[] items = mContext.getResources().getTextArray(
@@ -488,30 +459,6 @@ public class AlertDialog_BuilderTest extends ActivityInstrumentationTestCase2<Di
         assertEquals(items[0], mListView.getItemAtPosition(0));
     }
 
-    public void testSetMultiChoiceItemsWithParamCursor() throws Throwable {
-        preparePeople();
-        final Cursor c = mContext.getContentResolver().query(People.CONTENT_URI, mPROJECTION, null,
-                null, null);
-
-        runTestOnUiThread(new Runnable() {
-            public void run() {
-                mBuilder = new AlertDialog.Builder(mContext);
-                mBuilder.setMultiChoiceItems(c, People.NAME, People.NAME,
-                        mOnMultiChoiceClickListener);
-                mDialog = mBuilder.show();
-                mListView = mDialog.getListView();
-                mListView.performItemClick(null, 0, 0);
-                mListView.performItemClick(null, 1, 0);
-            }
-        });
-        mInstrumentation.waitForIdleSync();
-        final CursorWrapper selected = (CursorWrapper)mListView.getSelectedItem();
-        assertEquals(c.getString(1), selected.getString(1));
-        verify(mOnMultiChoiceClickListener, times(1)).onClick(mDialog, 0, true);
-        verify(mOnMultiChoiceClickListener, times(1)).onClick(mDialog, 1, true);
-        verifyNoMoreInteractions(mOnMultiChoiceClickListener);
-    }
-
     public void testSetSingleChoiceItemsWithParamInt() throws Throwable {
         final CharSequence[] items = mContext.getResources().getTextArray(
                 R.array.difficultyLevel);
@@ -530,39 +477,6 @@ public class AlertDialog_BuilderTest extends ActivityInstrumentationTestCase2<Di
         mInstrumentation.waitForIdleSync();
         assertEquals(items[0], mSelectedItem);
         assertEquals(items[0], mListView.getItemAtPosition(0));
-        verify(mOnClickListener, times(1)).onClick(mDialog, 0);
-        verifyNoMoreInteractions(mOnClickListener);
-    }
-
-    private void preparePeople() {
-        final ContentResolver mResolver = mContext.getContentResolver();
-        mResolver.delete(People.CONTENT_URI, null, null);
-        final ContentValues values = new ContentValues();
-        values.put(People._ID, "1");
-        values.put(People.NAME, "name");
-        mResolver.insert(People.CONTENT_URI, values);
-    }
-
-    public void testSetSingleChoiceItemsWithParamCursor() throws Throwable {
-        final String[] PROJECTION = new String[] {
-                People._ID, People.NAME
-        };
-        preparePeople();
-        final Cursor c = mContext.getContentResolver().query(People.CONTENT_URI, PROJECTION, null,
-                null, null);
-
-        runTestOnUiThread(new Runnable() {
-            public void run() {
-                mBuilder = new AlertDialog.Builder(mContext);
-                mBuilder.setSingleChoiceItems(c, 0, People.NAME, mOnClickListener);
-                mDialog = mBuilder.show();
-                mListView = mDialog.getListView();
-                mListView.performItemClick(null, 0, 0);
-            }
-        });
-        mInstrumentation.waitForIdleSync();
-        final CursorWrapper selected = (CursorWrapper)mListView.getSelectedItem();
-        assertEquals(c.getString(1), selected.getString(1));
         verify(mOnClickListener, times(1)).onClick(mDialog, 0);
         verifyNoMoreInteractions(mOnClickListener);
     }
