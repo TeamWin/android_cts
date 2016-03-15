@@ -403,6 +403,14 @@ public class ConfigurationTest extends AndroidTestCase {
         assertEquals(View.LAYOUT_DIRECTION_RTL, config.getLayoutDirection());
     }
 
+    public void testIsScreenRound() {
+        Configuration config = new Configuration();
+        assertFalse(config.isScreenRound());
+
+        config.screenLayout |= Configuration.SCREENLAYOUT_ROUND_YES;
+        assertTrue(config.isScreenRound());
+    }
+
     public void testFixUpLocaleList() {
         Configuration config = new Configuration();
 
