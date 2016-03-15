@@ -197,7 +197,9 @@ public class VectorDrawableTest extends AndroidTestCase {
                 throw new XmlPullParserException("No start tag found");
             }
 
-            mVectorDrawable.inflate(mResources, parser, attrs, mContext.getTheme());
+            Theme theme = mResources.newTheme();
+            theme.applyStyle(R.style.Theme_ThemedDrawableTest, true);
+            mVectorDrawable.inflate(mResources, parser, attrs, theme);
 
             if (stateSet != null) {
                 mVectorDrawable.setState(stateSet);
