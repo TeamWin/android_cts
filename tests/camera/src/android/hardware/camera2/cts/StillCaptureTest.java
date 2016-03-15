@@ -402,7 +402,7 @@ public class StillCaptureTest extends Camera2SurfaceViewTestCase {
                     continue;
                 }
                 takePictureTestByCamera(/*aeRegions*/null, /*awbRegions*/null, /*afRegions*/null,
-                        /*addAeTriggerCancel*/true, /*allocateBitmap*/true);
+                        /*addAeTriggerCancel*/false, /*allocateBitmap*/true);
             } finally {
                 closeDevice();
                 closeImageReader();
