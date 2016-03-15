@@ -384,14 +384,10 @@ public class DocumentsClientTest extends InstrumentationTestCase {
     public void testOpenExternalDirectory_userRejects() throws Exception {
         if (!supportedHardware()) return;
 
-        final String externalRoot = getExternalStorageDirectory().getPath();
-
         final StorageVolume primaryVolume = getPrimaryVolume();
 
         // Tests user clicking DENY button, for all valid directories.
         for (String directory : STANDARD_DIRECTORIES) {
-            final Uri uri = Uri.fromFile(new File(externalRoot, directory));
-
             final UiAlertDialog dialog = openExternalDirectoryValidPath(primaryVolume, directory);
             dialog.noButton.click();
             assertActivityFailed();
@@ -428,6 +424,56 @@ public class DocumentsClientTest extends InstrumentationTestCase {
         // Make sure other directories still require user permission.
         final Uri grantedUri2 = userAcceptsOpenExternalDirectoryTest(volume, DIRECTORY_ALARMS);
         assertNotEqual(grantedUri, grantedUri2);
+    }
+
+    public void testOpenExternalDirectory_deniesOnceButAllowsAskingAgain() throws Exception {
+        if (!supportedHardware())
+            return;
+
+        for (StorageVolume volume : getVolumes()) {
+            // Rejects the first attempt...
+            UiAlertDialog dialog = openExternalDirectoryValidPath(volume, DIRECTORY_DCIM);
+            dialog.assertDoNotAskAgainVisibility(false);
+            dialog.noButton.click();
+            assertActivityFailed();
+
+            // ...and the second.
+            dialog = openExternalDirectoryValidPath(volume, DIRECTORY_DCIM);
+            dialog.assertDoNotAskAgainVisibility(true);
+            dialog.noButton.click();
+            assertActivityFailed();
+
+            // Third time is a charm...
+            userAcceptsOpenExternalDirectoryTest(volume, DIRECTORY_DCIM);
+        }
+    }
+
+    public void testOpenExternalDirectory_deniesOnceForAll() throws Exception {
+        if (!supportedHardware())
+            return;
+        for (StorageVolume volume : getVolumes()) {
+            // Rejects the first attempt...
+            UiAlertDialog dialog = openExternalDirectoryValidPath(volume, DIRECTORY_RINGTONES);
+            dialog.assertDoNotAskAgainVisibility(false);
+            dialog.noButton.click();
+            assertActivityFailed();
+
+            // ...and the second, checking the box
+            dialog = openExternalDirectoryValidPath(volume, DIRECTORY_RINGTONES);
+            UiObject checkbox = dialog.assertDoNotAskAgainVisibility(true);
+            assertTrue("checkbox should not be checkable", checkbox.isCheckable());
+            assertFalse("checkbox should not be checked", checkbox.isChecked());
+            checkbox.click();
+            assertTrue("checkbox should be checked", checkbox.isChecked()); // Sanity check
+            assertFalse("allow button should be disabled", dialog.yesButton.isEnabled());
+
+            dialog.noButton.click();
+            assertActivityFailed();
+
+            // Third strike out...
+            sendOpenExternalDirectoryIntent(volume, DIRECTORY_RINGTONES);
+            assertActivityFailed();
+        }
     }
 
     private Uri userAcceptsOpenExternalDirectoryTest(StorageVolume volume, String directoryName)
@@ -721,6 +767,7 @@ public class DocumentsClientTest extends InstrumentationTestCase {
     }
 
     private final class UiAlertDialog {
+        final UiObject dialog;
         final UiObject messageText;
         final UiObject yesButton;
         final UiObject noButton;
@@ -729,11 +776,31 @@ public class DocumentsClientTest extends InstrumentationTestCase {
             final String id = "android:id/parentPanel";
             boolean gotIt = mDevice.wait(Until.hasObject(By.res(id)), TIMEOUT);
             assertTrue("object with id '(" + id + "') not visible yet", gotIt);
-            final UiObject dialog = mDevice.findObject(new UiSelector().resourceId(id));
+            dialog = mDevice.findObject(new UiSelector().resourceId(id));
             assertTrue("object with id '(" + id + "') doesn't exist", dialog.exists());
-            messageText = dialog.getChild(new UiSelector().resourceId("android:id/message"));
+            messageText = dialog.getChild(
+                    new UiSelector().resourceId("com.android.documentsui:id/message"));
             yesButton = dialog.getChild(new UiSelector().resourceId("android:id/button1"));
             noButton  = dialog.getChild(new UiSelector().resourceId("android:id/button2"));
+        }
+
+        private UiObject getDoNotAskAgainCheckBox() throws UiObjectNotFoundException {
+            return dialog.getChild(
+                    new UiSelector().resourceId("com.android.documentsui:id/do_not_ask_checkbox"));
+        }
+
+        UiObject assertDoNotAskAgainVisibility(boolean expectVisible) {
+            UiObject checkbox = null;
+            try {
+                checkbox = getDoNotAskAgainCheckBox();
+                assertEquals("Wrong value for 'DoNotAskAgain.exists()",
+                        expectVisible, checkbox.exists());
+            } catch (UiObjectNotFoundException e) {
+                if (expectVisible) {
+                    fail("'Do Not Ask Again' not found");
+                }
+            }
+            return checkbox;
         }
     }
 }
