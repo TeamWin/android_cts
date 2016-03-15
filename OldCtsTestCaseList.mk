@@ -155,12 +155,12 @@ cts_test_packages := \
     CtsAppTestCases \
     CtsAppWidgetTestCases \
     CtsAssistTestCases \
-    CtsAutomotiveTestCases \
     CtsBluetoothTestCases \
     CtsBrowserTestCases \
     CtsCalendarcommon2TestCases \
     CtsCallLogTestCases \
     CtsCameraTestCases \
+    CtsCarTestCases \
     CtsContentTestCases \
     CtsDatabaseTestCases \
     CtsDisplayTestCases \
