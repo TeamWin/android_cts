@@ -67,7 +67,9 @@ public class CaptioningManagerTest extends InstrumentationTestCase {
         putSecureSetting("accessibility_captioning_enabled", "1");
         assertTrue("Observed enabled change", listener.wasEnabledChangedCalled);
 
+        // Style change gets posted in a Runnable, so we need to wait for idle.
         putSecureSetting("accessibility_captioning_preset", "-1");
+        getInstrumentation().waitForIdleSync();
         assertTrue("Observed user style change", listener.wasUserStyleChangedCalled);
 
         putSecureSetting("accessibility_captioning_locale", "ja_JP");

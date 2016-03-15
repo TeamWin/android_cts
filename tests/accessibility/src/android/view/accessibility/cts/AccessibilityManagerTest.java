@@ -24,6 +24,7 @@ import android.test.InstrumentationTestCase;
 import android.view.accessibility.AccessibilityEvent;
 import android.view.accessibility.AccessibilityManager;
 import android.view.accessibility.AccessibilityManager.AccessibilityStateChangeListener;
+import android.view.accessibility.AccessibilityManager.TouchExplorationStateChangeListener;
 
 import java.util.List;
 
@@ -63,6 +64,19 @@ public class AccessibilityManagerTest extends InstrumentationTestCase {
         };
         assertTrue(mAccessibilityManager.addAccessibilityStateChangeListener(listener));
         assertTrue(mAccessibilityManager.removeAccessibilityStateChangeListener(listener));
+        assertFalse(mAccessibilityManager.removeAccessibilityStateChangeListener(listener));
+    }
+
+    public void testAddAndRemoveTouchExplorationStateChangeListener() throws Exception {
+        TouchExplorationStateChangeListener listener = new TouchExplorationStateChangeListener() {
+            @Override
+            public void onTouchExplorationStateChanged(boolean enabled) {
+                // Do nothing.
+            }
+        };
+        assertTrue(mAccessibilityManager.addTouchExplorationStateChangeListener(listener));
+        assertTrue(mAccessibilityManager.removeTouchExplorationStateChangeListener(listener));
+        assertFalse(mAccessibilityManager.removeTouchExplorationStateChangeListener(listener));
     }
 
     public void testIsTouchExplorationEnabled() throws Exception {
@@ -173,6 +187,10 @@ public class AccessibilityManagerTest extends InstrumentationTestCase {
                 AccessibilityEvent.TYPE_VIEW_CLICKED));
     }
 
+    public void testTouchExplorationStateChanged() throws Exception {
+        waitForTouchExplorationEnabled();
+    }
+
     private void waitForAccessibilityEnabled() throws InterruptedException {
         final Object waitObject = new Object();
 
@@ -192,6 +210,29 @@ public class AccessibilityManagerTest extends InstrumentationTestCase {
             }
         }
         mAccessibilityManager.removeAccessibilityStateChangeListener(listener);
-        assertTrue("Time out enabling accessibility", mAccessibilityManager.isEnabled());
+        assertTrue("Timed out enabling accessibility", mAccessibilityManager.isEnabled());
+    }
+
+    private void waitForTouchExplorationEnabled() throws InterruptedException {
+        final Object waitObject = new Object();
+
+        TouchExplorationStateChangeListener listener = new TouchExplorationStateChangeListener() {
+            @Override
+            public void onTouchExplorationStateChanged(boolean b) {
+                synchronized (waitObject) {
+                    waitObject.notifyAll();
+                }
+            }
+        };
+        mAccessibilityManager.addTouchExplorationStateChangeListener(listener);
+        long timeoutTime = System.currentTimeMillis() + WAIT_FOR_ACCESSIBILITY_ENABLED_TIMEOUT;
+        synchronized (waitObject) {
+            if (!mAccessibilityManager.isEnabled() && (System.currentTimeMillis() < timeoutTime)) {
+                waitObject.wait(timeoutTime - System.currentTimeMillis());
+            }
+        }
+        mAccessibilityManager.removeTouchExplorationStateChangeListener(listener);
+        assertTrue("Timed out enabling touch exploration",
+                mAccessibilityManager.isTouchExplorationEnabled());
     }
 }
