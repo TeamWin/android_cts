@@ -16,6 +16,7 @@
 
 package com.android.cts.deviceowner;
 
+import android.app.ActivityManager;
 import android.app.admin.DeviceAdminReceiver;
 import android.app.admin.DevicePolicyManager;
 import android.content.BroadcastReceiver;
@@ -46,6 +47,7 @@ public class CreateAndManageUserTest extends BaseDeviceOwnerTest {
     private static final int BROADCAST_TIMEOUT = 15_000;
     private static final int USER_SWITCH_DELAY = 10_000;
     private PackageManager mPackageManager;
+    private ActivityManager mActivityManager;
     private volatile boolean mReceived;
     private volatile boolean mTestProfileOwnerWasUsed;
     private volatile boolean mSetupComplete;
@@ -55,6 +57,7 @@ public class CreateAndManageUserTest extends BaseDeviceOwnerTest {
     protected void setUp() throws Exception {
         super.setUp();
         mPackageManager = mContext.getPackageManager();
+        mActivityManager = (ActivityManager) mContext.getSystemService(Context.ACTIVITY_SERVICE);
     }
 
     @Override
@@ -241,7 +244,11 @@ public class CreateAndManageUserTest extends BaseDeviceOwnerTest {
     }
 
     public void testCreateAndManageUser_DontSkipSetupWizard() {
-        createAndManageUserTest(0);
+        if (!mActivityManager.isRunningInTestHarness()) {
+            // In test harness, the setup wizard will be disabled by default, so this test is always
+            // failing.
+            createAndManageUserTest(0);
+        }
     }
 
     // createAndManageUser should circumvent the DISALLOW_ADD_USER restriction
