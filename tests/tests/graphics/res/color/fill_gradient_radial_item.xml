@@ -24,7 +24,7 @@
           android:gradientRadius="100"
           android:startColor="#ffffffff"
           android:type="radial">
-    <item android:offset="0.1" android:color="?android:attr/colorPrimary"/>
+    <item android:offset="0.1" android:color="?attr/themeColor"/>
     <item android:offset="0.4" android:color="#fff"/>
-    <item android:offset="0.9" android:color="?android:attr/colorControlActivated"/>
+    <item android:offset="0.9" android:color="#0f0"/>
 </gradient>
