@@ -70,6 +70,16 @@ public class MockConnection extends Connection {
     }
 
     @Override
+    public void onReject(String reason) {
+        super.onReject();
+        setDisconnected(new DisconnectCause(DisconnectCause.REJECTED, reason));
+        if (mRemoteConnection != null) {
+            mRemoteConnection.reject();
+        }
+        destroy();
+    }
+
+    @Override
     public void onHold() {
         super.onHold();
         setOnHold();
