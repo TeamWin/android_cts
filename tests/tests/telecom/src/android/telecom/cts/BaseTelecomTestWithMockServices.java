@@ -756,6 +756,24 @@ public class BaseTelecomTestWithMockServices extends InstrumentationTestCase {
         );
     }
 
+    void assertDisconnectReason(final Connection connection, final String disconnectReason) {
+        waitUntilConditionIsTrueOrTimeout(
+                new Condition() {
+                    @Override
+                    public Object expected() {
+                        return disconnectReason;
+                    }
+
+                    @Override
+                    public Object actual() {
+                        return connection.getDisconnectCause().getReason();
+                    }
+                },
+                WAIT_FOR_STATE_CHANGE_TIMEOUT_MS,
+                "Connection should have been disconnected with reason: " + disconnectReason
+        );
+    }
+
     void assertConferenceState(final Conference conference, final int state) {
         waitUntilConditionIsTrueOrTimeout(
                 new Condition() {
