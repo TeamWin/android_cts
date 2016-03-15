@@ -30,6 +30,7 @@ import android.text.TextDirectionHeuristics;
 import android.text.TextPaint;
 import android.text.TextUtils;
 import android.text.TextUtils.TruncateAt;
+import android.text.method.cts.EditorState;
 import android.text.style.StyleSpan;
 
 import java.text.Normalizer;
@@ -981,6 +982,146 @@ public class StaticLayoutTest extends AndroidTestCase {
             assertEquals(testLabel, 5, layout.getOffsetToRightOf(6));
             assertEquals(testLabel, 6, layout.getOffsetToRightOf(7));
         }
+    }
+
+    private void moveCursorToRightCursorableOffset(EditorState state) {
+        assertEquals("The editor has selection", state.mSelectionStart, state.mSelectionEnd);
+        StaticLayout layout = StaticLayout.Builder.obtain(state.mText, 0, state.mText.length(),
+                mDefaultPaint, DEFAULT_OUTER_WIDTH).build();
+        final int newOffset = layout.getOffsetToRightOf(state.mSelectionStart);
+        state.mSelectionStart = state.mSelectionEnd = newOffset;
+    }
+
+    private void moveCursorToLeftCursorableOffset(EditorState state) {
+        assertEquals("The editor has selection", state.mSelectionStart, state.mSelectionEnd);
+        StaticLayout layout = StaticLayout.Builder.obtain(state.mText, 0, state.mText.length(),
+                mDefaultPaint, DEFAULT_OUTER_WIDTH).build();
+        final int newOffset = layout.getOffsetToLeftOf(state.mSelectionStart);
+        state.mSelectionStart = state.mSelectionEnd = newOffset;
+    }
+
+    public void testGetOffset_Emoji() {
+        EditorState state = new EditorState();
+
+        // Emojis
+        // U+00A9 is COPYRIGHT SIGN.
+        state.setByString("| U+00A9 U+00A9 U+00A9");
+        moveCursorToRightCursorableOffset(state);
+        state.assertEquals("U+00A9 | U+00A9 U+00A9");
+        moveCursorToRightCursorableOffset(state);
+        state.assertEquals("U+00A9 U+00A9 | U+00A9");
+        moveCursorToRightCursorableOffset(state);
+        state.assertEquals("U+00A9 U+00A9 U+00A9 |");
+        moveCursorToRightCursorableOffset(state);
+        state.assertEquals("U+00A9 U+00A9 U+00A9 |");
+        moveCursorToLeftCursorableOffset(state);
+        state.assertEquals("U+00A9 U+00A9 | U+00A9");
+        moveCursorToLeftCursorableOffset(state);
+        state.assertEquals("U+00A9 | U+00A9 U+00A9");
+        moveCursorToLeftCursorableOffset(state);
+        state.assertEquals("| U+00A9 U+00A9 U+00A9");
+        moveCursorToLeftCursorableOffset(state);
+        state.assertEquals("| U+00A9 U+00A9 U+00A9");
+
+        // Surrogate pairs
+        // U+1F468 is MAN.
+        state.setByString("| U+1F468 U+1F468 U+1F468");
+        moveCursorToRightCursorableOffset(state);
+        state.assertEquals("U+1F468 | U+1F468 U+1F468");
+        moveCursorToRightCursorableOffset(state);
+        state.assertEquals("U+1F468 U+1F468 | U+1F468");
+        moveCursorToRightCursorableOffset(state);
+        state.assertEquals("U+1F468 U+1F468 U+1F468 |");
+        moveCursorToRightCursorableOffset(state);
+        state.assertEquals("U+1F468 U+1F468 U+1F468 |");
+        moveCursorToLeftCursorableOffset(state);
+        state.assertEquals("U+1F468 U+1F468 | U+1F468");
+        moveCursorToLeftCursorableOffset(state);
+        state.assertEquals("U+1F468 | U+1F468 U+1F468");
+        moveCursorToLeftCursorableOffset(state);
+        state.assertEquals("| U+1F468 U+1F468 U+1F468");
+        moveCursorToLeftCursorableOffset(state);
+        state.assertEquals("| U+1F468 U+1F468 U+1F468");
+
+        // Keycaps
+        // U+20E3 is COMBINING ENCLOSING KEYCAP.
+        state.setByString("| '1' U+20E3 '1' U+20E3 '1' U+20E3");
+        moveCursorToRightCursorableOffset(state);
+        state.assertEquals("'1' U+20E3 | '1' U+20E3 '1' U+20E3");
+        moveCursorToRightCursorableOffset(state);
+        state.assertEquals("'1' U+20E3 '1' U+20E3 | '1' U+20E3");
+        moveCursorToRightCursorableOffset(state);
+        state.assertEquals("'1' U+20E3 '1' U+20E3 '1' U+20E3 |");
+        moveCursorToRightCursorableOffset(state);
+        state.assertEquals("'1' U+20E3 '1' U+20E3 '1' U+20E3 |");
+        moveCursorToLeftCursorableOffset(state);
+        state.assertEquals("'1' U+20E3 '1' U+20E3 | '1' U+20E3");
+        moveCursorToLeftCursorableOffset(state);
+        state.assertEquals("'1' U+20E3 | '1' U+20E3 '1' U+20E3");
+        moveCursorToLeftCursorableOffset(state);
+        state.assertEquals("| '1' U+20E3 '1' U+20E3 '1' U+20E3");
+        moveCursorToLeftCursorableOffset(state);
+        state.assertEquals("| '1' U+20E3 '1' U+20E3 '1' U+20E3");
+
+        // Variation selectors
+        // U+00A9 is COPYRIGHT SIGN, U+FE0E is VARIATION SELECTOR-15. U+FE0F is VARIATION
+        // SELECTOR-16.
+        state.setByString("| U+00A9 U+FE0E U+00A9 U+FE0F U+00A9 U+FE0E");
+        moveCursorToRightCursorableOffset(state);
+        state.assertEquals("U+00A9 U+FE0E | U+00A9 U+FE0F U+00A9 U+FE0E");
+        moveCursorToRightCursorableOffset(state);
+        state.assertEquals("U+00A9 U+FE0E U+00A9 U+FE0F | U+00A9 U+FE0E");
+        moveCursorToRightCursorableOffset(state);
+        state.assertEquals("U+00A9 U+FE0E U+00A9 U+FE0F U+00A9 U+FE0E |");
+        moveCursorToRightCursorableOffset(state);
+        state.assertEquals("U+00A9 U+FE0E U+00A9 U+FE0F U+00A9 U+FE0E |");
+        moveCursorToLeftCursorableOffset(state);
+        state.assertEquals("U+00A9 U+FE0E U+00A9 U+FE0F | U+00A9 U+FE0E");
+        moveCursorToLeftCursorableOffset(state);
+        state.assertEquals("U+00A9 U+FE0E | U+00A9 U+FE0F U+00A9 U+FE0E");
+        moveCursorToLeftCursorableOffset(state);
+        state.assertEquals("| U+00A9 U+FE0E U+00A9 U+FE0F U+00A9 U+FE0E");
+        moveCursorToLeftCursorableOffset(state);
+        state.assertEquals("| U+00A9 U+FE0E U+00A9 U+FE0F U+00A9 U+FE0E");
+
+        // Keycap + variation selector
+        state.setByString("| '1' U+FE0E U+20E3 '1' U+FE0E U+20E3 '1' U+FE0E U+20E3");
+        moveCursorToRightCursorableOffset(state);
+        state.assertEquals("'1' U+FE0E U+20E3 | '1' U+FE0E U+20E3 '1' U+FE0E U+20E3");
+        moveCursorToRightCursorableOffset(state);
+        state.assertEquals("'1' U+FE0E U+20E3 '1' U+FE0E U+20E3 | '1' U+FE0E U+20E3");
+        moveCursorToRightCursorableOffset(state);
+        state.assertEquals("'1' U+FE0E U+20E3 '1' U+FE0E U+20E3 '1' U+FE0E U+20E3 |");
+        moveCursorToRightCursorableOffset(state);
+        state.assertEquals("'1' U+FE0E U+20E3 '1' U+FE0E U+20E3 '1' U+FE0E U+20E3 |");
+        moveCursorToLeftCursorableOffset(state);
+        state.assertEquals("'1' U+FE0E U+20E3 '1' U+FE0E U+20E3 | '1' U+FE0E U+20E3");
+        moveCursorToLeftCursorableOffset(state);
+        state.assertEquals("'1' U+FE0E U+20E3 | '1' U+FE0E U+20E3 '1' U+FE0E U+20E3");
+        moveCursorToLeftCursorableOffset(state);
+        state.assertEquals("| '1' U+FE0E U+20E3 '1' U+FE0E U+20E3 '1' U+FE0E U+20E3");
+        moveCursorToLeftCursorableOffset(state);
+        state.assertEquals("| '1' U+FE0E U+20E3 '1' U+FE0E U+20E3 '1' U+FE0E U+20E3");
+
+        // Flags
+        // U+1F1E6 U+1F1E8 is Ascension Island flag.
+        state.setByString("| U+1F1E6 U+1F1E8 U+1F1E6 U+1F1E8 U+1F1E6 U+1F1E8");
+        moveCursorToRightCursorableOffset(state);
+        state.assertEquals("U+1F1E6 U+1F1E8 | U+1F1E6 U+1F1E8 U+1F1E6 U+1F1E8");
+        moveCursorToRightCursorableOffset(state);
+        state.assertEquals("U+1F1E6 U+1F1E8 U+1F1E6 U+1F1E8 | U+1F1E6 U+1F1E8");
+        moveCursorToRightCursorableOffset(state);
+        state.assertEquals("U+1F1E6 U+1F1E8 U+1F1E6 U+1F1E8 U+1F1E6 U+1F1E8 |");
+        moveCursorToRightCursorableOffset(state);
+        state.assertEquals("U+1F1E6 U+1F1E8 U+1F1E6 U+1F1E8 U+1F1E6 U+1F1E8 |");
+        moveCursorToLeftCursorableOffset(state);
+        state.assertEquals("U+1F1E6 U+1F1E8 U+1F1E6 U+1F1E8 | U+1F1E6 U+1F1E8");
+        moveCursorToLeftCursorableOffset(state);
+        state.assertEquals("U+1F1E6 U+1F1E8 | U+1F1E6 U+1F1E8 U+1F1E6 U+1F1E8");
+        moveCursorToLeftCursorableOffset(state);
+        state.assertEquals("| U+1F1E6 U+1F1E8 U+1F1E6 U+1F1E8 U+1F1E6 U+1F1E8");
+        moveCursorToLeftCursorableOffset(state);
+        state.assertEquals("| U+1F1E6 U+1F1E8 U+1F1E6 U+1F1E8 U+1F1E6 U+1F1E8");
     }
 
     public void testGetOffsetForHorizontal_Multilines() {
