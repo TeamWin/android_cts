@@ -16,9 +16,9 @@
   bug: "27310873"
 },
 {
-  description: "Cannot find any classes to test because APK doesn't have entries for directories, android/icu/",
+  description: "Cannot find any classes to test because .class files are not treated as resources in APK",
   name: "android.icu.dev.test.serializable.CoverageTest",
-  bug: "27310873"
+  bug: "27666677"
 },
 {
   description: "Serialized forms have not been converted to use repackaged classes",
@@ -34,6 +34,21 @@
   description: "A completely empty test case",
   name: "android.icu.dev.test.duration.PeriodBuilderTest"
 },
+{
+  description: "Fails on host and on device in same way before and after packaging",
+  name: "android.icu.dev.test.bidi.TestCompatibility#testCompatibility",
+  bug: "23995372"
+},
+{
+  description: "Problem with negative multiplier, not a regression",
+  name: "android.icu.dev.test.format.NumberFormatTest#TestNonpositiveMultiplier",
+  bug: "19185440"
+},
+{
+  description: "Wrong case for exponent separator",
+  name: "android.icu.dev.test.format.PluralRulesTest#testOverUnderflow",
+  bug: "27566754"
+},
 // The following are known to be broken but the reason is not yet known. They are expected to
 // succeed and so will be run and will fail but that is intentional so that they do not get
 // forgotten and are investigated to determine whether it is correct behavior on Android or a bug
@@ -41,35 +56,12 @@
 {
   description: "Broken and not yet triaged",
   names: [
-    "android.icu.dev.test.bidi.TestCompatibility#testCompatibility",
-    "android.icu.dev.test.calendar.ChineseTest#TestCoverage",
-    "android.icu.dev.test.calendar.ChineseTest#TestInitWithCurrentTime",
-    "android.icu.dev.test.calendar.IBMCalendarTest#TestAddRollEra0AndEraBounds",
-    "android.icu.dev.test.duration.ICUDurationTest#TestBasics",
-    "android.icu.dev.test.format.DataDrivenFormatTest#TestConsistentPivot",
-    "android.icu.dev.test.format.DataDrivenFormatTest#TestDateFormatBasic",
-    "android.icu.dev.test.format.DateFormatRegressionTest#Test4073003",
-    "android.icu.dev.test.format.DateFormatRegressionTest#Test4151706",
-    "android.icu.dev.test.format.DateFormatRegressionTest#Test4182066",
-    "android.icu.dev.test.format.DateFormatTest#TestBadInput135",
-    "android.icu.dev.test.format.DateFormatTest#TestDotAndAtLeniency",
-    "android.icu.dev.test.format.DateFormatTest#TestGenericTime",
-    "android.icu.dev.test.format.DateFormatTest#TestPartialParse994",
-    "android.icu.dev.test.format.DateFormatTest#TestQuarters",
-    "android.icu.dev.test.format.DateFormatTest#TestSpaceParsing",
-    "android.icu.dev.test.format.DateFormatTest#TestTwoDigitYear",
-    "android.icu.dev.test.format.DateFormatTest#TestWhiteSpaceParsing",
     "android.icu.dev.test.format.NumberFormatTest#TestDataDrivenJDK",
-    "android.icu.dev.test.format.NumberFormatTest#TestNonpositiveMultiplier",
-    "android.icu.dev.test.format.PluralRulesTest#testOverUnderflow",
-    "android.icu.dev.test.timezone.TimeZoneBoundaryTest#TestStepwise",
-    "android.icu.dev.test.timezone.TimeZoneTest#TestObservesDaylightTime",
-    "android.icu.dev.test.util.CurrencyTest#TestGetKeywordValues"
   ],
   result: "SUCCESS"
 },
 {
-  description: "Broken due to warnings, not yet triaged",
+  description: "Collation rules data has been removed from ICU4J data on Android",
   names: [
     "android.icu.dev.test.collator.CollationCreationMethodTest#TestRuleVsLocaleCreationMonkey",
     "android.icu.dev.test.collator.CollationMiscTest#TestImport",
@@ -78,6 +70,6 @@
     "android.icu.dev.test.collator.CollationTest#TestDataDriven",
     "android.icu.dev.test.collator.G7CollationTest#TestG7Data"
   ],
-  result: "SUCCESS"
+  bug: "27552651"
 }
 ]
