@@ -16,11 +16,13 @@
 package android.uirendering.cts.testinfrastructure;
 
 import android.annotation.Nullable;
+import android.app.Activity;
+import android.app.Instrumentation;
 import android.graphics.Bitmap;
 import android.graphics.Point;
 import android.renderscript.Allocation;
 import android.renderscript.RenderScript;
-import android.test.ActivityInstrumentationTestCase2;
+import android.support.test.rule.ActivityTestRule;
 import android.uirendering.cts.bitmapcomparers.BitmapComparer;
 import android.uirendering.cts.bitmapverifiers.BitmapVerifier;
 import android.uirendering.cts.differencevisualizers.DifferenceVisualizer;
@@ -29,18 +31,23 @@ import android.uirendering.cts.util.BitmapDumper;
 import android.util.Log;
 
 import android.support.test.InstrumentationRegistry;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.rules.TestName;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+
+import static org.junit.Assert.assertTrue;
 
 /**
  * This class contains the basis for the graphics hardware test classes. Contained within this class
  * are several methods that help with the execution of tests, and should be extended to gain the
  * functionality built in.
  */
-public abstract class ActivityTestBase extends
-        ActivityInstrumentationTestCase2<DrawActivity> {
+public abstract class ActivityTestBase {
     public static final String TAG = "ActivityTestBase";
     public static final boolean DEBUG = false;
     public static final boolean USE_RS = false;
@@ -57,12 +64,18 @@ public abstract class ActivityTestBase extends
     private RenderScript mRenderScript;
     private TestCaseBuilder mTestCaseBuilder;
 
+    @Rule
+    public ActivityTestRule<DrawActivity> mActivityRule = new ActivityTestRule<>(
+            DrawActivity.class);
+
+    @Rule
+    public TestName name = new TestName();
+
     /**
      * The default constructor creates the package name and sets the DrawActivity as the class that
      * we would use.
      */
     public ActivityTestBase() {
-        super(DrawActivity.class);
         mDifferenceVisualizer = new PassFailVisualizer();
 
         // Create a location for the files to be held, if it doesn't exist already
@@ -74,26 +87,27 @@ public abstract class ActivityTestBase extends
         }
     }
 
-    /**
-     * This method is called before each test case and should be called from the test class that
-     * extends this class.
-     */
-    @Override
+    protected DrawActivity getActivity() {
+        return mActivityRule.getActivity();
+    }
+
+    protected String getName() {
+        return name.getMethodName();
+    }
+
+    protected Instrumentation getInstrumentation() {
+        return InstrumentationRegistry.getInstrumentation();
+    }
+
+    @Before
     public void setUp() {
-        // As the way to access Instrumentation is changed in the new runner, we need to inject it
-        // manually into ActivityInstrumentationTestCase2. ActivityInstrumentationTestCase2 will
-        // be marked as deprecated and replaced with ActivityTestRule.
-        injectInstrumentation(InstrumentationRegistry.getInstrumentation());
         mDifferenceVisualizer = new PassFailVisualizer();
         if (USE_RS) {
             mRenderScript = RenderScript.create(getActivity().getApplicationContext());
         }
     }
 
-    /**
-     * This method will kill the activity so that it can be reset depending on the test.
-     */
-    @Override
+    @After
     public void tearDown() {
         if (mTestCaseBuilder != null) {
             List<TestCase> testCases = mTestCaseBuilder.getTestCases();
@@ -101,7 +115,6 @@ public abstract class ActivityTestBase extends
             if (testCases.size() == 0) {
                 throw new IllegalStateException("Must have at least one test case");
             }
-
 
             for (TestCase testCase : testCases) {
                 if (!testCase.wasTestRan) {
@@ -111,16 +124,6 @@ public abstract class ActivityTestBase extends
             }
             mTestCaseBuilder = null;
         }
-
-        Runnable finishRunnable = new Runnable() {
-
-            @Override
-            public void run() {
-                getActivity().finish();
-            }
-        };
-
-        getActivity().runOnUiThread(finishRunnable);
     }
 
     public Bitmap takeScreenshot(Point testOffset) {

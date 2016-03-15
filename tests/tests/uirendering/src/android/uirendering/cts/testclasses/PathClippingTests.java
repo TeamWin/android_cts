@@ -34,6 +34,8 @@ import android.view.ViewGroup;
 import android.webkit.WebView;
 import android.uirendering.cts.R;
 
+import static org.junit.Assert.assertNotNull;
+
 public class PathClippingTests extends ActivityTestBase {
     // draw circle with hole in it, with stroked circle
     static final CanvasClient sTorusDrawCanvasClient = new CanvasClient() {
