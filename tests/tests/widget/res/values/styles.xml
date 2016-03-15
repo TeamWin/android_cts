@@ -169,4 +169,5 @@
         <item name="android:windowSwipeToDismiss">false</item>
     </style>
 
+    <style name="PopupEmptyStyle" />
 </resources>
