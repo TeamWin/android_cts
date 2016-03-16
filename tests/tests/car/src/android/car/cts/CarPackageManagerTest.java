@@ -18,16 +18,21 @@ package android.car.cts;
 import android.car.Car;
 import android.car.CarNotConnectedException;
 import android.car.content.pm.CarPackageManager;
-import android.telecom.TelecomManager;
-import android.util.Log;
+import android.content.pm.ApplicationInfo;
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
+import android.os.Bundle;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.ExecutionException;
 
 public class CarPackageManagerTest extends CarApiTestBase {
 
     private CarPackageManager mCarPm;
+    private static String TAG = CarPackageManagerTest.class.getSimpleName();
+
+    /** Name of the meta-data attribute for the automotive application XML resource */
+    private static final String METADATA_ATTRIBUTE = "android.car.application";
+
 
     @Override
     protected void setUp() throws Exception {
@@ -39,8 +44,6 @@ public class CarPackageManagerTest extends CarApiTestBase {
        assertFalse(mCarPm.isActivityAllowedWhileDriving("com.basic.package", "DummyActivity"));
        // Real system activity is not allowed as well.
        assertFalse(mCarPm.isActivityAllowedWhileDriving("com.android.phone", "CallActivity"));
-       assertTrue(mCarPm.isActivityAllowedWhileDriving(
-               "com.google.android.car.media", "com.google.android.car.media.MediaProxyActivity"));
 
        try {
            mCarPm.isActivityAllowedWhileDriving("com.android.settings", null);
@@ -62,6 +65,32 @@ public class CarPackageManagerTest extends CarApiTestBase {
        }
    }
 
+    public void testSystemActivitiesAllowed() throws CarNotConnectedException {
+        List<PackageInfo> packages = getContext().getPackageManager().getInstalledPackages(
+                PackageManager.GET_ACTIVITIES | PackageManager.GET_META_DATA);
+
+        for (PackageInfo info : packages) {
+            if (info.applicationInfo == null) {
+                continue;
+            }
+            if ((info.applicationInfo.flags & ApplicationInfo.FLAG_SYSTEM) != 0 ||
+                    ((info.applicationInfo.flags & ApplicationInfo.FLAG_UPDATED_SYSTEM_APP) != 0)) {
+
+                Bundle metaData = info.applicationInfo.metaData;
+                if (metaData == null || metaData.getInt(METADATA_ATTRIBUTE, 0) == 0) {
+                    continue;  // No car metadata, ignoring this app.
+                }
+
+                if (info.activities != null && info.activities.length > 0) {
+                    String activity = info.activities[0].name;
+                    String packageName = info.packageName;
+                    assertTrue("Failed for package: " + packageName + ", activity: " + activity,
+                            mCarPm.isActivityAllowedWhileDriving(packageName, activity));
+                }
+            }
+        }
+    }
+
     public void testServiceAllowedWhileDriving() throws Exception {
         assertFalse(mCarPm.isServiceAllowedWhileDriving("com.basic.package", ""));
         assertTrue(mCarPm.isServiceAllowedWhileDriving("com.android.settings", "Any"));
@@ -75,4 +104,5 @@ public class CarPackageManagerTest extends CarApiTestBase {
             // Expected.
         }
     }
+
 }
