@@ -17,17 +17,11 @@
 
     <include name="everything" />
     <include name="cts-preconditions" />
+    <include name="cts-known-failures" />
 
     <option name="compatibility:plan" value="cts" />
 
     <option name="enable-root" value="false" />
-
-    <!-- Exclude sample test cases -->
-    <option name="compatibility:exclude-filter" value="CtsSampleDeviceTestCases" />
-    <option name="compatibility:exclude-filter" value="CtsSampleHostTestCases" />
-
-    <!-- Exclude automotive only test cases for now -->
-    <option name="compatibility:exclude-filter" value="CtsCarTestCases" />
 
     <target_preparer class="com.android.compatibility.common.tradefed.targetprep.PropertyCheck">
         <option name="property-name" value="ro.build.type" />
@@ -41,4 +35,5 @@
         <option name="throw-error" value="false"/> <!-- Only print warning if not en-US -->
     </target_preparer>
     <template-include name="reporters" default="basic-reporters" />
+
 </configuration>
