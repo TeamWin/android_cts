@@ -56,7 +56,7 @@
 {
   description: "Broken and not yet triaged",
   names: [
-    "android.icu.dev.test.format.NumberFormatTest#TestDataDrivenJDK",
+    "android.icu.dev.test.format.NumberFormatTest#TestDataDrivenJDK"
   ],
   result: "SUCCESS"
 },
