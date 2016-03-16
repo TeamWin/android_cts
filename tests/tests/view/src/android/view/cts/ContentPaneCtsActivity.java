@@ -19,8 +19,7 @@ package android.view.cts;
 import android.app.Activity;
 import android.os.Bundle;
 import android.view.Menu;
-import android.view.MenuItem;
-import android.view.cts.R;
+import android.view.Window;
 
 /**
  * A simple activity to test "Focus Handling"
@@ -30,6 +29,7 @@ public class ContentPaneCtsActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setTheme(android.R.style.Theme_Material_Light);
+        getWindow().requestFeature(Window.FEATURE_OPTIONS_PANEL);
         setContentView(R.layout.viewtreeobserver_layout);
     }
 
