@@ -16,6 +16,8 @@
 
 package android.location.cts;
 
+import android.location.GnssClock;
+import android.location.GnssMeasurement;
 import android.location.GnssMeasurementsEvent;
 import android.test.AndroidTestCase;
 
@@ -25,7 +27,11 @@ public class GnssMeasurementsEventCallbackTest extends AndroidTestCase {
 
     public void testAllMethodsExist() {
         GnssMeasurementsEvent.Callback callback = new MockCallback();
-        GnssMeasurementsEvent event = new GnssMeasurementsEvent(null, null);
+        GnssClock clock = new GnssClock();
+        GnssMeasurement m1 = new GnssMeasurement();
+        GnssMeasurement m2 = new GnssMeasurement();
+        GnssMeasurementsEvent event = new GnssMeasurementsEvent(
+                clock, new GnssMeasurement[] {m1, m2});
         callback.onGnssMeasurementsReceived(event);
         callback.onStatusChanged(GnssMeasurementsEvent.STATUS_READY);
     }

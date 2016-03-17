@@ -16,6 +16,7 @@
 
 package android.location.cts;
 
+import android.location.GnssNavigationMessage;
 import android.location.GnssNavigationMessageEvent;
 import android.test.AndroidTestCase;
 
@@ -25,7 +26,8 @@ public class GnssNavigationMessageEventCallbackTest extends AndroidTestCase {
 
     public void testAllMethodsExist() {
         GnssNavigationMessageEvent.Callback callback = new MockCallback();
-        GnssNavigationMessageEvent event = new GnssNavigationMessageEvent(null);
+        GnssNavigationMessage message = new GnssNavigationMessage();
+        GnssNavigationMessageEvent event = new GnssNavigationMessageEvent(message);
         callback.onGnssNavigationMessageReceived(event);
         callback.onStatusChanged(GnssNavigationMessageEvent.STATUS_READY);
     }
