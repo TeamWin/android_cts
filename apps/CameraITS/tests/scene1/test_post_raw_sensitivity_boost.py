@@ -47,17 +47,17 @@ def main():
             raw_format = 'raw10'
         elif its.caps.raw12(props):
             raw_format = 'raw12'
-        else # should not reach here
+        else: # should not reach here
             raise its.error.Error('Cannot find available RAW output format')
 
         out_surfaces = [{"format": raw_format},
                         {"format": "yuv", "width": w, "height": h}]
 
         sens_min, sens_max = props['android.sensor.info.sensitivityRange']
-        sens_boost_min, sens_boost_max =
+        sens_boost_min, sens_boost_max = \
                 props['android.control.postRawSensitivityBoostRange']
 
-        e_targer, s_target =
+        e_targer, s_target = \
                 its.target.get_target_exposure_combos(cam)["midSensitivity"]
 
         reqs = []
