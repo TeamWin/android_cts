@@ -16,24 +16,24 @@
 
 package android.widget.cts;
 
-import android.graphics.Color;
-import android.view.View;
-import android.view.ViewTreeObserver;
 import org.xmlpull.v1.XmlPullParser;
 
 import android.app.Activity;
 import android.content.Context;
+import android.graphics.Color;
 import android.test.ActivityInstrumentationTestCase;
 import android.test.ViewAsserts;
 import android.util.AttributeSet;
 import android.util.Xml;
+import android.view.View;
+import android.view.View.MeasureSpec;
 import android.view.ViewGroup;
-import android.widget.LinearLayout.LayoutParams;
+import android.view.ViewTreeObserver;
 import android.widget.AbsoluteLayout;
 import android.widget.LinearLayout;
+import android.widget.LinearLayout.LayoutParams;
 import android.widget.ListView;
 import android.widget.TextView;
-
 import android.widget.cts.R;
 
 import java.util.concurrent.CountDownLatch;
@@ -175,6 +175,54 @@ public class LinearLayoutTest extends ActivityInstrumentationTestCase<LinearLayo
         assertEquals(Math.ceil(parentWidth * 0.2), weight02.getWidth(), 1.0);
         assertEquals(Math.ceil(parentWidth * 0.5), weight05.getWidth(), 1.0);
         assertEquals(Math.ceil(parentWidth * 0.3), weight03.getWidth(), 1.0);
+    }
+
+    public void testWeightDistribution() {
+        LinearLayout layout = new LinearLayout(mActivity);
+        for (int i = 0; i < 3; i++) {
+            layout.addView(new View(mActivity), new LayoutParams(0, 0, 1));
+        }
+
+        int size = 100;
+        int spec = MeasureSpec.makeMeasureSpec(size, MeasureSpec.EXACTLY);
+
+        for (int i = 0; i < 3; i++) {
+            View child = layout.getChildAt(i);
+            LayoutParams lp = (LayoutParams) child.getLayoutParams();
+            lp.height = 0;
+            lp.width = LayoutParams.MATCH_PARENT;
+            child.setLayoutParams(lp);
+        }
+        layout.setOrientation(LinearLayout.VERTICAL);
+        layout.measure(spec, spec);
+        layout.layout(0, 0, size, size);
+        assertEquals(100, layout.getWidth());
+        assertEquals(100, layout.getChildAt(0).getWidth());
+        assertEquals(100, layout.getChildAt(1).getWidth());
+        assertEquals(100, layout.getChildAt(2).getWidth());
+        assertEquals(100, layout.getHeight());
+        assertEquals(33, layout.getChildAt(0).getHeight());
+        assertEquals(33, layout.getChildAt(1).getHeight());
+        assertEquals(34, layout.getChildAt(2).getHeight());
+
+        for (int i = 0; i < 3; i++) {
+            View child = layout.getChildAt(i);
+            LayoutParams lp = (LayoutParams) child.getLayoutParams();
+            lp.height = LayoutParams.MATCH_PARENT;
+            lp.width = 0;
+            child.setLayoutParams(lp);
+        }
+        layout.setOrientation(LinearLayout.HORIZONTAL);
+        layout.measure(spec, spec);
+        layout.layout(0, 0, size, size);
+        assertEquals(100, layout.getWidth());
+        assertEquals(33, layout.getChildAt(0).getWidth());
+        assertEquals(33, layout.getChildAt(1).getWidth());
+        assertEquals(34, layout.getChildAt(2).getWidth());
+        assertEquals(100, layout.getHeight());
+        assertEquals(100, layout.getChildAt(0).getHeight());
+        assertEquals(100, layout.getChildAt(1).getHeight());
+        assertEquals(100, layout.getChildAt(2).getHeight());
     }
 
     public void testGenerateLayoutParams() {
