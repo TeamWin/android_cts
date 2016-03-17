@@ -72,6 +72,7 @@ import android.text.method.TextKeyListener.Capitalize;
 import android.text.method.TimeKeyListener;
 import android.text.method.TransformationMethod;
 import android.text.style.URLSpan;
+import android.text.style.UnderlineSpan;
 import android.text.util.Linkify;
 import android.util.DisplayMetrics;
 import android.util.LocaleList;
@@ -4014,10 +4015,53 @@ public class TextViewTest extends ActivityInstrumentationTestCase2<TextViewCtsAc
                 mTextView.getText().toString());
 
         ExtractedText et = new ExtractedText();
+
+        // Update text and selection.
         et.text = "test";
+        et.selectionStart = 0;
+        et.selectionEnd = 2;
 
         mTextView.setExtractedText(et);
         assertEquals("test", mTextView.getText().toString());
+        assertEquals(0, mTextView.getSelectionStart());
+        assertEquals(2, mTextView.getSelectionEnd());
+
+        // Use partialStartOffset and partialEndOffset
+        et.partialStartOffset = 2;
+        et.partialEndOffset = 3;
+        et.text = "x";
+        et.selectionStart = 2;
+        et.selectionEnd = 3;
+
+        mTextView.setExtractedText(et);
+        assertEquals("text", mTextView.getText().toString());
+        assertEquals(2, mTextView.getSelectionStart());
+        assertEquals(3, mTextView.getSelectionEnd());
+
+        // Update text with spans.
+        final SpannableString ss = new SpannableString("ex");
+        ss.setSpan(new UnderlineSpan(), 0, 2, 0);
+        ss.setSpan(new URLSpan("ctstest://TextView/test"), 1, 2, 0);
+
+        et.text = ss;
+        et.partialStartOffset = 1;
+        et.partialEndOffset = 3;
+        mTextView.setExtractedText(et);
+
+        assertEquals("text", mTextView.getText().toString());
+        final Editable editable = mTextView.getEditableText();
+        final UnderlineSpan[] underlineSpans = mTextView.getEditableText().getSpans(
+                0, editable.length(), UnderlineSpan.class);
+        assertEquals(1, underlineSpans.length);
+        assertEquals(1, editable.getSpanStart(underlineSpans[0]));
+        assertEquals(3, editable.getSpanEnd(underlineSpans[0]));
+
+        final URLSpan[] urlSpans = mTextView.getEditableText().getSpans(
+                0, editable.length(), URLSpan.class);
+        assertEquals(1, urlSpans.length);
+        assertEquals(2, editable.getSpanStart(urlSpans[0]));
+        assertEquals(3, editable.getSpanEnd(urlSpans[0]));
+        assertEquals("ctstest://TextView/test", urlSpans[0].getURL());
     }
 
     public void testMoveCursorToVisibleOffset() throws Throwable {
