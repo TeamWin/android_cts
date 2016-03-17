@@ -198,7 +198,7 @@ public class HealthStatsTest extends TestCase {
         // Measurements
         writer.addMeasurements(MEASUREMENTS_0, "Z", 800);
         writer.addMeasurements(MEASUREMENTS_1, "Y", 900);
-        writer.addMeasurements(MEASUREMENTS_1, "Z", 901);
+        writer.addMeasurements(MEASUREMENTS_1, "X", 901);
 
 
         // Parcel and unparcel it via HealthStatsWriter.writeToParcel.
