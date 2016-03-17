@@ -31,7 +31,6 @@ import android.os.Process;
 import android.os.RemoteException;
 import android.test.AndroidTestCase;
 import android.util.Log;
-import android.util.MutableInt;
 
 import android.externalservice.common.ServiceMessages;
 
@@ -140,15 +139,13 @@ public class ExternalServiceTest extends AndroidTestCase {
 
         // Check the identity of the service.
         Messenger remote = new Messenger(mConnection.service);
-        MutableInt uid = new MutableInt(0);
-        MutableInt pid = new MutableInt(0);
-        StringBuilder pkg = new StringBuilder();
-        assertTrue(identifyService(remote, uid, pid, pkg));
+        ServiceIdentity id = identifyService(remote);
+        assertNotNull(id);
 
-        assertFalse(uid.value == 0 || pid.value == 0);
-        assertNotEquals(Process.myUid(), uid.value);
-        assertNotEquals(Process.myPid(), pid.value);
-        assertEquals(getContext().getPackageName(), pkg.toString());
+        assertFalse(id.uid == 0 || id.pid == 0);
+        assertNotEquals(Process.myUid(), id.uid);
+        assertNotEquals(Process.myPid(), id.pid);
+        assertEquals(getContext().getPackageName(), id.packageName);
     }
 
     /** Tests that the APK providing the externalService can bind the service itself, and that
@@ -165,11 +162,9 @@ public class ExternalServiceTest extends AndroidTestCase {
 
         // Get the identity of the creator.
         Messenger remoteCreator = new Messenger(creatorConnection.service);
-        MutableInt creatorUid = new MutableInt(0);
-        MutableInt creatorPid = new MutableInt(0);
-        StringBuilder creatorPkg = new StringBuilder();
-        assertTrue(identifyService(remoteCreator, creatorUid, creatorPid, creatorPkg));
-        assertFalse(creatorUid.value == 0 || creatorPid.value == 0);
+        ServiceIdentity creatorId = identifyService(remoteCreator);
+        assertNotNull(creatorId);
+        assertFalse(creatorId.uid == 0 || creatorId.pid == 0);
 
         // Have the creator actually start its service.
         final Message creatorMsg =
@@ -201,12 +196,9 @@ public class ExternalServiceTest extends AndroidTestCase {
         // Get the connection to the creator's service.
         assertNotNull(creatorMsg.obj);
         Messenger remoteCreatorService = (Messenger) creatorMsg.obj;
-        MutableInt creatorServiceUid = new MutableInt(0);
-        MutableInt creatorServicePid = new MutableInt(0);
-        StringBuilder creatorServicePkg = new StringBuilder();
-        assertTrue(identifyService(remoteCreatorService, creatorServiceUid, creatorServicePid,
-                creatorServicePkg));
-        assertFalse(creatorServiceUid.value == 0 || creatorPid.value == 0);
+        ServiceIdentity creatorServiceId = identifyService(remoteCreatorService);
+        assertNotNull(creatorServiceId);
+        assertFalse(creatorServiceId.uid == 0 || creatorId.pid == 0);
 
         // Create an external service from this (the test) process.
         intent = new Intent();
@@ -216,37 +208,34 @@ public class ExternalServiceTest extends AndroidTestCase {
         assertTrue(getContext().bindService(intent, mConnection,
                     Context.BIND_AUTO_CREATE | Context.BIND_EXTERNAL_SERVICE));
         assertTrue(mCondition.block(CONDITION_TIMEOUT));
-        MutableInt serviceUid = new MutableInt(0);
-        MutableInt servicePid = new MutableInt(0);
-        StringBuilder servicePkg = new StringBuilder();
-        assertTrue(identifyService(new Messenger(mConnection.service), serviceUid, servicePid,
-                servicePkg));
-        assertFalse(serviceUid.value == 0 || servicePid.value == 0);
+        ServiceIdentity serviceId = identifyService(new Messenger(mConnection.service));
+        assertNotNull(serviceId);
+        assertFalse(serviceId.uid == 0 || serviceId.pid == 0);
 
         // Make sure that all the processes are unique.
         int myUid = Process.myUid();
         int myPid = Process.myPid();
         String myPkg = getContext().getPackageName();
 
-        assertNotEquals(myUid, creatorUid.value);
-        assertNotEquals(myUid, creatorServiceUid.value);
-        assertNotEquals(myUid, serviceUid.value);
-        assertNotEquals(myPid, creatorPid.value);
-        assertNotEquals(myPid, creatorServicePid.value);
-        assertNotEquals(myPid, servicePid.value);
+        assertNotEquals(myUid, creatorId.uid);
+        assertNotEquals(myUid, creatorServiceId.uid);
+        assertNotEquals(myUid, serviceId.uid);
+        assertNotEquals(myPid, creatorId.pid);
+        assertNotEquals(myPid, creatorServiceId.pid);
+        assertNotEquals(myPid, serviceId.pid);
 
-        assertNotEquals(creatorUid.value, creatorServiceUid.value);
-        assertNotEquals(creatorUid.value, serviceUid.value);
-        assertNotEquals(creatorPid.value, creatorServicePid.value);
-        assertNotEquals(creatorPid.value, servicePid.value);
+        assertNotEquals(creatorId.uid, creatorServiceId.uid);
+        assertNotEquals(creatorId.uid, serviceId.uid);
+        assertNotEquals(creatorId.pid, creatorServiceId.pid);
+        assertNotEquals(creatorId.pid, serviceId.pid);
 
-        assertNotEquals(creatorServiceUid.value, serviceUid.value);
-        assertNotEquals(creatorServicePid.value, servicePid.value);
+        assertNotEquals(creatorServiceId.uid, serviceId.uid);
+        assertNotEquals(creatorServiceId.pid, serviceId.pid);
 
-        assertNotEquals(myPkg, creatorPkg.toString());
-        assertNotEquals(myPkg, creatorServicePkg.toString());
-        assertEquals(creatorPkg.toString(), creatorServicePkg.toString());
-        assertEquals(myPkg, servicePkg.toString());
+        assertNotEquals(myPkg, creatorId.packageName);
+        assertNotEquals(myPkg, creatorServiceId.packageName);
+        assertEquals(creatorId.packageName, creatorServiceId.packageName);
+        assertEquals(myPkg, serviceId.packageName);
 
         getContext().unbindService(creatorConnection);
     }
@@ -264,11 +253,9 @@ public class ExternalServiceTest extends AndroidTestCase {
 
         assertTrue(mCondition.block(CONDITION_TIMEOUT));
 
-        MutableInt uidOne = new MutableInt(0);
-        MutableInt pidOne = new MutableInt(0);
-        StringBuilder pkgOne = new StringBuilder();
-        assertTrue(identifyService(new Messenger(initialConn.service), uidOne, pidOne, pkgOne));
-        assertFalse(uidOne.value == 0 || pidOne.value == 0);
+        ServiceIdentity idOne = identifyService(new Messenger(initialConn.service));
+        assertNotNull(idOne);
+        assertFalse(idOne.uid == 0 || idOne.pid == 0);
 
         // Bind the service with a different priority.
         mCondition.close();
@@ -279,38 +266,41 @@ public class ExternalServiceTest extends AndroidTestCase {
 
         assertTrue(mCondition.block(CONDITION_TIMEOUT));
 
-        MutableInt uidTwo = new MutableInt(0);
-        MutableInt pidTwo = new MutableInt(0);
-        StringBuilder pkgTwo = new StringBuilder();
-        Messenger prioMessenger = new Messenger(prioConn.service);
-        assertTrue(identifyService(prioMessenger, uidTwo, pidTwo, pkgTwo));
-        assertFalse(uidTwo.value == 0 || pidTwo.value == 0);
+        ServiceIdentity idTwo = identifyService(new Messenger(prioConn.service));
+        assertNotNull(idTwo);
+        assertFalse(idTwo.uid == 0 || idTwo.pid == 0);
 
-        assertEquals(uidOne.value, uidTwo.value);
-        assertEquals(pidOne.value, pidTwo.value);
-        assertEquals(pkgOne.toString(), pkgTwo.toString());
-        assertNotEquals(Process.myUid(), uidOne.value);
-        assertNotEquals(Process.myPid(), pidOne.value);
-        assertEquals(getContext().getPackageName(), pkgOne.toString());
+        assertEquals(idOne.uid, idTwo.uid);
+        assertEquals(idOne.pid, idTwo.pid);
+        assertEquals(idOne.packageName, idTwo.packageName);
+        assertNotEquals(Process.myUid(), idOne.uid);
+        assertNotEquals(Process.myPid(), idOne.pid);
+        assertEquals(getContext().getPackageName(), idOne.packageName);
 
         getContext().unbindService(prioConn);
         getContext().unbindService(initialConn);
     }
 
-    /** Given a Messenger, this will message the service to retrieve its UID, PID, and package name,
-     * storing the results in the mutable parameters. */
-    private boolean identifyService(Messenger service, final MutableInt uid, final MutableInt pid,
-            final StringBuilder packageName) {
+    /** Contains information about the security principal of a Service. */
+    private static class ServiceIdentity {
+        int uid;
+        int pid;
+        String packageName;
+    }
+
+    /** Given a Messenger, this will message the service to retrieve its UID, PID, and package name.
+     * On success, returns a ServiceIdentity. On failure, returns null. */
+    private ServiceIdentity identifyService(Messenger service) {
+        final ServiceIdentity id = new ServiceIdentity();
         Handler handler = new Handler(Looper.getMainLooper()) {
             @Override
             public void handleMessage(Message msg) {
                 Log.d(TAG, "Received message: " + msg);
                 switch (msg.what) {
                     case ServiceMessages.MSG_IDENTIFY_RESPONSE:
-                        uid.value = msg.arg1;
-                        pid.value = msg.arg2;
-                        packageName.append(
-                                msg.getData().getString(ServiceMessages.IDENTIFY_PACKAGE));
+                        id.uid = msg.arg1;
+                        id.pid = msg.arg2;
+                        id.packageName = msg.getData().getString(ServiceMessages.IDENTIFY_PACKAGE);
                         mCondition.open();
                         break;
                 }
@@ -326,10 +316,12 @@ public class ExternalServiceTest extends AndroidTestCase {
             service.send(msg);
         } catch (RemoteException e) {
             fail("Unexpected remote exception: " + e);
-            return false;
+            return null;
         }
 
-        return mCondition.block(CONDITION_TIMEOUT);
+        if (!mCondition.block(CONDITION_TIMEOUT))
+            return null;
+        return id;
     }
 
     private class Connection implements ServiceConnection {

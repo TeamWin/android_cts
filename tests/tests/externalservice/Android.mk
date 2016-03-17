@@ -36,7 +36,7 @@ LOCAL_CTS_MODULE_CONFIG := $(LOCAL_PATH)/Old$(CTS_MODULE_TEST_CONFIG)
 
 LOCAL_PACKAGE_NAME := CtsExternalServiceTestCases
 
-LOCAL_SDK_VERSION := system_current
+LOCAL_SDK_VERSION := current
 
 include $(BUILD_CTS_PACKAGE)
 include $(call all-makefiles-under,$(LOCAL_PATH))

@@ -30,6 +30,6 @@ LOCAL_PACKAGE_NAME := CtsExternalServiceService
 # Tag this module as a cts test artifact
 LOCAL_COMPATIBILITY_SUITE := cts
 
-LOCAL_SDK_VERSION := system_current
+LOCAL_SDK_VERSION := current
 
 include $(BUILD_CTS_SUPPORT_PACKAGE)
