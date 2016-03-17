@@ -477,7 +477,7 @@ public class LocationManagerTest extends BaseMockLocationTest {
         }
 
         try {
-            mManager.removeUpdates( (LocationListener) null );
+            mManager.removeUpdates((LocationListener) null );
             fail("Should throw IllegalArgumentException if listener is null!");
         } catch (IllegalArgumentException e) {
             // expected
@@ -566,7 +566,12 @@ public class LocationManagerTest extends BaseMockLocationTest {
         updateLocation(latitude3, longitude3);
         assertFalse(listener.hasCalledOnLocationChanged(TEST_TIME_OUT));
 
-        mManager.requestSingleUpdate(LocationManager.GPS_PROVIDER, mPendingIntent);
+        try {
+            mManager.requestSingleUpdate(LocationManager.GPS_PROVIDER, mPendingIntent);
+            fail("Should throw IllegalArgumentException if PendingIntent is null!");
+        } catch (IllegalArgumentException e) {
+            // expected
+        }
 
         try {
             mManager.requestSingleUpdate(LocationManager.GPS_PROVIDER, (LocationListener) null,
@@ -584,7 +589,7 @@ public class LocationManagerTest extends BaseMockLocationTest {
         }
 
         try {
-            mManager.removeUpdates( (LocationListener) null );
+            mManager.removeUpdates((LocationListener) null );
             fail("Should throw IllegalArgumentException if listener is null!");
         } catch (IllegalArgumentException e) {
             // expected

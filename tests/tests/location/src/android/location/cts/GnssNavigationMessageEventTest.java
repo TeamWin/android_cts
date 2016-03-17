@@ -23,7 +23,8 @@ import android.test.AndroidTestCase;
 
 public class GnssNavigationMessageEventTest extends AndroidTestCase {
     public void testDescribeContents() {
-        GnssNavigationMessageEvent event = new GnssNavigationMessageEvent(null);
+        GnssNavigationMessage message = new GnssNavigationMessage();
+        GnssNavigationMessageEvent event = new GnssNavigationMessageEvent(message);
         event.describeContents();
     }
 
