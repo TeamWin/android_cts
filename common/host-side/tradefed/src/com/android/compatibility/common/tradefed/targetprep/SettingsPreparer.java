@@ -95,6 +95,8 @@ public class SettingsPreparer extends PreconditionPreparer {
             String currentSettingValue = device.executeShellCommand(shellCmdGet).trim();
             // only change unexpected setting value
             if (!mExpectedSettingValues.contains(currentSettingValue)) {
+                logInfo("Changing value for %s from %s to %s",
+                        mSettingName, currentSettingValue, mSetValue);
                 device.executeShellCommand(shellCmdPut);
             }
             return;
@@ -102,6 +104,7 @@ public class SettingsPreparer extends PreconditionPreparer {
 
         /* Case 2: Only set-value given */
         if (mSetValue != null) {
+            logInfo("Setting %s to value %s", mSettingName, mSetValue);
             device.executeShellCommand(shellCmdPut);
             return;
         }

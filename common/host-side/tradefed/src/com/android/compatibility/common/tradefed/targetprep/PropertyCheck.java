@@ -15,13 +15,11 @@
  */
 package com.android.compatibility.common.tradefed.targetprep;
 
-import com.android.ddmlib.Log;
 import com.android.tradefed.build.IBuildInfo;
 import com.android.tradefed.config.Option;
 import com.android.tradefed.config.OptionClass;
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.device.ITestDevice;
-import com.android.tradefed.log.LogUtil;
 import com.android.tradefed.targetprep.BuildError;
 import com.android.tradefed.targetprep.TargetSetupError;
 
@@ -48,11 +46,11 @@ public class PropertyCheck extends PreconditionPreparer {
     @Override
     public void run(ITestDevice device, IBuildInfo buildInfo) throws TargetSetupError,
             BuildError, DeviceNotAvailableException {
+
         String propertyValue = device.getProperty(mPropertyName);
         if (propertyValue == null) {
-            LogUtil.printLog(Log.LogLevel.WARN, LOG_TAG, String.format(
-                    "Property \"%s\" not found on device, cannot verify value \"%s\" ",
-                    mPropertyName, mExpectedPropertyValue));
+            logWarning("Property \"%s\" not found on device, cannot verify value \"%s\" ",
+                    mPropertyName, mExpectedPropertyValue);
             return;
         }
 
@@ -63,7 +61,7 @@ public class PropertyCheck extends PreconditionPreparer {
             if(mThrowError) {
                 throw new TargetSetupError(msg);
             } else {
-                LogUtil.printLog(Log.LogLevel.WARN, LOG_TAG, msg);
+                logWarning(msg);
             }
         }
     }
