@@ -51,6 +51,7 @@ public class LocationCheck extends SettingsPreparer {
             return; // skip this precondition if required location feature is not present
         }
 
+        logInfo("Verifying location setting");
         mSettingName = LOCATION_SETTING;
         mSettingType = SettingsPreparer.SettingType.SECURE;
         mExpectedSettingValues.add(NETWORK);

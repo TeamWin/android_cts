@@ -26,7 +26,6 @@ import com.android.tradefed.config.Option.Importance;
 import com.android.tradefed.config.OptionClass;
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.device.ITestDevice;
-import com.android.tradefed.log.LogUtil.CLog;
 import com.android.tradefed.result.ITestInvocationListener;
 import com.android.tradefed.targetprep.BuildError;
 import com.android.tradefed.targetprep.ITargetCleaner;
@@ -83,7 +82,9 @@ public class ApkInstrumentationPreparer extends PreconditionPreparer implements 
             return;
         }
         try {
-            if (!instrument(device, buildInfo)) {
+            if (instrument(device, buildInfo)) {
+                logInfo("Target preparation successful");
+            } else {
                 throw new TargetSetupError("Not all target preparation steps completed");
             }
         } catch (FileNotFoundException e) {
@@ -106,8 +107,8 @@ public class ApkInstrumentationPreparer extends PreconditionPreparer implements 
         try {
             instrument(device, buildInfo);
         } catch (FileNotFoundException e1) {
-            CLog.e("Couldn't find apk to instrument");
-            CLog.e(e1);
+            logError("Couldn't find apk to instrument");
+            logError(e1);
         }
     }
 
@@ -123,10 +124,11 @@ public class ApkInstrumentationPreparer extends PreconditionPreparer implements 
         }
 
         if (device.getAppPackageInfo(mPackageName) != null) {
-            CLog.d("Package %s already present on the device, uninstalling ...");
+            logInfo("Package %s already present on the device, uninstalling ...", mPackageName);
             device.uninstallPackage(mPackageName);
         }
 
+        logInfo("Instrumenting package %s:", mPackageName);
         AndroidJUnitTest instrTest = new AndroidJUnitTest();
         instrTest.setDevice(device);
         instrTest.setInstallFile(apkFile);
@@ -139,7 +141,7 @@ public class ApkInstrumentationPreparer extends PreconditionPreparer implements 
             for (TestIdentifier test : testFailures.keySet()) {
                 success = false;
                 String trace = testFailures.get(test);
-                CLog.e("Target preparation step %s failed.\n%s", test.getTestName(), trace);
+                logError("Target preparation step %s failed.\n%s", test.getTestName(), trace);
             }
         }
         return success;
