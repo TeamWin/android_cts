@@ -94,6 +94,7 @@ public class ByodFlowTestActivity extends DialogTestListActivity {
     private DialogTestListItem mConfirmWorkCredentials;
     private TestListItem mVpnTest;
     private TestListItem mDisallowAppsControlTest;
+    private TestListItem mOrganizationInfoTest;
     private TestListItem mPolicyTransparencyTest;
 
     public ByodFlowTestActivity() {
@@ -374,6 +375,12 @@ public class ByodFlowTestActivity extends DialogTestListActivity {
                 R.string.provisioning_byod_confirm_work_credentials_description,
                 new Intent(ByodHelperActivity.ACTION_TEST_CONFIRM_WORK_CREDENTIALS));
 
+        mOrganizationInfoTest = TestListItem.newTest(this,
+                R.string.provisioning_byod_organization_info,
+                OrganizationInfoTestActivity.class.getName(),
+                new Intent(this, OrganizationInfoTestActivity.class),
+                null);
+
         final Intent policyTransparencyTestIntent = new Intent(this,
                 PolicyTransparencyTestListActivity.class);
         policyTransparencyTestIntent.putExtra(
@@ -418,6 +425,7 @@ public class ByodFlowTestActivity extends DialogTestListActivity {
         adapter.add(mTurnOffWorkNotifications);
         adapter.add(mSelectWorkChallenge);
         adapter.add(mConfirmWorkCredentials);
+        adapter.add(mOrganizationInfoTest);
         adapter.add(mPolicyTransparencyTest);
 
         if (canResolveIntent(new Intent(Settings.ACTION_APPLICATION_SETTINGS))) {

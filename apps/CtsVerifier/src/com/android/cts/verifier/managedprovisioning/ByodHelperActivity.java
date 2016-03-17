@@ -135,6 +135,9 @@ public class ByodHelperActivity extends LocationListenerActivity
     public static final String ACTION_TEST_CONFIRM_WORK_CREDENTIALS =
             "com.android.cts.verifier.managedprovisioning.TEST_CONFIRM_WORK_CREDENTIALS";
 
+    public static final String ACTION_SET_ORGANIZATION_INFO =
+            "com.android.cts.verifier.managedprovisioning.TEST_ORGANIZATION_INFO";
+
     public static final int RESULT_FAILED = RESULT_FIRST_USER;
 
     private static final int REQUEST_INSTALL_PACKAGE = 2;
@@ -324,6 +327,16 @@ public class ByodHelperActivity extends LocationListenerActivity
                     (KeyguardManager) getSystemService(Context.KEYGUARD_SERVICE);
             Intent launchIntent = keyguardManager.createConfirmDeviceCredentialIntent(null, null);
             startActivity(launchIntent);
+        } else if (ACTION_SET_ORGANIZATION_INFO.equals(action)) {
+            if(intent.hasExtra(OrganizationInfoTestActivity.EXTRA_ORGANIZATION_NAME)) {
+                final String organizationName = intent
+                        .getStringExtra(OrganizationInfoTestActivity.EXTRA_ORGANIZATION_NAME);
+                mDevicePolicyManager.setOrganizationName(mAdminReceiverComponent, organizationName);
+            }
+            final int organizationColor = intent.getIntExtra(
+                    OrganizationInfoTestActivity.EXTRA_ORGANIZATION_COLOR,
+                    mDevicePolicyManager.getOrganizationColor(mAdminReceiverComponent));
+            mDevicePolicyManager.setOrganizationColor(mAdminReceiverComponent, organizationColor);
         }
         // This activity has no UI and is only used to respond to CtsVerifier in the primary side.
         finish();
