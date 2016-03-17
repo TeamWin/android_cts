@@ -316,10 +316,6 @@ class TestPackageDef implements ITestPackageDef {
         // mName means 'apk file name' for instrumentation tests
         instrTest.addInstallApk(String.format("%s.apk", mName), mAppNameSpace);
         mDigest = generateDigest(testCaseDir, String.format("%s.apk", mName));
-        if (mTests.size() > 1000) {
-            // TODO: hack, large test suites can take longer to collect tests, increase timeout
-            instrTest.setCollectsTestsShellTimeout(10 * 60 * 1000);
-        }
         return instrTest;
     }
 
