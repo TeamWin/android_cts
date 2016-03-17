@@ -607,84 +607,12 @@ public class AudioManagerTest extends InstrumentationTestCase {
             }
         }
     }
-    public void testMuteDndAffectedStreams() throws Exception {
-        int[] streams = { AudioManager.STREAM_SYSTEM };
 
-        try {
-            // Mute streams
-            Utils.toggleNotificationPolicyAccess(
-                    mContext.getPackageName(), getInstrumentation(), true);
-            mAudioManager.setRingerMode(RINGER_MODE_SILENT);
-            Utils.toggleNotificationPolicyAccess(
-                    mContext.getPackageName(), getInstrumentation(), false);
-            // Verify streams cannot be unmuted without policy access.
-            for (int i = 0; i < streams.length; i++) {
-                try {
-                    mAudioManager.adjustStreamVolume(streams[i], AudioManager.ADJUST_UNMUTE, 0);
-                    assertEquals("Apps without Notification policy access can't change ringer mode",
-                            RINGER_MODE_SILENT, mAudioManager.getRingerMode());
-                } catch (SecurityException e) {
-                }
-
-                try {
-                    mAudioManager.adjustStreamVolume(streams[i], AudioManager.ADJUST_TOGGLE_MUTE,
-                            0);
-                    assertEquals("Apps without Notification policy access can't change ringer mode",
-                            RINGER_MODE_SILENT, mAudioManager.getRingerMode());
-                } catch (SecurityException e) {
-                }
-
-                try {
-                    mAudioManager.setStreamMute(streams[i], false);
-                    assertEquals("Apps without Notification policy access can't change ringer mode",
-                            RINGER_MODE_SILENT, mAudioManager.getRingerMode());
-                } catch (SecurityException e) {
-                }
-            }
-
-            // This ensures we're out of vibrate or silent modes.
-            Utils.toggleNotificationPolicyAccess(
-                    mContext.getPackageName(), getInstrumentation(), true);
-            mAudioManager.setRingerMode(RINGER_MODE_NORMAL);
-            for (int i = 0; i < streams.length; i++) {
-                // ensure each stream is on and turned up.
-                mAudioManager.setStreamVolume(streams[i],
-                        mAudioManager.getStreamMaxVolume(streams[i]),
-                        0);
-
-                Utils.toggleNotificationPolicyAccess(
-                        mContext.getPackageName(), getInstrumentation(), false);
-                try {
-                    mAudioManager.adjustStreamVolume(streams[i], AudioManager.ADJUST_MUTE, 0);
-                    assertEquals("Apps without Notification policy access can't change ringer mode",
-                            RINGER_MODE_NORMAL, mAudioManager.getRingerMode());
-                } catch (SecurityException e) {
-                }
-                try {
-                    mAudioManager.adjustStreamVolume(
-                            streams[i], AudioManager.ADJUST_TOGGLE_MUTE, 0);
-                    assertEquals("Apps without Notification policy access can't change ringer mode",
-                            RINGER_MODE_NORMAL, mAudioManager.getRingerMode());
-                } catch (SecurityException e) {
-                }
-
-                try {
-                    mAudioManager.setStreamMute(streams[i], true);
-                    assertEquals("Apps without Notification policy access can't change ringer mode",
-                            RINGER_MODE_NORMAL, mAudioManager.getRingerMode());
-                } catch (SecurityException e) {
-                }
-                Utils.toggleNotificationPolicyAccess(
-                        mContext.getPackageName(), getInstrumentation(), true);
-                testStreamMuting(streams[i]);
-            }
-        } finally {
-            Utils.toggleNotificationPolicyAccess(
-                    mContext.getPackageName(), getInstrumentation(), false);
+    public void testMute() throws Exception {
+        if (mUseFixedVolume) {
+            return;
         }
-    }
 
-    public void testMuteDnDUnaffectedStreams() throws Exception {
         int[] streams = {
                 AudioManager.STREAM_VOICE_CALL,
                 AudioManager.STREAM_MUSIC,
@@ -706,6 +634,8 @@ public class AudioManagerTest extends InstrumentationTestCase {
                     mContext.getPackageName(), getInstrumentation(), true);
             // This ensures we're out of vibrate or silent modes.
             mAudioManager.setRingerMode(RINGER_MODE_NORMAL);
+            Utils.toggleNotificationPolicyAccess(
+                    mContext.getPackageName(), getInstrumentation(), false);
             for (int i = 0; i < streams.length; i++) {
                 // ensure each stream is on and turned up.
                 mAudioManager.setStreamVolume(streams[i],
@@ -724,43 +654,39 @@ public class AudioManagerTest extends InstrumentationTestCase {
                             mAudioManager.isStreamMute(streams[i]));
                     continue;
                 }
-                testStreamMuting(streams[i]);
+                mAudioManager.adjustStreamVolume(streams[i], AudioManager.ADJUST_MUTE, 0);
+                assertTrue("Muting stream " + streams[i] + " failed.",
+                        mAudioManager.isStreamMute(streams[i]));
+
+                mAudioManager.adjustStreamVolume(streams[i], AudioManager.ADJUST_UNMUTE, 0);
+                assertFalse("Unmuting stream " + streams[i] + " failed.",
+                        mAudioManager.isStreamMute(streams[i]));
+
+                mAudioManager.adjustStreamVolume(streams[i], AudioManager.ADJUST_TOGGLE_MUTE, 0);
+                assertTrue("Toggling mute on stream " + streams[i] + " failed.",
+                        mAudioManager.isStreamMute(streams[i]));
+
+                mAudioManager.adjustStreamVolume(streams[i], AudioManager.ADJUST_TOGGLE_MUTE, 0);
+                assertFalse("Toggling mute on stream " + streams[i] + " failed.",
+                        mAudioManager.isStreamMute(streams[i]));
+
+                mAudioManager.setStreamMute(streams[i], true);
+                assertTrue("Muting stream " + streams[i] + " using setStreamMute failed",
+                        mAudioManager.isStreamMute(streams[i]));
+
+                // mute it three more times to verify the ref counting is gone.
+                mAudioManager.setStreamMute(streams[i], true);
+                mAudioManager.setStreamMute(streams[i], true);
+                mAudioManager.setStreamMute(streams[i], true);
+
+                mAudioManager.setStreamMute(streams[i], false);
+                assertFalse("Unmuting stream " + streams[i] + " using setStreamMute failed.",
+                        mAudioManager.isStreamMute(streams[i]));
             }
         } finally {
             Utils.toggleNotificationPolicyAccess(
                     mContext.getPackageName(), getInstrumentation(), false);
         }
-    }
-
-    private void testStreamMuting(int stream) {
-        mAudioManager.adjustStreamVolume(stream, AudioManager.ADJUST_MUTE, 0);
-        assertTrue("Muting stream " + stream + " failed.",
-                mAudioManager.isStreamMute(stream));
-
-        mAudioManager.adjustStreamVolume(stream, AudioManager.ADJUST_UNMUTE, 0);
-        assertFalse("Unmuting stream " + stream + " failed.",
-                mAudioManager.isStreamMute(stream));
-
-        mAudioManager.adjustStreamVolume(stream, AudioManager.ADJUST_TOGGLE_MUTE, 0);
-        assertTrue("Toggling mute on stream " + stream + " failed.",
-                mAudioManager.isStreamMute(stream));
-
-        mAudioManager.adjustStreamVolume(stream, AudioManager.ADJUST_TOGGLE_MUTE, 0);
-        assertFalse("Toggling mute on stream " + stream + " failed.",
-                mAudioManager.isStreamMute(stream));
-
-        mAudioManager.setStreamMute(stream, true);
-        assertTrue("Muting stream " + stream + " using setStreamMute failed",
-                mAudioManager.isStreamMute(stream));
-
-        // mute it three more times to verify the ref counting is gone.
-        mAudioManager.setStreamMute(stream, true);
-        mAudioManager.setStreamMute(stream, true);
-        mAudioManager.setStreamMute(stream, true);
-
-        mAudioManager.setStreamMute(stream, false);
-        assertFalse("Unmuting stream " + stream + " using setStreamMute failed.",
-                mAudioManager.isStreamMute(stream));
     }
 
     public void testSetInvalidRingerMode() {
