@@ -37,6 +37,7 @@ import com.android.tradefed.testtype.IBuildReceiver;
 import com.android.tradefed.testtype.IDeviceTest;
 import com.android.tradefed.testtype.IRemoteTest;
 import com.android.tradefed.testtype.IRuntimeHintProvider;
+import com.android.tradefed.testtype.ITestCollector;
 import com.android.tradefed.testtype.ITestFilterReceiver;
 
 import java.util.ArrayList;
@@ -71,7 +72,11 @@ public class ModuleDef implements IModuleDef {
         mName = name;
         mAbi = abi;
         mTest = test;
+        boolean hasAbiReceiver = false;
         for (ITargetPreparer preparer : preparers) {
+            if (preparer instanceof IAbiReceiver) {
+                hasAbiReceiver = true;
+            }
             // Separate preconditions from target preparers.
             if (preparer instanceof PreconditionPreparer) {
                 mPreconditions.add(preparer);
@@ -86,6 +91,25 @@ public class ModuleDef implements IModuleDef {
         }
         // Reverse cleaner order
         Collections.reverse(mCleaners);
+
+        // Required interfaces:
+        if (!hasAbiReceiver && !(test instanceof IAbiReceiver)) {
+            throw new IllegalArgumentException(test
+                    + "does not implement IAbiReceiver"
+                    + " - for multi-abi testing (64bit)");
+        } else if (!(test instanceof IRuntimeHintProvider)) {
+            throw new IllegalArgumentException(test
+                    + " does not implement IRuntimeHintProvider"
+                    + " - to provide estimates of test invocation time");
+        } else if (!(test instanceof ITestCollector)) {
+            throw new IllegalArgumentException(test
+                    + " does not implement ITestCollector"
+                    + " - for test list collection");
+        } else if (!(test instanceof ITestFilterReceiver)) {
+            throw new IllegalArgumentException(test
+                    + " does not implement ITestFilterReceiver"
+                    + " - to allow tests to be filtered");
+        }
     }
 
     /**
