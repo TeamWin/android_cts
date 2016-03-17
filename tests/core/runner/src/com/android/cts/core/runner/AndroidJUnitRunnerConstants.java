@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-package android.icu.cts;
+package com.android.cts.core.runner;
 
 import android.support.test.runner.AndroidJUnitRunner;
 
 /**
  * Constants used to communicate to and from {@link AndroidJUnitRunner}.
  */
-interface AndroidJUnitRunnerConstants {
+public interface AndroidJUnitRunnerConstants {
 
     /**
      * The names of the file containing the names of the tests to run.
@@ -82,5 +82,5 @@ interface AndroidJUnitRunnerConstants {
     /**
      * An identifier for tests run using this class.
      */
-    String REPORT_VALUE_ID = "IcuTestRunner";
+    String REPORT_VALUE_ID = "CoreTestRunner";
 }
