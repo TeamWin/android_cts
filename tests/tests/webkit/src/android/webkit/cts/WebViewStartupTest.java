@@ -20,6 +20,7 @@ package android.webkit.cts;
 import android.content.Context;
 import android.cts.util.NullWebViewUtils;
 import android.cts.util.PollingCheck;
+import android.os.StrictMode;
 import android.test.ActivityInstrumentationTestCase2;
 import android.test.UiThreadTest;
 import android.util.Log;
@@ -87,6 +88,22 @@ public class WebViewStartupTest
         Matcher m = pat.matcher(cookie);
         assertTrue(m.matches());
         assertEquals("42", m.group(1)); // value got incremented
+    }
+
+    @UiThreadTest
+    public void testStrictModeNotViolatedOnStartup() throws Throwable {
+        StrictMode.ThreadPolicy oldPolicy = StrictMode.getThreadPolicy();
+        StrictMode.ThreadPolicy testPolicy = new StrictMode.ThreadPolicy.Builder()
+            .detectDiskReads()
+            .penaltyLog()
+            .penaltyDeath()
+            .build();
+        StrictMode.setThreadPolicy(testPolicy);
+        try {
+            mActivity.createAndAttachWebView();
+        } finally {
+            StrictMode.setThreadPolicy(oldPolicy);
+        }
     }
 
 }
