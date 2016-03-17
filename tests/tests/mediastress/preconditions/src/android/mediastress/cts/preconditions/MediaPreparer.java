@@ -18,14 +18,11 @@ package android.mediastress.cts.preconditions;
 import com.android.compatibility.common.tradefed.targetprep.PreconditionPreparer;
 import com.android.compatibility.common.util.DynamicConfigHostSide;
 import com.android.ddmlib.IDevice;
-import com.android.ddmlib.Log;
 import com.android.tradefed.build.IBuildInfo;
 import com.android.tradefed.config.Option;
 import com.android.tradefed.config.OptionClass;
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.device.ITestDevice;
-import com.android.tradefed.log.LogUtil;
-import com.android.tradefed.log.LogUtil.CLog;
 import com.android.tradefed.targetprep.BuildError;
 import com.android.tradefed.targetprep.TargetSetupError;
 import com.android.tradefed.util.FileUtil;
@@ -150,7 +147,7 @@ public class MediaPreparer extends PreconditionPreparer {
         if(!matcher.find()) {
             // could not find resolution in dumpsysOutput, return largest max playback resolution
             // so that preparer copies all media files
-            CLog.e(MAX_PLAYBACK_RES_FAILURE_MSG);
+            logError(MAX_PLAYBACK_RES_FAILURE_MSG);
             return resolutions[RES_1920_1080];
         }
 
@@ -160,7 +157,7 @@ public class MediaPreparer extends PreconditionPreparer {
             first = Integer.parseInt(matcher.group(1));
             second = Integer.parseInt(matcher.group(2));
         } catch (NumberFormatException e) {
-            CLog.e(MAX_PLAYBACK_RES_FAILURE_MSG);
+            logError(MAX_PLAYBACK_RES_FAILURE_MSG);
             return resolutions[RES_1920_1080];
         }
         // dimensions in dumpsys output seem consistently reversed
@@ -193,11 +190,6 @@ public class MediaPreparer extends PreconditionPreparer {
             resIndex++;
         }
         return true;
-    }
-
-    /* A simple helper to print messages to the tradefed console */
-    private static void printInfo(String info) {
-        LogUtil.printLog(Log.LogLevel.INFO, LOG_TAG, info);
     }
 
     /*
@@ -249,7 +241,7 @@ public class MediaPreparer extends PreconditionPreparer {
                     new BufferedOutputStream(new FileOutputStream(mediaFolderZip));
             byte[] buffer = new byte[1024];
             int count;
-            printInfo("Downloading media files to host");
+            logInfo("Downloading media files to host");
             while ((count = in.read(buffer)) >= 0) {
                 out.write(buffer, 0, count);
             }
@@ -257,7 +249,7 @@ public class MediaPreparer extends PreconditionPreparer {
             out.close();
             in.close();
 
-            printInfo("Unzipping media files");
+            logInfo("Unzipping media files");
             ZipUtil.extractZip(new ZipFile(mediaFolderZip), mediaFolder);
 
         } catch (IOException e) {
@@ -283,16 +275,15 @@ public class MediaPreparer extends PreconditionPreparer {
             Dimension copiedResolution = resolutions[resIndex];
             String resString = resolutionString(copiedResolution);
             if (copiedResolution.width > mvpr.width || copiedResolution.height > mvpr.height) {
-                printInfo(String.format(
-                        "Device cannot support resolutions %s and larger, media copying complete",
-                        resString));
+                logInfo("Device cannot support resolutions %s and larger, media copying complete",
+                        resString);
                 return;
             }
             String deviceShortFilePath = baseDeviceShortDir + resString;
             String deviceFullFilePath = baseDeviceFullDir + resString;
             if (!device.doesFileExist(deviceShortFilePath) ||
                     !device.doesFileExist(deviceFullFilePath)) {
-                printInfo(String.format("Copying files of resolution %s to device", resString));
+                logInfo("Copying files of resolution %s to device", resString);
                 String localShortDirName = "bbb_short/" + resString;
                 String localFullDirName = "bbb_full/" + resString;
                 File localShortDir = new File(mLocalMediaPath, localShortDirName);
@@ -330,7 +321,7 @@ public class MediaPreparer extends PreconditionPreparer {
         Dimension mvpr = getMaxVideoPlaybackResolution(device);
         if (mediaFilesExistOnDevice(device, mvpr)) {
             // if files already on device, do nothing
-            printInfo("Media files found on the device");
+            logInfo("Media files found on the device");
             return;
         }
 
@@ -356,7 +347,7 @@ public class MediaPreparer extends PreconditionPreparer {
             updateLocalMediaPath(mediaFolder);
         }
 
-        printInfo(String.format("Media files located on host at: %s", mLocalMediaPath));
+        logInfo("Media files located on host at: %s", mLocalMediaPath);
         copyMediaFiles(device, mvpr);
     }
 

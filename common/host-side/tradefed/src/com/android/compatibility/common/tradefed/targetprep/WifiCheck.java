@@ -15,13 +15,11 @@
  */
 package com.android.compatibility.common.tradefed.targetprep;
 
-import com.android.ddmlib.Log.LogLevel;
 import com.android.tradefed.build.IBuildInfo;
 import com.android.tradefed.config.Option;
 import com.android.tradefed.config.OptionClass;
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.device.ITestDevice;
-import com.android.tradefed.log.LogUtil.CLog;
 import com.android.tradefed.targetprep.BuildError;
 import com.android.tradefed.targetprep.TargetSetupError;
 
@@ -65,16 +63,15 @@ public class WifiCheck extends PreconditionPreparer {
         if (mWifiSsid == null) { // no connection to create, check for existing connectivity
             if (!device.checkConnectivity()) {
                 throw new TargetSetupError("Device has no network connection, no ssid provided");
-            }  
+            }
         } else { // network provided in options, attempt to create new connection
-            CLog.logAndDisplay(LogLevel.INFO, "Attempting connection to \"%s\"", mWifiSsid);
-            if (device.connectToWifiNetwork(mWifiSsid, mWifiPsk)) { // attempt connection
-                CLog.logAndDisplay(LogLevel.INFO, "Connection successful");
-            } else {
+            logInfo("Attempting connection to \"%s\"", mWifiSsid);
+            if (!device.connectToWifiNetwork(mWifiSsid, mWifiPsk)) { // attempt connection
                 throw new TargetSetupError(String.format(
                         "Unable to connect to network \"%s\", some modules of CTS" +
                         "require an active network connection", mWifiSsid));
             }
         }
+        logInfo("Wifi is connected");
     }
 }
