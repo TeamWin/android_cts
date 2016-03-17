@@ -44,9 +44,9 @@ LOCAL_PROGUARD_ENABLED := disabled
 # include both the 32 and 64 bit versions
 LOCAL_MULTILIB := both
 
-LOCAL_STATIC_JAVA_LIBRARIES := ctsmediautil ctsdeviceutil compatibility-device-util ctstestserver ctstestrunner
+LOCAL_STATIC_JAVA_LIBRARIES := ctsmediautil ctsdeviceutil compatibility-device-util ctstestserver ctstestrunner ndkaudio
 
-LOCAL_JNI_SHARED_LIBRARIES := libctsmediacodec_jni libaudio_jni libnativehelper_compat_libc++
+LOCAL_JNI_SHARED_LIBRARIES := libctsmediacodec_jni libaudio_jni libnativehelper_compat_libc++ libndkaudioLib
 
 LOCAL_SRC_FILES := $(call all-java-files-under, src)
 
