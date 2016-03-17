@@ -32,20 +32,20 @@
                 android:exported="true" />
 
         <activity android:name=".AwareActivity"
-                android:encryptionAware="true"
+                android:directBootAware="true"
                 android:exported="true" />
 
         <receiver android:name=".AwareReceiver"
-                android:encryptionAware="true"
+                android:directBootAware="true"
                 android:exported="true" />
 
         <service android:name=".AwareService"
-                android:encryptionAware="true"
+                android:directBootAware="true"
                 android:exported="true" />
 
         <provider android:name=".AwareProvider"
                 android:authorities="com.android.cts.encryptionapp.aware"
-                android:encryptionAware="true"
+                android:directBootAware="true"
                 android:exported="true" />
 
         <uses-library android:name="android.test.runner" />

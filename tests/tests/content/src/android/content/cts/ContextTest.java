@@ -16,10 +16,6 @@
 
 package android.content.cts;
 
-import android.content.cts.R;
-
-import org.xmlpull.v1.XmlPullParserException;
-
 import android.content.Context;
 import android.content.cts.util.XmlUtils;
 import android.content.res.ColorStateList;
@@ -33,6 +29,8 @@ import android.test.AndroidTestCase;
 import android.util.AttributeSet;
 import android.util.Xml;
 import android.view.WindowManager;
+
+import org.xmlpull.v1.XmlPullParserException;
 
 import java.io.File;
 import java.io.IOException;
@@ -90,11 +88,11 @@ public class ContextTest extends AndroidTestCase {
      * they don't have file-based encryption, so that apps can go through a
      * backup/restore cycle between FBE and non-FBE devices.
      */
-    public void testCreateDeviceEncryptedStorageContext() throws Exception {
-        final Context deviceContext = mContext.createDeviceEncryptedStorageContext();
+    public void testCreateDeviceProtectedStorageContext() throws Exception {
+        final Context deviceContext = mContext.createDeviceProtectedStorageContext();
 
-        assertFalse(mContext.isDeviceEncryptedStorage());
-        assertTrue(deviceContext.isDeviceEncryptedStorage());
+        assertFalse(mContext.isDeviceProtectedStorage());
+        assertTrue(deviceContext.isDeviceProtectedStorage());
 
         final File defaultFile = new File(mContext.getFilesDir(), "test");
         final File deviceFile = new File(deviceContext.getFilesDir(), "test");
@@ -108,21 +106,21 @@ public class ContextTest extends AndroidTestCase {
         assertTrue(deviceFile.exists());
     }
 
-    public void testMigrateSharedPreferencesFrom() throws Exception {
-        final Context deviceContext = mContext.createDeviceEncryptedStorageContext();
+    public void testMoveSharedPreferencesFrom() throws Exception {
+        final Context deviceContext = mContext.createDeviceProtectedStorageContext();
 
         mContext.getSharedPreferences("test", Context.MODE_PRIVATE).edit().putInt("answer", 42)
                 .commit();
 
         // Verify that we can migrate
-        assertTrue(deviceContext.migrateSharedPreferencesFrom(mContext, "test"));
+        assertTrue(deviceContext.moveSharedPreferencesFrom(mContext, "test"));
         assertEquals(0, mContext.getSharedPreferences("test", Context.MODE_PRIVATE)
                 .getInt("answer", 0));
         assertEquals(42, deviceContext.getSharedPreferences("test", Context.MODE_PRIVATE)
                 .getInt("answer", 0));
 
         // Trying to migrate again when already done is a no-op
-        assertTrue(deviceContext.migrateSharedPreferencesFrom(mContext, "test"));
+        assertTrue(deviceContext.moveSharedPreferencesFrom(mContext, "test"));
         assertEquals(0, mContext.getSharedPreferences("test", Context.MODE_PRIVATE)
                 .getInt("answer", 0));
         assertEquals(42, deviceContext.getSharedPreferences("test", Context.MODE_PRIVATE)
@@ -132,7 +130,7 @@ public class ContextTest extends AndroidTestCase {
         deviceContext.getSharedPreferences("test", Context.MODE_PRIVATE).edit()
                 .putInt("question", 24).commit();
 
-        assertTrue(mContext.migrateSharedPreferencesFrom(deviceContext, "test"));
+        assertTrue(mContext.moveSharedPreferencesFrom(deviceContext, "test"));
         assertEquals(42, mContext.getSharedPreferences("test", Context.MODE_PRIVATE)
                 .getInt("answer", 0));
         assertEquals(24, mContext.getSharedPreferences("test", Context.MODE_PRIVATE)
@@ -143,8 +141,8 @@ public class ContextTest extends AndroidTestCase {
                 .getInt("question", 0));
     }
 
-    public void testMigrateDatabaseFrom() throws Exception {
-        final Context deviceContext = mContext.createDeviceEncryptedStorageContext();
+    public void testMoveDatabaseFrom() throws Exception {
+        final Context deviceContext = mContext.createDeviceProtectedStorageContext();
 
         SQLiteDatabase db = mContext.openOrCreateDatabase("test.db",
                 Context.MODE_PRIVATE | Context.MODE_ENABLE_WRITE_AHEAD_LOGGING, null);
@@ -154,7 +152,7 @@ public class ContextTest extends AndroidTestCase {
         db.close();
 
         // Verify that we can migrate
-        assertTrue(deviceContext.migrateDatabaseFrom(mContext, "test.db"));
+        assertTrue(deviceContext.moveDatabaseFrom(mContext, "test.db"));
         db = deviceContext.openOrCreateDatabase("test.db",
                 Context.MODE_PRIVATE | Context.MODE_ENABLE_WRITE_AHEAD_LOGGING, null);
         Cursor c = db.query("list", null, null, null, null, null, null);
@@ -168,10 +166,10 @@ public class ContextTest extends AndroidTestCase {
         db.close();
 
         // Trying to migrate again when already done is a no-op
-        assertTrue(deviceContext.migrateDatabaseFrom(mContext, "test.db"));
+        assertTrue(deviceContext.moveDatabaseFrom(mContext, "test.db"));
 
         // Verify that we can migrate back
-        assertTrue(mContext.migrateDatabaseFrom(deviceContext, "test.db"));
+        assertTrue(mContext.moveDatabaseFrom(deviceContext, "test.db"));
         db = mContext.openOrCreateDatabase("test.db",
                 Context.MODE_PRIVATE | Context.MODE_ENABLE_WRITE_AHEAD_LOGGING, null);
         c = db.query("list", null, null, null, null, null, null);
