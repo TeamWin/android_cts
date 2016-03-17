@@ -1520,6 +1520,10 @@
             </intent-filter>
         </activity-alias>
 
+        <activity android:name=".managedprovisioning.OrganizationInfoTestActivity"
+                android:label="@string/provisioning_byod_organization_info">
+        </activity>
+
         <activity android:name=".managedprovisioning.PolicyTransparencyTestListActivity"
                 android:label="@string/device_profile_owner_policy_transparency_test">
             <intent-filter>
@@ -1624,6 +1628,7 @@
                 <action android:name="com.android.cts.verifier.managedprovisioning.CLEAR_NOTIFICATION" />
                 <action android:name="com.android.cts.verifier.managedprovisioning.TEST_SELECT_WORK_CHALLENGE" />
                 <action android:name="com.android.cts.verifier.managedprovisioning.TEST_CONFIRM_WORK_CREDENTIALS" />
+                <action android:name="com.android.cts.verifier.managedprovisioning.TEST_ORGANIZATION_INFO" />
                 <category android:name="android.intent.category.DEFAULT"></category>
             </intent-filter>
         </activity>

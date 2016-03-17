@@ -1921,6 +1921,20 @@ You should be prompted to select credentials; choose the ones you just installed
         3. Check that the work notification has disappeared.\n
         4. Set work mode to on.\n
     </string>
+    <string name="provisioning_byod_organization_info">Organization Info</string>
+    <string name="provisioning_byod_organization_name_hint">Name</string>
+    <string name="provisioning_byod_organization_color_hint">#FF00FF</string>
+    <string name="provisioning_byod_set_organization_info_button_text">Set</string>
+    <string name="provisioning_byod_organization_info_instructions">
+    This test verifies that the Organization Info was set correctly.
+    You can only do this test after you have done "select work challenge" test.\n
+        1. Enter your organization name.\n
+        2. Enter a valid color code.\n
+        3. Press the Set button to set organization Info.\n
+        4. Press the Go button to open a dialog to confirm work credentials.\n
+        5. Verify that the background color of the resulting dialog is as set by you.\n
+        6. Verify that the header text has organization name as set by you.\n
+    </string>
 
     <!-- Strings for DeviceOwnerProvisioningTest -->
     <string name="provisioning_device_owner">Device Owner Provisioning</string>
