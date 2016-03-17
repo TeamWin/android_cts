@@ -14,8 +14,9 @@
 
 import its.device
 import its.caps
-import its.objects
 import its.image
+import its.objects
+import its.target
 import os.path
 import pylab
 import matplotlib
@@ -57,13 +58,14 @@ def main():
         sens_boost_min, sens_boost_max = \
                 props['android.control.postRawSensitivityBoostRange']
 
-        e_targer, s_target = \
+
+        e_target, s_target = \
                 its.target.get_target_exposure_combos(cam)["midSensitivity"]
 
         reqs = []
         settings = []
         s_boost = sens_boost_min
-        while s_boost <= sens_boost_min:
+        while s_boost <= sens_boost_max:
             s_raw = int(round(s_target * 100.0 / s_boost))
             if s_raw < sens_min or s_raw > sens_max:
                 continue
@@ -77,9 +79,15 @@ def main():
 
         raw_rgb_means = []
         yuv_rgb_means = []
-        for i,cap in enumerate(caps):
+        raw_caps, yuv_caps = caps
+        if not isinstance(raw_caps, list):
+            raw_caps = [raw_caps]
+        if not isinstance(yuv_caps, list):
+            yuv_caps = [yuv_caps]
+        for i in xrange(len(reqs)):
             (s, s_boost) = settings[i]
-            raw_cap, yuv_cap = cap
+            raw_cap = raw_caps[i]
+            yuv_cap = yuv_caps[i]
             raw_rgb = its.image.convert_capture_to_rgb_image(raw_cap, props=props)
             yuv_rgb = its.image.convert_capture_to_rgb_image(yuv_cap)
             raw_tile = its.image.get_image_patch(raw_rgb, 0.45,0.45,0.1,0.1)
@@ -90,7 +98,7 @@ def main():
                     "%s_raw_s=%04d_boost=%04d.jpg" % (NAME,s,s_boost))
             its.image.write_image(yuv_tile,
                     "%s_yuv_s=%04d_boost=%04d.jpg" % (NAME,s,s_boost))
-            print "s=%d, s_boost=%d: raw_means %s, yuv_means %d"%(
+            print "s=%d, s_boost=%d: raw_means %s, yuv_means %s"%(
                     s,s_boost,raw_rgb_means[-1], yuv_rgb_means[-1])
 
         xs = range(len(reqs))
@@ -125,7 +133,7 @@ def main():
         yuv_thres_max = 1 + RATIO_THRESHOLD
         for rgb in range(3):
             vals = [val[rgb] for val in yuv_rgb_means]
-            mean = sum(vals) / len(vales)
+            mean = sum(vals) / len(vals)
             print "%s channel vals %s mean %f"%(rgb_str[rgb], vals, mean)
             for step in range(len(reqs)):
                 ratio = vals[step] / mean
