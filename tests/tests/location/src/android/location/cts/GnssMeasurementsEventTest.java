@@ -28,7 +28,11 @@ import java.util.Iterator;
 
 public class GnssMeasurementsEventTest extends AndroidTestCase {
     public void testDescribeContents() {
-        GnssMeasurementsEvent event = new GnssMeasurementsEvent(null, null);
+        GnssClock clock = new GnssClock();
+        GnssMeasurement m1 = new GnssMeasurement();
+        GnssMeasurement m2 = new GnssMeasurement();
+        GnssMeasurementsEvent event = new GnssMeasurementsEvent(
+                clock, new GnssMeasurement[] {m1, m2});
         event.describeContents();
     }
 

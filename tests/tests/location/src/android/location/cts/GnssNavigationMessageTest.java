@@ -93,7 +93,7 @@ public class GnssNavigationMessageTest extends AndroidTestCase {
     private static void setTestValues(GnssNavigationMessage message) {
         message.setData(new byte[] {1, 2, 3, 4});
         message.setMessageId(5);
-        message.setStatus(GnssNavigationMessage.PARCELABLE_WRITE_RETURN_VALUE);
+        message.setStatus(GnssNavigationMessage.STATUS_PARITY_REBUILT);
         message.setSubmessageId(6);
         message.setSvid(7);
         message.setType(GnssNavigationMessage.TYPE_GPS_L2CNAV);
@@ -101,12 +101,13 @@ public class GnssNavigationMessageTest extends AndroidTestCase {
 
     private static void verifyTestValues(GnssNavigationMessage message) {
         byte[] data = message.getData();
+        assertEquals(4, data.length);
         assertEquals(1, data[0]);
         assertEquals(2, data[1]);
         assertEquals(3, data[2]);
         assertEquals(4, data[3]);
         assertEquals(5, message.getMessageId());
-        assertEquals(GnssNavigationMessage.PARCELABLE_WRITE_RETURN_VALUE, message.getStatus());
+        assertEquals(GnssNavigationMessage.STATUS_PARITY_REBUILT, message.getStatus());
         assertEquals(6, message.getSubmessageId());
         assertEquals(7, message.getSvid());
         assertEquals(GnssNavigationMessage.TYPE_GPS_L2CNAV, message.getType());
