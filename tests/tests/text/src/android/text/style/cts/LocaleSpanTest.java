@@ -17,9 +17,10 @@
 package android.text.style.cts;
 
 import junit.framework.TestCase;
-
 import android.annotation.NonNull;
 import android.os.Parcel;
+import android.test.suitebuilder.annotation.SmallTest;
+import android.text.TextPaint;
 import android.text.style.LocaleSpan;
 import android.util.LocaleList;
 
@@ -35,6 +36,7 @@ public class LocaleSpanTest extends TestCase {
         assertEquals(locales, cloned.getLocales());
     }
 
+    @SmallTest
     public void testGetLocales() {
         checkGetLocales(LocaleList.getEmptyLocaleList());
         checkGetLocales(LocaleList.forLanguageTags("en"));
@@ -42,6 +44,7 @@ public class LocaleSpanTest extends TestCase {
         checkGetLocales(LocaleList.forLanguageTags("de-DE-u-co-phonebk,en-GB,en"));
     }
 
+    @SmallTest
     public void testConstructorWithLocaleList() {
         try {
             new LocaleSpan((LocaleList) null);
@@ -65,5 +68,49 @@ public class LocaleSpanTest extends TestCase {
                 parcel.recycle();
             }
         }
+    }
+
+    @SmallTest
+    public void testDescribeContents_doesNotThrowException() {
+        LocaleSpan localeSpan = new LocaleSpan(LocaleList.getEmptyLocaleList());
+        localeSpan.describeContents();
+    }
+
+    @SmallTest
+    public void testGetSpanTypeId_doesNotThrowException() {
+        LocaleSpan localeSpan = new LocaleSpan(LocaleList.getEmptyLocaleList());
+        localeSpan.getSpanTypeId();
+    }
+
+    @SmallTest
+    public void testUpdateDrawState() {
+        LocaleList localeListForSpan = LocaleList.forLanguageTags("en");
+        LocaleSpan localeSpan = new LocaleSpan(localeListForSpan);
+
+        TextPaint tp = new TextPaint();
+        LocaleList localeList = LocaleList.forLanguageTags("fr,de");
+        tp.setTextLocales(localeList);
+        assertEquals(localeList, tp.getTextLocales());
+        assertEquals(localeList.get(0), tp.getTextLocale());
+
+        localeSpan.updateDrawState(tp);
+        assertEquals(localeListForSpan, tp.getTextLocales());
+        assertEquals(localeListForSpan.get(0), tp.getTextLocale());
+    }
+
+    @SmallTest
+    public void testUpdateMeasureState() {
+        LocaleList localeListForSpan = LocaleList.forLanguageTags("en");
+        LocaleSpan localeSpan = new LocaleSpan(localeListForSpan);
+
+        TextPaint tp = new TextPaint();
+        LocaleList localeList = LocaleList.forLanguageTags("fr,de");
+        tp.setTextLocales(localeList);
+        assertEquals(localeList, tp.getTextLocales());
+        assertEquals(localeList.get(0), tp.getTextLocale());
+
+        localeSpan.updateMeasureState(tp);
+        assertEquals(localeListForSpan, tp.getTextLocales());
+        assertEquals(localeListForSpan.get(0), tp.getTextLocale());
     }
 }
