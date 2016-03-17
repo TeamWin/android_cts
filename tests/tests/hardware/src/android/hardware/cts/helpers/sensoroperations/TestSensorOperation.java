@@ -246,7 +246,7 @@ public class TestSensorOperation extends SensorOperation {
     /**
      * Creates an operation that will wait for a given amount of events to arrive.
      *
-     * After the execution of this type of test opeation, the wakelock passed in will be acquired.
+     * After the execution of this type of test operation, the wakelock passed in will be acquired.
      * Make sure it is released at clean up.
      *
      * @param environment The test environment.
