@@ -119,7 +119,7 @@ static jboolean android_security_cts_AudioEffect_test_isCommandSecure()
     descriptor.type = EFFECT_UIID_EQUALIZER;
     descriptor.uuid = *EFFECT_UUID_NULL;
     const int32_t priority = 0;
-    const int sessionId = AUDIO_SESSION_OUTPUT_MIX;
+    const audio_session_t sessionId = AUDIO_SESSION_OUTPUT_MIX;
     const audio_io_handle_t io = AUDIO_IO_HANDLE_NONE;
     const String16 opPackageName("Exploitable");
     status_t status;
