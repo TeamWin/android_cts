@@ -260,7 +260,8 @@ public class PrintServicesTest extends BasePrintTest {
                 @Override
                 public void run() {
                     synchronized (synchronizer) {
-                        mPrintStatus = mPrintJob.getInfo().getStatus();
+                        mPrintStatus = mPrintJob.getInfo()
+                                .getStatus(getActivity().getPackageManager());
 
                         synchronizer.notify();
                     }
@@ -411,7 +412,7 @@ public class PrintServicesTest extends BasePrintTest {
         answerPrintServicesWarning(true);
 
         // Wait until the print job is queued and #mPrintJob is set
-        waitForServiceOnPrintJobQueuedCallbackCalled();
+        waitForServiceOnPrintJobQueuedCallbackCalled(1);
 
         // Progress print job and check for appropriate notifications
         progress(0, "printed 0");
@@ -569,7 +570,7 @@ public class PrintServicesTest extends BasePrintTest {
                 R.raw.yellow_printer);
         // Icon will be picked up from the discovery session once setHasCustomPrinterIcon is set
         mIcon = Icon.createWithBitmap(bm);
-        updatePrinter((new PrinterInfo.Builder(mPrinter)).setHasCustomPrinterIcon().build());
+        updatePrinter((new PrinterInfo.Builder(mPrinter)).setHasCustomPrinterIcon(true).build());
 
         assertThatIconIs(renderDrawable(mIcon.loadDrawable(getActivity())));
     }

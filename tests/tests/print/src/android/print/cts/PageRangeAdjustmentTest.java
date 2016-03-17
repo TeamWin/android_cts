@@ -153,7 +153,7 @@ public class PageRangeAdjustmentTest extends BasePrintTest {
         waitForAdapterFinishCallbackCalled();
 
         // Wait for the print job.
-        waitForServiceOnPrintJobQueuedCallbackCalled();
+        waitForServiceOnPrintJobQueuedCallbackCalled(1);
 
         // Verify the expected calls.
         InOrder inOrder = inOrder(firstServiceCallbacks);
@@ -268,7 +268,7 @@ public class PageRangeAdjustmentTest extends BasePrintTest {
         waitForAdapterFinishCallbackCalled();
 
         // Wait for the print job.
-        waitForServiceOnPrintJobQueuedCallbackCalled();
+        waitForServiceOnPrintJobQueuedCallbackCalled(1);
 
         // Verify the expected calls.
         InOrder inOrder = inOrder(firstServiceCallbacks);
@@ -399,7 +399,7 @@ public class PageRangeAdjustmentTest extends BasePrintTest {
         waitForAdapterFinishCallbackCalled();
 
         // Wait for the print job.
-        waitForServiceOnPrintJobQueuedCallbackCalled();
+        waitForServiceOnPrintJobQueuedCallbackCalled(1);
 
         // Verify the expected calls.
         InOrder inOrder = inOrder(firstServiceCallbacks);
@@ -614,7 +614,7 @@ public class PageRangeAdjustmentTest extends BasePrintTest {
         waitForAdapterFinishCallbackCalled();
 
         // Wait for the print job.
-        waitForServiceOnPrintJobQueuedCallbackCalled();
+        waitForServiceOnPrintJobQueuedCallbackCalled(1);
 
         // Verify the expected calls.
         InOrder inOrder = inOrder(firstServiceCallbacks);
