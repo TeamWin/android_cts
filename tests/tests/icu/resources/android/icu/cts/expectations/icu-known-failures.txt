@@ -49,16 +49,10 @@
   name: "android.icu.dev.test.format.PluralRulesTest#testOverUnderflow",
   bug: "27566754"
 },
-// The following are known to be broken but the reason is not yet known. They are expected to
-// succeed and so will be run and will fail but that is intentional so that they do not get
-// forgotten and are investigated to determine whether it is correct behavior on Android or a bug
-// that needs fixing.
 {
-  description: "Broken and not yet triaged",
-  names: [
-    "android.icu.dev.test.format.NumberFormatTest#TestDataDrivenJDK"
-  ],
-  result: "SUCCESS"
+  description: "Checks differences in DecimalFormat classes from ICU4J and JDK but on Android java.text.DecimalFormat is implemented in terms of ICU4J",
+  name: "android.icu.dev.test.format.NumberFormatTest#TestDataDrivenJDK",
+  bug: "27711713"
 },
 {
   description: "Collation rules data has been removed from ICU4J data on Android",
