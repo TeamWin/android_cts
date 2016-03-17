@@ -122,6 +122,11 @@ public class ApkInstrumentationPreparer extends PreconditionPreparer implements 
             throw new FileNotFoundException(String.format("%s not found", mApkFileName));
         }
 
+        if (device.getAppPackageInfo(mPackageName) != null) {
+            CLog.d("Package %s already present on the device, uninstalling ...");
+            device.uninstallPackage(mPackageName);
+        }
+
         AndroidJUnitTest instrTest = new AndroidJUnitTest();
         instrTest.setDevice(device);
         instrTest.setInstallFile(apkFile);
