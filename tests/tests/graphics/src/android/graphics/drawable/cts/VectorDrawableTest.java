@@ -46,7 +46,10 @@ import java.io.IOException;
 public class VectorDrawableTest extends AndroidTestCase {
     private static final String LOGTAG = "VectorDrawableTest";
 
-    private static final int[] ICON_RES_IDS = new int[] {
+    // Separate the test assets into different groups such that we could isolate the issue faster.
+    // Some new APIs or bug fixes only exist in particular os version, such that we name the tests
+    // and associated assets with OS code name L, M, N etc...
+    private static final int[] BASIC_ICON_RES_IDS = new int[]{
             R.drawable.vector_icon_create,
             R.drawable.vector_icon_delete,
             R.drawable.vector_icon_heart,
@@ -59,6 +62,24 @@ public class VectorDrawableTest extends AndroidTestCase {
             R.drawable.vector_icon_repeated_a_1,
             R.drawable.vector_icon_repeated_a_2,
             R.drawable.vector_icon_clip_path_1,
+    };
+
+    private static final int[] BASIC_GOLDEN_IMAGES = new int[] {
+            R.drawable.vector_icon_create_golden,
+            R.drawable.vector_icon_delete_golden,
+            R.drawable.vector_icon_heart_golden,
+            R.drawable.vector_icon_schedule_golden,
+            R.drawable.vector_icon_settings_golden,
+            R.drawable.vector_icon_random_path_1_golden,
+            R.drawable.vector_icon_random_path_2_golden,
+            R.drawable.vector_icon_repeated_cq_golden,
+            R.drawable.vector_icon_repeated_st_golden,
+            R.drawable.vector_icon_repeated_a_1_golden,
+            R.drawable.vector_icon_repeated_a_2_golden,
+            R.drawable.vector_icon_clip_path_1_golden,
+    };
+
+    private static final int[] L_M_ICON_RES_IDS = new int[] {
             R.drawable.vector_icon_transformation_1,
             R.drawable.vector_icon_transformation_2,
             R.drawable.vector_icon_transformation_3,
@@ -72,23 +93,9 @@ public class VectorDrawableTest extends AndroidTestCase {
             R.drawable.vector_icon_stroke_3,
             R.drawable.vector_icon_scale_1,
             R.drawable.vector_icon_scale_2,
-            R.drawable.vector_icon_implicit_lineto,
-            R.drawable.vector_icon_arcto,
     };
 
-    private static final int[] GOLDEN_IMAGES = new int[] {
-            R.drawable.vector_icon_create_golden,
-            R.drawable.vector_icon_delete_golden,
-            R.drawable.vector_icon_heart_golden,
-            R.drawable.vector_icon_schedule_golden,
-            R.drawable.vector_icon_settings_golden,
-            R.drawable.vector_icon_random_path_1_golden,
-            R.drawable.vector_icon_random_path_2_golden,
-            R.drawable.vector_icon_repeated_cq_golden,
-            R.drawable.vector_icon_repeated_st_golden,
-            R.drawable.vector_icon_repeated_a_1_golden,
-            R.drawable.vector_icon_repeated_a_2_golden,
-            R.drawable.vector_icon_clip_path_1_golden,
+    private static final int[] L_M_GOLDEN_IMAGES = new int[] {
             R.drawable.vector_icon_transformation_1_golden,
             R.drawable.vector_icon_transformation_2_golden,
             R.drawable.vector_icon_transformation_3_golden,
@@ -102,20 +109,38 @@ public class VectorDrawableTest extends AndroidTestCase {
             R.drawable.vector_icon_stroke_3_golden,
             R.drawable.vector_icon_scale_1_golden,
             R.drawable.vector_icon_scale_2_golden,
+    };
+
+    private static final int[] N_ICON_RES_IDS = new int[] {
+            R.drawable.vector_icon_implicit_lineto,
+            R.drawable.vector_icon_arcto,
+            R.drawable.vector_icon_filltype_nonzero,
+            R.drawable.vector_icon_filltype_evenodd,
+    };
+
+    private static final int[] N_GOLDEN_IMAGES = new int[] {
             R.drawable.vector_icon_implicit_lineto_golden,
             R.drawable.vector_icon_arcto_golden,
+            R.drawable.vector_icon_filltype_nonzero_golden,
+            R.drawable.vector_icon_filltype_evenodd_golden,
     };
 
     private static final int[] GRADIENT_ICON_RES_IDS = new int[] {
             R.drawable.vector_icon_gradient_1,
             R.drawable.vector_icon_gradient_2,
             R.drawable.vector_icon_gradient_3,
+            R.drawable.vector_icon_gradient_1_clamp,
+            R.drawable.vector_icon_gradient_2_repeat,
+            R.drawable.vector_icon_gradient_3_mirror,
     };
 
     private static final int[] GRADIENT_GOLDEN_IMAGES = new int[] {
             R.drawable.vector_icon_gradient_1_golden,
             R.drawable.vector_icon_gradient_2_golden,
             R.drawable.vector_icon_gradient_3_golden,
+            R.drawable.vector_icon_gradient_1_clamp_golden,
+            R.drawable.vector_icon_gradient_2_repeat_golden,
+            R.drawable.vector_icon_gradient_3_mirror_golden,
     };
 
     private static final int[] STATEFUL_RES_IDS = new int[] {
@@ -163,8 +188,18 @@ public class VectorDrawableTest extends AndroidTestCase {
     }
 
     @MediumTest
-    public void testSimpleVectorDrawables() throws XmlPullParserException, IOException {
-        verifyVectorDrawables(ICON_RES_IDS, GOLDEN_IMAGES, null);
+    public void testBasicVectorDrawables() throws XmlPullParserException, IOException {
+        verifyVectorDrawables(BASIC_ICON_RES_IDS, BASIC_GOLDEN_IMAGES, null);
+    }
+
+    @MediumTest
+    public void testLMVectorDrawables() throws XmlPullParserException, IOException {
+        verifyVectorDrawables(L_M_ICON_RES_IDS, L_M_GOLDEN_IMAGES, null);
+    }
+
+    @MediumTest
+    public void testNVectorDrawables() throws XmlPullParserException, IOException {
+        verifyVectorDrawables(N_ICON_RES_IDS, N_GOLDEN_IMAGES, null);
     }
 
     @MediumTest
