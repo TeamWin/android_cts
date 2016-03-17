@@ -89,7 +89,7 @@ public class DeviceSuspendTestActivity
               // Ignore.
             }
             LocalBroadcastManager.getInstance(this).unregisterReceiver(myBroadCastReceiver);
-            if (mDeviceSuspendLock !=null && mDeviceSuspendLock.isHeld()) {
+            if (mDeviceSuspendLock != null && mDeviceSuspendLock.isHeld()) {
                 mDeviceSuspendLock.release();
             }
         }
