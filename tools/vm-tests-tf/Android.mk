@@ -44,8 +44,7 @@ LOCAL_MODULE := cts-tf-dalvik-buildutil
 LOCAL_MODULE_CLASS := JAVA_LIBRARIES
 LOCAL_MODULE_TAGS := optional
 
-LOCAL_JAVA_LIBRARIES := dx dasm cfassembler junit
-LOCAL_JAVA_LIBRARIES += jack
+LOCAL_JAVA_LIBRARIES := dx dasm cfassembler junit jsr305lib
 
 LOCAL_CLASSPATH := $(HOST_JDK_TOOLS_JAR)
 
