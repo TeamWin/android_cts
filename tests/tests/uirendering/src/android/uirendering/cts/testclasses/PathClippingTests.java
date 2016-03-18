@@ -23,7 +23,7 @@ import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.Point;
 import android.graphics.Typeface;
-import android.test.suitebuilder.annotation.SmallTest;
+import android.test.suitebuilder.annotation.MediumTest;
 import android.uirendering.cts.bitmapcomparers.MSSIMComparer;
 import android.uirendering.cts.bitmapverifiers.SamplePointVerifier;
 import android.uirendering.cts.testinfrastructure.ActivityTestBase;
@@ -33,9 +33,11 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.webkit.WebView;
 import android.uirendering.cts.R;
+import org.junit.Test;
 
 import static org.junit.Assert.assertNotNull;
 
+@MediumTest
 public class PathClippingTests extends ActivityTestBase {
     // draw circle with hole in it, with stroked circle
     static final CanvasClient sTorusDrawCanvasClient = new CanvasClient() {
@@ -77,7 +79,7 @@ public class PathClippingTests extends ActivityTestBase {
         }
     };
 
-    @SmallTest
+    @Test
     public void testCircleWithCircle() {
         createTest()
                 .addCanvasClient(sTorusDrawCanvasClient, false)
@@ -85,7 +87,7 @@ public class PathClippingTests extends ActivityTestBase {
                 .runWithComparer(new MSSIMComparer(0.90));
     }
 
-    @SmallTest
+    @Test
     public void testCircleWithPoints() {
         createTest()
                 .addCanvasClient(sTorusClipCanvasClient)
@@ -107,7 +109,7 @@ public class PathClippingTests extends ActivityTestBase {
                         }));
     }
 
-    @SmallTest
+    @Test
     public void testViewRotate() {
         createTest()
                 .addLayout(R.layout.blue_padded_layout, new ViewInitializer() {
@@ -139,7 +141,7 @@ public class PathClippingTests extends ActivityTestBase {
                         }));
     }
 
-    @SmallTest
+    @Test
     public void testTextClip() {
         createTest()
                 .addCanvasClient(new CanvasClient() {
@@ -164,7 +166,7 @@ public class PathClippingTests extends ActivityTestBase {
                 .runWithComparer(new MSSIMComparer(0.90));
     }
 
-    @SmallTest
+    @Test
     public void testWebViewClipWithCircle() {
         if (!getActivity().getPackageManager().hasSystemFeature(PackageManager.FEATURE_WEBVIEW)) {
             return; // no WebView to run test on
