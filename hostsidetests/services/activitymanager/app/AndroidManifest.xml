@@ -24,6 +24,10 @@
                 android:resizeableActivity="true"
                 android:exported="true"
         />
+        <activity android:name=".NonResizeableActivity"
+                android:resizeableActivity="false"
+                android:exported="true"
+        />
         <activity android:name=".DockedActivity"
                 android:resizeableActivity="true"
                 android:exported="true"

@@ -32,7 +32,6 @@ public class ActivityManagerActivityVisiblityTests extends ActivityManagerTestBa
         mDevice.executeShellCommand(AM_START_HOME_ACTIVITY_COMMAND);
 
         mAmWmState.computeState(mDevice, new String[] {VISIBLE_BEHIND_ACTIVITY});
-        mAmWmState.assertSanity();
         mAmWmState.assertContainsStack(
                 "Must contain fullscreen stack.", FULLSCREEN_WORKSPACE_STACK_ID);
         mAmWmState.assertFrontStack("Home stack must be the front stack.", HOME_STACK_ID);
@@ -46,7 +45,6 @@ public class ActivityManagerActivityVisiblityTests extends ActivityManagerTestBa
 
         mAmWmState.computeState(mDevice,
                 new String[] {VISIBLE_BEHIND_ACTIVITY, TRANSLUCENT_ACTIVITY});
-        mAmWmState.assertSanity();
         mAmWmState.assertVisibility(VISIBLE_BEHIND_ACTIVITY, true);
         mAmWmState.assertVisibility(TRANSLUCENT_ACTIVITY, true);
     }
@@ -57,7 +55,6 @@ public class ActivityManagerActivityVisiblityTests extends ActivityManagerTestBa
 
         mAmWmState.computeState(mDevice,
                 new String[] {VISIBLE_BEHIND_ACTIVITY, TRANSLUCENT_ACTIVITY});
-        mAmWmState.assertSanity();
         mAmWmState.assertVisibility(VISIBLE_BEHIND_ACTIVITY, true);
         mAmWmState.assertVisibility(TRANSLUCENT_ACTIVITY, true);
     }
@@ -73,7 +70,6 @@ public class ActivityManagerActivityVisiblityTests extends ActivityManagerTestBa
         mDevice.executeShellCommand(AM_MOVE_TOP_ACTIVITY_TO_PINNED_STACK_COMMAND);
 
         mAmWmState.computeState(mDevice, new String[] {PIP_ON_PIP_ACTIVITY, TRANSLUCENT_ACTIVITY});
-        mAmWmState.assertSanity();
         mAmWmState.assertFrontStack("Pinned stack must be the front stack.", PINNED_STACK_ID);
         mAmWmState.assertVisibility(PIP_ON_PIP_ACTIVITY, true);
         mAmWmState.assertVisibility(TRANSLUCENT_ACTIVITY, true);

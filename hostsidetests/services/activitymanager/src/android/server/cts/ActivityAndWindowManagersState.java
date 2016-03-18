@@ -61,6 +61,9 @@ class ActivityAndWindowManagersState extends Assert {
                 retry = false;
             }
         } while (retry && retriesLeft-- > 0);
+
+        assertSanity();
+        assertValidBounds();
     }
 
     private boolean shouldRetry(String[] waitForActivitiesVisible) {
@@ -114,7 +117,7 @@ class ActivityAndWindowManagersState extends Assert {
         assertTrue(msg, mWmState.containsStack(stackId));
     }
 
-    void assertDoesNotContainsStack(String msg, int stackId) throws Exception {
+    void assertDoesNotContainStack(String msg, int stackId) throws Exception {
         assertFalse(msg, mAmState.containsStack(stackId));
         assertFalse(msg, mWmState.containsStack(stackId));
     }
