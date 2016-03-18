@@ -43,7 +43,7 @@ import java.util.concurrent.TimeUnit;
 // To run the tests in this file w/o running all the cts tests:
 // make cts
 // cts-tradefed
-// run cts -c android.provider.cts.BlockedNumberContractTest
+// run cts -m CtsProviderTestCases --test android.provider.cts.BlockedNumberContractTest
 public class BlockedNumberContractTest extends TestCaseThatRunsIfTelephonyIsEnabled {
     private ContentResolver mContentResolver;
     private Context mContext;
@@ -340,17 +340,7 @@ public class BlockedNumberContractTest extends TestCaseThatRunsIfTelephonyIsEnab
     }
 
     private void setDefaultSmsApp(boolean setToSmsApp) throws Exception {
-        StringBuilder command = new StringBuilder();
-        command.append("appops set ");
-        command.append(mContext.getPackageName());
-        command.append(" WRITE_SMS ");
-        command.append(setToSmsApp ? "allow" : "default");
-
-        ParcelFileDescriptor pfd = getInstrumentation().getUiAutomation()
-                .executeShellCommand(command.toString());
-
-        InputStream is = new FileInputStream(pfd.getFileDescriptor());
-        final byte[] buffer = new byte[8192];
-        while ((is.read(buffer)) != -1);
+        BlockedNumberTestUtils.setDefaultSmsApp(
+                setToSmsApp, mContext.getPackageName(), getInstrumentation().getUiAutomation());
     }
 }
