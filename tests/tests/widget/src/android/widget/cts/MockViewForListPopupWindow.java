@@ -44,5 +44,21 @@ public class MockViewForListPopupWindow extends EditText {
         }
         return super.onKeyPreIme(keyCode, event);
     }
+
+    @Override
+    public boolean onKeyDown(int keyCode, KeyEvent event) {
+        if (mListPopupWindow != null) {
+            return mListPopupWindow.onKeyDown(keyCode, event);
+        }
+        return super.onKeyDown(keyCode, event);
+    }
+
+    @Override
+    public boolean onKeyUp(int keyCode, KeyEvent event) {
+        if (mListPopupWindow != null) {
+            return mListPopupWindow.onKeyUp(keyCode, event);
+        }
+        return super.onKeyUp(keyCode, event);
+    }
 }
 
