@@ -70,9 +70,12 @@ public class MockView extends View {
     private boolean mCalledDispatchKeyEventPreIme = false;
     private boolean mCalledOnKeyPreIme = false;
     private boolean mCalledGetPointerIcon = false;
+    private boolean mCalledOnVisibilityAggregated = false;
 
     private int mOldWidth = -1;
     private int mOldHeight = -1;
+
+    private boolean mLastAggregatedVisibility;
 
     public MockView(Context context) {
         super(context);
@@ -616,6 +619,21 @@ public class MockView extends View {
         return mCalledGetPointerIcon;
     }
 
+    @Override
+    public void onVisibilityAggregated(boolean isVisible) {
+        super.onVisibilityAggregated(isVisible);
+        mCalledOnVisibilityAggregated = true;
+        mLastAggregatedVisibility = isVisible;
+    }
+
+    public boolean hasCalledOnVisibilityAggregated() {
+        return mCalledOnVisibilityAggregated;
+    }
+
+    public boolean getLastAggregatedVisibility() {
+        return mLastAggregatedVisibility;
+    }
+
     public void reset() {
         mCalledOnCreateContextMenu = false;
 
@@ -655,8 +673,10 @@ public class MockView extends View {
         mCalledDispatchKeyEventPreIme = false;
         mCalledOnKeyPreIme = false;
         mCalledGetPointerIcon = false;
+        mCalledOnVisibilityAggregated = false;
 
         mOldWidth = -1;
         mOldHeight = -1;
+        mLastAggregatedVisibility = false;
     }
 }

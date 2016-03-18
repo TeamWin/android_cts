@@ -123,4 +123,14 @@
       </LinearLayout>
     </LinearLayout>
 
+    <FrameLayout
+        android:id="@+id/aggregate_visibility_parent"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content">
+        <android.view.cts.MockView
+            android:id="@+id/mock_view_aggregate_visibility"
+            android:layout_width="10px"
+            android:layout_height="10px" />
+    </FrameLayout>
+
 </LinearLayout>

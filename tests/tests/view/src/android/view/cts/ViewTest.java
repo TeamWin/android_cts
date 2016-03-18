@@ -3940,6 +3940,89 @@ public class ViewTest extends ActivityInstrumentationTestCase2<ViewTestCtsActivi
         assertFalse(view2.hasPointerCapture());
     }
 
+    public void testVisibilityAggregated() throws Throwable {
+        final View grandparent = mActivity.findViewById(R.id.viewlayout_root);
+        final View parent = mActivity.findViewById(R.id.aggregate_visibility_parent);
+        final MockView mv = (MockView) mActivity.findViewById(R.id.mock_view_aggregate_visibility);
+
+        assertEquals(parent, mv.getParent());
+        assertEquals(grandparent, parent.getParent());
+
+        assertTrue(mv.hasCalledOnVisibilityAggregated());
+        assertTrue(mv.getLastAggregatedVisibility());
+
+        final Runnable reset = new Runnable() {
+            @Override
+            public void run() {
+                grandparent.setVisibility(View.VISIBLE);
+                parent.setVisibility(View.VISIBLE);
+                mv.setVisibility(View.VISIBLE);
+                mv.reset();
+            }
+        };
+
+        runTestOnUiThread(reset);
+
+        setVisibilityOnUiThread(parent, View.GONE);
+
+        assertTrue(mv.hasCalledOnVisibilityAggregated());
+        assertFalse(mv.getLastAggregatedVisibility());
+
+        runTestOnUiThread(reset);
+
+        setVisibilityOnUiThread(grandparent, View.GONE);
+
+        assertTrue(mv.hasCalledOnVisibilityAggregated());
+        assertFalse(mv.getLastAggregatedVisibility());
+
+        runTestOnUiThread(reset);
+        runTestOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                grandparent.setVisibility(View.GONE);
+                parent.setVisibility(View.GONE);
+                mv.setVisibility(View.VISIBLE);
+
+                grandparent.setVisibility(View.VISIBLE);
+            }
+        });
+
+        assertTrue(mv.hasCalledOnVisibilityAggregated());
+        assertFalse(mv.getLastAggregatedVisibility());
+
+        runTestOnUiThread(reset);
+        runTestOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                grandparent.setVisibility(View.GONE);
+                parent.setVisibility(View.INVISIBLE);
+
+                grandparent.setVisibility(View.VISIBLE);
+            }
+        });
+
+        assertTrue(mv.hasCalledOnVisibilityAggregated());
+        assertFalse(mv.getLastAggregatedVisibility());
+
+        runTestOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                parent.setVisibility(View.VISIBLE);
+            }
+        });
+
+        assertTrue(mv.getLastAggregatedVisibility());
+    }
+
+    private void setVisibilityOnUiThread(final View view, int visibility) throws Throwable {
+        runTestOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                view.setVisibility(visibility);
+            }
+        });
+    }
+
     private static class MockViewGroup extends ViewGroup {
         boolean isStartActionModeForChildCalled = false;
         int startActionModeForChildType = ActionMode.TYPE_PRIMARY;
