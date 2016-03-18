@@ -22,7 +22,7 @@ import android.graphics.Paint;
 import android.graphics.PorterDuff;
 import android.graphics.Rect;
 import android.graphics.drawable.NinePatchDrawable;
-import android.test.suitebuilder.annotation.SmallTest;
+import android.test.suitebuilder.annotation.MediumTest;
 import android.uirendering.cts.bitmapcomparers.BitmapComparer;
 import android.uirendering.cts.bitmapcomparers.ExactComparer;
 import android.uirendering.cts.bitmapverifiers.BitmapVerifier;
@@ -30,11 +30,13 @@ import android.uirendering.cts.bitmapverifiers.RectVerifier;
 import android.uirendering.cts.testinfrastructure.ActivityTestBase;
 import android.uirendering.cts.testinfrastructure.CanvasClient;
 import android.uirendering.cts.R;
+import org.junit.Test;
 
+@MediumTest
 public class ExactCanvasTests extends ActivityTestBase {
     private final BitmapComparer mExactComparer = new ExactComparer();
 
-    @SmallTest
+    @Test
     public void testBlueRect() {
         final Rect rect = new Rect(10, 10, 80, 80);
         createTest()
@@ -50,7 +52,7 @@ public class ExactCanvasTests extends ActivityTestBase {
                 .runWithVerifier(new RectVerifier(Color.WHITE, Color.BLUE, rect));
     }
 
-    @SmallTest
+    @Test
     public void testPoints() {
         createTest()
                 .addCanvasClient(new CanvasClient() {
@@ -68,7 +70,7 @@ public class ExactCanvasTests extends ActivityTestBase {
                 .runWithComparer(mExactComparer);
     }
 
-    @SmallTest
+    @Test
     public void testBlackRectWithStroke() {
         createTest()
                 .addCanvasClient(new CanvasClient() {
@@ -86,7 +88,7 @@ public class ExactCanvasTests extends ActivityTestBase {
                 .runWithComparer(mExactComparer);
     }
 
-    @SmallTest
+    @Test
     public void testBlackLineOnGreenBack() {
         createTest()
                 .addCanvasClient(new CanvasClient() {
@@ -102,7 +104,7 @@ public class ExactCanvasTests extends ActivityTestBase {
                 .runWithComparer(mExactComparer);
     }
 
-    @SmallTest
+    @Test
     public void testDrawRedRectOnBlueBack() {
         createTest()
                 .addCanvasClient(new CanvasClient() {
@@ -117,7 +119,7 @@ public class ExactCanvasTests extends ActivityTestBase {
                 .runWithComparer(mExactComparer);
     }
 
-    @SmallTest
+    @Test
     public void testDrawLine() {
         createTest()
                 .addCanvasClient(new CanvasClient() {
@@ -135,7 +137,7 @@ public class ExactCanvasTests extends ActivityTestBase {
                 .runWithComparer(mExactComparer);
     }
 
-    @SmallTest
+    @Test
     public void testDrawWhiteScreen() {
         createTest()
                 .addCanvasClient(new CanvasClient() {
@@ -147,7 +149,7 @@ public class ExactCanvasTests extends ActivityTestBase {
                 .runWithComparer(mExactComparer);
     }
 
-    @SmallTest
+    @Test
     public void testBasicText() {
         final String testString = "THIS IS A TEST";
         createTest()
@@ -164,7 +166,7 @@ public class ExactCanvasTests extends ActivityTestBase {
                 .runWithComparer(mExactComparer);
     }
 
-    @SmallTest
+    @Test
     public void testBasicColorXfermode() {
         createTest()
                 .addCanvasClient(new CanvasClient() {
@@ -177,7 +179,7 @@ public class ExactCanvasTests extends ActivityTestBase {
                 .runWithComparer(mExactComparer);
     }
 
-    @SmallTest
+    @Test
     public void testBluePaddedSquare() {
         final NinePatchDrawable ninePatchDrawable = (NinePatchDrawable)
             getActivity().getResources().getDrawable(R.drawable.blue_padded_square);
