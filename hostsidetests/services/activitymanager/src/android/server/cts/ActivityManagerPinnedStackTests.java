@@ -52,8 +52,6 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
         }
 
         mAmWmState.computeState(mDevice, new String[] {topActiviyName});
-        mAmWmState.assertSanity();
-        mAmWmState.assertValidBounds();
 
         if (supportsPip()) {
             final String windowName = getWindowName(topActiviyName);
@@ -81,7 +79,7 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
                         "Pinned window can't be focused window.", windowName);
             }
         } else {
-            mAmWmState.assertDoesNotContainsStack(
+            mAmWmState.assertDoesNotContainStack(
                     "Must not contain pinned stack.", PINNED_STACK_ID);
         }
     }
