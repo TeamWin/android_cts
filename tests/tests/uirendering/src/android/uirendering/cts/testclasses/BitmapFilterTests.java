@@ -20,13 +20,15 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.PaintFlagsDrawFilter;
-import android.test.suitebuilder.annotation.SmallTest;
+import android.test.suitebuilder.annotation.MediumTest;
 import android.uirendering.cts.bitmapverifiers.BitmapVerifier;
 import android.uirendering.cts.bitmapverifiers.ColorVerifier;
 import android.uirendering.cts.bitmapverifiers.PerPixelBitmapVerifier;
 import android.uirendering.cts.testinfrastructure.ActivityTestBase;
 import android.uirendering.cts.testinfrastructure.CanvasClient;
+import org.junit.Test;
 
+@MediumTest
 public class BitmapFilterTests extends ActivityTestBase {
     private static final int WHITE_WEIGHT = 255 * 3;
     private enum FilterEnum {
@@ -75,32 +77,32 @@ public class BitmapFilterTests extends ActivityTestBase {
     private static final int BIG_GRID_SIZE = TEST_WIDTH * 2;
     private Bitmap mBigGridBitmap = createGridBitmap(BIG_GRID_SIZE, BIG_GRID_SIZE);
 
-    @SmallTest
+    @Test
     public void testPaintFilterScaleUp() {
         runScaleTest(FilterEnum.PAINT_FILTER, true);
     }
 
-    @SmallTest
+    @Test
     public void testPaintFilterScaleDown() {
         runScaleTest(FilterEnum.PAINT_FILTER, false);
     }
 
-    @SmallTest
+    @Test
     public void testDrawFilterRemoveFilterScaleUp() {
         runScaleTest(FilterEnum.REMOVE_FILTER, true);
     }
 
-    @SmallTest
+    @Test
     public void testDrawFilterRemoveFilterScaleDown() {
         runScaleTest(FilterEnum.REMOVE_FILTER, false);
     }
 
-    @SmallTest
+    @Test
     public void testDrawFilterScaleUp() {
         runScaleTest(FilterEnum.ADD_FILTER, true);
     }
 
-    @SmallTest
+    @Test
     public void testDrawFilterScaleDown() {
         runScaleTest(FilterEnum.ADD_FILTER, false);
     }

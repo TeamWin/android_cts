@@ -32,6 +32,7 @@ import org.junit.runners.Parameterized;
 
 import java.util.List;
 
+@MediumTest
 @RunWith(Parameterized.class)
 public class ColorFilterAlphaTest extends ActivityTestBase {
     // We care about one point in each of the four rectangles of different alpha values, as well as
@@ -130,7 +131,6 @@ public class ColorFilterAlphaTest extends ActivityTestBase {
     };
 
     @Test
-    @MediumTest
     public void test() {
         createTest()
                 .addCanvasClient(mCanvasClient, mConfig.hardwareAccelerated)

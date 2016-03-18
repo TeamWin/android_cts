@@ -21,18 +21,20 @@ import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Picture;
 import android.graphics.Rect;
-import android.test.suitebuilder.annotation.SmallTest;
+import android.test.suitebuilder.annotation.MediumTest;
 import android.uirendering.cts.bitmapverifiers.ColorVerifier;
 import android.uirendering.cts.bitmapverifiers.RectVerifier;
 import android.uirendering.cts.testinfrastructure.ActivityTestBase;
 import android.uirendering.cts.testinfrastructure.CanvasClient;
+import org.junit.Test;
 
+@MediumTest
 public class PictureTest extends ActivityTestBase {
 
     private static final Rect sRect = new Rect(0, 0, 40, 40);
     private static final Rect sOffsetRect = new Rect(40, 0, 80, 40);
 
-    private static final Picture greenSquare() {
+    private static Picture greenSquare() {
         Paint pt = new Paint();
         pt.setColor(Color.GREEN);
         Picture pic = new Picture();
@@ -44,6 +46,7 @@ public class PictureTest extends ActivityTestBase {
         return pic;
     }
 
+    @Test
     public void testPictureRespectsClip() throws Exception {
         createTest()
             .addCanvasClient(
@@ -58,6 +61,7 @@ public class PictureTest extends ActivityTestBase {
             ).runWithVerifier(new ColorVerifier(Color.WHITE));
     }
 
+    @Test
     public void testPictureRespectsTranslate() throws Exception {
         createTest()
             .addCanvasClient(

@@ -20,9 +20,10 @@ import android.graphics.Canvas;
 import android.graphics.Path;
 import android.graphics.RectF;
 import android.graphics.Region;
-import android.test.suitebuilder.annotation.SmallTest;
+import android.test.suitebuilder.annotation.MediumTest;
 import android.uirendering.cts.testinfrastructure.ActivityTestBase;
 import android.uirendering.cts.testinfrastructure.CanvasClient;
+import org.junit.Test;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -33,9 +34,9 @@ import static org.junit.Assert.assertTrue;
  * Although these tests don't verify drawing content, they still make use of ActivityTestBase's
  * capability to test the hardware accelerated Canvas in the way that it is used by Views.
  */
+@MediumTest
 public class CanvasStateTests extends ActivityTestBase {
-
-    @SmallTest
+    @Test
     public void testClipRectReturnValues() {
         createTest()
                 .addCanvasClient(new CanvasClient() {
@@ -53,7 +54,7 @@ public class CanvasStateTests extends ActivityTestBase {
                 .runWithoutVerification();
     }
 
-    @SmallTest
+    @Test
     public void testClipRegionReturnValues() {
         createTest()
                 .addCanvasClient(new CanvasClient() {
@@ -86,7 +87,7 @@ public class CanvasStateTests extends ActivityTestBase {
                 .runWithoutVerification();
     }
 
-    @SmallTest
+    @Test
     public void testClipPathReturnValues() {
         createTest()
                 .addCanvasClient(new CanvasClient() {
@@ -107,7 +108,7 @@ public class CanvasStateTests extends ActivityTestBase {
                 })
                 .runWithoutVerification();
     }
-    @SmallTest
+    @Test
     public void testQuickReject() {
         createTest()
                 .addCanvasClient(new CanvasClient() {
