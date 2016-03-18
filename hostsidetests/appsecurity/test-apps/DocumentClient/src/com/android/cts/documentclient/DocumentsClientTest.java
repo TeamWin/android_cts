@@ -16,58 +16,20 @@
 
 package com.android.cts.documentclient;
 
-import static android.os.Environment.DIRECTORY_ALARMS;
-import static android.os.Environment.DIRECTORY_DCIM;
-import static android.os.Environment.DIRECTORY_DOCUMENTS;
-import static android.os.Environment.DIRECTORY_DOWNLOADS;
-import static android.os.Environment.DIRECTORY_MOVIES;
-import static android.os.Environment.DIRECTORY_MUSIC;
-import static android.os.Environment.DIRECTORY_NOTIFICATIONS;
-import static android.os.Environment.DIRECTORY_PICTURES;
-import static android.os.Environment.DIRECTORY_PODCASTS;
-import static android.os.Environment.DIRECTORY_RINGTONES;
-import static android.os.Environment.getExternalStorageDirectory;
-import static android.test.MoreAsserts.assertContainsRegex;
-import static android.test.MoreAsserts.assertNotEqual;
-
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-
-import android.app.Activity;
-import android.app.ActivityManager;
-import android.app.Instrumentation;
 import android.content.ContentResolver;
-import android.content.Context;
 import android.content.Intent;
-import android.content.pm.PackageManager;
-import android.content.res.AssetFileDescriptor.AutoCloseInputStream;
-import android.content.res.AssetFileDescriptor;
 import android.database.Cursor;
 import android.net.Uri;
-import android.os.Environment;
 import android.os.SystemClock;
-import android.os.storage.StorageManager;
-import android.os.storage.StorageVolume;
 import android.provider.DocumentsContract;
 import android.provider.DocumentsContract.Document;
 import android.provider.DocumentsProvider;
-import android.support.test.uiautomator.By;
-import android.support.test.uiautomator.Configurator;
-import android.support.test.uiautomator.UiDevice;
 import android.support.test.uiautomator.UiObject;
 import android.support.test.uiautomator.UiObjectNotFoundException;
 import android.support.test.uiautomator.UiScrollable;
 import android.support.test.uiautomator.UiSelector;
-import android.support.test.uiautomator.Until;
-import android.test.InstrumentationTestCase;
 import android.test.MoreAsserts;
-import android.text.format.DateUtils;
 import android.util.Log;
-import android.view.MotionEvent;
 
 import com.android.cts.documentclient.MyActivity.Result;
 
@@ -75,46 +37,8 @@ import com.android.cts.documentclient.MyActivity.Result;
  * Tests for {@link DocumentsProvider} and interaction with platform intents
  * like {@link Intent#ACTION_OPEN_DOCUMENT}.
  */
-public class DocumentsClientTest extends InstrumentationTestCase {
+public class DocumentsClientTest extends DocumentsClientTestCase {
     private static final String TAG = "DocumentsClientTest";
-
-    private UiDevice mDevice;
-    private MyActivity mActivity;
-
-    private static final long TIMEOUT = 30 * DateUtils.SECOND_IN_MILLIS;
-
-    private static final int REQUEST_CODE = 42;
-
-    private static final String[] STANDARD_DIRECTORIES = {
-        DIRECTORY_MUSIC,
-        DIRECTORY_PODCASTS,
-        DIRECTORY_RINGTONES,
-        DIRECTORY_ALARMS,
-        DIRECTORY_NOTIFICATIONS,
-        DIRECTORY_PICTURES,
-        DIRECTORY_MOVIES,
-        DIRECTORY_DOWNLOADS,
-        DIRECTORY_DCIM,
-        DIRECTORY_DOCUMENTS
-    };
-
-    @Override
-    public void setUp() throws Exception {
-        super.setUp();
-
-        Configurator.getInstance().setToolType(MotionEvent.TOOL_TYPE_FINGER);
-
-        mDevice = UiDevice.getInstance(getInstrumentation());
-        mActivity = launchActivity(getInstrumentation().getTargetContext().getPackageName(),
-                MyActivity.class, null);
-        mDevice.waitForIdle();
-    }
-
-    @Override
-    public void tearDown() throws Exception {
-        super.tearDown();
-        mActivity.finish();
-    }
 
     private UiObject findRoot(String label) throws UiObjectNotFoundException {
         final UiSelector rootsList = new UiSelector().resourceId(
@@ -370,162 +294,6 @@ public class DocumentsClientTest extends InstrumentationTestCase {
         }
     }
 
-    public void testOpenExternalDirectory_invalidPath() throws Exception {
-        if (!supportedHardware()) return;
-
-        for (StorageVolume volume : getVolumes()) {
-            openExternalDirectoryInvalidPath(volume, "");
-            openExternalDirectoryInvalidPath(volume, "/dev/null");
-            openExternalDirectoryInvalidPath(volume, "/../");
-            openExternalDirectoryInvalidPath(volume, "/HiddenStuff");
-        }
-    }
-
-    public void testOpenExternalDirectory_userRejects() throws Exception {
-        if (!supportedHardware()) return;
-
-        final StorageVolume primaryVolume = getPrimaryVolume();
-
-        // Tests user clicking DENY button, for all valid directories.
-        for (String directory : STANDARD_DIRECTORIES) {
-            final UiAlertDialog dialog = openExternalDirectoryValidPath(primaryVolume, directory);
-            dialog.noButton.click();
-            assertActivityFailed();
-        }
-
-        // Also test user clicking back button - one directory is enough.
-        openExternalDirectoryValidPath(primaryVolume, DIRECTORY_PICTURES);
-        mDevice.pressBack();
-        assertActivityFailed();
-    }
-
-    public void testOpenExternalDirectory_userAccepts() throws Exception {
-        if (!supportedHardware())
-            return;
-
-        for (StorageVolume volume : getVolumes()) {
-            userAcceptsOpenExternalDirectoryTest(volume, DIRECTORY_PICTURES);
-        }
-    }
-
-    public void testOpenExternalDirectory_notAskedAgain() throws Exception {
-        if (!supportedHardware())
-            return;
-
-        final StorageVolume volume = getPrimaryVolume();
-        final Uri grantedUri = userAcceptsOpenExternalDirectoryTest(volume, DIRECTORY_PICTURES);
-
-        // Calls it again - since the permission has been granted, it should return right away,
-        // without popping up the permissions dialog.
-        sendOpenExternalDirectoryIntent(volume, DIRECTORY_PICTURES);
-        final Intent newData = assertActivitySucceeded();
-        assertEquals(grantedUri, newData.getData());
-
-        // Make sure other directories still require user permission.
-        final Uri grantedUri2 = userAcceptsOpenExternalDirectoryTest(volume, DIRECTORY_ALARMS);
-        assertNotEqual(grantedUri, grantedUri2);
-    }
-
-    public void testOpenExternalDirectory_deniesOnceButAllowsAskingAgain() throws Exception {
-        if (!supportedHardware())
-            return;
-
-        for (StorageVolume volume : getVolumes()) {
-            // Rejects the first attempt...
-            UiAlertDialog dialog = openExternalDirectoryValidPath(volume, DIRECTORY_DCIM);
-            dialog.assertDoNotAskAgainVisibility(false);
-            dialog.noButton.click();
-            assertActivityFailed();
-
-            // ...and the second.
-            dialog = openExternalDirectoryValidPath(volume, DIRECTORY_DCIM);
-            dialog.assertDoNotAskAgainVisibility(true);
-            dialog.noButton.click();
-            assertActivityFailed();
-
-            // Third time is a charm...
-            userAcceptsOpenExternalDirectoryTest(volume, DIRECTORY_DCIM);
-        }
-    }
-
-    public void testOpenExternalDirectory_deniesOnceForAll() throws Exception {
-        if (!supportedHardware())
-            return;
-        for (StorageVolume volume : getVolumes()) {
-            // Rejects the first attempt...
-            UiAlertDialog dialog = openExternalDirectoryValidPath(volume, DIRECTORY_RINGTONES);
-            dialog.assertDoNotAskAgainVisibility(false);
-            dialog.noButton.click();
-            assertActivityFailed();
-
-            // ...and the second, checking the box
-            dialog = openExternalDirectoryValidPath(volume, DIRECTORY_RINGTONES);
-            UiObject checkbox = dialog.assertDoNotAskAgainVisibility(true);
-            assertTrue("checkbox should not be checkable", checkbox.isCheckable());
-            assertFalse("checkbox should not be checked", checkbox.isChecked());
-            checkbox.click();
-            assertTrue("checkbox should be checked", checkbox.isChecked()); // Sanity check
-            assertFalse("allow button should be disabled", dialog.yesButton.isEnabled());
-
-            dialog.noButton.click();
-            assertActivityFailed();
-
-            // Third strike out...
-            sendOpenExternalDirectoryIntent(volume, DIRECTORY_RINGTONES);
-            assertActivityFailed();
-        }
-    }
-
-    private Uri userAcceptsOpenExternalDirectoryTest(StorageVolume volume, String directoryName)
-            throws Exception {
-        // Asserts dialog contain the proper message.
-        final UiAlertDialog dialog = openExternalDirectoryValidPath(volume, directoryName);
-        final String message = dialog.messageText.getText();
-        Log.v(TAG, "request permission message: " + message);
-        final Context context = getInstrumentation().getTargetContext();
-        final String appLabel = context.getPackageManager().getApplicationLabel(
-                context.getApplicationInfo()).toString();
-        assertContainsRegex("missing app label", appLabel, message);
-        assertContainsRegex("missing folder", directoryName, message);
-        assertContainsRegex("missing root", volume.getDescription(context), message);
-
-        // Call API...
-        dialog.yesButton.click();
-
-        // ...and get its response.
-        final Intent data = assertActivitySucceeded();
-        final Uri grantedUri = data.getData();
-
-        // Test granted permission directly by persisting it...
-        final ContentResolver resolver = getInstrumentation().getContext().getContentResolver();
-        final int modeFlags = data.getFlags()
-                & (Intent.FLAG_GRANT_READ_URI_PERMISSION
-                | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
-        resolver.takePersistableUriPermission(grantedUri, modeFlags);
-
-        // ...and indirectly by creating some documents
-        final Uri doc = DocumentsContract.buildDocumentUriUsingTree(grantedUri,
-                DocumentsContract.getTreeDocumentId(grantedUri));
-        assertNotNull("could not get tree URI", doc);
-        final Uri pic = DocumentsContract.createDocument(resolver, doc, "image/png", "pic.png");
-        assertNotNull("could not create file (pic.png) on tree root", pic);
-        final Uri dir = DocumentsContract.createDocument(resolver, doc, Document.MIME_TYPE_DIR,
-                "my dir");
-        assertNotNull("could not create child dir (my dir)", pic);
-        final Uri dirPic = DocumentsContract.createDocument(resolver, dir, "image/png", "pic2.png");
-        assertNotNull("could not create file (pic.png) on child dir (my dir)", dirPic);
-
-        writeFully(pic, "pic".getBytes());
-        writeFully(dirPic, "dirPic".getBytes());
-
-        // Clean up created documents.
-        assertTrue("delete", DocumentsContract.deleteDocument(resolver, pic));
-        assertTrue("delete", DocumentsContract.deleteDocument(resolver, dirPic));
-        assertTrue("delete", DocumentsContract.deleteDocument(resolver, dir));
-
-        return grantedUri;
-    }
-
     public void testGetContent() throws Exception {
         if (!supportedHardware()) return;
 
@@ -658,149 +426,6 @@ public class DocumentsClientTest extends InstrumentationTestCase {
             assertEquals(0, cursorDst.getCount());
         } finally {
             cursorDst.close();
-        }
-    }
-
-    private String getColumn(Uri uri, String column) {
-        final ContentResolver resolver = getInstrumentation().getContext().getContentResolver();
-        final Cursor cursor = resolver.query(uri, new String[] { column }, null, null, null);
-        try {
-            assertTrue(cursor.moveToFirst());
-            return cursor.getString(0);
-        } finally {
-            cursor.close();
-        }
-    }
-
-    private byte[] readFully(Uri uri) throws IOException {
-        final InputStream in = getInstrumentation().getContext().getContentResolver()
-                .openInputStream(uri);
-        return readFully(in);
-    }
-
-    private byte[] readTypedFully(Uri uri, String mimeType) throws IOException {
-        final AssetFileDescriptor descriptor =
-                getInstrumentation().getContext().getContentResolver()
-                        .openTypedAssetFileDescriptor(uri, mimeType, null, null);
-        try (AutoCloseInputStream in = new AutoCloseInputStream(descriptor)) {
-            return readFully(in);
-        }
-    }
-
-    private byte[] readFully(InputStream in) throws IOException {
-        try {
-            ByteArrayOutputStream bytes = new ByteArrayOutputStream();
-            byte[] buffer = new byte[1024];
-            int count;
-            while ((count = in.read(buffer)) != -1) {
-                bytes.write(buffer, 0, count);
-            }
-            return bytes.toByteArray();
-        } finally {
-            in.close();
-        }
-    }
-
-    private void writeFully(Uri uri, byte[] data) throws IOException {
-        OutputStream out = getInstrumentation().getContext().getContentResolver()
-                .openOutputStream(uri);
-        try {
-            out.write(data);
-        } finally {
-            out.close();
-        }
-    }
-
-    private boolean supportedHardware() {
-        final PackageManager pm = getInstrumentation().getContext().getPackageManager();
-        if (pm.hasSystemFeature("android.hardware.type.television")
-                || pm.hasSystemFeature("android.hardware.type.watch")) {
-            return false;
-        }
-        return true;
-    }
-
-    private void assertActivityFailed() {
-        final Result result = mActivity.getResult();
-        assertEquals(REQUEST_CODE, result.requestCode);
-        assertEquals(Activity.RESULT_CANCELED, result.resultCode);
-        assertNull(result.data);
-    }
-
-    private Intent assertActivitySucceeded() {
-        final Result result = mActivity.getResult();
-        assertEquals(REQUEST_CODE, result.requestCode);
-        assertEquals(Activity.RESULT_OK, result.resultCode);
-        assertNotNull(result.data);
-        return result.data;
-    }
-
-    private void openExternalDirectoryInvalidPath(StorageVolume volume, String path) {
-        sendOpenExternalDirectoryIntent(volume, path);
-        assertActivityFailed();
-    }
-
-    private UiAlertDialog openExternalDirectoryValidPath(StorageVolume volume, String path)
-            throws UiObjectNotFoundException {
-        sendOpenExternalDirectoryIntent(volume, path);
-        return new UiAlertDialog();
-    }
-
-    private void sendOpenExternalDirectoryIntent(StorageVolume volume, String directoryName) {
-        final Intent intent = volume.createAccessIntent(directoryName);
-        mActivity.startActivityForResult(intent, REQUEST_CODE);
-        mDevice.waitForIdle();
-    }
-
-    private StorageVolume[] getVolumes() {
-        final StorageManager sm = (StorageManager)
-                getInstrumentation().getTargetContext().getSystemService(Context.STORAGE_SERVICE);
-        final StorageVolume[] volumes = sm.getVolumeList();
-        assertTrue("empty volumes", volumes.length > 0);
-        return volumes;
-    }
-
-    private StorageVolume getPrimaryVolume() {
-        final StorageManager sm = (StorageManager)
-                getInstrumentation().getTargetContext().getSystemService(Context.STORAGE_SERVICE);
-        return sm.getPrimaryVolume();
-    }
-
-    private final class UiAlertDialog {
-        final UiObject dialog;
-        final UiObject messageText;
-        final UiObject yesButton;
-        final UiObject noButton;
-
-        UiAlertDialog() throws UiObjectNotFoundException {
-            final String id = "android:id/parentPanel";
-            boolean gotIt = mDevice.wait(Until.hasObject(By.res(id)), TIMEOUT);
-            assertTrue("object with id '(" + id + "') not visible yet", gotIt);
-            dialog = mDevice.findObject(new UiSelector().resourceId(id));
-            assertTrue("object with id '(" + id + "') doesn't exist", dialog.exists());
-            messageText = dialog.getChild(
-                    new UiSelector().resourceId("com.android.documentsui:id/message"));
-            yesButton = dialog.getChild(new UiSelector().resourceId("android:id/button1"));
-            noButton  = dialog.getChild(new UiSelector().resourceId("android:id/button2"));
-        }
-
-        private UiObject getDoNotAskAgainCheckBox() throws UiObjectNotFoundException {
-            return dialog.getChild(
-                    new UiSelector().resourceId("com.android.documentsui:id/do_not_ask_checkbox"));
-        }
-
-        UiObject assertDoNotAskAgainVisibility(boolean expectVisible) {
-            UiObject checkbox = null;
-            try {
-                checkbox = getDoNotAskAgainCheckBox();
-                assertEquals("Wrong value for 'DoNotAskAgain.exists()",
-                        expectVisible, checkbox.exists());
-            } catch (UiObjectNotFoundException e) {
-                if (expectVisible) {
-                    fail("'Do Not Ask Again' not found");
-                }
-            }
-            return checkbox;
         }
     }
 }
