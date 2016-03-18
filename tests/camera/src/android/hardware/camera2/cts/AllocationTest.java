@@ -95,8 +95,6 @@ public class AllocationTest extends AndroidTestCase {
         super.setContext(context);
         mCameraManager = (CameraManager) context.getSystemService(Context.CAMERA_SERVICE);
         assertNotNull("Can't connect to camera manager!", mCameraManager);
-
-        RenderScriptSingleton.setContext(context);
     }
 
     @Override
@@ -111,6 +109,8 @@ public class AllocationTest extends AndroidTestCase {
         mCameraIterable = new CameraIterable();
         mSizeIterable = new SizeIterable();
         mResultIterable = new ResultIterable();
+
+        RenderScriptSingleton.setContext(getContext());
     }
 
     @Override
@@ -470,15 +470,14 @@ public class AllocationTest extends AndroidTestCase {
                     @Override
                     public void run(final Size size) throws CameraAccessException {
                         // Create a script graph that converts YUV to RGB
-                        final ScriptGraph scriptGraph = ScriptGraph.create()
+                        try (ScriptGraph scriptGraph = ScriptGraph.create()
                                 .configureInputWithSurface(size, YUV_420_888)
                                 .chainScript(ScriptYuvToRgb.class)
-                                .buildGraph();
+                                .buildGraph()) {
 
-                        if (VERBOSE) Log.v(TAG, "Prepared ScriptYuvToRgb for size " + size);
+                            if (VERBOSE) Log.v(TAG, "Prepared ScriptYuvToRgb for size " + size);
 
-                        // Run the graph against camera input and validate we get some input
-                        try {
+                            // Run the graph against camera input and validate we get some input
                             CaptureRequest request =
                                     configureAndCreateRequestForSurface(scriptGraph.getInputSurface()).build();
 
@@ -495,8 +494,6 @@ public class AllocationTest extends AndroidTestCase {
                             });
 
                             stopCapture();
-                        } finally {
-                            scriptGraph.close();
                         }
                     }
                 });
@@ -536,36 +533,37 @@ public class AllocationTest extends AndroidTestCase {
                 final Size maxSize = getMaxSize(
                         getSupportedSizeForFormat(YUV_420_888, camera.getId(), mCameraManager));
 
-                ScriptGraph scriptGraph = createGraphForYuvCroppedMeans(maxSize);
+                try (ScriptGraph scriptGraph = createGraphForYuvCroppedMeans(maxSize)) {
 
-                CaptureRequest.Builder req =
-                        configureAndCreateRequestForSurface(scriptGraph.getInputSurface());
+                    CaptureRequest.Builder req =
+                            configureAndCreateRequestForSurface(scriptGraph.getInputSurface());
 
-                // Take a shot with very low ISO and exposure time. Expect it to be black.
-                int minimumSensitivity = staticInfo.getSensitivityMinimumOrDefault();
-                long minimumExposure = staticInfo.getExposureMinimumOrDefault();
-                setManualCaptureRequest(req, minimumSensitivity, minimumExposure);
+                    // Take a shot with very low ISO and exposure time. Expect it to be black.
+                    int minimumSensitivity = staticInfo.getSensitivityMinimumOrDefault();
+                    long minimumExposure = staticInfo.getExposureMinimumOrDefault();
+                    setManualCaptureRequest(req, minimumSensitivity, minimumExposure);
 
-                CaptureRequest lowIsoExposureShot = req.build();
-                captureSingleShotAndExecute(lowIsoExposureShot, scriptGraph);
+                    CaptureRequest lowIsoExposureShot = req.build();
+                    captureSingleShotAndExecute(lowIsoExposureShot, scriptGraph);
 
-                float[] blackMeans = convertPixelYuvToRgb(scriptGraph.getOutputData());
+                    float[] blackMeans = convertPixelYuvToRgb(scriptGraph.getOutputData());
 
-                // Take a shot with very high ISO and exposure time. Expect it to be white.
-                int maximumSensitivity = staticInfo.getSensitivityMaximumOrDefault();
-                long maximumExposure = staticInfo.getExposureMaximumOrDefault();
-                setManualCaptureRequest(req, maximumSensitivity, maximumExposure);
+                    // Take a shot with very high ISO and exposure time. Expect it to be white.
+                    int maximumSensitivity = staticInfo.getSensitivityMaximumOrDefault();
+                    long maximumExposure = staticInfo.getExposureMaximumOrDefault();
+                    setManualCaptureRequest(req, maximumSensitivity, maximumExposure);
 
-                CaptureRequest highIsoExposureShot = req.build();
-                captureSingleShotAndExecute(highIsoExposureShot, scriptGraph);
+                    CaptureRequest highIsoExposureShot = req.build();
+                    captureSingleShotAndExecute(highIsoExposureShot, scriptGraph);
 
-                float[] whiteMeans = convertPixelYuvToRgb(scriptGraph.getOutputData());
+                    float[] whiteMeans = convertPixelYuvToRgb(scriptGraph.getOutputData());
 
-                // low iso + low exposure (first shot)
-                assertArrayWithinUpperBound("Black means too high", blackMeans, THRESHOLD_LOW);
+                    // low iso + low exposure (first shot)
+                    assertArrayWithinUpperBound("Black means too high", blackMeans, THRESHOLD_LOW);
 
-                // high iso + high exposure (second shot)
-                assertArrayWithinLowerBound("White means too low", whiteMeans, THRESHOLD_HIGH);
+                    // high iso + high exposure (second shot)
+                    assertArrayWithinLowerBound("White means too low", whiteMeans, THRESHOLD_HIGH);
+                }
             }
         });
     }
@@ -608,48 +606,49 @@ public class AllocationTest extends AndroidTestCase {
                     sensitivities[i] = sensitivityMin + delta * i;
                 }
 
-                ScriptGraph scriptGraph = createGraphForYuvCroppedMeans(maxSize);
+                try (ScriptGraph scriptGraph = createGraphForYuvCroppedMeans(maxSize)) {
 
-                CaptureRequest.Builder req =
-                        configureAndCreateRequestForSurface(scriptGraph.getInputSurface());
+                    CaptureRequest.Builder req =
+                            configureAndCreateRequestForSurface(scriptGraph.getInputSurface());
 
-                // Take burst shots with increasing sensitivity one after other.
-                for (int i = 0; i < NUM_STEPS; ++i) {
-                    setManualCaptureRequest(req, sensitivities[i], EXPOSURE_TIME_NS);
-                    captureSingleShotAndExecute(req.build(), scriptGraph);
-                    float[] means = convertPixelYuvToRgb(scriptGraph.getOutputData());
-                    rgbMeans.add(means);
+                    // Take burst shots with increasing sensitivity one after other.
+                    for (int i = 0; i < NUM_STEPS; ++i) {
+                        setManualCaptureRequest(req, sensitivities[i], EXPOSURE_TIME_NS);
+                        captureSingleShotAndExecute(req.build(), scriptGraph);
+                        float[] means = convertPixelYuvToRgb(scriptGraph.getOutputData());
+                        rgbMeans.add(means);
 
-                    if (VERBOSE) {
-                        Log.v(TAG, "testParamSensitivity - captured image " + i +
-                                " with RGB means: " + Arrays.toString(means));
+                        if (VERBOSE) {
+                            Log.v(TAG, "testParamSensitivity - captured image " + i +
+                                    " with RGB means: " + Arrays.toString(means));
+                        }
                     }
-                }
 
-                // Test that every consecutive image gets brighter.
-                for (int i = 0; i < rgbMeans.size() - 1; ++i) {
-                    float[] curMeans = rgbMeans.get(i);
-                    float[] nextMeans = rgbMeans.get(i+1);
+                    // Test that every consecutive image gets brighter.
+                    for (int i = 0; i < rgbMeans.size() - 1; ++i) {
+                        float[] curMeans = rgbMeans.get(i);
+                        float[] nextMeans = rgbMeans.get(i+1);
 
-                    assertArrayNotGreater(
-                            String.format("Shot with sensitivity %d should not have higher " +
-                                    "average means than shot with sensitivity %d",
-                                    sensitivities[i], sensitivities[i+1]),
-                            curMeans, nextMeans);
-                }
+                        assertArrayNotGreater(
+                                String.format("Shot with sensitivity %d should not have higher " +
+                                        "average means than shot with sensitivity %d",
+                                        sensitivities[i], sensitivities[i+1]),
+                                curMeans, nextMeans);
+                    }
 
-                // Test the min-max diff and ratios are within expected thresholds
-                float[] lastMeans = rgbMeans.get(NUM_STEPS - 1);
-                float[] firstMeans = rgbMeans.get(/*location*/0);
-                for (int i = 0; i < RGB_CHANNELS; ++i) {
-                    assertTrue(
-                            String.format("Sensitivity max-min diff too small (max=%f, min=%f)",
-                                    lastMeans[i], firstMeans[i]),
-                            lastMeans[i] - firstMeans[i] > THRESHOLD_MAX_MIN_DIFF);
-                    assertTrue(
-                            String.format("Sensitivity max-min ratio too small (max=%f, min=%f)",
-                                    lastMeans[i], firstMeans[i]),
-                            lastMeans[i] / firstMeans[i] > THRESHOLD_MAX_MIN_RATIO);
+                    // Test the min-max diff and ratios are within expected thresholds
+                    float[] lastMeans = rgbMeans.get(NUM_STEPS - 1);
+                    float[] firstMeans = rgbMeans.get(/*location*/0);
+                    for (int i = 0; i < RGB_CHANNELS; ++i) {
+                        assertTrue(
+                                String.format("Sensitivity max-min diff too small (max=%f, min=%f)",
+                                        lastMeans[i], firstMeans[i]),
+                                lastMeans[i] - firstMeans[i] > THRESHOLD_MAX_MIN_DIFF);
+                        assertTrue(
+                                String.format("Sensitivity max-min ratio too small (max=%f, min=%f)",
+                                        lastMeans[i], firstMeans[i]),
+                                lastMeans[i] / firstMeans[i] > THRESHOLD_MAX_MIN_RATIO);
+                    }
                 }
             }
         });
