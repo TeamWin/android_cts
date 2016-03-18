@@ -119,7 +119,7 @@ public class GestureDescriptionTest extends InstrumentationTestCase {
 
     public void testAddStroke_allowUpToMaxPaths() {
         GestureDescription.Builder gestureBuilder = new GestureDescription.Builder();
-        for (int i = 0; i < GestureDescription.MAX_STROKE_COUNT; i++) {
+        for (int i = 0; i < GestureDescription.getMaxStrokeCount(); i++) {
             Path path = new Path();
             path.moveTo(i, i);
             path.lineTo(10 + i, 10 + i);
@@ -144,7 +144,7 @@ public class GestureDescriptionTest extends InstrumentationTestCase {
         GestureDescription.Builder gestureBuilder = new GestureDescription.Builder();
         try {
             gestureBuilder.addStroke(new GestureDescription.StrokeDescription(
-                    path, 0, GestureDescription.MAX_GESTURE_DURATION_MS + 1));
+                    path, 0, GestureDescription.getMaxGestureDuration() + 1));
             fail("Missing exception for adding stroke with duration too long.");
         } catch (RuntimeException e) {
         }
@@ -156,151 +156,6 @@ public class GestureDescriptionTest extends InstrumentationTestCase {
             gestureBuilder.build();
             fail("Missing exception for building an empty gesture.");
         } catch (RuntimeException e) {
-        }
-    }
-
-
-    public void testClickAt_negativeX_shouldThrow() {
-        try {
-            GestureDescription.createClick(-1, 0);
-            fail("Missing exception for clicking at negative x coordinate.");
-        } catch (IllegalArgumentException e) {
-        }
-    }
-
-    public void testClickAt_negativeY_shouldThrow() {
-        try {
-            GestureDescription.createClick(0, -1);
-            fail("Missing exception for clicking at negative y coordinate.");
-        } catch (IllegalArgumentException e) {
-        }
-    }
-
-    public void testLongClickAt_negativeX_shouldThrow() {
-        try {
-            GestureDescription.createLongClick(-1, 0);
-            fail("Missing exception for long clicking at negative x coordinate.");
-        } catch (IllegalArgumentException e) {
-        }
-    }
-
-    public void testLongClickAt_negativeY_shouldThrow() {
-        try {
-            GestureDescription.createLongClick(0, -1);
-            fail("Missing exception for long clicking at negative y coordinate.");
-        } catch (IllegalArgumentException e) {
-        }
-    }
-
-    public void testZeroDurationSwipe_shouldThrow() {
-        try {
-            GestureDescription.createSwipe(0, 0, 100, 100, 0);
-            fail("Missing exception for creating zero duration swipe.");
-        } catch (IllegalArgumentException e) {
-        }
-    }
-
-    public void testNegativeDurationSwipe_shouldThrow() {
-        try {
-            GestureDescription.createSwipe(0, 0, 100, 100, -1);
-            fail("Missing exception for creating negative duration swipe.");
-        } catch (IllegalArgumentException e) {
-        }
-    }
-
-    public void testZeroLengthSwipe_shouldThrow() {
-        try {
-            GestureDescription.createSwipe(0, 0, 0, 0, 10);
-            fail("Missing exception for creating zero-length swipe.");
-        } catch (IllegalArgumentException e) {
-        }
-    }
-
-    public void testSwipe_negativeStartX_shouldThrow() {
-        try {
-            GestureDescription.createSwipe(-1, 0, 0, 0, 10);
-            fail("Missing exception for creating swipe with negative starting x.");
-        } catch (IllegalArgumentException e) {
-        }
-    }
-
-    public void testSwipe_negativeStartY_shouldThrow() {
-        try {
-            GestureDescription.createSwipe(0, -1, 0, 0, 10);
-            fail("Missing exception for creating swipe with negative starting y.");
-        } catch (IllegalArgumentException e) {
-        }
-    }
-
-    public void testSwipe_negativeEndX_shouldThrow() {
-        try {
-            GestureDescription.createSwipe(0, 0, -1, 0, 10);
-            fail("Missing exception for creating swipe with negative ending x.");
-        } catch (IllegalArgumentException e) {
-        }
-    }
-
-    public void testSwipe_negativeEndY_shouldThrow() {
-        try {
-            GestureDescription.createSwipe(0, 0, 0, -1, 10);
-            fail("Missing exception for creating swipe with negative ending y.");
-        } catch (IllegalArgumentException e) {
-        }
-    }
-
-    public void testZeroDurationPinch_shouldBeNull() {
-        try {
-            GestureDescription.createPinch(100, 100, 50, 75, 0, 0);
-            fail("Missing exception for creating pinch with zero duration.");
-        } catch (IllegalArgumentException e) {
-        }
-    }
-
-    public void testNegativeDurationPinch_shouldBeNull() {
-        try {
-            GestureDescription.createPinch(100, 100, 50, 75, 0, -1);
-            fail("Missing exception for creating pinch with negative duration.");
-        } catch (IllegalArgumentException e) {
-        }
-    }
-
-    public void testZeroLengthPinch_shouldThrow() {
-        try {
-            GestureDescription.createPinch(100, 100, 50, 50, 0, 100);
-            fail("Missing exception for creating pinch with zero length.");
-        } catch (IllegalArgumentException e) {
-        }
-    }
-
-    public void testPinch_negativeCenterX_shouldThrow() {
-        try {
-            GestureDescription.createPinch(-100, 100, 50, 75, 0, 100);
-            fail("Missing exception for creating pinch with negative center x.");
-        } catch (IllegalArgumentException e) {
-        }
-    }
-
-    public void testPinch_negativeCenterY_shouldThrow() {
-        try {
-            GestureDescription.createPinch(100, -100, 50, 75, 0, 100);
-            fail("Missing exception for creating pinch with negative center y.");
-        } catch (IllegalArgumentException e) {
-        }
-    }
-
-    public void testPinch_negativeStartSpacing_shouldThrow() {
-        try {
-            GestureDescription.createPinch(100, 100, -50, 75, 0, 100);
-            fail("Missing exception for creating pinch with negative start spacing.");
-        } catch (IllegalArgumentException e) {
-        }
-    }
-
-    public void testPinch_negativeEndSpacing_shouldThrow() {
-        try {
-            GestureDescription.createPinch(100, 100, 50, -75, 0, 100);
-            fail("Missing exception for creating pinch with negative end spacing.");
-        } catch (IllegalArgumentException e) {
         }
     }
 
