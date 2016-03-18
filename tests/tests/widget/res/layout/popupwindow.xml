@@ -30,27 +30,27 @@
 
     <View android:id="@+id/anchor_upper"
         android:layout_width="10dp"
-        android:layout_height="10dp"
+        android:layout_height="30dp"
         android:layout_alignParentTop="true"
         android:layout_centerHorizontal="true"
         android:background="#f00" />
 
     <View android:id="@+id/anchor_lower"
         android:layout_width="10dp"
-        android:layout_height="10dp"
+        android:layout_height="30dp"
         android:layout_alignParentBottom="true"
         android:layout_centerHorizontal="true"
         android:background="#0f0" />
 
     <View android:id="@+id/anchor_middle_left"
-        android:layout_width="10dp"
+        android:layout_width="30dp"
         android:layout_height="10dp"
         android:layout_alignParentLeft="true"
         android:layout_centerVertical="true"
         android:background="#00f" />
 
     <View android:id="@+id/anchor_middle_right"
-        android:layout_width="10dp"
+        android:layout_width="30dp"
         android:layout_height="10dp"
         android:layout_alignParentRight="true"
         android:layout_centerVertical="true"

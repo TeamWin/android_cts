@@ -105,6 +105,11 @@ public class ListPopupWindowTest extends
         new ListPopupWindow(mActivity, null, 0, android.R.style.Widget_Material_ListPopupWindow);
     }
 
+    public void noDefaultVisibility() {
+        mPopupWindow = new ListPopupWindow(mActivity);
+        assertFalse(mPopupWindow.isShowing());
+    }
+
     public void testAccessBackground() {
         mPopupWindowBuilder = new Builder();
         mPopupWindowBuilder.show();
@@ -281,8 +286,6 @@ public class ListPopupWindowTest extends
 
     public void testDismiss() {
         mPopupWindowBuilder = new Builder();
-        assertFalse(mPopupWindow.isShowing());
-
         mPopupWindowBuilder.show();
         assertTrue(mPopupWindow.isShowing());
 
@@ -682,6 +685,93 @@ public class ListPopupWindowTest extends
     }
 
     /**
+     * Emulates a drag-down gestures by injecting ACTION events with {@link Instrumentation}.
+     */
+    private void emulateDragDownGesture(int emulatedX, int emulatedStartY, int swipeAmount) {
+        // The logic below uses Instrumentation to emulate a swipe / drag gesture to bring up
+        // the popup content.
+
+        // Inject DOWN event
+        long downTime = SystemClock.uptimeMillis();
+        MotionEvent eventDown = MotionEvent.obtain(
+                downTime, downTime, MotionEvent.ACTION_DOWN, emulatedX, emulatedStartY, 1);
+        mInstrumentation.sendPointerSync(eventDown);
+
+        // Inject a sequence of MOVE events that emulate a "swipe down" gesture
+        for (int i = 0; i < 10; i++) {
+            long moveTime = SystemClock.uptimeMillis();
+            final int moveY = emulatedStartY + swipeAmount * i / 10;
+            MotionEvent eventMove = MotionEvent.obtain(
+                    moveTime, moveTime, MotionEvent.ACTION_MOVE, emulatedX, moveY, 1);
+            mInstrumentation.sendPointerSync(eventMove);
+            // sleep for a bit to emulate a 200ms swipe
+            SystemClock.sleep(20);
+        }
+
+        // Inject UP event
+        long upTime = SystemClock.uptimeMillis();
+        MotionEvent eventUp = MotionEvent.obtain(
+                upTime, upTime, MotionEvent.ACTION_UP, emulatedX, emulatedStartY + swipeAmount, 1);
+        mInstrumentation.sendPointerSync(eventUp);
+
+        // Wait for the system to process all events in the queue
+        mInstrumentation.waitForIdleSync();
+    }
+
+    public void testCreateOnDragListener() throws Throwable {
+        // In this test we want precise control over the height of the popup content since
+        // we need to know by how much to swipe down to end the emulated gesture over the
+        // specific item in the popup. This is why we're using a popup style that removes
+        // all decoration around the popup content, as well as our own row layout with known
+        // height.
+        mPopupWindowBuilder = new Builder()
+                .withPopupStyleAttr(R.style.PopupEmptyStyle)
+                .withContentRowLayoutId(R.layout.popup_window_item)
+                .withItemClickListener().withDismissListener();
+
+        // Configure ListPopupWindow without showing it
+        mPopupWindowBuilder.configure();
+
+        // Get the anchor view and configure it with ListPopupWindow's drag-to-open listener
+        final View anchor = mActivity.findViewById(mPopupWindowBuilder.mAnchorId);
+        View.OnTouchListener dragListener = mPopupWindow.createDragToOpenListener(anchor);
+        anchor.setOnTouchListener(dragListener);
+        // And also configure it to show the popup window on click
+        anchor.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                mPopupWindow.show();
+            }
+        });
+
+        // Get the height of a row item in our popup window
+        final int popupRowHeight = mActivity.getResources().getDimensionPixelSize(
+                R.dimen.popup_row_height);
+
+        final int[] anchorOnScreenXY = new int[2];
+        anchor.getLocationOnScreen(anchorOnScreenXY);
+
+        // Compute the start coordinates of a downward swipe and the amount of swipe. We'll
+        // be swiping by twice the row height. That, combined with the swipe originating in the
+        // center of the anchor should result in clicking the second row in the popup.
+        int emulatedX = anchorOnScreenXY[0] + anchor.getWidth() / 2;
+        int emulatedStartY = anchorOnScreenXY[1] + anchor.getHeight() / 2;
+        int swipeAmount = 2 * popupRowHeight;
+
+        // Emulate drag-down gesture with a sequence of motion events
+        emulateDragDownGesture(emulatedX, emulatedStartY, swipeAmount);
+
+        // We expect the swipe / drag gesture to result in clicking the second item in our list.
+        verify(mPopupWindowBuilder.mOnItemClickListener, times(1)).onItemClick(
+                any(AdapterView.class), any(View.class), eq(1), eq(1L));
+        // Since our item click listener calls dismiss() on the popup, we expect the popup to not
+        // be showing
+        assertFalse(mPopupWindow.isShowing());
+        // At this point our popup should have notified its dismiss listener
+        verify(mPopupWindowBuilder.mOnDismissListener, times(1)).onDismiss();
+    }
+
+    /**
      * Inner helper class to configure an instance of <code>ListPopupWindow</code> for the
      * specific test. The main reason for its existence is that once a popup window is shown
      * with the show() method, most of its configuration APIs are no-ops. This means that
@@ -698,9 +788,13 @@ public class ListPopupWindowTest extends
         private int mVerticalOffset;
         private int mDropDownGravity;
         private int mAnchorId = R.id.anchor_upper;
+        private int mContentRowLayoutId = android.R.layout.simple_list_item_1;
 
         private boolean mHasWindowLayoutType;
         private int mWindowLayoutType;
+
+        private boolean mUseCustomPopupStyle;
+        private int mPopupStyleAttr;
 
         private View mPromptView;
         private int mPromptPosition;
@@ -710,11 +804,21 @@ public class ListPopupWindowTest extends
         private PopupWindow.OnDismissListener mOnDismissListener;
 
         public Builder() {
-            mPopupWindow = new ListPopupWindow(mActivity);
         }
 
         public Builder withAnchor(int anchorId) {
             mAnchorId = anchorId;
+            return this;
+        }
+
+        public Builder withContentRowLayoutId(int contentRowLayoutId) {
+            mContentRowLayoutId = contentRowLayoutId;
+            return this;
+        }
+
+        public Builder withPopupStyleAttr(int popupStyleAttr) {
+            mUseCustomPopupStyle = true;
+            mPopupStyleAttr = popupStyleAttr;
             return this;
         }
 
@@ -805,7 +909,12 @@ public class ListPopupWindowTest extends
             return width;
         }
 
-        private void show() {
+        private void configure() {
+            if (mUseCustomPopupStyle) {
+                mPopupWindow = new ListPopupWindow(mActivity, null, mPopupStyleAttr, 0);
+            } else {
+                mPopupWindow = new ListPopupWindow(mActivity);
+            }
             final String[] POPUP_CONTENT =
                     new String[]{"Alice", "Bob", "Charlie", "Deirdre", "El"};
             final BaseAdapter listPopupAdapter = new BaseAdapter() {
@@ -832,7 +941,7 @@ public class ListPopupWindowTest extends
                 public View getView(int position, View convertView, ViewGroup parent) {
                     if (convertView == null) {
                         convertView = LayoutInflater.from(mActivity).inflate(
-                                android.R.layout.simple_list_item_1, parent, false);
+                                mContentRowLayoutId, parent, false);
                         ViewHolder viewHolder = new ViewHolder();
                         viewHolder.title = (TextView) convertView.findViewById(android.R.id.text1);
                         convertView.setTag(viewHolder);
@@ -898,6 +1007,10 @@ public class ListPopupWindowTest extends
                 mPopupWindow.setPromptPosition(mPromptPosition);
                 mPopupWindow.setPromptView(mPromptView);
             }
+        }
+
+        private void show() {
+            configure();
 
             mInstrumentation.runOnMainSync(new Runnable() {
                 public void run() {
