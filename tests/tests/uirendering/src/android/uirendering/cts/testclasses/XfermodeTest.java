@@ -33,6 +33,7 @@ import org.junit.runners.Parameterized;
 import java.util.ArrayList;
 import java.util.List;
 
+@MediumTest
 @RunWith(Parameterized.class)
 public class XfermodeTest extends ActivityTestBase {
     /**
@@ -173,7 +174,6 @@ public class XfermodeTest extends ActivityTestBase {
     };
 
     @Test
-    @MediumTest
     public void test() {
         createTest()
                 .addCanvasClient(mCanvasClient, mConfig.hardwareAccelerated)
