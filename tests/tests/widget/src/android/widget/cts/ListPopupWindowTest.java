@@ -599,6 +599,7 @@ public class ListPopupWindowTest extends
             }
         });
         mInstrumentation.waitForIdleSync();
+        assertTrue(anchor.isFocused());
 
         // Send BACK key event. As our custom extension of EditText calls
         // ListPopupWindow.onKeyPreIme, the end result should be the dismissal of the
@@ -606,6 +607,78 @@ public class ListPopupWindowTest extends
         mInstrumentation.sendKeyDownUpSync(KeyEvent.KEYCODE_BACK);
         verify(mPopupWindowBuilder.mOnDismissListener, times(1)).onDismiss();
         assertFalse(mPopupWindow.isShowing());
+    }
+
+    public void testListSelectionWithDPad() throws Throwable {
+        mPopupWindowBuilder = new Builder().withAnchor(R.id.anchor_upper_left)
+                .withDismissListener().withItemSelectedListener();
+        mPopupWindowBuilder.show();
+
+        // "Point" our custom extension of EditText to our ListPopupWindow
+        final MockViewForListPopupWindow anchor =
+                (MockViewForListPopupWindow) mPopupWindow.getAnchorView();
+        anchor.wireTo(mPopupWindow);
+        // Request focus on our EditText
+        runTestOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                anchor.requestFocus();
+            }
+        });
+        mInstrumentation.waitForIdleSync();
+        assertTrue(anchor.isFocused());
+
+        // Select entry #1 in the popup list
+        final ListView listView = mPopupWindow.getListView();
+        ViewTestUtils.runOnMainAndDrawSync(mInstrumentation, listView, new Runnable() {
+            public void run() {
+                mPopupWindow.setSelection(1);
+            }
+        });
+        verify(mPopupWindowBuilder.mOnItemSelectedListener, times(1)).onItemSelected(
+                any(AdapterView.class), any(View.class), eq(1), eq(1L));
+
+        // Send DPAD_DOWN key event. As our custom extension of EditText calls
+        // ListPopupWindow.onKeyDown and onKeyUp, the end result should be transfer of selection
+        // down one row
+        mInstrumentation.sendKeyDownUpSync(KeyEvent.KEYCODE_DPAD_DOWN);
+        mInstrumentation.waitForIdleSync();
+
+        // At this point we expect that item #2 was selected
+        verify(mPopupWindowBuilder.mOnItemSelectedListener, times(1)).onItemSelected(
+                any(AdapterView.class), any(View.class), eq(2), eq(2L));
+
+        // Send a DPAD_UP key event. As our custom extension of EditText calls
+        // ListPopupWindow.onKeyDown and onKeyUp, the end result should be transfer of selection
+        // up one row
+        mInstrumentation.sendKeyDownUpSync(KeyEvent.KEYCODE_DPAD_UP);
+        mInstrumentation.waitForIdleSync();
+
+        // At this point we expect that item #1 was selected
+        verify(mPopupWindowBuilder.mOnItemSelectedListener, times(2)).onItemSelected(
+                any(AdapterView.class), any(View.class), eq(1), eq(1L));
+
+        // Send one more DPAD_UP key event. As our custom extension of EditText calls
+        // ListPopupWindow.onKeyDown and onKeyUp, the end result should be transfer of selection
+        // up one more row
+        mInstrumentation.sendKeyDownUpSync(KeyEvent.KEYCODE_DPAD_UP);
+        mInstrumentation.waitForIdleSync();
+
+        // At this point we expect that item #0 was selected
+        verify(mPopupWindowBuilder.mOnItemSelectedListener, times(1)).onItemSelected(
+                any(AdapterView.class), any(View.class), eq(0), eq(0L));
+
+        // Send ENTER key event. As our custom extension of EditText calls
+        // ListPopupWindow.onKeyDown and onKeyUp, the end result should be dismissal of
+        // the popup window
+        mInstrumentation.sendKeyDownUpSync(KeyEvent.KEYCODE_ENTER);
+        mInstrumentation.waitForIdleSync();
+
+        verify(mPopupWindowBuilder.mOnDismissListener, times(1)).onDismiss();
+        assertFalse(mPopupWindow.isShowing());
+
+        verifyNoMoreInteractions(mPopupWindowBuilder.mOnItemSelectedListener);
+        verifyNoMoreInteractions(mPopupWindowBuilder.mOnDismissListener);
     }
 
     /**
