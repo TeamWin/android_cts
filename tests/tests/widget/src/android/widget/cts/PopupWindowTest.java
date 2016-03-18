@@ -130,6 +130,43 @@ public class PopupWindowTest extends
         assertTrue(mPopupWindow.isFocusable());
     }
 
+    public void testAccessEnterExitTransitions() {
+        PopupWindow w;
+
+        w = new PopupWindow(mActivity, null, 0, 0);
+        assertNull(w.getEnterTransition());
+        assertNull(w.getExitTransition());
+
+        w = new PopupWindow(mActivity, null, 0, R.style.PopupWindow_NullTransitions);
+        assertNull(w.getEnterTransition());
+        assertNull(w.getExitTransition());
+
+        w = new PopupWindow(mActivity, null, 0, R.style.PopupWindow_CustomTransitions);
+        assertTrue(w.getEnterTransition() instanceof CustomTransition);
+        assertTrue(w.getExitTransition() instanceof CustomTransition);
+
+        Transition enterTransition = new CustomTransition();
+        Transition exitTransition = new CustomTransition();
+        w = new PopupWindow(mActivity, null, 0, 0);
+        w.setEnterTransition(enterTransition);
+        w.setExitTransition(exitTransition);
+        assertEquals(enterTransition, w.getEnterTransition());
+        assertEquals(exitTransition, w.getExitTransition());
+
+        w.setEnterTransition(null);
+        w.setExitTransition(null);
+        assertNull(w.getEnterTransition());
+        assertNull(w.getExitTransition());
+    }
+
+    public static class CustomTransition extends Transition {
+        @Override
+        public void captureStartValues(TransitionValues transitionValues) {}
+
+        @Override
+        public void captureEndValues(TransitionValues transitionValues) {}
+    }
+
     public void testAccessBackground() {
         mPopupWindow = new PopupWindow(mActivity);
 
