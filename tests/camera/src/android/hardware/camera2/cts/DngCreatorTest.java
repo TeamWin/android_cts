@@ -97,6 +97,8 @@ public class DngCreatorTest extends Camera2AndroidTestCase {
 
     @Override
     protected void setUp() throws Exception {
+        RenderScriptSingleton.setContext(getContext());
+
         super.setUp();
     }
 
@@ -110,8 +112,6 @@ public class DngCreatorTest extends Camera2AndroidTestCase {
     @Override
     public synchronized void setContext(Context context) {
         super.setContext(context);
-
-        RenderScriptSingleton.setContext(context);
     }
 
     /**
