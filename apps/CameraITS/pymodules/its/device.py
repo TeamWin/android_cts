@@ -597,7 +597,12 @@ class ItsSession(object):
                        for c in cmd["outputSurfaces"]]
             formats = [s if s != "jpg" else "jpeg" for s in formats]
         else:
+            max_yuv_size = its.objects.get_available_output_sizes(
+                    "yuv", self.props)[0]
             formats = ['yuv']
+            cmd["outputSurfaces"] = [{"format": "yuv",
+                                      "width" : max_yuv_size[0],
+                                      "height": max_yuv_size[1]}]
         ncap = len(cmd["captureRequests"])
         nsurf = 1 if out_surfaces is None else len(cmd["outputSurfaces"])
         # Only allow yuv output to multiple targets
