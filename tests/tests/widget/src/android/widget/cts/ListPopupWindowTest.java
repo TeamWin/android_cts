@@ -23,6 +23,7 @@ import android.graphics.Rect;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.SystemClock;
+import android.platform.test.annotations.Presubmit;
 import android.support.test.InstrumentationRegistry;
 import android.test.ActivityInstrumentationTestCase2;
 import android.test.suitebuilder.annotation.SmallTest;
@@ -510,6 +511,7 @@ public class ListPopupWindowTest extends
         assertTrue(lastChildOnScreenXY[1] + lastListChild.getHeight() <= promptViewOnScreenXY[1]);
     }
 
+    @Presubmit
     public void testAccessSelection() throws Throwable {
         mPopupWindowBuilder = new Builder().withItemSelectedListener();
         mPopupWindowBuilder.show();

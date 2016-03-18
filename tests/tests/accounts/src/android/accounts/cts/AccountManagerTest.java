@@ -32,6 +32,7 @@ import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Looper;
 import android.os.StrictMode;
+import android.platform.test.annotations.Presubmit;
 import android.test.ActivityInstrumentationTestCase2;
 
 import java.io.IOException;
@@ -1440,6 +1441,7 @@ public class AccountManagerTest extends ActivityInstrumentationTestCase2<Account
     /**
      * Test confirmCredentials()
      */
+    @Presubmit
     public void testConfirmCredentials() throws IOException, AuthenticatorException,
             OperationCanceledException {
 

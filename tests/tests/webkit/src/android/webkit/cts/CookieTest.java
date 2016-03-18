@@ -17,6 +17,7 @@
 package android.webkit.cts;
 
 import android.cts.util.NullWebViewUtils;
+import android.platform.test.annotations.Presubmit;
 import android.test.ActivityInstrumentationTestCase2;
 import android.webkit.CookieManager;
 import android.webkit.CookieSyncManager;
@@ -56,6 +57,7 @@ public class CookieTest extends ActivityInstrumentationTestCase2<CookieSyncManag
         assertFalse(mCookieManager.hasCookies());
     }
 
+    @Presubmit
     public void testDomain() {
         if (!NullWebViewUtils.isWebViewAvailable()) {
             return;

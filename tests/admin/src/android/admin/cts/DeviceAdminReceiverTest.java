@@ -20,6 +20,7 @@ import android.app.admin.DeviceAdminReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.platform.test.annotations.Presubmit;
 import android.test.AndroidTestCase;
 import android.util.Log;
 
@@ -62,6 +63,7 @@ public class DeviceAdminReceiverTest extends AndroidTestCase {
                 mContext.getPackageManager().hasSystemFeature(PackageManager.FEATURE_DEVICE_ADMIN);
     }
 
+    @Presubmit
     public void testOnReceive() {
         if (!mDeviceAdmin) {
             Log.w(TAG, "Skipping testOnReceive");
