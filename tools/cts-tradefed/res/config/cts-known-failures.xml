@@ -189,42 +189,7 @@
     <option name="compatibility:exclude-filter" value="CtsSecurityTestCases android.security.cts.MediaCryptoTest#testMediaCryptoWidevine" />
 
     <!-- b/26150806 -->
-    <option name="compatibility:exclude-filter" value="CtsSignatureTestCases android.signature.cts.tests.JDiffClassDescriptionTest#testAbstractClass" />
-    <option name="compatibility:exclude-filter" value="CtsSignatureTestCases android.signature.cts.tests.JDiffClassDescriptionTest#testAddingAbstractToAClass" />
-    <option name="compatibility:exclude-filter" value="CtsSignatureTestCases android.signature.cts.tests.JDiffClassDescriptionTest#testAddingFinalToAMethodInAFinalClass" />
-    <option name="compatibility:exclude-filter" value="CtsSignatureTestCases android.signature.cts.tests.JDiffClassDescriptionTest#testAddingFinalToAMethodInANonFinalClass" />
-    <option name="compatibility:exclude-filter" value="CtsSignatureTestCases android.signature.cts.tests.JDiffClassDescriptionTest#testAddingNative" />
-    <option name="compatibility:exclude-filter" value="CtsSignatureTestCases android.signature.cts.tests.JDiffClassDescriptionTest#testAddingSync" />
-    <option name="compatibility:exclude-filter" value="CtsSignatureTestCases android.signature.cts.tests.JDiffClassDescriptionTest#testConstructorThrowsException" />
-    <option name="compatibility:exclude-filter" value="CtsSignatureTestCases android.signature.cts.tests.JDiffClassDescriptionTest#testFinalClass" />
-    <option name="compatibility:exclude-filter" value="CtsSignatureTestCases android.signature.cts.tests.JDiffClassDescriptionTest#testFinalField" />
-    <option name="compatibility:exclude-filter" value="CtsSignatureTestCases android.signature.cts.tests.JDiffClassDescriptionTest#testFinalMethod" />
-    <option name="compatibility:exclude-filter" value="CtsSignatureTestCases android.signature.cts.tests.JDiffClassDescriptionTest#testInnerClass" />
-    <option name="compatibility:exclude-filter" value="CtsSignatureTestCases android.signature.cts.tests.JDiffClassDescriptionTest#testInnerInnerClass" />
-    <option name="compatibility:exclude-filter" value="CtsSignatureTestCases android.signature.cts.tests.JDiffClassDescriptionTest#testInnerInterface" />
-    <option name="compatibility:exclude-filter" value="CtsSignatureTestCases android.signature.cts.tests.JDiffClassDescriptionTest#testInterface" />
-    <option name="compatibility:exclude-filter" value="CtsSignatureTestCases android.signature.cts.tests.JDiffClassDescriptionTest#testMissingClass" />
-    <option name="compatibility:exclude-filter" value="CtsSignatureTestCases android.signature.cts.tests.JDiffClassDescriptionTest#testNativeMethod" />
-    <option name="compatibility:exclude-filter" value="CtsSignatureTestCases android.signature.cts.tests.JDiffClassDescriptionTest#testNormalClassCompliance" />
-    <option name="compatibility:exclude-filter" value="CtsSignatureTestCases android.signature.cts.tests.JDiffClassDescriptionTest#testOneArgConstructor" />
-    <option name="compatibility:exclude-filter" value="CtsSignatureTestCases android.signature.cts.tests.JDiffClassDescriptionTest#testPacakgeField" />
-    <option name="compatibility:exclude-filter" value="CtsSignatureTestCases android.signature.cts.tests.JDiffClassDescriptionTest#testPackageProtectedConstructor" />
-    <option name="compatibility:exclude-filter" value="CtsSignatureTestCases android.signature.cts.tests.JDiffClassDescriptionTest#testPackageProtectMethod" />
-    <option name="compatibility:exclude-filter" value="CtsSignatureTestCases android.signature.cts.tests.JDiffClassDescriptionTest#testPrivateField" />
-    <option name="compatibility:exclude-filter" value="CtsSignatureTestCases android.signature.cts.tests.JDiffClassDescriptionTest#testPrivateMethod" />
-    <option name="compatibility:exclude-filter" value="CtsSignatureTestCases android.signature.cts.tests.JDiffClassDescriptionTest#testProtectedField" />
-    <option name="compatibility:exclude-filter" value="CtsSignatureTestCases android.signature.cts.tests.JDiffClassDescriptionTest#testProtectedMethod" />
-    <option name="compatibility:exclude-filter" value="CtsSignatureTestCases android.signature.cts.tests.JDiffClassDescriptionTest#testRemovingAbstractFromAClass" />
-    <option name="compatibility:exclude-filter" value="CtsSignatureTestCases android.signature.cts.tests.JDiffClassDescriptionTest#testRemovingFinalToAMethodInAFinalClass" />
-    <option name="compatibility:exclude-filter" value="CtsSignatureTestCases android.signature.cts.tests.JDiffClassDescriptionTest#testRemovingNative" />
-    <option name="compatibility:exclude-filter" value="CtsSignatureTestCases android.signature.cts.tests.JDiffClassDescriptionTest#testRemovingSync" />
-    <option name="compatibility:exclude-filter" value="CtsSignatureTestCases android.signature.cts.tests.JDiffClassDescriptionTest#testSimpleConstructor" />
-    <option name="compatibility:exclude-filter" value="CtsSignatureTestCases android.signature.cts.tests.JDiffClassDescriptionTest#testStaticField" />
-    <option name="compatibility:exclude-filter" value="CtsSignatureTestCases android.signature.cts.tests.JDiffClassDescriptionTest#testStaticMethod" />
-    <option name="compatibility:exclude-filter" value="CtsSignatureTestCases android.signature.cts.tests.JDiffClassDescriptionTest#testSyncMethod" />
-    <option name="compatibility:exclude-filter" value="CtsSignatureTestCases android.signature.cts.tests.JDiffClassDescriptionTest#testThrowsMethod" />
-    <option name="compatibility:exclude-filter" value="CtsSignatureTestCases android.signature.cts.tests.JDiffClassDescriptionTest#testTransientField" />
-    <option name="compatibility:exclude-filter" value="CtsSignatureTestCases android.signature.cts.tests.JDiffClassDescriptionTest#testVolatileFiled" />
+    <option name="compatibility:exclude-filter" value="CtsSignatureTestCases android.signature.cts.tests" />
 
     <!-- b/23427621 -->
     <option name="compatibility:exclude-filter" value="CtsSystemUiTestCases android.systemui.cts.LightStatusBarTests#testLightStatusBarIcons" />
