@@ -35,6 +35,18 @@
         <item name="type16">Typed Value!</item>
     </style>
 
+    <style name="PopupWindow" parent="@android:style/Widget.Material.ListPopupWindow" />
+
+    <style name="PopupWindow.NullTransitions">
+        <item name="android:popupEnterTransition">@null</item>
+        <item name="android:popupExitTransition">@null</item>
+    </style>
+
+    <style name="PopupWindow.CustomTransitions">
+        <item name="android:popupEnterTransition">@transition/custom_transition</item>
+        <item name="android:popupExitTransition">@transition/custom_transition</item>
+    </style>
+
     <style name="TextViewWithoutColorAndAppearance">
         <item name="android:textSize">18sp</item>
     </style>
