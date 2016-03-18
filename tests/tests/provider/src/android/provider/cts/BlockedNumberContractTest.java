@@ -105,11 +105,7 @@ public class BlockedNumberContractTest extends TestCaseThatRunsIfTelephonyIsEnab
         } catch (SecurityException expected) {
         }
 
-        try {
-            BlockedNumberContract.canCurrentUserBlockNumbers(mContext);
-            fail("Should throw SecurityException");
-        } catch (SecurityException expected) {
-        }
+        assertTrue(BlockedNumberContract.canCurrentUserBlockNumbers(mContext));
     }
 
     public void testGetType() throws Exception {
