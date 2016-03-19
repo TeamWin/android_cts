@@ -24,6 +24,7 @@ LOCAL_WHOLE_STATIC_LIBRARIES = \
 
 LOCAL_STATIC_LIBRARIES += \
   libgtest \
+  liblzma \
   libziparchive \
   libz \
 
@@ -56,6 +57,7 @@ LOCAL_STATIC_LIBRARIES += \
   libziparchive-host \
   libbase \
   liblog \
+  liblzma \
   libz \
   libutils \
 
