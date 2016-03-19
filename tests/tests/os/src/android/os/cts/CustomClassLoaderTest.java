@@ -19,6 +19,7 @@ package android.os.cts;
 import java.io.*;
 import java.lang.reflect.*;
 
+import android.platform.test.annotations.Presubmit;
 import android.test.AndroidTestCase;
 
 public class CustomClassLoaderTest extends AndroidTestCase {
@@ -76,6 +77,7 @@ public class CustomClassLoaderTest extends AndroidTestCase {
 
     /* Test a custom class loader based on the PathClassLoader.
      */
+    @Presubmit
     public void testCustomPathClassLoader() throws Exception {
         // Try to load the TestClass class by the CustomPathClassLoader.
         try {

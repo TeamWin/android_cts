@@ -44,6 +44,7 @@ import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.PowerManager;
 import android.os.SystemClock;
+import android.platform.test.annotations.Presubmit;
 import android.util.Log;
 
 import java.util.ArrayList;
@@ -200,6 +201,7 @@ public class SensorTest extends SensorTestCase {
 
     // Some sensors like proximity, significant motion etc. are defined as wake-up sensors by
     // default. Check if the wake-up flag is set correctly.
+    @Presubmit
     public void testWakeUpFlags() {
         final int TYPE_WAKE_GESTURE = 23;
         final int TYPE_GLANCE_GESTURE = 24;
@@ -241,6 +243,7 @@ public class SensorTest extends SensorTestCase {
         }
     }
 
+    @Presubmit
     public void testSensorStringTypes() {
         for (Sensor sensor : mSensorList) {
             if (sensor.getType() < MAX_OFFICIAL_ANDROID_SENSOR_TYPE &&
