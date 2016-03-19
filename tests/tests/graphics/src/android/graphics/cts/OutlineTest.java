@@ -20,16 +20,19 @@ import android.graphics.Outline;
 import android.graphics.Path;
 import android.graphics.Rect;
 import android.test.suitebuilder.annotation.SmallTest;
-import junit.framework.TestCase;
 import org.junit.Test;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+
 @SmallTest
-public class OutlineTest extends TestCase {
+public class OutlineTest {
     @Test
     public void testDefaults() {
         Outline outline = new Outline();
 
-        assertEquals(0.0f, outline.getAlpha());
+        assertEquals(0.0f, outline.getAlpha(), 0.0f);
         assertTrue(outline.isEmpty());
         Rect outRect = new Rect();
         assertFalse(outline.getRect(outRect));
@@ -41,19 +44,19 @@ public class OutlineTest extends TestCase {
         Outline outline = new Outline();
 
         outline.setAlpha(1.0f);
-        assertEquals(1.0f, outline.getAlpha());
+        assertEquals(1.0f, outline.getAlpha(), 0.0f);
 
         outline.setAlpha(0.0f);
-        assertEquals(0.0f, outline.getAlpha());
+        assertEquals(0.0f, outline.getAlpha(), 0.0f);
 
         outline.setAlpha(0.45f);
-        assertEquals(0.45f, outline.getAlpha());
+        assertEquals(0.45f, outline.getAlpha(), 0.0f);
 
         // define out of range getter/setter behavior: (note will be clamped in native when consumed)
         outline.setAlpha(4f);
-        assertEquals(4f, outline.getAlpha());
+        assertEquals(4f, outline.getAlpha(), 0.0f);
         outline.setAlpha(-30f);
-        assertEquals(-30f, outline.getAlpha());
+        assertEquals(-30f, outline.getAlpha(), 0.0f);
     }
 
     @Test
@@ -101,14 +104,14 @@ public class OutlineTest extends TestCase {
         assertFalse(outline.isEmpty());
         assertTrue(outline.getRect(outRect));
         assertEquals(new Rect(10, 10, 20, 20), outRect);
-        assertEquals(5f, outline.getRadius());
+        assertEquals(5f, outline.getRadius(), 0.0f);
         assertTrue(outline.canClip());
 
         outline.setRoundRect(new Rect(10, 10, 20, 20), 4f);
         assertFalse(outline.isEmpty());
         assertTrue(outline.getRect(outRect));
         assertEquals(new Rect(10, 10, 20, 20), outRect);
-        assertEquals(4f, outline.getRadius());
+        assertEquals(4f, outline.getRadius(), 0.0f);
         assertTrue(outline.canClip());
     }
 
@@ -154,12 +157,12 @@ public class OutlineTest extends TestCase {
 
         Rect outRect = new Rect();
         outline.setRoundRect(15, 10, 45, 40, 30.0f);
-        assertEquals(30.0f, outline.getRadius());
+        assertEquals(30.0f, outline.getRadius(), 0.0f);
         assertTrue(outline.getRect(outRect));
         assertEquals(new Rect(15, 10, 45, 40), outRect);
 
         outline.setRect(5, 10, 15, 20);
-        assertEquals(0.0f, outline.getRadius());
+        assertEquals(0.0f, outline.getRadius(), 0.0f);
         assertTrue(outline.getRect(outRect));
         assertEquals(new Rect(5, 10, 15, 20), outRect);
 
