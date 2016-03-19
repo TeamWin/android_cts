@@ -357,6 +357,14 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
         }
     }
 
+    // Execute HardwarePropertiesManagerTest as a device owner.
+    public void testHardwarePropertiesManagerAsDeviceOwner() throws Exception {
+        if (!mHasFeature)
+            return;
+
+        executeDeviceTestMethod(".HardwarePropertiesManagerTest", "testHardwarePropertiesManager");
+    }
+
     private void executeDeviceOwnerTest(String testClassName) throws Exception {
         if (!mHasFeature) {
             return;
