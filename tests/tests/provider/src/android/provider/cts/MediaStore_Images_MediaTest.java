@@ -28,6 +28,7 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.Environment;
+import android.platform.test.annotations.Presubmit;
 import android.provider.MediaStore.Images.Media;
 import android.provider.MediaStore.Images.Thumbnails;
 import android.test.InstrumentationTestCase;
@@ -178,6 +179,7 @@ public class MediaStore_Images_MediaTest extends InstrumentationTestCase {
         assertEquals(src.getHeight(), result.getHeight());
     }
 
+    @Presubmit
     public void testGetContentUri() {
         Cursor c = null;
         assertNotNull(c = mContentResolver.query(Media.getContentUri("internal"), null, null, null,

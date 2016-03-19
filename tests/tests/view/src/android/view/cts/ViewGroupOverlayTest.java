@@ -23,6 +23,7 @@ import android.graphics.Rect;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.SystemClock;
+import android.platform.test.annotations.Presubmit;
 import android.test.ActivityInstrumentationTestCase2;
 import android.test.suitebuilder.annotation.SmallTest;
 import android.util.Pair;
@@ -57,6 +58,7 @@ public class ViewGroupOverlayTest extends
         mContext = getInstrumentation().getTargetContext();
     }
 
+    @Presubmit
     public void testBasics() {
         DrawingUtils.assertAllPixelsOfColor("Default fill", mViewGroupWithOverlay,
                 Color.WHITE, null);
