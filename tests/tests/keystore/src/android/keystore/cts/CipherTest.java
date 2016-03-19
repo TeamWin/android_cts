@@ -16,6 +16,7 @@
 
 package android.keystore.cts;
 
+import android.platform.test.annotations.Presubmit;
 import android.security.keystore.KeyProperties;
 import android.security.keystore.KeyProtection;
 import android.test.AndroidTestCase;
@@ -221,6 +222,7 @@ public class CipherTest extends AndroidTestCase {
     private static final byte[] AES256_KAT_KEY_BYTES =
             HexEncoding.decode("cf601cc10aaf434d1f01747136aff222af7fb426d101901712214c3fea18125f");
 
+    @Presubmit
     public void testAlgorithmList() {
         // Assert that Android Keystore Provider exposes exactly the expected Cipher
         // transformations. We don't care whether the transformations are exposed via aliases, as

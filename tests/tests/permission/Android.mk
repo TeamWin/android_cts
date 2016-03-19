@@ -29,7 +29,8 @@ LOCAL_MULTILIB := both
 
 LOCAL_JAVA_LIBRARIES := telephony-common
 
-LOCAL_STATIC_JAVA_LIBRARIES := ctstestrunner guava android-ex-camera2
+LOCAL_STATIC_JAVA_LIBRARIES := \
+    ctstestrunner guava android-ex-camera2 platform-test-annotations
 
 LOCAL_JNI_SHARED_LIBRARIES := libctspermission_jni libnativehelper_compat_libc++
 

@@ -24,6 +24,7 @@ import android.hardware.cts.helpers.SensorCtsHelper;
 import android.hardware.cts.helpers.TestSensorEnvironment;
 import android.hardware.cts.helpers.sensoroperations.TestSensorOperation;
 import android.hardware.cts.helpers.sensorverification.FifoLengthVerification;
+import android.platform.test.annotations.Presubmit;
 
 import java.util.concurrent.TimeUnit;
 
@@ -46,6 +47,7 @@ public class SensorBatchingFifoTest extends SensorTestCase {
                 PackageManager.FEATURE_HIFI_SENSORS);
     }
 
+    @Presubmit
     public void testAccelerometerFifoLength() throws Throwable {
         if (!mHasHifiSensors) return;
         runBatchingSensorFifoTest(
