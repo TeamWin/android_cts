@@ -405,7 +405,6 @@ private:
     }
 
     static void BufferQueueCallback(SLBufferQueueItf queueItf, void *pContext) {
-        SLresult res;
         // naked native record
         AudioRecordNative *record = (AudioRecordNative *)pContext;
         record->bufferQueueCallback(queueItf);
