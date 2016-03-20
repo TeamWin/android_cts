@@ -25,6 +25,7 @@ import com.android.compatibility.common.util.ICaseResult;
 import com.android.compatibility.common.util.IInvocationResult;
 import com.android.compatibility.common.util.IModuleResult;
 import com.android.compatibility.common.util.ITestResult;
+import com.android.compatibility.common.util.MonitoringUtils;
 import com.android.compatibility.common.util.TestFilter;
 import com.android.compatibility.common.util.TestStatus;
 import com.android.ddmlib.Log.LogLevel;
@@ -53,7 +54,6 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.TimeUnit;
 
 /**
  * A Test for running Compatibility Suites
@@ -252,6 +252,7 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
             int moduleCount = modules.size();
             CLog.logAndDisplay(LogLevel.INFO, "Starting %d module%s on %s", moduleCount,
                     (moduleCount > 1) ? "s" : "", mDevice.getSerialNumber());
+            MonitoringUtils.checkDeviceConnectivity(getDevice(), listener, "start");
 
             // Set values and run preconditions
             for (int i = 0; i < moduleCount; i++) {
@@ -276,6 +277,8 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
                             TimeUtil.formatElapsedTime(expected),
                             TimeUtil.formatElapsedTime(duration));
                 }
+                MonitoringUtils.checkDeviceConnectivity(getDevice(), listener,
+                        String.format("%s-%s", module.getName(), module.getAbi().getName()));
             }
         } catch (FileNotFoundException fnfe) {
             throw new RuntimeException("Failed to initialize modules", fnfe);
