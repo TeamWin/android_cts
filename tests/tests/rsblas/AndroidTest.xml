@@ -20,5 +20,6 @@
     </target_preparer>
     <test class="com.android.tradefed.testtype.AndroidJUnitTest" >
         <option name="package" value="com.android.cts.rsblas" />
+        <option name="runtime-hint" value="12m57s" />
     </test>
 </configuration>
