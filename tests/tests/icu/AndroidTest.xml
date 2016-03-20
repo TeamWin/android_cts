@@ -20,5 +20,6 @@
     <test class="com.android.tradefed.testtype.AndroidJUnitTest" >
         <option name="runner" value="android.icu.cts.IcuTestRunner" /><!-- override AJUR -->
         <option name="package" value="android.icu.cts" />
+        <option name="runtime-hint" value="30m19s" />
     </test>
 </configuration>
