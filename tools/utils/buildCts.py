@@ -118,20 +118,20 @@ class CtsBuilder(object):
     packages.sort()
 
     plan = tools.TestPlan(packages)
-    plan.Exclude('android\.car.*')
+    plan.Exclude('android\.car')
     plan.Exclude('android\.performance.*')
     self.__WritePlan(plan, 'CTS')
     self.__WritePlan(plan, 'CTS-TF')
 
     plan = tools.TestPlan(packages)
-    plan.Exclude('android\.car.*')
+    plan.Exclude('android\.car')
     plan.Exclude('android\.performance.*')
     plan.Exclude('android\.media\.cts\.StreamingMediaPlayerTest.*')
     # Test plan to not include media streaming tests
     self.__WritePlan(plan, 'CTS-No-Media-Stream')
 
     plan = tools.TestPlan(packages)
-    plan.Exclude('android\.car.*')
+    plan.Exclude('android\.car')
     plan.Exclude('android\.performance.*')
     self.__WritePlan(plan, 'SDK')
 
@@ -140,19 +140,16 @@ class CtsBuilder(object):
     self.__WritePlan(plan, 'Android')
 
     plan = tools.TestPlan(packages)
-    plan.Exclude('android\.car.*')
     plan.Include(r'android\.core\.tests.*')
     plan.Exclude(r'android\.core\.tests\.libcore\.package\.harmony*')
     self.__WritePlan(plan, 'Java')
 
     # TODO: remove this once the tests are fixed and merged into Java plan above.
     plan = tools.TestPlan(packages)
-    plan.Exclude('android\.car.*')
     plan.Include(r'android\.core\.tests\.libcore\.package\.harmony*')
     self.__WritePlan(plan, 'Harmony')
 
     plan = tools.TestPlan(packages)
-    plan.Exclude('android\.car.*')
     plan.Include(r'android\.core\.vm-tests-tf')
     self.__WritePlan(plan, 'VM-TF')
 
@@ -174,7 +171,7 @@ class CtsBuilder(object):
     plan.Include('android\.telephony')
     plan.Include('android\.nativemedia.*')
     plan.Include('com\.android\.cts\..*')#TODO(stuartscott): Should PDK have all these?
-    plan.Exclude('android\.car.*')
+    plan.Exclude('android\.car')
     self.__WritePlan(plan, 'PDK')
 
     temporarily_known_failure_tests = BuildCtsTemporarilyKnownFailureList();
@@ -183,7 +180,7 @@ class CtsBuilder(object):
 
     # CTS Stable plan
     plan = tools.TestPlan(packages)
-    plan.Exclude('android\.car.*')
+    plan.Exclude('android\.car')
     plan.Exclude(r'android\.browser')
     for package, test_list in flaky_tests.iteritems():
       plan.ExcludeTests(package, test_list)
@@ -198,7 +195,6 @@ class CtsBuilder(object):
     for package, test_list in flaky_tests.iteritems():
       plan.Include(package+'$')
       plan.IncludeTests(package, test_list)
-    plan.Exclude('android\.car.*')
     self.__WritePlan(plan, 'CTS-flaky')
 
     small_tests = BuildAospSmallSizeTestList()
@@ -211,7 +207,6 @@ class CtsBuilder(object):
     for package, test_list in small_tests.iteritems():
       plan.Include(package+'$')
     plan.Exclude(r'android\.browser')
-    plan.Exclude('android\.car.*')
     for package, test_list in flaky_tests.iteritems():
       plan.ExcludeTests(package, test_list)
     for package, test_list in releasekey_tests.iteritems():
@@ -229,7 +224,6 @@ class CtsBuilder(object):
       plan.ExcludeTests(package, test_list)
     for package, test_list in releasekey_tests.iteritems():
       plan.ExcludeTests(package, test_list)
-    plan.Exclude('android\.car.*')
     self.__WritePlan(plan, 'CTS-kitkat-medium')
     self.__WritePlan(plan, 'CTS-public-medium')
 
@@ -326,7 +320,7 @@ class CtsBuilder(object):
     plan.Exclude(r'android\.view$')
     plan.Exclude(r'android\.mediastress$')
     plan.Exclude(r'android\.browser')
-    plan.Exclude('android\.car.*')
+    plan.Exclude('android\.car')
     for package, test_list in flaky_tests.iteritems():
       plan.ExcludeTests(package, test_list)
     for package, test_list in releasekey_tests.iteritems():
