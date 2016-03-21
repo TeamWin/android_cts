@@ -34,7 +34,7 @@
 
 using namespace ndkaudio;
 
-static const char* TAG = "AudioRecorder";
+//static const char* const TAG = "AudioRecorder";
 
 #define NB_BUFFERS_IN_QUEUE 1
 
@@ -211,7 +211,7 @@ void AudioRecorder::Start() {
 
     /* Enqueue buffers to map the region of memory allocated to store the recorded data */
     // __android_log_print(ANDROID_LOG_INFO, TAG, "Enqueueing buffer");
-    int bufferSizeInBytes = BUFFER_SIZE_IN_FRAMES * numChannels_ * sizeof(float);
+    //int bufferSizeInBytes = BUFFER_SIZE_IN_FRAMES * numChannels_ * sizeof(float);
 
     enqueBuffer();
 

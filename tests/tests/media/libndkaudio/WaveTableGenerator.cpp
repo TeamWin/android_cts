@@ -22,7 +22,7 @@
 
 static const float kPI = 3.14159265359;	// close enough
 
-static const char* TAG = "WaveTableGenerator";
+//static const char* const TAG = "WaveTableGenerator";
 
 namespace ndkaudio {
 
