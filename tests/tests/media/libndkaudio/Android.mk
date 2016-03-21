@@ -41,6 +41,8 @@ LOCAL_CXX_STL := libc++_static
 
 LOCAL_SHARED_LIBRARIES := liblog libOpenSLES
 
+LOCAL_CFLAGS := -Werror -Wall
+
 include $(BUILD_SHARED_LIBRARY)
 
 #

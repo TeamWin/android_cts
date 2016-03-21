@@ -35,4 +35,6 @@ LOCAL_SHARED_LIBRARIES := libandroid libnativehelper_compat_libc++ liblog libmed
 
 LOCAL_SDK_VERSION := 23
 
+LOCAL_CFLAGS := -Werror -Wall
+
 include $(BUILD_SHARED_LIBRARY)
