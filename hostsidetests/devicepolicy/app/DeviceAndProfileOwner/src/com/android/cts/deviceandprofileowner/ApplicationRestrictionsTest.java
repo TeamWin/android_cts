@@ -20,6 +20,7 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.pm.PackageManager.NameNotFoundException;
 import android.os.Bundle;
 import android.os.Parcelable;
 import android.os.UserManager;
@@ -183,13 +184,13 @@ public class ApplicationRestrictionsTest extends BaseDeviceAdminTest {
         }
     }
 
-    public void testSetApplicationRestrictionsManagingPackage() {
+    public void testSetApplicationRestrictionsManagingPackage() throws NameNotFoundException {
         final String previousValue = mDevicePolicyManager.getApplicationRestrictionsManagingPackage(
                 ADMIN_RECEIVER_COMPONENT);
         try {
             mDevicePolicyManager.setApplicationRestrictionsManagingPackage(
-                    ADMIN_RECEIVER_COMPONENT, OTHER_PACKAGE);
-            assertEquals(OTHER_PACKAGE,
+                    ADMIN_RECEIVER_COMPONENT, APP_RESTRICTIONS_TARGET_PKG);
+            assertEquals(APP_RESTRICTIONS_TARGET_PKG,
                     mDevicePolicyManager.getApplicationRestrictionsManagingPackage(
                             ADMIN_RECEIVER_COMPONENT));
             mDevicePolicyManager.setApplicationRestrictionsManagingPackage(
@@ -202,6 +203,22 @@ public class ApplicationRestrictionsTest extends BaseDeviceAdminTest {
             assertEquals(previousValue,
                     mDevicePolicyManager.getApplicationRestrictionsManagingPackage(
                             ADMIN_RECEIVER_COMPONENT));
+        }
+    }
+
+    public void testSetApplicationRestrictionsManagingPackageForNotInstalledPackage()
+            throws NameNotFoundException {
+        try {
+            mDevicePolicyManager.setApplicationRestrictionsManagingPackage(ADMIN_RECEIVER_COMPONENT,
+                    OTHER_PACKAGE);
+            fail("Not throwing exception for not installed package name");
+        } catch (NameNotFoundException expected) {
+            MoreAsserts.assertContainsRegex(OTHER_PACKAGE, expected.getMessage());
+        } finally {
+            mDevicePolicyManager.setApplicationRestrictionsManagingPackage(ADMIN_RECEIVER_COMPONENT,
+                    null);
+            assertNull(mDevicePolicyManager.getApplicationRestrictionsManagingPackage(
+                    ADMIN_RECEIVER_COMPONENT));
         }
     }
 
