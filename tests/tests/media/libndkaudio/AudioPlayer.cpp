@@ -268,9 +268,9 @@ void AudioPlayer::Stop() {
 SLresult AudioPlayer::enqueBuffer() {
     // __android_log_print(ANDROID_LOG_INFO, TAG, "AudioPlayer::enqueBuffer()");
     if (playing_) {
-        long dataSizeInSamples = source_->getData(time_++, playBuff_,
-                                                  numPlayBuffFrames_,
-                                                  source_->getNumChannels());
+        //long dataSizeInSamples = source_->getData(time_++, playBuff_,
+        //                                          numPlayBuffFrames_,
+        //                                          source_->getNumChannels());
         return (*bq_)->Enqueue(bq_, playBuff_, playBuffSizeInBytes_);
     } else {
         (*bqPlayerPlay_)->SetPlayState(bqPlayerPlay_, SL_PLAYSTATE_STOPPED);

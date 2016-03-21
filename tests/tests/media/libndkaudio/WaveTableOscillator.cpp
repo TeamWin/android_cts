@@ -16,7 +16,7 @@
 
 #include <android/log.h>
 
-static const char * TAG = "WaveTableOscillator";
+//static const char * const TAG = "WaveTableOscillator";
 
 #include "WaveTableOscillator.h"
 #include "SystemParams.h"
