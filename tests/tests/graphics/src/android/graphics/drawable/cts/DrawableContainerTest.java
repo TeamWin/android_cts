@@ -78,7 +78,7 @@ public class DrawableContainerTest extends TestCase {
     }
 
     private void helpTestSetEnterFadeDuration(int enterFadeDuration) {
-        DrawableContainer container = new MockDrawableContainer();
+        DrawableContainer container = new LevelListDrawable();
         DrawableContainerState cs = ((DrawableContainerState) container.getConstantState());
         container.setEnterFadeDuration(enterFadeDuration);
         assertEquals(enterFadeDuration, cs.getEnterFadeDuration());
@@ -90,7 +90,7 @@ public class DrawableContainerTest extends TestCase {
     }
 
     private void helpTestSetExitFadeDuration(int exitFadeDuration) {
-        DrawableContainer container = new MockDrawableContainer();
+        DrawableContainer container = new LevelListDrawable();
         DrawableContainerState cs = ((DrawableContainerState) container.getConstantState());
         container.setExitFadeDuration(exitFadeDuration);
         assertEquals(exitFadeDuration, cs.getExitFadeDuration());
