@@ -20,12 +20,12 @@
 
 namespace ndkaudio {
 
-static const char* TAG = "AudioSource";
+//static const char* const TAG = "AudioSource";
 
 AudioSource::AudioSource(int numChannels)
  : numChannels_(numChannels),
-   numBuffFrames_(SystemParams::getNumBufferFrames()),
-   lastReadSize_(0)
+   lastReadSize_(0),
+   numBuffFrames_(SystemParams::getNumBufferFrames())
 {}
 
 AudioSource::~AudioSource()
