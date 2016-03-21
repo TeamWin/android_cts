@@ -19,6 +19,7 @@ import android.app.Activity;
 import android.app.admin.DevicePolicyManager;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager.NameNotFoundException;
 import android.os.Bundle;
 import android.os.Process;
 import android.util.Log;
@@ -94,8 +95,12 @@ public class SetPolicyActivity extends Activity {
                     + " for user " + Process.myUserHandle());
         } else if (COMMAND_SET_APP_RESTRICTIONS_MANAGER.equals(command)) {
             String packageName = intent.getStringExtra(EXTRA_PACKAGE_NAME);
-            dpm.setApplicationRestrictionsManagingPackage(
-                    BaseDeviceAdminTest.ADMIN_RECEIVER_COMPONENT, packageName);
+            try {
+                dpm.setApplicationRestrictionsManagingPackage(
+                        BaseDeviceAdminTest.ADMIN_RECEIVER_COMPONENT, packageName);
+            } catch (NameNotFoundException e) {
+                throw new IllegalArgumentException(e);
+            }
             Log.i(TAG, "Setting the application restrictions managing package to " + packageName);
         } else {
             Log.e(TAG, "Invalid command: " + command);
