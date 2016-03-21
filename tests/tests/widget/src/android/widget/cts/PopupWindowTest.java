@@ -18,6 +18,7 @@ package android.widget.cts;
 
 import static org.mockito.Mockito.*;
 
+import android.util.AttributeSet;
 import org.mockito.InOrder;
 
 import android.app.Activity;
@@ -160,6 +161,15 @@ public class PopupWindowTest extends
     }
 
     public static class CustomTransition extends Transition {
+        public CustomTransition() {
+        }
+
+        // This constructor is needed for reflection-based creation of a transition when
+        // the transition is defined in layout XML via attribute.
+        public CustomTransition(Context context, AttributeSet attrs) {
+            super(context, attrs);
+        }
+
         @Override
         public void captureStartValues(TransitionValues transitionValues) {}
 
