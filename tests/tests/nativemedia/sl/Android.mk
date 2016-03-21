@@ -50,6 +50,8 @@ LOCAL_CTS_TEST_PACKAGE := android.nativemedia.sl
 # Tag this module as a cts test artifact
 LOCAL_COMPATIBILITY_SUITE := cts
 
+LOCAL_CFLAGS := -Werror -Wall
+
 include $(BUILD_CTS_EXECUTABLE)
 
 include $(CLEAR_VARS)
@@ -63,6 +65,7 @@ LOCAL_SRC_FILES := \
 
 LOCAL_CFLAGS := \
     -DBUILD_ONLY \
+    -Werror -Wall
 
 LOCAL_SHARED_LIBRARIES := \
     liblog \
