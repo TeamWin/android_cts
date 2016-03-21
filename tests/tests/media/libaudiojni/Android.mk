@@ -37,4 +37,6 @@ LOCAL_C_INCLUDES += $(call include-path-for, libaudiojni) \
 LOCAL_SHARED_LIBRARIES := libandroid liblog libnativehelper_compat_libc++ libOpenSLES
 LOCAL_CXX_STL := libc++_static
 
+LOCAL_CFLAGS := -Werror -Wall
+
 include $(BUILD_SHARED_LIBRARY)
