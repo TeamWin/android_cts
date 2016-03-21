@@ -17,12 +17,12 @@
 package android.icu.cts;
 
 import android.app.Instrumentation;
-import android.icu.cts.junit.ICUTestFailedException;
-import android.icu.cts.junit.IcuRunnerParams;
 import android.os.Bundle;
+import android.support.test.internal.util.AndroidRunnerParams;
 import android.util.Log;
 import java.util.ArrayList;
 import java.util.List;
+import junit.framework.AssertionFailedError;
 import org.junit.runner.Description;
 import org.junit.runner.Result;
 import org.junit.runner.notification.Failure;
@@ -54,7 +54,7 @@ class IcuRunListener extends RunListener {
      */
     private final Instrumentation instrumentation;
 
-    private final IcuRunnerParams icuRunnerParams;
+    private final AndroidRunnerParams runnerParams;
 
     private final int totalTestCount;
 
@@ -77,10 +77,10 @@ class IcuRunListener extends RunListener {
 
     private long testStartTime;
 
-    public IcuRunListener(Instrumentation instrumentation, IcuRunnerParams icuRunnerParams,
+    public IcuRunListener(Instrumentation instrumentation, AndroidRunnerParams runnerParams,
             int totalTestCount) {
         this.instrumentation = instrumentation;
-        this.icuRunnerParams = icuRunnerParams;
+        this.runnerParams = runnerParams;
         this.totalTestCount = totalTestCount;
         failedTests = new ArrayList<>();
     }
@@ -130,28 +130,15 @@ class IcuRunListener extends RunListener {
 
         @SuppressWarnings("ThrowableResultOfMethodCallIgnored")
         Throwable exception = failure.getException();
-        if (exception instanceof ICUTestFailedException) {
-            ICUTestFailedException icuTestFailedException =
-                    (ICUTestFailedException) exception;
-
-            String information = icuTestFailedException.getInformation();
-            int errorCount = icuTestFailedException.getErrorCount();
-
-            // Include the detailed logs from ICU as the stack trace.
-            currentTestResult.putString(REPORT_KEY_STACK, information);
-
-            // Also append the logs to the console output.
-            String output = "Failure: " + description + ", due to " + errorCount + " error(s)\n"
-                    + information;
-            currentTestResult.putString(Instrumentation.REPORT_KEY_STREAMRESULT, output);
+        if (exception instanceof AssertionFailedError) {
             resultStatus = REPORT_VALUE_RESULT_FAILURE;
         } else {
-            String information = failure.getTrace();
-            currentTestResult.putString(REPORT_KEY_STACK, information);
-            String output = "Error: " + description + "\n" + information;
-            currentTestResult.putString(Instrumentation.REPORT_KEY_STREAMRESULT, output);
             resultStatus = REPORT_VALUE_RESULT_ERROR;
         }
+        String information = failure.getTrace();
+        currentTestResult.putString(REPORT_KEY_STACK, information);
+        String output = "Error: " + description + "\n" + information;
+        currentTestResult.putString(Instrumentation.REPORT_KEY_STREAMRESULT, output);
     }
 
     @Override
@@ -178,7 +165,7 @@ class IcuRunListener extends RunListener {
 
     public Bundle getFinalResults() {
         int totalTests = totalFailures + totalSuccess;
-        Log.d(IcuTestRunner.TAG, (icuRunnerParams.getSkipExecution() ? "Skipped " : "Ran ")
+        Log.d(IcuTestRunner.TAG, (runnerParams.isSkipExecution() ? "Skipped " : "Ran ")
                 + totalTests + " tests, " + totalSuccess + " passed, " + totalFailures + " failed");
         Bundle results = new Bundle();
         results.putString(REPORT_KEY_IDENTIFIER, REPORT_VALUE_ID);
