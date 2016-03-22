@@ -41,18 +41,6 @@ public class TimingConstraintsTest extends ConstraintTest {
         assertTrue("Timed out waiting for override deadline.", executed);
     }
 
-    public void testSchedulePeriodic() throws Exception {
-        JobInfo periodicJob =
-                new JobInfo.Builder(TIMING_JOB_ID, kJobServiceComponent)
-                        .setPeriodic(5000L)  // 5 second period.
-                        .build();
-
-        kTestEnvironment.setExpectedExecutions(3);
-        mJobScheduler.schedule(periodicJob);
-        final boolean countedDown = kTestEnvironment.awaitExecution();
-        assertTrue("Timed out waiting for periodic jobs to execute", countedDown);
-    }
-
     public void testCancel() throws Exception {
         JobInfo cancelJob = new JobInfo.Builder(CANCEL_JOB_ID, kJobServiceComponent)
                 .setMinimumLatency(5000L) // make sure it doesn't actually run immediately
