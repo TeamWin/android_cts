@@ -182,4 +182,10 @@
     </style>
 
     <style name="PopupEmptyStyle" />
+
+    <style name="TabWidgetCustomStyle" parent="android:Widget.TabWidget">
+        <item name="android:tabStripEnabled">false</item>
+        <item name="android:tabStripLeft">@drawable/icon_green</item>
+        <item name="android:tabStripRight">@drawable/icon_red</item>
+    </style>
 </resources>
