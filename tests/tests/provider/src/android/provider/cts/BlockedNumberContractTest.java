@@ -25,14 +25,11 @@ import android.database.ContentObserver;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteConstraintException;
 import android.net.Uri;
-import android.os.ParcelFileDescriptor;
 import android.provider.BlockedNumberContract;
 import android.provider.BlockedNumberContract.BlockedNumbers;
 
 import junit.framework.Assert;
 
-import java.io.FileInputStream;
-import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -340,7 +337,7 @@ public class BlockedNumberContractTest extends TestCaseThatRunsIfTelephonyIsEnab
     }
 
     private void setDefaultSmsApp(boolean setToSmsApp) throws Exception {
-        BlockedNumberTestUtils.setDefaultSmsApp(
+        ProviderTestUtils.setDefaultSmsApp(
                 setToSmsApp, mContext.getPackageName(), getInstrumentation().getUiAutomation());
     }
 }
