@@ -61,6 +61,13 @@ public class BaseDevicePolicyTest extends DeviceTestCase implements IBuildReceiv
     protected static final int FLAG_GUEST = 0x00000004;
     protected static final int FLAG_EPHEMERAL = 0x00000100;
 
+    protected static interface Settings {
+        public static final String GLOBAL_NAMESPACE = "global";
+        public static interface Global {
+            public static final String DEVICE_PROVISIONED = "device_provisioned";
+        }
+    }
+
     protected IBuildInfo mCtsBuild;
 
     private String mPackageVerifier;
