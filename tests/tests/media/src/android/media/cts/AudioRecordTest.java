@@ -749,7 +749,7 @@ public class AudioRecordTest extends CtsAndroidTestCase {
             return;
         }
         // audit recording plays back recorded audio, so use longer test timing
-        final int TEST_TIME_MS = auditRecording ? 10000 : 2000;
+        final int TEST_TIME_MS = auditRecording ? 60000 : 2000;
         final int TEST_SOURCE = MediaRecorder.AudioSource.DEFAULT;
         mIsHandleMessageCalled = false;
 
@@ -1252,7 +1252,8 @@ public class AudioRecordTest extends CtsAndroidTestCase {
         final double ratio = (double)timeDiff / timeByFrames;
 
         // Usually the ratio is accurate to one part per thousand or better.
-        // Log.d(TAG, "ratio " + ratio);
+        // Log.d(TAG, "ratio=" + ratio + ", timeDiff=" + timeDiff + ", frameDiff=" + frameDiff +
+        //        ", timeByFrames=" + timeByFrames + ", sampleRate=" + sampleRate);
         assertEquals(1.0 /* expected */, ratio, 0.01 /* delta */);
     }
 
