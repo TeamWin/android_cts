@@ -18,7 +18,6 @@ package android.app.usage.cts;
 
 import android.app.Activity;
 import android.app.SharedElementCallback;
-import android.app.usage.cts.R;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.ResultReceiver;
@@ -59,6 +58,9 @@ public class ActivityTransitionActivity extends Activity {
     public static final String ARRIVE_RETURN_TIME_READY = "arriveReturnTimeReady";
     public static final String ARRIVE_RETURN_TIME = "arriveReturnTime";
 
+    public static final String ENTER_VISIBILITY = "enterVisibility";
+    public static final String RETURN_VISIBILITY = "returnVisibility";
+
     private int mLayoutId;
     private int mTest;
     private ResultReceiver mResultReceiver;
@@ -67,6 +69,8 @@ public class ActivityTransitionActivity extends Activity {
 
     public int resultCode = 0;
     public Bundle result = new Bundle();
+    public final OptionalVisibility exitVisibility = new OptionalVisibility();
+    public final OptionalVisibility reenterVisibility = new OptionalVisibility();
 
     public boolean mPauseOnRestart;
     public boolean mQuickFinish;
@@ -75,12 +79,6 @@ public class ActivityTransitionActivity extends Activity {
 
     public CountDownLatch returnLatch = new CountDownLatch(1);
     public CountDownLatch reenterLatch = new CountDownLatch(1);
-
-    public static final int EXIT_TRANSITION_INDEX = 0;
-    public static final int ENTER_TRANSITION_INDEX = 1;
-    public static final int RETURN_TRANSITION_INDEX = 2;
-    public static final int REENTER_TRANSITION_INDEX = 3;
-    public static final int sVisibility[] = new int[4];
 
     @Override
     public void onCreate(Bundle icicle) {
@@ -109,11 +107,10 @@ public class ActivityTransitionActivity extends Activity {
 
         getWindow().setSharedElementEnterTransition(new ChangeBounds().setDuration(DURATION));
         getWindow().setSharedElementReturnTransition(new ChangeBounds().setDuration(DURATION));
-        getWindow().setEnterTransition(createVisibilityTransition(true, ENTER_TRANSITION_INDEX));
-        getWindow().setReturnTransition(createVisibilityTransition(true, RETURN_TRANSITION_INDEX));
-        getWindow().setExitTransition(createVisibilityTransition(false, EXIT_TRANSITION_INDEX));
-        getWindow().setReenterTransition(createVisibilityTransition(false,
-                REENTER_TRANSITION_INDEX));
+        getWindow().setEnterTransition(createVisibilityTransition(true, ENTER_VISIBILITY));
+        getWindow().setReturnTransition(createVisibilityTransition(true, RETURN_VISIBILITY));
+        getWindow().setExitTransition(createVisibilityTransition(false, exitVisibility));
+        getWindow().setReenterTransition(createVisibilityTransition(false, reenterVisibility));
         getWindow().getReenterTransition().addListener(new TransitionListenerAdapter() {
             @Override
             public void onTransitionEnd(Transition transition) {
@@ -131,10 +128,17 @@ public class ActivityTransitionActivity extends Activity {
         startTest();
     }
 
-    private Transition createVisibilityTransition(boolean isExplode, int startIndex) {
+    private Transition createVisibilityTransition(boolean isExplode, OptionalVisibility visibility) {
         final Transition transition = isExplode ? new Explode() : new Fade();
         transition.setDuration(DURATION);
-        transition.addListener(new VisibilityCheck(R.id.redSquare, startIndex));
+        transition.addListener(new VisibilityCheck(R.id.redSquare, visibility));
+        return transition;
+    }
+
+    private Transition createVisibilityTransition(boolean isExplode, String propertyName) {
+        final Transition transition = isExplode ? new Explode() : new Fade();
+        transition.setDuration(DURATION);
+        transition.addListener(new VisibilityCheck(R.id.redSquare, propertyName));
         return transition;
     }
 
@@ -237,17 +241,49 @@ public class ActivityTransitionActivity extends Activity {
 
     private class VisibilityCheck extends TransitionListenerAdapter {
         private final int mViewId;
-        private final int mStartIndex;
+        private final OptionalVisibility mVisibility;
+        private final String mPropertyName;
 
-        public VisibilityCheck(int viewId, int startIndex) {
+        public VisibilityCheck(int viewId, OptionalVisibility visibility) {
             mViewId = viewId;
-            this.mStartIndex = startIndex;
+            mVisibility = visibility;
+            mPropertyName = null;
+        }
+
+        public VisibilityCheck(int viewId, String propertyName) {
+            mViewId = viewId;
+            mVisibility = null;
+            mPropertyName = propertyName;
         }
 
         @Override
         public void onTransitionEnd(Transition transition) {
             final View view = findViewById(mViewId);
-            sVisibility[mStartIndex ] = view.getVisibility();
+            if (mPropertyName != null) {
+                if (mResultReceiver != null) {
+                    Bundle data = new Bundle();
+                    data.putInt(mPropertyName, view.getVisibility());
+                    mResultReceiver.send(RESULT_OK, data);
+                }
+            } else {
+                mVisibility.set(view.getVisibility());
+            }
+        }
+    }
+
+    public static class OptionalVisibility {
+        private int mVisibility = -1;
+
+        public void set(int visibility) {
+            mVisibility = visibility;
+        }
+
+        public int get() {
+            return mVisibility;
+        }
+
+        public boolean isSet() {
+            return mVisibility != -1;
         }
     }
 }

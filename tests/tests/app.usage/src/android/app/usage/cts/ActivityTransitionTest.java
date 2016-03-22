@@ -17,7 +17,6 @@ package android.app.usage.cts;
 
 import android.app.ActivityOptions;
 import android.app.SharedElementCallback;
-import android.app.usage.cts.R;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
@@ -28,7 +27,6 @@ import android.transition.Transition;
 import android.transition.Transition.TransitionListener;
 import android.view.View;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -51,7 +49,6 @@ public class ActivityTransitionTest extends
     @Override
     protected void setUp() throws Exception {
         super.setUp();
-        Arrays.fill(ActivityTransitionActivity.sVisibility, -1);
         setActivityInitialTouchMode(false);
         mActivity = getActivity();
         mNumArrivedCalls = 0;
@@ -135,12 +132,14 @@ public class ActivityTransitionTest extends
         runTestOnUiThread(new Runnable() {
             @Override
             public void run() {
+                mReceiver = new PassInfo(new Handler());
                 mActivity.mPauseOnRestart = true;
                 Bundle options = ActivityOptions.makeSceneTransitionAnimation(mActivity,
                         mActivity.findViewById(R.id.hello), "target").toBundle();
                 Intent intent = new Intent(mActivity, ActivityTransitionActivity.class);
                 intent.putExtra(ActivityTransitionActivity.LAYOUT_ID, R.layout.end);
                 intent.putExtra(ActivityTransitionActivity.QUICK_FINISH, true);
+                intent.putExtra(ActivityTransitionActivity.RESULT_RECEIVER, mReceiver);
                 mActivity.startActivityForResult(intent, 0, options);
             }
         });
@@ -151,7 +150,7 @@ public class ActivityTransitionTest extends
         assertTrue("Reenter transition didn't finish", latch.await(1000, TimeUnit.MILLISECONDS));
         assertTrue(mActivity.reenterLatch.await(300, TimeUnit.MILLISECONDS));
         getInstrumentation().waitForIdleSync();
-        checkNormalTransitionVisibility();
+        checkNoReturnTransitionVisibility();
         runTestOnUiThread(new Runnable() {
             @Override
             public void run() {
@@ -168,12 +167,14 @@ public class ActivityTransitionTest extends
         runTestOnUiThread(new Runnable() {
             @Override
             public void run() {
+                mReceiver = new PassInfo(new Handler());
                 Bundle options = ActivityOptions.makeSceneTransitionAnimation(mActivity,
                         mActivity.findViewById(R.id.hello), "target").toBundle();
                 Intent intent = new Intent(mActivity, ActivityTransitionActivity.class);
                 intent.putExtra(ActivityTransitionActivity.LAYOUT_ID, R.layout.end);
                 intent.putExtra(ActivityTransitionActivity.QUICK_FINISH, true);
                 intent.putExtra(ActivityTransitionActivity.ALLOW_OVERLAP, false);
+                intent.putExtra(ActivityTransitionActivity.RESULT_RECEIVER, mReceiver);
                 mActivity.startActivityForResult(intent, 0, options);
             }
         });
@@ -182,7 +183,7 @@ public class ActivityTransitionTest extends
                 mActivity.returnLatch.await(1500, TimeUnit.MILLISECONDS));
         assertTrue(mActivity.reenterLatch.await(300, TimeUnit.MILLISECONDS));
         getInstrumentation().waitForIdleSync();
-        checkNormalTransitionVisibility();
+        checkNoReturnTransitionVisibility();
         runTestOnUiThread(new Runnable() {
             @Override
             public void run() {
@@ -200,12 +201,14 @@ public class ActivityTransitionTest extends
         runTestOnUiThread(new Runnable() {
             @Override
             public void run() {
+                mReceiver = new PassInfo(new Handler());
                 Bundle options = ActivityOptions.makeSceneTransitionAnimation(mActivity,
                         mActivity.findViewById(R.id.hello), "target").toBundle();
                 Intent intent = new Intent(mActivity, ActivityTransitionActivity.class);
                 intent.putExtra(ActivityTransitionActivity.LAYOUT_ID, R.layout.end);
                 intent.putExtra(ActivityTransitionActivity.QUICK_FINISH, true);
                 intent.putExtra(ActivityTransitionActivity.ALLOW_OVERLAP, true);
+                intent.putExtra(ActivityTransitionActivity.RESULT_RECEIVER, mReceiver);
                 mActivity.startActivityForResult(intent, 0, options);
             }
         });
@@ -215,7 +218,7 @@ public class ActivityTransitionTest extends
         assertTrue("Reenter transition didn't finish", latch.await(1000, TimeUnit.MILLISECONDS));
         assertTrue(mActivity.reenterLatch.await(300, TimeUnit.MILLISECONDS));
         getInstrumentation().waitForIdleSync();
-        checkNormalTransitionVisibility();
+        checkNoReturnTransitionVisibility();
         runTestOnUiThread(new Runnable() {
             @Override
             public void run() {
@@ -232,6 +235,7 @@ public class ActivityTransitionTest extends
         runTestOnUiThread(new Runnable() {
             @Override
             public void run() {
+                mReceiver = new PassInfo(new Handler());
                 Bundle options = ActivityOptions.makeSceneTransitionAnimation(mActivity,
                         mActivity.findViewById(R.id.hello), "target").toBundle();
                 Intent intent = new Intent(mActivity, ActivityTransitionActivity.class);
@@ -239,6 +243,7 @@ public class ActivityTransitionTest extends
                 intent.putExtra(ActivityTransitionActivity.QUICK_FINISH, true);
                 intent.putExtra(ActivityTransitionActivity.ALLOW_OVERLAP, true);
                 intent.putExtra(ActivityTransitionActivity.NO_RETURN_TRANSITION, true);
+                intent.putExtra(ActivityTransitionActivity.RESULT_RECEIVER, mReceiver);
                 mActivity.startActivityForResult(intent, 0, options);
             }
         });
@@ -261,19 +266,18 @@ public class ActivityTransitionTest extends
 
     private void checkNormalTransitionVisibility() {
         checkNoReturnTransitionVisibility();
-        final int[]  visibilities = ActivityTransitionActivity.sVisibility;
         assertEquals(View.INVISIBLE,
-                visibilities[ActivityTransitionActivity.RETURN_TRANSITION_INDEX]);
+                mReceiver.resultData.getInt(ActivityTransitionActivity.RETURN_VISIBILITY, -1));
     }
 
     private void checkNoReturnTransitionVisibility() {
-        final int[]  visibilities = ActivityTransitionActivity.sVisibility;
+        assertTrue(mActivity.exitVisibility.isSet());
+        assertTrue(mActivity.reenterVisibility.isSet());
+
         assertEquals(View.VISIBLE,
-                visibilities[ActivityTransitionActivity.ENTER_TRANSITION_INDEX]);
-        assertEquals(View.INVISIBLE,
-                visibilities[ActivityTransitionActivity.EXIT_TRANSITION_INDEX]);
-        assertEquals(View.VISIBLE,
-                visibilities[ActivityTransitionActivity.REENTER_TRANSITION_INDEX]);
+                mReceiver.resultData.getInt(ActivityTransitionActivity.ENTER_VISIBILITY, -1));
+        assertEquals(View.INVISIBLE, mActivity.exitVisibility.get());
+        assertEquals(View.VISIBLE, mActivity.reenterVisibility.get());
     }
 
     private CountDownLatch setReenterLatch() {
@@ -303,9 +307,10 @@ public class ActivityTransitionTest extends
         mActivity.getWindow().getReenterTransition().addListener(listener);
         return latch;
     }
+
     public static class PassInfo extends ResultReceiver {
         public int resultCode;
-        public Bundle resultData;
+        public Bundle resultData = new Bundle();
 
         public PassInfo(Handler handler) {
             super(handler);
@@ -314,7 +319,9 @@ public class ActivityTransitionTest extends
         @Override
         protected void onReceiveResult(int resultCode, Bundle resultData) {
             this.resultCode = resultCode;
-            this.resultData = resultData;
+            if (resultData != null) {
+                this.resultData.putAll(resultData);
+            }
         }
     }
 }
