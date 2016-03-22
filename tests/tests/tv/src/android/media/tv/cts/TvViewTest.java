@@ -28,6 +28,7 @@ import android.media.tv.TvTrackInfo;
 import android.media.tv.TvView;
 import android.media.tv.TvView.TvInputCallback;
 import android.net.Uri;
+import android.os.Bundle;
 import android.test.ActivityInstrumentationTestCase2;
 import android.test.UiThreadTest;
 import android.util.ArrayMap;
@@ -203,7 +204,7 @@ public class TvViewTest extends ActivityInstrumentationTestCase2<TvViewStubActiv
         new TvView(mActivity, null, 0);
     }
 
-    private void tryTuneAllChannels(Runnable runOnEachChannel) throws Throwable {
+    private void tryTuneAllChannels(Bundle params, Runnable runOnEachChannel) throws Throwable {
         StubTunerTvInputService.insertChannels(mActivity.getContentResolver(), mStubInfo);
 
         Uri uri = TvContract.buildChannelsUriForInput(mStubInfo.getId());
@@ -213,7 +214,11 @@ public class TvViewTest extends ActivityInstrumentationTestCase2<TvViewStubActiv
             while (cursor != null && cursor.moveToNext()) {
                 long channelId = cursor.getLong(0);
                 Uri channelUri = TvContract.buildChannelUri(channelId);
-                mTvView.tune(mStubInfo.getId(), channelUri);
+                if (params != null) {
+                    mTvView.tune(mStubInfo.getId(), channelUri, params);
+                } else {
+                    mTvView.tune(mStubInfo.getId(), channelUri);
+                }
                 mInstrumentation.waitForIdleSync();
                 new PollingCheck(TIME_OUT_MS) {
                     @Override
@@ -233,7 +238,16 @@ public class TvViewTest extends ActivityInstrumentationTestCase2<TvViewStubActiv
         if (!Utils.hasTvInputFramework(getActivity())) {
             return;
         }
-        tryTuneAllChannels(null);
+        tryTuneAllChannels(null, null);
+    }
+
+    public void testSimpleTuneWithBundle() throws Throwable {
+        if (!Utils.hasTvInputFramework(getActivity())) {
+            return;
+        }
+        Bundle params = new Bundle();
+        params.putString("android.media.tv.cts.TvViewTest.inputId", mStubInfo.getId());
+        tryTuneAllChannels(params, null);
     }
 
     private void selectTrackAndVerify(final int type, final TvTrackInfo track,
@@ -320,7 +334,7 @@ public class TvViewTest extends ActivityInstrumentationTestCase2<TvViewStubActiv
         final List<TvTrackInfo> tracks = new ArrayList<TvTrackInfo>();
         Collections.addAll(tracks, videoTrack1, videoTrack2, audioTrack1, audioTrack2,
                 subtitleTrack1, subtitleTrack2, subtitleTrack3);
-        tryTuneAllChannels(new Runnable() {
+        tryTuneAllChannels(null, new Runnable() {
             @Override
             public void run() {
                 new PollingCheck(TIME_OUT_MS) {
@@ -416,5 +430,29 @@ public class TvViewTest extends ActivityInstrumentationTestCase2<TvViewStubActiv
                 return mCallback.getConnectionFailedCount() > 0;
             }
         }.run();
+    }
+
+    public void testSetZOrderMediaOverlay() throws Exception {
+        if (!Utils.hasTvInputFramework(getActivity())) {
+            return;
+        }
+        // Verifying the z-order from app is not possible. Here we just check if calling APIs does
+        // not lead to any break.
+        mTvView.setZOrderMediaOverlay(true);
+        mInstrumentation.waitForIdleSync();
+        mTvView.setZOrderMediaOverlay(false);
+        mInstrumentation.waitForIdleSync();
+    }
+
+    public void testSetZOrderOnTop() throws Exception {
+        if (!Utils.hasTvInputFramework(getActivity())) {
+            return;
+        }
+        // Verifying the z-order from app is not possible. Here we just check if calling APIs does
+        // not lead to any break.
+        mTvView.setZOrderOnTop(true);
+        mInstrumentation.waitForIdleSync();
+        mTvView.setZOrderOnTop(false);
+        mInstrumentation.waitForIdleSync();
     }
 }

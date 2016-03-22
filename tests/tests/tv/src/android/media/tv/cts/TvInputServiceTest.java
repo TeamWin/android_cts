@@ -31,6 +31,7 @@ import android.media.tv.TvView;
 import android.media.tv.cts.TvInputServiceTest.CountingTvInputService.CountingSession;
 import android.media.tv.cts.TvInputServiceTest.CountingTvInputService.CountingRecordingSession;
 import android.net.Uri;
+import android.os.Bundle;
 import android.os.SystemClock;
 import android.test.ActivityInstrumentationTestCase2;
 import android.view.InputDevice;
@@ -190,6 +191,8 @@ public class TvInputServiceTest extends ActivityInstrumentationTestCase2<TvViewS
             return;
         }
         verifyCommandTune();
+        verifyCommandTuneWithBundle();
+        verifyCommandSendAppPrivateCommand();
         verifyCommandSetStreamVolume();
         verifyCommandSetCaptionEnabled();
         verifyCommandSelectTrack();
@@ -328,6 +331,20 @@ public class TvInputServiceTest extends ActivityInstrumentationTestCase2<TvViewS
         }.run();
     }
 
+    public void verifyCommandSendAppPrivateCommand() {
+        resetCounts();
+        String action = "android.media.tv.cts.TvInputServiceTest.privateCommand";
+        mTvView.sendAppPrivateCommand(action, null);
+        mInstrumentation.waitForIdleSync();
+        new PollingCheck(TIME_OUT) {
+            @Override
+            protected boolean check() {
+                CountingSession session = CountingTvInputService.sSession;
+                return session != null && session.mSendAppPrivateCommand > 0;
+            }
+        }.run();
+    }
+
     public void verifyCommandTune() {
         resetCounts();
         Uri fakeChannelUri = TvContract.buildChannelUri(0);
@@ -338,6 +355,20 @@ public class TvInputServiceTest extends ActivityInstrumentationTestCase2<TvViewS
             protected boolean check() {
                 CountingSession session = CountingTvInputService.sSession;
                 return session != null && session.mTuneCount > 0 && session.mCreateOverlayView > 0;
+            }
+        }.run();
+    }
+
+    public void verifyCommandTuneWithBundle() {
+        resetCounts();
+        Uri fakeChannelUri = TvContract.buildChannelUri(0);
+        mTvView.tune(mStubInfo.getId(), fakeChannelUri, null);
+        mInstrumentation.waitForIdleSync();
+        new PollingCheck(TIME_OUT) {
+            @Override
+            protected boolean check() {
+                CountingSession session = CountingTvInputService.sSession;
+                return session != null && session.mTuneCount > 0;
             }
         }.run();
     }
@@ -747,6 +778,7 @@ public class TvInputServiceTest extends ActivityInstrumentationTestCase2<TvViewS
         }
 
         public static class CountingSession extends Session {
+            public volatile int mSendAppPrivateCommand;
             public volatile int mTuneCount;
             public volatile int mSetStreamVolumeCount;
             public volatile int mSetCaptionEnabledCount;
@@ -773,6 +805,7 @@ public class TvInputServiceTest extends ActivityInstrumentationTestCase2<TvViewS
             }
 
             public void resetCounts() {
+                mSendAppPrivateCommand = 0;
                 mTuneCount = 0;
                 mSetStreamVolumeCount = 0;
                 mSetCaptionEnabledCount = 0;
@@ -793,6 +826,11 @@ public class TvInputServiceTest extends ActivityInstrumentationTestCase2<TvViewS
                 mTimeShiftPlayCount = 0;
                 mTimeShiftGetCurrentPositionCount = 0;
                 mTimeShiftGetStartPositionCount = 0;
+            }
+
+            @Override
+            public void onAppPrivateCommand(String action, Bundle data) {
+                mSendAppPrivateCommand++;
             }
 
             @Override
