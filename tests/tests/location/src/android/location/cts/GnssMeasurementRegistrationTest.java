@@ -23,6 +23,7 @@ import android.test.AndroidTestCase;
 import android.util.Log;
 
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Test for {@link GnssMeasurement}s without location registration.
@@ -92,7 +93,7 @@ public class GnssMeasurementRegistrationTest extends AndroidTestCase {
         mMeasurementListener = new TestGnssMeasurementListener(TAG, GPS_EVENTS_COUNT);
         mTestLocationManager.registerGnssMeasurementCallback(mMeasurementListener);
 
-        mMeasurementListener.await();
+        assertTrue(mMeasurementListener.await());
         if (!mMeasurementListener.verifyState()) {
             return;
         }
@@ -113,7 +114,7 @@ public class GnssMeasurementRegistrationTest extends AndroidTestCase {
         mTestLocationManager.requestLocationUpdates(mLocationListener);
 
         // Wait for location updates
-        mLocationListener.await();
+        assertTrue(mLocationListener.await());
 
         Log.i(TAG, "Location received = " + mLocationListener.isLocationReceived());
 
@@ -122,7 +123,7 @@ public class GnssMeasurementRegistrationTest extends AndroidTestCase {
         mTestLocationManager.addGpsStatusListener(mGpsStatusListener);
 
         // wait for Gps Status updates
-        mGpsStatusListener.await();
+        assertTrue(mGpsStatusListener.await());
 
         if (!mGpsStatusListener.isGpsStatusReceived()) {
             // Skip the Test. No Satellites are visible. Device may be Indoor
