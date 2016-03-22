@@ -147,93 +147,7 @@ public class CameraEvictionTest extends ActivityInstrumentationTestCase2<CameraC
      * Test basic eviction scenarios for the Camera1 API.
      */
     public void testCamera1ActivityEviction() throws Throwable {
-
-        // Open a camera1 client in the main CTS process's activity
-        final Camera.ErrorCallback mockErrorCb1 = mock(Camera.ErrorCallback.class);
-        final boolean[] skip = {false};
-        runTestOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                // Open camera
-                mCamera = Camera.open();
-                if (mCamera == null) {
-                    skip[0] = true;
-                } else {
-                    mCamera.setErrorCallback(mockErrorCb1);
-                }
-                notifyFromUI();
-            }
-        });
-        waitForUI();
-
-        if (skip[0]) {
-            Log.i(TAG, "Skipping testCamera1ActivityEviction, device has no cameras.");
-            return;
-        }
-
-        verifyZeroInteractions(mockErrorCb1);
-
-        startRemoteProcess(Camera1Activity.class, "camera1ActivityProcess");
-
-        // Make sure camera was setup correctly in remote activity
-        List<ErrorLoggingService.LogEvent> events = null;
-        try {
-            events = mErrorServiceConnection.getLog(SETUP_TIMEOUT,
-                    TestConstants.EVENT_CAMERA_CONNECT);
-        } finally {
-            if (events != null) assertOnly(TestConstants.EVENT_CAMERA_CONNECT, events);
-        }
-
-        Thread.sleep(WAIT_TIME);
-
-        // Ensure UI thread has a chance to process callbacks.
-        runTestOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                Log.i("CTS", "Did something on UI thread.");
-                notifyFromUI();
-            }
-        });
-        waitForUI();
-
-        // Make sure we received correct callback in error listener, and nothing else
-        verify(mockErrorCb1, only()).onError(eq(Camera.CAMERA_ERROR_EVICTED), isA(Camera.class));
-        mCamera = null;
-
-        // Try to open the camera again (even though other TOP process holds the camera).
-        final boolean[] pass = {false};
-        runTestOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                // Open camera
-                try {
-                    mCamera = Camera.open();
-                } catch (RuntimeException e) {
-                    pass[0] = true;
-                }
-                notifyFromUI();
-            }
-        });
-        waitForUI();
-
-        assertTrue("Did not receive exception when opening camera while camera is held by a" +
-                " higher priority client process.", pass[0]);
-
-        // Verify that attempting to open the camera didn't cause anything weird to happen in the
-        // other process.
-        List<ErrorLoggingService.LogEvent> eventList2 = null;
-        boolean timeoutExceptionHit = false;
-        try {
-            eventList2 = mErrorServiceConnection.getLog(EVICTION_TIMEOUT);
-        } catch (TimeoutException e) {
-            timeoutExceptionHit = true;
-        }
-
-        assertNone("Remote camera service received invalid events: ", eventList2);
-        assertTrue("Remote camera service exited early", timeoutExceptionHit);
-        android.os.Process.killProcess(mProcessPid);
-        mProcessPid = -1;
-        forceCtsActivityToTop();
+        testAPI1ActivityEviction(Camera1Activity.class, "camera1ActivityProcess");
     }
 
     /**
@@ -324,6 +238,114 @@ public class CameraEvictionTest extends ActivityInstrumentationTestCase2<CameraC
 
         assertTrue("Didn't receive exception when trying to open camera held by higher priority " +
                 "process.", openException);
+
+        // Verify that attempting to open the camera didn't cause anything weird to happen in the
+        // other process.
+        List<ErrorLoggingService.LogEvent> eventList2 = null;
+        boolean timeoutExceptionHit = false;
+        try {
+            eventList2 = mErrorServiceConnection.getLog(EVICTION_TIMEOUT);
+        } catch (TimeoutException e) {
+            timeoutExceptionHit = true;
+        }
+
+        assertNone("Remote camera service received invalid events: ", eventList2);
+        assertTrue("Remote camera service exited early", timeoutExceptionHit);
+        android.os.Process.killProcess(mProcessPid);
+        mProcessPid = -1;
+        forceCtsActivityToTop();
+    }
+
+
+    /**
+     * Test basic eviction scenarios for camera used in MediaRecoder
+     */
+    public void testMediaRecorderCameraActivityEviction() throws Throwable {
+        testAPI1ActivityEviction(MediaRecorderCameraActivity.class,
+                "mediaRecorderCameraActivityProcess");
+    }
+
+    /**
+     * Test basic eviction scenarios for Camera1 API.
+     *
+     * This test will open camera, create a higher priority process to run the specified activity,
+     * open camera again, and verify the right clients are evicted.
+     *
+     * @param activityKlass An activity to run in a higher priority process.
+     * @param processName The process name.
+     */
+    private void testAPI1ActivityEviction (java.lang.Class<?> activityKlass, String processName)
+            throws Throwable {
+        // Open a camera1 client in the main CTS process's activity
+        final Camera.ErrorCallback mockErrorCb1 = mock(Camera.ErrorCallback.class);
+        final boolean[] skip = {false};
+        runTestOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                // Open camera
+                mCamera = Camera.open();
+                if (mCamera == null) {
+                    skip[0] = true;
+                } else {
+                    mCamera.setErrorCallback(mockErrorCb1);
+                }
+                notifyFromUI();
+            }
+        });
+        waitForUI();
+
+        if (skip[0]) {
+            Log.i(TAG, "Skipping testCamera1ActivityEviction, device has no cameras.");
+            return;
+        }
+
+        verifyZeroInteractions(mockErrorCb1);
+
+        startRemoteProcess(activityKlass, processName);
+
+        // Make sure camera was setup correctly in remote activity
+        List<ErrorLoggingService.LogEvent> events = null;
+        try {
+            events = mErrorServiceConnection.getLog(SETUP_TIMEOUT,
+                    TestConstants.EVENT_CAMERA_CONNECT);
+        } finally {
+            if (events != null) assertOnly(TestConstants.EVENT_CAMERA_CONNECT, events);
+        }
+
+        Thread.sleep(WAIT_TIME);
+
+        // Ensure UI thread has a chance to process callbacks.
+        runTestOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                Log.i("CTS", "Did something on UI thread.");
+                notifyFromUI();
+            }
+        });
+        waitForUI();
+
+        // Make sure we received correct callback in error listener, and nothing else
+        verify(mockErrorCb1, only()).onError(eq(Camera.CAMERA_ERROR_EVICTED), isA(Camera.class));
+        mCamera = null;
+
+        // Try to open the camera again (even though other TOP process holds the camera).
+        final boolean[] pass = {false};
+        runTestOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                // Open camera
+                try {
+                    mCamera = Camera.open();
+                } catch (RuntimeException e) {
+                    pass[0] = true;
+                }
+                notifyFromUI();
+            }
+        });
+        waitForUI();
+
+        assertTrue("Did not receive exception when opening camera while camera is held by a" +
+                " higher priority client process.", pass[0]);
 
         // Verify that attempting to open the camera didn't cause anything weird to happen in the
         // other process.
