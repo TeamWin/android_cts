@@ -46,19 +46,22 @@ public class ReportLog implements Serializable {
     private static final String SOURCE_ATTR = "source";
     private static final String SUMMARY_TAG = "Summary";
     private static final String VALUE_TAG = "Value";
+    private static final String DEFAULT_NAME = "default";
 
-    private Metric mSummary;
-    private final List<Metric> mDetails = new ArrayList<>();
+    protected Metric mSummary;
+    protected String mReportLogName;
+    protected String mStreamName;
+    protected final List<Metric> mDetails = new ArrayList<>();
 
     public static class Metric implements Serializable {
         private static final int MAX_SOURCE_LENGTH = 200;
         private static final int MAX_MESSAGE_LENGTH = 200;
         private static final int MAX_NUM_VALUES = 1000;
-        private String mSource;
-        private String mMessage;
-        private double[] mValues;
-        private ResultType mType;
-        private ResultUnit mUnit;
+        String mSource;
+        String mMessage;
+        double[] mValues;
+        ResultType mType;
+        ResultUnit mUnit;
 
         Metric(String source, String message, double value, ResultType type, ResultUnit unit) {
             this(source, message, new double[] { value }, type, unit);
@@ -161,6 +164,15 @@ public class ReportLog implements Serializable {
         }
     }
 
+    public ReportLog() {
+        mReportLogName = DEFAULT_NAME;
+    }
+
+    public ReportLog(String reportLogName, String streamName) {
+        mReportLogName = reportLogName;
+        mStreamName = streamName;
+    }
+
     /**
      * @param elem
      */
@@ -225,9 +237,11 @@ public class ReportLog implements Serializable {
      * NOTE: messages over {@value Metric#MAX_MESSAGE_LENGTH} chars will be trimmed.
      */
     public void setSummary(String message, double value, ResultType type, ResultUnit unit) {
-        setSummary(new Metric(Stacktrace.getTestCallerClassMethodNameLineNumber(),
-                message, value, type, unit));
+        setSummary(new Metric(Stacktrace.getTestCallerClassMethodNameLineNumber(), message, value,
+                type, unit));
     }
+
+    // TODO(mishragaurav): Add support for values of other types.
 
     public Metric getSummary() {
         return mSummary;
@@ -328,5 +342,4 @@ public class ReportLog implements Serializable {
         }
         return report;
     }
-
 }
