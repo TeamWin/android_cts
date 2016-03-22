@@ -17,7 +17,6 @@
 package com.android.cts.appaccessdata;
 
 import java.io.BufferedReader;
-import java.io.DataInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -26,6 +25,7 @@ import java.io.IOException;
 
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
+import android.content.pm.PackageManager.NameNotFoundException;
 import android.test.AndroidTestCase;
 
 /**
@@ -85,32 +85,27 @@ public class AccessPrivateDataTest extends AndroidTestCase {
      */
     public void testAccessPublicData() throws IOException {
         try {
-            getOtherAppUid();
-        } catch (FileNotFoundException e) {
-            fail("Was not able to access another app's public file: " + e);
-        } catch (SecurityException e) {
-            fail("Was not able to access another app's public file: " + e);
+            // construct the absolute file path to the other app's public file
+            ApplicationInfo applicationInfo = getApplicationInfo(APP_WITH_DATA_PKG);
+            File publicFile = new File(applicationInfo.dataDir, "files/" + PUBLIC_FILE_NAME);
+            FileInputStream inputStream = new FileInputStream(publicFile);
+            inputStream.read();
+            inputStream.close();
+            fail("Was able to access another app's public file");
+        } catch (FileNotFoundException | SecurityException e) {
+            // expected
         }
-    }
-
-    private int getOtherAppUid() throws IOException, FileNotFoundException, SecurityException {
-        // construct the absolute file path to the other app's public file
-        ApplicationInfo applicationInfo = getApplicationInfo(APP_WITH_DATA_PKG);
-        File publicFile = new File(applicationInfo.dataDir, "files/" + PUBLIC_FILE_NAME);
-        DataInputStream inputStream = new DataInputStream(new FileInputStream(publicFile));
-        int otherAppUid = inputStream.readInt();
-        inputStream.close();
-        return otherAppUid;
     }
 
     private void accessPrivateTrafficStats() throws IOException {
         int otherAppUid = -1;
         try {
-            otherAppUid = getOtherAppUid();
-        } catch (FileNotFoundException | SecurityException e) {
-            fail("Was not able to access another app's public file: " + e);
+            otherAppUid = getContext()
+                    .createPackageContext(APP_WITH_DATA_PKG, 0 /*flags*/)
+                    .getApplicationInfo().uid;
+        } catch (NameNotFoundException e) {
+            fail("Was not able to find other app");
         }
-
         boolean foundOtherStats = false;
         try {
             BufferedReader qtaguidReader = new BufferedReader(new FileReader("/proc/net/xt_qtaguid/stats"));
