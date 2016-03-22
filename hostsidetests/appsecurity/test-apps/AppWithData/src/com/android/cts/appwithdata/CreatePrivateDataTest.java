@@ -79,8 +79,7 @@ public class CreatePrivateDataTest extends AndroidTestCase {
         outputStream.close();
         assertTrue(getContext().getFileStreamPath(PRIVATE_FILE_NAME).exists());
 
-        outputStream = getContext().openFileOutput(PUBLIC_FILE_NAME,
-                Context.MODE_WORLD_READABLE);
+        outputStream = getContext().openFileOutput(PUBLIC_FILE_NAME, 0 /*mode*/);
         DataOutputStream dataOut = new DataOutputStream(outputStream);
         dataOut.writeInt(getContext().getApplicationInfo().uid);
         dataOut.close();
