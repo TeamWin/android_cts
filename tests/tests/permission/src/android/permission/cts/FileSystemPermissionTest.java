@@ -107,7 +107,7 @@ public class FileSystemPermissionTest extends AndroidTestCase {
                 .getInstalledApplications(PackageManager.GET_UNINSTALLED_PACKAGES);
         String myAppDirectory = getContext().getApplicationInfo().dataDir;
         for (ApplicationInfo app : apps) {
-            if (!myAppDirectory.equals(app.dataDir)) {
+            if (app.dataDir != null && !myAppDirectory.equals(app.dataDir)) {
                 writableDirs.addAll(getWritableDirectoriesAndSubdirectoriesOf(new File(app.dataDir)));
             }
         }
