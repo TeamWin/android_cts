@@ -255,7 +255,7 @@ public class AnimatedVectorDrawableTest extends ActivityInstrumentationTestCase2
     }
 
     @MediumTest
-    public void testAddCallback() throws InterruptedException {
+    public void testAddCallbackBeforeStart() throws InterruptedException {
         final MyCallback callback = new MyCallback();
         // The AVD has a duration as 100ms.
         mActivity.runOnUiThread(new Runnable() {
@@ -271,6 +271,50 @@ public class AnimatedVectorDrawableTest extends ActivityInstrumentationTestCase2
         getInstrumentation().waitForIdleSync();
         sleep(200);
         assertTrue(callback.mStart);
+        assertTrue(callback.mEnd);
+    }
+
+    @MediumTest
+    public void testAddCallbackAfterTrigger() throws InterruptedException {
+        final MyCallback callback = new MyCallback();
+        // The AVD has a duration as 100ms.
+        mActivity.runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                mActivity.setContentView(mLayoutId);
+                ImageView imageView = (ImageView) mActivity.findViewById(mImageViewId);
+                AnimatedVectorDrawable d1 = (AnimatedVectorDrawable) imageView.getDrawable();
+                // This reset call can enforce the AnimatorSet is setup properly in AVD, when
+                // running on UI thread.
+                d1.reset();
+                d1.registerAnimationCallback(callback);
+                d1.start();
+            }
+        });
+        getInstrumentation().waitForIdleSync();
+        sleep(200);
+        assertTrue(callback.mStart);
+        assertTrue(callback.mEnd);
+    }
+
+    @MediumTest
+    public void testAddCallbackAfterStart() throws InterruptedException {
+        final MyCallback callback = new MyCallback();
+        // The AVD has a duration as 100ms.
+        mActivity.runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                mActivity.setContentView(mLayoutId);
+                ImageView imageView = (ImageView) mActivity.findViewById(mImageViewId);
+                AnimatedVectorDrawable d1 = (AnimatedVectorDrawable) imageView.getDrawable();
+                d1.start();
+                d1.registerAnimationCallback(callback);
+            }
+        });
+        getInstrumentation().waitForIdleSync();
+        sleep(200);
+        // Whether or not the callback.start is true could vary when running on Render Thread.
+        // Therefore, we don't make assertion here. The most useful flag is the callback.mEnd.
         assertTrue(callback.mEnd);
     }
 
