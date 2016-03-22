@@ -81,11 +81,11 @@ public class ChangeImageTransformTest extends BaseTransitionTest {
     private Matrix centerMatrix() {
         int imageWidth = mImage.getIntrinsicWidth();
         int imageViewWidth = mImageView.getWidth();
-        float tx = (imageViewWidth - imageWidth)/2f;
+        float tx = Math.round((imageViewWidth - imageWidth)/2f);
 
         int imageHeight = mImage.getIntrinsicHeight();
         int imageViewHeight = mImageView.getHeight();
-        float ty = (imageViewHeight - imageHeight)/2f;
+        float ty = Math.round((imageViewHeight - imageHeight)/2f);
 
         Matrix matrix = new Matrix();
         matrix.postTranslate(tx, ty);
@@ -119,8 +119,8 @@ public class ChangeImageTransformTest extends BaseTransitionTest {
 
         float width = imageWidth * maxScale;
         float height = imageHeight * maxScale;
-        float tx = (imageViewWidth - width) / 2f;
-        float ty = (imageViewHeight - height) / 2f;
+        float tx = Math.round((imageViewWidth - width) / 2f);
+        float ty = Math.round((imageViewHeight - height) / 2f);
 
         Matrix matrix = new Matrix();
         matrix.postScale(maxScale, maxScale);
