@@ -100,6 +100,32 @@ public class TestUtils {
     }
 
     /**
+     * Checks whether all the pixels in the specified View are of the same specified color.
+     *
+     * In case there is a color mismatch, the behavior of this method depends on the
+     * <code>throwExceptionIfFails</code> parameter. If it is <code>true</code>, this method will
+     * throw an <code>Exception</code> describing the mismatch. Otherwise this method will call
+     * <code>Assert.fail</code> with detailed description of the mismatch.
+     */
+    public static void assertAllPixelsOfColor(String failMessagePrefix, @NonNull View view,
+            @ColorInt int color, int allowedComponentVariance, boolean throwExceptionIfFails) {
+        // Create a bitmap
+        Bitmap bitmap = Bitmap.createBitmap(view.getWidth(), view.getHeight(),
+                Bitmap.Config.ARGB_8888);
+        // Create a canvas that wraps the bitmap
+        Canvas canvas = new Canvas(bitmap);
+        // And ask the view to draw itself to the canvas / bitmap
+        view.draw(canvas);
+
+        try {
+            assertAllPixelsOfColor(failMessagePrefix, bitmap, view.getWidth(), view.getHeight(),
+                    color, allowedComponentVariance, throwExceptionIfFails);
+        } finally {
+            bitmap.recycle();
+        }
+    }
+
+    /**
      * Checks whether all the pixels in the specified drawable are of the same specified color.
      *
      * In case there is a color mismatch, the behavior of this method depends on the
