@@ -3,7 +3,6 @@ android.icu.dev.test.bidi.BiDiConformanceTest#TestBidiTest
 android.icu.dev.test.bidi.TestBidi#testBidi
 android.icu.dev.test.bidi.TestCharFromDirProp#testCharFromDirProp
 android.icu.dev.test.bidi.TestClassOverride#testClassOverride
-android.icu.dev.test.bidi.TestCompatibility#testCompatibility
 android.icu.dev.test.bidi.TestContext#testContext
 android.icu.dev.test.bidi.TestFailureRecovery#testFailureRecovery
 android.icu.dev.test.bidi.TestInverse#testInverse
@@ -267,7 +266,6 @@ android.icu.dev.test.collator.CollationAPITest#TestSetStrength
 android.icu.dev.test.collator.CollationAPITest#TestSubClass
 android.icu.dev.test.collator.CollationAPITest#TestVariableTopSetting
 android.icu.dev.test.collator.CollationChineseTest#TestPinYin
-android.icu.dev.test.collator.CollationCreationMethodTest#TestRuleVsLocaleCreationMonkey
 android.icu.dev.test.collator.CollationCurrencyTest#TestCurrency
 android.icu.dev.test.collator.CollationDummyTest#TestExtra
 android.icu.dev.test.collator.CollationDummyTest#TestIdentical
@@ -341,8 +339,6 @@ android.icu.dev.test.collator.CollationMiscTest#TestHaniReorderWithOtherRules
 android.icu.dev.test.collator.CollationMiscTest#TestHungarianTailoring
 android.icu.dev.test.collator.CollationMiscTest#TestIdenticalCompare
 android.icu.dev.test.collator.CollationMiscTest#TestImplicitTailoring
-android.icu.dev.test.collator.CollationMiscTest#TestImport
-android.icu.dev.test.collator.CollationMiscTest#TestImportWithType
 android.icu.dev.test.collator.CollationMiscTest#TestIncompleteCnt
 android.icu.dev.test.collator.CollationMiscTest#TestIncrementalNormalize
 android.icu.dev.test.collator.CollationMiscTest#TestInvalidListsAndRanges
@@ -384,7 +380,6 @@ android.icu.dev.test.collator.CollationMiscTest#TestSuppressContractions
 android.icu.dev.test.collator.CollationMiscTest#TestSurrogates
 android.icu.dev.test.collator.CollationMiscTest#TestTibetanConformance
 android.icu.dev.test.collator.CollationMiscTest#TestUCAPrecontext
-android.icu.dev.test.collator.CollationMiscTest#TestUCARules
 android.icu.dev.test.collator.CollationMiscTest#TestUnknownCollationKeyword
 android.icu.dev.test.collator.CollationMiscTest#TestUpperFirstQuaternary
 android.icu.dev.test.collator.CollationMiscTest#TestVariableTop
@@ -442,7 +437,6 @@ android.icu.dev.test.collator.CollationServiceTest#TestSeparateTrees
 android.icu.dev.test.collator.CollationSpanishTest#TestPrimary
 android.icu.dev.test.collator.CollationSpanishTest#TestTertiary
 android.icu.dev.test.collator.CollationTest#TestCollationWeights
-android.icu.dev.test.collator.CollationTest#TestDataDriven
 android.icu.dev.test.collator.CollationTest#TestFCD
 android.icu.dev.test.collator.CollationTest#TestImplicits
 android.icu.dev.test.collator.CollationTest#TestMinMax
@@ -462,7 +456,6 @@ android.icu.dev.test.collator.G7CollationTest#TestDemo1
 android.icu.dev.test.collator.G7CollationTest#TestDemo2
 android.icu.dev.test.collator.G7CollationTest#TestDemo3
 android.icu.dev.test.collator.G7CollationTest#TestDemo4
-android.icu.dev.test.collator.G7CollationTest#TestG7Data
 android.icu.dev.test.collator.LotusCollationKoreanTest#TestTertiary
 android.icu.dev.test.collator.UCAConformanceTest#TestRulesNonIgnorable
 android.icu.dev.test.collator.UCAConformanceTest#TestRulesShifted
@@ -965,7 +958,6 @@ android.icu.dev.test.format.NumberFormatTest#TestCurrencyUsage
 android.icu.dev.test.format.NumberFormatTest#TestCurrFmtNegSameAsPositive
 android.icu.dev.test.format.NumberFormatTest#TestCustomCurrencySignAndSeparator
 android.icu.dev.test.format.NumberFormatTest#TestDataDrivenICU
-android.icu.dev.test.format.NumberFormatTest#TestDataDrivenJDK
 android.icu.dev.test.format.NumberFormatTest#TestDecimalFormatCurrencyParse
 android.icu.dev.test.format.NumberFormatTest#TestExplicitParents
 android.icu.dev.test.format.NumberFormatTest#TestExponent
@@ -989,7 +981,6 @@ android.icu.dev.test.format.NumberFormatTest#TestLenientSymbolParsing
 android.icu.dev.test.format.NumberFormatTest#TestMiscCurrencyParsing
 android.icu.dev.test.format.NumberFormatTest#TestMultiCurrencySign
 android.icu.dev.test.format.NumberFormatTest#TestNegZeroRounding
-android.icu.dev.test.format.NumberFormatTest#TestNonpositiveMultiplier
 android.icu.dev.test.format.NumberFormatTest#TestNumberFormatFactory
 android.icu.dev.test.format.NumberFormatTest#TestNumberFormatTestTupleToString
 android.icu.dev.test.format.NumberFormatTest#TestNumberingSystems
@@ -1140,7 +1131,6 @@ android.icu.dev.test.format.PluralRulesTest#TestLimitedAndSamplesConsistency
 android.icu.dev.test.format.PluralRulesTest#TestLocales
 android.icu.dev.test.format.PluralRulesTest#testOperands
 android.icu.dev.test.format.PluralRulesTest#TestOrdinal
-android.icu.dev.test.format.PluralRulesTest#testOverUnderflow
 android.icu.dev.test.format.PluralRulesTest#TestParseDescription
 android.icu.dev.test.format.PluralRulesTest#testParseEmpty
 android.icu.dev.test.format.PluralRulesTest#testParsing
