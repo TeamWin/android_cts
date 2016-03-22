@@ -30,3 +30,13 @@ float4 __attribute__((kernel)) testCrossFloat4Float4Float4(float4 inLeftVector, 
     float4 inRightVector = rsGetElementAt_float4(gAllocInRightVector, x);
     return cross(inLeftVector, inRightVector);
 }
+
+half3 __attribute__((kernel)) testCrossHalf3Half3Half3(half3 inLeftVector, unsigned int x) {
+    half3 inRightVector = rsGetElementAt_half3(gAllocInRightVector, x);
+    return cross(inLeftVector, inRightVector);
+}
+
+half4 __attribute__((kernel)) testCrossHalf4Half4Half4(half4 inLeftVector, unsigned int x) {
+    half4 inRightVector = rsGetElementAt_half4(gAllocInRightVector, x);
+    return cross(inLeftVector, inRightVector);
+}
