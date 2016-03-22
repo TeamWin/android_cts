@@ -503,28 +503,16 @@ public class NinePatchDrawableTest extends InstrumentationTestCase {
 
     private void testPreloadDensityInner(Resources res, int sourceResId, int[] densities,
             int[] goldenResIds) throws XmlPullParserException, IOException {
-        final Rect tempOutlineRect = new Rect();
-        final Rect tempPadding = new Rect();
-        final Outline tempOutline = new Outline();
-
         // Capture initial state at preload density.
         final int preloadDensityDpi = densities[0];
-        DrawableTestUtils.setResourcesDensity(res, preloadDensityDpi);
-
-        final XmlResourceParser parser = DrawableTestUtils.getResourceParser(res, sourceResId);
-        final NinePatchDrawable preloadedDrawable = new NinePatchDrawable(null);
-        preloadedDrawable.inflate(res, parser, Xml.asAttributeSet(parser));
+        final NinePatchDrawable preloadedDrawable = preloadedDrawable(res,
+                densities[0], sourceResId);
 
         final ConstantState preloadedConstantState = preloadedDrawable.getConstantState();
         final int origWidth = preloadedDrawable.getIntrinsicWidth();
         final int origHeight = preloadedDrawable.getIntrinsicHeight();
         final Rect origPadding = new Rect();
         preloadedDrawable.getPadding(origPadding);
-        final Outline origOutline = new Outline();
-        preloadedDrawable.getOutline(origOutline);
-        final Rect origOutlineRect = new Rect();
-        origOutline.getRect(origOutlineRect);
-        final float origOutlineRadius = origOutline.getRadius();
 
         compareOrSave(preloadedDrawable, preloadDensityDpi, sourceResId, goldenResIds[0]);
 
@@ -536,23 +524,11 @@ public class NinePatchDrawableTest extends InstrumentationTestCase {
             final NinePatchDrawable scaledDrawable =
                     (NinePatchDrawable) preloadedConstantState.newDrawable(res);
 
-            // Sizes are rounded.
             assertEquals(Math.round(origWidth * scale), scaledDrawable.getIntrinsicWidth());
             assertEquals(Math.round(origHeight * scale), scaledDrawable.getIntrinsicHeight());
 
-            // Outlines are truncated, but radius is precise.
-            // TODO: Uncomment this once outlines are working.
-            /*
-            scaledDrawable.getOutline(tempOutline);
-            assertTrue(tempOutline.getRect(tempOutlineRect));
-            assertEquals((int) (origOutlineRect.left * scale), tempOutlineRect.left);
-            assertEquals((int) (origOutlineRect.top * scale), tempOutlineRect.top);
-            assertEquals((int) (origOutlineRect.right * scale), tempOutlineRect.right);
-            assertEquals((int) (origOutlineRect.bottom * scale), tempOutlineRect.bottom);
-            assertEquals(origOutlineRadius * scale, tempOutline.getRadius());
-            */
-
             // Padding is truncated.
+            final Rect tempPadding = new Rect();
             assertTrue(scaledDrawable.getPadding(tempPadding));
             assertEquals((int) (origPadding.left * scale), tempPadding.left);
             assertEquals((int) (origPadding.top * scale), tempPadding.top);
@@ -572,6 +548,67 @@ public class NinePatchDrawableTest extends InstrumentationTestCase {
             assertEquals(origHeight, scaledDrawable.getIntrinsicHeight());
             assertTrue(scaledDrawable.getPadding(tempPadding));
             assertEquals(origPadding, tempPadding);
+        }
+    }
+
+    private static NinePatchDrawable preloadedDrawable(Resources res, int densityDpi, int sourceResId)
+            throws XmlPullParserException, IOException {
+        DrawableTestUtils.setResourcesDensity(res, densityDpi);
+        final XmlResourceParser parser = DrawableTestUtils.getResourceParser(res, sourceResId);
+        final NinePatchDrawable preloadedDrawable = new NinePatchDrawable(null);
+        preloadedDrawable.inflate(res, parser, Xml.asAttributeSet(parser));
+        return preloadedDrawable;
+    }
+
+    public void testOutlinePreloadDensity() throws XmlPullParserException, IOException {
+        final Resources res = mResources;
+        final int densityDpi = res.getConfiguration().densityDpi;
+        try {
+            testOutlinePreloadDensityInner(res);
+        } finally {
+            DrawableTestUtils.setResourcesDensity(res, densityDpi);
+        }
+    }
+
+    private static void testOutlinePreloadDensityInner(Resources res)
+            throws XmlPullParserException, IOException {
+        // Capture initial state at preload density.
+        final int preloadDensityDpi = DENSITY_VALUES[0];
+        final NinePatchDrawable preloadedDrawable = preloadedDrawable(res, preloadDensityDpi,
+                R.drawable.nine_patch_odd_insets);
+
+        final ConstantState preloadedConstantState = preloadedDrawable.getConstantState();
+        final int bound = 40;
+        final int expectedInset = 5;
+        preloadedDrawable.setBounds(0, 0, bound, bound);
+        final Outline origOutline = new Outline();
+        preloadedDrawable.getOutline(origOutline);
+        final Rect origOutlineRect = new Rect();
+        origOutline.getRect(origOutlineRect);
+        assertEquals(new Rect(expectedInset, expectedInset, bound - expectedInset,
+                bound - expectedInset), origOutlineRect);
+        final float origOutlineRadius = origOutline.getRadius();
+        float expectedRadius = 6.8f;
+        assertEquals(expectedRadius, origOutlineRadius, 0.1f);
+        for (int i = 1; i < DENSITY_VALUES.length; i++) {
+            final int scaledDensityDpi = DENSITY_VALUES[i];
+            final float scale = scaledDensityDpi / (float) preloadDensityDpi;
+            DrawableTestUtils.setResourcesDensity(res, scaledDensityDpi);
+            final NinePatchDrawable scaledDrawable =
+                    (NinePatchDrawable) preloadedConstantState.newDrawable(res);
+
+            int scaledBound = (int) (bound * scale);
+            scaledDrawable.setBounds(0, 0, scaledBound, scaledBound);
+
+            final Outline tempOutline = new Outline();
+            scaledDrawable.getOutline(tempOutline);
+            final Rect tempOutlineRect = new Rect();
+            assertTrue(tempOutline.getRect(tempOutlineRect));
+            assertEquals((int) Math.ceil(origOutlineRect.left * scale), tempOutlineRect.left);
+            assertEquals((int) Math.ceil(origOutlineRect.top * scale), tempOutlineRect.top);
+            assertEquals((int) Math.floor(origOutlineRect.right * scale), tempOutlineRect.right);
+            assertEquals((int) Math.floor(origOutlineRect.bottom * scale), tempOutlineRect.bottom);
+            assertEquals(origOutlineRadius * scale, tempOutline.getRadius(), 0.1f);
         }
     }
 
