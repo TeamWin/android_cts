@@ -221,6 +221,24 @@ public class FrameLayoutTest extends ActivityInstrumentationTestCase2<FrameLayou
         assertTrue(myFrameLayout.checkLayoutParams(params2));
     }
 
+    public void testGenerateLayoutParamsFromMarginParams() {
+        MyFrameLayout myFrameLayout = new MyFrameLayout(mActivity);
+        ViewGroup.MarginLayoutParams lp = new ViewGroup.MarginLayoutParams(3, 5);
+        lp.leftMargin = 1;
+        lp.topMargin = 2;
+        lp.rightMargin = 3;
+        lp.bottomMargin = 4;
+        LayoutParams generated = (LayoutParams) myFrameLayout.generateLayoutParams(lp);
+        assertNotNull(generated);
+        assertEquals(3, generated.width);
+        assertEquals(5, generated.height);
+
+        assertEquals(1, generated.leftMargin);
+        assertEquals(2, generated.topMargin);
+        assertEquals(3, generated.rightMargin);
+        assertEquals(4, generated.bottomMargin);
+    }
+
     public void testDrawableStateChanged() {
         // drawableStateChanged() is implementation details, do NOT test
     }
