@@ -212,4 +212,7 @@
 
     <!-- b/23238984 -->
     <option name="compatibility:exclude-filter" value="CtsVoiceSettingsTestCases android.voicesettings.cts.ZenModeTest#testAll" />
+
+    <!-- b/26235244 -->
+    <option name="compatibility:exclude-filter" value="android.util.cts.EventLogTest#testWriteEventWithOversizeValue" />
 </configuration>
