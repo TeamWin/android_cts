@@ -591,6 +591,20 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
         }
     }
 
+    public void testIsProvisioningAllowed() throws DeviceNotAvailableException {
+        if (!mHasFeature) {
+            return;
+        }
+        // In Managed profile user when managed profile is provisioned
+        assertTrue(runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".PreManagedProfileTest",
+                "testIsProvisioningAllowedFalse", mProfileUserId));
+
+        // In parent user when managed profile is provisioned
+        // It's allowed to provision again by removing the previous profile
+        assertTrue(runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".PreManagedProfileTest",
+                "testIsProvisioningAllowedTrue", mParentUserId));
+    }
+
     private void setDirectoryPrefix(String directoryName, int userId)
             throws DeviceNotAvailableException {
         String command = "content call --uri " + DIRECTORY_PRIVOIDER_URI

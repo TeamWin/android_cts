@@ -365,6 +365,18 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
         executeDeviceTestMethod(".HardwarePropertiesManagerTest", "testHardwarePropertiesManager");
     }
 
+    public void testIsManagedDeviceProvisioningAllowed() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
+        // This case runs when DO is provisioned
+        // mHasFeature == true and provisioned, can't provision DO again.
+        executeDeviceTestMethod(".PreDeviceOwnerTest", "testIsProvisioningAllowedFalse");
+        // Can't provision Managed Profile when DO is on
+        executeDeviceTestMethod(".PreDeviceOwnerTest",
+                "testIsProvisioningAllowedFalseForManagedProfileAction");
+    }
+
     private void executeDeviceOwnerTest(String testClassName) throws Exception {
         if (!mHasFeature) {
             return;
