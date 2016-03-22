@@ -35,3 +35,19 @@ float3 __attribute__((kernel)) testCeilFloat3Float3(float3 inV) {
 float4 __attribute__((kernel)) testCeilFloat4Float4(float4 inV) {
     return ceil(inV);
 }
+
+half __attribute__((kernel)) testCeilHalfHalf(half inV) {
+    return ceil(inV);
+}
+
+half2 __attribute__((kernel)) testCeilHalf2Half2(half2 inV) {
+    return ceil(inV);
+}
+
+half3 __attribute__((kernel)) testCeilHalf3Half3(half3 inV) {
+    return ceil(inV);
+}
+
+half4 __attribute__((kernel)) testCeilHalf4Half4(half4 inV) {
+    return ceil(inV);
+}

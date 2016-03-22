@@ -35,3 +35,19 @@ float3 __attribute__((kernel)) testTanpiFloat3Float3(float3 inV) {
 float4 __attribute__((kernel)) testTanpiFloat4Float4(float4 inV) {
     return tanpi(inV);
 }
+
+half __attribute__((kernel)) testTanpiHalfHalf(half inV) {
+    return tanpi(inV);
+}
+
+half2 __attribute__((kernel)) testTanpiHalf2Half2(half2 inV) {
+    return tanpi(inV);
+}
+
+half3 __attribute__((kernel)) testTanpiHalf3Half3(half3 inV) {
+    return tanpi(inV);
+}
+
+half4 __attribute__((kernel)) testTanpiHalf4Half4(half4 inV) {
+    return tanpi(inV);
+}

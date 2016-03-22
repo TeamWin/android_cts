@@ -20,34 +20,6 @@
 #pragma rs java_package_name(android.renderscript.cts)
 
 
-float __attribute__((kernel)) testCoshFloatFloat(float inV) {
-    return cosh(inV);
-}
-
-float2 __attribute__((kernel)) testCoshFloat2Float2(float2 inV) {
-    return cosh(inV);
-}
-
-float3 __attribute__((kernel)) testCoshFloat3Float3(float3 inV) {
-    return cosh(inV);
-}
-
-float4 __attribute__((kernel)) testCoshFloat4Float4(float4 inV) {
-    return cosh(inV);
-}
-
-half __attribute__((kernel)) testCoshHalfHalf(half inV) {
-    return cosh(inV);
-}
-
-half2 __attribute__((kernel)) testCoshHalf2Half2(half2 inV) {
-    return cosh(inV);
-}
-
-half3 __attribute__((kernel)) testCoshHalf3Half3(half3 inV) {
-    return cosh(inV);
-}
-
-half4 __attribute__((kernel)) testCoshHalf4Half4(half4 inV) {
-    return cosh(inV);
+half __attribute__((kernel)) testNanHalfHalf() {
+    return nan_half();
 }

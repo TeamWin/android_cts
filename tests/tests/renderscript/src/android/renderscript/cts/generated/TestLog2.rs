@@ -35,3 +35,19 @@ float3 __attribute__((kernel)) testLog2Float3Float3(float3 inV) {
 float4 __attribute__((kernel)) testLog2Float4Float4(float4 inV) {
     return log2(inV);
 }
+
+half __attribute__((kernel)) testLog2HalfHalf(half inV) {
+    return log2(inV);
+}
+
+half2 __attribute__((kernel)) testLog2Half2Half2(half2 inV) {
+    return log2(inV);
+}
+
+half3 __attribute__((kernel)) testLog2Half3Half3(half3 inV) {
+    return log2(inV);
+}
+
+half4 __attribute__((kernel)) testLog2Half4Half4(half4 inV) {
+    return log2(inV);
+}
