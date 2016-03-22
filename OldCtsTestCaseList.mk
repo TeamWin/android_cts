@@ -259,7 +259,6 @@ cts_host_libraries := \
     CtsCppToolsTestCases \
     CtsDevicePolicyManagerTestCases \
     CtsDumpsysHostTestCases \
-    CtsJankHostTestCases \
     CtsHostsideNetworkTests \
     CtsJdwpSecurityHostTestCases \
     CtsMonkeyTestCases \
@@ -288,7 +287,6 @@ cts_ui_tests := \
     CtsUiAutomatorTestCases
 
 cts_device_jars := \
-    CtsJankTestJar \
     CtsJdwpApp
 
 cts_target_junit_tests := \
