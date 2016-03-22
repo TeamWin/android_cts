@@ -624,7 +624,6 @@ public class FileSystemPermissionTest extends AndroidTestCase {
                     "/mnt_ext/badablk3",
                     "/mnt_ext/cache",
                     "/mnt_ext/data",
-                    "/system/etc/dhcpcd/dhcpcd-run-hooks",
                     "/system/etc/security/drm",
                     "/synthesis/hades",
                     "/synthesis/chimaira",
