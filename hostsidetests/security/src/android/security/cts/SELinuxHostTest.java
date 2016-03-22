@@ -602,11 +602,6 @@ public class SELinuxHostTest extends DeviceTestCase {
         assertDomainZeroOrOne("u:r:drmserver:s0", "/system/bin/drmserver");
     }
 
-    /* Media server is always running */
-    public void testMediaserverDomain() throws DeviceNotAvailableException {
-        assertDomainN("u:r:mediaserver:s0", "media.log", "/system/bin/mediaserver");
-    }
-
     /* Installd is always running */
     public void testInstalldDomain() throws DeviceNotAvailableException {
         assertDomainOne("u:r:installd:s0", "/system/bin/installd");
