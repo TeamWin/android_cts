@@ -42,6 +42,8 @@ public class GenerateImagesActivity extends Activity {
     private static final String OUT_DIR = "cts-theme-assets";
     private static final int REQUEST_CODE = 1;
 
+    public static final String EXTRA_REASON = "reason";
+
     private final CountDownLatch mLatch = new CountDownLatch(1);
 
     private File mOutputDir;
@@ -172,7 +174,8 @@ public class GenerateImagesActivity extends Activity {
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         if (resultCode != RESULT_OK) {
-            Log.i(TAG, "FAIL:Failed to generate images for theme " + mCurrentTheme);
+            Log.i(TAG, "FAIL:Failed to generate images for theme " + mCurrentTheme + " ("
+                    + data.getStringExtra(EXTRA_REASON) + ")");
             finish();
             return;
         }
