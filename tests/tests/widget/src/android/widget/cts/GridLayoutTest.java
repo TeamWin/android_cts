@@ -162,6 +162,24 @@ public class GridLayoutTest extends ActivityInstrumentationTestCase<GridLayoutCt
         assertEquals(ViewGroup.LayoutParams.WRAP_CONTENT, lp.height);
     }
 
+    public void testGenerateLayoutParamsFromMarginParams() {
+        MyGridLayout gridLayout = new MyGridLayout(mContext);
+        ViewGroup.MarginLayoutParams lp = new ViewGroup.MarginLayoutParams(3, 5);
+        lp.leftMargin = 1;
+        lp.topMargin = 2;
+        lp.rightMargin = 3;
+        lp.bottomMargin = 4;
+        GridLayout.LayoutParams generated = gridLayout.generateLayoutParams(lp);
+        assertNotNull(generated);
+        assertEquals(3, generated.width);
+        assertEquals(5, generated.height);
+
+        assertEquals(1, generated.leftMargin);
+        assertEquals(2, generated.topMargin);
+        assertEquals(3, generated.rightMargin);
+        assertEquals(4, generated.bottomMargin);
+    }
+
     private View[][] populate(GridLayout container) {
         Context context = container.getContext();
         int N = VERTICAL_ALIGNMENTS.length;
@@ -259,5 +277,30 @@ public class GridLayoutTest extends ActivityInstrumentationTestCase<GridLayoutCt
         test(p, table);
         //p.setLayoutMode(ViewGroup.LAYOUT_MODE_OPTICAL_BOUNDS);
         //test(p, table);
+    }
+
+    private static class MyGridLayout extends GridLayout {
+
+        public MyGridLayout(Context context) {
+            super(context);
+        }
+
+        public MyGridLayout(Context context, AttributeSet attrs) {
+            super(context, attrs);
+        }
+
+        public MyGridLayout(Context context, AttributeSet attrs, int defStyleAttr) {
+            super(context, attrs, defStyleAttr);
+        }
+
+        public MyGridLayout(Context context, AttributeSet attrs, int defStyleAttr,
+                int defStyleRes) {
+            super(context, attrs, defStyleAttr, defStyleRes);
+        }
+
+        @Override
+        protected LayoutParams generateLayoutParams(ViewGroup.LayoutParams p) {
+            return super.generateLayoutParams(p);
+        }
     }
 }
