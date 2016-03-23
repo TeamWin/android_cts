@@ -20,7 +20,7 @@ LOCAL_SRC_FILES := $(call all-java-files-under, src)
 
 LOCAL_STATIC_JAVA_LIBRARIES := compatibility-common-util-hostsidelib jsonlib
 
-LOCAL_JAVA_LIBRARIES := json-prebuilt
+LOCAL_JAVA_LIBRARIES := json-prebuilt tradefed-prebuilt
 
 LOCAL_MODULE := compatibility-host-util
 
