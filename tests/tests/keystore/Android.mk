@@ -18,7 +18,7 @@ include $(CLEAR_VARS)
 
 LOCAL_MODULE_TAGS := tests
 
-LOCAL_STATIC_JAVA_LIBRARIES := ctstestrunner core-tests-support
+LOCAL_STATIC_JAVA_LIBRARIES := ctstestrunner core-tests-support ctsdeviceutil
 
 LOCAL_SRC_FILES := $(call all-java-files-under, src)
 
