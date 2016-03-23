@@ -27,6 +27,7 @@ import static android.os.Environment.DIRECTORY_PICTURES;
 import static android.os.Environment.DIRECTORY_PODCASTS;
 import static android.os.Environment.DIRECTORY_RINGTONES;
 import static android.test.MoreAsserts.assertContainsRegex;
+import static android.test.MoreAsserts.assertNotContainsRegex;
 import static android.test.MoreAsserts.assertNotEqual;
 import android.content.ContentResolver;
 import android.content.Context;
@@ -48,6 +49,8 @@ import android.util.Log;
  */
 public class ScopedDirectoryAccessClientTest extends DocumentsClientTestCase {
     private static final String TAG = "ScopedDirectoryAccessClientTest";
+
+    private static final String DIRECTORY_ROOT = null;
 
     private static final String[] STANDARD_DIRECTORIES = {
         DIRECTORY_MUSIC,
@@ -88,14 +91,14 @@ public class ScopedDirectoryAccessClientTest extends DocumentsClientTestCase {
         final StorageVolume primaryVolume = getPrimaryVolume();
 
         // Tests user clicking DENY button, for all valid directories.
-        for (String directory : STANDARD_DIRECTORIES) {
-            final UiAlertDialog dialog = openExternalDirectoryValidPath(primaryVolume, directory);
+        for (String dir : STANDARD_DIRECTORIES) {
+            final UiAlertDialog dialog = openExternalDirectoryValidPath(primaryVolume, dir);
             dialog.noButton.click();
             assertActivityFailed();
         }
 
         // Also test user clicking back button - one directory is enough.
-        openExternalDirectoryValidPath(primaryVolume, DIRECTORY_PICTURES);
+        openExternalDirectoryValidPath(primaryVolume, DIRECTORY_ROOT);
         mDevice.pressBack();
         assertActivityFailed();
     }
@@ -105,6 +108,7 @@ public class ScopedDirectoryAccessClientTest extends DocumentsClientTestCase {
 
         for (StorageVolume volume : getVolumes()) {
             userAcceptsOpenExternalDirectoryTest(volume, DIRECTORY_PICTURES);
+            userAcceptsOpenExternalDirectoryTest(volume, DIRECTORY_ROOT);
         }
     }
 
@@ -123,66 +127,102 @@ public class ScopedDirectoryAccessClientTest extends DocumentsClientTestCase {
     public void testNotAskedAgain() throws Exception {
         if (!supportedHardware()) return;
 
-        final StorageVolume volume = getPrimaryVolume();
-        final Uri grantedUri = userAcceptsOpenExternalDirectoryTest(volume, DIRECTORY_PICTURES);
+        for (StorageVolume volume : getVolumes()) {
+            final String volumeDesc = volume.getDescription(getInstrumentation().getContext());
+            final Uri grantedUri = userAcceptsOpenExternalDirectoryTest(volume, DIRECTORY_PICTURES);
 
-        // Calls it again - since the permission has been granted, it should return right away,
-        // without popping up the permissions dialog.
-        sendOpenExternalDirectoryIntent(volume, DIRECTORY_PICTURES);
-        final Intent newData = assertActivitySucceeded();
-        assertEquals(grantedUri, newData.getData());
+            // Calls it again - since the permission has been granted, it should return right
+            // away, without popping up the permissions dialog.
+            sendOpenExternalDirectoryIntent(volume, DIRECTORY_PICTURES);
+            final Intent newData = assertActivitySucceeded("should have already granted "
+                    + "permission to " + volumeDesc + " and " + DIRECTORY_PICTURES);
+            assertEquals(grantedUri, newData.getData());
 
-        // Make sure other directories still require user permission.
-        final Uri grantedUri2 = userAcceptsOpenExternalDirectoryTest(volume, DIRECTORY_ALARMS);
-        assertNotEqual(grantedUri, grantedUri2);
+            // Make sure other directories still require user permission.
+            final Uri grantedUri2 = userAcceptsOpenExternalDirectoryTest(volume, DIRECTORY_ALARMS);
+            assertNotEqual(grantedUri, grantedUri2);
+        }
+    }
+
+    public void testNotAskedAgainOnRoot() throws Exception {
+        if (!supportedHardware()) return;
+
+         for (StorageVolume volume : getVolumes()) {
+            final String volumeDesc = volume.getDescription(getInstrumentation().getContext());
+            final Uri grantedRootUri = userAcceptsOpenExternalDirectoryTest(volume, DIRECTORY_ROOT);
+
+            // Calls it again - since the permission has been granted, it should return right
+            // away, without popping up the permissions dialog.
+            sendOpenExternalDirectoryIntent(volume, DIRECTORY_ROOT);
+            final Intent rootData = assertActivitySucceeded("should have already granted "
+                    + "permission to " + volumeDesc + " and root dir");
+            assertEquals(grantedRootUri, rootData.getData());
+
+            // Make sure other directories don't permission neither.
+            for (String dir : STANDARD_DIRECTORIES) {
+                sendOpenExternalDirectoryIntent(volume, dir);
+                final Intent childData = assertActivitySucceeded("should have already granted "
+                        + "permission to " + volumeDesc + " and " + dir);
+                assertNotNull(childData);
+                final Uri grantedChildUri = childData.getData();
+                assertFalse("received root URI (" + grantedRootUri + ") for child request",
+                        grantedRootUri.equals(grantedChildUri));
+            }
+        }
     }
 
     public void testDeniesOnceButAllowsAskingAgain() throws Exception {
         if (!supportedHardware())return;
 
+        final String[] dirs = {DIRECTORY_DCIM, DIRECTORY_ROOT};
         for (StorageVolume volume : getVolumes()) {
-            // Rejects the first attempt...
-            UiAlertDialog dialog = openExternalDirectoryValidPath(volume, DIRECTORY_DCIM);
-            dialog.assertDoNotAskAgainVisibility(false);
-            dialog.noButton.click();
-            assertActivityFailed();
+            for (String dir : dirs) {
+                // Rejects the first attempt...
+                UiAlertDialog dialog = openExternalDirectoryValidPath(volume, dir);
+                dialog.assertDoNotAskAgainVisibility(false);
+                dialog.noButton.click();
+                assertActivityFailed();
 
-            // ...and the second.
-            dialog = openExternalDirectoryValidPath(volume, DIRECTORY_DCIM);
-            dialog.assertDoNotAskAgainVisibility(true);
-            dialog.noButton.click();
-            assertActivityFailed();
+                // ...and the second.
+                dialog = openExternalDirectoryValidPath(volume, dir);
+                dialog.assertDoNotAskAgainVisibility(true);
+                dialog.noButton.click();
+                assertActivityFailed();
 
-            // Third time is a charm...
-            userAcceptsOpenExternalDirectoryTest(volume, DIRECTORY_DCIM);
+                // Third time is a charm...
+                userAcceptsOpenExternalDirectoryTest(volume, dir);
+            }
         }
     }
 
     public void testDeniesOnceForAll() throws Exception {
         if (!supportedHardware()) return;
 
+        final String[] dirs = {DIRECTORY_PICTURES, DIRECTORY_ROOT};
         for (StorageVolume volume : getVolumes()) {
-            // Rejects the first attempt...
-            UiAlertDialog dialog = openExternalDirectoryValidPath(volume, DIRECTORY_RINGTONES);
-            dialog.assertDoNotAskAgainVisibility(false);
-            dialog.noButton.click();
-            assertActivityFailed();
+            for (String dir : dirs) {
+                // Rejects the first attempt...
+                UiAlertDialog dialog = openExternalDirectoryValidPath(volume, dir);
+                dialog.assertDoNotAskAgainVisibility(false);
+                dialog.noButton.click();
+                assertActivityFailed();
 
-            // ...and the second, checking the box
-            dialog = openExternalDirectoryValidPath(volume, DIRECTORY_RINGTONES);
-            UiObject checkbox = dialog.assertDoNotAskAgainVisibility(true);
-            assertTrue("checkbox should not be checkable", checkbox.isCheckable());
-            assertFalse("checkbox should not be checked", checkbox.isChecked());
-            checkbox.click();
-            assertTrue("checkbox should be checked", checkbox.isChecked()); // Sanity check
-            assertFalse("allow button should be disabled", dialog.yesButton.isEnabled());
+                // ...and the second, checking the box
+                dialog = openExternalDirectoryValidPath(volume, dir);
+                UiObject checkbox = dialog.assertDoNotAskAgainVisibility(true);
+                assertTrue("checkbox should not be checkable", checkbox.isCheckable());
+                assertFalse("checkbox should not be checked", checkbox.isChecked());
+                checkbox.click();
+                assertTrue("checkbox should be checked", checkbox.isChecked()); // Sanity check
+                assertFalse("allow button should be disabled", dialog.yesButton.isEnabled());
 
-            dialog.noButton.click();
-            assertActivityFailed();
+                dialog.noButton.click();
+                assertActivityFailed();
 
-            // Third strike out...
-            sendOpenExternalDirectoryIntent(volume, DIRECTORY_RINGTONES);
-            assertActivityFailed();
+                // Third strike out...
+                sendOpenExternalDirectoryIntent(volume, dir);
+                assertActivityFailed();
+            }
         }
     }
 
@@ -196,14 +236,19 @@ public class ScopedDirectoryAccessClientTest extends DocumentsClientTestCase {
         final String appLabel = context.getPackageManager().getApplicationLabel(
                 context.getApplicationInfo()).toString();
         assertContainsRegex("missing app label", appLabel, message);
-        assertContainsRegex("missing folder", directoryName, message);
-        assertContainsRegex("missing root", volume.getDescription(context), message);
+        if (directoryName != null) {
+            assertContainsRegex("missing folder", directoryName, message);
+        } else {
+            assertNotContainsRegex("should not have folder for root", "null", message);
+        }
 
         // Call API...
         dialog.yesButton.click();
 
         // ...and get its response.
-        final Intent data = assertActivitySucceeded();
+        final String volumeDesc = volume.getDescription(getInstrumentation().getContext());
+        final Intent data = assertActivitySucceeded("should have already granted "
+                + "permission to " + volumeDesc + " and " + directoryName);
         final Uri grantedUri = data.getData();
 
         // Test granted permission directly by persisting it...
@@ -244,7 +289,7 @@ public class ScopedDirectoryAccessClientTest extends DocumentsClientTestCase {
     private UiAlertDialog openExternalDirectoryValidPath(StorageVolume volume, String path)
             throws UiObjectNotFoundException {
         sendOpenExternalDirectoryIntent(volume, path);
-        return new UiAlertDialog();
+        return new UiAlertDialog(volume, path);
     }
 
     private void sendOpenExternalDirectoryIntent(StorageVolume volume, String directoryName) {
@@ -272,11 +317,17 @@ public class ScopedDirectoryAccessClientTest extends DocumentsClientTestCase {
         final UiObject messageText;
         final UiObject yesButton;
         final UiObject noButton;
+        final String volumeDesc;
+        final String directory;
 
-        UiAlertDialog() throws UiObjectNotFoundException {
+        UiAlertDialog(StorageVolume volume, String path) throws UiObjectNotFoundException {
+            volumeDesc = volume.getDescription(getInstrumentation().getContext());
+            directory = path;
+
             final String id = "android:id/parentPanel";
             boolean gotIt = mDevice.wait(Until.hasObject(By.res(id)), TIMEOUT);
-            assertTrue("object with id '(" + id + "') not visible yet", gotIt);
+            assertTrue("object with id '(" + id + "') not visible yet for "
+                    + volumeDesc + " and " + path, gotIt);
             dialog = mDevice.findObject(new UiSelector().resourceId(id));
             assertTrue("object with id '(" + id + "') doesn't exist", dialog.exists());
             messageText = dialog.getChild(

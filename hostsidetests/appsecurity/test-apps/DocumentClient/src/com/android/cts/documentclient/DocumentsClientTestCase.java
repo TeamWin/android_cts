@@ -136,11 +136,11 @@ abstract class DocumentsClientTestCase extends InstrumentationTestCase {
         assertNull(result.data);
     }
 
-    protected Intent assertActivitySucceeded() {
+    protected Intent assertActivitySucceeded(String prefix) {
         final Result result = mActivity.getResult();
-        assertEquals(REQUEST_CODE, result.requestCode);
-        assertEquals(Activity.RESULT_OK, result.resultCode);
-        assertNotNull(result.data);
+        assertEquals(prefix + ": invalid request code", REQUEST_CODE, result.requestCode);
+        assertEquals(prefix + ": invalid result code", Activity.RESULT_OK, result.resultCode);
+        assertNotNull(prefix + ": null data on result", result.data);
         return result.data;
     }
 
