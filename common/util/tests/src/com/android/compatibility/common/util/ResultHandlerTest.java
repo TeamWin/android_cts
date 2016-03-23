@@ -35,6 +35,7 @@ public class ResultHandlerTest extends TestCase {
     private static final String SUITE_NAME = "CTS";
     private static final String SUITE_VERSION = "5.0";
     private static final String SUITE_PLAN = "cts";
+    private static final String SUITE_BUILD = "12345";
     private static final String REPORT_VERSION = "5.0";
     private static final String OS_NAME = System.getProperty("os.name");
     private static final String OS_VERSION = System.getProperty("os.version");
@@ -74,7 +75,8 @@ public class ResultHandlerTest extends TestCase {
             "<?xml version='1.0' encoding='UTF-8' standalone='no' ?>" +
             "<?xml-stylesheet type=\"text/xsl\" href=\"compatibility_result.xsl\"?>\n" +
             "<Result start=\"%d\" end=\"%d\" suite_name=\"%s\" suite_version=\"%s\" " +
-            "suite_plan=\"%s\" report_version=\"%s\" devices=\"%s\" host_name=\"%s\"" +
+            "suite_plan=\"%s\" suite_build_number=\"%s\" report_version=\"%s\" " +
+            "devices=\"%s\" host_name=\"%s\"" +
             "os_name=\"%s\" os_version=\"%s\" os_arch=\"%s\" java_vendor=\"%s\"" +
             "java_version=\"%s\" reference_url=\"%s\">\n" +
             "%s%s%s" +
@@ -164,8 +166,8 @@ public class ResultHandlerTest extends TestCase {
         moduleBTest4.setReportLog(report);
 
         // Serialize to file
-        ResultHandler.writeResults(SUITE_NAME, SUITE_VERSION, SUITE_PLAN, result, resultDir,
-                START_MS, END_MS, REFERENCE_URL);
+        ResultHandler.writeResults(SUITE_NAME, SUITE_VERSION, SUITE_PLAN, SUITE_BUILD,
+                result, resultDir, START_MS, END_MS, REFERENCE_URL);
 
         // Parse the results and assert correctness
         checkResult(ResultHandler.getResults(resultsDir), resultDir);
@@ -203,8 +205,8 @@ public class ResultHandlerTest extends TestCase {
                 hostName = InetAddress.getLocalHost().getHostName();
             } catch (UnknownHostException ignored) {}
             String output = String.format(XML_BASE, START_MS, END_MS, SUITE_NAME, SUITE_VERSION,
-                    SUITE_PLAN, REPORT_VERSION, DEVICES, hostName, OS_NAME, OS_VERSION, OS_ARCH,
-                    JAVA_VENDOR, JAVA_VERSION, REFERENCE_URL, deviceInfo, summary, modules);
+                    SUITE_PLAN, SUITE_BUILD, REPORT_VERSION, DEVICES, hostName, OS_NAME, OS_VERSION,
+                    OS_ARCH, JAVA_VENDOR, JAVA_VERSION, REFERENCE_URL, deviceInfo, summary, modules);
             writer.write(output);
             writer.flush();
 
