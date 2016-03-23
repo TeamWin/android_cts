@@ -124,6 +124,10 @@ public class BlockedNumberContractTest extends TestCaseThatRunsIfTelephonyIsEnab
         assertTrue(BlockedNumberContract.canCurrentUserBlockNumbers(mContext));
 
         assertInsertBlockedNumberSucceeds("1234567890", null);
+        // Attempting to insert a duplicate replaces the existing entry.
+        assertInsertBlockedNumberSucceeds("1234567890", "+812345678901");
+        assertInsertBlockedNumberSucceeds("1234567890", null);
+
         assertTrue(BlockedNumberContract.isBlocked(mContext, "1234567890"));
         assertFalse(BlockedNumberContract.isBlocked(mContext, "2234567890"));
 
@@ -179,16 +183,6 @@ public class BlockedNumberContractTest extends TestCaseThatRunsIfTelephonyIsEnab
             fail("Should throw IllegalArgumentException.");
         } catch (IllegalArgumentException expected) {
             assertTrue(expected.getMessage().contains("must not be specified"));
-        }
-
-        assertInsertBlockedNumberSucceeds("12345", null);
-        // Attempting to insert a duplicate fails.
-        ContentValues cv = new ContentValues();
-        cv.put(BlockedNumbers.COLUMN_ORIGINAL_NUMBER, "12345");
-        cv.put(BlockedNumbers.COLUMN_E164_NUMBER, "+112345");
-        try {
-            mAddedUris.add(mContentResolver.insert(BlockedNumbers.CONTENT_URI, cv));
-        } catch (SQLiteConstraintException expected) {
         }
     }
 
@@ -255,6 +249,7 @@ public class BlockedNumberContractTest extends TestCaseThatRunsIfTelephonyIsEnab
 
         try {
             mContentResolver.delete(Uri.parse("foobar"), null, null);
+            fail("Should throw IllegalArgumentException");
         } catch (IllegalArgumentException expected) {
         }
 
@@ -302,6 +297,7 @@ public class BlockedNumberContractTest extends TestCaseThatRunsIfTelephonyIsEnab
         try {
             mContext.getContentResolver()
                     .call(BlockedNumberContract.AUTHORITY_URI, "nonExistentMethod", "1234", null);
+            fail("Should throw IllegalArgumentException");
         } catch (IllegalArgumentException expected) {
             assertTrue(expected.getMessage().contains("Unsupported method"));
         }
