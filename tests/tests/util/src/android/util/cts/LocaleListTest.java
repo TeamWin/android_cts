@@ -312,6 +312,14 @@ public class LocaleListTest extends AndroidTestCase {
         assertEquals(original, cloneViaParcel(original));
     }
 
+    public void testDescribeContents_doesNotThrowException() {
+        // Just check calling describeContents() should not cause any exceptions.
+        LocaleList.forLanguageTags("en").describeContents();
+        LocaleList.forLanguageTags("").describeContents();
+        LocaleList.forLanguageTags(null).describeContents();
+        LocaleList.getEmptyLocaleList().describeContents();
+    }
+
     private static LocaleList cloneViaParcel(final LocaleList original) {
         Parcel parcel = null;
         try {
