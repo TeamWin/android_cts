@@ -39,6 +39,6 @@ LOCAL_PACKAGE_NAME := CtsThemeDeviceApp
 # Tag this module as a cts test artifact
 LOCAL_COMPATIBILITY_SUITE := cts
 
-LOCAL_SDK_VERSION := current
+LOCAL_SDK_VERSION := 23
 
 include $(BUILD_CTS_SUPPORT_PACKAGE)
