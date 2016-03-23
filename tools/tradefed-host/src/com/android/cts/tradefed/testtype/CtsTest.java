@@ -17,6 +17,7 @@
 package com.android.cts.tradefed.testtype;
 
 import com.android.compatibility.common.util.AbiUtils;
+import com.android.compatibility.common.util.MonitoringUtils;
 import com.android.cts.tradefed.build.CtsBuildHelper;
 import com.android.cts.tradefed.device.DeviceInfoCollector;
 import com.android.cts.tradefed.result.CtsTestStatus;
@@ -518,6 +519,8 @@ public class CtsTest implements IDeviceTest, IResumableTest, IShardableTest, IBu
                     remainingPackageCount, totalTestCount));
             IAbi currentAbi = null;
 
+            // check connectivity upfront
+            MonitoringUtils.checkDeviceConnectivity(getDevice(), listener, "start");
             for (int i = mLastTestPackageIndex; i < mTestPackageList.size(); i++) {
                 TestPackage testPackage = mTestPackageList.get(i);
 
@@ -565,6 +568,9 @@ public class CtsTest implements IDeviceTest, IResumableTest, IShardableTest, IBu
                 performPackagePrepareSetup(testPackage.getPackageDef());
                 test.run(filterMap.get(testPackage.getPackageDef().getId()));
                 performPackagePreparerTearDown(testPackage.getPackageDef());
+                MonitoringUtils.checkDeviceConnectivity(getDevice(), listener,
+                        String.format("%s-%s", testPackage.getPackageDef().getName(),
+                                testPackage.getPackageDef().getAbi().getName()));
                 if (i < mTestPackageList.size() - 1) {
                     TestPackage nextPackage = mTestPackageList.get(i + 1);
                     rebootIfNecessary(testPackage, nextPackage);
