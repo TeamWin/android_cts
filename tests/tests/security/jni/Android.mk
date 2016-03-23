@@ -41,7 +41,35 @@ LOCAL_SRC_FILES := \
 LOCAL_C_INCLUDES := $(JNI_H_INCLUDE) \
 										$(TOP)/frameworks/native/include/media/openmax
 
-LOCAL_SHARED_LIBRARIES := libnativehelper liblog libbinder libutils libmedia libselinux libdl libcutils libcrypto libstagefright_foundation
+LOCAL_SHARED_LIBRARIES := libnativehelper \
+		liblog \
+		libbinder \
+		libutils \
+		libmedia \
+		libselinux \
+		libdl \
+		libcutils \
+		libcrypto \
+		libstagefright_foundation \
+		libc++ \
+		libbacktrace \
+		libui \
+		libsonivox \
+		libexpat \
+		libcamera_client \
+		libgui \
+		libaudioutils \
+		libnbaio \
+		libpcre \
+		libpackagelistparser \
+		libpowermanager \
+		libbase \
+		libunwind \
+		libhardware \
+		libsync \
+		libcamera_metadata \
+		libspeexresampler \
+		liblzma
 
 LOCAL_C_INCLUDES += ndk/sources/cpufeatures
 LOCAL_STATIC_LIBRARIES := cpufeatures
