@@ -76,6 +76,7 @@ public class ResultHandler {
     private static final String SUITE_NAME_ATTR = "suite_name";
     private static final String SUITE_PLAN_ATTR = "suite_plan";
     private static final String SUITE_VERSION_ATTR = "suite_version";
+    private static final String SUITE_BUILD_ATTR = "suite_build_number";
     private static final String SUMMARY_TAG = "Summary";
     private static final String TEST_TAG = "Test";
 
@@ -191,8 +192,9 @@ public class ResultHandler {
      * @throws XmlPullParserException
      */
     public static File writeResults(String suiteName, String suiteVersion, String suitePlan,
-            IInvocationResult result, File resultDir, long startTime, long endTime,
-                    String referenceUrl) throws IOException, XmlPullParserException {
+            String suiteBuild, IInvocationResult result, File resultDir,
+            long startTime, long endTime, String referenceUrl)
+                    throws IOException, XmlPullParserException {
         int passed = result.countResults(TestStatus.PASS);
         int failed = result.countResults(TestStatus.FAIL);
         int notExecuted = result.countResults(TestStatus.NOT_EXECUTED);
@@ -210,6 +212,7 @@ public class ResultHandler {
         serializer.attribute(NS, SUITE_NAME_ATTR, suiteName);
         serializer.attribute(NS, SUITE_VERSION_ATTR, suiteVersion);
         serializer.attribute(NS, SUITE_PLAN_ATTR, suitePlan);
+        serializer.attribute(NS, SUITE_BUILD_ATTR, suiteBuild);
         serializer.attribute(NS, REPORT_VERSION_ATTR, RESULT_FILE_VERSION);
         if (referenceUrl != null) {
             serializer.attribute(NS, REFERENCE_URL_ATTR, referenceUrl);
