@@ -325,8 +325,9 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
                 mResult.countResults(TestStatus.NOT_EXECUTED));
         try {
             File resultFile = ResultHandler.writeResults(mBuildHelper.getSuiteName(),
-                    mBuildHelper.getSuiteVersion(), mBuildHelper.getSuitePlan(), mResult,
-                    mResultDir, mStartTime, elapsedTime + mStartTime, mReferenceUrl);
+                    mBuildHelper.getSuiteVersion(), mBuildHelper.getSuitePlan(),
+                    mBuildHelper.getSuiteBuild(), mResult, mResultDir, mStartTime,
+                    elapsedTime + mStartTime, mReferenceUrl);
             logResult("Result saved at: %s", resultFile.getCanonicalPath());
             copyDynamicConfigFiles(mBuildHelper.getDynamicConfigFiles(), mResultDir);
             copyFormattingFiles(mResultDir);
