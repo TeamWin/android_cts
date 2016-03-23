@@ -272,6 +272,24 @@ public class LinearLayoutTest extends ActivityInstrumentationTestCase<LinearLayo
         assertNull(mockLinearLayout.generateDefaultLayoutParams());
     }
 
+    public void testGenerateLayoutParamsFromMarginParams() {
+        MockLinearLayout layout = new MockLinearLayout(mContext);
+        ViewGroup.MarginLayoutParams lp = new ViewGroup.MarginLayoutParams(3, 5);
+        lp.leftMargin = 1;
+        lp.topMargin = 2;
+        lp.rightMargin = 3;
+        lp.bottomMargin = 4;
+        LinearLayout.LayoutParams generated = layout.generateLayoutParams(lp);
+        assertNotNull(generated);
+        assertEquals(3, generated.width);
+        assertEquals(5, generated.height);
+
+        assertEquals(1, generated.leftMargin);
+        assertEquals(2, generated.topMargin);
+        assertEquals(3, generated.rightMargin);
+        assertEquals(4, generated.bottomMargin);
+    }
+
     /**
      * layout of horizontal LinearLayout.
      * ----------------------------------------------------
