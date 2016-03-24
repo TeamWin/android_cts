@@ -523,11 +523,8 @@ public class ListPopupWindowTest extends
         final ListView listView = mPopupWindow.getListView();
 
         // Select an item
-        ViewTestUtils.runOnMainAndDrawSync(mInstrumentation, listView, new Runnable() {
-            public void run() {
-                mPopupWindow.setSelection(1);
-            }
-        });
+        ViewTestUtils.runOnMainAndDrawSync(mInstrumentation, listView,
+                () -> mPopupWindow.setSelection(1));
 
         // And verify the current selection state + selection listener invocation
         verify(mPopupWindowBuilder.mOnItemSelectedListener, times(1)).onItemSelected(
@@ -541,11 +538,8 @@ public class ListPopupWindowTest extends
                 ((TextView) selectedView.findViewById(android.R.id.text1)).getText());
 
         // Select another item
-        ViewTestUtils.runOnMainAndDrawSync(mInstrumentation, listView, new Runnable() {
-            public void run() {
-                mPopupWindow.setSelection(3);
-            }
-        });
+        ViewTestUtils.runOnMainAndDrawSync(mInstrumentation, listView,
+                () -> mPopupWindow.setSelection(3));
 
         // And verify the new selection state + selection listener invocation
         verify(mPopupWindowBuilder.mOnItemSelectedListener, times(1)).onItemSelected(
@@ -559,11 +553,8 @@ public class ListPopupWindowTest extends
                 ((TextView) selectedView.findViewById(android.R.id.text1)).getText());
 
         // Clear selection
-        ViewTestUtils.runOnMainAndDrawSync(mInstrumentation, listView, new Runnable() {
-            public void run() {
-                mPopupWindow.clearListSelection();
-            }
-        });
+        ViewTestUtils.runOnMainAndDrawSync(mInstrumentation, listView,
+                () -> mPopupWindow.clearListSelection());
 
         // And verify empty selection state + no more selection listener invocation
         verify(mPopupWindowBuilder.mOnItemSelectedListener, times(1)).onNothingSelected(
@@ -635,11 +626,8 @@ public class ListPopupWindowTest extends
 
         // Select entry #1 in the popup list
         final ListView listView = mPopupWindow.getListView();
-        ViewTestUtils.runOnMainAndDrawSync(mInstrumentation, listView, new Runnable() {
-            public void run() {
-                mPopupWindow.setSelection(1);
-            }
-        });
+        ViewTestUtils.runOnMainAndDrawSync(mInstrumentation, listView,
+                () -> mPopupWindow.setSelection(1));
         verify(mPopupWindowBuilder.mOnItemSelectedListener, times(1)).onItemSelected(
                 any(AdapterView.class), any(View.class), eq(1), eq(1L));
 
