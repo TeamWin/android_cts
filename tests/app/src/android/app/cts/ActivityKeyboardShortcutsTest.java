@@ -50,7 +50,7 @@ public class ActivityKeyboardShortcutsTest
     public void testOnProvideKeyboardShortcuts() {
         List<KeyboardShortcutGroup> data = new ArrayList<>();
         mActivity.onCreateOptionsMenu(mMenu);
-        mActivity.onProvideKeyboardShortcuts(data, mMenu);
+        mActivity.onProvideKeyboardShortcuts(data, mMenu, -1);
 
         assertEquals(1, data.size());
         assertEquals(1, data.get(0).getItems().size());

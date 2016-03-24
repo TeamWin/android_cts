@@ -1155,8 +1155,5 @@ public class WindowTest extends ActivityInstrumentationTestCase2<WindowCtsActivi
 
         public void onWindowDismissed() {
         }
-
-        public void onProvideKeyboardShortcuts(List<KeyboardShortcutGroup> data, Menu menu) {
-        }
     }
 }
