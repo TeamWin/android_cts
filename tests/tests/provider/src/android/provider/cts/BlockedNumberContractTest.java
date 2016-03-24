@@ -23,16 +23,12 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.database.ContentObserver;
 import android.database.Cursor;
-import android.database.sqlite.SQLiteConstraintException;
 import android.net.Uri;
-import android.os.ParcelFileDescriptor;
 import android.provider.BlockedNumberContract;
 import android.provider.BlockedNumberContract.BlockedNumbers;
 
 import junit.framework.Assert;
 
-import java.io.FileInputStream;
-import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -87,12 +83,6 @@ public class BlockedNumberContractTest extends TestCaseThatRunsIfTelephonyIsEnab
         }
 
         try {
-            BlockedNumberContract.isBlocked(mContext, "1234567890");
-            fail("Should throw SecurityException");
-        } catch (SecurityException expected) {
-        }
-
-        try {
             mContentResolver.update(
                     BlockedNumbers.CONTENT_URI, getContentValues("123"), null, null);
             fail("Should throw SecurityException");
@@ -101,6 +91,12 @@ public class BlockedNumberContractTest extends TestCaseThatRunsIfTelephonyIsEnab
 
         try {
             BlockedNumberContract.isBlocked(mContext, "123");
+            fail("Should throw SecurityException");
+        } catch (SecurityException expected) {
+        }
+
+        try {
+            BlockedNumberContract.unblock(mContext, "1234567890");
             fail("Should throw SecurityException");
         } catch (SecurityException expected) {
         }
@@ -143,6 +139,21 @@ public class BlockedNumberContractTest extends TestCaseThatRunsIfTelephonyIsEnab
 
         assertFalse(BlockedNumberContract.isBlocked(mContext, "9999@abcd.com"));
         assertFalse(BlockedNumberContract.isBlocked(mContext, "random string"));
+    }
+
+    public void testUnblock_succeeds() throws Exception {
+        setDefaultSmsApp(true);
+
+        // Unblocking non-existent blocked number should return 0.
+        assertEquals(0, BlockedNumberContract.unblock(mContext, "6501004000"));
+
+        assertInsertBlockedNumberSucceeds("6501004000", null);
+        assertEquals(1, BlockedNumberContract.unblock(mContext, "6501004000"));
+        assertFalse(BlockedNumberContract.isBlocked(mContext, "(650)1004000"));
+
+        assertInsertBlockedNumberSucceeds("1234@abcd.com", null);
+        assertEquals(1, BlockedNumberContract.unblock(mContext, "1234@abcd.com"));
+        assertFalse(BlockedNumberContract.isBlocked(mContext, "1234@abcd.com"));
     }
 
     public void testInsert_failsWithInvalidInputs() throws Exception {
