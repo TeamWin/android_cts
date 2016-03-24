@@ -35,7 +35,6 @@ LOCAL_SRC_FILES := \
 		android_security_cts_AudioFlingerBinderTest.cpp \
 		android_security_cts_AudioEffectBinderTest.cpp \
 		android_security_cts_MediaPlayerInfoLeakTest.cpp \
-		android_security_cts_StagefrightFoundationTest.cpp \
 		android_security_cts_GraphicBufferInfoLeakTest.cpp
 
 LOCAL_C_INCLUDES := $(JNI_H_INCLUDE) \
@@ -50,7 +49,6 @@ LOCAL_SHARED_LIBRARIES := libnativehelper \
 		libdl \
 		libcutils \
 		libcrypto \
-		libstagefright_foundation \
 		libc++ \
 		libbacktrace \
 		libui \
