@@ -444,4 +444,24 @@ public class FloatyUnitTest extends RSBaseCompute {
             validateRoundToFloat16(-value - 0.5 * ulp, -value - ulp, -value);
         }
     }
+
+    public void testConvertDoubleToFloat16() {
+        assertEquals(Float16Utils.convertDoubleToFloat16(0.), (short) 0x0);
+        assertEquals(Float16Utils.convertDoubleToFloat16(Float16Utils.MIN_VALUE), (short) 0x0001);
+        assertEquals(Float16Utils.convertDoubleToFloat16(42 * Float16Utils.MIN_VALUE), (short) 0x002a);
+        assertEquals(Float16Utils.convertDoubleToFloat16(Float16Utils.MIN_NORMAL), (short) 0x400);
+        assertEquals(Float16Utils.convertDoubleToFloat16(42.), (short) 0x5140);
+        assertEquals(Float16Utils.convertDoubleToFloat16(1024.), (short) 0x6400);
+        assertEquals(Float16Utils.convertDoubleToFloat16(Double.POSITIVE_INFINITY), (short) 0x7c00);
+
+        assertEquals(Float16Utils.convertDoubleToFloat16(-0.), (short) 0x8000);
+        assertEquals(Float16Utils.convertDoubleToFloat16(-Float16Utils.MIN_VALUE), (short) 0x8001);
+        assertEquals(Float16Utils.convertDoubleToFloat16(-42 * Float16Utils.MIN_VALUE), (short) 0x802a);
+        assertEquals(Float16Utils.convertDoubleToFloat16(-Float16Utils.MIN_NORMAL), (short) 0x8400);
+        assertEquals(Float16Utils.convertDoubleToFloat16(-42.), (short) 0xd140);
+        assertEquals(Float16Utils.convertDoubleToFloat16(-1024.), (short) 0xe400);
+        assertEquals(Float16Utils.convertDoubleToFloat16(Double.NEGATIVE_INFINITY), (short) 0xfc00);
+
+        assertEquals(Float16Utils.convertDoubleToFloat16(Double.NaN), (short) 0x7e00);
+    }
 }

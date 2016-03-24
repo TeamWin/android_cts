@@ -34,7 +34,6 @@ class Float16Utils {
     private static long DOUBLE_EXPONENT_MASK = 0x7ff0000000000000L;
     private static long DOUBLE_MANTISSA_MASK = 0x000fffffffffffffL;
 
-
     static double MIN_NORMAL = Math.scalb(1.0, -14); // smallest Float16 normal is 2 ^ -14
     static double MIN_VALUE = Math.scalb(1.0, -24); // smallest Float16 value is 2 ^ -24
     static double MAX_VALUE = 65504; // largest Float16 value is 2^16 - 32
@@ -280,6 +279,42 @@ class Float16Utils {
             return Math.scalb(1.0, (int) (unbiasedExponent - 10));
         }
         throw new RSRuntimeException("float16Ulp: unreachable line executed");
+    }
+
+    // This function converts its double input value to its Float16 representation (represented as a
+    // short).  It assumes, but does not check, that the input is precisely representable in Float16
+    // precision.  No rounding is performed either.
+    static short convertDoubleToFloat16(double value) {
+        if (value == 0.) {
+            if (Double.doubleToLongBits(value) == 0)
+                return (short) 0x0;
+            else
+                return (short) 0x8000;
+        } else if (Double.isNaN(value)) {
+            // return Quiet NaN irrespective of what kind of NaN 'value' is.
+            return (short) 0x7e00;
+        } else if (value == Double.POSITIVE_INFINITY) {
+            return (short) 0x7c00;
+        } else if (value == Double.NEGATIVE_INFINITY) {
+            return (short) 0xfc00;
+        }
+
+        double positiveValue = Math.abs(value);
+        boolean isNegative = (value < 0.);
+        if (positiveValue < MIN_NORMAL) {
+            short quotient = (short) (positiveValue / MIN_VALUE);
+            return (isNegative) ? (short) (0x8000 | quotient) : quotient;
+        } else {
+            long valueBits = Double.doubleToLongBits(value);
+            long mantissa = valueBits & DOUBLE_MANTISSA_MASK; // 52-bit mantissa
+            long exponent = valueBits & DOUBLE_EXPONENT_MASK; // 11-bit exponent
+            long unbiasedExponent = (exponent >> 52) - 1023;
+
+            short halfExponent = (short) ((unbiasedExponent + 15) << 10);
+            short halfMantissa = (short) (mantissa >> 42);
+            short halfValue = (short) (halfExponent | halfMantissa);
+            return (isNegative) ? (short) (0x8000 | halfValue) : halfValue;
+        }
     }
 
 }
