@@ -52,6 +52,8 @@ import java.util.List;
 
 import junit.framework.Assert;
 
+import static org.mockito.Mockito.*;
+
 public class ListViewTest extends ActivityInstrumentationTestCase2<ListViewCtsActivity> {
     private final String[] mCountryList = new String[] {
         "Argentina", "Australia", "China", "France", "Germany", "Italy", "Japan", "United States"
@@ -403,19 +405,16 @@ public class ListViewTest extends ActivityInstrumentationTestCase2<ListViewCtsAc
         mInstrumentation.runOnMainSync(() -> mListView.performItemClick(child, 2, itemID));
         mInstrumentation.waitForIdleSync();
 
-        MockOnItemClickListener onClickListener = new MockOnItemClickListener();
+        OnItemClickListener onClickListener = mock(OnItemClickListener.class);
         mListView.setOnItemClickListener(onClickListener);
-
-        assertNull(onClickListener.getView());
-        assertEquals(0, onClickListener.getPosition());
-        assertEquals(0, onClickListener.getID());
+        verify(onClickListener, never()).onItemClick(any(AdapterView.class), any(View.class),
+                anyInt(), anyLong());
 
         mInstrumentation.runOnMainSync(() -> mListView.performItemClick(child, 2, itemID));
         mInstrumentation.waitForIdleSync();
 
-        assertSame(child, onClickListener.getView());
-        assertEquals(2, onClickListener.getPosition());
-        assertEquals(2, onClickListener.getID());
+        verify(onClickListener, times(1)).onItemClick(mListView, child, 2, 2L);
+        verifyNoMoreInteractions(onClickListener);
     }
 
     public void testSaveAndRestoreInstanceState() {
@@ -563,30 +562,6 @@ public class ListViewTest extends ActivityInstrumentationTestCase2<ListViewCtsAc
         @Override
         protected void layoutChildren() {
             super.layoutChildren();
-        }
-    }
-
-    private static class MockOnItemClickListener implements OnItemClickListener {
-        private View mView;
-        private int mPosition;
-        private long mID;
-
-        public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-            mView = view;
-            mPosition = position;
-            mID = id;
-        }
-
-        public View getView() {
-            return mView;
-        }
-
-        public int getPosition() {
-            return mPosition;
-        }
-
-        public long getID() {
-            return mID;
         }
     }
 
