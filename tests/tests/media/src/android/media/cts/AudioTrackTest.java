@@ -1961,11 +1961,10 @@ public class AudioTrackTest extends CtsAndroidTestCase {
                 .setEncoding(encoding)
                 .setSampleRate(sampleRate)
                 .build();
+        // not specifying the buffer size in the builder should get us the minimum buffer size.
         AudioTrack track = new AudioTrack.Builder()
                 .setAudioAttributes(attributes)
                 .setAudioFormat(format)
-                .setBufferSizeInBytes(AudioTrack.getMinBufferSize(
-                        sampleRate, channelMask, encoding))
                 .setTransferMode(transferMode)
                 .build();
         assertEquals(AudioTrack.STATE_INITIALIZED, track.getState());
