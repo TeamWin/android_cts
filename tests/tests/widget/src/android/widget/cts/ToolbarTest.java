@@ -17,12 +17,17 @@
 package android.widget.cts;
 
 import android.app.Instrumentation;
+import android.graphics.drawable.Drawable;
 import android.test.ActivityInstrumentationTestCase2;
 import android.test.UiThreadTest;
+import android.view.Menu;
 import android.widget.Toolbar;
+import android.widget.cts.util.TestUtils;
 import android.widget.cts.util.ViewTestUtils;
 
-public class ToolbarTest  extends ActivityInstrumentationTestCase2<ToolbarCtsActivity> {
+import static org.mockito.Mockito.*;
+
+public class ToolbarTest extends ActivityInstrumentationTestCase2<ToolbarCtsActivity> {
     private Toolbar mMainToolbar;
     private ToolbarCtsActivity mActivity;
 
@@ -89,5 +94,101 @@ public class ToolbarTest  extends ActivityInstrumentationTestCase2<ToolbarCtsAct
         assertEquals(30, toolbar.getTitleMarginTop());
         assertEquals(35, toolbar.getTitleMarginEnd());
         assertEquals(40, toolbar.getTitleMarginBottom());
+    }
+
+    public void testMenuContent() {
+        final Instrumentation instrumentation = getInstrumentation();
+
+        ViewTestUtils.runOnMainAndDrawSync(instrumentation, mMainToolbar,
+                () -> mMainToolbar.inflateMenu(R.menu.toolbar_menu));
+
+        final Menu menu = mMainToolbar.getMenu();
+
+        assertEquals(6, menu.size());
+        assertEquals(R.id.action_highlight, menu.getItem(0).getItemId());
+        assertEquals(R.id.action_edit, menu.getItem(1).getItemId());
+        assertEquals(R.id.action_delete, menu.getItem(2).getItemId());
+        assertEquals(R.id.action_ignore, menu.getItem(3).getItemId());
+        assertEquals(R.id.action_share, menu.getItem(4).getItemId());
+        assertEquals(R.id.action_print, menu.getItem(5).getItemId());
+
+        Toolbar.OnMenuItemClickListener menuItemClickListener =
+                mock(Toolbar.OnMenuItemClickListener.class);
+        mMainToolbar.setOnMenuItemClickListener(menuItemClickListener);
+
+        menu.performIdentifierAction(R.id.action_highlight, 0);
+        verify(menuItemClickListener, times(1)).onMenuItemClick(
+                menu.findItem(R.id.action_highlight));
+
+        menu.performIdentifierAction(R.id.action_share, 0);
+        verify(menuItemClickListener, times(1)).onMenuItemClick(
+                menu.findItem(R.id.action_share));
+    }
+
+    public void testMenuOverflowShowHide() {
+        final Instrumentation instrumentation = getInstrumentation();
+
+        // Inflate menu and check that we're not showing overflow menu yet
+        instrumentation.runOnMainSync(() -> mMainToolbar.inflateMenu(R.menu.toolbar_menu));
+        assertFalse(mMainToolbar.isOverflowMenuShowing());
+
+        // Ask to show overflow menu and check that it's showing
+        instrumentation.runOnMainSync(() -> mMainToolbar.showOverflowMenu());
+        instrumentation.waitForIdleSync();
+        assertTrue(mMainToolbar.isOverflowMenuShowing());
+
+        // Ask to hide the overflow menu and check that it's not showing
+        instrumentation.runOnMainSync(() -> mMainToolbar.hideOverflowMenu());
+        instrumentation.waitForIdleSync();
+        assertFalse(mMainToolbar.isOverflowMenuShowing());
+    }
+
+    public void testMenuOverflowSubmenu() {
+        final Instrumentation instrumentation = getInstrumentation();
+
+        // Inflate menu and check that we're not showing overflow menu yet
+        ViewTestUtils.runOnMainAndDrawSync(instrumentation, mMainToolbar,
+                () -> mMainToolbar.inflateMenu(R.menu.toolbar_menu));
+        assertFalse(mMainToolbar.isOverflowMenuShowing());
+
+        // Ask to show overflow menu and check that it's showing
+        instrumentation.runOnMainSync(() -> mMainToolbar.showOverflowMenu());
+        instrumentation.waitForIdleSync();
+        assertTrue(mMainToolbar.isOverflowMenuShowing());
+
+        // Register a mock menu item click listener on the toolbar
+        Toolbar.OnMenuItemClickListener menuItemClickListener =
+                mock(Toolbar.OnMenuItemClickListener.class);
+        mMainToolbar.setOnMenuItemClickListener(menuItemClickListener);
+
+        final Menu menu = mMainToolbar.getMenu();
+
+        // Ask to "perform" the share action and check that the menu click listener has
+        // been notified
+        instrumentation.runOnMainSync(() -> menu.performIdentifierAction(R.id.action_share, 0));
+        verify(menuItemClickListener, times(1)).onMenuItemClick(
+                menu.findItem(R.id.action_share));
+
+        // Ask to dismiss all the popups and check that we're not showing the overflow menu
+        instrumentation.runOnMainSync(() -> mMainToolbar.dismissPopupMenus());
+        instrumentation.waitForIdleSync();
+        assertFalse(mMainToolbar.isOverflowMenuShowing());
+    }
+
+    public void testMenuOverflowIcon() {
+        final Instrumentation instrumentation = getInstrumentation();
+
+        // Inflate menu and check that we're not showing overflow menu yet
+        ViewTestUtils.runOnMainAndDrawSync(instrumentation, mMainToolbar,
+                () -> mMainToolbar.inflateMenu(R.menu.toolbar_menu));
+
+        final Drawable overflowIcon = mActivity.getDrawable(R.drawable.icon_red);
+        ViewTestUtils.runOnMainAndDrawSync(instrumentation, mMainToolbar,
+                () -> mMainToolbar.setOverflowIcon(overflowIcon));
+
+        final Drawable toolbarOverflowIcon = mMainToolbar.getOverflowIcon();
+        TestUtils.assertAllPixelsOfColor("Overflow icon is red", toolbarOverflowIcon,
+                toolbarOverflowIcon.getIntrinsicWidth(), toolbarOverflowIcon.getIntrinsicHeight(),
+                true, 0XFFFF0000, 1, false);
     }
 }
