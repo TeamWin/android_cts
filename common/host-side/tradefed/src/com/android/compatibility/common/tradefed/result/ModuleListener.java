@@ -130,9 +130,9 @@ public class ModuleListener implements IModuleListener {
      * {@inheritDoc}
      */
     @Override
-    public void testRunFailed(String id) {
-        CLog.d("ModuleListener.testRunFailed(%s)", id);
-        mListener.testRunFailed(mModule.getId());
+    public void testRunFailed(String errorMessage) {
+        CLog.d("ModuleListener.testRunFailed(%s)", errorMessage);
+        mListener.testRunFailed(errorMessage);
     }
 
     /**
