@@ -628,8 +628,7 @@ public class RecordingTest extends Camera2SurfaceViewTestCase {
         int cameraId = Integer.valueOf(mCamera.getId());
         int maxVideoFrameRate = -1;
         for (int profileId : camcorderProfileList) {
-            if (!CamcorderProfile.hasProfile(cameraId, profileId) ||
-                    allowedUnsupported(cameraId, profileId)) {
+            if (!CamcorderProfile.hasProfile(cameraId, profileId)) {
                 continue;
             }
 
@@ -639,6 +638,11 @@ public class RecordingTest extends Camera2SurfaceViewTestCase {
             if (maxVideoFrameRate < profile.videoFrameRate) {
                 maxVideoFrameRate = profile.videoFrameRate;
             }
+
+            if (allowedUnsupported(cameraId, profileId)) {
+                continue;
+            }
+
             if (mStaticInfo.isHardwareLevelLegacy() &&
                     (videoSz.getWidth() > maxPreviewSize.getWidth() ||
                      videoSz.getHeight() > maxPreviewSize.getHeight())) {
