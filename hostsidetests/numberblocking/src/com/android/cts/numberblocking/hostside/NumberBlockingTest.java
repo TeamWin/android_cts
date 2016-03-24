@@ -31,6 +31,10 @@ import java.io.File;
 /**
  * Multi-user tests for number blocking.
  */
+// To run the tests in this file w/o running all the cts tests:
+// make cts
+// cts-tradefed
+// run cts -m CtsHostsideNumberBlockingTestCases
 public class NumberBlockingTest extends DeviceTestCase implements IBuildReceiver {
     private static final String BLOCKED_NUMBER = "556";
     private static final String PHONE_ACCOUNT_ID = "test_call_provider_id";
