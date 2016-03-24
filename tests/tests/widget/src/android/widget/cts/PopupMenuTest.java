@@ -170,7 +170,7 @@ public class PopupMenuTest extends
         // need to synchronize with the popup window enter transition before proceeding to
         // "click" a submenu item.
         mBuilder = new Builder().withDismissListener()
-                .withPopupStyleAttr(R.style.PopupEmptyStyle);
+                .withPopupStyleResource(R.style.PopupWindow_NullTransitions);
         runTestOnUiThread(new Runnable() {
             public void run() {
                 mBuilder.show();
@@ -220,7 +220,8 @@ public class PopupMenuTest extends
         // need to synchronize with the popup window enter transition before proceeding to
         // emulate a click outside the popup window bounds.
         mBuilder = new Builder().withDismissListener()
-                .withPopupStyleAttr(R.style.PopupEmptyStyle);
+                .withPopupMenuContent(R.menu.popup_menu_single)
+                .withPopupStyleResource(R.style.PopupWindow_NullTransitions);
         runTestOnUiThread(new Runnable() {
             public void run() {
                 mBuilder.show();
@@ -303,7 +304,7 @@ public class PopupMenuTest extends
         // need to synchronize with the popup window enter transition before proceeding to
         // "click" a submenu item.
         mBuilder = new Builder().withDismissListener().withMenuItemClickListener()
-                .withPopupStyleAttr(R.style.PopupEmptyStyle);
+                .withPopupStyleResource(R.style.PopupWindow_NullTransitions);
         runTestOnUiThread(new Runnable() {
             public void run() {
                 mBuilder.show();
@@ -355,8 +356,10 @@ public class PopupMenuTest extends
         private boolean mHasMenuItemClickListener;
         private boolean mInflateWithInflater;
 
-        private boolean mUseCustomPopupStyle;
-        private int mPopupStyleAttr = android.R.attr.popupMenuStyle;
+        private int mPopupMenuContent = R.menu.popup_menu;
+
+        private boolean mUseCustomPopupResource;
+        private int mPopupStyleResource = 0;
 
         private boolean mUseCustomGravity;
         private int mGravity = Gravity.NO_GRAVITY;
@@ -381,9 +384,14 @@ public class PopupMenuTest extends
             return this;
         }
 
-        public Builder withPopupStyleAttr(int popupStyleAttr) {
-            mUseCustomPopupStyle = true;
-            mPopupStyleAttr = popupStyleAttr;
+        public Builder withPopupStyleResource(int popupStyleResource) {
+            mUseCustomPopupResource = true;
+            mPopupStyleResource = popupStyleResource;
+            return this;
+        }
+
+        public Builder withPopupMenuContent(int popupMenuContent) {
+            mPopupMenuContent = popupMenuContent;
             return this;
         }
 
@@ -395,20 +403,20 @@ public class PopupMenuTest extends
 
         private void configure() {
             mAnchor = mActivity.findViewById(R.id.anchor_middle_left);
-            if (!mUseCustomGravity && !mUseCustomPopupStyle) {
+            if (!mUseCustomGravity && !mUseCustomPopupResource) {
                 mPopupMenu = new PopupMenu(mActivity, mAnchor);
-            } else if (!mUseCustomPopupStyle) {
+            } else if (!mUseCustomPopupResource) {
                 mPopupMenu = new PopupMenu(mActivity, mAnchor, mGravity);
             } else {
                 mPopupMenu = new PopupMenu(mActivity, mAnchor, Gravity.NO_GRAVITY,
-                        mPopupStyleAttr, 0);
+                        0, mPopupStyleResource);
             }
 
             if (mInflateWithInflater) {
                 final MenuInflater menuInflater = mPopupMenu.getMenuInflater();
-                menuInflater.inflate(R.menu.popup_menu, mPopupMenu.getMenu());
+                menuInflater.inflate(mPopupMenuContent, mPopupMenu.getMenu());
             } else {
-                mPopupMenu.inflate(R.menu.popup_menu);
+                mPopupMenu.inflate(mPopupMenuContent);
             }
 
             if (mHasMenuItemClickListener) {
