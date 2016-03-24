@@ -81,8 +81,15 @@ public class AudioManagerTest extends InstrumentationTestCase {
     }
 
     public void testSoundEffects() throws Exception {
-        // set relative setting
-        mAudioManager.setRingerMode(AudioManager.RINGER_MODE_NORMAL);
+        try {
+            Utils.toggleNotificationPolicyAccess(
+                    mContext.getPackageName(), getInstrumentation(), true);
+            // set relative setting
+            mAudioManager.setRingerMode(AudioManager.RINGER_MODE_NORMAL);
+        } finally {
+            Utils.toggleNotificationPolicyAccess(
+                mContext.getPackageName(), getInstrumentation(), false);
+        }
         Settings.System.putInt(mContext.getContentResolver(), SOUND_EFFECTS_ENABLED, 1);
 
         // should hear sound after loadSoundEffects() called.
@@ -343,6 +350,9 @@ public class AudioManagerTest extends InstrumentationTestCase {
     }
 
     public void testSetRingerModePolicyAccess() throws Exception {
+        if (mUseFixedVolume || mIsTelevision) {
+            return;
+        }
         try {
             // Apps without policy access cannot change silent -> normal or silent -> vibrate.
             Utils.toggleNotificationPolicyAccess(
