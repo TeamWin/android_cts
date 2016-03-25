@@ -16,6 +16,7 @@
 package com.android.cts.deviceowner;
 
 import android.app.Instrumentation;
+import android.app.NotificationManager;
 import android.app.admin.DevicePolicyManager;
 import android.content.ComponentName;
 import android.content.Context;
@@ -37,7 +38,7 @@ import android.test.InstrumentationTestCase;
  */
 public class RemoteBugreportTest extends InstrumentationTestCase {
 
-    private static final int UI_TIMEOUT = 5000; //5 seconds
+    private static final int UI_TIMEOUT = 10000; //10 seconds
 
     private static final String MESSAGE_ONLY_ONE_MANAGED_USER_ALLOWED =
             "There should only be one user, managed by Device Owner";
@@ -60,6 +61,8 @@ public class RemoteBugreportTest extends InstrumentationTestCase {
                 mContext.getSystemService(Context.DEVICE_POLICY_SERVICE);
         BaseDeviceOwnerTest.assertDeviceOwner(mDevicePolicyManager);
         mComponentName = BaseDeviceOwnerTest.getWho();
+        // cancel existing notifications
+        ((NotificationManager) mContext.getSystemService(Context.NOTIFICATION_SERVICE)).cancelAll();
     }
 
     /**
