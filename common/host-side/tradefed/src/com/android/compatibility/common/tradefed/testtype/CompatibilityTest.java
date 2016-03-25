@@ -173,6 +173,10 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
             description = "Reboot the device after every test failure.")
     private boolean mRebootOnFailure = false;
 
+    @Option(name = "skip-connectivity-check",
+            description = "Don't verify device connectivity between module execution.")
+    private boolean mSkipConnectivityCheck = false;
+
     private int mTotalShards;
     private IModuleRepo mModuleRepo;
     private ITestDevice mDevice;
@@ -252,7 +256,9 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
             int moduleCount = modules.size();
             CLog.logAndDisplay(LogLevel.INFO, "Starting %d module%s on %s", moduleCount,
                     (moduleCount > 1) ? "s" : "", mDevice.getSerialNumber());
-            MonitoringUtils.checkDeviceConnectivity(getDevice(), listener, "start");
+            if (!mSkipConnectivityCheck) {
+                MonitoringUtils.checkDeviceConnectivity(getDevice(), listener, "start");
+            }
 
             // Set values and run preconditions
             for (int i = 0; i < moduleCount; i++) {
@@ -277,8 +283,10 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
                             TimeUtil.formatElapsedTime(expected),
                             TimeUtil.formatElapsedTime(duration));
                 }
-                MonitoringUtils.checkDeviceConnectivity(getDevice(), listener,
-                        String.format("%s-%s", module.getName(), module.getAbi().getName()));
+                if (!mSkipConnectivityCheck) {
+                    MonitoringUtils.checkDeviceConnectivity(getDevice(), listener,
+                            String.format("%s-%s", module.getName(), module.getAbi().getName()));
+                }
             }
         } catch (FileNotFoundException fnfe) {
             throw new RuntimeException("Failed to initialize modules", fnfe);
