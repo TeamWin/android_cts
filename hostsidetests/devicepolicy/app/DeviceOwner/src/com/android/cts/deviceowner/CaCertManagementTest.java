@@ -15,6 +15,8 @@
  */
 package com.android.cts.deviceowner;
 
+import android.security.NetworkSecurityPolicy;
+
 import java.io.ByteArrayInputStream;
 import java.security.GeneralSecurityException;
 import java.security.KeyStore;
@@ -126,6 +128,8 @@ public class CaCertManagementTest extends BaseDeviceOwnerTest {
                 listed = true;
             }
         }
+
+        NetworkSecurityPolicy.getInstance().handleTrustStorageUpdate();
 
         boolean trusted = false;
         final TrustManagerFactory tmf =
