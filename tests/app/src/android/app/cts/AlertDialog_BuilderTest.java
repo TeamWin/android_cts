@@ -16,7 +16,6 @@
 
 package android.app.cts;
 
-import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.AlertDialog.Builder;
 import android.app.Instrumentation;
@@ -79,13 +78,9 @@ public class AlertDialog_BuilderTest extends ActivityInstrumentationTestCase2<Di
         mBuilder = null;
         mInstrumentation = getInstrumentation();
         mContext = getActivity();
-        final Activity activity = getActivity();
-        new PollingCheck() {
-            @Override
-            protected boolean check() {
-                return activity.hasWindowFocus();
-            }
-        }.run();
+
+        PollingCheck.waitFor(() -> getActivity().hasWindowFocus());
+
         mButton = null;
         mView = null;
         mListView = null;
