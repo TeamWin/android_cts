@@ -137,11 +137,22 @@ public class SELinuxHostTest extends DeviceTestCase {
     }
 
     /**
+     * Tests that the kernel is enforcing selinux policy globally.
+     *
+     * @throws Exception
+     */
+    public void testGlobalEnforcing() throws Exception {
+        CollectingOutputReceiver out = new CollectingOutputReceiver();
+        mDevice.executeShellCommand("cat /sys/fs/selinux/enforce", out);
+        assertEquals("SELinux policy is not being enforced!", "1", out.getOutput());
+    }
+
+    /**
      * Tests that all domains in the running policy file are in enforcing mode
      *
      * @throws Exception
      */
-    public void testAllEnforcing() throws Exception {
+    public void testAllDomainsEnforcing() throws Exception {
 
         /* run sepolicy-analyze permissive check on policy file */
         ProcessBuilder pb = new ProcessBuilder(sepolicyAnalyze.getAbsolutePath(),
