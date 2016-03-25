@@ -55,12 +55,7 @@ public class ViewOverlayTest extends ActivityInstrumentationTestCase2<ViewOverla
 
     public void testAddNullDrawable() throws Throwable {
         try {
-            runTestOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    mViewOverlay.add(null);
-                }
-            });
+            runTestOnUiThread(() -> mViewOverlay.add(null));
             fail("should throw IllegalArgumentException");
         } catch (IllegalArgumentException e) {
         }
@@ -68,12 +63,7 @@ public class ViewOverlayTest extends ActivityInstrumentationTestCase2<ViewOverla
 
     public void testRemoveNullDrawable() throws Throwable {
         try {
-            runTestOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    mViewOverlay.remove(null);
-                }
-            });
+            runTestOnUiThread(() -> mViewOverlay.remove(null));
             fail("should throw IllegalArgumentException");
         } catch (IllegalArgumentException e) {
         }
@@ -83,12 +73,7 @@ public class ViewOverlayTest extends ActivityInstrumentationTestCase2<ViewOverla
         // Add one colored drawable to the overlay
         final Drawable redDrawable = new ColorDrawable(Color.RED);
         redDrawable.setBounds(20, 30, 40, 50);
-        runTestOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                mViewOverlay.add(redDrawable);
-            }
-        });
+        runTestOnUiThread(() -> mViewOverlay.add(redDrawable));
 
         final List<Pair<Rect, Integer>> colorRectangles = new ArrayList<>();
         colorRectangles.add(new Pair<>(new Rect(20, 30, 40, 50), Color.RED));
@@ -96,12 +81,7 @@ public class ViewOverlayTest extends ActivityInstrumentationTestCase2<ViewOverla
                 Color.WHITE, colorRectangles);
 
         // Now remove that drawable from the overlay and test that we're back to pure white fill
-        runTestOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                mViewOverlay.remove(redDrawable);
-            }
-        });
+        runTestOnUiThread(() -> mViewOverlay.remove(redDrawable));
         DrawingUtils.assertAllPixelsOfColor("Back to default fill", mViewWithOverlay,
                 Color.WHITE, null);
     }
@@ -109,14 +89,12 @@ public class ViewOverlayTest extends ActivityInstrumentationTestCase2<ViewOverla
     public void testAddTheSameDrawableTwice() throws Throwable {
         final Drawable redDrawable = new ColorDrawable(Color.RED);
         redDrawable.setBounds(20, 30, 40, 50);
-        runTestOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                // Add the same drawable twice
-                mViewOverlay.add(redDrawable);
-                mViewOverlay.add(redDrawable);
-            }
-        });
+        runTestOnUiThread(
+                () -> {
+                    // Add the same drawable twice
+                    mViewOverlay.add(redDrawable);
+                    mViewOverlay.add(redDrawable);
+                });
 
         final List<Pair<Rect, Integer>> colorRectangles = new ArrayList<>();
         colorRectangles.add(new Pair<>(new Rect(20, 30, 40, 50), Color.RED));
@@ -124,12 +102,7 @@ public class ViewOverlayTest extends ActivityInstrumentationTestCase2<ViewOverla
                 Color.WHITE, colorRectangles);
 
         // Now remove that drawable from the overlay and test that we're back to pure white fill
-        runTestOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                mViewOverlay.remove(redDrawable);
-            }
-        });
+        runTestOnUiThread(() -> mViewOverlay.remove(redDrawable));
         DrawingUtils.assertAllPixelsOfColor("Back to default fill", mViewWithOverlay,
                 Color.WHITE, null);
     }
@@ -138,12 +111,7 @@ public class ViewOverlayTest extends ActivityInstrumentationTestCase2<ViewOverla
         // Add one colored drawable to the overlay
         final Drawable redDrawable = new ColorDrawable(Color.RED);
         redDrawable.setBounds(20, 30, 40, 50);
-        runTestOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                mViewOverlay.add(redDrawable);
-            }
-        });
+        runTestOnUiThread(() -> mViewOverlay.add(redDrawable));
 
         final List<Pair<Rect, Integer>> colorRectangles = new ArrayList<>();
         colorRectangles.add(new Pair<>(new Rect(20, 30, 40, 50), Color.RED));
@@ -151,14 +119,12 @@ public class ViewOverlayTest extends ActivityInstrumentationTestCase2<ViewOverla
                 Color.WHITE, colorRectangles);
 
         // Now remove that drawable from the overlay and test that we're back to pure white fill
-        runTestOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                // Remove the drawable twice. The second should be a no-op
-                mViewOverlay.remove(redDrawable);
-                mViewOverlay.remove(redDrawable);
-            }
-        });
+        runTestOnUiThread(
+                () -> {
+                    // Remove the drawable twice. The second should be a no-op
+                    mViewOverlay.remove(redDrawable);
+                    mViewOverlay.remove(redDrawable);
+                });
         DrawingUtils.assertAllPixelsOfColor("Back to default fill", mViewWithOverlay,
                 Color.WHITE, null);
     }
@@ -172,14 +138,12 @@ public class ViewOverlayTest extends ActivityInstrumentationTestCase2<ViewOverla
         final Drawable blueDrawable = new ColorDrawable(Color.BLUE);
         blueDrawable.setBounds(40, 60, 80, 90);
 
-        runTestOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                mViewOverlay.add(redDrawable);
-                mViewOverlay.add(greenDrawable);
-                mViewOverlay.add(blueDrawable);
-            }
-        });
+        runTestOnUiThread(
+                () -> {
+                    mViewOverlay.add(redDrawable);
+                    mViewOverlay.add(greenDrawable);
+                    mViewOverlay.add(blueDrawable);
+                });
 
         final List<Pair<Rect, Integer>> colorRectangles = new ArrayList<>();
         colorRectangles.add(new Pair<>(new Rect(10, 20, 30, 40), Color.RED));
@@ -189,12 +153,7 @@ public class ViewOverlayTest extends ActivityInstrumentationTestCase2<ViewOverla
                 Color.WHITE, colorRectangles);
 
         // Remove one of the drawables from the overlay
-        runTestOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                mViewOverlay.remove(greenDrawable);
-            }
-        });
+        runTestOnUiThread(() -> mViewOverlay.remove(greenDrawable));
         colorRectangles.clear();
         colorRectangles.add(new Pair<>(new Rect(10, 20, 30, 40), Color.RED));
         colorRectangles.add(new Pair<>(new Rect(40, 60, 80, 90), Color.BLUE));
@@ -202,12 +161,7 @@ public class ViewOverlayTest extends ActivityInstrumentationTestCase2<ViewOverla
                 Color.WHITE, colorRectangles);
 
         // Clear all drawables from the overlay and test that we're back to pure white fill
-        runTestOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                mViewOverlay.clear();
-            }
-        });
+        runTestOnUiThread(() -> mViewOverlay.clear());
         DrawingUtils.assertAllPixelsOfColor("Back to default fill", mViewWithOverlay,
                 Color.WHITE, null);
     }
@@ -219,13 +173,11 @@ public class ViewOverlayTest extends ActivityInstrumentationTestCase2<ViewOverla
         final Drawable greenDrawable = new ColorDrawable(Color.GREEN);
         greenDrawable.setBounds(30, 20, 80, 40);
 
-        runTestOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                mViewOverlay.add(redDrawable);
-                mViewOverlay.add(greenDrawable);
-            }
-        });
+        runTestOnUiThread(
+                () -> {
+                    mViewOverlay.add(redDrawable);
+                    mViewOverlay.add(greenDrawable);
+                });
 
         // Our overlay drawables overlap in horizontal 30-60 range. Here we test that the
         // second drawable is the one that is drawn last in that range.
@@ -236,24 +188,14 @@ public class ViewOverlayTest extends ActivityInstrumentationTestCase2<ViewOverla
                 Color.WHITE, colorRectangles);
 
         // Remove the second from the overlay
-        runTestOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                mViewOverlay.remove(greenDrawable);
-            }
-        });
+        runTestOnUiThread(() -> mViewOverlay.remove(greenDrawable));
         colorRectangles.clear();
         colorRectangles.add(new Pair<>(new Rect(10, 20, 60, 40), Color.RED));
         DrawingUtils.assertAllPixelsOfColor("Overlay with one drawable", mViewWithOverlay,
                 Color.WHITE, colorRectangles);
 
         // Clear all drawables from the overlay and test that we're back to pure white fill
-        runTestOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                mViewOverlay.clear();
-            }
-        });
+        runTestOnUiThread(() -> mViewOverlay.clear());
         DrawingUtils.assertAllPixelsOfColor("Back to default fill", mViewWithOverlay,
                 Color.WHITE, null);
     }
@@ -262,12 +204,7 @@ public class ViewOverlayTest extends ActivityInstrumentationTestCase2<ViewOverla
         // Add one colored drawable to the overlay
         final ColorDrawable drawable = new ColorDrawable(Color.RED);
         drawable.setBounds(20, 30, 40, 50);
-        runTestOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                mViewOverlay.add(drawable);
-            }
-        });
+        runTestOnUiThread(() -> mViewOverlay.add(drawable));
 
         final List<Pair<Rect, Integer>> colorRectangles = new ArrayList<>();
         colorRectangles.add(new Pair<>(new Rect(20, 30, 40, 50), Color.RED));
@@ -279,24 +216,14 @@ public class ViewOverlayTest extends ActivityInstrumentationTestCase2<ViewOverla
         // off a redraw pass at some point. Here we are testing a subset of that - that the
         // next time a redraw of View / ViewOverlay happens, it catches the new state of our
         // original drawable.
-        runTestOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                drawable.setBounds(50, 10, 80, 90);
-            }
-        });
+        runTestOnUiThread(() -> drawable.setBounds(50, 10, 80, 90));
         colorRectangles.clear();
         colorRectangles.add(new Pair<>(new Rect(50, 10, 80, 90), Color.RED));
         DrawingUtils.assertAllPixelsOfColor("Red drawable moved", mViewWithOverlay,
                 Color.WHITE, colorRectangles);
 
         // Update the color of our drawable. Same (partial) testing as before.
-        runTestOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                drawable.setColor(Color.GREEN);
-            }
-        });
+        runTestOnUiThread(() -> drawable.setColor(Color.GREEN));
         colorRectangles.clear();
         colorRectangles.add(new Pair<>(new Rect(50, 10, 80, 90), Color.GREEN));
         DrawingUtils.assertAllPixelsOfColor("Drawable is green now", mViewWithOverlay,
@@ -310,13 +237,11 @@ public class ViewOverlayTest extends ActivityInstrumentationTestCase2<ViewOverla
         final ColorDrawable greenDrawable = new ColorDrawable(Color.GREEN);
         greenDrawable.setBounds(30, 20, 80, 40);
 
-        runTestOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                mViewOverlay.add(redDrawable);
-                mViewOverlay.add(greenDrawable);
-            }
-        });
+        runTestOnUiThread(
+                () -> {
+                    mViewOverlay.add(redDrawable);
+                    mViewOverlay.add(greenDrawable);
+                });
 
         // Our overlay drawables overlap in horizontal 30-60 range. This is the same test as
         // in testOverlayWithOverlappingDrawables
@@ -328,12 +253,7 @@ public class ViewOverlayTest extends ActivityInstrumentationTestCase2<ViewOverla
 
         // Now change the color of the first drawable and verify that it didn't "bump" it up
         // in the drawing order.
-        runTestOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                redDrawable.setColor(Color.BLUE);
-            }
-        });
+        runTestOnUiThread(() -> redDrawable.setColor(Color.BLUE));
         colorRectangles.add(new Pair<>(new Rect(10, 20, 30, 40), Color.BLUE));
         colorRectangles.add(new Pair<>(new Rect(30, 20, 80, 40), Color.GREEN));
         DrawingUtils.assertAllPixelsOfColor("Overlay with two drawables", mViewWithOverlay,
