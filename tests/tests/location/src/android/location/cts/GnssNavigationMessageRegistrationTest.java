@@ -94,7 +94,7 @@ public class GnssNavigationMessageRegistrationTest extends AndroidTestCase {
                 new TestGnssNavigationMessageListener(TAG, EVENTS_COUNT);
         mTestLocationManager.registerGnssNavigationMessageCallback(mTestGnssNavigationMessageListener);
 
-        mTestGnssNavigationMessageListener.await();
+        assertTrue(mTestGnssNavigationMessageListener.await());
         if (!mTestGnssNavigationMessageListener.verifyState()) {
             return;
         }
@@ -117,7 +117,7 @@ public class GnssNavigationMessageRegistrationTest extends AndroidTestCase {
         mTestLocationManager.requestLocationUpdates(mLocationListener);
 
         // Wait for location updates
-        mLocationListener.await();
+        assertTrue(mLocationListener.await());
 
         Log.i(TAG, "Location received = " + mLocationListener.isLocationReceived());
 
@@ -126,7 +126,7 @@ public class GnssNavigationMessageRegistrationTest extends AndroidTestCase {
         mTestLocationManager.addGpsStatusListener(mGpsStatusListener);
 
         // Wait for Gps Status updates
-        mGpsStatusListener.await();
+        assertTrue(mGpsStatusListener.await());
 
         if (!mGpsStatusListener.isGpsStatusReceived()) {
             // Skip the Test. No Satellites are visible. Device may be Indoor
