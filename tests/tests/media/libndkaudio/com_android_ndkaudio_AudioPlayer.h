@@ -82,7 +82,7 @@ JNIEXPORT void JNICALL Java_com_android_ndkaudio_AudioPlayer_ReleaseRoutingInter
  * Method:    GetLastSLResult
  * Signature: ()J
  */
-JNIEXPORT long JNICALL Java_com_android_ndkaudio_AudioPlayer_GetLastSLResult
+JNIEXPORT jlong JNICALL Java_com_android_ndkaudio_AudioPlayer_GetLastSLResult
   (JNIEnv*, jobject);
 
 /*

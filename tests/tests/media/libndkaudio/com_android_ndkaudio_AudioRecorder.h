@@ -92,7 +92,7 @@ JNIEXPORT void JNICALL Java_com_android_ndkaudio_AudioRecorder_GetBufferData
  * Method:    GetLastSLResult
  * Signature: ()J
  */
-JNIEXPORT long JNICALL Java_com_android_ndkaudio_AudioRecorder_GetLastSLResult
+JNIEXPORT jlong JNICALL Java_com_android_ndkaudio_AudioRecorder_GetLastSLResult
   (JNIEnv*, jobject);
 
 /*
