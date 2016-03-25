@@ -199,6 +199,11 @@ public class CtsTest implements IDeviceTest, IResumableTest, IShardableTest, IBu
     @Option(name = "min-pre-reboot-package-count", description =
             "The minimum number of packages to require a pre test reboot")
     private int mMinPreRebootPackageCount = 2;
+
+    @Option(name = "skip-connectivity-check",
+            description = "Don't verify device connectivity between module execution.")
+    private boolean mSkipConnectivityCheck = false;
+
     private final int mShardAssignment;
     private final int mTotalShards;
     private ITestDevice mDevice = null;
@@ -520,7 +525,9 @@ public class CtsTest implements IDeviceTest, IResumableTest, IShardableTest, IBu
             IAbi currentAbi = null;
 
             // check connectivity upfront
-            MonitoringUtils.checkDeviceConnectivity(getDevice(), listener, "start");
+            if (!mSkipConnectivityCheck) {
+                MonitoringUtils.checkDeviceConnectivity(getDevice(), listener, "start");
+            }
             for (int i = mLastTestPackageIndex; i < mTestPackageList.size(); i++) {
                 TestPackage testPackage = mTestPackageList.get(i);
 
@@ -568,9 +575,11 @@ public class CtsTest implements IDeviceTest, IResumableTest, IShardableTest, IBu
                 performPackagePrepareSetup(testPackage.getPackageDef());
                 test.run(filterMap.get(testPackage.getPackageDef().getId()));
                 performPackagePreparerTearDown(testPackage.getPackageDef());
-                MonitoringUtils.checkDeviceConnectivity(getDevice(), listener,
-                        String.format("%s-%s", testPackage.getPackageDef().getName(),
-                                testPackage.getPackageDef().getAbi().getName()));
+                if (!mSkipConnectivityCheck) {
+                    MonitoringUtils.checkDeviceConnectivity(getDevice(), listener,
+                            String.format("%s-%s", testPackage.getPackageDef().getName(),
+                                    testPackage.getPackageDef().getAbi().getName()));
+                }
                 if (i < mTestPackageList.size() - 1) {
                     TestPackage nextPackage = mTestPackageList.get(i + 1);
                     rebootIfNecessary(testPackage, nextPackage);
