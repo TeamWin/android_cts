@@ -106,7 +106,7 @@ public class ListPopupWindowTest extends
         new ListPopupWindow(mActivity, null, 0, android.R.style.Widget_Material_ListPopupWindow);
     }
 
-    public void noDefaultVisibility() {
+    public void testNoDefaultVisibility() {
         mPopupWindow = new ListPopupWindow(mActivity);
         assertFalse(mPopupWindow.isShowing());
     }
@@ -436,12 +436,7 @@ public class ListPopupWindowTest extends
         mPopupWindowBuilder = new Builder().withItemClickListener().withDismissListener();
         mPopupWindowBuilder.show();
 
-        runTestOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                mPopupWindow.performItemClick(2);
-            }
-        });
+        runTestOnUiThread(() -> mPopupWindow.performItemClick(2));
         mInstrumentation.waitForIdleSync();
 
         verify(mPopupWindowBuilder.mOnItemClickListener, times(1)).onItemClick(
@@ -451,12 +446,7 @@ public class ListPopupWindowTest extends
         verify(mPopupWindowBuilder.mOnDismissListener, times(1)).onDismiss();
 
         mPopupWindowBuilder.showAgain();
-        runTestOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                mPopupWindow.getListView().performItemClick(null, 1, 1);
-            }
-        });
+        runTestOnUiThread(() -> mPopupWindow.getListView().performItemClick(null, 1, 1));
         mInstrumentation.waitForIdleSync();
 
         verify(mPopupWindowBuilder.mOnItemClickListener, times(1)).onItemClick(
@@ -588,12 +578,7 @@ public class ListPopupWindowTest extends
                 (MockViewForListPopupWindow) mPopupWindow.getAnchorView();
         anchor.wireTo(mPopupWindow);
         // Request focus on our EditText
-        runTestOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                anchor.requestFocus();
-            }
-        });
+        runTestOnUiThread(() -> anchor.requestFocus());
         mInstrumentation.waitForIdleSync();
         assertTrue(anchor.isFocused());
 
@@ -615,12 +600,7 @@ public class ListPopupWindowTest extends
                 (MockViewForListPopupWindow) mPopupWindow.getAnchorView();
         anchor.wireTo(mPopupWindow);
         // Request focus on our EditText
-        runTestOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                anchor.requestFocus();
-            }
-        });
+        runTestOnUiThread(() -> anchor.requestFocus());
         mInstrumentation.waitForIdleSync();
         assertTrue(anchor.isFocused());
 
@@ -727,12 +707,7 @@ public class ListPopupWindowTest extends
         View.OnTouchListener dragListener = mPopupWindow.createDragToOpenListener(anchor);
         anchor.setOnTouchListener(dragListener);
         // And also configure it to show the popup window on click
-        anchor.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                mPopupWindow.show();
-            }
-        });
+        anchor.setOnClickListener((View view) -> mPopupWindow.show());
 
         // Get the height of a row item in our popup window
         final int popupRowHeight = mActivity.getResources().getDimensionPixelSize(
@@ -1002,36 +977,33 @@ public class ListPopupWindowTest extends
         private void show() {
             configure();
 
-            mInstrumentation.runOnMainSync(new Runnable() {
-                public void run() {
-                    mPopupWindow.show();
-                    assertTrue(mPopupWindow.isShowing());
-                }
-            });
+            mInstrumentation.runOnMainSync(
+                    () -> {
+                        mPopupWindow.show();
+                        assertTrue(mPopupWindow.isShowing());
+                    });
             mInstrumentation.waitForIdleSync();
         }
 
         private void showAgain() {
-            mInstrumentation.runOnMainSync(new Runnable() {
-                public void run() {
-                    if (mPopupWindow == null || mPopupWindow.isShowing()) {
-                        return;
-                    }
-                    mPopupWindow.show();
-                    assertTrue(mPopupWindow.isShowing());
-                }
-            });
+            mInstrumentation.runOnMainSync(
+                    () -> {
+                        if (mPopupWindow == null || mPopupWindow.isShowing()) {
+                            return;
+                        }
+                        mPopupWindow.show();
+                        assertTrue(mPopupWindow.isShowing());
+                    });
             mInstrumentation.waitForIdleSync();
         }
 
         private void dismiss() {
-            mInstrumentation.runOnMainSync(new Runnable() {
-                public void run() {
-                    if (mPopupWindow == null || !mPopupWindow.isShowing())
-                        return;
-                    mPopupWindow.dismiss();
-                }
-            });
+            mInstrumentation.runOnMainSync(
+                    () -> {
+                        if (mPopupWindow == null || !mPopupWindow.isShowing())
+                            return;
+                        mPopupWindow.dismiss();
+                    });
             mInstrumentation.waitForIdleSync();
         }
     }
