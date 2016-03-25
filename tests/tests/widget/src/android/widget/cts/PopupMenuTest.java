@@ -57,12 +57,7 @@ public class PopupMenuTest extends
     protected void tearDown() throws Exception {
         if (mPopupMenu != null) {
             try {
-                runTestOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        mPopupMenu.dismiss();
-                    }
-                });
+                runTestOnUiThread(() -> mPopupMenu.dismiss());
             } catch (Throwable t) {
                 throw new RuntimeException(t);
             }
@@ -89,11 +84,7 @@ public class PopupMenuTest extends
 
     public void testPopulateViaInflater() throws Throwable {
         mBuilder = new Builder().inflateWithInflater(true);
-        runTestOnUiThread(new Runnable() {
-            public void run() {
-                mBuilder.show();
-            }
-        });
+        runTestOnUiThread(() -> mBuilder.show());
         mInstrumentation.waitForIdleSync();
 
         verifyMenuContent();
@@ -101,11 +92,7 @@ public class PopupMenuTest extends
 
     public void testDirectPopulate() throws Throwable {
         mBuilder = new Builder().inflateWithInflater(false);
-        runTestOnUiThread(new Runnable() {
-            public void run() {
-                mBuilder.show();
-            }
-        });
+        runTestOnUiThread(() -> mBuilder.show());
         mInstrumentation.waitForIdleSync();
 
         verifyMenuContent();
@@ -113,11 +100,7 @@ public class PopupMenuTest extends
 
     public void testAccessGravity() throws Throwable {
         mBuilder = new Builder();
-        runTestOnUiThread(new Runnable() {
-            public void run() {
-                mBuilder.show();
-            }
-        });
+        runTestOnUiThread(() -> mBuilder.show());
 
         assertEquals(Gravity.NO_GRAVITY, mPopupMenu.getGravity());
         mPopupMenu.setGravity(Gravity.TOP);
@@ -126,39 +109,23 @@ public class PopupMenuTest extends
 
     public void testConstructorWithGravity() throws Throwable {
         mBuilder = new Builder().withGravity(Gravity.TOP);
-        runTestOnUiThread(new Runnable() {
-            public void run() {
-                mBuilder.show();
-            }
-        });
+        runTestOnUiThread(() -> mBuilder.show());
 
         assertEquals(Gravity.TOP, mPopupMenu.getGravity());
     }
 
     public void testDismissalViaAPI() throws Throwable {
         mBuilder = new Builder().withDismissListener();
-        runTestOnUiThread(new Runnable() {
-            public void run() {
-                mBuilder.show();
-            }
-        });
+        runTestOnUiThread(() -> mBuilder.show());
 
         mInstrumentation.waitForIdleSync();
         verify(mBuilder.mOnDismissListener, never()).onDismiss(mPopupMenu);
 
-        runTestOnUiThread(new Runnable() {
-            public void run() {
-                mPopupMenu.dismiss();
-            }
-        });
+        runTestOnUiThread(() -> mPopupMenu.dismiss());
         mInstrumentation.waitForIdleSync();
         verify(mBuilder.mOnDismissListener, times(1)).onDismiss(mPopupMenu);
 
-        runTestOnUiThread(new Runnable() {
-            public void run() {
-                mPopupMenu.dismiss();
-            }
-        });
+        runTestOnUiThread(() -> mPopupMenu.dismiss());
         mInstrumentation.waitForIdleSync();
         // Shouldn't have any more interactions with our dismiss listener since the menu was
         // already dismissed when we called dismiss()
@@ -171,44 +138,22 @@ public class PopupMenuTest extends
         // "click" a submenu item.
         mBuilder = new Builder().withDismissListener()
                 .withPopupStyleResource(R.style.PopupWindow_NullTransitions);
-        runTestOnUiThread(new Runnable() {
-            public void run() {
-                mBuilder.show();
-            }
-        });
+        runTestOnUiThread(() -> mBuilder.show());
         mInstrumentation.waitForIdleSync();
         verify(mBuilder.mOnDismissListener, never()).onDismiss(mPopupMenu);
 
-        runTestOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                mPopupMenu.getMenu().performIdentifierAction(R.id.action_share, 0);
-            }
-        });
+        runTestOnUiThread(() -> mPopupMenu.getMenu().performIdentifierAction(R.id.action_share, 0));
         mInstrumentation.waitForIdleSync();
 
-        runTestOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                mPopupMenu.getMenu().findItem(R.id.action_share).getSubMenu().
-                        performIdentifierAction(R.id.action_share_email, 0);
-            }
-        });
+        runTestOnUiThread(() -> mPopupMenu.getMenu().findItem(R.id.action_share).getSubMenu().
+                        performIdentifierAction(R.id.action_share_email, 0));
         mInstrumentation.waitForIdleSync();
 
-        runTestOnUiThread(new Runnable() {
-            public void run() {
-                mPopupMenu.dismiss();
-            }
-        });
+        runTestOnUiThread(() -> mPopupMenu.dismiss());
         mInstrumentation.waitForIdleSync();
         verify(mBuilder.mOnDismissListener, times(1)).onDismiss(mPopupMenu);
 
-        runTestOnUiThread(new Runnable() {
-            public void run() {
-                mPopupMenu.dismiss();
-            }
-        });
+        runTestOnUiThread(() -> mPopupMenu.dismiss());
         mInstrumentation.waitForIdleSync();
         // Shouldn't have any more interactions with our dismiss listener since the menu was
         // already dismissed when we called dismiss()
@@ -222,11 +167,7 @@ public class PopupMenuTest extends
         mBuilder = new Builder().withDismissListener()
                 .withPopupMenuContent(R.menu.popup_menu_single)
                 .withPopupStyleResource(R.style.PopupWindow_NullTransitions);
-        runTestOnUiThread(new Runnable() {
-            public void run() {
-                mBuilder.show();
-            }
-        });
+        runTestOnUiThread(() -> mBuilder.show());
         mInstrumentation.waitForIdleSync();
 
         // Determine the location of the anchor on the screen so that we can emulate
@@ -274,21 +215,13 @@ public class PopupMenuTest extends
 
     public void testSimpleMenuItemClickViaAPI() throws Throwable {
         mBuilder = new Builder().withMenuItemClickListener().withDismissListener();
-        runTestOnUiThread(new Runnable() {
-            public void run() {
-                mBuilder.show();
-            }
-        });
+        runTestOnUiThread(() -> mBuilder.show());
 
         // Verify that our menu item click listener hasn't been called yet
         verify(mBuilder.mOnMenuItemClickListener, never()).onMenuItemClick(any(MenuItem.class));
 
-        InstrumentationRegistry.getInstrumentation().runOnMainSync(new Runnable() {
-            @Override
-            public void run() {
-                mPopupMenu.getMenu().performIdentifierAction(R.id.action_highlight, 0);
-            }
-        });
+        runTestOnUiThread(
+                () -> mPopupMenu.getMenu().performIdentifierAction(R.id.action_highlight, 0));
 
         // Verify that our menu item click listener has been called with the expected menu item
         verify(mBuilder.mOnMenuItemClickListener, times(1)).onMenuItemClick(
@@ -305,33 +238,19 @@ public class PopupMenuTest extends
         // "click" a submenu item.
         mBuilder = new Builder().withDismissListener().withMenuItemClickListener()
                 .withPopupStyleResource(R.style.PopupWindow_NullTransitions);
-        runTestOnUiThread(new Runnable() {
-            public void run() {
-                mBuilder.show();
-            }
-        });
+        runTestOnUiThread(() -> mBuilder.show());
         mInstrumentation.waitForIdleSync();
 
         // Verify that our menu item click listener hasn't been called yet
         verify(mBuilder.mOnMenuItemClickListener, never()).onMenuItemClick(any(MenuItem.class));
 
-        runTestOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                mPopupMenu.getMenu().performIdentifierAction(R.id.action_share, 0);
-            }
-        });
+        runTestOnUiThread(() -> mPopupMenu.getMenu().performIdentifierAction(R.id.action_share, 0));
         // Verify that our menu item click listener has been called on "share" action
         verify(mBuilder.mOnMenuItemClickListener, times(1)).onMenuItemClick(
                 mPopupMenu.getMenu().findItem(R.id.action_share));
 
-        runTestOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                mPopupMenu.getMenu().findItem(R.id.action_share).getSubMenu().
-                        performIdentifierAction(R.id.action_share_email, 0);
-            }
-        });
+        runTestOnUiThread(() -> mPopupMenu.getMenu().findItem(R.id.action_share).getSubMenu().
+                        performIdentifierAction(R.id.action_share_email, 0));
 
         // Verify that out menu item click listener has been called with the expected menu item
         verify(mBuilder.mOnMenuItemClickListener, times(1)).onMenuItemClick(
