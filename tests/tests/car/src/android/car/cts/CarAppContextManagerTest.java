@@ -33,9 +33,9 @@ public class CarAppContextManagerTest extends CarApiTestBase {
         assertNotNull(mManager);
     }
 
-    public void testUnregisteredAccess() throws Exception {
+    public void testSetActiveNullListener() throws Exception {
         try {
-            mManager.setActiveContexts(CarAppContextManager.APP_CONTEXT_NAVIGATION);
+            mManager.setActiveContexts(null, CarAppContextManager.APP_CONTEXT_NAVIGATION);
             fail();
         } catch (IllegalStateException e) {
             // Expected.
@@ -72,14 +72,16 @@ public class CarAppContextManagerTest extends CarApiTestBase {
         assertNotNull(manager2);
 
         assertEquals(0, mManager.getActiveAppContexts());
-        ContextChangeListener owner = new ContextChangeListener();
-        ContextChangeListener owner2 = new ContextChangeListener();
-        mManager.registerContextListener(owner, CarAppContextManager.APP_CONTEXT_NAVIGATION |
+        ContextChangeListener change = new ContextChangeListener();
+        ContextChangeListener change2 = new ContextChangeListener();
+        ContextOwnershipChangeListener owner = new ContextOwnershipChangeListener();
+        ContextOwnershipChangeListener owner2 = new ContextOwnershipChangeListener();
+        mManager.registerContextListener(change, CarAppContextManager.APP_CONTEXT_NAVIGATION |
                 CarAppContextManager.APP_CONTEXT_VOICE_COMMAND);
-        manager2.registerContextListener(owner2, CarAppContextManager.APP_CONTEXT_NAVIGATION |
+        manager2.registerContextListener(change2, CarAppContextManager.APP_CONTEXT_NAVIGATION |
                 CarAppContextManager.APP_CONTEXT_VOICE_COMMAND);
 
-        mManager.setActiveContexts(CarAppContextManager.APP_CONTEXT_NAVIGATION);
+        mManager.setActiveContexts(owner, CarAppContextManager.APP_CONTEXT_NAVIGATION);
         int expectedContexts = CarAppContextManager.APP_CONTEXT_NAVIGATION;
         assertEquals(expectedContexts, mManager.getActiveAppContexts());
         assertEquals(expectedContexts, manager2.getActiveAppContexts());
@@ -89,12 +91,12 @@ public class CarAppContextManagerTest extends CarApiTestBase {
                 CarAppContextManager.APP_CONTEXT_VOICE_COMMAND));
         assertFalse(manager2.isOwningContext(CarAppContextManager.APP_CONTEXT_NAVIGATION));
         assertFalse(manager2.isOwningContext(CarAppContextManager.APP_CONTEXT_VOICE_COMMAND));
-        assertTrue(owner2.waitForContextChangeAndAssert(DEFAULT_WAIT_TIMEOUT_MS,
+        assertTrue(change2.waitForContextChangeAndAssert(DEFAULT_WAIT_TIMEOUT_MS,
                 expectedContexts));
-        // owner should not get notification for its own change
-        assertFalse(owner.waitForContextChangeAndAssert(DEFAULT_WAIT_TIMEOUT_MS, 0));
+        // change should not get notification for its own change
+        assertFalse(change.waitForContextChangeAndAssert(DEFAULT_WAIT_TIMEOUT_MS, 0));
 
-        mManager.setActiveContexts(CarAppContextManager.APP_CONTEXT_VOICE_COMMAND);
+        mManager.setActiveContexts(owner, CarAppContextManager.APP_CONTEXT_VOICE_COMMAND);
         expectedContexts = CarAppContextManager.APP_CONTEXT_NAVIGATION |
                 CarAppContextManager.APP_CONTEXT_VOICE_COMMAND;
         assertTrue(mManager.isOwningContext(CarAppContextManager.APP_CONTEXT_NAVIGATION));
@@ -105,19 +107,19 @@ public class CarAppContextManagerTest extends CarApiTestBase {
         assertFalse(manager2.isOwningContext(CarAppContextManager.APP_CONTEXT_VOICE_COMMAND));
         assertEquals(expectedContexts, mManager.getActiveAppContexts());
         assertEquals(expectedContexts, manager2.getActiveAppContexts());
-        assertTrue(owner2.waitForContextChangeAndAssert(DEFAULT_WAIT_TIMEOUT_MS,
+        assertTrue(change2.waitForContextChangeAndAssert(DEFAULT_WAIT_TIMEOUT_MS,
                 expectedContexts));
-        // owner should not get notification for its own change
-        assertFalse(owner.waitForContextChangeAndAssert(DEFAULT_WAIT_TIMEOUT_MS, 0));
+        // change should not get notification for its own change
+        assertFalse(change.waitForContextChangeAndAssert(DEFAULT_WAIT_TIMEOUT_MS, 0));
 
         // this should be no-op
-        mManager.setActiveContexts(CarAppContextManager.APP_CONTEXT_NAVIGATION);
+        mManager.setActiveContexts(owner, CarAppContextManager.APP_CONTEXT_NAVIGATION);
         assertEquals(expectedContexts, mManager.getActiveAppContexts());
         assertEquals(expectedContexts, manager2.getActiveAppContexts());
-        assertFalse(owner2.waitForContextChangeAndAssert(DEFAULT_WAIT_TIMEOUT_MS, 0));
-        assertFalse(owner.waitForContextChangeAndAssert(DEFAULT_WAIT_TIMEOUT_MS, 0));
+        assertFalse(change2.waitForContextChangeAndAssert(DEFAULT_WAIT_TIMEOUT_MS, 0));
+        assertFalse(change.waitForContextChangeAndAssert(DEFAULT_WAIT_TIMEOUT_MS, 0));
 
-        manager2.setActiveContexts(CarAppContextManager.APP_CONTEXT_NAVIGATION);
+        manager2.setActiveContexts(owner2, CarAppContextManager.APP_CONTEXT_NAVIGATION);
         assertFalse(mManager.isOwningContext(CarAppContextManager.APP_CONTEXT_NAVIGATION));
         assertTrue(mManager.isOwningContext(CarAppContextManager.APP_CONTEXT_VOICE_COMMAND));
         assertTrue(manager2.isOwningContext(CarAppContextManager.APP_CONTEXT_NAVIGATION));
@@ -144,9 +146,9 @@ public class CarAppContextManagerTest extends CarApiTestBase {
         expectedContexts = CarAppContextManager.APP_CONTEXT_NAVIGATION;
         assertEquals(expectedContexts, mManager.getActiveAppContexts());
         assertEquals(expectedContexts, manager2.getActiveAppContexts());
-        assertTrue(owner2.waitForContextChangeAndAssert(DEFAULT_WAIT_TIMEOUT_MS,
+        assertTrue(change2.waitForContextChangeAndAssert(DEFAULT_WAIT_TIMEOUT_MS,
                 CarAppContextManager.APP_CONTEXT_NAVIGATION));
-        assertFalse(owner.waitForContextChangeAndAssert(DEFAULT_WAIT_TIMEOUT_MS, 0));
+        assertFalse(change.waitForContextChangeAndAssert(DEFAULT_WAIT_TIMEOUT_MS, 0));
 
         manager2.resetActiveContexts(CarAppContextManager.APP_CONTEXT_NAVIGATION);
         assertFalse(mManager.isOwningContext(CarAppContextManager.APP_CONTEXT_NAVIGATION));
@@ -156,7 +158,7 @@ public class CarAppContextManagerTest extends CarApiTestBase {
         expectedContexts = 0;
         assertEquals(expectedContexts, mManager.getActiveAppContexts());
         assertEquals(expectedContexts, manager2.getActiveAppContexts());
-        assertTrue(owner.waitForContextChangeAndAssert(DEFAULT_WAIT_TIMEOUT_MS, 0));
+        assertTrue(change.waitForContextChangeAndAssert(DEFAULT_WAIT_TIMEOUT_MS, 0));
         mManager.unregisterContextListener();
         manager2.unregisterContextListener();
     }
@@ -172,15 +174,16 @@ public class CarAppContextManagerTest extends CarApiTestBase {
         assertNotNull(manager2);
 
         assertEquals(0, mManager.getActiveAppContexts());
-        ContextChangeListener owner = new ContextChangeListener();
+        ContextChangeListener change = new ContextChangeListener();
         ContextChangeListener listener = new ContextChangeListener();
-        mManager.registerContextListener(owner, CarAppContextManager.APP_CONTEXT_NAVIGATION |
+        ContextOwnershipChangeListener owner = new ContextOwnershipChangeListener();
+        mManager.registerContextListener(change, CarAppContextManager.APP_CONTEXT_NAVIGATION |
                 CarAppContextManager.APP_CONTEXT_VOICE_COMMAND);
         manager2.registerContextListener(listener, CarAppContextManager.APP_CONTEXT_NAVIGATION);
-        mManager.setActiveContexts(CarAppContextManager.APP_CONTEXT_NAVIGATION);
+        mManager.setActiveContexts(owner, CarAppContextManager.APP_CONTEXT_NAVIGATION);
         assertTrue(listener.waitForContextChangeAndAssert(DEFAULT_WAIT_TIMEOUT_MS,
                 CarAppContextManager.APP_CONTEXT_NAVIGATION));
-        mManager.setActiveContexts(CarAppContextManager.APP_CONTEXT_VOICE_COMMAND);
+        mManager.setActiveContexts(owner, CarAppContextManager.APP_CONTEXT_VOICE_COMMAND);
         assertFalse(listener.waitForContextChangeAndAssert(DEFAULT_WAIT_TIMEOUT_MS, 0));
         mManager.resetActiveContexts(CarAppContextManager.APP_CONTEXT_VOICE_COMMAND);
         assertFalse(listener.waitForContextChangeAndAssert(DEFAULT_WAIT_TIMEOUT_MS, 0));
@@ -191,8 +194,6 @@ public class CarAppContextManagerTest extends CarApiTestBase {
     private class ContextChangeListener implements CarAppContextManager.AppContextChangeListener {
         private int mLastChangeEvent;
         private final Semaphore mChangeWait = new Semaphore(0);
-        private int mLastLossEvent;
-        private final Semaphore mLossEventWait = new Semaphore(0);
 
         public boolean waitForContextChangeAndAssert(long timeoutMs, int expectedContexts)
                 throws Exception {
@@ -203,6 +204,20 @@ public class CarAppContextManagerTest extends CarApiTestBase {
             return true;
         }
 
+        @Override
+        public void onAppContextChange(int activeContexts) {
+            Log.i(TAG, "onAppContextChange " + Integer.toHexString(activeContexts));
+            assertMainThread();
+            mLastChangeEvent = activeContexts;
+            mChangeWait.release();
+        }
+    }
+
+    private class ContextOwnershipChangeListener
+            implements CarAppContextManager.AppContextOwnershipChangeListener {
+        private int mLastLossEvent;
+        private final Semaphore mLossEventWait = new Semaphore(0);
+
         public boolean waitForOwnershipLossAndAssert(long timeoutMs, int expectedContexts)
                 throws Exception {
             if (!mLossEventWait.tryAcquire(timeoutMs, TimeUnit.MILLISECONDS)) {
@@ -210,14 +225,6 @@ public class CarAppContextManagerTest extends CarApiTestBase {
             }
             assertEquals(expectedContexts, mLastLossEvent);
             return true;
-        }
-
-        @Override
-        public void onAppContextChange(int activeContexts) {
-            Log.i(TAG, "onAppContextChange " + Integer.toHexString(activeContexts));
-            assertMainThread();
-            mLastChangeEvent = activeContexts;
-            mChangeWait.release();
         }
 
         @Override
