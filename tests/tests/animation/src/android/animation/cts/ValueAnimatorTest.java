@@ -15,10 +15,15 @@
  */
 package android.animation.cts;
 
+import android.animation.Animator;
 import android.animation.ObjectAnimator;
 import android.animation.ValueAnimator;
 import android.test.ActivityInstrumentationTestCase2;
 import android.view.animation.AccelerateInterpolator;
+import android.view.animation.LinearInterpolator;
+
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 public class ValueAnimatorTest extends
         ActivityInstrumentationTestCase2<AnimationActivity> {
@@ -330,6 +335,31 @@ public class ValueAnimatorTest extends
         assertTrue(animatedValue <= end);
     }
 
+    public void testNoDelayOnSeekAnimation() throws Throwable {
+        ValueAnimator animator = ValueAnimator.ofFloat(0, 1);
+        animator.setInterpolator(new LinearInterpolator());
+        animator.setStartDelay(1000);
+        animator.setDuration(300);
+        animator.setCurrentPlayTime(150);
+        EventWatcher watcher = new EventWatcher();
+        animator.addListener(watcher);
+        runTestOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                animator.start();
+            }
+        });
+        assertTrue(watcher.start.await(0, TimeUnit.MILLISECONDS));
+        assertTrue(((Float)animator.getAnimatedValue()) >= 0.5f);
+        assertTrue(animator.getAnimatedFraction() >= 0.5f);
+        runTestOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                animator.cancel();
+            }
+        });
+    }
+
     private ValueAnimator getAnimator() {
         Object object = mActivity.view.newBall;
         String property = "y";
@@ -391,5 +421,28 @@ public class ValueAnimatorTest extends
             message.append(values[i]).append(" ");
         }
         return message.toString();
+    }
+
+    class EventWatcher implements Animator.AnimatorListener {
+        public CountDownLatch start = new CountDownLatch(1);
+        public CountDownLatch end = new CountDownLatch(1);
+        public CountDownLatch cancel = new CountDownLatch(1);
+        public CountDownLatch repeat = new CountDownLatch(1);
+
+        public void onAnimationCancel(Animator animation) {
+            cancel.countDown();
+        }
+
+        public void onAnimationEnd(Animator animation) {
+            end.countDown();
+        }
+
+        public void onAnimationRepeat(Animator animation) {
+            repeat.countDown();
+        }
+
+        public void onAnimationStart(Animator animation) {
+            start.countDown();
+        }
     }
 }
