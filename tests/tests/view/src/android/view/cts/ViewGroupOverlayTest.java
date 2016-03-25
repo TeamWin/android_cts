@@ -67,12 +67,7 @@ public class ViewGroupOverlayTest extends
 
     public void testAddNullView() throws Throwable {
         try {
-            runTestOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    mViewGroupOverlay.add((View) null);
-                }
-            });
+            runTestOnUiThread(() -> mViewGroupOverlay.add((View) null));
             fail("should throw IllegalArgumentException");
         } catch (IllegalArgumentException e) {
         }
@@ -80,12 +75,7 @@ public class ViewGroupOverlayTest extends
 
     public void testRemoveNullView() throws Throwable {
         try {
-            runTestOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    mViewGroupOverlay.remove((View) null);
-                }
-            });
+            runTestOnUiThread(() -> mViewGroupOverlay.remove((View) null));
             fail("should throw IllegalArgumentException");
         } catch (IllegalArgumentException e) {
         }
@@ -97,12 +87,7 @@ public class ViewGroupOverlayTest extends
         redView.setBackgroundColor(Color.RED);
         redView.layout(10, 20, 30, 40);
 
-        runTestOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                mViewGroupOverlay.add(redView);
-            }
-        });
+        runTestOnUiThread(() -> mViewGroupOverlay.add(redView));
 
         final List<Pair<Rect, Integer>> colorRectangles = new ArrayList<>();
         colorRectangles.add(new Pair<>(new Rect(10, 20, 30, 40), Color.RED));
@@ -110,12 +95,7 @@ public class ViewGroupOverlayTest extends
                 mViewGroupWithOverlay, Color.WHITE, colorRectangles);
 
         // Now remove that view from the overlay and test that we're back to pure white fill
-        runTestOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                mViewGroupOverlay.remove(redView);
-            }
-        });
+        runTestOnUiThread(() -> mViewGroupOverlay.remove(redView));
         DrawingUtils.assertAllPixelsOfColor("Back to default fill", mViewGroupWithOverlay,
                 Color.WHITE, null);
     }
@@ -132,14 +112,12 @@ public class ViewGroupOverlayTest extends
         blueView.setBackgroundColor(Color.BLUE);
         blueView.layout(40, 60, 80, 90);
 
-        runTestOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                mViewGroupOverlay.add(redView);
-                mViewGroupOverlay.add(greenView);
-                mViewGroupOverlay.add(blueView);
-            }
-        });
+        runTestOnUiThread(
+                () -> {
+                    mViewGroupOverlay.add(redView);
+                    mViewGroupOverlay.add(greenView);
+                    mViewGroupOverlay.add(blueView);
+                });
 
         final List<Pair<Rect, Integer>> colorRectangles = new ArrayList<>();
         colorRectangles.add(new Pair<>(new Rect(10, 20, 30, 40), Color.RED));
@@ -149,12 +127,7 @@ public class ViewGroupOverlayTest extends
                 Color.WHITE, colorRectangles);
 
         // Remove one of the views from the overlay
-        runTestOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                mViewGroupOverlay.remove(greenView);
-            }
-        });
+        runTestOnUiThread(() -> mViewGroupOverlay.remove(greenView));
         colorRectangles.clear();
         colorRectangles.add(new Pair<>(new Rect(10, 20, 30, 40), Color.RED));
         colorRectangles.add(new Pair<>(new Rect(40, 60, 80, 90), Color.BLUE));
@@ -162,12 +135,7 @@ public class ViewGroupOverlayTest extends
                 Color.WHITE, colorRectangles);
 
         // Clear all views from the overlay and test that we're back to pure white fill
-        runTestOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                mViewGroupOverlay.clear();
-            }
-        });
+        runTestOnUiThread(() -> mViewGroupOverlay.clear());
         DrawingUtils.assertAllPixelsOfColor("Back to default fill", mViewGroupWithOverlay,
                 Color.WHITE, null);
     }
@@ -181,13 +149,11 @@ public class ViewGroupOverlayTest extends
         final Drawable greenDrawable = new ColorDrawable(Color.GREEN);
         greenDrawable.setBounds(60, 30, 90, 50);
 
-        runTestOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                mViewGroupOverlay.add(redView);
-                mViewGroupOverlay.add(greenDrawable);
-            }
-        });
+        runTestOnUiThread(
+                () -> {
+                    mViewGroupOverlay.add(redView);
+                    mViewGroupOverlay.add(greenDrawable);
+                });
 
         final List<Pair<Rect, Integer>> colorRectangles = new ArrayList<>();
         colorRectangles.add(new Pair<>(new Rect(10, 20, 30, 40), Color.RED));
@@ -196,24 +162,14 @@ public class ViewGroupOverlayTest extends
                 mViewGroupWithOverlay, Color.WHITE, colorRectangles);
 
         // Remove the view from the overlay
-        runTestOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                mViewGroupOverlay.remove(redView);
-            }
-        });
+        runTestOnUiThread(() -> mViewGroupOverlay.remove(redView));
         colorRectangles.clear();
         colorRectangles.add(new Pair<>(new Rect(60, 30, 90, 50), Color.GREEN));
         DrawingUtils.assertAllPixelsOfColor("Overlay with one drawable", mViewGroupWithOverlay,
                 Color.WHITE, colorRectangles);
 
         // Clear everything from the overlay and test that we're back to pure white fill
-        runTestOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                mViewGroupOverlay.clear();
-            }
-        });
+        runTestOnUiThread(() -> mViewGroupOverlay.clear());
         DrawingUtils.assertAllPixelsOfColor("Back to default fill", mViewGroupWithOverlay,
                 Color.WHITE, null);
     }
@@ -227,13 +183,11 @@ public class ViewGroupOverlayTest extends
         greenView.setBackgroundColor(Color.GREEN);
         greenView.layout(30, 20, 80, 40);
 
-        runTestOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                mViewGroupOverlay.add(redView);
-                mViewGroupOverlay.add(greenView);
-            }
-        });
+        runTestOnUiThread(
+                () -> {
+                    mViewGroupOverlay.add(redView);
+                    mViewGroupOverlay.add(greenView);
+                });
 
         // Our overlay views overlap in horizontal 30-60 range. Here we test that the
         // second view is the one that is drawn last in that range.
@@ -244,24 +198,14 @@ public class ViewGroupOverlayTest extends
                 Color.WHITE, colorRectangles);
 
         // Remove the second view from the overlay
-        runTestOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                mViewGroupOverlay.remove(greenView);
-            }
-        });
+        runTestOnUiThread(() -> mViewGroupOverlay.remove(greenView));
         colorRectangles.clear();
         colorRectangles.add(new Pair<>(new Rect(10, 20, 60, 40), Color.RED));
         DrawingUtils.assertAllPixelsOfColor("Overlay with one drawable", mViewGroupWithOverlay,
                 Color.WHITE, colorRectangles);
 
         // Clear all views from the overlay and test that we're back to pure white fill
-        runTestOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                mViewGroupOverlay.clear();
-            }
-        });
+        runTestOnUiThread(() -> mViewGroupOverlay.clear());
         DrawingUtils.assertAllPixelsOfColor("Back to default fill", mViewGroupWithOverlay,
                 Color.WHITE, null);
     }
@@ -274,13 +218,11 @@ public class ViewGroupOverlayTest extends
         greenView.setBackgroundColor(Color.GREEN);
         greenView.layout(30, 20, 80, 40);
 
-        runTestOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                mViewGroupOverlay.add(redDrawable);
-                mViewGroupOverlay.add(greenView);
-            }
-        });
+        runTestOnUiThread(
+                () -> {
+                    mViewGroupOverlay.add(redDrawable);
+                    mViewGroupOverlay.add(greenView);
+                });
 
         // Our overlay views overlap in horizontal 30-60 range. Even though the green view was
         // added after the red drawable, *all* overlay drawables are drawn after the overlay views.
@@ -292,24 +234,14 @@ public class ViewGroupOverlayTest extends
                 mViewGroupWithOverlay, Color.WHITE, colorRectangles);
 
         // Remove the drawable from the overlay
-        runTestOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                mViewGroupOverlay.remove(redDrawable);
-            }
-        });
+        runTestOnUiThread(() -> mViewGroupOverlay.remove(redDrawable));
         colorRectangles.clear();
         colorRectangles.add(new Pair<>(new Rect(30, 20, 80, 40), Color.GREEN));
         DrawingUtils.assertAllPixelsOfColor("Overlay with one view", mViewGroupWithOverlay,
                 Color.WHITE, colorRectangles);
 
         // Clear all views from the overlay and test that we're back to pure white fill
-        runTestOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                mViewGroupOverlay.clear();
-            }
-        });
+        runTestOnUiThread(() -> mViewGroupOverlay.clear());
         DrawingUtils.assertAllPixelsOfColor("Back to default fill", mViewGroupWithOverlay,
                 Color.WHITE, null);
     }
@@ -322,12 +254,7 @@ public class ViewGroupOverlayTest extends
         redView.setOnClickListener(mockClickListener);
         redView.layout(10, 20, 30, 40);
 
-        runTestOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                mViewGroupOverlay.add(redView);
-            }
-        });
+        runTestOnUiThread(() -> mViewGroupOverlay.add(redView));
 
         // If we call performClick or dispatchTouchEvent on the view that we've added to the
         // overlay, that will invoke the listener that we've registered. But here we need to
@@ -378,13 +305,11 @@ public class ViewGroupOverlayTest extends
         assertTrue(level2View == level3View.getParent());
 
         // Set the fill of this view to red
-        runTestOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                level3View.setBackgroundColor(Color.RED);
-                mViewGroupOverlay.add(level3View);
-            }
-        });
+        runTestOnUiThread(
+                () -> {
+                    level3View.setBackgroundColor(Color.RED);
+                    mViewGroupOverlay.add(level3View);
+                });
 
         // At this point we expect the view that was added to the overlay to have been removed
         // from its original parent

@@ -144,11 +144,7 @@ public class AlertDialogTest extends ActivityInstrumentationTestCase2<DialogStub
     }
 
     private void performClick(final Button button) throws Throwable {
-        runTestOnUiThread(new Runnable() {
-            public void run() {
-                button.performClick();
-            }
-        });
+        runTestOnUiThread(() -> button.performClick());
         mInstrumentation.waitForIdleSync();
     }
 

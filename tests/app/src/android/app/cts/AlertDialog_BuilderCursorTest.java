@@ -149,13 +149,11 @@ public class AlertDialog_BuilderCursorTest
         if (mCursor != null) {
             // Close the cursor on the UI thread as the list view in the alert dialog
             // will get notified of any change to the underlying cursor.
-            InstrumentationRegistry.getInstrumentation().runOnMainSync(new Runnable() {
-                @Override
-                public void run() {
-                    mCursor.close();
-                    mCursor = null;
-                }
-            });
+            InstrumentationRegistry.getInstrumentation().runOnMainSync(
+                    () -> {
+                        mCursor.close();
+                        mCursor = null;
+                    });
         }
         if (mDatabase != null) {
             mDatabase.close();
@@ -173,15 +171,14 @@ public class AlertDialog_BuilderCursorTest
                 null, null, null, null, null);
         assertNotNull(mCursor);
 
-        runTestOnUiThread(new Runnable() {
-            public void run() {
-                mBuilder = new Builder(mContext);
-                mBuilder.setCursor(mCursor, mOnClickListener, TEXT_COLUMN_NAME);
-                mDialog = mBuilder.show();
-                mListView = mDialog.getListView();
-                mListView.performItemClick(null, 0, 0);
-            }
-        });
+        runTestOnUiThread(
+                () -> {
+                    mBuilder = new Builder(mContext);
+                    mBuilder.setCursor(mCursor, mOnClickListener, TEXT_COLUMN_NAME);
+                    mDialog = mBuilder.show();
+                    mListView = mDialog.getListView();
+                    mListView.performItemClick(null, 0, 0);
+                });
         mInstrumentation.waitForIdleSync();
         final SQLiteCursor selected = (SQLiteCursor) mListView.getSelectedItem();
         assertEquals(mCursor.getString(1), selected.getString(1));
@@ -195,15 +192,14 @@ public class AlertDialog_BuilderCursorTest
                 null, null, null, null, null);
         assertNotNull(mCursor);
 
-        runTestOnUiThread(new Runnable() {
-            public void run() {
-                mBuilder = new Builder(mContext);
-                mBuilder.setSingleChoiceItems(mCursor, 0, TEXT_COLUMN_NAME, mOnClickListener);
-                mDialog = mBuilder.show();
-                mListView = mDialog.getListView();
-                mListView.performItemClick(null, 0, 0);
-            }
-        });
+        runTestOnUiThread(
+                () -> {
+                    mBuilder = new Builder(mContext);
+                    mBuilder.setSingleChoiceItems(mCursor, 0, TEXT_COLUMN_NAME, mOnClickListener);
+                    mDialog = mBuilder.show();
+                    mListView = mDialog.getListView();
+                    mListView.performItemClick(null, 0, 0);
+                });
         mInstrumentation.waitForIdleSync();
         final SQLiteCursor selected = (SQLiteCursor) mListView.getSelectedItem();
         assertEquals(mCursor.getString(1), selected.getString(1));
@@ -219,16 +215,15 @@ public class AlertDialog_BuilderCursorTest
         final boolean[] checkedTracker = mCheckedContent.clone();
         final OnMultiChoiceClickListener mockMultiChoiceClickListener =
                 spy(new MultiChoiceClickListener(checkedTracker));
-        runTestOnUiThread(new Runnable() {
-            public void run() {
-                mBuilder = new Builder(mContext);
-                mBuilder.setMultiChoiceItems(mCursor, CHECKED_COLUMN_NAME, TEXT_COLUMN_NAME,
-                        mockMultiChoiceClickListener);
-                mDialog = mBuilder.show();
-                mListView = mDialog.getListView();
-                mListView.performItemClick(null, 0, 0);
-            }
-        });
+        runTestOnUiThread(
+                () -> {
+                    mBuilder = new Builder(mContext);
+                    mBuilder.setMultiChoiceItems(mCursor, CHECKED_COLUMN_NAME, TEXT_COLUMN_NAME,
+                            mockMultiChoiceClickListener);
+                    mDialog = mBuilder.show();
+                    mListView = mDialog.getListView();
+                    mListView.performItemClick(null, 0, 0);
+                });
         mInstrumentation.waitForIdleSync();
 
         SQLiteCursor selected = (SQLiteCursor) mListView.getSelectedItem();
@@ -240,11 +235,7 @@ public class AlertDialog_BuilderCursorTest
         assertTrue(checkedTracker[2]);
         assertFalse(checkedTracker[3]);
 
-        runTestOnUiThread(new Runnable() {
-            public void run() {
-                mListView.performItemClick(null, 1, 1);
-            }
-        });
+        runTestOnUiThread(() -> mListView.performItemClick(null, 1, 1));
         mInstrumentation.waitForIdleSync();
 
         selected = (SQLiteCursor) mListView.getSelectedItem();
