@@ -90,10 +90,7 @@ class TestGpsStatusListener implements GpsStatus.Listener {
         return mGpsStatus;
     }
 
-    /**
-     * See {@link java.util.concurrent.CountDownLatch#await()}.
-     */
     public boolean await() throws InterruptedException {
-        return mCountDownLatch.await(TIMEOUT_IN_SEC, TimeUnit.SECONDS);
+        return TestUtils.waitFor(mCountDownLatch);
     }
 }
