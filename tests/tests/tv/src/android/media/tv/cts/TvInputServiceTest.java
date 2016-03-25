@@ -233,6 +233,7 @@ public class TvInputServiceTest extends ActivityInstrumentationTestCase2<TvViewS
             return;
         }
         verifyCommandTuneForRecording();
+        verifyCommandTuneForRecordingWithBundle();
         verifyCallbackTuned();
         verifyCommandStartRecording();
         verifyCommandStopRecording();
@@ -245,6 +246,19 @@ public class TvInputServiceTest extends ActivityInstrumentationTestCase2<TvViewS
         resetCounts();
         Uri fakeChannelUri = TvContract.buildChannelUri(0);
         mTvRecordingClient.tune(mStubInfo.getId(), fakeChannelUri);
+        new PollingCheck(TIME_OUT) {
+            @Override
+            protected boolean check() {
+                CountingRecordingSession session = CountingTvInputService.sRecordingSession;
+                return session != null && session.mTuneCount > 0;
+            }
+        }.run();
+    }
+
+    public void verifyCommandTuneForRecordingWithBundle() {
+        resetCounts();
+        Uri fakeChannelUri = TvContract.buildChannelUri(0);
+        mTvRecordingClient.tune(mStubInfo.getId(), fakeChannelUri, null);
         new PollingCheck(TIME_OUT) {
             @Override
             protected boolean check() {
