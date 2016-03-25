@@ -35,3 +35,19 @@ float __attribute__((kernel)) testLengthFloat3Float(float3 inV) {
 float __attribute__((kernel)) testLengthFloat4Float(float4 inV) {
     return length(inV);
 }
+
+half __attribute__((kernel)) testLengthHalfHalf(half inV) {
+    return length(inV);
+}
+
+half __attribute__((kernel)) testLengthHalf2Half(half2 inV) {
+    return length(inV);
+}
+
+half __attribute__((kernel)) testLengthHalf3Half(half3 inV) {
+    return length(inV);
+}
+
+half __attribute__((kernel)) testLengthHalf4Half(half4 inV) {
+    return length(inV);
+}

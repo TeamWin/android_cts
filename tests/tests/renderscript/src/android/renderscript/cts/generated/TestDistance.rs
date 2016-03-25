@@ -40,3 +40,23 @@ float __attribute__((kernel)) testDistanceFloat4Float4Float(float4 inLeftVector,
     float4 inRightVector = rsGetElementAt_float4(gAllocInRightVector, x);
     return distance(inLeftVector, inRightVector);
 }
+
+half __attribute__((kernel)) testDistanceHalfHalfHalf(half inLeftVector, unsigned int x) {
+    half inRightVector = rsGetElementAt_half(gAllocInRightVector, x);
+    return distance(inLeftVector, inRightVector);
+}
+
+half __attribute__((kernel)) testDistanceHalf2Half2Half(half2 inLeftVector, unsigned int x) {
+    half2 inRightVector = rsGetElementAt_half2(gAllocInRightVector, x);
+    return distance(inLeftVector, inRightVector);
+}
+
+half __attribute__((kernel)) testDistanceHalf3Half3Half(half3 inLeftVector, unsigned int x) {
+    half3 inRightVector = rsGetElementAt_half3(gAllocInRightVector, x);
+    return distance(inLeftVector, inRightVector);
+}
+
+half __attribute__((kernel)) testDistanceHalf4Half4Half(half4 inLeftVector, unsigned int x) {
+    half4 inRightVector = rsGetElementAt_half4(gAllocInRightVector, x);
+    return distance(inLeftVector, inRightVector);
+}

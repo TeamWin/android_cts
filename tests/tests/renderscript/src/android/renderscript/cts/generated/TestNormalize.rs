@@ -35,3 +35,19 @@ float3 __attribute__((kernel)) testNormalizeFloat3Float3(float3 inV) {
 float4 __attribute__((kernel)) testNormalizeFloat4Float4(float4 inV) {
     return normalize(inV);
 }
+
+half __attribute__((kernel)) testNormalizeHalfHalf(half inV) {
+    return normalize(inV);
+}
+
+half2 __attribute__((kernel)) testNormalizeHalf2Half2(half2 inV) {
+    return normalize(inV);
+}
+
+half3 __attribute__((kernel)) testNormalizeHalf3Half3(half3 inV) {
+    return normalize(inV);
+}
+
+half4 __attribute__((kernel)) testNormalizeHalf4Half4(half4 inV) {
+    return normalize(inV);
+}
