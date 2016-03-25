@@ -116,7 +116,7 @@ public class GnssMeasurementWhenNoLocationTest extends AndroidTestCase {
         mTestLocationManager.requestLocationUpdates(mLocationListener);
 
         // Wait for Gps Status updates.
-        mGpsStatusListener.await();
+        assertTrue(mGpsStatusListener.await());
         if (!mMeasurementListener.verifyState()) {
             return;
         }

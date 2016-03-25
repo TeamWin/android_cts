@@ -64,12 +64,9 @@ class TestGnssNavigationMessageListener extends GnssNavigationMessageEvent.Callb
         }
     }
 
-    /**
-     * See {@link CountDownLatch#await()}.
-     */
-    public void await() throws InterruptedException {
-        mCountDownLatch.await(TIMEOUT_IN_SEC, TimeUnit.SECONDS);
+    public boolean await() throws InterruptedException {
         Log.i(mTag, "Number of GPS Navigation Message received = " + getEvents().size());
+        return TestUtils.waitFor(mCountDownLatch);
     }
 
     /**
