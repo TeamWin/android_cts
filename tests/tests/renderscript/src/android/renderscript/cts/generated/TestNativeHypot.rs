@@ -40,3 +40,23 @@ float4 __attribute__((kernel)) testNativeHypotFloat4Float4Float4(float4 inA, uns
     float4 inB = rsGetElementAt_float4(gAllocInB, x);
     return native_hypot(inA, inB);
 }
+
+half __attribute__((kernel)) testNativeHypotHalfHalfHalf(half inA, unsigned int x) {
+    half inB = rsGetElementAt_half(gAllocInB, x);
+    return native_hypot(inA, inB);
+}
+
+half2 __attribute__((kernel)) testNativeHypotHalf2Half2Half2(half2 inA, unsigned int x) {
+    half2 inB = rsGetElementAt_half2(gAllocInB, x);
+    return native_hypot(inA, inB);
+}
+
+half3 __attribute__((kernel)) testNativeHypotHalf3Half3Half3(half3 inA, unsigned int x) {
+    half3 inB = rsGetElementAt_half3(gAllocInB, x);
+    return native_hypot(inA, inB);
+}
+
+half4 __attribute__((kernel)) testNativeHypotHalf4Half4Half4(half4 inA, unsigned int x) {
+    half4 inB = rsGetElementAt_half4(gAllocInB, x);
+    return native_hypot(inA, inB);
+}

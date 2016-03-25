@@ -35,3 +35,19 @@ float3 __attribute__((kernel)) testNativeLog10Float3Float3(float3 inV) {
 float4 __attribute__((kernel)) testNativeLog10Float4Float4(float4 inV) {
     return native_log10(inV);
 }
+
+half __attribute__((kernel)) testNativeLog10HalfHalf(half inV) {
+    return native_log10(inV);
+}
+
+half2 __attribute__((kernel)) testNativeLog10Half2Half2(half2 inV) {
+    return native_log10(inV);
+}
+
+half3 __attribute__((kernel)) testNativeLog10Half3Half3(half3 inV) {
+    return native_log10(inV);
+}
+
+half4 __attribute__((kernel)) testNativeLog10Half4Half4(half4 inV) {
+    return native_log10(inV);
+}
