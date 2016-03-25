@@ -18,7 +18,9 @@ package android.app.cts;
 
 import android.app.stubs.CTSActivityTestCaseBase;
 import android.app.stubs.SearchManagerStubActivity;
+import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 
 public class SearchManagerTest extends CTSActivityTestCaseBase {
 
@@ -31,20 +33,36 @@ public class SearchManagerTest extends CTSActivityTestCaseBase {
     }
 
     public void testStopSearch() throws InterruptedException {
+        if (isTelevision()) {
+            return;
+        }
         SearchManagerStubActivity.setCTSResult(this);
         setupActivity(SearchManagerStubActivity.TEST_STOP_SEARCH);
         waitForResult();
     }
 
     public void testSetOnDismissListener() throws InterruptedException {
+        if (isTelevision()) {
+            return;
+        }
         SearchManagerStubActivity.setCTSResult(this);
         setupActivity(SearchManagerStubActivity.TEST_ON_DISMISSLISTENER);
         waitForResult();
     }
 
     public void testSetOnCancelListener() throws InterruptedException {
+        if (isTelevision()) {
+            return;
+        }
         SearchManagerStubActivity.setCTSResult(this);
         setupActivity(SearchManagerStubActivity.TEST_ON_CANCELLISTENER);
         waitForResult();
+    }
+
+    private boolean isTelevision() {
+        Context context = getInstrumentation().getTargetContext();
+        PackageManager pm = context.getPackageManager();
+        return pm.hasSystemFeature(PackageManager.FEATURE_TELEVISION)
+                || pm.hasSystemFeature(PackageManager.FEATURE_LEANBACK);
     }
 }
