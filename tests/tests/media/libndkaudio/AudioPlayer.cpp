@@ -201,6 +201,8 @@ void AudioPlayer::Close() {
 SLresult AudioPlayer::RealizePlayer() {
     SLresult result;
 
+//    __android_log_print(ANDROID_LOG_INFO, TAG, "AudioPlayer::RealizePlayer()");
+
     result = (*bqPlayerObject_)->Realize(bqPlayerObject_, SL_BOOLEAN_FALSE);
 //    __android_log_print(ANDROID_LOG_INFO, TAG,
 //                        "Realize player object result:%s", getSLErrStr(result));

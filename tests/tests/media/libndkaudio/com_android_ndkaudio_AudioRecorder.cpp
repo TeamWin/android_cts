@@ -76,7 +76,7 @@ JNIEXPORT jobject JNICALL Java_com_android_ndkaudio_AudioRecorder_GetRoutingInte
 }
 
 JNIEXPORT void JNICALL Java_com_android_ndkaudio_AudioRecorder_ReleaseRoutingInterface(JNIEnv*, jobject, jobject /*proxyObj*/) {
-  __android_log_print(ANDROID_LOG_INFO, TAG, "AudioPlayer_GetRoutingObj() ...");
+  __android_log_print(ANDROID_LOG_INFO, TAG, "AudioPlayer_ReleaseRoutingInterface() ...");
 
   SLAndroidConfigurationItf configItf = nativeRecorder->getConfigItf();
   lastSLResult = (*configItf)->ReleaseJavaProxy(configItf, SL_ANDROID_JAVA_PROXY_ROUTING/*, proxyObj*/);
@@ -93,7 +93,7 @@ JNIEXPORT void JNICALL Java_com_android_ndkaudio_AudioRecorder_GetBufferData(JNI
     }
 }
 
-JNIEXPORT long JNICALL Java_com_android_ndkaudio_AudioRecorder_GetLastSLResult(JNIEnv*, jobject) {
+JNIEXPORT jlong JNICALL Java_com_android_ndkaudio_AudioRecorder_GetLastSLResult(JNIEnv*, jobject) {
     return lastSLResult;
 }
 
