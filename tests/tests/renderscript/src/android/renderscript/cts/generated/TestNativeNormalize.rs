@@ -35,3 +35,19 @@ float3 __attribute__((kernel)) testNativeNormalizeFloat3Float3(float3 inV) {
 float4 __attribute__((kernel)) testNativeNormalizeFloat4Float4(float4 inV) {
     return native_normalize(inV);
 }
+
+half __attribute__((kernel)) testNativeNormalizeHalfHalf(half inV) {
+    return native_normalize(inV);
+}
+
+half2 __attribute__((kernel)) testNativeNormalizeHalf2Half2(half2 inV) {
+    return native_normalize(inV);
+}
+
+half3 __attribute__((kernel)) testNativeNormalizeHalf3Half3(half3 inV) {
+    return native_normalize(inV);
+}
+
+half4 __attribute__((kernel)) testNativeNormalizeHalf4Half4(half4 inV) {
+    return native_normalize(inV);
+}

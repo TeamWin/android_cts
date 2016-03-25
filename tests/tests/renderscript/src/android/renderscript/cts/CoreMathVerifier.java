@@ -376,6 +376,17 @@ public class CoreMathVerifier {
         }
     }
 
+    // Returns the distance between two points (in double-precision) in n-dimensional space.
+    static private Target.Floaty distance(double[] point1, double[] point2, Target t) {
+        Target.Floaty sum = t.newFloaty(0.f);
+        for (int i = 0; i < point1.length; i++) {
+            Target.Floaty diff = t.subtract(t.newFloaty(point1[i]), t.newFloaty(point2[i]));
+            sum = t.add(sum, t.multiply(diff, diff));
+        }
+        Target.Floaty d = t.sqrt(sum);
+        return d;
+    }
+
     // Returns the distance between two points in n-dimensional space.
     static private Target.Floaty distance(float[] point1, float[] point2, Target t) {
         Target.Floaty sum = t.new32(0.f);
@@ -438,6 +449,16 @@ public class CoreMathVerifier {
             hypot(inX.max32(), inY.max32()));
     }
 
+    // Returns the length of an n-dimensional vector (in double-precision).
+    static private Target.Floaty length(double[] array, Target t) {
+        Target.Floaty sum = t.newFloaty(0.);
+        for (int i = 0; i < array.length; i++) {
+            Target.Floaty f = t.newFloaty(array[i]);
+            sum = t.add(sum, t.multiply(f, f));
+        }
+        return t.sqrt(sum);
+    }
+
     // Returns the length of the n-dimensional vector.
     static private Target.Floaty length(float[] array, Target t) {
         Target.Floaty sum = t.new32(0.f);
@@ -479,6 +500,18 @@ public class CoreMathVerifier {
             log2(in.mid32()),
             log2(in.min32()),
             log2(in.max32()));
+    }
+
+    // Normalizes the double-precision n-dimensional vector, i.e. makes it length 1.
+    static private void normalize(double[] in, Target.Floaty[] out, Target t) {
+        Target.Floaty l = length(in, t);
+        boolean isZero = l.get() == 0.;
+        for (int i = 0; i < in.length; i++) {
+            out[i] = t.newFloaty(in[i]);
+            if (!isZero) {
+                out[i] = t.divide(out[i], l);
+            }
+        }
     }
 
     // Normalizes the n-dimensional vector, i.e. makes it length 1.
@@ -1128,6 +1161,16 @@ public class CoreMathVerifier {
         args.out = t.multiply(in, k);
     }
 
+    static public void computeDistance(TestDistance.ArgumentsHalfHalfHalf args, Target t) {
+        t.setPrecision(1, 1); // TODO double-check precision
+        args.out = distance(new double[] {args.inLeftVectorDouble},
+                            new double[] {args.inRightVectorDouble}, t);
+    }
+    static public void computeDistance(TestDistance.ArgumentsHalfNHalfNHalf args, Target t) {
+        t.setPrecision(1, 1); // TODO double-check precision
+        args.out = distance(args.inLeftVectorDouble, args.inRightVectorDouble, t);
+    }
+
     static public void computeDistance(TestDistance.ArgumentsFloatFloatFloat args, Target t) {
         t.setPrecision(1, 1);
         args.out = distance(new float[] {args.inLeftVector}, new float[] {args.inRightVector}, t);
@@ -1136,6 +1179,24 @@ public class CoreMathVerifier {
     static public void computeDistance(TestDistance.ArgumentsFloatNFloatNFloat args, Target t) {
         t.setPrecision(1, 1);
         args.out = distance(args.inLeftVector, args.inRightVector, t);
+    }
+
+    static public void computeDot(TestDot.ArgumentsHalfHalfHalf args, Target t) {
+        t.setPrecision(1, 4); // TODO double-check precision
+        Target.Floaty a = t.newFloaty(args.inLeftVectorDouble);
+        Target.Floaty b = t.newFloaty(args.inRightVectorDouble);
+        args.out = t.multiply(a, b);
+    }
+
+    static public void computeDot(TestDot.ArgumentsHalfNHalfNHalf args, Target t) {
+        t.setPrecision(1, 4); // TODO double-check precision
+        Target.Floaty sum = t.newFloaty(0.);
+        for (int i = 0; i < args.inLeftVectorDouble.length; i++) {
+            Target.Floaty a = t.newFloaty(args.inLeftVectorDouble[i]);
+            Target.Floaty b = t.newFloaty(args.inRightVectorDouble[i]);
+            sum = t.add(sum, t.multiply(a, b));
+        }
+        args.out = sum;
     }
 
     static public void computeDot(TestDot.ArgumentsFloatFloatFloat args, Target t) {
@@ -1367,6 +1428,16 @@ public class CoreMathVerifier {
             ldexp(inMantissa.mid32(), args.inExponent),
             ldexp(inMantissa.min32(), args.inExponent),
             ldexp(inMantissa.max32(), args.inExponent));
+    }
+
+    static public void computeLength(TestLength.ArgumentsHalfHalf args, Target t) {
+        t.setPrecision(1, 1); // TODO double-check precision
+        args.out = length(new double[]{args.inVDouble}, t);
+    }
+
+    static public void computeLength(TestLength.ArgumentsHalfNHalf args, Target t) {
+        t.setPrecision(1, 1); // TODO double-check precision
+        args.out = length(args.inVDouble, t);
     }
 
     static public void computeLength(TestLength.ArgumentsFloatFloat args, Target t) {
@@ -1683,6 +1754,16 @@ public class CoreMathVerifier {
         args.out = hypot(args.inA, args.inB, t);
     }
 
+    static public void computeNativeLength(TestNativeLength.ArgumentsHalfHalf args, Target t) {
+        t.setPrecision(1, 1); // TODO double-check precision
+        args.out = length(new double[]{args.inVDouble}, t);
+    }
+
+    static public void computeNativeLength(TestNativeLength.ArgumentsHalfNHalf args, Target t) {
+        t.setPrecision(1, 1); // TODO double-check precision
+        args.out = length(args.inVDouble, t);
+    }
+
     static public void computeNativeLength(TestNativeLength.ArgumentsFloatFloat args, Target t) {
         t.setPrecision(NATIVE_PRECISION, NATIVE_PRECISION);
         args.out = length(new float[] {args.inV}, t);
@@ -1726,6 +1807,18 @@ public class CoreMathVerifier {
         } else {
             args.out = log2(args.inV, t);
         }
+    }
+
+    static public void computeNativeNormalize(TestNativeNormalize.ArgumentsHalfHalf args, Target t) {
+        t.setPrecision(1, 1); // TODO double-check precision
+        Target.Floaty[] out = new Target.Floaty[1];
+        normalize(new double[] {args.inVDouble}, out, t);
+        args.out = out[0];
+    }
+
+    static public void computeNativeNormalize(TestNativeNormalize.ArgumentsHalfNHalfN args, Target t) {
+        t.setPrecision(1, 16); // TODO double-check precision.  Extra precision needed by libclcore.
+        normalize(args.inVDouble, args.out, t);
     }
 
     static public void computeNativeNormalize(TestNativeNormalize.ArgumentsFloatFloat args, Target t) {
@@ -1815,6 +1908,18 @@ public class CoreMathVerifier {
     static public void computeNextafter(TestNextafter.ArgumentsFloatFloatFloat args, Target t) {
         t.setPrecision(0, 0);
         args.out = t.new32(Math.nextAfter(args.inV, args.inTarget));
+    }
+
+    static public void computeNormalize(TestNormalize.ArgumentsHalfHalf args, Target t) {
+        t.setPrecision(1, 1); // TODO double-check precision
+        Target.Floaty[] out = new Target.Floaty[1];
+        normalize(new double[] {args.inVDouble}, out, t);
+        args.out = out[0];
+    }
+
+    static public void computeNormalize(TestNormalize.ArgumentsHalfNHalfN args, Target t) {
+        t.setPrecision(1, 1); // TODO double-check precision
+        normalize(args.inVDouble, args.out, t);
     }
 
     static public void computeNormalize(TestNormalize.ArgumentsFloatFloat args, Target t) {

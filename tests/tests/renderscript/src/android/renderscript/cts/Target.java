@@ -602,6 +602,7 @@ public class Target {
 
 
         // TODO simplify: remove 32() and 64()
+        public double get() { return mValue; }
         public double mid() { return mid64(); }
         public double min() { return mMinValue; }
         public double max() { return mMaxValue; }
