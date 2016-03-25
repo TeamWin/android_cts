@@ -50,12 +50,8 @@ public class AlertDialogTest extends ActivityInstrumentationTestCase2<DialogStub
 
     protected void startDialogActivity(int dialogNumber) {
         mActivity = DialogStubActivity.startDialogActivity(this, dialogNumber);
-        new PollingCheck() {
-            @Override
-            protected boolean check() {
-                return mActivity.getDialog().isShowing();
-            }
-        }.run();
+
+        PollingCheck.waitFor(() -> mActivity.getDialog().isShowing());
     }
 
     public void testAlertDialog() throws Throwable {
