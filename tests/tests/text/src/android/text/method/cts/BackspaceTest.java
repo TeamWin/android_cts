@@ -63,6 +63,31 @@ public class BackspaceTest extends KeyListenerTestCase {
     }
 
     @SmallTest
+    public void testCRLF() {
+        EditorState state = new EditorState();
+
+        // U+000A is LINE FEED.
+        state.setByString("U+000A |");
+        backspace(state, 0);
+        state.assertEquals("|");
+
+        // U+000D is CARRIAGE RETURN.
+        state.setByString("U+000D |");
+        backspace(state, 0);
+        state.assertEquals("|");
+
+        state.setByString("U+000D U+000A |");
+        backspace(state, 0);
+        state.assertEquals("|");
+
+        state.setByString("U+000A U+000D |");
+        backspace(state, 0);
+        state.assertEquals("U+000A |");
+        backspace(state, 0);
+        state.assertEquals("|");
+    }
+
+    @SmallTest
     public void testSurrogatePairs() {
         EditorState state = new EditorState();
 
