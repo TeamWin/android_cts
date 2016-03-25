@@ -217,6 +217,12 @@ public class ImageReaderTest extends Camera2AndroidTestCase {
             try {
                 Log.v(TAG, "Testing long processing on repeating raw for camera " + id);
                 openDevice(id);
+
+                if (!mStaticInfo.isCapabilitySupported(
+                        CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES_MANUAL_SENSOR)) {
+                    continue;
+                }
+
                 bufferFormatLongProcessingTimeTestByCamera(ImageFormat.RAW_SENSOR);
             } finally {
                 closeDevice(id);
@@ -229,6 +235,12 @@ public class ImageReaderTest extends Camera2AndroidTestCase {
             try {
                 Log.v(TAG, "Testing long processing on repeating YUV for camera " + id);
                 openDevice(id);
+
+                if (!mStaticInfo.isCapabilitySupported(
+                        CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES_MANUAL_SENSOR)) {
+                    continue;
+                }
+
                 bufferFormatLongProcessingTimeTestByCamera(ImageFormat.YUV_420_888);
             } finally {
                 closeDevice(id);
