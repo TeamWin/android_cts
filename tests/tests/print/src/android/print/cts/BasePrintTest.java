@@ -275,8 +275,8 @@ public abstract class BasePrintTest extends InstrumentationTestCase {
                 "Did not get expected call to onDestroyPrinterDiscoverySession.");
     }
 
-    protected void waitForServiceOnPrintJobQueuedCallbackCalled() {
-        waitForCallbackCallCount(mPrintJobQueuedCallCounter, 1,
+    protected void waitForServiceOnPrintJobQueuedCallbackCalled(int count) {
+        waitForCallbackCallCount(mPrintJobQueuedCallCounter, count,
                 "Did not get expected call to onPrintJobQueued.");
     }
 

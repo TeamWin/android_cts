@@ -315,9 +315,7 @@ public class PrinterInfoTest extends BasePrintTest {
                                                     }
 
                                                     // hasCustomPrinterIcon
-                                                    if (hasCustomPrinterIcon) {
-                                                        b.setHasCustomPrinterIcon();
-                                                    }
+                                                    b.setHasCustomPrinterIcon(hasCustomPrinterIcon);
 
                                                     // Description
                                                     b.setDescription(description);
