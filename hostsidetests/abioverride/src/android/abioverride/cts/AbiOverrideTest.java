@@ -48,7 +48,7 @@ public class AbiOverrideTest extends DeviceTestCase implements IBuildReceiver {
     /**
      * The class name of the main activity in the APK.
      */
-    private static final String APK_NAME="CtsAbiOverrideHostApp.apk";
+    private static final String APK_NAME="CtsAbiOverrideTestApp.apk";
 
     /**
      * The command to launch the main activity.
