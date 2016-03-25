@@ -494,6 +494,12 @@ public class CoreMathVerifier {
         }
     }
 
+    static private Target.Floaty divide(double left, double right, Target t) {
+        Target.Floaty lFloaty = t.newFloaty(left);
+        Target.Floaty rFloaty = t.newFloaty(right);
+        return t.divide(lFloaty, rFloaty);
+    }
+
     // Convert a double-precision radian value to degrees.
     static private Target.Floaty degrees(double d, Target t) {
         Target.Floaty in = t.newFloaty(d);
@@ -865,6 +871,11 @@ public class CoreMathVerifier {
         Target.Floaty in = t.newFloaty(d);
         Target.Floaty k = t.newFloaty(Math.PI / 180);
         return t.multiply(in, k);
+    }
+
+    static private Target.Floaty recip(double d, Target t) {
+        Target.Floaty in = t.newFloaty(d);
+        return t.divide(t.newFloaty(1.), in);
     }
 
     static private Target.Floaty recip(float f, Target t) {
@@ -2368,6 +2379,11 @@ public class CoreMathVerifier {
         args.out = acos(args.inV, t);
     }
 
+    static public void computeNativeAcosh(TestNativeAcosh.ArgumentsHalfHalf args, Target t) {
+        t.setPrecision(4, 4);
+        args.out = acosh(args.inVDouble, t);
+    }
+
     static public void computeNativeAcosh(TestNativeAcosh.ArgumentsFloatFloat args, Target t) {
         t.setPrecision(NATIVE_PRECISION, NATIVE_PRECISION);
         args.out = acosh(args.inV, t);
@@ -2383,6 +2399,11 @@ public class CoreMathVerifier {
         args.out = asin(args.inV, t);
     }
 
+    static public void computeNativeAsinh(TestNativeAsinh.ArgumentsHalfHalf args, Target t) {
+        t.setPrecision(4, 4);
+        args.out = asinh(args.inVDouble, t);
+    }
+
     static public void computeNativeAsinh(TestNativeAsinh.ArgumentsFloatFloat args, Target t) {
         t.setPrecision(NATIVE_PRECISION, NATIVE_PRECISION);
         args.out = asinh(args.inV, t);
@@ -2393,9 +2414,19 @@ public class CoreMathVerifier {
         args.out = asinpi(args.inV, t);
     }
 
+    static public void computeNativeAtan(TestNativeAtan.ArgumentsHalfHalf args, Target t) {
+        t.setPrecision(5, 5);
+        args.out = atan(args.inVDouble, t);
+    }
+
     static public void computeNativeAtan(TestNativeAtan.ArgumentsFloatFloat args, Target t) {
         t.setPrecision(NATIVE_PRECISION, NATIVE_PRECISION);
         args.out = atan(args.inV, t);
+    }
+
+    static public void computeNativeAtanh(TestNativeAtanh.ArgumentsHalfHalf args, Target t) {
+        t.setPrecision(5, 5);
+        args.out = atanh(args.inVDouble, t);
     }
 
     static public void computeNativeAtanh(TestNativeAtanh.ArgumentsFloatFloat args, Target t) {
@@ -2403,9 +2434,19 @@ public class CoreMathVerifier {
         args.out = atanh(args.inV, t);
     }
 
+    static public void computeNativeAtanpi(TestNativeAtanpi.ArgumentsHalfHalf args, Target t) {
+        t.setPrecision(5, 5);
+        args.out = atanpi(args.inVDouble, t);
+    }
+
     static public void computeNativeAtanpi(TestNativeAtanpi.ArgumentsFloatFloat args, Target t) {
         t.setPrecision(NATIVE_PRECISION, NATIVE_PRECISION);
         args.out = atanpi(args.inV, t);
+    }
+
+    static public void computeNativeAtan2(TestNativeAtan2.ArgumentsHalfHalfHalf args, Target t) {
+        t.setPrecision(5, 5);
+        args.out = atan2(args.inNumeratorDouble, args.inDenominatorDouble, t);
     }
 
     static public void computeNativeAtan2(TestNativeAtan2.ArgumentsFloatFloatFloat args, Target t) {
@@ -2413,9 +2454,19 @@ public class CoreMathVerifier {
         args.out = atan2(args.inNumerator, args.inDenominator, t);
     }
 
+    static public void computeNativeAtan2pi(TestNativeAtan2pi.ArgumentsHalfHalfHalf args, Target t) {
+        t.setPrecision(5, 5);
+        args.out = atan2pi(args.inNumeratorDouble, args.inDenominatorDouble, t);
+    }
+
     static public void computeNativeAtan2pi(TestNativeAtan2pi.ArgumentsFloatFloatFloat args, Target t) {
         t.setPrecision(NATIVE_PRECISION, NATIVE_PRECISION);
         args.out = atan2pi(args.inNumerator, args.inDenominator, t);
+    }
+
+    static public void computeNativeCbrt(TestNativeCbrt.ArgumentsHalfHalf args, Target t) {
+        t.setPrecision(2, 2);
+        args.out = cbrt(args.inVDouble, t);
     }
 
     static public void computeNativeCbrt(TestNativeCbrt.ArgumentsFloatFloat args, Target t) {
@@ -2426,6 +2477,11 @@ public class CoreMathVerifier {
     static public void computeNativeCos(TestNativeCos.ArgumentsFloatFloat args, Target t) {
         t.setPrecision(NATIVE_PRECISION, NATIVE_PRECISION);
         args.out = cos(args.inV, t);
+    }
+
+    static public void computeNativeCosh(TestNativeCosh.ArgumentsHalfHalf args, Target t) {
+        t.setPrecision(4, 4);
+        args.out = cosh(args.inVDouble, t);
     }
 
     static public void computeNativeCosh(TestNativeCosh.ArgumentsFloatFloat args, Target t) {
@@ -2448,9 +2504,19 @@ public class CoreMathVerifier {
         args.out = distance(args.inLeftVector, args.inRightVector, t);
     }
 
+    static public void computeNativeDivide(TestNativeDivide.ArgumentsHalfHalfHalf args, Target t) {
+        t.setPrecision(3, 3);
+        args.out = divide(args.inLeftVectorDouble, args.inRightVectorDouble, t);
+    }
+
     static public void computeNativeDivide(TestNativeDivide.ArgumentsFloatFloatFloat args, Target t) {
         t.setPrecision(NATIVE_PRECISION, NATIVE_PRECISION);
         args.out = t.divide(t.new32(args.inLeftVector), t.new32(args.inRightVector));
+    }
+
+    static public void computeNativeExp(TestNativeExp.ArgumentsHalfHalf args, Target t) {
+        t.setPrecision(3, 3);
+        args.out = exp(args.inVDouble, t);
     }
 
     static public void computeNativeExp(TestNativeExp.ArgumentsFloatFloat args, Target t) {
@@ -2458,9 +2524,19 @@ public class CoreMathVerifier {
         args.out = exp(args.inV, t);
     }
 
+    static public void computeNativeExp10(TestNativeExp10.ArgumentsHalfHalf args, Target t) {
+        t.setPrecision(3, 3);
+        args.out = exp10(args.inVDouble, t);
+    }
+
     static public void computeNativeExp10(TestNativeExp10.ArgumentsFloatFloat args, Target t) {
         t.setPrecision(NATIVE_PRECISION, NATIVE_PRECISION);
         args.out = exp10(args.inV, t);
+    }
+
+    static public void computeNativeExp2(TestNativeExp2.ArgumentsHalfHalf args, Target t) {
+        t.setPrecision(3, 3);
+        args.out = exp2(args.inVDouble, t);
     }
 
     static public void computeNativeExp2(TestNativeExp2.ArgumentsFloatFloat args, Target t) {
@@ -2472,6 +2548,11 @@ public class CoreMathVerifier {
     static public void computeNativeExpm1(TestNativeExpm1.ArgumentsFloatFloat args, Target t) {
         t.setPrecision(NATIVE_PRECISION, NATIVE_PRECISION);
         args.out = expm1(args.inV, t);
+    }
+
+    static public void computeNativeHypot(TestNativeHypot.ArgumentsHalfHalfHalf args, Target t) {
+        t.setPrecision(4, 4);
+        args.out = hypot(args.inADouble, args.inBDouble, t);
     }
 
     static public void computeNativeHypot(TestNativeHypot.ArgumentsFloatFloatFloat args, Target t) {
@@ -2499,6 +2580,17 @@ public class CoreMathVerifier {
         args.out = length(args.inV, t);
     }
 
+    static public void computeNativeLog(TestNativeLog.ArgumentsHalfHalf args, Target t) {
+        t.setPrecision(3, 3);
+        // http://b/27859722 Accept anything for zero.  Negative values don't get tested (see
+        // range() for this function in fw/rs/api/rs_math.spec.
+        if (Math.abs(args.inVDouble) < 1.e-20) {
+            args.out = any(t);
+        } else {
+            args.out = log(args.inVDouble, t);
+        }
+    }
+
     static public void computeNativeLog(TestNativeLog.ArgumentsFloatFloat args, Target t) {
         t.setPrecision(NATIVE_PRECISION, NATIVE_PRECISION);
         // For very small values, allow anything.
@@ -2506,6 +2598,17 @@ public class CoreMathVerifier {
             args.out = any32(t);
         } else {
             args.out = log(args.inV, t);
+        }
+    }
+
+    static public void computeNativeLog10(TestNativeLog10.ArgumentsHalfHalf args, Target t) {
+        t.setPrecision(3, 3);
+        // http://b/27859722 Accept anything for zero.  Negative values don't get tested (see
+        // range() for this function in fw/rs/api/rs_math.spec.
+        if (Math.abs(args.inVDouble) < 1.e-20) {
+            args.out = any(t);
+        } else {
+            args.out = log10(args.inVDouble, t);
         }
     }
 
@@ -2519,9 +2622,25 @@ public class CoreMathVerifier {
         }
     }
 
+    static public void computeNativeLog1p(TestNativeLog1p.ArgumentsHalfHalf args, Target t) {
+        t.setPrecision(2, 2);
+        args.out = log1p(args.inVDouble, t);
+    }
+
     static public void computeNativeLog1p(TestNativeLog1p.ArgumentsFloatFloat args, Target t) {
         t.setPrecision(NATIVE_PRECISION, NATIVE_PRECISION);
         args.out = log1p(args.inV, t);
+    }
+
+    static public void computeNativeLog2(TestNativeLog2.ArgumentsHalfHalf args, Target t) {
+        t.setPrecision(3, 3);
+        // http://b/27859722 Accept anything for zero.  Negative values don't get tested (see
+        // range() for this function in fw/rs/api/rs_math.spec.
+        if (Math.abs(args.inVDouble) < 1.e-20) {
+            args.out = any(t);
+        } else {
+            args.out = log2(args.inVDouble, t);
+        }
     }
 
     static public void computeNativeLog2(TestNativeLog2.ArgumentsFloatFloat args, Target t) {
@@ -2558,6 +2677,17 @@ public class CoreMathVerifier {
         normalize(args.inV, args.out, t);
     }
 
+    static public void computeNativePowr(TestNativePowr.ArgumentsHalfHalfHalf args, Target t) {
+        t.setPrecision(16, 16);
+        // http://b/27859722 Accept anything for zero.  Negative values don't get tested (see
+        // range() for this function in fw/rs/api/rs_math.spec.
+        if (Math.abs(args.inBaseDouble) < 1.e-20) {
+            args.out = any(t);
+        } else {
+            args.out = pow(args.inBaseDouble, args.inExponentDouble, t);
+        }
+    }
+
     static public void computeNativePowr(TestNativePowr.ArgumentsFloatFloatFloat args, Target t) {
         // TODO we would like to use NATIVE_PRECISION, NATIVE_PRECISION
         t.setPrecision(32000, 32000);
@@ -2567,6 +2697,11 @@ public class CoreMathVerifier {
         } else {
             args.out = powr(args.inBase, args.inExponent, t);
         }
+    }
+
+    static public void computeNativeRecip(TestNativeRecip.ArgumentsHalfHalf args, Target t) {
+        t.setPrecision(3, 3);
+        args.out = recip(args.inVDouble, t);
     }
 
     static public void computeNativeRecip(TestNativeRecip.ArgumentsFloatFloat args, Target t) {
@@ -2582,6 +2717,11 @@ public class CoreMathVerifier {
         } else {
             args.out = rootn(args.inV, args.inN, t);
         }
+    }
+
+    static public void computeNativeRsqrt(TestNativeRsqrt.ArgumentsHalfHalf args, Target t) {
+        t.setPrecision(2, 2);
+        args.out = rsqrt(args.inVDouble, t);
     }
 
     static public void computeNativeRsqrt(TestNativeRsqrt.ArgumentsFloatFloat args, Target t) {
@@ -2600,6 +2740,11 @@ public class CoreMathVerifier {
         args.out = sin(args.inV, t);
     }
 
+    static public void computeNativeSinh(TestNativeSinh.ArgumentsHalfHalf args, Target t) {
+        t.setPrecision(4, 4);
+        args.out = sinh(args.inVDouble, t);
+    }
+
     static public void computeNativeSinh(TestNativeSinh.ArgumentsFloatFloat args, Target t) {
         t.setPrecision(NATIVE_PRECISION, NATIVE_PRECISION);
         args.out = sinh(args.inV, t);
@@ -2610,6 +2755,11 @@ public class CoreMathVerifier {
         args.out = sinpi(args.inV, t);
     }
 
+    static public void computeNativeSqrt(TestNativeSqrt.ArgumentsHalfHalf args, Target t) {
+        t.setPrecision(3, 3);
+        args.out = sqrt(args.inVDouble, t);
+    }
+
     static public void computeNativeSqrt(TestNativeSqrt.ArgumentsFloatFloat args, Target t) {
         t.setPrecision(NATIVE_PRECISION, NATIVE_PRECISION);
         args.out = sqrt(args.inV, t);
@@ -2618,6 +2768,11 @@ public class CoreMathVerifier {
     static public void computeNativeTan(TestNativeTan.ArgumentsFloatFloat args, Target t) {
         t.setPrecision(NATIVE_PRECISION, NATIVE_PRECISION);
         args.out = tan(args.inV, t);
+    }
+
+    static public void computeNativeTanh(TestNativeTanh.ArgumentsHalfHalf args, Target t) {
+        t.setPrecision(5, 5);
+        args.out = tanh(args.inVDouble, t);
     }
 
     static public void computeNativeTanh(TestNativeTanh.ArgumentsFloatFloat args, Target t) {
