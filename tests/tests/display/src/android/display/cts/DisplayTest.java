@@ -28,7 +28,6 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.ParcelFileDescriptor;
-import android.platform.test.annotations.Presubmit;
 import android.test.InstrumentationTestCase;
 import android.util.DisplayMetrics;
 import android.view.Display;
@@ -140,7 +139,6 @@ public class DisplayTest extends InstrumentationTestCase {
     /**
      * Verify that the WindowManager returns the default display.
      */
-    @Presubmit
     public void testDefaultDisplay() {
         assertEquals(Display.DEFAULT_DISPLAY, mWindowManager.getDefaultDisplay().getDisplayId());
     }
