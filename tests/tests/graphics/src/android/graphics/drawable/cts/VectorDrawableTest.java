@@ -144,12 +144,24 @@ public class VectorDrawableTest extends AndroidTestCase {
     };
 
     private static final int[] STATEFUL_RES_IDS = new int[] {
-            R.drawable.vector_icon_state_list
+            // All these icons are using the same color state list, make sure it works for either
+            // the same drawable ID or different ID but same content.
+            R.drawable.vector_icon_state_list,
+            R.drawable.vector_icon_state_list,
+            R.drawable.vector_icon_state_list_2,
     };
 
     private static final int[][] STATEFUL_GOLDEN_IMAGES = new int[][] {
-            { R.drawable.vector_icon_state_list_golden },
-            { R.drawable.vector_icon_state_list_golden_pressed }
+            {
+                    R.drawable.vector_icon_state_list_golden,
+                    R.drawable.vector_icon_state_list_golden,
+                    R.drawable.vector_icon_state_list_2_golden
+            },
+            {
+                    R.drawable.vector_icon_state_list_golden_pressed,
+                    R.drawable.vector_icon_state_list_golden_pressed,
+                    R.drawable.vector_icon_state_list_2_golden_pressed
+            }
     };
 
     private static final int[][] STATEFUL_STATE_SETS = new int[][] {
@@ -169,7 +181,6 @@ public class VectorDrawableTest extends AndroidTestCase {
     private static final boolean DBG_DUMP_PNG = false;
 
     private Resources mResources;
-    private VectorDrawable mVectorDrawable;
     private Bitmap mBitmap;
     private Canvas mCanvas;
 
@@ -181,9 +192,6 @@ public class VectorDrawableTest extends AndroidTestCase {
 
         mBitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
         mCanvas = new Canvas(mBitmap);
-        mVectorDrawable = new VectorDrawable();
-        mVectorDrawable.setBounds(0, 0, width, height);
-
         mResources = mContext.getResources();
     }
 
@@ -218,6 +226,10 @@ public class VectorDrawableTest extends AndroidTestCase {
     private void verifyVectorDrawables(int[] resIds, int[] goldenImages, int[] stateSet)
             throws XmlPullParserException, IOException {
         for (int i = 0; i < resIds.length; i++) {
+            VectorDrawable vectorDrawable = new VectorDrawable();
+            vectorDrawable.setBounds(0, 0, IMAGE_WIDTH, IMAGE_HEIGHT);
+
+
             // Setup VectorDrawable from xml file and draw into the bitmap.
             XmlPullParser parser = mResources.getXml(resIds[i]);
             AttributeSet attrs = Xml.asAttributeSet(parser);
@@ -234,14 +246,14 @@ public class VectorDrawableTest extends AndroidTestCase {
 
             Theme theme = mResources.newTheme();
             theme.applyStyle(R.style.Theme_ThemedDrawableTest, true);
-            mVectorDrawable.inflate(mResources, parser, attrs, theme);
+            vectorDrawable.inflate(mResources, parser, attrs, theme);
 
             if (stateSet != null) {
-                mVectorDrawable.setState(stateSet);
+                vectorDrawable.setState(stateSet);
             }
 
             mBitmap.eraseColor(0);
-            mVectorDrawable.draw(mCanvas);
+            vectorDrawable.draw(mCanvas);
 
             if (DBG_DUMP_PNG) {
                 saveVectorDrawableIntoPNG(mBitmap, resIds, i, stateSet);
