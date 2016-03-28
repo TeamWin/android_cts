@@ -29,7 +29,6 @@ import android.server.cts.WindowManagerState.WindowTask;
 import java.awt.Rectangle;
 import java.util.Objects;
 
-import static android.server.cts.ActivityManagerTestBase.FREEFORM_WORKSPACE_STACK_ID;
 import static com.android.ddmlib.Log.LogLevel.INFO;
 
 /** Combined state of the activity manager and window manager. */
@@ -267,11 +266,6 @@ class ActivityAndWindowManagersState extends Assert {
                 } else {
                     assertEquals("Task bounds in AM and WM must be equal taskId=" + taskId
                             + ", stackId=" + stackId, aTaskBounds, wTaskBounds);
-
-                    if (stackId != FREEFORM_WORKSPACE_STACK_ID) {
-                        assertEquals("Task bounds must be equal to stack bounds taskId=" + taskId
-                                + ", stackId=" + stackId, aStackBounds, wTaskBounds);
-                    }
                 }
             }
         }
