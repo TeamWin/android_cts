@@ -125,7 +125,8 @@ public class ReduceTest extends RSBaseCompute {
 
     private static short[] createInputArrayHalf(int len, int seed) {
         short[] array = new short[len];
-        RSUtils.genRandomFloat16s(seed, RSUtils.FLOAT16_MIN_NORMAL, RSUtils.FLOAT16_MAX_VALUE, array, false);
+        RSUtils.genRandomFloat16s(seed, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY, array,
+            false);
         return array;
     }
 
