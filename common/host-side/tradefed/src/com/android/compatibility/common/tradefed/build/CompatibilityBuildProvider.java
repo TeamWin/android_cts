@@ -15,21 +15,31 @@
  */
 package com.android.compatibility.common.tradefed.build;
 
+import com.android.compatibility.SuiteInfo;
 import com.android.tradefed.build.BuildInfo;
+import com.android.tradefed.build.BuildRetrievalError;
+import com.android.tradefed.build.DeviceBuildInfo;
 import com.android.tradefed.build.IBuildInfo;
 import com.android.tradefed.build.IBuildProvider;
+import com.android.tradefed.build.IDeviceBuildProvider;
 import com.android.tradefed.config.Option;
 import com.android.tradefed.config.OptionClass;
+import com.android.tradefed.device.DeviceNotAvailableException;
+import com.android.tradefed.device.ITestDevice;
 /**
  * A simple {@link IBuildProvider} that uses a pre-existing Compatibility install.
  */
 @OptionClass(alias="compatibility-build-provider")
-public class CompatibilityBuildProvider implements IBuildProvider {
+public class CompatibilityBuildProvider implements IDeviceBuildProvider {
 
     @Option(name="branch", description="build branch name to supply.")
     private String mBranch = null;
 
-    private static final String PACKAGE_NAME = "com.android.compatibility.common.tradefed.build";
+    @Option(name="use-device-build-info", description="Bootstrap build info from device")
+    private boolean mUseDeviceBuildInfo = false;
+
+    @Option(name="test-tag", description="test tag name to supply.")
+    private String mTestTag = "cts";
 
     /**
      * {@inheritDoc}
@@ -37,16 +47,46 @@ public class CompatibilityBuildProvider implements IBuildProvider {
     @Override
     public IBuildInfo getBuild() {
         // Create a blank BuildInfo which will get populated later.
-        String version = Package.getPackage(PACKAGE_NAME).getImplementationVersion();
+        String version = SuiteInfo.BUILD_NUMBER;
         if (version == null) {
             version = IBuildInfo.UNKNOWN_BUILD_ID;
         }
-        IBuildInfo ctsBuild = new BuildInfo(version, "cts", "cts");
+        IBuildInfo ctsBuild = new BuildInfo(version, mTestTag, mTestTag);
         if (mBranch  != null) {
             ctsBuild.setBuildBranch(mBranch);
         }
 
         return ctsBuild;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public IBuildInfo getBuild(ITestDevice device)
+            throws BuildRetrievalError, DeviceNotAvailableException {
+        if (!mUseDeviceBuildInfo) {
+            // return a regular build info without extracting device attributes into standard
+            // build info fields
+            return getBuild();
+        } else {
+            String buildId = device.getBuildId();
+            String buildFlavor = device.getBuildFlavor();
+            IBuildInfo info = new DeviceBuildInfo(buildId, mTestTag, buildFlavor);
+            if (mBranch == null) {
+                // if branch is not specified via param, make a pseudo branch name based on platform
+                // version and product info from device
+                mBranch = String.format("%s-%s-%s-%s",
+                        device.getProperty("ro.product.brand"),
+                        device.getProperty("ro.product.name"),
+                        device.getProductVariant(),
+                        device.getProperty("ro.build.version.release"));
+            }
+            info.setBuildBranch(mBranch);
+            info.setBuildFlavor(buildFlavor);
+            info.addBuildAttribute("build_alias", device.getBuildAlias());
+            return info;
+        }
     }
 
     /**
