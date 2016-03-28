@@ -44,6 +44,8 @@ import android.support.test.uiautomator.UiSelector;
 import android.support.test.uiautomator.Until;
 import android.util.Log;
 
+import java.util.List;
+
 /**
  * Set of tests that verify behavior of the Scoped Directory Access API.
  */
@@ -298,18 +300,18 @@ public class ScopedDirectoryAccessClientTest extends DocumentsClientTestCase {
         mDevice.waitForIdle();
     }
 
-    private StorageVolume[] getVolumes() {
+    private List<StorageVolume> getVolumes() {
         final StorageManager sm = (StorageManager)
                 getInstrumentation().getTargetContext().getSystemService(Context.STORAGE_SERVICE);
-        final StorageVolume[] volumes = sm.getVolumeList();
-        assertTrue("empty volumes", volumes.length > 0);
+        final List<StorageVolume> volumes = sm.getStorageVolumes();
+        assertTrue("empty volumes", !volumes.isEmpty());
         return volumes;
     }
 
     private StorageVolume getPrimaryVolume() {
         final StorageManager sm = (StorageManager)
                 getInstrumentation().getTargetContext().getSystemService(Context.STORAGE_SERVICE);
-        return sm.getPrimaryVolume();
+        return sm.getPrimaryStorageVolume();
     }
 
     private final class UiAlertDialog {
