@@ -129,8 +129,8 @@ public class RSBaseCompute extends RSBase {
             alloc.copy1DRangeFrom(0, INPUTSIZE, inArray);
         } else if (dataType == Element.DataType.FLOAT_16) {
             short[] inArray = new short[INPUTSIZE * width];
-            short min = RSUtils.FLOAT16_MIN_NORMAL;
-            short max = 19456; // 0x4c00 in hex, 16.0 in float16
+            double min = -4.0 * Math.PI;
+            double max = 4.0 * Math.PI;
             RSUtils.genRandomFloat16s(seed, min, max, inArray, includeExtremes);
             alloc.copyFrom(inArray);
         } else if (dataType == Element.DataType.SIGNED_64) {
@@ -184,6 +184,10 @@ public class RSBaseCompute extends RSBase {
         } else if (dataType == Element.DataType.FLOAT_32) {
             float[] inArray = new float[INPUTSIZE * width];
             RSUtils.genRandomFloats(seed, (float) minValue, (float) maxValue, inArray, false);
+            alloc.copy1DRangeFrom(0, INPUTSIZE, inArray);
+        } else if (dataType == Element.DataType.FLOAT_16) {
+            short[] inArray = new short[INPUTSIZE * width];
+            RSUtils.genRandomFloat16s(seed, minValue, maxValue, inArray, false);
             alloc.copy1DRangeFrom(0, INPUTSIZE, inArray);
         } else {
             android.util.Log.e("RenderscriptCTS",

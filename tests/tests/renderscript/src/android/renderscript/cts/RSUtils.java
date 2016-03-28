@@ -165,8 +165,60 @@ public class RSUtils {
         }
     }
 
-    public static void genRandomFloat16s(long seed, short min, short max, short array[],
-            boolean includeExtremes) {
+    public static void genRandomFloat16s(long seed, double minDoubleValue, double maxDoubleValue,
+            short array[], boolean includeExtremes) {
+
+        // Ensure that requests for random Float16s span a reasnoable range.
+        if (maxDoubleValue - minDoubleValue <= 1.) {
+            throw new RSRuntimeException("Unexpected: Range is too small");
+        }
+
+        boolean includeNegatives = false;
+
+        // Identify a range of 'short' values from the input range of 'double' If either
+        // minValueInHalf or maxValueInHalf is +/- infinity, use MAX_VALUE with appropriate sign
+        // instead.  The extreme values will get included if includeExtremes flag is set.
+        double minValueInHalf = Float16Utils.roundToFloat16(minDoubleValue)[1];
+        double maxValueInHalf = Float16Utils.roundToFloat16(maxDoubleValue)[0];
+
+        if (Double.isInfinite(minValueInHalf)) {
+            minValueInHalf = Math.copySign(Float16Utils.MAX_VALUE, minValueInHalf);
+        }
+        if (Double.isInfinite(maxValueInHalf)) {
+            maxValueInHalf = Math.copySign(Float16Utils.MAX_VALUE, maxValueInHalf);
+        }
+
+        short min = Float16Utils.convertDoubleToFloat16(minValueInHalf);
+        short max = Float16Utils.convertDoubleToFloat16(maxValueInHalf);
+
+        // If range spans across zero, set the range to be entirely positive and set
+        // includeNegatives to true.  In this scenario, the upper bound is set to the larger of
+        // maxValue and abs(minValue).  The lower bound is FLOAT16_MIN_NORMAL.
+        if (minDoubleValue < 0. && maxDoubleValue > 0.) {
+            includeNegatives = true;
+            min = FLOAT16_MIN_NORMAL;
+
+            // If abs(minDoubleValue) is greater than maxDoubleValue, pick abs(minValue) as the
+            // upper bound.
+            // TODO Update this function to generate random float16s exactly between minDoubleValue
+            // and maxDoubleValue.
+            if (Math.abs(minDoubleValue) > maxDoubleValue) {
+                max = (short) (0x7fff & min);
+            }
+        } else if (maxDoubleValue < 0.) {
+            throw new RSRuntimeException("Unexpected: Range is entirely negative: " +
+                Double.toString(minDoubleValue) + " to " + Double.toString(maxDoubleValue));
+        }
+
+        // If min is 0 or subnormal, set it to FLOAT16_MIN_NORMAL
+        if (Float16Utils.isFloat16Zero(min) || Float16Utils.isFloat16SubNormal(min)) {
+            min = FLOAT16_MIN_NORMAL;
+        }
+
+        android.util.Log.e("F16-RSCTS", "Requested range" + Double.toString(minDoubleValue) + " to " + Double.toString(maxDoubleValue));
+        android.util.Log.e("F16-RSCTS", "Generating between " + Short.toString(min) + " to " + Short.toString(max));
+        android.util.Log.e("F16-RSCTS", "Negatives? " + Boolean.toString(includeNegatives));
+
         Random r = new Random(seed);
         short range = (short) (max - min + 1);
         for (int i = 0; i < array.length; i ++) {
@@ -176,13 +228,17 @@ public class RSUtils {
         array[r.nextInt(array.length)] = max;
 
         // Negate approximately half of the elements.
-        for (int i = 0; i < array.length; i ++) {
-            if (r.nextBoolean()) {
-                array[i] = (short) (0x8000 | array[i]);
+        if (includeNegatives) {
+            for (int i = 0; i < array.length; i ++) {
+                if (r.nextBoolean()) {
+                    array[i] = (short) (0x8000 | array[i]);
+                }
             }
         }
 
         for (short s : sInterestingFloat16s) {
+            if (!includeNegatives && s < 0)
+                continue;
             array[r.nextInt(array.length)] = s;
         }
         if (includeExtremes) {
