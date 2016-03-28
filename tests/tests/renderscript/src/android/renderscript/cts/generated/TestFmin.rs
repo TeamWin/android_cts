@@ -41,6 +41,26 @@ float4 __attribute__((kernel)) testFminFloat4Float4Float4(float4 inA, unsigned i
     return fmin(inA, inB);
 }
 
+half __attribute__((kernel)) testFminHalfHalfHalf(half inA, unsigned int x) {
+    half inB = rsGetElementAt_half(gAllocInB, x);
+    return fmin(inA, inB);
+}
+
+half2 __attribute__((kernel)) testFminHalf2Half2Half2(half2 inA, unsigned int x) {
+    half2 inB = rsGetElementAt_half2(gAllocInB, x);
+    return fmin(inA, inB);
+}
+
+half3 __attribute__((kernel)) testFminHalf3Half3Half3(half3 inA, unsigned int x) {
+    half3 inB = rsGetElementAt_half3(gAllocInB, x);
+    return fmin(inA, inB);
+}
+
+half4 __attribute__((kernel)) testFminHalf4Half4Half4(half4 inA, unsigned int x) {
+    half4 inB = rsGetElementAt_half4(gAllocInB, x);
+    return fmin(inA, inB);
+}
+
 float2 __attribute__((kernel)) testFminFloat2FloatFloat2(float2 inA, unsigned int x) {
     float inB = rsGetElementAt_float(gAllocInB, x);
     return fmin(inA, inB);
@@ -53,5 +73,20 @@ float3 __attribute__((kernel)) testFminFloat3FloatFloat3(float3 inA, unsigned in
 
 float4 __attribute__((kernel)) testFminFloat4FloatFloat4(float4 inA, unsigned int x) {
     float inB = rsGetElementAt_float(gAllocInB, x);
+    return fmin(inA, inB);
+}
+
+half2 __attribute__((kernel)) testFminHalf2HalfHalf2(half2 inA, unsigned int x) {
+    half inB = rsGetElementAt_half(gAllocInB, x);
+    return fmin(inA, inB);
+}
+
+half3 __attribute__((kernel)) testFminHalf3HalfHalf3(half3 inA, unsigned int x) {
+    half inB = rsGetElementAt_half(gAllocInB, x);
+    return fmin(inA, inB);
+}
+
+half4 __attribute__((kernel)) testFminHalf4HalfHalf4(half4 inA, unsigned int x) {
+    half inB = rsGetElementAt_half(gAllocInB, x);
     return fmin(inA, inB);
 }

@@ -40,3 +40,23 @@ float4 __attribute__((kernel)) testNativeDivideFloat4Float4Float4(float4 inLeftV
     float4 inRightVector = rsGetElementAt_float4(gAllocInRightVector, x);
     return native_divide(inLeftVector, inRightVector);
 }
+
+half __attribute__((kernel)) testNativeDivideHalfHalfHalf(half inLeftVector, unsigned int x) {
+    half inRightVector = rsGetElementAt_half(gAllocInRightVector, x);
+    return native_divide(inLeftVector, inRightVector);
+}
+
+half2 __attribute__((kernel)) testNativeDivideHalf2Half2Half2(half2 inLeftVector, unsigned int x) {
+    half2 inRightVector = rsGetElementAt_half2(gAllocInRightVector, x);
+    return native_divide(inLeftVector, inRightVector);
+}
+
+half3 __attribute__((kernel)) testNativeDivideHalf3Half3Half3(half3 inLeftVector, unsigned int x) {
+    half3 inRightVector = rsGetElementAt_half3(gAllocInRightVector, x);
+    return native_divide(inLeftVector, inRightVector);
+}
+
+half4 __attribute__((kernel)) testNativeDivideHalf4Half4Half4(half4 inLeftVector, unsigned int x) {
+    half4 inRightVector = rsGetElementAt_half4(gAllocInRightVector, x);
+    return native_divide(inLeftVector, inRightVector);
+}

@@ -35,3 +35,19 @@ float3 __attribute__((kernel)) testRintFloat3Float3(float3 inV) {
 float4 __attribute__((kernel)) testRintFloat4Float4(float4 inV) {
     return rint(inV);
 }
+
+half __attribute__((kernel)) testRintHalfHalf(half inV) {
+    return rint(inV);
+}
+
+half2 __attribute__((kernel)) testRintHalf2Half2(half2 inV) {
+    return rint(inV);
+}
+
+half3 __attribute__((kernel)) testRintHalf3Half3(half3 inV) {
+    return rint(inV);
+}
+
+half4 __attribute__((kernel)) testRintHalf4Half4(half4 inV) {
+    return rint(inV);
+}

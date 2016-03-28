@@ -40,3 +40,23 @@ float4 __attribute__((kernel)) testNativeAtan2Float4Float4Float4(float4 inNumera
     float4 inDenominator = rsGetElementAt_float4(gAllocInDenominator, x);
     return native_atan2(inNumerator, inDenominator);
 }
+
+half __attribute__((kernel)) testNativeAtan2HalfHalfHalf(half inNumerator, unsigned int x) {
+    half inDenominator = rsGetElementAt_half(gAllocInDenominator, x);
+    return native_atan2(inNumerator, inDenominator);
+}
+
+half2 __attribute__((kernel)) testNativeAtan2Half2Half2Half2(half2 inNumerator, unsigned int x) {
+    half2 inDenominator = rsGetElementAt_half2(gAllocInDenominator, x);
+    return native_atan2(inNumerator, inDenominator);
+}
+
+half3 __attribute__((kernel)) testNativeAtan2Half3Half3Half3(half3 inNumerator, unsigned int x) {
+    half3 inDenominator = rsGetElementAt_half3(gAllocInDenominator, x);
+    return native_atan2(inNumerator, inDenominator);
+}
+
+half4 __attribute__((kernel)) testNativeAtan2Half4Half4Half4(half4 inNumerator, unsigned int x) {
+    half4 inDenominator = rsGetElementAt_half4(gAllocInDenominator, x);
+    return native_atan2(inNumerator, inDenominator);
+}

@@ -40,3 +40,23 @@ float4 __attribute__((kernel)) testPowFloat4Float4Float4(float4 inBase, unsigned
     float4 inExponent = rsGetElementAt_float4(gAllocInExponent, x);
     return pow(inBase, inExponent);
 }
+
+half __attribute__((kernel)) testPowHalfHalfHalf(half inBase, unsigned int x) {
+    half inExponent = rsGetElementAt_half(gAllocInExponent, x);
+    return pow(inBase, inExponent);
+}
+
+half2 __attribute__((kernel)) testPowHalf2Half2Half2(half2 inBase, unsigned int x) {
+    half2 inExponent = rsGetElementAt_half2(gAllocInExponent, x);
+    return pow(inBase, inExponent);
+}
+
+half3 __attribute__((kernel)) testPowHalf3Half3Half3(half3 inBase, unsigned int x) {
+    half3 inExponent = rsGetElementAt_half3(gAllocInExponent, x);
+    return pow(inBase, inExponent);
+}
+
+half4 __attribute__((kernel)) testPowHalf4Half4Half4(half4 inBase, unsigned int x) {
+    half4 inExponent = rsGetElementAt_half4(gAllocInExponent, x);
+    return pow(inBase, inExponent);
+}
