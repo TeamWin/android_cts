@@ -35,3 +35,19 @@ float3 __attribute__((kernel)) testNativeAtanFloat3Float3(float3 inV) {
 float4 __attribute__((kernel)) testNativeAtanFloat4Float4(float4 inV) {
     return native_atan(inV);
 }
+
+half __attribute__((kernel)) testNativeAtanHalfHalf(half inV) {
+    return native_atan(inV);
+}
+
+half2 __attribute__((kernel)) testNativeAtanHalf2Half2(half2 inV) {
+    return native_atan(inV);
+}
+
+half3 __attribute__((kernel)) testNativeAtanHalf3Half3(half3 inV) {
+    return native_atan(inV);
+}
+
+half4 __attribute__((kernel)) testNativeAtanHalf4Half4(half4 inV) {
+    return native_atan(inV);
+}

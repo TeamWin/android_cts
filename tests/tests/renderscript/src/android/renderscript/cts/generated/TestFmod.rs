@@ -40,3 +40,23 @@ float4 __attribute__((kernel)) testFmodFloat4Float4Float4(float4 inNumerator, un
     float4 inDenominator = rsGetElementAt_float4(gAllocInDenominator, x);
     return fmod(inNumerator, inDenominator);
 }
+
+half __attribute__((kernel)) testFmodHalfHalfHalf(half inNumerator, unsigned int x) {
+    half inDenominator = rsGetElementAt_half(gAllocInDenominator, x);
+    return fmod(inNumerator, inDenominator);
+}
+
+half2 __attribute__((kernel)) testFmodHalf2Half2Half2(half2 inNumerator, unsigned int x) {
+    half2 inDenominator = rsGetElementAt_half2(gAllocInDenominator, x);
+    return fmod(inNumerator, inDenominator);
+}
+
+half3 __attribute__((kernel)) testFmodHalf3Half3Half3(half3 inNumerator, unsigned int x) {
+    half3 inDenominator = rsGetElementAt_half3(gAllocInDenominator, x);
+    return fmod(inNumerator, inDenominator);
+}
+
+half4 __attribute__((kernel)) testFmodHalf4Half4Half4(half4 inNumerator, unsigned int x) {
+    half4 inDenominator = rsGetElementAt_half4(gAllocInDenominator, x);
+    return fmod(inNumerator, inDenominator);
+}

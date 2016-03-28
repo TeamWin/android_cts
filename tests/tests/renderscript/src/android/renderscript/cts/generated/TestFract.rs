@@ -64,3 +64,47 @@ float3 __attribute__((kernel)) testFractFloat3Float3(float3 inV) {
 float4 __attribute__((kernel)) testFractFloat4Float4(float4 inV) {
     return fract(inV);
 }
+
+half __attribute__((kernel)) testFractHalfHalfHalf(half inV, unsigned int x) {
+    half outFloor = 0;
+    half out = fract(inV, &outFloor);
+    rsSetElementAt_half(gAllocOutFloor, outFloor, x);
+    return out;
+}
+
+half2 __attribute__((kernel)) testFractHalf2Half2Half2(half2 inV, unsigned int x) {
+    half2 outFloor = 0;
+    half2 out = fract(inV, &outFloor);
+    rsSetElementAt_half2(gAllocOutFloor, outFloor, x);
+    return out;
+}
+
+half3 __attribute__((kernel)) testFractHalf3Half3Half3(half3 inV, unsigned int x) {
+    half3 outFloor = 0;
+    half3 out = fract(inV, &outFloor);
+    rsSetElementAt_half3(gAllocOutFloor, outFloor, x);
+    return out;
+}
+
+half4 __attribute__((kernel)) testFractHalf4Half4Half4(half4 inV, unsigned int x) {
+    half4 outFloor = 0;
+    half4 out = fract(inV, &outFloor);
+    rsSetElementAt_half4(gAllocOutFloor, outFloor, x);
+    return out;
+}
+
+half __attribute__((kernel)) testFractHalfHalf(half inV) {
+    return fract(inV);
+}
+
+half2 __attribute__((kernel)) testFractHalf2Half2(half2 inV) {
+    return fract(inV);
+}
+
+half3 __attribute__((kernel)) testFractHalf3Half3(half3 inV) {
+    return fract(inV);
+}
+
+half4 __attribute__((kernel)) testFractHalf4Half4(half4 inV) {
+    return fract(inV);
+}

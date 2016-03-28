@@ -35,3 +35,19 @@ float3 __attribute__((kernel)) testTgammaFloat3Float3(float3 inV) {
 float4 __attribute__((kernel)) testTgammaFloat4Float4(float4 inV) {
     return tgamma(inV);
 }
+
+half __attribute__((kernel)) testTgammaHalfHalf(half inV) {
+    return tgamma(inV);
+}
+
+half2 __attribute__((kernel)) testTgammaHalf2Half2(half2 inV) {
+    return tgamma(inV);
+}
+
+half3 __attribute__((kernel)) testTgammaHalf3Half3(half3 inV) {
+    return tgamma(inV);
+}
+
+half4 __attribute__((kernel)) testTgammaHalf4Half4(half4 inV) {
+    return tgamma(inV);
+}

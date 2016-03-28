@@ -48,3 +48,31 @@ float4 __attribute__((kernel)) testSincosFloat4Float4Float4(float4 inV, unsigned
     rsSetElementAt_float4(gAllocOutCos, outCos, x);
     return out;
 }
+
+half __attribute__((kernel)) testSincosHalfHalfHalf(half inV, unsigned int x) {
+    half outCos = 0;
+    half out = sincos(inV, &outCos);
+    rsSetElementAt_half(gAllocOutCos, outCos, x);
+    return out;
+}
+
+half2 __attribute__((kernel)) testSincosHalf2Half2Half2(half2 inV, unsigned int x) {
+    half2 outCos = 0;
+    half2 out = sincos(inV, &outCos);
+    rsSetElementAt_half2(gAllocOutCos, outCos, x);
+    return out;
+}
+
+half3 __attribute__((kernel)) testSincosHalf3Half3Half3(half3 inV, unsigned int x) {
+    half3 outCos = 0;
+    half3 out = sincos(inV, &outCos);
+    rsSetElementAt_half3(gAllocOutCos, outCos, x);
+    return out;
+}
+
+half4 __attribute__((kernel)) testSincosHalf4Half4Half4(half4 inV, unsigned int x) {
+    half4 outCos = 0;
+    half4 out = sincos(inV, &outCos);
+    rsSetElementAt_half4(gAllocOutCos, outCos, x);
+    return out;
+}

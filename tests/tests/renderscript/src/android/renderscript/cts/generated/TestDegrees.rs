@@ -35,3 +35,19 @@ float3 __attribute__((kernel)) testDegreesFloat3Float3(float3 inV) {
 float4 __attribute__((kernel)) testDegreesFloat4Float4(float4 inV) {
     return degrees(inV);
 }
+
+half __attribute__((kernel)) testDegreesHalfHalf(half inV) {
+    return degrees(inV);
+}
+
+half2 __attribute__((kernel)) testDegreesHalf2Half2(half2 inV) {
+    return degrees(inV);
+}
+
+half3 __attribute__((kernel)) testDegreesHalf3Half3(half3 inV) {
+    return degrees(inV);
+}
+
+half4 __attribute__((kernel)) testDegreesHalf4Half4(half4 inV) {
+    return degrees(inV);
+}
