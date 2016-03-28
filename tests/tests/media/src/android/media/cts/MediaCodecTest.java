@@ -23,6 +23,8 @@ import android.cts.util.MediaUtils;
 import android.media.MediaCodec;
 import android.media.MediaCodec.BufferInfo;
 import android.media.MediaCodec.CodecException;
+import android.media.MediaCodec.CryptoInfo;
+import android.media.MediaCodec.CryptoInfo.Pattern;
 import android.media.MediaCodecInfo;
 import android.media.MediaCodecList;
 import android.media.MediaExtractor;
@@ -1244,6 +1246,25 @@ public class MediaCodecTest extends AndroidTestCase {
         public int mFps;
         public int mBitRate;
     };
+
+    public void testCryptoInfoPattern() {
+        CryptoInfo info = new CryptoInfo();
+        Pattern pattern = new Pattern(1 /*blocksToEncrypt*/, 2 /*blocksToSkip*/);
+        if (pattern.getEncryptBlocks() != 1) {
+            fail("Incorrect number of encrypt blocks in pattern");
+        }
+        if (pattern.getSkipBlocks() != 2) {
+            fail("Incorrect number of skip blocks in pattern");
+        }
+        pattern.set(3 /*blocksToEncrypt*/, 4 /*blocksToSkip*/);
+        if (pattern.getEncryptBlocks() != 3) {
+            fail("Incorrect number of encrypt blocks in pattern");
+        }
+        if (pattern.getSkipBlocks() != 4) {
+            fail("Incorrect number of skip blocks in pattern");
+        }
+        info.setPattern(pattern);
+    }
 
     private static CodecInfo getAvcSupportedFormatInfo() {
         MediaCodecInfo mediaCodecInfo = selectCodec(MIME_TYPE);
