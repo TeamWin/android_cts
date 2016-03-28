@@ -22,6 +22,9 @@
     <!-- String title of the accessibility end-to-end test activity -->
     <string name="accessibility_end_to_end_test_activity">End-to-end test</string>
 
+    <!-- String title of the accessibility test activity -->
+    <string name="accessibility_test_activity">Test</string>
+
     <!-- String value of used as text input -->
     <string name="text_input_blah">Blah</string>
 
