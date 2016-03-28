@@ -41,6 +41,26 @@ float4 __attribute__((kernel)) testMaxFloat4Float4Float4(float4 inA, unsigned in
     return max(inA, inB);
 }
 
+half __attribute__((kernel)) testMaxHalfHalfHalf(half inA, unsigned int x) {
+    half inB = rsGetElementAt_half(gAllocInB, x);
+    return max(inA, inB);
+}
+
+half2 __attribute__((kernel)) testMaxHalf2Half2Half2(half2 inA, unsigned int x) {
+    half2 inB = rsGetElementAt_half2(gAllocInB, x);
+    return max(inA, inB);
+}
+
+half3 __attribute__((kernel)) testMaxHalf3Half3Half3(half3 inA, unsigned int x) {
+    half3 inB = rsGetElementAt_half3(gAllocInB, x);
+    return max(inA, inB);
+}
+
+half4 __attribute__((kernel)) testMaxHalf4Half4Half4(half4 inA, unsigned int x) {
+    half4 inB = rsGetElementAt_half4(gAllocInB, x);
+    return max(inA, inB);
+}
+
 float2 __attribute__((kernel)) testMaxFloat2FloatFloat2(float2 inA, unsigned int x) {
     float inB = rsGetElementAt_float(gAllocInB, x);
     return max(inA, inB);
@@ -53,6 +73,21 @@ float3 __attribute__((kernel)) testMaxFloat3FloatFloat3(float3 inA, unsigned int
 
 float4 __attribute__((kernel)) testMaxFloat4FloatFloat4(float4 inA, unsigned int x) {
     float inB = rsGetElementAt_float(gAllocInB, x);
+    return max(inA, inB);
+}
+
+half2 __attribute__((kernel)) testMaxHalf2HalfHalf2(half2 inA, unsigned int x) {
+    half inB = rsGetElementAt_half(gAllocInB, x);
+    return max(inA, inB);
+}
+
+half3 __attribute__((kernel)) testMaxHalf3HalfHalf3(half3 inA, unsigned int x) {
+    half inB = rsGetElementAt_half(gAllocInB, x);
+    return max(inA, inB);
+}
+
+half4 __attribute__((kernel)) testMaxHalf4HalfHalf4(half4 inA, unsigned int x) {
+    half inB = rsGetElementAt_half(gAllocInB, x);
     return max(inA, inB);
 }
 

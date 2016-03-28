@@ -35,3 +35,19 @@ float3 __attribute__((kernel)) testNativeCbrtFloat3Float3(float3 inV) {
 float4 __attribute__((kernel)) testNativeCbrtFloat4Float4(float4 inV) {
     return native_cbrt(inV);
 }
+
+half __attribute__((kernel)) testNativeCbrtHalfHalf(half inV) {
+    return native_cbrt(inV);
+}
+
+half2 __attribute__((kernel)) testNativeCbrtHalf2Half2(half2 inV) {
+    return native_cbrt(inV);
+}
+
+half3 __attribute__((kernel)) testNativeCbrtHalf3Half3(half3 inV) {
+    return native_cbrt(inV);
+}
+
+half4 __attribute__((kernel)) testNativeCbrtHalf4Half4(half4 inV) {
+    return native_cbrt(inV);
+}

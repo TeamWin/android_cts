@@ -35,3 +35,19 @@ float3 __attribute__((kernel)) testNativeRsqrtFloat3Float3(float3 inV) {
 float4 __attribute__((kernel)) testNativeRsqrtFloat4Float4(float4 inV) {
     return native_rsqrt(inV);
 }
+
+half __attribute__((kernel)) testNativeRsqrtHalfHalf(half inV) {
+    return native_rsqrt(inV);
+}
+
+half2 __attribute__((kernel)) testNativeRsqrtHalf2Half2(half2 inV) {
+    return native_rsqrt(inV);
+}
+
+half3 __attribute__((kernel)) testNativeRsqrtHalf3Half3(half3 inV) {
+    return native_rsqrt(inV);
+}
+
+half4 __attribute__((kernel)) testNativeRsqrtHalf4Half4(half4 inV) {
+    return native_rsqrt(inV);
+}

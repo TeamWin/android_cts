@@ -35,3 +35,19 @@ float3 __attribute__((kernel)) testTruncFloat3Float3(float3 inV) {
 float4 __attribute__((kernel)) testTruncFloat4Float4(float4 inV) {
     return trunc(inV);
 }
+
+half __attribute__((kernel)) testTruncHalfHalf(half inV) {
+    return trunc(inV);
+}
+
+half2 __attribute__((kernel)) testTruncHalf2Half2(half2 inV) {
+    return trunc(inV);
+}
+
+half3 __attribute__((kernel)) testTruncHalf3Half3(half3 inV) {
+    return trunc(inV);
+}
+
+half4 __attribute__((kernel)) testTruncHalf4Half4(half4 inV) {
+    return trunc(inV);
+}

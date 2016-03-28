@@ -35,3 +35,19 @@ float3 __attribute__((kernel)) testSignFloat3Float3(float3 inV) {
 float4 __attribute__((kernel)) testSignFloat4Float4(float4 inV) {
     return sign(inV);
 }
+
+half __attribute__((kernel)) testSignHalfHalf(half inV) {
+    return sign(inV);
+}
+
+half2 __attribute__((kernel)) testSignHalf2Half2(half2 inV) {
+    return sign(inV);
+}
+
+half3 __attribute__((kernel)) testSignHalf3Half3(half3 inV) {
+    return sign(inV);
+}
+
+half4 __attribute__((kernel)) testSignHalf4Half4(half4 inV) {
+    return sign(inV);
+}
