@@ -1171,6 +1171,11 @@ public class PaintTest extends AndroidTestCase {
         }
 
         // TODO: when we support variation selectors, add positive tests
+
+        // Unicode 7.0, 8.0, and 9.0 emoji should be supported.
+        assertTrue(p.hasGlyph("\uD83D\uDD75"));  // SLEUTH OR SPY is introduced in Unicode 7.0
+        assertTrue(p.hasGlyph("\uD83C\uDF2E"));  // TACO is introduced in Unicode 8.0
+        assertTrue(p.hasGlyph("\uD83E\uDD33"));  // SELFIE is introduced in Unicode 9.0
     }
 
     public void testGetRunAdvance() {
