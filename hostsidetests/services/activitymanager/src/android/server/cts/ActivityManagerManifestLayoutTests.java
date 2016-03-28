@@ -40,11 +40,12 @@ public class ActivityManagerManifestLayoutTests extends ActivityManagerTestBase 
     private static final int DISPLAY_DENSITY_DEFAULT = 160;
 
     // Test parameters
-    private static final int DEFAULT_WIDTH_DP = 160;
+    private static final int DEFAULT_WIDTH_DP = 240;
     private static final int DEFAULT_HEIGHT_DP = 160;
     private static final float DEFAULT_WIDTH_FRACTION = 0.25f;
-    private static final float DEFAULT_HEIGHT_FRACTION = 0.25f;
-    private static final int MINIMAL_SIZE_DP = 80;
+    private static final float DEFAULT_HEIGHT_FRACTION = 0.35f;
+    private static final int MINIMAL_WIDTH_DP = 100;
+    private static final int MINIMAL_HEIGHT_DP = 80;
 
     private static final int GRAVITY_VER_CENTER = 0x01;
     private static final int GRAVITY_VER_TOP    = 0x02;
@@ -89,7 +90,7 @@ public class ActivityManagerManifestLayoutTests extends ActivityManagerTestBase 
         final String activityName = "BottomRightLayoutActivity";
 
         // Issue command to resize to <0,0,1,1>. We expect the size to be floored at
-        // MINIMAL_SIZE_DPxMINIMAL_SIZE_DP.
+        // MINIMAL_WIDTH_DPxMINIMAL_HEIGHT_DP.
         if (stackId == FREEFORM_WORKSPACE_STACK_ID) {
             launchActivityInStack(activityName, stackId);
             resizeActivityTask(activityName, 0, 0, 1, 1);
@@ -99,12 +100,12 @@ public class ActivityManagerManifestLayoutTests extends ActivityManagerTestBase 
         }
         getDisplayAndWindowState(activityName);
 
-        final int minimalSize = dpToPx(MINIMAL_SIZE_DP, mDisplay.getDpi());
+        final int minimalWidth = dpToPx(MINIMAL_WIDTH_DP, mDisplay.getDpi());
+        final int minimalHeight = dpToPx(MINIMAL_HEIGHT_DP, mDisplay.getDpi());
         final Rectangle containingRect = mWindowState.getContainingFrame();
-        final int actualSize = Math.min(containingRect.width, containingRect.height);
 
-        // The shorter of width, height should be the minimal size.
-        Assert.assertEquals("Minimum size is incorrect", minimalSize, actualSize);
+        Assert.assertEquals("Minimum width is incorrect", minimalWidth, containingRect.width);
+        Assert.assertEquals("Minimum height is incorrect", minimalHeight, containingRect.height);
     }
 
     private void testLayout(

@@ -97,10 +97,11 @@
                   android:resizeableActivity="true"
                   android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout"
                   android:exported="true">
-                  <layout android:defaultWidth="160dp"
+                  <layout android:defaultWidth="240dp"
                           android:defaultHeight="160dp"
                           android:gravity="top|left"
-                          android:minimalSize="80dp"
+                          android:minimalWidth="100dp"
+                          android:minimalHeight="80dp"
                   />
         </activity>
         <activity android:name=".TopRightLayoutActivity"
@@ -108,9 +109,10 @@
                   android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout"
                   android:exported="true">
                   <layout android:defaultWidth="25%"
-                          android:defaultHeight="25%"
+                          android:defaultHeight="35%"
                           android:gravity="top|right"
-                          android:minimalSize="80dp"
+                          android:minimalWidth="100dp"
+                          android:minimalHeight="80dp"
                   />
         </activity>
         <activity android:name=".BottomLeftLayoutActivity"
@@ -118,19 +120,21 @@
                   android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout"
                   android:exported="true">
                   <layout android:defaultWidth="25%"
-                          android:defaultHeight="25%"
+                          android:defaultHeight="35%"
                           android:gravity="bottom|left"
-                          android:minimalSize="80dp"
+                          android:minimalWidth="100dp"
+                          android:minimalHeight="80dp"
                   />
         </activity>
         <activity android:name=".BottomRightLayoutActivity"
                   android:resizeableActivity="true"
                   android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout"
                   android:exported="true">
-                  <layout android:defaultWidth="160dp"
+                  <layout android:defaultWidth="240dp"
                           android:defaultHeight="160dp"
                           android:gravity="bottom|right"
-                          android:minimalSize="80dp"
+                          android:minimalWidth="100dp"
+                          android:minimalHeight="80dp"
                   />
         </activity>
     </application>
