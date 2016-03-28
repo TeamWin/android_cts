@@ -50,7 +50,10 @@
        android:includeFontPadding="false"
        android:textSize="10dip"
        android:textStyle="normal"
+       android:lineSpacingExtra="20dp"
+       android:lineSpacingMultiplier="0.0"
        android:fontFamily="sans-serif"
+       android:background="@null"
        android:visibility="gone"
        />
 
