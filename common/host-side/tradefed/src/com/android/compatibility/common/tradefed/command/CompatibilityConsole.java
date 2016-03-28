@@ -25,8 +25,15 @@ import com.android.compatibility.common.util.IInvocationResult;
 import com.android.compatibility.common.util.TestStatus;
 import com.android.tradefed.command.Console;
 import com.android.tradefed.config.ConfigurationException;
+import com.android.tradefed.config.ConfigurationFactory;
+import com.android.tradefed.config.IConfiguration;
+import com.android.tradefed.config.IConfigurationFactory;
+import com.android.tradefed.log.LogUtil.CLog;
+import com.android.tradefed.testtype.IRemoteTest;
+import com.android.tradefed.testtype.IRuntimeHintProvider;
 import com.android.tradefed.util.ArrayUtil;
 import com.android.tradefed.util.FileUtil;
+import com.android.tradefed.util.Pair;
 import com.android.tradefed.util.RegexTrie;
 import com.android.tradefed.util.TableFormatter;
 import com.android.tradefed.util.TimeUtil;
@@ -37,14 +44,25 @@ import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * An extension of Tradefed's console which adds features specific to compatibility testing.
  */
 public class CompatibilityConsole extends Console {
 
+    /**
+     * Hard coded list of modules to be excluded from manual module sharding
+     * @see {@link #splitModules(int)}
+     */
+    private final static Set<String> MODULE_SPLIT_EXCLUSIONS = new HashSet<>();
+    static {
+        MODULE_SPLIT_EXCLUSIONS.add("CtsDeqpTestCases");
+    }
     private CompatibilityBuildHelper mBuildHelper;
 
     /**
@@ -81,6 +99,19 @@ public class CompatibilityConsole extends Console {
                 listResults();
             }
         }, LIST_PATTERN, "r(?:esults)?");
+        trie.put(new ArgRunnable<CaptureList>() {
+            @Override
+            public void run(CaptureList args) {
+                // Skip 2 tokens to get past split and modules pattern
+                String arg = args.get(2).get(0);
+                int shards = Integer.parseInt(arg);
+                if (shards <= 1) {
+                    printLine("number of shards should be more than 1");
+                    return;
+                }
+                splitModules(shards);
+            }
+        }, "split", "m(?:odules)?", "(\\d+)");
 
         // find existing help for 'LIST_PATTERN' commands, and append these commands help
         String listHelp = commandHelp.get(LIST_PATTERN);
@@ -172,6 +203,93 @@ public class CompatibilityConsole extends Console {
             Collections.sort(modules);
             for (String module : modules) {
                 printLine(module);
+            }
+        } else {
+            printLine("No modules found");
+        }
+    }
+
+    private void splitModules(int shards) {
+        File[] files = null;
+        try {
+            files = getBuildHelper().getTestsDir().listFiles(new ModuleRepo.ConfigFilter());
+        } catch (FileNotFoundException e) {
+            printLine(e.getMessage());
+            e.printStackTrace();
+        }
+        // parse through all config files to get runtime hints
+        if (files != null && files.length > 0) {
+            IConfigurationFactory configFactory = ConfigurationFactory.getInstance();
+            List<Pair<String, Long>> moduleRuntime = new ArrayList<>();
+            // parse through all config files to calculate module execution time
+            for (File file : files) {
+                IConfiguration config = null;
+                String moduleName = file.getName().split("\\.")[0];
+                if (MODULE_SPLIT_EXCLUSIONS.contains(moduleName)) {
+                    continue;
+                }
+                try {
+                    config = configFactory.createConfigurationFromArgs(new String[]{
+                            file.getAbsolutePath(),
+                    });
+                } catch (ConfigurationException ce) {
+                    printLine("Error loading config file: " + file.getAbsolutePath());
+                    CLog.e(ce);
+                    continue;
+                }
+                long runtime = 0;
+                for (IRemoteTest test : config.getTests()) {
+                    if (test instanceof IRuntimeHintProvider) {
+                        runtime += ((IRuntimeHintProvider) test).getRuntimeHint();
+                    } else {
+                        CLog.w("Using default 1m runtime estimation for test type %s",
+                                test.getClass().getSimpleName());
+                        runtime += 60 * 1000;
+                    }
+                }
+                moduleRuntime.add(new Pair<String, Long>(moduleName, runtime));
+            }
+            // sort list modules in descending order of runtime hint
+            Collections.sort(moduleRuntime, new Comparator<Pair<String, Long>>() {
+                @Override
+                public int compare(Pair<String, Long> o1, Pair<String, Long> o2) {
+                    return o2.second.compareTo(o1.second);
+                }
+            });
+            // partition list of modules based on the runtime hint
+            List<List<Pair<String, Long>>> splittedModules = new ArrayList<>();
+            for (int i = 0; i < shards; i++) {
+                splittedModules.add(new ArrayList<>());
+            }
+            int shardIndex = 0;
+            int increment = 1;
+            long[] shardTimes = new long[shards];
+            // go through the sorted list, distribute modules into shards in zig-zag pattern to get
+            // an even execution time among shards
+            for (Pair<String, Long> module : moduleRuntime) {
+                splittedModules.get(shardIndex).add(module);
+                // also collect total runtime per shard
+                shardTimes[shardIndex] += module.second;
+                shardIndex += increment;
+                // zig-zagging: first distribute modules from shard 0 to N, then N down to 0, repeat
+                if (shardIndex == shards) {
+                    increment = -1;
+                    shardIndex = shards - 1;
+                }
+                if (shardIndex == -1) {
+                    increment = 1;
+                    shardIndex = 0;
+                }
+            }
+            shardIndex = 0;
+            // print the final shared lists
+            for (List<Pair<String, Long>> shardedModules : splittedModules) {
+                printLine(String.format("shard #%d (%s)",
+                        shardIndex, TimeUtil.formatElapsedTime(shardTimes[shardIndex])));
+                for (Pair<String, Long> module : shardedModules) {
+                    printLine(String.format("    %s", module.first));
+                }
+                shardIndex++;
             }
         } else {
             printLine("No modules found");
