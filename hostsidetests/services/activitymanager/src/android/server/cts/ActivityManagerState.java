@@ -239,12 +239,18 @@ class ActivityManagerState {
     }
 
     ActivityTask getTaskByActivityName(String activityName) {
+        return getTaskByActivityName(activityName, -1);
+    }
+
+    ActivityTask getTaskByActivityName(String activityName, int stackId) {
         String fullName = ActivityManagerTestBase.getActivityComponentName(activityName);
         for (ActivityStack stack : mStacks) {
-            for (ActivityTask task : stack.mTasks) {
-                for (Activity activity : task.mActivities) {
-                    if (activity.name.equals(fullName)) {
-                        return task;
+            if (stackId == -1 || stackId == stack.mStackId) {
+                for (ActivityTask task : stack.mTasks) {
+                    for (Activity activity : task.mActivities) {
+                        if (activity.name.equals(fullName)) {
+                            return task;
+                        }
                     }
                 }
             }
