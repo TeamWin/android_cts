@@ -89,6 +89,8 @@ public class InputConnectionWrapperTest extends AndroidTestCase {
         assertTrue(inputConnection.isSetComposingRegionCalled);
         wrapper.requestCursorUpdates(InputConnection.CURSOR_UPDATE_IMMEDIATE);
         assertTrue(inputConnection.isRequestCursorUpdatesCalled);
+        wrapper.closeConnection();
+        assertTrue(inputConnection.isCloseConnectionCalled);
         assertFalse(inputConnection.isGetHandlerCalled);
         assertNull(inputConnection.getHandler());
         assertTrue(inputConnection.isGetHandlerCalled);
@@ -119,6 +121,7 @@ public class InputConnectionWrapperTest extends AndroidTestCase {
         public boolean isSetSelectionCalled;
         public boolean isRequestCursorUpdatesCalled;
         public boolean isGetHandlerCalled;
+        public boolean isCloseConnectionCalled;
 
         public boolean beginBatchEdit() {
             isBeginBatchEditCalled = true;
@@ -238,6 +241,10 @@ public class InputConnectionWrapperTest extends AndroidTestCase {
         public Handler getHandler() {
             isGetHandlerCalled = true;
             return null;
+        }
+
+        public void closeConnection() {
+            isCloseConnectionCalled = true;
         }
     }
 }
