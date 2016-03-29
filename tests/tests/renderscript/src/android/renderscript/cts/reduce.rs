@@ -75,8 +75,10 @@ static void fMMAccumulator(MinAndMax *accum, float in, int x) {
 
 static void fMMCombiner(MinAndMax *accum,
                         const MinAndMax *val) {
-  fMMAccumulator(accum, val->min.val, val->min.idx);
-  fMMAccumulator(accum, val->max.val, val->max.idx);
+  if (val->min.val < accum->min.val)
+    accum->min = val->min;
+  if (val->max.val > accum->max.val)
+    accum->max = val->max;
 }
 
 static void fMMOutConverter(int2 *result,
