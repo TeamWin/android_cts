@@ -57,7 +57,7 @@ import java.util.List;
  */
 public class GnssMeasurementWhenNoLocationTest extends AndroidTestCase {
 
-    private static final String TAG = "GpsMeasWhenNoFixTest";
+    private static final String TAG = "GnssMeasWhenNoFixTest";
     private TestGnssMeasurementListener mMeasurementListener;
     private TestLocationManager mTestLocationManager;
     private TestGpsStatusListener mGpsStatusListener;
