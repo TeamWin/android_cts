@@ -62,6 +62,16 @@ public class SecurityLoggingTest extends BaseDeviceOwnerTest {
     }
 
     /**
+     * Test: Test enabling and disabling of security logging.
+     */
+    public void testEnablingAndDisablingSecurityLogging() {
+        mDevicePolicyManager.setSecurityLoggingEnabled(getWho(), true);
+        assertTrue(mDevicePolicyManager.isSecurityLoggingEnabled(getWho()));
+        mDevicePolicyManager.setSecurityLoggingEnabled(getWho(), false);
+        assertFalse(mDevicePolicyManager.isSecurityLoggingEnabled(getWho()));
+    }
+
+    /**
      * Test: retrieving security logs should be rate limited - subsequent attempts should return
      * null.
      */
