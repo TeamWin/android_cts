@@ -1,5 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
-
 <!--
  * Copyright (C) 2010 The Android Open Source Project
  *
@@ -17,69 +16,93 @@
  -->
 
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-        package="android.accessibilityservice.cts">
+          package="android.accessibilityservice.cts">
 
     <uses-permission android:name="android.permission.DISABLE_KEYGUARD" />
     <uses-permission android:name="android.permission.WRITE_SECURE_SETTINGS" />
 
-    <application android:theme="@android:style/Theme.Holo.NoActionBar" >
+    <application android:theme="@android:style/Theme.Material.NoActionBar">
 
-      <uses-library android:name="android.test.runner"/>
+        <uses-library android:name="android.test.runner" />
 
-      <activity android:label="@string/accessibility_end_to_end_test_activity"
-              android:name=".AccessibilityEndToEndActivity"/>
+        <activity
+            android:label="@string/accessibility_end_to_end_test_activity"
+            android:name=".AccessibilityEndToEndActivity" />
 
-      <activity android:label="@string/accessibility_query_window_test_activity"
-              android:name=".AccessibilityWindowQueryActivity"/>
+        <activity
+            android:label="@string/accessibility_query_window_test_activity"
+            android:name=".AccessibilityWindowQueryActivity" />
 
-      <activity android:label="@string/accessibility_view_tree_reporting_test_activity"
-              android:name=".AccessibilityViewTreeReportingActivity"/>
+        <activity
+            android:label="@string/accessibility_view_tree_reporting_test_activity"
+            android:name=".AccessibilityViewTreeReportingActivity" />
 
-      <activity android:label="@string/accessibility_focus_and_input_focus_sync_test_activity"
-              android:name=".AccessibilityFocusAndInputFocusSyncActivity"/>
+        <activity
+            android:label="@string/accessibility_focus_and_input_focus_sync_test_activity"
+            android:name=".AccessibilityFocusAndInputFocusSyncActivity" />
 
-      <activity android:label="@string/accessibility_text_traversal_test_activity"
-              android:name=".AccessibilityTextTraversalActivity"/>
+        <activity
+            android:label="@string/accessibility_text_traversal_test_activity"
+            android:name=".AccessibilityTextTraversalActivity"/>
 
-      <activity android:label="Full screen activity for gesture dispatch testing"
-              android:name=".AccessibilityGestureDispatchTest$GestureDispatchActivity"/>
+        <activity
+            android:label="Full screen activity for gesture dispatch testing"
+            android:name=".AccessibilityGestureDispatchTest$GestureDispatchActivity" />
 
-      <service
-              android:name="android.accessibilityservice.cts.StubGestureAccessibilityService"
-              android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE" >
-          <intent-filter>
-              <action android:name="android.accessibilityservice.AccessibilityService" />
+        <service
+            android:name=".StubGestureAccessibilityService"
+            android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">
+            <intent-filter>
+                <action android:name="android.accessibilityservice.AccessibilityService" />
+                <category android:name="android.accessibilityservice.category.FEEDBACK_GENERIC" />
+            </intent-filter>
 
-              <category android:name="android.accessibilityservice.category.FEEDBACK_GENERIC" />
-          </intent-filter>
+            <meta-data
+                android:name="android.accessibilityservice"
+                android:resource="@xml/stub_gesture_a11y_service" />
+        </service>
 
-          <meta-data
-                  android:name="android.accessibilityservice"
-                  android:resource="@xml/stub_gesture_a11y_service" />
-      </service>
+        <activity
+            android:label="@string/accessibility_soft_keyboard_modes_activity"
+            android:name=".AccessibilitySoftKeyboardModesTest$SoftKeyboardModesActivity"
+            android:windowSoftInputMode="stateAlwaysVisible" />
 
-      <activity android:label="@string/accessibility_soft_keyboard_modes_activity"
-              android:name=".AccessibilitySoftKeyboardModesTest$SoftKeyboardModesActivity"
-              android:windowSoftInputMode="stateAlwaysVisible" />
+        <service
+            android:name=".StubSoftKeyboardModesAccessibilityService"
+            android:label="@string/title_soft_keyboard_modes_accessibility_service"
+            android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">
+            <intent-filter>
+                <action android:name="android.accessibilityservice.AccessibilityService" />
+                <category android:name="android.accessibilityservice.category.FEEDBACK_GENERIC" />
+            </intent-filter>
+            <meta-data
+                android:name="android.accessibilityservice"
+                android:resource="@xml/stub_soft_keyboard_modes_accessibility_service" />
+        </service>
 
-      <service android:name=".StubSoftKeyboardModesAccessibilityService"
-               android:label="@string/title_soft_keyboard_modes_accessibility_service"
-               android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">
-          <intent-filter>
-              <action android:name="android.accessibilityservice.AccessibilityService"/>
-              <category android:name="android.accessibilityservice.category.FEEDBACK_GENERIC" />
-          </intent-filter>
-          <meta-data android:name="android.accessibilityservice"
-                    android:resource="@xml/stub_soft_keyboard_modes_accessibility_service" />
-      </service>
+        <service
+            android:name=".StubMagnificationAccessibilityService"
+            android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">
+            <intent-filter>
+                <action android:name="android.accessibilityservice.AccessibilityService" />
+                <category android:name="android.accessibilityservice.category.FEEDBACK_GENERIC" />
+            </intent-filter>
+
+            <meta-data
+                android:name="android.accessibilityservice"
+                android:resource="@xml/stub_magnification_a11y_service" />
+        </service>
 
     </application>
 
-    <instrumentation android:name="android.support.test.runner.AndroidJUnitRunner"
-                   android:targetPackage="android.accessibilityservice.cts"
-                   android:label="Tests for the accessibility APIs.">
-        <meta-data android:name="listener"
+    <instrumentation
+        android:name="android.support.test.runner.AndroidJUnitRunner"
+        android:targetPackage="android.accessibilityservice.cts"
+        android:label="Tests for the accessibility APIs.">
+        <meta-data
+            android:name="listener"
             android:value="com.android.cts.runner.CtsTestRunListener" />
+
     </instrumentation>
 
 </manifest>
