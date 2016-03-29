@@ -16,11 +16,6 @@
 
 package android.widget.cts;
 
-import static org.mockito.Mockito.*;
-
-import android.util.AttributeSet;
-import org.mockito.InOrder;
-
 import android.app.Activity;
 import android.app.Instrumentation;
 import android.content.Context;
@@ -33,6 +28,7 @@ import android.test.UiThreadTest;
 import android.transition.Transition;
 import android.transition.Transition.TransitionListener;
 import android.transition.TransitionValues;
+import android.util.AttributeSet;
 import android.view.Display;
 import android.view.Gravity;
 import android.view.MotionEvent;
@@ -42,11 +38,17 @@ import android.view.ViewGroup;
 import android.view.ViewGroup.LayoutParams;
 import android.view.WindowManager;
 import android.widget.ImageView;
-import android.widget.PopupWindow.OnDismissListener;
 import android.widget.PopupWindow;
+import android.widget.PopupWindow.OnDismissListener;
 import android.widget.TextView;
-
 import android.widget.cts.R;
+
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 public class PopupWindowTest extends
         ActivityInstrumentationTestCase2<MockPopupWindowCtsActivity> {
@@ -166,6 +168,7 @@ public class PopupWindowTest extends
 
         // This constructor is needed for reflection-based creation of a transition when
         // the transition is defined in layout XML via attribute.
+        @SuppressWarnings("unused")
         public CustomTransition(Context context, AttributeSet attrs) {
             super(context, attrs);
         }
@@ -301,11 +304,7 @@ public class PopupWindowTest extends
         mPopupWindow = createPopupWindow(createPopupContent());
         final View upperAnchor = mActivity.findViewById(R.id.anchor_upper);
 
-        mInstrumentation.runOnMainSync(new Runnable() {
-            public void run() {
-                mPopupWindow.showAsDropDown(upperAnchor);
-            }
-        });
+        mInstrumentation.runOnMainSync(() -> mPopupWindow.showAsDropDown(upperAnchor));
         mInstrumentation.waitForIdleSync();
 
         assertTrue(mPopupWindow.isShowing());
@@ -336,11 +335,8 @@ public class PopupWindowTest extends
         assertEquals(0, popupContentViewInWindowXY[0]);
         assertEquals(0, popupContentViewInWindowXY[1]);
 
-        mInstrumentation.runOnMainSync(new Runnable() {
-            public void run() {
-                mPopupWindow.showAtLocation(upperAnchor, Gravity.NO_GRAVITY, xOff, yOff);
-            }
-        });
+        mInstrumentation.runOnMainSync(
+                () -> mPopupWindow.showAtLocation(upperAnchor, Gravity.NO_GRAVITY, xOff, yOff));
         mInstrumentation.waitForIdleSync();
 
         assertTrue(mPopupWindow.isShowing());
@@ -367,11 +363,7 @@ public class PopupWindowTest extends
         final int xOff = 11;
         final int yOff = 12;
 
-        mInstrumentation.runOnMainSync(new Runnable() {
-            public void run() {
-                mPopupWindow.showAsDropDown(upperAnchor, xOff, yOff);
-            }
-        });
+        mInstrumentation.runOnMainSync(() -> mPopupWindow.showAsDropDown(upperAnchor, xOff, yOff));
         mInstrumentation.waitForIdleSync();
 
         mPopupWindow.getContentView().getLocationOnScreen(viewOnScreenXY);
@@ -395,11 +387,7 @@ public class PopupWindowTest extends
         mPopupWindow.setOverlapAnchor(true);
         assertTrue(mPopupWindow.getOverlapAnchor());
 
-        mInstrumentation.runOnMainSync(new Runnable() {
-            public void run() {
-                mPopupWindow.showAsDropDown(upperAnchor, 0, 0);
-            }
-        });
+        mInstrumentation.runOnMainSync(() -> mPopupWindow.showAsDropDown(upperAnchor, 0, 0));
         mInstrumentation.waitForIdleSync();
 
         mPopupWindow.getContentView().getLocationOnScreen(viewOnScreenXY);
@@ -514,11 +502,7 @@ public class PopupWindowTest extends
         assertEquals(0, WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS & p.flags);
         assertEquals(0, WindowManager.LayoutParams.FLAG_ALT_FOCUSABLE_IM & p.flags);
 
-        mInstrumentation.runOnMainSync(new Runnable() {
-            public void run() {
-                mPopupWindow.update();
-            }
-        });
+        mInstrumentation.runOnMainSync(() -> mPopupWindow.update());
         mInstrumentation.waitForIdleSync();
 
         assertEquals(WindowManager.LayoutParams.FLAG_IGNORE_CHEEK_PRESSES,
@@ -554,21 +538,13 @@ public class PopupWindowTest extends
         verify(dismissListener, never()).onDismiss();
 
         final View anchorView = mActivity.findViewById(R.id.anchor_upper);
-        mInstrumentation.runOnMainSync(new Runnable() {
-            public void run() {
-                mPopupWindow.showAsDropDown(anchorView, 0, 0);
-            }
-        });
+        mInstrumentation.runOnMainSync(() -> mPopupWindow.showAsDropDown(anchorView, 0, 0));
         mInstrumentation.waitForIdleSync();
         verify(enterListener, times(1)).onTransitionStart(any(Transition.class));
         verify(exitListener, never()).onTransitionStart(any(Transition.class));
         verify(dismissListener, never()).onDismiss();
 
-        mInstrumentation.runOnMainSync(new Runnable() {
-            public void run() {
-                mPopupWindow.dismiss();
-            }
-        });
+        mInstrumentation.runOnMainSync(() -> mPopupWindow.dismiss());
         mInstrumentation.waitForIdleSync();
         verify(enterListener, times(1)).onTransitionStart(any(Transition.class));
         verify(exitListener, times(1)).onTransitionStart(any(Transition.class));
@@ -580,13 +556,11 @@ public class PopupWindowTest extends
         int[] sndXY = new int[2];
         int[] viewInWindowXY = new int[2];
 
-        mInstrumentation.runOnMainSync(new Runnable() {
-            public void run() {
-                mPopupWindow = createPopupWindow(createPopupContent());
-                // Do not attach within the decor; we will be measuring location
-                // with regard to screen coordinates.
-                mPopupWindow.setAttachedInDecor(false);
-            }
+        mInstrumentation.runOnMainSync(() -> {
+            mPopupWindow = createPopupWindow(createPopupContent());
+            // Do not attach within the decor; we will be measuring location
+            // with regard to screen coordinates.
+            mPopupWindow.setAttachedInDecor(false);
         });
 
         mInstrumentation.waitForIdleSync();
@@ -599,11 +573,7 @@ public class PopupWindowTest extends
         mPopupWindow.getContentView().getLocationInWindow(viewInWindowXY);
 
         // update if it is not shown
-        mInstrumentation.runOnMainSync(new Runnable() {
-            public void run() {
-                mPopupWindow.update(20, 50, 50, 50);
-            }
-        });
+        mInstrumentation.runOnMainSync(() -> mPopupWindow.update(20, 50, 50, 50));
 
         mInstrumentation.waitForIdleSync();
         assertTrue(mPopupWindow.isShowing());
@@ -615,11 +585,7 @@ public class PopupWindowTest extends
         assertEquals(viewInWindowXY[1] + 50, fstXY[1]);
 
         // ignore if width or height is -1
-        mInstrumentation.runOnMainSync(new Runnable() {
-            public void run() {
-                mPopupWindow.update(4, 0, -1, -1, true);
-            }
-        });
+        mInstrumentation.runOnMainSync(() -> mPopupWindow.update(4, 0, -1, -1, true));
         mInstrumentation.waitForIdleSync();
 
         assertTrue(mPopupWindow.isShowing());
@@ -634,11 +600,8 @@ public class PopupWindowTest extends
     }
 
     public void testUpdateDimensionAndAlignAnchorView() {
-        mInstrumentation.runOnMainSync(new Runnable() {
-            public void run() {
-                mPopupWindow = createPopupWindow(createPopupContent());
-            }
-        });
+        mInstrumentation.runOnMainSync(
+                () -> mPopupWindow = createPopupWindow(createPopupContent()));
         mInstrumentation.waitForIdleSync();
 
         final View anchorView = mActivity.findViewById(R.id.anchor_upper);
@@ -648,39 +611,23 @@ public class PopupWindowTest extends
         assertEquals(100, mPopupWindow.getWidth());
         assertEquals(100, mPopupWindow.getHeight());
 
-        mInstrumentation.runOnMainSync(new Runnable() {
-            public void run() {
-                mPopupWindow.showAsDropDown(anchorView);
-            }
-        });
+        mInstrumentation.runOnMainSync(() -> mPopupWindow.showAsDropDown(anchorView));
         mInstrumentation.waitForIdleSync();
         // update if it is shown
-        mInstrumentation.runOnMainSync(new Runnable() {
-            public void run() {
-                mPopupWindow.update(anchorView, 50, 50);
-            }
-        });
+        mInstrumentation.runOnMainSync(() -> mPopupWindow.update(anchorView, 50, 50));
         mInstrumentation.waitForIdleSync();
         assertTrue(mPopupWindow.isShowing());
         assertEquals(50, mPopupWindow.getWidth());
         assertEquals(50, mPopupWindow.getHeight());
 
         // ignore if width or height is -1
-        mInstrumentation.runOnMainSync(new Runnable() {
-            public void run() {
-                mPopupWindow.update(anchorView, -1, -1);
-            }
-        });
+        mInstrumentation.runOnMainSync(() -> mPopupWindow.update(anchorView, -1, -1));
         mInstrumentation.waitForIdleSync();
         assertTrue(mPopupWindow.isShowing());
         assertEquals(50, mPopupWindow.getWidth());
         assertEquals(50, mPopupWindow.getHeight());
 
-        mInstrumentation.runOnMainSync(new Runnable() {
-            public void run() {
-                mPopupWindow.dismiss();
-            }
-        });
+        mInstrumentation.runOnMainSync(() -> mPopupWindow.dismiss());
         mInstrumentation.waitForIdleSync();
     }
 
@@ -701,11 +648,7 @@ public class PopupWindowTest extends
         mPopupWindow.getContentView().getLocationInWindow(viewInWindowOff);
 
         // update if it is not shown
-        mInstrumentation.runOnMainSync(new Runnable() {
-            public void run() {
-                mPopupWindow.update(anchorView, 20, 50, 50, 50);
-            }
-        });
+        mInstrumentation.runOnMainSync(() -> mPopupWindow.update(anchorView, 20, 50, 50, 50));
 
         mInstrumentation.waitForIdleSync();
 
@@ -720,11 +663,7 @@ public class PopupWindowTest extends
         assertEquals(anchorXY[1] + anchorView.getHeight() + 50 + viewInWindowOff[1], viewXY[1]);
 
         // ignore width and height but change location
-        mInstrumentation.runOnMainSync(new Runnable() {
-            public void run() {
-                mPopupWindow.update(anchorView, 10, 50, -1, -1);
-            }
-        });
+        mInstrumentation.runOnMainSync(() -> mPopupWindow.update(anchorView, 10, 50, -1, -1));
         mInstrumentation.waitForIdleSync();
 
         assertTrue(mPopupWindow.isShowing());
@@ -738,11 +677,7 @@ public class PopupWindowTest extends
         assertEquals(anchorXY[1] + anchorView.getHeight() + 50 + viewInWindowOff[1], viewXY[1]);
 
         final View anotherView = mActivity.findViewById(R.id.anchor_middle_left);
-        mInstrumentation.runOnMainSync(new Runnable() {
-            public void run() {
-                mPopupWindow.update(anotherView, 0, 0, 60, 60);
-            }
-        });
+        mInstrumentation.runOnMainSync(() -> mPopupWindow.update(anotherView, 0, 0, 60, 60));
         mInstrumentation.waitForIdleSync();
 
         assertTrue(mPopupWindow.isShowing());
@@ -802,19 +737,11 @@ public class PopupWindowTest extends
     }
 
     public void testIsAboveAnchor() {
-        mInstrumentation.runOnMainSync(new Runnable() {
-            public void run() {
-                mPopupWindow = createPopupWindow(createPopupContent());
-            }
-        });
+        mInstrumentation.runOnMainSync(() -> mPopupWindow = createPopupWindow(createPopupContent()));
         mInstrumentation.waitForIdleSync();
         final View upperAnchor = mActivity.findViewById(R.id.anchor_upper);
 
-        mInstrumentation.runOnMainSync(new Runnable() {
-            public void run() {
-                mPopupWindow.showAsDropDown(upperAnchor);
-            }
-        });
+        mInstrumentation.runOnMainSync(() -> mPopupWindow.showAsDropDown(upperAnchor));
         mInstrumentation.waitForIdleSync();
         assertFalse(mPopupWindow.isAboveAnchor());
         dismissPopup();
@@ -822,11 +749,7 @@ public class PopupWindowTest extends
         mPopupWindow = createPopupWindow(createPopupContent());
         final View lowerAnchor = mActivity.findViewById(R.id.anchor_lower);
 
-        mInstrumentation.runOnMainSync(new Runnable() {
-            public void run() {
-                mPopupWindow.showAsDropDown(lowerAnchor, 0, 0);
-            }
-        });
+        mInstrumentation.runOnMainSync(() -> mPopupWindow.showAsDropDown(lowerAnchor, 0, 0));
         mInstrumentation.waitForIdleSync();
         assertTrue(mPopupWindow.isAboveAnchor());
         dismissPopup();
@@ -882,11 +805,7 @@ public class PopupWindowTest extends
         assertEquals(0, p.height);
 
         mPopupWindow.setWindowLayoutMode(LayoutParams.WRAP_CONTENT, LayoutParams.MATCH_PARENT);
-        mInstrumentation.runOnMainSync(new Runnable() {
-            public void run() {
-                mPopupWindow.update(20, 50, 50, 50);
-            }
-        });
+        mInstrumentation.runOnMainSync(() -> mPopupWindow.update(20, 50, 50, 50));
 
         assertEquals(LayoutParams.WRAP_CONTENT, p.width);
         assertEquals(LayoutParams.MATCH_PARENT, p.height);
@@ -922,27 +841,23 @@ public class PopupWindowTest extends
     }
 
     private void showPopup() {
-        mInstrumentation.runOnMainSync(new Runnable() {
-            public void run() {
-                if (mPopupWindow == null || mPopupWindow.isShowing()) {
-                    return;
-                }
-                View anchor = mActivity.findViewById(R.id.anchor_upper);
-                mPopupWindow.showAsDropDown(anchor);
-                assertTrue(mPopupWindow.isShowing());
+        mInstrumentation.runOnMainSync(() -> {
+            if (mPopupWindow == null || mPopupWindow.isShowing()) {
+                return;
             }
+            View anchor = mActivity.findViewById(R.id.anchor_upper);
+            mPopupWindow.showAsDropDown(anchor);
+            assertTrue(mPopupWindow.isShowing());
         });
         mInstrumentation.waitForIdleSync();
     }
 
     private void dismissPopup() {
-        mInstrumentation.runOnMainSync(new Runnable() {
-            public void run() {
-                if (mPopupWindow == null || !mPopupWindow.isShowing()) {
-                    return;
-                }
-                mPopupWindow.dismiss();
+        mInstrumentation.runOnMainSync(() -> {
+            if (mPopupWindow == null || !mPopupWindow.isShowing()) {
+                return;
             }
+            mPopupWindow.dismiss();
         });
         mInstrumentation.waitForIdleSync();
     }
