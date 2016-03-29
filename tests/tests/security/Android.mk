@@ -33,7 +33,6 @@ LOCAL_JNI_SHARED_LIBRARIES := libctssecurity_jni libcts_jni libnativehelper_comp
 		libselinux \
 		libcutils \
 		libcrypto \
-		libstagefright_foundation \
 		libc++ \
 		libbacktrace \
 		libui \
