@@ -14,17 +14,8 @@
 
 package android.host.systemui;
 
-import com.android.compatibility.common.util.AbiUtils;
-import com.android.cts.migration.MigrationHelper;
-import com.android.tradefed.build.IBuildInfo;
 import com.android.tradefed.device.DeviceNotAvailableException;
-import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.testtype.DeviceTestCase;
-import com.android.tradefed.testtype.IAbi;
-import com.android.tradefed.testtype.IAbiReceiver;
-import com.android.tradefed.testtype.IBuildReceiver;
-
-import java.io.File;
 
 public class BaseTileServiceTest extends DeviceTestCase {
     // Constants for generating commands below.
@@ -47,7 +38,7 @@ public class BaseTileServiceTest extends DeviceTestCase {
     // Time between checks for logs we expect.
     private static final long CHECK_DELAY = 500;
     // Number of times to check before failing.
-    private static final long CHECK_RETRIES = 15;
+    private static final long CHECK_RETRIES = 30;
 
     private final String mService;
     private final String mComponent;
