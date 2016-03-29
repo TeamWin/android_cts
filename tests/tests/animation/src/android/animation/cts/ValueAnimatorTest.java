@@ -18,7 +18,6 @@ package android.animation.cts;
 import android.animation.Animator;
 import android.animation.ObjectAnimator;
 import android.animation.ValueAnimator;
-import android.animation.ValueAnimator.AnimatorUpdateListener;
 import android.test.ActivityInstrumentationTestCase2;
 import android.view.animation.AccelerateInterpolator;
 import android.view.animation.LinearInterpolator;
@@ -344,8 +343,6 @@ public class ValueAnimatorTest extends
         animator.setCurrentPlayTime(150);
         EventWatcher watcher = new EventWatcher();
         animator.addListener(watcher);
-        UpdateListenerLatch updateListener = new UpdateListenerLatch();
-        animator.addUpdateListener(updateListener);
         runTestOnUiThread(new Runnable() {
             @Override
             public void run() {
@@ -353,15 +350,8 @@ public class ValueAnimatorTest extends
             }
         });
         assertTrue(watcher.start.await(0, TimeUnit.MILLISECONDS));
-        float startFraction = animator.getAnimatedFraction();
         assertTrue(((Float)animator.getAnimatedValue()) >= 0.5f);
-        assertTrue(startFraction >= 0.5f);
-        if (updateListener.updateLatch.getCount() == 0) {
-            updateListener.updateLatch = new CountDownLatch(1);
-        }
-        assertTrue(updateListener.updateLatch.await(100, TimeUnit.MILLISECONDS));
-        assertTrue(startFraction < animator.getAnimatedFraction());
-
+        assertTrue(animator.getAnimatedFraction() >= 0.5f);
         runTestOnUiThread(new Runnable() {
             @Override
             public void run() {
@@ -453,15 +443,6 @@ public class ValueAnimatorTest extends
 
         public void onAnimationStart(Animator animation) {
             start.countDown();
-        }
-    }
-
-    class UpdateListenerLatch implements AnimatorUpdateListener {
-        public CountDownLatch updateLatch = new CountDownLatch(0);
-
-        @Override
-        public void onAnimationUpdate(ValueAnimator animation) {
-            updateLatch.countDown();
         }
     }
 }
