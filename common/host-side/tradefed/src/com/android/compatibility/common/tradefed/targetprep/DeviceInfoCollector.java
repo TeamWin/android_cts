@@ -40,26 +40,26 @@ public class DeviceInfoCollector extends ApkInstrumentationPreparer {
 
     private static final Map<String, String> BUILD_KEYS = new HashMap<>();
     static {
-        BUILD_KEYS.put("build_id", "ro.build.id");
-        BUILD_KEYS.put("build_product", "ro.product.name");
-        BUILD_KEYS.put("build_device", "ro.product.device");
-        BUILD_KEYS.put("build_board", "ro.product.board");
-        BUILD_KEYS.put("build_manufacturer", "ro.product.manufacturer");
-        BUILD_KEYS.put("build_brand", "ro.product.brand");
-        BUILD_KEYS.put("build_model", "ro.product.model");
-        BUILD_KEYS.put("build_type", "ro.build.type");
-        BUILD_KEYS.put("build_tags", "ro.build.tags");
-        BUILD_KEYS.put("build_fingerprint", "ro.build.fingerprint");
-        BUILD_KEYS.put("build_abi", "ro.product.cpu.abi");
-        BUILD_KEYS.put("build_abi2", "ro.product.cpu.abi2");
-        BUILD_KEYS.put("build_abis", "ro.product.cpu.abilist");
-        BUILD_KEYS.put("build_abis_32", "ro.product.cpu.abilist32");
-        BUILD_KEYS.put("build_abis_64", "ro.product.cpu.abilist64");
-        BUILD_KEYS.put("build_serial", "ro.serialno");
-        BUILD_KEYS.put("build_version_release", "ro.build.version.release");
-        BUILD_KEYS.put("build_version_sdk", "ro.build.version.sdk");
-        BUILD_KEYS.put("build_version_base_os", "ro.build.version.base_os");
-        BUILD_KEYS.put("build_version_security_patch", "ro.build.version.security_patch");
+        BUILD_KEYS.put("cts:build_id", "ro.build.id");
+        BUILD_KEYS.put("cts:build_product", "ro.product.name");
+        BUILD_KEYS.put("cts:build_device", "ro.product.device");
+        BUILD_KEYS.put("cts:build_board", "ro.product.board");
+        BUILD_KEYS.put("cts:build_manufacturer", "ro.product.manufacturer");
+        BUILD_KEYS.put("cts:build_brand", "ro.product.brand");
+        BUILD_KEYS.put("cts:build_model", "ro.product.model");
+        BUILD_KEYS.put("cts:build_type", "ro.build.type");
+        BUILD_KEYS.put("cts:build_tags", "ro.build.tags");
+        BUILD_KEYS.put("cts:build_fingerprint", "ro.build.fingerprint");
+        BUILD_KEYS.put("cts:build_abi", "ro.product.cpu.abi");
+        BUILD_KEYS.put("cts:build_abi2", "ro.product.cpu.abi2");
+        BUILD_KEYS.put("cts:build_abis", "ro.product.cpu.abilist");
+        BUILD_KEYS.put("cts:build_abis_32", "ro.product.cpu.abilist32");
+        BUILD_KEYS.put("cts:build_abis_64", "ro.product.cpu.abilist64");
+        BUILD_KEYS.put("cts:build_serial", "ro.serialno");
+        BUILD_KEYS.put("cts:build_version_release", "ro.build.version.release");
+        BUILD_KEYS.put("cts:build_version_sdk", "ro.build.version.sdk");
+        BUILD_KEYS.put("cts:build_version_base_os", "ro.build.version.base_os");
+        BUILD_KEYS.put("cts:build_version_security_patch", "ro.build.version.security_patch");
     }
 
     @Option(name = CompatibilityTest.SKIP_DEVICE_INFO_OPTION,
