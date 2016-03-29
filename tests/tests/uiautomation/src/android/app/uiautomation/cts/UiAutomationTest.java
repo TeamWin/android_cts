@@ -275,21 +275,11 @@ public class UiAutomationTest extends InstrumentationTestCase {
         }
     }
 
-    public void testChangingFlags_shouldThrowException() {
-        getInstrumentation().getUiAutomation();
-        try {
-            getInstrumentation()
-                    .getUiAutomation(UiAutomation.FLAG_DONT_SUPPRESS_ACCESSIBILITY_SERVICES);
-            fail("Expected exception when changing UiAutomation flags");
-        } catch (RuntimeException e) {
-        }
-    }
-
     public void testDontSuppressAccessibility_canStartA11yService() throws IOException,
             InterruptedException {
         turnAccessibilityOff();
         try {
-            UiAutomation uiAutomation = getInstrumentation()
+            getInstrumentation()
                     .getUiAutomation(UiAutomation.FLAG_DONT_SUPPRESS_ACCESSIBILITY_SERVICES);
             enableAccessibilityService();
             assertTrue(UiAutomationTestA11yService.sConnectedInstance.isConnected());
@@ -327,6 +317,25 @@ public class UiAutomationTest extends InstrumentationTestCase {
             // after we destroy it
             UiAutomationTestA11yService.sConnectedInstance = null;
             suppressingUiAutomation.destroy();
+            waitForAccessibilityServiceToStart();
+        } finally {
+            turnAccessibilityOff();
+        }
+    }
+
+    public void testServiceSupressingA11yServices_a11yServiceStartsWhenFlagsChange()
+            throws IOException, InterruptedException {
+        turnAccessibilityOff();
+        try {
+            getInstrumentation()
+                    .getUiAutomation(UiAutomation.FLAG_DONT_SUPPRESS_ACCESSIBILITY_SERVICES);
+            enableAccessibilityService();
+            getInstrumentation().getUiAutomation();
+            // We verify above that the connection is broken here. Make sure we see a new one
+            // after we change the flags
+            UiAutomationTestA11yService.sConnectedInstance = null;
+            getInstrumentation()
+                    .getUiAutomation(UiAutomation.FLAG_DONT_SUPPRESS_ACCESSIBILITY_SERVICES);
             waitForAccessibilityServiceToStart();
         } finally {
             turnAccessibilityOff();
