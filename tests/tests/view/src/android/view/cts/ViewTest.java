@@ -80,7 +80,6 @@ import android.view.WindowManager;
 import android.view.accessibility.AccessibilityEvent;
 import android.view.animation.AlphaAnimation;
 import android.view.animation.Animation;
-import android.view.cts.R;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputConnection;
 import android.view.inputmethod.InputMethodManager;
@@ -4014,13 +4013,60 @@ public class ViewTest extends ActivityInstrumentationTestCase2<ViewTestCtsActivi
         assertTrue(mv.getLastAggregatedVisibility());
     }
 
-    private void setVisibilityOnUiThread(final View view, int visibility) throws Throwable {
+    public void testOverlappingRendering() {
+        View overlappingUnsetView = mActivity.findViewById(R.id.overlapping_rendering_unset);
+        View overlappingFalseView = mActivity.findViewById(R.id.overlapping_rendering_false);
+        View overlappingTrueView = mActivity.findViewById(R.id.overlapping_rendering_true);
+
+        assertTrue(overlappingUnsetView.hasOverlappingRendering());
+        assertTrue(overlappingUnsetView.getHasOverlappingRendering());
+        overlappingUnsetView.forceHasOverlappingRendering(false);
+        assertTrue(overlappingUnsetView.hasOverlappingRendering());
+        assertFalse(overlappingUnsetView.getHasOverlappingRendering());
+        overlappingUnsetView.forceHasOverlappingRendering(true);
+        assertTrue(overlappingUnsetView.hasOverlappingRendering());
+        assertTrue(overlappingUnsetView.getHasOverlappingRendering());
+
+        assertTrue(overlappingTrueView.hasOverlappingRendering());
+        assertTrue(overlappingTrueView.getHasOverlappingRendering());
+
+        assertTrue(overlappingFalseView.hasOverlappingRendering());
+        assertFalse(overlappingFalseView.getHasOverlappingRendering());
+
+        View overridingView = new MockOverlappingRenderingSubclass(mActivity, false);
+        assertFalse(overridingView.hasOverlappingRendering());
+
+        overridingView = new MockOverlappingRenderingSubclass(mActivity, true);
+        assertTrue(overridingView.hasOverlappingRendering());
+        overridingView.forceHasOverlappingRendering(false);
+        assertFalse(overridingView.getHasOverlappingRendering());
+        assertTrue(overridingView.hasOverlappingRendering());
+        overridingView.forceHasOverlappingRendering(true);
+        assertTrue(overridingView.getHasOverlappingRendering());
+        assertTrue(overridingView.hasOverlappingRendering());
+    }
+
+    private void setVisibilityOnUiThread(final View view, final int visibility) throws Throwable {
         runTestOnUiThread(new Runnable() {
             @Override
             public void run() {
                 view.setVisibility(visibility);
             }
         });
+    }
+
+    private static class MockOverlappingRenderingSubclass extends View {
+        boolean mOverlap;
+
+        public MockOverlappingRenderingSubclass(Context context, boolean overlap) {
+            super(context);
+            mOverlap = overlap;
+        }
+
+        @Override
+        public boolean hasOverlappingRendering() {
+            return mOverlap;
+        }
     }
 
     private static class MockViewGroup extends ViewGroup {
