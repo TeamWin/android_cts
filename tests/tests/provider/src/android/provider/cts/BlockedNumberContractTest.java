@@ -347,7 +347,7 @@ public class BlockedNumberContractTest extends TestCaseThatRunsIfTelephonyIsEnab
     }
 
     private void setDefaultSmsApp(boolean setToSmsApp) throws Exception {
-        BlockedNumberTestUtils.setDefaultSmsApp(
+        ProviderTestUtils.setDefaultSmsApp(
                 setToSmsApp, mContext.getPackageName(), getInstrumentation().getUiAutomation());
     }
 }
