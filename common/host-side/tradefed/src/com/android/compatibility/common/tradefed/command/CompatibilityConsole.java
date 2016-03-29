@@ -57,7 +57,7 @@ public class CompatibilityConsole extends Console {
 
     /**
      * Hard coded list of modules to be excluded from manual module sharding
-     * @see {@link #splitModules(int)}
+     * @see #splitModules(int)
      */
     private final static Set<String> MODULE_SPLIT_EXCLUSIONS = new HashSet<>();
     static {
@@ -84,7 +84,7 @@ public class CompatibilityConsole extends Console {
         trie.put(new Runnable() {
             @Override
             public void run() {
-                // TODO(stuartscott)" listPlans(buildHelper);
+                listPlans();
             }
         }, LIST_PATTERN, "p(?:lans)?");
         trie.put(new Runnable() {
@@ -207,6 +207,11 @@ public class CompatibilityConsole extends Console {
         } else {
             printLine("No modules found");
         }
+    }
+
+    private void listPlans() {
+        printLine("Available plans include:");
+        ConfigurationFactory.getInstance().printHelp(System.out);
     }
 
     private void splitModules(int shards) {
