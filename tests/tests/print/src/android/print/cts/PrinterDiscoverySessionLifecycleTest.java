@@ -187,6 +187,7 @@ public class PrinterDiscoverySessionLifecycleTest extends BasePrintTest {
 
         // Configure the print services.
         FirstPrintService.setCallbacks(firstServiceCallbacks);
+        SecondPrintService.setCallbacks(createSecondMockPrintServiceCallbacks());
 
         // Create a print adapter that respects the print contract.
         PrintDocumentAdapter adapter = createMockPrintDocumentAdapter();

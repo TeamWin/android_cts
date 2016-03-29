@@ -550,7 +550,8 @@ public abstract class BasePrintTest extends InstrumentationTestCase {
         }
         if (onRequestCustomPrinterIcon != null) {
             doAnswer(onRequestCustomPrinterIcon).when(callbacks).onRequestCustomPrinterIcon(
-                    any(PrinterId.class), any(CustomPrinterIconCallback.class));
+                    any(PrinterId.class), any(CancellationSignal.class),
+                    any(CustomPrinterIconCallback.class));
         }
         if (onStopPrinterStateTracking != null) {
             doAnswer(onStopPrinterStateTracking).when(callbacks).onStopPrinterStateTracking(
