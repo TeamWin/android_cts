@@ -41,7 +41,7 @@ import java.util.List;
  */
 public class GnssMeasurementValuesTest extends AndroidTestCase {
 
-    private static final String TAG = "GpsMeasValuesTest";
+    private static final String TAG = "GnssMeasValuesTest";
     private static final int LOCATION_TO_COLLECT_COUNT = 5;
 
     private TestLocationManager mTestLocationManager;
