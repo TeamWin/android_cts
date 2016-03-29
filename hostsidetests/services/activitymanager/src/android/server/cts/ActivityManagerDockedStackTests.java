@@ -137,7 +137,8 @@ public class ActivityManagerDockedStackTests extends ActivityManagerTestBase {
         mDevice.executeShellCommand(getAmStartCmd(TEST_ACTIVITY_NAME));
         launchActivityInDockStack(DOCKED_ACTIVITY_NAME);
         resizeDockedStack(STACK_SIZE, STACK_SIZE, TASK_SIZE, TASK_SIZE);
-        mAmWmState.computeState(mDevice, new String[] {TEST_ACTIVITY_NAME, DOCKED_ACTIVITY_NAME});
+        mAmWmState.computeState(mDevice, new String[] {TEST_ACTIVITY_NAME, DOCKED_ACTIVITY_NAME},
+                false /* compareTaskAndStackBounds */);
         mAmWmState.assertContainsStack("Must contain docked stack", DOCKED_STACK_ID);
         mAmWmState.assertContainsStack("Must contain fullscreen stack",
                 FULLSCREEN_WORKSPACE_STACK_ID);

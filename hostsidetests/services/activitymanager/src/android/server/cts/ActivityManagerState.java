@@ -405,6 +405,10 @@ class ActivityManagerState {
                     continue;
                 }
 
+                if (extractMinimalSize(line)) {
+                    continue;
+                }
+
                 Matcher matcher = TASK_RECORD_PATTERN.matcher(line);
                 if (matcher.matches()) {
                     CLog.logAndDisplay(INFO, line);
@@ -515,9 +519,15 @@ class ActivityManagerState {
         protected static final Pattern FULLSCREEN_PATTERN = Pattern.compile("mFullscreen=(\\S+)");
         protected static final Pattern BOUNDS_PATTERN =
                 Pattern.compile("mBounds=Rect\\((\\d+), (\\d+) - (\\d+), (\\d+)\\)");
+        protected static final Pattern MINIMAL_WIDTH_PATTERN =
+                Pattern.compile("mMinimalWidth=(\\d+)");
+        protected static final Pattern MINIMAL_HEIGHT_PATTERN =
+                Pattern.compile("mMinimalHeight=(\\d+)");
 
         protected boolean mFullscreen;
         protected Rectangle mBounds;
+        protected int mMinimalWidth = -1;
+        protected int mMinimalHeight = -1;
 
         boolean extractFullscreen(String line) {
             final Matcher matcher = FULLSCREEN_PATTERN.matcher(line);
@@ -552,12 +562,36 @@ class ActivityManagerState {
             return rect;
         }
 
+        boolean extractMinimalSize(String line) {
+            final Matcher minWidthMatcher = MINIMAL_WIDTH_PATTERN.matcher(line);
+            final Matcher minHeightMatcher = MINIMAL_HEIGHT_PATTERN.matcher(line);
+
+            if (minWidthMatcher.matches()) {
+                CLog.logAndDisplay(INFO, line);
+                mMinimalWidth = Integer.valueOf(minWidthMatcher.group(1));
+            } else if (minHeightMatcher.matches()) {
+                CLog.logAndDisplay(INFO, line);
+                mMinimalHeight = Integer.valueOf(minHeightMatcher.group(1));
+            } else {
+                return false;
+            }
+            return true;
+        }
+
         Rectangle getBounds() {
             return mBounds;
         }
 
         boolean isFullscreen() {
             return mFullscreen;
+        }
+
+        int getMinimalWidth() {
+            return mMinimalWidth;
+        }
+
+        int getMinimalHeight() {
+            return mMinimalHeight;
         }
     }
 
