@@ -16,6 +16,7 @@
 
 package android.provider.cts;
 
+import android.app.UiAutomation;
 import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.Context;
@@ -39,12 +40,12 @@ public class BlockedNumberBackupRestoreTest extends TestCaseThatRunsIfTelephonyI
             "android/com.android.internal.backup.LocalTransport";
     private static final String BLOCKED_NUMBERS_PROVIDER_PACKAGE =
             "com.android.providers.blockednumber";
-    private static final int BACKUP_TIMEOUT_MILLIS = 4000;
     private static final Pattern BMGR_ENABLED_PATTERN = Pattern.compile(
             "^Backup Manager currently (enabled|disabled)$");
 
     private ContentResolver mContentResolver;
     private Context mContext;
+    private UiAutomation mUiAutomation;
     private String mOldTransport;
 
     @Override
@@ -53,11 +54,11 @@ public class BlockedNumberBackupRestoreTest extends TestCaseThatRunsIfTelephonyI
 
         mContext = getInstrumentation().getContext();
         mContentResolver = mContext.getContentResolver();
+        mUiAutomation = getInstrumentation().getUiAutomation();
 
-        BlockedNumberTestUtils.setDefaultSmsApp(
-                true, mContext.getPackageName(), getInstrumentation().getUiAutomation());
+        ProviderTestUtils.setDefaultSmsApp(true, mContext.getPackageName(), mUiAutomation);
 
-        mOldTransport = setBackupTransport(LOCAL_BACKUP_COMPONENT);
+        mOldTransport = ProviderTestUtils.setBackupTransport(LOCAL_BACKUP_COMPONENT, mUiAutomation);
         clearBlockedNumbers();
         wipeBackup();
     }
@@ -66,16 +67,14 @@ public class BlockedNumberBackupRestoreTest extends TestCaseThatRunsIfTelephonyI
     protected void tearDown() throws Exception {
         wipeBackup();
         clearBlockedNumbers();
-        setBackupTransport(mOldTransport);
-
-        BlockedNumberTestUtils.setDefaultSmsApp(
-                false, mContext.getPackageName(), getInstrumentation().getUiAutomation());
+        ProviderTestUtils.setBackupTransport(mOldTransport, mUiAutomation);
+        ProviderTestUtils.setDefaultSmsApp(false, mContext.getPackageName(), mUiAutomation);
 
         super.tearDown();
     }
 
     public void testBackupAndRestoreForSingleNumber() throws Exception {
-        if (!hasBackupTransport(LOCAL_BACKUP_COMPONENT)) {
+        if (!ProviderTestUtils.hasBackupTransport(LOCAL_BACKUP_COMPONENT, mUiAutomation)) {
             Log.i(TAG, "skipping BlockedNumberBackupRestoreTest");
         }
 
@@ -84,7 +83,6 @@ public class BlockedNumberBackupRestoreTest extends TestCaseThatRunsIfTelephonyI
 
         Log.i(TAG, "Running backup.");
         runBackup();
-        Thread.sleep(BACKUP_TIMEOUT_MILLIS);
 
         Log.i(TAG, "Clearing blocked numbers.");
         clearBlockedNumbers();
@@ -92,12 +90,11 @@ public class BlockedNumberBackupRestoreTest extends TestCaseThatRunsIfTelephonyI
 
         Log.i(TAG, "Restoring blocked numbers.");
         runRestore();
-        Thread.sleep(BACKUP_TIMEOUT_MILLIS);
         verifyBlockedNumbers("123456789");
     }
 
     public void testBackupAndRestoreWithDeletion() throws Exception {
-        if (!hasBackupTransport(LOCAL_BACKUP_COMPONENT)) {
+        if (!ProviderTestUtils.hasBackupTransport(LOCAL_BACKUP_COMPONENT, mUiAutomation)) {
             Log.i(TAG, "skipping BlockedNumberBackupRestoreTest");
         }
 
@@ -108,7 +105,6 @@ public class BlockedNumberBackupRestoreTest extends TestCaseThatRunsIfTelephonyI
 
         Log.i(TAG, "Running backup.");
         runBackup();
-        Thread.sleep(BACKUP_TIMEOUT_MILLIS);
 
         Log.i(TAG, "Deleting blocked number.");
         deleteNumber("123456789");
@@ -116,7 +112,6 @@ public class BlockedNumberBackupRestoreTest extends TestCaseThatRunsIfTelephonyI
 
         Log.i(TAG, "Running backup.");
         runBackup();
-        Thread.sleep(BACKUP_TIMEOUT_MILLIS);
 
         Log.i(TAG, "Clearing blocked numbers.");
         clearBlockedNumbers();
@@ -124,7 +119,6 @@ public class BlockedNumberBackupRestoreTest extends TestCaseThatRunsIfTelephonyI
 
         Log.i(TAG, "Restoring blocked numbers.");
         runRestore();
-        Thread.sleep(BACKUP_TIMEOUT_MILLIS);
         verifyBlockedNumbers("223456789", "323456789");
     }
 
@@ -156,45 +150,16 @@ public class BlockedNumberBackupRestoreTest extends TestCaseThatRunsIfTelephonyI
         mContentResolver.delete(BlockedNumberContract.BlockedNumbers.CONTENT_URI, null, null);
     }
 
-    private boolean hasBackupTransport(String transport) throws Exception {
-        String output = BlockedNumberTestUtils.executeShellCommand(
-                getInstrumentation().getUiAutomation(), "bmgr list transports");
-        for (String t : output.split(" ")) {
-            if ("*".equals(t)) {
-                // skip the current selection marker.
-                continue;
-            } else if (Objects.equals(transport, t)) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    private String setBackupTransport(String transport) throws Exception {
-        String output = exec("bmgr transport " + transport);
-        Pattern pattern = Pattern.compile("\\(formerly (.*)\\)$");
-        Matcher matcher = pattern.matcher(output);
-        if (matcher.find()) {
-            return matcher.group(1);
-        } else {
-            throw new Exception("non-parsable output setting bmgr transport: " + output);
-        }
-    }
-
     private void runBackup() throws Exception {
-        exec("bmgr backupnow " + BLOCKED_NUMBERS_PROVIDER_PACKAGE);
+        ProviderTestUtils.runBackup(BLOCKED_NUMBERS_PROVIDER_PACKAGE, mUiAutomation);
     }
 
     private void runRestore() throws Exception {
-        exec("bmgr restore " + BLOCKED_NUMBERS_PROVIDER_PACKAGE);
+        ProviderTestUtils.runRestore(BLOCKED_NUMBERS_PROVIDER_PACKAGE, mUiAutomation);
     }
 
     private void wipeBackup() throws Exception {
-        exec("bmgr wipe " + LOCAL_BACKUP_COMPONENT + " " + BLOCKED_NUMBERS_PROVIDER_PACKAGE);
-    }
-
-    private String exec(String command) throws Exception {
-        return BlockedNumberTestUtils.executeShellCommand(
-                getInstrumentation().getUiAutomation(), command);
+        ProviderTestUtils.wipeBackup(LOCAL_BACKUP_COMPONENT, BLOCKED_NUMBERS_PROVIDER_PACKAGE,
+                mUiAutomation);
     }
 }
