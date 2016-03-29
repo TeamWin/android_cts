@@ -53,8 +53,7 @@ public class SmsBackupRestoreTest extends TestCaseThatRunsIfTelephonyIsEnabled {
     private static final String SMS_SELECTION = Telephony.Sms.ADDRESS + " = ? and "
             + Telephony.Sms.BODY + " = ?";
 
-    private static final String MMS_SELECTION = Telephony.Mms.SUBJECT + " = ? and "
-            + Telephony.Mms.TEXT_ONLY + " = 1";
+    private static final String MMS_SELECTION = Telephony.Mms.SUBJECT + " = ?";
 
     private static final String[] MMS_PART_TEXT_PROJECTION = new String[]{Telephony.Mms.Part.TEXT};
     private static final String MMS_PART_SELECTION = Telephony.Mms.Part.MSG_ID + " = ?";
