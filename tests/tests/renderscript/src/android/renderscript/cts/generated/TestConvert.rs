@@ -1220,6 +1220,18 @@ ulong4 __attribute__((kernel)) testConvertUlong4Uint4Ulong4(uint4 inV) {
     return convert_ulong4(inV);
 }
 
+half2 __attribute__((kernel)) testConvertHalf2Half2Half2(half2 inV) {
+    return convert_half2(inV);
+}
+
+half3 __attribute__((kernel)) testConvertHalf3Half3Half3(half3 inV) {
+    return convert_half3(inV);
+}
+
+half4 __attribute__((kernel)) testConvertHalf4Half4Half4(half4 inV) {
+    return convert_half4(inV);
+}
+
 float2 __attribute__((kernel)) testConvertFloat2Half2Float2(half2 inV) {
     return convert_float2(inV);
 }
