@@ -38,7 +38,7 @@ public class LockScreenInfoTest extends BaseDeviceOwnerTest {
 
     public void testEmptyStringClearsLockInfo() {
         final String message = "";
-        assertTrue(mDevicePolicyManager.setDeviceOwnerLockScreenInfo(getWho(), message));
+        mDevicePolicyManager.setDeviceOwnerLockScreenInfo(getWho(), message);
         assertNull(mDevicePolicyManager.getDeviceOwnerLockScreenInfo());
     }
 
@@ -78,7 +78,7 @@ public class LockScreenInfoTest extends BaseDeviceOwnerTest {
      * @throws AssertionError if the setting did not take effect.
      */
     private void setLockInfo(String message) {
-        assertTrue(mDevicePolicyManager.setDeviceOwnerLockScreenInfo(getWho(), message));
+        mDevicePolicyManager.setDeviceOwnerLockScreenInfo(getWho(), message);
         assertEquals(message, mDevicePolicyManager.getDeviceOwnerLockScreenInfo());
     }
 }
