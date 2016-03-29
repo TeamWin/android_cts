@@ -133,4 +133,19 @@
             android:layout_height="10px" />
     </FrameLayout>
 
+    <View
+            android:id="@+id/overlapping_rendering_unset"
+            android:layout_width="10px"
+            android:layout_height="10px" />
+    <View
+            android:id="@+id/overlapping_rendering_false"
+            android:forceHasOverlappingRendering="false"
+            android:layout_width="10px"
+            android:layout_height="10px" />
+    <View
+            android:id="@+id/overlapping_rendering_true"
+            android:forceHasOverlappingRendering="true"
+            android:layout_width="10px"
+            android:layout_height="10px" />
+
 </LinearLayout>
