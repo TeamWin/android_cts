@@ -1625,6 +1625,10 @@ public class CoreMathVerifier {
     static public void computeConvert(TestConvert.ArgumentsHalfUlong args) {
         args.out = convertDoubleToUlong(args.inVDouble);
     }
+    static public void computeConvert(TestConvert.ArgumentsHalfHalf args, Target t) {
+        t.setPrecision(0, 0);
+        args.out = t.newFloaty(args.inVDouble);
+    }
     static public void computeConvert(TestConvert.ArgumentsHalfFloat args, Target t) {
         t.setPrecision(0, 0);
         args.out = t.newFloaty(convertDoubleToFloat(args.inVDouble));
@@ -2492,6 +2496,17 @@ public class CoreMathVerifier {
     static public void computeNativeCospi(TestNativeCospi.ArgumentsFloatFloat args, Target t) {
         t.setPrecision(NATIVE_PRECISION, NATIVE_PRECISION);
         args.out = cospi(args.inV, t);
+    }
+
+    static public void computeNativeDistance(TestNativeDistance.ArgumentsHalfHalfHalf args, Target t) {
+        t.setPrecision(1, 1);
+        args.out = distance(new double[] {args.inLeftVectorDouble},
+                            new double[] {args.inRightVectorDouble}, t);
+    }
+
+    static public void computeNativeDistance(TestNativeDistance.ArgumentsHalfNHalfNHalf args, Target t) {
+        t.setPrecision(1, 1);
+        args.out = distance(args.inLeftVectorDouble, args.inRightVectorDouble, t);
     }
 
     static public void computeNativeDistance(TestNativeDistance.ArgumentsFloatFloatFloat args, Target t) {
