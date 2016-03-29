@@ -26,11 +26,15 @@ import com.android.tradefed.config.Option;
 import com.android.tradefed.config.OptionClass;
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.device.ITestDevice;
+
+import java.util.regex.Pattern;
 /**
  * A simple {@link IBuildProvider} that uses a pre-existing Compatibility install.
  */
 @OptionClass(alias="compatibility-build-provider")
 public class CompatibilityBuildProvider implements IDeviceBuildProvider {
+
+    private static final Pattern RELEASE_BUILD = Pattern.compile("^[A-Z]{3}\\d{2}[A-Z]{0,1}$");
 
     @Option(name="branch", description="build branch name to supply.")
     private String mBranch = null;
@@ -84,7 +88,10 @@ public class CompatibilityBuildProvider implements IDeviceBuildProvider {
             }
             info.setBuildBranch(mBranch);
             info.setBuildFlavor(buildFlavor);
-            info.addBuildAttribute("build_alias", device.getBuildAlias());
+            String buildAlias = device.getBuildAlias();
+            if (RELEASE_BUILD.matcher(buildAlias).matches()) {
+                info.addBuildAttribute("build_alias", buildAlias);
+            }
             return info;
         }
     }
