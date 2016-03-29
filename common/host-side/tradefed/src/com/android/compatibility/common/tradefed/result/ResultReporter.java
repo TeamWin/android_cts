@@ -69,7 +69,8 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
        ITestSummaryListener {
 
     private static final String RESULT_KEY = "COMPATIBILITY_TEST_RESULT";
-    private static final String BUILD_INFO = "build_";
+    private static final String CTS_PREFIX = "cts:";
+    private static final String BUILD_INFO = CTS_PREFIX + "build_";
     private static final String[] RESULT_RESOURCES = {
         "compatibility_result.css",
         "compatibility_result.xsd",
@@ -273,7 +274,7 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
         for (Entry<String, String> entry : mBuild.getBuildAttributes().entrySet()) {
             String key = entry.getKey();
             if (key.startsWith(BUILD_INFO)) {
-                mResult.addBuildInfo(key, entry.getValue());
+                mResult.addBuildInfo(key.substring(CTS_PREFIX.length()), entry.getValue());
             }
         }
         mCurrentModuleResult.addRuntime(elapsedTime);
