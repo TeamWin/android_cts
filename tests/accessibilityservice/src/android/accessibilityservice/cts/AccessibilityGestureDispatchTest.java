@@ -15,28 +15,18 @@
 package android.accessibilityservice.cts;
 
 import android.accessibilityservice.AccessibilityService;
-import android.accessibilityservice.AccessibilityServiceInfo;
 import android.accessibilityservice.GestureDescription;
-import android.accessibilityservice.GestureDescription.Builder;
-import android.accessibilityservice.GestureDescription.StrokeDescription;
-import android.app.UiAutomation;
-import android.content.ContentResolver;
-import android.content.Context;
 import android.graphics.Matrix;
 import android.graphics.Path;
 import android.graphics.Rect;
 import android.os.Bundle;
-import android.os.ParcelFileDescriptor;
 import android.os.SystemClock;
-import android.provider.Settings;
 import android.test.ActivityInstrumentationTestCase2;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewConfiguration;
-import android.view.accessibility.AccessibilityManager;
 import android.widget.TextView;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -45,13 +35,11 @@ import java.util.List;
  */
 public class AccessibilityGestureDispatchTest extends
         ActivityInstrumentationTestCase2<AccessibilityGestureDispatchTest.GestureDispatchActivity> {
-    // Match com.android.server.accessibility.AccessibilityManagerService#COMPONENT_NAME_SEPARATOR
-    private static final String COMPONENT_NAME_SEPARATOR = ":";
-    private static final int TIMEOUT_FOR_SERVICE_ENABLE = 10000; // millis; 10s
     private static final int GESTURE_COMPLETION_TIMEOUT = 5000; // millis
     private static final int MOTION_EVENT_TIMEOUT = 1000; // millis
 
     final List<MotionEvent> mMotionEvents = new ArrayList<>();
+    StubGestureAccessibilityService mService;
     MyTouchListener mMyTouchListener = new MyTouchListener();
     MyGestureCallback mCallback;
     TextView mFullScreenTextView;
@@ -65,33 +53,26 @@ public class AccessibilityGestureDispatchTest extends
     @Override
     public void setUp() throws Exception {
         super.setUp();
+
         mFullScreenTextView =
                 (TextView) getActivity().findViewById(R.id.full_screen_text_view);
-        getInstrumentation().runOnMainSync(new Runnable() {
-            @Override
-            public void run() {
-                mFullScreenTextView.getGlobalVisibleRect(mViewBounds);
-                mFullScreenTextView.setOnTouchListener(mMyTouchListener);
-            }
+        getInstrumentation().runOnMainSync(() -> {
+            mFullScreenTextView.getGlobalVisibleRect(mViewBounds);
+            mFullScreenTextView.setOnTouchListener(mMyTouchListener);
         });
-        Context context = getInstrumentation().getContext();
-        UiAutomation uiAutomation = getInstrumentation()
-                .getUiAutomation(UiAutomation.FLAG_DONT_SUPPRESS_ACCESSIBILITY_SERVICES);
-        ParcelFileDescriptor fd = uiAutomation.executeShellCommand(
-                "pm grant " + context.getPackageName()
-                        + "android.permission.WRITE_SECURE_SETTINGS");
-        uiAutomation.destroy();
-        fd.close();
-        turnAccessibilityOff();
-        enableService();
+
+        mService = StubGestureAccessibilityService.enableSelf(this);
+
         mMotionEvents.clear();
         mCallback = new MyGestureCallback();
         mGotUpEvent = false;
     }
 
     @Override
-    public void tearDown() {
-        turnAccessibilityOff();
+    public void tearDown() throws Exception {
+        mService.runOnServiceSync(() -> mService.disableSelf());
+
+        super.tearDown();
     }
 
     public void testClickAt_producesDownThenUp() throws InterruptedException {
@@ -100,8 +81,7 @@ public class AccessibilityGestureDispatchTest extends
         int clickX = clickXInsideView + mViewBounds.left;
         int clickY = clickYInsideView + mViewBounds.top;
         GestureDescription click = createClick(clickX, clickY);
-        assertTrue(StubGestureAccessibilityService.sConnectedInstance
-                .doDispatchGesture(click, mCallback, null));
+        mService.runOnServiceSync(() -> mService.doDispatchGesture(click, mCallback, null));
         mCallback.assertGestureCompletes(GESTURE_COMPLETION_TIMEOUT);
         waitForMotionEvents(3);
 
@@ -148,8 +128,7 @@ public class AccessibilityGestureDispatchTest extends
         int clickX = clickXInsideView + mViewBounds.left;
         int clickY = clickYInsideView + mViewBounds.top;
         GestureDescription longClick = createLongClick(clickX, clickY);
-        assertTrue(StubGestureAccessibilityService.sConnectedInstance
-                .doDispatchGesture(longClick, mCallback, null));
+        mService.runOnServiceSync(() -> mService.doDispatchGesture(longClick, mCallback, null));
         mCallback.assertGestureCompletes(
                 ViewConfiguration.getLongPressTimeout() + GESTURE_COMPLETION_TIMEOUT);
 
@@ -190,8 +169,7 @@ public class AccessibilityGestureDispatchTest extends
         float swipeTolerance = 2.0f;
 
         GestureDescription swipe = createSwipe(startX, startY, endX, endY, gestureTime);
-        assertTrue(StubGestureAccessibilityService.sConnectedInstance
-                .doDispatchGesture(swipe, mCallback, null));
+        mService.runOnServiceSync(() -> mService.doDispatchGesture(swipe, mCallback, null));
         mCallback.assertGestureCompletes(gestureTime + GESTURE_COMPLETION_TIMEOUT);
         waitForUpEvent();
         int numEvents = mMotionEvents.size();
@@ -234,8 +212,7 @@ public class AccessibilityGestureDispatchTest extends
         int gestureTime = 1000;
 
         GestureDescription swipe = createSwipe(startX, startY, endX, endY, gestureTime);
-        assertTrue(StubGestureAccessibilityService.sConnectedInstance
-                .doDispatchGesture(swipe, mCallback, null));
+        mService.runOnServiceSync(() -> mService.doDispatchGesture(swipe, mCallback, null));
         mCallback.assertGestureCompletes(gestureTime + GESTURE_COMPLETION_TIMEOUT);
         waitForUpEvent();
 
@@ -272,8 +249,7 @@ public class AccessibilityGestureDispatchTest extends
 
         GestureDescription pinch = createPinch(centerX, centerY, startSpacing,
                 endSpacing, 45.0F, gestureTime);
-        assertTrue(StubGestureAccessibilityService.sConnectedInstance
-                .doDispatchGesture(pinch, mCallback, null));
+        mService.runOnServiceSync(() -> mService.doDispatchGesture(pinch, mCallback, null));
         mCallback.assertGestureCompletes(gestureTime + GESTURE_COMPLETION_TIMEOUT);
         waitForUpEvent();
         int numEvents = mMotionEvents.size();
@@ -333,76 +309,6 @@ public class AccessibilityGestureDispatchTest extends
             assertTrue(spacing >= endSpacing - pinchTolerance);
             lastSpacing = spacing;
         }
-    }
-
-    private void enableService() throws IOException {
-        Context context = getInstrumentation().getContext();
-        AccessibilityManager manager =
-                (AccessibilityManager) context.getSystemService(Context.ACCESSIBILITY_SERVICE);
-        List<AccessibilityServiceInfo> serviceInfos =
-                manager.getInstalledAccessibilityServiceList();
-        for (int i = 0; i < serviceInfos.size(); i++) {
-            AccessibilityServiceInfo serviceInfo = serviceInfos.get(i);
-            if (context.getString(R.string.stub_gesture_a11y_service_description)
-                    .equals(serviceInfo.getDescription())) {
-                ContentResolver cr = context.getContentResolver();
-                String enabledServices = Settings.Secure.getString(cr,
-                        Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES);
-                Settings.Secure.putString(cr, Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES,
-                        enabledServices + COMPONENT_NAME_SEPARATOR + serviceInfo.getId());
-                Settings.Secure.putInt(cr, Settings.Secure.ACCESSIBILITY_ENABLED, 1);
-                long timeoutTimeMillis = SystemClock.uptimeMillis() + TIMEOUT_FOR_SERVICE_ENABLE;
-                while (SystemClock.uptimeMillis() < timeoutTimeMillis) {
-                    synchronized(StubGestureAccessibilityService.sWaitObjectForConnecting) {
-                        if (StubGestureAccessibilityService.sConnectedInstance != null) {
-                            return;
-                        }
-                        try {
-                            StubGestureAccessibilityService.sWaitObjectForConnecting.wait(
-                                    timeoutTimeMillis - SystemClock.uptimeMillis());
-                        } catch (InterruptedException e) {
-                            // Ignored; loop again
-                        }
-                    }
-                }
-                throw new RuntimeException("Stub accessibility service not starting");
-            }
-        }
-        throw new RuntimeException("Stub accessibility service not found");
-    }
-
-    private void turnAccessibilityOff() {
-        final Object waitLockForA11yOff = new Object();
-        Context context = getInstrumentation().getContext();
-        AccessibilityManager manager =
-                (AccessibilityManager) context.getSystemService(Context.ACCESSIBILITY_SERVICE);
-        manager.addAccessibilityStateChangeListener(
-                new AccessibilityManager.AccessibilityStateChangeListener() {
-                    @Override
-                    public void onAccessibilityStateChanged(boolean b) {
-                        synchronized (waitLockForA11yOff) {
-                            waitLockForA11yOff.notifyAll();
-                        }
-                    }
-                });
-        ContentResolver cr = context.getContentResolver();
-        Settings.Secure.putString(
-                cr, Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES, null);
-        StubGestureAccessibilityService.sConnectedInstance = null;
-        long timeoutTimeMillis = SystemClock.uptimeMillis() + TIMEOUT_FOR_SERVICE_ENABLE;
-        while (SystemClock.uptimeMillis() < timeoutTimeMillis) {
-            synchronized (waitLockForA11yOff) {
-                if (!manager.isEnabled()) {
-                    return;
-                }
-                try {
-                    waitLockForA11yOff.wait(timeoutTimeMillis - SystemClock.uptimeMillis());
-                } catch (InterruptedException e) {
-                    // Ignored; loop again
-                }
-            }
-        }
-        throw new RuntimeException("Unable to turn accessibility off");
     }
 
     public static class GestureDispatchActivity extends AccessibilityTestActivity {

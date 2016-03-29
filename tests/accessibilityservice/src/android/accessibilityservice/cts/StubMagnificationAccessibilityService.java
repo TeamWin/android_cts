@@ -24,15 +24,10 @@ import java.io.IOException;
 /**
  * A stub accessibility service to install for testing gesture dispatch
  */
-public class StubGestureAccessibilityService extends InstrumentedAccessibilityService {
+public class StubMagnificationAccessibilityService extends InstrumentedAccessibilityService {
 
-    public boolean doDispatchGesture(GestureDescription description, GestureResultCallback callback,
-            Handler handler) {
-        return dispatchGesture(description, callback, handler);
-    }
-
-    public static StubGestureAccessibilityService enableSelf(InstrumentationTestCase test) {
+    public static StubMagnificationAccessibilityService enableSelf(InstrumentationTestCase test) {
         return InstrumentedAccessibilityService.enableService(
-                test, StubGestureAccessibilityService.class);
+                test, StubMagnificationAccessibilityService.class);
     }
 }
