@@ -312,6 +312,7 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
     public void testSecurityLoggingWithSingleUser() throws Exception {
         executeDeviceTestMethod(".SecurityLoggingTest",
                 "testRetrievingSecurityLogsNotPossibleImmediatelyAfterPreviousSuccessfulRetrieval");
+        executeDeviceTestMethod(".SecurityLoggingTest", "testEnablingAndDisablingSecurityLogging");
     }
 
     public void testLockTask() throws Exception {
