@@ -29,6 +29,7 @@ import android.server.cts.WindowManagerState.WindowTask;
 import java.awt.Rectangle;
 import java.util.Objects;
 
+import static android.server.cts.ActivityManagerTestBase.FREEFORM_WORKSPACE_STACK_ID;
 import static com.android.ddmlib.Log.LogLevel.INFO;
 
 /** Combined state of the activity manager and window manager. */
@@ -38,11 +39,21 @@ class ActivityAndWindowManagersState extends Assert {
     private WindowManagerState mWmState = new WindowManagerState();
 
     void computeState(ITestDevice device, String[] waitForActivitiesVisible) throws Exception {
-        computeState(device, true, waitForActivitiesVisible);
+        computeState(device, waitForActivitiesVisible, true);
+    }
+
+    void computeState(ITestDevice device, String[] waitForActivitiesVisible,
+                      boolean compareTaskAndStackBounds) throws Exception {
+        computeState(device, true, waitForActivitiesVisible, compareTaskAndStackBounds);
     }
 
     void computeState(ITestDevice device, boolean visibleOnly, String[] waitForActivitiesVisible)
             throws Exception {
+        computeState(device, visibleOnly, waitForActivitiesVisible, true);
+    }
+
+    void computeState(ITestDevice device, boolean visibleOnly, String[] waitForActivitiesVisible,
+                      boolean compareTaskAndStackBounds) throws Exception {
         int retriesLeft = 5;
         boolean retry = waitForActivitiesVisible != null && waitForActivitiesVisible.length > 0;
         do {
@@ -62,7 +73,7 @@ class ActivityAndWindowManagersState extends Assert {
         } while (retry && retriesLeft-- > 0);
 
         assertSanity();
-        assertValidBounds();
+        assertValidBounds(compareTaskAndStackBounds);
     }
 
     private boolean shouldRetry(String[] waitForActivitiesVisible) {
@@ -227,7 +238,7 @@ class ActivityAndWindowManagersState extends Assert {
         return true;
     }
 
-    void assertValidBounds() {
+    void assertValidBounds(boolean compareTaskAndStackBounds) {
         for (ActivityStack aStack : mAmState.getStacks()) {
             final int stackId = aStack.mStackId;
             final WindowStack wStack = mWmState.getStack(stackId);
@@ -255,10 +266,12 @@ class ActivityAndWindowManagersState extends Assert {
                 final boolean aTaskIsFullscreen = aTask.isFullscreen();
                 final boolean wTaskIsFullscreen = wTask.isFullscreen();
                 assertEquals("Task fullscreen state in AM and WM must be equal taskId=" + taskId
-                                + ", stackId=" + stackId, aTaskIsFullscreen, wTaskIsFullscreen);
+                        + ", stackId=" + stackId, aTaskIsFullscreen, wTaskIsFullscreen);
 
                 final Rectangle aTaskBounds = aTask.getBounds();
                 final Rectangle wTaskBounds = wTask.getBounds();
+                final int aTaskMinWidth = aTask.getMinimalWidth();
+                final int aTaskMinHeight = aTask.getMinimalHeight();
 
                 if (aTaskIsFullscreen) {
                     assertNull("Task bounds in AM must be null for fullscreen taskId=" + taskId,
@@ -266,6 +279,28 @@ class ActivityAndWindowManagersState extends Assert {
                 } else {
                     assertEquals("Task bounds in AM and WM must be equal taskId=" + taskId
                             + ", stackId=" + stackId, aTaskBounds, wTaskBounds);
+
+                    if (compareTaskAndStackBounds && stackId != FREEFORM_WORKSPACE_STACK_ID) {
+                        if (aTaskMinWidth == -1 && aTaskMinHeight == -1) {
+                            // Minimal size not set for task - checking for equality of bounds with
+                            // stack.
+                            assertEquals("Task bounds must be equal to stack bounds taskId="
+                                    + taskId + ", stackId=" + stackId, aStackBounds, wTaskBounds);
+                        } else {
+                            // Minimal width and/or height set for task - bounds of task and stack
+                            // can be different.
+                            int targetWidth = aTaskMinWidth == -1
+                                    ? (int) aStackBounds.getWidth()
+                                    : (int) Math.max(aTaskMinWidth, aStackBounds.getWidth());
+                            int targetHeight = aTaskMinHeight == -1
+                                    ? (int) aStackBounds.getHeight()
+                                    : (int) Math.max(aTaskMinHeight, aStackBounds.getHeight());
+                            final Rectangle targetBounds = new Rectangle((int) aStackBounds.getX(),
+                                    (int) aStackBounds.getY(), targetWidth, targetHeight);
+                            assertEquals("Task bounds must be set according to minimal size taskId="
+                                    + taskId + ", stackId=" + stackId, targetBounds, wTaskBounds);
+                        }
+                    }
                 }
             }
         }
