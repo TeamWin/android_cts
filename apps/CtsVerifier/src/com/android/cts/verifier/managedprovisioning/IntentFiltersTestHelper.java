@@ -77,6 +77,7 @@ public class IntentFiltersTestHelper {
                 new Intent(Settings.ACTION_WIRELESS_SETTINGS),
                 new Intent(DevicePolicyManager.ACTION_SET_NEW_PASSWORD),
                 new Intent("android.net.vpn.SETTINGS"),
+                new Intent(Settings.ACTION_VPN_SETTINGS),
                 new Intent("android.settings.ACCOUNT_SYNC_SETTINGS"),
                 new Intent(Settings.ACTION_BATTERY_SAVER_SETTINGS),
                 new Intent("android.settings.LICENSE"),
