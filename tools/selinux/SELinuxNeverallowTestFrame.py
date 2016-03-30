@@ -18,25 +18,22 @@ src_header = """/*
 
 package android.cts.security;
 
+import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
 import com.android.tradefed.build.IBuildInfo;
 import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.testtype.DeviceTestCase;
 import com.android.tradefed.testtype.IBuildReceiver;
+import com.android.tradefed.testtype.IDeviceTest;
 
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.FileOutputStream;
-import java.lang.String;
-import java.net.URL;
-import java.util.Scanner;
 
 /**
  * Neverallow Rules SELinux tests.
  */
-public class SELinuxNeverallowRulesTest extends DeviceTestCase {
+public class SELinuxNeverallowRulesTest extends DeviceTestCase implements IBuildReceiver, IDeviceTest {
     private File sepolicyAnalyze;
     private File devicePolicyFile;
 
@@ -45,27 +42,28 @@ public class SELinuxNeverallowRulesTest extends DeviceTestCase {
      */
     private ITestDevice mDevice;
 
-    private File copyResourceToTempFile(String resName) throws IOException {
-        InputStream is = this.getClass().getResourceAsStream(resName);
-        File tempFile = File.createTempFile("SELinuxHostTest", ".tmp");
-        FileOutputStream os = new FileOutputStream(tempFile);
-        int rByte = 0;
-        while ((rByte = is.read()) != -1) {
-            os.write(rByte);
-        }
-        os.flush();
-        os.close();
-        tempFile.deleteOnExit();
-        return tempFile;
+    private CompatibilityBuildHelper mHelper;
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void setBuild(IBuildInfo build) {
+        mHelper = new CompatibilityBuildHelper(build);
     }
 
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void setDevice(ITestDevice device) {
+        super.setDevice(device);
+        mDevice = device;
+    }
     @Override
     protected void setUp() throws Exception {
         super.setUp();
-        mDevice = getDevice();
-
-        /* retrieve the sepolicy-analyze executable from jar */
-        sepolicyAnalyze = copyResourceToTempFile("/sepolicy-analyze");
+        sepolicyAnalyze = new File(mHelper.getTestsDir(), "sepolicy-analyze");
         sepolicyAnalyze.setExecutable(true);
 
         /* obtain sepolicy file from running device */
