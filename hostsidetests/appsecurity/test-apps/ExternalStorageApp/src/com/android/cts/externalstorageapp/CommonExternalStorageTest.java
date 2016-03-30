@@ -142,6 +142,15 @@ public class CommonExternalStorageTest extends AndroidTestCase {
         return paths;
     }
 
+    public static List<File> getAllPackageSpecificPathsExceptMedia(Context context) {
+        final List<File> paths = new ArrayList<File>();
+        Collections.addAll(paths, context.getExternalCacheDirs());
+        Collections.addAll(paths, context.getExternalFilesDirs(null));
+        Collections.addAll(paths, context.getExternalFilesDirs(Environment.DIRECTORY_PICTURES));
+        Collections.addAll(paths, context.getObbDirs());
+        return paths;
+    }
+
     public static List<File> getAllPackageSpecificPathsExceptObb(Context context) {
         final List<File> paths = new ArrayList<File>();
         Collections.addAll(paths, context.getExternalCacheDirs());
