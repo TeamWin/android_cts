@@ -105,8 +105,10 @@ public class KeyManagementTest extends ActivityInstrumentationTestCase2<KeyManag
         final Certificate cert = getCertificate(FAKE_RSA_1.caCertificate);
 
         // Install keypairs.
-        assertTrue(mDevicePolicyManager.installKeyPair(getWho(), privKey, cert, grant, true));
-        assertTrue(mDevicePolicyManager.installKeyPair(getWho(), privKey, cert, withhold, false));
+        assertTrue(mDevicePolicyManager.installKeyPair(getWho(), privKey, new Certificate[] {cert},
+                grant, true));
+        assertTrue(mDevicePolicyManager.installKeyPair(getWho(), privKey, new Certificate[] {cert},
+                withhold, false));
         try {
             // Verify only the requested key was actually granted.
             assertGranted(grant, true);
@@ -130,7 +132,8 @@ public class KeyManagementTest extends ActivityInstrumentationTestCase2<KeyManag
         final Certificate cert = getCertificate(FAKE_RSA_1.caCertificate);
 
         // Install keypair.
-        assertTrue(mDevicePolicyManager.installKeyPair(getWho(), privKey, cert, alias, true));
+        assertTrue(mDevicePolicyManager.installKeyPair(getWho(), privKey, new Certificate[] {cert},
+                alias, true));
         try {
             assertGranted(alias, true);
         } finally {
@@ -140,7 +143,8 @@ public class KeyManagementTest extends ActivityInstrumentationTestCase2<KeyManag
         assertGranted(alias, false);
 
         // Install again.
-        assertTrue(mDevicePolicyManager.installKeyPair(getWho(), privKey, cert, alias, false));
+        assertTrue(mDevicePolicyManager.installKeyPair(getWho(), privKey, new Certificate[] {cert},
+                alias, false));
         try {
             assertGranted(alias, false);
         } finally {
