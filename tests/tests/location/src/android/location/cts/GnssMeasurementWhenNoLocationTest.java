@@ -121,12 +121,17 @@ public class GnssMeasurementWhenNoLocationTest extends AndroidTestCase {
             return;
         }
         if (!mGpsStatusListener.isGpsStatusReceived()) {
-            Log.i(TAG, "No Satellites are visible. Device may be Indoor. Skip test.");
+            Log.i(TAG, "No Satellites are visible. Device may be indoors. Skip test.");
             return;
         }
 
         List<GnssMeasurementsEvent> events = mMeasurementListener.getEvents();
         Log.i(TAG, "Number of GPS measurement events received = " + events.size());
+
+        if (events.isEmpty()) {
+            Log.i(TAG, "No GPS measurement events received. Device may be indoors. Skip test.");
+            return;
+        }
 
         // If device is not indoor, verify that we receive GPS measurements before being able to
         // calculate the position solution and verify that mandatory fields of GnssMeasurement are
