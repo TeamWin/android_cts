@@ -200,7 +200,7 @@ public class PrintServicesTest extends BasePrintTest {
             @Override
             public Void answer(InvocationOnMock invocation) throws Throwable {
                 CustomPrinterIconCallback callback = (CustomPrinterIconCallback) invocation
-                        .getArguments()[1];
+                        .getArguments()[2];
 
                 if (mIcon != null) {
                     callback.onCustomPrinterIconLoaded(mIcon);
