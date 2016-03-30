@@ -26,8 +26,8 @@ import java.io.FileNotFoundException;
 
 /**
  * Set of tests for use cases that apply to profile and device owner.
- * This class is the base class of MixedProfileOwnerTest and MixedDeviceOwnerTest and is abstract
- * to avoid running spurious tests.
+ * This class is the base class of MixedProfileOwnerTest, MixedDeviceOwnerTest and
+ * MixedManagedProfileOwnerTest and is abstract to avoid running spurious tests.
  *
  * NOTE: Not all tests are executed in the subclasses.  Sometimes, if a test is not applicable to
  * a subclass, they override it with an empty method.
@@ -85,6 +85,9 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
     private static final String ACCOUNT_TYPE
             = "com.android.cts.devicepolicy.accountmanagement.account.type";
 
+    private static final String CUSTOMIZATION_APP_PKG = "com.android.cts.customizationapp";
+    private static final String CUSTOMIZATION_APP_APK = "CtsCustomizationApp.apk";
+
     // ID of the user all tests are run as. For device owner this will be the primary user, for
     // profile owner it is the user id of the created profile.
     protected int mUserId;
@@ -102,6 +105,7 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
             getDevice().uninstallPackage(VPN_APP_PKG);
             getDevice().uninstallPackage(INTENT_RECEIVER_PKG);
             getDevice().uninstallPackage(INTENT_SENDER_PKG);
+            getDevice().uninstallPackage(CUSTOMIZATION_APP_PKG);
         }
         super.tearDown();
     }
@@ -382,6 +386,45 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
                         DEVICE_ADMIN_PKG + ".ClearProfileOwnerTest", mPrimaryUserId));
             }
         }
+    }
+
+    // Sets restrictions and launches non-admin app, that tries to set wallpaper.
+    // Non-admin apps must not violate any user restriction.
+    public void testSetWallpaper_disallowed() throws Exception {
+        // UserManager.DISALLOW_SET_WALLPAPER
+        final String DISALLOW_SET_WALLPAPER = "no_set_wallpaper";
+        if (!mHasFeature) {
+            return;
+        }
+
+        installAppAsUser(CUSTOMIZATION_APP_APK, mUserId);
+        try {
+            changeUserRestrictionForUser(DISALLOW_SET_WALLPAPER, COMMAND_ADD_USER_RESTRICTION,
+                    mUserId);
+            assertTrue(runDeviceTestsAsUser(CUSTOMIZATION_APP_PKG, ".CustomizationTest",
+                "testSetWallpaper_disallowed", mUserId));
+        } finally {
+            changeUserRestrictionForUser(DISALLOW_SET_WALLPAPER, COMMAND_CLEAR_USER_RESTRICTION,
+                    mUserId);
+        }
+    }
+
+    // Runs test with admin privileges. The test methods set all the tested restrictions
+    // inside. But these restrictions must have no effect on the device/profile owner behavior.
+    public void testDisallowSetWallpaper_allowed() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
+        executeDeviceTestMethod(".CustomizationRestrictionsTest",
+                "testDisallowSetWallpaper_allowed");
+    }
+
+    public void testDisallowSetUserIcon_allowed() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
+        executeDeviceTestMethod(".CustomizationRestrictionsTest",
+                "testDisallowSetUserIcon_allowed");
     }
 
     public void testPackageInstallUserRestrictions() throws Exception {
