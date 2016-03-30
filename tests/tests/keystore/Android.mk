@@ -24,7 +24,7 @@ LOCAL_MODULE_PATH := $(TARGET_OUT_DATA_APPS)
 LOCAL_COMPATIBILITY_SUITE := cts
 
 LOCAL_STATIC_JAVA_LIBRARIES := \
-    ctstestrunner core-tests-support platform-test-annotations
+    ctstestrunner core-tests-support platform-test-annotations ctsdeviceutil
 
 LOCAL_SRC_FILES := $(call all-java-files-under, src)
 
