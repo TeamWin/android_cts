@@ -24,12 +24,24 @@ package android.security.cts;
 
 import android.content.Context;
 import android.content.res.AssetFileDescriptor;
+import android.content.res.Resources;
+import android.graphics.SurfaceTexture;
+import android.media.MediaCodec;
+import android.media.MediaCodecInfo;
+import android.media.MediaCodecList;
+import android.media.MediaExtractor;
+import android.media.MediaFormat;
 import android.media.MediaPlayer;
+import android.opengl.GLES20;
+import android.opengl.GLES11Ext;
 import android.os.Looper;
+import android.os.SystemClock;
 import android.test.InstrumentationTestCase;
 import android.util.Log;
+import android.view.Surface;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -149,13 +161,48 @@ public class StagefrightTest extends InstrumentationTestCase {
     }
 
     private void doStagefrightTest(final int rid) throws Exception {
+        doStagefrightTestMediaPlayer(rid);
+        doStagefrightTestMediaCodec(rid);
+    }
+
+    private Surface getDummySurface() {
+        int[] textures = new int[1];
+        GLES20.glGenTextures(1, textures, 0);
+        GLES20.glBindTexture(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, textures[0]);
+        GLES20.glTexParameterf(GLES11Ext.GL_TEXTURE_EXTERNAL_OES,
+                GLES20.GL_TEXTURE_MIN_FILTER,
+                GLES20.GL_NEAREST);
+        GLES20.glTexParameterf(GLES11Ext.GL_TEXTURE_EXTERNAL_OES,
+                GLES20.GL_TEXTURE_MAG_FILTER,
+                GLES20.GL_LINEAR);
+        GLES20.glTexParameteri(GLES11Ext.GL_TEXTURE_EXTERNAL_OES,
+                GLES20.GL_TEXTURE_WRAP_S,
+                GLES20.GL_CLAMP_TO_EDGE);
+        GLES20.glTexParameteri(GLES11Ext.GL_TEXTURE_EXTERNAL_OES,
+                GLES20.GL_TEXTURE_WRAP_T,
+                GLES20.GL_CLAMP_TO_EDGE);
+        SurfaceTexture surfaceTex = new SurfaceTexture(textures[0]);
+        surfaceTex.setOnFrameAvailableListener(new SurfaceTexture.OnFrameAvailableListener() {
+            @Override
+            public void onFrameAvailable(SurfaceTexture surfaceTexture) {
+                Log.i(TAG, "new frame available");
+            }
+        });
+        return new Surface(surfaceTex);
+    }
+
+    private void doStagefrightTestMediaPlayer(final int rid) throws Exception {
         class MediaPlayerCrashListener
                 implements MediaPlayer.OnErrorListener,
                     MediaPlayer.OnPreparedListener,
                     MediaPlayer.OnCompletionListener {
             @Override
             public boolean onError(MediaPlayer mp, int newWhat, int extra) {
-                what = newWhat;
+                Log.i(TAG, "error: " + newWhat);
+                // don't overwrite a more severe error with a less severe one
+                if (what != MediaPlayer.MEDIA_ERROR_SERVER_DIED) {
+                    what = newWhat;
+                }
                 lock.lock();
                 condition.signal();
                 lock.unlock();
@@ -170,7 +217,7 @@ public class StagefrightTest extends InstrumentationTestCase {
 
             @Override
             public void onCompletion(MediaPlayer mp) {
-                what = 0;
+                // preserve error condition, if any
                 lock.lock();
                 condition.signal();
                 lock.unlock();
@@ -182,6 +229,12 @@ public class StagefrightTest extends InstrumentationTestCase {
                     Log.d(TAG, "timed out on waiting for error");
                 }
                 lock.unlock();
+                if (what != 0) {
+                    // Sometimes mediaserver signals a decoding error first, and *then* crashes
+                    // due to additional in-flight buffers being processed, so wait a little
+                    // and see if more errors show up.
+                    SystemClock.sleep(1000);
+                }
                 return what;
             }
 
@@ -190,17 +243,40 @@ public class StagefrightTest extends InstrumentationTestCase {
             int what;
         }
 
+        String name = getInstrumentation().getContext().getResources().getResourceEntryName(rid);
+        Log.i(TAG, "start mediaplayer test for: " + name);
+        
         final MediaPlayerCrashListener mpcl = new MediaPlayerCrashListener();
 
-        Thread t = new Thread(new Runnable() {
+        class LooperThread extends Thread {
+            private Looper mLooper;
+
+            LooperThread(Runnable runner) {
+                super(runner);
+            }
+
             @Override
             public void run() {
                 Looper.prepare();
+                mLooper = Looper.myLooper();
+                super.run();
+            }
+
+            public void stopLooper() {
+                mLooper.quitSafely();
+            }
+        }
+
+        LooperThread t = new LooperThread(new Runnable() {
+            @Override
+            public void run() {
 
                 MediaPlayer mp = new MediaPlayer();
                 mp.setOnErrorListener(mpcl);
                 mp.setOnPreparedListener(mpcl);
                 mp.setOnCompletionListener(mpcl);
+                Surface surface = getDummySurface();
+                mp.setSurface(surface);
                 try {
                     AssetFileDescriptor fd = getInstrumentation().getContext().getResources()
                         .openRawResourceFd(rid);
@@ -219,10 +295,96 @@ public class StagefrightTest extends InstrumentationTestCase {
         });
 
         t.start();
-        String name = getInstrumentation().getContext().getResources().getResourceEntryName(rid);
         String cve = name.replace("_", "-").toUpperCase();
         assertFalse("Device *IS* vulnerable to " + cve,
                     mpcl.waitForError() == MediaPlayer.MEDIA_ERROR_SERVER_DIED);
-        t.interrupt();
+        t.stopLooper();
+    }
+
+    private void doStagefrightTestMediaCodec(final int rid) throws Exception {
+        Resources resources =  getInstrumentation().getContext().getResources();
+        AssetFileDescriptor fd = resources.openRawResourceFd(rid);
+        MediaExtractor ex = new MediaExtractor();
+        ex.setDataSource(fd.getFileDescriptor(), fd.getStartOffset(), fd.getLength());
+        MediaCodecList codecList = new MediaCodecList(MediaCodecList.REGULAR_CODECS);
+        int numtracks = ex.getTrackCount();
+        String rname = resources.getResourceEntryName(rid);
+        Log.i(TAG, "start mediacodec test for: " + rname + ", which has " + numtracks + " tracks");
+        for (int t = 0; t < numtracks; t++) {
+            // find all the available decoders for this format
+            ArrayList<String> matchingCodecs = new ArrayList<String>();
+            MediaFormat format = ex.getTrackFormat(t);
+            String mime = format.getString(MediaFormat.KEY_MIME);
+            for (MediaCodecInfo info: codecList.getCodecInfos()) {
+                if (info.isEncoder()) {
+                    continue;
+                }
+                try {
+                    MediaCodecInfo.CodecCapabilities caps = info.getCapabilitiesForType(mime);
+                    if (caps != null && caps.isFormatSupported(format)) {
+                        matchingCodecs.add(info.getName());
+                    }
+                } catch (IllegalArgumentException e) {
+                    // type is not supported
+                }
+            }
+
+            if (matchingCodecs.size() == 0) {
+                Log.w(TAG, "no codecs for track " + t + ", type " + mime);
+            }
+            // decode this track once with each matching codec
+            ex.selectTrack(t);
+            for (String codecName: matchingCodecs) {
+                Log.i(TAG, "Decoding track " + t + " using codec " + codecName);
+                ex.seekTo(0, MediaExtractor.SEEK_TO_CLOSEST_SYNC);
+                MediaCodec codec = MediaCodec.createByCodecName(codecName);
+                Surface surface = null;
+                if (mime.startsWith("video/")) {
+                    surface = getDummySurface();
+                }
+                codec.configure(format, surface, null, 0);
+                codec.start();
+                MediaCodec.BufferInfo info = new MediaCodec.BufferInfo();
+                try {
+                    while (true) {
+                        int flags = ex.getSampleFlags();
+                        long time = ex.getSampleTime();
+                        int bufidx = codec.dequeueInputBuffer(5000);
+                        if (bufidx >= 0) {
+                            int n = ex.readSampleData(codec.getInputBuffer(bufidx), 0);
+                            if (n < 0) {
+                                flags = MediaCodec.BUFFER_FLAG_END_OF_STREAM;
+                                time = 0;
+                                n = 0;
+                            }
+                            codec.queueInputBuffer(bufidx, 0, n, time, flags);
+                            ex.advance();
+                        }
+                        int status = codec.dequeueOutputBuffer(info, 5000);
+                        if (status >= 0) {
+                            if ((info.flags & MediaCodec.BUFFER_FLAG_END_OF_STREAM) != 0) {
+                                break;
+                            }
+                            if (info.presentationTimeUs > TIMEOUT_NS / 1000) {
+                                Log.d(TAG, "stopping after 10 seconds worth of data");
+                                break;
+                            }
+                            codec.releaseOutputBuffer(status, true);
+                        }
+                    }
+                } catch (MediaCodec.CodecException ce) {
+                    if (ce.getErrorCode() == MediaCodec.CodecException.ERROR_RECLAIMED) {
+                        // This indicates that the remote service is dead, suggesting a crash.
+                        throw new RuntimeException(ce);
+                    }
+                    // Other errors ignored.
+                } catch (IllegalStateException ise) {
+                    // Other errors ignored.
+                } finally {
+                    codec.release();
+                }
+            }
+        }
+        ex.release();
     }
 }
