@@ -36,6 +36,19 @@ def skip_unless(cond):
         print "Test skipped"
         sys.exit(SKIP_RET_CODE)
 
+def full_or_better(props):
+    """Returns whether a device is a FULL or better camera2 device.
+
+    Args:
+        props: Camera properties object.
+
+    Returns:
+        Boolean.
+    """
+    return props.has_key("android.info.supportedHardwareLevel") and \
+            props["android.info.supportedHardwareLevel"] != 2 and \
+            props["android.info.supportedHardwareLevel"] > 1
+
 def level3(props):
     """Returns whether a device is a LEVEL3 capability camera2 device.
 
@@ -107,8 +120,7 @@ def manual_sensor(props):
         Boolean.
     """
     return    props.has_key("android.request.availableCapabilities") and \
-              1 in props["android.request.availableCapabilities"] \
-           or full(props)
+              1 in props["android.request.availableCapabilities"]
 
 def manual_post_proc(props):
     """Returns whether a device supports MANUAL_POST_PROCESSING capabilities.
@@ -120,8 +132,7 @@ def manual_post_proc(props):
         Boolean.
     """
     return    props.has_key("android.request.availableCapabilities") and \
-              2 in props["android.request.availableCapabilities"] \
-           or full(props)
+              2 in props["android.request.availableCapabilities"]
 
 def raw(props):
     """Returns whether a device supports RAW capabilities.
