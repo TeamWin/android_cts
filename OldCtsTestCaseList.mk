@@ -87,6 +87,7 @@ cts_support_packages := \
     CtsAtraceTestApp \
     CtsCertInstallerApp \
     CtsContactDirectoryProvider \
+    CtsCustomizationApp \
     CtsCppToolsApp \
     CtsDeviceAdminApp23 \
     CtsDeviceAdminApp24 \

@@ -86,4 +86,9 @@ public class MixedManagedProfileOwnerTest extends DeviceAndProfileOwnerTest {
                             mPrimaryUserId));
         }
     }
+
+    @Override
+    public void testDisallowSetWallpaper_allowed() throws Exception {
+        // Managed profile doesn't have wallpaper.
+    }
 }
