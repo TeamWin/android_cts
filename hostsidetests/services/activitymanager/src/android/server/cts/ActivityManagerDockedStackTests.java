@@ -69,6 +69,68 @@ public class ActivityManagerDockedStackTests extends ActivityManagerTestBase {
         mAmWmState.assertContainsStack("Must contain docked stack.", DOCKED_STACK_ID);
     }
 
+    public void testLaunchToSideAndBringToFront() throws Exception {
+        launchActivityInDockStack(LAUNCH_TO_SIDE_ACTIVITY_NAME);
+        printStacksAndTasks();
+        final String[] waitForFirstVisible = new String[] {TEST_ACTIVITY_NAME};
+        final String[] waitForSecondVisible = new String[] {NO_RELAUNCH_ACTIVITY_NAME};
+
+        // Launch activity to side.
+        launchActivityToSide(LAUNCH_TO_SIDE_ACTIVITY_NAME);
+        mAmWmState.computeState(mDevice, waitForFirstVisible);
+        int taskNumberInitial = mAmWmState.getAmState().getStackById(FULLSCREEN_WORKSPACE_STACK_ID)
+                .getTasks().size();
+        mAmWmState.assertFocusedActivity("Launched to side activity must be in front.",
+                TEST_ACTIVITY_NAME);
+
+        // Launch another activity to side to cover first one.
+        launchActivityInStack(NO_RELAUNCH_ACTIVITY_NAME, FULLSCREEN_WORKSPACE_STACK_ID);
+        mAmWmState.computeState(mDevice, waitForSecondVisible);
+        int taskNumberCovered = mAmWmState.getAmState().getStackById(FULLSCREEN_WORKSPACE_STACK_ID)
+                .getTasks().size();
+        mAmWmState.assertEquals("Fullscreen stack must have one task added.",
+                taskNumberInitial + 1, taskNumberCovered);
+        mAmWmState.assertFocusedActivity("Launched to side covering activity must be in front.",
+                NO_RELAUNCH_ACTIVITY_NAME);
+
+        // Launch activity that was first launched to side. It should be brought to front.
+        launchActivityToSide(LAUNCH_TO_SIDE_ACTIVITY_NAME);
+        mAmWmState.computeState(mDevice, waitForFirstVisible);
+        int taskNumberFinal = mAmWmState.getAmState().getStackById(FULLSCREEN_WORKSPACE_STACK_ID)
+                .getTasks().size();
+        mAmWmState.assertEquals("Task number in fullscreen stack must remain the same.",
+                taskNumberCovered, taskNumberFinal);
+        mAmWmState.assertFocusedActivity("Launched to side covering activity must be in front.",
+                TEST_ACTIVITY_NAME);
+    }
+
+    public void testLaunchToSideMultiple() throws Exception {
+        launchActivityInDockStack(LAUNCH_TO_SIDE_ACTIVITY_NAME);
+        printStacksAndTasks();
+        final String[] waitForActivitiesVisible = new String[] {TEST_ACTIVITY_NAME};
+
+        // Launch activity to side.
+        launchActivityToSide(LAUNCH_TO_SIDE_ACTIVITY_NAME);
+        mAmWmState.computeState(mDevice, waitForActivitiesVisible);
+        int taskNumberInitial = mAmWmState.getAmState().getStackById(FULLSCREEN_WORKSPACE_STACK_ID)
+                .getTasks().size();
+        mAmWmState.assertNotNull("Launched to side activity must be in fullscreen stack.",
+                mAmWmState.getAmState()
+                        .getTaskByActivityName(TEST_ACTIVITY_NAME, FULLSCREEN_WORKSPACE_STACK_ID));
+
+        // Try to launch to side same activity again.
+        launchActivityToSide(LAUNCH_TO_SIDE_ACTIVITY_NAME);
+        mAmWmState.computeState(mDevice, waitForActivitiesVisible);
+        int taskNumberFinal = mAmWmState.getAmState().getStackById(FULLSCREEN_WORKSPACE_STACK_ID)
+                .getTasks().size();
+        mAmWmState.assertEquals("Task number mustn't change.", taskNumberInitial, taskNumberFinal);
+        mAmWmState.assertFocusedActivity("Launched to side activity must remain in front.",
+                TEST_ACTIVITY_NAME);
+        mAmWmState.assertNotNull("Launched to side activity must remain in fullscreen stack.",
+                mAmWmState.getAmState()
+                        .getTaskByActivityName(TEST_ACTIVITY_NAME, FULLSCREEN_WORKSPACE_STACK_ID));
+    }
+
     public void testRotationWhenDocked() throws Exception {
         launchActivityInDockStack(LAUNCH_TO_SIDE_ACTIVITY_NAME);
         launchActivityToSide(LAUNCH_TO_SIDE_ACTIVITY_NAME);
