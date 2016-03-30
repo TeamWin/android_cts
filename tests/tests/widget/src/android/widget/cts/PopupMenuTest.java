@@ -246,8 +246,10 @@ public class PopupMenuTest extends
 
         runTestOnUiThread(() -> mPopupMenu.getMenu().performIdentifierAction(R.id.action_share, 0));
         // Verify that our menu item click listener has been called on "share" action
+        // and that the dismiss listener hasn't been called just as a result of opening the submenu.
         verify(mBuilder.mOnMenuItemClickListener, times(1)).onMenuItemClick(
                 mPopupMenu.getMenu().findItem(R.id.action_share));
+        verify(mBuilder.mOnDismissListener, never()).onDismiss(mPopupMenu);
 
         runTestOnUiThread(() -> mPopupMenu.getMenu().findItem(R.id.action_share).getSubMenu().
                         performIdentifierAction(R.id.action_share_email, 0));
