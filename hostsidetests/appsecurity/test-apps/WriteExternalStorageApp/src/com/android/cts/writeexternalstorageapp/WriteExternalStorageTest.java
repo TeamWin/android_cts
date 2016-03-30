@@ -17,6 +17,7 @@
 package com.android.cts.writeexternalstorageapp;
 
 import static android.test.MoreAsserts.assertNotEqual;
+
 import static com.android.cts.externalstorageapp.CommonExternalStorageTest.PACKAGE_NONE;
 import static com.android.cts.externalstorageapp.CommonExternalStorageTest.TAG;
 import static com.android.cts.externalstorageapp.CommonExternalStorageTest.assertDirNoWriteAccess;
@@ -24,7 +25,7 @@ import static com.android.cts.externalstorageapp.CommonExternalStorageTest.asser
 import static com.android.cts.externalstorageapp.CommonExternalStorageTest.assertDirReadWriteAccess;
 import static com.android.cts.externalstorageapp.CommonExternalStorageTest.buildProbeFile;
 import static com.android.cts.externalstorageapp.CommonExternalStorageTest.deleteContents;
-import static com.android.cts.externalstorageapp.CommonExternalStorageTest.getAllPackageSpecificPaths;
+import static com.android.cts.externalstorageapp.CommonExternalStorageTest.getAllPackageSpecificPathsExceptMedia;
 import static com.android.cts.externalstorageapp.CommonExternalStorageTest.getMountPaths;
 import static com.android.cts.externalstorageapp.CommonExternalStorageTest.getPrimaryPackageSpecificPaths;
 import static com.android.cts.externalstorageapp.CommonExternalStorageTest.getSecondaryPackageSpecificPaths;
@@ -240,10 +241,10 @@ public class WriteExternalStorageTest extends AndroidTestCase {
      * Verify that .nomedia is created correctly.
      */
     public void testVerifyNoMediaCreated() throws Exception {
-        for (File file : getAllPackageSpecificPaths(getContext())) {
+        for (File file : getAllPackageSpecificPathsExceptMedia(getContext())) {
             deleteContents(file);
         }
-        final List<File> paths = getAllPackageSpecificPaths(getContext());
+        final List<File> paths = getAllPackageSpecificPathsExceptMedia(getContext());
 
         // Require that .nomedia was created somewhere above each dir
         for (File path : paths) {
