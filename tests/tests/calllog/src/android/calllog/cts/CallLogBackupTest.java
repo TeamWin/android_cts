@@ -61,6 +61,8 @@ public class CallLogBackupTest extends InstrumentationTestCase {
     private static final int CALL_START_TIME = 0;
     private static final int CALL_DURATION = 2000;
     private static final int TIMEOUT_BACKUP = 4000;
+    private static final String TEST_POST_DIAL_DIGITS = ";1234";
+    private static final String TEST_VIA_NUMBER = "555-1112";
 
     private static final Pattern BMGR_ENABLED_PATTERN = Pattern.compile(
             "^Backup Manager currently (enabled|disabled)$");
@@ -77,7 +79,9 @@ public class CallLogBackupTest extends InstrumentationTestCase {
         CallLog.Calls.PHONE_ACCOUNT_COMPONENT_NAME,
         CallLog.Calls.PHONE_ACCOUNT_ID,
         CallLog.Calls.DATA_USAGE,
-        CallLog.Calls.FEATURES
+        CallLog.Calls.FEATURES,
+        CallLog.Calls.POST_DIAL_DIGITS,
+        CallLog.Calls.VIA_NUMBER
     };
 
     class Call {
@@ -89,6 +93,8 @@ public class CallLogBackupTest extends InstrumentationTestCase {
         String phoneAccountComponent;
         String phoneAccountId;
         int presentation;
+        String postDialDigits;
+        String viaNumber;
     }
 
     private String mCallLogBackupPackageName;
@@ -175,6 +181,8 @@ public class CallLogBackupTest extends InstrumentationTestCase {
         assertEquals(CALL_START_TIME, call.date);
         assertEquals(CALL_DURATION, call.duration);
         assertEquals(Calls.OUTGOING_TYPE, call.type);
+        assertEquals(TEST_POST_DIAL_DIGITS, call.postDialDigits);
+        assertEquals(TEST_VIA_NUMBER, call.viaNumber);
         return call;
     }
 
@@ -248,6 +256,8 @@ public class CallLogBackupTest extends InstrumentationTestCase {
         values.put(Calls.DATE, Long.valueOf(CALL_START_TIME));
         values.put(Calls.DURATION, Long.valueOf(CALL_DURATION));
         values.put(Calls.NEW, Integer.valueOf(1));
+        values.put(Calls.POST_DIAL_DIGITS, TEST_POST_DIAL_DIGITS);
+        values.put(Calls.VIA_NUMBER, TEST_VIA_NUMBER);
 
         getContext().getContentResolver().insert(Calls.CONTENT_URI, values);
     }
@@ -272,6 +282,10 @@ public class CallLogBackupTest extends InstrumentationTestCase {
                             cursor.getColumnIndex(Calls.PHONE_ACCOUNT_ID));
                     call.presentation = cursor.getInt(
                             cursor.getColumnIndex(Calls.NUMBER_PRESENTATION));
+                    call.postDialDigits = cursor.getString(
+                            cursor.getColumnIndex(Calls.POST_DIAL_DIGITS));
+                    call.viaNumber = cursor.getString(
+                            cursor.getColumnIndex(Calls.VIA_NUMBER));
                     calls.add(call);
                 }
             } finally {
