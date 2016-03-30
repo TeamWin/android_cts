@@ -43,7 +43,6 @@ selinux_general_property_contexts := $(call intermediates-dir-for,ETC,general_pr
 selinux_general_service_contexts := $(call intermediates-dir-for,ETC,general_service_contexts)/general_service_contexts
 
 LOCAL_JAVA_RESOURCE_FILES := \
-    $(HOST_OUT_EXECUTABLES)/sepolicy-analyze \
     $(HOST_OUT_EXECUTABLES)/checkseapp \
     $(HOST_OUT_EXECUTABLES)/checkfc \
     $(selinux_general_seapp_contexts) \
@@ -57,6 +56,8 @@ selinux_general_policy := $(call intermediates-dir-for,ETC,general_sepolicy.conf
 selinux_neverallow_gen := cts/tools/selinux/SELinuxNeverallowTestGen.py
 
 selinux_neverallow_gen_data := cts/tools/selinux/SELinuxNeverallowTestFrame.py
+
+LOCAL_ADDITIONAL_DEPENDENCIES := $(COMPATIBILITY_TESTCASES_OUT_cts)/sepolicy-analyze
 
 LOCAL_GENERATED_SOURCES := $(call local-generated-sources-dir)/android/cts/security/SELinuxNeverallowRulesTest.java
 
