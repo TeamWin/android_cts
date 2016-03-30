@@ -179,6 +179,11 @@ class ItsSession(object):
                 time.sleep(duration)
                 print "Reboot complete"
 
+        # Flush logcat so following code won't be misled by previous
+        # 'ItsService ready' log.
+        _run('%s logcat -c' % (self.adb))
+        time.sleep(1)
+
         # TODO: Figure out why "--user 0" is needed, and fix the problem.
         _run('%s shell am force-stop --user 0 %s' % (self.adb, self.PACKAGE))
         _run(('%s shell am startservice --user 0 -t text/plain '
