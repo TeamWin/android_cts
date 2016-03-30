@@ -16,12 +16,14 @@
 
 package android.security.cts;
 
+import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
 import com.android.tradefed.build.IBuildInfo;
 import com.android.tradefed.device.CollectingOutputReceiver;
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.testtype.DeviceTestCase;
 import com.android.tradefed.testtype.IBuildReceiver;
+import com.android.tradefed.testtype.IDeviceTest;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -48,7 +50,7 @@ import java.util.Set;
  * run as the shell user to evaluate aspects of the state of SELinux on the test
  * device which otherwise would not be available to a normal apk.
  */
-public class SELinuxHostTest extends DeviceTestCase {
+public class SELinuxHostTest extends DeviceTestCase implements IBuildReceiver, IDeviceTest {
 
     private File sepolicyAnalyze;
     private File checkSeapp;
@@ -69,6 +71,25 @@ public class SELinuxHostTest extends DeviceTestCase {
      */
     private ITestDevice mDevice;
 
+    private CompatibilityBuildHelper mHelper;
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void setBuild(IBuildInfo build) {
+        mHelper = new CompatibilityBuildHelper(build);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void setDevice(ITestDevice device) {
+        super.setDevice(device);
+        mDevice = device;
+    }
+
     private File copyResourceToTempFile(String resName) throws IOException {
         InputStream is = this.getClass().getResourceAsStream(resName);
         File tempFile = File.createTempFile("SELinuxHostTest", ".tmp");
@@ -86,51 +107,13 @@ public class SELinuxHostTest extends DeviceTestCase {
     @Override
     protected void setUp() throws Exception {
         super.setUp();
-        mDevice = getDevice();
-
-        /* retrieve the sepolicy-analyze executable from jar */
-        sepolicyAnalyze = copyResourceToTempFile("/sepolicy-analyze");
+        sepolicyAnalyze = new File(mHelper.getTestsDir(), "sepolicy-analyze");
         sepolicyAnalyze.setExecutable(true);
-
-        /* retrieve the checkseapp executable from jar */
-        checkSeapp = copyResourceToTempFile("/checkseapp");
-        checkSeapp.setExecutable(true);
-
-        /* retrieve the checkfc executable from jar */
-        checkFc = copyResourceToTempFile("/checkfc");
-        checkFc.setExecutable(true);
 
         /* obtain sepolicy file from running device */
         devicePolicyFile = File.createTempFile("sepolicy", ".tmp");
         devicePolicyFile.deleteOnExit();
         mDevice.pullFile("/sys/fs/selinux/policy", devicePolicyFile);
-
-        /* obtain seapp_contexts file from running device */
-        deviceSeappFile = File.createTempFile("seapp_contexts", ".tmp");
-        deviceSeappFile.deleteOnExit();
-        mDevice.pullFile("/seapp_contexts", deviceSeappFile);
-
-        /* obtain file_contexts.bin file from running device */
-        deviceFcFile = File.createTempFile("file_contexts", ".bin");
-        deviceFcFile.deleteOnExit();
-        mDevice.pullFile("/file_contexts.bin", deviceFcFile);
-
-        /* obtain property_contexts file from running device */
-        devicePcFile = File.createTempFile("property_contexts", ".tmp");
-        devicePcFile.deleteOnExit();
-        mDevice.pullFile("/property_contexts", devicePcFile);
-
-        /* obtain service_contexts file from running device */
-        deviceSvcFile = File.createTempFile("service_contexts", ".tmp");
-        deviceSvcFile.deleteOnExit();
-        mDevice.pullFile("/service_contexts", deviceSvcFile);
-
-        /* retrieve the AOSP *_contexts files from jar */
-        aospSeappFile = copyResourceToTempFile("/general_seapp_contexts");
-        aospFcFile = copyResourceToTempFile("/general_file_contexts.bin");
-        aospPcFile = copyResourceToTempFile("/general_property_contexts");
-        aospSvcFile = copyResourceToTempFile("/general_service_contexts");
-        seappNeverAllowFile = copyResourceToTempFile("/general_seapp_neverallows");
     }
 
     /**
@@ -214,6 +197,18 @@ public class SELinuxHostTest extends DeviceTestCase {
      */
     public void testValidSeappContexts() throws Exception {
 
+        /* obtain seapp_contexts file from running device */
+        deviceSeappFile = File.createTempFile("seapp_contexts", ".tmp");
+        deviceSeappFile.deleteOnExit();
+        mDevice.pullFile("/seapp_contexts", deviceSeappFile);
+
+        /* retrieve the checkseapp executable from jar */
+        checkSeapp = copyResourceToTempFile("/checkseapp");
+        checkSeapp.setExecutable(true);
+
+        /* retrieve the AOSP seapp_neverallows file from jar */
+        seappNeverAllowFile = copyResourceToTempFile("/general_seapp_neverallows");
+
         /* run checkseapp on seapp_contexts */
         ProcessBuilder pb = new ProcessBuilder(checkSeapp.getAbsolutePath(),
                 "-p", devicePolicyFile.getAbsolutePath(),
@@ -260,6 +255,15 @@ public class SELinuxHostTest extends DeviceTestCase {
      * @throws Exception
      */
     public void testAospSeappContexts() throws Exception {
+
+        /* obtain seapp_contexts file from running device */
+        deviceSeappFile = File.createTempFile("seapp_contexts", ".tmp");
+        deviceSeappFile.deleteOnExit();
+        mDevice.pullFile("/seapp_contexts", deviceSeappFile);
+
+        /* retrieve the AOSP seapp_contexts file from jar */
+        aospSeappFile = copyResourceToTempFile("/general_seapp_contexts");
+
         assertFileStartsWith(aospSeappFile, deviceSeappFile);
     }
 
@@ -270,6 +274,19 @@ public class SELinuxHostTest extends DeviceTestCase {
      * @throws Exception
      */
     public void testAospFileContexts() throws Exception {
+
+        /* retrieve the checkfc executable from jar */
+        checkFc = copyResourceToTempFile("/checkfc");
+        checkFc.setExecutable(true);
+
+        /* obtain file_contexts.bin file from running device */
+        deviceFcFile = File.createTempFile("file_contexts", ".bin");
+        deviceFcFile.deleteOnExit();
+        mDevice.pullFile("/file_contexts.bin", deviceFcFile);
+
+        /* retrieve the AOSP file_contexts file from jar */
+        aospFcFile = copyResourceToTempFile("/general_file_contexts.bin");
+
         /* run checkfc -c general_file_contexts.bin file_contexts.bin */
         ProcessBuilder pb = new ProcessBuilder(checkFc.getAbsolutePath(),
                 "-c", aospFcFile.getAbsolutePath(),
@@ -292,6 +309,15 @@ public class SELinuxHostTest extends DeviceTestCase {
      * @throws Exception
      */
     public void testAospPropertyContexts() throws Exception {
+
+        /* obtain property_contexts file from running device */
+        devicePcFile = File.createTempFile("property_contexts", ".tmp");
+        devicePcFile.deleteOnExit();
+        mDevice.pullFile("/property_contexts", devicePcFile);
+
+        /* retrieve the AOSP property_contexts file from jar */
+        aospPcFile = copyResourceToTempFile("/general_property_contexts");
+
         assertFileStartsWith(aospPcFile, devicePcFile);
     }
 
@@ -302,6 +328,15 @@ public class SELinuxHostTest extends DeviceTestCase {
      * @throws Exception
      */
     public void testAospServiceContexts() throws Exception {
+
+        /* obtain service_contexts file from running device */
+        deviceSvcFile = File.createTempFile("service_contexts", ".tmp");
+        deviceSvcFile.deleteOnExit();
+        mDevice.pullFile("/service_contexts", deviceSvcFile);
+
+        /* retrieve the AOSP service_contexts file from jar */
+        aospSvcFile = copyResourceToTempFile("/general_service_contexts");
+
         assertFileStartsWith(aospSvcFile, deviceSvcFile);
     }
 
@@ -311,6 +346,15 @@ public class SELinuxHostTest extends DeviceTestCase {
      * @throws Exception
      */
     public void testValidFileContexts() throws Exception {
+
+        /* retrieve the checkfc executable from jar */
+        checkFc = copyResourceToTempFile("/checkfc");
+        checkFc.setExecutable(true);
+
+        /* obtain file_contexts.bin file from running device */
+        deviceFcFile = File.createTempFile("file_contexts", ".bin");
+        deviceFcFile.deleteOnExit();
+        mDevice.pullFile("/file_contexts.bin", deviceFcFile);
 
         /* run checkfc sepolicy file_contexts.bin */
         ProcessBuilder pb = new ProcessBuilder(checkFc.getAbsolutePath(),
@@ -338,6 +382,15 @@ public class SELinuxHostTest extends DeviceTestCase {
      */
     public void testValidPropertyContexts() throws Exception {
 
+        /* retrieve the checkfc executable from jar */
+        checkFc = copyResourceToTempFile("/checkfc");
+        checkFc.setExecutable(true);
+
+        /* obtain property_contexts file from running device */
+        devicePcFile = File.createTempFile("property_contexts", ".tmp");
+        devicePcFile.deleteOnExit();
+        mDevice.pullFile("/property_contexts", devicePcFile);
+
         /* run checkfc -p on property_contexts */
         ProcessBuilder pb = new ProcessBuilder(checkFc.getAbsolutePath(),
                 "-p", devicePolicyFile.getAbsolutePath(),
@@ -363,6 +416,15 @@ public class SELinuxHostTest extends DeviceTestCase {
      * @throws Exception
      */
     public void testValidServiceContexts() throws Exception {
+
+        /* retrieve the checkfc executable from jar */
+        checkFc = copyResourceToTempFile("/checkfc");
+        checkFc.setExecutable(true);
+
+        /* obtain service_contexts file from running device */
+        deviceSvcFile = File.createTempFile("service_contexts", ".tmp");
+        deviceSvcFile.deleteOnExit();
+        mDevice.pullFile("/service_contexts", deviceSvcFile);
 
         /* run checkfc -s on service_contexts */
         ProcessBuilder pb = new ProcessBuilder(checkFc.getAbsolutePath(),

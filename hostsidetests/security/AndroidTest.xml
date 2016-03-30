@@ -16,6 +16,6 @@
 <configuration description="Config for the CTS Security host tests">
     <test class="com.android.compatibility.common.tradefed.testtype.JarHostTest" >
         <option name="jar" value="CtsSecurityHostTestCases.jar" />
-        <option name="runtime-hint" value="12m13s" />
+        <option name="runtime-hint" value="32s" />
     </test>
 </configuration>
