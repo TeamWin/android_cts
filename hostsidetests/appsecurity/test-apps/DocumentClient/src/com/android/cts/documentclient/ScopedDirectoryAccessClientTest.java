@@ -85,23 +85,31 @@ public class ScopedDirectoryAccessClientTest extends DocumentsClientTestCase {
             openExternalDirectoryInvalidPath(volume, "/../");
             openExternalDirectoryInvalidPath(volume, "/HiddenStuff");
         }
+        openExternalDirectoryInvalidPath(getPrimaryVolume(), DIRECTORY_ROOT);
     }
 
     public void testUserRejects() throws Exception {
         if (!supportedHardware()) return;
 
-        final StorageVolume primaryVolume = getPrimaryVolume();
-
-        // Tests user clicking DENY button, for all valid directories.
-        for (String dir : STANDARD_DIRECTORIES) {
-            final UiAlertDialog dialog = openExternalDirectoryValidPath(primaryVolume, dir);
-            dialog.noButton.click();
+        for (StorageVolume volume : getVolumes()) {
+            // Tests user clicking DENY button, for all valid directories.
+            for (String dir : STANDARD_DIRECTORIES) {
+                userRejectsTest(volume, dir);
+            }
+            if (!volume.isPrimary()) {
+                // Also test root
+                userRejectsTest(volume, DIRECTORY_ROOT);
+            }
+            // Also test user clicking back button - one directory is enough.
+            openExternalDirectoryValidPath(volume, DIRECTORY_PICTURES);
+            mDevice.pressBack();
             assertActivityFailed();
         }
+    }
 
-        // Also test user clicking back button - one directory is enough.
-        openExternalDirectoryValidPath(primaryVolume, DIRECTORY_ROOT);
-        mDevice.pressBack();
+    private void userRejectsTest(StorageVolume volume, String dir) throws Exception {
+        final UiAlertDialog dialog = openExternalDirectoryValidPath(volume, dir);
+        dialog.noButton.click();
         assertActivityFailed();
     }
 
@@ -110,7 +118,9 @@ public class ScopedDirectoryAccessClientTest extends DocumentsClientTestCase {
 
         for (StorageVolume volume : getVolumes()) {
             userAcceptsOpenExternalDirectoryTest(volume, DIRECTORY_PICTURES);
-            userAcceptsOpenExternalDirectoryTest(volume, DIRECTORY_ROOT);
+            if (!volume.isPrimary()) {
+                userAcceptsOpenExternalDirectoryTest(volume, DIRECTORY_ROOT);
+            }
         }
     }
 
@@ -149,7 +159,8 @@ public class ScopedDirectoryAccessClientTest extends DocumentsClientTestCase {
     public void testNotAskedAgainOnRoot() throws Exception {
         if (!supportedHardware()) return;
 
-         for (StorageVolume volume : getVolumes()) {
+        for (StorageVolume volume : getVolumes()) {
+            if (volume.isPrimary()) continue;
             final String volumeDesc = volume.getDescription(getInstrumentation().getContext());
             final Uri grantedRootUri = userAcceptsOpenExternalDirectoryTest(volume, DIRECTORY_ROOT);
 
@@ -176,9 +187,10 @@ public class ScopedDirectoryAccessClientTest extends DocumentsClientTestCase {
     public void testDeniesOnceButAllowsAskingAgain() throws Exception {
         if (!supportedHardware())return;
 
-        final String[] dirs = {DIRECTORY_DCIM, DIRECTORY_ROOT};
+        final String[] dirs = { DIRECTORY_DCIM, DIRECTORY_ROOT };
         for (StorageVolume volume : getVolumes()) {
             for (String dir : dirs) {
+                if (volume.isPrimary() && dir == DIRECTORY_ROOT) continue;
                 // Rejects the first attempt...
                 UiAlertDialog dialog = openExternalDirectoryValidPath(volume, dir);
                 dialog.assertDoNotAskAgainVisibility(false);
@@ -203,6 +215,7 @@ public class ScopedDirectoryAccessClientTest extends DocumentsClientTestCase {
         final String[] dirs = {DIRECTORY_PICTURES, DIRECTORY_ROOT};
         for (StorageVolume volume : getVolumes()) {
             for (String dir : dirs) {
+                if (volume.isPrimary() && dir == DIRECTORY_ROOT) continue;
                 // Rejects the first attempt...
                 UiAlertDialog dialog = openExternalDirectoryValidPath(volume, dir);
                 dialog.assertDoNotAskAgainVisibility(false);
@@ -234,10 +247,16 @@ public class ScopedDirectoryAccessClientTest extends DocumentsClientTestCase {
         final UiAlertDialog dialog = openExternalDirectoryValidPath(volume, directoryName);
         final String message = dialog.messageText.getText();
         Log.v(TAG, "request permission message: " + message);
-        final Context context = getInstrumentation().getTargetContext();
+        final Context context = getInstrumentation().getContext();
         final String appLabel = context.getPackageManager().getApplicationLabel(
                 context.getApplicationInfo()).toString();
         assertContainsRegex("missing app label", appLabel, message);
+        final String volumeLabel = volume.getDescription(context);
+        if (volume.isPrimary()) {
+            assertNotContainsRegex("should not have volume label on primary", volumeLabel, message);
+        } else {
+            assertContainsRegex("missing volume label", volumeLabel, message);
+        }
         if (directoryName != null) {
             assertContainsRegex("missing folder", directoryName, message);
         } else {
@@ -248,13 +267,13 @@ public class ScopedDirectoryAccessClientTest extends DocumentsClientTestCase {
         dialog.yesButton.click();
 
         // ...and get its response.
-        final String volumeDesc = volume.getDescription(getInstrumentation().getContext());
+        final String volumeDesc = volume.getDescription(context);
         final Intent data = assertActivitySucceeded("should have already granted "
                 + "permission to " + volumeDesc + " and " + directoryName);
         final Uri grantedUri = data.getData();
 
         // Test granted permission directly by persisting it...
-        final ContentResolver resolver = getInstrumentation().getContext().getContentResolver();
+        final ContentResolver resolver = context.getContentResolver();
         final int modeFlags = data.getFlags()
                 & (Intent.FLAG_GRANT_READ_URI_PERMISSION
                 | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
@@ -283,9 +302,10 @@ public class ScopedDirectoryAccessClientTest extends DocumentsClientTestCase {
         return grantedUri;
     }
 
-    private void openExternalDirectoryInvalidPath(StorageVolume volume, String path) {
-        sendOpenExternalDirectoryIntent(volume, path);
-        assertActivityFailed();
+    private void openExternalDirectoryInvalidPath(StorageVolume volume, String directoryName) {
+        final Intent intent = volume.createAccessIntent(directoryName);
+        assertNull("should not get intent for volume '" + volume + "' and directory '"
+                + directoryName + "'", intent);
     }
 
     private UiAlertDialog openExternalDirectoryValidPath(StorageVolume volume, String path)
@@ -296,6 +316,7 @@ public class ScopedDirectoryAccessClientTest extends DocumentsClientTestCase {
 
     private void sendOpenExternalDirectoryIntent(StorageVolume volume, String directoryName) {
         final Intent intent = volume.createAccessIntent(directoryName);
+        assertNotNull("no intent for '" + volume + "' and directory " + directoryName, intent);
         mActivity.startActivityForResult(intent, REQUEST_CODE);
         mDevice.waitForIdle();
     }
