@@ -35,3 +35,19 @@ float3 __attribute__((kernel)) testNativeCosFloat3Float3(float3 inV) {
 float4 __attribute__((kernel)) testNativeCosFloat4Float4(float4 inV) {
     return native_cos(inV);
 }
+
+half __attribute__((kernel)) testNativeCosHalfHalf(half inV) {
+    return native_cos(inV);
+}
+
+half2 __attribute__((kernel)) testNativeCosHalf2Half2(half2 inV) {
+    return native_cos(inV);
+}
+
+half3 __attribute__((kernel)) testNativeCosHalf3Half3(half3 inV) {
+    return native_cos(inV);
+}
+
+half4 __attribute__((kernel)) testNativeCosHalf4Half4(half4 inV) {
+    return native_cos(inV);
+}
