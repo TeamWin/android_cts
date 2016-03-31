@@ -22,6 +22,7 @@ import android.graphics.Paint;
 import android.graphics.Bitmap.Config;
 import android.test.AndroidTestCase;
 import android.text.BoringLayout;
+import android.text.BoringLayout.Metrics;
 import android.text.Layout;
 import android.text.TextPaint;
 import android.text.TextUtils;
@@ -41,7 +42,7 @@ public class BoringLayoutTest extends AndroidTestCase {
     private static final CharSequence DEFAULT_CHAR_SEQUENCE = "default";
     private static final TextPaint DEFAULT_PAINT = new TextPaint();
     private static final Layout.Alignment DEFAULT_ALIGN = Layout.Alignment.ALIGN_CENTER;
-    private static final BoringLayout.Metrics DEFAULT_METRICS = createMetrics(
+    private static final Metrics DEFAULT_METRICS = createMetrics(
             METRICS_TOP,
             METRICS_ASCENT,
             METRICS_DESCENT,
@@ -216,7 +217,7 @@ public class BoringLayoutTest extends AndroidTestCase {
         TextPaint paint = new TextPaint();
         assertNotNull(BoringLayout.isBoring("hello android", paint));
 
-        BoringLayout.Metrics metrics = new BoringLayout.Metrics();
+        Metrics metrics = new Metrics();
         metrics.width = 100;
         assertNotNull(BoringLayout.isBoring("hello android", paint, metrics));
 
@@ -226,6 +227,31 @@ public class BoringLayoutTest extends AndroidTestCase {
         assertNull(BoringLayout.isBoring("hello \n\n\n android", paint));
         assertNull(BoringLayout.isBoring("\nhello \n android\n", paint));
         assertNull(BoringLayout.isBoring("hello android\n\n\n", paint));
+    }
+
+    public void testIsBoring_resetsFontMetrics() {
+        int someInt = 100;
+        String text = "some text";
+
+        TextPaint paint = new TextPaint();
+        Paint.FontMetricsInt paintMetrics = paint.getFontMetricsInt();
+        Metrics changedMetrics = new Metrics();
+        changedMetrics.top = paintMetrics.top - someInt;
+        changedMetrics.ascent = paintMetrics.ascent - someInt;
+        changedMetrics.bottom = paintMetrics.bottom + someInt;
+        changedMetrics.descent = paintMetrics.descent + someInt;
+        changedMetrics.leading = paintMetrics.leading + someInt;
+
+        Metrics expectedMetrics = BoringLayout.isBoring(text, paint, (Metrics) null);
+        Metrics actualMetrics = BoringLayout.isBoring(text, paint, changedMetrics);
+
+        assertNotNull(actualMetrics);
+        assertNotNull(expectedMetrics);
+        assertEquals(expectedMetrics.top, actualMetrics.top);
+        assertEquals(expectedMetrics.ascent, actualMetrics.ascent);
+        assertEquals(expectedMetrics.bottom, actualMetrics.bottom);
+        assertEquals(expectedMetrics.descent, actualMetrics.descent);
+        assertEquals(expectedMetrics.leading, actualMetrics.leading);
     }
 
     public void testGetLineDirections() {
@@ -288,7 +314,7 @@ public class BoringLayoutTest extends AndroidTestCase {
         }
     }
 
-    private static BoringLayout.Metrics createMetrics(
+    private static Metrics createMetrics(
             final int top,
             final int ascent,
             final int descent,
@@ -296,7 +322,7 @@ public class BoringLayoutTest extends AndroidTestCase {
             final int width,
             final int leading) {
 
-        final BoringLayout.Metrics metrics = new BoringLayout.Metrics();
+        final Metrics metrics = new Metrics();
 
         metrics.top = top;
         metrics.ascent = ascent;

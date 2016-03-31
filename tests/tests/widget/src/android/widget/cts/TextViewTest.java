@@ -42,9 +42,9 @@ import android.os.Parcelable;
 import android.test.ActivityInstrumentationTestCase2;
 import android.test.TouchUtils;
 import android.test.UiThreadTest;
+import android.test.suitebuilder.annotation.MediumTest;
 import android.test.suitebuilder.annotation.SmallTest;
 import android.text.Editable;
-import android.text.Html;
 import android.text.InputFilter;
 import android.text.InputType;
 import android.text.Layout;
@@ -71,6 +71,7 @@ import android.text.method.TextKeyListener;
 import android.text.method.TextKeyListener.Capitalize;
 import android.text.method.TimeKeyListener;
 import android.text.method.TransformationMethod;
+import android.text.style.ImageSpan;
 import android.text.style.URLSpan;
 import android.text.style.UnderlineSpan;
 import android.text.util.Linkify;
@@ -1300,6 +1301,71 @@ public class TextViewTest extends ActivityInstrumentationTestCase2<TextViewCtsAc
             fail("Should throw exception with illegal id");
         } catch (NotFoundException e) {
         }
+    }
+
+    @MediumTest
+    public void testSetText_updatesHeightAfterRemovingImageSpan() {
+        // Height calculation had problems when TextView had width: match_parent
+        final int textViewWidth = ViewGroup.LayoutParams.MATCH_PARENT;
+        final Spannable text = new SpannableString("some text");
+        final int spanHeight = 100;
+
+        // prepare TextView, width: MATCH_PARENT
+        TextView textView = new TextView(getActivity());
+        textView.setSingleLine(true);
+        textView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 2);
+        textView.setPadding(0, 0, 0, 0);
+        textView.setIncludeFontPadding(false);
+        textView.setText(text);
+        final FrameLayout layout = new FrameLayout(mActivity);
+        final ViewGroup.LayoutParams layoutParams = new ViewGroup.LayoutParams(textViewWidth,
+                ViewGroup.LayoutParams.WRAP_CONTENT);
+        layout.addView(textView, layoutParams);
+        layout.setLayoutParams(layoutParams);
+        mActivity.runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                getActivity().setContentView(layout);
+            }
+        });
+        getInstrumentation().waitForIdleSync();
+
+        // measure height of text with no span
+        final int heightWithoutSpan = textView.getHeight();
+        assertTrue("Text height should be smaller than span height",
+                heightWithoutSpan < spanHeight);
+
+        // add ImageSpan to text
+        Drawable drawable = mInstrumentation.getContext().getDrawable(R.drawable.scenery);
+        drawable.setBounds(0, 0, spanHeight, spanHeight);
+        ImageSpan span = new ImageSpan(drawable);
+        text.setSpan(span, 0, 1, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        mActivity.runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                textView.setText(text);
+            }
+        });
+        mInstrumentation.waitForIdleSync();
+
+        // measure height with span
+        final int heightWithSpan = textView.getHeight();
+        assertTrue("Text height should be greater or equal than span height",
+                heightWithSpan >= spanHeight);
+
+        // remove the span
+        text.removeSpan(span);
+        mActivity.runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                textView.setText(text);
+            }
+        });
+        mInstrumentation.waitForIdleSync();
+
+        final int heightAfterRemoveSpan = textView.getHeight();
+        assertEquals("Text height should be same after removing the span",
+                heightWithoutSpan, heightAfterRemoveSpan);
     }
 
     public void testRemoveSelectionWithSelectionHandles() {
