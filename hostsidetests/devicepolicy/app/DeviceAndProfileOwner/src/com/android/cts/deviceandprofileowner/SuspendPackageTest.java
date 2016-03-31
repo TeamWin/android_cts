@@ -18,6 +18,7 @@ package com.android.cts.deviceandprofileowner;
 
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.content.pm.PackageManager.NameNotFoundException;
 import android.content.pm.ResolveInfo;
 
 import java.util.Arrays;
@@ -26,29 +27,29 @@ import java.util.HashSet;
 public class SuspendPackageTest extends BaseDeviceAdminTest {
     private static final String INTENT_RECEIVER_PKG = "com.android.cts.intent.receiver";
 
-    public void testSetPackagesSuspended() {
+    public void testSetPackagesSuspended() throws NameNotFoundException {
         String[] notHandledPackages =
                 mDevicePolicyManager.setPackagesSuspended(ADMIN_RECEIVER_COMPONENT, new String[]
                         {INTENT_RECEIVER_PKG}, true);
         // all packages should be handled.
         assertEquals(0, notHandledPackages.length);
-        // test getPackageSuspended
+        // test isPackageSuspended
         boolean isSuspended =
-                mDevicePolicyManager.getPackageSuspended(
+                mDevicePolicyManager.isPackageSuspended(
                         ADMIN_RECEIVER_COMPONENT, INTENT_RECEIVER_PKG);
         assertTrue(isSuspended);
     }
 
-    public void testSetPackagesNotSuspended() {
+    public void testSetPackagesNotSuspended() throws NameNotFoundException {
         String[] notHandledPackages = mDevicePolicyManager.setPackagesSuspended(
                 ADMIN_RECEIVER_COMPONENT,
                 new String[] {INTENT_RECEIVER_PKG},
                 false);
         // all packages should be handled.
         assertEquals(0, notHandledPackages.length);
-        // test getPackageSuspended
+        // test isPackageSuspended
         boolean isSuspended =
-                mDevicePolicyManager.getPackageSuspended(
+                mDevicePolicyManager.isPackageSuspended(
                         ADMIN_RECEIVER_COMPONENT, INTENT_RECEIVER_PKG);
         assertFalse(isSuspended);
     }
