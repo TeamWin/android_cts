@@ -19,6 +19,7 @@ package com.android.compatibility.common.preconditions;
 import android.content.Context;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
+import android.os.Build;
 
 /**
  * WifiHelper is used to check whether the device is connected to WiFi.
@@ -27,6 +28,9 @@ import android.net.NetworkInfo;
 public class WifiHelper {
 
     public static boolean isWifiConnected(Context context) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
+            return true; // ConnectivityManager.getNetworkInfo() added in LOLLIPOP, skip this check
+        }
         ConnectivityManager cm = (ConnectivityManager)
                 context.getSystemService(Context.CONNECTIVITY_SERVICE);
         NetworkInfo wifiNetworkInfo = cm.getNetworkInfo(ConnectivityManager.TYPE_WIFI);
