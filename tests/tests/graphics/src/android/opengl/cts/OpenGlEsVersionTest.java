@@ -135,6 +135,54 @@ public class OpenGlEsVersionTest
                 mActivity.getAepEs31Support());
     }
 
+    public void testOpenGlEsVersionForVrHighPerformance() throws InterruptedException {
+        if (!supportsVrHighPerformance())
+            return;
+        restartActivityWithClientVersion(3);
+
+        int reportedVersion = getVersionFromActivityManager(mActivity);
+        int major = getMajorVersion(reportedVersion);
+        int minor = getMinorVersion(reportedVersion);
+
+        assertTrue("OpenGL ES version 3.2 or higher is required for VR high-performance devices " +
+            " but this device supports only version " + major + "." + minor,
+            (major == 3 && minor >= 2) || major > 3);
+    }
+
+    public void testRequiredExtensionsForVrHighPerformance() throws InterruptedException {
+        if (!supportsVrHighPerformance())
+            return;
+        restartActivityWithClientVersion(3);
+
+        String extensions = mActivity.getExtensionsString();
+        final String requiredList[] = {
+            "EXT_protected_textures",
+            "EXT_multisampled_render_to_texture",
+            "OVR_multiview",
+            "OVR_multiview_multisampled_render_to_texture",
+            "OVR_multiview2",
+        };
+
+        for (int i = 0; i < requiredList.length; ++i) {
+            assertTrue("Required extension for VR high-performance is missing: " + requiredList[i],
+                    hasExtension(extensions, requiredList[i]));
+        }
+
+        EGL10 egl = (EGL10) EGLContext.getEGL();
+        EGLDisplay display = egl.eglGetDisplay(EGL10.EGL_DEFAULT_DISPLAY);
+        extensions = egl.eglQueryString(display, EGL10.EGL_EXTENSIONS);
+        final String requiredEglList[] = {
+            "EGL_ANDROID_front_buffer_auto_refresh",
+            "EGL_EXT_protected_content",
+            "EGL_KHR_mutable_render_buffer",
+        };
+
+        for (int i = 0; i < requiredList.length; ++i) {
+            assertTrue("Required EGL extension for VR high-performance is missing: " +
+                requiredEglList[i], hasExtension(extensions, requiredEglList[i]));
+        }
+    }
+
     private static boolean hasExtension(String extensions, String name) {
         return OpenGlEsVersionCtsActivity.hasExtension(extensions, name);
     }
@@ -263,5 +311,14 @@ public class OpenGlEsVersionTest
         } finally {
             setActivityIntent(null);
         }
+    }
+
+    /**
+     * Return whether the system supports FEATURE_VR_MODE and
+     * FEATURE_VR_MODE_HIGH_PERFORMANCE. This is used to skip some tests.
+     */
+    private boolean supportsVrHighPerformance() {
+        PackageManager pm = mActivity.getPackageManager();
+        return pm.hasSystemFeature(PackageManager.FEATURE_VR_MODE_HIGH_PERFORMANCE);
     }
 }
