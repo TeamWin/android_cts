@@ -21,10 +21,8 @@ import android.text.cts.R;
 import android.app.Instrumentation;
 import android.test.ActivityInstrumentationTestCase2;
 import android.text.format.DateUtils;
-import android.text.method.cts.KeyListenerCtsActivity;
 import android.text.method.KeyListener;
 import android.view.KeyEvent;
-import android.view.WindowManager;
 import android.widget.EditText;
 
 /**
@@ -71,7 +69,7 @@ public abstract class KeyListenerTestCase extends
                 mTextView.setKeepScreenOn(true);
             }
         });
-
+        mInstrumentation.waitForIdleSync();
         assertTrue(mActivity.waitForWindowFocus(5 * DateUtils.SECOND_IN_MILLIS));
     }
 
