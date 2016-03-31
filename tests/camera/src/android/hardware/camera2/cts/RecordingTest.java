@@ -969,7 +969,8 @@ public class RecordingTest extends Camera2SurfaceViewTestCase {
                 CaptureRequest request = videoSnapshotRequestBuilder.build();
 
                 // Start recording
-                startRecording(/* useMediaRecorder */true, resultListener, /*useVideoStab*/false);
+                startRecording(/* useMediaRecorder */true, resultListener,
+                        /*useVideoStab*/mStaticInfo.isVideoStabilizationSupported());
                 long startTime = SystemClock.elapsedRealtime();
 
                 // Record certain duration.
@@ -1196,10 +1197,6 @@ public class RecordingTest extends Camera2SurfaceViewTestCase {
             // TODO: need implement MediaCodec path.
         }
         mRecordingStartTime = SystemClock.elapsedRealtime();
-    }
-
-    private void startRecording(boolean useMediaRecorder)  throws Exception {
-        startRecording(useMediaRecorder, /*listener*/null, /*useVideoStab*/false);
     }
 
     private void stopCameraStreaming() throws Exception {
