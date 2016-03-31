@@ -44,20 +44,20 @@ public class PipActivityTest extends ActivityInstrumentationTestCase2<PipActivit
                 final boolean supportsPip =
                         mActivity.getPackageManager().hasSystemFeature(FEATURE_PICTURE_IN_PICTURE);
                 if (supportsPip) {
-                    mActivity.enterPictureInPicture();
-                    assertTrue(mActivity.inMultiWindow());
-                    assertTrue(mActivity.inPictureInPicture());
+                    mActivity.enterPictureInPictureMode();
+                    assertTrue(mActivity.isInMultiWindowMode());
+                    assertTrue(mActivity.isInPictureInPictureMode());
                 } else {
                     boolean pipSupportDisabled = false;
                     try {
-                        mActivity.enterPictureInPicture();
+                        mActivity.enterPictureInPictureMode();
                     } catch (IllegalStateException e) {
                         // Pip not supported
                         pipSupportDisabled = true;
                     }
                     assertTrue(pipSupportDisabled);
-                    assertFalse(mActivity.inMultiWindow());
-                    assertFalse(mActivity.inPictureInPicture());
+                    assertFalse(mActivity.isInMultiWindowMode());
+                    assertFalse(mActivity.isInPictureInPictureMode());
                 }
             }
         });
