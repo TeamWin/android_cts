@@ -35,3 +35,19 @@ float3 __attribute__((kernel)) testNativeAcospiFloat3Float3(float3 inV) {
 float4 __attribute__((kernel)) testNativeAcospiFloat4Float4(float4 inV) {
     return native_acospi(inV);
 }
+
+half __attribute__((kernel)) testNativeAcospiHalfHalf(half inV) {
+    return native_acospi(inV);
+}
+
+half2 __attribute__((kernel)) testNativeAcospiHalf2Half2(half2 inV) {
+    return native_acospi(inV);
+}
+
+half3 __attribute__((kernel)) testNativeAcospiHalf3Half3(half3 inV) {
+    return native_acospi(inV);
+}
+
+half4 __attribute__((kernel)) testNativeAcospiHalf4Half4(half4 inV) {
+    return native_acospi(inV);
+}
