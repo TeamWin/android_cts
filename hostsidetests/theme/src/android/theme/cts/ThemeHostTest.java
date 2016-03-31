@@ -21,6 +21,7 @@ import com.android.cts.migration.MigrationHelper;
 import com.android.ddmlib.Log;
 import com.android.ddmlib.Log.LogLevel;
 import com.android.tradefed.build.IBuildInfo;
+import com.android.tradefed.device.CollectingOutputReceiver;
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.testtype.DeviceTestCase;
@@ -28,20 +29,16 @@ import com.android.tradefed.testtype.IAbi;
 import com.android.tradefed.testtype.IAbiReceiver;
 import com.android.tradefed.testtype.IBuildReceiver;
 
-import java.io.Closeable;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.lang.String;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Scanner;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.Executors;
 import java.util.concurrent.ExecutorCompletionService;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
@@ -58,12 +55,11 @@ public class ThemeHostTest extends DeviceTestCase implements IAbiReceiver, IBuil
     private static final String GENERATED_ASSETS_ZIP = "/sdcard/cts-theme-assets.zip";
 
     /** The class name of the main activity in the APK. */
-    private static final String CLASS = "GenerateImagesActivity";
     private static final String TEST_CLASS = "android.support.test.runner.AndroidJUnitRunner";
 
     /** The command to launch the main instrumentation test. */
     private static final String START_CMD = String.format(
-            "am instrument -w %s/%s", APP_PACKAGE_NAME, TEST_CLASS);
+            "am instrument -w --no-window-animation %s/%s", APP_PACKAGE_NAME, TEST_CLASS);
 
     private static final String CLEAR_GENERATED_CMD = "rm -rf %s/*.png";
     private static final String STOP_CMD = String.format("am force-stop %s", APP_PACKAGE_NAME);
@@ -71,7 +67,7 @@ public class ThemeHostTest extends DeviceTestCase implements IAbiReceiver, IBuil
     private static final String DENSITY_PROP_DEVICE = "ro.sf.lcd_density";
     private static final String DENSITY_PROP_EMULATOR = "qemu.sf.lcd_density";
 
-    /** Overall test timeout is 30 minutes. */
+    /** Overall test timeout is 30 minutes. Should only take about 5. */
     private static final int TEST_RESULT_TIMEOUT = 30 * 60 * 1000;
 
     /** Map of reference image names and files. */
@@ -155,9 +151,7 @@ public class ThemeHostTest extends DeviceTestCase implements IAbiReceiver, IBuil
     @Override
     protected void tearDown() throws Exception {
         // Delete the temp files
-        for (File ref : mReferences.values()) {
-            ref.delete();
-        }
+        mReferences.values().forEach(File::delete);
 
         mExecutionService.shutdown();
 
@@ -222,7 +216,7 @@ public class ThemeHostTest extends DeviceTestCase implements IAbiReceiver, IBuil
                     pngOutput.flush();
                     pngOutput.close();
 
-                    mCompletionService.submit(new ComparisonTask(mDevice, expected, actual));
+                    mCompletionService.submit(new ComparisonTask(expected, actual));
                     numTasks++;
                 } else {
                     Log.logAndDisplay(LogLevel.INFO, LOG_TAG,
@@ -237,85 +231,15 @@ public class ThemeHostTest extends DeviceTestCase implements IAbiReceiver, IBuil
     }
 
     private boolean generateDeviceImages() throws Exception {
-        // Clear logcat
-        mDevice.executeAdbCommand("logcat", "-c");
-
-        // Stop any existing instances
+        // Stop any existing instances.
         mDevice.executeShellCommand(STOP_CMD);
 
-        // Start activity
-        mDevice.executeShellCommand(START_CMD);
+        // Start instrumentation test.
+        final CollectingOutputReceiver receiver = new CollectingOutputReceiver();
+        mDevice.executeShellCommand(START_CMD, receiver, TEST_RESULT_TIMEOUT,
+                TimeUnit.MILLISECONDS, 0);
 
-        final long testTimeout = System.currentTimeMillis() + TEST_RESULT_TIMEOUT;
-        boolean aborted = false;
-        boolean waiting = true;
-        do {
-            // Dump logcat.
-            final String logs = mDevice.executeAdbCommand(
-                    "logcat", "-v", "brief", "-d", CLASS + ":I", "*:S");
-
-            // Search for string.
-            try (Scanner in = new Scanner(logs)) {
-                while (in.hasNextLine()) {
-                    final CloseTimeout timeout = new CloseTimeout(in, TEST_RESULT_TIMEOUT);
-                    timeout.start();
-                    final String line = in.nextLine();
-                    timeout.cancel();
-
-                    if (line.startsWith("I/" + CLASS)) {
-                        final String[] lineSplit = line.split(":");
-                        if (lineSplit.length >= 3) {
-                            final String cmd = lineSplit[1].trim();
-                            final String arg = lineSplit[2].trim();
-                            switch (cmd) {
-                                case "FAIL":
-                                    Log.logAndDisplay(LogLevel.WARN, LOG_TAG, line);
-                                    Log.logAndDisplay(LogLevel.WARN, LOG_TAG,
-                                            "Aborting! Check host logs for details.");
-                                    aborted = true;
-                                    // fall-through
-                                case "OKAY":
-                                    waiting = false;
-                                    break;
-                            }
-                        }
-                    }
-                }
-            }
-            if (testTimeout < System.currentTimeMillis()) {
-                Log.logAndDisplay(LogLevel.WARN, LOG_TAG, "Aborting! Test results took too long.");
-                aborted = true;
-            }
-        } while (waiting && !aborted);
-
-        return !aborted;
-    }
-
-    private static class CloseTimeout extends Thread {
-        private final CountDownLatch mCancelLatch = new CountDownLatch(1);
-
-        private final Closeable mCloseable;
-        private final long mTimeout;
-
-        public CloseTimeout(Closeable closeable, long timeout) {
-            mCloseable = closeable;
-            mTimeout = timeout;
-        }
-
-        @Override
-        public void run() {
-            try {
-                if (!mCancelLatch.await(mTimeout, TimeUnit.MILLISECONDS)) {
-                    mCloseable.close();
-                }
-            } catch (InterruptedException | IOException e) {
-                // Well, at least we tried.
-            }
-        }
-
-        public void cancel() {
-            mCancelLatch.countDown();
-        }
+        return receiver.getOutput().contains("OK ");
     }
 
     private static String getDensityBucketForDevice(ITestDevice device) {
@@ -354,10 +278,6 @@ public class ThemeHostTest extends DeviceTestCase implements IAbiReceiver, IBuil
     }
 
     private static boolean checkHardwareTypeSkipTest(String hardwareTypeString) {
-        if (hardwareTypeString.contains("android.hardware.type.watch")) {
-            return true;
-        }
-
-        return false;
+        return hardwareTypeString.contains("android.hardware.type.watch");
     }
 }
