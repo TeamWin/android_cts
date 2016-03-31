@@ -21,12 +21,11 @@ import android.location.GnssMeasurement;
 import android.location.GnssMeasurementsEvent;
 import android.location.GnssStatus;
 import android.os.Parcel;
-import android.test.AndroidTestCase;
 
 import java.util.Collection;
 import java.util.Iterator;
 
-public class GnssMeasurementsEventTest extends AndroidTestCase {
+public class GnssMeasurementsEventTest extends GnssTestCase {
     public void testDescribeContents() {
         GnssClock clock = new GnssClock();
         GnssMeasurement m1 = new GnssMeasurement();

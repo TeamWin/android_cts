@@ -29,6 +29,7 @@ LOCAL_STATIC_JAVA_LIBRARIES := android-ex-camera2 \
                                android-support-v4 \
                                compatibility-common-util-devicesidelib \
                                cts-sensors-tests \
+                               cts-location-tests \
                                ctstestrunner \
                                apache-commons-math \
                                androidplot \

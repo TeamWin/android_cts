@@ -11,22 +11,20 @@
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
- * limitations under the License.
+ * limitations under the License
  */
 
-package android.location.cts;
+package com.android.cts.verifier.location;
 
-import android.location.GnssStatusCallback;
+import android.location.cts.GnssMeasurementWhenNoLocationTest;
+import com.android.cts.verifier.location.base.GnssCtsTestActivity;
 
-public class GnssStatusCallbackTest extends GnssTestCase {
-    private static class MockCallback extends GnssStatusCallback {
-    }
-
-    public void testAllMethodsExist() {
-        GnssStatusCallback callback = new MockCallback();
-        callback.onStarted();
-        callback.onFirstFix(10);
-        callback.onSatelliteStatusChanged(null);
-        callback.onStopped();
+/**
+ * Activity to execute CTS GnssMeasurementWhenNoLocationTest.
+ * It is a wrapper for {@link GnssMeasurementValuesTest} running with AndroidJUnitRunner.
+ */
+public class GnssMeasurementWhenNoLocationTestsActivity extends GnssCtsTestActivity {
+    public GnssMeasurementWhenNoLocationTestsActivity() {
+        super(GnssMeasurementWhenNoLocationTest.class);
     }
 }

@@ -19,9 +19,8 @@ package android.location.cts;
 import android.location.GnssMeasurement;
 import android.location.GnssStatus;
 import android.os.Parcel;
-import android.test.AndroidTestCase;
 
-public class GnssMeasurementTest extends AndroidTestCase {
+public class GnssMeasurementTest extends GnssTestCase {
     public void testDescribeContents() {
         GnssMeasurement measurement = new GnssMeasurement();
         measurement.describeContents();
