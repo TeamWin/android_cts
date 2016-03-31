@@ -66,8 +66,6 @@ public class DeviceOwnerPositiveTestActivity extends PassFailButtons.TestListAct
     private static final String DISALLOW_CONFIG_WIFI_ID = "DISALLOW_CONFIG_WIFI";
     private static final String DISALLOW_CONFIG_VPN_ID = "DISALLOW_CONFIG_VPN";
     private static final String DISALLOW_USB_FILE_TRANSFER_ID = "DISALLOW_USB_FILE_TRANSFER";
-    //TODO(rgl): This symbol should be available in android.provider.settings
-    private static final String ACTION_VPN_SETTINGS = "android.net.vpn.SETTINGS";
     private static final String DISALLOW_DATA_ROAMING_ID = "DISALLOW_DATA_ROAMING";
     private static final String POLICY_TRANSPARENCY_TEST_ID = "POLICY_TRANSPARENCY";
     private static final String REMOVE_DEVICE_OWNER_TEST_ID = "REMOVE_DEVICE_OWNER";
@@ -182,7 +180,7 @@ public class DeviceOwnerPositiveTestActivity extends PassFailButtons.TestListAct
                                         UserManager.DISALLOW_CONFIG_VPN)),
                         new ButtonInfo(
                                 R.string.device_owner_settings_go,
-                                new Intent(ACTION_VPN_SETTINGS)),
+                                new Intent(Settings.ACTION_VPN_SETTINGS)),
                         new ButtonInfo(
                                 R.string.device_owner_vpn_test,
                                 new Intent(this, VpnTestActivity.class))}));
