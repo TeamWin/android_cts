@@ -1006,10 +1006,10 @@ public class CoreMathVerifier {
         Target.Floaty in = t.newFloaty(d);
         double min = Math.tan(in.min());
         double max = Math.tan(in.max());
-        /* If the tan of the min is greater than that of the max,
-         * we spanned a discontinuity.
+        /* If difference between in.max() and in.min() is larger than PI or if the tan of the min is
+         * greater than that of the max, we spanned a discontinuity.
          */
-        if (min > max) {
+        if (in.max() - in.min() > Math.PI || min > max) {
             return any(t);
         } else {
             return t.newFloaty(Math.tan(d), min, max);
@@ -1020,10 +1020,10 @@ public class CoreMathVerifier {
         Target.Floaty in = t.new32(f);
         float min = tan(in.min32());
         float max = tan(in.max32());
-        /* If the tan of the min is greater than that of the max,
-         * we spanned a discontinuity.
+        /* If difference between in.max() and in.min() is larger than PI or if the tan of the min is
+         * greater than that of the max, we spanned a discontinuity.
          */
-        if (min > max) {
+        if (in.max() - in.min() > Math.PI || min > max) {
             return any32(t);
         } else {
             return t.new32(tan(f), min, max);
@@ -1050,10 +1050,11 @@ public class CoreMathVerifier {
         Target.Floaty in = t.multiply(t.newFloaty(d), pi(t));
         double min = Math.tan(in.min());
         double max = Math.tan(in.max());
-        /* If the tan of the min is greater than that of the max,
-         * we spanned a discontinuity.
+
+        /* If difference between in.max() and in.min() is larger than PI or if the tan of the min is
+         * greater than that of the max, we spanned a discontinuity.
          */
-        if (min > max) {
+        if (in.max() - in.min() > Math.PI || min > max) {
             return any(t);
         } else {
             return t.newFloaty(Math.tan(in.mid()), min, max);
@@ -1064,10 +1065,10 @@ public class CoreMathVerifier {
         Target.Floaty in = t.multiply(t.new32(f), pi32(t));
         float min = tan(in.min32());
         float max = tan(in.max32());
-        /* If the tan of the min is greater than that of the max,
-         * we spanned a discontinuity.
+        /* If difference between in.max() and in.min() is larger than PI or if the tan of the min is
+         * greater than that of the max, we spanned a discontinuity.
          */
-        if (min > max) {
+        if (in.max() - in.min() > Math.PI || min > max) {
             return any32(t);
         } else {
             return t.new32(tan(in.mid32()), min, max);
@@ -2599,6 +2600,31 @@ public class CoreMathVerifier {
         args.out = exp2(args.inV, t);
     }
 
+    static public String verifyNativeExpm1(TestNativeExpm1.ArgumentsHalfHalf args, Target t) {
+        // Acceptable error for native_expm1 is:
+        //     < 2^-11 in [-Inf, 0.6]
+        //     3 ulp outside
+        double extraAllowedError = 0.;
+        int ulpFactor;
+        if (args.inVDouble < 0.6) {
+            ulpFactor = 0;
+            extraAllowedError = 0.00048828125; // 2^-11
+        } else {
+            ulpFactor = 3;
+        }
+        t.setPrecision(ulpFactor, ulpFactor);
+
+        Target.Floaty expectedOut = expm1(args.inVDouble, t);
+        if (!expectedOut.couldBe(args.outDouble, extraAllowedError)) {
+            StringBuilder message = new StringBuilder();
+            message.append("Ulp Factor: " + Integer.toString(ulpFactor) + "\n");
+            message.append("Extra allowed error: " + Double.toString(extraAllowedError) + "\n");
+            message.append("Expected output out: " + expectedOut.toString() + "\n");
+            return message.toString();
+        }
+        return null;
+    }
+
     static public void computeNativeExpm1(TestNativeExpm1.ArgumentsFloatFloat args, Target t) {
         t.setPrecision(NATIVE_PRECISION, NATIVE_PRECISION);
         args.out = expm1(args.inV, t);
@@ -2835,6 +2861,35 @@ public class CoreMathVerifier {
         args.out = sqrt(args.inV, t);
     }
 
+    static public String verifyNativeTan(TestNativeTan.ArgumentsHalfHalf args, Target t) {
+        // Precision for native_tan is as follows:
+        //     For integral n:
+        //         8 ulp in [(n-0.45) pi, (n+0.45) pi]
+        //         2048 ulp in [(n+0.45) pi, (n+0.55) pi]"
+
+        // Compute the fractional part of args.inVDouble / pi
+        double absoluteValueOverPi = Math.abs(args.inVDouble) / Math.PI;
+        double fract = absoluteValueOverPi - Math.floor(absoluteValueOverPi);
+
+        int ulpFactor;
+        if (0.45 <= fract && fract <= 0.55) {
+            ulpFactor = 2048;
+        } else {
+            ulpFactor = 8;
+        }
+        t.setPrecision(ulpFactor, ulpFactor);
+
+        Target.Floaty expectedOut = tan(args.inVDouble, t);
+        if (!expectedOut.couldBe(args.outDouble)) {
+            StringBuilder message = new StringBuilder();
+            message.append("Ulp Factor: " + Integer.toString(ulpFactor) + "\n");
+            message.append("Expected output out: " + expectedOut.toString() + "\n");
+            return message.toString();
+        }
+
+        return null;
+    }
+
     static public void computeNativeTan(TestNativeTan.ArgumentsFloatFloat args, Target t) {
         t.setPrecision(NATIVE_PRECISION, NATIVE_PRECISION);
         args.out = tan(args.inV, t);
@@ -2848,6 +2903,35 @@ public class CoreMathVerifier {
     static public void computeNativeTanh(TestNativeTanh.ArgumentsFloatFloat args, Target t) {
         t.setPrecision(NATIVE_PRECISION, NATIVE_PRECISION);
         args.out = tanh(args.inV, t);
+    }
+
+    static public String verifyNativeTanpi(TestNativeTanpi.ArgumentsHalfHalf args, Target t) {
+        // Precision for native_tan is as follows:
+        //     For integral n:
+        //         8 ulp in [(n-0.45), (n+0.45)]
+        //         2048 ulp in [(n+0.45), (n+0.55)]"
+
+        // Compute the fractional part of args.inVDouble
+        double absoluteValue = Math.abs(args.inVDouble);
+        double fract = absoluteValue - Math.floor(absoluteValue);
+
+        int ulpFactor;
+        if (0.45 <= fract && fract <= 0.55) {
+            ulpFactor = 2048;
+        } else {
+            ulpFactor = 8;
+        }
+        t.setPrecision(ulpFactor, ulpFactor);
+
+        Target.Floaty expectedOut = tanpi(args.inVDouble, t);
+        if (!expectedOut.couldBe(args.outDouble)) {
+            StringBuilder message = new StringBuilder();
+            message.append("Ulp Factor: " + Integer.toString(ulpFactor) + "\n");
+            message.append("Expected output out: " + expectedOut.toString() + "\n");
+            return message.toString();
+        }
+
+        return null;
     }
 
     static public void computeNativeTanpi(TestNativeTanpi.ArgumentsFloatFloat args, Target t) {
