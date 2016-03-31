@@ -32,6 +32,7 @@ import android.platform.test.annotations.Presubmit;
 import android.provider.MediaStore.Images.Media;
 import android.provider.MediaStore.Images.Thumbnails;
 import android.test.InstrumentationTestCase;
+import android.util.Log;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -53,6 +54,8 @@ public class MediaStore_Images_MediaTest extends InstrumentationTestCase {
 
     private static final String TEST_DESCRIPTION3 = "test description3";
 
+    private static final String LOG_TAG = "MediaStore_Images_MediaTest";
+    
     private ArrayList<Uri> mRowsAdded;
 
     private Context mContext;
@@ -80,6 +83,16 @@ public class MediaStore_Images_MediaTest extends InstrumentationTestCase {
 
         mHelper = new FileCopyHelper(mContext);
         mRowsAdded = new ArrayList<Uri>();
+
+        File pics = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES);
+        if (!pics.exists()) {
+            Log.i(LOG_TAG, "Nonstandard test-environment: Pictures directory does not exist!");
+            pics.mkdirs();
+            if (!pics.exists()) {
+                Log.i(LOG_TAG, "Couldn't create Pictures directory, some tests may fail!");
+            }
+        }
+
     }
 
     public void testInsertImageWithImagePath() throws Exception {
