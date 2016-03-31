@@ -115,8 +115,8 @@ static void fMMHalfAccumulator(MinAndMaxHalf *accum, half in) {
 
 static void fMMHalfCombiner(MinAndMaxHalf *accum,
                             const MinAndMaxHalf *val) {
-  fMMHalfAccumulator(accum, val->min);
-  fMMHalfAccumulator(accum, val->max);
+  accum->min = fmin(accum->min, val->min);
+  accum->max = fmax(accum->max, val->max);
 }
 
 static void fMMHalfOutConverter(half2 *result,
@@ -192,8 +192,10 @@ static void fMMHalf2Accumulator(MinAndMaxHalf2 *accum, half2 in) {
 
 static void fMMHalf2Combiner(MinAndMaxHalf2 *accum,
                             const MinAndMaxHalf2 *val) {
-  fMMHalf2Accumulator(accum, val->min);
-  fMMHalf2Accumulator(accum, val->max);
+  accum->min.x = fmin(accum->min.x, val->min.x);
+  accum->min.y = fmin(accum->min.y, val->min.y);
+  accum->max.x = fmax(accum->max.x, val->max.x);
+  accum->max.y = fmax(accum->max.y, val->max.y);
 }
 
 typedef half2 ArrayOf2Half2[2];
@@ -283,19 +285,26 @@ static void fMinMaxMatAccumulator(MatrixPair *accum, rs_matrix2x2 val) {
       const float valElt = rsMatrixGet(&val, i, j);
 
       const float minElt = rsMatrixGet(&(*accum)[MPE_Min], i, j);
-      if (valElt < minElt)
-        rsMatrixSet(&(*accum)[MPE_Min], i, j, valElt);
+      rsMatrixSet(&(*accum)[MPE_Min], i, j, fmin(minElt, valElt));
 
       const float maxElt = rsMatrixGet(&(*accum)[MPE_Max], i, j);
-      if (valElt > maxElt)
-        rsMatrixSet(&(*accum)[MPE_Max], i, j, valElt);
+      rsMatrixSet(&(*accum)[MPE_Max], i, j, fmax(maxElt, valElt));
     }
   }
 }
 
 static void fMinMaxMatCombiner(MatrixPair *accum, const MatrixPair *other) {
-  fMinMaxMatAccumulator(accum, (*other)[MPE_Min]);
-  fMinMaxMatAccumulator(accum, (*other)[MPE_Max]);
+  for (int i = 0; i < 2; ++i) {
+    for (int j = 0; j < 2; ++j) {
+      const float minElt = rsMatrixGet(&(*accum)[MPE_Min], i, j);
+      const float minEltOther = rsMatrixGet(&(*other)[MPE_Min], i, j);
+      rsMatrixSet(&(*accum)[MPE_Min], i, j, fmin(minElt, minEltOther));
+
+      const float maxElt = rsMatrixGet(&(*accum)[MPE_Max], i, j);
+      const float maxEltOther = rsMatrixGet(&(*other)[MPE_Max], i, j);
+      rsMatrixSet(&(*accum)[MPE_Max], i, j, fmax(maxElt, maxEltOther));
+    }
+  }
 }
 
 // reduction does not support matrix result, so use array instead
