@@ -1665,6 +1665,154 @@ public class PrintDocumentAdapterContractTest extends BasePrintTest {
         waitForPrinterDiscoverySessionDestroyCallbackCalled();
     }
 
+    /**
+     * Executes a print process with a given print document info
+     *
+     * @param info The print document info to declare on layout
+     */
+    private void printDocumentInfoBaseTest(final PrintDocumentInfo info) throws Exception {
+        if (!supportsPrinting()) {
+            return;
+        }
+        // Configure the print services.
+        FirstPrintService.setCallbacks(createFirstMockPrintServiceCallbacks());
+        SecondPrintService.setCallbacks(createSecondMockPrintServiceCallbacks());
+
+        final PrintAttributes[] printAttributes = new PrintAttributes[1];
+
+        // Create a mock print adapter.
+        final PrintDocumentAdapter adapter = createMockPrintDocumentAdapter(
+                new Answer<Void>() {
+                    @Override
+                    public Void answer(InvocationOnMock invocation) throws Throwable {
+                        printAttributes[0] = (PrintAttributes) invocation.getArguments()[1];
+                        LayoutResultCallback callback = (LayoutResultCallback) invocation.getArguments()[3];
+                        callback.onLayoutFinished(info, false);
+                        // Mark layout was called.
+                        onLayoutCalled();
+                        return null;
+                    }
+                }, new Answer<Void>() {
+                    @Override
+                    public Void answer(InvocationOnMock invocation) throws Throwable {
+                        Object[] args = invocation.getArguments();
+                        PageRange[] pages = (PageRange[]) args[0];
+                        ParcelFileDescriptor fd = (ParcelFileDescriptor) args[1];
+                        WriteResultCallback callback = (WriteResultCallback) args[3];
+                        writeBlankPages(printAttributes[0], fd, 0, 1);
+                        fd.close();
+                        callback.onWriteFinished(pages);
+                        // Mark write was called.
+                        onWriteCalled();
+                        return null;
+                    }
+                }, new Answer<Void>() {
+                    @Override
+                    public Void answer(InvocationOnMock invocation) throws Throwable {
+                        // Mark finish was called.
+                        onFinishCalled();
+                        return null;
+                    }
+                });
+
+        // Start printing.
+        print(adapter);
+
+        // Select the second printer.
+        selectPrinter("Second printer");
+
+        // Wait for layout.
+        waitForLayoutAdapterCallbackCount(2);
+
+        // Click the print button.
+        clickPrintButton();
+
+        // Answer the dialog for the print service cloud warning
+        answerPrintServicesWarning(true);
+
+        // Wait for the session to be destroyed to isolate tests.
+        waitForPrinterDiscoverySessionDestroyCallbackCalled();
+    }
+
+    /**
+     * Test that the default values of the PrintDocumentInfo are fine.
+     *
+     * @throws Exception If anything unexpected happens
+     */
+    public void testDocumentInfoNothingSet() throws Exception {
+        printDocumentInfoBaseTest((new PrintDocumentInfo.Builder(PRINT_JOB_NAME)).build());
+    }
+
+    /**
+     * Test that a unknown page count is handled correctly.
+     *
+     * @throws Exception If anything unexpected happens
+     */
+    public void testDocumentInfoUnknownPageCount() throws Exception {
+        printDocumentInfoBaseTest((new PrintDocumentInfo.Builder(PRINT_JOB_NAME))
+                .setPageCount(PrintDocumentInfo.PAGE_COUNT_UNKNOWN).build());
+    }
+
+    /**
+     * Test that zero page count is handled correctly.
+     *
+     * @throws Exception If anything unexpected happens
+     */
+    public void testDocumentInfoZeroPageCount() throws Exception {
+        printDocumentInfoBaseTest((new PrintDocumentInfo.Builder(PRINT_JOB_NAME))
+                .setPageCount(0).build());
+    }
+
+    /**
+     * Test that page count one is handled correctly. (The document has two pages)
+     *
+     * @throws Exception If anything unexpected happens
+     */
+    public void testDocumentInfoOnePageCount() throws Exception {
+        printDocumentInfoBaseTest((new PrintDocumentInfo.Builder(PRINT_JOB_NAME))
+                .setPageCount(1).build());
+    }
+
+    /**
+     * Test that page count three is handled correctly. (The document has two pages)
+     *
+     * @throws Exception If anything unexpected happens
+     */
+    public void testDocumentInfoThreePageCount() throws Exception {
+        printDocumentInfoBaseTest((new PrintDocumentInfo.Builder(PRINT_JOB_NAME))
+                .setPageCount(3).build());
+    }
+
+    /**
+     * Test that a photo content type is handled correctly.
+     *
+     * @throws Exception If anything unexpected happens
+     */
+    public void testDocumentInfoContentTypePhoto() throws Exception {
+        printDocumentInfoBaseTest((new PrintDocumentInfo.Builder(PRINT_JOB_NAME))
+                .setContentType(PrintDocumentInfo.CONTENT_TYPE_PHOTO).build());
+    }
+
+    /**
+     * Test that a unknown content type is handled correctly.
+     *
+     * @throws Exception If anything unexpected happens
+     */
+    public void testDocumentInfoContentTypeUnknown() throws Exception {
+        printDocumentInfoBaseTest((new PrintDocumentInfo.Builder(PRINT_JOB_NAME))
+                .setContentType(PrintDocumentInfo.CONTENT_TYPE_UNKNOWN).build());
+    }
+
+    /**
+     * Test that a undefined content type is handled correctly.
+     *
+     * @throws Exception If anything unexpected happens
+     */
+    public void testDocumentInfoContentTypeNonDefined() throws Exception {
+        printDocumentInfoBaseTest((new PrintDocumentInfo.Builder(PRINT_JOB_NAME))
+                .setContentType(-23).build());
+    }
+
     private PrintServiceCallbacks createFirstMockPrintServiceCallbacks() {
         final PrinterDiscoverySessionCallbacks callbacks =
                 createMockPrinterDiscoverySessionCallbacks(new Answer<Void>() {
