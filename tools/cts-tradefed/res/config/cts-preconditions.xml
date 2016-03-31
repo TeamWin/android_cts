@@ -51,6 +51,7 @@
     <target_preparer class="com.android.compatibility.common.tradefed.targetprep.ReportLogCollector">
         <option name="src-dir" value="/sdcard/report-log-files/"/>
         <option name="dest-dir" value="report-log-files/"/>
+        <option name="temp-dir" value="temp-report-logs/"/>
     </target_preparer>
 
 </configuration>
