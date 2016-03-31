@@ -17,7 +17,6 @@
 package com.android.cts.tradefed.testtype;
 
 import com.android.compatibility.common.util.AbiUtils;
-import com.android.ddmlib.Log.LogLevel;
 import com.android.ddmlib.testrunner.TestIdentifier;
 import com.android.tradefed.log.LogUtil.CLog;
 import com.android.tradefed.targetprep.ITargetPreparer;
@@ -54,7 +53,6 @@ class TestPackageDef implements ITestPackageDef {
     public static final String WRAPPED_NATIVE_TEST = "wrappednative";
     public static final String VM_HOST_TEST = "vmHostTest";
     public static final String DEQP_TEST = "deqpTest";
-    public static final String UIAUTOMATOR_TEST = "uiAutomator";
     public static final String JUNIT_DEVICE_TEST = "jUnitDeviceTest";
 
     private String mAppPackageName = null;
@@ -270,10 +268,6 @@ class TestPackageDef implements ITestPackageDef {
             WrappedGTest wrappedGeeTest = new WrappedGTest(mAppNameSpace, mAppPackageName, mName, mRunner);
             wrappedGeeTest.setAbi(mAbi);
             return wrappedGeeTest;
-        } else if (UIAUTOMATOR_TEST.equals(mTestType)) {
-            UiAutomatorJarTest uiautomatorTest = new UiAutomatorJarTest();
-            uiautomatorTest.setRunName(getId());
-            return setUiAutomatorTest(uiautomatorTest);
         } else if (JUNIT_DEVICE_TEST.equals(mTestType)){
             CLog.d("Creating JUnit device test %s", mName);
             JUnitDeviceTest jUnitDeviceTest = new JUnitDeviceTest();
@@ -317,29 +311,6 @@ class TestPackageDef implements ITestPackageDef {
         instrTest.addInstallApk(String.format("%s.apk", mName), mAppNameSpace);
         mDigest = generateDigest(testCaseDir, String.format("%s.apk", mName));
         return instrTest;
-    }
-
-    /**
-     * Populates given {@link UiAutomatorJarTest} with data from the package xml.
-     *
-     * @param uiautomatorTest
-     * @return the populated {@link UiAutomatorJarTest} or <code>null</code>
-     */
-    @SuppressWarnings("deprecation")
-    private IRemoteTest setUiAutomatorTest(UiAutomatorJarTest uiautomatorTest) {
-        uiautomatorTest.setInstallArtifacts(getJarPath());
-        if (mClassName != null) {
-            if (mMethodName != null) {
-                CLog.logAndDisplay(LogLevel.WARN, "ui automator tests don't currently support" +
-                        "running  individual methods");
-            }
-            uiautomatorTest.addClassName(mClassName);
-        } else {
-            uiautomatorTest.addClassNames(mTestClasses);
-        }
-        uiautomatorTest.setRunName(getId());
-        uiautomatorTest.setCaptureLogs(false);
-        return uiautomatorTest;
     }
 
     /**
