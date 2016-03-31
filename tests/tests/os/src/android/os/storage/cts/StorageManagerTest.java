@@ -241,11 +241,22 @@ public class StorageManagerTest extends AndroidTestCase {
         } catch (NotFoundException e) {
             fail("Failed to load resource with id: " + rawResId);
         }
-        FileUtils.setPermissions(outFile.getPath(), FileUtils.S_IRWXU | FileUtils.S_IRWXG
-                | FileUtils.S_IRWXO);
         assertTrue(FileUtils.copyToFile(is, outFile));
-        FileUtils.setPermissions(outFile.getPath(), FileUtils.S_IRWXU | FileUtils.S_IRWXG
-                | FileUtils.S_IRWXO);
+        exposeFile(outFile);
+    }
+
+    private File exposeFile(File file) {
+        file.setReadable(true, false);
+        file.setReadable(true, true);
+
+        File dir = file.getParentFile();
+        do {
+            dir.setExecutable(true, false);
+            dir.setExecutable(true, true);
+            dir = dir.getParentFile();
+        } while (dir != null);
+
+        return file;
     }
 
     private String mountObb(final int resource, final File file, int expectedState) {
