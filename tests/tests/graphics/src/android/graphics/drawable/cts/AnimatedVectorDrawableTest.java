@@ -53,7 +53,6 @@ public class AnimatedVectorDrawableTest extends ActivityInstrumentationTestCase2
 
     private DrawableStubActivity mActivity;
     private Resources mResources;
-    private AnimatedVectorDrawable mAnimatedVectorDrawable;
     private Bitmap mBitmap;
     private Canvas mCanvas;
     private static final boolean DBG_DUMP_PNG = false;
@@ -72,7 +71,6 @@ public class AnimatedVectorDrawableTest extends ActivityInstrumentationTestCase2
 
         mBitmap = Bitmap.createBitmap(IMAGE_WIDTH, IMAGE_HEIGHT, Bitmap.Config.ARGB_8888);
         mCanvas = new Canvas(mBitmap);
-        mAnimatedVectorDrawable = new AnimatedVectorDrawable();
 
         mActivity = getActivity();
         mResources = mActivity.getResources();
@@ -125,11 +123,11 @@ public class AnimatedVectorDrawableTest extends ActivityInstrumentationTestCase2
         if (type != XmlPullParser.START_TAG) {
             throw new XmlPullParserException("No start tag found");
         }
-
-        mAnimatedVectorDrawable.inflate(mResources, parser, attrs);
-        mAnimatedVectorDrawable.setBounds(0, 0, IMAGE_WIDTH, IMAGE_HEIGHT);
+        AnimatedVectorDrawable drawable = new AnimatedVectorDrawable();
+        drawable.inflate(mResources, parser, attrs);
+        drawable.setBounds(0, 0, IMAGE_WIDTH, IMAGE_HEIGHT);
         mBitmap.eraseColor(0);
-        mAnimatedVectorDrawable.draw(mCanvas);
+        drawable.draw(mCanvas);
         int sunColor = mBitmap.getPixel(IMAGE_WIDTH / 2, IMAGE_HEIGHT / 2);
         int earthColor = mBitmap.getPixel(IMAGE_WIDTH * 3 / 4 + 2, IMAGE_HEIGHT / 2);
         assertTrue(sunColor == 0xFFFF8000);
@@ -137,6 +135,35 @@ public class AnimatedVectorDrawableTest extends ActivityInstrumentationTestCase2
 
         if (DBG_DUMP_PNG) {
             saveVectorDrawableIntoPNG(mBitmap, mResId);
+        }
+    }
+
+    @MediumTest
+    public void testSingleFrameAnimation() throws Exception {
+        int resId = R.drawable.avd_single_frame;
+        final AnimatedVectorDrawable d1 =
+                (AnimatedVectorDrawable) mResources.getDrawable(resId);
+        // The AVD has a duration as 16ms.
+        mActivity.runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                d1.start();
+                d1.stop();
+
+            }
+        });
+        getInstrumentation().waitForIdleSync();
+
+        d1.setBounds(0, 0, IMAGE_WIDTH, IMAGE_HEIGHT);
+        mBitmap.eraseColor(0);
+        d1.draw(mCanvas);
+
+        int endColor = mBitmap.getPixel(IMAGE_WIDTH / 2, IMAGE_HEIGHT / 2);
+
+        assertEquals("Center point's color must be green", 0xFF00FF00, endColor);
+
+        if (DBG_DUMP_PNG) {
+            saveVectorDrawableIntoPNG(mBitmap, resId);
         }
     }
 
