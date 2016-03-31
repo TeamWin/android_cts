@@ -54,6 +54,15 @@ public class ReduceTest extends RSBaseCompute {
             assertEquals(String.valueOf(i), javaRslt[i], rsRslt[i]);
     }
 
+    private void assertEquals(final String msg, final Float2 javaRslt, final Float2 rsRslt) {
+        assertEquals(msg + "(x)", javaRslt.x, rsRslt.x);
+        assertEquals(msg + "(y)", javaRslt.y, rsRslt.y);
+    }
+
+    private void assertEquals(final Float2 javaRslt, final Float2 rsRslt) {
+        assertEquals("", javaRslt, rsRslt);
+    }
+
     private void assertEquals(final String msg, final Int2 javaRslt, final Int2 rsRslt) {
         assertEquals(msg + "(x)", javaRslt.x, rsRslt.x);
         assertEquals(msg + "(y)", javaRslt.y, rsRslt.y);
@@ -215,7 +224,13 @@ public class ReduceTest extends RSBaseCompute {
         final Int2 javaRslt = findMinAndMax(input);
         final Int2 rsRslt = mScript.reduce_findMinAndMax(input).get();
 
-        assertEquals(javaRslt, rsRslt);
+        // Note that the Java and RenderScript algorithms are not
+        // guaranteed to find the same cells -- but they should
+        // find cells of the same value.
+        final Float2 javaVal = new Float2(input[javaRslt.x], input[javaRslt.y]);
+        final Float2 rsVal = new Float2(input[rsRslt.x], input[rsRslt.y]);
+
+        assertEquals(javaVal, rsVal);
     }
 
     ///////////////////////////////////////////////////////////////////
