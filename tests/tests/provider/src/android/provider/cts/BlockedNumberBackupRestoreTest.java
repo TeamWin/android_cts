@@ -20,12 +20,9 @@ import android.app.UiAutomation;
 import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.Context;
+import android.content.pm.PackageManager;
 import android.provider.BlockedNumberContract;
 import android.telecom.Log;
-
-import java.util.Objects;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  * CTS tests for backup and restore of blocked numbers using local transport.
@@ -40,13 +37,12 @@ public class BlockedNumberBackupRestoreTest extends TestCaseThatRunsIfTelephonyI
             "android/com.android.internal.backup.LocalTransport";
     private static final String BLOCKED_NUMBERS_PROVIDER_PACKAGE =
             "com.android.providers.blockednumber";
-    private static final Pattern BMGR_ENABLED_PATTERN = Pattern.compile(
-            "^Backup Manager currently (enabled|disabled)$");
 
     private ContentResolver mContentResolver;
     private Context mContext;
     private UiAutomation mUiAutomation;
     private String mOldTransport;
+    private boolean mHasFeature;
 
     @Override
     protected void setUp() throws Exception {
@@ -56,26 +52,34 @@ public class BlockedNumberBackupRestoreTest extends TestCaseThatRunsIfTelephonyI
         mContentResolver = mContext.getContentResolver();
         mUiAutomation = getInstrumentation().getUiAutomation();
 
-        ProviderTestUtils.setDefaultSmsApp(true, mContext.getPackageName(), mUiAutomation);
+        mHasFeature = isFeatureSupported();
 
-        mOldTransport = ProviderTestUtils.setBackupTransport(LOCAL_BACKUP_COMPONENT, mUiAutomation);
-        clearBlockedNumbers();
-        wipeBackup();
+        if (mHasFeature) {
+            ProviderTestUtils.setDefaultSmsApp(true, mContext.getPackageName(), mUiAutomation);
+
+            mOldTransport = ProviderTestUtils.setBackupTransport(
+                    LOCAL_BACKUP_COMPONENT, mUiAutomation);
+            clearBlockedNumbers();
+            wipeBackup();
+        }
     }
 
     @Override
     protected void tearDown() throws Exception {
-        wipeBackup();
-        clearBlockedNumbers();
-        ProviderTestUtils.setBackupTransport(mOldTransport, mUiAutomation);
-        ProviderTestUtils.setDefaultSmsApp(false, mContext.getPackageName(), mUiAutomation);
+        if (mHasFeature) {
+            wipeBackup();
+            clearBlockedNumbers();
+            ProviderTestUtils.setBackupTransport(mOldTransport, mUiAutomation);
+            ProviderTestUtils.setDefaultSmsApp(false, mContext.getPackageName(), mUiAutomation);
+        }
 
         super.tearDown();
     }
 
     public void testBackupAndRestoreForSingleNumber() throws Exception {
-        if (!ProviderTestUtils.hasBackupTransport(LOCAL_BACKUP_COMPONENT, mUiAutomation)) {
+        if (!mHasFeature) {
             Log.i(TAG, "skipping BlockedNumberBackupRestoreTest");
+            return;
         }
 
         Log.i(TAG, "Adding blocked numbers.");
@@ -94,8 +98,9 @@ public class BlockedNumberBackupRestoreTest extends TestCaseThatRunsIfTelephonyI
     }
 
     public void testBackupAndRestoreWithDeletion() throws Exception {
-        if (!ProviderTestUtils.hasBackupTransport(LOCAL_BACKUP_COMPONENT, mUiAutomation)) {
+        if (!mHasFeature) {
             Log.i(TAG, "skipping BlockedNumberBackupRestoreTest");
+            return;
         }
 
         Log.i(TAG, "Adding blocked numbers.");
@@ -120,6 +125,11 @@ public class BlockedNumberBackupRestoreTest extends TestCaseThatRunsIfTelephonyI
         Log.i(TAG, "Restoring blocked numbers.");
         runRestore();
         verifyBlockedNumbers("223456789", "323456789");
+    }
+
+    private boolean isFeatureSupported() throws Exception {
+        return ProviderTestUtils.hasBackupTransport(LOCAL_BACKUP_COMPONENT, mUiAutomation)
+                && mContext.getPackageManager().hasSystemFeature(PackageManager.FEATURE_TELEPHONY);
     }
 
     private void insertBlockedNumber(String number) {
