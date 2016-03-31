@@ -30,6 +30,7 @@ public class FloatyUnitTest extends RSBaseCompute {
     static double normalDouble = 1.7833920e+16;
 
     static double normalHalf = 1985; // 2048 - 63.  Magic number chosen for use in testHalf128Ulp
+    static double negativeNormalHalf = -237;
 
     // Some double values that are precisely representable in half-precision.
     static double[] preciseFloat16Values = {Double.NaN,
@@ -43,13 +44,18 @@ public class FloatyUnitTest extends RSBaseCompute {
                                             -Float16Utils.MIN_VALUE * 100,
                                            };
 
-    // Fail if Floaty f doesn't accept value
-    private void shouldAccept(Target.Floaty f, double value) {
-        if (!f.couldBe(value)) {
+    // Fail if Floaty f with an extra error allowance of 'extraAllowedError' doesn't accept 'value'
+    private void shouldAccept(Target.Floaty f, double value, double extraAllowedError) {
+        if (!f.couldBe(value, extraAllowedError)) {
             StringBuilder message = new StringBuilder();
             message.append("Floaty: ");
             appendVariableToMessage(message, f);
             message.append("\n");
+            if (extraAllowedError > 0.) {
+                message.append("extraAllowedError: ");
+                appendVariableToMessage(message, extraAllowedError);
+                message.append("\n");
+            }
             message.append("Value: ");
             appendVariableToMessage(message, (float) value);
             message.append("\n");
@@ -57,18 +63,33 @@ public class FloatyUnitTest extends RSBaseCompute {
         }
     }
 
-    // Fail if Floaty f accepts value
-    private void shouldNotAccept(Target.Floaty f, double value) {
+    // Fail if Floaty f doesn't accept value
+    private void shouldAccept(Target.Floaty f, double value) {
+        shouldAccept(f, value, 0.);
+    }
+
+    // Fail if Floaty f with an extra error allowance of 'extraAllowedError' accepts 'value'
+    private void shouldNotAccept(Target.Floaty f, double value, double extraAllowedError) {
         if (f.couldBe(value)) {
             StringBuilder message = new StringBuilder();
             message.append("Floaty: ");
             appendVariableToMessage(message, f);
             message.append("\n");
+            if (extraAllowedError > 0.) {
+                message.append("extraAllowedError: ");
+                appendVariableToMessage(message, extraAllowedError);
+                message.append("\n");
+            }
             message.append("Value: ");
             appendVariableToMessage(message, (float) value);
             message.append("\n");
             assertTrue("Floaty incorrectly accepts value:\n" + message.toString(), false);
         }
+    }
+
+    // Fail if Floaty f accepts value
+    private void shouldNotAccept(Target.Floaty f, double value) {
+        shouldNotAccept(f, value, 0.);
     }
 
     // Test Target that accepts precise 1ulp error for floating values.
@@ -235,6 +256,78 @@ public class FloatyUnitTest extends RSBaseCompute {
         shouldAccept(normalFloaty, normalHalf + 129 * Float16Utils.float16Ulp(normalHalf));
         shouldNotAccept(normalFloaty, normalHalf + 130 * Float16Utils.float16Ulp(normalHalf));
         shouldNotAccept(normalFloaty, 2500);
+    }
+
+    public void testExtraAllowedError() {
+        Target t;
+        double extraError, lb, ub;
+
+        t = new Target(Target.FunctionType.NORMAL, Target.ReturnType.FLOAT, false);
+        t.setPrecision(4, 4);
+
+        // Test normal float value with extraAllowedError
+        extraError = 1e-15;
+        Target.Floaty normalFloaty = t.newFloaty(normalFloat2);
+        ub = normalFloat2 + 4 * Math.ulp(normalFloat2) + extraError;
+        lb = normalFloat2 - 4 * Math.ulp(normalFloat2) - extraError;
+        shouldAccept(normalFloaty, ub, extraError);
+        shouldAccept(normalFloaty, lb, extraError);
+        shouldNotAccept(normalFloaty, ub + Math.ulp(ub), extraError);
+        shouldNotAccept(normalFloaty, lb - Math.ulp(lb), extraError);
+
+        t = new Target(Target.FunctionType.NORMAL, Target.ReturnType.FLOAT, false);
+        t.setPrecision(2, 2);
+        extraError = Float.MIN_VALUE;
+
+        // Test subnormal float value with extraAllowedError
+        Target.Floaty subnormalFloaty = t.newFloaty(subnormalFloat);
+        ub = subnormalFloat + 2 * Math.ulp(subnormalFloat) + extraError;
+        lb = subnormalFloat - 2 * Math.ulp(subnormalFloat) - extraError;
+        shouldAccept(subnormalFloaty, ub, extraError);
+        shouldAccept(subnormalFloaty, lb, extraError);
+        shouldNotAccept(subnormalFloaty, ub + Math.ulp(ub), extraError);
+        shouldNotAccept(subnormalFloaty, lb - Math.ulp(lb), extraError);
+
+        t = new Target(Target.FunctionType.NATIVE, Target.ReturnType.HALF, false);
+        t.setPrecision(0, 0);
+
+        // Test Float16 with extraAllowedError in same order of magnitude
+        extraError = 2.0;
+        Target.Floaty halfFloaty = t.newFloaty(normalHalf);
+        ub = normalHalf + extraError;
+        lb = normalHalf - extraError;
+        shouldAccept(halfFloaty, ub, extraError);
+        shouldAccept(halfFloaty, lb, extraError);
+        shouldNotAccept(halfFloaty, ub + Float16Utils.float16Ulp(ub), extraError);
+        shouldNotAccept(halfFloaty, lb - Float16Utils.float16Ulp(lb), extraError);
+
+        // Test Float16 with a tiny extraAllowedError
+        extraError = Float16Utils.MIN_NORMAL;
+        ub = normalHalf;
+        lb = normalHalf;
+        shouldAccept(halfFloaty, ub, extraError);
+        shouldAccept(halfFloaty, lb, extraError);
+        shouldNotAccept(halfFloaty, ub + Float16Utils.float16Ulp(ub), extraError);
+        shouldNotAccept(halfFloaty, lb - Float16Utils.float16Ulp(lb), extraError);
+
+        // Test negative Float16 with extraAllowedError in same order of magnitude
+        extraError = 2.0;
+        Target.Floaty negativeHalfFloaty = t.newFloaty(negativeNormalHalf);
+        ub = negativeNormalHalf + extraError;
+        lb = negativeNormalHalf - extraError;
+        shouldAccept(negativeHalfFloaty, ub, extraError);
+        shouldAccept(negativeHalfFloaty, lb, extraError);
+        shouldNotAccept(negativeHalfFloaty, ub + Float16Utils.float16Ulp(ub), extraError);
+        shouldNotAccept(negativeHalfFloaty, lb - Float16Utils.float16Ulp(lb), extraError);
+
+        // Test negative Float16 with a tiny extraAllowedError
+        extraError = Float16Utils.MIN_NORMAL;
+        ub = negativeNormalHalf;
+        lb = negativeNormalHalf;
+        shouldAccept(negativeHalfFloaty, ub, extraError);
+        shouldAccept(negativeHalfFloaty, lb, extraError);
+        shouldNotAccept(negativeHalfFloaty, ub + Float16Utils.float16Ulp(ub), extraError);
+        shouldNotAccept(negativeHalfFloaty, lb - Float16Utils.float16Ulp(lb), extraError);
     }
 
     // Test that range of allowed error is trimmed at the zero boundary.  This function tests both

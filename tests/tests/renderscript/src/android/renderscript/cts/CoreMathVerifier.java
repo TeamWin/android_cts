@@ -2378,6 +2378,11 @@ public class CoreMathVerifier {
         args.out = t.newFloaty(Double.NaN);
     }
 
+    static public void computeNativeAcos(TestNativeAcos.ArgumentsHalfHalf args, Target t) {
+        t.setPrecision(0, 0); // extraAllowedError set in fw/rs/rs_math.spec and generated test files
+        args.out = acos(args.inVDouble, t);
+    }
+
     static public void computeNativeAcos(TestNativeAcos.ArgumentsFloatFloat args, Target t) {
         t.setPrecision(NATIVE_PRECISION, NATIVE_PRECISION);
         args.out = acos(args.inV, t);
@@ -2393,9 +2398,19 @@ public class CoreMathVerifier {
         args.out = acosh(args.inV, t);
     }
 
+    static public void computeNativeAcospi(TestNativeAcospi.ArgumentsHalfHalf args, Target t) {
+        t.setPrecision(0, 0); // extraAllowedError set in fw/rs/rs_math.spec and generated test files
+        args.out = acospi(args.inVDouble, t);
+    }
+
     static public void computeNativeAcospi(TestNativeAcospi.ArgumentsFloatFloat args, Target t) {
         t.setPrecision(NATIVE_PRECISION, NATIVE_PRECISION);
         args.out = acospi(args.inV, t);
+    }
+
+    static public void computeNativeAsin(TestNativeAsin.ArgumentsHalfHalf args, Target t) {
+        t.setPrecision(0, 0); // extraAllowedError set in fw/rs/rs_math.spec and generated test files
+        args.out = asin(args.inVDouble, t);
     }
 
     static public void computeNativeAsin(TestNativeAsin.ArgumentsFloatFloat args, Target t) {
@@ -2411,6 +2426,11 @@ public class CoreMathVerifier {
     static public void computeNativeAsinh(TestNativeAsinh.ArgumentsFloatFloat args, Target t) {
         t.setPrecision(NATIVE_PRECISION, NATIVE_PRECISION);
         args.out = asinh(args.inV, t);
+    }
+
+    static public void computeNativeAsinpi(TestNativeAsinpi.ArgumentsHalfHalf args, Target t) {
+        t.setPrecision(0, 0); // extraAllowedError set in fw/rs/rs_math.spec and generated test files
+        args.out = asinpi(args.inVDouble, t);
     }
 
     static public void computeNativeAsinpi(TestNativeAsinpi.ArgumentsFloatFloat args, Target t) {
@@ -2478,6 +2498,11 @@ public class CoreMathVerifier {
         args.out = cbrt(args.inV, t);
     }
 
+    static public void computeNativeCos(TestNativeCos.ArgumentsHalfHalf args, Target t) {
+        t.setPrecision(0, 0); // extraAllowedError set in fw/rs/rs_math.spec and generated test files
+        args.out = cos(args.inVDouble, t);
+    }
+
     static public void computeNativeCos(TestNativeCos.ArgumentsFloatFloat args, Target t) {
         t.setPrecision(NATIVE_PRECISION, NATIVE_PRECISION);
         args.out = cos(args.inV, t);
@@ -2491,6 +2516,11 @@ public class CoreMathVerifier {
     static public void computeNativeCosh(TestNativeCosh.ArgumentsFloatFloat args, Target t) {
         t.setPrecision(NATIVE_PRECISION, NATIVE_PRECISION);
         args.out = cosh(args.inV, t);
+    }
+
+    static public void computeNativeCospi(TestNativeCospi.ArgumentsHalfHalf args, Target t) {
+        t.setPrecision(0, 0); // extraAllowedError set in fw/rs/rs_math.spec and generated test files
+        args.out = cospi(args.inVDouble, t);
     }
 
     static public void computeNativeCospi(TestNativeCospi.ArgumentsFloatFloat args, Target t) {
@@ -2744,9 +2774,20 @@ public class CoreMathVerifier {
         args.out = rsqrt(args.inV, t);
     }
 
+    static public void computeNativeSin(TestNativeSin.ArgumentsHalfHalf args, Target t) {
+        t.setPrecision(0, 0); // extraAllowedError set in fw/rs/rs_math.spec and generated test files
+        args.out = sin(args.inVDouble, t);
+    }
+
     static public void computeNativeSin(TestNativeSin.ArgumentsFloatFloat args, Target t) {
         t.setPrecision(NATIVE_PRECISION, NATIVE_PRECISION);
         args.out = sin(args.inV, t);
+    }
+
+    static public void computeNativeSincos(TestNativeSincos.ArgumentsHalfHalfHalf args, Target t) {
+        t.setPrecision(0, 0); // extraAllowedError set in fw/rs/rs_math.spec and generated test files
+        args.outCos = cos(args.inVDouble, t);
+        args.out = sin(args.inVDouble, t);
     }
 
     static public void computeNativeSincos(TestNativeSincos.ArgumentsFloatFloatFloat args, Target t) {
@@ -2763,6 +2804,11 @@ public class CoreMathVerifier {
     static public void computeNativeSinh(TestNativeSinh.ArgumentsFloatFloat args, Target t) {
         t.setPrecision(NATIVE_PRECISION, NATIVE_PRECISION);
         args.out = sinh(args.inV, t);
+    }
+
+    static public void computeNativeSinpi(TestNativeSinpi.ArgumentsHalfHalf args, Target t) {
+        t.setPrecision(0, 0); // extraAllowedError set in fw/rs/rs_math.spec and generated test files
+        args.out = sinpi(args.inVDouble, t);
     }
 
     static public void computeNativeSinpi(TestNativeSinpi.ArgumentsFloatFloat args, Target t) {
