@@ -119,7 +119,6 @@ cts_support_packages := \
     CtsSomeAccessibilityServices \
     CtsSystemUiDeviceApp \
     CtsThemeDeviceApp \
-    CtsUiAutomatorTestApp \
     CtsUsbSerialTestApp \
     CtsVoiceInteractionService \
     CtsVoiceInteractionApp \
@@ -282,9 +281,6 @@ cts_native_tests += CtsBionicTestCases
 cts_native_tests += CtsSimpleperfTestCases
 endif
 
-cts_ui_tests := \
-    CtsUiAutomatorTestCases
-
 cts_device_jars := \
     CtsJdwpApp
 
@@ -301,7 +297,6 @@ cts_deqp_test_apis := \
 # directory of the final CTS distribution.
 CTS_TEST_CASES := $(call cts-get-lib-paths,$(cts_host_libraries)) \
     $(call cts-get-package-paths,$(cts_test_packages)) \
-    $(call cts-get-ui-lib-paths,$(cts_ui_tests)) \
     $(call cts-get-ui-lib-paths,$(cts_device_jars)) \
     $(call cts-get-ui-lib-paths,$(cts_target_junit_tests)) \
     $(call cts-get-executable-paths,$(cts_device_executables)) \
@@ -317,7 +312,6 @@ CTS_TEST_XMLS := $(call cts-get-test-xmls,$(cts_host_libraries)) \
     $(call cts-get-test-xmls,$(cts_test_packages)) \
     $(call cts-get-test-xmls,$(cts_native_tests)) \
     $(call cts-get-test-xmls,$(cts_target_junit_tests)) \
-    $(call cts-get-test-xmls,$(cts_ui_tests)) \
     $(call cts-get-deqp-test-xmls,$(cts_deqp_test_apis))
 
 # The following files will be placed in the tools directory of the CTS distribution
