@@ -215,10 +215,6 @@ public class RSUtils {
             min = FLOAT16_MIN_NORMAL;
         }
 
-        android.util.Log.e("F16-RSCTS", "Requested range" + Double.toString(minDoubleValue) + " to " + Double.toString(maxDoubleValue));
-        android.util.Log.e("F16-RSCTS", "Generating between " + Short.toString(min) + " to " + Short.toString(max));
-        android.util.Log.e("F16-RSCTS", "Negatives? " + Boolean.toString(includeNegatives));
-
         Random r = new Random(seed);
         short range = (short) (max - min + 1);
         for (int i = 0; i < array.length; i ++) {
