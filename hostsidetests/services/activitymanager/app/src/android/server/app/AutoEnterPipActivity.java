@@ -22,6 +22,6 @@ public class AutoEnterPipActivity extends Activity {
     @Override
     protected void onResume() {
         super.onResume();
-        enterPictureInPicture();
+        enterPictureInPictureMode();
     }
 }
