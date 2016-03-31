@@ -18,7 +18,6 @@ package android.theme.cts;
 
 import com.android.ddmlib.Log;
 import com.android.ddmlib.Log.LogLevel;
-import com.android.tradefed.device.ITestDevice;
 
 import java.awt.Color;
 import java.awt.image.BufferedImage;
@@ -37,12 +36,10 @@ public class ComparisonTask implements Callable<Boolean> {
 
     private static final int IMAGE_THRESHOLD = 2;
 
-    private final ITestDevice mDevice;
     private final File mExpected;
     private final File mActual;
 
-    public ComparisonTask(ITestDevice device, File expected, File actual) {
-        mDevice = device;
+    public ComparisonTask(File expected, File actual) {
         mExpected = expected;
         mActual = actual;
     }
