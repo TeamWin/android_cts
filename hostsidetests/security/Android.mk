@@ -30,6 +30,8 @@ LOCAL_MODULE_CLASS := JAVA_LIBRARIES
 
 LOCAL_JAVA_LIBRARIES := cts-tradefed tradefed-prebuilt
 
+LOCAL_STATIC_JAVA_LIBRARIES := cts-migration-lib
+
 LOCAL_CTS_TEST_PACKAGE := android.host.security
 
 selinux_general_seapp_contexts := $(call intermediates-dir-for,ETC,general_seapp_contexts)/general_seapp_contexts
@@ -57,7 +59,14 @@ selinux_neverallow_gen := cts/tools/selinux/SELinuxNeverallowTestGen.py
 
 selinux_neverallow_gen_data := cts/tools/selinux/SELinuxNeverallowTestFrame.py
 
-LOCAL_ADDITIONAL_DEPENDENCIES := $(COMPATIBILITY_TESTCASES_OUT_cts)/sepolicy-analyze
+old_cts_sepolicy-analyze := $(CTS_TESTCASES_OUT)/sepolicy-analyze
+
+LOCAL_ADDITIONAL_DEPENDENCIES := $(COMPATIBILITY_TESTCASES_OUT_cts)/sepolicy-analyze \
+    $(old_cts_sepolicy-analyze)
+
+$(old_cts_sepolicy-analyze) : $(HOST_OUT_EXECUTABLES)/sepolicy-analyze
+	mkdir -p $(dir $@)
+	$(copy-file-to-target)
 
 LOCAL_GENERATED_SOURCES := $(call local-generated-sources-dir)/android/cts/security/SELinuxNeverallowRulesTest.java
 

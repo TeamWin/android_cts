@@ -16,7 +16,7 @@
 
 package android.security.cts;
 
-import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
+import com.android.cts.migration.MigrationHelper;
 import com.android.tradefed.build.IBuildInfo;
 import com.android.tradefed.device.CollectingOutputReceiver;
 import com.android.tradefed.device.DeviceNotAvailableException;
@@ -66,19 +66,19 @@ public class SELinuxHostTest extends DeviceTestCase implements IBuildReceiver, I
     private File deviceSvcFile;
     private File seappNeverAllowFile;
 
+    private IBuildInfo mBuild;
+
     /**
      * A reference to the device under test.
      */
     private ITestDevice mDevice;
-
-    private CompatibilityBuildHelper mHelper;
 
     /**
      * {@inheritDoc}
      */
     @Override
     public void setBuild(IBuildInfo build) {
-        mHelper = new CompatibilityBuildHelper(build);
+        mBuild = build;
     }
 
     /**
@@ -107,7 +107,7 @@ public class SELinuxHostTest extends DeviceTestCase implements IBuildReceiver, I
     @Override
     protected void setUp() throws Exception {
         super.setUp();
-        sepolicyAnalyze = new File(mHelper.getTestsDir(), "sepolicy-analyze");
+        sepolicyAnalyze = MigrationHelper.getTestFile(mBuild, "sepolicy-analyze");
         sepolicyAnalyze.setExecutable(true);
 
         /* obtain sepolicy file from running device */
