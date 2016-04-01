@@ -79,7 +79,7 @@ public class AssistStructureTest extends AssistTestBase {
         }
     }
 
-    public void testAssistStructure() throws Exception {
+    public void testAssistStructure() throws Throwable {
         if (mActivityManager.isLowRamDevice()) {
             Log.d(TAG, "Not running assist tests on low-RAM device.");
             return;
@@ -91,9 +91,13 @@ public class AssistStructureTest extends AssistTestBase {
         startSession();
         waitForContext();
         verifyAssistDataNullness(false, false, false, false);
-
-        verifyAssistStructure(Utils.getTestAppComponent(TEST_CASE_TYPE),
-                false /*FLAG_SECURE set*/);
+        getInstrumentation().waitForIdleSync();
+        runTestOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                verifyAssistStructure(Utils.getTestAppComponent(TEST_CASE_TYPE), false /*FLAG_SECURE set*/);
+            }
+        });
     }
 
     private class AssistStructureTestBroadcastReceiver extends BroadcastReceiver {
