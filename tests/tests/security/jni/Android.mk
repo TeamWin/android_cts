@@ -67,7 +67,8 @@ LOCAL_SHARED_LIBRARIES := libnativehelper \
 		libsync \
 		libcamera_metadata \
 		libspeexresampler \
-		liblzma
+		liblzma \
+		libstagefright_foundation
 
 LOCAL_C_INCLUDES += ndk/sources/cpufeatures
 LOCAL_STATIC_LIBRARIES := cpufeatures

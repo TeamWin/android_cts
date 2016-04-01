@@ -51,7 +51,8 @@ LOCAL_JNI_SHARED_LIBRARIES := libctssecurity_jni libcts_jni libnativehelper_comp
 		libsync \
 		libcamera_metadata \
 		libspeexresampler \
-		liblzma
+		liblzma \
+		libstagefright_foundation
 
 LOCAL_SRC_FILES := $(call all-java-files-under, src)\
                    src/android/security/cts/activity/ISecureRandomService.aidl
