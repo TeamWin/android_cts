@@ -410,6 +410,10 @@ public class CoreMathVerifier {
             cbrt(in.max32()));
     }
 
+    static private Target.Floaty clamp(double value, double minValue, double maxValue, Target t) {
+        return t.newFloaty(Math.min(maxValue, Math.max(minValue, value)));
+    }
+
     static private Target.Floaty copysign(double magnitude, double sign, Target t) {
         return t.newFloaty(Math.copySign(magnitude, sign));
     }
@@ -1262,6 +1266,11 @@ public class CoreMathVerifier {
 
     static public void computeClamp(TestClamp.ArgumentsUintUintUintUint args) {
         args.out = minU32(args.inMaxValue, maxU32(args.inValue, args.inMinValue));
+    }
+
+    static public void computeClamp(TestClamp.ArgumentsHalfHalfHalfHalf args, Target t) {
+        t.setPrecision(0, 0);
+        args.out = clamp(args.inValueDouble, args.inMinValueDouble, args.inMaxValueDouble, t);
     }
 
     static public void computeClamp(TestClamp.ArgumentsFloatFloatFloatFloat args, Target t) {

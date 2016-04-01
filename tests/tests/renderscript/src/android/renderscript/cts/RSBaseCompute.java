@@ -268,6 +268,22 @@ public class RSBaseCompute extends RSBase {
             }
             minAlloc.copyFrom(minArray);
             maxAlloc.copyFrom(maxArray);
+        } else if (dataType == Element.DataType.FLOAT_16) {
+            short[] minArray = new short[size];
+            short[] maxArray = new short[size];
+            minAlloc.copyTo(minArray);
+            maxAlloc.copyTo(maxArray);
+            for (int i = 0; i < size; i++) {
+                double minValue = Float16Utils.convertFloat16ToDouble(minArray[i]);
+                double maxValue = Float16Utils.convertFloat16ToDouble(maxArray[i]);
+                if (minValue > maxValue) {
+                    short temp = minArray[i];
+                    minArray[i] = maxArray[i];
+                    maxArray[i] = temp;
+                }
+            }
+            minAlloc.copyFrom(minArray);
+            maxAlloc.copyFrom(maxArray);
         } else if (dataType == Element.DataType.SIGNED_64) {
             long[] minArray = new long[size];
             long[] maxArray = new long[size];
