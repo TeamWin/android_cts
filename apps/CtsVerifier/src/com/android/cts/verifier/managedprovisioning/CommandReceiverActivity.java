@@ -21,6 +21,7 @@ import android.app.admin.DevicePolicyManager;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.BitmapFactory;
 import android.os.Bundle;
 import android.os.UserManager;
 import android.util.Log;
@@ -55,6 +56,7 @@ public class CommandReceiverActivity extends Activity {
     public static final String COMMAND_PROFILE_OWNER_CLEAR_POLICIES = "po-clear-policies";
     public static final String COMMAND_REMOVE_DEVICE_OWNER = "remove-device-owner";
     public static final String COMMAND_REQUEST_BUGREPORT = "request-bugreport";
+    public static final String COMMAND_SET_USER_ICON = "set-user-icon";
 
     public static final String EXTRA_USER_RESTRICTION =
             "com.android.cts.verifier.managedprovisioning.extra.USER_RESTRICTION";
@@ -160,6 +162,13 @@ public class CommandReceiverActivity extends Activity {
                         return;
                     }
                     clearProfileOwnerRelatedPolicies();
+                } break;
+                case COMMAND_SET_USER_ICON: {
+                    if (!mDpm.isDeviceOwnerApp(getPackageName())) {
+                        return;
+                    }
+                    mDpm.setUserIcon(mAdmin, BitmapFactory.decodeResource(getResources(),
+                            com.android.cts.verifier.R.drawable.icon));
                 } break;
             }
         } catch (Exception e) {
