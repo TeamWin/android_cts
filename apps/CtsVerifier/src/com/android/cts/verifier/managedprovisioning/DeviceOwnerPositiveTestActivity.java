@@ -66,6 +66,7 @@ public class DeviceOwnerPositiveTestActivity extends PassFailButtons.TestListAct
     private static final String DISALLOW_CONFIG_WIFI_ID = "DISALLOW_CONFIG_WIFI";
     private static final String DISALLOW_CONFIG_VPN_ID = "DISALLOW_CONFIG_VPN";
     private static final String DISALLOW_USB_FILE_TRANSFER_ID = "DISALLOW_USB_FILE_TRANSFER";
+    private static final String SET_USER_ICON_TEST_ID = "SET_USER_ICON";
     private static final String DISALLOW_DATA_ROAMING_ID = "DISALLOW_DATA_ROAMING";
     private static final String POLICY_TRANSPARENCY_TEST_ID = "POLICY_TRANSPARENCY";
     private static final String REMOVE_DEVICE_OWNER_TEST_ID = "REMOVE_DEVICE_OWNER";
@@ -256,6 +257,17 @@ public class DeviceOwnerPositiveTestActivity extends PassFailButtons.TestListAct
                                         CommandReceiverActivity.COMMAND_SET_KEYGUARD_DISABLED,
                                                 false))}));
 
+        adapter.add(createInteractiveTestItem(this, SET_USER_ICON_TEST_ID,
+                R.string.device_owner_set_user_icon,
+                R.string.device_owner_set_user_icon_instruction,
+                new ButtonInfo[] {
+                        new ButtonInfo(
+                                R.string.device_owner_set_user_icon_button,
+                                createSetUserIconIntent()),
+                        new ButtonInfo(
+                                R.string.device_owner_settings_go,
+                                new Intent(Settings.ACTION_SETTINGS))}));
+
         // setPermissionGrantState
         adapter.add(createTestItem(this, CHECK_PERMISSION_LOCKDOWN_TEST_ID,
                 R.string.device_profile_owner_permission_lockdown_test,
@@ -306,5 +318,11 @@ public class DeviceOwnerPositiveTestActivity extends PassFailButtons.TestListAct
                         CommandReceiverActivity.COMMAND_SET_USER_RESTRICTION)
                 .putExtra(CommandReceiverActivity.EXTRA_USER_RESTRICTION, restriction)
                 .putExtra(CommandReceiverActivity.EXTRA_ENFORCED, true);
+    }
+
+    private Intent createSetUserIconIntent() {
+        return new Intent(this, CommandReceiverActivity.class)
+                .putExtra(CommandReceiverActivity.EXTRA_COMMAND,
+                        CommandReceiverActivity.COMMAND_SET_USER_ICON);
     }
 }
