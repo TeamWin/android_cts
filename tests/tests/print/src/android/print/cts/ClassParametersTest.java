@@ -19,6 +19,7 @@ package android.print.cts;
 import android.print.PrintAttributes;
 import android.print.PrintAttributes.MediaSize;
 import android.print.PrintAttributes.Resolution;
+import android.print.PrintDocumentInfo;
 import android.support.test.runner.AndroidJUnit4;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -107,5 +108,24 @@ public class ClassParametersTest {
                 IllegalArgumentException.class);
 
         // There is no restrictions on what parameters to set for minMargins.
+    }
+
+    /**
+     * Test that we cannot create PrintDocumentInfo with illegal parameters.
+     *
+     * @throws Exception If anything is unexpected
+     */
+    @Test
+    public void testIllegalPrintDocumentInfo() throws Exception {
+        assertException(() -> new PrintDocumentInfo.Builder(null),
+                IllegalArgumentException.class);
+        assertException(() -> new PrintDocumentInfo.Builder(""),
+                IllegalArgumentException.class);
+
+        assertException(() -> new PrintDocumentInfo.Builder("doc").setPageCount(-2),
+                IllegalArgumentException.class);
+        // -1 == UNKNOWN and 0 are allowed
+
+        // Content type is not restricted
     }
 }
