@@ -637,12 +637,27 @@ public class PrintAttributesTest extends BasePrintTest {
      *
      * @throws Exception If anything is unexpected
      */
-    public void testIllegalSuggested() throws Exception {
+    public void testUnsupportedSuggested() throws Exception {
         //       available                               default          suggestion
         baseTest(                                        MIN_MARGINS[0],
                  Arrays.copyOfRange(MEDIA_SIZES, 0, 1),  MEDIA_SIZES[0],  MEDIA_SIZES[1],
                  Arrays.copyOfRange(COLOR_MODES, 0, 1),  COLOR_MODES[0],  COLOR_MODES[1],
                  Arrays.copyOfRange(DUPLEX_MODES, 0, 1), DUPLEX_MODES[0], DUPLEX_MODES[1],
                  Arrays.copyOfRange(RESOLUTIONS, 0, 1),  RESOLUTIONS[0],  RESOLUTIONS[1]);
+    }
+
+    /**
+     * Test that negative Margins do not cause issues in the print print spooler. Negative margins
+     * are allowed because of historical reasons.
+     *
+     * @throws Exception If anything is unexpected
+     */
+    public void testNegativeMargins() throws Exception {
+        //       available     default                          suggestion
+        baseTest(              new Margins(-10, -10, -10, -10),
+                 MEDIA_SIZES,  MEDIA_SIZES[1],                  null,
+                 COLOR_MODES,  COLOR_MODES[1],                  0,
+                 DUPLEX_MODES, DUPLEX_MODES[1],                 0,
+                 RESOLUTIONS,  RESOLUTIONS[1],                  null);
     }
 }
