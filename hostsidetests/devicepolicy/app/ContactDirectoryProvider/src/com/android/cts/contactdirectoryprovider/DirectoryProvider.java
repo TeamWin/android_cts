@@ -16,6 +16,8 @@
 
 package com.android.cts.contactdirectoryprovider;
 
+import android.accounts.Account;
+import android.accounts.AccountManager;
 import android.content.ContentProvider;
 import android.content.ContentValues;
 import android.content.Context;
@@ -43,8 +45,8 @@ public class DirectoryProvider extends ContentProvider {
     private static final String CONFIG_NAME = "config";
     private static final String SET_CUSTOM_PREFIX = "set_prefix";
     private static final String AUTHORITY = "com.android.cts.contact.directory.provider";
-    private static final String TEST_ACCOUNT_NAME = "cts@android.com";
-    private static final String TEST_ACCOUNT_TYPE = "com.android.cts";
+    // Same as com.android.cts.managedprofile.AccountAuthenticator.ACCOUNT_TYPE
+    private static final String TEST_ACCOUNT_TYPE = "com.android.cts.test";
     private static final String DEFAULT_DISPLAY_NAME = "Directory";
     private static final String DEFAULT_CONTACT_NAME = "DirectoryContact";
 
@@ -109,24 +111,30 @@ public class DirectoryProvider extends ContentProvider {
         switch (match) {
             case GAL_DIRECTORIES: {
                 final MatrixCursor cursor = new MatrixCursor(projection);
-                final Object[] row = new Object[projection.length];
-                for (int i = 0; i < projection.length; i++) {
-                    final String column = projection[i];
-                    if (column.equals(Directory.ACCOUNT_NAME)) {
-                        row[i] = TEST_ACCOUNT_NAME;
-                    } else if (column.equals(Directory.ACCOUNT_TYPE)) {
-                        row[i] = TEST_ACCOUNT_TYPE;
-                    } else if (column.equals(Directory.TYPE_RESOURCE_ID)) {
-                        row[i] = R.string.directory_resource_id;
-                    } else if (column.equals(Directory.DISPLAY_NAME)) {
-                        row[i] = prefix + DEFAULT_DISPLAY_NAME;
-                    } else if (column.equals(Directory.EXPORT_SUPPORT)) {
-                        row[i] = Directory.EXPORT_SUPPORT_SAME_ACCOUNT_ONLY;
-                    } else if (column.equals(Directory.SHORTCUT_SUPPORT)) {
-                        row[i] = Directory.SHORTCUT_SUPPORT_NONE;
+                final AccountManager am = getContext().getSystemService(AccountManager.class);
+                Account[] accounts = am.getAccountsByType(TEST_ACCOUNT_TYPE);
+                if (accounts != null) {
+                    for (Account account : accounts) {
+                        final Object[] row = new Object[projection.length];
+                        for (int i = 0; i < projection.length; i++) {
+                            final String column = projection[i];
+                            if (column.equals(Directory.ACCOUNT_NAME)) {
+                                row[i] = account.name;
+                            } else if (column.equals(Directory.ACCOUNT_TYPE)) {
+                                row[i] = TEST_ACCOUNT_TYPE;
+                            } else if (column.equals(Directory.TYPE_RESOURCE_ID)) {
+                                row[i] = R.string.directory_resource_id;
+                            } else if (column.equals(Directory.DISPLAY_NAME)) {
+                                row[i] = prefix + DEFAULT_DISPLAY_NAME;
+                            } else if (column.equals(Directory.EXPORT_SUPPORT)) {
+                                row[i] = Directory.EXPORT_SUPPORT_SAME_ACCOUNT_ONLY;
+                            } else if (column.equals(Directory.SHORTCUT_SUPPORT)) {
+                                row[i] = Directory.SHORTCUT_SUPPORT_NONE;
+                            }
+                        }
+                        cursor.addRow(row);
                     }
                 }
-                cursor.addRow(row);
                 return cursor;
             }
             case GAL_FILTER:
