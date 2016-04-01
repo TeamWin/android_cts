@@ -1,4 +1,4 @@
-# Copyright (C) 2009 The Android Open Source Project
+# Copyright (C) 2014 The Android Open Source Project
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,27 +12,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-LOCAL_PATH := $(call my-dir)
+LOCAL_PATH:= $(call my-dir)
 
 include $(CLEAR_VARS)
-
-# Only compile source java files in this apk.
-LOCAL_SRC_FILES := $(call all-java-files-under, src)
-
-LOCAL_MODULE := CtsAppSecurityHostTestCases
-
-LOCAL_JAVA_LIBRARIES := cts-tradefed tradefed-prebuilt compatibility-host-util
-
-LOCAL_STATIC_JAVA_LIBRARIES := cts-migration-lib
-
-LOCAL_JAVA_RESOURCE_DIRS := res
-
-LOCAL_CTS_TEST_PACKAGE := android.appsecurity
 
 # tag this module as a cts test artifact
 LOCAL_COMPATIBILITY_SUITE := cts
 
-include $(BUILD_CTS_HOST_JAVA_LIBRARY)
+LOCAL_MODULE_TAGS := tests
+LOCAL_SRC_FILES := $(call all-java-files-under, src)
+LOCAL_SDK_VERSION := 23
+LOCAL_PACKAGE_NAME := CtsPkgInstallTinyApp
+LOCAL_DEX_PREOPT := false
 
-# Build the test APKs using their own makefiles
-include $(call all-makefiles-under,$(LOCAL_PATH))
+include $(BUILD_CTS_SUPPORT_PACKAGE)
