@@ -19,7 +19,7 @@
         <option name="test-file-name" value="CtsOsTestCases.apk" />
     </target_preparer>
     <test class="com.android.tradefed.testtype.AndroidJUnitTest" >
-        <option name="package" value="com.android.cts.os" />
+        <option name="package" value="android.os.cts" />
         <option name="runtime-hint" value="3m15s" />
     </test>
 </configuration>
