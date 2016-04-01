@@ -16,7 +16,7 @@
 
 package android.os.storage.cts;
 
-import com.android.cts.os.R;
+import android.os.cts.R;
 
 import android.content.Context;
 import android.content.res.Resources;
@@ -47,7 +47,7 @@ public class StorageManagerTest extends AndroidTestCase {
     private static final long WAIT_TIME_INCR = 5*1000;
 
     private static final String OBB_MOUNT_PREFIX = "/mnt/obb/";
-    private static final String TEST1_CONTENTS = "1\n";
+    private static final String TEST1_NEW_CONTENTS = "1\n";
 
     private StorageManager mStorageManager;
 
@@ -59,16 +59,16 @@ public class StorageManagerTest extends AndroidTestCase {
 
     public void testMountAndUnmountObbNormal() throws IOException {
         for (File target : getTargetFiles()) {
-            target = new File(target, "test1.obb");
+            target = new File(target, "test1_new.obb");
             Log.d(TAG, "Testing path " + target);
             doMountAndUnmountObbNormal(target);
         }
     }
 
     private void doMountAndUnmountObbNormal(File outFile) throws IOException {
-        final String canonPath = mountObb(R.raw.test1, outFile, OnObbStateChangeListener.MOUNTED);
+        final String canonPath = mountObb(R.raw.test1_new, outFile, OnObbStateChangeListener.MOUNTED);
 
-        mountObb(R.raw.test1, outFile, OnObbStateChangeListener.ERROR_ALREADY_MOUNTED);
+        mountObb(R.raw.test1_new, outFile, OnObbStateChangeListener.ERROR_ALREADY_MOUNTED);
 
         try {
             final String mountPath = checkMountedPath(canonPath);
@@ -77,7 +77,7 @@ public class StorageManagerTest extends AndroidTestCase {
 
             assertTrue("OBB mounted path should be a directory", mountDir.isDirectory());
             assertTrue("test1.txt does not exist in OBB dir", testFile.exists());
-            assertFileContains(testFile, TEST1_CONTENTS);
+            assertFileContains(testFile, TEST1_NEW_CONTENTS);
         } finally {
             unmountObb(outFile, OnObbStateChangeListener.UNMOUNTED);
         }
@@ -130,8 +130,8 @@ public class StorageManagerTest extends AndroidTestCase {
     }
 
     private void doMountAndUnmountTwoObbs(File file1, File file2) throws IOException {
-        ObbObserver oo1 = mountObbWithoutWait(R.raw.test1, file1);
-        ObbObserver oo2 = mountObbWithoutWait(R.raw.test1, file2);
+        ObbObserver oo1 = mountObbWithoutWait(R.raw.test1_new, file1);
+        ObbObserver oo2 = mountObbWithoutWait(R.raw.test1_new, file2);
 
         Log.d(TAG, "Waiting for OBB #1 to complete mount");
         waitForObbActionCompletion(file1, oo1, OnObbStateChangeListener.MOUNTED);
@@ -144,14 +144,14 @@ public class StorageManagerTest extends AndroidTestCase {
             final File testFile1 = new File(mountDir1, "test1.txt");
             assertTrue("OBB mounted path should be a directory", mountDir1.isDirectory());
             assertTrue("test1.txt does not exist in OBB dir", testFile1.exists());
-            assertFileContains(testFile1, TEST1_CONTENTS);
+            assertFileContains(testFile1, TEST1_NEW_CONTENTS);
 
             final String mountPath2 = checkMountedPath(oo2.getPath());
             final File mountDir2 = new File(mountPath2);
             final File testFile2 = new File(mountDir2, "test1.txt");
             assertTrue("OBB mounted path should be a directory", mountDir2.isDirectory());
             assertTrue("test1.txt does not exist in OBB dir", testFile2.exists());
-            assertFileContains(testFile2, TEST1_CONTENTS);
+            assertFileContains(testFile2, TEST1_NEW_CONTENTS);
         } finally {
             unmountObb(file1, OnObbStateChangeListener.UNMOUNTED);
             unmountObb(file2, OnObbStateChangeListener.UNMOUNTED);
@@ -308,7 +308,7 @@ public class StorageManagerTest extends AndroidTestCase {
     private void unmountObb(final File file, int expectedState) {
         final ObbObserver observer = new ObbObserver();
 
-        assertTrue("unmountObb call on test1.obb should succeed",
+        assertTrue("unmountObb call on test1_new.obb should succeed",
                 mStorageManager.unmountObb(file.getPath(), false, observer));
 
         assertTrue("Unmount should have completed",
