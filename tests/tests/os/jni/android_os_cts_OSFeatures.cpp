@@ -82,13 +82,42 @@ jboolean android_os_cts_OSFeatures_hasSeccompSupport(JNIEnv* env, jobject)
     return WIFSIGNALED(status) && (WTERMSIG(status) == SIGSYS);
 }
 
+jboolean android_os_cts_OSFeatures_needsSeccompSupport(JNIEnv*, jobject)
+{
+#if !defined(ARCH_SUPPORTS_SECCOMP)
+    // Seccomp support is only available for ARM, x86, x86_64.
+    // This define is controlled by the Android.mk.
+    return false;
+#endif
+
+    int major;
+    int minor;
+    struct utsname uts;
+    if (uname(&uts) == -1) {
+        return false;
+    }
+
+    if (sscanf(uts.release, "%d.%d", &major, &minor) != 2) {
+        return false;
+    }
+
+    // Kernels before 3.8 don't have seccomp
+    if ((major < 3) || ((major == 3) && (minor < 8))) {
+        return false;
+    }
+
+    return true;
+}
+
 static JNINativeMethod gMethods[] = {
     {  "getNoNewPrivs", "()I",
             (void *) android_os_cts_OSFeatures_getNoNewPrivs  },
     {  "prctlCapBsetRead", "(I)I",
             (void *) android_os_cts_OSFeatures_prctlCapBsetRead },
     {  "hasSeccompSupport", "()Z",
-            (void *) android_os_cts_OSFeatures_hasSeccompSupport  }
+            (void *) android_os_cts_OSFeatures_hasSeccompSupport  },
+    {  "needsSeccompSupport", "()Z",
+            (void *) android_os_cts_OSFeatures_needsSeccompSupport  }
 };
 
 int register_android_os_cts_OSFeatures(JNIEnv* env)
