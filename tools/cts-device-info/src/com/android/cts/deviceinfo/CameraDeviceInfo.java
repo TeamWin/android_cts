@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.android.compatibility.common.deviceinfo;
+package com.android.cts.deviceinfo;
 
 import android.content.Context;
 import android.graphics.Rect;
@@ -32,6 +32,7 @@ import android.util.Size;
 import android.util.SizeF;
 import android.util.Range;
 
+import com.android.compatibility.common.deviceinfo.DeviceInfo;
 import com.android.compatibility.common.util.DeviceInfoStore;
 
 import java.lang.reflect.Array;
@@ -415,36 +416,25 @@ public final class CameraDeviceInfo extends DeviceInfo {
         store.addResult("profile_qcif", CamcorderProfile.hasProfile(CamcorderProfile.QUALITY_QCIF));
         store.addResult("profile_qvga", CamcorderProfile.hasProfile(CamcorderProfile.QUALITY_QVGA));
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.L) {
-            // query camera devices and store each camera's characteristics
-            CameraManager cameraManager = (CameraManager)
-                    getContext().getSystemService(Context.CAMERA_SERVICE);
-            try {
-                String[] cameraIdList = cameraManager.getCameraIdList();
-                store.addResult("num_of_camera", cameraIdList.length);
-                if (cameraIdList.length > 0) {
-                    CameraCharacteristicsStorer charsStorer =
-                            new CameraCharacteristicsStorer(cameraManager, store);
-                    store.startArray("per_camera_info");
-                    for (int i = 0; i < cameraIdList.length; i++) {
-                        charsStorer.storeCameraInfo(cameraIdList[i]);
-                    }
-                    store.endArray(); // per_camera_info
+        CameraManager cameraManager = (CameraManager)
+                getContext().getSystemService(Context.CAMERA_SERVICE);
+        try {
+            String[] cameraIdList = cameraManager.getCameraIdList();
+            store.addResult("num_of_camera", cameraIdList.length);
+            if (cameraIdList.length > 0) {
+                CameraCharacteristicsStorer charsStorer =
+                        new CameraCharacteristicsStorer(cameraManager, store);
+                store.startArray("per_camera_info");
+                for (int i = 0; i < cameraIdList.length; i++) {
+                    charsStorer.storeCameraInfo(cameraIdList[i]);
                 }
-            } catch (CameraAccessException e) {
-                Log.e(TAG,
-                        "Unable to get camera camera ID list, error: "
-                                + e.getMessage());
+                store.endArray(); // per_camera_info
             }
-        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD) {
-            // Only supports Camera API1
-            int numCameras = Camera.getNumberOfCameras();
-            store.addResult("num_of_camera", numCameras);
-        } else {
-            // No Camera number query support
-            store.addResult("num_of_camera", 0);
+        } catch (CameraAccessException e) {
+            Log.e(TAG,
+                    "Unable to get camera camera ID list, error: "
+                            + e.getMessage());
         }
-
     }
 
     /*@O~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~
