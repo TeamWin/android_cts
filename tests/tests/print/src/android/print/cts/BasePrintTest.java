@@ -105,6 +105,7 @@ public abstract class BasePrintTest extends InstrumentationTestCase {
     private CallCounter mWriteCallCounter;
     private CallCounter mFinishCallCounter;
     private CallCounter mPrintJobQueuedCallCounter;
+    private CallCounter mCreateSessionCallCounter;
     private CallCounter mDestroySessionCallCounter;
 
     private String[] mEnabledImes;
@@ -189,6 +190,7 @@ public abstract class BasePrintTest extends InstrumentationTestCase {
         mWriteCallCounter = new CallCounter();
         mFinishCallCounter = new CallCounter();
         mPrintJobQueuedCallCounter = new CallCounter();
+        mCreateSessionCallCounter = new CallCounter();
         mDestroySessionCallCounter = new CallCounter();
 
         // Create the activity for the right locale.
@@ -261,6 +263,10 @@ public abstract class BasePrintTest extends InstrumentationTestCase {
         mPrintJobQueuedCallCounter.call();
     }
 
+    protected void onPrinterDiscoverySessionCreateCalled() {
+        mCreateSessionCallCounter.call();
+    }
+
     protected void onPrinterDiscoverySessionDestroyCalled() {
         mDestroySessionCallCounter.call();
     }
@@ -268,6 +274,11 @@ public abstract class BasePrintTest extends InstrumentationTestCase {
     protected void waitForCancelOperationCallbackCalled() {
         waitForCallbackCallCount(mCancelOperationCounter, 1,
                 "Did not get expected call to onCancel for the current operation.");
+    }
+
+    protected void waitForPrinterDiscoverySessionCreateCallbackCalled() {
+        waitForCallbackCallCount(mCreateSessionCallCounter, 1,
+                "Did not get expected call to onCreatePrinterDiscoverySession.");
     }
 
     protected void waitForPrinterDiscoverySessionDestroyCallbackCalled() {
