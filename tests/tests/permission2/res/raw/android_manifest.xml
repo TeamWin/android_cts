@@ -87,6 +87,7 @@
     <protected-broadcast android:name="android.os.action.DEVICE_IDLE_MODE_CHANGED" />
     <protected-broadcast android:name="android.os.action.POWER_SAVE_WHITELIST_CHANGED" />
     <protected-broadcast android:name="android.os.action.POWER_SAVE_TEMP_WHITELIST_CHANGED" />
+    <protected-broadcast android:name="android.os.action.POWER_SAVE_MODE_CHANGED_INTERNAL" />
 
     <protected-broadcast android:name="android.os.action.SCREEN_BRIGHTNESS_BOOST_CHANGED" />
 
@@ -265,6 +266,7 @@
     <protected-broadcast android:name="com.android.server.WifiManager.action.START_SCAN" />
     <protected-broadcast android:name="com.android.server.WifiManager.action.START_PNO" />
     <protected-broadcast android:name="com.android.server.WifiManager.action.DELAYED_DRIVER_STOP" />
+    <protected-broadcast android:name="com.android.server.WifiManager.action.DEVICE_IDLE" />
     <protected-broadcast android:name="com.android.server.action.REMOTE_BUGREPORT_SHARING_ACCEPTED" />
     <protected-broadcast android:name="com.android.server.action.REMOTE_BUGREPORT_SHARING_DECLINED" />
     <protected-broadcast android:name="android.net.wifi.WIFI_STATE_CHANGED" />
@@ -374,7 +376,10 @@
     <protected-broadcast android:name="android.app.action.ACTION_PASSWORD_FAILED" />
     <protected-broadcast android:name="android.app.action.ACTION_PASSWORD_SUCCEEDED" />
     <protected-broadcast android:name="com.android.server.ACTION_EXPIRED_PASSWORD_NOTIFICATION" />
+
     <protected-broadcast android:name="android.intent.action.MANAGED_PROFILE_ADDED" />
+    <protected-broadcast android:name="android.intent.action.MANAGED_PROFILE_UNLOCKED" />
+    <protected-broadcast android:name="android.intent.action.MANAGED_PROFILE_REMOVED" />
 
     <protected-broadcast android:name="android.bluetooth.adapter.action.BLE_STATE_CHANGED" />
     <protected-broadcast android:name="android.content.jobscheduler.JOB_DELAY_EXPIRED" />
@@ -412,6 +417,7 @@
     <protected-broadcast android:name="android.os.action.ACTION_EFFECTS_SUPPRESSOR_CHANGED" />
     <protected-broadcast android:name="android.os.action.LIGHT_DEVICE_IDLE_MODE_CHANGED" />
     <protected-broadcast android:name="android.os.storage.action.VOLUME_STATE_CHANGED" />
+    <protected-broadcast android:name="android.os.storage.action.DISK_SCANNED" />
     <protected-broadcast android:name="com.android.server.action.UPDATE_TWILIGHT_STATE" />
     <protected-broadcast android:name="com.android.server.device_idle.STEP_IDLE_STATE" />
     <protected-broadcast android:name="com.android.server.device_idle.STEP_LIGHT_IDLE_STATE" />
@@ -432,7 +438,6 @@
     <protected-broadcast android:name="android.intent.action.DYNAMIC_SENSOR_CHANGED" />
 
     <protected-broadcast android:name="android.intent.action.ACTION_RADIO_OFF" />
-    <protected-broadcast android:name="android.intent.action.MANAGED_PROFILE_UNLOCKED" />
 
     <protected-broadcast android:name="android.accounts.LOGIN_ACCOUNTS_CHANGED" />
     <protected-broadcast android:name="com.android.sync.SYNC_CONN_STATUS_CHANGED" />
@@ -449,6 +454,13 @@
     <protected-broadcast android:name="android.bluetooth.input.profile.action.REPORT" />
 
     <protected-broadcast android:name="android.intent.action.TWILIGHT_CHANGED" />
+
+    <protected-broadcast android:name="com.android.server.fingerprint.ACTION_LOCKOUT_RESET" />
+    <protected-broadcast android:name="android.net.wifi.PASSPOINT_ICON_RECEIVED" />
+    <protected-broadcast android:name="com.android.server.notification.CountdownConditionProvider" />
+
+    <!-- @hide UCE service Notification -->
+    <protected-broadcast android:name="com.android.ims.internal.uce.UCE_SERVICE_UP" />
 
     <!-- ====================================================================== -->
     <!--                          RUNTIME PERMISSIONS                           -->
@@ -694,7 +706,9 @@
                       android:description="@string/permgroupdesc_phone"
                       android:priority="500" />
 
-    <!-- Allows read only access to phone state.
+    <!-- Allows read only access to phone state, including the phone number of the device,
+         current cellular network information, the status of any ongoing calls, and a list of any
+         {@link android.telecom.PhoneAccount}s registered on the device.
          <p class="note"><strong>Note:</strong> If <em>both</em> your <a
          href="{@docRoot}guide/topics/manifest/uses-sdk-element.html#min">{@code
          minSdkVersion}</a> and <a
@@ -821,6 +835,26 @@
                 android:label="@string/permlab_recordAudio"
                 android:description="@string/permdesc_recordAudio"
                 android:protectionLevel="dangerous"/>
+
+    <!-- ====================================================================== -->
+    <!-- Permissions for accessing the UCE Service                              -->
+    <!-- ====================================================================== -->
+
+    <!-- @hide Allows an application to Access UCE-Presence.
+         <p>Protection level: dangerous
+    -->
+    <permission android:name="android.permission.ACCESS_UCE_PRESENCE_SERVICE"
+                android:permissionGroup="android.permission-group.PHONE"
+                android:protectionLevel="dangerous"/>
+
+    <!-- @hide Allows an application to Access UCE-OPTIONS.
+         <p>Protection level: dangerous
+    -->
+    <permission android:name="android.permission.ACCESS_UCE_OPTIONS_SERVICE"
+                android:permissionGroup="android.permission-group.PHONE"
+                android:protectionLevel="dangerous"/>
+
+
 
     <!-- ====================================================================== -->
     <!-- Permissions for accessing the device camera                            -->
@@ -965,16 +999,6 @@
     <!-- INSTALL PERMISSIONS                                                    -->
     <!-- ====================================================================== -->
 
-    `   <!-- =========================================== -->
-    <!-- Permissions for accessing contact metadata -->
-    <!-- =========================================== -->
-    <eat-comment />
-
-    <!-- @SystemApi Allows an application to read/write contact metadata.
-         <p>Not for use by third-party applications. -->
-    <permission android:name="android.permission.READ_WRITE_CONTACT_METADATA"
-                android:protectionLevel="signature|system" />
-
     <!-- ================================== -->
     <!-- Permissions for accessing messages -->
     <!-- ================================== -->
@@ -984,6 +1008,11 @@
          to handle the respond-via-message action during incoming calls.
          <p>Not for use by third-party applications. -->
     <permission android:name="android.permission.SEND_RESPOND_VIA_MESSAGE"
+                android:protectionLevel="signature|privileged" />
+
+    <!-- @SystemApi Allows an application to send SMS to premium shortcodes without user permission.
+         <p>Not for use by third-party applications. -->
+    <permission android:name="android.permission.SEND_SMS_NO_CONFIRMATION"
                 android:protectionLevel="signature|privileged" />
 
     <!-- Allows an application to filter carrier specific sms.
@@ -1255,7 +1284,7 @@
     <!-- ================================== -->
     <eat-comment />
 
-    <!-- Allows applications to enter Wi-Fi Multicast mode.
+    <!-- Allows applications to enter Wi-Fi ffMulticast mode.
          <p>Protection level: normal
     -->
     <permission android:name="android.permission.CHANGE_WIFI_MULTICAST_STATE"
@@ -1480,9 +1509,19 @@
 
     <!-- Allows an application to manage access to documents, usually as part
          of a document picker.
+         <p>This permission should <em>only</em> be requested by the platform
+         document management app.  This permission cannot be granted to
+         third-party apps.
          <p>Protection level: signature
     -->
     <permission android:name="android.permission.MANAGE_DOCUMENTS"
+                android:protectionLevel="signature" />
+
+    <!-- @hide Allows an application to cache content.
+         <p>Not for use by third-party applications.
+         <p>Protection level: signature
+    -->
+    <permission android:name="android.permission.CACHE_CONTENT"
                 android:protectionLevel="signature" />
 
     <!-- ================================== -->
@@ -1607,6 +1646,11 @@
          This permission is not available to third party applications. -->
     <permission android:name="android.permission.GET_PACKAGE_IMPORTANCE"
                 android:protectionLevel="signature|privileged" />
+
+    <!-- Allows use of PendingIntent.getIntent().
+         @hide -->
+    <permission android:name="android.permission.GET_INTENT_SENDER_INTENT"
+                android:protectionLevel="signature" />
 
     <!-- ================================== -->
     <!-- Permissions affecting the display of other applications  -->
@@ -2126,6 +2170,15 @@
          <p>Protection level: signature
     -->
     <permission android:name="android.permission.BIND_PRINT_SERVICE"
+                android:protectionLevel="signature" />
+
+    <!-- Must be required by a {@link android.printservice.recommendation.RecommendationService},
+     to ensure that only the system can bind to it.
+     @hide
+     @SystemApi
+     <p>Protection level: signature
+    -->
+    <permission android:name="android.permission.BIND_PRINT_RECOMMENDATION_SERVICE"
                 android:protectionLevel="signature" />
 
     <!-- Must be required by a {@link android.nfc.cardemulation.HostApduService}
@@ -2695,7 +2748,7 @@
          OTA reboot *not* occur while the lock is held.
          @hide -->
     <permission android:name="android.permission.UPDATE_LOCK"
-                android:protectionLevel="signature|privileged" />
+                android:protectionLevel="signature|fvprivileged" />
 
     <!-- @SystemApi Allows an application to read the current set of notifications, including
          any metadata and intents attached.
@@ -2766,12 +2819,11 @@
                 android:protectionLevel="signature" />
 
     <!-- Must be required by an {@link
-         android.service.notification.NotificationAssistantService},
-         to ensure that only the system can bind to it.
+         android.service.notification.NotificationRankerService         to ensure that only the system can bind to it.
          <p>Protection level: signature
          @hide This is not a third-party API (intended for system apps). -->
     -->
-    <permission android:name="android.permission.BIND_NOTIFICATION_ASSISTANT_SERVICE"
+    <permission android:name="android.permission.BIND_NOTIFICATION_RANKER_SERVICE"
                 android:protectionLevel="signature" />
 
     <!-- Must be required by a {@link
@@ -2926,6 +2978,12 @@
     <permission android:name="android.permission.WRITE_BLOCKED_NUMBERS"
                 android:protectionLevel="signature" />
 
+    <!-- Must be required by an {@link android.service.vr.VrListenerService}, to ensure that only
+         the system can bind to it.
+         <p>Protection level: signature -->
+    <permission android:name="android.permission.BIND_VR_LISTENER_SERVICE"
+                android:protectionLevel="signature" />
+
     <application android:process="system"
                  android:persistent="true"
                  android:hasCode="false"
@@ -2935,9 +2993,9 @@
                  android:killAfterRestore="false"
                  android:icon="@drawable/ic_launcher_android"
                  android:supportsRtl="true"
-                 android:theme="@style/Theme.Material.DayNight.DarkActionBar"
-                 android:forceDeviceEncrypted="true"
-                 android:encryptionAware="true">
+                 android:theme="@style/Theme.Material.Light.DarkActionBar"
+                 android:defaultToDeviceProtectedStorage="true"
+                 android:directBootAware="true">
         <activity android:name="com.android.internal.app.ChooserActivity"
                   android:theme="@style/Theme.DeviceDefault.Resolver"
                   android:finishOnCloseSystemDialogs="true"
@@ -2971,7 +3029,7 @@
                         android:label="@string/managed_profile_label">
         </activity-alias>
         <activity android:name="com.android.internal.app.HeavyWeightSwitcherActivity"
-                  android:theme="@style/Theme.Material.DayNight.Dialog"
+                  android:theme="@style/Theme.Material.Light.Dialog"
                   android:label="@string/heavy_weight_switcher_title"
                   android:finishOnCloseSystemDialogs="true"
                   android:excludeFromRecents="true"
@@ -3004,7 +3062,7 @@
         <activity android:name="android.accounts.ChooseAccountActivity"
                   android:excludeFromRecents="true"
                   android:exported="true"
-                  android:theme="@style/Theme.Material.DayNight.Dialog"
+                  android:theme="@style/Theme.Material.Light.Dialog"
                   android:label="@string/choose_account_label"
                   android:process=":ui">
         </activity>
@@ -3012,14 +3070,14 @@
         <activity android:name="android.accounts.ChooseTypeAndAccountActivity"
                   android:excludeFromRecents="true"
                   android:exported="true"
-                  android:theme="@style/Theme.Material.DayNight.Dialog"
+                  android:theme="@style/Theme.Material.Light.Dialog"
                   android:label="@string/choose_account_label"
                   android:process=":ui">
         </activity>
 
         <activity android:name="android.accounts.ChooseAccountTypeActivity"
                   android:excludeFromRecents="true"
-                  android:theme="@style/Theme.Material.DayNight.Dialog"
+                  android:theme="@style/Theme.Material.Light.Dialog"
                   android:label="@string/choose_account_label"
                   android:process=":ui">
         </activity>
@@ -3027,19 +3085,19 @@
         <activity android:name="android.accounts.CantAddAccountActivity"
                   android:excludeFromRecents="true"
                   android:exported="true"
-                  android:theme="@style/Theme.Material.DayNight.Dialog.NoActionBar"
+                  android:theme="@style/Theme.Material.Light.Dialog.NoActionBar"
                   android:process=":ui">
         </activity>
 
         <activity android:name="android.accounts.GrantCredentialsPermissionActivity"
                   android:excludeFromRecents="true"
                   android:exported="true"
-                  android:theme="@style/Theme.Material.DayNight.DialogWhenLarge"
+                  android:theme="@style/Theme.Material.Light.DialogWhenLarge"
                   android:process=":ui">
         </activity>
 
         <activity android:name="android.content.SyncActivityTooManyDeletes"
-                  android:theme="@style/Theme.Material.DayNight.Dialog"
+                  android:theme="@style/Theme.Material.Light.Dialog"
                   android:label="@string/sync_too_many_deletes"
                   android:process=":ui">
         </activity>
@@ -3059,7 +3117,7 @@
         </activity>
 
         <activity android:name="com.android.internal.app.NetInitiatedActivity"
-                  android:theme="@style/Theme.Material.DayNight.Dialog.Alert"
+                  android:theme="@style/Theme.Material.Light.Dialog.Alert"
                   android:excludeFromRecents="true"
                   android:process=":ui">
         </activity>
@@ -3080,7 +3138,7 @@
         <activity android:name="com.android.internal.app.ConfirmUserCreationActivity"
                   android:excludeFromRecents="true"
                   android:process=":ui"
-                  android:theme="@style/Theme.Material.DayNight.Dialog.Alert">
+                  android:theme="@style/Theme.Material.Light.Dialog.Alert">
             <intent-filter android:priority="1000">
                 <action android:name="android.os.action.CREATE_USER" />
                 <category android:name="android.intent.category.DEFAULT" />
@@ -3088,7 +3146,7 @@
         </activity>
 
         <activity android:name="com.android.internal.app.UnlaunchableAppActivity"
-                  android:theme="@style/Theme.Material.DayNight.Dialog.Alert"
+                  android:theme="@style/Theme.Material.Light.Dialog.Alert"
                   android:excludeFromRecents="true"
                   android:process=":ui">
         </activity>
