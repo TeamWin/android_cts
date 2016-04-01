@@ -60,12 +60,17 @@ public class SeccompTest extends AndroidTestCase {
     }
 
     public void testSeccomp() {
-        assertTrue("Please enable seccomp support "
-                   + "in your kernel (CONFIG_SECCOMP_FILTER=y)",
-                   OSFeatures.hasSeccompSupport());
+        if (OSFeatures.needsSeccompSupport()) {
+            assertTrue("Please enable seccomp support "
+                       + "in your kernel (CONFIG_SECCOMP_FILTER=y)",
+                       OSFeatures.hasSeccompSupport());
+        }
     }
 
     public void testKernelBasicTests() {
+        if (!OSFeatures.needsSeccompSupport())
+            return;
+
         if (isRunningUnderEmulatedAbi()) {
             Log.d(TAG, "Skipping test running under an emulated ABI");
             return;
@@ -97,6 +102,9 @@ public class SeccompTest extends AndroidTestCase {
     }
 
     public void testKernelTrapTests() {
+        if (!OSFeatures.needsSeccompSupport())
+            return;
+
         final String[] tests = {
             "TRAP.dfl",
             "TRAP.ign",
@@ -106,6 +114,9 @@ public class SeccompTest extends AndroidTestCase {
     }
 
     public void testKernelPrecedenceTests() {
+        if (!OSFeatures.needsSeccompSupport())
+            return;
+
         final String[] tests = {
             "precedence.allow_ok",
             "precedence.kill_is_highest",
@@ -122,6 +133,9 @@ public class SeccompTest extends AndroidTestCase {
 
     /* // The SECCOMP_RET_TRACE does not work under Android Arm32.
     public void testKernelTraceTests() {
+        if (!OSFeatures.needsSeccompSupport())
+            return;
+
         final String[] tests = {
             "TRACE_poke.read_has_side_effects",
             "TRACE_poke.getpid_runs_normally",
@@ -134,6 +148,9 @@ public class SeccompTest extends AndroidTestCase {
     */
 
     public void testKernelTSYNCTests() {
+        if (!OSFeatures.needsSeccompSupport())
+            return;
+
         if (isRunningUnderEmulatedAbi()) {
             Log.d(TAG, "Skipping test running under an emulated ABI");
             return;
@@ -174,6 +191,9 @@ public class SeccompTest extends AndroidTestCase {
      */
     public void testIsolatedServicePolicy() throws InterruptedException, ExecutionException,
            RemoteException {
+        if (!OSFeatures.needsSeccompSupport())
+            return;
+
         if (isRunningUnderEmulatedAbi()) {
             Log.d(TAG, "Skipping test running under an emulated ABI");
             return;
@@ -202,6 +222,9 @@ public class SeccompTest extends AndroidTestCase {
      */
     public void testViolateIsolatedServicePolicy() throws InterruptedException,
            ExecutionException, RemoteException {
+        if (!OSFeatures.needsSeccompSupport())
+            return;
+
         if (isRunningUnderEmulatedAbi()) {
             Log.d(TAG, "Skipping test running under an emulated ABI");
             return;
