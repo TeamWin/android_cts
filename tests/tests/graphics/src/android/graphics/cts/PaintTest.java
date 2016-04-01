@@ -1189,6 +1189,13 @@ public class PaintTest extends AndroidTestCase {
                 assertEquals(0.0f, width);
             }
             {
+                for (int i = 0; i < string.length(); i++) {
+                    final float width = p.getRunAdvance(string, i, i + 1, 0, string.length(),
+                            false, i);
+                    assertEquals(0.0f, width);
+                }
+            }
+            {
                 final float widthToMid = p.getRunAdvance(string, 0, string.length(), 0,
                         string.length(), false, string.length() / 2);
                 final float widthToTail = p.getRunAdvance(string, 0, string.length(), 0,
@@ -1203,10 +1210,31 @@ public class PaintTest extends AndroidTestCase {
                         string.length(), false, string.length());
                 assertTrue(widthFromHead > widthFromSecond);
             }
+            {
+                float width = 0.0f;
+                for (int i = 0; i < string.length(); i++) {
+                    width += p.getRunAdvance(string, i, i + 1, 0, string.length(), false, i + 1);
+                }
+                final float totalWidth = p.getRunAdvance(string, 0, string.length(), 0,
+                        string.length(), false, string.length());
+                assertEquals(totalWidth, width, 1.0f);
+            }
         }
         {
             // RTL
             String string = "\u0644\u063A\u0629 \u0639\u0631\u0628\u064A\u0629"; // Arabic
+            {
+                final float width = p.getRunAdvance(string, 0, string.length(), 0,
+                        string.length(), true, 0);
+                assertEquals(0.0f, width);
+            }
+            {
+                for (int i = 0; i < string.length(); i++) {
+                    final float width = p.getRunAdvance(string, i, i + 1, 0, string.length(),
+                            true, i);
+                    assertEquals(0.0f, width);
+                }
+            }
             {
                 final float widthToMid = p.getRunAdvance(string, 0, string.length(), 0,
                         string.length(), true, string.length() / 2);
