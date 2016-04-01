@@ -162,7 +162,7 @@ public class AudioRecordingConfigurationTest extends CtsAndroidTestCase {
         // just call the callback once directly so it's marked as tested
         final AudioManager.AudioRecordingCallback arc =
                 (AudioManager.AudioRecordingCallback) callback;
-        arc.onRecordConfigChanged(new AudioRecordingConfiguration[0]);
+        arc.onRecordingConfigChanged(new AudioRecordingConfiguration[0]);
     }
 
     public void testParcel() throws Exception {
@@ -216,7 +216,7 @@ public class AudioRecordingConfigurationTest extends CtsAndroidTestCase {
         }
 
         @Override
-        public void onRecordConfigChanged(AudioRecordingConfiguration[] configs) {
+        public void onRecordingConfigChanged(AudioRecordingConfiguration[] configs) {
             mCalled = true;
             mParamMatch = verifyAudioConfig(mTestSource, mTestSession, mAudioRecord.getFormat(),
                     mAudioRecord.getRoutedDevice(), configs);
