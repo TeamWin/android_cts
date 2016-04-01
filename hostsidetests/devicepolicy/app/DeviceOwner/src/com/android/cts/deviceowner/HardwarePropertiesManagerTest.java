@@ -44,7 +44,7 @@ public class HardwarePropertiesManagerTest extends BaseDeviceOwnerTest {
                 || temp == HardwarePropertiesManager.UNDEFINED_TEMPERATURE);
 
         // Compare current temperature and shutdown threshold.
-        assertTrue(temp < shutdownTemp
+        assertTrue(temp < shutdownTemp || temp == HardwarePropertiesManager.UNDEFINED_TEMPERATURE
                 || shutdownTemp == HardwarePropertiesManager.UNDEFINED_TEMPERATURE);
         // Compare throttling and shutdown thresholds.
         assertTrue(throttlingTemp < shutdownTemp
