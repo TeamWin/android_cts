@@ -176,6 +176,14 @@ public class DecoderTest extends MediaPlayerTestBase {
         testTimeStampOrdering(R.raw.sinesweeptsaac);
     }
 
+    public void testDecodeVorbis() throws Exception {
+        testTimeStampOrdering(R.raw.sinesweepvorbis);
+    }
+
+    public void testDecodeOpus() throws Exception {
+        testTimeStampOrdering(R.raw.sinesweepopus);
+    }
+
     public void testDecode51M4a() throws Exception {
         decodeToMemory(R.raw.sinesweep51m4a, RESET_MODE_NONE, CONFIG_MODE_NONE, -1, null);
     }
