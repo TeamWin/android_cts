@@ -18,9 +18,8 @@ package android.location.cts;
 
 import android.location.GnssNavigationMessage;
 import android.location.GnssNavigationMessageEvent;
-import android.test.AndroidTestCase;
 
-public class GnssNavigationMessageEventCallbackTest extends AndroidTestCase {
+public class GnssNavigationMessageEventCallbackTest extends GnssTestCase {
     private static class MockCallback extends GnssNavigationMessageEvent.Callback {
     }
 

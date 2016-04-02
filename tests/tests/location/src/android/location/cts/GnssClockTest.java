@@ -18,9 +18,8 @@ package android.location.cts;
 
 import android.location.GnssClock;
 import android.os.Parcel;
-import android.test.AndroidTestCase;
 
-public class GnssClockTest extends AndroidTestCase {
+public class GnssClockTest extends GnssTestCase {
     public void testDescribeContents() {
         GnssClock clock = new GnssClock();
         clock.describeContents();

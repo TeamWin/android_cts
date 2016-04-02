@@ -19,7 +19,6 @@ package android.location.cts;
 import android.location.GnssMeasurement;
 import android.location.GnssMeasurementsEvent;
 import android.location.GpsStatus;
-import android.test.AndroidTestCase;
 import android.util.Log;
 
 import java.util.Arrays;
@@ -55,7 +54,7 @@ import java.util.List;
  5. If {@link GnssMeasurementsEvent}s are received: verify all mandatory fields, the test will fail
     if any of the mandatory fields is not populated or in the expected range.
  */
-public class GnssMeasurementWhenNoLocationTest extends AndroidTestCase {
+public class GnssMeasurementWhenNoLocationTest extends GnssTestCase {
 
     private static final String TAG = "GnssMeasWhenNoFixTest";
     private TestGnssMeasurementListener mMeasurementListener;

@@ -19,9 +19,8 @@ package android.location.cts;
 import android.location.GnssNavigationMessage;
 import android.location.GnssNavigationMessageEvent;
 import android.os.Parcel;
-import android.test.AndroidTestCase;
 
-public class GnssNavigationMessageEventTest extends AndroidTestCase {
+public class GnssNavigationMessageEventTest extends GnssTestCase {
     public void testDescribeContents() {
         GnssNavigationMessage message = new GnssNavigationMessage();
         GnssNavigationMessageEvent event = new GnssNavigationMessageEvent(message);
