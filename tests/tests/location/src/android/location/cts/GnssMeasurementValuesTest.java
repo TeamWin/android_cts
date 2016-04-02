@@ -18,7 +18,6 @@ package android.location.cts;
 
 import android.location.GnssMeasurement;
 import android.location.GnssMeasurementsEvent;
-import android.test.AndroidTestCase;
 import android.util.Log;
 
 import java.util.List;
@@ -39,7 +38,7 @@ import java.util.List;
  *  5. Verify {@link GnssMeasurement}s (all mandatory fields), the test will fail if any of the
  *     mandatory fields is not populated or in the expected range.
  */
-public class GnssMeasurementValuesTest extends AndroidTestCase {
+public class GnssMeasurementValuesTest extends GnssTestCase {
 
     private static final String TAG = "GnssMeasValuesTest";
     private static final int LOCATION_TO_COLLECT_COUNT = 5;

@@ -13,20 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package android.location.cts;
 
-import android.location.GnssStatusCallback;
+import android.test.AndroidTestCase;
 
-public class GnssStatusCallbackTest extends GnssTestCase {
-    private static class MockCallback extends GnssStatusCallback {
-    }
-
-    public void testAllMethodsExist() {
-        GnssStatusCallback callback = new MockCallback();
-        callback.onStarted();
-        callback.onFirstFix(10);
-        callback.onSatelliteStatusChanged(null);
-        callback.onStopped();
-    }
+/**
+ * Base Test Case class for all Gnss Tests.
+ */
+public abstract class GnssTestCase extends AndroidTestCase {
+    protected GnssTestCase() {}
 }

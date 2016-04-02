@@ -18,7 +18,6 @@ package android.location.cts;
 
 import android.location.GnssNavigationMessage;
 import android.location.GnssNavigationMessageEvent;
-import android.test.AndroidTestCase;
 import android.os.Parcel;
 import android.util.Log;
 
@@ -39,7 +38,7 @@ import java.util.List;
  * 4. Verify {@link GnssNavigationMessage}s (all mandatory fields), the test will fail if any of the
  *    mandatory fields is not populated or in the expected range.
  */
-public class GnssNavigationMessageTest extends AndroidTestCase {
+public class GnssNavigationMessageTest extends GnssTestCase {
 
     private static final String TAG = "GpsNavMsgTest";
     private TestLocationManager mTestLocationManager;

@@ -18,7 +18,6 @@ package android.location.cts;
 
 import android.location.GnssNavigationMessage;
 import android.location.GnssNavigationMessageEvent;
-import android.test.AndroidTestCase;
 import android.util.Log;
 
 import java.util.List;
@@ -48,7 +47,7 @@ import java.util.List;
  *                  2.4.2 The test might fail in a future Android release, when this requirement
  *                        becomes mandatory.
  */
-public class GnssNavigationMessageRegistrationTest extends AndroidTestCase {
+public class GnssNavigationMessageRegistrationTest extends GnssTestCase {
 
     private static final String TAG = "GpsNavMsgRegTest";
     private TestLocationManager mTestLocationManager;
