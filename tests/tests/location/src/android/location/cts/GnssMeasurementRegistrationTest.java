@@ -19,7 +19,6 @@ package android.location.cts;
 import android.location.GnssMeasurement;
 import android.location.GnssMeasurementsEvent;
 import android.location.GpsStatus;
-import android.test.AndroidTestCase;
 import android.util.Log;
 
 import java.util.List;
@@ -49,9 +48,9 @@ import java.util.concurrent.TimeUnit;
  *                  2.4.2 The test might fail in a future Android release, when this requirement
  *                        becomes mandatory.
  */
-public class GnssMeasurementRegistrationTest extends AndroidTestCase {
+public class GnssMeasurementRegistrationTest extends GnssTestCase {
 
-    private static final String TAG = "GpsMeasRegistrationTest";
+    private static final String TAG = "GnssMeasRegTest";
     private TestLocationManager mTestLocationManager;
     private static final int EVENTS_COUNT = 5;
     private static final int GPS_EVENTS_COUNT = 1;

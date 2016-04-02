@@ -19,9 +19,8 @@ package android.location.cts;
 import android.location.GnssClock;
 import android.location.GnssMeasurement;
 import android.location.GnssMeasurementsEvent;
-import android.test.AndroidTestCase;
 
-public class GnssMeasurementsEventCallbackTest extends AndroidTestCase {
+public class GnssMeasurementsEventCallbackTest extends GnssTestCase {
     private static class MockCallback extends GnssMeasurementsEvent.Callback {
     }
 
