@@ -19,7 +19,6 @@ import android.sample.SampleDeviceActivity;
 import android.test.ActivityInstrumentationTestCase2;
 
 import com.android.compatibility.common.util.DeviceReportLog;
-import com.android.compatibility.common.util.DynamicConfigDeviceSide;
 import com.android.compatibility.common.util.MeasureRun;
 import com.android.compatibility.common.util.MeasureTime;
 import com.android.compatibility.common.util.ResultType;
@@ -35,16 +34,6 @@ import java.util.Random;
  * This test measures the time taken to run a workload and adds in the report.
  */
 public class SampleDeviceResultTest extends ActivityInstrumentationTestCase2<SampleDeviceActivity> {
-
-    /**
-     * The default name for metrics report log file.
-     */
-    private String DEFAULT_REPORT_LOG_NAME = "DefaultMetrics";
-
-    /**
-     * The default name for a metrics stream.
-     */
-    private String DEFAULT_STREAM_NAME = "DefaultStream";
 
     /**
      * The number of times to repeat the test.
@@ -87,15 +76,15 @@ public class SampleDeviceResultTest extends ActivityInstrumentationTestCase2<Sam
         // Compute the stats.
         Stat.StatResult stat = Stat.getStat(result);
         // Create a new report to hold the metrics.
-        String reportLogName = getReportLogName();
-        String streamName = getStreamName("testSort-stream-name");
+        String reportLogName = "SampleDeviceTestMetrics";
+        String streamName = "test_sort_metrics";
         DeviceReportLog reportLog = new DeviceReportLog(reportLogName, streamName);
         // Add the results to the report.
-        reportLog.addValues("Times", result, ResultType.LOWER_BETTER, ResultUnit.MS);
-        reportLog.addValue("Min", stat.mMin, ResultType.LOWER_BETTER, ResultUnit.MS);
-        reportLog.addValue("Max", stat.mMax, ResultType.LOWER_BETTER, ResultUnit.MS);
+        reportLog.addValues("times", result, ResultType.LOWER_BETTER, ResultUnit.MS);
+        reportLog.addValue("min", stat.mMin, ResultType.LOWER_BETTER, ResultUnit.MS);
+        reportLog.addValue("max", stat.mMax, ResultType.LOWER_BETTER, ResultUnit.MS);
         // Every report must have a summary,
-        reportLog.setSummary("Average", stat.mAverage, ResultType.LOWER_BETTER, ResultUnit.MS);
+        reportLog.setSummary("average", stat.mAverage, ResultType.LOWER_BETTER, ResultUnit.MS);
         // Submit the report to the given instrumentation.
         reportLog.submit(getInstrumentation());
     }
@@ -123,39 +112,4 @@ public class SampleDeviceResultTest extends ActivityInstrumentationTestCase2<Sam
         }
         return true;
     }
-
-    /**
-     * Retreives name of report log from dynamic config.
-     *
-     * @return {@link String} name of the report log.
-     */
-    private String getReportLogName() {
-        try {
-            DynamicConfigDeviceSide dynamicConfig = new DynamicConfigDeviceSide(
-                    "CtsSampleDeviceTestCases");
-            return dynamicConfig.getValues("report-log-name").get(0);
-        } catch (Exception e) {
-            // Do nothing.
-        }
-        return DEFAULT_REPORT_LOG_NAME;
-    }
-
-    /**
-     * Retreives name of metrics stream from dynamic config.
-     *
-     * @param key The key in dynamic config containing stream name.
-     * @return {@link String} name of the stream.
-     */
-    private String getStreamName(String key) {
-        try {
-            DynamicConfigDeviceSide dynamicConfig = new DynamicConfigDeviceSide(
-                    "CtsSampleDeviceTestCases");
-            return dynamicConfig.getValues(key).get(0);
-        } catch (Exception e) {
-            // Do nothing.
-        }
-        return DEFAULT_STREAM_NAME ;
-    }
-
-
 }

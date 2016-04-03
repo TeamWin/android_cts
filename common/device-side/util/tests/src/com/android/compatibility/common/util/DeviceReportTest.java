@@ -88,10 +88,10 @@ public class DeviceReportTest extends TestCase {
     }
 
     public void testFile() throws Exception {
-        final File dir = new File(Environment.getExternalStorageDirectory(), "report-log-files");
         assertTrue("External storage is not mounted",
                 Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED));
-        assertTrue("Report Log directory missing", dir.isDirectory());
+        final File dir = new File(Environment.getExternalStorageDirectory(), "report-log-files");
+        assertTrue("Report Log directory missing", dir.isDirectory() || dir.mkdirs());
 
         // Remove files from earlier possible runs.
         File[] files = dir.listFiles();

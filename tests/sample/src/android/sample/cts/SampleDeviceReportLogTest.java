@@ -19,7 +19,6 @@ import android.sample.SampleDeviceActivity;
 import android.test.ActivityInstrumentationTestCase2;
 
 import com.android.compatibility.common.util.DeviceReportLog;
-import com.android.compatibility.common.util.DynamicConfigDeviceSide;
 import com.android.compatibility.common.util.ResultType;
 import com.android.compatibility.common.util.ResultUnit;
 
@@ -32,16 +31,6 @@ public class SampleDeviceReportLogTest
         extends ActivityInstrumentationTestCase2<SampleDeviceActivity> {
 
     /**
-     * The default name for metrics report log file.
-     */
-    private String DEFAULT_REPORT_LOG_NAME = "DefaultMetrics";
-
-    /**
-     * The default name for a metrics stream.
-     */
-    private String DEFAULT_STREAM_NAME = "DefaultStream";
-
-    /**
      * Sample numbers used by the sample tests.
      */
     private static final int MULTIPLICATION_NUMBER_1 = 23;
@@ -50,10 +39,10 @@ public class SampleDeviceReportLogTest
     private static final int COUNT_START = 1;
     private static final int COUNT_END = 1000;
 
-    private static final String EXPECTED_PRODUCT_TAG = "Expected Product";
-    private static final String ACTUAL_PRODUCT_TAG = "Actual Product";
-    private static final String START_TAG = "Count Start";
-    private static final String END_TAG = "Actual End";
+    private static final String EXPECTED_PRODUCT_TAG = "expected_product";
+    private static final String ACTUAL_PRODUCT_TAG = "actual_product";
+    private static final String START_TAG = "count_start";
+    private static final String END_TAG = "actual_end";
 
     /**
      * Constructor which passes the class of the activity to be instrumented.
@@ -71,8 +60,8 @@ public class SampleDeviceReportLogTest
         assertTrue("Multiplication result do not match", product == MULTIPLICATION_RESULT);
 
         // Log metrics from the test.
-        String reportLogName = getReportLogName();
-        String streamName = getStreamName("testMultiplication-stream-name");
+        String reportLogName = "SampleDeviceTestMetrics";
+        String streamName = "test_multiplication_metrics";
         DeviceReportLog reportLog = new DeviceReportLog(reportLogName, streamName);
         reportLog.addValue(EXPECTED_PRODUCT_TAG, 1.0 * MULTIPLICATION_RESULT, ResultType.NEUTRAL,
                 ResultUnit.NONE);
@@ -85,7 +74,7 @@ public class SampleDeviceReportLogTest
      * Sample test to check counting up.
      */
     public void testCountUp() {
-        String streamName = getStreamName("testCountUp-stream-name");
+        String streamName = "test_count_up_metrics";
         countHelper(1, streamName);
     }
 
@@ -93,7 +82,7 @@ public class SampleDeviceReportLogTest
      * Sample test to check counting down.
      */
     public void testCountDown() {
-        String streamName = getStreamName("testCountDown-stream-name");
+        String streamName = "test_count_down_metrics";
         countHelper(2, streamName);
     }
 
@@ -122,45 +111,11 @@ public class SampleDeviceReportLogTest
         }
 
         // Log metrics.
-        String reportLogName = getReportLogName();
+        String reportLogName = "SampleDeviceTestMetrics";
         DeviceReportLog reportLog = new DeviceReportLog(reportLogName, streamName);
-        reportLog.addValue(streamName + START_TAG, 1.0 * start, ResultType.NEUTRAL, ResultUnit.NONE);
-        reportLog.addValue(streamName + END_TAG, 1.0 * end, ResultType.NEUTRAL, ResultUnit.NONE);
-        reportLog.setSummary(streamName + END_TAG, 1.0 * end, ResultType.NEUTRAL, ResultUnit.NONE);
+        reportLog.addValue(START_TAG, 1.0 * start, ResultType.NEUTRAL, ResultUnit.NONE);
+        reportLog.addValue(END_TAG, 1.0 * end, ResultType.NEUTRAL, ResultUnit.NONE);
+        reportLog.setSummary(END_TAG, 1.0 * end, ResultType.NEUTRAL, ResultUnit.NONE);
         reportLog.submit(getInstrumentation());
-    }
-
-    /**
-     * Retreives name of report log from dynamic config.
-     *
-     * @return {@link String} name of the report log.
-     */
-    private String getReportLogName() {
-        try {
-            DynamicConfigDeviceSide dynamicConfig = new DynamicConfigDeviceSide(
-                    "CtsSampleDeviceTestCases");
-            return dynamicConfig.getValues("report-log-name").get(0);
-        } catch (Exception e) {
-            // Do nothing.
-        }
-        return DEFAULT_REPORT_LOG_NAME ;
-    }
-
-
-    /**
-     * Retreives name of metrics stream from dynamic config.
-     *
-     * @param key The key in dynamic config containing stream name.
-     * @return {@link String} name of the stream.
-     */
-    private String getStreamName(String key) {
-        try {
-            DynamicConfigDeviceSide dynamicConfig = new DynamicConfigDeviceSide(
-                    "CtsSampleDeviceTestCases");
-            return dynamicConfig.getValues(key).get(0);
-        } catch (Exception e) {
-            // Do nothing.
-        }
-        return DEFAULT_STREAM_NAME ;
     }
 }

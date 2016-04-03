@@ -27,8 +27,12 @@ import java.util.List;
 
 public class HostInfoStore extends InfoStore {
 
-    private final File mJsonFile;
-    private JsonWriter mJsonWriter = null;
+    protected File mJsonFile;
+    protected JsonWriter mJsonWriter = null;
+
+    public HostInfoStore() {
+        mJsonFile = null;
+    }
 
     public HostInfoStore(File file) throws Exception {
         mJsonFile = file;
