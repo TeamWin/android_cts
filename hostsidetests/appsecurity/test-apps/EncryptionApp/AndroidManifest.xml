@@ -16,37 +16,68 @@
 
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
         package="com.android.cts.encryptionapp">
-
     <application android:label="EncryptionApp">
         <activity android:name=".UnawareActivity"
-                android:exported="true"/>
+                android:exported="true">
+            <intent-filter>
+                <action android:name="com.android.cts.encryptionapp.TEST" />
+            </intent-filter>
+        </activity>
 
         <receiver android:name=".UnawareReceiver"
-                android:exported="true" />
+                android:exported="true">
+            <intent-filter>
+                <action android:name="com.android.cts.encryptionapp.TEST" />
+            </intent-filter>
+        </receiver>
 
         <service android:name=".UnawareService"
-                android:exported="true" />
+                android:exported="true">
+            <intent-filter>
+                <action android:name="com.android.cts.encryptionapp.TEST" />
+            </intent-filter>
+        </service>
 
         <provider android:name=".UnawareProvider"
                 android:authorities="com.android.cts.encryptionapp.unaware"
-                android:exported="true" />
+                android:exported="true">
+            <intent-filter>
+                <action android:name="com.android.cts.encryptionapp.TEST" />
+            </intent-filter>
+        </provider>
 
         <activity android:name=".AwareActivity"
                 android:directBootAware="true"
-                android:exported="true" />
+                android:exported="true">
+            <intent-filter>
+                <action android:name="com.android.cts.encryptionapp.TEST" />
+            </intent-filter>
+        </activity>
 
         <receiver android:name=".AwareReceiver"
                 android:directBootAware="true"
-                android:exported="true" />
+                android:exported="true">
+            <intent-filter>
+                <action android:name="com.android.cts.encryptionapp.TEST" />
+            </intent-filter>
+        </receiver>
 
         <service android:name=".AwareService"
                 android:directBootAware="true"
-                android:exported="true" />
+                android:exported="true">
+            <intent-filter>
+                <action android:name="com.android.cts.encryptionapp.TEST" />
+            </intent-filter>
+        </service>
 
         <provider android:name=".AwareProvider"
                 android:authorities="com.android.cts.encryptionapp.aware"
                 android:directBootAware="true"
-                android:exported="true" />
+                android:exported="true">
+            <intent-filter>
+                <action android:name="com.android.cts.encryptionapp.TEST" />
+            </intent-filter>
+        </provider>
 
         <uses-library android:name="android.test.runner" />
     </application>
