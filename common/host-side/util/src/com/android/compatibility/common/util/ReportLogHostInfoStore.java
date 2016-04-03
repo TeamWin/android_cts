@@ -15,7 +15,7 @@
  */
 package com.android.compatibility.common.util;
 
-import android.util.JsonWriter;
+import com.android.json.stream.JsonWriter;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -24,11 +24,11 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 
-public class ReportLogDeviceInfoStore extends DeviceInfoStore {
+public class ReportLogHostInfoStore extends HostInfoStore {
 
     private final String mStreamName;
 
-    public ReportLogDeviceInfoStore(File jsonFile, String streamName) throws Exception {
+    public ReportLogHostInfoStore(File jsonFile, String streamName) throws Exception {
         mJsonFile = jsonFile;
         mStreamName = streamName;
     }

@@ -132,13 +132,16 @@ public class SampleHostResultTest extends DeviceTestCase implements IAbiReceiver
         // Compute the stats.
         Stat.StatResult stat = Stat.getStat(result);
         // Get the report for this test and add the results to record.
+        String reportLogName = "SampleHostTestMetrics";
+        String streamName = "test_transfer_time_metrics";
         MetricsReportLog report = new MetricsReportLog(mDevice.getSerialNumber(), mAbi.getName(),
-                String.format("%s#testTransferTime", getClass().getCanonicalName()));
-        report.addValues("Times", result, ResultType.LOWER_BETTER, ResultUnit.MS);
-        report.addValue("Min", stat.mMin, ResultType.LOWER_BETTER, ResultUnit.MS);
-        report.addValue("Max", stat.mMax, ResultType.LOWER_BETTER, ResultUnit.MS);
+                String.format("%s#testTransferTime", getClass().getCanonicalName()),
+                reportLogName, streamName);
+        report.addValues("times", result, ResultType.LOWER_BETTER, ResultUnit.MS);
+        report.addValue("min", stat.mMin, ResultType.LOWER_BETTER, ResultUnit.MS);
+        report.addValue("max", stat.mMax, ResultType.LOWER_BETTER, ResultUnit.MS);
         // Every report must have a summary,
-        report.setSummary("Average", stat.mAverage, ResultType.LOWER_BETTER, ResultUnit.MS);
+        report.setSummary("average", stat.mAverage, ResultType.LOWER_BETTER, ResultUnit.MS);
         // Send the report to Tradefed.
         report.submit();
     }
