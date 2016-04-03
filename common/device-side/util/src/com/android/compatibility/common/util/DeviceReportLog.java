@@ -37,7 +37,8 @@ import java.io.IOException;
 public class DeviceReportLog extends ReportLog {
     private static final String TAG = DeviceReportLog.class.getSimpleName();
     private static final String RESULT = "COMPATIBILITY_TEST_RESULT";
-    private static final String DEFAULT_REPORT_LOG_NAME = "DefaultTestMetrics";
+    // TODO(mishragaurav): Remove default names and constructor after fixing b/27950009.
+    private static final String DEFAULT_REPORT_LOG_NAME = "DefaultDeviceTestMetrics";
     private static final String DEFAULT_STREAM_NAME = "DefaultStream";
     private static final int INST_STATUS_ERROR = -1;
     private static final int INST_STATUS_IN_PROGRESS = 2;
@@ -72,7 +73,7 @@ public class DeviceReportLog extends ReportLog {
 
     @Override
     public void addValue(String source, String message, double value, ResultType type,
-             ResultUnit unit) {
+            ResultUnit unit) {
         super.addValue(source, message, value, type, unit);
         try {
             store.addResult(message, value);
@@ -82,8 +83,7 @@ public class DeviceReportLog extends ReportLog {
     }
 
     @Override
-    public void addValue(String message, double value, ResultType type,
-                         ResultUnit unit) {
+    public void addValue(String message, double value, ResultType type, ResultUnit unit) {
         super.addValue(message, value, type, unit);
         try {
             store.addResult(message, value);
@@ -94,7 +94,7 @@ public class DeviceReportLog extends ReportLog {
 
     @Override
     public void addValues(String source, String message, double[] values, ResultType type,
-                         ResultUnit unit) {
+            ResultUnit unit) {
         super.addValues(source, message, values, type, unit);
         try {
             store.addArrayResult(message, values);
@@ -104,8 +104,7 @@ public class DeviceReportLog extends ReportLog {
     }
 
     @Override
-    public void addValues(String message, double[] values, ResultType type,
-                         ResultUnit unit) {
+    public void addValues(String message, double[] values, ResultType type, ResultUnit unit) {
         super.addValues(message, values, type, unit);
         try {
             store.addArrayResult(message, values);

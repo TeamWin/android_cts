@@ -25,6 +25,7 @@ import com.android.tradefed.log.LogUtil.CLog;
 import com.android.tradefed.targetprep.BuildError;
 import com.android.tradefed.targetprep.ITargetCleaner;
 import com.android.tradefed.targetprep.TargetSetupError;
+import com.android.tradefed.util.FileUtil;
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -42,6 +43,9 @@ public class ReportLogCollector implements ITargetCleaner {
 
     @Option(name = "dest-dir", description = "The directory under the result to store the files")
     private String mDestDir;
+
+    @Option(name = "temp-dir", description = "The temp directory containing host-side report logs")
+    private String mTempReportFolder;
 
     public ReportLogCollector() {
     }
@@ -79,19 +83,47 @@ public class ReportLogCollector implements ITargetCleaner {
         CompatibilityBuildHelper buildHelper = new CompatibilityBuildHelper(buildInfo);
         try {
             File resultDir = buildHelper.getResultDir();
+            if (mDestDir != null) {
+                resultDir = new File(resultDir, mDestDir);
+            }
+            resultDir.mkdirs();
+            if (!resultDir.isDirectory()) {
+                CLog.e("%s is not a directory", resultDir.getAbsolutePath());
+                return;
+            }
             String resultPath = resultDir.getAbsolutePath();
-            pull(device, mSrcDir, resultPath);
-        } catch (FileNotFoundException fnfe) {
-            fnfe.printStackTrace();
+            final File hostReportDir = FileUtil.createNamedTempDir(mTempReportFolder);
+            if (!hostReportDir.isDirectory()) {
+                CLog.e("%s is not a directory", hostReportDir.getAbsolutePath());
+                return;
+            }
+            String hostReportsPath = hostReportDir.getAbsolutePath();
+            pull(device, mSrcDir, hostReportsPath, resultPath);
+        } catch (Exception exception) {
+            exception.printStackTrace();
         }
     }
 
-    private void pull(ITestDevice device, String src, String dest) {
-        String command = String.format("adb -s %s pull %s %s", device.getSerialNumber(), src, dest);
+    private void pull(ITestDevice device, String deviceSrc, String hostSrc, String dest) {
+        String deviceSideCommand = String.format("adb -s %s pull %s %s", device.getSerialNumber(),
+                deviceSrc, dest);
+        String hostSideCommand = String.format("cp -r %s/* %s", hostSrc, dest);
+        String cleanUpCommand = String.format("rm -rf %s", hostSrc);
         try {
-            Process p = Runtime.getRuntime().exec(new String[]{"/bin/bash", "-c", command});
-            if (p.waitFor() != 0) {
-                CLog.e("Failed to run %s", command);
+            Process deviceProcess = Runtime.getRuntime().exec(new String[]{"/bin/bash", "-c",
+                    deviceSideCommand});
+            if (deviceProcess.waitFor() != 0) {
+                CLog.v("No device-side report logs pulled.");
+            }
+            Process hostProcess = Runtime.getRuntime().exec(new String[]{"/bin/bash", "-c",
+                    hostSideCommand});
+            if (hostProcess.waitFor() != 0) {
+                CLog.v("No host-side report logs pulled");
+            }
+            Process cleanUpProcess = Runtime.getRuntime().exec(new String[]{"/bin/bash", "-c",
+                    cleanUpCommand});
+            if (cleanUpProcess.waitFor() != 0) {
+                CLog.e("Failed to run %s", cleanUpCommand);
             }
         } catch (Exception e) {
             CLog.e("Caught exception during pull.");
