@@ -21,11 +21,16 @@ import static com.android.cts.encryptionapp.EncryptionApp.AWARE;
 import android.app.Activity;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.WindowManager;
 
 public class AwareActivity extends Activity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         Log.v(AWARE, "Activity.onCreate()");
+
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON
+                | WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON
+                | WindowManager.LayoutParams.FLAG_DISMISS_KEYGUARD);
     }
 }
