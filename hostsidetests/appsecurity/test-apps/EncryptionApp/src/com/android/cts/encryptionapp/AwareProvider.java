@@ -25,9 +25,12 @@ import android.net.Uri;
 import android.util.Log;
 
 public class AwareProvider extends ContentProvider {
+    public static volatile boolean sCreated = false;
+
     @Override
     public boolean onCreate() {
         Log.v(AWARE, "ContentProvider.onCreate()");
+        sCreated = true;
         return true;
     }
 

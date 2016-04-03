@@ -14,23 +14,9 @@
  * limitations under the License.
  */
 
-package com.android.cts.encryptionapp;
-
-import static com.android.cts.encryptionapp.EncryptionApp.UNAWARE;
+package com.android.cts.splitapp;
 
 import android.app.Activity;
-import android.os.Bundle;
-import android.util.Log;
-import android.view.WindowManager;
 
-public class UnawareActivity extends Activity {
-    @Override
-    public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        Log.v(UNAWARE, "Activity.onCreate()");
-
-        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON
-                | WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON
-                | WindowManager.LayoutParams.FLAG_DISMISS_KEYGUARD);
-    }
+public class MyActivity extends Activity {
 }
