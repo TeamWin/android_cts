@@ -220,6 +220,21 @@ public class CommonExternalStorageTest extends AndroidTestCase {
         return new File(dir, ".probe_" + System.nanoTime());
     }
 
+    public static File[] buildCommonChildDirs(File dir) {
+        return new File[] {
+                new File(dir, Environment.DIRECTORY_MUSIC),
+                new File(dir, Environment.DIRECTORY_PODCASTS),
+                new File(dir, Environment.DIRECTORY_ALARMS),
+                new File(dir, Environment.DIRECTORY_RINGTONES),
+                new File(dir, Environment.DIRECTORY_NOTIFICATIONS),
+                new File(dir, Environment.DIRECTORY_PICTURES),
+                new File(dir, Environment.DIRECTORY_MOVIES),
+                new File(dir, Environment.DIRECTORY_DOWNLOADS),
+                new File(dir, Environment.DIRECTORY_DCIM),
+                new File(dir, Environment.DIRECTORY_DOCUMENTS),
+        };
+    }
+
     public static void assertDirReadOnlyAccess(File path) {
         Log.d(TAG, "Asserting read-only access to " + path);
 
@@ -230,8 +245,9 @@ public class CommonExternalStorageTest extends AndroidTestCase {
 
         try {
             final File probe = buildProbeFile(path);
-            probe.createNewFile();
-            probe.delete();
+            assertFalse(probe.createNewFile());
+            assertFalse(probe.exists());
+            assertFalse(probe.delete());
             fail("able to create probe!");
         } catch (IOException e) {
             // expected
@@ -248,8 +264,10 @@ public class CommonExternalStorageTest extends AndroidTestCase {
 
         try {
             final File probe = buildProbeFile(path);
-            probe.createNewFile();
-            probe.delete();
+            assertTrue(probe.createNewFile());
+            assertTrue(probe.exists());
+            assertTrue(probe.delete());
+            assertFalse(probe.exists());
         } catch (IOException e) {
             fail("failed to create probe!");
         }
@@ -263,11 +281,18 @@ public class CommonExternalStorageTest extends AndroidTestCase {
 
         try {
             final File probe = buildProbeFile(path);
-            probe.createNewFile();
-            probe.delete();
+            assertFalse(probe.createNewFile());
+            assertFalse(probe.exists());
+            assertFalse(probe.delete());
             fail("able to create probe!");
         } catch (IOException e) {
             // expected
+        }
+    }
+
+    public static void assertDirNoWriteAccess(File[] paths) {
+        for (File path : paths) {
+            assertDirNoWriteAccess(path);
         }
     }
 
@@ -276,8 +301,9 @@ public class CommonExternalStorageTest extends AndroidTestCase {
 
         try {
             final File probe = buildProbeFile(path);
-            probe.createNewFile();
-            probe.delete();
+            assertFalse(probe.createNewFile());
+            assertFalse(probe.exists());
+            assertFalse(probe.delete());
             fail("able to create probe!");
         } catch (IOException e) {
             // expected
