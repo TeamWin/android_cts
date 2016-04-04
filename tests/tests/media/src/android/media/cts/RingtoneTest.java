@@ -54,7 +54,14 @@ public class RingtoneTest extends InstrumentationTestCase {
         mAudioManager.setStreamVolume(AudioManager.STREAM_RING, maxVolume / 2,
                 AudioManager.FLAG_ALLOW_RINGER_MODES);
         // make sure that we are not in silent mode
-        mAudioManager.setRingerMode(AudioManager.RINGER_MODE_NORMAL);
+        try {
+            Utils.toggleNotificationPolicyAccess(
+                    mContext.getPackageName(), getInstrumentation(), true);
+            mAudioManager.setRingerMode(AudioManager.RINGER_MODE_NORMAL);
+        } finally {
+            Utils.toggleNotificationPolicyAccess(
+                    mContext.getPackageName(), getInstrumentation(), false);
+        }
 
         mDefaultRingUri = RingtoneManager.getActualDefaultRingtoneUri(mContext,
                 RingtoneManager.TYPE_RINGTONE);
@@ -80,7 +87,14 @@ public class RingtoneTest extends InstrumentationTestCase {
             mRingtone.setStreamType(mOriginalStreamType);
         }
         if (mAudioManager != null) {
-            mAudioManager.setRingerMode(mOriginalRingerMode);
+            try {
+                Utils.toggleNotificationPolicyAccess(
+                        mContext.getPackageName(), getInstrumentation(), true);
+                mAudioManager.setRingerMode(mOriginalRingerMode);
+            } finally {
+                Utils.toggleNotificationPolicyAccess(
+                        mContext.getPackageName(), getInstrumentation(), false);
+            }
             mAudioManager.setStreamVolume(AudioManager.STREAM_RING, mOriginalVolume,
                     AudioManager.FLAG_ALLOW_RINGER_MODES);
         }
