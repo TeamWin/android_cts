@@ -45,6 +45,9 @@
             android:label="@string/accessibility_text_traversal_test_activity"
             android:name=".AccessibilityTextTraversalActivity"/>
 
+        <activity android:label="Activity for testing window accessibility reporting"
+             android:name=".AccessibilityWindowReportingActivity"/>
+
         <activity
             android:label="Full screen activity for gesture dispatch testing"
             android:name=".AccessibilityGestureDispatchTest$GestureDispatchActivity" />
