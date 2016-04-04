@@ -205,7 +205,8 @@ public class AccessibilityManagerTest extends InstrumentationTestCase {
         mAccessibilityManager.addAccessibilityStateChangeListener(listener);
         long timeoutTime = System.currentTimeMillis() + WAIT_FOR_ACCESSIBILITY_ENABLED_TIMEOUT;
         synchronized (waitObject) {
-            if (!mAccessibilityManager.isEnabled() && (System.currentTimeMillis() < timeoutTime)) {
+            while (!mAccessibilityManager.isEnabled()
+                    && (System.currentTimeMillis() < timeoutTime)) {
                 waitObject.wait(timeoutTime - System.currentTimeMillis());
             }
         }
@@ -227,7 +228,8 @@ public class AccessibilityManagerTest extends InstrumentationTestCase {
         mAccessibilityManager.addTouchExplorationStateChangeListener(listener);
         long timeoutTime = System.currentTimeMillis() + WAIT_FOR_ACCESSIBILITY_ENABLED_TIMEOUT;
         synchronized (waitObject) {
-            if (!mAccessibilityManager.isEnabled() && (System.currentTimeMillis() < timeoutTime)) {
+            while (!mAccessibilityManager.isTouchExplorationEnabled()
+                    && (System.currentTimeMillis() < timeoutTime)) {
                 waitObject.wait(timeoutTime - System.currentTimeMillis());
             }
         }
