@@ -21,7 +21,7 @@
     <uses-permission android:name="android.permission.DISABLE_KEYGUARD" />
     <uses-permission android:name="android.permission.WRITE_SECURE_SETTINGS" />
 
-    <application android:theme="@android:style/Theme.Material.NoActionBar">
+    <application android:theme="@android:style/Theme.Holo.NoActionBar">
 
         <uses-library android:name="android.test.runner" />
 
