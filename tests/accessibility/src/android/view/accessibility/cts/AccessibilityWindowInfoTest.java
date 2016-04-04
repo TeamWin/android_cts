@@ -20,6 +20,7 @@ import android.graphics.Rect;
 import android.os.Parcel;
 import android.test.AndroidTestCase;
 import android.test.suitebuilder.annotation.SmallTest;
+import android.text.TextUtils;
 import android.view.accessibility.AccessibilityWindowInfo;
 
 /**
@@ -34,7 +35,7 @@ public class AccessibilityWindowInfoTest extends AndroidTestCase {
 
         AccessibilityWindowInfo w2 = AccessibilityWindowInfo.obtain(w1);
         assertNotSame(w1, w2);
-        assertEquals(w1, w2);
+        assertTrue(areWindowsEqual(w1, w2));
     }
 
     @SmallTest
@@ -45,8 +46,7 @@ public class AccessibilityWindowInfoTest extends AndroidTestCase {
         parcel.setDataPosition(0);
         AccessibilityWindowInfo w2 = AccessibilityWindowInfo.CREATOR.createFromParcel(parcel);
         assertNotSame(w1, w2);
-        assertEquals(w1, w2);
-
+        assertTrue(areWindowsEqual(w1, w2));
     }
 
     @SmallTest
@@ -62,6 +62,7 @@ public class AccessibilityWindowInfoTest extends AndroidTestCase {
         assertFalse(w.isAccessibilityFocused());
         assertFalse(w.isActive());
         assertFalse(w.isFocused());
+        assertNull(w.getTitle());
 
         Rect rect = new Rect();
         w.getBoundsInScreen(rect);
@@ -86,5 +87,20 @@ public class AccessibilityWindowInfoTest extends AndroidTestCase {
         } catch (IllegalStateException e) {
             // Expected.
         }
+    }
+
+    private boolean areWindowsEqual(AccessibilityWindowInfo w1, AccessibilityWindowInfo w2) {
+        boolean equality = w1.equals(w2);
+        equality &= TextUtils.equals(w1.getTitle(), w2.getTitle());
+        equality &= w1.isAccessibilityFocused() == w2.isAccessibilityFocused();
+        equality &= w1.isActive() == w2.isActive();
+        equality &= w1.getType() == w2.getType();
+        equality &= w1.getLayer() == w2.getLayer();
+        Rect bounds1 = new Rect();
+        Rect bounds2 = new Rect();
+        w1.getBoundsInScreen(bounds1);
+        w2.getBoundsInScreen(bounds2);
+        equality &= bounds1.equals(bounds2);
+        return equality;
     }
 }
