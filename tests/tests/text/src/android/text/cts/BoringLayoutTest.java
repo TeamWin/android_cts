@@ -82,11 +82,10 @@ public class BoringLayoutTest extends AndroidTestCase {
 
     private void verifyMultAddScale(float spacingMult, float spacingAdd) {
         final int height = METRICS_BOTTOM - METRICS_TOP;
-        final int bottomPadding = METRICS_BOTTOM - METRICS_DESCENT;
 
         BoringLayout boringLayout = makeBoringLayout(spacingMult, spacingAdd);
         assertEquals(height, boringLayout.getHeight());
-        assertEquals(height + bottomPadding + METRICS_TOP, boringLayout.getLineDescent(0));
+        assertEquals(height + METRICS_TOP, boringLayout.getLineDescent(0));
     }
 
     public void testScale() {
@@ -172,10 +171,8 @@ public class BoringLayoutTest extends AndroidTestCase {
     }
 
     public void testGetLineDescent_withIncludePadding() {
-        final int bottomPadding = METRICS_BOTTOM - METRICS_DESCENT;
         final int height = METRICS_BOTTOM - METRICS_TOP;
-        assertEquals(height + METRICS_TOP + bottomPadding,
-                mBoringLayout.getLineDescent(0));
+        assertEquals(height + METRICS_TOP, mBoringLayout.getLineDescent(0));
     }
 
     public void testGetLineDescent_withoutIncludePadding() {
