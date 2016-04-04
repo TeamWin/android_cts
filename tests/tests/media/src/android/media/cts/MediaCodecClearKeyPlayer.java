@@ -18,6 +18,7 @@ package android.media.cts;
 import android.content.res.Resources;
 import android.content.res.AssetFileDescriptor;
 import android.media.AudioManager;
+import android.media.DrmInitData;
 import android.media.MediaCodec;
 import android.media.MediaCodecInfo;
 import android.media.MediaCodecList;
@@ -77,7 +78,6 @@ public class MediaCodecClearKeyPlayer implements MediaTimeProvider {
     private Thread mThread;
     private Uri mAudioUri;
     private Uri mVideoUri;
-    private String mDrmInitDataType;
     private Resources mResources;
 
     private static final byte[] PSSH = hexStringToByteArray(
@@ -108,10 +108,9 @@ public class MediaCodecClearKeyPlayer implements MediaTimeProvider {
      * Media player class to stream CENC content using MediaCodec class.
      */
     public MediaCodecClearKeyPlayer(
-            SurfaceHolder holder, byte[] sessionId, String initDataType, Resources resources) {
+            SurfaceHolder holder, byte[] sessionId, Resources resources) {
         mSessionId = sessionId;
         mSurfaceHolder = holder;
-        mDrmInitDataType = initDataType;
         mResources = resources;
         mState = STATE_IDLE;
         mThread = new Thread(new Runnable() {
@@ -152,41 +151,19 @@ public class MediaCodecClearKeyPlayer implements MediaTimeProvider {
         return mMediaFormatWidth;
     }
 
-    public final Map<UUID, byte[]> getPsshInfo() {
-        if (mVideoExtractor != null) {
-            mPsshInitData = mVideoExtractor.getPsshInfo();
-        }
-        // TODO (edwinwong@)
-        // Remove the if statement when we get content that has the clear key system id.
-        if (mPsshInitData == null ||
-                (mPsshInitData != null && !mPsshInitData.containsKey(CLEARKEY_SCHEME_UUID))) {
-            mPsshInitData = new HashMap<UUID, byte[]>();
-            mPsshInitData.put(CLEARKEY_SCHEME_UUID, PSSH);
-        }
-        return mPsshInitData;
-    }
-
     public final byte[] getDrmInitData() {
-        if ("cenc".equals(mDrmInitDataType)) {
-            return getPsshInfo().get(CLEARKEY_SCHEME_UUID);
-        } else if ("webm".equals(mDrmInitDataType)) {
-            for (MediaExtractor ex: new MediaExtractor[] {mVideoExtractor, mAudioExtractor}) {
-                for (int i = ex.getTrackCount(); i-- > 0;) {
-                    MediaFormat format = ex.getTrackFormat(i);
-                    // TODO use public api if possible
-                    ByteBuffer cryptoKey = format.getByteBuffer("crypto-key");
-                    if (cryptoKey != null) {
-                        byte[] dst = new byte[cryptoKey.remaining()];
-                        cryptoKey.get(dst);
-                        return dst;
-                    }
+        for (MediaExtractor ex: new MediaExtractor[] {mVideoExtractor, mAudioExtractor}) {
+            DrmInitData drmInitData = ex.getDrmInitData();
+            if (drmInitData != null) {
+                DrmInitData.SchemeInitData schemeInitData = drmInitData.get(CLEARKEY_SCHEME_UUID);
+                if (schemeInitData != null && schemeInitData.data != null) {
+                    return schemeInitData.data;
                 }
             }
-            return new byte[0];
-        } else {
-          throw new IllegalArgumentException(
-                  "initDataType must be one of {\"cenc\", \"webm\"}: " + mDrmInitDataType);
         }
+        // TODO
+        // Should not happen after we get content that has the clear key system id.
+        return PSSH;
     }
 
     private void prepareAudio() throws IOException {
