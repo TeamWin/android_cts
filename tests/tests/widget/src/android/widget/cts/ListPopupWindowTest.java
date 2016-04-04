@@ -938,7 +938,8 @@ public class ListPopupWindowTest extends
             if (mHasItemSelectedListener) {
                 mOnItemSelectedListener = mock(AdapterView.OnItemSelectedListener.class);
                 mPopupWindow.setOnItemSelectedListener(mOnItemSelectedListener);
-                mPopupWindow.setListSelector(mActivity.getDrawable(R.drawable.red_fill));
+                mPopupWindow.setListSelector(
+                        mActivity.getDrawable(R.drawable.red_translucent_fill));
             }
 
             if (mHasDismissListener) {

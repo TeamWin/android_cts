@@ -15,4 +15,8 @@
 -->
 <resources>
     <dimen name="popup_row_height">48dp</dimen>
+    <dimen name="switch_padding">24dp</dimen>
+    <dimen name="switch_thumb_text_padding">12dp</dimen>
+    <dimen name="switch_min_width">160dp</dimen>
+    <dimen name="switch_min_width2">200dp</dimen>
 </resources>

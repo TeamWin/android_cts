@@ -16,12 +16,12 @@
 
 package android.widget.cts.util;
 
+import android.annotation.ColorInt;
+import android.annotation.NonNull;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;
-import android.support.annotation.ColorInt;
-import android.support.annotation.NonNull;
 import android.util.Pair;
 import android.view.View;
 import android.view.ViewParent;
@@ -136,17 +136,17 @@ public class TestUtils {
     public static void assertAllPixelsOfColor(String failMessagePrefix, @NonNull Drawable drawable,
             int drawableWidth, int drawableHeight, boolean callSetBounds, @ColorInt int color,
             int allowedComponentVariance, boolean throwExceptionIfFails) {
-            // Create a bitmap
-            Bitmap bitmap = Bitmap.createBitmap(drawableWidth, drawableHeight,
-                    Bitmap.Config.ARGB_8888);
-            // Create a canvas that wraps the bitmap
-            Canvas canvas = new Canvas(bitmap);
-            if (callSetBounds) {
-                // Configure the drawable to have bounds that match the passed size
-                drawable.setBounds(0, 0, drawableWidth, drawableHeight);
-            }
-            // And ask the drawable to draw itself to the canvas / bitmap
-            drawable.draw(canvas);
+        // Create a bitmap
+        Bitmap bitmap = Bitmap.createBitmap(drawableWidth, drawableHeight,
+                Bitmap.Config.ARGB_8888);
+        // Create a canvas that wraps the bitmap
+        Canvas canvas = new Canvas(bitmap);
+        if (callSetBounds) {
+            // Configure the drawable to have bounds that match the passed size
+            drawable.setBounds(0, 0, drawableWidth, drawableHeight);
+        }
+        // And ask the drawable to draw itself to the canvas / bitmap
+        drawable.draw(canvas);
 
         try {
             assertAllPixelsOfColor(failMessagePrefix, bitmap, drawableWidth, drawableHeight, color,
@@ -208,5 +208,33 @@ public class TestUtils {
                 }
             }
         }
+    }
+
+
+    /**
+     * Composite two potentially translucent colors over each other and returns the result.
+     */
+    public static int compositeColors(@ColorInt int foreground, @ColorInt int background) {
+        int bgAlpha = Color.alpha(background);
+        int fgAlpha = Color.alpha(foreground);
+        int a = compositeAlpha(fgAlpha, bgAlpha);
+
+        int r = compositeComponent(Color.red(foreground), fgAlpha,
+                Color.red(background), bgAlpha, a);
+        int g = compositeComponent(Color.green(foreground), fgAlpha,
+                Color.green(background), bgAlpha, a);
+        int b = compositeComponent(Color.blue(foreground), fgAlpha,
+                Color.blue(background), bgAlpha, a);
+
+        return Color.argb(a, r, g, b);
+    }
+
+    private static int compositeAlpha(int foregroundAlpha, int backgroundAlpha) {
+        return 0xFF - (((0xFF - backgroundAlpha) * (0xFF - foregroundAlpha)) / 0xFF);
+    }
+
+    private static int compositeComponent(int fgC, int fgA, int bgC, int bgA, int a) {
+        if (a == 0) return 0;
+        return ((0xFF * fgC * fgA) + (bgC * bgA * (0xFF - fgA))) / (a * 0xFF);
     }
 }
