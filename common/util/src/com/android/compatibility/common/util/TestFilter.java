@@ -27,15 +27,20 @@ public class TestFilter {
     /**
      * Builds a new {@link TestFilter} from the given string. Filters can be in one of four forms,
      * the instance will be initialized as;
-     * -"name"              -> abi = null, name = "name", test = null
-     * -"name" "test"       -> abi = null, name = "name", test = "test"
-     * -"abi" "name"        -> abi = "abi", name = "name", test = null
-     * -"abi" "name" test"  -> abi = "abi", name = "name", test = "test"
+     * -"name"                 -> abi = null, name = "name", test = null
+     * -"name" "test..."       -> abi = null, name = "name", test = "test..."
+     * -"abi" "name"           -> abi = "abi", name = "name", test = null
+     * -"abi" "name" "test..." -> abi = "abi", name = "name", test = "test..."
+     *
+     * Test identifier can contain multiple parts, eg parameterized tests.
      *
      * @param filter the filter to parse
      * @return the {@link TestFilter}
      */
     public static TestFilter createFrom(String filter) {
+        if (filter.isEmpty()) {
+            throw new IllegalArgumentException("Filter was empty");
+        }
         String[] parts = filter.split(" ");
         String abi = null, name = null, test = null;
         // Either:
@@ -45,20 +50,18 @@ public class TestFilter {
         // <abi> <name> <test>
         if (parts.length == 1) {
             name = parts[0];
-        } else if (parts.length == 2) {
+        } else {
+            int index = 0;
             if (AbiUtils.isAbiSupportedByCompatibility(parts[0])) {
                 abi = parts[0];
-                name = parts[1];
-            } else {
-                name = parts[0];
-                test = parts[1];
+                index++;
             }
-        } else if (parts.length == 3){
-            abi = parts[0];
-            name = parts[1];
-            test = parts[2];
-        } else {
-            throw new IllegalArgumentException(String.format("Could not parse filter: %s", filter));
+            name = parts[index];
+            index++;
+            parts = filter.split(" ", index + 1);
+            if (parts.length > index) {
+                test = parts[index];
+            }
         }
         return new TestFilter(abi, name, test);
     }
