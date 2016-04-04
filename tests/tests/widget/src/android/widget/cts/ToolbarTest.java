@@ -17,6 +17,9 @@
 package android.widget.cts;
 
 import android.app.Instrumentation;
+import android.content.Context;
+import android.content.res.TypedArray;
+import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.test.ActivityInstrumentationTestCase2;
 import android.test.UiThreadTest;
@@ -24,6 +27,7 @@ import android.test.suitebuilder.annotation.MediumTest;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.ListPopupWindow;
 import android.widget.Toolbar;
 import android.widget.cts.util.TestUtils;
 import android.widget.cts.util.ViewTestUtils;
@@ -44,6 +48,16 @@ public class ToolbarTest extends ActivityInstrumentationTestCase2<ToolbarCtsActi
         super.setUp();
         mActivity = getActivity();
         mMainToolbar = mActivity.getMainToolbar();
+    }
+
+    public void testConstructor() {
+        new Toolbar(mActivity);
+
+        new Toolbar(mActivity, null);
+
+        new Toolbar(mActivity, null, android.R.attr.toolbarStyle);
+
+        new Toolbar(mActivity, null, 0, android.R.style.Widget_Material_Toolbar);
     }
 
     public void testTitleAndSubtitleContent() {
@@ -70,6 +84,30 @@ public class ToolbarTest extends ActivityInstrumentationTestCase2<ToolbarCtsActi
         ViewTestUtils.runOnMainAndDrawSync(instrumentation, mMainToolbar,
                 () -> mMainToolbar.setSubtitle("New subtitle"));
         assertEquals("New subtitle", mMainToolbar.getSubtitle());
+    }
+
+    public void testTitleAndSubtitleAppearance() {
+        final Instrumentation instrumentation = getInstrumentation();
+
+        ViewTestUtils.runOnMainAndDrawSync(instrumentation, mMainToolbar,
+                () -> mMainToolbar.setTitle(R.string.toolbar_title));
+        ViewTestUtils.runOnMainAndDrawSync(instrumentation, mMainToolbar,
+                () -> mMainToolbar.setSubtitle(R.string.toolbar_subtitle));
+
+        // Since there are no APIs to get reference to the underlying implementation of
+        // title and subtitle, here we are testing that calling the relevant APIs doesn't crash
+
+        ViewTestUtils.runOnMainAndDrawSync(instrumentation, mMainToolbar,
+                () -> mMainToolbar.setTitleTextColor(Color.RED));
+        ViewTestUtils.runOnMainAndDrawSync(instrumentation, mMainToolbar,
+                () -> mMainToolbar.setSubtitleTextColor(Color.BLUE));
+
+        ViewTestUtils.runOnMainAndDrawSync(instrumentation, mMainToolbar,
+                () -> mMainToolbar.setTitleTextAppearance(
+                        mActivity, R.style.TextAppearance_NotColors));
+        ViewTestUtils.runOnMainAndDrawSync(instrumentation, mMainToolbar,
+                () -> mMainToolbar.setSubtitleTextAppearance(
+                        mActivity, R.style.TextAppearance_WithColor));
     }
 
     @UiThreadTest
@@ -325,5 +363,11 @@ public class ToolbarTest extends ActivityInstrumentationTestCase2<ToolbarCtsActi
         assertEquals(40, mMainToolbar.getContentInsetStart());
         assertEquals(40, mMainToolbar.getContentInsetRight());
         assertEquals(20, mMainToolbar.getContentInsetEnd());
+    }
+
+    @UiThreadTest
+    public void testPopupTheme() {
+        mMainToolbar.setPopupTheme(R.style.ToolbarPopupTheme_Test);
+        assertEquals(R.style.ToolbarPopupTheme_Test, mMainToolbar.getPopupTheme());
     }
 }
