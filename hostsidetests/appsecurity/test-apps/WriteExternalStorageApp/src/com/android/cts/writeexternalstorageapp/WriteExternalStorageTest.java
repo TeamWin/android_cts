@@ -23,6 +23,7 @@ import static com.android.cts.externalstorageapp.CommonExternalStorageTest.TAG;
 import static com.android.cts.externalstorageapp.CommonExternalStorageTest.assertDirNoWriteAccess;
 import static com.android.cts.externalstorageapp.CommonExternalStorageTest.assertDirReadOnlyAccess;
 import static com.android.cts.externalstorageapp.CommonExternalStorageTest.assertDirReadWriteAccess;
+import static com.android.cts.externalstorageapp.CommonExternalStorageTest.buildCommonChildDirs;
 import static com.android.cts.externalstorageapp.CommonExternalStorageTest.buildProbeFile;
 import static com.android.cts.externalstorageapp.CommonExternalStorageTest.deleteContents;
 import static com.android.cts.externalstorageapp.CommonExternalStorageTest.getAllPackageSpecificPathsExceptMedia;
@@ -229,9 +230,14 @@ public class WriteExternalStorageTest extends AndroidTestCase {
                 path = path.getParentFile();
             }
 
-            // Keep walking up until we leave device
-            while (Environment.MEDIA_MOUNTED.equals(Environment.getExternalStorageState(path))) {
-                assertDirReadOnlyAccess(path);
+            // Walk all the way up to root
+            while (path != null) {
+                if (Environment.MEDIA_MOUNTED.equals(Environment.getExternalStorageState(path))) {
+                    assertDirReadOnlyAccess(path);
+                } else {
+                    assertDirNoWriteAccess(path);
+                }
+                assertDirNoWriteAccess(buildCommonChildDirs(path));
                 path = path.getParentFile();
             }
         }
