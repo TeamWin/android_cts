@@ -90,11 +90,11 @@ public class AssistStructureTest extends AssistTestBase {
         waitForOnResume();
         startSession();
         waitForContext();
-        verifyAssistDataNullness(false, false, false, false);
         getInstrumentation().waitForIdleSync();
         runTestOnUiThread(new Runnable() {
             @Override
             public void run() {
+                verifyAssistDataNullness(false, false, false, false);
                 verifyAssistStructure(Utils.getTestAppComponent(TEST_CASE_TYPE), false /*FLAG_SECURE set*/);
             }
         });
