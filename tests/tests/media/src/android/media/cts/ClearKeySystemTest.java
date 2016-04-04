@@ -367,7 +367,6 @@ public class ClearKeySystemTest extends MediaPlayerTestBase {
         mMediaCodecPlayer = new MediaCodecClearKeyPlayer(
                 getActivity().getSurfaceHolder(),
                 mSessionId,
-                initDataType,
                 mContext.getResources());
 
         mMediaCodecPlayer.setAudioDataSource(audioUrl, null, audioEncrypted);
