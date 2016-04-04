@@ -76,6 +76,7 @@ cts_account_support_packages := \
     CtsUnaffiliatedAccountAuthenticators
 
 cts_support_packages := \
+    CtsAbiOverrideTestApp \
     CtsAccountManagementDevicePolicyApp \
     CtsAlarmClockService \
     CtsAppRestrictionsManagingApp \
