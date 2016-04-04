@@ -19,7 +19,6 @@ package android.widget.cts;
 import android.app.Activity;
 import android.app.Instrumentation;
 import android.os.SystemClock;
-import android.support.test.InstrumentationRegistry;
 import android.test.ActivityInstrumentationTestCase2;
 import android.test.suitebuilder.annotation.SmallTest;
 import android.view.Gravity;
@@ -29,6 +28,7 @@ import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.SubMenu;
 import android.view.View;
+import android.widget.EditText;
 import android.widget.PopupMenu;
 
 import static org.mockito.Mockito.*;
@@ -51,6 +51,19 @@ public class PopupMenuTest extends
         super.setUp();
         mInstrumentation = getInstrumentation();
         mActivity = getActivity();
+
+        try {
+            runTestOnUiThread(() -> {
+                // Disable and remove focusability on the first child of our activity so that
+                // it doesn't bring in the soft keyboard that can mess up with some of the tests
+                // (such as menu dismissal when we emulate a tap outside the menu bounds).
+                final EditText editText = (EditText) mActivity.findViewById(R.id.anchor_upper_left);
+                editText.setEnabled(false);
+                editText.setFocusable(false);
+            });
+        } catch (Throwable t) {
+            throw new RuntimeException(t);
+        }
     }
 
     @Override
