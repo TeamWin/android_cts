@@ -122,11 +122,10 @@ public class MediaBrowserTest extends InstrumentationTestCase {
         createMediaBrowser(TEST_BROWSER_SERVICE);
         connectMediaBrowserService();
         final int pageSize = 3;
-        final int lastPage = (StubMediaBrowserService.MEDIA_ID_CHILDREN.length + pageSize - 1)
-                / pageSize;
+        final int lastPage = (StubMediaBrowserService.MEDIA_ID_CHILDREN.length - 1) / pageSize;
         Bundle options = new Bundle();
         options.putInt(MediaBrowser.EXTRA_PAGE_SIZE, pageSize);
-        for (int page = 1; page <= lastPage; ++page) {
+        for (int page = 0; page <= lastPage; ++page) {
             resetCallbacks();
             options.putInt(MediaBrowser.EXTRA_PAGE, page);
             mMediaBrowser.subscribe(StubMediaBrowserService.MEDIA_ID_ROOT, options,
@@ -142,12 +141,12 @@ public class MediaBrowserTest extends InstrumentationTestCase {
             if (page != lastPage) {
                 assertEquals(pageSize, mSubscriptionCallback.mLastChildMediaItems.size());
             } else {
-                assertEquals((StubMediaBrowserService.MEDIA_ID_CHILDREN.length + pageSize - 1)
-                        % pageSize + 1, mSubscriptionCallback.mLastChildMediaItems.size());
+                assertEquals((StubMediaBrowserService.MEDIA_ID_CHILDREN.length - 1) % pageSize + 1,
+                        mSubscriptionCallback.mLastChildMediaItems.size());
             }
             // Check whether all the items in the current page are loaded.
             for (int i = 0; i < mSubscriptionCallback.mLastChildMediaItems.size(); ++i) {
-                assertEquals(StubMediaBrowserService.MEDIA_ID_CHILDREN[(page - 1) * pageSize + i],
+                assertEquals(StubMediaBrowserService.MEDIA_ID_CHILDREN[page * pageSize + i],
                         mSubscriptionCallback.mLastChildMediaItems.get(i).getMediaId());
             }
         }
