@@ -86,31 +86,21 @@ public class AccessibilitySoftKeyboardModesTest extends ActivityInstrumentationT
         getActivity();
 
         mContext = getInstrumentation().getContext();
-        UiAutomation uiAutomation;
-        try {
-            uiAutomation = getUiAutomation();
-        } catch (RuntimeException e) {
-            // Clean up UI Automation after other tests as we cannot request UI Automation with
-            // different flags if one already exists.
-            uiAutomation = getInstrumentation().getUiAutomation();
-            uiAutomation.destroy();
-
-            // Try to get UI Automation again.
-            uiAutomation = getUiAutomation();
-        }
         String command = "pm grant " + mContext.getPackageName()
                 + "android.permission.WRITE_SECURE_SETTINGS";
-        executeShellCommand(uiAutomation, command);
-        uiAutomation.destroy();
+        executeShellCommand(getUiAutomation(), command);
 
-        disableAllServices();
+        if (mService != null) {
+            mService.disableSelf();
+        }
         enableTestService();
-
     }
 
     @Override
     public void tearDown() throws Exception {
-        disableAllServices();
+        if (mService != null) {
+            mService.disableSelf();
+        }
     }
 
     public void testApiReturnValues_shouldChangeValueOnRequestAndSendCallback() throws Exception {
@@ -174,8 +164,7 @@ public class AccessibilitySoftKeyboardModesTest extends ActivityInstrumentationT
         assertEquals(numWindowsWithIme, mService.getTestWindowsListSize());
     }
 
-
-    public void testHideSoftKeyboard_shouldHideKeyboardUntilAllServicesDisabled() throws Exception {
+    public void testHideSoftKeyboard_shouldHideKeyboardUntilServiceIsDisabled() throws Exception {
         // The soft keyboard should be in its' default mode.
         assertEquals(SHOW_MODE_AUTO, mKeyboardController.getShowMode());
 
@@ -192,7 +181,7 @@ public class AccessibilitySoftKeyboardModesTest extends ActivityInstrumentationT
         assertEquals(numWindowsWithIme - 1, mService.getTestWindowsListSize());
 
         // Make sure we can see the soft keyboard once all Accessibility Services are disabled.
-        disableAllServices();
+        mService.disableSelf();
         waitForWindowStateChanged();
         waitForIdle();
 
@@ -245,9 +234,8 @@ public class AccessibilitySoftKeyboardModesTest extends ActivityInstrumentationT
     }
 
     private void waitForWindowStateChanged() throws Exception {
-        UiAutomation uiAutomation = getUiAutomation();
         try {
-            uiAutomation.executeAndWaitForEvent(new Runnable() {
+            getUiAutomation().executeAndWaitForEvent(new Runnable() {
                 @Override
                 public void run() {
                     // Do nothing.
@@ -263,44 +251,7 @@ public class AccessibilitySoftKeyboardModesTest extends ActivityInstrumentationT
         } catch (TimeoutException ignored) {
             // Ignore since the event could have occured before this method was called. There should
             // be a check after this method returns to catch incorrect values.
-        } finally {
-            uiAutomation.destroy();
         }
-    }
-
-    private void disableAllServices() throws Exception {
-        final Object waitLockForA11yOff = new Object();
-        AccessibilityManager manager =
-                (AccessibilityManager) mContext.getSystemService(Context.ACCESSIBILITY_SERVICE);
-        manager.addAccessibilityStateChangeListener(
-                new AccessibilityManager.AccessibilityStateChangeListener() {
-                    @Override
-                    public void onAccessibilityStateChanged(boolean b) {
-                        synchronized (waitLockForA11yOff) {
-                            waitLockForA11yOff.notifyAll();
-                        }
-                    }
-                });
-        ContentResolver cr = mContext.getContentResolver();
-        UiAutomation uiAutomation = getUiAutomation();
-        executeShellCommand(uiAutomation, "settings put secure "
-                + Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES + " null");
-        uiAutomation.destroy();
-        StubSoftKeyboardModesAccessibilityService.sInstance = null;
-        long timeoutTimeMillis = SystemClock.uptimeMillis() + TIMEOUT_SERVICE_TOGGLE_MS;
-        while (SystemClock.uptimeMillis() < timeoutTimeMillis) {
-            synchronized (waitLockForA11yOff) {
-                if (!manager.isEnabled()) {
-                    return;
-                }
-                try {
-                    waitLockForA11yOff.wait(timeoutTimeMillis - SystemClock.uptimeMillis());
-                } catch (InterruptedException e) {
-                    // Ignored; loop again
-                }
-            }
-        }
-        throw new RuntimeException("Unable to turn accessibility off");
     }
 
     private void enableTestService() throws Exception {
@@ -321,7 +272,6 @@ public class AccessibilitySoftKeyboardModesTest extends ActivityInstrumentationT
                 executeShellCommand(uiAutomation, command);
                 executeShellCommand(uiAutomation, "settings put secure "
                         + Settings.Secure.ACCESSIBILITY_ENABLED + " 1");
-                uiAutomation.destroy();
 
                 // We have enabled the services of interest and need to wait until they
                 // are instantiated and started (if needed) and the system binds to them.
