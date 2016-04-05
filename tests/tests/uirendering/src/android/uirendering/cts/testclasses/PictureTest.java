@@ -25,7 +25,6 @@ import android.test.suitebuilder.annotation.MediumTest;
 import android.uirendering.cts.bitmapverifiers.ColorVerifier;
 import android.uirendering.cts.bitmapverifiers.RectVerifier;
 import android.uirendering.cts.testinfrastructure.ActivityTestBase;
-import android.uirendering.cts.testinfrastructure.CanvasClient;
 import org.junit.Test;
 
 @MediumTest
@@ -38,8 +37,8 @@ public class PictureTest extends ActivityTestBase {
         Paint pt = new Paint();
         pt.setColor(Color.GREEN);
         Picture pic = new Picture();
-        Canvas subcanvas = pic.beginRecording(ActivityTestBase.TEST_WIDTH,
-                                              ActivityTestBase.TEST_HEIGHT);
+        Canvas subcanvas = pic.beginRecording(
+                ActivityTestBase.TEST_WIDTH, ActivityTestBase.TEST_HEIGHT);
         subcanvas.drawRect(sRect, pt);
         pic.endRecording();
 
@@ -50,14 +49,11 @@ public class PictureTest extends ActivityTestBase {
     public void testPictureRespectsClip() throws Exception {
         createTest()
             .addCanvasClient(
-                new CanvasClient() {
-                    @Override
-                    public void draw(Canvas canvas, int width, int height) {
+                    (canvas, width, height) -> {
                         Picture pic = greenSquare();
                         canvas.clipRect(sOffsetRect);
                         pic.draw(canvas);  // should be clipped out
                     }
-                }
             ).runWithVerifier(new ColorVerifier(Color.WHITE));
     }
 
@@ -65,14 +61,11 @@ public class PictureTest extends ActivityTestBase {
     public void testPictureRespectsTranslate() throws Exception {
         createTest()
             .addCanvasClient(
-                new CanvasClient() {
-                    @Override
-                    public void draw(Canvas canvas, int width, int height) {
+                    (canvas, width, height) -> {
                         Picture pic = greenSquare();
                         canvas.translate(40, 0);
                         pic.draw(canvas);  // should be offset
                     }
-                }
             ).runWithVerifier(
                 new RectVerifier(Color.WHITE, Color.GREEN, sOffsetRect));
     }

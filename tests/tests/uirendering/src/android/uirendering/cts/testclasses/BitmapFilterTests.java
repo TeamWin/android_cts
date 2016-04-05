@@ -16,7 +16,6 @@
 package android.uirendering.cts.testclasses;
 
 import android.graphics.Bitmap;
-import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.PaintFlagsDrawFilter;
@@ -112,18 +111,15 @@ public class BitmapFilterTests extends ActivityTestBase {
         final Paint paint = new Paint(filterEnum.equals(FilterEnum.ADD_FILTER) ?
                 0 : Paint.FILTER_BITMAP_FLAG);
 
-        CanvasClient canvasClient = new CanvasClient() {
-            @Override
-            public void draw(Canvas canvas, int width, int height) {
-                canvas.scale(1.0f * width / gridWidth, 1.0f * height / gridWidth);
-                if (filterEnum.equals(FilterEnum.ADD_FILTER)) {
-                    canvas.setDrawFilter(new PaintFlagsDrawFilter(0, Paint.FILTER_BITMAP_FLAG));
-                } else if (filterEnum.equals(FilterEnum.REMOVE_FILTER)) {
-                    canvas.setDrawFilter(new PaintFlagsDrawFilter(Paint.FILTER_BITMAP_FLAG, 0));
-                }
-                canvas.drawBitmap(scaleUp ? mSmallGridBitmap : mBigGridBitmap, 0, 0, paint);
-                canvas.setDrawFilter(null);
+        CanvasClient canvasClient = (canvas, width, height) -> {
+            canvas.scale(1.0f * width / gridWidth, 1.0f * height / gridWidth);
+            if (filterEnum.equals(FilterEnum.ADD_FILTER)) {
+                canvas.setDrawFilter(new PaintFlagsDrawFilter(0, Paint.FILTER_BITMAP_FLAG));
+            } else if (filterEnum.equals(FilterEnum.REMOVE_FILTER)) {
+                canvas.setDrawFilter(new PaintFlagsDrawFilter(Paint.FILTER_BITMAP_FLAG, 0));
             }
+            canvas.drawBitmap(scaleUp ? mSmallGridBitmap : mBigGridBitmap, 0, 0, paint);
+            canvas.setDrawFilter(null);
         };
         createTest()
                 .addCanvasClient(canvasClient)
