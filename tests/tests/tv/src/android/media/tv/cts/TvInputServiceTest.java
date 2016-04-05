@@ -237,6 +237,7 @@ public class TvInputServiceTest extends ActivityInstrumentationTestCase2<TvViewS
         verifyCallbackTuned();
         verifyCommandStartRecording();
         verifyCommandStopRecording();
+        verifyCommandSendAppPrivateCommandForRecording();
         verifyCallbackRecordingStopped();
         verifyCallbackError();
         verifyCommandRelease();
@@ -263,7 +264,7 @@ public class TvInputServiceTest extends ActivityInstrumentationTestCase2<TvViewS
             @Override
             protected boolean check() {
                 CountingRecordingSession session = CountingTvInputService.sRecordingSession;
-                return session != null && session.mTuneCount > 0;
+                return session != null && session.mTuneWithBundleCount > 0;
             }
         }.run();
     }
@@ -303,6 +304,20 @@ public class TvInputServiceTest extends ActivityInstrumentationTestCase2<TvViewS
             }
         }.run();
     }
+
+    public void verifyCommandSendAppPrivateCommandForRecording() {
+        resetCounts();
+        String action = "android.media.tv.cts.TvInputServiceTest.privateCommand";
+        mTvRecordingClient.sendAppPrivateCommand(action, null);
+        new PollingCheck(TIME_OUT) {
+            @Override
+            protected boolean check() {
+                CountingRecordingSession session = CountingTvInputService.sRecordingSession;
+                return session != null && session.mAppPrivateCommandCount > 0;
+            }
+        }.run();
+    }
+
 
     public void verifyCallbackTuned() {
         resetCounts();
@@ -345,20 +360,6 @@ public class TvInputServiceTest extends ActivityInstrumentationTestCase2<TvViewS
         }.run();
     }
 
-    public void verifyCommandSendAppPrivateCommand() {
-        resetCounts();
-        String action = "android.media.tv.cts.TvInputServiceTest.privateCommand";
-        mTvView.sendAppPrivateCommand(action, null);
-        mInstrumentation.waitForIdleSync();
-        new PollingCheck(TIME_OUT) {
-            @Override
-            protected boolean check() {
-                CountingSession session = CountingTvInputService.sSession;
-                return session != null && session.mSendAppPrivateCommand > 0;
-            }
-        }.run();
-    }
-
     public void verifyCommandTune() {
         resetCounts();
         Uri fakeChannelUri = TvContract.buildChannelUri(0);
@@ -382,7 +383,7 @@ public class TvInputServiceTest extends ActivityInstrumentationTestCase2<TvViewS
             @Override
             protected boolean check() {
                 CountingSession session = CountingTvInputService.sSession;
-                return session != null && session.mTuneCount > 0;
+                return session != null && session.mTuneWithBundleCount > 0;
             }
         }.run();
     }
@@ -613,6 +614,20 @@ public class TvInputServiceTest extends ActivityInstrumentationTestCase2<TvViewS
         }.run();
     }
 
+    public void verifyCommandSendAppPrivateCommand() {
+        resetCounts();
+        String action = "android.media.tv.cts.TvInputServiceTest.privateCommand";
+        mTvView.sendAppPrivateCommand(action, null);
+        mInstrumentation.waitForIdleSync();
+        new PollingCheck(TIME_OUT) {
+            @Override
+            protected boolean check() {
+                CountingSession session = CountingTvInputService.sSession;
+                return session != null && session.mAppPrivateCommandCount > 0;
+            }
+        }.run();
+    }
+
     public void verifyCallbackChannelRetuned() {
         resetCounts();
         CountingSession session = CountingTvInputService.sSession;
@@ -792,8 +807,8 @@ public class TvInputServiceTest extends ActivityInstrumentationTestCase2<TvViewS
         }
 
         public static class CountingSession extends Session {
-            public volatile int mSendAppPrivateCommand;
             public volatile int mTuneCount;
+            public volatile int mTuneWithBundleCount;
             public volatile int mSetStreamVolumeCount;
             public volatile int mSetCaptionEnabledCount;
             public volatile int mSelectTrackCount;
@@ -813,14 +828,15 @@ public class TvInputServiceTest extends ActivityInstrumentationTestCase2<TvViewS
             public volatile int mTimeShiftPlayCount;
             public volatile long mTimeShiftGetCurrentPositionCount;
             public volatile long mTimeShiftGetStartPositionCount;
+            public volatile int mAppPrivateCommandCount;
 
             CountingSession(Context context) {
                 super(context);
             }
 
             public void resetCounts() {
-                mSendAppPrivateCommand = 0;
                 mTuneCount = 0;
+                mTuneWithBundleCount = 0;
                 mSetStreamVolumeCount = 0;
                 mSetCaptionEnabledCount = 0;
                 mSelectTrackCount = 0;
@@ -840,11 +856,7 @@ public class TvInputServiceTest extends ActivityInstrumentationTestCase2<TvViewS
                 mTimeShiftPlayCount = 0;
                 mTimeShiftGetCurrentPositionCount = 0;
                 mTimeShiftGetStartPositionCount = 0;
-            }
-
-            @Override
-            public void onAppPrivateCommand(String action, Bundle data) {
-                mSendAppPrivateCommand++;
+                mAppPrivateCommandCount = 0;
             }
 
             @Override
@@ -859,6 +871,15 @@ public class TvInputServiceTest extends ActivityInstrumentationTestCase2<TvViewS
             @Override
             public boolean onTune(Uri channelUri) {
                 mTuneCount++;
+                return false;
+            }
+
+            @Override
+            public boolean onTune(Uri channelUri, Bundle data) {
+                mTuneWithBundleCount++;
+                // Also calls {@link #onTune(Uri)} since it will never be called if the
+                // implementation overrides {@link #onTune(Uri, Bundle)}.
+                onTune(channelUri);
                 return false;
             }
 
@@ -965,13 +986,20 @@ public class TvInputServiceTest extends ActivityInstrumentationTestCase2<TvViewS
             public void onOverlayViewSizeChanged(int width, int height) {
                 mOverlayViewSizeChangedCount++;
             }
+
+            @Override
+            public void onAppPrivateCommand(String action, Bundle data) {
+                mAppPrivateCommandCount++;
+            }
         }
 
         public static class CountingRecordingSession extends RecordingSession {
             public volatile int mTuneCount;
+            public volatile int mTuneWithBundleCount;
             public volatile int mReleaseCount;
             public volatile int mStartRecordingCount;
             public volatile int mStopRecordingCount;
+            public volatile int mAppPrivateCommandCount;
 
             CountingRecordingSession(Context context) {
                 super(context);
@@ -979,14 +1007,24 @@ public class TvInputServiceTest extends ActivityInstrumentationTestCase2<TvViewS
 
             public void resetCounts() {
                 mTuneCount = 0;
+                mTuneWithBundleCount = 0;
                 mReleaseCount = 0;
                 mStartRecordingCount = 0;
                 mStopRecordingCount = 0;
+                mAppPrivateCommandCount = 0;
             }
 
             @Override
             public void onTune(Uri channelUri) {
                 mTuneCount++;
+            }
+
+            @Override
+            public void onTune(Uri channelUri, Bundle data) {
+                mTuneWithBundleCount++;
+                // Also calls {@link #onTune(Uri)} since it will never be called if the
+                // implementation overrides {@link #onTune(Uri, Bundle)}.
+                onTune(channelUri);
             }
 
             @Override
@@ -1002,6 +1040,11 @@ public class TvInputServiceTest extends ActivityInstrumentationTestCase2<TvViewS
             @Override
             public void onStopRecording() {
                 mStopRecordingCount++;
+            }
+
+            @Override
+            public void onAppPrivateCommand(String action, Bundle data) {
+                mAppPrivateCommandCount++;
             }
         }
     }
