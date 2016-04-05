@@ -14,21 +14,21 @@
  * limitations under the License.
  */
 
-package android.icu.cts;
+package com.android.cts.core.runner;
 
 import android.app.Activity;
 import android.app.Instrumentation;
-import android.icu.junit.IcuTestRunnerBuilder;
+import com.android.cts.core.runner.support.ExtendedAndroidRunnerBuilder;
 import android.os.Bundle;
 import android.os.Debug;
 import android.support.test.internal.util.AndroidRunnerParams;
 import android.util.Log;
+import com.google.common.base.Splitter;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
@@ -45,22 +45,26 @@ import org.junit.runners.model.RunnerBuilder;
 import vogar.ExpectationStore;
 import vogar.ModeId;
 
-import static android.icu.cts.AndroidJUnitRunnerConstants.ARGUMENT_COUNT;
-import static android.icu.cts.AndroidJUnitRunnerConstants.ARGUMENT_DEBUG;
-import static android.icu.cts.AndroidJUnitRunnerConstants.ARGUMENT_LOG_ONLY;
-import static android.icu.cts.AndroidJUnitRunnerConstants.ARGUMENT_TEST_CLASS;
-import static android.icu.cts.AndroidJUnitRunnerConstants.ARGUMENT_TEST_FILE;
+import static com.android.cts.core.runner.AndroidJUnitRunnerConstants.ARGUMENT_COUNT;
+import static com.android.cts.core.runner.AndroidJUnitRunnerConstants.ARGUMENT_DEBUG;
+import static com.android.cts.core.runner.AndroidJUnitRunnerConstants.ARGUMENT_LOG_ONLY;
+import static com.android.cts.core.runner.AndroidJUnitRunnerConstants.ARGUMENT_TEST_CLASS;
+import static com.android.cts.core.runner.AndroidJUnitRunnerConstants.ARGUMENT_TEST_FILE;
 
 /**
  * A drop-in replacement for AndroidJUnitTestRunner, which understands the same arguments, and has
- * similar functionality, but runs ICU tests instead of calling the JUnit wrapper.
+ * similar functionality, but can filter by expectations and allows a custom runner-builder to be
+ * provided.
  */
-public final class IcuTestRunner extends Instrumentation {
+public class CoreTestRunner extends Instrumentation {
 
-    public static final String TAG = "IcuTestRunner";
+    public static final String TAG = "LibcoreTestRunner";
 
-    private static final List<String> EXPECTATIONS_PATHS =
-            Collections.singletonList("expectations/icu-known-failures.txt");
+    private static final java.lang.String ARGUMENT_ROOT_CLASSES = "core-root-classes";
+
+    private static final String ARGUMENT_EXPECTATIONS = "core-expectations";
+
+    private static final Splitter CLASS_LIST_SPLITTER = Splitter.on(',').trimResults();
 
     /** The args for the runner. */
     private Bundle args;
@@ -80,10 +84,10 @@ public final class IcuTestRunner extends Instrumentation {
     /**
      * The list of tests to run.
      */
-    private IcuTestList icuTestList;
+    private TestList testList;
 
     @Override
-    public void onCreate(Bundle args) {
+    public void onCreate(final Bundle args) {
         super.onCreate(args);
         this.args = args;
 
@@ -102,7 +106,9 @@ public final class IcuTestRunner extends Instrumentation {
         this.testCountOnly = args.getBoolean(ARGUMENT_COUNT);
 
         try {
-            Set<String> expectationResources = new LinkedHashSet<>(EXPECTATIONS_PATHS);
+            // Get the set of resource names containing the expectations.
+            Set<String> expectationResources = new LinkedHashSet<>(
+                    CLASS_LIST_SPLITTER.splitToList(args.getString(ARGUMENT_EXPECTATIONS)));
             expectationStore = ExpectationStore.parseResources(
                     getClass(), expectationResources, ModeId.DEVICE);
         } catch (IOException e) {
@@ -131,11 +137,16 @@ public final class IcuTestRunner extends Instrumentation {
         }
 
         if (testNameList == null) {
-            icuTestList = IcuTestList.rootList(Arrays.asList(
-                    "android.icu.cts.coverage.TestAll",
-                    "android.icu.dev.test.TestAll"));
+            String rootClasses = args.getString(ARGUMENT_ROOT_CLASSES);
+            if (rootClasses == null) {
+                throw new IllegalStateException(
+                        "No tests specified, neither exclusive list or root class");
+            } else {
+                List<String> roots = CLASS_LIST_SPLITTER.splitToList(rootClasses);
+                testList = TestList.rootList(roots);
+            }
         } else {
-            icuTestList = IcuTestList.exclusiveList(testNameList);
+            testList = TestList.exclusiveList(testNameList);
         }
 
         start();
@@ -157,15 +168,15 @@ public final class IcuTestRunner extends Instrumentation {
         Request request;
         int totalTestCount;
         try {
-            RunnerBuilder runnerBuilder = new IcuTestRunnerBuilder(runnerParams);
-            Class[] classes = icuTestList.getClassesToRun();
+            RunnerBuilder runnerBuilder = new ExtendedAndroidRunnerBuilder(runnerParams);
+            Class[] classes = testList.getClassesToRun();
             Runner suite = new Computer().getSuite(runnerBuilder, classes);
 
             if (suite instanceof Filterable) {
                 Filterable filterable = (Filterable) suite;
 
                 // Filter out all the tests that are expected to fail.
-                Filter filter = new IcuTestFilter(icuTestList, expectationStore);
+                Filter filter = new TestFilter(testList, expectationStore);
 
                 try {
                     filterable.filter(filter);
@@ -183,17 +194,18 @@ public final class IcuTestRunner extends Instrumentation {
             throw new RuntimeException("Could not create a suite", e);
         }
 
-        IcuRunListener icuRunListener = new IcuRunListener(this, runnerParams, totalTestCount);
-        core.addListener(icuRunListener);
+        StatusUpdaterRunListener statusUpdaterRunListener =
+                new StatusUpdaterRunListener(this, runnerParams, totalTestCount);
+        core.addListener(statusUpdaterRunListener);
         core.run(request);
 
         Bundle results;
         if (testCountOnly) {
-            results = icuRunListener.getCountResults();
+            results = statusUpdaterRunListener.getCountResults();
             Log.d(TAG, "test count only: " + results);
         } else {
             // Get the final results to send back.
-            results = icuRunListener.getFinalResults();
+            results = statusUpdaterRunListener.getFinalResults();
         }
 
         Log.d(TAG, "Finished");
