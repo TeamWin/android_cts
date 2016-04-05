@@ -108,23 +108,21 @@ public class SweepTests extends ActivityTestBase {
         ResourceModifier.init(getActivity().getResources());
         // For each modification combination, we will get the CanvasClient associated with it and
         // from there execute a normal canvas test with that.
-        CanvasClient canvasClient = new CanvasClient() {
-            @Override
-            public void draw(Canvas canvas, int width, int height) {
-                Paint paint = new Paint();
-                modifierAccessor.modifyDrawing(canvas, paint);
-                if (drawOp != null) {
-                    drawOp.modifyDrawing(paint, canvas);
-                }
+        CanvasClient canvasClient = (canvas, width, height) -> {
+            Paint paint = new Paint();
+            modifierAccessor.modifyDrawing(canvas, paint);
+            if (drawOp != null) {
+                drawOp.modifyDrawing(paint, canvas);
             }
         };
 
         int index = 0;
         // Create the test cases with each combination
         do {
-            canvasClient.setDebugString(modifierAccessor.getDebugString());
             int arrIndex = Math.min(index, bitmapComparers.length - 1);
-            createTest().addCanvasClient(canvasClient).runWithComparer(bitmapComparers[arrIndex]);
+            createTest()
+                    .addCanvasClient(modifierAccessor.getDebugString(), canvasClient)
+                    .runWithComparer(bitmapComparers[arrIndex]);
             index++;
         } while (modifierAccessor.step());
     }

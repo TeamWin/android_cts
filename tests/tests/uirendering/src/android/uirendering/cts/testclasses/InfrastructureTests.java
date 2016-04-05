@@ -19,7 +19,6 @@ import android.graphics.Point;
 import android.test.suitebuilder.annotation.MediumTest;
 import android.uirendering.cts.R;
 
-import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Rect;
 import android.uirendering.cts.bitmapcomparers.BitmapComparer;
@@ -49,11 +48,8 @@ public class InfrastructureTests extends ActivityTestBase {
      */
     @Test
     public void testRenderSpecIsolation() {
-        CanvasClient canvasClient = new CanvasClient() {
-            @Override
-            public void draw(Canvas canvas, int width, int height) {
-                canvas.drawColor(canvas.isHardwareAccelerated() ? Color.BLACK : Color.WHITE);
-            }
+        CanvasClient canvasClient = (canvas, width, height) -> {
+            canvas.drawColor(canvas.isHardwareAccelerated() ? Color.BLACK : Color.WHITE);
         };
         BitmapComparer inverseComparer = new BitmapComparer() {
             @Override

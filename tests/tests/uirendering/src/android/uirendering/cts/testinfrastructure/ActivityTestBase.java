@@ -145,7 +145,7 @@ public abstract class ActivityTestBase {
     protected Bitmap captureRenderSpec(TestCase testCase) {
         Point testOffset = getActivity().enqueueRenderSpecAndWait(
                 testCase.layoutID, testCase.canvasClient,
-                testCase.webViewUrl, testCase.viewInitializer, testCase.useHardware);
+                null, testCase.viewInitializer, testCase.useHardware);
         testCase.wasTestRan = true;
         return takeScreenshot(testOffset);
     }
@@ -260,36 +260,33 @@ public abstract class ActivityTestBase {
             });
         }
 
-        public TestCaseBuilder addWebView(String webViewUrl,
-                @Nullable ViewInitializer viewInitializer) {
-            return addWebView(webViewUrl, viewInitializer, false)
-                    .addWebView(webViewUrl, viewInitializer, true);
-        }
-
         public TestCaseBuilder addLayout(int layoutId, @Nullable ViewInitializer viewInitializer) {
             return addLayout(layoutId, viewInitializer, false)
                     .addLayout(layoutId, viewInitializer, true);
         }
 
-        public TestCaseBuilder addCanvasClient(CanvasClient canvasClient) {
-            return addCanvasClient(canvasClient, false)
-                    .addCanvasClient(canvasClient, true);
-        }
-
-        public TestCaseBuilder addWebView(String webViewUrl,
-                @Nullable ViewInitializer viewInitializer, boolean useHardware) {
-            mTestCases.add(new TestCase(null, 0, webViewUrl, viewInitializer, useHardware));
-            return this;
-        }
-
         public TestCaseBuilder addLayout(int layoutId, @Nullable ViewInitializer viewInitializer,
-                boolean useHardware) {
-            mTestCases.add(new TestCase(null, layoutId, null, viewInitializer, useHardware));
+                                         boolean useHardware) {
+            mTestCases.add(new TestCase(layoutId, viewInitializer, useHardware));
             return this;
+        }
+
+        public TestCaseBuilder addCanvasClient(CanvasClient canvasClient) {
+            return addCanvasClient(null, canvasClient);
         }
 
         public TestCaseBuilder addCanvasClient(CanvasClient canvasClient, boolean useHardware) {
-            mTestCases.add(new TestCase(canvasClient, 0, null, null, useHardware));
+            return addCanvasClient(null, canvasClient, useHardware);
+        }
+
+        public TestCaseBuilder addCanvasClient(String debugString, CanvasClient canvasClient) {
+            return addCanvasClient(debugString, canvasClient, false)
+                    .addCanvasClient(debugString, canvasClient, true);
+        }
+
+        public TestCaseBuilder addCanvasClient(String debugString,
+                    CanvasClient canvasClient, boolean useHardware) {
+            mTestCases.add(new TestCase(canvasClient, debugString, useHardware));
             return this;
         }
 
@@ -300,39 +297,35 @@ public abstract class ActivityTestBase {
 
     private class TestCase {
         public int layoutID;
-        public CanvasClient canvasClient;
-        public String webViewUrl;
         public ViewInitializer viewInitializer;
-        public boolean useHardware;
-        public boolean wasTestRan;
 
-        public TestCase(CanvasClient client, int id, String viewUrl,
-                ViewInitializer viewInitializer, boolean useHardware) {
-            int count = 0;
-            count += (client == null ? 0 : 1);
-            count += (viewUrl == null ? 0 : 1);
-            count += (id == 0 ? 0 : 1);
-            assert(count == 1);
-            assert(client == null || viewInitializer == null);
-            this.layoutID = id;
-            this.canvasClient = client;
-            this.webViewUrl = viewUrl;
+        public CanvasClient canvasClient;
+        public String canvasClientDebugString;
+
+        public boolean useHardware;
+        public boolean wasTestRan = false;
+
+        public TestCase(int layoutId, ViewInitializer viewInitializer, boolean useHardware) {
+            this.layoutID = layoutId;
             this.viewInitializer = viewInitializer;
             this.useHardware = useHardware;
-            this.wasTestRan = false;
+        }
+
+        public TestCase(CanvasClient client, String debugString, boolean useHardware) {
+            this.canvasClient = client;
+            this.canvasClientDebugString = debugString;
+            this.useHardware = useHardware;
         }
 
         public String getDebugString() {
             String debug = "";
             if (canvasClient != null) {
                 debug += "CanvasClient : ";
-                if (canvasClient.getDebugString() != null) {
-                    debug += canvasClient.getDebugString();
+                if (canvasClientDebugString != null) {
+                    debug += canvasClientDebugString;
                 } else {
                     debug += "no debug string given";
                 }
-            } else if (webViewUrl != null) {
-                debug += "WebView URL : " + webViewUrl;
             } else {
                 debug += "Layout resource : " +
                         getActivity().getResources().getResourceName(layoutID);
