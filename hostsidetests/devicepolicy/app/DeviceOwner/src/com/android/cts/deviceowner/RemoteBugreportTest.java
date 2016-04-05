@@ -23,6 +23,7 @@ import android.content.Context;
 import android.support.test.uiautomator.By;
 import android.support.test.uiautomator.UiDevice;
 import android.support.test.uiautomator.UiObject;
+import android.support.test.uiautomator.UiObject2;
 import android.support.test.uiautomator.UiObjectNotFoundException;
 import android.support.test.uiautomator.UiSelector;
 import android.support.test.uiautomator.Until;
@@ -38,7 +39,7 @@ import android.test.InstrumentationTestCase;
  */
 public class RemoteBugreportTest extends InstrumentationTestCase {
 
-    private static final int UI_TIMEOUT = 10000; //10 seconds
+    private static final int UI_TIMEOUT_MILLIS = 5000; //5 seconds
 
     private static final String MESSAGE_ONLY_ONE_MANAGED_USER_ALLOWED =
             "There should only be one user, managed by Device Owner";
@@ -61,8 +62,6 @@ public class RemoteBugreportTest extends InstrumentationTestCase {
                 mContext.getSystemService(Context.DEVICE_POLICY_SERVICE);
         BaseDeviceOwnerTest.assertDeviceOwner(mDevicePolicyManager);
         mComponentName = BaseDeviceOwnerTest.getWho();
-        // cancel existing notifications
-        ((NotificationManager) mContext.getSystemService(Context.NOTIFICATION_SERVICE)).cancelAll();
     }
 
     /**
@@ -102,26 +101,14 @@ public class RemoteBugreportTest extends InstrumentationTestCase {
         if (!startedSuccessfully) {
             return;
         }
-        mUiDevice.openNotification();
 
-        // give it max 5 seconds to find the notification
-        boolean notificationPresent = mUiDevice.wait(
-                Until.hasObject(By.textStartsWith(TAKING_BUG_REPORT)), UI_TIMEOUT);
-        assertTrue(notificationPresent);
-
-        UiObject bugreportNotification = mUiDevice.findObject(
-                new UiSelector().textStartsWith(TAKING_BUG_REPORT));
+        UiObject2 bugreportNotification = findRemoteBugreportNotification();
         assertNotNull(bugreportNotification);
-        try {
-            bugreportNotification.click();
-        } catch (UiObjectNotFoundException e) {
-            throw new IllegalStateException(
-                    "Exception when clicking on 'Taking bugreport' notification", e);
-        }
+        bugreportNotification.click();
 
         // give it max 5 seconds to find the DECLINE button on the dialog
         boolean declineButtonPresent = mUiDevice.wait(
-                Until.hasObject(By.text(DECLINE)), UI_TIMEOUT);
+                Until.hasObject(By.text(DECLINE)), UI_TIMEOUT_MILLIS);
         assertTrue(declineButtonPresent);
 
         UiObject declineButton = mUiDevice.findObject(new UiSelector().text(DECLINE));
@@ -131,5 +118,29 @@ public class RemoteBugreportTest extends InstrumentationTestCase {
         } catch (UiObjectNotFoundException e) {
             throw new IllegalStateException("Exception when clicking on 'DECLINE' button", e);
         }
+    }
+
+    /**
+     * Attempts to find the remote bugreport notification scrolling down in the notification panel
+     * in between 10 attempts.
+     */
+    private UiObject2 findRemoteBugreportNotification() {
+        mUiDevice.openNotification();
+        final int displayWidth = mUiDevice.getDisplayWidth();
+        final int displayHeight = mUiDevice.getDisplayHeight();
+        for (int i = 0; i < 10; i++) {
+            UiObject2 notification = mUiDevice.wait(Until.findObject(
+                    By.textStartsWith(TAKING_BUG_REPORT)), UI_TIMEOUT_MILLIS);
+            if (notification != null) {
+                return notification;
+            } else {
+                /* makes a swipe from the middle of the screen upwards to the top of the screen
+                (the motion is upwards, so it scrolls downwards) half a screen, so that the
+                notification is always fully visible - never cut in two pieces) */
+                mUiDevice.swipe(displayWidth / 2, displayHeight / 2, displayWidth / 2,
+                        /* endY= */ 0, /* steps= */ 30);
+            }
+        }
+        return null;
     }
 }
