@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.icu.cts;
+package com.android.cts.core.runner;
 
 import android.app.Instrumentation;
 import android.os.Bundle;
@@ -30,8 +30,8 @@ import org.junit.runner.notification.RunListener;
 
 import static android.app.Instrumentation.REPORT_KEY_IDENTIFIER;
 import static android.app.Instrumentation.REPORT_KEY_STREAMRESULT;
-import static android.icu.cts.AndroidJUnitRunnerConstants.REPORT_KEY_RUNTIME;
-import static android.icu.cts.AndroidJUnitRunnerConstants.REPORT_VALUE_ID;
+import static com.android.cts.core.runner.AndroidJUnitRunnerConstants.REPORT_KEY_RUNTIME;
+import static com.android.cts.core.runner.AndroidJUnitRunnerConstants.REPORT_VALUE_ID;
 import static android.test.InstrumentationTestRunner.REPORT_KEY_NAME_CLASS;
 import static android.test.InstrumentationTestRunner.REPORT_KEY_NAME_TEST;
 import static android.test.InstrumentationTestRunner.REPORT_KEY_NUM_CURRENT;
@@ -47,7 +47,7 @@ import static android.test.InstrumentationTestRunner.REPORT_VALUE_RESULT_START;
  * Listens to result of running tests, collates details and sends intermediate status information
  * back to the host.
  */
-class IcuRunListener extends RunListener {
+class StatusUpdaterRunListener extends RunListener {
 
     /**
      * The {@link Instrumentation} for which this will report information.
@@ -77,7 +77,8 @@ class IcuRunListener extends RunListener {
 
     private long testStartTime;
 
-    public IcuRunListener(Instrumentation instrumentation, AndroidRunnerParams runnerParams,
+    public StatusUpdaterRunListener(Instrumentation instrumentation,
+            AndroidRunnerParams runnerParams,
             int totalTestCount) {
         this.instrumentation = instrumentation;
         this.runnerParams = runnerParams;
@@ -135,6 +136,7 @@ class IcuRunListener extends RunListener {
         } else {
             resultStatus = REPORT_VALUE_RESULT_ERROR;
         }
+
         String information = failure.getTrace();
         currentTestResult.putString(REPORT_KEY_STACK, information);
         String output = "Error: " + description + "\n" + information;
@@ -165,7 +167,7 @@ class IcuRunListener extends RunListener {
 
     public Bundle getFinalResults() {
         int totalTests = totalFailures + totalSuccess;
-        Log.d(IcuTestRunner.TAG, (runnerParams.isSkipExecution() ? "Skipped " : "Ran ")
+        Log.d(CoreTestRunner.TAG, (runnerParams.isSkipExecution() ? "Skipped " : "Ran ")
                 + totalTests + " tests, " + totalSuccess + " passed, " + totalFailures + " failed");
         Bundle results = new Bundle();
         results.putString(REPORT_KEY_IDENTIFIER, REPORT_VALUE_ID);
@@ -189,7 +191,7 @@ class IcuRunListener extends RunListener {
     }
 
     public Bundle getCountResults() {
-        Log.d(IcuTestRunner.TAG, "Counted " + (totalFailures + totalSuccess) + " tests, "
+        Log.d(CoreTestRunner.TAG, "Counted " + (totalFailures + totalSuccess) + " tests, "
                 + totalSuccess + " passed, " + totalFailures + " failed");
         Bundle results = new Bundle();
         results.putString(REPORT_KEY_IDENTIFIER, REPORT_VALUE_ID);

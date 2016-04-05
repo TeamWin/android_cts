@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package android.icu.cts;
+package com.android.cts.core.runner;
 
 import android.util.Log;
 import java.util.ArrayList;
@@ -25,7 +25,7 @@ import javax.annotation.Nullable;
 /**
  * A list of the tests to run.
  */
-class IcuTestList {
+class TestList {
 
     /**
      * The names of the set of tests to run, if null then all tests should be run.
@@ -35,7 +35,7 @@ class IcuTestList {
 
     private final List<Class<?>> classesToRun;
 
-    public static IcuTestList exclusiveList(List<String> testNameList) {
+    public static TestList exclusiveList(List<String> testNameList) {
         Set<String> classNamesToRun = new LinkedHashSet<>();
         Set<String> testsToRun = new LinkedHashSet<>(testNameList);
 
@@ -50,19 +50,19 @@ class IcuTestList {
             classNamesToRun.add(className);
         }
 
-        Log.d(IcuTestRunner.TAG, "Running only the following tests: " + testsToRun);
-        return new IcuTestList(getClasses(classNamesToRun), testsToRun);
+        Log.d(CoreTestRunner.TAG, "Running only the following tests: " + testsToRun);
+        return new TestList(getClasses(classNamesToRun), testsToRun);
     }
 
-    public static IcuTestList rootList(List<String> rootList) {
+    public static TestList rootList(List<String> rootList) {
 
         // Run from the root test class.
         Set<String> classNamesToRun = new LinkedHashSet<>(rootList);
-        Log.d(IcuTestRunner.TAG, "Running all tests rooted at " + classNamesToRun);
+        Log.d(CoreTestRunner.TAG, "Running all tests rooted at " + classNamesToRun);
 
         List<Class<?>> classesToRun1 = getClasses(classNamesToRun);
 
-        return new IcuTestList(classesToRun1, null);
+        return new TestList(classesToRun1, null);
     }
 
     private static List<Class<?>> getClasses(Set<String> classNames) {
@@ -83,7 +83,7 @@ class IcuTestList {
      * @param testsToRun The exclusive set of tests to run or null if all tests reachable from the
      * classes are to be run.
      */
-    private IcuTestList(List<Class<?>> classes, Set<String> testsToRun) {
+    private TestList(List<Class<?>> classes, Set<String> testsToRun) {
         this.testsToRun = testsToRun;
         this.classesToRun = classes;
     }

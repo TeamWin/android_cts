@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package android.icu.cts;
+package com.android.cts.core.runner;
 
 import android.util.Log;
 import java.util.List;
@@ -61,15 +61,15 @@ import vogar.Result;
  * {@link ParentRunner}, as that would prevent it from traversing the hierarchy and finding
  * the leaf nodes.
  */
-class IcuTestFilter extends Filter {
+class TestFilter extends Filter {
 
     private final ExpectationStore expectationStore;
 
-    private final IcuTestList icuTestList;
+    private final TestList testList;
 
-    public IcuTestFilter(IcuTestList icuTestList, @Nullable ExpectationStore expectationStore) {
+    public TestFilter(TestList testList, @Nullable ExpectationStore expectationStore) {
         this.expectationStore = expectationStore;
-        this.icuTestList = icuTestList;
+        this.testList = testList;
     }
 
     @Override
@@ -84,14 +84,14 @@ class IcuTestFilter extends Filter {
             String testName = className + "#" + methodName;
 
             // If the test isn't in the list of tests to run then do not run it.
-            if (!icuTestList.shouldRunTest(testName)) {
+            if (!testList.shouldRunTest(testName)) {
                 return false;
             }
 
             if (expectationStore != null) {
                 Expectation expectation = expectationStore.get(testName);
                 if (expectation.getResult() != Result.SUCCESS) {
-                    Log.d(IcuTestRunner.TAG, "Excluding test " + description
+                    Log.d(CoreTestRunner.TAG, "Excluding test " + testDescription
                             + " as it matches expectation: " + expectation);
                     return false;
                 }
@@ -126,6 +126,6 @@ class IcuTestFilter extends Filter {
 
     @Override
     public String describe() {
-        return "IcuTestFilter";
+        return "TestFilter";
     }
 }
