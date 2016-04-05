@@ -43,17 +43,14 @@ public class LayerTests extends ActivityTestBase {
         @ColorInt
         final int expectedColor = Color.rgb(255, 191, 191);
         createTest()
-                .addLayout(R.layout.simple_red_layout, new ViewInitializer() {
-                    @Override
-                    public void initializeView(View view) {
-                        // reduce alpha by 50%
-                        Paint paint = new Paint();
-                        paint.setAlpha(128);
-                        view.setLayerType(View.LAYER_TYPE_HARDWARE, paint);
+                .addLayout(R.layout.simple_red_layout, (ViewInitializer) view -> {
+                    // reduce alpha by 50%
+                    Paint paint = new Paint();
+                    paint.setAlpha(128);
+                    view.setLayerType(View.LAYER_TYPE_HARDWARE, paint);
 
-                        // reduce alpha by another 50% (ensuring two alphas combine correctly)
-                        view.setAlpha(0.5f);
-                    }
+                    // reduce alpha by another 50% (ensuring two alphas combine correctly)
+                    view.setAlpha(0.5f);
                 })
                 .runWithVerifier(new ColorVerifier(expectedColor));
     }
@@ -65,15 +62,12 @@ public class LayerTests extends ActivityTestBase {
         @ColorInt
         final int expectedColor = Color.rgb(54, 54, 54);
         createTest()
-                .addLayout(R.layout.simple_red_layout, new ViewInitializer() {
-                    @Override
-                    public void initializeView(View view) {
-                        Paint paint = new Paint();
-                        ColorMatrix desatMatrix = new ColorMatrix();
-                        desatMatrix.setSaturation(0.0f);
-                        paint.setColorFilter(new ColorMatrixColorFilter(desatMatrix));
-                        view.setLayerType(View.LAYER_TYPE_HARDWARE, paint);
-                    }
+                .addLayout(R.layout.simple_red_layout, (ViewInitializer) view -> {
+                    Paint paint = new Paint();
+                    ColorMatrix desatMatrix = new ColorMatrix();
+                    desatMatrix.setSaturation(0.0f);
+                    paint.setColorFilter(new ColorMatrixColorFilter(desatMatrix));
+                    view.setLayerType(View.LAYER_TYPE_HARDWARE, paint);
                 })
                 .runWithVerifier(new ColorVerifier(expectedColor));
     }
@@ -85,20 +79,17 @@ public class LayerTests extends ActivityTestBase {
         @ColorInt
         final int expectedColor = Color.WHITE;
         createTest()
-                .addLayout(R.layout.simple_red_layout, new ViewInitializer() {
-                    @Override
-                    public void initializeView(View view) {
-                        Paint paint = new Paint();
-                        /* Note that when drawing in SW, we're blending within an otherwise empty
-                         * SW layer, as opposed to in the frame buffer (which has a white
-                         * background).
-                         *
-                         * For this reason we use just use DST, which just throws out the SRC
-                         * content, regardless of the DST alpha channel.
-                         */
-                        paint.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.DST));
-                        view.setLayerType(View.LAYER_TYPE_HARDWARE, paint);
-                    }
+                .addLayout(R.layout.simple_red_layout, (ViewInitializer) view -> {
+                    Paint paint = new Paint();
+                    /* Note that when drawing in SW, we're blending within an otherwise empty
+                     * SW layer, as opposed to in the frame buffer (which has a white
+                     * background).
+                     *
+                     * For this reason we use just use DST, which just throws out the SRC
+                     * content, regardless of the DST alpha channel.
+                     */
+                    paint.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.DST));
+                    view.setLayerType(View.LAYER_TYPE_HARDWARE, paint);
                 })
                 .runWithVerifier(new ColorVerifier(expectedColor));
     }
