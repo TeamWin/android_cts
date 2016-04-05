@@ -40,8 +40,9 @@ public class PkgInstallSignatureVerificationTest extends DeviceTestCase implemen
 
     private static final String[] DSA_KEY_NAMES = {"1024", "2048", "3072"};
     private static final String[] EC_KEY_NAMES = {"p256", "p384", "p521"};
-    private static final String[] RSA_KEY_NAMES = {"1024", "2048", "3072", "4096"};
-    private static final String[] RSA_KEY_NAMES_2048_AND_LARGER = {"2048", "3072", "4096"};
+    private static final String[] RSA_KEY_NAMES = {"1024", "2048", "3072", "4096", "8192", "16384"};
+    private static final String[] RSA_KEY_NAMES_2048_AND_LARGER =
+            {"2048", "3072", "4096", "8192", "16384"};
 
 
     /** Device under test. */
