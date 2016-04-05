@@ -188,4 +188,6 @@
         <item name="android:tabStripLeft">@drawable/icon_green</item>
         <item name="android:tabStripRight">@drawable/icon_red</item>
     </style>
+
+    <style name="ToolbarPopupTheme_Test" parent="@android:style/ThemeOverlay.Material.Light" />
 </resources>
