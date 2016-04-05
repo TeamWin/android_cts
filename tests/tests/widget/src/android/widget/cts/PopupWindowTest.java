@@ -16,12 +16,16 @@
 
 package android.widget.cts;
 
+import junit.framework.AssertionFailedError;
+
 import android.app.Activity;
 import android.app.Instrumentation;
 import android.content.Context;
 import android.graphics.Color;
+import android.graphics.Rect;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
+import android.os.Debug;
 import android.os.SystemClock;
 import android.test.ActivityInstrumentationTestCase2;
 import android.test.UiThreadTest;
@@ -296,33 +300,281 @@ public class PopupWindowTest extends
         assertEquals(width, mPopupWindow.getWidth());
     }
 
+    private static final int TOP = 0x00;
+    private static final int BOTTOM = 0x01;
+
+    private static final int LEFT = 0x00;
+    private static final int RIGHT = 0x01;
+
+    private static final int GREATER_THAN = 1;
+    private static final int LESS_THAN = -1;
+    private static final int EQUAL_TO = 0;
+
     public void testShowAsDropDown() {
-        int[] anchorXY = new int[2];
-        int[] viewOnScreenXY = new int[2];
-        int[] viewInWindowXY = new int[2];
+        final PopupWindow popup = createPopupWindow(createPopupContent(50, 50));
+        popup.setClipToScreenEnabled(false);
+        popup.setOverlapAnchor(false);
+        popup.setAnimationStyle(0);
+        popup.setExitTransition(null);
+        popup.setEnterTransition(null);
 
-        mPopupWindow = createPopupWindow(createPopupContent());
-        final View upperAnchor = mActivity.findViewById(R.id.anchor_upper);
+        assertPosition(popup, R.id.anchor_upper_left,
+                LEFT, EQUAL_TO, LEFT, TOP, EQUAL_TO, BOTTOM);
+        assertPosition(popup, R.id.anchor_upper,
+                LEFT, EQUAL_TO, LEFT, TOP, EQUAL_TO, BOTTOM);
+        assertPosition(popup, R.id.anchor_upper_right,
+                RIGHT, EQUAL_TO, RIGHT, TOP, EQUAL_TO, BOTTOM);
 
-        mInstrumentation.runOnMainSync(() -> mPopupWindow.showAsDropDown(upperAnchor));
-        mInstrumentation.waitForIdleSync();
+        assertPosition(popup, R.id.anchor_middle_left,
+                LEFT, EQUAL_TO, LEFT, TOP, EQUAL_TO, BOTTOM);
+        assertPosition(popup, R.id.anchor_middle,
+                LEFT, EQUAL_TO, LEFT, TOP, EQUAL_TO, BOTTOM);
+        assertPosition(popup, R.id.anchor_middle_right,
+                RIGHT, EQUAL_TO, RIGHT, TOP, EQUAL_TO, BOTTOM);
 
-        assertTrue(mPopupWindow.isShowing());
+        assertPosition(popup, R.id.anchor_lower_left,
+                LEFT, EQUAL_TO, LEFT, BOTTOM, EQUAL_TO, TOP);
+        assertPosition(popup, R.id.anchor_lower,
+                LEFT, EQUAL_TO, LEFT, BOTTOM, EQUAL_TO, TOP);
+        assertPosition(popup, R.id.anchor_lower_right,
+                RIGHT, EQUAL_TO, RIGHT, BOTTOM, EQUAL_TO, TOP);
+    }
 
-        mPopupWindow.getContentView().getLocationOnScreen(viewOnScreenXY);
-        upperAnchor.getLocationOnScreen(anchorXY);
-        mPopupWindow.getContentView().getLocationInWindow(viewInWindowXY);
-        assertEquals(anchorXY[0] + viewInWindowXY[0], viewOnScreenXY[0]);
-        assertEquals(anchorXY[1] + viewInWindowXY[1] + upperAnchor.getHeight(), viewOnScreenXY[1]);
+    public void testShowAsDropDown_ClipToScreen() {
+        final PopupWindow popup = createPopupWindow(createPopupContent(50, 50));
+        popup.setClipToScreenEnabled(true);
+        popup.setOverlapAnchor(false);
+        popup.setAnimationStyle(0);
+        popup.setExitTransition(null);
+        popup.setEnterTransition(null);
 
-        dismissPopup();
+        assertPosition(popup, R.id.anchor_upper_left,
+                LEFT, EQUAL_TO, LEFT, TOP, EQUAL_TO, BOTTOM);
+        assertPosition(popup, R.id.anchor_upper,
+                LEFT, EQUAL_TO, LEFT, TOP, EQUAL_TO, BOTTOM);
+        assertPosition(popup, R.id.anchor_upper_right,
+                RIGHT, EQUAL_TO, RIGHT, TOP, EQUAL_TO, BOTTOM);
+
+        assertPosition(popup, R.id.anchor_middle_left,
+                LEFT, EQUAL_TO, LEFT, TOP, EQUAL_TO, BOTTOM);
+        assertPosition(popup, R.id.anchor_middle,
+                LEFT, EQUAL_TO, LEFT, TOP, EQUAL_TO, BOTTOM);
+        assertPosition(popup, R.id.anchor_middle_right,
+                RIGHT, EQUAL_TO, RIGHT, TOP, EQUAL_TO, BOTTOM);
+
+        assertPosition(popup, R.id.anchor_lower_left,
+                LEFT, EQUAL_TO, LEFT, BOTTOM, EQUAL_TO, TOP);
+        assertPosition(popup, R.id.anchor_lower,
+                LEFT, EQUAL_TO, LEFT, BOTTOM, EQUAL_TO, TOP);
+        assertPosition(popup, R.id.anchor_lower_right,
+                RIGHT, EQUAL_TO, RIGHT, BOTTOM, EQUAL_TO, TOP);
+    }
+
+    public void testShowAsDropDown_ClipToScreen_Overlap() {
+        final PopupWindow popup = createPopupWindow(createPopupContent(50, 50));
+        popup.setClipToScreenEnabled(true);
+        popup.setOverlapAnchor(true);
+        popup.setAnimationStyle(0);
+        popup.setExitTransition(null);
+        popup.setEnterTransition(null);
+
+        assertPosition(popup, R.id.anchor_upper_left,
+                LEFT, EQUAL_TO, LEFT, TOP, EQUAL_TO, TOP);
+        assertPosition(popup, R.id.anchor_upper,
+                LEFT, EQUAL_TO, LEFT, TOP, EQUAL_TO, TOP);
+        assertPosition(popup, R.id.anchor_upper_right,
+                RIGHT, EQUAL_TO, RIGHT, TOP, EQUAL_TO, TOP);
+
+        assertPosition(popup, R.id.anchor_middle_left,
+                LEFT, EQUAL_TO, LEFT, TOP, EQUAL_TO, TOP);
+        assertPosition(popup, R.id.anchor_middle,
+                LEFT, EQUAL_TO, LEFT, TOP, EQUAL_TO, TOP);
+        assertPosition(popup, R.id.anchor_middle_right,
+                RIGHT, EQUAL_TO, RIGHT, TOP, EQUAL_TO, TOP);
+
+        assertPosition(popup, R.id.anchor_lower_left,
+                LEFT, EQUAL_TO, LEFT, BOTTOM, EQUAL_TO, TOP);
+        assertPosition(popup, R.id.anchor_lower,
+                LEFT, EQUAL_TO, LEFT, BOTTOM, EQUAL_TO, TOP);
+        assertPosition(popup, R.id.anchor_lower_right,
+                RIGHT, EQUAL_TO, RIGHT, BOTTOM, EQUAL_TO, TOP);
+    }
+
+    public void testShowAsDropDown_ClipToScreen_Overlap_Offset() {
+        final PopupWindow popup = createPopupWindow(createPopupContent(50, 50));
+        popup.setClipToScreenEnabled(true);
+        popup.setOverlapAnchor(true);
+        popup.setAnimationStyle(0);
+        popup.setExitTransition(null);
+        popup.setEnterTransition(null);
+
+        final int offsetX = mActivity.findViewById(R.id.anchor_upper).getWidth() / 2;
+        final int offsetY = mActivity.findViewById(R.id.anchor_upper).getHeight() / 2;
+        final int gravity = Gravity.TOP | Gravity.START;
+
+        assertPosition(popup, R.id.anchor_upper_left,
+                LEFT, GREATER_THAN, LEFT, TOP, GREATER_THAN, TOP,
+                offsetX, offsetY, gravity);
+        assertPosition(popup, R.id.anchor_upper,
+                LEFT, GREATER_THAN, LEFT, TOP, GREATER_THAN, TOP,
+                offsetX, offsetY, gravity);
+        assertPosition(popup, R.id.anchor_upper_right,
+                RIGHT, EQUAL_TO, RIGHT, TOP, GREATER_THAN, TOP,
+                offsetX, offsetY, gravity);
+
+        assertPosition(popup, R.id.anchor_middle_left,
+                LEFT, GREATER_THAN, LEFT, TOP, GREATER_THAN, TOP,
+                offsetX, offsetY, gravity);
+        assertPosition(popup, R.id.anchor_middle,
+                LEFT, GREATER_THAN, LEFT, TOP, GREATER_THAN, TOP,
+                offsetX, offsetY, gravity);
+        assertPosition(popup, R.id.anchor_middle_right,
+                RIGHT, EQUAL_TO, RIGHT, TOP, GREATER_THAN, TOP,
+                offsetX, offsetY, gravity);
+
+        assertPosition(popup, R.id.anchor_lower_left,
+                LEFT, GREATER_THAN, LEFT, BOTTOM, LESS_THAN, BOTTOM,
+                offsetX, offsetY, gravity);
+        assertPosition(popup, R.id.anchor_lower,
+                LEFT, GREATER_THAN, LEFT, BOTTOM, LESS_THAN, BOTTOM,
+                offsetX, offsetY, gravity);
+        assertPosition(popup, R.id.anchor_lower_right,
+                RIGHT, EQUAL_TO, RIGHT, BOTTOM, LESS_THAN, BOTTOM,
+                offsetX, offsetY, gravity);
+    }
+
+    public void testShowAsDropDown_ClipToScreen_TooBig() {
+        final View rootView = mActivity.findViewById(R.id.anchor_upper_left).getRootView();
+        final int width = rootView.getWidth() * 2;
+        final int height = rootView.getHeight() * 2;
+
+        final PopupWindow popup = createPopupWindow(createPopupContent(width, height));
+        popup.setWidth(width);
+        popup.setHeight(height);
+
+        popup.setClipToScreenEnabled(true);
+        popup.setOverlapAnchor(false);
+        popup.setAnimationStyle(0);
+        popup.setExitTransition(null);
+        popup.setEnterTransition(null);
+
+        assertPosition(popup, R.id.anchor_upper_left,
+                LEFT, EQUAL_TO, LEFT, TOP, LESS_THAN, TOP);
+        assertPosition(popup, R.id.anchor_upper,
+                LEFT, LESS_THAN, LEFT, TOP, LESS_THAN, TOP);
+        assertPosition(popup, R.id.anchor_upper_right,
+                RIGHT, EQUAL_TO, RIGHT, TOP, LESS_THAN, TOP);
+
+        assertPosition(popup, R.id.anchor_middle_left,
+                LEFT, EQUAL_TO, LEFT, TOP, LESS_THAN, TOP);
+        assertPosition(popup, R.id.anchor_middle,
+                LEFT, LESS_THAN, LEFT, TOP, LESS_THAN, TOP);
+        assertPosition(popup, R.id.anchor_middle_right,
+                RIGHT, EQUAL_TO, RIGHT, TOP, LESS_THAN, TOP);
+
+        assertPosition(popup, R.id.anchor_lower_left,
+                LEFT, EQUAL_TO, LEFT, BOTTOM, EQUAL_TO, BOTTOM);
+        assertPosition(popup, R.id.anchor_lower,
+                LEFT, LESS_THAN, LEFT, BOTTOM, EQUAL_TO, BOTTOM);
+        assertPosition(popup, R.id.anchor_lower_right,
+                RIGHT, EQUAL_TO, RIGHT, BOTTOM, EQUAL_TO, BOTTOM);
+    }
+
+    private void assertPosition(PopupWindow popup, int anchorId,
+            int contentEdgeX, int operatorX, int anchorEdgeX,
+            int contentEdgeY, int operatorY, int anchorEdgeY) {
+        assertPosition(popup, anchorId,
+                contentEdgeX, operatorX, anchorEdgeX,
+                contentEdgeY, operatorY, anchorEdgeY,
+                0, 0, Gravity.TOP | Gravity.START);
+    }
+
+    private void assertPosition(PopupWindow popup, int anchorId,
+            int contentEdgeX, int operatorX, int anchorEdgeX,
+            int contentEdgeY, int operatorY, int anchorEdgeY,
+            int offsetX, int offsetY, int gravity) {
+        final View content = popup.getContentView();
+        final View anchor = mActivity.findViewById(anchorId);
+
+        getInstrumentation().runOnMainSync(() -> popup.showAsDropDown(
+                anchor, offsetX, offsetY, gravity));
+        getInstrumentation().waitForIdleSync();
+
+        assertTrue(popup.isShowing());
+        assertPositionX(content, contentEdgeX, operatorX, anchor, anchorEdgeX);
+        assertPositionY(content, contentEdgeY, operatorY, anchor, anchorEdgeY);
+
+        // Make sure it fits in the display frame.
+        final Rect displayFrame = new Rect();
+        anchor.getWindowVisibleDisplayFrame(displayFrame);
+        final Rect contentFrame = new Rect();
+        content.getBoundsOnScreen(contentFrame);
+        assertTrue("Content (" + contentFrame + ") extends outside display (" + displayFrame + ")",
+                displayFrame.contains(contentFrame));
+
+        getInstrumentation().runOnMainSync(() -> popup.dismiss());
+        getInstrumentation().waitForIdleSync();
+
+        assertFalse(popup.isShowing());
+    }
+
+    public static void assertPositionY(View content, int contentEdge, int flags,
+            View anchor, int anchorEdge) {
+        final int[] anchorOnScreenXY = new int[2];
+        anchor.getLocationOnScreen(anchorOnScreenXY);
+        int anchorY = anchorOnScreenXY[1];
+        if ((anchorEdge & BOTTOM) == BOTTOM) {
+            anchorY += anchor.getHeight();
+        }
+
+        final int[] contentOnScreenXY = new int[2];
+        content.getLocationOnScreen(contentOnScreenXY);
+        int contentY = contentOnScreenXY[1];
+        if ((contentEdge & BOTTOM) == BOTTOM) {
+            contentY += content.getHeight();
+        }
+
+        assertComparison(contentY, flags, anchorY);
+    }
+
+    private static void assertPositionX(View content, int contentEdge, int flags,
+            View anchor, int anchorEdge) {
+        final int[] anchorOnScreenXY = new int[2];
+        anchor.getLocationOnScreen(anchorOnScreenXY);
+        int anchorX = anchorOnScreenXY[0];
+        if ((anchorEdge & RIGHT) == RIGHT) {
+            anchorX += anchor.getWidth();
+        }
+
+        final int[] contentOnScreenXY = new int[2];
+        content.getLocationOnScreen(contentOnScreenXY);
+        int contentX = contentOnScreenXY[0];
+        if ((contentEdge & RIGHT) == RIGHT) {
+            contentX += content.getWidth();
+        }
+
+        assertComparison(contentX, flags, anchorX);
+    }
+
+    private static void assertComparison(int left, int operator, int right) {
+        switch (operator) {
+            case GREATER_THAN:
+                assertTrue(left + " <= " + right, left > right);
+                break;
+            case LESS_THAN:
+                assertTrue(left + " >= " + right, left < right);
+                break;
+            case EQUAL_TO:
+                assertTrue(left + " != " + right, left == right);
+                break;
+        }
     }
 
     public void testShowAtLocation() {
         int[] popupContentViewInWindowXY = new int[2];
         int[] popupContentViewOnScreenXY = new int[2];
 
-        mPopupWindow = createPopupWindow(createPopupContent());
+        mPopupWindow = createPopupWindow(createPopupContent(50, 50));
         // Do not attach within the decor; we will be measuring location
         // with regard to screen coordinates.
         mPopupWindow.setAttachedInDecor(false);
@@ -355,7 +607,7 @@ public class PopupWindowTest extends
         int[] viewOnScreenXY = new int[2];
         int[] viewInWindowXY = new int[2];
 
-        mPopupWindow = createPopupWindow(createPopupContent());
+        mPopupWindow = createPopupWindow(createPopupContent(50, 50));
         final View upperAnchor = mActivity.findViewById(R.id.anchor_upper);
         upperAnchor.getLocationOnScreen(anchorXY);
         int height = upperAnchor.getHeight();
@@ -379,7 +631,7 @@ public class PopupWindowTest extends
         int[] viewOnScreenXY = new int[2];
         int[] viewInWindowXY = new int[2];
 
-        mPopupWindow = createPopupWindow(createPopupContent());
+        mPopupWindow = createPopupWindow(createPopupContent(50, 50));
         final View upperAnchor = mActivity.findViewById(R.id.anchor_upper);
         upperAnchor.getLocationOnScreen(anchorXY);
 
@@ -397,7 +649,7 @@ public class PopupWindowTest extends
     }
 
     public void testAccessWindowLayoutType() {
-        mPopupWindow = createPopupWindow(createPopupContent());
+        mPopupWindow = createPopupWindow(createPopupContent(50, 50));
         assertEquals(WindowManager.LayoutParams.TYPE_APPLICATION_PANEL,
                 mPopupWindow.getWindowLayoutType());
         mPopupWindow.setWindowLayoutType(WindowManager.LayoutParams.TYPE_APPLICATION_SUB_PANEL);
@@ -406,7 +658,7 @@ public class PopupWindowTest extends
     }
 
     public void testGetMaxAvailableHeight() {
-        mPopupWindow = createPopupWindow(createPopupContent());
+        mPopupWindow = createPopupWindow(createPopupContent(50, 50));
 
         View anchorView = mActivity.findViewById(R.id.anchor_upper);
         int avaliable = getDisplay().getHeight() - anchorView.getHeight();
@@ -447,7 +699,7 @@ public class PopupWindowTest extends
 
     @UiThreadTest
     public void testDismiss() {
-        mPopupWindow = createPopupWindow(createPopupContent());
+        mPopupWindow = createPopupWindow(createPopupContent(50, 50));
         assertFalse(mPopupWindow.isShowing());
         View anchorView = mActivity.findViewById(R.id.anchor_upper);
         mPopupWindow.showAsDropDown(anchorView);
@@ -480,7 +732,7 @@ public class PopupWindowTest extends
     }
 
     public void testUpdate() {
-        mPopupWindow = createPopupWindow(createPopupContent());
+        mPopupWindow = createPopupWindow(createPopupContent(50, 50));
         mPopupWindow.setBackgroundDrawable(null);
         showPopup();
 
@@ -529,7 +781,7 @@ public class PopupWindowTest extends
 
         OnDismissListener dismissListener = mock(OnDismissListener.class);
 
-        mPopupWindow = createPopupWindow(createPopupContent());
+        mPopupWindow = createPopupWindow(createPopupContent(50, 50));
         mPopupWindow.setEnterTransition(enterTransition);
         mPopupWindow.setExitTransition(exitTransition);
         mPopupWindow.setOnDismissListener(dismissListener);
@@ -557,7 +809,7 @@ public class PopupWindowTest extends
         int[] viewInWindowXY = new int[2];
 
         mInstrumentation.runOnMainSync(() -> {
-            mPopupWindow = createPopupWindow(createPopupContent());
+            mPopupWindow = createPopupWindow(createPopupContent(50, 50));
             // Do not attach within the decor; we will be measuring location
             // with regard to screen coordinates.
             mPopupWindow.setAttachedInDecor(false);
@@ -601,7 +853,7 @@ public class PopupWindowTest extends
 
     public void testUpdateDimensionAndAlignAnchorView() {
         mInstrumentation.runOnMainSync(
-                () -> mPopupWindow = createPopupWindow(createPopupContent()));
+                () -> mPopupWindow = createPopupWindow(createPopupContent(50, 50)));
         mInstrumentation.waitForIdleSync();
 
         final View anchorView = mActivity.findViewById(R.id.anchor_upper);
@@ -636,7 +888,7 @@ public class PopupWindowTest extends
         int[] viewInWindowOff = new int[2];
         int[] viewXY = new int[2];
 
-        mPopupWindow = createPopupWindow(createPopupContent());
+        mPopupWindow = createPopupWindow(createPopupContent(50, 50));
         final View anchorView = mActivity.findViewById(R.id.anchor_upper);
         // Do not update if it is not shown
         assertFalse(mPopupWindow.isShowing());
@@ -737,7 +989,8 @@ public class PopupWindowTest extends
     }
 
     public void testIsAboveAnchor() {
-        mInstrumentation.runOnMainSync(() -> mPopupWindow = createPopupWindow(createPopupContent()));
+        mInstrumentation.runOnMainSync(() -> mPopupWindow = createPopupWindow(createPopupContent(50,
+                50)));
         mInstrumentation.waitForIdleSync();
         final View upperAnchor = mActivity.findViewById(R.id.anchor_upper);
 
@@ -746,7 +999,7 @@ public class PopupWindowTest extends
         assertFalse(mPopupWindow.isAboveAnchor());
         dismissPopup();
 
-        mPopupWindow = createPopupWindow(createPopupContent());
+        mPopupWindow = createPopupWindow(createPopupContent(50, 50));
         final View lowerAnchor = mActivity.findViewById(R.id.anchor_lower);
 
         mInstrumentation.runOnMainSync(() -> mPopupWindow.showAsDropDown(lowerAnchor, 0, 0));
@@ -819,9 +1072,9 @@ public class PopupWindowTest extends
         public void captureEndValues(TransitionValues transitionValues) {}
     }
 
-    private View createPopupContent() {
-        View popupView = new View(mActivity);
-        popupView.setLayoutParams(new ViewGroup.LayoutParams(50, 50));
+    private View createPopupContent(int width, int height) {
+        final View popupView = new View(mActivity);
+        popupView.setLayoutParams(new ViewGroup.LayoutParams(width, height));
         popupView.setBackgroundColor(Color.MAGENTA);
 
         return popupView;
@@ -831,6 +1084,7 @@ public class PopupWindowTest extends
         PopupWindow window = new PopupWindow(mActivity);
         window.setWidth(100);
         window.setHeight(100);
+        window.setBackgroundDrawable(new ColorDrawable(Color.YELLOW));
         return window;
     }
 
