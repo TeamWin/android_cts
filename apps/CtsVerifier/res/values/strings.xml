@@ -2462,6 +2462,13 @@ You should be prompted to select credentials; choose the ones you just installed
     Do you see the programs named \"Dummy Program\" and their descriptions
     "Dummy Program Description" in the EPG?
     </string>
+    <string name="tv_input_discover_test_trigger_setup">
+    Select the \"Launch setup\" button and verify if the bundled TV app shows the list of installed
+    TV inputs for setup.
+    </string>
+    <string name="tv_input_discover_test_verify_trigger_setup">
+    Do you see the \"CTS Verifier\" input in the list?
+    </string>
 
     <string name="tv_parental_control_test">TV app parental controls test</string>
     <string name="tv_parental_control_test_info">
@@ -2489,6 +2496,7 @@ You should be prompted to select credentials; choose the ones you just installed
 
     <string name="tv_launch_tv_app">Launch TV app</string>
     <string name="tv_launch_epg">Launch EPG</string>
+    <string name="tv_launch_setup">Launch setup</string>
     <string name="tv_channel_not_found">
     CtsVerifier channel is not set up. Please set up before proceeding.
     </string>
