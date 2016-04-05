@@ -112,17 +112,13 @@ public class PathClippingTests extends ActivityTestBase {
     @Test
     public void testViewRotate() {
         createTest()
-                .addLayout(R.layout.blue_padded_layout, new ViewInitializer() {
-                    @Override
-                    public void initializeView(View view) {
-                        ViewGroup rootView = (ViewGroup) view;
-                        rootView.setClipChildren(true);
-                        View childView = rootView.getChildAt(0);
-                        childView.setPivotX(40);
-                        childView.setPivotY(40);
-                        childView.setRotation(45f);
-
-                    }
+                .addLayout(R.layout.blue_padded_layout, (ViewInitializer) view -> {
+                    ViewGroup rootView = (ViewGroup) view;
+                    rootView.setClipChildren(true);
+                    View childView = rootView.getChildAt(0);
+                    childView.setPivotX(40);
+                    childView.setPivotY(40);
+                    childView.setRotation(45f);
                 })
                 .runWithVerifier(new SamplePointVerifier(
                         new Point[] {
@@ -183,13 +179,10 @@ public class PathClippingTests extends ActivityTestBase {
                     }
                 }, false)
                 // verify against solid color webview, clipped to its parent oval
-                .addLayout(R.layout.circle_clipped_webview, new ViewInitializer() {
-                    @Override
-                    public void initializeView(View view) {
-                        WebView webview = (WebView)view.findViewById(R.id.webview);
-                        assertNotNull(webview);
-                        webview.loadData("<body style=\"background-color:blue\">", null, null);
-                    }
+                .addLayout(R.layout.circle_clipped_webview, (ViewInitializer) view -> {
+                    WebView webview = (WebView)view.findViewById(R.id.webview);
+                    assertNotNull(webview);
+                    webview.loadData("<body style=\"background-color:blue\">", null, null);
                 })
                 .runWithComparer(new MSSIMComparer(0.95));
     }
