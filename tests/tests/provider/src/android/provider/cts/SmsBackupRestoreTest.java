@@ -24,6 +24,7 @@ import android.content.ContentResolver;
 import android.content.ContentUris;
 import android.content.ContentValues;
 import android.content.Context;
+import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.net.Uri;
 import android.provider.BaseColumns;
@@ -65,6 +66,8 @@ public class SmsBackupRestoreTest extends TestCaseThatRunsIfTelephonyIsEnabled {
     private ContentResolver mContentResolver;
     private UiAutomation mUiAutomation;
     private String mOldTransport;
+    private boolean mOldBackupEnabled;
+    private boolean mHasFeature;
 
     @Override
     protected void setUp() throws Exception {
@@ -74,19 +77,33 @@ public class SmsBackupRestoreTest extends TestCaseThatRunsIfTelephonyIsEnabled {
         mContext = getInstrumentation().getContext();
         mContentResolver = mContext.getContentResolver();
         mUiAutomation = getInstrumentation().getUiAutomation();
-        ProviderTestUtils.setDefaultSmsApp(true, mContext.getPackageName(), mUiAutomation);
-        mOldTransport = ProviderTestUtils.setBackupTransport(LOCAL_BACKUP_COMPONENT, mUiAutomation);
-        clearMessages();
-        wipeBackup();
+        mHasFeature = isFeatureSupported();
+        if (mHasFeature) {
+            ProviderTestUtils.setDefaultSmsApp(true, mContext.getPackageName(), mUiAutomation);
+            mOldTransport =
+                    ProviderTestUtils.setBackupTransport(LOCAL_BACKUP_COMPONENT, mUiAutomation);
+            mOldBackupEnabled = ProviderTestUtils.setBackupEnabled(true, mUiAutomation);
+            clearMessages();
+            wipeBackup();
+        }
     }
 
     @Override
     protected void tearDown() throws Exception {
-        wipeBackup();
-        clearMessages();
-        ProviderTestUtils.setBackupTransport(mOldTransport, mUiAutomation);
-        ProviderTestUtils.setDefaultSmsApp(false, mContext.getPackageName(), mUiAutomation);
+        if (mHasFeature) {
+            wipeBackup();
+            clearMessages();
+            ProviderTestUtils.setBackupEnabled(mOldBackupEnabled, mUiAutomation);
+            ProviderTestUtils.setBackupTransport(mOldTransport, mUiAutomation);
+            ProviderTestUtils.setDefaultSmsApp(false, mContext.getPackageName(), mUiAutomation);
+        }
+
         super.tearDown();
+    }
+
+    private boolean isFeatureSupported() throws Exception {
+        return (ProviderTestUtils.hasBackupTransport(LOCAL_BACKUP_COMPONENT, mUiAutomation)
+                && mContext.getPackageManager().hasSystemFeature(PackageManager.FEATURE_TELEPHONY));
     }
 
     private void clearMessages() {
@@ -117,8 +134,9 @@ public class SmsBackupRestoreTest extends TestCaseThatRunsIfTelephonyIsEnabled {
      * @throws Exception
      */
     public void testSmsBackupRestore() throws Exception {
-        if (!ProviderTestUtils.hasBackupTransport(LOCAL_BACKUP_COMPONENT, mUiAutomation)) {
+        if (!mHasFeature) {
             Log.i(TAG, "skipping testSmsBackupRestore");
+            return;
         }
 
         ContentValues smsContentValues[] = new ContentValues[] {

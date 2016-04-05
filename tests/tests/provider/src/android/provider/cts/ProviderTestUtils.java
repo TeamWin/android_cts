@@ -34,7 +34,9 @@ import java.util.regex.Pattern;
  */
 public class ProviderTestUtils {
 
-    static final int BACKUP_TIMEOUT_MILLIS = 4000;
+    private static final int BACKUP_TIMEOUT_MILLIS = 4000;
+    private static final Pattern BMGR_ENABLED_PATTERN = Pattern.compile(
+            "^Backup Manager currently (enabled|disabled)$");
 
     static void setDefaultSmsApp(boolean setToSmsApp, String packageName, UiAutomation uiAutomation)
             throws Exception {
@@ -71,6 +73,22 @@ public class ProviderTestUtils {
         } else {
             throw new Exception("non-parsable output setting bmgr transport: " + output);
         }
+    }
+
+    static boolean setBackupEnabled(boolean enable, UiAutomation uiAutomation) throws Exception {
+        // Check to see the previous state of the backup service
+        boolean previouslyEnabled = false;
+        String output = executeShellCommand("bmgr enabled", uiAutomation);
+        Matcher matcher = BMGR_ENABLED_PATTERN.matcher(output.trim());
+        if (matcher.find()) {
+            previouslyEnabled = "enabled".equals(matcher.group(1));
+        } else {
+            throw new RuntimeException("Backup output format changed.  No longer matches"
+                    + " expected regex: " + BMGR_ENABLED_PATTERN + "\nactual: '" + output + "'");
+        }
+
+        executeShellCommand("bmgr enable " + enable, uiAutomation);
+        return previouslyEnabled;
     }
 
     static boolean hasBackupTransport(String transport, UiAutomation uiAutomation)
