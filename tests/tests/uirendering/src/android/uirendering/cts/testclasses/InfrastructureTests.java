@@ -75,12 +75,7 @@ public class InfrastructureTests extends ActivityTestBase {
     @Test
     public void testViewInitializer() {
         final Rect clipRect = new Rect(0, 0, 50, 50);
-        ViewInitializer viewInitializer = new ViewInitializer() {
-            @Override
-            public void initializeView(View view) {
-                view.setClipBounds(clipRect);
-            }
-        };
+        ViewInitializer viewInitializer = view -> view.setClipBounds(clipRect);
         createTest()
                 .addLayout(R.layout.simple_red_layout, viewInitializer)
                 .runWithVerifier(new RectVerifier(Color.WHITE, Color.RED, clipRect));
