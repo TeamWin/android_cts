@@ -2,6 +2,7 @@ package android.uirendering.cts.testclasses;
 
 import android.graphics.Color;
 import android.graphics.Outline;
+import android.graphics.Path;
 import android.graphics.Rect;
 import android.test.suitebuilder.annotation.MediumTest;
 import android.uirendering.cts.bitmapverifiers.BitmapVerifier;
@@ -15,6 +16,8 @@ import android.view.ViewOutlineProvider;
 import android.uirendering.cts.R;
 import org.junit.Test;
 
+import static org.junit.Assert.assertFalse;
+
 /**
  * This tests view clipping by modifying properties of blue_padded_layout, and validating
  * the resulting rect of content.
@@ -23,46 +26,35 @@ import org.junit.Test;
  */
 @MediumTest
 public class ViewClippingTests extends ActivityTestBase {
-    final Rect FULL_RECT = new Rect(0, 0, 90, 90);
-    final Rect BOUNDS_RECT = new Rect(0, 0, 80, 80);
-    final Rect PADDED_RECT = new Rect(15, 16, 63, 62);
-    final Rect OUTLINE_RECT = new Rect(1, 2, 78, 79);
-    final Rect CLIP_BOUNDS_RECT = new Rect(10, 20, 50, 60);
+    static final Rect FULL_RECT = new Rect(0, 0, 90, 90);
+    static final Rect BOUNDS_RECT = new Rect(0, 0, 80, 80);
+    static final Rect PADDED_RECT = new Rect(15, 16, 63, 62);
+    static final Rect OUTLINE_RECT = new Rect(1, 2, 78, 79);
+    static final Rect CLIP_BOUNDS_RECT = new Rect(10, 20, 50, 60);
 
-    final ViewInitializer BOUNDS_CLIP_INIT = new ViewInitializer() {
-        @Override
-        public void initializeView(View rootView) {
-            ((ViewGroup)rootView).setClipChildren(true);
-        }
+    static final ViewInitializer BOUNDS_CLIP_INIT =
+            rootView -> ((ViewGroup)rootView).setClipChildren(true);
+
+    static final ViewInitializer PADDING_CLIP_INIT = rootView -> {
+        ViewGroup child = (ViewGroup) rootView.findViewById(R.id.child);
+        child.setClipToPadding(true);
+        child.setWillNotDraw(true);
+        child.addView(new UnclippedBlueView(rootView.getContext()));
     };
-    final ViewInitializer PADDING_CLIP_INIT = new ViewInitializer() {
-        @Override
-        public void initializeView(View rootView) {
-            ViewGroup child = (ViewGroup) rootView.findViewById(R.id.child);
-            child.setClipToPadding(true);
-            child.setWillNotDraw(true);
-            child.addView(new UnclippedBlueView(rootView.getContext()));
-        }
+
+    static final ViewInitializer OUTLINE_CLIP_INIT = rootView -> {
+        View child = rootView.findViewById(R.id.child);
+        child.setOutlineProvider(new ViewOutlineProvider() {
+            @Override
+            public void getOutline(View view, Outline outline) {
+                outline.setRect(OUTLINE_RECT);
+            }
+        });
+        child.setClipToOutline(true);
     };
-    final ViewInitializer OUTLINE_CLIP_INIT = new ViewInitializer() {
-        @Override
-        public void initializeView(View rootView) {
-            View child = rootView.findViewById(R.id.child);
-            child.setOutlineProvider(new ViewOutlineProvider() {
-                @Override
-                public void getOutline(View view, Outline outline) {
-                    outline.setRect(OUTLINE_RECT);
-                }
-            });
-            child.setClipToOutline(true);
-        }
-    };
-    final ViewInitializer CLIP_BOUNDS_CLIP_INIT = new ViewInitializer() {
-        @Override
-        public void initializeView(View view) {
-            view.setClipBounds(CLIP_BOUNDS_RECT);
-        }
-    };
+
+    static final ViewInitializer CLIP_BOUNDS_CLIP_INIT =
+            view -> view.setClipBounds(CLIP_BOUNDS_RECT);
 
     static BitmapVerifier makeClipVerifier(Rect blueBoundsRect) {
         // very high error tolerance, since all these tests care about is clip alignment
@@ -96,6 +88,7 @@ public class ViewClippingTests extends ActivityTestBase {
                 .addLayout(R.layout.blue_padded_layout, PADDING_CLIP_INIT)
                 .runWithVerifier(makeClipVerifier(PADDED_RECT));
     }
+    // TODO: add tests with clip + scroll, and with interesting combinations of the above
 
     @Test
     public void testSimpleOutlineClip() {
@@ -110,5 +103,25 @@ public class ViewClippingTests extends ActivityTestBase {
                 .runWithVerifier(makeClipVerifier(FULL_RECT));
     }
 
-    // TODO: add tests with clip + scroll, and with interesting combinations of the above
+    @Test
+    public void testOvalOutlineClip() {
+        // In hw this works because clipping to a non-round rect isn't supported, and is no-op'd.
+        // In sw this works because Outline clipping isn't supported.
+        createTest()
+                .addLayout(R.layout.blue_padded_layout, view -> {
+                    view.setOutlineProvider(new ViewOutlineProvider() {
+                        Path mPath = new Path();
+                        @Override
+                        public void getOutline(View view, Outline outline) {
+                            mPath.reset();
+                            mPath.addOval(0, 0, view.getWidth(), view.getHeight(),
+                                    Path.Direction.CW);
+                            outline.setConvexPath(mPath);
+                            assertFalse(outline.canClip()); // NOTE: non-round-rect, so can't clip
+                        }
+                    });
+                    view.setClipToOutline(true); // should do nothing, since non-rect clip
+                })
+                .runWithVerifier(makeClipVerifier(FULL_RECT));
+    }
 }
