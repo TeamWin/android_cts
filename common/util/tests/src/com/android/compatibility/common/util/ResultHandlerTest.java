@@ -25,6 +25,7 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -47,6 +48,12 @@ public class ResultHandlerTest extends TestCase {
     private static final String ABI = "mips64";
     private static final String ID_A = AbiUtils.createId(ABI, NAME_A);
     private static final String ID_B = AbiUtils.createId(ABI, NAME_B);
+
+    private static final String BUILD_ID = "build_id";
+    private static final String BUILD_PRODUCT = "build_product";
+    private static final String EXAMPLE_BUILD_ID = "XYZ";
+    private static final String EXAMPLE_BUILD_PRODUCT = "wolverine";
+
     private static final String DEVICE_A = "device123";
     private static final String DEVICE_B = "device456";
     private static final String DEVICES = "device456,device123";
@@ -85,8 +92,9 @@ public class ResultHandlerTest extends TestCase {
             "java_version=\"%s\" reference_url=\"%s\">\n" +
             "%s%s%s" +
             "</Result>";
-    private static final String XML_DEVICE_INFO =
-            "  <Build build_fingerprint=\"%s\" />\n";
+    private static final String XML_BUILD_INFO =
+            "  <Build build_fingerprint=\"%s\" " + BUILD_ID + "=\"%s\" " +
+               BUILD_PRODUCT + "=\"%s\" />\n";
     private static final String XML_SUMMARY =
             "  <Summary pass=\"%d\" failed=\"%d\" not_executed=\"%d\" />\n";
     private static final String XML_MODULE =
@@ -144,6 +152,8 @@ public class ResultHandlerTest extends TestCase {
         result.setTestPlan(SUITE_PLAN);
         result.addDeviceSerial(DEVICE_A);
         result.addDeviceSerial(DEVICE_B);
+        result.addBuildInfo(BUILD_ID, EXAMPLE_BUILD_ID);
+        result.addBuildInfo(BUILD_PRODUCT, EXAMPLE_BUILD_PRODUCT);
         IModuleResult moduleA = result.getOrCreateModule(ID_A);
         ICaseResult moduleACase = moduleA.getOrCreateResult(CLASS_A);
         ITestResult moduleATest1 = moduleACase.getOrCreateResult(METHOD_1);
@@ -186,7 +196,8 @@ public class ResultHandlerTest extends TestCase {
             // Create the result file
             File resultFile = new File(resultDir, ResultHandler.TEST_RESULT_FILE_NAME);
             writer = new FileWriter(resultFile);
-            String deviceInfo = String.format(XML_DEVICE_INFO, DEVICE_A);
+            String buildInfo = String.format(XML_BUILD_INFO, DEVICE_A,
+                    EXAMPLE_BUILD_ID, EXAMPLE_BUILD_PRODUCT);
             String summary = String.format(XML_SUMMARY, 2, 1, 1);
             String moduleATest1 = String.format(XML_TEST_PASS, METHOD_1);
             String moduleATest2 = String.format(XML_TEST_NOT_EXECUTED, METHOD_2);
@@ -210,8 +221,8 @@ public class ResultHandlerTest extends TestCase {
             } catch (UnknownHostException ignored) {}
             String output = String.format(XML_BASE, START_MS, END_MS, START_DISPLAY, END_DISPLAY,
                     SUITE_NAME, SUITE_VERSION, SUITE_PLAN, SUITE_BUILD, REPORT_VERSION, DEVICES,
-                    hostName, OS_NAME, OS_VERSION, OS_ARCH, JAVA_VENDOR, JAVA_VERSION, REFERENCE_URL,
-                    deviceInfo, summary, modules);
+                    hostName, OS_NAME, OS_VERSION, OS_ARCH, JAVA_VENDOR,
+                    JAVA_VERSION, REFERENCE_URL, buildInfo, summary, modules);
             writer.write(output);
             writer.flush();
 
@@ -227,16 +238,22 @@ public class ResultHandlerTest extends TestCase {
     private void checkResult(List<IInvocationResult> results, File resultDir) throws Exception {
         assertEquals("Expected 1 result", 1, results.size());
         IInvocationResult result = results.get(0);
+        assertEquals("Incorrect result dir", resultDir.getAbsolutePath(),
+                result.getResultDir().getAbsolutePath());
         assertEquals("Expected 2 passes", 2, result.countResults(TestStatus.PASS));
         assertEquals("Expected 1 failure", 1, result.countResults(TestStatus.FAIL));
         assertEquals("Expected 1 not executed", 1, result.countResults(TestStatus.NOT_EXECUTED));
+
+        Map<String, String> buildInfo = result.getBuildInfo();
+        assertEquals("Incorrect Build ID", EXAMPLE_BUILD_ID, buildInfo.get(BUILD_ID));
+        assertEquals("Incorrect Build Product",
+            EXAMPLE_BUILD_PRODUCT, buildInfo.get(BUILD_PRODUCT));
+
         Set<String> serials = result.getDeviceSerials();
         assertTrue("Missing device", serials.contains(DEVICE_A));
         assertTrue("Missing device", serials.contains(DEVICE_B));
         assertEquals("Expected 2 devices", 2, serials.size());
         assertTrue("Incorrect devices", serials.contains(DEVICE_A) && serials.contains(DEVICE_B));
-        assertEquals("Incorrect result dir", resultDir.getAbsolutePath(),
-                result.getResultDir().getAbsolutePath());
         assertEquals("Incorrect start time", START_MS, result.getStartTime());
         assertEquals("Incorrect test plan", SUITE_PLAN, result.getTestPlan());
 
