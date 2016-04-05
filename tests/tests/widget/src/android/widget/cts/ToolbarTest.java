@@ -370,4 +370,16 @@ public class ToolbarTest extends ActivityInstrumentationTestCase2<ToolbarCtsActi
         mMainToolbar.setPopupTheme(R.style.ToolbarPopupTheme_Test);
         assertEquals(R.style.ToolbarPopupTheme_Test, mMainToolbar.getPopupTheme());
     }
+
+    public void testNavigationOnClickListener() {
+        View.OnClickListener mockListener = mock(View.OnClickListener.class);
+        mMainToolbar.setNavigationOnClickListener(mockListener);
+
+        verify(mockListener, never()).onClick(any(View.class));
+
+        getInstrumentation().runOnMainSync(() -> mMainToolbar.getNavigationView().performClick());
+        verify(mockListener, times(1)).onClick(any(View.class));
+
+        verifyNoMoreInteractions(mockListener);
+    }
 }
