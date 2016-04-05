@@ -37,6 +37,13 @@
             android:label="@string/app_name"
             android:name="android.vr.cts.OpenGLESActivity">
          </activity>
+         <activity android:name=".CtsActivity"
+                  android:label="CtsActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.FRAMEWORK_INSTRUMENTATION_TEST" />
+            </intent-filter>
+        </activity>
          <uses-library  android:name="android.test.runner" />
     </application>
 
