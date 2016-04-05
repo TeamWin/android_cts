@@ -42,6 +42,7 @@ public class BlockedNumberBackupRestoreTest extends TestCaseThatRunsIfTelephonyI
     private Context mContext;
     private UiAutomation mUiAutomation;
     private String mOldTransport;
+    private boolean mOldBackupEnabled;
     private boolean mHasFeature;
 
     @Override
@@ -59,6 +60,7 @@ public class BlockedNumberBackupRestoreTest extends TestCaseThatRunsIfTelephonyI
 
             mOldTransport = ProviderTestUtils.setBackupTransport(
                     LOCAL_BACKUP_COMPONENT, mUiAutomation);
+            mOldBackupEnabled = ProviderTestUtils.setBackupEnabled(true, mUiAutomation);
             clearBlockedNumbers();
             wipeBackup();
         }
@@ -69,6 +71,7 @@ public class BlockedNumberBackupRestoreTest extends TestCaseThatRunsIfTelephonyI
         if (mHasFeature) {
             wipeBackup();
             clearBlockedNumbers();
+            ProviderTestUtils.setBackupEnabled(mOldBackupEnabled, mUiAutomation);
             ProviderTestUtils.setBackupTransport(mOldTransport, mUiAutomation);
             ProviderTestUtils.setDefaultSmsApp(false, mContext.getPackageName(), mUiAutomation);
         }
