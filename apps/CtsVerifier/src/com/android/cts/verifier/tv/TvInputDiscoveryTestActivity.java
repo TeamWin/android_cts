@@ -20,6 +20,7 @@ import android.app.SearchableInfo;
 import android.content.Context;
 import android.content.Intent;
 import android.media.tv.TvContract;
+import android.media.tv.TvInputManager;
 import android.os.AsyncTask;
 import android.view.View;
 
@@ -36,6 +37,8 @@ public class TvInputDiscoveryTestActivity extends TvAppVerifierActivity
             TvContract.Channels.CONTENT_URI);
     private static final Intent EPG_INTENT = new Intent(Intent.ACTION_VIEW,
             TvContract.Programs.CONTENT_URI);
+    private static final Intent TV_TRIGGER_SETUP_INTENT = new Intent(
+            TvInputManager.ACTION_SETUP_INPUTS);
 
     private static final long TIMEOUT_MS = 5l * 60l * 1000l;  // 5 mins.
 
@@ -47,6 +50,8 @@ public class TvInputDiscoveryTestActivity extends TvAppVerifierActivity
     private View mVerifyGlobalSearchItem;
     private View mGoToEpgItem;
     private View mVerifyEpgItem;
+    private View mTriggerSetupItem;
+    private View mVerifyTriggerSetupItem;
     private boolean mTuneVerified;
     private boolean mOverlayViewVerified;
     private boolean mGlobalSearchVerified;
@@ -109,6 +114,13 @@ public class TvInputDiscoveryTestActivity extends TvAppVerifierActivity
             setButtonEnabled(mVerifyEpgItem, true);
         } else if (containsButton(mVerifyEpgItem, v)) {
             setPassState(mVerifyEpgItem, true);
+            setButtonEnabled(mTriggerSetupItem, true);
+        } else if (containsButton(mTriggerSetupItem, v)) {
+            startActivity(TV_TRIGGER_SETUP_INTENT);
+            setPassState(mTriggerSetupItem, true);
+            setButtonEnabled(mVerifyTriggerSetupItem, true);
+        } else if (containsButton(mVerifyTriggerSetupItem, v)) {
+            setPassState(mVerifyTriggerSetupItem, true);
             getPassButton().setEnabled(true);
         }
     }
@@ -130,6 +142,10 @@ public class TvInputDiscoveryTestActivity extends TvAppVerifierActivity
                 R.string.tv_launch_epg, this);
         mVerifyEpgItem = createUserItem(R.string.tv_input_discover_test_verify_epg,
                 android.R.string.yes, this);
+        mTriggerSetupItem = createUserItem(R.string.tv_input_discover_test_trigger_setup,
+                R.string.tv_launch_setup, this);
+        mVerifyTriggerSetupItem = createUserItem(
+                R.string.tv_input_discover_test_verify_trigger_setup, android.R.string.yes, this);
     }
 
     @Override
