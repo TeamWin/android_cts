@@ -53,18 +53,15 @@ public class FontRenderingTests extends ActivityTestBase {
 
         final Typeface typeface = Typeface.create(family, style);
         createTest()
-                .addCanvasClient(new CanvasClient() {
-                    @Override
-                    public void draw(Canvas canvas, int width, int height) {
-                        Paint p = new Paint();
-                        p.setAntiAlias(true);
-                        p.setColor(Color.BLACK);
-                        p.setTextSize(26);
-                        p.setTypeface(typeface);
-                        canvas.drawText(sTestString1, 1, 20, p);
-                        canvas.drawText(sTestString2, 1, 50, p);
-                        canvas.drawText(sTestString3, 1, 80, p);
-                    }
+                .addCanvasClient((canvas, width, height) -> {
+                    Paint p = new Paint();
+                    p.setAntiAlias(true);
+                    p.setColor(Color.BLACK);
+                    p.setTextSize(26);
+                    p.setTypeface(typeface);
+                    canvas.drawText(sTestString1, 1, 20, p);
+                    canvas.drawText(sTestString2, 1, 50, p);
+                    canvas.drawText(sTestString3, 1, 80, p);
                 })
                 .runWithVerifier(new GoldenImageVerifier(goldenBitmap, comparer));
     }
