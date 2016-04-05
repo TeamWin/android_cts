@@ -71,6 +71,18 @@
         <item name="android:textColor">#ffff0000</item>
     </style>
 
+    <style name="TextAppearance.WithColorGreen">
+        <item name="android:textColor">#ff00ff00</item>
+    </style>
+
+    <style name="TextAppearance.WithColorBlue">
+        <item name="android:textColor">#ff0000ff</item>
+    </style>
+
+    <style name="TextAppearance.WithColorMagenta">
+        <item name="android:textColor">#ffff00ff</item>
+    </style>
+
     <style name="TextAppearance.All">
         <item name="android:textColor">@drawable/black</item>
         <item name="android:textSize">20px</item>
