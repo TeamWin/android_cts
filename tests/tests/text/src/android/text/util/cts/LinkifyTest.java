@@ -592,13 +592,6 @@ public class LinkifyTest extends AndroidTestCase {
     }
 
     @SmallTest
-    public void testAddLinks_partiallyMatchesUrlWithInvalidRequestParameter() throws Exception {
-        String url = "http://android.com?p=value";
-        assertAddLinksWithWebUrlPartiallyMatches("Should partially match URL with invalid " +
-                "request parameter", "http://android.com", url);
-    }
-
-    @SmallTest
     public void testAddLinks_matchesValidUrlWithEmoji() throws Exception {
         String url = "Thank\u263A.com";
         assertAddLinksWithWebUrlSucceeds("Should match URL with emoji", url);
@@ -667,6 +660,48 @@ public class LinkifyTest extends AndroidTestCase {
             assertAddLinksWithWebUrlPartiallyMatches("Should not include empty space with code: " +
                     emptySpace.codePointAt(0), part1, url);
         }
+    }
+
+    @SmallTest
+    public void testAddLinks_matchesDomainNameWithDash() throws Exception {
+        String url = "http://a-nd.r-oid.com";
+        assertAddLinksWithWebUrlSucceeds("Should match domain name with '-'", url);
+
+        url = "a-nd.r-oid.com";
+        assertAddLinksWithWebUrlSucceeds("Should match domain name with '-'", url);
+    }
+
+    @SmallTest
+    public void testAddLinks_matchesDomainNameWithUnderscore() throws Exception {
+        String url = "http://a_nd.r_oid.com";
+        assertAddLinksWithWebUrlSucceeds("Should match domain name with '_'", url);
+
+        url = "a_nd.r_oid.com";
+        assertAddLinksWithWebUrlSucceeds("Should match domain name with '_'", url);
+    }
+
+    @SmallTest
+    public void testAddLinks_matchesPathAndQueryWithDollarSign() throws Exception {
+        String url = "http://android.com/path$?v=$val";
+        assertAddLinksWithWebUrlSucceeds("Should match path and query with '$'", url);
+
+        url = "android.com/path$?v=$val";
+        assertAddLinksWithWebUrlSucceeds("Should match path and query with '$'", url);
+    }
+
+    @SmallTest
+    public void testAddLinks_matchesEmptyPathWithQueryParams() throws Exception {
+        String url = "http://android.com?q=v";
+        assertAddLinksWithWebUrlSucceeds("Should match empty path with query params", url);
+
+        url = "android.com?q=v";
+        assertAddLinksWithWebUrlSucceeds("Should match empty path with query params", url);
+
+        url = "http://android.com/?q=v";
+        assertAddLinksWithWebUrlSucceeds("Should match empty path with query params", url);
+
+        url = "android.com/?q=v";
+        assertAddLinksWithWebUrlSucceeds("Should match empty path with query params", url);
     }
 
     // EMAIL_ADDRESSES Related Tests
