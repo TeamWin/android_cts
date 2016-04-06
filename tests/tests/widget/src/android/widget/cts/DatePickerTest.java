@@ -16,120 +16,130 @@
 
 package android.widget.cts;
 
-import android.widget.cts.R;
-
+import android.app.Activity;
+import android.app.Instrumentation;
 import android.content.Context;
-import android.content.res.XmlResourceParser;
 import android.os.Parcelable;
-import android.test.InstrumentationTestCase;
+import android.test.ActivityInstrumentationTestCase2;
 import android.test.UiThreadTest;
-import android.util.AttributeSet;
+import android.test.suitebuilder.annotation.MediumTest;
 import android.util.SparseArray;
-import android.util.Xml;
 import android.view.View;
 import android.widget.DatePicker;
-import android.widget.cts.util.XmlUtils;
+
+import static org.mockito.Mockito.*;
 
 /**
  * Test {@link DatePicker}.
  */
-public class DatePickerTest extends InstrumentationTestCase {
+@MediumTest
+public class DatePickerTest extends ActivityInstrumentationTestCase2<DatePickerCtsActivity> {
+    private Activity mActivity;
+    private DatePicker mDatePickerSpinnerMode;
+    private DatePicker mDatePickerCalendarMode;
 
-    private Context mContext;
+    public DatePickerTest() {
+        super("android.widget.cts", DatePickerCtsActivity.class);
+    }
 
     @Override
-    public void setUp() {
-        mContext = getInstrumentation().getTargetContext();
+    protected void setUp() throws Exception {
+        super.setUp();
+        mActivity = getActivity();
+        mDatePickerSpinnerMode = (DatePicker) mActivity.findViewById(R.id.date_picker_spinner_mode);
+        mDatePickerCalendarMode =
+                (DatePicker) mActivity.findViewById(R.id.date_picker_calendar_mode);
     }
 
-    @UiThreadTest
     public void testConstructor() {
-        new DatePicker(mContext);
+        new DatePicker(mActivity);
 
-        new DatePicker(mContext, null);
+        new DatePicker(mActivity, null);
 
-        new DatePicker(mContext, getAttributeSet(R.layout.datepicker_layout));
+        new DatePicker(mActivity, null, android.R.attr.datePickerStyle);
 
-        new DatePicker(mContext, getAttributeSet(R.layout.datepicker_layout), 0);
-
-        // Test constructor with null Context, in fact, previous two functions will finally invoke
-        // this version.
-        try {
-            // Test with null Context
-            new DatePicker(null, getAttributeSet(R.layout.datepicker_layout), 0);
-            fail("should throw NullPointerException");
-        } catch (Exception e) {
-        }
+        new DatePicker(mActivity, null, 0, android.R.style.Widget_Material_Light_DatePicker);
     }
 
-    @UiThreadTest
     public void testSetEnabled() {
-        MockDatePicker datePicker = createDatePicker();
+        final Instrumentation instrumentation = getInstrumentation();
 
-        assertTrue(datePicker.isEnabled());
+        assertTrue(mDatePickerCalendarMode.isEnabled());
 
-        datePicker.setEnabled(false);
-        assertFalse(datePicker.isEnabled());
+        instrumentation.runOnMainSync(() -> mDatePickerCalendarMode.setEnabled(false));
+        assertFalse(mDatePickerCalendarMode.isEnabled());
 
-        datePicker.setEnabled(true);
-        assertTrue(datePicker.isEnabled());
+        instrumentation.runOnMainSync(() -> mDatePickerCalendarMode.setEnabled(true));
+        assertTrue(mDatePickerCalendarMode.isEnabled());
     }
 
-    @UiThreadTest
+    private void verifyInit(DatePicker datePicker) {
+        final Instrumentation instrumentation = getInstrumentation();
+        final DatePicker.OnDateChangedListener mockDateChangeListener =
+                mock(DatePicker.OnDateChangedListener.class);
+
+        instrumentation.runOnMainSync(
+                () -> datePicker.init(2000, 10, 15, mockDateChangeListener));
+        assertEquals(2000, datePicker.getYear());
+        assertEquals(10, datePicker.getMonth());
+        assertEquals(15, datePicker.getDayOfMonth());
+
+        verifyZeroInteractions(mockDateChangeListener);
+    }
+
     public void testInit() {
-        MockOnDateChangedListener onDateChangedListener = new MockOnDateChangedListener();
-        DatePicker datePicker = createDatePicker();
+        verifyInit(mDatePickerSpinnerMode);
+        verifyInit(mDatePickerCalendarMode);
+    }
 
-        /* The month display uses 1-12 but our internal state stores it
-         * 0-11 so add one when setting the display.
-         */
-        datePicker.init(2000, 10, 15, onDateChangedListener);
+    private void verifyAccessDate(DatePicker datePicker) {
+        final Instrumentation instrumentation = getInstrumentation();
+        final DatePicker.OnDateChangedListener mockDateChangeListener =
+                mock(DatePicker.OnDateChangedListener.class);
+
+        instrumentation.runOnMainSync(() -> datePicker.init(2000, 10, 15, mockDateChangeListener));
         assertEquals(2000, datePicker.getYear());
         assertEquals(10, datePicker.getMonth());
         assertEquals(15, datePicker.getDayOfMonth());
+        verify(mockDateChangeListener, never()).onDateChanged(any(DatePicker.class), anyInt(),
+                anyInt(), anyInt());
+
+        instrumentation.runOnMainSync(() -> datePicker.updateDate(1989, 9, 19));
+        assertEquals(1989, datePicker.getYear());
+        assertEquals(9, datePicker.getMonth());
+        assertEquals(19, datePicker.getDayOfMonth());
+        verify(mockDateChangeListener, times(1)).onDateChanged(datePicker, 1989, 9, 19);
+
+        verifyNoMoreInteractions(mockDateChangeListener);
     }
 
-    @UiThreadTest
     public void testAccessDate() {
-        DatePicker datePicker = createDatePicker();
+        verifyAccessDate(mDatePickerSpinnerMode);
+        verifyAccessDate(mDatePickerCalendarMode);
+    }
 
-        /* The month display uses 1-12 but our internal state stores it
-         * 0-11 so add one when setting the display.
-         */
-        MockOnDateChangedListener onDateChangedListener = new MockOnDateChangedListener();
-        datePicker.init(2000, 10, 15, onDateChangedListener);
-        assertEquals(2000, datePicker.getYear());
-        assertEquals(10, datePicker.getMonth());
-        assertEquals(15, datePicker.getDayOfMonth());
+    private void verifyUpdateDate(DatePicker datePicker) {
+        final Instrumentation instrumentation = getInstrumentation();
 
-        datePicker.updateDate(1989, 9, 19);
+        instrumentation.runOnMainSync(() -> datePicker.updateDate(1989, 9, 19));
         assertEquals(1989, datePicker.getYear());
         assertEquals(9, datePicker.getMonth());
         assertEquals(19, datePicker.getDayOfMonth());
     }
 
-    @UiThreadTest
     public void testUpdateDate() {
-        DatePicker datePicker = createDatePicker();
-
-        // Test normal input values
-        /* The month display uses 1-12 but our internal state stores it
-         * 0-11 so add one when setting the display.
-         */
-        datePicker.updateDate(1989, 9, 19);
-        assertEquals(1989, datePicker.getYear());
-        assertEquals(9, datePicker.getMonth());
-        assertEquals(19, datePicker.getDayOfMonth());
+        verifyUpdateDate(mDatePickerSpinnerMode);
+        verifyUpdateDate(mDatePickerCalendarMode);
     }
 
     @UiThreadTest
-    public void testOnSaveInstanceState() {
-        MockDatePicker datePicker = createDatePicker();
+    public void testAccessInstanceState() {
+        MockDatePicker datePicker = new MockDatePicker(mActivity);
 
         datePicker.updateDate(2008, 9, 10);
         SparseArray<Parcelable> container = new SparseArray<Parcelable>();
 
-        // Test onSaveHierarchyState
+        // Test saveHierarchyState -> onSaveInstanceState path
         assertEquals(View.NO_ID, datePicker.getId());
         datePicker.setId(99);
         assertFalse(datePicker.hasCalledOnSaveInstanceState());
@@ -137,43 +147,23 @@ public class DatePickerTest extends InstrumentationTestCase {
         assertEquals(1, datePicker.getChildCount());
         assertTrue(datePicker.hasCalledOnSaveInstanceState());
 
-        // Test dispatchRestoreInstanceState
-        datePicker = createDatePicker();
+        // Test dispatchRestoreInstanceState -> onRestoreInstanceState path
+        datePicker = new MockDatePicker(mActivity);
         datePicker.setId(99);
         assertFalse(datePicker.hasCalledOnRestoreInstanceState());
         datePicker.dispatchRestoreInstanceState(container);
         assertEquals(2008, datePicker.getYear());
         assertEquals(9, datePicker.getMonth());
         assertEquals(10, datePicker.getDayOfMonth());
-
-        // Test onRestoreInstanceState
         assertTrue(datePicker.hasCalledOnRestoreInstanceState());
-    }
-
-    private AttributeSet getAttributeSet(int resourceId) {
-        final XmlResourceParser parser = mContext.getResources().getXml(resourceId);
-        try {
-            XmlUtils.beginDocument(parser, "RelativeLayout");
-        } catch (Exception e) {
-            fail("Found unexpected loading process error before invoking generateLayoutParams.");
-        }
-        final AttributeSet attr = Xml.asAttributeSet(parser);
-        assertNotNull(attr);
-        return attr;
-    }
-
-    private MockDatePicker createDatePicker() {
-        MockDatePicker datePicker = new MockDatePicker(mContext,
-                getAttributeSet(R.layout.datepicker_layout));
-        return datePicker;
     }
 
     private class MockDatePicker extends DatePicker {
         private boolean mCalledOnSaveInstanceState = false;
         private boolean mCalledOnRestoreInstanceState = false;
 
-        public MockDatePicker(Context context, AttributeSet attrs) {
-            super(context, attrs);
+        public MockDatePicker(Context context) {
+            super(context);
         }
 
         @Override
@@ -199,12 +189,6 @@ public class DatePickerTest extends InstrumentationTestCase {
 
         public boolean hasCalledOnRestoreInstanceState() {
             return mCalledOnRestoreInstanceState;
-        }
-    }
-
-    private class MockOnDateChangedListener implements DatePicker.OnDateChangedListener {
-        public void onDateChanged(DatePicker view, int year, int monthOfYear, int dayOfMonth) {
-
         }
     }
 }
