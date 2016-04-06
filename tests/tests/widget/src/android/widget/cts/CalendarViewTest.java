@@ -16,6 +16,7 @@
 
 package android.widget.cts;
 
+import android.annotation.ColorInt;
 import android.app.Instrumentation;
 import android.test.ActivityInstrumentationTestCase2;
 import android.test.suitebuilder.annotation.MediumTest;
@@ -99,5 +100,97 @@ public class CalendarViewTest extends ActivityInstrumentationTestCase2<CalendarV
 
         assertEquals(mCalendarViewMaterial.getMinDate(), minDate);
         assertEquals(mCalendarViewMaterial.getMaxDate(), maxDate);
+    }
+
+    public void testAppearanceMaterial() {
+        // The logic in this method is performed on a Material-styled CalendarView and
+        // non-deprecated attributes / visual appearance APIs
+
+        // Test the initial appearance defined in the layout XML
+        assertEquals(2, mCalendarViewMaterial.getFirstDayOfWeek());
+        assertEquals(R.style.TextAppearance_WithColor,
+                mCalendarViewMaterial.getDateTextAppearance());
+        assertEquals(R.style.TextAppearance_WithColorGreen,
+                mCalendarViewMaterial.getWeekDayTextAppearance());
+
+        final Instrumentation instrumentation = getInstrumentation();
+
+        // Change the visual appearance of the widget
+        instrumentation.runOnMainSync(() -> {
+            mCalendarViewMaterial.setFirstDayOfWeek(3);
+            mCalendarViewMaterial.setDateTextAppearance(R.style.TextAppearance_WithColorBlue);
+            mCalendarViewMaterial.setWeekDayTextAppearance(R.style.TextAppearance_WithColorMagenta);
+        });
+
+        assertEquals(3, mCalendarViewMaterial.getFirstDayOfWeek());
+        assertEquals(R.style.TextAppearance_WithColorBlue,
+                mCalendarViewMaterial.getDateTextAppearance());
+        assertEquals(R.style.TextAppearance_WithColorMagenta,
+                mCalendarViewMaterial.getWeekDayTextAppearance());
+    }
+
+    public void testAppearanceHolo() {
+        // All the logic in this method is performed on a Holo-styled CalendarView, as
+        // under Material design we are ignoring most of these decorative attributes
+
+        // Test the initial appearance defined in the layout XML
+        assertEquals(3, mCalendarViewHolo.getFirstDayOfWeek());
+        assertEquals(5, mCalendarViewHolo.getShownWeekCount());
+        assertFalse(mCalendarViewHolo.getShowWeekNumber());
+        assertEquals(R.style.TextAppearance_WithColor,
+                mCalendarViewHolo.getDateTextAppearance());
+        assertEquals(R.style.TextAppearance_WithColorGreen,
+                mCalendarViewHolo.getWeekDayTextAppearance());
+        assertEquals(mActivity.getColor(R.color.calendarview_week_background),
+                mCalendarViewHolo.getSelectedWeekBackgroundColor());
+        assertEquals(mActivity.getColor(R.color.calendarview_focusedmonthdate),
+                mCalendarViewHolo.getFocusedMonthDateColor());
+        assertEquals(mActivity.getColor(R.color.calendarview_unfocusedmonthdate),
+                mCalendarViewHolo.getUnfocusedMonthDateColor());
+
+        final Instrumentation instrumentation = getInstrumentation();
+
+        // Change the visual appearance of the widget
+        final @ColorInt int newSelectedWeekBackgroundColor =
+                mActivity.getColor(R.color.calendarview_week_background_new);
+        final @ColorInt int newFocusedMonthDateColor =
+                mActivity.getColor(R.color.calendarview_focusedmonthdate_new);
+        final @ColorInt int newUnfocusedMonthDataColor =
+                mActivity.getColor(R.color.calendarview_unfocusedmonthdate_new);
+        final @ColorInt int newWeekNumberColor =
+                mActivity.getColor(R.color.calendarview_week_number_new);
+        final @ColorInt int newWeekSeparatorLineColor =
+                mActivity.getColor(R.color.calendarview_week_separatorline_new);
+
+        instrumentation.runOnMainSync(() -> {
+            mCalendarViewHolo.setFirstDayOfWeek(1);
+            mCalendarViewHolo.setShownWeekCount(4);
+            mCalendarViewHolo.setShowWeekNumber(true);
+            mCalendarViewHolo.setDateTextAppearance(R.style.TextAppearance_WithColorBlue);
+            mCalendarViewHolo.setWeekDayTextAppearance(R.style.TextAppearance_WithColorMagenta);
+            mCalendarViewHolo.setSelectedWeekBackgroundColor(newSelectedWeekBackgroundColor);
+            mCalendarViewHolo.setFocusedMonthDateColor(newFocusedMonthDateColor);
+            mCalendarViewHolo.setUnfocusedMonthDateColor(newUnfocusedMonthDataColor);
+            mCalendarViewHolo.setWeekNumberColor(newWeekNumberColor);
+            mCalendarViewHolo.setWeekSeparatorLineColor(newWeekSeparatorLineColor);
+        });
+
+        assertEquals(1, mCalendarViewHolo.getFirstDayOfWeek());
+        assertEquals(4, mCalendarViewHolo.getShownWeekCount());
+        assertTrue(mCalendarViewHolo.getShowWeekNumber());
+        assertEquals(R.style.TextAppearance_WithColorBlue,
+                mCalendarViewHolo.getDateTextAppearance());
+        assertEquals(R.style.TextAppearance_WithColorMagenta,
+                mCalendarViewHolo.getWeekDayTextAppearance());
+        assertEquals(newSelectedWeekBackgroundColor,
+                mCalendarViewHolo.getSelectedWeekBackgroundColor());
+        assertEquals(newFocusedMonthDateColor,
+                mCalendarViewHolo.getFocusedMonthDateColor());
+        assertEquals(newUnfocusedMonthDataColor,
+                mCalendarViewHolo.getUnfocusedMonthDateColor());
+        assertEquals(newWeekNumberColor,
+                mCalendarViewHolo.getWeekNumberColor());
+        assertEquals(newWeekSeparatorLineColor,
+                mCalendarViewHolo.getWeekSeparatorLineColor());
     }
 }

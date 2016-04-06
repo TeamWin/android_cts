@@ -30,7 +30,10 @@
         <CalendarView
             android:id="@+id/calendar_view_material"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content" />
+            android:layout_height="wrap_content"
+            android:firstDayOfWeek="2"
+            android:dateTextAppearance="@style/TextAppearance.WithColor"
+            android:weekDayTextAppearance="@style/TextAppearance.WithColorGreen" />
 
         <!-- CalendarView in Holo Light style for testing attributes and APIs that control
              the deprecated visual aspects of this widget. -->
@@ -38,7 +41,16 @@
             style="@android:style/Widget.Holo.Light.CalendarView"
             android:id="@+id/calendar_view_holoyolo"
             android:layout_width="match_parent"
-            android:layout_height="320dip" />
+            android:layout_height="320dip"
+            android:firstDayOfWeek="3"
+            android:shownWeekCount="5"
+            android:showWeekNumber="false"
+            android:selectedWeekBackgroundColor="@color/calendarview_week_background"
+            android:focusedMonthDateColor="@color/calendarview_focusedmonthdate"
+            android:unfocusedMonthDateColor="@color/calendarview_unfocusedmonthdate"
+            android:dateTextAppearance="@style/TextAppearance.WithColor"
+            android:weekDayTextAppearance="@style/TextAppearance.WithColorGreen"
+            android:selectedDateVerticalBar="@drawable/red_fill" />
 
     </LinearLayout>
 
