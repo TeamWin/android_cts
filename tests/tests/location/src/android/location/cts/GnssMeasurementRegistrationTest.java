@@ -92,7 +92,7 @@ public class GnssMeasurementRegistrationTest extends GnssTestCase {
         mMeasurementListener = new TestGnssMeasurementListener(TAG, GPS_EVENTS_COUNT);
         mTestLocationManager.registerGnssMeasurementCallback(mMeasurementListener);
 
-        assertTrue(mMeasurementListener.await());
+        mMeasurementListener.await();
         if (!mMeasurementListener.verifyState()) {
             return;
         }
@@ -113,8 +113,7 @@ public class GnssMeasurementRegistrationTest extends GnssTestCase {
         mTestLocationManager.requestLocationUpdates(mLocationListener);
 
         // Wait for location updates
-        assertTrue(mLocationListener.await());
-
+        mLocationListener.await();
         Log.i(TAG, "Location received = " + mLocationListener.isLocationReceived());
 
         // Register for Gps Status updates
@@ -122,8 +121,7 @@ public class GnssMeasurementRegistrationTest extends GnssTestCase {
         mTestLocationManager.addGpsStatusListener(mGpsStatusListener);
 
         // wait for Gps Status updates
-        assertTrue(mGpsStatusListener.await());
-
+        mGpsStatusListener.await();
         if (!mGpsStatusListener.isGpsStatusReceived()) {
             // Skip the Test. No Satellites are visible. Device may be Indoor
             Log.i(TAG, "No Satellites are visible. Device may be Indoor. Skipping Test.");

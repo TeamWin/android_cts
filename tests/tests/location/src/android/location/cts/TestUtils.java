@@ -22,7 +22,7 @@ import java.util.concurrent.TimeUnit;
 public class TestUtils {
     private static final long STANDARD_WAIT_TIME_MS = 50;
     private static final long STANDARD_SLEEP_TIME_MS = 50;
-    private static final long STANDARD_WAIT_TIME_ROUNDS = 3000;
+    private static final long STANDARD_WAIT_TIME_ROUNDS = 1200;
 
     public static boolean waitFor(CountDownLatch latch) throws InterruptedException {
         // Since late 2014, if the main thread has been occupied for long enough, Android will
