@@ -688,55 +688,63 @@ public class MediaPlayerTest extends MediaPlayerTestBase {
     }
 
     private void testGapless(int resid1, int resid2) throws Exception {
-
-        MediaPlayer mp1 = new MediaPlayer();
-        mp1.setAudioStreamType(AudioManager.STREAM_MUSIC);
+        MediaPlayer mp1 = null;
+        MediaPlayer mp2 = null;
+        AudioEffect vc = null;
+        Visualizer vis = null;
+        AudioManager am = null;
+        int oldRingerMode = Integer.MIN_VALUE;
+        int oldVolume = Integer.MIN_VALUE;
         try {
+            Utils.toggleNotificationPolicyAccess(
+                    mContext.getPackageName(), getInstrumentation(), true /* on */);
+
+            mp1 = new MediaPlayer();
+            mp1.setAudioStreamType(AudioManager.STREAM_MUSIC);
+
             AssetFileDescriptor afd = mContext.getResources().openRawResourceFd(resid1);
             mp1.setDataSource(afd.getFileDescriptor(), afd.getStartOffset(), afd.getLength());
             afd.close();
             mp1.prepare();
-        } catch (Exception e) {
-            assertTrue(false);
-        }
-        int session = mp1.getAudioSessionId();
 
-        MediaPlayer mp2 = new MediaPlayer();
-        mp2.setAudioSessionId(session);
-        mp2.setAudioStreamType(AudioManager.STREAM_MUSIC);
-        try {
-            AssetFileDescriptor afd = mContext.getResources().openRawResourceFd(resid2);
+            int session = mp1.getAudioSessionId();
+
+            mp2 = new MediaPlayer();
+            mp2.setAudioSessionId(session);
+            mp2.setAudioStreamType(AudioManager.STREAM_MUSIC);
+
+            afd = mContext.getResources().openRawResourceFd(resid2);
             mp2.setDataSource(afd.getFileDescriptor(), afd.getStartOffset(), afd.getLength());
             afd.close();
             mp2.prepare();
-        } catch (Exception e) {
-            assertTrue(false);
-        }
-        // creating a volume controller on output mix ensures that ro.audio.silent mutes
-        // audio after the effects and not before
-        AudioEffect vc = new AudioEffect(
+
+            // creating a volume controller on output mix ensures that ro.audio.silent mutes
+            // audio after the effects and not before
+            vc = new AudioEffect(
                             AudioEffect.EFFECT_TYPE_NULL,
                             UUID.fromString("119341a0-8469-11df-81f9-0002a5d5c51b"),
                             0,
                             session);
-        vc.setEnabled(true);
-        int captureintervalms = mp1.getDuration() + mp2.getDuration() - 2000;
-        int size = 256;
-        int[] range = Visualizer.getCaptureSizeRange();
-        if (size < range[0]) {
-            size = range[0];
-        }
-        if (size > range[1]) {
-            size = range[1];
-        }
-        byte [] vizdata = new byte[size];
-        Visualizer vis = new Visualizer(session);
-        AudioManager am = (AudioManager) mContext.getSystemService(Context.AUDIO_SERVICE);
-        int oldRingerMode = am.getRingerMode();
-        am.setRingerMode(AudioManager.RINGER_MODE_NORMAL);
-        int oldvolume = am.getStreamVolume(AudioManager.STREAM_MUSIC);
-        am.setStreamVolume(AudioManager.STREAM_MUSIC, 1, 0);
-        try {
+            vc.setEnabled(true);
+            int captureintervalms = mp1.getDuration() + mp2.getDuration() - 2000;
+            int size = 256;
+            int[] range = Visualizer.getCaptureSizeRange();
+            if (size < range[0]) {
+                size = range[0];
+            }
+            if (size > range[1]) {
+                size = range[1];
+            }
+            byte[] vizdata = new byte[size];
+
+            vis = new Visualizer(session);
+            am = (AudioManager) mContext.getSystemService(Context.AUDIO_SERVICE);
+            oldRingerMode = am.getRingerMode();
+            // make sure we aren't in silent mode
+            am.setRingerMode(AudioManager.RINGER_MODE_NORMAL);
+            oldVolume = am.getStreamVolume(AudioManager.STREAM_MUSIC);
+            am.setStreamVolume(AudioManager.STREAM_MUSIC, 1, 0);
+
             assertEquals("setCaptureSize failed",
                     Visualizer.SUCCESS, vis.setCaptureSize(vizdata.length));
             assertEquals("setEnabled failed", Visualizer.SUCCESS, vis.setEnabled(true));
@@ -770,12 +778,26 @@ public class MediaPlayerTest extends MediaPlayerTestBase {
                 first = false;
             }
         } finally {
-            mp1.release();
-            mp2.release();
-            vis.release();
-            vc.release();
-            am.setRingerMode(oldRingerMode);
-            am.setStreamVolume(AudioManager.STREAM_MUSIC, oldvolume, 0);
+            if (mp1 != null) {
+                mp1.release();
+            }
+            if (mp2 != null) {
+                mp2.release();
+            }
+            if (vis != null) {
+                vis.release();
+            }
+            if (vc != null) {
+                vc.release();
+            }
+            if (oldRingerMode != Integer.MIN_VALUE) {
+                am.setRingerMode(oldRingerMode);
+            }
+            if (oldVolume != Integer.MIN_VALUE) {
+                am.setStreamVolume(AudioManager.STREAM_MUSIC, oldVolume, 0);
+            }
+            Utils.toggleNotificationPolicyAccess(
+                    mContext.getPackageName(), getInstrumentation(), false  /* on == false */);
         }
     }
 
