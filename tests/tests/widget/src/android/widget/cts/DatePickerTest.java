@@ -27,6 +27,9 @@ import android.util.SparseArray;
 import android.view.View;
 import android.widget.DatePicker;
 
+import java.util.Calendar;
+import java.util.GregorianCalendar;
+
 import static org.mockito.Mockito.*;
 
 /**
@@ -130,6 +133,96 @@ public class DatePickerTest extends ActivityInstrumentationTestCase2<DatePickerC
     public void testUpdateDate() {
         verifyUpdateDate(mDatePickerSpinnerMode);
         verifyUpdateDate(mDatePickerCalendarMode);
+    }
+
+    private void verifyMinMaxDate(DatePicker datePicker) {
+        final Instrumentation instrumentation = getInstrumentation();
+
+        // Use a range of minus/plus one year as min/max dates
+        final Calendar minCalendar = new GregorianCalendar();
+        minCalendar.set(Calendar.YEAR, minCalendar.get(Calendar.YEAR) - 1);
+        final Calendar maxCalendar = new GregorianCalendar();
+        maxCalendar.set(Calendar.YEAR, maxCalendar.get(Calendar.YEAR) + 1);
+
+        final long minDate = minCalendar.getTime().getTime();
+        final long maxDate = maxCalendar.getTime().getTime();
+
+        instrumentation.runOnMainSync(() -> {
+            datePicker.setMinDate(minDate);
+            datePicker.setMaxDate(maxDate);
+        });
+
+        assertEquals(datePicker.getMinDate(), minDate);
+        assertEquals(datePicker.getMaxDate(), maxDate);
+    }
+
+    public void testMinMaxDate() {
+        verifyMinMaxDate(mDatePickerSpinnerMode);
+        verifyMinMaxDate(mDatePickerCalendarMode);
+    }
+
+    private void verifyFirstDayOfWeek(DatePicker datePicker) {
+        final Instrumentation instrumentation = getInstrumentation();
+
+        instrumentation.runOnMainSync(() -> datePicker.setFirstDayOfWeek(Calendar.TUESDAY));
+        assertEquals(Calendar.TUESDAY, datePicker.getFirstDayOfWeek());
+
+        instrumentation.runOnMainSync(() -> datePicker.setFirstDayOfWeek(Calendar.SUNDAY));
+        assertEquals(Calendar.SUNDAY, datePicker.getFirstDayOfWeek());
+    }
+
+    public void testFirstDayOfWeek() {
+        verifyFirstDayOfWeek(mDatePickerSpinnerMode);
+        verifyFirstDayOfWeek(mDatePickerCalendarMode);
+    }
+
+    public void testCalendarViewInSpinnerMode() {
+        final Instrumentation instrumentation = getInstrumentation();
+
+        assertNotNull(mDatePickerSpinnerMode.getCalendarView());
+
+        // Update the DatePicker and test that its CalendarView is synced to the same date
+        final Calendar calendar = new GregorianCalendar();
+        calendar.set(Calendar.YEAR, 2008);
+        calendar.set(Calendar.MONTH, Calendar.SEPTEMBER);
+        calendar.set(Calendar.DAY_OF_MONTH, 23);
+        instrumentation.runOnMainSync(
+                () -> mDatePickerSpinnerMode.updateDate(
+                        calendar.get(Calendar.YEAR),
+                        calendar.get(Calendar.MONTH),
+                        calendar.get(Calendar.DAY_OF_MONTH)));
+
+        final Calendar calendarFromSpinner = new GregorianCalendar();
+        final long timeFromSpinnerCalendar = mDatePickerSpinnerMode.getCalendarView().getDate();
+        calendarFromSpinner.setTimeInMillis(timeFromSpinnerCalendar);
+
+        assertEquals(calendar.get(Calendar.YEAR), calendarFromSpinner.get(Calendar.YEAR));
+        assertEquals(calendar.get(Calendar.MONTH), calendarFromSpinner.get(Calendar.MONTH));
+        assertEquals(calendar.get(Calendar.DAY_OF_MONTH),
+                calendarFromSpinner.get(Calendar.DAY_OF_MONTH));
+    }
+
+    public void testPartsVisibilityInSpinnerMode() {
+        final Instrumentation instrumentation = getInstrumentation();
+
+        assertTrue(mDatePickerSpinnerMode.getSpinnersShown());
+        assertTrue(mDatePickerSpinnerMode.getCalendarViewShown());
+
+        instrumentation.runOnMainSync(() -> mDatePickerSpinnerMode.setSpinnersShown(false));
+        assertFalse(mDatePickerSpinnerMode.getSpinnersShown());
+        assertTrue(mDatePickerSpinnerMode.getCalendarViewShown());
+
+        instrumentation.runOnMainSync(() -> mDatePickerSpinnerMode.setCalendarViewShown(false));
+        assertFalse(mDatePickerSpinnerMode.getSpinnersShown());
+        assertFalse(mDatePickerSpinnerMode.getCalendarViewShown());
+
+        instrumentation.runOnMainSync(() -> mDatePickerSpinnerMode.setSpinnersShown(true));
+        assertTrue(mDatePickerSpinnerMode.getSpinnersShown());
+        assertFalse(mDatePickerSpinnerMode.getCalendarViewShown());
+
+        instrumentation.runOnMainSync(() -> mDatePickerSpinnerMode.setCalendarViewShown(true));
+        assertTrue(mDatePickerSpinnerMode.getSpinnersShown());
+        assertTrue(mDatePickerSpinnerMode.getCalendarViewShown());
     }
 
     @UiThreadTest
