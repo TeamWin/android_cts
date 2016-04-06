@@ -366,6 +366,14 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
         executeDeviceTestMethod(".HardwarePropertiesManagerTest", "testHardwarePropertiesManager");
     }
 
+    // Execute VrTemperatureTest as a device owner.
+    public void testVrTemperaturesAsDeviceOwner() throws Exception {
+        if (!mHasFeature)
+            return;
+
+        executeDeviceTestMethod(".VrTemperatureTest", "testVrTemperatures");
+    }
+
     public void testIsManagedDeviceProvisioningAllowed() throws Exception {
         if (!mHasFeature) {
             return;
