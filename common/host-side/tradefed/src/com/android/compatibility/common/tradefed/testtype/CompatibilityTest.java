@@ -76,11 +76,6 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
     public static final String DEVICE_TOKEN_OPTION = "device-token";
     private static final String URL = "dynamic-config-url";
 
-    private static final TestStatus[] RETRY_TEST_STATUS = new TestStatus[] {
-            TestStatus.FAIL,
-            TestStatus.NOT_EXECUTED
-    };
-
     @Option(name = PLAN_OPTION,
             description = "the test suite plan to run, such as \"everything\" or \"cts\"",
             importance = Importance.ALWAYS)
@@ -347,20 +342,14 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
             }
             // Append each test that failed or was not executed to the filters
             for (IModuleResult module : result.getModules()) {
-                for (ICaseResult cr : module.getResults()) {
-                    for (TestStatus status : RETRY_TEST_STATUS) {
-                        for (ITestResult r : cr.getResults(status)) {
-                            // Create the filter for the test to be run.
-                            TestFilter filter = new TestFilter(
-                                    module.getAbi(), module.getName(), r.getFullName());
-                            mIncludeFilters.add(filter.toString());
-                        }
+                for (ICaseResult testResultList : module.getResults()) {
+                    for (ITestResult testResult : testResultList.getResults(TestStatus.PASS)) {
+                        // Create the filter for the test to be run.
+                        TestFilter filter = new TestFilter(
+                                module.getAbi(), module.getName(), testResult.getFullName());
+                        mExcludeFilters.add(filter.toString());
                     }
                 }
-            }
-            if (mIncludeFilters.isEmpty()) {
-                throw new IllegalArgumentException(String.format(
-                        "No tests to retry in session %d", mRetrySessionId));
             }
         } else if (mModuleName != null) {
             mIncludeFilters.clear();
