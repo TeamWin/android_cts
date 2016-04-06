@@ -69,12 +69,16 @@ public class ResultHandlerTest extends TestCase {
             "at four.big.insects.Marley.sing(Marley.java:10)";
     private static final long START_MS = 1431586801000L;
     private static final long END_MS = 1431673199000L;
+    private static final String START_DISPLAY = "Fri Aug 20 15:13:03 PDT 2010";
+    private static final String END_DISPLAY = "Fri Aug 20 15:13:04 PDT 2010";
+
     private static final String REFERENCE_URL="http://android.com";
     private static final String JOIN = "%s%s";
     private static final String XML_BASE =
             "<?xml version='1.0' encoding='UTF-8' standalone='no' ?>" +
             "<?xml-stylesheet type=\"text/xsl\" href=\"compatibility_result.xsl\"?>\n" +
-            "<Result start=\"%d\" end=\"%d\" suite_name=\"%s\" suite_version=\"%s\" " +
+            "<Result start=\"%d\" end=\"%d\" start_display=\"%s\"" +
+            "end_display=\"%s\" suite_name=\"%s\" suite_version=\"%s\" " +
             "suite_plan=\"%s\" suite_build_number=\"%s\" report_version=\"%s\" " +
             "devices=\"%s\" host_name=\"%s\"" +
             "os_name=\"%s\" os_version=\"%s\" os_arch=\"%s\" java_vendor=\"%s\"" +
@@ -204,9 +208,10 @@ public class ResultHandlerTest extends TestCase {
             try {
                 hostName = InetAddress.getLocalHost().getHostName();
             } catch (UnknownHostException ignored) {}
-            String output = String.format(XML_BASE, START_MS, END_MS, SUITE_NAME, SUITE_VERSION,
-                    SUITE_PLAN, SUITE_BUILD, REPORT_VERSION, DEVICES, hostName, OS_NAME, OS_VERSION,
-                    OS_ARCH, JAVA_VENDOR, JAVA_VERSION, REFERENCE_URL, deviceInfo, summary, modules);
+            String output = String.format(XML_BASE, START_MS, END_MS, START_DISPLAY, END_DISPLAY,
+                    SUITE_NAME, SUITE_VERSION, SUITE_PLAN, SUITE_BUILD, REPORT_VERSION, DEVICES,
+                    hostName, OS_NAME, OS_VERSION, OS_ARCH, JAVA_VENDOR, JAVA_VERSION, REFERENCE_URL,
+                    deviceInfo, summary, modules);
             writer.write(output);
             writer.flush();
 

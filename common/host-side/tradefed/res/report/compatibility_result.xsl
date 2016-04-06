@@ -16,6 +16,7 @@
 
 <!DOCTYPE xsl:stylesheet [ <!ENTITY nbsp "&#160;"> ]>
 <xsl:stylesheet version="2.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+
     <xsl:output method="html" version="1.0" encoding="UTF-8" indent="yes"/>
 
     <xsl:template match="/">
@@ -31,69 +32,41 @@
                 <div>
                     <table class="title">
                         <tr>
-                            <td width="40%" align="left"><img src="logo.png"></img></td>
-                            <td width="60%" align="left">
-                                <h1>Test Report</h1>
-                            </td>
+                            <td align="left"><img src="logo.png"/></td>
                         </tr>
                     </table>
                 </div>
-                <img src="newrule_green.png" align="left"></img>
-
-                <br></br>
-
-                <center>
-                    <a href="device-info/GenericDeviceInfo.deviceinfo.json" >Device Information</a>
-                </center>
-
-                <br></br>
 
                 <div>
                     <table class="summary">
                         <tr>
-                            <th colspan="2">Test Summary</th>
+                            <th colspan="2">Summary</th>
                         </tr>
                         <tr>
-                            <td class="rowtitle">Compatibility Suite</td>
+                            <td class="rowtitle">Suite / Plan</td>
                             <td>
-                                <xsl:value-of select="Result/@suite_name"/>
+                                <xsl:value-of select="Result/@suite_name"/> / <xsl:value-of select="Result/@plan"/>
                             </td>
                         </tr>
                         <tr>
-                            <td class="rowtitle">Compatibility Version</td>
+                            <td class="rowtitle">Suite / Build</td>
                             <td>
-                                <xsl:value-of select="Result/@suite_version"/>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td class="rowtitle">Report Version</td>
-                            <td>
-                                <xsl:value-of select="Result/@report_version"/>
+                                <xsl:value-of select="Result/@suite_version"/> / <xsl:value-of select="Result/@suite_build_number"/>
                             </td>
                         </tr>
                         <tr>
                             <td class="rowtitle">Host Info</td>
                             <td>
+                                Result/@start
                                 <xsl:value-of select="Result/@host_name"/>
                                 (<xsl:value-of select="Result/@os_name"/> - <xsl:value-of select="Result/@os_version"/>)
                             </td>
                         </tr>
                         <tr>
-                            <td class="rowtitle">Plan</td>
+                            <td class="rowtitle">Start time / End Time</td>
                             <td>
-                                <xsl:value-of select="Result/@plan"/>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td class="rowtitle">Start time</td>
-                            <td>
-                                <xsl:value-of select="Result/@start"/>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td class="rowtitle">End time</td>
-                            <td>
-                                <xsl:value-of select="Result/@end"/>
+                                <xsl:value-of select="Result/@start_display"/> /
+                                <xsl:value-of select="Result/@end_display"/>
                             </td>
                         </tr>
                         <tr>
@@ -114,11 +87,35 @@
                                 <xsl:value-of select="Result/Summary/@not_executed"/>
                             </td>
                         </tr>
+                        <tr>
+                            <td class="rowtitle">Fingerprint</td>
+                            <td>
+                                <xsl:value-of select="Result/Build/@build_fingerprint"/>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="rowtitle">Security Patch</td>
+                            <td>
+                                <xsl:value-of select="Result/Build/@build_version_security_patch"/>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="rowtitle">Release (SDK)</td>
+                            <td>
+                                <xsl:value-of select="Result/Build/@build_version_release"/> (<xsl:value-of select="Result/Build/@build_version_sdk"/>)
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="rowtitle">ABIs</td>
+                            <td>
+                                <xsl:value-of select="Result/Build/@build_abis"/>
+                            </td>
+                        </tr>
                     </table>
                 </div>
 
                 <!-- High level summary of test execution -->
-                <h2 align="center">Test Summary by Module</h2>
+                <br/>
                 <div>
                     <table class="testsummary">
                         <tr>
@@ -135,16 +132,16 @@
                                     <a href="#{$href}"><xsl:value-of select="@name"/> - <xsl:value-of select="@abi"/></a>
                                 </td>
                                 <td>
-                                    <xsl:value-of select="count(Test[@result = 'pass'])"/>
+                                    <xsl:value-of select="count(TestCase/Test[@result = 'pass'])"/>
                                 </td>
                                 <td>
-                                    <xsl:value-of select="count(Test[@result = 'fail'])"/>
+                                    <xsl:value-of select="count(TestCase/Test[@result = 'fail'])"/>
                                 </td>
                                 <td>
-                                    <xsl:value-of select="count(Test[@result = 'not_executed'])"/>
+                                    <xsl:value-of select="count(TestCase/Test[@result = 'not_executed'])"/>
                                 </td>
                                 <td>
-                                    <xsl:value-of select="count(Test)"/>
+                                    <xsl:value-of select="count(TestCase/Test)"/>
                                 </td>
                             </tr>
                         </xsl:for-each> <!-- end Module -->
@@ -161,7 +158,7 @@
                     <xsl:with-param name="resultFilter" select="'not_executed'" />
                 </xsl:call-template>
 
-                <h2 align="center">Detailed Test Report</h2>
+                <br/>
                 <xsl:call-template name="detailedTestReport" />
 
             </body>
@@ -201,46 +198,49 @@
                             <th>Details</th>
                         </tr>
 
-                        <!-- test -->
-                        <xsl:for-each select="Test">
-                            <xsl:if test="$resultFilter='' or $resultFilter=@result">
-                                <tr>
-                                    <td class="testname"> -- <xsl:value-of select="@name"/></td>
+                        <xsl:for-each select="TestCase">
+                            <xsl:variable name="TestCase" select="."/>
+                            <!-- test -->
+                            <xsl:for-each select="Test">
+                                <xsl:if test="$resultFilter='' or $resultFilter=@result">
+                                    <tr>
+                                        <td class="testname"> <xsl:value-of select="$TestCase/@name"/>#<xsl:value-of select="@name"/></td>
 
-                                    <!-- test results -->
-                                    <xsl:if test="@result='pass'">
-                                        <td class="pass">
-                                            <div style="text-align: center; margin-left:auto; margin-right:auto;">
-                                                <xsl:value-of select="@result"/>
-                                            </div>
-                                        </td>
-                                        <td class="failuredetails"/>
-                                    </xsl:if>
+                                        <!-- test results -->
+                                        <xsl:if test="@result='pass'">
+                                            <td class="pass">
+                                                <div style="text-align: center; margin-left:auto; margin-right:auto;">
+                                                    <xsl:value-of select="@result"/>
+                                                </div>
+                                            </td>
+                                            <td class="failuredetails"/>
+                                        </xsl:if>
 
-                                    <xsl:if test="@result='fail'">
-                                        <td class="failed">
-                                            <div style="text-align: center; margin-left:auto; margin-right:auto;">
-                                                <xsl:value-of select="@result"/>
-                                            </div>
-                                        </td>
-                                        <td class="failuredetails">
-                                            <div class="details">
-                                                <xsl:value-of select="Failure/@message"/>
-                                            </div>
-                                        </td>
-                                    </xsl:if>
+                                        <xsl:if test="@result='fail'">
+                                            <td class="failed">
+                                                <div style="text-align: center; margin-left:auto; margin-right:auto;">
+                                                    <xsl:value-of select="@result"/>
+                                                </div>
+                                            </td>
+                                            <td class="failuredetails">
+                                                <div class="details">
+                                                    <xsl:value-of select="Failure/@message"/>
+                                                </div>
+                                            </td>
+                                        </xsl:if>
 
-                                    <xsl:if test="@result='not_executed'">
-                                        <td class="not_executed">
-                                            <div style="text-align: center; margin-left:auto; margin-right:auto;">
-                                                <xsl:value-of select="@result"/>
-                                            </div>
-                                        </td>
-                                        <td class="failuredetails"></td>
-                                    </xsl:if>
-                                </tr> <!-- finished with a row -->
-                            </xsl:if>
-                        </xsl:for-each> <!-- end test -->
+                                        <xsl:if test="@result='not_executed'">
+                                            <td class="not_executed">
+                                                <div style="text-align: center; margin-left:auto; margin-right:auto;">
+                                                    <xsl:value-of select="@result"/>
+                                                </div>
+                                            </td>
+                                            <td class="failuredetails"></td>
+                                        </xsl:if>
+                                    </tr> <!-- finished with a row -->
+                                </xsl:if>
+                            </xsl:for-each> <!-- end test -->
+                        </xsl:for-each>
                     </table>
                 </xsl:if>
             </xsl:for-each> <!-- end test Module -->
