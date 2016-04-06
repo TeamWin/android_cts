@@ -50,7 +50,7 @@
             android:unfocusedMonthDateColor="@color/calendarview_unfocusedmonthdate"
             android:dateTextAppearance="@style/TextAppearance.WithColor"
             android:weekDayTextAppearance="@style/TextAppearance.WithColorGreen"
-            android:selectedDateVerticalBar="@drawable/red_fill" />
+            android:selectedDateVerticalBar="@drawable/blue_fill" />
 
     </LinearLayout>
 
