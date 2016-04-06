@@ -45,6 +45,7 @@ import android.util.Log;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -81,6 +82,11 @@ public class BaseTelecomTestWithMockServices extends InstrumentationTestCase {
     InvokeCounter mOnCallAudioStateChangedCounter;
     InvokeCounter mOnPostDialWaitCounter;
     InvokeCounter mOnCannedTextResponsesLoadedCounter;
+    InvokeCounter mOnConnectionEventCounter;
+    InvokeCounter mOnExtrasChangedCounter;
+    InvokeCounter mOnPropertiesChangedCounter;
+    Bundle mPreviousExtras;
+    int mPreviousProperties = -1;
 
     InCallServiceCallbacks mInCallCallbacks;
     String mPreviousDefaultDialer = null;
@@ -192,6 +198,17 @@ public class BaseTelecomTestWithMockServices extends InstrumentationTestCase {
             @Override
             public void onDetailsChanged(Call call, Call.Details details) {
                 Log.i(TAG, "onDetailsChanged, Call: " + call + ", Details: " + details);
+                if (!areBundlesEqual(mPreviousExtras, details.getExtras())) {
+                    mOnExtrasChangedCounter.invoke(call, details);
+                }
+                mPreviousExtras = details.getExtras();
+
+                if (mPreviousProperties != details.getCallProperties()) {
+                    mOnPropertiesChangedCounter.invoke(call, details);
+                    Log.i(TAG, "onDetailsChanged; properties changed from " + Call.Details.propertiesToString(mPreviousProperties) +
+                            " to " + Call.Details.propertiesToString(details.getCallProperties()));
+                }
+                mPreviousProperties = details.getCallProperties();
             }
             @Override
             public void onCallDestroyed(Call call) {
@@ -218,6 +235,10 @@ public class BaseTelecomTestWithMockServices extends InstrumentationTestCase {
             public void onCannedTextResponsesLoaded(Call call, List<String> cannedTextResponses) {
                 mOnCannedTextResponsesLoadedCounter.invoke(call, cannedTextResponses);
             }
+            @Override
+            public void onConnectionEvent(Call call, String event, Bundle extras) {
+                mOnConnectionEventCounter.invoke(call, event, extras);
+            }
         };
 
         MockInCallService.setCallbacks(mInCallCallbacks);
@@ -228,6 +249,9 @@ public class BaseTelecomTestWithMockServices extends InstrumentationTestCase {
         mOnCallAudioStateChangedCounter = new InvokeCounter("OnCallAudioStateChanged");
         mOnPostDialWaitCounter = new InvokeCounter("OnPostDialWait");
         mOnCannedTextResponsesLoadedCounter = new InvokeCounter("OnCannedTextResponsesLoaded");
+        mOnConnectionEventCounter = new InvokeCounter("OnConnectionEvent");
+        mOnExtrasChangedCounter = new InvokeCounter("OnDetailsChangedCounter");
+        mOnPropertiesChangedCounter = new InvokeCounter("OnPropertiesChangedCounter");
     }
 
     /**
@@ -865,6 +889,30 @@ public class BaseTelecomTestWithMockServices extends InstrumentationTestCase {
         );
     }
 
+    /**
+     * Asserts that a call's properties are as expected.
+     *
+     * @param call The call.
+     * @param properties The expected properties.
+     */
+    public void assertCallProperties(final Call call, final int properties) {
+        waitUntilConditionIsTrueOrTimeout(
+                new Condition() {
+                    @Override
+                    public Object expected() {
+                        return true;
+                    }
+
+                    @Override
+                    public Object actual() {
+                        return call.getDetails().hasProperty(properties);
+                    }
+                },
+                TestUtils.WAIT_FOR_STATE_CHANGE_TIMEOUT_MS,
+                "Call should have properties " + properties
+        );
+    }
+
     void waitUntilConditionIsTrueOrTimeout(Condition condition, long timeout,
             String description) {
         final long start = System.currentTimeMillis();
@@ -981,5 +1029,26 @@ public class BaseTelecomTestWithMockServices extends InstrumentationTestCase {
                 }
             }
         }
+    }
+
+    public static boolean areBundlesEqual(Bundle extras, Bundle newExtras) {
+        if (extras == null || newExtras == null) {
+            return extras == newExtras;
+        }
+
+        if (extras.size() != newExtras.size()) {
+            return false;
+        }
+
+        for (String key : extras.keySet()) {
+            if (key != null) {
+                final Object value = extras.get(key);
+                final Object newValue = newExtras.get(key);
+                if (!Objects.equals(value, newValue)) {
+                    return false;
+                }
+            }
+        }
+        return true;
     }
 }
