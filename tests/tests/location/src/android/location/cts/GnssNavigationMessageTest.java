@@ -77,7 +77,7 @@ public class GnssNavigationMessageTest extends GnssTestCase {
                 new TestGnssNavigationMessageListener(TAG, EVENTS_COUNT);
         mTestLocationManager.registerGnssNavigationMessageCallback(mTestGnssNavigationMessageListener);
 
-        assertTrue(mTestGnssNavigationMessageListener.await());
+        mTestGnssNavigationMessageListener.await();
         if (!mTestGnssNavigationMessageListener.verifyState()) {
             return;
         }
