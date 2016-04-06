@@ -21,6 +21,7 @@ import android.app.Instrumentation;
 import android.test.ActivityInstrumentationTestCase2;
 import android.test.suitebuilder.annotation.MediumTest;
 import android.widget.CalendarView;
+import android.widget.cts.util.TestUtils;
 
 import java.util.Calendar;
 import java.util.GregorianCalendar;
@@ -147,6 +148,8 @@ public class CalendarViewTest extends ActivityInstrumentationTestCase2<CalendarV
                 mCalendarViewHolo.getFocusedMonthDateColor());
         assertEquals(mActivity.getColor(R.color.calendarview_unfocusedmonthdate),
                 mCalendarViewHolo.getUnfocusedMonthDateColor());
+        TestUtils.assertAllPixelsOfColor("Selected date vertical bar blue",
+                mCalendarViewHolo.getSelectedDateVerticalBar(), 40, 40, true, 0xFF0000FF, 1, true);
 
         final Instrumentation instrumentation = getInstrumentation();
 
@@ -192,5 +195,16 @@ public class CalendarViewTest extends ActivityInstrumentationTestCase2<CalendarV
                 mCalendarViewHolo.getWeekNumberColor());
         assertEquals(newWeekSeparatorLineColor,
                 mCalendarViewHolo.getWeekSeparatorLineColor());
+
+        instrumentation.runOnMainSync(
+                () -> mCalendarViewHolo.setSelectedDateVerticalBar(R.drawable.yellow_fill));
+        TestUtils.assertAllPixelsOfColor("Selected date vertical bar yellow",
+                mCalendarViewHolo.getSelectedDateVerticalBar(), 40, 40, true, 0xFFFFFF00, 1, true);
+
+        instrumentation.runOnMainSync(
+                () -> mCalendarViewHolo.setSelectedDateVerticalBar(
+                        mActivity.getDrawable(R.drawable.magenta_fill)));
+        TestUtils.assertAllPixelsOfColor("Selected date vertical bar magenta",
+                mCalendarViewHolo.getSelectedDateVerticalBar(), 40, 40, true, 0xFFFF00FF, 1, true);
     }
 }
