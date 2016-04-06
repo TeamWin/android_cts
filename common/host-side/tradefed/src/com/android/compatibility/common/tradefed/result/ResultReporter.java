@@ -75,8 +75,7 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
         "compatibility_result.css",
         "compatibility_result.xsd",
         "compatibility_result.xsl",
-        "logo.png",
-        "newrule_green.png"};
+        "logo.png"};
 
     @Option(name = CompatibilityTest.RETRY_OPTION,
             shortName = 'r',
