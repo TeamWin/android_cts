@@ -27,15 +27,19 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.test.AndroidTestCase;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.util.Xml;
 import android.view.WindowManager;
 
 import org.xmlpull.v1.XmlPullParserException;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 
 public class ContextTest extends AndroidTestCase {
+    private static final String TAG = "ContextTest";
+
     private Context mContext;
 
     @Override
@@ -301,6 +305,44 @@ public class ContextTest extends AndroidTestCase {
 
         final int color = mContext.getColor(R.color.color2);
         assertEquals(0xffffff00, color);
+    }
+
+    /**
+     * Developers have come to expect at least ext4-style filename behavior, so
+     * verify that the underlying filesystem supports them.
+     */
+    public void testFilenames() throws Exception {
+        final File base = mContext.getFilesDir();
+        assertValidFile(new File(base, "foo"));
+        assertValidFile(new File(base, ".bar"));
+        assertValidFile(new File(base, "foo.bar"));
+        assertValidFile(new File(base, "\u2603"));
+        assertValidFile(new File(base, "\uD83D\uDCA9"));
+
+        final int pid = android.os.Process.myPid();
+        final StringBuilder sb = new StringBuilder(255);
+        while (sb.length() <= 255) {
+            sb.append(pid);
+            sb.append(mContext.getPackageName());
+        }
+        sb.setLength(255);
+
+        final String longName = sb.toString();
+        final File longDir = new File(base, longName);
+        assertValidFile(longDir);
+        longDir.mkdir();
+        final File longFile = new File(longDir, longName);
+        assertValidFile(longFile);
+    }
+
+    private void assertValidFile(File file) throws Exception {
+        Log.d(TAG, "Checking " + file);
+        assertTrue("Failed to create " + file, file.createNewFile());
+        assertTrue("Doesn't exist after create " + file, file.exists());
+        assertTrue("Failed to delete after create " + file, file.delete());
+        new FileOutputStream(file).close();
+        assertTrue("Doesn't exist after stream " + file, file.exists());
+        assertTrue("Failed to delete after stream " + file, file.delete());
     }
 
     private AttributeSet getAttributeSet(int resourceId) {
