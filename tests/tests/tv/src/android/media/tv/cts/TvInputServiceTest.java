@@ -32,6 +32,7 @@ import android.media.tv.cts.TvInputServiceTest.CountingTvInputService.CountingSe
 import android.media.tv.cts.TvInputServiceTest.CountingTvInputService.CountingRecordingSession;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Process;
 import android.os.SystemClock;
 import android.test.ActivityInstrumentationTestCase2;
 import android.view.InputDevice;
@@ -65,6 +66,7 @@ public class TvInputServiceTest extends ActivityInstrumentationTestCase2<TvViewS
     private Instrumentation mInstrumentation;
     private TvInputManager mManager;
     private TvInputInfo mStubInfo;
+    private TvInputInfo mFaultyStubInfo;
     private final StubCallback mCallback = new StubCallback();
     private final StubTimeShiftPositionCallback mTimeShiftPositionCallback =
             new StubTimeShiftPositionCallback();
@@ -177,6 +179,11 @@ public class TvInputServiceTest extends ActivityInstrumentationTestCase2<TvViewS
         for (TvInputInfo info : mManager.getTvInputList()) {
             if (info.getServiceInfo().name.equals(CountingTvInputService.class.getName())) {
                 mStubInfo = info;
+            }
+            if (info.getServiceInfo().name.equals(FaultyTvInputService.class.getName())) {
+                mFaultyStubInfo = info;
+            }
+            if (mStubInfo != null && mFaultyStubInfo != null) {
                 break;
             }
         }
@@ -233,6 +240,7 @@ public class TvInputServiceTest extends ActivityInstrumentationTestCase2<TvViewS
             return;
         }
         verifyCommandTuneForRecording();
+        verifyCallbackConnectionFailed();
         verifyCommandTuneForRecordingWithBundle();
         verifyCallbackTuned();
         verifyCommandStartRecording();
@@ -241,6 +249,7 @@ public class TvInputServiceTest extends ActivityInstrumentationTestCase2<TvViewS
         verifyCallbackRecordingStopped();
         verifyCallbackError();
         verifyCommandRelease();
+        verifyCallbackDisconnected();
     }
 
     public void verifyCommandTuneForRecording() {
@@ -356,6 +365,30 @@ public class TvInputServiceTest extends ActivityInstrumentationTestCase2<TvViewS
             @Override
             protected boolean check() {
                 return mRecordingCallback.mRecordingStoppedCount > 0;
+            }
+        }.run();
+    }
+
+    public void verifyCallbackConnectionFailed() {
+        resetCounts();
+        Uri fakeChannelUri = TvContract.buildChannelUri(0);
+        mTvRecordingClient.tune("invalid_input_id", fakeChannelUri);
+        new PollingCheck(TIME_OUT) {
+            @Override
+            protected boolean check() {
+                return mRecordingCallback.mConnectionFailedCount > 0;
+            }
+        }.run();
+    }
+
+    public void verifyCallbackDisconnected() {
+        resetCounts();
+        Uri fakeChannelUri = TvContract.buildChannelUri(0);
+        mTvRecordingClient.tune(mFaultyStubInfo.getId(), fakeChannelUri);
+        new PollingCheck(TIME_OUT) {
+            @Override
+            protected boolean check() {
+                return mRecordingCallback.mDisconnectedCount > 0;
             }
         }.run();
     }
@@ -1053,6 +1086,8 @@ public class TvInputServiceTest extends ActivityInstrumentationTestCase2<TvViewS
         private int mTunedCount;
         private int mRecordingStoppedCount;
         private int mErrorCount;
+        private int mConnectionFailedCount;
+        private int mDisconnectedCount;
 
         @Override
         public void onTuned(Uri channelUri) {
@@ -1069,10 +1104,49 @@ public class TvInputServiceTest extends ActivityInstrumentationTestCase2<TvViewS
             mErrorCount++;
         }
 
+        @Override
+        public void onConnectionFailed(String inputId) {
+            mConnectionFailedCount++;
+        }
+
+        @Override
+        public void onDisconnected(String inputId) {
+            mDisconnectedCount++;
+        }
+
         public void resetCounts() {
             mTunedCount = 0;
             mRecordingStoppedCount = 0;
             mErrorCount = 0;
+            mConnectionFailedCount = 0;
+            mDisconnectedCount = 0;
+        }
+    }
+
+    public static class FaultyTvInputService extends StubTvInputService {
+        @Override
+        public RecordingSession onCreateRecordingSession(String inputId) {
+            return new FaultyRecordingSession(this);
+        }
+
+        public static class FaultyRecordingSession extends RecordingSession {
+            FaultyRecordingSession(Context context) {
+                super(context);
+            }
+
+            @Override
+            public void onTune(Uri channelUri) {
+                Process.killProcess(android.os.Process.myPid());
+            }
+
+            @Override
+            public void onStartRecording(Uri programHint) { }
+
+            @Override
+            public void onStopRecording() { }
+
+            @Override
+            public void onRelease() { }
         }
     }
 }
