@@ -29,24 +29,32 @@ import android.telecom.Connection;
 import android.telecom.ConnectionRequest;
 import android.telecom.DisconnectCause;
 import android.telecom.GatewayInfo;
-import android.telecom.InCallService;
 import android.telecom.PhoneAccount;
 import android.telecom.PhoneAccountHandle;
 import android.telecom.StatusHints;
 import android.telecom.TelecomManager;
+import android.util.Log;
+
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * Suites of tests that verifies the various Call details.
  */
 public class CallDetailsTest extends BaseTelecomTestWithMockServices {
 
+    /**
+     * {@link Connection#PROPERTY_HIGH_DEF_AUDIO} is @hide, so define it here for now.
+     */
+    public static final int PROPERTY_HIGH_DEF_AUDIO = 1<<2;
+
+    /**
+     * {@link Connection#PROPERTY_WIFI} is @hide, so define it here for now.
+     */
+    public static final int PROPERTY_WIFI = 1<<3;
+    public static final int CONNECTION_PROPERTIES =  PROPERTY_HIGH_DEF_AUDIO | PROPERTY_WIFI;
     public static final int CONNECTION_CAPABILITIES =
-            Connection.CAPABILITY_HOLD | Connection.CAPABILITY_MUTE |
-            /**
-             * CAPABILITY_HIGH_DEF_AUDIO & CAPABILITY_WIFI are hidden, so
-             * hardcoding the values for now.
-             */
-            0x00008000 | 0x00010000;
+            Connection.CAPABILITY_HOLD | Connection.CAPABILITY_MUTE;
     public static final int CALL_CAPABILITIES =
             Call.Details.CAPABILITY_HOLD | Call.Details.CAPABILITY_MUTE;
     public static final int CALL_PROPERTIES =
@@ -57,14 +65,17 @@ public class CallDetailsTest extends BaseTelecomTestWithMockServices {
     public static final String TEST_CHILD_NUMBER = "650-555-1212";
     public static final String TEST_FORWARDED_NUMBER = "650-555-1212";
     public static final String TEST_EXTRA_KEY = "com.test.extra.TEST";
+    public static final String TEST_EXTRA_KEY2 = "com.test.extra.TEST2";
+    public static final String TEST_EXTRA_KEY3 = "com.test.extra.TEST3";
     public static final int TEST_EXTRA_VALUE = 10;
+    public static final String TEST_EVENT = "com.test.event.TEST";
 
     private StatusHints mStatusHints;
     private Bundle mExtras = new Bundle();
 
     private MockInCallService mInCallService;
     private Call mCall;
-    private Connection mConnection;
+    private MockConnection mConnection;
 
     @Override
     protected void setUp() throws Exception {
@@ -79,9 +90,10 @@ public class CallDetailsTest extends BaseTelecomTestWithMockServices {
                             Connection connection = super.onCreateOutgoingConnection(
                                     connectionManagerPhoneAccount,
                                     request);
-                            mConnection = connection;
+                            mConnection = (MockConnection) connection;
                             // Modify the connection object created with local values.
                             connection.setConnectionCapabilities(CONNECTION_CAPABILITIES);
+                            connection.setConnectionProperties(CONNECTION_PROPERTIES);
                             connection.setCallerDisplayName(
                                     CALLER_DISPLAY_NAME,
                                     CALLER_DISPLAY_NAME_PRESENTATION);
@@ -399,6 +411,189 @@ public class CallDetailsTest extends BaseTelecomTestWithMockServices {
         assertEquals(TEST_FORWARDED_NUMBER,
                 callExtras.getString(Connection.EXTRA_LAST_FORWARDED_NUMBER));
         assertEquals(TEST_EXTRA_VALUE, callExtras.getInt(TEST_EXTRA_KEY));
+    }
+
+    /**
+     * Tests that {@link Connection} extras changes made via {@link Connection#putExtras(Bundle)}
+     * are propagated to the {@link Call} via
+     * {@link android.telecom.Call.Callback#onDetailsChanged(Call, Call.Details)}.
+     */
+    public void testConnectionPutExtras() {
+        if (!mShouldTestTelecom) {
+            return;
+        }
+
+        Bundle testBundle = new Bundle();
+        testBundle.putString(TEST_EXTRA_KEY, TEST_SUBJECT);
+        testBundle.putInt(TEST_EXTRA_KEY2, TEST_EXTRA_VALUE);
+        mConnection.putExtras(testBundle);
+        // Wait for the 2nd invocation; setExtras is called in the setup method.
+        mOnExtrasChangedCounter.waitForCount(2, WAIT_FOR_STATE_CHANGE_TIMEOUT_MS);
+
+        Bundle extras = mCall.getDetails().getExtras();
+        assertEquals(2, extras.size());
+        assertTrue(extras.containsKey(TEST_EXTRA_KEY));
+        assertEquals(TEST_SUBJECT, extras.getString(TEST_EXTRA_KEY));
+        assertTrue(extras.containsKey(TEST_EXTRA_KEY2));
+        assertEquals(TEST_EXTRA_VALUE, extras.getInt(TEST_EXTRA_KEY2));
+    }
+
+    /**
+     * Tests that {@link Connection} extras changes made via {@link Connection#removeExtras(List)}
+     * are propagated to the {@link Call} via
+     * {@link android.telecom.Call.Callback#onDetailsChanged(Call, Call.Details)}.
+     */
+    public void testConnectionRemoveExtras() {
+        testConnectionPutExtras();
+
+        mConnection.removeExtras(Arrays.asList(TEST_EXTRA_KEY));
+        // testConnectionPutExtra will have waited for the 2nd invocation, so wait for the 3rd here.
+        mOnExtrasChangedCounter.waitForCount(3, WAIT_FOR_STATE_CHANGE_TIMEOUT_MS);
+
+        Bundle extras = mCall.getDetails().getExtras();
+        assertEquals(1, extras.size());
+        assertFalse(extras.containsKey(TEST_EXTRA_KEY));
+        assertTrue(extras.containsKey(TEST_EXTRA_KEY2));
+        assertEquals(TEST_EXTRA_VALUE, extras.getInt(TEST_EXTRA_KEY2));
+    }
+
+    /**
+     * Tests that {@link Call} extras changes made via {@link Call#putExtras(Bundle)} are propagated
+     * to {@link Connection#onExtrasChanged(Bundle)}.
+     */
+    public void testCallPutExtras() {
+        if (!mShouldTestTelecom) {
+            return;
+        }
+
+        Bundle testBundle = new Bundle();
+        testBundle.putString(TEST_EXTRA_KEY, TEST_SUBJECT);
+        final InvokeCounter counter = mConnection.getInvokeCounter(
+                MockConnection.ON_EXTRAS_CHANGED);
+        mCall.putExtras(testBundle);
+        counter.waitForCount(1, WAIT_FOR_STATE_CHANGE_TIMEOUT_MS);
+        Bundle extras = mConnection.getExtras();
+
+        assertNotNull(extras);
+        assertTrue(extras.containsKey(TEST_EXTRA_KEY));
+        assertEquals(TEST_SUBJECT, extras.getString(TEST_EXTRA_KEY));
+    }
+
+    /**
+     * Tests that {@link Call} extra operations using {@link Call#removeExtras(List)} are propagated
+     * to the {@link Connection} via {@link Connection#onExtrasChanged(Bundle)}.
+     *
+     * This test specifically tests addition and removal of extras values.
+     */
+    public void testCallRemoveExtras() {
+        if (!mShouldTestTelecom) {
+            return;
+        }
+
+        Bundle testBundle = new Bundle();
+        testBundle.putString(TEST_EXTRA_KEY, TEST_SUBJECT);
+        testBundle.putInt(TEST_EXTRA_KEY2, TEST_EXTRA_VALUE);
+        testBundle.putString(TEST_EXTRA_KEY3, TEST_SUBJECT);
+        final InvokeCounter counter = mConnection.getInvokeCounter(
+                MockConnection.ON_EXTRAS_CHANGED);
+        mCall.putExtras(testBundle);
+        counter.waitForCount(1, WAIT_FOR_STATE_CHANGE_TIMEOUT_MS);
+        Bundle extras = mConnection.getExtras();
+
+        assertNotNull(extras);
+        assertTrue(extras.containsKey(TEST_EXTRA_KEY));
+        assertEquals(TEST_SUBJECT, extras.getString(TEST_EXTRA_KEY));
+        assertTrue(extras.containsKey(TEST_EXTRA_KEY2));
+        assertEquals(TEST_EXTRA_VALUE, extras.getInt(TEST_EXTRA_KEY2));
+        assertTrue(extras.containsKey(TEST_EXTRA_KEY3));
+        assertEquals(TEST_SUBJECT, extras.getString(TEST_EXTRA_KEY3));
+
+        mCall.removeExtras(Arrays.asList(TEST_EXTRA_KEY));
+        counter.waitForCount(2, WAIT_FOR_STATE_CHANGE_TIMEOUT_MS);
+        extras = mConnection.getExtras();
+        assertNotNull(extras);
+        assertFalse(extras.containsKey(TEST_EXTRA_KEY));
+        assertTrue(extras.containsKey(TEST_EXTRA_KEY2));
+        assertEquals(TEST_EXTRA_VALUE, extras.getInt(TEST_EXTRA_KEY2));
+        assertTrue(extras.containsKey(TEST_EXTRA_KEY3));
+        assertEquals(TEST_SUBJECT, extras.getString(TEST_EXTRA_KEY3));
+
+        mCall.removeExtras(Arrays.asList(TEST_EXTRA_KEY2, TEST_EXTRA_KEY3));
+        counter.waitForCount(3, WAIT_FOR_STATE_CHANGE_TIMEOUT_MS);
+        extras = mConnection.getExtras();
+        assertTrue(extras.isEmpty());
+    }
+
+    /**
+     * Tests that {@link Connection} events are propagated from
+     * {@link Connection#sendConnectionEvent(String, Bundle)} to
+     * {@link android.telecom.Call.Callback#onConnectionEvent(Call, String, Bundle)}.
+     */
+    public void testConnectionEvent() {
+        if (!mShouldTestTelecom) {
+            return;
+        }
+
+        Bundle testBundle = new Bundle();
+        testBundle.putString(TEST_EXTRA_KEY, TEST_SUBJECT);
+
+        mConnection.sendConnectionEvent(Connection.EVENT_CALL_PULL_FAILED, testBundle);
+        mOnConnectionEventCounter.waitForCount(1, WAIT_FOR_STATE_CHANGE_TIMEOUT_MS);
+        String event = (String) (mOnConnectionEventCounter.getArgs(0)[1]);
+        Bundle extras = (Bundle) (mOnConnectionEventCounter.getArgs(0)[2]);
+
+        assertEquals(Connection.EVENT_CALL_PULL_FAILED, event);
+        assertNotNull(extras);
+        assertTrue(extras.containsKey(TEST_EXTRA_KEY));
+        assertEquals(TEST_SUBJECT, extras.getString(TEST_EXTRA_KEY));
+    }
+
+    /**
+     * Tests that {@link Call} events are propagated from {@link Call#sendCallEvent(String, Bundle)}
+     * to {@link Connection#onCallEvent(String, Bundle)}.
+     */
+    public void testCallEvent() {
+        if (!mShouldTestTelecom) {
+            return;
+        }
+
+        Bundle testBundle = new Bundle();
+        testBundle.putString(TEST_EXTRA_KEY, TEST_SUBJECT);
+        final InvokeCounter counter = mConnection.getInvokeCounter(MockConnection.ON_CALL_EVENT);
+        mCall.sendCallEvent(TEST_EVENT, testBundle);
+        counter.waitForCount(1, WAIT_FOR_STATE_CHANGE_TIMEOUT_MS);
+
+        String event = (String) (counter.getArgs(0)[0]);
+        Bundle extras = (Bundle) (counter.getArgs(0)[1]);
+
+        assertEquals(TEST_EVENT, event);
+        assertNotNull(extras);
+        assertTrue(extras.containsKey(TEST_EXTRA_KEY));
+        assertEquals(TEST_SUBJECT, extras.getString(TEST_EXTRA_KEY));
+    }
+
+    /**
+     * Tests that a request to pull an external call via {@link Call#pullExternalCall()} is
+     * communicated to the {@link Connection} via {@link Connection#onPullExternalCall()}.
+     */
+    public void testPullExternalCall() {
+        if (!mShouldTestTelecom) {
+            return;
+        }
+
+        // First, configure the connection as an external call which is pullable.
+        int properties = mConnection.getConnectionProperties();
+        int capabilities = mConnection.getConnectionCapabilities();
+        properties |= Connection.PROPERTY_IS_EXTERNAL_CALL;
+        capabilities |= Connection.CAPABILITY_CAN_PULL_CALL;
+        mConnection.setConnectionCapabilities(capabilities);
+        mConnection.setConnectionProperties(properties);
+        assertCallProperties(mCall, Call.Details.PROPERTY_IS_EXTERNAL_CALL);
+
+        final InvokeCounter counter = mConnection.getInvokeCounter(
+                MockConnection.ON_PULL_EXTERNAL_CALL);
+        mCall.pullExternalCall();
+        counter.waitForCount(1, WAIT_FOR_STATE_CHANGE_TIMEOUT_MS);
     }
 
     /**
