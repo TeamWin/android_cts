@@ -37,11 +37,13 @@ def main():
         steps_per_ev = int(1.0 / ev_per_step)
         evs = range(-2 * steps_per_ev, 2 * steps_per_ev + 1, steps_per_ev)
         lumas = []
+
+        # Converge 3A, and lock AE once converged. skip AF trigger as
+        # dark/bright scene could make AF convergence fail and this test
+        # doesn't care the image sharpness.
+        cam.do_3a(ev_comp=0, lock_ae=True, do_af=False)
+
         for ev in evs:
-            # Re-converge 3A, and lock AE once converged. skip AF trigger as
-            # dark/bright scene could make AF convergence fail and this test
-            # doesn't care the image sharpness.
-            cam.do_3a(ev_comp=ev, lock_ae=True, do_af=False)
 
             # Capture a single shot with the same EV comp and locked AE.
             req = its.objects.auto_capture_request()
