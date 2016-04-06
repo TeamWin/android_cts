@@ -41,7 +41,7 @@ LOCAL_MODULE_STEM_32 := $(LOCAL_MODULE)
 LOCAL_MODULE_STEM_64 := $(LOCAL_MODULE)64
 
 LOCAL_LDLIBS += \
-    -lrt -ldl -lutil \
+    -lresolv -lrt -ldl -lutil \
 
 LOCAL_WHOLE_STATIC_LIBRARIES += \
     libBionicTests \
