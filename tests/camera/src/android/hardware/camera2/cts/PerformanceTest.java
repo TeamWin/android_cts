@@ -301,7 +301,7 @@ public class PerformanceTest extends Camera2SurfaceViewTestCase {
                     // simulate real scenario (preview runs a bit)
                     waitForNumResults(previewResultListener, NUM_RESULTS_WAIT);
 
-                    stopPreview();
+                    stopPreviewAndDrain();
 
                 }
                 mReportLog.addValues("Camera " + id
