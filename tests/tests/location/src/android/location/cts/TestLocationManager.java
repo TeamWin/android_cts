@@ -18,7 +18,7 @@ package android.location.cts;
 
 import android.content.Context;
 import android.location.GnssMeasurementsEvent;
-import android.location.GnssNavigationMessageEvent;
+import android.location.GnssNavigationMessage;
 import android.location.GpsStatus;
 import android.location.LocationListener;
 import android.location.LocationManager;
@@ -158,11 +158,11 @@ public class TestLocationManager {
     /**
      * Add a GNSS Navigation Message callback.
      *
-     * @param callback a {@link GnssNavigationMessageEvent.Callback} object to register.
+     * @param callback a {@link GnssNavigationMessage.Callback} object to register.
      * @return {@code true} if the listener was added successfully, {@code false} otherwise.
      */
     public boolean registerGnssNavigationMessageCallback(
-            GnssNavigationMessageEvent.Callback callback) {
+            GnssNavigationMessage.Callback callback) {
         Log.i(TAG, "Add Gnss Navigation Message Callback.");
         return mLocationManager.registerGnssNavigationMessageCallback(callback);
     }
@@ -170,12 +170,12 @@ public class TestLocationManager {
     /**
      * Add a GNSS Navigation Message callback.
      *
-     * @param callback a {@link GnssNavigationMessageEvent.Callback} object to register.
+     * @param callback a {@link GnssNavigationMessage.Callback} object to register.
      * @param handler the handler that the callback runs at.
      * @return {@code true} if the listener was added successfully, {@code false} otherwise.
      */
     public boolean registerGnssNavigationMessageCallback(
-            GnssNavigationMessageEvent.Callback callback, Handler handler) {
+            GnssNavigationMessage.Callback callback, Handler handler) {
         Log.i(TAG, "Add Gnss Navigation Message Callback.");
         return mLocationManager.registerGnssNavigationMessageCallback(callback, handler);
     }
@@ -183,9 +183,9 @@ public class TestLocationManager {
     /**
      * Removes a GNSS Navigation Message callback.
      *
-     * @param callback a {@link GnssNavigationMessageEvent.Callback} object to remove.
+     * @param callback a {@link GnssNavigationMessage.Callback} object to remove.
      */
-    public void unregisterGnssNavigationMessageCallback(GnssNavigationMessageEvent.Callback callback) {
+    public void unregisterGnssNavigationMessageCallback(GnssNavigationMessage.Callback callback) {
         Log.i(TAG, "Remove Gnss Navigation Message Callback.");
         mLocationManager.unregisterGnssNavigationMessageCallback(callback);
     }

@@ -17,7 +17,6 @@
 package android.location.cts;
 
 import android.location.GnssStatus;
-import android.location.GnssStatusCallback;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -27,7 +26,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * Used for receiving notifications when GNSS status has changed.
  */
-class TestGnssStatusCallback extends GnssStatusCallback {
+class TestGnssStatusCallback extends GnssStatus.Callback {
 
     private volatile boolean mGpsStatusReceived;
     private GnssStatus mGnssStatus = null;

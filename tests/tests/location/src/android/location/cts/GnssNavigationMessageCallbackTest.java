@@ -17,17 +17,16 @@
 package android.location.cts;
 
 import android.location.GnssNavigationMessage;
-import android.location.GnssNavigationMessageEvent;
 
-public class GnssNavigationMessageEventCallbackTest extends GnssTestCase {
-    private static class MockCallback extends GnssNavigationMessageEvent.Callback {
+public class GnssNavigationMessageCallbackTest extends GnssTestCase {
+    private static class MockCallback extends GnssNavigationMessage.Callback {
     }
 
     public void testAllMethodsExist() {
-        GnssNavigationMessageEvent.Callback callback = new MockCallback();
+        GnssNavigationMessage.Callback callback = new MockCallback();
         GnssNavigationMessage message = new GnssNavigationMessage();
-        GnssNavigationMessageEvent event = new GnssNavigationMessageEvent(message);
+        GnssNavigationMessage event = message;
         callback.onGnssNavigationMessageReceived(event);
-        callback.onStatusChanged(GnssNavigationMessageEvent.STATUS_READY);
+        callback.onStatusChanged(GnssNavigationMessage.Callback.STATUS_READY);
     }
 }
