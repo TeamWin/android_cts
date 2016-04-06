@@ -28,7 +28,9 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -50,6 +52,7 @@ public class ResultHandler {
     private static final String BUILD_TAG = "Build";
     private static final String CASE_TAG = "TestCase";
     private static final String DEVICES_ATTR = "devices";
+    private static final String END_DISPLAY_TIME_ATTR = "end_display";
     private static final String END_TIME_ATTR = "end";
     private static final String FAILED_ATTR = "failed";
     private static final String FAILURE_TAG = "Failure";
@@ -72,6 +75,7 @@ public class ResultHandler {
     private static final String RUNTIME_ATTR = "runtime";
     private static final String SCREENSHOT_TAG = "Screenshot";
     private static final String STACK_TAG = "StackTrace";
+    private static final String START_DISPLAY_TIME_ATTR = "start_display";
     private static final String START_TIME_ATTR = "start";
     private static final String SUITE_NAME_ATTR = "suite_name";
     private static final String SUITE_PLAN_ATTR = "suite_plan";
@@ -205,10 +209,13 @@ public class ResultHandler {
         serializer.startDocument(ENCODING, false);
         serializer.setFeature("http://xmlpull.org/v1/doc/features.html#indent-output", true);
         serializer.processingInstruction(
-                "xml-stylesheet type=\"text/xsl\" href=\"compatibility-result.xsl\"");
+                "xml-stylesheet type=\"text/xsl\" href=\"compatibility_result.xsl\"");
         serializer.startTag(NS, RESULT_TAG);
         serializer.attribute(NS, START_TIME_ATTR, String.valueOf(startTime));
         serializer.attribute(NS, END_TIME_ATTR, String.valueOf(endTime));
+        serializer.attribute(NS, START_DISPLAY_TIME_ATTR, toReadableDateString(startTime));
+        serializer.attribute(NS, END_DISPLAY_TIME_ATTR, toReadableDateString(endTime));
+
         serializer.attribute(NS, SUITE_NAME_ATTR, suiteName);
         serializer.attribute(NS, SUITE_VERSION_ATTR, suiteVersion);
         serializer.attribute(NS, SUITE_PLAN_ATTR, suitePlan);
@@ -315,4 +322,15 @@ public class ResultHandler {
         return resultFile;
     }
 
+    /**
+     * Return the given time as a {@link String} suitable for displaying.
+     * <p/>
+     * Example: Fri Aug 20 15:13:03 PDT 2010
+     *
+     * @param time the epoch time in ms since midnight Jan 1, 1970
+     */
+    static String toReadableDateString(long time) {
+        SimpleDateFormat dateFormat = new SimpleDateFormat("EEE MMM dd HH:mm:ss zzz yyyy");
+        return dateFormat.format(new Date(time));
+    }
 }

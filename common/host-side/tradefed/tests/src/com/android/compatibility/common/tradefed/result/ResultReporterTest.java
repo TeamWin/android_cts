@@ -62,8 +62,7 @@ public class ResultReporterTest extends TestCase {
         "compatibility_result.css",
         "compatibility_result.xsd",
         "compatibility_result.xsl",
-        "logo.png",
-        "newrule_green.png"};
+        "logo.png"};
 
     private ResultReporter mReporter;
     private IBuildInfo mBuildInfo;
