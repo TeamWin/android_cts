@@ -93,7 +93,7 @@ public class GnssNavigationMessageRegistrationTest extends GnssTestCase {
                 new TestGnssNavigationMessageListener(TAG, EVENTS_COUNT);
         mTestLocationManager.registerGnssNavigationMessageCallback(mTestGnssNavigationMessageListener);
 
-        assertTrue(mTestGnssNavigationMessageListener.await());
+        mTestGnssNavigationMessageListener.await();
         if (!mTestGnssNavigationMessageListener.verifyState()) {
             return;
         }
@@ -116,8 +116,7 @@ public class GnssNavigationMessageRegistrationTest extends GnssTestCase {
         mTestLocationManager.requestLocationUpdates(mLocationListener);
 
         // Wait for location updates
-        assertTrue(mLocationListener.await());
-
+        mLocationListener.await();
         Log.i(TAG, "Location received = " + mLocationListener.isLocationReceived());
 
         // Register for Gps Status updates
@@ -125,8 +124,7 @@ public class GnssNavigationMessageRegistrationTest extends GnssTestCase {
         mTestLocationManager.addGpsStatusListener(mGpsStatusListener);
 
         // Wait for Gps Status updates
-        assertTrue(mGpsStatusListener.await());
-
+        mGpsStatusListener.await();
         if (!mGpsStatusListener.isGpsStatusReceived()) {
             // Skip the Test. No Satellites are visible. Device may be Indoor
             Log.i(TAG, "No Satellites are visible. Device may be Indoor. Skipping Test.");
