@@ -19,6 +19,7 @@ package android.telecom.cts;
 import static org.junit.Assert.assertTrue;
 
 import android.content.Intent;
+import android.os.Bundle;
 import android.telecom.Call;
 import android.telecom.CallAudioState;
 import android.telecom.InCallService;
@@ -58,6 +59,7 @@ public class MockInCallService extends InCallService {
         public void onCallAudioStateChanged(CallAudioState audioState) {}
         public void onPostDialWait(Call call, String remainingPostDialSequence) {}
         public void onCannedTextResponsesLoaded(Call call, List<String> cannedTextResponses) {}
+        public void onConnectionEvent(Call call, String event, Bundle extras) {}
 
         final public MockInCallService getService() {
             return mService;
@@ -140,6 +142,14 @@ public class MockInCallService extends InCallService {
             super.onCannedTextResponsesLoaded(call, cannedTextResponses);
             if (getCallbacks() != null) {
                 getCallbacks().onCannedTextResponsesLoaded(call, cannedTextResponses);
+            }
+        }
+
+        @Override
+        public void onConnectionEvent(Call call, String event, Bundle extras) {
+            super.onConnectionEvent(call, event, extras);
+            if (getCallbacks() != null) {
+                getCallbacks().onConnectionEvent(call, event, extras);
             }
         }
     };
