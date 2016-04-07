@@ -242,10 +242,28 @@ public class StagefrightTest extends InstrumentationTestCase {
 
         final MediaPlayerCrashListener mpcl = new MediaPlayerCrashListener();
 
-        Thread t = new Thread(new Runnable() {
+        class LooperThread extends Thread {
+            private Looper mLooper;
+
+            LooperThread(Runnable runner) {
+                super(runner);
+            }
+
             @Override
             public void run() {
                 Looper.prepare();
+                mLooper = Looper.myLooper();
+                super.run();
+            }
+
+            public void stopLooper() {
+                mLooper.quitSafely();
+            }
+        }
+
+        LooperThread t = new LooperThread(new Runnable() {
+            @Override
+            public void run() {
 
                 MediaPlayer mp = new MediaPlayer();
                 mp.setOnErrorListener(mpcl);
@@ -274,7 +292,7 @@ public class StagefrightTest extends InstrumentationTestCase {
         String cve = name.replace("_", "-").toUpperCase();
         assertFalse("Device *IS* vulnerable to " + cve,
                     mpcl.waitForError() == MediaPlayer.MEDIA_ERROR_SERVER_DIED);
-        t.interrupt();
+        t.stopLooper();
     }
 
     private void doStagefrightTestMediaCodec(final int rid) throws Exception {
@@ -321,34 +339,46 @@ public class StagefrightTest extends InstrumentationTestCase {
                 codec.configure(format, surface, null, 0);
                 codec.start();
                 MediaCodec.BufferInfo info = new MediaCodec.BufferInfo();
-                while (true) {
-                    int flags = ex.getSampleFlags();
-                    long time = ex.getSampleTime();
-                    int bufidx = codec.dequeueInputBuffer(5000);
-                    if (bufidx >= 0) {
-                        int n = ex.readSampleData(codec.getInputBuffer(bufidx), 0);
-                        if (n < 0) {
-                            flags = MediaCodec.BUFFER_FLAG_END_OF_STREAM;
-                            time = 0;
-                            n = 0;
+                try {
+                    while (true) {
+                        int flags = ex.getSampleFlags();
+                        long time = ex.getSampleTime();
+                        int bufidx = codec.dequeueInputBuffer(5000);
+                        if (bufidx >= 0) {
+                            int n = ex.readSampleData(codec.getInputBuffer(bufidx), 0);
+                            if (n < 0) {
+                                flags = MediaCodec.BUFFER_FLAG_END_OF_STREAM;
+                                time = 0;
+                                n = 0;
+                            }
+                            codec.queueInputBuffer(bufidx, 0, n, time, flags);
+                            ex.advance();
                         }
-                        codec.queueInputBuffer(bufidx, 0, n, time, flags);
-                        ex.advance();
+                        int status = codec.dequeueOutputBuffer(info, 5000);
+                        if (status >= 0) {
+                            if ((info.flags & MediaCodec.BUFFER_FLAG_END_OF_STREAM) != 0) {
+                                break;
+                            }
+                            if (info.presentationTimeUs > TIMEOUT_NS / 1000) {
+                                Log.d(TAG, "stopping after 10 seconds worth of data");
+                                break;
+                            }
+                            codec.releaseOutputBuffer(status, true);
+                        }
                     }
-                    int status = codec.dequeueOutputBuffer(info, 5000);
-                    if (status >= 0) {
-                        if ((info.flags & MediaCodec.BUFFER_FLAG_END_OF_STREAM) != 0) {
-                            break;
-                        }
-                        if (info.presentationTimeUs > TIMEOUT_NS / 1000) {
-                            Log.d(TAG, "stopping after 10 seconds worth of data");
-                            break;
-                        }
-                        codec.releaseOutputBuffer(status, true);
+                } catch (MediaCodec.CodecException ce) {
+                    if (ce.getErrorCode() == MediaCodec.CodecException.ERROR_RECLAIMED) {
+                        // This indicates that the remote service is dead, suggesting a crash.
+                        throw new RuntimeException(ce);
                     }
+                    // Other errors ignored.
+                } catch (IllegalStateException ise) {
+                    // Other errors ignored.
+                } finally {
+                    codec.release();
                 }
-                codec.release();
             }
         }
+        ex.release();
     }
 }
