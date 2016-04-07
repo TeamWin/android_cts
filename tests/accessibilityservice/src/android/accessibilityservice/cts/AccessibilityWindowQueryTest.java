@@ -60,10 +60,6 @@ public class AccessibilityWindowQueryTest
         super(AccessibilityWindowQueryActivity.class);
     }
 
-    public void tearDown() {
-        getInstrumentation().getUiAutomation().destroy();
-    }
-
     @MediumTest
     public void testFindByText() throws Exception {
         // find a view by text

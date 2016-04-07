@@ -40,10 +40,6 @@ public class AccessibilityFocusAndInputFocusSyncTest
         super(AccessibilityFocusAndInputFocusSyncActivity.class);
     }
 
-    public void tearDown() {
-        getInstrumentation().getUiAutomation().destroy();
-    }
-
     @MediumTest
     public void testFindAccessibilityFocus() throws Exception {
         // Get the view that has input and accessibility focus.

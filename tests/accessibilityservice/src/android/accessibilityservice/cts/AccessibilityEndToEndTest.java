@@ -55,10 +55,6 @@ public class AccessibilityEndToEndTest extends
         super(AccessibilityEndToEndActivity.class);
     }
 
-    public void tearDown() {
-        getInstrumentation().getUiAutomation().destroy();
-    }
-
     @MediumTest
     public void testTypeViewSelectedAccessibilityEvent() throws Throwable {
         // create and populate the expected event

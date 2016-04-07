@@ -93,7 +93,9 @@ public class InstrumentedAccessibilityService extends AccessibilityService {
         final String enabledServices = Settings.Secure.getString(
                 context.getContentResolver(),
                 Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES);
-        assertFalse("Service is already enabled", enabledServices.contains(serviceName));
+        if (enabledServices != null) {
+            assertFalse("Service is already enabled", enabledServices.contains(serviceName));
+        }
 
         final AccessibilityManager manager = (AccessibilityManager) context.getSystemService(
                 Context.ACCESSIBILITY_SERVICE);
