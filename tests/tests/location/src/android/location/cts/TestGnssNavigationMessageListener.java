@@ -18,7 +18,7 @@ package android.location.cts;
 
 import junit.framework.Assert;
 
-import android.location.GnssNavigationMessageEvent;
+import android.location.GnssNavigationMessage;
 import android.util.Log;
 
 import java.util.ArrayList;
@@ -29,7 +29,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * Used for receiving GPS satellite Navigation Messages from the GPS engine.
  */
-class TestGnssNavigationMessageListener extends GnssNavigationMessageEvent.Callback {
+class TestGnssNavigationMessageListener extends GnssNavigationMessage.Callback {
 
     // Timeout in sec for count down latch wait
     private static final long TIMEOUT_IN_SEC = 90L;
@@ -38,7 +38,7 @@ class TestGnssNavigationMessageListener extends GnssNavigationMessageEvent.Callb
 
     private final String mTag;
     private final int mEventsToCollect;
-    private final List<GnssNavigationMessageEvent> mEvents;
+    private final List<GnssNavigationMessage> mEvents;
     private final CountDownLatch mCountDownLatch;
 
     TestGnssNavigationMessageListener(String tag, int eventsToCollect) {
@@ -49,7 +49,7 @@ class TestGnssNavigationMessageListener extends GnssNavigationMessageEvent.Callb
     }
 
     @Override
-    public void onGnssNavigationMessageReceived(GnssNavigationMessageEvent event) {
+    public void onGnssNavigationMessageReceived(GnssNavigationMessage event) {
         mEvents.add(event);
         if (mEvents.size() > mEventsToCollect) {
             mCountDownLatch.countDown();
@@ -59,7 +59,7 @@ class TestGnssNavigationMessageListener extends GnssNavigationMessageEvent.Callb
     @Override
     public void onStatusChanged(int status) {
         mStatus = status;
-        if (mStatus != GnssNavigationMessageEvent.STATUS_READY) {
+        if (mStatus != GnssNavigationMessage.Callback.STATUS_READY) {
             mCountDownLatch.countDown();
         }
     }
@@ -84,17 +84,17 @@ class TestGnssNavigationMessageListener extends GnssNavigationMessageEvent.Callb
      */
     public boolean verifyState() {
         switch (getStatus()) {
-            case GnssNavigationMessageEvent.STATUS_NOT_SUPPORTED:
+            case GnssNavigationMessage.Callback.STATUS_NOT_SUPPORTED:
                 SoftAssert.failAsWarning(mTag, "GnssNavigationMessage is not supported in the"
                         + " device: verifications performed by this test will be skipped.");
                 return false;
-            case GnssNavigationMessageEvent.STATUS_READY:
+            case GnssNavigationMessage.Callback.STATUS_READY:
                 return true;
-            case GnssNavigationMessageEvent.STATUS_GNSS_LOCATION_DISABLED:
+            case GnssNavigationMessage.Callback.STATUS_LOCATION_DISABLED:
                 Log.i(mTag, "Location or GPS is disabled on the device: skipping the test.");
                 return false;
             default:
-                Assert.fail("GnssNavigationMessageEvent status callback was not received.");
+                Assert.fail("GnssNavigationMessage status callback was not received.");
         }
         return false;
     }
@@ -104,7 +104,7 @@ class TestGnssNavigationMessageListener extends GnssNavigationMessageEvent.Callb
      *
      * @return mEvents list of GPS Navigation Message Events
      */
-    public List<GnssNavigationMessageEvent> getEvents() {
+    public List<GnssNavigationMessage> getEvents() {
         return mEvents;
     }
 }

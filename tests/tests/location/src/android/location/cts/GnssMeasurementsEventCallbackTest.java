@@ -32,6 +32,6 @@ public class GnssMeasurementsEventCallbackTest extends GnssTestCase {
         GnssMeasurementsEvent event = new GnssMeasurementsEvent(
                 clock, new GnssMeasurement[] {m1, m2});
         callback.onGnssMeasurementsReceived(event);
-        callback.onStatusChanged(GnssMeasurementsEvent.STATUS_READY);
+        callback.onStatusChanged(GnssMeasurementsEvent.Callback.STATUS_READY);
     }
 }
