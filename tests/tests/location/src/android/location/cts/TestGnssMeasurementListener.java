@@ -62,7 +62,7 @@ class TestGnssMeasurementListener extends GnssMeasurementsEvent.Callback {
     @Override
     public void onStatusChanged(int status) {
         mStatus = status;
-        if (mStatus != GnssMeasurementsEvent.STATUS_READY) {
+        if (mStatus != GnssMeasurementsEvent.Callback.STATUS_READY) {
             mCountDownLatch.countDown();
         }
     }
@@ -77,13 +77,13 @@ class TestGnssMeasurementListener extends GnssMeasurementsEvent.Callback {
      */
     public boolean verifyState() {
         switch (getStatus()) {
-            case GnssMeasurementsEvent.STATUS_NOT_SUPPORTED:
+            case GnssMeasurementsEvent.Callback.STATUS_NOT_SUPPORTED:
                 SoftAssert.failAsWarning(mTag, "GnssMeasurements is not supported in the device:"
                         + " verifications performed by this test will be skipped.");
                 return false;
-            case GnssMeasurementsEvent.STATUS_READY:
+            case GnssMeasurementsEvent.Callback.STATUS_READY:
                 return true;
-            case GnssMeasurementsEvent.STATUS_GNSS_LOCATION_DISABLED:
+            case GnssMeasurementsEvent.Callback.STATUS_LOCATION_DISABLED:
                 Log.i(mTag, "Location or GPS is disabled on the device: skipping the test.");
                 return false;
             default:

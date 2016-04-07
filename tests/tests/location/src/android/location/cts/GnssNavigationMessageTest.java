@@ -17,7 +17,6 @@
 package android.location.cts;
 
 import android.location.GnssNavigationMessage;
-import android.location.GnssNavigationMessageEvent;
 import android.os.Parcel;
 import android.util.Log;
 
@@ -27,10 +26,10 @@ import java.util.List;
  * Test the {@link GnssNavigationMessage} values.
  *
  * Test steps:
- * 1. Register for {@link GnssNavigationMessageEvent}s.
+ * 1. Register for {@link GnssNavigationMessage}s.
  * 2. Wait for {@link #EVENTS_COUNT} events to arrive.
- * 3. Check {@link GnssNavigationMessageEvent} status: if the status is not
- *    {@link GnssNavigationMessageEvent#STATUS_READY}, the test will be skipped because one of the
+ * 3. Check {@link GnssNavigationMessage} status: if the status is not
+ *    {@link GnssNavigationMessage.Callback#STATUS_READY}, the test will be skipped because one of the
  *    following reasons:
  *          3.1 the device does not support the feature,
  *          3.2 GPS is disabled in the device,
@@ -63,7 +62,7 @@ public class GnssNavigationMessageTest extends GnssTestCase {
     }
 
     /**
-     * Tests that one can listen for {@link GnssNavigationMessageEvent}s for collection purposes.
+     * Tests that one can listen for {@link GnssNavigationMessage}s for collection purposes.
      * It only performs sanity checks for the Navigation messages received.
      * This tests uses actual data retrieved from GPS HAL.
      */
@@ -82,7 +81,7 @@ public class GnssNavigationMessageTest extends GnssTestCase {
             return;
         }
 
-        List<GnssNavigationMessageEvent> events = mTestGnssNavigationMessageListener.getEvents();
+        List<GnssNavigationMessage> events = mTestGnssNavigationMessageListener.getEvents();
         assertTrue("No Gps Navigation Message received.", !events.isEmpty());
 
         // Verify mandatory GnssNavigationMessage field values.

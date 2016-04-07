@@ -18,7 +18,6 @@ package android.location.cts;
 
 import android.location.GnssMeasurement;
 import android.location.GnssNavigationMessage;
-import android.location.GnssNavigationMessageEvent;
 import android.location.GnssStatus;
 import android.location.LocationManager;
 import android.os.Build;
@@ -581,11 +580,10 @@ public final class TestMeasurementUtil {
      *
      * @param events GnssNavigationMessageEvents
      */
-    public static void verifyGnssNavMessageMandatoryField(List<GnssNavigationMessageEvent> events) {
+    public static void verifyGnssNavMessageMandatoryField(List<GnssNavigationMessage> events) {
         // Verify mandatory GnssNavigationMessage field values.
         SoftAssert softAssert = new SoftAssert(TAG);
-        for (GnssNavigationMessageEvent event : events) {
-            GnssNavigationMessage message = event.getNavigationMessage();
+        for (GnssNavigationMessage message : events) {
             int type = message.getType();
             softAssert.assertTrue("Gnss Navigation Message Type:expected [0x0101 - 0x0104]," +
                             " actual = " + type,

@@ -16,14 +16,14 @@
 
 package android.location.cts;
 
-import android.location.GnssStatusCallback;
+import android.location.GnssStatus;
 
 public class GnssStatusCallbackTest extends GnssTestCase {
-    private static class MockCallback extends GnssStatusCallback {
+    private static class MockCallback extends GnssStatus.Callback {
     }
 
     public void testAllMethodsExist() {
-        GnssStatusCallback callback = new MockCallback();
+        GnssStatus.Callback callback = new MockCallback();
         callback.onStarted();
         callback.onFirstFix(10);
         callback.onSatelliteStatusChanged(null);

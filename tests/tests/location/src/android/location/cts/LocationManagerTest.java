@@ -24,9 +24,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.location.Criteria;
-import android.location.GnssNmeaListener;
 import android.location.GnssStatus;
-import android.location.GnssStatusCallback;
 import android.location.GpsStatus;
 import android.location.GpsStatus.Listener;
 import android.location.GpsStatus.NmeaListener;
@@ -34,6 +32,7 @@ import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
 import android.location.LocationProvider;
+import android.location.OnNmeaMessageListener;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.HandlerThread;
@@ -920,8 +919,8 @@ public class LocationManagerTest extends BaseMockLocationTest {
         mManager.addNmeaListener(gnssListener, new Handler(handlerThread.getLooper()));
         mManager.removeNmeaListener(gnssListener);
 
-        mManager.addNmeaListener((GnssNmeaListener) null);
-        mManager.removeNmeaListener((GnssNmeaListener) null);
+        mManager.addNmeaListener((OnNmeaMessageListener) null);
+        mManager.removeNmeaListener((OnNmeaMessageListener) null);
     }
 
     public void testIsProviderEnabled() {
@@ -1429,11 +1428,11 @@ public class LocationManagerTest extends BaseMockLocationTest {
         }
     }
 
-    private static class MockGnssNmeaListener implements GnssNmeaListener {
+    private static class MockGnssNmeaListener implements OnNmeaMessageListener {
         private boolean mIsNmeaReceived;
 
         @Override
-        public void onNmeaReceived(long timestamp, String nmea) {
+        public void onNmeaMessage(String name, long timestamp) {
             mIsNmeaReceived = true;
         }
 
@@ -1462,17 +1461,17 @@ public class LocationManagerTest extends BaseMockLocationTest {
         }
     }
 
-    private static class MockGnssStatusCallback extends GnssStatusCallback {
+    private static class MockGnssStatusCallback extends GnssStatus.Callback {
         @Override
         public void onSatelliteStatusChanged(GnssStatus status) {
-            for (int i = 0; i < status.getNumSatellites(); ++i) {
+            for (int i = 0; i < status.getSatelliteCount(); ++i) {
                 status.getAzimuthDegrees(i);
                 status.getCn0DbHz(i);
                 status.getConstellationType(i);
                 status.getElevationDegrees(i);
                 status.getSvid(i);
-                status.hasAlmanac(i);
-                status.hasEphemeris(i);
+                status.hasAlmanacData(i);
+                status.hasEphemerisData(i);
                 status.usedInFix(i);
             }
         }
