@@ -271,6 +271,8 @@ public class EncoderTest extends AndroidTestCase {
         // test with pcm input file
         testEncoder(componentName, format, 0, R.raw.okgoogle123_good, MODE_RESOURCE);
         testEncoder(componentName, format, 0, R.raw.okgoogle123_good, MODE_RESOURCE | MODE_QUIET);
+        testEncoder(componentName, format, 0, R.raw.tones, MODE_RESOURCE);
+        testEncoder(componentName, format, 0, R.raw.tones, MODE_RESOURCE | MODE_QUIET);
 
         // test with random data, with and without a few leading zeroes
         for (int i = 0; i < mBadSeeds.length; i++) {
