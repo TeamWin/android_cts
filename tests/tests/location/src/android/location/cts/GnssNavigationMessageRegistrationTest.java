@@ -17,7 +17,6 @@
 package android.location.cts;
 
 import android.location.GnssNavigationMessage;
-import android.location.GnssNavigationMessageEvent;
 import android.util.Log;
 
 import java.util.List;
@@ -26,22 +25,22 @@ import java.util.List;
  * Test the {@link GnssNavigationMessage} without location registration.
  *
  * Test steps:
- * 1. Register for {@link GnssNavigationMessageEvent}s.
+ * 1. Register for {@link GnssNavigationMessage}s.
  * 2. Wait for {@link #EVENTS_COUNT} events to arrive.
- * 3. Check {@link GnssNavigationMessageEvent} status: if the status is not
- *    {@link GnssNavigationMessageEvent#STATUS_READY}, the test will be skipped because one of the
+ * 3. Check {@link GnssNavigationMessage} status: if the status is not
+ *    {@link GnssNavigationMessage#Callback#STATUS_READY}, the test will be skipped because one of the
  *    following reasons:
  *          3.1 the device does not support the feature,
  *          3.2 GPS is disabled in the device,
  *          3.3 Location is disabled in the device.
- * 4. If at least one {@link GnssNavigationMessageEvent} is received, the test will pass.
- * 5. If no {@link GnssNavigationMessageEvent}s are received, then check whether the device is
+ * 4. If at least one {@link GnssNavigationMessage} is received, the test will pass.
+ * 5. If no {@link GnssNavigationMessage}s are received, then check whether the device is
  *    deep indoor. This is done by performing the following steps:
  *          2.1 Register for location updates, and {@link GpsStatus} events.
  *          2.2 Wait for {@link TestGpsStatusListener#TIMEOUT_IN_SEC}.
  *          2.3 If no {@link GpsStatus} is received this will mean that the device is located
  *              indoor. Test will be skipped.
- *          2.4 If we receive a {@link GpsStatus}, it mean that {@link GnssNavigationMessageEvent}s
+ *          2.4 If we receive a {@link GpsStatus}, it mean that {@link GnssNavigationMessage}s
  *              are provided only if the application registers for location updates as well:
  *                  2.4.1 The test will pass with a warning for the M release.
  *                  2.4.2 The test might fail in a future Android release, when this requirement
@@ -80,7 +79,7 @@ public class GnssNavigationMessageRegistrationTest extends GnssTestCase {
     }
 
     /**
-     * Tests that one can listen for {@link GnssNavigationMessageEvent}s for collection purposes.
+     * Tests that one can listen for {@link GnssNavigationMessage}s for collection purposes.
      * It only performs sanity checks for the Navigation messages received.
      */
     public void testGnssNavigationMessageRegistration() throws Exception {
@@ -98,7 +97,7 @@ public class GnssNavigationMessageRegistrationTest extends GnssTestCase {
             return;
         }
 
-        List<GnssNavigationMessageEvent> events = mTestGnssNavigationMessageListener.getEvents();
+        List<GnssNavigationMessage> events = mTestGnssNavigationMessageListener.getEvents();
         if (!events.isEmpty()) {
             // Verify mandatory GnssNavigationMessage field values.
             TestMeasurementUtil.verifyGnssNavMessageMandatoryField(events);
@@ -107,7 +106,7 @@ public class GnssNavigationMessageRegistrationTest extends GnssTestCase {
             return;
         }
 
-        // If no {@link GnssNavigationMessageEvent}s are received, then check whether the device is
+        // If no {@link GnssNavigationMessage}s are received, then check whether the device is
         // deep indoor.
         Log.i(TAG, "Did not receive any GPS Navigation Message. Test if device is deep indoor.");
 
