@@ -23,9 +23,8 @@ import android.util.Log;
 public class TestActiveTileService extends TestTileService {
 
     @Override
-    public int onTileAdded() {
+    public void onTileAdded() {
         Log.i(TAG, TEST_PREFIX + "onTileAdded");
-        return TILE_MODE_ACTIVE;
     }
 
     public static class Receiver extends BroadcastReceiver {
