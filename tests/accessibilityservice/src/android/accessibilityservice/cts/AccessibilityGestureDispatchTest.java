@@ -29,6 +29,7 @@ import android.widget.TextView;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Verify that gestures dispatched from an accessibility service show up in the current UI
@@ -310,6 +311,63 @@ public class AccessibilityGestureDispatchTest extends
             lastSpacing = spacing;
         }
     }
+
+    public void testClickWhenMagnified_matchesActualTouch() throws InterruptedException {
+        final int clickXInsideView = 10;
+        final int clickYInsideView = 20;
+        int clickX = clickXInsideView + mViewBounds.left;
+        int clickY = clickYInsideView + mViewBounds.top;
+        final float TOUCH_TOLERANCE = 2.0f;
+
+        StubMagnificationAccessibilityService magnificationService =
+                StubMagnificationAccessibilityService.enableSelf(this);
+        android.accessibilityservice.AccessibilityService.MagnificationController
+                magnificationController = magnificationService.getMagnificationController();
+        try {
+            // Magnify screen by 2x from upper left corner
+            final AtomicBoolean setScale = new AtomicBoolean();
+            final AtomicBoolean setCenter = new AtomicBoolean();
+            final float magnificationFactor = 2.0f;
+            magnificationService.runOnServiceSync(() -> {
+                        setScale.set(magnificationController.setScale(magnificationFactor, false));
+                        setCenter.set(magnificationController.setCenter(0, 0, false));
+                    });
+            assertTrue("Failed to set scale", setScale.get());
+            assertTrue("Failed to set center", setCenter.get());
+
+            GestureDescription click = createClick((int) (clickX * magnificationFactor),
+                    (int) (clickY * magnificationFactor));
+            mService.runOnServiceSync(() -> mService.doDispatchGesture(click, mCallback, null));
+            mCallback.assertGestureCompletes(GESTURE_COMPLETION_TIMEOUT);
+            waitForMotionEvents(3);
+        } finally {
+            // Reset magnification
+            final AtomicBoolean result = new AtomicBoolean();
+            magnificationService.runOnServiceSync(() ->
+                    result.set(magnificationController.reset(false)));
+            magnificationService.runOnServiceSync(() -> magnificationService.disableSelf());
+            assertTrue("Failed to reset", result.get());
+        }
+
+        assertEquals(3, mMotionEvents.size());
+        MotionEvent clickDown = mMotionEvents.get(0);
+        MotionEvent clickMove = mMotionEvents.get(1);
+        MotionEvent clickUp = mMotionEvents.get(2);
+
+        assertEquals(MotionEvent.ACTION_DOWN, clickDown.getActionMasked());
+        assertEquals((float) clickXInsideView, clickDown.getX(), TOUCH_TOLERANCE);
+        assertEquals((float) clickYInsideView, clickDown.getY(), TOUCH_TOLERANCE);
+        assertEquals(clickDown.getDownTime(), clickDown.getEventTime());
+
+        assertEquals(MotionEvent.ACTION_MOVE, clickMove.getActionMasked());
+        assertEquals((float) clickXInsideView + 1, clickMove.getX(), TOUCH_TOLERANCE);
+        assertEquals((float) clickYInsideView, clickMove.getY(), TOUCH_TOLERANCE);
+
+        assertEquals(MotionEvent.ACTION_UP, clickUp.getActionMasked());
+        assertEquals((float) clickXInsideView + 1, clickUp.getX(), TOUCH_TOLERANCE);
+        assertEquals((float) clickYInsideView, clickUp.getY(), TOUCH_TOLERANCE);
+    }
+
 
     public static class GestureDispatchActivity extends AccessibilityTestActivity {
         public GestureDispatchActivity() {
