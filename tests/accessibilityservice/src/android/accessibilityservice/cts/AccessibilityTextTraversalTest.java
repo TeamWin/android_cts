@@ -42,10 +42,6 @@ public class AccessibilityTextTraversalTest
         super(AccessibilityTextTraversalActivity.class);
     }
 
-    public void tearDown() {
-        getInstrumentation().getUiAutomation().destroy();
-    }
-
     @MediumTest
     public void testActionNextAndPreviousAtGranularityCharacterOverContentDescription()
             throws Exception {
