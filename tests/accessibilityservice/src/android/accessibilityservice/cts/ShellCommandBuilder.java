@@ -42,7 +42,8 @@ public class ShellCommandBuilder {
     }
 
     public void run() {
-        final UiAutomation automation = getUiAutomationSafe(mTestCase);
+        final UiAutomation automation = mTestCase.getInstrumentation().getUiAutomation(
+                UiAutomation.FLAG_DONT_SUPPRESS_ACCESSIBILITY_SERVICES);
         for (String command : mCommands) {
             execShellCommand(automation, command);
         }
@@ -66,27 +67,6 @@ public class ShellCommandBuilder {
     public ShellCommandBuilder addCommand(String command) {
         mCommands.add(command);
         return this;
-    }
-
-    private static UiAutomation getUiAutomationSafe(InstrumentationTestCase testCase) {
-        UiAutomation uiAutomation;
-        try {
-            uiAutomation = getUiAutomation(testCase);
-        } catch (RuntimeException e) {
-            // Clean up UI Automation after other tests as we cannot request UI Automation with
-            // different flags if one already exists.
-            uiAutomation = testCase.getInstrumentation().getUiAutomation();
-            uiAutomation.destroy();
-
-            // Try to get UI Automation again.
-            uiAutomation = getUiAutomation(testCase);
-        }
-        return uiAutomation;
-    }
-
-    private static UiAutomation getUiAutomation(InstrumentationTestCase testCase) {
-        return testCase.getInstrumentation().getUiAutomation(
-                UiAutomation.FLAG_DONT_SUPPRESS_ACCESSIBILITY_SERVICES);
     }
 
     private static void execShellCommand(UiAutomation automation, String command) {

@@ -71,7 +71,7 @@
             android:windowSoftInputMode="stateAlwaysVisible" />
 
         <service
-            android:name=".StubSoftKeyboardModesAccessibilityService"
+            android:name=".InstrumentedAccessibilityService"
             android:label="@string/title_soft_keyboard_modes_accessibility_service"
             android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">
             <intent-filter>

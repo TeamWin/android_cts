@@ -43,12 +43,6 @@ import java.util.concurrent.TimeoutException;
 public class AccessibilitySoftKeyboardModesTest extends ActivityInstrumentationTestCase2
         <AccessibilitySoftKeyboardModesTest.SoftKeyboardModesActivity> {
 
-    /**
-     * Timeout in which we are waiting for the system to start the mock
-     * accessibility services.
-     */
-    private static final long TIMEOUT_SERVICE_TOGGLE_MS = 10000;
-
     private static final long TIMEOUT_PROPAGATE_SETTING = 5000;
 
     /**
@@ -67,9 +61,9 @@ public class AccessibilitySoftKeyboardModesTest extends ActivityInstrumentationT
 
     private int mLastCallbackValue;
 
-    private Context mContext;
-    private StubSoftKeyboardModesAccessibilityService mService;
+    private InstrumentedAccessibilityService mService;
     private SoftKeyboardController mKeyboardController;
+    private UiAutomation mUiAutomation;
 
     private Object mLock = new Object();
 
@@ -85,22 +79,19 @@ public class AccessibilitySoftKeyboardModesTest extends ActivityInstrumentationT
         // windows on screen.
         getActivity();
 
-        mContext = getInstrumentation().getContext();
-        String command = "pm grant " + mContext.getPackageName()
-                + "android.permission.WRITE_SECURE_SETTINGS";
-        executeShellCommand(getUiAutomation(), command);
-
-        if (mService != null) {
-            mService.disableSelf();
-        }
-        enableTestService();
+        mService = InstrumentedAccessibilityService.enableService(
+                this, InstrumentedAccessibilityService.class);
+        mKeyboardController = mService.getSoftKeyboardController();
+        mUiAutomation = getInstrumentation()
+                .getUiAutomation(UiAutomation.FLAG_DONT_SUPPRESS_ACCESSIBILITY_SERVICES);
+        AccessibilityServiceInfo info = mUiAutomation.getServiceInfo();
+        info.flags |= AccessibilityServiceInfo.FLAG_RETRIEVE_INTERACTIVE_WINDOWS;
+        mUiAutomation.setServiceInfo(info);
     }
 
     @Override
     public void tearDown() throws Exception {
-        if (mService != null) {
-            mService.disableSelf();
-        }
+        mService.runOnServiceSync(() -> mService.disableSelf());
     }
 
     public void testApiReturnValues_shouldChangeValueOnRequestAndSendCallback() throws Exception {
@@ -145,7 +136,7 @@ public class AccessibilitySoftKeyboardModesTest extends ActivityInstrumentationT
 
         // Note: This Activity always has a visible keyboard (due to windowSoftInputMode being set
         // to stateAlwaysVisible).
-        int numWindowsWithIme = mService.getTestWindowsListSize();
+        int numWindowsWithIme = mUiAutomation.getWindows().size();
 
         // Request the keyboard be hidden.
         assertTrue(mKeyboardController.setShowMode(SHOW_MODE_HIDDEN));
@@ -153,7 +144,7 @@ public class AccessibilitySoftKeyboardModesTest extends ActivityInstrumentationT
         waitForIdle();
 
         // Make sure the keyboard is hidden.
-        assertEquals(numWindowsWithIme - 1, mService.getTestWindowsListSize());
+        assertEquals(numWindowsWithIme - 1, mUiAutomation.getWindows().size());
 
         // Request the default keyboard mode.
         assertTrue(mKeyboardController.setShowMode(SHOW_MODE_AUTO));
@@ -161,7 +152,7 @@ public class AccessibilitySoftKeyboardModesTest extends ActivityInstrumentationT
         waitForIdle();
 
         // Make sure the keyboard is visible.
-        assertEquals(numWindowsWithIme, mService.getTestWindowsListSize());
+        assertEquals(numWindowsWithIme, mUiAutomation.getWindows().size());
     }
 
     public void testHideSoftKeyboard_shouldHideKeyboardUntilServiceIsDisabled() throws Exception {
@@ -170,7 +161,7 @@ public class AccessibilitySoftKeyboardModesTest extends ActivityInstrumentationT
 
         // Note: This Activity always has a visible keyboard (due to windowSoftInputMode being set
         // to stateAlwaysVisible).
-        int numWindowsWithIme = mService.getTestWindowsListSize();
+        int numWindowsWithIme = mUiAutomation.getWindows().size();
 
         // Set the show mode to SHOW_MODE_HIDDEN.
         assertTrue(mKeyboardController.setShowMode(SHOW_MODE_HIDDEN));
@@ -178,39 +169,15 @@ public class AccessibilitySoftKeyboardModesTest extends ActivityInstrumentationT
         waitForIdle();
 
         // Make sure the keyboard is hidden.
-        assertEquals(numWindowsWithIme - 1, mService.getTestWindowsListSize());
+        assertEquals(numWindowsWithIme - 1, mUiAutomation.getWindows().size());
 
         // Make sure we can see the soft keyboard once all Accessibility Services are disabled.
         mService.disableSelf();
         waitForWindowStateChanged();
         waitForIdle();
 
-        // Enable our test service,.
-        enableTestService();
-
         // See how many windows are present.
-        assertEquals(numWindowsWithIme, mService.getTestWindowsListSize());
-    }
-
-    private synchronized UiAutomation getUiAutomation() {
-        return getInstrumentation()
-                .getUiAutomation(UiAutomation.FLAG_DONT_SUPPRESS_ACCESSIBILITY_SERVICES);
-    }
-
-    private void executeShellCommand(UiAutomation uiAutomation, String command) throws Exception {
-        ParcelFileDescriptor fd = uiAutomation.executeShellCommand(command);
-        BufferedReader reader = null;
-        try (InputStream inputStream = new FileInputStream(fd.getFileDescriptor())) {
-            reader = new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8));
-            while (reader.readLine() != null) {
-                // Keep reading.
-            }
-        } finally {
-            if (reader != null) {
-                reader.close();
-            }
-            fd.close();
-        }
+        assertEquals(numWindowsWithIme, mUiAutomation.getWindows().size());
     }
 
     private void waitForCallbackValueWithLock(int expectedValue) throws Exception {
@@ -235,7 +202,7 @@ public class AccessibilitySoftKeyboardModesTest extends ActivityInstrumentationT
 
     private void waitForWindowStateChanged() throws Exception {
         try {
-            getUiAutomation().executeAndWaitForEvent(new Runnable() {
+            mUiAutomation.executeAndWaitForEvent(new Runnable() {
                 @Override
                 public void run() {
                     // Do nothing.
@@ -249,57 +216,13 @@ public class AccessibilitySoftKeyboardModesTest extends ActivityInstrumentationT
             },
             TIMEOUT_PROPAGATE_SETTING);
         } catch (TimeoutException ignored) {
-            // Ignore since the event could have occured before this method was called. There should
-            // be a check after this method returns to catch incorrect values.
+            // Ignore since the event could have occurred before this method was called. There
+            // should be a check after this method returns to catch incorrect values.
         }
-    }
-
-    private void enableTestService() throws Exception {
-        Context context = getInstrumentation().getContext();
-        AccessibilityManager manager =
-                (AccessibilityManager) context.getSystemService(Context.ACCESSIBILITY_SERVICE);
-        List<AccessibilityServiceInfo> serviceInfos =
-                manager.getInstalledAccessibilityServiceList();
-        for (int i = 0; i < serviceInfos.size(); i++) {
-            AccessibilityServiceInfo serviceInfo = serviceInfos.get(i);
-            if (context.getString(R.string.soft_keyboard_modes_accessibility_service_description)
-                    .equals(serviceInfo.getDescription())) {
-                ContentResolver cr = context.getContentResolver();
-                UiAutomation uiAutomation = getUiAutomation();
-                String command = "settings put secure "
-                        + Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES + " "
-                        + serviceInfo.getId();
-                executeShellCommand(uiAutomation, command);
-                executeShellCommand(uiAutomation, "settings put secure "
-                        + Settings.Secure.ACCESSIBILITY_ENABLED + " 1");
-
-                // We have enabled the services of interest and need to wait until they
-                // are instantiated and started (if needed) and the system binds to them.
-                long timeoutTimeMillis = SystemClock.uptimeMillis() + TIMEOUT_SERVICE_TOGGLE_MS;
-                while (SystemClock.uptimeMillis() < timeoutTimeMillis) {
-                    synchronized(
-                            StubSoftKeyboardModesAccessibilityService.sWaitObjectForConnecting) {
-                        if (StubSoftKeyboardModesAccessibilityService.sInstance != null) {
-                            mService = StubSoftKeyboardModesAccessibilityService.sInstance;
-                            mKeyboardController = mService.getTestSoftKeyboardController();
-                            return;
-                        }
-                        try {
-                            StubSoftKeyboardModesAccessibilityService.sWaitObjectForConnecting.wait(
-                                    timeoutTimeMillis - SystemClock.uptimeMillis());
-                        } catch (InterruptedException e) {
-                            // Ignored; loop again
-                        }
-                    }
-                }
-                throw new IllegalStateException("Stub accessibility service not started");
-            }
-        }
-        throw new IllegalStateException("Stub accessiblity service not found");
     }
 
     private void waitForIdle() throws TimeoutException {
-        getUiAutomation().waitForIdle(TIMEOUT_ACCESSIBILITY_STATE_IDLE, TIMEOUT_ASYNC_PROCESSING);
+        mUiAutomation.waitForIdle(TIMEOUT_ACCESSIBILITY_STATE_IDLE, TIMEOUT_ASYNC_PROCESSING);
     }
 
     /**

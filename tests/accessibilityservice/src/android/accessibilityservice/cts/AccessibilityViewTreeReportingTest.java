@@ -39,10 +39,6 @@ public class AccessibilityViewTreeReportingTest
         super(AccessibilityViewTreeReportingActivity.class);
     }
 
-    public void tearDown() {
-        getInstrumentation().getUiAutomation().destroy();
-    }
-
     @MediumTest
     public void testDescendantsOfNotImportantViewReportedInOrder1() throws Exception {
         UiAutomation uiAutomation = getUiAutomation(false);
