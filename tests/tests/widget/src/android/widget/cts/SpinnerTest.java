@@ -16,101 +16,126 @@
 
 package android.widget.cts;
 
-import android.widget.cts.R;
-
-
+import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
-import android.content.Context;
+import android.app.Instrumentation;
+import android.content.res.Resources;
 import android.content.res.Resources.NotFoundException;
 import android.content.res.Resources.Theme;
 import android.test.ActivityInstrumentationTestCase2;
 import android.test.UiThreadTest;
+import android.test.suitebuilder.annotation.MediumTest;
 import android.view.ContextThemeWrapper;
 import android.widget.ArrayAdapter;
 import android.widget.Spinner;
 
+import static org.mockito.Mockito.mock;
+
 /**
  * Test {@link Spinner}.
  */
-public class SpinnerTest extends ActivityInstrumentationTestCase2<RelativeLayoutCtsActivity> {
-    private Context mTargetContext;
+@MediumTest
+public class SpinnerTest extends ActivityInstrumentationTestCase2<SpinnerCtsActivity> {
+    private Activity mActivity;
+    private Spinner mSpinnerDialogMode;
+    private Spinner mSpinnerDropdownMode;
 
     public SpinnerTest() {
-        super("android.widget.cts", RelativeLayoutCtsActivity.class);
+        super("android.widget.cts", SpinnerCtsActivity.class);
     }
 
     @Override
     protected void setUp() throws Exception {
         super.setUp();
-        mTargetContext = getInstrumentation().getTargetContext();
+
+        mActivity = getActivity();
+        mSpinnerDialogMode = (Spinner) mActivity.findViewById(R.id.spinner_dialog_mode);
+        mSpinnerDropdownMode = (Spinner) mActivity.findViewById(R.id.spinner_dropdown_mode);
     }
 
-    @UiThreadTest
     public void testConstructor() {
-        new Spinner(mTargetContext);
+        new Spinner(mActivity);
 
-        new Spinner(mTargetContext, null);
+        new Spinner(mActivity, null);
 
-        new Spinner(mTargetContext, null, android.R.attr.spinnerStyle);
+        new Spinner(mActivity, null, android.R.attr.spinnerStyle);
 
-        new Spinner(mTargetContext, Spinner.MODE_DIALOG);
+        new Spinner(mActivity, Spinner.MODE_DIALOG);
 
-        new Spinner(mTargetContext, null, android.R.attr.spinnerStyle,
+        new Spinner(mActivity, Spinner.MODE_DROPDOWN);
+
+        new Spinner(mActivity, null, android.R.attr.spinnerStyle, Spinner.MODE_DIALOG);
+
+        new Spinner(mActivity, null, android.R.attr.spinnerStyle, Spinner.MODE_DROPDOWN);
+
+        new Spinner(mActivity, null, 0, android.R.style.Widget_Material_Light_Spinner,
                 Spinner.MODE_DIALOG);
 
-        new Spinner(mTargetContext, null, android.R.attr.spinnerStyle, 0,
-                Spinner.MODE_DIALOG);
+        new Spinner(mActivity, null, 0, android.R.style.Widget_Material_Light_Spinner,
+                Spinner.MODE_DROPDOWN);
 
-        new Spinner(mTargetContext, null, android.R.attr.spinnerStyle, 0,
-                Spinner.MODE_DIALOG, mTargetContext.getTheme());
+        final Resources.Theme popupTheme = mActivity.getResources().newTheme();
+        popupTheme.applyStyle(android.R.style.Theme_Material, true);
 
-        Spinner spinner = (Spinner) getActivity().findViewById(R.id.spinner1);
-        assertEquals(mTargetContext.getString(R.string.text_view_hello), spinner.getPrompt());
+        new Spinner(mActivity, null, android.R.attr.spinnerStyle, 0, Spinner.MODE_DIALOG,
+                popupTheme);
+
+        new Spinner(mActivity, null, android.R.attr.spinnerStyle, 0, Spinner.MODE_DROPDOWN,
+                popupTheme);
     }
 
-    @UiThreadTest
-    public void testGetBaseline() {
-        Spinner spinner = new Spinner(mTargetContext);
-
+    private void verifyGetBaseline(Spinner spinner) {
         assertEquals(-1, spinner.getBaseline());
 
-        spinner = (Spinner) getActivity().findViewById(R.id.spinner1);
-        ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(mTargetContext,
-                android.widget.cts.R.array.string, android.R.layout.simple_spinner_item);
+        ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(mActivity,
+                R.array.string, android.R.layout.simple_spinner_item);
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        spinner.setAdapter(adapter);
-        assertTrue(spinner.getBaseline() > 0);
+        getInstrumentation().runOnMainSync(() -> {
+            spinner.setAdapter(adapter);
+            assertTrue(spinner.getBaseline() > 0);
+        });
     }
 
-    @UiThreadTest
-    public void testSetOnItemClickListener() {
-        Spinner spinner = new Spinner(mTargetContext);
+    public void testGetBaseline() {
+        verifyGetBaseline(mSpinnerDialogMode);
+        verifyGetBaseline(mSpinnerDropdownMode);
+    }
 
+    private void verifySetOnItemClickListener(Spinner spinner) {
         try {
             spinner.setOnItemClickListener(null);
             fail("Should throw RuntimeException");
         } catch (RuntimeException e) {
         }
+
+        try {
+            spinner.setOnItemClickListener(mock(Spinner.OnItemClickListener.class));
+            fail("Should throw RuntimeException");
+        } catch (RuntimeException e) {
+        }
     }
 
-    @UiThreadTest
+    public void testSetOnItemClickListener() {
+        verifySetOnItemClickListener(mSpinnerDialogMode);
+        verifySetOnItemClickListener(mSpinnerDropdownMode);
+    }
+
+    private void verifyPerformClick(Spinner spinner) {
+        getInstrumentation().runOnMainSync(() -> assertTrue(spinner.performClick()));
+    }
+
     public void testPerformClick() {
-        final Spinner spinner = (Spinner) getActivity().findViewById(R.id.spinner1);
-
-        assertTrue(spinner.performClick());
-
-        // TODO: no description for the expected result for this method in its javadoc, issue?
-        // Or do UI check?
+        verifyPerformClick(mSpinnerDialogMode);
+        verifyPerformClick(mSpinnerDropdownMode);
     }
 
-    @UiThreadTest
-    public void testOnClick() {
-        Spinner spinner = new Spinner(mTargetContext);
+    private void verifyOnClick(Spinner spinner) {
         // normal value
         AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
         AlertDialog alertDialog = builder.show();
         assertTrue(alertDialog.isShowing());
+
         spinner.onClick(alertDialog, 10);
         assertEquals(10, spinner.getSelectedItemPosition());
         assertFalse(alertDialog.isShowing());
@@ -125,32 +150,42 @@ public class SpinnerTest extends ActivityInstrumentationTestCase2<RelativeLayout
         Dialog dialog = new Dialog(getActivity());
         dialog.show();
         assertTrue(dialog.isShowing());
+
         spinner.onClick(dialog, -10);
         assertEquals(-10, spinner.getSelectedItemPosition());
         assertFalse(dialog.isShowing());
     }
 
     @UiThreadTest
-    public void testAccessPrompt() {
+    public void testOnClick() {
+        verifyOnClick(mSpinnerDialogMode);
+        verifyOnClick(mSpinnerDropdownMode);
+    }
+
+    private void verifyAccessPrompt(Spinner spinner) {
+        final String initialPrompt = mActivity.getString(R.string.text_view_hello);
+        assertEquals(initialPrompt, spinner.getPrompt());
+
+        final Instrumentation instrumentation = getInstrumentation();
         final String promptText = "prompt text";
 
-        Spinner spinner = new Spinner(mTargetContext);
-
-        spinner.setPrompt(promptText);
+        instrumentation.runOnMainSync(() -> spinner.setPrompt(promptText));
         assertEquals(promptText, spinner.getPrompt());
 
         spinner.setPrompt(null);
         assertNull(spinner.getPrompt());
-
-        // TODO: find the dialog and get its title to assert whether setPrompt() takes effect?
     }
 
-    @UiThreadTest
-    public void testSetPromptId() {
-        Spinner spinner = new Spinner(mTargetContext);
+    public void testAccessPrompt() {
+        verifyAccessPrompt(mSpinnerDialogMode);
+        verifyAccessPrompt(mSpinnerDropdownMode);
+    }
 
-        spinner.setPromptId(R.string.hello_world);
-        assertEquals(mTargetContext.getString(R.string.hello_world), spinner.getPrompt());
+    private void verifySetPromptId(Spinner spinner) {
+        final Instrumentation instrumentation = getInstrumentation();
+
+        instrumentation.runOnMainSync(() -> spinner.setPromptId(R.string.hello_world));
+        assertEquals(mActivity.getString(R.string.hello_world), spinner.getPrompt());
 
         try {
             spinner.setPromptId(-1);
@@ -165,23 +200,22 @@ public class SpinnerTest extends ActivityInstrumentationTestCase2<RelativeLayout
         } catch (NotFoundException e) {
             // issue 1695243, not clear what is supposed to happen if promptId is exceptional.
         }
+    }
 
-        // TODO: find the dialog and get its title to assert whether setPromptId() takes effect?
+    public void testSetPromptId() {
+        verifySetPromptId(mSpinnerDialogMode);
+        verifySetPromptId(mSpinnerDropdownMode);
     }
 
     @UiThreadTest
     public void testGetPopupContext() {
-        Theme theme = mTargetContext.getResources().newTheme();
-        Spinner themeSpinner = new Spinner(mTargetContext, null,
+        Theme theme = mActivity.getResources().newTheme();
+        Spinner themeSpinner = new Spinner(mActivity, null,
                 android.R.attr.spinnerStyle, 0, Spinner.MODE_DIALOG, theme);
-        assertNotSame(mTargetContext, themeSpinner.getPopupContext());
+        assertNotSame(mActivity, themeSpinner.getPopupContext());
         assertSame(theme, themeSpinner.getPopupContext().getTheme());
 
         ContextThemeWrapper context = (ContextThemeWrapper)themeSpinner.getPopupContext();
-        assertSame(mTargetContext, context.getBaseContext());
-    }
-
-    public void testOnLayout() {
-        // onLayout() is implementation details, do NOT test
+        assertSame(mActivity, context.getBaseContext());
     }
 }
