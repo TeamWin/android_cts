@@ -86,6 +86,7 @@ cts_support_packages := \
     CtsAssistService \
     CtsAssistApp \
     CtsAtraceTestApp \
+    CtsBackupApp \
     CtsCertInstallerApp \
     CtsContactDirectoryProvider \
     CtsCustomizationApp \
@@ -154,6 +155,7 @@ cts_test_packages := \
     CtsAppTestCases \
     CtsAppWidgetTestCases \
     CtsAssistTestCases \
+    CtsBackupTestCases \
     CtsBluetoothTestCases \
     CtsBrowserTestCases \
     CtsCalendarcommon2TestCases \
