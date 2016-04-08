@@ -25,4 +25,8 @@
     <dimen name="autocomplete_textview_dropdown_width">160dp</dimen>
     <dimen name="autocomplete_textview_dropdown_offset_h">24dp</dimen>
     <dimen name="autocomplete_textview_dropdown_offset_v">32dp</dimen>
+
+    <dimen name="spinner_dropdown_width">200dp</dimen>
+    <dimen name="spinner_dropdown_offset_h">64dp</dimen>
+    <dimen name="spinner_dropdown_offset_v">48dp</dimen>
 </resources>
