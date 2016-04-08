@@ -22,6 +22,7 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.net.Uri;
+import android.renderscript.cts.refocus.image.RangeInverseDepthTransform;
 import android.util.Log;
 
 import java.io.FileNotFoundException;
@@ -55,10 +56,29 @@ public class RGBZ {
     if (preview == null) {
       throw new FileNotFoundException(uri.toString());
     }
-    this.depthImage = new DepthImage(context, uri);
-    this.depthBitmap = depthImage.getDepthBitmap();
-    this.bitmap = setAlphaChannel(preview, this.depthBitmap);
-    this.depthTransform = depthImage.getDepthTransform();
+    depthImage = DepthImage.createFromXMPMetadata(context, uri);
+    depthBitmap = depthImage.getDepthBitmap();
+    bitmap = setAlphaChannel(preview, depthBitmap);
+    depthTransform = depthImage.getDepthTransform();
+  }
+
+  /**
+   * Creates an RGBZ from uris to an image and a depthmap.
+   *
+   * @param uriImage The uri name of the image
+   * @param uriDepthmap The uri name of the depthmap
+   * @throws FileNotFoundException if the RGBZ could not be read
+   */
+  public RGBZ(Uri uriImage, Uri uriDepthmap, ContentResolver contentResolver,
+              Context context) throws IOException {
+    preview = BitmapFactory.decodeStream(contentResolver.openInputStream(uriImage));
+    if (preview == null) {
+      throw new FileNotFoundException(uriImage.toString());
+    }
+    depthImage = DepthImage.createFromDepthmap(context, uriDepthmap);
+    depthBitmap = depthImage.getDepthBitmap();
+    bitmap = setAlphaChannel(preview, depthBitmap);
+    depthTransform = depthImage.getDepthTransform();
   }
 
   /**
