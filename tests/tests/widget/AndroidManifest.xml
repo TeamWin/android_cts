@@ -221,8 +221,24 @@
             </intent-filter>
         </activity>
 
-        <activity android:name="android.widget.cts.MockPopupWindowCtsActivity"
-            android:label="MockPopupWindowCtsActivity">
+        <activity android:name="android.widget.cts.PopupWindowCtsActivity"
+            android:label="PopupWindowCtsActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.FRAMEWORK_INSTRUMENTATION_TEST" />
+            </intent-filter>
+        </activity>
+
+        <activity android:name="android.widget.cts.PopupMenuCtsActivity"
+                  android:label="PopupMenuCtsActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.FRAMEWORK_INSTRUMENTATION_TEST" />
+            </intent-filter>
+        </activity>
+
+        <activity android:name="android.widget.cts.ListPopupWindowCtsActivity"
+                  android:label="ListPopupWindowCtsActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.FRAMEWORK_INSTRUMENTATION_TEST" />

@@ -16,8 +16,6 @@
 
 package android.widget.cts;
 
-import junit.framework.AssertionFailedError;
-
 import android.app.Activity;
 import android.app.Instrumentation;
 import android.content.Context;
@@ -25,7 +23,6 @@ import android.graphics.Color;
 import android.graphics.Rect;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
-import android.os.Debug;
 import android.os.SystemClock;
 import android.test.ActivityInstrumentationTestCase2;
 import android.test.UiThreadTest;
@@ -55,7 +52,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 public class PopupWindowTest extends
-        ActivityInstrumentationTestCase2<MockPopupWindowCtsActivity> {
+        ActivityInstrumentationTestCase2<PopupWindowCtsActivity> {
     private Instrumentation mInstrumentation;
     private Activity mActivity;
     /** The popup window. */
@@ -65,7 +62,7 @@ public class PopupWindowTest extends
      * Instantiates a new popup window test.
      */
     public PopupWindowTest() {
-        super("android.widget.cts", MockPopupWindowCtsActivity.class);
+        super("android.widget.cts", PopupWindowCtsActivity.class);
     }
 
     /*
