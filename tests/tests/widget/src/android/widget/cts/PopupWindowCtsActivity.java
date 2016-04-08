@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008 The Android Open Source Project
+ * Copyright (C) 2016 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,24 +16,19 @@
 
 package android.widget.cts;
 
-import android.widget.cts.R;
-
 import android.app.Activity;
 import android.os.Bundle;
 import android.widget.PopupWindow;
-import android.view.View;
-import android.view.View.OnApplyWindowInsetsListener;
-import android.view.Window;
-import android.view.WindowInsets;
+import android.widget.cts.R;
 
 /**
  * Stub activity for testing {@link PopupWindow}
  */
-public class MockPopupWindowCtsActivity extends Activity {
+public class PopupWindowCtsActivity extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.popupwindow);
+        setContentView(R.layout.popup_window);
     }
 }
 
