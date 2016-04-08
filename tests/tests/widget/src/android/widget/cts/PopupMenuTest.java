@@ -35,7 +35,7 @@ import static org.mockito.Mockito.*;
 
 @SmallTest
 public class PopupMenuTest extends
-        ActivityInstrumentationTestCase2<MockPopupWindowCtsActivity> {
+        ActivityInstrumentationTestCase2<PopupMenuCtsActivity> {
     private Instrumentation mInstrumentation;
     private Activity mActivity;
 
@@ -43,7 +43,7 @@ public class PopupMenuTest extends
     private PopupMenu mPopupMenu;
 
     public PopupMenuTest() {
-        super("android.widget.cts", MockPopupWindowCtsActivity.class);
+        super("android.widget.cts", PopupMenuCtsActivity.class);
     }
 
     @Override
