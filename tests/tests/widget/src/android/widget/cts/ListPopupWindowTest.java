@@ -48,7 +48,7 @@ import static org.mockito.Mockito.*;
 
 @SmallTest
 public class ListPopupWindowTest extends
-        ActivityInstrumentationTestCase2<MockPopupWindowCtsActivity> {
+        ActivityInstrumentationTestCase2<ListPopupWindowCtsActivity> {
     private Instrumentation mInstrumentation;
     private Activity mActivity;
 
@@ -76,7 +76,7 @@ public class ListPopupWindowTest extends
      * Instantiates a new popup window test.
      */
     public ListPopupWindowTest() {
-        super(MockPopupWindowCtsActivity.class);
+        super(ListPopupWindowCtsActivity.class);
     }
 
     @Override
