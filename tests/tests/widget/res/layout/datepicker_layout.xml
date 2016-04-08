@@ -27,16 +27,16 @@
         android:orientation="vertical">
 
         <DatePicker
-            android:id="@+id/date_picker_spinner_mode"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:datePickerMode="spinner" />
-
-        <DatePicker
             android:id="@+id/date_picker_calendar_mode"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:datePickerMode="calendar" />
+
+        <DatePicker
+            android:id="@+id/date_picker_spinner_mode"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:datePickerMode="spinner" />
 
     </LinearLayout>
 </ScrollView>

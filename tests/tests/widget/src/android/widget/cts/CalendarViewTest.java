@@ -118,12 +118,12 @@ public class CalendarViewTest extends ActivityInstrumentationTestCase2<CalendarV
 
         // Change the visual appearance of the widget
         instrumentation.runOnMainSync(() -> {
-            mCalendarViewMaterial.setFirstDayOfWeek(3);
+            mCalendarViewMaterial.setFirstDayOfWeek(Calendar.TUESDAY);
             mCalendarViewMaterial.setDateTextAppearance(R.style.TextAppearance_WithColorBlue);
             mCalendarViewMaterial.setWeekDayTextAppearance(R.style.TextAppearance_WithColorMagenta);
         });
 
-        assertEquals(3, mCalendarViewMaterial.getFirstDayOfWeek());
+        assertEquals(Calendar.TUESDAY, mCalendarViewMaterial.getFirstDayOfWeek());
         assertEquals(R.style.TextAppearance_WithColorBlue,
                 mCalendarViewMaterial.getDateTextAppearance());
         assertEquals(R.style.TextAppearance_WithColorMagenta,
@@ -166,7 +166,7 @@ public class CalendarViewTest extends ActivityInstrumentationTestCase2<CalendarV
                 mActivity.getColor(R.color.calendarview_week_separatorline_new);
 
         instrumentation.runOnMainSync(() -> {
-            mCalendarViewHolo.setFirstDayOfWeek(1);
+            mCalendarViewHolo.setFirstDayOfWeek(Calendar.SUNDAY);
             mCalendarViewHolo.setShownWeekCount(4);
             mCalendarViewHolo.setShowWeekNumber(true);
             mCalendarViewHolo.setDateTextAppearance(R.style.TextAppearance_WithColorBlue);
@@ -178,7 +178,7 @@ public class CalendarViewTest extends ActivityInstrumentationTestCase2<CalendarV
             mCalendarViewHolo.setWeekSeparatorLineColor(newWeekSeparatorLineColor);
         });
 
-        assertEquals(1, mCalendarViewHolo.getFirstDayOfWeek());
+        assertEquals(Calendar.SUNDAY, mCalendarViewHolo.getFirstDayOfWeek());
         assertEquals(4, mCalendarViewHolo.getShownWeekCount());
         assertTrue(mCalendarViewHolo.getShowWeekNumber());
         assertEquals(R.style.TextAppearance_WithColorBlue,
