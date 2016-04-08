@@ -514,6 +514,443 @@ public class DecoderTest extends MediaPlayerTestBase {
         }
     }
 
+    /**
+     * Verify correct decoding of MPEG-4 AAC-LC mono and stereo streams
+     */
+    public void testDecodeAacLcM4a() throws Exception {
+        // mono
+        decodeNtest(R.raw.sinesweep1_1ch_8khz_aot2_mp4, 40.f);
+        decodeNtest(R.raw.sinesweep1_1ch_11khz_aot2_mp4, 40.f);
+        decodeNtest(R.raw.sinesweep1_1ch_12khz_aot2_mp4, 40.f);
+        decodeNtest(R.raw.sinesweep1_1ch_16khz_aot2_mp4, 40.f);
+        decodeNtest(R.raw.sinesweep1_1ch_22khz_aot2_mp4, 40.f);
+        decodeNtest(R.raw.sinesweep1_1ch_24khz_aot2_mp4, 40.f);
+        decodeNtest(R.raw.sinesweep1_1ch_32khz_aot2_mp4, 40.f);
+        decodeNtest(R.raw.sinesweep1_1ch_44khz_aot2_mp4, 40.f);
+        decodeNtest(R.raw.sinesweep1_1ch_48khz_aot2_mp4, 40.f);
+        // stereo
+        decodeNtest(R.raw.sinesweep_2ch_8khz_aot2_mp4, 40.f);
+        decodeNtest(R.raw.sinesweep_2ch_11khz_aot2_mp4, 40.f);
+        decodeNtest(R.raw.sinesweep_2ch_12khz_aot2_mp4, 40.f);
+        decodeNtest(R.raw.sinesweep_2ch_16khz_aot2_mp4, 40.f);
+        decodeNtest(R.raw.sinesweep_2ch_22khz_aot2_mp4, 40.f);
+        decodeNtest(R.raw.sinesweep_2ch_24khz_aot2_mp4, 40.f);
+        decodeNtest(R.raw.sinesweep_2ch_32khz_aot2_mp4, 40.f);
+        decodeNtest(R.raw.sinesweep_2ch_44khz_aot2_mp4, 40.f);
+        decodeNtest(R.raw.sinesweep_2ch_48khz_aot2_mp4, 40.f);
+    }
+
+    /**
+     * Verify correct decoding of MPEG-4 AAC-LC 5.0 and 5.1 channel streams
+     */
+    public void testDecodeAacLcMcM4a() throws Exception {
+        AudioParameter decParams = new AudioParameter();
+        short[] decSamples = decodeToMemory(decParams, R.raw.noise_6ch_48khz_aot2_mp4,
+                RESET_MODE_NONE, CONFIG_MODE_NONE, -1, null);
+        checkEnergy(decSamples, decParams, 6);
+        decParams.reset();
+
+        decSamples = decodeToMemory(decParams, R.raw.noise_5ch_44khz_aot2_mp4,
+                RESET_MODE_NONE, CONFIG_MODE_NONE, -1, null);
+        checkEnergy(decSamples, decParams, 5);
+        decParams.reset();
+    }
+
+    /**
+     * Verify correct decoding of MPEG-4 HE-AAC mono and stereo streams
+     */
+    public void testDecodeHeAacM4a() throws Exception {
+        AudioParameter decParams = new AudioParameter();
+        // mono
+        short[] decSamples = decodeToMemory(decParams, R.raw.noise_1ch_24khz_aot5_dr_sbr_sig1_mp4,
+                RESET_MODE_NONE, CONFIG_MODE_NONE, -1, null);
+        checkEnergy(decSamples, decParams, 1);
+        decParams.reset();
+
+        decSamples = decodeToMemory(decParams, R.raw.noise_1ch_24khz_aot5_ds_sbr_sig1_mp4,
+                RESET_MODE_NONE, CONFIG_MODE_NONE, -1, null);
+        checkEnergy(decSamples, decParams, 1);
+        decParams.reset();
+
+        decSamples = decodeToMemory(decParams, R.raw.noise_1ch_32khz_aot5_dr_sbr_sig2_mp4,
+                RESET_MODE_NONE, CONFIG_MODE_NONE, -1, null);
+        checkEnergy(decSamples, decParams, 1);
+        decParams.reset();
+
+        decSamples = decodeToMemory(decParams, R.raw.noise_1ch_44khz_aot5_dr_sbr_sig0_mp4,
+                RESET_MODE_NONE, CONFIG_MODE_NONE, -1, null);
+        checkEnergy(decSamples, decParams, 1);
+        decParams.reset();
+
+        decSamples = decodeToMemory(decParams, R.raw.noise_1ch_44khz_aot5_ds_sbr_sig2_mp4,
+                RESET_MODE_NONE, CONFIG_MODE_NONE, -1, null);
+        checkEnergy(decSamples, decParams, 1);
+        decParams.reset();
+
+        // stereo
+        decSamples = decodeToMemory(decParams, R.raw.noise_2ch_24khz_aot5_dr_sbr_sig2_mp4,
+                RESET_MODE_NONE, CONFIG_MODE_NONE, -1, null);
+        checkEnergy(decSamples, decParams, 2);
+        decParams.reset();
+
+        decSamples = decodeToMemory(decParams, R.raw.noise_2ch_32khz_aot5_ds_sbr_sig2_mp4,
+                RESET_MODE_NONE, CONFIG_MODE_NONE, -1, null);
+        checkEnergy(decSamples, decParams, 2);
+        decParams.reset();
+
+        decSamples = decodeToMemory(decParams, R.raw.noise_2ch_48khz_aot5_dr_sbr_sig1_mp4,
+                RESET_MODE_NONE, CONFIG_MODE_NONE, -1, null);
+        checkEnergy(decSamples, decParams, 2);
+        decParams.reset();
+
+        decSamples = decodeToMemory(decParams, R.raw.noise_2ch_48khz_aot5_ds_sbr_sig1_mp4,
+                RESET_MODE_NONE, CONFIG_MODE_NONE, -1, null);
+        checkEnergy(decSamples, decParams, 2);
+        decParams.reset();
+    }
+
+    /**
+     * Verify correct decoding of MPEG-4 HE-AAC 5.0 and 5.1 channel streams
+     */
+    public void testDecodeHeAacMcM4a() throws Exception {
+        AudioParameter decParams = new AudioParameter();
+        short[] decSamples = decodeToMemory(decParams, R.raw.noise_5ch_48khz_aot5_dr_sbr_sig1_mp4,
+                RESET_MODE_NONE, CONFIG_MODE_NONE, -1, null);
+        checkEnergy(decSamples, decParams, 5);
+        decParams.reset();
+
+        decSamples = decodeToMemory(decParams, R.raw.noise_6ch_44khz_aot5_dr_sbr_sig2_mp4,
+                RESET_MODE_NONE, CONFIG_MODE_NONE, -1, null);
+        checkEnergy(decSamples, decParams, 6);
+        decParams.reset();
+    }
+
+    /**
+     * Verify correct decoding of MPEG-4 HE-AAC v2 stereo streams
+     */
+    public void testDecodeHeAacV2M4a() throws Exception {
+        AudioParameter decParams = new AudioParameter();
+        short[] decSamples = decodeToMemory(decParams, R.raw.noise_2ch_24khz_aot29_dr_sbr_sig0_mp4,
+                RESET_MODE_NONE, CONFIG_MODE_NONE, -1, null);
+        checkEnergy(decSamples, decParams, 2);
+
+        decSamples = decodeToMemory(decParams, R.raw.noise_2ch_44khz_aot29_dr_sbr_sig1_mp4,
+                RESET_MODE_NONE, CONFIG_MODE_NONE, -1, null);
+        checkEnergy(decSamples, decParams, 2);
+
+        decSamples = decodeToMemory(decParams, R.raw.noise_2ch_48khz_aot29_dr_sbr_sig2_mp4,
+                RESET_MODE_NONE, CONFIG_MODE_NONE, -1, null);
+        checkEnergy(decSamples, decParams, 2);
+    }
+
+    /**
+     * Verify correct decoding of MPEG-4 AAC-ELD mono and stereo streams
+     */
+    public void testDecodeAacEldM4a() throws Exception {
+        // mono
+        decodeNtest(R.raw.sinesweep1_1ch_16khz_aot39_fl480_mp4, 40.f);
+        decodeNtest(R.raw.sinesweep1_1ch_22khz_aot39_fl512_mp4, 40.f);
+        decodeNtest(R.raw.sinesweep1_1ch_24khz_aot39_fl480_mp4, 40.f);
+        decodeNtest(R.raw.sinesweep1_1ch_32khz_aot39_fl512_mp4, 40.f);
+        decodeNtest(R.raw.sinesweep1_1ch_44khz_aot39_fl480_mp4, 40.f);
+        decodeNtest(R.raw.sinesweep1_1ch_48khz_aot39_fl512_mp4, 40.f);
+
+        // stereo
+        decodeNtest(R.raw.sinesweep_2ch_16khz_aot39_fl512_mp4, 40.f);
+        decodeNtest(R.raw.sinesweep_2ch_22khz_aot39_fl480_mp4, 40.f);
+        decodeNtest(R.raw.sinesweep_2ch_24khz_aot39_fl512_mp4, 40.f);
+        decodeNtest(R.raw.sinesweep_2ch_32khz_aot39_fl480_mp4, 40.f);
+        decodeNtest(R.raw.sinesweep_2ch_44khz_aot39_fl512_mp4, 40.f);
+        decodeNtest(R.raw.sinesweep_2ch_48khz_aot39_fl480_mp4, 40.f);
+
+        AudioParameter decParams = new AudioParameter();
+        // mono
+        short[] decSamples = decodeToMemory(decParams, R.raw.noise_1ch_16khz_aot39_ds_sbr_fl512_mp4,
+                RESET_MODE_NONE, CONFIG_MODE_NONE, -1, null);
+        checkEnergy(decSamples, decParams, 1);
+        decParams.reset();
+
+        decSamples = decodeToMemory(decParams, R.raw.noise_1ch_24khz_aot39_ds_sbr_fl512_mp4,
+                RESET_MODE_NONE, CONFIG_MODE_NONE, -1, null);
+        checkEnergy(decSamples, decParams, 1);
+        decParams.reset();
+
+        decSamples = decodeToMemory(decParams, R.raw.noise_1ch_32khz_aot39_dr_sbr_fl480_mp4,
+                RESET_MODE_NONE, CONFIG_MODE_NONE, -1, null);
+        checkEnergy(decSamples, decParams, 1);
+        decParams.reset();
+
+        decSamples = decodeToMemory(decParams, R.raw.noise_1ch_44khz_aot39_ds_sbr_fl512_mp4,
+                RESET_MODE_NONE, CONFIG_MODE_NONE, -1, null);
+        checkEnergy(decSamples, decParams, 1);
+        decParams.reset();
+
+        decSamples = decodeToMemory(decParams, R.raw.noise_1ch_48khz_aot39_dr_sbr_fl480_mp4,
+                RESET_MODE_NONE, CONFIG_MODE_NONE, -1, null);
+        checkEnergy(decSamples, decParams, 1);
+        decParams.reset();
+
+        // stereo
+        decSamples = decodeToMemory(decParams, R.raw.noise_2ch_22khz_aot39_ds_sbr_fl512_mp4,
+                RESET_MODE_NONE, CONFIG_MODE_NONE, -1, null);
+        checkEnergy(decSamples, decParams, 2);
+        decParams.reset();
+
+        decSamples = decodeToMemory(decParams, R.raw.noise_2ch_32khz_aot39_ds_sbr_fl512_mp4,
+                RESET_MODE_NONE, CONFIG_MODE_NONE, -1, null);
+        checkEnergy(decSamples, decParams, 2);
+        decParams.reset();
+
+        decSamples = decodeToMemory(decParams, R.raw.noise_2ch_44khz_aot39_dr_sbr_fl480_mp4,
+                RESET_MODE_NONE, CONFIG_MODE_NONE, -1, null);
+        checkEnergy(decSamples, decParams, 2);
+        decParams.reset();
+
+        decSamples = decodeToMemory(decParams, R.raw.noise_2ch_48khz_aot39_ds_sbr_fl512_mp4,
+                RESET_MODE_NONE, CONFIG_MODE_NONE, -1, null);
+        checkEnergy(decSamples, decParams, 2);
+        decParams.reset();
+    }
+
+    /**
+     * Perform a segmented energy analysis on given audio signal samples and run several tests on
+     * the energy values.
+     *
+     * The main purpose is to verify whether an AAC decoder implementation applies Spectral Band
+     * Replication (SBR) and Parametric Stereo (PS) correctly. Both tools are inherent parts to the
+     * MPEG-4 HE-AAC and HE-AAC v2 audio codecs.
+     *
+     * In addition, this test can verify the correct decoding of multi-channel (e.g. 5.1 channel)
+     * streams or the creation of a mixdown signal.
+     *
+     * Note: This test procedure is not an MPEG Conformance Test and can not serve as a replacement.
+     *
+     * @param decSamples the decoded audio samples to be tested
+     * @param decParams the audio parameters of the given audio samples (decSamples)
+     * @param encNch the encoded number of audio channels (number of channels of the original
+     *               input)
+     * @throws RuntimeException
+     */
+    private void checkEnergy(short[] decSamples, AudioParameter decParams, int encNch)
+            throws RuntimeException
+    {
+        String localTag = TAG + "#checkEnergy";
+
+        final int nSegPerBlk = 4;                          // the number of segments per block
+        final int nCh = decParams.getNumChannels();        // the number of input channels
+        final int nBlkSmp = decParams.getSamplingRate();   // length of one (LB/HB) block [samples]
+        final int nSegSmp = nBlkSmp / nSegPerBlk;          // length of one segment [samples]
+        final int smplPerChan = decSamples.length / nCh;   // actual # samples per channel (total)
+
+        final int nSegSmpTot = nSegSmp * nCh;              // actual # samples per segment (all ch)
+        final int nSegChOffst = 2 * nSegPerBlk;            // signal offset between chans [segments]
+        final int procNch = Math.min(nCh, encNch);         // the number of channels to be analyzed
+        if (encNch > 4) {
+            assertTrue(String.format("multichannel content (%dch) was downmixed (%dch)",
+                    encNch, nCh), procNch > 4);
+        }
+        assertTrue(String.format("got less channels(%d) than encoded (%d)", nCh, encNch),
+                nCh >= encNch);
+
+        final int encEffNch = (encNch > 5) ? encNch-1 : encNch;  // all original configs with more
+                                                           // ... than five channel have an LFE */
+        final int expSmplPerChan = Math.max(encEffNch, 2) * nSegChOffst * nSegSmp;
+        final boolean isDmx = nCh < encNch;                // flag telling that input is dmx signal
+        int effProcNch = procNch;                          // the num analyzed channels with signal
+
+        assertTrue("got less input samples than expected", smplPerChan >= expSmplPerChan);
+
+        // get the signal offset by counting zero samples at the very beginning (over all channels)
+        final int zeroSigThresh = 1;                     // sample value threshold for signal search
+        int signalStart = smplPerChan;                   // receives the number of samples that
+                                                         // ... are in front of the actual signal
+        int noiseStart = signalStart;                    // receives the number of null samples
+                                                         // ... (per chan) at the very beginning
+        for (int smpl = 0; smpl < decSamples.length; smpl++) {
+            int value = Math.abs(decSamples[smpl]);
+            if (value > 0 && noiseStart == signalStart) {
+                noiseStart = smpl / nCh;                   // store start of prepended noise
+            }                                              // ... (can be same as signalStart)
+            if (value > zeroSigThresh) {
+                signalStart = smpl / nCh;                  // store signal start offset [samples]
+                break;
+            }
+        }
+        signalStart = (signalStart > noiseStart+1) ? signalStart : noiseStart;
+        assertTrue ("no signal found in any channel!", signalStart < smplPerChan);
+        final int totSeg = (smplPerChan-signalStart) / nSegSmp; // max num seg that fit into signal
+        final int totSmp = nSegSmp * totSeg;               // max num relevant samples (per channel)
+        assertTrue("no segments left to test after signal search", totSeg > 0);
+
+        // get the energies and the channel offsets by searching for the first segment above the
+        //  energy threshold
+        final double zeroMaxNrgRatio = 0.001f;             // ratio of zeroNrgThresh to the max nrg
+        double zeroNrgThresh = nSegSmp * nSegSmp;          // threshold to classify segment energies
+        double totMaxNrg = 0.0f;                           // will store the max seg nrg over all ch
+        double[][] nrg = new double[procNch][totSeg];      // array receiving the segment energies
+        int[] offset = new int[procNch];                   // array for channel offsets
+        boolean[] sigSeg = new boolean[totSeg];            // array receiving the segment ...
+                                                           // ... energy status over all channels
+        for (int ch = 0; ch < procNch; ch++) {
+            offset[ch] = -1;
+            for (int seg = 0; seg < totSeg; seg++) {
+                final int smpStart = (signalStart * nCh) + (seg * nSegSmpTot) + ch;
+                final int smpStop = smpStart + nSegSmpTot;
+                for (int smpl = smpStart; smpl < smpStop; smpl += nCh) {
+                    nrg[ch][seg] += decSamples[smpl] * decSamples[smpl];  // accumulate segment nrg
+                }
+                if (nrg[ch][seg] > zeroNrgThresh && offset[ch] < 0) { // store 1st segment (index)
+                    offset[ch] = seg / nSegChOffst;        // ... per ch which has energy above the
+                }                                          // ... threshold to get the ch offsets
+                if (nrg[ch][seg] > totMaxNrg) {
+                    totMaxNrg = nrg[ch][seg];              // store the max segment nrg over all ch
+                }
+                sigSeg[seg] |= nrg[ch][seg] > zeroNrgThresh;  // store whether the channel has
+                                                           // ... energy in this segment
+            }
+            if (offset[ch] < 0) {                          // if one channel has no signal it is
+                effProcNch -= 1;                           // ... most probably the LFE
+                offset[ch] = effProcNch;                   // the LFE is no effective channel
+            }
+            if (ch == 0) {                                 // recalculate the zero signal threshold
+                zeroNrgThresh = zeroMaxNrgRatio * totMaxNrg; // ... based on the 1st channels max
+            }                                              // ... energy for all subsequent checks
+        }
+        // check the channel mapping
+        assertTrue("more than one LFE detected", effProcNch >= procNch - 1);
+        assertTrue(String.format("less samples decoded than expected: %d < %d",
+                decSamples.length-(signalStart * nCh), totSmp * effProcNch),
+                decSamples.length-(signalStart * nCh) >= totSmp * effProcNch);
+        if (procNch >= 5) {                                // for multi-channel signals the only
+            final int[] frontChMap1 = {2, 0, 1};           // valid front channel orders are L, R, C
+            final int[] frontChMap2 = {0, 1, 2};           // or C, L, R (L=left, R=right, C=center)
+            if ( !(Arrays.equals(Arrays.copyOfRange(offset, 0, 3), frontChMap1)
+                    || Arrays.equals(Arrays.copyOfRange(offset, 0, 3), frontChMap2)) ) {
+                fail("wrong front channel mapping");
+            }
+        }
+        // check whether every channel occurs exactly once
+        int[] chMap = new int[nCh];                        // mapping array to sort channels
+        for (int ch = 0; ch < effProcNch; ch++) {
+            int occurred = 0;
+            for (int idx = 0; idx < procNch; idx++) {
+                if (offset[idx] == ch) {
+                    occurred += 1;
+                    chMap[ch] = idx;                       // create mapping table to address chans
+                }                                          // ... from front to back
+            }                                              // the LFE must be last
+            assertTrue(String.format("channel %d occurs %d times in the mapping", ch, occurred),
+                    occurred == 1);
+        }
+
+        // go over all segment energies in all channels and check them
+        final double nrgRatioThresh = 0.50f;               // threshold to classify energy ratios
+        double refMinNrg = zeroNrgThresh;                  // reference min energy for the 1st ch;
+                                                           // others will be compared against 1st
+        for (int ch = 0; ch < procNch; ch++) {
+            int idx = chMap[ch];                           // resolve channel mapping
+            final int ofst = offset[idx] * nSegChOffst;    // signal offset [segments]
+            if (ch < effProcNch && ofst < totSeg) {
+                int nrgSegEnd;                             // the last segment that has energy
+                int nrgSeg;                                // the number of segments with energy
+                if ((encNch <= 2) && (ch == 0)) {          // the first channel of a mono or ...
+                    nrgSeg = totSeg;                       // stereo signal has full signal ...
+                } else {                                   // all others have one LB + one HB block
+                    nrgSeg = Math.min(totSeg, (2 * nSegPerBlk) + ofst) - ofst;
+                }
+                nrgSegEnd = ofst + nrgSeg;
+                // find min and max energy of all segments that should have signal
+                double minNrg = nrg[idx][ofst];            // channels minimum segment energy
+                double maxNrg = nrg[idx][ofst];            // channels maximum segment energy
+                for (int seg = ofst+1; seg < nrgSegEnd; seg++) {          // values of 1st segment
+                    if (nrg[idx][seg] < minNrg) minNrg = nrg[idx][seg];   // ... already assigned
+                    if (nrg[idx][seg] > maxNrg) maxNrg = nrg[idx][seg];
+                }
+                assertTrue(String.format("max energy of channel %d is zero", ch),
+                        maxNrg > 0.0f);
+                assertTrue(String.format("channel %d has not enough energy", ch),
+                        minNrg >= refMinNrg);              // check the channels minimum energy
+                if (ch == 0) {                             // use 85% of 1st channels min energy as
+                    refMinNrg = minNrg * 0.85f;            // ... reference the other chs must meet
+                } else if (isDmx && (ch == 1)) {           // in case of mixdown signal the energy
+                    refMinNrg *= 0.50f;                    // ... can be lower depending on the
+                }                                          // ... downmix equation
+                // calculate and check the energy ratio
+                final double nrgRatio = minNrg / maxNrg;
+                assertTrue(String.format("energy ratio of channel %d below threshold", ch),
+                        nrgRatio >= nrgRatioThresh);
+                if (!isDmx) {
+                    if (nrgSegEnd < totSeg) {
+                        // consider that some noise can extend into the subsequent segment
+                        // allow this to be at max 20% of the channels minimum energy
+                        assertTrue(String.format("min energy after noise above threshold (%.2f)",
+                                nrg[idx][nrgSegEnd]),
+                                nrg[idx][nrgSegEnd] < minNrg * 0.20f);
+                        nrgSegEnd += 1;
+                    }
+                } else {                                   // ignore all subsequent segments
+                    nrgSegEnd = totSeg;                    // ... in case of a mixdown signal
+                }
+                // zero-out the verified energies to simplify the subsequent check
+                for (int seg = ofst; seg < nrgSegEnd; seg++) nrg[idx][seg] = 0.0f;
+            }
+            // check zero signal parts
+            for (int seg = 0; seg < totSeg; seg++) {
+                assertTrue(String.format("segment %d in channel %d has signal where should " +
+                        "be none (%.2f)", seg, ch, nrg[idx][seg]), nrg[idx][seg] < zeroNrgThresh);
+            }
+        }
+        // test whether each segment has energy in at least one channel
+        for (int seg = 0; seg < totSeg; seg++) {
+            assertTrue(String.format("no channel has energy in segment %d", seg), sigSeg[seg]);
+        }
+    }
+
+    /**
+     * Calculate the RMS of the difference signal between a given signal and the reference samples
+     * located in mMasterBuffer.
+     * @param signal the decoded samples to test
+     * @return RMS of error signal
+     * @throws RuntimeException
+     */
+    private double getRmsError(short[] signal) throws RuntimeException {
+        long totalErrorSquared = 0;
+        int stride = mMasterBuffer.length / signal.length;
+        assertEquals("wrong data size", mMasterBuffer.length, signal.length * stride);
+
+        for (int i = 0; i < signal.length; i++) {
+            short sample = signal[i];
+            short mastersample = mMasterBuffer[i * stride];
+            int d = sample - mastersample;
+            totalErrorSquared += d * d;
+        }
+        long avgErrorSquared = (totalErrorSquared / signal.length);
+        return Math.sqrt(avgErrorSquared);
+    }
+
+    /**
+     * Decode a given input stream and compare the output against the reference signal. The RMS of
+     * the error signal must be below the given threshold (maxerror).
+     * Important note about the test signals: this method expects test signals to have been
+     *   "stretched" relative to the reference signal. The reference, sinesweepraw, is 3s long at
+     *   44100Hz. For instance for comparing this reference to a test signal at 8000Hz, the test
+     *   signal needs to be 44100/8000 = 5.5125 times longer, containing frequencies 5.5125
+     *   times lower than the reference.
+     * @param testinput the file to decode
+     * @param maxerror  the maximum allowed root mean squared error
+     * @throws Exception
+     */
+    private void decodeNtest(int testinput, float maxerror) throws Exception {
+        String localTag = TAG + "#decodeNtest";
+
+        AudioParameter decParams = new AudioParameter();
+        short[] decoded = decodeToMemory(decParams, testinput, RESET_MODE_NONE, CONFIG_MODE_NONE,
+                -1, null);
+        double rmse = getRmsError(decoded);
+
+        assertTrue("decoding error too big: " + rmse, rmse <= maxerror);
+        Log.v(localTag, String.format("rms = %f (max = %f)", rmse, maxerror));
+    }
 
     private void monoTest(int res, int expectedLength) throws Exception {
         short [] mono = decodeToMemory(res, RESET_MODE_NONE, CONFIG_MODE_NONE, -1, null);
@@ -555,17 +992,8 @@ public class DecoderTest extends MediaPlayerTestBase {
 
         assertEquals("wrong data size", mMasterBuffer.length, decoded.length);
 
-        long totalErrorSquared = 0;
+        double rmse = getRmsError(decoded);
 
-        for (int i = 0; i < decoded.length; i++) {
-            short sample = decoded[i];
-            short mastersample = mMasterBuffer[i];
-            int d = sample - mastersample;
-            totalErrorSquared += d * d;
-        }
-
-        long avgErrorSquared = (totalErrorSquared / decoded.length);
-        double rmse = Math.sqrt(avgErrorSquared);
         assertTrue("decoding error too big: " + rmse, rmse <= maxerror);
 
         int[] resetModes = new int[] { RESET_MODE_NONE, RESET_MODE_RECONFIGURE,
@@ -611,9 +1039,49 @@ public class DecoderTest extends MediaPlayerTestBase {
         }
     }
 
+    // Class handling all audio parameters relevant for testing
+    private class AudioParameter {
+
+        public AudioParameter() {
+            this.reset();
+        }
+
+        public void reset() {
+            this.numChannels = 0;
+            this.samplingRate = 0;
+        }
+
+        public int getNumChannels() {
+            return this.numChannels;
+        }
+
+        public int getSamplingRate() {
+            return this.samplingRate;
+        }
+
+        public void setNumChannels(int numChannels) {
+            this.numChannels = numChannels;
+        }
+
+        public void setSamplingRate(int samplingRate) {
+            this.samplingRate = samplingRate;
+        }
+
+        private int numChannels;
+        private int samplingRate;
+    }
+
     private short[] decodeToMemory(int testinput, int resetMode, int configMode,
             int eossample, List<Long> timestamps) throws IOException {
 
+        AudioParameter audioParams = new AudioParameter();
+        return decodeToMemory(audioParams, testinput, resetMode, configMode, eossample, timestamps);
+    }
+
+    private short[] decodeToMemory(AudioParameter audioParams, int testinput, int resetMode,
+            int configMode, int eossample, List<Long> timestamps)
+            throws IOException
+    {
         String localTag = TAG + "#decodeToMemory";
         Log.v(localTag, String.format("reset = %d; config: %s", resetMode, configMode));
         short [] decoded = new short[0];
@@ -796,7 +1264,8 @@ public class DecoderTest extends MediaPlayerTestBase {
                 Log.d(TAG, "output buffers have changed.");
             } else if (res == MediaCodec.INFO_OUTPUT_FORMAT_CHANGED) {
                 MediaFormat oformat = codec.getOutputFormat();
-
+                audioParams.setNumChannels(oformat.getInteger(MediaFormat.KEY_CHANNEL_COUNT));
+                audioParams.setSamplingRate(oformat.getInteger(MediaFormat.KEY_SAMPLE_RATE));
                 Log.d(TAG, "output format has changed to " + oformat);
             } else {
                 Log.d(TAG, "dequeueOutputBuffer returned " + res);
