@@ -348,6 +348,8 @@
     <protected-broadcast android:name="android.app.action.DEVICE_OWNER_CHANGED" />
 
     <protected-broadcast android:name="android.intent.action.MANAGED_PROFILE_AVAILABILITY_CHANGED" />
+    <protected-broadcast android:name="android.intent.action.MANAGED_PROFILE_AVAILABLE" />
+    <protected-broadcast android:name="android.intent.action.MANAGED_PROFILE_UNAVAILABLE" />
 
     <!-- Added in N -->
     <protected-broadcast android:name="android.intent.action.ANR" />
@@ -399,7 +401,6 @@
     <protected-broadcast android:name="android.telephony.action.CARRIER_CONFIG_CHANGED" />
 
     <protected-broadcast android:name="com.android.bluetooth.btservice.action.ALARM_WAKEUP" />
-    <protected-broadcast android:name="com.android.ims.IMS_SERVICE_UP" />
     <protected-broadcast android:name="com.android.server.action.NETWORK_STATS_POLL" />
     <protected-broadcast android:name="com.android.server.action.NETWORK_STATS_UPDATED" />
     <protected-broadcast android:name="com.android.server.NetworkTimeUpdateService.action.POLL" />
@@ -459,8 +460,15 @@
     <protected-broadcast android:name="android.net.wifi.PASSPOINT_ICON_RECEIVED" />
     <protected-broadcast android:name="com.android.server.notification.CountdownConditionProvider" />
 
-    <!-- @hide UCE service Notification -->
+    <protected-broadcast android:name="com.android.ims.IMS_SERVICE_UP" />
+    <protected-broadcast android:name="com.android.ims.IMS_INCOMING_CALL" />
     <protected-broadcast android:name="com.android.ims.internal.uce.UCE_SERVICE_UP" />
+    <protected-broadcast android:name="com.android.intent.action.IMS_FEATURE_CHANGED" />
+    <protected-broadcast android:name="com.android.intent.action.IMS_CONFIG_CHANGED" />
+
+    <protected-broadcast android:name="com.android.internal.location.ALARM_WAKEUP" />
+    <protected-broadcast android:name="com.android.internal.location.ALARM_TIMEOUT" />
+    <protected-broadcast android:name="android.intent.action.GLOBAL_BUTTON" />
 
     <!-- ====================================================================== -->
     <!--                          RUNTIME PERMISSIONS                           -->
@@ -845,14 +853,14 @@
     -->
     <permission android:name="android.permission.ACCESS_UCE_PRESENCE_SERVICE"
                 android:permissionGroup="android.permission-group.PHONE"
-                android:protectionLevel="dangerous"/>
+                android:protectionLevel="signatureOrSystem"/>
 
     <!-- @hide Allows an application to Access UCE-OPTIONS.
          <p>Protection level: dangerous
     -->
     <permission android:name="android.permission.ACCESS_UCE_OPTIONS_SERVICE"
                 android:permissionGroup="android.permission-group.PHONE"
-                android:protectionLevel="dangerous"/>
+                android:protectionLevel="signatureOrSystem"/>
 
 
 
@@ -1284,7 +1292,7 @@
     <!-- ================================== -->
     <eat-comment />
 
-    <!-- Allows applications to enter Wi-Fi ffMulticast mode.
+    <!-- Allows applications to enter Wi-Fi Multicast mode.
          <p>Protection level: normal
     -->
     <permission android:name="android.permission.CHANGE_WIFI_MULTICAST_STATE"
@@ -2002,6 +2010,11 @@
 
     <!-- @SystemApi Allows access to the list of accounts in the Accounts Service. -->
     <permission android:name="android.permission.GET_ACCOUNTS_PRIVILEGED"
+                android:protectionLevel="signature|privileged" />
+
+    <!-- @SystemApi Allows but does not guarantee access to user passwords at the conclusion of add
+         account -->
+    <permission android:name="android.permission.GET_PASSWORD_PRIVILEGED"
                 android:protectionLevel="signature|privileged" />
 
     <!-- @SystemApi Allows applications to RW to diagnostic resources.
@@ -2748,7 +2761,7 @@
          OTA reboot *not* occur while the lock is held.
          @hide -->
     <permission android:name="android.permission.UPDATE_LOCK"
-                android:protectionLevel="signature|fvprivileged" />
+                android:protectionLevel="signature|privileged" />
 
     <!-- @SystemApi Allows an application to read the current set of notifications, including
          any metadata and intents attached.
@@ -2983,6 +2996,16 @@
          <p>Protection level: signature -->
     <permission android:name="android.permission.BIND_VR_LISTENER_SERVICE"
                 android:protectionLevel="signature" />
+
+    <!-- Required to make calls to {@link android.service.vr.IVrManager}.
+         @hide -->
+    <permission android:name="android.permission.ACCESS_VR_MANAGER"
+                android:protectionLevel="signature" />
+
+    <!-- Allows an application to whitelist tasks during lock task mode
+         @hide <p>Not for use by third-party applications.</p> -->
+    <permission android:name="android.permission.UPDATE_LOCK_TASK_PACKAGES"
+                android:protectionLevel="signature|setup" />
 
     <application android:process="system"
                  android:persistent="true"
