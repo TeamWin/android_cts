@@ -59,6 +59,13 @@ public class AudioEffectTest extends PostProcTestBase {
     // AUDIOEFFECT TESTS:
     //----------------------------------
 
+    @Override
+    protected void tearDown() throws Exception {
+        releaseEffect();
+        terminateMediaPlayerLooper();
+        terminateListenerLooper();
+    }
+
     //-----------------------------------------------------------------
     // 0 - static methods
     //----------------------------------
