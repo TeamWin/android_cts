@@ -18,8 +18,11 @@ package android.renderscript.cts.refocus;
 
 import android.content.Context;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.renderscript.cts.refocus.image.RangeInverseDepthTransform;
 import android.net.Uri;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 
@@ -34,20 +37,58 @@ public class DepthImage {
     private final double mFocalPointX;
     private final double mFocalPointY;
     private final DepthTransform mDepthTransform;
-    public DepthImage(Context context, Uri data) throws IOException {
-        InputStream input = context.getContentResolver().openInputStream(data);
+
+    public DepthImage(String format, double far, double near,
+                      Bitmap depthBitmap, double blurAtInfinity,
+                      double focalDistance, double depthOfField,
+                      double focalPointX, double focalPointY,
+                      DepthTransform depthTransform) {
+        mFormat = format;
+        mFar = far;
+        mNear = near;
+        mDepthBitmap = depthBitmap;
+        mBlurAtInfinity = blurAtInfinity;
+        mFocalDistance = focalDistance;
+        mDepthOfFiled = depthOfField;
+        mFocalPointX = focalPointX;
+        mFocalPointY = focalPointY;
+        mDepthTransform = depthTransform;
+    }
+
+    public static DepthImage createFromXMPMetadata(Context context, Uri image)
+            throws IOException {
+        InputStream input = context.getContentResolver().openInputStream(image);
         XmpDepthDecode decode = new XmpDepthDecode(input);
-        mFormat = decode.getFormat();
-        mFar = decode.getFar();
-        mNear = decode.getNear();
-        mDepthBitmap = decode.getDepthBitmap();
-        mBlurAtInfinity = decode.getBlurAtInfinity();
-        mFocalDistance = decode.getFocalDistance();
-        mDepthOfFiled = decode.getDepthOfField();
-        mFocalPointX = decode.getFocalPointX();
-        mFocalPointY = decode.getFocalPointY();
-        input = context.getContentResolver().openInputStream(data);
-        mDepthTransform = decode.getDepthTransform();
+        return new DepthImage(decode.getFormat(), decode.getFar(),
+                              decode.getNear(), decode.getDepthBitmap(),
+                              decode.getBlurAtInfinity(),
+                              decode.getFocalDistance(),
+                              decode.getDepthOfField(),
+                              decode.getFocalPointX(),
+                              decode.getFocalPointY(),
+                              decode.getDepthTransform());
+    }
+
+    public static DepthImage createFromDepthmap(Context context, Uri uriDepthmap)
+            throws IOException {
+        Bitmap bitmap = BitmapFactory.decodeStream(context.getContentResolver().openInputStream(uriDepthmap));
+        if (bitmap == null) {
+            throw new FileNotFoundException(uriDepthmap.toString());
+        }
+
+        double near = 12.0;
+        double far = 120.0;
+        DepthTransform transform = new RangeInverseDepthTransform((float)near, (float)far);
+        return new DepthImage(RangeInverseDepthTransform.FORMAT,
+                              far,
+                              near,
+                              bitmap, // depthmap
+                              5.0,    // blur at ininity
+                              15.0,   // focal distance
+                              0.1,    // depth of field
+                              0.5,    // x of focal point
+                              0.5,    // y of focla point
+                              transform);
     }
 
     public Bitmap getDepthBitmap() {
