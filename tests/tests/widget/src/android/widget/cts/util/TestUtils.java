@@ -26,9 +26,14 @@ import android.util.Pair;
 import android.view.View;
 import android.view.ViewParent;
 import junit.framework.Assert;
+import org.hamcrest.BaseMatcher;
+import org.hamcrest.Description;
+import org.hamcrest.Matcher;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import static org.mockito.Matchers.argThat;
 
 public class TestUtils {
     /**
@@ -210,7 +215,6 @@ public class TestUtils {
         }
     }
 
-
     /**
      * Composite two potentially translucent colors over each other and returns the result.
      */
@@ -236,5 +240,22 @@ public class TestUtils {
     private static int compositeComponent(int fgC, int fgA, int bgC, int bgA, int a) {
         if (a == 0) return 0;
         return ((0xFF * fgC * fgA) + (bgC * bgA * (0xFF - fgA))) / (a * 0xFF);
+    }
+
+    public static CharSequence sameCharSequence(final CharSequence expected) {
+        return argThat(new BaseMatcher<CharSequence>() {
+            @Override
+            public boolean matches(Object o) {
+                if (o instanceof CharSequence) {
+                    return expected.toString().compareTo(o.toString()) == 0;
+                }
+                return false;
+            }
+
+            @Override
+            public void describeTo(Description description) {
+                description.appendText("doesn't match " + expected);
+            }
+        });
     }
 }
