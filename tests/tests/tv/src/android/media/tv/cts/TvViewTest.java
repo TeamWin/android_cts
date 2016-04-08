@@ -55,6 +55,7 @@ public class TvViewTest extends ActivityInstrumentationTestCase2<TvViewStubActiv
     private Instrumentation mInstrumentation;
     private TvInputManager mManager;
     private TvInputInfo mStubInfo;
+    private TvInputInfo mFaultyStubInfo;
     private final MockCallback mCallback = new MockCallback();
 
     private static class MockCallback extends TvInputCallback {
@@ -63,6 +64,7 @@ public class TvViewTest extends ActivityInstrumentationTestCase2<TvViewStubActiv
         private final Map<String, Integer> mTracksGenerationMap = new ArrayMap<>();
         private final Object mLock = new Object();
         private volatile int mConnectionFailedCount;
+        private volatile int mDisconnectedCount;
 
         public boolean isVideoAvailable(String inputId) {
             synchronized (mLock) {
@@ -82,17 +84,27 @@ public class TvViewTest extends ActivityInstrumentationTestCase2<TvViewStubActiv
             }
         }
 
-        public void resetConnectionFailedCount() {
+        public void resetCount() {
             mConnectionFailedCount = 0;
+            mDisconnectedCount = 0;
         }
 
         public int getConnectionFailedCount() {
             return mConnectionFailedCount;
         }
 
+        public int getDisconnectedCount() {
+            return mDisconnectedCount;
+        }
+
         @Override
         public void onConnectionFailed(String inputId) {
             mConnectionFailedCount++;
+        }
+
+        @Override
+        public void onDisconnected(String inputId) {
+            mDisconnectedCount++;
         }
 
         @Override
@@ -163,6 +175,11 @@ public class TvViewTest extends ActivityInstrumentationTestCase2<TvViewStubActiv
         for (TvInputInfo info : mManager.getTvInputList()) {
             if (info.getServiceInfo().name.equals(StubTunerTvInputService.class.getName())) {
                 mStubInfo = info;
+            }
+            if (info.getServiceInfo().name.equals(FaultyTvInputService.class.getName())) {
+                mFaultyStubInfo = info;
+            }
+            if (mStubInfo != null && mFaultyStubInfo != null) {
                 break;
             }
         }
@@ -421,13 +438,28 @@ public class TvViewTest extends ActivityInstrumentationTestCase2<TvViewStubActiv
         if (!Utils.hasTvInputFramework(getActivity())) {
             return;
         }
-        mCallback.resetConnectionFailedCount();
+        mCallback.resetCount();
         mTvView.tune("invalid_input_id", TvContract.Channels.CONTENT_URI);
         mInstrumentation.waitForIdleSync();
         new PollingCheck(TIME_OUT_MS) {
             @Override
             protected boolean check() {
                 return mCallback.getConnectionFailedCount() > 0;
+            }
+        }.run();
+    }
+
+    public void testDisconnected() throws Throwable {
+        if (!Utils.hasTvInputFramework(getActivity())) {
+            return;
+        }
+        mCallback.resetCount();
+        Uri fakeChannelUri = TvContract.buildChannelUri(0);
+        mTvView.tune(mFaultyStubInfo.getId(), fakeChannelUri);
+        new PollingCheck(TIME_OUT_MS) {
+            @Override
+            protected boolean check() {
+                return mCallback.getDisconnectedCount() > 0;
             }
         }.run();
     }
