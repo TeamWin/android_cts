@@ -25,6 +25,7 @@ import android.content.pm.PackageManager;
 import android.test.ActivityInstrumentationTestCase2;
 import android.util.Log;
 
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import javax.microedition.khronos.egl.EGL10;
@@ -61,27 +62,23 @@ public class OpenGlEsVersionTest
         int detectedMajorVersion = getDetectedMajorVersion();
         int reportedVersion = getVersionFromActivityManager(mActivity);
 
-        assertEquals("Detected OpenGL ES major version " + detectedMajorVersion
-                + " but Activity Manager is reporting " +  getMajorVersion(reportedVersion)
-                + " (Check ro.opengles.version)",
-                detectedMajorVersion, getMajorVersion(reportedVersion));
         assertEquals("Reported OpenGL ES version from ActivityManager differs from PackageManager",
                 reportedVersion, getVersionFromPackageManager(mActivity));
 
-        assertGlVersionString(1);
+        assertGlVersionString(1, 1);
         if (detectedMajorVersion == 2) {
             restartActivityWithClientVersion(2);
-            assertGlVersionString(2);
+            assertGlVersionString(2, getMinorVersion(reportedVersion));
         } else if (detectedMajorVersion == 3) {
             restartActivityWithClientVersion(3);
-            assertGlVersionString(3);
+            assertGlVersionString(3, getMinorVersion(reportedVersion));
         }
     }
 
     public void testRequiredExtensions() throws InterruptedException {
         int reportedVersion = getVersionFromActivityManager(mActivity);
-        // We only have required extensions on ES3.1
-        if (getMajorVersion(reportedVersion) != 3 || getMinorVersion(reportedVersion) != 1)
+        // We only have required extensions on ES3.1+
+        if (getMajorVersion(reportedVersion) != 3 || getMinorVersion(reportedVersion) < 1)
             return;
 
         restartActivityWithClientVersion(3);
@@ -97,7 +94,7 @@ public class OpenGlEsVersionTest
         };
 
         for (int i = 0; i < requiredList.length; ++i) {
-            assertTrue("OpenGL ES version 3.1 is missing extension " + requiredList[i],
+            assertTrue("OpenGL ES version 3.1+ is missing extension " + requiredList[i],
                     hasExtension(extensions, requiredList[i]));
         }
     }
@@ -105,19 +102,17 @@ public class OpenGlEsVersionTest
     public void testExtensionPack() throws InterruptedException {
         // Requirements:
         // 1. If the device claims support for the system feature, the extension must be available.
-        // 2. If the extension is available, it must be correct:
-        //    - ES 3.1 must be supported
+        // 2. If the extension is available, the device must claim support for it.
+        // 3. If the extension is available, it must be correct:
+        //    - ES 3.1+ must be supported
         //    - All included extensions must be available
-        //
-        // Supporting the extension but not claiming support for the system feature is allowed,
-        // just like the ES context version can be higher than the ro.opengles.version property.
 
         int reportedVersion = getVersionFromActivityManager(mActivity);
         boolean hasAepFeature = mActivity.getPackageManager().hasSystemFeature(
                 PackageManager.FEATURE_OPENGLES_EXTENSION_PACK);
 
-        if (getMajorVersion(reportedVersion) != 3 || getMinorVersion(reportedVersion) != 1) {
-            assertFalse("FEATURE_OPENGLES_EXTENSION_PACK is available without OpenGL ES 3.1",
+        if (getMajorVersion(reportedVersion) != 3 || getMinorVersion(reportedVersion) < 1) {
+            assertFalse("FEATURE_OPENGLES_EXTENSION_PACK is available without OpenGL ES 3.1+",
                     hasAepFeature);
             return;
         }
@@ -125,14 +120,11 @@ public class OpenGlEsVersionTest
         restartActivityWithClientVersion(3);
 
         String extensions = mActivity.getExtensionsString();
-        if (!hasExtension(extensions, "ANDROID_extension_pack_es31a")) {
-            assertFalse("FEATURE_OPENGLES_EXTENSION_PACK is available but ANDROID_extension_pack_es31a isn't in the extension list",
-                    hasAepFeature);
-            return;
-        }
-
-        assertTrue("ANDROID_extension_pack_es31a is present, but support is incomplete",
-                mActivity.getAepEs31Support());
+        boolean hasAepExtension = hasExtension(extensions, "GL_ANDROID_extension_pack_es31a");
+        assertEquals("System feature FEATURE_OPENGLES_EXTENSION_PACK is "
+            + (hasAepFeature ? "" : "not ") + "available, but extension GL_ANDROID_extension_pack_es31a is "
+            + (hasAepExtension ? "" : "not ") + "in the OpenGL ES extension list.",
+            hasAepFeature, hasAepExtension);
     }
 
     public void testOpenGlEsVersionForVrHighPerformance() throws InterruptedException {
@@ -288,15 +280,21 @@ public class OpenGlEsVersionTest
     }
 
     /**
-     * Check that the version string has some form of "Open GL ES X.Y" in it where X is the major
-     * version and Y must be some digit.
+     * Check that the version string has the form "OpenGL ES(-CM)? (\d+)\.(\d+)", where the two
+     * numbers match the major and minor parameters.
      */
-    private void assertGlVersionString(int majorVersion) throws InterruptedException {
-        String versionString = "" + majorVersion;
-        String message = "OpenGL version string '" + mActivity.getVersionString()
-                + "' is not " + majorVersion + ".0+.";
-        assertTrue(message, Pattern.matches(".*OpenGL.*ES.*" + versionString + "\\.\\d.*",
-                mActivity.getVersionString()));
+    private void assertGlVersionString(int major, int minor) throws InterruptedException {
+        Matcher matcher = Pattern.compile("OpenGL ES(?:-CM)? (\\d+)\\.(\\d+).*")
+                                 .matcher(mActivity.getVersionString());
+        assertTrue("OpenGL ES version string is not of the required form "
+            + "'OpenGL ES(-CM)? (\\d+)\\.(\\d+).*'",
+            matcher.matches());
+        int stringMajor = Integer.parseInt(matcher.group(1));
+        int stringMinor = Integer.parseInt(matcher.group(2));
+        assertEquals("GL_VERSION string doesn't match ActivityManager major version (check ro.opengles.version property)",
+            major, stringMajor);
+        assertEquals("GL_VERSION string doesn't match ActivityManager minor version (check ro.opengles.version property)",
+            minor, stringMinor);
     }
 
     /** Restart {@link GLSurfaceViewCtsActivity} with a specific client version. */
