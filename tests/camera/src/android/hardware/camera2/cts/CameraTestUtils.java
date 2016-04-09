@@ -741,7 +741,7 @@ public class CameraTestUtils extends Assert {
             CameraCaptureSession.StateCallback listener, Handler handler)
             throws CameraAccessException {
         BlockingSessionCallback sessionListener = new BlockingSessionCallback(listener);
-        camera.createCaptureSessionByOutputConfiguration(outputs, sessionListener, handler);
+        camera.createCaptureSessionByOutputConfigurations(outputs, sessionListener, handler);
         CameraCaptureSession session =
                 sessionListener.waitAndGetSession(SESSION_CONFIGURE_TIMEOUT_MS);
         assertFalse("Camera session should not be a reprocessable session",
@@ -804,7 +804,7 @@ public class CameraTestUtils extends Assert {
             CameraCaptureSession.StateCallback listener, Handler handler)
             throws CameraAccessException {
         BlockingSessionCallback sessionListener = new BlockingSessionCallback(listener);
-        camera.createReprocessableCaptureSessionWithConfigurations(inputConfiguration, outputs,
+        camera.createReprocessableCaptureSessionByConfigurations(inputConfiguration, outputs,
                 sessionListener, handler);
 
         Integer[] sessionStates = {BlockingSessionCallback.SESSION_READY,
