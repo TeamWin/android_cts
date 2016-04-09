@@ -52,9 +52,8 @@ public class TestTileService extends TileService {
     }
 
     @Override
-    public int onTileAdded() {
+    public void onTileAdded() {
         Log.i(TAG, TEST_PREFIX + "onTileAdded");
-        return super.onTileAdded();
     }
 
     @Override
