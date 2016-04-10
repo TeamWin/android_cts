@@ -950,6 +950,15 @@
     <string name="usb_file_descriptor_error">Could not open file descriptor for USB accessory... try reconnecting and restarting the accessory?</string>
     <string name="usb_test_abort">Test lost focus, aborting test.</string>
 
+    <!-- Strings for MTP host test activity -->
+    <string name="mtp_host_test">MTP Host Test</string>
+    <string name="mtp_host_test_info">The CTS-verifier tests the MTP host feature with another Android device. Please connect another Android device to this Android device by using OTG cable or USB type C cable, then follow the instructions on this screen. Note the test creates/deletes files in the connected Android device.</string>
+    <string name="mtp_host_device_lookup_message">Connect MTP device.\nPlease connect another Android device to this device by using USB OTG cable or USB type C cable.\nOpen \"Use USB for\" dialog from the notification in the other Android device and choose \"File Transfer\" option.\nThen press the next button.</string>
+    <string name="mtp_host_grant_permission_message">Grant permission.\nReply a dialog asking device permission.</string>
+    <string name="mtp_host_test_read_event_message">Test MtpDevice#readEvent.\nTake a picture at the connected device.</string>
+    <string name="mtp_host_test_send_object_message">Test MtpDevice#sendObject.</string>
+    <string name="mtp_host_test_notification_message">Test MTP notification.\nCheck if there is an notification on this device saying the other MTP device is connected to this device. Also check if it opens the UI to browse files in the connected device by tapping the notification.</string>
+
     <!-- Strings for the Camera ITS test activity -->
     <string name="camera_its_test">Camera ITS Test</string>
     <string name="camera_its_test_info">
