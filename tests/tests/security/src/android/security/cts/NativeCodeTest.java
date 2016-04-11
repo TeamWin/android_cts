@@ -65,6 +65,15 @@ public class NativeCodeTest extends TestCase {
                    doPingPongRootTest());
     }
 
+    public void testPipeReadV() throws Exception {
+        assertTrue("Device is vulnerable to CVE-2015-1805 and/or CVE-2016-0774,"
+                   + " a vulnerability in the pipe_read() function."
+                   + " Please apply the following patches:\n"
+                   + "https://git.kernel.org/cgit/linux/kernel/git/stable/linux-stable.git/commit/?id=75cf667b7fac08a7b21694adca7dff07361be68a\n"
+                   + "https://git.kernel.org/cgit/linux/kernel/git/stable/linux-stable.git/commit/?id=feae3ca2e5e1a8f44aa6290255d3d9709985d0b2\n",
+                   doPipeReadVTest());
+    }
+
     public void testSysVipc() throws Exception {
         assertTrue("Android does not support Sys V IPC, it must "
                    + "be removed from the kernel. In the kernel config: "
@@ -148,6 +157,19 @@ public class NativeCodeTest extends TestCase {
      * http://seclists.org/oss-sec/2015/q2/333
      */
     private static native boolean doPingPongRootTest();
+
+    /**
+     * CVE-2015-1805 and CVE-2016-0774
+     *
+     * Returns true if the patches are applied, crashes the system otherwise.
+     *
+     * Detects if the following patches are present.
+     * https://git.kernel.org/cgit/linux/kernel/git/stable/linux-stable.git/commit/?id=75cf667b7fac08a7b21694adca7dff07361be68a
+     * https://git.kernel.org/cgit/linux/kernel/git/stable/linux-stable.git/commit/?id=feae3ca2e5e1a8f44aa6290255d3d9709985d0b2
+     *
+     * b/27275324 and b/27721803
+     */
+    private static native boolean doPipeReadVTest();
 
     /**
      * Test that SysV IPC has been removed from the kernel.
