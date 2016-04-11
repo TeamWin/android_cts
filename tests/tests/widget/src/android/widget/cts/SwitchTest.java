@@ -25,6 +25,7 @@ import android.graphics.Rect;
 import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
 import android.test.ActivityInstrumentationTestCase;
+import android.test.ActivityInstrumentationTestCase2;
 import android.test.UiThreadTest;
 import android.test.suitebuilder.annotation.SmallTest;
 import android.view.ContextThemeWrapper;
@@ -37,7 +38,7 @@ import android.widget.cts.util.ViewTestUtils;
  * Test {@link Switch}.
  */
 @SmallTest
-public class SwitchTest extends ActivityInstrumentationTestCase<SwitchCtsActivity> {
+public class SwitchTest extends ActivityInstrumentationTestCase2<SwitchCtsActivity> {
     private Activity mActivity;
     private Switch mSwitch;
 
