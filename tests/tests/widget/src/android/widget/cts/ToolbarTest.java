@@ -233,7 +233,7 @@ public class ToolbarTest extends ActivityInstrumentationTestCase2<ToolbarCtsActi
         final Drawable toolbarOverflowIcon = mMainToolbar.getOverflowIcon();
         TestUtils.assertAllPixelsOfColor("Overflow icon is red", toolbarOverflowIcon,
                 toolbarOverflowIcon.getIntrinsicWidth(), toolbarOverflowIcon.getIntrinsicHeight(),
-                true, 0XFFFF0000, 1, false);
+                true, Color.RED, 1, false);
     }
 
     public void testActionView() {
@@ -282,7 +282,7 @@ public class ToolbarTest extends ActivityInstrumentationTestCase2<ToolbarCtsActi
         TestUtils.assertAllPixelsOfColor("Navigation icon is green", toolbarNavigationIcon,
                 toolbarNavigationIcon.getIntrinsicWidth(),
                 toolbarNavigationIcon.getIntrinsicHeight(),
-                true, 0xFF00FF00, 1, false);
+                true, Color.GREEN, 1, false);
 
         ViewTestUtils.runOnMainAndDrawSync(instrumentation, mMainToolbar,
                 () -> mMainToolbar.setNavigationIcon(mActivity.getDrawable(R.drawable.icon_blue)));
@@ -290,7 +290,7 @@ public class ToolbarTest extends ActivityInstrumentationTestCase2<ToolbarCtsActi
         TestUtils.assertAllPixelsOfColor("Navigation icon is blue", toolbarNavigationIcon,
                 toolbarNavigationIcon.getIntrinsicWidth(),
                 toolbarNavigationIcon.getIntrinsicHeight(),
-                true, 0xFF0000FF, 1, false);
+                true, Color.BLUE, 1, false);
 
         instrumentation.runOnMainSync(
                 () -> mMainToolbar.setNavigationContentDescription(R.string.toolbar_navigation));
@@ -311,7 +311,7 @@ public class ToolbarTest extends ActivityInstrumentationTestCase2<ToolbarCtsActi
         TestUtils.assertAllPixelsOfColor("Logo is yellow", toolbarLogo,
                 toolbarLogo.getIntrinsicWidth(),
                 toolbarLogo.getIntrinsicHeight(),
-                true, 0xFFFFFF00, 1, false);
+                true, Color.YELLOW, 1, false);
 
         ViewTestUtils.runOnMainAndDrawSync(instrumentation, mMainToolbar,
                 () -> mMainToolbar.setLogo(mActivity.getDrawable(R.drawable.icon_red)));
@@ -319,7 +319,7 @@ public class ToolbarTest extends ActivityInstrumentationTestCase2<ToolbarCtsActi
         TestUtils.assertAllPixelsOfColor("Logo is red", toolbarLogo,
                 toolbarLogo.getIntrinsicWidth(),
                 toolbarLogo.getIntrinsicHeight(),
-                true, 0xFFFF0000, 1, false);
+                true, Color.RED, 1, false);
 
         instrumentation.runOnMainSync(
                 () -> mMainToolbar.setLogoDescription(R.string.toolbar_logo));
