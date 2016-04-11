@@ -16,9 +16,7 @@
 -->
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:paddingTop="8dp"
-    android:paddingBottom="8dp">
+    android:layout_height="wrap_content" >
 
     <ImageView
         android:id="@+id/status"
@@ -26,10 +24,9 @@
         android:layout_height="wrap_content"
         android:layout_alignParentLeft="true"
         android:layout_alignParentTop="true"
+        android:layout_marginTop="10dip"
         android:contentDescription="@string/pass_button_text"
-        android:paddingTop="3dip"
-        android:paddingLeft="10dip"
-        android:paddingRight="10dip"
+        android:padding="10dip"
         android:src="@drawable/fs_indeterminate" />
 
     <TextView
@@ -37,34 +34,7 @@
         style="@style/InstructionsSmallFont"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_alignParentRight="true"
         android:layout_alignParentTop="true"
         android:layout_toRightOf="@id/status" />
-
-    <Button
-        android:id="@+id/next_item_button"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_below="@id/instructions"
-        android:layout_toRightOf="@id/status"
-        android:text="@string/next_button_text"
-        android:visibility="gone" />
-
-    <Button
-        android:id="@+id/pass_item_button"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_below="@id/instructions"
-        android:layout_toRightOf="@id/next_item_button"
-        android:text="@string/pass_button_text"
-        android:visibility="gone" />
-
-    <Button
-        android:id="@+id/fail_item_button"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_below="@id/instructions"
-        android:layout_toRightOf="@id/pass_item_button"
-        android:text="@string/fail_button_text"
-        android:visibility="gone" />
-
 </RelativeLayout>
