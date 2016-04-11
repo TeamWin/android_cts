@@ -33,23 +33,12 @@ LOCAL_SRC_FILES := \
 # Select the architectures on which seccomp-bpf are supported. This is used to
 # include extra test files that will not compile on architectures where it is
 # not supported.
-ARCH_SUPPORTS_SECCOMP := 0
-ifeq ($(strip $(TARGET_ARCH)),arm)
-	ARCH_SUPPORTS_SECCOMP = 1
+ARCH_SUPPORTS_SECCOMP := 1
+ifeq ($(strip $(TARGET_ARCH)),mips)
+	ARCH_SUPPORTS_SECCOMP = 0
 endif
-
-ifeq ($(strip $(TARGET_ARCH)),arm64)
-	ARCH_SUPPORTS_SECCOMP = 1
-	# Required for __NR_poll definition.
-	LOCAL_CFLAGS += -D__ARCH_WANT_SYSCALL_DEPRECATED
-endif
-
-ifeq ($(strip $(TARGET_ARCH)),x86)
-	ARCH_SUPPORTS_SECCOMP = 1
-endif
-
-ifeq ($(strip $(TARGET_ARCH)),x86_64)
-	ARCH_SUPPORTS_SECCOMP = 1
+ifeq ($(strip $(TARGET_ARCH)),mips64)
+	ARCH_SUPPORTS_SECCOMP = 0
 endif
 
 ifeq ($(ARCH_SUPPORTS_SECCOMP),1)
