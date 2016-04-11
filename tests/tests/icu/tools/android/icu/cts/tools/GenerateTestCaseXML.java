@@ -94,7 +94,7 @@ public class GenerateTestCaseXML {
     setAttribute(testPackageElem, ATTRIBUTE_NAME_VERSION, ATTRIBUTE_VALUE_VERSION);
     setAttribute(testPackageElem, ATTRIBUTE_NAME_FRAMEWORK, ATTRIBUTE_VALUE_FRAMEWORK);
     setAttribute(testPackageElem, ATTRIBUTE_NAME, "CtsIcuTestCases");
-    setAttribute(testPackageElem, ATTRIBUTE_RUNNER, ".IcuTestRunner");
+    setAttribute(testPackageElem, ATTRIBUTE_RUNNER, "android.icu.cts.IcuTestRunnerForCtsV1");
     setAttribute(testPackageElem, ATTRIBUTE_PACKAGE, "android.icu.dev.test");
     setAttribute(testPackageElem, ATTRIBUTE_NS, "android.icu.cts");
 

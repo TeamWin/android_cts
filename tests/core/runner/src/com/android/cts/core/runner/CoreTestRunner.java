@@ -119,7 +119,7 @@ public class CoreTestRunner extends Instrumentation {
         try {
             // Get the set of resource names containing the expectations.
             Set<String> expectationResources = new LinkedHashSet<>(
-                    CLASS_LIST_SPLITTER.splitToList(args.getString(ARGUMENT_EXPECTATIONS)));
+                    getExpectationResourcePaths(args));
             expectationStore = ExpectationStore.parseResources(
                     getClass(), expectationResources, ModeId.DEVICE);
         } catch (IOException e) {
@@ -148,14 +148,14 @@ public class CoreTestRunner extends Instrumentation {
         }
 
         if (testNameList == null) {
-            String rootClasses = args.getString(ARGUMENT_ROOT_CLASSES);
-            if (rootClasses == null) {
+            List<String> roots = getRootClassNames(args);
+            if (roots == null) {
                 // Find all test classes
                 testList = getAllTestClasses();
             } else {
-                List<String> roots = CLASS_LIST_SPLITTER.splitToList(rootClasses);
                 testList = TestList.rootList(roots);
             }
+
         } else {
             testList = TestList.exclusiveList(testNameList);
         }
@@ -176,6 +176,21 @@ public class CoreTestRunner extends Instrumentation {
         }
 
         start();
+    }
+
+    protected List<String> getExpectationResourcePaths(Bundle args) {
+        return CLASS_LIST_SPLITTER.splitToList(args.getString(ARGUMENT_EXPECTATIONS));
+    }
+
+    protected List<String> getRootClassNames(Bundle args) {
+        String rootClasses = args.getString(ARGUMENT_ROOT_CLASSES);
+        List<String> roots;
+        if (rootClasses == null) {
+            roots = null;
+        } else {
+            roots = CLASS_LIST_SPLITTER.splitToList(rootClasses);
+        }
+        return roots;
     }
 
     @Override
