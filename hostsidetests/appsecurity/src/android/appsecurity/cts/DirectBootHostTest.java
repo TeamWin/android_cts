@@ -142,6 +142,9 @@ public class DirectBootHostTest extends DeviceTestCase implements IAbiReceiver, 
 
             runDeviceTests(PKG, CLASS, "testSetUp", users);
 
+            // Give enough time for vold to update keys
+            Thread.sleep(15000);
+
             // Reboot system into known state with keys ejected
             if (MODE_EMULATED.equals(mode)) {
                 getDevice().executeShellCommand("sm set-emulate-fbe true");
