@@ -45,8 +45,9 @@ class AndroidRunnerBuilder extends AllDefaultPossibilitiesBuilder {
     /**
      * @param runnerParams {@link AndroidRunnerParams} that stores common runner parameters
      */
-    AndroidRunnerBuilder(AndroidRunnerParams runnerParams) {
-        super(true);
+    // Added canUseSuiteMethod parameter.
+    AndroidRunnerBuilder(AndroidRunnerParams runnerParams, boolean canUseSuiteMethod) {
+        super(canUseSuiteMethod);
         mAndroidJUnit3Builder = new AndroidJUnit3Builder(runnerParams);
         mAndroidJUnit4Builder = new AndroidJUnit4Builder(runnerParams);
         mAndroidSuiteBuilder = new AndroidSuiteBuilder(runnerParams);
