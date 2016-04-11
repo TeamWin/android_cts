@@ -18,13 +18,21 @@ package android.widget.cts;
 
 import android.annotation.ColorInt;
 import android.app.Instrumentation;
+import android.graphics.Rect;
+import android.os.SystemClock;
 import android.test.ActivityInstrumentationTestCase2;
 import android.test.suitebuilder.annotation.MediumTest;
+import android.view.MotionEvent;
+import android.view.ViewGroup;
 import android.widget.CalendarView;
+import android.widget.ScrollView;
 import android.widget.cts.util.TestUtils;
+import android.widget.cts.util.ViewTestUtils;
 
 import java.util.Calendar;
 import java.util.GregorianCalendar;
+
+import static org.mockito.Mockito.*;
 
 @MediumTest
 public class CalendarViewTest extends ActivityInstrumentationTestCase2<CalendarViewCtsActivity> {
@@ -101,6 +109,64 @@ public class CalendarViewTest extends ActivityInstrumentationTestCase2<CalendarV
 
         assertEquals(mCalendarViewMaterial.getMinDate(), minDate);
         assertEquals(mCalendarViewMaterial.getMaxDate(), maxDate);
+    }
+
+    private void verifyOnDateChangeListener(CalendarView calendarView,
+            boolean onlyAllowOneChangeEvent) {
+        final Instrumentation instrumentation = getInstrumentation();
+
+        final CalendarView.OnDateChangeListener mockDateChangeListener =
+                mock(CalendarView.OnDateChangeListener.class);
+        calendarView.setOnDateChangeListener(mockDateChangeListener);
+
+        // Go back to September 2008
+        final Calendar calendar = new GregorianCalendar();
+        calendar.set(Calendar.YEAR, 2008);
+        calendar.set(Calendar.MONTH, Calendar.SEPTEMBER);
+        calendar.set(Calendar.DAY_OF_MONTH, 16);
+        instrumentation.runOnMainSync(
+                () -> calendarView.setDate(calendar.getTime().getTime(), false, true));
+        instrumentation.waitForIdleSync();
+
+        // Get bounds of 09/23/2008
+        calendar.set(Calendar.DAY_OF_MONTH, 23);
+        final Rect dayBounds = new Rect();
+        final boolean getDayBoundsSuccess = calendarView.getBoundsForDate(
+                calendar.getTime().getTime(), dayBounds);
+        assertTrue(getDayBoundsSuccess);
+
+        if (onlyAllowOneChangeEvent) {
+            verifyZeroInteractions(mockDateChangeListener);
+        }
+
+        // Use instrumentation to emulate a tap on 09/23/2008
+        ViewTestUtils.emulateTapOnScreen(instrumentation, calendarView,
+                dayBounds.left + dayBounds.width() / 2,
+                dayBounds.top + dayBounds.height() / 2);
+
+        verify(mockDateChangeListener, times(1)).onSelectedDayChange(calendarView,
+                2008, Calendar.SEPTEMBER, 23);
+        if (onlyAllowOneChangeEvent) {
+            verifyNoMoreInteractions(mockDateChangeListener);
+        }
+    }
+
+    public void testOnDateChangeListenerHolo() {
+        // Scroll the Holo calendar view all the way up so it's fully visible
+        final ScrollView scroller = (ScrollView) mActivity.findViewById(R.id.scroller);
+        final ViewGroup container = (ViewGroup) scroller.findViewById(R.id.container);
+        final Instrumentation instrumentation = getInstrumentation();
+
+        instrumentation.runOnMainSync(() -> scroller.scrollTo(0, container.getHeight()));
+        // Note that in pre-Material world we are "allowing" the CalendarView to notify
+        // the date change listener on multiple occasions. This is the old behavior of the widget.
+        verifyOnDateChangeListener(mCalendarViewHolo, false);
+    }
+
+    public void testOnDateChangeListenerMaterial() {
+        // Note that in Material world only "real" date change events are allowed to be reported
+        // to our listener. This is the new behavior of the widget.
+        verifyOnDateChangeListener(mCalendarViewMaterial, true);
     }
 
     public void testAppearanceMaterial() {
