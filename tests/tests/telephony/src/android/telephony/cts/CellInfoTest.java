@@ -22,6 +22,7 @@ import android.telephony.CellInfo;
 import android.telephony.CellInfoGsm;
 import android.telephony.CellInfoLte;
 import android.telephony.CellInfoWcdma;
+import android.telephony.CellSignalStrengthLte;
 import android.telephony.TelephonyManager;
 import android.test.AndroidTestCase;
 import android.util.Log;
@@ -40,7 +41,7 @@ public class CellInfoTest extends AndroidTestCase{
     private static ConnectivityManager mCm;
     private static final String TAG = "android.telephony.cts.CellInfoTest";
     // Maximum and minimum possible RSSI values(in dbm).
-    private static final int MAX_RRSI = -10;
+    private static final int MAX_RSSI = -10;
     private static final int MIN_RSSI = -150;
     private PackageManager mPm;
 
@@ -85,7 +86,10 @@ public class CellInfoTest extends AndroidTestCase{
                 verifyGsmInfo((CellInfoGsm) cellInfo);
             }
         }
-        // At most two cells could be registered.
+
+        //FIXME: The maximum needs to be calculated based on the number of
+        //       radios and the technologies used (ex SRLTE); however, we have
+        //       not hit any of these cases yet.
         assertTrue("None or too many registered cells : " + numRegisteredCells,
                 numRegisteredCells > 0 && numRegisteredCells <= 2);
     }
@@ -98,6 +102,15 @@ public class CellInfoTest extends AndroidTestCase{
         int pci = lte.getCellIdentity().getPci();
         // Physical cell id should be within [0, 503].
         assertTrue("getPci() out of range [0, 503]", pci >= 0 && pci <= 503);
+
+        int earfcn = lte.getCellIdentity().getEarfcn();
+        // Reference 3GPP 36.101 Table 5.7.3-1
+        assertTrue("getEarfcn() out of range [0,47000]", earfcn >= 0 && earfcn <= 47000);
+
+        int ta = ((CellSignalStrengthLte)lte.getCellSignalStrength()).getTimingAdvance();
+        //Integer.MAX_VALUE indicates an unavailable field
+        assertTrue("getTimingAdvance() invalid [0-1282] | Integer.MAX_VALUE",
+                ta == Integer.MAX_VALUE || (ta >= 0 && ta <=1282));
     }
 
     // Verify wcdma cell information is within correct range.
@@ -107,6 +120,10 @@ public class CellInfoTest extends AndroidTestCase{
         // Primary scrambling code should be within [0, 511].
         int psc = wcdma.getCellIdentity().getPsc();
         assertTrue("getPsc() out of range [0, 511]", psc >= 0 && psc <= 511);
+
+        int uarfcn = wcdma.getCellIdentity().getUarfcn();
+        // Reference 3GPP 25.101 Table 5.2
+        assertTrue("getUarfcn() out of range [400,11000]", uarfcn >= 400 && uarfcn <= 11000);
     }
 
     // Verify gsm cell information is within correct range.
@@ -118,11 +135,18 @@ public class CellInfoTest extends AndroidTestCase{
         assertTrue("getLac() out of range [0, 65535]", lac >= 0 && lac <= 65535);
         int cid = gsm.getCellIdentity().getCid();
         assertTrue("getCid() out range [0, 65535]", cid >= 0 && cid <= 65535);
+
+        int arfcn = gsm.getCellIdentity().getArfcn();
+        // Reference 3GPP 45.005 Table 2-2
+        assertTrue("getArfcn() out of range [0,1024]", arfcn >= 0 && arfcn <= 1024);
+
+        int bsic = gsm.getCellIdentity().getBsic();
+        assertTrue("getBsic() out of range [0,63]", bsic >=0 && bsic <=63);
     }
 
     // Rssi(in dbm) should be within [MIN_RSSI, MAX_RSSI].
     private void verifyRssiDbm(int dbm) {
         assertTrue("getCellSignalStrength().getDbm() out of range",
-                dbm >= MIN_RSSI && dbm <= MAX_RRSI);
+                dbm >= MIN_RSSI && dbm <= MAX_RSSI);
     }
 }
