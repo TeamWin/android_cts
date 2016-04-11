@@ -29,6 +29,7 @@ import android.hardware.camera2.CameraCharacteristics;
 import android.hardware.camera2.CameraDevice;
 import android.hardware.camera2.CaptureRequest;
 import android.hardware.camera2.CaptureResult;
+import android.hardware.camera2.cts.CameraTestUtils.ImageDropperListener;
 import android.hardware.camera2.cts.helpers.StaticMetadata;
 import android.hardware.camera2.cts.rs.BitmapUtils;
 import android.hardware.camera2.cts.testcases.Camera2AndroidTestCase;
@@ -874,7 +875,15 @@ public class ImageReaderTest extends Camera2AndroidTestCase {
                     Thread.sleep(LONG_PROCESS_TIME_MS);
                     img.close();
                 }
-                // stop capture.
+                // Stop capture.
+                // Drain the reader queue in case the full queue blocks
+                // HAL from delivering new results
+                ImageDropperListener imageDropperListener = new ImageDropperListener();
+                mReader.setOnImageAvailableListener(imageDropperListener, mHandler);
+                Image img = mReader.acquireLatestImage();
+                if (img != null) {
+                    img.close();
+                }
                 stopCapture(/*fast*/false);
             } finally {
                 closeDefaultImageReader();
