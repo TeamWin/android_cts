@@ -17,6 +17,7 @@ package com.android.cts.core.runner;
 
 import android.util.Log;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
@@ -33,7 +34,7 @@ class TestList {
     @Nullable
     private final Set<String> testsToRun;
 
-    private final List<Class<?>> classesToRun;
+    private final Collection<Class<?>> classesToRun;
 
     public static TestList exclusiveList(List<String> testNameList) {
         Set<String> classNamesToRun = new LinkedHashSet<>();
@@ -78,12 +79,15 @@ class TestList {
         return classesToRun;
     }
 
+    public static TestList classList(Collection<Class<?>> classes) {
+        return new TestList(classes, null);
+    }
+
     /**
      * @param classes The list of classes to run.
      * @param testsToRun The exclusive set of tests to run or null if all tests reachable from the
-     * classes are to be run.
      */
-    private TestList(List<Class<?>> classes, Set<String> testsToRun) {
+    private TestList(Collection<Class<?>> classes, Set<String> testsToRun) {
         this.testsToRun = testsToRun;
         this.classesToRun = classes;
     }
