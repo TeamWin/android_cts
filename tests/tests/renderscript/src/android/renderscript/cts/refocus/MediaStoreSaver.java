@@ -36,32 +36,34 @@ public class MediaStoreSaver {
                                        String folderName,
                                        String imageName,
                                        Context mContext) {
-        File folder = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES);
-        String folder_path = folder.getAbsolutePath();
-        String file_path = folder_path + "/" + folderName;
-        File dir = new File(file_path);
+        File picDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES);
 
-        if (!dir.exists()) {
-            System.out.println("make directory: " + dir.getAbsolutePath());
-            dir.mkdirs();
+        if (!picDir.exists()) {
+            // The Pictures directory does not exist on an x86 emulator
+            picDir = mContext.getFilesDir();
         }
-        File file = null;
+
+        File dir = new File(picDir, folderName);
+        dir.mkdirs();
+
         try {
-            file =  File.createTempFile( imageName, ".png",dir);
+            File file = File.createTempFile(imageName, ".png", dir);
             FileOutputStream fOut = new FileOutputStream(file);
             bitmap.compress(Bitmap.CompressFormat.PNG, 0, fOut);
             System.out.println("saved image: " + file.getAbsolutePath());
             fOut.flush();
             fOut.close();
+            MediaStorageScan(mContext, file);
+            return file.getAbsolutePath();
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         } catch (IOException e) {
             e.printStackTrace();
         }
 
-        MediaStorageScan(mContext, file);
-        return file.getAbsolutePath();
+        return "";
     }
+
     /*
      * Refresh image files to view them on computer
      */
