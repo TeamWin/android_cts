@@ -26,6 +26,9 @@ import android.content.pm.LauncherApps.ShortcutQuery;
 import android.content.pm.ShortcutInfo;
 import android.os.Handler;
 import android.os.Looper;
+import android.os.ParcelFileDescriptor;
+
+import java.io.IOException;
 
 public class ShortcutManagerSpoofDetectionTest extends ShortcutManagerCtsTestsBase {
 
@@ -53,13 +56,13 @@ public class ShortcutManagerSpoofDetectionTest extends ShortcutManagerCtsTestsBa
             getManager().setDynamicShortcuts(list(makeShortcut("s1")));
         });
         assertCallingPackageMismatch("addDynamicShortcut", mPackageContext4, () -> {
-            getManager().addDynamicShortcut(makeShortcut("s1"));
+            getManager().addDynamicShortcuts(list(makeShortcut("s1")));
         });
         assertCallingPackageMismatch("deleteDynamicShortcut", mPackageContext4, () -> {
-            getManager().deleteDynamicShortcut("s1");
+            getManager().removeDynamicShortcuts(list("s1"));
         });
         assertCallingPackageMismatch("deleteAllDynamicShortcuts", mPackageContext4, () -> {
-            getManager().deleteAllDynamicShortcuts();
+            getManager().removeAllDynamicShortcuts();
         });
         assertCallingPackageMismatch("getDynamicShortcuts", mPackageContext4, () -> {
             getManager().getDynamicShortcuts();
@@ -104,19 +107,20 @@ public class ShortcutManagerSpoofDetectionTest extends ShortcutManagerCtsTestsBa
                     mPackageContext1.getPackageName(), list(), getUserHandle());
         });
 
-        assertCallingPackageMismatch("getShortcutIconResId 1", mLauncherContext4, () -> {
-            getLauncherApps().getShortcutIconResId(makeShortcut("s"));
+        assertCallingPackageMismatch("getShortcutIconFd 1", mLauncherContext4, () -> {
+            ParcelFileDescriptor pfd = getLauncherApps().getShortcutIconFd(makeShortcut("s"));
+            try {
+                pfd.close();
+            } catch (IOException e) {
+            }
         });
-        assertCallingPackageMismatch("getShortcutIconResId 2", mLauncherContext4, () -> {
-            getLauncherApps().getShortcutIconResId(mPackageContext1.getPackageName(), "s1",
-                    getUserHandle());
-        });
-        assertCallingPackageMismatch("getShortcutIconResId 1", mLauncherContext4, () -> {
-            getLauncherApps().getShortcutIconResId(makeShortcut("s"));
-        });
-        assertCallingPackageMismatch("getShortcutIconResId 2", mLauncherContext4, () -> {
-            getLauncherApps().getShortcutIconResId(mPackageContext1.getPackageName(), "s1",
-                    getUserHandle());
+        assertCallingPackageMismatch("getShortcutIconFd 2", mLauncherContext4, () -> {
+            ParcelFileDescriptor pfd = getLauncherApps().getShortcutIconFd(
+                    mPackageContext1.getPackageName(), "s1", getUserHandle());
+            try {
+                pfd.close();
+            } catch (IOException e) {
+            }
         });
 
         assertCallingPackageMismatch("startShortcut 1", mLauncherContext4, () -> {
