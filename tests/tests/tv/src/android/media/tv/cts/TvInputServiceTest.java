@@ -32,7 +32,6 @@ import android.media.tv.cts.TvInputServiceTest.CountingTvInputService.CountingSe
 import android.media.tv.cts.TvInputServiceTest.CountingTvInputService.CountingRecordingSession;
 import android.net.Uri;
 import android.os.Bundle;
-import android.os.Process;
 import android.os.SystemClock;
 import android.test.ActivityInstrumentationTestCase2;
 import android.view.InputDevice;
@@ -1120,33 +1119,6 @@ public class TvInputServiceTest extends ActivityInstrumentationTestCase2<TvViewS
             mErrorCount = 0;
             mConnectionFailedCount = 0;
             mDisconnectedCount = 0;
-        }
-    }
-
-    public static class FaultyTvInputService extends StubTvInputService {
-        @Override
-        public RecordingSession onCreateRecordingSession(String inputId) {
-            return new FaultyRecordingSession(this);
-        }
-
-        public static class FaultyRecordingSession extends RecordingSession {
-            FaultyRecordingSession(Context context) {
-                super(context);
-            }
-
-            @Override
-            public void onTune(Uri channelUri) {
-                Process.killProcess(android.os.Process.myPid());
-            }
-
-            @Override
-            public void onStartRecording(Uri programHint) { }
-
-            @Override
-            public void onStopRecording() { }
-
-            @Override
-            public void onRelease() { }
         }
     }
 }
