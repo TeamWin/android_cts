@@ -19,9 +19,16 @@ include $(CLEAR_VARS)
 LOCAL_PACKAGE_NAME := CtsLibcoreTestCases
 
 LOCAL_STATIC_JAVA_LIBRARIES := \
+    apache-harmony-tests \
+    bouncycastle-nojarjar \
+    conscrypt-tests \
     core-tests \
+    cts-core-test-runner \
+    jsr166-tests \
     mockito-target \
-    cts-core-test-runner
+    okhttp-nojarjar \
+    okhttp-tests-nojarjar \
+    tzdata_update-tests
 
 #LOCAL_JAVA_LIBRARIES := android-support-test android.test.runner bouncycastle conscrypt
 
