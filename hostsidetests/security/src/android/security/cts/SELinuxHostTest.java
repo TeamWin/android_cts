@@ -657,7 +657,8 @@ public class SELinuxHostTest extends DeviceTestCase implements IBuildReceiver, I
 
     /* Debuggerd is always there */
     public void testDebuggerdDomain() throws DeviceNotAvailableException {
-        assertDomainN("u:r:debuggerd:s0", "/system/bin/debuggerd", "/system/bin/debuggerd64");
+        assertDomainN("u:r:debuggerd:s0", "/system/bin/debuggerd", "/system/bin/debuggerd64",
+                "debuggerd:signaller", "debuggerd64:signaller");
     }
 
     /* Surface flinger is always there */
