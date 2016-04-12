@@ -22,7 +22,7 @@
         <uses-library android:name="android.test.runner" />
     </application>
 
-    <instrumentation android:name="com.android.cts.core.runner.CoreTestRunner"
+    <instrumentation android:name="android.icu.cts.IcuTestRunnerForCtsV1"
                      android:targetPackage="android.icu.cts"
                      android:label="CTS Repackaged ICU4J library tests."/>
 </manifest>
