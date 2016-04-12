@@ -56,7 +56,7 @@ public class ShortcutManagerThrottlingTest extends ShortcutManagerCtsTestsBase {
     }
 
     private void clearDynamicShortcuts() {
-        getManager().deleteAllDynamicShortcuts();
+        getManager().removeAllDynamicShortcuts();
         assertEquals(0, getManager().getDynamicShortcuts().size());
     }
 
@@ -174,9 +174,9 @@ public class ShortcutManagerThrottlingTest extends ShortcutManagerCtsTestsBase {
 
     public void testNotThrottled_delete() {
         runWithCaller(mPackageContext1, () -> {
-            checkNotThrottled(() -> getManager().deleteAllDynamicShortcuts());
+            checkNotThrottled(() -> getManager().removeAllDynamicShortcuts());
 
-            checkNotThrottled(() -> getManager().deleteDynamicShortcut("s1"));
+            checkNotThrottled(() -> getManager().removeDynamicShortcuts(list("s1")));
         });
     }
 
