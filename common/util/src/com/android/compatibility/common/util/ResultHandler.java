@@ -49,6 +49,8 @@ public class ResultHandler {
     // XML constants
     private static final String ABI_ATTR = "abi";
     private static final String BUGREPORT_TAG = "BugReport";
+    private static final String BUILD_ID = "build_id";
+    private static final String BUILD_PRODUCT = "build_product";
     private static final String BUILD_TAG = "Build";
     private static final String CASE_TAG = "TestCase";
     private static final String DEVICES_ATTR = "devices";
@@ -107,6 +109,7 @@ public class ResultHandler {
                 XmlPullParserFactory factory = XmlPullParserFactory.newInstance();
                 XmlPullParser parser = factory.newPullParser();
                 parser.setInput(new FileReader(resultFile));
+
                 parser.nextTag();
                 parser.require(XmlPullParser.START_TAG, NS, RESULT_TAG);
                 invocation.setStartTime(Long.valueOf(
@@ -116,8 +119,12 @@ public class ResultHandler {
                 for (String device : deviceList.split(",")) {
                     invocation.addDeviceSerial(device);
                 }
+
                 parser.nextTag();
                 parser.require(XmlPullParser.START_TAG, NS, BUILD_TAG);
+                invocation.addBuildInfo(BUILD_ID, parser.getAttributeValue(NS, BUILD_ID));
+                invocation.addBuildInfo(BUILD_PRODUCT, parser.getAttributeValue(NS, BUILD_PRODUCT));
+
                 // TODO(stuartscott): may want to reload these incase the retry was done with
                 // --skip-device-info flag
                 parser.nextTag();
@@ -130,8 +137,8 @@ public class ResultHandler {
                     parser.require(XmlPullParser.START_TAG, NS, MODULE_TAG);
                     String name = parser.getAttributeValue(NS, NAME_ATTR);
                     String abi = parser.getAttributeValue(NS, ABI_ATTR);
-                    String id = AbiUtils.createId(abi, name);
-                    IModuleResult module = invocation.getOrCreateModule(id);
+                    String moduleId = AbiUtils.createId(abi, name);
+                    IModuleResult module = invocation.getOrCreateModule(moduleId);
                     while (parser.nextTag() == XmlPullParser.START_TAG) {
                         parser.require(XmlPullParser.START_TAG, NS, CASE_TAG);
                         String caseName = parser.getAttributeValue(NS, NAME_ATTR);
