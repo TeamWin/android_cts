@@ -427,6 +427,10 @@
         (for example, stationary on a windowsill.  If needed, try again, outside, also with the
         device stationary, and with at least some view of the sky.) and then press Next to run
         the automated tests.</string>
+    <string name="location_gnss_test_retry_info">If this test fails, please make sure the device
+        has line of sight to GNSS satellites (for example, stationary on a windowsill. If needed,
+        try again, outside, also with the device stationary, with as much view of the sky as
+        possible.) </string>
 
     <!-- Strings for net.ConnectivityScreenOffTestActivity -->
     <string name="network_screen_off_test">Network Connectivity Screen Off Test</string>

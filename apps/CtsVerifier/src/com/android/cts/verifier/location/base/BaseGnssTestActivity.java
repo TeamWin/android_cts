@@ -83,8 +83,6 @@ public abstract class BaseGnssTestActivity extends PassFailButtons.Activity
     private ScrollView mLogScrollView;
     private LinearLayout mLogLayout;
     private Button mNextButton;
-    private Button mPassButton;
-    private Button mFailButton;
     protected TextView mTextView;
 
     /**
@@ -119,13 +117,11 @@ public abstract class BaseGnssTestActivity extends PassFailButtons.Activity
         mLogLayout = (LinearLayout) findViewById(R.id.log_layout);
         mNextButton = (Button) findViewById(R.id.next_button);
         mNextButton.setOnClickListener(this);
-        mPassButton = (Button) findViewById(R.id.pass_button);
-        mFailButton = (Button) findViewById(R.id.fail_button);
         mTextView = (TextView) findViewById(R.id.text);
 
         mTextView.setText(R.string.location_gnss_test_info);
 
-        updateNextButton(false /*enabled*/);
+        updateNextButton(false /*not enabled*/);
         mExecutorService.execute(this);
     }
 
@@ -188,6 +184,9 @@ public abstract class BaseGnssTestActivity extends PassFailButtons.Activity
         if (resultCode == GnssTestDetails.ResultCode.PASS) {
             testDetails = executeActivityTests(testName);
         }
+
+        // This set the test UI so the operator can report the result of the test
+        updateResult(testDetails);
     }
 
     /**
@@ -336,7 +335,6 @@ public abstract class BaseGnssTestActivity extends PassFailButtons.Activity
     private void setTestResult(GnssTestDetails testDetails) {
         // the name here, must be the Activity's name because it is what CtsVerifier expects
         String name = super.getClass().getName();
-        //String summary = mTestLogger.getOverallSummary();
         GnssTestDetails.ResultCode resultCode = testDetails.getResultCode();
         switch(resultCode) {
             case SKIPPED:
@@ -389,34 +387,20 @@ public abstract class BaseGnssTestActivity extends PassFailButtons.Activity
         return testDetails;
     }
 
+    private void updateResult(final GnssTestDetails testDetails) {
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                setTestResult(testDetails);
+            }
+        });
+    }
+
     private void updateNextButton(final boolean enabled) {
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
                 mNextButton.setEnabled(enabled);
-            }
-        });
-    }
-
-    private void enableTestResultButton(
-            final Button button,
-            final int textResId,
-            final GnssTestDetails testDetails) {
-        final View.OnClickListener listener = new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                setTestResult(testDetails);
-                finish();
-            }
-        };
-
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                mNextButton.setVisibility(View.GONE);
-                button.setText(textResId);
-                button.setOnClickListener(listener);
-                button.setVisibility(View.VISIBLE);
             }
         });
     }
