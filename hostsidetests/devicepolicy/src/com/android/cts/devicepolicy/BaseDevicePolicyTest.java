@@ -80,7 +80,8 @@ public class BaseDevicePolicyTest extends DeviceTestCase implements IBuildReceiv
     /** Whether multi-user is supported. */
     protected boolean mSupportsMultiUser;
 
-    private ArrayList<Integer> mOriginalUsers;
+    /** Users we shouldn't delete in the tests */
+    private ArrayList<Integer> mFixedUsers;
 
     @Override
     public void setBuild(IBuildInfo buildInfo) {
@@ -100,9 +101,14 @@ public class BaseDevicePolicyTest extends DeviceTestCase implements IBuildReceiv
                 "settings get global package_verifier_enable");
         getDevice().executeShellCommand("settings put global package_verifier_enable 0");
 
-        mOriginalUsers = listUsers();
+        mFixedUsers = new ArrayList();
         mPrimaryUserId = getPrimaryUser();
+        mFixedUsers.add(mPrimaryUserId);
+        if (mPrimaryUserId != USER_SYSTEM) {
+            mFixedUsers.add(USER_SYSTEM);
+        }
         switchUser(mPrimaryUserId);
+        removeTestUsers();
     }
 
     @Override
@@ -110,6 +116,7 @@ public class BaseDevicePolicyTest extends DeviceTestCase implements IBuildReceiv
         // reset the package verifier setting to its original value
         getDevice().executeShellCommand("settings put global package_verifier_enable "
                 + mPackageVerifier);
+        removeTestUsers();
         super.tearDown();
     }
 
@@ -179,14 +186,15 @@ public class BaseDevicePolicyTest extends DeviceTestCase implements IBuildReceiv
     }
 
     protected void removeUser(int userId) throws Exception  {
-        if (listUsers().contains(userId) && userId != 0) {
+        if (listUsers().contains(userId) && userId != USER_SYSTEM) {
+            stopUser(userId);
             assertTrue("Couldn't remove user", getDevice().removeUser(userId));
         }
     }
 
     protected void removeTestUsers() throws Exception {
         for (int userId : listUsers()) {
-            if (!mOriginalUsers.contains(userId)) {
+            if (!mFixedUsers.contains(userId)) {
                 removeUser(userId);
             }
         }
