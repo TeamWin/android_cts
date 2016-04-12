@@ -37,14 +37,12 @@ public class DepthOfFieldOptions {
   public DepthOfFieldOptions(RGBZ rgbz) {
     this.focalDepth = (float)rgbz.getFocusDepth();
     this.depthOfField = (float)rgbz.getDepthOfField();
-    this.blurInfinity = (float)rgbz.getBlurInfinity() * Math.max(rgbz.getHeight(), rgbz.getWidth());
+    this.blurInfinity = (float)rgbz.getBlurInfinity();
     this.rgbz = rgbz;
   }
 
   public void setFocusPoint(float x, float y) {
     this.focalDepth = rgbz.getDepth((int)(x * rgbz.getWidth()), (int)(y * rgbz.getHeight()));
-    //this.blurInfinity = lensController.blurInfinityFromAverageBlur(this.focalDepth, this.depthOfField, averageBlur);
-    //System.out.println("new focal depth: " + this.focalDepth);
   }
 
   public void setBokeh(float bokeh) {

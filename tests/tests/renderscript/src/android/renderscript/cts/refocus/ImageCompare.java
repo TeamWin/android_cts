@@ -17,46 +17,65 @@
 package android.renderscript.cts.refocus;
 
 import android.graphics.Bitmap;
-
-import java.nio.ByteBuffer;
+import android.graphics.Color;
+import java.lang.Math;
 
 public class ImageCompare {
 
-    private static byte[] loadBitmapByteArray(Bitmap bitmap) {
-        int bytes = bitmap.getByteCount();
-        ByteBuffer buffer = ByteBuffer.allocate(bytes);
-        bitmap.copyPixelsToBuffer(buffer);
-        byte[] array = buffer.array();
-        return array;
+    /**
+     * Compute the luma channel of an RGB image, i.e., the Y channel of the
+     * equivalent YCbCr image.
+     * https://en.wikipedia.org/wiki/YCbCr
+     */
+    private static double luma(int pixel) {
+        final int R = Color.red(pixel);
+        final int G = Color.green(pixel);
+        final int B = Color.blue(pixel);
+        return 0.299 * R + 0.587 * G + 0.114 * B;
     }
 
-    public static class CompareValue {
-        float aveDiff = 0f;
-        float diffPercent = 0f;
-    }
-
-    public static void compareBitmap(Bitmap bitmap1, Bitmap bitmap2, CompareValue result) {
-
-        if (bitmap1.getWidth() != bitmap2.getWidth() || bitmap1.getHeight() != bitmap2.getHeight()) {
+    /**
+     * Compute peak signal-to-noise ration (PSNR) between two images
+     * The greater the value of psnr, the closer the two images are to each
+     * other. For identical images, psnr = +infinity.
+     * For 8-bit images, a psnr above 50 is commonly acceptable for a lossy
+     * conversion.
+     *
+     * References:
+     * http://www.mathworks.com/help/vision/ref/psnr.html
+     * https://en.wikipedia.org/wiki/Peak_signal-to-noise_ratio
+     */
+    public static double psnr(Bitmap bitmap1, Bitmap bitmap2) {
+        if (bitmap1.getWidth() != bitmap2.getWidth() ||
+            bitmap1.getHeight() != bitmap2.getHeight()) {
             throw new RuntimeException("images were of diffrent size");
         }
 
-        byte[] first = loadBitmapByteArray(bitmap1);
-        byte[] second = loadBitmapByteArray(bitmap2);
-        int loopCount = first.length;
+        if (bitmap1.sameAs(bitmap2)) {
+            android.util.Log.i("RefocusTest",
+                               "bitmaps verified to be identical in fast path.");
+            return Double.POSITIVE_INFINITY;
+        }
 
-        int diffCount = 0;
-        long diffSum = 0;
-        for (int i = 0; i < loopCount; i++) {
-            int v1 = 0xFF & first[i];
-            int v2 = 0xFF & second[i];
-            int error = Math.abs(v1 - v2);
-            if (error > 0) {
-                diffCount++;
-                diffSum += error;
+        final int width = bitmap1.getWidth();
+        final int height = bitmap1.getHeight();
+        final int numPixels = width * height;
+
+        double noise = 0;
+        for (int y = 0; y < height; y++) {
+            for (int x = 0; x < width; x++) {
+                int pixel1 = bitmap1.getPixel(x, y);
+                int pixel2 = bitmap2.getPixel(x, y);
+                if (pixel1 != pixel2) {
+                    final double Y1 = luma(pixel1);
+                    final double Y2 = luma(pixel2);
+                    noise += (Y1 - Y2) * (Y1 - Y2);
+                }
             }
         }
-        result.diffPercent = ((float) diffCount) / first.length;
-        result.aveDiff = ((float) diffSum) / first.length;
+
+        final double mse = noise / numPixels;
+        final double psnr = 20 * Math.log10(255) - 10 * Math.log10(mse);
+        return psnr;
     }
 }
