@@ -64,6 +64,7 @@ public class CompatibilityConsole extends Console {
         MODULE_SPLIT_EXCLUSIONS.add("CtsDeqpTestCases");
     }
     private CompatibilityBuildHelper mBuildHelper;
+    private static final int TIMESTAMP_COLUMN = 4;
 
     /**
      * {@inheritDoc}
@@ -304,8 +305,6 @@ public class CompatibilityConsole extends Console {
     private void listResults() {
         TableFormatter tableFormatter = new TableFormatter();
         List<List<String>> table = new ArrayList<>();
-        table.add(Arrays.asList("Session","Pass", "Fail", "Not Executed", "Start Time", "Test Plan",
-                "Device serial(s)"));
         IInvocationResultRepo testResultRepo = null;
         List<IInvocationResult> results = null;
         try {
@@ -318,14 +317,40 @@ public class CompatibilityConsole extends Console {
         if (testResultRepo != null && results.size() > 0) {
             for (int i = 0; i < results.size(); i++) {
                 IInvocationResult result = results.get(i);
-                table.add(Arrays.asList(Integer.toString(i),
+                Map<String, String> buildInfo = result.getBuildInfo();
+
+                // build attributes are not always present (e.g. in the case of halted test runs)
+                // replace null entries with the string "Unknown"
+                for (Map.Entry<String, String> entry : buildInfo.entrySet()) {
+                    if (entry.getValue() == null) {
+                        buildInfo.put(entry.getKey(), "Unknown");
+                    }
+                }
+
+                table.add(Arrays.asList(
+                        Integer.toString(i),
                         Integer.toString(result.countResults(TestStatus.PASS)),
                         Integer.toString(result.countResults(TestStatus.FAIL)),
                         Integer.toString(result.countResults(TestStatus.NOT_EXECUTED)),
                         TimeUtil.formatTimeStamp(result.getStartTime()),
                         result.getTestPlan(),
-                        ArrayUtil.join(", ", result.getDeviceSerials())));
+                        ArrayUtil.join(", ", result.getDeviceSerials()),
+                        buildInfo.get("build_id"),
+                        buildInfo.get("build_product")
+                        ));
+
+                // sort the table entries on each entry's formatted timestamp
+                Collections.sort(table, new Comparator<List<String>>() {
+                    public int compare(List<String> firstList, List<String> secondList) {
+                        return firstList.get(TIMESTAMP_COLUMN)
+                                .compareTo(secondList.get(TIMESTAMP_COLUMN));
+                    }
+                });
             }
+
+            // add the table header to the beginning of the list
+            table.add(0, Arrays.asList("Session", "Pass", "Fail", "Not Executed", "Start Time",
+                    "Test Plan", "Device serial(s)", "Build ID", "Product"));
             tableFormatter.displayTable(table, new PrintWriter(System.out, true));
         } else {
             printLine(String.format("No results found"));
