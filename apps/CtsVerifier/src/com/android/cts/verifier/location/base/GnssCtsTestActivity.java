@@ -68,7 +68,7 @@ public class GnssCtsTestActivity extends BaseGnssTestActivity {
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                mTextView.setText("Running test... \n");
+                mTextView.setText("");
             }
         });
     }
@@ -154,6 +154,9 @@ public class GnssCtsTestActivity extends BaseGnssTestActivity {
      */
     private class GnssRunListener extends RunListener {
         private volatile boolean mCurrentTestReported;
+        private StringBuilder mTestsResults = new StringBuilder("Test summary:\n");
+        private int mPassTestCase = 0;
+        private int mFailTestCase = 0;
 
         public void testRunStarted(Description description) throws Exception {
             // nothing to log
@@ -161,44 +164,66 @@ public class GnssCtsTestActivity extends BaseGnssTestActivity {
 
         public void testRunFinished(Result result) throws Exception {
             // nothing to log
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    int totalTestCase = mPassTestCase + mFailTestCase;
+                    mTestsResults.append(String.format("\n\n %d/%d verification passed.",
+                            mPassTestCase, totalTestCase));
+                    if (mFailTestCase == 0) {
+                        mTestsResults.append(" All test pass!");
+                    } else {
+                        mTestsResults.append("\n\n" + mTextView.getResources().getString(
+                                R.string.location_gnss_test_retry_info) + "\n");
+                    }
+                    mTextView.setText(mTestsResults);
+                }
+            });
             vibrate((int)TimeUnit.SECONDS.toMillis(2));
             playSound();
         }
 
         public void testStarted(Description description) throws Exception {
             mCurrentTestReported = false;
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    mTextView.append("\n Running test: " + description.getMethodName());
+                }
+            });
         }
 
         public void testFinished(Description description) throws Exception {
             if (!mCurrentTestReported) {
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        mTextView.append("\n Test passed: " + description.getMethodName());
-                    }
-                });
+                mPassTestCase++;
+                appendTestDetail("\n Test passed: " + description.getMethodName());
+                mTestsResults.append("\n Test passed: " + description.getMethodName());
             }
         }
 
         public void testFailure(Failure failure) throws Exception {
             mCurrentTestReported = true;
-            runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    mTextView.setText(""); // clear running status
-                    mTextView.append("\n Test failed: " + failure.getDescription().getMethodName()
-                            + "\n Error: " + failure.toString());
-                }
-            });
+            mFailTestCase++;
+            mTestsResults.append("\n Test failed: "
+                    + failure.getDescription().getMethodName()
+                    + "\n\n Error: " + failure.toString() + "\n");
         }
 
         public void testAssumptionFailure(Failure failure) {
             mCurrentTestReported = true;
-
         }
 
         public void testIgnored(Description description) throws Exception {
             mCurrentTestReported = true;
+        }
+
+        private void appendTestDetail(final String testDetail) {
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    mTextView.append(testDetail);
+                }
+            });
         }
     }
 }
