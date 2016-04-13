@@ -408,6 +408,14 @@
             </intent-filter>
         </activity>
 
+        <activity android:name="android.widget.cts.SearchViewCtsActivity"
+                  android:label="SearchViewCtsActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.FRAMEWORK_INSTRUMENTATION_TEST" />
+            </intent-filter>
+        </activity>
+
         <activity android:name="android.app.ActivityGroup"
             android:label="ActivityGroup" />
 
