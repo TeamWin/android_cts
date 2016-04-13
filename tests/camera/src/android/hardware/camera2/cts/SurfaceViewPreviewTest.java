@@ -479,7 +479,7 @@ public class SurfaceViewPreviewTest extends Camera2SurfaceViewTestCase {
     }
 
     private void surfaceSetTestByCamera(String cameraId) throws Exception {
-        final int MAX_SURFACE_SET_ID = 10;
+        final int MAX_SURFACE_GROUP_ID = 10;
         Size maxPreviewSz = mOrderedPreviewSizes.get(0);
         Size yuvSizeBound = maxPreviewSz; // Default case: legacy device
         if (mStaticInfo.isHardwareLevelLimited()) {
@@ -498,8 +498,8 @@ public class SurfaceViewPreviewTest extends Camera2SurfaceViewTestCase {
         List<OutputConfiguration> outputConfigs = new ArrayList<OutputConfiguration>();
         OutputConfiguration previewConfig = new OutputConfiguration(mPreviewSurface);
         OutputConfiguration yuvConfig = new OutputConfiguration(mReaderSurface);
-        assertEquals(OutputConfiguration.SURFACE_SET_ID_INVALID, previewConfig.getSurfaceSetId());
-        assertEquals(OutputConfiguration.SURFACE_SET_ID_INVALID, yuvConfig.getSurfaceSetId());
+        assertEquals(OutputConfiguration.SURFACE_GROUP_ID_NONE, previewConfig.getSurfaceGroupId());
+        assertEquals(OutputConfiguration.SURFACE_GROUP_ID_NONE, yuvConfig.getSurfaceGroupId());
         assertEquals(mPreviewSurface, previewConfig.getSurface());
         assertEquals(mReaderSurface, yuvConfig.getSurface());
         outputConfigs.add(previewConfig);
@@ -508,14 +508,20 @@ public class SurfaceViewPreviewTest extends Camera2SurfaceViewTestCase {
         requestBuilder.addTarget(mReaderSurface);
 
         // Test different stream set ID.
-        for (int surfaceSetId = OutputConfiguration.SURFACE_SET_ID_INVALID;
-                surfaceSetId < MAX_SURFACE_SET_ID; surfaceSetId++) {
+        for (int surfaceGroupId = OutputConfiguration.SURFACE_GROUP_ID_NONE;
+                surfaceGroupId < MAX_SURFACE_GROUP_ID; surfaceGroupId++) {
             if (VERBOSE) {
-                Log.v(TAG, "test preview with surface set id: ");
+                Log.v(TAG, "test preview with surface group id: ");
             }
+
+            previewConfig = new OutputConfiguration(surfaceGroupId, mPreviewSurface);
+            yuvConfig = new OutputConfiguration(surfaceGroupId, mReaderSurface);
+            outputConfigs.clear();
+            outputConfigs.add(previewConfig);
+            outputConfigs.add(yuvConfig);
+
             for (OutputConfiguration config : outputConfigs) {
-                config.setSurfaceSetId(surfaceSetId);
-                assertEquals(surfaceSetId, config.getSurfaceSetId());
+                assertEquals(surfaceGroupId, config.getSurfaceGroupId());
             }
 
             CameraCaptureSession.StateCallback mockSessionListener =
