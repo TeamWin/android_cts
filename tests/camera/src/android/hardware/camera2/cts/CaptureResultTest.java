@@ -29,6 +29,7 @@ import android.media.ImageReader;
 import android.os.SystemClock;
 import android.util.Pair;
 import android.util.Size;
+import android.hardware.camera2.cts.helpers.StaticMetadata;
 import android.hardware.camera2.cts.testcases.Camera2AndroidTestCase;
 
 import static android.hardware.camera2.cts.CameraTestUtils.*;
@@ -463,9 +464,6 @@ public class CaptureResultTest extends Camera2AndroidTestCase {
         waiverKeys.add(CaptureResult.JPEG_QUALITY);
         waiverKeys.add(CaptureResult.JPEG_THUMBNAIL_QUALITY);
         waiverKeys.add(CaptureResult.JPEG_THUMBNAIL_SIZE);
-        // Waived until framework implemented deriving logic for this key
-        // b/26625646
-        waiverKeys.add(CaptureResult.CONTROL_POST_RAW_SENSITIVITY_BOOST);
 
         // Keys only present when corresponding control is on are being
         // verified in its own functional test
@@ -500,6 +498,21 @@ public class CaptureResultTest extends Camera2AndroidTestCase {
             waiverKeys.add(CaptureResult.LENS_POSE_TRANSLATION);
             waiverKeys.add(CaptureResult.LENS_INTRINSIC_CALIBRATION);
             waiverKeys.add(CaptureResult.LENS_RADIAL_DISTORTION);
+        }
+
+        // Waived if RAW output is not supported
+        int[] outputFormats = mStaticInfo.getAvailableFormats(
+                StaticMetadata.StreamDirection.Output);
+        boolean supportRaw = false;
+        for (int format : outputFormats) {
+            if (format == ImageFormat.RAW_SENSOR || format == ImageFormat.RAW10 ||
+                    format == ImageFormat.RAW12 || format == ImageFormat.RAW_PRIVATE) {
+                supportRaw = true;
+                break;
+            }
+        }
+        if (!supportRaw) {
+            waiverKeys.add(CaptureResult.CONTROL_POST_RAW_SENSITIVITY_BOOST);
         }
 
         if (mStaticInfo.getAeMaxRegionsChecked() == 0) {
