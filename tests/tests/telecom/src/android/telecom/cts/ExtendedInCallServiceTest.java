@@ -413,6 +413,21 @@ public class ExtendedInCallServiceTest extends BaseTelecomTestWithMockServices {
         assertTrue((Boolean) mOnBringToForegroundCounter.getArgs(1)[0]);
     }
 
+    public void testSilenceRinger() {
+        if (!mShouldTestTelecom) {
+            return;
+        }
+
+        addAndVerifyNewIncomingCall(createTestNumber(), null);
+        final MockConnection connection = verifyConnectionForIncomingCall();
+        final MockInCallService inCallService = mInCallCallbacks.getService();
+
+        final TelecomManager telecomManager =
+            (TelecomManager) mContext.getSystemService(Context.TELECOM_SERVICE);
+        telecomManager.silenceRinger();
+        mOnSilenceRingerCounter.waitForCount(1);
+    }
+
     public void testOnPostDialWaitAndContinue() {
         if (!mShouldTestTelecom) {
             return;
