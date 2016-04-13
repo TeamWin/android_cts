@@ -1139,6 +1139,7 @@
             <meta-data android:name="test_category" android:value="@string/test_category_hardware" />
             <meta-data android:name="test_required_features" android:value="android.hardware.usb.host" />
             <meta-data android:name="test_excluded_features" android:value="android.hardware.type.automotive" />
+            <meta-data android:name="test_excluded_features" android:value="android.hardware.type.television" />
         </activity>
 
 <!-- Turned off Sensor Power Test in initial L release
