@@ -49,22 +49,16 @@ public class NumberBlockingTest extends DeviceTestCase implements IBuildReceiver
     private int mSecondaryUserId;
     private int mPrimaryUserSerialNumber;
     private int mSecondaryUserSerialNumber;
-    private String mPackageVerifier;
+
     private IBuildInfo mCtsBuild;
 
     @Override
     protected void setUp() throws Exception {
         super.setUp();
-        assertNotNull(mCtsBuild);  // ensure build has been set before test is run.
 
         if (!getDevice().isMultiUserSupported()) {
             return;
         }
-
-        // disable the package verifier to avoid the dialog when installing an app
-        mPackageVerifier = getDevice().executeShellCommand(
-                "settings get global package_verifier_enable");
-        getDevice().executeShellCommand("settings put global package_verifier_enable 0");
 
         installTestAppForUser(getDevice().getPrimaryUserId());
         createSecondaryUser();
@@ -78,9 +72,6 @@ public class NumberBlockingTest extends DeviceTestCase implements IBuildReceiver
     protected void tearDown() throws Exception {
         if (getDevice().isMultiUserSupported()) {
             getDevice().removeUser(mSecondaryUserId);
-            // reset the package verifier setting to its original value
-            getDevice().executeShellCommand("settings put global package_verifier_enable "
-                    + mPackageVerifier);
         }
 
         super.tearDown();
@@ -145,15 +136,13 @@ public class NumberBlockingTest extends DeviceTestCase implements IBuildReceiver
     private void createSecondaryUser() throws Exception {
         mSecondaryUserId = getDevice().createUser(SECONDARY_USER_NAME);
         getDevice().waitForDeviceAvailable();
-        LogUtil.CLog.logAndDisplay(
-                Log.LogLevel.INFO, "Created secondary user: " + mSecondaryUserId);
     }
 
     private void installTestAppForUser(int userId) throws Exception {
         LogUtil.CLog.logAndDisplay(Log.LogLevel.INFO, "Installing test app for user: " + userId);
         File testAppFile = MigrationHelper.getTestFile(mCtsBuild, TEST_APK);
         String installResult = getDevice().installPackageForUser(
-                testAppFile, true /*reinstall*/, true /*grantPermissions*/, userId);
+                testAppFile, true /*reinstall*/, userId);
         assertNull(String.format(
                 "failed to install number blocking test app. Reason: %s", installResult),
                 installResult);
