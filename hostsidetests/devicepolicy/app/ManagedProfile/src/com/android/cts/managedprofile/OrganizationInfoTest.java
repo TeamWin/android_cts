@@ -64,19 +64,24 @@ public class OrganizationInfoTest extends BaseManagedProfileTest {
     }
 
     public void testDefaultOrganizationNameIsNull() {
-        final String name = mDevicePolicyManager.getOrganizationName(ADMIN_RECEIVER_COMPONENT);
-        assertNull(name);
+        CharSequence organizationName = mDevicePolicyManager.getOrganizationName(
+                ADMIN_RECEIVER_COMPONENT);
+        assertNull(organizationName);
     }
 
     public void testSetOrganizationName() {
-        String previousName = mDevicePolicyManager.getOrganizationName(ADMIN_RECEIVER_COMPONENT);
+        CharSequence previousOrganizationName = mDevicePolicyManager.getOrganizationName(
+                ADMIN_RECEIVER_COMPONENT);
 
         try {
-            final String name = "test-set-name";
+            final CharSequence name = "test-set-name";
             mDevicePolicyManager.setOrganizationName(ADMIN_RECEIVER_COMPONENT, name);
-            assertEquals(name, mDevicePolicyManager.getOrganizationName(ADMIN_RECEIVER_COMPONENT));
+            CharSequence organizationName = mDevicePolicyManager.getOrganizationName(
+                    ADMIN_RECEIVER_COMPONENT);
+            assertEquals(name, organizationName);
         } finally {
-            mDevicePolicyManager.setOrganizationName(ADMIN_RECEIVER_COMPONENT, previousName);
+            mDevicePolicyManager.setOrganizationName(ADMIN_RECEIVER_COMPONENT,
+                    previousOrganizationName);
         }
     }
 
@@ -88,7 +93,7 @@ public class OrganizationInfoTest extends BaseManagedProfileTest {
         }
 
         try {
-            String name = mDevicePolicyManager.getOrganizationName(null);
+            mDevicePolicyManager.getOrganizationName(null);
             fail("Exception should have been thrown for null admin ComponentName");
         } catch (Exception expected) {
         }
