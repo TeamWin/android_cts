@@ -19,15 +19,10 @@ package android.graphics.cts;
 
 import android.graphics.Paint;
 import android.graphics.Typeface;
-import android.content.res.AssetFileDescriptor;
-import android.content.res.AssetManager;
-import android.content.res.Resources;
-import android.graphics.Typeface;
-import android.os.ParcelFileDescriptor;
 import android.test.AndroidTestCase;
+import android.test.suitebuilder.annotation.SmallTest;
 
 import java.io.File;
-import java.io.FileDescriptor;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -203,4 +198,27 @@ public class TypefaceTest extends AndroidTestCase {
         float widthCustomTypeface = p.measureText(testString);
         assertEquals(widthDefaultTypeface, widthCustomTypeface, 1.0f);
     }
+
+    @SmallTest
+    public void testCreateFromAsset_cachesTypeface() {
+        Typeface typeface1 = Typeface.createFromAsset(getContext().getAssets(), "bombfont2.ttf");
+        assertNotNull(typeface1);
+
+        Typeface typeface2 = Typeface.createFromAsset(getContext().getAssets(), "bombfont2.ttf");
+        assertNotNull(typeface2);
+        assertSame("Same font asset should return same Typeface object", typeface1, typeface2);
+
+        Typeface typeface3 = Typeface.createFromAsset(getContext().getAssets(), "bombfont.ttf");
+        assertNotNull(typeface3);
+        assertNotSame("Different font asset should return different Typeface object",
+                typeface2, typeface3);
+
+        Typeface typeface4 = Typeface.createFromAsset(getContext().getAssets(), "samplefont.ttf");
+        assertNotNull(typeface4);
+        assertNotSame("Different font asset should return different Typeface object",
+                typeface2, typeface4);
+        assertNotSame("Different font asset should return different Typeface object",
+                typeface3, typeface4);
+    }
+
 }
