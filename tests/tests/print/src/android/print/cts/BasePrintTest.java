@@ -48,6 +48,7 @@ import android.print.pdf.PrintedPdfDocument;
 import android.printservice.CustomPrinterIconCallback;
 import android.printservice.PrintJob;
 import android.printservice.PrintService;
+import android.support.test.uiautomator.By;
 import android.support.test.uiautomator.UiDevice;
 import android.support.test.uiautomator.UiObject;
 import android.support.test.uiautomator.UiObjectNotFoundException;
@@ -316,11 +317,42 @@ public abstract class BasePrintTest extends InstrumentationTestCase {
 
     protected void selectPrinter(String printerName) throws UiObjectNotFoundException, IOException {
         try {
+            long delay = 100;
             UiObject destinationSpinner = mUiDevice.findObject(new UiSelector().resourceId(
                     "com.android.printspooler:id/destination_spinner"));
-            destinationSpinner.click();
-            UiObject printerOption = mUiDevice.findObject(new UiSelector().text(printerName));
-            printerOption.click();
+            while (true) {
+                destinationSpinner.click();
+
+                // Give spinner some time to expand
+                try {
+                    Thread.sleep(delay);
+                } catch (InterruptedException e) {
+                    // ignore
+                }
+
+                // try to select printer
+                try {
+                    UiObject printerOption = mUiDevice
+                            .findObject(new UiSelector().text(printerName));
+                    printerOption.click();
+                } catch (UiObjectNotFoundException e) {
+                    Log.w(LOG_TAG, "Could not select printer " + printerName);
+                }
+
+                // Make sure printer is selected
+                if (getUiDevice().hasObject(By.text(printerName))) {
+                    break;
+                } else {
+                    if (delay <= OPERATION_TIMEOUT_MILLIS) {
+                        Log.w(LOG_TAG, "Cannot find printer " + printerName + ", retrying.");
+                        delay *= 2;
+                        continue;
+                    } else {
+                        throw new UiObjectNotFoundException("Could find printer " + printerName +
+                                " even though we retried");
+                    }
+                }
+            }
         } catch (UiObjectNotFoundException e) {
             dumpWindowHierarchy();
             throw new UiObjectNotFoundException(e);
