@@ -63,6 +63,30 @@ public class ForwardDeleteTest extends KeyListenerTestCase {
     }
 
     @SmallTest
+    public void testCRLF() {
+        EditorState state = new EditorState();
+
+        // U+000A is LINE FEED.
+        state.setByString("| U+000A");
+        forwardDelete(state, 0);
+        state.assertEquals("|");
+
+        // U+000D is CARRIAGE RETURN.
+        state.setByString("| U+000D");
+        forwardDelete(state, 0);
+        state.assertEquals("|");
+
+        state.setByString("| U+000D U+000A");
+        forwardDelete(state, 0);
+        state.assertEquals("|");
+
+        state.setByString("| U+000A U+000D");
+        forwardDelete(state, 0);
+        state.assertEquals("| U+000D");
+        forwardDelete(state, 0);
+    }
+
+    @SmallTest
     public void testSurrogatePairs() {
         EditorState state = new EditorState();
 
