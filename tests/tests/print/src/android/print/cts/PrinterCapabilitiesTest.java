@@ -320,17 +320,9 @@ public class PrinterCapabilitiesTest extends BasePrintTest {
         testCase(session, printerId, false, MediaSize.ISO_A0, true, null);
         testCase(session, printerId, false, MediaSize.ISO_A0, true, MediaSize.ISO_A0);
         testCase(session, printerId, false, MediaSize.ISO_A0, true, MediaSize.ISO_B0);
-        testCase(session, printerId, false, MediaSize.ISO_B0, false, null);
-        testCase(session, printerId, false, MediaSize.ISO_B0, false, MediaSize.ISO_A0);
-        testCase(session, printerId, false, MediaSize.ISO_B0, false, MediaSize.ISO_B0);
-        testCase(session, printerId, false, MediaSize.ISO_B0, true, null);
-        testCase(session, printerId, false, MediaSize.ISO_B0, true, MediaSize.ISO_A0);
-        testCase(session, printerId, false, MediaSize.ISO_B0, true, MediaSize.ISO_B0);
         testCase(session, printerId, true, null, false, null);
-        testCase(session, printerId, true, null, false, MediaSize.ISO_A0);
         testCase(session, printerId, true, null, false, MediaSize.ISO_B0);
         testCase(session, printerId, true, null, true, null);
-        testCase(session, printerId, true, null, true, MediaSize.ISO_A0);
         testCase(session, printerId, true, null, true, MediaSize.ISO_B0);
         testCase(session, printerId, true, MediaSize.ISO_A0, false, null);
         testCase(session, printerId, true, MediaSize.ISO_A0, false, MediaSize.ISO_A0);
@@ -338,12 +330,6 @@ public class PrinterCapabilitiesTest extends BasePrintTest {
         testCase(session, printerId, true, MediaSize.ISO_A0, true, null);
         testCase(session, printerId, true, MediaSize.ISO_A0, true, MediaSize.ISO_A0);
         testCase(session, printerId, true, MediaSize.ISO_A0, true, MediaSize.ISO_B0);
-        testCase(session, printerId, true, MediaSize.ISO_B0, false, null);
-        testCase(session, printerId, true, MediaSize.ISO_B0, false, MediaSize.ISO_A0);
-        testCase(session, printerId, true, MediaSize.ISO_B0, false, MediaSize.ISO_B0);
-        testCase(session, printerId, true, MediaSize.ISO_B0, true, null);
-        testCase(session, printerId, true, MediaSize.ISO_B0, true, MediaSize.ISO_A0);
-        testCase(session, printerId, true, MediaSize.ISO_B0, true, MediaSize.ISO_B0);
 
         waitForPrinterDiscoverySessionDestroyCallbackCalled();
     }
