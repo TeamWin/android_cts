@@ -64,6 +64,20 @@ public class CarrierConfigManagerTest extends AndroidTestCase {
             // Static default in CarrierConfigManager will be returned when no sim card present.
             assertEquals("Config doesn't match static default.",
                     config.getBoolean(CarrierConfigManager.KEY_ADDITIONAL_CALL_SETTING_BOOL), true);
+
+            assertEquals("KEY_VVM_DESTINATION_NUMBER_STRING doesn't match static default.",
+                config.getString(CarrierConfigManager.KEY_VVM_DESTINATION_NUMBER_STRING), "");
+            assertEquals("KEY_VVM_PORT_NUMBER_INT doesn't match static default.",
+                config.getInt(CarrierConfigManager.KEY_VVM_PORT_NUMBER_INT), 0);
+            assertEquals("KEY_VVM_TYPE_STRING doesn't match static default.",
+                config.getString(CarrierConfigManager.KEY_VVM_TYPE_STRING), "");
+            assertEquals("KEY_VVM_CELLULAR_DATA_REQUIRED_BOOLEAN doesn't match static default.",
+                config.getBoolean(CarrierConfigManager.KEY_VVM_CELLULAR_DATA_REQUIRED_BOOLEAN),
+                false);
+            assertEquals("KEY_VVM_PREFETCH_BOOLEAN doesn't match static default.",
+                config.getBoolean(CarrierConfigManager.KEY_VVM_PREFETCH_BOOLEAN), true);
+            assertEquals("KEY_CARRIER_VVM_PACKAGE_NAME_STRING doesn't match static default.",
+                config.getString(CarrierConfigManager.KEY_CARRIER_VVM_PACKAGE_NAME_STRING), "");
         }
     }
 
