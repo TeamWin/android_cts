@@ -56,6 +56,12 @@
             </intent-filter>
         </service>
 
+        <receiver android:name="android.telecom.cts.MockMissedCallNotificationReceiver">
+            <intent-filter>
+                <action android:name="android.telecom.action.SHOW_MISSED_CALLS_NOTIFICATION" />
+            </intent-filter>
+        </receiver>
+
         <activity android:name="android.telecom.cts.MockDialerActivity">
             <intent-filter>
                 <action android:name="android.intent.action.DIAL" />
