@@ -162,7 +162,6 @@ cts_test_packages := \
     CtsCarTestCases \
     CtsContentTestCases \
     CtsDatabaseTestCases \
-    CtsDeviceAdminUninstallerTestCases \
     CtsDisplayTestCases \
     CtsDpiTestCases \
     CtsDpiTestCases2 \
