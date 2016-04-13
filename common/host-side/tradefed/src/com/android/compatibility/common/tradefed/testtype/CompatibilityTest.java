@@ -271,7 +271,7 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
                 long expected = module.getRuntimeHint();
                 long delta = Math.abs(duration - expected);
                 // Show warning if delta is more than 10% of expected
-                if ((delta / expected) > 0.1f) {
+                if (expected > 0 && ((float)delta / (float)expected) > 0.1f) {
                     CLog.logAndDisplay(LogLevel.WARN,
                             "Inaccurate runtime hint for %s, expected %s was %s",
                             module.getId(),
