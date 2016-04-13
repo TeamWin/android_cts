@@ -59,6 +59,7 @@ public class MockInCallService extends InCallService {
         public void onCallAudioStateChanged(CallAudioState audioState) {}
         public void onPostDialWait(Call call, String remainingPostDialSequence) {}
         public void onCannedTextResponsesLoaded(Call call, List<String> cannedTextResponses) {}
+        public void onSilenceRinger() {}
         public void onConnectionEvent(Call call, String event, Bundle extras) {}
 
         final public MockInCallService getService() {
@@ -234,6 +235,14 @@ public class MockInCallService extends InCallService {
         super.onCallAudioStateChanged(audioState);
         if (getCallbacks() != null) {
             getCallbacks().onCallAudioStateChanged(audioState);
+        }
+    }
+
+    @Override
+    public void onSilenceRinger(){
+        super.onSilenceRinger();
+        if(getCallbacks() != null) {
+            getCallbacks().onSilenceRinger();
         }
     }
 

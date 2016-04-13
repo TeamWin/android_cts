@@ -82,6 +82,7 @@ public class BaseTelecomTestWithMockServices extends InstrumentationTestCase {
     InvokeCounter mOnCallAudioStateChangedCounter;
     InvokeCounter mOnPostDialWaitCounter;
     InvokeCounter mOnCannedTextResponsesLoadedCounter;
+    InvokeCounter mOnSilenceRingerCounter;
     InvokeCounter mOnConnectionEventCounter;
     InvokeCounter mOnExtrasChangedCounter;
     InvokeCounter mOnPropertiesChangedCounter;
@@ -239,6 +240,12 @@ public class BaseTelecomTestWithMockServices extends InstrumentationTestCase {
             public void onConnectionEvent(Call call, String event, Bundle extras) {
                 mOnConnectionEventCounter.invoke(call, event, extras);
             }
+
+            @Override
+            public void onSilenceRinger() {
+                Log.i(TAG, "onSilenceRinger");
+                mOnSilenceRingerCounter.invoke();
+            }
         };
 
         MockInCallService.setCallbacks(mInCallCallbacks);
@@ -249,6 +256,7 @@ public class BaseTelecomTestWithMockServices extends InstrumentationTestCase {
         mOnCallAudioStateChangedCounter = new InvokeCounter("OnCallAudioStateChanged");
         mOnPostDialWaitCounter = new InvokeCounter("OnPostDialWait");
         mOnCannedTextResponsesLoadedCounter = new InvokeCounter("OnCannedTextResponsesLoaded");
+        mOnSilenceRingerCounter = new InvokeCounter("OnSilenceRinger");
         mOnConnectionEventCounter = new InvokeCounter("OnConnectionEvent");
         mOnExtrasChangedCounter = new InvokeCounter("OnDetailsChangedCounter");
         mOnPropertiesChangedCounter = new InvokeCounter("OnPropertiesChangedCounter");
