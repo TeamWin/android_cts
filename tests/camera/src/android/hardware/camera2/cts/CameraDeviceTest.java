@@ -74,6 +74,7 @@ public class CameraDeviceTest extends Camera2AndroidTestCase {
     private static final int REPEATING_CAPTURE_EXPECTED_RESULT_COUNT = 5;
     private static final int MAX_NUM_IMAGES = 5;
     private static final int MIN_FPS_REQUIRED_FOR_STREAMING = 20;
+    private static final int DEFAULT_POST_RAW_SENSITIVITY_BOOST = 100;
 
     private CameraCaptureSession mSession;
 
@@ -1743,6 +1744,22 @@ public class CameraDeviceTest extends Camera2AndroidTestCase {
             if (mStaticInfo.areKeysAvailable(STATISTICS_LENS_SHADING_MAP_MODE)) {
                 mCollector.expectKeyValueNotNull(request, STATISTICS_LENS_SHADING_MAP_MODE);
             }
+        }
+
+        int[] outputFormats = mStaticInfo.getAvailableFormats(
+                StaticMetadata.StreamDirection.Output);
+        boolean supportRaw = false;
+        for (int format : outputFormats) {
+            if (format == ImageFormat.RAW_SENSOR || format == ImageFormat.RAW10 ||
+                    format == ImageFormat.RAW12 || format == ImageFormat.RAW_PRIVATE) {
+                supportRaw = true;
+                break;
+            }
+        }
+        if (supportRaw) {
+            mCollector.expectKeyValueEquals(request,
+                    CONTROL_POST_RAW_SENSITIVITY_BOOST,
+                    DEFAULT_POST_RAW_SENSITIVITY_BOOST);
         }
 
         mCollector.expectKeyValueEquals(request, CONTROL_CAPTURE_INTENT, template);
