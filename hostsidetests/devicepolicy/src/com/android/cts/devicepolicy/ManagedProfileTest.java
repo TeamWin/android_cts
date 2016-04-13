@@ -687,6 +687,29 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
                 mParentUserId));
     }
 
+    public void testTrustAgentInfo() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
+        // Set and get trust agent config using child dpm instance.
+        assertTrue(runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".TrustAgentInfoTest",
+                "testSetAndGetTrustAgentConfiguration_child",
+                mProfileUserId));
+        // Set and get trust agent config using parent dpm instance.
+        assertTrue(runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".TrustAgentInfoTest",
+                "testSetAndGetTrustAgentConfiguration_parent",
+                mProfileUserId));
+        // Unified case
+        assertTrue(runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".TrustAgentInfoTest",
+                "testSetTrustAgentConfiguration_bothHaveTrustAgentConfigAndUnified",
+                mProfileUserId));
+        // Non-unified case, this test must run last because we have no way to clear work side
+        // password.
+        assertTrue(runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".TrustAgentInfoTest",
+                "testSetTrustAgentConfiguration_bothHaveTrustAgentConfigAndNonUnified",
+                mProfileUserId));
+    }
+
     private void disableActivityForUser(String activityName, int userId)
             throws DeviceNotAvailableException {
         String command = "am start -W --user " + userId
