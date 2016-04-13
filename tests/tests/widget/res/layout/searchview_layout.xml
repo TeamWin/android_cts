@@ -31,7 +31,7 @@
         android:id="@+id/search_view_with_defaults"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:maxWidth="@dimen/search_view_maxwidth"
+        android:maxWidth="@dimen/search_view_max_width"
         android:iconifiedByDefault="false"
         android:queryHint="@string/search_query_hint"
         android:inputType="textCapCharacters"

@@ -18,9 +18,12 @@ package android.widget.cts;
 
 import android.app.Activity;
 import android.app.Instrumentation;
+import android.content.res.Resources;
 import android.test.ActivityInstrumentationTestCase2;
 import android.test.UiThreadTest;
 import android.test.suitebuilder.annotation.MediumTest;
+import android.text.InputType;
+import android.text.TextUtils;
 import android.view.inputmethod.EditorInfo;
 import android.widget.SearchView;
 
@@ -69,7 +72,7 @@ public class SearchViewTest extends ActivityInstrumentationTestCase2<SearchViewC
         assertEquals(EditorInfo.TYPE_TEXT_FLAG_CAP_CHARACTERS | EditorInfo.TYPE_CLASS_TEXT,
                 searchViewWithAttributes.getInputType());
         assertEquals(EditorInfo.IME_ACTION_DONE, searchViewWithAttributes.getImeOptions());
-        assertEquals(mActivity.getResources().getDimensionPixelSize(R.dimen.search_view_maxwidth),
+        assertEquals(mActivity.getResources().getDimensionPixelSize(R.dimen.search_view_max_width),
                 searchViewWithAttributes.getMaxWidth());
     }
 
@@ -144,5 +147,94 @@ public class SearchViewTest extends ActivityInstrumentationTestCase2<SearchViewC
         // search view is not iconified.
         verify(mockAllowCloseListener, times(1)).onClose();
         assertTrue(mSearchView.isIconified());
+    }
+
+    public void testAccessMaxWidth() {
+        final Resources res = mActivity.getResources();
+        final int maxWidth1 = res.getDimensionPixelSize(R.dimen.search_view_max_width);
+        final int maxWidth2 = res.getDimensionPixelSize(R.dimen.search_view_max_width2);
+
+        // Set search view to not be iconified before running max-width tests
+        mInstrumentation.runOnMainSync(() -> mSearchView.setIconified(false));
+
+        mInstrumentation.runOnMainSync(() -> mSearchView.setMaxWidth(maxWidth1));
+        mInstrumentation.waitForIdleSync();
+        assertEquals(maxWidth1, mSearchView.getMaxWidth());
+        assertTrue(mSearchView.getWidth() <= maxWidth1);
+
+        mInstrumentation.runOnMainSync(() -> mSearchView.setMaxWidth(maxWidth2));
+        mInstrumentation.waitForIdleSync();
+        assertEquals(maxWidth2, mSearchView.getMaxWidth());
+        assertTrue(mSearchView.getWidth() <= maxWidth2);
+    }
+
+    public void testAccessQuery() {
+        mInstrumentation.runOnMainSync(() -> mSearchView.setIconified(false));
+
+        final SearchView.OnQueryTextListener mockQueryTextListener =
+                mock(SearchView.OnQueryTextListener.class);
+        when(mockQueryTextListener.onQueryTextSubmit(anyString())).thenReturn(Boolean.TRUE);
+        mSearchView.setOnQueryTextListener(mockQueryTextListener);
+
+        mInstrumentation.runOnMainSync(() -> mSearchView.setQuery("alpha", false));
+        assertTrue(TextUtils.equals("alpha", mSearchView.getQuery()));
+        // Since we passed false as the second parameter to setQuery, our query text listener
+        // should have been invoked only with text change
+        verify(mockQueryTextListener, times(1)).onQueryTextChange("alpha");
+        verify(mockQueryTextListener, never()).onQueryTextSubmit(anyString());
+
+        mInstrumentation.runOnMainSync(() -> mSearchView.setQuery("beta", true));
+        assertTrue(TextUtils.equals("beta", mSearchView.getQuery()));
+        // Since we passed true as the second parameter to setQuery, our query text listener
+        // should have been invoked on both callbacks
+        verify(mockQueryTextListener, times(1)).onQueryTextChange("beta");
+        verify(mockQueryTextListener, times(1)).onQueryTextSubmit("beta");
+
+        mInstrumentation.runOnMainSync(() -> mSearchView.setQuery("gamma", true));
+        assertTrue(TextUtils.equals("gamma", mSearchView.getQuery()));
+        // Since we passed true as the second parameter to setQuery, our query text listener
+        // should have been invoked on both callbacks
+        verify(mockQueryTextListener, times(1)).onQueryTextChange("gamma");
+        verify(mockQueryTextListener, times(1)).onQueryTextSubmit("gamma");
+
+        verifyNoMoreInteractions(mockQueryTextListener);
+    }
+
+    public void testAccessQueryHint() {
+        mInstrumentation.runOnMainSync(() -> mSearchView.setQueryHint("hint 1"));
+        assertTrue(TextUtils.equals("hint 1", mSearchView.getQueryHint()));
+
+        mInstrumentation.runOnMainSync(() -> mSearchView.setQueryHint("hint 2"));
+        assertTrue(TextUtils.equals("hint 2", mSearchView.getQueryHint()));
+    }
+
+    public void testAccessInputType() {
+        mInstrumentation.runOnMainSync(() ->
+                mSearchView.setInputType(InputType.TYPE_CLASS_NUMBER
+                    | InputType.TYPE_NUMBER_FLAG_DECIMAL
+                    | InputType.TYPE_NUMBER_FLAG_SIGNED));
+        assertEquals(InputType.TYPE_CLASS_NUMBER
+                | InputType.TYPE_NUMBER_FLAG_DECIMAL
+                | InputType.TYPE_NUMBER_FLAG_SIGNED, mSearchView.getInputType());
+
+        mInstrumentation.runOnMainSync(() ->
+                mSearchView.setInputType(InputType.TYPE_CLASS_TEXT
+                        | InputType.TYPE_TEXT_FLAG_CAP_WORDS));
+        assertEquals(InputType.TYPE_CLASS_TEXT
+                | InputType.TYPE_TEXT_FLAG_CAP_WORDS, mSearchView.getInputType());
+
+        mInstrumentation.runOnMainSync(() -> mSearchView.setInputType(InputType.TYPE_CLASS_PHONE));
+        assertEquals(InputType.TYPE_CLASS_PHONE, mSearchView.getInputType());
+    }
+
+    public void testAccessImeOptions() {
+        mInstrumentation.runOnMainSync(() -> mSearchView.setImeOptions(EditorInfo.IME_ACTION_GO));
+        assertEquals(EditorInfo.IME_ACTION_GO, mSearchView.getImeOptions());
+
+        mInstrumentation.runOnMainSync(() -> mSearchView.setImeOptions(EditorInfo.IME_ACTION_DONE));
+        assertEquals(EditorInfo.IME_ACTION_DONE, mSearchView.getImeOptions());
+
+        mInstrumentation.runOnMainSync(() -> mSearchView.setImeOptions(EditorInfo.IME_NULL));
+        assertEquals(EditorInfo.IME_NULL, mSearchView.getImeOptions());
     }
 }

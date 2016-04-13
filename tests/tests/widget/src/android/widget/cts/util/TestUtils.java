@@ -33,6 +33,7 @@ import org.hamcrest.Matcher;
 import java.util.ArrayList;
 import java.util.List;
 
+import static org.junit.Assert.fail;
 import static org.mockito.Matchers.argThat;
 
 public class TestUtils {
