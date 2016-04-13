@@ -33,22 +33,22 @@ public class SupportMessageTest extends BaseDeviceAdminTest {
     // Declare a different string of the same type for both long and short messages, so we can be
     // sure they aren't mixed up by any API calls.
     private static class ShortMessage {
-        static final String EMPTY = "";
-        static final String SIMPLE = "short-message-short";
-        static final String MAX_LENGTH =
+        static final CharSequence EMPTY = "";
+        static final CharSequence SIMPLE = "short-message-short";
+        static final CharSequence MAX_LENGTH =
                 new String(new char[MAX_SHORT_MSG_LENGTH]).replace('\0', 'X');
-        static final String TOO_LONG =
+        static final CharSequence TOO_LONG =
                 new String(new char[MAX_SHORT_MSG_LENGTH + 10]).replace('\0', 'A');
-        static final String UNICODE = new String(Character.toChars(0x1F634)) + " zzz";
-        static final String CONTAINS_NULL = "short\0null";
+        static final CharSequence UNICODE = new String(Character.toChars(0x1F634)) + " zzz";
+        static final CharSequence CONTAINS_NULL = "short\0null";
     }
     private static class LongMessage {
-        static final String EMPTY = "";
-        static final String SIMPLE = "long-message-long";
-        static final String LONG =
+        static final CharSequence EMPTY = "";
+        static final CharSequence SIMPLE = "long-message-long";
+        static final CharSequence LONG =
                 new String(new char[REASONABLE_LONG_MSG_LENGTH]).replace('\0', 'B');
-        static final String UNICODE = new String(Character.toChars(0x1F609)) + " ;)";
-        static final String CONTAINS_NULL = "long\0null";
+        static final CharSequence UNICODE = new String(Character.toChars(0x1F609)) + " ;)";
+        static final CharSequence CONTAINS_NULL = "long\0null";
     }
 
     @Override
@@ -86,7 +86,7 @@ public class SupportMessageTest extends BaseDeviceAdminTest {
          */
         mDevicePolicyManager.setShortSupportMessage(ADMIN_RECEIVER_COMPONENT,
                 ShortMessage.TOO_LONG);
-        assertStartsWith(ShortMessage.TOO_LONG.substring(0, MAX_SHORT_MSG_LENGTH),
+        assertStartsWith(ShortMessage.TOO_LONG.subSequence(0, MAX_SHORT_MSG_LENGTH),
                 getShortMessage());
 
         // Long support messages should not be affected; verify that.
@@ -117,7 +117,7 @@ public class SupportMessageTest extends BaseDeviceAdminTest {
         } catch (NullPointerException expected) {
         }
         try {
-            String message = mDevicePolicyManager.getShortSupportMessage(null);
+            CharSequence message = mDevicePolicyManager.getShortSupportMessage(null);
             fail("Exception should have been thrown for null admin ComponentName");
         } catch (NullPointerException expected) {
         }
@@ -130,7 +130,7 @@ public class SupportMessageTest extends BaseDeviceAdminTest {
         }
 
         try {
-            String message = mDevicePolicyManager.getLongSupportMessage(null);
+            CharSequence message = mDevicePolicyManager.getLongSupportMessage(null);
             fail("Exception should have been thrown for null admin ComponentName");
         } catch (NullPointerException expected) {
         }
@@ -149,7 +149,7 @@ public class SupportMessageTest extends BaseDeviceAdminTest {
      *
      * @throws AssertionError in the case that the message could not be set.
      */
-    private void setShortMessage(String message) {
+    private void setShortMessage(CharSequence message) {
         mDevicePolicyManager.setShortSupportMessage(ADMIN_RECEIVER_COMPONENT, message);
         assertEquals(message, getShortMessage());
     }
@@ -159,23 +159,23 @@ public class SupportMessageTest extends BaseDeviceAdminTest {
      *
      * @throws AssertionError in the case that the message could not be set.
      */
-    private void setLongMessage(String message) {
+    private void setLongMessage(CharSequence message) {
         mDevicePolicyManager.setLongSupportMessage(ADMIN_RECEIVER_COMPONENT, message);
         assertEquals(message, getLongMessage());
     }
 
-    private String getShortMessage() {
+    private CharSequence getShortMessage() {
         return mDevicePolicyManager.getShortSupportMessage(ADMIN_RECEIVER_COMPONENT);
     }
 
-    private String getLongMessage() {
+    private CharSequence getLongMessage() {
         return mDevicePolicyManager.getLongSupportMessage(ADMIN_RECEIVER_COMPONENT);
     }
 
-    private static void assertStartsWith(String expectPrefix, String actual) {
+    private static void assertStartsWith(CharSequence expectPrefix, CharSequence actual) {
         assertNotNull(expectPrefix);
         assertNotNull(actual);
-        if (!actual.startsWith(expectPrefix)) {
+        if (!actual.toString().startsWith(expectPrefix.toString())) {
             fail("Expected prefix: '" + expectPrefix + "'\n" +
                  "            got: '" + actual + "'");
         }
