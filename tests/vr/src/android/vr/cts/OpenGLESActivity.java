@@ -46,8 +46,7 @@ public class OpenGLESActivity extends Activity {
     public static final String EXTRA_LATCH_COUNT = "latchCount";
 
 
-    // Note that the final extension will use value 0x32C0.
-    public static final int EGL_PROTECTED_CONTENT_EXT = 0x32E0;
+    public static final int EGL_PROTECTED_CONTENT_EXT = 0x32C0;
 
     // Context priority enums are not exposed in Java.
     public static final int EGL_CONTEXT_PRIORITY_LEVEL_IMG = 0x3100;
