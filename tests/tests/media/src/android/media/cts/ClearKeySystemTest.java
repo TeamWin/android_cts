@@ -68,7 +68,7 @@ public class ClearKeySystemTest extends MediaPlayerTestBase {
     private static final int VIDEO_HEIGHT_CENC = 720;
     private static final int VIDEO_WIDTH_WEBM = 320;
     private static final int VIDEO_HEIGHT_WEBM = 180;
-    private static final long PLAY_TIME_MS = TimeUnit.MILLISECONDS.convert(1, TimeUnit.MINUTES);
+    private static final long PLAY_TIME_MS = TimeUnit.MILLISECONDS.convert(25, TimeUnit.SECONDS);
     private static final String MIME_VIDEO_AVC = MediaFormat.MIMETYPE_VIDEO_AVC;
     private static final String MIME_VIDEO_VP8 = MediaFormat.MIMETYPE_VIDEO_VP8;
 
@@ -379,7 +379,7 @@ public class ClearKeySystemTest extends MediaPlayerTestBase {
         // starts video playback
         mMediaCodecPlayer.startThread();
 
-        long timeOut = System.currentTimeMillis() + PLAY_TIME_MS * 4;
+        long timeOut = System.currentTimeMillis() + PLAY_TIME_MS;
         while (timeOut > System.currentTimeMillis() && !mMediaCodecPlayer.isEnded()) {
             Thread.sleep(SLEEP_TIME_MS);
             if (mMediaCodecPlayer.getCurrentPosition() >= mMediaCodecPlayer.getDuration() ) {
