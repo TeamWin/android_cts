@@ -17,5 +17,6 @@
         <wipe-data />
         <disable-camera />
         <limit-password />
+        <disable-keyguard-features/>
     </uses-policies>
 </device-admin>
