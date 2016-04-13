@@ -223,6 +223,25 @@ public class StorageManagerTest extends AndroidTestCase {
         assertStorageVolumesEquals(primary, mStorageManager.getPrimaryVolume());
     }
 
+    public void testGetStorageVolume() throws Exception {
+        assertNull("Should not get volume for null path", mStorageManager.getStorageVolume(null));
+        assertNull("Should not get volume for invalid path",
+                mStorageManager.getStorageVolume(new File("/system")));
+        assertNull("Should not get volume for storage directory",
+                mStorageManager.getStorageVolume(Environment.getStorageDirectory()));
+
+        final File root = Environment.getExternalStorageDirectory();
+        final StorageVolume primary = mStorageManager.getPrimaryStorageVolume();
+        final StorageVolume rootVolume = mStorageManager.getStorageVolume(root);
+        assertNotNull("No volume for root (" + root + ")", rootVolume);
+        assertStorageVolumesEquals(primary, rootVolume);
+
+        final File child = new File(root, "child");
+        StorageVolume childVolume = mStorageManager.getStorageVolume(child);
+        assertNotNull("No volume for child (" + child + ")", childVolume);
+        assertStorageVolumesEquals(primary, childVolume);
+    }
+
     private void assertStorageVolumesEquals(StorageVolume volume, StorageVolume clone)
             throws Exception {
         // Asserts equals() method.
