@@ -86,12 +86,15 @@ public class DragAndDropTest extends InstrumentationTestCase {
 
     private void doCrossAppDrag(String sourceViewId, String targetViewId, String expectedResult) {
         startAppInStack(DRAG_SOURCE_PKG, DOCKED_STACK_ID);
-        startAppInStack(DROP_TARGET_PKG, FREEFORM_WORKSPACE_STACK_ID);
-
         Point srcPosition = getVisibleCenter(DRAG_SOURCE_PKG, sourceViewId);
+
+        startAppInStack(DROP_TARGET_PKG, FREEFORM_WORKSPACE_STACK_ID);
         Point tgtPosition = getVisibleCenter(DROP_TARGET_PKG, targetViewId);
 
         drag(srcPosition, tgtPosition);
+
+        // If we don't do that the next 'findObject' often fails.
+        mDevice.click(tgtPosition.x, tgtPosition.y);
 
         UiObject2 result = findObject(DROP_TARGET_PKG, "result");
         assertNotNull("Result widget not found", result);
