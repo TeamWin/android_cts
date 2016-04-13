@@ -22,9 +22,11 @@ import android.content.Context;
 import android.content.res.Resources;
 import android.content.res.Resources.NotFoundException;
 import android.os.Environment;
+import android.os.Parcel;
 import android.cts.util.FileUtils;
 import android.os.storage.OnObbStateChangeListener;
 import android.os.storage.StorageManager;
+import android.os.storage.StorageVolume;
 import android.test.AndroidTestCase;
 import android.test.ComparisonFailure;
 import android.util.Log;
@@ -35,6 +37,8 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
 import java.io.IOException;
+import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -155,6 +159,81 @@ public class StorageManagerTest extends AndroidTestCase {
         } finally {
             unmountObb(file1, OnObbStateChangeListener.UNMOUNTED);
             unmountObb(file2, OnObbStateChangeListener.UNMOUNTED);
+        }
+    }
+
+    public void testGetPrimaryVolume() throws Exception {
+        final StorageVolume volume = mStorageManager.getPrimaryStorageVolume();
+        assertNotNull("Did not get primary storage", volume);
+
+        // Tests some basic Scoped Directory Access requests.
+        assertNull("Should not grant access for root directory", volume.createAccessIntent(null));
+        assertNull("Should not grant access for invalid directory",
+                volume.createAccessIntent("/system"));
+        assertNotNull("Should grant access for valid directory " + Environment.DIRECTORY_DOCUMENTS,
+                volume.createAccessIntent(Environment.DIRECTORY_DOCUMENTS));
+
+        // Tests basic properties.
+        assertNotNull("Should have description", volume.getDescription(mContext));
+        assertTrue("Should be primary", volume.isPrimary());
+        assertEquals("Wrong state", Environment.MEDIA_MOUNTED, volume.getState());
+
+        // Tests properties that depend on storage type (emulated or physical)
+        final String uuid = volume.getUuid();
+        final boolean removable = volume.isRemovable();
+        final boolean emulated = volume.isEmulated();
+        if (emulated) {
+            assertFalse("Should not be removable", removable);
+            assertNull("Should not have uuid", uuid);
+        } else {
+            assertTrue("Should be removable", removable);
+            assertNotNull("Should have uuid", uuid);
+        }
+
+        // Tests path - although it's not a public API, sm.getPrimaryStorageVolume()
+        // explicitly states it should match Environment#getExternalStorageDirectory
+        final String path = volume.getPath();
+        assertEquals("Path does not match Environment's",
+                Environment.getExternalStorageDirectory().getAbsolutePath(), path);
+
+        // Tests Parcelable contract.
+        assertEquals("Wrong describeContents", 0, volume.describeContents());
+        final Parcel parcel = Parcel.obtain();
+        try {
+            volume.writeToParcel(parcel, 0);
+            parcel.setDataPosition(0);
+            final StorageVolume clone = StorageVolume.CREATOR.createFromParcel(parcel);
+            assertStorageVolumesEquals(volume, clone);
+        } finally {
+            parcel.recycle();
+        }
+    }
+
+    public void testGetStorageVolumes() throws Exception {
+        final List<StorageVolume> volumes = mStorageManager.getStorageVolumes();
+        assertFalse("No volume return", volumes.isEmpty());
+        StorageVolume primary = null;
+        for (StorageVolume volume : volumes) {
+            if (volume.isPrimary()) {
+                assertNull("There can be only one primary volume: " + volumes, primary);
+                primary = volume;
+            }
+        }
+        assertNotNull("No primary volume on  " + volumes, primary);
+        assertStorageVolumesEquals(primary, mStorageManager.getPrimaryVolume());
+    }
+
+    private void assertStorageVolumesEquals(StorageVolume volume, StorageVolume clone)
+            throws Exception {
+        // Asserts equals() method.
+        assertEquals("StorageVolume.equals() mismatch", volume, clone);
+        // Make sure all fields match.
+        for (Field field : StorageVolume.class.getDeclaredFields()) {
+            if (Modifier.isStatic(field.getModifiers())) continue;
+            field.setAccessible(true);
+            final Object originalValue = field.get(volume);
+            final Object clonedValue = field.get(clone);
+            assertEquals("Mismatch for field " + field.getName(), originalValue, clonedValue);
         }
     }
 
