@@ -39,6 +39,7 @@ import android.print.cts.services.StubbablePrinterDiscoverySession;
 import android.support.test.uiautomator.By;
 import android.support.test.uiautomator.UiObject;
 import android.support.test.uiautomator.UiSelector;
+import android.support.test.uiautomator.UiObjectNotFoundException;
 import android.util.Log;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
@@ -89,18 +90,23 @@ public class CustomPrintOptionsTest extends BasePrintTest {
             return PAGESS[2];
         }
 
-        UiObject pagesEditText = getUiDevice().findObject(new UiSelector().resourceId(
-                "com.android.printspooler:id/page_range_edittext"));
+        try {
+            UiObject pagesEditText = getUiDevice().findObject(new UiSelector().resourceId(
+                    "com.android.printspooler:id/page_range_edittext"));
 
-        if (pagesEditText.getText().equals("2")) {
-            return PAGESS[1];
+            if (pagesEditText.getText().equals("2")) {
+                return PAGESS[1];
+            }
+
+            if (pagesEditText.getText().equals("1")) {
+                return PAGESS[0];
+            }
+
+            return null;
+        } catch (UiObjectNotFoundException e) {
+            dumpWindowHierarchy();
+            throw new UiObjectNotFoundException(e);
         }
-
-        if (pagesEditText.getText().equals("1")) {
-            return PAGESS[0];
-        }
-
-        return null;
     }
 
     /**

@@ -55,6 +55,7 @@ import android.support.test.uiautomator.UiSelector;
 import android.test.InstrumentationTestCase;
 import android.util.DisplayMetrics;
 import android.util.LocaleList;
+import android.util.Log;
 
 import org.hamcrest.BaseMatcher;
 import org.hamcrest.Description;
@@ -62,7 +63,7 @@ import org.mockito.InOrder;
 import org.mockito.stubbing.Answer;
 
 import java.io.BufferedReader;
-import java.io.File;
+import java.io.ByteArrayOutputStream;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -71,11 +72,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.TimeoutException;
-
 /**
  * This is the base class for print tests.
  */
 public abstract class BasePrintTest extends InstrumentationTestCase {
+    private final static String LOG_TAG = "BasePrintTest";
 
     protected static final long OPERATION_TIMEOUT_MILLIS = 20000;
     private static final String PRINT_SPOOLER_PACKAGE_NAME = "com.android.printspooler";
@@ -456,11 +457,13 @@ public abstract class BasePrintTest extends InstrumentationTestCase {
         }
     }
 
-    private void dumpWindowHierarchy() throws IOException {
-        String name = "print-test-failure-" + System.currentTimeMillis() + ".xml";
-        File file = new File(getActivity().getFilesDir(), name);
-        try (FileOutputStream os = new FileOutputStream(file.toString())) {
-            mUiDevice.dumpWindowHierarchy(os);
+    protected void dumpWindowHierarchy() throws IOException {
+        ByteArrayOutputStream os = new ByteArrayOutputStream();
+        mUiDevice.dumpWindowHierarchy(os);
+
+        Log.w(LOG_TAG, "Window hierarchy:");
+        for (String line : os.toString("UTF-8").split("\n")) {
+            Log.w(LOG_TAG, line);
         }
     }
 
