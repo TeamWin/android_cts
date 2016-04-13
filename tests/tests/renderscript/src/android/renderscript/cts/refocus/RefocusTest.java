@@ -35,26 +35,26 @@ import java.io.IOException;
  */
 public class RefocusTest extends RSBaseCompute {
     /**
-     * Test the orignal and current refocus code
+     * Test the orignal refocus code
      */
     public void testOriginalRefocus() {
         refocus(RenderScriptTask.script.f32, Double.POSITIVE_INFINITY);
     }
 
     /**
-     * Test the orignal and current refocus code
+     * Test the new refocus code
      */
     public void testNewRefocus() {
         // The new implementation may run on a GPU using relaxed floating point
         // mathematics. Hence more relaxed precision requirement.
-        refocus(RenderScriptTask.script.d1new, 50);
+        refocus(RenderScriptTask.script.d1new, 45);
     }
 
     /**
      * Test a refocus operator against the refocus_reference image
-     * @param d1new which version of refocus to run
+     * @param impl version of refocus to run
      */
-    private void refocus(RenderScriptTask.script d1new, double minimumPSNR) {
+    private void refocus(RenderScriptTask.script impl, double minimumPSNR) {
         Context ctx = getContext();
 
         RenderScript rs = RenderScript.create(ctx);
@@ -70,7 +70,7 @@ public class RefocusTest extends RSBaseCompute {
         DepthOfFieldOptions current_depth_options = new DepthOfFieldOptions(current_rgbz);
         RsTaskParams rsTaskParam = new RsTaskParams(rs, current_depth_options);
 
-        RenderScriptTask renderScriptTask = new RenderScriptTask(rs, d1new);
+        RenderScriptTask renderScriptTask = new RenderScriptTask(rs, impl);
         Bitmap outputImage = renderScriptTask.applyRefocusFilter(rsTaskParam.mOptions);
 
         Bitmap expectedImage = BitmapFactory.decodeResource(ctx.getResources(), R.drawable.expected_output);

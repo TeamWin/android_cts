@@ -37,23 +37,23 @@ public class MediaStoreSaver {
                                        String imageName,
                                        Context mContext) {
         File picDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES);
-
-        if (!picDir.exists()) {
+        if (!picDir.exists() && picDir.mkdirs()) {
             // The Pictures directory does not exist on an x86 emulator
             picDir = mContext.getFilesDir();
         }
 
         File dir = new File(picDir, folderName);
-        dir.mkdirs();
+        if (!dir.exists() && !dir.mkdirs()) {
+            return "";
+        }
 
         try {
             File file = File.createTempFile(imageName, ".png", dir);
             FileOutputStream fOut = new FileOutputStream(file);
             bitmap.compress(Bitmap.CompressFormat.PNG, 0, fOut);
-            System.out.println("saved image: " + file.getAbsolutePath());
+            android.util.Log.v("RefocusTest", "saved image: " + file.getAbsolutePath());
             fOut.flush();
             fOut.close();
-            MediaStorageScan(mContext, file);
             return file.getAbsolutePath();
         } catch (FileNotFoundException e) {
             e.printStackTrace();
@@ -63,22 +63,4 @@ public class MediaStoreSaver {
 
         return "";
     }
-
-    /*
-     * Refresh image files to view them on computer
-     */
-    private static void MediaStorageScan(Context context, final File file) {
-        final Uri fileUri = Uri.fromFile(file);
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.ICE_CREAM_SANDWICH) {
-            context.sendBroadcast(new Intent("android.hardware.action.NEW_PICTURE", fileUri));
-        }
-
-        context.sendBroadcast(new Intent("com.android.camera.NEW_PICTURE", fileUri));
-
-        final Intent intent = new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE);
-        intent.setData(fileUri);
-        context.sendBroadcast(intent);
-    }
-
 }
