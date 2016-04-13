@@ -23,6 +23,7 @@ import android.content.pm.PackageManager;
 import android.media.tv.TvContract;
 import android.media.tv.TvInputInfo;
 import android.media.tv.TvInputManager;
+import android.os.Bundle;
 import android.os.Parcel;
 import android.test.AndroidTestCase;
 import android.text.TextUtils;
@@ -202,11 +203,16 @@ public class TvInputInfoTest extends AndroidTestCase {
         assertEquals(mStubInfo.getTunerCount(), defaultInfo.getTunerCount());
         assertEquals(mStubInfo.canRecord(), defaultInfo.canRecord());
 
+        Bundle extras = new Bundle();
+        final String TEST_KEY = "android.media.tv.cts.TEST_KEY";
+        final String TEST_VALUE = "android.media.tv.cts.TEST_VALUE";
+        extras.putString(TEST_KEY, TEST_VALUE);
         TvInputInfo updatedInfo = new TvInputInfo.Builder(getContext(),
                 new ComponentName(getContext(), StubTunerTvInputService.class)).setTunerCount(10)
-                .setCanRecord(true).build();
+                .setCanRecord(true).setExtras(extras).build();
         assertEquals(mStubInfo.getId(), updatedInfo.getId());
         assertEquals(10, updatedInfo.getTunerCount());
         assertTrue(updatedInfo.canRecord());
+        assertEquals(TEST_VALUE, updatedInfo.getExtras().getString(TEST_KEY));
     }
 }
