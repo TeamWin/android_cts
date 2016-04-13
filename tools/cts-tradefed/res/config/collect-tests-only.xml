@@ -36,4 +36,7 @@
     <!-- Tell all deqp tests to only list the tests -->
     <option name="compatibility:test-arg" value="com.drawelements.deqp.runner.DeqpTestRunner:collect-tests-only:true" />
 
+    <!-- Tell all JarHostTests to only list the tests -->
+    <option name="compatibility:test-arg" value="com.android.compatibility.common.tradefed.testtype.JarHostTest:collect-tests-only:true" />
+
 </configuration>
