@@ -78,6 +78,7 @@ cts_account_support_packages := \
 cts_support_packages := \
     CtsAbiOverrideTestApp \
     CtsAccountManagementDevicePolicyApp \
+    CtsAdminApp \
     CtsAlarmClockService \
     CtsAppRestrictionsManagingApp \
     CtsAppRestrictionsTargetApp \
@@ -150,6 +151,7 @@ cts_test_packages := \
     CtsAccountManagerTestCases \
     CtsAccessibilityServiceTestCases \
     CtsAccessibilityTestCases \
+    CtsAdminTestCases \
     CtsAlarmClockTestCases \
     CtsAnimationTestCases \
     CtsAppTestCases \
