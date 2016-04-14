@@ -498,6 +498,13 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
         executeDeviceTestMethod(".SuspendPackageTest", "testSuspendNotSuspendablePackages");
     }
 
+    public void testTrustAgentInfo() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
+        executeDeviceTestClass(".TrustAgentInfoTest");
+    }
+
     protected void executeDeviceTestClass(String className) throws Exception {
         assertTrue(runDeviceTestsAsUser(DEVICE_ADMIN_PKG, className, mUserId));
     }
