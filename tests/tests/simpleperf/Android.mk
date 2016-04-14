@@ -4,6 +4,9 @@ test_executable := simpleperf-unit-test-cts
 list_executable := $(test_executable)_list
 simpleperf_src_path := system/extras/simpleperf
 
+LLVM_ROOT_PATH := external/llvm
+include $(LLVM_ROOT_PATH)/llvm.mk
+
 include $(CLEAR_VARS)
 LOCAL_MODULE := $(test_executable)
 LOCAL_MODULE_PATH := $(TARGET_OUT_DATA)/nativetest
@@ -13,7 +16,7 @@ LOCAL_MODULE_STEM_64 := $(LOCAL_MODULE)64
 
 LOCAL_SHARED_LIBRARIES += \
   libbacktrace \
-  libbacktrace_offline \
+  libunwind \
   libbase \
   liblog \
   libutils \
@@ -24,9 +27,10 @@ LOCAL_WHOLE_STATIC_LIBRARIES = \
 
 LOCAL_STATIC_LIBRARIES += \
   libgtest \
-  liblzma \
+  libbacktrace_offline \
   libziparchive \
   libz \
+  liblzma \
 
 LOCAL_POST_LINK_CMD =  \
   TMP_FILE=`mktemp $(OUT_DIR)/simpleperf-post-link-XXXXXXXXXX` && \
@@ -44,19 +48,26 @@ LOCAL_MODULE_HOST_OS := linux
 LOCAL_MULTILIB := first
 LOCAL_LDLIBS = -lrt
 
-LOCAL_SHARED_LIBRARIES := \
-  libbacktrace_offline \
-  libbacktrace \
-
 LOCAL_WHOLE_STATIC_LIBRARIES += \
   libsimpleperf_cts_test \
 
 LOCAL_STATIC_LIBRARIES += \
+  libbacktrace_offline \
+  libbacktrace \
+  libunwind \
   libziparchive-host \
+  libz \
+  liblzma \
   libbase \
   liblog \
-  liblzma \
-  libz \
+  libcutils \
   libutils \
+  libLLVMObject \
+  libLLVMBitReader \
+  libLLVMMC \
+  libLLVMMCParser \
+  libLLVMCore \
+  libLLVMSupport \
 
+include $(LLVM_HOST_BUILD_MK)
 include $(BUILD_HOST_NATIVE_TEST)
