@@ -573,54 +573,6 @@ public class CallDetailsTest extends BaseTelecomTestWithMockServices {
     }
 
     /**
-     * Tests that a request to pull an external call via {@link Call#pullExternalCall()} is
-     * communicated to the {@link Connection} via {@link Connection#onPullExternalCall()}.
-     */
-    public void testPullExternalCall() {
-        if (!mShouldTestTelecom) {
-            return;
-        }
-
-        // First, configure the connection as an external call which is pullable.
-        int properties = mConnection.getConnectionProperties();
-        int capabilities = mConnection.getConnectionCapabilities();
-        properties |= Connection.PROPERTY_IS_EXTERNAL_CALL;
-        capabilities |= Connection.CAPABILITY_CAN_PULL_CALL;
-        mConnection.setConnectionCapabilities(capabilities);
-        mConnection.setConnectionProperties(properties);
-        assertCallProperties(mCall, Call.Details.PROPERTY_IS_EXTERNAL_CALL);
-
-        final InvokeCounter counter = mConnection.getInvokeCounter(
-                MockConnection.ON_PULL_EXTERNAL_CALL);
-        mCall.pullExternalCall();
-        counter.waitForCount(1, WAIT_FOR_STATE_CHANGE_TIMEOUT_MS);
-    }
-
-    /**
-     * Asserts that a call's capabilities are as expected.
-     *
-     * @param call The call.
-     * @param capabilities The expected capabilities.
-     */
-    private void assertCallCapabilities(final Call call, final int capabilities) {
-        waitUntilConditionIsTrueOrTimeout(
-                new Condition() {
-                    @Override
-                    public Object expected() {
-                        return capabilities;
-                    }
-
-                    @Override
-                    public Object actual() {
-                        return call.getDetails().getCallCapabilities();
-                    }
-                },
-                TestUtils.WAIT_FOR_STATE_CHANGE_TIMEOUT_MS,
-                "Call should have capabilities " + capabilities
-        );
-    }
-
-    /**
      * Asserts that a call's extras contain a specified key.
      *
      * @param call The call.
