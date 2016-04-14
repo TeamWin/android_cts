@@ -20,6 +20,7 @@ import android.app.Instrumentation;
 import android.test.ActivityInstrumentationTestCase2;
 import android.test.UiThreadTest;
 import android.test.suitebuilder.annotation.SmallTest;
+import android.text.TextUtils;
 import android.widget.NumberPicker;
 import android.widget.cts.util.ViewTestUtils;
 import org.mockito.InOrder;
@@ -53,6 +54,10 @@ public class NumberPickerTest extends ActivityInstrumentationTestCase2<NumberPic
         new NumberPicker(mActivity);
 
         new NumberPicker(mActivity, null);
+
+        new NumberPicker(mActivity, null, android.R.attr.numberPickerStyle);
+
+        new NumberPicker(mActivity, null, 0, android.R.style.Widget_Material_Light_NumberPicker);
     }
 
     private void verifyDisplayedValues(String[] expected) {
@@ -63,7 +68,7 @@ public class NumberPickerTest extends ActivityInstrumentationTestCase2<NumberPic
         }
     }
 
-    public void testSetDisplayedValues() {
+    public void testSetDisplayedValuesRangeMatch() {
         mInstrumentation.runOnMainSync(() -> {
             mNumberPicker.setMinValue(10);
             mNumberPicker.setMaxValue(12);
@@ -93,7 +98,7 @@ public class NumberPickerTest extends ActivityInstrumentationTestCase2<NumberPic
         verifyDisplayedValues(NUMBER_NAMES_ALT3);
     }
 
-    public void testSetDisplayedValuesMismatch() {
+    public void testSetDisplayedValuesRangeMismatch() {
         mInstrumentation.runOnMainSync(() -> {
             mNumberPicker.setMinValue(10);
             mNumberPicker.setMaxValue(14);
@@ -114,6 +119,134 @@ public class NumberPickerTest extends ActivityInstrumentationTestCase2<NumberPic
                 mNumberPicker.setDisplayedValues(NUMBER_NAMES5);
             }
         });
+    }
+
+    public void testSelectionDisplayedValueFromDisplayedValues() {
+        mInstrumentation.runOnMainSync(() -> {
+            mNumberPicker.setMinValue(1);
+            mNumberPicker.setMaxValue(3);
+            mNumberPicker.setDisplayedValues(NUMBER_NAMES3);
+        });
+
+        mInstrumentation.runOnMainSync(() -> mNumberPicker.setValue(1));
+        assertTrue(TextUtils.equals(NUMBER_NAMES3[0],
+                mNumberPicker.getDisplayedValueForCurrentSelection()));
+
+        mInstrumentation.runOnMainSync(() -> mNumberPicker.setValue(2));
+        assertTrue(TextUtils.equals(NUMBER_NAMES3[1],
+                mNumberPicker.getDisplayedValueForCurrentSelection()));
+
+        mInstrumentation.runOnMainSync(() -> mNumberPicker.setValue(3));
+        assertTrue(TextUtils.equals(NUMBER_NAMES3[2],
+                mNumberPicker.getDisplayedValueForCurrentSelection()));
+
+        // Switch to a different displayed values array
+        mInstrumentation.runOnMainSync(() -> {
+            mNumberPicker.setDisplayedValues(NUMBER_NAMES_ALT3);
+        });
+        assertTrue(TextUtils.equals(NUMBER_NAMES_ALT3[2],
+                mNumberPicker.getDisplayedValueForCurrentSelection()));
+
+        mInstrumentation.runOnMainSync(() -> mNumberPicker.setValue(1));
+        assertTrue(TextUtils.equals(NUMBER_NAMES_ALT3[0],
+                mNumberPicker.getDisplayedValueForCurrentSelection()));
+
+        mInstrumentation.runOnMainSync(() -> mNumberPicker.setValue(2));
+        assertTrue(TextUtils.equals(NUMBER_NAMES_ALT3[1],
+                mNumberPicker.getDisplayedValueForCurrentSelection()));
+    }
+
+    public void testSelectionDisplayedValueFromFormatter() {
+        mInstrumentation.runOnMainSync(() -> {
+            mNumberPicker.setMinValue(0);
+            mNumberPicker.setMaxValue(4);
+            mNumberPicker.setFormatter((int value) -> "entry " + value);
+        });
+
+        mInstrumentation.runOnMainSync(() -> mNumberPicker.setValue(0));
+        assertTrue(TextUtils.equals("entry 0",
+                mNumberPicker.getDisplayedValueForCurrentSelection()));
+
+        mInstrumentation.runOnMainSync(() -> mNumberPicker.setValue(1));
+        assertTrue(TextUtils.equals("entry 1",
+                mNumberPicker.getDisplayedValueForCurrentSelection()));
+
+        mInstrumentation.runOnMainSync(() -> mNumberPicker.setValue(2));
+        assertTrue(TextUtils.equals("entry 2",
+                mNumberPicker.getDisplayedValueForCurrentSelection()));
+
+        mInstrumentation.runOnMainSync(() -> mNumberPicker.setValue(3));
+        assertTrue(TextUtils.equals("entry 3",
+                mNumberPicker.getDisplayedValueForCurrentSelection()));
+
+        mInstrumentation.runOnMainSync(() -> mNumberPicker.setValue(4));
+        assertTrue(TextUtils.equals("entry 4",
+                mNumberPicker.getDisplayedValueForCurrentSelection()));
+
+        // Switch to a different formatter
+        mInstrumentation.runOnMainSync(
+                () -> mNumberPicker.setFormatter((int value) -> "row " + value));
+        // Check that the currently selected value has new displayed value
+        assertTrue(TextUtils.equals("row 4",
+                mNumberPicker.getDisplayedValueForCurrentSelection()));
+
+        // and check a couple more values for the new formatting
+        mInstrumentation.runOnMainSync(() -> mNumberPicker.setValue(0));
+        assertTrue(TextUtils.equals("row 0",
+                mNumberPicker.getDisplayedValueForCurrentSelection()));
+
+        mInstrumentation.runOnMainSync(() -> mNumberPicker.setValue(1));
+        assertTrue(TextUtils.equals("row 1",
+                mNumberPicker.getDisplayedValueForCurrentSelection()));
+    }
+
+
+    public void testSelectionDisplayedValuePrecedence() {
+        mInstrumentation.runOnMainSync(() -> {
+            mNumberPicker.setMinValue(1);
+            mNumberPicker.setMaxValue(3);
+            mNumberPicker.setDisplayedValues(NUMBER_NAMES3);
+            mNumberPicker.setFormatter((int value) -> "entry " + value);
+        });
+
+        // According to the widget documentation, displayed values take precedence over formatter
+        mInstrumentation.runOnMainSync(() -> mNumberPicker.setValue(1));
+        assertTrue(TextUtils.equals(NUMBER_NAMES3[0],
+                mNumberPicker.getDisplayedValueForCurrentSelection()));
+
+        mInstrumentation.runOnMainSync(() -> mNumberPicker.setValue(2));
+        assertTrue(TextUtils.equals(NUMBER_NAMES3[1],
+                mNumberPicker.getDisplayedValueForCurrentSelection()));
+
+        mInstrumentation.runOnMainSync(() -> mNumberPicker.setValue(3));
+        assertTrue(TextUtils.equals(NUMBER_NAMES3[2],
+                mNumberPicker.getDisplayedValueForCurrentSelection()));
+
+        // Set displayed values to null and test that the widget is using the formatter
+        mInstrumentation.runOnMainSync(() -> mNumberPicker.setDisplayedValues(null));
+        assertTrue(TextUtils.equals("entry 3",
+                mNumberPicker.getDisplayedValueForCurrentSelection()));
+
+        mInstrumentation.runOnMainSync(() -> mNumberPicker.setValue(1));
+        assertTrue(TextUtils.equals("entry 1",
+                mNumberPicker.getDisplayedValueForCurrentSelection()));
+
+        mInstrumentation.runOnMainSync(() -> mNumberPicker.setValue(2));
+        assertTrue(TextUtils.equals("entry 2",
+                mNumberPicker.getDisplayedValueForCurrentSelection()));
+
+        // Set a different displayed values array and test that it's taking precedence
+        mInstrumentation.runOnMainSync(() -> mNumberPicker.setDisplayedValues(NUMBER_NAMES_ALT3));
+        assertTrue(TextUtils.equals(NUMBER_NAMES_ALT3[1],
+                mNumberPicker.getDisplayedValueForCurrentSelection()));
+
+        mInstrumentation.runOnMainSync(() -> mNumberPicker.setValue(1));
+        assertTrue(TextUtils.equals(NUMBER_NAMES_ALT3[0],
+                mNumberPicker.getDisplayedValueForCurrentSelection()));
+
+        mInstrumentation.runOnMainSync(() -> mNumberPicker.setValue(3));
+        assertTrue(TextUtils.equals(NUMBER_NAMES_ALT3[2],
+                mNumberPicker.getDisplayedValueForCurrentSelection()));
     }
 
     public void testAccessValue() {
