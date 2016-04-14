@@ -72,6 +72,14 @@ public interface IModuleDef extends Comparable<IModuleDef>, IBuildReceiver, IDev
     void addExcludeFilter(String name);
 
     /**
+     * Set a list of preparers to allow to run before or after a test.
+     * If this list is empty, then all configured preparers will run.
+     *
+     * @param a list containing the simple name of the preparer to run.
+     */
+    void setPreparerWhitelist(Set<String> preparerWhitelist);
+
+    /**
      * Runs the module's precondition checks and setup tasks.
      */
     void prepare(boolean skipPrep) throws DeviceNotAvailableException;
