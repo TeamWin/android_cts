@@ -79,7 +79,7 @@ import java.util.concurrent.TimeoutException;
 public abstract class BasePrintTest extends InstrumentationTestCase {
     private final static String LOG_TAG = "BasePrintTest";
 
-    protected static final long OPERATION_TIMEOUT_MILLIS = 20000;
+    protected static final long OPERATION_TIMEOUT_MILLIS = 60000;
     private static final String PRINT_SPOOLER_PACKAGE_NAME = "com.android.printspooler";
     protected static final String PRINT_JOB_NAME = "Test";
     private static final String PM_CLEAR_SUCCESS_OUTPUT = "Success";
@@ -695,6 +695,7 @@ public abstract class BasePrintTest extends InstrumentationTestCase {
             throws Exception {
         // Perform a full print operation on the printer
         print(adapter);
+        waitForWriteAdapterCallback();
         selectPrinter(printerName);
         clickPrintButton();
         answerPrintServicesWarning(true);
