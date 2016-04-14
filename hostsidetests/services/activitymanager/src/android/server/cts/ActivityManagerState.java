@@ -19,7 +19,6 @@ package android.server.cts;
 import com.android.tradefed.device.CollectingOutputReceiver;
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.device.ITestDevice;
-import com.android.tradefed.log.LogUtil.CLog;
 
 import java.awt.Rectangle;
 import java.lang.Integer;
@@ -32,9 +31,8 @@ import java.util.List;
 import java.util.regex.Pattern;
 import java.util.regex.Matcher;
 
-import static com.android.ddmlib.Log.LogLevel.INFO;
-
 import static android.server.cts.ActivityManagerTestBase.HOME_STACK_ID;
+import static android.server.cts.StateLogger.log;
 
 class ActivityManagerState {
     private static final String DUMPSYS_ACTIVITY_ACTIVITIES = "dumpsys activity activities";
@@ -67,18 +65,18 @@ class ActivityManagerState {
         boolean retry = false;
         String dump = null;
 
-        CLog.logAndDisplay(INFO, "==============================");
-        CLog.logAndDisplay(INFO, "     ActivityManagerState     ");
-        CLog.logAndDisplay(INFO, "==============================");
+        log("==============================");
+        log("     ActivityManagerState     ");
+        log("==============================");
 
         do {
             if (retry) {
-                CLog.logAndDisplay(INFO, "***Incomplete AM state. Retrying...");
+                log("***Incomplete AM state. Retrying...");
                 // Wait half a second between retries for activity manager to finish transitioning.
                 try {
                     Thread.sleep(500);
                 } catch (InterruptedException e) {
-                    CLog.logAndDisplay(INFO, e.toString());
+                    log(e.toString());
                     // Well I guess we are not waiting...
                 }
             }
@@ -93,20 +91,20 @@ class ActivityManagerState {
         } while (retry && retriesLeft-- > 0);
 
         if (retry) {
-            CLog.logAndDisplay(INFO, dump);
+            log(dump);
         }
 
         if (mStacks.isEmpty()) {
-            CLog.logAndDisplay(INFO, "No stacks found...");
+            log("No stacks found...");
         }
         if (mFocusedStackId == -1) {
-            CLog.logAndDisplay(INFO, "No focused stack found...");
+            log("No focused stack found...");
         }
         if (mFocusedActivityRecord == null) {
-            CLog.logAndDisplay(INFO, "No focused activity found...");
+            log("No focused activity found...");
         }
         if (mResumedActivities.isEmpty()) {
-            CLog.logAndDisplay(INFO, "No resumed activities found...");
+            log("No resumed activities found...");
         }
     }
 
@@ -131,18 +129,18 @@ class ActivityManagerState {
 
             Matcher matcher = mFocusedStackPattern.matcher(line);
             if (matcher.matches()) {
-                CLog.logAndDisplay(INFO, line);
+                log(line);
                 final String stackId = matcher.group(2);
-                CLog.logAndDisplay(INFO, stackId);
+                log(stackId);
                 mFocusedStackId = Integer.parseInt(stackId);
                 continue;
             }
 
             matcher = mFocusedActivityPattern.matcher(line);
             if (matcher.matches()) {
-                CLog.logAndDisplay(INFO, line);
+                log(line);
                 mFocusedActivityRecord = matcher.group(3);
-                CLog.logAndDisplay(INFO, mFocusedActivityRecord);
+                log(mFocusedActivityRecord);
                 continue;
             }
         }
@@ -284,9 +282,9 @@ class ActivityManagerState {
             dump.pop();
 
             final ActivityStack stack = new ActivityStack();
-            CLog.logAndDisplay(INFO, line);
+            log(line);
             final String stackId = matcher.group(1);
-            CLog.logAndDisplay(INFO, stackId);
+            log(stackId);
             stack.mStackId = Integer.parseInt(stackId);
             stack.extract(dump, exitPatterns);
             return stack;
@@ -322,9 +320,9 @@ class ActivityManagerState {
 
                 Matcher matcher = RESUMED_ACTIVITY_PATTERN.matcher(line);
                 if (matcher.matches()) {
-                    CLog.logAndDisplay(INFO, line);
+                    log(line);
                     mResumedActivity = matcher.group(3);
-                    CLog.logAndDisplay(INFO, mResumedActivity);
+                    log(mResumedActivity);
                     continue;
                 }
             }
@@ -377,9 +375,9 @@ class ActivityManagerState {
             dump.pop();
 
             final ActivityTask task = new ActivityTask();
-            CLog.logAndDisplay(INFO, line);
+            log(line);
             final String taskId = matcher.group(1);
-            CLog.logAndDisplay(INFO, taskId);
+            log(taskId);
             task.mTaskId = Integer.parseInt(taskId);
             task.extract(dump, exitPatterns);
             return task;
@@ -417,25 +415,25 @@ class ActivityManagerState {
 
                 Matcher matcher = TASK_RECORD_PATTERN.matcher(line);
                 if (matcher.matches()) {
-                    CLog.logAndDisplay(INFO, line);
+                    log(line);
                     final String stackId = matcher.group(6);
                     mStackId = Integer.valueOf(stackId);
-                    CLog.logAndDisplay(INFO, stackId);
+                    log(stackId);
                     continue;
                 }
 
                 matcher = LAST_NON_FULLSCREEN_BOUNDS_PATTERN.matcher(line);
                 if (matcher.matches()) {
-                    CLog.logAndDisplay(INFO, line);
+                    log(line);
                     mLastNonFullscreenBounds = extractBounds(matcher);
                 }
 
                 matcher = REAL_ACTIVITY_PATTERN.matcher(line);
                 if (matcher.matches()) {
                     if (mRealActivity == null) {
-                        CLog.logAndDisplay(INFO, line);
+                        log(line);
                         mRealActivity = matcher.group(1);
-                        CLog.logAndDisplay(INFO, mRealActivity);
+                        log(mRealActivity);
                     }
                     continue;
                 }
@@ -443,16 +441,16 @@ class ActivityManagerState {
                 matcher = ORIG_ACTIVITY_PATTERN.matcher(line);
                 if (matcher.matches()) {
                     if (mOrigActivity == null) {
-                        CLog.logAndDisplay(INFO, line);
+                        log(line);
                         mOrigActivity = matcher.group(1);
-                        CLog.logAndDisplay(INFO, mOrigActivity);
+                        log(mOrigActivity);
                     }
                     continue;
                 }
 
                 matcher = TASK_TYPE_PATTERN.matcher(line);
                 if (matcher.matches()) {
-                    CLog.logAndDisplay(INFO, line);
+                    log(line);
                     mTaskType = Integer.valueOf(matcher.group(4));
                     mReturnToType = Integer.valueOf(matcher.group(5));
                     continue;
@@ -488,9 +486,9 @@ class ActivityManagerState {
             dump.pop();
 
             final Activity activity = new Activity();
-            CLog.logAndDisplay(INFO, line);
+            log(line);
             activity.name = matcher.group(4);
-            CLog.logAndDisplay(INFO, activity.name);
+            log(activity.name);
             activity.extract(dump, exitPatterns);
             return activity;
         }
@@ -502,19 +500,19 @@ class ActivityManagerState {
 
                 Matcher matcher = VISIBILITY_PATTERN.matcher(line);
                 if (matcher.matches()) {
-                    CLog.logAndDisplay(INFO, line);
+                    log(line);
                     final String visibleString = matcher.group(3);
                     visible = Boolean.valueOf(visibleString);
-                    CLog.logAndDisplay(INFO, visibleString);
+                    log(visibleString);
                     continue;
                 }
 
                 matcher = FRONT_OF_TASK_PATTERN.matcher(line);
                 if (matcher.matches()) {
-                    CLog.logAndDisplay(INFO, line);
+                    log(line);
                     final String frontOfTaskString = matcher.group(1);
                     frontOfTask = Boolean.valueOf(frontOfTaskString);
-                    CLog.logAndDisplay(INFO, frontOfTaskString);
+                    log(frontOfTaskString);
                     continue;
                 }
             }
@@ -540,9 +538,9 @@ class ActivityManagerState {
             if (!matcher.matches()) {
                 return false;
             }
-            CLog.logAndDisplay(INFO, line);
+            log(line);
             final String fullscreen = matcher.group(1);
-            CLog.logAndDisplay(INFO, fullscreen);
+            log(fullscreen);
             mFullscreen = Boolean.valueOf(fullscreen);
             return true;
         }
@@ -552,7 +550,7 @@ class ActivityManagerState {
             if (!matcher.matches()) {
                 return false;
             }
-            CLog.logAndDisplay(INFO, line);
+            log(line);
             mBounds = extractBounds(matcher);
             return true;
         }
@@ -564,7 +562,7 @@ class ActivityManagerState {
             final int bottom = Integer.valueOf(matcher.group(4));
             final Rectangle rect = new Rectangle(left, top, right - left, bottom - top);
 
-            CLog.logAndDisplay(INFO, rect.toString());
+            log(rect.toString());
             return rect;
         }
 
@@ -573,10 +571,10 @@ class ActivityManagerState {
             final Matcher minHeightMatcher = MINIMAL_HEIGHT_PATTERN.matcher(line);
 
             if (minWidthMatcher.matches()) {
-                CLog.logAndDisplay(INFO, line);
+                log(line);
                 mMinimalWidth = Integer.valueOf(minWidthMatcher.group(1));
             } else if (minHeightMatcher.matches()) {
-                CLog.logAndDisplay(INFO, line);
+                log(line);
                 mMinimalHeight = Integer.valueOf(minHeightMatcher.group(1));
             } else {
                 return false;
