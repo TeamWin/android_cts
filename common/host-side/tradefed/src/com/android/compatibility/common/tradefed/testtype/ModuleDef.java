@@ -63,6 +63,7 @@ public class ModuleDef implements IModuleDef {
     private ITestDevice mDevice;
     private List<String> mIncludeFilters = new ArrayList<>();
     private List<String> mExcludeFilters = new ArrayList<>();
+    private Set<String> mPreparerWhitelist = new HashSet<>();
 
     public ModuleDef(String name, IAbi abi, IRemoteTest test,
             List<ITargetPreparer> preparers) {
@@ -166,6 +167,14 @@ public class ModuleDef implements IModuleDef {
      * {@inheritDoc}
      */
     @Override
+    public void setPreparerWhitelist(Set<String> preparerWhitelist) {
+        mPreparerWhitelist.addAll(preparerWhitelist);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
     public int compareTo(IModuleDef moduleDef) {
         return getName().compareTo(moduleDef.getName());
     }
@@ -203,6 +212,12 @@ public class ModuleDef implements IModuleDef {
 
         // Setup
         for (ITargetPreparer preparer : mPreparers) {
+            String preparerName = preparer.getClass().getCanonicalName();
+            if (!mPreparerWhitelist.isEmpty() && !mPreparerWhitelist.contains(preparerName)) {
+                CLog.w("Skipping Preparer: %s since it is not in the whitelist %s",
+                        preparerName, mPreparerWhitelist);
+                continue;
+            }
             CLog.d("Preparer: %s", preparer.getClass().getSimpleName());
             if (preparer instanceof IAbiReceiver) {
                 ((IAbiReceiver) preparer).setAbi(mAbi);
