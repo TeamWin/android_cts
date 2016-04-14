@@ -51,7 +51,7 @@ public class TvInputManagerTest extends ActivityInstrumentationTestCase2<TvViewS
 
     private String mStubId;
     private TvInputManager mManager;
-    private LoggingCallback mCallabck = new LoggingCallback();
+    private LoggingCallback mCallback = new LoggingCallback();
 
     private static TvInputInfo getInfoForClassName(List<TvInputInfo> list, String name) {
         for (TvInputInfo info : list) {
@@ -139,8 +139,8 @@ public class TvInputManagerTest extends ActivityInstrumentationTestCase2<TvViewS
             @Override
             public void run() {
                 try {
-                    mManager.registerCallback(mCallabck, new Handler());
-                    mManager.unregisterCallback(mCallabck);
+                    mManager.registerCallback(mCallback, new Handler());
+                    mManager.unregisterCallback(mCallback);
                 } catch (Exception e) {
                     fail();
                 }
@@ -156,13 +156,13 @@ public class TvInputManagerTest extends ActivityInstrumentationTestCase2<TvViewS
         getActivity().runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                mManager.registerCallback(mCallabck, new Handler());
+                mManager.registerCallback(mCallback, new Handler());
             }
         });
         getInstrumentation().waitForIdleSync();
 
         // Test if onInputRemoved() is called.
-        mCallabck.resetLogs();
+        mCallback.resetLogs();
         PackageManager pm = getActivity().getPackageManager();
         ComponentName component = new ComponentName(getActivity(), StubTvInputService2.class);
         assertTrue(PackageManager.COMPONENT_ENABLED_STATE_DISABLED != pm.getComponentEnabledSetting(
@@ -172,12 +172,12 @@ public class TvInputManagerTest extends ActivityInstrumentationTestCase2<TvViewS
         new PollingCheck(TIME_OUT_MS) {
             @Override
             protected boolean check() {
-                return mCallabck.isInputRemoved(mStubId);
+                return mCallback.isInputRemoved(mStubId);
             }
         }.run();
 
         // Test if onInputAdded() is called.
-        mCallabck.resetLogs();
+        mCallback.resetLogs();
         assertEquals(PackageManager.COMPONENT_ENABLED_STATE_DISABLED, pm.getComponentEnabledSetting(
                 component));
         pm.setComponentEnabledSetting(component, PackageManager.COMPONENT_ENABLED_STATE_ENABLED,
@@ -185,14 +185,14 @@ public class TvInputManagerTest extends ActivityInstrumentationTestCase2<TvViewS
         new PollingCheck(TIME_OUT_MS) {
             @Override
             protected boolean check() {
-                return mCallabck.isInputAdded(mStubId);
+                return mCallback.isInputAdded(mStubId);
             }
         }.run();
 
         getActivity().runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                mManager.unregisterCallback(mCallabck);
+                mManager.unregisterCallback(mCallback);
             }
         });
         getInstrumentation().waitForIdleSync();
@@ -205,12 +205,12 @@ public class TvInputManagerTest extends ActivityInstrumentationTestCase2<TvViewS
         getActivity().runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                mManager.registerCallback(mCallabck, new Handler());
+                mManager.registerCallback(mCallback, new Handler());
             }
         });
         getInstrumentation().waitForIdleSync();
 
-        mCallabck.resetLogs();
+        mCallback.resetLogs();
         TvInputInfo defaultInfo = new TvInputInfo.Builder(getActivity(),
                 new ComponentName(getActivity(), StubTunerTvInputService.class)).build();
         TvInputInfo updatedInfo = new TvInputInfo.Builder(getActivity(),
@@ -221,7 +221,7 @@ public class TvInputManagerTest extends ActivityInstrumentationTestCase2<TvViewS
         new PollingCheck(TIME_OUT_MS) {
             @Override
             protected boolean check() {
-                TvInputInfo info = mCallabck.getLastUpdatedTvInputInfo();
+                TvInputInfo info = mCallback.getLastUpdatedTvInputInfo();
                 return info !=  null && info.getTunerCount() == 10 && info.canRecord();
             }
         }.run();
@@ -230,7 +230,7 @@ public class TvInputManagerTest extends ActivityInstrumentationTestCase2<TvViewS
         new PollingCheck(TIME_OUT_MS) {
             @Override
             protected boolean check() {
-                TvInputInfo info = mCallabck.getLastUpdatedTvInputInfo();
+                TvInputInfo info = mCallback.getLastUpdatedTvInputInfo();
                 return info !=  null && info.getTunerCount() == 1 && !info.canRecord();
             }
         }.run();
@@ -238,7 +238,7 @@ public class TvInputManagerTest extends ActivityInstrumentationTestCase2<TvViewS
         getActivity().runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                mManager.unregisterCallback(mCallabck);
+                mManager.unregisterCallback(mCallback);
             }
         });
         getInstrumentation().waitForIdleSync();
