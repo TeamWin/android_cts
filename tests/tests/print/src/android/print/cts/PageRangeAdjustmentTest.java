@@ -59,6 +59,8 @@ import java.util.List;
  */
 public class PageRangeAdjustmentTest extends BasePrintTest {
 
+    private static final int MAX_PREVIEW_PAGES_BATCH = 50;
+    private static final int PAGE_COUNT = 60;
     private static final String FIRST_PRINTER = "First printer";
 
     public void testAllPagesWantedAndAllPagesWritten() throws Exception {
@@ -101,7 +103,7 @@ public class PageRangeAdjustmentTest extends BasePrintTest {
                 LayoutResultCallback callback = (LayoutResultCallback) invocation.getArguments()[3];
                 PrintDocumentInfo info = new PrintDocumentInfo.Builder(PRINT_JOB_NAME)
                         .setContentType(PrintDocumentInfo.CONTENT_TYPE_DOCUMENT)
-                        .setPageCount(100)
+                        .setPageCount(PAGE_COUNT)
                         .build();
                 callback.onLayoutFinished(info, false);
                 // Mark layout was called.
@@ -115,7 +117,7 @@ public class PageRangeAdjustmentTest extends BasePrintTest {
                 PageRange[] pages = (PageRange[]) args[0];
                 ParcelFileDescriptor fd = (ParcelFileDescriptor) args[1];
                 WriteResultCallback callback = (WriteResultCallback) args[3];
-                writeBlankPages(printAttributes[0], fd, 0, 99);
+                writeBlankPages(printAttributes[0], fd, 0, PAGE_COUNT - 1);
                 fd.close();
                 callback.onWriteFinished(pages);
                 // Mark write was called.
@@ -209,7 +211,7 @@ public class PageRangeAdjustmentTest extends BasePrintTest {
                 LayoutResultCallback callback = (LayoutResultCallback) invocation.getArguments()[3];
                 PrintDocumentInfo info = new PrintDocumentInfo.Builder(PRINT_JOB_NAME)
                         .setContentType(PrintDocumentInfo.CONTENT_TYPE_DOCUMENT)
-                        .setPageCount(100)
+                        .setPageCount(PAGE_COUNT)
                         .build();
                 callback.onLayoutFinished(info, false);
                 // Mark layout was called.
@@ -221,10 +223,10 @@ public class PageRangeAdjustmentTest extends BasePrintTest {
             public Void answer(InvocationOnMock invocation) throws Throwable {
                 Object[] args = invocation.getArguments();
                 PageRange[] pages = (PageRange[]) args[0];
-                assertTrue(pages[pages.length - 1].getEnd() < 100);
+                assertTrue(pages[pages.length - 1].getEnd() < PAGE_COUNT);
                 ParcelFileDescriptor fd = (ParcelFileDescriptor) args[1];
                 WriteResultCallback callback = (WriteResultCallback) args[3];
-                writeBlankPages(printAttributes[0], fd, 0, 99);
+                writeBlankPages(printAttributes[0], fd, 0, PAGE_COUNT - 1);
                 fd.close();
                 callback.onWriteFinished(new PageRange[] {PageRange.ALL_PAGES});
                 // Mark write was called.
@@ -283,6 +285,8 @@ public class PageRangeAdjustmentTest extends BasePrintTest {
     }
 
     public void testSomePagesWantedAndSomeMorePagesWritten() throws Exception {
+        final int REQUESTED_PAGE = 55;
+
         if (!supportsPrinting()) {
             return;
         }
@@ -301,8 +305,8 @@ public class PageRangeAdjustmentTest extends BasePrintTest {
                 PrintJob printJob = (PrintJob) invocation.getArguments()[0];
                 PrintJobInfo printJobInfo = printJob.getInfo();
                 PageRange[] pages = printJobInfo.getPages();
-                // We asked only for page 60 (index 59) but got 60 and 61 (indices
-                // 59, 60), but the system pruned the extra page, hence we expect
+                // We asked only for page 55 (index 54) but got 55 and 56 (indices
+                // 54, 55), but the system pruned the extra page, hence we expect
                 // to print all pages.
                 assertTrue(pages.length == 1 && PageRange.ALL_PAGES.equals(pages[0]));
                 assertSame(printJob.getDocument().getInfo().getPageCount(), 1);
@@ -327,7 +331,7 @@ public class PageRangeAdjustmentTest extends BasePrintTest {
                 LayoutResultCallback callback = (LayoutResultCallback) invocation.getArguments()[3];
                 PrintDocumentInfo info = new PrintDocumentInfo.Builder(PRINT_JOB_NAME)
                         .setContentType(PrintDocumentInfo.CONTENT_TYPE_DOCUMENT)
-                        .setPageCount(100)
+                        .setPageCount(PAGE_COUNT)
                         .build();
                 callback.onLayoutFinished(info, false);
                 // Mark layout was called.
@@ -352,8 +356,9 @@ public class PageRangeAdjustmentTest extends BasePrintTest {
                     callback.onWriteFinished(pages);
                 } else {
                     // Otherwise write a page more that the one we selected.
-                    writeBlankPages(printAttributes[0], fd, 59, 60);
-                    callback.onWriteFinished(new PageRange[] {new PageRange(59, 60)});
+                    writeBlankPages(printAttributes[0], fd, REQUESTED_PAGE - 1, REQUESTED_PAGE);
+                    callback.onWriteFinished(new PageRange[] {new PageRange(REQUESTED_PAGE - 1,
+                            REQUESTED_PAGE)});
                 }
 
                 fd.close();
@@ -387,7 +392,7 @@ public class PageRangeAdjustmentTest extends BasePrintTest {
         waitForLayoutAdapterCallbackCount(2);
 
         // Select a page not written for preview.
-        selectPages("60");
+        selectPages(Integer.valueOf(REQUESTED_PAGE).toString());
 
         // Click the print button.
         clickPrintButton();
@@ -443,7 +448,7 @@ public class PageRangeAdjustmentTest extends BasePrintTest {
                 LayoutResultCallback callback = (LayoutResultCallback) invocation.getArguments()[3];
                 PrintDocumentInfo info = new PrintDocumentInfo.Builder(PRINT_JOB_NAME)
                         .setContentType(PrintDocumentInfo.CONTENT_TYPE_DOCUMENT)
-                        .setPageCount(100)
+                        .setPageCount(PAGE_COUNT)
                         .build();
                 callback.onLayoutFinished(info, false);
                 // Mark layout was called.
@@ -461,7 +466,7 @@ public class PageRangeAdjustmentTest extends BasePrintTest {
 
                 // We should be asked for some pages...
                 assertSame(pages[0].getStart(), 0);
-                assertTrue(pages[0].getEnd() == 49);
+                assertTrue(pages[0].getEnd() == MAX_PREVIEW_PAGES_BATCH - 1);
 
                 writeBlankPages(printAttributes[0], fd, pages[0].getStart(), pages[0].getEnd());
                 fd.close();
@@ -550,7 +555,7 @@ public class PageRangeAdjustmentTest extends BasePrintTest {
                 LayoutResultCallback callback = (LayoutResultCallback) invocation.getArguments()[3];
                 PrintDocumentInfo info = new PrintDocumentInfo.Builder(PRINT_JOB_NAME)
                         .setContentType(PrintDocumentInfo.CONTENT_TYPE_DOCUMENT)
-                        .setPageCount(100)
+                        .setPageCount(PAGE_COUNT)
                         .build();
                 callback.onLayoutFinished(info, false);
                 // Mark layout was called.
