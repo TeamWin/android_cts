@@ -626,40 +626,6 @@ public class ListPopupWindowTest extends
         verifyNoMoreInteractions(mPopupWindowBuilder.mOnDismissListener);
     }
 
-    /**
-     * Emulates a drag-down gestures by injecting ACTION events with {@link Instrumentation}.
-     */
-    private void emulateDragDownGesture(int emulatedX, int emulatedStartY, int swipeAmount) {
-        // The logic below uses Instrumentation to emulate a swipe / drag gesture to bring up
-        // the popup content.
-
-        // Inject DOWN event
-        long downTime = SystemClock.uptimeMillis();
-        MotionEvent eventDown = MotionEvent.obtain(
-                downTime, downTime, MotionEvent.ACTION_DOWN, emulatedX, emulatedStartY, 1);
-        mInstrumentation.sendPointerSync(eventDown);
-
-        // Inject a sequence of MOVE events that emulate a "swipe down" gesture
-        for (int i = 0; i < 10; i++) {
-            long moveTime = SystemClock.uptimeMillis();
-            final int moveY = emulatedStartY + swipeAmount * i / 10;
-            MotionEvent eventMove = MotionEvent.obtain(
-                    moveTime, moveTime, MotionEvent.ACTION_MOVE, emulatedX, moveY, 1);
-            mInstrumentation.sendPointerSync(eventMove);
-            // sleep for a bit to emulate a 200ms swipe
-            SystemClock.sleep(20);
-        }
-
-        // Inject UP event
-        long upTime = SystemClock.uptimeMillis();
-        MotionEvent eventUp = MotionEvent.obtain(
-                upTime, upTime, MotionEvent.ACTION_UP, emulatedX, emulatedStartY + swipeAmount, 1);
-        mInstrumentation.sendPointerSync(eventUp);
-
-        // Wait for the system to process all events in the queue
-        mInstrumentation.waitForIdleSync();
-    }
-
     public void testCreateOnDragListener() throws Throwable {
         // In this test we want precise control over the height of the popup content since
         // we need to know by how much to swipe down to end the emulated gesture over the
@@ -696,7 +662,8 @@ public class ListPopupWindowTest extends
         int swipeAmount = 2 * popupRowHeight;
 
         // Emulate drag-down gesture with a sequence of motion events
-        emulateDragDownGesture(emulatedX, emulatedStartY, swipeAmount);
+        ViewTestUtils.emulateDragGesture(getInstrumentation(), emulatedX, emulatedStartY,
+                0, swipeAmount);
 
         // We expect the swipe / drag gesture to result in clicking the second item in our list.
         verify(mPopupWindowBuilder.mOnItemClickListener, times(1)).onItemClick(

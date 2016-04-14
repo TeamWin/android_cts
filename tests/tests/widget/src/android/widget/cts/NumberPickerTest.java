@@ -18,8 +18,13 @@ package android.widget.cts;
 
 import android.app.Instrumentation;
 import android.test.ActivityInstrumentationTestCase2;
+import android.test.UiThreadTest;
 import android.test.suitebuilder.annotation.SmallTest;
 import android.widget.NumberPicker;
+import android.widget.cts.util.ViewTestUtils;
+import org.mockito.InOrder;
+
+import static org.mockito.Mockito.*;
 
 @SmallTest
 public class NumberPickerTest extends ActivityInstrumentationTestCase2<NumberPickerCtsActivity> {
@@ -41,6 +46,13 @@ public class NumberPickerTest extends ActivityInstrumentationTestCase2<NumberPic
         mInstrumentation = getInstrumentation();
         mActivity = getActivity();
         mNumberPicker = (NumberPicker) mActivity.findViewById(R.id.number_picker);
+    }
+
+    @UiThreadTest
+    public void testConstructor() {
+        new NumberPicker(mActivity);
+
+        new NumberPicker(mActivity, null);
     }
 
     private void verifyDisplayedValues(String[] expected) {
@@ -102,5 +114,141 @@ public class NumberPickerTest extends ActivityInstrumentationTestCase2<NumberPic
                 mNumberPicker.setDisplayedValues(NUMBER_NAMES5);
             }
         });
+    }
+
+    public void testAccessValue() {
+        mInstrumentation.runOnMainSync(() -> {
+            mNumberPicker.setMinValue(20);
+            mNumberPicker.setMaxValue(22);
+            mNumberPicker.setDisplayedValues(NUMBER_NAMES3);
+        });
+
+        final NumberPicker.OnValueChangeListener mockValueChangeListener =
+                mock(NumberPicker.OnValueChangeListener.class);
+        mNumberPicker.setOnValueChangedListener(mockValueChangeListener);
+
+        mInstrumentation.runOnMainSync(() -> mNumberPicker.setValue(21));
+        assertEquals(21, mNumberPicker.getValue());
+
+        mInstrumentation.runOnMainSync(() -> mNumberPicker.setValue(20));
+        assertEquals(20, mNumberPicker.getValue());
+
+        mInstrumentation.runOnMainSync(() -> mNumberPicker.setValue(22));
+        assertEquals(22, mNumberPicker.getValue());
+
+        // Check trying to set value out of min/max range
+        mInstrumentation.runOnMainSync(() -> mNumberPicker.setValue(10));
+        assertEquals(20, mNumberPicker.getValue());
+
+        mInstrumentation.runOnMainSync(() -> mNumberPicker.setValue(100));
+        assertEquals(22, mNumberPicker.getValue());
+
+        // Since all changes to value are via API calls, we should have no interactions /
+        // callbacks on our listener.
+        verifyZeroInteractions(mockValueChangeListener);
+    }
+
+    public void testInteractionWithSwipeDown() {
+        mInstrumentation.runOnMainSync(() -> {
+            mNumberPicker.setMinValue(6);
+            mNumberPicker.setMaxValue(8);
+            mNumberPicker.setDisplayedValues(NUMBER_NAMES_ALT3);
+        });
+
+        final NumberPicker.OnValueChangeListener mockValueChangeListener =
+                mock(NumberPicker.OnValueChangeListener.class);
+        mNumberPicker.setOnValueChangedListener(mockValueChangeListener);
+
+        final NumberPicker.OnScrollListener mockScrollListener =
+                mock(NumberPicker.OnScrollListener.class);
+        mNumberPicker.setOnScrollListener(mockScrollListener);
+
+        mInstrumentation.runOnMainSync(() -> mNumberPicker.setValue(7));
+        assertEquals(7, mNumberPicker.getValue());
+
+        // Swipe down across our number picker
+        final int[] numberPickerLocationOnScreen = new int[2];
+        mNumberPicker.getLocationOnScreen(numberPickerLocationOnScreen);
+
+        ViewTestUtils.emulateDragGesture(mInstrumentation,
+                numberPickerLocationOnScreen[0] + mNumberPicker.getWidth() / 2,
+                numberPickerLocationOnScreen[1] + 1,
+                0,
+                mNumberPicker.getHeight() - 2);
+
+        // At this point we expect that the drag-down gesture has selected the value
+        // that was "above" the previously selected one, and that our value change listener
+        // has been notified of that change exactly once.
+        assertEquals(6, mNumberPicker.getValue());
+        verify(mockValueChangeListener, times(1)).onValueChange(mNumberPicker, 7, 6);
+        verifyNoMoreInteractions(mockValueChangeListener);
+
+        // We expect that our scroll listener will be called with specific state changes.
+        InOrder inOrder = inOrder(mockScrollListener);
+        inOrder.verify(mockScrollListener).onScrollStateChange(mNumberPicker,
+                NumberPicker.OnScrollListener.SCROLL_STATE_TOUCH_SCROLL);
+        inOrder.verify(mockScrollListener).onScrollStateChange(mNumberPicker,
+                NumberPicker.OnScrollListener.SCROLL_STATE_IDLE);
+        verifyNoMoreInteractions(mockScrollListener);
+    }
+
+    public void testInteractionWithSwipeUp() {
+        mInstrumentation.runOnMainSync(() -> {
+            mNumberPicker.setMinValue(10);
+            mNumberPicker.setMaxValue(12);
+            mNumberPicker.setDisplayedValues(NUMBER_NAMES_ALT3);
+        });
+
+        final NumberPicker.OnValueChangeListener mockValueChangeListener =
+                mock(NumberPicker.OnValueChangeListener.class);
+        mNumberPicker.setOnValueChangedListener(mockValueChangeListener);
+
+        final NumberPicker.OnScrollListener mockScrollListener =
+                mock(NumberPicker.OnScrollListener.class);
+        mNumberPicker.setOnScrollListener(mockScrollListener);
+
+        mInstrumentation.runOnMainSync(() -> mNumberPicker.setValue(11));
+        assertEquals(11, mNumberPicker.getValue());
+
+        // Swipe up across our number picker
+        final int[] numberPickerLocationOnScreen = new int[2];
+        mNumberPicker.getLocationOnScreen(numberPickerLocationOnScreen);
+
+        ViewTestUtils.emulateDragGesture(mInstrumentation,
+                numberPickerLocationOnScreen[0] + mNumberPicker.getWidth() / 2,
+                numberPickerLocationOnScreen[1] + mNumberPicker.getHeight() - 1,
+                0,
+                - (mNumberPicker.getHeight() - 2));
+
+        // At this point we expect that the drag-up gesture has selected the value
+        // that was "below" the previously selected one, and that our value change listener
+        // has been notified of that change exactly once.
+        assertEquals(12, mNumberPicker.getValue());
+        verify(mockValueChangeListener, times(1)).onValueChange(mNumberPicker, 11, 12);
+        verifyNoMoreInteractions(mockValueChangeListener);
+
+        // We expect that our scroll listener will be called with specific state changes.
+        InOrder inOrder = inOrder(mockScrollListener);
+        inOrder.verify(mockScrollListener).onScrollStateChange(mNumberPicker,
+                NumberPicker.OnScrollListener.SCROLL_STATE_TOUCH_SCROLL);
+        inOrder.verify(mockScrollListener).onScrollStateChange(mNumberPicker,
+                NumberPicker.OnScrollListener.SCROLL_STATE_IDLE);
+        verifyNoMoreInteractions(mockScrollListener);
+    }
+
+    public void testAccessWrapSelectorValue() {
+        mInstrumentation.runOnMainSync(() -> {
+            mNumberPicker.setMinValue(100);
+            mNumberPicker.setMaxValue(200);
+        });
+        // As specified in the Javadocs of NumberPicker.setWrapSelectorWheel, when min/max
+        // range is larger than what the widget is showing, the selector wheel is enabled.
+        assertTrue(mNumberPicker.getWrapSelectorWheel());
+
+        mInstrumentation.runOnMainSync(() -> mNumberPicker.setWrapSelectorWheel(false));
+        assertFalse(mNumberPicker.getWrapSelectorWheel());
+
+        mInstrumentation.runOnMainSync(() -> mNumberPicker.setWrapSelectorWheel(true));
+        assertTrue(mNumberPicker.getWrapSelectorWheel());
     }
 }

@@ -34,8 +34,8 @@ import java.util.concurrent.TimeUnit;
 public class ViewTestUtils {
 
     /**
-     * Runs the specified Runnable on the main thread and ensures that the
-     * specified View's tree is drawn before returning.
+     * Runs the specified Runnable on the main thread and ensures that the specified View's tree is
+     * drawn before returning.
      *
      * @param instrumentation the instrumentation used to run the test
      * @param view the view whose tree should be drawn before returning
@@ -78,8 +78,8 @@ public class ViewTestUtils {
     }
 
     /**
-     * Emulates a tap on a point relative to the top-left corner of the passed {@link View}.
-     * Offset parameters are used to compute the final screen coordinates of the tap point.
+     * Emulates a tap on a point relative to the top-left corner of the passed {@link View}. Offset
+     * parameters are used to compute the final screen coordinates of the tap point.
      *
      * @param instrumentation the instrumentation used to run the test
      * @param anchorView the anchor view to determine the tap location on the screen
@@ -110,6 +110,47 @@ public class ViewTestUtils {
         long upTime = SystemClock.uptimeMillis();
         MotionEvent eventUp = MotionEvent.obtain(
                 upTime, upTime, MotionEvent.ACTION_UP, emulatedTapX, emulatedTapY, 1);
+        instrumentation.sendPointerSync(eventUp);
+
+        // Wait for the system to process all events in the queue
+        instrumentation.waitForIdleSync();
+    }
+
+    /**
+     * Emulates a drag gesture across the screen.
+     *
+     * @param instrumentation the instrumentation used to run the test
+     * @param dragStartX Start X of the emulated drag gesture
+     * @param dragStartY Start Y of the emulated drag gesture
+     * @param dragAmountX X amount of the emulated drag gesture
+     * @param dragAmountY Y amount of the emulated drag gesture
+     */
+    public static void emulateDragGesture(Instrumentation instrumentation,
+            int dragStartX, int dragStartY, int dragAmountX, int dragAmountY) {
+        // Inject DOWN event
+        long downTime = SystemClock.uptimeMillis();
+        MotionEvent eventDown = MotionEvent.obtain(
+                downTime, downTime, MotionEvent.ACTION_DOWN, dragStartX, dragStartY, 1);
+        instrumentation.sendPointerSync(eventDown);
+
+        // Inject a sequence of MOVE events that emulate a "swipe down" gesture
+        final int moveEventCount = 20;
+        for (int i = 0; i < moveEventCount; i++) {
+            long moveTime = SystemClock.uptimeMillis();
+            final int moveX = dragStartX + dragAmountX * i / moveEventCount;
+            final int moveY = dragStartY + dragAmountY * i / moveEventCount;
+            MotionEvent eventMove = MotionEvent.obtain(
+                    moveTime, moveTime, MotionEvent.ACTION_MOVE, moveX, moveY, 1);
+            instrumentation.sendPointerSync(eventMove);
+            // sleep for a bit to emulate a 2-second swipe
+            SystemClock.sleep(2000 / moveEventCount);
+        }
+
+        // Inject UP event
+        long upTime = SystemClock.uptimeMillis();
+        MotionEvent eventUp = MotionEvent.obtain(
+                upTime, upTime, MotionEvent.ACTION_UP, dragStartX + dragAmountX,
+                dragStartY + dragAmountY, 1);
         instrumentation.sendPointerSync(eventUp);
 
         // Wait for the system to process all events in the queue
