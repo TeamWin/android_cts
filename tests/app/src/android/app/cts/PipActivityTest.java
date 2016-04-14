@@ -45,8 +45,16 @@ public class PipActivityTest extends ActivityInstrumentationTestCase2<PipActivit
                         mActivity.getPackageManager().hasSystemFeature(FEATURE_PICTURE_IN_PICTURE);
                 if (supportsPip) {
                     mActivity.enterPictureInPictureMode();
-                    assertTrue(mActivity.isInMultiWindowMode());
-                    assertTrue(mActivity.isInPictureInPictureMode());
+
+                    // Entering PIP mode is not synchronous, so waiting for completion of all work
+                    // on UI thread.
+                    mInstrumentation.waitForIdle(new Runnable() {
+                        @Override
+                        public void run() {
+                            assertTrue(mActivity.isInMultiWindowMode());
+                            assertTrue(mActivity.isInPictureInPictureMode());
+                        }
+                    });
                 } else {
                     boolean pipSupportDisabled = false;
                     try {
@@ -56,8 +64,16 @@ public class PipActivityTest extends ActivityInstrumentationTestCase2<PipActivit
                         pipSupportDisabled = true;
                     }
                     assertTrue(pipSupportDisabled);
-                    assertFalse(mActivity.isInMultiWindowMode());
-                    assertFalse(mActivity.isInPictureInPictureMode());
+
+                    // Entering PIP mode is not synchronous, so waiting for completion of all work
+                    // on UI thread.
+                    mInstrumentation.waitForIdle(new Runnable() {
+                        @Override
+                        public void run() {
+                            assertFalse(mActivity.isInMultiWindowMode());
+                            assertFalse(mActivity.isInPictureInPictureMode());
+                        }
+                    });
                 }
             }
         });
