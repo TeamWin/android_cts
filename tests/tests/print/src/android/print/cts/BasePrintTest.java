@@ -355,7 +355,7 @@ public abstract class BasePrintTest extends InstrumentationTestCase {
             }
         } catch (UiObjectNotFoundException e) {
             dumpWindowHierarchy();
-            throw new UiObjectNotFoundException(e);
+            throw e;
         }
     }
 
@@ -380,7 +380,7 @@ public abstract class BasePrintTest extends InstrumentationTestCase {
             orientationOption.click();
         } catch (UiObjectNotFoundException e) {
             dumpWindowHierarchy();
-            throw new UiObjectNotFoundException(e);
+            throw e;
         }
     }
 
@@ -391,7 +391,7 @@ public abstract class BasePrintTest extends InstrumentationTestCase {
             return orientationSpinner.getText();
         } catch (UiObjectNotFoundException e) {
             dumpWindowHierarchy();
-            throw new UiObjectNotFoundException(e);
+            throw e;
         }
     }
 
@@ -404,7 +404,7 @@ public abstract class BasePrintTest extends InstrumentationTestCase {
             mediaSizeOption.click();
         } catch (UiObjectNotFoundException e) {
             dumpWindowHierarchy();
-            throw new UiObjectNotFoundException(e);
+            throw e;
         }
     }
 
@@ -415,7 +415,7 @@ public abstract class BasePrintTest extends InstrumentationTestCase {
             return mediaSizeSpinner.getText();
         } catch (UiObjectNotFoundException e) {
             dumpWindowHierarchy();
-            throw new UiObjectNotFoundException(e);
+            throw e;
         }
     }
 
@@ -428,7 +428,7 @@ public abstract class BasePrintTest extends InstrumentationTestCase {
             colorOption.click();
         } catch (UiObjectNotFoundException e) {
             dumpWindowHierarchy();
-            throw new UiObjectNotFoundException(e);
+            throw e;
         }
     }
 
@@ -439,7 +439,7 @@ public abstract class BasePrintTest extends InstrumentationTestCase {
             return colorSpinner.getText();
         } catch (UiObjectNotFoundException e) {
             dumpWindowHierarchy();
-            throw new UiObjectNotFoundException(e);
+            throw e;
         }
     }
 
@@ -452,7 +452,7 @@ public abstract class BasePrintTest extends InstrumentationTestCase {
             duplexOption.click();
         } catch (UiObjectNotFoundException e) {
             dumpWindowHierarchy();
-            throw new UiObjectNotFoundException(e);
+            throw e;
         }
     }
 
@@ -463,7 +463,7 @@ public abstract class BasePrintTest extends InstrumentationTestCase {
             return duplexSpinner.getText();
         } catch (UiObjectNotFoundException e) {
             dumpWindowHierarchy();
-            throw new UiObjectNotFoundException(e);
+            throw e;
         }
     }
 
@@ -474,7 +474,7 @@ public abstract class BasePrintTest extends InstrumentationTestCase {
             return copies.getText();
         } catch (UiObjectNotFoundException e) {
             dumpWindowHierarchy();
-            throw new UiObjectNotFoundException(e);
+            throw e;
         }
     }
 
@@ -485,7 +485,7 @@ public abstract class BasePrintTest extends InstrumentationTestCase {
             printButton.click();
         } catch (UiObjectNotFoundException e) {
             dumpWindowHierarchy();
-            throw new UiObjectNotFoundException(e);
+            throw e;
         }
     }
 
@@ -681,6 +681,28 @@ public abstract class BasePrintTest extends InstrumentationTestCase {
                 }
             }
         }
+    }
+
+
+    /**
+     * Make {@code printerName} the default printer by adding it to the history of printers by
+     * printing once.
+     *
+     * @param adapter The {@link PrintDocumentAdapter} used
+     * @throws Exception If the printer could not be made default
+     */
+    protected void makeDefaultPrinter(PrintDocumentAdapter adapter, String printerName)
+            throws Exception {
+        // Perform a full print operation on the printer
+        print(adapter);
+        selectPrinter(printerName);
+        clickPrintButton();
+        answerPrintServicesWarning(true);
+        waitForPrinterDiscoverySessionDestroyCallbackCalled();
+
+        // Switch to new activity, which should now use the default printer
+        getActivity().finish();
+        createActivity();
     }
 
     protected boolean supportsPrinting() {
