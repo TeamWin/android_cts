@@ -26,6 +26,7 @@
 
     <option name="skip-device-info" value="true" />
     <option name="skip-preconditions" value="true" />
+    <option name="skip-connectivity-check" value="true" />
     <option name="preparer-whitelist" value="com.android.compatibility.common.tradefed.targetprep.ApkInstaller" />
     <option name="preparer-whitelist" value="com.android.compatibility.common.tradefed.targetprep.FilePusher" />
 
@@ -38,7 +39,7 @@
     <!-- Tell all HostTests to only list the tests -->
     <option name="compatibility:test-arg" value="com.android.tradefed.testtype.HostTest:collect-tests-only:true" />
 
-    <!-- Tell all deqp tests to only list the tests -->
+    <!-- Tell all DEQPTests to only list the tests -->
     <option name="compatibility:test-arg" value="com.drawelements.deqp.runner.DeqpTestRunner:collect-tests-only:true" />
 
     <!-- Tell all JarHostTests to only list the tests -->
