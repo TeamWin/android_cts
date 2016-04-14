@@ -17,7 +17,6 @@
 package android.server.cts;
 
 import com.android.tradefed.device.ITestDevice;
-import com.android.tradefed.log.LogUtil;
 
 import junit.framework.Assert;
 
@@ -30,7 +29,7 @@ import java.awt.Rectangle;
 import java.util.Objects;
 
 import static android.server.cts.ActivityManagerTestBase.FREEFORM_WORKSPACE_STACK_ID;
-import static com.android.ddmlib.Log.LogLevel.INFO;
+import static android.server.cts.StateLogger.log;
 
 /** Combined state of the activity manager and window manager. */
 class ActivityAndWindowManagersState extends Assert {
@@ -60,11 +59,11 @@ class ActivityAndWindowManagersState extends Assert {
             mAmState.computeState(device);
             mWmState.computeState(device, visibleOnly);
             if (retry && shouldRetry(waitForActivitiesVisible)) {
-                LogUtil.CLog.logAndDisplay(INFO, "***Waiting for Activities to be visible...");
+                log("***Waiting for Activities to be visible...");
                 try {
                     Thread.sleep(1000);
                 } catch (InterruptedException e) {
-                    LogUtil.CLog.logAndDisplay(INFO, e.toString());
+                    log(e.toString());
                     // Well I guess we are not waiting...
                 }
             } else {
@@ -80,7 +79,7 @@ class ActivityAndWindowManagersState extends Assert {
         if (!stackInAMAndWMAreEqual()) {
             // We want to wait a little for the stacks in AM and WM to have equal values as there
             // might be a transition animation ongoing when we got the states from WM AM separately.
-            LogUtil.CLog.logAndDisplay(INFO, "***stackInAMAndWMAreEqual=false");
+            log("***stackInAMAndWMAreEqual=false");
             return true;
         }
         // If the caller is interested in us waiting for some particular activity windows to be
@@ -91,8 +90,7 @@ class ActivityAndWindowManagersState extends Assert {
                     ActivityManagerTestBase.getWindowName(activityName);
             allActivityWindowsVisible &= mWmState.isWindowVisible(windowName);
         }
-        LogUtil.CLog.logAndDisplay(INFO,
-                "***allActivityWindowsVisible=" + allActivityWindowsVisible);
+        log("***allActivityWindowsVisible=" + allActivityWindowsVisible);
         return !allActivityWindowsVisible;
     }
 

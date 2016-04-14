@@ -31,7 +31,7 @@ import java.util.List;
 import java.util.regex.Pattern;
 import java.util.regex.Matcher;
 
-import static com.android.ddmlib.Log.LogLevel.INFO;
+import static android.server.cts.StateLogger.log;
 
 class WindowManagerState {
     private static final String DUMPSYS_WINDOWS_APPS = "dumpsys window apps";
@@ -75,17 +75,17 @@ class WindowManagerState {
         boolean retry = false;
         String dump = null;
 
-        CLog.logAndDisplay(INFO, "==============================");
-        CLog.logAndDisplay(INFO, "      WindowManagerState      ");
-        CLog.logAndDisplay(INFO, "==============================");
+        log("==============================");
+        log("      WindowManagerState      ");
+        log("==============================");
         do {
             if (retry) {
-                CLog.logAndDisplay(INFO, "***Incomplete WM state. Retrying...");
+                log("***Incomplete WM state. Retrying...");
                 // Wait half a second between retries for window manager to finish transitioning...
                 try {
                     Thread.sleep(500);
                 } catch (InterruptedException e) {
-                    CLog.logAndDisplay(INFO, e.toString());
+                    log(e.toString());
                     // Well I guess we are not waiting...
                 }
             }
@@ -101,21 +101,21 @@ class WindowManagerState {
         } while (retry && retriesLeft-- > 0);
 
         if (retry) {
-            CLog.logAndDisplay(INFO, dump);
+            log(dump);
         }
 
         if (mWindows.isEmpty()) {
-            CLog.logAndDisplay(INFO, "No Windows found...");
+            log("No Windows found...");
         }
         if (mFocusedWindow == null) {
-            CLog.logAndDisplay(INFO, "No Focused Window...");
+            log("No Focused Window...");
         }
         if (mFocusedApp == null) {
-            CLog.logAndDisplay(INFO, "No Focused App...");
+            log("No Focused App...");
         }
     }
 
-    private void parseSysDump(String sysDump,boolean visibleOnly) {
+    private void parseSysDump(String sysDump, boolean visibleOnly) {
         reset();
 
         Collections.addAll(mSysDump, sysDump.split("\\n"));
@@ -124,7 +124,7 @@ class WindowManagerState {
             final Display display =
                     Display.create(mSysDump, sExtractStackExitPatterns);
             if (display != null) {
-                CLog.logAndDisplay(INFO, display.toString());
+                log(display.toString());
                 mDisplays.add(display);
                 continue;
             }
@@ -140,21 +140,19 @@ class WindowManagerState {
 
             final WindowState ws = WindowState.create(mSysDump, sExtractStackExitPatterns);
             if (ws != null) {
-                CLog.logAndDisplay(INFO, ws.toString());
+                log(ws.toString());
 
                 if (visibleOnly && mWindows.isEmpty()) {
                     // This is the front window. Check to see if we are in the middle of
                     // transitioning. If we are, we want to skip dumping until window manager is
                     // done transitioning the top window.
                     if (ws.isStartingWindow()) {
-                        CLog.logAndDisplay(INFO,
-                                "Skipping dump due to starting window transition...");
+                        log("Skipping dump due to starting window transition...");
                         return;
                     }
 
                     if (ws.isExitingWindow()) {
-                        CLog.logAndDisplay(INFO,
-                                "Skipping dump due to exiting window transition...");
+                        log("Skipping dump due to exiting window transition...");
                         return;
                     }
                 }
@@ -168,27 +166,27 @@ class WindowManagerState {
 
             Matcher matcher = sFocusedWindowPattern.matcher(line);
             if (matcher.matches()) {
-                CLog.logAndDisplay(INFO, line);
+                log(line);
                 final String focusedWindow = matcher.group(3);
-                CLog.logAndDisplay(INFO, focusedWindow);
+                log(focusedWindow);
                 mFocusedWindow = focusedWindow;
                 continue;
             }
 
             matcher = sAppErrorFocusedWindowPattern.matcher(line);
             if (matcher.matches()) {
-                CLog.logAndDisplay(INFO, line);
+                log(line);
                 final String focusedWindow = matcher.group(3);
-                CLog.logAndDisplay(INFO, focusedWindow);
+                log(focusedWindow);
                 mFocusedWindow = focusedWindow;
                 continue;
             }
 
             matcher = sFocusedAppPattern.matcher(line);
             if (matcher.matches()) {
-                CLog.logAndDisplay(INFO, line);
+                log(line);
                 final String focusedApp = matcher.group(5);
-                CLog.logAndDisplay(INFO, focusedApp);
+                log(focusedApp);
                 mFocusedApp = focusedApp;
                 continue;
             }
@@ -300,9 +298,9 @@ class WindowManagerState {
             dump.pop();
 
             final WindowStack stack = new WindowStack();
-            CLog.logAndDisplay(INFO, line);
+            log(line);
             final String stackId = matcher.group(1);
-            CLog.logAndDisplay(INFO, stackId);
+            log(stackId);
             stack.mStackId = Integer.parseInt(stackId);
             stack.extract(dump, exitPatterns);
             return stack;
@@ -376,9 +374,9 @@ class WindowManagerState {
             dump.pop();
 
             final WindowTask task = new WindowTask();
-            CLog.logAndDisplay(INFO, line);
+            log(line);
             final String taskId = matcher.group(1);
-            CLog.logAndDisplay(INFO, taskId);
+            log(taskId);
             task.mTaskId = Integer.parseInt(taskId);
             task.extract(dump, exitPatterns);
             return task;
@@ -399,15 +397,15 @@ class WindowManagerState {
 
                 Matcher matcher = sTempInsetBoundsPattern.matcher(line);
                 if (matcher.matches()) {
-                    CLog.logAndDisplay(INFO, line);
+                    log(line);
                     mTempInsetBounds = extractBounds(matcher);
                 }
 
                 matcher = sAppTokenPattern.matcher(line);
                 if (matcher.matches()) {
-                    CLog.logAndDisplay(INFO, line);
+                    log(line);
                     final String appToken = matcher.group(6);
-                    CLog.logAndDisplay(INFO, appToken);
+                    log(appToken);
                     mAppTokens.add(appToken);
                     continue;
                 }
@@ -442,9 +440,9 @@ class WindowManagerState {
             if (!matcher.matches()) {
                 return false;
             }
-            CLog.logAndDisplay(INFO, line);
+            log(line);
             final String fullscreen = matcher.group(1);
-            CLog.logAndDisplay(INFO, fullscreen);
+            log(fullscreen);
             mFullscreen = Boolean.valueOf(fullscreen);
             return true;
         }
@@ -454,7 +452,7 @@ class WindowManagerState {
             if (!matcher.matches()) {
                 return false;
             }
-            CLog.logAndDisplay(INFO, line);
+            log(line);
             mBounds = extractBounds(matcher);
             return true;
         }
@@ -466,7 +464,7 @@ class WindowManagerState {
             final int bottom = Integer.valueOf(matcher.group(4));
             final Rectangle rect = new Rectangle(left, top, right - left, bottom - top);
 
-            CLog.logAndDisplay(INFO, rect.toString());
+            log(rect.toString());
             return rect;
         }
 
@@ -534,7 +532,7 @@ class WindowManagerState {
                 return null;
             }
 
-            CLog.logAndDisplay(INFO, TAG + "DISPLAY_ID: " + line);
+            log(TAG + "DISPLAY_ID: " + line);
             dump.pop();
 
             final int displayId = Integer.valueOf(matcher.group(1));
@@ -549,7 +547,7 @@ class WindowManagerState {
 
                 final Matcher matcher = sDisplayInfoPattern.matcher(line);
                 if (matcher.matches()) {
-                    CLog.logAndDisplay(INFO, TAG + "DISPLAY_INFO: " + line);
+                    log(TAG + "DISPLAY_INFO: " + line);
                     mDpi = Integer.valueOf(matcher.group(2));
 
                     final int displayWidth = Integer.valueOf(matcher.group(3));
@@ -634,18 +632,18 @@ class WindowManagerState {
                 return null;
             }
 
-            CLog.logAndDisplay(INFO, TAG + "WINDOW: " + line);
+            log(TAG + "WINDOW: " + line);
             dump.pop();
 
             final WindowState window;
             Matcher specialMatcher = sStartingWindowPattern.matcher(line);
             if (specialMatcher.matches()) {
-                CLog.logAndDisplay(INFO, TAG + "STARTING: " + line);
+                log(TAG + "STARTING: " + line);
                 window = new WindowState(specialMatcher, true, false);
             } else {
                 specialMatcher = sExitingWindowPattern.matcher(line);
                 if (specialMatcher.matches()) {
-                    CLog.logAndDisplay(INFO, TAG + "EXITING: " + line);
+                    log(TAG + "EXITING: " + line);
                     window = new WindowState(specialMatcher, false, true);
                 } else {
                     window = new WindowState(matcher, false, false);
@@ -662,14 +660,14 @@ class WindowManagerState {
 
                 Matcher matcher = sWindowAssociationPattern.matcher(line);
                 if (matcher.matches()) {
-                    CLog.logAndDisplay(INFO, TAG + "WINDOW_ASSOCIATION: " + line);
+                    log(TAG + "WINDOW_ASSOCIATION: " + line);
                     mDisplayId = Integer.valueOf(matcher.group(1));
                     continue;
                 }
 
                 matcher = sFramePattern.matcher(line);
                 if (matcher.matches()) {
-                    CLog.logAndDisplay(INFO, TAG + "FRAME: " + line);
+                    log(TAG + "FRAME: " + line);
                     extractMultipleBounds(matcher, 1, mContainingFrame, mParentFrame);
                     continue;
                 }
