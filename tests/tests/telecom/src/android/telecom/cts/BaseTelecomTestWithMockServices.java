@@ -946,6 +946,31 @@ public class BaseTelecomTestWithMockServices extends InstrumentationTestCase {
         );
     }
 
+    /**
+     * Asserts that a call's capabilities are as expected.
+     *
+     * @param call The call.
+     * @param capabilities The expected capabiltiies.
+     */
+    public void assertCallCapabilities(final Call call, final int capabilities) {
+        waitUntilConditionIsTrueOrTimeout(
+                new Condition() {
+                    @Override
+                    public Object expected() {
+                        return true;
+                    }
+
+                    @Override
+                    public Object actual() {
+                        return (call.getDetails().getCallCapabilities() & capabilities) ==
+                                capabilities;
+                    }
+                },
+                TestUtils.WAIT_FOR_STATE_CHANGE_TIMEOUT_MS,
+                "Call should have properties " + capabilities
+        );
+    }
+
     void waitUntilConditionIsTrueOrTimeout(Condition condition, long timeout,
             String description) {
         final long start = System.currentTimeMillis();
