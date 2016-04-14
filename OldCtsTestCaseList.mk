@@ -185,6 +185,7 @@ cts_test_packages := \
     CtsJniTestCases \
     CtsKeystoreTestCases \
     CtsLibcoreLegacy22TestCases \
+    CtsLibcoreFileIOTestCases \
     CtsLocationTestCases \
     CtsLocation2TestCases \
     CtsMediaStressTestCases \

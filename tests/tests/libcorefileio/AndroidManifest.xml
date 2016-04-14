@@ -26,7 +26,7 @@
                  android:process=":lockHoldingService"
                  android:permission="android.permission.WRITE_EXTERNAL_STORAGE"
         />
-        <receiver android:name="android.cts.FileChannelTryLockTest$IntentReceiver">
+        <receiver android:name="android.cts.FileChannelInterProcessLockTest$IntentReceiver">
 
             <intent-filter>
                 <action android:name="android.cts.CtsLibcoreFileIOTestCases">
