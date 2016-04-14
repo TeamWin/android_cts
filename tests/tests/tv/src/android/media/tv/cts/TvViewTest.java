@@ -487,4 +487,26 @@ public class TvViewTest extends ActivityInstrumentationTestCase2<TvViewStubActiv
         mTvView.setZOrderOnTop(false);
         mInstrumentation.waitForIdleSync();
     }
+
+    @UiThreadTest
+    public void testUnhandledInputEvent() throws Exception {
+        if (!Utils.hasTvInputFramework(getActivity())) {
+            return;
+        }
+        boolean result = mTvView.dispatchUnhandledInputEvent(null);
+        assertFalse(result);
+        result = new InputEventHandlingTvView(mActivity).dispatchUnhandledInputEvent(null);
+        assertTrue(result);
+    }
+
+    private static class InputEventHandlingTvView extends TvView {
+        public InputEventHandlingTvView(Context context) {
+            super(context);
+        }
+
+        @Override
+        public boolean onUnhandledInputEvent(InputEvent event) {
+            return true;
+        }
+    }
 }
