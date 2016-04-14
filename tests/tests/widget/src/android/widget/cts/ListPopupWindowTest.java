@@ -370,17 +370,6 @@ public class ListPopupWindowTest extends
         // Make sure that the modality of the popup window is set up correctly
         assertEquals("Popup window modality", setupAsModal, mPopupWindow.isModal());
 
-        // Determine the location of the popup on the screen so that we can emulate
-        // a tap outside of its bounds to dismiss it
-        final int[] popupOnScreenXY = new int[2];
-        final Rect rect = new Rect();
-        mPopupWindow.getListView().getLocationOnScreen(popupOnScreenXY);
-        mPopupWindow.getBackground().getPadding(rect);
-
-        int emulatedTapX = popupOnScreenXY[0] - rect.left - 20;
-        int emulatedTapY = popupOnScreenXY[1] + mPopupWindow.getListView().getHeight() +
-                rect.top + rect.bottom + 20;
-
         // The logic below uses Instrumentation to emulate a tap outside the bounds of the
         // displayed list popup window. This tap is then treated by the framework to be "split" as
         // the ACTION_OUTSIDE for the popup itself, as well as DOWN / MOVE / UP for the underlying
@@ -390,29 +379,12 @@ public class ListPopupWindowTest extends
         // of Instrumentation is necessary here since Espresso's actions operate at the level
         // of view or data. Also, we don't want to use View.dispatchTouchEvent directly as
         // that would require emulation of two separate sequences as well.
-
-        Instrumentation instrumentation = InstrumentationRegistry.getInstrumentation();
-
-        // Inject DOWN event
-        long downTime = SystemClock.uptimeMillis();
-        MotionEvent eventDown = MotionEvent.obtain(
-                downTime, downTime, MotionEvent.ACTION_DOWN, emulatedTapX, emulatedTapY, 1);
-        instrumentation.sendPointerSync(eventDown);
-
-        // Inject MOVE event
-        long moveTime = SystemClock.uptimeMillis();
-        MotionEvent eventMove = MotionEvent.obtain(
-                moveTime, moveTime, MotionEvent.ACTION_MOVE, emulatedTapX, emulatedTapY, 1);
-        instrumentation.sendPointerSync(eventMove);
-
-        // Inject UP event
-        long upTime = SystemClock.uptimeMillis();
-        MotionEvent eventUp = MotionEvent.obtain(
-                upTime, upTime, MotionEvent.ACTION_UP, emulatedTapX, emulatedTapY, 1);
-        instrumentation.sendPointerSync(eventUp);
-
-        // Wait for the system to process all events in the queue
-        instrumentation.waitForIdleSync();
+        final Instrumentation instrumentation = InstrumentationRegistry.getInstrumentation();
+        final ListView popupListView = mPopupWindow.getListView();
+        final Rect rect = new Rect();
+        mPopupWindow.getBackground().getPadding(rect);
+        ViewTestUtils.emulateTapOnScreen(instrumentation, popupListView,
+                -rect.left - 20, popupListView.getHeight() + rect.top + rect.bottom + 20);
 
         // At this point our popup should not be showing and should have notified its
         // dismiss listener
