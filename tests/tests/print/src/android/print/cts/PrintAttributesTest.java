@@ -117,27 +117,6 @@ public class PrintAttributesTest extends BasePrintTest {
     }
 
     /**
-     * Make {@link #PRINTER_NAME} the default printer by adding it to the history of printers by
-     * printing once.
-     *
-     * @param adapter The {@link PrintDocumentAdapter} used
-     * @throws Exception If the printer could not be made default
-     */
-    private void makeDefaultPrinter(PrintDocumentAdapter adapter)
-            throws Exception {
-        // Perform a full print operation on the printer
-        print(adapter);
-        selectPrinter(PRINTER_NAME);
-        clickPrintButton();
-        answerPrintServicesWarning(true);
-        waitForPrinterDiscoverySessionDestroyCallbackCalled();
-
-        // Switch to new activity, which should now use the default printer
-        getActivity().finish();
-        createActivity();
-    }
-
-    /**
      * Create {@link PrinterDiscoverySessionCallbacks} with a single printer that has the given
      * capabilities
      *
@@ -398,7 +377,7 @@ public class PrintAttributesTest extends BasePrintTest {
 
         // Make printer default. This is necessary as a different default printer might pre-select
         // its default attributes and thereby overrides the defaults of the tested printer.
-        makeDefaultPrinter(adapter);
+        makeDefaultPrinter(adapter, PRINTER_NAME);
 
         // Select suggested attributes
         PrintAttributes suggestedAttributes = createAttributes(suggestedMediaSize,

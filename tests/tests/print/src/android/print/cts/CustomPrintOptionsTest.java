@@ -105,15 +105,13 @@ public class CustomPrintOptionsTest extends BasePrintTest {
             return null;
         } catch (UiObjectNotFoundException e) {
             dumpWindowHierarchy();
-            throw new UiObjectNotFoundException(e);
+            throw e;
         }
     }
 
     /**
      * Test that we can switch to a specific set of settings via the custom print options activity
      *
-     * @param resetStateBefore Reset the state before the test case
-     * @param layoutAttributes The layout attributes that are monitored
      * @param copyFromOriginal If the print job info should be copied from the original
      * @param numCopies        The copies to print
      * @param pages            The page ranges to print
@@ -125,20 +123,92 @@ public class CustomPrintOptionsTest extends BasePrintTest {
      *
      * @throws Exception If anything is unexpected
      */
-    private void testCase(boolean resetStateBefore, PrintAttributes[] layoutAttributes,
-            final boolean copyFromOriginal, final Integer numCopies, final PageRange[] pages,
-            final MediaSize mediaSize, final boolean isPortrait, final Integer colorMode,
-            final Integer duplexMode, final Resolution resolution) throws Exception {
+    private void testCase(final boolean copyFromOriginal, final Integer numCopies,
+            final PageRange[] pages, final MediaSize mediaSize, final boolean isPortrait,
+            final Integer colorMode, final Integer duplexMode, final Resolution resolution)
+            throws Exception {
+        if (!supportsPrinting()) {
+            return;
+        }
+
+        final PrintAttributes[] layoutAttributes = new PrintAttributes[1];
+
+        final PrinterDiscoverySessionCallbacks firstSessionCallbacks =
+                createMockPrinterDiscoverySessionCallbacks(invocation -> {
+                    StubbablePrinterDiscoverySession session =
+                            ((PrinterDiscoverySessionCallbacks) invocation.getMock())
+                                    .getSession();
+                    PrinterId printerId = session.getService().generatePrinterId(PRINTER_NAME);
+                    List<PrinterInfo> printers = new ArrayList<>(1);
+                    PrinterCapabilitiesInfo.Builder builder =
+                            new PrinterCapabilitiesInfo.Builder(printerId);
+
+                    builder.setMinMargins(DEFAULT_MARGINS)
+                            .setColorModes(COLOR_MODES[0] | COLOR_MODES[1],
+                                    DEFAULT_COLOR_MODE)
+                            .setDuplexModes(DUPLEX_MODES[0] | DUPLEX_MODES[1],
+                                    DEFAULT_DUPLEX_MODE)
+                            .addMediaSize(DEFAULT_MEDIA_SIZE, true)
+                            .addMediaSize(MEDIA_SIZES[1], false)
+                            .addResolution(DEFAULT_RESOLUTION, true)
+                            .addResolution(RESOLUTIONS[1], false);
+
+                    printers.add(new PrinterInfo.Builder(printerId, PRINTER_NAME,
+                            PrinterInfo.STATUS_IDLE).setCapabilities(builder.build()).build());
+
+                    session.addPrinters(printers);
+                    return null;
+                }, null, null, null, null, null, invocation -> {
+                    onPrinterDiscoverySessionDestroyCalled();
+                    return null;
+                });
+
+        PrintDocumentAdapter adapter = createMockPrintDocumentAdapter(
+                invocation -> {
+                    LayoutResultCallback callback = (LayoutResultCallback) invocation
+                            .getArguments()[3];
+                    PrintDocumentInfo info = new PrintDocumentInfo.Builder(PRINT_JOB_NAME)
+                            .setContentType(PrintDocumentInfo.CONTENT_TYPE_DOCUMENT)
+                            .setPageCount(3)
+                            .build();
+
+                    synchronized (CustomPrintOptionsTest.this) {
+                        layoutAttributes[0] = (PrintAttributes) invocation.getArguments()[1];
+
+                        CustomPrintOptionsTest.this.notifyAll();
+                    }
+
+                    callback.onLayoutFinished(info, true);
+                    return null;
+                },
+                invocation -> {
+                    Object[] args = invocation.getArguments();
+                    ParcelFileDescriptor fd = (ParcelFileDescriptor) args[1];
+                    WriteResultCallback callback = (WriteResultCallback) args[3];
+
+                    PageRange[] writtenPages = (PageRange[]) args[0];
+
+                    writeBlankPages(layoutAttributes[0], fd, writtenPages[0].getStart(),
+                            writtenPages[0].getEnd());
+                    fd.close();
+
+                    callback.onWriteFinished(writtenPages);
+
+                    onWriteCalled();
+
+                    return null;
+                }, null);
+
+        // Create the service callbacks for the first print service.
+        PrintServiceCallbacks firstServiceCallbacks = createMockPrintServiceCallbacks(
+                invocation -> firstSessionCallbacks, null, null);
+
+        // Configure the print services.
+        FirstPrintService.setCallbacks(firstServiceCallbacks);
+        SecondPrintService.setCallbacks(createMockPrintServiceCallbacks(null, null, null));
+
         final PrintAttributes.Builder additionalAttributesBuilder = new PrintAttributes.Builder();
         final PrintAttributes.Builder newAttributesBuilder = new PrintAttributes.Builder();
-
-        if (resetStateBefore) {
-            Log.d(LOG_TAG, "Reset");
-            // Reset the UI state
-            testCase(false, layoutAttributes, false, 1, DEFAULT_PAGES, DEFAULT_MEDIA_SIZE,
-                    DEFAULT_MEDIA_SIZE.isPortrait(), DEFAULT_COLOR_MODE, DEFAULT_DUPLEX_MODE,
-                    DEFAULT_RESOLUTION);
-        }
 
         newAttributesBuilder.setMinMargins(DEFAULT_MARGINS);
 
@@ -176,39 +246,46 @@ public class CustomPrintOptionsTest extends BasePrintTest {
         }
 
         CustomPrintOptionsActivity.setCallBack(
-                new CustomPrintOptionsActivity.CustomPrintOptionsCallback() {
-                    @Override
-                    public PrintJobInfo executeCustomPrintOptionsActivity(
-                            PrintJobInfo printJob, PrinterInfo printer) {
-                        PrintJobInfo.Builder printJobBuilder;
+                (printJob, printer) -> {
+                    PrintJobInfo.Builder printJobBuilder;
 
-                        if (copyFromOriginal) {
-                            printJobBuilder = new PrintJobInfo.Builder(printJob);
-                        } else {
-                            printJobBuilder = new PrintJobInfo.Builder(null);
-                        }
-
-                        if (numCopies != null) {
-                            printJobBuilder.setCopies(numCopies);
-                        }
-
-                        if (pages != null) {
-                            printJobBuilder.setPages(pages);
-                        }
-
-                        if (mediaSize != null || colorMode != null || duplexMode != null
-                                || resolution != null) {
-                            printJobBuilder.setAttributes(additionalAttributesBuilder.build());
-                        }
-
-                        return printJobBuilder.build();
+                    if (copyFromOriginal) {
+                        printJobBuilder = new PrintJobInfo.Builder(printJob);
+                    } else {
+                        printJobBuilder = new PrintJobInfo.Builder(null);
                     }
+
+                    if (numCopies != null) {
+                        printJobBuilder.setCopies(numCopies);
+                    }
+
+                    if (pages != null) {
+                        printJobBuilder.setPages(pages);
+                    }
+
+                    if (mediaSize != null || colorMode != null || duplexMode != null
+                            || resolution != null) {
+                        printJobBuilder.setAttributes(additionalAttributesBuilder.build());
+                    }
+
+                    return printJobBuilder.build();
                 });
+
+        makeDefaultPrinter(adapter, PRINTER_NAME);
 
         // Check that the attributes were send to the print service
         PrintAttributes newAttributes = newAttributesBuilder.build();
         Log.i(LOG_TAG, "Change to attributes: " + newAttributes + ", copies: " + numCopies +
                 ", pages: " + Arrays.toString(pages) + ", copyFromOriginal: " + copyFromOriginal);
+
+        // Start printing
+        print(adapter);
+
+        // Wait for write.
+        waitForWriteAdapterCallback();
+
+        // Open the print options.
+        openPrintOptions();
 
         // Apply options by executing callback above
         Log.d(LOG_TAG, "Apply changes");
@@ -239,158 +316,72 @@ public class CustomPrintOptionsTest extends BasePrintTest {
         }
 
         Log.d(LOG_TAG, "Check pages");
-        PageRange[] actualPages = getPages();
-        if (!Arrays.equals(newPages, actualPages)) {
-            new AssertionError("Expected " + Arrays.toString(newPages) + ", actual " +
-                    Arrays.toString(actualPages));
+        long endTime = System.currentTimeMillis() + OPERATION_TIMEOUT_MILLIS;
+        while (true) {
+            try {
+                PageRange[] actualPages = getPages();
+                if (!Arrays.equals(newPages, actualPages)) {
+                    new AssertionError("Expected " + Arrays.toString(newPages) + ", actual " +
+                            Arrays.toString(actualPages));
+                }
+
+                break;
+            } catch (Exception e) {
+                if (endTime < System.currentTimeMillis()) {
+                    throw e;
+                } else {
+                    Log.e(LOG_TAG, "Could not verify pages, retiring", e);
+                    Thread.sleep(100);
+                }
+            }
         }
-    }
-
-    /**
-     * Tests that we can change the print settings via the custom print options activity.
-     *
-     * @throws Exception If something is unexpected.
-     */
-    public void testPrintSettingsChangeViaCustomPrintOptions() throws Exception {
-        if (!supportsPrinting()) {
-            return;
-        }
-
-        final PrintAttributes[] layoutAttributes = new PrintAttributes[1];
-
-        final PrinterDiscoverySessionCallbacks firstSessionCallbacks =
-                createMockPrinterDiscoverySessionCallbacks(new Answer<Void>() {
-                    @Override
-                    public Void answer(InvocationOnMock invocation) {
-                        StubbablePrinterDiscoverySession session =
-                                ((PrinterDiscoverySessionCallbacks) invocation.getMock())
-                                        .getSession();
-                        PrinterId printerId = session.getService().generatePrinterId(PRINTER_NAME);
-                        List<PrinterInfo> printers = new ArrayList<>(1);
-                        PrinterCapabilitiesInfo.Builder builder =
-                                new PrinterCapabilitiesInfo.Builder(printerId);
-
-                        builder.setMinMargins(DEFAULT_MARGINS)
-                                .setColorModes(COLOR_MODES[0] | COLOR_MODES[1],
-                                        DEFAULT_COLOR_MODE)
-                                .setDuplexModes(DUPLEX_MODES[0] | DUPLEX_MODES[1],
-                                        DEFAULT_DUPLEX_MODE)
-                                .addMediaSize(DEFAULT_MEDIA_SIZE, true)
-                                .addMediaSize(MEDIA_SIZES[1], false)
-                                .addResolution(DEFAULT_RESOLUTION, true)
-                                .addResolution(RESOLUTIONS[1], false);
-
-                        printers.add(new PrinterInfo.Builder(printerId, PRINTER_NAME,
-                                PrinterInfo.STATUS_IDLE).setCapabilities(builder.build()).build());
-
-                        session.addPrinters(printers);
-                        return null;
-                    }
-                }, null, null, null, null, null, new Answer<Void>() {
-                    @Override
-                    public Void answer(InvocationOnMock invocation) {
-                        onPrinterDiscoverySessionDestroyCalled();
-                        return null;
-                    }
-                });
-
-        PrintDocumentAdapter adapter = createMockPrintDocumentAdapter(
-                new Answer<Void>() {
-                    @Override
-                    public Void answer(InvocationOnMock invocation) throws Throwable {
-                        LayoutResultCallback callback = (LayoutResultCallback) invocation
-                                .getArguments()[3];
-                        PrintDocumentInfo info = new PrintDocumentInfo.Builder(PRINT_JOB_NAME)
-                                .setContentType(PrintDocumentInfo.CONTENT_TYPE_DOCUMENT)
-                                .setPageCount(3)
-                                .build();
-
-                        synchronized (CustomPrintOptionsTest.this) {
-                            layoutAttributes[0] = (PrintAttributes) invocation.getArguments()[1];
-
-                            CustomPrintOptionsTest.this.notifyAll();
-                        }
-
-                        callback.onLayoutFinished(info, true);
-                        return null;
-                    }
-                },
-                new Answer<Void>() {
-                    @Override
-                    public Void answer(InvocationOnMock invocation) throws Throwable {
-                        Object[] args = invocation.getArguments();
-                        ParcelFileDescriptor fd = (ParcelFileDescriptor) args[1];
-                        WriteResultCallback callback = (WriteResultCallback) args[3];
-
-                        PageRange[] writtenPages = (PageRange[]) args[0];
-
-                        writeBlankPages(layoutAttributes[0], fd, writtenPages[0].getStart(),
-                                writtenPages[0].getEnd());
-                        fd.close();
-
-                        callback.onWriteFinished(writtenPages);
-                        return null;
-                    }
-                }, null);
-
-        // Create the service callbacks for the first print service.
-        PrintServiceCallbacks firstServiceCallbacks = createMockPrintServiceCallbacks(
-                new Answer<PrinterDiscoverySessionCallbacks>() {
-                    @Override
-                    public PrinterDiscoverySessionCallbacks answer(InvocationOnMock invocation) {
-                        return firstSessionCallbacks;
-                    }
-                }, null, null);
-
-        // Configure the print services.
-        FirstPrintService.setCallbacks(firstServiceCallbacks);
-        SecondPrintService.setCallbacks(createMockPrintServiceCallbacks(null, null, null));
-
-        print(adapter);
-
-        selectPrinter(PRINTER_NAME);
-        openPrintOptions();
-
-        // All combinations would take hours, hence run only an interesting subset
-
-        // Change everything
-        testCase(true, layoutAttributes, false, 2, PAGESS[1], MEDIA_SIZES[1], false, COLOR_MODES[1],
-                DUPLEX_MODES[1], RESOLUTIONS[1]);
-
-        // Change only attributes
-        testCase(true, layoutAttributes, false, null, null, MEDIA_SIZES[1], false, COLOR_MODES[1],
-                DUPLEX_MODES[1], RESOLUTIONS[1]);
-
-        // Change only non-attributes
-        testCase(true, layoutAttributes, false, 2, PAGESS[1], null, true, null, null, null);
-
-        // Change only attributes, no copy from original
-        testCase(true, layoutAttributes, true, null, null, MEDIA_SIZES[1], false, COLOR_MODES[1],
-                DUPLEX_MODES[1], RESOLUTIONS[1]);
-
-        // Change only non-attributes, no copy from original
-        testCase(true, layoutAttributes, true, 2, PAGESS[1], null, true, null, null, null);
-
-        // Change to default
-        testCase(false, layoutAttributes, false, 1, DEFAULT_PAGES, DEFAULT_MEDIA_SIZE,
-                DEFAULT_MEDIA_SIZE.isPortrait(), DEFAULT_COLOR_MODE, DEFAULT_DUPLEX_MODE,
-                DEFAULT_RESOLUTION);
-
-        // Change to default, no copy from original
-        testCase(false, layoutAttributes, true, 1, DEFAULT_PAGES, DEFAULT_MEDIA_SIZE,
-                DEFAULT_MEDIA_SIZE.isPortrait(), DEFAULT_COLOR_MODE, DEFAULT_DUPLEX_MODE,
-                DEFAULT_RESOLUTION);
-
-        // Change nothing
-        testCase(true, layoutAttributes, false, null, null, null, true, null, null, null);
-
-        // Change nothing, no copy from original
-        testCase(true, layoutAttributes, true, null, null, null, true, null, null, null);
-
-        // Change to all pages
-        testCase(true, layoutAttributes, false, null, PAGESS[2], null, true, null, null, null);
 
         // Abort printing
         getUiDevice().pressBack();
+    }
+
+    public void testChangeToChangeEveryThing() throws Exception {
+        testCase(false, 2, PAGESS[1], MEDIA_SIZES[1], false, COLOR_MODES[1], DUPLEX_MODES[1],
+                RESOLUTIONS[1]);
+    }
+
+    public void testChangeToAttributes() throws Exception {
+        testCase(false, null, null, MEDIA_SIZES[1], false, COLOR_MODES[1], DUPLEX_MODES[1],
+                RESOLUTIONS[1]);
+    }
+
+    public void testChangeToNonAttributes() throws Exception {
+        testCase(false, 2, PAGESS[1], null, true, null, null, null);
+    }
+
+    public void testChangeToAttributesNoCopy() throws Exception {
+        testCase(true, null, null, MEDIA_SIZES[1], false, COLOR_MODES[1], DUPLEX_MODES[1],
+                RESOLUTIONS[1]);
+    }
+
+    public void testChangeToNonAttributesNoCopy() throws Exception {
+        testCase(true, 2, PAGESS[1], null, true, null, null, null);
+    }
+
+    public void testChangeToDefault() throws Exception {
+        testCase(false, 1, DEFAULT_PAGES, DEFAULT_MEDIA_SIZE, DEFAULT_MEDIA_SIZE.isPortrait(),
+                DEFAULT_COLOR_MODE, DEFAULT_DUPLEX_MODE, DEFAULT_RESOLUTION);
+    }
+
+    public void testChangeToDefaultNoCopy() throws Exception {
+        testCase(true, 1, DEFAULT_PAGES, DEFAULT_MEDIA_SIZE, DEFAULT_MEDIA_SIZE.isPortrait(),
+                DEFAULT_COLOR_MODE, DEFAULT_DUPLEX_MODE, DEFAULT_RESOLUTION);
+    }
+
+    public void testChangeToNothing() throws Exception {
+        testCase(false, null, null, null, true, null, null, null);
+    }
+
+    public void testChangeToNothingNoCopy() throws Exception {
+        testCase(true, null, null, null, true, null, null, null);
+    }
+
+    public void testChangeToAllPages() throws Exception {
+        testCase(false, null, PAGESS[2], null, true, null, null, null);
     }
 }
