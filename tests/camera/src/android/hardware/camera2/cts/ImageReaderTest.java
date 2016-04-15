@@ -868,7 +868,7 @@ public class ImageReaderTest extends Camera2AndroidTestCase {
                                     "sensitivity was %d expecting %d.", i, format, sz.toString(),
                                     getValueNotNull(result, CaptureResult.SENSOR_SENSITIVITY),
                                     TEST_SENSITIVITY_VALUE),
-                            sensitivityDiff == 0);
+                            sensitivityDiff >= 0);
 
 
                     // Sleep to Simulate long porcessing before closing the image.
