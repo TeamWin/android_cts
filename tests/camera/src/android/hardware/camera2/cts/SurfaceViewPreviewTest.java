@@ -23,6 +23,7 @@ import android.view.Surface;
 
 import com.android.ex.camera2.blocking.BlockingSessionCallback;
 
+import android.graphics.SurfaceTexture;
 import android.hardware.camera2.CameraCaptureSession;
 import android.hardware.camera2.CameraCaptureSession.CaptureCallback;
 import android.hardware.camera2.CameraDevice;
@@ -324,6 +325,97 @@ public class SurfaceViewPreviewTest extends Camera2SurfaceViewTestCase {
                 (preparedFrameDurationStats.first <=
                         frameDurationStats.first * (1 + PREPARE_FRAME_RATE_BOUNDS)));
         }
+    }
+
+    /**
+     * Test to verify correct behavior with the same Surface object being used repeatedly with
+     * different native internals, and multiple Surfaces pointing to the same actual consumer object
+     */
+    public void testSurfaceEquality() throws Exception {
+        for (int i = 0; i < mCameraIds.length; i++) {
+            try {
+                openDevice(mCameraIds[i]);
+                if (!mStaticInfo.isColorOutputSupported()) {
+                    Log.i(TAG, "Camera " + mCameraIds[i] +
+                            " does not support color outputs, skipping");
+                    continue;
+                }
+                surfaceEqualityTestByCamera(mCameraIds[i]);
+            }
+            finally {
+                closeDevice();
+            }
+        }
+    }
+
+    private void surfaceEqualityTestByCamera(String cameraId) throws Exception {
+        final int SOME_FRAMES = 10;
+
+        Size maxPreviewSize = mOrderedPreviewSizes.get(0);
+
+        SimpleCaptureCallback resultListener = new SimpleCaptureCallback();
+
+        // Create a SurfaceTexture for a second output
+        SurfaceTexture sharedOutputTexture = new SurfaceTexture(/*random texture ID*/ 5);
+        sharedOutputTexture.setDefaultBufferSize(maxPreviewSize.getWidth(),
+                maxPreviewSize.getHeight());
+        Surface sharedOutputSurface1 = new Surface(sharedOutputTexture);
+
+        updatePreviewSurface(maxPreviewSize);
+
+        List<Surface> outputSurfaces = new ArrayList<Surface>();
+        outputSurfaces.add(mPreviewSurface);
+        outputSurfaces.add(sharedOutputSurface1);
+
+        BlockingSessionCallback sessionListener =
+                new BlockingSessionCallback();
+
+        mSession = configureCameraSession(mCamera, outputSurfaces, sessionListener, mHandler);
+        sessionListener.getStateWaiter().waitForState(BlockingSessionCallback.SESSION_READY,
+                SESSION_CONFIGURE_TIMEOUT_MS);
+
+        CaptureRequest.Builder previewRequest =
+                mCamera.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW);
+        previewRequest.addTarget(mPreviewSurface);
+        previewRequest.addTarget(sharedOutputSurface1);
+
+        mSession.setRepeatingRequest(previewRequest.build(), resultListener, mHandler);
+
+        // Wait to get some frames out
+        waitForNumResults(resultListener, SOME_FRAMES);
+
+        // Drain
+        mSession.abortCaptures();
+        sessionListener.getStateWaiter().waitForState(BlockingSessionCallback.SESSION_READY,
+                SESSION_CONFIGURE_TIMEOUT_MS);
+
+        // Hide / unhide the SurfaceView to get a new target Surface
+        recreatePreviewSurface();
+
+        // And resize it again
+        updatePreviewSurface(maxPreviewSize);
+
+        // Create a second surface that targets the shared SurfaceTexture
+        Surface sharedOutputSurface2 = new Surface(sharedOutputTexture);
+
+        // Use the new Surfaces for a new session
+        outputSurfaces.clear();
+        outputSurfaces.add(mPreviewSurface);
+        outputSurfaces.add(sharedOutputSurface2);
+
+        sessionListener = new BlockingSessionCallback();
+
+        mSession = configureCameraSession(mCamera, outputSurfaces, sessionListener, mHandler);
+
+        previewRequest =
+                mCamera.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW);
+        previewRequest.addTarget(mPreviewSurface);
+        previewRequest.addTarget(sharedOutputSurface2);
+
+        mSession.setRepeatingRequest(previewRequest.build(), resultListener, mHandler);
+
+        // Wait to get some frames out
+        waitForNumResults(resultListener, SOME_FRAMES);
     }
 
     /**

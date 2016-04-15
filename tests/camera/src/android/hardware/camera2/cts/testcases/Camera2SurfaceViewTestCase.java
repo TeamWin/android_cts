@@ -29,6 +29,7 @@ import android.test.ActivityInstrumentationTestCase2;
 import android.util.Log;
 import android.view.Surface;
 import android.view.SurfaceHolder;
+import android.view.View;
 import android.view.WindowManager;
 import android.content.Context;
 import android.graphics.ImageFormat;
@@ -635,6 +636,41 @@ public class Camera2SurfaceViewTestCase extends
         mPreviewSurface = holder.getSurface();
         assertNotNull("Preview surface is null", mPreviewSurface);
         assertTrue("Preview surface is invalid", mPreviewSurface.isValid());
+    }
+
+    /**
+     * Recreate the SurfaceView's Surface
+     *
+     * Hide and unhide the activity's preview SurfaceView, so that its backing Surface is
+     * recreated
+     */
+    protected void recreatePreviewSurface() {
+        Camera2SurfaceViewCtsActivity ctsActivity = getActivity();
+        setPreviewVisibility(View.GONE);
+        boolean res = ctsActivity.waitForSurfaceState(
+            WAIT_FOR_SURFACE_CHANGE_TIMEOUT_MS, /*valid*/ false);
+        assertTrue("wait for surface destroyed timed out", res);
+        setPreviewVisibility(View.VISIBLE);
+        res = ctsActivity.waitForSurfaceState(
+            WAIT_FOR_SURFACE_CHANGE_TIMEOUT_MS, /*valid*/ true);
+        assertTrue("wait for surface created timed out", res);
+    }
+
+    /**
+     * Show/hide the preview SurfaceView.
+     *
+     * If set to View.GONE, the surfaceDestroyed callback will fire
+     * @param visibility the new new visibility to set, one of View.VISIBLE / INVISIBLE / GONE
+     */
+    protected void setPreviewVisibility(int visibility) {
+        final Camera2SurfaceViewCtsActivity ctsActivity = getActivity();
+        Handler handler = new Handler(Looper.getMainLooper());
+        handler.post(new Runnable() {
+            @Override
+            public void run() {
+                ctsActivity.getSurfaceView().setVisibility(visibility);
+            }
+        });
     }
 
     /**
