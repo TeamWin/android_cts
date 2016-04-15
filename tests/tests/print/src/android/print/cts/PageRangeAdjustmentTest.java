@@ -137,7 +137,7 @@ public class PageRangeAdjustmentTest extends BasePrintTest {
         print(adapter);
 
         // Wait for write.
-        waitForWriteAdapterCallback();
+        waitForWriteAdapterCallback(1);
 
         // Select the first printer.
         selectPrinter(FIRST_PRINTER);
@@ -246,7 +246,7 @@ public class PageRangeAdjustmentTest extends BasePrintTest {
         print(adapter);
 
         // Wait for write.
-        waitForWriteAdapterCallback();
+        waitForWriteAdapterCallback(1);
 
         // Open the print options.
         openPrintOptions();
@@ -380,7 +380,7 @@ public class PageRangeAdjustmentTest extends BasePrintTest {
         print(adapter);
 
         // Wait for write.
-        waitForWriteAdapterCallback();
+        waitForWriteAdapterCallback(1);
 
         // Open the print options.
         openPrintOptions();
@@ -489,7 +489,7 @@ public class PageRangeAdjustmentTest extends BasePrintTest {
         print(adapter);
 
         // Wait for write.
-        waitForWriteAdapterCallback();
+        waitForWriteAdapterCallback(1);
 
         // Cancel printing.
         getUiDevice().pressBack(); // wakes up the device.
@@ -595,7 +595,7 @@ public class PageRangeAdjustmentTest extends BasePrintTest {
         print(adapter);
 
         // Wait for write.
-        waitForWriteAdapterCallback();
+        waitForWriteAdapterCallback(1);
 
         // Open the print options.
         openPrintOptions();

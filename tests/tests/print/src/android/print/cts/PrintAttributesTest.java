@@ -386,9 +386,9 @@ public class PrintAttributesTest extends BasePrintTest {
         // Start print action and wait for layout, the result is stored in #layoutAttributes,
         // @see createMockPrintDocumentAdapter
         print(adapter, suggestedAttributes);
-        waitForWriteAdapterCallback();
+        waitForWriteAdapterCallback(2);
         clickPrintButton();
-        waitForPrinterDiscoverySessionDestroyCallbackCalled();
+        waitForPrinterDiscoverySessionDestroyCallbackCalled(2);
 
         // It does not make sense to suggest minMargins, hence the print framework always picks
         // the one set up for the printer.

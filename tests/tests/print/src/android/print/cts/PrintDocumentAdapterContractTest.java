@@ -111,7 +111,7 @@ public class PrintDocumentAdapterContractTest extends BasePrintTest {
         print(adapter);
 
         // Wait for write.
-        waitForWriteAdapterCallback();
+        waitForWriteAdapterCallback(1);
 
         // Select the second printer.
         selectPrinter("Second printer");
@@ -129,7 +129,7 @@ public class PrintDocumentAdapterContractTest extends BasePrintTest {
         waitForAdapterFinishCallbackCalled();
 
         // Wait for the session to be destroyed to isolate tests.
-        waitForPrinterDiscoverySessionDestroyCallbackCalled();
+        waitForPrinterDiscoverySessionDestroyCallbackCalled(1);
 
         // Verify the expected calls.
         InOrder inOrder = inOrder(adapter);
@@ -234,7 +234,7 @@ public class PrintDocumentAdapterContractTest extends BasePrintTest {
         print(adapter);
 
         // Wait for write.
-        waitForWriteAdapterCallback();
+        waitForWriteAdapterCallback(1);
 
         // Cancel the printing.
         getUiDevice().pressBack(); // wakes up the device.
@@ -244,7 +244,7 @@ public class PrintDocumentAdapterContractTest extends BasePrintTest {
         waitForAdapterFinishCallbackCalled();
 
         // Wait for the session to be destroyed to isolate tests.
-        waitForPrinterDiscoverySessionDestroyCallbackCalled();
+        waitForPrinterDiscoverySessionDestroyCallbackCalled(1);
 
         // Verify the expected calls.
         InOrder inOrder = inOrder(adapter);
@@ -330,7 +330,7 @@ public class PrintDocumentAdapterContractTest extends BasePrintTest {
         print(adapter);
 
         // Wait for write.
-        waitForWriteAdapterCallback();
+        waitForWriteAdapterCallback(1);
 
         // Open the print options.
         openPrintOptions();
@@ -375,7 +375,7 @@ public class PrintDocumentAdapterContractTest extends BasePrintTest {
         waitForAdapterFinishCallbackCalled();
 
         // Wait for the session to be destroyed to isolate tests.
-        waitForPrinterDiscoverySessionDestroyCallbackCalled();
+        waitForPrinterDiscoverySessionDestroyCallbackCalled(1);
 
         // Verify the expected calls.
         InOrder inOrder = inOrder(adapter);
@@ -534,7 +534,7 @@ public class PrintDocumentAdapterContractTest extends BasePrintTest {
         print(adapter);
 
         // Wait for write.
-        waitForWriteAdapterCallback();
+        waitForWriteAdapterCallback(1);
 
         // Open the print options.
         openPrintOptions();
@@ -568,7 +568,7 @@ public class PrintDocumentAdapterContractTest extends BasePrintTest {
         waitForAdapterFinishCallbackCalled();
 
         // Wait for the session to be destroyed to isolate tests.
-        waitForPrinterDiscoverySessionDestroyCallbackCalled();
+        waitForPrinterDiscoverySessionDestroyCallbackCalled(1);
 
         // Verify the expected calls.
         InOrder inOrder = inOrder(adapter);
@@ -699,7 +699,7 @@ public class PrintDocumentAdapterContractTest extends BasePrintTest {
         print(adapter);
 
         // Wait for write.
-        waitForWriteAdapterCallback();
+        waitForWriteAdapterCallback(1);
 
         // Open the print options.
         openPrintOptions();
@@ -720,7 +720,7 @@ public class PrintDocumentAdapterContractTest extends BasePrintTest {
         waitForAdapterFinishCallbackCalled();
 
         // Wait for the session to be destroyed to isolate tests.
-        waitForPrinterDiscoverySessionDestroyCallbackCalled();
+        waitForPrinterDiscoverySessionDestroyCallbackCalled(1);
 
         // Verify the expected calls.
         InOrder inOrder = inOrder(adapter);
@@ -830,7 +830,7 @@ public class PrintDocumentAdapterContractTest extends BasePrintTest {
         print(adapter);
 
         // Wait for write.
-        waitForWriteAdapterCallback();
+        waitForWriteAdapterCallback(1);
 
         // Open the print options.
         openPrintOptions();
@@ -848,7 +848,7 @@ public class PrintDocumentAdapterContractTest extends BasePrintTest {
         waitForAdapterFinishCallbackCalled();
 
         // Wait for the session to be destroyed to isolate tests.
-        waitForPrinterDiscoverySessionDestroyCallbackCalled();
+        waitForPrinterDiscoverySessionDestroyCallbackCalled(1);
 
         // Verify the expected calls.
         InOrder inOrder = inOrder(adapter);
@@ -940,7 +940,7 @@ public class PrintDocumentAdapterContractTest extends BasePrintTest {
         print(adapter);
 
         // Wait for write.
-        waitForWriteAdapterCallback();
+        waitForWriteAdapterCallback(1);
 
         // Open the print options.
         openPrintOptions();
@@ -961,7 +961,7 @@ public class PrintDocumentAdapterContractTest extends BasePrintTest {
         waitForAdapterFinishCallbackCalled();
 
         // Wait for the session to be destroyed to isolate tests.
-        waitForPrinterDiscoverySessionDestroyCallbackCalled();
+        waitForPrinterDiscoverySessionDestroyCallbackCalled(1);
 
         // Verify the expected calls.
         InOrder inOrder = inOrder(adapter);
@@ -1069,7 +1069,7 @@ public class PrintDocumentAdapterContractTest extends BasePrintTest {
         waitForAdapterFinishCallbackCalled();
 
         // Wait for the session to be destroyed to isolate tests.
-        waitForPrinterDiscoverySessionDestroyCallbackCalled();
+        waitForPrinterDiscoverySessionDestroyCallbackCalled(1);
 
         // Verify the expected calls.
         InOrder inOrder = inOrder(adapter);
@@ -1151,7 +1151,7 @@ public class PrintDocumentAdapterContractTest extends BasePrintTest {
         print(adapter);
 
         // Wait for write.
-        waitForWriteAdapterCallback();
+        waitForWriteAdapterCallback(1);
 
         // Cancel printing.
         getUiDevice().pressBack(); // wakes up the device.
@@ -1164,7 +1164,7 @@ public class PrintDocumentAdapterContractTest extends BasePrintTest {
         waitForAdapterFinishCallbackCalled();
 
         // Wait for the session to be destroyed to isolate tests.
-        waitForPrinterDiscoverySessionDestroyCallbackCalled();
+        waitForPrinterDiscoverySessionDestroyCallbackCalled(1);
 
         // Verify the expected calls.
         InOrder inOrder = inOrder(adapter);
@@ -1237,7 +1237,7 @@ public class PrintDocumentAdapterContractTest extends BasePrintTest {
         waitForAdapterFinishCallbackCalled();
 
         // Wait for the session to be destroyed to isolate tests.
-        waitForPrinterDiscoverySessionDestroyCallbackCalled();
+        waitForPrinterDiscoverySessionDestroyCallbackCalled(1);
 
         // Verify the expected calls.
         InOrder inOrder = inOrder(adapter);
@@ -1310,7 +1310,7 @@ public class PrintDocumentAdapterContractTest extends BasePrintTest {
         print(adapter);
 
         // Wait for write.
-        waitForWriteAdapterCallback();
+        waitForWriteAdapterCallback(1);
 
         // Cancel printing.
         getUiDevice().pressBack(); // wakes up the device.
@@ -1320,7 +1320,7 @@ public class PrintDocumentAdapterContractTest extends BasePrintTest {
         waitForAdapterFinishCallbackCalled();
 
         // Wait for the session to be destroyed to isolate tests.
-        waitForPrinterDiscoverySessionDestroyCallbackCalled();
+        waitForPrinterDiscoverySessionDestroyCallbackCalled(1);
 
         // Verify the expected calls.
         InOrder inOrder = inOrder(adapter);
@@ -1402,7 +1402,7 @@ public class PrintDocumentAdapterContractTest extends BasePrintTest {
         print(adapter);
 
         // Wait for write.
-        waitForWriteAdapterCallback();
+        waitForWriteAdapterCallback(1);
 
         // Cancel printing.
         getUiDevice().pressBack(); // wakes up the device.
@@ -1412,7 +1412,7 @@ public class PrintDocumentAdapterContractTest extends BasePrintTest {
         waitForAdapterFinishCallbackCalled();
 
         // Wait for the session to be destroyed to isolate tests.
-        waitForPrinterDiscoverySessionDestroyCallbackCalled();
+        waitForPrinterDiscoverySessionDestroyCallbackCalled(1);
 
         // Verify the expected calls.
         InOrder inOrder = inOrder(adapter);
@@ -1484,7 +1484,7 @@ public class PrintDocumentAdapterContractTest extends BasePrintTest {
         waitForAdapterFinishCallbackCalled();
 
         // Wait for the session to be destroyed to isolate tests.
-        waitForPrinterDiscoverySessionDestroyCallbackCalled();
+        waitForPrinterDiscoverySessionDestroyCallbackCalled(1);
 
         // Verify the expected calls.
         InOrder inOrder = inOrder(adapter);
@@ -1554,7 +1554,7 @@ public class PrintDocumentAdapterContractTest extends BasePrintTest {
         print(adapter);
 
         // Wait for write.
-        waitForWriteAdapterCallback();
+        waitForWriteAdapterCallback(1);
 
         // Cancel printing.
         getUiDevice().pressBack(); // wakes up the device.
@@ -1564,7 +1564,7 @@ public class PrintDocumentAdapterContractTest extends BasePrintTest {
         waitForAdapterFinishCallbackCalled();
 
         // Wait for the session to be destroyed to isolate tests.
-        waitForPrinterDiscoverySessionDestroyCallbackCalled();
+        waitForPrinterDiscoverySessionDestroyCallbackCalled(1);
 
         // Verify the expected calls.
         InOrder inOrder = inOrder(adapter);
@@ -1652,7 +1652,7 @@ public class PrintDocumentAdapterContractTest extends BasePrintTest {
                 });
 
         print(adapter);
-        waitForWriteAdapterCallback();
+        waitForWriteAdapterCallback(1);
         selectPrinter("First printer");
         clickPrintButton();
 
@@ -1662,7 +1662,7 @@ public class PrintDocumentAdapterContractTest extends BasePrintTest {
         waitForAdapterFinishCallbackCalled();
 
         // Wait for the session to be destroyed to isolate tests.
-        waitForPrinterDiscoverySessionDestroyCallbackCalled();
+        waitForPrinterDiscoverySessionDestroyCallbackCalled(1);
     }
 
     /**
@@ -1731,7 +1731,7 @@ public class PrintDocumentAdapterContractTest extends BasePrintTest {
         answerPrintServicesWarning(true);
 
         // Wait for the session to be destroyed to isolate tests.
-        waitForPrinterDiscoverySessionDestroyCallbackCalled();
+        waitForPrinterDiscoverySessionDestroyCallbackCalled(1);
     }
 
     /**
