@@ -28,11 +28,15 @@ import android.camera.cts.R;
 public class Camera2SurfaceViewCtsActivity extends Activity implements SurfaceHolder.Callback {
     private final static String TAG = "Camera2SurfaceViewCtsActivity";
     private final ConditionVariable surfaceChangedDone = new ConditionVariable();
+    private final ConditionVariable surfaceStateDone = new ConditionVariable();
 
     private SurfaceView mSurfaceView;
     private int currentWidth = 0;
     private int currentHeight = 0;
-    private final Object sizeLock = new Object();
+    private boolean surfaceValid = false;
+
+    private final Object surfaceLock = new Object();
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -56,7 +60,7 @@ public class Camera2SurfaceViewCtsActivity extends Activity implements SurfaceHo
                             timeOutMs, expectWidth, expectHeight));
         }
 
-        synchronized(sizeLock) {
+        synchronized(surfaceLock) {
             if (expectWidth == currentWidth && expectHeight == currentHeight) {
                 return true;
             }
@@ -85,16 +89,60 @@ public class Camera2SurfaceViewCtsActivity extends Activity implements SurfaceHo
 
         // Couldn't get expected surface size change.
         return false;
-     }
+    }
+
+    /**
+     * Wait for surface state to become valid (surfaceCreated) / invalid (surfaceDestroyed)
+     */
+    public boolean waitForSurfaceState(int timeOutMs, boolean valid) {
+        if (timeOutMs <= 0) {
+            throw new IllegalArgumentException(
+                    String.format("timeout(%d) should be a positive number", timeOutMs));
+        }
+
+        synchronized(surfaceLock) {
+            if (valid == surfaceValid) {
+                return true;
+            }
+        }
+
+        int waitTimeMs = timeOutMs;
+        boolean stateReached = false;
+        while (!stateReached && waitTimeMs > 0) {
+            long startTimeMs = SystemClock.elapsedRealtime();
+            stateReached = surfaceStateDone.block(waitTimeMs);
+            if (!stateReached) {
+                Log.e(TAG, "Wait for surface state " + valid + " timed out after " + timeOutMs + " ms");
+                return false;
+            } else {
+                surfaceStateDone.close();
+                synchronized(surfaceLock) {
+                    if (valid == surfaceValid) return true;
+                }
+                // Do a further iteration as surfaceDestroyed could be called
+                // again.
+                stateReached = false;
+            }
+            waitTimeMs -= (SystemClock.elapsedRealtime() - startTimeMs);
+        }
+
+        // Couldn't get expected surface size change.
+        return false;
+    }
 
     @Override
     public void surfaceCreated(SurfaceHolder holder) {
+        Log.i(TAG, "Surface created");
+        synchronized (surfaceLock) {
+            surfaceValid = true;
+        }
+        surfaceStateDone.open();
     }
 
     @Override
     public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
         Log.i(TAG, "Surface Changed to: " + width + "x" + height);
-        synchronized (sizeLock) {
+        synchronized (surfaceLock) {
             currentWidth = width;
             currentHeight = height;
         }
@@ -103,5 +151,10 @@ public class Camera2SurfaceViewCtsActivity extends Activity implements SurfaceHo
 
     @Override
     public void surfaceDestroyed(SurfaceHolder holder) {
+        Log.i(TAG, "Surface destroyed");
+        synchronized (surfaceLock) {
+            surfaceValid = false;
+        }
+        surfaceStateDone.open();
     }
 }
