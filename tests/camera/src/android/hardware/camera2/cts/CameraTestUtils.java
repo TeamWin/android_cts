@@ -391,6 +391,9 @@ public class CameraTestUtils extends Assert {
         // Pair<CaptureRequest, Long> is a pair of capture request and timestamp.
         private final LinkedBlockingQueue<Pair<CaptureRequest, Long>> mCaptureStartQueue =
                 new LinkedBlockingQueue<>();
+        // Pair<Int, Long> is a pair of sequence id and frame number
+        private final LinkedBlockingQueue<Pair<Integer, Long>> mCaptureSequenceCompletedQueue =
+                new LinkedBlockingQueue<>();
 
         private AtomicLong mNumFramesArrived = new AtomicLong(0);
 
@@ -431,6 +434,12 @@ public class CameraTestUtils extends Assert {
         @Override
         public void onCaptureSequenceCompleted(CameraCaptureSession session, int sequenceId,
                 long frameNumber) {
+            try {
+                mCaptureSequenceCompletedQueue.put(new Pair(sequenceId, frameNumber));
+            } catch (InterruptedException e) {
+                throw new UnsupportedOperationException(
+                        "Can't handle InterruptedException in onCaptureSequenceCompleted");
+            }
         }
 
         public long getTotalNumFrames() {
@@ -631,9 +640,38 @@ public class CameraTestUtils extends Assert {
                     "event after waiting for " + numCaptureStartsWait + " capture starts");
         }
 
+        /**
+         * Wait until it receives capture sequence completed callback for a given squence ID.
+         *
+         * @param sequenceId The sequence ID of the capture sequence completed callback to wait for.
+         * @param timeoutMs Time to wait for each capture sequence complete callback before
+         *                  timing out.
+         */
+        public long getCaptureSequenceLastFrameNumber(int sequenceId, long timeoutMs) {
+            try {
+                while (true) {
+                    Pair<Integer, Long> completedSequence =
+                            mCaptureSequenceCompletedQueue.poll(timeoutMs, TimeUnit.MILLISECONDS);
+                    assertNotNull("Wait for a capture sequence completed timed out in " +
+                            timeoutMs + "ms", completedSequence);
+
+                    if (completedSequence.first.equals(sequenceId)) {
+                        return completedSequence.second.longValue();
+                    }
+                }
+            } catch (InterruptedException e) {
+                throw new UnsupportedOperationException("Unhandled interrupted exception", e);
+            }
+        }
+
         public boolean hasMoreResults()
         {
             return !mQueue.isEmpty();
+        }
+
+        public boolean hasMoreFailures()
+        {
+            return !mFailureQueue.isEmpty();
         }
 
         public void drain() {
