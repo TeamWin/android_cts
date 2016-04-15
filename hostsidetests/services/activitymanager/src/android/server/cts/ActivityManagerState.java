@@ -42,6 +42,7 @@ class ActivityManagerState {
     private static final int HOME_ACTIVITY_TYPE = 1;
     private static final int RECENTS_ACTIVITY_TYPE = 2;
 
+    private final Pattern mDisplayIdPattern = Pattern.compile("Display #(\\d+)");
     private final Pattern mStackIdPattern = Pattern.compile("Stack #(\\d+)\\:");
     private final Pattern mFocusedActivityPattern =
             Pattern.compile("mFocusedActivity\\: ActivityRecord\\{(.+) u(\\d+) (\\S+) (\\S+)\\}");
@@ -113,9 +114,10 @@ class ActivityManagerState {
 
         Collections.addAll(mSysDump, sysDump.split("\\n"));
 
+        int currentDisplayId = 0;
         while (!mSysDump.isEmpty()) {
-            final ActivityStack stack =
-                    ActivityStack.create(mSysDump, mStackIdPattern, mExtractStackExitPatterns);
+            final ActivityStack stack = ActivityStack.create(mSysDump, mStackIdPattern,
+                    mExtractStackExitPatterns, currentDisplayId);
 
             if (stack != null) {
                 mStacks.add(stack);
@@ -142,6 +144,14 @@ class ActivityManagerState {
                 mFocusedActivityRecord = matcher.group(3);
                 log(mFocusedActivityRecord);
                 continue;
+            }
+
+            matcher = mDisplayIdPattern.matcher(line);
+            if (matcher.matches()) {
+                log(line);
+                final String displayId = matcher.group(2);
+                log(displayId);
+                currentDisplayId = Integer.parseInt(displayId);
             }
         }
     }
@@ -262,6 +272,7 @@ class ActivityManagerState {
         private static final Pattern RESUMED_ACTIVITY_PATTERN = Pattern.compile(
                 "mResumedActivity\\: ActivityRecord\\{(.+) u(\\d+) (\\S+) (\\S+)\\}");
 
+        int mDisplayId;
         int mStackId;
         String mResumedActivity;
         ArrayList<ActivityTask> mTasks = new ArrayList();
@@ -269,8 +280,8 @@ class ActivityManagerState {
         private ActivityStack() {
         }
 
-        static ActivityStack create(
-                LinkedList<String> dump, Pattern stackIdPattern, Pattern[] exitPatterns) {
+        static ActivityStack create(LinkedList<String> dump, Pattern stackIdPattern,
+                                    Pattern[] exitPatterns, int displayId) {
             final String line = dump.peek().trim();
 
             final Matcher matcher = stackIdPattern.matcher(line);
@@ -282,6 +293,7 @@ class ActivityManagerState {
             dump.pop();
 
             final ActivityStack stack = new ActivityStack();
+            stack.mDisplayId = displayId;
             log(line);
             final String stackId = matcher.group(1);
             log(stackId);
