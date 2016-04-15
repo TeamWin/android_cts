@@ -284,7 +284,7 @@ public class PrintJobTest extends BasePrintTest {
         waitForServiceOnPrintJobQueuedCallbackCalled(testCaseNum + 1);
 
         // Wait for discovery session to be destroyed to isolate tests from each other
-        waitForPrinterDiscoverySessionDestroyCallbackCalled();
+        waitForPrinterDiscoverySessionDestroyCallbackCalled(1);
 
         if (!testSuccess[0]) {
             throw new Exception("Did not succeed");
@@ -614,7 +614,7 @@ public class PrintJobTest extends BasePrintTest {
         waitForServiceOnPrintJobQueuedCallbackCalled(1);
 
         // Wait for discovery session to be destroyed to isolate tests from each other
-        waitForPrinterDiscoverySessionDestroyCallbackCalled();
+        waitForPrinterDiscoverySessionDestroyCallbackCalled(1);
 
         if (!testSuccess[0]) {
             throw new Exception("Did not succeed");
