@@ -23,7 +23,7 @@ import java.util.function.BooleanSupplier;
 
 public class ShortcutManagerThrottlingTest extends ShortcutManagerCtsTestsBase {
     private static final String CONFIG_BASE =
-            "max_daily_updates=5,"
+            "max_updates_per_interval=5,"
             + "max_shortcuts=10,"
             + "max_icon_dimension_dp=128,"
             + "max_icon_dimension_dp_lowram=32,"
