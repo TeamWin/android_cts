@@ -282,7 +282,7 @@ public class CustomPrintOptionsTest extends BasePrintTest {
         print(adapter);
 
         // Wait for write.
-        waitForWriteAdapterCallback();
+        waitForWriteAdapterCallback(2);
 
         // Open the print options.
         openPrintOptions();
@@ -337,7 +337,9 @@ public class CustomPrintOptionsTest extends BasePrintTest {
         }
 
         // Abort printing
-        getUiDevice().pressBack();
+        getActivity().finish();
+
+        waitForPrinterDiscoverySessionDestroyCallbackCalled(2);
     }
 
     public void testChangeToChangeEveryThing() throws Exception {

@@ -432,7 +432,7 @@ public class PrinterInfoTest extends BasePrintTest {
         print(adapter);
 
         // Wait for write of the first page.
-        waitForWriteAdapterCallback();
+        waitForWriteAdapterCallback(1);
 
         // Open destination spinner
         UiObject destinationSpinner = getUiDevice().findObject(new UiSelector().resourceId(

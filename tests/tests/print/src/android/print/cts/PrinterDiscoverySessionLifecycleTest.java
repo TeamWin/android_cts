@@ -96,7 +96,7 @@ public class PrinterDiscoverySessionLifecycleTest extends BasePrintTest {
         print(adapter);
 
         // Wait for write of the first page.
-        waitForWriteAdapterCallback();
+        waitForWriteAdapterCallback(1);
 
         // Select the first printer.
         selectPrinter(FIRST_PRINTER_NAME);
@@ -126,7 +126,7 @@ public class PrinterDiscoverySessionLifecycleTest extends BasePrintTest {
         answerPrintServicesWarning(true);
 
         // Wait for all print jobs to be handled after which the session destroyed.
-        waitForPrinterDiscoverySessionDestroyCallbackCalled();
+        waitForPrinterDiscoverySessionDestroyCallbackCalled(1);
 
         // Verify the expected calls.
         InOrder inOrder = inOrder(firstSessionCallbacks);
@@ -196,7 +196,7 @@ public class PrinterDiscoverySessionLifecycleTest extends BasePrintTest {
         print(adapter);
 
         // Wait for write of the first page.
-        waitForWriteAdapterCallback();
+        waitForWriteAdapterCallback(1);
 
         // Select the first printer.
         selectPrinter(FIRST_PRINTER_NAME);
@@ -222,7 +222,7 @@ public class PrinterDiscoverySessionLifecycleTest extends BasePrintTest {
         answerPrintServicesWarning(true);
 
         // Wait for all print jobs to be handled after which the session destroyed.
-        waitForPrinterDiscoverySessionDestroyCallbackCalled();
+        waitForPrinterDiscoverySessionDestroyCallbackCalled(1);
 
         // Verify the expected calls.
         InOrder inOrder = inOrder(firstSessionCallbacks);
@@ -284,7 +284,7 @@ public class PrinterDiscoverySessionLifecycleTest extends BasePrintTest {
         print(adapter);
 
         // Wait for write of the first page.
-        waitForWriteAdapterCallback();
+        waitForWriteAdapterCallback(1);
 
         // Select the first printer.
         selectPrinter(FIRST_PRINTER_NAME);
@@ -324,7 +324,7 @@ public class PrinterDiscoverySessionLifecycleTest extends BasePrintTest {
         getUiDevice().pressBack();
 
         // Wait for all print jobs to be handled after which the is session destroyed.
-        waitForPrinterDiscoverySessionDestroyCallbackCalled();
+        waitForPrinterDiscoverySessionDestroyCallbackCalled(1);
 
         // Verify the expected calls.
         InOrder inOrder = inOrder(firstSessionCallbacks);
