@@ -54,7 +54,6 @@ public class CarUiProviderTest extends AndroidTestCase {
         COMPATIBILITY_APIS.put("setCarMenuCallbacks", new Class<?>[]{CarMenuCallbacks.class});
         COMPATIBILITY_APIS.put("getFragmentContainerId", new Class<?>[]{});
         COMPATIBILITY_APIS.put("setBackground", new Class<?>[]{Bitmap.class});
-        COMPATIBILITY_APIS.put("setBackgroundResource", new Class<?>[]{int.class});
         COMPATIBILITY_APIS.put("hideMenuButton", new Class<?>[]{});
         COMPATIBILITY_APIS.put("restoreMenuDrawable", new Class<?>[]{});
         COMPATIBILITY_APIS.put("setMenuProgress", new Class<?>[]{float.class});
