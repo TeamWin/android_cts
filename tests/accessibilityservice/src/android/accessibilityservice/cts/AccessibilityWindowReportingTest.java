@@ -16,7 +16,6 @@
 
 package android.accessibilityservice.cts;
 
-import android.accessibilityservice.AccessibilityService;
 import android.accessibilityservice.AccessibilityServiceInfo;
 import android.app.UiAutomation;
 import android.text.TextUtils;
@@ -54,9 +53,7 @@ public class AccessibilityWindowReportingTest
     }
 
     public void testWindowTitle_getTitleReturnsTitle() {
-        final String title = "Some title";
-        setTitleSync(title);
-        AccessibilityWindowInfo window = findWindowByTitle(title);
+        AccessibilityWindowInfo window = findWindowByTitle(getActivity().getTitle());
         assertNotNull("Window title not reported to accessibility", window);
         window.recycle();
     }
@@ -124,35 +121,5 @@ public class AccessibilityWindowReportingTest
             }
         }
         return returnValue;
-    }
-
-    private void setTitleSync(final String title) {
-        try {
-            waitForIdle();
-            mUiAutomation.executeAndWaitForEvent(new Runnable() {
-                @Override
-                public void run() {
-                    getInstrumentation().runOnMainSync(new Runnable() {
-                        @Override
-                        public void run() {
-                            getActivity().getWindow().setTitle(title);
-                        }
-                    });
-                    // TODO: Setting the title should trigger an update of windows
-                    mUiAutomation.performGlobalAction(
-                            AccessibilityService.GLOBAL_ACTION_TOGGLE_SPLIT_SCREEN);
-                    mUiAutomation.performGlobalAction(
-                            AccessibilityService.GLOBAL_ACTION_TOGGLE_SPLIT_SCREEN);
-                }
-            }, new UiAutomation.AccessibilityEventFilter() {
-                @Override
-                public boolean accept(AccessibilityEvent event) {
-                    return event.getEventType() == AccessibilityEvent.TYPE_WINDOWS_CHANGED;
-                }
-            }, TIMEOUT_ASYNC_PROCESSING);
-        } catch (TimeoutException exception) {
-            throw new RuntimeException(
-                    "Failed to get window changed event on title change", exception);
-        }
     }
 }
