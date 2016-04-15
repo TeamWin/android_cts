@@ -172,9 +172,12 @@ public class OpenGlEsVersionTest
         EGLDisplay display = egl.eglGetDisplay(EGL10.EGL_DEFAULT_DISPLAY);
         extensions = egl.eglQueryString(display, EGL10.EGL_EXTENSIONS);
         final String requiredEglList[] = {
+            "EGL_ANDROID_create_native_client_buffer",
             "EGL_ANDROID_front_buffer_auto_refresh",
             "EGL_EXT_protected_content",
             "EGL_KHR_mutable_render_buffer",
+            "EGL_KHR_reusable_sync",
+            "EGL_KHR_wait_sync",
         };
 
         for (int i = 0; i < requiredList.length; ++i) {
