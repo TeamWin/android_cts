@@ -126,12 +126,22 @@ public abstract class ShortcutManagerCtsTestsBase extends InstrumentationTestCas
         setCurrentCaller(mPackageContext1);
 
         // Make sure shortcuts are removed.
-        withCallers(getAllPublishers(), () -> {
-            assertEquals("for " + getCurrentCallingPackage(),
-                    0, getManager().getDynamicShortcuts().size());
-            assertEquals("for " + getCurrentCallingPackage(),
-                    0, getManager().getPinnedShortcuts().size());
+        withCallers(getAllPublishers(), new Runnable() {
+            @Override
+            public void run() {
+                assertEquals("for " + getCurrentCallingPackage(),
+                        0, getManager().getDynamicShortcuts().size());
+                assertEquals("for " + getCurrentCallingPackage(),
+                        0, getManager().getPinnedShortcuts().size());
+            }
         });
+        // This was calling the wrong lambda.
+//        withCallers(getAllPublishers(), () -> {
+//            assertEquals("for " + getCurrentCallingPackage(),
+//                    0, getManager().getDynamicShortcuts().size());
+//            assertEquals("for " + getCurrentCallingPackage(),
+//                    0, getManager().getPinnedShortcuts().size());
+//        });
     }
 
     @Override

@@ -35,7 +35,7 @@ public class ShortcutManagerSpoofDetectionTest extends ShortcutManagerCtsTestsBa
     @Override
     protected String getOverrideConfig() {
         return "reset_interval_sec=999999,"
-                + "max_daily_updates=999999,"
+                + "max_updates_per_interval=999999,"
                 + "max_shortcuts=10,"
                 + "max_icon_dimension_dp=128,"
                 + "max_icon_dimension_dp_lowram=32,"
