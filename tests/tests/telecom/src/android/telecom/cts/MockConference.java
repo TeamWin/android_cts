@@ -152,9 +152,4 @@ public class MockConference extends Conference {
     public String getDtmfString() {
         return mDtmfString;
     }
-
-    @Override
-    public void onExtrasChanged(Bundle extras) {
-        mOnExtrasChanged.invoke(extras);
-    }
 }
