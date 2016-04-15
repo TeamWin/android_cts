@@ -206,7 +206,10 @@ public abstract class BasePrintTest extends InstrumentationTestCase {
         }
 
         // Done with the activity.
-        getActivity().finish();
+        if (!getActivity().isFinishing()) {
+            getActivity().finish();
+        }
+
         enableImes();
 
         // Restore the locale if needed.
@@ -283,8 +286,8 @@ public abstract class BasePrintTest extends InstrumentationTestCase {
                 "Did not get expected call to onCreatePrinterDiscoverySession.");
     }
 
-    protected void waitForPrinterDiscoverySessionDestroyCallbackCalled() {
-        waitForCallbackCallCount(mDestroySessionCallCounter, 1,
+    protected void waitForPrinterDiscoverySessionDestroyCallbackCalled(int count) {
+        waitForCallbackCallCount(mDestroySessionCallCounter, count,
                 "Did not get expected call to onDestroyPrinterDiscoverySession.");
     }
 
@@ -303,8 +306,8 @@ public abstract class BasePrintTest extends InstrumentationTestCase {
                 "Did not get expected call to layout.");
     }
 
-    protected void waitForWriteAdapterCallback() {
-        waitForCallbackCallCount(mWriteCallCounter, 1, "Did not get expected call to write.");
+    protected void waitForWriteAdapterCallback(int count) {
+        waitForCallbackCallCount(mWriteCallCounter, count, "Did not get expected call to write.");
     }
 
     private void waitForCallbackCallCount(CallCounter counter, int count, String message) {
@@ -318,25 +321,26 @@ public abstract class BasePrintTest extends InstrumentationTestCase {
     protected void selectPrinter(String printerName) throws UiObjectNotFoundException, IOException {
         try {
             long delay = 100;
-            UiObject destinationSpinner = mUiDevice.findObject(new UiSelector().resourceId(
-                    "com.android.printspooler:id/destination_spinner"));
             while (true) {
-                destinationSpinner.click();
-
-                // Give spinner some time to expand
                 try {
-                    Thread.sleep(delay);
-                } catch (InterruptedException e) {
-                    // ignore
-                }
+                    UiObject destinationSpinner = mUiDevice.findObject(new UiSelector().resourceId(
+                            "com.android.printspooler:id/destination_spinner"));
 
-                // try to select printer
-                try {
+                    destinationSpinner.click();
+
+                    // Give spinner some time to expand
+                    try {
+                        Thread.sleep(delay);
+                    } catch (InterruptedException e) {
+                        // ignore
+                    }
+
+                    // try to select printer
                     UiObject printerOption = mUiDevice
                             .findObject(new UiSelector().text(printerName));
                     printerOption.click();
                 } catch (UiObjectNotFoundException e) {
-                    Log.w(LOG_TAG, "Could not select printer " + printerName);
+                    Log.e(LOG_TAG, "Could not select printer " + printerName, e);
                 }
 
                 // Make sure printer is selected
@@ -695,11 +699,11 @@ public abstract class BasePrintTest extends InstrumentationTestCase {
             throws Exception {
         // Perform a full print operation on the printer
         print(adapter);
-        waitForWriteAdapterCallback();
+        waitForWriteAdapterCallback(1);
         selectPrinter(printerName);
         clickPrintButton();
         answerPrintServicesWarning(true);
-        waitForPrinterDiscoverySessionDestroyCallbackCalled();
+        waitForPrinterDiscoverySessionDestroyCallbackCalled(1);
 
         // Switch to new activity, which should now use the default printer
         getActivity().finish();

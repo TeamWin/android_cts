@@ -331,7 +331,7 @@ public class PrinterCapabilitiesTest extends BasePrintTest {
         testCase(session, printerId, true, MediaSize.ISO_A0, true, MediaSize.ISO_A0);
         testCase(session, printerId, true, MediaSize.ISO_A0, true, MediaSize.ISO_B0);
 
-        waitForPrinterDiscoverySessionDestroyCallbackCalled();
+        waitForPrinterDiscoverySessionDestroyCallbackCalled(1);
     }
 
     /**
@@ -477,9 +477,9 @@ public class PrinterCapabilitiesTest extends BasePrintTest {
 
         waitForPrinterDiscoverySessionCreateCallbackCalled();
 
-        getUiDevice().pressBack();
+        getActivity().finish();
 
-        waitForPrinterDiscoverySessionDestroyCallbackCalled();
+        waitForPrinterDiscoverySessionDestroyCallbackCalled(1);
     }
 
     /**
@@ -592,7 +592,7 @@ public class PrinterCapabilitiesTest extends BasePrintTest {
 
         getUiDevice().pressBack();
 
-        waitForPrinterDiscoverySessionDestroyCallbackCalled();
+        waitForPrinterDiscoverySessionDestroyCallbackCalled(1);
     }
 
     /**
@@ -698,7 +698,7 @@ public class PrinterCapabilitiesTest extends BasePrintTest {
 
         test.accept(layoutAttributes[0]);
 
-        waitForPrinterDiscoverySessionDestroyCallbackCalled();
+        waitForPrinterDiscoverySessionDestroyCallbackCalled(1);
     }
 
     /**

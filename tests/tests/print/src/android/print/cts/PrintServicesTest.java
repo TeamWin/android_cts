@@ -400,7 +400,7 @@ public class PrintServicesTest extends BasePrintTest {
         print(adapter);
 
         // Wait for write of the first page.
-        waitForWriteAdapterCallback();
+        waitForWriteAdapterCallback(1);
 
         // Select the printer.
         selectPrinter(PRINTER_NAME);
@@ -432,7 +432,7 @@ public class PrintServicesTest extends BasePrintTest {
         handler.post(completer);
 
         // Wait for all print jobs to be handled after which the session destroyed.
-        waitForPrinterDiscoverySessionDestroyCallbackCalled();
+        waitForPrinterDiscoverySessionDestroyCallbackCalled(1);
     }
 
     /**
