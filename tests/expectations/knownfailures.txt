@@ -369,5 +369,12 @@
     "android.security.cts.StagefrightTest#testStagefright_cve_2015_3826"
   ],
   bug: 27368229
+},
+{
+  description: "testDumpProtected flaky in CTS 5.1"
+  names: [
+    "android.security.cts.ServicePermissionsTest#testDumpProtected"
+  ],
+  bug: 23377274
 }
 ]
