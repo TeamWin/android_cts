@@ -374,8 +374,8 @@
   names: ["com.android.cts.cpptools.RunAsHostTest#testRunAs"]
 },
 {
-  description: "Sensor tests not working"
-  bug: 28159339
+  description: "Sensor tests not working",
+  bug: 28159339,
   names: [
     “android.hardware.cts.helpers.sensorverification.TimestampClockSourceVerificationTest#testVerify_fail”,
     “android.hardware.cts.helpers.sensorverification.TimestampClockSourceVerificationTest#testVerify_jitter_fail”,
@@ -387,8 +387,8 @@
   ]
 },
 {
-  description: "Permission Policy unaltered not working in M"
-  bug: 27599613
+  description: "Permission Policy unaltered not working in M",
+  bug: 27599613,
   names: [
     "android.permission2.cts.PermissionPolicyTest#testPlatformPermissionPolicyUnaltered"
   ]
