@@ -55,6 +55,7 @@ import java.util.concurrent.TimeoutException;
 public class CustomPrintOptionsTest extends BasePrintTest {
     private final static String LOG_TAG = "CustomPrintOptionsTest";
     private static final String PRINTER_NAME = "Test printer";
+    private static final int MAX_TRIES = 10;
 
     // Default settings
     private final PageRange[] DEFAULT_PAGES = new PageRange[] { new PageRange(0, 0) };
@@ -271,75 +272,115 @@ public class CustomPrintOptionsTest extends BasePrintTest {
                     return printJobBuilder.build();
                 });
 
-        makeDefaultPrinter(adapter, PRINTER_NAME);
+        // This is the first print test that runs. If this is run after other tests these other test
+        // can still cause memory pressure and make the printactivity to go through a destroy-create
+        // cycle. In this case we have to retry to operation.
+        int tries = 0;
+        while (true) {
+            try {
+                clearPrintSpoolerData();
+                resetCounters();
+                makeDefaultPrinter(adapter, PRINTER_NAME);
+                break;
+            } catch (Exception e) {
+                if (getActivityDestroyCallbackCallCount() > 0 && tries < MAX_TRIES) {
+                    Log.e(LOG_TAG, "Activity was destroyed during test, retrying", e);
+
+                    tries++;
+                    continue;
+                }
+
+                throw e;
+            }
+        }
 
         // Check that the attributes were send to the print service
         PrintAttributes newAttributes = newAttributesBuilder.build();
         Log.i(LOG_TAG, "Change to attributes: " + newAttributes + ", copies: " + numCopies +
                 ", pages: " + Arrays.toString(pages) + ", copyFromOriginal: " + copyFromOriginal);
 
-        // Start printing
-        print(adapter);
-
-        // Wait for write.
-        waitForWriteAdapterCallback(2);
-
-        // Open the print options.
-        openPrintOptions();
-
-        // Apply options by executing callback above
-        Log.d(LOG_TAG, "Apply changes");
-        openCustomPrintOptions();
-
-        Log.d(LOG_TAG, "Check attributes");
-        synchronized (this) {
-            long endTime = System.currentTimeMillis() + OPERATION_TIMEOUT_MILLIS;
-            while (layoutAttributes[0] == null ||
-                    !layoutAttributes[0].equals(newAttributes)) {
-                wait(Math.max(1, endTime - System.currentTimeMillis()));
-
-                if (endTime < System.currentTimeMillis()) {
-                    throw new TimeoutException(
-                            "Print attributes did not change to " + newAttributes + " in " +
-                                    OPERATION_TIMEOUT_MILLIS + " ms. Current attributes"
-                                    + layoutAttributes[0]);
-                }
-            }
-        }
-
-        PageRange[] newPages;
-
-        if (pages == null) {
-            newPages = new PageRange[] { new PageRange(0, 2) };
-        } else {
-            newPages = pages;
-        }
-
-        Log.d(LOG_TAG, "Check pages");
-        long endTime = System.currentTimeMillis() + OPERATION_TIMEOUT_MILLIS;
+        // This is the first print test that runs. If this is run after other tests these other test
+        // can still cause memory pressure and make the printactivity to go through a destroy-create
+        // cycle. In this case we have to retry to operation.
         while (true) {
             try {
-                PageRange[] actualPages = getPages();
-                if (!Arrays.equals(newPages, actualPages)) {
-                    new AssertionError("Expected " + Arrays.toString(newPages) + ", actual " +
-                            Arrays.toString(actualPages));
+                resetCounters();
+
+                // Start printing
+                print(adapter);
+
+                // Wait for write.
+                waitForWriteAdapterCallback(1);
+
+                // Open the print options.
+                openPrintOptions();
+
+                // Apply options by executing callback above
+                Log.d(LOG_TAG, "Apply changes");
+                openCustomPrintOptions();
+
+                Log.d(LOG_TAG, "Check attributes");
+                long endTime = System.currentTimeMillis() + OPERATION_TIMEOUT_MILLIS;
+                synchronized (this) {
+                    while (layoutAttributes[0] == null ||
+                            !layoutAttributes[0].equals(newAttributes)) {
+                        wait(Math.max(1, endTime - System.currentTimeMillis()));
+
+                        if (endTime < System.currentTimeMillis()) {
+                            throw new TimeoutException(
+                                    "Print attributes did not change to " + newAttributes + " in " +
+                                            OPERATION_TIMEOUT_MILLIS + " ms. Current attributes"
+                                            + layoutAttributes[0]);
+                        }
+                    }
+                }
+
+                PageRange[] newPages;
+
+                if (pages == null) {
+                    newPages = new PageRange[] { new PageRange(0, 2) };
+                } else {
+                    newPages = pages;
+                }
+
+                Log.d(LOG_TAG, "Check pages");
+                while (true) {
+                    try {
+                        PageRange[] actualPages = getPages();
+                        if (!Arrays.equals(newPages, actualPages)) {
+                            new AssertionError(
+                                    "Expected " + Arrays.toString(newPages) + ", actual " +
+                                            Arrays.toString(actualPages));
+                        }
+
+                        break;
+                    } catch (Exception e) {
+                        if (endTime < System.currentTimeMillis()) {
+                            throw e;
+                        } else {
+                            Log.e(LOG_TAG, "Could not verify pages, retrying", e);
+                            Thread.sleep(100);
+                        }
+                    }
                 }
 
                 break;
             } catch (Exception e) {
-                if (endTime < System.currentTimeMillis()) {
-                    throw e;
-                } else {
-                    Log.e(LOG_TAG, "Could not verify pages, retiring", e);
-                    Thread.sleep(100);
+                if (getActivityDestroyCallbackCallCount() > 0 && tries < MAX_TRIES) {
+                    Log.e(LOG_TAG, "Activity was destroyed during test, retrying", e);
+
+                    tries++;
+                    continue;
                 }
+
+                throw e;
             }
         }
 
         // Abort printing
         getActivity().finish();
 
-        waitForPrinterDiscoverySessionDestroyCallbackCalled(2);
+        waitForPrinterDiscoverySessionDestroyCallbackCalled(1);
     }
 
     public void testChangeToChangeEveryThing() throws Exception {
