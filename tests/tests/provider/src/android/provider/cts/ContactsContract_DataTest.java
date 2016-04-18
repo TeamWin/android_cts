@@ -36,6 +36,7 @@ import android.provider.ContactsContract.CommonDataKinds.StructuredName;
 import android.provider.ContactsContract.Contacts;
 import android.provider.ContactsContract.Contacts.Entity;
 import android.provider.ContactsContract.Data;
+import android.provider.ContactsContract.Directory;
 import android.provider.ContactsContract.RawContacts;
 import android.provider.ContactsContract.RawContactsEntity;
 import android.provider.cts.ContactsContract_TestDataBuilder.TestContact;
@@ -530,6 +531,37 @@ public class ContactsContract_DataTest extends InstrumentationTestCase {
     public void testCallableFilterBySipAddress_returnsCorrectDataRows() throws Exception {
         long[] ids = setupContactablesTestData();
         Uri uri = Uri.withAppendedPath(Callable.CONTENT_FILTER_URI, "mysip");
+        assertCursorStoredValuesWithRawContactsFilter(uri, ids, sContentValues[6]);
+    }
+
+    public void testEnterpriseCallableFilterByNameOrOrganization_returnsCorrectDataRows()
+            throws Exception {
+        long[] ids = setupContactablesTestData();
+        Uri uri = Uri.withAppendedPath(Callable.ENTERPRISE_CONTENT_FILTER_URI, "doe").buildUpon()
+                .appendQueryParameter(ContactsContract.DIRECTORY_PARAM_KEY,
+                        String.valueOf(Directory.DEFAULT))
+                .build();
+        // Only callables belonging to John Doe (name) and Cold Tamago (organization) are returned.
+        assertCursorStoredValuesWithRawContactsFilter(uri, ids, sContentValues[5],
+                sContentValues[6]);
+    }
+
+    public void testEnterpriseCallableFilterByNumber_returnsCorrectDataRows() throws Exception {
+        long[] ids = setupContactablesTestData();
+        Uri uri = Uri.withAppendedPath(Callable.ENTERPRISE_CONTENT_FILTER_URI, "510").buildUpon()
+                .appendQueryParameter(ContactsContract.DIRECTORY_PARAM_KEY,
+                        String.valueOf(Directory.DEFAULT))
+                .build();
+        assertCursorStoredValuesWithRawContactsFilter(uri, ids, sContentValues[1]);
+    }
+
+    public void testEnterpriseCallableFilterBySipAddress_returnsCorrectDataRows()
+            throws Exception {
+        long[] ids = setupContactablesTestData();
+        Uri uri = Uri.withAppendedPath(Callable.ENTERPRISE_CONTENT_FILTER_URI, "mysip").buildUpon()
+                .appendQueryParameter(ContactsContract.DIRECTORY_PARAM_KEY,
+                        String.valueOf(Directory.DEFAULT))
+                .build();
         assertCursorStoredValuesWithRawContactsFilter(uri, ids, sContentValues[6]);
     }
 

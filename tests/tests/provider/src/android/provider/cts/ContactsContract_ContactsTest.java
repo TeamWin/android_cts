@@ -29,6 +29,7 @@ import android.os.SystemClock;
 import android.provider.ContactsContract;
 import android.provider.ContactsContract.CommonDataKinds.StructuredName;
 import android.provider.ContactsContract.Contacts;
+import android.provider.ContactsContract.Directory;
 import android.provider.cts.ContactsContract_TestDataBuilder.TestContact;
 import android.provider.cts.ContactsContract_TestDataBuilder.TestRawContact;
 import android.provider.cts.contacts.ContactUtil;
@@ -224,6 +225,15 @@ public class ContactsContract_ContactsTest extends AndroidTestCase {
         // Contacts.CONTENT_FILTER_URI
         DatabaseAsserts.checkProjection(mResolver,
                 Contacts.CONTENT_FILTER_URI.buildUpon().appendEncodedPath("xxx").build(),
+                PROJECTION,
+                new long[]{contact.getId()}
+        );
+
+        // Contacts.CONTENT_FILTER_URI
+        DatabaseAsserts.checkProjection(mResolver,
+                Contacts.ENTERPRISE_CONTENT_FILTER_URI.buildUpon().appendEncodedPath("xxx")
+                        .appendQueryParameter(ContactsContract.DIRECTORY_PARAM_KEY,
+                                String.valueOf(Directory.DEFAULT)).build(),
                 PROJECTION,
                 new long[]{contact.getId()}
         );

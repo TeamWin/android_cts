@@ -28,6 +28,7 @@ import android.provider.ContactsContract.CommonDataKinds.Phone;
 import android.provider.ContactsContract.CommonDataKinds.StructuredName;
 import android.provider.ContactsContract.CommonDataKinds.StructuredPostal;
 import android.provider.ContactsContract.Contacts;
+import android.provider.ContactsContract.Directory;
 import android.provider.ContactsContract.RawContacts;
 import android.provider.ContactsContract.SearchSnippets;
 import android.provider.cts.ContactsContract_TestDataBuilder.TestContact;
@@ -85,10 +86,31 @@ public class ContactsContract_SearchSnippetsTest extends InstrumentationTestCase
         assertCursorStoredValuesWithContactsFilter(uri, ids);
     }
 
+    public void testEnterpriseSearchSnippets_NoMatch() throws Exception {
+        long[] ids = setupTestData();
+        final Uri uri = ContactsContract.Contacts.ENTERPRISE_CONTENT_FILTER_URI.buildUpon()
+                .appendQueryParameter(ContactsContract.DIRECTORY_PARAM_KEY,
+                        String.valueOf(Directory.DEFAULT)).appendPath("nomatch").build();
+
+        assertCursorStoredValuesWithContactsFilter(uri, ids);
+    }
+
     public void testSearchSnippets_MatchEmailAddressCorrectSnippet() throws Exception {
         long[] ids = setupTestData();
         final Uri uri = ContactsContract.Contacts.CONTENT_FILTER_URI.buildUpon()
                 .appendPath("farm").build();
+
+        final ContentValues expected = new ContentValues();
+        expected.put(Contacts._ID, ids[1]);
+        expected.put(SearchSnippets.SNIPPET, "eggs@[farmers].org");
+        assertCursorStoredValuesWithContactsFilter(uri, ids, expected);
+    }
+
+    public void testEnterpriseSearchSnippets_MatchEmailAddressCorrectSnippet() throws Exception {
+        long[] ids = setupTestData();
+        final Uri uri = ContactsContract.Contacts.ENTERPRISE_CONTENT_FILTER_URI.buildUpon()
+                .appendPath("farm").appendQueryParameter(ContactsContract.DIRECTORY_PARAM_KEY,
+                        String.valueOf(Directory.DEFAULT)).build();
 
         final ContentValues expected = new ContentValues();
         expected.put(Contacts._ID, ids[1]);
@@ -107,10 +129,34 @@ public class ContactsContract_SearchSnippetsTest extends InstrumentationTestCase
         assertCursorStoredValuesWithContactsFilter(uri, ids, expected);
     }
 
+    public void testEnterpriseSearchSnippets_MatchPhoneNumberCorrectSnippet() throws Exception {
+        long[] ids = setupTestData();
+        final Uri uri = ContactsContract.Contacts.ENTERPRISE_CONTENT_FILTER_URI.buildUpon()
+                .appendPath("510").appendQueryParameter(ContactsContract.DIRECTORY_PARAM_KEY,
+                        String.valueOf(Directory.DEFAULT)).build();
+
+        final ContentValues expected = new ContentValues();
+        expected.put(Contacts._ID, ids[0]);
+        expected.put(SearchSnippets.SNIPPET, "[510-123-5769]");
+        assertCursorStoredValuesWithContactsFilter(uri, ids, expected);
+    }
+
     public void testSearchSnippets_MatchPostalAddressCorrectSnippet() throws Exception {
         long[] ids = setupTestData();
         final Uri uri = ContactsContract.Contacts.CONTENT_FILTER_URI.buildUpon()
                 .appendPath("street").build();
+
+        final ContentValues expected = new ContentValues();
+        expected.put(Contacts._ID, ids[2]);
+        expected.put(SearchSnippets.SNIPPET, "123 Main [Street] Unit 3113\u2026");
+        assertCursorStoredValuesWithContactsFilter(uri, ids, expected);
+    }
+
+    public void testEnterpriseSearchSnippets_MatchPostalAddressCorrectSnippet() throws Exception {
+        long[] ids = setupTestData();
+        final Uri uri = ContactsContract.Contacts.ENTERPRISE_CONTENT_FILTER_URI.buildUpon()
+                .appendPath("street").appendQueryParameter(ContactsContract.DIRECTORY_PARAM_KEY,
+                        String.valueOf(Directory.DEFAULT)).build();
 
         final ContentValues expected = new ContentValues();
         expected.put(Contacts._ID, ids[2]);
@@ -129,10 +175,39 @@ public class ContactsContract_SearchSnippetsTest extends InstrumentationTestCase
         assertCursorStoredValuesWithContactsFilter(uri, ids, expected);
     }
 
+    public void testEnterpriseSearchSnippets_LongMatchTruncation() throws Exception {
+        long[] ids = setupTestData();
+        final Uri uri = ContactsContract.Contacts.ENTERPRISE_CONTENT_FILTER_URI.buildUpon()
+                .appendPath("over").appendQueryParameter(ContactsContract.DIRECTORY_PARAM_KEY,
+                        String.valueOf(Directory.DEFAULT)).build();
+
+        final ContentValues expected = new ContentValues();
+        expected.put(Contacts._ID, ids[2]);
+        expected.put(SearchSnippets.SNIPPET, "\u2026dog jumps [over] the quick\u2026");
+        assertCursorStoredValuesWithContactsFilter(uri, ids, expected);
+    }
+
     public void testSearchSnippets_MultipleMatchesCorrectSnippet() throws Exception {
         long[] ids = setupTestData();
         final Uri uri = ContactsContract.Contacts.CONTENT_FILTER_URI.buildUpon()
                 .appendPath("123").build();
+
+        final ContentValues expected = new ContentValues();
+        expected.put(Contacts._ID, ids[1]);
+        expected.put(SearchSnippets.SNIPPET, "[123-456-7890]");
+
+        final ContentValues expected2 = new ContentValues();
+        expected2.put(Contacts._ID, ids[2]);
+        expected2.put(SearchSnippets.SNIPPET, "[123] Main Street Unit 3113\u2026");
+
+        assertCursorStoredValuesWithContactsFilter(uri, ids, expected, expected2);
+    }
+
+    public void testEnterpriseSearchSnippets_MultipleMatchesCorrectSnippet() throws Exception {
+        long[] ids = setupTestData();
+        final Uri uri = ContactsContract.Contacts.ENTERPRISE_CONTENT_FILTER_URI.buildUpon()
+                .appendPath("123").appendQueryParameter(ContactsContract.DIRECTORY_PARAM_KEY,
+                        String.valueOf(Directory.DEFAULT)).build();
 
         final ContentValues expected = new ContentValues();
         expected.put(Contacts._ID, ids[1]);
@@ -163,6 +238,25 @@ public class ContactsContract_SearchSnippetsTest extends InstrumentationTestCase
     }
 
     /**
+     * Tests that if deferred snippeting is indicated, the provider will not perform formatting
+     * of the snippet for a single word query.
+     */
+    public void testEnterpriseSearchSnippets_DeferredSnippetingSingleWordQuerySnippetDeferred()
+            throws Exception {
+        long[] ids = setupTestData();
+        final Uri uri = ContactsContract.Contacts.ENTERPRISE_CONTENT_FILTER_URI.buildUpon()
+                .appendQueryParameter(SearchSnippets.DEFERRED_SNIPPETING_KEY, "1")
+                .appendQueryParameter(ContactsContract.DIRECTORY_PARAM_KEY,
+                        String.valueOf(Directory.DEFAULT))
+                .appendPath("510").build();
+
+        final ContentValues expected = new ContentValues();
+        expected.put(Contacts._ID, ids[0]);
+        expected.put(SearchSnippets.SNIPPET, "510-123-5769");
+        assertCursorStoredValuesWithContactsFilter(uri, ids, expected);
+    }
+
+    /**
      * Tests that even if deferred snippeting is indicated, a multi-word query will have formatting
      * of the snippet done by the provider using SQLite
      */
@@ -171,6 +265,25 @@ public class ContactsContract_SearchSnippetsTest extends InstrumentationTestCase
         long[] ids = setupTestData();
         final Uri uri = ContactsContract.Contacts.CONTENT_FILTER_URI.buildUpon()
                 .appendQueryParameter(SearchSnippets.DEFERRED_SNIPPETING_KEY, "1")
+                .appendPath("jumps over").build();
+
+        final ContentValues expected = new ContentValues();
+        expected.put(Contacts._ID, ids[2]);
+        expected.put(SearchSnippets.SNIPPET, "\u2026lazy dog [jumps] [over] the\u2026");
+        assertCursorStoredValuesWithContactsFilter(uri, ids, expected);
+    }
+
+    /**
+     * Tests that even if deferred snippeting is indicated, a multi-word query will have formatting
+     * of the snippet done by the provider using SQLite
+     */
+    public void testEnterpriseSearchSnippets_DeferredSnippetingMultiWordQuerySnippetNotDeferred()
+            throws Exception {
+        long[] ids = setupTestData();
+        final Uri uri = ContactsContract.Contacts.ENTERPRISE_CONTENT_FILTER_URI.buildUpon()
+                .appendQueryParameter(SearchSnippets.DEFERRED_SNIPPETING_KEY, "1")
+                .appendQueryParameter(ContactsContract.DIRECTORY_PARAM_KEY,
+                        String.valueOf(Directory.DEFAULT))
                 .appendPath("jumps over").build();
 
         final ContentValues expected = new ContentValues();
