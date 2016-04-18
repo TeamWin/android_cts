@@ -377,13 +377,13 @@
   description: "Sensor tests not working",
   bug: 28159339,
   names: [
-    “android.hardware.cts.helpers.sensorverification.TimestampClockSourceVerificationTest#testVerify_fail”,
-    “android.hardware.cts.helpers.sensorverification.TimestampClockSourceVerificationTest#testVerify_jitter_fail”,
-    “android.hardware.cts.helpers.sensorverification.TimestampClockSourceVerificationTest#testVerify_jitter_pass”,
-    “android.hardware.cts.helpers.sensorverification.TimestampClockSourceVerificationTest#testVerify_missing_events_fail”,
-    “android.hardware.cts.helpers.sensorverification.TimestampClockSourceVerificationTest#testVerify_missing_events_pass”,
-    “android.hardware.cts.helpers.sensorverification.TimestampClockSourceVerificationTest#testVerify_no_events_fail”,
-    “android.hardware.cts.helpers.sensorverification.TimestampClockSourceVerificationTest#testVerify_pass”
+    "android.hardware.cts.helpers.sensorverification.TimestampClockSourceVerificationTest#testVerify_fail",
+    "android.hardware.cts.helpers.sensorverification.TimestampClockSourceVerificationTest#testVerify_jitter_fail",
+    "android.hardware.cts.helpers.sensorverification.TimestampClockSourceVerificationTest#testVerify_jitter_pass",
+    "android.hardware.cts.helpers.sensorverification.TimestampClockSourceVerificationTest#testVerify_missing_events_fail",
+    "android.hardware.cts.helpers.sensorverification.TimestampClockSourceVerificationTest#testVerify_missing_events_pass",
+    "android.hardware.cts.helpers.sensorverification.TimestampClockSourceVerificationTest#testVerify_no_events_fail",
+    "android.hardware.cts.helpers.sensorverification.TimestampClockSourceVerificationTest#testVerify_pass"
   ]
 },
 {
