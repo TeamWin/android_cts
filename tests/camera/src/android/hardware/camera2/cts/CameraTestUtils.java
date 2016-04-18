@@ -633,7 +633,7 @@ public class CameraTestUtils extends Assert {
 
         public boolean hasMoreResults()
         {
-            return mQueue.isEmpty();
+            return !mQueue.isEmpty();
         }
 
         public void drain() {
