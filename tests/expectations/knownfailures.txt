@@ -373,7 +373,7 @@
 {
   description: "testDumpProtected flaky in CTS 5.1",
   names: [
-    "android.security.cts.ServicePermissionsTest#testDumpProtected",
+    "android.security.cts.ServicePermissionsTest#testDumpProtected"
   ],
   bug: 23377274
 }
