@@ -29,5 +29,13 @@ public class PrintDocumentActivity extends Activity {
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON
                 | WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON
                 | WindowManager.LayoutParams.FLAG_DISMISS_KEYGUARD);
+
+        BasePrintTest.onActivityCreateCalled();
+    }
+
+    @Override
+    protected void onDestroy() {
+        BasePrintTest.onActivityDestroyCalled();
+        super.onDestroy();
     }
 }
