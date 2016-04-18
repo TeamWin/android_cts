@@ -272,7 +272,9 @@ public class CallDetailsTest extends BaseTelecomTestWithMockServices {
         }
 
         assertThat(mCall.getDetails().getCallProperties(), is(Integer.class));
-        assertEquals(CALL_PROPERTIES, mCall.getDetails().getCallProperties());
+
+        // No public call properties at the moment, so ensure we have 0 as a return.
+        assertEquals(0, mCall.getDetails().getCallProperties());
     }
 
     /**
