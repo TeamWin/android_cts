@@ -20,6 +20,7 @@ import android.app.Activity;
 import android.app.Instrumentation;
 import android.os.Bundle;
 import android.os.Debug;
+import android.support.test.internal.runner.listener.InstrumentationResultPrinter;
 import android.support.test.internal.runner.listener.InstrumentationRunListener;
 import android.support.test.internal.util.AndroidRunnerParams;
 import android.util.Log;
@@ -207,7 +208,6 @@ public class CoreTestRunner extends Instrumentation {
         JUnitCore core = new JUnitCore();
 
         Request request;
-        int totalTestCount;
         try {
             RunnerBuilder runnerBuilder = new ExtendedAndroidRunnerBuilder(runnerParams);
             Class[] classes = testList.getClassesToRun();
@@ -228,16 +228,14 @@ public class CoreTestRunner extends Instrumentation {
 
             request = Request.runner(suite);
 
-            // Get the total number of tests.
-            totalTestCount = suite.testCount();
-
         } catch (InitializationError e) {
             throw new RuntimeException("Could not create a suite", e);
         }
 
-        StatusUpdaterRunListener statusUpdaterRunListener =
-                new StatusUpdaterRunListener(this, runnerParams, totalTestCount);
-        core.addListener(statusUpdaterRunListener);
+        InstrumentationResultPrinter instrumentationResultPrinter =
+                new InstrumentationResultPrinter();
+        instrumentationResultPrinter.setInstrumentation(this);
+        core.addListener(instrumentationResultPrinter);
 
         for (Class<? extends RunListener> listenerClass : listenerClasses) {
             try {
@@ -251,15 +249,15 @@ public class CoreTestRunner extends Instrumentation {
             }
         }
 
-        core.run(request);
-
-        Bundle results;
-        if (testCountOnly) {
-            results = statusUpdaterRunListener.getCountResults();
-            Log.d(TAG, "test count only: " + results);
-        } else {
-            // Get the final results to send back.
-            results = statusUpdaterRunListener.getFinalResults();
+        Bundle results = new Bundle();
+        try {
+            core.run(request);
+        } catch (RuntimeException e) {
+            final String msg = "Fatal exception when running tests";
+            Log.e(TAG, msg, e);
+            // report the exception to instrumentation out
+            results.putString(Instrumentation.REPORT_KEY_STREAMRESULT,
+                    msg + "\n" + Log.getStackTraceString(e));
         }
 
         Log.d(TAG, "Finished");
