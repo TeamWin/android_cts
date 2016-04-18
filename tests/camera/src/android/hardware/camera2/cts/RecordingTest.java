@@ -1305,7 +1305,7 @@ public class RecordingTest extends Camera2SurfaceViewTestCase {
         double expectedDurationMs = 1000.0 / mVideoFrameRate;
         CaptureResult prevResult = resultListener.getCaptureResult(WAIT_FOR_RESULT_TIMEOUT_MS);
         long prevTS = getValueNotNull(prevResult, CaptureResult.SENSOR_TIMESTAMP);
-        while (!resultListener.hasMoreResults()) {
+        while (resultListener.hasMoreResults()) {
             CaptureResult currentResult =
                     resultListener.getCaptureResult(WAIT_FOR_RESULT_TIMEOUT_MS);
             long currentTS = getValueNotNull(currentResult, CaptureResult.SENSOR_TIMESTAMP);
@@ -1383,7 +1383,7 @@ public class RecordingTest extends Camera2SurfaceViewTestCase {
         double expectedDurationMs = 1000.0 / mVideoFrameRate;
         CaptureResult prevResult = resultListener.getCaptureResult(WAIT_FOR_RESULT_TIMEOUT_MS);
         long prevTS = getValueNotNull(prevResult, CaptureResult.SENSOR_TIMESTAMP);
-        while (!resultListener.hasMoreResults()) {
+        while (resultListener.hasMoreResults()) {
             CaptureResult currentResult =
                     resultListener.getCaptureResult(WAIT_FOR_RESULT_TIMEOUT_MS);
             long currentTS = getValueNotNull(currentResult, CaptureResult.SENSOR_TIMESTAMP);
