@@ -40,8 +40,6 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
 
     private static final String ADMIN_RECEIVER_TEST_CLASS =
             DEVICE_OWNER_PKG + ".BaseDeviceOwnerTest$BasicAdminReceiver";
-    private static final String CLEAR_DEVICE_OWNER_TEST_CLASS =
-            DEVICE_OWNER_PKG + ".ClearDeviceOwnerTest";
 
     /** The ephemeral users are implemented and supported on the device. */
     private boolean mHasEphemeralUserFeature;
@@ -60,10 +58,10 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
         super.setUp();
         if (mHasFeature) {
             installAppAsUser(DEVICE_OWNER_APK, mPrimaryUserId);
-            if (!setDeviceOwner(DEVICE_OWNER_PKG + "/" + ADMIN_RECEIVER_TEST_CLASS, mPrimaryUserId))
-            {
-                runDeviceTestsAsUser(
-                        DEVICE_OWNER_PKG, CLEAR_DEVICE_OWNER_TEST_CLASS, mPrimaryUserId);
+            if (!setDeviceOwner(
+                    DEVICE_OWNER_PKG + "/" + ADMIN_RECEIVER_TEST_CLASS, mPrimaryUserId,
+                    /*expectFailure*/ false)) {
+                removeAdmin(DEVICE_OWNER_PKG + "/" + ADMIN_RECEIVER_TEST_CLASS, mPrimaryUserId);
                 fail("Failed to set device owner");
             }
         }
@@ -76,8 +74,8 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
     @Override
     protected void tearDown() throws Exception {
         if (mHasFeature) {
-            assertTrue("Failed to remove device owner.", runDeviceTestsAsUser(
-                    DEVICE_OWNER_PKG, CLEAR_DEVICE_OWNER_TEST_CLASS, mPrimaryUserId));
+            assertTrue("Failed to remove device owner.",
+                    removeAdmin(DEVICE_OWNER_PKG + "/" + ADMIN_RECEIVER_TEST_CLASS, mPrimaryUserId));
             getDevice().uninstallPackage(DEVICE_OWNER_PKG);
             switchUser(USER_SYSTEM);
             removeTestUsers();
@@ -351,14 +349,18 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
         }
         // verify that we can't set the same admin receiver as device owner again
         assertFalse(setDeviceOwner(
-                DEVICE_OWNER_PKG + "/" + ADMIN_RECEIVER_TEST_CLASS, mPrimaryUserId));
+                DEVICE_OWNER_PKG + "/" + ADMIN_RECEIVER_TEST_CLASS, mPrimaryUserId,
+                /*expectFailure*/ true));
 
         // verify that we can't set a different admin receiver as device owner
         try {
             installAppAsUser(MANAGED_PROFILE_APK, mPrimaryUserId);
             assertFalse(setDeviceOwner(
-                    MANAGED_PROFILE_PKG + "/" + MANAGED_PROFILE_ADMIN, mPrimaryUserId));
+                    MANAGED_PROFILE_PKG + "/" + MANAGED_PROFILE_ADMIN, mPrimaryUserId,
+                    /*expectFailure*/ true));
         } finally {
+            // Remove the device owner in case the test fails.
+            removeAdmin(MANAGED_PROFILE_PKG + "/" + MANAGED_PROFILE_ADMIN, mPrimaryUserId);
             getDevice().uninstallPackage(MANAGED_PROFILE_PKG);
         }
     }
