@@ -67,6 +67,22 @@ static std::unordered_set<std::string> kSystemPublicLibraries = {
     "libz.so"
   };
 
+// This is not complete list - just a small subset
+// of the libraries that should reside in /system/lib
+// (in addition to kSystemPublicLibraries)
+static std::unordered_set<std::string> kSystemLibraries = {
+    "libart.so",
+    "libandroid_runtime.so",
+    "libbinder.so",
+    "libcutils.so",
+    "libgui.so",
+    "libmedia.so",
+    "libnativehelper.so",
+    "libstagefright.so",
+    "libui.so",
+    "libutils.so",
+  };
+
 template <typename F>
 static bool for_each_file(const std::string& dir, F functor, std::string* error_msg) {
   auto dir_deleter = [](DIR* handle) { closedir(handle); };
@@ -113,8 +129,44 @@ static bool is_libdl(const std::string path) {
   return kSystemLibraryPath + "/libdl.so" == path;
 }
 
+static bool check_lib(const std::string& public_library_path,
+                      const std::unordered_set<std::string>& public_libraries,
+                      const std::string& path,
+                      std::string* error_msg) {
+  if (is_libdl(path)) {
+    // TODO (dimitry): we skip check for libdl.so because
+    // 1. Linker will fail to check accessibility because it imposes as libdl.so (see http://b/27106625)
+    // 2. It is impractical to dlopen libdl.so because this library already depends
+    //    on it in order to have dlopen()
+    return true;
+  }
+
+  auto dlcloser = [](void* handle) { dlclose(handle); };
+  std::unique_ptr<void, decltype(dlcloser)> handle(dlopen(path.c_str(), RTLD_NOW), dlcloser);
+  if (should_be_accessible(public_library_path, public_libraries, path)) {
+    if (handle.get() == nullptr) {
+      *error_msg = "The library \"" + path + "\" should be accessible but isn't: " + dlerror();
+      return false;
+    }
+  } else if (handle != nullptr) {
+    *error_msg = "The library \"" + path + "\" should not be accessible";
+    return false;
+  } else { // (handle == nullptr && !shouldBeAccessible(path))
+    // Check the error message
+    std::string err = dlerror();
+
+    if (err.find("dlopen failed: library \"" + path + "\"") != 0 ||
+        err.find("is not accessible for the namespace \"classloader-namespace\"") == std::string::npos) {
+      *error_msg = "unexpected dlerror: " + err;
+      return false;
+    }
+  }
+  return true;
+}
+
 static bool check_libs(const std::string& public_library_path,
                        const std::unordered_set<std::string>& public_libraries,
+                       const std::unordered_set<std::string>& mandatory_files,
                        std::string* error) {
   std::list<std::string> dirs;
   dirs.push_back(public_library_path);
@@ -129,39 +181,19 @@ static bool check_libs(const std::string& public_library_path,
         return true;
       }
 
-      if (is_libdl(path)) {
-        // TODO (dimitry): we skip check for libdl.so because
-        // 1. Linker will fail to check accessibility because it imposes as libdl.so (see http://b/27106625)
-        // 2. It is impractical to dlopen libdl.so because this library already depends
-        //    on it in order to have dlopen()
-        return true;
-      }
-
-      auto dlcloser = [](void* handle) { dlclose(handle); };
-      std::unique_ptr<void, decltype(dlcloser)> handle(dlopen(path.c_str(), RTLD_NOW), dlcloser);
-      if (should_be_accessible(public_library_path, public_libraries, path)) {
-        if (handle.get() == nullptr) {
-          *error_msg = "The library \"" + path + "\" should be accessible but isn't: " + dlerror();
-          return false;
-        }
-      } else if (handle != nullptr) {
-        *error_msg = "The library \"" + path + "\" should not be accessible";
-        return false;
-      } else { // (handle == nullptr && !shouldBeAccessible(path))
-        // Check the error message
-        std::string err = dlerror();
-
-        if (err.find("dlopen failed: library \"" + path + "\"") != 0 ||
-            err.find("is not accessible for the namespace \"classloader-namespace\"") == std::string::npos) {
-          *error_msg = "unexpected dlerror: " + err;
-          return false;
-        }
-      }
-      return true;
+      return check_lib(public_library_path, public_libraries, path, error_msg);
     }, error);
 
     if (!success) {
       return false;
+    }
+
+    // Check mandatory files - the grey list
+    for (const auto& name : mandatory_files) {
+      std::string path = public_library_path + "/" + name;
+      if (!check_lib(public_library_path, public_libraries, path, error)) {
+        return false;
+      }
     }
   }
 
@@ -189,10 +221,11 @@ extern "C" JNIEXPORT jstring JNICALL
   std::string error;
 
   std::unordered_set<std::string> vendor_public_libraries;
+  std::unordered_set<std::string> empty_set;
   load_vendor_libraries(env, java_vendor_public_libraries, &vendor_public_libraries);
 
-  if (!check_libs(kSystemLibraryPath, kSystemPublicLibraries, &error) ||
-      !check_libs(kVendorLibraryPath, vendor_public_libraries, &error)) {
+  if (!check_libs(kSystemLibraryPath, kSystemPublicLibraries, kSystemLibraries, &error) ||
+      !check_libs(kVendorLibraryPath, vendor_public_libraries, empty_set, &error)) {
     return env->NewStringUTF(error.c_str());
   }
 
