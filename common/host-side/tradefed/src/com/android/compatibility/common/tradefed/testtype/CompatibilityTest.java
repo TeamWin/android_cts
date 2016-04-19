@@ -35,6 +35,7 @@ import com.android.tradefed.config.Option.Importance;
 import com.android.tradefed.config.OptionClass;
 import com.android.tradefed.config.OptionCopier;
 import com.android.tradefed.device.DeviceNotAvailableException;
+import com.android.tradefed.device.DeviceUnresponsiveException;
 import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.log.LogUtil.CLog;
 import com.android.tradefed.result.ITestInvocationListener;
@@ -47,7 +48,10 @@ import com.android.tradefed.util.AbiFormatter;
 import com.android.tradefed.util.ArrayUtil;
 import com.android.tradefed.util.TimeUtil;
 
+import java.io.ByteArrayOutputStream;
 import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
@@ -274,7 +278,24 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
             for (int i = 0; i < moduleCount; i++) {
                 IModuleDef module = modules.get(i);
                 long start = System.currentTimeMillis();
-                module.run(listener);
+                try {
+                    module.run(listener);
+                } catch (DeviceUnresponsiveException due) {
+                    // being able to catch a DeviceUnresponsiveException here implies that recovery
+                    // was successful, and test execution should proceed to next module
+                    ByteArrayOutputStream stack = new ByteArrayOutputStream();
+                    due.printStackTrace(new PrintWriter(stack, true));
+                    try {
+                        stack.close();
+                    } catch (IOException ioe) {
+                        // won't happen on BAOS
+                    }
+                    CLog.w("Ignored DeviceUnresponsiveException because recovery was successful, "
+                            + "proceeding with next module. Stack trace: %s",
+                            stack.toString());
+                    CLog.w("This may be due to incorrect timeout setting on module %s",
+                            module.getName());
+                }
                 long duration = System.currentTimeMillis() - start;
                 long expected = module.getRuntimeHint();
                 long delta = Math.abs(duration - expected);
