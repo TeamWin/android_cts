@@ -203,6 +203,46 @@ public class WebViewTest extends ActivityInstrumentationTestCase2<WebViewCtsActi
     }
 
     @UiThreadTest
+    public void testCreatingWebViewWithDeviceEncrpytionFails() {
+        if (!NullWebViewUtils.isWebViewAvailable()) {
+            return;
+        }
+
+        Context deviceEncryptedContext = getActivity().createDeviceProtectedStorageContext();
+        try {
+            new WebView(deviceEncryptedContext);
+        } catch (IllegalArgumentException e) {
+            return;
+        }
+
+        Assert.fail("WebView should have thrown exception when creating with a device " +
+                "protected storage context");
+    }
+
+    @UiThreadTest
+    public void testCreatingWebViewWithMultipleEncryptionContext() {
+        if (!NullWebViewUtils.isWebViewAvailable()) {
+            return;
+        }
+
+        // Credential encrpytion is the default. Create one here for the sake of clarity.
+        Context credentialEncryptedContext = getActivity().createCredentialProtectedStorageContext();
+        Context deviceEncryptedContext = getActivity().createDeviceProtectedStorageContext();
+
+        // No exception should be thrown with credential encryption context.
+        new WebView(credentialEncryptedContext);
+
+        try {
+            new WebView(deviceEncryptedContext);
+        } catch (IllegalArgumentException e) {
+            return;
+        }
+
+        Assert.fail("WebView should have thrown exception when creating with a device " +
+                "protected storage context");
+    }
+
+    @UiThreadTest
     public void testCreatingWebViewCreatesCookieSyncManager() throws Exception {
         if (!NullWebViewUtils.isWebViewAvailable()) {
             return;
