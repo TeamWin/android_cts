@@ -45,30 +45,6 @@ static const std::string kSystemLibraryPath = "/system/lib";
 static const std::string kVendorLibraryPath = "/vendor/lib";
 #endif
 
-static std::unordered_set<std::string> kSystemPublicLibraries = {
-    "libandroid.so",
-    "libcamera2ndk.so",
-    "libc.so",
-    "libdl.so",
-    "libEGL.so",
-    "libGLESv1_CM.so",
-    "libGLESv2.so",
-    "libGLESv3.so",
-    "libicui18n.so",
-    "libicuuc.so",
-    "libjnigraphics.so",
-    "liblog.so",
-    "libmediandk.so",
-    "libm.so",
-    "libOpenMAXAL.so",
-    "libOpenSLES.so",
-    "libRS.so",
-    "libstdc++.so",
-    "libvulkan.so",
-    "libwebviewchromium_plat_support.so",
-    "libz.so"
-  };
-
 // This is not complete list - just a small subset
 // of the libraries that should reside in /system/lib
 // (in addition to kSystemPublicLibraries)
@@ -202,13 +178,13 @@ static bool check_libs(const std::string& public_library_path,
   return true;
 }
 
-static void load_vendor_libraries(JNIEnv* env,
-                                  jobjectArray java_vendor_public_libraries,
-                                  std::unordered_set<std::string>* libraries) {
-  size_t size = env->GetArrayLength(java_vendor_public_libraries);
+static void jobject_array_to_set(JNIEnv* env,
+                                 jobjectArray java_libraries_array,
+                                 std::unordered_set<std::string>* libraries) {
+  size_t size = env->GetArrayLength(java_libraries_array);
   for (size_t i = 0; i<size; ++i) {
     ScopedLocalRef<jstring> java_soname(
-        env, (jstring) env->GetObjectArrayElement(java_vendor_public_libraries, i));
+        env, (jstring) env->GetObjectArrayElement(java_libraries_array, i));
 
     ScopedUtfChars soname(env, java_soname.get());
     libraries->insert(soname.c_str());
@@ -219,14 +195,17 @@ extern "C" JNIEXPORT jstring JNICALL
     Java_android_jni_cts_LinkerNamespacesHelper_runAccessibilityTestImpl(
         JNIEnv* env,
         jclass clazz __attribute__((unused)),
+        jobjectArray java_system_public_libraries,
         jobjectArray java_vendor_public_libraries) {
   std::string error;
 
   std::unordered_set<std::string> vendor_public_libraries;
+  std::unordered_set<std::string> system_public_libraries;
   std::unordered_set<std::string> empty_set;
-  load_vendor_libraries(env, java_vendor_public_libraries, &vendor_public_libraries);
+  jobject_array_to_set(env, java_vendor_public_libraries, &vendor_public_libraries);
+  jobject_array_to_set(env, java_system_public_libraries, &system_public_libraries);
 
-  if (!check_libs(kSystemLibraryPath, kSystemPublicLibraries, kSystemLibraries, &error) ||
+  if (!check_libs(kSystemLibraryPath, system_public_libraries, kSystemLibraries, &error) ||
       !check_libs(kVendorLibraryPath, vendor_public_libraries, empty_set, &error)) {
     return env->NewStringUTF(error.c_str());
   }
