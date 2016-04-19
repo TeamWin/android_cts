@@ -908,13 +908,69 @@ public class RobustnessTest extends Camera2AndroidTestCase {
         }
     }
 
-    private CaptureRequest.Builder prepareTriggerTestSession(
-            SurfaceTexture preview, int aeMode, int afMode) throws Exception {
-        Log.i(TAG, String.format("Testing AE mode %s, AF mode %s",
-                        StaticMetadata.AE_MODE_NAMES[aeMode],
-                        StaticMetadata.AF_MODE_NAMES[afMode]));
+    public void testAbandonRepeatingRequestSurface() throws Exception {
+        for (String id : mCameraIds) {
+            Log.i(TAG, String.format(
+                    "Testing Camera %s for abandoning surface of a repeating request", id));
 
+            openDevice(id);
+            try {
+                SurfaceTexture preview = new SurfaceTexture(/*random int*/ 1);
+                Surface previewSurface = new Surface(preview);
 
+                CaptureRequest.Builder previewRequest = preparePreviewTestSession(preview);
+                SimpleCaptureCallback captureListener = new CameraTestUtils.SimpleCaptureCallback();
+
+                int sequenceId = mCameraSession.setRepeatingRequest(previewRequest.build(),
+                        captureListener, mHandler);
+
+                for (int i = 0; i < PREVIEW_WARMUP_FRAMES; i++) {
+                    captureListener.getTotalCaptureResult(CAPTURE_TIMEOUT);
+                }
+
+                // Abandon preview surface.
+                preview.release();
+
+                // Check onCaptureSequenceCompleted is received.
+                long sequenceLastFrameNumber = captureListener.getCaptureSequenceLastFrameNumber(
+                        sequenceId, CAPTURE_TIMEOUT);
+
+                mCameraSession.stopRepeating();
+
+                // Find the last frame number received in results and failures.
+                long lastFrameNumber = -1;
+                while (captureListener.hasMoreResults()) {
+                    TotalCaptureResult result = captureListener.getTotalCaptureResult(
+                            CAPTURE_TIMEOUT);
+                    if (lastFrameNumber < result.getFrameNumber()) {
+                        lastFrameNumber = result.getFrameNumber();
+                    }
+                }
+
+                while (captureListener.hasMoreFailures()) {
+                    ArrayList<CaptureFailure> failures = captureListener.getCaptureFailures(
+                            /*maxNumFailures*/ 1);
+                    for (CaptureFailure failure : failures) {
+                        if (lastFrameNumber < failure.getFrameNumber()) {
+                            lastFrameNumber = failure.getFrameNumber();
+                        }
+                    }
+                }
+
+                // Verify the last frame number received from capture sequence completed matches the
+                // the last frame number of the results and failures.
+                assertEquals(String.format("Last frame number from onCaptureSequenceCompleted " +
+                        "(%d) doesn't match the last frame number received from " +
+                        "results/failures (%d)", sequenceLastFrameNumber, lastFrameNumber),
+                        sequenceLastFrameNumber, lastFrameNumber);
+            } finally {
+                closeDevice(id);
+            }
+        }
+    }
+
+    private CaptureRequest.Builder preparePreviewTestSession(SurfaceTexture preview)
+            throws Exception {
         Surface previewSurface = new Surface(preview);
 
         preview.setDefaultBufferSize(640, 480);
@@ -929,6 +985,16 @@ public class RobustnessTest extends Camera2AndroidTestCase {
 
         previewRequest.addTarget(previewSurface);
 
+        return previewRequest;
+    }
+
+    private CaptureRequest.Builder prepareTriggerTestSession(
+            SurfaceTexture preview, int aeMode, int afMode) throws Exception {
+        Log.i(TAG, String.format("Testing AE mode %s, AF mode %s",
+                        StaticMetadata.AE_MODE_NAMES[aeMode],
+                        StaticMetadata.AF_MODE_NAMES[afMode]));
+
+        CaptureRequest.Builder previewRequest = preparePreviewTestSession(preview);
         previewRequest.set(CaptureRequest.CONTROL_AE_MODE, aeMode);
         previewRequest.set(CaptureRequest.CONTROL_AF_MODE, afMode);
 
