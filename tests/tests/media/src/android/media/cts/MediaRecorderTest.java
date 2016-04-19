@@ -54,10 +54,11 @@ public class MediaRecorderTest extends ActivityInstrumentationTestCase2<MediaStu
     private final String OUTPUT_PATH2;
     private static final float TOLERANCE = 0.0002f;
     private static final int RECORD_TIME_MS = 3000;
-    private static final int RECORD_TIME_LAPSE_MS = 4000;
+    private static final int RECORD_TIME_LAPSE_MS = 6000;
     private static final int RECORD_TIME_LONG_MS = 20000;
     private static final int RECORDED_DUR_TOLERANCE_MS = 1000;
-    private static final float RECORDED_DUR_TOLERANCE = 0.1f;
+    // Tolerate 4 frames off at maximum
+    private static final float RECORDED_DUR_TOLERANCE_FRAMES = 4f;
     private static final int VIDEO_WIDTH = 176;
     private static final int VIDEO_HEIGHT = 144;
     private static int mVideoWidth = VIDEO_WIDTH;
@@ -295,11 +296,12 @@ public class MediaRecorderTest extends ActivityInstrumentationTestCase2<MediaStu
         int targetDurMs = timelapse? ((int) (durMs * (captureRate / frameRate))): durMs;
         boolean hasVideo = true;
         boolean hasAudio = timelapse? false: true;
-        checkTracksAndDuration(targetDurMs, hasVideo, hasAudio, fileName);
+        checkTracksAndDuration(targetDurMs, hasVideo, hasAudio, fileName, frameRate);
     }
 
     private void checkTracksAndDuration(
-            int targetMs, boolean hasVideo, boolean hasAudio, String fileName) throws Exception {
+            int targetMs, boolean hasVideo, boolean hasAudio, String fileName,
+            float frameRate) throws Exception {
         MediaMetadataRetriever retriever = new MediaMetadataRetriever();
         retriever.setDataSource(fileName);
         String hasVideoStr = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_HAS_VIDEO);
@@ -311,9 +313,13 @@ public class MediaRecorderTest extends ActivityInstrumentationTestCase2<MediaStu
         // check on the duration.
         String durStr = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION);
         assertTrue(durStr != null);
-        assertTrue(Integer.parseInt(durStr) > 0);
+        int duration = Integer.parseInt(durStr);
+        assertTrue("duration is non-positive: dur = " + duration, duration > 0);
         if (targetMs != 0) {
-            assertTrue(Integer.parseInt(durStr) <= targetMs * (1.0f + RECORDED_DUR_TOLERANCE));
+            float toleranceMs = RECORDED_DUR_TOLERANCE_FRAMES * (1000f / frameRate);
+            assertTrue(String.format("duration is too large: dur = %d, target = %d, tolerance = %f",
+                        duration, targetMs, toleranceMs),
+                    duration <= targetMs + toleranceMs);
         }
 
         retriever.release();
@@ -923,6 +929,7 @@ public class MediaRecorderTest extends ActivityInstrumentationTestCase2<MediaStu
         boolean success = false;
         Surface surface = null;
         int noOfFailure = 0;
+        final float frameRate = getMaxFrameRateForCodec(MediaRecorder.VideoEncoder.H264);
 
         if (!hasH264()) {
             MediaUtils.skipTest("no codecs");
@@ -955,7 +962,7 @@ public class MediaRecorderTest extends ActivityInstrumentationTestCase2<MediaStu
                 Log.v(TAG, "testRecordFromSurface - round " + k);
                 success = recordFromSurface(filename, captureRate, hasAudio, surface);
                 if (success) {
-                    checkTracksAndDuration(0, true /* hasVideo */, hasAudio, filename);
+                    checkTracksAndDuration(0, true /* hasVideo */, hasAudio, filename, frameRate);
 
                     // verify capture fps meta key
                     if (timelapse && !checkCaptureFps(filename, captureRate)) {
