@@ -107,4 +107,27 @@ public class CarrierApiTest extends AndroidTestCase {
         }
     }
 
+    public void testGetIccAuthentication() {
+        // EAP-SIM rand is 16 bytes.
+        String base64Challenge = "ECcTqwuo6OfY8ddFRboD9WM=";
+        String base64Challenge2 = "EMNxjsFrPCpm+KcgCmQGnwQ=";
+        if (!hasCellular) return;
+        try {
+            assertNull("getIccAuthentication should return null for empty data.",
+                    mTelephonyManager.getIccAuthentication(TelephonyManager.APPTYPE_USIM,
+                    TelephonyManager.AUTHTYPE_EAP_AKA, ""));
+            String response = mTelephonyManager.getIccAuthentication(TelephonyManager.APPTYPE_USIM,
+                    TelephonyManager.AUTHTYPE_EAP_SIM, base64Challenge);
+            assertTrue("Response to EAP-SIM Challenge must not be Null.", response != null);
+            // response is base64 encoded. After decoding, the value should be:
+            // 1 length byte + SRES(4 bytes) + 1 length byte + Kc(8 bytes)
+            byte[] result = android.util.Base64.decode(response, android.util.Base64.DEFAULT);
+            assertTrue("Result length must be 14 bytes.", 14 == result.length);
+            String response2 = mTelephonyManager.getIccAuthentication(TelephonyManager.APPTYPE_USIM,
+                    TelephonyManager.AUTHTYPE_EAP_SIM, base64Challenge2);
+            assertTrue("Two responses must be different.", !response.equals(response2));
+        } catch (SecurityException e) {
+            failMessage();
+        }
+    }
 }
