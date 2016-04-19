@@ -127,7 +127,7 @@ public class CustomPrintOptionsTest extends BasePrintTest {
     private void testCase(final boolean copyFromOriginal, final Integer numCopies,
             final PageRange[] pages, final MediaSize mediaSize, final boolean isPortrait,
             final Integer colorMode, final Integer duplexMode, final Resolution resolution)
-            throws Exception {
+            throws Throwable {
         if (!supportsPrinting()) {
             return;
         }
@@ -282,7 +282,7 @@ public class CustomPrintOptionsTest extends BasePrintTest {
                 resetCounters();
                 makeDefaultPrinter(adapter, PRINTER_NAME);
                 break;
-            } catch (Exception e) {
+            } catch (Throwable e) {
                 if (getActivityDestroyCallbackCallCount() > 0 && tries < MAX_TRIES) {
                     Log.e(LOG_TAG, "Activity was destroyed during test, retrying", e);
 
@@ -354,7 +354,7 @@ public class CustomPrintOptionsTest extends BasePrintTest {
                         }
 
                         break;
-                    } catch (Exception e) {
+                    } catch (Throwable e) {
                         if (endTime < System.currentTimeMillis()) {
                             throw e;
                         } else {
@@ -365,7 +365,7 @@ public class CustomPrintOptionsTest extends BasePrintTest {
                 }
 
                 break;
-            } catch (Exception e) {
+            } catch (Throwable e) {
                 if (getActivityDestroyCallbackCallCount() > 0 && tries < MAX_TRIES) {
                     Log.e(LOG_TAG, "Activity was destroyed during test, retrying", e);
 
@@ -383,48 +383,48 @@ public class CustomPrintOptionsTest extends BasePrintTest {
         waitForPrinterDiscoverySessionDestroyCallbackCalled(1);
     }
 
-    public void testChangeToChangeEveryThing() throws Exception {
+    public void testChangeToChangeEveryThing() throws Throwable {
         testCase(false, 2, PAGESS[1], MEDIA_SIZES[1], false, COLOR_MODES[1], DUPLEX_MODES[1],
                 RESOLUTIONS[1]);
     }
 
-    public void testChangeToAttributes() throws Exception {
+    public void testChangeToAttributes() throws Throwable {
         testCase(false, null, null, MEDIA_SIZES[1], false, COLOR_MODES[1], DUPLEX_MODES[1],
                 RESOLUTIONS[1]);
     }
 
-    public void testChangeToNonAttributes() throws Exception {
+    public void testChangeToNonAttributes() throws Throwable {
         testCase(false, 2, PAGESS[1], null, true, null, null, null);
     }
 
-    public void testChangeToAttributesNoCopy() throws Exception {
+    public void testChangeToAttributesNoCopy() throws Throwable {
         testCase(true, null, null, MEDIA_SIZES[1], false, COLOR_MODES[1], DUPLEX_MODES[1],
                 RESOLUTIONS[1]);
     }
 
-    public void testChangeToNonAttributesNoCopy() throws Exception {
+    public void testChangeToNonAttributesNoCopy() throws Throwable {
         testCase(true, 2, PAGESS[1], null, true, null, null, null);
     }
 
-    public void testChangeToDefault() throws Exception {
+    public void testChangeToDefault() throws Throwable {
         testCase(false, 1, DEFAULT_PAGES, DEFAULT_MEDIA_SIZE, DEFAULT_MEDIA_SIZE.isPortrait(),
                 DEFAULT_COLOR_MODE, DEFAULT_DUPLEX_MODE, DEFAULT_RESOLUTION);
     }
 
-    public void testChangeToDefaultNoCopy() throws Exception {
+    public void testChangeToDefaultNoCopy() throws Throwable {
         testCase(true, 1, DEFAULT_PAGES, DEFAULT_MEDIA_SIZE, DEFAULT_MEDIA_SIZE.isPortrait(),
                 DEFAULT_COLOR_MODE, DEFAULT_DUPLEX_MODE, DEFAULT_RESOLUTION);
     }
 
-    public void testChangeToNothing() throws Exception {
+    public void testChangeToNothing() throws Throwable {
         testCase(false, null, null, null, true, null, null, null);
     }
 
-    public void testChangeToNothingNoCopy() throws Exception {
+    public void testChangeToNothingNoCopy() throws Throwable {
         testCase(true, null, null, null, true, null, null, null);
     }
 
-    public void testChangeToAllPages() throws Exception {
+    public void testChangeToAllPages() throws Throwable {
         testCase(false, null, PAGESS[2], null, true, null, null, null);
     }
 }
