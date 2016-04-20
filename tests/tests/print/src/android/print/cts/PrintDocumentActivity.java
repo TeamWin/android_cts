@@ -30,7 +30,7 @@ public class PrintDocumentActivity extends Activity {
                 | WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON
                 | WindowManager.LayoutParams.FLAG_DISMISS_KEYGUARD);
 
-        BasePrintTest.onActivityCreateCalled();
+        BasePrintTest.onActivityCreateCalled(this);
     }
 
     @Override
