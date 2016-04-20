@@ -89,25 +89,5 @@
     "org.w3c.domts.level3.xpath.TestXalanAltConfig"
   ],
   bug: "1234"
-},
-{
-  description: "CTS: SSLSocketTest#test_SSLSocket_endpointIdentification_Failure failing",
-  name: "libcore.javax.net.ssl.SSLSocketTest#test_SSLSocket_endpointIdentification_Failure",
-  bug: "27271561"
-},
-{
-  description: "Re-enable blacklisted libcore tests in enso",
-  name: "org.apache.harmony.tests.java.net.ServerSocketTest#test_toString",
-  bug: "26352408"
-},
-{
-  description: "JarEntry.getCertificates(), getCodeSigners() should return null until the entry has been read",
-  names: [
-    "org.apache.harmony.tests.java.util.jar.JarEntryTest#testCertificatesAndCodesigners",
-    "org.apache.harmony.tests.java.util.jar.JarEntryTest#test_getCodeSigners",
-    "org.apache.harmony.tests.java.util.jar.JarFileTest#testJarFile_Signed_InvalidChain",
-    "org.apache.harmony.tests.java.util.jar.JarFileTest#testJarFile_Signed_ValidChain"
-  ],
-  bug: "1864326"
 }
 ]
