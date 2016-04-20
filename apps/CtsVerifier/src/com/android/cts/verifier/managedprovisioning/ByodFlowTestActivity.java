@@ -93,6 +93,7 @@ public class ByodFlowTestActivity extends DialogTestListActivity {
     private DialogTestListItem mPrimaryLocationWhenWorkDisabledTest;
     private DialogTestListItem mSelectWorkChallenge;
     private DialogTestListItem mConfirmWorkCredentials;
+    private DialogTestListItem mParentProfilePassword;
     private TestListItem mVpnTest;
     private TestListItem mDisallowAppsControlTest;
     private TestListItem mOrganizationInfoTest;
@@ -374,13 +375,19 @@ public class ByodFlowTestActivity extends DialogTestListActivity {
                 R.string.provisioning_byod_confirm_work_credentials,
                 "BYOD_ConfirmWorkCredentials",
                 R.string.provisioning_byod_confirm_work_credentials_description,
-                new Intent(ByodHelperActivity.ACTION_TEST_CONFIRM_WORK_CREDENTIALS));
+                new Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME));
 
         mOrganizationInfoTest = TestListItem.newTest(this,
                 R.string.provisioning_byod_organization_info,
                 OrganizationInfoTestActivity.class.getName(),
                 new Intent(this, OrganizationInfoTestActivity.class),
                 null);
+
+        mParentProfilePassword = new DialogTestListItem(this,
+                R.string.provisioning_byod_parent_profile_password,
+                "BYOD_ParentProfilePasswordTest",
+                R.string.provisioning_byod_parent_profile_password_description,
+                new Intent(ByodHelperActivity.ACTION_TEST_PARENT_PROFILE_PASSWORD));
 
         final Intent policyTransparencyTestIntent = new Intent(this,
                 PolicyTransparencyTestListActivity.class);
@@ -427,6 +434,7 @@ public class ByodFlowTestActivity extends DialogTestListActivity {
         adapter.add(mSelectWorkChallenge);
         adapter.add(mConfirmWorkCredentials);
         adapter.add(mOrganizationInfoTest);
+        adapter.add(mParentProfilePassword);
         adapter.add(mPolicyTransparencyTest);
 
         if (canResolveIntent(new Intent(Settings.ACTION_APPLICATION_SETTINGS))) {
