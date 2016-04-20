@@ -61,7 +61,7 @@ public class SensorSupportTest extends AndroidTestCase {
     }
 
     public void testSupportsGeoMagneticField() {
-        checkSupportsSensor(Sensor.TYPE_GEOMAGNETIC_ROTATION_VECTOR);
+        checkSupportsSensor(Sensor.TYPE_MAGNETIC_FIELD);
     }
 
     public void testSupportsMagneticFieldUncalibrated() {
