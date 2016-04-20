@@ -88,7 +88,7 @@ public abstract class BasePrintTest extends InstrumentationTestCase {
     private static final String COMMAND_PREFIX_DISABLE_IME = "ime disable ";
     private static final int CURRENT_USER_ID = -2; // Mirrors UserHandle.USER_CURRENT
 
-    private PrintDocumentActivity mActivity;
+    private static PrintDocumentActivity sActivity;
     private UiDevice mUiDevice;
 
     /**
@@ -109,8 +109,8 @@ public abstract class BasePrintTest extends InstrumentationTestCase {
     private CallCounter mPrintJobQueuedCallCounter;
     private CallCounter mCreateSessionCallCounter;
     private CallCounter mDestroySessionCallCounter;
-    private static CallCounter mDestroyActivityCallCounter = new CallCounter();
-    private static CallCounter mCreateActivityCallCounter = new CallCounter();
+    private static CallCounter sDestroyActivityCallCounter = new CallCounter();
+    private static CallCounter sCreateActivityCallCounter = new CallCounter();
 
     private String[] mEnabledImes;
 
@@ -312,7 +312,7 @@ public abstract class BasePrintTest extends InstrumentationTestCase {
         waitForCallbackCallCount(mWriteCallCounter, count, "Did not get expected call to write.");
     }
 
-    private void waitForCallbackCallCount(CallCounter counter, int count, String message) {
+    private static void waitForCallbackCallCount(CallCounter counter, int count, String message) {
         try {
             counter.waitForCount(count, OPERATION_TIMEOUT_MILLIS);
         } catch (TimeoutException te) {
@@ -323,15 +323,16 @@ public abstract class BasePrintTest extends InstrumentationTestCase {
     /**
      * Indicate the print activity was created.
      */
-    static void onActivityCreateCalled() {
-        mCreateActivityCallCounter.call();
+    static void onActivityCreateCalled(PrintDocumentActivity activity) {
+        sActivity = activity;
+        sCreateActivityCallCounter.call();
     }
 
     /**
      * Indicate the print activity was destroyed.
      */
     static void onActivityDestroyCalled() {
-        mDestroyActivityCallCounter.call();
+        sDestroyActivityCallCounter.call();
     }
 
     /**
@@ -339,8 +340,8 @@ public abstract class BasePrintTest extends InstrumentationTestCase {
      *
      * @return The number of onDestroy calls on the print activity.
      */
-    protected int getActivityDestroyCallbackCallCount() {
-        return mDestroyActivityCallCounter.getCallCount();
+    protected static int getActivityDestroyCallbackCallCount() {
+        return sDestroyActivityCallCounter.getCallCount();
     }
 
     /**
@@ -348,8 +349,8 @@ public abstract class BasePrintTest extends InstrumentationTestCase {
      *
      * @return The number of onCreate calls on the print activity.
      */
-    protected int getActivityCreateCallbackCallCount() {
-        return mCreateActivityCallCounter.getCallCount();
+    protected static int getActivityCreateCallbackCallCount() {
+        return sCreateActivityCallCounter.getCallCount();
     }
 
     /**
@@ -357,8 +358,8 @@ public abstract class BasePrintTest extends InstrumentationTestCase {
      *
      * @param count The number of create calls to expect.
      */
-    protected void waitForActivityCreateCallbackCalled(int count) {
-        waitForCallbackCallCount(mCreateActivityCallCounter, count,
+    private static void waitForActivityCreateCallbackCalled(int count) {
+        waitForCallbackCallCount(sCreateActivityCallCounter, count,
                 "Did not get expected call to create.");
     }
 
@@ -373,8 +374,8 @@ public abstract class BasePrintTest extends InstrumentationTestCase {
         mPrintJobQueuedCallCounter.reset();
         mCreateSessionCallCounter.reset();
         mDestroySessionCallCounter.reset();
-        mDestroyActivityCallCounter.reset();
-        mCreateActivityCallCounter.reset();
+        sDestroyActivityCallCounter.reset();
+        sCreateActivityCallCounter.reset();
     }
 
     protected void selectPrinter(String printerName) throws UiObjectNotFoundException, IOException {
@@ -563,13 +564,16 @@ public abstract class BasePrintTest extends InstrumentationTestCase {
     }
 
     protected PrintDocumentActivity getActivity() {
-        return mActivity;
+        return sActivity;
     }
 
     protected void createActivity() {
-        mActivity = launchActivity(
-                getInstrumentation().getTargetContext().getPackageName(),
+        int createBefore = getActivityCreateCallbackCallCount();
+
+        launchActivity(getInstrumentation().getTargetContext().getPackageName(),
                 PrintDocumentActivity.class, null);
+
+        waitForActivityCreateCallbackCalled(createBefore + 1);
     }
 
     protected void openPrintOptions() throws UiObjectNotFoundException {
@@ -773,11 +777,7 @@ public abstract class BasePrintTest extends InstrumentationTestCase {
         // Switch to new activity, which should now use the default printer
         getActivity().finish();
 
-        int createBefore = getActivityCreateCallbackCallCount();
         createActivity();
-
-        // Wait for activity to be up
-        waitForActivityCreateCallbackCalled(createBefore + 1);
     }
 
     protected boolean supportsPrinting() {
