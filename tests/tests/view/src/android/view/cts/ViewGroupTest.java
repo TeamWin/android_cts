@@ -1769,6 +1769,164 @@ public class ViewGroupTest extends InstrumentationTestCase implements CTSResult{
         assertTrue(vgParent.isStartActionModeForChildTypedCalled);
     }
 
+    public void testTemporaryDetach() {
+        // [vgParent]
+        //   - [viewParent1]
+        //   - [viewParent1]
+        //   - [vg]
+        //     - [view1]
+        //     - [view2]
+        MockViewGroupSubclass vgParent = new MockViewGroupSubclass(mContext);
+        TemporaryDetachingMockView viewParent1 = new TemporaryDetachingMockView(mContext);
+        TemporaryDetachingMockView viewParent2 = new TemporaryDetachingMockView(mContext);
+        vgParent.addView(viewParent1);
+        vgParent.addView(viewParent2);
+        MockViewGroupSubclass vg = new MockViewGroupSubclass(mContext);
+        vgParent.addView(vg);
+        TemporaryDetachingMockView view1 = new TemporaryDetachingMockView(mContext);
+        TemporaryDetachingMockView view2 = new TemporaryDetachingMockView(mContext);
+        vg.addView(view1);
+        vg.addView(view2);
+
+        // Make sure that no View is temporarity detached in the initial state.
+        assertFalse(viewParent1.isTemporarilyDetached());
+        assertEquals(0, viewParent1.getDispatchStartTemporaryDetachCount());
+        assertEquals(0, viewParent1.getDispatchFinishTemporaryDetachCount());
+        assertEquals(0, viewParent1.getOnStartTemporaryDetachCount());
+        assertEquals(0, viewParent1.getOnFinishTemporaryDetachCount());
+        assertFalse(viewParent2.isTemporarilyDetached());
+        assertEquals(0, viewParent2.getDispatchStartTemporaryDetachCount());
+        assertEquals(0, viewParent2.getDispatchFinishTemporaryDetachCount());
+        assertEquals(0, viewParent2.getOnStartTemporaryDetachCount());
+        assertEquals(0, viewParent2.getOnFinishTemporaryDetachCount());
+        assertFalse(view1.isTemporarilyDetached());
+        assertEquals(0, view1.getDispatchStartTemporaryDetachCount());
+        assertEquals(0, view1.getDispatchFinishTemporaryDetachCount());
+        assertEquals(0, view1.getOnStartTemporaryDetachCount());
+        assertEquals(0, view1.getOnFinishTemporaryDetachCount());
+        assertFalse(view2.isTemporarilyDetached());
+        assertEquals(0, view2.getDispatchStartTemporaryDetachCount());
+        assertEquals(0, view2.getDispatchFinishTemporaryDetachCount());
+        assertEquals(0, view2.getOnStartTemporaryDetachCount());
+        assertEquals(0, view2.getOnFinishTemporaryDetachCount());
+
+        // [vgParent]
+        //   - [viewParent1]
+        //   - [viewParent1]
+        //   - [vg]           <- dispatchStartTemporaryDetach()
+        //     - [view1]
+        //     - [view2]
+        vg.dispatchStartTemporaryDetach();
+
+        assertFalse(viewParent1.isTemporarilyDetached());
+        assertEquals(0, viewParent1.getDispatchStartTemporaryDetachCount());
+        assertEquals(0, viewParent1.getDispatchFinishTemporaryDetachCount());
+        assertEquals(0, viewParent1.getOnStartTemporaryDetachCount());
+        assertEquals(0, viewParent1.getOnFinishTemporaryDetachCount());
+        assertFalse(viewParent2.isTemporarilyDetached());
+        assertEquals(0, viewParent2.getDispatchStartTemporaryDetachCount());
+        assertEquals(0, viewParent2.getDispatchFinishTemporaryDetachCount());
+        assertEquals(0, viewParent2.getOnStartTemporaryDetachCount());
+        assertEquals(0, viewParent2.getOnFinishTemporaryDetachCount());
+        assertTrue(view1.isTemporarilyDetached());
+        assertEquals(1, view1.getDispatchStartTemporaryDetachCount());
+        assertEquals(0, view1.getDispatchFinishTemporaryDetachCount());
+        assertEquals(1, view1.getOnStartTemporaryDetachCount());
+        assertEquals(0, view1.getOnFinishTemporaryDetachCount());
+        assertTrue(view2.isTemporarilyDetached());
+        assertEquals(1, view2.getDispatchStartTemporaryDetachCount());
+        assertEquals(0, view2.getDispatchFinishTemporaryDetachCount());
+        assertEquals(1, view2.getOnStartTemporaryDetachCount());
+        assertEquals(0, view2.getOnFinishTemporaryDetachCount());
+
+        // [vgParent]
+        //   - [viewParent1]
+        //   - [viewParent1]
+        //   - [vg]           <- dispatchFinishTemporaryDetach()
+        //     - [view1]
+        //     - [view2]
+        vg.dispatchFinishTemporaryDetach();
+
+        assertFalse(viewParent1.isTemporarilyDetached());
+        assertEquals(0, viewParent1.getDispatchStartTemporaryDetachCount());
+        assertEquals(0, viewParent1.getDispatchFinishTemporaryDetachCount());
+        assertEquals(0, viewParent1.getOnStartTemporaryDetachCount());
+        assertEquals(0, viewParent1.getOnFinishTemporaryDetachCount());
+        assertFalse(viewParent2.isTemporarilyDetached());
+        assertEquals(0, viewParent2.getDispatchStartTemporaryDetachCount());
+        assertEquals(0, viewParent2.getDispatchFinishTemporaryDetachCount());
+        assertEquals(0, viewParent2.getOnStartTemporaryDetachCount());
+        assertEquals(0, viewParent2.getOnFinishTemporaryDetachCount());
+        assertFalse(view1.isTemporarilyDetached());
+        assertEquals(1, view1.getDispatchStartTemporaryDetachCount());
+        assertEquals(1, view1.getDispatchFinishTemporaryDetachCount());
+        assertEquals(1, view1.getOnStartTemporaryDetachCount());
+        assertEquals(1, view1.getOnFinishTemporaryDetachCount());
+        assertFalse(view2.isTemporarilyDetached());
+        assertEquals(1, view2.getDispatchStartTemporaryDetachCount());
+        assertEquals(1, view2.getDispatchFinishTemporaryDetachCount());
+        assertEquals(1, view2.getOnStartTemporaryDetachCount());
+        assertEquals(1, view2.getOnFinishTemporaryDetachCount());
+
+        // [vgParent]         <- dispatchStartTemporaryDetach()
+        //   - [viewParent1]
+        //   - [viewParent1]
+        //   - [vg]
+        //     - [view1]
+        //     - [view2]
+        vgParent.dispatchStartTemporaryDetach();
+
+        assertTrue(viewParent1.isTemporarilyDetached());
+        assertEquals(1, viewParent1.getDispatchStartTemporaryDetachCount());
+        assertEquals(0, viewParent1.getDispatchFinishTemporaryDetachCount());
+        assertEquals(1, viewParent1.getOnStartTemporaryDetachCount());
+        assertEquals(0, viewParent1.getOnFinishTemporaryDetachCount());
+        assertTrue(viewParent2.isTemporarilyDetached());
+        assertEquals(1, viewParent2.getDispatchStartTemporaryDetachCount());
+        assertEquals(0, viewParent2.getDispatchFinishTemporaryDetachCount());
+        assertEquals(1, viewParent2.getOnStartTemporaryDetachCount());
+        assertEquals(0, viewParent2.getOnFinishTemporaryDetachCount());
+        assertTrue(view1.isTemporarilyDetached());
+        assertEquals(2, view1.getDispatchStartTemporaryDetachCount());
+        assertEquals(1, view1.getDispatchFinishTemporaryDetachCount());
+        assertEquals(2, view1.getOnStartTemporaryDetachCount());
+        assertEquals(1, view1.getOnFinishTemporaryDetachCount());
+        assertTrue(view2.isTemporarilyDetached());
+        assertEquals(2, view2.getDispatchStartTemporaryDetachCount());
+        assertEquals(1, view2.getDispatchFinishTemporaryDetachCount());
+        assertEquals(2, view2.getOnStartTemporaryDetachCount());
+        assertEquals(1, view2.getOnFinishTemporaryDetachCount());
+
+        // [vgParent]         <- dispatchFinishTemporaryDetach()
+        //   - [viewParent1]
+        //   - [viewParent1]
+        //   - [vg]
+        //     - [view1]
+        //     - [view2]
+        vgParent.dispatchFinishTemporaryDetach();
+
+        assertFalse(viewParent1.isTemporarilyDetached());
+        assertEquals(1, viewParent1.getDispatchStartTemporaryDetachCount());
+        assertEquals(1, viewParent1.getDispatchFinishTemporaryDetachCount());
+        assertEquals(1, viewParent1.getOnStartTemporaryDetachCount());
+        assertEquals(1, viewParent1.getOnFinishTemporaryDetachCount());
+        assertFalse(viewParent2.isTemporarilyDetached());
+        assertEquals(1, viewParent2.getDispatchStartTemporaryDetachCount());
+        assertEquals(1, viewParent2.getDispatchFinishTemporaryDetachCount());
+        assertEquals(1, viewParent2.getOnStartTemporaryDetachCount());
+        assertEquals(1, viewParent2.getOnFinishTemporaryDetachCount());
+        assertFalse(view1.isTemporarilyDetached());
+        assertEquals(2, view1.getDispatchStartTemporaryDetachCount());
+        assertEquals(2, view1.getDispatchFinishTemporaryDetachCount());
+        assertEquals(2, view1.getOnStartTemporaryDetachCount());
+        assertEquals(2, view1.getOnFinishTemporaryDetachCount());
+        assertFalse(view2.isTemporarilyDetached());
+        assertEquals(2, view2.getDispatchStartTemporaryDetachCount());
+        assertEquals(2, view2.getDispatchFinishTemporaryDetachCount());
+        assertEquals(2, view2.getOnStartTemporaryDetachCount());
+        assertEquals(2, view2.getOnFinishTemporaryDetachCount());
+    }
+
     private static final ActionMode.Callback NO_OP_ACTION_MODE_CALLBACK =
             new ActionMode.Callback() {
                 @Override
@@ -2419,6 +2577,57 @@ public class ViewGroupTest extends InstrumentationTestCase implements CTSResult{
         protected void resetResolvedDrawables() {
             super.resetResolvedDrawables();
             resetResolvedDrawablesCount++;
+        }
+    }
+
+    static final class TemporaryDetachingMockView extends View {
+        private int mDispatchStartTemporaryDetachCount = 0;
+        private int mDispatchFinishTemporaryDetachCount = 0;
+        private int mOnStartTemporaryDetachCount = 0;
+        private int mOnFinishTemporaryDetachCount = 0;
+
+        public TemporaryDetachingMockView(Context context) {
+            super(context);
+        }
+
+        @Override
+        public void dispatchStartTemporaryDetach() {
+            super.dispatchStartTemporaryDetach();
+            mDispatchStartTemporaryDetachCount += 1;
+        }
+
+        @Override
+        public void dispatchFinishTemporaryDetach() {
+            super.dispatchFinishTemporaryDetach();
+            mDispatchFinishTemporaryDetachCount += 1;
+        }
+
+        @Override
+        public void onStartTemporaryDetach() {
+            super.onStartTemporaryDetach();
+            mOnStartTemporaryDetachCount += 1;
+        }
+
+        @Override
+        public void onFinishTemporaryDetach() {
+            super.onFinishTemporaryDetach();
+            mOnFinishTemporaryDetachCount += 1;
+        }
+
+        public int getDispatchStartTemporaryDetachCount() {
+            return mDispatchStartTemporaryDetachCount;
+        }
+
+        public int getDispatchFinishTemporaryDetachCount() {
+            return mDispatchFinishTemporaryDetachCount;
+        }
+
+        public int getOnStartTemporaryDetachCount() {
+            return mOnStartTemporaryDetachCount;
+        }
+
+        public int getOnFinishTemporaryDetachCount() {
+            return mOnFinishTemporaryDetachCount;
         }
     }
 
