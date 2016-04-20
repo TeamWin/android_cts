@@ -72,10 +72,10 @@ public class CarrierConfigManagerTest extends AndroidTestCase {
             assertEquals("KEY_VVM_TYPE_STRING doesn't match static default.",
                 config.getString(CarrierConfigManager.KEY_VVM_TYPE_STRING), "");
             assertEquals("KEY_VVM_CELLULAR_DATA_REQUIRED_BOOLEAN doesn't match static default.",
-                config.getBoolean(CarrierConfigManager.KEY_VVM_CELLULAR_DATA_REQUIRED_BOOLEAN),
+                config.getBoolean(CarrierConfigManager.KEY_VVM_CELLULAR_DATA_REQUIRED_BOOL),
                 false);
             assertEquals("KEY_VVM_PREFETCH_BOOLEAN doesn't match static default.",
-                config.getBoolean(CarrierConfigManager.KEY_VVM_PREFETCH_BOOLEAN), true);
+                config.getBoolean(CarrierConfigManager.KEY_VVM_PREFETCH_BOOL), true);
             assertEquals("KEY_CARRIER_VVM_PACKAGE_NAME_STRING doesn't match static default.",
                 config.getString(CarrierConfigManager.KEY_CARRIER_VVM_PACKAGE_NAME_STRING), "");
         }
