@@ -25,7 +25,8 @@ DEVICE_INFO_PERMISSIONS :=
 
 DEVICE_INFO_ACTIVITIES := \
     com.android.compatibility.common.deviceinfo.GlesStubActivity \
-    com.android.cts.deviceinfo.CameraDeviceInfo
+    com.android.cts.deviceinfo.CameraDeviceInfo \
+    com.android.cts.deviceinfo.SensorDeviceInfo
 
 LOCAL_PACKAGE_NAME := CtsDeviceInfo
 
