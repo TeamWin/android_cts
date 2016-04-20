@@ -395,23 +395,18 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
                 } else {
                     String module = modules.get(0);
                     mIncludeFilters.add(new TestFilter(mAbiName, module, mTestName).toString());
-                    if (mTestName != null) {
-                        // We're filtering it down to the lowest level, no need to give excludes
-                        mExcludeFilters.clear();
-                    } else {
-                        // If we dont specify a test name, we only want to run this module with any
-                        // previous exclusions as long as they dont exclude the whole module.
-                        List<String> excludeFilters = new ArrayList<>();
-                        for (String excludeFilter : mExcludeFilters) {
-                            TestFilter filter = TestFilter.createFrom(excludeFilter);
-                            String name = filter.getName();
-                            // Add the filter if it applies to this module, and it has a test name
-                            if (module.equals(name) && filter.getTest() != null) {
-                                excludeFilters.add(excludeFilter);
-                            }
+                    // We will run this module with previous exclusions,
+                    // unless they exclude the whole module.
+                    List<String> excludeFilters = new ArrayList<>();
+                    for (String excludeFilter : mExcludeFilters) {
+                        TestFilter filter = TestFilter.createFrom(excludeFilter);
+                        String name = filter.getName();
+                        // Add the filter if it applies to this module
+                        if (module.equals(name)) {
+                            excludeFilters.add(excludeFilter);
                         }
-                        mExcludeFilters = excludeFilters;
                     }
+                    mExcludeFilters = excludeFilters;
                 }
             } catch (FileNotFoundException e) {
                 e.printStackTrace();
