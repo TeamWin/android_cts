@@ -36,6 +36,8 @@
         <option name="package" value="com.android.preconditions.cts"/>
     </target_preparer>
 
+    <target_preparer class="com.android.compatibility.common.tradefed.targetprep.WifiCheck" />
+
     <target_preparer class="com.android.tradefed.targetprep.RunCommandTargetPreparer">
         <option name="run-command" value="rm -rf /sdcard/device-info-files" />
         <option name="run-command" value="rm -rf /sdcard/report-log-files" />
