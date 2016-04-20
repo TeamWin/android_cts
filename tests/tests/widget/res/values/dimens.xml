@@ -32,4 +32,5 @@
 
     <dimen name="search_view_max_width">160dp</dimen>
     <dimen name="search_view_max_width2">200dp</dimen>
+    <dimen name="search_view_suggestion_row_height">48dp</dimen>
 </resources>
