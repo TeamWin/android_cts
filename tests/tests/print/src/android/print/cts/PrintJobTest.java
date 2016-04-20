@@ -661,14 +661,13 @@ public class PrintJobTest extends BasePrintTest {
                 eventually(() -> assertEquals(getActivity().getString(R.string.testStr2),
                         printJob.getInfo().getStatus(getActivity().getPackageManager())));
 
-                try {
-                    printJob.setStatus(0);
-                    throw new Exception("Should not be able to set 0 as status res id");
-                } catch (IllegalArgumentException e) {
-                    // expected, status should not be changed
-                    assertEquals(getActivity().getString(R.string.testStr2),
-                            printJob.getInfo().getStatus(getActivity().getPackageManager()));
-                }
+                printJob.setStatus(0);
+                eventually(() -> assertNull(
+                        printJob.getInfo().getStatus(getActivity().getPackageManager())));
+
+                printJob.setStatus("testStr3");
+                eventually(() -> assertEquals("testStr3",
+                        printJob.getInfo().getStatus(getActivity().getPackageManager())));
 
                 printJob.setStatus(-1);
                 eventually(() -> assertNull(
