@@ -25,7 +25,7 @@ import junit.framework.TestListener;
 import junit.framework.TestResult;
 
 import android.content.Context;
-import android.test.AndroidTestCase;
+import android.location.cts.GnssTestCase;
 
 import java.util.Enumeration;
 
@@ -134,12 +134,10 @@ public class GnssCtsTestResult extends TestResult {
 
     @Override
     protected void run(TestCase testCase) {
-        if (testCase instanceof AndroidTestCase) {
-            AndroidTestCase gnssTestCase = (AndroidTestCase) testCase;
+        if (testCase instanceof GnssTestCase) {
+            GnssTestCase gnssTestCase = (GnssTestCase) testCase;
             gnssTestCase.setContext(mContext);
-            //sensorTestCase.setEmulateSensorUnderLoad(false);
-            //sensorTestCase.setCurrentTestNode(new TestNode(testCase));
-            // TODO: set delayed assertion provider
+            gnssTestCase.setTestAsCtsVerifierTest(true);
         } else {
             throw new IllegalStateException("TestCase invalid.");
         }

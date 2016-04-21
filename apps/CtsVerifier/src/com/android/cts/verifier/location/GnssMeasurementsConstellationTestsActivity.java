@@ -11,28 +11,20 @@
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
- * limitations under the License.
+ * limitations under the License
  */
-package android.location.cts;
 
-import android.test.AndroidTestCase;
+package com.android.cts.verifier.location;
+
+import android.location.cts.GnssMeasurementsConstellationTest;
+import com.android.cts.verifier.location.base.GnssCtsTestActivity;
 
 /**
- * Base Test Case class for all Gnss Tests.
+ * Activity to execute CTS Gnss ConstellationType tests.
+ * It is a wrapper for {@link GnssConstellationTypeTest} running with AndroidJUnitRunner.
  */
-public abstract class GnssTestCase extends AndroidTestCase {
-
-    // This is used to mark cts tests as CtsVerifier tests.
-    private volatile boolean mCtsVerifierTest = false;
-
-    protected GnssTestCase() {
-    }
-
-    public void setTestAsCtsVerifierTest(boolean value) {
-        mCtsVerifierTest = value;
-    }
-
-    public boolean isCtsVerifierTest() {
-        return mCtsVerifierTest;
+public class GnssMeasurementsConstellationTestsActivity extends GnssCtsTestActivity {
+    public GnssMeasurementsConstellationTestsActivity() {
+        super(GnssMeasurementsConstellationTest.class);
     }
 }
