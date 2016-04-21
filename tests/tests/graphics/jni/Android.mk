@@ -1,4 +1,4 @@
-# Copyright (C) 2008 The Android Open Source Project
+# Copyright 2016 The Android Open Source Project
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,24 +16,22 @@ LOCAL_PATH:= $(call my-dir)
 
 include $(CLEAR_VARS)
 
+LOCAL_MODULE := libctsgraphics_jni
+
 LOCAL_MODULE_TAGS := tests
 
-LOCAL_MULTILIB := both
+LOCAL_SRC_FILES := \
+	CtsGraphicsJniOnLoad.cpp \
+	android_graphics_cts_VulkanFeaturesTest.cpp
 
-LOCAL_JAVA_LIBRARIES := android.test.runner
+LOCAL_C_INCLUDES := \
+	$(JNI_H_INCLUDE) \
+	external/vulkan-validation-layers/libs/vkjson
 
-LOCAL_STATIC_JAVA_LIBRARIES := mockito-target ctsdeviceutil ctstestrunner
-LOCAL_JNI_SHARED_LIBRARIES := libctsgraphics_jni
+LOCAL_STATIC_LIBRARIES := libvkjson
+LOCAL_SHARED_LIBRARIES := libvulkan liblog libdl
+LOCAL_NDK_STL_VARIANT := c++_static
 
-LOCAL_SRC_FILES := $(call all-java-files-under, src)
+LOCAL_SDK_VERSION := 24
 
-LOCAL_PACKAGE_NAME := CtsGraphicsTestCases
-
-# Tag this module as a cts test artifact
-LOCAL_COMPATIBILITY_SUITE := cts
-
-LOCAL_SDK_VERSION := current
-
-include $(BUILD_CTS_PACKAGE)
-
-include $(call all-makefiles-under,$(LOCAL_PATH))
+include $(BUILD_SHARED_LIBRARY)
