@@ -11,28 +11,20 @@
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
- * limitations under the License.
+ * limitations under the License
  */
+
 package android.location.cts;
 
-import android.test.AndroidTestCase;
-
 /**
- * Base Test Case class for all Gnss Tests.
+ * Exception that indicates an issue in the device that does not support Multi Constellation type.
  */
-public abstract class GnssTestCase extends AndroidTestCase {
-
-    // This is used to mark cts tests as CtsVerifier tests.
-    private volatile boolean mCtsVerifierTest = false;
-
-    protected GnssTestCase() {
+public class MultiConstellationNotSupportedException extends Exception {
+    public MultiConstellationNotSupportedException(String format, Object... params) {
+        this(String.format(format, params));
     }
 
-    public void setTestAsCtsVerifierTest(boolean value) {
-        mCtsVerifierTest = value;
-    }
-
-    public boolean isCtsVerifierTest() {
-        return mCtsVerifierTest;
+    public MultiConstellationNotSupportedException(String message) {
+        super(message);
     }
 }
