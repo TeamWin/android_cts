@@ -196,8 +196,8 @@ public class ActivityManagerDockedStackTests extends ActivityManagerTestBase {
     }
 
     public void testResizeDockedStack() throws Exception {
-        mDevice.executeShellCommand(getAmStartCmd(TEST_ACTIVITY_NAME));
         launchActivityInDockStack(DOCKED_ACTIVITY_NAME);
+        launchActivityToSide(TEST_ACTIVITY_NAME);
         resizeDockedStack(STACK_SIZE, STACK_SIZE, TASK_SIZE, TASK_SIZE);
         mAmWmState.computeState(mDevice, new String[] {TEST_ACTIVITY_NAME, DOCKED_ACTIVITY_NAME},
                 false /* compareTaskAndStackBounds */);
@@ -213,12 +213,13 @@ public class ActivityManagerDockedStackTests extends ActivityManagerTestBase {
     }
 
     public void testActivityLifeCycleOnResizeDockedStack() throws Exception {
-        mDevice.executeShellCommand(getAmStartCmd(NO_RELAUNCH_ACTIVITY_NAME));
-        mAmWmState.computeState(mDevice, new String[]{NO_RELAUNCH_ACTIVITY_NAME});
+        mDevice.executeShellCommand(getAmStartCmd(TEST_ACTIVITY_NAME));
+        mAmWmState.computeState(mDevice, new String[] {TEST_ACTIVITY_NAME});
         final Rectangle fullScreenBounds =
                 mAmWmState.getWmState().getStack(FULLSCREEN_WORKSPACE_STACK_ID).getBounds();
 
-        launchActivityInDockStack(TEST_ACTIVITY_NAME);
+        moveActivityToDockStack(TEST_ACTIVITY_NAME);
+        launchActivityToSide(NO_RELAUNCH_ACTIVITY_NAME);
 
         mAmWmState.computeState(mDevice,
                 new String[]{TEST_ACTIVITY_NAME, NO_RELAUNCH_ACTIVITY_NAME});
