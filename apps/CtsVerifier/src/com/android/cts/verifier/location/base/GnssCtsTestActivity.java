@@ -16,7 +16,13 @@
 
 package com.android.cts.verifier.location.base;
 
+import android.location.cts.GnssTestCase;
+import android.location.cts.MultiConstellationNotSupportedException;
+import android.view.WindowManager;
+
 import com.android.cts.verifier.R;
+import com.android.cts.verifier.location.reporting.GnssTestDetails;
+
 import junit.framework.Test;
 import junit.framework.TestSuite;
 
@@ -30,19 +36,10 @@ import org.junit.runner.Result;
 import org.junit.runner.Runner;
 import org.junit.runner.notification.Failure;
 import org.junit.runner.notification.RunListener;
-import org.junit.runners.model.InitializationError;
 import org.junit.runners.model.RunnerBuilder;
 
-import android.content.Context;
-import android.os.PowerManager;
-import android.view.WindowManager;
-
-import java.lang.Override;
-import java.lang.Runnable;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
-
-import android.location.cts.GnssTestCase;
-import com.android.cts.verifier.location.reporting.GnssTestDetails;
 
 /**
  * An Activity that allows Gnss CTS tests to be executed inside CtsVerifier.
@@ -112,6 +109,23 @@ public class GnssCtsTestActivity extends BaseGnssTestActivity {
 
         Request request = Request.runner(runner);
         Result result = testRunner.run(request);
+        // Handle MultiConstellationNotSupportedException warning: If there is a
+        // "MultiConstellationNotSupportedException" then it will just print the warning and
+        // mark test as pass.
+        int failureCount = result.getFailureCount();
+        List<Failure> failures = result.getFailures();
+        for (Failure f: failures) {
+            // TODO: Refactor this to use a more general exception instead of 
+            // MultiConstellationNotSupportedException.
+            if (f.getException() instanceof MultiConstellationNotSupportedException) {
+                failureCount = failureCount - 1;
+                int passCount = result.getRunCount() - failureCount - result.getIgnoreCount();
+                return new GnssTestDetails(
+                        getApplicationContext(), getClass().getName(), passCount,
+                        result.getIgnoreCount(), failureCount);
+            }
+        }
+
         return new GnssTestDetails(getApplicationContext(), getClass().getName(), result);
     }
 
@@ -203,10 +217,15 @@ public class GnssCtsTestActivity extends BaseGnssTestActivity {
 
         public void testFailure(Failure failure) throws Exception {
             mCurrentTestReported = true;
-            mFailTestCase++;
-            mTestsResults.append("\n Test failed: "
-                    + failure.getDescription().getMethodName()
-                    + "\n\n Error: " + failure.toString() + "\n");
+            if (failure.getException() instanceof MultiConstellationNotSupportedException) {
+                // append warning for MultiConstellationNotSupportedException's.
+                mTestsResults.append(failure.getException());
+            } else {
+                mFailTestCase++;
+                mTestsResults.append("\n Test failed: "
+                        + failure.getDescription().getMethodName()
+                        + "\n\n Error: " + failure.toString() + "\n");
+            }
         }
 
         public void testAssumptionFailure(Failure failure) {
