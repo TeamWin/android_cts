@@ -188,7 +188,7 @@ public class TestResult implements ITestResult {
      */
     @Override
     public void passed(ReportLog report) {
-        if (!getResultStatus().equals(TestStatus.FAIL)) {
+        if (getResultStatus() != TestStatus.FAIL) {
             setResultStatus(TestStatus.PASS);
             if (report != null) {
                 setReportLog(report);
@@ -209,7 +209,7 @@ public class TestResult implements ITestResult {
      */
     @Override
     public void reset() {
-        mResult = TestStatus.NOT_EXECUTED;
+        mResult = null;
         mMessage = null;
         mStackTrace = null;
         mReport = null;

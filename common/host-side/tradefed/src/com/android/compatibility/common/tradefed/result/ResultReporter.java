@@ -223,8 +223,17 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
             report = MetricsStore.removeResult(
                     mDeviceSerial, mCurrentModuleResult.getAbi(), test.toString());
         }
-        mCurrentResult.passed(report);
-        logResult("%s passed", test);
+        if (mCurrentResult.getResultStatus() == null) {
+            // Only claim that we passed when we're certain our result was
+            // not any other state.
+            mCurrentResult.passed(report);
+            logResult("%s passed", test);
+        } else {
+            // We had some other result (presumably NOT_EXECUTED, but we
+            // leave this more general in case of future expansion of the
+            // TestResult enum.
+            logResult("%s %s", test, mCurrentResult.getResultStatus().getValue());
+        }
     }
 
     /**
