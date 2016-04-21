@@ -54,6 +54,7 @@ public class GnssMeasurementRegistrationTest extends GnssTestCase {
     private TestLocationManager mTestLocationManager;
     private static final int EVENTS_COUNT = 5;
     private static final int GPS_EVENTS_COUNT = 1;
+    private static final int HARDWARE_YEAR = 2016;
     private TestLocationListener mLocationListener;
     private TestGnssMeasurementListener mMeasurementListener;
     private TestGpsStatusListener mGpsStatusListener;
@@ -99,37 +100,48 @@ public class GnssMeasurementRegistrationTest extends GnssTestCase {
 
         List<GnssMeasurementsEvent> events = mMeasurementListener.getEvents();
         Log.i(TAG, "Number of GnssMeasurement events received = " + events.size());
+
         if (!events.isEmpty()) {
-            // Test passes if we get at least 1 pseudorange.
-            Log.i(TAG, "Received GPS measurements. Test Pass.");
-            return;
+           // Test passes if we get at least 1 pseudorange.
+           Log.i(TAG, "Received GPS measurements. Test Pass.");
+           return;
         }
 
-        // Test if device is deep indoor.
-        Log.i(TAG, "Did not receive any GPS measurements. Test if device is deep indoor.");
+        int gnssYearOfHardware = mTestLocationManager.getLocationManager().getGnssYearOfHardware();
 
-        // Register for location updates.
-        mLocationListener = new TestLocationListener(EVENTS_COUNT);
-        mTestLocationManager.requestLocationUpdates(mLocationListener);
+        if (gnssYearOfHardware >= HARDWARE_YEAR && isCtsVerifierTest()) {
+            Log.i(TAG, "For GnssYearOfHardware = " + gnssYearOfHardware
+                    + ", number of GnssMeasurement events received = " + events.size());
+            assertTrue(
+                    "Did not recieve any GnssMeasurement events: expected > 0, received = "
+                            + events.size(), events.size() > 0);
+        } else {
+            // Test if device is deep indoor.
+            Log.i(TAG, "Did not receive any GPS measurements. Test if device is deep indoor.");
 
-        // Wait for location updates
-        mLocationListener.await();
-        Log.i(TAG, "Location received = " + mLocationListener.isLocationReceived());
+            // Register for location updates.
+            mLocationListener = new TestLocationListener(EVENTS_COUNT);
+            mTestLocationManager.requestLocationUpdates(mLocationListener);
 
-        // Register for Gps Status updates
-        mGpsStatusListener = new TestGpsStatusListener(EVENTS_COUNT, mTestLocationManager);
-        mTestLocationManager.addGpsStatusListener(mGpsStatusListener);
+            // Wait for location updates
+            mLocationListener.await();
+            Log.i(TAG, "Location received = " + mLocationListener.isLocationReceived());
 
-        // wait for Gps Status updates
-        mGpsStatusListener.await();
-        if (!mGpsStatusListener.isGpsStatusReceived()) {
-            // Skip the Test. No Satellites are visible. Device may be Indoor
-            Log.i(TAG, "No Satellites are visible. Device may be Indoor. Skipping Test.");
-            return;
+            // Register for Gps Status updates
+            mGpsStatusListener = new TestGpsStatusListener(EVENTS_COUNT, mTestLocationManager);
+            mTestLocationManager.addGpsStatusListener(mGpsStatusListener);
+
+            // wait for Gps Status updates
+            mGpsStatusListener.await();
+            if (!mGpsStatusListener.isGpsStatusReceived()) {
+                // Skip the Test. No Satellites are visible. Device may be Indoor
+                Log.i(TAG, "No Satellites are visible. Device may be Indoor. Skipping Test.");
+                return;
+            }
+
+            SoftAssert.failAsWarning(
+                    TAG,
+                    "GPS measurements were not received without registering for location updates.");
         }
-
-        SoftAssert.failAsWarning(
-                TAG,
-                "GPS measurements were not received without registering for location updates.");
     }
 }
