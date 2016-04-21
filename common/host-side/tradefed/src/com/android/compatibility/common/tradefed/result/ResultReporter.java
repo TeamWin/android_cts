@@ -35,6 +35,7 @@ import com.android.tradefed.config.Option;
 import com.android.tradefed.config.Option.Importance;
 import com.android.tradefed.config.OptionClass;
 import com.android.tradefed.log.LogUtil.CLog;
+import com.android.tradefed.result.FileInputStreamSource;
 import com.android.tradefed.result.ILogSaver;
 import com.android.tradefed.result.ILogSaverListener;
 import com.android.tradefed.result.ITestInvocationListener;
@@ -47,6 +48,7 @@ import com.android.tradefed.result.TestSummary;
 import com.android.tradefed.util.FileUtil;
 import com.android.tradefed.util.StreamUtil;
 import com.android.tradefed.util.TimeUtil;
+import com.android.tradefed.util.ZipUtil;
 
 import org.xmlpull.v1.XmlPullParserException;
 
@@ -340,7 +342,9 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
             logResult("Result saved at: %s", resultFile.getCanonicalPath());
             copyDynamicConfigFiles(mBuildHelper.getDynamicConfigFiles(), mResultDir);
             copyFormattingFiles(mResultDir);
-            zipResults(mResultDir);
+            // Zip the full test results directory.
+            File zippedResults = zipResults(mResultDir);
+            // Save the test result XML.
             if (mUseLogSaver) {
                 FileInputStream fis = null;
                 try {
@@ -351,6 +355,16 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
                     CLog.e(ioe);
                 } finally {
                     StreamUtil.close(fis);
+                }
+                // Save the full results folder.
+                if (zippedResults != null) {
+                    FileInputStreamSource fiss = null;
+                    try {
+                        fiss =  new FileInputStreamSource(zippedResults);
+                        testLog("results", LogDataType.ZIP, fiss);
+                    } finally {
+                        StreamUtil.cancel(fiss);
+                    }
                 }
             }
             if (mResultServer != null && !mResultServer.trim().isEmpty() && !mDisableResultPosting) {
@@ -469,17 +483,18 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
      *
      * @param resultsDir
      */
-    @SuppressWarnings("deprecation")
-    private static void zipResults(File resultsDir) {
+    private static File zipResults(File resultsDir) {
+        File zipResultFile = null;
         try {
             // create a file in parent directory, with same name as resultsDir
-            File zipResultFile = new File(resultsDir.getParent(), String.format("%s.zip",
+            zipResultFile = new File(resultsDir.getParent(), String.format("%s.zip",
                     resultsDir.getName()));
-            FileUtil.createZip(resultsDir, zipResultFile);
+            ZipUtil.createZip(resultsDir, zipResultFile);
         } catch (IOException e) {
             Log.w(ResultReporter.class.getSimpleName(),
                     String.format("Failed to create zip for %s", resultsDir.getName()));
         }
+        return zipResultFile;
     }
 
     /**
