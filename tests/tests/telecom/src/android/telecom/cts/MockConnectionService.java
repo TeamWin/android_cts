@@ -62,6 +62,7 @@ public class MockConnectionService extends ConnectionService {
             mCreateVideoProvider = true;
         }
         connection.setVideoState(request.getVideoState());
+        connection.setInitializing();
 
         outgoingConnections.add(connection);
         lock.release();
@@ -78,6 +79,7 @@ public class MockConnectionService extends ConnectionService {
                         Connection.CAPABILITY_CAN_SEND_RESPONSE_VIA_CONNECTION);
         connection.createMockVideoProvider();
         ((Connection) connection).setVideoState(request.getVideoState());
+        connection.setRinging();
 
         incomingConnections.add(connection);
         lock.release();
