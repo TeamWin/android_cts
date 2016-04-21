@@ -177,6 +177,7 @@ public class VectorDrawableTest extends AndroidTestCase {
     // on different devices. So far, the tests show they are matching correctly.
     private static final float PIXEL_ERROR_THRESHOLD = 0.03f;
     private static final float PIXEL_ERROR_COUNT_THRESHOLD = 0.005f;
+    private static final int PIXEL_ERROR_TOLERANCE = 3;
 
     private static final boolean DBG_DUMP_PNG = false;
 
@@ -262,7 +263,9 @@ public class VectorDrawableTest extends AndroidTestCase {
                 Bitmap golden = BitmapFactory.decodeResource(mResources, goldenImages[i]);
                 DrawableTestUtils.compareImages(mResources.getString(resIds[i]), mBitmap, golden,
                         VectorDrawableTest.PIXEL_ERROR_THRESHOLD,
-                        VectorDrawableTest.PIXEL_ERROR_COUNT_THRESHOLD);
+                        VectorDrawableTest.PIXEL_ERROR_COUNT_THRESHOLD,
+                        VectorDrawableTest.PIXEL_ERROR_TOLERANCE);
+
             }
         }
     }
