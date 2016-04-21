@@ -138,6 +138,16 @@ public class VulkanFeaturesTest extends AndroidTestCase {
             isVersionCompatible(bestDeviceVersion, mVulkanHardwareVersion.version));
     }
 
+    public void testVulkanVersionForVrHighPerformance() {
+        if (!mPm.hasSystemFeature(PackageManager.FEATURE_VR_MODE_HIGH_PERFORMANCE))
+            return;
+        assertTrue(
+            "VR high-performance devices must support Vulkan 1.0 with Hardware Level 0, " +
+            "but this device does not.",
+            mVulkanHardwareVersion != null && mVulkanHardwareVersion.version >= VULKAN_1_0 &&
+            mVulkanHardwareLevel != null && mVulkanHardwareLevel.version >= 0);
+    }
+
     private int determineHardwareLevel(JSONObject device) throws JSONException {
         JSONObject features = device.getJSONObject("features");
         boolean textureCompressionETC2 = features.getInt("textureCompressionETC2") != 0;
