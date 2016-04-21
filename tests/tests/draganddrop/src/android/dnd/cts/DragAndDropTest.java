@@ -130,11 +130,11 @@ public class DragAndDropTest extends InstrumentationTestCase {
     }
 
     public void testDontGrantRequestRead() {
-        doCrossAppDrag("dont_grant", "request_read", "Null DropPermissions");
+        doCrossAppDrag("dont_grant", "request_read", "Null DragAndDropPermissions");
     }
 
     public void testDontGrantRequestWrite() {
-        doCrossAppDrag("dont_grant", "request_write", "Null DropPermissions");
+        doCrossAppDrag("dont_grant", "request_write", "Null DragAndDropPermissions");
     }
 
     public void testGrantReadDontRequest() {
