@@ -19,8 +19,11 @@
 
     <uses-sdk android:minSdkVersion="23" android:targetSdkVersion="24"/>
 
+    <uses-permission android:name="android.permission.DISABLE_KEYGUARD" />
+
     <application>
         <uses-library android:name="android.test.runner"/>
+        <activity android:name="android.devicepolicy.cts.uiautomatertest.UiAutomaterTestActivity"/>
     </application>
 
     <instrumentation android:name="android.support.test.runner.AndroidJUnitRunner"

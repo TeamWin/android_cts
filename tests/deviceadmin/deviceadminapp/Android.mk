@@ -31,4 +31,4 @@ LOCAL_SDK_VERSION := current
 # tag this module as a cts test artifact
 LOCAL_COMPATIBILITY_SUITE := cts
 
-include $(BUILD_PACKAGE)
+include $(BUILD_CTS_PACKAGE)
