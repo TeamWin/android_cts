@@ -650,7 +650,7 @@ public class NinePatchDrawableTest extends InstrumentationTestCase {
         } else {
             final Bitmap golden = BitmapFactory.decodeResource(mResources, goldenResId);
             DrawableTestUtils.compareImages(densityDpi + " dpi", golden, bitmap,
-                    PIXEL_ERROR_THRESHOLD, PIXEL_ERROR_COUNT_THRESHOLD);
+                    PIXEL_ERROR_THRESHOLD, PIXEL_ERROR_COUNT_THRESHOLD, 0 /* tolerance */);
         }
     }
 
