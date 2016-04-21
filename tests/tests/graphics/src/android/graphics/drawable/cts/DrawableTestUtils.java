@@ -134,14 +134,16 @@ public class DrawableTestUtils {
     /**
      * Asserts that two images are similar within the given thresholds.
      *
-     * @param message
-     * @param expected
-     * @param actual
-     * @param pixelThreshold
-     * @param pixelCountThreshold
+     * @param message Error message
+     * @param expected Expected bitmap
+     * @param actual Actual bitmap
+     * @param pixelThreshold The total difference threshold for a single pixel
+     * @param pixelCountThreshold The total different pixel count threshold
+     * @param pixelDiffTolerance The pixel value difference tolerance
+     *
      */
     public static void compareImages(String message, Bitmap expected, Bitmap actual,
-            float pixelThreshold, float pixelCountThreshold) {
+            float pixelThreshold, float pixelCountThreshold, int pixelDiffTolerance) {
         int idealWidth = expected.getWidth();
         int idealHeight = expected.getHeight();
 
@@ -167,7 +169,9 @@ public class DrawableTestUtils {
                     Assert.fail((message + ": totalError is " + totalError));
                 }
 
-                totalDiffPixelCount++;
+                if (totalError > pixelDiffTolerance) {
+                    totalDiffPixelCount++;
+                }
             }
         }
         if ((totalDiffPixelCount / totalPixelCount) >= pixelCountThreshold) {
