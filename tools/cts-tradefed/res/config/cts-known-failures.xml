@@ -194,6 +194,11 @@
     <!-- b/23427621 -->
     <option name="compatibility:exclude-filter" value="CtsSystemUiTestCases android.systemui.cts.LightStatusBarTests#testLightStatusBarIcons" />
 
+    <!-- b/27873815 -->
+    <option name="compatibility:exclude-filter" value="arm64-v8a CtsRenderscriptLegacyTestCases" />
+    <option name="compatibility:exclude-filter" value="x86_64 CtsRenderscriptLegacyTestCases" />
+    <option name="compatibility:exclude-filter" value="mips64 CtsRenderscriptLegacyTestCases" />
+
     <!-- b/23604254 -->
     <option name="compatibility:exclude-filter" value="CtsTelecomTestCases android.telecom.cts.ExtendedInCallServiceTest#testAddNewOutgoingCallAndThenDisconnect" />
     <option name="compatibility:exclude-filter" value="CtsTelecomTestCases android.telecom.cts.RemoteConferenceTest#testRemoteConferenceCallbacks_ConferenceableConnections" />
