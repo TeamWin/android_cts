@@ -592,7 +592,7 @@ public class BitmapDrawableTest extends InstrumentationTestCase {
             final Bitmap golden = BitmapFactory.decodeResource(
                     mContext.getResources(), goldenResId);
             DrawableTestUtils.compareImages(densityDpi + " dpi", golden, bitmap,
-                    PIXEL_ERROR_THRESHOLD, PIXEL_ERROR_COUNT_THRESHOLD);
+                    PIXEL_ERROR_THRESHOLD, PIXEL_ERROR_COUNT_THRESHOLD, 0 /* tolerance */);
         }
     }
 
