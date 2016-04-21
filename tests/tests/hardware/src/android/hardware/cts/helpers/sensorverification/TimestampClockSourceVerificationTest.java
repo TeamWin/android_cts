@@ -35,6 +35,7 @@ public class TimestampClockSourceVerificationTest extends TestCase {
     private final String TAG = "TimestampClockSourceVerificationTest";
 
     private final int MIN_DELTA_BETWEEN_CLOCKS_MS = 2000;
+    private boolean mAdjustUptime = false;
 
     private long getValidTimestamp() {
         return SystemClock.elapsedRealtimeNanos();
@@ -42,6 +43,9 @@ public class TimestampClockSourceVerificationTest extends TestCase {
 
     private long getInvalidTimestamp() {
         long ms = SystemClock.uptimeMillis();
+        if (mAdjustUptime == true) {
+            ms -= MIN_DELTA_BETWEEN_CLOCKS_MS;
+        }
         return (ms * 1000000);
     }
 
@@ -50,10 +54,12 @@ public class TimestampClockSourceVerificationTest extends TestCase {
         long realtimeNs = SystemClock.elapsedRealtimeNanos();
         long deltaMs = (realtimeNs/1000000 - uptimeMs);
         if (deltaMs < MIN_DELTA_BETWEEN_CLOCKS_MS) {
-        throw new Error("Delta between clock sources too small ("
-            + deltaMs + "mS), device did not sleep.");
+            Log.i(TAG, "Device has not slept, will use different clock source for test purposes");
+            mAdjustUptime = true;
+        } else {
+            mAdjustUptime = false;
+            Log.i(TAG, "CLOCK_MONOTONIC="+uptimeMs*1000000+", CLOCK_BOOTTIME="+realtimeNs+", delta=" + deltaMs + " mS");
         }
-        Log.i(TAG, "CLOCK_MONOTONIC="+uptimeMs*1000000+", CLOCK_BOOTTIME="+realtimeNs+", delta=" + deltaMs + " mS");
     }
 
 
@@ -61,11 +67,11 @@ public class TimestampClockSourceVerificationTest extends TestCase {
      * Test that the verification passes when there are not missing events.
      */
     public void testVerify_pass() throws Throwable {
-        // Timestamps in ns, expected in us
-        long ts = getValidTimestamp();
-        long[] timestamps = {ts-4000000, ts-3000000, ts-2000000, ts-1000000, ts};
         try {
             verifyClockDelta();
+            long ts = getValidTimestamp();
+            long[] timestamps = {ts-4000000, ts-3000000, ts-2000000, ts-1000000, ts};
+            // Timestamps in ns, expected in us
             runVerification(MIN_DELTA_BETWEEN_CLOCKS_MS*1000, timestamps, true, new int[]{});
         } finally {
         }
@@ -76,11 +82,11 @@ public class TimestampClockSourceVerificationTest extends TestCase {
      * but wrong clock source is used.
      */
     public void testVerify_fail() throws Throwable {
-        // Timestamps in ns, expected in us
-        long ts = getInvalidTimestamp();
-        long[] timestamps = {ts-4000000, ts-3000000, ts-2000000, ts-1000000, ts};
         try {
             verifyClockDelta();
+            long ts = getInvalidTimestamp();
+            long[] timestamps = {ts-4000000, ts-3000000, ts-2000000, ts-1000000, ts};
+            // Timestamps in ns, expected in us
             runVerification(MIN_DELTA_BETWEEN_CLOCKS_MS*1000, timestamps, false, new int[]{0,1,2,3,4});
         } finally {
         }
@@ -90,11 +96,11 @@ public class TimestampClockSourceVerificationTest extends TestCase {
      * Test that the verification passes when there are not missing events but some jitter.
      */
     public void testVerify_jitter_pass() throws Throwable {
-        // Timestamps in ns, expected in us
-        long ts = getValidTimestamp();
-        long[] timestamps = {ts-3900000, ts-2950000, ts-2050000, ts-1000000, ts-50000};
         try {
             verifyClockDelta();
+            long ts = getValidTimestamp();
+            long[] timestamps = {ts-3900000, ts-2950000, ts-2050000, ts-1000000, ts-50000};
+            // Timestamps in ns, expected in us
             runVerification(MIN_DELTA_BETWEEN_CLOCKS_MS*1000, timestamps, true, new int[]{});
         } finally {
         }
@@ -104,11 +110,11 @@ public class TimestampClockSourceVerificationTest extends TestCase {
      * Test that the verification passes when there are not missing events but some jitter.
      */
     public void testVerify_jitter_fail() throws Throwable {
-        // Timestamps in ns, expected in us
-        long ts = getInvalidTimestamp();
-        long[] timestamps = {ts-3900000, ts-2950000, ts-2050000, ts-1000000, ts-50000};
         try {
             verifyClockDelta();
+            long ts = getInvalidTimestamp();
+            long[] timestamps = {ts-3900000, ts-2950000, ts-2050000, ts-1000000, ts-50000};
+            // Timestamps in ns, expected in us
             runVerification(MIN_DELTA_BETWEEN_CLOCKS_MS*1000, timestamps, false, new int[]{0,1,2,3,4});
         } finally {
         }
@@ -118,11 +124,11 @@ public class TimestampClockSourceVerificationTest extends TestCase {
      * Test that the verification does not fail when there are missing events.
      */
     public void testVerify_missing_events_pass() throws Throwable {
-        // Timestamps in ns, expected in us
-        long ts = getValidTimestamp();
-        long[] timestamps = {ts-4000000, ts-3000000, ts-1000000, ts};
         try {
             verifyClockDelta();
+            long ts = getValidTimestamp();
+            long[] timestamps = {ts-4000000, ts-3000000, ts-1000000, ts};
+            // Timestamps in ns, expected in us
             runVerification(MIN_DELTA_BETWEEN_CLOCKS_MS*1000, timestamps, true, new int[]{});
         } finally {
         }
@@ -133,12 +139,12 @@ public class TimestampClockSourceVerificationTest extends TestCase {
      * timestamp
      */
     public void testVerify_missing_events_fail() throws Throwable {
-        // Timestamps in ns, expected in us
-        long ts = getInvalidTimestamp();
-        long[] timestamps = {ts-4000000, ts-3000000, ts-2000000, ts-1000000, ts};
         try {
             verifyClockDelta();
-            runVerification(MIN_DELTA_BETWEEN_CLOCKS_MS*1000, timestamps, false, new int[]{0,1,2,3,4});
+            long ts = getInvalidTimestamp();
+            long[] timestamps = {ts-4000000, ts-3000000, ts-1000000, ts};
+            // Timestamps in ns, expected in us
+            runVerification(MIN_DELTA_BETWEEN_CLOCKS_MS*1000, timestamps, false, new int[]{0,1,2,3});
         } finally {
         }
     }
@@ -147,9 +153,9 @@ public class TimestampClockSourceVerificationTest extends TestCase {
      * Test that the verification fails when there are no results.
      */
     public void testVerify_no_events_fail() throws Throwable {
-        // Timestamps in ns, expected in us
         try {
             verifyClockDelta();
+            // Timestamps in ns, expected in us
             runVerification(MIN_DELTA_BETWEEN_CLOCKS_MS*1000, new long[]{}, false, new int[]{});
         } finally {
         }
