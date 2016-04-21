@@ -21,5 +21,7 @@
     <test class="com.android.tradefed.testtype.AndroidJUnitTest" >
         <option name="package" value="android.ui.cts" />
         <option name="runtime-hint" value="5m" />
+        <!-- test-timeout unit is ms, value = 30 min -->
+        <option name="test-timeout" value="1800000" />
     </test>
 </configuration>
