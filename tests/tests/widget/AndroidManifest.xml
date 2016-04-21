@@ -416,6 +416,14 @@
             </intent-filter>
         </activity>
 
+        <activity android:name="android.widget.cts.ImageButtonCtsActivity"
+                  android:label="ImageButtonCtsActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.FRAMEWORK_INSTRUMENTATION_TEST" />
+            </intent-filter>
+        </activity>
+
         <activity android:name="android.widget.cts.NumberPickerCtsActivity"
                   android:label="NumberPickerCtsActivity">
             <intent-filter>
