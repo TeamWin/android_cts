@@ -23,8 +23,8 @@ import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.PersistableBundle;
+import android.view.DragAndDropPermissions;
 import android.view.DragEvent;
-import android.view.DropPermissions;
 import android.view.View;
 import android.widget.TextView;
 
@@ -124,19 +124,19 @@ public class DropTarget extends Activity {
                 return "Null Uri";
             }
 
-            DropPermissions dp = null;
+            DragAndDropPermissions permissions = null;
             if (requestPermissions) {
-                dp = requestDropPermissions(event);
-                if (dp == null) {
-                    return "Null DropPermissions";
+                permissions = requestDragAndDropPermissions(event);
+                if (permissions == null) {
+                    return "Null DragAndDropPermissions";
                 }
             }
 
             try {
                 return processUri(uri);
             } finally {
-                if (dp != null) {
-                    dp.release();
+                if (permissions != null) {
+                    permissions.release();
                 }
             }
         }
