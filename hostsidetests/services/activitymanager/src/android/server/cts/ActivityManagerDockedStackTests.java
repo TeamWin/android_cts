@@ -17,9 +17,6 @@
 package android.server.cts;
 
 import java.awt.Rectangle;
-import java.util.ArrayList;
-
-import static com.android.ddmlib.Log.LogLevel.*;
 
 public class ActivityManagerDockedStackTests extends ActivityManagerTestBase {
 
@@ -206,8 +203,7 @@ public class ActivityManagerDockedStackTests extends ActivityManagerTestBase {
                 FULLSCREEN_WORKSPACE_STACK_ID);
         assertEquals(new Rectangle(0, 0, STACK_SIZE, STACK_SIZE),
                 mAmWmState.getAmState().getStackById(DOCKED_STACK_ID).getBounds());
-        assertEquals(new Rectangle(0, 0, TASK_SIZE, TASK_SIZE),
-                mAmWmState.getAmState().getTaskByActivityName(DOCKED_ACTIVITY_NAME).getBounds());
+        mAmWmState.assertDockedTaskBounds(TASK_SIZE, DOCKED_ACTIVITY_NAME);
         mAmWmState.assertVisibility(DOCKED_ACTIVITY_NAME, true);
         mAmWmState.assertVisibility(TEST_ACTIVITY_NAME, true);
     }
