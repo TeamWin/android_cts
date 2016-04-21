@@ -16,14 +16,13 @@
 
 package android.widget.cts.util;
 
+import android.app.Instrumentation;
 import android.os.SystemClock;
 import android.view.MotionEvent;
-import junit.framework.Assert;
-
-import android.app.Instrumentation;
 import android.view.View;
 import android.view.ViewTreeObserver;
 import android.view.ViewTreeObserver.OnDrawListener;
+import junit.framework.Assert;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
