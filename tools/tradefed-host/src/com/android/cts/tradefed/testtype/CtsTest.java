@@ -31,6 +31,7 @@ import com.android.tradefed.config.Option;
 import com.android.tradefed.config.Option.Importance;
 import com.android.tradefed.config.OptionCopier;
 import com.android.tradefed.device.DeviceNotAvailableException;
+import com.android.tradefed.device.DeviceUnresponsiveException;
 import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.device.TestDeviceOptions;
 import com.android.tradefed.log.LogUtil.CLog;
@@ -57,10 +58,13 @@ import com.android.tradefed.util.xml.AbstractXmlParser.ParseException;
 import junit.framework.Test;
 
 import java.io.BufferedInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.io.InputStream;
+import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -572,9 +576,26 @@ public class CtsTest implements IDeviceTest, IResumableTest, IShardableTest, IBu
                 }
 
                 forwardPackageDetails(testPackage.getPackageDef(), listener);
-                performPackagePrepareSetup(testPackage.getPackageDef());
-                test.run(filterMap.get(testPackage.getPackageDef().getId()));
-                performPackagePreparerTearDown(testPackage.getPackageDef());
+                try {
+                    performPackagePrepareSetup(testPackage.getPackageDef());
+                    test.run(filterMap.get(testPackage.getPackageDef().getId()));
+                    performPackagePreparerTearDown(testPackage.getPackageDef());
+                } catch (DeviceUnresponsiveException due) {
+                    // being able to catch a DeviceUnresponsiveException here implies that recovery
+                    // was successful, and test execution should proceed to next module
+                    ByteArrayOutputStream stack = new ByteArrayOutputStream();
+                    due.printStackTrace(new PrintWriter(stack, true));
+                    try {
+                        stack.close();
+                    } catch (IOException ioe) {
+                        // won't happen on BAOS
+                    }
+                    CLog.w("Ignored DeviceUnresponsiveException because recovery was successful, "
+                            + "proceeding with next test package. Stack trace: %s",
+                            stack.toString());
+                    CLog.w("This may be due to incorrect timeout setting on test package %s",
+                            testPackage.getPackageDef().getName());
+                }
                 if (!mSkipConnectivityCheck) {
                     MonitoringUtils.checkDeviceConnectivity(getDevice(), listener,
                             String.format("%s-%s", testPackage.getPackageDef().getName(),
