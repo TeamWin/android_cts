@@ -28,16 +28,13 @@ import java.awt.Rectangle;
 import android.server.cts.WindowManagerState.WindowState;
 import android.server.cts.WindowManagerState.Display;
 
+import static android.server.cts.ActivityAndWindowManagersState.dpToPx;
 import static com.android.ddmlib.Log.LogLevel.INFO;
 
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.log.LogUtil.CLog;
 
 public class ActivityManagerManifestLayoutTests extends ActivityManagerTestBase {
-
-    // Clone of android DisplayMetrics.DENSITY_DEFAULT (DENSITY_MEDIUM)
-    // (Needed in host-side test to convert dp to px.)
-    private static final int DISPLAY_DENSITY_DEFAULT = 160;
 
     // Test parameters
     private static final int DEFAULT_WIDTH_DP = 240;
@@ -180,9 +177,5 @@ public class ActivityManagerManifestLayoutTests extends ActivityManagerTestBase 
             Assert.assertEquals("Should be on the right",
                     parentFrame.x + parentFrame.width, containingFrame.x + containingFrame.width);
         }
-    }
-
-    private static int dpToPx(float dp, int densityDpi){
-        return (int) (dp * densityDpi / DISPLAY_DENSITY_DEFAULT + 0.5f);
     }
 }
