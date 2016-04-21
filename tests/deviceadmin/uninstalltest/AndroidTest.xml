@@ -16,16 +16,19 @@
 <configuration description="Config for the CTS device admin uninstall tests">
     <target_preparer class="com.android.compatibility.common.tradefed.targetprep.ApkInstaller">
         <option name="cleanup-apks" value="true" />
+        <option name="install-arg" value="-t" />
         <option name="test-file-name" value="CtsEmptyDeviceAdmin.apk" />
         <option name="test-file-name" value="CtsDeviceAdminUninstallerTestCases.apk" />
     </target_preparer>
 
     <target_preparer class="com.android.tradefed.targetprep.RunCommandTargetPreparer">
         <option name="run-command" value="dpm set-active-admin --user cur android.devicepolicy.cts.emptydeviceadmin/.EmptyDeviceAdmin" />
+        <option name="teardown-command" value="dpm remove-active-admin --user cur android.devicepolicy.cts.emptydeviceadmin/.EmptyDeviceAdmin" />
     </target_preparer>
 
     <test class="com.android.tradefed.testtype.AndroidJUnitTest" >
         <option name="package" value="android.devicepolicy.cts.uiautomatertest" />
+        <option name="runtime-hint" value="30s" />
     </test>
 
 </configuration>

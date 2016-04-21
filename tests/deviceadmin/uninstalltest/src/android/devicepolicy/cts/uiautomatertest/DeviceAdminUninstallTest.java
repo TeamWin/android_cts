@@ -15,6 +15,8 @@
  */
 package android.devicepolicy.cts.uiautomatertest;
 
+import android.app.Activity;
+import android.app.Instrumentation;
 import android.app.admin.DevicePolicyManager;
 import android.content.ComponentName;
 import android.content.Context;
@@ -26,11 +28,14 @@ import android.net.Uri;
 import android.provider.Settings;
 import android.widget.ScrollView;
 
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.util.List;
 
 import android.support.test.InstrumentationRegistry;
@@ -44,6 +49,7 @@ import android.support.test.uiautomator.UiObjectNotFoundException;
 import android.support.test.uiautomator.UiScrollable;
 import android.support.test.uiautomator.UiSelector;
 import android.support.test.uiautomator.Until;
+import android.util.Log;
 
 @RunWith(AndroidJUnit4.class)
 @LargeTest
@@ -61,20 +67,35 @@ public class DeviceAdminUninstallTest {
             .res("com.android.settings", "left_button");
     private static final UiSelector OK_BUTTON_SELECTOR = new UiSelector()
             .resourceId("android:id/button1");
+    private static final UiSelector SCROLL_VIEW_SELECTOR =
+            new UiSelector().className(ScrollView.class);
+
     private static final long DEACTIVATE_ADMIN_TIMEOUT = 15000;
     private static final long WAIT_FOR_ACTIVITY_TIMEOUT = 6000;
+    private static final String TAG = DeviceAdminUninstallTest.class.getSimpleName();
 
     private UiDevice mUiDevice;
+    private Instrumentation mInstrumentation;
     private Context mContext;
     private DevicePolicyManager mDpm;
     private PackageManager mPm;
+    private Activity mActivity;
 
     @Before
     public void setUp() throws Exception {
-        mUiDevice = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation());
+        mInstrumentation = InstrumentationRegistry.getInstrumentation();
+        mUiDevice = UiDevice.getInstance(mInstrumentation);
         mContext = InstrumentationRegistry.getTargetContext();
         mDpm = mContext.getSystemService(DevicePolicyManager.class);
         mPm = mContext.getPackageManager();
+        startTestActivity();
+    }
+
+    private void startTestActivity() {
+        final Intent testActivityIntent = new Intent(mContext, UiAutomaterTestActivity.class);
+        testActivityIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        mActivity = mInstrumentation.startActivitySync(testActivityIntent);
+        mInstrumentation.waitForIdleSync();
     }
 
     private boolean hasActiveAdmin() {
@@ -122,19 +143,17 @@ public class DeviceAdminUninstallTest {
         final Intent displayAppDetailsIntent = new Intent(
                 Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
                 packageURI);
-        displayAppDetailsIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        mContext.startActivity(displayAppDetailsIntent);
+        mActivity.startActivity(displayAppDetailsIntent);
     }
 
     private void automateUninstallThroughUi() {
-        StringBuilder failMessageBuilder = new StringBuilder();
-        UiObject uninstallButton = mUiDevice
-                .findObject(UNINSTALL_BUTTON_SELECTOR);
-        UiScrollable scrollable = new UiScrollable(new UiSelector().className(ScrollView.class));
-        UiObject deactivateButton = mUiDevice
-                .findObject(DEACTIVATE_AND_UNINSTALL_BUTTON_SELECTOR);
-        UiObject okButton = mUiDevice
-                .findObject(OK_BUTTON_SELECTOR);
+        String errorMessage = "No exception in UI Automation";
+
+        UiObject uninstallButton = mUiDevice.findObject(UNINSTALL_BUTTON_SELECTOR);
+        UiScrollable scrollable = new UiScrollable(SCROLL_VIEW_SELECTOR);
+        UiObject deactivateButton = mUiDevice.findObject(DEACTIVATE_AND_UNINSTALL_BUTTON_SELECTOR);
+        UiObject okButton = mUiDevice.findObject(OK_BUTTON_SELECTOR);
+
         mUiDevice.wait(Until.hasObject(UNINSTALL_BUTTON_BYSELECTOR), WAIT_FOR_ACTIVITY_TIMEOUT);
         try {
             uninstallButton.clickAndWaitForNewWindow();
@@ -143,12 +162,18 @@ public class DeviceAdminUninstallTest {
             waitTillNoActiveAdmin();
             okButton.clickAndWaitForNewWindow();
         } catch (UiObjectNotFoundException exc) {
-            failMessageBuilder.append(exc.getMessage());
+            Log.e(TAG, "Error while automating uninstall of " + DEVICE_ADMIN_PACKAGE_NAME, exc);
+            errorMessage = generateStackTrace(exc);
         } finally {
-            Assert.assertFalse(
-                    "Package " + DEVICE_ADMIN_PACKAGE_NAME + " was not uninstalled.\n"
-                    + failMessageBuilder.toString(), packageExists());
+            Assert.assertFalse("Package " + DEVICE_ADMIN_PACKAGE_NAME + " was not uninstalled\n"
+                    + errorMessage, packageExists());
         }
+    }
+
+    private String generateStackTrace(Throwable t) {
+        StringWriter errorWriter = new StringWriter();
+        t.printStackTrace(new PrintWriter(errorWriter));
+        return errorWriter.toString();
     }
 
     @Test
@@ -159,5 +184,11 @@ public class DeviceAdminUninstallTest {
                 + " does not have any active admin component", hasActiveAdmin());
         launchApplicationDetailsActivity();
         automateUninstallThroughUi();
+    }
+
+    @After
+    public void tearDown() {
+        mActivity.finish();
+        mUiDevice.pressHome();
     }
 }
