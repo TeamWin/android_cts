@@ -133,9 +133,13 @@ public class ByodHelperActivity extends LocationListenerActivity
     public static final String ACTION_TEST_SELECT_WORK_CHALLENGE =
             "com.android.cts.verifier.managedprovisioning.TEST_SELECT_WORK_CHALLENGE";
 
+    // Primary -> managed intent: Start the selection of a parent profile password.
+    public static final String ACTION_TEST_PARENT_PROFILE_PASSWORD =
+            "com.android.cts.verifier.managedprovisioning.TEST_PARENT_PROFILE_PASSWORD";
+
     // Primary -> managed intent: Start the confirm credentials screen for the managed profile
-    public static final String ACTION_TEST_CONFIRM_WORK_CREDENTIALS =
-            "com.android.cts.verifier.managedprovisioning.TEST_CONFIRM_WORK_CREDENTIALS";
+    public static final String ACTION_LAUNCH_CONFIRM_WORK_CREDENTIALS =
+            "com.android.cts.verifier.managedprovisioning.LAUNCH_CONFIRM_WORK_CREDENTIALS";
 
     public static final String ACTION_SET_ORGANIZATION_INFO =
             "com.android.cts.verifier.managedprovisioning.TEST_ORGANIZATION_INFO";
@@ -333,7 +337,7 @@ public class ByodHelperActivity extends LocationListenerActivity
             mDevicePolicyManager.setOrganizationName(mAdminReceiverComponent, getResources()
                     .getString(R.string.provisioning_byod_confirm_work_credentials_header));
             startActivity(new Intent(DevicePolicyManager.ACTION_SET_NEW_PASSWORD));
-        } else if (ACTION_TEST_CONFIRM_WORK_CREDENTIALS.equals(action)) {
+        } else if (ACTION_LAUNCH_CONFIRM_WORK_CREDENTIALS.equals(action)) {
             KeyguardManager keyguardManager =
                     (KeyguardManager) getSystemService(Context.KEYGUARD_SERVICE);
             Intent launchIntent = keyguardManager.createConfirmDeviceCredentialIntent(null, null);
@@ -348,6 +352,8 @@ public class ByodHelperActivity extends LocationListenerActivity
                     OrganizationInfoTestActivity.EXTRA_ORGANIZATION_COLOR,
                     mDevicePolicyManager.getOrganizationColor(mAdminReceiverComponent));
             mDevicePolicyManager.setOrganizationColor(mAdminReceiverComponent, organizationColor);
+        } else if (ACTION_TEST_PARENT_PROFILE_PASSWORD.equals(action)) {
+            startActivity(new Intent(DevicePolicyManager.ACTION_SET_NEW_PARENT_PROFILE_PASSWORD));
         }
         // This activity has no UI and is only used to respond to CtsVerifier in the primary side.
         finish();

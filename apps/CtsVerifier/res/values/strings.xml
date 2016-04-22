@@ -1436,14 +1436,16 @@ You should be prompted to select credentials; choose the ones you just installed
     </string>
     <string name="provisioning_byod_confirm_work_credentials">Confirm work challenge test</string>
     <string name="provisioning_byod_confirm_work_credentials_description">
-        This test verifies that the work challenge was set correctly and it is customized according
-        to the policies set. You can only do this test after you have done the previous test.\n
+        This test verifies that work challenge is shown when opening a work app,
+        the work challenge was set correctly and it is customized according to
+        the policies set. You can only do this test after you have done the previous test.\n
 
-        1. Verify that a screen asking you for your work credentials is shown.\n
-        2. Verify that the background image contains an orange suitcase.\n
-        3. Verify that the background color of the remaining image is blue.\n
-        4. Verify that the header text says \"CtsVerifier\".\n
-        5. Confirm your credentials and verify that the credentials you entered previously work.
+        1. Open a work app.\n
+        2. Verify that a screen asking you for your work credentials is shown.\n
+        3. Verify that the background image contains an orange suitcase.\n
+        4. Verify that the background color of the remaining image is blue.\n
+        5. Verify that the header text says \"CtsVerifier\".\n
+        6. Confirm your credentials and verify that the credentials you entered previously work.
     </string>
     <string name="provisioning_byod_confirm_work_credentials_header">
         CtsVerifier
@@ -1985,6 +1987,13 @@ You should be prompted to select credentials; choose the ones you just installed
         4. Press the Go button to open a dialog to confirm work credentials.\n
         5. Verify that the background color of the resulting dialog is as set by you.\n
         6. Verify that the header text has organization name as set by you.\n
+    </string>
+    <string name="provisioning_byod_parent_profile_password">Personal password test</string>
+    <string name="provisioning_byod_parent_profile_password_description">
+        This test verifies that the password on the personal side can be chosen from within a managed profile.\n
+
+        1. Press the Go button to set a new password for the personal side.\n
+        2. Lock and unlock the screen to verify that the personal side password was set correctly.\n
     </string>
 
     <!-- Strings for DeviceOwnerProvisioningTest -->

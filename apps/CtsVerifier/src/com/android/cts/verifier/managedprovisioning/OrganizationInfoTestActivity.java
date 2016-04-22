@@ -62,7 +62,7 @@ public class OrganizationInfoTestActivity extends PassFailButtons.Activity
             }
             startActivity(intent);
         } else if (view.getId() == R.id.go_button) {
-            Intent intent = new Intent(ByodHelperActivity.ACTION_TEST_CONFIRM_WORK_CREDENTIALS);
+            Intent intent = new Intent(ByodHelperActivity.ACTION_LAUNCH_CONFIRM_WORK_CREDENTIALS);
             startActivity(intent);
         }
     }
