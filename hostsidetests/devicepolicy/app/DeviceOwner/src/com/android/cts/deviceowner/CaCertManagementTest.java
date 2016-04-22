@@ -15,6 +15,7 @@
  */
 package com.android.cts.deviceowner;
 
+import android.net.http.X509TrustManagerExtensions;
 import android.security.NetworkSecurityPolicy;
 
 import java.io.ByteArrayInputStream;
@@ -23,6 +24,7 @@ import java.security.KeyStore;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
+import java.security.cert.X509Certificate;
 import java.util.Arrays;
 import java.util.List;
 
@@ -102,6 +104,15 @@ public class CaCertManagementTest extends BaseDeviceOwnerTest {
         assertFalse(isCaCertInstalledAndTrusted(caCert));
     }
 
+    private static X509TrustManager getFirstX509TrustManager(TrustManagerFactory tmf) {
+        for (TrustManager trustManager : tmf.getTrustManagers()) {
+             if (trustManager instanceof X509TrustManager) {
+                 return (X509TrustManager) trustManager;
+             }
+        }
+        throw new RuntimeException("Unable to find X509TrustManager");
+    }
+
     /**
      * Whether a given cert, or one a lot like it, has been installed system-wide and is available
      * to all apps.
@@ -131,23 +142,21 @@ public class CaCertManagementTest extends BaseDeviceOwnerTest {
 
         NetworkSecurityPolicy.getInstance().handleTrustStorageUpdate();
 
-        boolean trusted = false;
+        // Verify that the user added CA is reflected in the default X509TrustManager.
         final TrustManagerFactory tmf =
                 TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
+        // Use platform provided CA store.
         tmf.init((KeyStore) null);
-        for (TrustManager trustManager : tmf.getTrustManagers()) {
-             if (trustManager instanceof X509TrustManager) {
-                final X509TrustManager tm = (X509TrustManager) trustManager;
-                if (Arrays.asList(tm.getAcceptedIssuers()).contains(caCert)) {
-                    trusted = true;
-                }
-            }
-        }
+        X509TrustManager tm = getFirstX509TrustManager(tmf);
+        boolean trusted = Arrays.asList(tm.getAcceptedIssuers()).contains(caCert);
+        X509TrustManagerExtensions xtm = new X509TrustManagerExtensions(tm);
+        boolean userAddedCertificate = xtm.isUserAddedCertificate((X509Certificate) caCert);
 
         // All three responses should match - if an installed certificate isn't trusted or (worse)
         // a trusted certificate isn't even installed we should 
         assertEquals(installed, listed);
         assertEquals(installed, trusted);
+        assertEquals(installed, userAddedCertificate);
         return installed;
     }
 
