@@ -1,6 +1,5 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!--
- * Copyright (C) 2008 The Android Open Source Project.
+/*
+ * Copyright (C) 2016 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,11 +12,24 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- -->
-<ImageButton xmlns:android="http://schemas.android.com/apk/res/android"
-    android:id="@+id/imagebutton"
-    android:layout_width="96px"
-    android:layout_height="76px"
-    android:soundEffectsEnabled="false"
-/>
+ */
 
+package android.widget.cts;
+
+import android.app.Activity;
+import android.os.Bundle;
+import android.widget.ImageButton;
+
+/**
+ * A minimal application for {@link ImageButton} test.
+ */
+public class ImageButtonCtsActivity extends Activity {
+    /**
+     * Called with the activity is first created.
+     */
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.imagebutton_layout);
+    }
+}
