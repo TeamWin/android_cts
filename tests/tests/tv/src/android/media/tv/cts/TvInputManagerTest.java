@@ -217,7 +217,7 @@ public class TvInputManagerTest extends ActivityInstrumentationTestCase2<TvViewS
                 new ComponentName(getActivity(), StubTunerTvInputService.class))
                         .setTunerCount(10).setCanRecord(true).build();
 
-        TvInputService.updateTvInputInfo(getActivity(), updatedInfo);
+        mManager.updateTvInputInfo(updatedInfo);
         new PollingCheck(TIME_OUT_MS) {
             @Override
             protected boolean check() {
@@ -226,7 +226,7 @@ public class TvInputManagerTest extends ActivityInstrumentationTestCase2<TvViewS
             }
         }.run();
 
-        TvInputService.updateTvInputInfo(getActivity(), defaultInfo);
+        mManager.updateTvInputInfo(defaultInfo);
         new PollingCheck(TIME_OUT_MS) {
             @Override
             protected boolean check() {
