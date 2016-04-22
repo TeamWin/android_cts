@@ -1729,8 +1729,9 @@
                 <action android:name="com.android.cts.verifier.managedprovisioning.LOCKSCREEN_NOTIFICATION" />
                 <action android:name="com.android.cts.verifier.managedprovisioning.CLEAR_NOTIFICATION" />
                 <action android:name="com.android.cts.verifier.managedprovisioning.TEST_SELECT_WORK_CHALLENGE" />
-                <action android:name="com.android.cts.verifier.managedprovisioning.TEST_CONFIRM_WORK_CREDENTIALS" />
+                <action android:name="com.android.cts.verifier.managedprovisioning.LAUNCH_CONFIRM_WORK_CREDENTIALS" />
                 <action android:name="com.android.cts.verifier.managedprovisioning.TEST_ORGANIZATION_INFO" />
+                <action android:name="com.android.cts.verifier.managedprovisioning.TEST_PARENT_PROFILE_PASSWORD" />
                 <category android:name="android.intent.category.DEFAULT"></category>
             </intent-filter>
         </activity>
