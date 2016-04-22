@@ -16,24 +16,41 @@
 
 package android.widget.cts;
 
-import android.widget.cts.R;
-
-
-import org.xmlpull.v1.XmlPullParser;
-
-import android.test.AndroidTestCase;
-import android.util.AttributeSet;
-import android.util.Xml;
+import android.app.Activity;
+import android.app.Instrumentation;
+import android.test.ActivityInstrumentationTestCase2;
+import android.test.suitebuilder.annotation.SmallTest;
+import android.text.TextUtils;
 import android.widget.CheckBox;
+import android.widget.cts.util.ViewTestUtils;
 
-public class CheckBoxTest extends AndroidTestCase {
+import static org.mockito.Mockito.*;
+
+@SmallTest
+public class CheckBoxTest extends ActivityInstrumentationTestCase2<CheckBoxCtsActivity> {
+    private Instrumentation mInstrumentation;
+    private Activity mActivity;
+    private CheckBox mCheckBox;
+
+    public CheckBoxTest() {
+        super("android.widget.cts", CheckBoxCtsActivity.class);
+    }
+
+    @Override
+    protected void setUp() throws Exception {
+        super.setUp();
+
+        mInstrumentation = getInstrumentation();
+        mActivity = getActivity();
+        mCheckBox = (CheckBox) mActivity.findViewById(R.id.check_box);
+    }
+
     public void testConstructor() {
-        XmlPullParser parser = mContext.getResources().getXml(R.layout.checkbox_layout);
-        AttributeSet mAttrSet = Xml.asAttributeSet(parser);
-
-        new CheckBox(mContext, mAttrSet, 0);
-        new CheckBox(mContext, mAttrSet);
-        new CheckBox(mContext);
+        new CheckBox(mActivity);
+        new CheckBox(mActivity, null);
+        new CheckBox(mActivity, null, android.R.attr.checkboxStyle);
+        new CheckBox(mActivity, null, 0,
+                android.R.style.Widget_Material_Light_CompoundButton_CheckBox);
 
         try {
             new CheckBox(null, null, -1);
@@ -55,5 +72,110 @@ public class CheckBoxTest extends AndroidTestCase {
         } catch (NullPointerException e) {
             // expected, test success.
         }
+    }
+
+    public void testText() {
+        assertTrue(TextUtils.equals(
+                mActivity.getString(R.string.hello_world), mCheckBox.getText()));
+
+        mInstrumentation.runOnMainSync(() -> mCheckBox.setText("new text"));
+        assertTrue(TextUtils.equals("new text", mCheckBox.getText()));
+
+        mInstrumentation.runOnMainSync(() -> mCheckBox.setText(R.string.text_name));
+        assertTrue(TextUtils.equals(mActivity.getString(R.string.text_name), mCheckBox.getText()));
+    }
+
+    public void testAccessChecked() {
+        final CheckBox.OnCheckedChangeListener mockCheckedChangeListener =
+                mock(CheckBox.OnCheckedChangeListener.class);
+        mCheckBox.setOnCheckedChangeListener(mockCheckedChangeListener);
+        verifyZeroInteractions(mockCheckedChangeListener);
+
+        assertFalse(mCheckBox.isChecked());
+
+        // not checked -> not checked
+        mInstrumentation.runOnMainSync(() -> mCheckBox.setChecked(false));
+        verifyZeroInteractions(mockCheckedChangeListener);
+        assertFalse(mCheckBox.isChecked());
+
+        // not checked -> checked
+        mInstrumentation.runOnMainSync(() -> mCheckBox.setChecked(true));
+        verify(mockCheckedChangeListener, times(1)).onCheckedChanged(mCheckBox, true);
+        assertTrue(mCheckBox.isChecked());
+
+        // checked -> checked
+        mInstrumentation.runOnMainSync(() -> mCheckBox.setChecked(true));
+        verify(mockCheckedChangeListener, times(1)).onCheckedChanged(mCheckBox, true);
+        assertTrue(mCheckBox.isChecked());
+
+        // checked -> not checked
+        mInstrumentation.runOnMainSync(() -> mCheckBox.setChecked(false));
+        verify(mockCheckedChangeListener, times(1)).onCheckedChanged(mCheckBox, false);
+        assertFalse(mCheckBox.isChecked());
+
+        verifyNoMoreInteractions(mockCheckedChangeListener);
+    }
+
+    public void testToggleViaApi() {
+        final CheckBox.OnCheckedChangeListener mockCheckedChangeListener =
+                mock(CheckBox.OnCheckedChangeListener.class);
+        mCheckBox.setOnCheckedChangeListener(mockCheckedChangeListener);
+        verifyZeroInteractions(mockCheckedChangeListener);
+
+        assertFalse(mCheckBox.isChecked());
+
+        // toggle to checked
+        mInstrumentation.runOnMainSync(() -> mCheckBox.toggle());
+        verify(mockCheckedChangeListener, times(1)).onCheckedChanged(mCheckBox, true);
+        assertTrue(mCheckBox.isChecked());
+
+        // toggle to not checked
+        mInstrumentation.runOnMainSync(() -> mCheckBox.toggle());
+        verify(mockCheckedChangeListener, times(1)).onCheckedChanged(mCheckBox, false);
+        assertFalse(mCheckBox.isChecked());
+
+        verifyNoMoreInteractions(mockCheckedChangeListener);
+    }
+
+    public void testToggleViaEmulatedTap() {
+        final CheckBox.OnCheckedChangeListener mockCheckedChangeListener =
+                mock(CheckBox.OnCheckedChangeListener.class);
+        mCheckBox.setOnCheckedChangeListener(mockCheckedChangeListener);
+        verifyZeroInteractions(mockCheckedChangeListener);
+
+        assertFalse(mCheckBox.isChecked());
+
+        // tap to checked
+        ViewTestUtils.emulateTapOnViewCenter(mInstrumentation, mCheckBox);
+        verify(mockCheckedChangeListener, times(1)).onCheckedChanged(mCheckBox, true);
+        assertTrue(mCheckBox.isChecked());
+
+        // tap to not checked
+        ViewTestUtils.emulateTapOnViewCenter(mInstrumentation, mCheckBox);
+        verify(mockCheckedChangeListener, times(1)).onCheckedChanged(mCheckBox, false);
+        assertFalse(mCheckBox.isChecked());
+
+        verifyNoMoreInteractions(mockCheckedChangeListener);
+    }
+
+    public void testToggleViaPerformClick() {
+        final CheckBox.OnCheckedChangeListener mockCheckedChangeListener =
+                mock(CheckBox.OnCheckedChangeListener.class);
+        mCheckBox.setOnCheckedChangeListener(mockCheckedChangeListener);
+        verifyZeroInteractions(mockCheckedChangeListener);
+
+        assertFalse(mCheckBox.isChecked());
+
+        // click to checked
+        mInstrumentation.runOnMainSync(() -> mCheckBox.performClick());
+        verify(mockCheckedChangeListener, times(1)).onCheckedChanged(mCheckBox, true);
+        assertTrue(mCheckBox.isChecked());
+
+        // click to not checked
+        mInstrumentation.runOnMainSync(() -> mCheckBox.performClick());
+        verify(mockCheckedChangeListener, times(1)).onCheckedChanged(mCheckBox, false);
+        assertFalse(mCheckBox.isChecked());
+
+        verifyNoMoreInteractions(mockCheckedChangeListener);
     }
 }
