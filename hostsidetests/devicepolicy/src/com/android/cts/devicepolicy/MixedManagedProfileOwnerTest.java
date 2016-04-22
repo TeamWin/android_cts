@@ -91,4 +91,10 @@ public class MixedManagedProfileOwnerTest extends DeviceAndProfileOwnerTest {
     public void testDisallowSetWallpaper_allowed() throws Exception {
         // Managed profile doesn't have wallpaper.
     }
+
+    @Override
+    public void testAudioRestriction() throws Exception {
+        // DISALLOW_UNMUTE_MICROPHONE and DISALLOW_ADJUST_VOLUME can only be set by device owners
+        // and profile owners on the primary user.
+    }
 }
