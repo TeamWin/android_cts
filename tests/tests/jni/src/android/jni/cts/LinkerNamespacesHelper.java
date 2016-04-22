@@ -16,17 +16,45 @@
 
 package android.jni.cts;
 
+import android.content.Context;
+import android.content.pm.PackageManager;
+import android.support.test.InstrumentationRegistry;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.File;
 import java.io.FileReader;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 class LinkerNamespacesHelper {
     private final static String VENDOR_CONFIG_FILE = "/vendor/etc/public.libraries.txt";
+    private final static String[] PUBLIC_SYSTEM_LIBRARIES = {
+        "libandroid.so",
+        "libc.so",
+        "libdl.so",
+        "libEGL.so",
+        "libGLESv1_CM.so",
+        "libGLESv2.so",
+        "libGLESv3.so",
+        "libicui18n.so",
+        "libicuuc.so",
+        "libjnigraphics.so",
+        "liblog.so",
+        "libmediandk.so",
+        "libm.so",
+        "libOpenMAXAL.so",
+        "libOpenSLES.so",
+        "libRS.so",
+        "libstdc++.so",
+        "libz.so"
+    };
+
+    private final static String WEBVIEW_PLAT_SUPPORT_LIB = "libwebviewchromium_plat_support.so";
+
     public static String runAccessibilityTest() throws IOException {
-        List<String> libs = new ArrayList<>();
+        List<String> vendorLibs = new ArrayList<>();
         File file = new File(VENDOR_CONFIG_FILE);
         if (file.exists()) {
             try (BufferedReader br = new BufferedReader(new FileReader(file))) {
@@ -36,11 +64,23 @@ class LinkerNamespacesHelper {
                     if (line.isEmpty() || line.startsWith("#")) {
                         continue;
                     }
-                    libs.add(line);
+                    vendorLibs.add(line);
                 }
             }
         }
-        return runAccessibilityTestImpl(libs.toArray(new String[libs.size()]));
+
+        List<String> systemLibs = new ArrayList<>();
+        Collections.addAll(systemLibs, PUBLIC_SYSTEM_LIBRARIES);
+
+        if (InstrumentationRegistry.getContext().getPackageManager().
+                hasSystemFeature(PackageManager.FEATURE_WEBVIEW)) {
+            systemLibs.add(WEBVIEW_PLAT_SUPPORT_LIB);
+        }
+
+        return runAccessibilityTestImpl(systemLibs.toArray(new String[systemLibs.size()]),
+                                        vendorLibs.toArray(new String[vendorLibs.size()]));
     }
-    private static native String runAccessibilityTestImpl(String[] publicVendorLibs);
+
+    private static native String runAccessibilityTestImpl(String[] publicSystemLibs,
+                                                          String[] publicVendorLibs);
 }
