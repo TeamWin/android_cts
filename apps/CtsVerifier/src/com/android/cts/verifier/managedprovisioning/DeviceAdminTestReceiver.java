@@ -16,8 +16,6 @@
 
 package com.android.cts.verifier.managedprovisioning;
 
-import android.app.Notification;
-import android.app.NotificationManager;
 import android.app.admin.DeviceAdminReceiver;
 import android.app.admin.DevicePolicyManager;
 import android.content.ComponentName;
@@ -29,6 +27,7 @@ import android.util.Log;
 
 import com.android.cts.verifier.R;
 import com.android.cts.verifier.location.LocationListenerActivity;
+import com.android.cts.verifier.managedprovisioning.Utils;
 
 /**
  * Profile owner receiver for BYOD flow test.
@@ -42,7 +41,6 @@ public class DeviceAdminTestReceiver extends DeviceAdminReceiver {
                 DEVICE_OWNER_PKG + ".managedprovisioning.DeviceAdminTestReceiver";
         private static final ComponentName RECEIVER_COMPONENT_NAME = new ComponentName(
                 DEVICE_OWNER_PKG, ADMIN_RECEIVER_TEST_CLASS);
-        private static final int BUGREPORT_NOTIFICATION_ID = 12345;
 
         public static ComponentName getReceiverComponentName() {
             return RECEIVER_COMPONENT_NAME;
@@ -57,15 +55,22 @@ public class DeviceAdminTestReceiver extends DeviceAdminReceiver {
         @Override
         public void onBugreportSharingDeclined(Context context, Intent intent) {
             Log.i(TAG, "Bugreport sharing declined");
-            showBugreportNotification(context, context.getString(
-                    R.string.bugreport_sharing_declined), BUGREPORT_NOTIFICATION_ID);
+            Utils.showBugreportNotification(context, context.getString(
+                    R.string.bugreport_sharing_declined), Utils.BUGREPORT_NOTIFICATION_ID);
         }
 
         @Override
         public void onBugreportShared(Context context, Intent intent, String bugreportFileHash) {
             Log.i(TAG, "Bugreport shared");
-            showBugreportNotification(context, context.getString(
-                    R.string.bugreport_shared_successfully), BUGREPORT_NOTIFICATION_ID);
+            Utils.showBugreportNotification(context, context.getString(
+                    R.string.bugreport_shared_successfully), Utils.BUGREPORT_NOTIFICATION_ID);
+        }
+
+        @Override
+        public void onBugreportFailed(Context context, Intent intent, int failureCode) {
+            Log.i(TAG, "Bugreport collection operation failed, code: " + failureCode);
+            Utils.showBugreportNotification(context, context.getString(
+                    R.string.bugreport_failed_completing), Utils.BUGREPORT_NOTIFICATION_ID);
         }
 
         private void setupProfile(Context context) {
@@ -123,17 +128,4 @@ public class DeviceAdminTestReceiver extends DeviceAdminReceiver {
             context.startActivity(intent);
         }
 
-        private void showBugreportNotification(Context context, String msg,
-                int notificationId) {
-            NotificationManager mNotificationManager =
-                    (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
-            Notification notification = new Notification.Builder(context)
-                    .setSmallIcon(R.drawable.icon)
-                    .setContentTitle(context.getString(
-                            R.string.device_owner_requesting_bugreport_tests))
-                    .setContentText(msg)
-                    .setStyle(new Notification.BigTextStyle().bigText(msg))
-                    .build();
-            mNotificationManager.notify(notificationId, notification);
-        }
 }

@@ -2235,12 +2235,19 @@ You should be prompted to select credentials; choose the ones you just installed
     <string name="device_owner_request_bugreport">Request bugreport</string>
     <string name="bugreport_sharing_declined">Bugreport sharing declined</string>
     <string name="bugreport_shared_successfully">Bugreport shared successfully</string>
+    <string name="bugreport_already_in_progress">Bugreport is already being collected on this device</string>
+    <string name="bugreport_failed_completing">Bugreport collection operation failed</string>
     <string name="device_owner_bugreport_sharing_declined_while_being_taken">Sharing of requested bugreport declined while being taken</string>
     <string name="device_owner_bugreport_sharing_declined_while_being_taken_info">
         Please press the \"Request bugreport\" button to invoke the bugreport sharing operation.
         Open the notifications panel and verify that:\n
         \n
         - Notification titled \"Taking bugreport...\" with an indefinite progress bar is present.\n
+        \n
+        Press the \"Request bugreport\" button again to try to invoke a second bugreport sharing operation.
+        Open the notifications panel and verify that:\n
+        \n
+        - Notification titled \"Device Owner Requesting Bugreport Tests\" with message \"Bugreport is already being collected on this device\" is present. Dismiss that notification.\n
         - Tapping on the \"Taking bugreport...\" notification opens a dialog titled \"Share bug report?\", that contains a message \"Your IT admin requested a bug report to help troubleshoot this device. Apps and data may be shared, and your device may temporarily slow down.\" and two buttons - \"DECLINE\" and \"SHARE\".\n
         \n
         Tap the \"DECLINE\" button and verify that:\n

@@ -20,13 +20,6 @@ import android.app.NotificationManager;
 import android.app.admin.DevicePolicyManager;
 import android.content.ComponentName;
 import android.content.Context;
-import android.support.test.uiautomator.By;
-import android.support.test.uiautomator.UiDevice;
-import android.support.test.uiautomator.UiObject;
-import android.support.test.uiautomator.UiObject2;
-import android.support.test.uiautomator.UiObjectNotFoundException;
-import android.support.test.uiautomator.UiSelector;
-import android.support.test.uiautomator.Until;
 import android.test.InstrumentationTestCase;
 
 /**
@@ -39,17 +32,12 @@ import android.test.InstrumentationTestCase;
  */
 public class RemoteBugreportTest extends InstrumentationTestCase {
 
-    private static final int UI_TIMEOUT_MILLIS = 5000; //5 seconds
-
     private static final String MESSAGE_ONLY_ONE_MANAGED_USER_ALLOWED =
             "There should only be one user, managed by Device Owner";
 
-    private static final String TAKING_BUG_REPORT = "Taking bug report";
-    private static final String DECLINE = "DECLINE";
 
     private DevicePolicyManager mDevicePolicyManager;
     private Context mContext;
-    private UiDevice mUiDevice;
     private ComponentName mComponentName;
 
     @Override
@@ -57,25 +45,10 @@ public class RemoteBugreportTest extends InstrumentationTestCase {
         super.setUp();
         Instrumentation instrumentation = getInstrumentation();
         mContext = instrumentation.getTargetContext();
-        mUiDevice = UiDevice.getInstance(instrumentation);
         mDevicePolicyManager = (DevicePolicyManager)
                 mContext.getSystemService(Context.DEVICE_POLICY_SERVICE);
         BaseDeviceOwnerTest.assertDeviceOwner(mDevicePolicyManager);
         mComponentName = BaseDeviceOwnerTest.getWho();
-    }
-
-    /**
-     * Test: only one remote bugreport flow can be running on the device at one time.
-     */
-    public void testSubsequentRemoteBugreportThrottled() {
-        boolean startedSuccessfully = mDevicePolicyManager.requestBugreport(mComponentName);
-        assertTrue(startedSuccessfully);
-
-        // subsequent attempts should be throttled
-        assertFalse(mDevicePolicyManager.requestBugreport(mComponentName));
-        assertFalse(mDevicePolicyManager.requestBugreport(mComponentName));
-
-        cancelRemoteBugreportFlowIfStartedSuccessfully(startedSuccessfully);
     }
 
     /**
@@ -88,59 +61,7 @@ public class RemoteBugreportTest extends InstrumentationTestCase {
             fail("did not throw expected SecurityException");
         } catch (SecurityException e) {
             assertEquals(e.getMessage(), MESSAGE_ONLY_ONE_MANAGED_USER_ALLOWED);
-        } finally {
-            cancelRemoteBugreportFlowIfStartedSuccessfully(startedSuccessfully);
         }
     }
 
-    /**
-     * Clicks on "Taking bugreport..." notification, and then DECLINE button on the consent dialog
-     * to cancel the whole remote bugreport flow (including stopping the dumpstate service).
-     */
-    private void cancelRemoteBugreportFlowIfStartedSuccessfully(boolean startedSuccessfully) {
-        if (!startedSuccessfully) {
-            return;
-        }
-
-        UiObject2 bugreportNotification = findRemoteBugreportNotification();
-        assertNotNull(bugreportNotification);
-        bugreportNotification.click();
-
-        // give it max 5 seconds to find the DECLINE button on the dialog
-        boolean declineButtonPresent = mUiDevice.wait(
-                Until.hasObject(By.text(DECLINE)), UI_TIMEOUT_MILLIS);
-        assertTrue(declineButtonPresent);
-
-        UiObject declineButton = mUiDevice.findObject(new UiSelector().text(DECLINE));
-        assertNotNull(declineButton);
-        try {
-            declineButton.click();
-        } catch (UiObjectNotFoundException e) {
-            throw new IllegalStateException("Exception when clicking on 'DECLINE' button", e);
-        }
-    }
-
-    /**
-     * Attempts to find the remote bugreport notification scrolling down in the notification panel
-     * in between 10 attempts.
-     */
-    private UiObject2 findRemoteBugreportNotification() {
-        mUiDevice.openNotification();
-        final int displayWidth = mUiDevice.getDisplayWidth();
-        final int displayHeight = mUiDevice.getDisplayHeight();
-        for (int i = 0; i < 10; i++) {
-            UiObject2 notification = mUiDevice.wait(Until.findObject(
-                    By.textStartsWith(TAKING_BUG_REPORT)), UI_TIMEOUT_MILLIS);
-            if (notification != null) {
-                return notification;
-            } else {
-                /* makes a swipe from the middle of the screen upwards to the top of the screen
-                (the motion is upwards, so it scrolls downwards) half a screen, so that the
-                notification is always fully visible - never cut in two pieces) */
-                mUiDevice.swipe(displayWidth / 2, displayHeight / 2, displayWidth / 2,
-                        /* endY= */ 0, /* steps= */ 30);
-            }
-        }
-        return null;
-    }
 }
