@@ -27,6 +27,12 @@ import java.util.concurrent.Callable;
 public class AudioRestrictionTest extends BaseDeviceAdminTest {
 
     private AudioManager mAudioManager;
+    private final Callable<Boolean> mCheckIfMasterVolumeMuted = new Callable<Boolean>() {
+        @Override
+        public Boolean call() throws Exception {
+            return mDevicePolicyManager.isMasterVolumeMuted(ADMIN_RECEIVER_COMPONENT);
+        }
+    };
 
     @Override
     protected void setUp() throws Exception {
@@ -34,7 +40,37 @@ public class AudioRestrictionTest extends BaseDeviceAdminTest {
         mAudioManager = (AudioManager) mContext.getSystemService(Context.AUDIO_SERVICE);
     }
 
-    private void disallowAdjustVolumeTestInternal(boolean setByAddUserRestiction) throws Exception {
+    // Here we test that DISALLOW_ADJUST_VOLUME disallows to unmute volume.
+    public void testDisallowAdjustVolume_muted() throws Exception {
+        // If we check that some value did not change, we must wait until the action is applied.
+        // Method waitUntil() may check old value before changes took place.
+        final int WAIT_TIME_MS = 1000;
+        final boolean initVolumeMuted =
+                mDevicePolicyManager.isMasterVolumeMuted(ADMIN_RECEIVER_COMPONENT);
+        try {
+            // Unmute volume, if necessary.
+            if (initVolumeMuted) {
+                mDevicePolicyManager.setMasterVolumeMuted(ADMIN_RECEIVER_COMPONENT, false);
+                waitUntil(false, mCheckIfMasterVolumeMuted);
+            }
+
+            // DISALLOW_ADJUST_VOLUME must mute volume.
+            mDevicePolicyManager.addUserRestriction(ADMIN_RECEIVER_COMPONENT,
+                    UserManager.DISALLOW_ADJUST_VOLUME);
+            waitUntil(true, mCheckIfMasterVolumeMuted);
+
+            // Unmute should not have effect because the restriction does not allow this.
+            mDevicePolicyManager.setMasterVolumeMuted(ADMIN_RECEIVER_COMPONENT, false);
+            Thread.sleep(WAIT_TIME_MS);
+            assertTrue(mDevicePolicyManager.isMasterVolumeMuted(ADMIN_RECEIVER_COMPONENT));
+        } finally {
+            mDevicePolicyManager.clearUserRestriction(ADMIN_RECEIVER_COMPONENT,
+                    UserManager.DISALLOW_ADJUST_VOLUME);
+            mDevicePolicyManager.setMasterVolumeMuted(ADMIN_RECEIVER_COMPONENT, initVolumeMuted);
+        }
+    }
+
+    public void testDisallowAdjustVolume() throws Exception {
         try {
             // Set volume of ringtone to be 1.
             mAudioManager.setStreamVolume(AudioManager.STREAM_RING, 1, /* flag= */ 0);
@@ -42,12 +78,8 @@ public class AudioRestrictionTest extends BaseDeviceAdminTest {
             // Disallow adjusting volume.
             mDevicePolicyManager.addUserRestriction(ADMIN_RECEIVER_COMPONENT,
                     UserManager.DISALLOW_ADJUST_VOLUME);
-            waitUntil(true, new Callable<Boolean>() {
-                @Override
-                public Boolean call() throws Exception {
-                    return mDevicePolicyManager.isMasterVolumeMuted(ADMIN_RECEIVER_COMPONENT);
-                }
-            });
+            waitUntil(true, mCheckIfMasterVolumeMuted);
+
             // Verify that volume can't be changed.
             mAudioManager.adjustVolume(AudioManager.ADJUST_RAISE, /* flag= */ 0);
             assertEquals(1, mAudioManager.getStreamVolume(AudioManager.STREAM_RING));
@@ -55,12 +87,8 @@ public class AudioRestrictionTest extends BaseDeviceAdminTest {
             // Allowing adjusting volume.
             mDevicePolicyManager.clearUserRestriction(ADMIN_RECEIVER_COMPONENT,
                     UserManager.DISALLOW_ADJUST_VOLUME);
-            waitUntil(false, new Callable<Boolean>() {
-                @Override
-                public Boolean call() throws Exception {
-                    return mDevicePolicyManager.isMasterVolumeMuted(ADMIN_RECEIVER_COMPONENT);
-                }
-            });
+            waitUntil(false, mCheckIfMasterVolumeMuted);
+
             // Verify the volume can be changed now.
             mAudioManager.adjustVolume(AudioManager.ADJUST_RAISE,  /* flag= */ 0);
             waitUntil(2, new Callable<Integer>() {
@@ -73,12 +101,7 @@ public class AudioRestrictionTest extends BaseDeviceAdminTest {
             // Clear the restriction.
             mDevicePolicyManager.clearUserRestriction(ADMIN_RECEIVER_COMPONENT,
                     UserManager.DISALLOW_ADJUST_VOLUME);
-            waitUntil(false, new Callable<Boolean>() {
-                @Override
-                public Boolean call() throws Exception {
-                    return mDevicePolicyManager.isMasterVolumeMuted(ADMIN_RECEIVER_COMPONENT);
-                }
-            });
+            waitUntil(false, mCheckIfMasterVolumeMuted);
         }
     }
 
