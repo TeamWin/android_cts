@@ -22,7 +22,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.os.Process;
 import android.os.UserHandle;
 import android.os.UserManager;
@@ -31,7 +30,6 @@ import com.android.cts.deviceandprofileowner.R;
 
 import java.io.Closeable;
 import java.io.IOException;
-import java.io.InputStream;
 import java.lang.reflect.Method;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
@@ -111,6 +109,13 @@ public class CustomizationRestrictionsTest extends BaseDeviceAdminTest {
         return (Bitmap) methodGetUserIcon.invoke(mUserManager, getUserId());
     }
 
+    // The idea of testing is check if a DO/PO can set a wallpapper despite the
+    // DISALLOW_SET_WALLPAPER restriction is set. But we can't use
+    // pixel-by-pixel comparison of the reference bitmap (the bitmap we want to be a
+    // wallpaper) and current wallpaper bitmap, because the reference bitmap can be
+    // processed while setting (e.g. crop or scale), and getter may return us different
+    // (but visually the same) Bitmap object. Thus in this test we check if the new
+    // wallpaper is different from the old one after we ran a setter method.
     public void testDisallowSetWallpaper_allowed() throws Exception {
         final WallpaperManager wallpaperManager = WallpaperManager.getInstance(mContext);
         final Bitmap originalWallpaper = BitmapUtils.getWallpaperBitmap(mContext);
@@ -125,34 +130,33 @@ public class CustomizationRestrictionsTest extends BaseDeviceAdminTest {
             assertTrue(mUserManager.hasUserRestriction(UserManager.DISALLOW_SET_WALLPAPER));
 
             // Checking setBitmap() method.
-            Bitmap referenceWallpaper = BitmapUtils.generateRandomBitmap(97, 73);
-            wallpaperManager.setBitmap(referenceWallpaper);
+            Bitmap oldWallpaper = originalWallpaper;
+            wallpaperManager.setBitmap(BitmapUtils.generateRandomBitmap(97, 73));
             bcast.waitForBroadcast();
             Bitmap newWallpaper = BitmapUtils.getWallpaperBitmap(mContext);
-            // Violation of encapsulation if refs are equal.
-            assertNotSame(newWallpaper, referenceWallpaper);
-            assertTrue(BitmapUtils.compareBitmaps(newWallpaper, referenceWallpaper));
+            assertFalse(BitmapUtils.compareBitmaps(newWallpaper, oldWallpaper));
 
             // Checking setStream() method.
-            referenceWallpaper = BitmapUtils.generateRandomBitmap(83, 69);
-            wallpaperManager.setStream(BitmapUtils.bitmapToInputStream(referenceWallpaper));
+            oldWallpaper = newWallpaper;
+            final Bitmap wallpaperForStream = BitmapUtils.generateRandomBitmap(83, 69);
+            wallpaperManager.setStream(BitmapUtils.bitmapToInputStream(wallpaperForStream));
             bcast.waitForBroadcast();
             newWallpaper = BitmapUtils.getWallpaperBitmap(mContext);
-            assertTrue(BitmapUtils.compareBitmaps(newWallpaper, referenceWallpaper));
+            assertFalse(BitmapUtils.compareBitmaps(newWallpaper, oldWallpaper));
 
             // Checking setResource() method.
-            final InputStream is = mContext.getResources().openRawResource(R.raw.wallpaper);
-            referenceWallpaper = BitmapFactory.decodeStream(is);
+            oldWallpaper = newWallpaper;
             wallpaperManager.setResource(R.raw.wallpaper);
             bcast.waitForBroadcast();
             newWallpaper = BitmapUtils.getWallpaperBitmap(mContext);
-            assertTrue(BitmapUtils.compareBitmaps(newWallpaper, referenceWallpaper));
+            assertFalse(BitmapUtils.compareBitmaps(newWallpaper, oldWallpaper));
         } finally {
             wallpaperManager.setBitmap(originalWallpaper);
         }
         assertFalse(mUserManager.hasUserRestriction(UserManager.DISALLOW_SET_WALLPAPER));
     }
 
+    // The idea behind this test is similar to testDisallowSetWallpaper_allowed
     public void testDisallowSetUserIcon_allowed() throws Exception {
         final Bitmap originalIcon = getUserIcon();
 
@@ -166,7 +170,7 @@ public class CustomizationRestrictionsTest extends BaseDeviceAdminTest {
             mDevicePolicyManager.setUserIcon(ADMIN_RECEIVER_COMPONENT, randomBmp);
             final Bitmap currentIcon = getUserIcon();
             assertNotSame(randomBmp, currentIcon);
-            assertTrue(BitmapUtils.compareBitmaps(randomBmp, currentIcon));
+            assertFalse(BitmapUtils.compareBitmaps(originalIcon, currentIcon));
         } finally {
             if (originalIcon == null) {
                 // There is no way to restore absence of an icon. Thus set white
