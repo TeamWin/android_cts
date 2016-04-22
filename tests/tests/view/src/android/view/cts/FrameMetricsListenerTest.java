@@ -41,7 +41,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class FrameMetricsListenerTest extends ActivityInstrumentationTestCase2<MockActivity> {
 
     private Instrumentation mInstrumentation;
-    private Window.FrameMetricsListener mFrameMetricsListener;
+    private Window.OnFrameMetricsAvailableListener mFrameMetricsListener;
     private Activity mActivity;
 
     public FrameMetricsListenerTest() {
@@ -71,10 +71,11 @@ public class FrameMetricsListenerTest extends ActivityInstrumentationTestCase2<M
         final ArrayList<FrameMetrics> data = new ArrayList<>();
         final Handler handler = new Handler(Looper.getMainLooper());
         final Window myWindow = mActivity.getWindow();
-        final Window.FrameMetricsListener listener =
-            new Window.FrameMetricsListener() {
+        final Window.OnFrameMetricsAvailableListener listener =
+            new Window.OnFrameMetricsAvailableListener() {
                @Override
-               public void onMetricsAvailable(Window window, FrameMetrics frameMetrics, int dropCount) {
+               public void onFrameMetricsAvailable(Window window, FrameMetrics frameMetrics,
+                       int dropCount) {
                    assertEquals(myWindow, window);
                    assertEquals(0, dropCount);
                    data.add(new FrameMetrics(frameMetrics));
@@ -83,7 +84,7 @@ public class FrameMetricsListenerTest extends ActivityInstrumentationTestCase2<M
         runTestOnUiThread(new Runnable() {
             @Override
             public void run() {
-                mActivity.getWindow().addFrameMetricsListener(listener, handler);
+                mActivity.getWindow().addOnFrameMetricsAvailableListener(listener, handler);
             }
         });
 
@@ -107,7 +108,7 @@ public class FrameMetricsListenerTest extends ActivityInstrumentationTestCase2<M
         runTestOnUiThread(new Runnable() {
             @Override
             public void run() {
-                mActivity.getWindow().removeFrameMetricsListener(listener);
+                mActivity.getWindow().removeOnFrameMetricsAvailableListener(listener);
                 data.clear();
             }
         });
@@ -132,20 +133,22 @@ public class FrameMetricsListenerTest extends ActivityInstrumentationTestCase2<M
         final Handler handler = new Handler(Looper.getMainLooper());
         final Window myWindow = mActivity.getWindow();
 
-        final Window.FrameMetricsListener frameMetricsListener1 =
-            new Window.FrameMetricsListener() {
+        final Window.OnFrameMetricsAvailableListener frameMetricsListener1 =
+            new Window.OnFrameMetricsAvailableListener() {
                @Override
-               public void onMetricsAvailable(Window window, FrameMetrics frameMetrics, int dropCount) {
+               public void onFrameMetricsAvailable(Window window, FrameMetrics frameMetrics,
+                       int dropCount) {
                    assertEquals(myWindow, window);
                    assertEquals(0, dropCount);
                    data1.add(new FrameMetrics(frameMetrics));
                }
             };
         final ArrayList<FrameMetrics> data2 = new ArrayList<>();
-        final Window.FrameMetricsListener frameMetricsListener2 =
-            new Window.FrameMetricsListener() {
+        final Window.OnFrameMetricsAvailableListener frameMetricsListener2 =
+            new Window.OnFrameMetricsAvailableListener() {
                @Override
-               public void onMetricsAvailable(Window window, FrameMetrics frameMetrics, int dropCount) {
+               public void onFrameMetricsAvailable(Window window, FrameMetrics frameMetrics,
+                       int dropCount) {
                    assertEquals(myWindow, window);
                    assertEquals(0, dropCount);
                    data2.add(new FrameMetrics(frameMetrics));
@@ -154,8 +157,10 @@ public class FrameMetricsListenerTest extends ActivityInstrumentationTestCase2<M
         runTestOnUiThread(new Runnable() {
             @Override
             public void run() {
-                mActivity.getWindow().addFrameMetricsListener(frameMetricsListener1, handler);
-                mActivity.getWindow().addFrameMetricsListener(frameMetricsListener2, handler);
+                mActivity.getWindow().addOnFrameMetricsAvailableListener(
+                        frameMetricsListener1, handler);
+                mActivity.getWindow().addOnFrameMetricsAvailableListener(
+                        frameMetricsListener2, handler);
             }
         });
 
@@ -179,8 +184,8 @@ public class FrameMetricsListenerTest extends ActivityInstrumentationTestCase2<M
         runTestOnUiThread(new Runnable() {
             @Override
             public void run() {
-                mActivity.getWindow().removeFrameMetricsListener(frameMetricsListener1);
-                mActivity.getWindow().removeFrameMetricsListener(frameMetricsListener2);
+                mActivity.getWindow().removeOnFrameMetricsAvailableListener(frameMetricsListener1);
+                mActivity.getWindow().removeOnFrameMetricsAvailableListener(frameMetricsListener2);
             }
         });
     }
@@ -196,10 +201,11 @@ public class FrameMetricsListenerTest extends ActivityInstrumentationTestCase2<M
         final HandlerThread thread = new HandlerThread("Listener");
         thread.start();
         final Handler handler = new Handler(thread.getLooper());
-        final Window.FrameMetricsListener frameMetricsListener =
-            new Window.FrameMetricsListener() {
+        final Window.OnFrameMetricsAvailableListener frameMetricsListener =
+            new Window.OnFrameMetricsAvailableListener() {
                @Override
-               public void onMetricsAvailable(Window window, FrameMetrics frameMetrics, int dropCount) {
+               public void onFrameMetricsAvailable(Window window, FrameMetrics frameMetrics,
+                       int dropCount) {
                     try {
                         Thread.sleep(100);
                         framesDropped.addAndGet(dropCount);
@@ -210,7 +216,7 @@ public class FrameMetricsListenerTest extends ActivityInstrumentationTestCase2<M
         runTestOnUiThread(new Runnable() {
             @Override
             public void run() {
-                mActivity.getWindow().addFrameMetricsListener(frameMetricsListener, handler);
+                mActivity.getWindow().addOnFrameMetricsAvailableListener(frameMetricsListener, handler);
             }
         });
 
@@ -234,7 +240,7 @@ public class FrameMetricsListenerTest extends ActivityInstrumentationTestCase2<M
         runTestOnUiThread(new Runnable() {
             @Override
             public void run() {
-                mActivity.getWindow().removeFrameMetricsListener(frameMetricsListener);
+                mActivity.getWindow().removeOnFrameMetricsAvailableListener(frameMetricsListener);
             }
         });
     }
