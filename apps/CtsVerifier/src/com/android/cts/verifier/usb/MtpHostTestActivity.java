@@ -16,6 +16,11 @@
 
 package com.android.cts.verifier.usb;
 
+import static junit.framework.Assert.assertEquals;
+import static junit.framework.Assert.assertNotNull;
+import static junit.framework.Assert.assertTrue;
+import static junit.framework.Assert.fail;
+
 import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -28,6 +33,7 @@ import android.hardware.usb.UsbInterface;
 import android.hardware.usb.UsbManager;
 import android.mtp.MtpConstants;
 import android.mtp.MtpDevice;
+import android.mtp.MtpDeviceInfo;
 import android.mtp.MtpEvent;
 import android.mtp.MtpObjectInfo;
 import android.os.Bundle;
@@ -57,8 +63,6 @@ import java.util.ArrayList;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-
-import static junit.framework.Assert.*;
 
 public class MtpHostTestActivity extends PassFailButtons.Activity implements Handler.Callback {
     private static final int MESSAGE_PASS = 0;
@@ -265,12 +269,18 @@ public class MtpHostTestActivity extends PassFailButtons.Activity implements Han
     }
 
     private void stepTestReadEvent() {
-        final int[] eventsSupported = mMtpDevice.getDeviceInfo().getEventsSupported();
-        assertTrue(contains(eventsSupported, MtpConstants.EVENT_OBJECT_ADDED));
+        assertNotNull(mMtpDevice.getDeviceInfo().getEventsSupported());
+        assertTrue(mMtpDevice.getDeviceInfo().isEventSupported(MtpEvent.EVENT_OBJECT_ADDED));
 
         while (true) {
-            final MtpEvent event = mMtpDevice.readEvent(null);
-            if (event.getEventCode() == MtpConstants.EVENT_OBJECT_ADDED) {
+            MtpEvent event;
+            try {
+                event = mMtpDevice.readEvent(null);
+            } catch (IOException e) {
+                fail();
+                return;
+            }
+            if (event.getEventCode() == MtpEvent.EVENT_OBJECT_ADDED) {
                 break;
             }
             SystemClock.sleep(RETRY_DELAY_MS);
@@ -278,9 +288,10 @@ public class MtpHostTestActivity extends PassFailButtons.Activity implements Han
     }
 
     private void stepTestSendObject() throws IOException {
-        final int[] operationsSupported = mMtpDevice.getDeviceInfo().getOperationsSupported();
-        assertTrue(contains(operationsSupported, MtpConstants.OPERATION_SEND_OBJECT_INFO));
-        assertTrue(contains(operationsSupported, MtpConstants.OPERATION_SEND_OBJECT));
+        final MtpDeviceInfo deviceInfo = mMtpDevice.getDeviceInfo();
+        assertNotNull(deviceInfo.getOperationsSupported());
+        assertTrue(deviceInfo.isOperationSupported(MtpConstants.OPERATION_SEND_OBJECT_INFO));
+        assertTrue(deviceInfo.isOperationSupported(MtpConstants.OPERATION_SEND_OBJECT));
 
         // Delete an existing test file that may be created by the test previously.
         final int storageId = mMtpDevice.getStorageIds()[0];
@@ -348,15 +359,6 @@ public class MtpHostTestActivity extends PassFailButtons.Activity implements Han
                     usbInterface.getInterfaceSubclass() == SUBCLASS_MTP &&
                     usbInterface.getInterfaceProtocol() == PROTOCOL_MTP &&
                     "MTP".equals(usbInterface.getName())) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    private static boolean contains(int[] set, int value) {
-        for (final int n : set) {
-            if (n == value) {
                 return true;
             }
         }
