@@ -187,17 +187,19 @@ public class DeviceOwnerPositiveTestActivity extends PassFailButtons.TestListAct
                                 new Intent(this, VpnTestActivity.class))}));
 
         // DISALLOW_DATA_ROAMING
-        adapter.add(createInteractiveTestItem(this, DISALLOW_DATA_ROAMING_ID,
-                R.string.device_owner_disallow_data_roaming,
-                R.string.device_owner_disallow_data_roaming_info,
-                new ButtonInfo[] {
-                        new ButtonInfo(
-                                R.string.device_owner_user_restriction_set,
-                                createSetUserRestrictionIntent(
-                                        UserManager.DISALLOW_DATA_ROAMING)),
-                        new ButtonInfo(
-                                R.string.device_owner_settings_go,
-                                new Intent(Settings.ACTION_DATA_ROAMING_SETTINGS))}));
+        if(packageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
+            adapter.add(createInteractiveTestItem(this, DISALLOW_DATA_ROAMING_ID,
+                    R.string.device_owner_disallow_data_roaming,
+                    R.string.device_owner_disallow_data_roaming_info,
+                    new ButtonInfo[] {
+                            new ButtonInfo(
+                                    R.string.device_owner_user_restriction_set,
+                                    createSetUserRestrictionIntent(
+                                            UserManager.DISALLOW_DATA_ROAMING)),
+                            new ButtonInfo(
+                                    R.string.device_owner_settings_go,
+                                    new Intent(Settings.ACTION_DATA_ROAMING_SETTINGS))}));
+        }
 
         // DISALLOW_CONFIG_BLUETOOTH
         if (packageManager.hasSystemFeature(PackageManager.FEATURE_BLUETOOTH)) {
