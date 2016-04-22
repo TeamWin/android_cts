@@ -81,7 +81,10 @@ public class ImageReaderTest extends Camera2AndroidTestCase {
     // Max difference allowed between YUV and JPEG patches. This tolerance is intentionally very
     // generous to avoid false positives due to punch/saturation operations vendors apply to the
     // JPEG outputs.
-    private static final double IMAGE_DIFFERENCE_TOLERANCE = 30;
+    private static final double IMAGE_DIFFERENCE_TOLERANCE = 40;
+    // Legacy level devices needs even larger tolerance because jpeg and yuv are not captured
+    // from the same frame in legacy mode.
+    private static final double IMAGE_DIFFERENCE_TOLERANCE_LEGACY = 60;
 
     private SimpleImageListener mListener;
 
@@ -495,10 +498,13 @@ public class ImageReaderTest extends Camera2AndroidTestCase {
 
                             // Compare two patches using average of per-pixel differences
                             double difference = BitmapUtils.calcDifferenceMetric(yuvBmap, jpegBmap);
-
+                            double tolerance = IMAGE_DIFFERENCE_TOLERANCE;
+                            if (mStaticInfo.isHardwareLevelLegacy()) {
+                                tolerance = IMAGE_DIFFERENCE_TOLERANCE_LEGACY;
+                            }
                             Log.i(TAG, "Difference for resolution " + captureSz + " is: " +
                                     difference);
-                            if (difference > IMAGE_DIFFERENCE_TOLERANCE) {
+                            if (difference > tolerance) {
                                 // Dump files if running in verbose mode
                                 if (DEBUG) {
                                     String jpegFileName = DEBUG_FILE_NAME_BASE + "/" + captureSz +
@@ -522,7 +528,7 @@ public class ImageReaderTest extends Camera2AndroidTestCase {
                                 fail("Camera " + mCamera.getId() + ": YUV and JPEG image at " +
                                         "capture size " + captureSz + " for the same frame are " +
                                         "not similar, center patches have difference metric of " +
-                                        difference);
+                                        difference + ", tolerance is " + tolerance);
                             }
 
                             // Stop capture, delete the streams.
