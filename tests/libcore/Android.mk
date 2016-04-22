@@ -54,7 +54,7 @@ LOCAL_COMPATIBILITY_SUITE := cts
 
 LOCAL_JAVA_RESOURCE_DIRS := resources
 
-LOCAL_JAVA_RESOURCE_FILES := art/tools/libcore_failures.txt \
+LOCAL_JAVA_RESOURCE_FILES := \
     libcore/expectations/brokentests.txt \
     libcore/expectations/icebox.txt \
     libcore/expectations/knownfailures.txt \
