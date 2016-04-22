@@ -30,7 +30,7 @@
         <option name="instrumentation-arg" key="core-listener"
                 value="com.android.cts.runner.CtsTestRunListener"/>
         <option name="instrumentation-arg" key="core-expectations"
-                value="/knownfailures.txt,/brokentests.txt,/icebox.txt,/libcore_failures.txt,/taggedtests.txt,/expectations/cts-runner-specific-failures.txt" />
+                value="/knownfailures.txt,/brokentests.txt,/icebox.txt,/taggedtests.txt,/expectations/cts-runner-specific-failures.txt" />
         <option name="runtime-hint" value="45m"/>
     </test>
 </configuration>
