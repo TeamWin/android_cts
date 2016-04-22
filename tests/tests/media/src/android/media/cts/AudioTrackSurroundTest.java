@@ -44,8 +44,9 @@ import java.util.Random;
 public class AudioTrackSurroundTest extends CtsAndroidTestCase {
     private static final String TAG = "AudioTrackSurroundTest";
 
-    private static final double MAX_RATE_TOLERANCE_HZ = 100.0;
-    private static final double MAX_INSTANTANEOUS_RATE_TOLERANCE_HZ = 5000.0;
+    // We typically find tolerance to be within 0.2 percent, but we allow one percent.
+    private static final double MAX_RATE_TOLERANCE_FRACTION = 0.01;
+    private static final double MAX_INSTANTANEOUS_RATE_TOLERANCE_FRACTION = 0.15;
     private static final boolean LOG_TIMESTAMPS = false; // set true for debugging
 
     // Set this true to prefer the device that supports the particular encoding.
@@ -226,7 +227,8 @@ public class AudioTrackSurroundTest extends CtsAndroidTestCase {
                 if (previous != null) {
                     double instantaneousRate = calculateSampleRate(previous, timestamp);
                     assertEquals("instantaneous sample rate should match long term rate",
-                            measuredRate, instantaneousRate, MAX_INSTANTANEOUS_RATE_TOLERANCE_HZ);
+                            measuredRate, instantaneousRate,
+                            measuredRate * MAX_INSTANTANEOUS_RATE_TOLERANCE_FRACTION);
                     assertTrue("framePosition should be monotonic",
                             timestamp.framePosition > previous.framePosition);
                     assertTrue("nanoTime should be monotonic",
@@ -352,7 +354,7 @@ public class AudioTrackSurroundTest extends CtsAndroidTestCase {
                 // Estimate the sample rate and compare it with expected.
                 double estimatedRate = mTimestampAnalyzer.estimateSampleRate();
                 assertEquals(TEST_NAME + ": measured sample rate",
-                        mSampleRate, estimatedRate, MAX_RATE_TOLERANCE_HZ);
+                        mSampleRate, estimatedRate, mSampleRate * MAX_RATE_TOLERANCE_FRACTION);
             } finally {
                 mTrack.release();
             }
