@@ -26,6 +26,8 @@ public class ActivityManagerActivityVisiblityTests extends ActivityManagerTestBa
     private static final String VISIBLE_BEHIND_ACTIVITY = "VisibleBehindActivity";
     private static final String PIP_ON_PIP_ACTIVITY = "LaunchPipOnPipActivity";
     private static final String TEST_ACTIVITY_NAME = "TestActivity";
+    private static final String TRANSLUCENT_ACTIVITY_NAME = "TranslucentActivity";
+    private static final String DOCKED_ACTIVITY_NAME = "DockedActivity";
 
     public void testVisibleBehindHomeActivity() throws Exception {
         mDevice.executeShellCommand(getAmStartCmd(VISIBLE_BEHIND_ACTIVITY));
@@ -112,5 +114,19 @@ public class ActivityManagerActivityVisiblityTests extends ActivityManagerTestBa
         mAmWmState.assertVisibility(TRANSLUCENT_ACTIVITY, true);
         mAmWmState.assertVisibility(TEST_ACTIVITY_NAME, false);
         mAmWmState.assertHomeActivityVisible(true);
+    }
+
+    public void testTranslucentActivityOverDockedStack() throws Exception {
+        mDevice.executeShellCommand(getAmStartCmd(TEST_ACTIVITY_NAME));
+        launchActivityInDockStack(DOCKED_ACTIVITY_NAME);
+        launchActivityInDockStack(TRANSLUCENT_ACTIVITY_NAME);
+        mAmWmState.computeState(mDevice, new String[] {TEST_ACTIVITY_NAME, DOCKED_ACTIVITY_NAME},
+                false /* compareTaskAndStackBounds */);
+        mAmWmState.assertContainsStack("Must contain docked stack", DOCKED_STACK_ID);
+        mAmWmState.assertContainsStack("Must contain fullscreen stack",
+                FULLSCREEN_WORKSPACE_STACK_ID);
+        mAmWmState.assertVisibility(DOCKED_ACTIVITY_NAME, true);
+        mAmWmState.assertVisibility(TEST_ACTIVITY_NAME, true);
+        mAmWmState.assertVisibility(TRANSLUCENT_ACTIVITY_NAME, true);
     }
 }
