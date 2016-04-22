@@ -95,7 +95,7 @@ public class ActivityManagerManifestLayoutTests extends ActivityManagerTestBase 
             launchActivityInDockStack(activityName);
             resizeDockedStack(1, 1, 1, 1);
         }
-        getDisplayAndWindowState(activityName);
+        getDisplayAndWindowState(activityName, false);
 
         final int minimalWidth = dpToPx(MINIMAL_WIDTH_DP, mDisplay.getDpi());
         final int minimalHeight = dpToPx(MINIMAL_HEIGHT_DP, mDisplay.getDpi());
@@ -118,7 +118,7 @@ public class ActivityManagerManifestLayoutTests extends ActivityManagerTestBase 
         // Launch in freeform stack
         launchActivityInStack(activityName, FREEFORM_WORKSPACE_STACK_ID);
 
-        getDisplayAndWindowState(activityName);
+        getDisplayAndWindowState(activityName, true);
 
         final Rectangle containingRect = mWindowState.getContainingFrame();
         final Rectangle appRect = mDisplay.getAppRect();
@@ -139,12 +139,17 @@ public class ActivityManagerManifestLayoutTests extends ActivityManagerTestBase 
                 vGravity, hGravity, expectedWidthPx, expectedHeightPx, containingRect, appRect);
     }
 
-    private void getDisplayAndWindowState(String activityName) throws Exception {
+    private void getDisplayAndWindowState(String activityName, boolean checkFocus)
+            throws Exception {
         final String windowName = getWindowName(activityName);
 
         mAmWmState.computeState(mDevice, true /* visibleOnly */, new String[] {activityName});
 
-        mAmWmState.assertFocusedWindow("Test window must be the front window.", windowName);
+        if (checkFocus) {
+            mAmWmState.assertFocusedWindow("Test window must be the front window.", windowName);
+        } else {
+            mAmWmState.assertVisibility(activityName, true);
+        }
 
         mAmWmState.getWmState().getMatchingWindowState(windowName, mTempWindowList);
 
