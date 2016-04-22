@@ -128,6 +128,10 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
 
     protected void launchActivityInDockStack(String activityName) throws Exception {
         mDevice.executeShellCommand(getAmStartCmd(activityName));
+        moveActivityToDockStack(activityName);
+    }
+
+    protected void moveActivityToDockStack(String activityName) throws Exception {
         final int taskId = getActivityTaskId(activityName);
         final String cmd = AM_MOVE_TASK + taskId + " " + DOCKED_STACK_ID + " true";
         mDevice.executeShellCommand(cmd);
