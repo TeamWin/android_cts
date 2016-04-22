@@ -80,14 +80,20 @@ public class DeviceAdminUninstallTest {
     private DevicePolicyManager mDpm;
     private PackageManager mPm;
     private Activity mActivity;
+    private boolean mHasFeature;
 
     @Before
     public void setUp() throws Exception {
+        mContext = InstrumentationRegistry.getTargetContext();
+        mPm = mContext.getPackageManager();
+        mHasFeature = mPm.hasSystemFeature(PackageManager.FEATURE_DEVICE_ADMIN);
+        if (!mHasFeature) {
+            // No point of initializing other stuff
+            return;
+        }
         mInstrumentation = InstrumentationRegistry.getInstrumentation();
         mUiDevice = UiDevice.getInstance(mInstrumentation);
-        mContext = InstrumentationRegistry.getTargetContext();
         mDpm = mContext.getSystemService(DevicePolicyManager.class);
-        mPm = mContext.getPackageManager();
         startTestActivity();
     }
 
@@ -178,6 +184,9 @@ public class DeviceAdminUninstallTest {
 
     @Test
     public void uninstallPackageWithActiveAdmin() {
+        if (!mHasFeature) {
+            return;
+        }
         Assert.assertTrue("Package " + DEVICE_ADMIN_PACKAGE_NAME + " was not found installed",
                 packageExists());
         Assert.assertTrue("Package " + DEVICE_ADMIN_PACKAGE_NAME
@@ -188,6 +197,9 @@ public class DeviceAdminUninstallTest {
 
     @After
     public void tearDown() {
+        if (!mHasFeature) {
+            return;
+        }
         mActivity.finish();
         mUiDevice.pressHome();
     }
