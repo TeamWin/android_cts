@@ -102,8 +102,9 @@ public class DeviceAdminTestReceiver extends DeviceAdminReceiver {
             filter.addAction(ByodHelperActivity.ACTION_BYOD_SET_LOCATION_AND_CHECK_UPDATES);
             filter.addAction(VpnTestActivity.ACTION_VPN);
             filter.addAction(ByodHelperActivity.ACTION_TEST_SELECT_WORK_CHALLENGE);
-            filter.addAction(ByodHelperActivity.ACTION_TEST_CONFIRM_WORK_CREDENTIALS);
+            filter.addAction(ByodHelperActivity.ACTION_LAUNCH_CONFIRM_WORK_CREDENTIALS);
             filter.addAction(ByodHelperActivity.ACTION_SET_ORGANIZATION_INFO);
+            filter.addAction(ByodHelperActivity.ACTION_TEST_PARENT_PROFILE_PASSWORD);
             filter.addAction(SetSupportMessageActivity.ACTION_SET_SUPPORT_MSG);
             filter.addAction(CommandReceiverActivity.ACTION_EXECUTE_COMMAND);
             dpm.addCrossProfileIntentFilter(getWho(context), filter,
