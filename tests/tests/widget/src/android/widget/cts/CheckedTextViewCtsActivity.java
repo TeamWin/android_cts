@@ -16,13 +16,12 @@
 
 package android.widget.cts;
 
-import android.widget.cts.R;
-
 import android.app.Activity;
 import android.os.Bundle;
+import android.widget.CheckedTextView;
 
 /**
- * A minimal application for CheckedTextView test.
+ * A minimal application for {@link CheckedTextView} test.
  */
 public class CheckedTextViewCtsActivity extends Activity {
     /**
