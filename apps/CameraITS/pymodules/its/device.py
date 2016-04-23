@@ -439,12 +439,21 @@ class ItsSession(object):
             raise its.error.Error('3A failed to converge')
         return ae_sens, ae_exp, awb_gains, awb_transform, af_dist
 
-    def do_capture(self, cap_request, out_surfaces=None, reprocess_format=None):
+    def do_capture(self, cap_request,
+            out_surfaces=None, reprocess_format=None, repeat_request=None):
         """Issue capture request(s), and read back the image(s) and metadata.
 
         The main top-level function for capturing one or more images using the
         device. Captures a single image if cap_request is a single object, and
         captures a burst if it is a list of objects.
+
+        The optional repeat_request field can be used to assign a repeating
+        request list ran in background for 3 seconds to warm up the capturing
+        pipeline before start capturing. The repeat_requests will be ran on a
+        640x480 YUV surface without sending any data back. The caller needs to
+        make sure the stream configuration defined by out_surfaces and
+        repeat_request are valid or do_capture may fail because device does not
+        support such stream configuration.
 
         The out_surfaces field can specify the width(s), height(s), and
         format(s) of the captured image. The formats may be "yuv", "jpeg",
@@ -579,6 +588,17 @@ class ItsSession(object):
             cmd["reprocessFormat"] = reprocess_format
         else:
             cmd["cmdName"] = "doCapture"
+
+        if repeat_request is not None and reprocess_format is not None:
+            raise its.error.Error('repeating request + reprocessing is not supported')
+
+        if repeat_request is None:
+            cmd["repeatRequests"] = []
+        elif not isinstance(repeat_request, list):
+            cmd["repeatRequests"] = [repeat_request]
+        else:
+            cmd["repeatRequests"] = repeat_request
+
         if not isinstance(cap_request, list):
             cmd["captureRequests"] = [cap_request]
         else:
