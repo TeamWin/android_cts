@@ -197,7 +197,8 @@ public class ConferenceTest extends BaseTelecomTestWithMockServices {
 
         // Dialing state is unsupported for conference calls. so, the state remains active.
         mConferenceObject.setDialing();
-        assertCallState(conf, Call.STATE_ACTIVE);
+        // just assert call state is not dialing, the state remains as previous one.
+        assertTrue(conf.getState() != Call.STATE_DIALING);
 
         mConferenceObject.setOnHold();
         assertCallState(conf, Call.STATE_HOLDING);
