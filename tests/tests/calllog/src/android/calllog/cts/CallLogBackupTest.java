@@ -27,8 +27,6 @@ import android.provider.Settings;
 import android.test.InstrumentationTestCase;
 import android.util.Log;
 
-import com.android.org.bouncycastle.util.encoders.Base64;
-
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
@@ -54,13 +52,14 @@ public class CallLogBackupTest extends InstrumentationTestCase {
 
     private static final String LOCAL_BACKUP_COMPONENT =
             "android/com.android.internal.backup.LocalTransport";
+
     private static final String CALLLOG_BACKUP_PACKAGE = "com.android.providers.calllogbackup";
     private static final String ALT_CALLLOG_BACKUP_PACKAGE = "com.android.calllogbackup";
 
     private static final String TEST_NUMBER = "555-1234";
     private static final int CALL_START_TIME = 0;
     private static final int CALL_DURATION = 2000;
-    private static final int TIMEOUT_BACKUP = 4000;
+    private static final int TIMEOUT_BACKUP = 10000;
     private static final String TEST_POST_DIAL_DIGITS = ";1234";
     private static final String TEST_VIA_NUMBER = "555-1112";
 
@@ -83,6 +82,11 @@ public class CallLogBackupTest extends InstrumentationTestCase {
         CallLog.Calls.POST_DIAL_DIGITS,
         CallLog.Calls.VIA_NUMBER
     };
+
+    protected interface Condition {
+        Object expected();
+        Object actual();
+    }
 
     class Call {
         int id;
@@ -142,6 +146,7 @@ public class CallLogBackupTest extends InstrumentationTestCase {
         // Clear the call log
         Log.i(TAG, "Clearing the call log");
         clearCallLog();
+        clearBackups();
 
         // Add a single call and verify it exists
         Log.i(TAG, "Adding a call");
@@ -151,7 +156,6 @@ public class CallLogBackupTest extends InstrumentationTestCase {
         // Run backup for the call log (saves the single call).
         Log.i(TAG, "Running backup");
         runBackupFor(mCallLogBackupPackageName);
-        Thread.sleep(TIMEOUT_BACKUP); // time for backup
 
         // Clear the call log and verify that it is empty
         Log.i(TAG, "Clearing the call log");
@@ -161,9 +165,11 @@ public class CallLogBackupTest extends InstrumentationTestCase {
         // Restore from the previous backup and verify we have the new call again.
         Log.i(TAG, "Restoring the single call");
         runRestoreFor(mCallLogBackupPackageName);
-        Thread.sleep(TIMEOUT_BACKUP); // time for restore
 
         verifyCall();
+
+        // Clean up after ourselves
+        clearCallLog();
 
         // Reset backup manager to original state.
         Log.i(TAG, "Reseting backup");
@@ -173,9 +179,19 @@ public class CallLogBackupTest extends InstrumentationTestCase {
     }
 
     private Call verifyCall() {
-        List<Call> calls = getCalls();
-        assertEquals(1, calls.size());
+        waitUntilConditionIsTrueOrTimeout(new Condition() {
+            @Override
+            public Object expected() {
+                return 1;
+            }
 
+            @Override
+            public Object actual() {
+                return getCalls().size();
+            }
+        }, TIMEOUT_BACKUP);
+
+        List<Call> calls = getCalls();
         Call call = calls.get(0);
         assertEquals(TEST_NUMBER, call.number);
         assertEquals(CALL_START_TIME, call.date);
@@ -203,8 +219,7 @@ public class CallLogBackupTest extends InstrumentationTestCase {
     }
 
     private void runBackupFor(String packageName) throws Exception {
-        exec("bmgr backup " + packageName);
-        exec("bmgr run");
+        exec("bmgr backupnow " + packageName);
     }
 
     private void runRestoreFor(String packageName) throws Exception {
@@ -248,6 +263,10 @@ public class CallLogBackupTest extends InstrumentationTestCase {
         resolver.delete(Calls.CONTENT_URI, null, null);
     }
 
+    private void clearBackups() throws Exception {
+        exec("bmgr wipe " + LOCAL_BACKUP_COMPONENT + " " + mCallLogBackupPackageName);
+    }
+
     private void addCall() {
         ContentValues values = new ContentValues(6);
         values.put(Calls.NUMBER, TEST_NUMBER);
@@ -260,6 +279,19 @@ public class CallLogBackupTest extends InstrumentationTestCase {
         values.put(Calls.VIA_NUMBER, TEST_VIA_NUMBER);
 
         getContext().getContentResolver().insert(Calls.CONTENT_URI, values);
+    }
+
+    void waitUntilConditionIsTrueOrTimeout(Condition condition, long timeout) {
+        final long start = System.currentTimeMillis();
+        while (!condition.expected().equals(condition.actual())
+                && System.currentTimeMillis() - start < timeout) {
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException e) {
+                // ignore
+            }
+        }
+        assertEquals(condition.expected(), condition.actual());
     }
 
     private List<Call> getCalls() {
