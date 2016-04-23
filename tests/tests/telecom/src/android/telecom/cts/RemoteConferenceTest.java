@@ -480,6 +480,13 @@ public class RemoteConferenceTest extends BaseRemoteTelecomTest {
                             remoteConnection2.getConference() == null) {
                         conferenceRemoteConnections(remoteConnection1, remoteConnection2);
                     }
+
+                    if (connection1.getState() == Connection.STATE_HOLDING){
+                        connection1.setActive();
+                    }
+                    if(connection2.getState() == Connection.STATE_HOLDING){
+                        connection2.setActive();
+                    }
                 }
                 @Override
                 public void onRemoteConferenceAdded(RemoteConference remoteConference) {
@@ -520,6 +527,14 @@ public class RemoteConferenceTest extends BaseRemoteTelecomTest {
                                 (MockConnection)connection1, (MockConnection)connection2);
                         CtsRemoteConnectionService.addConferenceToTelecom(conference);
                         conferences.add(conference);
+
+                        if (connection1.getState() == Connection.STATE_HOLDING){
+                            connection1.setActive();
+                        }
+                        if(connection2.getState() == Connection.STATE_HOLDING){
+                            connection2.setActive();
+                        }
+
                         lock.release();
                     }
                 }
