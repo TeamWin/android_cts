@@ -45,4 +45,7 @@
     <!-- Tell all JarHostTests to only list the tests -->
     <option name="compatibility:test-arg" value="com.android.compatibility.common.tradefed.testtype.JarHostTest:collect-tests-only:true" />
 
+    <!-- Tell all DalvikTests to only list the tests -->
+    <option name="compatibility:test-arg" value="com.android.compatibility.testtype.DalvikTest:collect-tests-only:true" />
+
 </configuration>
