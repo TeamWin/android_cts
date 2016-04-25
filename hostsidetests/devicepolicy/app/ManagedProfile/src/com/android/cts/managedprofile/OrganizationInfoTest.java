@@ -20,9 +20,13 @@ import android.graphics.Color;
 
 public class OrganizationInfoTest extends BaseManagedProfileTest {
 
-    public void testDefaultOrganizationColorIsGray() {
+    // needs to match DevicePolicyManagerService.ActiveAdmin.DEF_ORGANIZATION_COLOR
+    private static final int DEFAULT_ORGANIZATION_COLOR = Color.parseColor("#00796B");
+
+    public void testDefaultOrganizationColor() {
         int defaultColor = mDevicePolicyManager.getOrganizationColor(ADMIN_RECEIVER_COMPONENT);
-        assertEquals(Color.GRAY, defaultColor);
+        assertEquals("Default color returned: " + Integer.toHexString(defaultColor),
+                DEFAULT_ORGANIZATION_COLOR, defaultColor);
     }
 
     public void testSetOrganizationColor() {
@@ -40,7 +44,7 @@ public class OrganizationInfoTest extends BaseManagedProfileTest {
 
             for (int color : colors) {
                 mDevicePolicyManager.setOrganizationColor(ADMIN_RECEIVER_COMPONENT, color);
-                assertEquals(color,
+                assertEquals(color | 0xFF000000 /* opacity always enforced to 100% */,
                         mDevicePolicyManager.getOrganizationColor(ADMIN_RECEIVER_COMPONENT));
             }
         } finally {
