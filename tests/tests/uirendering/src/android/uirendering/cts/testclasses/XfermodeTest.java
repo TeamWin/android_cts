@@ -22,19 +22,17 @@ import android.graphics.Point;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffXfermode;
 import android.graphics.RectF;
-import android.test.suitebuilder.annotation.MediumTest;
+import android.test.suitebuilder.annotation.LargeTest;
 import android.uirendering.cts.bitmapverifiers.SamplePointVerifier;
 import android.uirendering.cts.testinfrastructure.ActivityTestBase;
 import android.uirendering.cts.testinfrastructure.CanvasClient;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
 
 import java.util.ArrayList;
 import java.util.List;
 
-@MediumTest
-@RunWith(Parameterized.class)
+@LargeTest // large while non-parameterized
+//@RunWith(Parameterized.class) // TODO: Reenable when CTS supports parameterized tests
 public class XfermodeTest extends ActivityTestBase {
     /**
      * There are 4 locations we care about in testing each filter:
@@ -125,16 +123,12 @@ public class XfermodeTest extends ActivityTestBase {
                 BG_COLOR, DST_COLOR, SCREEN_COLOR, SRC_COLOR } },
     };
 
-    @Parameterized.Parameters(name = "{0}")
+    //@Parameterized.Parameters(name = "{0}")
     public static List<Config> configs() {
         return configs(MODES_AND_EXPECTED_COLORS);
     }
 
-    private final Config mConfig;
-
-    public XfermodeTest(Config config) {
-        mConfig = config;
-    }
+    private Config mConfig;
 
     private CanvasClient mCanvasClient = new CanvasClient() {
         final Paint mPaint = new Paint();
@@ -175,8 +169,11 @@ public class XfermodeTest extends ActivityTestBase {
 
     @Test
     public void test() {
-        createTest()
-                .addCanvasClient(mCanvasClient, mConfig.hardwareAccelerated)
-                .runWithVerifier(new SamplePointVerifier(TEST_POINTS, mConfig.expectedColors));
+        for (XfermodeTest.Config config : configs()) {
+            mConfig = config;
+            createTest()
+                    .addCanvasClient(mCanvasClient, mConfig.hardwareAccelerated)
+                    .runWithVerifier(new SamplePointVerifier(TEST_POINTS, mConfig.expectedColors));
+        }
     }
 }
