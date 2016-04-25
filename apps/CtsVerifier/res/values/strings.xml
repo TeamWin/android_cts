@@ -587,7 +587,7 @@
     <string name="nfc_hce_foreground_payment_emulator">Foreground override payment services (Emulator)</string>
     <string name="nfc_hce_foreground_payment_reader">Foreground override payment services (Reader)</string>
     <string name="nfc_hce_foreground_payment_help">This test enables two payment services, and asks you to set one as the default service. It then uses Androids API to allow the foreground app to set a preference for the non-default service. This will cause the non-default payment service to be invoked.</string>
-    <string name="nfc_hce_change_favor_foreground">This test requires the "Favor foreground app" setting to be enabled. Tap OK to go to Tap and Pay settings and check the Favor foreground app option</string>
+    <string name="nfc_hce_change_favor_foreground">This test requires the \"Use default\" setting to be set to \"Except when another payment app is open\". Tap OK to go to Tap and Pay settings and make sure the \"Use default\" setting is set to \"Except when another payment app is open\".</string>
     <string name="nfc_hce_offhost_service_emulator">Off-host service (Emulator)</string>
     <string name="nfc_hce_offhost_service_reader">Off-host service (Reader)</string>
     <string name="nfc_hce_offhost_emulator_help">This tests enables a service that declares some AIDs to reside off-host. This test only needs to be passed if your device has a secure element (either embedded or UICC.). The responses from the secure element are not verified by the test - it is up to the tester to verify the responses are as expected.</string>
