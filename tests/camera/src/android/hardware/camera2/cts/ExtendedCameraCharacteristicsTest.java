@@ -573,7 +573,7 @@ public class ExtendedCameraCharacteristicsTest extends AndroidTestCase {
 
             long maxFastYuvRate =
                     config.getOutputMinFrameDuration(ImageFormat.YUV_420_888, maxFastYuvSize);
-            final long MIN_8MP_DURATION_BOUND_NS = 200000000; // 50 ms, 20 fps
+            final long MIN_8MP_DURATION_BOUND_NS = 50000000; // 50 ms, 20 fps
             boolean haveFastYuvRate = maxFastYuvRate <= MIN_8MP_DURATION_BOUND_NS;
 
             final int SIZE_8MP_BOUND = 8000000;
@@ -656,7 +656,7 @@ public class ExtendedCameraCharacteristicsTest extends AndroidTestCase {
                 assertTrue(
                         String.format("Camera device %s has all the requirements for BURST" +
                                 " capability but does not report it!", mIds[counter]),
-                        !(haveMaxYuv && haveMaxYuvRate && haveFastAeTargetFps &&
+                        !(haveMaxYuv && haveMaxYuvRate && haveFastYuvRate && haveFastAeTargetFps &&
                                 haveFastSyncLatency && maxYuvMatchSensor &&
                                 haveAeLock && haveAwbLock));
             }
