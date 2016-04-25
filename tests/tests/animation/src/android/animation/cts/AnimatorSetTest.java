@@ -249,6 +249,35 @@ public class AnimatorSetTest extends
         assertTrue(l2.mEndIsCalled);
     }
 
+    public void testPauseBeforeStart() throws Throwable {
+        final AnimatorSet set = new AnimatorSet();
+        ValueAnimator a1 = ValueAnimator.ofFloat(0f, 100f);
+        a1.setDuration(50);
+        ValueAnimator a2 = ValueAnimator.ofFloat(0f, 100f);
+        a2.setDuration(50);
+        set.setStartDelay(50);
+        set.playSequentially(a1, a2);
+
+        final MyListener listener = new MyListener();
+        set.addListener(listener);
+
+        runTestOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                // Pause animator set before calling start()
+                set.pause();
+                // Verify that pause should have no effect on a not-yet-started animator.
+                assertFalse(set.isPaused());
+                set.start();
+            }
+        });
+        Thread.sleep(300);
+
+        // Animator set should finish running by now since it's not paused.
+        assertTrue(listener.mStartIsCalled);
+        assertTrue(listener.mEndIsCalled);
+    }
+
     public void testDuration() throws Throwable {
         xAnimator.setRepeatCount(ValueAnimator.INFINITE);
         Animator[] animatorArray = { xAnimator, yAnimator };
