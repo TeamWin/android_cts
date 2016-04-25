@@ -184,6 +184,71 @@ public class AnimatorSetTest extends
         verifySequentialPlayOrder(set, new Animator[] {xAnimator, yAnimator, zAnimator});
     }
 
+    public void testPauseAndResume() throws Throwable {
+        final AnimatorSet set = new AnimatorSet();
+        ValueAnimator a1 = ValueAnimator.ofFloat(0f, 100f);
+        a1.setDuration(50);
+        ValueAnimator a2 = ValueAnimator.ofFloat(0f, 100f);
+        a2.setDuration(50);
+        a1.addListener(new AnimatorListenerAdapter() {
+            @Override
+            public void onAnimationStart(Animator animation) {
+                // Pause non-delayed set once the child animator starts
+                set.pause();
+            }
+        });
+        set.playTogether(a1, a2);
+
+        final AnimatorSet delayedSet = new AnimatorSet();
+        ValueAnimator a3 = ValueAnimator.ofFloat(0f, 100f);
+        a3.setDuration(50);
+        ValueAnimator a4 = ValueAnimator.ofFloat(0f, 100f);
+        a4.setDuration(50);
+        delayedSet.playSequentially(a3, a4);
+        delayedSet.setStartDelay(50);
+
+        MyListener l1 = new MyListener();
+        MyListener l2 = new MyListener();
+        set.addListener(l1);
+        delayedSet.addListener(l2);
+
+        runTestOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                set.start();
+                delayedSet.start();
+
+                // Pause the delayed set during start delay
+                delayedSet.pause();
+            }
+        });
+
+        // Sleep long enough so that if the sets are not properly paused, they would have
+        // finished.
+        Thread.sleep(300);
+        // Verify that both sets have been paused and *not* finished.
+        assertTrue(set.isPaused());
+        assertTrue(delayedSet.isPaused());
+        assertTrue(l1.mStartIsCalled);
+        assertTrue(l2.mStartIsCalled);
+        assertFalse(l1.mEndIsCalled);
+        assertFalse(l2.mEndIsCalled);
+
+        runTestOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                set.resume();
+                delayedSet.resume();
+            }
+        });
+        Thread.sleep(300);
+
+        assertFalse(set.isPaused());
+        assertFalse(delayedSet.isPaused());
+        assertTrue(l1.mEndIsCalled);
+        assertTrue(l2.mEndIsCalled);
+    }
+
     public void testDuration() throws Throwable {
         xAnimator.setRepeatCount(ValueAnimator.INFINITE);
         Animator[] animatorArray = { xAnimator, yAnimator };
