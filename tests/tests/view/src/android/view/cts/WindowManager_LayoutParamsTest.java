@@ -113,6 +113,7 @@ public class WindowManager_LayoutParamsTest extends AndroidTestCase {
 
         params = new WindowManager.LayoutParams();
         params.setTitle(PARAMS_TITLE);
+        params.accessibilityTitle = PARAMS_TITLE;
         params.alpha = ALPHA - 0.5f;
         params.windowAnimations = WINDOW_ANIMATIONS;
         params.dimAmount = DIM_AMOUNT - 1.0f;
