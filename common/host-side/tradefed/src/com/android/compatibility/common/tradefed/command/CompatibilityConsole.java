@@ -46,6 +46,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -290,12 +291,17 @@ public class CompatibilityConsole extends Console {
             shardIndex = 0;
             // print the final shared lists
             for (List<Pair<String, Long>> shardedModules : splittedModules) {
-                printLine(String.format("shard #%d (%s)",
+                StringBuilder lineBuffer = new StringBuilder();
+                lineBuffer.append(String.format("shard #%d (%s):",
                         shardIndex, TimeUtil.formatElapsedTime(shardTimes[shardIndex])));
-                for (Pair<String, Long> module : shardedModules) {
-                    printLine(String.format("    %s", module.first));
+                Iterator<Pair<String, Long>> itr = shardedModules.iterator();
+                lineBuffer.append(itr.next().first);
+                while (itr.hasNext()) {
+                    lineBuffer.append(',');
+                    lineBuffer.append(itr.next().first);
                 }
                 shardIndex++;
+                printLine(lineBuffer.toString());
             }
         } else {
             printLine("No modules found");
