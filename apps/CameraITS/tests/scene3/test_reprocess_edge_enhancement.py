@@ -64,7 +64,7 @@ def test_edge_mode(cam, edge_mode, sensitivity, exp, fd, out_surface,
     sharpness_list = []
     for n in range(NUM_SAMPLES):
         cap = cam.do_capture(req, out_surface, reprocess_format)
-        img = its.image.decompress_jpeg_to_rgb_image(cap["data"])
+        img = its.image.convert_capture_to_rgb_image(cap)
         if n == 0:
             its.image.write_image(img, "%s_reprocess_fmt_%s_edge=%d.jpg" %
                 (NAME, reprocess_format, edge_mode))
