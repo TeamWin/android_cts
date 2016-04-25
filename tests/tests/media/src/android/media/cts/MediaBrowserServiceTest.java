@@ -53,6 +53,11 @@ public class MediaBrowserServiceTest extends InstrumentationTestCase {
             public void onChildrenLoaded(String parentId, List<MediaItem> children) {
                 synchronized (mWaitLock) {
                     mOnChildrenLoaded = true;
+                    if (children != null) {
+                        for (MediaItem item : children) {
+                            assertRootHints(item);
+                        }
+                    }
                     mWaitLock.notify();
                 }
             }
@@ -62,6 +67,11 @@ public class MediaBrowserServiceTest extends InstrumentationTestCase {
                     Bundle options) {
                 synchronized (mWaitLock) {
                     mOnChildrenLoadedWithOptions = true;
+                    if (children != null) {
+                        for (MediaItem item : children) {
+                            assertRootHints(item);
+                        }
+                    }
                     mWaitLock.notify();
                 }
             }
@@ -72,6 +82,7 @@ public class MediaBrowserServiceTest extends InstrumentationTestCase {
         public void onItemLoaded(MediaItem item) {
             synchronized (mWaitLock) {
                 mOnItemLoaded = true;
+                assertRootHints(item);
                 mWaitLock.notify();
             }
         }
@@ -82,14 +93,19 @@ public class MediaBrowserServiceTest extends InstrumentationTestCase {
     private boolean mOnChildrenLoaded;
     private boolean mOnChildrenLoadedWithOptions;
     private boolean mOnItemLoaded;
+    private Bundle mRootHints;
 
     @Override
     protected void setUp() throws Exception {
         getInstrumentation().runOnMainSync(new Runnable() {
             @Override
             public void run() {
+                mRootHints = new Bundle();
+                mRootHints.putBoolean(MediaBrowserService.BrowserRoot.EXTRA_RECENT, true);
+                mRootHints.putBoolean(MediaBrowserService.BrowserRoot.EXTRA_OFFLINE, true);
+                mRootHints.putBoolean(MediaBrowserService.BrowserRoot.EXTRA_SUGGESTED, true);
                 mMediaBrowser = new MediaBrowser(getInstrumentation().getTargetContext(),
-                        TEST_BROWSER_SERVICE, mConnectionCallback, null);
+                        TEST_BROWSER_SERVICE, mConnectionCallback, mRootHints);
             }
         });
         synchronized (mWaitLock) {
@@ -185,5 +201,16 @@ public class MediaBrowserServiceTest extends InstrumentationTestCase {
         MediaBrowserService.BrowserRoot browserRoot = new BrowserRoot(id, extras);
         assertEquals(id, browserRoot.getRootId());
         assertEquals(val, browserRoot.getExtras().getString(key));
+    }
+
+    private void assertRootHints(MediaItem item) {
+        Bundle rootHints = item.getDescription().getExtras();
+        assertNotNull(rootHints);
+        assertEquals(mRootHints.getBoolean(BrowserRoot.EXTRA_RECENT),
+                rootHints.getBoolean(BrowserRoot.EXTRA_RECENT));
+        assertEquals(mRootHints.getBoolean(BrowserRoot.EXTRA_OFFLINE),
+                rootHints.getBoolean(BrowserRoot.EXTRA_OFFLINE));
+        assertEquals(mRootHints.getBoolean(BrowserRoot.EXTRA_SUGGESTED),
+                rootHints.getBoolean(BrowserRoot.EXTRA_SUGGESTED));
     }
 }
