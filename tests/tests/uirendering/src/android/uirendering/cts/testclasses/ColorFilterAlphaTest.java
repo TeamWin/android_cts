@@ -22,18 +22,16 @@ import android.graphics.Point;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffXfermode;
 import android.graphics.PorterDuffColorFilter;
-import android.test.suitebuilder.annotation.MediumTest;
+import android.test.suitebuilder.annotation.LargeTest;
 import android.uirendering.cts.bitmapverifiers.SamplePointVerifier;
 import android.uirendering.cts.testinfrastructure.ActivityTestBase;
 import android.uirendering.cts.testinfrastructure.CanvasClient;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
 
 import java.util.List;
 
-@MediumTest
-@RunWith(Parameterized.class)
+@LargeTest // large while non-parameterized
+//@RunWith(Parameterized.class) // TODO: Reenable when CTS supports parameterized tests
 public class ColorFilterAlphaTest extends ActivityTestBase {
     // We care about one point in each of the four rectangles of different alpha values, as well as
     // the area outside the rectangles
@@ -86,16 +84,12 @@ public class ColorFilterAlphaTest extends ActivityTestBase {
                 0xFFC21A1A, 0xFFC93333, 0xFFD04D4D, 0xFFD66666, 0xFFBB0000 } },
     };
 
-    @Parameterized.Parameters(name = "{0}")
+    //@Parameterized.Parameters(name = "{0}")
     public static List<XfermodeTest.Config> configs() {
         return XfermodeTest.configs(MODES_AND_EXPECTED_COLORS);
     }
 
-    private final XfermodeTest.Config mConfig;
-
-    public ColorFilterAlphaTest(XfermodeTest.Config config) {
-        mConfig = config;
-    }
+    private XfermodeTest.Config mConfig;
 
     private static final int[] BLOCK_COLORS = new int[] {
             0x33808080,
@@ -132,9 +126,12 @@ public class ColorFilterAlphaTest extends ActivityTestBase {
 
     @Test
     public void test() {
-        createTest()
-                .addCanvasClient(mCanvasClient, mConfig.hardwareAccelerated)
-                .runWithVerifier(new SamplePointVerifier(TEST_POINTS, mConfig.expectedColors));
+        for (XfermodeTest.Config config : configs()) {
+            mConfig = config;
+            createTest()
+                    .addCanvasClient(mCanvasClient, mConfig.hardwareAccelerated)
+                    .runWithVerifier(new SamplePointVerifier(TEST_POINTS, mConfig.expectedColors));
+        }
     }
 }
 
