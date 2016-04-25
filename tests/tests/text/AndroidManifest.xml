@@ -25,7 +25,8 @@
 
         <activity android:name="android.text.cts.EmojiCtsActivity"
             android:label="AvailableIntentsActivity"
-            android:screenOrientation="nosensor">
+            android:screenOrientation="nosensor"
+            android:windowSoftInputMode="stateAlwaysHidden">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.FRAMEWORK_INSTRUMENTATION_TEST" />
@@ -35,12 +36,12 @@
         <activity android:name="android.text.method.cts.KeyListenerCtsActivity"
             android:label="KeyListenerCtsActivity"
             android:screenOrientation="nosensor"
-            android:windowSoftInputMode="stateAlwaysHidden"
-        />
+            android:windowSoftInputMode="stateAlwaysHidden"/>
 
         <activity android:name="android.text.method.cts.CtsActivity"
             android:label="CtsActivity"
-            android:screenOrientation="nosensor">
+            android:screenOrientation="nosensor"
+            android:windowSoftInputMode="stateAlwaysHidden">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.FRAMEWORK_INSTRUMENTATION_TEST" />
