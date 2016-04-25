@@ -290,7 +290,8 @@ cts_device_jars := \
     CtsJdwpApp
 
 cts_target_junit_tests := \
-    CtsJdwp
+    CtsJdwp \
+    CtsLibcoreOj
 
 cts_deqp_test_apis := \
     egl \
