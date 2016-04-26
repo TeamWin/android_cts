@@ -98,6 +98,7 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
     protected ActivityAndWindowManagersState mAmWmState = new ActivityAndWindowManagersState();
 
     private int mInitialAccelerometerRotation;
+    private int mUserRotation;
 
     @Override
     protected void setUp() throws Exception {
@@ -106,6 +107,7 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
         // Get the device, this gives a handle to run commands and install APKs.
         mDevice = getDevice();
         mInitialAccelerometerRotation = getAccelerometerRotation();
+        mUserRotation = getUserRotation();
     }
 
     @Override
@@ -114,6 +116,7 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
         try {
             mDevice.executeShellCommand(AM_FORCE_STOP_TEST_PACKAGE);
             setAccelerometerRotation(mInitialAccelerometerRotation);
+            setUserRotation(mUserRotation);
             // Remove special stacks.
             mDevice.executeShellCommand(AM_REMOVE_STACK + PINNED_STACK_ID);
             mDevice.executeShellCommand(AM_REMOVE_STACK + DOCKED_STACK_ID);
@@ -224,18 +227,37 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
 
     protected void setDeviceRotation(int rotation) throws DeviceNotAvailableException {
         setAccelerometerRotation(0);
-        runCommandAndPrintOutput("settings put system user_rotation " + rotation);
+        setUserRotation(rotation);
     }
 
     private int getAccelerometerRotation() throws DeviceNotAvailableException {
         final String rotation =
                 runCommandAndPrintOutput("settings get system accelerometer_rotation");
-        return Integer.valueOf(rotation.trim());
+        return Integer.parseInt(rotation.trim());
     }
 
     private void setAccelerometerRotation(int rotation) throws DeviceNotAvailableException {
         runCommandAndPrintOutput(
                 "settings put system accelerometer_rotation " + rotation);
+    }
+
+    private int getUserRotation() throws DeviceNotAvailableException {
+        final String rotation =
+                runCommandAndPrintOutput("settings get system user_rotation").trim();
+        if ("null".equals(rotation)) {
+            return -1;
+        }
+        return Integer.parseInt(rotation);
+    }
+
+    private void setUserRotation(int rotation) throws DeviceNotAvailableException {
+        if (rotation == -1) {
+            runCommandAndPrintOutput(
+                    "settings delete system user_rotation");
+        } else {
+            runCommandAndPrintOutput(
+                    "settings put system user_rotation " + rotation);
+        }
     }
 
     protected String runCommandAndPrintOutput(String command) throws DeviceNotAvailableException {
