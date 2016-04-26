@@ -32,6 +32,7 @@ import java.util.regex.Pattern;
 import java.util.regex.Matcher;
 
 import static android.server.cts.StateLogger.log;
+import static android.server.cts.StateLogger.logE;
 
 class WindowManagerState {
     private static final String DUMPSYS_WINDOWS_APPS = "dumpsys window apps";
@@ -105,13 +106,13 @@ class WindowManagerState {
         }
 
         if (mWindows.isEmpty()) {
-            log("No Windows found...");
+            logE("No Windows found...");
         }
         if (mFocusedWindow == null) {
-            log("No Focused Window...");
+            logE("No Focused Window...");
         }
         if (mFocusedApp == null) {
-            log("No Focused App...");
+            logE("No Focused App...");
         }
     }
 
