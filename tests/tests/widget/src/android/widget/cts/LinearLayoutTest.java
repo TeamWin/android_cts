@@ -16,15 +16,16 @@
 
 package android.widget.cts;
 
-import org.xmlpull.v1.XmlPullParser;
-
 import android.app.Activity;
+import android.app.Instrumentation;
 import android.content.Context;
 import android.graphics.Color;
 import android.test.ActivityInstrumentationTestCase;
 import android.test.ViewAsserts;
+import android.test.suitebuilder.annotation.SmallTest;
 import android.util.AttributeSet;
 import android.util.Xml;
+import android.view.Gravity;
 import android.view.View;
 import android.view.View.MeasureSpec;
 import android.view.ViewGroup;
@@ -34,7 +35,7 @@ import android.widget.LinearLayout;
 import android.widget.LinearLayout.LayoutParams;
 import android.widget.ListView;
 import android.widget.TextView;
-import android.widget.cts.R;
+import org.xmlpull.v1.XmlPullParser;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -42,6 +43,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * Test {@link LinearLayout}.
  */
+@SmallTest
 public class LinearLayoutTest extends ActivityInstrumentationTestCase<LinearLayoutCtsActivity> {
     private Context mContext;
     private Activity mActivity;
@@ -152,9 +154,9 @@ public class LinearLayoutTest extends ActivityInstrumentationTestCase<LinearLayo
      */
     public void testAccessWeightSum() {
         LinearLayout parent = (LinearLayout) mActivity.findViewById(R.id.weightsum);
-        TextView weight02 = (TextView) mActivity.findViewById(R.id.weight_0_2);
-        TextView weight05 = (TextView) mActivity.findViewById(R.id.weight_0_5);
-        TextView weight03 = (TextView) mActivity.findViewById(R.id.weight_0_3);
+        TextView weight02 = (TextView) parent.findViewById(R.id.weight_0_2);
+        TextView weight05 = (TextView) parent.findViewById(R.id.weight_0_5);
+        TextView weight03 = (TextView) parent.findViewById(R.id.weight_0_3);
 
         assertNotNull(parent);
         assertNotNull(weight02);
@@ -397,6 +399,170 @@ public class LinearLayoutTest extends ActivityInstrumentationTestCase<LinearLayo
         assertEquals(parent.getHeight(), rightView.getBottom());
         assertEquals(parent.getWidth() - rightView.getWidth(), rightView.getLeft());
         assertEquals(parent.getWidth(), rightView.getRight());
+    }
+
+    public void testVerticalCenterGravityOnHorizontalLayout() {
+        LinearLayout parent = (LinearLayout) mActivity.findViewById(R.id.weightsum);
+        TextView leftView = (TextView) parent.findViewById(R.id.weight_0_2);
+        TextView centerView = (TextView) parent.findViewById(R.id.weight_0_5);
+        TextView rightView = (TextView) parent.findViewById(R.id.weight_0_3);
+
+        int originalLeftViewRight = leftView.getRight();
+        int originalCenterViewLeft = centerView.getLeft();
+        int originalCenterViewRight = centerView.getRight();
+        int originalRightViewLeft = rightView.getLeft();
+
+        final Instrumentation instrumentation = getInstrumentation();
+        instrumentation.runOnMainSync(() -> parent.setVerticalGravity(Gravity.CENTER_VERTICAL));
+        instrumentation.waitForIdleSync();
+
+        assertEquals(Gravity.CENTER_VERTICAL, parent.getGravity() & Gravity.VERTICAL_GRAVITY_MASK);
+
+        ViewAsserts.assertVerticalCenterAligned(parent, leftView);
+        ViewAsserts.assertVerticalCenterAligned(parent, centerView);
+        ViewAsserts.assertVerticalCenterAligned(parent, rightView);
+
+        final int parentHeight = parent.getHeight();
+
+        int verticalOffset = (parentHeight - leftView.getHeight()) / 2;
+        assertEquals(verticalOffset, leftView.getTop());
+        assertEquals(verticalOffset + leftView.getHeight(), leftView.getBottom());
+        assertEquals(0, leftView.getLeft());
+        assertEquals(originalLeftViewRight, leftView.getRight());
+
+        verticalOffset = (parentHeight - centerView.getHeight()) / 2;
+        assertEquals(verticalOffset, centerView.getTop());
+        assertEquals(verticalOffset + centerView.getHeight(), centerView.getBottom());
+        assertEquals(originalCenterViewLeft, centerView.getLeft());
+        assertEquals(originalCenterViewRight, centerView.getRight());
+
+        verticalOffset = (parentHeight - rightView.getHeight()) / 2;
+        assertEquals(verticalOffset, rightView.getTop());
+        assertEquals(verticalOffset + rightView.getHeight(), rightView.getBottom());
+        assertEquals(originalRightViewLeft, rightView.getLeft());
+        assertEquals(parent.getWidth(), rightView.getRight());
+    }
+
+    public void testBottomGravityOnHorizontalLayout() {
+        LinearLayout parent = (LinearLayout) mActivity.findViewById(R.id.weightsum);
+        TextView leftView = (TextView) parent.findViewById(R.id.weight_0_2);
+        TextView centerView = (TextView) parent.findViewById(R.id.weight_0_5);
+        TextView rightView = (TextView) parent.findViewById(R.id.weight_0_3);
+
+        int originalLeftViewRight = leftView.getRight();
+        int originalCenterViewLeft = centerView.getLeft();
+        int originalCenterViewRight = centerView.getRight();
+        int originalRightViewLeft = rightView.getLeft();
+
+        final Instrumentation instrumentation = getInstrumentation();
+        instrumentation.runOnMainSync(() -> parent.setVerticalGravity(Gravity.BOTTOM));
+        instrumentation.waitForIdleSync();
+
+        assertEquals(Gravity.BOTTOM, parent.getGravity() & Gravity.VERTICAL_GRAVITY_MASK);
+
+        ViewAsserts.assertBottomAligned(parent, leftView);
+        ViewAsserts.assertBottomAligned(parent, centerView);
+        ViewAsserts.assertBottomAligned(parent, rightView);
+
+        final int parentHeight = parent.getHeight();
+
+        assertEquals(parentHeight - leftView.getHeight(), leftView.getTop());
+        assertEquals(parentHeight, leftView.getBottom());
+        assertEquals(0, leftView.getLeft());
+        assertEquals(originalLeftViewRight, leftView.getRight());
+
+        assertEquals(parentHeight - centerView.getHeight(), centerView.getTop());
+        assertEquals(parentHeight, centerView.getBottom());
+        assertEquals(originalCenterViewLeft, centerView.getLeft());
+        assertEquals(originalCenterViewRight, centerView.getRight());
+
+        assertEquals(parentHeight - rightView.getHeight(), rightView.getTop());
+        assertEquals(parentHeight, rightView.getBottom());
+        assertEquals(originalRightViewLeft, rightView.getLeft());
+        assertEquals(parent.getWidth(), rightView.getRight());
+    }
+
+    public void testHorizontalCenterGravityOnVerticalLayout() {
+        LinearLayout parent = (LinearLayout) mActivity.findViewById(R.id.weightsum_vertical);
+        TextView topView = (TextView) parent.findViewById(R.id.weight_0_1);
+        TextView centerView = (TextView) parent.findViewById(R.id.weight_0_4);
+        TextView bottomView = (TextView) parent.findViewById(R.id.weight_0_5);
+
+        final int parentWidth = parent.getHeight();
+
+        int originalTopViewBottom = topView.getBottom();
+        int originalCenterViewTop = centerView.getTop();
+        int originalCenterViewBottom = centerView.getBottom();
+        int originalBottomViewTop = bottomView.getTop();
+
+        final Instrumentation instrumentation = getInstrumentation();
+        instrumentation.runOnMainSync(() -> parent.setHorizontalGravity(Gravity.CENTER_HORIZONTAL));
+        instrumentation.waitForIdleSync();
+
+        assertEquals(Gravity.CENTER_HORIZONTAL,
+                parent.getGravity() & Gravity.HORIZONTAL_GRAVITY_MASK);
+
+        ViewAsserts.assertHorizontalCenterAligned(parent, topView);
+        ViewAsserts.assertHorizontalCenterAligned(parent, centerView);
+        ViewAsserts.assertHorizontalCenterAligned(parent, bottomView);
+
+        int horizontalOffset = (parentWidth - topView.getWidth()) / 2;
+        assertEquals(0, topView.getTop());
+        assertEquals(originalTopViewBottom, topView.getBottom());
+        assertEquals(horizontalOffset, topView.getLeft());
+        assertEquals(horizontalOffset + topView.getWidth(), topView.getRight());
+
+        horizontalOffset = (parentWidth - centerView.getWidth()) / 2;
+        assertEquals(originalCenterViewTop, centerView.getTop());
+        assertEquals(originalCenterViewBottom, centerView.getBottom());
+        assertEquals(horizontalOffset, centerView.getLeft());
+        assertEquals(horizontalOffset + centerView.getWidth(), centerView.getRight());
+
+        horizontalOffset = (parentWidth - bottomView.getWidth()) / 2;
+        assertEquals(originalBottomViewTop, bottomView.getTop());
+        assertEquals(parent.getHeight(), bottomView.getBottom());
+        assertEquals(horizontalOffset, bottomView.getLeft());
+        assertEquals(horizontalOffset + bottomView.getWidth(), bottomView.getRight());
+    }
+
+    public void testRightGravityOnVerticalLayout() {
+        LinearLayout parent = (LinearLayout) mActivity.findViewById(R.id.weightsum_vertical);
+        TextView topView = (TextView) parent.findViewById(R.id.weight_0_1);
+        TextView centerView = (TextView) parent.findViewById(R.id.weight_0_4);
+        TextView bottomView = (TextView) parent.findViewById(R.id.weight_0_5);
+
+        final int parentWidth = parent.getHeight();
+
+        int originalTopViewBottom = topView.getBottom();
+        int originalCenterViewTop = centerView.getTop();
+        int originalCenterViewBottom = centerView.getBottom();
+        int originalBottomViewTop = bottomView.getTop();
+
+        final Instrumentation instrumentation = getInstrumentation();
+        instrumentation.runOnMainSync(() -> parent.setHorizontalGravity(Gravity.RIGHT));
+        instrumentation.waitForIdleSync();
+
+        assertEquals(Gravity.RIGHT,
+                parent.getGravity() & Gravity.HORIZONTAL_GRAVITY_MASK);
+
+        ViewAsserts.assertRightAligned(parent, topView);
+        ViewAsserts.assertRightAligned(parent, centerView);
+        ViewAsserts.assertRightAligned(parent, bottomView);
+
+        assertEquals(0, topView.getTop());
+        assertEquals(originalTopViewBottom, topView.getBottom());
+        assertEquals(parentWidth - topView.getWidth(), topView.getLeft());
+        assertEquals(parentWidth, topView.getRight());
+
+        assertEquals(originalCenterViewTop, centerView.getTop());
+        assertEquals(originalCenterViewBottom, centerView.getBottom());
+        assertEquals(parentWidth - centerView.getWidth(), centerView.getLeft());
+        assertEquals(parentWidth, centerView.getRight());
+
+        assertEquals(originalBottomViewTop, bottomView.getTop());
+        assertEquals(parent.getHeight(), bottomView.getBottom());
+        assertEquals(parentWidth - bottomView.getWidth(), bottomView.getLeft());
+        assertEquals(parentWidth, bottomView.getRight());
     }
 
     private void checkBounds(final ViewGroup viewGroup, final View view,
