@@ -749,6 +749,7 @@ public class ExtendedCameraCharacteristicsTest extends AndroidTestCase {
                         "NOISE_REDUCTION_MODE_ZERO_SHUTTER_LAG is supported",
                         !supportZslNoiseReductionMode);
             }
+            counter++;
         }
     }
 
@@ -900,6 +901,7 @@ public class ExtendedCameraCharacteristicsTest extends AndroidTestCase {
                         "All necessary depth fields defined, but DEPTH_OUTPUT capability is not listed",
                         !hasFields);
             }
+            counter++;
         }
     }
 
@@ -1107,9 +1109,8 @@ public class ExtendedCameraCharacteristicsTest extends AndroidTestCase {
                                 invalidSize.toString()),
                         config.isOutputSupportedFor(surf));
 
-                counter++;
             }
-
+            counter++;
         } // mCharacteristics
     }
 
