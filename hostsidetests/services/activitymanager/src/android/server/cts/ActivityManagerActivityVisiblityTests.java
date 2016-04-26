@@ -117,11 +117,11 @@ public class ActivityManagerActivityVisiblityTests extends ActivityManagerTestBa
     }
 
     public void testTranslucentActivityOverDockedStack() throws Exception {
-        mDevice.executeShellCommand(getAmStartCmd(TEST_ACTIVITY_NAME));
         launchActivityInDockStack(DOCKED_ACTIVITY_NAME);
-        launchActivityInDockStack(TRANSLUCENT_ACTIVITY_NAME);
-        mAmWmState.computeState(mDevice, new String[] {TEST_ACTIVITY_NAME, DOCKED_ACTIVITY_NAME},
-                false /* compareTaskAndStackBounds */);
+        launchActivityInStack(TEST_ACTIVITY_NAME, FULLSCREEN_WORKSPACE_STACK_ID);
+        launchActivityInStack(TRANSLUCENT_ACTIVITY_NAME, DOCKED_STACK_ID);
+        mAmWmState.computeState(mDevice, new String[] {TEST_ACTIVITY_NAME, DOCKED_ACTIVITY_NAME,
+                TRANSLUCENT_ACTIVITY_NAME}, false /* compareTaskAndStackBounds */);
         mAmWmState.assertContainsStack("Must contain docked stack", DOCKED_STACK_ID);
         mAmWmState.assertContainsStack("Must contain fullscreen stack",
                 FULLSCREEN_WORKSPACE_STACK_ID);
