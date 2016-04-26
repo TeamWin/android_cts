@@ -31,6 +31,7 @@ import java.util.List;
 import java.util.Objects;
 
 import static android.server.cts.ActivityManagerTestBase.FREEFORM_WORKSPACE_STACK_ID;
+import static android.server.cts.ActivityManagerTestBase.PINNED_STACK_ID;
 import static android.server.cts.StateLogger.log;
 
 /** Combined state of the activity manager and window manager. */
@@ -349,7 +350,8 @@ class ActivityAndWindowManagersState extends Assert {
                         }
 
                         if (aStackBounds.getWidth() >= aTaskMinWidth
-                                && aStackBounds.getHeight() >= aTaskMinHeight) {
+                                && aStackBounds.getHeight() >= aTaskMinHeight
+                                || stackId == PINNED_STACK_ID) {
                             // Bounds are not smaller then minimal possible, so stack and task
                             // bounds must be equal.
                             assertEquals("Task bounds must be equal to stack bounds taskId="
