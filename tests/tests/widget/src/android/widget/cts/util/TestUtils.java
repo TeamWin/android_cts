@@ -105,7 +105,8 @@ public class TestUtils {
     }
 
     /**
-     * Checks whether all the pixels in the specified View are of the same specified color.
+     * Checks whether all the pixels in the specified of the {@link View} are
+     * filled with the specific color.
      *
      * In case there is a color mismatch, the behavior of this method depends on the
      * <code>throwExceptionIfFails</code> parameter. If it is <code>true</code>, this method will
@@ -114,7 +115,26 @@ public class TestUtils {
      */
     public static void assertAllPixelsOfColor(String failMessagePrefix, @NonNull View view,
             @ColorInt int color, int allowedComponentVariance, boolean throwExceptionIfFails) {
+        assertRegionPixelsOfColor(failMessagePrefix, view,
+                new Rect(0, 0, view.getWidth(), view.getHeight()),
+                color, allowedComponentVariance, throwExceptionIfFails);
+    }
+
+    /**
+     * Checks whether all the pixels in the specific rectangular region of the {@link View} are
+     * filled with the specific color.
+     *
+     * In case there is a color mismatch, the behavior of this method depends on the
+     * <code>throwExceptionIfFails</code> parameter. If it is <code>true</code>, this method will
+     * throw an <code>Exception</code> describing the mismatch. Otherwise this method will call
+     * <code>Assert.fail</code> with detailed description of the mismatch.
+     */
+    public static void assertRegionPixelsOfColor(String failMessagePrefix, @NonNull View view,
+            @NonNull Rect region, @ColorInt int color, int allowedComponentVariance,
+            boolean throwExceptionIfFails) {
         // Create a bitmap
+        final int viewWidth = view.getWidth();
+        final int viewHeight = view.getHeight();
         Bitmap bitmap = Bitmap.createBitmap(view.getWidth(), view.getHeight(),
                 Bitmap.Config.ARGB_8888);
         // Create a canvas that wraps the bitmap
@@ -123,7 +143,7 @@ public class TestUtils {
         view.draw(canvas);
 
         try {
-            assertAllPixelsOfColor(failMessagePrefix, bitmap, view.getWidth(), view.getHeight(),
+            assertAllPixelsOfColor(failMessagePrefix, bitmap, region,
                     color, allowedComponentVariance, throwExceptionIfFails);
         } finally {
             bitmap.recycle();
@@ -131,7 +151,8 @@ public class TestUtils {
     }
 
     /**
-     * Checks whether all the pixels in the specified drawable are of the same specified color.
+     * Checks whether all the pixels in the specified {@link Drawable} are filled with the specific
+     * color.
      *
      * In case there is a color mismatch, the behavior of this method depends on the
      * <code>throwExceptionIfFails</code> parameter. If it is <code>true</code>, this method will
@@ -158,7 +179,8 @@ public class TestUtils {
         drawable.draw(canvas);
 
         try {
-            assertAllPixelsOfColor(failMessagePrefix, bitmap, drawableWidth, drawableHeight, color,
+            assertAllPixelsOfColor(failMessagePrefix, bitmap,
+                    new Rect(0, 0, drawableWidth, drawableHeight), color,
                     allowedComponentVariance, throwExceptionIfFails);
         } finally {
             bitmap.recycle();
@@ -166,26 +188,36 @@ public class TestUtils {
     }
 
     /**
-     * Checks whether all the pixels in the specified bitmap are of the same specified color.
+     * Checks whether all the pixels in the specific rectangular region of the bitmap are filled
+     * with the specific color.
      *
      * In case there is a color mismatch, the behavior of this method depends on the
      * <code>throwExceptionIfFails</code> parameter. If it is <code>true</code>, this method will
      * throw an <code>Exception</code> describing the mismatch. Otherwise this method will call
      * <code>Assert.fail</code> with detailed description of the mismatch.
      */
-    public static void assertAllPixelsOfColor(String failMessagePrefix, @NonNull Bitmap bitmap,
-            int bitmapWidth, int bitmapHeight, @ColorInt int color,
-            int allowedComponentVariance, boolean throwExceptionIfFails) {
-        int[] rowPixels = new int[bitmapWidth];
-        for (int row = 0; row < bitmapHeight; row++) {
+    private static void assertAllPixelsOfColor(String failMessagePrefix, @NonNull Bitmap bitmap,
+            @NonNull Rect region, @ColorInt int color, int allowedComponentVariance,
+            boolean throwExceptionIfFails) {
+        final int bitmapWidth = bitmap.getWidth();
+        final int bitmapHeight = bitmap.getHeight();
+        final int[] rowPixels = new int[bitmapWidth];
+
+        final int startRow = region.top;
+        final int endRow = region.bottom;
+        final int startColumn = region.left;
+        final int endColumn = region.right;
+
+        for (int row = startRow; row < endRow; row++) {
             bitmap.getPixels(rowPixels, 0, bitmapWidth, 0, row, bitmapWidth, 1);
-            for (int column = 0; column < bitmapWidth; column++) {
+            for (int column = startColumn; column < endColumn; column++) {
                 @ColorInt int colorAtCurrPixel = rowPixels[column];
                 if (!areColorsTheSameWithTolerance(color, colorAtCurrPixel,
                         allowedComponentVariance)) {
                     String mismatchDescription = failMessagePrefix
-                            + ": expected all drawable colors to be "
-                            + formatColorToHex(color)
+                            + ": expected all bitmap colors in rectangle [l="
+                            + startColumn + ", t=" + startRow + ", r=" + endColumn
+                            + ", b=" + endRow + "] to be " + formatColorToHex(color)
                             + " but at position (" + row + "," + column + ") out of ("
                             + bitmapWidth + "," + bitmapHeight + ") found "
                             + formatColorToHex(colorAtCurrPixel);
@@ -232,7 +264,7 @@ public class TestUtils {
     /**
      * Formats the passed integer-packed color into the #AARRGGBB format.
      */
-    private static String formatColorToHex(@ColorInt int color) {
+    public static String formatColorToHex(@ColorInt int color) {
         return String.format("#%08X", (0xFFFFFFFF & color));
     }
 
