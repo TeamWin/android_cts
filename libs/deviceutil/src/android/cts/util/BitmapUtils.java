@@ -36,6 +36,10 @@ public class BitmapUtils {
             return true;
         }
 
+        if (bmp1 == null || bmp2 == null) {
+            return false;
+        }
+
         if ((bmp1.getWidth() != bmp2.getWidth()) || (bmp1.getHeight() != bmp2.getHeight())) {
             return false;
         }
