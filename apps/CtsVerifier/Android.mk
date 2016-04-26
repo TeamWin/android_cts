@@ -46,7 +46,7 @@ LOCAL_JNI_SHARED_LIBRARIES := libctsverifier_jni
 
 LOCAL_PROGUARD_FLAG_FILES := proguard.flags
 
-LOCAL_SDK_VERSION := current
+LOCAL_SDK_VERSION := test_current
 
 LOCAL_DEX_PREOPT := false
 
