@@ -36,6 +36,10 @@ import java.util.List;
  * Tests that verify installing of various split APKs from host side.
  */
 public class SplitTests extends DeviceTestCase implements IAbiReceiver, IBuildReceiver {
+    static final String PKG_NO_RESTART = "com.android.cts.norestart";
+    static final String APK_NO_RESTART_BASE = "CtsNoRestartBase.apk";
+    static final String APK_NO_RESTART_FEATURE = "CtsNoRestartFeature.apk";
+
     static final String PKG = "com.android.cts.splitapp";
     static final String CLASS = ".SplitAppTest";
 
@@ -110,6 +114,7 @@ public class SplitTests extends DeviceTestCase implements IAbiReceiver, IBuildRe
         super.tearDown();
 
         getDevice().uninstallPackage(PKG);
+        getDevice().uninstallPackage(PKG_NO_RESTART);
     }
 
     public void testSingleBase() throws Exception {
@@ -277,6 +282,18 @@ public class SplitTests extends DeviceTestCase implements IAbiReceiver, IBuildRe
 
     public void testInheritUpdatedSplit() throws Exception {
         // TODO: flesh out this test
+    }
+
+    public void testFeatureWithoutRestart() throws Exception {
+        new InstallMultiple().addApk(APK).run();
+        new InstallMultiple().addApk(APK_NO_RESTART_BASE).run();
+        runDeviceTests(PKG, CLASS, "testBaseInstalled");
+        new InstallMultiple()
+                .addArg("--dont-kill")
+                .inheritFrom(PKG_NO_RESTART)
+                .addApk(APK_NO_RESTART_FEATURE)
+                .run();
+        runDeviceTests(PKG, CLASS, "testFeatureInstalled");
     }
 
     /**
