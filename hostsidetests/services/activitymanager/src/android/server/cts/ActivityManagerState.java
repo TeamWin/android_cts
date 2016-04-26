@@ -33,6 +33,7 @@ import java.util.regex.Matcher;
 
 import static android.server.cts.ActivityManagerTestBase.HOME_STACK_ID;
 import static android.server.cts.StateLogger.log;
+import static android.server.cts.StateLogger.logE;
 
 class ActivityManagerState {
     private static final String DUMPSYS_ACTIVITY_ACTIVITIES = "dumpsys activity activities";
@@ -96,16 +97,16 @@ class ActivityManagerState {
         }
 
         if (mStacks.isEmpty()) {
-            log("No stacks found...");
+            logE("No stacks found...");
         }
         if (mFocusedStackId == -1) {
-            log("No focused stack found...");
+            logE("No focused stack found...");
         }
         if (mFocusedActivityRecord == null) {
-            log("No focused activity found...");
+            logE("No focused activity found...");
         }
         if (mResumedActivities.isEmpty()) {
-            log("No resumed activities found...");
+            logE("No resumed activities found...");
         }
     }
 

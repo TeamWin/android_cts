@@ -19,6 +19,7 @@ package android.server.cts;
 import com.android.tradefed.log.LogUtil.CLog;
 
 import static com.android.ddmlib.Log.LogLevel.INFO;
+import static com.android.ddmlib.Log.LogLevel.ERROR;
 
 /**
  * Util class to perform simple state logging.
@@ -31,5 +32,9 @@ public class StateLogger {
         if (DEBUG) {
             CLog.logAndDisplay(INFO, logText);
         }
+    }
+
+    public static void logE(String logText) {
+        CLog.logAndDisplay(ERROR, logText);
     }
 }
