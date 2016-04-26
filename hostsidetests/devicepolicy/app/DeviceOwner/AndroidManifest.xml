@@ -47,7 +47,8 @@
         </receiver>
 
         <activity
-            android:name="com.android.cts.deviceowner.KeyManagementActivity" />
+            android:name="com.android.cts.deviceowner.KeyManagementActivity"
+            android:theme="@android:style/Theme.Translucent.NoTitleBar" />
 
         <activity
             android:name="com.android.cts.deviceowner.LockTaskUtilityActivity" />
