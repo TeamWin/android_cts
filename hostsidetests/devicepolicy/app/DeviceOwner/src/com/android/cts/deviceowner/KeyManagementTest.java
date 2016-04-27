@@ -27,21 +27,29 @@ import android.security.KeyChainException;
 import android.test.ActivityInstrumentationTestCase2;
 
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.DataInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
+import java.security.cert.X509Certificate;
 import java.security.cert.Certificate;
 import java.security.KeyFactory;
 import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.PKCS8EncodedKeySpec;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 import android.content.ComponentName;
 import android.content.Context;
+import android.content.res.AssetManager;
 
 public class KeyManagementTest extends ActivityInstrumentationTestCase2<KeyManagementActivity> {
 
@@ -126,6 +134,38 @@ public class KeyManagementTest extends ActivityInstrumentationTestCase2<KeyManag
         assertGranted(withhold, false);
     }
 
+    public void testCanInstallCertChain() throws Exception {
+        // Use assets/generate-client-cert-chain.sh to regenerate the client cert chain.
+        final PrivateKey privKey = loadPrivateKeyFromAsset("user-cert-chain.key");
+        final Collection<Certificate> certs = loadCertificatesFromAsset("user-cert-chain.crt");
+        final Certificate[] certChain = certs.toArray(new Certificate[certs.size()]);
+        final String alias = "com.android.test.clientkeychain";
+        // Some sanity check on the cert chain
+        assertTrue(certs.size() > 1);
+        for (int i = 1; i < certs.size(); i++) {
+            certChain[i - 1].verify(certChain[i].getPublicKey());
+        }
+
+        // Install keypairs.
+        assertTrue(mDevicePolicyManager.installKeyPair(getWho(), privKey, certChain, alias, true));
+        try {
+            // Verify only the requested key was actually granted.
+            assertGranted(alias, true);
+
+            // Verify the granted key is actually obtainable in PrivateKey form.
+            assertEquals(KeyChain.getPrivateKey(getActivity(), alias).getAlgorithm(), "RSA");
+
+            // Verify the certificate chain is correct
+            X509Certificate[] returnedCerts = KeyChain.getCertificateChain(getActivity(), alias);
+            assertTrue(Arrays.equals(certChain, returnedCerts));
+        } finally {
+            // Delete both keypairs.
+            assertTrue(mDevicePolicyManager.removeKeyPair(getWho(), alias));
+        }
+        // Verify they're actually gone.
+        assertGranted(alias, false);
+    }
+
     public void testGrantsDoNotPersistBetweenInstallations() throws Exception {
         final String alias = "com.android.test.persistent-key-1";
         final PrivateKey privKey = getPrivateKey(FAKE_RSA_1.privateKey , "RSA");
@@ -200,6 +240,35 @@ public class KeyManagementTest extends ActivityInstrumentationTestCase2<KeyManag
                 new ByteArrayInputStream(cert));
     }
 
+    private Collection<Certificate> loadCertificatesFromAsset(String assetName) {
+        try {
+            final CertificateFactory certFactory = CertificateFactory.getInstance("X.509");
+            AssetManager am = getActivity().getAssets();
+            InputStream is = am.open(assetName);
+            return (Collection<Certificate>) certFactory.generateCertificates(is);
+        } catch (IOException | CertificateException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    private PrivateKey loadPrivateKeyFromAsset(String assetName) {
+        try {
+            AssetManager am = getActivity().getAssets();
+            InputStream is = am.open(assetName);
+            ByteArrayOutputStream output = new ByteArrayOutputStream();
+            int length;
+            byte[] buffer = new byte[4096];
+            while ((length = is.read(buffer, 0, buffer.length)) != -1) {
+              output.write(buffer, 0, length);
+            }
+            return getPrivateKey(output.toByteArray(), "RSA");
+        } catch (IOException | NoSuchAlgorithmException | InvalidKeySpecException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
     private class KeyChainAliasFuture implements KeyChainAliasCallback {
         private final CountDownLatch mLatch = new CountDownLatch(1);
         private String mChosenAlias = null;
@@ -224,5 +293,5 @@ public class KeyManagementTest extends ActivityInstrumentationTestCase2<KeyManag
             assertTrue("Chooser timeout", mLatch.await(KEYCHAIN_TIMEOUT_MINS, TimeUnit.MINUTES));
             return mChosenAlias;
         }
-    };
+    }
 }
