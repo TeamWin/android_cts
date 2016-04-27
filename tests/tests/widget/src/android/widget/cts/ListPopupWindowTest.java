@@ -475,6 +475,8 @@ public class ListPopupWindowTest extends
         promptView.getLocationOnScreen(promptViewOnScreenXY);
 
         final ListView listView = mPopupWindow.getListView();
+        ViewTestUtils.runOnMainAndDrawSync(mInstrumentation, listView, null);
+
         final View firstListChild = listView.getChildAt(0);
         final int[] firstChildOnScreenXY = new int[2];
         firstListChild.getLocationOnScreen(firstChildOnScreenXY);
@@ -498,6 +500,8 @@ public class ListPopupWindowTest extends
         promptView.getLocationOnScreen(promptViewOnScreenXY);
 
         final ListView listView = mPopupWindow.getListView();
+        ViewTestUtils.runOnMainAndDrawSync(mInstrumentation, listView, null);
+
         final View lastListChild = listView.getChildAt(listView.getChildCount() - 1);
         final int[] lastChildOnScreenXY = new int[2];
         lastListChild.getLocationOnScreen(lastChildOnScreenXY);
