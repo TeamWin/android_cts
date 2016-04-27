@@ -84,12 +84,11 @@ public class AccessibilityGestureDispatchTest extends
         GestureDescription click = createClick(clickX, clickY);
         mService.runOnServiceSync(() -> mService.doDispatchGesture(click, mCallback, null));
         mCallback.assertGestureCompletes(GESTURE_COMPLETION_TIMEOUT);
-        waitForMotionEvents(3);
+        waitForMotionEvents(2);
 
-        assertEquals(3, mMotionEvents.size());
+        assertEquals(2, mMotionEvents.size());
         MotionEvent clickDown = mMotionEvents.get(0);
-        MotionEvent clickMove = mMotionEvents.get(1);
-        MotionEvent clickUp = mMotionEvents.get(2);
+        MotionEvent clickUp = mMotionEvents.get(1);
 
         assertEquals(MotionEvent.ACTION_DOWN, clickDown.getActionMasked());
         assertEquals(0, clickDown.getActionIndex());
@@ -103,23 +102,13 @@ public class AccessibilityGestureDispatchTest extends
         assertEquals((float) clickYInsideView, clickDown.getY());
         assertEquals(clickDown.getDownTime(), clickDown.getEventTime());
 
-        assertEquals(MotionEvent.ACTION_MOVE, clickMove.getActionMasked());
-        assertEquals(clickDown.getDownTime(), clickMove.getDownTime());
-        assertEquals(ViewConfiguration.getTapTimeout(),
-                clickMove.getEventTime() - clickMove.getDownTime());
-        assertEquals(0, clickMove.getActionIndex());
-        assertEquals(1, clickMove.getPointerCount());
-        assertEquals((float) clickXInsideView + 1, clickMove.getX());
-        assertEquals((float) clickYInsideView, clickMove.getY());
-        assertEquals(clickDown.getPointerId(0),
-                clickMove.getPointerId(0));
-
         assertEquals(MotionEvent.ACTION_UP, clickUp.getActionMasked());
         assertEquals(clickDown.getDownTime(), clickUp.getDownTime());
-        assertEquals(clickMove.getEventTime(), clickUp.getEventTime());
+        assertEquals(ViewConfiguration.getTapTimeout(),
+                clickUp.getEventTime() - clickUp.getDownTime());
         assertTrue(clickDown.getEventTime() + ViewConfiguration.getLongPressTimeout()
                 > clickUp.getEventTime());
-        assertEquals((float) clickXInsideView + 1, clickUp.getX());
+        assertEquals((float) clickXInsideView, clickUp.getX());
         assertEquals((float) clickYInsideView, clickUp.getY());
     }
 
@@ -133,27 +122,20 @@ public class AccessibilityGestureDispatchTest extends
         mCallback.assertGestureCompletes(
                 ViewConfiguration.getLongPressTimeout() + GESTURE_COMPLETION_TIMEOUT);
 
-        waitForMotionEvents(3);
+        waitForMotionEvents(2);
         MotionEvent clickDown = mMotionEvents.get(0);
-        MotionEvent clickMove = mMotionEvents.get(1);
-        MotionEvent clickUp = mMotionEvents.get(2);
+        MotionEvent clickUp = mMotionEvents.get(1);
 
         assertEquals(MotionEvent.ACTION_DOWN, clickDown.getActionMasked());
 
         assertEquals((float) clickXInsideView, clickDown.getX());
         assertEquals((float) clickYInsideView, clickDown.getY());
 
-        assertEquals(MotionEvent.ACTION_MOVE, clickMove.getActionMasked());
-        assertEquals(clickDown.getDownTime(), clickMove.getDownTime());
-        assertEquals((float) clickXInsideView + 1, clickMove.getX());
-        assertEquals((float) clickYInsideView, clickMove.getY());
-        assertEquals(clickDown.getPointerId(0), clickMove.getPointerId(0));
-
         assertEquals(MotionEvent.ACTION_UP, clickUp.getActionMasked());
         assertTrue(clickDown.getEventTime() + ViewConfiguration.getLongPressTimeout()
                 <= clickUp.getEventTime());
         assertEquals(clickDown.getDownTime(), clickUp.getDownTime());
-        assertEquals((float) clickXInsideView + 1, clickUp.getX());
+        assertEquals((float) clickXInsideView, clickUp.getX());
         assertEquals((float) clickYInsideView, clickUp.getY());
     }
 
@@ -349,22 +331,17 @@ public class AccessibilityGestureDispatchTest extends
             assertTrue("Failed to reset", result.get());
         }
 
-        assertEquals(3, mMotionEvents.size());
+        assertEquals(2, mMotionEvents.size());
         MotionEvent clickDown = mMotionEvents.get(0);
-        MotionEvent clickMove = mMotionEvents.get(1);
-        MotionEvent clickUp = mMotionEvents.get(2);
+        MotionEvent clickUp = mMotionEvents.get(1);
 
         assertEquals(MotionEvent.ACTION_DOWN, clickDown.getActionMasked());
         assertEquals((float) clickXInsideView, clickDown.getX(), TOUCH_TOLERANCE);
         assertEquals((float) clickYInsideView, clickDown.getY(), TOUCH_TOLERANCE);
         assertEquals(clickDown.getDownTime(), clickDown.getEventTime());
 
-        assertEquals(MotionEvent.ACTION_MOVE, clickMove.getActionMasked());
-        assertEquals((float) clickXInsideView + 1, clickMove.getX(), TOUCH_TOLERANCE);
-        assertEquals((float) clickYInsideView, clickMove.getY(), TOUCH_TOLERANCE);
-
         assertEquals(MotionEvent.ACTION_UP, clickUp.getActionMasked());
-        assertEquals((float) clickXInsideView + 1, clickUp.getX(), TOUCH_TOLERANCE);
+        assertEquals((float) clickXInsideView, clickUp.getX(), TOUCH_TOLERANCE);
         assertEquals((float) clickYInsideView, clickUp.getY(), TOUCH_TOLERANCE);
     }
 
@@ -450,7 +427,6 @@ public class AccessibilityGestureDispatchTest extends
     private GestureDescription createClick(int x, int y) {
         Path clickPath = new Path();
         clickPath.moveTo(x, y);
-        clickPath.lineTo(x + 1, y);
         GestureDescription.StrokeDescription clickStroke =
                 new GestureDescription.StrokeDescription(clickPath, 0, ViewConfiguration.getTapTimeout());
         GestureDescription.Builder clickBuilder = new GestureDescription.Builder();
@@ -461,7 +437,6 @@ public class AccessibilityGestureDispatchTest extends
     private GestureDescription createLongClick(int x, int y) {
         Path clickPath = new Path();
         clickPath.moveTo(x, y);
-        clickPath.lineTo(x + 1, y);
         int longPressTime = ViewConfiguration.getLongPressTimeout();
 
         GestureDescription.StrokeDescription longClickStroke =
