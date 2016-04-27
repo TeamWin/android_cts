@@ -64,6 +64,7 @@ public class GeolocationTest extends ActivityInstrumentationTestCase2<WebViewCts
     // url, and different domains.
     private static final String URL_1 = "https://www.example.com";
     private static final String URL_2 = "https://www.example.org";
+    private static final String URL_INSECURE = "http://www.example.org";
 
     private static final String JS_INTERFACE_NAME = "Android";
     private static final int POLLING_TIMEOUT = 60 * 1000;
@@ -536,7 +537,7 @@ public class GeolocationTest extends ActivityInstrumentationTestCase2<WebViewCts
         originCheck.run();
     }
 
-    // Test loading pages and checks rejecting once and recjecting the domain forever
+    // Test loading pages and checks rejecting once and rejecting the domain forever
     public void testSimpleGeolocationRequestReject() throws Exception {
         if (!NullWebViewUtils.isWebViewAvailable()) {
             return;
@@ -589,6 +590,26 @@ public class GeolocationTest extends ActivityInstrumentationTestCase2<WebViewCts
         BooleanCheck falseCheck = new BooleanCheck(false);
         GeolocationPermissions.getInstance().getAllowed(URL_1, falseCheck);
         falseCheck.run();
+    }
+
+    // Test deny geolocation on insecure origins
+    public void testGeolocationRequestDeniedOnInsecureOrigin() throws Exception {
+        if (!NullWebViewUtils.isWebViewAvailable()) {
+            return;
+        }
+        final TestSimpleGeolocationRequestWebChromeClient chromeClientAcceptAlways =
+                new TestSimpleGeolocationRequestWebChromeClient(mOnUiThread, true, true);
+        mOnUiThread.setWebChromeClient(chromeClientAcceptAlways);
+        loadUrlAndUpdateLocation(URL_INSECURE);
+        Callable<Boolean> locationDenied = new Callable<Boolean>() {
+            @Override
+            public Boolean call() {
+                return mJavascriptStatusReceiver.mDenied;
+            }
+        };
+        PollingCheck.check("JS got position", POLLING_TIMEOUT, locationDenied);
+        // The geolocation permission prompt should not be called
+        assertFalse(chromeClientAcceptAlways.mReceivedRequest);
     }
 
     // Object added to the page via AddJavascriptInterface() that is used by the test Javascript to
