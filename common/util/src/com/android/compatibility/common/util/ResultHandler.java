@@ -53,6 +53,7 @@ public class ResultHandler {
     private static final String BUILD_PRODUCT = "build_product";
     private static final String BUILD_TAG = "Build";
     private static final String CASE_TAG = "TestCase";
+    private static final String DETAIL_TAG = "Detail";
     private static final String DEVICES_ATTR = "devices";
     private static final String END_DISPLAY_TIME_ATTR = "end_display";
     private static final String END_TIME_ATTR = "end";
@@ -171,7 +172,11 @@ public class ResultHandler {
                                     parser.nextTag();
                                 } else {
                                     test.setReportLog(ReportLog.parse(parser));
-                                    parser.nextTag();
+                                    // Details are optional; parser is at next tag if report log
+                                    // does not have details.
+                                    if (parser.getName().equals(DETAIL_TAG)) {
+                                        parser.nextTag();
+                                    }
                                 }
                             }
                             parser.require(XmlPullParser.END_TAG, NS, TEST_TAG);
