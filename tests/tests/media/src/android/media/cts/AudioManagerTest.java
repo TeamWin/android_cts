@@ -35,6 +35,7 @@ import static android.media.AudioManager.VIBRATE_TYPE_NOTIFICATION;
 import static android.media.AudioManager.VIBRATE_TYPE_RINGER;
 import static android.provider.Settings.System.SOUND_EFFECTS_ENABLED;
 
+import android.app.NotificationManager;
 import android.content.Context;
 import android.content.res.Resources;
 import android.media.AudioManager;
@@ -52,6 +53,7 @@ public class AudioManagerTest extends InstrumentationTestCase {
     private final static long TIME_TO_PLAY = 2000;
     private final static String APPOPS_OP_STR = "android:write_settings";
     private AudioManager mAudioManager;
+    private NotificationManager mNm;
     private boolean mHasVibrator;
     private boolean mUseFixedVolume;
     private boolean mIsTelevision;
@@ -64,6 +66,7 @@ public class AudioManagerTest extends InstrumentationTestCase {
         Utils.enableAppOps(mContext.getPackageName(), APPOPS_OP_STR, getInstrumentation());
         mAudioManager = (AudioManager) mContext.getSystemService(Context.AUDIO_SERVICE);
         Vibrator vibrator = (Vibrator) mContext.getSystemService(Context.VIBRATOR_SERVICE);
+        mNm = (NotificationManager) mContext.getSystemService(Context.NOTIFICATION_SERVICE);
         mHasVibrator = (vibrator != null) && vibrator.hasVibrator();
         mUseFixedVolume = mContext.getResources().getBoolean(
                 Resources.getSystem().getIdentifier("config_useFixedVolume", "bool", "android"));
@@ -389,26 +392,28 @@ public class AudioManagerTest extends InstrumentationTestCase {
             }
             assertEquals(RINGER_MODE_NORMAL, mAudioManager.getRingerMode());
 
-            // Apps without policy access cannot change vibrate -> silent.
-            Utils.toggleNotificationPolicyAccess(
-                    mContext.getPackageName(), getInstrumentation(), true);
-            mAudioManager.setRingerMode(RINGER_MODE_VIBRATE);
-            assertEquals(RINGER_MODE_VIBRATE, mAudioManager.getRingerMode());
-            Utils.toggleNotificationPolicyAccess(
-                    mContext.getPackageName(), getInstrumentation(), false);
+            if (mHasVibrator) {
+                // Apps without policy access cannot change vibrate -> silent.
+                Utils.toggleNotificationPolicyAccess(
+                        mContext.getPackageName(), getInstrumentation(), true);
+                mAudioManager.setRingerMode(RINGER_MODE_VIBRATE);
+                assertEquals(RINGER_MODE_VIBRATE, mAudioManager.getRingerMode());
+                Utils.toggleNotificationPolicyAccess(
+                        mContext.getPackageName(), getInstrumentation(), false);
 
-            try {
-                mAudioManager.setRingerMode(RINGER_MODE_SILENT);
-                fail("Apps without notification policy access cannot change ringer mode");
-            } catch (SecurityException e) {
+                try {
+                    mAudioManager.setRingerMode(RINGER_MODE_SILENT);
+                    fail("Apps without notification policy access cannot change ringer mode");
+                } catch (SecurityException e) {
+                }
+
+                // Apps without policy access can change vibrate -> normal and vice versa.
+                assertEquals(RINGER_MODE_VIBRATE, mAudioManager.getRingerMode());
+                mAudioManager.setRingerMode(RINGER_MODE_NORMAL);
+                assertEquals(RINGER_MODE_NORMAL, mAudioManager.getRingerMode());
+                mAudioManager.setRingerMode(RINGER_MODE_VIBRATE);
+                assertEquals(RINGER_MODE_VIBRATE, mAudioManager.getRingerMode());
             }
-
-            // Apps without policy access can change vibrate -> normal and vice versa.
-            assertEquals(RINGER_MODE_VIBRATE, mAudioManager.getRingerMode());
-            mAudioManager.setRingerMode(RINGER_MODE_NORMAL);
-            assertEquals(RINGER_MODE_NORMAL, mAudioManager.getRingerMode());
-            mAudioManager.setRingerMode(RINGER_MODE_VIBRATE);
-            assertEquals(RINGER_MODE_VIBRATE, mAudioManager.getRingerMode());
         } finally {
             Utils.toggleNotificationPolicyAccess(
                     mContext.getPackageName(), getInstrumentation(), false);
@@ -618,18 +623,94 @@ public class AudioManagerTest extends InstrumentationTestCase {
         }
     }
 
-    public void testMute() throws Exception {
+    public void testMuteDndAffectedStreams() throws Exception {
         if (mUseFixedVolume) {
             return;
         }
+        int[] streams = { AudioManager.STREAM_RING };
+        try {
+            // Mute streams
+            Utils.toggleNotificationPolicyAccess(
+                    mContext.getPackageName(), getInstrumentation(), true);
+            mAudioManager.setRingerMode(RINGER_MODE_SILENT);
+            Utils.toggleNotificationPolicyAccess(
+                    mContext.getPackageName(), getInstrumentation(), false);
+            // Verify streams cannot be unmuted without policy access.
+            for (int i = 0; i < streams.length; i++) {
+                try {
+                    mAudioManager.adjustStreamVolume(streams[i], AudioManager.ADJUST_UNMUTE, 0);
+                    assertEquals("Apps without Notification policy access can't change ringer mode",
+                            RINGER_MODE_SILENT, mAudioManager.getRingerMode());
+                } catch (SecurityException e) {
+                }
 
+                try {
+                    mAudioManager.adjustStreamVolume(streams[i], AudioManager.ADJUST_TOGGLE_MUTE,
+                            0);
+                    assertEquals("Apps without Notification policy access can't change ringer mode",
+                            RINGER_MODE_SILENT, mAudioManager.getRingerMode());
+                } catch (SecurityException e) {
+                }
+
+                try {
+                    mAudioManager.setStreamMute(streams[i], false);
+                    assertEquals("Apps without Notification policy access can't change ringer mode",
+                            RINGER_MODE_SILENT, mAudioManager.getRingerMode());
+                } catch (SecurityException e) {
+                }
+            }
+
+            // This ensures we're out of vibrate or silent modes.
+            Utils.toggleNotificationPolicyAccess(
+                    mContext.getPackageName(), getInstrumentation(), true);
+            mAudioManager.setRingerMode(RINGER_MODE_NORMAL);
+            for (int i = 0; i < streams.length; i++) {
+                // ensure each stream is on and turned up.
+                mAudioManager.setStreamVolume(streams[i],
+                        mAudioManager.getStreamMaxVolume(streams[i]),
+                        0);
+
+                Utils.toggleNotificationPolicyAccess(
+                        mContext.getPackageName(), getInstrumentation(), false);
+                try {
+                    mAudioManager.adjustStreamVolume(streams[i], AudioManager.ADJUST_MUTE, 0);
+                    assertEquals("Apps without Notification policy access can't change ringer mode",
+                            RINGER_MODE_NORMAL, mAudioManager.getRingerMode());
+                } catch (SecurityException e) {
+                }
+                try {
+                    mAudioManager.adjustStreamVolume(
+                            streams[i], AudioManager.ADJUST_TOGGLE_MUTE, 0);
+                    assertEquals("Apps without Notification policy access can't change ringer mode",
+                            RINGER_MODE_NORMAL, mAudioManager.getRingerMode());
+                } catch (SecurityException e) {
+                }
+
+                try {
+                    mAudioManager.setStreamMute(streams[i], true);
+                    assertEquals("Apps without Notification policy access can't change ringer mode",
+                            RINGER_MODE_NORMAL, mAudioManager.getRingerMode());
+                } catch (SecurityException e) {
+                }
+                Utils.toggleNotificationPolicyAccess(
+                        mContext.getPackageName(), getInstrumentation(), true);
+                testStreamMuting(streams[i]);
+            }
+        } finally {
+            Utils.toggleNotificationPolicyAccess(
+                    mContext.getPackageName(), getInstrumentation(), false);
+        }
+    }
+
+    public void testMuteDndUnaffectedStreams() throws Exception {
+        if (mUseFixedVolume) {
+            return;
+        }
         int[] streams = {
                 AudioManager.STREAM_VOICE_CALL,
                 AudioManager.STREAM_MUSIC,
-                AudioManager.STREAM_RING,
-                AudioManager.STREAM_ALARM,
-                AudioManager.STREAM_NOTIFICATION,
-                AudioManager.STREAM_SYSTEM };
+                AudioManager.STREAM_ALARM
+        };
 
         try {
             int muteAffectedStreams = System.getInt(mContext.getContentResolver(),
@@ -664,39 +745,43 @@ public class AudioManagerTest extends InstrumentationTestCase {
                             mAudioManager.isStreamMute(streams[i]));
                     continue;
                 }
-                mAudioManager.adjustStreamVolume(streams[i], AudioManager.ADJUST_MUTE, 0);
-                assertTrue("Muting stream " + streams[i] + " failed.",
-                        mAudioManager.isStreamMute(streams[i]));
-
-                mAudioManager.adjustStreamVolume(streams[i], AudioManager.ADJUST_UNMUTE, 0);
-                assertFalse("Unmuting stream " + streams[i] + " failed.",
-                        mAudioManager.isStreamMute(streams[i]));
-
-                mAudioManager.adjustStreamVolume(streams[i], AudioManager.ADJUST_TOGGLE_MUTE, 0);
-                assertTrue("Toggling mute on stream " + streams[i] + " failed.",
-                        mAudioManager.isStreamMute(streams[i]));
-
-                mAudioManager.adjustStreamVolume(streams[i], AudioManager.ADJUST_TOGGLE_MUTE, 0);
-                assertFalse("Toggling mute on stream " + streams[i] + " failed.",
-                        mAudioManager.isStreamMute(streams[i]));
-
-                mAudioManager.setStreamMute(streams[i], true);
-                assertTrue("Muting stream " + streams[i] + " using setStreamMute failed",
-                        mAudioManager.isStreamMute(streams[i]));
-
-                // mute it three more times to verify the ref counting is gone.
-                mAudioManager.setStreamMute(streams[i], true);
-                mAudioManager.setStreamMute(streams[i], true);
-                mAudioManager.setStreamMute(streams[i], true);
-
-                mAudioManager.setStreamMute(streams[i], false);
-                assertFalse("Unmuting stream " + streams[i] + " using setStreamMute failed.",
-                        mAudioManager.isStreamMute(streams[i]));
+                testStreamMuting(streams[i]);
             }
         } finally {
             Utils.toggleNotificationPolicyAccess(
                     mContext.getPackageName(), getInstrumentation(), false);
         }
+    }
+
+    private void testStreamMuting(int stream) {
+        mAudioManager.adjustStreamVolume(stream, AudioManager.ADJUST_MUTE, 0);
+        assertTrue("Muting stream " + stream + " failed.",
+                mAudioManager.isStreamMute(stream));
+
+        mAudioManager.adjustStreamVolume(stream, AudioManager.ADJUST_UNMUTE, 0);
+        assertFalse("Unmuting stream " + stream + " failed.",
+                mAudioManager.isStreamMute(stream));
+
+        mAudioManager.adjustStreamVolume(stream, AudioManager.ADJUST_TOGGLE_MUTE, 0);
+        assertTrue("Toggling mute on stream " + stream + " failed.",
+                mAudioManager.isStreamMute(stream));
+
+        mAudioManager.adjustStreamVolume(stream, AudioManager.ADJUST_TOGGLE_MUTE, 0);
+        assertFalse("Toggling mute on stream " + stream + " failed.",
+                mAudioManager.isStreamMute(stream));
+
+        mAudioManager.setStreamMute(stream, true);
+        assertTrue("Muting stream " + stream + " using setStreamMute failed",
+                mAudioManager.isStreamMute(stream));
+
+        // mute it three more times to verify the ref counting is gone.
+        mAudioManager.setStreamMute(stream, true);
+        mAudioManager.setStreamMute(stream, true);
+        mAudioManager.setStreamMute(stream, true);
+
+        mAudioManager.setStreamMute(stream, false);
+        assertFalse("Unmuting stream " + stream + " using setStreamMute failed.",
+                mAudioManager.isStreamMute(stream));
     }
 
     public void testSetInvalidRingerMode() {
@@ -706,6 +791,110 @@ public class AudioManagerTest extends InstrumentationTestCase {
 
         mAudioManager.setRingerMode(-3007);
         assertEquals(ringerMode, mAudioManager.getRingerMode());
+    }
+
+    public void testAdjustVolumeInTotalSilenceMode() throws Exception {
+        if (mUseFixedVolume || mIsTelevision) {
+            return;
+        }
+        try {
+            Utils.toggleNotificationPolicyAccess(
+                    mContext.getPackageName(), getInstrumentation(), true);
+            mAudioManager.setStreamVolume(AudioManager.STREAM_MUSIC, 1, 0);
+            setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_NONE);
+
+            int musicVolume = mAudioManager.getStreamVolume(AudioManager.STREAM_MUSIC);
+            mAudioManager.adjustStreamVolume(
+                    AudioManager.STREAM_MUSIC, AudioManager.ADJUST_RAISE, 0);
+            assertEquals(musicVolume, mAudioManager.getStreamVolume(AudioManager.STREAM_MUSIC));
+
+        } finally {
+            setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_ALL);
+            Utils.toggleNotificationPolicyAccess(
+                    mContext.getPackageName(), getInstrumentation(), false);
+        }
+    }
+
+    public void testAdjustVolumeInAlarmsOnlyMode() throws Exception {
+        if (mUseFixedVolume || mIsTelevision) {
+            return;
+        }
+        try {
+            Utils.toggleNotificationPolicyAccess(
+                    mContext.getPackageName(), getInstrumentation(), true);
+            mAudioManager.setStreamVolume(AudioManager.STREAM_MUSIC, 1, 0);
+            setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_ALARMS);
+
+            int musicVolume = mAudioManager.getStreamVolume(AudioManager.STREAM_MUSIC);
+            mAudioManager.adjustStreamVolume(
+                    AudioManager.STREAM_MUSIC, AudioManager.ADJUST_RAISE, 0);
+            int volumeDelta =
+                    getVolumeDelta(mAudioManager.getStreamVolume(AudioManager.STREAM_MUSIC));
+            assertEquals(musicVolume + volumeDelta,
+                    mAudioManager.getStreamVolume(AudioManager.STREAM_MUSIC));
+
+        } finally {
+            setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_ALL);
+            Utils.toggleNotificationPolicyAccess(
+                    mContext.getPackageName(), getInstrumentation(), false);
+        }
+    }
+
+    public void testSetStreamVolumeInTotalSilenceMode() throws Exception {
+        if (mUseFixedVolume || mIsTelevision) {
+            return;
+        }
+        try {
+            Utils.toggleNotificationPolicyAccess(
+                    mContext.getPackageName(), getInstrumentation(), true);
+            mAudioManager.setStreamVolume(AudioManager.STREAM_RING, 1, 0);
+            mAudioManager.setStreamVolume(AudioManager.STREAM_MUSIC, 1, 0);
+            setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_NONE);
+
+            int musicVolume = mAudioManager.getStreamVolume(AudioManager.STREAM_MUSIC);
+            mAudioManager.setStreamVolume(AudioManager.STREAM_MUSIC, 7, 0);
+            assertEquals(musicVolume, mAudioManager.getStreamVolume(AudioManager.STREAM_MUSIC));
+
+            mAudioManager.setStreamVolume(AudioManager.STREAM_RING, 7, 0);
+            assertEquals(7, mAudioManager.getStreamVolume(AudioManager.STREAM_RING));
+        } finally {
+            setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_ALL);
+            Utils.toggleNotificationPolicyAccess(
+                    mContext.getPackageName(), getInstrumentation(), false);
+        }
+    }
+
+    public void testSetStreamVolumeInAlarmsOnlyMode() throws Exception {
+        if (mUseFixedVolume || mIsTelevision) {
+            return;
+        }
+        try {
+            Utils.toggleNotificationPolicyAccess(
+                    mContext.getPackageName(), getInstrumentation(), true);
+            mAudioManager.setStreamVolume(AudioManager.STREAM_RING, 1, 0);
+            mAudioManager.setStreamVolume(AudioManager.STREAM_MUSIC, 1, 0);
+            setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_ALARMS);
+
+            mAudioManager.setStreamVolume(AudioManager.STREAM_MUSIC, 3, 0);
+            assertEquals(3, mAudioManager.getStreamVolume(AudioManager.STREAM_MUSIC));
+
+            mAudioManager.setStreamVolume(AudioManager.STREAM_RING, 7, 0);
+            assertEquals(7, mAudioManager.getStreamVolume(AudioManager.STREAM_RING));
+        } finally {
+            setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_ALL);
+            Utils.toggleNotificationPolicyAccess(
+                    mContext.getPackageName(), getInstrumentation(), false);
+        }
+    }
+
+    private void setInterruptionFilter(int filter) throws Exception {
+        mNm.setInterruptionFilter(filter);
+        for (int i = 0; i < 5; i++) {
+            if (mNm.getCurrentInterruptionFilter() == filter) {
+                break;
+            }
+            Thread.sleep(1000);
+        }
     }
 
     private int getVolumeDelta(int volume) {
