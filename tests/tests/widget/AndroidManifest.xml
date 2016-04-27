@@ -254,7 +254,9 @@
         </activity>
 
         <activity android:name="android.widget.cts.TextViewCtsActivity"
-            android:label="TextViewCtsActivity">
+            android:label="TextViewCtsActivity"
+            android:screenOrientation="nosensor"
+            android:windowSoftInputMode="stateAlwaysHidden">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.FRAMEWORK_INSTRUMENTATION_TEST" />
@@ -286,7 +288,7 @@
         </activity>
 
         <activity android:name="android.widget.cts.VideoViewCtsActivity"
-            android:configChanges="keyboardHidden|orientation|screenSize">
+            android:configChanges="keyboardHidden|orientation|screenSize"
             android:label="VideoViewCtsActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -295,7 +297,9 @@
         </activity>
 
         <activity android:name="android.widget.cts.AutoCompleteCtsActivity"
-            android:label="AutoCompleteCtsActivity">
+            android:label="AutoCompleteCtsActivity"
+            android:screenOrientation="nosensor"
+            android:windowSoftInputMode="stateAlwaysHidden">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.FRAMEWORK_INSTRUMENTATION_TEST" />
