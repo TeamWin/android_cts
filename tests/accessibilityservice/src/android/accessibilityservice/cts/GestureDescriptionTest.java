@@ -93,13 +93,11 @@ public class GestureDescriptionTest extends InstrumentationTestCase {
         }
     }
 
-    public void testCreateStroke_pathWithZeroLength_shouldThrow() {
-        Path zeroLengthPath = new Path();
-        zeroLengthPath.moveTo(0, 0);
-        zeroLengthPath.lineTo(0, 0);
+    public void testCreateStroke_withEmptyPath_shouldThrow() {
+        Path emptyPath = new Path();
         try {
-            new GestureDescription.StrokeDescription(zeroLengthPath, 0, NOMINAL_PATH_DURATION);
-            fail("Missing exception for stroke with path of zero length.");
+            new GestureDescription.StrokeDescription(emptyPath, 0, NOMINAL_PATH_DURATION);
+            fail("Missing exception for empty path.");
         } catch (IllegalArgumentException e) {
         }
     }
