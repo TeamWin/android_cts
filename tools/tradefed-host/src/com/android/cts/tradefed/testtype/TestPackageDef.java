@@ -54,6 +54,7 @@ class TestPackageDef implements ITestPackageDef {
     public static final String VM_HOST_TEST = "vmHostTest";
     public static final String DEQP_TEST = "deqpTest";
     public static final String JUNIT_DEVICE_TEST = "jUnitDeviceTest";
+    public static final String TESTNG_DEVICE_TEST = "testNGDeviceTest";
 
     private String mAppPackageName = null;
     private String mAppNameSpace = null;
@@ -278,7 +279,18 @@ class TestPackageDef implements ITestPackageDef {
             jUnitDeviceTest.setAbi(mAbi);
             mDigest = generateDigest(testCaseDir, mJarPath);
             return jUnitDeviceTest;
-        } else {
+        } else if (TESTNG_DEVICE_TEST.equals(mTestType)){
+            CLog.d("Creating TestNG device test %s", mName);
+            TestNGDeviceTest testNGDeviceTest = new TestNGDeviceTest();
+            testNGDeviceTest.setRunName(getId());
+            testNGDeviceTest.addTestJarFileName(mJarPath);
+            testNGDeviceTest.addRunTimeArgs(mRunTimeArgs);
+            testNGDeviceTest.setTests(mTests);
+            testNGDeviceTest.setAbi(mAbi);
+            mDigest = generateDigest(testCaseDir, mJarPath);
+            return testNGDeviceTest;
+        }
+        else {
             CLog.d("Creating instrumentation test for %s", mName);
             CtsInstrumentationApkTest instrTest = new CtsInstrumentationApkTest();
             if (mTimeoutInMins >= 0) {
