@@ -475,6 +475,8 @@ public class ListPopupWindowTest extends
         promptView.getLocationOnScreen(promptViewOnScreenXY);
 
         final ListView listView = mPopupWindow.getListView();
+        ViewTestUtils.runOnMainAndDrawSync(mInstrumentation, listView, null);
+
         final View firstListChild = listView.getChildAt(0);
         final int[] firstChildOnScreenXY = new int[2];
         firstListChild.getLocationOnScreen(firstChildOnScreenXY);
@@ -498,6 +500,8 @@ public class ListPopupWindowTest extends
         promptView.getLocationOnScreen(promptViewOnScreenXY);
 
         final ListView listView = mPopupWindow.getListView();
+        ViewTestUtils.runOnMainAndDrawSync(mInstrumentation, listView, null);
+
         final View lastListChild = listView.getChildAt(listView.getChildCount() - 1);
         final int[] lastChildOnScreenXY = new int[2];
         lastListChild.getLocationOnScreen(lastChildOnScreenXY);
@@ -595,6 +599,8 @@ public class ListPopupWindowTest extends
                 .withDismissListener().withItemSelectedListener();
         mPopupWindowBuilder.show();
 
+        final View root = mPopupWindow.getListView().getRootView();
+
         // "Point" our custom extension of EditText to our ListPopupWindow
         final MockViewForListPopupWindow anchor =
                 (MockViewForListPopupWindow) mPopupWindow.getAnchorView();
@@ -617,6 +623,8 @@ public class ListPopupWindowTest extends
         mInstrumentation.sendKeyDownUpSync(KeyEvent.KEYCODE_DPAD_DOWN);
         mInstrumentation.waitForIdleSync();
 
+        ViewTestUtils.runOnMainAndDrawSync(mInstrumentation, root, null);
+
         // At this point we expect that item #2 was selected
         verify(mPopupWindowBuilder.mOnItemSelectedListener, times(1)).onItemSelected(
                 any(AdapterView.class), any(View.class), eq(2), eq(2L));
@@ -627,6 +635,8 @@ public class ListPopupWindowTest extends
         mInstrumentation.sendKeyDownUpSync(KeyEvent.KEYCODE_DPAD_UP);
         mInstrumentation.waitForIdleSync();
 
+        ViewTestUtils.runOnMainAndDrawSync(mInstrumentation, root, null);
+
         // At this point we expect that item #1 was selected
         verify(mPopupWindowBuilder.mOnItemSelectedListener, times(2)).onItemSelected(
                 any(AdapterView.class), any(View.class), eq(1), eq(1L));
@@ -636,6 +646,8 @@ public class ListPopupWindowTest extends
         // up one more row
         mInstrumentation.sendKeyDownUpSync(KeyEvent.KEYCODE_DPAD_UP);
         mInstrumentation.waitForIdleSync();
+
+        ViewTestUtils.runOnMainAndDrawSync(mInstrumentation, root, null);
 
         // At this point we expect that item #0 was selected
         verify(mPopupWindowBuilder.mOnItemSelectedListener, times(1)).onItemSelected(
