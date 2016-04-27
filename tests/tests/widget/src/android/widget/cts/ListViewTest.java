@@ -37,7 +37,6 @@ import android.util.Xml;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.ViewTreeObserver.OnDrawListener;
 import android.view.animation.LayoutAnimationController;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
@@ -569,7 +568,7 @@ public class ListViewTest extends ActivityInstrumentationTestCase2<ListViewCtsAc
      * The following functions are merged from frameworktest.
      */
     @MediumTest
-    public void testRequestLayout() throws Exception {
+    public void testRequestLayoutCallsMeasure() throws Exception {
         ListView listView = new ListView(mActivity);
         List<String> items = new ArrayList<>();
         items.add("hello");
@@ -640,6 +639,114 @@ public class ListViewTest extends ActivityInstrumentationTestCase2<ListViewCtsAc
         @Override
         public View getView(int position, View convertView, ViewGroup parent) {
             return new MockView(getContext());
+        }
+    }
+
+    @MediumTest
+    public void testRequestLayoutWithTemporaryDetach() throws Exception {
+        ListView listView = new ListView(mActivity);
+        List<String> items = new ArrayList<>();
+        items.add("0");
+        items.add("1");
+        items.add("2");
+        final TemporarilyDetachableMockViewAdapter<String> adapter =
+                new TemporarilyDetachableMockViewAdapter<>(
+                        mActivity, android.R.layout.simple_list_item_1, items);
+        mInstrumentation.runOnMainSync(() -> {
+            listView.setAdapter(adapter);
+            mActivity.setContentView(listView);
+        });
+        mInstrumentation.waitForIdleSync();
+
+        assertEquals(items.size(), listView.getCount());
+        final TemporarilyDetachableMockView childView0 =
+                (TemporarilyDetachableMockView) listView.getChildAt(0);
+        final TemporarilyDetachableMockView childView1 =
+                (TemporarilyDetachableMockView) listView.getChildAt(1);
+        final TemporarilyDetachableMockView childView2 =
+                (TemporarilyDetachableMockView) listView.getChildAt(2);
+        assertNotNull(childView0);
+        assertNotNull(childView1);
+        assertNotNull(childView2);
+
+        // Make sure that the childView1 has focus.
+        ViewTestUtils.runOnMainAndDrawSync(mInstrumentation, childView1, childView1::requestFocus);
+        assertTrue(childView1.isFocused());
+
+        // Make sure that ListView#requestLayout() is optimized when nothing is changed.
+        ViewTestUtils.runOnMainAndDrawSync(mInstrumentation, listView, listView::requestLayout);
+        assertEquals(childView0, listView.getChildAt(0));
+        assertEquals(childView1, listView.getChildAt(1));
+        assertEquals(childView2, listView.getChildAt(2));
+    }
+
+    private class TemporarilyDetachableMockView extends View {
+
+        private boolean mIsDispatchingStartTemporaryDetach = false;
+        private boolean mIsDispatchingFinishTemporaryDetach = false;
+
+        public TemporarilyDetachableMockView(Context context) {
+            super(context);
+        }
+
+        @Override
+        public void dispatchStartTemporaryDetach() {
+            mIsDispatchingStartTemporaryDetach = true;
+            super.dispatchStartTemporaryDetach();
+            mIsDispatchingStartTemporaryDetach = false;
+        }
+
+        @Override
+        public void dispatchFinishTemporaryDetach() {
+            mIsDispatchingFinishTemporaryDetach = true;
+            super.dispatchFinishTemporaryDetach();
+            mIsDispatchingFinishTemporaryDetach = false;
+        }
+
+        @Override
+        public void onStartTemporaryDetach() {
+            super.onStartTemporaryDetach();
+            if (!mIsDispatchingStartTemporaryDetach) {
+                throw new IllegalStateException("#onStartTemporaryDetach() must be indirectly"
+                        + " called via #dispatchStartTemporaryDetach()");
+            }
+        }
+
+        @Override
+        public void onFinishTemporaryDetach() {
+            super.onFinishTemporaryDetach();
+            if (!mIsDispatchingFinishTemporaryDetach) {
+                throw new IllegalStateException("#onStartTemporaryDetach() must be indirectly"
+                        + " called via #dispatchFinishTemporaryDetach()");
+            }
+        }
+    }
+
+    private class TemporarilyDetachableMockViewAdapter<T> extends ArrayAdapter<T> {
+        ArrayList<TemporarilyDetachableMockView> views = new ArrayList<>();
+
+        public TemporarilyDetachableMockViewAdapter(Context context, int textViewResourceId,
+                List<T> objects) {
+            super(context, textViewResourceId, objects);
+            for (int i = 0; i < objects.size(); i++) {
+                views.add(new TemporarilyDetachableMockView(context));
+                views.get(i).setFocusable(true);
+            }
+        }
+
+        @Override
+        public int getCount() {
+            return views.size();
+        }
+
+        @Override
+        public long getItemId(int position) {
+            return position;
+        }
+
+        @Override
+        public View getView(int position, View convertView, ViewGroup parent) {
+            return views.get(position);
         }
     }
 
