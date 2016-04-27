@@ -67,7 +67,6 @@ public class KeyguardDisabledFeaturesActivity extends DialogTestListActivity {
                         return;
                     }
                     setKeyguardDisabledFeatures();
-                    mDpm.resetPassword("testpassword", 0);
                 }
             });
     }
@@ -86,7 +85,6 @@ public class KeyguardDisabledFeaturesActivity extends DialogTestListActivity {
         // clear the password.
         final ComponentName adminComponent = getAdminComponent();
         if (mDpm.isAdminActive(adminComponent)) {
-            mDpm.resetPassword(null, 0);
             mDpm.removeActiveAdmin(adminComponent);
         }
         super.finish();
