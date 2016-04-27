@@ -83,7 +83,6 @@ import android.view.animation.Animation;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputConnection;
 import android.view.inputmethod.InputMethodManager;
-import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.LinearLayout;
@@ -3561,107 +3560,41 @@ public class ViewTest extends ActivityInstrumentationTestCase2<ViewTestCtsActivi
     }
 
     public void testOnStartAndFinishTemporaryDetach() throws Throwable {
-        final MockListView listView = new MockListView(mActivity);
-        List<String> items = new ArrayList<>();
-        items.add("1");
-        items.add("2");
-        items.add("3");
-        final Adapter<String> adapter = new Adapter<>(mActivity, 0, items);
+        final MockView view = (MockView) mActivity.findViewById(R.id.mock_view);
+
+        assertFalse(view.isTemporarilyDetached());
+        assertFalse(view.hasCalledDispatchStartTemporaryDetach());
+        assertFalse(view.hasCalledDispatchFinishTemporaryDetach());
+        assertFalse(view.hasCalledOnStartTemporaryDetach());
+        assertFalse(view.hasCalledOnFinishTemporaryDetach());
 
         runTestOnUiThread(new Runnable() {
             @Override
             public void run() {
-                mActivity.setContentView(listView);
-                listView.setAdapter(adapter);
+                view.dispatchStartTemporaryDetach();
             }
         });
         getInstrumentation().waitForIdleSync();
-        final MockView focusChild = (MockView) listView.getChildAt(0);
+
+        assertTrue(view.isTemporarilyDetached());
+        assertTrue(view.hasCalledDispatchStartTemporaryDetach());
+        assertFalse(view.hasCalledDispatchFinishTemporaryDetach());
+        assertTrue(view.hasCalledOnStartTemporaryDetach());
+        assertFalse(view.hasCalledOnFinishTemporaryDetach());
 
         runTestOnUiThread(new Runnable() {
             @Override
             public void run() {
-                focusChild.requestFocus();
+                view.dispatchFinishTemporaryDetach();
             }
         });
         getInstrumentation().waitForIdleSync();
-        assertTrue(listView.getChildAt(0).isFocused());
 
-        runTestOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                listView.detachViewFromParent(focusChild);
-            }
-        });
-        getInstrumentation().waitForIdleSync();
-        assertFalse(listView.hasCalledOnStartTemporaryDetach());
-        assertFalse(listView.hasCalledOnFinishTemporaryDetach());
-    }
-
-    private static class MockListView extends ListView {
-        private boolean mCalledOnStartTemporaryDetach = false;
-        private boolean mCalledOnFinishTemporaryDetach = false;
-
-        public MockListView(Context context) {
-            super(context);
-        }
-
-        @Override
-        protected void detachViewFromParent(View child) {
-            super.detachViewFromParent(child);
-        }
-
-        @Override
-        public void onFinishTemporaryDetach() {
-            super.onFinishTemporaryDetach();
-            mCalledOnFinishTemporaryDetach = true;
-        }
-
-        public boolean hasCalledOnFinishTemporaryDetach() {
-            return mCalledOnFinishTemporaryDetach;
-        }
-
-        @Override
-        public void onStartTemporaryDetach() {
-            super.onStartTemporaryDetach();
-            mCalledOnStartTemporaryDetach = true;
-        }
-
-        public boolean hasCalledOnStartTemporaryDetach() {
-            return mCalledOnStartTemporaryDetach;
-        }
-
-        public void reset() {
-            mCalledOnStartTemporaryDetach = false;
-            mCalledOnFinishTemporaryDetach = false;
-        }
-    }
-
-    private static class Adapter<T> extends ArrayAdapter<T> {
-        ArrayList<MockView> views = new ArrayList<>();
-
-        public Adapter(Context context, int textViewResourceId, List<T> objects) {
-            super(context, textViewResourceId, objects);
-            for (int i = 0; i < objects.size(); i++) {
-                views.add(new MockView(context));
-                views.get(i).setFocusable(true);
-            }
-        }
-
-        @Override
-        public int getCount() {
-            return views.size();
-        }
-
-        @Override
-        public long getItemId(int position) {
-            return position;
-        }
-
-        @Override
-        public View getView(int position, View convertView, ViewGroup parent) {
-            return views.get(position);
-        }
+        assertFalse(view.isTemporarilyDetached());
+        assertTrue(view.hasCalledDispatchStartTemporaryDetach());
+        assertTrue(view.hasCalledDispatchFinishTemporaryDetach());
+        assertTrue(view.hasCalledOnStartTemporaryDetach());
+        assertTrue(view.hasCalledOnFinishTemporaryDetach());
     }
 
     public void testKeyPreIme() throws Throwable {
