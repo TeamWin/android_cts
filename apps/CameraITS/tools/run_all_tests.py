@@ -62,6 +62,9 @@ def main():
         "scene5" : "Capture images with a diffuser attached to the camera. See "
                    "CameraITS.pdf section 2.3.4 for more details"
     }
+    scene_extra_args = {
+        "scene5" : ["doAF=False"]
+    }
     tests = []
     for d in scenes:
         tests += [(d,s[:-3],os.path.join("tests", d, s))
@@ -120,9 +123,11 @@ def main():
                 out_path = os.path.join(topdir, camera_id, scene+".jpg")
                 out_arg = "out=" + out_path
                 scene_arg = "scene=" + scene_req[scene]
+                extra_args = scene_extra_args.get(scene, [])
                 cmd = ['python',
                         os.path.join(os.getcwd(),"tools/validate_scene.py"),
-                        camera_id_arg, out_arg, scene_arg, device_id_arg]
+                        camera_id_arg, out_arg, scene_arg, device_id_arg] + \
+                        extra_args
                 retcode = subprocess.call(cmd,cwd=topdir)
                 assert(retcode == 0)
                 print "Start running tests for", scene
