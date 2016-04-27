@@ -170,8 +170,10 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
         CollectingOutputReceiver outputReceiver = new CollectingOutputReceiver();
         mDevice.executeShellCommand(AM_STACK_LIST, outputReceiver);
         final String output = outputReceiver.getOutput();
+        final Pattern activityPattern = Pattern.compile("(.*) " + getWindowName(name) + " (.*)");
         for (String line : output.split("\\n")) {
-            if (line.contains(name)) {
+            Matcher matcher = activityPattern.matcher(line);
+            if (matcher.matches()) {
                 for (String word : line.split("\\s+")) {
                     if (word.startsWith(TASK_ID_PREFIX)) {
                         final String withColon = word.split("=")[1];
