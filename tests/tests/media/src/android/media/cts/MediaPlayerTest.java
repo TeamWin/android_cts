@@ -838,6 +838,11 @@ public class MediaPlayerTest extends MediaPlayerTestBase {
         mCamera = Camera.open(0);
         Camera.Parameters parameters = mCamera.getParameters();
         List<Camera.Size> videoSizes = parameters.getSupportedVideoSizes();
+        // getSupportedVideoSizes returns null when separate video/preview size
+        // is not supported.
+        if (videoSizes == null) {
+            videoSizes = parameters.getSupportedPreviewSizes();
+        }
         for (Camera.Size size : videoSizes)
         {
             if (size.width == width && size.height == height) {
