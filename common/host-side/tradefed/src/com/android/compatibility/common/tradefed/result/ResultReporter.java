@@ -35,7 +35,6 @@ import com.android.tradefed.config.Option;
 import com.android.tradefed.config.Option.Importance;
 import com.android.tradefed.config.OptionClass;
 import com.android.tradefed.log.LogUtil.CLog;
-import com.android.tradefed.result.FileInputStreamSource;
 import com.android.tradefed.result.ILogSaver;
 import com.android.tradefed.result.ILogSaverListener;
 import com.android.tradefed.result.ITestInvocationListener;
@@ -358,12 +357,12 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
                 }
                 // Save the full results folder.
                 if (zippedResults != null) {
-                    FileInputStreamSource fiss = null;
+                    FileInputStream zipResultStream = null;
                     try {
-                        fiss =  new FileInputStreamSource(zippedResults);
-                        testLog("results", LogDataType.ZIP, fiss);
+                        zipResultStream =  new FileInputStream(zippedResults);
+                        mLogSaver.saveLogData("results", LogDataType.ZIP, zipResultStream);
                     } finally {
-                        StreamUtil.cancel(fiss);
+                        StreamUtil.close(zipResultStream);
                     }
                 }
             }
