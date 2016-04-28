@@ -91,40 +91,32 @@ public class ReportLogCollector implements ITargetCleaner {
                 CLog.e("%s is not a directory", resultDir.getAbsolutePath());
                 return;
             }
-            String resultPath = resultDir.getAbsolutePath();
             final File hostReportDir = FileUtil.createNamedTempDir(mTempReportFolder);
             if (!hostReportDir.isDirectory()) {
                 CLog.e("%s is not a directory", hostReportDir.getAbsolutePath());
                 return;
             }
-            String hostReportsPath = hostReportDir.getAbsolutePath();
-            pull(device, mSrcDir, hostReportsPath, resultPath);
+            pull(device, mSrcDir, hostReportDir, resultDir);
         } catch (Exception exception) {
             exception.printStackTrace();
         }
     }
 
-    private void pull(ITestDevice device, String deviceSrc, String hostSrc, String dest) {
+    private void pull(ITestDevice device, String deviceSrc, File hostDir, File destDir) {
+        String hostSrc = hostDir.getAbsolutePath();
+        String dest = destDir.getAbsolutePath();
         String deviceSideCommand = String.format("adb -s %s pull %s %s", device.getSerialNumber(),
                 deviceSrc, dest);
-        String hostSideCommand = String.format("cp -r %s/* %s", hostSrc, dest);
-        String cleanUpCommand = String.format("rm -rf %s", hostSrc);
         try {
-            Process deviceProcess = Runtime.getRuntime().exec(new String[]{"/bin/bash", "-c",
-                    deviceSideCommand});
-            if (deviceProcess.waitFor() != 0) {
-                CLog.v("No device-side report logs pulled.");
+            if (device.doesFileExist(deviceSrc)) {
+                Process deviceProcess = Runtime.getRuntime().exec(new String[]{"/bin/bash", "-c",
+                        deviceSideCommand});
+                if (deviceProcess.waitFor() != 0) {
+                    CLog.e("Failed to run %s", deviceSideCommand);
+                }
             }
-            Process hostProcess = Runtime.getRuntime().exec(new String[]{"/bin/bash", "-c",
-                    hostSideCommand});
-            if (hostProcess.waitFor() != 0) {
-                CLog.v("No host-side report logs pulled");
-            }
-            Process cleanUpProcess = Runtime.getRuntime().exec(new String[]{"/bin/bash", "-c",
-                    cleanUpCommand});
-            if (cleanUpProcess.waitFor() != 0) {
-                CLog.e("Failed to run %s", cleanUpCommand);
-            }
+            FileUtil.recursiveCopy(hostDir, destDir);
+            FileUtil.recursiveDelete(hostDir);
         } catch (Exception e) {
             CLog.e("Caught exception during pull.");
             CLog.e(e);
