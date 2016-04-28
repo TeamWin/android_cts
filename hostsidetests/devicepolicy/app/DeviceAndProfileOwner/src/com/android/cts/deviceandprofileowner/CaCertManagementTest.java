@@ -17,7 +17,6 @@ package com.android.cts.deviceandprofileowner;
 
 import android.content.ComponentName;
 import android.net.http.X509TrustManagerExtensions;
-import android.security.NetworkSecurityPolicy;
 
 import java.io.ByteArrayInputStream;
 import java.security.GeneralSecurityException;
@@ -142,8 +141,6 @@ public class CaCertManagementTest extends BaseDeviceAdminTest {
                 listed = true;
             }
         }
-
-        NetworkSecurityPolicy.getInstance().handleTrustStorageUpdate();
 
         // Verify that the user added CA is reflected in the default X509TrustManager.
         final TrustManagerFactory tmf =
