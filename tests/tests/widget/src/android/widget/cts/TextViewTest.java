@@ -23,6 +23,7 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.res.ColorStateList;
 import android.content.res.Resources.NotFoundException;
+import android.cts.util.KeyEventUtil;
 import android.cts.util.PollingCheck;
 import android.cts.util.WidgetTestUtils;
 import android.graphics.Bitmap;
@@ -123,6 +124,7 @@ public class TextViewTest extends ActivityInstrumentationTestCase2<TextViewCtsAc
             + "this text, I would love to see the kind of devices you guys now use!";
     private static final long TIMEOUT = 5000;
     private CharSequence mTransformedText;
+    private KeyEventUtil mKeyEventUtil;
 
     public TextViewTest() {
         super("android.widget.cts", TextViewCtsActivity.class);
@@ -139,6 +141,7 @@ public class TextViewTest extends ActivityInstrumentationTestCase2<TextViewCtsAc
             }
         }.run();
         mInstrumentation = getInstrumentation();
+        mKeyEventUtil = new KeyEventUtil(mInstrumentation);
     }
 
     /**
@@ -1400,7 +1403,7 @@ public class TextViewTest extends ActivityInstrumentationTestCase2<TextViewCtsAc
         initTextViewForTyping();
 
         // Type some text.
-        mInstrumentation.sendStringSync("abc");
+        mKeyEventUtil.sendString(mTextView, "abc");
         mActivity.runOnUiThread(new Runnable() {
             public void run() {
                 // Precondition: The cursor is at the end of the text.
@@ -1432,8 +1435,9 @@ public class TextViewTest extends ActivityInstrumentationTestCase2<TextViewCtsAc
         initTextViewForTyping();
 
         // Simulate deleting text and undoing it.
-        mInstrumentation.sendStringSync("xyz");
-        sendKeys(KeyEvent.KEYCODE_DEL, KeyEvent.KEYCODE_DEL, KeyEvent.KEYCODE_DEL);
+        mKeyEventUtil.sendString(mTextView, "xyz");
+        mKeyEventUtil.sendKeys(mTextView, KeyEvent.KEYCODE_DEL, KeyEvent.KEYCODE_DEL,
+                KeyEvent.KEYCODE_DEL);
         mActivity.runOnUiThread(new Runnable() {
             public void run() {
                 // Precondition: The text was actually deleted.
@@ -1563,8 +1567,9 @@ public class TextViewTest extends ActivityInstrumentationTestCase2<TextViewCtsAc
         initTextViewForTyping();
 
         // Create two undo operations, an insert and a delete.
-        mInstrumentation.sendStringSync("xyz");
-        sendKeys(KeyEvent.KEYCODE_DEL, KeyEvent.KEYCODE_DEL, KeyEvent.KEYCODE_DEL);
+        mKeyEventUtil.sendString(mTextView, "xyz");
+        mKeyEventUtil.sendKeys(mTextView, KeyEvent.KEYCODE_DEL, KeyEvent.KEYCODE_DEL,
+                KeyEvent.KEYCODE_DEL);
         mActivity.runOnUiThread(new Runnable() {
             public void run() {
                 // Calling setText() clears both undo operations, so undo doesn't happen.
@@ -1585,7 +1590,7 @@ public class TextViewTest extends ActivityInstrumentationTestCase2<TextViewCtsAc
         initTextViewForTyping();
 
         // Type some text. This creates an undo entry.
-        mInstrumentation.sendStringSync("abc");
+        mKeyEventUtil.sendString(mTextView, "abc");
         mActivity.runOnUiThread(new Runnable() {
             public void run() {
                 // Undo the typing to create a redo entry.
@@ -1604,7 +1609,7 @@ public class TextViewTest extends ActivityInstrumentationTestCase2<TextViewCtsAc
         initTextViewForTyping();
 
         // Type some text.
-        mInstrumentation.sendStringSync("abc");
+        mKeyEventUtil.sendString(mTextView, "abc");
         mActivity.runOnUiThread(new Runnable() {
             public void run() {
                 // Programmatically append some text.
@@ -1627,7 +1632,7 @@ public class TextViewTest extends ActivityInstrumentationTestCase2<TextViewCtsAc
         initTextViewForTyping();
 
         // Type some text.
-        mInstrumentation.sendStringSync("abc");
+        mKeyEventUtil.sendString(mTextView, "abc");
         mActivity.runOnUiThread(new Runnable() {
             public void run() {
                 // Directly modify the underlying Editable to insert some text.
@@ -1676,7 +1681,7 @@ public class TextViewTest extends ActivityInstrumentationTestCase2<TextViewCtsAc
         mTextView.addTextChangedListener(new ConvertToSpacesTextWatcher());
 
         // Type some text.
-        mInstrumentation.sendStringSync("abc");
+        mKeyEventUtil.sendString(mTextView, "abc");
         mActivity.runOnUiThread(new Runnable() {
             public void run() {
                 // TextWatcher altered the text.
@@ -1714,7 +1719,7 @@ public class TextViewTest extends ActivityInstrumentationTestCase2<TextViewCtsAc
         initTextViewForTyping();
 
         // Type some text.
-        mInstrumentation.sendStringSync("abc");
+        mKeyEventUtil.sendString(mTextView, "abc");
         mActivity.runOnUiThread(new Runnable() {
             public void run() {
                 // Pressing Control-Z triggers undo.
@@ -1737,7 +1742,7 @@ public class TextViewTest extends ActivityInstrumentationTestCase2<TextViewCtsAc
         initTextViewForTyping();
 
         // Type some text to create an undo operation.
-        mInstrumentation.sendStringSync("abc");
+        mKeyEventUtil.sendString(mTextView, "abc");
         mActivity.runOnUiThread(new Runnable() {
             public void run() {
                 // Parcel and unparcel the TextView.
@@ -1748,7 +1753,7 @@ public class TextViewTest extends ActivityInstrumentationTestCase2<TextViewCtsAc
         mInstrumentation.waitForIdleSync();
 
         // Delete a character to create a new undo operation.
-        sendKeys(KeyEvent.KEYCODE_DEL);
+        mKeyEventUtil.sendKeys(mTextView, KeyEvent.KEYCODE_DEL);
         mActivity.runOnUiThread(new Runnable() {
             public void run() {
                 assertEquals("ab", mTextView.getText().toString());
@@ -1775,8 +1780,8 @@ public class TextViewTest extends ActivityInstrumentationTestCase2<TextViewCtsAc
         initTextViewForTyping();
 
         // Type and delete to create two new undo operations.
-        mInstrumentation.sendStringSync("a");
-        sendKeys(KeyEvent.KEYCODE_DEL);
+        mKeyEventUtil.sendString(mTextView, "a");
+        mKeyEventUtil.sendKeys(mTextView, KeyEvent.KEYCODE_DEL);
         mActivity.runOnUiThread(new Runnable() {
             public void run() {
                 // Empty the undo stack then parcel and unparcel the TextView. While the undo
@@ -1790,8 +1795,8 @@ public class TextViewTest extends ActivityInstrumentationTestCase2<TextViewCtsAc
         mInstrumentation.waitForIdleSync();
 
         // Create two more undo operations.
-        mInstrumentation.sendStringSync("b");
-        sendKeys(KeyEvent.KEYCODE_DEL);
+        mKeyEventUtil.sendString(mTextView, "b");
+        mKeyEventUtil.sendKeys(mTextView, KeyEvent.KEYCODE_DEL);
         mActivity.runOnUiThread(new Runnable() {
             public void run() {
                 // Verify undo still works.
