@@ -330,6 +330,17 @@ public class CheckedTextViewTest extends
         TestUtils.assertAllPixelsOfColor("Expected 50% green over full red", checkMark,
                 checkMark.getIntrinsicWidth(), checkMark.getIntrinsicHeight(), false,
                 TestUtils.compositeColors(0x8000FF00, Color.RED), 1, true);
+
+        // Switch to a different color for the underlying checkmark and verify that the
+        // currently configured tinting (50% green overlay) is still respected
+        ViewTestUtils.runOnMainAndDrawSync(mInstrumentation, mCheckedTextView,
+                () -> mCheckedTextView.setCheckMarkDrawable(R.drawable.icon_yellow));
+        assertEquals(PorterDuff.Mode.SRC_OVER, mCheckedTextView.getCheckMarkTintMode());
+        assertEquals(0x8000FF00, mCheckedTextView.getCheckMarkTintList().getDefaultColor());
+        checkMark = mCheckedTextView.getCheckMarkDrawable();
+        TestUtils.assertAllPixelsOfColor("Expected 50% green over full yellow", checkMark,
+                checkMark.getIntrinsicWidth(), checkMark.getIntrinsicHeight(), false,
+                TestUtils.compositeColors(0x8000FF00, Color.YELLOW), 1, true);
     }
 
     private static final class MockCheckedTextView extends CheckedTextView {
