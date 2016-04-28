@@ -29,6 +29,7 @@ import android.telephony.SmsManager;
 import android.telephony.SmsMessage;
 import android.telephony.TelephonyManager;
 import android.test.AndroidTestCase;
+import android.text.TextUtils;
 import android.util.Log;
 
 import java.util.ArrayList;
@@ -242,6 +243,9 @@ public class SmsManagerTest extends AndroidTestCase {
             return;
         }
 
+        assertFalse("[RERUN] SIM card does not provide phone number. Use a suitable SIM Card.",
+                TextUtils.isEmpty(mDestAddr));
+
         String mccmnc = mTelephonyManager.getSimOperator();
 
         mSendIntent = new Intent(SMS_SEND_ACTION);
@@ -264,9 +268,11 @@ public class SmsManagerTest extends AndroidTestCase {
         // send single text sms
         init();
         sendTextMessage(mDestAddr, mDestAddr, mSentIntent, mDeliveredIntent);
-        assertTrue(mSendReceiver.waitForCalls(1, TIME_OUT));
+        assertTrue("[RERUN] Could not send SMS. Check signal.",
+                mSendReceiver.waitForCalls(1, TIME_OUT));
         if (mDeliveryReportSupported) {
-            assertTrue(mDeliveryReceiver.waitForCalls(1, TIME_OUT));
+            assertTrue("[RERUN] SMS message delivery notification not received. Check signal.",
+                    mDeliveryReceiver.waitForCalls(1, TIME_OUT));
         }
 
         if (mTelephonyManager.getPhoneType() == TelephonyManager.PHONE_TYPE_CDMA) {
@@ -281,12 +287,14 @@ public class SmsManagerTest extends AndroidTestCase {
 
             init();
             sendDataMessage(mDestAddr, port, data, mSentIntent, mDeliveredIntent);
-            assertTrue(mSendReceiver.waitForCalls(1, TIME_OUT));
+            assertTrue("[RERUN] Could not send data SMS. Check signal.",
+                    mSendReceiver.waitForCalls(1, TIME_OUT));
             if (mDeliveryReportSupported) {
-                assertTrue(mDeliveryReceiver.waitForCalls(1, TIME_OUT));
+                assertTrue("[RERUN] Data SMS message delivery notification not received. " +
+                        "Check signal.", mDeliveryReceiver.waitForCalls(1, TIME_OUT));
             }
             mDataSmsReceiver.waitForCalls(1, TIME_OUT);
-            assertTrue(mReceivedDataSms);
+            assertTrue("[RERUN] Data SMS message not received. Check signal.", mReceivedDataSms);
             assertEquals(mReceivedText, mText);
         } else {
             // This GSM network doesn't support Data(binary) SMS message.
@@ -305,9 +313,11 @@ public class SmsManagerTest extends AndroidTestCase {
                 deliveryIntents.add(PendingIntent.getBroadcast(getContext(), 0, mDeliveryIntent, 0));
             }
             sendMultiPartTextMessage(mDestAddr, parts, sentIntents, deliveryIntents);
-            assertTrue(mSendReceiver.waitForCalls(numParts, TIME_OUT));
+            assertTrue("[RERUN] Could not send multi part SMS. Check signal.",
+                    mSendReceiver.waitForCalls(numParts, TIME_OUT));
             if (mDeliveryReportSupported) {
-              assertTrue(mDeliveryReceiver.waitForCalls(numParts, TIME_OUT));
+                assertTrue("[RERUN] Multi part SMS message delivery notification not received. " +
+                        "Check signal.", mDeliveryReceiver.waitForCalls(numParts, TIME_OUT));
             }
         } else {
             // This GSM network doesn't support Multipart SMS message.
