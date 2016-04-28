@@ -803,12 +803,6 @@ public class FileSystemPermissionTest extends AndroidTestCase {
         assertTrue("/data is not mounted NODEV", (vfs.f_flag & OsConstants.ST_NODEV) != 0);
     }
 
-    public void testAllBlockDevicesAreSecure() throws Exception {
-        Set<File> insecure = getAllInsecureDevicesInDirAndSubdir(new File("/dev"), FileUtils.S_IFBLK);
-        assertTrue("Found insecure block devices: " + insecure.toString(),
-                insecure.isEmpty());
-    }
-
     public void testDevRandomWorldReadableAndWritable() throws Exception {
         File f = new File("/dev/random");
 
