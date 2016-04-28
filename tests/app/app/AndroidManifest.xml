@@ -124,6 +124,9 @@
             <meta-data android:name="android.app.stubs.reference" android:resource="@xml/metadata" />
         </service>
 
+        <service android:name="android.app.stubs.LocalForegroundService">
+        </service>
+
         <service android:name="android.app.stubs.LocalGrantedService"
              android:permission="android.app.stubs.permission.TEST_GRANTED">
             <intent-filter>
