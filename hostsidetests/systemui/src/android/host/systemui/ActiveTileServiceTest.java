@@ -32,6 +32,7 @@ public class ActiveTileServiceTest extends BaseTileServiceTest {
     }
 
     public void testNotListening() throws Exception {
+        if (!supportedHardware()) return;
         addTile();
         assertTrue(waitFor("onDestroy"));
 
@@ -42,6 +43,7 @@ public class ActiveTileServiceTest extends BaseTileServiceTest {
     }
 
     public void testRequestListening() throws Exception {
+        if (!supportedHardware()) return;
         addTile();
         assertTrue(waitFor("onDestroy"));
 
@@ -52,6 +54,7 @@ public class ActiveTileServiceTest extends BaseTileServiceTest {
     }
 
     public void testClick() throws Exception {
+        if (!supportedHardware()) return;
         addTile();
         assertTrue(waitFor("onDestroy"));
 
