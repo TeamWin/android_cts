@@ -108,6 +108,12 @@ public class FileSystemPermissionTest extends DeviceTestCase {
                 insecure.isEmpty());
     }
 
+    public void testAllBlockDevicesAreSecure() throws Exception {
+        Set<String> insecure = getAllInsecureDevicesInDirAndSubdir("/dev", "b");
+        assertTrue("Found insecure block devices: " + insecure.toString(),
+                insecure.isEmpty());
+    }
+
     /**
      * Searches for all world accessable files, note this may need sepolicy to search the desired
      * location and stat files.
