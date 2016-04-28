@@ -259,13 +259,14 @@ static jboolean android_security_cts_NativeCodeTest_doPingPongRootTest(JNIEnv*, 
 #define FIXED_ADDR 0x45678000
 #define TIMEOUT 60 /* seconds */
 
-struct iovec *iovs = NULL;
-int fd[2];
+static struct iovec *iovs = NULL;
+static int fd[2];
+static void *overflow_addr;
 
 void* func_map(void*)
 {
-    munmap((void*)(FIXED_ADDR), PAGE_SIZE);
-    mmap((void*)(FIXED_ADDR), PAGE_SIZE, PROT_READ | PROT_WRITE,
+    munmap(overflow_addr, PAGE_SIZE);
+    overflow_addr = mmap(overflow_addr, PAGE_SIZE, PROT_READ | PROT_WRITE,
             MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
     return NULL;
 }
@@ -306,8 +307,10 @@ static jboolean android_security_cts_NativeCodeTest_doPipeReadVTest(JNIEnv*, job
     iovs[OVERFLOW_BUF].iov_base = bufs[OVERFLOW_BUF];
     iovs[OVERFLOW_BUF].iov_len = IOV_LEN;
 
-    bufs[OVERFLOW_BUF] = mmap((void*)(FIXED_ADDR), PAGE_SIZE, PROT_READ | PROT_WRITE,
-            MAP_PRIVATE | MAP_ANONYMOUS | MAP_FIXED, -1, 0);
+    overflow_addr = mmap((void *) FIXED_ADDR, PAGE_SIZE, PROT_READ | PROT_WRITE,
+            MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+
+    bufs[OVERFLOW_BUF] = overflow_addr;
     if (bufs[OVERFLOW_BUF] == MAP_FAILED) {
         ALOGE("mmap fixed addr failed:%s", strerror(errno));
         goto __close_pipe;
@@ -337,6 +340,12 @@ static jboolean android_security_cts_NativeCodeTest_doPipeReadVTest(JNIEnv*, job
 
         pthread_join(thr_map, NULL);
         pthread_join(thr_readv, NULL);
+
+        bufs[OVERFLOW_BUF] = overflow_addr;
+        if (bufs[OVERFLOW_BUF] == MAP_FAILED) {
+            ALOGE("mmap fixed addr failed:%s", strerror(errno));
+            goto __free_bufs;
+        }
 
         clock_gettime(CLOCK_MONOTONIC, &ts);
         if ((ts.tv_sec - time) > TIMEOUT) {
