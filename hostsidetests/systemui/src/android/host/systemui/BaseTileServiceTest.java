@@ -63,6 +63,7 @@ public class BaseTileServiceTest extends DeviceTestCase {
     protected void tearDown() throws Exception {
         super.tearDown();
 
+        if (!supportedHardware()) return;
         collapse();
         remTile();
         // Try to wait for a onTileRemoved.
@@ -121,5 +122,11 @@ public class BaseTileServiceTest extends DeviceTestCase {
 
     private void clearLogcat() throws DeviceNotAvailableException {
         getDevice().executeAdbCommand("logcat", "-c");
+    }
+
+    protected boolean supportedHardware() throws DeviceNotAvailableException {
+        String features = getDevice().executeShellCommand("pm list features");
+        return !features.contains("android.hardware.type.television") &&
+               !features.contains("android.hardware.type.watch");
     }
 }
