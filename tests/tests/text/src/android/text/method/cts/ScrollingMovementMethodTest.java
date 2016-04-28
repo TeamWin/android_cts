@@ -60,7 +60,7 @@ public class ScrollingMovementMethodTest extends ActivityInstrumentationTestCase
     @Override
     protected void setUp() throws Exception {
         super.setUp();
-        mTextView = new TextView(getActivity());
+        mTextView = new TextViewNoIme(getActivity());
         mTextView.setText(THREE_LINES_TEXT, BufferType.EDITABLE);
         mSpannable = (Spannable) mTextView.getText();
         mScaledTouchSlop = ViewConfiguration.get(getActivity()).getScaledTouchSlop();
@@ -649,7 +649,7 @@ public class ScrollingMovementMethodTest extends ActivityInstrumentationTestCase
         ScrollingMovementMethod method = new ScrollingMovementMethod();
         SpannableString spannable = new SpannableString("Test Content");
         KeyEvent event = new KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_0);
-        TextView view = new TextView(getActivity());
+        TextView view = new TextViewNoIme(getActivity());
 
         assertFalse(method.onKeyUp(view, spannable, KeyEvent.KEYCODE_0, event));
         assertFalse(method.onKeyUp(null, null, 0, null));

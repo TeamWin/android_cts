@@ -16,18 +16,14 @@
 
 package android.text.method.cts;
 
-import android.app.Activity;
 import android.test.suitebuilder.annotation.SmallTest;
-import android.test.suitebuilder.annotation.Suppress;
 import android.text.InputType;
 import android.text.method.BaseKeyListener;
-import android.text.method.cts.KeyListenerTestCase;
 import android.view.KeyEvent;
-import android.widget.EditText;
 import android.widget.TextView.BufferType;
 
 /**
- * Test backspace key handling of {@link android.text.method.BaseKeyListner}.
+ * Test backspace key handling of {@link android.text.method.BaseKeyListener}.
  */
 public class BackspaceTest extends KeyListenerTestCase {
     private static final BaseKeyListener mKeyListener = new BaseKeyListener() {
