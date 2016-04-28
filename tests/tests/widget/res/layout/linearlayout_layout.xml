@@ -212,4 +212,30 @@
 
     </LinearLayout>
 
+    <LinearLayout
+        android:id="@+id/horizontal_with_divider"
+        android:layout_width="100px"
+        android:layout_height="100px"
+        android:orientation="horizontal"
+        android:background="#FF0"
+        android:showDividers="middle"
+        android:divider="@drawable/linear_layout_divider_red"
+        android:dividerPadding="@dimen/linear_layout_divider_padding">
+
+        <View
+            android:id="@+id/child1"
+            android:layout_width="0dip"
+            android:layout_height="match_parent"
+            android:layout_weight="0.5"
+            android:background="#00F" />
+
+        <View
+            android:id="@+id/child2"
+            android:layout_width="0dip"
+            android:layout_height="match_parent"
+            android:layout_weight="0.5"
+            android:background="#0F0" />
+
+    </LinearLayout>
+
 </LinearLayout>
