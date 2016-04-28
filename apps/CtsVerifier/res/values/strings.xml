@@ -1208,7 +1208,7 @@
     <string name="attention_email_order">Check that ranker respects mailto URIs for contacts.</string>
     <string name="attention_phone_order">Check that ranker respects telephone URIs for contacts.</string>
     <string name="attention_interruption_order">Check that ranker temporarily boosts interruptions.
-    This test takes 15 seconds to complete.</string>
+    This test takes 30 seconds to complete.</string>
     <string name="attention_none_are_filtered">Check that \"All\" mode doesn\'t filter any notifications.</string>
     <string name="attention_some_are_filtered">Check that \"Priority\" mode doesn\'t filter priority notifications.</string>
     <string name="attention_all_are_filtered">Check that \"None\" mode filters all notifications.</string>
