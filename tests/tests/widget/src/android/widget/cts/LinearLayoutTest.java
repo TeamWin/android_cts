@@ -16,10 +16,14 @@
 
 package android.widget.cts;
 
+import android.annotation.ColorInt;
 import android.app.Activity;
 import android.app.Instrumentation;
 import android.content.Context;
+import android.content.res.Resources;
 import android.graphics.Color;
+import android.graphics.Rect;
+import android.graphics.drawable.Drawable;
 import android.test.ActivityInstrumentationTestCase;
 import android.test.ViewAsserts;
 import android.test.suitebuilder.annotation.SmallTest;
@@ -35,6 +39,9 @@ import android.widget.LinearLayout;
 import android.widget.LinearLayout.LayoutParams;
 import android.widget.ListView;
 import android.widget.TextView;
+import android.widget.cts.util.TestUtils;
+import android.widget.cts.util.ViewTestUtils;
+
 import org.xmlpull.v1.XmlPullParser;
 
 import java.util.concurrent.CountDownLatch;
@@ -402,17 +409,20 @@ public class LinearLayoutTest extends ActivityInstrumentationTestCase<LinearLayo
     }
 
     public void testVerticalCenterGravityOnHorizontalLayout() {
+        final Instrumentation instrumentation = getInstrumentation();
         LinearLayout parent = (LinearLayout) mActivity.findViewById(R.id.weightsum);
         TextView leftView = (TextView) parent.findViewById(R.id.weight_0_2);
         TextView centerView = (TextView) parent.findViewById(R.id.weight_0_5);
         TextView rightView = (TextView) parent.findViewById(R.id.weight_0_3);
+
+        instrumentation.runOnMainSync(() -> parent.setLayoutDirection(View.LAYOUT_DIRECTION_LTR));
+        instrumentation.waitForIdleSync();
 
         int originalLeftViewRight = leftView.getRight();
         int originalCenterViewLeft = centerView.getLeft();
         int originalCenterViewRight = centerView.getRight();
         int originalRightViewLeft = rightView.getLeft();
 
-        final Instrumentation instrumentation = getInstrumentation();
         instrumentation.runOnMainSync(() -> parent.setVerticalGravity(Gravity.CENTER_VERTICAL));
         instrumentation.waitForIdleSync();
 
@@ -444,17 +454,20 @@ public class LinearLayoutTest extends ActivityInstrumentationTestCase<LinearLayo
     }
 
     public void testBottomGravityOnHorizontalLayout() {
+        final Instrumentation instrumentation = getInstrumentation();
         LinearLayout parent = (LinearLayout) mActivity.findViewById(R.id.weightsum);
         TextView leftView = (TextView) parent.findViewById(R.id.weight_0_2);
         TextView centerView = (TextView) parent.findViewById(R.id.weight_0_5);
         TextView rightView = (TextView) parent.findViewById(R.id.weight_0_3);
+
+        instrumentation.runOnMainSync(() -> parent.setLayoutDirection(View.LAYOUT_DIRECTION_LTR));
+        instrumentation.waitForIdleSync();
 
         int originalLeftViewRight = leftView.getRight();
         int originalCenterViewLeft = centerView.getLeft();
         int originalCenterViewRight = centerView.getRight();
         int originalRightViewLeft = rightView.getLeft();
 
-        final Instrumentation instrumentation = getInstrumentation();
         instrumentation.runOnMainSync(() -> parent.setVerticalGravity(Gravity.BOTTOM));
         instrumentation.waitForIdleSync();
 
@@ -483,10 +496,14 @@ public class LinearLayoutTest extends ActivityInstrumentationTestCase<LinearLayo
     }
 
     public void testHorizontalCenterGravityOnVerticalLayout() {
+        final Instrumentation instrumentation = getInstrumentation();
         LinearLayout parent = (LinearLayout) mActivity.findViewById(R.id.weightsum_vertical);
         TextView topView = (TextView) parent.findViewById(R.id.weight_0_1);
         TextView centerView = (TextView) parent.findViewById(R.id.weight_0_4);
         TextView bottomView = (TextView) parent.findViewById(R.id.weight_0_5);
+
+        instrumentation.runOnMainSync(() -> parent.setLayoutDirection(View.LAYOUT_DIRECTION_LTR));
+        instrumentation.waitForIdleSync();
 
         final int parentWidth = parent.getHeight();
 
@@ -495,7 +512,6 @@ public class LinearLayoutTest extends ActivityInstrumentationTestCase<LinearLayo
         int originalCenterViewBottom = centerView.getBottom();
         int originalBottomViewTop = bottomView.getTop();
 
-        final Instrumentation instrumentation = getInstrumentation();
         instrumentation.runOnMainSync(() -> parent.setHorizontalGravity(Gravity.CENTER_HORIZONTAL));
         instrumentation.waitForIdleSync();
 
@@ -526,10 +542,14 @@ public class LinearLayoutTest extends ActivityInstrumentationTestCase<LinearLayo
     }
 
     public void testRightGravityOnVerticalLayout() {
+        final Instrumentation instrumentation = getInstrumentation();
         LinearLayout parent = (LinearLayout) mActivity.findViewById(R.id.weightsum_vertical);
         TextView topView = (TextView) parent.findViewById(R.id.weight_0_1);
         TextView centerView = (TextView) parent.findViewById(R.id.weight_0_4);
         TextView bottomView = (TextView) parent.findViewById(R.id.weight_0_5);
+
+        instrumentation.runOnMainSync(() -> parent.setLayoutDirection(View.LAYOUT_DIRECTION_LTR));
+        instrumentation.waitForIdleSync();
 
         final int parentWidth = parent.getHeight();
 
@@ -538,7 +558,6 @@ public class LinearLayoutTest extends ActivityInstrumentationTestCase<LinearLayo
         int originalCenterViewBottom = centerView.getBottom();
         int originalBottomViewTop = bottomView.getTop();
 
-        final Instrumentation instrumentation = getInstrumentation();
         instrumentation.runOnMainSync(() -> parent.setHorizontalGravity(Gravity.RIGHT));
         instrumentation.waitForIdleSync();
 
@@ -635,6 +654,259 @@ public class LinearLayoutTest extends ActivityInstrumentationTestCase<LinearLayo
             }
         });
         countDownLatch3.await(500, TimeUnit.MILLISECONDS);
+    }
+
+    private void verifyVisualsOfVerticalLayoutWithDivider(LinearLayout parent,
+            int expectedDividerPositionMask,
+            int expectedDividerSize, @ColorInt int expectedDividerColor,
+            int expectedDividerPadding) {
+        final int parentWidth = parent.getWidth();
+        final int parentHeight = parent.getHeight();
+
+        final boolean expectingTopDivider =
+                (expectedDividerPositionMask & LinearLayout.SHOW_DIVIDER_BEGINNING) != 0;
+        final boolean expectingMiddleDivider =
+                (expectedDividerPositionMask & LinearLayout.SHOW_DIVIDER_MIDDLE) != 0;
+        final boolean expectingBottomDivider =
+                (expectedDividerPositionMask & LinearLayout.SHOW_DIVIDER_END) != 0;
+        final int expectedDividerCount = (expectingTopDivider ? 1 : 0)
+                + (expectingMiddleDivider ? 1 : 0) + (expectingBottomDivider ? 1 : 0);
+
+        final int expectedChildHeight =
+                (parent.getHeight() - expectedDividerCount * expectedDividerSize) / 2;
+
+        final int expectedTopChildTop = expectingTopDivider ? expectedDividerSize : 0;
+        TestUtils.assertRegionPixelsOfColor("Region of first child is blue", parent,
+                new Rect(0, expectedTopChildTop, parentWidth,
+                        expectedTopChildTop + expectedChildHeight),
+                Color.BLUE, 1, true);
+
+        final int expectedBottomChildBottom =
+                expectingBottomDivider ? parentHeight - expectedDividerSize : parentHeight;
+        TestUtils.assertRegionPixelsOfColor("Region of second child is green", parent,
+                new Rect(0, expectedBottomChildBottom - expectedChildHeight, parentWidth,
+                        expectedBottomChildBottom),
+                Color.GREEN, 1, true);
+
+        if (expectedDividerSize == 0) {
+            return;
+        }
+
+        // Do we expect top divider?
+        if (expectingTopDivider) {
+            TestUtils.assertRegionPixelsOfColor(
+                    "Region of top divider is " + TestUtils.formatColorToHex(expectedDividerColor),
+                    parent,
+                    new Rect(expectedDividerPadding, 0, parentWidth - expectedDividerPadding,
+                            expectedDividerSize),
+                    expectedDividerColor, 1, true);
+            TestUtils.assertRegionPixelsOfColor("Region of left padding of top divider is yellow",
+                    parent,
+                    new Rect(0, 0, expectedDividerPadding, expectedDividerSize),
+                    Color.YELLOW, 1, true);
+            TestUtils.assertRegionPixelsOfColor("Region of right padding of top divider is yellow",
+                    parent,
+                    new Rect(parentWidth - expectedDividerPadding, 0, parentWidth,
+                            expectedDividerSize),
+                    Color.YELLOW, 1, true);
+        }
+
+        // Do we expect middle divider?
+        if (expectingMiddleDivider) {
+            final int expectedMiddleDividerTop = expectedTopChildTop + expectedChildHeight;
+            TestUtils.assertRegionPixelsOfColor(
+                    "Region of middle divider is " +
+                            TestUtils.formatColorToHex(expectedDividerColor),
+                    parent,
+                    new Rect(expectedDividerPadding, expectedMiddleDividerTop,
+                            parentWidth - expectedDividerPadding,
+                            expectedMiddleDividerTop + expectedDividerSize),
+                    expectedDividerColor, 1, true);
+            TestUtils.assertRegionPixelsOfColor(
+                    "Region of left padding of middle divider is yellow",
+                    parent,
+                    new Rect(0, expectedMiddleDividerTop, expectedDividerPadding,
+                            expectedMiddleDividerTop + expectedDividerSize),
+                    Color.YELLOW, 1, true);
+            TestUtils.assertRegionPixelsOfColor(
+                    "Region of right padding of middle divider is yellow",
+                    parent,
+                    new Rect(parentWidth - expectedDividerPadding, expectedMiddleDividerTop,
+                            parentWidth, expectedMiddleDividerTop + expectedDividerSize),
+                    Color.YELLOW, 1, true);
+        }
+
+        // Do we expect bottom divider?
+        if (expectingBottomDivider) {
+            final int expectedBottomDividerTop = expectedBottomChildBottom;
+            TestUtils.assertRegionPixelsOfColor(
+                    "Region of bottom divider is " +
+                            TestUtils.formatColorToHex(expectedDividerColor),
+                    parent,
+                    new Rect(expectedDividerPadding, expectedBottomDividerTop,
+                            parentWidth - expectedDividerPadding,
+                            expectedBottomDividerTop + expectedDividerSize),
+                    expectedDividerColor, 1, true);
+            TestUtils.assertRegionPixelsOfColor(
+                    "Region of left padding of bottom divider is yellow",
+                    parent,
+                    new Rect(0, expectedBottomDividerTop, expectedDividerPadding,
+                            expectedBottomDividerTop + expectedDividerSize),
+                    Color.YELLOW, 1, true);
+            TestUtils.assertRegionPixelsOfColor(
+                    "Region of right padding of bottom divider is yellow",
+                    parent,
+                    new Rect(parentWidth - expectedDividerPadding, expectedBottomDividerTop,
+                            parentWidth, expectedBottomDividerTop + expectedDividerSize),
+                    Color.YELLOW, 1, true);
+        }
+    }
+
+    /**
+     * layout of vertical LinearLayout.
+     * -----------------------------------
+     * | ------------------------------- |
+     * | |            child1           | |
+     * | ------------------------------- |
+     * | - - - - - - divider - - - - - - |
+     * | ------------------------------- |
+     * | |            child2           | |
+     * | ------------------------------- |
+     * -----------------------------------
+     *
+     * Parent is filled with yellow color. Child 1 is filled with green and child 2 is filled
+     * with blue. Divider is red at the beginning. Throughout this method we reconfigure the
+     * visibility, drawable and paddings of the divider and verify the overall visuals of the
+     * container.
+     */
+    public void testDividersInVerticalLayout() {
+        final LinearLayout parent =
+                (LinearLayout) mActivity.findViewById(R.id.vertical_with_divider);
+
+        final Instrumentation instrumentation = getInstrumentation();
+
+        final Resources res = mActivity.getResources();
+        final int dividerSize = res.getDimensionPixelSize(R.dimen.linear_layout_divider_size);
+        final int dividerPadding = res.getDimensionPixelSize(R.dimen.linear_layout_divider_padding);
+
+        assertEquals(LinearLayout.SHOW_DIVIDER_MIDDLE, parent.getShowDividers());
+        assertEquals(dividerPadding, parent.getDividerPadding());
+        final Drawable dividerDrawable = parent.getDividerDrawable();
+        TestUtils.assertAllPixelsOfColor("Divider is red", dividerDrawable,
+                dividerDrawable.getIntrinsicWidth(), dividerDrawable.getIntrinsicHeight(),
+                false, Color.RED, 1, true);
+
+        // Test the initial visuals of the entire parent
+        verifyVisualsOfVerticalLayoutWithDivider(parent, LinearLayout.SHOW_DIVIDER_MIDDLE,
+                dividerSize, Color.RED, dividerPadding);
+
+        // Change the divider to magenta
+        ViewTestUtils.runOnMainAndDrawSync(instrumentation, parent,
+                () -> parent.setDividerDrawable(
+                        mActivity.getDrawable(R.drawable.linear_layout_divider_magenta)));
+        verifyVisualsOfVerticalLayoutWithDivider(parent, LinearLayout.SHOW_DIVIDER_MIDDLE,
+                dividerSize, Color.MAGENTA, dividerPadding);
+
+        // Change the divider to null (no divider effectively)
+        ViewTestUtils.runOnMainAndDrawSync(instrumentation, parent,
+                () -> parent.setDividerDrawable(null));
+        verifyVisualsOfVerticalLayoutWithDivider(parent, LinearLayout.SHOW_DIVIDER_MIDDLE,
+                0, Color.TRANSPARENT, 0);
+
+        // Change the divider back to red
+        ViewTestUtils.runOnMainAndDrawSync(instrumentation, parent,
+                () -> parent.setDividerDrawable(
+                        mActivity.getDrawable(R.drawable.linear_layout_divider_red)));
+        verifyVisualsOfVerticalLayoutWithDivider(parent, LinearLayout.SHOW_DIVIDER_MIDDLE,
+                dividerSize, Color.RED, dividerPadding);
+
+        // Change the padding to half the original size
+        final int halfPadding = dividerPadding / 2;
+        ViewTestUtils.runOnMainAndDrawSync(instrumentation, parent,
+                () -> parent.setDividerPadding(halfPadding));
+        assertEquals(halfPadding, parent.getDividerPadding());
+        verifyVisualsOfVerticalLayoutWithDivider(parent, LinearLayout.SHOW_DIVIDER_MIDDLE,
+                dividerSize, Color.RED, halfPadding);
+
+        // Change the padding to twice the original size
+        final int doublePadding = dividerPadding * 5;
+        ViewTestUtils.runOnMainAndDrawSync(instrumentation, parent,
+                () -> parent.setDividerPadding(doublePadding));
+        assertEquals(doublePadding, parent.getDividerPadding());
+        verifyVisualsOfVerticalLayoutWithDivider(parent, LinearLayout.SHOW_DIVIDER_MIDDLE,
+                dividerSize, Color.RED, doublePadding);
+
+        // And back to the original padding
+        ViewTestUtils.runOnMainAndDrawSync(instrumentation, parent,
+                () -> parent.setDividerPadding(dividerPadding));
+        assertEquals(dividerPadding, parent.getDividerPadding());
+        verifyVisualsOfVerticalLayoutWithDivider(parent, LinearLayout.SHOW_DIVIDER_MIDDLE,
+                dividerSize, Color.RED, dividerPadding);
+
+        // Set show dividers to NONE (no divider effectively)
+        ViewTestUtils.runOnMainAndDrawSync(instrumentation, parent,
+                () -> parent.setShowDividers(LinearLayout.SHOW_DIVIDER_NONE));
+        assertEquals(LinearLayout.SHOW_DIVIDER_NONE, parent.getShowDividers());
+        verifyVisualsOfVerticalLayoutWithDivider(parent, LinearLayout.SHOW_DIVIDER_NONE,
+                0, Color.TRANSPARENT, 0);
+
+        // Show only top divider
+        ViewTestUtils.runOnMainAndDrawSync(instrumentation, parent,
+                () -> parent.setShowDividers(LinearLayout.SHOW_DIVIDER_BEGINNING));
+        assertEquals(LinearLayout.SHOW_DIVIDER_BEGINNING, parent.getShowDividers());
+        verifyVisualsOfVerticalLayoutWithDivider(parent, LinearLayout.SHOW_DIVIDER_BEGINNING,
+                dividerSize, Color.RED, dividerPadding);
+
+        // Show only bottom divider
+        ViewTestUtils.runOnMainAndDrawSync(instrumentation, parent,
+                () -> parent.setShowDividers(LinearLayout.SHOW_DIVIDER_END));
+        assertEquals(LinearLayout.SHOW_DIVIDER_END, parent.getShowDividers());
+        verifyVisualsOfVerticalLayoutWithDivider(parent, LinearLayout.SHOW_DIVIDER_END,
+                dividerSize, Color.RED, dividerPadding);
+
+        // Show top and bottom dividers
+        ViewTestUtils.runOnMainAndDrawSync(instrumentation, parent,
+                () -> parent.setShowDividers(
+                        LinearLayout.SHOW_DIVIDER_BEGINNING | LinearLayout.SHOW_DIVIDER_END));
+        assertEquals(LinearLayout.SHOW_DIVIDER_BEGINNING | LinearLayout.SHOW_DIVIDER_END,
+                parent.getShowDividers());
+        verifyVisualsOfVerticalLayoutWithDivider(parent,
+                LinearLayout.SHOW_DIVIDER_BEGINNING | LinearLayout.SHOW_DIVIDER_END,
+                dividerSize, Color.RED, dividerPadding);
+
+        // Show top and middle dividers
+        ViewTestUtils.runOnMainAndDrawSync(instrumentation, parent,
+                () -> parent.setShowDividers(
+                        LinearLayout.SHOW_DIVIDER_BEGINNING | LinearLayout.SHOW_DIVIDER_MIDDLE));
+        assertEquals(LinearLayout.SHOW_DIVIDER_BEGINNING | LinearLayout.SHOW_DIVIDER_MIDDLE,
+                parent.getShowDividers());
+        verifyVisualsOfVerticalLayoutWithDivider(parent,
+                LinearLayout.SHOW_DIVIDER_BEGINNING | LinearLayout.SHOW_DIVIDER_MIDDLE,
+                dividerSize, Color.RED, dividerPadding);
+
+        // Show middle and bottom dividers
+        ViewTestUtils.runOnMainAndDrawSync(instrumentation, parent,
+                () -> parent.setShowDividers(
+                        LinearLayout.SHOW_DIVIDER_MIDDLE | LinearLayout.SHOW_DIVIDER_END));
+        assertEquals(LinearLayout.SHOW_DIVIDER_MIDDLE | LinearLayout.SHOW_DIVIDER_END,
+                parent.getShowDividers());
+        verifyVisualsOfVerticalLayoutWithDivider(parent,
+                LinearLayout.SHOW_DIVIDER_MIDDLE | LinearLayout.SHOW_DIVIDER_END,
+                dividerSize, Color.RED, dividerPadding);
+
+        // Show top, middle and bottom dividers
+        ViewTestUtils.runOnMainAndDrawSync(instrumentation, parent,
+                () -> parent.setShowDividers(
+                        LinearLayout.SHOW_DIVIDER_BEGINNING | LinearLayout.SHOW_DIVIDER_MIDDLE
+                                | LinearLayout.SHOW_DIVIDER_END));
+        assertEquals(
+                LinearLayout.SHOW_DIVIDER_BEGINNING | LinearLayout.SHOW_DIVIDER_MIDDLE
+                        | LinearLayout.SHOW_DIVIDER_END,
+                parent.getShowDividers());
+        verifyVisualsOfVerticalLayoutWithDivider(parent,
+                LinearLayout.SHOW_DIVIDER_BEGINNING | LinearLayout.SHOW_DIVIDER_MIDDLE
+                        | LinearLayout.SHOW_DIVIDER_END,
+                dividerSize, Color.RED, dividerPadding);
     }
 
     private class MockListView extends ListView {

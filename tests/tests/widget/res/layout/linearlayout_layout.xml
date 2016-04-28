@@ -26,14 +26,14 @@
         android:layout_width="wrap_content"
         android:layout_height="100dip"
         android:orientation="horizontal"
-        android:background="#FF909090">
+        android:background="#888">
 
         <TextView
             android:id="@+id/gravity_top"
             android:layout_width="wrap_content"
             android:layout_height="50dip"
             android:layout_gravity="top"
-            android:background="#FF00FF00"
+            android:background="#0F0"
             android:text="@string/horizontal_text_1" />
 
         <TextView
@@ -41,7 +41,7 @@
             android:layout_width="wrap_content"
             android:layout_height="50dip"
             android:layout_gravity="center_vertical"
-            android:background="#FF00FF00"
+            android:background="#0F0"
             android:text="@string/horizontal_text_2" />
 
         <TextView
@@ -49,7 +49,7 @@
             android:layout_width="wrap_content"
             android:layout_height="50dip"
             android:layout_gravity="bottom"
-            android:background="#FF00FF00"
+            android:background="#0F0"
             android:text="@string/horizontal_text_3" />
     </LinearLayout>
 
@@ -58,14 +58,14 @@
         android:layout_width="100dip"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:background="#FFFF0909">
+        android:background="#F00">
 
         <TextView
             android:id="@+id/gravity_left"
             android:layout_width="wrap_content"
             android:layout_height="20dip"
             android:layout_gravity="left"
-            android:background="#FF00FF00"
+            android:background="#0F0"
             android:text="@string/vertical_text_1" />
 
         <TextView
@@ -73,7 +73,7 @@
             android:layout_width="wrap_content"
             android:layout_height="20dip"
             android:layout_gravity="center_horizontal"
-            android:background="#FF0000FF"
+            android:background="#00F"
             android:text="@string/vertical_text_2" />
 
         <TextView
@@ -81,7 +81,7 @@
             android:layout_width="wrap_content"
             android:layout_height="20dip"
             android:layout_gravity="right"
-            android:background="#FF00FF00"
+            android:background="#0F0"
             android:text="@string/vertical_text_3" />
     </LinearLayout>
 
@@ -92,14 +92,14 @@
         android:orientation="horizontal"
         android:weightSum="1.0"
         android:baselineAligned="false"
-        android:background="#FF909090">
+        android:background="#888">
 
         <TextView
             android:id="@+id/weight_0_2"
             android:layout_width="0dip"
             android:layout_height="wrap_content"
             android:layout_weight="0.2"
-            android:background="#FF0000FF"
+            android:background="#00F"
             android:text="@string/horizontal_text_1" />
 
         <TextView
@@ -107,7 +107,7 @@
             android:layout_width="0dip"
             android:layout_height="wrap_content"
             android:layout_weight="0.5"
-            android:background="#FFF00F0F"
+            android:background="#F00"
             android:text="@string/horizontal_text_2" />
 
         <TextView
@@ -115,7 +115,7 @@
             android:layout_width="0dip"
             android:layout_height="wrap_content"
             android:layout_weight="0.3"
-            android:background="#FF0000FF"
+            android:background="#00F"
             android:text="@string/horizontal_text_3" />
     </LinearLayout>
 
@@ -126,14 +126,14 @@
         android:orientation="vertical"
         android:weightSum="1.0"
         android:baselineAligned="false"
-        android:background="#FF909090">
+        android:background="#888">
 
         <TextView
             android:id="@+id/weight_0_1"
             android:layout_width="wrap_content"
             android:layout_height="0dip"
             android:layout_weight="0.1"
-            android:background="#FF0000FF"
+            android:background="#00F"
             android:text="@string/vertical_text_1" />
 
         <TextView
@@ -141,7 +141,7 @@
             android:layout_width="wrap_content"
             android:layout_height="0dip"
             android:layout_weight="0.4"
-            android:background="#FFF00F0F"
+            android:background="#F00"
             android:text="@string/vertical_text_2" />
 
         <TextView
@@ -149,7 +149,7 @@
             android:layout_width="wrap_content"
             android:layout_height="0dip"
             android:layout_weight="0.5"
-            android:background="#FF0000FF"
+            android:background="#00F"
             android:text="@string/vertical_text_3" />
     </LinearLayout>
 
@@ -159,14 +159,14 @@
         android:layout_height="wrap_content"
         android:orientation="vertical"
         android:baselineAlignedChildIndex="1"
-        android:background="#FFFF0909">
+        android:background="#F00">
 
         <TextView
             android:id="@+id/textview1"
             android:layout_width="wrap_content"
             android:layout_height="20dip"
             android:layout_gravity="left"
-            android:background="#FF00FF00"
+            android:background="#0F0"
             android:text="@string/vertical_text_1" />
 
         <TextView
@@ -174,7 +174,7 @@
             android:layout_width="wrap_content"
             android:layout_height="20dip"
             android:layout_gravity="center_horizontal"
-            android:background="#FF0000FF"
+            android:background="#00F"
             android:text="@string/vertical_text_2" />
 
         <TextView
@@ -182,8 +182,34 @@
             android:layout_width="wrap_content"
             android:layout_height="20dip"
             android:layout_gravity="right"
-            android:background="#FF00FF00"
+            android:background="#0F0"
             android:text="@string/vertical_text_3" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/vertical_with_divider"
+        android:layout_width="100px"
+        android:layout_height="100px"
+        android:orientation="vertical"
+        android:background="#FF0"
+        android:showDividers="middle"
+        android:divider="@drawable/linear_layout_divider_red"
+        android:dividerPadding="@dimen/linear_layout_divider_padding">
+
+        <View
+            android:id="@+id/child1"
+            android:layout_width="match_parent"
+            android:layout_height="0dip"
+            android:layout_weight="0.5"
+            android:background="#00F" />
+
+        <View
+            android:id="@+id/child2"
+            android:layout_width="match_parent"
+            android:layout_height="0dip"
+            android:layout_weight="0.5"
+            android:background="#0F0" />
+
     </LinearLayout>
 
 </LinearLayout>
