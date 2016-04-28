@@ -17,7 +17,6 @@
 package com.android.compatibility.common.tradefed.targetprep;
 
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
-import com.android.compatibility.common.tradefed.testtype.CompatibilityTest;
 import com.android.compatibility.common.tradefed.util.NoOpTestInvocationListener;
 import com.android.ddmlib.testrunner.TestIdentifier;
 import com.android.tradefed.build.IBuildInfo;
@@ -50,16 +49,6 @@ public class ApkInstrumentationPreparer extends PreconditionPreparer implements 
 
     @Option(name = "package", description = "Name of the package", mandatory = true)
     protected String mPackageName = null;
-
-    @Option(name = CompatibilityTest.INCLUDE_FILTER_OPTION,
-            description = "the include module filters to apply.",
-            importance = Importance.ALWAYS)
-    private List<String> mIncludeFilters = new ArrayList<>();
-
-    @Option(name = CompatibilityTest.EXCLUDE_FILTER_OPTION,
-            description = "the exclude module filters to apply.",
-            importance = Importance.ALWAYS)
-    private List<String> mExcludeFilters = new ArrayList<>();
 
     public enum When {
         BEFORE, AFTER, BOTH;
@@ -133,8 +122,6 @@ public class ApkInstrumentationPreparer extends PreconditionPreparer implements 
         instrTest.setDevice(device);
         instrTest.setInstallFile(apkFile);
         instrTest.setPackageName(mPackageName);
-        instrTest.addAllIncludeFilters(mIncludeFilters);
-        instrTest.addAllExcludeFilters(mExcludeFilters);
         instrTest.run(listener);
         boolean success = true;
         if (!testFailures.isEmpty()) {
