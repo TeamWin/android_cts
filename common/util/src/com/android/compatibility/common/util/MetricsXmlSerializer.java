@@ -38,7 +38,6 @@ public final class MetricsXmlSerializer {
             return;
         }
         ReportLog.Metric summary = reportLog.getSummary();
-        List<ReportLog.Metric> detailedMetrics = reportLog.getDetailedMetrics();
         // <Summary message="Average" scoreType="lower_better" unit="ms">195.2</Summary>
         if (summary != null) {
             mXmlSerializer.startTag(null, "Summary");
@@ -47,25 +46,6 @@ public final class MetricsXmlSerializer {
             mXmlSerializer.attribute(null, "unit", summary.getUnit().toReportString());
             mXmlSerializer.text(Double.toString(summary.getValues()[0]));
             mXmlSerializer.endTag(null, "Summary");
-        }
-
-        if (!detailedMetrics.isEmpty()) {
-            mXmlSerializer.startTag(null, "Details");
-            for (ReportLog.Metric result : detailedMetrics) {
-                mXmlSerializer.startTag(null, "ValueArray");
-                mXmlSerializer.attribute(null, "source", result.getSource());
-                mXmlSerializer.attribute(null, "message", result.getMessage());
-                mXmlSerializer.attribute(null, "scoreType", result.getType().toReportString());
-                mXmlSerializer.attribute(null, "unit", result.getUnit().toReportString());
-
-                for (double value : result.getValues()) {
-                    mXmlSerializer.startTag(null, "Value");
-                    mXmlSerializer.text(Double.toString(value));
-                    mXmlSerializer.endTag(null, "Value");
-                }
-                mXmlSerializer.endTag(null, "ValueArray");
-            }
-            mXmlSerializer.endTag(null, "Details");
         }
     }
 }
