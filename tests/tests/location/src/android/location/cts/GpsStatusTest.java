@@ -48,9 +48,11 @@ public class GpsStatusTest extends AndroidTestCase {
         int count = 0;
         while (iterator.hasNext()) {
             count++;
+            if (count > maxSatellites) {
+                // the real total could not be larger than maxSatellites
+                fail("Found more satellites than: " + maxSatellites);
+            }
         }
-        // the real total could not be larger than maxSatellites
-        assertTrue(count <= maxSatellites);
     }
 
     public void testGetTimeToFirstFix() {
