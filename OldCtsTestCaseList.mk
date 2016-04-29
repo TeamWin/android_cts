@@ -23,6 +23,8 @@ cts_security_apps_list := \
     CtsNetSecPolicyUsesCleartextTrafficFalse \
     CtsNetSecPolicyUsesCleartextTrafficTrue \
     CtsNetSecPolicyUsesCleartextTrafficUnspecified \
+    CtsNoRestartBase \
+    CtsNoRestartFeature \
     CtsUsePermissionApp \
     CtsUsePermissionAppCompat \
     CtsPermissionDeclareApp \
