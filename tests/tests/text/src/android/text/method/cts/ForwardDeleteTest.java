@@ -16,14 +16,10 @@
 
 package android.text.method.cts;
 
-import android.app.Activity;
 import android.test.suitebuilder.annotation.SmallTest;
-import android.test.suitebuilder.annotation.Suppress;
 import android.text.InputType;
 import android.text.method.BaseKeyListener;
-import android.text.method.cts.KeyListenerTestCase;
 import android.view.KeyEvent;
-import android.widget.EditText;
 import android.widget.TextView.BufferType;
 
 /**
