@@ -16,12 +16,18 @@
 
 package android.uirendering.cts.testclasses;
 
+import android.graphics.Bitmap;
 import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.RectF;
 import android.graphics.Region;
 import android.test.suitebuilder.annotation.MediumTest;
+import android.uirendering.cts.bitmapverifiers.ColorVerifier;
 import android.uirendering.cts.testinfrastructure.ActivityTestBase;
+import android.util.DisplayMetrics;
+
 import org.junit.Test;
 
 import static org.junit.Assert.assertFalse;
@@ -113,5 +119,69 @@ public class CanvasStateTests extends ActivityTestBase {
                     canvas.restore();
                 })
                 .runWithoutVerification();
+    }
+
+    private void testFailureOnBitmapDraw(Bitmap bitmap) {
+        createTest()
+                .addCanvasClient((canvas, width, height) -> {
+                    boolean sawException = false;
+                    try {
+                        canvas.drawBitmap(bitmap, 0, 0, null);
+                    } catch (RuntimeException e) {
+                        sawException = true;
+                    }
+                    assertTrue(sawException);
+                })
+                .runWithoutVerification();
+    }
+
+    @Test
+    public void testFailureOnDrawRecycledBitmap() {
+        Bitmap recycledBitmap = Bitmap.createBitmap(100, 100, Bitmap.Config.ARGB_8888);
+        recycledBitmap.recycle();
+        testFailureOnBitmapDraw(recycledBitmap);
+    }
+
+    @Test
+    public void testFailureOnNonPremultipliedBitmap() {
+        Bitmap nonPremultipliedBitmap = Bitmap.createBitmap(100, 100, Bitmap.Config.ARGB_8888);
+        nonPremultipliedBitmap.setPremultiplied(false);
+        nonPremultipliedBitmap.setHasAlpha(true);
+        testFailureOnBitmapDraw(nonPremultipliedBitmap);
+    }
+
+    @Test
+    public void testDrawScreenWideBitmap() {
+        createTest()
+                .addCanvasClient((canvas, width, height) -> {
+                    DisplayMetrics displayMetrics =
+                            getActivity().getResources().getDisplayMetrics();
+                    assertTrue(displayMetrics.widthPixels <= canvas.getMaximumBitmapWidth());
+                    assertTrue(displayMetrics.heightPixels <= canvas.getMaximumBitmapHeight());
+                    Bitmap bitmap = Bitmap.createBitmap(displayMetrics.widthPixels,
+                            displayMetrics.heightPixels, Bitmap.Config.ARGB_8888);
+                    bitmap.eraseColor(Color.RED);
+                    canvas.drawBitmap(bitmap, 0, 0, null);
+                })
+                .runWithVerifier(new ColorVerifier(Color.RED, 0));
+    }
+
+    @Test
+    public void testDrawLargeBitmap() {
+        // verify that HW and SW pipelines can both draw screen-and-a-half sized bitmap
+        createTest()
+                .addCanvasClient((canvas, width, height) -> {
+                    DisplayMetrics displayMetrics =
+                            getActivity().getResources().getDisplayMetrics();
+
+                    int bWidth = displayMetrics.widthPixels * 3 / 2;
+                    int bHeight = displayMetrics.heightPixels * 3 / 2;
+                    bWidth = Math.min(bWidth, canvas.getMaximumBitmapWidth());
+                    bHeight = Math.min(bHeight, canvas.getMaximumBitmapHeight());
+                    Bitmap bitmap = Bitmap.createBitmap(bWidth, bHeight, Bitmap.Config.ARGB_8888);
+                    bitmap.eraseColor(Color.RED);
+                    canvas.drawBitmap(bitmap, 0, 0, null);
+                })
+                .runWithVerifier(new ColorVerifier(Color.RED, 0));
     }
 }
