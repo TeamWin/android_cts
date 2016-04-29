@@ -99,18 +99,20 @@ public class BurstCaptureTest extends Camera2SurfaceViewTestCase {
         final long minStillFrameDuration =
                 config.getOutputMinFrameDuration(ImageFormat.YUV_420_888, stillSize);
 
-        // Find suitable target FPS range - as high as possible
-        List<Range<Integer> > fpsRanges = Arrays.asList(
-                mStaticInfo.getAeAvailableTargetFpsRangesChecked());
-        Range<Integer> targetRange = mStaticInfo.getAeMaxTargetFpsRange();
         // Add 0.05 here so Fps like 29.99 evaluated to 30
         int minBurstFps = (int) Math.floor(1e9 / minStillFrameDuration + 0.05f);
         boolean foundConstantMaxYUVRange = false;
         boolean foundYUVStreamingRange = false;
 
+        // Find suitable target FPS range - as high as possible that covers the max YUV rate
+        // Also verify that there's a good preview rate as well
+        List<Range<Integer> > fpsRanges = Arrays.asList(
+                mStaticInfo.getAeAvailableTargetFpsRangesChecked());
+        Range<Integer> targetRange = null;
         for (Range<Integer> fpsRange : fpsRanges) {
             if (fpsRange.getLower() == minBurstFps && fpsRange.getUpper() == minBurstFps) {
                 foundConstantMaxYUVRange = true;
+                targetRange = fpsRange;
             }
             if (fpsRange.getLower() <= 15 && fpsRange.getUpper() == minBurstFps) {
                 foundYUVStreamingRange = true;
@@ -122,10 +124,6 @@ public class BurstCaptureTest extends Camera2SurfaceViewTestCase {
         assertTrue(String.format(
                 "Cam %s: Target FPS range of (x, %d) where x <= 15 must be supported",
                 cameraId, minBurstFps), foundYUVStreamingRange);
-        assertTrue(String.format("Cam %s: No target FPS range found with minimum FPS above " +
-                        " 1/minFrameDuration (%d fps, duration %d ns) for full-resolution YUV",
-                        cameraId, minBurstFps, minStillFrameDuration),
-                targetRange.getLower() >= minBurstFps);
 
         Log.i(TAG, String.format("Selected frame rate range %d - %d for YUV burst",
                         targetRange.getLower(), targetRange.getUpper()));
