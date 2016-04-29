@@ -35,12 +35,14 @@ LOCAL_SRC_FILES := \
 		android_security_cts_MediaCryptoTest.cpp \
 		android_security_cts_MediaPlayerInfoLeakTest.cpp \
 		android_security_cts_AudioFlingerBinderTest.cpp \
-		android_security_cts_AudioEffectBinderTest.cpp
+		android_security_cts_AudioEffectBinderTest.cpp \
+		android_security_cts_IDRMInfoLeakTest.cpp
 
 LOCAL_C_INCLUDES := \
 	$(JNI_H_INCLUDE) \
 	system/core/include \
-	frameworks/base/media/jni
+	frameworks/base/media/jni \
+	frameworks/native/include/media/openmax
 
 LOCAL_SHARED_LIBRARIES := \
 	libnativehelper \
