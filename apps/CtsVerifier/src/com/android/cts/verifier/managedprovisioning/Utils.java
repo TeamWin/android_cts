@@ -17,6 +17,8 @@
 package com.android.cts.verifier.managedprovisioning;
 
 import android.app.Activity;
+import android.app.Notification;
+import android.app.NotificationManager;
 import android.widget.Toast;
 import android.content.ActivityNotFoundException;
 import android.content.Context;
@@ -32,6 +34,7 @@ import com.android.cts.verifier.TestListAdapter.TestListItem;
 public class Utils {
 
     private static final String TAG = "CtsVerifierByodUtils";
+    static final int BUGREPORT_NOTIFICATION_ID = 12345;
 
     static TestListItem createInteractiveTestItem(Activity activity, String id, int titleRes,
             int infoRes, ButtonInfo[] buttonInfos) {
@@ -60,5 +63,18 @@ public class Utils {
         catch (ActivityNotFoundException e) {
             Log.d(TAG, "requestDeleteProfileOwner: ActivityNotFoundException", e);
         }
+    }
+
+    static void showBugreportNotification(Context context, String msg, int notificationId) {
+        NotificationManager mNotificationManager =
+                (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
+        Notification notification = new Notification.Builder(context)
+                .setSmallIcon(R.drawable.icon)
+                .setContentTitle(context.getString(
+                        R.string.device_owner_requesting_bugreport_tests))
+                .setContentText(msg)
+                .setStyle(new Notification.BigTextStyle().bigText(msg))
+                .build();
+        mNotificationManager.notify(notificationId, notification);
     }
 }
