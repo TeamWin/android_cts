@@ -22,6 +22,7 @@ import android.content.pm.PackageManager;
 import android.content.res.AssetFileDescriptor;
 import android.cts.util.MediaUtils;
 import android.graphics.Rect;
+import android.hardware.Camera;
 import android.media.AudioManager;
 import android.media.MediaCodec;
 import android.media.MediaDataSource;
@@ -50,6 +51,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.util.List;
 import java.util.StringTokenizer;
 import java.util.UUID;
 import java.util.Vector;
@@ -887,14 +889,38 @@ public class MediaPlayerTest extends MediaPlayerTestBase {
         return getActivity().getPackageManager().hasSystemFeature(PackageManager.FEATURE_CAMERA);
     }
 
+    private Camera mCamera;
     private void testRecordedVideoPlaybackWithAngle(int angle) throws Exception {
-        final int width = RECORDED_VIDEO_WIDTH;
-        final int height = RECORDED_VIDEO_HEIGHT;
+        int width = RECORDED_VIDEO_WIDTH;
+        int height = RECORDED_VIDEO_HEIGHT;
         final String file = RECORDED_FILE;
         final long durationMs = RECORDED_DURATION_MS;
 
         if (!hasCamera()) {
             return;
+        }
+
+        boolean isSupported = false;
+        mCamera = Camera.open(0);
+        Camera.Parameters parameters = mCamera.getParameters();
+        List<Camera.Size> videoSizes = parameters.getSupportedVideoSizes();
+        // getSupportedVideoSizes returns null when separate video/preview size
+        // is not supported.
+        if (videoSizes == null) {
+            videoSizes = parameters.getSupportedPreviewSizes();
+        }
+        for (Camera.Size size : videoSizes)
+        {
+            if (size.width == width && size.height == height) {
+                isSupported = true;
+                break;
+            }
+        }
+        mCamera.release();
+        mCamera = null;
+        if (!isSupported) {
+            width = videoSizes.get(0).width;
+            height = videoSizes.get(0).height;
         }
         checkOrientation(angle);
         recordVideo(width, height, angle, file, durationMs);
