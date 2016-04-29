@@ -720,15 +720,15 @@ public class CaptureRequestTest extends Camera2SurfaceViewTestCase {
                 Image.Plane rawPlane = rawImage.getPlanes()[0];
                 ByteBuffer rawBuffer = rawPlane.getBuffer();
                 float[] avgBlackLevels = {0, 0, 0, 0};
-                int rowSize = rawPlane.getRowStride() * rawPlane.getPixelStride();
-                int bytePerPixel = rawPlane.getPixelStride();
+                final int rowSize = rawPlane.getRowStride();
+                final int bytePerPixel = rawPlane.getPixelStride();
                 if (VERBOSE) {
                     Log.v(TAG, "maxRegion: " + maxRegion + ", Row stride: " +
                             rawPlane.getRowStride());
                 }
-                for (int row = maxRegion.left; row < maxRegion.right; row += 2) {
-                    for (int col = maxRegion.top; col < maxRegion.bottom; col += 2) {
-                        int startOffset = col * rawPlane.getRowStride() + row * bytePerPixel;
+                for (int row = maxRegion.top; row < maxRegion.bottom; row += 2) {
+                    for (int col = maxRegion.left; col < maxRegion.right; col += 2) {
+                        int startOffset = row * rowSize + col * bytePerPixel;
                         avgBlackLevels[0] += rawBuffer.getShort(startOffset);
                         avgBlackLevels[1] += rawBuffer.getShort(startOffset + bytePerPixel);
                         startOffset += rowSize;
