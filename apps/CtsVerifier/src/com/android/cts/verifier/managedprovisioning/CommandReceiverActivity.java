@@ -26,6 +26,9 @@ import android.os.Bundle;
 import android.os.UserManager;
 import android.util.Log;
 
+import com.android.cts.verifier.R;
+import com.android.cts.verifier.managedprovisioning.Utils;
+
 import java.util.ArrayList;
 import java.util.concurrent.TimeUnit;
 
@@ -149,7 +152,12 @@ public class CommandReceiverActivity extends Activity {
                     if (!mDpm.isDeviceOwnerApp(getPackageName())) {
                         return;
                     }
-                    mDpm.requestBugreport(mAdmin);
+                    final boolean bugreportStarted = mDpm.requestBugreport(mAdmin);
+                    if (!bugreportStarted) {
+                        Utils.showBugreportNotification(this, getString(
+                                R.string.bugreport_already_in_progress),
+                                Utils.BUGREPORT_NOTIFICATION_ID);
+                    }
                 } break;
                 case COMMAND_DEVICE_OWNER_CLEAR_POLICIES: {
                     if (!mDpm.isDeviceOwnerApp(getPackageName())) {

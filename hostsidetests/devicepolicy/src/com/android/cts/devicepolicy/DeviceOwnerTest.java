@@ -123,10 +123,6 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
         }
     }
 
-    public void testRemoteBugreportWithSingleUser() throws Exception {
-        executeDeviceTestMethod(".RemoteBugreportTest", "testSubsequentRemoteBugreportThrottled");
-    }
-
     /** Tries to toggle the force-ephemeral-users on and checks it was really set. */
     public void testSetForceEphemeralUsers() throws Exception {
         if (!mHasEphemeralUserFeature) {
