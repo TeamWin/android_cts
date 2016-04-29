@@ -27,10 +27,12 @@ import java.io.IOException;
 public class ReportLogHostInfoStore extends HostInfoStore {
 
     private final String mStreamName;
+    private final File tempJsonFile;
 
     public ReportLogHostInfoStore(File jsonFile, String streamName) throws Exception {
         mJsonFile = jsonFile;
         mStreamName = streamName;
+        tempJsonFile = File.createTempFile(streamName, "-temp-report-log");
     }
 
     /**
@@ -38,30 +40,32 @@ public class ReportLogHostInfoStore extends HostInfoStore {
      */
     @Override
     public void open() throws IOException {
+        // Write new metrics to a temp file to avoid invalid JSON files due to failed tests.
         BufferedWriter formatWriter;
-        String oldMetrics;
+        tempJsonFile.createNewFile();
+        formatWriter = new BufferedWriter(new FileWriter(tempJsonFile));
         if (mJsonFile.exists()) {
             BufferedReader jsonReader = new BufferedReader(new FileReader(mJsonFile));
-            StringBuilder oldMetricsBuilder = new StringBuilder();
-            String line;
-            while ((line = jsonReader.readLine()) != null) {
-                oldMetricsBuilder.append(line);
+            String currentLine;
+            String nextLine = jsonReader.readLine();
+            while ((currentLine = nextLine) != null) {
+                nextLine = jsonReader.readLine();
+                if (nextLine == null && currentLine.charAt(currentLine.length() - 1) == '}') {
+                    // Reopen overall JSON object to write new metrics.
+                    currentLine = currentLine.substring(0, currentLine.length() - 1) + ",";
+                }
+                // Copy to temp file directly to avoid large metrics string in memory.
+                formatWriter.write(currentLine, 0, currentLine.length());
             }
-            oldMetrics = oldMetricsBuilder.toString().trim();
-            if (oldMetrics.charAt(oldMetrics.length() - 1) == '}') {
-                oldMetrics = oldMetrics.substring(0, oldMetrics.length() - 1);
-            }
-            oldMetrics = oldMetrics + ",";
+            jsonReader.close();
         } else {
-            oldMetrics = "{";
+            formatWriter.write("{", 0 , 1);
         }
-        mJsonFile.createNewFile();
-        formatWriter = new BufferedWriter(new FileWriter(mJsonFile));
-        formatWriter.write(oldMetrics + "\"" + mStreamName + "\":", 0, oldMetrics.length() +
-                mStreamName.length() + 3);
+        // Start new JSON object for new metrics.
+        formatWriter.write("\"" + mStreamName + "\":", 0, mStreamName.length() + 3);
         formatWriter.flush();
         formatWriter.close();
-        mJsonWriter = new JsonWriter(new FileWriter(mJsonFile, true));
+        mJsonWriter = new JsonWriter(new FileWriter(tempJsonFile, true));
         mJsonWriter.beginObject();
     }
 
@@ -70,12 +74,24 @@ public class ReportLogHostInfoStore extends HostInfoStore {
      */
     @Override
     public void close() throws IOException {
+        // Close JSON Writer.
         mJsonWriter.endObject();
         mJsonWriter.close();
-        // Close the overall JSON object
-        BufferedWriter formatWriter = new BufferedWriter(new FileWriter(mJsonFile, true));
-        formatWriter.write("}", 0, 1);
-        formatWriter.flush();
-        formatWriter.close();
+        // Close overall JSON Object.
+        try (BufferedWriter formatWriter = new BufferedWriter(new FileWriter(tempJsonFile, true))) {
+            formatWriter.write("}", 0, 1);
+        }
+        // Copy metrics from temp file and delete temp file.
+        mJsonFile.createNewFile();
+        try (
+                BufferedReader jsonReader = new BufferedReader(new FileReader(tempJsonFile));
+                BufferedWriter metricsWriter = new BufferedWriter(new FileWriter(mJsonFile))
+        ) {
+            String line;
+            while ((line = jsonReader.readLine()) != null) {
+                // Copy from temp file directly to avoid large metrics string in memory.
+                metricsWriter.write(line, 0, line.length());
+            }
+        }
     }
 }
