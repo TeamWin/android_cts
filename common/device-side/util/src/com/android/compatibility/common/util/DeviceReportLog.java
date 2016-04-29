@@ -27,6 +27,7 @@ import org.xmlpull.v1.XmlPullParserException;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.List;
 
 /**
  * Handles adding results to the report for device side tests.
@@ -56,6 +57,8 @@ public class DeviceReportLog extends ReportLog {
     public DeviceReportLog(String reportLogName, String streamName) {
         super(reportLogName, streamName);
         try {
+            // dir value must match the src-dir value configured in ReportLogCollector target
+            // preparer in cts/tools/cts-tradefed/res/config/cts-preconditions.xml
             final File dir = new File(Environment.getExternalStorageDirectory(), "report-log-files");
             if (!Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED)) {
                 throw new IOException("External storage is not mounted");
@@ -71,6 +74,9 @@ public class DeviceReportLog extends ReportLog {
         }
     }
 
+    /**
+     * Adds a double metric to the report.
+     */
     @Override
     public void addValue(String source, String message, double value, ResultType type,
             ResultUnit unit) {
@@ -82,6 +88,9 @@ public class DeviceReportLog extends ReportLog {
         }
     }
 
+    /**
+     * Adds a double metric to the report.
+     */
     @Override
     public void addValue(String message, double value, ResultType type, ResultUnit unit) {
         super.addValue(message, value, type, unit);
@@ -92,6 +101,9 @@ public class DeviceReportLog extends ReportLog {
         }
     }
 
+    /**
+     * Adds a double array of metrics to the report.
+     */
     @Override
     public void addValues(String source, String message, double[] values, ResultType type,
             ResultUnit unit) {
@@ -103,6 +115,9 @@ public class DeviceReportLog extends ReportLog {
         }
     }
 
+    /**
+     * Adds a double array of metrics to the report.
+     */
     @Override
     public void addValues(String message, double[] values, ResultType type, ResultUnit unit) {
         super.addValues(message, values, type, unit);
@@ -113,6 +128,144 @@ public class DeviceReportLog extends ReportLog {
         }
     }
 
+    /**
+     * Adds an int metric to the report.
+     */
+    @Override
+    public void addValue(String message, int value, ResultType type, ResultUnit unit) {
+        try {
+            store.addResult(message, value);
+        } catch (IOException e) {
+            Log.e(TAG, "Could not log metric.", e);
+        }
+    }
+
+    /**
+     * Adds a long metric to the report.
+     */
+    @Override
+    public void addValue(String message, long value, ResultType type, ResultUnit unit) {
+        try {
+            store.addResult(message, value);
+        } catch (IOException e) {
+            Log.e(TAG, "Could not log metric.", e);
+        }
+    }
+
+    /**
+     * Adds a float metric to the report.
+     */
+    @Override
+    public void addValue(String message, float value, ResultType type, ResultUnit unit) {
+        try {
+            store.addResult(message, value);
+        } catch (IOException e) {
+            Log.e(TAG, "Could not log metric.", e);
+        }
+    }
+
+    /**
+     * Adds a boolean metric to the report.
+     */
+    @Override
+    public void addValue(String message, boolean value, ResultType type, ResultUnit unit) {
+        try {
+            store.addResult(message, value);
+        } catch (IOException e) {
+            Log.e(TAG, "Could not log metric.", e);
+        }
+    }
+
+    /**
+     * Adds a String metric to the report.
+     */
+    @Override
+    public void addValue(String message, String value, ResultType type, ResultUnit unit) {
+        try {
+            store.addResult(message, value);
+        } catch (IOException e) {
+            Log.e(TAG, "Could not log metric.", e);
+        }
+    }
+
+    /**
+     * Adds an int array of metrics to the report.
+     */
+    @Override
+    public void addValues(String message, int[] values, ResultType type, ResultUnit unit) {
+        try {
+            store.addArrayResult(message, values);
+        } catch (IOException e) {
+            Log.e(TAG, "Could not log metric.", e);
+        }
+    }
+
+    /**
+     * Adds a long array of metrics to the report.
+     */
+    @Override
+    public void addValues(String message, long[] values, ResultType type, ResultUnit unit) {
+        try {
+            store.addArrayResult(message, values);
+        } catch (IOException e) {
+            Log.e(TAG, "Could not log metric.", e);
+        }
+    }
+
+    /**
+     * Adds a float array of metrics to the report.
+     */
+    @Override
+    public void addValues(String message, float[] values, ResultType type, ResultUnit unit) {
+        try {
+            store.addArrayResult(message, values);
+        } catch (IOException e) {
+            Log.e(TAG, "Could not log metric.", e);
+        }
+    }
+
+    /**
+     * Adds a boolean array of metrics to the report.
+     */
+    @Override
+    public void addValues(String message, boolean[] values, ResultType type, ResultUnit unit) {
+        try {
+            store.addArrayResult(message, values);
+        } catch (IOException e) {
+            Log.e(TAG, "Could not log metric.", e);
+        }
+    }
+
+    /**
+     * Adds a String List of metrics to the report.
+     */
+    @Override
+    public void addValues(String message, List<String> values, ResultType type, ResultUnit unit) {
+        try {
+            store.addListResult(message, values);
+        } catch (IOException e) {
+            Log.e(TAG, "Could not log metric.", e);
+        }
+    }
+
+    /**
+     * Sets the summary double metric of the report.
+     *
+     * NOTE: messages over {@value Metric#MAX_MESSAGE_LENGTH} chars will be trimmed.
+     */
+    @Override
+    public void setSummary(String message, double value, ResultType type, ResultUnit unit) {
+        super.setSummary(message, value, type, unit);
+        try {
+            store.addResult(message, value);
+        } catch (IOException e) {
+            Log.e(TAG, "Could not log metric.", e);
+        }
+    }
+
+    /**
+     * Closes report file and submits report to instrumentation.
+     */
     public void submit(Instrumentation instrumentation) {
         Log.i(TAG, "Submit");
         try {
