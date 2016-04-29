@@ -122,13 +122,6 @@ public class ResultHandlerTest extends TestCase {
             "             <Value>%s</Value>\n" +
             "          </Metric>\n" +
             "        </Summary>\n" +
-            "        <Detail>\n" +
-            "          <Metric source=\"%s\" message=\"%s\" score_type=\"%s\" score_unit=\"%s\">\n" +
-            "            <Value>%s</Value>\n" +
-            "            <Value>%s</Value>\n" +
-            "            <Value>%s</Value>\n" +
-            "          </Metric>\n" +
-            "        </Detail>\n" +
             "      </Test>\n";
     private File resultsDir = null;
     private File resultDir = null;
@@ -173,10 +166,6 @@ public class ResultHandlerTest extends TestCase {
         ReportLog.Metric summary = new ReportLog.Metric(SUMMARY_SOURCE, SUMMARY_MESSAGE,
                 SUMMARY_VALUE, ResultType.HIGHER_BETTER, ResultUnit.SCORE);
         report.setSummary(summary);
-        ReportLog.Metric details = new ReportLog.Metric(DETAILS_SOURCE, DETAILS_MESSAGE,
-                new double[] {DETAILS_VALUE_1, DETAILS_VALUE_2, DETAILS_VALUE_3},
-                ResultType.LOWER_BETTER, ResultUnit.MS);
-        report.addMetric(details);
         moduleBTest4.setReportLog(report);
 
         // Serialize to file
@@ -332,14 +321,5 @@ public class ResultHandlerTest extends TestCase {
         assertEquals("Incorrect unit", ResultUnit.SCORE, summary.getUnit());
         assertTrue("Incorrect values", Arrays.equals(new double[] { SUMMARY_VALUE },
                 summary.getValues()));
-        List<ReportLog.Metric> details = report.getDetailedMetrics();
-        assertEquals("Expected 1 report detail", 1, details.size());
-        ReportLog.Metric detail = details.get(0);
-        assertEquals("Incorrect source", DETAILS_SOURCE, detail.getSource());
-        assertEquals("Incorrect message", DETAILS_MESSAGE, detail.getMessage());
-        assertEquals("Incorrect type", ResultType.LOWER_BETTER, detail.getType());
-        assertEquals("Incorrect unit", ResultUnit.MS, detail.getUnit());
-        assertTrue("Incorrect values", Arrays.equals(new double[] { DETAILS_VALUE_1,
-                DETAILS_VALUE_2, DETAILS_VALUE_3 }, detail.getValues()));
     }
 }
