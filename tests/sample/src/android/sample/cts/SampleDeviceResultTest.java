@@ -36,6 +36,11 @@ import java.util.Random;
 public class SampleDeviceResultTest extends ActivityInstrumentationTestCase2<SampleDeviceActivity> {
 
     /**
+     * Name of the report log to store test metrics.
+     */
+    private static final String REPORT_LOG_NAME = "CtsSampleDeviceTestCases";
+
+    /**
      * The number of times to repeat the test.
      */
     private static final int REPEAT = 5;
@@ -76,14 +81,13 @@ public class SampleDeviceResultTest extends ActivityInstrumentationTestCase2<Sam
         // Compute the stats.
         Stat.StatResult stat = Stat.getStat(result);
         // Create a new report to hold the metrics.
-        String reportLogName = "SampleDeviceTestMetrics";
-        String streamName = "test_sort_metrics";
-        DeviceReportLog reportLog = new DeviceReportLog(reportLogName, streamName);
+        String streamName = "test_sort";
+        DeviceReportLog reportLog = new DeviceReportLog(REPORT_LOG_NAME, streamName);
         // Add the results to the report.
         reportLog.addValues("times", result, ResultType.LOWER_BETTER, ResultUnit.MS);
         reportLog.addValue("min", stat.mMin, ResultType.LOWER_BETTER, ResultUnit.MS);
         reportLog.addValue("max", stat.mMax, ResultType.LOWER_BETTER, ResultUnit.MS);
-        // Every report must have a summary,
+        // Set a summary.
         reportLog.setSummary("average", stat.mAverage, ResultType.LOWER_BETTER, ResultUnit.MS);
         // Submit the report to the given instrumentation.
         reportLog.submit(getInstrumentation());

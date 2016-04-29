@@ -51,6 +51,7 @@ import java.util.List;
 public class TvProviderPerfTest extends CtsAndroidTestCase {
     private static final int TRANSACTION_RUNS = 100;
     private static final int QUERY_RUNS = 10;
+    private static final String REPORT_LOG_NAME = "CtsTvProviderTestCases";
 
     private ContentResolver mContentResolver;
     private String mInputId;
@@ -106,9 +107,10 @@ public class TvProviderPerfTest extends CtsAndroidTestCase {
                 }
             }
         });
-        DeviceReportLog report = new DeviceReportLog();
-        report.addValues("Elapsed time for insert: ",
-                applyBatchTimes, ResultType.LOWER_BETTER, ResultUnit.MS);
+        String streamName = "test_channels";
+        DeviceReportLog report = new DeviceReportLog(REPORT_LOG_NAME, streamName);
+        report.addValues("elapsed_time_for_insert", applyBatchTimes, ResultType.LOWER_BETTER,
+                ResultUnit.MS);
         averages[0] = Stat.getAverage(applyBatchTimes);
 
         // Update
@@ -135,8 +137,8 @@ public class TvProviderPerfTest extends CtsAndroidTestCase {
                 }
             });
         }
-        report.addValues("Elapsed time for update: ",
-                applyBatchTimes, ResultType.LOWER_BETTER, ResultUnit.MS);
+        report.addValues("elapsed_time_for_update", applyBatchTimes, ResultType.LOWER_BETTER,
+                ResultUnit.MS);
         averages[1] = Stat.getAverage(applyBatchTimes);
 
         // Query channels
@@ -151,8 +153,8 @@ public class TvProviderPerfTest extends CtsAndroidTestCase {
                 }
             }
         });
-        report.addValues("Elapsed time for query (channels): ",
-                applyBatchTimes, ResultType.LOWER_BETTER, ResultUnit.MS);
+        report.addValues("elapsed_time_for_query_channels", applyBatchTimes,
+                ResultType.LOWER_BETTER, ResultUnit.MS);
         averages[2] = Stat.getAverage(applyBatchTimes);
 
         // Query a channel
@@ -171,8 +173,8 @@ public class TvProviderPerfTest extends CtsAndroidTestCase {
                 }
             });
         }
-        report.addValues("Elapsed time for query (a channel): ",
-                applyBatchTimes, ResultType.LOWER_BETTER, ResultUnit.MS);
+        report.addValues("elapsed_time_for_query_a_channel", applyBatchTimes,
+                ResultType.LOWER_BETTER, ResultUnit.MS);
         averages[3] = Stat.getAverage(applyBatchTimes);
 
         // Delete
@@ -182,13 +184,12 @@ public class TvProviderPerfTest extends CtsAndroidTestCase {
                 mContentResolver.delete(TvContract.buildChannelsUriForInput(mInputId), null, null);
             }
         });
-        report.addValues("Elapsed time for delete: ",
-                applyBatchTimes, ResultType.LOWER_BETTER, ResultUnit.MS);
+        report.addValues("elapsed_time_for_delete", applyBatchTimes, ResultType.LOWER_BETTER,
+                ResultUnit.MS);
         averages[4] = Stat.getAverage(applyBatchTimes);
 
-        report.addValues("Average elapsed time for insert, update, query (channels), "
-                + "query (a channel), delete: ",
-                averages, ResultType.LOWER_BETTER, ResultUnit.MS);
+        report.addValues("average_elapsed_time_for_insert_update_query_channels_query_a_channel_"
+                + "delete", averages, ResultType.LOWER_BETTER, ResultUnit.MS);
         report.submit(getInstrumentation());
     }
 
@@ -245,9 +246,10 @@ public class TvProviderPerfTest extends CtsAndroidTestCase {
                 }
             }
         });
-        DeviceReportLog report = new DeviceReportLog();
-        report.addValues("Elapsed time for insert: ",
-                applyBatchTimes, ResultType.LOWER_BETTER, ResultUnit.MS);
+        String streamName = "test_programs";
+        DeviceReportLog report = new DeviceReportLog(REPORT_LOG_NAME, streamName);
+        report.addValues("elapsed_time_for_insert", applyBatchTimes, ResultType.LOWER_BETTER,
+                ResultUnit.MS);
         averages[0] = Stat.getAverage(applyBatchTimes);
 
         // Update
@@ -281,8 +283,8 @@ public class TvProviderPerfTest extends CtsAndroidTestCase {
                 }
             }
         });
-        report.addValues("Elapsed time for update: ",
-                applyBatchTimes, ResultType.LOWER_BETTER, ResultUnit.MS);
+        report.addValues("elapsed_time_for_update", applyBatchTimes, ResultType.LOWER_BETTER,
+                ResultUnit.MS);
         averages[1] = Stat.getAverage(applyBatchTimes);
 
         // Query programs
@@ -297,8 +299,8 @@ public class TvProviderPerfTest extends CtsAndroidTestCase {
                 }
             }
         });
-        report.addValues("Elapsed time for query (programs): ",
-                applyBatchTimes, ResultType.LOWER_BETTER, ResultUnit.MS);
+        report.addValues("elapsed_time_for_query_programs", applyBatchTimes,
+                ResultType.LOWER_BETTER, ResultUnit.MS);
         averages[2] = Stat.getAverage(applyBatchTimes);
 
         // Query programs with selection
@@ -317,8 +319,8 @@ public class TvProviderPerfTest extends CtsAndroidTestCase {
                 }
             }
         });
-        report.addValues("Elapsed time for query (programs with selection): ",
-                applyBatchTimes, ResultType.LOWER_BETTER, ResultUnit.MS);
+        report.addValues("elapsed_time_for_query_programs_with_selection", applyBatchTimes,
+                ResultType.LOWER_BETTER, ResultUnit.MS);
         averages[3] = Stat.getAverage(applyBatchTimes);
 
         // Query a program
@@ -337,8 +339,8 @@ public class TvProviderPerfTest extends CtsAndroidTestCase {
                 }
             });
         }
-        report.addValues("Elapsed time for query (a program): ",
-                applyBatchTimes, ResultType.LOWER_BETTER, ResultUnit.MS);
+        report.addValues("elapsed_time_for_query_a_program", applyBatchTimes,
+                ResultType.LOWER_BETTER, ResultUnit.MS);
         averages[4] = Stat.getAverage(applyBatchTimes);
 
         // Delete programs
@@ -354,8 +356,8 @@ public class TvProviderPerfTest extends CtsAndroidTestCase {
                         null, null);
             }
         });
-        report.addValues("Elapsed time for delete programs: ",
-                applyBatchTimes, ResultType.LOWER_BETTER, ResultUnit.MS);
+        report.addValues("elapsed_time_for_delete_programs", applyBatchTimes,
+                ResultType.LOWER_BETTER, ResultUnit.MS);
         averages[5] = Stat.getAverage(applyBatchTimes);
 
         // Delete channels
@@ -366,14 +368,12 @@ public class TvProviderPerfTest extends CtsAndroidTestCase {
                 mContentResolver.delete(channelUri, null, null);
             }
         });
-        report.addValues("Elapsed time for delete channels: ",
-                applyBatchTimes, ResultType.LOWER_BETTER, ResultUnit.MS);
+        report.addValues("elapsed_time_for_delete_channels", applyBatchTimes,
+                ResultType.LOWER_BETTER, ResultUnit.MS);
         averages[6] = Stat.getAverage(applyBatchTimes);
 
-        report.addValues("Average elapsed time for insert, update, query (programs), "
-                + "query (programs with selection), query (a channel), delete (channels), "
-                + "delete (programs): ",
-                averages, ResultType.LOWER_BETTER, ResultUnit.MS);
+        report.addValues("average_elapsed_time_for_all_operations", averages,
+                ResultType.LOWER_BETTER, ResultUnit.MS);
         report.submit(getInstrumentation());
     }
 }
