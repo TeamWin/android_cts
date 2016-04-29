@@ -1184,8 +1184,8 @@
         user preferences about relative package priorities.
     </string>
     <string name="package_priority_bot">Verifying that the CTS Robot helper package is installed.</string>
-    <string name="package_priority_high">Find \"%s\" under \"App notifications\" in the \"Sound &amp; notifications\" settings panel, and mark it as having notification priority.</string>
-    <string name="package_priority_default">Find \"%s\" under \"App notifications\" in the \"Sound &amp; notifications\" settings panel, and make sure it has default priority.</string>
+    <string name="package_priority_high">Find \"%s\" in the \"Notifications\" settings panel, and allow it to Override Do Not Disturb.</string>
+    <string name="package_priority_default">Find \"%s\" in the \"Notifications\" settings panel, and disallow it to Override Do Not Disturb.</string>
     <string name="package_priority_user_order">Check that ranker respects user priorities.</string>
 
     <string name="attention_test">Notification Attention Management Test</string>
@@ -1208,7 +1208,7 @@
     <string name="attention_email_order">Check that ranker respects mailto URIs for contacts.</string>
     <string name="attention_phone_order">Check that ranker respects telephone URIs for contacts.</string>
     <string name="attention_interruption_order">Check that ranker temporarily boosts interruptions.
-    This test takes 15 seconds to complete.</string>
+    This test takes 30 seconds to complete.</string>
     <string name="attention_none_are_filtered">Check that \"All\" mode doesn\'t filter any notifications.</string>
     <string name="attention_some_are_filtered">Check that \"Priority\" mode doesn\'t filter priority notifications.</string>
     <string name="attention_all_are_filtered">Check that \"None\" mode filters all notifications.</string>
@@ -1236,9 +1236,9 @@
         <string name="vr_disable_service">Please disable \"VR Listener for CTS Verifier\"
         under Apps > Gear Icon > Special Access > VR Helper Services and return here.</string>
     <string name="nls_enable_service">Please enable \"Notification Listener for CTS Verifier\"
-        under Security > Notification Access and return here.</string>
+        under Apps > Gear Icon > Special Access > Notification Access and return here.</string>
     <string name="nls_disable_service">Please disable \"Notification Listener for CTS Verifier\"
-        under Security > Notification Access and return here.</string>
+        under Apps > Gear Icon > Special Access > Notification Access and return here.</string>
     <string name="nls_start_settings">Launch Settings</string>
     <string name="nls_service_started">Service should start once enabled.</string>
     <string name="nls_note_received">Check that notification was received.</string>
