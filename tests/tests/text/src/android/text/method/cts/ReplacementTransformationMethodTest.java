@@ -17,10 +17,8 @@
 package android.text.method.cts;
 
 
-import android.graphics.Rect;
 import android.test.ActivityInstrumentationTestCase2;
 import android.text.method.ReplacementTransformationMethod;
-import android.view.View;
 import android.widget.EditText;
 
 /**
@@ -43,7 +41,7 @@ public class ReplacementTransformationMethodTest extends
     @Override
     protected void setUp() throws Exception {
         super.setUp();
-        mEditText = new EditText(getActivity());
+        mEditText = new EditTextNoIme(getActivity());
     }
 
     public void testGetTransformation() {

@@ -19,7 +19,6 @@ package android.text.method.cts;
 
 import android.test.ActivityInstrumentationTestCase2;
 import android.text.method.SingleLineTransformationMethod;
-import android.view.View;
 import android.widget.EditText;
 
 /**
@@ -54,7 +53,7 @@ public class SingleLineTransformationMethodTest
         CharSequence result = method.getTransformation("hello\nworld\r", null);
         assertEquals("hello world\uFEFF", result.toString());
 
-        EditText editText = new EditText(getActivity());
+        EditText editText = new EditTextNoIme(getActivity());
         editText.setText("hello\nworld\r");
         // TODO cannot get transformed text from the view
     }

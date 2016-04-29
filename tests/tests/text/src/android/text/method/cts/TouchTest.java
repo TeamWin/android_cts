@@ -21,7 +21,6 @@ import android.app.Activity;
 import android.os.SystemClock;
 import android.test.ActivityInstrumentationTestCase2;
 import android.text.Layout;
-import android.text.Spannable;
 import android.text.SpannableString;
 import android.text.TextPaint;
 import android.text.method.Touch;
@@ -53,7 +52,7 @@ public class TouchTest extends ActivityInstrumentationTestCase2<CtsActivity> {
     }
 
     public void testScrollTo() throws Throwable {
-        final TextView tv = new TextView(mActivity);
+        final TextView tv = new TextViewNoIme(mActivity);
         runTestOnUiThread(new Runnable() {
             public void run() {
                 mActivity.setContentView(tv);
@@ -105,7 +104,7 @@ public class TouchTest extends ActivityInstrumentationTestCase2<CtsActivity> {
     }
 
     public void testOnTouchEvent() throws Throwable {
-        final TextView tv = new TextView(mActivity);
+        final TextView tv = new TextViewNoIme(mActivity);
 
         // Create a string that is wider than the screen.
         DisplayMetrics metrics = mActivity.getResources().getDisplayMetrics();
