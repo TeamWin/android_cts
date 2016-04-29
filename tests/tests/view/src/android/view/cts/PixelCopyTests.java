@@ -28,6 +28,7 @@ import android.os.HandlerThread;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.filters.MediumTest;
 import android.support.test.rule.ActivityTestRule;
+import android.util.Log;
 import android.view.PixelCopy;
 import android.view.Surface;
 import android.view.SurfaceView;
@@ -54,9 +55,15 @@ import static org.junit.Assert.*;
 
 @MediumTest
 public class PixelCopyTests {
+    private static final String TAG = "PixelCopyTests";
+
     @Rule
     public ActivityTestRule<GLSurfaceViewCtsActivity> mGLSurfaceViewActivityRule =
             new ActivityTestRule<>(GLSurfaceViewCtsActivity.class, false, false);
+
+    @Rule
+    public ActivityTestRule<PixelCopyVideoSourceActivity> mVideoSourceActivityRule =
+            new ActivityTestRule<>(PixelCopyVideoSourceActivity.class, false, false);
 
     private Instrumentation mInstrumentation;
 
@@ -163,6 +170,36 @@ public class PixelCopyTests {
         }
     }
 
+    @Test
+    public void testVideoProducer() throws InterruptedException {
+        PixelCopyVideoSourceActivity activity =
+                mVideoSourceActivityRule.launchActivity(null);
+        if (!activity.canPlayVideo()) {
+            Log.i(TAG, "Skipping testVideoProducer, video codec isn't supported");
+        }
+        // This returns when the video has been prepared and playback has
+        // been started, it doesn't necessarily means a frame has actually been
+        // produced. There sadly isn't a callback for that.
+        // So we'll try for up to 300ms after this event to acquire a frame, otherwise
+        // it's considered a timeout.
+        activity.waitForPlaying();
+        SynchronousPixelCopy copyHelper = new SynchronousPixelCopy();
+        Bitmap bitmap = Bitmap.createBitmap(100, 100, Config.ARGB_8888);
+        int copyResult = PixelCopy.ERROR_SOURCE_NO_DATA;
+        for (int i = 0; i < 30; i++) {
+            copyResult = copyHelper.request(activity.getVideoView(), bitmap);
+            if (copyResult != PixelCopy.ERROR_SOURCE_NO_DATA) {
+                break;
+            }
+            Thread.sleep(10);
+        }
+        assertEquals(PixelCopy.SUCCESS, copyResult);
+        // A large threshold is used because decoder accuracy is covered in the
+        // media CTS tests, so we are mainly interested in verifying that rotation
+        // and YUV->RGB conversion were handled properly.
+        assertBitmapQuadColor(bitmap, Color.RED, Color.GREEN, Color.BLUE, Color.BLACK, 30);
+    }
+
     private static int getPixelFloatPos(Bitmap bitmap, float xpos, float ypos) {
         return bitmap.getPixel((int) (bitmap.getWidth() * xpos), (int) (bitmap.getHeight() * ypos));
     }
@@ -174,6 +211,22 @@ public class PixelCopyTests {
         assertEquals("Top right", topRight, getPixelFloatPos(bitmap, .75f, .25f));
         assertEquals("Bottom left", bottomLeft, getPixelFloatPos(bitmap, .25f, .75f));
         assertEquals("Bottom right", bottomRight, getPixelFloatPos(bitmap, .75f, .75f));
+    }
+
+    private void assertBitmapQuadColor(Bitmap bitmap, int topLeft, int topRight,
+            int bottomLeft, int bottomRight, int threshold) {
+        // Just quickly sample 4 pixels in the various regions.
+        assertTrue("Top left", pixelsAreSame(topLeft, getPixelFloatPos(bitmap, .25f, .25f), threshold));
+        assertTrue("Top right", pixelsAreSame(topRight, getPixelFloatPos(bitmap, .75f, .25f), threshold));
+        assertTrue("Bottom left", pixelsAreSame(bottomLeft, getPixelFloatPos(bitmap, .25f, .75f), threshold));
+        assertTrue("Bottom right", pixelsAreSame(bottomRight, getPixelFloatPos(bitmap, .75f, .75f), threshold));
+    }
+
+    private boolean pixelsAreSame(int ideal, int given, int threshold) {
+        int error = Math.abs(Color.red(ideal) - Color.red(given));
+        error += Math.abs(Color.green(ideal) - Color.green(given));
+        error += Math.abs(Color.blue(ideal) - Color.blue(given));
+        return (error < threshold);
     }
 
     private static class QuadColorGLRenderer implements Renderer {
