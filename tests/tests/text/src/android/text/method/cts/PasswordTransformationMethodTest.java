@@ -17,6 +17,7 @@
 package android.text.method.cts;
 
 
+import android.cts.util.KeyEventUtil;
 import android.cts.util.PollingCheck;
 import android.graphics.Rect;
 import android.os.ParcelFileDescriptor;
@@ -66,6 +67,8 @@ public class PasswordTransformationMethodTest extends
         super("android.text.cts", CtsActivity.class);
     }
 
+    private KeyEventUtil mKeyEventUtil;
+
     @Override
     protected void setUp() throws Exception {
         super.setUp();
@@ -80,7 +83,7 @@ public class PasswordTransformationMethodTest extends
         try {
             runTestOnUiThread(new Runnable() {
                 public void run() {
-                    EditText editText = new EditText(mActivity);
+                    EditText editText = new EditTextNoIme(mActivity);
                     editText.setId(EDIT_TXT_ID);
                     editText.setTransformationMethod(mMethod);
                     Button button = new Button(mActivity);
@@ -101,6 +104,8 @@ public class PasswordTransformationMethodTest extends
 
         mEditText = (EditText) getActivity().findViewById(EDIT_TXT_ID);
         assertTrue(mEditText.isFocused());
+
+        mKeyEventUtil = new KeyEventUtil(getInstrumentation());
 
         enableAppOps();
         savePasswordPref();
@@ -157,10 +162,10 @@ public class PasswordTransformationMethodTest extends
         KeyCharacterMap keymap = KeyCharacterMap.load(KeyCharacterMap.VIRTUAL_KEYBOARD);
         if (keymap.getKeyboardType() == KeyCharacterMap.NUMERIC) {
             // "HELLO" in case of 12-key(NUMERIC) keyboard
-            sendKeys("6*4 6*3 7*5 DPAD_RIGHT 7*5 7*6 DPAD_RIGHT");
+            mKeyEventUtil.sendKeys(mEditText, "6*4 6*3 7*5 DPAD_RIGHT 7*5 7*6 DPAD_RIGHT");
         }
         else {
-            sendKeys("H E 2*L O");
+            mKeyEventUtil.sendKeys(mEditText, "H E 2*L O");
         }
         assertTrue(mMethod.hasCalledBeforeTextChanged());
         assertTrue(mMethod.hasCalledOnTextChanged());
@@ -221,14 +226,14 @@ public class PasswordTransformationMethodTest extends
         // lose focus
         mMethod.reset();
         assertTrue(mEditText.isFocused());
-        sendKeys("DPAD_DOWN");
+        mKeyEventUtil.sendKeys(mEditText, "DPAD_DOWN");
         assertFalse(mEditText.isFocused());
         assertTrue(mMethod.hasCalledOnFocusChanged());
 
         // gain focus
         mMethod.reset();
         assertFalse(mEditText.isFocused());
-        sendKeys("DPAD_UP");
+        mKeyEventUtil.sendKeys(mEditText, "DPAD_UP");
         assertTrue(mEditText.isFocused());
         assertTrue(mMethod.hasCalledOnFocusChanged());
     }
