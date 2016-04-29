@@ -106,7 +106,24 @@ public abstract class TvAppVerifierActivity extends PassFailButtons.Activity {
         return item;
     }
 
+    /**
+     * Call this to create alternative choice for the previous test step.
+     */
+    protected View createButtonItem(int buttonTextId, View.OnClickListener l) {
+        View item = mInflater.inflate(R.layout.tv_item, mItemList, false);
+        Button button = (Button) item.findViewById(R.id.user_action_button);
+        button.setVisibility(View.VISIBLE);
+        button.setText(buttonTextId);
+        button.setOnClickListener(l);
+        ImageView status = (ImageView) item.findViewById(R.id.status);
+        status.setVisibility(View.INVISIBLE);
+        TextView instructions = (TextView) item.findViewById(R.id.instructions);
+        instructions.setVisibility(View.GONE);
+        mItemList.addView(item);
+        return item;
+    }
+
     static boolean containsButton(View item, View button) {
-        return item.findViewById(R.id.user_action_button) == button;
+        return item == null ? false : item.findViewById(R.id.user_action_button) == button;
     }
 }
