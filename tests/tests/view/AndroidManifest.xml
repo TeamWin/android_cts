@@ -147,6 +147,14 @@
             </intent-filter>
         </activity>
 
+        <activity android:name="android.view.cts.PixelCopyVideoSourceActivity"
+            android:label="PixelCopyVideoSourceActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.intent.category.FRAMEWORK_INSTRUMENTATION_TEST" />
+            </intent-filter>
+        </activity>
+
         <activity android:name="android.view.cts.FocusFinderCtsActivity"
             android:label="FocusFinderCtsActivity">
             <intent-filter>
