@@ -34,18 +34,7 @@ public class MetricsXmlSerializerTest extends TestCase {
     private static final double[] VALUES = new double[] {1, 11, 21, 1211, 111221};
     private static final String HEADER = "<?xml version='1.0' encoding='utf-8' standalone='yes' ?>";
     private static final String EXPECTED_XML = HEADER
-            + "<Summary message=\"Sample\" scoreType=\"higher_better\" unit=\"byte\">1.0</Summary>"
-            + "<Details>"
-                    + "<ValueArray source=\"com.android.compatibility.common.util."
-                    + "MetricsXmlSerializerTest#testSerialize:84\""
-                    + " message=\"Details\" scoreType=\"neutral\" unit=\"fps\">"
-                        + "<Value>1.0</Value>"
-                        + "<Value>11.0</Value>"
-                        + "<Value>21.0</Value>"
-                        + "<Value>1211.0</Value>"
-                        + "<Value>111221.0</Value>"
-                    + "</ValueArray>"
-            + "</Details>";
+            + "<Summary message=\"Sample\" scoreType=\"higher_better\" unit=\"byte\">1.0</Summary>";
 
     private LocalReportLog mLocalReportLog;
     private MetricsXmlSerializer mMetricsXmlSerializer;

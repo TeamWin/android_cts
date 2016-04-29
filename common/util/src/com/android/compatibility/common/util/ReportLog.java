@@ -38,7 +38,6 @@ public class ReportLog implements Serializable {
     private static final String TYPE = "org.kxml2.io.KXmlParser,org.kxml2.io.KXmlSerializer";
 
     // XML constants
-    private static final String DETAIL_TAG = "Detail";
     private static final String METRIC_TAG = "Metric";
     private static final String MESSAGE_ATTR = "message";
     private static final String SCORETYPE_ATTR = "score_type";
@@ -51,9 +50,7 @@ public class ReportLog implements Serializable {
     protected Metric mSummary;
     protected String mReportLogName;
     protected String mStreamName;
-    protected final List<Metric> mDetails = new ArrayList<>();
 
-    // TODO(mishragaurav): Remove Metric class after removing details from result report.
     public static class Metric implements Serializable {
         private static final int MAX_SOURCE_LENGTH = 200;
         private static final int MAX_MESSAGE_LENGTH = 200;
@@ -174,18 +171,11 @@ public class ReportLog implements Serializable {
         mStreamName = streamName;
     }
 
-    /* package */ void addMetric(Metric elem) {
-        mDetails.add(elem);
-    }
-
-    // TODO(mishragaurav): Make addValue functions no-op after removing details from report.
-
     /**
      * Adds a double array of metrics to the report.
      */
     public void addValues(String message, double[] values, ResultType type, ResultUnit unit) {
-        addMetric(new Metric(Stacktrace.getTestCallerClassMethodNameLineNumber(),
-                message, values, type, unit));
+        // Do nothing. Subclasses may implement using InfoStore to write metrics to files.
     }
 
     /**
@@ -193,15 +183,14 @@ public class ReportLog implements Serializable {
      */
     public void addValues(String source, String message, double[] values, ResultType type,
             ResultUnit unit) {
-        addMetric(new Metric(source, message, values, type, unit));
+        // Do nothing. Subclasses may implement using InfoStore to write metrics to files.
     }
 
     /**
      * Adds a double metric to the report.
      */
     public void addValue(String message, double value, ResultType type, ResultUnit unit) {
-        addMetric(new Metric(Stacktrace.getTestCallerClassMethodNameLineNumber(), message,
-                value, type, unit));
+        // Do nothing. Subclasses may implement using InfoStore to write metrics to files.
     }
 
     /**
@@ -209,7 +198,7 @@ public class ReportLog implements Serializable {
      */
     public void addValue(String source, String message, double value, ResultType type,
             ResultUnit unit) {
-        addMetric(new Metric(source, message, value, type, unit));
+        // Do nothing. Subclasses may implement using InfoStore to write metrics to files.
     }
 
     /**
@@ -303,10 +292,6 @@ public class ReportLog implements Serializable {
         return mSummary;
     }
 
-    public List<Metric> getDetailedMetrics() {
-        return new ArrayList<Metric>(mDetails);
-    }
-
     /**
      * Serializes a given {@link ReportLog} to a String.
      * @throws XmlPullParserException
@@ -338,20 +323,11 @@ public class ReportLog implements Serializable {
             throw new IllegalArgumentException("Metrics reports was null");
         }
         Metric summary = reportLog.getSummary();
-        List<Metric> detailedMetrics = reportLog.getDetailedMetrics();
-        if (summary == null) {
-            throw new IllegalArgumentException("Metrics reports must have a summary");
-        }
-        serializer.startTag(null, SUMMARY_TAG);
-        summary.serialize(serializer);
-        serializer.endTag(null, SUMMARY_TAG);
-
-        if (!detailedMetrics.isEmpty()) {
-            serializer.startTag(null, DETAIL_TAG);
-            for (Metric elem : detailedMetrics) {
-                elem.serialize(serializer);
-            }
-            serializer.endTag(null, DETAIL_TAG);
+        // Summary is optional. Details are not included in result report.
+        if (summary != null) {
+            serializer.startTag(null, SUMMARY_TAG);
+            summary.serialize(serializer);
+            serializer.endTag(null, SUMMARY_TAG);
         }
     }
 
@@ -361,13 +337,22 @@ public class ReportLog implements Serializable {
      * @throws IOException
      */
     public static ReportLog parse(String result) throws XmlPullParserException, IOException {
-        if (result == null || result.trim().isEmpty()) {
-            throw new IllegalArgumentException("Metrics string was empty");
+        if (result == null){
+            throw new IllegalArgumentException("Metrics string was null");
+        }
+        if (result.trim().isEmpty()) {
+            // Empty report.
+            return new ReportLog();
         }
         XmlPullParserFactory factory = XmlPullParserFactory.newInstance();
         XmlPullParser parser = factory.newPullParser();
         parser.setInput(new ByteArrayInputStream(result.getBytes(ENCODING)), ENCODING);
-        parser.nextTag();
+        try {
+            parser.nextTag();
+        } catch (XmlPullParserException e) {
+            // Empty Report.
+            return new ReportLog();
+        }
         return parse(parser);
     }
 
@@ -384,18 +369,6 @@ public class ReportLog implements Serializable {
         report.setSummary(Metric.parse(parser));
         parser.nextTag();
         parser.require(XmlPullParser.END_TAG, null, SUMMARY_TAG);
-        try {
-            parser.nextTag();
-        } catch (XmlPullParserException e) {
-            // Report doesn't have any details, it's ok
-            return report;
-        }
-        if (parser.getName().equals(DETAIL_TAG)) {
-            while (parser.nextTag() == XmlPullParser.START_TAG) {
-                report.addMetric(Metric.parse(parser));
-            }
-            parser.require(XmlPullParser.END_TAG, null, DETAIL_TAG);
-        }
         return report;
     }
 }
