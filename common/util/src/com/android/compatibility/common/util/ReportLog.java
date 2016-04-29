@@ -53,6 +53,7 @@ public class ReportLog implements Serializable {
     protected String mStreamName;
     protected final List<Metric> mDetails = new ArrayList<>();
 
+    // TODO(mishragaurav): Remove Metric class after removing details from result report.
     public static class Metric implements Serializable {
         private static final int MAX_SOURCE_LENGTH = 200;
         private static final int MAX_MESSAGE_LENGTH = 200;
@@ -173,18 +174,14 @@ public class ReportLog implements Serializable {
         mStreamName = streamName;
     }
 
-    /**
-     * @param elem
-     */
     /* package */ void addMetric(Metric elem) {
         mDetails.add(elem);
     }
 
+    // TODO(mishragaurav): Make addValue functions no-op after removing details from report.
+
     /**
-     * Adds an array of metrics to the report.
-     *
-     * NOTE: messages over {@value Metric#MAX_MESSAGE_LENGTH} chars will be trimmed.
-     * NOTE: arrays with length over {@value Metric#MAX_NUM_VALUES} will be truncated.
+     * Adds a double array of metrics to the report.
      */
     public void addValues(String message, double[] values, ResultType type, ResultUnit unit) {
         addMetric(new Metric(Stacktrace.getTestCallerClassMethodNameLineNumber(),
@@ -192,11 +189,7 @@ public class ReportLog implements Serializable {
     }
 
     /**
-     * Adds an array of metrics to the report.
-     *
-     * NOTE: sources over {@value Metric#MAX_SOURCE_LENGTH} chars will be trimmed.
-     * NOTE: messages over {@value Metric#MAX_MESSAGE_LENGTH} chars will be trimmed.
-     * NOTE: arrays with length over {@value Metric#MAX_NUM_VALUES} will be truncated.
+     * Adds a double array of metrics to the report.
      */
     public void addValues(String source, String message, double[] values, ResultType type,
             ResultUnit unit) {
@@ -204,9 +197,7 @@ public class ReportLog implements Serializable {
     }
 
     /**
-     * Adds a metric to the report.
-     *
-     * NOTE: messages over {@value Metric#MAX_MESSAGE_LENGTH} chars will be trimmed.
+     * Adds a double metric to the report.
      */
     public void addValue(String message, double value, ResultType type, ResultUnit unit) {
         addMetric(new Metric(Stacktrace.getTestCallerClassMethodNameLineNumber(), message,
@@ -214,14 +205,81 @@ public class ReportLog implements Serializable {
     }
 
     /**
-     * Adds a metric to the report.
-     *
-     * NOTE: sources over {@value Metric#MAX_SOURCE_LENGTH} chars will be trimmed.
-     * NOTE: messages over {@value Metric#MAX_MESSAGE_LENGTH} chars will be trimmed.
+     * Adds a double metric to the report.
      */
     public void addValue(String source, String message, double value, ResultType type,
             ResultUnit unit) {
         addMetric(new Metric(source, message, value, type, unit));
+    }
+
+    /**
+     * Adds an int metric to the report.
+     */
+    public void addValue(String message, int value, ResultType type, ResultUnit unit) {
+        // Do nothing. Subclasses may implement using InfoStore to write metrics to files.
+    }
+
+    /**
+     * Adds a long metric to the report.
+     */
+    public void addValue(String message, long value, ResultType type, ResultUnit unit) {
+        // Do nothing. Subclasses may implement using InfoStore to write metrics to files.
+    }
+
+    /**
+     * Adds a float metric to the report.
+     */
+    public void addValue(String message, float value, ResultType type, ResultUnit unit) {
+        // Do nothing. Subclasses may implement using InfoStore to write metrics to files.
+    }
+
+    /**
+     * Adds a boolean metric to the report.
+     */
+    public void addValue(String message, boolean value, ResultType type, ResultUnit unit) {
+        // Do nothing. Subclasses may implement using InfoStore to write metrics to files.
+    }
+
+    /**
+     * Adds a String metric to the report.
+     */
+    public void addValue(String message, String value, ResultType type, ResultUnit unit) {
+        // Do nothing. Subclasses may implement using InfoStore to write metrics to files.
+    }
+
+    /**
+     * Adds an int array of metrics to the report.
+     */
+    public void addValues(String message, int[] values, ResultType type, ResultUnit unit) {
+        // Do nothing. Subclasses may implement using InfoStore to write metrics to files.
+    }
+
+    /**
+     * Adds a long array of metrics to the report.
+     */
+    public void addValues(String message, long[] values, ResultType type, ResultUnit unit) {
+        // Do nothing. Subclasses may implement using InfoStore to write metrics to files.
+    }
+
+    /**
+     * Adds a float array of metrics to the report.
+     */
+    public void addValues(String message, float[] values, ResultType type, ResultUnit unit) {
+        // Do nothing. Subclasses may implement using InfoStore to write metrics to files.
+    }
+
+    /**
+     * Adds a boolean array of metrics to the report.
+     */
+    public void addValues(String message, boolean[] values, ResultType type, ResultUnit unit) {
+        // Do nothing. Subclasses may implement using InfoStore to write metrics to files.
+    }
+
+    /**
+     * Adds a String List of metrics to the report.
+     */
+    public void addValues(String message, List<String> values, ResultType type, ResultUnit unit) {
+        // Do nothing. Subclasses may implement using InfoStore to write metrics to files.
     }
 
     /**
@@ -232,7 +290,7 @@ public class ReportLog implements Serializable {
     }
 
     /**
-     * Sets the summary of the report.
+     * Sets the double metric summary of the report.
      *
      * NOTE: messages over {@value Metric#MAX_MESSAGE_LENGTH} chars will be trimmed.
      */
@@ -240,8 +298,6 @@ public class ReportLog implements Serializable {
         setSummary(new Metric(Stacktrace.getTestCallerClassMethodNameLineNumber(), message, value,
                 type, unit));
     }
-
-    // TODO(mishragaurav): Add support for values of other types.
 
     public Metric getSummary() {
         return mSummary;
