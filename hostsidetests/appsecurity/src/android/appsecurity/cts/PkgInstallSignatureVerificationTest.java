@@ -317,6 +317,21 @@ public class PkgInstallSignatureVerificationTest extends DeviceTestCase implemen
                 "two-signers-second-signer-v2-broken.apk", "signature did not verify");
     }
 
+    public void testInstallV2TwoSignersRejectsWhenOneWithoutSignatures() throws Exception {
+        // APK v2-signed by two different signers. However, there are no signatures for the second
+        // signer.
+        assertInstallFailsWithError(
+                "v2-only-two-signers-second-signer-no-sig.apk", "No signatures");
+    }
+
+    public void testInstallV2TwoSignersRejectsWhenOneWithoutSupportedSignatures() throws Exception {
+        // APK v2-signed by two different signers. However, there are no supported signatures for
+        // the second signer.
+        assertInstallFailsWithError(
+                "v2-only-two-signers-second-signer-no-supported-sig.apk",
+                "No supported signatures");
+    }
+
     public void testInstallV2RejectsWhenMissingCode() throws Exception {
         // Obtained by removing classes.dex from original.apk and then signing with v2 only.
         // Although this has nothing to do with v2 signature verification, package manager wants
