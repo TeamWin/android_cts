@@ -32,22 +32,6 @@ public class LocaleListTest extends AndroidTestCase {
         assertNull(ll.get(1));
         assertNull(ll.get(10));
 
-        ll = new LocaleList((Locale) null);
-        assertNotNull(ll);
-        assertTrue(ll.isEmpty());
-        assertEquals(0, ll.size());
-        assertNull(ll.get(0));
-        assertNull(ll.get(1));
-        assertNull(ll.get(10));
-
-        ll = new LocaleList((Locale[]) null);
-        assertNotNull(ll);
-        assertTrue(ll.isEmpty());
-        assertEquals(0, ll.size());
-        assertNull(ll.get(0));
-        assertNull(ll.get(1));
-        assertNull(ll.get(10));
-
         ll = new LocaleList(new Locale[0]);
         assertNotNull(ll);
         assertTrue(ll.isEmpty());
@@ -76,6 +60,21 @@ public class LocaleListTest extends AndroidTestCase {
         assertEquals(enPH, ll.get(0));
         assertEquals(Locale.US, ll.get(1));
         assertNull(ll.get(10));
+    }
+
+    public void testNullArgument() {
+        try {
+            LocaleList ll = new LocaleList((Locale) null);
+            fail("Initializing a LocaleList with a null argument should throw.");
+        } catch (Throwable e) {
+            assertEquals(NullPointerException.class, e.getClass());
+        }
+        try {
+            LocaleList ll = new LocaleList((Locale[]) null);
+            fail("Initializing a LocaleList with a null array should throw.");
+        } catch (Throwable e) {
+            assertEquals(NullPointerException.class, e.getClass());
+        }
     }
 
     public void testNullArguments() {
