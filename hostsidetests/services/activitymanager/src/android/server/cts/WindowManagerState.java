@@ -384,7 +384,6 @@ class WindowManagerState {
         }
 
         private void extract(LinkedList<String> dump, Pattern[] exitPatterns) {
-
             while (!doneExtracting(dump, exitPatterns)) {
                 final String line = dump.pop().trim();
 
@@ -417,7 +416,7 @@ class WindowManagerState {
     static abstract class WindowContainer {
         protected static final Pattern sFullscreenPattern = Pattern.compile("mFullscreen=(\\S+)");
         protected static final Pattern sBoundsPattern =
-                Pattern.compile("mBounds=\\[(\\d+),(\\d+)\\]\\[(\\d+),(\\d+)\\]");
+                Pattern.compile("mBounds=\\[(-?\\d+),(-?\\d+)\\]\\[(-?\\d+),(-?\\d+)\\]");
 
         protected boolean mFullscreen;
         protected Rectangle mBounds;
