@@ -70,19 +70,19 @@ public class ImageCaptureUriExtraToClipDataTest extends AndroidTestCase {
     public void testUriExtraOutputMigratedToClipData_imageCaptureIntent() {
         startActivityWithAction(MediaStore.ACTION_IMAGE_CAPTURE);
         waitForFileReady();
-        testFileContents();
+        assertFileContents();
     }
 
     public void testUriExtraOutputMigratedToClipData_imageCaptureSecureIntent() {
         startActivityWithAction(MediaStore.ACTION_IMAGE_CAPTURE_SECURE);
         waitForFileReady();
-        testFileContents();
+        assertFileContents();
     }
 
     public void testUriExtraOutputMigratedToClipData_videoCaptureIntent() {
         startActivityWithAction(MediaStore.ACTION_VIDEO_CAPTURE);
         waitForFileReady();
-        testFileContents();
+        assertFileContents();
     }
 
     private void startActivityWithAction(String action) {
@@ -102,7 +102,7 @@ public class ImageCaptureUriExtraToClipDataTest extends AndroidTestCase {
         }
     }
 
-    private void testFileContents() {
+    private void assertFileContents() {
         char[] buffer = new char[TEST_INPUT.length()];
         try {
             FileReader reader = new FileReader(mTestFile);
