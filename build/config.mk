@@ -48,3 +48,4 @@ BUILD_CTS_DEQP_PACKAGE := cts/build/test_deqp_package.mk
 BUILD_CTS_SUPPORT_PACKAGE := cts/build/support_package.mk
 BUILD_CTS_MODULE_TEST_CONFIG := cts/build/module_test_config.mk
 BUILD_CTS_DEVICE_INFO_PACKAGE := cts/build/device_info_package.mk
+BUILD_CTS_TARGET_TESTNG_PACKAGE := cts/build/test_target_testng_package.mk
