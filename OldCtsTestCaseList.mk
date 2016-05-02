@@ -48,6 +48,7 @@ cts_security_apps_list := \
     CtsSplitAppFeature \
     CtsTargetInstrumentationApp \
     CtsUsePermissionDiffCert \
+    CtsUsesLibraryApp \
     CtsWriteExternalStorageApp \
     CtsMultiUserStorageApp
 
