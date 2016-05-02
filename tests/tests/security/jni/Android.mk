@@ -36,7 +36,8 @@ LOCAL_SRC_FILES := \
 		android_security_cts_AudioEffectBinderTest.cpp \
 		android_security_cts_AudioFlingerBinderTest.cpp \
 		android_security_cts_StagefrightFoundationTest.cpp \
-		android_security_cts_GraphicBufferInfoLeakTest.cpp
+		android_security_cts_GraphicBufferInfoLeakTest.cpp \
+		android_security_cts_IDRMInfoLeakTest.cpp
 
 LOCAL_C_INCLUDES := $(JNI_H_INCLUDE) \
 										$(TOP)/frameworks/native/include/media/openmax
