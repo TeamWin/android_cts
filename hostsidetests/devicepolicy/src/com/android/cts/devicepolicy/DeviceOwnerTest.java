@@ -310,12 +310,18 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
     }
 
     public void testSecurityLoggingWithSingleUser() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
         executeDeviceTestMethod(".SecurityLoggingTest",
                 "testRetrievingSecurityLogsNotPossibleImmediatelyAfterPreviousSuccessfulRetrieval");
         executeDeviceTestMethod(".SecurityLoggingTest", "testEnablingAndDisablingSecurityLogging");
     }
 
     public void testLockTask() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
         try {
             installAppAsUser(INTENT_RECEIVER_APK, mPrimaryUserId);
             executeDeviceOwnerTest("LockTaskTest");
@@ -325,6 +331,9 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
     }
 
     public void testSystemUpdatePolicy() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
         executeDeviceOwnerTest("SystemUpdatePolicyTest");
     }
 
