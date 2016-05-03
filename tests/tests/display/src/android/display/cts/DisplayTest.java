@@ -32,6 +32,7 @@ import android.platform.test.annotations.Presubmit;
 import android.test.InstrumentationTestCase;
 import android.util.DisplayMetrics;
 import android.view.Display;
+import android.view.Display.HdrCapabilities;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
@@ -143,6 +144,21 @@ public class DisplayTest extends InstrumentationTestCase {
     @Presubmit
     public void testDefaultDisplay() {
         assertEquals(Display.DEFAULT_DISPLAY, mWindowManager.getDefaultDisplay().getDisplayId());
+    }
+
+    /**
+     * Verify default display's HDR capability.
+     */
+    public void testDefaultDisplayHdrCapability() {
+        Display display = mDisplayManager.getDisplay(Display.DEFAULT_DISPLAY);
+        HdrCapabilities cap = display.getHdrCapabilities();
+        int[] hdrTypes = cap.getSupportedHdrTypes();
+        for (int type : hdrTypes) {
+            assertTrue(type >= 1 && type <= 3);
+        }
+        assertFalse(cap.getDesiredMaxLuminance() < -1.0f);
+        assertFalse(cap.getDesiredMinLuminance() < -1.0f);
+        assertFalse(cap.getDesiredMaxAverageLuminance() < -1.0f);
     }
 
     /**
