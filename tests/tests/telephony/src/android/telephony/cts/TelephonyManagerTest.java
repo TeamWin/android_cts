@@ -98,9 +98,7 @@ public class TelephonyManagerTest extends AndroidTestCase {
         });
         t.start();
         synchronized (mLock) {
-            while (!mOnCellLocationChangedCalled) {
-                mLock.wait();
-            }
+            mLock.wait(TOLERANCE);
         }
         assertTrue(mOnCellLocationChangedCalled);
 
