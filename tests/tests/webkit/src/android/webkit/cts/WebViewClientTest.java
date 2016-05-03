@@ -45,7 +45,7 @@ import java.util.ArrayList;
 
 public class WebViewClientTest extends ActivityInstrumentationTestCase2<WebViewCtsActivity> {
     private static final long TEST_TIMEOUT = 5000;
-    private static final String TEST_URL = "http://foo.com/";
+    private static final String TEST_URL = "http://www.example.com/";
 
     private WebViewOnUiThread mOnUiThread;
     private CtsTestServer mWebServer;

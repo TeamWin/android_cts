@@ -128,6 +128,12 @@ public class WebViewOnUiThread {
         setPictureListener(null);
         setWebChromeClient(null);
         setWebViewClient(null);
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                mWebView.destroy();
+            }
+        });
     }
 
     /**
