@@ -26,6 +26,7 @@ import android.provider.Settings.System;
 import android.test.ActivityInstrumentationTestCase2;
 import android.text.Editable;
 import android.text.method.PasswordTransformationMethod;
+import android.util.TypedValue;
 import android.view.KeyCharacterMap;
 import android.view.View;
 import android.widget.Button;
@@ -84,6 +85,7 @@ public class PasswordTransformationMethodTest extends
             runTestOnUiThread(new Runnable() {
                 public void run() {
                     EditText editText = new EditTextNoIme(mActivity);
+                    editText.setTextSize(TypedValue.COMPLEX_UNIT_SP, 10);
                     editText.setId(EDIT_TXT_ID);
                     editText.setTransformationMethod(mMethod);
                     Button button = new Button(mActivity);
