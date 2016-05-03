@@ -1947,33 +1947,58 @@ You should be prompted to select credentials; choose the ones you just installed
         3. Go back to the cts-verifier tests using the back button, then mark the test accordingly.\n
     </string>
 
-    <string name="provisioning_byod_turn_off_work_icon">Icon when work mode is off</string>
-    <string name="provisioning_byod_turn_off_work_icon_instruction">
-        This test verifies that a status bar icon indicates if work mode is off.\n
-        1. Press the go button to go to the settings apps, set work mode to off.\n
-        2. Verify that the status bar shows an icon indicating that work mode is off.\n
-        3. Set work mode to on.\n
-        4. Check that the work icon on the status bar is removed.
+    <string name="provisioning_byod_turn_off_work">Turn off work mode</string>
+    <string name="provisioning_byod_turn_off_work_info">This test verifes device behaviours when turning off work mode.</string>
+    <string name="provisioning_byod_turn_off_work_instructions">
+        This test verifies the device behaviour when work profile is turned off.\n
+        Please exercise the following tests in sequence.\n
+        The button below can be used to open the Settings page where you can toggle work mode.
     </string>
+    <string name="provisioning_byod_turn_off_work_prepare_button">Open Settings to toggle work mode</string>
+
+    <string name="provisioning_byod_turn_off_work_prepare_notifications">Prepare a work notification</string>
+    <string name="provisioning_byod_turn_off_work_prepare_notifications_instruction">
+        This is a test setup step.\n
+        1. Press the go button to send a work notification.\n
+        2. Verify that the notification is displayed and mark this test as passed.\n
+        (Note: in the following test, you will be asked to verify the notification disappears after work mode is turned off.)
+    </string>
+
+    <string name="provisioning_byod_turn_off_work_turned_off">Please turn off work mode</string>
+    <string name="provisioning_byod_turn_off_work_turned_off_toast">Open settings to turn off work mode, using the button above.</string>
+
+    <string name="provisioning_byod_turn_off_work_notifications">Notifications when work mode is off</string>
+    <string name="provisioning_byod_turn_off_work_notifications_instruction">
+        Verify that the previously-shown work notification has now disappeared.
+    </string>
+
+    <string name="provisioning_byod_turn_off_work_icon">Status bar icon when work mode is off</string>
+    <string name="provisioning_byod_turn_off_work_icon_instruction">
+        Now that work mode is off, please verify that the status bar shows an icon indicating that work mode is off.\n
+    </string>
+
     <string name="provisioning_byod_turn_off_work_launcher">Starting work apps when work mode is off</string>
     <string name="provisioning_byod_turn_off_work_launcher_instruction">
         This test verifies that work applications cannot be started if work mode is off.\n
-        1. Press the go button to go to the settings apps, set work mode to off.\n
-        2. Press home to go to the launcher.\n
-        3. Verify that work applications are greyed out.\n
-        4. Tap on a work application.\n
-        5. Verify that the application does not start.\n
-        6. Set work mode to on.\n
-        7. Go to the launcher and verify that you can start a work application.\n
+        1. Press home to go to the launcher.\n
+        2. Verify that work applications are greyed out.\n
+        3. Tap on a work application.\n
+        4. Verify that the application does not start.\n
     </string>
-    <string name="provisioning_byod_turn_off_work_notifications">Notifications when work mode is off</string>
-    <string name="provisioning_byod_turn_off_work_notifications_instruction">
-        This test verifies that work notifications are not shown if work mode is off.\n
-        1. Press the go button to send a work notification.\n
-        2. Set work mode to off.\n
-        3. Check that the work notification has disappeared.\n
-        4. Set work mode to on.\n
+
+    <string name="provisioning_byod_turn_off_work_turned_on">Please turn work mode back on</string>
+    <string name="provisioning_byod_turn_off_work_turned_on_toast">Open settings to turn work mode back on, using the button above.</string>
+
+    <string name="provisioning_byod_turn_on_work_icon">Status bar icon when work mode is on</string>
+    <string name="provisioning_byod_turn_on_work_icon_instruction">
+        Now that work mode is back on, please verify that the status bar icon for work mode off is no longer visible.
     </string>
+
+    <string name="provisioning_byod_turn_on_work_launcher">Starting work apps when work mode is on</string>
+    <string name="provisioning_byod_turn_on_work_launcher_instruction">
+        Now that work mode is back on, please go to the launcher and verify that you can start a work application.
+    </string>
+
     <string name="provisioning_byod_organization_info">Organization Info</string>
     <string name="provisioning_byod_organization_name_hint">Name</string>
     <string name="provisioning_byod_organization_color_hint">#FF00FF</string>

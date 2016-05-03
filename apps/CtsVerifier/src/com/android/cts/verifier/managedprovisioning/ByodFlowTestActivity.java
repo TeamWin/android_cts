@@ -77,9 +77,6 @@ public class ByodFlowTestActivity extends DialogTestListActivity {
     private DialogTestListItem mPrintSettingsVisibleTest;
     private DialogTestListItem mIntentFiltersTest;
     private DialogTestListItem mPermissionLockdownTest;
-    private DialogTestListItem mTurnOffWorkIcon;
-    private DialogTestListItem mTurnOffWorkLauncher;
-    private DialogTestListItem mTurnOffWorkNotifications;
     private DialogTestListItem mCrossProfileImageCaptureSupportTest;
     private DialogTestListItem mCrossProfileVideoCaptureWithExtraOutputSupportTest;
     private DialogTestListItem mCrossProfileVideoCaptureWithoutExtraOutputSupportTest;
@@ -98,6 +95,7 @@ public class ByodFlowTestActivity extends DialogTestListActivity {
     private TestListItem mDisallowAppsControlTest;
     private TestListItem mOrganizationInfoTest;
     private TestListItem mPolicyTransparencyTest;
+    private TestListItem mTurnOffWorkFeaturesTest;
 
     public ByodFlowTestActivity() {
         super(R.layout.provisioning_byod,
@@ -339,6 +337,11 @@ public class ByodFlowTestActivity extends DialogTestListActivity {
             }
         };
 
+        mTurnOffWorkFeaturesTest = TestListItem.newTest(this,
+                R.string.provisioning_byod_turn_off_work,
+                TurnOffWorkActivity.class.getName(),
+                new Intent(this, TurnOffWorkActivity.class), null);
+
         Intent permissionCheckIntent = new Intent(
                 PermissionLockdownTestActivity.ACTION_MANAGED_PROFILE_CHECK_PERMISSION_LOCKDOWN);
         mPermissionLockdownTest = new DialogTestListItem(this,
@@ -346,24 +349,6 @@ public class ByodFlowTestActivity extends DialogTestListActivity {
                 "BYOD_PermissionLockdownTest",
                 R.string.profile_owner_permission_lockdown_test_info,
                 permissionCheckIntent);
-
-        mTurnOffWorkIcon = new DialogTestListItem(this,
-                R.string.provisioning_byod_turn_off_work_icon,
-                "BYOD_TurnOffWorkIcon",
-                R.string.provisioning_byod_turn_off_work_icon_instruction,
-                new Intent(Settings.ACTION_SETTINGS));
-
-        mTurnOffWorkLauncher = new DialogTestListItem(this,
-                R.string.provisioning_byod_turn_off_work_launcher,
-                "BYOD_TurnOffWorkStartApps",
-                R.string.provisioning_byod_turn_off_work_launcher_instruction,
-                new Intent(Settings.ACTION_SETTINGS));
-
-        mTurnOffWorkNotifications = new DialogTestListItem(this,
-                R.string.provisioning_byod_turn_off_work_notifications,
-                "BYOD_TurnOffWorkNotifications",
-                R.string.provisioning_byod_turn_off_work_notifications_instruction,
-                new Intent(ByodHelperActivity.ACTION_NOTIFICATION));
 
         mSelectWorkChallenge = new DialogTestListItem(this,
                 R.string.provisioning_byod_select_work_challenge,
@@ -428,9 +413,7 @@ public class ByodFlowTestActivity extends DialogTestListActivity {
         adapter.add(mKeyguardDisabledFeaturesTest);
         adapter.add(mAuthenticationBoundKeyTest);
         adapter.add(mVpnTest);
-        adapter.add(mTurnOffWorkIcon);
-        adapter.add(mTurnOffWorkLauncher);
-        adapter.add(mTurnOffWorkNotifications);
+        adapter.add(mTurnOffWorkFeaturesTest);
         adapter.add(mSelectWorkChallenge);
         adapter.add(mConfirmWorkCredentials);
         adapter.add(mOrganizationInfoTest);
