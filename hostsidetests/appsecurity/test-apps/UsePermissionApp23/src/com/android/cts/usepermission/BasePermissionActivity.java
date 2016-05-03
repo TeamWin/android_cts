@@ -20,11 +20,15 @@ import android.app.Activity;
 import android.os.Bundle;
 import android.view.WindowManager;
 
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.TimeUnit;
 
-public class MyActivity extends Activity {
+public class BasePermissionActivity extends Activity {
+    private static final long OPERATION_TIMEOUT_MILLIS = 5000;
+
     private final SynchronousQueue<Result> mResult = new SynchronousQueue<>();
+    private final CountDownLatch mOnCreateSync = new CountDownLatch(1);
 
     public static class Result {
         public final int requestCode;
@@ -45,6 +49,8 @@ public class MyActivity extends Activity {
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON
                 | WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON
                 | WindowManager.LayoutParams.FLAG_DISMISS_KEYGUARD);
+
+        mOnCreateSync.countDown();
     }
 
     @Override
@@ -57,9 +63,17 @@ public class MyActivity extends Activity {
         }
     }
 
+    public void waitForOnCreate() {
+        try {
+            mOnCreateSync.await(OPERATION_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     public Result getResult() {
         try {
-            return mResult.take();
+            return mResult.poll(OPERATION_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }

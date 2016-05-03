@@ -19,13 +19,12 @@ LOCAL_PATH := $(call my-dir)
 include $(CLEAR_VARS)
 
 LOCAL_MODULE_TAGS := tests
-LOCAL_SDK_VERSION := 21
 LOCAL_STATIC_JAVA_LIBRARIES := android-support-test ctsdeviceutil ctstestrunner ub-uiautomator
 
 LOCAL_SRC_FILES := $(call all-java-files-under, src) \
     ../ExternalStorageApp/src/com/android/cts/externalstorageapp/CommonExternalStorageTest.java
 
-LOCAL_PACKAGE_NAME := CtsUsePermissionAppCompat
+LOCAL_PACKAGE_NAME := CtsUsePermissionApp23
 
 # tag this module as a cts test artifact
 LOCAL_COMPATIBILITY_SUITE := cts
