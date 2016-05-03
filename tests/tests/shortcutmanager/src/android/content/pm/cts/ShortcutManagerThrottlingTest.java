@@ -18,7 +18,9 @@ package android.content.pm.cts;
 import static com.android.server.pm.shortcutmanagertest.ShortcutManagerTestUtils.*;
 
 import android.test.suitebuilder.annotation.LargeTest;
+import android.test.suitebuilder.annotation.Suppress;
 
+import java.util.List;
 import java.util.function.BooleanSupplier;
 
 public class ShortcutManagerThrottlingTest extends ShortcutManagerCtsTestsBase {
@@ -131,6 +133,15 @@ public class ShortcutManagerThrottlingTest extends ShortcutManagerCtsTestsBase {
         });
     }
 
+    /**
+     * Make sure {@link android.content.pm.ShortcutManager#setDynamicShortcuts(List)} correctly
+     * throttles calls.
+     *
+     * <p>Suppressed for now -- because when an instrumentation test is running, the process
+     * will be in the PROCESS_STATE_FOREGROUND_SERVICE state, so none of calls will be throttled.
+     * Need a different way to verify this.
+     */
+    @Suppress
     @LargeTest
     public void testThrottled_setDynamicShortcuts() {
         runWithCaller(mPackageContext1, () -> {
