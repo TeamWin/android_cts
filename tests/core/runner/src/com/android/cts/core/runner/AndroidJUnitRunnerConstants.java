@@ -48,6 +48,25 @@ public interface AndroidJUnitRunnerConstants {
     String ARGUMENT_TEST_CLASS = "class";
 
     /**
+     * A comma separated list of the names of test classes not to run
+     */
+    String ARGUMENT_NOT_TEST_CLASS = "notClass";
+
+    /**
+     * A comma separated list of the names of test packages to run.
+     *
+     * <p>The equivalent constant in {@code InstrumentationTestRunner} is hidden and so not
+     * available
+     * through the public API.
+     */
+    String ARGUMENT_TEST_PACKAGE = "package";
+
+    /**
+     * A comma separated list of the names of test packages not to run.
+     */
+    String ARGUMENT_NOT_TEST_PACKAGE = "notPackage";
+
+    /**
      * Log the results as if the tests were executed but don't actually run the tests.
      *
      * <p>The equivalent constant in {@code InstrumentationTestRunner} is private.
