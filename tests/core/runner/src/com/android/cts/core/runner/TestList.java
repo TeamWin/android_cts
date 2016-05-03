@@ -18,6 +18,7 @@ package com.android.cts.core.runner;
 import android.util.Log;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
@@ -28,32 +29,20 @@ import javax.annotation.Nullable;
  */
 class TestList {
 
-    /**
-     * The names of the set of tests to run, if null then all tests should be run.
-     */
-    @Nullable
-    private final Set<String> testsToRun;
+    /** The set of test pacakges to run */
+    private final Set<String> mIncludedPackages = new HashSet<>();
 
+    /** The set of test packages not to run */
+    private final Set<String> mExcludedPackages = new HashSet<>();
+
+    /** The set of tests (classes or methods) to run */
+    private final Set<String> mIncludedTests = new HashSet<>();
+
+    /** The set of tests (classes or methods) not to run */
+    private final Set<String> mExcludedTests = new HashSet<>();
+
+    /** The list of all test classes to run (without filtering applied)*/
     private final Collection<Class<?>> classesToRun;
-
-    public static TestList exclusiveList(List<String> testNameList) {
-        Set<String> classNamesToRun = new LinkedHashSet<>();
-        Set<String> testsToRun = new LinkedHashSet<>(testNameList);
-
-        for (String testName : testNameList) {
-            int index = testName.indexOf('#');
-            String className;
-            if (index == -1) {
-                className = testName;
-            } else {
-                className = testName.substring(0, index);
-            }
-            classNamesToRun.add(className);
-        }
-
-        Log.d(CoreTestRunner.TAG, "Running only the following tests: " + testsToRun);
-        return new TestList(getClasses(classNamesToRun), testsToRun);
-    }
 
     public static TestList rootList(List<String> rootList) {
 
@@ -63,7 +52,7 @@ class TestList {
 
         List<Class<?>> classesToRun1 = getClasses(classNamesToRun);
 
-        return new TestList(classesToRun1, null);
+        return new TestList(classesToRun1);
     }
 
     private static List<Class<?>> getClasses(Set<String> classNames) {
@@ -79,17 +68,27 @@ class TestList {
         return classesToRun;
     }
 
-    public static TestList classList(Collection<Class<?>> classes) {
-        return new TestList(classes, null);
-    }
-
     /**
      * @param classes The list of classes to run.
-     * @param testsToRun The exclusive set of tests to run or null if all tests reachable from the
      */
-    private TestList(Collection<Class<?>> classes, Set<String> testsToRun) {
-        this.testsToRun = testsToRun;
+    public TestList(Collection<Class<?>> classes) {
         this.classesToRun = classes;
+    }
+
+    public void addIncludeTestPackages(Set<String> packageNameSet) {
+        mIncludedPackages.addAll(packageNameSet);
+    }
+
+    public void addExcludeTestPackages(Set<String> packageNameSet) {
+        mExcludedPackages.addAll(packageNameSet);
+    }
+
+    public void addIncludeTests(Set<String> testNameSet) {
+        mIncludedTests.addAll(testNameSet);
+    }
+
+    public void addExcludeTests(Set<String> testNameSet) {
+        mExcludedTests.addAll(testNameSet);
     }
 
     /**
@@ -103,8 +102,36 @@ class TestList {
      * Return true if the test with the specified name should be run, false otherwise.
      */
     public boolean shouldRunTest(String testName) {
-        // If the tests aren't explicitly provided then run all tests by
-        // default, otherwise run only those tests explicitly listed by name.
-        return testsToRun == null || testsToRun.contains(testName);
+
+        int index = testName.indexOf('#');
+        String className;
+        if (index == -1) {
+            className = testName;
+        } else {
+            className = testName.substring(0, index);
+        }
+        try {
+            Class<?> testClass = Class.forName(className);
+            Package testPackage = testClass.getPackage();
+            String testPackageName = "";
+            if (testPackage != null) {
+                testPackageName = testPackage.getName();
+            }
+
+            boolean include =
+                    (mIncludedPackages.isEmpty() || mIncludedPackages.contains(testPackageName)) &&
+                    (mIncludedTests.isEmpty() || mIncludedTests.contains(className) ||
+                            mIncludedTests.contains(testName));
+
+            boolean exclude =
+                    mExcludedPackages.contains(testPackageName) ||
+                    mExcludedTests.contains(className) ||
+                    mExcludedTests.contains(testName);
+
+            return include && !exclude;
+        } catch (ClassNotFoundException e) {
+            Log.w("Could not load class '" + className, e);
+            return false;
+        }
     }
 }

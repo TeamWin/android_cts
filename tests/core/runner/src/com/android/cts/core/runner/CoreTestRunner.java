@@ -36,6 +36,7 @@ import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.HashSet;
 import javax.annotation.Nullable;
 import org.junit.runner.Computer;
 import org.junit.runner.JUnitCore;
@@ -53,8 +54,11 @@ import vogar.ModeId;
 import static com.android.cts.core.runner.AndroidJUnitRunnerConstants.ARGUMENT_COUNT;
 import static com.android.cts.core.runner.AndroidJUnitRunnerConstants.ARGUMENT_DEBUG;
 import static com.android.cts.core.runner.AndroidJUnitRunnerConstants.ARGUMENT_LOG_ONLY;
+import static com.android.cts.core.runner.AndroidJUnitRunnerConstants.ARGUMENT_NOT_TEST_CLASS;
+import static com.android.cts.core.runner.AndroidJUnitRunnerConstants.ARGUMENT_NOT_TEST_PACKAGE;
 import static com.android.cts.core.runner.AndroidJUnitRunnerConstants.ARGUMENT_TEST_CLASS;
 import static com.android.cts.core.runner.AndroidJUnitRunnerConstants.ARGUMENT_TEST_FILE;
+import static com.android.cts.core.runner.AndroidJUnitRunnerConstants.ARGUMENT_TEST_PACKAGE;
 
 /**
  * A drop-in replacement for AndroidJUnitTestRunner, which understands the same arguments, and has
@@ -129,12 +133,12 @@ public class CoreTestRunner extends Instrumentation {
 
         // The test can be run specifying a list of tests to run, or as cts-tradefed does it,
         // by passing a fileName with a test to run on each line.
-        List<String> testNameList;
+        Set<String> testNameSet = new HashSet<>();
         String arg;
         if ((arg = args.getString(ARGUMENT_TEST_FILE)) != null) {
             // The tests are specified in a file.
             try {
-                testNameList = readTestsFromFile(arg);
+                testNameSet.addAll(readTestsFromFile(arg));
             } catch (IOException err) {
                 finish(Activity.RESULT_CANCELED, new Bundle());
                 return;
@@ -142,24 +146,45 @@ public class CoreTestRunner extends Instrumentation {
         } else if ((arg = args.getString(ARGUMENT_TEST_CLASS)) != null) {
             // The tests are specified in a String passed in the bundle.
             String[] tests = arg.split(",");
-            testNameList = Arrays.asList(tests);
-        } else {
-            // null means the runner should run all tests.
-            testNameList = null;
+            testNameSet.addAll(Arrays.asList(tests));
         }
 
-        if (testNameList == null) {
-            List<String> roots = getRootClassNames(args);
-            if (roots == null) {
-                // Find all test classes
-                testList = getAllTestClasses();
-            } else {
-                testList = TestList.rootList(roots);
-            }
-
-        } else {
-            testList = TestList.exclusiveList(testNameList);
+        Set<String> notTestNameSet = new HashSet<>();
+        if ((arg = args.getString(ARGUMENT_NOT_TEST_CLASS)) != null) {
+            // The classes are specified in a String passed in the bundle
+            String[] tests = arg.split(",");
+            notTestNameSet.addAll(Arrays.asList(tests));
         }
+
+        Set<String> packageNameSet = new HashSet<>();
+        if ((arg = args.getString(ARGUMENT_TEST_PACKAGE)) != null) {
+            // The packages are specified in a String passed in the bundle
+            String[] packages = arg.split(",");
+            packageNameSet.addAll(Arrays.asList(packages));
+        }
+
+        Set<String> notPackageNameSet = new HashSet<>();
+        if ((arg = args.getString(ARGUMENT_NOT_TEST_PACKAGE)) != null) {
+            // The packages are specified in a String passed in the bundle
+            String[] packages = arg.split(",");
+            notPackageNameSet.addAll(Arrays.asList(packages));
+        }
+
+        List<String> roots = getRootClassNames(args);
+        if (roots == null) {
+            // Find all test classes
+            Collection<Class<?>> classes = TestClassFinder.getClasses(
+                Collections.singletonList(getContext().getPackageCodePath()),
+                getClass().getClassLoader());
+            testList = new TestList(classes);
+        } else {
+            testList = TestList.rootList(roots);
+        }
+
+        testList.addIncludeTestPackages(packageNameSet);
+        testList.addExcludeTestPackages(notPackageNameSet);
+        testList.addIncludeTests(testNameSet);
+        testList.addExcludeTests(notTestNameSet);
 
         listenerClasses = new ArrayList<>();
         String listenerArg = args.getString(ARGUMENT_CORE_LISTENER);
@@ -282,13 +307,4 @@ public class CoreTestRunner extends Instrumentation {
             throw err;
         }
     }
-
-    private TestList getAllTestClasses() {
-        Collection<Class<?>> classes = TestClassFinder.getClasses(
-                Collections.singletonList(getContext().getPackageCodePath()),
-                getClass().getClassLoader());
-
-        return TestList.classList(classes);
-    }
-
 }
