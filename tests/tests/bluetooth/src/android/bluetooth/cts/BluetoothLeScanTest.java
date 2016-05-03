@@ -63,11 +63,14 @@ public class BluetoothLeScanTest extends AndroidTestCase {
 
     private BluetoothAdapter mBluetoothAdapter;
     private BluetoothLeScanner mScanner;
+    // Whether location is on before running the tests.
+    private boolean mLocationOn;
 
     @Override
     public void setUp() {
-        if (!isBleSupported())
+        if (!isBleSupported()) {
             return;
+        }
         BluetoothManager manager = (BluetoothManager) mContext.getSystemService(
                 Context.BLUETOOTH_SERVICE);
         mBluetoothAdapter = manager.getAdapter();
@@ -78,6 +81,17 @@ public class BluetoothLeScanTest extends AndroidTestCase {
             sleep(3000);
         }
         mScanner = mBluetoothAdapter.getBluetoothLeScanner();
+        mLocationOn = TestUtils.isLocationOn(getContext());
+        if (!mLocationOn) {
+            TestUtils.enableLocation(getContext());
+        }
+    }
+
+    @Override
+    public void tearDown() {
+        if (!mLocationOn) {
+            TestUtils.disableLocation(getContext());
+        }
     }
 
     /**
@@ -85,8 +99,9 @@ public class BluetoothLeScanTest extends AndroidTestCase {
      */
     @MediumTest
     public void testBasicBleScan() {
-        if (!isBleSupported())
+        if (!isBleSupported()) {
             return;
+        }
         long scanStartMillis = SystemClock.elapsedRealtime();
         Collection<ScanResult> scanResults = scan();
         long scanEndMillis = SystemClock.elapsedRealtime();
@@ -100,8 +115,9 @@ public class BluetoothLeScanTest extends AndroidTestCase {
      */
     @MediumTest
     public void testScanFilter() {
-        if (!isBleSupported())
+        if (!isBleSupported()) {
             return;
+        }
 
         List<ScanFilter> filters = new ArrayList<ScanFilter>();
         ScanFilter filter = createScanFilter();
@@ -140,13 +156,13 @@ public class BluetoothLeScanTest extends AndroidTestCase {
         Map<ParcelUuid, byte[]> serviceData = record.getServiceData();
         if (serviceData != null && !serviceData.isEmpty()) {
             ParcelUuid uuid = serviceData.keySet().iterator().next();
-            return new ScanFilter.Builder().setServiceData(uuid, new byte[] { 0 },
-                    new byte[] { 0 }).build();
+            return new ScanFilter.Builder().setServiceData(uuid, new byte[]{0},
+                    new byte[]{0}).build();
         }
         SparseArray<byte[]> manufacturerSpecificData = record.getManufacturerSpecificData();
         if (manufacturerSpecificData != null && manufacturerSpecificData.size() > 0) {
             return new ScanFilter.Builder().setManufacturerData(manufacturerSpecificData.keyAt(0),
-                    new byte[] { 0 }, new byte[] { 0 }).build();
+                    new byte[]{0}, new byte[]{0}).build();
         }
         List<ParcelUuid> serviceUuids = record.getServiceUuids();
         if (serviceUuids != null && !serviceUuids.isEmpty()) {
@@ -160,15 +176,16 @@ public class BluetoothLeScanTest extends AndroidTestCase {
      */
     @MediumTest
     public void testOpportunisticScan() {
-        if (!isBleSupported())
+        if (!isBleSupported()) {
             return;
+        }
         ScanSettings opportunisticScanSettings = new ScanSettings.Builder()
                 .setScanMode(ScanSettings.SCAN_MODE_OPPORTUNISTIC)
                 .build();
         BleScanCallback emptyScanCallback = new BleScanCallback();
 
         // No scans are really started with opportunistic scans only.
-        mScanner.startScan(Collections.<ScanFilter> emptyList(), opportunisticScanSettings,
+        mScanner.startScan(Collections.<ScanFilter>emptyList(), opportunisticScanSettings,
                 emptyScanCallback);
         sleep(SCAN_DURATION_MILLIS);
         assertTrue(emptyScanCallback.getScanResults().isEmpty());
@@ -213,7 +230,7 @@ public class BluetoothLeScanTest extends AndroidTestCase {
                 .setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY)
                 .setReportDelay(BATCH_SCAN_REPORT_DELAY_MILLIS).build();
         BleScanCallback batchScanCallback = new BleScanCallback();
-        mScanner.startScan(Collections.<ScanFilter> emptyList(), batchScanSettings,
+        mScanner.startScan(Collections.<ScanFilter>emptyList(), batchScanSettings,
                 batchScanCallback);
         sleep(SCAN_DURATION_MILLIS);
         mScanner.flushPendingScanResults(batchScanCallback);
