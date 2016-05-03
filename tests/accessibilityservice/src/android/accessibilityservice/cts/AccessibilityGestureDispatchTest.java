@@ -16,12 +16,14 @@ package android.accessibilityservice.cts;
 
 import android.accessibilityservice.AccessibilityService;
 import android.accessibilityservice.GestureDescription;
+import android.content.res.Resources;
 import android.graphics.Matrix;
 import android.graphics.Path;
 import android.graphics.Rect;
 import android.os.Bundle;
 import android.os.SystemClock;
 import android.test.ActivityInstrumentationTestCase2;
+import android.util.DisplayMetrics;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewConfiguration;
@@ -305,17 +307,21 @@ public class AccessibilityGestureDispatchTest extends
                 StubMagnificationAccessibilityService.enableSelf(this);
         android.accessibilityservice.AccessibilityService.MagnificationController
                 magnificationController = magnificationService.getMagnificationController();
+        final Resources res = getInstrumentation().getTargetContext().getResources();
+        final DisplayMetrics metrics = res.getDisplayMetrics();
         try {
             // Magnify screen by 2x from upper left corner
             final AtomicBoolean setScale = new AtomicBoolean();
-            final AtomicBoolean setCenter = new AtomicBoolean();
             final float magnificationFactor = 2.0f;
+            // Center to have (0,0) in the upper-left corner
+            final float centerX = metrics.widthPixels / (2.0f * magnificationFactor) - 1.0f;
+            final float centerY = metrics.heightPixels / (2.0f * magnificationFactor) - 1.0f;
             magnificationService.runOnServiceSync(() -> {
                         setScale.set(magnificationController.setScale(magnificationFactor, false));
-                        setCenter.set(magnificationController.setCenter(0, 0, false));
+                        // Make sure the upper right corner is on the screen
+                        magnificationController.setCenter(centerX, centerY, false);
                     });
             assertTrue("Failed to set scale", setScale.get());
-            assertTrue("Failed to set center", setCenter.get());
 
             GestureDescription click = createClick((int) (clickX * magnificationFactor),
                     (int) (clickY * magnificationFactor));
