@@ -355,15 +355,22 @@ public class CommonExternalStorageTest extends AndroidTestCase {
         }
     }
 
-    public static void assertMediaNoAccess(ContentResolver resolver) throws Exception {
+    public static void assertMediaNoAccess(ContentResolver resolver, boolean legacyApp)
+            throws Exception {
         final ContentValues values = new ContentValues();
         values.put(Images.Media.MIME_TYPE, "image/jpeg");
         values.put(Images.Media.DATA,
                 buildProbeFile(Environment.getExternalStorageDirectory()).getAbsolutePath());
 
         try {
-            resolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values);
-            fail("Expected access to be blocked");
+            Uri uri = resolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values);
+            if (legacyApp) {
+                // For legacy apps we do not crash - just make the operation do nothing
+                assertEquals(MediaStore.Images.Media.EXTERNAL_CONTENT_URI
+                        .buildUpon().appendPath("0").build().toString(), uri.toString());
+            } else {
+                fail("Expected access to be blocked");
+            }
         } catch (Exception expected) {
         }
     }

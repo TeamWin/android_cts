@@ -19,13 +19,14 @@ LOCAL_PATH := $(call my-dir)
 include $(CLEAR_VARS)
 
 LOCAL_MODULE_TAGS := tests
-LOCAL_SDK_VERSION := current
 LOCAL_STATIC_JAVA_LIBRARIES := android-support-test ctsdeviceutil ctstestrunner ub-uiautomator
 
 LOCAL_SRC_FILES := $(call all-java-files-under, src) \
-    ../ExternalStorageApp/src/com/android/cts/externalstorageapp/CommonExternalStorageTest.java
+    ../ExternalStorageApp/src/com/android/cts/externalstorageapp/CommonExternalStorageTest.java \
+    ../UsePermissionApp23/src/com/android/cts/usepermission/BasePermissionActivity.java \
+    ../UsePermissionApp23/src/com/android/cts/usepermission/BasePermissionsTest.java
 
-LOCAL_PACKAGE_NAME := CtsUsePermissionApp
+LOCAL_PACKAGE_NAME := CtsUsePermissionApp22
 
 # tag this module as a cts test artifact
 LOCAL_COMPATIBILITY_SUITE := cts
