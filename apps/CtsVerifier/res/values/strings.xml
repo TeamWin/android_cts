@@ -1427,17 +1427,17 @@ You should be prompted to select credentials; choose the ones you just installed
     <string name="provisioning_byod_lockscreen_bound_key">Lockscreen-bound key test</string>
     <string name="provisioning_byod_fingerprint_bound_key">Fingerprint-bound key test</string>
     <string name="provisioning_byod_vpn">Vpn test</string>
-    <string name="provisioning_byod_select_work_challenge">Select work challenge test</string>
+    <string name="provisioning_byod_select_work_challenge">Select work lock test</string>
     <string name="provisioning_byod_select_work_challenge_description">
-        This test verifies that a work challenge can be chosen.\n
+        This test verifies that a work lock can be chosen.\n
 
-        1. Verify that you get sent to the page for setting up a new work challenge.\n
-        2. Set a new work challenge.
+        1. Verify that you get sent to the page for Choosing a new work lock.\n
+        2. Set a new work lock.
     </string>
-    <string name="provisioning_byod_confirm_work_credentials">Confirm work challenge test</string>
+    <string name="provisioning_byod_confirm_work_credentials">Confirm work lock test</string>
     <string name="provisioning_byod_confirm_work_credentials_description">
-        This test verifies that work challenge is shown when opening a work app,
-        the work challenge was set correctly and it is customized according to
+        This test verifies that work lock is shown when opening a work app,
+        the work lock was set correctly and it is customized according to
         the policies set. You can only do this test after you have done the previous test.\n
 
         1. Open a work app.\n
@@ -1983,7 +1983,7 @@ You should be prompted to select credentials; choose the ones you just installed
     <string name="provisioning_byod_set_organization_info_button_text">Set</string>
     <string name="provisioning_byod_organization_info_instructions">
     This test verifies that the Organization Info was set correctly.
-    You can only do this test after you have done "select work challenge" test.\n
+    You can only do this test after you have done "select work lock" test.\n
         1. Enter your organization name.\n
         2. Enter a valid color code.\n
         3. Press the Set button to set organization Info.\n
