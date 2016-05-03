@@ -41,6 +41,7 @@ import android.provider.ContactsContract.Directory;
 import android.provider.ContactsContract.PhoneLookup;
 import android.provider.ContactsContract.RawContacts;
 import android.test.AndroidTestCase;
+import android.util.Log;
 
 import java.io.ByteArrayOutputStream;
 import java.io.FileNotFoundException;
@@ -51,6 +52,8 @@ import java.util.Arrays;
 
 @TargetApi(Build.VERSION_CODES.LOLLIPOP)
 public class ContactsTest extends AndroidTestCase {
+
+    private static final String TAG = "ContactsTest";
 
     private static final String TEST_ACCOUNT_NAME = AccountAuthenticator.ACCOUNT_NAME;
     private static final String TEST_ACCOUNT_TYPE = AccountAuthenticator.ACCOUNT_TYPE;
@@ -78,6 +81,10 @@ public class ContactsTest extends AndroidTestCase {
     private static final String MANAGED_DIRECTORY_NAME = "ManagedDirectory";
     private static final String PRIMARY_DIRECTORY_CONTACT_NAME = "PrimaryDirectoryContact";
     private static final String MANAGED_DIRECTORY_CONTACT_NAME = "ManagedDirectoryContact";
+
+    // Retry directory query so we can make sure directory info in cp2 is updated
+    private static final int MAX_RETRY_DIRECTORY_QUERY = 10;
+    private static final int RETRY_DIRECTORY_QUERY_INTERVAL = 1000; // 1s
 
     private DevicePolicyManager mDevicePolicyManager;
     private ContentResolver mResolver;
@@ -502,48 +509,66 @@ public class ContactsTest extends AndroidTestCase {
 
     public void testGetDirectoryListInPrimaryProfile() {
         assertFalse(isManagedProfile());
-        final Cursor cursor = mResolver.query(Directory.ENTERPRISE_CONTENT_URI,
-                new String[]{
-                        Directory._ID,
-                        Directory.DISPLAY_NAME
-                }, null, null, null);
+        // As directory content in CP2 may not be updated, we will try 10 times to see if it's
+        // updated
+        for (int i = 0; i < MAX_RETRY_DIRECTORY_QUERY; i++) {
+            final Cursor cursor = mResolver.query(Directory.ENTERPRISE_CONTENT_URI,
+                    new String[]{
+                            Directory._ID,
+                            Directory.DISPLAY_NAME
+                    }, null, null, null);
 
-        boolean hasPrimaryDefault = false;
-        boolean hasPrimaryInvisible = false;
-        boolean hasManagedDefault = false;
-        boolean hasManagedInvisible = false;
-        boolean hasPrimaryDirectory = false;
-        boolean hasManagedDirectory = false;
+            boolean hasPrimaryDefault = false;
+            boolean hasPrimaryInvisible = false;
+            boolean hasManagedDefault = false;
+            boolean hasManagedInvisible = false;
+            boolean hasPrimaryDirectory = false;
+            boolean hasManagedDirectory = false;
 
-        while(cursor.moveToNext()) {
-            final long directoryId = cursor.getLong(0);
-            if (directoryId == Directory.DEFAULT) {
-                hasPrimaryDefault = true;
-            } else if (directoryId == Directory.LOCAL_INVISIBLE) {
-                hasPrimaryInvisible = true;
-            } else if (directoryId == Directory.ENTERPRISE_DEFAULT) {
-                hasManagedDefault = true;
-            } else if (directoryId == Directory.ENTERPRISE_LOCAL_INVISIBLE) {
-                hasManagedInvisible = true;
-            } else {
-                final String displayName = cursor.getString(1);
-                if (Directory.isEnterpriseDirectoryId(directoryId)
-                        && displayName.equals(MANAGED_DIRECTORY_NAME)) {
-                    hasManagedDirectory = true;
-                }
-                if (!Directory.isEnterpriseDirectoryId(directoryId)
-                        && displayName.equals(PRIMARY_DIRECTORY_NAME)) {
-                    hasPrimaryDirectory = true;
+            while(cursor.moveToNext()) {
+                final long directoryId = cursor.getLong(0);
+                if (directoryId == Directory.DEFAULT) {
+                    hasPrimaryDefault = true;
+                } else if (directoryId == Directory.LOCAL_INVISIBLE) {
+                    hasPrimaryInvisible = true;
+                } else if (directoryId == Directory.ENTERPRISE_DEFAULT) {
+                    hasManagedDefault = true;
+                } else if (directoryId == Directory.ENTERPRISE_LOCAL_INVISIBLE) {
+                    hasManagedInvisible = true;
+                } else {
+                    final String displayName = cursor.getString(1);
+                    if (Directory.isEnterpriseDirectoryId(directoryId)
+                            && displayName.equals(MANAGED_DIRECTORY_NAME)) {
+                        hasManagedDirectory = true;
+                    }
+                    if (!Directory.isEnterpriseDirectoryId(directoryId)
+                            && displayName.equals(PRIMARY_DIRECTORY_NAME)) {
+                        hasPrimaryDirectory = true;
+                    }
                 }
             }
+            cursor.close();
+
+            if (i + 1 == MAX_RETRY_DIRECTORY_QUERY) {
+                assertTrue(hasPrimaryDefault);
+                assertTrue(hasPrimaryInvisible);
+                assertTrue(hasManagedDefault);
+                assertTrue(hasManagedInvisible);
+                assertTrue(hasPrimaryDirectory);
+                assertTrue(hasManagedDirectory);
+            }
+            if (hasPrimaryDefault && hasPrimaryInvisible && hasManagedDefault
+                    && hasManagedInvisible && hasPrimaryDirectory && hasManagedDirectory) {
+                // Success
+                return;
+            } else {
+                // Failed, sleep and retry
+                try {
+                    Log.i(TAG, "Failed " + (i+1) + " times, retry");
+                    Thread.sleep(RETRY_DIRECTORY_QUERY_INTERVAL);
+                } catch (InterruptedException e) {}
+            }
         }
-        cursor.close();
-        assertTrue(hasPrimaryDefault);
-        assertTrue(hasPrimaryInvisible);
-        assertTrue(hasManagedDefault);
-        assertTrue(hasManagedInvisible);
-        assertTrue(hasPrimaryDirectory);
-        assertTrue(hasManagedDirectory);
     }
 
     public void testPrimaryProfileEnterpriseEmailLookup_canAccessPrimaryDirectories() {
