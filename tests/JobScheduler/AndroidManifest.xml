@@ -23,12 +23,19 @@
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
     <uses-permission android:name="android.permission.CHANGE_NETWORK_STATE" />
     <uses-permission android:name="android.permission.CHANGE_WIFI_STATE" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
 
     <application>
         <uses-library android:name="android.test.runner" />
 
         <service android:name="android.jobscheduler.MockJobService"
             android:permission="android.permission.BIND_JOB_SERVICE" />
+        <service android:name="android.jobscheduler.TriggerContentJobService"
+            android:permission="android.permission.BIND_JOB_SERVICE" />
+
+        <provider android:name="android.jobscheduler.DummyJobContentProvider"
+            android:authorities="android.jobscheduler.dummyprovider" android:multiprocess="false" />
     </application>
 
     <!--  self-instrumenting test package. -->
