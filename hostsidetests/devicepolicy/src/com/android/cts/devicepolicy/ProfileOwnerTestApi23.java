@@ -51,6 +51,9 @@ public class ProfileOwnerTestApi23 extends BaseDevicePolicyTest {
     }
 
     public void testDelegatedCertInstaller() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
         assertTrue("DelegatedCertInstaller failed", runDeviceTestsAsUser(DEVICE_ADMIN_PKG,
                 ".DelegatedCertInstallerTest", "testSetNotExistCertInstallerPackage",  mUserId));
     }
