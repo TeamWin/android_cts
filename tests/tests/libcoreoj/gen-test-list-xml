@@ -26,4 +26,4 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 test_list_txt=$DIR/test_list.txt
 [[ -f $test_list_txt ]] || echo "Can't find $test_list_txt" >&2
 
-$DIR/gen-test-list-xml.py --app-package-name android.libcore.oj --cts-name CtsLibcoreOj --jar-path CtsLibcoreOj.jar $DIR/test_list.txt
+$DIR/../../../tools/testng/gen-test-list-xml.py --app-package-name android.libcore.oj --cts-name CtsLibcoreOj --jar-path CtsLibcoreOj.jar $DIR/test_list.txt
