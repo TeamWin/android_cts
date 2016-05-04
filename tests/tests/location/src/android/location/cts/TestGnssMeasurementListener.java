@@ -75,16 +75,27 @@ class TestGnssMeasurementListener extends GnssMeasurementsEvent.Callback {
      * @return {@code true} if the state of the test ensures that data is expected to be collected,
      *         {@code false} otherwise.
      */
-    public boolean verifyState() {
+    public boolean verifyState(boolean testIsStrict) {
         switch (getStatus()) {
             case GnssMeasurementsEvent.Callback.STATUS_NOT_SUPPORTED:
-                SoftAssert.failAsWarning(mTag, "GnssMeasurements is not supported in the device:"
-                        + " verifications performed by this test will be skipped.");
+                String message = "GnssMeasurements is not supported in the device:"
+                        + " verifications performed by this test may be skipped on older devices.";
+                if (testIsStrict) {
+                    Assert.fail(message);
+                } else {
+                    SoftAssert.failAsWarning(mTag, message);
+                }
                 return false;
             case GnssMeasurementsEvent.Callback.STATUS_READY:
                 return true;
             case GnssMeasurementsEvent.Callback.STATUS_LOCATION_DISABLED:
-                Log.i(mTag, "Location or GPS is disabled on the device: skipping the test.");
+                message =  "Location or GPS is disabled on the device:"
+                        + " enable location to continue the test";
+                if (testIsStrict) {
+                    Assert.fail(message);
+                } else {
+                    SoftAssert.failAsWarning(mTag, message);
+                }
                 return false;
             default:
                 Assert.fail("GnssMeasurementsEvent status callback was not received.");
