@@ -36,7 +36,6 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
     private static final String DEVICE_OWNER_APK = "CtsDeviceOwnerApp.apk";
     private static final String DEVICE_OWNER_ADMIN =
             DEVICE_OWNER_PKG + ".BaseDeviceOwnerTest$BasicAdminReceiver";
-    private static final String DEVICE_OWNER_CLEAR = DEVICE_OWNER_PKG + ".ClearDeviceOwnerTest";
 
     private static final String INTENT_SENDER_PKG = "com.android.cts.intent.sender";
     private static final String INTENT_SENDER_APK = "CtsIntentSenderApp.apk";
@@ -182,7 +181,7 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
         // Set up filters from primary to managed profile
         String command = "am start -W --user " + mProfileUserId  + " " + MANAGED_PROFILE_PKG
                 + "/.PrimaryUserFilterSetterActivity";
-        CLog.logAndDisplay(LogLevel.INFO, "Output for command " + command + ": "
+        CLog.d("Output for command " + command + ": "
               + getDevice().executeShellCommand(command));
         assertTrue(runDeviceTestsAsUser(
                 MANAGED_PROFILE_PKG, MANAGED_PROFILE_PKG + ".PrimaryUserTest", mParentUserId));
@@ -319,7 +318,7 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
         // so the DISALLOW_DEBUGGING_FEATURES restriction does not work and this test
         // fails.
         if (getDevice().isAdbRoot()) {
-            CLog.logAndDisplay(LogLevel.INFO,
+            CLog.logAndDisplay(LogLevel.WARN,
                     "Cannot test testNoDebuggingFeaturesRestriction() in eng/userdebug build");
             return;
         }
@@ -499,11 +498,13 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
         }
         // verify that we can't set the same admin receiver as profile owner again
         assertFalse(setProfileOwner(
-                MANAGED_PROFILE_PKG + "/" + ADMIN_RECEIVER_TEST_CLASS, mProfileUserId));
+                MANAGED_PROFILE_PKG + "/" + ADMIN_RECEIVER_TEST_CLASS, mProfileUserId,
+                /*expectFailure*/ true));
 
         // verify that we can't set a different admin receiver as profile owner
         installAppAsUser(DEVICE_OWNER_APK, mProfileUserId);
-        assertFalse(setProfileOwner(DEVICE_OWNER_PKG + "/" + DEVICE_OWNER_ADMIN, mProfileUserId));
+        assertFalse(setProfileOwner(DEVICE_OWNER_PKG + "/" + DEVICE_OWNER_ADMIN, mProfileUserId,
+                /*expectFailure*/ true));
     }
 
     public void testCannotSetDeviceOwnerWhenProfilePresent() throws Exception {
@@ -513,10 +514,11 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
 
         try {
             installAppAsUser(DEVICE_OWNER_APK, mParentUserId);
-            assertFalse(setDeviceOwner(DEVICE_OWNER_PKG + "/" + DEVICE_OWNER_ADMIN, mParentUserId));
+            assertFalse(setDeviceOwner(DEVICE_OWNER_PKG + "/" + DEVICE_OWNER_ADMIN, mParentUserId,
+                    /*expectFailure*/ true));
         } finally {
             // make sure we clean up in case we succeeded in setting the device owner
-            runDeviceTestsAsUser(DEVICE_OWNER_PKG, DEVICE_OWNER_CLEAR, mParentUserId);
+            removeAdmin(DEVICE_OWNER_PKG + "/" + DEVICE_OWNER_ADMIN, mParentUserId);
             getDevice().uninstallPackage(DEVICE_OWNER_PKG);
         }
     }
@@ -611,7 +613,7 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
                 + " --user " + userId
                 + " --method " + SET_CUSTOM_DIRECTORY_PREFIX_METHOD
                 + " --arg " + directoryName;
-        CLog.logAndDisplay(LogLevel.INFO, "Output for command " + command + ": "
+        CLog.d("Output for command " + command + ": "
                 + getDevice().executeShellCommand(command));
     }
 
@@ -716,7 +718,7 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
                 + " --es extra-package " + MANAGED_PROFILE_PKG
                 + " --es extra-class-name " + MANAGED_PROFILE_PKG + "." + activityName
                 + " " + MANAGED_PROFILE_PKG + "/.ComponentDisablingActivity ";
-        CLog.logAndDisplay(LogLevel.INFO, "Output for command " + command + ": "
+        CLog.d("Output for command " + command + ": "
                 + getDevice().executeShellCommand(command));
     }
 
@@ -727,9 +729,9 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
                 + " --es extra-command " + command
                 + " --es extra-restriction-key " + key
                 + " " + MANAGED_PROFILE_PKG + "/.SetPolicyActivity";
+        // Don't log output because sometimes used expecting failures.
+        CLog.d("Running command " + adbCommand);
         String commandOutput = getDevice().executeShellCommand(adbCommand);
-        CLog.logAndDisplay(LogLevel.INFO,
-                "Output for command " + adbCommand + ": " + commandOutput);
         return commandOutput;
     }
 
@@ -741,8 +743,7 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
                 + " --es extra-package-name " + packageName
                 + " " + MANAGED_PROFILE_PKG + "/.SetPolicyActivity";
         String commandOutput = getDevice().executeShellCommand(adbCommand);
-        CLog.logAndDisplay(LogLevel.INFO,
-                "Output for command " + adbCommand + ": " + commandOutput);
+        CLog.d("Output for command " + adbCommand + ": " + commandOutput);
         return commandOutput;
     }
 
@@ -750,7 +751,7 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
     private void changeVerificationStatus(int userId, String packageName, String status)
             throws DeviceNotAvailableException {
         String command = "pm set-app-link --user " + userId + " " + packageName + " " + status;
-        CLog.logAndDisplay(LogLevel.INFO, "Output for command " + command + ": "
+        CLog.d("Output for command " + command + ": "
                 + getDevice().executeShellCommand(command));
     }
 
@@ -759,7 +760,7 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
                 + " -a " + WIDGET_PROVIDER_PKG + ".REGISTER_CALLBACK "
                 + "--ei user-extra " + getUserSerialNumber(mProfileUserId)
                 + " " + WIDGET_PROVIDER_PKG + "/.SimpleAppWidgetHostService";
-        CLog.logAndDisplay(LogLevel.INFO, "Output for command " + command + ": "
+        CLog.d("Output for command " + command + ": "
               + getDevice().executeShellCommand(command));
     }
 

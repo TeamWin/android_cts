@@ -24,8 +24,6 @@ public class ProfileOwnerTestApi23 extends BaseDevicePolicyTest {
     protected static final String DEVICE_ADMIN_APK = "CtsDeviceAndProfileOwnerApp23.apk";
     protected static final String ADMIN_RECEIVER_TEST_CLASS
             = ".BaseDeviceAdminTest$BasicAdminReceiver";
-    protected static final String CLEAR_PROFILE_OWNER_TEST_CLASS =
-            DEVICE_ADMIN_PKG + ".ClearProfileOwnerTest";
     private int mUserId;
 
     @Override
@@ -44,8 +42,7 @@ public class ProfileOwnerTestApi23 extends BaseDevicePolicyTest {
     protected void tearDown() throws Exception {
         if (mHasFeature) {
             assertTrue("Failed to remove profile owner.",
-                    runDeviceTestsAsUser(DEVICE_ADMIN_PKG, CLEAR_PROFILE_OWNER_TEST_CLASS,
-                            mUserId));
+                    removeAdmin(DEVICE_ADMIN_PKG + "/" + ADMIN_RECEIVER_TEST_CLASS, mUserId));
         }
         super.tearDown();
     }

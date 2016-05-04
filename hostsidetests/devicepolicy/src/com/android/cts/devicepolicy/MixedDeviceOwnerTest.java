@@ -28,9 +28,6 @@ import junit.framework.AssertionFailedError;
  */
 public class MixedDeviceOwnerTest extends DeviceAndProfileOwnerTest {
 
-    private static final String CLEAR_DEVICE_OWNER_TEST_CLASS =
-            DEVICE_ADMIN_PKG + ".ClearDeviceOwnerTest";
-
     @Override
     protected void setUp() throws Exception {
         super.setUp();
@@ -40,15 +37,16 @@ public class MixedDeviceOwnerTest extends DeviceAndProfileOwnerTest {
 
             installAppAsUser(DEVICE_ADMIN_APK, mUserId);
             assertTrue("Failed to set device owner", setDeviceOwner(
-                    DEVICE_ADMIN_PKG + "/" + ADMIN_RECEIVER_TEST_CLASS, mUserId));
+                    DEVICE_ADMIN_PKG + "/" + ADMIN_RECEIVER_TEST_CLASS, mUserId,
+                    /*expectFailure*/ false));
         }
     }
 
     @Override
     protected void tearDown() throws Exception {
         if (mHasFeature) {
-            assertTrue("Failed to remove device owner.", runDeviceTestsAsUser(
-                    DEVICE_ADMIN_PKG, CLEAR_DEVICE_OWNER_TEST_CLASS, mUserId));
+            assertTrue("Failed to remove device owner",
+                    removeAdmin(DEVICE_ADMIN_PKG + "/" + ADMIN_RECEIVER_TEST_CLASS, mUserId));
         }
         super.tearDown();
     }
