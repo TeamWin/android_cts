@@ -176,13 +176,15 @@ public class PixelCopyTests {
                 mVideoSourceActivityRule.launchActivity(null);
         if (!activity.canPlayVideo()) {
             Log.i(TAG, "Skipping testVideoProducer, video codec isn't supported");
+            return;
         }
         // This returns when the video has been prepared and playback has
         // been started, it doesn't necessarily means a frame has actually been
         // produced. There sadly isn't a callback for that.
-        // So we'll try for up to 300ms after this event to acquire a frame, otherwise
+        // So we'll try for up to 900ms after this event to acquire a frame, otherwise
         // it's considered a timeout.
         activity.waitForPlaying();
+        assertTrue("Failed to start video playback", activity.canPlayVideo());
         SynchronousPixelCopy copyHelper = new SynchronousPixelCopy();
         Bitmap bitmap = Bitmap.createBitmap(100, 100, Config.ARGB_8888);
         int copyResult = PixelCopy.ERROR_SOURCE_NO_DATA;
@@ -191,7 +193,7 @@ public class PixelCopyTests {
             if (copyResult != PixelCopy.ERROR_SOURCE_NO_DATA) {
                 break;
             }
-            Thread.sleep(10);
+            Thread.sleep(30);
         }
         assertEquals(PixelCopy.SUCCESS, copyResult);
         // A large threshold is used because decoder accuracy is covered in the
