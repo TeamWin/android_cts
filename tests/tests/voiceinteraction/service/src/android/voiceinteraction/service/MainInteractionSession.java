@@ -45,6 +45,10 @@ public class MainInteractionSession extends VoiceInteractionSession {
     @Override
     public void onCreate() {
         super.onCreate();
+        Intent sessionStarted = new Intent();
+        sessionStarted.setClassName("android.voiceinteraction.cts",
+                "android.voiceinteraction.cts.VoiceInteractionTestReceiver");
+        getContext().sendBroadcast(sessionStarted);
     }
 
     @Override

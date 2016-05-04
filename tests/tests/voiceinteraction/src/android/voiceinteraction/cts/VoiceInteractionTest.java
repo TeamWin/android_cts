@@ -87,6 +87,8 @@ public class VoiceInteractionTest extends ActivityInstrumentationTestCase2<TestS
     }
 
     public void testAll() throws Exception {
+        VoiceInteractionTestReceiver.sServiceStartedLatch.await(5, TimeUnit.SECONDS);
+
         if (!mHasFeature) {
             Log.i(TAG, "The device doesn't support feature: " + FEATURE_VOICE_RECOGNIZERS);
             return;
