@@ -16,6 +16,7 @@ package android.accessibilityservice.cts;
 
 import android.accessibilityservice.AccessibilityService;
 import android.accessibilityservice.GestureDescription;
+import android.content.pm.PackageManager;
 import android.content.res.Resources;
 import android.graphics.Matrix;
 import android.graphics.Path;
@@ -48,6 +49,9 @@ public class AccessibilityGestureDispatchTest extends
     TextView mFullScreenTextView;
     Rect mViewBounds = new Rect();
     boolean mGotUpEvent;
+    // Without a touch screen, there's no point in testing this feature
+    boolean mHasTouchScreen;
+    boolean mHasMultiTouch;
 
     public AccessibilityGestureDispatchTest() {
         super(GestureDispatchActivity.class);
@@ -56,6 +60,16 @@ public class AccessibilityGestureDispatchTest extends
     @Override
     public void setUp() throws Exception {
         super.setUp();
+
+        PackageManager pm = getInstrumentation().getContext().getPackageManager();
+        mHasTouchScreen = pm.hasSystemFeature(PackageManager.FEATURE_TOUCHSCREEN)
+                || pm.hasSystemFeature(PackageManager.FEATURE_FAKETOUCH);
+        if (!mHasTouchScreen) {
+            return;
+        }
+
+        mHasMultiTouch = pm.hasSystemFeature(PackageManager.FEATURE_TOUCHSCREEN_MULTITOUCH)
+                || pm.hasSystemFeature(PackageManager.FEATURE_FAKETOUCH_MULTITOUCH_DISTINCT);
 
         mFullScreenTextView =
                 (TextView) getActivity().findViewById(R.id.full_screen_text_view);
@@ -73,12 +87,19 @@ public class AccessibilityGestureDispatchTest extends
 
     @Override
     public void tearDown() throws Exception {
-        mService.runOnServiceSync(() -> mService.disableSelf());
+        if (!mHasTouchScreen) {
+            return;
+        }
 
+        mService.runOnServiceSync(() -> mService.disableSelf());
         super.tearDown();
     }
 
     public void testClickAt_producesDownThenUp() throws InterruptedException {
+        if (!mHasTouchScreen) {
+            return;
+        }
+
         final int clickXInsideView = 10;
         final int clickYInsideView = 20;
         int clickX = clickXInsideView + mViewBounds.left;
@@ -115,6 +136,10 @@ public class AccessibilityGestureDispatchTest extends
     }
 
     public void testLongClickAt_producesEventsWithLongClickTiming() throws InterruptedException {
+        if (!mHasTouchScreen) {
+            return;
+        }
+
         final int clickXInsideView = 10;
         final int clickYInsideView = 20;
         int clickX = clickXInsideView + mViewBounds.left;
@@ -142,6 +167,10 @@ public class AccessibilityGestureDispatchTest extends
     }
 
     public void testSwipe_shouldContainPointsInALine() throws InterruptedException {
+        if (!mHasTouchScreen) {
+            return;
+        }
+
         int startXInsideView = 10;
         int startYInsideView = 20;
         int endXInsideView = 20;
@@ -186,6 +215,10 @@ public class AccessibilityGestureDispatchTest extends
     }
 
     public void testSlowSwipe_shouldNotContainMovesForTinyMovement() throws InterruptedException {
+        if (!mHasTouchScreen) {
+            return;
+        }
+
         int startXInsideView = 10;
         int startYInsideView = 20;
         int endXInsideView = 11;
@@ -223,6 +256,10 @@ public class AccessibilityGestureDispatchTest extends
     }
 
     public void testAngledPinch_looksReasonable() throws InterruptedException {
+        if (!(mHasTouchScreen && mHasMultiTouch)) {
+            return;
+        }
+
         int centerXInsideView = 50;
         int centerYInsideView = 60;
         int centerX = centerXInsideView + mViewBounds.left;
@@ -297,6 +334,10 @@ public class AccessibilityGestureDispatchTest extends
     }
 
     public void testClickWhenMagnified_matchesActualTouch() throws InterruptedException {
+        if (!mHasTouchScreen) {
+            return;
+        }
+
         final int clickXInsideView = 10;
         final int clickYInsideView = 20;
         int clickX = clickXInsideView + mViewBounds.left;

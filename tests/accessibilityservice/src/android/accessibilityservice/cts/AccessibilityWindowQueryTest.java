@@ -26,8 +26,8 @@ import static android.view.accessibility.AccessibilityNodeInfo.ACTION_SELECT;
 import android.accessibilityservice.AccessibilityService;
 import android.accessibilityservice.AccessibilityServiceInfo;
 import android.app.UiAutomation;
+import android.content.pm.PackageManager;
 import android.graphics.Rect;
-import android.os.SystemClock;
 import android.test.suitebuilder.annotation.MediumTest;
 import android.view.Gravity;
 import android.view.Window;
@@ -519,96 +519,6 @@ public class AccessibilityWindowQueryTest
     }
 
     @MediumTest
-    public void testPerformGlobalActionBack() throws Exception {
-        assertTrue(getInstrumentation().getUiAutomation().performGlobalAction(
-                AccessibilityService.GLOBAL_ACTION_BACK));
-
-        // Sleep a bit so the UI is settles.
-        waitForIdle();
-    }
-
-    @MediumTest
-    public void testPerformGlobalActionHome() throws Exception {
-        assertTrue(getInstrumentation().getUiAutomation().performGlobalAction(
-                AccessibilityService.GLOBAL_ACTION_HOME));
-
-        // Sleep a bit so the UI is settles.
-        waitForIdle();
-    }
-
-    @MediumTest
-    public void testPerformGlobalActionRecents() throws Exception {
-        // Check whether the action succeeded.
-        assertTrue(getInstrumentation().getUiAutomation().performGlobalAction(
-                AccessibilityService.GLOBAL_ACTION_RECENTS));
-
-        // Sleep a bit so the UI is settles.
-        waitForIdle();
-
-        // This is a necessary since the back action does not
-        // dismiss recents until they stop animating. Sigh...
-        SystemClock.sleep(5000);
-
-        // Clean up.
-        getInstrumentation().getUiAutomation().performGlobalAction(
-                AccessibilityService.GLOBAL_ACTION_BACK);
-
-        // Sleep a bit so the UI is settles.
-        waitForIdle();
-    }
-
-    @MediumTest
-    public void testPerformGlobalActionNotifications() throws Exception {
-        // Perform the action under test
-        assertTrue(getInstrumentation().getUiAutomation().performGlobalAction(
-                AccessibilityService.GLOBAL_ACTION_NOTIFICATIONS));
-
-        // Sleep a bit so the UI is settles.
-        waitForIdle();
-
-        // Clean up.
-        assertTrue(getInstrumentation().getUiAutomation().performGlobalAction(
-                AccessibilityService.GLOBAL_ACTION_BACK));
-
-        // Sleep a bit so the UI is settles.
-        waitForIdle();
-    }
-
-    @MediumTest
-    public void testPerformGlobalActionQuickSettings() throws Exception {
-        // Check whether the action succeeded.
-        assertTrue(getInstrumentation().getUiAutomation().performGlobalAction(
-                AccessibilityService.GLOBAL_ACTION_QUICK_SETTINGS));
-
-        // Sleep a bit so the UI is settles.
-        waitForIdle();
-
-        // Clean up.
-        getInstrumentation().getUiAutomation().performGlobalAction(
-                AccessibilityService.GLOBAL_ACTION_BACK);
-
-        // Sleep a bit so the UI is settles.
-        waitForIdle();
-    }
-
-    @MediumTest
-    public void testPerformGlobalActionPowerDialog() throws Exception {
-        // Check whether the action succeeded.
-        assertTrue(getInstrumentation().getUiAutomation().performGlobalAction(
-                AccessibilityService.GLOBAL_ACTION_POWER_DIALOG));
-
-        // Sleep a bit so the UI is settles.
-        waitForIdle();
-
-        // Clean up.
-        getInstrumentation().getUiAutomation().performGlobalAction(
-                AccessibilityService.GLOBAL_ACTION_BACK);
-
-        // Sleep a bit so the UI is settles.
-        waitForIdle();
-    }
-
-    @MediumTest
     public void testObjectContract() throws Exception {
         try {
             AccessibilityServiceInfo info = getInstrumentation().getUiAutomation().getServiceInfo();
@@ -640,6 +550,11 @@ public class AccessibilityWindowQueryTest
 
     @MediumTest
     public void testWindowDockAndUndock_dividerWindowAppearsAndDisappears() throws Exception {
+        if (getInstrumentation().getContext().getPackageManager()
+                .hasSystemFeature(PackageManager.FEATURE_LEANBACK)) {
+            // Android TV doesn't support the divider window
+            return;
+        }
         setAccessInteractiveWindowsFlag();
         final UiAutomation uiAutomation = getInstrumentation().getUiAutomation();
         assertFalse(isDividerWindowPresent(uiAutomation));

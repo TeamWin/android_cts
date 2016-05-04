@@ -136,6 +136,7 @@ public class AccessibilitySoftKeyboardModesTest extends ActivityInstrumentationT
 
         // Note: This Activity always has a visible keyboard (due to windowSoftInputMode being set
         // to stateAlwaysVisible).
+        waitForIdle();
         int numWindowsWithIme = mUiAutomation.getWindows().size();
 
         // Request the keyboard be hidden.
@@ -161,6 +162,7 @@ public class AccessibilitySoftKeyboardModesTest extends ActivityInstrumentationT
 
         // Note: This Activity always has a visible keyboard (due to windowSoftInputMode being set
         // to stateAlwaysVisible).
+        waitForIdle();
         int numWindowsWithIme = mUiAutomation.getWindows().size();
 
         // Set the show mode to SHOW_MODE_HIDDEN.
