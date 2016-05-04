@@ -221,12 +221,12 @@ public class PermissionsHostTest extends DeviceTestCase implements IAbiReceiver,
                 "testRequestPermissionFromTwoGroups");
     }
 
-    public void testOnlyRequestedPermissionsGranted24() throws Exception {
-        assertNull(getDevice().installPackage(
-                MigrationHelper.getTestFile(mCtsBuild, APK_24), false, false));
-        runDeviceTests(PKG, "com.android.cts.usepermission.UsePermissionTest24",
-                "testOnlyRequestedPermissionsGranted");
-    }
+//    public void testOnlyRequestedPermissionsGranted24() throws Exception {
+//        assertNull(getDevice().installPackage(
+//                MigrationHelper.getTestFile(mCtsBuild, APK_24), false, false));
+//        runDeviceTests(PKG, "com.android.cts.usepermission.UsePermissionTest24",
+//                "testOnlyRequestedPermissionsGranted");
+//    }
 
     public void testUpgradeKeepsPermissions() throws Exception {
         assertNull(getDevice().installPackage(
