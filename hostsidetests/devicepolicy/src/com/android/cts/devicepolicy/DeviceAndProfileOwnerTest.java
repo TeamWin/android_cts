@@ -382,8 +382,9 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
             assertTrue("Clear lockscreen password failed", runDeviceTestsAsUser(DEVICE_ADMIN_PKG,
                     ".ResetPasswordHelper", "testClearPassword", mPrimaryUserId));
             if (installProfileOwnerForPassword) {
-                assertTrue("Failed to remove profile owner.", runDeviceTestsAsUser(DEVICE_ADMIN_PKG,
-                        DEVICE_ADMIN_PKG + ".ClearProfileOwnerTest", mPrimaryUserId));
+                assertTrue("Failed to remove profile owner.",
+                        removeAdmin(DEVICE_ADMIN_PKG + "/" + ADMIN_RECEIVER_TEST_CLASS,
+                                mPrimaryUserId));
             }
         }
     }
@@ -562,8 +563,7 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
                 + " " + extras
                 + " " + DEVICE_ADMIN_PKG + "/.SetPolicyActivity";
         String commandOutput = getDevice().executeShellCommand(adbCommand);
-        CLog.logAndDisplay(LogLevel.INFO,
-                "Output for command " + adbCommand + ": " + commandOutput);
+        CLog.d("Output for command " + adbCommand + ": " + commandOutput);
         assertTrue("Command was expected to succeed " + commandOutput,
                 commandOutput.contains("Status: ok"));
     }

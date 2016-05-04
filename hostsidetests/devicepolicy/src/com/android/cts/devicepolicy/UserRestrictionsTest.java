@@ -26,29 +26,24 @@ public class UserRestrictionsTest extends BaseDevicePolicyTest {
     private static final String ADMIN_RECEIVER_TEST_CLASS
             = ".BaseDeviceAdminTest$BasicAdminReceiver";
 
-    private boolean mRemoveDeviceOwnerInTearDown;
-    private boolean mRemovePrimaryProfileOwnerInTearDown;
+    private boolean mRemoveOwnerInTearDown;
     private int mDeviceOwnerUserId;
 
     @Override
     protected void setUp() throws Exception {
         super.setUp();
 
-        mRemoveDeviceOwnerInTearDown = false;
-        mRemovePrimaryProfileOwnerInTearDown = false;
+        mRemoveOwnerInTearDown = false;
         mDeviceOwnerUserId = mPrimaryUserId;
     }
 
     @Override
     protected void tearDown() throws Exception {
         if (mHasFeature) {
-            if (mRemoveDeviceOwnerInTearDown) {
-                assertTrue("Failed to clear device owner",
-                        runTests("ClearDeviceOwnerTest", mDeviceOwnerUserId));
-            }
-            if (mRemovePrimaryProfileOwnerInTearDown) {
-                assertTrue("Failed to clear profile owner",
-                        runTests("ClearProfileOwnerTest", mDeviceOwnerUserId));
+            if (mRemoveOwnerInTearDown) {
+                assertTrue("Failed to clear owner",
+                        removeAdmin(DEVICE_ADMIN_PKG + "/" + ADMIN_RECEIVER_TEST_CLASS,
+                                mDeviceOwnerUserId));
             }
             assertTrue("Some user restrictions are still set",
                     runTests("userrestrictions.CheckNoOwnerRestrictionsTest", mDeviceOwnerUserId));
@@ -77,8 +72,8 @@ public class UserRestrictionsTest extends BaseDevicePolicyTest {
         installAppAsUser(DEVICE_ADMIN_APK, mDeviceOwnerUserId);
         assertTrue("Failed to set device owner",
                 setDeviceOwner(DEVICE_ADMIN_PKG + "/" + ADMIN_RECEIVER_TEST_CLASS,
-                        mDeviceOwnerUserId));
-        mRemoveDeviceOwnerInTearDown = true;
+                        mDeviceOwnerUserId, /*expectFailure*/ false));
+        mRemoveOwnerInTearDown = true;
 
         runTests("userrestrictions.DeviceOwnerUserRestrictionsTest",
                 "testSetAllRestrictions", mDeviceOwnerUserId);
@@ -96,8 +91,8 @@ public class UserRestrictionsTest extends BaseDevicePolicyTest {
         installAppAsUser(DEVICE_ADMIN_APK, mDeviceOwnerUserId);
         assertTrue("Failed to set profile owner",
                 setProfileOwner(DEVICE_ADMIN_PKG + "/" + ADMIN_RECEIVER_TEST_CLASS,
-                        mDeviceOwnerUserId));
-        mRemovePrimaryProfileOwnerInTearDown = true;
+                        mDeviceOwnerUserId, /* expectFailure */ false));
+        mRemoveOwnerInTearDown = true;
 
         runTests("userrestrictions.PrimaryProfileOwnerUserRestrictionsTest",
                 "testSetAllRestrictions", mDeviceOwnerUserId);
@@ -112,7 +107,7 @@ public class UserRestrictionsTest extends BaseDevicePolicyTest {
         installAppAsUser(DEVICE_ADMIN_APK, secondaryUserId);
         assertTrue("Failed to set profile owner",
                 setProfileOwner(DEVICE_ADMIN_PKG + "/" + ADMIN_RECEIVER_TEST_CLASS,
-                        secondaryUserId));
+                        secondaryUserId, /* expectFailure */ false));
 
         runTests("userrestrictions.SecondaryProfileOwnerUserRestrictionsTest",
                 "testSetAllRestrictions", secondaryUserId);
@@ -129,8 +124,8 @@ public class UserRestrictionsTest extends BaseDevicePolicyTest {
         installAppAsUser(DEVICE_ADMIN_APK, mDeviceOwnerUserId);
         assertTrue("Failed to set device owner",
                 setDeviceOwner(DEVICE_ADMIN_PKG + "/" + ADMIN_RECEIVER_TEST_CLASS,
-                        mDeviceOwnerUserId));
-        mRemoveDeviceOwnerInTearDown = true;
+                        mDeviceOwnerUserId, /*expectFailure*/ false));
+        mRemoveOwnerInTearDown = true;
 
         // Create another user and set PO.
         final int secondaryUserId = createUser();
@@ -138,7 +133,7 @@ public class UserRestrictionsTest extends BaseDevicePolicyTest {
         installAppAsUser(DEVICE_ADMIN_APK, secondaryUserId);
         assertTrue("Failed to set profile owner",
                 setProfileOwner(DEVICE_ADMIN_PKG + "/" + ADMIN_RECEIVER_TEST_CLASS,
-                        secondaryUserId));
+                        secondaryUserId, /* expectFailure */ false));
 
         // Let DO set all restrictions.
         runTests("userrestrictions.DeviceOwnerUserRestrictionsTest",
@@ -180,8 +175,8 @@ public class UserRestrictionsTest extends BaseDevicePolicyTest {
         installAppAsUser(DEVICE_ADMIN_APK, mDeviceOwnerUserId);
         assertTrue("Failed to set profile owner",
                 setProfileOwner(DEVICE_ADMIN_PKG + "/" + ADMIN_RECEIVER_TEST_CLASS,
-                        mDeviceOwnerUserId));
-        mRemovePrimaryProfileOwnerInTearDown = true;
+                        mDeviceOwnerUserId, /* expectFailure */ false));
+        mRemoveOwnerInTearDown = true;
 
         // Create another user and set PO.
         final int secondaryUserId = createUser();
@@ -189,7 +184,7 @@ public class UserRestrictionsTest extends BaseDevicePolicyTest {
         installAppAsUser(DEVICE_ADMIN_APK, secondaryUserId);
         assertTrue("Failed to set profile owner",
                 setProfileOwner(DEVICE_ADMIN_PKG + "/" + ADMIN_RECEIVER_TEST_CLASS,
-                        secondaryUserId));
+                        secondaryUserId, /* expectFailure */ false));
 
         // Let user-0 PO sets all restrictions.
         runTests("userrestrictions.PrimaryProfileOwnerUserRestrictionsTest",
