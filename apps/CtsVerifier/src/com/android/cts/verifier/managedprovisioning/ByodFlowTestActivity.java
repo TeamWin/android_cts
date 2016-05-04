@@ -72,7 +72,8 @@ public class ByodFlowTestActivity extends DialogTestListActivity {
     private DialogTestListItem mAppSettingsVisibleTest;
     private DialogTestListItem mLocationSettingsVisibleTest;
     private DialogTestListItem mBatterySettingsVisibleTest;
-    private DialogTestListItem mDataUsageSettingsVisibleTest;
+    private DialogTestListItem mWiFiDataUsageSettingsVisibleTest;
+    private DialogTestListItem mCellularDataUsageSettingsVisibleTest;
     private DialogTestListItem mCredSettingsVisibleTest;
     private DialogTestListItem mPrintSettingsVisibleTest;
     private DialogTestListItem mIntentFiltersTest;
@@ -273,10 +274,16 @@ public class ByodFlowTestActivity extends DialogTestListActivity {
                 R.string.provisioning_byod_battery_settings_instruction,
                 new Intent(Intent.ACTION_POWER_USAGE_SUMMARY));
 
-        mDataUsageSettingsVisibleTest = new DialogTestListItem(this,
-                R.string.provisioning_byod_data_usage_settings,
-                "BYOD_DataUsageSettingsVisibleTest",
-                R.string.provisioning_byod_data_usage_settings_instruction,
+        mWiFiDataUsageSettingsVisibleTest = new DialogTestListItem(this,
+                R.string.provisioning_byod_wifi_data_usage_settings,
+                "BYOD_WiFiDataUsageSettingsVisibleTest",
+                R.string.provisioning_byod_wifi_data_usage_settings_instruction,
+                new Intent(Settings.ACTION_SETTINGS));
+
+        mCellularDataUsageSettingsVisibleTest = new DialogTestListItem(this,
+                R.string.provisioning_byod_cellular_data_usage_settings,
+                "BYOD_CellularDataUsageSettingsVisibleTest",
+                R.string.provisioning_byod_cellular_data_usage_settings_instruction,
                 new Intent(Settings.ACTION_SETTINGS));
 
         mPrintSettingsVisibleTest = new DialogTestListItem(this,
@@ -415,7 +422,8 @@ public class ByodFlowTestActivity extends DialogTestListActivity {
         adapter.add(mAppSettingsVisibleTest);
         adapter.add(mLocationSettingsVisibleTest);
         adapter.add(mBatterySettingsVisibleTest);
-        adapter.add(mDataUsageSettingsVisibleTest);
+        adapter.add(mWiFiDataUsageSettingsVisibleTest);
+        adapter.add(mCellularDataUsageSettingsVisibleTest);
         adapter.add(mPrintSettingsVisibleTest);
 
         adapter.add(mCrossProfileIntentFiltersTestFromPersonal);
