@@ -37,8 +37,7 @@ public class RendererProtectedTexturesTest extends RendererBasicTest {
             + " gl_FragColor = texture2D(protectedTexture, vec2(0.76953125, 0.22265625)); \n"
             + "}  \n";
 
-    // TODO: Update this value when the extension is ratified.
-    public static int GL_CONTEXT_FLAG_PROTECTED_CONTENT_BIT = 0x00000016;
+    public static int GL_CONTEXT_FLAG_PROTECTED_CONTENT_BIT = 0x00000010;
     public static int GL_TEXTURE_PROTECTED_EXT = 0x8BFA;
 
     private IntBuffer mTexture;
