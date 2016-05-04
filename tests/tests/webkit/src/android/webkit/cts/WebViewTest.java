@@ -1174,6 +1174,7 @@ public class WebViewTest extends ActivityInstrumentationTestCase2<WebViewCtsActi
             startWebServer(false);
             WebSettings settings = mOnUiThread.getSettings();
             settings.setDatabaseEnabled(true);
+            settings.setJavaScriptEnabled(true);
             WebViewDatabase webViewDatabase = WebViewDatabase.getInstance(getActivity());
             webViewDatabase.clearFormData();
             final String url = mWebServer.getAssetUrl(TestHtmlConstants.LOGIN_FORM_URL);
@@ -1185,9 +1186,9 @@ public class WebViewTest extends ActivityInstrumentationTestCase2<WebViewCtsActi
                 }
             }.run();
 
-            // click submit
-            moveFocusDown();
-            getInstrumentation().sendKeyDownUpSync(KeyEvent.KEYCODE_ENTER);
+            // Click submit (using JS, rather than simulated key presses, to avoid IME
+            // inconsistencies).
+            mOnUiThread.evaluateJavascript("document.getElementsByName('submit')[0].click()", null);
             new PollingCheck(TEST_TIMEOUT) {
                 @Override
                 public boolean check() {
