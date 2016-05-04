@@ -1545,6 +1545,8 @@
             <meta-data android:name="test_required_features" android:value="android.software.device_admin" />
         </activity>
 
+        <activity android:name=".managedprovisioning.DeviceOwnerNegativeTestActivity$TrampolineActivity" />
+
         <activity android:name=".managedprovisioning.DeviceOwnerPositiveTestActivity"
                 android:label="@string/positive_device_owner">
             <intent-filter>
