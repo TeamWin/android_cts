@@ -433,16 +433,6 @@
               <Test name="testReplaceAll" />
             </TestCase>
           </TestSuite>
-          <TestSuite name="lang">
-            <TestSuite name="invoke">
-              <TestCase name="DeserializeMethodTest">
-                <Test name="testCapturingNonSerLambda" />
-                <Test name="testCapturingNonserIntersectionLambda" />
-                <Test name="testCapturingSerLambda" />
-                <Test name="testEmptyClass" />
-              </TestCase>
-            </TestSuite>
-          </TestSuite>
         </TestSuite>
       </TestSuite>
     </TestSuite>
