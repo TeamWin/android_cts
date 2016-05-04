@@ -43,8 +43,8 @@ public class NumberBlockingAppTest extends BaseNumberBlockingClientTest {
 
         try {
             BlockedNumberContract.isBlocked(mContext, mBlockedPhoneNumber);
-            fail("Expected UnsupportedOperationException.");
-        } catch (UnsupportedOperationException expected) {
+            fail("Expected SecurityException.");
+        } catch (SecurityException expected) {
         }
     }
 
