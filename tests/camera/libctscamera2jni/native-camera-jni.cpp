@@ -345,7 +345,7 @@ class ImageReaderListener {
 
 class StaticInfo {
   public:
-    StaticInfo(ACameraMetadata* chars) : mChars(chars) {}
+    explicit StaticInfo(ACameraMetadata* chars) : mChars(chars) {}
 
     bool isColorOutputSupported() {
         return isCapabilitySupported(ACAMERA_REQUEST_AVAILABLE_CAPABILITIES_BACKWARD_COMPATIBLE);
