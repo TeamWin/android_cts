@@ -16,12 +16,17 @@
 
 package android.location.cts;
 
+import android.content.Context;
+import android.content.pm.PackageManager;
+import android.location.GnssClock;
 import android.location.GnssMeasurement;
 import android.location.GnssNavigationMessage;
 import android.location.GnssStatus;
 import android.location.LocationManager;
 import android.os.Build;
 import android.util.Log;
+
+import junit.framework.Assert;
 
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -32,6 +37,16 @@ import java.util.concurrent.TimeUnit;
 public final class TestMeasurementUtil {
 
     private static final String TAG = "TestMeasurementUtil";
+
+    private static final long NSEC_IN_SEC = 1000_000_000L;
+    // Generally carrier phase quality prr's have uncertainties around 0.001-0.05 m/s, vs.
+    // doppler energy quality prr's closer to 0.25-10 m/s.  Threshold is chosen between those
+    // typical ranges.
+    private static final float THRESHOLD_FOR_CARRIER_PRR_UNC_METERS_PER_SEC = 0.15F;
+
+    // For gpsTimeInNs >= 1.14 * 10^18 (year 2016+)
+    private static final long GPS_TIME_YEAR_2016_IN_NSEC = 1_140_000_000L * NSEC_IN_SEC;
+
     // Error message for GnssMeasurements Registration.
     public static final String REGISTRATION_ERROR_MESSAGE = "Registration of GnssMeasurements" +
             " listener has failed, this indicates a platform bug. Please report the issue with" +
@@ -41,9 +56,13 @@ public final class TestMeasurementUtil {
      * Check if test can be run on the current device.
      *
      * @param  testLocationManager TestLocationManager
-     * @return true if Build.VERSION &gt;=  Build.VERSION_CODES.N and location enabled in device.
+     * @return true if Build.VERSION &gt;=  Build.VERSION_CODES.N and Location GPS present on
+     *         device.
      */
-    public static boolean canTestRunOnCurrentDevice(TestLocationManager testLocationManager) {
+    public static boolean canTestRunOnCurrentDevice(TestLocationManager testLocationManager,
+                                                    String testTag,
+                                                    int minHardwareYear,
+                                                    boolean isCtsVerifier) {
        // TODO(sumitk): Enable this check once api 24 for N is avaiable.
        /*
        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.N) {
@@ -54,13 +73,77 @@ public final class TestMeasurementUtil {
         }
         */
 
-        if (!testLocationManager.getLocationManager()
-                .isProviderEnabled(LocationManager.GPS_PROVIDER)) {
-            Log.i(TAG, "GPS disabled or location disabled on the device. Skipping Test.");
+        // If device does not have a GPS, skip the test.
+        PackageManager pm = testLocationManager.getContext().getPackageManager();
+        if (!pm.hasSystemFeature(PackageManager.FEATURE_LOCATION_GPS)) {
+          Log.w(testTag, "GPS feature not present on device, skipping GPS test.");
+          return false;
+        }
+
+        // If device has a GPS, but it's turned off in settings, and this is CTS verifier,
+        // fail the test now, because there's no point in going further.
+        // If this is CTS only,we'll warn instead, and quickly pass the test.
+        // (Cts non-verifier deep-indoors-forgiveness happens later, *if* needed)
+        boolean gpsProviderEnabled = testLocationManager.getLocationManager()
+                .isProviderEnabled(LocationManager.GPS_PROVIDER);
+        SoftAssert.failOrWarning(isCtsVerifier, " GPS location disabled on the device. " +
+                "Enable location in settings to continue test.", gpsProviderEnabled);
+        // If CTS only, allow an early exit pass
+        if (!isCtsVerifier && !gpsProviderEnabled) {
             return false;
         }
 
+        // TODO - add this to the test info page
+        int gnssYearOfHardware = testLocationManager.getLocationManager().getGnssYearOfHardware();
+        Log.i(testTag, "This device is reporting GNSS hardware from year "
+                + (gnssYearOfHardware == 0 ? "2015 or earlier" : gnssYearOfHardware) + ". "
+                + "Devices " + (gnssYearOfHardware >= minHardwareYear ? "like this one " : "")
+                + "from year " + minHardwareYear + " or newer provide GnssMeasurement support." );
+
         return true;
+    }
+
+    /**
+     * Check if pseudorange rate uncertainty in Gnss Measurement is in the expected range.
+     * See field description in {@code gps.h}.
+     *
+     * @param measurement GnssMeasurement
+     * @return true if this measurement has prr uncertainty in a range indicative of carrier phase
+     */
+    public static boolean gnssMeasurementHasCarrierPhasePrr(GnssMeasurement measurement) {
+      return (measurement.getPseudorangeRateUncertaintyMetersPerSecond() <
+              THRESHOLD_FOR_CARRIER_PRR_UNC_METERS_PER_SEC);
+    }
+
+    /**
+     * Assert all mandatory fields in Gnss Clock are in expected range.
+     * See mandatory fields in {@code gps.h}.
+     *
+     * @param clock       GnssClock
+     * @param softAssert  custom SoftAssert
+     * @param timeInNs    event time in ns
+     */
+    public static void assertGnssClockFields(GnssClock clock,
+                                             SoftAssert softAssert,
+                                             long timeInNs) {
+        softAssert.assertTrue("time_ns: clock value",
+                timeInNs,
+                "X >= 0",
+                String.valueOf(timeInNs),
+                timeInNs >= 0L);
+
+        // If full bias is valid and accurate within one sec. verify its sign & magnitude
+        if (clock.hasFullBiasNanos() &&
+                ((!clock.hasBiasUncertaintyNanos()) ||
+                        (clock.getBiasUncertaintyNanos() < NSEC_IN_SEC))) {
+            long gpsTimeInNs = timeInNs - clock.getFullBiasNanos();
+            softAssert.assertTrue("TimeNanos - FullBiasNanos = GpsTimeNanos: clock value",
+                    gpsTimeInNs,
+                    "gpsTimeInNs >= 1.14 * 10^18 (year 2016+)",
+                    String.valueOf(gpsTimeInNs),
+                    gpsTimeInNs >= GPS_TIME_YEAR_2016_IN_NSEC);
+        }
+
     }
 
     /**
@@ -246,7 +329,8 @@ public final class TestMeasurementUtil {
                         timeInNs,
                         "freq == -127 || -7 <= freq <= 6",
                         svidValue,
-                        (freq == -127) || (freq >= -7 && freq <= 6));
+                        // future proof check allowing a change in definition under discussion
+                        (freq == -127) || (freq >= -7 && freq <= 6) || (freq >= 93 && freq <= 106));
                 // Check lower 8 bits, signed
                 byte slot = (byte) svid;
                 softAssert.assertTrue("svid: lower 8 bits, slot. Constellation type " +
@@ -254,7 +338,8 @@ public final class TestMeasurementUtil {
                         timeInNs,
                         "slot == -127 || 1 <= slot <= 24",
                         svidValue,
-                        (slot == -127) || (slot >= 1 && slot <= 24));
+                        // future proof check allowingn a change in definition under discussion
+                        (slot == -127) || (slot >= 1 && slot <= 24) || (slot >= 93 && slot <= 106));
                 softAssert.assertTrue("svid: one of slot or freq is set (not -127). " +
                                 "ConstellationType = CONSTELLATION_GLONASS,",
                         timeInNs,

@@ -46,7 +46,6 @@ import junit.framework.Assert;
 public class GnssMeasurementsConstellationTest extends GnssTestCase {
 
     private static final String TAG = "GnssConsTypeTest";
-    private TestLocationManager mTestLocationManager;
     private static final int EVENTS_COUNT = 5;
     private static final int GPS_EVENTS_COUNT = 3;
     private TestLocationListener mLocationListener;
@@ -75,7 +74,10 @@ public class GnssMeasurementsConstellationTest extends GnssTestCase {
      * Test Gnss multi constellation supported.
      */
     public void testGnssMultiConstellationSupported() throws Exception {
-        if (!TestMeasurementUtil.canTestRunOnCurrentDevice(mTestLocationManager)) {
+        // Checks if GPS hardware feature is present, skips test (pass) if not,
+        // and hard asserts that Location/GPS (Provider) is turned on if is Cts Verifier.
+        if (!TestMeasurementUtil.canTestRunOnCurrentDevice(mTestLocationManager,
+                TAG, MIN_HARDWARE_YEAR_MEASUREMENTS_REQUIRED, isCtsVerifierTest())) {
             return;
         }
 
@@ -88,23 +90,16 @@ public class GnssMeasurementsConstellationTest extends GnssTestCase {
         mTestLocationManager.requestLocationUpdates(mLocationListener);
 
         mMeasurementListener.await();
-        if (!mMeasurementListener.verifyState()) {
+        if (!mMeasurementListener.verifyState(isMeasurementTestStrict())) {
             return;
         }
 
         List<GnssMeasurementsEvent> events = mMeasurementListener.getEvents();
         Log.i(TAG, "Number of GnssMeasurement events received = " + events.size());
 
-        if (events.isEmpty()) {
-           if (isCtsVerifierTest()) {
-              // Test fails in cts verifier mode if no events are recieved.
-              Assert.fail("No GnssMeasurement events received.");
-           } else {
-              // Test skips in cts mode if no events are recieved.
-              Log.i(TAG, "Did not received GPS measurements. Test skipped.");
-              return;
-           }
-        }
+        SoftAssert.failOrWarning(isMeasurementTestStrict(),
+                "Did not receive any GnssMeasurement events.  Retry outdoors?",
+                !events.isEmpty());
 
         SoftAssert softAssert = new SoftAssert(TAG);
         for (GnssMeasurementsEvent event : events) {
