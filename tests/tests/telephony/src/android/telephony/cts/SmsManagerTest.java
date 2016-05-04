@@ -62,6 +62,7 @@ public class SmsManagerTest extends AndroidTestCase {
                     "45005",    // SKT Mobility
                     "45002",    // SKT Mobility
                     "45008",    // KT Mobility
+                    "45028",    // KT Safety Network
                     "45006",    // LGT
                     "311660",   // MetroPCS
                     "310120",   // Sprint
