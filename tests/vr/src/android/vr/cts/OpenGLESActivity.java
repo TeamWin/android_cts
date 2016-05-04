@@ -113,7 +113,7 @@ public class OpenGLESActivity extends Activity {
         int[] values = new int[1];
         EGL14.eglQuerySurface(EGL14.eglGetDisplay(EGL14.EGL_DEFAULT_DISPLAY),
             EGL14.eglGetCurrentSurface(EGL14.EGL_DRAW), attribute, values, 0);
-        checkEglError("eglQueryContext");
+        checkEglError("eglQuerySurface");
         return values[0] == value;
     }
 
@@ -127,9 +127,9 @@ public class OpenGLESActivity extends Activity {
     public boolean waitForFrameDrawn() {
         boolean result = false;
         try {
-            result = mLatch.await(1L, TimeUnit.SECONDS);
+            result = mLatch.await(2L, TimeUnit.SECONDS);
         } catch (InterruptedException e) {
-            // just return false
+            // Ignore the exception and return false below.
         }
         return result;
     }
@@ -221,8 +221,10 @@ public class OpenGLESActivity extends Activity {
         }
 
         public EGLContext createContext(EGL10 egl, EGLDisplay display, EGLConfig config) {
+            boolean highPerf = supportsVrHighPerformance();
             int[] attrib_list = { EGL_CONTEXT_CLIENT_VERSION, mEGLContextClientVersion,
-                EGL_CONTEXT_PRIORITY_LEVEL_IMG,  mPriority, EGL10.EGL_NONE };
+                highPerf ? EGL_CONTEXT_PRIORITY_LEVEL_IMG : EGL10.EGL_NONE,
+                highPerf ? mPriority : EGL10.EGL_NONE, EGL10.EGL_NONE };
 
             EGLContext context = egl.eglCreateContext(display, config, EGL10.EGL_NO_CONTEXT,
                 attrib_list);
@@ -245,9 +247,10 @@ public class OpenGLESActivity extends Activity {
         private int mEGLContextClientVersion = 2;
 
         public EGLContext createContext(EGL10 egl, EGLDisplay display, EGLConfig config) {
+            boolean highPerf = supportsVrHighPerformance();
             int[] attrib_list = { EGL_CONTEXT_CLIENT_VERSION, mEGLContextClientVersion,
-                EGL_PROTECTED_CONTENT_EXT,  EGL14.EGL_TRUE,
-                EGL10.EGL_NONE };
+                highPerf ? EGL_PROTECTED_CONTENT_EXT : EGL10.EGL_NONE,
+                highPerf ? EGL14.EGL_TRUE : EGL10.EGL_NONE, EGL10.EGL_NONE };
 
             EGLContext context = egl.eglCreateContext(display, config, EGL10.EGL_NO_CONTEXT,
                 attrib_list);
@@ -265,13 +268,15 @@ public class OpenGLESActivity extends Activity {
           }
     }
 
-    private static class ProtectedWindowSurfaceFactory implements GLSurfaceView.EGLWindowSurfaceFactory {
+    private class ProtectedWindowSurfaceFactory implements GLSurfaceView.EGLWindowSurfaceFactory {
 
       public EGLSurface createWindowSurface(EGL10 egl, EGLDisplay display,
                                             EGLConfig config, Object nativeWindow) {
         EGLSurface result = null;
         try {
-          int[] attrib_list = { EGL_PROTECTED_CONTENT_EXT,  EGL14.EGL_TRUE, EGL10.EGL_NONE };
+          boolean highPerf = supportsVrHighPerformance();
+          int[] attrib_list = { highPerf ? EGL_PROTECTED_CONTENT_EXT : EGL10.EGL_NONE,
+                  highPerf ? EGL14.EGL_TRUE : EGL10.EGL_NONE, EGL10.EGL_NONE };
           result = egl.eglCreateWindowSurface(display, config, nativeWindow, attrib_list);
           checkEglError("eglCreateWindowSurface");
         } catch (IllegalArgumentException e) {
