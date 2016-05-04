@@ -16,11 +16,14 @@
 
 package com.android.cts.deviceandprofileowner;
 
+import android.content.pm.PackageManager;
 import android.net.ConnectivityManager.NetworkCallback;
 import android.net.ConnectivityManager;
 import android.net.Network;
 import android.net.NetworkCapabilities;
+import android.net.NetworkInfo;
 import android.net.NetworkRequest;
+import android.os.Bundle;
 import android.system.ErrnoException;
 import android.system.Os;
 import android.system.StructPollfd;
@@ -58,12 +61,34 @@ public class AlwaysOnVpnTest extends BaseDeviceAdminTest {
     private static final int NETWORK_SETTLE_GRACE_MS = 100;
     private static final int SOCKET_TIMEOUT_MS = 5000;
 
+    /** @see com.android.cts.vpnfirewall.ReflectorVpnService */
+    public static final String RESTRICTION_ADDRESSES = "vpn.addresses";
+    public static final String RESTRICTION_ROUTES = "vpn.routes";
+    public static final String RESTRICTION_ALLOWED = "vpn.allowed";
+    public static final String RESTRICTION_DISALLOWED = "vpn.disallowed";
+
     private static final int ICMP_ECHO_REQUEST = 0x08;
     private static final int ICMP_ECHO_REPLY = 0x00;
+
+    // IP address reserved for documentation by rfc5737
+    private static final String TEST_ADDRESS = "192.0.2.4";
+
+    private ConnectivityManager mConnectivityManager;
+    private String mPackageName;
+
+    @Override
+    public void setUp() throws Exception {
+        super.setUp();
+        mPackageName = mContext.getPackageName();
+        mConnectivityManager =
+                (ConnectivityManager) mContext.getSystemService(mContext.CONNECTIVITY_SERVICE);
+    }
 
     @Override
     public void tearDown() throws Exception {
         mDevicePolicyManager.setAlwaysOnVpnPackage(ADMIN_RECEIVER_COMPONENT, null, false);
+        mDevicePolicyManager.setApplicationRestrictions(ADMIN_RECEIVER_COMPONENT, VPN_PACKAGE,
+                /* restrictions */ null);
         super.tearDown();
     }
 
@@ -72,10 +97,30 @@ public class AlwaysOnVpnTest extends BaseDeviceAdminTest {
         assertNull(mDevicePolicyManager.getAlwaysOnVpnPackage(ADMIN_RECEIVER_COMPONENT));
 
         final CountDownLatch vpnLatch = new CountDownLatch(1);
+        setAndWaitForVpn(VPN_PACKAGE);
+        checkPing(TEST_ADDRESS);
+    }
 
-        final ConnectivityManager cm =
-                (ConnectivityManager) mContext.getSystemService(mContext.CONNECTIVITY_SERVICE);
+    public void testAllowedApps() throws Exception {
+        final Bundle restrictions = new Bundle();
+        restrictions.putStringArray(RESTRICTION_ALLOWED, new String[] {mPackageName});
+        mDevicePolicyManager.setApplicationRestrictions(ADMIN_RECEIVER_COMPONENT, VPN_PACKAGE,
+                restrictions);
+        setAndWaitForVpn(VPN_PACKAGE);
+        assertTrue(isNetworkVpn());
+    }
 
+    public void testDisallowedApps() throws Exception {
+        final Bundle restrictions = new Bundle();
+        restrictions.putStringArray(RESTRICTION_DISALLOWED, new String[] {mPackageName});
+        mDevicePolicyManager.setApplicationRestrictions(ADMIN_RECEIVER_COMPONENT, VPN_PACKAGE,
+                restrictions);
+        setAndWaitForVpn(VPN_PACKAGE);
+        assertFalse(isNetworkVpn());
+    }
+
+    private void setAndWaitForVpn(String packageName) {
+        final CountDownLatch vpnLatch = new CountDownLatch(1);
         final NetworkRequest request = new NetworkRequest.Builder()
                 .addTransportType(NetworkCapabilities.TRANSPORT_VPN)
                 .removeCapability(NetworkCapabilities.NET_CAPABILITY_NOT_VPN)
@@ -88,25 +133,31 @@ public class AlwaysOnVpnTest extends BaseDeviceAdminTest {
                 vpnLatch.countDown();
             }
         };
-
-        cm.registerNetworkCallback(request, callback);
+        mConnectivityManager.registerNetworkCallback(request, callback);
         try {
             mDevicePolicyManager.setAlwaysOnVpnPackage(ADMIN_RECEIVER_COMPONENT, VPN_PACKAGE, true);
             assertEquals(VPN_PACKAGE, mDevicePolicyManager.getAlwaysOnVpnPackage(
                     ADMIN_RECEIVER_COMPONENT));
-            assertTrue("Took too long waiting to establish a VPN-backed connection",
-                    vpnLatch.await(NETWORK_TIMEOUT_MS, TimeUnit.MILLISECONDS));
-
+            if (!vpnLatch.await(NETWORK_TIMEOUT_MS, TimeUnit.MILLISECONDS)) {
+                fail("Took too long waiting to establish a VPN-backed connection");
+            }
             // Give the VPN a moment to start transmitting data.
             Thread.sleep(NETWORK_SETTLE_GRACE_MS);
-        } catch (InterruptedException e) {
-            fail("Interrupted while waiting to send ping: " + e);
+        } catch (InterruptedException | PackageManager.NameNotFoundException e) {
+            fail("Failed to send ping: " + e);
         } finally {
-            cm.unregisterNetworkCallback(callback);
+            mConnectivityManager.unregisterNetworkCallback(callback);
         }
 
-        // IP address reserved for documentation by rfc5737
-        checkPing("192.0.2.4");
+        // Do we have a network?
+        NetworkInfo vpnInfo = mConnectivityManager.getNetworkInfo(ConnectivityManager.TYPE_VPN);
+        assertTrue(vpnInfo != null && vpnInfo.isConnected());
+    }
+
+    private boolean isNetworkVpn() {
+        Network network = mConnectivityManager.getActiveNetwork();
+        NetworkCapabilities capabilities = mConnectivityManager.getNetworkCapabilities(network);
+        return capabilities != null && capabilities.hasTransport(NetworkCapabilities.TRANSPORT_VPN);
     }
 
     private static void checkPing(String host) throws ErrnoException, IOException {
