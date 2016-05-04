@@ -574,4 +574,77 @@ public class AudioTrackLatencyTest extends CtsAndroidTestCase {
         // -------- tear down --------------
         track.release();
     }
+
+    static class TrackBufferSizeChecker {
+        private final static String TEST_NAME = "testTrackBufferSize";
+        private final static int TEST_SR = 48000;
+        private final static int TEST_CONF = AudioFormat.CHANNEL_OUT_STEREO;
+        private final static int TEST_FORMAT = AudioFormat.ENCODING_PCM_16BIT;
+        private final static int TEST_MODE = AudioTrack.MODE_STREAM;
+        private final static int TEST_STREAM_TYPE = AudioManager.STREAM_MUSIC;
+        private final static int FRAME_SIZE = 2 * 2; // stereo 16-bit PCM
+
+        public static int getFrameSize() {
+            return FRAME_SIZE;
+        }
+
+        public static int getMinBufferSize() {
+            return AudioTrack.getMinBufferSize(TEST_SR, TEST_CONF, TEST_FORMAT);
+        }
+
+        public static AudioTrack createAudioTrack(int bufferSize) {
+            return new AudioTrack(TEST_STREAM_TYPE, TEST_SR, TEST_CONF, TEST_FORMAT,
+                bufferSize, TEST_MODE);
+        }
+
+        public static void checkBadSize(int bufferSize) {
+            AudioTrack track = null;
+            try {
+                track = TrackBufferSizeChecker.createAudioTrack(bufferSize);
+                assertTrue(TEST_NAME + ": should not have survived size " + bufferSize, false);
+            } catch(IllegalArgumentException e) {
+                // expected
+            } finally {
+                if (track != null) {
+                    track.release();
+                }
+            }
+        }
+
+        public static void checkSmallSize(int bufferSize) {
+            AudioTrack track = null;
+            try {
+                track = TrackBufferSizeChecker.createAudioTrack(bufferSize);
+                assertEquals(TEST_NAME + ": should still be initialized with small size " + bufferSize,
+                            AudioTrack.STATE_INITIALIZED, track.getState());
+            } finally {
+                if (track != null) {
+                    track.release();
+                }
+            }
+        }
+    }
+
+    /**
+     * Test various values for bufferSizeInBytes.
+     *
+     * According to the latest documentation, any positive bufferSize that is a multiple
+     * of the frameSize is legal. Small sizes will be rounded up to the minimum size.
+     *
+     * Negative sizes, zero, or any non-multiple of the frameSize is illegal.
+     *
+     * @throws Exception
+     */
+    public void testTrackBufferSize() throws Exception {
+        TrackBufferSizeChecker.checkBadSize(0);
+        TrackBufferSizeChecker.checkBadSize(17);
+        TrackBufferSizeChecker.checkBadSize(18);
+        TrackBufferSizeChecker.checkBadSize(-9);
+        int frameSize = TrackBufferSizeChecker.getFrameSize();
+        TrackBufferSizeChecker.checkBadSize(-4 * frameSize);
+        for (int i = 1; i < 8; i++) {
+            TrackBufferSizeChecker.checkSmallSize(i * frameSize);
+            TrackBufferSizeChecker.checkBadSize(3 + (i * frameSize));
+        }
+    }
 }
