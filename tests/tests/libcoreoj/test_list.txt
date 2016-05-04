@@ -63,10 +63,6 @@ org.openjdk.tests.java.util.stream.CountTest#testOps
 org.openjdk.tests.java.util.stream.CountTest#testOps
 org.openjdk.tests.java.util.stream.CountTest#testOps
 org.openjdk.tests.java.util.stream.CountTest#testOps
-org.openjdk.tests.java.lang.invoke.DeserializeMethodTest#testCapturingNonSerLambda
-org.openjdk.tests.java.lang.invoke.DeserializeMethodTest#testCapturingNonserIntersectionLambda
-org.openjdk.tests.java.lang.invoke.DeserializeMethodTest#testCapturingSerLambda
-org.openjdk.tests.java.lang.invoke.DeserializeMethodTest#testEmptyClass
 org.openjdk.tests.java.util.stream.DistinctOpTest#testDistinctDistinct
 org.openjdk.tests.java.util.stream.DistinctOpTest#testDistinctSorted
 org.openjdk.tests.java.util.stream.DistinctOpTest#testOp
