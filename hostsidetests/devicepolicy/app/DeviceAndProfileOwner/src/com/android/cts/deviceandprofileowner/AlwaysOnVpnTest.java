@@ -63,7 +63,7 @@ public class AlwaysOnVpnTest extends BaseDeviceAdminTest {
 
     @Override
     public void tearDown() throws Exception {
-        mDevicePolicyManager.setAlwaysOnVpnPackage(ADMIN_RECEIVER_COMPONENT, null);
+        mDevicePolicyManager.setAlwaysOnVpnPackage(ADMIN_RECEIVER_COMPONENT, null, false);
         super.tearDown();
     }
 
@@ -91,7 +91,7 @@ public class AlwaysOnVpnTest extends BaseDeviceAdminTest {
 
         cm.registerNetworkCallback(request, callback);
         try {
-            mDevicePolicyManager.setAlwaysOnVpnPackage(ADMIN_RECEIVER_COMPONENT, VPN_PACKAGE);
+            mDevicePolicyManager.setAlwaysOnVpnPackage(ADMIN_RECEIVER_COMPONENT, VPN_PACKAGE, true);
             assertEquals(VPN_PACKAGE, mDevicePolicyManager.getAlwaysOnVpnPackage(
                     ADMIN_RECEIVER_COMPONENT));
             assertTrue("Took too long waiting to establish a VPN-backed connection",
