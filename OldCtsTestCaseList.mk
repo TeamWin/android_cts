@@ -29,9 +29,11 @@ cts_security_apps_list := \
     CtsUsePermissionAppCompat \
     CtsPermissionDeclareApp \
     CtsPermissionDeclareAppCompat \
+    CtsPrivilegedUpdateTests \
     CtsReadExternalStorageApp \
     CtsSharedUidInstall \
     CtsSharedUidInstallDiffCert \
+    CtsShimPrivUpgradePrebuilt \
     CtsSimpleAppInstall \
     CtsSimpleAppInstallDiffCert \
     CtsSplitApp \
