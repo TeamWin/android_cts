@@ -34,9 +34,6 @@ public abstract class BaseDeviceAdminHostSideTest extends BaseDevicePolicyTest {
 
     protected int mUserId;
 
-    private boolean mClearDeviceOwnerInTearDown;
-    private boolean mDeactivateInTearDown;
-
     /** returns "com.android.cts.deviceadmin" */
     protected final String getDeviceAdminJavaPackage() {
         return "com.android.cts.deviceadmin";
@@ -79,9 +76,6 @@ public abstract class BaseDeviceAdminHostSideTest extends BaseDevicePolicyTest {
 
         mUserId = mPrimaryUserId;
 
-        mClearDeviceOwnerInTearDown = false;
-        mDeactivateInTearDown = false;
-
         if (mHasFeature) {
             installAppAsUser(getDeviceAdminApkFileName(), mUserId);
             setDeviceAdmin(getAdminReceiverComponent(), mUserId);
@@ -91,12 +85,8 @@ public abstract class BaseDeviceAdminHostSideTest extends BaseDevicePolicyTest {
     @Override
     protected void tearDown() throws Exception {
         if (mHasFeature) {
-            if (mClearDeviceOwnerInTearDown) {
-                runTests(getDeviceAdminApkPackage(), "ClearDeviceOwnerTest");
-            }
-            if (mDeactivateInTearDown) {
-                runTests(getDeviceAdminApkPackage(), "ClearDeviceAdminTest");
-            }
+            assertTrue("Failed to remove admin",
+                    removeAdmin(getAdminReceiverComponent(), mUserId));
             getDevice().uninstallPackage(getDeviceAdminApkPackage());
         }
 
@@ -122,8 +112,6 @@ public abstract class BaseDeviceAdminHostSideTest extends BaseDevicePolicyTest {
             return;
         }
 
-        mDeactivateInTearDown = true;
-
         assertTrue("Some of device side tests failed",
                 runTests(getDeviceAdminApkPackage(), "DeviceAdminTest"));
     }
@@ -135,38 +123,30 @@ public abstract class BaseDeviceAdminHostSideTest extends BaseDevicePolicyTest {
 
     private void makeDoAndClearPassword() throws Exception {
         // Clear the password.  We do it by promoting the DA to DO.
-        setDeviceOwner(getAdminReceiverComponent(), mUserId);
-
-        clearPasswordForDeviceOwner();
-
-        assertTrue("Failed to clear device owner",
-                runTests(getDeviceAdminApkPackage(), "ClearDeviceOwnerTest"));
-
-        // Clearing DO removes the DA too, so we need to set it again.
-        setDeviceAdmin(getAdminReceiverComponent(), mUserId);
-    }
-
-    /**
-     * Run the tests in DeviceAdminPasswordTest.java (as device admin).
-     */
-    private void testRunDeviceAdminPasswordTest(String method) throws Exception {
-        if (!mHasFeature) {
-            return;
-        }
-
-        mDeactivateInTearDown = true;
-
-        // If there's a password, clear it.
-        makeDoAndClearPassword();
+        setDeviceOwner(getAdminReceiverComponent(), mUserId, /*expectFailure*/ false);
         try {
-            assertTrue(runTests(getDeviceAdminApkPackage(), "DeviceAdminPasswordTest", method));
+            clearPasswordForDeviceOwner();
         } finally {
-            makeDoAndClearPassword();
+            assertTrue("Failed to clear device owner",
+                    removeAdmin(getAdminReceiverComponent(), mUserId));
+            // Clearing DO removes the DA too, so we need to set it again.
+            setDeviceAdmin(getAdminReceiverComponent(), mUserId);
         }
     }
 
     public void testResetPassword_nycRestrictions() throws Exception {
-        testRunDeviceAdminPasswordTest("testResetPassword_nycRestrictions");
+        if (!mHasFeature) {
+            return;
+        }
+
+        // If there's a password, clear it.
+        makeDoAndClearPassword();
+        try {
+            assertTrue(runTests(getDeviceAdminApkPackage(), "DeviceAdminPasswordTest",
+                            "testResetPassword_nycRestrictions"));
+        } finally {
+            makeDoAndClearPassword();
+        }
     }
 
     /**
@@ -177,9 +157,7 @@ public abstract class BaseDeviceAdminHostSideTest extends BaseDevicePolicyTest {
             return;
         }
 
-        mClearDeviceOwnerInTearDown = true;
-
-        setDeviceOwner(getAdminReceiverComponent(), mUserId);
+        setDeviceOwner(getAdminReceiverComponent(), mUserId, /*expectFailure*/ false);
 
         clearPasswordForDeviceOwner();
 

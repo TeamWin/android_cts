@@ -25,7 +25,9 @@
     <uses-permission android:name="android.permission.SET_WALLPAPER" />
     <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
 
-    <application>
+    <application
+        android:testOnly="true">
+
         <uses-library android:name="android.test.runner" />
         <receiver
             android:name="com.android.cts.deviceandprofileowner.BaseDeviceAdminTest$BasicAdminReceiver"
