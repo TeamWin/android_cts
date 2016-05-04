@@ -39,6 +39,8 @@
               <category android:name="android.intent.category.DEFAULT" />
           </intent-filter>
       </activity>
+      <receiver android:name="VoiceInteractionTestReceiver"
+              android:exported="true" />
     </application>
 
     <instrumentation android:name="android.support.test.runner.AndroidJUnitRunner"
