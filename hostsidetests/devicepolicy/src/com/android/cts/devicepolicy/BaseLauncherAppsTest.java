@@ -51,8 +51,6 @@ public class BaseLauncherAppsTest extends BaseDevicePolicyTest {
         String command = "am startservice --user " + mPrimaryUserId
                 + " -a " + LAUNCHER_TESTS_SUPPORT_PKG + ".REGISTER_CALLBACK "
                 + LAUNCHER_TESTS_SUPPORT_PKG + "/.LauncherCallbackTestsService";
-        CLog.logAndDisplay(LogLevel.INFO, "Output for command " + command + ": "
-              + getDevice().executeShellCommand(command));
-
+        CLog.d("Output for command " + command + ": " + getDevice().executeShellCommand(command));
     }
 }

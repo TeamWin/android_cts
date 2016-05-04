@@ -22,9 +22,6 @@ package com.android.cts.devicepolicy;
  */
 public class MixedProfileOwnerTest extends DeviceAndProfileOwnerTest {
 
-    protected static final String CLEAR_PROFILE_OWNER_TEST_CLASS =
-            DEVICE_ADMIN_PKG + ".ClearProfileOwnerTest";
-
     @Override
     protected void setUp() throws Exception {
         super.setUp();
@@ -41,8 +38,7 @@ public class MixedProfileOwnerTest extends DeviceAndProfileOwnerTest {
     protected void tearDown() throws Exception {
         if (mHasFeature) {
             assertTrue("Failed to remove profile owner.",
-                    runDeviceTestsAsUser(DEVICE_ADMIN_PKG, CLEAR_PROFILE_OWNER_TEST_CLASS,
-                            mUserId));
+                    removeAdmin(DEVICE_ADMIN_PKG + "/" + ADMIN_RECEIVER_TEST_CLASS, mUserId));
         }
         super.tearDown();
     }
