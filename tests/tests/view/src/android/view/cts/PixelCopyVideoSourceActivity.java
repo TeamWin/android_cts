@@ -20,11 +20,13 @@ import android.app.Activity;
 import android.cts.util.MediaUtils;
 import android.net.Uri;
 import android.os.Bundle;
+import android.util.Log;
 import android.widget.VideoView;
 
 import java.util.concurrent.CountDownLatch;
 
 public class PixelCopyVideoSourceActivity extends Activity {
+    private static final String TAG = "PixelCopyVideoSourceActivity";
     private VideoView mVideoView;
     private CountDownLatch mVideoPlayingFence = new CountDownLatch(1);
     private boolean mCanPlayVideo;
@@ -37,6 +39,12 @@ public class PixelCopyVideoSourceActivity extends Activity {
             mp.setLooping(true);
             mVideoView.start();
             mVideoPlayingFence.countDown();
+        });
+        mVideoView.setOnErrorListener((mp, what, extra) -> {
+            Log.e(TAG, "MediaPlayer encountered error " + what + ", " + extra);
+            mCanPlayVideo = false;
+            mVideoPlayingFence.countDown();
+            return true;
         });
         mCanPlayVideo = MediaUtils.hasCodecsForResource(this, R.raw.colorgrid_video);
         if (mCanPlayVideo) {
