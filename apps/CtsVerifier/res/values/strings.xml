@@ -1850,12 +1850,28 @@ You should be prompted to select credentials; choose the ones you just installed
         Then use the Back button to return to this test and mark accordingly.
     </string>
 
-    <string name="provisioning_byod_data_usage_settings">Profile-aware data usage settings</string>
-    <string name="provisioning_byod_data_usage_settings_instruction">
+    <string name="provisioning_byod_wifi_data_usage_settings">Profile-aware data usage settings (Wi-Fi)</string>
+    <string name="provisioning_byod_wifi_data_usage_settings_instruction">
         Please press the Go button to open the Settings page.\n
         \n
-        Navigate to Data usage page and confirm that it includes a Work profile section,
-        and that tapping it shows just work profile data usage.\n
+        Navigate to \"Data usage\" page and then into the \"Wi-Fi data usage\" category.\n
+        Confirm that \"All work apps\" section is present and that the list includes badged apps.\n
+        Confirm that tapping on \"All work apps\" section shows a list of only work profile apps data usage.\n
+        \n
+        Then use the Back button to return to this test and mark accordingly.
+    </string>
+
+    <string name="provisioning_byod_cellular_data_usage_settings">Profile-aware data usage settings (Cellular)</string>
+    <string name="provisioning_byod_cellular_data_usage_settings_instruction">
+        Please disable Wi-Fi connection on your device.\n
+        Please make sure you have added a SIM card with data plan to your phone, have enabled data over cellular and in case of dual SIM devices, have selected the right SIM for data connection.\n
+        Please carry out operations that will use mobile data using both badged and unbadged apps (e.g. visit a page in a browser).\n
+        \n
+        Please press the Go button to open the Settings page.\n
+        \n
+        Navigate to \"Data usage\" page and then into the \"Cellular data usage\" category.\n
+        Confirm that \"All work apps\" section is present and that the list includes badged apps.\n
+        Confirm that tapping on \"All work apps\" section shows a list of only work profile apps data usage.\n
         \n
         Then use the Back button to return to this test and mark accordingly.
     </string>
