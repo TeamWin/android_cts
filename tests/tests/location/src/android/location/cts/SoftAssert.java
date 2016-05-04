@@ -42,11 +42,11 @@ public class SoftAssert {
     /**
      * Check if condition is true
      *
-     * @param message test message
-     * @param eventTimeInNs the time at which the condition occurred
+     * @param message        test message
+     * @param eventTimeInNs  the time at which the condition occurred
      * @param expectedResult expected value
-     * @param actualResult actual value
-     * @param condition condition for test
+     * @param actualResult   actual value
+     * @param condition      condition for test
      */
     public void assertTrue(String message, long eventTimeInNs, String expectedResult,
                            String actualResult, boolean condition) {
@@ -66,11 +66,11 @@ public class SoftAssert {
      * Check if a condition is true.
      * NOTE: A failure is downgraded to a warning.
      *
-     * @param message the message associated with the condition
-     * @param eventTimeInNs the time at which the condition occurred
+     * @param message        the message associated with the condition
+     * @param eventTimeInNs  the time at which the condition occurred
      * @param expectedResult the expected result of the condition
-     * @param actualResult the actual result of the condition
-     * @param condition the condition status
+     * @param actualResult   the actual result of the condition
+     * @param condition      the condition status
      */
     public void assertTrueAsWarning(
             String message,
@@ -99,16 +99,31 @@ public class SoftAssert {
     /**
      * Check if condition is true
      *
-     * @param message    test message
-     * @param condition  condition for test
+     * @param message   test message
+     * @param condition condition for test
      */
     public void assertTrue(String message, boolean condition) {
+        assertOrWarnTrue(true, message, condition);
+    }
+
+    /**
+     * Check if condition is true
+     *
+     * @param strict      if true, add this to the failure list, else, log a warning message
+     * @param message     message to describe the test - output on pass or fail
+     * @param condition   condition for test
+     */
+    public void assertOrWarnTrue(boolean strict, String message, boolean condition) {
         if (condition) {
             Log.i(mTag, "(Test: PASS) " + message);
         } else {
             String errorMessage = "(Test: FAIL) " + message;
             Log.i(mTag, errorMessage);
-            mErrorList.add(errorMessage);
+            if (strict) {
+                mErrorList.add(errorMessage);
+            } else {
+                failAsWarning(mTag, errorMessage);
+            }
         }
     }
 
@@ -128,6 +143,20 @@ public class SoftAssert {
             }
             Log.e(mTag, "Failing tests are: \n" + message);
             Assert.fail("Failing tests are: \n" + message);
+        }
+    }
+
+    /**
+     * A hard or soft failure, depending on the setting.
+     * TODO - make this cleaner - e.g. refactor this out completely: get rid of static methods,
+     * and make a class (say TestVerification) the only entry point for verifications,
+     * so strict vs not can be abstracted away test implementations.
+     */
+    public static void failOrWarning(boolean testIsStrict, String message, boolean condition) {
+        if (testIsStrict) {
+            Assert.assertTrue(message, condition);
+        } else {
+            failAsWarning("", message);
         }
     }
 

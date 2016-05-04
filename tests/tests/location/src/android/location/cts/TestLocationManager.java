@@ -35,8 +35,10 @@ public class TestLocationManager {
 
     private static final String TAG = "TestLocationManager";
     private LocationManager mLocationManager;
+    private Context mContext;
 
-    public TestLocationManager(Context mContext) {
+    public TestLocationManager(Context context) {
+        mContext = context;
         mLocationManager =
                 (LocationManager) mContext.getSystemService(Context.LOCATION_SERVICE);
     }
@@ -197,5 +199,13 @@ public class TestLocationManager {
      */
     public LocationManager getLocationManager() {
         return mLocationManager;
+    }
+    /**
+     * Get Context
+     *
+     * @return context
+     */
+    public Context getContext() {
+        return mContext;
     }
 }

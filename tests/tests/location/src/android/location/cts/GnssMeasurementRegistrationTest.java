@@ -22,7 +22,6 @@ import android.location.GpsStatus;
 import android.util.Log;
 
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Test for {@link GnssMeasurement}s without location registration.
@@ -51,10 +50,8 @@ import java.util.concurrent.TimeUnit;
 public class GnssMeasurementRegistrationTest extends GnssTestCase {
 
     private static final String TAG = "GnssMeasRegTest";
-    private TestLocationManager mTestLocationManager;
     private static final int EVENTS_COUNT = 5;
     private static final int GPS_EVENTS_COUNT = 1;
-    private static final int HARDWARE_YEAR = 2016;
     private TestLocationListener mLocationListener;
     private TestGnssMeasurementListener mMeasurementListener;
     private TestGpsStatusListener mGpsStatusListener;
@@ -85,7 +82,10 @@ public class GnssMeasurementRegistrationTest extends GnssTestCase {
      * Test GPS measurements registration.
      */
     public void testGnssMeasurementRegistration() throws Exception {
-        if (!TestMeasurementUtil.canTestRunOnCurrentDevice(mTestLocationManager)) {
+        // Checks if GPS hardware feature is present, skips test (pass) if not,
+        // and hard asserts that Location/GPS (Provider) is turned on if is Cts Verifier.
+        if (!TestMeasurementUtil.canTestRunOnCurrentDevice(mTestLocationManager,
+                TAG, MIN_HARDWARE_YEAR_MEASUREMENTS_REQUIRED, isCtsVerifierTest())) {
             return;
         }
 
@@ -94,7 +94,9 @@ public class GnssMeasurementRegistrationTest extends GnssTestCase {
         mTestLocationManager.registerGnssMeasurementCallback(mMeasurementListener);
 
         mMeasurementListener.await();
-        if (!mMeasurementListener.verifyState()) {
+        if (!mMeasurementListener.verifyState(isMeasurementTestStrict())) {
+            // If test is strict verifyState will assert conditions are good for further testing.
+            // Else this returns false and, we arrive here, and then return from here (pass.)
             return;
         }
 
@@ -107,41 +109,25 @@ public class GnssMeasurementRegistrationTest extends GnssTestCase {
            return;
         }
 
-        int gnssYearOfHardware = mTestLocationManager.getLocationManager().getGnssYearOfHardware();
+        SoftAssert.failAsWarning(
+                TAG,
+                "GPS measurements were not received without registering for location updates."
+                + "Trying again with Location request.");
 
-        if (gnssYearOfHardware >= HARDWARE_YEAR && isCtsVerifierTest()) {
-            Log.i(TAG, "For GnssYearOfHardware = " + gnssYearOfHardware
-                    + ", number of GnssMeasurement events received = " + events.size());
-            assertTrue(
-                    "Did not recieve any GnssMeasurement events: expected > 0, received = "
-                            + events.size(), events.size() > 0);
-        } else {
-            // Test if device is deep indoor.
-            Log.i(TAG, "Did not receive any GPS measurements. Test if device is deep indoor.");
+        // Register for location updates.
+        mLocationListener = new TestLocationListener(EVENTS_COUNT);
+        mTestLocationManager.requestLocationUpdates(mLocationListener);
 
-            // Register for location updates.
-            mLocationListener = new TestLocationListener(EVENTS_COUNT);
-            mTestLocationManager.requestLocationUpdates(mLocationListener);
+        // Wait for location updates
+        mLocationListener.await();
+        Log.i(TAG, "Location received = " + mLocationListener.isLocationReceived());
 
-            // Wait for location updates
-            mLocationListener.await();
-            Log.i(TAG, "Location received = " + mLocationListener.isLocationReceived());
+        events = mMeasurementListener.getEvents();
+        Log.i(TAG, "Number of GnssMeasurement events received = " + events.size());
 
-            // Register for Gps Status updates
-            mGpsStatusListener = new TestGpsStatusListener(EVENTS_COUNT, mTestLocationManager);
-            mTestLocationManager.addGpsStatusListener(mGpsStatusListener);
-
-            // wait for Gps Status updates
-            mGpsStatusListener.await();
-            if (!mGpsStatusListener.isGpsStatusReceived()) {
-                // Skip the Test. No Satellites are visible. Device may be Indoor
-                Log.i(TAG, "No Satellites are visible. Device may be Indoor. Skipping Test.");
-                return;
-            }
-
-            SoftAssert.failAsWarning(
-                    TAG,
-                    "GPS measurements were not received without registering for location updates.");
-        }
+        // If no measurements found, fail if strict (Verifier + 2016+)
+        SoftAssert.failOrWarning(isMeasurementTestStrict(),
+                "Did not receive any GnssMeasurement events.  Retry outdoors?",
+                !events.isEmpty());
     }
 }
