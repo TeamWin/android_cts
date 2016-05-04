@@ -29,12 +29,12 @@ import java.util.List;
  * 1. Register for location updates.
  * 2. Register a listener for {@link GnssMeasurementsEvent}s.
  * 3. Wait for {@link #LOCATION_TO_COLLECT_COUNT} locations.
+ *          3.1 Confirm locations have been found.
  * 4. Check {@link GnssMeasurementsEvent} status: if the status is not
  *    {@link GnssMeasurementsEvent#STATUS_READY}, the test will be skipped because one of the
  *    following reasons:
- *          4.1 the device does not support the feature,
- *          4.2 GPS is disabled in the device,
- *          4.3 Location is disabled in the device.
+ *          4.1 the device does not support the GPS feature,
+ *          4.2 GPS Location is disabled in the device and this is CTS (non-verifier)
  *  5. Verify {@link GnssMeasurement}s (all mandatory fields), the test will fail if any of the
  *     mandatory fields is not populated or in the expected range.
  */
@@ -43,7 +43,6 @@ public class GnssMeasurementValuesTest extends GnssTestCase {
     private static final String TAG = "GnssMeasValuesTest";
     private static final int LOCATION_TO_COLLECT_COUNT = 5;
 
-    private TestLocationManager mTestLocationManager;
     private TestGnssMeasurementListener mMeasurementListener;
     private TestLocationListener mLocationListener;
 
@@ -72,7 +71,10 @@ public class GnssMeasurementValuesTest extends GnssTestCase {
      * This tests uses actual data retrieved from GPS HAL.
      */
     public void testListenForGnssMeasurements() throws Exception {
-        if (!TestMeasurementUtil.canTestRunOnCurrentDevice(mTestLocationManager)) {
+        // Checks if GPS hardware feature is present, skips test (pass) if not,
+        // and hard asserts that Location/GPS (Provider) is turned on if is Cts Verifier.
+       if (!TestMeasurementUtil.canTestRunOnCurrentDevice(mTestLocationManager,
+                TAG, MIN_HARDWARE_YEAR_MEASUREMENTS_REQUIRED, isCtsVerifierTest())) {
             return;
         }
 
@@ -83,42 +85,50 @@ public class GnssMeasurementValuesTest extends GnssTestCase {
         mTestLocationManager.registerGnssMeasurementCallback(mMeasurementListener);
 
         boolean success = mLocationListener.await();
-        if (!success) {
-            Log.i(TAG, "Time elapsed without getting enough location fixes. Possibly, the test is"
-                    + " ran deep indoor. Skipping Test.");
-            return;
-        }
+        SoftAssert.failOrWarning(isMeasurementTestStrict(),
+                "Time elapsed without getting enough location fixes."
+                        + " Possibly, the test has been run deep indoors."
+                        + " Consider retrying test outdoors.",
+                success);
 
         Log.i(TAG, "Location status received = " + mLocationListener.isLocationReceived());
-        if (!mMeasurementListener.verifyState()) {
-            return;
+
+        if (!mMeasurementListener.verifyState(isMeasurementTestStrict())) {
+            // If test is strict and veriifyState reutrns false, an assert exception happens and
+            // test fails.   If test is not strict, we arrive here, and:
+            return; // exit (with pass)
         }
 
         List<GnssMeasurementsEvent> events = mMeasurementListener.getEvents();
         int eventCount = events.size();
         Log.i(TAG, "Number of Gps Event received = " + eventCount);
-        assertTrue(
+        SoftAssert.failOrWarning(isMeasurementTestStrict(),
                 "GnssMeasurementEvent count: expected >= 0, received = " + eventCount,
                 eventCount > 0);
 
         SoftAssert softAssert = new SoftAssert(TAG);
+
+        boolean carrierPhaseQualityPrrFound = false;
         // we received events, so perform a quick sanity check on mandatory fields
         for (GnssMeasurementsEvent event : events) {
             // Verify Gps Event mandatory fields are in required ranges
             assertNotNull("GnssMeasurementEvent cannot be null.", event);
+
             // TODO(sumitk): To validate the timestamp if we receive GPS clock.
             long timeInNs = event.getClock().getTimeNanos();
-            softAssert.assertTrue("time_ns: clock value",
-                    timeInNs,
-                    "X >= 0",
-                    String.valueOf(timeInNs),
-                    timeInNs >= 0L);
+            TestMeasurementUtil.assertGnssClockFields(event.getClock(), softAssert, timeInNs);
 
             for (GnssMeasurement measurement : event.getMeasurements()) {
                 TestMeasurementUtil.assertAllGnssMeasurementMandatoryFields(measurement,
                         softAssert, timeInNs);
+                carrierPhaseQualityPrrFound |=
+                        TestMeasurementUtil.gnssMeasurementHasCarrierPhasePrr(measurement);
             }
         }
+        softAssert.assertOrWarnTrue(isMeasurementTestStrict(),
+                "GNSS Measurements PRRs with Carrier Phase "
+                        + "level uncertainties.  If failed, retry near window or outdoors?",
+                carrierPhaseQualityPrrFound);
         softAssert.assertAll();
     }
 }

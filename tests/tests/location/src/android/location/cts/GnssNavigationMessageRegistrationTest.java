@@ -49,7 +49,6 @@ import java.util.List;
 public class GnssNavigationMessageRegistrationTest extends GnssTestCase {
 
     private static final String TAG = "GpsNavMsgRegTest";
-    private TestLocationManager mTestLocationManager;
     private static final int EVENTS_COUNT = 5;
     private TestGnssNavigationMessageListener mTestGnssNavigationMessageListener;
     private TestLocationListener mLocationListener;
@@ -83,7 +82,10 @@ public class GnssNavigationMessageRegistrationTest extends GnssTestCase {
      * It only performs sanity checks for the Navigation messages received.
      */
     public void testGnssNavigationMessageRegistration() throws Exception {
-        if (!TestMeasurementUtil.canTestRunOnCurrentDevice(mTestLocationManager)) {
+        // Checks if GPS hardware feature is present, skips test (pass) if not,
+        // and hard asserts that Location/GPS (Provider) is turned on if is Cts Verifier.
+        if (!TestMeasurementUtil.canTestRunOnCurrentDevice(mTestLocationManager,
+                TAG, MIN_HARDWARE_YEAR_MEASUREMENTS_REQUIRED, isCtsVerifierTest())) {
             return;
         }
 

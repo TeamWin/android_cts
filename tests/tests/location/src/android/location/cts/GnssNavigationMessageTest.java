@@ -29,8 +29,8 @@ import java.util.List;
  * 1. Register for {@link GnssNavigationMessage}s.
  * 2. Wait for {@link #EVENTS_COUNT} events to arrive.
  * 3. Check {@link GnssNavigationMessage} status: if the status is not
- *    {@link GnssNavigationMessage.Callback#STATUS_READY}, the test will be skipped because one of the
- *    following reasons:
+ *    {@link GnssNavigationMessage.Callback#STATUS_READY}, the test will be skipped because one of
+ *    the following reasons:
  *          3.1 the device does not support the feature,
  *          3.2 GPS is disabled in the device,
  *          3.3 Location is disabled in the device.
@@ -40,7 +40,6 @@ import java.util.List;
 public class GnssNavigationMessageTest extends GnssTestCase {
 
     private static final String TAG = "GpsNavMsgTest";
-    private TestLocationManager mTestLocationManager;
     private static final int EVENTS_COUNT = 5;
     private TestGnssNavigationMessageListener mTestGnssNavigationMessageListener;
 
@@ -67,14 +66,18 @@ public class GnssNavigationMessageTest extends GnssTestCase {
      * This tests uses actual data retrieved from GPS HAL.
      */
     public void testGnssNavigationMessageMandatoryFieldRanges() throws Exception {
-        if (!TestMeasurementUtil.canTestRunOnCurrentDevice(mTestLocationManager)) {
+        // Checks if GPS hardware feature is present, skips test (pass) if not,
+        // and hard asserts that Location/GPS (Provider) is turned on if is Cts Verifier.
+        if (!TestMeasurementUtil.canTestRunOnCurrentDevice(mTestLocationManager,
+                TAG, MIN_HARDWARE_YEAR_MEASUREMENTS_REQUIRED, isCtsVerifierTest())) {
             return;
         }
 
         // Register Gps Navigation Message Listener.
         mTestGnssNavigationMessageListener =
                 new TestGnssNavigationMessageListener(TAG, EVENTS_COUNT);
-        mTestLocationManager.registerGnssNavigationMessageCallback(mTestGnssNavigationMessageListener);
+        mTestLocationManager
+                .registerGnssNavigationMessageCallback(mTestGnssNavigationMessageListener);
 
         mTestGnssNavigationMessageListener.await();
         if (!mTestGnssNavigationMessageListener.verifyState()) {
