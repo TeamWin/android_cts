@@ -2076,6 +2076,9 @@ You should be prompted to select credentials; choose the ones you just installed
     <string name="tv_parental_control_test_verify_receive_broadcast1">
     TV input service must have received ACTION_PARENTAL_CONTROLS_ENABLED_CHANGED broadcast.
     </string>
+    <string name="tv_parental_control_test_check_parental_controls_switch">
+    Is there an option to turn off parental controls on this device?
+    </string>
     <string name="tv_parental_control_test_block_tv_ma">
     Select the \"Launch TV app\" button and block the \"Fake\" rating for \"CtsVerifier\" rating
     system in the parental control settings. If the rating system is disabled by default, enable it.
@@ -2089,6 +2092,8 @@ You should be prompted to select credentials; choose the ones you just installed
     Try to unblock the screen by entering PIN; verify that it\'s unblocked.
     </string>
 
+    <string name="tv_parental_control_turn_off_disabled">No</string>
+    <string name="tv_parental_control_turn_off_enabled">Yes</string>
     <string name="tv_launch_tv_app">Launch TV app</string>
     <string name="tv_launch_epg">Launch EPG</string>
     <string name="tv_channel_not_found">
