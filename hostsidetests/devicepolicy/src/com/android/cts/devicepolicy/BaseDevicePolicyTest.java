@@ -108,6 +108,7 @@ public class BaseDevicePolicyTest extends DeviceTestCase implements IBuildReceiv
             mFixedUsers.add(USER_SYSTEM);
         }
         switchUser(mPrimaryUserId);
+        removeOwners();
         removeTestUsers();
     }
 
@@ -116,6 +117,7 @@ public class BaseDevicePolicyTest extends DeviceTestCase implements IBuildReceiv
         // reset the package verifier setting to its original value
         getDevice().executeShellCommand("settings put global package_verifier_enable "
                 + mPackageVerifier);
+        removeOwners();
         removeTestUsers();
         super.tearDown();
     }
@@ -127,10 +129,10 @@ public class BaseDevicePolicyTest extends DeviceTestCase implements IBuildReceiv
 
     protected void installAppAsUser(String appFileName, boolean grantPermissions, int userId)
             throws FileNotFoundException, DeviceNotAvailableException {
-        CLog.logAndDisplay(LogLevel.INFO, "Installing app " + appFileName + " for user " + userId);
+        CLog.d("Installing app " + appFileName + " for user " + userId);
         String result = getDevice().installPackageForUser(
                 MigrationHelper.getTestFile(mCtsBuild, appFileName), true, grantPermissions,
-                userId);
+                userId, "-t");
         assertNull("Failed to install " + appFileName + " for user " + userId + ": " + result,
                 result);
     }
@@ -143,9 +145,9 @@ public class BaseDevicePolicyTest extends DeviceTestCase implements IBuildReceiv
     protected void switchUser(int userId) throws Exception {
         // TODO Move this logic to ITestDevice
         String command = "am switch-user " + userId;
-        CLog.logAndDisplay(LogLevel.INFO, "Starting command " + command);
+        CLog.d("Starting command " + command);
         String commandOutput = getDevice().executeShellCommand(command);
-        CLog.logAndDisplay(LogLevel.INFO, "Output for command " + command + ": " + commandOutput);
+        CLog.d("Output for command " + command + ": " + commandOutput);
     }
 
     protected int getMaxNumberOfUsersSupported() throws DeviceNotAvailableException {
@@ -180,14 +182,18 @@ public class BaseDevicePolicyTest extends DeviceTestCase implements IBuildReceiv
 
     protected void stopUser(int userId) throws Exception  {
         String stopUserCommand = "am stop-user -w -f " + userId;
-        CLog.logAndDisplay(LogLevel.INFO, "starting command \"" + stopUserCommand + "\" and waiting.");
-        CLog.logAndDisplay(LogLevel.INFO, "Output for command " + stopUserCommand + ": "
+        CLog.d("starting command \"" + stopUserCommand + "\" and waiting.");
+        CLog.d("Output for command " + stopUserCommand + ": "
                 + getDevice().executeShellCommand(stopUserCommand));
     }
 
     protected void removeUser(int userId) throws Exception  {
         if (listUsers().contains(userId) && userId != USER_SYSTEM) {
-            stopUser(userId);
+            // Don't log output, as tests sometimes set no debug user restriction, which
+            // causes this to fail, we should still continue and remove the user.
+            String stopUserCommand = "am stop-user -w -f " + userId;
+            CLog.d("stopping and removing user " + userId);
+            getDevice().executeShellCommand(stopUserCommand);
             assertTrue("Couldn't remove user", getDevice().removeUser(userId));
         }
     }
@@ -276,10 +282,9 @@ public class BaseDevicePolicyTest extends DeviceTestCase implements IBuildReceiv
         for (Map.Entry<TestIdentifier, TestResult> testEntry :
                 runResult.getTestResults().entrySet()) {
             TestResult testResult = testEntry.getValue();
-            CLog.logAndDisplay(LogLevel.INFO,
-                    "Test " + testEntry.getKey() + ": " + testResult.getStatus());
+            CLog.d("Test " + testEntry.getKey() + ": " + testResult.getStatus());
             if (testResult.getStatus() != TestStatus.PASSED) {
-                CLog.logAndDisplay(LogLevel.WARN, testResult.getStackTrace());
+                CLog.d(testResult.getStackTrace());
             }
         }
     }
@@ -304,14 +309,17 @@ public class BaseDevicePolicyTest extends DeviceTestCase implements IBuildReceiv
         }
         boolean result = mAvailableFeatures.contains(requiredFeature);
         if (!result) {
-            CLog.logAndDisplay(LogLevel.INFO, "Device doesn't have required feature "
+            CLog.d("Device doesn't have required feature "
             + requiredFeature + ". Test won't run.");
         }
         return result;
     }
 
     protected int createUser() throws Exception {
-        return createUser(0);
+        int userId = createUser(0);
+        // TODO remove this and audit tests so they start users as necessary
+        startUser(userId);
+        return userId;
     }
 
     protected int createUser(int flags) throws Exception {
@@ -320,9 +328,9 @@ public class BaseDevicePolicyTest extends DeviceTestCase implements IBuildReceiv
         // TODO Use ITestDevice.createUser() when guest and ephemeral is available
         String command ="pm create-user " + (guest ? "--guest " : "")
                 + (ephemeral ? "--ephemeral " : "") + "TestUser_" + System.currentTimeMillis();
-        CLog.logAndDisplay(LogLevel.INFO, "Starting command " + command);
+        CLog.d("Starting command " + command);
         String commandOutput = getDevice().executeShellCommand(command);
-        CLog.logAndDisplay(LogLevel.INFO, "Output for command " + command + ": " + commandOutput);
+        CLog.d("Output for command " + command + ": " + commandOutput);
 
         // Extract the id of the new user.
         String[] tokens = commandOutput.split("\\s+");
@@ -334,9 +342,9 @@ public class BaseDevicePolicyTest extends DeviceTestCase implements IBuildReceiv
     protected int createManagedProfile(int parentUserId) throws DeviceNotAvailableException {
         String command = "pm create-user --profileOf " + parentUserId + " --managed "
                 + "TestProfile_" + System.currentTimeMillis();
-        CLog.logAndDisplay(LogLevel.INFO, "Starting command " + command);
+        CLog.d("Starting command " + command);
         String commandOutput = getDevice().executeShellCommand(command);
-        CLog.logAndDisplay(LogLevel.INFO, "Output for command " + command + ": " + commandOutput);
+        CLog.d("Output for command " + command + ": " + commandOutput);
 
         // Extract the id of the new user.
         String[] tokens = commandOutput.split("\\s+");
@@ -361,7 +369,7 @@ public class BaseDevicePolicyTest extends DeviceTestCase implements IBuildReceiv
                 String[] split = token.split("serialNo=");
                 assertTrue(split.length == 2);
                 int serialNumber = Integer.parseInt(split[1]);
-                CLog.logAndDisplay(LogLevel.INFO, "Serial number of user " + userId + ": "
+                CLog.d("Serial number of user " + userId + ": "
                         + serialNumber);
                 return serialNumber;
             }
@@ -370,17 +378,24 @@ public class BaseDevicePolicyTest extends DeviceTestCase implements IBuildReceiv
         return -1;
     }
 
-    protected boolean setProfileOwner(String componentName, int userId)
+    protected boolean setProfileOwner(String componentName, int userId, boolean expectFailure)
             throws DeviceNotAvailableException {
         String command = "dpm set-profile-owner --user " + userId + " '" + componentName + "'";
         String commandOutput = getDevice().executeShellCommand(command);
-        CLog.logAndDisplay(LogLevel.INFO, "Output for command " + command + ": " + commandOutput);
-        return commandOutput.startsWith("Success:");
+        boolean success = commandOutput.startsWith("Success:");
+        // If we succeeded always log, if we are expecting failure don't log failures
+        // as call stacks for passing tests confuse the logs.
+        if (success || !expectFailure) {
+            CLog.d("Output for command " + command + ": " + commandOutput);
+        } else {
+            CLog.d("Command Failed " + command);
+        }
+        return success;
     }
 
     protected void setProfileOwnerOrFail(String componentName, int userId)
             throws Exception {
-        if (!setProfileOwner(componentName, userId)) {
+        if (!setProfileOwner(componentName, userId, /*expectFailure*/ false)) {
             removeUser(userId);
             fail("Failed to set profile owner");
         }
@@ -396,7 +411,7 @@ public class BaseDevicePolicyTest extends DeviceTestCase implements IBuildReceiv
     protected void setDeviceAdmin(String componentName, int userId)
             throws DeviceNotAvailableException {
         String commandOutput = setDeviceAdminInner(componentName, userId);
-        CLog.logAndDisplay(LogLevel.INFO, "Output for command " + commandOutput
+        CLog.d("Output for command " + commandOutput
                 + ": " + commandOutput);
         assertTrue(commandOutput + " expected to start with \"Success:\"",
                 commandOutput.startsWith("Success:"));
@@ -410,19 +425,26 @@ public class BaseDevicePolicyTest extends DeviceTestCase implements IBuildReceiv
         }
     }
 
-    protected boolean setDeviceOwner(String componentName, int userId)
+    protected boolean setDeviceOwner(String componentName, int userId, boolean expectFailure)
             throws DeviceNotAvailableException {
         String command = "dpm set-device-owner --user " + userId + " '" + componentName + "'";
         String commandOutput = getDevice().executeShellCommand(command);
-        CLog.logAndDisplay(LogLevel.INFO, "Output for command " + command + ": " + commandOutput);
-        return commandOutput.startsWith("Success:");
+        boolean success = commandOutput.startsWith("Success:");
+        // If we succeeded always log, if we are expecting failure don't log failures
+        // as call stacks for passing tests confuse the logs.
+        if (success || !expectFailure) {
+            CLog.d("Output for command " + command + ": " + commandOutput);
+        } else {
+            CLog.d("Command Failed " + command);
+        }
+        return success;
     }
 
     protected String getSettings(String namespace, String name, int userId)
             throws DeviceNotAvailableException {
         String command = "settings --user " + userId + " get " + namespace + " " + name;
         String commandOutput = getDevice().executeShellCommand(command);
-        CLog.logAndDisplay(LogLevel.INFO, "Output for command " + command + ": " + commandOutput);
+        CLog.d("Output for command " + command + ": " + commandOutput);
         return commandOutput.replace("\n", "").replace("\r", "");
     }
 
@@ -431,6 +453,50 @@ public class BaseDevicePolicyTest extends DeviceTestCase implements IBuildReceiv
         String command = "settings --user " + userId + " put " + namespace + " " + name
                 + " " + value;
         String commandOutput = getDevice().executeShellCommand(command);
-        CLog.logAndDisplay(LogLevel.INFO, "Output for command " + command + ": " + commandOutput);
+        CLog.d("Output for command " + command + ": " + commandOutput);
+    }
+
+    protected boolean removeAdmin(String componentName, int userId)
+            throws DeviceNotAvailableException {
+        String command = "dpm remove-active-admin --user " + userId + " '" + componentName + "'";
+        String commandOutput = getDevice().executeShellCommand(command);
+        CLog.d("Output for command " + command + ": " + commandOutput);
+        return commandOutput.startsWith("Success:");
+    }
+
+    // Tries to remove and profile or device owners it finds.
+    protected void removeOwners() throws DeviceNotAvailableException {
+        String command = "dumpsys device_policy";
+        String commandOutput = getDevice().executeShellCommand(command);
+        String[] lines = commandOutput.split("\\r?\\n");
+        for (int i = 0; i < lines.length; ++i) {
+            String line = lines[i].trim();
+            if (line.contains("Profile Owner")) {
+                // Line is "Profile owner (User <id>):
+                String[] tokens = line.split("\\(|\\)| ");
+                int userId = Integer.parseInt(tokens[4]);
+                i++;
+                line = lines[i].trim();
+                // Line is admin=ComponentInfo{<component>}
+                tokens = line.split("\\{|\\}");
+                String componentName = tokens[1];
+                CLog.w("Cleaning up profile owner " + userId + " " + componentName);
+                removeAdmin(componentName, userId);
+            } else if (line.contains("Device Owner:")) {
+                i++;
+                line = lines[i].trim();
+                // Line is admin=ComponentInfo{<component>}
+                String[] tokens = line.split("\\{|\\}");
+                String componentName = tokens[1];
+                // Skip to user id line.
+                i += 3;
+                line = lines[i].trim();
+                // Line is User ID: <N>
+                tokens = line.split(":");
+                int userId = Integer.parseInt(tokens[1].trim());
+                CLog.w("Cleaning up device owner " + userId + " " + componentName);
+                removeAdmin(componentName, userId);
+            }
+        }
     }
 }

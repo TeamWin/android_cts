@@ -29,7 +29,9 @@
     <uses-permission android:name="android.permission.READ_CALL_LOG"/>
     <uses-permission android:name="android.permission.WRITE_CALL_LOG"/>
 
-    <application>
+    <application
+        android:testOnly="true">
+
         <uses-library android:name="android.test.runner" />
         <receiver
             android:name="com.android.cts.managedprofile.BaseManagedProfileTest$BasicAdminReceiver"
