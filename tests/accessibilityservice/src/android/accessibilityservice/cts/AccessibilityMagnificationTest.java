@@ -74,8 +74,8 @@ public class AccessibilityMagnificationTest extends InstrumentationTestCase {
         final Resources res = getInstrumentation().getTargetContext().getResources();
         final DisplayMetrics metrics = res.getDisplayMetrics();
         final float scale = 2.0f;
-        final float x = metrics.widthPixels / 2.0f;
-        final float y = metrics.heightPixels / 2.0f;
+        final float x = metrics.widthPixels / 4.0f;
+        final float y = metrics.heightPixels / 4.0f;
         final AtomicBoolean setScale = new AtomicBoolean();
         final AtomicBoolean setCenter = new AtomicBoolean();
         final AtomicBoolean result = new AtomicBoolean();
@@ -89,8 +89,8 @@ public class AccessibilityMagnificationTest extends InstrumentationTestCase {
         assertEquals("Failed to apply scale", scale, controller.getScale());
 
         assertTrue("Failed to set center", setCenter.get());
-        assertEquals("Failed to apply center X", x, controller.getCenterX());
-        assertEquals("Failed to apply center Y", y, controller.getCenterY());
+        assertEquals("Failed to apply center X", x, controller.getCenterX(), 5.0f);
+        assertEquals("Failed to apply center Y", y, controller.getCenterY(), 5.0f);
 
         mService.runOnServiceSync(() -> result.set(controller.reset(false)));
 
