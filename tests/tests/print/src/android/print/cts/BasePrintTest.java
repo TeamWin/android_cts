@@ -160,6 +160,8 @@ public abstract class BasePrintTest extends InstrumentationTestCase {
 
     @Override
     public void setUp() throws Exception {
+        Log.d(LOG_TAG, "setUp()");
+
         super.setUp();
         if (!supportsPrinting()) {
             return;
@@ -168,7 +170,9 @@ public abstract class BasePrintTest extends InstrumentationTestCase {
         mUiDevice = UiDevice.getInstance(getInstrumentation());
 
         // Make sure we start with a clean slate.
+        Log.d(LOG_TAG, "clearPrintSpoolerData()");
         clearPrintSpoolerData();
+        Log.d(LOG_TAG, "disableImes()");
         disableImes();
 
         // Workaround for dexmaker bug: https://code.google.com/p/dexmaker/issues/detail?id=2
@@ -177,6 +181,7 @@ public abstract class BasePrintTest extends InstrumentationTestCase {
                 .getTargetContext().getCacheDir().getPath());
 
         // Set to US locale.
+        Log.d(LOG_TAG, "set locale");
         Resources resources = getInstrumentation().getTargetContext().getResources();
         Configuration oldConfiguration = resources.getConfiguration();
         if (!oldConfiguration.getLocales().get(0).equals(Locale.US)) {
@@ -188,6 +193,7 @@ public abstract class BasePrintTest extends InstrumentationTestCase {
         }
 
         // Initialize the latches.
+        Log.d(LOG_TAG, "init counters");
         mCancelOperationCounter = new CallCounter();
         mLayoutCallCounter = new CallCounter();
         mFinishCallCounter = new CallCounter();
@@ -198,23 +204,30 @@ public abstract class BasePrintTest extends InstrumentationTestCase {
         mDestroySessionCallCounter = new CallCounter();
 
         // Create the activity for the right locale.
+        Log.d(LOG_TAG, "createActivity()");
         createActivity();
+        Log.d(LOG_TAG, "setUp() done");
     }
 
     @Override
     public void tearDown() throws Exception {
+        Log.d(LOG_TAG, "tearDown()");
+
         if (!supportsPrinting()) {
             return;
         }
 
         // Done with the activity.
+        Log.d(LOG_TAG, "finish activity");
         if (!getActivity().isFinishing()) {
             getActivity().finish();
         }
 
+        Log.d(LOG_TAG, "enableImes()");
         enableImes();
 
         // Restore the locale if needed.
+        Log.d(LOG_TAG, "restore locale");
         if (mOldLocale != null) {
             Resources resources = getInstrumentation().getTargetContext().getResources();
             DisplayMetrics displayMetrics = resources.getDisplayMetrics();
@@ -225,9 +238,11 @@ public abstract class BasePrintTest extends InstrumentationTestCase {
         }
 
         // Make sure the spooler is cleaned, this also un-approves all services
+        Log.d(LOG_TAG, "clearPrintSpoolerData()");
         clearPrintSpoolerData();
 
         super.tearDown();
+        Log.d(LOG_TAG, "tearDown() done");
     }
 
     protected void print(final PrintDocumentAdapter adapter, final PrintAttributes attributes) {
@@ -767,16 +782,24 @@ public abstract class BasePrintTest extends InstrumentationTestCase {
     protected void makeDefaultPrinter(PrintDocumentAdapter adapter, String printerName)
             throws Exception {
         // Perform a full print operation on the printer
+        Log.d(LOG_TAG, "print");
         print(adapter);
+        Log.d(LOG_TAG, "waitForWriteAdapterCallback");
         waitForWriteAdapterCallback(1);
+        Log.d(LOG_TAG, "selectPrinter");
         selectPrinter(printerName);
+        Log.d(LOG_TAG, "clickPrintButton");
         clickPrintButton();
+        Log.d(LOG_TAG, "answerPrintServicesWarning");
         answerPrintServicesWarning(true);
+        Log.d(LOG_TAG, "waitForPrinterDiscoverySessionDestroyCallbackCalled");
         waitForPrinterDiscoverySessionDestroyCallbackCalled(1);
 
         // Switch to new activity, which should now use the default printer
+        Log.d(LOG_TAG, "getActivity().finish()");
         getActivity().finish();
 
+        Log.d(LOG_TAG, "createActivity");
         createActivity();
     }
 
