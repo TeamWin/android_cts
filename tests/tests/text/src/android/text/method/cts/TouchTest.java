@@ -25,6 +25,7 @@ import android.text.SpannableString;
 import android.text.TextPaint;
 import android.text.method.Touch;
 import android.util.DisplayMetrics;
+import android.util.TypedValue;
 import android.view.MotionEvent;
 import android.widget.TextView;
 
@@ -53,6 +54,8 @@ public class TouchTest extends ActivityInstrumentationTestCase2<CtsActivity> {
 
     public void testScrollTo() throws Throwable {
         final TextView tv = new TextViewNoIme(mActivity);
+        tv.setTextSize(TypedValue.COMPLEX_UNIT_SP, 10);
+
         runTestOnUiThread(new Runnable() {
             public void run() {
                 mActivity.setContentView(tv);
@@ -105,6 +108,7 @@ public class TouchTest extends ActivityInstrumentationTestCase2<CtsActivity> {
 
     public void testOnTouchEvent() throws Throwable {
         final TextView tv = new TextViewNoIme(mActivity);
+        tv.setTextSize(TypedValue.COMPLEX_UNIT_SP, 10);
 
         // Create a string that is wider than the screen.
         DisplayMetrics metrics = mActivity.getResources().getDisplayMetrics();
