@@ -1143,8 +1143,10 @@ public class EncodeDecodeTest extends AndroidTestCase {
 
         boolean frameFailed = false;
         boolean semiPlanar = isSemiPlanarYUV(colorFormat);
-        int width = format.getInteger(MediaFormat.KEY_WIDTH);
-        int height = format.getInteger(MediaFormat.KEY_HEIGHT);
+        int width = format.getInteger(MediaFormat.KEY_STRIDE,
+                format.getInteger(MediaFormat.KEY_WIDTH));
+        int height = format.getInteger(MediaFormat.KEY_SLICE_HEIGHT,
+                format.getInteger(MediaFormat.KEY_HEIGHT));
         int halfWidth = width / 2;
         int cropLeft = format.getInteger("crop-left");
         int cropRight = format.getInteger("crop-right");
