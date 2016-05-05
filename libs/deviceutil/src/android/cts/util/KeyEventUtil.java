@@ -184,7 +184,7 @@ public class KeyEventUtil {
                 metaState, deviceId, scancode, flags, source);
 
         InputMethodManager imm = targetView.getContext().getSystemService(InputMethodManager.class);
-        imm.dispatchKeyEventFromInputMethod(targetView, newEvent);
+        imm.dispatchKeyEventFromInputMethod(null, newEvent);
         mInstrumentation.waitForIdleSync();
     }
 
