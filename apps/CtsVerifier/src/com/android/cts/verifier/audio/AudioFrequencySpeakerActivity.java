@@ -54,7 +54,7 @@ import android.widget.ProgressBar;
 /**
  * Tests Audio Device roundtrip latency by using a loopback plug.
  */
-public class AudioFrequencySpeakerActivity extends PassFailButtons.Activity implements Runnable,
+public class AudioFrequencySpeakerActivity extends AudioFrequencyActivity implements Runnable,
     AudioRecord.OnRecordPositionUpdateListener {
     private static final String TAG = "AudioFrequencySpeakerActivity";
 
@@ -110,13 +110,13 @@ public class AudioFrequencySpeakerActivity extends PassFailButtons.Activity impl
     AudioBandSpecs[] bandSpecsArray = new AudioBandSpecs[mBands];
     AudioBandSpecs[] baseBandSpecsArray = new AudioBandSpecs[mBands];
 
-    int mMaxLevel;
     private class OnBtnClickListener implements OnClickListener {
         @Override
         public void onClick(View v) {
             switch (v.getId()) {
             case R.id.audio_frequency_speaker_mic_ready_btn:
                 testUSB();
+                setMaxLevel();
                 break;
             case R.id.audio_frequency_speaker_test_btn:
                 startAudioTest();
@@ -227,17 +227,6 @@ public class AudioFrequencySpeakerActivity extends PassFailButtons.Activity impl
         }
     }
 
-    private void setMaxLevel() {
-        AudioManager am = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
-        mMaxLevel = am.getStreamMaxVolume(AudioManager.STREAM_MUSIC);
-        am.setStreamVolume(AudioManager.STREAM_MUSIC, (int)(mMaxLevel), 0);
-    }
-
-    private void setMinLevel() {
-        AudioManager am = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
-        am.setStreamVolume(AudioManager.STREAM_MUSIC, 0, 0);
-    }
-
     /**
      *  Start the loopback audio test
      */
@@ -272,7 +261,6 @@ public class AudioFrequencySpeakerActivity extends PassFailButtons.Activity impl
             mFreqAverageBase.reset();
             play();
 
-            setMaxLevel();
             sendMessage("Testing Left Capture");
             mCurrentTest = 1;
             mFreqAverageLeft.reset();

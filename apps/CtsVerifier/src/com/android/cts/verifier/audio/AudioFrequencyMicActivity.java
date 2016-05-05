@@ -54,7 +54,7 @@ import android.widget.ProgressBar;
 /**
  * Tests Audio built in Microphone response using external speakers and USB reference microphone.
  */
-public class AudioFrequencyMicActivity extends PassFailButtons.Activity implements Runnable,
+public class AudioFrequencyMicActivity extends AudioFrequencyActivity implements Runnable,
     AudioRecord.OnRecordPositionUpdateListener {
     private static final String TAG = "AudioFrequencyMicActivity";
 
@@ -123,13 +123,14 @@ public class AudioFrequencyMicActivity extends PassFailButtons.Activity implemen
     AudioBandSpecs[] bandSpecsArray = new AudioBandSpecs[mBands];
     AudioBandSpecs[] baseBandSpecsArray = new AudioBandSpecs[mBands];
 
-    int mMaxLevel;
     private class OnBtnClickListener implements OnClickListener {
         @Override
         public void onClick(View v) {
             switch (v.getId()) {
             case R.id.audio_frequency_mic_speakers_ready_btn:
                 testSpeakersReady();
+                setMaxLevel();
+                testMaxLevel();
                 break;
             case R.id.audio_frequency_mic_test1_btn:
                 startTest1();
@@ -277,17 +278,6 @@ public class AudioFrequencyMicActivity extends PassFailButtons.Activity implemen
         }
     }
 
-    private void setMaxLevel() {
-        AudioManager am = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
-        mMaxLevel = am.getStreamMaxVolume(AudioManager.STREAM_MUSIC);
-        am.setStreamVolume(AudioManager.STREAM_MUSIC, (int)(mMaxLevel), 0);
-    }
-
-    private void setMinLevel() {
-        AudioManager am = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
-        am.setStreamVolume(AudioManager.STREAM_MUSIC, 0, 0);
-    }
-
     /**
      *  Start the loopback audio test
      */
@@ -322,7 +312,6 @@ public class AudioFrequencyMicActivity extends PassFailButtons.Activity implemen
             mFreqAverageBase.reset();
             play();
 
-            setMaxLevel();
             sendMessage("Testing Built in Microphone");
             mCurrentTest = 1;
             mFreqAverageBuiltIn.reset();

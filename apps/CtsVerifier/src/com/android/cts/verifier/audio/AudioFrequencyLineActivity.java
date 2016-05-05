@@ -23,6 +23,7 @@ import com.android.compatibility.common.util.ReportLog;
 import com.android.compatibility.common.util.ResultType;
 import com.android.compatibility.common.util.ResultUnit;
 
+import android.app.AlertDialog;
 import android.content.Context;
 import android.media.AudioDeviceCallback;
 import android.media.AudioDeviceInfo;
@@ -47,7 +48,7 @@ import android.widget.ProgressBar;
 /**
  * Tests Audio Device roundtrip latency by using a loopback plug.
  */
-public class AudioFrequencyLineActivity extends PassFailButtons.Activity implements Runnable,
+public class AudioFrequencyLineActivity extends AudioFrequencyActivity implements Runnable,
     AudioRecord.OnRecordPositionUpdateListener {
     private static final String TAG = "AudioFrequencyLineActivity";
 
@@ -78,7 +79,7 @@ public class AudioFrequencyLineActivity extends PassFailButtons.Activity impleme
 
     private final int mBlockSizeSamples = 1024;
     private final int mSamplingRate = 48000;
-    private final int mSelectedRecordSource = MediaRecorder.AudioSource.UNPROCESSED;//VOICE_RECOGNITION;// UNPROCESSED;
+    private final int mSelectedRecordSource = MediaRecorder.AudioSource.UNPROCESSED;
     private final int mChannelConfig = AudioFormat.CHANNEL_IN_MONO;
     private final int mAudioFormat = AudioFormat.ENCODING_PCM_16BIT;
     private volatile Thread mRecordThread;
@@ -101,7 +102,6 @@ public class AudioFrequencyLineActivity extends PassFailButtons.Activity impleme
     int mBands = 4;
     AudioBandSpecs[] bandSpecsArray = new AudioBandSpecs[mBands];
 
-    int mMaxLevel;
     private class OnBtnClickListener implements OnClickListener {
         @Override
         public void onClick(View v) {
@@ -110,6 +110,8 @@ public class AudioFrequencyLineActivity extends PassFailButtons.Activity impleme
                     Log.i(TAG, "audio loopback plug ready");
                     //enable all the other views.
                     enableLayout(true);
+                    setMaxLevel();
+                    testMaxLevel();
                     break;
                 case R.id.audio_frequency_line_test_btn:
                     Log.i(TAG, "audio loopback test");
@@ -218,12 +220,6 @@ public class AudioFrequencyLineActivity extends PassFailButtons.Activity impleme
         }
     }
 
-    private void setMaxLevel() {
-        AudioManager am = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
-        mMaxLevel = am.getStreamMaxVolume(AudioManager.STREAM_MUSIC);
-        am.setStreamVolume(AudioManager.STREAM_MUSIC, (int)(mMaxLevel), 0);
-    }
-
     /**
      *  Start the loopback audio test
      */
@@ -250,7 +246,6 @@ public class AudioFrequencyLineActivity extends PassFailButtons.Activity impleme
             Message msg = Message.obtain();
             msg.what = TEST_STARTED;
             mMessageHandler.sendMessage(msg);
-            setMaxLevel();
 
             sendMessage("Testing Left Capture");
             mCurrentTest = 0;
