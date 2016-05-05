@@ -80,6 +80,8 @@ public class DeviceInfoInstrument extends Instrumentation implements DeviceInfoC
         addResult(BUILD_ABIS_32, TextUtils.join(",", Build.SUPPORTED_32_BIT_ABIS));
         addResult(BUILD_ABIS_64, TextUtils.join(",", Build.SUPPORTED_64_BIT_ABIS));
         addResult(SERIAL_NUMBER, Build.SERIAL);
+        addResult(REFERENCE_BUILD_FINGERPRINT,
+            SystemProperties.get("ro.build.reference.fingerprint", ""));
 
         addResult(VERSION_RELEASE, Build.VERSION.RELEASE);
         addResult(VERSION_SDK, Build.VERSION.SDK);
