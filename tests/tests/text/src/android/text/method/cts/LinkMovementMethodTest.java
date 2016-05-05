@@ -27,6 +27,7 @@ import android.text.Spanned;
 import android.text.method.LinkMovementMethod;
 import android.text.method.MovementMethod;
 import android.text.style.ClickableSpan;
+import android.util.TypedValue;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.View;
@@ -66,6 +67,7 @@ public class LinkMovementMethodTest extends
 
         // Set the content view with a text view which contains 3 lines,
         mView = new TextViewNoIme(getActivity());
+        mView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 10);
         mView.setText(CONTENT, BufferType.SPANNABLE);
         getInstrumentation().runOnMainSync(new Runnable() {
             public void run() {
