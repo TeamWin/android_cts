@@ -498,11 +498,11 @@ public class ListPopupWindowTest extends
         assertTrue(promptView.isShown());
         assertEquals(ListPopupWindow.POSITION_PROMPT_BELOW, mPopupWindow.getPromptPosition());
 
-        final int[] promptViewOnScreenXY = new int[2];
-        promptView.getLocationOnScreen(promptViewOnScreenXY);
-
         final ListView listView = mPopupWindow.getListView();
         ViewTestUtils.runOnMainAndDrawSync(mInstrumentation, listView, null);
+
+        final int[] promptViewOnScreenXY = new int[2];
+        promptView.getLocationOnScreen(promptViewOnScreenXY);
 
         final View lastListChild = listView.getChildAt(listView.getChildCount() - 1);
         final int[] lastChildOnScreenXY = new int[2];
