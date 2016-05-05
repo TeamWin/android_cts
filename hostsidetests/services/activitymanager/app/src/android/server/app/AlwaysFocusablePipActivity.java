@@ -24,8 +24,6 @@ import android.app.ActivityOptions;
 import android.content.Intent;
 import android.graphics.Rect;
 
-import java.lang.reflect.Method;
-
 public class AlwaysFocusablePipActivity extends Activity {
 
     static void launchAlwaysFocusablePipActivity(Activity caller) {
@@ -34,21 +32,7 @@ public class AlwaysFocusablePipActivity extends Activity {
 
         final ActivityOptions options = ActivityOptions.makeBasic();
         options.setLaunchBounds(new Rect(0, 0, 500, 500));
-        try {
-            setLaunchStackId(options);
-        } catch (Exception e) {
-            throw new IllegalStateException(e);
-        }
-
+        options.setLaunchStackId(4 /* ActivityManager.StackId.PINNED_STACK_ID */);
         caller.startActivity(intent, options.toBundle());
-    }
-
-    /** ActivityOptions#setLaunchStackId is a @hidden API so we access it through reflection...*/
-    static void setLaunchStackId(ActivityOptions options) throws Exception {
-        final Method method = options.getClass().getDeclaredMethod(
-                "setLaunchStackId", new Class[] { int.class });
-
-        method.setAccessible(true);
-        method.invoke(options, 4 /* ActivityManager.StackId.PINNED_STACK_ID */);
     }
 }
