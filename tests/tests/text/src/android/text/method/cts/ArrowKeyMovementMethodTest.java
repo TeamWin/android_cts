@@ -27,6 +27,7 @@ import android.text.SpannableString;
 import android.text.method.ArrowKeyMovementMethod;
 import android.text.method.MetaKeyKeyListener;
 import android.text.method.MovementMethod;
+import android.util.TypedValue;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.View;
@@ -983,6 +984,7 @@ public class ArrowKeyMovementMethodTest extends ActivityInstrumentationTestCase2
         SpannableString spannable = new SpannableString("Test Content");
         KeyEvent event = new KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_0);
         TextView view = new TextViewNoIme(getActivity());
+        view.setTextSize(TypedValue.COMPLEX_UNIT_SP, 10);
 
         assertFalse(method.onKeyUp(view, spannable, KeyEvent.KEYCODE_0, event));
         assertFalse(method.onKeyUp(null, null, 0, null));
@@ -1394,6 +1396,7 @@ public class ArrowKeyMovementMethodTest extends ActivityInstrumentationTestCase2
 
     private void initTextViewWithNullLayout(CharSequence text) {
         mTextView = new TextViewNoIme(getActivity());
+        mTextView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 10);
         mTextView.setText(text, BufferType.EDITABLE);
         assertNull(mTextView.getLayout());
         mEditable = (Editable) mTextView.getText();

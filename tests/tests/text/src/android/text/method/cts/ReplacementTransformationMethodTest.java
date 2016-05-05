@@ -19,6 +19,7 @@ package android.text.method.cts;
 
 import android.test.ActivityInstrumentationTestCase2;
 import android.text.method.ReplacementTransformationMethod;
+import android.util.TypedValue;
 import android.widget.EditText;
 
 /**
@@ -42,6 +43,7 @@ public class ReplacementTransformationMethodTest extends
     protected void setUp() throws Exception {
         super.setUp();
         mEditText = new EditTextNoIme(getActivity());
+        mEditText.setTextSize(TypedValue.COMPLEX_UNIT_SP, 10);
     }
 
     public void testGetTransformation() {
