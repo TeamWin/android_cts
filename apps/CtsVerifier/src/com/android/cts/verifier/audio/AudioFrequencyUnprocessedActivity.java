@@ -54,7 +54,7 @@ import android.widget.ProgressBar;
 /**
  * Tests Audio built in Microphone response for Unprocessed audio source feature.
  */
-public class AudioFrequencyUnprocessedActivity extends PassFailButtons.Activity implements Runnable,
+public class AudioFrequencyUnprocessedActivity extends AudioFrequencyActivity implements Runnable,
     AudioRecord.OnRecordPositionUpdateListener {
     private static final String TAG = "AudioFrequencyUnprocessedActivity";
 
@@ -109,12 +109,13 @@ public class AudioFrequencyUnprocessedActivity extends PassFailButtons.Activity 
     AudioBandSpecs[] bandSpecsArray = new AudioBandSpecs[mBands];
     private TextView mTextViewUnprocessedStatus;
 
-    int mMaxLevel;
     private class OnBtnClickListener implements OnClickListener {
         @Override
         public void onClick(View v) {
             switch (v.getId()) {
             case R.id.audio_frequency_unprocessed_test1_btn:
+                setMaxLevel();
+                testMaxLevel();
                 startTest1();
                 break;
             }
@@ -207,17 +208,6 @@ public class AudioFrequencyUnprocessedActivity extends PassFailButtons.Activity 
         }
     }
 
-    private void setMaxLevel() {
-        AudioManager am = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
-        mMaxLevel = am.getStreamMaxVolume(AudioManager.STREAM_MUSIC);
-        am.setStreamVolume(AudioManager.STREAM_MUSIC, (int)(mMaxLevel), 0);
-    }
-
-    private void setMinLevel() {
-        AudioManager am = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
-        am.setStreamVolume(AudioManager.STREAM_MUSIC, 0, 0);
-    }
-
     private boolean supportsUnprocessed() {
         boolean unprocessedSupport = false;
         AudioManager am = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
@@ -258,7 +248,6 @@ public class AudioFrequencyUnprocessedActivity extends PassFailButtons.Activity 
             msg.what = TEST_STARTED;
             mMessageHandler.sendMessage(msg);
 
-            setMaxLevel();
             sendMessage("Testing Built in Microphone");
             mFreqAverageBuiltIn.reset();
             mFreqAverageBuiltIn.setCaptureType(VectorAverage.CAPTURE_TYPE_MAX);
