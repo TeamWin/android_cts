@@ -52,6 +52,7 @@
        android:textStyle="normal"
        android:fontFamily="sans-serif"
        android:visibility="gone"
+       android:background="@null"
        />
 
 </LinearLayout>
