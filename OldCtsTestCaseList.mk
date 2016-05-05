@@ -25,8 +25,9 @@ cts_security_apps_list := \
     CtsNetSecPolicyUsesCleartextTrafficUnspecified \
     CtsNoRestartBase \
     CtsNoRestartFeature \
-    CtsUsePermissionApp \
-    CtsUsePermissionAppCompat \
+    CtsUsePermissionApp22 \
+    CtsUsePermissionApp23 \
+    CtsUsePermissionApp24 \
     CtsPermissionDeclareApp \
     CtsPermissionDeclareAppCompat \
     CtsPrivilegedUpdateTests \
