@@ -30,7 +30,7 @@ def main():
     NAME = os.path.basename(__file__).split(".")[0]
 
     # Each raw image
-    RATIO_THRESHOLD = 0.03
+    RATIO_THRESHOLD = 0.05
 
     with its.device.ItsSession() as cam:
         props = cam.get_camera_properties()
@@ -68,12 +68,17 @@ def main():
         while s_boost <= sens_boost_max:
             s_raw = int(round(s_target * 100.0 / s_boost))
             if s_raw < sens_min or s_raw > sens_max:
-                continue
+                break
             req = its.objects.manual_capture_request(s_raw, e_target)
             req['android.control.postRawSensitivityBoost'] = s_boost
             reqs.append(req)
             settings.append((s_raw, s_boost))
+            if s_boost == sens_boost_max:
+                break
             s_boost *= 2
+            # Always try to test maximum sensitivity boost value
+            if s_boost > sens_boost_max:
+                s_boost = sens_boost_max
 
         caps = cam.do_capture(reqs, out_surfaces)
 
@@ -116,16 +121,20 @@ def main():
 
         rgb_str = ["R", "G", "B"]
         # Test that raw means is about 2x brighter than next step
-        raw_thres_min = 2 * (1 - RATIO_THRESHOLD)
-        raw_thres_max = 2 * (1 + RATIO_THRESHOLD)
         for step in range(1, len(reqs)):
+            (s_prev, s_boost_prev) = settings[step - 1]
+            (s, s_boost) = settings[step]
+            expect_raw_ratio = s_prev / float(s)
+            raw_thres_min = expect_raw_ratio * (1 - RATIO_THRESHOLD)
+            raw_thres_max = expect_raw_ratio * (1 + RATIO_THRESHOLD)
             for rgb in range(3):
                 ratio = raw_rgb_means[step - 1][rgb] / raw_rgb_means[step][rgb]
-                print "Step (%d,%d) %s channel: %f, %f, ratio %f" % (
+                print ("Step (%d,%d) %s channel: %f, %f, ratio %f," +
+                       " threshold_min %f, threshold_max %f") % (
                         step-1, step, rgb_str[rgb],
                         raw_rgb_means[step - 1][rgb],
                         raw_rgb_means[step][rgb],
-                        ratio)
+                        ratio, raw_thres_min, raw_thres_max)
                 assert(raw_thres_min < ratio < raw_thres_max)
 
         # Test that each yuv step is about the same bright as their mean
