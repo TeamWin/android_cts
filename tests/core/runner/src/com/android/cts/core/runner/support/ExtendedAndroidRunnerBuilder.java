@@ -15,10 +15,10 @@
  */
 package com.android.cts.core.runner.support;
 
-import android.support.test.internal.runner.junit4.AndroidAnnotatedBuilder;
+import android.support.test.internal.runner.AndroidLogOnlyBuilder;
 import android.support.test.internal.util.AndroidRunnerParams;
-import org.junit.internal.builders.AnnotatedBuilder;
 import org.junit.runners.model.RunnerBuilder;
+import org.junit.runner.Runner;
 
 /**
  * Extends {@link AndroidRunnerBuilder} in order to provide alternate {@link RunnerBuilder}
@@ -26,18 +26,24 @@ import org.junit.runners.model.RunnerBuilder;
  */
 public class ExtendedAndroidRunnerBuilder extends AndroidRunnerBuilder {
 
-    private final AndroidAnnotatedBuilder mAndroidAnnotatedBuilder;
+   private final ExtendedAndroidLogOnlyBuilder androidLogOnlyBuilder;
 
     /**
      * @param runnerParams {@link AndroidRunnerParams} that stores common runner parameters
      */
     public ExtendedAndroidRunnerBuilder(AndroidRunnerParams runnerParams) {
         super(runnerParams, false /* CTSv1 filtered out Test suite() classes. */);
-        mAndroidAnnotatedBuilder = new ExtendedAndroidAnnotatedBuilder(this, runnerParams);
+        androidLogOnlyBuilder = new ExtendedAndroidLogOnlyBuilder(runnerParams);
     }
 
     @Override
-    protected AnnotatedBuilder annotatedBuilder() {
-        return mAndroidAnnotatedBuilder;
+    public Runner runnerForClass(Class<?> testClass) throws Throwable {
+        // Check if this is a dry-run with -e log true argument passed to the runner.
+        Runner runner = androidLogOnlyBuilder.runnerForClass(testClass);
+        if (runner != null) {
+            return runner;
+        }
+        // Otherwise use the default behaviour
+        return super.runnerForClass(testClass);
     }
 }
