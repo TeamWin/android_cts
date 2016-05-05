@@ -25,6 +25,7 @@ import android.text.SpannableString;
 import android.text.method.MovementMethod;
 import android.text.method.ScrollingMovementMethod;
 import android.util.DisplayMetrics;
+import android.util.TypedValue;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.View;
@@ -61,6 +62,7 @@ public class ScrollingMovementMethodTest extends ActivityInstrumentationTestCase
     protected void setUp() throws Exception {
         super.setUp();
         mTextView = new TextViewNoIme(getActivity());
+        mTextView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 12);
         mTextView.setText(THREE_LINES_TEXT, BufferType.EDITABLE);
         mSpannable = (Spannable) mTextView.getText();
         mScaledTouchSlop = ViewConfiguration.get(getActivity()).getScaledTouchSlop();
@@ -650,6 +652,7 @@ public class ScrollingMovementMethodTest extends ActivityInstrumentationTestCase
         SpannableString spannable = new SpannableString("Test Content");
         KeyEvent event = new KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_0);
         TextView view = new TextViewNoIme(getActivity());
+        view.setTextSize(TypedValue.COMPLEX_UNIT_SP, 12);
 
         assertFalse(method.onKeyUp(view, spannable, KeyEvent.KEYCODE_0, event));
         assertFalse(method.onKeyUp(null, null, 0, null));
