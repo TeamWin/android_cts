@@ -26,7 +26,6 @@ import android.support.test.uiautomator.UiObject2;
 import android.support.test.uiautomator.Until;
 import android.test.InstrumentationTestCase;
 
-import java.lang.reflect.Method;
 import java.util.concurrent.TimeoutException;
 
 public class DragAndDropTest extends InstrumentationTestCase {
@@ -47,25 +46,13 @@ public class DragAndDropTest extends InstrumentationTestCase {
         mDevice = UiDevice.getInstance(getInstrumentation());
     }
 
-    /** ActivityOptions#setLaunchStackId is a @hidden API so we access it through reflection. */
-    private static void setLaunchStackId(ActivityOptions options, int stackId) throws Exception {
-        final Method method = options.getClass().getDeclaredMethod("setLaunchStackId", int.class);
-
-        method.setAccessible(true);
-        method.invoke(options, stackId);
-    }
-
     private void startAppInStack(String packageName, int stackId) {
         Context context = getInstrumentation().getContext();
         Intent intent = context.getPackageManager().getLaunchIntentForPackage(packageName);
         intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK);
 
         ActivityOptions options = ActivityOptions.makeBasic();
-        try {
-            setLaunchStackId(options, stackId);
-        } catch (Exception e) {
-            fail(e.getMessage());
-        }
+        options.setLaunchStackId(stackId);
         context.startActivity(intent, options.toBundle());
 
         // Wait for the app to appear
