@@ -2721,6 +2721,10 @@ You should be prompted to select credentials; choose the ones you just installed
     <string name="audio_general_test_failed">Test Failed</string>
     <string name="audio_general_default_false_string">false</string>
     <string name="audio_general_default_true_string">true</string>
+    <string name="audio_general_warning">Warning</string>
+    <string name="audio_general_ok">Ok</string>
+    <string name="audio_general_level_not_max">Audio Level is not maximum. Please check your device
+          is set to max level for audio playback.</string>
 
     <!-- Audio Loopback Latency Test -->
     <string name="audio_loopback_test">Audio Loopback Latency Test</string>
