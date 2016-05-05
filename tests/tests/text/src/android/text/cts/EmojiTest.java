@@ -23,6 +23,7 @@ import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.Picture;
 import android.test.ActivityInstrumentationTestCase2;
+import android.util.TypedValue;
 import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.View;
@@ -204,6 +205,7 @@ public class EmojiTest extends ActivityInstrumentationTestCase2<EmojiCtsActivity
 
         CaptureTextView(Context context) {
             super(context);
+            setTextSize(TypedValue.COMPLEX_UNIT_SP, 10);
         }
 
         Bitmap capture(char c[]) {
@@ -227,6 +229,7 @@ public class EmojiTest extends ActivityInstrumentationTestCase2<EmojiCtsActivity
 
         CaptureEditText(Context context) {
             super(context);
+            setTextSize(TypedValue.COMPLEX_UNIT_SP, 10);
         }
 
         Bitmap capture(char c[]) {
