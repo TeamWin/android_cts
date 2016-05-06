@@ -40,15 +40,20 @@ public class DropTarget extends Activity {
         View view = getLayoutInflater().inflate(R.layout.main_activity, null);
         setContentView(view);
 
-        setUpDropTarget(R.id.dont_request, new OnDragUriReadListener(false));
-        setUpDropTarget(R.id.request_read, new OnDragUriReadListener());
-        setUpDropTarget(R.id.request_write, new OnDragUriWriteListener());
-        setUpDropTarget(R.id.request_read_nested, new OnDragUriReadPrefixListener());
-        setUpDropTarget(R.id.request_take_persistable, new OnDragUriTakePersistableListener());
+        setUpDropTarget("dont_request", new OnDragUriReadListener(false));
+        setUpDropTarget("request_read", new OnDragUriReadListener());
+        setUpDropTarget("request_write", new OnDragUriWriteListener());
+        setUpDropTarget("request_read_nested", new OnDragUriReadPrefixListener());
+        setUpDropTarget("request_take_persistable", new OnDragUriTakePersistableListener());
     }
 
-    private void setUpDropTarget(final int targetResourceId, OnDragUriListener listener) {
-        findViewById(targetResourceId).setOnDragListener(listener);
+    private void setUpDropTarget(String mode, OnDragUriListener listener) {
+        if (!mode.equals(getIntent().getStringExtra("mode"))) {
+            return;
+        }
+        final View target = findViewById(R.id.target);
+        ((TextView) target).setText(mode);
+        target.setOnDragListener(listener);
     }
 
     private String checkExtraValue(DragEvent event) {
