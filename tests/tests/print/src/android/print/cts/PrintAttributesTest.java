@@ -36,6 +36,7 @@ import android.print.cts.services.SecondPrintService;
 import android.print.cts.services.StubbablePrinterDiscoverySession;
 import android.printservice.PrintJob;
 
+import android.util.Log;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
@@ -47,6 +48,7 @@ import java.util.List;
  * Test that the print attributes are correctly propagated through the print framework
  */
 public class PrintAttributesTest extends BasePrintTest {
+    private static final String LOG_TAG = "PrintAttributesTest";
     private final String PRINTER_NAME = "Test printer";
 
     private final Margins[] MIN_MARGINS = {
@@ -375,6 +377,7 @@ public class PrintAttributesTest extends BasePrintTest {
                 setUpPrinter(minMargins, mediaSizes, defaultMediaSize, colorModes, defaultColorMode,
                         duplexModes, defaultDuplexMode, resolutions, defaultResolution);
 
+        Log.d(LOG_TAG, "makeDefaultPrinter");
         // Make printer default. This is necessary as a different default printer might pre-select
         // its default attributes and thereby overrides the defaults of the tested printer.
         makeDefaultPrinter(adapter, PRINTER_NAME);
@@ -385,9 +388,13 @@ public class PrintAttributesTest extends BasePrintTest {
 
         // Start print action and wait for layout, the result is stored in #layoutAttributes,
         // @see createMockPrintDocumentAdapter
+        Log.d(LOG_TAG, "print");
         print(adapter, suggestedAttributes);
+        Log.d(LOG_TAG, "waitForWriteAdapterCallback");
         waitForWriteAdapterCallback(2);
+        Log.d(LOG_TAG, "clickPrintButton");
         clickPrintButton();
+        Log.d(LOG_TAG, "waitForPrinterDiscoverySessionDestroyCallbackCalled");
         waitForPrinterDiscoverySessionDestroyCallbackCalled(2);
 
         // It does not make sense to suggest minMargins, hence the print framework always picks
