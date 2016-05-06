@@ -47,7 +47,7 @@ public class AccessibilityMagnificationTest extends InstrumentationTestCase {
 
     @Override
     protected void tearDown() throws Exception {
-        mService.runOnServiceSync(() -> mService.disableSelf());
+        mService.runOnServiceSync(() -> mService.disableSelfAndRemove());
         mService = null;
 
         super.tearDown();

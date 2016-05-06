@@ -56,6 +56,14 @@ public class InstrumentedAccessibilityService extends AccessibilityService {
         // Stub method.
     }
 
+    public void disableSelfAndRemove() {
+        disableSelf();
+
+        synchronized (sInstances) {
+            sInstances.remove(getClass());
+        }
+    }
+
     public void runOnServiceSync(Runnable runner) {
         final SyncRunnable sr = new SyncRunnable(runner, TIMEOUT_SERVICE_PERFORM_SYNC);
         mHandler.post(sr);
@@ -112,6 +120,10 @@ public class InstrumentedAccessibilityService extends AccessibilityService {
 
                 final T instance = getInstanceForClass(clazz, TIMEOUT_SERVICE_ENABLE);
                 if (instance == null) {
+                    ShellCommandBuilder.create(testCase)
+                            .putSecureSetting(Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES,
+                                    enabledServices)
+                            .run();
                     throw new RuntimeException("Starting accessibility service " + serviceName
                             + " took longer than " + TIMEOUT_SERVICE_ENABLE + "ms");
                 }
