@@ -70,7 +70,7 @@ public class DeviceReportLog extends ReportLog {
                 store.open();
             }
         } catch (Exception e) {
-            Log.e(TAG, "Could not create report log file.");
+            Log.e(TAG, "Could not create report log file.", e);
         }
     }
 
