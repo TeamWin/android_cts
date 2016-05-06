@@ -46,10 +46,11 @@ public class DragAndDropTest extends InstrumentationTestCase {
         mDevice = UiDevice.getInstance(getInstrumentation());
     }
 
-    private void startAppInStack(String packageName, int stackId) {
+    private void startAppInStack(String packageName, int stackId, String mode) {
         Context context = getInstrumentation().getContext();
         Intent intent = context.getPackageManager().getLaunchIntentForPackage(packageName);
         intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        intent.putExtra("mode", mode);
 
         ActivityOptions options = ActivityOptions.makeBasic();
         options.setLaunchStackId(stackId);
@@ -71,12 +72,12 @@ public class DragAndDropTest extends InstrumentationTestCase {
         mDevice.drag(srcPosition.x, srcPosition.y, tgtPosition.x, tgtPosition.y, 100);
     }
 
-    private void doCrossAppDrag(String sourceViewId, String targetViewId, String expectedResult) {
-        startAppInStack(DRAG_SOURCE_PKG, DOCKED_STACK_ID);
-        Point srcPosition = getVisibleCenter(DRAG_SOURCE_PKG, sourceViewId);
+    private void doCrossAppDrag(String sourceMode, String targetMode, String expectedResult) {
+        startAppInStack(DRAG_SOURCE_PKG, DOCKED_STACK_ID, sourceMode);
+        Point srcPosition = getVisibleCenter(DRAG_SOURCE_PKG, "source");
 
-        startAppInStack(DROP_TARGET_PKG, FREEFORM_WORKSPACE_STACK_ID);
-        Point tgtPosition = getVisibleCenter(DROP_TARGET_PKG, targetViewId);
+        startAppInStack(DROP_TARGET_PKG, FREEFORM_WORKSPACE_STACK_ID, targetMode);
+        Point tgtPosition = getVisibleCenter(DROP_TARGET_PKG, "target");
 
         drag(srcPosition, tgtPosition);
 
