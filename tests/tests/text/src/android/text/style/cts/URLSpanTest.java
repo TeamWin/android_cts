@@ -28,8 +28,8 @@ import android.text.style.URLSpan;
 import android.widget.TextView;
 
 public class URLSpanTest extends ActivityInstrumentationTestCase2<URLSpanCtsActivity> {
-    // The scheme of TEST_URL must be "ctstest" to launch MockURLSpanTestActivity
-    private static final String TEST_URL = "ctstest://urlSpan/test";
+    // The scheme of TEST_URL must be "ctstesttext" to launch MockURLSpanTestActivity
+    private static final String TEST_URL = "ctstesttext://urlSpan/test";
     private Activity mActivity;
 
     public URLSpanTest() {
