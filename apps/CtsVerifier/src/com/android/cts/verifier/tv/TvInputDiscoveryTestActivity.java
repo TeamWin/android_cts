@@ -45,11 +45,13 @@ public class TvInputDiscoveryTestActivity extends TvAppVerifierActivity
     private View mVerifyTuneItem;
     private View mVerifyOverlayViewItem;
     private View mVerifyGlobalSearchItem;
+    private View mVerifyOverlayViewSizeChanged;
     private View mGoToEpgItem;
     private View mVerifyEpgItem;
     private boolean mTuneVerified;
     private boolean mOverlayViewVerified;
     private boolean mGlobalSearchVerified;
+    private boolean mOverlayViewSizeChangedVerified;
 
     @Override
     public void onClick(View v) {
@@ -91,6 +93,16 @@ public class TvInputDiscoveryTestActivity extends TvAppVerifierActivity
                     goToNextState(postTarget, failCallback);
                 }
             });
+            MockTvInputService.expectedVideoAspectRatio(postTarget, new Runnable() {
+                @Override
+                public void run() {
+                    postTarget.removeCallbacks(failCallback);
+                    setPassState(mVerifyOverlayViewSizeChanged, true);
+
+                    mOverlayViewSizeChangedVerified = true;
+                    goToNextState(postTarget, failCallback);
+                }
+            });
             MockTvInputService.expectOverlayView(postTarget, new Runnable() {
                 @Override
                 public void run() {
@@ -124,6 +136,8 @@ public class TvInputDiscoveryTestActivity extends TvAppVerifierActivity
         mVerifyTuneItem = createAutoItem(R.string.tv_input_discover_test_verify_tune);
         mVerifyOverlayViewItem = createAutoItem(
                 R.string.tv_input_discover_test_verify_overlay_view);
+        mVerifyOverlayViewSizeChanged = createAutoItem(
+                R.string.tv_input_discover_test_verify_size_changed);
         mVerifyGlobalSearchItem = createAutoItem(
                 R.string.tv_input_discover_test_verify_global_search);
         mGoToEpgItem = createUserItem(R.string.tv_input_discover_test_go_to_epg,
@@ -139,7 +153,8 @@ public class TvInputDiscoveryTestActivity extends TvAppVerifierActivity
     }
 
     private void goToNextState(View postTarget, Runnable failCallback) {
-        if (mTuneVerified && mOverlayViewVerified && mGlobalSearchVerified) {
+        if (mTuneVerified && mOverlayViewVerified
+                && mGlobalSearchVerified && mOverlayViewSizeChangedVerified) {
             postTarget.removeCallbacks(failCallback);
             setButtonEnabled(mGoToEpgItem, true);
         }
