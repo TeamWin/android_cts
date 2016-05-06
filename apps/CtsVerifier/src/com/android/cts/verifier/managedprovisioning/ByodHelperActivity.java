@@ -33,8 +33,6 @@ import android.support.v4.content.FileProvider;
 import android.util.Log;
 import android.widget.Toast;
 
-import static android.provider.Settings.Secure.INSTALL_NON_MARKET_APPS;
-
 import java.io.File;
 import java.util.ArrayList;
 
@@ -71,19 +69,14 @@ public class ByodHelperActivity extends Activity implements DialogCallback {
 
     public static final String EXTRA_PROVISIONED = "extra_provisioned";
 
-    // Primary -> managed intent: set unknown sources restriction and install package
-    public static final String ACTION_INSTALL_APK = "com.android.cts.verifier.managedprovisioning.BYOD_INSTALL_APK";
-    public static final String EXTRA_ALLOW_NON_MARKET_APPS = INSTALL_NON_MARKET_APPS;
-
-    private static final int REQUEST_INSTALL_PACKAGE = 1;
+    // Unused - b/26702522
+    // private static final int REQUEST_INSTALL_PACKAGE = 1;
     private static final int REQUEST_IMAGE_CAPTURE = 2;
     private static final int REQUEST_VIDEO_CAPTURE = 3;
     private static final int REQUEST_AUDIO_CAPTURE = 4;
 
-    private static final String ORIGINAL_SETTINGS_NAME = "original settings";
-    private Bundle mOriginalSettings;
-
     private ComponentName mAdminReceiverComponent;
+
     private DevicePolicyManager mDevicePolicyManager;
 
     private Uri mImageUri;
@@ -94,18 +87,10 @@ public class ByodHelperActivity extends Activity implements DialogCallback {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        if (savedInstanceState != null) {
-            Log.w(TAG, "Restored state");
-            mOriginalSettings = savedInstanceState.getBundle(ORIGINAL_SETTINGS_NAME);
-        } else {
-            mOriginalSettings = new Bundle();
-        }
-
         mAdminReceiverComponent = new ComponentName(this, DeviceAdminTestReceiver.class.getName());
         mDevicePolicyManager = (DevicePolicyManager) getSystemService(
                 Context.DEVICE_POLICY_SERVICE);
-        Intent intent = getIntent();
-        String action = intent.getAction();
+        String action = getIntent().getAction();
         Log.d(TAG, "ByodHelperActivity.onCreate: " + action);
 
         // we are explicitly started by {@link DeviceAdminTestReceiver} after a successful provisioning.
@@ -125,23 +110,6 @@ public class ByodHelperActivity extends Activity implements DialogCallback {
                 mDevicePolicyManager.wipeData(0);
                 showToast(R.string.provisioning_byod_profile_deleted);
             }
-        } else if (action.equals(ACTION_INSTALL_APK)) {
-            boolean allowNonMarket = intent.getBooleanExtra(EXTRA_ALLOW_NON_MARKET_APPS, false);
-            boolean wasAllowed = getAllowNonMarket();
-
-            // Update permission to install non-market apps
-            setAllowNonMarket(allowNonMarket);
-            mOriginalSettings.putBoolean(INSTALL_NON_MARKET_APPS, wasAllowed);
-
-            // Request to install a non-market application- easiest way is to reinstall ourself
-            final Intent installIntent = new Intent(Intent.ACTION_INSTALL_PACKAGE)
-                    .setData(Uri.parse("package:" + getPackageName()))
-                    .putExtra(Intent.EXTRA_NOT_UNKNOWN_SOURCE, true)
-                    .putExtra(Intent.EXTRA_RETURN_RESULT, true);
-            startActivityForResult(installIntent, REQUEST_INSTALL_PACKAGE);
-
-            // Not yet ready to finish- wait until the result comes back
-            return;
         } else if (action.equals(ACTION_CAPTURE_AND_CHECK_IMAGE)) {
             Intent captureImageIntent = getCaptureImageIntent();
             mImageUri = getTempUri("image.jpg");
@@ -182,25 +150,8 @@ public class ByodHelperActivity extends Activity implements DialogCallback {
     }
 
     @Override
-    protected void onSaveInstanceState(final Bundle savedState) {
-        super.onSaveInstanceState(savedState);
-
-        savedState.putBundle(ORIGINAL_SETTINGS_NAME, mOriginalSettings);
-    }
-
-    @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         switch (requestCode) {
-            case REQUEST_INSTALL_PACKAGE: {
-                Log.w(TAG, "Received REQUEST_INSTALL_PACKAGE, resultCode = " + resultCode);
-                if (mOriginalSettings.containsKey(INSTALL_NON_MARKET_APPS)) {
-                    // Restore original setting
-                    setAllowNonMarket(mOriginalSettings.getBoolean(INSTALL_NON_MARKET_APPS));
-                    mOriginalSettings.remove(INSTALL_NON_MARKET_APPS);
-                }
-                finish();
-                break;
-            }
             case REQUEST_IMAGE_CAPTURE: {
                 if (resultCode == RESULT_OK) {
                     ByodPresentMediaDialog.newImageInstance(mImageUri)
@@ -274,16 +225,6 @@ public class ByodHelperActivity extends Activity implements DialogCallback {
     private boolean isProfileOwner() {
         return mDevicePolicyManager.isAdminActive(mAdminReceiverComponent) &&
                 mDevicePolicyManager.isProfileOwnerApp(mAdminReceiverComponent.getPackageName());
-    }
-
-    private boolean getAllowNonMarket() {
-        String value = Settings.Secure.getString(getContentResolver(), INSTALL_NON_MARKET_APPS);
-        return "1".equals(value);
-    }
-
-    private void setAllowNonMarket(boolean allow) {
-        mDevicePolicyManager.setSecureSetting(mAdminReceiverComponent, INSTALL_NON_MARKET_APPS,
-                (allow ? "1" : "0"));
     }
 
     private void startActivityInPrimary(Intent intent) {

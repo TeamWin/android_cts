@@ -48,7 +48,6 @@ public class DeviceAdminTestReceiver extends DeviceAdminReceiver {
             IntentFilter filter = new IntentFilter();
             filter.addAction(ByodHelperActivity.ACTION_QUERY_PROFILE_OWNER);
             filter.addAction(ByodHelperActivity.ACTION_REMOVE_PROFILE_OWNER);
-            filter.addAction(ByodHelperActivity.ACTION_INSTALL_APK);
             filter.addAction(ByodHelperActivity.ACTION_CAPTURE_AND_CHECK_IMAGE);
             filter.addAction(ByodHelperActivity.ACTION_CAPTURE_AND_CHECK_VIDEO);
             filter.addAction(ByodHelperActivity.ACTION_CAPTURE_AND_CHECK_AUDIO);
