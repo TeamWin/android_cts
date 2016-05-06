@@ -21,58 +21,11 @@
         android:orientation="vertical">
 
     <TextView
-            android:id="@+id/dont_request"
+            android:id="@+id/target"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:gravity="center"
-            android:layout_margin="@dimen/item_margin"
-            android:padding="@dimen/item_padding"
-            android:background="#ddd"
-            android:text="@string/dont_request_label">
-    </TextView>
-
-    <TextView
-        android:id="@+id/request_read"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:gravity="center"
-        android:layout_margin="@dimen/item_margin"
-        android:padding="@dimen/item_padding"
-        android:background="#ddd"
-        android:text="@string/request_read_label">
-    </TextView>
-
-    <TextView
-        android:id="@+id/request_write"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:gravity="center"
-        android:layout_margin="@dimen/item_margin"
-        android:padding="@dimen/item_padding"
-        android:background="#ddd"
-        android:text="@string/request_write_label">
-    </TextView>
-
-    <TextView
-        android:id="@+id/request_read_nested"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:gravity="center"
-        android:layout_margin="@dimen/item_margin"
-        android:padding="@dimen/item_padding"
-        android:background="#ddd"
-        android:text="@string/request_read_nested_label">
-    </TextView>
-
-    <TextView
-        android:id="@+id/request_take_persistable"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:gravity="center"
-        android:layout_margin="@dimen/item_margin"
-        android:padding="@dimen/item_padding"
-        android:background="#ddd"
-        android:text="@string/request_take_persistable_label">
+            android:background="#ddd">
     </TextView>
 
     <TextView
