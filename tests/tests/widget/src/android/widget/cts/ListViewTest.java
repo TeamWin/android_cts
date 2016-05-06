@@ -16,6 +16,7 @@
 
 package android.widget.cts;
 
+import android.widget.BaseAdapter;
 import android.widget.cts.R;
 
 import org.xmlpull.v1.XmlPullParser;
@@ -615,6 +616,58 @@ public class ListViewTest extends ActivityInstrumentationTestCase2<ListViewCtsAc
         listView.layout(0, 0, 100, 100);
     }
 
+    @MediumTest
+    public void testFullDetachHeaderViewOnScroll() {
+        final AttachDetachAwareView header = new AttachDetachAwareView(mActivity);
+        ViewTestUtils.runOnMainAndDrawSync(getInstrumentation(), mListView, () -> {
+            mListView.setAdapter(new DummyAdapter(1000));
+            mListView.addHeaderView(header);
+        });
+        assertEquals("test sanity", 1, header.mOnAttachCount);
+        assertEquals("test sanity", 0, header.mOnDetachCount);
+        ViewTestUtils.runOnMainAndDrawSync(getInstrumentation(), mListView, () -> {
+            mListView.scrollListBy(mListView.getHeight() * 3);
+        });
+        assertNull("test sanity, header should be removed", header.getParent());
+        assertEquals("header view should be detached", 1, header.mOnDetachCount);
+        assertFalse(header.isTemporarilyDetached());
+    }
+
+    @MediumTest
+    public void testFullDetachHeaderViewOnRelayout() {
+        final AttachDetachAwareView header = new AttachDetachAwareView(mActivity);
+        ViewTestUtils.runOnMainAndDrawSync(getInstrumentation(), mListView, () -> {
+            mListView.setAdapter(new DummyAdapter(1000));
+            mListView.addHeaderView(header);
+        });
+        assertEquals("test sanity", 1, header.mOnAttachCount);
+        assertEquals("test sanity", 0, header.mOnDetachCount);
+        ViewTestUtils.runOnMainAndDrawSync(getInstrumentation(), mListView, () -> {
+            mListView.setSelection(800);
+        });
+        assertNull("test sanity, header should be removed", header.getParent());
+        assertEquals("header view should be detached", 1, header.mOnDetachCount);
+        assertFalse(header.isTemporarilyDetached());
+    }
+
+    @MediumTest
+    public void testFullDetachHeaderViewOnScrollForFocus() {
+        final AttachDetachAwareView header = new AttachDetachAwareView(mActivity);
+        ViewTestUtils.runOnMainAndDrawSync(getInstrumentation(), mListView, () -> {
+            mListView.setAdapter(new DummyAdapter(1000));
+            mListView.addHeaderView(header);
+        });
+        assertEquals("test sanity", 1, header.mOnAttachCount);
+        assertEquals("test sanity", 0, header.mOnDetachCount);
+        while(header.getParent() != null) {
+            assertEquals("header view should NOT be detached", 0, header.mOnDetachCount);
+            sendKeys(KeyEvent.KEYCODE_DPAD_DOWN);
+            ViewTestUtils.runOnMainAndDrawSync(getInstrumentation(), mListView, null);
+        }
+        assertEquals("header view should be detached", 1, header.mOnDetachCount);
+        assertFalse(header.isTemporarilyDetached());
+    }
+
     private class MockView extends View {
 
         public boolean onMeasureCalled = false;
@@ -678,6 +731,27 @@ public class ListViewTest extends ActivityInstrumentationTestCase2<ListViewCtsAc
         assertEquals(childView0, listView.getChildAt(0));
         assertEquals(childView1, listView.getChildAt(1));
         assertEquals(childView2, listView.getChildAt(2));
+    }
+
+    private class AttachDetachAwareView extends View {
+        private int mOnAttachCount = 0;
+        private int mOnDetachCount = 0;
+
+        public AttachDetachAwareView(Context context) {
+            super(context);
+        }
+
+        @Override
+        protected void onAttachedToWindow() {
+            mOnAttachCount++;
+            super.onAttachedToWindow();
+        }
+
+        @Override
+        protected void onDetachedFromWindow() {
+            mOnDetachCount++;
+            super.onDetachedFromWindow();
+        }
     }
 
     private class TemporarilyDetachableMockView extends View {
@@ -821,6 +895,38 @@ public class ListViewTest extends ActivityInstrumentationTestCase2<ListViewCtsAc
         @Override
         public boolean hasStableIds() {
             return true;
+        }
+    }
+
+    private static class DummyAdapter extends BaseAdapter {
+        int mCount;
+
+        public DummyAdapter(int count) {
+            mCount = count;
+        }
+
+        @Override
+        public int getCount() {
+            return mCount;
+        }
+
+        @Override
+        public Object getItem(int position) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public long getItemId(int position) {
+            return 0;
+        }
+
+        @Override
+        public View getView(int position, View convertView, ViewGroup parent) {
+            if (convertView == null) {
+                convertView = new View(parent.getContext());
+                convertView.setMinimumHeight(200);
+            }
+            return convertView;
         }
     }
 }
