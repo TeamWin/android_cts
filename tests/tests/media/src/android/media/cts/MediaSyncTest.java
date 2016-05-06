@@ -468,7 +468,8 @@ public class MediaSyncTest extends ActivityInstrumentationTestCase2<MediaStubAct
             long lastBufferTimestampUs,
             boolean audio,
             boolean video,
-            float playbackRate) {
+            float playbackRate,
+            PlayAVState state) {
         // allow 750ms for playback to get to stable state.
         final int PLAYBACK_RAMP_UP_TIME_US = 750000;
 
