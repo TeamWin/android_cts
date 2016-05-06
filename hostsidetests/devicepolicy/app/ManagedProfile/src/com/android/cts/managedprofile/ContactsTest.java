@@ -981,7 +981,7 @@ public class ContactsTest extends AndroidTestCase {
             while (cursor.moveToNext()) {
                 final long directoryId = cursor.getLong(0);
                 if (!Directory.isEnterpriseDirectoryId(directoryId)
-                        && Directory.isRemoteDirectory(directoryId)) {
+                        && Directory.isRemoteDirectoryId(directoryId)) {
                     return directoryId;
                 }
             }
@@ -1008,7 +1008,7 @@ public class ContactsTest extends AndroidTestCase {
             while (cursor.moveToNext()) {
                 final long directoryId = cursor.getLong(0);
                 if (Directory.isEnterpriseDirectoryId(directoryId)
-                        && Directory.isRemoteDirectory(directoryId)) {
+                        && Directory.isRemoteDirectoryId(directoryId)) {
                     return directoryId;
                 }
             }
