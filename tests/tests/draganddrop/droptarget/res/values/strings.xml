@@ -15,12 +15,5 @@
 -->
 
 <resources>
-
-     <string name="dont_request_label">Do not request permissions, read</string>
-     <string name="request_read_label">Request permissions, read</string>
-     <string name="request_write_label">Request permissions, write</string>
-     <string name="request_read_nested_label">Request permissions, read nested</string>
-     <string name="request_take_persistable_label">Request permissions, take persistable</string>
      <string name="not_available_label">N/A</string>
-
 </resources>
