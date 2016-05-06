@@ -93,7 +93,7 @@ public class CaptureRequestTest extends Camera2SurfaceViewTestCase {
     // 1 percent error margin for centering the crop region
     private static final float CROP_REGION_ERROR_PERCENT_CENTERED = 0.01f;
     private static final float DYNAMIC_VS_FIXED_BLK_WH_LVL_ERROR_MARGIN = 0.25f;
-    private static final float DYNAMIC_VS_OPTICAL_BLK_LVL_ERROR_MARGIN = 0.1f;
+    private static final float DYNAMIC_VS_OPTICAL_BLK_LVL_ERROR_MARGIN = 0.2f;
 
     // Linear tone mapping curve example.
     private static final float[] TONEMAP_CURVE_LINEAR = {0, 0, 1.0f, 1.0f};
