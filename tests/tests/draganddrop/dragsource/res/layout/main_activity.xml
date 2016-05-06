@@ -21,91 +21,11 @@
         android:orientation="vertical">
 
     <TextView
-            android:id="@+id/dont_grant"
+            android:id="@+id/source"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:gravity="center"
-            android:layout_margin="@dimen/item_margin"
-            android:padding="@dimen/item_padding"
-            android:background="#ddd"
-            android:text="@string/dont_grant_label">
-    </TextView>
-
-    <TextView
-            android:id="@+id/grant_read"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:gravity="center"
-            android:layout_margin="@dimen/item_margin"
-            android:padding="@dimen/item_padding"
-            android:background="#ddd"
-            android:text="@string/grant_read_label">
-    </TextView>
-
-    <TextView
-            android:id="@+id/grant_write"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:gravity="center"
-            android:layout_margin="@dimen/item_margin"
-            android:padding="@dimen/item_padding"
-            android:background="#ddd"
-            android:text="@string/grant_write_label">
-    </TextView>
-
-    <TextView
-            android:id="@+id/grant_read_prefix"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:gravity="center"
-            android:layout_margin="@dimen/item_margin"
-            android:padding="@dimen/item_padding"
-            android:background="#ddd"
-            android:text="@string/grant_read_prefix_label">
-    </TextView>
-
-    <TextView
-            android:id="@+id/grant_read_noprefix"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:gravity="center"
-            android:layout_margin="@dimen/item_margin"
-            android:padding="@dimen/item_padding"
-            android:background="#ddd"
-            android:text="@string/grant_read_noprefix_label">
-    </TextView>
-
-    <TextView
-            android:id="@+id/grant_read_persistable"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:gravity="center"
-            android:layout_margin="@dimen/item_margin"
-            android:padding="@dimen/item_padding"
-            android:background="#ddd"
-            android:text="@string/grant_read_persistable_label">
-    </TextView>
-
-    <TextView
-            android:id="@+id/disallow_global"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:gravity="center"
-            android:layout_margin="@dimen/item_margin"
-            android:padding="@dimen/item_padding"
-            android:background="#aaa"
-            android:text="@string/disallow_global_label">
-    </TextView>
-
-    <TextView
-            android:id="@+id/cancel_soon"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:gravity="center"
-            android:layout_margin="@dimen/item_margin"
-            android:padding="@dimen/item_padding"
-            android:background="#aaa"
-            android:text="@string/cancel_soon_label">
+            android:background="#ddd">
     </TextView>
 
 </LinearLayout>
