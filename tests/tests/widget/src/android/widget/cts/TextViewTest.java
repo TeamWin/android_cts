@@ -2672,6 +2672,54 @@ public class TextViewTest extends ActivityInstrumentationTestCase2<TextViewCtsAc
         }
     }
 
+    public void testTextViewInWeigthenedLayoutChangesWidthAfterSetText() {
+        final TextView textView = new TextView(getActivity());
+        textView.setEllipsize(TruncateAt.END);
+        textView.setSingleLine(true);
+        textView.setText("a");
+
+        TextView otherTextView = new TextView(getActivity());
+        otherTextView.setSingleLine(true);
+        otherTextView.setText("any");
+
+        final LinearLayout layout = new LinearLayout(mActivity);
+        layout.setOrientation(LinearLayout.HORIZONTAL);
+
+        // TextView under test has weight 1, and width 0
+        layout.addView(textView, new LinearLayout.LayoutParams(0,
+                ViewGroup.LayoutParams.WRAP_CONTENT, 1.0f));
+
+        // other TextView has default weight
+        layout.addView(otherTextView, new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT));
+
+        // main layout params
+        layout.setLayoutParams(new ViewGroup.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+
+        mActivity.runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                getActivity().setContentView(layout);
+            }
+        });
+        getInstrumentation().waitForIdleSync();
+
+        int oldWidth = textView.getWidth();
+
+        mActivity.runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                textView.setText("aaa");
+            }
+        });
+        getInstrumentation().waitForIdleSync();
+
+        assertTrue("TextView should have larger width after a longer text is set",
+                textView.getWidth() > oldWidth);
+    }
+
     public void testSetCursorVisible() {
         mTextView = new TextView(mActivity);
 
