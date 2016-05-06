@@ -223,6 +223,9 @@ class WindowManagerState {
     }
 
     String getFrontWindow() {
+        if (mWindows == null || mWindows.isEmpty()) {
+            return null;
+        }
         return mWindows.get(0);
     }
 
