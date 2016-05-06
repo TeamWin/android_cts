@@ -24,6 +24,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.PersistableBundle;
 import android.view.View;
+import android.widget.TextView;
 
 public class DragSource extends Activity{
     private static final String URI_PREFIX =
@@ -41,30 +42,35 @@ public class DragSource extends Activity{
 
         final Uri plainUri = Uri.parse(URI_PREFIX + "/" + MAGIC_VALUE);
 
-        setUpDragSource(R.id.disallow_global, plainUri, 0);
-        setUpDragSource(R.id.cancel_soon, plainUri, View.DRAG_FLAG_GLOBAL);
+        setUpDragSource("disallow_global", plainUri, 0);
+        setUpDragSource("cancel_soon", plainUri, View.DRAG_FLAG_GLOBAL);
 
-        setUpDragSource(R.id.dont_grant, plainUri, View.DRAG_FLAG_GLOBAL);
-        setUpDragSource(R.id.grant_read, plainUri,
+        setUpDragSource("dont_grant", plainUri, View.DRAG_FLAG_GLOBAL);
+        setUpDragSource("grant_read", plainUri,
                 View.DRAG_FLAG_GLOBAL | View.DRAG_FLAG_GLOBAL_URI_READ);
-        setUpDragSource(R.id.grant_write, plainUri,
+        setUpDragSource("grant_write", plainUri,
                 View.DRAG_FLAG_GLOBAL | View.DRAG_FLAG_GLOBAL_URI_WRITE);
-        setUpDragSource(R.id.grant_read_persistable, plainUri,
+        setUpDragSource("grant_read_persistable", plainUri,
                 View.DRAG_FLAG_GLOBAL | View.DRAG_FLAG_GLOBAL_URI_READ |
                         View.DRAG_FLAG_GLOBAL_PERSISTABLE_URI_PERMISSION);
 
         final Uri prefixUri = Uri.parse(URI_PREFIX);
 
-        setUpDragSource(R.id.grant_read_prefix, prefixUri,
+        setUpDragSource("grant_read_prefix", prefixUri,
                 View.DRAG_FLAG_GLOBAL | View.DRAG_FLAG_GLOBAL_URI_READ |
                         View.DRAG_FLAG_GLOBAL_PREFIX_URI_PERMISSION);
-        setUpDragSource(R.id.grant_read_noprefix, prefixUri,
+        setUpDragSource("grant_read_noprefix", prefixUri,
                 View.DRAG_FLAG_GLOBAL | View.DRAG_FLAG_GLOBAL_URI_READ);
 
     }
 
-    private void setUpDragSource(final int resourceId, final Uri uri, final int flags) {
-        findViewById(resourceId).setOnLongClickListener(new View.OnLongClickListener() {
+    private void setUpDragSource(String mode, final Uri uri, final int flags) {
+        if (!mode.equals(getIntent().getStringExtra("mode"))) {
+            return;
+        }
+        final View source = findViewById(R.id.source);
+        ((TextView) source).setText(mode);
+        source.setOnLongClickListener(new View.OnLongClickListener() {
             @Override
             public boolean onLongClick(final View v) {
                 final ClipDescription clipDescription = new ClipDescription("", new String[] {
@@ -78,7 +84,7 @@ public class DragSource extends Activity{
                         new View.DragShadowBuilder(v),
                         null,
                         flags);
-                if (resourceId == R.id.cancel_soon) {
+                if (mode.equals("cancel_soon")) {
                     new Handler().postDelayed(new Runnable() {
                         @Override
                         public void run() {
