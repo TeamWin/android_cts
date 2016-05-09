@@ -172,6 +172,9 @@ public class TelephonyManagerPermissionTest extends AndroidTestCase {
      */
     @SmallTest
     public void testProtectedBroadcasts() {
+        if (!mHasTelephony) {
+            return;
+        }
         try {
             Intent intent = new Intent("android.intent.action.SIM_STATE_CHANGED");
             getContext().sendBroadcast(intent);
