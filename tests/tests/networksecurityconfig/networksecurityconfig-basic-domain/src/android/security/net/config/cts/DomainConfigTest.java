@@ -30,7 +30,7 @@ public class DomainConfigTest extends TestCase {
     public void testDefaultConfig() throws Exception {
         // The default config in this case has no trusted CAs, so all connections should fail.
         TestUtils.assertTlsConnectionFails("developer.android.com", 443);
-        TestUtils.assertTlsConnectionFails("google.com", 443);
+        TestUtils.assertTlsConnectionFails("example.com", 443);
     }
 
     public void testHostnameAwareCheckServerTrustedRequired() throws Exception {

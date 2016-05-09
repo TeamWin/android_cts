@@ -34,8 +34,8 @@ public class TestAttributes extends TestCase {
         assertTrue(instance.isCleartextTrafficPermitted("android.com"));
         assertTrue(instance.isCleartextTrafficPermitted("foo.android.com"));
         // Domains in a domain-config that explicitly allow cleartext.
-        assertTrue(instance.isCleartextTrafficPermitted("google.com"));
-        assertTrue(instance.isCleartextTrafficPermitted("test.google.com"));
+        assertTrue(instance.isCleartextTrafficPermitted("example.com"));
+        assertTrue(instance.isCleartextTrafficPermitted("test.example.com"));
         // Domain not specified in a domain-config, should use the base-config's value.
         assertTrue(instance.isCleartextTrafficPermitted("example.com"));
     }
