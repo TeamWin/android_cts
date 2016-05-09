@@ -232,6 +232,11 @@ public class MediaRecorderTest extends ActivityInstrumentationTestCase2<MediaStu
     private void setSupportedResolution(Camera camera) {
         Camera.Parameters parameters = camera.getParameters();
         List<Camera.Size> videoSizes = parameters.getSupportedVideoSizes();
+        // getSupportedVideoSizes returns null when separate video/preview size
+        // is not supported.
+        if (videoSizes == null) {
+            videoSizes = parameters.getSupportedPreviewSizes();
+        }
         for (Camera.Size size : videoSizes)
         {
             if (size.width == VIDEO_WIDTH && size.height == VIDEO_HEIGHT) {
