@@ -775,6 +775,12 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
         }
 
         try {
+            // Allow cross profile contacts search.
+            // TODO test both on and off.
+            getDevice().executeShellCommand(
+                    "settings put --user " + mProfileUserId
+                    + " secure managed_profile_contact_remote_search 1");
+
             // Add test account
             assertTrue(runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".ContactsTest",
                     "testAddTestAccount", mParentUserId));
