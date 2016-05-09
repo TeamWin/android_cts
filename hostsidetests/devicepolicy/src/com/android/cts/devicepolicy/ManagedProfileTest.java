@@ -64,6 +64,8 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
     private static final String FEATURE_BLUETOOTH = "android.hardware.bluetooth";
     private static final String FEATURE_CAMERA = "android.hardware.camera";
     private static final String FEATURE_WIFI = "android.hardware.wifi";
+    private static final String FEATURE_TELEPHONY = "android.hardware.telephony";
+    private static final String FEATURE_CONNECTION_SERVICE = "android.software.connectionservice";
 
     private static final String ADD_RESTRICTION_COMMAND = "add-restriction";
 
@@ -621,6 +623,9 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
         if (!mHasFeature) {
             return;
         }
+        if (!shouldRunTelecomTest()) {
+            return;
+        }
         try {
             // Register phone account in parent user.
             assertTrue(runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".PhoneAccountTest",
@@ -656,6 +661,9 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
 
     public void testManagedCall() throws Exception {
         if (!mHasFeature) {
+            return;
+        }
+        if (!shouldRunTelecomTest()) {
             return;
         }
         // Place a outgoing call through work phone account using TelecomManager and verify the
@@ -767,6 +775,10 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
     private void assertAppLinkResult(String methodName) throws DeviceNotAvailableException {
         assertTrue(runDeviceTestsAsUser(INTENT_SENDER_PKG, ".AppLinkTest", methodName,
                 mProfileUserId));
+    }
+
+    private boolean shouldRunTelecomTest() throws DeviceNotAvailableException {
+        return hasDeviceFeature(FEATURE_TELEPHONY) && hasDeviceFeature(FEATURE_CONNECTION_SERVICE);
     }
 
     private void runManagedContactsTest(Callable<Void> callable) throws Exception {
