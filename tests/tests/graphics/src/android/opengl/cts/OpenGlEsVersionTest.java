@@ -80,8 +80,8 @@ public class OpenGlEsVersionTest
 
     public void testRequiredExtensions() throws InterruptedException {
         int reportedVersion = getVersionFromActivityManager(mActivity);
-        // We only have required extensions on ES3.1
-        if (getMajorVersion(reportedVersion) != 3 || getMinorVersion(reportedVersion) != 1)
+        // We only have required extensions on ES3.1+
+        if (getMajorVersion(reportedVersion) != 3 || getMinorVersion(reportedVersion) < 1)
             return;
 
         restartActivityWithClientVersion(3);
@@ -97,7 +97,7 @@ public class OpenGlEsVersionTest
         };
 
         for (int i = 0; i < requiredList.length; ++i) {
-            assertTrue("OpenGL ES version 3.1 is missing extension " + requiredList[i],
+            assertTrue("OpenGL ES version 3.1+ is missing extension " + requiredList[i],
                     hasExtension(extensions, requiredList[i]));
         }
     }
@@ -105,19 +105,17 @@ public class OpenGlEsVersionTest
     public void testExtensionPack() throws InterruptedException {
         // Requirements:
         // 1. If the device claims support for the system feature, the extension must be available.
-        // 2. If the extension is available, it must be correct:
-        //    - ES 3.1 must be supported
+        // 2. If the extension is available, the device must claim support for it.
+        // 3. If the extension is available, it must be correct:
+        //    - ES 3.1+ must be supported
         //    - All included extensions must be available
-        //
-        // Supporting the extension but not claiming support for the system feature is allowed,
-        // just like the ES context version can be higher than the ro.opengles.version property.
 
         int reportedVersion = getVersionFromActivityManager(mActivity);
         boolean hasAepFeature = mActivity.getPackageManager().hasSystemFeature(
                 PackageManager.FEATURE_OPENGLES_EXTENSION_PACK);
 
-        if (getMajorVersion(reportedVersion) != 3 || getMinorVersion(reportedVersion) != 1) {
-            assertFalse("FEATURE_OPENGLES_EXTENSION_PACK is available without OpenGL ES 3.1",
+        if (getMajorVersion(reportedVersion) != 3 || getMinorVersion(reportedVersion) < 1) {
+            assertFalse("FEATURE_OPENGLES_EXTENSION_PACK is available without OpenGL ES 3.1+",
                     hasAepFeature);
             return;
         }
