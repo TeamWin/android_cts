@@ -20,11 +20,12 @@ import com.android.cts.media.R;
 
 import android.content.Context;
 import android.media.audiofx.AudioEffect;
-import android.media.audiofx.Visualizer;
 import android.media.AudioFormat;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.media.audiofx.LoudnessEnhancer;
+import java.util.UUID;
+import android.media.audiofx.Visualizer;
 import android.media.audiofx.Visualizer.MeasurementPeakRms;
 import android.os.Looper;
 import android.test.AndroidTestCase;
@@ -33,8 +34,7 @@ import android.util.Log;
 public class LoudnessEnhancerTest extends PostProcTestBase {
 
     private String TAG = "LoudnessEnhancerTest";
-    private LoudnessEnhancer mLE = null;
-    private Visualizer mVisualizer = null;
+    private LoudnessEnhancer mLE;
 
     //-----------------------------------------------------------------
     // LOUDNESS ENHANCER TESTS:
@@ -92,7 +92,7 @@ public class LoudnessEnhancerTest extends PostProcTestBase {
 
     //Test case 2.0: test setEnabled() and getEnabled() in valid state
     public void test2_0SetEnabledGetEnabled() throws Exception {
-        if (!isLoudnessEnhancerAvailable()) {
+        if (!hasAudioOutput()) {
             return;
         }
         getLoudnessEnhancer(getSessionId());
@@ -111,7 +111,7 @@ public class LoudnessEnhancerTest extends PostProcTestBase {
 
     //Test case 2.1: test setEnabled() throws exception after release
     public void test2_1SetEnabledAfterRelease() throws Exception {
-        if (!isLoudnessEnhancerAvailable()) {
+        if (!hasAudioOutput()) {
             return;
         }
         getLoudnessEnhancer(getSessionId());
@@ -126,80 +126,111 @@ public class LoudnessEnhancerTest extends PostProcTestBase {
         }
     }
 
-  //-----------------------------------------------------------------
+    //-----------------------------------------------------------------
     // 3 - check effect using visualizer effect
     //----------------------------------
 
-    //Test case 3.0: test enhancement 6 db
-    public void test3_0Measure6dbEnhancement() throws Exception {
+    //Test case 3.0: test loudness gain change in audio
+    public void test3_0MeasureGainChange() throws Exception {
+        if (!hasAudioOutput()) {
+            return;
+        }
+        AudioEffect vc = null;
+        Visualizer visualizer = null;
         MediaPlayer mp = null;
-        AudioManager am = null;
-        int originalVolume = 0;
         try {
+            // this test will play a 1kHz sine wave with peaks at -40dB, and apply 6 db gain
+            // using loudness enhancement
             mp = MediaPlayer.create(getContext(), R.raw.sine1khzm40db);
-            final int GAIN_MB =  600;
-            final int MAX_GAIN_ERROR_MB = 100;
+            final int LOUDNESS_GAIN = 600;
+            final int MAX_MEASUREMENT_ERROR_MB = 200;
             assertNotNull("null MediaPlayer", mp);
 
-            am = (AudioManager) getContext().getSystemService(Context.AUDIO_SERVICE);
+            // creating a volume controller on output mix ensures that ro.audio.silent mutes
+            // audio after the effects and not before
+            vc = new AudioEffect(
+                    AudioEffect.EFFECT_TYPE_NULL,
+                    UUID.fromString(BUNDLE_VOLUME_EFFECT_UUID),
+                    0,
+                    mp.getAudioSessionId());
+            vc.setEnabled(true);
+
+            AudioManager am = (AudioManager) getContext().getSystemService(Context.AUDIO_SERVICE);
             assertNotNull("null AudioManager", am);
-            originalVolume = am.getStreamVolume(AudioManager.STREAM_MUSIC);
+            int originalVolume = am.getStreamVolume(AudioManager.STREAM_MUSIC);
             am.setStreamVolume(AudioManager.STREAM_MUSIC,
                     am.getStreamMaxVolume(AudioManager.STREAM_MUSIC), 0);
-
             int sessionId = mp.getAudioSessionId();
+
             getLoudnessEnhancer(sessionId);
-            getVisualizer(sessionId);
+            visualizer = new Visualizer(sessionId);
+
+            mp.setLooping(true);
             mp.start();
 
-            mVisualizer.setEnabled(true);
-            assertTrue("visualizer not enabled", mVisualizer.getEnabled());
+            visualizer.setEnabled(true);
+            assertTrue("visualizer not enabled", visualizer.getEnabled());
             Thread.sleep(100);
-            int status = mVisualizer.setMeasurementMode(Visualizer.MEASUREMENT_MODE_PEAK_RMS);
-            // make sure we're playing long enough so the measurement is valid
+            int status = visualizer.setMeasurementMode(Visualizer.MEASUREMENT_MODE_PEAK_RMS);
             Thread.sleep(500);
             assertEquals("setMeasurementMode() for PEAK_RMS doesn't report success",
                     Visualizer.SUCCESS, status);
+            // make sure we're playing long enough so the measurement is valid
+            int currentPosition = mp.getCurrentPosition();
+            int maxTry = 100;
+            int tryCount = 0;
+            while (currentPosition < 200 && tryCount < maxTry) {
+                Thread.sleep(50);
+                currentPosition = mp.getCurrentPosition();
+                tryCount++;
+            }
+            assertTrue("MediaPlayer not ready", tryCount < maxTry);
+
             MeasurementPeakRms measurement = new MeasurementPeakRms();
-            status = mVisualizer.getMeasurementPeakRms(measurement);
+            status = visualizer.getMeasurementPeakRms(measurement);
+            assertEquals("getMeasurementPeakRms() reports failure", Visualizer.SUCCESS, status);
+
+            //run for a new set of 3 seconds, get new measurement
+            mLE.setTargetGain(LOUDNESS_GAIN);
+            assertEquals("target gain differs from value set", (float)LOUDNESS_GAIN,
+                    mLE.getTargetGain());
+
+            mLE.setEnabled(true);
+
+            visualizer.setMeasurementMode(Visualizer.MEASUREMENT_MODE_PEAK_RMS);
+            Thread.sleep(500);
+
+            MeasurementPeakRms measurement2 = new MeasurementPeakRms();
+            status = visualizer.getMeasurementPeakRms(measurement2);
+            assertEquals("getMeasurementPeakRms() reports failure", Visualizer.SUCCESS, status);
+
+            //compare both measurements
+            am.setStreamVolume(AudioManager.STREAM_MUSIC, originalVolume, 0);
             assertEquals("getMeasurementPeakRms() reports failure",
                     Visualizer.SUCCESS, status);
-            Log.i(TAG, "peak="+measurement.mPeak+"  rms="+measurement.mRms);
+            Log.i("LETest", "peak="+measurement.mPeak+"  rms="+measurement.mRms);
+            Log.i("LETest", "peak2="+measurement2.mPeak+"  rms2="+measurement2.mRms);
 
-            //enable loudness enhancement.
-            //start new measurement
-            mLE.setTargetGain(GAIN_MB);
-            mLE.setEnabled(true);
-            assertTrue("LoudnessEnhancer not enabled", mLE.getEnabled());
-            Thread.sleep(500);
-            MeasurementPeakRms measurement2 = new MeasurementPeakRms();
-            status = mVisualizer.getMeasurementPeakRms(measurement2);
+            int deltaPeak = Math.abs(measurement2.mPeak - (measurement.mPeak + LOUDNESS_GAIN) );
+            assertTrue("peak deviation in mB = "+deltaPeak, deltaPeak < MAX_MEASUREMENT_ERROR_MB);
 
-            assertEquals("getMeasurementPeakRms()2 reports failure",
-                    Visualizer.SUCCESS, status);
-            Log.i(TAG, "peak2="+measurement2.mPeak+"  rms2="+measurement2.mRms);
-            int diffExpectedPeak = Math.abs(measurement2.mPeak - (measurement.mPeak + GAIN_MB));
-            int diffExpectedRms =  Math.abs(measurement2.mRms - (measurement.mRms + GAIN_MB));
-
-            assertTrue("Gain peak deviation in mB=" + diffExpectedPeak,
-                    diffExpectedPeak < MAX_GAIN_ERROR_MB);
-            assertTrue("Gain RMS deviation in mB=" + diffExpectedRms,
-                    diffExpectedRms < MAX_GAIN_ERROR_MB);
         } catch (IllegalStateException e) {
             fail("method called in wrong state");
         } catch (InterruptedException e) {
             fail("sleep() interrupted");
         } finally {
-            releaseLoudnessEnhancer();
-            releaseVisualizer();
             if (mp != null) {
                 mp.stop();
                 mp.release();
             }
-            if (am != null) {
-                am.setStreamVolume(AudioManager.STREAM_MUSIC, originalVolume, 0);
-            }
 
+            if (vc != null)
+                vc.release();
+
+            if (visualizer != null)
+                visualizer.release();
+
+            releaseLoudnessEnhancer();
         }
     }
 
@@ -224,29 +255,4 @@ public class LoudnessEnhancerTest extends PostProcTestBase {
             mLE = null;
         }
     }
-
-    private void getVisualizer(int session) {
-        if (mVisualizer == null || session != mSession) {
-            if (session != mSession && mVisualizer != null) {
-                mVisualizer.release();
-                mVisualizer = null;
-            }
-            try {
-               mVisualizer = new Visualizer(session);
-               mSession = session;
-           } catch (IllegalArgumentException e) {
-               Log.e(TAG, "getVisualizer() Visualizer not found exception: "+e);
-           } catch (UnsupportedOperationException e) {
-               Log.e(TAG, "getVisualizer() Effect library not loaded exception: "+e);
-           }
-        }
-        assertNotNull("could not create mVisualizer", mVisualizer);
-   }
-
-   private void releaseVisualizer() {
-       if (mVisualizer != null) {
-           mVisualizer.release();
-           mVisualizer = null;
-       }
-   }
 }
