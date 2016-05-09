@@ -1550,12 +1550,10 @@ You should be prompted to select credentials; choose the ones you just installed
     <string name="pwa_info">This tests whether or displaying widets and keyfocus navigation works.\n
         You should see four buttons on the bottom of the screen.\n
         Pressing the "up" and "down" buttons should highlight different buttons.\n
-        Further, you should also be able to touch them and they should highlight as usual.</string>
+        Furthermore, the highlight should disappear when any button is touched, and the touched button should behave as usual.\n</string>
     <string name="pwa_test">Projection Widget Test</string>
     <string name="pwa_button_up">Up</string>
     <string name="pwa_button_down">Down</string>
-    <string name="pwa_button_left">Left</string>
-    <string name="pwa_button_right">Right</string>
     <string name="pwa_button">Button</string>
     <string name="pla_test">Projection Scrolling List Test</string>
     <string name="pla_info">This tests whether a projected list view will scroll properly\n
