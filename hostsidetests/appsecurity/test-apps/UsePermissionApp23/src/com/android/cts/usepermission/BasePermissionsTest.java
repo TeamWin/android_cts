@@ -29,21 +29,28 @@ import android.content.pm.PackageManager;
 import android.content.res.Resources;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.SystemClock;
 import android.provider.Settings;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.runner.AndroidJUnit4;
 import android.support.test.uiautomator.By;
+import android.view.accessibility.AccessibilityNodeInfo.AccessibilityAction;
 import android.support.test.uiautomator.UiDevice;
 import android.support.test.uiautomator.UiObject;
 import android.support.test.uiautomator.UiObject2;
 import android.support.test.uiautomator.UiSelector;
 import android.util.ArrayMap;
+import android.view.accessibility.AccessibilityEvent;
+import android.view.accessibility.AccessibilityNodeInfo;
 import android.widget.Switch;
 import junit.framework.Assert;
 import org.junit.Before;
 import org.junit.runner.RunWith;
 
+import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Callable;
+import java.util.concurrent.TimeoutException;
 
 @RunWith(AndroidJUnit4.class)
 public abstract class BasePermissionsTest {
@@ -51,6 +58,8 @@ public abstract class BasePermissionsTest {
 
     private static final long IDLE_TIMEOUT_MILLIS = 500;
     private static final long GLOBAL_TIMEOUT_MILLIS = 5000;
+
+    private static final long RETRY_TIMEOUT = 30000;
 
     private static Map<String, String> sPermissionToLabelResNameMap = new ArrayMap<>();
     static {
@@ -160,6 +169,11 @@ public abstract class BasePermissionsTest {
         } catch (PackageManager.NameNotFoundException e) {
             /* cannot happen */
         }
+
+        UiObject2 button = getUiDevice().findObject(By.text("Close"));
+        if (button != null) {
+            button.click();
+        }
     }
 
     protected BasePermissionActivity.Result requestPermissions(
@@ -203,6 +217,11 @@ public abstract class BasePermissionsTest {
                 "com.android.packageinstaller:id/do_not_ask_checkbox")).click();
     }
 
+    protected void clickDontAskAgainButton() throws Exception {
+        getUiDevice().findObject(new UiSelector().resourceId(
+                "com.android.packageinstaller:id/permission_deny_dont_ask_again_button")).click();
+    }
+
     protected void grantPermission(String permission) throws Exception {
         grantPermissions(new String[]{permission});
     }
@@ -222,47 +241,53 @@ public abstract class BasePermissionsTest {
     private void setPermissionGrantState(String[] permissions, boolean granted,
             boolean legacyApp) throws Exception {
         getUiDevice().pressBack();
-        getUiDevice().waitForIdle();
+        waitForIdle();
         getUiDevice().pressBack();
-        getUiDevice().waitForIdle();
+        waitForIdle();
 
         // Open the app details settings
         Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
         intent.addCategory(Intent.CATEGORY_DEFAULT);
         intent.setData(Uri.parse("package:" + mContext.getPackageName()));
-        mContext.startActivity(intent);
+        startActivity(intent);
 
-        getUiDevice().waitForIdle();
+        waitForIdle();
 
         // Open the permissions UI
-        UiObject permissionItem = getUiDevice().findObject(new UiSelector().text("Permissions"));
-        permissionItem.click();
+        AccessibilityNodeInfo permLabelView = getNodeTimed(() -> findByText("Permissions"));
+        Assert.assertNotNull("Permissions label should be present", permLabelView);
 
-        getUiDevice().waitForIdle();
+        AccessibilityNodeInfo permItemView = findCollectionItem(permLabelView);
+        Assert.assertNotNull("Permissions item should be present", permLabelView);
+
+        click(permItemView);
+
+        waitForIdle();
 
         for (String permission : permissions) {
             // Find the permission toggle
             String permissionLabel = getPermissionLabel(permission);
 
-            UiObject2 toggleSwitch = null;
-            UiObject2 current = getUiDevice().findObject(By.text(permissionLabel));
-            Assert.assertNotNull("Permission should be present");
+            AccessibilityNodeInfo labelView = getNodeTimed(() -> findByText(permissionLabel));
+            Assert.assertNotNull("Permission label should be present", labelView);
 
-            while (toggleSwitch == null) {
-                UiObject2 parent = current.getParent();
-                if (parent == null) {
-                    fail("Cannot find permission list item");
-                }
-                toggleSwitch = current.findObject(By.clazz(Switch.class));
-                current = parent;
-            }
+            AccessibilityNodeInfo itemView = findCollectionItem(labelView);
+            Assert.assertNotNull("Permission item should be present", itemView);
 
-            final boolean wasGranted = toggleSwitch.isChecked();
+            final AccessibilityNodeInfo toggleView = findSwitch(itemView);
+            Assert.assertNotNull("Permission toggle should be present", toggleView);
+
+            final boolean wasGranted = toggleView.isChecked();
             if (granted != wasGranted) {
                 // Toggle the permission
-                toggleSwitch.click();
 
-                getUiDevice().waitForIdle();
+                if (!itemView.getActionList().contains(AccessibilityAction.ACTION_CLICK)) {
+                    click(toggleView);
+                } else {
+                    click(itemView);
+                }
+
+                waitForIdle();
 
                 if (wasGranted && legacyApp) {
                     String packageName = getInstrumentation().getContext().getPackageManager()
@@ -277,15 +302,15 @@ public abstract class BasePermissionsTest {
                             .text(confirmTitle.toUpperCase()));
                     denyAnyway.click();
 
-                    getUiDevice().waitForIdle();
+                    waitForIdle();
                 }
             }
         }
 
         getUiDevice().pressBack();
-        getUiDevice().waitForIdle();
+        waitForIdle();
         getUiDevice().pressBack();
-        getUiDevice().waitForIdle();
+        waitForIdle();
     }
 
     private String getPermissionLabel(String permission) throws Exception {
@@ -294,4 +319,126 @@ public abstract class BasePermissionsTest {
         final int resourceId = mPlatformResources.getIdentifier(labelResName, null, null);
         return mPlatformResources.getString(resourceId);
     }
-}
+
+    private void startActivity(final Intent intent) throws Exception {
+        getInstrumentation().getUiAutomation().executeAndWaitForEvent(
+                () -> {
+            try {
+                getInstrumentation().getContext().startActivity(intent);
+            } catch (Exception e) {
+                fail("Cannot start activity: " + intent);
+            }
+        }, (AccessibilityEvent event) -> event.getEventType() == AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED
+         , GLOBAL_TIMEOUT_MILLIS);
+    }
+
+    private AccessibilityNodeInfo findByText(String text) throws Exception {
+        AccessibilityNodeInfo root = getInstrumentation().getUiAutomation().getRootInActiveWindow();
+        AccessibilityNodeInfo result = findByText(root, text);
+        if (result != null) {
+            return result;
+        }
+        return findByTextInCollection(root, text);
+    }
+
+    private static AccessibilityNodeInfo findByText(AccessibilityNodeInfo root, String text) {
+        List<AccessibilityNodeInfo> nodes = root.findAccessibilityNodeInfosByText(text);
+        for (AccessibilityNodeInfo node : nodes) {
+            if (node.getText().toString().equals(text)) {
+                return node;
+            }
+        }
+        return null;
+    }
+
+    private static AccessibilityNodeInfo findByTextInCollection(AccessibilityNodeInfo root, String text)
+            throws Exception {
+        AccessibilityNodeInfo result;
+        final int childCount = root.getChildCount();
+        for (int i = 0; i < childCount; i++) {
+            AccessibilityNodeInfo child = root.getChild(i);
+            if (child == null) {
+                continue;
+            }
+            if (child.getCollectionInfo() != null) {
+                while (child.getActionList().contains(AccessibilityAction.ACTION_SCROLL_FORWARD)) {
+                    scrollForward(child);
+                    waitForIdle();
+                    result = getNodeTimed(() -> findByText(child, text));
+                    if (result != null) {
+                        return result;
+                    }
+                }
+            } else {
+                result = findByTextInCollection(child, text);
+                if (result != null) {
+                    return result;
+                }
+            }
+        }
+        return null;
+    }
+
+    private static void scrollForward(AccessibilityNodeInfo node) throws Exception {
+        getInstrumentation().getUiAutomation().executeAndWaitForEvent(
+                () -> node.performAction(AccessibilityNodeInfo.ACTION_SCROLL_FORWARD),
+                (AccessibilityEvent event) -> event.getEventType() == AccessibilityEvent.TYPE_VIEW_SCROLLED,
+                GLOBAL_TIMEOUT_MILLIS);
+    }
+
+    private static void click(AccessibilityNodeInfo node) throws Exception {
+        getInstrumentation().getUiAutomation().executeAndWaitForEvent(
+                () -> node.performAction(AccessibilityNodeInfo.ACTION_CLICK),
+                (AccessibilityEvent event) -> event.getEventType() == AccessibilityEvent.TYPE_VIEW_CLICKED,
+                GLOBAL_TIMEOUT_MILLIS);
+    }
+
+    private static AccessibilityNodeInfo findCollectionItem(AccessibilityNodeInfo current) throws Exception {
+        AccessibilityNodeInfo result = current;
+        while (result != null) {
+            if (result.getCollectionItemInfo() != null) {
+                return result;
+            }
+            result = result.getParent();
+        }
+        return null;
+    }
+
+    private static AccessibilityNodeInfo findSwitch(AccessibilityNodeInfo root) throws Exception {
+        if (Switch.class.getName().equals(root.getClassName().toString())) {
+            return root;
+        }
+        final int childCount = root.getChildCount();
+        for (int i = 0; i < childCount; i++) {
+            AccessibilityNodeInfo child = root.getChild(i);
+            if (child == null) {
+                continue;
+            }
+            if (Switch.class.getName().equals(child.getClassName().toString())) {
+                return child;
+            }
+            AccessibilityNodeInfo result = findSwitch(child);
+            if (result != null) {
+                return result;
+            }
+        }
+        return null;
+    }
+
+    private static AccessibilityNodeInfo getNodeTimed(Callable<AccessibilityNodeInfo> callable) throws Exception {
+        final long startTimeMillis = SystemClock.uptimeMillis();
+        while (true) {
+            AccessibilityNodeInfo node = callable.call();
+            if (node != null) {
+                return node;
+            }
+            final long elapsedTimeMillis = SystemClock.uptimeMillis() - startTimeMillis;
+            final long remainingTimeMillis = Math.min(startTimeMillis + RETRY_TIMEOUT, 2 * elapsedTimeMillis);
+            SystemClock.sleep(remainingTimeMillis);
+        }
+    }
+
+    private static void waitForIdle() throws TimeoutException {
+        getInstrumentation().getUiAutomation().waitForIdle(IDLE_TIMEOUT_MILLIS, GLOBAL_TIMEOUT_MILLIS);
+    }
+ }
