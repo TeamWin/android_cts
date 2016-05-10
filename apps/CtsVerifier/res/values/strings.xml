@@ -853,32 +853,32 @@
     1. Click Start Test. \n
     2. Go to home screen (HOME key). \n
     3. Launch Camera application. \n
-    4. Capture photo. \n
+    4. Capture photo within 1 minute. \n
     5. Return to CTS verifier app. \n
-    6. Pass button will light up if intent was received.\n
+    6. Pass button will light up if URI trigger was fired.\n
     7. Click "Pass" if possible.
     </string>
     <string name="ci_instruction_text_app_video_label">\n
     1. Click Start Test. \n
     2. Go to home screen (HOME key). \n
     3. Launch Camera application. \n
-    4. Capture video. \n
+    4. Capture video within 1 minute. \n
     5. Return to CTS verifier app. \n
-    6. Pass button will light up if intent was received.\n
+    6. Pass button will light up if URI trigger was fired.\n
     7. Click "Pass" if possible.
     </string>
     <string name="ci_instruction_text_intent_picture_label">\n
     1. Click Start Test.\n
     2. Camera app will launch, prompting to take photo.\n
-    3. Capture/confirm photo using camera app controls.\n
-    4. Pass button will light up if intent was NOT received.\n
+    3. Capture/confirm photo using camera app controls within 1 minute.\n
+    4. Pass button will light up if URI trigger was NOT received.\n
     5. Click "Pass" if possible.
     </string>
     <string name="ci_instruction_text_intent_video_label">\n
     1. Click Start Test.\n
     2. Camera app will launch, prompting to take video.\n
-    3. Capture/confirm video using camera app controls.\n
-    4. Pass button will light up if intent was received.\n
+    3. Capture/confirm video using camera app controls within 1 minute.\n
+    4. Pass button will light up if URI trigger was received.\n
     5. Click "Pass" if possible.
     </string>
     <string name="ci_start_test_button_caption">Start Test</string>
