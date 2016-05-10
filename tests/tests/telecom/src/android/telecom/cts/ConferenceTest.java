@@ -276,18 +276,42 @@ public class ConferenceTest extends BaseTelecomTestWithMockServices {
         final Call conf = mInCallService.getLastConferenceCall();
         assertCallState(conf, Call.STATE_ACTIVE);
 
+        setupExtras();
+
+        mConferenceObject.removeExtras(Arrays.asList(TEST_EXTRA_KEY_1));
+        mOnExtrasChangedCounter.waitForCount(2);
+        Bundle extras = mConferenceObject.getExtras();
+
+        assertFalse(extras.containsKey(TEST_EXTRA_KEY_1));
+        assertTrue(extras.containsKey(TEST_EXTRA_KEY_2));
+    }
+
+    /**
+     * Verifies {@link Conference#removeExtras(String[])} calls are propagated to
+     * {@link android.telecom.Call.Callback#onDetailsChanged(Call, Call.Details)}.
+     */
+    public void testConferenceRemoveExtras2() {
+        if (!mShouldTestTelecom) {
+            return;
+        }
+        final Call conf = mInCallService.getLastConferenceCall();
+        assertCallState(conf, Call.STATE_ACTIVE);
+
+        setupExtras();
+
+        mConferenceObject.removeExtras(TEST_EXTRA_KEY_1, TEST_EXTRA_KEY_2);
+        mOnExtrasChangedCounter.waitForCount(2);
+        Bundle extras = mConferenceObject.getExtras();
+
+        assertNull(extras);
+    }
+
+    private void setupExtras() {
         Bundle extras = new Bundle();
         extras.putString(TEST_EXTRA_KEY_1, TEST_EXTRA_VALUE_1);
         extras.putInt(TEST_EXTRA_KEY_2, TEST_EXTRA_VALUE_2);
         mConferenceObject.putExtras(extras);
         mOnExtrasChangedCounter.waitForCount(1);
-
-        mConferenceObject.removeExtras(Arrays.asList(TEST_EXTRA_KEY_1));
-        mOnExtrasChangedCounter.waitForCount(2);
-        extras = mConferenceObject.getExtras();
-
-        assertFalse(extras.containsKey(TEST_EXTRA_KEY_1));
-        assertTrue(extras.containsKey(TEST_EXTRA_KEY_2));
     }
 
     /**
