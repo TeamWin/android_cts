@@ -276,8 +276,7 @@ public class UsePermissionTest23 extends BasePermissionsTest {
                         Manifest.permission.WRITE_CONTACTS}, REQUEST_CODE_PERMISSIONS + 1,
                 BasePermissionActivity.class, () -> {
                     try {
-                        clickDontAskAgainCheckbox();
-                        clickDenyButton();
+                        denyWithPrejudice();
                         getUiDevice().waitForIdle();
                     } catch (Exception e) {
                         throw new RuntimeException(e);
@@ -352,8 +351,7 @@ public class UsePermissionTest23 extends BasePermissionsTest {
                         Manifest.permission.READ_CALENDAR}, REQUEST_CODE_PERMISSIONS + 1,
                 BasePermissionActivity.class, () -> {
                     try {
-                        clickDontAskAgainCheckbox();
-                        clickDenyButton();
+                        denyWithPrejudice();
                         getUiDevice().waitForIdle();
                     } catch (Exception e) {
                         throw new RuntimeException(e);
@@ -556,6 +554,16 @@ public class UsePermissionTest23 extends BasePermissionsTest {
         for (String permission : permissions) {
             assertEquals(grantState, getInstrumentation().getContext()
                     .checkSelfPermission(permission));
+        }
+    }
+
+    private void denyWithPrejudice() throws Exception {
+        if (!getInstrumentation().getContext().getPackageManager()
+                .hasSystemFeature(PackageManager.FEATURE_LEANBACK)) {
+            clickDontAskAgainCheckbox();
+            clickDenyButton();
+        } else {
+            clickDontAskAgainButton();
         }
     }
 }
