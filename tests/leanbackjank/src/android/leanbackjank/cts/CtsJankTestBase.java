@@ -16,17 +16,19 @@
 
 package android.leanbackjank.cts;
 
-import android.cts.util.DeviceReportLog;
 import android.os.Bundle;
 import android.support.test.jank.GfxMonitor;
 import android.support.test.jank.JankTestBase;
 import android.support.test.jank.WindowContentFrameStatsMonitor;
 import android.support.test.uiautomator.UiDevice;
 
-import com.android.cts.util.ResultType;
-import com.android.cts.util.ResultUnit;
+import com.android.compatibility.common.util.DeviceReportLog;
+import com.android.compatibility.common.util.ResultType;
+import com.android.compatibility.common.util.ResultUnit;
 
 public abstract class CtsJankTestBase extends JankTestBase {
+
+    private final String REPORT_LOG_NAME = "CtsLeanbackJankTestCases";
 
     private UiDevice mDevice;
     private DeviceReportLog mLog;
@@ -36,7 +38,7 @@ public abstract class CtsJankTestBase extends JankTestBase {
         if (!metrics.containsKey(key)) {
             return;
         }
-        mLog.printValue(source, key, metrics.getInt(key), resultType, resultUnit);
+        mLog.addValue(source, key, metrics.getInt(key), resultType, resultUnit);
     }
 
     private void printDoubleValueWithKey(String source, Bundle metrics, String key,
@@ -44,7 +46,7 @@ public abstract class CtsJankTestBase extends JankTestBase {
         if (!metrics.containsKey(key)) {
             return;
         }
-        mLog.printValue(source, key, metrics.getDouble(key), resultType, resultUnit);
+        mLog.addValue(source, key, metrics.getDouble(key), resultType, resultUnit);
     }
 
     @Override
@@ -57,7 +59,7 @@ public abstract class CtsJankTestBase extends JankTestBase {
                 ResultType.LOWER_BETTER, ResultUnit.MS);
         printIntValueWithKey(source, metrics, WindowContentFrameStatsMonitor.KEY_MAX_NUM_JANKY,
                 ResultType.LOWER_BETTER, ResultUnit.COUNT);
-        mLog.printSummary(WindowContentFrameStatsMonitor.KEY_AVG_NUM_JANKY,
+        mLog.setSummary(WindowContentFrameStatsMonitor.KEY_AVG_NUM_JANKY,
                 metrics.getDouble(WindowContentFrameStatsMonitor.KEY_AVG_NUM_JANKY),
                 ResultType.LOWER_BETTER, ResultUnit.COUNT);
 
@@ -84,7 +86,8 @@ public abstract class CtsJankTestBase extends JankTestBase {
     @Override
     protected void setUp() throws Exception {
         super.setUp();
-        mLog = new DeviceReportLog();
+        String streamName = "cts_leanback_jank";
+        mLog = new DeviceReportLog(REPORT_LOG_NAME, streamName);
         // fix device orientation
         mDevice = UiDevice.getInstance(getInstrumentation());
         mDevice.setOrientationNatural();
@@ -92,7 +95,7 @@ public abstract class CtsJankTestBase extends JankTestBase {
 
     @Override
     protected void tearDown() throws Exception {
-        mLog.deliverReportToHost(getInstrumentation());
+        mLog.submit(getInstrumentation());
         // restore device orientation
         mDevice.unfreezeRotation();
         super.tearDown();

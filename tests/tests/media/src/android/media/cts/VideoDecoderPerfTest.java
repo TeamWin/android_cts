@@ -21,7 +21,6 @@ import android.media.cts.R;
 import android.content.Context;
 import android.content.res.AssetFileDescriptor;
 import android.content.res.Resources;
-import android.cts.util.DeviceReportLog;
 import android.cts.util.MediaUtils;
 import android.media.MediaCodec;
 import android.media.MediaCodecList;
@@ -34,8 +33,9 @@ import android.util.Log;
 import android.util.Range;
 import android.view.Surface;
 
-import com.android.cts.util.ResultType;
-import com.android.cts.util.ResultUnit;
+import com.android.compatibility.common.util.DeviceReportLog;
+import com.android.compatibility.common.util.ResultType;
+import com.android.compatibility.common.util.ResultUnit;
 import com.android.compatibility.common.util.Stat;
 
 import java.nio.ByteBuffer;
@@ -45,6 +45,7 @@ import java.util.LinkedList;
 
 public class VideoDecoderPerfTest extends MediaPlayerTestBase {
     private static final String TAG = "VideoDecoderPerfTest";
+    private static final String REPORT_LOG_NAME = "CtsMediaTestCases";
     private static final int TOTAL_FRAMES = 3000;
     private static final int MAX_TIME_MS = 120000;  // 2 minutes
     private static final int NUMBER_OF_REPEAT = 2;
@@ -71,12 +72,13 @@ public class VideoDecoderPerfTest extends MediaPlayerTestBase {
         super.setUp();
         mVerifyResults = true;
         mResources = mContext.getResources();
-        mReportLog = new DeviceReportLog();
+        String streamName = "video_decoder_perf_test";
+        mReportLog = new DeviceReportLog(REPORT_LOG_NAME, streamName);
     }
 
     @Override
     protected void tearDown() throws Exception {
-        mReportLog.deliverReportToHost(getInstrumentation());
+        mReportLog.submit(getInstrumentation());
         super.tearDown();
     }
 
@@ -149,7 +151,7 @@ public class VideoDecoderPerfTest extends MediaPlayerTestBase {
             mResultRawData = null;
         }
         // use 0 for summary line, detail for each test config is in the report.
-        mReportLog.printSummary("average fps", 0, ResultType.HIGHER_BETTER, ResultUnit.FPS);
+        mReportLog.setSummary("average_fps", 0, ResultType.HIGHER_BETTER, ResultUnit.FPS);
         mSamplesInMemory.clear();
     }
 
@@ -298,7 +300,7 @@ public class VideoDecoderPerfTest extends MediaPlayerTestBase {
 
         String message = "average fps for " + testConfig;
         double fps = (double)outputNum / ((finish - start) / 1000.0);
-        mReportLog.printValue(message, fps, ResultType.HIGHER_BETTER, ResultUnit.FPS);
+        mReportLog.addValue(message, fps, ResultType.HIGHER_BETTER, ResultUnit.FPS);
 
         double[] avgs = MediaUtils.calculateMovingAverage(frameTimeDiff, MOVING_AVERAGE_NUM);
         double decMin = Stat.getMin(avgs);
