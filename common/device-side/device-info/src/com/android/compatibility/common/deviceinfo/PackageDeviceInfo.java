@@ -41,8 +41,10 @@ public class PackageDeviceInfo extends DeviceInfo {
             store.addResult(NAME, pkg.packageName);
             store.addResult(VERSION_NAME, pkg.versionName);
 
-            String dir = pkg.applicationInfo.sourceDir;
-            store.addResult(SYSTEM_PRIV, dir != null && dir.startsWith(PRIV_APP_DIR));
+            if (pkg.applicationInfo != null) {
+                String dir = pkg.applicationInfo.sourceDir;
+                store.addResult(SYSTEM_PRIV, dir != null && dir.startsWith(PRIV_APP_DIR));
+            }
             store.endGroup();
         }
         store.endArray(); // Package
