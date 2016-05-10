@@ -27,9 +27,9 @@ import android.media.MediaFormat;
 import android.net.Uri;
 import android.util.Range;
 
-import com.android.cts.util.ReportLog;
-import com.android.cts.util.ResultType;
-import com.android.cts.util.ResultUnit;
+import com.android.compatibility.common.util.DeviceReportLog;
+import com.android.compatibility.common.util.ResultType;
+import com.android.compatibility.common.util.ResultUnit;
 
 import java.lang.reflect.Method;
 import static java.lang.reflect.Modifier.isPublic;
@@ -503,12 +503,12 @@ public class MediaUtils {
         return avgs;
     }
 
-    public static String logResults(ReportLog log, String prefix,
+    public static String logResults(DeviceReportLog log, String prefix,
             double min, double max, double avg, double stdev) {
         String msg = prefix;
         msg += " min=" + Math.round(min / 1000) + " max=" + Math.round(max / 1000) +
                 " avg=" + Math.round(avg / 1000) + " stdev=" + Math.round(stdev / 1000);
-        log.printValue(msg, 1000000000 / min, ResultType.HIGHER_BETTER, ResultUnit.FPS);
+        log.addValue(msg, 1000000000 / min, ResultType.HIGHER_BETTER, ResultUnit.FPS);
         return msg;
     }
 

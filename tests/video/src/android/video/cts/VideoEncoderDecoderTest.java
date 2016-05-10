@@ -17,7 +17,6 @@
 package android.video.cts;
 
 import android.cts.util.MediaUtils;
-import android.cts.util.DeviceReportLog;
 import android.graphics.ImageFormat;
 import android.graphics.Point;
 import android.media.Image;
@@ -36,8 +35,9 @@ import android.util.Pair;
 import android.util.Range;
 
 import android.cts.util.CtsAndroidTestCase;
-import com.android.cts.util.ResultType;
-import com.android.cts.util.ResultUnit;
+import com.android.compatibility.common.util.DeviceReportLog;
+import com.android.compatibility.common.util.ResultType;
+import com.android.compatibility.common.util.ResultUnit;
 import com.android.compatibility.common.util.Stat;
 import com.android.cts.util.TimeoutReq;
 
@@ -61,6 +61,7 @@ import java.util.Random;
  */
 public class VideoEncoderDecoderTest extends CtsAndroidTestCase {
     private static final String TAG = "VideoEncoderDecoderTest";
+    private static final String REPORT_LOG_NAME = "CtsVideoTestCases";
     // this wait time affects fps as too big value will work as a blocker if device fps
     // is not very high.
     private static final long VIDEO_CODEC_WAIT_TIME_US = 5000;
@@ -123,7 +124,8 @@ public class VideoEncoderDecoderTest extends CtsAndroidTestCase {
         long now = System.currentTimeMillis();
         mRandom = new Random(now);
         mTestConfig = new TestConfig();
-        mReportLog = new DeviceReportLog();
+        String streamName = "video_encoder_decoder_test";
+        mReportLog = new DeviceReportLog(REPORT_LOG_NAME, streamName);
         super.setUp();
     }
 
@@ -137,7 +139,7 @@ public class VideoEncoderDecoderTest extends CtsAndroidTestCase {
         mUVDirectBuffer = null;
         mRandom = null;
         mTestConfig = null;
-        mReportLog.deliverReportToHost(getInstrumentation());
+        mReportLog.submit(getInstrumentation());
         super.tearDown();
     }
 
@@ -553,19 +555,19 @@ public class VideoEncoderDecoderTest extends CtsAndroidTestCase {
             // it will be good to clean everything to make every run the same.
             System.gc();
         }
-        mReportLog.printArray("encoder", encoderFpsResults, ResultType.HIGHER_BETTER,
+        mReportLog.addValues("encoder", encoderFpsResults, ResultType.HIGHER_BETTER,
                 ResultUnit.FPS);
-        mReportLog.printArray("rms error", decoderRmsErrorResults, ResultType.LOWER_BETTER,
+        mReportLog.addValues("rms_error", decoderRmsErrorResults, ResultType.LOWER_BETTER,
                 ResultUnit.NONE);
-        mReportLog.printArray("decoder", decoderFpsResults, ResultType.HIGHER_BETTER,
+        mReportLog.addValues("decoder", decoderFpsResults, ResultType.HIGHER_BETTER,
                 ResultUnit.FPS);
-        mReportLog.printArray("encoder decoder", totalFpsResults, ResultType.HIGHER_BETTER,
+        mReportLog.addValues("encoder_decoder", totalFpsResults, ResultType.HIGHER_BETTER,
                 ResultUnit.FPS);
-        mReportLog.printValue(mimeType + " encoder average fps for " + w + "x" + h,
+        mReportLog.addValue(mimeType + "_encoder_average_fps_for_" + w + "x" + h,
                 Stat.getAverage(encoderFpsResults), ResultType.HIGHER_BETTER, ResultUnit.FPS);
-        mReportLog.printValue(mimeType + " decoder average fps for " + w + "x" + h,
+        mReportLog.addValue(mimeType + "_decoder_average_fps_for_" + w + "x" + h,
                 Stat.getAverage(decoderFpsResults), ResultType.HIGHER_BETTER, ResultUnit.FPS);
-        mReportLog.printSummary("encoder decoder", Stat.getAverage(totalFpsResults),
+        mReportLog.setSummary("encoder_decoder", Stat.getAverage(totalFpsResults),
                 ResultType.HIGHER_BETTER, ResultUnit.FPS);
 
         boolean encTestPassed = false;
@@ -580,10 +582,10 @@ public class VideoEncoderDecoderTest extends CtsAndroidTestCase {
             }
 
             if (mTestConfig.mReportFrameTime) {
-                mReportLog.printValue(
+                mReportLog.addValue(
                         "encodertest#" + i + ": " + Arrays.toString(mEncoderFrameTimeDiff[i]),
                         0, ResultType.NEUTRAL, ResultUnit.NONE);
-                mReportLog.printValue(
+                mReportLog.addValue(
                         "decodertest#" + i + ": " + Arrays.toString(mDecoderFrameTimeDiff[i]),
                         0, ResultType.NEUTRAL, ResultUnit.NONE);
             }
