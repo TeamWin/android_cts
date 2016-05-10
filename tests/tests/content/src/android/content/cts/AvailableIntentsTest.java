@@ -242,4 +242,8 @@ public class AvailableIntentsTest extends AndroidTestCase {
     public void testViewDownloads() {
         assertCanBeHandled(new Intent(DownloadManager.ACTION_VIEW_DOWNLOADS));
     }
+
+    public void testDeletionHelper() {
+        assertCanBeHandled(new Intent(Settings.ACTION_DELETION_HELPER_SETTINGS));
+    }
 }
