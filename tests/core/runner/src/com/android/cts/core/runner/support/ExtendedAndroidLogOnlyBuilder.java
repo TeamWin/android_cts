@@ -15,18 +15,23 @@
  */
 package com.android.cts.core.runner.support;
 
-import android.support.test.internal.runner.junit4.AndroidAnnotatedBuilder;
+import android.support.test.internal.runner.AndroidLogOnlyBuilder;
 import android.support.test.internal.util.AndroidRunnerParams;
 import android.support.test.runner.AndroidJUnit4;
 import junit.framework.TestCase;
 import org.junit.runner.RunWith;
 import org.junit.runner.Runner;
+import org.junit.runners.Parameterized;
 import org.junit.runners.BlockJUnit4ClassRunner;
 import org.junit.runners.JUnit4;
 import org.junit.runners.model.RunnerBuilder;
+import org.junit.runners.Suite;
+
+import static android.support.test.internal.util.AndroidRunnerBuilderUtil.isJUnit3Test;
+import static android.support.test.internal.util.AndroidRunnerBuilderUtil.isJUnit3TestSuite;
 
 /**
- * Extends {@link AndroidAnnotatedBuilder} to add support for passing the
+ * Extends {@link AndroidLogOnlyBuilder} to add support for passing the
  * {@link AndroidRunnerParams} object to the constructor of any {@link RunnerBuilder}
  * implementation that is not a {@link BlockJUnit4ClassRunner}.
  *
@@ -44,46 +49,48 @@ import org.junit.runners.model.RunnerBuilder;
  * <p>It then attempts to construct a {@link RunnerBuilder} by calling the constructor with the
  * signature {@code <init>(Class, AndroidRunnerParams)}. If that doesn't exist it falls back to
  * the overridden behavior.
+ *
+ * <p>Another unfortunate behavior of the {@link AndroidLogOnlyBuilder} is that it assumes the
+ * {@link Parameterized} class has a field called DEFAULT_FACTORY. That field is only present
+ * in JUnit 4.12, and not JUnit 4.10 used by tests run by CoreTestRunner.
+ * Therefore these tests are actually skipped by this class and executed even though
+ * isSkipExecution is true.
  */
-class ExtendedAndroidAnnotatedBuilder extends AndroidAnnotatedBuilder {
+class ExtendedAndroidLogOnlyBuilder extends AndroidLogOnlyBuilder {
 
     private final AndroidRunnerParams runnerParams;
 
-    public ExtendedAndroidAnnotatedBuilder(RunnerBuilder suiteBuilder,
-            AndroidRunnerParams runnerParams) {
-        super(suiteBuilder, runnerParams);
+    public ExtendedAndroidLogOnlyBuilder(AndroidRunnerParams runnerParams) {
+        super(runnerParams);
         this.runnerParams = runnerParams;
     }
 
     @Override
-    public Runner runnerForClass(Class<?> testClass) throws Exception {
-
-        RunWith annotation = testClass.getAnnotation(RunWith.class);
-        if (annotation != null) {
-            Class<? extends Runner> runnerClass = annotation.value();
-
-            // If the runner is expected to skip execution and it is a JUnit4, AndroidJUnit4 or
-            // a JUnit3 test class then return a special skipping runner.
-            if (runnerParams.isSkipExecution()) {
-                if (runnerClass == AndroidJUnit4.class || runnerClass == JUnit4.class
-                        || TestCase.class.isAssignableFrom(testClass)) {
-                    return super.runnerForClass(testClass);
-                }
-            }
-
-            try {
-                // try to build an AndroidJUnit4 runner
-                Runner runner = buildAndroidRunner(runnerClass, testClass);
-                if (runner != null) {
-                    return runner;
-                }
-            } catch (NoSuchMethodException e) {
-                // let the super class handle the error for us and throw an InitializationError
-                // exception.
-                return super.buildRunner(runnerClass, testClass);
-            }
+    public Runner runnerForClass(Class<?> testClass) throws Throwable {
+        if (!runnerParams.isSkipExecution() ||
+                isJUnit3Test(testClass) || isJUnit3TestSuite(testClass)) {
+            return super.runnerForClass(testClass);
         }
 
-        return null;
+        RunWith annotation = testClass.getAnnotation(RunWith.class);
+
+        if (annotation != null) {
+            Class<? extends Runner> runnerClass = annotation.value();
+            if (runnerClass == AndroidJUnit4.class || runnerClass == JUnit4.class
+                    || TestCase.class.isAssignableFrom(testClass)) {
+                return super.runnerForClass(testClass);
+            }
+            try {
+                // b/28606746 try to build an AndroidJUnit4 runner to avoid BlockJUnit4ClassRunner
+                return runnerClass.getConstructor(Class.class, AndroidRunnerParams.class).newInstance(
+                    testClass, runnerParams);
+            } catch (NoSuchMethodException e) {
+                // Let the super class handle the error for us and throw an InitializationError
+                // exception. Returning null means that this test will be executed.
+                // b/28606746 Some parameterized tests that cannot be skipped fall through this
+                return null;
+            }
+        }
+        return super.runnerForClass(testClass);
     }
 }
