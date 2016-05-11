@@ -16,6 +16,7 @@
 
 package android.widget.cts;
 
+import android.widget.BaseAdapter;
 import android.widget.cts.R;
 
 import org.xmlpull.v1.XmlPullParser;
@@ -613,6 +614,130 @@ public class ListViewTest extends ActivityInstrumentationTestCase2<ListViewCtsAc
         adapter.notifyDataSetChanged();
         listView.measure(measureSpec, measureSpec);
         listView.layout(0, 0, 100, 100);
+    }
+
+    @MediumTest
+    public void testFullDetachHeaderViewOnScroll() {
+        final AttachDetachAwareView header = new AttachDetachAwareView(mActivity);
+        ViewTestUtils.runOnMainAndDrawSync(getInstrumentation(), mListView, () -> {
+            mListView.setAdapter(new DummyAdapter(1000));
+            mListView.addHeaderView(header);
+        });
+        assertEquals("test sanity", 1, header.mOnAttachCount);
+        assertEquals("test sanity", 0, header.mOnDetachCount);
+        ViewTestUtils.runOnMainAndDrawSync(getInstrumentation(), mListView, () -> {
+            mListView.scrollListBy(mListView.getHeight() * 3);
+        });
+        assertNull("test sanity, header should be removed", header.getParent());
+        assertEquals("header view should be detached", 1, header.mOnDetachCount);
+        assertFalse(header.isTemporarilyDetached());
+    }
+
+    @MediumTest
+    public void testFullDetachHeaderViewOnRelayout() {
+        final AttachDetachAwareView header = new AttachDetachAwareView(mActivity);
+        ViewTestUtils.runOnMainAndDrawSync(getInstrumentation(), mListView, () -> {
+            mListView.setAdapter(new DummyAdapter(1000));
+            mListView.addHeaderView(header);
+        });
+        assertEquals("test sanity", 1, header.mOnAttachCount);
+        assertEquals("test sanity", 0, header.mOnDetachCount);
+        ViewTestUtils.runOnMainAndDrawSync(getInstrumentation(), mListView, () -> {
+            mListView.setSelection(800);
+        });
+        assertNull("test sanity, header should be removed", header.getParent());
+        assertEquals("header view should be detached", 1, header.mOnDetachCount);
+        assertFalse(header.isTemporarilyDetached());
+    }
+
+    @MediumTest
+    public void testFullDetachHeaderViewOnScrollForFocus() {
+        final AttachDetachAwareView header = new AttachDetachAwareView(mActivity);
+        ViewTestUtils.runOnMainAndDrawSync(getInstrumentation(), mListView, () -> {
+            mListView.setAdapter(new DummyAdapter(1000));
+            mListView.addHeaderView(header);
+        });
+        assertEquals("test sanity", 1, header.mOnAttachCount);
+        assertEquals("test sanity", 0, header.mOnDetachCount);
+        while(header.getParent() != null) {
+            assertEquals("header view should NOT be detached", 0, header.mOnDetachCount);
+            sendKeys(KeyEvent.KEYCODE_DPAD_DOWN);
+            ViewTestUtils.runOnMainAndDrawSync(getInstrumentation(), mListView, null);
+        }
+        assertEquals("header view should be detached", 1, header.mOnDetachCount);
+        assertFalse(header.isTemporarilyDetached());
+    }
+
+    @MediumTest
+    public void testFullyDetachUnusedViewOnScroll() {
+        final AttachDetachAwareView theView = new AttachDetachAwareView(mActivity);
+        ViewTestUtils.runOnMainAndDrawSync(getInstrumentation(), mListView, () -> {
+            mListView.setAdapter(new DummyAdapter(1000, theView));
+        });
+        assertEquals("test sanity", 1, theView.mOnAttachCount);
+        assertEquals("test sanity", 0, theView.mOnDetachCount);
+        ViewTestUtils.runOnMainAndDrawSync(getInstrumentation(), mListView, () -> {
+            mListView.scrollListBy(mListView.getHeight() * 2);
+        });
+        assertNull("test sanity, unused view should be removed", theView.getParent());
+        assertEquals("unused view should be detached", 1, theView.mOnDetachCount);
+        assertFalse(theView.isTemporarilyDetached());
+        ViewTestUtils.runOnMainAndDrawSync(getInstrumentation(), mListView, () -> {
+            mListView.scrollListBy(-mListView.getHeight() * 2);
+            // listview limits scroll to 1 page which is why we call it twice here.
+            mListView.scrollListBy(-mListView.getHeight() * 2);
+        });
+        assertNotNull("test sanity, view should be re-added", theView.getParent());
+        assertEquals("view should receive another attach call", 2, theView.mOnAttachCount);
+        assertEquals("view should not receive a detach call", 1, theView.mOnDetachCount);
+        assertFalse(theView.isTemporarilyDetached());
+    }
+
+    @MediumTest
+    public void testFullyDetachUnusedViewOnReLayout() {
+        final AttachDetachAwareView theView = new AttachDetachAwareView(mActivity);
+        ViewTestUtils.runOnMainAndDrawSync(getInstrumentation(), mListView, () -> {
+            mListView.setAdapter(new DummyAdapter(1000, theView));
+        });
+        assertEquals("test sanity", 1, theView.mOnAttachCount);
+        assertEquals("test sanity", 0, theView.mOnDetachCount);
+        ViewTestUtils.runOnMainAndDrawSync(getInstrumentation(), mListView, () -> {
+            mListView.setSelection(800);
+        });
+        assertNull("test sanity, unused view should be removed", theView.getParent());
+        assertEquals("unused view should be detached", 1, theView.mOnDetachCount);
+        assertFalse(theView.isTemporarilyDetached());
+        ViewTestUtils.runOnMainAndDrawSync(getInstrumentation(), mListView, () -> {
+            mListView.setSelection(0);
+        });
+        assertNotNull("test sanity, view should be re-added", theView.getParent());
+        assertEquals("view should receive another attach call", 2, theView.mOnAttachCount);
+        assertEquals("view should not receive a detach call", 1, theView.mOnDetachCount);
+        assertFalse(theView.isTemporarilyDetached());
+    }
+
+    @MediumTest
+    public void testFullyDetachUnusedViewOnScrollForFocus() {
+        final AttachDetachAwareView theView = new AttachDetachAwareView(mActivity);
+        ViewTestUtils.runOnMainAndDrawSync(getInstrumentation(), mListView, () -> {
+            mListView.setAdapter(new DummyAdapter(1000, theView));
+        });
+        assertEquals("test sanity", 1, theView.mOnAttachCount);
+        assertEquals("test sanity", 0, theView.mOnDetachCount);
+        while(theView.getParent() != null) {
+            assertEquals("the view should NOT be detached", 0, theView.mOnDetachCount);
+            sendKeys(KeyEvent.KEYCODE_DPAD_DOWN);
+            ViewTestUtils.runOnMainAndDrawSync(getInstrumentation(), mListView, null);
+        }
+        assertEquals("the view should be detached", 1, theView.mOnDetachCount);
+        assertFalse(theView.isTemporarilyDetached());
+        while(theView.getParent() == null) {
+            sendKeys(KeyEvent.KEYCODE_DPAD_UP);
+            ViewTestUtils.runOnMainAndDrawSync(getInstrumentation(), mListView, null);
+        }
+        assertEquals("the view should be re-attached", 2, theView.mOnAttachCount);
+        assertEquals("the view should not recieve another detach", 1, theView.mOnDetachCount);
+        assertFalse(theView.isTemporarilyDetached());
     }
 
     private class MockView extends View {
