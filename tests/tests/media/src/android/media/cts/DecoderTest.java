@@ -2497,5 +2497,182 @@ public class DecoderTest extends MediaPlayerTestBase {
         mMediaCodecPlayer.flush();
         // mMediaCodecPlayer.reset() handled in TearDown();
     }
+
+    /**
+     * Returns list of CodecCapabilities advertising support for the given MIME type.
+     */
+    private static List<CodecCapabilities> getCodecCapabilitiesForMimeType(String mimeType) {
+        int numCodecs = MediaCodecList.getCodecCount();
+        List<CodecCapabilities> caps = new ArrayList<CodecCapabilities>();
+        for (int i = 0; i < numCodecs; i++) {
+            MediaCodecInfo codecInfo = MediaCodecList.getCodecInfoAt(i);
+            if (codecInfo.isEncoder()) {
+                continue;
+            }
+
+            String[] types = codecInfo.getSupportedTypes();
+            for (int j = 0; j < types.length; j++) {
+                if (types[j].equalsIgnoreCase(mimeType)) {
+                    caps.add(codecInfo.getCapabilitiesForType(mimeType));
+                }
+            }
+        }
+        return caps;
+    }
+
+    /**
+     * Returns true if there exists a codec supporting the given MIME type that meets VR high
+     * performance requirements.
+     *
+     * The requirements are as follows:
+     *   - At least 972000 blocks per second (where blocks are defined as 16x16 -- note this
+     *   is equivalent to 3840x2160@30fps)
+     *   - At least 4 concurrent instances
+     *   - Feature adaptive-playback present
+     */
+    private static boolean doesMimeTypeHaveVrReadyCodec(String mimeType) {
+        List<CodecCapabilities> caps = getCodecCapabilitiesForMimeType(mimeType);
+        for (CodecCapabilities c : caps) {
+            if (c.getMaxSupportedInstances() < 4) {
+                continue;
+            }
+
+            if (!c.isFeatureSupported(CodecCapabilities.FEATURE_AdaptivePlayback)) {
+                continue;
+            }
+
+            if (!c.getVideoCapabilities().areSizeAndRateSupported(3840, 2160, 30.0)) {
+                continue;
+            }
+
+            return true;
+        }
+
+        return false;
+    }
+
+    private class DecodeRunnable implements Runnable {
+        private int video;
+        private int frames;
+        private long durationMillis;
+
+        public DecodeRunnable(int video) {
+            this.video = video;
+            this.frames = 0;
+            this.durationMillis = 0;
+        }
+
+        @Override
+        public void run() {
+            long start = System.currentTimeMillis();
+            int actual = 0;
+            try {
+                actual = countFrames(this.video, RESET_MODE_NONE, -1, null);
+            } catch (Exception e) {
+                actual = -1;
+            }
+            long durationMillis = System.currentTimeMillis() - start;
+
+            synchronized (this) {
+                this.frames = actual;
+                this.durationMillis = durationMillis;
+            }
+        }
+
+        public synchronized int getFrames() {
+            return this.frames;
+        }
+
+        public synchronized double getMeasuredFps() {
+            return this.frames / (this.durationMillis / 1000.0);
+        }
+    }
+
+    private void decodeInParallel(int video, int frames, int fps, int parallel) throws Exception {
+        DecodeRunnable[] runnables = new DecodeRunnable[parallel];
+        Thread[] threads = new Thread[parallel];
+
+        for (int i = 0; i < parallel; ++i) {
+            runnables[i] = new DecodeRunnable(video);
+            threads[i] = new Thread(runnables[i]);
+            threads[i].start();
+        }
+
+        for (Thread t : threads) {
+            t.join();
+        }
+
+        for (DecodeRunnable dr : runnables) {
+            assertTrue("Expected to decode " + frames + " frames, found " + dr.getFrames(),
+                    frames == dr.getFrames());
+        }
+
+        for (DecodeRunnable dr : runnables) {
+            Log.d(TAG, "Decoded at " + dr.getMeasuredFps());
+            assertTrue("Expected to decode at " + fps + " fps, measured " + dr.getMeasuredFps(),
+                    fps < dr.getMeasuredFps());
+        }
+    }
+
+    public void testVrHighPerformanceH264() throws Exception {
+        if (!supportsVrHighPerformance()) {
+            MediaUtils.skipTest(TAG, "FEATURE_VR_MODE_HIGH_PERFORMANCE not present");
+            return;
+        }
+
+        boolean h264IsReady = doesMimeTypeHaveVrReadyCodec(MediaFormat.MIMETYPE_VIDEO_AVC);
+        assertTrue("Did not find a VR ready H.264 decoder", h264IsReady);
+
+        // Test throughput by decoding 1920x1080 @ 30fps x 4 instances.
+        decodeInParallel(
+                R.raw.video_1920x1080_mp4_h264_20480kbps_30fps_aac_stereo_128kbps_44100hz, 299, 30,
+                4);
+
+        // Test throughput by decoding 1920x1080 @ 60fps x 2 instances.
+        decodeInParallel(
+                R.raw.video_1920x1080_mp4_h264_20480kbps_60fps_aac_stereo_128kbps_44100hz, 596, 60,
+                2);
+    }
+
+    public void testVrHighPerformanceHEVC() throws Exception {
+        if (!supportsVrHighPerformance()) {
+            MediaUtils.skipTest(TAG, "FEATURE_VR_MODE_HIGH_PERFORMANCE not present");
+            return;
+        }
+
+        boolean hevcIsReady = doesMimeTypeHaveVrReadyCodec(MediaFormat.MIMETYPE_VIDEO_HEVC);
+        if (!hevcIsReady) {
+            MediaUtils.skipTest(TAG, "HEVC isn't required to be VR ready");
+            return;
+        }
+
+        // Test throughput by decoding 1920x1080 @ 30fps x 4 instances.
+        decodeInParallel(
+                R.raw.video_1920x1080_mp4_hevc_10240kbps_30fps_aac_stereo_128kbps_44100hz, 299, 30,
+                4);
+    }
+
+    public void testVrHighPerformanceVP9() throws Exception {
+        if (!supportsVrHighPerformance()) {
+            MediaUtils.skipTest(TAG, "FEATURE_VR_MODE_HIGH_PERFORMANCE not present");
+            return;
+        }
+
+        boolean vp9IsReady = doesMimeTypeHaveVrReadyCodec(MediaFormat.MIMETYPE_VIDEO_VP9);
+        if (!vp9IsReady) {
+            MediaUtils.skipTest(TAG, "VP9 isn't required to be VR ready");
+            return;
+        }
+
+        // Test throughput by decoding 1920x1080 @ 30fps x 4 instances.
+        decodeInParallel(
+                R.raw.video_1920x1080_webm_vp9_10240kbps_30fps_vorbis_stereo_128kbps_48000hz, 249,
+                30, 4);
+    }
+
+    private boolean supportsVrHighPerformance() {
+        PackageManager pm = mContext.getPackageManager();
+        return pm.hasSystemFeature(PackageManager.FEATURE_VR_MODE_HIGH_PERFORMANCE);
+    }
 }
 
