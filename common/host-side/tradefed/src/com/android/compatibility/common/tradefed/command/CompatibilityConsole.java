@@ -152,7 +152,7 @@ public class CompatibilityConsole extends Console {
         helpBuilder.append("  help: show this message.\n");
         helpBuilder.append("  help all: show the complete tradefed help.\n");
         helpBuilder.append("  version: show the version.\n");
-        helpBuilder.append("  exit: gracefully exit the compatibiltiy console, waiting until all ");
+        helpBuilder.append("  exit: gracefully exit the compatibility console, waiting until all ");
         helpBuilder.append("invocations have completed.\n");
         helpBuilder.append("Run:\n");
         final String runPrompt = "  run <plan> ";
