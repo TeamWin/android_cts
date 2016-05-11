@@ -34,6 +34,7 @@ LOCAL_STATIC_JAVA_LIBRARIES := \
     ub-uiautomator \
     ub-janktesthelper \
     android-support-v17-leanback \
+    android-support-v7-recyclerview \
     android-support-v4
 
 LOCAL_CTS_MODULE_CONFIG := $(LOCAL_PATH)/Old$(CTS_MODULE_TEST_CONFIG)
