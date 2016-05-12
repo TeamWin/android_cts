@@ -139,4 +139,15 @@ public class BannedFilesTest extends TestCase {
         assertTrue("File \"" + file + "\" is setUID", (fs.mode & FileUtils.S_ISUID) == 0);
         assertTrue("File \"" + file + "\" is setGID", (fs.mode & FileUtils.S_ISGID) == 0);
     }
+
+    /**
+     * Detect "rootmydevice" vulnerability
+     *
+     * References:
+     *
+     * http://www.theregister.co.uk/2016/05/09/allwinners_allloser_custom_kernel_has_a_nasty_root_backdoor/
+     */
+    public void testNoSunxiDebug() {
+        assertFalse("/proc/sunxi_debug/sunxi_debug", new File("/proc/sunxi_debug/sunxi_debug").exists());
+    }
 }
