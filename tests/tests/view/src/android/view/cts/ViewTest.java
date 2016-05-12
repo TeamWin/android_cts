@@ -85,13 +85,13 @@ import android.view.inputmethod.InputConnection;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.FrameLayout;
 import android.widget.LinearLayout;
-import android.widget.ListView;
 
 import java.lang.reflect.Constructor;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
+import java.util.Collections;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -1129,6 +1129,69 @@ public class ViewTest extends ActivityInstrumentationTestCase2<ViewTestCtsActivi
         viewList = view.getFocusables(-1);
         assertEquals(1, viewList.size());
         assertEquals(view, viewList.get(0));
+    }
+
+    public void testAddFocusablesWithoutTouchMode() {
+        View view = new View(mActivity);
+        assertFalse("test sanity", view.isInTouchMode());
+        focusableInTouchModeTest(view, false);
+    }
+
+    public void testAddFocusablesInTouchMode() {
+        View view = spy(new View(mActivity));
+        when(view.isInTouchMode()).thenReturn(true);
+        focusableInTouchModeTest(view, true);
+    }
+
+    private void focusableInTouchModeTest(View view, boolean inTouchMode) {
+        ArrayList<View> views = new ArrayList<View>();
+
+        view.setFocusableInTouchMode(false);
+        view.setFocusable(true);
+
+        view.addFocusables(views, View.FOCUS_FORWARD);
+        if (inTouchMode) {
+            assertEquals(Collections.emptyList(), views);
+        } else {
+            assertEquals(Collections.singletonList(view), views);
+        }
+
+
+        views.clear();
+        view.addFocusables(views, View.FOCUS_FORWARD, View.FOCUSABLES_ALL);
+        assertEquals(Collections.singletonList(view), views);
+
+        views.clear();
+        view.addFocusables(views, View.FOCUS_FORWARD, View.FOCUSABLES_TOUCH_MODE);
+        assertEquals(Collections.emptyList(), views);
+
+        view.setFocusableInTouchMode(true);
+
+        views.clear();
+        view.addFocusables(views, View.FOCUS_FORWARD);
+        assertEquals(Collections.singletonList(view), views);
+
+        views.clear();
+        view.addFocusables(views, View.FOCUS_FORWARD, View.FOCUSABLES_ALL);
+        assertEquals(Collections.singletonList(view), views);
+
+        views.clear();
+        view.addFocusables(views, View.FOCUS_FORWARD, View.FOCUSABLES_TOUCH_MODE);
+        assertEquals(Collections.singletonList(view), views);
+
+        view.setFocusable(false);
+
+        views.clear();
+        view.addFocusables(views, View.FOCUS_FORWARD);
+        assertEquals(Collections.emptyList(), views);
+
+        views.clear();
+        view.addFocusables(views, View.FOCUS_FORWARD, View.FOCUSABLES_ALL);
+        assertEquals(Collections.emptyList(), views);
+
+        views.clear();
+        view.addFocusables(views, View.FOCUS_FORWARD, View.FOCUSABLES_TOUCH_MODE);
+        assertEquals(Collections.emptyList(), views);
     }
 
     public void testGetRootView() {
