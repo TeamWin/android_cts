@@ -28,14 +28,14 @@ import java.util.ArrayList;
 import java.util.Arrays;
 
 /**
- * Verification test for vp8 encoder and decoder.
+ * Verification test for vp8/vp9 encoder and decoder.
  *
  * A raw yv12 stream is encoded at various settings and written to an IVF
  * file. Encoded stream bitrate and key frame interval are checked against target values.
- * The stream is later decoded by vp8 decoder to verify frames are decodable and to
+ * The stream is later decoded by vp8/vp9 decoder to verify frames are decodable and to
  * calculate PSNR values for various bitrates.
  */
-public class Vp8EncoderTest extends VpxCodecTestBase {
+public class VpxEncoderTest extends VpxCodecTestBase {
 
     private static final String ENCODED_IVF_BASE = "football";
     private static final String INPUT_YUV = null;
@@ -54,9 +54,9 @@ public class Vp8EncoderTest extends VpxCodecTestBase {
     private static final int[] TEST_BITRATES_SET = { 300000, 500000, 700000, 900000 };
     // Maximum allowed bitrate variation from the target value.
     private static final double MAX_BITRATE_VARIATION = 0.2;
-    // Average PSNR values for reference Google VP8 codec for the above bitrates.
+    // Average PSNR values for reference Google VPx codec for the above bitrates.
     private static final double[] REFERENCE_AVERAGE_PSNR = { 33.1, 35.2, 36.6, 37.8 };
-    // Minimum PSNR values for reference Google VP8 codec for the above bitrates.
+    // Minimum PSNR values for reference Google VPx codec for the above bitrates.
     private static final double[] REFERENCE_MINIMUM_PSNR = { 25.9, 27.5, 28.4, 30.3 };
     // Maximum allowed average PSNR difference of encoder comparing to reference Google encoder.
     private static final double MAX_AVERAGE_PSNR_DIFFERENCE = 2;
@@ -75,13 +75,13 @@ public class Vp8EncoderTest extends VpxCodecTestBase {
     private static final int MAX_KEYFRAME_INTERVAL_VARIATION = 3;
 
     /**
-     * A basic test for VP8 encoder.
+     * A basic test for VPx encoder.
      *
      * Encodes 9 seconds of raw stream with default configuration options,
      * and then decodes it to verify the bitstream.
      * Also checks the average bitrate is within MAX_BITRATE_VARIATION of the target value.
      */
-    public void testBasic() throws Exception {
+    private void internalTestBasic(String codecMimeType) throws Exception {
         int encodeSeconds = 9;
         boolean skipped = true;
 
@@ -89,7 +89,7 @@ public class Vp8EncoderTest extends VpxCodecTestBase {
             EncoderOutputStreamParameters params = getDefaultEncodingParameters(
                     INPUT_YUV,
                     ENCODED_IVF_BASE,
-                    VP8_MIME,
+                    codecMimeType,
                     encodeSeconds,
                     WIDTH,
                     HEIGHT,
@@ -110,7 +110,7 @@ public class Vp8EncoderTest extends VpxCodecTestBase {
                     targetBitrate, statistics.mAverageBitrate,
                     MAX_BITRATE_VARIATION * targetBitrate);
 
-            decode(params.outputIvfFilename, null, VP8_MIME, FPS, params.forceGoogleEncoder);
+            decode(params.outputIvfFilename, null, codecMimeType, FPS, params.forceGoogleEncoder);
         }
 
         if (skipped) {
@@ -119,13 +119,13 @@ public class Vp8EncoderTest extends VpxCodecTestBase {
     }
 
     /**
-     * Asynchronous encoding test for VP8 encoder.
+     * Asynchronous encoding test for VPx encoder.
      *
      * Encodes 9 seconds of raw stream using synchronous and asynchronous calls.
      * Checks the PSNR difference between the encoded and decoded output and reference yuv input
      * does not change much for two different ways of the encoder call.
      */
-    public void testAsyncEncoding() throws Exception {
+    private void internalTestAsyncEncoding(String codecMimeType) throws Exception {
         int encodeSeconds = 9;
 
         // First test the encoder running in a looper thread with buffer callbacks enabled.
@@ -133,7 +133,7 @@ public class Vp8EncoderTest extends VpxCodecTestBase {
         EncoderOutputStreamParameters params = getDefaultEncodingParameters(
                 INPUT_YUV,
                 ENCODED_IVF_BASE,
-                VP8_MIME,
+                codecMimeType,
                 encodeSeconds,
                 WIDTH,
                 HEIGHT,
@@ -147,7 +147,7 @@ public class Vp8EncoderTest extends VpxCodecTestBase {
             return;
         }
         computeEncodingStatistics(bufInfos);
-        decode(params.outputIvfFilename, OUTPUT_YUV, VP8_MIME, FPS, params.forceGoogleEncoder);
+        decode(params.outputIvfFilename, OUTPUT_YUV, codecMimeType, FPS, params.forceGoogleEncoder);
         VpxDecodingStatistics statisticsAsync = computeDecodingStatistics(
                 params.inputYuvFilename, R.raw.football_qvga, OUTPUT_YUV,
                 params.frameWidth, params.frameHeight);
@@ -158,7 +158,7 @@ public class Vp8EncoderTest extends VpxCodecTestBase {
         params = getDefaultEncodingParameters(
                 INPUT_YUV,
                 ENCODED_IVF_BASE,
-                VP8_MIME,
+                codecMimeType,
                 encodeSeconds,
                 WIDTH,
                 HEIGHT,
@@ -172,7 +172,7 @@ public class Vp8EncoderTest extends VpxCodecTestBase {
             return;
         }
         computeEncodingStatistics(bufInfos);
-        decode(params.outputIvfFilename, OUTPUT_YUV, VP8_MIME, FPS, params.forceGoogleEncoder);
+        decode(params.outputIvfFilename, OUTPUT_YUV, codecMimeType, FPS, params.forceGoogleEncoder);
         VpxDecodingStatistics statisticsSync = computeDecodingStatistics(
                 params.inputYuvFilename, R.raw.football_qvga, OUTPUT_YUV,
                 params.frameWidth, params.frameHeight);
@@ -196,13 +196,13 @@ public class Vp8EncoderTest extends VpxCodecTestBase {
      * Encodes 9 seconds of raw stream and requests a sync frame every second (30 frames).
      * The test does not verify the output stream.
      */
-    public void testSyncFrame() throws Exception {
+    private void internalTestSyncFrame(String codecMimeType) throws Exception {
         int encodeSeconds = 9;
 
         EncoderOutputStreamParameters params = getDefaultEncodingParameters(
                 INPUT_YUV,
                 ENCODED_IVF_BASE,
-                VP8_MIME,
+                codecMimeType,
                 encodeSeconds,
                 WIDTH,
                 HEIGHT,
@@ -246,14 +246,14 @@ public class Vp8EncoderTest extends VpxCodecTestBase {
      * Run the the encoder for 12 seconds. Request changes to the
      * bitrate after 6 seconds and ensure the encoder responds.
      */
-    public void testDynamicBitrateChange() throws Exception {
+    private void internalTestDynamicBitrateChange(String codecMimeType) throws Exception {
         int encodeSeconds = 12;    // Encoding sequence duration in seconds.
         int[] bitrateTargetValues = { 400000, 800000 };  // List of bitrates to test.
 
         EncoderOutputStreamParameters params = getDefaultEncodingParameters(
                 INPUT_YUV,
                 ENCODED_IVF_BASE,
-                VP8_MIME,
+                codecMimeType,
                 encodeSeconds,
                 WIDTH,
                 HEIGHT,
@@ -314,11 +314,11 @@ public class Vp8EncoderTest extends VpxCodecTestBase {
       * and then run parallel encoding and decoding of the same streams.
       * Compares average bitrate and PSNR for sequential and parallel runs.
       */
-     public void testParallelEncodingAndDecoding() throws Exception {
+     private void internalTestParallelEncodingAndDecoding(String codecMimeType) throws Exception {
          // check for encoder up front, as by the time we detect lack of
          // encoder support, we may have already started decoding.
          MediaCodecList mcl = new MediaCodecList(MediaCodecList.REGULAR_CODECS);
-         MediaFormat format = MediaFormat.createVideoFormat(VP8_MIME, WIDTH, HEIGHT);
+         MediaFormat format = MediaFormat.createVideoFormat(codecMimeType, WIDTH, HEIGHT);
          if (mcl.findEncoderForFormat(format) == null) {
              Log.i(TAG, "SKIPPING testParallelEncodingAndDecoding(): no suitable encoder found");
              return;
@@ -332,7 +332,7 @@ public class Vp8EncoderTest extends VpxCodecTestBase {
          final EncoderOutputStreamParameters params = getDefaultEncodingParameters(
                  INPUT_YUV,
                  ENCODED_IVF_BASE,
-                 VP8_MIME,
+                 codecMimeType,
                  encodeSeconds,
                  WIDTH,
                  HEIGHT,
@@ -357,7 +357,7 @@ public class Vp8EncoderTest extends VpxCodecTestBase {
          Runnable runDecoder = new Runnable() {
              public void run() {
                  try {
-                     decode(inputIvfFilename, OUTPUT_YUV, VP8_MIME, FPS, params.forceGoogleEncoder);
+                     decode(inputIvfFilename, OUTPUT_YUV, codecMimeType, FPS, params.forceGoogleEncoder);
                      VpxDecodingStatistics statistics = computeDecodingStatistics(
                             params.inputYuvFilename, R.raw.football_qvga, OUTPUT_YUV,
                             params.frameWidth, params.frameHeight);
@@ -416,7 +416,7 @@ public class Vp8EncoderTest extends VpxCodecTestBase {
      * Video streams with higher bitrates should have higher PSNRs.
      * Also compares average and minimum PSNR of codec with PSNR values of reference Google codec.
      */
-    public void testEncoderQuality() throws Exception {
+    private void internalTestEncoderQuality(String codecMimeType) throws Exception {
         int encodeSeconds = 9;      // Encoding sequence duration in seconds for each bitrate.
         double[] psnrPlatformCodecAverage = new double[TEST_BITRATES_SET.length];
         double[] psnrPlatformCodecMin = new double[TEST_BITRATES_SET.length];
@@ -429,7 +429,7 @@ public class Vp8EncoderTest extends VpxCodecTestBase {
             EncoderOutputStreamParameters params = getDefaultEncodingParameters(
                     INPUT_YUV,
                     ENCODED_IVF_BASE,
-                    VP8_MIME,
+                    codecMimeType,
                     encodeSeconds,
                     WIDTH,
                     HEIGHT,
@@ -445,7 +445,7 @@ public class Vp8EncoderTest extends VpxCodecTestBase {
             completed[i] = true;
             skipped = false;
 
-            decode(params.outputIvfFilename, OUTPUT_YUV, VP8_MIME, FPS, params.forceGoogleEncoder);
+            decode(params.outputIvfFilename, OUTPUT_YUV, codecMimeType, FPS, params.forceGoogleEncoder);
             VpxDecodingStatistics statistics = computeDecodingStatistics(
                     params.inputYuvFilename, R.raw.football_qvga, OUTPUT_YUV,
                     params.frameWidth, params.frameHeight);
@@ -507,5 +507,32 @@ public class Vp8EncoderTest extends VpxCodecTestBase {
             }
         }
     }
+
+    public void testBasicVP8() throws Exception { internalTestBasic(VP8_MIME); }
+    public void testBasicVP9() throws Exception { internalTestBasic(VP9_MIME); }
+
+    public void testAsyncEncodingVP8() throws Exception { internalTestAsyncEncoding(VP8_MIME); }
+    public void testAsyncEncodingVP9() throws Exception { internalTestAsyncEncoding(VP9_MIME); }
+
+    public void testSyncFrameVP8() throws Exception { internalTestSyncFrame(VP8_MIME); }
+    public void testSyncFrameVP9() throws Exception { internalTestSyncFrame(VP9_MIME); }
+
+    public void testDynamicBitrateChangeVP8() throws Exception {
+        internalTestDynamicBitrateChange(VP8_MIME);
+    }
+    public void testDynamicBitrateChangeVP9() throws Exception {
+        internalTestDynamicBitrateChange(VP9_MIME);
+    }
+
+    public void testParallelEncodingAndDecodingVP8() throws Exception {
+        internalTestParallelEncodingAndDecoding(VP8_MIME);
+    }
+    public void testParallelEncodingAndDecodingVP9() throws Exception {
+        internalTestParallelEncodingAndDecoding(VP9_MIME);
+    }
+
+    public void testEncoderQualityVP8() throws Exception { internalTestEncoderQuality(VP8_MIME); }
+    public void testEncoderQualityVP9() throws Exception { internalTestEncoderQuality(VP9_MIME); }
+
 }
 
