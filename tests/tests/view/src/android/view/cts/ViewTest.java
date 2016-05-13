@@ -377,73 +377,73 @@ public class ViewTest extends ActivityInstrumentationTestCase2<ViewTestCtsActivi
         getInstrumentation().sendPointerSync(event);
         getInstrumentation().waitForIdleSync();
 
-        assertTrue(view.hasCalledGetPointerIcon());
+        assertTrue(view.hasCalledOnResolvePointerIcon());
 
         final MockView view2 = (MockView) mActivity.findViewById(R.id.scroll_view);
-        assertFalse(view2.hasCalledGetPointerIcon());
+        assertFalse(view2.hasCalledOnResolvePointerIcon());
     }
 
-    public void testAccessPointerShape() {
+    public void testAccessPointerIcon() {
         View view = mActivity.findViewById(R.id.pointer_icon_layout);
         MotionEvent event = MotionEvent.obtain(0, 0, MotionEvent.ACTION_HOVER_MOVE,
                                                view.getX(), view.getY(), 0);
 
-        // First view has pointerShape="help"
-        assertEquals(PointerIcon.getSystemIcon(mActivity, PointerIcon.STYLE_HELP),
-                     view.getPointerIcon(event, 0, 0));
+        // First view has pointerIcon="help"
+        assertEquals(PointerIcon.getSystemIcon(mActivity, PointerIcon.TYPE_HELP),
+                     view.onResolvePointerIcon(event, 0));
 
-        // Second view inherits pointerShape="crosshair" from the parent
+        // Second view inherits pointerIcon="crosshair" from the parent
         event.setLocation(0, 21);
-        assertEquals(PointerIcon.getSystemIcon(mActivity, PointerIcon.STYLE_CROSSHAIR),
-                     view.getPointerIcon(event, 0, 21));
+        assertEquals(PointerIcon.getSystemIcon(mActivity, PointerIcon.TYPE_CROSSHAIR),
+                     view.onResolvePointerIcon(event, 0));
 
-        // Third view has custom pointer shape defined in a resource.
+        // Third view has custom pointer icon defined in a resource.
         event.setLocation(0, 41);
-        assertNotNull(view.getPointerIcon(event, 0, 41));
+        assertNotNull(view.onResolvePointerIcon(event, 0));
 
-        // Parent view has pointerShape="crosshair"
+        // Parent view has pointerIcon="crosshair"
         event.setLocation(0, 61);
-        assertEquals(PointerIcon.getSystemIcon(mActivity, PointerIcon.STYLE_CROSSHAIR),
-                     view.getPointerIcon(event, 0, 61));
+        assertEquals(PointerIcon.getSystemIcon(mActivity, PointerIcon.TYPE_CROSSHAIR),
+                     view.onResolvePointerIcon(event, 0));
 
-        // Outside of the parent view, no pointer shape defined.
+        // Outside of the parent view, no pointer icon defined.
         event.setLocation(0, 71);
-        assertNull(view.getPointerIcon(event, 0, 71));
+        assertNull(view.onResolvePointerIcon(event, 0));
 
-        view.setPointerIcon(PointerIcon.getSystemIcon(mActivity, PointerIcon.STYLE_TEXT));
-        assertEquals(PointerIcon.getSystemIcon(mActivity, PointerIcon.STYLE_TEXT),
-                     view.getPointerIcon(event, 0,71));
+        view.setPointerIcon(PointerIcon.getSystemIcon(mActivity, PointerIcon.TYPE_TEXT));
+        assertEquals(PointerIcon.getSystemIcon(mActivity, PointerIcon.TYPE_TEXT),
+                     view.onResolvePointerIcon(event, 0));
         event.recycle();
     }
 
     public void testCreatePointerIcons() {
-        assertSystemPointerIcon(PointerIcon.STYLE_NULL);
-        assertSystemPointerIcon(PointerIcon.STYLE_DEFAULT);
-        assertSystemPointerIcon(PointerIcon.STYLE_ARROW);
-        assertSystemPointerIcon(PointerIcon.STYLE_CONTEXT_MENU);
-        assertSystemPointerIcon(PointerIcon.STYLE_HAND);
-        assertSystemPointerIcon(PointerIcon.STYLE_HELP);
-        assertSystemPointerIcon(PointerIcon.STYLE_WAIT);
-        assertSystemPointerIcon(PointerIcon.STYLE_CELL);
-        assertSystemPointerIcon(PointerIcon.STYLE_CROSSHAIR);
-        assertSystemPointerIcon(PointerIcon.STYLE_TEXT);
-        assertSystemPointerIcon(PointerIcon.STYLE_VERTICAL_TEXT);
-        assertSystemPointerIcon(PointerIcon.STYLE_ALIAS);
-        assertSystemPointerIcon(PointerIcon.STYLE_COPY);
-        assertSystemPointerIcon(PointerIcon.STYLE_NO_DROP);
-        assertSystemPointerIcon(PointerIcon.STYLE_ALL_SCROLL);
-        assertSystemPointerIcon(PointerIcon.STYLE_HORIZONTAL_DOUBLE_ARROW);
-        assertSystemPointerIcon(PointerIcon.STYLE_VERTICAL_DOUBLE_ARROW);
-        assertSystemPointerIcon(PointerIcon.STYLE_TOP_RIGHT_DIAGONAL_DOUBLE_ARROW);
-        assertSystemPointerIcon(PointerIcon.STYLE_TOP_LEFT_DIAGONAL_DOUBLE_ARROW);
-        assertSystemPointerIcon(PointerIcon.STYLE_ZOOM_IN);
-        assertSystemPointerIcon(PointerIcon.STYLE_ZOOM_OUT);
-        assertSystemPointerIcon(PointerIcon.STYLE_GRAB);
+        assertSystemPointerIcon(PointerIcon.TYPE_NULL);
+        assertSystemPointerIcon(PointerIcon.TYPE_DEFAULT);
+        assertSystemPointerIcon(PointerIcon.TYPE_ARROW);
+        assertSystemPointerIcon(PointerIcon.TYPE_CONTEXT_MENU);
+        assertSystemPointerIcon(PointerIcon.TYPE_HAND);
+        assertSystemPointerIcon(PointerIcon.TYPE_HELP);
+        assertSystemPointerIcon(PointerIcon.TYPE_WAIT);
+        assertSystemPointerIcon(PointerIcon.TYPE_CELL);
+        assertSystemPointerIcon(PointerIcon.TYPE_CROSSHAIR);
+        assertSystemPointerIcon(PointerIcon.TYPE_TEXT);
+        assertSystemPointerIcon(PointerIcon.TYPE_VERTICAL_TEXT);
+        assertSystemPointerIcon(PointerIcon.TYPE_ALIAS);
+        assertSystemPointerIcon(PointerIcon.TYPE_COPY);
+        assertSystemPointerIcon(PointerIcon.TYPE_NO_DROP);
+        assertSystemPointerIcon(PointerIcon.TYPE_ALL_SCROLL);
+        assertSystemPointerIcon(PointerIcon.TYPE_HORIZONTAL_DOUBLE_ARROW);
+        assertSystemPointerIcon(PointerIcon.TYPE_VERTICAL_DOUBLE_ARROW);
+        assertSystemPointerIcon(PointerIcon.TYPE_TOP_RIGHT_DIAGONAL_DOUBLE_ARROW);
+        assertSystemPointerIcon(PointerIcon.TYPE_TOP_LEFT_DIAGONAL_DOUBLE_ARROW);
+        assertSystemPointerIcon(PointerIcon.TYPE_ZOOM_IN);
+        assertSystemPointerIcon(PointerIcon.TYPE_ZOOM_OUT);
+        assertSystemPointerIcon(PointerIcon.TYPE_GRAB);
 
-        assertNotNull(PointerIcon.loadCustomIcon(mResources, R.drawable.custom_pointer_icon));
+        assertNotNull(PointerIcon.load(mResources, R.drawable.custom_pointer_icon));
 
         Bitmap bitmap = BitmapFactory.decodeResource(mResources, R.drawable.icon_blue);
-        assertNotNull(PointerIcon.createCustomIcon(bitmap, 0, 0));
+        assertNotNull(PointerIcon.create(bitmap, 0, 0));
     }
 
     private void assertSystemPointerIcon(int style) {
@@ -3876,7 +3876,7 @@ public class ViewTest extends ActivityInstrumentationTestCase2<ViewTestCtsActivi
 
         assertFalse(view.hasPointerCapture());
 
-        view.setPointerCapture();
+        view.requestPointerCapture();
         assertTrue(view.hasPointerCapture());
         getInstrumentation().sendPointerSync(dummyMotion);
         getInstrumentation().waitForIdleSync();
@@ -3895,7 +3895,7 @@ public class ViewTest extends ActivityInstrumentationTestCase2<ViewTestCtsActivi
         });
         getInstrumentation().waitForIdleSync();
 
-        view.setPointerCapture();
+        view.requestPointerCapture();
         assertTrue(view.hasPointerCapture());
         assertFalse(view2.hasPointerCapture());
 
@@ -3905,7 +3905,7 @@ public class ViewTest extends ActivityInstrumentationTestCase2<ViewTestCtsActivi
         assertFalse(view2.hasCalledOnHoverEvent());
         view.reset();
 
-        view2.setPointerCapture();
+        view2.requestPointerCapture();
         assertFalse(view.hasPointerCapture());
         assertTrue(view2.hasPointerCapture());
 
