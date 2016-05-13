@@ -23,8 +23,8 @@ import junit.framework.TestCase;
 
 public class CleartextPermittedTest extends TestCase {
     public void testDefaultAllowed() throws Exception {
-        TestUtils.assertCleartextConnectionSucceeds("google.com", 80);
-        TestUtils.assertTlsConnectionSucceeds("google.com", 443);
+        TestUtils.assertCleartextConnectionSucceeds("example.com", 80);
+        TestUtils.assertTlsConnectionSucceeds("example.com", 443);
     }
 
     public void testCleartextBlocked() throws Exception {
