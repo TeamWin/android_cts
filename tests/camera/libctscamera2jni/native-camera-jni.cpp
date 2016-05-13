@@ -1213,7 +1213,7 @@ testCameraDeviceCreateCaptureRequestNative(
             ACameraDevice_request_template templateId =
                     static_cast<ACameraDevice_request_template>(t);
             ret = ACameraDevice_createCaptureRequest(device, templateId, &request);
-            if (ret == ACAMERA_ERROR_UNSUPPORTED) {
+            if (ret == ACAMERA_ERROR_INVALID_PARAMETER) {
                 // template not supported. skip
                 continue;
             }
