@@ -302,14 +302,11 @@ public class VideoDecoderPerfTest extends MediaPlayerTestBase {
         double fps = (double)outputNum / ((finish - start) / 1000.0);
         mReportLog.addValue(message, fps, ResultType.HIGHER_BETTER, ResultUnit.FPS);
 
-        double[] avgs = MediaUtils.calculateMovingAverage(frameTimeDiff, MOVING_AVERAGE_NUM);
-        double decMin = Stat.getMin(avgs);
-        double decMax = Stat.getMax(avgs);
-        double decAvg = Stat.getAverage(avgs);
-        double decStdev = MediaUtils.getStdev(avgs);
+        MediaUtils.Stats stats =
+            new MediaUtils.Stats(frameTimeDiff).movingAverage(MOVING_AVERAGE_NUM);
         String result =
-                MediaUtils.logResults(mReportLog, testConfig, decMin, decMax, decAvg, decStdev);
-        fps = 1000000000 / decMin;
+                MediaUtils.logAchievableRatesResults(mReportLog, testConfig, stats);
+        fps = 1000000000 / stats.getMin();
         if (surface != null) {
             mMeasuredFps[round] = fps;
             mResultRawData[round] = result;
