@@ -43,6 +43,9 @@ import java.io.IOException;
 public class MediaUtils {
     private static final String TAG = "MediaUtils";
 
+    /*
+     *  ----------------------- HELPER METHODS FOR SKIPPING TESTS -----------------------
+     */
     private static final int ALL_AV_TRACKS = -1;
 
     private static final MediaCodecList sMCL = new MediaCodecList(MediaCodecList.REGULAR_CODECS);
@@ -148,6 +151,10 @@ public class MediaUtils {
         }
         return result;
     }
+
+    /*
+     *  ------------------- HELPER METHODS FOR CHECKING CODEC SUPPORT -------------------
+     */
 
     public static MediaCodec getDecoder(MediaFormat format) {
         String decoder = sMCL.findDecoderForFormat(format);
@@ -423,6 +430,10 @@ public class MediaUtils {
         return check(canDecode(format), "no decoder for " + format);
     }
 
+    /*
+     *  ----------------------- HELPER METHODS FOR MEDIA HANDLING -----------------------
+     */
+
     public static MediaExtractor createMediaExtractorForMimeType(
             Context context, int resourceId, String mimeTypePrefix)
             throws IOException {
@@ -450,65 +461,172 @@ public class MediaUtils {
         return extractor;
     }
 
-    /**
-     * return the average value of the passed array.
+    /*
+     *  ------------------ HELPER METHODS FOR STATISTICS AND REPORTING ------------------
      */
-    public static double getAverage(double[] data) {
-        int num = data.length;
-        if (num == 0) {
-            return 0;
+
+    // TODO: migrate this into com.android.compatibility.common.util.Stat
+    public static class Stats {
+        /** does not support NaN or Inf in |data| */
+        public Stats(double[] data) {
+            mData = data;
+            if (mData != null) {
+                mNum = mData.length;
+            }
         }
 
-        double sum = data[0];
-        for (int i = 1; i < num; i++) {
-            sum += data[i];
+        public int getNum() {
+            return mNum;
         }
-        return sum / num;
+
+        /** calculate mSumX and mSumXX */
+        private void analyze() {
+            if (mAnalyzed) {
+                return;
+            }
+
+            if (mData != null) {
+                for (double x : mData) {
+                    if (!(x >= mMinX)) { // mMinX may be NaN
+                        mMinX = x;
+                    }
+                    if (!(x <= mMaxX)) { // mMaxX may be NaN
+                        mMaxX = x;
+                    }
+                    mSumX += x;
+                    mSumXX += x * x;
+                }
+            }
+            mAnalyzed = true;
+        }
+
+        /** returns the maximum or NaN if it does not exist */
+        public double getMin() {
+            analyze();
+            return mMinX;
+        }
+
+        /** returns the minimum or NaN if it does not exist */
+        public double getMax() {
+            analyze();
+            return mMaxX;
+        }
+
+        /** returns the average or NaN if it does not exist. */
+        public double getAverage() {
+            analyze();
+            if (mNum == 0) {
+                return Double.NaN;
+            } else {
+                return mSumX / mNum;
+            }
+        }
+
+        /** returns the standard deviation or NaN if it does not exist. */
+        public double getStdev() {
+            analyze();
+            if (mNum == 0) {
+                return Double.NaN;
+            } else {
+                double average = mSumX / mNum;
+                return Math.sqrt(mSumXX / mNum - average * average);
+            }
+        }
+
+        /** returns the statistics for the moving average over n values */
+        public Stats movingAverage(int n) {
+            if (n < 1 || mNum < n) {
+                return new Stats(null);
+            } else if (n == 1) {
+                return this;
+            }
+
+            double[] avgs = new double[mNum - n + 1];
+            double sum = 0;
+            for (int i = 0; i < mNum; ++i) {
+                sum += mData[i];
+                if (i >= n - 1) {
+                    avgs[i - n + 1] = sum / n;
+                    sum -= mData[i - n + 1];
+                }
+            }
+            return new Stats(avgs);
+        }
+
+        /** calculate mSortedData */
+        private void sort() {
+            if (mSorted || mNum == 0) {
+                return;
+            }
+            mSortedData = Arrays.copyOf(mData, mNum);
+            Arrays.sort(mSortedData);
+            mSorted = true;
+        }
+
+        /** returns an array of percentiles for the points using nearest rank */
+        public double[] getPercentiles(double... points) {
+            sort();
+            double[] res = new double[points.length];
+            for (int i = 0; i < points.length; ++i) {
+                if (mNum < 1 || points[i] < 0 || points[i] > 100) {
+                    res[i] = Double.NaN;
+                } else {
+                    res[i] = mSortedData[(int)Math.round(points[i] / 100 * (mNum - 1))];
+                }
+            }
+            return res;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (o instanceof Stats) {
+                Stats other = (Stats)o;
+                if (other.mNum != mNum) {
+                    return false;
+                } else if (mNum == 0) {
+                    return true;
+                }
+                return Arrays.equals(mData, other.mData);
+            }
+            return false;
+        }
+
+        private double[] mData;
+        private double mSumX = 0;
+        private double mSumXX = 0;
+        private double mMinX = Double.NaN;
+        private double mMaxX = Double.NaN;
+        private int mNum = 0;
+        private boolean mAnalyzed = false;
+        private double[] mSortedData;
+        private boolean mSorted = false;
     }
+
+    /*
+     *  ------------------ HELPER METHODS FOR ACHIEVABLE FRAME RATES ------------------
+     */
 
     /**
-     * return the standard deviation value of the passed array
+     * logs results for achievable frame rates test
      */
-    public static double getStdev(double[] data) {
-        double average = getAverage(data);
-        int num = data.length;
-        if (num == 0) {
-            return 0;
-        }
-        double variance = 0;
-        for (int i = 0; i < num; ++i) {
-            variance += (data[i] - average) * (data[i] - average);
-        }
-        variance /= num;
-        return Math.sqrt(variance);
-    }
-
-    public static double[] calculateMovingAverage(double[] array, int n) {
-        int num = array.length;
-        if (num < n) {
-            return null;
-        }
-        int avgsNum = num - n + 1;
-        double[] avgs = new double[avgsNum];
-        double sum = array[0];
-        for (int i = 1; i < n; ++i) {
-            sum += array[i];
-        }
-        avgs[0] = sum / n;
-
-        for (int i = n; i < num; ++i) {
-            sum = sum - array[i - n] + array[i];
-            avgs[i - n + 1] = sum / n;
-        }
-        return avgs;
-    }
-
-    public static String logResults(DeviceReportLog log, String prefix,
-            double min, double max, double avg, double stdev) {
+    public static String logAchievableRatesResults(DeviceReportLog log, String prefix,
+            Stats stats) {
         String msg = prefix;
-        msg += " min=" + Math.round(min / 1000) + " max=" + Math.round(max / 1000) +
-                " avg=" + Math.round(avg / 1000) + " stdev=" + Math.round(stdev / 1000);
-        log.addValue(msg, 1000000000 / min, ResultType.HIGHER_BETTER, ResultUnit.FPS);
+        msg += " num=" + stats.getNum()
+                + " avg=" + Math.round(stats.getAverage() / 1000)
+                + " stdev=" + Math.round(stats.getStdev() / 1000);
+        String[] labels = {
+                "min", "p5", "p10", "p20", "p30", "p40", "p50", "p60", "p70", "p80", "p90", "p95",
+                "max" };
+        double[] percentiles = stats.getPercentiles(new double[] {
+                0, 5, 10, 20, 30, 40, 50, 60, 70, 80, 90, 95, 100 });
+
+        for (int i = 0; i < labels.length; ++i) {
+            msg += " " + labels[i] + "=" + Math.round(percentiles[i] / 1000);
+        }
+
+        log.addValue(msg, 1000000000 / stats.getMin(), ResultType.HIGHER_BETTER, ResultUnit.FPS);
+        Log.i(TAG, msg);
         return msg;
     }
 
