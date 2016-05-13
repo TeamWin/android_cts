@@ -15,6 +15,7 @@
  */
 package com.android.cts.aadb;
 
+import com.android.cts.util.TimeoutReq;
 import com.android.ddmlib.IDevice;
 import com.android.ddmlib.Log;
 import com.android.ddmlib.testrunner.RemoteAndroidTestRunner;
@@ -67,6 +68,9 @@ public class TestDeviceStressTest extends DeviceTestCase {
      * Stress test to push a folder which contains 200 text file to device
      * internal storage.
      */
+    // http://b/27325804
+    // ADB over TCP/IP needs more time
+    @TimeoutReq(minutes = 15)
     public void testPushFolderWithManyFiles() throws IOException, DeviceNotAvailableException {
         File tmpDir = null;
         String deviceFilePath = null;
