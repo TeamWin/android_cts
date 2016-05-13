@@ -591,18 +591,15 @@ public class VideoEncoderDecoderTest extends CtsAndroidTestCase {
             }
 
             if (mTestConfig.mTestResult) {
-                double[] avgs = MediaUtils.calculateMovingAverage(
-                        mEncoderFrameTimeDiff[i], MOVING_AVERAGE_NUM);
-                double encMin = Stat.getMin(avgs);
-                double encMax = Stat.getMax(avgs);
-                double encAvg = MediaUtils.getAverage(mEncoderFrameTimeDiff[i]);
-                double encStdev = MediaUtils.getStdev(avgs);
+                MediaUtils.Stats encStats =
+                    new MediaUtils.Stats(mEncoderFrameTimeDiff[i])
+                            .movingAverage(MOVING_AVERAGE_NUM);
                 String prefix = "codec=" + encoderName + " round=" + i +
                         " EncInputFormat=" + mEncInputFormat +
                         " EncOutputFormat=" + mEncOutputFormat;
                 String result =
-                        MediaUtils.logResults(mReportLog, prefix, encMin, encMax, encAvg, encStdev);
-                double measuredEncFps = 1000000000 / encMin;
+                        MediaUtils.logAchievableRatesResults(mReportLog, prefix, encStats);
+                double measuredEncFps = 1000000000 / encStats.getMin();
                 resultRawData[i] = result;
                 measuredFps[i] = measuredEncFps;
                 if (!encTestPassed) {
@@ -610,16 +607,13 @@ public class VideoEncoderDecoderTest extends CtsAndroidTestCase {
                             encoderName, mimeType, w, h, measuredEncFps);
                 }
 
-                avgs = MediaUtils.calculateMovingAverage(
-                        mDecoderFrameTimeDiff[i], MOVING_AVERAGE_NUM);
-                double decMin = Stat.getMin(avgs);
-                double decMax = Stat.getMax(avgs);
-                double decAvg = MediaUtils.getAverage(mDecoderFrameTimeDiff[i]);
-                double decStdev = MediaUtils.getStdev(avgs);
+                MediaUtils.Stats decStats =
+                    new MediaUtils.Stats(mDecoderFrameTimeDiff[i])
+                            .movingAverage(MOVING_AVERAGE_NUM);
                 prefix = "codec=" + decoderName + " size=" + w + "x" + h + " round=" + i +
                         " DecOutputFormat=" + mDecOutputFormat;
-                MediaUtils.logResults(mReportLog, prefix, decMin, decMax, decAvg, decStdev);
-                double measuredDecFps = 1000000000 / decMin;
+                MediaUtils.logAchievableRatesResults(mReportLog, prefix, decStats);
+                double measuredDecFps = 1000000000 / decStats.getMin();
                 if (!decTestPassed) {
                     decTestPassed = MediaUtils.verifyResults(
                             decoderName, mimeType, w, h, measuredDecFps);
