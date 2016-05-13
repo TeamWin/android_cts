@@ -25,7 +25,7 @@ public class InvalidPinTest extends TestCase {
     }
 
     public void testDefaultDomainUnaffected() throws Exception {
-        TestUtils.assertTlsConnectionSucceeds("google.com", 443);
+        TestUtils.assertTlsConnectionSucceeds("example.com", 443);
         TestUtils.assertTlsConnectionSucceeds("developer.android.com", 443);
     }
 }

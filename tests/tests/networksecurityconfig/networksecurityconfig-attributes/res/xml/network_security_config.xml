@@ -10,8 +10,8 @@
   <domain-config>
       <domain includeSubdomains="true">android.com</domain>
   </domain-config>
-  <!-- Cleartext traffic is explicitly permitted to google.com and all subdomains -->
+  <!-- Cleartext traffic is explicitly permitted to example.com and all subdomains -->
   <domain-config cleartextTrafficPermitted="true">
-      <domain includeSubdomains="true">google.com</domain>
+      <domain includeSubdomains="true">example.com</domain>
   </domain-config>
 </network-security-config>
