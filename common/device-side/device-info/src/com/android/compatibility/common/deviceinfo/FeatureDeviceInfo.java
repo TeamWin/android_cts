@@ -17,6 +17,7 @@ package com.android.compatibility.common.deviceinfo;
 
 import android.content.pm.FeatureInfo;
 import android.content.pm.PackageManager;
+import android.os.Build;
 
 import com.android.compatibility.common.util.DeviceInfoStore;
 
@@ -35,32 +36,46 @@ public final class FeatureDeviceInfo extends DeviceInfo {
 
     @Override
     protected void collectDeviceInfo(DeviceInfoStore store) throws Exception {
-        PackageManager packageManager = getInstrumentation().getContext().getPackageManager();
+        PackageManager packageManager =
+                getInstrumentation().getContext().getPackageManager();
         store.startArray("feature");
 
-        Set<String> checkedFeatures = new HashSet<String>();
-        for (String featureName : getPackageManagerFeatures()) {
-            checkedFeatures.add(featureName);
-            boolean hasFeature = packageManager.hasSystemFeature(featureName);
-            addFeature(store, featureName, "sdk", hasFeature);
-        }
+        List<String> sdkFeatures = getPackageManagerFeatures();
 
         FeatureInfo[] featureInfos = packageManager.getSystemAvailableFeatures();
         if (featureInfos != null) {
             for (FeatureInfo featureInfo : featureInfos) {
-                if (featureInfo.name != null && !checkedFeatures.contains(featureInfo.name)) {
-                    addFeature(store, featureInfo.name, "other", true);
+                if (featureInfo.name != null) {
+                    // Check if this feature is a "sdk" feature.
+                    String type = "other";
+                    if (sdkFeatures.contains(featureInfo.name)) {
+                        type = "sdk";
+                        sdkFeatures.remove(featureInfo.name);
+                    }
+                    // Add the feature version if avaiable.
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                        int version = featureInfo.version;
+                        addFeature(store, featureInfo.name, type, true, version);
+                    } else {
+                        addFeature(store, featureInfo.name, type, true);
+                    }
                 }
             }
+        }
+
+        // Store the remaining "sdk" features not avaiable on this device.
+        for (String featureName : sdkFeatures) {
+            boolean hasFeature = packageManager.hasSystemFeature(featureName);
+            addFeature(store, featureName, "sdk", hasFeature);
         }
 
         store.endArray();
     }
 
     /**
-     * Use reflection to get the features defined by the SDK. If there are features that do not fit
-     * the convention of starting with "FEATURE_" then they will still be shown under the
-     * "Other Features" section.
+     * Use reflection to get the features defined by the SDK. If there are
+     * features that do not fit the convention of starting with "FEATURE_"
+     * then they will still be shown under the "Other Features" section.
      *
      * @return list of feature names from sdk
      */
@@ -80,12 +95,29 @@ public final class FeatureDeviceInfo extends DeviceInfo {
         }
     }
 
-    private void addFeature(DeviceInfoStore store, String name, String type, boolean available)
-            throws Exception {
+    private void addFeature(
+            DeviceInfoStore store,
+            String name,
+            String type,
+            boolean available) throws Exception {
         store.startGroup();
         store.addResult("name", name);
         store.addResult("type", type);
         store.addResult("available", available);
+        store.endGroup();
+    }
+
+    private void addFeature(
+            DeviceInfoStore store,
+            String name,
+            String type,
+            boolean available,
+            int version) throws Exception {
+        store.startGroup();
+        store.addResult("name", name);
+        store.addResult("type", type);
+        store.addResult("available", available);
+        store.addResult("version", version);
         store.endGroup();
     }
 }
