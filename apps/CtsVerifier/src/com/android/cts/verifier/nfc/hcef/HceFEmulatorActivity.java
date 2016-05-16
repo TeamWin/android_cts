@@ -61,7 +61,7 @@ public class HceFEmulatorActivity extends PassFailButtons.Activity{
         registerReceiver(mReceiver, filter);
         ComponentName hceFService = new ComponentName("com.android.cts.verifier",
                 MyHostFelicaService.class.getName());
-        mNfcFCardEmulation.enableNfcFForegroundService(this, hceFService);
+        mNfcFCardEmulation.enableService(this, hceFService);
     }
 
     @Override
