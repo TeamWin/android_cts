@@ -62,14 +62,16 @@ public class WifiCheck extends PreconditionPreparer {
 
         if (mWifiSsid == null) { // no connection to create, check for existing connectivity
             if (!device.checkConnectivity()) {
-                throw new TargetSetupError("Device has no network connection, no ssid provided");
+                logError("Device has no network connection, no ssid provided, some modules " +
+                        "of CTS require an active network connection");
+                return;
             }
         } else { // network provided in options, attempt to create new connection
             logInfo("Attempting connection to \"%s\"", mWifiSsid);
             if (!device.connectToWifiNetwork(mWifiSsid, mWifiPsk)) { // attempt connection
-                throw new TargetSetupError(String.format(
-                        "Unable to connect to network \"%s\", some modules of CTS" +
-                        "require an active network connection", mWifiSsid));
+                logError("Unable to connect to network \"%s\", some modules of CTS" +
+                        "require an active network connection", mWifiSsid);
+                return;
             }
         }
         logInfo("Wifi is connected");
