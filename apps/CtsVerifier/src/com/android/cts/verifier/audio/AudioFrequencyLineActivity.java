@@ -180,7 +180,7 @@ public class AudioFrequencyLineActivity extends AudioFrequencyActivity implement
         //Init bands
         bandSpecsArray[0] = new AudioBandSpecs(
                 50, 500,        /* frequency start,stop */
-                -20.0, -50,     /* start top,bottom value */
+                4.0, -50,     /* start top,bottom value */
                 4.0, -4.0       /* stop top,bottom value */);
 
         bandSpecsArray[1] = new AudioBandSpecs(
@@ -327,7 +327,7 @@ public class AudioFrequencyLineActivity extends AudioFrequencyActivity implement
         public String toString() {
             StringBuilder sb = new StringBuilder();
             sb.append(String.format("Channel %s\n", mLabel));
-            sb.append("Level in Band 1 : " + (testLevel() ? "OK" :"FAILED") +"\n");
+            sb.append("Level in Band 1 : " + (testLevel() ? "OK" :"Not Optimal") +"\n");
             for (int b = 0; b < mBands; b++) {
                 double percent = 0;
                 if (mPointsPerBand[b] > 0) {
@@ -339,7 +339,7 @@ public class AudioFrequencyLineActivity extends AudioFrequencyActivity implement
                         mInBoundPointsPerBand[b],
                         mPointsPerBand[b],
                         percent,
-                        (testInBand(b) ? "OK" : "FAILED")));
+                        (testInBand(b) ? "OK" : "Not Optimal")));
             }
             return sb.toString();
         }
