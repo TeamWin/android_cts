@@ -85,7 +85,9 @@ public class Utils {
             throw new AssertionError("Failed to successfully run device tests for "
                     + result.getName() + ": " + result.getRunFailureMessage());
         }
-
+        if (result.getNumTests() == 0) {
+            throw new AssertionError("No tests were run on the device");
+        }
         if (result.hasFailedTests()) {
             // build a meaningful error message
             StringBuilder errorBuilder = new StringBuilder("on-device tests failed:\n");
