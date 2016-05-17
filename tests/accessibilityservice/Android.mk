@@ -27,6 +27,6 @@ LOCAL_COMPATIBILITY_SUITE := cts
 
 LOCAL_PACKAGE_NAME := CtsAccessibilityServiceTestCases
 
-LOCAL_SDK_VERSION := current
+LOCAL_SDK_VERSION := test_current
 
 include $(BUILD_CTS_PACKAGE)

@@ -29,7 +29,7 @@ LOCAL_STATIC_JAVA_LIBRARIES := ctsdeviceutil ctstestrunner
 # Tag this module as a cts test artifact
 LOCAL_COMPATIBILITY_SUITE := cts
 
-LOCAL_SDK_VERSION := current
+LOCAL_SDK_VERSION := test_current
 
 include $(BUILD_CTS_PACKAGE)
 
