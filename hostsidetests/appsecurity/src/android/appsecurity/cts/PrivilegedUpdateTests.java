@@ -64,6 +64,7 @@ public class PrivilegedUpdateTests extends DeviceTestCase implements IAbiReceive
 
         assertNull(getDevice().installPackage(
                 MigrationHelper.getTestFile(mCtsBuild, TEST_APK), false));
+        getDevice().executeShellCommand("pm enable " + SHIM_PKG);
     }
 
     @Override
@@ -72,6 +73,7 @@ public class PrivilegedUpdateTests extends DeviceTestCase implements IAbiReceive
 
         getDevice().uninstallPackage(SHIM_PKG);
         getDevice().uninstallPackage(TEST_PKG);
+        getDevice().executeShellCommand("pm enable " + SHIM_PKG);
     }
 
     public void testSystemAppPriorities() throws Exception {
@@ -89,6 +91,28 @@ public class PrivilegedUpdateTests extends DeviceTestCase implements IAbiReceive
             assertNull(getDevice().installPackage(
                     MigrationHelper.getTestFile(mCtsBuild, SHIM_UPDATE_APK), true));
             runDeviceTests(TEST_PKG, ".PrivilegedUpdateTest", "testPrivilegedAppUpgradePriorities");
+        } finally {
+            getDevice().uninstallPackage(SHIM_PKG);
+        }
+    }
+
+    public void testDisableSystemApp() throws Exception {
+        getDevice().executeShellCommand("pm enable " + SHIM_PKG);
+        runDeviceTests(TEST_PKG, ".PrivilegedAppDisableTest", "testPrivAppAndEnabled");
+        getDevice().executeShellCommand("pm disable-user " + SHIM_PKG);
+        runDeviceTests(TEST_PKG, ".PrivilegedAppDisableTest", "testPrivAppAndDisabled");
+    }
+
+    public void testDisableUpdatedSystemApp() throws Exception {
+        getDevice().executeShellCommand("pm enable " + SHIM_PKG);
+        runDeviceTests(TEST_PKG, ".PrivilegedAppDisableTest", "testPrivAppAndEnabled");
+        try {
+            assertNull(getDevice().installPackage(
+                    MigrationHelper.getTestFile(mCtsBuild, SHIM_UPDATE_APK), true));
+            getDevice().executeShellCommand("pm disable-user " + SHIM_PKG);
+            runDeviceTests(TEST_PKG, ".PrivilegedAppDisableTest", "testUpdatedPrivAppAndDisabled");
+            getDevice().executeShellCommand("pm enable " + SHIM_PKG);
+            runDeviceTests(TEST_PKG, ".PrivilegedAppDisableTest", "testUpdatedPrivAppAndEnabled");
         } finally {
             getDevice().uninstallPackage(SHIM_PKG);
         }
