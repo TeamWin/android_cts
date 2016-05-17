@@ -1862,6 +1862,10 @@
             </intent-filter>
         </activity>
 
+        <activity android:name=".managedprovisioning.TurnOffWorkActivity"
+                android:label="@string/provisioning_byod_turn_off_work">
+        </activity>
+
         <receiver android:name=".managedprovisioning.DeviceAdminTestReceiver"
                 android:label="@string/afw_device_admin"
                 android:permission="android.permission.BIND_DEVICE_ADMIN">
