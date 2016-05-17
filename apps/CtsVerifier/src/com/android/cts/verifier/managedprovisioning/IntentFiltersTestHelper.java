@@ -179,13 +179,13 @@ public class IntentFiltersTestHelper {
         if (pm.hasSystemFeature(PackageManager.FEATURE_NFC)) {
             forwardedIntentsFromManaged.addAll(Arrays.asList(
                     new Intent(Settings.ACTION_NFC_SETTINGS),
-                    new Intent(Settings.ACTION_NFCSHARING_SETTINGS),
-                    new Intent(Settings.ACTION_NFC_PAYMENT_SETTINGS)));
+                    new Intent(Settings.ACTION_NFCSHARING_SETTINGS)));
         }
 
         if (pm.hasSystemFeature(PackageManager.FEATURE_NFC_HOST_CARD_EMULATION)) {
-            forwardedIntentsFromManaged.add(
-                    new Intent(CardEmulation.ACTION_CHANGE_DEFAULT));
+            forwardedIntentsFromManaged.addAll(Arrays.asList(
+                    new Intent(CardEmulation.ACTION_CHANGE_DEFAULT),
+                    new Intent(Settings.ACTION_NFC_PAYMENT_SETTINGS)));
         }
 
         if (pm.hasSystemFeature(PackageManager.FEATURE_CAMERA)) {
