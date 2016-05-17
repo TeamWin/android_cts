@@ -536,15 +536,15 @@ class ActivityManagerState {
         protected static final Pattern FULLSCREEN_PATTERN = Pattern.compile("mFullscreen=(\\S+)");
         protected static final Pattern BOUNDS_PATTERN =
                 Pattern.compile("mBounds=Rect\\((\\d+), (\\d+) - (\\d+), (\\d+)\\)");
-        protected static final Pattern MINIMAL_WIDTH_PATTERN =
-                Pattern.compile("mMinimalWidth=(\\d+)");
-        protected static final Pattern MINIMAL_HEIGHT_PATTERN =
-                Pattern.compile("mMinimalHeight=(\\d+)");
+        protected static final Pattern MIN_WIDTH_PATTERN =
+                Pattern.compile("mMinWidth=(\\d+)");
+        protected static final Pattern MIN_HEIGHT_PATTERN =
+                Pattern.compile("mMinHeight=(\\d+)");
 
         protected boolean mFullscreen;
         protected Rectangle mBounds;
-        protected int mMinimalWidth = -1;
-        protected int mMinimalHeight = -1;
+        protected int mMinWidth = -1;
+        protected int mMinHeight = -1;
 
         boolean extractFullscreen(String line) {
             final Matcher matcher = FULLSCREEN_PATTERN.matcher(line);
@@ -580,15 +580,15 @@ class ActivityManagerState {
         }
 
         boolean extractMinimalSize(String line) {
-            final Matcher minWidthMatcher = MINIMAL_WIDTH_PATTERN.matcher(line);
-            final Matcher minHeightMatcher = MINIMAL_HEIGHT_PATTERN.matcher(line);
+            final Matcher minWidthMatcher = MIN_WIDTH_PATTERN.matcher(line);
+            final Matcher minHeightMatcher = MIN_HEIGHT_PATTERN.matcher(line);
 
             if (minWidthMatcher.matches()) {
                 log(line);
-                mMinimalWidth = Integer.valueOf(minWidthMatcher.group(1));
+                mMinWidth = Integer.valueOf(minWidthMatcher.group(1));
             } else if (minHeightMatcher.matches()) {
                 log(line);
-                mMinimalHeight = Integer.valueOf(minHeightMatcher.group(1));
+                mMinHeight = Integer.valueOf(minHeightMatcher.group(1));
             } else {
                 return false;
             }
@@ -603,12 +603,12 @@ class ActivityManagerState {
             return mFullscreen;
         }
 
-        int getMinimalWidth() {
-            return mMinimalWidth;
+        int getMinWidth() {
+            return mMinWidth;
         }
 
-        int getMinimalHeight() {
-            return mMinimalHeight;
+        int getMinHeight() {
+            return mMinHeight;
         }
     }
 
