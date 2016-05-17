@@ -198,6 +198,9 @@ public class AudioNativeTest extends CtsAndroidTestCase {
     }
 
     public void testOutputChannelMasks() {
+        if (!hasAudioOutput()) {
+            return;
+        }
         AudioTrackNative track = new AudioTrackNative();
 
         // TODO: when b/23899814 is fixed, use AudioManager.getDevices() to enumerate
@@ -223,6 +226,9 @@ public class AudioNativeTest extends CtsAndroidTestCase {
     }
 
     public void testInputChannelMasks() {
+        if (!hasMicrophone()) {
+            return;
+        }
         AudioRecordNative recorder = new AudioRecordNative();
 
         // TODO: when b/23899814 is fixed, use AudioManager.getDevices() to enumerate
@@ -290,6 +296,11 @@ public class AudioNativeTest extends CtsAndroidTestCase {
     private boolean hasMicrophone() {
         return getContext().getPackageManager().hasSystemFeature(
                 PackageManager.FEATURE_MICROPHONE);
+    }
+
+    private boolean hasAudioOutput() {
+        return getContext().getPackageManager().hasSystemFeature(
+                PackageManager.FEATURE_AUDIO_OUTPUT);
     }
 
     private static native void nativeAppendixBBufferQueue();
