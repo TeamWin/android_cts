@@ -165,7 +165,7 @@ public class AudioFrequencySpeakerActivity extends AudioFrequencyActivity implem
         //Init bands for Left/Right test
         bandSpecsArray[0] = new AudioBandSpecs(
                 50, 500,        /* frequency start,stop */
-                -20.0, -50,     /* start top,bottom value */
+                4.0, -50,     /* start top,bottom value */
                 4.0, -4.0       /* stop top,bottom value */);
 
         bandSpecsArray[1] = new AudioBandSpecs(
@@ -342,7 +342,7 @@ public class AudioFrequencySpeakerActivity extends AudioFrequencyActivity implem
         public String toString() {
             StringBuilder sb = new StringBuilder();
             sb.append(String.format("Channel %s\n", mLabel));
-            sb.append("Level in Band 1 : " + (testLevel() ? "OK" :"FAILED") +
+            sb.append("Level in Band 1 : " + (testLevel() ? "OK" :"Not Optimal") +
                     (mIsBaseMeasurement ? " (Base Meas.)" : "") + "\n");
             for (int b = 0; b < mBands; b++) {
                 double percent = 0;
@@ -355,7 +355,7 @@ public class AudioFrequencySpeakerActivity extends AudioFrequencyActivity implem
                         mInBoundPointsPerBand[b],
                         mPointsPerBand[b],
                         percent,
-                        (testInBand(b) ? "OK" : "FAILED")));
+                        (testInBand(b) ? "OK" : "Not Optimal")));
             }
             return sb.toString();
         }
