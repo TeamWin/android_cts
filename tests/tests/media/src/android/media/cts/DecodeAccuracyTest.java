@@ -41,27 +41,6 @@ public class DecodeAccuracyTest extends DecodeAccuracyTestBase {
 
     /* <------------- Tests Using H264 -------------> */
     @TimeoutReq(minutes = TESTCASE_WAITTIME_MIN)
-    public void testH264TextureViewVideoDecode() throws Exception {
-        runDecodeAccuracyTest(
-                new TextureViewFactory(),
-                new VideoFormat(H264_VIDEO_FILE_NAME));
-    }
-
-    @TimeoutReq(minutes = TESTCASE_WAITTIME_MIN)
-    public void testH264TextureViewLargerHeightVideoDecode() throws Exception {
-        runDecodeAccuracyTest(
-                new TextureViewFactory(),
-                getLargerHeightVideoFormat(new VideoFormat(H264_VIDEO_FILE_NAME)));
-    }
-
-    @TimeoutReq(minutes = TESTCASE_WAITTIME_MIN)
-    public void testH264TextureViewLargerWidthVideoDecode() throws Exception {
-        runDecodeAccuracyTest(
-                new TextureViewFactory(),
-                getLargerWidthVideoFormat(new VideoFormat(H264_VIDEO_FILE_NAME)));
-    }
-
-    @TimeoutReq(minutes = TESTCASE_WAITTIME_MIN)
     public void testH264GLViewVideoDecode() throws Exception {
         runDecodeAccuracyTest(
                 new GLSurfaceViewFactory(),
@@ -83,27 +62,6 @@ public class DecodeAccuracyTest extends DecodeAccuracyTestBase {
     }
 
     /* <------------- Tests Using VP9 -------------> */
-    @TimeoutReq(minutes = TESTCASE_WAITTIME_MIN)
-    public void testVP9TextureViewVideoDecode() throws Exception {
-        runDecodeAccuracyTest(
-                new TextureViewFactory(),
-                new VideoFormat(VP9_VIDEO_FILE_NAME));
-    }
-
-    @TimeoutReq(minutes = TESTCASE_WAITTIME_MIN)
-    public void testVP9TextureViewLargerHeightVideoDecode() throws Exception {
-        runDecodeAccuracyTest(
-                new TextureViewFactory(),
-                getLargerHeightVideoFormat(new VideoFormat(VP9_VIDEO_FILE_NAME)));
-    }
-
-    @TimeoutReq(minutes = TESTCASE_WAITTIME_MIN)
-    public void testVP9TextureViewLargerWidthVideoDecode() throws Exception {
-        runDecodeAccuracyTest(
-                new TextureViewFactory(),
-                getLargerWidthVideoFormat(new VideoFormat(VP9_VIDEO_FILE_NAME)));
-    }
-
     @TimeoutReq(minutes = TESTCASE_WAITTIME_MIN)
     public void testVP9GLViewVideoDecode() throws Exception {
         runDecodeAccuracyTest(
@@ -128,15 +86,6 @@ public class DecodeAccuracyTest extends DecodeAccuracyTestBase {
     private void runDecodeAccuracyTest(VideoViewFactory videoViewFactory, VideoFormat videoFormat) {
         checkNotNull(videoViewFactory);
         checkNotNull(videoFormat);
-        if (!DisplayUtil.canPlay360p(getHelper().getContext())) {
-            MediaUtils.skipTest("Display does not support 360p.");
-            return;
-        }
-        if (!DisplayUtil.currentOrientationCanPlay360p(getHelper().getContext())) {
-            Log.w(TAG, "Current screen orientation does not support 360p.");
-            Log.i(TAG, "Rotate screen orientation and continue.");
-            getHelper().rotateOrientation();
-        }
         View videoView = videoViewFactory.createView(getHelper().getContext());
         // If view is intended and available to display.
         if (videoView != null) {
@@ -218,40 +167,6 @@ public class DecodeAccuracyTest extends DecodeAccuracyTestBase {
                 return super.getWidth() * 2 + OFFSET;
             }
         };
-    }
-
-    private static final class DisplayUtil {
-
-        public static boolean canPlay360p(Context context) {
-            return displayMetricsHasMinPixelSize(context, 360);
-        }
-
-        public static boolean currentOrientationCanPlay360p(Context context) {
-            DisplayMetrics metrics = getDisplayMetrics(context);
-            return metrics.widthPixels >= 480 && metrics.heightPixels >= 360;
-        }
-
-        private static boolean displayMetricsHasMinPixelSize(Context context, int minPixelSize) {
-            return getDisplayMetricsMinPixelSize(context) >= minPixelSize;
-        }
-
-        private static int getDisplayMetricsMinPixelSize(Context context) {
-            DisplayMetrics metrics = getDisplayMetrics(context);
-            return Math.min(metrics.widthPixels, metrics.heightPixels);
-        }
-
-        private static DisplayMetrics getDisplayMetrics(Context context) {
-            checkNotNull(context);
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
-                DisplayMetrics metrics = new DisplayMetrics();
-                ((WindowManager) context.getSystemService(Context.WINDOW_SERVICE))
-                        .getDefaultDisplay().getRealMetrics(metrics);
-                return metrics;
-            } else {
-                return context.getResources().getDisplayMetrics();
-            }
-        }
-
     }
 
 }
