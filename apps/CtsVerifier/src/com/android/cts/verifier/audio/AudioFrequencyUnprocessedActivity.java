@@ -327,7 +327,7 @@ public class AudioFrequencyUnprocessedActivity extends AudioFrequencyActivity im
         public String toString() {
             StringBuilder sb = new StringBuilder();
             sb.append(String.format("Channel %s\n", mLabel));
-            sb.append("Level in Band 1 : " + (testLevel() ? "OK" :"FAILED") + "\n");
+            sb.append("Level in Band 1 : " + (testLevel() ? "OK" :"Not Optimal") + "\n");
             for (int b = 0; b < mBands; b++) {
                 double percent = 0;
                 if (mPointsPerBand[b] > 0) {
@@ -339,7 +339,7 @@ public class AudioFrequencyUnprocessedActivity extends AudioFrequencyActivity im
                         mInBoundPointsPerBand[b],
                         mPointsPerBand[b],
                         percent,
-                        (testInBand(b) ? "OK" : "FAILED")));
+                        (testInBand(b) ? "OK" : "Not Optimal")));
             }
             return sb.toString();
         }
