@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.android.cts.intentfilter;
+package com.android.cts.privilegedupdate;
 
 import java.util.List;
 
