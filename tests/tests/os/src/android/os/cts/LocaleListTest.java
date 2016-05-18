@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-package android.util.cts;
+package android.os.cts;
 
+import android.os.LocaleList;
 import android.os.Parcel;
-import android.util.LocaleList;
 import android.test.AndroidTestCase;
 
 import java.util.Locale;

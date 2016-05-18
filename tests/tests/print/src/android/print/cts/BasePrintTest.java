@@ -32,6 +32,7 @@ import android.cts.util.SystemUtil;
 import android.graphics.pdf.PdfDocument;
 import android.os.Bundle;
 import android.os.CancellationSignal;
+import android.os.LocaleList;
 import android.os.ParcelFileDescriptor;
 import android.os.SystemClock;
 import android.print.PageRange;
@@ -55,7 +56,6 @@ import android.support.test.uiautomator.UiObjectNotFoundException;
 import android.support.test.uiautomator.UiSelector;
 import android.test.InstrumentationTestCase;
 import android.util.DisplayMetrics;
-import android.util.LocaleList;
 import android.util.Log;
 
 import org.hamcrest.BaseMatcher;
