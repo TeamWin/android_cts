@@ -20,9 +20,9 @@ import java.util.Locale;
 
 import android.content.pm.ActivityInfo;
 import android.content.res.Configuration;
+import android.os.LocaleList;
 import android.os.Parcel;
 import android.test.AndroidTestCase;
-import android.util.LocaleList;
 import android.view.View;
 
 public class ConfigurationTest extends AndroidTestCase {
