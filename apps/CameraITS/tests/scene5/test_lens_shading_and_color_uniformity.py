@@ -41,9 +41,11 @@ def main():
     SPB_CT_LIST = numpy.arange(spb_r, 1/2., spb_r*2)
 
     # Threshold for pass/fail
-    THRES_LS_CT = 0.9   # len shading allowance for center
-    THRES_LS_CN = 0.6   # len shading allowance for corner
-    THRES_UFMT = 0.1   # uniformity allowance
+    THRES_LS_CT = 0.9    # len shading allowance for center
+    THRES_LS_CN = 0.6    # len shading allowance for corner
+    THRES_LS_HIGH = 0.05 # max allowed percentage for a patch to be brighter
+                         # than center
+    THRES_UFMT = 0.1     # uniformity allowance
     # Drawing color
     RED = (1, 0, 0)   # blocks failed the test
     GREEN = (0, 0.7, 0.3)   # blocks passed the test
@@ -111,7 +113,7 @@ def main():
         # evaluate y and r/g, b/g for each block
         ls_test_failed = []
         cu_test_failed = []
-        ls_thres_h = center_y * 1.001
+        ls_thres_h = center_y * (1 + THRES_LS_HIGH)
         dist_max = math.sqrt(pow(w, 2)+pow(h, 2))/2
         for spb_ct in SPB_CT_LIST:
             # list sample block center location
