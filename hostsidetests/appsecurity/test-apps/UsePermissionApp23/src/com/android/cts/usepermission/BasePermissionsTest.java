@@ -59,7 +59,7 @@ public abstract class BasePermissionsTest {
     private static final long IDLE_TIMEOUT_MILLIS = 500;
     private static final long GLOBAL_TIMEOUT_MILLIS = 5000;
 
-    private static final long RETRY_TIMEOUT = 30000;
+    private static final long RETRY_TIMEOUT = 5000;
 
     private static Map<String, String> sPermissionToLabelResNameMap = new ArrayMap<>();
     static {
@@ -328,7 +328,8 @@ public abstract class BasePermissionsTest {
             } catch (Exception e) {
                 fail("Cannot start activity: " + intent);
             }
-        }, (AccessibilityEvent event) -> event.getEventType() == AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED
+        }, (AccessibilityEvent event) -> event.getEventType()
+                        == AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED
          , GLOBAL_TIMEOUT_MILLIS);
     }
 
@@ -351,8 +352,8 @@ public abstract class BasePermissionsTest {
         return null;
     }
 
-    private static AccessibilityNodeInfo findByTextInCollection(AccessibilityNodeInfo root, String text)
-            throws Exception {
+    private static AccessibilityNodeInfo findByTextInCollection(AccessibilityNodeInfo root,
+            String text)  throws Exception {
         AccessibilityNodeInfo result;
         final int childCount = root.getChildCount();
         for (int i = 0; i < childCount; i++) {
@@ -361,9 +362,13 @@ public abstract class BasePermissionsTest {
                 continue;
             }
             if (child.getCollectionInfo() != null) {
+                scrollTop(child);
+                result = getNodeTimed(() -> findByText(child, text));
+                if (result != null) {
+                    return result;
+                }
                 while (child.getActionList().contains(AccessibilityAction.ACTION_SCROLL_FORWARD)) {
                     scrollForward(child);
-                    waitForIdle();
                     result = getNodeTimed(() -> findByText(child, text));
                     if (result != null) {
                         return result;
@@ -379,21 +384,46 @@ public abstract class BasePermissionsTest {
         return null;
     }
 
-    private static void scrollForward(AccessibilityNodeInfo node) throws Exception {
-        getInstrumentation().getUiAutomation().executeAndWaitForEvent(
-                () -> node.performAction(AccessibilityNodeInfo.ACTION_SCROLL_FORWARD),
-                (AccessibilityEvent event) -> event.getEventType() == AccessibilityEvent.TYPE_VIEW_SCROLLED,
-                GLOBAL_TIMEOUT_MILLIS);
+    private static void scrollTop(AccessibilityNodeInfo node) throws Exception {
+        try {
+            while (node.getActionList().contains(AccessibilityAction.ACTION_SCROLL_BACKWARD)) {
+                scroll(node, false);
+            }
+        } catch (TimeoutException e) {
+            /* ignore */
+        }
     }
+
+    private static void scrollForward(AccessibilityNodeInfo node) throws Exception {
+        try {
+            scroll(node, true);
+        } catch (TimeoutException e) {
+            /* ignore */
+        }
+    }
+
+    private static void scroll(AccessibilityNodeInfo node, boolean forward) throws Exception {
+        getInstrumentation().getUiAutomation().executeAndWaitForEvent(
+                () -> node.performAction(forward
+                        ? AccessibilityNodeInfo.ACTION_SCROLL_FORWARD
+                        : AccessibilityNodeInfo.ACTION_SCROLL_BACKWARD),
+                (AccessibilityEvent event) -> event.getEventType()
+                        == AccessibilityEvent.TYPE_VIEW_SCROLLED,
+                GLOBAL_TIMEOUT_MILLIS);
+        waitForIdle();
+    }
+
 
     private static void click(AccessibilityNodeInfo node) throws Exception {
         getInstrumentation().getUiAutomation().executeAndWaitForEvent(
                 () -> node.performAction(AccessibilityNodeInfo.ACTION_CLICK),
-                (AccessibilityEvent event) -> event.getEventType() == AccessibilityEvent.TYPE_VIEW_CLICKED,
+                (AccessibilityEvent event) -> event.getEventType()
+                        == AccessibilityEvent.TYPE_VIEW_CLICKED,
                 GLOBAL_TIMEOUT_MILLIS);
     }
 
-    private static AccessibilityNodeInfo findCollectionItem(AccessibilityNodeInfo current) throws Exception {
+    private static AccessibilityNodeInfo findCollectionItem(AccessibilityNodeInfo current)
+            throws Exception {
         AccessibilityNodeInfo result = current;
         while (result != null) {
             if (result.getCollectionItemInfo() != null) {
@@ -425,7 +455,8 @@ public abstract class BasePermissionsTest {
         return null;
     }
 
-    private static AccessibilityNodeInfo getNodeTimed(Callable<AccessibilityNodeInfo> callable) throws Exception {
+    private static AccessibilityNodeInfo getNodeTimed(
+            Callable<AccessibilityNodeInfo> callable) throws Exception {
         final long startTimeMillis = SystemClock.uptimeMillis();
         while (true) {
             AccessibilityNodeInfo node = callable.call();
@@ -433,12 +464,15 @@ public abstract class BasePermissionsTest {
                 return node;
             }
             final long elapsedTimeMillis = SystemClock.uptimeMillis() - startTimeMillis;
-            final long remainingTimeMillis = Math.min(startTimeMillis + RETRY_TIMEOUT, 2 * elapsedTimeMillis);
-            SystemClock.sleep(remainingTimeMillis);
+            if (elapsedTimeMillis > RETRY_TIMEOUT) {
+                return null;
+            }
+            SystemClock.sleep(2 * elapsedTimeMillis);
         }
     }
 
     private static void waitForIdle() throws TimeoutException {
-        getInstrumentation().getUiAutomation().waitForIdle(IDLE_TIMEOUT_MILLIS, GLOBAL_TIMEOUT_MILLIS);
+        getInstrumentation().getUiAutomation().waitForIdle(IDLE_TIMEOUT_MILLIS,
+                GLOBAL_TIMEOUT_MILLIS);
     }
  }
