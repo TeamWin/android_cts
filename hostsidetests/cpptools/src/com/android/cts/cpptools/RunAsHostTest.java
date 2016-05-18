@@ -35,7 +35,7 @@ public class RunAsHostTest extends DeviceTestCase {
         String runAsResult = getDevice().executeShellCommand("run-as android.cpptools.app id -u");
         assertNotNull("adb shell command failed", runAsResult);
         runAsResult = runAsResult.trim();
-        Matcher appIdMatcher = Pattern.compile("^uid=([0-9]+).*$").matcher(runAsResult);
+        Matcher appIdMatcher = Pattern.compile("^([0-9]+)$").matcher(runAsResult);
         assertTrue("unexpected result returned by adb shell command: \"" + runAsResult + "\"",
                    appIdMatcher.matches());
         String appIdString = appIdMatcher.group(1);

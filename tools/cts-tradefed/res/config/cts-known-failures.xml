@@ -71,9 +71,6 @@
 
     <option name="compatibility:exclude-filter" value="CtsCarTestCases" />
 
-    <!-- b/27578806 -->
-    <option name="compatibility:exclude-filter" value="CtsCppToolsTestCases com.android.cts.cpptools.RunAsHostTest#testRunAs" />
-
     <!-- b/23776893 -->
     <option name="compatibility:exclude-filter" value="CtsDumpsysHostTestCases android.dumpsys.cts.DumpsysHostTest#testBatterystatsOutput" />
     <option name="compatibility:exclude-filter" value="CtsDumpsysHostTestCases android.dumpsys.cts.DumpsysHostTest#testGfxinfoFramestats" />
