@@ -22,6 +22,7 @@ import com.android.cts.tradefed.build.CtsBuildHelper;
 import com.android.cts.tradefed.device.DeviceInfoCollector;
 import com.android.cts.tradefed.result.CtsTestStatus;
 import com.android.cts.tradefed.result.PlanCreator;
+import com.android.cts.tradefed.util.ReportLogUtil;
 import com.android.ddmlib.Log;
 import com.android.ddmlib.Log.LogLevel;
 import com.android.ddmlib.testrunner.TestIdentifier;
@@ -519,6 +520,8 @@ public class CtsTest implements IDeviceTest, IResumableTest, IShardableTest, IBu
             // always collect the device info, even for resumed runs, since test will likely be
             // running on a different device
             collectDeviceInfo(getDevice(), mCtsBuild, listener);
+            // prepare containers to hold test metric report logs.
+            prepareReportLogContainers(getDevice(), mBuildInfo);
             preRebootIfNecessary(mTestPackageList);
 
             mPrevRebootTime = System.currentTimeMillis();
@@ -620,7 +623,8 @@ public class CtsTest implements IDeviceTest, IResumableTest, IShardableTest, IBu
             }
 
             uninstallPrequisiteApks(uninstallPackages);
-
+            // Collect test metric report logs.
+            collectReportLogs(getDevice(), mBuildInfo);
         } catch (RuntimeException e) {
             CLog.e(e);
             throw e;
@@ -1096,6 +1100,20 @@ public class CtsTest implements IDeviceTest, IResumableTest, IShardableTest, IBu
             DeviceInfoCollector.collectExtendedDeviceInfo(
                 device, abi, ctsBuild.getTestCasesDir(), listener, mBuildInfo);
         }
+    }
+
+    /**
+     * Prepares the report log directory on host to store test metric report logs.
+     */
+    void prepareReportLogContainers(ITestDevice device, IBuildInfo buildInfo) {
+        ReportLogUtil.prepareReportLogContainers(device, buildInfo);
+    }
+
+    /**
+     * Collects the test metric report logs written out by device-side and host-side tests.
+     */
+    void collectReportLogs(ITestDevice device, IBuildInfo buildInfo) {
+        ReportLogUtil.collectReportLogs(device, buildInfo);
     }
 
     /**
