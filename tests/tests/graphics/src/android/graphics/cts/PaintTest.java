@@ -35,9 +35,9 @@ import android.graphics.BitmapShader;
 import android.graphics.Typeface;
 import android.graphics.Xfermode;
 import android.os.Build;
+import android.os.LocaleList;
 import android.test.AndroidTestCase;
 import android.text.SpannedString;
-import android.util.LocaleList;
 import android.util.Log;
 
 import java.util.Locale;
