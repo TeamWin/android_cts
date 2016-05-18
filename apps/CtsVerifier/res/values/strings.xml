@@ -1535,14 +1535,14 @@
     <string name="cacert_info">This test checks that when a CA Certificate is installed, the user is notified.</string>
     <string name="cacert_do_something">Do it</string>
     <string name="cacert_done">Done</string>
-    <string name="cacert_install_cert">Use the CertInstaller to install the certificate. When it opens, just tap "Okay". If this button does nothing, pass the test and move on.</string>
+    <string name="cacert_install_cert">Use the CertInstaller to install the certificate "MyCA.cer" from device storage. When it opens, choose any name and tap "Okay". If this button does nothing, pass the test and move on.</string>
     <string name="cacert_check_cert_in_settings">Visit the user-installed trusted credentials page and confirm that the "Internet Widgits Pty Ltd" cert appears in the list.</string>
     <string name="cacert_remove_screen_lock">You may have been prompted to set a screen lock when installing the certificate. If so, remove it. If not, you may skip this step.</string>
     <string name="cacert_check_notification">Look at the system notifications. Confirm that:\n
 1. There is a notification saying a certificate authority is installed.\n
 2. Tapping that notification brings up a more detailed explanation and a button to check trusted credentials.\n
 3. Tapping that button brings up the Trusted Credentials page you just visited.</string>
-    <string name="cacert_dismiss_notification">Dismiss the notification. If it cannot be dismissed, fail the test.</string>
+    <string name="cacert_dismiss_notification">Open the notification and follow the link to remove CA certificates. If removing CA certificates does not dismiss the notification, fail the test.</string>
 
     <string name="caboot_test">CA Cert Notification on Boot test</string>
     <string name="caboot_info">This test is to confirm that when the user has installed a trusted credential, the system notifies the user when it boots.</string>
