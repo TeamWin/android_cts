@@ -18,10 +18,10 @@ package android.view.inputmethod.cts;
 
 
 import android.os.Bundle;
+import android.os.LocaleList;
 import android.os.Parcel;
 import android.test.AndroidTestCase;
 import android.text.TextUtils;
-import android.util.LocaleList;
 import android.util.Printer;
 import android.view.inputmethod.EditorInfo;
 
