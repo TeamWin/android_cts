@@ -50,6 +50,10 @@
         <option name="dest-dir" value="device-info-files/"/>
     </target_preparer>
 
+    <!-- The following values are used in cts/common/device-side/util/DeviceReportLog.java,
+    cts/common/host-side/util/MetricsReportLog.java and tools/tradefed-host/util/ReportLogUtil.java.
+    Any change in these values must also be translated to the stated files.
+    -->
     <target_preparer class="com.android.compatibility.common.tradefed.targetprep.ReportLogCollector">
         <option name="src-dir" value="/sdcard/report-log-files/"/>
         <option name="dest-dir" value="report-log-files/"/>
