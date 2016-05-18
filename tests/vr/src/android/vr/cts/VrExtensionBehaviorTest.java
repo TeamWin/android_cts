@@ -37,11 +37,12 @@ public class VrExtensionBehaviorTest extends ActivityInstrumentationTestCase2<Op
     }
 
     private OpenGLESActivity getGlEsActivity(int viewIndex, int createProtected,
-        int priorityAttribute) {
+        int priorityAttribute, int mutableAttribute) {
         Intent intent = new Intent();
         intent.putExtra(OpenGLESActivity.EXTRA_VIEW_INDEX, viewIndex);
         intent.putExtra(OpenGLESActivity.EXTRA_PROTECTED, createProtected);
         intent.putExtra(OpenGLESActivity.EXTRA_PRIORITY, priorityAttribute);
+        intent.putExtra(OpenGLESActivity.EXTRA_MUTABLE, mutableAttribute);
         setActivityIntent(intent);
         OpenGLESActivity activity = getActivity();
         assertTrue(activity.waitForFrameDrawn());
@@ -52,7 +53,7 @@ public class VrExtensionBehaviorTest extends ActivityInstrumentationTestCase2<Op
      * Tests that protected content contexts and surfaces can be created.
      */
     public void testProtectedContent() throws Throwable {
-        mActivity = getGlEsActivity(1, 1, 0);
+        mActivity = getGlEsActivity(1, 1, 0, 0);
         if (!mActivity.supportsVrHighPerformance())
             return;
 
@@ -76,7 +77,7 @@ public class VrExtensionBehaviorTest extends ActivityInstrumentationTestCase2<Op
      * Tests that textures can be marked as protected.
      */
     public void testProtectedTextures() throws Throwable {
-        mActivity = getGlEsActivity(2, 1, 0);
+        mActivity = getGlEsActivity(2, 1, 0, 0);
         if (!mActivity.supportsVrHighPerformance())
             return;
 
@@ -126,7 +127,7 @@ public class VrExtensionBehaviorTest extends ActivityInstrumentationTestCase2<Op
      */
     public void testMutableRenderBuffer() throws Throwable {
 
-        mActivity = getGlEsActivity(1, 0, 0);
+        mActivity = getGlEsActivity(1, 0, 0, 1);
         if (!mActivity.supportsVrHighPerformance())
             return;
 
@@ -141,14 +142,14 @@ public class VrExtensionBehaviorTest extends ActivityInstrumentationTestCase2<Op
                     EGL14.EGL_TRUE);
                 swapBuffers();
                 assertTrue("Unable to enable single buffered mode",
-                    OpenGLESActivity.contextHasAttributeWithValue(
+                    OpenGLESActivity.surfaceHasAttributeWithValue(
                         EGL14.EGL_RENDER_BUFFER, EGL14.EGL_SINGLE_BUFFER));
 
                 OpenGLESActivity.setSurfaceAttribute(EGL14.EGL_RENDER_BUFFER,
                     EGL14.EGL_BACK_BUFFER);
                 swapBuffers();
                 assertTrue("Unable to disable single buffered mode",
-                    OpenGLESActivity.contextHasAttributeWithValue(
+                    OpenGLESActivity.surfaceHasAttributeWithValue(
                         EGL14.EGL_RENDER_BUFFER, EGL14.EGL_BACK_BUFFER));
             }
         });
@@ -158,7 +159,7 @@ public class VrExtensionBehaviorTest extends ActivityInstrumentationTestCase2<Op
      * Runs a context priority test.
      */
     private void runContextPriorityTest(int priority) throws Throwable {
-        mActivity = getGlEsActivity(1, 0, priority);
+        mActivity = getGlEsActivity(1, 0, priority, 0);
         if (!mActivity.supportsVrHighPerformance())
             return;
 
