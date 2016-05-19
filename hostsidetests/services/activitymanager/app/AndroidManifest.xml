@@ -106,8 +106,8 @@
                   <layout android:defaultWidth="240dp"
                           android:defaultHeight="160dp"
                           android:gravity="top|left"
-                          android:minimalWidth="100dp"
-                          android:minimalHeight="80dp"
+                          android:minWidth="100dp"
+                          android:minHeight="80dp"
                   />
         </activity>
         <activity android:name=".TopRightLayoutActivity"
@@ -117,8 +117,8 @@
                   <layout android:defaultWidth="25%"
                           android:defaultHeight="35%"
                           android:gravity="top|right"
-                          android:minimalWidth="100dp"
-                          android:minimalHeight="80dp"
+                          android:minWidth="100dp"
+                          android:minHeight="80dp"
                   />
         </activity>
         <activity android:name=".BottomLeftLayoutActivity"
@@ -128,8 +128,8 @@
                   <layout android:defaultWidth="25%"
                           android:defaultHeight="35%"
                           android:gravity="bottom|left"
-                          android:minimalWidth="100dp"
-                          android:minimalHeight="80dp"
+                          android:minWidth="100dp"
+                          android:minHeight="80dp"
                   />
         </activity>
         <activity android:name=".BottomRightLayoutActivity"
@@ -139,8 +139,8 @@
                   <layout android:defaultWidth="240dp"
                           android:defaultHeight="160dp"
                           android:gravity="bottom|right"
-                          android:minimalWidth="100dp"
-                          android:minimalHeight="80dp"
+                          android:minWidth="100dp"
+                          android:minHeight="80dp"
                   />
         </activity>
     </application>
