@@ -49,14 +49,16 @@ public class RingtoneTest extends InstrumentationTestCase {
         mOriginalRingerMode = mAudioManager.getRingerMode();
         mOriginalVolume = mAudioManager.getStreamVolume(AudioManager.STREAM_RING);
         mOriginalStreamType = mRingtone.getStreamType();
-        // set ringer to a reasonable volume
+
         int maxVolume = mAudioManager.getStreamMaxVolume(AudioManager.STREAM_RING);
-        mAudioManager.setStreamVolume(AudioManager.STREAM_RING, maxVolume / 2,
-                AudioManager.FLAG_ALLOW_RINGER_MODES);
-        // make sure that we are not in silent mode
+
         try {
             Utils.toggleNotificationPolicyAccess(
                     mContext.getPackageName(), getInstrumentation(), true);
+            // set ringer to a reasonable volume
+            mAudioManager.setStreamVolume(AudioManager.STREAM_RING, maxVolume / 2,
+                    AudioManager.FLAG_ALLOW_RINGER_MODES);
+            // make sure that we are not in silent mode
             mAudioManager.setRingerMode(AudioManager.RINGER_MODE_NORMAL);
         } finally {
             Utils.toggleNotificationPolicyAccess(
@@ -91,12 +93,12 @@ public class RingtoneTest extends InstrumentationTestCase {
                 Utils.toggleNotificationPolicyAccess(
                         mContext.getPackageName(), getInstrumentation(), true);
                 mAudioManager.setRingerMode(mOriginalRingerMode);
+                mAudioManager.setStreamVolume(AudioManager.STREAM_RING, mOriginalVolume,
+                        AudioManager.FLAG_ALLOW_RINGER_MODES);
             } finally {
                 Utils.toggleNotificationPolicyAccess(
                         mContext.getPackageName(), getInstrumentation(), false);
             }
-            mAudioManager.setStreamVolume(AudioManager.STREAM_RING, mOriginalVolume,
-                    AudioManager.FLAG_ALLOW_RINGER_MODES);
         }
         RingtoneManager.setActualDefaultRingtoneUri(mContext, RingtoneManager.TYPE_RINGTONE,
                 mDefaultRingUri);
