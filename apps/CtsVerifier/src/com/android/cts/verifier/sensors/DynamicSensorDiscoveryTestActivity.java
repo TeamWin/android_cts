@@ -46,8 +46,9 @@ public class DynamicSensorDiscoveryTestActivity extends SensorCtsVerifierTestAct
     private SensorManager mSensorManager;
     private boolean mFeatureSupported = false;
     private boolean mSensorConnected = false;
+    private boolean mSensorDisconnected = false;
+    private Integer mSensorId;
     private Callback mCallback;
-
 
     public DynamicSensorDiscoveryTestActivity() {
         super(DynamicSensorDiscoveryTestActivity.class);
@@ -79,6 +80,7 @@ public class DynamicSensorDiscoveryTestActivity extends SensorCtsVerifierTestAct
 
         Assert.assertTrue("Cannot detect sensor connection.", mCallback.waitForConnection());
         mSensorConnected = true;
+        mSensorId = mCallback.getSensorId();
         return "OnConnect: Success";
     }
 
@@ -119,7 +121,25 @@ public class DynamicSensorDiscoveryTestActivity extends SensorCtsVerifierTestAct
         showUserMessage(String.format("Please disconnect the external sensor that was previously " +
                     "connected in %d seconds", DISCONNECTION_TIMEOUT_SEC));
         Assert.assertTrue("Cannot detect sensor disconnection.", mCallback.waitForDisconnection());
+        mSensorDisconnected = true;
         return "OnDisconnect: Success";
+    }
+
+    @SuppressWarnings("unused")
+    public String test4_OnReconnect() {
+        featureSupportedOrSkip();
+        sensorConnectedOrSkip();
+        sensorDisconnectedOrSkip();
+
+        showUserMessage(String.format("Please connect the same sensor that was previously " +
+                    "connected in %d seconds", CONNECTION_TIMEOUT_SEC));
+        Assert.assertTrue("Cannot detect sensor reconnection.", mCallback.waitForConnection());
+
+        Integer sensorId = mCallback.getSensorId();
+        boolean match = mSensorId != null && sensorId != null &&
+                sensorId.intValue() == mSensorId.intValue();
+        Assert.assertTrue("Id mismatch for the reconnected sensor", match);
+        return "OnReconnect: Success";
     }
 
     private class Callback extends SensorManager.DynamicSensorCallback {
@@ -155,6 +175,7 @@ public class DynamicSensorDiscoveryTestActivity extends SensorCtsVerifierTestAct
                 ret = mConnectLatch.await(CONNECTION_TIMEOUT_SEC, TimeUnit.SECONDS);
             } catch (InterruptedException e) {
                 ret = false;
+                Thread.currentThread().interrupt();
             } finally {
                 mConnectLatch = null;
             }
@@ -168,6 +189,7 @@ public class DynamicSensorDiscoveryTestActivity extends SensorCtsVerifierTestAct
                 ret = mDisconnectLatch.await(DISCONNECTION_TIMEOUT_SEC, TimeUnit.SECONDS);
             } catch (InterruptedException e) {
                 ret = false;
+                Thread.currentThread().interrupt();
             } finally {
                 mDisconnectLatch = null;
             }
@@ -200,6 +222,7 @@ public class DynamicSensorDiscoveryTestActivity extends SensorCtsVerifierTestAct
                 ret = eventLatch.await(EVENT_TIMEOUT_SEC, TimeUnit.SECONDS);
             } catch (InterruptedException e) {
                 ret = false;
+                Thread.currentThread().interrupt();
             } finally {
                 mSensorManager.unregisterListener(eventCallback);
             }
@@ -220,6 +243,11 @@ public class DynamicSensorDiscoveryTestActivity extends SensorCtsVerifierTestAct
                     mSensorManager.getDynamicSensorList(mSensor.getType()).contains(mSensor);
         }
 
+        public Integer getSensorId() {
+            return assumeSensorIsSet() ? mSensor.getId() : null;
+        }
+
+        // name assumeSensorIsSet instead of is... because the Log print is one of the main purpose.
         private boolean assumeSensorIsSet() {
             if (mSensor == null) {
                 Log.e(TAG, "Sensor is not set");
@@ -254,14 +282,21 @@ public class DynamicSensorDiscoveryTestActivity extends SensorCtsVerifierTestAct
     private void featureSupportedOrSkip() {
         if (!mFeatureSupported) {
             throw new SensorTestStateNotSupportedException(
-                    "Dynamic sensor discovery not supported, skipped.");
+                    "Dynamic sensor discovery not supported, skip.");
         }
     }
 
     private void sensorConnectedOrSkip() {
         if (!mSensorConnected) {
             throw new SensorTestStateNotSupportedException(
-                    "Sensor not connected, skipped.");
+                    "Sensor not connected, skip.");
+        }
+    }
+
+    private void sensorDisconnectedOrSkip() {
+        if (!mSensorDisconnected) {
+            throw new SensorTestStateNotSupportedException(
+                    "Sensor has not been disconnected, skip.");
         }
     }
 
