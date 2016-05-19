@@ -111,15 +111,15 @@
           android:orientation="vertical"
           android:layout_width="match_parent"
           android:layout_height="70px"
-          android:pointerShape="crosshair">
+          android:pointerIcon="crosshair">
         <View android:layout_width="match_parent"
               android:layout_height="20px"
-              android:pointerShape="help"/>
+              android:pointerIcon="help"/>
         <View android:layout_width="match_parent"
               android:layout_height="20px"/>
         <View android:layout_width="match_parent"
               android:layout_height="20px"
-              android:pointerShape="@drawable/custom_pointer_icon"/>
+              android:pointerIcon="@drawable/custom_pointer_icon"/>
       </LinearLayout>
     </LinearLayout>
 
