@@ -48,7 +48,7 @@ class ActivityManagerState {
     private final Pattern mFocusedActivityPattern =
             Pattern.compile("mFocusedActivity\\: ActivityRecord\\{(.+) u(\\d+) (\\S+) (\\S+)\\}");
     private final Pattern mFocusedStackPattern =
-            Pattern.compile("mFocusedStack=ActivityStack\\{(.+) stackId=(\\d+), (.+)");
+            Pattern.compile("mFocusedStack=ActivityStack\\{(.+) stackId=(\\d+), (.+)\\}(.+)");
 
     private final Pattern[] mExtractStackExitPatterns =
             { mStackIdPattern, mFocusedActivityPattern, mFocusedStackPattern};
