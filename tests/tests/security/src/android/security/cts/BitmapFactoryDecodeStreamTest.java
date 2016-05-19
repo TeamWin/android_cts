@@ -19,7 +19,7 @@ package android.security.cts;
 import android.graphics.BitmapFactory;
 import android.test.AndroidTestCase;
 
-import com.android.cts.security.R;
+import android.security.cts.R;
 
 import java.io.BufferedInputStream;
 import java.io.InputStream;
