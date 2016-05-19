@@ -54,7 +54,7 @@ public class OsHostTests extends DeviceTestCase implements IBuildReceiver, IAbiR
     private static final Pattern HOST_PATTERN = Pattern.compile(".*hosts:\"(.*?)\"");
     // domains that should be validated against given our test apk
     private static final String HOST_EXPLICIT = "explicit.example.com";
-    private static final String HOST_WILDCARD = "wildcard.tld";
+    private static final String HOST_WILDCARD = "*.wildcard.tld";
 
     /**
      * A reference to the device under test.
@@ -103,7 +103,7 @@ public class OsHostTests extends DeviceTestCase implements IBuildReceiver, IAbiR
 
             String[] options = { AbiUtils.createAbiFlag(mAbi.getName()) };
 
-            mDevice.executeAdbCommand("logcat", "-c");
+            mDevice.clearLogcat();
 
             String installResult = getDevice().installPackage(getTestAppFile(HOST_VERIFICATION_APK),
                     false /* = reinstall? */, options);
@@ -123,9 +123,9 @@ public class OsHostTests extends DeviceTestCase implements IBuildReceiver, IAbiR
                     final String hostgroup = m.group(1);
                     HashSet<String> allHosts = new HashSet<String>(
                             Arrays.asList(hostgroup.split(" ")));
-                    assertTrue(allHosts.size() == 2);
-                    assertTrue(allHosts.contains(HOST_EXPLICIT));
-                    assertTrue(allHosts.contains(HOST_WILDCARD));
+                    assertEquals(2, allHosts.size());
+                    assertTrue("AllHosts Contains: " + allHosts, allHosts.contains(HOST_EXPLICIT));
+                    assertTrue("AllHosts Contains: " + allHosts, allHosts.contains(HOST_WILDCARD));
                     foundVerifierOutput = true;
                     break;
                 }
