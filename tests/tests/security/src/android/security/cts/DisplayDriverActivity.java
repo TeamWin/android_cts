@@ -16,7 +16,7 @@
 
 package android.security.cts;
 
-import com.android.cts.security.R;
+import android.security.cts.R;
 
 import android.app.Activity;
 import android.os.Bundle;
