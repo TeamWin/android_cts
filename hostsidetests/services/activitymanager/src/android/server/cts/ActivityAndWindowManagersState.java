@@ -334,8 +334,8 @@ class ActivityAndWindowManagersState extends Assert {
                             + ", stackId=" + stackId, aTaskBounds, wTaskBounds);
 
                     if (compareTaskAndStackBounds && stackId != FREEFORM_WORKSPACE_STACK_ID) {
-                        int aTaskMinWidth = aTask.getMinimalWidth();
-                        int aTaskMinHeight = aTask.getMinimalHeight();
+                        int aTaskMinWidth = aTask.getMinWidth();
+                        int aTaskMinHeight = aTask.getMinHeight();
 
                         if (aTaskMinWidth == -1 || aTaskMinHeight == -1) {
                             // Minimal dimension(s) not set for task - it should be using defaults.
