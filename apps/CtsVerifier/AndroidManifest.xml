@@ -1877,6 +1877,7 @@
             </intent-filter>
         </receiver>
 
+<!-- Comment out until b/28406044 is addressed
         <activity android:name=".jobscheduler.IdleConstraintTestActivity" android:label="@string/js_idle_test">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -1888,6 +1889,7 @@
             <meta-data android:name="test_excluded_features"
                     android:value="android.software.leanback" />
         </activity>
+-->
 
         <activity android:name=".jobscheduler.ChargingConstraintTestActivity" android:label="@string/js_charging_test">
             <intent-filter>
