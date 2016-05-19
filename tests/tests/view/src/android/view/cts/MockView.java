@@ -69,7 +69,7 @@ public class MockView extends View {
     private boolean mCalledComputeScroll = false;
     private boolean mCalledDispatchKeyEventPreIme = false;
     private boolean mCalledOnKeyPreIme = false;
-    private boolean mCalledGetPointerIcon = false;
+    private boolean mCalledOnResolvePointerIcon = false;
     private boolean mCalledOnVisibilityAggregated = false;
     private boolean mCalledDispatchStartTemporaryDetach = false;
     private boolean mCalledDispatchFinishTemporaryDetach = false;
@@ -614,13 +614,13 @@ public class MockView extends View {
     }
 
     @Override
-    public PointerIcon getPointerIcon(MotionEvent event, float x, float y) {
-        mCalledGetPointerIcon = true;
-        return super.getPointerIcon(event, x, y);
+    public PointerIcon onResolvePointerIcon(MotionEvent event, int pointerIndex) {
+        mCalledOnResolvePointerIcon = true;
+        return super.onResolvePointerIcon(event, pointerIndex);
     }
 
-    public boolean hasCalledGetPointerIcon() {
-        return mCalledGetPointerIcon;
+    public boolean hasCalledOnResolvePointerIcon() {
+        return mCalledOnResolvePointerIcon;
     }
 
     @Override
@@ -716,7 +716,7 @@ public class MockView extends View {
         mCalledComputeScroll = false;
         mCalledDispatchKeyEventPreIme = false;
         mCalledOnKeyPreIme = false;
-        mCalledGetPointerIcon = false;
+        mCalledOnResolvePointerIcon = false;
         mCalledOnVisibilityAggregated = false;
         mCalledOnVisibilityAggregated = false;
         mCalledDispatchStartTemporaryDetach = false;
