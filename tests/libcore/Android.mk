@@ -22,6 +22,7 @@ LOCAL_STATIC_JAVA_LIBRARIES := \
     apache-harmony-tests \
     bouncycastle-nojarjar \
     conscrypt-tests \
+    core-ojtests-public \
     core-tests \
     cts-core-test-runner \
     jsr166-tests \
