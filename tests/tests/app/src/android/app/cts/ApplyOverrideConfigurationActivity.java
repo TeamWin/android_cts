@@ -18,6 +18,8 @@ package android.app.cts;
 import android.app.Activity;
 import android.content.Context;
 import android.content.res.Configuration;
+import android.os.Bundle;
+import android.view.WindowManager;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
@@ -26,6 +28,15 @@ public class ApplyOverrideConfigurationActivity extends Activity {
     public static final int OVERRIDE_SMALLEST_WIDTH = 99999;
 
     private CompletableFuture<Configuration> mOnConfigurationChangedFuture = null;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_DISMISS_KEYGUARD
+                | WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON
+                | WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+    }
 
     @Override
     protected void attachBaseContext(Context newBase) {
