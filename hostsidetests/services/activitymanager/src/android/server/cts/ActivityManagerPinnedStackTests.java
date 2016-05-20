@@ -43,7 +43,7 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
                 LAUNCH_INTO_PINNED_STACK_PIP_ACTIVITY, ALWAYS_FOCUSABLE_PIP_ACTIVITY, false, true);
     }
 
-    private void pinnedStackTester(String startActivity, String topActiviyName,
+    private void pinnedStackTester(String startActivity, String topActivityName,
             boolean moveTopToPinnedStack, boolean isFocusable) throws Exception {
 
         mDevice.executeShellCommand(getAmStartCmd(startActivity));
@@ -51,30 +51,32 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
             mDevice.executeShellCommand(AM_MOVE_TOP_ACTIVITY_TO_PINNED_STACK_COMMAND);
         }
 
-        mAmWmState.computeState(mDevice, new String[] {topActiviyName});
+        mAmWmState.waitForValidState(mDevice, true, new String[] {topActivityName},
+                new int[] {PINNED_STACK_ID});
+        mAmWmState.computeState(mDevice, null);
 
         if (supportsPip()) {
-            final String windowName = getWindowName(topActiviyName);
+            final String windowName = getWindowName(topActivityName);
             mAmWmState.assertContainsStack("Must contain pinned stack.", PINNED_STACK_ID);
             mAmWmState.assertFrontStack("Pinned stack must be the front stack.", PINNED_STACK_ID);
-            mAmWmState.assertVisibility(topActiviyName, true);
+            mAmWmState.assertVisibility(topActivityName, true);
 
             if (isFocusable) {
                 mAmWmState.assertFocusedStack(
                         "Pinned stack must be the focused stack.", PINNED_STACK_ID);
                 mAmWmState.assertFocusedActivity(
-                        "Pinned activity must be focused activity.", topActiviyName);
-                mAmWmState.assertResumedActivity(
-                        "Pinned activity must be the resumed activity.", topActiviyName);
+                        "Pinned activity must be focused activity.", topActivityName);
                 mAmWmState.assertFocusedWindow(
                         "Pinned window must be focused window.", windowName);
+                // Not checking for resumed state here because PiP overlay can be launched on top
+                // in different task by SystemUI.
             } else {
                 mAmWmState.assertNotFocusedStack(
                         "Pinned stack can't be the focused stack.", PINNED_STACK_ID);
                 mAmWmState.assertNotFocusedActivity(
-                        "Pinned stack can't be the focused activity.", topActiviyName);
+                        "Pinned activity can't be the focused activity.", topActivityName);
                 mAmWmState.assertNotResumedActivity(
-                        "Pinned stack can't be the resumed activity.", topActiviyName);
+                        "Pinned activity can't be the resumed activity.", topActivityName);
                 mAmWmState.assertNotFocusedWindow(
                         "Pinned window can't be focused window.", windowName);
             }
