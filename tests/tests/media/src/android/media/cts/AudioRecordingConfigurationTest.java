@@ -28,6 +28,10 @@ import android.os.Looper;
 import android.os.Parcel;
 import android.util.Log;
 
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+
 public class AudioRecordingConfigurationTest extends CtsAndroidTestCase {
     private final static String TAG = "AudioRecordingConfigurationTest";
 
@@ -98,7 +102,7 @@ public class AudioRecordingConfigurationTest extends CtsAndroidTestCase {
         AudioManager am = new AudioManager(getContext());
         assertNotNull("Could not create AudioManager", am);
 
-        AudioRecordingConfiguration[] configs = am.getActiveRecordingConfigurations();
+        List<AudioRecordingConfiguration> configs = am.getActiveRecordingConfigurations();
         assertNotNull("Invalid null array of record configurations before recording", configs);
 
         assertEquals(AudioRecord.STATE_INITIALIZED, mAudioRecord.getState());
@@ -110,8 +114,8 @@ public class AudioRecordingConfigurationTest extends CtsAndroidTestCase {
         configs = am.getActiveRecordingConfigurations();
         assertNotNull("Invalid null array of record configurations during recording", configs);
         assertTrue("no active record configurations (empty array) during recording",
-                configs.length > 0);
-        final int nbConfigsDuringRecording = configs.length;
+                configs.size() > 0);
+        final int nbConfigsDuringRecording = configs.size();
 
         // verify our recording shows as one of the recording configs
         assertTrue("Test source/session not amongst active record configurations",
@@ -123,7 +127,7 @@ public class AudioRecordingConfigurationTest extends CtsAndroidTestCase {
         Thread.sleep(TEST_TIMING_TOLERANCE_MS);
         configs = am.getActiveRecordingConfigurations();
         assertTrue("end of recording not reported in record configs",
-                configs.length < nbConfigsDuringRecording);
+                configs.size() < nbConfigsDuringRecording);
     }
 
     public void testCallback() throws Exception {
@@ -162,7 +166,7 @@ public class AudioRecordingConfigurationTest extends CtsAndroidTestCase {
         // just call the callback once directly so it's marked as tested
         final AudioManager.AudioRecordingCallback arc =
                 (AudioManager.AudioRecordingCallback) callback;
-        arc.onRecordingConfigChanged(new AudioRecordingConfiguration[0]);
+        arc.onRecordingConfigChanged(new ArrayList<AudioRecordingConfiguration>());
     }
 
     public void testParcel() throws Exception {
@@ -177,15 +181,15 @@ public class AudioRecordingConfigurationTest extends CtsAndroidTestCase {
         assertEquals(AudioRecord.RECORDSTATE_RECORDING, mAudioRecord.getRecordingState());
         Thread.sleep(TEST_TIMING_TOLERANCE_MS);
 
-        AudioRecordingConfiguration[] configs = am.getActiveRecordingConfigurations();
-        assertTrue("Empty array of record configs during recording", configs.length > 0);
-        assertEquals(0, configs[0].describeContents());
+        List<AudioRecordingConfiguration> configs = am.getActiveRecordingConfigurations();
+        assertTrue("Empty array of record configs during recording", configs.size() > 0);
+        assertEquals(0, configs.get(0).describeContents());
 
         // marshall a AudioRecordingConfiguration and compare to unmarshalled
         final Parcel srcParcel = Parcel.obtain();
         final Parcel dstParcel = Parcel.obtain();
 
-        configs[0].writeToParcel(srcParcel, 0 /*no public flags for marshalling*/);
+        configs.get(0).writeToParcel(srcParcel, 0 /*no public flags for marshalling*/);
         final byte[] mbytes = srcParcel.marshall();
         dstParcel.unmarshall(mbytes, 0, mbytes.length);
         dstParcel.setDataPosition(0);
@@ -194,7 +198,7 @@ public class AudioRecordingConfigurationTest extends CtsAndroidTestCase {
 
         assertNotNull("Failure to unmarshall AudioRecordingConfiguration", unmarshalledConf);
         assertEquals("Source and destination AudioRecordingConfiguration not equal",
-                configs[0], unmarshalledConf);
+                configs.get(0), unmarshalledConf);
     }
 
     class MyAudioRecordingCallback extends AudioManager.AudioRecordingCallback {
@@ -216,7 +220,7 @@ public class AudioRecordingConfigurationTest extends CtsAndroidTestCase {
         }
 
         @Override
-        public void onRecordingConfigChanged(AudioRecordingConfiguration[] configs) {
+        public void onRecordingConfigChanged(List<AudioRecordingConfiguration> configs) {
             mCalled = true;
             mParamMatch = verifyAudioConfig(mTestSource, mTestSession, mAudioRecord.getFormat(),
                     mAudioRecord.getRoutedDevice(), configs);
@@ -230,24 +234,26 @@ public class AudioRecordingConfigurationTest extends CtsAndroidTestCase {
     }
 
     private static boolean verifyAudioConfig(int source, int session, AudioFormat format,
-            AudioDeviceInfo device, AudioRecordingConfiguration[] configs) {
-        for (int i = 0 ; i < configs.length ; i++) {
-            if ((configs[i].getClientAudioSource() == source)
-                    && (configs[i].getClientAudioSessionId() == session)
+            AudioDeviceInfo device, List<AudioRecordingConfiguration> configs) {
+        final Iterator<AudioRecordingConfiguration> confIt = configs.iterator();
+        while (confIt.hasNext()) {
+            final AudioRecordingConfiguration config = confIt.next();
+            if ((config.getClientAudioSource() == source)
+                    && (config.getClientAudioSessionId() == session)
                     // test the client format matches that requested (same as the AudioRecord's)
-                    && (configs[i].getClientFormat().getEncoding() == format.getEncoding())
-                    && (configs[i].getClientFormat().getSampleRate() == format.getSampleRate())
-                    && (configs[i].getClientFormat().getChannelMask() == format.getChannelMask())
-                    && (configs[i].getClientFormat().getChannelIndexMask() ==
+                    && (config.getClientFormat().getEncoding() == format.getEncoding())
+                    && (config.getClientFormat().getSampleRate() == format.getSampleRate())
+                    && (config.getClientFormat().getChannelMask() == format.getChannelMask())
+                    && (config.getClientFormat().getChannelIndexMask() ==
                             format.getChannelIndexMask())
                     // test the device format is configured
-                    && (configs[i].getFormat().getEncoding() != AudioFormat.ENCODING_INVALID)
-                    && (configs[i].getFormat().getSampleRate() > 0)
+                    && (config.getFormat().getEncoding() != AudioFormat.ENCODING_INVALID)
+                    && (config.getFormat().getSampleRate() > 0)
                     //  for the channel mask, either the position or index-based value must be valid
-                    && ((configs[i].getFormat().getChannelMask() != AudioFormat.CHANNEL_INVALID)
-                            || (configs[i].getFormat().getChannelIndexMask() !=
+                    && ((config.getFormat().getChannelMask() != AudioFormat.CHANNEL_INVALID)
+                            || (config.getFormat().getChannelIndexMask() !=
                                     AudioFormat.CHANNEL_INVALID))
-                    && deviceMatch(device, configs[i].getAudioDevice())) {
+                    && deviceMatch(device, config.getAudioDevice())) {
                 return true;
             }
         }
