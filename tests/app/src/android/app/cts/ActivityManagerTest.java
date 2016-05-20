@@ -30,6 +30,7 @@ import android.app.stubs.ActivityManagerRecentOneActivity;
 import android.app.stubs.ActivityManagerRecentTwoActivity;
 import android.app.stubs.MockApplicationActivity;
 import android.app.stubs.MockService;
+import android.app.stubs.ScreenOnActivity;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -81,6 +82,7 @@ public class ActivityManagerTest extends InstrumentationTestCase {
         mActivityManager = (ActivityManager) mContext.getSystemService(Context.ACTIVITY_SERVICE);
         mStartedActivityList = new ArrayList<Activity>();
         mErrorProcessID = -1;
+        startSubActivity(ScreenOnActivity.class);
     }
 
     @Override
@@ -347,9 +349,6 @@ public class ActivityManagerTest extends InstrumentationTestCase {
     public void testGetProcessInErrorState() throws Exception {
         List<ActivityManager.ProcessErrorStateInfo> errList = null;
         errList = mActivityManager.getProcessesInErrorState();
-    }
-
-    public void testRestartPackage() {
     }
 
     public void testGetDeviceConfigurationInfo() {

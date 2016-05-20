@@ -51,6 +51,8 @@
         <uses-library android:name="android.test.runner" />
         <uses-library android:name="org.apache.http.legacy" android:required="false" />
 
+        <activity android:name="android.app.stubs.ScreenOnActivity" />
+
         <activity android:name="android.app.stubs.ActionBarActivity" />
 
         <activity android:name="android.app.stubs.DialogStubActivity"
