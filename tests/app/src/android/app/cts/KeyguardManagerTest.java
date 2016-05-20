@@ -37,10 +37,4 @@ public class KeyguardManagerTest
         final KeyguardManager.KeyguardLock keyLock = keyguardManager.newKeyguardLock(TAG);
         assertNotNull(keyLock);
     }
-
-    public void testInKeyguardRestrictedInputMode() {
-    }
-
-    public void testExitKeyguardSecurely() {
-    }
 }
