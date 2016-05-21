@@ -49,13 +49,20 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:id="@+id/audio_general_headset_no"
-                    android:text="@string/audio_general_headset_no" />
+                    android:text="@string/audio_general_headset_no"
+                    android:nextFocusForward="@+id/audio_general_headset_yes"
+                    android:nextFocusDown="@+id/audio_frequency_line_plug_ready_btn"
+                    android:nextFocusRight="@+id/audio_general_headset_yes"/>
 
                 <Button
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:id="@+id/audio_general_headset_yes"
-                    android:text="@string/audio_general_headset_yes" />
+                    android:text="@string/audio_general_headset_yes"
+                    android:nextFocusForward="@+id/audio_frequency_line_plug_ready_btns"
+                    android:nextFocusDown="@+id/audio_frequency_line_plug_ready_btn"
+                    android:nextFocusLeft="@+id/audio_general_headset_no"
+                    android:nextFocusRight="@+id/audio_frequency_line_plug_ready_btn" />
 
             </LinearLayout>
 
@@ -75,7 +82,12 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:id="@+id/audio_frequency_line_plug_ready_btn"
-                    android:text="@string/audio_frequency_line_plug_ready_btn" />
+                    android:text="@string/audio_frequency_line_plug_ready_btn"
+                    android:nextFocusForward="@+id/audio_frequency_line_test_btn"
+                    android:nextFocusUp="@+id/audio_general_headset_yes"
+                    android:nextFocusDown="@+id/audio_frequency_line_test_btn"
+                    android:nextFocusLeft="@+id/audio_general_headset_yes"
+                    android:nextFocusRight="@+id/audio_frequency_line_test_btn"/>
 
                 <LinearLayout
                     android:orientation="vertical"
@@ -93,7 +105,12 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="@string/audio_frequency_line_test_btn"
-                            android:id="@+id/audio_frequency_line_test_btn" />
+                            android:id="@+id/audio_frequency_line_test_btn"
+                            android:nextFocusForward="@+id/pass_button"
+                            android:nextFocusUp="@+id/audio_frequency_line_plug_ready_btn"
+                            android:nextFocusDown="@+id/pass_button"
+                            android:nextFocusLeft="@+id/audio_frequency_line_plug_ready_btn"
+                            android:nextFocusRight="@+id/pass_button"/>
 
                         <ProgressBar
                             android:layout_width="wrap_content"
