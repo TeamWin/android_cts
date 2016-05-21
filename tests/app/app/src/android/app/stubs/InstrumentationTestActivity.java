@@ -28,6 +28,7 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.WindowManager;
 import android.widget.TextView;
 
 public class InstrumentationTestActivity extends Activity {
@@ -61,6 +62,9 @@ public class InstrumentationTestActivity extends Activity {
         mTextView = new MockTextView(this);
         setContentView(mTextView);
         mOnCreateCalled = true;
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_DISMISS_KEYGUARD
+                | WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON
+                | WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
     }
 
     class MockTextView extends TextView {
