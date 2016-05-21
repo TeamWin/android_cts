@@ -51,13 +51,20 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:id="@+id/audio_general_headset_no"
-                    android:text="@string/audio_general_headset_no" />
+                    android:text="@string/audio_general_headset_no"
+                    android:nextFocusForward="@+id/audio_general_headset_yes"
+                    android:nextFocusDown="@+id/audio_frequency_mic_speakers_ready_btn"
+                    android:nextFocusRight="@+id/audio_general_headset_yes" />
 
                 <Button
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:id="@+id/audio_general_headset_yes"
-                    android:text="@string/audio_general_headset_yes" />
+                    android:text="@string/audio_general_headset_yes"
+                    android:nextFocusForward="@+id/audio_frequency_mic_speakers_ready_btn"
+                    android:nextFocusDown="@+id/audio_frequency_mic_speakers_ready_btn"
+                    android:nextFocusLeft="@+id/audio_general_headset_no"
+                    android:nextFocusRight="@+id/audio_frequency_mic_speakers_ready_btn" />
 
             </LinearLayout>
 
@@ -84,7 +91,12 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:id="@+id/audio_frequency_mic_speakers_ready_btn"
-                android:text="@string/audio_frequency_mic_speakers_ready_btn" />
+                android:text="@string/audio_frequency_mic_speakers_ready_btn"
+                android:nextFocusForward="@+id/audio_frequency_mic_test1_btn"
+                android:nextFocusUp="@+id/audio_general_headset_yes"
+                android:nextFocusDown="@+id/audio_frequency_mic_test1_btn"
+                android:nextFocusLeft="@+id/audio_general_headset_yes"
+                android:nextFocusRight="@+id/audio_frequency_mic_test1_btn" />
 
             <TextView
                 android:layout_width="match_parent"
@@ -111,7 +123,12 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="@string/audio_frequency_mic_test1_btn"
-                    android:id="@+id/audio_frequency_mic_test1_btn" />
+                    android:id="@+id/audio_frequency_mic_test1_btn"
+                    android:nextFocusForward="@+id/audio_frequency_mic_mic_ready_btn"
+                    android:nextFocusUp="@+id/audio_frequency_mic_speakers_ready_btn"
+                    android:nextFocusDown="@+id/audio_frequency_mic_mic_ready_btn"
+                    android:nextFocusLeft="@+id/audio_frequency_mic_speakers_ready_btn"
+                    android:nextFocusRight="@+id/audio_frequency_mic_mic_ready_btn" />
 
                 <TextView
                     android:layout_width="wrap_content"
@@ -131,7 +148,12 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:id="@+id/audio_frequency_mic_mic_ready_btn"
-                    android:text="@string/audio_frequency_mic_mic_ready_btn" />
+                    android:text="@string/audio_frequency_mic_mic_ready_btn"
+                    android:nextFocusForward="@+id/audio_frequency_mic_test2_btn"
+                    android:nextFocusUp="@+id/audio_frequency_mic_test1_btn"
+                    android:nextFocusDown="@+id/audio_frequency_mic_test2_btn"
+                    android:nextFocusLeft="@+id/audio_frequency_mic_test1_btn"
+                    android:nextFocusRight="@+id/audio_frequency_mic_test2_btn" />
 
                 <TextView
                     android:layout_width="wrap_content"
@@ -151,7 +173,12 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="@string/audio_frequency_mic_test2_btn"
-                    android:id="@+id/audio_frequency_mic_test2_btn" />
+                    android:id="@+id/audio_frequency_mic_test2_btn"
+                    android:nextFocusForward="@+id/pass_button"
+                    android:nextFocusUp="@+id/audio_frequency_mic_mic_ready_btn"
+                    android:nextFocusDown="@+id/pass_button"
+                    android:nextFocusLeft="@+id/audio_frequency_mic_mic_ready_btn"
+                    android:nextFocusRight="@+id/pass_button" />
 
                 <TextView
                     android:layout_width="wrap_content"
