@@ -27,14 +27,8 @@ import java.util.Random;
 /**
  * A simple activity which can be subjected to (dex to native) compilation.
  *
- * If you change this code, you need to regenerate assets/primary.prof
- * using the new code:
- * <ol>
- * <li>make CtsCompilationApp</li>
- * <li>adb install out/target/product/angler/data/app/CtsCompilationApp/CtsCompilationApp.apk</li>
- * <li>Run the app manually for a couple of minutes</li>
- * <li>adb pull /data/misc/profiles/cur/0/android.cts.compilation/primary.prof primary.prof</li>
- * </ol>
+ * If you change this code, you need to regenerate APK and profile using the
+ * the new code - see instructions in {@code assets/README.txt}.
  */
 public class CompilationTargetActivity extends Activity {
 
