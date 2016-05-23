@@ -21,6 +21,7 @@ import android.accessibilityservice.AccessibilityService.MagnificationController
 import android.accessibilityservice.AccessibilityServiceInfo;
 import android.content.res.Resources;
 import android.graphics.Region;
+import android.provider.Settings;
 import android.test.InstrumentationTestCase;
 import android.util.DisplayMetrics;
 
@@ -35,20 +36,27 @@ public class AccessibilityMagnificationTest extends InstrumentationTestCase {
 
     /** Maximum timeout when waiting for a magnification callback. */
     public static final int LISTENER_TIMEOUT_MILLIS = 500;
-
+    public static final String ACCESSIBILITY_DISPLAY_MAGNIFICATION_ENABLED =
+            "accessibility_display_magnification_enabled";
     private StubMagnificationAccessibilityService mService;
 
     @Override
     public void setUp() throws Exception {
         super.setUp();
-
+        ShellCommandBuilder.create(this)
+                .deleteSecureSetting(ACCESSIBILITY_DISPLAY_MAGNIFICATION_ENABLED)
+                .run();
+        // Starting the service will force the accessibility subsystem to examine its settings, so
+        // it will update magnification in the process to disable it.
         mService = StubMagnificationAccessibilityService.enableSelf(this);
     }
 
     @Override
     protected void tearDown() throws Exception {
-        mService.runOnServiceSync(() -> mService.disableSelfAndRemove());
-        mService = null;
+        if (mService != null) {
+            mService.runOnServiceSync(() -> mService.disableSelfAndRemove());
+            mService = null;
+        }
 
         super.tearDown();
     }
@@ -120,6 +128,106 @@ public class AccessibilityMagnificationTest extends InstrumentationTestCase {
                     eq(controller), any(Region.class), eq(1.0f), anyFloat(), anyFloat());
         } finally {
             controller.removeListener(listener);
+        }
+    }
+
+    public void testMagnificationServiceShutsDownWhileMagnifying_shouldReturnTo1x() {
+        final MagnificationController controller = mService.getMagnificationController();
+        mService.runOnServiceSync(() -> controller.setScale(2.0f, false));
+
+        mService.runOnServiceSync(() -> mService.disableSelf());
+        mService = null;
+        InstrumentedAccessibilityService service = InstrumentedAccessibilityService.enableService(
+                this, InstrumentedAccessibilityService.class);
+        final MagnificationController controller2 = service.getMagnificationController();
+        try {
+            assertEquals("Magnification must reset when a service dies",
+                    1.0f, controller2.getScale());
+        } finally {
+            service.runOnServiceSync(() -> service.disableSelf());
+        }
+    }
+
+    public void testGetMagnificationRegion_whenCanControlMagnification_shouldNotBeEmpty() {
+        final MagnificationController controller = mService.getMagnificationController();
+        Region magnificationRegion = controller.getMagnificationRegion();
+        assertFalse("Magnification region should not be empty when "
+                 + "magnification is being actively controlled", magnificationRegion.isEmpty());
+    }
+
+    public void testGetMagnificationRegion_whenCantControlMagnification_shouldBeEmpty() {
+        mService.runOnServiceSync(() -> mService.disableSelf());
+        mService = null;
+        InstrumentedAccessibilityService service = InstrumentedAccessibilityService.enableService(
+                this, InstrumentedAccessibilityService.class);
+        try {
+            final MagnificationController controller = service.getMagnificationController();
+            Region magnificationRegion = controller.getMagnificationRegion();
+            assertTrue("Magnification region should be empty when magnification "
+                    + "is not being actively controlled", magnificationRegion.isEmpty());
+        } finally {
+            service.runOnServiceSync(() -> service.disableSelf());
+        }
+    }
+
+    public void testGetMagnificationRegion_whenMagnificationGesturesEnabled_shouldNotBeEmpty() {
+        ShellCommandBuilder.create(this)
+                .putSecureSetting(ACCESSIBILITY_DISPLAY_MAGNIFICATION_ENABLED, "1")
+                .run();
+        mService.runOnServiceSync(() -> mService.disableSelf());
+        mService = null;
+        InstrumentedAccessibilityService service = InstrumentedAccessibilityService.enableService(
+                this, InstrumentedAccessibilityService.class);
+        try {
+            final MagnificationController controller = service.getMagnificationController();
+            Region magnificationRegion = controller.getMagnificationRegion();
+            assertFalse("Magnification region should not be empty when magnification "
+                    + "gestures are active", magnificationRegion.isEmpty());
+        } finally {
+            service.runOnServiceSync(() -> service.disableSelf());
+            ShellCommandBuilder.create(this)
+                    .deleteSecureSetting(ACCESSIBILITY_DISPLAY_MAGNIFICATION_ENABLED)
+                    .run();
+        }
+    }
+
+    public void testAnimatingMagnification() throws InterruptedException {
+        final MagnificationController controller = mService.getMagnificationController();
+        final int timeBetweenAnimationChanges = 100;
+
+        final float scale1 = 5.0f;
+        final float x1 = 500;
+        final float y1 = 1000;
+
+        final float scale2 = 4.0f;
+        final float x2 = 500;
+        final float y2 = 1500;
+
+        final float scale3 = 2.1f;
+        final float x3 = 700;
+        final float y3 = 700;
+
+        for (int i = 0; i < 5; i++) {
+            mService.runOnServiceSync(() -> {
+                controller.setScale(scale1, true);
+                controller.setCenter(x1, y1, true);
+            });
+
+            Thread.sleep(timeBetweenAnimationChanges);
+
+            mService.runOnServiceSync(() -> {
+                controller.setScale(scale2, true);
+                controller.setCenter(x2, y2, true);
+            });
+
+            Thread.sleep(timeBetweenAnimationChanges);
+
+            mService.runOnServiceSync(() -> {
+                controller.setScale(scale3, true);
+                controller.setCenter(x3, y3, true);
+            });
+
+            Thread.sleep(timeBetweenAnimationChanges);
         }
     }
 }
