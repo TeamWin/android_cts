@@ -128,11 +128,15 @@ public class DumpsysHostTest extends DeviceTestCase implements IBuildReceiver {
     }
 
     private void checkPeriod(String[] parts) {
-        assertEquals(5, parts.length);
+        assertTrue("Expected 5 or 6, found: " + parts.length,
+                parts.length == 5 || parts.length == 6);
         assertNotNull(parts[1]); // date
         assertInteger(parts[2]); // start time (msec)
         assertInteger(parts[3]); // end time (msec)
         assertNotNull(parts[4]); // status
+        if (parts.length == 6) {
+            assertNotNull(parts[5]); // swapped-out-pss
+        }
     }
 
     private void checkPkgProc(String[] parts, int version) {
