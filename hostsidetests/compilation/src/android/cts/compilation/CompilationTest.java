@@ -24,6 +24,9 @@ import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.testtype.DeviceTestCase;
 
 import java.io.File;
+import java.io.FileOutputStream;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -62,12 +65,20 @@ public class CompilationTest extends DeviceTestCase {
     private File localProfileFile;
     private String odexFilePath;
     private byte[] initialOdexFileContents;
+    private File apkFile;
 
     @Override
     protected void setUp() throws Exception {
         super.setUp();
         mDevice = getDevice();
         mDevice.executeAdbCommand("root");
+        apkFile = File.createTempFile("CtsCompilationApp", ".apk");
+        try (OutputStream outputStream = new FileOutputStream(apkFile)) {
+            InputStream inputStream = getClass().getResourceAsStream("/CtsCompilationApp.apk");
+            ByteStreams.copy(inputStream, outputStream);
+        }
+        mDevice.uninstallPackage(APPLICATION_PACKAGE); // in case it's still installed
+        mDevice.installPackage(apkFile, false);
 
         // Load snapshot of file contents from {@link ProfileLocation#CUR} after
         // manually running the target application manually for a few minutes.
@@ -92,6 +103,7 @@ public class CompilationTest extends DeviceTestCase {
     @Override
     protected void tearDown() throws Exception {
         localProfileFile.delete();
+        mDevice.uninstallPackage(APPLICATION_PACKAGE);
         super.tearDown();
     }
 
