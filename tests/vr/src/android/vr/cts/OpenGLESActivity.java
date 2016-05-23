@@ -68,7 +68,7 @@ public class OpenGLESActivity extends Activity {
         int viewIndex = getIntent().getIntExtra(EXTRA_VIEW_INDEX, -1);
         int protectedAttribute = getIntent().getIntExtra(EXTRA_PROTECTED, -1);
         int priorityAttribute = getIntent().getIntExtra(EXTRA_PRIORITY, -1);
-        int mutableAttribute =  getIntent().getIntExtra(EXTRA_MUTABLE, -1);
+        int mutableAttribute =  getIntent().getIntExtra(EXTRA_MUTABLE, 0);
         int latchCount = getIntent().getIntExtra(EXTRA_LATCH_COUNT, 1);
         mLatch = new CountDownLatch(latchCount);
         mView = new OpenGLES20View(this, viewIndex, protectedAttribute, priorityAttribute,
@@ -193,7 +193,7 @@ public class OpenGLESActivity extends Activity {
                 setEGLWindowSurfaceFactory(new ProtectedWindowSurfaceFactory());
             } else if (priorityAttribute != 0) {
                 setEGLContextFactory(new PriorityContextFactory(priorityAttribute));
-            } else if (mutableAttribute != 0) {
+            } else if (mutableAttribute != 0 && supportsVrHighPerformance()) {
                 setEGLConfigChooser(new MutableEGLConfigChooser());
             }
 
