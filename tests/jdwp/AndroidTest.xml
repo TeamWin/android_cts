@@ -31,7 +31,6 @@
         <option name="dalvik-arg" value="-Xcompiler-option" />
         <option name="dalvik-arg" value="--debuggable" />
         <option name="dalvik-arg" value="-Djpda.settings.verbose=false" />
-        <option name="dalvik-arg" value="-Djpda.settings.syncPort=34017" />
         <option name="dalvik-arg" value="-Djpda.settings.timeout=10000" />
         <option name="dalvik-arg" value="-Djpda.settings.waitingTime=10000" />
         <option name="dalvik-arg" value="-Djpda.settings.debuggeeJavaPath='dalvikvm|#ABI#| -XXlib:libart.so -Xcompiler-option --debuggable'" />
