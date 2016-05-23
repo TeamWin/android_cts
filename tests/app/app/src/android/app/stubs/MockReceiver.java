@@ -19,23 +19,53 @@ package android.app.stubs;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.os.SystemClock;
 
 public class MockReceiver extends BroadcastReceiver {
 
     // PendingIntent may return same instance or new instance, so static variable is needed.
     public static int sResultCode = 0;
-    public static final String MOCKACTION = "android.app.PendingIntentTest.TEST_RECEIVER";
+    public static final String MOCKACTION = "android.app.stubs.PendingIntentTest.TEST_RECEIVER";
     public static String sAction;
+
+    private static boolean sReceived = false;
+    private static Object sBlocker = new Object();
 
     /**
      * set the result as true when received alarm
      */
     @Override
     public void onReceive(Context context, Intent intent) {
-        sAction = intent.getAction();
-        if (sAction.equals(MOCKACTION)) {
-            sResultCode = getResultCode();
+        synchronized (sBlocker) {
+            sAction = intent.getAction();
+            if (sAction.equals(MOCKACTION)) {
+                sResultCode = getResultCode();
+            }
+            sReceived = true;
+            sBlocker.notifyAll();
+        }
+    }
+
+    public static void prepareReceive(String initAction, int initResultCode) {
+        synchronized (sBlocker) {
+            sAction = initAction;
+            sResultCode = initResultCode;
+            sReceived = false;
+        }
+    }
+
+    public static boolean waitForReceive(long timeout) {
+        long now = SystemClock.elapsedRealtime();
+        final long endTime = now + timeout;
+        synchronized (sBlocker) {
+            while (!sReceived && now < endTime) {
+                try {
+                    sBlocker.wait(endTime - now);
+                } catch (InterruptedException e) {
+                }
+                now = SystemClock.elapsedRealtime();
+            }
+            return sReceived;
         }
     }
 }
-

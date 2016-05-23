@@ -28,11 +28,13 @@ import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
 import android.os.Parcel;
+import android.os.SystemClock;
 import android.test.AndroidTestCase;
+import android.util.Log;
 
 public class PendingIntentTest extends AndroidTestCase {
 
-    private static final int WAIT_TIME = 5000;
+    private static final int WAIT_TIME = 10000;
     private PendingIntent mPendingIntent;
     private Intent mIntent;
     private Context mContext;
@@ -51,9 +53,12 @@ public class PendingIntentTest extends AndroidTestCase {
         mFinish = new PendingIntent.OnFinished() {
             public void onSendFinished(PendingIntent pi, Intent intent, int resultCode,
                     String resultData, Bundle resultExtras) {
-                mFinishResult = true;
-                if (intent != null) {
-                    mResultAction = intent.getAction();
+                synchronized (mFinish) {
+                    mFinishResult = true;
+                    if (intent != null) {
+                        mResultAction = intent.getAction();
+                    }
+                    mFinish.notifyAll();
                 }
             }
         };
@@ -73,20 +78,26 @@ public class PendingIntentTest extends AndroidTestCase {
         mHandler = new Handler(mLooper) {
             @Override
             public void dispatchMessage(Message msg) {
-                mHandleResult = true;
+                synchronized (mFinish) {
+                    mHandleResult = true;
+                }
                 super.dispatchMessage(msg);
             }
 
             @Override
             public boolean sendMessageAtTime(Message msg, long uptimeMillis) {
-                mHandleResult = true;
+                synchronized (mFinish) {
+                    mHandleResult = true;
+                }
                 return super.sendMessageAtTime(msg, uptimeMillis);
             }
 
             @Override
             public void handleMessage(Message msg) {
+                synchronized (mFinish) {
+                    mHandleResult = true;
+                }
                 super.handleMessage(msg);
-                mHandleResult = true;
             }
         };
     }
@@ -97,8 +108,30 @@ public class PendingIntentTest extends AndroidTestCase {
         mLooper.quit();
     }
 
+    private void prepareFinish() {
+        synchronized (mFinish) {
+            mFinishResult = false;
+            mHandleResult = false;
+        }
+    }
+
+    public boolean waitForFinish(long timeout) {
+        long now = SystemClock.elapsedRealtime();
+        final long endTime = now + timeout;
+        synchronized (mFinish) {
+            while (!mFinishResult && now < endTime) {
+                try {
+                    mFinish.wait(endTime - now);
+                } catch (InterruptedException e) {
+                }
+                now = SystemClock.elapsedRealtime();
+            }
+            return mFinishResult;
+        }
+    }
+
     public void testGetActivity() throws InterruptedException, CanceledException {
-        PendingIntentStubActivity.status = PendingIntentStubActivity.INVALIDATE;
+        PendingIntentStubActivity.prepare();
         mPendingIntent = null;
         mIntent = new Intent();
 
@@ -110,7 +143,7 @@ public class PendingIntentTest extends AndroidTestCase {
 
         mPendingIntent.send();
 
-        Thread.sleep(WAIT_TIME);
+        PendingIntentStubActivity.waitForCreate(WAIT_TIME);
         assertNotNull(mPendingIntent);
         assertEquals(PendingIntentStubActivity.status, PendingIntentStubActivity.ON_CREATE);
 
@@ -140,7 +173,7 @@ public class PendingIntentTest extends AndroidTestCase {
     }
 
     public void testGetBroadcast() throws InterruptedException, CanceledException {
-        MockReceiver.sAction = null;
+        MockReceiver.prepareReceive(null, 0);
         mIntent = new Intent(MockReceiver.MOCKACTION);
         mIntent.setClass(mContext, MockReceiver.class);
         mPendingIntent = PendingIntent.getBroadcast(mContext, 1, mIntent,
@@ -148,7 +181,7 @@ public class PendingIntentTest extends AndroidTestCase {
 
         mPendingIntent.send();
 
-        Thread.sleep(WAIT_TIME);
+        MockReceiver.waitForReceive(WAIT_TIME);
         assertEquals(MockReceiver.MOCKACTION, MockReceiver.sAction);
 
         // test getBroadcast return null
@@ -164,7 +197,7 @@ public class PendingIntentTest extends AndroidTestCase {
     }
 
     public void testGetService() throws InterruptedException, CanceledException {
-        MockService.result = false;
+        MockService.prepareStart();
         mIntent = new Intent();
         mIntent.setClass(mContext, MockService.class);
         mPendingIntent = PendingIntent.getService(mContext, 1, mIntent,
@@ -172,7 +205,7 @@ public class PendingIntentTest extends AndroidTestCase {
 
         mPendingIntent.send();
 
-        Thread.sleep(WAIT_TIME);
+        MockService.waitForStart(WAIT_TIME);
         assertTrue(MockService.result);
 
         // test getService return null
@@ -185,6 +218,43 @@ public class PendingIntentTest extends AndroidTestCase {
                 PendingIntent.FLAG_ONE_SHOT);
 
         pendingIntentSendError(mPendingIntent);
+    }
+
+    public void testStartServiceOnFinishedHandler() throws InterruptedException, CanceledException {
+        MockService.prepareStart();
+        prepareFinish();
+        mIntent = new Intent();
+        mIntent.setClass(mContext, MockService.class);
+        mPendingIntent = PendingIntent.getService(mContext, 1, mIntent,
+                PendingIntent.FLAG_CANCEL_CURRENT);
+
+        mPendingIntent.send(mContext, 1, null, mFinish, null);
+
+        MockService.waitForStart(WAIT_TIME);
+        waitForFinish(WAIT_TIME);
+        assertTrue(MockService.result);
+
+        assertTrue(mFinishResult);
+        assertFalse(mHandleResult);
+        mPendingIntent.cancel();
+
+        MockService.prepareStart();
+        prepareFinish();
+        mIntent = new Intent();
+        mIntent.setClass(mContext, MockService.class);
+        mPendingIntent = PendingIntent.getService(mContext, 1, mIntent,
+                PendingIntent.FLAG_CANCEL_CURRENT);
+
+        mPendingIntent.send(mContext, 1, null, mFinish, mHandler);
+
+        MockService.waitForStart(WAIT_TIME);
+        waitForFinish(WAIT_TIME);
+        assertTrue(MockService.result);
+
+        assertTrue(mFinishResult);
+        assertTrue(mHandleResult);
+        mPendingIntent.cancel();
+
     }
 
     public void testCancel() throws CanceledException {
@@ -209,8 +279,7 @@ public class PendingIntentTest extends AndroidTestCase {
     }
 
     public void testSend() throws InterruptedException, CanceledException {
-        MockReceiver.sAction = null;
-        MockReceiver.sResultCode = -1;
+        MockReceiver.prepareReceive(null, -1);
         mIntent = new Intent();
         mIntent.setAction(MockReceiver.MOCKACTION);
         mIntent.setClass(mContext, MockReceiver.class);
@@ -219,7 +288,7 @@ public class PendingIntentTest extends AndroidTestCase {
 
         mPendingIntent.send();
 
-        Thread.sleep(WAIT_TIME);
+        MockReceiver.waitForReceive(WAIT_TIME);
 
         // send function to send default code 0
         assertEquals(0, MockReceiver.sResultCode);
@@ -234,22 +303,20 @@ public class PendingIntentTest extends AndroidTestCase {
         mIntent.setClass(mContext, MockReceiver.class);
         mPendingIntent = PendingIntent.getBroadcast(mContext, 1, mIntent,
                 PendingIntent.FLAG_CANCEL_CURRENT);
-        MockReceiver.sResultCode = 0;
-        MockReceiver.sAction = null;
+        MockReceiver.prepareReceive(null, 0);
         // send result code 1.
         mPendingIntent.send(1);
-        Thread.sleep(WAIT_TIME);
+        MockReceiver.waitForReceive(WAIT_TIME);
         assertEquals(MockReceiver.MOCKACTION, MockReceiver.sAction);
 
         // assert the result code
         assertEquals(1, MockReceiver.sResultCode);
         assertEquals(mResultAction, null);
 
-        mResultAction = null;
-        MockReceiver.sResultCode = 0;
+        MockReceiver.prepareReceive(null, 0);
         // send result code 2
         mPendingIntent.send(2);
-        Thread.sleep(WAIT_TIME);
+        MockReceiver.waitForReceive(WAIT_TIME);
 
         assertEquals(MockReceiver.MOCKACTION, MockReceiver.sAction);
 
@@ -265,24 +332,22 @@ public class PendingIntentTest extends AndroidTestCase {
         mIntent = new Intent(MockReceiver.MOCKACTION);
         mIntent.setClass(mContext, MockReceiver.class);
 
-        MockReceiver.sAction = null;
-        MockReceiver.sResultCode = 0;
+        MockReceiver.prepareReceive(null, 0);
 
         mPendingIntent = PendingIntent.getBroadcast(mContext, 1, mIntent, 1);
 
         mPendingIntent.send(mContext, 1, null);
-        Thread.sleep(WAIT_TIME);
+        MockReceiver.waitForReceive(WAIT_TIME);
 
         assertEquals(MockReceiver.MOCKACTION, MockReceiver.sAction);
         assertEquals(1, MockReceiver.sResultCode);
         mPendingIntent.cancel();
 
         mPendingIntent = PendingIntent.getBroadcast(mContext, 1, mIntent, 1);
-        MockReceiver.sAction = null;
-        MockReceiver.sResultCode = 0;
+        MockReceiver.prepareReceive(null, 0);
 
         mPendingIntent.send(mContext, 2, mIntent);
-        Thread.sleep(WAIT_TIME);
+        MockReceiver.waitForReceive(WAIT_TIME);
         assertEquals(MockReceiver.MOCKACTION, MockReceiver.sAction);
         assertEquals(2, MockReceiver.sResultCode);
         mPendingIntent.cancel();
@@ -294,13 +359,11 @@ public class PendingIntentTest extends AndroidTestCase {
         mIntent.setClass(mContext, MockReceiver.class);
 
         mPendingIntent = PendingIntent.getBroadcast(mContext, 1, mIntent, 1);
-        mFinishResult = false;
-        mHandleResult = false;
-        MockReceiver.sAction = null;
-        MockReceiver.sResultCode = 0;
+        MockReceiver.prepareReceive(null, 0);
+        prepareFinish();
 
         mPendingIntent.send(1, null, null);
-        Thread.sleep(WAIT_TIME);
+        MockReceiver.waitForReceive(WAIT_TIME);
         assertFalse(mFinishResult);
         assertFalse(mHandleResult);
         assertEquals(MockReceiver.MOCKACTION, MockReceiver.sAction);
@@ -310,13 +373,11 @@ public class PendingIntentTest extends AndroidTestCase {
         mPendingIntent.cancel();
 
         mPendingIntent = PendingIntent.getBroadcast(mContext, 1, mIntent, 1);
-        mFinishResult = false;
-        MockReceiver.sAction = null;
-        MockReceiver.sResultCode = 0;
-        mHandleResult = false;
+        MockReceiver.prepareReceive(null, 0);
+        prepareFinish();
 
         mPendingIntent.send(2, mFinish, null);
-        Thread.sleep(WAIT_TIME);
+        waitForFinish(WAIT_TIME);
         assertTrue(mFinishResult);
         assertFalse(mHandleResult);
         assertEquals(MockReceiver.MOCKACTION, MockReceiver.sAction);
@@ -325,12 +386,11 @@ public class PendingIntentTest extends AndroidTestCase {
         assertEquals(2, MockReceiver.sResultCode);
         mPendingIntent.cancel();
 
-        mHandleResult = false;
-        mFinishResult = false;
+        MockReceiver.prepareReceive(null, 0);
+        prepareFinish();
         mPendingIntent = PendingIntent.getBroadcast(mContext, 1, mIntent, 1);
-        MockReceiver.sAction = null;
         mPendingIntent.send(3, mFinish, mHandler);
-        Thread.sleep(WAIT_TIME);
+        waitForFinish(WAIT_TIME);
         assertTrue(mHandleResult);
         assertTrue(mFinishResult);
         assertEquals(MockReceiver.MOCKACTION, MockReceiver.sAction);
@@ -346,36 +406,68 @@ public class PendingIntentTest extends AndroidTestCase {
         mIntent.setAction(MockReceiver.MOCKACTION);
 
         mPendingIntent = PendingIntent.getBroadcast(mContext, 1, mIntent, 1);
-        mFinishResult = false;
-        mResultAction = null;
-        mHandleResult = false;
+        MockReceiver.prepareReceive(null, 0);
+        prepareFinish();
         mPendingIntent.send(mContext, 1, mIntent, null, null);
-        Thread.sleep(WAIT_TIME);
+        MockReceiver.waitForReceive(WAIT_TIME);
         assertFalse(mFinishResult);
         assertFalse(mHandleResult);
         assertNull(mResultAction);
+        assertEquals(MockReceiver.MOCKACTION, MockReceiver.sAction);
         mPendingIntent.cancel();
 
         mPendingIntent = PendingIntent.getBroadcast(mContext, 1, mIntent, 1);
-        mFinishResult = false;
-        mResultAction = null;
-        mHandleResult = false;
+        MockReceiver.prepareReceive(null, 0);
+        prepareFinish();
         mPendingIntent.send(mContext, 1, mIntent, mFinish, null);
-        Thread.sleep(WAIT_TIME);
+        waitForFinish(WAIT_TIME);
         assertTrue(mFinishResult);
         assertEquals(mResultAction, MockReceiver.MOCKACTION);
         assertFalse(mHandleResult);
+        assertEquals(MockReceiver.MOCKACTION, MockReceiver.sAction);
         mPendingIntent.cancel();
 
         mPendingIntent = PendingIntent.getBroadcast(mContext, 1, mIntent, 1);
-        mFinishResult = false;
-        mResultAction = null;
-        mHandleResult = false;
+        MockReceiver.prepareReceive(null, 0);
+        prepareFinish();
         mPendingIntent.send(mContext, 1, mIntent, mFinish, mHandler);
-        Thread.sleep(WAIT_TIME);
+        waitForFinish(WAIT_TIME);
         assertTrue(mHandleResult);
         assertEquals(mResultAction, MockReceiver.MOCKACTION);
         assertTrue(mFinishResult);
+        assertEquals(MockReceiver.MOCKACTION, MockReceiver.sAction);
+        mPendingIntent.cancel();
+    }
+
+
+    public void testSendNoReceiverOnFinishedHandler() throws InterruptedException,
+            CanceledException {
+        // This action won't match anything, so no receiver will run but we should
+        // still get a finish result.
+        final String BAD_ACTION = MockReceiver.MOCKACTION + "_bad";
+        mIntent = new Intent(BAD_ACTION);
+        mIntent.setAction(BAD_ACTION);
+
+        mPendingIntent = PendingIntent.getBroadcast(mContext, 1, mIntent, 1);
+        MockReceiver.prepareReceive(null, 0);
+        prepareFinish();
+        mPendingIntent.send(mContext, 1, mIntent, mFinish, null);
+        waitForFinish(WAIT_TIME);
+        assertTrue(mFinishResult);
+        assertEquals(mResultAction, BAD_ACTION);
+        assertFalse(mHandleResult);
+        assertNull(MockReceiver.sAction);
+        mPendingIntent.cancel();
+
+        mPendingIntent = PendingIntent.getBroadcast(mContext, 1, mIntent, 1);
+        MockReceiver.prepareReceive(null, 0);
+        prepareFinish();
+        mPendingIntent.send(mContext, 1, mIntent, mFinish, mHandler);
+        waitForFinish(WAIT_TIME);
+        assertTrue(mHandleResult);
+        assertEquals(mResultAction, BAD_ACTION);
+        assertTrue(mFinishResult);
+        assertNull(MockReceiver.sAction);
         mPendingIntent.cancel();
     }
 
