@@ -1158,6 +1158,15 @@
                     android:value="android.software.leanback" />
         </activity>
 
+        <activity android:name=".security.AlarmIntentTest"
+                  android:label="@string/alarmintenttest_title">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.cts.intent.category.MANUAL_TEST" />
+            </intent-filter>
+            <meta-data android:name="test_category" android:value="@string/test_category_security" />
+        </activity>
+
         <activity android:name=".p2p.GoNegRequesterTestListActivity"
                 android:label="@string/p2p_go_neg_requester"
                 android:configChanges="keyboardHidden|orientation|screenSize" />
