@@ -58,7 +58,8 @@ public class VideoDecoderPerfTest extends MediaPlayerTestBase {
 
     private static final int MAX_SIZE_SAMPLES_IN_MEMORY_BYTES = 5 * 1024 * 1024;  // 5MB
     LinkedList<ByteBuffer> mSamplesInMemory = new LinkedList<ByteBuffer>();
-    private static final int MOVING_AVERAGE_NUM = 10;
+    private static final int MOVING_AVERAGE_NUM_FRAMES = 10;
+    private static final int MOVING_AVERAGE_WINDOW_MS = 1000;
     private MediaFormat mDecOutputFormat;
     private double[] mMeasuredFps;
     private String[] mResultRawData;
@@ -312,12 +313,20 @@ public class VideoDecoderPerfTest extends MediaPlayerTestBase {
         mReportLog.addValue("average_fps", fps, ResultType.HIGHER_BETTER, ResultUnit.FPS);
 
         MediaUtils.Stats stats =
-            new MediaUtils.Stats(frameTimeDiff).movingAverage(MOVING_AVERAGE_NUM);
+            new MediaUtils.Stats(frameTimeDiff).movingAverage(MOVING_AVERAGE_NUM_FRAMES);
         // prefix for MediaUtils must be lowercase alphanumeric underscored format.
-        String prefix = "decoder";
-        String message = "average fps for " + testConfig;
+        String prefix = "decoder_frame_window";
+        String message = "frame-averaged stats for " + testConfig;
         String result = MediaUtils.logAchievableRatesResults(mReportLog, prefix, message, stats);
-        fps = 1000000000 / stats.getMin();
+
+        // frameTimeDiff is in nanoseconds, so convert window to nanoseconds
+        stats = new MediaUtils.Stats(frameTimeDiff)
+                .movingAverageOverSum(MOVING_AVERAGE_WINDOW_MS * 1e6);
+        // prefix for MediaUtils must be lowercase alphanumeric underscored format.
+        prefix = "decoder_time_window";
+        message = "time-averaged stats for " + testConfig;
+        result = MediaUtils.logAchievableRatesResults(mReportLog, prefix, message, stats);
+        fps = 1000000000 / stats.getPercentiles(95)[0];
         if (surface != null) {
             mMeasuredFps[round] = fps;
             mResultRawData[round] = result;

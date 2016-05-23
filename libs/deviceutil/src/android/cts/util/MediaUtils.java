@@ -578,6 +578,83 @@ public class MediaUtils {
             return new Stats(avgs);
         }
 
+        /** returns the statistics for the moving average over a window over the
+         *  cumulative sum. Basically, moves a window from: [0, window] to
+         *  [sum - window, sum] over the cumulative sum, over ((sum - window) / average)
+         *  steps, and returns the average value over each window.
+         *  This method is used to average time-diff data over a window of a constant time.
+         */
+        public Stats movingAverageOverSum(double window) {
+            if (window <= 0 || mNum < 1) {
+                return new Stats(null);
+            }
+
+            analyze();
+            double average = mSumX / mNum;
+            if (window >= mSumX) {
+                return new Stats(new double[] { average });
+            }
+            int samples = (int)Math.ceil((mSumX - window) / average);
+            double[] avgs = new double[samples];
+
+            // A somewhat brute force approach to calculating the moving average.
+            // TODO: add support for weights in Stats, so we can do a more refined approach.
+            double sum = 0; // sum of elements in the window
+            int num = 0; // number of elements in the moving window
+            int bi = 0; // index of the first element in the moving window
+            int ei = 0; // index of the last element in the moving window
+            double space = window; // space at the end of the window
+            double foot = 0; // space at the beginning of the window
+
+            // invariants: foot + sum + space == window
+            //             bi + num == ei
+            //
+            //  window:             |-------------------------------|
+            //                      |    <-----sum------>           |
+            //                      <foot>               <---space-->
+            //                           |               |
+            //  intervals:   |-----------|-------|-------|--------------------|--------|
+            //                           ^bi             ^ei
+
+            int ix = 0; // index in the result
+            while (ix < samples) {
+                // add intervals while there is space in the window
+                while (ei < mData.length && mData[ei] <= space) {
+                    space -= mData[ei];
+                    sum += mData[ei];
+                    num++;
+                    ei++;
+                }
+
+                // calculate average over window and deal with odds and ends (e.g. if there are no
+                // intervals in the current window: pick whichever element overlaps the window
+                // most.
+                if (num > 0) {
+                    avgs[ix++] = sum / num;
+                } else if (bi > 0 && foot > space) {
+                    // consider previous
+                    avgs[ix++] = mData[bi - 1];
+                } else if (ei == mData.length) {
+                    break;
+                } else {
+                    avgs[ix++] = mData[ei];
+                }
+
+                // move the window to the next position
+                foot -= average;
+                space += average;
+
+                // remove intervals that are now partially or wholly outside of the window
+                while (bi < ei && foot < 0) {
+                    foot += mData[bi];
+                    sum -= mData[bi];
+                    num--;
+                    bi++;
+                }
+            }
+            return new Stats(Arrays.copyOf(avgs, ix));
+        }
+
         /** calculate mSortedData */
         private void sort() {
             if (mSorted || mNum == 0) {

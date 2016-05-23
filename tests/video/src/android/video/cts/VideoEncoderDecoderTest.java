@@ -75,7 +75,8 @@ public class VideoEncoderDecoderTest extends CtsAndroidTestCase {
     private double[][] mDecoderFrameTimeDiff = null;
     // i frame interval for encoder
     private static final int KEY_I_FRAME_INTERVAL = 5;
-    private static final int MOVING_AVERAGE_NUM = 10;
+    private static final int MOVING_AVERAGE_NUM_FRAMES = 10;
+    private static final int MOVING_AVERAGE_WINDOW_MS = 1000;
 
     private static final int Y_CLAMP_MIN = 16;
     private static final int Y_CLAMP_MAX = 235;
@@ -590,7 +591,7 @@ public class VideoEncoderDecoderTest extends CtsAndroidTestCase {
             if (mTestConfig.mTestResult) {
                 MediaUtils.Stats encStats =
                     new MediaUtils.Stats(mEncoderFrameTimeDiff[i])
-                            .movingAverage(MOVING_AVERAGE_NUM);
+                            .movingAverage(MOVING_AVERAGE_NUM_FRAMES);
                 String encInputFormat = "" + mEncInputFormat;
                 String encOutputFormat = "" + mEncOutputFormat;
                 String decOutputFormat = "" + mDecOutputFormat;
@@ -605,32 +606,31 @@ public class VideoEncoderDecoderTest extends CtsAndroidTestCase {
                         ResultUnit.NONE);
 
                 // prefix for MediaUtils must be lowercase alphanumeric underscored format.
-                String prefix = "encoder";
-                String message = "codec=" + encoderName + " round=" + i +
+                String prefix = "encoder_frame_window";
+                String message = "frame-averaged stats for codec=" + encoderName + " round=" + i +
+                        " window=" + MOVING_AVERAGE_NUM_FRAMES +
                         " EncInputFormat=" + mEncInputFormat +
                         " EncOutputFormat=" + mEncOutputFormat;
                 String result = MediaUtils.logAchievableRatesResults(mReportLog, prefix, message,
                         encStats);
-                double measuredEncFps = 1000000000 / encStats.getMin();
+
+                // frameTimeDiff is in nanoseconds, so convert window to nanoseconds
+                encStats = new MediaUtils.Stats(mEncoderFrameTimeDiff[i])
+                        .movingAverageOverSum(MOVING_AVERAGE_WINDOW_MS * 1e6);
+                prefix = "encoder_time_window";
+                message = "time-averaged stats for codec=" + encoderName + " round=" + i +
+                        " windowMs=" + MOVING_AVERAGE_WINDOW_MS +
+                        " EncInputFormat=" + mEncInputFormat +
+                        " EncOutputFormat=" + mEncOutputFormat;
+                result = MediaUtils.logAchievableRatesResults(mReportLog, prefix, message,
+                        encStats);
+
+                double measuredEncFps = 1000000000 / encStats.getPercentiles(95)[0];
                 resultRawData[i] = result;
                 measuredFps[i] = measuredEncFps;
                 if (!encTestPassed) {
                     encTestPassed = MediaUtils.verifyResults(
                             encoderName, mimeType, w, h, measuredEncFps);
-                }
-
-                MediaUtils.Stats decStats =
-                    new MediaUtils.Stats(mDecoderFrameTimeDiff[i])
-                            .movingAverage(MOVING_AVERAGE_NUM);
-                // prefix for MediaUtils must be lowercase alphanumeric underscored format.
-                prefix = "decoder";
-                message = "codec=" + decoderName + " size=" + w + "x" + h + " round=" + i +
-                        " DecOutputFormat=" + mDecOutputFormat;
-                MediaUtils.logAchievableRatesResults(mReportLog, prefix, message, decStats);
-                double measuredDecFps = 1000000000 / decStats.getMin();
-                if (!decTestPassed) {
-                    decTestPassed = MediaUtils.verifyResults(
-                            decoderName, mimeType, w, h, measuredDecFps);
                 }
             }
 
