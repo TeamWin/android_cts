@@ -421,6 +421,12 @@ public class DeqpTestRunner implements IBuildReceiver, IDeviceTest, IRemoteTest 
         private boolean handleBeginTestCase(Map<String, String> values) {
             String casePath = values.get("dEQP-BeginTestCase-TestCasePath");
 
+            if (mCurrentTestId != null) {
+                    CLog.w("Got unexpected start of %s, so aborting", mCurrentTestId);
+                    abortTest(mCurrentTestId, INCOMPLETE_LOG_MESSAGE);
+                    mCurrentTestId = null;
+            }
+
             mCurrentTestLog = "";
             mGotTestResult = false;
 
@@ -432,10 +438,7 @@ public class DeqpTestRunner implements IBuildReceiver, IDeviceTest, IRemoteTest 
 
             mCurrentTestId = pathToIdentifier(casePath);
 
-            // mark instance as started
-            if (mPendingResults.get(mCurrentTestId) != null) {
-                mPendingResults.get(mCurrentTestId).remainingConfigs.remove(mRunConfig);
-            } else {
+            if (mPendingResults.get(mCurrentTestId) == null) {
                 CLog.w("Got unexpected start of %s", mCurrentTestId);
             }
             return true;
@@ -453,6 +456,7 @@ public class DeqpTestRunner implements IBuildReceiver, IDeviceTest, IRemoteTest 
                     result.errorMessages.put(mRunConfig, INCOMPLETE_LOG_MESSAGE);
                     CLog.i("Test %s failed as it ended before receiving result.", mCurrentTestId);
                 }
+                result.remainingConfigs.remove(mRunConfig);
 
                 if (mLogData && mCurrentTestLog != null && mCurrentTestLog.length() > 0) {
                     result.testLogs.put(mRunConfig, mCurrentTestLog);
@@ -523,6 +527,7 @@ public class DeqpTestRunner implements IBuildReceiver, IDeviceTest, IRemoteTest 
                 mPendingResults.get(mCurrentTestId).allInstancesPassed = false;
                 mPendingResults.get(mCurrentTestId)
                         .errorMessages.put(mRunConfig, "Terminated: " + reason);
+                result.remainingConfigs.remove(mRunConfig);
 
                 // Pending result finished, report result
                 if (result.remainingConfigs.isEmpty()) {
