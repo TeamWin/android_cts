@@ -22,6 +22,24 @@ list_executable := $(test_executable)_list
 include $(CLEAR_VARS)
 LOCAL_ADDITIONAL_DEPENDENCIES := $(LOCAL_PATH)/Android.mk
 
+LOCAL_MODULE := $(list_executable)
+LOCAL_MODULE_TAGS := optional
+
+LOCAL_SRC_FILES := \
+    src/SLObjectCreationTest.cpp
+
+LOCAL_CFLAGS := \
+    -DBUILD_ONLY \
+    -Werror -Wall
+
+LOCAL_SHARED_LIBRARIES := \
+    liblog \
+
+include $(BUILD_HOST_NATIVE_TEST)
+
+include $(CLEAR_VARS)
+LOCAL_ADDITIONAL_DEPENDENCIES := $(LOCAL_PATH)/Android.mk
+
 LOCAL_MODULE := $(test_executable)
 LOCAL_MODULE_TAGS := optional
 LOCAL_MODULE_PATH := $(TARGET_OUT_DATA)/nativetest
@@ -45,6 +63,8 @@ LOCAL_STATIC_LIBRARIES := \
     libOpenSLESUT \
     libgtest
 
+LOCAL_CTS_GTEST_LIST_EXECUTABLE := $(ALL_MODULES.$(list_executable).INSTALLED)
+
 LOCAL_CTS_TEST_PACKAGE := android.nativemedia.sl
 
 # Tag this module as a cts test artifact
@@ -53,21 +73,3 @@ LOCAL_COMPATIBILITY_SUITE := cts
 LOCAL_CFLAGS := -Werror -Wall
 
 include $(BUILD_CTS_EXECUTABLE)
-
-include $(CLEAR_VARS)
-LOCAL_ADDITIONAL_DEPENDENCIES := $(LOCAL_PATH)/Android.mk
-
-LOCAL_MODULE := $(list_executable)
-LOCAL_MODULE_TAGS := optional
-
-LOCAL_SRC_FILES := \
-    src/SLObjectCreationTest.cpp
-
-LOCAL_CFLAGS := \
-    -DBUILD_ONLY \
-    -Werror -Wall
-
-LOCAL_SHARED_LIBRARIES := \
-    liblog \
-
-include $(BUILD_HOST_NATIVE_TEST)
