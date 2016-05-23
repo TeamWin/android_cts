@@ -1545,4 +1545,22 @@
     <string name="error_screen_pinning_did_not_start">Screen was not pinned.</string>
     <string name="error_screen_pinning_did_not_exit">Screen was not unpinned.</string>
     <string name="error_screen_pinning_couldnt_exit">Could not exit screen pinning through API.</string>
+
+    <string name="alarmintenttest_title">Alarm Intent Test</string>
+    <string name="alarmintenttest_desc">This test verifies Elevation of Privileges by an
+        external application through setting an alarm using AlarmManager.setAlarmClock (A
+        vulnerability in SystemUI component)</string>
+    <string name="set_alarm_btn">Set alarm</string>
+    <string name="cancel_alarm_btn">Cancel</string>
+    <string name="alarmintenttest_set_alarm">Press SET ALARM below to set an Alarm</string>
+    <string name="alarmintenttest_instructions">Instructions to verify the bug:</string>
+    <string name="alarmintenttest_verify_bug">Click on alarm description near date in quick
+        settings</string>
+    <string name="alarmintenttest_point1">1.</string>
+    <string name="alarmintenttest_failcase">If a new activity(PlatLogoActivity) is
+        launched, please fail the test case</string>
+    <string name="alarmintenttest_point2">2.</string>
+    <string name="alarmintenttest_passcase">If nothing is happening after clicking on alarm
+        description, please pass the test case </string>
+    <string name="calcel_alarm_info">Click on Cancel below to cancel the Alarm</string>
 </resources>
