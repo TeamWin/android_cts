@@ -18,6 +18,7 @@ package android.app.stubs;
 
 import android.app.Activity;
 import android.os.Bundle;
+import android.os.SystemClock;
 
 public class PendingIntentStubActivity extends Activity {
 
@@ -25,10 +26,39 @@ public class PendingIntentStubActivity extends Activity {
     public static final int ON_CREATE = 0;
     public static int status = INVALIDATE;
 
+    private static boolean sCreated = false;
+    private static Object sBlocker = new Object();
+
     @Override
     public void onCreate(Bundle icicle) {
         super.onCreate(icicle);
-        status = ON_CREATE;
+        synchronized (sBlocker) {
+            status = ON_CREATE;
+            sCreated = true;
+            sBlocker.notifyAll();
+        }
     }
 
+
+    public static void prepare() {
+        synchronized (sBlocker) {
+            status = INVALIDATE;
+            sCreated = false;
+        }
+    }
+
+    public static boolean waitForCreate(long timeout) {
+        long now = SystemClock.elapsedRealtime();
+        final long endTime = now + timeout;
+        synchronized (sBlocker) {
+            while (!sCreated && now < endTime) {
+                try {
+                    sBlocker.wait(endTime - now);
+                } catch (InterruptedException e) {
+                }
+                now = SystemClock.elapsedRealtime();
+            }
+            return sCreated;
+        }
+    }
 }
