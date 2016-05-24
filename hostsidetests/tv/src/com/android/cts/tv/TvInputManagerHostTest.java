@@ -106,16 +106,25 @@ public class TvInputManagerHostTest extends DeviceTestCase implements IAbiReceiv
         device.executeShellCommand(START_COMMAND);
         // Re-install the input app so the monitoring app can get the onInputUpdated callback.
         installPackage(TEST_APK);
-        String logs = device.executeAdbCommand("logcat", "-v", "brief", "-d", CLASS + ":I", "*:S");
         String testString = "";
-        Scanner in = new Scanner(logs);
-        while (in.hasNextLine()) {
-            String line = in.nextLine();
-            if(line.contains(INPUT_UPDATED_STRING)) {
-                testString = line.split(":")[1].trim();
+        for (int i = 0; i < 5; ++i) {
+            // Try 5 times as this sometimes fails.
+            String logs = device.executeAdbCommand(
+                    "logcat", "-v", "brief", "-d", CLASS + ":I", "*:S");
+            Scanner in = new Scanner(logs);
+            while (in.hasNextLine()) {
+                String line = in.nextLine();
+                if (line.contains(INPUT_UPDATED_STRING)) {
+                    testString = line.split(":")[1].trim();
+                }
             }
+            in.close();
+            if (!testString.isEmpty()) {
+                break;
+            }
+            // Wait for the system service to handle the installation.
+            Thread.currentThread().sleep(100);
         }
-        in.close();
         assertEquals("Incorrect test string", INPUT_UPDATED_STRING, testString);
     }
 
