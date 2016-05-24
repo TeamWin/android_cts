@@ -65,7 +65,7 @@ public class RVCVXCheckAnalyzer {
 
     private static final boolean OUTPUT_DEBUG_IMAGE = false;
     private static final double VALID_FRAME_THRESHOLD = 0.8;
-    private static final double REPROJECTION_THREASHOLD = 4.0;
+    private static final double REPROJECTION_THREASHOLD_RATIO = 0.008;
     private static final boolean FORCE_CV_ANALYSIS  = false;
     private static final boolean TRACE_VIDEO_ANALYSIS = false;
     private static final double DECIMATION_FPS_TARGET = 15.0;
@@ -884,8 +884,9 @@ public class RVCVXCheckAnalyzer {
                 Log.v(TAG, "Found attitude, re-projection error = " + error);
             }
 
-            // if error is reasonable, add it into the results
-            if (error < REPROJECTION_THREASHOLD) {
+            // if error is reasonable, add it into the results. use ratio to frame height to avoid
+            // discriminating higher definition videos
+            if (error < REPROJECTION_THREASHOLD_RATIO * frameSize.height) {
                 double [] rv = new double[3];
                 double timestamp;
 
