@@ -86,6 +86,7 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -93,7 +94,7 @@ public class ItsService extends Service implements SensorEventListener {
     public static final String TAG = ItsService.class.getSimpleName();
 
     // Timeouts, in seconds.
-    private static final int TIMEOUT_CALLBACK = 3;
+    private static final int TIMEOUT_CALLBACK = 10;
     private static final int TIMEOUT_3A = 10;
 
     // Time given for background requests to warm up pipeline
@@ -148,6 +149,8 @@ public class ItsService extends Service implements SensorEventListener {
 
     private volatile ServerSocket mSocket = null;
     private volatile SocketRunnable mSocketRunnableObj = null;
+    private Semaphore mSocketQueueQuota = null;
+    private LinkedList<Integer> mInflightImageSizes = new LinkedList<>();
     private volatile BlockingQueue<ByteBuffer> mSocketWriteQueue =
             new LinkedBlockingDeque<ByteBuffer>();
     private final Object mSocketWriteEnqueueLock = new Object();
@@ -316,6 +319,10 @@ public class ItsService extends Service implements SensorEventListener {
                     mCameraListener, mCameraHandler);
             mCameraCharacteristics = mCameraManager.getCameraCharacteristics(
                     devices[cameraId]);
+            Size maxYuvSize = ItsUtils.getYuvOutputSizes(mCameraCharacteristics)[0];
+            // 2 bytes per pixel for RGBA Bitmap and at least 3 Bitmaps per CDD
+            int quota = maxYuvSize.getWidth() * maxYuvSize.getHeight() * 2 * 3;
+            mSocketQueueQuota = new Semaphore(quota, true);
         } catch (CameraAccessException e) {
             throw new ItsException("Failed to open camera", e);
         } catch (BlockingOpenException e) {
@@ -425,6 +432,13 @@ public class ItsService extends Service implements SensorEventListener {
                         }
                         mOpenSocket.getOutputStream().flush();
                         Logt.i(TAG, String.format("Wrote to socket: %d bytes", b.capacity()));
+                        Integer imgBufSize = mInflightImageSizes.peek();
+                        if (imgBufSize != null && imgBufSize == b.capacity()) {
+                            mInflightImageSizes.removeFirst();
+                            if (mSocketQueueQuota != null) {
+                                mSocketQueueQuota.release(imgBufSize);
+                            }
+                        }
                     }
                 } catch (IOException e) {
                     Logt.e(TAG, "Error writing to socket", e);
@@ -473,6 +487,7 @@ public class ItsService extends Service implements SensorEventListener {
                         break;
                     }
                     mSocketWriteQueue.clear();
+                    mInflightImageSizes.clear();
                     mSocketWriteRunnable.setOpenSocket(mOpenSocket);
                     Logt.i(TAG, "Socket connected");
                 } catch (IOException e) {
@@ -508,6 +523,7 @@ public class ItsService extends Service implements SensorEventListener {
                 try {
                     synchronized(mSocketWriteDrainLock) {
                         mSocketWriteQueue.clear();
+                        mInflightImageSizes.clear();
                         mOpenSocket.close();
                         mOpenSocket = null;
                         mSocketWriteRunnable.setOpenSocket(null);
@@ -598,6 +614,7 @@ public class ItsService extends Service implements SensorEventListener {
                         mSocketWriteQueue.put(bstr);
                     }
                     if (bbuf != null) {
+                        mInflightImageSizes.add(bbuf.capacity());
                         mSocketWriteQueue.put(bbuf);
                     }
                 }
@@ -1484,25 +1501,25 @@ public class ItsService extends Service implements SensorEventListener {
                 int format = capture.getFormat();
                 if (format == ImageFormat.JPEG) {
                     Logt.i(TAG, "Received JPEG capture");
-                    byte[] img = ItsUtils.getDataFromImage(capture);
+                    byte[] img = ItsUtils.getDataFromImage(capture, mSocketQueueQuota);
                     ByteBuffer buf = ByteBuffer.wrap(img);
                     int count = mCountJpg.getAndIncrement();
                     mSocketRunnableObj.sendResponseCaptureBuffer("jpegImage", buf);
                 } else if (format == ImageFormat.YUV_420_888) {
                     Logt.i(TAG, "Received YUV capture");
-                    byte[] img = ItsUtils.getDataFromImage(capture);
+                    byte[] img = ItsUtils.getDataFromImage(capture, mSocketQueueQuota);
                     ByteBuffer buf = ByteBuffer.wrap(img);
                     int count = mCountYuv.getAndIncrement();
                     mSocketRunnableObj.sendResponseCaptureBuffer("yuvImage", buf);
                 } else if (format == ImageFormat.RAW10) {
                     Logt.i(TAG, "Received RAW10 capture");
-                    byte[] img = ItsUtils.getDataFromImage(capture);
+                    byte[] img = ItsUtils.getDataFromImage(capture, mSocketQueueQuota);
                     ByteBuffer buf = ByteBuffer.wrap(img);
                     int count = mCountRaw10.getAndIncrement();
                     mSocketRunnableObj.sendResponseCaptureBuffer("raw10Image", buf);
                 } else if (format == ImageFormat.RAW12) {
                     Logt.i(TAG, "Received RAW12 capture");
-                    byte[] img = ItsUtils.getDataFromImage(capture);
+                    byte[] img = ItsUtils.getDataFromImage(capture, mSocketQueueQuota);
                     ByteBuffer buf = ByteBuffer.wrap(img);
                     int count = mCountRaw12.getAndIncrement();
                     mSocketRunnableObj.sendResponseCaptureBuffer("raw12Image", buf);
@@ -1510,7 +1527,7 @@ public class ItsService extends Service implements SensorEventListener {
                     Logt.i(TAG, "Received RAW16 capture");
                     int count = mCountRawOrDng.getAndIncrement();
                     if (! mCaptureRawIsDng) {
-                        byte[] img = ItsUtils.getDataFromImage(capture);
+                        byte[] img = ItsUtils.getDataFromImage(capture, mSocketQueueQuota);
                         if (! mCaptureRawIsStats) {
                             ByteBuffer buf = ByteBuffer.wrap(img);
                             mSocketRunnableObj.sendResponseCaptureBuffer("rawImage", buf);
@@ -1525,8 +1542,12 @@ public class ItsService extends Service implements SensorEventListener {
                             float[] stats = StatsImage.computeStatsImage(img, w, h, gw, gh);
                             long endTimeMs = SystemClock.elapsedRealtime();
                             Log.e(TAG, "Raw stats computation takes " + (endTimeMs - startTimeMs) + " ms");
-
-                            ByteBuffer bBuf = ByteBuffer.allocateDirect(stats.length * 4);
+                            int statsImgSize = stats.length * 4;
+                            if (mSocketQueueQuota != null) {
+                                mSocketQueueQuota.release(img.length);
+                                mSocketQueueQuota.acquire(statsImgSize);
+                            }
+                            ByteBuffer bBuf = ByteBuffer.allocateDirect(statsImgSize);
                             bBuf.order(ByteOrder.nativeOrder());
                             FloatBuffer fBuf = bBuf.asFloatBuffer();
                             fBuf.put(stats);
@@ -1545,6 +1566,15 @@ public class ItsService extends Service implements SensorEventListener {
                                 ByteArrayOutputStream dngStream = new ByteArrayOutputStream();
                                 dngCreator.writeImage(dngStream, capture);
                                 byte[] dngArray = dngStream.toByteArray();
+                                if (mSocketQueueQuota != null) {
+                                    // Ideally we should acquire before allocating memory, but
+                                    // here the DNG size is unknown before toByteArray call, so
+                                    // we have to register the size afterward. This should still
+                                    // works most of the time since all DNG images are handled by
+                                    // the same handler thread, so we are at most one buffer over
+                                    // the quota.
+                                    mSocketQueueQuota.acquire(dngArray.length);
+                                }
                                 ByteBuffer dngBuf = ByteBuffer.wrap(dngArray);
                                 mSocketRunnableObj.sendResponseCaptureBuffer("dngImage", dngBuf);
                                 break;
