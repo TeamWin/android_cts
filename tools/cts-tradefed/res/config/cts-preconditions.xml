@@ -25,6 +25,11 @@
 
     <target_preparer class="com.android.compatibility.common.tradefed.targetprep.StayAwakePreparer" />
 
+    <!-- Disable "Android Beta Program" -->
+    <target_preparer class="com.android.compatibility.common.tradefed.targetprep.PackageDisabler" >
+        <option name="package" value="com.android.yadayada"/>
+    </target_preparer>
+
     <target_preparer class="com.android.compatibility.common.tradefed.targetprep.SettingsPreparer">
         <option name="device-setting" value="verifier_verify_adb_installs"/>
         <option name="setting-type" value="global"/>
