@@ -504,7 +504,8 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
     }
 
     private void logResult(String format, Object... args) {
-        format = String.format("[%s] %s", mDeviceSerial, format);
+        // Escape any "%" signs in the device serial.
+        format = String.format("[%s] %s", mDeviceSerial.replace("%", "%%"), format);
         if (mQuietOutput) {
             CLog.i(format, args);
         } else {
