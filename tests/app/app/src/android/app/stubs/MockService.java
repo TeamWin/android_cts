@@ -20,10 +20,14 @@ import android.app.Service;
 import android.content.Intent;
 import android.os.Binder;
 import android.os.IBinder;
+import android.os.SystemClock;
 
 public class MockService extends Service {
     public static boolean result = false;
     private final IBinder mBinder = new MockBinder();
+
+    private static boolean sStarted = false;
+    private static Object sBlocker = new Object();
 
     public class MockBinder extends Binder {
         MockService getService() {
@@ -36,7 +40,11 @@ public class MockService extends Service {
      */
     @Override
     public IBinder onBind(Intent intent) {
-        result = true;
+        synchronized (sBlocker) {
+            result = true;
+            sStarted = true;
+            sBlocker.notifyAll();
+        }
         return mBinder;
     }
 
@@ -46,7 +54,34 @@ public class MockService extends Service {
     @Override
     public void onStart(Intent intent, int startId) {
         super.onStart(intent, startId);
-        result = true;
+        synchronized (sBlocker) {
+            stopSelf(startId);
+            result = true;
+            sStarted = true;
+            sBlocker.notifyAll();
+        }
+    }
+
+    public static void prepareStart() {
+        synchronized (sBlocker) {
+            sStarted = false;
+            result = false;
+        }
+    }
+
+    public static boolean waitForStart(long timeout) {
+        long now = SystemClock.elapsedRealtime();
+        final long endTime = now + timeout;
+        synchronized (sBlocker) {
+            while (!sStarted && now < endTime) {
+                try {
+                    sBlocker.wait(endTime - now);
+                } catch (InterruptedException e) {
+                }
+                now = SystemClock.elapsedRealtime();
+            }
+            return sStarted;
+        }
     }
 }
 
