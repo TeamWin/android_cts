@@ -16,6 +16,9 @@
 
 package android.widget.cts;
 
+import android.graphics.drawable.ColorDrawable;
+import android.test.suitebuilder.annotation.SmallTest;
+import org.mockito.ArgumentCaptor;
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
 
@@ -49,6 +52,10 @@ import android.widget.cts.util.ViewTestUtils;
 
 import java.io.IOException;
 
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.*;
+
+@SmallTest
 public class FrameLayoutTest extends ActivityInstrumentationTestCase2<FrameLayoutCtsActivity> {
     private Activity mActivity;
     private Instrumentation mInstrumentation;
@@ -94,17 +101,12 @@ public class FrameLayoutTest extends ActivityInstrumentationTestCase2<FrameLayou
         assertTrue(foreground.isVisible());
         final Rect rect = foreground.getBounds();
         // foreground has been stretched
-        new PollingCheck() {
-            @Override
-            protected boolean check() {
-                return mFrameLayout.getHeight() == rect.bottom - rect.top;
-            }
-        }.run();
+        PollingCheck.waitFor(() -> mFrameLayout.getHeight() == rect.bottom - rect.top);
         assertEquals(mFrameLayout.getWidth(), rect.right - rect.left);
 
         // should get a new foreground again, because former foreground has been stretched
         final BitmapDrawable newForeground =
-                (BitmapDrawable) mActivity.getResources().getDrawable(R.drawable.size_48x48);
+                (BitmapDrawable) mActivity.getDrawable(R.drawable.size_48x48);
         compareScaledPixels(48, newForeground.getIntrinsicHeight());
         compareScaledPixels(48, newForeground.getIntrinsicWidth());
         assertTrue(mFrameLayout.getHeight() > newForeground.getIntrinsicHeight());
@@ -156,7 +158,7 @@ public class FrameLayoutTest extends ActivityInstrumentationTestCase2<FrameLayou
         assertEquals(textView.getMeasuredWidth(), frameLayout.getMeasuredWidth());
 
         // measureAll is false and text view is GONE, text view will NOT be measured
-        mActivity.runOnUiThread(() -> {
+        mInstrumentation.runOnMainSync(() -> {
             textView.setVisibility(View.GONE);
             frameLayout.requestLayout();
         });
@@ -169,11 +171,12 @@ public class FrameLayoutTest extends ActivityInstrumentationTestCase2<FrameLayou
         assertEquals(button.getMeasuredWidth(), frameLayout.getMeasuredWidth());
 
         // measureAll is true and text view is GONE, text view will be measured
-        mActivity.runOnUiThread(() -> {
+        mInstrumentation.runOnMainSync(() -> {
             frameLayout.setMeasureAllChildren(true);
             frameLayout.requestLayout();
         });
         mInstrumentation.waitForIdleSync();
+        assertTrue(frameLayout.getMeasureAllChildren());
         assertTrue(frameLayout.getConsiderGoneChildrenWhenMeasuring());
         assertEquals(textView.getMeasuredHeight(), frameLayout.getMeasuredHeight());
         assertEquals(textView.getMeasuredWidth(), frameLayout.getMeasuredWidth());
@@ -285,21 +288,25 @@ public class FrameLayoutTest extends ActivityInstrumentationTestCase2<FrameLayou
         assertEquals("Foreground tint mode inflated correctly",
                 PorterDuff.Mode.SRC_OVER, inflatedView.getForegroundTintMode());
 
-        MockDrawable foreground = new MockDrawable();
+        final Drawable foreground = spy(new ColorDrawable());
         FrameLayout view = new FrameLayout(mActivity);
 
         view.setForeground(foreground);
-        assertFalse("No foreground tint applied by default", foreground.hasCalledSetTint());
+        verify(foreground, never()).setTintList(any(ColorStateList.class));
 
-        view.setForegroundTintList(ColorStateList.valueOf(Color.WHITE));
-        assertTrue("Foreground tint applied when setForegroundTintList() called after setForeground()",
-                foreground.hasCalledSetTint());
+        view.setForegroundTintList(ColorStateList.valueOf(Color.RED));
+        final ArgumentCaptor<ColorStateList> colorStateListCaptor =
+                ArgumentCaptor.forClass(ColorStateList.class);
+        verify(foreground, times(1)).setTintList(colorStateListCaptor.capture());
+        assertEquals(1, colorStateListCaptor.getValue().getColors().length);
+        assertEquals(Color.RED, colorStateListCaptor.getValue().getColors()[0]);
 
-        foreground.reset();
+        reset(foreground);
         view.setForeground(null);
         view.setForeground(foreground);
-        assertTrue("Foreground tint applied when setForegroundTintList() called before setForeground()",
-                foreground.hasCalledSetTint());
+        verify(foreground, times(1)).setTintList(colorStateListCaptor.capture());
+        assertEquals(1, colorStateListCaptor.getValue().getColors().length);
+        assertEquals(Color.RED, colorStateListCaptor.getValue().getColors()[0]);
     }
 
     private static void assertCenterAligned(View container, Drawable drawable) {
@@ -317,38 +324,6 @@ public class FrameLayoutTest extends ActivityInstrumentationTestCase2<FrameLayou
         XmlPullParser parser = mActivity.getResources().getLayout(R.layout.framelayout_layout);
         WidgetTestUtils.beginDocument(parser, "LinearLayout");
         return Xml.asAttributeSet(parser);
-    }
-
-    private static class MockDrawable extends Drawable {
-        private boolean mCalledSetTint = false;
-
-        @Override
-        public void draw(Canvas canvas) {}
-
-        @Override
-        public void setAlpha(int alpha) {}
-
-        @Override
-        public void setColorFilter(ColorFilter cf) {}
-
-        @Override
-        public void setTintList(ColorStateList tint) {
-            super.setTintList(tint);
-            mCalledSetTint = true;
-        }
-
-        @Override
-        public int getOpacity() {
-            return 0;
-        }
-
-        public boolean hasCalledSetTint() {
-            return mCalledSetTint;
-        }
-
-        public void reset() {
-            mCalledSetTint = false;
-        }
     }
 
     private static class MyFrameLayout extends FrameLayout {
