@@ -93,25 +93,20 @@ public class RVCVXCheckTestActivity
 
         mRecPath = "";
 
-        // By default it is a fail, until it is successful.
+        // Test result is fail by default.
         getReportLog().setSummary(
                 "Initialize failed", 0, ResultType.NEUTRAL, ResultUnit.NONE);
 
+        showDetailedTutorialLink();
+
         showUserMessage("Loading OpenCV Library...");
 
-        int retry = 10;
-        while(retry-->0) {
-            try {
-                Thread.sleep(250);
-            } catch (InterruptedException e) {
-                //
-            }
-            if (OpenCVLibrary.isLoaded()) {
-                break;
-            }
-        }
-        if (!OpenCVLibrary.isLoaded()) {
-            // failed requirement test
+        if (!OpenCVLibrary.load(this,
+                false /*allowLocal*/, true/*allowPackage*/, false/*allowInstall*/)) {
+            // cannot load opencv library
+            showUserMessage("Cannot load OpenCV library! Please follow instruction and install " +
+                    "OpenCV Manager 3.0.0 and start this test again.");
+            waitForUserToContinue();
             clearText();
             return;
         }
@@ -131,12 +126,10 @@ public class RVCVXCheckTestActivity
                    "horizontal surface.\n" +
                 "2. Start the test and align the yellow square on the screen "+
                    "roughly to the yellow sqaure.\n" +
-                "3. Follow the prompt to orbit the phone around the test " +
+                "3. Follow the prompt to orbit the device around the test " +
                    "pattern while aiming the field of view at the test pattern" +
                    "at the same time.\n" +
                 "4. Wait patiently for the analysis to finish.");
-
-            showDetailedTutorialLink();
 
             waitForUserToContinue();
 
@@ -372,7 +365,7 @@ public class RVCVXCheckTestActivity
     private void showDetailedTutorialLink() {
         TextView textView = new TextView(this);
         textView.setText(Html.fromHtml(
-                    "Detailed instructions can be found at " +
+                    "Detailed test instructions can be found at " +
                     "<A href=\"http://goo.gl/xTwB4d\">http://goo.gl/xTwB4d</a><br>"));
         textView.setMovementMethod(LinkMovementMethod.getInstance());
         textView.setPadding(10, 0, 0, 0);
@@ -428,8 +421,6 @@ public class RVCVXCheckTestActivity
 
         // GlSurfaceView is not necessary for this test
         closeGlSurfaceView();
-
-        OpenCVLibrary.loadAsync(this);
     }
 
     @Override
