@@ -92,11 +92,10 @@ public class VrExtensionBehaviorTest extends ActivityInstrumentationTestCase2<Op
                 assertTrue("Context is not a protected context",
                     (values[0] & RendererProtectedTexturesTest.GL_CONTEXT_FLAG_PROTECTED_CONTENT_BIT) != 0);
 
-                // TODO(cdonner): Uncomment the below test once b/28550257 is fixed.
-                //values[0] = 0;
-                //GLES32.glGetTexParameteriv(GLES32.GL_TEXTURE_2D,
-                //    RendererProtectedTexturesTest.GL_TEXTURE_PROTECTED_EXT, values, 0);
-                //assertEquals("Texture is not marked as protected", GLES32.GL_TRUE, values[0]);
+                values[0] = 0;
+                GLES32.glGetTexParameteriv(GLES32.GL_TEXTURE_2D,
+                    RendererProtectedTexturesTest.GL_TEXTURE_PROTECTED_EXT, values, 0);
+                assertEquals("Texture is not marked as protected", GLES32.GL_TRUE, values[0]);
             }
         });
     }
