@@ -202,4 +202,9 @@
     </style>
 
     <style name="ToolbarPopupTheme_Test" parent="@android:style/ThemeOverlay.Material.Light" />
+
+    <style name="Theme_Toggle" parent="@android:style/Widget.Material.Light.Button.Toggle">
+        <item name="android:textOn">@string/toggle_text_on</item>
+        <item name="android:textOff">@string/toggle_text_off</item>
+    </style>
 </resources>
