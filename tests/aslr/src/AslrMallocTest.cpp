@@ -157,7 +157,9 @@ int main(int argc, char **argv)
             return EXIT_FAILURE;
         }
 
-        printf("%p", malloc(size));
+        void* p = malloc(size);
+        printf("%p", p);
+        free(p);
         return EXIT_SUCCESS;
     }
 #endif
