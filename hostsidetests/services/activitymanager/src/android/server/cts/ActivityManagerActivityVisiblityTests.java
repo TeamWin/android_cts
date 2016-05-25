@@ -30,8 +30,8 @@ public class ActivityManagerActivityVisiblityTests extends ActivityManagerTestBa
     private static final String DOCKED_ACTIVITY_NAME = "DockedActivity";
 
     public void testVisibleBehindHomeActivity() throws Exception {
-        mDevice.executeShellCommand(getAmStartCmd(VISIBLE_BEHIND_ACTIVITY));
-        mDevice.executeShellCommand(AM_START_HOME_ACTIVITY_COMMAND);
+        executeShellCommand(getAmStartCmd(VISIBLE_BEHIND_ACTIVITY));
+        executeShellCommand(AM_START_HOME_ACTIVITY_COMMAND);
 
         mAmWmState.computeState(mDevice, new String[] {VISIBLE_BEHIND_ACTIVITY});
         mAmWmState.assertContainsStack(
@@ -42,8 +42,8 @@ public class ActivityManagerActivityVisiblityTests extends ActivityManagerTestBa
     }
 
     public void testVisibleBehindOtherActivity_NotOverHome() throws Exception {
-        mDevice.executeShellCommand(getAmStartCmd(VISIBLE_BEHIND_ACTIVITY));
-        mDevice.executeShellCommand(getAmStartCmd(TRANSLUCENT_ACTIVITY));
+        executeShellCommand(getAmStartCmd(VISIBLE_BEHIND_ACTIVITY));
+        executeShellCommand(getAmStartCmd(TRANSLUCENT_ACTIVITY));
 
         mAmWmState.computeState(mDevice,
                 new String[] {VISIBLE_BEHIND_ACTIVITY, TRANSLUCENT_ACTIVITY});
@@ -52,8 +52,8 @@ public class ActivityManagerActivityVisiblityTests extends ActivityManagerTestBa
     }
 
     public void testVisibleBehindOtherActivity_OverHome() throws Exception {
-        mDevice.executeShellCommand(getAmStartCmdOverHome(VISIBLE_BEHIND_ACTIVITY));
-        mDevice.executeShellCommand(getAmStartCmdOverHome(TRANSLUCENT_ACTIVITY));
+        executeShellCommand(getAmStartCmdOverHome(VISIBLE_BEHIND_ACTIVITY));
+        executeShellCommand(getAmStartCmdOverHome(TRANSLUCENT_ACTIVITY));
 
         mAmWmState.computeState(mDevice,
                 new String[] {VISIBLE_BEHIND_ACTIVITY, TRANSLUCENT_ACTIVITY});
@@ -66,10 +66,10 @@ public class ActivityManagerActivityVisiblityTests extends ActivityManagerTestBa
             return;
         }
 
-        mDevice.executeShellCommand(getAmStartCmdOverHome(PIP_ON_PIP_ACTIVITY));
+        executeShellCommand(getAmStartCmdOverHome(PIP_ON_PIP_ACTIVITY));
         // NOTE: moving to pinned stack will trigger the pip-on-pip activity to launch the
         // translucent activity.
-        mDevice.executeShellCommand(AM_MOVE_TOP_ACTIVITY_TO_PINNED_STACK_COMMAND);
+        executeShellCommand(AM_MOVE_TOP_ACTIVITY_TO_PINNED_STACK_COMMAND);
 
         mAmWmState.computeState(mDevice, new String[] {PIP_ON_PIP_ACTIVITY, TRANSLUCENT_ACTIVITY});
         mAmWmState.assertFrontStack("Pinned stack must be the front stack.", PINNED_STACK_ID);
@@ -82,8 +82,8 @@ public class ActivityManagerActivityVisiblityTests extends ActivityManagerTestBa
      * fullscreen stack over the home activity.
      */
     public void testTranslucentActivityOnTopOfHome() throws Exception {
-        mDevice.executeShellCommand(AM_START_HOME_ACTIVITY_COMMAND);
-        mDevice.executeShellCommand(getAmStartCmd(TRANSLUCENT_ACTIVITY));
+        executeShellCommand(AM_START_HOME_ACTIVITY_COMMAND);
+        executeShellCommand(getAmStartCmd(TRANSLUCENT_ACTIVITY));
 
         mAmWmState.computeState(mDevice, new String[]{TRANSLUCENT_ACTIVITY});
         mAmWmState.assertSanity();
@@ -102,11 +102,11 @@ public class ActivityManagerActivityVisiblityTests extends ActivityManagerTestBa
             return;
         }
 
-        mDevice.executeShellCommand(AM_START_HOME_ACTIVITY_COMMAND);
-        mDevice.executeShellCommand(getAmStartCmd(TEST_ACTIVITY_NAME));
-        mDevice.executeShellCommand(AM_START_HOME_ACTIVITY_COMMAND);
-        mDevice.executeShellCommand(getAmStartCmd(TRANSLUCENT_ACTIVITY));
-        mDevice.executeShellCommand(AM_MOVE_TOP_ACTIVITY_TO_PINNED_STACK_COMMAND);
+        executeShellCommand(AM_START_HOME_ACTIVITY_COMMAND);
+        executeShellCommand(getAmStartCmd(TEST_ACTIVITY_NAME));
+        executeShellCommand(AM_START_HOME_ACTIVITY_COMMAND);
+        executeShellCommand(getAmStartCmd(TRANSLUCENT_ACTIVITY));
+        executeShellCommand(AM_MOVE_TOP_ACTIVITY_TO_PINNED_STACK_COMMAND);
 
         mAmWmState.computeState(mDevice, new String[]{TRANSLUCENT_ACTIVITY});
         mAmWmState.assertSanity();
