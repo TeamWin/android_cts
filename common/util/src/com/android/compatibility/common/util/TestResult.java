@@ -208,6 +208,16 @@ public class TestResult implements ITestResult {
      * {@inheritDoc}
      */
     @Override
+    public void skipped() {
+        // TODO(b/28386054): Report SKIPPED as a separate result.
+        // For now, we mark this as PASS.
+        setResultStatus(TestStatus.PASS);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
     public void reset() {
         mResult = null;
         mMessage = null;
