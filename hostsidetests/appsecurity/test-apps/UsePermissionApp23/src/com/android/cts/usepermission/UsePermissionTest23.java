@@ -314,6 +314,7 @@ public class UsePermissionTest23 extends BasePermissionsTest {
         // We just committed a suicide by revoking the permission. See part2 below...
     }
 
+    @Test
     public void testRevokeAffectsWholeGroup_part2() throws Exception {
         // Make sure we don't have the permissions
         assertEquals(PackageManager.PERMISSION_DENIED, getInstrumentation().getContext()
@@ -485,7 +486,7 @@ public class UsePermissionTest23 extends BasePermissionsTest {
                 PackageManager.PERMISSION_DENIED);
     }
 
-
+    @Test
     public void testRevokePropagatedOnUpgradeNewToNewModel_part1() throws Exception {
         // Make sure we don't have the permission
         assertEquals(PackageManager.PERMISSION_DENIED, getInstrumentation().getContext()
@@ -508,6 +509,7 @@ public class UsePermissionTest23 extends BasePermissionsTest {
                 new String[] {Manifest.permission.READ_CALENDAR}, new boolean[] {true});
     }
 
+    @Test
     public void testRevokePropagatedOnUpgradeNewToNewModel_part2() throws Exception {
         // Make sure the permission is still granted after the upgrade
         assertPermissionsGrantState(new String[] {Manifest.permission.READ_CALENDAR},
@@ -515,6 +517,11 @@ public class UsePermissionTest23 extends BasePermissionsTest {
         // Also make sure one of the not granted permissions is still not granted
         assertPermissionsGrantState(new String[] {Manifest.permission.READ_EXTERNAL_STORAGE},
                 PackageManager.PERMISSION_DENIED);
+    }
+
+    @Test
+    public void testAllPermissionsGrantedOnUpgrade() throws Exception {
+        assertAllPermissionsGrantState(PackageManager.PERMISSION_GRANTED);
     }
 
     private void assertAllPermissionsRevoked() {
@@ -541,7 +548,6 @@ public class UsePermissionTest23 extends BasePermissionsTest {
                 Manifest.permission.USE_SIP,
                 Manifest.permission.PROCESS_OUTGOING_CALLS,
                 Manifest.permission.RECORD_AUDIO,
-                Manifest.permission.BODY_SENSORS,
                 Manifest.permission.ACCESS_FINE_LOCATION,
                 Manifest.permission.ACCESS_COARSE_LOCATION,
                 Manifest.permission.CAMERA,
