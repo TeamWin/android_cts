@@ -25,6 +25,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
+import android.hardware.Camera;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.test.ActivityInstrumentationTestCase2;
@@ -117,6 +118,14 @@ public class BroadcastReceiverTest extends ActivityInstrumentationTestCase2<Mock
                 wait(timeout);
             }
             assertTrue(mCalledOnReceive);
+        }
+
+        public synchronized boolean waitForReceiverNoException(long timeout)
+                throws InterruptedException {
+            if (!mCalledOnReceive) {
+                wait(timeout);
+            }
+            return mCalledOnReceive;
         }
 
         public IBinder getIBinder() {
@@ -279,6 +288,24 @@ public class BroadcastReceiverTest extends ActivityInstrumentationTestCase2<Mock
         activity.unbindService(msc);
         activity.stopService(intent);
         activity.unregisterReceiver(internalReceiver);
+    }
+
+    public void testNewPhotoBroadcast_notReceived() throws InterruptedException {
+        final MockActivity activity = getActivity();
+        MockReceiverInternal internalReceiver = new MockReceiverInternal();
+        IntentFilter filter = new IntentFilter();
+        filter.addAction(Camera.ACTION_NEW_PICTURE);
+        activity.registerReceiver(internalReceiver, filter);
+        assertFalse(internalReceiver.waitForReceiverNoException(SEND_BROADCAST_TIMEOUT));
+    }
+
+    public void testNewVideoBroadcast_notReceived() throws InterruptedException {
+        final MockActivity activity = getActivity();
+        MockReceiverInternal internalReceiver = new MockReceiverInternal();
+        IntentFilter filter = new IntentFilter();
+        filter.addAction(Camera.ACTION_NEW_VIDEO);
+        activity.registerReceiver(internalReceiver, filter);
+        assertFalse(internalReceiver.waitForReceiverNoException(SEND_BROADCAST_TIMEOUT));
     }
 
     static class MyServiceConnection implements ServiceConnection {
