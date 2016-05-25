@@ -23,6 +23,7 @@
 
     <application>
         <uses-library android:name="android.test.runner" />
+        <activity android:name=".ScreenOnActivity" />
     </application>
 
     <!--  self-instrumenting test package. -->
