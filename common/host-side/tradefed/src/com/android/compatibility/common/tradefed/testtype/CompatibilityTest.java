@@ -172,6 +172,10 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
             description = "Reboot the device after every test failure.")
     private boolean mRebootOnFailure = false;
 
+    @Option(name = "reboot-before-test",
+            description = "Reboot the device before the test suite starts.")
+    private boolean mRebootBeforeTest = false;
+
     @Option(name = "skip-connectivity-check",
             description = "Don't verify device connectivity between module execution.")
     private boolean mSkipConnectivityCheck = false;
@@ -262,6 +266,10 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
             int moduleCount = modules.size();
             CLog.logAndDisplay(LogLevel.INFO, "Starting %d module%s on %s", moduleCount,
                     (moduleCount > 1) ? "s" : "", mDevice.getSerialNumber());
+            if (mRebootBeforeTest) {
+                CLog.d("Rebooting device before test starts as requested.");
+                mDevice.reboot();
+            }
             if (!mSkipConnectivityCheck) {
                 MonitoringUtils.checkDeviceConnectivity(getDevice(), listener, "start");
             }
