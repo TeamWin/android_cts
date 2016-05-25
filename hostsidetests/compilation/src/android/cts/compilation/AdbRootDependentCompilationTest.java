@@ -29,8 +29,10 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -38,7 +40,8 @@ import java.util.regex.Pattern;
  * Tests that profile guided compilation succeeds regardless of whether a runtime
  * profile of the target application is present on the device.
  */
-public class CompilationTest extends DeviceTestCase {
+public class AdbRootDependentCompilationTest extends DeviceTestCase {
+    private static final String TAG = AdbRootDependentCompilationTest.class.getSimpleName();
     private static final String APPLICATION_PACKAGE = "android.cts.compilation";
 
     enum ProfileLocation {
@@ -66,12 +69,24 @@ public class CompilationTest extends DeviceTestCase {
     private String odexFilePath;
     private byte[] initialOdexFileContents;
     private File apkFile;
+    private boolean mIsRoot;
+    private boolean mNewlyObtainedRoot;
 
     @Override
     protected void setUp() throws Exception {
         super.setUp();
         mDevice = getDevice();
-        mDevice.executeAdbCommand("root");
+
+        String buildType = mDevice.getProperty("ro.build.type");
+        assertTrue("Unknown build type: " + buildType,
+                Arrays.asList("user", "userdebug", "eng").contains(buildType));
+        boolean wasRoot = mDevice.isAdbRoot();
+        mIsRoot = (!buildType.equals("user"));
+        mNewlyObtainedRoot = (mIsRoot && !wasRoot);
+        if (mNewlyObtainedRoot) {
+            mDevice.executeAdbCommand("root");
+        }
+
         apkFile = File.createTempFile("CtsCompilationApp", ".apk");
         try (OutputStream outputStream = new FileOutputStream(apkFile)) {
             InputStream inputStream = getClass().getResourceAsStream("/CtsCompilationApp.apk");
@@ -87,21 +102,27 @@ public class CompilationTest extends DeviceTestCase {
         Files.write(profileBytes, localProfileFile);
         assertTrue("empty profile", profileBytes.length > 0); // sanity check
 
-        // ensure no profiles initially present
-        for (ProfileLocation profileLocation : ProfileLocation.values()) {
-            String clientPath = profileLocation.getPath();
-            if (mDevice.doesFileExist(clientPath)) {
-                executeAdbCommand(0, "shell", "rm", clientPath);
+        if (mIsRoot) {
+            // ensure no profiles initially present
+            for (ProfileLocation profileLocation : ProfileLocation.values()) {
+                String clientPath = profileLocation.getPath();
+                if (mDevice.doesFileExist(clientPath)) {
+                    executeAdbCommand(0, "shell", "rm", clientPath);
+                }
             }
+            executeCompile(/* force */ true);
+            this.odexFilePath = getOdexFilePath();
+            this.initialOdexFileContents = readFileOnClient(odexFilePath);
+            assertTrue("empty odex file", initialOdexFileContents.length > 0); // sanity check
         }
-        executeCompile(/* force */ true);
-        this.odexFilePath = getOdexFilePath();
-        this.initialOdexFileContents = readFileOnClient(odexFilePath);
-        assertTrue("empty odex file", initialOdexFileContents.length > 0); // sanity check
     }
 
     @Override
     protected void tearDown() throws Exception {
+        if (mNewlyObtainedRoot) {
+            mDevice.executeAdbCommand("unroot");
+        }
+        apkFile.delete();
         localProfileFile.delete();
         mDevice.uninstallPackage(APPLICATION_PACKAGE);
         super.tearDown();
@@ -120,16 +141,21 @@ public class CompilationTest extends DeviceTestCase {
      */
 
     public void testForceCompile_noProfile() throws Exception {
-        compileWithProfilesAndCheckFilter();
+        Set<ProfileLocation> profileLocations = EnumSet.noneOf(ProfileLocation.class);
+        if (!canRunTest(profileLocations)) {
+            return;
+        }
+        compileWithProfilesAndCheckFilter(profileLocations);
         byte[] odexFileContents = readFileOnClient(odexFilePath);
         assertBytesEqual(initialOdexFileContents, odexFileContents);
     }
 
     public void testForceCompile_curProfile() throws Exception {
-        if (!isUseJitProfiles()) {
+        Set<ProfileLocation> profileLocations = EnumSet.of(ProfileLocation.CUR);
+        if (!canRunTest(profileLocations)) {
             return;
         }
-        compileWithProfilesAndCheckFilter(ProfileLocation.CUR);
+        compileWithProfilesAndCheckFilter(profileLocations);
         assertTrue("ref profile should have been created by the compiler",
                 mDevice.doesFileExist(ProfileLocation.REF.getPath()));
         assertFalse("odex compiled with cur profile should differ from the initial one without",
@@ -137,10 +163,11 @@ public class CompilationTest extends DeviceTestCase {
     }
 
     public void testForceCompile_refProfile() throws Exception {
-        if (!isUseJitProfiles()) {
+        Set<ProfileLocation> profileLocations = EnumSet.of(ProfileLocation.REF);
+        if (!canRunTest(profileLocations)) {
             return;
         }
-        compileWithProfilesAndCheckFilter(ProfileLocation.REF);
+        compileWithProfilesAndCheckFilter(profileLocations);
         // We assume that the compiler isn't smart enough to realize that the
         // previous odex was compiled before the ref profile was in place, even
         // though theoretically it could be.
@@ -149,10 +176,12 @@ public class CompilationTest extends DeviceTestCase {
     }
 
     public void testForceCompile_curAndRefProfile() throws Exception {
-        if (!isUseJitProfiles()) {
+        Set<ProfileLocation> profileLocations = EnumSet.of(
+                ProfileLocation.CUR, ProfileLocation.REF);
+        if (!canRunTest(profileLocations)) {
             return;
         }
-        compileWithProfilesAndCheckFilter(ProfileLocation.CUR, ProfileLocation.REF);
+        compileWithProfilesAndCheckFilter(profileLocations);
         // We assume that the compiler isn't smart enough to realize that the
         // previous odex was compiled before the ref profile was in place, even
         // though theoretically it could be.
@@ -176,7 +205,7 @@ public class CompilationTest extends DeviceTestCase {
      * Places {@link #profileBytes} in the specified locations, recompiles (without -f)
      * and checks the compiler-filter in the odex file.
      */
-    private void compileWithProfilesAndCheckFilter(ProfileLocation... profileLocations)
+    private void compileWithProfilesAndCheckFilter(Set<ProfileLocation> profileLocations)
             throws Exception {
         for (ProfileLocation profileLocation : profileLocations) {
             writeProfile(profileLocation);
@@ -263,10 +292,23 @@ public class CompilationTest extends DeviceTestCase {
     }
 
     /**
-     * Returns whether JIT profiles are enabled on this client. If not, the tests
-     * that rely on profiles cannot run.
+     * Returns whether a test can run in the current device configuration
+     * and for the given profileLocations. This allows tests to exit early.
+     *
+     * <p>Ideally we'd like tests to be marked as skipped/ignored or similar
+     * rather than passing if they can't run on the current device, but that
+     * doesn't seem to be supported by CTS as of 2016-05-24.
      * TODO: Use Assume.assumeTrue() if this test gets converted to JUnit 4.
      */
+    private boolean canRunTest(Set<ProfileLocation> profileLocations) throws Exception {
+        boolean result = mIsRoot && (profileLocations.isEmpty() || isUseJitProfiles());
+        if (!result) {
+            System.err.printf("Skipping test [isRoot=%s, %d profiles] on %s\n",
+                    mIsRoot, profileLocations.size(), mDevice);
+        }
+        return result;
+    }
+
     private boolean isUseJitProfiles() throws Exception {
         boolean propUseJitProfiles = Boolean.parseBoolean(
                 executeAdbCommand(1, "shell", "getprop", "dalvik.vm.usejitprofiles")[0]);
