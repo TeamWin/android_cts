@@ -54,7 +54,7 @@ public class OsHostTests extends DeviceTestCase implements IBuildReceiver, IAbiR
     private static final Pattern HOST_PATTERN = Pattern.compile(".*hosts:\"(.*?)\"");
     // domains that should be validated against given our test apk
     private static final String HOST_EXPLICIT = "explicit.example.com";
-    private static final String HOST_WILDCARD = "*.wildcard.tld";
+    private static final String HOST_WILDCARD = "wildcard.tld";
 
     /**
      * A reference to the device under test.
