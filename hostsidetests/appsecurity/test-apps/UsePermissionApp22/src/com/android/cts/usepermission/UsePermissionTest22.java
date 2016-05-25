@@ -112,10 +112,6 @@ public class UsePermissionTest22 extends BasePermissionsTest {
         assertEquals(PackageManager.PERMISSION_GRANTED, getInstrumentation().getContext()
                 .checkSelfPermission(Manifest.permission.WRITE_CALENDAR));
         assertEquals(PackageManager.PERMISSION_GRANTED, getInstrumentation().getContext()
-                .checkSelfPermission(Manifest.permission.SEND_SMS));
-        assertEquals(PackageManager.PERMISSION_GRANTED, getInstrumentation().getContext()
-                .checkSelfPermission(Manifest.permission.RECEIVE_SMS));
-        assertEquals(PackageManager.PERMISSION_GRANTED, getInstrumentation().getContext()
                 .checkSelfPermission(Manifest.permission.READ_SMS));
         assertEquals(PackageManager.PERMISSION_GRANTED, getInstrumentation().getContext()
                 .checkSelfPermission(Manifest.permission.RECEIVE_WAP_PUSH));
