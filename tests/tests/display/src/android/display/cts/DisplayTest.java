@@ -16,9 +16,12 @@
 
 package android.display.cts;
 
+import android.app.Activity;
+import android.app.Instrumentation;
 import android.app.Presentation;
 import android.app.UiAutomation;
 import android.content.Context;
+import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.PixelFormat;
 import android.graphics.Point;
@@ -66,12 +69,22 @@ public class DisplayTest extends InstrumentationTestCase {
     // To test display mode switches.
     private TestPresentation mPresentation;
 
+    private Activity mScreenOnActivity;
+
     @Override
     protected void setUp() throws Exception {
         super.setUp();
+        mScreenOnActivity = launchScreenOnActivity();
         mContext = getInstrumentation().getContext();
         mDisplayManager = (DisplayManager)mContext.getSystemService(Context.DISPLAY_SERVICE);
         mWindowManager = (WindowManager)mContext.getSystemService(Context.WINDOW_SERVICE);
+    }
+
+    @Override
+    protected void tearDown() throws Exception {
+        if (mScreenOnActivity != null) {
+            mScreenOnActivity.finish();
+        }
     }
 
     private void enableAppOps() {
@@ -345,5 +358,15 @@ public class DisplayTest extends InstrumentationTestCase {
             params.setTitle("CtsTestPresentation");
             getWindow().setAttributes(params);
         }
+    }
+
+    private Activity launchScreenOnActivity() {
+        Class clazz = ScreenOnActivity.class;
+        String targetPackage = getInstrumentation().getContext().getPackageName();
+        Instrumentation.ActivityResult result = new Instrumentation.ActivityResult(0, new Intent());
+        Instrumentation.ActivityMonitor monitor = new Instrumentation.ActivityMonitor(clazz.getName(), result, false);
+        getInstrumentation().addMonitor(monitor);
+        launchActivity(targetPackage, clazz, null);
+        return monitor.waitForActivity();
     }
 }
