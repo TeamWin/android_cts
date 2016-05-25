@@ -260,7 +260,7 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
      */
     @Override
     public void testAssumptionFailure(TestIdentifier test, String trace) {
-        mCurrentResult.notExecuted();
+        mCurrentResult.skipped();
         logResult("%s failed assumption: %s", test, trace);
     }
 
