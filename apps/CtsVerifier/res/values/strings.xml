@@ -790,6 +790,9 @@
     <string name="snsr_sensor_test">CTS Sensor Test</string>
     <string name="snsr_sensor_batching_tests">CTS Sensor Batching Tests</string>
 
+    <!-- String for DynamicSensorDiscoveryTest -->
+    <string name="snsr_dynamic_sensor_discovery_test">Dynamic Sensor Discovery Test</string>
+
     <!-- Strings for Sample Test Activities -->
     <string name="share_button_text">Share</string>
     <string name="sample_framework_test">Sample Framework Test</string>
