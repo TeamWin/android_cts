@@ -15,11 +15,10 @@
  */
 package com.android.cts.certinstaller;
 
-import android.app.Activity;
 import android.app.admin.DevicePolicyManager;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-import android.os.Bundle;
 import android.util.Base64;
 import android.util.Base64InputStream;
 import android.util.Log;
@@ -42,7 +41,7 @@ import java.util.List;
  * {@link DevicePolicyManager#getInstalledCaCerts},
  * {@link DevicePolicyManager#installKeyPair}.
  */
-public class CertInstallerActivity extends Activity {
+public class CertInstallerReceiver extends BroadcastReceiver {
 
     private static final String TAG = "DelegatedCertInstaller";
     // exercises {@link DevicePolicyManager#installCaCert} and
@@ -66,16 +65,13 @@ public class CertInstallerActivity extends Activity {
     private static final String EXTRA_RESULT_EXCEPTION = "extra_result_exception";
 
     @Override
-    public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        Intent intent = getIntent();
+    public void onReceive(Context context, Intent intent) {
         if (intent == null) {
-            finish();
             return;
         }
 
         String action = intent.getAction();
-        DevicePolicyManager dpm = (DevicePolicyManager) getSystemService(
+        DevicePolicyManager dpm = (DevicePolicyManager) context.getSystemService(
                 Context.DEVICE_POLICY_SERVICE);
 
         byte[] certBuffer;
@@ -93,10 +89,10 @@ public class CertInstallerActivity extends Activity {
                 if (!dpm.hasCaCertInstalled(null, certBuffer)) {
                     throw new RuntimeException("Cannot find cert after installation.");
                 }
-                sendResult(true, null);
+                sendResult(context, true, null);
             } catch (Exception e) {
                 Log.e(TAG, "Exception raised duing ACTION_INSTALL_CERT", e);
-                sendResult(false, e);
+                sendResult(context, false, e);
             }
         } else if (ACTION_REMOVE_CERT.equals(action)) {
             try {
@@ -105,18 +101,19 @@ public class CertInstallerActivity extends Activity {
                     throw new RuntimeException("Trying to uninstall a non-existent cert.");
                 }
                 dpm.uninstallCaCert(null, certBuffer);
-                sendResult(!dpm.hasCaCertInstalled(null, certBuffer), null);
+                sendResult(context, !dpm.hasCaCertInstalled(null, certBuffer), null);
             } catch (Exception e) {
                 Log.e(TAG, "Exception raised duing ACTION_REMOVE_CERT", e);
-                sendResult(false, e);
+                sendResult(context, false, e);
             }
         } else if (ACTION_VERIFY_CERT.equals(action)) {
             try {
                 certBuffer = intent.getByteArrayExtra(EXTRA_CERT_DATA);
-                sendResult(containsCertificate(dpm.getInstalledCaCerts(null), certBuffer), null);
+                sendResult(context, containsCertificate(dpm.getInstalledCaCerts(null), certBuffer),
+                        null);
             } catch (Exception e) {
                 Log.e(TAG, "Exception raised duing ACTION_VERIFY_CERT", e);
-                sendResult(false, e);
+                sendResult(context, false, e);
             }
         } else if (ACTION_INSTALL_KEYPAIR.equals(action)) {
             String alias = intent.getStringExtra(EXTRA_KEY_ALIAS);
@@ -138,26 +135,27 @@ public class CertInstallerActivity extends Activity {
                 // CTS keychain tests will make sure the API's behaviour is correct.
                 // Note: installKeyPair() will silently return false if there is no lockscreen
                 // password, however the test setup should have set one already.
-                sendResult(dpm.installKeyPair(null, privatekey, certificate,  alias), null);
+                sendResult(context, dpm.installKeyPair(null, privatekey, certificate,  alias),
+                        null);
             } catch (Exception e) {
                 Log.e(TAG, "Exception raised duing ACTION_INSTALL_KEYPAIR", e);
-                sendResult(false, e);
+                sendResult(context, false, e);
             }
         }
-        finish();
     }
 
-    private void sendResult(boolean succeed, Exception e) {
+
+    private void sendResult(Context context, boolean succeed, Exception e) {
         Intent intent = new Intent();
         intent.setAction(ACTION_CERT_OPERATION_DONE);
         intent.putExtra(EXTRA_RESULT_VALUE, succeed);
         if (e != null) {
             intent.putExtra(EXTRA_RESULT_EXCEPTION, e);
         }
-        sendBroadcast(intent);
+        context.sendBroadcast(intent);
     }
 
-    private boolean containsCertificate(List<byte[]> certificates, byte[] toMatch)
+    private static boolean containsCertificate(List<byte[]> certificates, byte[] toMatch)
             throws CertificateException {
         Certificate certificateToMatch = readCertificate(toMatch);
         for (byte[] certBuffer : certificates) {
@@ -169,7 +167,7 @@ public class CertInstallerActivity extends Activity {
         return false;
     }
 
-    private Certificate readCertificate(byte[] certBuffer) throws CertificateException {
+    private static Certificate readCertificate(byte[] certBuffer) throws CertificateException {
         final CertificateFactory certFactory = CertificateFactory.getInstance("X.509");
         return certFactory.generateCertificate(new ByteArrayInputStream(certBuffer));
     }

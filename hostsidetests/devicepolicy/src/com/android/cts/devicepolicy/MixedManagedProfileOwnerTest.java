@@ -37,14 +37,18 @@ public class MixedManagedProfileOwnerTest extends DeviceAndProfileOwnerTest {
         if (mHasFeature) {
             removeTestUsers();
             mParentUserId = mPrimaryUserId;
-            mUserId = createManagedProfile(mParentUserId);
-            switchUser(mParentUserId);
-            startUser(mUserId);
-
-            installAppAsUser(DEVICE_ADMIN_APK, mUserId);
-            setProfileOwnerOrFail(DEVICE_ADMIN_PKG + "/" + ADMIN_RECEIVER_TEST_CLASS, mUserId);
-            startUser(mUserId);
+            createManagedProfile();
         }
+    }
+
+    private void createManagedProfile() throws Exception {
+        mUserId = createManagedProfile(mParentUserId);
+        switchUser(mParentUserId);
+        startUser(mUserId);
+
+        installAppAsUser(DEVICE_ADMIN_APK, mUserId);
+        setProfileOwnerOrFail(DEVICE_ADMIN_PKG + "/" + ADMIN_RECEIVER_TEST_CLASS, mUserId);
+        startUser(mUserId);
     }
 
     @Override
@@ -96,5 +100,21 @@ public class MixedManagedProfileOwnerTest extends DeviceAndProfileOwnerTest {
     public void testAudioRestriction() throws Exception {
         // DISALLOW_UNMUTE_MICROPHONE and DISALLOW_ADJUST_VOLUME can only be set by device owners
         // and profile owners on the primary user.
+    }
+
+    @Override
+    public void testDelegatedCertInstaller() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
+
+        try {
+            super.testDelegatedCertInstaller();
+        } finally {
+            // In managed profile, clearing password through dpm is not allowed. Recreate user to
+            // clear password instead.
+            removeUser(mUserId);
+            createManagedProfile();
+        }
     }
 }
