@@ -26,6 +26,7 @@ import android.transition.TransitionInflater;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.WindowManager;
 
 /**
  * A simple activity used for Fragment Transitions
@@ -35,6 +36,10 @@ public class FragmentTestActivity extends Activity {
     public void onCreate(Bundle icicle) {
         super.onCreate(icicle);
         setContentView(R.layout.activity_content);
+        // Work around problems running while on lock screen
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_DISMISS_KEYGUARD |
+                WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON |
+                WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
     }
 
     public static class TestFragment extends Fragment {

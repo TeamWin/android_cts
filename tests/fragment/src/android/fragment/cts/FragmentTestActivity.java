@@ -18,6 +18,16 @@
 package android.fragment.cts;
 
 import android.app.Activity;
+import android.os.Bundle;
+import android.view.WindowManager;
 
 public class FragmentTestActivity extends Activity {
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        // Work around problems running while on lock screen
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_DISMISS_KEYGUARD |
+                WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON |
+                WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+    }
 }
