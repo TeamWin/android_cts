@@ -40,6 +40,7 @@ import android.support.test.uiautomator.UiObject;
 import android.support.test.uiautomator.UiObject2;
 import android.support.test.uiautomator.UiSelector;
 import android.util.ArrayMap;
+import android.util.Log;
 import android.view.accessibility.AccessibilityEvent;
 import android.view.accessibility.AccessibilityNodeInfo;
 import android.widget.Switch;
@@ -60,6 +61,7 @@ public abstract class BasePermissionsTest {
     private static final long GLOBAL_TIMEOUT_MILLIS = 5000;
 
     private static final long RETRY_TIMEOUT = 5000;
+    private static final String LOG_TAG = "BasePermissionsTest";
 
     private static Map<String, String> sPermissionToLabelResNameMap = new ArrayMap<>();
     static {
@@ -459,10 +461,16 @@ public abstract class BasePermissionsTest {
             Callable<AccessibilityNodeInfo> callable) throws Exception {
         final long startTimeMillis = SystemClock.uptimeMillis();
         while (true) {
-            AccessibilityNodeInfo node = callable.call();
-            if (node != null) {
-                return node;
+            try {
+                AccessibilityNodeInfo node = callable.call();
+
+                if (node != null) {
+                    return node;
+                }
+            } catch (NullPointerException e) {
+                Log.e(LOG_TAG, "NPE while finding AccessibilityNodeInfo", e);
             }
+
             final long elapsedTimeMillis = SystemClock.uptimeMillis() - startTimeMillis;
             if (elapsedTimeMillis > RETRY_TIMEOUT) {
                 return null;

@@ -179,12 +179,12 @@ public class PermissionsHostTest extends DeviceTestCase implements IAbiReceiver,
         assertNull(getDevice().installPackage(
                 MigrationHelper.getTestFile(mCtsBuild, APK_23), false, false));
         try {
-            runDeviceTests(PKG, "com.android.cts.usepermission.UsePermissionTest23_part1",
-                    "testRevokeAffectsWholeGroup");
+            runDeviceTests(PKG, "com.android.cts.usepermission.UsePermissionTest23",
+                    "testRevokeAffectsWholeGroup_part1");
         } catch (AssertionError expected) {
         }
-        runDeviceTests(PKG, "com.android.cts.usepermission.UsePermissionTest23_part2",
-                "testRevokeAffectsWholeGroup");
+        runDeviceTests(PKG, "com.android.cts.usepermission.UsePermissionTest23",
+                "testRevokeAffectsWholeGroup_part2");
     }
 
     public void testGrantPreviouslyRevokedWithPrejudiceShowsPrompt23() throws Exception {
