@@ -21,7 +21,10 @@ import android.content.pm.PackageManager;
 import android.hardware.Sensor;
 import android.hardware.SensorManager;
 import android.hardware.cts.helpers.SensorCtsHelper;
+import android.text.TextUtils;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -161,5 +164,22 @@ public class SensorParameterRangeTest extends SensorTestCase {
         assertTrue(String.format("Sensor=%s, min required fifo length=%d actual=%d",
                     sensor.getName(), minRequiredLength, reservedLength),
                     reservedLength >= minRequiredLength);
+    }
+
+    public void testStaticSensorId() {
+        // all static sensors should have id of 0
+        List<Sensor> sensors = mSensorManager.getSensorList(Sensor.TYPE_ALL);
+        List<String> errors = new ArrayList<>();
+        for (Sensor s : sensors) {
+            int id = s.getId();
+            if (id != 0) {
+                errors.add(String.format("sensor \"%s\" has id %d", s.getName(), s));
+            }
+        }
+        if (errors.size() > 0) {
+            String message = "Static sensors should have id of 0, violations: < " +
+                    TextUtils.join(", ", errors) + " >";
+            fail(message);
+        }
     }
 }
