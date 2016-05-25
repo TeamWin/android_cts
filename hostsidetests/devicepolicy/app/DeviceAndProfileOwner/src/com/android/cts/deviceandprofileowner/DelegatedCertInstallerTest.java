@@ -19,6 +19,7 @@ package com.android.cts.deviceandprofileowner;
 import android.app.KeyguardManager;
 import android.app.admin.DevicePolicyManager;
 import android.content.BroadcastReceiver;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
@@ -52,6 +53,10 @@ public class DelegatedCertInstallerTest extends BaseDeviceAdminTest {
     private static final String EXTRA_KEY_ALIAS = "extra_key_alias";
     private static final String EXTRA_RESULT_VALUE = "extra_result_value";
     private static final String EXTRA_RESULT_EXCEPTION = "extra_result_exception";
+    // package name of receiver has to be specified explicitly as the receiver is registered in
+    // manifest
+    private static final ComponentName CERT_INSTALLER_COMPONENT = new ComponentName(
+            CERT_INSTALLER_PACKAGE, "com.android.cts.certinstaller.CertInstallerReceiver");
 
     /*
      * The CA and keypair below are generated with:
@@ -254,30 +259,33 @@ public class DelegatedCertInstallerTest extends BaseDeviceAdminTest {
     private void installCaCert(byte[] cert) {
         Intent intent = new Intent();
         intent.setAction(ACTION_INSTALL_CERT);
+        intent.setComponent(CERT_INSTALLER_COMPONENT);
         intent.putExtra(EXTRA_CERT_DATA, cert);
-        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        mContext.startActivity(intent);
+        intent.addFlags(Intent.FLAG_RECEIVER_FOREGROUND);
+        mContext.sendBroadcast(intent);
     }
 
     private void removeCaCert(byte[] cert) {
         Intent intent = new Intent();
         intent.setAction(ACTION_REMOVE_CERT);
+        intent.setComponent(CERT_INSTALLER_COMPONENT);
         intent.putExtra(EXTRA_CERT_DATA, cert);
-        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        mContext.startActivity(intent);
+        intent.addFlags(Intent.FLAG_RECEIVER_FOREGROUND);
+        mContext.sendBroadcast(intent);
     }
 
     private void verifyCaCert(byte[] cert) {
         Intent intent = new Intent();
         intent.setAction(ACTION_VERIFY_CERT);
+        intent.setComponent(CERT_INSTALLER_COMPONENT);
         intent.putExtra(EXTRA_CERT_DATA, cert);
-        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        mContext.startActivity(intent);
+        intent.addFlags(Intent.FLAG_RECEIVER_FOREGROUND);
+        mContext.sendBroadcast(intent);
     }
 
     private void assertResult(String testName, Boolean expectSuccess) throws InterruptedException {
         assertTrue("Cert installer did not respond in time.",
-                mAvailableResultSemaphore.tryAcquire(5, TimeUnit.SECONDS));
+                mAvailableResultSemaphore.tryAcquire(10, TimeUnit.SECONDS));
         synchronized (this) {
             if (expectSuccess) {
                 assertTrue(testName + " failed unexpectedly.", mReceivedResult);
@@ -294,10 +302,11 @@ public class DelegatedCertInstallerTest extends BaseDeviceAdminTest {
     private void installKeyPair(String key, String cert, String alias) {
         Intent intent = new Intent();
         intent.setAction(ACTION_INSTALL_KEYPAIR);
+        intent.setComponent(CERT_INSTALLER_COMPONENT);
         intent.putExtra(EXTRA_CERT_DATA, cert);
         intent.putExtra(EXTRA_KEY_DATA, key);
         intent.putExtra(EXTRA_KEY_ALIAS, alias);
-        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        mContext.startActivity(intent);
+        intent.addFlags(Intent.FLAG_RECEIVER_FOREGROUND);
+        mContext.sendBroadcast(intent);
     }
 }

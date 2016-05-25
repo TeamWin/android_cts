@@ -361,30 +361,20 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
 
         installAppAsUser(CERT_INSTALLER_APK, mUserId);
 
-        boolean installProfileOwnerForPassword = (mPrimaryUserId != mUserId);
-        if (installProfileOwnerForPassword) {
-            // This is a managed profile test. We need to set a profile owner on the primary user in
-            // order to be able to set and clear the lockscreen password.
-            installAppAsUser(DEVICE_ADMIN_APK, mPrimaryUserId);
-            setProfileOwnerOrFail(DEVICE_ADMIN_PKG + "/" + ADMIN_RECEIVER_TEST_CLASS,
-                    mPrimaryUserId);
-        }
+        boolean isManagedProfile = (mPrimaryUserId != mUserId);
 
         try {
             // Set a non-empty device lockscreen password, which is a precondition for installing
             // private key pairs.
             assertTrue("Set lockscreen password failed", runDeviceTestsAsUser(DEVICE_ADMIN_PKG,
-                    ".ResetPasswordHelper", "testSetPassword", mPrimaryUserId));
+                    ".ResetPasswordHelper", "testSetPassword", mUserId));
             assertTrue("DelegatedCertInstaller failed", runDeviceTestsAsUser(DEVICE_ADMIN_PKG,
                     ".DelegatedCertInstallerTest", mUserId));
         } finally {
-            // Reset lockscreen password and remove profile owner if required
-            assertTrue("Clear lockscreen password failed", runDeviceTestsAsUser(DEVICE_ADMIN_PKG,
-                    ".ResetPasswordHelper", "testClearPassword", mPrimaryUserId));
-            if (installProfileOwnerForPassword) {
-                assertTrue("Failed to remove profile owner.",
-                        removeAdmin(DEVICE_ADMIN_PKG + "/" + ADMIN_RECEIVER_TEST_CLASS,
-                                mPrimaryUserId));
+            if (!isManagedProfile) {
+                // Skip managed profile as dpm doesn't allow clear password
+                assertTrue("Clear lockscreen password failed", runDeviceTestsAsUser(DEVICE_ADMIN_PKG,
+                        ".ResetPasswordHelper", "testClearPassword", mUserId));
             }
         }
     }
