@@ -143,10 +143,9 @@ class WindowManagerState {
             if (ws != null) {
                 log(ws.toString());
 
-                if (visibleOnly && mWindows.isEmpty()) {
-                    // This is the front window. Check to see if we are in the middle of
-                    // transitioning. If we are, we want to skip dumping until window manager is
-                    // done transitioning the top window.
+                if (visibleOnly) {
+                    // Check to see if we are in the middle of transitioning. If we are, we want to
+                    // skip dumping until window manager is done transitioning windows.
                     if (ws.isStartingWindow()) {
                         log("Skipping dump due to starting window transition...");
                         return;
