@@ -975,6 +975,15 @@
                        android:value="android.hardware.sensor.accelerometer:android.hardware.sensor.stepcounter:android.hardware.sensor.stepdetector:android.hardware.sensor.heartrate:android.hardware.sensor.compass:android.hardware.sensor.ambient_temperature" />
         </activity>
 
+        <activity android:name=".sensors.DynamicSensorDiscoveryTestActivity"
+                  android:label="@string/snsr_dynamic_sensor_discovery_test"
+                  android:screenOrientation="locked">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.cts.intent.category.MANUAL_TEST"/>
+            </intent-filter>
+            <meta-data android:name="test_category" android:value="@string/test_category_sensors"/>
+        </activity>
         <!-- End sensor tests definitions -->
 
         <activity android:name=".location.LocationModeOffTestActivity"
