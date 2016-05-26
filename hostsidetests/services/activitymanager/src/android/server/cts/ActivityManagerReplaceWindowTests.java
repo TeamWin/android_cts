@@ -52,7 +52,7 @@ public class ActivityManagerReplaceWindowTests extends ActivityManagerTestBase {
         final String windowName = getWindowName(activityName);
         final String amStartCmd = getAmStartCmd(activityName);
 
-        mDevice.executeShellCommand(amStartCmd);
+        executeShellCommand(amStartCmd);
 
         // Sleep 2 seconds, then check if the window is started properly.
         // SlowCreateActivity will do a sleep inside its onCreate() to simulate a
@@ -69,7 +69,7 @@ public class ActivityManagerReplaceWindowTests extends ActivityManagerTestBase {
         // Move to docked stack
         final int taskId = getActivityTaskId(activityName);
         final String cmd = AM_MOVE_TASK + taskId + " " + DOCKED_STACK_ID + " true";
-        mDevice.executeShellCommand(cmd);
+        executeShellCommand(cmd);
 
         // Sleep 5 seconds, then check if the window is replaced properly.
         Thread.sleep(5000);
