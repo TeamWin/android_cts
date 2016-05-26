@@ -46,9 +46,9 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
     private void pinnedStackTester(String startActivity, String topActivityName,
             boolean moveTopToPinnedStack, boolean isFocusable) throws Exception {
 
-        mDevice.executeShellCommand(getAmStartCmd(startActivity));
+        executeShellCommand(getAmStartCmd(startActivity));
         if (moveTopToPinnedStack) {
-            mDevice.executeShellCommand(AM_MOVE_TOP_ACTIVITY_TO_PINNED_STACK_COMMAND);
+            executeShellCommand(AM_MOVE_TOP_ACTIVITY_TO_PINNED_STACK_COMMAND);
         }
 
         mAmWmState.waitForValidState(mDevice, true, new String[] {topActivityName},

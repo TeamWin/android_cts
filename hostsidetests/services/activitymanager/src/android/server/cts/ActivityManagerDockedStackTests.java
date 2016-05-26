@@ -30,7 +30,7 @@ public class ActivityManagerDockedStackTests extends ActivityManagerTestBase {
     private static final int STACK_SIZE = 300;
 
     public void testStackList() throws Exception {
-        mDevice.executeShellCommand(getAmStartCmd(TEST_ACTIVITY_NAME));
+        executeShellCommand(getAmStartCmd(TEST_ACTIVITY_NAME));
         mAmWmState.computeState(mDevice, new String[] {TEST_ACTIVITY_NAME});
         mAmWmState.assertContainsStack("Must contain home stack.", HOME_STACK_ID);
         mAmWmState.assertContainsStack(
@@ -209,7 +209,7 @@ public class ActivityManagerDockedStackTests extends ActivityManagerTestBase {
     }
 
     public void testActivityLifeCycleOnResizeDockedStack() throws Exception {
-        mDevice.executeShellCommand(getAmStartCmd(TEST_ACTIVITY_NAME));
+        executeShellCommand(getAmStartCmd(TEST_ACTIVITY_NAME));
         mAmWmState.computeState(mDevice, new String[] {TEST_ACTIVITY_NAME});
         final Rectangle fullScreenBounds =
                 mAmWmState.getWmState().getStack(FULLSCREEN_WORKSPACE_STACK_ID).getBounds();
@@ -257,7 +257,7 @@ public class ActivityManagerDockedStackTests extends ActivityManagerTestBase {
     }
 
     private void launchActivityToSide(String activityName) throws Exception {
-        mDevice.executeShellCommand(
+        executeShellCommand(
                 getAmStartCmd(activityName) + " -f 0x20000000 --ez launch_to_the_side true");
     }
 }
