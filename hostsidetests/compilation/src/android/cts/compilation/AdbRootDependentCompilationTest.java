@@ -36,9 +36,17 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 /**
- * Tests that profile guided compilation succeeds regardless of whether a runtime
- * profile of the target application is present on the device.
+ * Various integration tests for dex to oat compilation, with or without profiles.
+ * When changing this test, make sure it still passes in each of the following
+ * configurations:
+ * <ul>
+ *     <li>On a 'user' build</li>
+ *     <li>On a 'userdebug' build with system property 'dalvik.vm.usejitprofiles' set to false</li>
+ *     <li>On a 'userdebug' build with system property 'dalvik.vm.usejitprofiles' set to true</li>
+ * </ul>
  */
 public class AdbRootDependentCompilationTest extends DeviceTestCase {
     private static final String TAG = AdbRootDependentCompilationTest.class.getSimpleName();
@@ -66,8 +74,6 @@ public class AdbRootDependentCompilationTest extends DeviceTestCase {
     private ITestDevice mDevice;
     private byte[] profileBytes;
     private File localProfileFile;
-    private String odexFilePath;
-    private byte[] initialOdexFileContents;
     private File apkFile;
     private boolean mIsRoot;
     private boolean mNewlyObtainedRoot;
@@ -101,20 +107,6 @@ public class AdbRootDependentCompilationTest extends DeviceTestCase {
         localProfileFile = File.createTempFile("compilationtest", "prof");
         Files.write(profileBytes, localProfileFile);
         assertTrue("empty profile", profileBytes.length > 0); // sanity check
-
-        if (mIsRoot) {
-            // ensure no profiles initially present
-            for (ProfileLocation profileLocation : ProfileLocation.values()) {
-                String clientPath = profileLocation.getPath();
-                if (mDevice.doesFileExist(clientPath)) {
-                    executeAdbCommand(0, "shell", "rm", clientPath);
-                }
-            }
-            executeCompile(/* force */ true);
-            this.odexFilePath = getOdexFilePath();
-            this.initialOdexFileContents = readFileOnClient(odexFilePath);
-            assertTrue("empty odex file", initialOdexFileContents.length > 0); // sanity check
-        }
     }
 
     @Override
@@ -126,6 +118,29 @@ public class AdbRootDependentCompilationTest extends DeviceTestCase {
         localProfileFile.delete();
         mDevice.uninstallPackage(APPLICATION_PACKAGE);
         super.tearDown();
+    }
+
+    /**
+     * Tests compilation using {@code -r bg-dexopt -f}.
+     */
+    public void testCompile_bgDexopt() throws Exception {
+        if (!canRunTest(EnumSet.noneOf(ProfileLocation.class))) {
+            return;
+        }
+        // Usually "interpret-only"
+        String expectedInstallFilter = checkNotNull(mDevice.getProperty("pm.dexopt.install"));
+        // Usually "speed-profile"
+        String expectedBgDexoptFilter = checkNotNull(mDevice.getProperty("pm.dexopt.bg-dexopt"));
+
+        String odexPath = getOdexFilePath();
+        assertEquals(expectedInstallFilter, getCompilerFilter(odexPath));
+
+        // Without -f, the compiler would only run if it judged the bg-dexopt filter to
+        // be "better" than the install filter. However manufacturers can change those
+        // values so we don't want to depend here on the resulting filter being better.
+        executeCompile("-r", "bg-dexopt", "-f");
+
+        assertEquals(expectedBgDexoptFilter, getCompilerFilter(odexPath));
     }
 
     /*
@@ -140,53 +155,31 @@ public class AdbRootDependentCompilationTest extends DeviceTestCase {
      profile_assistant, it may only be available in "ref".
      */
 
-    public void testForceCompile_noProfile() throws Exception {
-        Set<ProfileLocation> profileLocations = EnumSet.noneOf(ProfileLocation.class);
-        if (!canRunTest(profileLocations)) {
-            return;
-        }
-        compileWithProfilesAndCheckFilter(profileLocations);
-        byte[] odexFileContents = readFileOnClient(odexFilePath);
-        assertBytesEqual(initialOdexFileContents, odexFileContents);
+    public void testCompile_noProfile() throws Exception {
+        compileWithProfilesAndCheckFilter(false /* expectOdexChange */,
+                EnumSet.noneOf(ProfileLocation.class));
     }
 
-    public void testForceCompile_curProfile() throws Exception {
-        Set<ProfileLocation> profileLocations = EnumSet.of(ProfileLocation.CUR);
-        if (!canRunTest(profileLocations)) {
-            return;
+    public void testCompile_curProfile() throws Exception {
+        boolean didRun = compileWithProfilesAndCheckFilter(true  /* expectOdexChange */,
+                 EnumSet.of(ProfileLocation.CUR));
+        if (didRun) {
+            assertTrue("ref profile should have been created by the compiler",
+                    mDevice.doesFileExist(ProfileLocation.REF.getPath()));
         }
-        compileWithProfilesAndCheckFilter(profileLocations);
-        assertTrue("ref profile should have been created by the compiler",
-                mDevice.doesFileExist(ProfileLocation.REF.getPath()));
-        assertFalse("odex compiled with cur profile should differ from the initial one without",
-                Arrays.equals(initialOdexFileContents, readFileOnClient(odexFilePath)));
     }
 
-    public void testForceCompile_refProfile() throws Exception {
-        Set<ProfileLocation> profileLocations = EnumSet.of(ProfileLocation.REF);
-        if (!canRunTest(profileLocations)) {
-            return;
-        }
-        compileWithProfilesAndCheckFilter(profileLocations);
+    public void testCompile_refProfile() throws Exception {
+        compileWithProfilesAndCheckFilter(false /* expectOdexChange */,
+                 EnumSet.of(ProfileLocation.REF));
         // We assume that the compiler isn't smart enough to realize that the
         // previous odex was compiled before the ref profile was in place, even
         // though theoretically it could be.
-        byte[] odexFileContents = readFileOnClient(odexFilePath);
-        assertBytesEqual(initialOdexFileContents, odexFileContents);
     }
 
-    public void testForceCompile_curAndRefProfile() throws Exception {
-        Set<ProfileLocation> profileLocations = EnumSet.of(
-                ProfileLocation.CUR, ProfileLocation.REF);
-        if (!canRunTest(profileLocations)) {
-            return;
-        }
-        compileWithProfilesAndCheckFilter(profileLocations);
-        // We assume that the compiler isn't smart enough to realize that the
-        // previous odex was compiled before the ref profile was in place, even
-        // though theoretically it could be.
-        byte[] odexFileContents = readFileOnClient(odexFilePath);
-        assertBytesEqual(initialOdexFileContents, odexFileContents);
+    public void testCompile_curAndRefProfile() throws Exception {
+        compileWithProfilesAndCheckFilter(false /* expectOdexChange */,
+                EnumSet.of(ProfileLocation.CUR, ProfileLocation.REF));
     }
 
     private byte[] readFileOnClient(String clientPath) throws Exception {
@@ -204,29 +197,58 @@ public class AdbRootDependentCompilationTest extends DeviceTestCase {
     /**
      * Places {@link #profileBytes} in the specified locations, recompiles (without -f)
      * and checks the compiler-filter in the odex file.
+     *
+     * @return whether the test ran (as opposed to early exit)
      */
-    private void compileWithProfilesAndCheckFilter(Set<ProfileLocation> profileLocations)
+    private boolean compileWithProfilesAndCheckFilter(boolean expectOdexChange,
+            Set<ProfileLocation> profileLocations)
             throws Exception {
+        if (!canRunTest(profileLocations)) {
+            return false;
+        }
+        // ensure no profiles initially present
+        for (ProfileLocation profileLocation : ProfileLocation.values()) {
+            String clientPath = profileLocation.getPath();
+            if (mDevice.doesFileExist(clientPath)) {
+                executeAdbCommand(0, "shell", "rm", clientPath);
+            }
+        }
+        executeCompile("-m", "speed-profile", "-f");
+        String odexFilePath = getOdexFilePath();
+        byte[] initialOdexFileContents = readFileOnClient(odexFilePath);
+        assertTrue("empty odex file", initialOdexFileContents.length > 0); // sanity check
+
         for (ProfileLocation profileLocation : profileLocations) {
             writeProfile(profileLocation);
         }
-        executeCompile(/* force */ false);
+        executeCompile("-m", "speed-profile");
 
         // Confirm the compiler-filter used in creating the odex file
         String compilerFilter = getCompilerFilter(odexFilePath);
 
         assertEquals("compiler-filter", "speed-profile", compilerFilter);
+
+        byte[] odexFileContents = readFileOnClient(odexFilePath);
+        boolean odexChanged = !(Arrays.equals(initialOdexFileContents, odexFileContents));
+        if (odexChanged && !expectOdexChange) {
+            String msg = String.format(Locale.US, "Odex file without filters (%d bytes) "
+                    + "unexpectedly different from odex file (%d bytes) compiled with filters: %s",
+                    initialOdexFileContents.length, odexFileContents.length, profileLocations);
+            fail(msg);
+        } else if (!odexChanged && expectOdexChange) {
+            fail("odex file should have changed when recompiling with " + profileLocations);
+        }
+        return true;
     }
 
     /**
      * Invokes the dex2oat compiler on the client.
+     *
+     * @param compileOptions extra options to pass to the compiler on the command line
      */
-    private void executeCompile(boolean force) throws Exception {
-        List<String> command = new ArrayList<>(Arrays.asList("shell", "cmd", "package", "compile",
-                "-m", "speed-profile"));
-        if (force) {
-            command.add("-f");
-        }
+    private void executeCompile(String... compileOptions) throws Exception {
+        List<String> command = new ArrayList<>(Arrays.asList("shell", "cmd", "package", "compile"));
+        command.addAll(Arrays.asList(compileOptions));
         command.add(APPLICATION_PACKAGE);
         String[] commandArray = command.toArray(new String[0]);
         assertEquals("Success", executeAdbCommand(1, commandArray)[0]);
@@ -292,8 +314,8 @@ public class AdbRootDependentCompilationTest extends DeviceTestCase {
     }
 
     /**
-     * Returns whether a test can run in the current device configuration
-     * and for the given profileLocations. This allows tests to exit early.
+     * Returns whether a test that uses the given profileLocations can run
+     * in the current device configuration. This allows tests to exit early.
      *
      * <p>Ideally we'd like tests to be marked as skipped/ignored or similar
      * rather than passing if they can't run on the current device, but that
@@ -331,11 +353,5 @@ public class AdbRootDependentCompilationTest extends DeviceTestCase {
         // "".split() returns { "" }, but we want an empty array
         String[] lines = output.equals("") ? new String[0] : output.split("\n");
         return lines;
-    }
-
-    private static void assertBytesEqual(byte[] expected, byte[] actual) {
-        String msg = String.format("Expected %d bytes differ from actual %d bytes",
-                expected.length, actual.length);
-        assertTrue(msg, Arrays.equals(expected, actual));
     }
 }
