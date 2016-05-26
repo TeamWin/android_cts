@@ -97,7 +97,7 @@ public class AlwaysOnVpnTest extends BaseDeviceAdminTest {
         assertNull(mDevicePolicyManager.getAlwaysOnVpnPackage(ADMIN_RECEIVER_COMPONENT));
 
         final CountDownLatch vpnLatch = new CountDownLatch(1);
-        setAndWaitForVpn(VPN_PACKAGE);
+        setAndWaitForVpn(VPN_PACKAGE, /* usable */ true);
         checkPing(TEST_ADDRESS);
     }
 
@@ -106,7 +106,7 @@ public class AlwaysOnVpnTest extends BaseDeviceAdminTest {
         restrictions.putStringArray(RESTRICTION_ALLOWED, new String[] {mPackageName});
         mDevicePolicyManager.setApplicationRestrictions(ADMIN_RECEIVER_COMPONENT, VPN_PACKAGE,
                 restrictions);
-        setAndWaitForVpn(VPN_PACKAGE);
+        setAndWaitForVpn(VPN_PACKAGE, /* usable */ true);
         assertTrue(isNetworkVpn());
     }
 
@@ -115,11 +115,11 @@ public class AlwaysOnVpnTest extends BaseDeviceAdminTest {
         restrictions.putStringArray(RESTRICTION_DISALLOWED, new String[] {mPackageName});
         mDevicePolicyManager.setApplicationRestrictions(ADMIN_RECEIVER_COMPONENT, VPN_PACKAGE,
                 restrictions);
-        setAndWaitForVpn(VPN_PACKAGE);
+        setAndWaitForVpn(VPN_PACKAGE, /* usable */ false);
         assertFalse(isNetworkVpn());
     }
 
-    private void setAndWaitForVpn(String packageName) {
+    private void setAndWaitForVpn(String packageName, boolean usable) {
         final CountDownLatch vpnLatch = new CountDownLatch(1);
         final NetworkRequest request = new NetworkRequest.Builder()
                 .addTransportType(NetworkCapabilities.TRANSPORT_VPN)
@@ -151,7 +151,10 @@ public class AlwaysOnVpnTest extends BaseDeviceAdminTest {
 
         // Do we have a network?
         NetworkInfo vpnInfo = mConnectivityManager.getNetworkInfo(ConnectivityManager.TYPE_VPN);
-        assertTrue(vpnInfo != null && vpnInfo.isConnected());
+        assertTrue(vpnInfo != null);
+
+        // Is it usable?
+        assertEquals(usable, vpnInfo.isConnected());
     }
 
     private boolean isNetworkVpn() {
