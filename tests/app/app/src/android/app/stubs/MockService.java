@@ -17,16 +17,21 @@
 package android.app.stubs;
 
 import android.app.Service;
+import android.content.Context;
 import android.content.Intent;
 import android.os.Binder;
 import android.os.IBinder;
 import android.os.SystemClock;
 
 public class MockService extends Service {
+    // Extra for start: don't automatically stop itself, if true.
+    public static final String EXTRA_NO_STOP = "no_stop";
+
     public static boolean result = false;
     private final IBinder mBinder = new MockBinder();
 
     private static boolean sStarted = false;
+    private static boolean sDestroyed = false;
     private static Object sBlocker = new Object();
 
     public class MockBinder extends Binder {
@@ -55,9 +60,20 @@ public class MockService extends Service {
     public void onStart(Intent intent, int startId) {
         super.onStart(intent, startId);
         synchronized (sBlocker) {
-            stopSelf(startId);
+            if (!intent.getBooleanExtra(EXTRA_NO_STOP, false)) {
+                stopSelf(startId);
+            }
             result = true;
             sStarted = true;
+            sBlocker.notifyAll();
+        }
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        synchronized (sBlocker) {
+            sDestroyed = true;
             sBlocker.notifyAll();
         }
     }
@@ -83,5 +99,32 @@ public class MockService extends Service {
             return sStarted;
         }
     }
-}
 
+
+    public static void prepareDestroy() {
+        synchronized (sBlocker) {
+            sDestroyed = false;
+        }
+    }
+
+    public static boolean waitForDestroy(long timeout) {
+        long now = SystemClock.elapsedRealtime();
+        final long endTime = now + timeout;
+        synchronized (sBlocker) {
+            while (!sDestroyed && now < endTime) {
+                try {
+                    sBlocker.wait(endTime - now);
+                } catch (InterruptedException e) {
+                }
+                now = SystemClock.elapsedRealtime();
+            }
+            return sDestroyed;
+        }
+    }
+
+    public static void stopService(Context context) {
+        Intent intent = new Intent();
+        intent.setClass(context, MockService.class);
+        context.stopService(intent);
+    }
+}
