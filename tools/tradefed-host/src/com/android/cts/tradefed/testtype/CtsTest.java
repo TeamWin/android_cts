@@ -760,7 +760,8 @@ public class CtsTest implements IDeviceTest, IResumableTest, IShardableTest, IBu
         // Also reboot after package which is know to leave pop-up behind
         final List<String> rebootAfterList = Arrays.asList(
                 "CtsMediaTestCases",
-                "CtsAccessibilityTestCases");
+                "CtsAccessibilityTestCases",
+                "CtsAccountManagerTestCases");
         final List<String> rebootBeforeList = Arrays.asList(
                 "CtsAnimationTestCases",
                 "CtsGraphicsTestCases",
