@@ -588,7 +588,8 @@ class WindowManagerState {
         private final String mAppToken;
         private final boolean mStarting;
         private final boolean mExiting;
-        private int mDisplayId = 0;
+        private int mDisplayId;
+        private int mStackId;
         private Rectangle mContainingFrame = new Rectangle();
         private Rectangle mParentFrame = new Rectangle();
 
@@ -617,6 +618,10 @@ class WindowManagerState {
 
         int getDisplayId() {
             return mDisplayId;
+        }
+
+        int getStackId() {
+            return mStackId;
         }
 
         Rectangle getContainingFrame() {
@@ -665,6 +670,7 @@ class WindowManagerState {
                 if (matcher.matches()) {
                     log(TAG + "WINDOW_ASSOCIATION: " + line);
                     mDisplayId = Integer.valueOf(matcher.group(1));
+                    mStackId = Integer.valueOf(matcher.group(2));
                     continue;
                 }
 

@@ -186,12 +186,7 @@ class ActivityManagerState {
     }
 
     boolean containsStack(int stackId) {
-        for (ActivityStack stack : mStacks) {
-            if (stackId == stack.mStackId) {
-                return true;
-            }
-        }
-        return false;
+        return getStackById(stackId) != null;
     }
 
     ActivityStack getStackById(int stackId) {
