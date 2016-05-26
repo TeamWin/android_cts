@@ -32,6 +32,8 @@ import java.util.LinkedList;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static android.server.cts.StateLogger.log;
+
 public abstract class ActivityManagerTestBase extends DeviceTestCase {
     private static final boolean PRETEND_DEVICE_SUPPORTS_PIP = false;
     private static final boolean PRETEND_DEVICE_SUPPORTS_FREEFORM = false;
@@ -114,30 +116,41 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
     protected void tearDown() throws Exception {
         super.tearDown();
         try {
-            mDevice.executeShellCommand(AM_FORCE_STOP_TEST_PACKAGE);
+            executeShellCommand(AM_FORCE_STOP_TEST_PACKAGE);
             setAccelerometerRotation(mInitialAccelerometerRotation);
             setUserRotation(mUserRotation);
             // Remove special stacks.
-            mDevice.executeShellCommand(AM_REMOVE_STACK + PINNED_STACK_ID);
-            mDevice.executeShellCommand(AM_REMOVE_STACK + DOCKED_STACK_ID);
-            mDevice.executeShellCommand(AM_REMOVE_STACK + FREEFORM_WORKSPACE_STACK_ID);
+            executeShellCommand(AM_REMOVE_STACK + PINNED_STACK_ID);
+            executeShellCommand(AM_REMOVE_STACK + DOCKED_STACK_ID);
+            executeShellCommand(AM_REMOVE_STACK + FREEFORM_WORKSPACE_STACK_ID);
         } catch (DeviceNotAvailableException e) {
         }
     }
 
+    protected String executeShellCommand(String command) throws DeviceNotAvailableException {
+        log("adb shell " + command);
+        return mDevice.executeShellCommand(command);
+    }
+
+    protected void executeShellCommand(String command, CollectingOutputReceiver outputReceiver)
+            throws DeviceNotAvailableException {
+        log("adb shell " + command);
+        mDevice.executeShellCommand(command, outputReceiver);
+    }
+
     protected void launchActivityInStack(String activityName, int stackId) throws Exception {
-        mDevice.executeShellCommand(getAmStartCmd(activityName) + " --stack " + stackId);
+        executeShellCommand(getAmStartCmd(activityName) + " --stack " + stackId);
     }
 
     protected void launchActivityInDockStack(String activityName) throws Exception {
-        mDevice.executeShellCommand(getAmStartCmd(activityName));
+        executeShellCommand(getAmStartCmd(activityName));
         moveActivityToDockStack(activityName);
     }
 
     protected void moveActivityToDockStack(String activityName) throws Exception {
         final int taskId = getActivityTaskId(activityName);
         final String cmd = AM_MOVE_TASK + taskId + " " + DOCKED_STACK_ID + " true";
-        mDevice.executeShellCommand(cmd);
+        executeShellCommand(cmd);
     }
 
     protected void resizeActivityTask(String activityName, int left, int top, int right, int bottom)
@@ -145,13 +158,13 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
         final int taskId = getActivityTaskId(activityName);
         final String cmd = "am task resize "
                 + taskId + " " + left + " " + top + " " + right + " " + bottom;
-        mDevice.executeShellCommand(cmd);
+        executeShellCommand(cmd);
     }
 
     protected void resizeDockedStack(
             int stackWidth, int stackHeight, int taskWidth, int taskHeight)
                     throws DeviceNotAvailableException {
-        mDevice.executeShellCommand(AM_RESIZE_DOCKED_STACK
+        executeShellCommand(AM_RESIZE_DOCKED_STACK
                 + "0 0 " + stackWidth + " " + stackHeight
                 + " 0 0 " + taskWidth + " " + taskHeight);
     }
@@ -159,7 +172,7 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
     // Utility method for debugging, not used directly here, but useful, so kept around.
     protected void printStacksAndTasks() throws DeviceNotAvailableException {
         CollectingOutputReceiver outputReceiver = new CollectingOutputReceiver();
-        mDevice.executeShellCommand(AM_STACK_LIST, outputReceiver);
+        executeShellCommand(AM_STACK_LIST, outputReceiver);
         String output = outputReceiver.getOutput();
         for (String line : output.split("\\n")) {
             CLog.logAndDisplay(LogLevel.INFO, line);
@@ -168,7 +181,7 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
 
     protected int getActivityTaskId(String name) throws DeviceNotAvailableException {
         CollectingOutputReceiver outputReceiver = new CollectingOutputReceiver();
-        mDevice.executeShellCommand(AM_STACK_LIST, outputReceiver);
+        executeShellCommand(AM_STACK_LIST, outputReceiver);
         final String output = outputReceiver.getOutput();
         final Pattern activityPattern = Pattern.compile("(.*) " + getWindowName(name) + " (.*)");
         for (String line : output.split("\\n")) {
@@ -263,9 +276,8 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
     }
 
     protected String runCommandAndPrintOutput(String command) throws DeviceNotAvailableException {
-        final String output = mDevice.executeShellCommand(command);
-        CLog.logAndDisplay(LogLevel.INFO, command);
-        CLog.logAndDisplay(LogLevel.INFO, output);
+        final String output = executeShellCommand(command);
+        log(output);
         return output;
     }
 
