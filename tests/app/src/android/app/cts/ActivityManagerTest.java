@@ -284,8 +284,9 @@ public class ActivityManagerTest extends InstrumentationTestCase {
 
         Intent intent = new Intent();
         intent.setClass(mInstrumentation.getTargetContext(), MockService.class);
+        intent.putExtra(MockService.EXTRA_NO_STOP, true);
         mInstrumentation.getTargetContext().startService(intent);
-        Thread.sleep(WAIT_TIME);
+        MockService.waitForStart(WAIT_TIME);
 
         runningServiceInfo = mActivityManager.getRunningServices(Integer.MAX_VALUE);
         boolean foundService = false;
@@ -296,8 +297,10 @@ public class ActivityManagerTest extends InstrumentationTestCase {
             }
         }
         assertTrue(foundService);
+        MockService.prepareDestroy();
         mContext.stopService(intent);
-        Thread.sleep(WAIT_TIME);
+        boolean destroyed = MockService.waitForDestroy(WAIT_TIME);
+        assertTrue(destroyed);
     }
 
     public void testGetMemoryInfo() {
@@ -500,7 +503,7 @@ public class ActivityManagerTest extends InstrumentationTestCase {
 
         // The application finished tracker.
         ActivityReceiverFilter appEndReceiver = new ActivityReceiverFilter(
-                ACTIVITY_CHAIN_EXIT_ACTION);
+                ACTIVITY_LAUNCHED_ACTION);
 
         // The filter for the time event.
         ActivityReceiverFilter timeReceiver = new ActivityReceiverFilter(ACTIVITY_TIME_TRACK_INFO);
