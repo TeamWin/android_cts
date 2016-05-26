@@ -17,6 +17,7 @@
 package com.android.compatibility.common.tradefed.targetprep;
 
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
+import com.android.compatibility.common.tradefed.build.MasterBuildInfo;
 import com.android.compatibility.common.tradefed.testtype.CompatibilityTest;
 import com.android.tradefed.build.IBuildInfo;
 import com.android.tradefed.config.Option;
@@ -80,12 +81,13 @@ public class DeviceInfoCollector extends ApkInstrumentationPreparer {
     @Override
     public void setUp(ITestDevice device, IBuildInfo buildInfo) throws TargetSetupError,
             BuildError, DeviceNotAvailableException {
-        if (mSkipDeviceInfo) {
-            return;
-        }
         for (Entry<String, String> entry : BUILD_KEYS.entrySet()) {
             buildInfo.addBuildAttribute(entry.getKey(),
                     ArrayUtil.join(",", device.getProperty(entry.getValue())));
+        }
+        MasterBuildInfo.addBuildInfo(buildInfo.getBuildAttributes());
+        if (mSkipDeviceInfo) {
+            return;
         }
         run(device, buildInfo);
         getDeviceInfoFiles(device, buildInfo);
