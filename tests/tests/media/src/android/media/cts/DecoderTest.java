@@ -24,6 +24,7 @@ import android.content.res.AssetFileDescriptor;
 import android.content.res.Resources;
 import android.cts.util.MediaUtils;
 import android.graphics.ImageFormat;
+import android.media.cts.CodecUtils;
 import android.media.Image;
 import android.media.AudioManager;
 import android.media.MediaCodec;
@@ -35,6 +36,10 @@ import android.media.MediaFormat;
 import android.util.Log;
 import android.view.Surface;
 import android.net.Uri;
+
+import com.android.compatibility.common.util.DeviceReportLog;
+import com.android.compatibility.common.util.ResultType;
+import com.android.compatibility.common.util.ResultUnit;
 
 import java.io.BufferedInputStream;
 import java.io.IOException;
@@ -282,6 +287,131 @@ public class DecoderTest extends MediaPlayerTestBase {
         fd.close();
         return 1;
       }
+
+    private static String[] getDecoderNames(String mime, boolean isGoog) {
+        MediaCodecList mcl = new MediaCodecList(MediaCodecList.REGULAR_CODECS);
+        ArrayList<String> result = new ArrayList<String>();
+        for (MediaCodecInfo info : mcl.getCodecInfos()) {
+            if (info.isEncoder() ||
+                    info.getName().toLowerCase().startsWith("omx.google.") != isGoog) {
+                continue;
+            }
+            CodecCapabilities caps = null;
+            try {
+                caps = info.getCapabilitiesForType(mime);
+            } catch (IllegalArgumentException e) {  // mime is not supported
+                continue;
+            }
+            result.add(info.getName());
+        }
+        return result.toArray(new String[result.size()]);
+    }
+
+    /**
+     * Test ColorAspects of AVC decoders from vendor.
+     */
+    public void testH264ColorAspectsOther() throws Exception {
+        String[] decoderNames = getDecoderNames(MediaFormat.MIMETYPE_VIDEO_AVC, false /* isGoog */);
+        for (String decoderName: decoderNames) {
+            testColorAspects(
+                    decoderName, R.raw.color_176x144_bt709_lr_sdr_h264, 1 /* testId */,
+                    MediaFormat.COLOR_RANGE_LIMITED, MediaFormat.COLOR_STANDARD_BT709, MediaFormat.COLOR_TRANSFER_SDR_VIDEO);
+        }
+    }
+
+    /**
+     * Test ColorAspects of AVC decoders from Google.
+     */
+    public void testH264ColorAspectsGoog() throws Exception {
+        String[] decoderNames = getDecoderNames(MediaFormat.MIMETYPE_VIDEO_AVC, true /* isGoog */);
+        for (String decoderName: decoderNames) {
+            testColorAspects(
+                    decoderName, R.raw.color_176x144_bt709_lr_sdr_h264, 1 /* testId */,
+                    MediaFormat.COLOR_RANGE_LIMITED, MediaFormat.COLOR_STANDARD_BT709, MediaFormat.COLOR_TRANSFER_SDR_VIDEO);
+        }
+    }
+
+    private void testColorAspects(
+            String decoderName, int res, int testId, int expectRange, int expectStandard, int expectTransfer) throws Exception {
+        AssetFileDescriptor fd = mResources.openRawResourceFd(res);
+        MediaExtractor ex = new MediaExtractor();
+        ex.setDataSource(fd.getFileDescriptor(), fd.getStartOffset(), fd.getLength());
+        MediaFormat format = ex.getTrackFormat(0);
+        MediaCodec dec = MediaCodec.createByCodecName(decoderName);
+        dec.configure(format, null, null, 0);
+        dec.start();
+        ByteBuffer[] buf = dec.getInputBuffers();
+        ex.selectTrack(0);
+        MediaCodec.BufferInfo info = new MediaCodec.BufferInfo();
+        boolean sawInputEOS = false;
+        boolean getOutputFormat = false;
+        boolean rangeMatch = false;
+        boolean colorMatch = false;
+        boolean transferMatch = false;
+        int colorRange = 0;
+        int colorStandard = 0;
+        int colorTransfer = 0;
+
+        while (true) {
+            if (!sawInputEOS) {
+                int flags = ex.getSampleFlags();
+                long time = ex.getSampleTime();
+                int bufidx = dec.dequeueInputBuffer(200 * 1000);
+                if (bufidx >= 0) {
+                    int n = ex.readSampleData(buf[bufidx], 0);
+                    if (n < 0) {
+                        flags = MediaCodec.BUFFER_FLAG_END_OF_STREAM;
+                        sawInputEOS = true;
+                    }
+                    dec.queueInputBuffer(bufidx, 0, n, time, flags);
+                    ex.advance();
+                } else {
+                    assertEquals(
+                            "codec.dequeueInputBuffer() unrecognized return value: " + bufidx,
+                            MediaCodec.INFO_TRY_AGAIN_LATER, bufidx);
+                }
+            }
+
+            int status = dec.dequeueOutputBuffer(info, sawInputEOS ? 3000 * 1000 : 100 * 1000);
+            if (status == MediaCodec.INFO_OUTPUT_FORMAT_CHANGED) {
+                MediaFormat fmt = dec.getOutputFormat();
+                colorRange = fmt.containsKey("color-range") ? fmt.getInteger("color-range") : 0;
+                colorStandard = fmt.containsKey("color-standard") ? fmt.getInteger("color-standard") : 0;
+                colorTransfer = fmt.containsKey("color-transfer") ? fmt.getInteger("color-transfer") : 0;
+                rangeMatch = colorRange == expectRange;
+                colorMatch = colorStandard == expectStandard;
+                transferMatch = colorTransfer == expectTransfer;
+                getOutputFormat = true;
+                // Test only needs to check the color format in the first format changed event.
+                break;
+            } else if (status >= 0) {
+                // Test should get at least one format changed event before getting first frame.
+                assertTrue(getOutputFormat == true);
+                break;
+            } else {
+                assertFalse(
+                        "codec.dequeueOutputBuffer() timeout after seeing input EOS",
+                        status == MediaCodec.INFO_TRY_AGAIN_LATER && sawInputEOS);
+            }
+        }
+
+        DeviceReportLog log = new DeviceReportLog();
+        String reportName = decoderName + "_colorAspectsTest Test " + testId +
+                " (Get R: " + colorRange + " S: " + colorStandard + " T: " + colorTransfer + ")" +
+                " (Expect R: " + expectRange + " S: " + expectStandard + " T: " + expectTransfer + ")";
+        Log.d(TAG, reportName);
+
+        if (rangeMatch && colorMatch && transferMatch) {
+            log.addValue(reportName + " Result: ", 1, ResultType.NEUTRAL, ResultUnit.NONE);
+        } else {
+            log.addValue(reportName + " Result: ", 0, ResultType.NEUTRAL, ResultUnit.NONE);
+        }
+        log.submit(getInstrumentation());
+
+        dec.release();
+        ex.release();
+        fd.close();
+    }
 
     private void testTrackSelection(int resid) throws Exception {
         AssetFileDescriptor fd1 = null;
