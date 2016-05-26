@@ -50,11 +50,10 @@ import java.util.HashMap;
 /**
  * Conformance test for decoders on the device.
  *
- * This test will decode all standard test vectors from libvpx and calculate
- * every decoded frame's md5sum to see if it matches with the correct md5 value
- * read from a md5 file associated with the test vector. Both test vectors and
- * md5sum files are imported from libvpx. Test vector md5 sums are based on
- * the YUV 420 plannar format.
+ * This test will decode test vectors and calculate every decoded frame's md5
+ * checksum to see if it matches with the correct md5 value read from a
+ * reference file associated with the test vector. Test vector md5 sums are
+ * based on the YUV 420 plannar format.
  */
 public class DecoderConformanceTest extends MediaPlayerTestBase {
     private static enum Status {
@@ -271,4 +270,19 @@ public class DecoderConformanceTest extends MediaPlayerTestBase {
             mReportLog.printSummary(decoderName, 0, ResultType.NEUTRAL, ResultUnit.NONE);
         }
     }
+
+    /**
+     * Test VP9 decoders from vendor.
+     */
+    public void testVP9Other() throws Exception {
+        decodeTestVectors(MediaFormat.MIMETYPE_VIDEO_VP9, false /* isGoog */);
+    }
+
+    /**
+     * Test Google's VP9 decoder from libvpx.
+     */
+    public void testVP9Goog() throws Exception {
+        decodeTestVectors(MediaFormat.MIMETYPE_VIDEO_VP9, true /* isGoog */);
+    }
+
 }
