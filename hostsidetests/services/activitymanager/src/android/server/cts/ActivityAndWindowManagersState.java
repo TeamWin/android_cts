@@ -99,13 +99,30 @@ class ActivityAndWindowManagersState extends Assert {
      */
     void computeState(ITestDevice device, boolean visibleOnly, String[] waitForActivitiesVisible,
                       boolean compareTaskAndStackBounds) throws Exception {
+        waitForValidState(device, visibleOnly, waitForActivitiesVisible, null);
+
+        assertSanity();
+        assertValidBounds(compareTaskAndStackBounds);
+    }
+
+    /**
+     * Wait for consistent state in AM and WM.
+     *
+     * @param device test device.
+     * @param visibleOnly pass 'true' if WM state should include only visible windows.
+     * @param waitForActivitiesVisible array of activity names to wait for.
+     * @param stackIds ids of stack where provided activities should be found.
+     *                 Pass null to skip this check.
+     */
+    void waitForValidState(ITestDevice device, boolean visibleOnly,
+                           String[] waitForActivitiesVisible, int[] stackIds) throws Exception {
         int retriesLeft = 5;
-        boolean retry = waitForActivitiesVisible != null && waitForActivitiesVisible.length > 0;
         do {
             mAmState.computeState(device);
             mWmState.computeState(device, visibleOnly);
-            if (retry && shouldRetry(waitForActivitiesVisible)) {
-                log("***Waiting for Activities to be visible...");
+            if (shouldWaitForValidStacks()
+                    || shouldWaitForActivities(waitForActivitiesVisible, stackIds)) {
+                log("***Waiting for valid stacks and activities states...");
                 try {
                     Thread.sleep(1000);
                 } catch (InterruptedException e) {
@@ -113,31 +130,62 @@ class ActivityAndWindowManagersState extends Assert {
                     // Well I guess we are not waiting...
                 }
             } else {
-                retry = false;
+                break;
             }
-        } while (retry && retriesLeft-- > 0);
-
-        assertSanity();
-        assertValidBounds(compareTaskAndStackBounds);
+        } while (retriesLeft-- > 0);
     }
 
-    private boolean shouldRetry(String[] waitForActivitiesVisible) {
-        if (!stackInAMAndWMAreEqual()) {
-            // We want to wait a little for the stacks in AM and WM to have equal values as there
-            // might be a transition animation ongoing when we got the states from WM AM separately.
-            log("***stackInAMAndWMAreEqual=false");
+    private boolean shouldWaitForValidStacks() {
+        if (!taskListsInAmAndWmAreEqual()) {
+            // We want to wait for equal task lists in AM and WM in case we caught them in the
+            // middle of some state change operations.
+            log("***taskListsInAmAndWmAreEqual=false");
             return true;
         }
-        // If the caller is interested in us waiting for some particular activity windows to be
-        // visible before compute the state. Check for the visibility of those activity windows.
-        boolean allActivityWindowsVisible = true;
-        for (String activityName : waitForActivitiesVisible) {
-            final String windowName =
-                    ActivityManagerTestBase.getWindowName(activityName);
-            allActivityWindowsVisible &= mWmState.isWindowVisible(windowName);
+        if (!stackBoundsInAMAndWMAreEqual()) {
+            // We want to wait a little for the stacks in AM and WM to have equal bounds as there
+            // might be a transition animation ongoing when we got the states from WM AM separately.
+            log("***stackBoundsInAMAndWMAreEqual=false");
+            return true;
         }
-        log("***allActivityWindowsVisible=" + allActivityWindowsVisible);
-        return !allActivityWindowsVisible;
+        return false;
+    }
+
+    private boolean shouldWaitForActivities(String[] waitForActivitiesVisible, int[] stackIds) {
+        if (waitForActivitiesVisible == null || waitForActivitiesVisible.length == 0) {
+            return false;
+        }
+        // If the caller is interested in us waiting for some particular activity windows to be
+        // visible before compute the state. Check for the visibility of those activity windows
+        // and for placing them in correct stacks (if requested).
+        boolean allActivityWindowsVisible = true;
+        boolean tasksInCorrectStacks = true;
+        List<WindowManagerState.WindowState> matchingWindowStates = new ArrayList<>();
+        for (int i = 0; i < waitForActivitiesVisible.length; i++) {
+            // Check if window is visible - it should be represented as one of the window states.
+            final String windowName =
+                    ActivityManagerTestBase.getWindowName(waitForActivitiesVisible[i]);
+            mWmState.getMatchingWindowState(windowName, matchingWindowStates);
+            boolean activityWindowVisible = !matchingWindowStates.isEmpty();
+            if (!activityWindowVisible) {
+                log("Activity window not visible: " + waitForActivitiesVisible[i]);
+                allActivityWindowsVisible = false;
+            } else if (stackIds != null) {
+                // Check if window is already in stack requested by test.
+                boolean windowInCorrectStack = false;
+                for (WindowManagerState.WindowState ws : matchingWindowStates) {
+                    if (ws.getStackId() == stackIds[i]) {
+                        windowInCorrectStack = true;
+                        break;
+                    }
+                }
+                if (!windowInCorrectStack) {
+                    log("Window in incorrect stack: " + waitForActivitiesVisible[i]);
+                    tasksInCorrectStacks = false;
+                }
+            }
+        }
+        return !allActivityWindowsVisible || !tasksInCorrectStacks;
     }
 
     ActivityManagerState getAmState() {
@@ -262,19 +310,47 @@ class ActivityAndWindowManagersState extends Assert {
         }
     }
 
-    boolean stackInAMAndWMAreEqual() {
+    boolean taskListsInAmAndWmAreEqual() {
         for (ActivityStack aStack : mAmState.getStacks()) {
             final int stackId = aStack.mStackId;
             final WindowStack wStack = mWmState.getStack(stackId);
-            if (wStack == null || aStack.isFullscreen() != wStack.isFullscreen()) {
+            if (wStack == null) {
+                log("Waiting for stack setup in WM, stackId=" + stackId);
+                return false;
+            }
+
+            for (ActivityTask aTask : aStack.getTasks()) {
+                if (wStack.getTask(aTask.mTaskId) == null) {
+                    log("Task is in AM but not in WM, waiting for it to settle, taskId="
+                            + aTask.mTaskId);
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
+    boolean stackBoundsInAMAndWMAreEqual() {
+        for (ActivityStack aStack : mAmState.getStacks()) {
+            final int stackId = aStack.mStackId;
+            final WindowStack wStack = mWmState.getStack(stackId);
+            if (aStack.isFullscreen() != wStack.isFullscreen()) {
+                log("Waiting for correct fullscreen state, stackId=" + stackId);
                 return false;
             }
 
             final Rectangle aStackBounds = aStack.getBounds();
             final Rectangle wStackBounds = wStack.getBounds();
 
-            if ((aStack.isFullscreen() && aStackBounds != null)
-                    || !Objects.equals(aStackBounds, wStackBounds)) {
+            if (aStack.isFullscreen()) {
+                if (aStackBounds != null) {
+                    log("Waiting for correct stack state in AM, stackId=" + stackId);
+                    return false;
+                }
+            } else if (!Objects.equals(aStackBounds, wStackBounds)) {
+                // If stack is not fullscreen - comparing bounds. Not doing it always because
+                // for fullscreen stack bounds in WM can be either null or equal to display size.
+                log("Waiting for stack bound equality in AM and WM, stackId=" + stackId);
                 return false;
             }
         }
