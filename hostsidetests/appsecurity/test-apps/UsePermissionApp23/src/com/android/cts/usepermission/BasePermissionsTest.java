@@ -246,6 +246,8 @@ public abstract class BasePermissionsTest {
         waitForIdle();
         getUiDevice().pressBack();
         waitForIdle();
+        getUiDevice().pressBack();
+        waitForIdle();
 
         // Open the app details settings
         Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
