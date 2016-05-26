@@ -312,6 +312,7 @@ public class AudioFrequencyMicActivity extends AudioFrequencyActivity implements
             mFreqAverageBase.reset();
             play();
 
+            setMaxLevel();
             sendMessage("Testing Built in Microphone");
             mCurrentTest = 1;
             mFreqAverageBuiltIn.reset();
