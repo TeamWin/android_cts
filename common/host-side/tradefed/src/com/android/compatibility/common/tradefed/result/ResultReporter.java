@@ -16,6 +16,7 @@
 package com.android.compatibility.common.tradefed.result;
 
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
+import com.android.compatibility.common.tradefed.build.MasterBuildInfo;
 import com.android.compatibility.common.tradefed.testtype.CompatibilityTest;
 import com.android.compatibility.common.util.ICaseResult;
 import com.android.compatibility.common.util.IInvocationResult;
@@ -34,11 +35,9 @@ import com.android.tradefed.build.IBuildInfo;
 import com.android.tradefed.config.Option;
 import com.android.tradefed.config.Option.Importance;
 import com.android.tradefed.config.OptionClass;
-import com.android.tradefed.config.OptionCopier;
 import com.android.tradefed.log.LogUtil.CLog;
 import com.android.tradefed.result.ILogSaver;
 import com.android.tradefed.result.ILogSaverListener;
-import com.android.tradefed.result.IShardableListener;
 import com.android.tradefed.result.ITestInvocationListener;
 import com.android.tradefed.result.ITestSummaryListener;
 import com.android.tradefed.result.InputStreamSource;
@@ -69,7 +68,7 @@ import java.util.Map.Entry;
  */
 @OptionClass(alias="result-reporter")
 public class ResultReporter implements ILogSaverListener, ITestInvocationListener,
-       ITestSummaryListener, IShardableListener {
+       ITestSummaryListener {
 
     private static final String RESULT_KEY = "COMPATIBILITY_TEST_RESULT";
     private static final String CTS_PREFIX = "cts:";
@@ -115,7 +114,7 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
     private IBuildInfo mBuild;
     private CompatibilityBuildHelper mBuildHelper;
     private ILogSaver mLogSaver;
-    private int mResultDirIndex = 0;
+    private boolean mReloadBuildInfo = false;
 
     /**
      * {@inheritDoc}
@@ -127,6 +126,7 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
         mDeviceSerial = buildInfo.getDeviceSerial();
         if (mDeviceSerial == null) {
             mDeviceSerial = "unknown_device";
+            mReloadBuildInfo = true;
         }
         long time = System.currentTimeMillis();
         String dirSuffix = getDirSuffix(time);
@@ -153,13 +153,8 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
             } catch (FileNotFoundException e) {
                 e.printStackTrace();
             }
-            if (mResultDir != null) {
-                while (mResultDir.exists()) {
-                    mResultDir = new File(mResultDir.getAbsolutePath() + "_" + ++mResultDirIndex);
-                }
-            }
             if (mResultDir != null && mResultDir.mkdirs()) {
-                logResult("Created result dir %s", mResultDir.getAbsolutePath());
+                    logResult("Created result dir %s", mResultDir.getAbsolutePath());
             } else {
                 throw new IllegalArgumentException(String.format("Could not create result dir %s",
                         mResultDir.getAbsolutePath()));
@@ -172,11 +167,6 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
             mLogDir = new File(mBuildHelper.getLogsDir(), dirSuffix);
         } catch (FileNotFoundException e) {
             e.printStackTrace();
-        }
-        if (mLogDir != null) {
-            while (mLogDir.exists()) {
-                mLogDir = new File(mLogDir.getAbsolutePath() + "_" + mResultDirIndex);
-            }
         }
         if (mLogDir != null && mLogDir.mkdirs()) {
             logResult("Created log dir %s", mLogDir.getAbsolutePath());
@@ -200,7 +190,11 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
     public void testRunStarted(String id, int numTests) {
         logResult("Starting %s with %d test%s", id, numTests, (numTests > 1) ? "s" : "");
         mCurrentModuleResult = mResult.getOrCreateModule(id);
-        mResult.addDeviceSerial(mDeviceSerial);
+        if (mDeviceSerial == null || mDeviceSerial.equals("unknown_device")) {
+            mResult.addDeviceSerial(mBuild.getDeviceSerial());
+        } else {
+            mResult.addDeviceSerial(mDeviceSerial);
+        }
     }
 
     /**
@@ -347,6 +341,13 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
                 mResult.countResults(TestStatus.FAIL),
                 mResult.countResults(TestStatus.NOT_EXECUTED));
         try {
+            // invocationStarted picked up an unfinished IBuildInfo, so repopulate it now from
+            // the master
+            if (mReloadBuildInfo) {
+                for (Map.Entry<String, String> e : MasterBuildInfo.getBuild().entrySet()) {
+                    mResult.addBuildInfo(e.getKey(), e.getValue());
+                }
+            }
             File resultFile = ResultHandler.writeResults(mBuildHelper.getSuiteName(),
                     mBuildHelper.getSuiteVersion(), mBuildHelper.getSuitePlan(),
                     mBuildHelper.getSuiteBuild(), mResult, mResultDir, mStartTime,
@@ -391,6 +392,8 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
         } catch (IOException | XmlPullParserException e) {
             CLog.e("[%s] Exception while saving result XML.", mDeviceSerial);
             CLog.e(e);
+        } finally {
+            MasterBuildInfo.clear();
         }
     }
 
@@ -524,12 +527,5 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
         } else {
             CLog.logAndDisplay(LogLevel.INFO, format, args);
         }
-    }
-
-    @Override
-    public IShardableListener clone() {
-        ResultReporter clone = new ResultReporter();
-        OptionCopier.copyOptionsNoThrow(this, clone);
-        return clone;
     }
 }
