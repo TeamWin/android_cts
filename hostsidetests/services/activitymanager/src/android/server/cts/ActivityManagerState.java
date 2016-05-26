@@ -339,6 +339,15 @@ class ActivityManagerState {
         List<ActivityTask> getTasks() {
             return new ArrayList(mTasks);
         }
+
+        ActivityTask getTask(int taskId) {
+            for (ActivityTask task : mTasks) {
+                if (taskId == task.mTaskId) {
+                    return task;
+                }
+            }
+            return null;
+        }
     }
 
     static class ActivityTask extends ActivityContainer {
