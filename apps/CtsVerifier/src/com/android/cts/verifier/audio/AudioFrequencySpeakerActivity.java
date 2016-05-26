@@ -117,6 +117,7 @@ public class AudioFrequencySpeakerActivity extends AudioFrequencyActivity implem
             case R.id.audio_frequency_speaker_mic_ready_btn:
                 testUSB();
                 setMaxLevel();
+                testMaxLevel();
                 break;
             case R.id.audio_frequency_speaker_test_btn:
                 startAudioTest();
@@ -261,6 +262,7 @@ public class AudioFrequencySpeakerActivity extends AudioFrequencyActivity implem
             mFreqAverageBase.reset();
             play();
 
+            setMaxLevel();
             sendMessage("Testing Left Capture");
             mCurrentTest = 1;
             mFreqAverageLeft.reset();
