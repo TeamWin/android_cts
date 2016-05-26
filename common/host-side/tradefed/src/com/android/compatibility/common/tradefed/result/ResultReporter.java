@@ -34,9 +34,11 @@ import com.android.tradefed.build.IBuildInfo;
 import com.android.tradefed.config.Option;
 import com.android.tradefed.config.Option.Importance;
 import com.android.tradefed.config.OptionClass;
+import com.android.tradefed.config.OptionCopier;
 import com.android.tradefed.log.LogUtil.CLog;
 import com.android.tradefed.result.ILogSaver;
 import com.android.tradefed.result.ILogSaverListener;
+import com.android.tradefed.result.IShardableListener;
 import com.android.tradefed.result.ITestInvocationListener;
 import com.android.tradefed.result.ITestSummaryListener;
 import com.android.tradefed.result.InputStreamSource;
@@ -67,7 +69,7 @@ import java.util.Map.Entry;
  */
 @OptionClass(alias="result-reporter")
 public class ResultReporter implements ILogSaverListener, ITestInvocationListener,
-       ITestSummaryListener {
+       ITestSummaryListener, IShardableListener {
 
     private static final String RESULT_KEY = "COMPATIBILITY_TEST_RESULT";
     private static final String CTS_PREFIX = "cts:";
@@ -113,6 +115,7 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
     private IBuildInfo mBuild;
     private CompatibilityBuildHelper mBuildHelper;
     private ILogSaver mLogSaver;
+    private int mResultDirIndex = 0;
 
     /**
      * {@inheritDoc}
@@ -150,6 +153,11 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
             } catch (FileNotFoundException e) {
                 e.printStackTrace();
             }
+            if (mResultDir != null) {
+                while (mResultDir.exists()) {
+                    mResultDir = new File(mResultDir.getAbsolutePath() + "_" + ++mResultDirIndex);
+                }
+            }
             if (mResultDir != null && mResultDir.mkdirs()) {
                 logResult("Created result dir %s", mResultDir.getAbsolutePath());
             } else {
@@ -164,6 +172,11 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
             mLogDir = new File(mBuildHelper.getLogsDir(), dirSuffix);
         } catch (FileNotFoundException e) {
             e.printStackTrace();
+        }
+        if (mLogDir != null) {
+            while (mLogDir.exists()) {
+                mLogDir = new File(mLogDir.getAbsolutePath() + "_" + mResultDirIndex);
+            }
         }
         if (mLogDir != null && mLogDir.mkdirs()) {
             logResult("Created log dir %s", mLogDir.getAbsolutePath());
@@ -511,5 +524,12 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
         } else {
             CLog.logAndDisplay(LogLevel.INFO, format, args);
         }
+    }
+
+    @Override
+    public IShardableListener clone() {
+        ResultReporter clone = new ResultReporter();
+        OptionCopier.copyOptionsNoThrow(this, clone);
+        return clone;
     }
 }
