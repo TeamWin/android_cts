@@ -326,6 +326,14 @@ class ActivityAndWindowManagersState extends Assert {
                     return false;
                 }
             }
+
+            for (WindowTask wTask : wStack.mTasks) {
+                if (aStack.getTask(wTask.mTaskId) == null) {
+                    log("Task is in WM but not in AM, waiting for it to settle, taskId="
+                            + wTask.mTaskId);
+                    return false;
+                }
+            }
         }
         return true;
     }

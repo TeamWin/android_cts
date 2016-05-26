@@ -36,7 +36,7 @@ public class ActivityManagerFreeformStackTests extends ActivityManagerTestBase {
 
         launchActivityInStack(FREEFORM_ACTIVITY, FREEFORM_WORKSPACE_STACK_ID);
 
-        mAmWmState.computeState(mDevice, new String[] {FREEFORM_ACTIVITY});
+        mAmWmState.computeState(mDevice, new String[] {FREEFORM_ACTIVITY, TEST_ACTIVITY});
 
         if (!supportsFreeform()) {
             mAmWmState.assertDoesNotContainStack(
