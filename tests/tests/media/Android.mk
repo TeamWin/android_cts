@@ -48,6 +48,9 @@ LOCAL_STATIC_JAVA_LIBRARIES := ctsmediautil ctsdeviceutil compatibility-device-u
 
 LOCAL_JNI_SHARED_LIBRARIES := libctsmediacodec_jni libaudio_jni libnativehelper_compat_libc++ libndkaudioLib
 
+# do not compress VP9 video files
+LOCAL_AAPT_FLAGS := -0 .vp9
+
 LOCAL_SRC_FILES := $(call all-java-files-under, src)
 
 LOCAL_PACKAGE_NAME := CtsMediaTestCases
