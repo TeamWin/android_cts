@@ -168,13 +168,17 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
             description = "Take a screenshot on every test failure.")
     private boolean mScreenshotOnFailure = false;
 
+    @Option(name = "reboot-before-test",
+            description = "Reboot the device before the test suite starts.")
+    private boolean mRebootBeforeTest = false;
+
     @Option(name = "reboot-on-failure",
             description = "Reboot the device after every test failure.")
     private boolean mRebootOnFailure = false;
 
-    @Option(name = "reboot-before-test",
-            description = "Reboot the device before the test suite starts.")
-    private boolean mRebootBeforeTest = false;
+    @Option(name = "reboot-per-module",
+            description = "Reboot the device before every module run.")
+    private boolean mRebootPerModule = false;
 
     @Option(name = "skip-connectivity-check",
             description = "Don't verify device connectivity between module execution.")
@@ -286,6 +290,18 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
             for (int i = 0; i < moduleCount; i++) {
                 IModuleDef module = modules.get(i);
                 long start = System.currentTimeMillis();
+
+                if (mRebootPerModule) {
+                    if ("user".equals(mDevice.getProperty("ro.build.type"))) {
+                        CLog.e("reboot-per-module should only be used during development, "
+                            + "this is a\" user\" build device");
+                    } else {
+                        CLog.logAndDisplay(LogLevel.INFO, "Rebooting device before starting next "
+                            + "module");
+                        mDevice.reboot();
+                    }
+                }
+
                 try {
                     module.run(listener);
                 } catch (DeviceUnresponsiveException due) {
