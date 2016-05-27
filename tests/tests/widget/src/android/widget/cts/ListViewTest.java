@@ -17,6 +17,7 @@
 package android.widget.cts;
 
 import android.widget.BaseAdapter;
+import android.widget.LinearLayout;
 import android.widget.cts.R;
 
 import org.xmlpull.v1.XmlPullParser;
@@ -738,6 +739,32 @@ public class ListViewTest extends ActivityInstrumentationTestCase2<ListViewCtsAc
         assertEquals("the view should be re-attached", 2, theView.mOnAttachCount);
         assertEquals("the view should not recieve another detach", 1, theView.mOnDetachCount);
         assertFalse(theView.isTemporarilyDetached());
+    }
+
+    @MediumTest
+    public void testSetPadding() {
+        View view = new View(mActivity);
+        view.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT));
+        view.setMinimumHeight(30);
+        final DummyAdapter adapter = new DummyAdapter(2, view);
+        ViewTestUtils.runOnMainAndDrawSync(getInstrumentation(), mListView, () -> {
+            mListView.setLayoutParams(new LinearLayout.LayoutParams(200, 100));
+            mListView.setAdapter(adapter);
+        });
+        assertEquals("test sanity", 200, mListView.getWidth());
+        assertEquals(200, view.getWidth());
+        ViewTestUtils.runOnMainAndDrawSync(getInstrumentation(), mListView, () -> {
+            mListView.setPadding(10, 0, 5, 0);
+            assertTrue(view.isLayoutRequested());
+        });
+        assertEquals(185, view.getWidth());
+        assertFalse(view.isLayoutRequested());
+        ViewTestUtils.runOnMainAndDrawSync(getInstrumentation(), mListView, () -> {
+            mListView.setPadding(10, 0, 5, 0);
+            assertFalse(view.isLayoutRequested());
+        });
+
     }
 
     private class MockView extends View {
