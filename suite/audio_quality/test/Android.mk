@@ -37,6 +37,7 @@ LOCAL_STATIC_LIBRARIES := \
 LOCAL_WHOLE_STATIC_LIBRARIES := libcts_audio_quality
 LOCAL_CFLAGS:= -g -fno-exceptions
 LOCAL_LDFLAGS:= -g -lrt -ldl -lm -fno-exceptions -lpthread
+LOCAL_CXX_STL := libc++_static
 LOCAL_MODULE_HOST_OS := linux
 LOCAL_MODULE := cts_audio_quality_test
 LOCAL_MULTILIB := first
