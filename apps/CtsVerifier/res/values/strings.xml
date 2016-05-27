@@ -1048,23 +1048,28 @@
     <string name="p2p_service_discovery_requester">Service Discovery Requester</string>
 
     <string name="p2p_go_neg_responder_info">
-        Start the \"GO Negotiation Requester Test\" on the other device and follow
+        Go to the Wi-Fi settings and forget all remembered networks.  Then
+        start the \"GO Negotiation Requester Test\" on the other device and follow
         the instructions.</string>
     <string name="p2p_accept_client_info">
-        Start the \"Group Client Test\" on the other device and follow
+        Go to the Wi-Fi settings and forget all remembered networks.  Then
+        start the \"Group Client Test\" on the other device and follow
         the instructions.</string>
     <string name="p2p_service_discovery_responder_info">
         Start the \"Service Discovery Requester Test\" on the other device and follow
         the instructions.</string>
 
     <string name="p2p_go_neg_requester_info">
-        Start the \"GO Negotiation Responder Test\" on the other device.
+        Go to the Wi-Fi settings and forget all remembered networks.  Then
+        start the \"GO Negotiation Responder Test\" on the other device.
         Then run each test individually by clicking on it\'s name.</string>
     <string name="p2p_join_go_info">
-        Start the \"Group Owner Test\" on the other device.
+        Go to the Wi-Fi settings and forget all remembered networks.  Then
+        start the \"Group Owner Test\" on the other device.
         Then run each test individually by clicking on it\'s name.</string>
     <string name="p2p_service_discovery_requester_info">
-        Start the \"Service Discovery Responder Test\" on the other device.
+        Go to the Wi-Fi settings and forget all remembered networks.  Then
+        start the \"Service Discovery Responder Test\" on the other device.
         Then run each test individually by clicking on it\'s name.</string>
 
     <string name="p2p_not_enabled">Wi-Fi is not enabled</string>
@@ -1075,18 +1080,21 @@
     <string name="p2p_result_success">Test passed successfully.</string>
 
     <string name="p2p_go_neg_responder_ready">
-        The go negotiation responder is now ready to start. Start
-        the \"GO Negotiation Requester Test\" on the other device.
+        The go negotiation responder is now ready to start.
+        Go to the Wi-Fi settings and forget all remembered networks.  Then
+        start the \"GO Negotiation Requester Test\" on the other device.
         Keep the screen here until all tests on the other device are
         finished.</string>
     <string name="p2p_go_ready">
-        The group owner is now ready to start. Start the \"Join
-        Group Test\" on the other device.
+        The group owner is now ready to start.
+        Go to the Wi-Fi settings and forget all remembered networks.  Then
+        start the \"Join Group Test\" on the other device.
         Keep the screen here until all tests on the other device are
         finished.</string>
     <string name="p2p_service_responder_ready">
-        The service responder is now ready to start. Start the
-        \"Service Discovery Requester Test\" on the other device.
+        The service responder is now ready to start.
+        Go to the Wi-Fi settings and forget all remembered networks.  Then
+        start the \"Service Discovery Requester Test\" on the other device.
         Keep the screen here until all tests on the other device are
         finished.</string>
 
