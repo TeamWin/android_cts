@@ -45,8 +45,8 @@
                   android:required="false" />
     <uses-feature android:name="android.hardware.camera.autofocus"
                   android:required="false" />
-    <uses-feature android:name="android.software.vr.mode"
-                  android:required="false" />
+    <uses-feature android:name="android.software.vr.mode" android:required="false" />
+    <uses-feature android:name="android.hardware.vr.high_performance" android:required="false"/>
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
@@ -1248,6 +1248,8 @@
                 <category android:name="android.cts.intent.category.MANUAL_TEST" />
             </intent-filter>
             <meta-data android:name="test_category" android:value="@string/test_category_vr" />
+            <meta-data android:name="test_required_features"
+                       android:value="android.software.vr.mode" />
         </activity>
 
         <activity android:name=".vr.MockVrActivity"
