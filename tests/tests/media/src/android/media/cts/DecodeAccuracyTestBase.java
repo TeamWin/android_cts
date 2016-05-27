@@ -684,22 +684,27 @@ class GLSurfaceViewFactory extends VideoViewFactory {
         private static final int TRIANGLE_VERTICES_DATA_POS_OFFSET = 0;
         private static final int TRIANGLE_VERTICES_DATA_UV_OFFSET = 3;
         private FloatBuffer triangleVertices;
+        private float[] textureTransform = new float[16];
 
-        private final float[] triangleVerticesData = {
+        private float[] triangleVerticesData = {
                 // X, Y, Z, U, V
-                -1.0f, -1.0f, 0, 0.f, 0.f,
-                1.0f, -1.0f, 0, 1.f, 0.f,
-                -1.0f,  1.0f, 0, 0.f, 1.f,
-                1.0f,  1.0f, 0, 1.f, 1.f,
+                -1f, -1f,  0f,  0f,  1f,
+                 1f, -1f,  0f,  1f,  1f,
+                -1f,  1f,  0f,  0f,  0f,
+                 1f,  1f,  0f,  1f,  0f,
         };
+        // Make the top-left corner corresponds to texture coordinate
+        // (0, 0). This complies with the transformation matrix obtained from
+        // SurfaceTexture.getTransformMatrix.
 
         private static final String VERTEX_SHADER =
                 "attribute vec4 aPosition;\n"
                 + "attribute vec4 aTextureCoord;\n"
+                + "uniform mat4 uTextureTransform;\n"
                 + "varying vec2 vTextureCoord;\n"
                 + "void main() {\n"
                 + "    gl_Position = aPosition;\n"
-                + "    vTextureCoord = aTextureCoord.xy;\n"
+                + "    vTextureCoord = (uTextureTransform * aTextureCoord).xy;\n"
                 + "}\n";
 
         private static final String FRAGMENT_SHADER =
@@ -715,6 +720,7 @@ class GLSurfaceViewFactory extends VideoViewFactory {
         private int textureID = -1;
         private int aPositionHandle;
         private int aTextureHandle;
+        private int uTextureTransformHandle;
         private EGLDisplay eglDisplay = null;
         private EGLContext eglContext = null;
         private EGLSurface eglSurface = null;
@@ -754,6 +760,8 @@ class GLSurfaceViewFactory extends VideoViewFactory {
         public void onFrameAvailable(SurfaceTexture st) {
             checkGlError("before updateTexImage");
             surfaceTexture.updateTexImage();
+            st.getTransformMatrix(textureTransform);
+
             drawFrame();
             saveFrame();
             snapshotIsReady = true;
@@ -847,6 +855,8 @@ class GLSurfaceViewFactory extends VideoViewFactory {
             checkLocation(aPositionHandle, "aPosition");
             aTextureHandle = GLES20.glGetAttribLocation(glProgram, "aTextureCoord");
             checkLocation(aTextureHandle, "aTextureCoord");
+            uTextureTransformHandle = GLES20.glGetUniformLocation(glProgram, "uTextureTransform");
+            checkLocation(uTextureTransformHandle, "uTextureTransform");
 
             int[] textures = new int[1];
             GLES20.glGenTextures(1, textures, 0);
@@ -887,6 +897,10 @@ class GLSurfaceViewFactory extends VideoViewFactory {
             checkGlError("glVertexAttribPointer aTextureHandle");
             GLES20.glEnableVertexAttribArray(aTextureHandle);
             checkGlError("glEnableVertexAttribArray aTextureHandle");
+
+            GLES20.glUniformMatrix4fv(uTextureTransformHandle, 1, false,
+                    textureTransform, 0);
+            checkGlError("glUniformMatrix uTextureTransformHandle");
 
             GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, 4);
             checkGlError("glDrawArrays");
