@@ -385,8 +385,7 @@ public class ViewTest extends ActivityInstrumentationTestCase2<ViewTestCtsActivi
 
     public void testAccessPointerIcon() {
         View view = mActivity.findViewById(R.id.pointer_icon_layout);
-        MotionEvent event = MotionEvent.obtain(0, 0, MotionEvent.ACTION_HOVER_MOVE,
-                                               view.getX(), view.getY(), 0);
+        MotionEvent event = MotionEvent.obtain(0, 0, MotionEvent.ACTION_HOVER_MOVE, 0, 0, 0);
 
         // First view has pointerIcon="help"
         assertEquals(PointerIcon.getSystemIcon(mActivity, PointerIcon.TYPE_HELP),
