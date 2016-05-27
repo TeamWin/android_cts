@@ -255,7 +255,12 @@ public class ResourcesTest extends AndroidTestCase {
         cfg.setLocales(LocaleList.forLanguageTags("az-Arab,ru"));
 
         res.updateConfiguration(cfg, null);
-        assertEquals(LocaleList.forLanguageTags("az-Arab,ru"), res.getConfiguration().getLocales());
+
+        // Depending on the locales available in the framework resources, the LocaleList may be
+        // re-arranged. Check that any valid permutation is present.
+        final LocaleList locales = res.getConfiguration().getLocales();
+        assertTrue(LocaleList.forLanguageTags("az-Arab,ru").equals(locales) ||
+                LocaleList.forLanguageTags("ru,az-Arab").equals(locales));
     }
 
     public void testUpdateConfiguration_emptyAfterUpdate() {
