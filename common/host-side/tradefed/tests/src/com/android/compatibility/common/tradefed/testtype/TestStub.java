@@ -18,9 +18,19 @@ package com.android.compatibility.common.tradefed.testtype;
 import com.android.tradefed.config.Option;
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.result.ITestInvocationListener;
+import com.android.tradefed.testtype.IAbi;
+import com.android.tradefed.testtype.IAbiReceiver;
+import com.android.tradefed.testtype.IBuildReceiver;
 import com.android.tradefed.testtype.IRemoteTest;
+import com.android.tradefed.testtype.IRuntimeHintProvider;
+import com.android.tradefed.testtype.IShardableTest;
+import com.android.tradefed.testtype.ITestCollector;
+import com.android.tradefed.testtype.ITestFilterReceiver;
 
-public class TestStub implements IRemoteTest {
+import java.util.List;
+
+public class TestStub implements IRemoteTest, IAbiReceiver, IRuntimeHintProvider, ITestCollector,
+        ITestFilterReceiver {
 
     @Option(name = "module")
     String mModule;
@@ -35,6 +45,41 @@ public class TestStub implements IRemoteTest {
     @Override
     public void run(ITestInvocationListener listener) throws DeviceNotAvailableException {
         // Do nothing
+    }
+
+    @Override
+    public void setAbi(IAbi abi) {
+        // Do nothing
+    }
+
+    @Override
+    public long getRuntimeHint() {
+        return 1L;
+    }
+
+    @Override
+    public void setCollectTestsOnly(boolean shouldCollectTest) {
+        // Do nothing
+    }
+
+    @Override
+    public void addIncludeFilter(String filter) {
+
+    }
+
+    @Override
+    public void addAllIncludeFilters(List<String> filters) {
+
+    }
+
+    @Override
+    public void addExcludeFilter(String filter) {
+
+    }
+
+    @Override
+    public void addAllExcludeFilters(List<String> filters) {
+
     }
 
 }
