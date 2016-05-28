@@ -19,6 +19,7 @@ package android.media.cts;
 import android.annotation.IntDef;
 import android.annotation.NonNull;
 import android.content.Context;
+import android.content.pm.PackageManager;
 import android.media.AudioDeviceInfo;
 import android.media.AudioManager;
 import android.media.AudioRouting;
@@ -59,6 +60,9 @@ public class AudioRecordRoutingNative extends AndroidTestCase {
 
     // Test a basic Aquire/Release cycle on the default recorder.
     public void testAquireDefaultProxy() throws Exception {
+        if (!hasMicrophone()) {
+            return;
+        }
         AudioRecorder recorder = new AudioRecorder();
         recorder.ClearLastSLResult();
         recorder.RealizeRecorder();
@@ -78,6 +82,9 @@ public class AudioRecordRoutingNative extends AndroidTestCase {
 
     // Test an Aquire before the OpenSL ES recorder is Realized.
     public void testAquirePreRealizeDefaultProxy() throws Exception {
+        if (!hasMicrophone()) {
+            return;
+        }
         AudioRecorder recorder = new AudioRecorder();
         recorder.ClearLastSLResult();
         recorder.RealizeRecorder();
@@ -97,6 +104,9 @@ public class AudioRecordRoutingNative extends AndroidTestCase {
 
     // Test actually setting the routing through the enumerated devices.
     public void testRouting() {
+        if (!hasMicrophone()) {
+            return;
+        }
         AudioRecorder recorder = new AudioRecorder();
         recorder.ClearLastSLResult();
         recorder.RealizeRecorder();
@@ -114,5 +124,10 @@ public class AudioRecordRoutingNative extends AndroidTestCase {
 
         recorder.ReleaseRoutingInterface(routingObj);
         assertTrue(recorder.GetLastSLResult() == 0);
+    }
+
+    private boolean hasMicrophone() {
+        return getContext().getPackageManager().hasSystemFeature(
+                PackageManager.FEATURE_MICROPHONE);
     }
 }
