@@ -376,7 +376,7 @@ public class VectorDrawableTest extends AndroidTestCase {
     @SmallTest
     public void testMutate() {
         Resources resources = mContext.getResources();
-        // d1 will be mutated, while d2 / d3 will not.
+        // d1 and d2 will be mutated, while d3 will not.
         VectorDrawable d1 = (VectorDrawable) resources.getDrawable(R.drawable.vector_icon_create);
         VectorDrawable d2 = (VectorDrawable) resources.getDrawable(R.drawable.vector_icon_create);
         VectorDrawable d3 = (VectorDrawable) resources.getDrawable(R.drawable.vector_icon_create);
@@ -393,12 +393,17 @@ public class VectorDrawableTest extends AndroidTestCase {
         assertEquals(0x80, d2.getAlpha());
         assertEquals(0x80, d3.getAlpha());
 
+        d2.setAlpha(0x00);
+        d2.mutate();
+        // Test that after mutating, the alpha value is copied over.
+        assertEquals(0x00, d2.getAlpha());
+
         d2.setAlpha(0x20);
         assertEquals(0x40, d1.getAlpha());
         assertEquals(0x20, d2.getAlpha());
-        assertEquals(0x20, d3.getAlpha());
+        assertEquals(0x00, d3.getAlpha());
 
-        d2.setAlpha(originalAlpha);
+        d3.setAlpha(originalAlpha);
     }
 
     @SmallTest
