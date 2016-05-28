@@ -2663,7 +2663,6 @@ public class TextViewTest extends ActivityInstrumentationTestCase2<TextViewCtsAc
         });
         getInstrumentation().waitForIdleSync();
 
-        assertEquals(tvEllipsizeEnd.getLineCount(), tvEllipsizeNone.getLineCount());
         for (int i = 0; i < tvEllipsizeEnd.getLineCount(); i++) {
             assertEquals("Ellipsized and non ellipsized multi line texts should have the same " +
                             "baseline for line " + i,
