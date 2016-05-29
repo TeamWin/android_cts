@@ -22,7 +22,10 @@ import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.result.ITestInvocationListener;
 import com.android.tradefed.targetprep.ITargetPreparer;
 import com.android.tradefed.testtype.IAbi;
+import com.android.tradefed.testtype.IAbiReceiver;
 import com.android.tradefed.testtype.IRemoteTest;
+import com.android.tradefed.testtype.IRuntimeHintProvider;
+import com.android.tradefed.testtype.ITestCollector;
 import com.android.tradefed.testtype.ITestFilterReceiver;
 
 import junit.framework.TestCase;
@@ -62,7 +65,8 @@ public class ModuleDefTest extends TestCase {
         assertEquals("Incorrect exclude filter", TEST_1, mockTest.mExcludeFilters.get(0));
     }
 
-    private class MockRemoteTest implements IRemoteTest, ITestFilterReceiver {
+    private class MockRemoteTest implements IRemoteTest, ITestFilterReceiver, IAbiReceiver,
+            IRuntimeHintProvider, ITestCollector {
 
         private final List<String> mIncludeFilters = new ArrayList<>();
         private final List<String> mExcludeFilters = new ArrayList<>();
@@ -92,6 +96,20 @@ public class ModuleDefTest extends TestCase {
             // Do nothing
         }
 
+        @Override
+        public void setAbi(IAbi abi) {
+            // Do nothing
+        }
+
+        @Override
+        public long getRuntimeHint() {
+            return 1L;
+        }
+
+        @Override
+        public void setCollectTestsOnly(boolean shouldCollectTest) {
+            // Do nothing
+        }
     }
 
     private class MockListener extends NoOpTestInvocationListener {}
