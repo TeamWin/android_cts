@@ -19,16 +19,23 @@ import com.android.tradefed.build.IBuildInfo;
 import com.android.tradefed.config.Option;
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.result.ITestInvocationListener;
+import com.android.tradefed.testtype.IAbi;
+import com.android.tradefed.testtype.IAbiReceiver;
 import com.android.tradefed.testtype.IBuildReceiver;
 import com.android.tradefed.testtype.IRemoteTest;
+import com.android.tradefed.testtype.IRuntimeHintProvider;
 import com.android.tradefed.testtype.IShardableTest;
+import com.android.tradefed.testtype.ITestCollector;
+import com.android.tradefed.testtype.ITestFilterReceiver;
 
 import junit.framework.Assert;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 
-public class ShardableTestStub implements IRemoteTest, IShardableTest, IBuildReceiver {
+public class ShardableTestStub implements IRemoteTest, IShardableTest, IBuildReceiver,
+        IAbiReceiver, IRuntimeHintProvider, ITestCollector, ITestFilterReceiver {
 
     @Option(name = "module")
     String mModule;
@@ -70,4 +77,40 @@ public class ShardableTestStub implements IRemoteTest, IShardableTest, IBuildRec
         }
         return mShards;
     }
+
+    @Override
+    public void setAbi(IAbi abi) {
+        // Do nothing
+    }
+
+    @Override
+    public long getRuntimeHint() {
+        return 1L;
+    }
+
+    @Override
+    public void setCollectTestsOnly(boolean shouldCollectTest) {
+        // Do nothing
+    }
+
+    @Override
+    public void addIncludeFilter(String filter) {
+
+    }
+
+    @Override
+    public void addAllIncludeFilters(List<String> filters) {
+
+    }
+
+    @Override
+    public void addExcludeFilter(String filter) {
+
+    }
+
+    @Override
+    public void addAllExcludeFilters(List<String> filters) {
+
+    }
+
 }
