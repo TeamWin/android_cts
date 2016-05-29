@@ -249,8 +249,8 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
      */
     @Override
     public void testIgnored(TestIdentifier test) {
-        mCurrentResult.notExecuted();
         logResult("%s ignored", test);
+        // Ignored tests are not reported
     }
 
     /**
