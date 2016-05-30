@@ -59,6 +59,7 @@ import static com.android.cts.core.runner.AndroidJUnitRunnerConstants.ARGUMENT_N
 import static com.android.cts.core.runner.AndroidJUnitRunnerConstants.ARGUMENT_TEST_CLASS;
 import static com.android.cts.core.runner.AndroidJUnitRunnerConstants.ARGUMENT_TEST_FILE;
 import static com.android.cts.core.runner.AndroidJUnitRunnerConstants.ARGUMENT_TEST_PACKAGE;
+import static com.android.cts.core.runner.AndroidJUnitRunnerConstants.ARGUMENT_TIMEOUT;
 
 /**
  * A drop-in replacement for AndroidJUnitTestRunner, which understands the same arguments, and has
@@ -85,6 +86,9 @@ public class CoreTestRunner extends Instrumentation {
 
     /** Only log the number of tests, and not run them. */
     private boolean logOnly;
+
+    /** The amount of time in millis to wait for a single test to complete. */
+    private long testTimeout;
 
     /**
      * The container for any test expectations.
@@ -120,6 +124,7 @@ public class CoreTestRunner extends Instrumentation {
 
         this.logOnly = "true".equalsIgnoreCase(args.getString(ARGUMENT_LOG_ONLY));
         this.testCountOnly = args.getBoolean(ARGUMENT_COUNT);
+        this.testTimeout = parseUnsignedLong(args.getString(ARGUMENT_TIMEOUT), ARGUMENT_TIMEOUT);
 
         try {
             // Get the set of resource names containing the expectations.
@@ -228,7 +233,7 @@ public class CoreTestRunner extends Instrumentation {
         }
 
         AndroidRunnerParams runnerParams = new AndroidRunnerParams(this, args,
-                logOnly || testCountOnly, -1, false);
+                logOnly || testCountOnly, testTimeout, false /*ignoreSuiteMethods*/);
 
         JUnitCore core = new JUnitCore();
 
@@ -307,4 +312,22 @@ public class CoreTestRunner extends Instrumentation {
             throw err;
         }
     }
+
+    /**
+     * Parse long from given value - except either Long or String.
+     *
+     * @return the value, -1 if not found
+     * @throws NumberFormatException if value is negative or not a number
+     */
+    private static long parseUnsignedLong(Object value, String name) {
+        if (value != null) {
+            long longValue = Long.parseLong(value.toString());
+            if (longValue < 0) {
+                throw new NumberFormatException(name + " can not be negative");
+            }
+            return longValue;
+        }
+        return -1;
+    }
+
 }

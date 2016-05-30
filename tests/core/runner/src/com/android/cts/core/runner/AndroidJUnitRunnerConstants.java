@@ -92,6 +92,11 @@ public interface AndroidJUnitRunnerConstants {
     String ARGUMENT_COUNT = "count";
 
     /**
+     * The per test timeout value.
+     */
+    String ARGUMENT_TIMEOUT = "timeout_msec";
+
+    /**
      * Token representing how long (in seconds) the current test took to execute.
      *
      * <p>The equivalent constant in {@code InstrumentationTestRunner} is private.
