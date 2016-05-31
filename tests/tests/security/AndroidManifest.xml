@@ -37,14 +37,6 @@
 
         <service android:name="android.security.cts.activity.SecureRandomService"
                  android:process=":secureRandom"/>
-        <activity
-            android:name="android.security.cts.DisplayDriverActivity"
-            android:label="Test qhwc::MDPCompLowRes::allocLayerPipes (Qualcomm)">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN"/>
-                <category android:name="android.intent.category.FRAMEWORK_INSTRUMENTATION_TEST"/>
-            </intent-filter>
-        </activity>
     </application>
 
     <instrumentation android:name="android.support.test.runner.AndroidJUnitRunner"
