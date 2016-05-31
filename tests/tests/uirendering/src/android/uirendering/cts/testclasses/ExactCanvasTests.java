@@ -168,4 +168,18 @@ public class ExactCanvasTests extends ActivityTestBase {
                 .addLayout(R.layout.blue_padded_square, null)
                 .runWithVerifier(verifier);
     }
+
+    @Test
+    public void testEmptyLayer() {
+        createTest()
+                .addCanvasClient((canvas, width, height) -> {
+                    canvas.drawColor(Color.CYAN);
+                    Paint p = new Paint();
+                    p.setColor(Color.BLACK);
+                    canvas.saveLayer(10, 10, 80, 80, p);
+                    canvas.restore();
+                })
+                .runWithComparer(mExactComparer);
+    }
+
 }
