@@ -174,7 +174,6 @@ public class OpenGlEsVersionTest
             "EGL_ANDROID_front_buffer_auto_refresh",
             "EGL_EXT_protected_content",
             "EGL_KHR_mutable_render_buffer",
-            "EGL_KHR_reusable_sync",
             "EGL_KHR_wait_sync",
         };
 
