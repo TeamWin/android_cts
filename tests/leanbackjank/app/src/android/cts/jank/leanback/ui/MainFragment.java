@@ -21,7 +21,6 @@ import android.cts.jank.leanback.R;
 import android.cts.jank.leanback.data.VideoProvider;
 import android.cts.jank.leanback.model.Movie;
 import android.cts.jank.leanback.presenter.CardPresenter;
-import android.cts.jank.leanback.presenter.GridItemPresenter;
 import android.cts.jank.leanback.presenter.IconHeaderItemPresenter;
 import android.os.Bundle;
 import android.os.Handler;
@@ -183,15 +182,6 @@ public class MainFragment extends BrowseFragment {
             i++;
             mRowsAdapter.add(new ListRow(header, listRowAdapter));
         }
-
-        HeaderItem gridHeader = new HeaderItem(i, getString(R.string.settings));
-
-        GridItemPresenter gridPresenter = new GridItemPresenter(this);
-        ArrayObjectAdapter gridRowAdapter = new ArrayObjectAdapter(gridPresenter);
-        for (int j = 0; j < 10; j++) {
-            gridRowAdapter.add(getString(R.string.grid_item_template, j));
-        }
-        mRowsAdapter.add(new ListRow(gridHeader, gridRowAdapter));
 
         setAdapter(mRowsAdapter);
     }
