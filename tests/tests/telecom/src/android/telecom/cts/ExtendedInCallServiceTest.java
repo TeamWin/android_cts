@@ -103,8 +103,20 @@ public class ExtendedInCallServiceTest extends BaseTelecomTestWithMockServices {
 
         final int currentInvokeCount = mOnCallAudioStateChangedCounter.getInvokeCount();
 
-        // Only test speaker and earpiece modes because the other modes are dependent on having
-        // a bluetooth headset or wired headset connected.
+
+        // We need to check what audio routes are available. If speaker and either headset or
+        // earpiece aren't available, then we should skip this test.
+        int availableRoutes = connection.getCallAudioState().getSupportedRouteMask();
+        if ((availableRoutes & CallAudioState.ROUTE_SPEAKER) == 0) {
+            return;
+        }
+        if ((availableRoutes & CallAudioState.ROUTE_WIRED_OR_EARPIECE) == 0) {
+            return;
+        }
+        // Determine what the second route to go to after SPEAKER should be, depending on what's
+        // supported.
+        int secondRoute = (availableRoutes & CallAudioState.ROUTE_EARPIECE) == 0 ?
+                CallAudioState.ROUTE_WIRED_HEADSET : CallAudioState.ROUTE_EARPIECE;
 
         // Explicitly call super implementation to enable detection of CTS coverage
         ((InCallService) inCallService).setAudioRoute(CallAudioState.ROUTE_SPEAKER);
@@ -113,11 +125,11 @@ public class ExtendedInCallServiceTest extends BaseTelecomTestWithMockServices {
         assertAudioRoute(connection, CallAudioState.ROUTE_SPEAKER);
         assertAudioRoute(inCallService, CallAudioState.ROUTE_SPEAKER);
 
-        inCallService.setAudioRoute(CallAudioState.ROUTE_EARPIECE);
+        inCallService.setAudioRoute(secondRoute);
         mOnCallAudioStateChangedCounter.waitForCount(currentInvokeCount + 2,
                 WAIT_FOR_STATE_CHANGE_TIMEOUT_MS);
-        assertAudioRoute(connection, CallAudioState.ROUTE_EARPIECE);
-        assertAudioRoute(inCallService, CallAudioState.ROUTE_EARPIECE);
+        assertAudioRoute(connection, secondRoute);
+        assertAudioRoute(inCallService, secondRoute);
     }
 
     /**
