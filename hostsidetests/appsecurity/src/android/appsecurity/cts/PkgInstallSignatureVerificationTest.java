@@ -340,6 +340,21 @@ public class PkgInstallSignatureVerificationTest extends DeviceTestCase implemen
         assertInstallFailsWithError("v2-only-missing-classes.dex.apk", "code is missing");
     }
 
+    public void testCorrectCertUsedFromPkcs7SignedDataCertsSet() throws Exception {
+        // Obtained by prepending the rsa-1024 certificate to the PKCS#7 SignedData certificates set
+        // of v1-only-with-rsa-pkcs1-sha1-2048.apk META-INF/CERT.RSA. The certs (in the order of
+        // appearance in the file) are thus: rsa-1024, rsa-2048. The package's signing cert is
+        // rsa-2048.
+        assertInstallSucceeds("v1-only-pkcs7-cert-bag-first-cert-not-used.apk");
+
+        // Check that rsa-1024 was not used as the previously installed package's signing cert.
+        assertInstallFailsWithError(
+                "v1-only-with-rsa-pkcs1-sha1-1024.apk", "signatures do not match");
+
+        // Check that rsa-2048 was used as the previously installed package's signing cert.
+        assertInstallSucceeds("v1-only-with-rsa-pkcs1-sha1-2048.apk");
+    }
+
     private void assertInstallSucceeds(String apkFilenameInResources) throws Exception {
         String installResult = installPackageFromResource(apkFilenameInResources);
         if (installResult != null) {
