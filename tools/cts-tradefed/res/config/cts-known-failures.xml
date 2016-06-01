@@ -47,17 +47,6 @@
     <option name="compatibility:exclude-filter" value="CtsAppWidgetTestCases android.appwidget.cts.AppWidgetTest#testUpdateAppWidgetViaWidgetId" />
     <option name="compatibility:exclude-filter" value="CtsAppWidgetTestCases android.appwidget.cts.AppWidgetTest#testUpdateAppWidgetViaWidgetIds" />
 
-    <!-- b/21668302 -->
-    <option name="compatibility:exclude-filter" value="CtsAssistTestCases android.assist.cts.AssistantContentViewTest#testAssistantContentViewDimens" />
-    <option name="compatibility:exclude-filter" value="CtsAssistTestCases android.assist.cts.ExtraAssistDataTest#testAssistContentAndAssistData" />
-    <option name="compatibility:exclude-filter" value="CtsAssistTestCases android.assist.cts.FocusChangeTest#testLayerCausesUnderlyingActivityToLoseFocus" />
-    <option name="compatibility:exclude-filter" value="CtsAssistTestCases android.assist.cts.LargeViewHierarchyTest#testTextView" />
-    <option name="compatibility:exclude-filter" value="CtsAssistTestCases android.assist.cts.ScreenshotTest#testBlueScreenshot" />
-    <option name="compatibility:exclude-filter" value="CtsAssistTestCases android.assist.cts.ScreenshotTest#testGreenScreenshot" />
-    <option name="compatibility:exclude-filter" value="CtsAssistTestCases android.assist.cts.ScreenshotTest#testRedScreenshot" />
-    <option name="compatibility:exclude-filter" value="CtsAssistTestCases android.assist.cts.TextViewTest#testTextView" />
-    <option name="compatibility:exclude-filter" value="CtsAssistTestCases android.assist.cts.WebViewTest#testWebView" />
-
     <!-- b/23776099 -->
     <option name="compatibility:exclude-filter" value="CtsCallLogTestCases android.calllog.cts.CallLogBackupTest#testSingleCallBackup" />
 
