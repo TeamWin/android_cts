@@ -70,7 +70,6 @@ public class ByodFlowTestActivity extends DialogTestListActivity {
     private DialogTestListItem mWorkStatusBarToastTest;
     private DialogTestListItem mAppSettingsVisibleTest;
     private DialogTestListItem mLocationSettingsVisibleTest;
-    private DialogTestListItem mBatterySettingsVisibleTest;
     private DialogTestListItem mDataUsageSettingsVisibleTest;
     private DialogTestListItem mCredSettingsVisibleTest;
     private DialogTestListItem mPrintSettingsVisibleTest;
@@ -256,12 +255,6 @@ public class ByodFlowTestActivity extends DialogTestListActivity {
                 R.string.provisioning_byod_location_settings_instruction,
                 new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS));
 
-        mBatterySettingsVisibleTest = new DialogTestListItem(this,
-                R.string.provisioning_byod_battery_settings,
-                "BYOD_BatterySettingsVisibleTest",
-                R.string.provisioning_byod_battery_settings_instruction,
-                new Intent(Intent.ACTION_POWER_USAGE_SUMMARY));
-
         mDataUsageSettingsVisibleTest = new DialogTestListItem(this,
                 R.string.provisioning_byod_data_usage_settings,
                 "BYOD_DataUsageSettingsVisibleTest",
@@ -350,7 +343,6 @@ public class ByodFlowTestActivity extends DialogTestListActivity {
         adapter.add(mCredSettingsVisibleTest);
         adapter.add(mAppSettingsVisibleTest);
         adapter.add(mLocationSettingsVisibleTest);
-        adapter.add(mBatterySettingsVisibleTest);
         adapter.add(mDataUsageSettingsVisibleTest);
         adapter.add(mPrintSettingsVisibleTest);
 
