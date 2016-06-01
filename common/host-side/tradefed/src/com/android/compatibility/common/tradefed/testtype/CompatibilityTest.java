@@ -26,6 +26,7 @@ import com.android.compatibility.common.util.IInvocationResult;
 import com.android.compatibility.common.util.IModuleResult;
 import com.android.compatibility.common.util.ITestResult;
 import com.android.compatibility.common.util.MonitoringUtils;
+import com.android.compatibility.common.util.ResultHandler;
 import com.android.compatibility.common.util.TestFilter;
 import com.android.compatibility.common.util.TestStatus;
 import com.android.ddmlib.Log.LogLevel;
@@ -194,7 +195,6 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
     private int mTotalShards;
     private IModuleRepo mModuleRepo;
     private ITestDevice mDevice;
-    private IBuildInfo mBuild;
     private CompatibilityBuildHelper mBuildHelper;
 
     /**
@@ -239,9 +239,12 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
      */
     @Override
     public void setBuild(IBuildInfo buildInfo) {
-        mBuild = buildInfo;
-        mBuildHelper = new CompatibilityBuildHelper(mBuild);
-        mBuildHelper.init(mSuitePlan, mURL);
+        mBuildHelper = new CompatibilityBuildHelper(buildInfo);
+        // Initializing the mBuildHelper also updates properties in buildInfo.
+        // TODO(nicksauer): Keeping invocation properties around via buildInfo
+        // is confusing and would be better done in an "InvocationInfo".
+        // Note, the current time is used to generated the result directory.
+        mBuildHelper.init(mSuitePlan, mURL, System.currentTimeMillis());
     }
 
     /**
@@ -259,7 +262,7 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
                     // throw a {@link FileNotFoundException}
                     mModuleRepo.initialize(mTotalShards, mBuildHelper.getTestsDir(), getAbis(),
                             mDeviceTokens, mTestArgs, mModuleArgs, mIncludeFilters,
-                            mExcludeFilters, mBuild);
+                            mExcludeFilters, mBuildHelper.getBuildInfo());
                 }
             }
             // Get the tests to run in this shard
@@ -281,7 +284,7 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
             // Set values and run preconditions
             for (int i = 0; i < moduleCount; i++) {
                 IModuleDef module = modules.get(i);
-                module.setBuild(mBuild);
+                module.setBuild(mBuildHelper.getBuildInfo());
                 module.setDevice(mDevice);
                 module.setPreparerWhitelist(mPreparerWhitelist);
                 module.prepare(mSkipPreconditions);
@@ -381,13 +384,11 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
             mModuleName = null;
             mTestName = null;
             // Load the invocation result
-            IInvocationResultRepo repo;
             IInvocationResult result = null;
             try {
-                repo = new InvocationResultRepo(mBuildHelper.getResultsDir());
-                result = repo.getResult(mRetrySessionId);
+                result = ResultHandler.findResult(mBuildHelper.getResultsDir(), mRetrySessionId);
             } catch (FileNotFoundException e) {
-                e.printStackTrace();
+                throw new RuntimeException(e);
             }
             if (result == null) {
                 throw new IllegalArgumentException(String.format(

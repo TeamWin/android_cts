@@ -36,6 +36,7 @@ public class CompatibilityBuildHelperTest extends TestCase {
     private static final String ROOT_DIR_NAME = "root";
     private static final String BASE_DIR_NAME = "android-tests";
     private static final String TESTCASES = "testcases";
+    private static final long START_TIME = 123456L;
 
     private File mRoot = null;
     private File mBase = null;
@@ -69,7 +70,7 @@ public class CompatibilityBuildHelperTest extends TestCase {
 
     public void testSuiteInfoLoad() throws Exception {
         setProperty(mRoot.getAbsolutePath());
-        mHelper.init(SUITE_PLAN, DYNAMIC_CONFIG_URL);
+        mHelper.init(SUITE_PLAN, DYNAMIC_CONFIG_URL, START_TIME);
         assertEquals("Incorrect suite build number", BUILD_NUMBER, mHelper.getSuiteBuild());
         assertEquals("Incorrect suite name", SUITE_NAME, mHelper.getSuiteName());
         assertEquals("Incorrect suite full name", SUITE_FULL_NAME, mHelper.getSuiteFullName());
@@ -82,19 +83,19 @@ public class CompatibilityBuildHelperTest extends TestCase {
         CompatibilityBuildHelper helper = new CompatibilityBuildHelper(provider.getBuild());
         try {
             // Should fail with root unset
-            helper.init(SUITE_PLAN, DYNAMIC_CONFIG_URL);
+            helper.init(SUITE_PLAN, DYNAMIC_CONFIG_URL, START_TIME);
             fail("Expected fail for unset root property");
         } catch (IllegalArgumentException e) {
             /* expected */
         }
         setProperty(mRoot.getAbsolutePath());
         // Shouldn't fail with root set
-        helper.init(SUITE_PLAN, DYNAMIC_CONFIG_URL);
+        helper.init(SUITE_PLAN, DYNAMIC_CONFIG_URL, START_TIME);
     }
 
     public void testValidation() throws Exception {
         setProperty(mRoot.getAbsolutePath());
-        mHelper.init(SUITE_PLAN, DYNAMIC_CONFIG_URL);
+        mHelper.init(SUITE_PLAN, DYNAMIC_CONFIG_URL, START_TIME);
         try {
             mHelper.getDir();
             fail("Build helper validation succeeded on an invalid installation");
@@ -112,7 +113,7 @@ public class CompatibilityBuildHelperTest extends TestCase {
 
     public void testDirs() throws Exception {
         setProperty(mRoot.getAbsolutePath());
-        mHelper.init(SUITE_PLAN, DYNAMIC_CONFIG_URL);
+        mHelper.init(SUITE_PLAN, DYNAMIC_CONFIG_URL, START_TIME);
         createDirStructure();
         assertNotNull(mRoot);
         assertNotNull(mBuild);

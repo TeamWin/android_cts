@@ -130,4 +130,21 @@ public class ModuleResult implements IModuleResult {
         return getId().compareTo(another.getId());
     }
 
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void mergeFrom(IModuleResult otherModuleResult) {
+        if (!otherModuleResult.getId().equals(getId())) {
+            throw new IllegalArgumentException(String.format(
+                "Cannot merge module result with mismatched id. Expected %s, Found %s",
+                        otherModuleResult.getId(), getId()));
+        }
+
+        this.mRuntime += otherModuleResult.getRuntime();
+        for (ICaseResult otherCaseResult : otherModuleResult.getResults()) {
+            ICaseResult caseResult = getOrCreateResult(otherCaseResult.getName());
+            caseResult.mergeFrom(otherCaseResult);
+        }
+    }
 }

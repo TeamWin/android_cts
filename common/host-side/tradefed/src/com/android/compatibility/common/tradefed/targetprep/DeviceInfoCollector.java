@@ -17,7 +17,6 @@
 package com.android.compatibility.common.tradefed.targetprep;
 
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
-import com.android.compatibility.common.tradefed.build.MasterBuildInfo;
 import com.android.compatibility.common.tradefed.testtype.CompatibilityTest;
 import com.android.tradefed.build.IBuildInfo;
 import com.android.tradefed.config.Option;
@@ -85,7 +84,6 @@ public class DeviceInfoCollector extends ApkInstrumentationPreparer {
             buildInfo.addBuildAttribute(entry.getKey(),
                     ArrayUtil.join(",", device.getProperty(entry.getValue())));
         }
-        MasterBuildInfo.addBuildInfo(buildInfo.getBuildAttributes());
         if (mSkipDeviceInfo) {
             return;
         }

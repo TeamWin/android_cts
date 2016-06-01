@@ -112,4 +112,20 @@ public class CaseResult implements ICaseResult {
         return getName().compareTo(another.getName());
     }
 
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void mergeFrom(ICaseResult otherCaseResult) {
+        if (!otherCaseResult.getName().equals(getName())) {
+            throw new IllegalArgumentException(String.format(
+                "Cannot merge case result with mismatched name. Expected %s, Found %d",
+                        otherCaseResult.getName(), getName()));
+        }
+
+        for (ITestResult otherTestResult : otherCaseResult.getResults()) {
+            mResults.put(otherTestResult.getName(), otherTestResult);
+        }
+    }
+
 }

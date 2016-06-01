@@ -24,9 +24,12 @@ import junit.framework.TestCase;
 public class ModuleResultTest extends TestCase {
 
     private static final String NAME = "ModuleName";
+    private static final String NAME_2 = "ModuleName2";
     private static final String ABI = "mips64";
     private static final String ID = AbiUtils.createId(ABI, NAME);
+    private static final String ID_2 = AbiUtils.createId(ABI, NAME_2);
     private static final String CLASS = "android.test.FoorBar";
+    private static final String CLASS_2 = "android.test.FoorBar2";
     private static final String METHOD_1 = "testBlah1";
     private static final String METHOD_2 = "testBlah2";
     private static final String METHOD_3 = "testBlah3";
@@ -68,5 +71,41 @@ public class ModuleResultTest extends TestCase {
         testCase.getOrCreateResult(METHOD_3).passed(null);
         assertEquals("Expected two failures", 2, mResult.countResults(TestStatus.FAIL));
         assertEquals("Expected one pass", 1, mResult.countResults(TestStatus.PASS));
+    }
+
+    public void testMergeModule() throws Exception {
+        ICaseResult caseResult = mResult.getOrCreateResult(CLASS);
+        caseResult.getOrCreateResult(METHOD_1).failed(STACK_TRACE);
+        caseResult.getOrCreateResult(METHOD_3).passed(null);
+
+        ICaseResult caseResult2 = mResult.getOrCreateResult(CLASS_2);
+        caseResult2.getOrCreateResult(METHOD_1).failed(STACK_TRACE);
+        caseResult2.getOrCreateResult(METHOD_3).passed(null);
+
+        assertEquals("Expected two results", 2, mResult.getResults().size());
+        assertTrue("Expected test result", mResult.getResults().contains(caseResult));
+        assertTrue("Expected test result", mResult.getResults().contains(caseResult2));
+
+        ModuleResult otherResult = new ModuleResult(ID);
+        // Same class but all passing tests
+        ICaseResult otherCaseResult = otherResult.getOrCreateResult(CLASS);
+        otherCaseResult.getOrCreateResult(METHOD_1).passed(null);
+        otherCaseResult.getOrCreateResult(METHOD_2).passed(null);
+        otherCaseResult.getOrCreateResult(METHOD_3).passed(null);
+
+        mResult.mergeFrom(otherResult);
+
+        assertEquals("Expected two results", 2, mResult.getResults().size());
+        assertTrue("Expected test result", mResult.getResults().contains(caseResult));
+        assertTrue("Expected test result", mResult.getResults().contains(caseResult2));
+    }
+
+    public void testMergeModule_mismatchedModuleId() throws Exception {
+
+        ModuleResult otherResult = new ModuleResult(ID_2);
+        try {
+            mResult.mergeFrom(otherResult);
+            fail("Expected IlleglArgumentException");
+        } catch (IllegalArgumentException expected) {}
     }
 }
