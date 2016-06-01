@@ -55,4 +55,8 @@ public interface ICaseResult extends Comparable<ICaseResult> {
      */
     int countResults(TestStatus status);
 
+    /**
+     * Merge the case results from otherCaseResult into this caseResult.
+     */
+    void mergeFrom(ICaseResult otherCaseResult);
 }
