@@ -65,7 +65,6 @@ public class CompatibilityConsole extends Console {
         MODULE_SPLIT_EXCLUSIONS.add("CtsDeqpTestCases");
     }
     private CompatibilityBuildHelper mBuildHelper;
-    private static final int TIMESTAMP_COLUMN = 4;
 
     /**
      * {@inheritDoc}
@@ -171,7 +170,7 @@ public class CompatibilityConsole extends Console {
         helpBuilder.append("Options:\n");
         helpBuilder.append("  --serial/-s <device_id>: The device to run the test on.\n");
         helpBuilder.append("  --abi/-a <abi>: The ABI to run the test against.\n");
-        helpBuilder.append("  --shard <shards>: Shards a run into the given number of independant");
+        helpBuilder.append("  --shards <shards>: Shards a run into the given number of independant");
         helpBuilder.append(" chunks, to run on multiple devices in parallel.\n");
         helpBuilder.append("  --logcat-on-failure: Capture logcat when a test fails.\n");
         helpBuilder.append("  --bugreport-on-failure: Capture a bugreport when a test fails.\n");
@@ -321,6 +320,12 @@ public class CompatibilityConsole extends Console {
             e.printStackTrace();
         }
         if (testResultRepo != null && results.size() > 0) {
+            // sort the table entries on each entry's timestamp
+            Collections.sort(results, new Comparator<IInvocationResult>() {
+                public int compare(IInvocationResult result1, IInvocationResult result2) {
+                    return Long.compare(result1.getStartTime(), result2.getStartTime());
+                }
+            });
             for (int i = 0; i < results.size(); i++) {
                 IInvocationResult result = results.get(i);
                 Map<String, String> buildInfo = result.getBuildInfo();
@@ -344,15 +349,8 @@ public class CompatibilityConsole extends Console {
                         buildInfo.get("build_id"),
                         buildInfo.get("build_product")
                         ));
-
-                // sort the table entries on each entry's formatted timestamp
-                Collections.sort(table, new Comparator<List<String>>() {
-                    public int compare(List<String> firstList, List<String> secondList) {
-                        return firstList.get(TIMESTAMP_COLUMN)
-                                .compareTo(secondList.get(TIMESTAMP_COLUMN));
-                    }
-                });
             }
+
 
             // add the table header to the beginning of the list
             table.add(0, Arrays.asList("Session", "Pass", "Fail", "Not Executed", "Start Time",
@@ -367,7 +365,8 @@ public class CompatibilityConsole extends Console {
         if (mBuildHelper == null) {
             CompatibilityBuildProvider buildProvider = new CompatibilityBuildProvider();
             mBuildHelper = new CompatibilityBuildHelper(buildProvider.getBuild());
-            mBuildHelper.init("" /* suite plan */, "" /* dynamic config url */);
+            mBuildHelper.init(
+                "" /* suite plan */, "" /* dynamic config url */, -1 /*startTimeMs*/);
         }
         return mBuildHelper;
     }

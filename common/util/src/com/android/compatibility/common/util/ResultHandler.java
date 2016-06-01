@@ -105,7 +105,7 @@ public class ResultHandler {
                 if (!resultFile.exists()) {
                     continue;
                 }
-                IInvocationResult invocation = new InvocationResult(resultDir);
+                IInvocationResult invocation = new InvocationResult();
                 XmlPullParserFactory factory = XmlPullParserFactory.newInstance();
                 XmlPullParser parser = factory.newPullParser();
                 parser.setInput(new FileReader(resultFile));
@@ -327,6 +327,23 @@ public class ResultHandler {
         }
         serializer.endDocument();
         return resultFile;
+    }
+
+    /**
+     * Find the IInvocationResult for the given sessionId.
+     */
+    public static IInvocationResult findResult(File resultsDir, Integer sessionId)
+            throws FileNotFoundException {
+        if (sessionId < 0) {
+            throw new IllegalArgumentException(
+                String.format("Invalid session id [%d] ", sessionId));
+        }
+
+        List<IInvocationResult> results = getResults(resultsDir);
+        if (results == null || sessionId >= results.size()) {
+            throw new RuntimeException(String.format("Could not find session [%d]", sessionId));
+        }
+        return results.get(sessionId);
     }
 
     /**

@@ -21,6 +21,8 @@ import com.android.tradefed.build.IFolderBuildInfo;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -37,6 +39,7 @@ public class CompatibilityBuildHelper {
     private static final String SUITE_VERSION = "SUITE_VERSION";
     private static final String SUITE_PLAN = "SUITE_PLAN";
     private static final String RESULT_DIR = "RESULT_DIR";
+    private static final String START_TIME_MS = "START_TIME_MS";
     private static final String CONFIG_PATH_PREFIX = "DYNAMIC_CONFIG_FILE:";
     private static final String DYNAMIC_CONFIG_OVERRIDE_URL = "DYNAMIC_CONFIG_OVERRIDE_URL";
     private final IBuildInfo mBuildInfo;
@@ -50,9 +53,17 @@ public class CompatibilityBuildHelper {
     }
 
     /**
-     * Initializes the {@link IBuildInfo} from the manifest.
+     * Initializes the {@link IBuildInfo} from the manifest with the current time
+     * as the start time.
      */
     public void init(String suitePlan, String dynamicConfigUrl) {
+        init(suitePlan, dynamicConfigUrl, System.currentTimeMillis());
+    }
+
+    /**
+     * Initializes the {@link IBuildInfo} from the manifest.
+     */
+    public void init(String suitePlan, String dynamicConfigUrl, long startTimeMs) {
         if (mInitialized) {
             return;
         }
@@ -62,6 +73,8 @@ public class CompatibilityBuildHelper {
         mBuildInfo.addBuildAttribute(SUITE_FULL_NAME, SuiteInfo.FULLNAME);
         mBuildInfo.addBuildAttribute(SUITE_VERSION, SuiteInfo.VERSION);
         mBuildInfo.addBuildAttribute(SUITE_PLAN, suitePlan);
+        mBuildInfo.addBuildAttribute(START_TIME_MS, Long.toString(startTimeMs));
+        mBuildInfo.addBuildAttribute(RESULT_DIR, getDirSuffix(startTimeMs));
         String rootDirPath = null;
         if (mBuildInfo instanceof IFolderBuildInfo) {
             File rootDir = ((IFolderBuildInfo) mBuildInfo).getRootDir();
@@ -86,6 +99,10 @@ public class CompatibilityBuildHelper {
         }
     }
 
+    public IBuildInfo getBuildInfo() {
+        return mBuildInfo;
+    }
+
     public String getSuiteBuild() {
         return mBuildInfo.getBuildAttributes().get(SUITE_BUILD);
     }
@@ -108,6 +125,10 @@ public class CompatibilityBuildHelper {
 
     public String getDynamicConfigUrl() {
         return mBuildInfo.getBuildAttributes().get(DYNAMIC_CONFIG_OVERRIDE_URL);
+    }
+
+    public long getStartTime() {
+        return Long.parseLong(mBuildInfo.getBuildAttributes().get(START_TIME_MS));
     }
 
     public void addDynamicConfigFile(String moduleName, File configFile) {
@@ -172,18 +193,12 @@ public class CompatibilityBuildHelper {
     }
 
     /**
-     * Sets the name of the current invocation's result directory.
-     */
-    public void setResultDir(String resultDir) {
-        mBuildInfo.addBuildAttribute(RESULT_DIR, resultDir);
-    }
-
-    /**
      * @return a {@link File} representing the result directory of the current invocation.
      * @throws FileNotFoundException if the directory structure is not valid.
      */
     public File getResultDir() throws FileNotFoundException {
-        return new File(getResultsDir(), mBuildInfo.getBuildAttributes().get(RESULT_DIR));
+        return new File(getResultsDir(),
+            getDirSuffix(Long.parseLong(mBuildInfo.getBuildAttributes().get(START_TIME_MS))));
     }
 
     /**
@@ -208,4 +223,10 @@ public class CompatibilityBuildHelper {
         return testsDir;
     }
 
+    /**
+     * @return a {@link String} to use for directory suffixes created from the given time.
+     */
+    public static String getDirSuffix(long millis) {
+        return new SimpleDateFormat("yyyy.MM.dd_HH.mm.ss").format(new Date(millis));
+    }
 }

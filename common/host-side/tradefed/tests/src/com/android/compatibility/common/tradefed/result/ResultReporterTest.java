@@ -63,6 +63,7 @@ public class ResultReporterTest extends TestCase {
         "compatibility_result.xsd",
         "compatibility_result.xsl",
         "logo.png"};
+    private static final long START_TIME = 123456L;
 
     private ResultReporter mReporter;
     private IBuildInfo mBuildInfo;
@@ -76,7 +77,6 @@ public class ResultReporterTest extends TestCase {
     public void setUp() throws Exception {
         mReporter = new ResultReporter();
         OptionSetter setter = new OptionSetter(mReporter);
-        setter.setOptionValue("quiet-output", "true");
         mRoot = FileUtil.createTempDir(ROOT_DIR_NAME);
         mBase = new File(mRoot, BASE_DIR_NAME);
         mBase.mkdirs();
@@ -85,7 +85,7 @@ public class ResultReporterTest extends TestCase {
         System.setProperty(ROOT_PROPERTY, mRoot.getAbsolutePath());
         mBuildInfo = new BuildInfo(BUILD_NUMBER, "", "");
         mBuildHelper = new CompatibilityBuildHelper(mBuildInfo);
-        mBuildHelper.init(SUITE_PLAN, DYNAMIC_CONFIG_URL);
+        mBuildHelper.init(SUITE_PLAN, DYNAMIC_CONFIG_URL, START_TIME);
     }
 
     @Override

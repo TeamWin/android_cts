@@ -16,7 +16,6 @@
 package com.android.compatibility.common.tradefed.result;
 
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
-import com.android.compatibility.common.tradefed.build.MasterBuildInfo;
 import com.android.compatibility.common.tradefed.testtype.CompatibilityTest;
 import com.android.compatibility.common.util.ICaseResult;
 import com.android.compatibility.common.util.IInvocationResult;
@@ -35,9 +34,11 @@ import com.android.tradefed.build.IBuildInfo;
 import com.android.tradefed.config.Option;
 import com.android.tradefed.config.Option.Importance;
 import com.android.tradefed.config.OptionClass;
+import com.android.tradefed.config.OptionCopier;
 import com.android.tradefed.log.LogUtil.CLog;
 import com.android.tradefed.result.ILogSaver;
 import com.android.tradefed.result.ILogSaverListener;
+import com.android.tradefed.result.IShardableListener;
 import com.android.tradefed.result.ITestInvocationListener;
 import com.android.tradefed.result.ITestSummaryListener;
 import com.android.tradefed.result.InputStreamSource;
@@ -59,17 +60,20 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 
 /**
  * Collect test results for an entire invocation and output test results to disk.
  */
 @OptionClass(alias="result-reporter")
 public class ResultReporter implements ILogSaverListener, ITestInvocationListener,
-       ITestSummaryListener {
+       ITestSummaryListener, IShardableListener {
 
+    private static final String UNKNOWN_DEVICE = "unknown_device";
     private static final String RESULT_KEY = "COMPATIBILITY_TEST_RESULT";
     private static final String CTS_PREFIX = "cts:";
     private static final String BUILD_INFO = CTS_PREFIX + "build_";
@@ -97,87 +101,130 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
     @Option(name = "use-log-saver", description = "Also saves generated result with log saver")
     private boolean mUseLogSaver = false;
 
-    private String mDeviceSerial;
-
-    private IInvocationResult mResult;
+    private CompatibilityBuildHelper mBuildHelper;
     private File mResultDir = null;
     private File mLogDir = null;
-    private long mStartTime;
     private ResultUploader mUploader;
     private String mReferenceUrl;
+    private ILogSaver mLogSaver;
+    private int invocationEndedCount = 0;
+
+    private IInvocationResult mResult = new InvocationResult();
     private IModuleResult mCurrentModuleResult;
     private ICaseResult mCurrentCaseResult;
     private ITestResult mCurrentResult;
-    private IBuildInfo mBuild;
-    private CompatibilityBuildHelper mBuildHelper;
-    private ILogSaver mLogSaver;
-    private boolean mReloadBuildInfo = false;
+    private String mDeviceSerial = UNKNOWN_DEVICE;
+    private Set<String> mMasterDeviceSerials = new HashSet<>();
+    private Set<IBuildInfo> mMasterBuildInfos = new HashSet<>();
+
+    // Nullable. If null, "this" is considered the master and must handle
+    // result aggregation and reporting. When not null, it should forward events
+    // to the master.
+    private final ResultReporter mMasterResultReporter;
+
+    /**
+     * Default constructor.
+     */
+    public ResultReporter() {
+        this(null);
+    }
+
+    /**
+     * Construct a shard ResultReporter that forwards module results to the
+     * masterResultReporter.
+     */
+    public ResultReporter(ResultReporter masterResultReporter) {
+        mMasterResultReporter = masterResultReporter;
+    }
 
     /**
      * {@inheritDoc}
      */
     @Override
     public void invocationStarted(IBuildInfo buildInfo) {
-        mBuild = buildInfo;
-        mBuildHelper = new CompatibilityBuildHelper(mBuild);
-        mDeviceSerial = buildInfo.getDeviceSerial();
-        if (mDeviceSerial == null) {
-            mDeviceSerial = "unknown_device";
-            mReloadBuildInfo = true;
+        synchronized(this) {
+            if (mBuildHelper == null) {
+                mBuildHelper = new CompatibilityBuildHelper(buildInfo);
+            }
+            if (mDeviceSerial == null && buildInfo.getDeviceSerial() != null) {
+                mDeviceSerial = buildInfo.getDeviceSerial();
+            }
         }
-        long time = System.currentTimeMillis();
-        String dirSuffix = getDirSuffix(time);
-        if (mRetrySessionId != null) {
-            CLog.d("[%s] Retrying session %d", mDeviceSerial, mRetrySessionId);
-            List<IInvocationResult> results = null;
-            try {
-                results = ResultHandler.getResults(mBuildHelper.getResultsDir());
-            } catch (FileNotFoundException e) {
-                e.printStackTrace();
-            }
-            if (results != null && mRetrySessionId >= 0 && mRetrySessionId < results.size()) {
-                mResult = results.get(mRetrySessionId);
-            } else {
-                throw new IllegalArgumentException(
-                        String.format("Could not find session %d",mRetrySessionId));
-            }
-            mStartTime = mResult.getStartTime();
-            mResultDir = mResult.getResultDir();
-        } else {
-            mStartTime = time;
-            try {
-                mResultDir = new File(mBuildHelper.getResultsDir(), dirSuffix);
-            } catch (FileNotFoundException e) {
-                e.printStackTrace();
-            }
-            if (mResultDir != null && mResultDir.mkdirs()) {
-                info("Created result dir %s", mResultDir.getAbsolutePath());
-            } else {
-                throw new IllegalArgumentException(String.format("Could not create result dir %s",
-                        mResultDir.getAbsolutePath()));
-            }
-            mResult = new InvocationResult(mStartTime, mResultDir);
+
+        if (isShardResultReporter()) {
+            // Shard ResultReporters forward invocationStarted to the mMasterResultReporter
+            mMasterResultReporter.invocationStarted(buildInfo);
+            return;
         }
-        mBuildHelper.setResultDir(mResultDir.getName());
+
+        // NOTE: Everything after this line only applies to the master ResultReporter.
+
+        synchronized(this) {
+            if (buildInfo.getDeviceSerial() != null) {
+                // The master ResultReporter collects all device serials being used
+                // for the current implementation.
+                mMasterDeviceSerials.add(buildInfo.getDeviceSerial());
+            }
+
+            // The master ResultReporter collects all buildInfos.
+            mMasterBuildInfos.add(buildInfo);
+
+            if (mResultDir == null) {
+                // For the non-sharding case, invocationStarted is only called once,
+                // but for the sharding case, this might be called multiple times.
+                // Logic used to initialize the result directory should not be
+                // invoked twice during the same invocation.
+                initializeResultDirectories();
+            }
+        }
+    }
+
+    /**
+     * Create directory structure that where results and logs will be written.
+     */
+    private void initializeResultDirectories() {
+        info("Initializing result directory");
+
+        try {
+            // Initialize the result directory. Either a new directory or reusing
+            // an existing session.
+            if (mRetrySessionId != null) {
+                // Overwrite the mResult with the test results of the previous session
+                mResult = ResultHandler.findResult(mBuildHelper.getResultsDir(), mRetrySessionId);
+            }
+            mResult.setStartTime(mBuildHelper.getStartTime());
+            mResultDir = mBuildHelper.getResultDir();
+            if (mResultDir != null) {
+                mResultDir.mkdirs();
+            }
+        } catch (FileNotFoundException e) {
+            throw new RuntimeException(e);
+        }
+
+        if (mResultDir == null) {
+            throw new RuntimeException("Result Directory was not created");
+        }
+        if (!mResultDir.exists()) {
+            throw new RuntimeException("Result Directory was not created: " +
+                    mResultDir.getAbsolutePath());
+        }
+
+        info("Results Directory: " + mResultDir.getAbsolutePath());
+
         mUploader = new ResultUploader(mResultServer, mBuildHelper.getSuiteName());
         try {
-            mLogDir = new File(mBuildHelper.getLogsDir(), dirSuffix);
+            mLogDir = new File(mBuildHelper.getLogsDir(),
+                    CompatibilityBuildHelper.getDirSuffix(mBuildHelper.getStartTime()));
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         }
         if (mLogDir != null && mLogDir.mkdirs()) {
             info("Created log dir %s", mLogDir.getAbsolutePath());
-        } else {
+        }
+        if (mLogDir == null || !mLogDir.exists()) {
             throw new IllegalArgumentException(String.format("Could not create log dir %s",
                     mLogDir.getAbsolutePath()));
         }
-    }
-
-    /**
-     * @return a {@link String} to use for directory suffixes created from the given time.
-     */
-    private String getDirSuffix(long time) {
-        return new SimpleDateFormat("yyyy.MM.dd_HH.mm.ss").format(new Date(time));
     }
 
     /**
@@ -186,11 +233,6 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
     @Override
     public void testRunStarted(String id, int numTests) {
         mCurrentModuleResult = mResult.getOrCreateModule(id);
-        if (mDeviceSerial == null || mDeviceSerial.equals("unknown_device")) {
-            mResult.addDeviceSerial(mBuild.getDeviceSerial());
-        } else {
-            mResult.addDeviceSerial(mDeviceSerial);
-        }
     }
 
     /**
@@ -270,13 +312,6 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
      */
     @Override
     public void testRunEnded(long elapsedTime, Map<String, String> metrics) {
-        // Get device info from build attributes
-        for (Entry<String, String> entry : mBuild.getBuildAttributes().entrySet()) {
-            String key = entry.getKey();
-            if (key.startsWith(BUILD_INFO)) {
-                mResult.addBuildInfo(key.substring(CTS_PREFIX.length()), entry.getValue());
-            }
-        }
         mCurrentModuleResult.addRuntime(elapsedTime);
         info("%s completed in %s. %d passed, %d failed, %d not executed",
                 mCurrentModuleResult.getId(),
@@ -284,6 +319,24 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
                 mCurrentModuleResult.countResults(TestStatus.PASS),
                 mCurrentModuleResult.countResults(TestStatus.FAIL),
                 mCurrentModuleResult.countResults(TestStatus.NOT_EXECUTED));
+
+        if (isShardResultReporter()) {
+            // Forward module results to the master.
+            mMasterResultReporter.mergeModuleResult(mCurrentModuleResult);
+        }
+    }
+
+    /**
+     * Directly add a module result. Note: this method is meant to be used by
+     * a shard ResultReporter.
+     */
+    private void mergeModuleResult(IModuleResult moduleResult) {
+        // This merges the results in moduleResult to any existing results already
+        // contained in mResult. This is useful for retries and allows the final
+        // report from a retry to contain all test results.
+        synchronized(this) {
+            mResult.mergeModuleResult(moduleResult);
+        }
     }
 
     /**
@@ -308,6 +361,8 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
      */
     @Override
     public void putSummary(List<TestSummary> summaries) {
+        // This is safe to be invoked on either the master or a shard ResultReporter,
+        // but the value added to the report will be that of the master ResultReporter.
         if (summaries.size() > 0) {
             mReferenceUrl = summaries.get(0).getSummary().getString();
         }
@@ -318,65 +373,68 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
      */
     @Override
     public void invocationEnded(long elapsedTime) {
+        if (isShardResultReporter()) {
+            // Shard ResultReporters report
+            mMasterResultReporter.invocationEnded(elapsedTime);
+            return;
+        }
+
+        // NOTE: Everything after this line only applies to the master ResultReporter.
+
+
+        synchronized(this) {
+            // The master ResultReporter tracks the progress of all invocations across
+            // shard ResultReporters. Writing results should not proceed until all
+            // ResultReporters have completed.
+            if (++invocationEndedCount < mMasterBuildInfos.size()) {
+                return;
+            }
+            finalizeResultDirectories(elapsedTime);
+        }
+    }
+
+    private void finalizeResultDirectories(long elapsedTime) {
         info("Invocation completed in %s. %d passed, %d failed, %d not executed",
                 TimeUtil.formatElapsedTime(elapsedTime),
                 mResult.countResults(TestStatus.PASS),
                 mResult.countResults(TestStatus.FAIL),
                 mResult.countResults(TestStatus.NOT_EXECUTED));
-        try {
-            // invocationStarted picked up an unfinished IBuildInfo, so repopulate it now from
-            // the master
-            if (mReloadBuildInfo) {
-                for (Map.Entry<String, String> e : MasterBuildInfo.getBuild().entrySet()) {
-                    mResult.addBuildInfo(e.getKey(), e.getValue());
+
+        // Add all device serials into the result to be serialized
+        for (String deviceSerial : mMasterDeviceSerials) {
+            mResult.addDeviceSerial(deviceSerial);
+        }
+
+        // Add all build info to the result to be serialized
+        for (IBuildInfo buildInfo : mMasterBuildInfos) {
+            for (Map.Entry<String, String> entry : buildInfo.getBuildAttributes().entrySet()) {
+                String key = entry.getKey();
+                if (key.startsWith(BUILD_INFO)) {
+                    mResult.addBuildInfo(key.substring(CTS_PREFIX.length()), entry.getValue());
                 }
             }
+        }
+        long startTime = mResult.getStartTime();
+        try {
             File resultFile = ResultHandler.writeResults(mBuildHelper.getSuiteName(),
                     mBuildHelper.getSuiteVersion(), mBuildHelper.getSuitePlan(),
-                    mBuildHelper.getSuiteBuild(), mResult, mResultDir, mStartTime,
-                    elapsedTime + mStartTime, mReferenceUrl);
+                    mBuildHelper.getSuiteBuild(), mResult, mResultDir, startTime,
+                    elapsedTime + startTime, mReferenceUrl);
             info("Test Result: %s", resultFile.getCanonicalPath());
+
+            // Zip the full test results directory.
             copyDynamicConfigFiles(mBuildHelper.getDynamicConfigFiles(), mResultDir);
             copyFormattingFiles(mResultDir);
-            // Zip the full test results directory.
             File zippedResults = zipResults(mResultDir);
             info("Full Result: %s", zippedResults.getCanonicalPath());
-            // Save the test result XML.
-            if (mUseLogSaver) {
-                FileInputStream fis = null;
-                try {
-                    fis = new FileInputStream(resultFile);
-                    mLogSaver.saveLogData("log-result", LogDataType.XML, fis);
-                } catch (IOException ioe) {
-                    CLog.e("[%s] error saving XML with log saver", mDeviceSerial);
-                    CLog.e(ioe);
-                } finally {
-                    StreamUtil.close(fis);
-                }
-                // Save the full results folder.
-                if (zippedResults != null) {
-                    FileInputStream zipResultStream = null;
-                    try {
-                        zipResultStream =  new FileInputStream(zippedResults);
-                        mLogSaver.saveLogData("results", LogDataType.ZIP, zipResultStream);
-                    } finally {
-                        StreamUtil.close(zipResultStream);
-                    }
-                }
-            }
-            if (mResultServer != null && !mResultServer.trim().isEmpty() && !mDisableResultPosting) {
-                try {
-                    info("Result Server: %d", mUploader.uploadResult(resultFile, mReferenceUrl));
-                } catch (IOException ioe) {
-                    CLog.e("[%s] IOException while uploading result.", mDeviceSerial);
-                    CLog.e(ioe);
-                }
-            }
+
+            saveLog(resultFile, zippedResults);
+
+            uploadResult(resultFile);
+
         } catch (IOException | XmlPullParserException e) {
             CLog.e("[%s] Exception while saving result XML.", mDeviceSerial);
             CLog.e(e);
-        } finally {
-            MasterBuildInfo.clear();
         }
     }
 
@@ -393,6 +451,7 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
      */
     @Override
     public void testLog(String name, LogDataType type, InputStreamSource stream) {
+        // This is safe to be invoked on either the master or a shard ResultReporter
         try {
             LogFileSaver saver = new LogFileSaver(mLogDir);
             File logFile = saver.saveAndZipLogData(name, type, stream.createInputStream());
@@ -409,8 +468,10 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
     @Override
     public void testLogSaved(String dataName, LogDataType dataType, InputStreamSource dataStream,
             LogFile logFile) {
+        // This is safe to be invoked on either the master or a shard ResultReporter
         if (mIncludeTestLogTags && mCurrentResult != null
                 && dataName.startsWith(mCurrentResult.getFullName())) {
+
             if (dataType == LogDataType.BUGREPORT) {
                 mCurrentResult.setBugReport(logFile.getUrl());
             } else if (dataType == LogDataType.LOGCAT) {
@@ -426,7 +487,67 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
      */
     @Override
     public void setLogSaver(ILogSaver saver) {
+        // This is safe to be invoked on either the master or a shard ResultReporter
         mLogSaver = saver;
+    }
+
+    /**
+     * When enabled, save log data using log saver
+     */
+    private void saveLog(File resultFile, File zippedResults) throws IOException {
+        if (!mUseLogSaver) {
+            return;
+        }
+
+        FileInputStream fis = null;
+        try {
+            fis = new FileInputStream(resultFile);
+            mLogSaver.saveLogData("log-result", LogDataType.XML, fis);
+        } catch (IOException ioe) {
+            CLog.e("[%s] error saving XML with log saver", mDeviceSerial);
+            CLog.e(ioe);
+        } finally {
+            StreamUtil.close(fis);
+        }
+        // Save the full results folder.
+        if (zippedResults != null) {
+            FileInputStream zipResultStream = null;
+            try {
+                zipResultStream =  new FileInputStream(zippedResults);
+                mLogSaver.saveLogData("results", LogDataType.ZIP, zipResultStream);
+            } finally {
+                StreamUtil.close(zipResultStream);
+            }
+        }
+    }
+
+    @Override
+    public IShardableListener clone() {
+        ResultReporter clone = new ResultReporter(this);
+        OptionCopier.copyOptionsNoThrow(this, clone);
+        return clone;
+    }
+
+    /**
+     * Return true if this instance is a shard ResultReporter and should propagate
+     * certain events to the master.
+     */
+    private boolean isShardResultReporter() {
+        return mMasterResultReporter != null;
+    }
+
+    /**
+     * When enabled, upload the result to a server.
+     */
+    private void uploadResult(File resultFile) throws IOException {
+        if (mResultServer != null && !mResultServer.trim().isEmpty() && !mDisableResultPosting) {
+            try {
+                info("Result Server: %d", mUploader.uploadResult(resultFile, mReferenceUrl));
+            } catch (IOException ioe) {
+                CLog.e("[%s] IOException while uploading result.", mDeviceSerial);
+                CLog.e(ioe);
+            }
+        }
     }
 
     /**

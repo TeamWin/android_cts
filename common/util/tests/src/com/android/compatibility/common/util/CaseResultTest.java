@@ -76,4 +76,45 @@ public class CaseResultTest extends TestCase {
         assertEquals("Expected two failures", 2, mResult.countResults(TestStatus.FAIL));
         assertEquals("Expected one pass", 1, mResult.countResults(TestStatus.PASS));
     }
+
+    public void testMergeCase() throws Exception {
+        mResult.getOrCreateResult(METHOD_1).failed(STACK_TRACE);
+        mResult.getOrCreateResult(METHOD_2).passed(null);
+
+        // Same case another test and passing results in method 2
+        CaseResult otherResult = new CaseResult(CLASS);
+        otherResult.getOrCreateResult(METHOD_1).passed(null);
+        otherResult.getOrCreateResult(METHOD_2).passed(null);
+        otherResult.getOrCreateResult(METHOD_3).failed(STACK_TRACE);
+
+        mResult.mergeFrom(otherResult);
+        assertEquals("Expected one result", 3, mResult.getResults().size());
+        assertEquals("Expected one failures", 1, mResult.countResults(TestStatus.FAIL));
+        assertEquals("Expected two pass", 2, mResult.countResults(TestStatus.PASS));
+    }
+
+     public void testMergeCase_passToFail() throws Exception {
+        mResult.getOrCreateResult(METHOD_1).passed(null);
+
+        // Same case another test and passing results in method 2
+        CaseResult otherResult = new CaseResult(CLASS);
+        otherResult.getOrCreateResult(METHOD_1).passed(null);
+        otherResult.getOrCreateResult(METHOD_2).passed(null);
+        otherResult.getOrCreateResult(METHOD_3).failed(STACK_TRACE);
+
+        mResult.mergeFrom(otherResult);
+
+        assertEquals("Expected one result", 3, mResult.getResults().size());
+        assertEquals("Expected one failures", 1, mResult.countResults(TestStatus.FAIL));
+        assertEquals("Expected two pass", 2, mResult.countResults(TestStatus.PASS));
+    }
+
+    public void testMergeCase_mismatchedModuleName() throws Exception {
+
+        CaseResult otherResult = new CaseResult(CLASS + "foo");
+        try {
+            mResult.mergeFrom(otherResult);
+            fail("Expected IlleglArgumentException");
+        } catch (IllegalArgumentException expected) {}
+    }
 }
