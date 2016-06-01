@@ -180,7 +180,7 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
     }
 
     /**
-     * Create directory structure that where results and logs will be written.
+     * Create directory structure where results and logs will be written.
      */
     private void initializeResultDirectories() {
         info("Initializing result directory");
@@ -419,7 +419,7 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
             File resultFile = ResultHandler.writeResults(mBuildHelper.getSuiteName(),
                     mBuildHelper.getSuiteVersion(), mBuildHelper.getSuitePlan(),
                     mBuildHelper.getSuiteBuild(), mResult, mResultDir, startTime,
-                    elapsedTime + startTime, mReferenceUrl);
+                    elapsedTime + startTime, mReferenceUrl, mBuildHelper.getCommandLineArgs());
             info("Test Result: %s", resultFile.getCanonicalPath());
 
             // Zip the full test results directory.
