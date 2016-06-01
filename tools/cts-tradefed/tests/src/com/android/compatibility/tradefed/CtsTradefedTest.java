@@ -34,6 +34,7 @@ public class CtsTradefedTest extends TestCase {
     private static final String SUITE_NAME = "CTS";
     private static final String SUITE_PLAN = "cts";
     private static final String DYNAMIC_CONFIG_URL = "";
+    private static final long START_TIME = 123456L;
 
     public void testSuiteInfoLoad() throws Exception {
         // Test the values in the manifest can be loaded
@@ -46,7 +47,7 @@ public class CtsTradefedTest extends TestCase {
         CompatibilityBuildProvider provider = new CompatibilityBuildProvider();
         IBuildInfo info = provider.getBuild();
         CompatibilityBuildHelper helper = new CompatibilityBuildHelper(info);
-        helper.init(SUITE_PLAN, DYNAMIC_CONFIG_URL);
+        helper.init(SUITE_PLAN, DYNAMIC_CONFIG_URL, START_TIME);
         assertEquals("Incorrect suite full name", SUITE_FULL_NAME, helper.getSuiteFullName());
         assertEquals("Incorrect suite name", SUITE_NAME, helper.getSuiteName());
         FileUtil.recursiveDelete(root);

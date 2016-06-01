@@ -71,9 +71,9 @@ public interface IInvocationResult {
     List<IModuleResult> getModules();
 
     /**
-     * @return the directory containing this result.
+     * Merges a module result to the invocation result.
      */
-    File getResultDir();
+    void mergeModuleResult(IModuleResult moduleResult);
 
     /**
      * Adds the given build info to the result.
