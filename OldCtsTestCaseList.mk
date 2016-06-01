@@ -109,6 +109,8 @@ cts_support_packages := \
     CtsDeviceTaskSwitchingAppA \
     CtsDeviceTaskSwitchingAppB \
     CtsDeviceTaskSwitchingControl \
+    CtsDragAndDropSourceApp \
+    CtsDragAndDropTargetApp \
     CtsExternalServiceService \
     CtsHostsideNetworkTestsApp \
     CtsHostsideNetworkTestsApp2 \
@@ -266,6 +268,7 @@ cts_host_libraries := \
     CtsAtraceHostTestCases \
     CtsCppToolsTestCases \
     CtsDevicePolicyManagerTestCases \
+    CtsDragAndDropHostTestCases \
     CtsDumpsysHostTestCases \
     CtsHostsideNetworkTests \
     CtsJdwpSecurityHostTestCases \
