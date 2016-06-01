@@ -2824,75 +2824,146 @@ public class TextViewTest {
     }
 
     @Test
-    public void testEllipsizeEndAndNoEllipsizeHasSameBaselineForSingleLine() throws Throwable {
-        mActivityRule.runOnUiThread(() -> {
-            mTextView = new TextView(mActivity);
-            mTextView.setEllipsize(TruncateAt.END);
-            mTextView.setMaxLines(1);
-            mTextView.setText(LONG_TEXT);
+    public void testEllipsizeAndMaxLinesForSingleLine() throws Throwable {
+        // no maxline or ellipsize set, single line text
+        final TextView tvNoMaxLine = new TextView(mActivity);
+        tvNoMaxLine.setLineSpacing(0, 1.5f);
+        tvNoMaxLine.setText("a");
 
-            mSecondTextView = new TextView(mActivity);
-            mSecondTextView.setText("a");
-        });
-        mInstrumentation.waitForIdleSync();
+        // maxline set, no ellipsize, text with two lines
+        final TextView tvEllipsizeNone = new TextView(mActivity);
+        tvEllipsizeNone.setMaxLines(1);
+        tvEllipsizeNone.setLineSpacing(0, 1.5f);
+        tvEllipsizeNone.setText("a\na");
 
-        final int textWidth = (int) mTextView.getPaint().measureText(LONG_TEXT) / 4;
-        mTextView.setWidth(textWidth);
-        mSecondTextView.setWidth(textWidth);
+        // maxline set, ellipsize end, text with two lines
+        final TextView tvEllipsizeEnd = new TextView(mActivity);
+        tvEllipsizeEnd.setEllipsize(TruncateAt.END);
+        tvEllipsizeEnd.setMaxLines(1);
+        tvEllipsizeEnd.setLineSpacing(0, 1.5f);
+        tvEllipsizeEnd.setText("a\na");
 
         final FrameLayout layout = new FrameLayout(mActivity);
         ViewGroup.LayoutParams layoutParams = new ViewGroup.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.MATCH_PARENT);
-        layout.addView(mTextView, layoutParams);
-        layout.addView(mSecondTextView, layoutParams);
-        layout.setLayoutParams(layoutParams);
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT);
+        layout.addView(tvEllipsizeEnd, layoutParams);
+        layout.addView(tvEllipsizeNone, layoutParams);
+        layout.addView(tvNoMaxLine, layoutParams);
 
-        mActivityRule.runOnUiThread(() -> mActivity.setContentView(layout));
+        mActivityRule.runOnUiThread(() -> mActivity.setContentView(layout,
+                new ViewGroup.LayoutParams(
+                        ViewGroup.LayoutParams.MATCH_PARENT,
+                        ViewGroup.LayoutParams.MATCH_PARENT)));
         mInstrumentation.waitForIdleSync();
 
-        assertEquals("Ellipsized and non ellipsized single line texts should have the same " +
-                        "baseline",
-                mTextView.getLayout().getLineBaseline(0),
-                mSecondTextView.getLayout().getLineBaseline(0));
+        assertEquals(tvEllipsizeEnd.getHeight(), tvEllipsizeNone.getHeight());
+
+        assertEquals(tvEllipsizeEnd.getHeight(), tvNoMaxLine.getHeight());
+
+        assertEquals(tvEllipsizeEnd.getLayout().getLineBaseline(0),
+                tvEllipsizeNone.getLayout().getLineBaseline(0));
+
+        assertEquals(tvEllipsizeEnd.getLayout().getLineBaseline(0),
+                tvNoMaxLine.getLayout().getLineBaseline(0));
     }
 
     @Test
-    public void testEllipsizeEndAndNoEllipsizeHasSameBaselineForMultiLine() throws Throwable {
-        mActivityRule.runOnUiThread(() -> {
-            mTextView = new TextView(mActivity);
-            mTextView.setEllipsize(TruncateAt.END);
-            mTextView.setMaxLines(2);
-            mTextView.setText(LONG_TEXT);
+    public void testEllipsizeAndMaxLinesForMultiLine() throws Throwable {
+        // no maxline, no ellipsize, text with two lines
+        final TextView tvNoMaxLine = new TextView(mActivity);
+        tvNoMaxLine.setLineSpacing(0, 1.5f);
+        tvNoMaxLine.setText("a\na");
 
-            mSecondTextView = new TextView(mActivity);
-            mSecondTextView.setMaxLines(2);
-            mSecondTextView.setText(LONG_TEXT);
-        });
-        mInstrumentation.waitForIdleSync();
+        // maxline set, no ellipsize, text with three lines
+        final TextView tvEllipsizeNone = new TextView(mActivity);
+        tvEllipsizeNone.setMaxLines(2);
+        tvEllipsizeNone.setLineSpacing(0, 1.5f);
+        tvEllipsizeNone.setText("a\na\na");
 
-        final int textWidth = (int) mTextView.getPaint().measureText(LONG_TEXT) / 2;
-        mTextView.setWidth(textWidth);
-        mSecondTextView.setWidth(textWidth);
+        // maxline set, ellipsize end, text with three lines
+        final TextView tvEllipsizeEnd = new TextView(mActivity);
+        tvEllipsizeEnd.setEllipsize(TruncateAt.END);
+        tvEllipsizeEnd.setMaxLines(2);
+        tvEllipsizeEnd.setLineSpacing(0, 1.5f);
+        tvEllipsizeEnd.setText("a\na\na");
 
         final FrameLayout layout = new FrameLayout(mActivity);
         ViewGroup.LayoutParams layoutParams = new ViewGroup.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.MATCH_PARENT);
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT);
 
-        layout.addView(mTextView, layoutParams);
-        layout.addView(mSecondTextView, layoutParams);
-        layout.setLayoutParams(layoutParams);
+        layout.addView(tvNoMaxLine, layoutParams);
+        layout.addView(tvEllipsizeEnd, layoutParams);
+        layout.addView(tvEllipsizeNone, layoutParams);
 
-        mActivityRule.runOnUiThread(() -> mActivity.setContentView(layout));
+        mActivityRule.runOnUiThread(() ->  mActivity.setContentView(layout,
+                new ViewGroup.LayoutParams(
+                        ViewGroup.LayoutParams.MATCH_PARENT,
+                        ViewGroup.LayoutParams.MATCH_PARENT)));
         mInstrumentation.waitForIdleSync();
 
-        for (int i = 0; i < mTextView.getLineCount(); i++) {
-            assertEquals("Ellipsized and non ellipsized multi line texts should have the same " +
-                            "baseline for line " + i,
-                    mTextView.getLayout().getLineBaseline(i),
-                    mSecondTextView.getLayout().getLineBaseline(i));
+        assertEquals(tvEllipsizeEnd.getHeight(), tvEllipsizeNone.getHeight());
+
+        assertEquals(tvEllipsizeEnd.getHeight(), tvNoMaxLine.getHeight());
+
+        for (int i = 0; i < tvEllipsizeEnd.getLineCount(); i++) {
+            assertEquals("Should have the same baseline for line " + i,
+                    tvEllipsizeEnd.getLayout().getLineBaseline(i),
+                    tvEllipsizeNone.getLayout().getLineBaseline(i));
+
+            assertEquals("Should have the same baseline for line " + i,
+                    tvEllipsizeEnd.getLayout().getLineBaseline(i),
+                    tvNoMaxLine.getLayout().getLineBaseline(i));
         }
+    }
+
+    @Test
+    public void testEllipsizeAndMaxLinesForHint() throws Throwable {
+        // no maxline, no ellipsize, hint with two lines
+        final TextView tvTwoLines = new TextView(mActivity);
+        tvTwoLines.setLineSpacing(0, 1.5f);
+        tvTwoLines.setHint("a\na");
+
+        // no maxline, no ellipsize, hint with three lines
+        final TextView tvThreeLines = new TextView(mActivity);
+        tvThreeLines.setLineSpacing(0, 1.5f);
+        tvThreeLines.setHint("a\na\na");
+
+        // maxline set, ellipsize end, hint with three lines
+        final TextView tvEllipsizeEnd = new TextView(mActivity);
+        tvEllipsizeEnd.setEllipsize(TruncateAt.END);
+        tvEllipsizeEnd.setMaxLines(2);
+        tvEllipsizeEnd.setLineSpacing(0, 1.5f);
+        tvEllipsizeEnd.setHint("a\na\na");
+
+        // maxline set, no ellipsize, hint with three lines
+        final TextView tvEllipsizeNone = new TextView(mActivity);
+        tvEllipsizeNone.setMaxLines(2);
+        tvEllipsizeNone.setLineSpacing(0, 1.5f);
+        tvEllipsizeNone.setHint("a\na\na");
+
+        final FrameLayout layout = new FrameLayout(mActivity);
+        ViewGroup.LayoutParams layoutParams = new ViewGroup.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT);
+
+        layout.addView(tvTwoLines, layoutParams);
+        layout.addView(tvEllipsizeEnd, layoutParams);
+        layout.addView(tvEllipsizeNone, layoutParams);
+        layout.addView(tvThreeLines, layoutParams);
+
+        mActivityRule.runOnUiThread(() ->  mActivity.setContentView(layout,
+                new ViewGroup.LayoutParams(
+                        ViewGroup.LayoutParams.MATCH_PARENT,
+                        ViewGroup.LayoutParams.MATCH_PARENT)));
+        mInstrumentation.waitForIdleSync();
+
+        assertEquals("Non-ellipsized hint should not crop text at maxLines",
+                tvThreeLines.getHeight(), tvEllipsizeNone.getHeight());
+
+        assertEquals("Ellipsized hint should crop text at maxLines",
+                tvTwoLines.getHeight(), tvEllipsizeEnd.getHeight());
     }
 
     @Test
@@ -2936,6 +3007,7 @@ public class TextViewTest {
         assertTrue("TextView should have larger width after a longer text is set",
                 mTextView.getWidth() > oldWidth);
     }
+
 
     @UiThreadTest
     @Test
