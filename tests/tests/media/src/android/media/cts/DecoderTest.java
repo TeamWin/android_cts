@@ -47,6 +47,7 @@ import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.util.zip.CRC32;
 import java.util.concurrent.TimeUnit;
@@ -1930,9 +1931,9 @@ public class DecoderTest extends MediaPlayerTestBase {
                 testFd.getLength());
         extractor.selectTrack(0);
 
-        int numframes = decodeWithChecks(extractor, CHECKFLAG_RETURN_OUTPUTFRAMES
-                | CHECKFLAG_COMPAREINPUTOUTPUTPTSMATCH, resetMode, s,
-                eosframe, null, null);
+        int numframes = decodeWithChecks(null /* decoderName */, extractor,
+                CHECKFLAG_RETURN_OUTPUTFRAMES | CHECKFLAG_COMPAREINPUTOUTPUTPTSMATCH,
+                resetMode, s, eosframe, null, null);
 
         extractor.release();
         testFd.close();
@@ -1949,7 +1950,8 @@ public class DecoderTest extends MediaPlayerTestBase {
         extractor.selectTrack(0);
 
         // fails CHECKFLAG_COMPAREINPUTOUTPUTPTSMATCH
-        int outputSize = decodeWithChecks(extractor, CHECKFLAG_RETURN_OUTPUTSIZE, resetMode, null,
+        int outputSize = decodeWithChecks(null /* decoderName */, extractor,
+                CHECKFLAG_RETURN_OUTPUTSIZE, resetMode, null,
                 eosframe, null, null);
 
         extractor.release();
@@ -1957,10 +1959,16 @@ public class DecoderTest extends MediaPlayerTestBase {
         return outputSize;
     }
 
+    /*
+    * Test all decoders' EOS behavior.
+    */
     private void testEOSBehavior(int movie, int stopatsample) throws Exception {
         testEOSBehavior(movie, new int[] {stopatsample});
     }
 
+    /*
+    * Test all decoders' EOS behavior.
+    */
     private void testEOSBehavior(int movie, int[] stopAtSample) throws Exception {
         Surface s = null;
         AssetFileDescriptor testFd = mResources.openRawResourceFd(movie);
@@ -1969,42 +1977,45 @@ public class DecoderTest extends MediaPlayerTestBase {
                 testFd.getLength());
         extractor.selectTrack(0); // consider variable looping on track
         MediaFormat format = extractor.getTrackFormat(0);
-        if (!MediaUtils.checkDecoderForFormat(format)) {
-            return; // skip
-        }
-        List<Long> outputChecksums = new ArrayList<Long>();
-        List<Long> outputTimestamps = new ArrayList<Long>();
-        Arrays.sort(stopAtSample);
-        int last = stopAtSample.length - 1;
 
-        // decode reference (longest sequence to stop at + 100) and
-        // store checksums/pts in outputChecksums and outputTimestamps
-        // (will fail CHECKFLAG_COMPAREINPUTOUTPUTSAMPLEMATCH)
-        decodeWithChecks(extractor,
-                CHECKFLAG_SETCHECKSUM | CHECKFLAG_SETPTS | CHECKFLAG_COMPAREINPUTOUTPUTPTSMATCH,
-                RESET_MODE_NONE, s,
-                stopAtSample[last] + 100, outputChecksums, outputTimestamps);
+        Collection<String> decoderNames = MediaUtils.getDecodersForFormat(format);
+        for (String decoderName: decoderNames) {
+            List<Long> outputChecksums = new ArrayList<Long>();
+            List<Long> outputTimestamps = new ArrayList<Long>();
+            Arrays.sort(stopAtSample);
+            int last = stopAtSample.length - 1;
 
-        // decode stopAtSample requests in reverse order (longest to
-        // shortest) and compare to reference checksums/pts in
-        // outputChecksums and outputTimestamps
-        for (int i = last; i >= 0; --i) {
-            if (true) { // reposition extractor
-                extractor.seekTo(0, MediaExtractor.SEEK_TO_NEXT_SYNC);
-            } else { // create new extractor
-                extractor.release();
-                extractor = new MediaExtractor();
-                extractor.setDataSource(testFd.getFileDescriptor(),
-                        testFd.getStartOffset(), testFd.getLength());
-                extractor.selectTrack(0); // consider variable looping on track
-            }
-            decodeWithChecks(extractor,
-                    CHECKFLAG_COMPARECHECKSUM | CHECKFLAG_COMPAREPTS
-                    | CHECKFLAG_COMPAREINPUTOUTPUTSAMPLEMATCH
-                    | CHECKFLAG_COMPAREINPUTOUTPUTPTSMATCH,
+            // decode reference (longest sequence to stop at + 100) and
+            // store checksums/pts in outputChecksums and outputTimestamps
+            // (will fail CHECKFLAG_COMPAREINPUTOUTPUTSAMPLEMATCH)
+            decodeWithChecks(decoderName, extractor,
+                    CHECKFLAG_SETCHECKSUM | CHECKFLAG_SETPTS | CHECKFLAG_COMPAREINPUTOUTPUTPTSMATCH,
                     RESET_MODE_NONE, s,
-                    stopAtSample[i], outputChecksums, outputTimestamps);
+                    stopAtSample[last] + 100, outputChecksums, outputTimestamps);
+
+            // decode stopAtSample requests in reverse order (longest to
+            // shortest) and compare to reference checksums/pts in
+            // outputChecksums and outputTimestamps
+            for (int i = last; i >= 0; --i) {
+                if (true) { // reposition extractor
+                    extractor.seekTo(0, MediaExtractor.SEEK_TO_NEXT_SYNC);
+                } else { // create new extractor
+                    extractor.release();
+                    extractor = new MediaExtractor();
+                    extractor.setDataSource(testFd.getFileDescriptor(),
+                            testFd.getStartOffset(), testFd.getLength());
+                    extractor.selectTrack(0); // consider variable looping on track
+                }
+                decodeWithChecks(decoderName, extractor,
+                        CHECKFLAG_COMPARECHECKSUM | CHECKFLAG_COMPAREPTS
+                        | CHECKFLAG_COMPAREINPUTOUTPUTSAMPLEMATCH
+                        | CHECKFLAG_COMPAREINPUTOUTPUTPTSMATCH,
+                        RESET_MODE_NONE, s,
+                        stopAtSample[i], outputChecksums, outputTimestamps);
+            }
+            extractor.seekTo(0, MediaExtractor.SEEK_TO_NEXT_SYNC);
         }
+
         extractor.release();
         testFd.close();
     }
@@ -2020,10 +2031,13 @@ public class DecoderTest extends MediaPlayerTestBase {
 
     /**
      * Decodes frames with parameterized checks and return values.
+     * If decoderName is provided, mediacodec will create that decoder. Otherwise,
+     * mediacodec will use the default decoder provided by platform.
      * The integer return can be selected through the checkFlags variable.
      */
-    private static int decodeWithChecks(MediaExtractor extractor, int checkFlags, int resetMode,
-            Surface surface, int stopAtSample,
+    private static int decodeWithChecks(
+            String decoderName, MediaExtractor extractor,
+            int checkFlags, int resetMode, Surface surface, int stopAtSample,
             List<Long> outputChecksums, List<Long> outputTimestamps)
             throws Exception {
         int trackIndex = extractor.getSampleTrackIndex();
@@ -2033,7 +2047,8 @@ public class DecoderTest extends MediaPlayerTestBase {
         ByteBuffer[] codecInputBuffers;
         ByteBuffer[] codecOutputBuffers;
 
-        MediaCodec codec = createDecoder(format);
+        MediaCodec codec =
+                decoderName == null ? createDecoder(format) : MediaCodec.createByCodecName(decoderName);
         Log.i("@@@@", "using codec: " + codec.getName());
         codec.configure(format, surface, null /* crypto */, 0 /* flags */);
         codec.start();
@@ -2253,37 +2268,42 @@ public class DecoderTest extends MediaPlayerTestBase {
 
     public void testEOSBehaviorH264() throws Exception {
         // this video has an I frame at 44
-        testEOSBehavior(R.raw.video_480x360_mp4_h264_1000kbps_25fps_aac_stereo_128kbps_44100hz,
-                new int[] {44, 45, 55});
+        testEOSBehavior(
+                R.raw.video_480x360_mp4_h264_1000kbps_25fps_aac_stereo_128kbps_44100hz,
+                new int[] {1, 44, 45, 55});
     }
     public void testEOSBehaviorHEVC() throws Exception {
-        testEOSBehavior(R.raw.video_480x360_mp4_hevc_650kbps_30fps_aac_stereo_128kbps_48000hz, 17);
-        testEOSBehavior(R.raw.video_480x360_mp4_hevc_650kbps_30fps_aac_stereo_128kbps_48000hz, 23);
-        testEOSBehavior(R.raw.video_480x360_mp4_hevc_650kbps_30fps_aac_stereo_128kbps_48000hz, 49);
+        testEOSBehavior(
+            R.raw.video_480x360_mp4_hevc_650kbps_30fps_aac_stereo_128kbps_48000hz,
+            new int[] {1, 17, 23, 49});
     }
 
     public void testEOSBehaviorH263() throws Exception {
         // this video has an I frame every 12 frames.
-        testEOSBehavior(R.raw.video_176x144_3gp_h263_300kbps_12fps_aac_stereo_128kbps_22050hz,
-                new int[] {24, 25, 48, 50});
+        testEOSBehavior(
+                R.raw.video_176x144_3gp_h263_300kbps_12fps_aac_stereo_128kbps_22050hz,
+                new int[] {1, 24, 25, 48, 50});
     }
 
     public void testEOSBehaviorMpeg4() throws Exception {
         // this video has an I frame every 12 frames
-        testEOSBehavior(R.raw.video_480x360_mp4_mpeg4_860kbps_25fps_aac_stereo_128kbps_44100hz,
-                new int[] {24, 25, 48, 50, 2});
+        testEOSBehavior(
+                R.raw.video_480x360_mp4_mpeg4_860kbps_25fps_aac_stereo_128kbps_44100hz,
+                new int[] {1, 24, 25, 48, 50, 2});
     }
 
     public void testEOSBehaviorVP8() throws Exception {
         // this video has an I frame at 46
-        testEOSBehavior(R.raw.video_480x360_webm_vp8_333kbps_25fps_vorbis_stereo_128kbps_48000hz,
-                new int[] {46, 47, 57, 45});
+        testEOSBehavior(
+                R.raw.video_480x360_webm_vp8_333kbps_25fps_vorbis_stereo_128kbps_48000hz,
+                new int[] {1, 46, 47, 57, 45});
     }
 
     public void testEOSBehaviorVP9() throws Exception {
         // this video has an I frame at 44
-        testEOSBehavior(R.raw.video_480x360_webm_vp9_333kbps_25fps_vorbis_stereo_128kbps_48000hz,
-                new int[] {44, 45, 55, 43});
+        testEOSBehavior(
+                R.raw.video_480x360_webm_vp9_333kbps_25fps_vorbis_stereo_128kbps_48000hz,
+                new int[] {1, 44, 45, 55, 43});
     }
 
     /* from EncodeDecodeTest */
