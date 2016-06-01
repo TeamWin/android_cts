@@ -140,7 +140,7 @@ public class ResultHandlerTest extends TestCase {
     }
 
     public void testSerialization() throws Exception {
-        IInvocationResult result = new InvocationResult(resultDir);
+        IInvocationResult result = new InvocationResult();
         result.setStartTime(START_MS);
         result.setTestPlan(SUITE_PLAN);
         result.addDeviceSerial(DEVICE_A);
@@ -227,8 +227,6 @@ public class ResultHandlerTest extends TestCase {
     private void checkResult(List<IInvocationResult> results, File resultDir) throws Exception {
         assertEquals("Expected 1 result", 1, results.size());
         IInvocationResult result = results.get(0);
-        assertEquals("Incorrect result dir", resultDir.getAbsolutePath(),
-                result.getResultDir().getAbsolutePath());
         assertEquals("Expected 2 passes", 2, result.countResults(TestStatus.PASS));
         assertEquals("Expected 1 failure", 1, result.countResults(TestStatus.FAIL));
         assertEquals("Expected 1 not executed", 1, result.countResults(TestStatus.NOT_EXECUTED));

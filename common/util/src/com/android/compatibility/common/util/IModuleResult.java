@@ -58,4 +58,8 @@ public interface IModuleResult extends Comparable<IModuleResult> {
      */
     int countResults(TestStatus status);
 
+    /**
+     * Merge the module results from otherModuleResult into this moduleResult.
+     */
+    void mergeFrom(IModuleResult otherModuleResult);
 }

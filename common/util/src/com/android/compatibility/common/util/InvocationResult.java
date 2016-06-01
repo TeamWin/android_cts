@@ -15,7 +15,6 @@
  */
 package com.android.compatibility.common.util;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -35,23 +34,6 @@ public class InvocationResult implements IInvocationResult {
     private Map<String, String> mBuildInfo = new HashMap<>();
     private Set<String> mSerials = new HashSet<>();
     private String mTestPlan;
-    private File mResultDir;
-
-    /**
-     * @param resultDir
-     */
-    public InvocationResult(File resultDir) {
-        this(System.currentTimeMillis(), resultDir);
-    }
-
-    /**
-     * @param timestamp
-     * @param resultDir
-     */
-    public InvocationResult(long timestamp, File resultDir) {
-        setStartTime(timestamp);
-        mResultDir = resultDir;
-    }
 
     /**
      * {@inheritDoc}
@@ -86,6 +68,16 @@ public class InvocationResult implements IInvocationResult {
             mModuleResults.put(id, moduleResult);
         }
         return moduleResult;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void mergeModuleResult(IModuleResult moduleResult) {
+        // Merge the moduleResult with any existing module result
+        IModuleResult existingModuleResult = getOrCreateModule(moduleResult.getId());
+        existingModuleResult.mergeFrom(moduleResult);
     }
 
     /**
@@ -151,13 +143,4 @@ public class InvocationResult implements IInvocationResult {
     public Set<String> getDeviceSerials() {
         return mSerials;
     }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public File getResultDir() {
-        return mResultDir;
-    }
-
 }
