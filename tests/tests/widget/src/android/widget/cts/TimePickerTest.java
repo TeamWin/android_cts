@@ -268,7 +268,7 @@ public class TimePickerTest extends ActivityInstrumentationTestCase2<CtsActivity
 
         private int mNotifiedHourOfDay;
 
-        private int mNotifiedMinute;;
+        private int mNotifiedMinute;
 
         public boolean hasCalledOnTimeChanged() {
             return mHasCalledOnTimeChanged;
