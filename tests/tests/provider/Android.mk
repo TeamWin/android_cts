@@ -33,7 +33,7 @@ LOCAL_CTS_MODULE_CONFIG := $(LOCAL_PATH)/Old$(CTS_MODULE_TEST_CONFIG)
 LOCAL_JAVA_LIBRARIES := android.test.runner telephony-common
 
 LOCAL_STATIC_JAVA_LIBRARIES := \
-    ctsdeviceutil ctstestrunner platform-test-annotations
+    ctsdeviceutil ctstestrunner
 
 LOCAL_JNI_SHARED_LIBRARIES := libcts_jni libnativehelper_compat_libc++
 
