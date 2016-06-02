@@ -591,7 +591,7 @@ public class DngCreatorTest extends Camera2AndroidTestCase {
                 Log.e(TAG, "Failed RAW patch file for camera " + deviceId + " saved to " +
                         rawFilePath);
 
-                fail("Camera " + mCamera.getId() + ": RAW and JPEG image at  for the same " +
+                fail("Camera " + deviceId + ": RAW and JPEG image at  for the same " +
                         "frame are not similar, center patches have difference metric of " +
                         difference);
             } finally {
