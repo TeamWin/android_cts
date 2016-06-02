@@ -89,4 +89,9 @@ public interface IModuleRepo {
      * @return the modules which have token and have not been assigned to a device.
      */
     List<IModuleDef> getTokenModules();
+
+    /**
+     * @return An array of all module ids in the repo.
+     */
+    String[] getModuleIds();
 }

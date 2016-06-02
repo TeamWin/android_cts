@@ -175,6 +175,27 @@ public class ModuleRepo implements IModuleRepo {
      * {@inheritDoc}
      */
     @Override
+    public String[] getModuleIds() {
+        Set<String> moduleIdSet = new HashSet<>();
+        for (IModuleDef moduleDef : mSmallModules) {
+            moduleIdSet.add(moduleDef.getId());
+        }
+        for (IModuleDef moduleDef : mMediumModules) {
+            moduleIdSet.add(moduleDef.getId());
+        }
+        for (IModuleDef moduleDef : mLargeModules) {
+            moduleIdSet.add(moduleDef.getId());
+        }
+        for (IModuleDef moduleDef : mTokenModules) {
+            moduleIdSet.add(moduleDef.getId());
+        }
+        return moduleIdSet.toArray(new String[moduleIdSet.size()]);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
     public boolean isInitialized() {
         return mInitialized;
     }
