@@ -30,7 +30,10 @@ def main():
     NAME = os.path.basename(__file__).split(".")[0]
 
     # Each raw image
-    RATIO_THRESHOLD = 0.05
+    RATIO_THRESHOLD = 0.1
+    # Waive the check if raw pixel value is below this level (signal too small
+    # that small black level error converts to huge error in percentage)
+    RAW_PIXEL_VAL_THRESHOLD = 0.03
 
     with its.device.ItsSession() as cam:
         props = cam.get_camera_properties()
@@ -135,6 +138,8 @@ def main():
                         raw_rgb_means[step - 1][rgb],
                         raw_rgb_means[step][rgb],
                         ratio, raw_thres_min, raw_thres_max)
+                if (raw_rgb_means[step][rgb] <= RAW_PIXEL_VAL_THRESHOLD):
+                    continue
                 assert(raw_thres_min < ratio < raw_thres_max)
 
         # Test that each yuv step is about the same bright as their mean
@@ -142,9 +147,12 @@ def main():
         yuv_thres_max = 1 + RATIO_THRESHOLD
         for rgb in range(3):
             vals = [val[rgb] for val in yuv_rgb_means]
+            for step in range(len(reqs)):
+                if (raw_rgb_means[step][rgb] <= RAW_PIXEL_VAL_THRESHOLD):
+                    vals = vals[:step]
             mean = sum(vals) / len(vals)
             print "%s channel vals %s mean %f"%(rgb_str[rgb], vals, mean)
-            for step in range(len(reqs)):
+            for step in range(len(vals)):
                 ratio = vals[step] / mean
                 assert(yuv_thres_min < ratio < yuv_thres_max)
 
