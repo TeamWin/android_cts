@@ -58,6 +58,10 @@ class ItsSession(object):
 
     # Seconds timeout on each socket operation.
     SOCK_TIMEOUT = 10.0
+    # Additional timeout in seconds when ITS service is doing more complicated
+    # operations, for example: issuing warmup requests before actual capture.
+    EXTRA_SOCK_TIMEOUT = 5.0
+
     SEC_TO_NSEC = 1000*1000*1000.0
 
     PACKAGE = 'com.android.cts.verifier.camera.its'
@@ -674,6 +678,8 @@ class ItsSession(object):
 
         extended_timeout = longest_exp_time / self.SEC_TO_NSEC + \
                 self.SOCK_TIMEOUT
+        if repeat_request:
+            extended_timeout += self.EXTRA_SOCK_TIMEOUT
         self.sock.settimeout(extended_timeout)
 
         print "Capturing %d frame%s with %d format%s [%s]" % (
