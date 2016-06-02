@@ -17,7 +17,7 @@ LOCAL_PATH:= $(call my-dir)
 
 include $(CLEAR_VARS)
 
-LOCAL_STATIC_JAVA_LIBRARIES := ctstestrunner platform-test-annotations
+LOCAL_STATIC_JAVA_LIBRARIES := ctstestrunner
 
 LOCAL_SRC_FILES := $(call all-java-files-under, src)
 

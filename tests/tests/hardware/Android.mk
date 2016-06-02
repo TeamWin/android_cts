@@ -24,8 +24,9 @@ LOCAL_MODULE_TAGS := tests
 
 LOCAL_MODULE_PATH := $(TARGET_OUT_DATA_APPS)
 
-LOCAL_STATIC_JAVA_LIBRARIES := \
-    ctsdeviceutil compatibility-device-util platform-test-annotations
+LOCAL_STATIC_JAVA_LIBRARIES := ctsdeviceutil
+
+LOCAL_JAVA_LIBRARIES := platform-test-annotations
 
 LOCAL_SDK_VERSION := current
 
@@ -59,8 +60,7 @@ LOCAL_STATIC_JAVA_LIBRARIES := \
     compatibility-device-util \
     ctstestrunner \
     mockito-target \
-    android-ex-camera2 \
-    platform-test-annotations
+    android-ex-camera2
 
 LOCAL_SRC_FILES := $(call all-java-files-under, src) $(call all-renderscript-files-under, src)
 
