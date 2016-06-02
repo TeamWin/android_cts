@@ -187,11 +187,9 @@ public class EncoderTest extends AndroidTestCase {
             57821391502855l,  // fail @ 32000 in zero-lead mode
     };
 
-    private Random mRandom = new Random(1);
-
     private int queueInputBuffer(
             MediaCodec codec, ByteBuffer[] inputBuffers, int index,
-            InputStream istream, int mode, long timeUs) {
+            InputStream istream, int mode, long timeUs, Random random) {
         ByteBuffer buffer = inputBuffers[index];
         buffer.rewind();
         int size = buffer.limit();
@@ -218,8 +216,8 @@ public class EncoderTest extends AndroidTestCase {
             }
             while (true) {
                 try {
-                    int next = mRandom.nextInt();
-                    buffer.putInt(mRandom.nextInt());
+                    int next = random.nextInt();
+                    buffer.putInt(random.nextInt());
                 } catch (BufferOverflowException ex) {
                     break;
                 }
@@ -295,8 +293,9 @@ public class EncoderTest extends AndroidTestCase {
         if (sSaveResults) {
             try {
                 String outFile = "/data/local/tmp/transcoded-" + componentName +
-                        "-" + sampleRate + "-" + channelCount + "-" + outBitrate +
-                        "-" + mode + "-" + startSeed + ".mp4";
+                        "-" + sampleRate + "Hz-" + channelCount + "ch-" + outBitrate +
+                        "bps-" + mode + "-" + resid + "-" + startSeed + "-" +
+                        (android.os.Process.is64Bit() ? "64bit" : "32bit") + ".mp4";
                 new File("outFile").delete();
                 muxer = new MediaMuxer(outFile, MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4);
                 // The track can't be added until we have the codec specific data
@@ -310,7 +309,7 @@ public class EncoderTest extends AndroidTestCase {
             istream = mContext.getResources().openRawResource(resid);
         }
 
-        mRandom.setSeed(startSeed);
+        Random random = new Random(startSeed);
         MediaCodec codec;
         try {
             codec = MediaCodec.createByCodecName(componentName);
@@ -360,7 +359,7 @@ public class EncoderTest extends AndroidTestCase {
                         doneSubmittingInput = true;
                     } else {
                         int size = queueInputBuffer(
-                                codec, codecInputBuffers, index, istream, mode, timeUs);
+                                codec, codecInputBuffers, index, istream, mode, timeUs, random);
 
                         numBytesSubmitted += size;
 
