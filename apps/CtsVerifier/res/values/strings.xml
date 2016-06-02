@@ -979,7 +979,7 @@
         \n\n4. Run the full ITS test suite on all possible camera Ids.
         (cd CameraITS; python tools/run_all_tests.py).  Once all
         of the tests have been run, the \'PASS\' button will be enabled if all of the tests have
-        succeeded.  Please note that these tests can take 20+ minutes to run.
+        succeeded. Please note that these tests can take more than 2 hours to run on some devices.
     </string>
     <string name="no_camera_manager">
         No camera manager exists!  This test device is in a bad state.
