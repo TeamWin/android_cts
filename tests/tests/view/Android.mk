@@ -29,7 +29,7 @@ LOCAL_MULTILIB := both
 LOCAL_JAVA_LIBRARIES := android.test.runner
 
 LOCAL_STATIC_JAVA_LIBRARIES := \
-    ctsdeviceutil ctstestrunner mockito-target platform-test-annotations
+    ctsdeviceutil ctstestrunner mockito-target
 
 LOCAL_JNI_SHARED_LIBRARIES := libctsview_jni libnativehelper_compat_libc++
 
