@@ -2087,7 +2087,7 @@ public class StaticMetadata {
 
         checkTrueForKey(key, " value is out of range ",
                 facing >= CameraCharacteristics.LENS_FACING_FRONT &&
-                facing <= CameraCharacteristics.LENS_FACING_BACK);
+                facing <= CameraCharacteristics.LENS_FACING_EXTERNAL);
         return facing;
     }
 
