@@ -43,6 +43,10 @@ public class ConsoleReporter extends StubTestInvocationListener implements IShar
     private String mDeviceSerial = UNKNOWN_DEVICE;
     private boolean mTestFailed;
     private String mModuleId;
+    private int mCurrentTestNum;
+    private int mTotalTestsInModule;
+    private int mPassedTests;
+    private int mFailedTests;
 
     /**
      * {@inheritDoc}
@@ -53,7 +57,7 @@ public class ConsoleReporter extends StubTestInvocationListener implements IShar
             CLog.w("buildInfo should not be null");
             return;
         }
-
+        // Escape any "%" signs in the device serial.
         mDeviceSerial = buildInfo.getDeviceSerial().replace("%", "%%");
     }
 
@@ -62,8 +66,21 @@ public class ConsoleReporter extends StubTestInvocationListener implements IShar
      */
     @Override
     public void testRunStarted(String id, int numTests) {
-        mModuleId = id;
-        log("Starting %s with %d test%s", id, numTests, (numTests > 1) ? "s" : "");
+        if (mModuleId == null || !mModuleId.equals(id)) {
+            mModuleId = id;
+            mTotalTestsInModule = numTests;
+            // Reset counters
+            mCurrentTestNum = 0;
+            mPassedTests = 0;
+            mFailedTests = 0;
+            mTestFailed = false;
+            logMessage("Starting %s with %d test%s",
+                    id, mTotalTestsInModule, (mTotalTestsInModule > 1) ? "s" : "");
+        } else {
+            mTotalTestsInModule += numTests;
+            logMessage("Continuing %s with %d test%s",
+                    id, mTotalTestsInModule, (mTotalTestsInModule > 1) ? "s" : "");
+        }
     }
 
     /**
@@ -72,6 +89,7 @@ public class ConsoleReporter extends StubTestInvocationListener implements IShar
     @Override
     public void testStarted(TestIdentifier test) {
         mTestFailed = false;
+        mCurrentTestNum++;
     }
 
     /**
@@ -79,8 +97,9 @@ public class ConsoleReporter extends StubTestInvocationListener implements IShar
      */
     @Override
     public void testFailed(TestIdentifier test, String trace) {
-        log("%s fail: %s", test, trace);
+        logProgress("%s fail: %s", test, trace);
         mTestFailed = true;
+        mFailedTests++;
     }
 
     /**
@@ -88,7 +107,7 @@ public class ConsoleReporter extends StubTestInvocationListener implements IShar
      */
     @Override
     public void testIgnored(TestIdentifier test) {
-        log("%s ignore", test);
+        logProgress("%s ignore", test);
     }
 
     /**
@@ -96,7 +115,7 @@ public class ConsoleReporter extends StubTestInvocationListener implements IShar
      */
     @Override
     public void testAssumptionFailure(TestIdentifier test, String trace) {
-        log("%s failed assumption: %s", test, trace);
+        logProgress("%s failed assumption: %s", test, trace);
     }
 
     /**
@@ -105,7 +124,8 @@ public class ConsoleReporter extends StubTestInvocationListener implements IShar
     @Override
     public void testEnded(TestIdentifier test, Map<String, String> testMetrics) {
         if (!mTestFailed) {
-            log("%s pass", test);
+            logProgress("%s pass", test);
+            mPassedTests++;
         }
     }
 
@@ -114,7 +134,24 @@ public class ConsoleReporter extends StubTestInvocationListener implements IShar
      */
     @Override
     public void testRunFailed(String errorMessage) {
-        log(errorMessage);
+        logMessage(errorMessage);
+    }
+
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void testRunEnded(long elapsedTime, Map<String, String> metrics) {
+        int notExecuted = mTotalTestsInModule - mCurrentTestNum;
+        String status = notExecuted > 0 ? "failed" : "completed";
+        logMessage("%s %s in %s. %d passed, %d failed, %d not executed",
+            mModuleId,
+            status,
+            TimeUtil.formatElapsedTime(elapsedTime),
+            mPassedTests,
+            mFailedTests,
+            notExecuted);
     }
 
     /**
@@ -122,16 +159,29 @@ public class ConsoleReporter extends StubTestInvocationListener implements IShar
      */
     @Override
     public void testRunStopped(long elapsedTime) {
-        log("%s stopped (%s)", mModuleId, TimeUtil.formatElapsedTime(elapsedTime));
+        logMessage("%s stopped (%s)", mModuleId, TimeUtil.formatElapsedTime(elapsedTime));
+    }
+
+    /**
+     * Print out message with test execution status.
+     */
+    private void logProgress(String format, Object... args) {
+        format = String.format("[%s %s %s] %s", progress(), mModuleId, mDeviceSerial, format);
+        log(format, args);
+    }
+
+    /**
+     * Print out message to the console
+     */
+    private void logMessage(String format, Object... args) {
+        format = String.format("[%s] %s", mDeviceSerial, format);
+        log(format, args);
     }
 
     /**
      * Print out to the console or log silently when mQuietOutput is true.
      */
     private void log(String format, Object... args) {
-        // Escape any "%" signs in the device serial.
-        format = String.format("[%s] %s", mDeviceSerial, format);
-
         if (mQuietOutput) {
             CLog.i(format, args);
         } else {
@@ -147,5 +197,40 @@ public class ConsoleReporter extends StubTestInvocationListener implements IShar
         ConsoleReporter clone = new ConsoleReporter();
         OptionCopier.copyOptionsNoThrow(this, clone);
         return clone;
+    }
+
+    /**
+     * Return a string containing the percentage complete of module test execution.
+     */
+    private String progress() {
+        return String.format("%d/%d", mCurrentTestNum, mTotalTestsInModule);
+    }
+
+    String getDeviceSerial() {
+        return mDeviceSerial;
+    }
+
+    boolean getTestFailed() {
+        return mTestFailed;
+    }
+
+    String getModuleId() {
+        return mModuleId;
+    }
+
+    int getCurrentTestNum() {
+        return mCurrentTestNum;
+    }
+
+    int getTotalTestsInModule() {
+        return mTotalTestsInModule;
+    }
+
+    int getPassedTests() {
+        return mPassedTests;
+    }
+
+    int getFailedTests() {
+        return mFailedTests;
     }
 }
