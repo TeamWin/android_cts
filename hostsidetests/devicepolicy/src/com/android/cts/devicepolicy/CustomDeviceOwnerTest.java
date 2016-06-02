@@ -58,6 +58,9 @@ public class CustomDeviceOwnerTest extends BaseDevicePolicyTest {
     private static final String PACKAGE_INSTALLER_CLEAR_DEVICE_OWNER_TEST_CLASS =
             PACKAGE_INSTALLER_PKG + ".ClearDeviceOwnerTest";
 
+    // Dequeue time of PACKAGE_ADDED intent for two test packages.
+    private static final int BROADCAST_WAIT_TIME_MILLIS = 10000; // 10 seconds
+
     @Override
     public void tearDown() throws Exception {
         if (mHasFeature) {
@@ -85,6 +88,9 @@ public class CustomDeviceOwnerTest extends BaseDevicePolicyTest {
 
             // Setting the device owner should send the owner changed broadcast.
             assertTrue(setDeviceOwner(DEVICE_OWNER_ADMIN_COMPONENT));
+
+            // Waiting for the broadcast idle state.
+            Thread.sleep(BROADCAST_WAIT_TIME_MILLIS);
 
             assertTrue(runDeviceTests(INTENT_RECEIVER_PKG, testClass,
                     "testOwnerChangedBroadcastReceived", 0));
