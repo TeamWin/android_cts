@@ -27,8 +27,7 @@ LOCAL_STATIC_JAVA_LIBRARIES := \
     ctsdeviceutil \
     ctsdeviceutillegacy \
     ctstestserver \
-    ctstestrunner \
-    platform-test-annotations
+    ctstestrunner
 
 LOCAL_SRC_FILES := $(call all-java-files-under, src)
 

@@ -26,8 +26,7 @@ LOCAL_STATIC_JAVA_LIBRARIES += \
     android-common \
     ctsdeviceutil \
     ctstestrunner \
-    platform-test-annotations \
-    android-support-test
+    platform-test-annotations
 
 LOCAL_JAVA_LIBRARIES := android.test.runner
 
