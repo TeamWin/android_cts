@@ -28,10 +28,13 @@ import com.android.tradefed.testtype.IAbi;
 import com.android.tradefed.testtype.IBuildReceiver;
 import com.android.tradefed.testtype.IRemoteTest;
 import com.android.tradefed.testtype.IShardableTest;
+import com.android.tradefed.util.FileUtil;
 import com.android.tradefed.util.TimeUtil;
 
 import java.io.File;
 import java.io.FilenameFilter;
+import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -63,6 +66,7 @@ public class ModuleRepo implements IModuleRepo {
     private int mMediumModulesPerShard;
     private int mLargeModulesPerShard;
     private int mModuleCount = 0;
+    private boolean mIsRetry = false;
     private Set<String> mSerials = new HashSet<>();
     private Map<String, Set<String>> mDeviceTokens = new HashMap<>();
     private Map<String, Map<String, String>> mTestArgs = new HashMap<>();
@@ -173,6 +177,11 @@ public class ModuleRepo implements IModuleRepo {
     @Override
     public boolean isInitialized() {
         return mInitialized;
+    }
+
+    @Override
+    public void setRetryMode(boolean isRetry) {
+        mIsRetry = isRetry;
     }
 
     /**
@@ -333,38 +342,93 @@ public class ModuleRepo implements IModuleRepo {
 
     private void addModuleDef(IModuleDef moduleDef) {
         String id = moduleDef.getId();
-        boolean includeModule = mIncludeAll;
-        for (TestFilter include : getFilter(mIncludeFilters, id)) {
-            String test = include.getTest();
-            if (test != null) {
-                // We're including a subset of tests
-                moduleDef.addIncludeFilter(test);
-            }
-            includeModule = true;
+        List<TestFilter> mdIncludes = getFilter(mIncludeFilters, id);
+        List<TestFilter> mdExcludes = getFilter(mExcludeFilters, id);
+        if ((!mIncludeAll && mdIncludes.isEmpty()) || containsModuleExclude(mdExcludes)) {
+            // if only including some modules, and no includes exist for this module, do not add
+            // this module. Or if an exclude applies to this entire module, do not add this module.
+            return;
         }
-        for (TestFilter exclude : getFilter(mExcludeFilters, id)) {
-            String test = exclude.getTest();
-            if (test != null) {
-                // Excluding a subset of tests, so keep module but give filter
-                moduleDef.addExcludeFilter(test);
-            } else {
-                // Excluding all tests in the module so just remove the whole thing
-                includeModule = false;
+        if (!mdIncludes.isEmpty()) {
+            addModuleIncludes(moduleDef, mdIncludes);
+        }
+        if (!mdExcludes.isEmpty()) {
+            addModuleExcludes(moduleDef, mdExcludes);
+        }
+
+        Set<String> tokens = moduleDef.getTokens();
+        if (tokens != null && !tokens.isEmpty()) {
+            mTokenModules.add(moduleDef);
+        } else if (moduleDef.getRuntimeHint() < SMALL_TEST) {
+            mSmallModules.add(moduleDef);
+        } else if (moduleDef.getRuntimeHint() < MEDIUM_TEST) {
+            mMediumModules.add(moduleDef);
+        } else {
+            mLargeModules.add(moduleDef);
+        }
+        mModuleCount++;
+    }
+
+    private void addModuleIncludes(IModuleDef moduleDef, List<TestFilter> includes) {
+        if (mIsRetry && moduleDef.isFileFilterReceiver()) {
+            File includeFile = createFilterFile(moduleDef.getName(), ".include", includes);
+            moduleDef.setIncludeTestFile(includeFile);
+        } else {
+            // add module includes one at a time
+            for (TestFilter include : includes) {
+                String test = include.getTest();
+                if (test != null) {
+                    moduleDef.addIncludeFilter(test);
+                }
             }
         }
-        if (includeModule) {
-            Set<String> tokens = moduleDef.getTokens();
-            if (tokens != null && !tokens.isEmpty()) {
-                mTokenModules.add(moduleDef);
-            } else if (moduleDef.getRuntimeHint() < SMALL_TEST) {
-                mSmallModules.add(moduleDef);
-            } else if (moduleDef.getRuntimeHint() < MEDIUM_TEST) {
-                mMediumModules.add(moduleDef);
-            } else {
-                mLargeModules.add(moduleDef);
+    }
+
+    private void addModuleExcludes(IModuleDef moduleDef, List<TestFilter> excludes) {
+        if (mIsRetry && moduleDef.isFileFilterReceiver()) {
+            File excludeFile = createFilterFile(moduleDef.getName(), ".exclude", excludes);
+            moduleDef.setExcludeTestFile(excludeFile);
+        } else {
+            // add module excludes one at a time
+            for (TestFilter exclude : excludes) {
+                moduleDef.addExcludeFilter(exclude.getTest());
             }
-            mModuleCount++;
         }
+    }
+
+    private File createFilterFile(String prefix, String suffix, List<TestFilter> filters) {
+        File filterFile = null;
+        PrintWriter out = null;
+        try {
+            filterFile = FileUtil.createTempFile(prefix, suffix);
+            out = new PrintWriter(filterFile);
+            for (TestFilter filter : filters) {
+                String filterTest = filter.getTest();
+                if (filterTest != null) {
+                    out.println(filterTest);
+                }
+            }
+            out.flush();
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to create filter file");
+        } finally {
+            if (out != null) {
+                out.close();
+            }
+        }
+        return filterFile;
+    }
+
+    /*
+     * Returns true iff one or more test filters in excludes apply to the entire module.
+     */
+    private boolean containsModuleExclude(Collection<TestFilter> excludes) {
+        for (TestFilter exclude : excludes) {
+            if (exclude.getTest() == null) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
