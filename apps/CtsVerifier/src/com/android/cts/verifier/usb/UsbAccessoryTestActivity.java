@@ -18,6 +18,7 @@ package com.android.cts.verifier.usb;
 
 import com.android.cts.verifier.PassFailButtons;
 import com.android.cts.verifier.R;
+import com.android.cts.verifier.TestResult;
 
 import android.app.AlertDialog;
 import android.app.Dialog;
@@ -33,6 +34,7 @@ import android.hardware.usb.UsbAccessory;
 import android.hardware.usb.UsbManager;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.Looper;
 import android.os.Message;
 import android.os.ParcelFileDescriptor;
 import android.util.Log;
@@ -54,7 +56,7 @@ import java.io.OutputStream;
  */
 public class UsbAccessoryTestActivity extends PassFailButtons.Activity {
 
-    private static final String TAG = UsbAccessoryTestActivity.class.getSimpleName();
+    private static final String TAG = "UsbAccessoryTest";
 
     private static final int FILE_DESCRIPTOR_PROBLEM_DIALOG_ID = 1;
     private static final int STATE_START = 0;
@@ -69,6 +71,7 @@ public class UsbAccessoryTestActivity extends PassFailButtons.Activity {
     private ArrayAdapter<String> mReceivedMessagesAdapter;
     private ArrayAdapter<String> mSentMessagesAdapter;
     private MessageHandler mHandler;
+    private Handler mMainHandler;
 
     private UsbManager mUsbManager;
     private PendingIntent mPermissionIntent;
@@ -81,9 +84,19 @@ public class UsbAccessoryTestActivity extends PassFailButtons.Activity {
     private UsbAccessory mAccessory;
     private ParcelFileDescriptor mFileDescriptor;
 
+    private Runnable mTimeoutRunnable = new Runnable() {
+        @Override
+        public void run() {
+            Toast.makeText(UsbAccessoryTestActivity.this,
+                    R.string.usb_reconnect_timeout, Toast.LENGTH_SHORT).show();
+            TestResult.setFailedResult(UsbAccessoryTestActivity.this, getTestId(), getTestDetails());
+        }
+    };
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        Log.d(TAG, "onCreate");
         // Test success only works properly if launched from TestListActivity
         String action = getIntent().getAction();
         if (ACTION_USB_PERMISSION.equals(action)
@@ -135,6 +148,8 @@ public class UsbAccessoryTestActivity extends PassFailButtons.Activity {
         mDisconnectDialog = builder
             .setMessage(R.string.usb_disconnect_message)
             .create();
+
+        mMainHandler = new Handler(Looper.getMainLooper());
     }
 
     private boolean hasUsbAccessorySupport() {
@@ -172,6 +187,7 @@ public class UsbAccessoryTestActivity extends PassFailButtons.Activity {
     class UsbReceiver extends BroadcastReceiver {
         @Override
         public void onReceive(Context context, Intent intent) {
+            Log.d(TAG, "Received broadcast: intent=" + intent);
             if (ACTION_USB_PERMISSION.equals(intent.getAction())) {
                 if (intent.getBooleanExtra(UsbManager.EXTRA_PERMISSION_GRANTED, false)) {
                     UsbAccessory accessory = intent.getParcelableExtra(UsbManager.EXTRA_ACCESSORY);
@@ -180,12 +196,14 @@ public class UsbAccessoryTestActivity extends PassFailButtons.Activity {
                     Log.i(TAG, "Permission denied...");
                 }
                 mPermissionRequestPending = false;
-            } else if (UsbManager.ACTION_USB_ACCESSORY_DETACHED.equals(intent.getAction())) {
+            } else if (mState == STATE_WAITING_FOR_RECONNECT &&
+                    UsbManager.ACTION_USB_ACCESSORY_DETACHED.equals(intent.getAction())) {
                 UsbAccessory accessory = intent.getParcelableExtra(UsbManager.EXTRA_ACCESSORY);
                 if (accessory.equals(mAccessory)) {
                     closeAccessory();
                     mDisconnectDialog.dismiss();
                     mConnectDialog.show();
+                    mMainHandler.postDelayed(mTimeoutRunnable, 10000 /* 10 seconds */);
                 }
             }
         }
@@ -193,6 +211,7 @@ public class UsbAccessoryTestActivity extends PassFailButtons.Activity {
 
     public void onNewIntent(Intent intent) {
         super.onNewIntent(intent);
+        Log.d(TAG, "onNewIntent: state=" + mState + ", intent=" + intent);
         if (UsbManager.ACTION_USB_ACCESSORY_ATTACHED.equals(intent.getAction())) {
             UsbAccessory accessory = intent.getParcelableExtra(UsbManager.EXTRA_ACCESSORY);
             openAccessory(accessory);
@@ -203,9 +222,9 @@ public class UsbAccessoryTestActivity extends PassFailButtons.Activity {
         mAccessory = accessory;
         mFileDescriptor = mUsbManager.openAccessory(accessory);
         if (mState == STATE_START) {
-            mState = STATE_CONNECTED;
+            setState(STATE_CONNECTED);
         } else if (mState == STATE_WAITING_FOR_RECONNECT) {
-            mState = STATE_RECONNECTED;
+            setState(STATE_RECONNECTED);
             mConnectDialog.dismiss();
         }
         if (mFileDescriptor != null) {
@@ -340,10 +359,11 @@ public class UsbAccessoryTestActivity extends PassFailButtons.Activity {
                     if (mState == STATE_RECONNECTED) {
                         showToast(R.string.usb_test_passed);
                         getPassButton().setEnabled(true);
-                        mState = STATE_PASSED;
+                        setState(STATE_PASSED);
+                        mMainHandler.removeCallbacks(mTimeoutRunnable);
                     } else if (mState == STATE_CONNECTED) {
                         mDisconnectDialog.show();
-                        mState = STATE_WAITING_FOR_RECONNECT;
+                        setState(STATE_WAITING_FOR_RECONNECT);
                     }
                     break;
 
@@ -372,6 +392,7 @@ public class UsbAccessoryTestActivity extends PassFailButtons.Activity {
     @Override
     protected void onResume() {
         super.onResume();
+        Log.d(TAG, "onResume: state=" + stateToString(mState));
         if (mState == STATE_START) {
             UsbAccessory[] accessories = mUsbManager.getAccessoryList();
             UsbAccessory accessory = accessories != null && accessories.length > 0
@@ -387,18 +408,19 @@ public class UsbAccessoryTestActivity extends PassFailButtons.Activity {
                     }
                 }
             }
-        } else if (mState != STATE_CONNECTED && mState != STATE_RECONNECTED) {
-            // Prevent the user from opening any dialogs to change the USB mode
-            closeAccessory();
-            setTestResultAndFinish(false);
-            Toast.makeText(this, R.string.usb_test_abort, Toast.LENGTH_SHORT).show();
-            mState = STATE_START;
         }
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        Log.d(TAG, "onPause: state=" + stateToString(mState));
     }
 
     @Override
     protected void onStop() {
         super.onStop();
+        Log.d(TAG, "onStop: state=" + stateToString(mState));
         closeAccessory();
     }
 
@@ -427,8 +449,26 @@ public class UsbAccessoryTestActivity extends PassFailButtons.Activity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        Log.d(TAG, "onDestroy");
         if (mUsbReceiver != null) {
             unregisterReceiver(mUsbReceiver);
+        }
+    }
+
+    private void setState(int newState) {
+        Log.d(TAG, "Transition: " + stateToString(mState) + " -> " + stateToString(newState));
+        mState = newState;
+    }
+
+
+    private static String stateToString(int state) {
+        switch (state) {
+            case STATE_START: return "START";
+            case STATE_CONNECTED: return "CONNECTED";
+            case STATE_WAITING_FOR_RECONNECT: return "WAITING_FOR_RECONNECT";
+            case STATE_RECONNECTED: return "RECONNECTED";
+            case STATE_PASSED: return "PASSED";
+            default: return "UNKNOWN";
         }
     }
 
