@@ -903,7 +903,7 @@
         \n\n4. Run the full ITS test suite on all possible camera Ids.
         (cd CameraITS; python tools/run_all_tests.py).  Once all
         of the tests have been run, the \'PASS\' button will be enabled if all of the tests have
-        succeeded.  Please note that these tests can take 20+ minutes to run.
+        succeeded. Please note that these tests can take more than 2 hours to run on some devices.
     </string>
     <string name="no_camera_manager">
         No camera manager exists!  This test device is in a bad state.
@@ -1768,7 +1768,7 @@ You should be prompted to select credentials; choose the ones you just installed
     <string name="provisioning_byod_location_mode_disable_instruction">
         This test verifies that the location updates can be disabled for the managed profile apps.\n
         1. Press the go button to go to the location settings page, set the location switch disabled.\n
-        2. Move your position a little bit, verify that no location updates toast come up and that the timeout message show up after around 15 seconds. 
+        2. Move your position a little bit, verify that no location updates toast come up and that the timeout message show up after around 15 seconds.
         Please wait until the timeout or location updates toast message shows up before going back to the cts-verifier tests.\n
         3. Go back to the cts-verifier tests using the back button, then mark the test accordingly.\n
     </string>
