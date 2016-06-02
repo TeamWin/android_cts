@@ -101,6 +101,7 @@ public class Camera2SurfaceViewTestCase extends
     protected Surface mPreviewSurface;
     protected Size mPreviewSize;
     protected List<Size> mOrderedPreviewSizes; // In descending order.
+    protected List<Size> m1080pBoundedOrderedPreviewSizes; // In descending order.
     protected List<Size> mOrderedVideoSizes; // In descending order.
     protected List<Size> mOrderedStillSizes; // In descending order.
     protected HashMap<Size, Long> mMinPreviewFrameDurationMap;
@@ -581,6 +582,8 @@ public class Camera2SurfaceViewTestCase extends
         if (mStaticInfo.isColorOutputSupported()) {
             mOrderedPreviewSizes = getSupportedPreviewSizes(cameraId, mCameraManager,
                     getPreviewSizeBound(mWindowManager, PREVIEW_SIZE_BOUND));
+            m1080pBoundedOrderedPreviewSizes = getSupportedPreviewSizes(cameraId, mCameraManager,
+                    PREVIEW_SIZE_BOUND);
             mOrderedVideoSizes = getSupportedVideoSizes(cameraId, mCameraManager, PREVIEW_SIZE_BOUND);
             mOrderedStillSizes = getSupportedStillSizes(cameraId, mCameraManager, null);
             // Use ImageFormat.YUV_420_888 for now. TODO: need figure out what's format for preview
@@ -749,6 +752,22 @@ public class Camera2SurfaceViewTestCase extends
             }
         }
 
+        // Search again for sizes not bounded by display size
+        for (Size size : m1080pBoundedOrderedPreviewSizes) {
+            Long minDuration = mMinPreviewFrameDurationMap.get(size);
+            if (minDuration == null ||
+                    minDuration == 0) {
+                if (mStaticInfo.isCapabilitySupported(
+                        CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES_MANUAL_SENSOR)) {
+                    throw new IllegalArgumentException(
+                            "No min frame duration available for the size " + size);
+                }
+                continue;
+            }
+            if (minDuration <= (frameDurationRange[0] + MIN_FRAME_DURATION_ERROR_MARGIN)) {
+                return size;
+            }
+        }
         return null;
     }
 

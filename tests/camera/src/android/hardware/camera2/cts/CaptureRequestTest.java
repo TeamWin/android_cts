@@ -2563,7 +2563,7 @@ public class CaptureRequestTest extends Camera2SurfaceViewTestCase {
             // If unable to find a preview size, then log the failure, and skip this run.
             if (previewSz == null) {
                 if (mStaticInfo.isCapabilitySupported(
-                    CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES_MANUAL_SENSOR)) {
+                        CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES_MANUAL_SENSOR)) {
                     mCollector.addMessage(String.format(
                             "Unable to find a preview size supporting given fps range %s",
                             fpsRange));
