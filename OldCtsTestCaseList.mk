@@ -114,7 +114,6 @@ cts_support_packages := \
     CtsHostsideNetworkTestsApp2 \
     CtsIntentReceiverApp \
     CtsIntentSenderApp \
-    CtsLargeApkTestApp \
     CtsLauncherAppsTests \
     CtsLauncherAppsTestsSupport \
     CtsLeanbackJankApp \
@@ -271,7 +270,6 @@ cts_host_libraries := \
     CtsDumpsysHostTestCases \
     CtsHostsideNetworkTests \
     CtsJdwpSecurityHostTestCases \
-    CtsLargeApkHostTestCases \
     CtsMonkeyTestCases \
     CtsOsHostTestCases \
     CtsSecurityHostTestCases \
