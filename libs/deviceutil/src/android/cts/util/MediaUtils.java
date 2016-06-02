@@ -35,6 +35,8 @@ import java.lang.reflect.Method;
 import static java.lang.reflect.Modifier.isPublic;
 import static java.lang.reflect.Modifier.isStatic;
 import java.util.Arrays;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Map;
 import android.util.Log;
 
@@ -459,6 +461,29 @@ public class MediaUtils {
         }
 
         return extractor;
+    }
+
+    /**
+     * return mime type of the resourceId
+     */
+    public static Collection<String> getDecodersForFormat(MediaFormat format) {
+        ArrayList<String> decoders = new ArrayList<String>();
+        String mime = format.getString(MediaFormat.KEY_MIME);
+        MediaCodecList mcl = new MediaCodecList(MediaCodecList.REGULAR_CODECS);
+        for (MediaCodecInfo info : mcl.getCodecInfos()) {
+            if (info.isEncoder()) {
+                continue;
+            }
+            CodecCapabilities caps = null;
+            try {
+                caps = info.getCapabilitiesForType(mime);
+            } catch (IllegalArgumentException e) {  // mime is not supported
+                continue;
+            }
+            if (caps.isFormatSupported(format))
+                decoders.add(info.getName());
+        }
+        return decoders;
     }
 
     /*
