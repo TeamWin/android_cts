@@ -1995,7 +1995,8 @@ public class CameraTestUtils extends Assert {
                 exifFocalLength, EXIF_FOCAL_LENGTH_ERROR_MARGIN);
         // More checks for focal length.
         collector.expectEquals("Exif focal length should match capture result",
-                validateFocalLength(result, staticInfo, collector), exifFocalLength);
+                validateFocalLength(result, staticInfo, collector),
+                exifFocalLength, EXIF_FOCAL_LENGTH_ERROR_MARGIN);
 
         // TAG_EXPOSURE_TIME
         // ExifInterface API gives exposure time value in the form of float instead of rational
@@ -2026,7 +2027,8 @@ public class CameraTestUtils extends Assert {
                         apertureValue, EXIF_APERTURE_ERROR_MARGIN);
                 // More checks for aperture.
                 collector.expectEquals("Exif aperture length should match capture result",
-                        validateAperture(result, staticInfo, collector), apertureValue);
+                        validateAperture(result, staticInfo, collector),
+                        apertureValue, EXIF_APERTURE_ERROR_MARGIN);
             }
         }
 
