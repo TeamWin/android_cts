@@ -394,6 +394,8 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
                 throw new IllegalArgumentException(String.format(
                         "Could not find session with id %d", mRetrySessionId));
             }
+            CLog.logAndDisplay(LogLevel.INFO, "Retrying session from: %s",
+                    CompatibilityBuildHelper.getDirSuffix(result.getStartTime()));
             // Append each test that failed or was not executed to the filters
             for (IModuleResult module : result.getModules()) {
                 for (ICaseResult testResultList : module.getResults()) {
