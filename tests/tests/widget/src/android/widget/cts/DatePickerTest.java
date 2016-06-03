@@ -121,6 +121,37 @@ public class DatePickerTest extends ActivityInstrumentationTestCase2<DatePickerC
         verifyAccessDate(mDatePickerCalendarMode);
     }
 
+    private void verifySetOnDateChangedListener(DatePicker datePicker) {
+        final Instrumentation instrumentation = getInstrumentation();
+        final DatePicker.OnDateChangedListener mockDateChangeListener1 =
+                mock(DatePicker.OnDateChangedListener.class);
+        final DatePicker.OnDateChangedListener mockDateChangeListener2 =
+                mock(DatePicker.OnDateChangedListener.class);
+
+        instrumentation.runOnMainSync(() -> datePicker.init(2000, 10, 15, mockDateChangeListener1));
+        instrumentation.runOnMainSync(() -> datePicker.updateDate(1989, 9, 19));
+        assertEquals(1989, datePicker.getYear());
+        assertEquals(9, datePicker.getMonth());
+        assertEquals(19, datePicker.getDayOfMonth());
+        verify(mockDateChangeListener1, times(1)).onDateChanged(datePicker, 1989, 9, 19);
+        verify(mockDateChangeListener2, times(0)).onDateChanged(datePicker, 1989, 9, 19);
+
+        instrumentation.runOnMainSync(() -> datePicker.setOnDateChangedListener(
+                mockDateChangeListener2));
+        instrumentation.runOnMainSync(() -> datePicker.updateDate(2000, 10, 15));
+        assertEquals(2000, datePicker.getYear());
+        assertEquals(10, datePicker.getMonth());
+        assertEquals(15, datePicker.getDayOfMonth());
+        verify(mockDateChangeListener1, times(0)).onDateChanged(datePicker, 2000, 10, 15);
+        verify(mockDateChangeListener2, times(1)).onDateChanged(datePicker, 2000, 10, 15);
+
+    }
+
+    public void testSetOnDateChangedListener() {
+        verifySetOnDateChangedListener(mDatePickerSpinnerMode);
+        verifySetOnDateChangedListener(mDatePickerCalendarMode);
+    }
+
     private void verifyUpdateDate(DatePicker datePicker) {
         final Instrumentation instrumentation = getInstrumentation();
 
