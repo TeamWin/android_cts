@@ -320,12 +320,6 @@ public class CompatibilityConsole extends Console {
             e.printStackTrace();
         }
         if (testResultRepo != null && results.size() > 0) {
-            // sort the table entries on each entry's timestamp
-            Collections.sort(results, new Comparator<IInvocationResult>() {
-                public int compare(IInvocationResult result1, IInvocationResult result2) {
-                    return Long.compare(result1.getStartTime(), result2.getStartTime());
-                }
-            });
             for (int i = 0; i < results.size(); i++) {
                 IInvocationResult result = results.get(i);
                 Map<String, String> buildInfo = result.getBuildInfo();
@@ -343,7 +337,7 @@ public class CompatibilityConsole extends Console {
                         Integer.toString(result.countResults(TestStatus.PASS)),
                         Integer.toString(result.countResults(TestStatus.FAIL)),
                         Integer.toString(result.countResults(TestStatus.NOT_EXECUTED)),
-                        TimeUtil.formatTimeStamp(result.getStartTime()),
+                        CompatibilityBuildHelper.getDirSuffix(result.getStartTime()),
                         result.getTestPlan(),
                         ArrayUtil.join(", ", result.getDeviceSerials()),
                         buildInfo.get("build_id"),
@@ -353,7 +347,7 @@ public class CompatibilityConsole extends Console {
 
 
             // add the table header to the beginning of the list
-            table.add(0, Arrays.asList("Session", "Pass", "Fail", "Not Executed", "Start Time",
+            table.add(0, Arrays.asList("Session", "Pass", "Fail", "Not Executed", "Result Directory",
                     "Test Plan", "Device serial(s)", "Build ID", "Product"));
             tableFormatter.displayTable(table, new PrintWriter(System.out, true));
         } else {

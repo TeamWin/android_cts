@@ -30,6 +30,8 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Map.Entry;
@@ -190,6 +192,12 @@ public class ResultHandler {
                 e.printStackTrace();
             }
         }
+        // Sort the table entries on each entry's timestamp.
+        Collections.sort(results, new Comparator<IInvocationResult>() {
+            public int compare(IInvocationResult result1, IInvocationResult result2) {
+                return Long.compare(result1.getStartTime(), result2.getStartTime());
+            }
+        });
         return results;
     }
 
