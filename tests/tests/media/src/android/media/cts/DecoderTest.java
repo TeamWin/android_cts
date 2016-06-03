@@ -289,12 +289,11 @@ public class DecoderTest extends MediaPlayerTestBase {
         return 1;
       }
 
-    private static String[] getDecoderNames(String mime, boolean isGoog) {
+    private static String[] getDecoderNames(String mime) {
         MediaCodecList mcl = new MediaCodecList(MediaCodecList.REGULAR_CODECS);
         ArrayList<String> result = new ArrayList<String>();
         for (MediaCodecInfo info : mcl.getCodecInfos()) {
-            if (info.isEncoder() ||
-                    info.getName().toLowerCase().startsWith("omx.google.") != isGoog) {
+            if (info.isEncoder()) {
                 continue;
             }
             CodecCapabilities caps = null;
@@ -309,26 +308,28 @@ public class DecoderTest extends MediaPlayerTestBase {
     }
 
     /**
-     * Test ColorAspects of AVC decoders from vendor.
+     * Test ColorAspects of all the AVC decoders. Decoders should handle
+     * the colors aspects presented in both the mp4 atom 'colr' and VUI
+     * in the bitstream correctly. The following table lists the color
+     * aspects contained in the color box and VUI for the test stream.
+     * P = primaries, T = transfer, M = coeffs, R = range. '-' means
+     * empty value.
+     *                                  |   colr       |    VUI
+     * --------------------------------------------------------------
+     *         File Name                |  P  T  M  R  |  P  T  M  R
+     * --------------------------------------------------------------
+     *  color_176x144_bt709_lr_sdr_h264 |  1  1  1  0  |  -  -  -  -
+     *  color_176x144_bt601_fr_sdr_h264 |  1  6  6  0  |  5  2  2  1
      */
-    public void testH264ColorAspectsOther() throws Exception {
-        String[] decoderNames = getDecoderNames(MediaFormat.MIMETYPE_VIDEO_AVC, false /* isGoog */);
+    public void testH264ColorAspects() throws Exception {
+        String[] decoderNames = getDecoderNames(MediaFormat.MIMETYPE_VIDEO_AVC);
         for (String decoderName: decoderNames) {
             testColorAspects(
                     decoderName, R.raw.color_176x144_bt709_lr_sdr_h264, 1 /* testId */,
                     MediaFormat.COLOR_RANGE_LIMITED, MediaFormat.COLOR_STANDARD_BT709, MediaFormat.COLOR_TRANSFER_SDR_VIDEO);
-        }
-    }
-
-    /**
-     * Test ColorAspects of AVC decoders from Google.
-     */
-    public void testH264ColorAspectsGoog() throws Exception {
-        String[] decoderNames = getDecoderNames(MediaFormat.MIMETYPE_VIDEO_AVC, true /* isGoog */);
-        for (String decoderName: decoderNames) {
             testColorAspects(
-                    decoderName, R.raw.color_176x144_bt709_lr_sdr_h264, 1 /* testId */,
-                    MediaFormat.COLOR_RANGE_LIMITED, MediaFormat.COLOR_STANDARD_BT709, MediaFormat.COLOR_TRANSFER_SDR_VIDEO);
+                    decoderName, R.raw.color_176x144_bt601_fr_sdr_h264, 2 /* testId */,
+                    MediaFormat.COLOR_RANGE_FULL, MediaFormat.COLOR_STANDARD_BT601_PAL, MediaFormat.COLOR_TRANSFER_SDR_VIDEO);
         }
     }
 
