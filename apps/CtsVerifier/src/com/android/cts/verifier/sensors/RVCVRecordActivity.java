@@ -451,6 +451,7 @@ public class RVCVRecordActivity extends Activity {
                 }
             }
             if (profile != null) {
+                param = mCamera.getParameters(); //acquire proper fov after change the picture size
                 float fovW = param.getHorizontalViewAngle();
                 float fovH = param.getVerticalViewAngle();
                 writeVideoMetaInfo(profile.videoFrameWidth, profile.videoFrameHeight,
