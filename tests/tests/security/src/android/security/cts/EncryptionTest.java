@@ -33,8 +33,6 @@ public class EncryptionTest extends AndroidTestCase {
         System.loadLibrary("ctssecurity_jni");
     }
 
-    private static final int min_api_level = 23;
-
     private static final String TAG = "EncryptionTest";
 
     private static final String crypto = "/proc/crypto";
@@ -75,22 +73,7 @@ public class EncryptionTest extends AndroidTestCase {
         return activityManager.isLowRamDevice();
     }
 
-    private boolean isRequired() {
-        int first_api_level = System.GetProperty("ro.product.first_api_level");
-
-        // Optional before min_api_level or if the device has low RAM
-        if (first_api_level && first_api_level < min_api_level) {
-            return false;
-        } else {
-            return !hasLowRAM();
-        }
-    }
-
     public void testConfig() throws Exception {
-        if (!isRequired()) {
-            return;
-        }
-
         if (cpuHasAes()) {
             // If CPU has AES CE, it must be enabled in kernel
             assertTrue(crypto + " is missing xts-aes-ce or xts-aes-aesni",
@@ -110,7 +93,13 @@ public class EncryptionTest extends AndroidTestCase {
     }
 
     public void testEncryption() throws Exception {
-        if (!isRequired() || deviceIsEncrypted()) {
+        if (deviceIsEncrypted()) {
+            return;
+        }
+
+        // Optional for low RAM devices
+        if (hasLowRAM()) {
+            Log.i(TAG, "hasLowRAM: true");
             return;
         }
 
