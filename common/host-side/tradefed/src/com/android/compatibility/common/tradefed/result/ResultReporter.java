@@ -313,12 +313,6 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
     @Override
     public void testRunEnded(long elapsedTime, Map<String, String> metrics) {
         mCurrentModuleResult.addRuntime(elapsedTime);
-        info("%s completed in %s. %d passed, %d failed, %d not executed",
-                mCurrentModuleResult.getId(),
-                TimeUtil.formatElapsedTime(elapsedTime),
-                mCurrentModuleResult.countResults(TestStatus.PASS),
-                mCurrentModuleResult.countResults(TestStatus.FAIL),
-                mCurrentModuleResult.countResults(TestStatus.NOT_EXECUTED));
 
         if (isShardResultReporter()) {
             // Forward module results to the master.
