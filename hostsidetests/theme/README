@@ -47,6 +47,10 @@ generate a new set of reference images, do the following:
 A complete collection of reference images for a given API revision must include
 a set for each possible DPI bucket (tvdpi, xxhdpi, etc.) that may be tested.
 
+For a list of devices and their DPI buckets, see Device Metrics:
+
+    https://design.google.com/devices/
+
 
 II. Building theme tests
 
