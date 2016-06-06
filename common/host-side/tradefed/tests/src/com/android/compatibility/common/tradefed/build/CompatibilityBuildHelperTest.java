@@ -36,6 +36,7 @@ public class CompatibilityBuildHelperTest extends TestCase {
     private static final String ROOT_DIR_NAME = "root";
     private static final String BASE_DIR_NAME = "android-tests";
     private static final String TESTCASES = "testcases";
+    private static final String COMMAND_LINE_ARGS = "cts -m CtsModuleTestCases";
     private static final long START_TIME = 123456L;
 
     private File mRoot = null;
@@ -128,6 +129,16 @@ public class CompatibilityBuildHelperTest extends TestCase {
                 mHelper.getTestsDir().getAbsolutePath());
         assertEquals("Incorrect results dir", new File(mBase, "results").getAbsolutePath(),
                 mHelper.getResultsDir().getAbsolutePath());
+    }
+
+    public void testGetCommandLineArgs() {
+        assertNull(mHelper.getCommandLineArgs());
+        mBuild.addBuildAttribute("command_line_args", COMMAND_LINE_ARGS);
+        assertEquals(COMMAND_LINE_ARGS, mHelper.getCommandLineArgs());
+
+        mBuild.addBuildAttribute("command_line_args", "cts --retry 0");
+        mHelper.setRetryCommandLineArgs(COMMAND_LINE_ARGS);
+        assertEquals(COMMAND_LINE_ARGS, mHelper.getCommandLineArgs());
     }
 
     /**

@@ -42,6 +42,8 @@ public class CompatibilityBuildHelper {
     private static final String START_TIME_MS = "START_TIME_MS";
     private static final String CONFIG_PATH_PREFIX = "DYNAMIC_CONFIG_FILE:";
     private static final String DYNAMIC_CONFIG_OVERRIDE_URL = "DYNAMIC_CONFIG_OVERRIDE_URL";
+    private static final String COMMAND_LINE_ARGS = "command_line_args";
+    private static final String RETRY_COMMAND_LINE_ARGS = "retry_command_line_args";
     private final IBuildInfo mBuildInfo;
     private boolean mInitialized = false;
 
@@ -101,6 +103,20 @@ public class CompatibilityBuildHelper {
 
     public IBuildInfo getBuildInfo() {
         return mBuildInfo;
+    }
+
+    public void setRetryCommandLineArgs(String commandLineArgs) {
+        mBuildInfo.addBuildAttribute(RETRY_COMMAND_LINE_ARGS, commandLineArgs);
+    }
+
+    public String getCommandLineArgs() {
+        if (mBuildInfo.getBuildAttributes().containsKey(RETRY_COMMAND_LINE_ARGS)) {
+            return mBuildInfo.getBuildAttributes().get(RETRY_COMMAND_LINE_ARGS);
+        } else {
+            // NOTE: this is a temporary workaround set in TestInvocation#invoke in tradefed.
+            // This will be moved to a separate method in a new invocation metadata class.
+            return mBuildInfo.getBuildAttributes().get(COMMAND_LINE_ARGS);
+        }
     }
 
     public String getSuiteBuild() {
