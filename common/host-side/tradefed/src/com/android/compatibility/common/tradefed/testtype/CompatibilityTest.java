@@ -20,6 +20,7 @@ import com.android.compatibility.SuiteInfo;
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
 import com.android.compatibility.common.tradefed.result.IInvocationResultRepo;
 import com.android.compatibility.common.tradefed.result.InvocationResultRepo;
+import com.android.compatibility.common.tradefed.util.OptionHelper;
 import com.android.compatibility.common.util.AbiUtils;
 import com.android.compatibility.common.util.ICaseResult;
 import com.android.compatibility.common.util.IInvocationResult;
@@ -31,6 +32,8 @@ import com.android.compatibility.common.util.TestFilter;
 import com.android.compatibility.common.util.TestStatus;
 import com.android.ddmlib.Log.LogLevel;
 import com.android.tradefed.build.IBuildInfo;
+import com.android.tradefed.config.ArgsOptionParser;
+import com.android.tradefed.config.ConfigurationException;
 import com.android.tradefed.config.Option;
 import com.android.tradefed.config.Option.Importance;
 import com.android.tradefed.config.OptionClass;
@@ -58,6 +61,8 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
 /**
@@ -396,6 +401,26 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
             }
             CLog.logAndDisplay(LogLevel.INFO, "Retrying session from: %s",
                     CompatibilityBuildHelper.getDirSuffix(result.getStartTime()));
+
+            String retryCommandLineArgs = result.getCommandLineArgs();
+            if (retryCommandLineArgs != null) {
+                // Copy the original command into the build helper so it can be serialized later
+                mBuildHelper.setRetryCommandLineArgs(retryCommandLineArgs);
+                try {
+                    // parse the command-line string from the result file and set options
+                    ArgsOptionParser parser = new ArgsOptionParser(this);
+                    parser.parse(OptionHelper.getValidCliArgs(retryCommandLineArgs, this));
+                    if (mModuleName != null) {
+                        // retry checks for tests to run via the include/exclude filters
+                        // so add the module to the include filter
+                        mIncludeFilters.add(new TestFilter(mAbiName, mModuleName,
+                            mTestName).toString());
+                    }
+                } catch (ConfigurationException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+
             // Append each test that failed or was not executed to the filters
             for (IModuleResult module : result.getModules()) {
                 for (ICaseResult testResultList : module.getResults()) {
