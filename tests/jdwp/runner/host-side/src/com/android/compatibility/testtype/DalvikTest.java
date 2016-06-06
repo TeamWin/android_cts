@@ -37,6 +37,7 @@ import com.android.tradefed.testtype.IRemoteTest;
 import com.android.tradefed.testtype.IRuntimeHintProvider;
 import com.android.tradefed.testtype.IShardableTest;
 import com.android.tradefed.testtype.ITestCollector;
+import com.android.tradefed.testtype.ITestFileFilterReceiver;
 import com.android.tradefed.testtype.ITestFilterReceiver;
 import com.android.tradefed.util.ArrayUtil;
 import com.android.tradefed.util.TimeVal;
@@ -45,8 +46,10 @@ import com.google.common.base.Splitter;
 import vogar.ExpectationStore;
 import vogar.ModeId;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FilenameFilter;
+import java.io.FileReader;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
@@ -54,7 +57,6 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -63,7 +65,8 @@ import java.util.concurrent.TimeUnit;
  * A wrapper to run tests against Dalvik.
  */
 public class DalvikTest implements IAbiReceiver, IBuildReceiver, IDeviceTest, IRemoteTest,
-        IRuntimeHintProvider, IShardableTest, ITestCollector, ITestFilterReceiver {
+        IRuntimeHintProvider, IShardableTest, ITestCollector, ITestFileFilterReceiver,
+        ITestFilterReceiver {
 
     private static final String TAG = DalvikTest.class.getSimpleName();
 
@@ -130,6 +133,16 @@ public class DalvikTest implements IAbiReceiver, IBuildReceiver, IDeviceTest, IR
     @Option(name = "exclude-filter",
             description = "The exclude filters of the test name to run.")
     private List<String> mExcludeFilters = new ArrayList<>();
+
+    @Option(name = "test-file-include-filter",
+            description="A file containing a list of line separated test classes and optionally"
+            + " methods to include")
+    private File mIncludeTestFile = null;
+
+    @Option(name = "test-file-exclude-filter",
+            description="A file containing a list of line separated test classes and optionally"
+            + " methods to exclude")
+    private File mExcludeTestFile = null;
 
     @Option(name = "runtime-hint",
             isTimeVal = true,
@@ -224,6 +237,22 @@ public class DalvikTest implements IAbiReceiver, IBuildReceiver, IDeviceTest, IR
      * {@inheritDoc}
      */
     @Override
+    public void setIncludeTestFile(File testFile) {
+        mIncludeTestFile = testFile;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void setExcludeTestFile(File testFile) {
+        mExcludeTestFile = testFile;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
     public long getRuntimeHint() {
         return mRuntimeHint;
     }
@@ -244,55 +273,32 @@ public class DalvikTest implements IAbiReceiver, IBuildReceiver, IDeviceTest, IR
         String abiName = mAbi.getName();
         String bitness = AbiUtils.getBitness(abiName);
 
-        File temp = null;
-        PrintWriter out = null;
+        File tmpExcludeFile = null;
         try {
-            Set<File> expectationFiles = new HashSet<>();
-            for (File f : mBuildHelper.getTestsDir().listFiles(
-                    new ExpectationFileFilter(mRunName))) {
-                expectationFiles.add(f);
-            }
-            ExpectationStore store = ExpectationStore.parse(expectationFiles, ModeId.DEVICE);
-
-            ExpectationStore resourceStore = null;
-            if (mKnownFailures != null) {
-                Splitter splitter = Splitter.on(',').trimResults();
-                Set<String> knownFailuresFileList =
-                        new LinkedHashSet<>(splitter.splitToList(mKnownFailures));
-                resourceStore = ExpectationStore.parseResources(
-                        getClass(), knownFailuresFileList, ModeId.DEVICE);
-            }
-
-            // Work around because there are to many expectations to pass via command line
-            temp = File.createTempFile("excludes", "txt");
-            out = new PrintWriter(temp);
-            for (String exclude : store.getAllFailures().keySet()) {
-                out.println(exclude);
-            }
-            for (String exclude : store.getAllOutComes().keySet()) {
-                out.println(exclude);
-            }
-            // Add expectations from resources
-            if (resourceStore != null) {
-                for (String exclude : resourceStore.getAllFailures().keySet()) {
-                    out.println(exclude);
-                }
-                for (String exclude : resourceStore.getAllOutComes().keySet()) {
-                    out.println(exclude);
-                }
-            }
-            out.flush();
-            if (!mDevice.pushFile(temp, EXCLUDE_FILE)) {
-                Log.logAndDisplay(LogLevel.ERROR, TAG, "Couldn't push file: " + temp);
+            // push one file of exclude filters to the device
+            tmpExcludeFile = getExcludeFile();
+            if (!mDevice.pushFile(tmpExcludeFile, EXCLUDE_FILE)) {
+                Log.logAndDisplay(LogLevel.ERROR, TAG, "Couldn't push file: " + tmpExcludeFile);
             }
         } catch (IOException e) {
-            throw new RuntimeException("Failed to parse expectations");
+            throw new RuntimeException("Failed to parse expectations", e);
         } finally {
-            if (out != null) {
-                out.close();
+            if (tmpExcludeFile != null) {
+                tmpExcludeFile.delete();
             }
-            temp.delete();
         }
+
+        // push one file of include filters to the device, if file exists
+        if (mIncludeTestFile != null) {
+            String path = mIncludeTestFile.getAbsolutePath();
+            if (!mIncludeTestFile.isFile() || !mIncludeTestFile.canRead()) {
+                throw new RuntimeException(String.format("Failed to read include file %s", path));
+            }
+            if (!mDevice.pushFile(mIncludeTestFile, INCLUDE_FILE)) {
+                Log.logAndDisplay(LogLevel.ERROR, TAG, "Couldn't push file: " + path);
+            }
+        }
+
 
         // Create command
         mDalvikArgs.add("-Duser.name=shell");
@@ -372,6 +378,82 @@ public class DalvikTest implements IAbiReceiver, IBuildReceiver, IDeviceTest, IR
 
         };
         mDevice.executeShellCommand(command, receiver, mPerTestTimeout, TimeUnit.MINUTES, 1);
+    }
+
+    /*
+     * Due to known failures, there are typically too many excludes to pass via command line.
+     * Collect excludes from .expectation files in the testcases directory, from files in the
+     * module's resources directory, and from mExcludeTestFile, if set.
+     */
+    private File getExcludeFile() throws IOException {
+        File excludeFile = null;
+        PrintWriter out = null;
+
+        try {
+            excludeFile = File.createTempFile("excludes", "txt");
+            out = new PrintWriter(excludeFile);
+            // create expectation store from set of expectation files found in testcases dir
+            Set<File> expectationFiles = new HashSet<>();
+            for (File f : mBuildHelper.getTestsDir().listFiles(
+                    new ExpectationFileFilter(mRunName))) {
+                expectationFiles.add(f);
+            }
+            ExpectationStore testsDirStore =
+                    ExpectationStore.parse(expectationFiles, ModeId.DEVICE);
+            // create expectation store from expectation files found in module resources dir
+            ExpectationStore resourceStore = null;
+            if (mKnownFailures != null) {
+                Splitter splitter = Splitter.on(',').trimResults();
+                Set<String> knownFailuresFiles =
+                        new HashSet<>(splitter.splitToList(mKnownFailures));
+                resourceStore = ExpectationStore.parseResources(
+                        getClass(), knownFailuresFiles, ModeId.DEVICE);
+            }
+            // Add expectations from testcases dir
+            for (String exclude : testsDirStore.getAllFailures().keySet()) {
+                out.println(exclude);
+            }
+            for (String exclude : testsDirStore.getAllOutComes().keySet()) {
+                out.println(exclude);
+            }
+            // Add expectations from resources dir
+            if (resourceStore != null) {
+                for (String exclude : resourceStore.getAllFailures().keySet()) {
+                    out.println(exclude);
+                }
+                for (String exclude : resourceStore.getAllOutComes().keySet()) {
+                    out.println(exclude);
+                }
+            }
+            // Add excludes from test-file-exclude-filter option
+            for (String exclude : getFiltersFromFile(mExcludeTestFile)) {
+                out.println(exclude);
+            }
+            out.flush();
+        } finally {
+            if (out != null) {
+                out.close();
+            }
+        }
+        return excludeFile;
+    }
+
+
+    /*
+     * Helper method that reads filters from a file into a set.
+     * Returns an empty set given a null file
+     */
+    private static Set<String> getFiltersFromFile(File f) throws IOException {
+        Set<String> filters = new HashSet<String>();
+        if (f != null) {
+            BufferedReader reader = new BufferedReader(new FileReader(f));
+            String filter = null;
+            while ((filter = reader.readLine()) != null) {
+                filters.add(filter);
+            }
+            reader.close();
+        }
+        return filters;
     }
 
     /**
