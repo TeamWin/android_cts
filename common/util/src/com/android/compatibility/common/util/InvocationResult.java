@@ -34,6 +34,7 @@ public class InvocationResult implements IInvocationResult {
     private Map<String, String> mBuildInfo = new HashMap<>();
     private Set<String> mSerials = new HashSet<>();
     private String mTestPlan;
+    private String mCommandLineArgs;
 
     /**
      * {@inheritDoc}
@@ -142,5 +143,21 @@ public class InvocationResult implements IInvocationResult {
     @Override
     public Set<String> getDeviceSerials() {
         return mSerials;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void setCommandLineArgs(String commandLineArgs) {
+        mCommandLineArgs = commandLineArgs;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public String getCommandLineArgs() {
+        return mCommandLineArgs;
     }
 }
