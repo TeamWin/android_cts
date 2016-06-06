@@ -252,6 +252,9 @@ public class CoreTestRunner extends Instrumentation {
         try {
             RunnerBuilder runnerBuilder = new ExtendedAndroidRunnerBuilder(runnerParams);
             Class[] classes = testList.getClassesToRun();
+            for (Class cls : classes) {
+              Log.d(TAG, "Found class to run: " + cls.getName());
+            }
             Runner suite = new Computer().getSuite(runnerBuilder, classes);
 
             if (suite instanceof Filterable) {
