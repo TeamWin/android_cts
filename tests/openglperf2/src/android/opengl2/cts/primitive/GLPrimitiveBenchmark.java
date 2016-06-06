@@ -30,6 +30,7 @@ public class GLPrimitiveBenchmark extends ActivityInstrumentationTestCase2<GLPri
     private static final int NUM_FRAMES = 100;
     private static final int NUM_ITERATIONS = 8;
     private static final int TIMEOUT = 1000000;
+    private static final String REPORT_LOG_NAME = "CtsOpenGlPerf2TestCases";
 
     public GLPrimitiveBenchmark() {
         super(GLPrimitiveActivity.class);
@@ -40,7 +41,9 @@ public class GLPrimitiveBenchmark extends ActivityInstrumentationTestCase2<GLPri
      */
     @TimeoutReq(minutes = 100)
     public void testFullPipelineOffscreen() throws Exception {
-        runBenchmark(BenchmarkName.FullPipeline, true, NUM_FRAMES, NUM_ITERATIONS, TIMEOUT);
+        String streamName = "test_full_pipeline_offscreen";
+        runBenchmark(BenchmarkName.FullPipeline, true, NUM_FRAMES, NUM_ITERATIONS, TIMEOUT,
+                streamName);
     }
 
     /**
@@ -48,7 +51,9 @@ public class GLPrimitiveBenchmark extends ActivityInstrumentationTestCase2<GLPri
      */
     @TimeoutReq(minutes = 100)
     public void testFullPipelineOnscreen() throws Exception {
-        runBenchmark(BenchmarkName.FullPipeline, false, NUM_FRAMES, NUM_ITERATIONS, TIMEOUT);
+        String streamName = "test_full_pipeline_onscreen";
+        runBenchmark(BenchmarkName.FullPipeline, false, NUM_FRAMES, NUM_ITERATIONS, TIMEOUT,
+                streamName);
     }
 
     /**
@@ -56,7 +61,9 @@ public class GLPrimitiveBenchmark extends ActivityInstrumentationTestCase2<GLPri
      */
     @TimeoutReq(minutes = 100)
     public void testPixelOutputOffscreen() throws Exception {
-        runBenchmark(BenchmarkName.PixelOutput, true, NUM_FRAMES, NUM_ITERATIONS, TIMEOUT);
+        String streamName = "test_pixel_output_offscreen";
+        runBenchmark(BenchmarkName.PixelOutput, true, NUM_FRAMES, NUM_ITERATIONS, TIMEOUT,
+                streamName);
     }
 
     /**
@@ -64,7 +71,9 @@ public class GLPrimitiveBenchmark extends ActivityInstrumentationTestCase2<GLPri
      */
     @TimeoutReq(minutes = 100)
     public void testPixelOutputOnscreen() throws Exception {
-        runBenchmark(BenchmarkName.PixelOutput, false, NUM_FRAMES, NUM_ITERATIONS, TIMEOUT);
+        String streamName = "test_pixel_output_onscreen";
+        runBenchmark(BenchmarkName.PixelOutput, false, NUM_FRAMES, NUM_ITERATIONS, TIMEOUT,
+                streamName);
     }
 
     /**
@@ -72,7 +81,9 @@ public class GLPrimitiveBenchmark extends ActivityInstrumentationTestCase2<GLPri
      */
     @TimeoutReq(minutes = 100)
     public void testShaderPerfOffscreen() throws Exception {
-        runBenchmark(BenchmarkName.ShaderPerf, true, NUM_FRAMES, NUM_ITERATIONS, TIMEOUT);
+        String streamName = "test_shader_perf_offscreen";
+        runBenchmark(BenchmarkName.ShaderPerf, true, NUM_FRAMES, NUM_ITERATIONS, TIMEOUT,
+                streamName);
     }
 
     /**
@@ -80,7 +91,9 @@ public class GLPrimitiveBenchmark extends ActivityInstrumentationTestCase2<GLPri
      */
     @TimeoutReq(minutes = 100)
     public void testShaderPerfOnscreen() throws Exception {
-        runBenchmark(BenchmarkName.ShaderPerf, false, NUM_FRAMES, NUM_ITERATIONS, TIMEOUT);
+        String streamName = "test_shader_perf_onscreen";
+        runBenchmark(BenchmarkName.ShaderPerf, false, NUM_FRAMES, NUM_ITERATIONS, TIMEOUT,
+                streamName);
     }
 
     /**
@@ -88,7 +101,9 @@ public class GLPrimitiveBenchmark extends ActivityInstrumentationTestCase2<GLPri
      */
     @TimeoutReq(minutes = 100)
     public void testContextSwitchOffscreen() throws Exception {
-        runBenchmark(BenchmarkName.ContextSwitch, true, NUM_FRAMES, NUM_ITERATIONS, TIMEOUT);
+        String streamName = "test_context_switch_offscreen";
+        runBenchmark(BenchmarkName.ContextSwitch, true, NUM_FRAMES, NUM_ITERATIONS, TIMEOUT,
+                streamName);
     }
 
     /**
@@ -96,7 +111,9 @@ public class GLPrimitiveBenchmark extends ActivityInstrumentationTestCase2<GLPri
      */
     @TimeoutReq(minutes = 100)
     public void testContextSwitchOnscreen() throws Exception {
-        runBenchmark(BenchmarkName.ContextSwitch, false, NUM_FRAMES, NUM_ITERATIONS, TIMEOUT);
+        String streamName = "test_context_switch_onscreen";
+        runBenchmark(BenchmarkName.ContextSwitch, false, NUM_FRAMES, NUM_ITERATIONS, TIMEOUT,
+                streamName);
     }
 
     /**
@@ -107,10 +124,11 @@ public class GLPrimitiveBenchmark extends ActivityInstrumentationTestCase2<GLPri
      * @param numFrames The number of frames to render.
      * @param numIterations The number of iterations to run, each iteration has a bigger workload.
      * @param timeout The milliseconds to wait for an iteration of the benchmark before timing out.
+     * @param streamName The name of the stream of test metrics.
      * @throws Exception If the benchmark could not be run.
      */
     private void runBenchmark(BenchmarkName benchmark, boolean offscreen, int numFrames,
-            int numIterations, int timeout) throws Exception {
+            int numIterations, int timeout, String streamName) throws Exception {
         String benchmarkName = benchmark.toString();
         Intent intent = new Intent();
         intent.putExtra(GLActivityIntentKeys.INTENT_EXTRA_BENCHMARK_NAME, benchmarkName);
@@ -132,8 +150,8 @@ public class GLPrimitiveBenchmark extends ActivityInstrumentationTestCase2<GLPri
 
             // TODO: maybe standard deviation / RMSE will be useful?
 
-            DeviceReportLog report = new DeviceReportLog();
-            report.setSummary("Average FPS", score, ResultType.HIGHER_BETTER, ResultUnit.SCORE);
+            DeviceReportLog report = new DeviceReportLog(REPORT_LOG_NAME, streamName);
+            report.setSummary("average_fps", score, ResultType.HIGHER_BETTER, ResultUnit.SCORE);
             report.submit(getInstrumentation());
         }
     }

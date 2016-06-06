@@ -31,6 +31,12 @@ public class SampleDeviceReportLogTest
         extends ActivityInstrumentationTestCase2<SampleDeviceActivity> {
 
     /**
+     * Name of the report log. Test metrics will be written out to ths report. The name must match
+     * the test module name.
+     */
+    private static final String REPORT_LOG_NAME = "CtsSampleDeviceTestCases";
+
+    /**
      * Sample numbers used by the sample tests.
      */
     private static final int MULTIPLICATION_NUMBER_1 = 23;
@@ -60,9 +66,8 @@ public class SampleDeviceReportLogTest
         assertTrue("Multiplication result do not match", product == MULTIPLICATION_RESULT);
 
         // Log metrics from the test.
-        String reportLogName = "SampleDeviceTestMetrics";
-        String streamName = "test_multiplication_metrics";
-        DeviceReportLog reportLog = new DeviceReportLog(reportLogName, streamName);
+        String streamName = "test_multiplication";
+        DeviceReportLog reportLog = new DeviceReportLog(REPORT_LOG_NAME, streamName);
         reportLog.addValue(EXPECTED_PRODUCT_TAG, 1.0 * MULTIPLICATION_RESULT, ResultType.NEUTRAL,
                 ResultUnit.NONE);
         reportLog.addValue(ACTUAL_PRODUCT_TAG, 1.0 * product, ResultType.NEUTRAL, ResultUnit.NONE);
@@ -74,7 +79,7 @@ public class SampleDeviceReportLogTest
      * Sample test to check counting up.
      */
     public void testCountUp() {
-        String streamName = "test_count_up_metrics";
+        String streamName = "test_count_up";
         countHelper(1, streamName);
     }
 
@@ -82,7 +87,7 @@ public class SampleDeviceReportLogTest
      * Sample test to check counting down.
      */
     public void testCountDown() {
-        String streamName = "test_count_down_metrics";
+        String streamName = "test_count_down";
         countHelper(2, streamName);
     }
 
@@ -111,8 +116,7 @@ public class SampleDeviceReportLogTest
         }
 
         // Log metrics.
-        String reportLogName = "SampleDeviceTestMetrics";
-        DeviceReportLog reportLog = new DeviceReportLog(reportLogName, streamName);
+        DeviceReportLog reportLog = new DeviceReportLog(REPORT_LOG_NAME, streamName);
         reportLog.addValue(START_TAG, 1.0 * start, ResultType.NEUTRAL, ResultUnit.NONE);
         reportLog.addValue(END_TAG, 1.0 * end, ResultType.NEUTRAL, ResultUnit.NONE);
         reportLog.setSummary(END_TAG, 1.0 * end, ResultType.NEUTRAL, ResultUnit.NONE);

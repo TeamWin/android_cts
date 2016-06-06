@@ -34,6 +34,7 @@ public class AlmostFullTest extends CtsAndroidTestCase {
     private static final String DIR_RANDOM_WR = "RANDOM_WR";
     private static final String DIR_RANDOM_RD = "RANDOM_RD";
     private static final String TAG = "AlmostFullTest";
+    private static final String REPORT_LOG_NAME = "CtsFileSystemTestCases";
 
     private static final long FREE_SPACE_FINAL = 1000L * 1024 * 1024L;
 
@@ -107,10 +108,9 @@ public class AlmostFullTest extends CtsAndroidTestCase {
         }
         final int BUFFER_SIZE = 10 * 1024 * 1024;
         final int NUMBER_REPETITION = 10;
-        DeviceReportLog report = new DeviceReportLog();
-        FileUtil.doSequentialUpdateTest(getContext(), DIR_SEQ_UPDATE, report, FILE_SIZE,
-                BUFFER_SIZE, NUMBER_REPETITION);
-        report.submit(getInstrumentation());
+        String streamName = "test_sequential_update";
+        FileUtil.doSequentialUpdateTest(getContext(), DIR_SEQ_UPDATE, FILE_SIZE, BUFFER_SIZE,
+                NUMBER_REPETITION, REPORT_LOG_NAME, streamName);
     }
 
     // TODO: file size too small and caching will give wrong better result.
@@ -124,7 +124,8 @@ public class AlmostFullTest extends CtsAndroidTestCase {
             Log.w(TAG, "too little space: " + freeDisk);
             return;
         }
-        DeviceReportLog report = new DeviceReportLog();
+        String streamName = "test_random_read";
+        DeviceReportLog report = new DeviceReportLog(REPORT_LOG_NAME, streamName);
         FileUtil.doRandomReadTest(getContext(), DIR_RANDOM_RD, report, fileSize, BUFFER_SIZE);
         report.submit(getInstrumentation());
     }
@@ -138,7 +139,8 @@ public class AlmostFullTest extends CtsAndroidTestCase {
             Log.w(TAG, "too little space: " + freeDisk);
             return;
         }
-        DeviceReportLog report = new DeviceReportLog();
+        String streamName = "test_random_update";
+        DeviceReportLog report = new DeviceReportLog(REPORT_LOG_NAME, streamName);
         FileUtil.doRandomWriteTest(getContext(), DIR_RANDOM_WR, report, fileSize, BUFFER_SIZE);
         report.submit(getInstrumentation());
     }
