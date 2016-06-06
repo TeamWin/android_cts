@@ -377,7 +377,6 @@ public class ThemeDeviceActivity extends Activity {
             new Layout(R.layout.color_red_light, "color_red_light"),
             new Layout(R.layout.datepicker, "datepicker",
                     new DatePickerModifier()),
-            new Layout(R.layout.display_info, "display_info"),
             new Layout(R.layout.edittext, "edittext"),
             new Layout(R.layout.progressbar_horizontal_0, "progressbar_horizontal_0"),
             new Layout(R.layout.progressbar_horizontal_100, "progressbar_horizontal_100"),
