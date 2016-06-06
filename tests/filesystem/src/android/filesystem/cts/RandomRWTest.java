@@ -24,6 +24,7 @@ import com.android.cts.util.TimeoutReq;
 public class RandomRWTest extends CtsAndroidTestCase {
     private static final String DIR_RANDOM_WR = "RANDOM_WR";
     private static final String DIR_RANDOM_RD = "RANDOM_RD";
+    private static final String REPORT_LOG_NAME = "CtsFileSystemTestCases";
 
     @Override
     protected void tearDown() throws Exception {
@@ -39,7 +40,8 @@ public class RandomRWTest extends CtsAndroidTestCase {
         if (fileSize == 0) { // not enough space, give up
             return;
         }
-        DeviceReportLog report = new DeviceReportLog();
+        String streamName = "test_random_read";
+        DeviceReportLog report = new DeviceReportLog(REPORT_LOG_NAME, streamName);
         FileUtil.doRandomReadTest(getContext(), DIR_RANDOM_RD, report, fileSize,
                 READ_BUFFER_SIZE);
         report.submit(getInstrumentation());
@@ -50,7 +52,8 @@ public class RandomRWTest extends CtsAndroidTestCase {
     public void testRandomUpdate() throws Exception {
         final int WRITE_BUFFER_SIZE = 4 * 1024;
         final long fileSize = 256 * 1024 * 1024;
-        DeviceReportLog report = new DeviceReportLog();
+        String streamName = "test_random_update";
+        DeviceReportLog report = new DeviceReportLog(REPORT_LOG_NAME, streamName);
         FileUtil.doRandomWriteTest(getContext(), DIR_RANDOM_WR, report, fileSize,
                 WRITE_BUFFER_SIZE);
         report.submit(getInstrumentation());

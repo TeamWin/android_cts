@@ -41,6 +41,7 @@ public class AudioTrackTest extends CtsAndroidTestCase {
     private final long WAIT_MSEC = 200;
     private final int OFFSET_DEFAULT = 0;
     private final int OFFSET_NEGATIVE = -10;
+    private static final String REPORT_LOG_NAME = "CtsMediaTestCases";
 
     private void log(String testName, String message) {
         Log.v(TAG, "[" + testName + "] " + message);
@@ -1911,11 +1912,13 @@ public class AudioTrackTest extends CtsAndroidTestCase {
                     + "audio output HAL");
             return;
         }
+        String streamName = "test_get_timestamp";
         doTestTimestamp(
                 22050 /* sampleRate */,
                 AudioFormat.CHANNEL_OUT_MONO ,
                 AudioFormat.ENCODING_PCM_16BIT,
-                AudioTrack.MODE_STREAM);
+                AudioTrack.MODE_STREAM,
+                streamName);
     }
 
     public void testFastTimestamp() throws Exception {
@@ -1924,15 +1927,17 @@ public class AudioTrackTest extends CtsAndroidTestCase {
                     + "audio output HAL");
             return;
         }
+        String streamName = "test_fast_timestamp";
         doTestTimestamp(
                 AudioTrack.getNativeOutputSampleRate(AudioManager.STREAM_MUSIC),
                 AudioFormat.CHANNEL_OUT_MONO,
                 AudioFormat.ENCODING_PCM_16BIT,
-                AudioTrack.MODE_STREAM);
+                AudioTrack.MODE_STREAM,
+                streamName);
     }
 
-    private void doTestTimestamp(
-            int sampleRate, int channelMask, int encoding, int transferMode) throws Exception {
+    private void doTestTimestamp(int sampleRate, int channelMask, int encoding, int transferMode,
+            String streamName) throws Exception {
         // constants for test
         final String TEST_NAME = "testGetTimestamp";
         final int TEST_LOOP_CNT = 10;
@@ -2069,14 +2074,14 @@ public class AudioTrackTest extends CtsAndroidTestCase {
         track.release();
         // Log the average jitter
         if (cumulativeJitterCount > 0) {
-            DeviceReportLog log = new DeviceReportLog();
+            DeviceReportLog log = new DeviceReportLog(REPORT_LOG_NAME, streamName);
             final float averageJitterInFrames = cumulativeJitter / cumulativeJitterCount;
             final float averageJitterInMs = averageJitterInFrames * 1000 / sampleRate;
             final float maxJitterInMs = maxJitter * 1000 / sampleRate;
             // ReportLog needs at least one Value and Summary.
-            log.addValue("Maximum Jitter", maxJitterInMs,
+            log.addValue("maximum_jitter", maxJitterInMs,
                     ResultType.LOWER_BETTER, ResultUnit.MS);
-            log.setSummary("Average Jitter", averageJitterInMs,
+            log.setSummary("average_jitter", averageJitterInMs,
                     ResultType.LOWER_BETTER, ResultUnit.MS);
             log.submit(getInstrumentation());
         }
