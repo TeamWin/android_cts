@@ -55,6 +55,7 @@ import static com.android.cts.core.runner.AndroidJUnitRunnerConstants.ARGUMENT_C
 import static com.android.cts.core.runner.AndroidJUnitRunnerConstants.ARGUMENT_DEBUG;
 import static com.android.cts.core.runner.AndroidJUnitRunnerConstants.ARGUMENT_LOG_ONLY;
 import static com.android.cts.core.runner.AndroidJUnitRunnerConstants.ARGUMENT_NOT_TEST_CLASS;
+import static com.android.cts.core.runner.AndroidJUnitRunnerConstants.ARGUMENT_NOT_TEST_FILE;
 import static com.android.cts.core.runner.AndroidJUnitRunnerConstants.ARGUMENT_NOT_TEST_PACKAGE;
 import static com.android.cts.core.runner.AndroidJUnitRunnerConstants.ARGUMENT_TEST_CLASS;
 import static com.android.cts.core.runner.AndroidJUnitRunnerConstants.ARGUMENT_TEST_FILE;
@@ -154,8 +155,18 @@ public class CoreTestRunner extends Instrumentation {
             testNameSet.addAll(Arrays.asList(tests));
         }
 
+        // Tests may be excluded from the run by passing a list of tests not to run,
+        // or by passing a fileName with a test not to run on each line.
         Set<String> notTestNameSet = new HashSet<>();
-        if ((arg = args.getString(ARGUMENT_NOT_TEST_CLASS)) != null) {
+        if ((arg = args.getString(ARGUMENT_NOT_TEST_FILE)) != null) {
+            // The tests are specified in a file.
+            try {
+                notTestNameSet.addAll(readTestsFromFile(arg));
+            } catch (IOException err) {
+                finish(Activity.RESULT_CANCELED, new Bundle());
+                return;
+            }
+        } else if ((arg = args.getString(ARGUMENT_NOT_TEST_CLASS)) != null) {
             // The classes are specified in a String passed in the bundle
             String[] tests = arg.split(",");
             notTestNameSet.addAll(Arrays.asList(tests));
