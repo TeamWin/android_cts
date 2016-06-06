@@ -27,22 +27,23 @@ import com.android.compatibility.common.util.ResultUnit;
 
 public abstract class CtsJankTestBase extends JankTestBase {
 
+    private static final String REPORT_LOG_NAME = "CtsJankDeviceTestCases";
     private UiDevice mDevice;
     private DeviceReportLog mLog;
 
     @Override
     public void afterTest(Bundle metrics) {
         String source = String.format("%s#%s", getClass().getCanonicalName(), getName());
-        mLog.addValue(source, WindowContentFrameStatsMonitor.KEY_AVG_FPS,
+        mLog.addValue(source, "frame_fps",
                 metrics.getDouble(WindowContentFrameStatsMonitor.KEY_AVG_FPS),
                 ResultType.HIGHER_BETTER, ResultUnit.FPS);
-        mLog.addValue(source, WindowContentFrameStatsMonitor.KEY_AVG_LONGEST_FRAME,
+        mLog.addValue(source, "frame_max_frame_duration",
                 metrics.getDouble(WindowContentFrameStatsMonitor.KEY_AVG_LONGEST_FRAME),
                 ResultType.LOWER_BETTER, ResultUnit.MS);
-        mLog.addValue(source, WindowContentFrameStatsMonitor.KEY_MAX_NUM_JANKY,
+        mLog.addValue(source, "frame_max_jank",
                 metrics.getInt(WindowContentFrameStatsMonitor.KEY_MAX_NUM_JANKY),
                 ResultType.LOWER_BETTER, ResultUnit.COUNT);
-        mLog.setSummary(WindowContentFrameStatsMonitor.KEY_AVG_NUM_JANKY,
+        mLog.setSummary("frame_avg_jank",
                 metrics.getDouble(WindowContentFrameStatsMonitor.KEY_AVG_NUM_JANKY),
                 ResultType.LOWER_BETTER, ResultUnit.COUNT);
     }
@@ -50,7 +51,8 @@ public abstract class CtsJankTestBase extends JankTestBase {
     @Override
     protected void setUp() throws Exception {
         super.setUp();
-        mLog = new DeviceReportLog();
+        String streamName = "cts_device_jank_test";
+        mLog = new DeviceReportLog(REPORT_LOG_NAME, streamName);
         // fix device orientation
         mDevice = UiDevice.getInstance(getInstrumentation());
         mDevice.setOrientationNatural();

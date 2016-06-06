@@ -43,6 +43,7 @@ import java.util.ArrayList;
 
 public class AudioRecordTest extends CtsAndroidTestCase {
     private final static String TAG = "AudioRecordTest";
+    private static final String REPORT_LOG_NAME = "CtsMediaTestCases";
     private AudioRecord mAudioRecord;
     private int mHz = 44100;
     private boolean mIsOnMarkerReachedCalled;
@@ -235,7 +236,7 @@ public class AudioRecordTest extends CtsAndroidTestCase {
     }
 
     public void testAudioRecordResamplerMono8Bit() throws Exception {
-        doTest("ResamplerResamplerMono8Bit", true /*localRecord*/, false /*customHandler*/,
+        doTest("resampler_mono_8bit", true /*localRecord*/, false /*customHandler*/,
                 1 /*periodsPerSecond*/, 1 /*markerPeriodsPerSecond*/,
                 false /*useByteBuffer*/,  false /*blocking*/,
                 false /*auditRecording*/, false /*isChannelIndex*/, 88200 /*TEST_SR*/,
@@ -243,7 +244,7 @@ public class AudioRecordTest extends CtsAndroidTestCase {
     }
 
     public void testAudioRecordResamplerStereo8Bit() throws Exception {
-        doTest("ResamplerStereo8Bit", true /*localRecord*/, false /*customHandler*/,
+        doTest("resampler_stereo_8bit", true /*localRecord*/, false /*customHandler*/,
                 0 /*periodsPerSecond*/, 3 /*markerPeriodsPerSecond*/,
                 true /*useByteBuffer*/,  true /*blocking*/,
                 false /*auditRecording*/, false /*isChannelIndex*/, 45000 /*TEST_SR*/,
@@ -251,7 +252,7 @@ public class AudioRecordTest extends CtsAndroidTestCase {
     }
 
     public void testAudioRecordLocalMono16Bit() throws Exception {
-        doTest("LocalMono16Bit", true /*localRecord*/, false /*customHandler*/,
+        doTest("local_mono_16bit", true /*localRecord*/, false /*customHandler*/,
                 30 /*periodsPerSecond*/, 2 /*markerPeriodsPerSecond*/,
                 false /*useByteBuffer*/, true /*blocking*/,
                 false /*auditRecording*/, false /*isChannelIndex*/, 8000 /*TEST_SR*/,
@@ -259,7 +260,7 @@ public class AudioRecordTest extends CtsAndroidTestCase {
     }
 
     public void testAudioRecordStereo16Bit() throws Exception {
-        doTest("Stereo16Bit", false /*localRecord*/, false /*customHandler*/,
+        doTest("stereo_16bit", false /*localRecord*/, false /*customHandler*/,
                 2 /*periodsPerSecond*/, 2 /*markerPeriodsPerSecond*/,
                 false /*useByteBuffer*/, false /*blocking*/,
                 false /*auditRecording*/, false /*isChannelIndex*/, 17000 /*TEST_SR*/,
@@ -267,7 +268,7 @@ public class AudioRecordTest extends CtsAndroidTestCase {
     }
 
     public void testAudioRecordMonoFloat() throws Exception {
-        doTest("MonoFloat", false /*localRecord*/, true /*customHandler*/,
+        doTest("mono_float", false /*localRecord*/, true /*customHandler*/,
                 30 /*periodsPerSecond*/, 2 /*markerPeriodsPerSecond*/,
                 false /*useByteBuffer*/, true /*blocking*/,
                 false /*auditRecording*/, false /*isChannelIndex*/, 32000 /*TEST_SR*/,
@@ -275,7 +276,7 @@ public class AudioRecordTest extends CtsAndroidTestCase {
     }
 
     public void testAudioRecordLocalNonblockingStereoFloat() throws Exception {
-        doTest("LocalNonblockingStereoFloat", true /*localRecord*/, true /*customHandler*/,
+        doTest("local_nonblocking_stereo_float", true /*localRecord*/, true /*customHandler*/,
                 2 /*periodsPerSecond*/, 0 /*markerPeriodsPerSecond*/,
                 false /*useByteBuffer*/, false /*blocking*/,
                 false /*auditRecording*/, false /*isChannelIndex*/, 48000 /*TEST_SR*/,
@@ -287,7 +288,7 @@ public class AudioRecordTest extends CtsAndroidTestCase {
         if (isLowRamDevice()) {
             return; // skip. FIXME: reenable when AF memory allocation is updated.
         }
-        doTest("AuditByteBufferResamplerStereoFloat",
+        doTest("audit_byte_buffer_resampler_stereo_float",
                 false /*localRecord*/, true /*customHandler*/,
                 2 /*periodsPerSecond*/, 0 /*markerPeriodsPerSecond*/,
                 true /*useByteBuffer*/, false /*blocking*/,
@@ -296,7 +297,7 @@ public class AudioRecordTest extends CtsAndroidTestCase {
     }
 
     public void testAudioRecordAuditChannelIndexMonoFloat() throws Exception {
-        doTest("AuditChannelIndexMonoFloat", true /*localRecord*/, true /*customHandler*/,
+        doTest("audit_channel_index_mono_float", true /*localRecord*/, true /*customHandler*/,
                 2 /*periodsPerSecond*/, 0 /*markerPeriodsPerSecond*/,
                 false /*useByteBuffer*/, false /*blocking*/,
                 true /*auditRecording*/, true /*isChannelIndex*/, 47000 /*TEST_SR*/,
@@ -309,7 +310,7 @@ public class AudioRecordTest extends CtsAndroidTestCase {
         if (isLowRamDevice()) {
             return; // skip. FIXME: reenable when AF memory allocation is updated.
         }
-        doTest("AuditChannelIndex2", true /*localRecord*/, true /*customHandler*/,
+        doTest("audit_channel_index_2", true /*localRecord*/, true /*customHandler*/,
                 2 /*periodsPerSecond*/, 0 /*markerPeriodsPerSecond*/,
                 false /*useByteBuffer*/, false /*blocking*/,
                 true /*auditRecording*/, true /*isChannelIndex*/, 192000 /*TEST_SR*/,
@@ -320,7 +321,7 @@ public class AudioRecordTest extends CtsAndroidTestCase {
     // Audit buffers can run out of space with high numbers of channels,
     // so keep the sample rate low.
     public void testAudioRecordAuditChannelIndex5() throws Exception {
-        doTest("AuditChannelIndex5", true /*localRecord*/, true /*customHandler*/,
+        doTest("audit_channel_index_5", true /*localRecord*/, true /*customHandler*/,
                 2 /*periodsPerSecond*/, 0 /*markerPeriodsPerSecond*/,
                 false /*useByteBuffer*/, false /*blocking*/,
                 true /*auditRecording*/, true /*isChannelIndex*/, 16000 /*TEST_SR*/,
@@ -1115,37 +1116,33 @@ public class AudioRecordTest extends CtsAndroidTestCase {
         }
 
         // report this
-        DeviceReportLog log = new DeviceReportLog();
-        log.addValue(reportName + ": startRecording lag", coldInputStartTime,
-                ResultType.LOWER_BETTER, ResultUnit.MS);
-        log.addValue(reportName + ": stop execution time", stopTime - stopRequestTime,
-                ResultType.LOWER_BETTER, ResultUnit.MS);
-        log.addValue(reportName + ": Total record time expected", TEST_TIME_MS,
-                ResultType.NEUTRAL, ResultUnit.MS);
-        log.addValue(reportName + ": Total record time actual", endTime - firstSampleTime,
-                ResultType.NEUTRAL, ResultUnit.MS);
-        log.addValue(reportName + ": Total markers expected", markerPeriods,
-                ResultType.NEUTRAL, ResultUnit.COUNT);
-        log.addValue(reportName + ": Total markers actual", markerList.size(),
-                ResultType.NEUTRAL, ResultUnit.COUNT);
-        log.addValue(reportName + ": Total periods expected", updatePeriods,
-                ResultType.NEUTRAL, ResultUnit.COUNT);
-        log.addValue(reportName + ": Total periods actual", periodicList.size(),
-                ResultType.NEUTRAL, ResultUnit.COUNT);
-        log.addValue(reportName + ": Average Marker diff", markerStat.getAvg(),
-                ResultType.LOWER_BETTER, ResultUnit.MS);
-        log.addValue(reportName + ": Maximum Marker abs diff", markerStat.getMaxAbs(),
-                ResultType.LOWER_BETTER, ResultUnit.MS);
-        log.addValue(reportName + ": Average Marker abs diff", markerStat.getAvgAbs(),
-                ResultType.LOWER_BETTER, ResultUnit.MS);
-        log.addValue(reportName + ": Average Periodic diff", periodicStat.getAvg(),
-                ResultType.LOWER_BETTER, ResultUnit.MS);
-        log.addValue(reportName + ": Maximum Periodic abs diff", periodicStat.getMaxAbs(),
-                ResultType.LOWER_BETTER, ResultUnit.MS);
-        log.addValue(reportName + ": Average Periodic abs diff", periodicStat.getAvgAbs(),
-                ResultType.LOWER_BETTER, ResultUnit.MS);
-        log.setSummary(reportName + ": Unified abs diff",
-                (periodicStat.getAvgAbs() + markerStat.getAvgAbs()) / 2,
+        DeviceReportLog log = new DeviceReportLog(REPORT_LOG_NAME, reportName);
+        log.addValue("start_recording_lag", coldInputStartTime, ResultType.LOWER_BETTER,
+                ResultUnit.MS);
+        log.addValue("stop_execution_time", stopTime - stopRequestTime, ResultType.LOWER_BETTER,
+                ResultUnit.MS);
+        log.addValue("total_record_time_expected", TEST_TIME_MS, ResultType.NEUTRAL, ResultUnit.MS);
+        log.addValue("total_record_time_actual", endTime - firstSampleTime, ResultType.NEUTRAL,
+                ResultUnit.MS);
+        log.addValue("total_markers_expected", markerPeriods, ResultType.NEUTRAL, ResultUnit.COUNT);
+        log.addValue("total_markers_actual", markerList.size(), ResultType.NEUTRAL,
+                ResultUnit.COUNT);
+        log.addValue("total_periods_expected", updatePeriods, ResultType.NEUTRAL, ResultUnit.COUNT);
+        log.addValue("total_periods_actual", periodicList.size(), ResultType.NEUTRAL,
+                ResultUnit.COUNT);
+        log.addValue("average_marker_diff", markerStat.getAvg(), ResultType.LOWER_BETTER,
+                ResultUnit.MS);
+        log.addValue("maximum_marker_abs_diff", markerStat.getMaxAbs(), ResultType.LOWER_BETTER,
+                ResultUnit.MS);
+        log.addValue("average_marker_abs_diff", markerStat.getAvgAbs(), ResultType.LOWER_BETTER,
+                ResultUnit.MS);
+        log.addValue("average_periodic_diff", periodicStat.getAvg(), ResultType.LOWER_BETTER,
+                ResultUnit.MS);
+        log.addValue("maximum_periodic_abs_diff", periodicStat.getMaxAbs(), ResultType.LOWER_BETTER,
+                ResultUnit.MS);
+        log.addValue("average_periodic_abs_diff", periodicStat.getAvgAbs(), ResultType.LOWER_BETTER,
+                ResultUnit.MS);
+        log.setSummary("unified_abs_diff", (periodicStat.getAvgAbs() + markerStat.getAvgAbs()) / 2,
                 ResultType.LOWER_BETTER, ResultUnit.MS);
         log.submit(getInstrumentation());
     }

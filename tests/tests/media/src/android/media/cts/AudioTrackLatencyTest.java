@@ -28,10 +28,6 @@ import android.media.AudioTrack;
 import android.media.PlaybackParams;
 import android.util.Log;
 
-import com.android.compatibility.common.util.DeviceReportLog;
-import com.android.compatibility.common.util.ResultType;
-import com.android.compatibility.common.util.ResultUnit;
-
 import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
 import java.nio.ShortBuffer;

@@ -38,6 +38,7 @@ public class SimpleCpuTest extends CtsAndroidTestCase {
     private static final int NUMBER_REPEAT = 20;
     // reject data outside +/- this value * median
     private static final double OUTLIER_THRESHOLD = 0.1;
+    private static final String REPORT_LOG_NAME = "CtsSimpleCpuTestCases";
 
     @Override
     protected void setUp() throws Exception {
@@ -100,13 +101,15 @@ public class SimpleCpuTest extends CtsAndroidTestCase {
         for (int i = 0; i < numberRepeat; i++) {
             result[i] = CpuNative.runSort(arrayLength, numberRepeatInEachCall);
         }
-        DeviceReportLog report = new DeviceReportLog();
-        report.addValues("sorting time", result, ResultType.LOWER_BETTER, ResultUnit.MS);
+        String streamName = "do_test_sort";
+        DeviceReportLog report = new DeviceReportLog(REPORT_LOG_NAME, streamName);
+        report.addValue("array_length", arrayLength, ResultType.NEUTRAL, ResultUnit.NONE);
+        report.addValues("sorting_time", result, ResultType.LOWER_BETTER, ResultUnit.MS);
         Stat.StatResult stat = Stat.getStatWithOutlierRejection(result, OUTLIER_THRESHOLD);
         if (stat.mDataCount != result.length) {
             Log.w(TAG, "rejecting " + (result.length - stat.mDataCount) + " outliers");
         }
-        report.setSummary("sorting time", stat.mAverage, ResultType.LOWER_BETTER, ResultUnit.MS);
+        report.setSummary("sorting_time_average", stat.mAverage, ResultType.LOWER_BETTER, ResultUnit.MS);
         report.submit(getInstrumentation());
     }
 
@@ -122,14 +125,16 @@ public class SimpleCpuTest extends CtsAndroidTestCase {
         for (int i = 0; i < numberRepeat; i++) {
             result[i] = CpuNative.runMatrixMultiplication(n, numberRepeatInEachCall);
         }
-        DeviceReportLog report = new DeviceReportLog();
-        report.addValues("matrix mutiplication time", result, ResultType.LOWER_BETTER,
+        String streamName = "do_matrix_multiplication";
+        DeviceReportLog report = new DeviceReportLog(REPORT_LOG_NAME, streamName);
+        report.addValue("matrix_dimension", n, ResultType.NEUTRAL, ResultUnit.NONE);
+        report.addValues("matrix_mutiplication_time", result, ResultType.LOWER_BETTER,
                 ResultUnit.MS);
         Stat.StatResult stat = Stat.getStatWithOutlierRejection(result, OUTLIER_THRESHOLD);
         if (stat.mDataCount != result.length) {
             Log.w(TAG, "rejecting " + (result.length - stat.mDataCount) + " outliers");
         }
-        report.setSummary("matrix mutiplication time", stat.mAverage,
+        report.setSummary("matrix_mutiplication_time_average", stat.mAverage,
                 ResultType.LOWER_BETTER, ResultUnit.MS);
         report.submit(getInstrumentation());
     }
