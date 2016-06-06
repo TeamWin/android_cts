@@ -45,7 +45,8 @@ LOCAL_STATIC_JAVA_LIBRARIES := \
     compatibility-device-util \
     android-support-test \
     android.test.runner \
-    vogarexpect
+    vogarexpect \
+    testng
 
 LOCAL_JAVA_LANGUAGE_VERSION := 1.8
 
