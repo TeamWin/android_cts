@@ -33,6 +33,7 @@ import java.util.ArrayList;
 
 public class AudioTrack_ListenerTest extends CtsAndroidTestCase {
     private final static String TAG = "AudioTrack_ListenerTest";
+    private static final String REPORT_LOG_NAME = "CtsMediaTestCases";
     private final static int TEST_SR = 11025;
     private final static int TEST_CONF = AudioFormat.CHANNEL_OUT_MONO;
     private final static int TEST_FORMAT = AudioFormat.ENCODING_PCM_8BIT;
@@ -53,25 +54,26 @@ public class AudioTrack_ListenerTest extends CtsAndroidTestCase {
     };
 
     public void testAudioTrackCallback() throws Exception {
-        doTest("Streaming Local Looper", true /*localTrack*/, false /*customHandler*/,
+        doTest("streaming_local_looper", true /*localTrack*/, false /*customHandler*/,
                 30 /*periodsPerSecond*/, 2 /*markerPeriodsPerSecond*/, AudioTrack.MODE_STREAM);
     }
 
     public void testAudioTrackCallbackWithHandler() throws Exception {
         // with 100 periods per second, trigger back-to-back notifications.
-        doTest("Streaming Private Handler", false /*localTrack*/, true /*customHandler*/,
+        doTest("streaming_private_handler", false /*localTrack*/, true /*customHandler*/,
                 100 /*periodsPerSecond*/, 10 /*markerPeriodsPerSecond*/, AudioTrack.MODE_STREAM);
         // verify mHandler is used only for accessing its associated Looper
         assertFalse(mIsHandleMessageCalled);
     }
 
     public void testStaticAudioTrackCallback() throws Exception {
-        doTest("Static", false /*localTrack*/, false /*customHandler*/,
+        doTest("static", false /*localTrack*/, false /*customHandler*/,
                 100 /*periodsPerSecond*/, 10 /*markerPeriodsPerSecond*/, AudioTrack.MODE_STATIC);
     }
 
     public void testStaticAudioTrackCallbackWithHandler() throws Exception {
-        doTest("Static Private Handler", false /*localTrack*/, true /*customHandler*/,
+        String streamName = "test_static_audio_track_callback_handler";
+        doTest("static_private_handler", false /*localTrack*/, true /*customHandler*/,
                 30 /*periodsPerSecond*/, 2 /*markerPeriodsPerSecond*/, AudioTrack.MODE_STATIC);
         // verify mHandler is used only for accessing its associated Looper
         assertFalse(mIsHandleMessageCalled);
@@ -205,21 +207,20 @@ public class AudioTrack_ListenerTest extends CtsAndroidTestCase {
         }
 
         // report this
-        DeviceReportLog log = new DeviceReportLog();
-        log.addValue(reportName + ": Average Marker diff", markerStat.getAvg(),
-                ResultType.LOWER_BETTER, ResultUnit.MS);
-        log.addValue(reportName + ": Maximum Marker abs diff", markerStat.getMaxAbs(),
-                ResultType.LOWER_BETTER, ResultUnit.MS);
-        log.addValue(reportName + ": Average Marker abs diff", markerStat.getAvgAbs(),
-                ResultType.LOWER_BETTER, ResultUnit.MS);
-        log.addValue(reportName + ": Average Periodic diff", periodicStat.getAvg(),
-                ResultType.LOWER_BETTER, ResultUnit.MS);
-        log.addValue(reportName + ": Maximum Periodic abs diff", periodicStat.getMaxAbs(),
-                ResultType.LOWER_BETTER, ResultUnit.MS);
-        log.addValue(reportName + ": Average Periodic abs diff", periodicStat.getAvgAbs(),
-                ResultType.LOWER_BETTER, ResultUnit.MS);
-        log.setSummary(reportName + ": Unified abs diff",
-                (periodicStat.getAvgAbs() + markerStat.getAvgAbs()) / 2,
+        DeviceReportLog log = new DeviceReportLog(REPORT_LOG_NAME, reportName);
+        log.addValue("average_marker_diff", markerStat.getAvg(), ResultType.LOWER_BETTER,
+                ResultUnit.MS);
+        log.addValue("maximum_marker_abs_diff", markerStat.getMaxAbs(), ResultType.LOWER_BETTER,
+                ResultUnit.MS);
+        log.addValue("average_marker_abs_diff", markerStat.getAvgAbs(), ResultType.LOWER_BETTER,
+                ResultUnit.MS);
+        log.addValue("average_periodic_diff", periodicStat.getAvg(), ResultType.LOWER_BETTER,
+                ResultUnit.MS);
+        log.addValue("maximum_periodic_abs_diff", periodicStat.getMaxAbs(), ResultType.LOWER_BETTER,
+                ResultUnit.MS);
+        log.addValue("average_periodic_abs_diff", periodicStat.getAvgAbs(), ResultType.LOWER_BETTER,
+                ResultUnit.MS);
+        log.setSummary("unified_abs_diff", (periodicStat.getAvgAbs() + markerStat.getAvgAbs()) / 2,
                 ResultType.LOWER_BETTER, ResultUnit.MS);
         log.submit(getInstrumentation());
     }

@@ -35,6 +35,7 @@ import com.android.compatibility.common.util.Stat;
  */
 public class BandwidthTest extends CtsAndroidTestCase {
     private static final String TAG = BandwidthTest.class.getSimpleName();
+    private static final String REPORT_LOG_NAME = "CtsDramTestCases";
     private static final int MEMCPY_REPETITION = 10;
     private static final int MEMSET_REPETITION = 30;
     private static final int REPEAT_IN_EACH_CALL = 100;
@@ -165,13 +166,13 @@ public class BandwidthTest extends CtsAndroidTestCase {
         for (int i = 0; i < MEMCPY_REPETITION; i++) {
             result[i] = MemoryNative.runMemcpy(bufferSize, repeatInEachCall);
         }
-        DeviceReportLog report = new DeviceReportLog();
-        report.addValues("memcpy time", result, ResultType.LOWER_BETTER,
-                ResultUnit.MS);
+        String streamName = "run_memcpy";
+        DeviceReportLog report = new DeviceReportLog(REPORT_LOG_NAME, streamName);
+        report.addValue("buffer_size", bufferSize, ResultType.NEUTRAL, ResultUnit.NONE);
+        report.addValues("memcpy_time", result, ResultType.LOWER_BETTER, ResultUnit.MS);
         double[] mbps = Stat.calcRatePerSecArray(
                 (double)bufferSize * repeatInEachCall / 1024.0 / 1024.0, result);
-        report.addValues("memcpy throughput", mbps, ResultType.HIGHER_BETTER,
-                ResultUnit.MBPS);
+        report.addValues("memcpy_throughput", mbps, ResultType.HIGHER_BETTER, ResultUnit.MBPS);
         Stat.StatResult stat = Stat.getStatWithOutlierRejection(mbps, OUTLIER_THRESHOLD);
         if (stat.mDataCount != result.length) {
             Log.w(TAG, "rejecting " + (result.length - stat.mDataCount) + " outliers");
@@ -183,9 +184,9 @@ public class BandwidthTest extends CtsAndroidTestCase {
         double pixels = size.x * size.y;
         // now this represents how many times the whole screen can be copied in a sec.
         double screensPerSecAverage = stat.mAverage / pixels * 1024.0 * 1024.0 / 4.0;
-        report.addValue("memcpy in fps", screensPerSecAverage,
-                ResultType.HIGHER_BETTER, ResultUnit.FPS);
-        report.setSummary("memcpy throughput", stat.mAverage, ResultType.HIGHER_BETTER,
+        report.addValue("memcpy_in_fps", screensPerSecAverage, ResultType.HIGHER_BETTER,
+                ResultUnit.FPS);
+        report.setSummary("memcpy_throughput_average", stat.mAverage, ResultType.HIGHER_BETTER,
                 ResultUnit.MBPS);
         report.submit(getInstrumentation());
     }
@@ -200,11 +201,13 @@ public class BandwidthTest extends CtsAndroidTestCase {
         for (int i = 0; i < MEMSET_REPETITION; i++) {
             result[i] = MemoryNative.runMemset(bufferSize, repeatInEachCall, MEMSET_CHAR);
         }
-        DeviceReportLog report = new DeviceReportLog();
-        report.addValues("memset time", result, ResultType.LOWER_BETTER, ResultUnit.MS);
+        String streamName = "run_memset";
+        DeviceReportLog report = new DeviceReportLog(REPORT_LOG_NAME, streamName);
+        report.addValue("buffer_size", bufferSize, ResultType.NEUTRAL, ResultUnit.NONE);
+        report.addValues("memset_time", result, ResultType.LOWER_BETTER, ResultUnit.MS);
         double[] mbps = Stat.calcRatePerSecArray(
                 (double)bufferSize * repeatInEachCall / 1024.0 / 1024.0, result);
-        report.addValues("memset throughput", mbps, ResultType.HIGHER_BETTER, ResultUnit.MBPS);
+        report.addValues("memset_throughput", mbps, ResultType.HIGHER_BETTER, ResultUnit.MBPS);
         Stat.StatResult stat = Stat.getStatWithOutlierRejection(mbps, OUTLIER_THRESHOLD);
         if (stat.mDataCount != result.length) {
             Log.w(TAG, "rejecting " + (result.length - stat.mDataCount) + " outliers");
@@ -216,9 +219,9 @@ public class BandwidthTest extends CtsAndroidTestCase {
         double pixels = size.x * size.y;
         // now this represents how many times the whole screen can be copied in a sec.
         double screensPerSecAverage = stat.mAverage / pixels * 1024.0 * 1024.0 / 4.0;
-        report.addValue("memset in fps", screensPerSecAverage,
-                ResultType.HIGHER_BETTER, ResultUnit.FPS);
-        report.setSummary("memset throughput", stat.mAverage, ResultType.HIGHER_BETTER,
+        report.addValue("memset_in_fps", screensPerSecAverage, ResultType.HIGHER_BETTER,
+                ResultUnit.FPS);
+        report.setSummary("memset_throughput_average", stat.mAverage, ResultType.HIGHER_BETTER,
                 ResultUnit.MBPS);
         report.submit(getInstrumentation());
     }

@@ -28,6 +28,9 @@ import com.android.cts.util.TimeoutReq;
 import java.io.IOException;
 
 public class ScrollingTest extends ActivityInstrumentationTestCase2<ScrollingActivity> {
+
+    private static final String REPORT_LOG_NAME = "CtsUiDeviceTestCases";
+
     private ScrollingActivity mActivity;
 
     public ScrollingTest() {
@@ -69,10 +72,12 @@ public class ScrollingTest extends ActivityInstrumentationTestCase2<ScrollingAct
                 assertTrue(activity.scrollToTop());
             }
         });
-        DeviceReportLog report = new DeviceReportLog();
-        report.addValues("scrolling time", results, ResultType.LOWER_BETTER,ResultUnit.MS);
+        String streamName = "test_full_scrolling";
+        DeviceReportLog report = new DeviceReportLog(REPORT_LOG_NAME, streamName);
+        report.addValues("scrolling_time", results, ResultType.LOWER_BETTER,ResultUnit.MS);
         Stat.StatResult stat = Stat.getStat(results);
-        report.setSummary("scrolling time", stat.mAverage, ResultType.LOWER_BETTER,ResultUnit.MS);
+        report.setSummary("scrolling_time_average", stat.mAverage,
+                ResultType.LOWER_BETTER,ResultUnit.MS);
         report.submit(getInstrumentation());
     }
 }

@@ -44,6 +44,7 @@ public class InstallTimeTest extends DeviceTestCase implements IAbiReceiver, IBu
     private IAbi mAbi;
 
     private static final String TAG = "InstallTimeTest";
+    private static final String REPORT_LOG_NAME = "CtsUiHostTestCases";
     static final String PACKAGE = "com.replica.replicaisland";
     static final String APK = "com.replica.replicaisland.apk";
     private static final double OUTLIER_THRESHOLD = 0.1;
@@ -72,8 +73,10 @@ public class InstallTimeTest extends DeviceTestCase implements IAbiReceiver, IBu
     }
 
     public void testInstallTime() throws Exception {
+        String streamName = "test_install_time";
         MetricsReportLog report = new MetricsReportLog(mDevice.getSerialNumber(), mAbi.getName(),
-                String.format("%s#%s", getClass().getName(), "testInstallTime"));
+                String.format("%s#%s", getClass().getName(), "testInstallTime"), REPORT_LOG_NAME,
+                streamName);
         final int NUMBER_REPEAT = 10;
         final IBuildInfo build = mBuild;
         final ITestDevice device = mDevice;
@@ -89,12 +92,13 @@ public class InstallTimeTest extends DeviceTestCase implements IAbiReceiver, IBu
                 device.installPackage(app, false, options);
             }
         });
-        report.addValues("install time", result, ResultType.LOWER_BETTER, ResultUnit.MS);
+        report.addValues("install_time", result, ResultType.LOWER_BETTER, ResultUnit.MS);
         Stat.StatResult stat = Stat.getStatWithOutlierRejection(result, OUTLIER_THRESHOLD);
         if (stat.mDataCount != result.length) {
             Log.w(TAG, "rejecting " + (result.length - stat.mDataCount) + " outliers");
         }
-        report.setSummary("install time", stat.mAverage, ResultType.LOWER_BETTER, ResultUnit.MS);
+        report.setSummary("install_time_average", stat.mAverage, ResultType.LOWER_BETTER,
+                ResultUnit.MS);
         report.submit();
     }
 
