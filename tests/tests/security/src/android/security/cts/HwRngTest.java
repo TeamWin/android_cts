@@ -45,20 +45,22 @@ public class HwRngTest extends CtsAndroidTestCase {
     private static final String HWRNG_DRIVER_NAME = "hwrng";
     private static final int HWRNG_DRIVER_MAJOR = 10;
     private static final int HWRNG_DRIVER_MINOR = 183;
+    private static final String REPORT_LOG_NAME = "CtsSecurityTestCases";
 
     /**
      * Reports whether the {@code /dev/hw_random} device is found. This test always passes.
      */
     public void testDeviceFilePresent() {
-        DeviceReportLog report = new DeviceReportLog();
+        String streamName = "test_device_file_present";
+        DeviceReportLog report = new DeviceReportLog(REPORT_LOG_NAME, streamName);
         // Need to report at least one value, otherwise summary won't be logged.
         report.addValue(
-                DEV_HW_RANDOM + " found",
+                "hw_random_found" /* key cannot contain special chars */,
                 DEV_HW_RANDOM.exists() ? 1 : 0,
                 ResultType.WARNING,
                 ResultUnit.NONE);
         report.setSummary(
-                "Hardware RNG exposed",
+                "hardware_rng_exposed",
                 DEV_HW_RANDOM.exists() ? 1 : 0,
                 ResultType.WARNING,
                 ResultUnit.NONE);

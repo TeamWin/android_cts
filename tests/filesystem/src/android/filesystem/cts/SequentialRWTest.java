@@ -34,6 +34,7 @@ public class SequentialRWTest extends CtsAndroidTestCase {
     private static final String DIR_SEQ_WR = "SEQ_WR";
     private static final String DIR_SEQ_UPDATE = "SEQ_UPDATE";
     private static final String DIR_SEQ_RD = "SEQ_RD";
+    private static final String REPORT_LOG_NAME = "CtsFileSystemTestCases";
     private static final int BUFFER_SIZE = 10 * 1024 * 1024;
 
     @Override
@@ -51,7 +52,8 @@ public class SequentialRWTest extends CtsAndroidTestCase {
             return;
         }
         final int numberOfFiles =(int)(fileSize / BUFFER_SIZE);
-        DeviceReportLog report = new DeviceReportLog();
+        String streamName = "test_single_sequential_write";
+        DeviceReportLog report = new DeviceReportLog(REPORT_LOG_NAME, streamName);
         report.addValue("files", numberOfFiles, ResultType.NEUTRAL, ResultUnit.COUNT);
         final byte[] data = FileUtil.generateRandomData(BUFFER_SIZE);
         final File[] files = FileUtil.createNewFiles(getContext(), DIR_SEQ_WR,
@@ -66,12 +68,10 @@ public class SequentialRWTest extends CtsAndroidTestCase {
             }
         });
         double[] mbps = Stat.calcRatePerSecArray((double)BUFFER_SIZE / 1024 / 1024, times);
-        report.addValues("write throughput",
-                mbps, ResultType.HIGHER_BETTER, ResultUnit.MBPS);
-        report.addValues("write amount", wrAmount, ResultType.NEUTRAL,
-                ResultUnit.BYTE);
+        report.addValues("write_throughput", mbps, ResultType.HIGHER_BETTER, ResultUnit.MBPS);
+        report.addValues("write_amount", wrAmount, ResultType.NEUTRAL, ResultUnit.BYTE);
         Stat.StatResult stat = Stat.getStat(mbps);
-        report.setSummary("write throughput", stat.mAverage, ResultType.HIGHER_BETTER,
+        report.setSummary("write_throughput_average", stat.mAverage, ResultType.HIGHER_BETTER,
                 ResultUnit.MBPS);
         report.submit(getInstrumentation());
     }
@@ -83,10 +83,9 @@ public class SequentialRWTest extends CtsAndroidTestCase {
             return;
         }
         final int NUMBER_REPETITION = 6;
-        DeviceReportLog report = new DeviceReportLog();
-        FileUtil.doSequentialUpdateTest(getContext(), DIR_SEQ_UPDATE, report, fileSize,
-                BUFFER_SIZE, NUMBER_REPETITION);
-        report.submit(getInstrumentation());
+        String streamName = "test_single_sequential_update";
+        FileUtil.doSequentialUpdateTest(getContext(), DIR_SEQ_UPDATE, fileSize, BUFFER_SIZE,
+                NUMBER_REPETITION, REPORT_LOG_NAME, streamName);
     }
 
     @TimeoutReq(minutes = 30)
@@ -99,8 +98,10 @@ public class SequentialRWTest extends CtsAndroidTestCase {
         final File file = FileUtil.createNewFilledFile(getContext(),
                 DIR_SEQ_RD, fileSize);
         long finish = System.currentTimeMillis();
-        DeviceReportLog report = new DeviceReportLog();
-        report.addValue("write throughput for test file of length " + fileSize,
+        String streamName = "test_single_sequential_read";
+        DeviceReportLog report = new DeviceReportLog(REPORT_LOG_NAME, streamName);
+        report.addValue("file_size", fileSize, ResultType.NEUTRAL, ResultUnit.NONE);
+        report.addValue("write_throughput",
                 Stat.calcRatePerSec((double)fileSize / 1024 / 1024, finish - start),
                 ResultType.HIGHER_BETTER, ResultUnit.MBPS);
 
@@ -121,10 +122,9 @@ public class SequentialRWTest extends CtsAndroidTestCase {
             }
         });
         double[] mbps = Stat.calcRatePerSecArray((double)fileSize / 1024 / 1024, times);
-        report.addValues("read throughput",
-                mbps, ResultType.HIGHER_BETTER, ResultUnit.MBPS);
+        report.addValues("read_throughput", mbps, ResultType.HIGHER_BETTER, ResultUnit.MBPS);
         Stat.StatResult stat = Stat.getStat(mbps);
-        report.setSummary("read throughput", stat.mAverage, ResultType.HIGHER_BETTER,
+        report.setSummary("read_throughput_average", stat.mAverage, ResultType.HIGHER_BETTER,
                 ResultUnit.MBPS);
         report.submit(getInstrumentation());
     }

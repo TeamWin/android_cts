@@ -31,6 +31,7 @@ public class GLReferenceBenchmark extends ActivityInstrumentationTestCase2<GLRef
     private static final int NUM_SCENES = 2;
     private static final int NUM_FRAMES = NUM_FRAMES_PER_SCENE * NUM_SCENES;
     private static final int TIMEOUT = 1000000;
+    private static final String REPORT_LOG_NAME = "CtsOpenGlPerf2TestCases";
 
     public GLReferenceBenchmark() {
         super(GLReferenceActivity.class);
@@ -65,15 +66,16 @@ public class GLReferenceBenchmark extends ActivityInstrumentationTestCase2<GLRef
             double updateAverage = updateSum / NUM_FRAMES;
             double renderAverage = renderSum / NUM_FRAMES;
 
-            DeviceReportLog report = new DeviceReportLog();
-            report.addValues("Set Up Times", setUpTimes, ResultType.LOWER_BETTER, ResultUnit.MS);
-            report.addValue("Update Time Average", updateAverage, ResultType.LOWER_BETTER,
+            String streamName = "test_reference_benchmark";
+            DeviceReportLog report = new DeviceReportLog(REPORT_LOG_NAME, streamName);
+            report.addValues("set_up_times", setUpTimes, ResultType.LOWER_BETTER, ResultUnit.MS);
+            report.addValue("update_time_average", updateAverage, ResultType.LOWER_BETTER,
                     ResultUnit.MS);
-            report.addValue("Render Time Average", renderAverage, ResultType.LOWER_BETTER,
+            report.addValue("render_time_average", renderAverage, ResultType.LOWER_BETTER,
                     ResultUnit.MS);
             totalTime = setUpTimes[0] + setUpTimes[1] + setUpTimes[2] + setUpTimes[3] +
                     updateAverage + renderAverage;
-            report.setSummary("Total Time Average", totalTime, ResultType.LOWER_BETTER,
+            report.setSummary("total_time_average", totalTime, ResultType.LOWER_BETTER,
                     ResultUnit.MS);
             report.submit(getInstrumentation());
         }

@@ -279,4 +279,18 @@ public class DeviceReportLog extends ReportLog {
             instrumentation.sendStatus(INST_STATUS_ERROR, null);
         }
     }
+
+    /**
+     * Closes report file. Static functions that do not have access to instrumentation can
+     * use this to close report logs. Summary, if present, is not reported to instrumentation, hence
+     * does not appear in the result XML.
+     */
+    public void submit() {
+        Log.i(TAG, "Submit");
+        try {
+            store.close();
+        } catch (IOException e) {
+            Log.e(TAG, "Submit Failed", e);
+        }
+    }
 }
