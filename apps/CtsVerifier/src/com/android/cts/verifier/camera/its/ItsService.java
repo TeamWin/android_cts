@@ -564,6 +564,7 @@ public class ItsService extends Service implements SensorEventListener {
             // Each command is a serialized JSON object.
             try {
                 JSONObject cmdObj = new JSONObject(cmd);
+                Logt.i(TAG, "Start processing command" + cmdObj.getString("cmdName"));
                 if ("open".equals(cmdObj.getString("cmdName"))) {
                     int cameraId = cmdObj.getInt("cameraId");
                     openCameraDevice(cameraId);
@@ -588,6 +589,7 @@ public class ItsService extends Service implements SensorEventListener {
                 } else {
                     throw new ItsException("Unknown command: " + cmd);
                 }
+                Logt.i(TAG, "Finish processing command" + cmdObj.getString("cmdName"));
             } catch (org.json.JSONException e) {
                 Logt.e(TAG, "Invalid command: ", e);
             }
@@ -642,6 +644,7 @@ public class ItsService extends Service implements SensorEventListener {
 
         public void sendResponse(LinkedList<MySensorEvent> events)
                 throws ItsException {
+            Logt.i(TAG, "Sending " + events.size() + " sensor events");
             try {
                 JSONArray accels = new JSONArray();
                 JSONArray mags = new JSONArray();
@@ -668,6 +671,7 @@ public class ItsService extends Service implements SensorEventListener {
             } catch (org.json.JSONException e) {
                 throw new ItsException("JSON error: ", e);
             }
+            Logt.i(TAG, "Sent sensor events");
         }
 
         public void sendResponse(CameraCharacteristics props)
