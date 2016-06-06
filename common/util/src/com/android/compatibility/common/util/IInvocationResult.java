@@ -84,4 +84,14 @@ public interface IInvocationResult {
      * Gets the {@link Map} of build info collected.
      */
     Map<String, String> getBuildInfo();
+
+    /**
+     *  Set the string containing the command line arguments to the run command.
+     */
+    void setCommandLineArgs(String setCommandLineArgs);
+
+    /**
+     * Retrieve the command line arguments to the run command.
+     */
+    String getCommandLineArgs();
 }
