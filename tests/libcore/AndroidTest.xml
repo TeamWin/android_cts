@@ -32,5 +32,7 @@
         <option name="instrumentation-arg" key="core-expectations"
                 value="/knownfailures.txt,/brokentests.txt,/icebox.txt,/taggedtests.txt,/expectations/cts-runner-specific-failures.txt" />
         <option name="runtime-hint" value="45m"/>
+        <!-- 20x default timeout of 600sec -->
+        <option name="shell-timeout" value="12000000"/>
     </test>
 </configuration>
