@@ -24,7 +24,7 @@ import android.support.test.runner.AndroidJUnitRunner;
 public interface AndroidJUnitRunnerConstants {
 
     /**
-     * The names of the file containing the names of the tests to run.
+     * The name of the file containing the names of the tests to run.
      *
      * <p>This is an internal constant used within
      * {@code android.support.test.internal.runner.RunnerArgs}, which is used on both the server
@@ -37,6 +37,21 @@ public interface AndroidJUnitRunnerConstants {
      * its client without the client being aware of how that was done.
      */
     String ARGUMENT_TEST_FILE = "testFile";
+
+    /**
+     * The name of the file containing the names of the tests not to run.
+     *
+     * <p>This is an internal constant used within
+     * {@code android.support.test.internal.runner.RunnerArgs}, which is used on both the server
+     * and
+     * client side. The constant is used when there are too many test names to pass on the command
+     * line, in which case they are stored in a file that is pushed to the device and then the
+     * location of that file is passed in this argument. The {@code RunnerArgs} on the client will
+     * read the contents of that file in order to retrieve the list of names and then return that
+     * to
+     * its client without the client being aware of how that was done.
+     */
+    String ARGUMENT_NOT_TEST_FILE = "notTestFile";
 
     /**
      * A comma separated list of the names of test classes to run.
