@@ -97,6 +97,9 @@ public class ItsService extends Service implements SensorEventListener {
     private static final int TIMEOUT_CALLBACK = 10;
     private static final int TIMEOUT_3A = 10;
 
+    // Timeout for doCapture command polling
+    private static final int TIMEOUT_POLL_MS = 500;
+
     // Time given for background requests to warm up pipeline
     private static final long PIPELINE_WARMUP_TIME_MS = 2000;
 
@@ -1273,16 +1276,20 @@ public class ItsService extends Service implements SensorEventListener {
             // Make sure all callbacks have been hit (wait until captures are done).
             // If no timeouts are received after a timeout, then fail.
             int currentCount = mCountCallbacksRemaining.get();
+            long totalSleep = 0;
             while (currentCount > 0) {
                 try {
-                    Thread.sleep(timeout);
+                    Thread.sleep(TIMEOUT_POLL_MS);
                 } catch (InterruptedException e) {
                     throw new ItsException("Timeout failure", e);
                 }
+                totalSleep += TIMEOUT_POLL_MS;
                 int newCount = mCountCallbacksRemaining.get();
-                if (newCount == currentCount) {
+                if (newCount == currentCount && totalSleep > timeout) {
                     throw new ItsException(
                             "No callback received within timeout");
+                } else if (newCount < currentCount) {
+                    totalSleep = 0;
                 }
                 currentCount = newCount;
             }
