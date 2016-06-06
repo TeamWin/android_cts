@@ -13,10 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package com.android.cts.core.runner.support;
 
 import android.support.test.internal.runner.AndroidLogOnlyBuilder;
 import android.support.test.internal.util.AndroidRunnerParams;
+import android.util.Log;
 import org.junit.runners.model.RunnerBuilder;
 import org.junit.runner.Runner;
 
@@ -26,7 +28,10 @@ import org.junit.runner.Runner;
  */
 public class ExtendedAndroidRunnerBuilder extends AndroidRunnerBuilder {
 
-   private final ExtendedAndroidLogOnlyBuilder androidLogOnlyBuilder;
+    private final ExtendedAndroidLogOnlyBuilder androidLogOnlyBuilder;
+    private static final boolean DEBUG = false;
+
+    private final TestNgRunnerBuilder mTestNgBuilder;
 
     /**
      * @param runnerParams {@link AndroidRunnerParams} that stores common runner parameters
@@ -34,16 +39,42 @@ public class ExtendedAndroidRunnerBuilder extends AndroidRunnerBuilder {
     public ExtendedAndroidRunnerBuilder(AndroidRunnerParams runnerParams) {
         super(runnerParams, false /* CTSv1 filtered out Test suite() classes. */);
         androidLogOnlyBuilder = new ExtendedAndroidLogOnlyBuilder(runnerParams);
+        mTestNgBuilder = new TestNgRunnerBuilder(runnerParams);
     }
 
     @Override
     public Runner runnerForClass(Class<?> testClass) throws Throwable {
-        // Check if this is a dry-run with -e log true argument passed to the runner.
-        Runner runner = androidLogOnlyBuilder.runnerForClass(testClass);
-        if (runner != null) {
-            return runner;
-        }
-        // Otherwise use the default behaviour
-        return super.runnerForClass(testClass);
+      if (DEBUG) {
+        Log.d("ExAndRunBuild", "runnerForClass: Searching runner for class " + testClass.getName());
+      }
+
+      Runner runner;
+      // Give TestNG tests a chance to participate in the Runner search first.
+      // (Note that the TestNG runner handles log-only runs by itself)
+      runner = mTestNgBuilder.runnerForClass(testClass);
+      if (runner != null) {
+        logFoundRunner(runner);
+        return runner;
+      }
+
+      // Check if this is a dry-run with -e log true argument passed to the runner.
+      runner = androidLogOnlyBuilder.runnerForClass(testClass);
+      if (runner != null) {
+        logFoundRunner(runner);
+        return runner;
+      }
+
+      // Use the normal Runner search mechanism (for Junit tests).
+      runner = super.runnerForClass(testClass);
+      logFoundRunner(runner);
+
+      return runner;
+    }
+
+    private static void logFoundRunner(Runner runner) {
+      if (DEBUG) {
+        Log.d("ExAndRunBuild", "runnerForClass: Found runner of type " +
+            ((runner == null) ? "<null>" : runner.getClass().getName()));
+      }
     }
 }
