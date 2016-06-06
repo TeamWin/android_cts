@@ -94,15 +94,15 @@ public class TestFilter {
     public String toString() {
         StringBuilder sb = new StringBuilder();
         if (mAbi != null) {
-            sb.append(mAbi);
+            sb.append(mAbi.trim());
             sb.append(" ");
         }
         if (mName != null) {
-            sb.append(mName);
+            sb.append(mName.trim());
         }
         if (mTest != null) {
             sb.append(" ");
-            sb.append(mTest);
+            sb.append(mTest.trim());
         }
         return sb.toString();
     }

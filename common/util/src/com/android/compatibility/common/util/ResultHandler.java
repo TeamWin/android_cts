@@ -55,6 +55,7 @@ public class ResultHandler {
     private static final String BUILD_PRODUCT = "build_product";
     private static final String BUILD_TAG = "Build";
     private static final String CASE_TAG = "TestCase";
+    private static final String COMMAND_LINE_ARGS = "command_line_args";
     private static final String DEVICES_ATTR = "devices";
     private static final String END_DISPLAY_TIME_ATTR = "end_display";
     private static final String END_TIME_ATTR = "end";
@@ -117,6 +118,7 @@ public class ResultHandler {
                 invocation.setStartTime(Long.valueOf(
                         parser.getAttributeValue(NS, START_TIME_ATTR)));
                 invocation.setTestPlan(parser.getAttributeValue(NS, SUITE_PLAN_ATTR));
+                invocation.setCommandLineArgs(parser.getAttributeValue(NS, COMMAND_LINE_ARGS));
                 String deviceList = parser.getAttributeValue(NS, DEVICES_ATTR);
                 for (String device : deviceList.split(",")) {
                     invocation.addDeviceSerial(device);
@@ -206,13 +208,14 @@ public class ResultHandler {
      * @param resultDir
      * @param startTime
      * @param referenceUrl A nullable string that can contain a URL to a related data
+     * @param commandLineArgs A string containing the arguments to the run command
      * @return The result file created.
      * @throws IOException
      * @throws XmlPullParserException
      */
     public static File writeResults(String suiteName, String suiteVersion, String suitePlan,
             String suiteBuild, IInvocationResult result, File resultDir,
-            long startTime, long endTime, String referenceUrl)
+            long startTime, long endTime, String referenceUrl, String commandLineArgs)
                     throws IOException, XmlPullParserException {
         int passed = result.countResults(TestStatus.PASS);
         int failed = result.countResults(TestStatus.FAIL);
@@ -236,6 +239,8 @@ public class ResultHandler {
         serializer.attribute(NS, SUITE_PLAN_ATTR, suitePlan);
         serializer.attribute(NS, SUITE_BUILD_ATTR, suiteBuild);
         serializer.attribute(NS, REPORT_VERSION_ATTR, RESULT_FILE_VERSION);
+        serializer.attribute(NS, COMMAND_LINE_ARGS, nullToEmpty(commandLineArgs));
+
         if (referenceUrl != null) {
             serializer.attribute(NS, REFERENCE_URL_ATTR, referenceUrl);
         }
@@ -364,5 +369,12 @@ public class ResultHandler {
     static String toReadableDateString(long time) {
         SimpleDateFormat dateFormat = new SimpleDateFormat("EEE MMM dd HH:mm:ss zzz yyyy");
         return dateFormat.format(new Date(time));
+    }
+
+    /**
+     * When nullable is null, return an empty string. Otherwise, return the value in nullable.
+     */
+    private static String nullToEmpty(String nullable) {
+        return nullable == null ? "" : nullable;
     }
 }
