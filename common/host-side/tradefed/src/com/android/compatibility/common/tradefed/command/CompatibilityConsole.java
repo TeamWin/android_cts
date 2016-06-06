@@ -322,13 +322,13 @@ public class CompatibilityConsole extends Console {
         if (testResultRepo != null && results.size() > 0) {
             for (int i = 0; i < results.size(); i++) {
                 IInvocationResult result = results.get(i);
-                Map<String, String> buildInfo = result.getBuildInfo();
+                Map<String, String> invocationInfo = result.getInvocationInfo();
 
-                // build attributes are not always present (e.g. in the case of halted test runs)
+                // invocation attributes are not always present (e.g. in the case of halted runs)
                 // replace null entries with the string "Unknown"
-                for (Map.Entry<String, String> entry : buildInfo.entrySet()) {
+                for (Map.Entry<String, String> entry : invocationInfo.entrySet()) {
                     if (entry.getValue() == null) {
-                        buildInfo.put(entry.getKey(), "Unknown");
+                        invocationInfo.put(entry.getKey(), "Unknown");
                     }
                 }
 
@@ -340,8 +340,8 @@ public class CompatibilityConsole extends Console {
                         CompatibilityBuildHelper.getDirSuffix(result.getStartTime()),
                         result.getTestPlan(),
                         ArrayUtil.join(", ", result.getDeviceSerials()),
-                        buildInfo.get("build_id"),
-                        buildInfo.get("build_product")
+                        invocationInfo.get("build_id"),
+                        invocationInfo.get("build_product")
                         ));
             }
 

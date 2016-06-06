@@ -404,7 +404,7 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
             for (Map.Entry<String, String> entry : buildInfo.getBuildAttributes().entrySet()) {
                 String key = entry.getKey();
                 if (key.startsWith(BUILD_INFO)) {
-                    mResult.addBuildInfo(key.substring(CTS_PREFIX.length()), entry.getValue());
+                    mResult.addInvocationInfo(key.substring(CTS_PREFIX.length()), entry.getValue());
                 }
             }
         }
