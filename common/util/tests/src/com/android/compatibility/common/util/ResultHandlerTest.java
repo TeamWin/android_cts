@@ -146,8 +146,8 @@ public class ResultHandlerTest extends TestCase {
         result.setTestPlan(SUITE_PLAN);
         result.addDeviceSerial(DEVICE_A);
         result.addDeviceSerial(DEVICE_B);
-        result.addBuildInfo(BUILD_ID, EXAMPLE_BUILD_ID);
-        result.addBuildInfo(BUILD_PRODUCT, EXAMPLE_BUILD_PRODUCT);
+        result.addInvocationInfo(BUILD_ID, EXAMPLE_BUILD_ID);
+        result.addInvocationInfo(BUILD_PRODUCT, EXAMPLE_BUILD_PRODUCT);
         IModuleResult moduleA = result.getOrCreateModule(ID_A);
         ICaseResult moduleACase = moduleA.getOrCreateResult(CLASS_A);
         ITestResult moduleATest1 = moduleACase.getOrCreateResult(METHOD_1);
@@ -232,7 +232,7 @@ public class ResultHandlerTest extends TestCase {
         assertEquals("Expected 1 failure", 1, result.countResults(TestStatus.FAIL));
         assertEquals("Expected 1 not executed", 1, result.countResults(TestStatus.NOT_EXECUTED));
 
-        Map<String, String> buildInfo = result.getBuildInfo();
+        Map<String, String> buildInfo = result.getInvocationInfo();
         assertEquals("Incorrect Build ID", EXAMPLE_BUILD_ID, buildInfo.get(BUILD_ID));
         assertEquals("Incorrect Build Product",
             EXAMPLE_BUILD_PRODUCT, buildInfo.get(BUILD_PRODUCT));

@@ -76,14 +76,14 @@ public interface IInvocationResult {
     void mergeModuleResult(IModuleResult moduleResult);
 
     /**
-     * Adds the given build info to the result.
+     * Adds the given invocation info to the result.
      */
-    void addBuildInfo(String key, String value);
+    void addInvocationInfo(String key, String value);
 
     /**
-     * Gets the {@link Map} of build info collected.
+     * Gets the {@link Map} of invocation info collected.
      */
-    Map<String, String> getBuildInfo();
+    Map<String, String> getInvocationInfo();
 
     /**
      *  Set the string containing the command line arguments to the run command.
