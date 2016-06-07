@@ -15,6 +15,7 @@
 import its.image
 import its.device
 import its.objects
+import its.caps
 import time
 import math
 import pylab
@@ -323,11 +324,15 @@ def collect_data():
         frames: List of RGB images as numpy arrays.
     """
     with its.device.ItsSession() as cam:
+        props = cam.get_camera_properties()
+        its.caps.skip_unless(its.caps.sensor_fusion(props) and
+                             its.caps.manual_sensor(props))
+
         print "Starting sensor event collection"
         cam.start_sensor_events()
 
         # Sleep a few seconds for gyro events to stabilize.
-        time.sleep(5)
+        time.sleep(2)
 
         # TODO: Ensure that OIS is disabled; set to DISABLE and wait some time.
 
