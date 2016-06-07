@@ -30,18 +30,9 @@ public class ManualPackageInstallTest extends BasePackageInstallTest {
     private static final int AUTOMATOR_WAIT_TIMEOUT = 5000;
     private static final int INSTALL_WAIT_TIME = 5000;
 
-    private static final BySelector POPUP_BUTTON_SELECTOR = By
-            .clazz(android.widget.Button.class.getName())
-            .res("android:id/button1")
-            .pkg("com.google.android.packageinstaller");
-    private static final BySelector POPUP_TEXT_SELECTOR = By
-            .clazz(android.widget.TextView.class.getName())
-            .res("android:id/alertTitle")
-            .pkg("com.google.android.packageinstaller");
-    private static final BySelector INSTALL_BUTTON_SELECTOR = By
-            .clazz(android.widget.Button.class.getName())
-            .res("com.android.packageinstaller:id/ok_button")
-            .pkg("com.google.android.packageinstaller");
+    private static BySelector POPUP_BUTTON_SELECTOR = null;
+    private static BySelector POPUP_TEXT_SELECTOR = null;
+    private static BySelector INSTALL_BUTTON_SELECTOR = null;
 
     public void testManualInstallSucceeded() throws Exception {
         assertInstallPackage();
@@ -99,6 +90,10 @@ public class ManualPackageInstallTest extends BasePackageInstallTest {
     }
 
     private void automateInstallClick() {
+        if(null == INSTALL_BUTTON_SELECTOR)INSTALL_BUTTON_SELECTOR = By
+            .clazz(android.widget.Button.class.getName())
+            .res("com.android.packageinstaller:id/ok_button")
+            .pkg(instllerPkgName);
         mDevice.wait(Until.hasObject(INSTALL_BUTTON_SELECTOR), AUTOMATOR_WAIT_TIMEOUT);
         UiObject2 button = mDevice.findObject(INSTALL_BUTTON_SELECTOR);
         assertNotNull("Install button not found", button);
@@ -106,10 +101,18 @@ public class ManualPackageInstallTest extends BasePackageInstallTest {
     }
 
     private void automateDismissInstallBlockedDialog() {
+        if(null == POPUP_TEXT_SELECTOR)POPUP_TEXT_SELECTOR = By
+            .clazz(android.widget.TextView.class.getName())
+            .res("android:id/alertTitle")
+            .pkg(instllerPkgName);
         mDevice.wait(Until.hasObject(POPUP_TEXT_SELECTOR), AUTOMATOR_WAIT_TIMEOUT);
         UiObject2 text = mDevice.findObject(POPUP_TEXT_SELECTOR);
         assertNotNull("Alert dialog not found", text);
         // "OK" button only present in the dialog if it is blocked by policy.
+        if(null == POPUP_BUTTON_SELECTOR)POPUP_BUTTON_SELECTOR = By
+            .clazz(android.widget.Button.class.getName())
+            .res("android:id/button1")
+            .pkg(instllerPkgName);
         UiObject2 button = mDevice.findObject(POPUP_BUTTON_SELECTOR);
         assertNotNull("OK button not found", button);
         button.click();
