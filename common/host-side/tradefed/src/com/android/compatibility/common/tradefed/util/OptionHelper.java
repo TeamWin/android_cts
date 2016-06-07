@@ -19,13 +19,11 @@ import com.android.tradefed.config.Option;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.List;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.Set;
 
 /**
  * Helper class for manipulating fields with @option annotations.
@@ -100,7 +98,6 @@ public final class OptionHelper {
     public static List<String> getValidCliArgs(String commandString, Object object) {
         Set<String> optionNames = OptionHelper.getOptionNames(object);
         Set<String> optionShortNames = OptionHelper.getOptionShortNames(object);
-        Map<String, String> optionMap = new HashMap <String, String>();
         List<String> validCliArgs = new ArrayList<String>();
 
         // get "-option/--option value" pairs from the command-line string
@@ -114,11 +111,16 @@ public final class OptionHelper {
             // remove initial hyphens from option args
             String keyName = tokens[0].replaceFirst("^--?", "");
 
-            // add substrings only when the options are recognisable
+            // add substrings only when the options are recognized
             if (optionShortNames.contains(keyName) || optionNames.contains(keyName)) {
-                validCliArgs.add(match);
+                if (match.contains(" ")) {
+                    // ArgsOptionParser expect stand-alone entity or a key=value format, no spaces.
+                    validCliArgs.add(match.split(" ")[0]);
+                    validCliArgs.add(match.split(" ")[1]);
+                } else {
+                    validCliArgs.add(match);
+                }
             }
-
         }
         return validCliArgs;
     }
