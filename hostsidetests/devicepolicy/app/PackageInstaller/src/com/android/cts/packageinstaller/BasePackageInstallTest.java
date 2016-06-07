@@ -15,6 +15,7 @@
  */
 package com.android.cts.packageinstaller;
 
+import android.net.Uri;
 import android.app.PendingIntent;
 import android.app.admin.DevicePolicyManager;
 import android.content.BroadcastReceiver;
@@ -57,6 +58,7 @@ public class BasePackageInstallTest extends InstrumentationTestCase {
     protected boolean mCallbackReceived;
     protected int mCallbackStatus;
     protected Intent mCallbackIntent;
+    public static String instllerPkgName="";
 
     protected final Object mPackageInstallerTimeoutLock = new Object();
 
@@ -88,6 +90,10 @@ public class BasePackageInstallTest extends InstrumentationTestCase {
                 mContext.getSystemService(Context.DEVICE_POLICY_SERVICE);
         mPackageManager = mContext.getPackageManager();
         mPackageInstaller = mPackageManager.getPackageInstaller();
+        Intent intent=new Intent("android.intent.action.INSTALL_PACKAGE");
+        intent.setData(Uri.parse("package:"));
+        instllerPkgName = mPackageManager.queryIntentActivities(
+                intent, PackageManager.MATCH_DEFAULT_ONLY).get(0).activityInfo.packageName;
         assertNotNull(mPackageInstaller);
 
         // check that app is not already installed
