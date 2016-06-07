@@ -38,8 +38,10 @@ import com.android.tradefed.testtype.IDeviceTest;
 import com.android.tradefed.testtype.IRemoteTest;
 import com.android.tradefed.testtype.IRuntimeHintProvider;
 import com.android.tradefed.testtype.ITestCollector;
+import com.android.tradefed.testtype.ITestFileFilterReceiver;
 import com.android.tradefed.testtype.ITestFilterReceiver;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
@@ -185,6 +187,40 @@ public class ModuleDef implements IModuleDef {
     @Override
     public void addExcludeFilter(String filter) {
         mExcludeFilters.add(filter);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void setIncludeTestFile(File testFile) {
+        if (!isFileFilterReceiver()) {
+            throw new IllegalArgumentException(
+                    String.format("%s does not implement interface ITestFileFilterReceiver,"
+                    + " cannot setExcludeFile for %s", mTest, mName));
+        }
+        ((ITestFileFilterReceiver)mTest).setIncludeTestFile(testFile);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void setExcludeTestFile(File testFile) {
+        if (!isFileFilterReceiver()) {
+            throw new IllegalArgumentException(
+                    String.format("%s does not implement interface ITestFileFilterReceiver,"
+                    + " cannot setExcludeFile for %s", mTest, mName));
+        }
+        ((ITestFileFilterReceiver)mTest).setExcludeTestFile(testFile);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public boolean isFileFilterReceiver() {
+        return (mTest instanceof ITestFileFilterReceiver);
     }
 
     /**

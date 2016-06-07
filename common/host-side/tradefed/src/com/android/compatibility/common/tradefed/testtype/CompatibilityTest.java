@@ -263,12 +263,15 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
             synchronized (mModuleRepo) {
                 if (!mModuleRepo.isInitialized()) {
                     setupFilters();
+                    // Set retry mode for module repo
+                    mModuleRepo.setRetryMode(mRetrySessionId != null);
                     // Initialize the repository, {@link CompatibilityBuildHelper#getTestsDir} can
                     // throw a {@link FileNotFoundException}
                     mModuleRepo.initialize(mTotalShards, mBuildHelper.getTestsDir(), getAbis(),
                             mDeviceTokens, mTestArgs, mModuleArgs, mIncludeFilters,
                             mExcludeFilters, mBuildHelper.getBuildInfo());
                 }
+
             }
             // Get the tests to run in this shard
             List<IModuleDef> modules = mModuleRepo.getModules(getDevice().getSerialNumber());
@@ -410,17 +413,10 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
                     // parse the command-line string from the result file and set options
                     ArgsOptionParser parser = new ArgsOptionParser(this);
                     parser.parse(OptionHelper.getValidCliArgs(retryCommandLineArgs, this));
-                    if (mModuleName != null) {
-                        // retry checks for tests to run via the include/exclude filters
-                        // so add the module to the include filter
-                        mIncludeFilters.add(new TestFilter(mAbiName, mModuleName,
-                            mTestName).toString());
-                    }
                 } catch (ConfigurationException e) {
                     throw new RuntimeException(e);
                 }
             }
-
             // Append each test that failed or was not executed to the filters
             for (IModuleResult module : result.getModules()) {
                 for (ICaseResult testResultList : module.getResults()) {
@@ -432,7 +428,8 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
                     }
                 }
             }
-        } else if (mModuleName != null) {
+        }
+        if (mModuleName != null) {
             mIncludeFilters.clear();
             try {
                 List<String> modules = ModuleRepo.getModuleNamesMatching(

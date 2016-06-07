@@ -41,6 +41,11 @@ public interface IModuleRepo {
             List<String> mExcludeFilters, IBuildInfo buildInfo);
 
     /**
+     * Set the retry mode of the module repo.
+     */
+    void setRetryMode(boolean isRetry);
+
+    /**
      * @return a {@link Map} of all modules to run on the device referenced by the given serial.
      */
     List<IModuleDef> getModules(String serial);
