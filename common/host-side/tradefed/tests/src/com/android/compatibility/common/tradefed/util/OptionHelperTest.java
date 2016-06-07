@@ -18,12 +18,12 @@ package com.android.compatibility.common.tradefed.util;
 import com.android.tradefed.config.Option;
 import com.android.tradefed.config.Option.Importance;
 
+import junit.framework.TestCase;
+
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import junit.framework.TestCase;
 
 /**
  * Unit tests for {@link OptionHelper}
@@ -66,11 +66,11 @@ public class OptionHelperTest extends TestCase {
     }
 
     public void testGetValidCliArgs() throws Exception {
-        List<String> noValidNames = new ArrayList();
-        List<String> validSubset = Arrays.asList("--" + TEST_CLASS + " fooclass",
-            "-" + TEST_SUITE_SHORTNAME + " foosuite");
-        List<String> allValidNames = Arrays.asList("--" + TEST_CLASS + " fooclass",
-            "-" + TEST_SUITE_SHORTNAME + " foosuite", "--" + TEST_NAME + " footest");
+        List<String> noValidNames = new ArrayList<String>();
+        List<String> validSubset = Arrays.asList("--" + TEST_CLASS, "fooclass",
+            "-" + TEST_SUITE_SHORTNAME, "foosuite");
+        List<String> allValidNames = Arrays.asList("--" + TEST_CLASS, "fooclass",
+            "-" + TEST_SUITE_SHORTNAME, "foosuite", "--" + TEST_NAME, "footest");
 
         assertEquals("Expected no valid names", noValidNames,
             OptionHelper.getValidCliArgs("test --foo -b", this));
