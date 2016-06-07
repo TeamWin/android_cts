@@ -288,6 +288,10 @@ public class ResourcesTest extends AndroidTestCase {
         // app_icon_size is 48px, as defined in cts/tests/res/values/resources_test.xml
         final int size = mResources.getDimensionPixelSize(R.dimen.app_icon_size);
         assertEquals(48, size);
+        assertEquals(1, mResources.getDimensionPixelSize(R.dimen.pos_dimen_149));
+        assertEquals(2, mResources.getDimensionPixelSize(R.dimen.pos_dimen_151));
+        assertEquals(-1, mResources.getDimensionPixelSize(R.dimen.neg_dimen_149));
+        assertEquals(-2, mResources.getDimensionPixelSize(R.dimen.neg_dimen_151));
     }
 
     public void testGetDrawable() {
