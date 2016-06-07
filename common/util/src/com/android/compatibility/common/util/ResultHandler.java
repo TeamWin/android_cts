@@ -126,8 +126,9 @@ public class ResultHandler {
 
                 parser.nextTag();
                 parser.require(XmlPullParser.START_TAG, NS, BUILD_TAG);
-                invocation.addBuildInfo(BUILD_ID, parser.getAttributeValue(NS, BUILD_ID));
-                invocation.addBuildInfo(BUILD_PRODUCT, parser.getAttributeValue(NS, BUILD_PRODUCT));
+                invocation.addInvocationInfo(BUILD_ID, parser.getAttributeValue(NS, BUILD_ID));
+                invocation.addInvocationInfo(BUILD_PRODUCT, parser.getAttributeValue(NS,
+                    BUILD_PRODUCT));
 
                 // TODO(stuartscott): may want to reload these incase the retry was done with
                 // --skip-device-info flag
@@ -273,7 +274,7 @@ public class ResultHandler {
 
         // Build Info
         serializer.startTag(NS, BUILD_TAG);
-        for (Entry<String, String> entry : result.getBuildInfo().entrySet()) {
+        for (Entry<String, String> entry : result.getInvocationInfo().entrySet()) {
             serializer.attribute(NS, entry.getKey(), entry.getValue());
         }
         serializer.endTag(NS, BUILD_TAG);
