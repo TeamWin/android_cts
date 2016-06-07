@@ -331,9 +331,12 @@ class ItsSession(object):
         cmd = {}
         cmd["cmdName"] = "getSensorEvents"
         self.sock.send(json.dumps(cmd) + "\n")
+        timeout = self.SOCK_TIMEOUT + self.EXTRA_SOCK_TIMEOUT
+        self.sock.settimeout(timeout)
         data,_ = self.__read_response_from_socket()
         if data['tag'] != 'sensorEvents':
             raise its.error.Error('Invalid command response')
+        self.sock.settimeout(self.SOCK_TIMEOUT)
         return data['objValue']
 
     def get_camera_ids(self):
