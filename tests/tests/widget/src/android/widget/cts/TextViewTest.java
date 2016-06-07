@@ -4238,6 +4238,12 @@ public class TextViewTest extends ActivityInstrumentationTestCase2<TextViewCtsAc
 
         // Tap the view to show InsertPointController.
         TouchUtils.tapView(this, mTextView);
+        // bad workaround for waiting onStartInputView of LeanbackIme.apk done
+        try {
+            Thread.sleep(1000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
 
         // Execute SelectAll context menu.
         mActivity.runOnUiThread(new Runnable() {
@@ -4249,6 +4255,7 @@ public class TextViewTest extends ActivityInstrumentationTestCase2<TextViewCtsAc
 
         // The selection must be whole of the text contents.
         assertEquals(0, mTextView.getSelectionStart());
+        assertEquals("Hello, World.", mTextView.getText().toString());
         assertEquals(mTextView.length(), mTextView.getSelectionEnd());
     }
 
