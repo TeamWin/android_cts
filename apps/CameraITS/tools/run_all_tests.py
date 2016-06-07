@@ -45,12 +45,15 @@ def main():
         "scene2":[],
         "scene3":[],
         "scene4":[],
-        "scene5":[]
+        "scene5":[],
+        "sensor_fusion":[]
     }
 
     # Get all the scene0 and scene1 tests, which can be run using the same
     # physical setup.
-    scenes = ["scene0", "scene1", "scene2", "scene3", "scene4", "scene5"]
+    scenes = ["scene0", "scene1", "scene2", "scene3", "scene4", "scene5",
+              "sensor_fusion"]
+
     scene_req = {
         "scene0" : None,
         "scene1" : "A grey card covering at least the middle 30% of the scene",
@@ -60,7 +63,14 @@ def main():
                    "middle 50% of the scene. See CameraITS.pdf section 2.3.4 "
                    "for more details",
         "scene5" : "Capture images with a diffuser attached to the camera. See "
-                   "CameraITS.pdf section 2.3.4 for more details"
+                   "CameraITS.pdf section 2.3.4 for more details",
+        "sensor_fusion" : "Rotating checkboard pattern. See "
+                          "sensor_fusion/SensorFusion.pdf for detailed "
+                          "instructions. Note that this test will be skipped "
+                          "on devices not supporting REALTIME camera timestamp."
+                          "If that is the case, no scene setup is required and "
+                          "you can just answer Y when being asked if the scene "
+                          "is okay"
     }
     scene_extra_args = {
         "scene5" : ["doAF=False"]
