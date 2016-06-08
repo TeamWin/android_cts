@@ -1721,6 +1721,9 @@ public class MediaPlayerTest extends MediaPlayerTestBase {
     // returns 1 if test was run, 0 otherwise
     private int testResumeAtEnd(int res) throws Throwable {
         if (!loadResource(res)) {
+            Log.i(LOG_TAG, "testResumeAtEnd: No decoder found for " +
+                mContext.getResources().getResourceEntryName(res) +
+                " --- skipping.");
             return 0; // skip
         }
         mMediaPlayer.prepare();
@@ -1744,19 +1747,26 @@ public class MediaPlayerTest extends MediaPlayerTestBase {
     }
 
     public void testPositionAtEnd() throws Throwable {
-        testPositionAtEnd(R.raw.test1m1shighstereo);
-        testPositionAtEnd(R.raw.loudsoftmp3);
-        testPositionAtEnd(R.raw.loudsoftmp3);
-        testPositionAtEnd(R.raw.loudsoftwav);
-        testPositionAtEnd(R.raw.loudsoftogg);
-        testPositionAtEnd(R.raw.loudsoftitunes);
-        testPositionAtEnd(R.raw.loudsoftfaac);
-        testPositionAtEnd(R.raw.loudsoftaac);
+        int testsRun =
+            testPositionAtEnd(R.raw.test1m1shighstereo) +
+            testPositionAtEnd(R.raw.loudsoftmp3) +
+            testPositionAtEnd(R.raw.loudsoftwav) +
+            testPositionAtEnd(R.raw.loudsoftogg) +
+            testPositionAtEnd(R.raw.loudsoftitunes) +
+            testPositionAtEnd(R.raw.loudsoftfaac) +
+            testPositionAtEnd(R.raw.loudsoftaac);
+        if (testsRun == 0) {
+            MediaUtils.skipTest(LOG_TAG, "no decoder found");
+        }
     }
 
-    private void testPositionAtEnd(int res) throws Throwable {
-
-        loadResource(res);
+    private int testPositionAtEnd(int res) throws Throwable {
+        if (!loadResource(res)) {
+            Log.i(LOG_TAG, "testPositionAtEnd: No decoder found for " +
+                mContext.getResources().getResourceEntryName(res) +
+                " --- skipping.");
+            return 0; // skip
+        }
         mMediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
         mMediaPlayer.prepare();
         int duration = mMediaPlayer.getDuration();
@@ -1777,6 +1787,7 @@ public class MediaPlayerTest extends MediaPlayerTestBase {
         Log.i("@@@@", "final position: " + mMediaPlayer.getCurrentPosition());
         assertTrue(mMediaPlayer.getCurrentPosition() > duration - 1000);
         mMediaPlayer.reset();
+        return 1;
     }
 
     public void testCallback() throws Throwable {
