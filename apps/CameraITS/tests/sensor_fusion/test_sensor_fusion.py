@@ -59,6 +59,11 @@ THRESH_MAX_CORR_DIST = 0.005
 THRESH_MAX_SHIFT_MS = 2
 THRESH_MIN_ROT = 0.001
 
+# lens facing
+FACING_FRONT = 0
+FACING_BACK = 1
+FACING_EXTERNAL = 2
+
 def main():
     """Test if image and motion sensor events are well synchronized.
 
@@ -99,7 +104,7 @@ def main():
 
     # Compute the camera rotation displacements (rad) between each pair of
     # adjacent frames.
-    cam_rots = get_cam_rotations(frames)
+    cam_rots = get_cam_rotations(frames, events["facing"])
     if max(abs(cam_rots)) < THRESH_MIN_ROT:
         print "Device wasn't moved enough"
         assert(0)
@@ -241,7 +246,7 @@ def get_gyro_rotations(gyro_events, cam_times):
     gyro_rots = numpy.array(gyro_rots)
     return gyro_rots
 
-def get_cam_rotations(frames):
+def get_cam_rotations(frames, facing):
     """Get the rotations of the camera between each pair of frames.
 
     Takes N frames and returns N-1 angular displacements corresponding to the
@@ -265,8 +270,13 @@ def get_cam_rotations(frames):
         p1,st,_ = cv2.calcOpticalFlowPyrLK(gframe0, gframe1, p0, None,
                 **LK_PARAMS)
         tform = procrustes_rotation(p0[st==1], p1[st==1])
-        # TODO: Choose the sign for the rotation so the cam matches the gyro
-        rot = -math.atan2(tform[0, 1], tform[0, 0])
+        if facing == FACING_BACK:
+            rot = -math.atan2(tform[0, 1], tform[0, 0])
+        elif facing == FACING_FRONT:
+            rot = math.atan2(tform[0, 1], tform[0, 0])
+        else:
+            print "Unknown lens facing", facing
+            assert(0)
         rots.append(rot)
         if i == 1:
             # Save a debug visualization of the features that are being
@@ -326,7 +336,8 @@ def collect_data():
     with its.device.ItsSession() as cam:
         props = cam.get_camera_properties()
         its.caps.skip_unless(its.caps.sensor_fusion(props) and
-                             its.caps.manual_sensor(props))
+                             its.caps.manual_sensor(props) and
+                             props['android.lens.facing'] != FACING_EXTERNAL)
 
         print "Starting sensor event collection"
         cam.start_sensor_events()
@@ -337,7 +348,11 @@ def collect_data():
         # TODO: Ensure that OIS is disabled; set to DISABLE and wait some time.
 
         # Capture the frames.
-        props = cam.get_camera_properties()
+        facing = props['android.lens.facing']
+        if facing != FACING_FRONT and facing != FACING_BACK:
+            print "Unknown lens facing", facing
+            assert(0)
+
         fmt = {"format":"yuv", "width":W, "height":H}
         s,e,_,_,_ = cam.do_3a(get_results=True)
         req = its.objects.manual_capture_request(s, e)
@@ -355,7 +370,8 @@ def collect_data():
         exptimes = [c["metadata"]["android.sensor.exposureTime"] for c in caps]
         readouts = [c["metadata"]["android.sensor.rollingShutterSkew"]
                     for c in caps]
-        events = {"gyro": gyro, "cam": zip(starts,exptimes,readouts)}
+        events = {"gyro": gyro, "cam": zip(starts,exptimes,readouts),
+                  "facing": facing}
         with open("%s_events.txt"%(NAME), "w") as f:
             f.write(json.dumps(events))
 
