@@ -37,12 +37,9 @@ public class CrossAppDragAndDropTests extends DeviceTestCase {
     private static final int DOCKED_STACK_ID = FREEFORM_WORKSPACE_STACK_ID + 1;
 
     private static final String AM_FORCE_STOP = "am force-stop ";
-    private static final String AM_MOVE_TASK = "am stack movetask ";
     private static final String AM_START_N = "am start -n ";
     private static final String AM_STACK_LIST = "am stack list";
     private static final String INPUT_MOUSE_SWIPE = "input mouse swipe ";
-
-    private static final String TASK_ID_PREFIX = "taskId";
 
     private static final int SWIPE_DURATION_MS = 500;
 
@@ -106,10 +103,6 @@ public class CrossAppDragAndDropTests extends DeviceTestCase {
         return AM_START_N + componentName + " -e mode " + modeExtra;
     }
 
-    private String getMoveTaskCommand(int taskId, int stackId) throws Exception {
-        return AM_MOVE_TASK + taskId + " " + stackId + " true";
-    }
-
     private String getComponentName(String packageName, String activityName) {
         return packageName + "/" + packageName + "." + activityName;
     }
@@ -118,17 +111,16 @@ public class CrossAppDragAndDropTests extends DeviceTestCase {
             throws Exception {
         clearLogs();
         final String componentName = getComponentName(packageName, activityName);
-        adbShell(getStartCommand(componentName, mode));
-        final int taskId = getActivityTaskId(componentName);
-        adbShell(getMoveTaskCommand(taskId, DOCKED_STACK_ID));
+        adbShell(getStartCommand(componentName, mode) + " --stack " + DOCKED_STACK_ID);
         waitForResume(packageName, activityName);
     }
 
-    private void launchFreeformActivity(String packageName, String activityName, String mode)
+    private void launchFullscreenActivity(String packageName, String activityName, String mode)
             throws Exception {
         clearLogs();
         final String componentName = getComponentName(packageName, activityName);
-        adbShell(getStartCommand(componentName, mode) + " --stack " + FREEFORM_WORKSPACE_STACK_ID);
+        adbShell(getStartCommand(componentName, mode) + " --stack "
+                + FULLSCREEN_WORKSPACE_STACK_ID);
         waitForResume(packageName, activityName);
     }
 
@@ -190,17 +182,6 @@ public class CrossAppDragAndDropTests extends DeviceTestCase {
         return false;
     }
 
-    private int getActivityTaskId(String name) throws Exception {
-        final String taskInfo = findTaskInfo(name);
-        for (String word : taskInfo.split("\\s+")) {
-            if (word.startsWith(TASK_ID_PREFIX)) {
-                final String withColon = word.split("=")[1];
-                return Integer.parseInt(withColon.substring(0, withColon.length() - 1));
-            }
-        }
-        return -1;
-    }
-
     private Point getWindowCenter(String name) throws Exception {
         Point p1 = new Point();
         Point p2 = new Point();
@@ -242,7 +223,7 @@ public class CrossAppDragAndDropTests extends DeviceTestCase {
             throws Exception {
 
         launchDockedActivity(SOURCE_PACKAGE_NAME, SOURCE_ACTIVITY_NAME, sourceMode);
-        launchFreeformActivity(TARGET_PACKAGE_NAME, TARGET_ACTIVITY_NAME, targetMode);
+        launchFullscreenActivity(TARGET_PACKAGE_NAME, TARGET_ACTIVITY_NAME, targetMode);
 
         clearLogs();
 
