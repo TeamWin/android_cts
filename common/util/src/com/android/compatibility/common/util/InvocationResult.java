@@ -33,6 +33,7 @@ public class InvocationResult implements IInvocationResult {
     private Map<String, IModuleResult> mModuleResults = new LinkedHashMap<>();
     private Map<String, String> mInvocationInfo = new HashMap<>();
     private Set<String> mSerials = new HashSet<>();
+    private String mBuildFingerprint;
     private String mTestPlan;
     private String mCommandLineArgs;
 
@@ -159,5 +160,18 @@ public class InvocationResult implements IInvocationResult {
     @Override
     public String getCommandLineArgs() {
         return mCommandLineArgs;
+    }
+
+    @Override
+    public void setBuildFingerprint(String buildFingerprint) {
+        mBuildFingerprint = buildFingerprint;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public String getBuildFingerprint() {
+        return mBuildFingerprint;
     }
 }
