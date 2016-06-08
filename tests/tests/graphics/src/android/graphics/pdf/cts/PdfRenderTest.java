@@ -570,6 +570,45 @@ public class PdfRenderTest {
                         Page.RENDER_MODE_FOR_DISPLAY), IllegalArgumentException.class);
     }
 
+    @Test
+    public void renderTwoModes() throws Exception {
+        assertException(
+                () -> renderWithTransform(A4_WIDTH_PTS, A4_HEIGHT_PTS, A4_PORTRAIT, null, null,
+                        Page.RENDER_MODE_FOR_DISPLAY | Page.RENDER_MODE_FOR_PRINT),
+                IllegalArgumentException.class);
+    }
+
+    @Test
+    public void renderBadMode() throws Exception {
+        assertException(
+                () -> renderWithTransform(A4_WIDTH_PTS, A4_HEIGHT_PTS, A4_PORTRAIT, null, null,
+                        1 << 30), IllegalArgumentException.class);
+    }
+
+    @Test
+    public void renderAllModes() throws Exception {
+        assertException(
+                () -> renderWithTransform(A4_WIDTH_PTS, A4_HEIGHT_PTS, A4_PORTRAIT, null, null,
+                        -1), IllegalArgumentException.class);
+    }
+
+    @Test
+    public void renderNoMode() throws Exception {
+        assertException(
+                () -> renderWithTransform(A4_WIDTH_PTS, A4_HEIGHT_PTS, A4_PORTRAIT, null, null, 0),
+                        IllegalArgumentException.class);
+    }
+
+    @Test
+    public void renderOnNullBitmap() throws Exception {
+        try (PdfRenderer renderer = createRenderer(A4_PORTRAIT)) {
+            try (Page page = renderer.openPage(0)) {
+                assertException(() -> page.render(null, null, null, Page.RENDER_MODE_FOR_DISPLAY),
+                        NullPointerException.class);
+            }
+        }
+    }
+
     /**
      * A runnable that can throw an exception.
      */
