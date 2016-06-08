@@ -21,18 +21,19 @@ import android.test.AndroidTestCase;
 import android.test.suitebuilder.annotation.SmallTest;
 import android.text.Editable;
 import android.text.InputFilter;
+import android.text.Selection;
 import android.text.SpannableString;
 import android.text.SpannableStringBuilder;
 import android.text.Spanned;
 import android.text.TextWatcher;
 import android.text.style.BulletSpan;
-import android.text.style.ParagraphStyle;
 import android.text.style.QuoteSpan;
-import android.text.style.RelativeSizeSpan;
 import android.text.style.StrikethroughSpan;
 import android.text.style.SubscriptSpan;
 import android.text.style.TabStopSpan;
 import android.text.style.UnderlineSpan;
+
+import java.util.Arrays;
 
 /**
  * Test {@link SpannableStringBuilder}.
@@ -686,6 +687,19 @@ public class SpannableStringBuilderTest extends AndroidTestCase {
         assertEquals(5, builder.length());
         builder.clear();
         assertEquals(0, builder.length());
+    }
+
+    public void testReplace_shouldNotThrowIndexOutOfBoundsExceptionForLongText() {
+        final char[] charArray = new char[75000];
+        Arrays.fill(charArray, 'a');
+        final String text = new String(charArray, 0, 50000);
+        final String copiedText = new String(charArray);
+        final SpannableStringBuilder spannable = new SpannableStringBuilder(text);
+        Selection.setSelection(spannable, text.length());
+
+        spannable.replace(0, text.length(), copiedText);
+
+        assertEquals(copiedText.length(), spannable.length());
     }
 
     public void testDelete() {
