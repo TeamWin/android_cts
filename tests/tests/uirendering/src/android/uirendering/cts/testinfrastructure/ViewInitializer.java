@@ -22,4 +22,6 @@ import android.view.View;
  */
 public interface ViewInitializer {
     void initializeView(View view);
+
+    default void teardownView() {};
 }

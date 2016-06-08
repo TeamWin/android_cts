@@ -16,7 +16,6 @@
 package android.uirendering.cts.testinfrastructure;
 
 import android.annotation.Nullable;
-import android.app.Activity;
 import android.app.Instrumentation;
 import android.graphics.Bitmap;
 import android.graphics.Point;
@@ -55,8 +54,6 @@ public abstract class ActivityTestBase {
     //The minimum height and width of a device
     public static final int TEST_WIDTH = 90;
     public static final int TEST_HEIGHT = 90;
-
-    public static final int MAX_SCREEN_SHOTS = 100;
 
     private int[] mHardwareArray = new int[TEST_HEIGHT * TEST_WIDTH];
     private int[] mSoftwareArray = new int[TEST_HEIGHT * TEST_WIDTH];
@@ -132,21 +129,19 @@ public abstract class ActivityTestBase {
         return Bitmap.createBitmap(source, testOffset.x, testOffset.y, TEST_WIDTH, TEST_HEIGHT);
     }
 
-    /**
-     * Sets the current DifferenceVisualizer for use in current test.
-     */
-    public void setDifferenceVisualizer(DifferenceVisualizer differenceVisualizer) {
-        mDifferenceVisualizer = differenceVisualizer;
+    protected Point runRenderSpec(TestCase testCase) {
+        Point testOffset = getActivity().enqueueRenderSpecAndWait(
+                testCase.layoutID, testCase.canvasClient,
+                null, testCase.viewInitializer, testCase.useHardware);
+        testCase.wasTestRan = true;
+        return testOffset;
     }
 
     /**
      * Used to execute a specific part of a test and get the resultant bitmap
      */
     protected Bitmap captureRenderSpec(TestCase testCase) {
-        Point testOffset = getActivity().enqueueRenderSpecAndWait(
-                testCase.layoutID, testCase.canvasClient,
-                null, testCase.viewInitializer, testCase.useHardware);
-        testCase.wasTestRan = true;
+        Point testOffset = runRenderSpec(testCase);
         return takeScreenshot(testOffset);
     }
 
@@ -210,7 +205,7 @@ public abstract class ActivityTestBase {
         private List<TestCase> mTestCases;
 
         private TestCaseBuilder() {
-            mTestCases = new ArrayList<TestCase>();
+            mTestCases = new ArrayList<>();
         }
 
         /**
@@ -243,6 +238,37 @@ public abstract class ActivityTestBase {
             for (TestCase testCase : mTestCases) {
                 Bitmap testCaseBitmap = captureRenderSpec(testCase);
                 assertBitmapIsVerified(testCaseBitmap, bitmapVerifier, testCase.getDebugString());
+            }
+        }
+
+        private static final int VERIFY_ANIMATION_LOOP_COUNT = 20;
+        private static final int VERIFY_ANIMATION_SLEEP_MS = 100;
+
+        /**
+         * Runs a test where each testcase is independent of the others and each is checked against
+         * the verifier given in a loop.
+         *
+         * A screenshot is captured several times in a loop, to ensure that valid output is produced
+         * at many different times during the animation.
+         */
+        public void runWithAnimationVerifier(BitmapVerifier bitmapVerifier) {
+            if (mTestCases.size() == 0) {
+                throw new IllegalStateException("Need at least one test to run");
+            }
+
+            for (TestCase testCase : mTestCases) {
+                Point testOffset = runRenderSpec(testCase);
+
+                for (int i = 0; i < VERIFY_ANIMATION_LOOP_COUNT; i++) {
+                    try {
+                        Thread.sleep(VERIFY_ANIMATION_SLEEP_MS);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                    Bitmap testCaseBitmap = takeScreenshot(testOffset);
+                    assertBitmapIsVerified(testCaseBitmap, bitmapVerifier,
+                            testCase.getDebugString());
+                }
             }
         }
 
