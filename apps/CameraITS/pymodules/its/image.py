@@ -25,6 +25,8 @@ import unittest
 import cStringIO
 import scipy.stats
 import copy
+import cv2
+import os
 
 DEFAULT_YUV_TO_RGB_CCM = numpy.matrix([
                                 [1.000,  0.000,  1.402],
@@ -699,6 +701,7 @@ def downscale_image(img, f):
     img = numpy.vstack(chs).T.reshape(h/f,w/f,chans)
     return img
 
+
 def compute_image_sharpness(img):
     """Calculate the sharpness of input image.
 
@@ -711,12 +714,73 @@ def compute_image_sharpness(img):
     """
     chans = img.shape[2]
     assert(chans == 1 or chans == 3)
-    luma = img
-    if (chans == 3):
+    if (chans == 1):
+        luma = img[:, :, 0]
+    elif (chans == 3):
         luma = 0.299 * img[:,:,0] + 0.587 * img[:,:,1] + 0.114 * img[:,:,2]
 
     [gy, gx] = numpy.gradient(luma)
     return numpy.average(numpy.sqrt(gy*gy + gx*gx))
+
+
+def scale_img(img, scale=1.0):
+    """Scale and image based on a real number scale factor."""
+    dim = (int(img.shape[1]*scale), int(img.shape[0]*scale))
+    return cv2.resize(img.copy(), dim, interpolation=cv2.INTER_AREA)
+
+
+def find_chart(chart, img, scale_start, scale_stop, scale_step):
+    """Find the chart in the image.
+
+    Args:
+        chart:          numpy array; chart image
+        img:            numpy array; camera image containing chart
+        scale_start:    float; start of scaling factor
+        scale_stop:     float; stop of scaling factor
+        scale_step:     float; step of scaling factor
+
+    Returns:
+        bounding box (top_right, bottom_left) coordinates in img
+    """
+    max_match = []
+    # check for normalized image
+    if numpy.amax(img) <= 1.0:
+        img = (img * 255.0).astype(numpy.uint8)
+    if len(img.shape) == 2:
+        img_gray = img.copy()
+    elif len(img.shape) == 3:
+        if img.shape[2] == 1:
+            img_gray = img[:, :, 0]
+        else:
+            img_gray = cv2.cvtColor(img.copy(), cv2.COLOR_RGB2GRAY)
+    print 'Finding chart in image...'
+    for scale in numpy.arange(scale_start, scale_stop, scale_step):
+        img_scaled = scale_img(img_gray, scale)
+        result = cv2.matchTemplate(img_scaled, chart, cv2.TM_CCOEFF)
+        _, opt_val, _, top_left_scaled = cv2.minMaxLoc(result)
+        # print out scale and match
+        print ' scale factor: %.3f, optimization val: %.f' % (scale, opt_val)
+        max_match.append((opt_val, top_left_scaled))
+
+    # determine if optimization results are valid
+    opt_values = [x[0] for x in max_match]
+    if 2.0*min(opt_values) > max(opt_values):
+        estring = ('Unable to find chart in scene!\n'
+                   'Check camera distance and self-reported '
+                   'pixel pitch, focal length and hyperfocal distance.')
+        raise its.error.Error(estring)
+    # find max and draw bbox
+    match_index = max_match.index(max(max_match, key=lambda x: x[0]))
+    scale = scale_start + scale_step * match_index
+    print 'Optimum scale factor: %.3f' %  scale
+    top_left_scaled = max_match[match_index][1]
+    h, w = chart.shape
+    bottom_right_scaled = (top_left_scaled[0] + w, top_left_scaled[1] + h)
+    top_left = (int(top_left_scaled[0]/scale), int(top_left_scaled[1]/scale))
+    bottom_right = (int(bottom_right_scaled[0]/scale),
+                    int(bottom_right_scaled[1]/scale))
+    return (top_left, bottom_right)
+
 
 class __UnitTest(unittest.TestCase):
     """Run a suite of unit tests on this module.
@@ -734,7 +798,7 @@ class __UnitTest(unittest.TestCase):
             [ 7 8 9 ]   [ 0.3 ]   [ 5.0 ]
                mat         x         y
         """
-        mat = numpy.array([[1,2,3],[4,5,6],[7,8,9]])
+        mat = numpy.array([[1,2,3], [4,5,6], [7,8,9]])
         x = numpy.array([0.1,0.2,0.3]).reshape(1,1,3)
         y = apply_matrix_to_image(x, mat).reshape(3).tolist()
         y_ref = [1.4,3.2,5.0]
@@ -742,7 +806,7 @@ class __UnitTest(unittest.TestCase):
         self.assertTrue(passed)
 
     def test_apply_lut_to_image(self):
-        """ Unit test for apply_lut_to_image.
+        """Unit test for apply_lut_to_image.
 
         Test by using a canned set of values on a 1x1 pixel image. The LUT will
         simply double the value of the index:
@@ -756,6 +820,29 @@ class __UnitTest(unittest.TestCase):
         passed = all([math.fabs(y[i] - y_ref[i]) < 0.001 for i in xrange(3)])
         self.assertTrue(passed)
 
+    def test_compute_image_sharpness(self):
+        """Unit test for compute_img_sharpness.
+
+        Test by using PNG of ISO12233 chart and blurring intentionally.
+        'sharpness' should drop off by sqrt(2) for 2x blur of image.
+
+        We do one level of blur as PNG image is not perfect.
+        """
+        yuv_full_scale = 1023.0
+        chart_file = os.path.join(os.environ['CAMERA_ITS_TOP'], 'pymodules',
+                                  'its', 'test_images', 'ISO12233.png')
+        chart = cv2.imread(chart_file, cv2.IMREAD_ANYDEPTH)
+        white_level = numpy.amax(chart).astype(float)
+        sharpness = {}
+        for j in [2, 4, 8]:
+            blur = cv2.blur(chart, (j, j))
+            blur = blur[:, :, numpy.newaxis]
+            sharpness[j] = yuv_full_scale * compute_image_sharpness(blur /
+                                                                    white_level)
+        self.assertTrue(numpy.isclose(sharpness[2]/sharpness[4],
+                                      numpy.sqrt(2), atol=0.1))
+        self.assertTrue(numpy.isclose(sharpness[4]/sharpness[8],
+                                      numpy.sqrt(2), atol=0.1))
+
 if __name__ == '__main__':
     unittest.main()
-

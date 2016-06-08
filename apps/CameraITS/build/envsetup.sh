@@ -18,6 +18,7 @@
 # is correct).
 
 CAMERA_ITS_TOP=$PWD
+export CAMERA_ITS_TOP="$CAMERA_ITS_TOP"
 
 [[ "${BASH_SOURCE[0]}" != "${0}" ]] || \
     { echo ">> Script must be sourced with 'source $0'" >&2; exit 1; }

@@ -58,7 +58,7 @@ def main():
         "scene0" : None,
         "scene1" : "A grey card covering at least the middle 30% of the scene",
         "scene2" : "A picture containing human faces",
-        "scene3" : "A chart containing sharp edges like ISO 12233",
+        "scene3" : "The ISO 12233 chart",
         "scene4" : "A specific test page of a circle covering at least the "
                    "middle 50% of the scene. See CameraITS.pdf section 2.3.4 "
                    "for more details",
