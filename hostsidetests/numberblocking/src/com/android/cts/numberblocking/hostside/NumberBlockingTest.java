@@ -45,18 +45,25 @@ public class NumberBlockingTest extends DeviceTestCase implements IBuildReceiver
     private static final String NUMBER_BLOCKING_APP_TEST_CLASS_NAME = "NumberBlockingAppTest";
     private static final String TEST_APP_CONNECTION_SERVICE_NAME = "DummyConnectionService";
     private static final String SECONDARY_USER_NAME = "NumberBlockingTest SecondaryUser";
+    private static final String FEATURE_TELEPHONY = "android.hardware.telephony";
+    private static final String FEATURE_CONNECTION_SERVICE = "android.software.connectionservice";
 
     private int mSecondaryUserId;
     private int mPrimaryUserSerialNumber;
     private int mSecondaryUserSerialNumber;
 
     private IBuildInfo mCtsBuild;
+    private boolean mHasFeature;
 
     @Override
     protected void setUp() throws Exception {
         super.setUp();
 
-        if (!getDevice().isMultiUserSupported()) {
+        mHasFeature = getDevice().isMultiUserSupported()
+                && getDevice().hasFeature(FEATURE_TELEPHONY)
+                && getDevice().hasFeature(FEATURE_CONNECTION_SERVICE);
+
+        if (!mHasFeature) {
             return;
         }
 
@@ -70,7 +77,7 @@ public class NumberBlockingTest extends DeviceTestCase implements IBuildReceiver
 
     @Override
     protected void tearDown() throws Exception {
-        if (getDevice().isMultiUserSupported()) {
+        if (mHasFeature) {
             getDevice().removeUser(mSecondaryUserId);
         }
 
@@ -83,7 +90,9 @@ public class NumberBlockingTest extends DeviceTestCase implements IBuildReceiver
     }
 
     public void testNumberBlocking() throws Exception {
-        if (!getDevice().isMultiUserSupported()) {
+        if (!mHasFeature) {
+            LogUtil.CLog.logAndDisplay(Log.LogLevel.INFO,
+                    "Skipping number blocking test as the feature is not supported.");
             return;
         }
 
