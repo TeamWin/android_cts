@@ -64,13 +64,15 @@ public class SensorParameterRangeTest extends SensorTestCase {
     private static final int STEP_DETECTOR_MIN_FIFO_LENGTH = 100;
 
     private boolean mHasHifiSensors;
+    private boolean mVrModeHighPerformance;
     private SensorManager mSensorManager;
 
     @Override
     public void setUp() {
+        PackageManager pm = getContext().getPackageManager();
         mSensorManager = (SensorManager) getContext().getSystemService(Context.SENSOR_SERVICE);
-        mHasHifiSensors = getContext().getPackageManager().hasSystemFeature(
-                PackageManager.FEATURE_HIFI_SENSORS);
+        mHasHifiSensors = pm.hasSystemFeature(PackageManager.FEATURE_HIFI_SENSORS);
+        mVrModeHighPerformance = pm.hasSystemFeature(PackageManager.FEATURE_VR_MODE_HIGH_PERFORMANCE);
     }
 
     public void testAccelerometerRange() {
@@ -98,16 +100,18 @@ public class SensorParameterRangeTest extends SensorTestCase {
     }
 
     public void testPressureRange() {
-        checkSensorRangeAndFrequency(
-                mSensorManager.getDefaultSensor(Sensor.TYPE_PRESSURE),
-                PRESSURE_MAX_RANGE,
-                PRESSURE_MIN_FREQUENCY,
-                PRESSURE_MAX_FREQUENCY);
+        if (mHasHifiSensors) {
+            checkSensorRangeAndFrequency(
+                    mSensorManager.getDefaultSensor(Sensor.TYPE_PRESSURE),
+                    PRESSURE_MAX_RANGE,
+                    PRESSURE_MIN_FREQUENCY,
+                    PRESSURE_MAX_FREQUENCY);
+        }
     }
 
     private void checkSensorRangeAndFrequency(
           Sensor sensor, double maxRange, double minFrequency, double maxFrequency) {
-        if (!mHasHifiSensors) return;
+        if (!mHasHifiSensors && !mVrModeHighPerformance) return;
         assertTrue(String.format("%s Range actual=%.2f expected=%.2f %s",
                     sensor.getName(), sensor.getMaximumRange(), maxRange,
                     SensorCtsHelper.getUnitsForSensor(sensor)),
