@@ -59,6 +59,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.text.SimpleDateFormat;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
@@ -116,6 +117,12 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
     private String mDeviceSerial = UNKNOWN_DEVICE;
     private Set<String> mMasterDeviceSerials = new HashSet<>();
     private Set<IBuildInfo> mMasterBuildInfos = new HashSet<>();
+
+    // mCurrentTestNum and mTotalTestsInModule track the progress within the module
+    // Note that this count is not necessarily equal to the count of tests contained
+    // in mCurrentModuleResult because of how special cases like ignored tests are reported.
+    private int mCurrentTestNum;
+    private int mTotalTestsInModule;
 
     // Nullable. If null, "this" is considered the master and must handle
     // result aggregation and reporting. When not null, it should forward events
@@ -232,7 +239,18 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
      */
     @Override
     public void testRunStarted(String id, int numTests) {
-        mCurrentModuleResult = mResult.getOrCreateModule(id);
+        if (mCurrentModuleResult != null && mCurrentModuleResult.getId().equals(id)) {
+            // In case we get another test run of a known module, update the complete
+            // status to false to indicate it is not complete. This happens in cases like host side
+            // tests when each test class is executed as separate module.
+            mCurrentModuleResult.setDone(false);
+            mTotalTestsInModule += numTests;
+        } else {
+            mCurrentModuleResult = mResult.getOrCreateModule(id);
+            mTotalTestsInModule = numTests;
+            // Reset counters
+            mCurrentTestNum = 0;
+        }
     }
 
     /**
@@ -243,6 +261,7 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
         mCurrentCaseResult = mCurrentModuleResult.getOrCreateResult(test.getClassName());
         mCurrentResult = mCurrentCaseResult.getOrCreateResult(test.getTestName().trim());
         mCurrentResult.reset();
+        mCurrentTestNum++;
     }
 
     /**
@@ -280,7 +299,8 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
      */
     @Override
     public void testIgnored(TestIdentifier test) {
-        // Ignored tests are not reported
+        // Ignored tests are not reported.
+        mCurrentTestNum--;
     }
 
     /**
@@ -313,6 +333,8 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
     @Override
     public void testRunEnded(long elapsedTime, Map<String, String> metrics) {
         mCurrentModuleResult.addRuntime(elapsedTime);
+        // Expect them to be equal, but greater than to be safe.
+        mCurrentModuleResult.setDone(mCurrentTestNum >= mTotalTestsInModule);
 
         if (isShardResultReporter()) {
             // Forward module results to the master.
@@ -383,31 +405,47 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
             if (++invocationEndedCount < mMasterBuildInfos.size()) {
                 return;
             }
-            finalizeResultDirectories(elapsedTime);
+            finalizeResults(elapsedTime);
         }
     }
 
-    private void finalizeResultDirectories(long elapsedTime) {
-        info("Invocation completed in %s. %d passed, %d failed, %d not executed",
-                TimeUtil.formatElapsedTime(elapsedTime),
-                mResult.countResults(TestStatus.PASS),
-                mResult.countResults(TestStatus.FAIL),
-                mResult.countResults(TestStatus.NOT_EXECUTED));
-
+    private void finalizeResults(long elapsedTime) {
         // Add all device serials into the result to be serialized
         for (String deviceSerial : mMasterDeviceSerials) {
             mResult.addDeviceSerial(deviceSerial);
         }
 
+        Set<String> allExpectedModules = new HashSet<>();
         // Add all build info to the result to be serialized
         for (IBuildInfo buildInfo : mMasterBuildInfos) {
             for (Map.Entry<String, String> entry : buildInfo.getBuildAttributes().entrySet()) {
                 String key = entry.getKey();
+                String value = entry.getValue();
                 if (key.startsWith(BUILD_INFO)) {
-                    mResult.addInvocationInfo(key.substring(CTS_PREFIX.length()), entry.getValue());
+                    mResult.addInvocationInfo(key.substring(CTS_PREFIX.length()), value);
+                }
+
+                if (key.equals(CompatibilityBuildHelper.MODULE_IDS)) {
+                    Collections.addAll(allExpectedModules, value.split(","));
                 }
             }
         }
+
+        // Include a record in the report of all expected modules ids, even if they weren't
+        // executed.
+        for (String moduleId : allExpectedModules) {
+            mResult.getOrCreateModule(moduleId);
+        }
+
+        String moduleProgress = String.format("%d of %d",
+                mResult.getModuleCompleteCount(), mResult.getModules().size());
+
+        info("Invocation finished in %s. PASSED: %d, FAILED: %d, MODULES: %s",
+                TimeUtil.formatElapsedTime(elapsedTime),
+                mResult.countResults(TestStatus.PASS),
+                mResult.countResults(TestStatus.FAIL),
+                moduleProgress);
+
         long startTime = mResult.getStartTime();
         try {
             File resultFile = ResultHandler.writeResults(mBuildHelper.getSuiteName(),

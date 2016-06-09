@@ -31,6 +31,8 @@ import java.util.Map;
  */
 public class CompatibilityBuildHelper {
 
+    public static final String MODULE_IDS = "MODULE_IDS";
+
     private static final String ROOT_DIR = "ROOT_DIR";
     private static final String ROOT_DIR2 = "ROOT_DIR2";
     private static final String SUITE_BUILD = "SUITE_BUILD";
@@ -149,6 +151,10 @@ public class CompatibilityBuildHelper {
 
     public void addDynamicConfigFile(String moduleName, File configFile) {
         mBuildInfo.addBuildAttribute(CONFIG_PATH_PREFIX + moduleName, configFile.getAbsolutePath());
+    }
+
+    public void setModuleIds(String[] moduleIds) {
+        mBuildInfo.addBuildAttribute(MODULE_IDS, String.join(",", moduleIds));
     }
 
     public Map<String, File> getDynamicConfigFiles() {
