@@ -389,9 +389,8 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
      */
     void setupFilters() throws DeviceNotAvailableException {
         if (mRetrySessionId != null) {
-            // We're retrying so clear the filters
-            mIncludeFilters.clear();
-            mExcludeFilters.clear();
+            // We're retrying so clear -m and -t options
+            // eventually reset these options with values given in the previous session
             mModuleName = null;
             mTestName = null;
             // Load the invocation result
