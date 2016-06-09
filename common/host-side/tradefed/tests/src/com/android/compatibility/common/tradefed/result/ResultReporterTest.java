@@ -134,6 +134,7 @@ public class ResultReporterTest extends TestCase {
         List<IModuleResult> modules = result.getModules();
         assertEquals("Expected 1 module", 1, modules.size());
         IModuleResult module = modules.get(0);
+        assertTrue(module.isDone());
         assertEquals("Incorrect ID", ID, module.getId());
         List<ICaseResult> caseResults = module.getResults();
         assertEquals("Expected 1 test case", 1, caseResults.size());
@@ -152,6 +153,36 @@ public class ResultReporterTest extends TestCase {
         assertNotNull(String.format("Expected result for %s", TEST_3), result3);
         assertEquals(String.format("Expected fail for %s", TEST_3), TestStatus.FAIL,
                 result3.getResultStatus());
+    }
+
+    public void testResultReporting_moduleNotDone() throws Exception {
+        mReporter.invocationStarted(mBuildInfo);
+        mReporter.testRunStarted(ID, 2);
+        TestIdentifier test1 = new TestIdentifier(CLASS, METHOD_1);
+        mReporter.testStarted(test1);
+        mReporter.testEnded(test1, new HashMap<String, String>());
+        mReporter.testRunFailed("error");
+        mReporter.testRunEnded(10, new HashMap<String, String>());
+        mReporter.invocationEnded(10);
+        IInvocationResult result = mReporter.getResult();
+        assertEquals("Expected 1 pass", 1, result.countResults(TestStatus.PASS));
+        assertEquals("Expected 0 failures", 0, result.countResults(TestStatus.FAIL));
+        List<IModuleResult> modules = result.getModules();
+        assertEquals("Expected 1 module", 1, modules.size());
+        IModuleResult module = modules.get(0);
+
+        // Ensure module is reported as not done
+        assertFalse(module.isDone());
+        assertEquals("Incorrect ID", ID, module.getId());
+        List<ICaseResult> caseResults = module.getResults();
+        assertEquals("Expected 1 test case", 1, caseResults.size());
+        ICaseResult caseResult = caseResults.get(0);
+        List<ITestResult> testResults = caseResult.getResults();
+        assertEquals("Expected 1 tests", 1, testResults.size());
+        ITestResult result1 = caseResult.getResult(METHOD_1);
+        assertNotNull(String.format("Expected result for %s", TEST_1), result1);
+        assertEquals(String.format("Expected pass for %s", TEST_1), TestStatus.PASS,
+                result1.getResultStatus());
     }
 
     public void testCopyFormattingFiles() throws Exception {

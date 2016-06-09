@@ -66,6 +66,7 @@ public class ConsoleReporterTest extends TestCase {
     public void setUp() throws Exception {
         mReporter = new ConsoleReporter();
         OptionSetter setter = new OptionSetter(mReporter);
+        setter.setOptionValue("quiet-output", "true");
     }
 
     @Override
@@ -117,6 +118,7 @@ public class ConsoleReporterTest extends TestCase {
         assertEquals(8, mReporter.getTotalTestsInModule());
     }
 
+    /** Run 4 test, but one is ignored */
     private void runTests() {
         TestIdentifier test1 = new TestIdentifier(CLASS, METHOD_1);
         mReporter.testStarted(test1);
@@ -134,5 +136,11 @@ public class ConsoleReporterTest extends TestCase {
         assertFalse(mReporter.getTestFailed());
         mReporter.testFailed(test3, STACK_TRACE);
         assertTrue(mReporter.getTestFailed());
+
+        TestIdentifier test4 = new TestIdentifier(CLASS, METHOD_3);
+        mReporter.testStarted(test4);
+        assertFalse(mReporter.getTestFailed());
+        mReporter.testIgnored(test4);
+        assertFalse(mReporter.getTestFailed());
     }
 }
