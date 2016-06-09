@@ -31,6 +31,7 @@ checkPath() {
     fi;
 }
 
+checkPath aapt
 checkPath adb
 checkPath java
 
