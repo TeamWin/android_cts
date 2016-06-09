@@ -141,6 +141,13 @@ public class CompatibilityBuildHelperTest extends TestCase {
         assertEquals(COMMAND_LINE_ARGS, mHelper.getCommandLineArgs());
     }
 
+    public void testSetModuleIds() {
+        mHelper.setModuleIds(new String[] {"module1", "module2"});
+
+        assertEquals("module1,module2",
+            mBuild.getBuildAttributes().get(CompatibilityBuildHelper.MODULE_IDS));
+    }
+
     /**
      * Sets the *_ROOT property of the build's installation location.
      *
