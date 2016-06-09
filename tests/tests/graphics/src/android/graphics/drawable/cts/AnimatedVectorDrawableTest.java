@@ -147,9 +147,11 @@ public class AnimatedVectorDrawableTest extends ActivityInstrumentationTestCase2
         mActivity.runOnUiThread(new Runnable() {
             @Override
             public void run() {
+                mActivity.setContentView(mLayoutId);
+                ImageView imageView = (ImageView) mActivity.findViewById(mImageViewId);
+                imageView.setImageDrawable(d1);
                 d1.start();
                 d1.stop();
-
             }
         });
         getInstrumentation().waitForIdleSync();
