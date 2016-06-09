@@ -94,4 +94,14 @@ public interface IInvocationResult {
      * Retrieve the command line arguments to the run command.
      */
     String getCommandLineArgs();
+
+    /**
+     * @param buildFingerprint the build fingerprint associated with this result.
+     */
+    void setBuildFingerprint(String buildFingerprint);
+
+    /**
+     * @return the device build fingerprint associated with result.
+     */
+    String getBuildFingerprint();
 }
