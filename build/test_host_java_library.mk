@@ -17,8 +17,6 @@
 # package XML needed by CTS.
 #
 
-LOCAL_STATIC_JAVA_LIBRARIES += platform-test-annotations-host
-
 include $(BUILD_HOST_JAVA_LIBRARY)
 include $(BUILD_CTS_MODULE_TEST_CONFIG)
 
