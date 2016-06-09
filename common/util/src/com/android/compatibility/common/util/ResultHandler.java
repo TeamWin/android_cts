@@ -51,6 +51,7 @@ public class ResultHandler {
     // XML constants
     private static final String ABI_ATTR = "abi";
     private static final String BUGREPORT_TAG = "BugReport";
+    private static final String BUILD_FINGERPRINT = "build_fingerprint";
     private static final String BUILD_ID = "build_id";
     private static final String BUILD_PRODUCT = "build_product";
     private static final String BUILD_TAG = "Build";
@@ -128,7 +129,8 @@ public class ResultHandler {
                 parser.require(XmlPullParser.START_TAG, NS, BUILD_TAG);
                 invocation.addInvocationInfo(BUILD_ID, parser.getAttributeValue(NS, BUILD_ID));
                 invocation.addInvocationInfo(BUILD_PRODUCT, parser.getAttributeValue(NS,
-                    BUILD_PRODUCT));
+                        BUILD_PRODUCT));
+                invocation.setBuildFingerprint(parser.getAttributeValue(NS, BUILD_FINGERPRINT));
 
                 // TODO(stuartscott): may want to reload these incase the retry was done with
                 // --skip-device-info flag
