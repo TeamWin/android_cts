@@ -384,7 +384,7 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
      * Sets the include/exclude filters up based on if a module name was given or whether this is a
      * retry run.
      */
-    void setupFilters() {
+    void setupFilters() throws DeviceNotAvailableException {
         if (mRetrySessionId != null) {
             // We're retrying so clear the filters
             mIncludeFilters.clear();
@@ -402,8 +402,17 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
                 throw new IllegalArgumentException(String.format(
                         "Could not find session with id %d", mRetrySessionId));
             }
-            CLog.logAndDisplay(LogLevel.INFO, "Retrying session from: %s",
-                    CompatibilityBuildHelper.getDirSuffix(result.getStartTime()));
+
+            String oldBuildFingerprint = result.getBuildFingerprint();
+            String currentBuildFingerprint = mDevice.getProperty("ro.build.fingerprint");
+            if (oldBuildFingerprint.equals(currentBuildFingerprint)) {
+                CLog.logAndDisplay(LogLevel.INFO, "Retrying session from: %s",
+                        CompatibilityBuildHelper.getDirSuffix(result.getStartTime()));
+            } else {
+                throw new IllegalArgumentException(String.format(
+                        "Device build fingerprint must match %s to retry session %d",
+                        oldBuildFingerprint, mRetrySessionId));
+            }
 
             String retryCommandLineArgs = result.getCommandLineArgs();
             if (retryCommandLineArgs != null) {
