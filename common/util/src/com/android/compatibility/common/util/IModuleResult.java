@@ -32,6 +32,10 @@ public interface IModuleResult extends Comparable<IModuleResult> {
 
     long getRuntime();
 
+    boolean isDone();
+
+    void setDone(boolean done);
+
     /**
      * Gets a {@link ICaseResult} for the given testcase, creating it if it doesn't exist.
      *

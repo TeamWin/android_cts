@@ -174,4 +174,18 @@ public class InvocationResult implements IInvocationResult {
     public String getBuildFingerprint() {
         return mBuildFingerprint;
     }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public int getModuleCompleteCount() {
+        int completeModules = 0;
+        for (IModuleResult module : mModuleResults.values()) {
+            if (module.isDone()) {
+                completeModules++;
+            }
+        }
+        return completeModules;
+    }
 }

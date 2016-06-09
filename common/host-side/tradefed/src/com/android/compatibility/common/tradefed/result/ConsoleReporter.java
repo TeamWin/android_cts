@@ -107,6 +107,7 @@ public class ConsoleReporter extends StubTestInvocationListener implements IShar
      */
     @Override
     public void testIgnored(TestIdentifier test) {
+        mCurrentTestNum--;
         logProgress("%s ignore", test);
     }
 

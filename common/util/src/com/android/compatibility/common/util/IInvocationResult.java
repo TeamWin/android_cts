@@ -104,4 +104,9 @@ public interface IInvocationResult {
      * @return the device build fingerprint associated with result.
      */
     String getBuildFingerprint();
+
+    /**
+     * Return the number of completed test modules for this invocation.
+     */
+    int getModuleCompleteCount();
 }

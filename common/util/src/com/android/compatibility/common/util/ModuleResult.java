@@ -28,6 +28,7 @@ public class ModuleResult implements IModuleResult {
 
     private String mId;
     private long mRuntime = 0;
+    private boolean mDone = false;
 
     private Map<String, ICaseResult> mResults = new HashMap<>();
 
@@ -37,6 +38,22 @@ public class ModuleResult implements IModuleResult {
      */
     public ModuleResult(String id) {
         mId = id;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public boolean isDone() {
+        return mDone;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void setDone(boolean done) {
+        mDone = done;
     }
 
     /**
@@ -142,6 +159,7 @@ public class ModuleResult implements IModuleResult {
         }
 
         this.mRuntime += otherModuleResult.getRuntime();
+        this.mDone = otherModuleResult.isDone();
         for (ICaseResult otherCaseResult : otherModuleResult.getResults()) {
             ICaseResult caseResult = getOrCreateResult(otherCaseResult.getName());
             caseResult.mergeFrom(otherCaseResult);

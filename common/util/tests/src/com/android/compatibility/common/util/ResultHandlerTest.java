@@ -97,7 +97,8 @@ public class ResultHandlerTest extends TestCase {
             "  <Build build_fingerprint=\"%s\" " + BUILD_ID + "=\"%s\" " +
                BUILD_PRODUCT + "=\"%s\" />\n";
     private static final String XML_SUMMARY =
-            "  <Summary pass=\"%d\" failed=\"%d\" not_executed=\"%d\" />\n";
+            "  <Summary pass=\"%d\" failed=\"%d\" not_executed=\"%d\" " +
+            "modules_done=\"1\" modules_total=\"1\" />\n";
     private static final String XML_MODULE =
             "  <Module name=\"%s\" abi=\"%s\" device=\"%s\">\n" +
             "%s" +
