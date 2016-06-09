@@ -270,6 +270,9 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
                     mModuleRepo.initialize(mTotalShards, mBuildHelper.getTestsDir(), getAbis(),
                             mDeviceTokens, mTestArgs, mModuleArgs, mIncludeFilters,
                             mExcludeFilters, mBuildHelper.getBuildInfo());
+
+                    // Add the entire list of modules to the CompatibilityBuildHelper for reporting
+                    mBuildHelper.setModuleIds(mModuleRepo.getModuleIds());
                 }
 
             }

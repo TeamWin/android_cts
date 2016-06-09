@@ -30,6 +30,7 @@ import junit.framework.TestCase;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -77,6 +78,15 @@ public class ModuleRepoTest extends TestCase {
     private static final String MODULE_ARG = "%s:blah:foobar";
     private static final String TEST_STUB = "TestStub"; // Trivial test stub
     private static final String SHARDABLE_TEST_STUB = "ShardableTestStub"; // Shardable and IBuildReceiver
+    private static final String [] EXPECTED_MODULE_IDS = new String[] {
+        "arm64-v8a FooModuleB",
+        "arm64-v8a FooModuleC",
+        "armeabi-v7a FooModuleA",
+        "arm64-v8a FooModuleA",
+        "armeabi-v7a FooModuleC",
+        "armeabi-v7a FooModuleB"
+    };
+
     static {
         SERIALS.add(SERIAL1);
         SERIALS.add(SERIAL2);
@@ -242,5 +252,17 @@ public class ModuleRepoTest extends TestCase {
             }
         }
         assertEquals("Shards wrong", 3*3, shardableCount);
+    }
+
+    public void testGetModuleIds() {
+        mRepo.initialize(3, mTestsDir, ABIS, DEVICE_TOKENS, TEST_ARGS, MODULE_ARGS, INCLUDES,
+                EXCLUDES, mBuild);
+        assertTrue("Should be initialized", mRepo.isInitialized());
+
+        assertArrayEquals(EXPECTED_MODULE_IDS, mRepo.getModuleIds());
+    }
+
+    private void assertArrayEquals(Object[] expected, Object[] actual) {
+        assertEquals(Arrays.asList(expected), Arrays.asList(actual));
     }
 }

@@ -92,12 +92,20 @@ public class ModuleResultTest extends TestCase {
         otherCaseResult.getOrCreateResult(METHOD_1).passed(null);
         otherCaseResult.getOrCreateResult(METHOD_2).passed(null);
         otherCaseResult.getOrCreateResult(METHOD_3).passed(null);
+        otherResult.setDone(true);
 
         mResult.mergeFrom(otherResult);
 
         assertEquals("Expected two results", 2, mResult.getResults().size());
         assertTrue("Expected test result", mResult.getResults().contains(caseResult));
         assertTrue("Expected test result", mResult.getResults().contains(caseResult2));
+        assertTrue(mResult.isDone());
+    }
+
+    public void testSetDone() {
+        assertFalse(mResult.isDone());
+        mResult.setDone(true);
+        assertTrue(mResult.isDone());
     }
 
     public void testMergeModule_mismatchedModuleId() throws Exception {

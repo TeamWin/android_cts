@@ -332,11 +332,14 @@ public class CompatibilityConsole extends Console {
                     }
                 }
 
+                String moduleProgress = String.format("%d of %d",
+                        result.getModuleCompleteCount(), result.getModules().size());
+
                 table.add(Arrays.asList(
                         Integer.toString(i),
                         Integer.toString(result.countResults(TestStatus.PASS)),
                         Integer.toString(result.countResults(TestStatus.FAIL)),
-                        Integer.toString(result.countResults(TestStatus.NOT_EXECUTED)),
+                        moduleProgress,
                         CompatibilityBuildHelper.getDirSuffix(result.getStartTime()),
                         result.getTestPlan(),
                         ArrayUtil.join(", ", result.getDeviceSerials()),
@@ -347,7 +350,7 @@ public class CompatibilityConsole extends Console {
 
 
             // add the table header to the beginning of the list
-            table.add(0, Arrays.asList("Session", "Pass", "Fail", "Not Executed", "Result Directory",
+            table.add(0, Arrays.asList("Session", "Pass", "Fail", "Modules Complete", "Result Directory",
                     "Test Plan", "Device serial(s)", "Build ID", "Product"));
             tableFormatter.displayTable(table, new PrintWriter(System.out, true));
         } else {
