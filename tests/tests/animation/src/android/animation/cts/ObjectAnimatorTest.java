@@ -22,8 +22,12 @@ import android.animation.PropertyValuesHolder;
 import android.animation.ValueAnimator;
 import android.test.ActivityInstrumentationTestCase2;
 import android.util.Property;
+import android.view.View;
 import android.view.animation.AccelerateInterpolator;
 import android.view.animation.Interpolator;
+
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 public class ObjectAnimatorTest extends
         ActivityInstrumentationTestCase2<AnimationActivity> {
@@ -304,6 +308,46 @@ public class ObjectAnimatorTest extends
                 anim3.setCurrentFraction(1);
                 assertEquals(endValueExpected3, (Float) anim3.getAnimatedValue());
                 anim3.cancel();
+            }
+        });
+    }
+
+    public void testCachedValues() throws Throwable {
+        final AnimTarget target = new AnimTarget();
+        final ObjectAnimator anim = ObjectAnimator.ofFloat(target, "testValue", 100);
+        anim.setDuration(200);
+        final CountDownLatch twoFramesLatch = new CountDownLatch(2);
+        runTestOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                anim.start();
+                final View decor = getActivity().getWindow().getDecorView();
+                decor.postOnAnimation(new Runnable() {
+                    @Override
+                    public void run() {
+                        if (twoFramesLatch.getCount() > 0) {
+                            twoFramesLatch.countDown();
+                            decor.postOnAnimation(this);
+                        }
+                    }
+                });
+            }
+        });
+
+        assertTrue("Animation didn't start in a reasonable time",
+                twoFramesLatch.await(100, TimeUnit.MILLISECONDS));
+
+        runTestOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                assertTrue("Start value should readjust to current position",
+                        target.getTestValue() != 0);
+                anim.cancel();
+                anim.setupStartValues();
+                anim.start();
+                assertTrue("Start value should readjust to current position",
+                        target.getTestValue() != 0);
+                anim.cancel();
             }
         });
     }
