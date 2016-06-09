@@ -420,15 +420,18 @@ public class NativeDecoderTest extends MediaPlayerTestBase {
             int fd, long startOffset, long length);
 
     public void testMuxerAvc() throws Exception {
+        // IMPORTANT: this file must not have B-frames
         testMuxer(R.raw.video_1280x720_mp4_h264_1000kbps_25fps_aac_stereo_128kbps_44100hz, false);
     }
 
     public void testMuxerH263() throws Exception {
+        // IMPORTANT: this file must not have B-frames
         testMuxer(R.raw.video_176x144_3gp_h263_300kbps_25fps_aac_stereo_128kbps_11025hz, false);
     }
 
     public void testMuxerHevc() throws Exception {
-        testMuxer(R.raw.video_640x360_mp4_hevc_450kbps_30fps_aac_stereo_128kbps_48000hz, false);
+        // IMPORTANT: this file must not have B-frames
+        testMuxer(R.raw.video_640x360_mp4_hevc_450kbps_no_b, false);
     }
 
     public void testMuxerVp8() throws Exception {
@@ -449,11 +452,14 @@ public class NativeDecoderTest extends MediaPlayerTestBase {
         testMuxer(R.raw.video_256x144_webm_vp9_hdr_83kbps_24fps, true);
     }
 
-    public void testMuxerMpeg2() throws Exception {
+    // We do not support MPEG-2 muxing as of yet
+    public void SKIP_testMuxerMpeg2() throws Exception {
+        // IMPORTANT: this file must not have B-frames
         testMuxer(R.raw.video_176x144_mp4_mpeg2_105kbps_25fps_aac_stereo_128kbps_44100hz, false);
     }
 
     public void testMuxerMpeg4() throws Exception {
+        // IMPORTANT: this file must not have B-frames
         testMuxer(R.raw.video_176x144_mp4_mpeg4_300kbps_25fps_aac_stereo_128kbps_44100hz, false);
     }
 
