@@ -20,16 +20,18 @@ import java.math.BigDecimal;
 import java.math.MathContext;
 
 import android.test.AndroidTestCase;
+import android.test.suitebuilder.annotation.SmallTest;
 import android.text.format.Formatter;
 
 public class FormatterTest extends AndroidTestCase {
 
+    @SmallTest
     public void testFormatFileSize() {
         // test null Context
         assertEquals("", Formatter.formatFileSize(null, 0));
 
         MathContext mc = MathContext.DECIMAL64;
-        BigDecimal bd = new BigDecimal((long) 1024, mc);
+        BigDecimal bd = new BigDecimal((long) 1000, mc);
 
         // test different long values with various length
         assertEquals("0 B", Formatter.formatFileSize(mContext, 0));
@@ -39,9 +41,9 @@ public class FormatterTest extends AndroidTestCase {
         assertEquals("99 B", Formatter.formatFileSize(mContext, 99));
         assertEquals("100 B", Formatter.formatFileSize(mContext, 100));
         assertEquals("900 B", Formatter.formatFileSize(mContext, 900));
-        assertEquals("0.88 KB", Formatter.formatFileSize(mContext, 901));
+        assertEquals("0.90 kB", Formatter.formatFileSize(mContext, 901));
 
-        assertEquals("1.00 KB", Formatter.formatFileSize(mContext, bd.pow(1).longValue()));
+        assertEquals("1.00 kB", Formatter.formatFileSize(mContext, bd.pow(1).longValue()));
 
         assertEquals("1.00 MB", Formatter.formatFileSize(mContext, bd.pow(2).longValue()));
 
@@ -51,12 +53,13 @@ public class FormatterTest extends AndroidTestCase {
 
         assertEquals("1.00 PB", Formatter.formatFileSize(mContext, bd.pow(5).longValue()));
 
-        assertEquals("1024 PB", Formatter.formatFileSize(mContext, bd.pow(6).longValue()));
+        assertEquals("1000 PB", Formatter.formatFileSize(mContext, bd.pow(6).longValue()));
 
         // test Negative value
         assertEquals("-1 B", Formatter.formatFileSize(mContext, -1));
     }
 
+    @SmallTest
     public void testFormatIpAddress() {
         assertEquals("1.0.168.192", Formatter.formatIpAddress(0xC0A80001));
         assertEquals("1.0.0.127", Formatter.formatIpAddress(0x7F000001));
