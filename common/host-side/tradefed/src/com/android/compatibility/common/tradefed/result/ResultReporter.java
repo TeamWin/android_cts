@@ -425,7 +425,7 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
                     mResult.addInvocationInfo(key.substring(CTS_PREFIX.length()), value);
                 }
 
-                if (key.equals(CompatibilityBuildHelper.MODULE_IDS)) {
+                if (key.equals(CompatibilityBuildHelper.MODULE_IDS) && value.length() > 0) {
                     Collections.addAll(allExpectedModules, value.split(","));
                 }
             }
