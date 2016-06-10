@@ -978,6 +978,105 @@ public class MediaPlayerTest extends MediaPlayerTestBase {
         assertEquals(Integer.parseInt(rotation), angle);
     }
 
+    // setPlaybackParams() with non-zero speed should start playback.
+    public void testSetPlaybackParamsPositiveSpeed() throws Exception {
+        if (!checkLoadResource(
+                R.raw.video_480x360_mp4_h264_1000kbps_30fps_aac_stereo_128kbps_44100hz)) {
+            return; // skip
+        }
+
+        mMediaPlayer.setOnSeekCompleteListener(new MediaPlayer.OnSeekCompleteListener() {
+            @Override
+            public void onSeekComplete(MediaPlayer mp) {
+                mOnSeekCompleteCalled.signal();
+            }
+        });
+        mOnCompletionCalled.reset();
+        mMediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
+            @Override
+            public void onCompletion(MediaPlayer mp) {
+                mOnCompletionCalled.signal();
+            }
+        });
+        mMediaPlayer.setDisplay(mActivity.getSurfaceHolder());
+
+        mMediaPlayer.prepare();
+
+        mOnSeekCompleteCalled.reset();
+        mMediaPlayer.seekTo(0);
+        mOnSeekCompleteCalled.waitForSignal();
+
+        final float playbackRate = 1.0f;
+
+        int playTime = 2000;  // The testing clip is about 10 second long.
+        mMediaPlayer.setPlaybackParams(new PlaybackParams().setSpeed(playbackRate));
+        assertTrue("MediaPlayer should be playing", mMediaPlayer.isPlaying());
+        Thread.sleep(playTime);
+        assertTrue("MediaPlayer should still be playing",
+                mMediaPlayer.getCurrentPosition() > 0);
+
+        int duration = mMediaPlayer.getDuration();
+        mOnSeekCompleteCalled.reset();
+        mMediaPlayer.seekTo(duration - 1000);
+        mOnSeekCompleteCalled.waitForSignal();
+
+        mOnCompletionCalled.waitForSignal();
+        assertFalse("MediaPlayer should not be playing", mMediaPlayer.isPlaying());
+        int eosPosition = mMediaPlayer.getCurrentPosition();
+
+        mMediaPlayer.setPlaybackParams(new PlaybackParams().setSpeed(playbackRate));
+        assertTrue("MediaPlayer should be playing after EOS", mMediaPlayer.isPlaying());
+        Thread.sleep(playTime);
+        int position = mMediaPlayer.getCurrentPosition();
+        assertTrue("MediaPlayer should still be playing after EOS",
+                position > 0 && position < eosPosition);
+
+        mMediaPlayer.stop();
+    }
+
+    // setPlaybackParams() with zero speed should pause playback.
+    public void testSetPlaybackParamsZeroSpeed() throws Exception {
+        if (!checkLoadResource(
+                R.raw.video_480x360_mp4_h264_1000kbps_30fps_aac_stereo_128kbps_44100hz)) {
+            return; // skip
+        }
+
+        mMediaPlayer.setOnSeekCompleteListener(new MediaPlayer.OnSeekCompleteListener() {
+            @Override
+            public void onSeekComplete(MediaPlayer mp) {
+                mOnSeekCompleteCalled.signal();
+            }
+        });
+        mMediaPlayer.setDisplay(mActivity.getSurfaceHolder());
+
+        mMediaPlayer.prepare();
+
+        mMediaPlayer.setPlaybackParams(new PlaybackParams().setSpeed(0.0f));
+        assertFalse("MediaPlayer should not be playing", mMediaPlayer.isPlaying());
+
+        int playTime = 2000;  // The testing clip is about 10 second long.
+        mOnSeekCompleteCalled.reset();
+        mMediaPlayer.seekTo(0);
+        mOnSeekCompleteCalled.waitForSignal();
+        Thread.sleep(playTime);
+        assertTrue("MediaPlayer should not be playing",
+                !mMediaPlayer.isPlaying() && mMediaPlayer.getCurrentPosition() == 0);
+
+        mMediaPlayer.start();
+        Thread.sleep(playTime);
+        assertTrue("MediaPlayer should be playing",
+                mMediaPlayer.isPlaying() && mMediaPlayer.getCurrentPosition() > 0);
+
+        mMediaPlayer.setPlaybackParams(new PlaybackParams().setSpeed(0.0f));
+        assertFalse("MediaPlayer should not be playing", mMediaPlayer.isPlaying());
+        Thread.sleep(1000);
+        int position = mMediaPlayer.getCurrentPosition();
+        Thread.sleep(playTime);
+        assertTrue("MediaPlayer should be paused", mMediaPlayer.getCurrentPosition() == position);
+
+        mMediaPlayer.stop();
+    }
+
     public void testPlaybackRate() throws Exception {
         final int toleranceMs = 1000;
         if (!checkLoadResource(
