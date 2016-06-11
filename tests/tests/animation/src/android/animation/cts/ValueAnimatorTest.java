@@ -16,6 +16,7 @@
 package android.animation.cts;
 
 import android.animation.Animator;
+import android.animation.AnimatorListenerAdapter;
 import android.animation.ObjectAnimator;
 import android.animation.ValueAnimator;
 import android.test.ActivityInstrumentationTestCase2;
@@ -174,6 +175,48 @@ public class ValueAnimatorTest extends
                 delayedAnim.cancel();
             }
         });
+    }
+
+    public void testSetCurrentPlayTimeAfterStart() throws Throwable {
+        // This test sets current play time right after start() is called on a non-delayed animation
+        final long duration = 100;
+        final float seekFraction = 0.2f;
+        final CountDownLatch frameUpdateLatch = new CountDownLatch(1);
+        final CountDownLatch endLatch = new CountDownLatch(1);
+
+        final ValueAnimator anim  = ValueAnimator.ofFloat(0, 1).setDuration(duration);
+        anim.setInterpolator(null);
+        anim.addListener(new AnimatorListenerAdapter() {
+            @Override
+            public void onAnimationEnd(Animator animation) {
+                super.onAnimationEnd(animation);
+                endLatch.countDown();
+            }
+        });
+        runTestOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                anim.start();
+                anim.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+                    float fractionOnFirstFrame = -1f;
+                    @Override
+                    public void onAnimationUpdate(ValueAnimator animation) {
+                        if (fractionOnFirstFrame < 0) {
+                            // First frame:
+                            fractionOnFirstFrame = animation.getAnimatedFraction();
+                            assertRoughlyEqual(seekFraction, fractionOnFirstFrame);
+                            frameUpdateLatch.countDown();
+                        } else {
+                            assertTrue(animation.getAnimatedFraction() >= fractionOnFirstFrame);
+                        }
+                    }
+                });
+                long currentPlayTime = (long) (seekFraction * (float) duration);
+                anim.setCurrentPlayTime(currentPlayTime);
+            }
+        });
+        assertTrue(frameUpdateLatch.await(100, TimeUnit.MILLISECONDS));
+        assertTrue(endLatch.await(200, TimeUnit.MILLISECONDS));
     }
 
     public void testSetCurrentFraction() throws Throwable {
