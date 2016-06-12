@@ -100,25 +100,25 @@ public final class OptionHelper {
         Set<String> optionShortNames = OptionHelper.getOptionShortNames(object);
         List<String> validCliArgs = new ArrayList<String>();
 
-        // get "-option/--option value" pairs from the command-line string
-        Pattern cliPattern = Pattern.compile("-[-\\w]+[ =]\\S+");
+        // get "-(-)option" or "-(-)option value" substrings from the command-line string
+        Pattern cliPattern = Pattern.compile("-[-\\w]+([ =][^-]+)?");
         Matcher matcher = cliPattern.matcher(commandString);
 
         while (matcher.find()) {
-            String match = matcher.group();
+            String optionInput = matcher.group();
             // split between the option name and value
-            String[] tokens = match.split("[ =]");
+            String[] keyNameTokens = optionInput.split("[ =]", 2);
             // remove initial hyphens from option args
-            String keyName = tokens[0].replaceFirst("^--?", "");
+            String keyName = keyNameTokens[0].replaceFirst("^--?", "");
 
             // add substrings only when the options are recognized
             if (optionShortNames.contains(keyName) || optionNames.contains(keyName)) {
-                if (match.contains(" ")) {
-                    // ArgsOptionParser expect stand-alone entity or a key=value format, no spaces.
-                    validCliArgs.add(match.split(" ")[0]);
-                    validCliArgs.add(match.split(" ")[1]);
-                } else {
-                    validCliArgs.add(match);
+                // add values separated by spaces or in quotes separately to the return array
+                Pattern tokenPattern = Pattern.compile("(\".*\")|\\S+");
+                Matcher tokenMatcher = tokenPattern.matcher(optionInput);
+                while (tokenMatcher.find()) {
+                    String token = tokenMatcher.group().replaceAll("\"", "");
+                    validCliArgs.add(token);
                 }
             }
         }
