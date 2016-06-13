@@ -16,12 +16,12 @@
 
 package android.widget.cts;
 
-import org.xmlpull.v1.XmlPullParser;
-
-import android.app.Activity;
+import android.app.Instrumentation;
 import android.content.Context;
 import android.os.Parcelable;
+import android.provider.Settings;
 import android.test.ActivityInstrumentationTestCase2;
+import android.test.suitebuilder.annotation.SmallTest;
 import android.util.AttributeSet;
 import android.util.SparseArray;
 import android.util.Xml;
@@ -31,17 +31,17 @@ import android.view.animation.AnimationSet;
 import android.view.animation.LayoutAnimationController;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.ListAdapter;
 import android.widget.ListView;
-import android.widget.AdapterView.OnItemClickListener;
-import android.widget.AdapterView.OnItemLongClickListener;
-import android.widget.AdapterView.OnItemSelectedListener;
-import android.provider.Settings;
+import android.widget.cts.util.ViewTestUtils;
 
-import android.widget.cts.R;
+import org.xmlpull.v1.XmlPullParser;
 
+import static org.mockito.Mockito.*;
 
+@SmallTest
 public class AdapterViewTest extends ActivityInstrumentationTestCase2<AdapterViewCtsActivity> {
 
     private final static int INVALID_ID = -1;
@@ -51,7 +51,7 @@ public class AdapterViewTest extends ActivityInstrumentationTestCase2<AdapterVie
 
     final String[] FRUIT = { "1", "2", "3", "4", "5", "6", "7", "8" };
 
-    private Activity mActivity;
+    private AdapterViewCtsActivity mActivity;
     private AdapterView<ListAdapter> mAdapterView;
 
     public AdapterViewTest() {
@@ -250,47 +250,67 @@ public class AdapterViewTest extends ActivityInstrumentationTestCase2<AdapterVie
     }
 
     public void testAccessOnItemClickAndLongClickListener() {
-        MockOnItemClickListener clickListener = new MockOnItemClickListener();
-        MockOnItemLongClickListener longClickListener = new MockOnItemLongClickListener();
+        AdapterView.OnItemClickListener mockClickListener =
+                mock(AdapterView.OnItemClickListener.class);
+        AdapterView.OnItemLongClickListener mockLongClickListener =
+                mock(AdapterView.OnItemLongClickListener.class);
+        when(mockLongClickListener.onItemLongClick(
+                any(AdapterView.class), any(View.class), anyInt(), anyLong())).thenReturn(true);
+
+        assertNull(mAdapterView.getOnItemLongClickListener());
+        assertNull(mAdapterView.getOnItemClickListener());
 
         assertFalse(mAdapterView.performItemClick(null, 0, 0));
 
-        mAdapterView.setOnItemClickListener(clickListener);
-        mAdapterView.setOnItemLongClickListener(longClickListener);
+        mAdapterView.setOnItemClickListener(mockClickListener);
+        mAdapterView.setOnItemLongClickListener(mockLongClickListener);
+        assertEquals(mockLongClickListener, mAdapterView.getOnItemLongClickListener());
 
-        assertFalse(clickListener.isClicked());
+        verifyZeroInteractions(mockClickListener);
         assertTrue(mAdapterView.performItemClick(null, 0, 0));
-        assertTrue(clickListener.isClicked());
+        verify(mockClickListener, times(1)).onItemClick(eq(mAdapterView), any(View.class),
+                eq(0), eq(0L));
 
         setArrayAdapter(mAdapterView);
-        assertFalse(longClickListener.isClicked());
+        verifyZeroInteractions(mockLongClickListener);
         mAdapterView.layout(0, 0, LAYOUT_WIDTH, LAYOUT_HEIGHT);
         assertTrue(mAdapterView.showContextMenuForChild(mAdapterView.getChildAt(0)));
-        assertTrue(longClickListener.isClicked());
+        verify(mockLongClickListener, times(1)).onItemLongClick(eq(mAdapterView), any(View.class),
+                eq(0), eq(0L));
     }
 
     public void testAccessOnItemSelectedListener() {
-        // FIXME: we can not select the item in touch mode, how can we change the mode to test
-        setArrayAdapter(mAdapterView);
-        MockOnItemSelectedListener selectedListener = new MockOnItemSelectedListener();
-        mAdapterView.setOnItemSelectedListener(selectedListener);
+        mAdapterView = mActivity.getListView();
+        final Instrumentation instrumentation = getInstrumentation();
+        ViewTestUtils.runOnMainAndDrawSync(instrumentation, mAdapterView,
+                () -> mAdapterView.setLayoutParams(new FrameLayout.LayoutParams(
+                        ViewGroup.LayoutParams.MATCH_PARENT,
+                        ViewGroup.LayoutParams.MATCH_PARENT)));
 
-//        mAdapterView.layout(0, 0, LAYOUT_WIDTH, LAYOUT_HEIGHT);
-//
-//        assertFalse(selectedListener.isItemSelected());
-//        assertFalse(selectedListener.isNothingSelected());
-//
-//        mAdapterView.setSelection(1);
-//        assertTrue(selectedListener.isItemSelected());
-//        assertFalse(selectedListener.isNothingSelected());
-//
-//        mAdapterView.setSelection(-1);
-//        assertTrue(selectedListener.isItemSelected());
-//        assertTrue(selectedListener.isNothingSelected());
-//
-//        mAdapterView.setSelection(FRUIT.length);
-//        assertTrue(selectedListener.isItemSelected());
-//        assertTrue(selectedListener.isNothingSelected());
+        instrumentation.runOnMainSync(() -> setArrayAdapter(mAdapterView));
+
+        AdapterView.OnItemSelectedListener mockSelectedListener =
+                mock(AdapterView.OnItemSelectedListener.class);
+        mAdapterView.setOnItemSelectedListener(mockSelectedListener);
+        assertEquals(mockSelectedListener, mAdapterView.getOnItemSelectedListener());
+
+        verifyZeroInteractions(mockSelectedListener);
+
+        // Select item #1 and verify that the listener has been notified
+        ViewTestUtils.runOnMainAndDrawSync(instrumentation, mAdapterView,
+                () -> mAdapterView.setSelection(1));
+        verify(mockSelectedListener, times(1)).onItemSelected(eq(mAdapterView), any(View.class),
+                eq(1), eq(1L));
+        verifyNoMoreInteractions(mockSelectedListener);
+
+        // Select last item and verify that the listener has been notified
+        reset(mockSelectedListener);
+        ViewTestUtils.runOnMainAndDrawSync(instrumentation, mAdapterView,
+                () -> mAdapterView.setSelection(FRUIT.length - 1));
+        verify(mockSelectedListener, times(1)).onItemSelected(
+                eq(mAdapterView), any(View.class), eq(FRUIT.length - 1),
+                eq((long) FRUIT.length - 1));
+        verifyNoMoreInteractions(mockSelectedListener);
     }
 
     /*
@@ -459,62 +479,7 @@ public class AdapterViewTest extends ActivityInstrumentationTestCase2<AdapterVie
     }
 
     private void setArrayAdapter(AdapterView<ListAdapter> adapterView) {
-        ((ListView) adapterView).setAdapter(new ArrayAdapter<String>(
+        adapterView.setAdapter(new ArrayAdapter<>(
                 mActivity, R.layout.adapterview_layout, FRUIT));
-    }
-
-    /**
-     * this is a mock item click listener for check out call back
-     */
-    private class MockOnItemClickListener implements OnItemClickListener {
-        private boolean mClicked;
-
-        public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-            mClicked = true;
-        }
-
-        protected boolean isClicked() {
-            return mClicked;
-        }
-    }
-
-    /**
-     * this is a mock long item click listener for check out call back
-     */
-    private class MockOnItemLongClickListener implements OnItemLongClickListener {
-        private boolean mClicked;
-
-        public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
-            mClicked = true;
-            return true;
-        }
-
-        protected boolean isClicked() {
-            return mClicked;
-        }
-    }
-
-    /**
-     * this is a mock item selected listener for check out call lback
-     */
-    private class MockOnItemSelectedListener implements OnItemSelectedListener {
-        private boolean mIsItemSelected;
-        private boolean mIsNothingSelected;
-
-        public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-            mIsItemSelected = true;
-        }
-
-        public void onNothingSelected(AdapterView<?> parent) {
-            mIsNothingSelected = true;
-        }
-
-        protected boolean isItemSelected() {
-            return mIsItemSelected;
-        }
-
-        protected boolean isNothingSelected() {
-            return mIsNothingSelected;
-        }
     }
 }
