@@ -110,6 +110,13 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
         super.tearDown();
     }
 
+    public void testCaCertManagement() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
+        executeDeviceTestClass(".CaCertManagementTest");
+    }
+
     public void testResetPassword() throws Exception {
         if (!mHasFeature) {
             return;

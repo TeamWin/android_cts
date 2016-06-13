@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.android.cts.deviceowner;
+package android.cts.util;
 
 // Copied from cts/tests/tests/keystore/src/android/keystore/cts/AndroidKeyStoreTest.java
 

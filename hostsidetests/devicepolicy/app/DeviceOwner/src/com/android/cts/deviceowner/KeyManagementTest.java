@@ -15,8 +15,8 @@
  */
 package com.android.cts.deviceowner;
 
+import static android.cts.util.FakeKeys.FAKE_RSA_1;
 import static com.android.cts.deviceowner.BaseDeviceOwnerTest.getWho;
-import static com.android.cts.deviceowner.FakeKeys.FAKE_RSA_1;
 
 import android.app.Activity;
 import android.app.admin.DevicePolicyManager;
