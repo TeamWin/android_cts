@@ -33,6 +33,7 @@ LOCAL_STATIC_LIBRARIES += \
   libLLVMMCParser \
   libLLVMCore \
   libLLVMSupport \
+  libprotobuf-cpp-lite \
 
 include $(LLVM_HOST_BUILD_MK)
 include $(BUILD_HOST_NATIVE_TEST)
@@ -66,6 +67,7 @@ LOCAL_STATIC_LIBRARIES += \
   libLLVMMCParser \
   libLLVMCore \
   libLLVMSupport \
+  libprotobuf-cpp-lite \
   libc \
 
 LOCAL_POST_LINK_CMD =  \
