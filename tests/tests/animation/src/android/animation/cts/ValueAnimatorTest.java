@@ -418,6 +418,31 @@ public class ValueAnimatorTest extends
         });
     }
 
+    public void testNotifiesAfterEnd() throws Throwable {
+        final ValueAnimator animator = ValueAnimator.ofFloat(0, 1);
+        animator.addListener(new AnimatorListenerAdapter() {
+            @Override
+            public void onAnimationStart(Animator animation) {
+                assertTrue(animation.isStarted());
+                assertTrue(animation.isRunning());
+            }
+
+            @Override
+            public void onAnimationEnd(Animator animation) {
+                assertFalse(animation.isRunning());
+                assertFalse(animation.isStarted());
+                super.onAnimationEnd(animation);
+            }
+        });
+        runTestOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                animator.start();
+                animator.end();
+            }
+        });
+    }
+
     private ValueAnimator getAnimator() {
         Object object = mActivity.view.newBall;
         String property = "y";
