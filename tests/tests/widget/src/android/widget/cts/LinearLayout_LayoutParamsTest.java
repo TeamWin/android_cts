@@ -16,16 +16,14 @@
 
 package android.widget.cts;
 
-import android.widget.cts.R;
-
-import org.xmlpull.v1.XmlPullParserException;
-
 import android.content.res.XmlResourceParser;
 import android.test.AndroidTestCase;
+import android.view.Gravity;
 import android.view.ViewGroup.LayoutParams;
 import android.view.ViewGroup.MarginLayoutParams;
 import android.widget.LinearLayout;
 import android.widget.cts.util.XmlUtils;
+import org.xmlpull.v1.XmlPullParserException;
 
 import java.io.IOException;
 
@@ -34,17 +32,47 @@ public class LinearLayout_LayoutParamsTest extends AndroidTestCase {
         XmlResourceParser p = mContext.getResources().getLayout(R.layout.linearlayout_layout);
 
         XmlUtils.beginDocument(p, "LinearLayout");
-        new LinearLayout.LayoutParams(getContext(), p);
+        LinearLayout.LayoutParams linearLayoutParams =
+                new LinearLayout.LayoutParams(getContext(), p);
+        assertEquals(LayoutParams.MATCH_PARENT, linearLayoutParams.width);
+        assertEquals(LayoutParams.WRAP_CONTENT, linearLayoutParams.height);
+        assertEquals(0.0f, linearLayoutParams.weight);
+        assertEquals(-1, linearLayoutParams.gravity);
 
-        new LinearLayout.LayoutParams(320, 240);
+        linearLayoutParams = new LinearLayout.LayoutParams(320, 240);
+        assertEquals(320, linearLayoutParams.width);
+        assertEquals(240, linearLayoutParams.height);
+        assertEquals(0.0f, linearLayoutParams.weight);
+        assertEquals(-1, linearLayoutParams.gravity);
 
-        new LinearLayout.LayoutParams(320, 240, 0);
+        linearLayoutParams = new LinearLayout.LayoutParams(360, 320, 0.4f);
+        assertEquals(360, linearLayoutParams.width);
+        assertEquals(320, linearLayoutParams.height);
+        assertEquals(0.4f, linearLayoutParams.weight);
+        assertEquals(-1, linearLayoutParams.gravity);
 
-        LayoutParams layoutParams = new LayoutParams(320, 480);
-        new LinearLayout.LayoutParams(layoutParams);
+        LayoutParams layoutParams = new LayoutParams(200, 480);
+        linearLayoutParams = new LinearLayout.LayoutParams(layoutParams);
+        assertEquals(200, linearLayoutParams.width);
+        assertEquals(480, linearLayoutParams.height);
+        assertEquals(0.0f, linearLayoutParams.weight);
+        assertEquals(-1, linearLayoutParams.gravity);
 
-        MarginLayoutParams marginLayoutParams = new MarginLayoutParams(320, 480);
-        new LinearLayout.LayoutParams(marginLayoutParams);
+        MarginLayoutParams marginLayoutParams = new MarginLayoutParams(320, 200);
+        linearLayoutParams = new LinearLayout.LayoutParams(marginLayoutParams);
+        assertEquals(320, linearLayoutParams.width);
+        assertEquals(200, linearLayoutParams.height);
+        assertEquals(0.0f, linearLayoutParams.weight);
+        assertEquals(-1, linearLayoutParams.gravity);
+
+        LinearLayout.LayoutParams linearLayoutParams2 = new LinearLayout.LayoutParams(360, 720);
+        linearLayoutParams2.weight = 0.9f;
+        linearLayoutParams2.gravity = Gravity.RIGHT;
+        linearLayoutParams = new LinearLayout.LayoutParams(linearLayoutParams2);
+        assertEquals(360, linearLayoutParams.width);
+        assertEquals(720, linearLayoutParams.height);
+        assertEquals(0.9f, linearLayoutParams.weight);
+        assertEquals(Gravity.RIGHT, linearLayoutParams.gravity);
     }
 
     public void testDebug() {
