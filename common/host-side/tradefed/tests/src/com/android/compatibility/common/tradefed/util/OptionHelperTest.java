@@ -32,6 +32,7 @@ public class OptionHelperTest extends TestCase {
 
     private static final String TEST_CLASS = "test-class";
     private static final String TEST_CLASS_SHORTNAME = "c";
+    private static final String TEST_FILTER = "test-filter";
     private static final String TEST_NAME = "test-name";
     private static final String TEST_SUITE = "test-suite";
     private static final String TEST_SUITE_SHORTNAME = "s";
@@ -50,11 +51,15 @@ public class OptionHelperTest extends TestCase {
             importance = Importance.ALWAYS)
     private String mTestSuite = null;
 
+    @Option(name = TEST_FILTER,
+            importance = Importance.ALWAYS)
+    private List<String> mFilters = new ArrayList<>();
+
     public void testGetOptionNames() throws Exception {
         Set<String> optionNames = OptionHelper.getOptionNames(this);
         List<String> expectedNames = Arrays.asList(TEST_CLASS, TEST_NAME, TEST_SUITE);
         assertEquals("Missing option names", true, optionNames.containsAll(expectedNames));
-        assertEquals("Expected three elements", 3, optionNames.size());
+        assertEquals("Expected four elements", 4, optionNames.size());
     }
 
     public void testGetOptionShortNames() throws Exception {
@@ -66,11 +71,21 @@ public class OptionHelperTest extends TestCase {
     }
 
     public void testGetValidCliArgs() throws Exception {
+        String fakeTestClass = "FooTestCases";
+        String fakeTestMethod = "android.foo.footestsuite.RealTest#testSuperReal";
         List<String> noValidNames = new ArrayList<String>();
         List<String> validSubset = Arrays.asList("--" + TEST_CLASS, "fooclass",
             "-" + TEST_SUITE_SHORTNAME, "foosuite");
         List<String> allValidNames = Arrays.asList("--" + TEST_CLASS, "fooclass",
             "-" + TEST_SUITE_SHORTNAME, "foosuite", "--" + TEST_NAME, "footest");
+
+        List<String> validQuoteSubset = Arrays.asList("-" + TEST_CLASS_SHORTNAME, fakeTestClass,
+            "--" + TEST_NAME + "=" + fakeTestMethod, "--" + TEST_FILTER, fakeTestClass + " "
+            + fakeTestMethod);
+        String[] inputArray = {"foocts ", "-", TEST_CLASS_SHORTNAME, " ", fakeTestClass, " --",
+            TEST_NAME, "=", fakeTestMethod, " -z \"FAKE1 FAKE2\" --", TEST_FILTER, " ", " \"",
+            fakeTestClass, " ", fakeTestMethod + "\""};
+        String inputString = String.join("", inputArray);
 
         assertEquals("Expected no valid names", noValidNames,
             OptionHelper.getValidCliArgs("test --foo -b", this));
@@ -80,6 +95,8 @@ public class OptionHelperTest extends TestCase {
         assertEquals("Expected two long names and one short name", allValidNames,
             OptionHelper.getValidCliArgs("test --" + TEST_CLASS + " fooclass -b fake"
                 + " -s foosuite " + "--" + TEST_NAME + " footest", this));
+        assertEquals("Expected matching arrays", validQuoteSubset,
+            OptionHelper.getValidCliArgs(inputString, this));
     }
 
 }
