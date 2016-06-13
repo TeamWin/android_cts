@@ -1,0 +1,173 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Copyright (C) 2016 The Android Open Source Project
+
+     Licensed under the Apache License, Version 2.0 (the "License");
+     you may not use this file except in compliance with the License.
+     You may obtain a copy of the License at
+
+          http://www.apache.org/licenses/LICENSE-2.0
+
+     Unless required by applicable law or agreed to in writing, software
+     distributed under the License is distributed on an "AS IS" BASIS,
+     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+     See the License for the specific language governing permissions and
+     limitations under the License.
+-->
+<RelativeLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="10dip">
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_above="@+id/pass_fail_buttons">
+
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <LinearLayout
+                android:id="@+id/layout1"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+
+                <ImageView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dip"
+                    android:contentDescription="@string/pass_button_text"
+                    android:padding="10dip"
+                    android:src="@drawable/fs_indeterminate"/>
+
+                <TextView
+                    style="@style/InstructionsSmallFont"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/sec_push_ca_certificate_to_device_text"/>
+            </LinearLayout>
+
+            <Button
+                android:id="@+id/transfer_ca_certificate"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_below="@+id/layout1"
+                android:gravity="center"
+                android:text="@string/cacert_do_something"/>
+
+            <LinearLayout
+                android:id="@+id/layout2"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_below="@+id/transfer_ca_certificate">
+
+                <ImageView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dip"
+                    android:contentDescription="@string/pass_button_text"
+                    android:padding="10dip"
+                    android:src="@drawable/fs_indeterminate"/>
+
+                <TextView
+                    style="@style/InstructionsSmallFont"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/sec_launch_wifi_settings"/>
+            </LinearLayout>
+
+            <Button
+                android:id="@+id/gotowifisettings"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_below="@+id/layout2"
+                android:gravity="center"
+                android:text="@string/cacert_do_something"/>
+
+            <LinearLayout
+                android:id="@+id/layout3"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_below="@+id/gotowifisettings">
+
+                <ImageView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_below="@+id/transfer_ca_certificate"
+                    android:layout_marginTop="5dip"
+                    android:contentDescription="@string/pass_button_text"
+                    android:padding="10dip"
+                    android:src="@drawable/fs_indeterminate"/>
+
+                <TextView
+                    style="@style/InstructionsSmallFont"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/sec_certificate_trust_text"/>
+            </LinearLayout>
+
+            <Button
+                android:id="@+id/check_cert_trust"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_below="@+id/layout3"
+                android:gravity="center"
+                android:text="@string/cacert_do_something"/>
+
+            <LinearLayout
+                android:id="@+id/layout4"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_below="@+id/check_cert_trust">
+
+                <ImageView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:contentDescription="@string/pass_button_text"
+                    android:padding="10dip"
+                    android:src="@drawable/fs_indeterminate"/>
+
+                <TextView
+                    style="@style/InstructionsSmallFont"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/sec_push_ca_certificate_to_device_clearcreds_text"/>
+            </LinearLayout>
+
+            <Button
+                android:id="@+id/gotosettings"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_below="@+id/layout4"
+                android:gravity="center"
+                android:text="@string/cacert_do_something"/>
+
+            <LinearLayout
+                android:id="@+id/layout6"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_below="@+id/gotosettings">
+
+                <TextView
+                    android:id="@+id/clear_creds_textView"
+                    style="@style/InstructionsSmallFont"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/passfail_instruction"
+                    android:textAlignment="center"/>
+            </LinearLayout>
+
+        </RelativeLayout>
+    </ScrollView>
+
+    <include
+        android:id="@+id/pass_fail_buttons"
+        layout="@layout/pass_fail_buttons"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"/>
+
+</RelativeLayout>
