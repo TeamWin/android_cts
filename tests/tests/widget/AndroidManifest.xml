@@ -205,8 +205,16 @@
             </intent-filter>
         </activity>
 
-        <activity android:name="android.widget.cts.ExpandableListSimple"
-            android:label="ExpandableListSimple">
+        <activity android:name="android.widget.cts.ExpandableListBasic"
+                  android:label="ExpandableListBasic">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.FRAMEWORK_INSTRUMENTATION_TEST" />
+            </intent-filter>
+        </activity>
+
+        <activity android:name="android.widget.cts.ExpandableList"
+                  android:label="ExpandableList">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.FRAMEWORK_INSTRUMENTATION_TEST" />
