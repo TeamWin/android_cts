@@ -17,6 +17,8 @@
 package android.view.inputmethod.cts;
 
 
+import android.content.ClipDescription;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.test.AndroidTestCase;
@@ -29,6 +31,7 @@ import android.view.inputmethod.ExtractedText;
 import android.view.inputmethod.ExtractedTextRequest;
 import android.view.inputmethod.InputConnection;
 import android.view.inputmethod.InputConnectionWrapper;
+import android.view.inputmethod.InputContentInfo;
 
 public class InputConnectionWrapperTest extends AndroidTestCase {
 
@@ -94,6 +97,13 @@ public class InputConnectionWrapperTest extends AndroidTestCase {
         assertFalse(inputConnection.isGetHandlerCalled);
         assertNull(inputConnection.getHandler());
         assertTrue(inputConnection.isGetHandlerCalled);
+        assertFalse(inputConnection.isInsertContentCalled);
+        final InputContentInfo inputContentInfo = new InputContentInfo(
+                Uri.parse("content://com.example/path"),
+                new ClipDescription("sample content", new String[]{"image/png"}),
+                Uri.parse("https://example.com"));
+        assertTrue(inputConnection.insertContent(inputContentInfo, null /* opt */));
+        assertTrue(inputConnection.isInsertContentCalled);
     }
 
     private class MockInputConnection implements InputConnection {
@@ -122,6 +132,7 @@ public class InputConnectionWrapperTest extends AndroidTestCase {
         public boolean isRequestCursorUpdatesCalled;
         public boolean isGetHandlerCalled;
         public boolean isCloseConnectionCalled;
+        public boolean isInsertContentCalled;
 
         public boolean beginBatchEdit() {
             isBeginBatchEditCalled = true;
@@ -245,6 +256,11 @@ public class InputConnectionWrapperTest extends AndroidTestCase {
 
         public void closeConnection() {
             isCloseConnectionCalled = true;
+        }
+
+        public boolean insertContent(InputContentInfo inputContentInfo, Bundle opts) {
+            isInsertContentCalled = true;
+            return true;
         }
     }
 }
