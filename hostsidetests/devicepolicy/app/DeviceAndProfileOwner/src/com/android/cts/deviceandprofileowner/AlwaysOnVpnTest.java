@@ -58,7 +58,6 @@ public class AlwaysOnVpnTest extends BaseDeviceAdminTest {
 
     private static final String VPN_PACKAGE = "com.android.cts.vpnfirewall";
     private static final int NETWORK_TIMEOUT_MS = 5000;
-    private static final int NETWORK_SETTLE_GRACE_MS = 100;
     private static final int SOCKET_TIMEOUT_MS = 5000;
 
     /** @see com.android.cts.vpnfirewall.ReflectorVpnService */
@@ -141,8 +140,6 @@ public class AlwaysOnVpnTest extends BaseDeviceAdminTest {
             if (!vpnLatch.await(NETWORK_TIMEOUT_MS, TimeUnit.MILLISECONDS)) {
                 fail("Took too long waiting to establish a VPN-backed connection");
             }
-            // Give the VPN a moment to start transmitting data.
-            Thread.sleep(NETWORK_SETTLE_GRACE_MS);
         } catch (InterruptedException | PackageManager.NameNotFoundException e) {
             fail("Failed to send ping: " + e);
         } finally {
