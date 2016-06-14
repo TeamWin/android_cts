@@ -28,6 +28,8 @@ import com.android.tradefed.testtype.IAbi;
 import com.android.tradefed.testtype.IBuildReceiver;
 import com.android.tradefed.testtype.IRemoteTest;
 import com.android.tradefed.testtype.IShardableTest;
+import com.android.tradefed.testtype.ITestFileFilterReceiver;
+import com.android.tradefed.testtype.ITestFilterReceiver;
 import com.android.tradefed.util.FileUtil;
 import com.android.tradefed.util.TimeUtil;
 
@@ -257,6 +259,11 @@ public class ModuleRepo implements IModuleRepo {
                 for (IAbi abi : abis) {
                     IConfiguration config = mConfigFactory.createConfigurationFromArgs(pathArg);
                     String id = AbiUtils.createId(abi.getName(), name);
+                    if (!shouldRunModule(id)) {
+                        // If the module should not run tests based on the state of filters,
+                        // skip this name/abi combination.
+                        continue;
+                    }
                     {
                         Map<String, String> args = new HashMap<>();
                         if (mModuleArgs.containsKey(name)) {
@@ -283,6 +290,7 @@ public class ModuleRepo implements IModuleRepo {
                                 config.injectOptionValue(entry.getKey(), entry.getValue());
                             }
                         }
+                        addFiltersToTest(test, abi, name);
                     }
                     List<IRemoteTest> shardedTests = tests;
                     if (mShards > 1) {
@@ -362,21 +370,6 @@ public class ModuleRepo implements IModuleRepo {
     }
 
     private void addModuleDef(IModuleDef moduleDef) {
-        String id = moduleDef.getId();
-        List<TestFilter> mdIncludes = getFilter(mIncludeFilters, id);
-        List<TestFilter> mdExcludes = getFilter(mExcludeFilters, id);
-        if ((!mIncludeAll && mdIncludes.isEmpty()) || containsModuleExclude(mdExcludes)) {
-            // if only including some modules, and no includes exist for this module, do not add
-            // this module. Or if an exclude applies to this entire module, do not add this module.
-            return;
-        }
-        if (!mdIncludes.isEmpty()) {
-            addModuleIncludes(moduleDef, mdIncludes);
-        }
-        if (!mdExcludes.isEmpty()) {
-            addModuleExcludes(moduleDef, mdExcludes);
-        }
-
         Set<String> tokens = moduleDef.getTokens();
         if (tokens != null && !tokens.isEmpty()) {
             mTokenModules.add(moduleDef);
@@ -390,29 +383,55 @@ public class ModuleRepo implements IModuleRepo {
         mModuleCount++;
     }
 
-    private void addModuleIncludes(IModuleDef moduleDef, List<TestFilter> includes) {
-        if (mIsRetry && moduleDef.isFileFilterReceiver()) {
-            File includeFile = createFilterFile(moduleDef.getName(), ".include", includes);
-            moduleDef.setIncludeTestFile(includeFile);
+    private void addFiltersToTest(IRemoteTest test, IAbi abi, String name) {
+        String moduleId = AbiUtils.createId(abi.getName(), name);
+        if (!(test instanceof ITestFilterReceiver)) {
+            throw new IllegalArgumentException(String.format(
+                    "Test in module %s must implement ITestFilterReceiver.", moduleId));
+        }
+        List<TestFilter> mdIncludes = getFilter(mIncludeFilters, moduleId);
+        List<TestFilter> mdExcludes = getFilter(mExcludeFilters, moduleId);
+        if (!mdIncludes.isEmpty()) {
+            addTestIncludes((ITestFilterReceiver) test, mdIncludes, name);
+        }
+        if (!mdExcludes.isEmpty()) {
+            addTestExcludes((ITestFilterReceiver) test, mdExcludes, name);
+        }
+    }
+
+    private boolean shouldRunModule(String moduleId) {
+        List<TestFilter> mdIncludes = getFilter(mIncludeFilters, moduleId);
+        List<TestFilter> mdExcludes = getFilter(mExcludeFilters, moduleId);
+        // if including all modules or includes exist for this module, and there are not excludes
+        // for the entire module, this module should be run.
+        return (mIncludeAll || !mdIncludes.isEmpty()) && !containsModuleExclude(mdExcludes);
+    }
+
+    private void addTestIncludes(ITestFilterReceiver test, List<TestFilter> includes,
+            String name) {
+        if (mIsRetry && test instanceof ITestFileFilterReceiver) {
+            File includeFile = createFilterFile(name, ".include", includes);
+            ((ITestFileFilterReceiver)test).setIncludeTestFile(includeFile);
         } else {
-            // add module includes one at a time
+            // add test includes one at a time
             for (TestFilter include : includes) {
-                String test = include.getTest();
-                if (test != null) {
-                    moduleDef.addIncludeFilter(test);
+                String filterTestName = include.getTest();
+                if (filterTestName != null) {
+                    test.addIncludeFilter(filterTestName);
                 }
             }
         }
     }
 
-    private void addModuleExcludes(IModuleDef moduleDef, List<TestFilter> excludes) {
-        if (mIsRetry && moduleDef.isFileFilterReceiver()) {
-            File excludeFile = createFilterFile(moduleDef.getName(), ".exclude", excludes);
-            moduleDef.setExcludeTestFile(excludeFile);
+    private void addTestExcludes(ITestFilterReceiver test, List<TestFilter> excludes,
+            String name) {
+        if (mIsRetry && test instanceof ITestFileFilterReceiver) {
+            File excludeFile = createFilterFile(name, ".exclude", excludes);
+            ((ITestFileFilterReceiver)test).setExcludeTestFile(excludeFile);
         } else {
-            // add module excludes one at a time
+            // add test excludes one at a time
             for (TestFilter exclude : excludes) {
-                moduleDef.addExcludeFilter(exclude.getTest());
+                test.addExcludeFilter(exclude.getTest());
             }
         }
     }
