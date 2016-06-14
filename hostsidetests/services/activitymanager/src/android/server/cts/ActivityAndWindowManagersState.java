@@ -135,6 +135,24 @@ class ActivityAndWindowManagersState extends Assert {
         } while (retriesLeft-- > 0);
     }
 
+    void waitForHomeActivityVisible(ITestDevice device) throws Exception {
+        int retriesLeft = 5;
+        do {
+            mAmState.computeState(device);
+            if (!mAmState.isHomeActivityVisible()) {
+                log("***Waiting for home activity to be visible...");
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException e) {
+                    log(e.toString());
+                    // Well I guess we are not waiting...
+                }
+            } else {
+                break;
+            }
+        } while (retriesLeft-- > 0);
+    }
+
     private boolean shouldWaitForValidStacks() {
         if (!taskListsInAmAndWmAreEqual()) {
             // We want to wait for equal task lists in AM and WM in case we caught them in the
