@@ -87,6 +87,7 @@ public abstract class BasePrintTest extends InstrumentationTestCase {
     private static final String COMMAND_PREFIX_ENABLE_IME = "ime enable ";
     private static final String COMMAND_PREFIX_DISABLE_IME = "ime disable ";
     private static final int CURRENT_USER_ID = -2; // Mirrors UserHandle.USER_CURRENT
+    private static final String PRINTSPOOLER_PACKAGE = "com.android.printspooler";
 
     private static PrintDocumentActivity sActivity;
     private UiDevice mUiDevice;
@@ -99,8 +100,6 @@ public abstract class BasePrintTest extends InstrumentationTestCase {
     public UiDevice getUiDevice() {
         return mUiDevice;
     }
-
-    private LocaleList mOldLocale;
 
     private CallCounter mCancelOperationCounter;
     private CallCounter mLayoutCallCounter;
@@ -180,18 +179,6 @@ public abstract class BasePrintTest extends InstrumentationTestCase {
         System.setProperty("dexmaker.dexcache", getInstrumentation()
                 .getTargetContext().getCacheDir().getPath());
 
-        // Set to US locale.
-        Log.d(LOG_TAG, "set locale");
-        Resources resources = getInstrumentation().getTargetContext().getResources();
-        Configuration oldConfiguration = resources.getConfiguration();
-        if (!oldConfiguration.getLocales().get(0).equals(Locale.US)) {
-            mOldLocale = oldConfiguration.getLocales();
-            DisplayMetrics displayMetrics = resources.getDisplayMetrics();
-            Configuration newConfiguration = new Configuration(oldConfiguration);
-            newConfiguration.setLocale(Locale.US);
-            resources.updateConfiguration(newConfiguration, displayMetrics);
-        }
-
         // Initialize the latches.
         Log.d(LOG_TAG, "init counters");
         mCancelOperationCounter = new CallCounter();
@@ -225,17 +212,6 @@ public abstract class BasePrintTest extends InstrumentationTestCase {
 
         Log.d(LOG_TAG, "enableImes()");
         enableImes();
-
-        // Restore the locale if needed.
-        Log.d(LOG_TAG, "restore locale");
-        if (mOldLocale != null) {
-            Resources resources = getInstrumentation().getTargetContext().getResources();
-            DisplayMetrics displayMetrics = resources.getDisplayMetrics();
-            Configuration newConfiguration = new Configuration(resources.getConfiguration());
-            newConfiguration.setLocales(mOldLocale);
-            mOldLocale = null;
-            resources.updateConfiguration(newConfiguration, displayMetrics);
-        }
 
         // Make sure the spooler is cleaned, this also un-approves all services
         Log.d(LOG_TAG, "clearPrintSpoolerData()");
@@ -806,5 +782,77 @@ public abstract class BasePrintTest extends InstrumentationTestCase {
     protected boolean supportsPrinting() {
         return getInstrumentation().getContext().getPackageManager()
                 .hasSystemFeature(PackageManager.FEATURE_PRINTING);
+    }
+
+    /**
+     * Get a string array from the print spooler's resources.
+     *
+     * @param resourceName The name of the array resource
+     * @return The localized string array
+     *
+     * @throws Exception If anything is unexpected
+     */
+    protected String[] getPrintSpoolerStringArray(String resourceName) throws Exception {
+        PackageManager pm = getActivity().getPackageManager();
+        Resources printSpoolerRes = pm.getResourcesForApplication(PRINTSPOOLER_PACKAGE);
+        int id = printSpoolerRes.getIdentifier(resourceName, "array", PRINTSPOOLER_PACKAGE);
+        return printSpoolerRes.getStringArray(id);
+    }
+
+    /**
+     * Get a string from the print spooler's resources.
+     *
+     * @param resource_name The name of the string resource
+     * @return The localized string
+     *
+     * @throws Exception If anything is unexpected
+     */
+    protected String getPrintSpoolerString(String resourceName) throws Exception {
+        PackageManager pm = getActivity().getPackageManager();
+        Resources printSpoolerRes = pm.getResourcesForApplication(PRINTSPOOLER_PACKAGE);
+        int id = printSpoolerRes.getIdentifier(resourceName, "string", PRINTSPOOLER_PACKAGE);
+        return printSpoolerRes.getString(id);
+    }
+
+    /**
+     * Get a string with one parameter from the print spooler's resources.
+     *
+     * @param resource_name The name of the string resource
+     * @return The localized string
+     *
+     * @throws Exception If anything is unexpected
+     */
+    protected String getPrintSpoolerStringOneParam(String resourceName, Object p)
+            throws Exception {
+        PackageManager pm = getActivity().getPackageManager();
+        Resources printSpoolerRes = pm.getResourcesForApplication(PRINTSPOOLER_PACKAGE);
+        int id = printSpoolerRes.getIdentifier(resourceName, "string", PRINTSPOOLER_PACKAGE);
+        return printSpoolerRes.getString(id, p);
+    }
+
+    /**
+     * Get the default media size for the current locale.
+     *
+     * @return The default media size for the current locale
+     *
+     * @throws Exception If anything is unexpected
+     */
+    protected PrintAttributes.MediaSize getDefaultMediaSize() throws Exception {
+        PackageManager pm = getActivity().getPackageManager();
+        Resources printSpoolerRes = pm.getResourcesForApplication(PRINTSPOOLER_PACKAGE);
+        int defaultMediaSizeResId = printSpoolerRes.getIdentifier("mediasize_default", "string",
+                PRINTSPOOLER_PACKAGE);
+        String defaultMediaSizeName = printSpoolerRes.getString(defaultMediaSizeResId);
+
+        switch (defaultMediaSizeName) {
+            case "NA_LETTER":
+                return PrintAttributes.MediaSize.NA_LETTER;
+            case "JIS_B5":
+                return PrintAttributes.MediaSize.JIS_B5;
+            case "ISO_A4":
+                return PrintAttributes.MediaSize.ISO_A4;
+            default:
+                throw new Exception("Unknown default media size " + defaultMediaSizeName);
+        }
     }
 }
