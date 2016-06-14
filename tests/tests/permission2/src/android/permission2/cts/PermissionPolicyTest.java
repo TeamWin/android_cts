@@ -113,7 +113,7 @@ public class PermissionPolicyTest extends AndroidTestCase {
         // OEMs cannot define groups in the platform namespace
         for (PermissionGroupInfo declaredGroup : declaredGroups) {
             if (!expectedPermissionGroups.contains(declaredGroup.name)) {
-                assertFalse("Cannot define groups in android namespace",
+                assertFalse("Cannot define group " + declaredGroup.name + " in android namespace",
                         declaredGroup.name != null
                         && declaredGroup.name.startsWith(PLATFORM_ROOT_NAMESPACE));
             }
