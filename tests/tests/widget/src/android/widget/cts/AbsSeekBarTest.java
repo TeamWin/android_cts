@@ -16,8 +16,6 @@
 
 package android.widget.cts;
 
-import android.widget.cts.R;
-
 import android.app.Activity;
 import android.content.Context;
 import android.content.res.ColorStateList;
@@ -37,9 +35,9 @@ import android.widget.SeekBar;
 /**
  * Test {@link AbsSeekBar}.
  */
-public class AbsSeekBarTest extends ActivityInstrumentationTestCase2<ProgressBarCtsActivity> {
+public class AbsSeekBarTest extends ActivityInstrumentationTestCase2<AbsSeekBarCtsActivity> {
     public AbsSeekBarTest() {
-        super("android.widget.cts", ProgressBarCtsActivity.class);
+        super("android.widget.cts", AbsSeekBarCtsActivity.class);
     }
 
     private Activity mActivity;

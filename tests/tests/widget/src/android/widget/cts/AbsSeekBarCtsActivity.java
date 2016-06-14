@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008 The Android Open Source Project
+ * Copyright (C) 2016 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,18 +18,17 @@ package android.widget.cts;
 
 import android.app.Activity;
 import android.os.Bundle;
-import android.widget.ProgressBar;
+import android.widget.AbsSeekBar;
 
 /**
- * A minimal application for {@link ProgressBar} test.
+ * A minimal application for {@link AbsSeekBar} test
  */
-public class ProgressBarCtsActivity extends Activity {
+public class AbsSeekBarCtsActivity extends Activity {
     /**
      * Called when the activity is first created.
      */
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.progressbar_layout);
     }
 }
