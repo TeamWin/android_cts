@@ -31,9 +31,13 @@ public class ActivityManagerActivityVisiblityTests extends ActivityManagerTestBa
 
     public void testVisibleBehindHomeActivity() throws Exception {
         executeShellCommand(getAmStartCmd(VISIBLE_BEHIND_ACTIVITY));
-        executeShellCommand(AM_START_HOME_ACTIVITY_COMMAND);
+        mAmWmState.waitForValidState(mDevice, true, new String[] {VISIBLE_BEHIND_ACTIVITY},
+                new int[] {FULLSCREEN_WORKSPACE_STACK_ID});
 
-        mAmWmState.computeState(mDevice, new String[] {VISIBLE_BEHIND_ACTIVITY});
+        executeShellCommand(AM_START_HOME_ACTIVITY_COMMAND);
+        mAmWmState.waitForHomeActivityVisible(mDevice);
+
+        mAmWmState.computeState(mDevice, null);
         mAmWmState.assertContainsStack(
                 "Must contain fullscreen stack.", FULLSCREEN_WORKSPACE_STACK_ID);
         mAmWmState.assertFrontStack("Home stack must be the front stack.", HOME_STACK_ID);
