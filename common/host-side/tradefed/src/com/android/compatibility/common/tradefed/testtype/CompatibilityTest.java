@@ -267,8 +267,6 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
                     mModuleRepo.setRetryMode(mRetrySessionId != null);
                     // Initialize the repository, {@link CompatibilityBuildHelper#getTestsDir} can
                     // throw a {@link FileNotFoundException}
-                    CLog.logAndDisplay(LogLevel.INFO, "Module Repo initialized with the following include filters: %s", mIncludeFilters.toString());
-                    CLog.logAndDisplay(LogLevel.INFO, "Module Repo initialized with the following exclude filters: %s", mExcludeFilters.toString());
                     mModuleRepo.initialize(mTotalShards, mBuildHelper.getTestsDir(), getAbis(),
                             mDeviceTokens, mTestArgs, mModuleArgs, mIncludeFilters,
                             mExcludeFilters, mBuildHelper.getBuildInfo());
@@ -419,7 +417,6 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
             }
 
             String retryCommandLineArgs = result.getCommandLineArgs();
-            CLog.logAndDisplay(LogLevel.INFO, "Retry args: %s", retryCommandLineArgs);
             if (retryCommandLineArgs != null) {
                 // Copy the original command into the build helper so it can be serialized later
                 mBuildHelper.setRetryCommandLineArgs(retryCommandLineArgs);
@@ -431,7 +428,6 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
                     throw new RuntimeException(e);
                 }
             }
-            CLog.logAndDisplay(LogLevel.INFO, "Found exclude %s after ArgsOptionParser", mExcludeFilters.toString());
             // Append each test that failed or was not executed to the filters
             for (IModuleResult module : result.getModules()) {
                 for (ICaseResult testResultList : module.getResults()) {
