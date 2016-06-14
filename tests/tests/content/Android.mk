@@ -28,7 +28,10 @@ LOCAL_STATIC_JAVA_LIBRARIES := android-support-v4 ctsdeviceutil ctstestrunner se
 # Resource unit tests use a private locale and some densities
 LOCAL_AAPT_FLAGS = -c xx_YY -c cs -c small -c normal -c large -c xlarge \
         -c 320dpi -c 240dpi -c 160dpi -c 32dpi \
-        -c kok,kok_IN,kok_419,kok_419_VARIANT,kok_Knda_419,kok_Knda_419_VARIANT,kok_VARIANT,kok_Knda,tgl,tgl_PH
+        -c fil,fil_SA \
+        -c kok,kok_IN,kok_419,kok_419_VARIANT,kok_Knda_419,kok_Knda_419_VARIANT,kok_VARIANT,kok_Knda \
+        -c tgl,tgl_PH \
+        -c tlh
 
 LOCAL_SRC_FILES := $(call all-java-files-under, src)
 

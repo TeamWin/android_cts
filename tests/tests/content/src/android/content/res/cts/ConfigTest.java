@@ -1225,9 +1225,9 @@ public class ConfigTest extends AndroidTestCase {
         config.setProperty(Properties.LANGUAGE, "fil");
         config.setProperty(Properties.COUNTRY, "US");
         Resources res = config.getResources();
-        checkValue(res, R.configVarying.simple, "simple tl");
+        checkValue(res, R.configVarying.simple, "simple fil");  // We have this resource in 'fil'
         checkValue(res, R.configVarying.bag,
-                R.styleable.TestConfig, new String[] { "bag tl" });
+                R.styleable.TestConfig, new String[] { "bag tl" });  // But this comes from 'tl'
 
         // Ensure that "fil-PH" is mapped to "tl-PH" correctly.
         config = makeClassicConfig();
@@ -1237,6 +1237,24 @@ public class ConfigTest extends AndroidTestCase {
         checkValue(res, R.configVarying.simple, "simple tl PH");
         checkValue(res, R.configVarying.bag,
                 R.styleable.TestConfig, new String[] { "bag tl PH" });
+
+        // Ensure that "fil-SA" works with no "tl" version.
+        config = makeClassicConfig();
+        config.setProperty(Properties.LANGUAGE, "fil");
+        config.setProperty(Properties.COUNTRY, "SA");
+        res = config.getResources();
+        checkValue(res, R.configVarying.simple, "simple fil");  // This comes from 'fil'
+        checkValue(res, R.configVarying.bag,
+                R.styleable.TestConfig, new String[] { "bag fil SA" });  // And this from 'fil-SA'
+
+        // Ensure that "tlh" is not mistakenly treated as a "tl" variant.
+        config = makeClassicConfig();
+        config.setProperty(Properties.LANGUAGE, "tlh");
+        config.setProperty(Properties.COUNTRY, "US");
+        res = config.getResources();
+        checkValue(res, R.configVarying.simple, "simple tlh");
+        checkValue(res, R.configVarying.bag,
+                R.styleable.TestConfig, new String[] { "bag tlh" });
 
         config = makeClassicConfig();
         config.setProperty(Properties.LANGUAGE, "tgl");
@@ -1276,8 +1294,9 @@ public class ConfigTest extends AndroidTestCase {
         }
 
         assertEquals(0, tlLocales.size());
-        assertEquals(2, filLocales.size());
+        assertEquals(3, filLocales.size());
         assertTrue(filLocales.contains("fil"));
         assertTrue(filLocales.contains("fil-PH"));
+        assertTrue(filLocales.contains("fil-SA"));
     }
 }
