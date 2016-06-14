@@ -30,6 +30,8 @@ import android.test.UiThreadTest;
 import android.test.suitebuilder.annotation.SmallTest;
 import android.view.View;
 import android.view.animation.AccelerateDecelerateInterpolator;
+import android.view.animation.AccelerateInterpolator;
+import android.view.animation.AnimationUtils;
 import android.view.animation.Interpolator;
 import android.view.animation.LinearInterpolator;
 import android.widget.ProgressBar;
@@ -172,6 +174,9 @@ public class ProgressBarTest extends ActivityInstrumentationTestCase2<ProgressBa
         mProgressBarHorizontal.setProgress(Integer.MAX_VALUE);
         assertEquals(maxProgress, mProgressBarHorizontal.getProgress());
 
+        mProgressBarHorizontal.setProgress(0, true);
+        assertEquals(0, mProgressBarHorizontal.getProgress());
+
         // when in indeterminate mode
         mProgressBarHorizontal.setIndeterminate(true);
         mProgressBarHorizontal.setProgress(maxProgress >> 1);
@@ -258,10 +263,12 @@ public class ProgressBarTest extends ActivityInstrumentationTestCase2<ProgressBa
         // default should be LinearInterpolator
         assertTrue(mProgressBar.getInterpolator() instanceof LinearInterpolator);
 
-        // normal value
-        Interpolator i = new AccelerateDecelerateInterpolator();
-        mProgressBar.setInterpolator(i);
-        assertEquals(i, mProgressBar.getInterpolator());
+        Interpolator interpolator = new AccelerateDecelerateInterpolator();
+        mProgressBar.setInterpolator(interpolator);
+        assertEquals(interpolator, mProgressBar.getInterpolator());
+
+        mProgressBar.setInterpolator(mActivity, android.R.anim.accelerate_interpolator);
+        assertTrue(mProgressBar.getInterpolator() instanceof AccelerateInterpolator);
     }
 
     @UiThreadTest
@@ -381,6 +388,15 @@ public class ProgressBarTest extends ActivityInstrumentationTestCase2<ProgressBa
         assertTrue("Progress tint applied when setProgressTintList() called after setProgress()",
                 progress.hasCalledSetTint());
 
+        mProgressBar.setProgressBackgroundTintMode(PorterDuff.Mode.DST_OVER);
+        assertEquals(PorterDuff.Mode.DST_OVER, mProgressBar.getProgressBackgroundTintMode());
+
+        mProgressBar.setSecondaryProgressTintMode(PorterDuff.Mode.DST_IN);
+        assertEquals(PorterDuff.Mode.DST_IN, mProgressBar.getSecondaryProgressTintMode());
+
+        mProgressBar.setProgressTintMode(PorterDuff.Mode.DST_ATOP);
+        assertEquals(PorterDuff.Mode.DST_ATOP, mProgressBar.getProgressTintMode());
+
         progress.reset();
         mProgressBar.setProgressDrawable(null);
         mProgressBar.setProgressDrawable(progress);
@@ -406,6 +422,9 @@ public class ProgressBarTest extends ActivityInstrumentationTestCase2<ProgressBa
         mProgressBar.setIndeterminateTintList(ColorStateList.valueOf(Color.WHITE));
         assertTrue("Indeterminate tint applied when setIndeterminateTintList() called after "
                 + "setIndeterminate()", indeterminate.hasCalledSetTint());
+
+        mProgressBar.setIndeterminateTintMode(PorterDuff.Mode.LIGHTEN);
+        assertEquals(PorterDuff.Mode.LIGHTEN, mProgressBar.getIndeterminateTintMode());
 
         indeterminate.reset();
         mProgressBar.setIndeterminateDrawable(null);
