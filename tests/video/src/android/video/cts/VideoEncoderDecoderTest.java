@@ -99,6 +99,8 @@ public class VideoEncoderDecoderTest extends CtsAndroidTestCase {
     private int mBufferHeight;
     private int mVideoWidth;
     private int mVideoHeight;
+    private int mVideoStride;
+    private int mVideoVStride;
     private int mFrameRate;
 
     private MediaFormat mEncConfigFormat;
@@ -648,6 +650,13 @@ public class VideoEncoderDecoderTest extends CtsAndroidTestCase {
         codec.start();
         mEncInputFormat = codec.getInputFormat();
         ByteBuffer[] codecOutputBuffers = codec.getOutputBuffers();
+        MediaFormat inputFormat = codec.getInputFormat();
+        mVideoStride = inputFormat.containsKey(MediaFormat.KEY_STRIDE)
+                ? inputFormat.getInteger(MediaFormat.KEY_STRIDE)
+                : inputFormat.getInteger(MediaFormat.KEY_WIDTH);
+        mVideoVStride = inputFormat.containsKey(MediaFormat.KEY_SLICE_HEIGHT)
+                ? inputFormat.getInteger(MediaFormat.KEY_SLICE_HEIGHT)
+                : inputFormat.getInteger(MediaFormat.KEY_HEIGHT);
 
         int numBytesSubmitted = 0;
         int numBytesDequeued = 0;
@@ -761,6 +770,7 @@ public class VideoEncoderDecoderTest extends CtsAndroidTestCase {
         int srcOffsetY = origin.x + origin.y * mBufferWidth;
         final byte[] yBuffer = mYBuffer.array();
         for (int i = 0; i < mVideoHeight; i++) {
+            buffer.position(i * mVideoStride);
             buffer.put(yBuffer, srcOffsetY, mVideoWidth);
             srcOffsetY += mBufferWidth;
         }
@@ -768,6 +778,7 @@ public class VideoEncoderDecoderTest extends CtsAndroidTestCase {
             int srcOffsetU = origin.y / 2 * mBufferWidth + origin.x / 2 * 2;
             final byte[] uvBuffer = mUVBuffer.array();
             for (int i = 0; i < mVideoHeight / 2; i++) {
+                buffer.position(mVideoVStride * mVideoStride + i * mVideoStride);
                 buffer.put(uvBuffer, srcOffsetU, mVideoWidth);
                 srcOffsetU += mBufferWidth;
             }
@@ -776,15 +787,18 @@ public class VideoEncoderDecoderTest extends CtsAndroidTestCase {
             int srcOffsetV = srcOffsetU + mBufferWidth / 2 * mBufferHeight / 2;
             final byte[] uvBuffer = mUVBuffer.array();
             for (int i = 0; i < mVideoHeight / 2; i++) { //U only
+                buffer.position(mVideoVStride * mVideoStride + i * mVideoStride / 2);
                 buffer.put(uvBuffer, srcOffsetU, mVideoWidth / 2);
                 srcOffsetU += mBufferWidth / 2;
             }
             for (int i = 0; i < mVideoHeight / 2; i++) { //V only
+                buffer.position(mVideoVStride * mVideoStride * 5 / 4 + i * mVideoStride / 2);
                 buffer.put(uvBuffer, srcOffsetV, mVideoWidth / 2);
                 srcOffsetV += mBufferWidth / 2;
             }
         }
-        int size = mVideoHeight * mVideoWidth * 3 / 2;
+        // submit till end of stride
+        int size = /* buffer.position(); */ mVideoStride * (mVideoVStride + mVideoHeight / 2);
         long ptsUsec = computePresentationTime(frameCount);
 
         codec.queueInputBuffer(index, 0 /* offset */, size, ptsUsec /* timeUs */, flags);
@@ -983,6 +997,12 @@ public class VideoEncoderDecoderTest extends CtsAndroidTestCase {
                     Log.w(TAG, "output format changed to unsupported one " +
                             Integer.toHexString(colorFormat) + ", using FlexYUV");
                 }
+                mVideoStride = mDecOutputFormat.containsKey(MediaFormat.KEY_STRIDE)
+                        ? mDecOutputFormat.getInteger(MediaFormat.KEY_STRIDE)
+                        : mDecOutputFormat.getInteger(MediaFormat.KEY_WIDTH);
+                mVideoVStride = mDecOutputFormat.containsKey(MediaFormat.KEY_SLICE_HEIGHT)
+                        ? mDecOutputFormat.getInteger(MediaFormat.KEY_SLICE_HEIGHT)
+                        : mDecOutputFormat.getInteger(MediaFormat.KEY_HEIGHT);
             }
         }
         long finish = System.currentTimeMillis();
@@ -1133,15 +1153,15 @@ public class VideoEncoderDecoderTest extends CtsAndroidTestCase {
      *               instances
      */
     private void getPixelValuesFromOutputBuffer(ByteBuffer buffer, int x, int y, YUVValue result) {
-        result.mY = buffer.get(y * mVideoWidth + x);
+        result.mY = buffer.get(y * mVideoStride + x);
         if (isDstSemiPlanar()) {
-            int index = mVideoWidth * mVideoHeight + y / 2 * mVideoWidth + x / 2 * 2;
+            int index = mVideoStride * mVideoVStride + y / 2 * mVideoStride + x / 2 * 2;
             //Log.d(TAG, "Decoded " + x + "," + y + "," + index);
             result.mU = buffer.get(index);
             result.mV = buffer.get(index + 1);
         } else {
-            int vOffset = mVideoWidth * mVideoHeight / 4;
-            int index = mVideoWidth * mVideoHeight + y / 2 * mVideoWidth / 2 + x / 2;
+            int vOffset = mVideoStride * mVideoVStride / 4;
+            int index = mVideoStride * mVideoVStride + y / 2 * mVideoStride / 2 + x / 2;
             result.mU = buffer.get(index);
             result.mV = buffer.get(index + vOffset);
         }
