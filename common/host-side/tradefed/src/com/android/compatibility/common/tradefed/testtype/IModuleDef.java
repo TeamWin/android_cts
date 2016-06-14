@@ -21,7 +21,6 @@ import com.android.tradefed.testtype.IBuildReceiver;
 import com.android.tradefed.testtype.IDeviceTest;
 import com.android.tradefed.testtype.IRemoteTest;
 import com.android.tradefed.testtype.IRuntimeHintProvider;
-import com.android.tradefed.testtype.ITestFileFilterReceiver;
 
 import java.io.File;
 import java.util.Set;
@@ -30,7 +29,7 @@ import java.util.Set;
  * Container for Compatibility test info.
  */
 public interface IModuleDef extends Comparable<IModuleDef>, IBuildReceiver, IDeviceTest,
-        IRemoteTest, IRuntimeHintProvider, ITestFileFilterReceiver {
+        IRemoteTest, IRuntimeHintProvider {
 
     /**
      * @return The name of this module.
@@ -56,27 +55,6 @@ public interface IModuleDef extends Comparable<IModuleDef>, IBuildReceiver, IDev
      * @return the {@link IRemoteTest} that runs the tests.
      */
     IRemoteTest getTest();
-
-    /**
-     * Adds a filter to include a specific test
-     *
-     * @param name the name of the test. Can be <package>, <package>.<class>,
-     * <package>.<class>#<method> or <native_name>
-     */
-    void addIncludeFilter(String name);
-
-    /**
-     * Adds a filter to exclude a specific test
-     *
-     * @param name the name of the test. Can be <package>, <package>.<class>,
-     * <package>.<class>#<method> or <native_name>
-     */
-    void addExcludeFilter(String name);
-
-    /**
-     * @return true if the IModuleDef can handle files of include and exclude filters
-     */
-    boolean isFileFilterReceiver();
 
     /**
      * Set a list of preparers to allow to run before or after a test.
