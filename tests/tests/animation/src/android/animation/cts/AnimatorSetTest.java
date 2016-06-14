@@ -475,6 +475,37 @@ public class AnimatorSetTest extends
         }
     }
 
+    public void testNotifiesAfterEnd() throws Throwable {
+        final ValueAnimator animator = ValueAnimator.ofFloat(0, 1);
+        Animator.AnimatorListener listener = new AnimatorListenerAdapter() {
+            @Override
+            public void onAnimationStart(Animator animation) {
+                assertTrue(animation.isStarted());
+                assertTrue(animation.isRunning());
+            }
+
+            @Override
+            public void onAnimationEnd(Animator animation) {
+                assertFalse(animation.isRunning());
+                assertFalse(animation.isStarted());
+                super.onAnimationEnd(animation);
+            }
+        };
+        animator.addListener(listener);
+        final AnimatorSet animatorSet = new AnimatorSet();
+        animatorSet.playTogether(animator);
+        animatorSet.addListener(listener);
+        runTestOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                animatorSet.start();
+                animator.end();
+                assertFalse(animator.isStarted());
+                assertFalse(animatorSet.isStarted());
+            }
+        });
+    }
+
     static class TargetObj {
         public float value = 0;
 
