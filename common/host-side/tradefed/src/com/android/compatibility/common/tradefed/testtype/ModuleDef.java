@@ -38,7 +38,6 @@ import com.android.tradefed.testtype.IDeviceTest;
 import com.android.tradefed.testtype.IRemoteTest;
 import com.android.tradefed.testtype.IRuntimeHintProvider;
 import com.android.tradefed.testtype.ITestCollector;
-import com.android.tradefed.testtype.ITestFileFilterReceiver;
 import com.android.tradefed.testtype.ITestFilterReceiver;
 
 import java.io.File;
@@ -64,8 +63,6 @@ public class ModuleDef implements IModuleDef {
     private List<ITargetCleaner> mCleaners = new ArrayList<>();
     private IBuildInfo mBuild;
     private ITestDevice mDevice;
-    private List<String> mIncludeFilters = new ArrayList<>();
-    private List<String> mExcludeFilters = new ArrayList<>();
     private Set<String> mPreparerWhitelist = new HashSet<>();
 
     public ModuleDef(String name, IAbi abi, IRemoteTest test,
@@ -177,56 +174,6 @@ public class ModuleDef implements IModuleDef {
      * {@inheritDoc}
      */
     @Override
-    public void addIncludeFilter(String filter) {
-        mIncludeFilters.add(filter);
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public void addExcludeFilter(String filter) {
-        mExcludeFilters.add(filter);
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public void setIncludeTestFile(File testFile) {
-        if (!isFileFilterReceiver()) {
-            throw new IllegalArgumentException(
-                    String.format("%s does not implement interface ITestFileFilterReceiver,"
-                    + " cannot setExcludeFile for %s", mTest, mName));
-        }
-        ((ITestFileFilterReceiver)mTest).setIncludeTestFile(testFile);
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public void setExcludeTestFile(File testFile) {
-        if (!isFileFilterReceiver()) {
-            throw new IllegalArgumentException(
-                    String.format("%s does not implement interface ITestFileFilterReceiver,"
-                    + " cannot setExcludeFile for %s", mTest, mName));
-        }
-        ((ITestFileFilterReceiver)mTest).setExcludeTestFile(testFile);
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public boolean isFileFilterReceiver() {
-        return (mTest instanceof ITestFileFilterReceiver);
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
     public void setPreparerWhitelist(Set<String> preparerWhitelist) {
         mPreparerWhitelist.addAll(preparerWhitelist);
     }
@@ -307,10 +254,7 @@ public class ModuleDef implements IModuleDef {
         if (mTest instanceof IDeviceTest) {
             ((IDeviceTest) mTest).setDevice(mDevice);
         }
-        if (mTest instanceof ITestFilterReceiver) {
-            ((ITestFilterReceiver) mTest).addAllIncludeFilters(mIncludeFilters);
-            ((ITestFilterReceiver) mTest).addAllExcludeFilters(mExcludeFilters);
-        }
+
         mTest.run(moduleListener);
 
         // Tear down
