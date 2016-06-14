@@ -542,7 +542,14 @@ public class EncodeVirtualDisplayWithCompositionTest extends AndroidTestCase {
             format.setInteger(MediaFormat.KEY_BIT_RATE, bitRate);
             format.setInteger(MediaFormat.KEY_FRAME_RATE, 30);
             format.setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, IFRAME_INTERVAL);
-            mEncoder = MediaCodec.createEncoderByType(MIME_TYPE);
+
+            MediaCodecList mcl = new MediaCodecList(MediaCodecList.REGULAR_CODECS);
+            String codecName = null;
+            if ((codecName = mcl.findEncoderForFormat(format)) == null) {
+                throw new RuntimeException("encoder "+ MIME_TYPE + " not support : " + format.toString());
+            }
+
+            mEncoder = MediaCodec.createByCodecName(codecName);
             mEncoder.configure(format, null, null, MediaCodec.CONFIGURE_FLAG_ENCODE);
             mEncodingSurface = mEncoder.createInputSurface();
             mEncoder.start();
