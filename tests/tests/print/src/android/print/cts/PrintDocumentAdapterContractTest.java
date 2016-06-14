@@ -43,6 +43,7 @@ import android.print.cts.services.SecondPrintService;
 import android.print.cts.services.StubbablePrinterDiscoverySession;
 import android.printservice.PrintJob;
 import android.printservice.PrintService;
+import android.util.Log;
 
 import org.mockito.InOrder;
 import org.mockito.invocation.InvocationOnMock;
@@ -57,6 +58,8 @@ import java.util.List;
  * contract and invokes all callbacks as expected.
  */
 public class PrintDocumentAdapterContractTest extends BasePrintTest {
+
+    private static final String LOG_TAG = "PrintDocumentAdapterContractTest";
 
     public void testNoPrintOptionsOrPrinterChange() throws Exception {
         if (!supportsPrinting()) {
@@ -141,7 +144,7 @@ public class PrintDocumentAdapterContractTest extends BasePrintTest {
         // there are other printers but none of them was used.
         PrintAttributes firstOldAttributes = new PrintAttributes.Builder().build();
         PrintAttributes firstNewAttributes = new PrintAttributes.Builder()
-                .setMediaSize(MediaSize.NA_LETTER)
+                .setMediaSize(getDefaultMediaSize())
                 .setResolution(new Resolution("PDF resolution", "PDF resolution", 300, 300))
                 .setMinMargins(Margins.NO_MARGINS)
                 .setColorMode(PrintAttributes.COLOR_MODE_COLOR)
@@ -256,7 +259,7 @@ public class PrintDocumentAdapterContractTest extends BasePrintTest {
         // there are other printers but none of them was used.
         PrintAttributes firstOldAttributes = new PrintAttributes.Builder().build();
         PrintAttributes firstNewAttributes = new PrintAttributes.Builder()
-                .setMediaSize(MediaSize.NA_LETTER)
+                .setMediaSize(getDefaultMediaSize())
                 .setResolution(new Resolution("PDF resolution", "PDF resolution", 300, 300))
                 .setMinMargins(Margins.NO_MARGINS)
                 .setColorMode(PrintAttributes.COLOR_MODE_COLOR)
@@ -342,25 +345,25 @@ public class PrintDocumentAdapterContractTest extends BasePrintTest {
         waitForLayoutAdapterCallbackCount(2);
 
         // Change the orientation.
-        changeOrientation("Landscape");
+        changeOrientation(getPrintSpoolerStringArray("orientation_labels")[1]);
 
         // Wait for layout.
         waitForLayoutAdapterCallbackCount(3);
 
         // Change the media size.
-        changeMediaSize("ISO A4");
+        changeMediaSize(MediaSize.ISO_A0.getLabel(getActivity().getPackageManager()));
 
         // Wait for layout.
         waitForLayoutAdapterCallbackCount(4);
 
         // Change the color.
-        changeColor("Black & White");
+        changeColor(getPrintSpoolerStringArray("color_mode_labels")[0]);
 
         // Wait for layout.
         waitForLayoutAdapterCallbackCount(5);
 
         // Change the duplex.
-        changeDuplex("Short edge");
+        changeDuplex(getPrintSpoolerStringArray("duplex_mode_labels")[2]);
 
         // Wait for layout.
         waitForLayoutAdapterCallbackCount(6);
@@ -387,7 +390,7 @@ public class PrintDocumentAdapterContractTest extends BasePrintTest {
         // there are other printers but none of them was used.
         PrintAttributes firstOldAttributes = new PrintAttributes.Builder().build();
         PrintAttributes firstNewAttributes = new PrintAttributes.Builder()
-                .setMediaSize(MediaSize.NA_LETTER)
+                .setMediaSize(getDefaultMediaSize())
                 .setResolution(new Resolution("PDF resolution", "PDF resolution", 300, 300))
                 .setMinMargins(Margins.NO_MARGINS)
                 .setColorMode(PrintAttributes.COLOR_MODE_COLOR)
@@ -432,7 +435,7 @@ public class PrintDocumentAdapterContractTest extends BasePrintTest {
         // there shouldn't be a next call to write.
         PrintAttributes fourthOldAttributes = thirdNewAttributes;
         PrintAttributes fourthNewAttributes = new PrintAttributes.Builder()
-                .setMediaSize(MediaSize.ISO_A4.asLandscape())
+                .setMediaSize(MediaSize.ISO_A0.asLandscape())
                 .setResolution(new Resolution("300x300", "300x300", 300, 300))
                 .setMinMargins(Margins.NO_MARGINS)
                 .setColorMode(PrintAttributes.COLOR_MODE_COLOR)
@@ -445,7 +448,7 @@ public class PrintDocumentAdapterContractTest extends BasePrintTest {
         // there shouldn't be a next call to write.
         PrintAttributes fifthOldAttributes = fourthNewAttributes;
         PrintAttributes fifthNewAttributes = new PrintAttributes.Builder()
-                .setMediaSize(MediaSize.ISO_A4.asLandscape())
+                .setMediaSize(MediaSize.ISO_A0.asLandscape())
                 .setResolution(new Resolution("300x300", "300x300", 300, 300))
                 .setMinMargins(Margins.NO_MARGINS)
                 .setColorMode(PrintAttributes.COLOR_MODE_MONOCHROME)
@@ -458,7 +461,7 @@ public class PrintDocumentAdapterContractTest extends BasePrintTest {
         // there shouldn't be a next call to write.
         PrintAttributes sixthOldAttributes = fifthNewAttributes;
         PrintAttributes sixthNewAttributes = new PrintAttributes.Builder()
-                .setMediaSize(MediaSize.ISO_A4.asLandscape())
+                .setMediaSize(MediaSize.ISO_A0.asLandscape())
                 .setResolution(new Resolution("300x300", "300x300", 300, 300))
                 .setMinMargins(Margins.NO_MARGINS)
                 .setColorMode(PrintAttributes.COLOR_MODE_MONOCHROME)
@@ -546,7 +549,7 @@ public class PrintDocumentAdapterContractTest extends BasePrintTest {
         waitForLayoutAdapterCallbackCount(2);
 
         // Change the color.
-        changeColor("Black & White");
+        changeColor(getPrintSpoolerStringArray("color_mode_labels")[0]);
 
         // Wait for layout.
         waitForLayoutAdapterCallbackCount(3);
@@ -580,7 +583,7 @@ public class PrintDocumentAdapterContractTest extends BasePrintTest {
         // there are other printers but none of them was used.
         PrintAttributes firstOldAttributes = new PrintAttributes.Builder().build();
         PrintAttributes firstNewAttributes = new PrintAttributes.Builder()
-                .setMediaSize(MediaSize.NA_LETTER)
+                .setMediaSize(getDefaultMediaSize())
                 .setResolution(new Resolution("PDF resolution", "PDF resolution", 300, 300))
                 .setMinMargins(Margins.NO_MARGINS)
                 .setColorMode(PrintAttributes.COLOR_MODE_COLOR)
@@ -622,7 +625,7 @@ public class PrintDocumentAdapterContractTest extends BasePrintTest {
         // new printer which results in a layout pass. Same for color.
         PrintAttributes fourthOldAttributes = thirdNewAttributes;
         PrintAttributes fourthNewAttributes = new PrintAttributes.Builder()
-                .setMediaSize(MediaSize.ISO_A4)
+                .setMediaSize(MediaSize.ISO_A0)
                 .setResolution(new Resolution("PDF resolution", "PDF resolution", 300, 300))
                 .setMinMargins(new Margins(200, 200, 200, 200))
                 .setColorMode(PrintAttributes.COLOR_MODE_COLOR)
@@ -732,7 +735,7 @@ public class PrintDocumentAdapterContractTest extends BasePrintTest {
         // there are other printers but none of them was used.
         PrintAttributes firstOldAttributes = new PrintAttributes.Builder().build();
         PrintAttributes firstNewAttributes = new PrintAttributes.Builder()
-                .setMediaSize(MediaSize.NA_LETTER)
+                .setMediaSize(getDefaultMediaSize())
                 .setResolution(new Resolution("PDF resolution", "PDF resolution", 300, 300))
                 .setMinMargins(Margins.NO_MARGINS).setColorMode(PrintAttributes.COLOR_MODE_COLOR)
                 .setDuplexMode(PrintAttributes.DUPLEX_MODE_NONE)
@@ -860,7 +863,7 @@ public class PrintDocumentAdapterContractTest extends BasePrintTest {
         // there are other printers but none of them was used.
         PrintAttributes firstOldAttributes = new PrintAttributes.Builder().build();
         PrintAttributes firstNewAttributes = new PrintAttributes.Builder()
-                .setMediaSize(MediaSize.NA_LETTER)
+                .setMediaSize(getDefaultMediaSize())
                 .setResolution(new Resolution("PDF resolution", "PDF resolution", 300, 300))
                 .setMinMargins(Margins.NO_MARGINS).setColorMode(PrintAttributes.COLOR_MODE_COLOR)
                 .setDuplexMode(PrintAttributes.DUPLEX_MODE_NONE)
@@ -973,7 +976,7 @@ public class PrintDocumentAdapterContractTest extends BasePrintTest {
         // there are other printers but none of them was used.
         PrintAttributes firstOldAttributes = new PrintAttributes.Builder().build();
         PrintAttributes firstNewAttributes = new PrintAttributes.Builder()
-                .setMediaSize(MediaSize.NA_LETTER)
+                .setMediaSize(getDefaultMediaSize())
                 .setResolution(new Resolution("PDF resolution", "PDF resolution", 300, 300))
                 .setMinMargins(Margins.NO_MARGINS).setColorMode(PrintAttributes.COLOR_MODE_COLOR)
                 .setDuplexMode(PrintAttributes.DUPLEX_MODE_NONE)
@@ -1081,7 +1084,7 @@ public class PrintDocumentAdapterContractTest extends BasePrintTest {
         // there are other printers but none of them was used.
         PrintAttributes firstOldAttributes = new PrintAttributes.Builder().build();
         PrintAttributes firstNewAttributes = new PrintAttributes.Builder()
-                .setMediaSize(MediaSize.NA_LETTER)
+                .setMediaSize(getDefaultMediaSize())
                 .setResolution(new Resolution("PDF resolution", "PDF resolution", 300, 300))
                 .setMinMargins(Margins.NO_MARGINS).setColorMode(PrintAttributes.COLOR_MODE_COLOR)
                 .setDuplexMode(PrintAttributes.DUPLEX_MODE_NONE)
@@ -1176,7 +1179,7 @@ public class PrintDocumentAdapterContractTest extends BasePrintTest {
         // there are other printers but none of them was used.
         PrintAttributes firstOldAttributes = new PrintAttributes.Builder().build();
         PrintAttributes firstNewAttributes = new PrintAttributes.Builder()
-                .setMediaSize(MediaSize.NA_LETTER)
+                .setMediaSize(getDefaultMediaSize())
                 .setResolution(new Resolution("PDF resolution", "PDF resolution", 300, 300))
                 .setMinMargins(Margins.NO_MARGINS).setColorMode(PrintAttributes.COLOR_MODE_COLOR)
                 .setDuplexMode(PrintAttributes.DUPLEX_MODE_NONE)
@@ -1249,7 +1252,7 @@ public class PrintDocumentAdapterContractTest extends BasePrintTest {
         // there are other printers but none of them was used.
         PrintAttributes firstOldAttributes = new PrintAttributes.Builder().build();
         PrintAttributes firstNewAttributes = new PrintAttributes.Builder()
-                .setMediaSize(MediaSize.NA_LETTER)
+                .setMediaSize(getDefaultMediaSize())
                 .setResolution(new Resolution("PDF resolution", "PDF resolution", 300, 300))
                 .setMinMargins(Margins.NO_MARGINS).setColorMode(PrintAttributes.COLOR_MODE_COLOR)
                 .setDuplexMode(PrintAttributes.DUPLEX_MODE_NONE)
@@ -1332,7 +1335,7 @@ public class PrintDocumentAdapterContractTest extends BasePrintTest {
         // there are other printers but none of them was used.
         PrintAttributes firstOldAttributes = new PrintAttributes.Builder().build();
         PrintAttributes firstNewAttributes = new PrintAttributes.Builder()
-                .setMediaSize(MediaSize.NA_LETTER)
+                .setMediaSize(getDefaultMediaSize())
                 .setResolution(new Resolution("PDF resolution", "PDF resolution", 300, 300))
                 .setMinMargins(Margins.NO_MARGINS).setColorMode(PrintAttributes.COLOR_MODE_COLOR)
                 .setDuplexMode(PrintAttributes.DUPLEX_MODE_NONE)
@@ -1424,7 +1427,7 @@ public class PrintDocumentAdapterContractTest extends BasePrintTest {
         // there are other printers but none of them was used.
         PrintAttributes firstOldAttributes = new PrintAttributes.Builder().build();
         PrintAttributes firstNewAttributes = new PrintAttributes.Builder()
-                .setMediaSize(MediaSize.NA_LETTER)
+                .setMediaSize(getDefaultMediaSize())
                 .setResolution(new Resolution("PDF resolution", "PDF resolution", 300, 300))
                 .setMinMargins(Margins.NO_MARGINS).setColorMode(PrintAttributes.COLOR_MODE_COLOR)
                 .setDuplexMode(PrintAttributes.DUPLEX_MODE_NONE)
@@ -1496,7 +1499,7 @@ public class PrintDocumentAdapterContractTest extends BasePrintTest {
         // there are other printers but none of them was used.
         PrintAttributes firstOldAttributes = new PrintAttributes.Builder().build();
         PrintAttributes firstNewAttributes = new PrintAttributes.Builder()
-                .setMediaSize(MediaSize.NA_LETTER)
+                .setMediaSize(getDefaultMediaSize())
                 .setResolution(new Resolution("PDF resolution", "PDF resolution", 300, 300))
                 .setMinMargins(Margins.NO_MARGINS).setColorMode(PrintAttributes.COLOR_MODE_COLOR)
                 .setDuplexMode(PrintAttributes.DUPLEX_MODE_NONE)
@@ -1576,7 +1579,7 @@ public class PrintDocumentAdapterContractTest extends BasePrintTest {
         // there are other printers but none of them was used.
         PrintAttributes firstOldAttributes = new PrintAttributes.Builder().build();
         PrintAttributes firstNewAttributes = new PrintAttributes.Builder()
-                .setMediaSize(MediaSize.NA_LETTER)
+                .setMediaSize(getDefaultMediaSize())
                 .setResolution(new Resolution("PDF resolution", "PDF resolution", 300, 300))
                 .setMinMargins(Margins.NO_MARGINS).setColorMode(PrintAttributes.COLOR_MODE_COLOR)
                 .setDuplexMode(PrintAttributes.DUPLEX_MODE_NONE)
@@ -1832,7 +1835,7 @@ public class PrintDocumentAdapterContractTest extends BasePrintTest {
                     PrinterCapabilitiesInfo firstCapabilities =
                             new PrinterCapabilitiesInfo.Builder(firstPrinterId)
                         .setMinMargins(new Margins(200, 200, 200, 200))
-                        .addMediaSize(MediaSize.ISO_A4, true)
+                        .addMediaSize(MediaSize.ISO_A0, true)
                         .addMediaSize(MediaSize.ISO_A5, false)
                         .addResolution(new Resolution("300x300", "300x300", 300, 300), true)
                         .setColorModes(PrintAttributes.COLOR_MODE_COLOR,
@@ -1849,7 +1852,7 @@ public class PrintDocumentAdapterContractTest extends BasePrintTest {
                     PrinterCapabilitiesInfo secondCapabilities =
                             new PrinterCapabilitiesInfo.Builder(secondPrinterId)
                         .addMediaSize(MediaSize.ISO_A3, true)
-                        .addMediaSize(MediaSize.ISO_A4, false)
+                        .addMediaSize(MediaSize.ISO_A0, false)
                         .addResolution(new Resolution("200x200", "200x200", 200, 200), true)
                         .addResolution(new Resolution("300x300", "300x300", 300, 300), false)
                         .setColorModes(PrintAttributes.COLOR_MODE_COLOR
@@ -1870,12 +1873,17 @@ public class PrintDocumentAdapterContractTest extends BasePrintTest {
                     // Add the third printer.
                     PrinterId thirdPrinterId = service.generatePrinterId("third_printer");
                     PrinterCapabilitiesInfo thirdCapabilities =
-                            new PrinterCapabilitiesInfo.Builder(thirdPrinterId)
-                        .addMediaSize(MediaSize.NA_LETTER, true)
-                        .addResolution(new Resolution("300x300", "300x300", 300, 300), true)
-                        .setColorModes(PrintAttributes.COLOR_MODE_COLOR,
-                                PrintAttributes.COLOR_MODE_COLOR)
-                        .build();
+                            null;
+                    try {
+                        thirdCapabilities = new PrinterCapabilitiesInfo.Builder(thirdPrinterId)
+                                .addMediaSize(getDefaultMediaSize(), true)
+                                .addResolution(new Resolution("300x300", "300x300", 300, 300), true)
+                                .setColorModes(PrintAttributes.COLOR_MODE_COLOR,
+                                        PrintAttributes.COLOR_MODE_COLOR)
+                                .build();
+                    } catch (Exception e) {
+                        Log.e(LOG_TAG, "Cannot create third printer", e);
+                    }
                     PrinterInfo thirdPrinter = new PrinterInfo.Builder(thirdPrinterId,
                             "Third printer", PrinterInfo.STATUS_IDLE)
                         .setCapabilities(thirdCapabilities)

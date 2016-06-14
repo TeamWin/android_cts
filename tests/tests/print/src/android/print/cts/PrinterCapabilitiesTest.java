@@ -149,7 +149,8 @@ public class PrinterCapabilitiesTest extends BasePrintTest {
      * @throws Exception If anything was unexpected.
      */
     private void waitForPrinterUnavailable() throws Exception {
-        final String PRINTER_UNAVAILABLE_MSG = "This printer isn't available right now.";
+        final String PRINTER_UNAVAILABLE_MSG =
+                getPrintSpoolerString("print_error_printer_unavailable");
 
         UiObject message = getUiDevice().findObject(new UiSelector().resourceId(
                 "com.android.printspooler:id/message"));

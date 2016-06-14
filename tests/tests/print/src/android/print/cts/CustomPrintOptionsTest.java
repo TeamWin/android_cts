@@ -87,7 +87,8 @@ public class CustomPrintOptionsTest extends BasePrintTest {
      * @throws Exception If something was unexpected
      */
     private PageRange[] getPages() throws Exception {
-        if (getUiDevice().hasObject(By.text("All 3"))) {
+        if (getUiDevice().hasObject(By.text(getPrintSpoolerStringOneParam("template_all_pages",
+                3)))) {
             return PAGESS[2];
         }
 

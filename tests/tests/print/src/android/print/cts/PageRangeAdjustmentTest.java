@@ -258,7 +258,7 @@ public class PageRangeAdjustmentTest extends BasePrintTest {
         waitForLayoutAdapterCallbackCount(2);
 
         // Select only the second page.
-        selectPages("2");
+        selectPages("2", PAGE_COUNT);
 
         // Click the print button.
         clickPrintButton();
@@ -392,7 +392,7 @@ public class PageRangeAdjustmentTest extends BasePrintTest {
         waitForLayoutAdapterCallbackCount(2);
 
         // Select a page not written for preview.
-        selectPages(Integer.valueOf(REQUESTED_PAGE).toString());
+        selectPages(Integer.valueOf(REQUESTED_PAGE).toString(), PAGE_COUNT);
 
         // Click the print button.
         clickPrintButton();
@@ -607,7 +607,7 @@ public class PageRangeAdjustmentTest extends BasePrintTest {
         waitForLayoutAdapterCallbackCount(2);
 
         // Select a page not written for preview.
-        selectPages("3");
+        selectPages("3", PAGE_COUNT);
 
         // Click the print button.
         clickPrintButton();
@@ -633,12 +633,13 @@ public class PageRangeAdjustmentTest extends BasePrintTest {
                 any(PrintJob.class));
     }
 
-    private void selectPages(String pages) throws UiObjectNotFoundException {
+    private void selectPages(String pages, int totalPages) throws Exception {
         UiObject pagesSpinner = getUiDevice().findObject(new UiSelector().resourceId(
                 "com.android.printspooler:id/range_options_spinner"));
         pagesSpinner.click();
 
-        UiObject rangeOption = getUiDevice().findObject(new UiSelector().textContains("Range"));
+        UiObject rangeOption = getUiDevice().findObject(new UiSelector().textContains(
+                getPrintSpoolerStringOneParam("template_page_range", totalPages)));
         rangeOption.click();
 
         UiObject pagesEditText = getUiDevice().findObject(new UiSelector().resourceId(
