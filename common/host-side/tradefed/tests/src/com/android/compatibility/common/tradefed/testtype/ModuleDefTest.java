@@ -51,20 +51,6 @@ public class ModuleDefTest extends TestCase {
         assertEquals("Incorrect Name", NAME, def.getName());
     }
 
-    public void testAddFilters() throws Exception {
-        IAbi abi = new Abi(ABI, "");
-        MockRemoteTest mockTest = new MockRemoteTest();
-        ModuleDef def = new ModuleDef(NAME, abi, mockTest, new ArrayList<ITargetPreparer>());
-        def.addIncludeFilter(CLASS);
-        def.addExcludeFilter(TEST_1);
-        MockListener mockListener = new MockListener();
-        def.run(mockListener);
-        assertEquals("Expected one include filter", 1, mockTest.mIncludeFilters.size());
-        assertEquals("Expected one exclude filter", 1, mockTest.mExcludeFilters.size());
-        assertEquals("Incorrect include filter", CLASS, mockTest.mIncludeFilters.get(0));
-        assertEquals("Incorrect exclude filter", TEST_1, mockTest.mExcludeFilters.get(0));
-    }
-
     private class MockRemoteTest implements IRemoteTest, ITestFilterReceiver, IAbiReceiver,
             IRuntimeHintProvider, ITestCollector {
 
