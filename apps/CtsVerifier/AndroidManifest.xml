@@ -1118,7 +1118,8 @@
 
         <activity android:name=".camera.its.ItsTestActivity"
                   android:label="@string/camera_its_test"
-                  android:configChanges="keyboardHidden|orientation|screenSize">
+                  android:configChanges="keyboardHidden|screenSize"
+                  android:screenOrientation="landscape">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.cts.intent.category.MANUAL_TEST" />
