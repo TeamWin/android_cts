@@ -197,7 +197,6 @@ public class ItsTestActivity extends PassFailButtons.Activity {
         setContentView(R.layout.its_main);
         setInfoResources(R.string.camera_its_test, R.string.camera_its_test_info, -1);
         setPassFailButtonClickListeners();
-        getPassButton().setEnabled(false);
     }
 
     private void showToast(int messageId) {
