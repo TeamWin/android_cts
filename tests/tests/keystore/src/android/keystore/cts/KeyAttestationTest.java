@@ -98,7 +98,7 @@ public class KeyAttestationTest extends AndroidTestCase {
     private static final int OS_MINOR_VERSION_MATCH_GROUP_NAME = 2;
     private static final int OS_SUBMINOR_VERSION_MATCH_GROUP_NAME = 3;
     private static final Pattern OS_VERSION_STRING_PATTERN = Pattern
-            .compile("([0-9]{1,2})(\\.([0-9]{1,2}))?(\\.([0-9]{1,2}))?.*");
+            .compile("([0-9]{1,2})(?:\\.([0-9]{1,2}))?(?:\\.([0-9]{1,2}))?(?:[^0-9.]+.*)?");
 
     private static final int OS_PATCH_LEVEL_YEAR_GROUP_NAME = 1;
     private static final int OS_PATCH_LEVEL_MONTH_GROUP_NAME = 2;
@@ -106,6 +106,29 @@ public class KeyAttestationTest extends AndroidTestCase {
             .compile("([0-9]{4})-([0-9]{2})-[0-9]{2}");
 
     private static final int KM_ERROR_INVALID_INPUT_LENGTH = -21;
+
+    public void testVersionParser() throws Exception {
+        // Non-numerics/empty give version 0
+        assertEquals(0, parseSystemOsVersion(""));
+        assertEquals(0, parseSystemOsVersion("N"));
+
+        // Should support one, two or three version number values.
+        assertEquals(10000, parseSystemOsVersion("1"));
+        assertEquals(10200, parseSystemOsVersion("1.2"));
+        assertEquals(10203, parseSystemOsVersion("1.2.3"));
+
+        // It's fine to append other stuff to the dotted numeric version.
+        assertEquals(10000, parseSystemOsVersion("1stuff"));
+        assertEquals(10200, parseSystemOsVersion("1.2garbage.32"));
+        assertEquals(10203, parseSystemOsVersion("1.2.3-stuff"));
+
+        // Two digits per version field are supported
+        assertEquals(152536, parseSystemOsVersion("15.25.36"));
+        assertEquals(999999, parseSystemOsVersion("99.99.99"));
+        assertEquals(0, parseSystemOsVersion("100.99.99"));
+        assertEquals(0, parseSystemOsVersion("99.100.99"));
+        assertEquals(0, parseSystemOsVersion("99.99.100"));
+    }
 
     public void testEcAttestation() throws Exception {
         // Note: Curve and key sizes arrays must correspond.
@@ -459,7 +482,11 @@ public class KeyAttestationTest extends AndroidTestCase {
     }
 
     private int getSystemOsVersion() {
-        Matcher matcher = OS_VERSION_STRING_PATTERN.matcher(Build.VERSION.RELEASE);
+        return parseSystemOsVersion(Build.VERSION.RELEASE);
+    }
+
+    private int parseSystemOsVersion(String versionString) {
+        Matcher matcher = OS_VERSION_STRING_PATTERN.matcher(versionString);
         if (!matcher.matches()) {
             return 0;
         }
