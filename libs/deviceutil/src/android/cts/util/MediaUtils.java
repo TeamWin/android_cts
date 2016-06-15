@@ -632,14 +632,20 @@ public class MediaUtils {
      */
 
     /**
-     * logs results for achievable frame rates test
+     * logs results for achievable frame rates test. prefix must be lowercase alphanumeric
+     * underscored format.
      */
     public static String logAchievableRatesResults(DeviceReportLog log, String prefix,
-            Stats stats) {
-        String msg = prefix;
+            String message, Stats stats) {
+        String msg = message;
         msg += " num=" + stats.getNum()
                 + " avg=" + Math.round(stats.getAverage() / 1000)
                 + " stdev=" + Math.round(stats.getStdev() / 1000);
+        log.addValue(prefix + "_num", stats.getNum(), ResultType.NEUTRAL, ResultUnit.NONE);
+        log.addValue(prefix + "_avg", Math.round(stats.getAverage() / 1000), ResultType.NEUTRAL,
+                ResultUnit.NONE);
+        log.addValue(prefix + "_stdev", Math.round(stats.getStdev() / 1000), ResultType.NEUTRAL,
+                ResultUnit.NONE);
         String[] labels = {
                 "min", "p5", "p10", "p20", "p30", "p40", "p50", "p60", "p70", "p80", "p90", "p95",
                 "max" };
@@ -648,9 +654,12 @@ public class MediaUtils {
 
         for (int i = 0; i < labels.length; ++i) {
             msg += " " + labels[i] + "=" + Math.round(percentiles[i] / 1000);
+            log.addValue(prefix + "_" + labels[i], Math.round(percentiles[i] / 1000),
+                    ResultType.NEUTRAL, ResultUnit.NONE);
         }
 
-        log.addValue(msg, 1000000000 / stats.getMin(), ResultType.HIGHER_BETTER, ResultUnit.FPS);
+        log.addValue(prefix + "_fps", 1000000000 / stats.getMin(), ResultType.HIGHER_BETTER,
+                ResultUnit.FPS);
         Log.i(TAG, msg);
         return msg;
     }
