@@ -22,22 +22,22 @@ import android.view.MenuItem.OnMenuItemClickListener;
 import android.widget.BaseExpandableListAdapter;
 import android.widget.cts.util.ExpandableListScenario;
 
-public class ExpandableListSimple extends ExpandableListScenario {
-    private static final int[] NUM_CHILDREN = {4, 3, 2, 1, 0};
+public class ExpandableListBasic extends ExpandableListScenario {
+    private static final int[] CHILD_COUNT = {4, 3, 2, 1, 0};
 
     @Override
     protected void init(ExpandableParams params) {
-        params.setNumChildren(NUM_CHILDREN).setItemScreenSizeFactor(0.14);
+        params.setNumChildren(CHILD_COUNT).setItemScreenSizeFactor(0.14);
     }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        menu.add("Add item").setOnMenuItemClickListener(new OnMenuItemClickListener() {
-            public boolean onMenuItemClick(MenuItem item) {
+        menu.add("Add item").setOnMenuItemClickListener((MenuItem item) -> {
                 mGroups.add(0, new MyGroup(2));
-                ((BaseExpandableListAdapter) mAdapter).notifyDataSetChanged();
+                if (mAdapter != null) {
+                    ((BaseExpandableListAdapter) mAdapter).notifyDataSetChanged();
+                }
                 return true;
-            }
         });
 
         return true;

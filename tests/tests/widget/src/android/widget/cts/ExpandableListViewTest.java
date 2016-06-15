@@ -16,43 +16,67 @@
 
 package android.widget.cts;
 
-import android.widget.cts.R;
-
-
-import org.xmlpull.v1.XmlPullParser;
-
+import android.app.Instrumentation;
 import android.content.Context;
+import android.cts.util.PollingCheck;
 import android.database.DataSetObserver;
 import android.graphics.Canvas;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.Parcelable;
-import android.test.AndroidTestCase;
+import android.test.ActivityInstrumentationTestCase2;
+import android.test.UiThreadTest;
+import android.test.suitebuilder.annotation.MediumTest;
 import android.util.AttributeSet;
 import android.util.Xml;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.AdapterView;
 import android.widget.ExpandableListAdapter;
 import android.widget.ExpandableListView;
 import android.widget.ListAdapter;
-import android.widget.AdapterView.OnItemClickListener;
-import android.widget.ExpandableListView.OnChildClickListener;
-import android.widget.ExpandableListView.OnGroupClickListener;
+import android.widget.TextView;
+import android.widget.cts.util.ExpandableListScenario;
 
-public class ExpandableListViewTest extends AndroidTestCase {
+import org.xmlpull.v1.XmlPullParser;
+
+import static org.mockito.Mockito.*;
+
+@MediumTest
+public class ExpandableListViewTest extends ActivityInstrumentationTestCase2<ExpandableList> {
+    private Instrumentation mInstrumentation;
+    private ExpandableListScenario mActivity;
+    private ExpandableListView mExpandableListView;
+
+    public ExpandableListViewTest() {
+        super(ExpandableList.class);
+    }
+
+    @Override
+    protected void setUp() throws Exception {
+        super.setUp();
+
+        mInstrumentation = getInstrumentation();
+        mActivity = getActivity();
+        PollingCheck.waitFor(() -> mActivity.hasWindowFocus());
+        mExpandableListView = mActivity.getExpandableListView();
+    }
+
     public void testConstructor() {
-        new ExpandableListView(mContext);
+        new ExpandableListView(mActivity);
 
-        new ExpandableListView(mContext, null);
+        new ExpandableListView(mActivity, null);
 
-        new ExpandableListView(mContext, null, 0);
+        new ExpandableListView(mActivity, null, android.R.attr.expandableListViewStyle);
+
+        new ExpandableListView(mActivity, null, 0,
+                android.R.style.Widget_Material_Light_ExpandableListView);
 
         XmlPullParser parser =
-            getContext().getResources().getXml(R.layout.expandablelistview_layout);
+                mActivity.getResources().getXml(R.layout.expandablelistview_layout);
         AttributeSet attrs = Xml.asAttributeSet(parser);
-        new ExpandableListView(mContext, attrs);
-        new ExpandableListView(mContext, attrs, 0);
+        new ExpandableListView(mActivity, attrs);
+        new ExpandableListView(mActivity, attrs, 0);
 
         try {
             new ExpandableListView(null);
@@ -74,230 +98,292 @@ public class ExpandableListViewTest extends AndroidTestCase {
     }
 
     public void testSetChildDivider() {
-        ExpandableListView expandableListView = new ExpandableListView(mContext);
-        Drawable drawable = mContext.getResources().getDrawable(R.drawable.scenery);
-        expandableListView.setChildDivider(drawable);
+        Drawable drawable = mActivity.getResources().getDrawable(R.drawable.scenery);
+        mExpandableListView.setChildDivider(drawable);
     }
 
     public void testSetAdapter() {
-        ExpandableListView expandableListView = new ExpandableListView(mContext);
         try {
-            expandableListView.setAdapter((ListAdapter) null);
+            mExpandableListView.setAdapter((ListAdapter) null);
             fail("setAdapter(ListAdapter) should throw RuntimeException here.");
         } catch (RuntimeException e) {
         }
     }
 
+    @UiThreadTest
     public void testGetAdapter() {
-        ExpandableListView expandableListView = new ExpandableListView(mContext);
-        assertNull(expandableListView.getAdapter());
+        assertNull(mExpandableListView.getAdapter());
 
         ExpandableListAdapter expandableAdapter = new MockExpandableListAdapter();
-        expandableListView.setAdapter(expandableAdapter);
-        assertNotNull(expandableListView.getAdapter());
+        mExpandableListView.setAdapter(expandableAdapter);
+        assertNotNull(mExpandableListView.getAdapter());
     }
 
+    @UiThreadTest
     public void testAccessExpandableListAdapter() {
-        ExpandableListView expandableListView = new ExpandableListView(mContext);
         ExpandableListAdapter expandableAdapter = new MockExpandableListAdapter();
 
-        assertNull(expandableListView.getExpandableListAdapter());
-        expandableListView.setAdapter(expandableAdapter);
-        assertSame(expandableAdapter, expandableListView.getExpandableListAdapter());
+        assertNull(mExpandableListView.getExpandableListAdapter());
+        mExpandableListView.setAdapter(expandableAdapter);
+        assertSame(expandableAdapter, mExpandableListView.getExpandableListAdapter());
     }
 
+    @UiThreadTest
     public void testPerformItemClick() {
-        ExpandableListView expandableListView = new ExpandableListView(mContext);
+        assertFalse(mExpandableListView.performItemClick(null, 100, 99));
 
-        assertFalse(expandableListView.performItemClick(null, 100, 99));
-
-        MockOnItemClickListener onClickListener = new MockOnItemClickListener();
-        expandableListView.setOnItemClickListener(onClickListener);
-        assertTrue(expandableListView.performItemClick(null, 100, 99));
+        ExpandableListView.OnItemClickListener mockOnItemClickListener =
+                mock(ExpandableListView.OnItemClickListener.class);
+        mExpandableListView.setOnItemClickListener(mockOnItemClickListener);
+        assertTrue(mExpandableListView.performItemClick(null, 100, 99));
+        verify(mockOnItemClickListener, times(1)).onItemClick(eq(mExpandableListView),
+                any(View.class), eq(100), eq(99L));
     }
 
     public void testSetOnItemClickListener() {
-        ExpandableListView expandableListView = new ExpandableListView(mContext);
-        MockOnItemClickListener listener = new MockOnItemClickListener();
+        ExpandableListView.OnItemClickListener mockOnItemClickListener =
+                mock(ExpandableListView.OnItemClickListener.class);
 
-        assertNull(expandableListView.getOnItemClickListener());
-        expandableListView.setOnItemClickListener(listener);
-        assertSame(listener, expandableListView.getOnItemClickListener());
+        assertNull(mExpandableListView.getOnItemClickListener());
+        mExpandableListView.setOnItemClickListener(mockOnItemClickListener);
+        assertSame(mockOnItemClickListener, mExpandableListView.getOnItemClickListener());
     }
 
+    @UiThreadTest
     public void testExpandGroup() {
-        ExpandableListView expandableListView = new ExpandableListView(mContext);
         ExpandableListAdapter expandableAdapter = new MockExpandableListAdapter();
-        expandableListView.setAdapter(expandableAdapter);
+        mExpandableListView.setAdapter(expandableAdapter);
 
-        MockOnGroupExpandListener mockOnGroupExpandListener = new MockOnGroupExpandListener();
-        expandableListView.setOnGroupExpandListener(mockOnGroupExpandListener);
+        ExpandableListView.OnGroupExpandListener mockOnGroupExpandListener =
+                mock(ExpandableListView.OnGroupExpandListener.class);
+        mExpandableListView.setOnGroupExpandListener(mockOnGroupExpandListener);
 
-        assertFalse(mockOnGroupExpandListener.hasCalledOnGroupExpand());
-        assertTrue(expandableListView.expandGroup(0));
-        assertTrue(mockOnGroupExpandListener.hasCalledOnGroupExpand());
-        mockOnGroupExpandListener.reset();
-        assertFalse(expandableListView.expandGroup(0));
-        assertTrue(mockOnGroupExpandListener.hasCalledOnGroupExpand());
-        mockOnGroupExpandListener.reset();
-        assertTrue(expandableListView.expandGroup(1));
-        assertTrue(mockOnGroupExpandListener.hasCalledOnGroupExpand());
-        mockOnGroupExpandListener.reset();
-        assertFalse(expandableListView.expandGroup(1));
-        assertTrue(mockOnGroupExpandListener.hasCalledOnGroupExpand());
-        mockOnGroupExpandListener.reset();
+        verifyZeroInteractions(mockOnGroupExpandListener);
 
-        expandableListView.setAdapter((ExpandableListAdapter) null);
+        assertTrue(mExpandableListView.expandGroup(0));
+        verify(mockOnGroupExpandListener, times(1)).onGroupExpand(0);
+        assertTrue(mExpandableListView.isGroupExpanded(0));
+
+        reset(mockOnGroupExpandListener);
+        assertFalse(mExpandableListView.expandGroup(0));
+        verify(mockOnGroupExpandListener, times(1)).onGroupExpand(0);
+        assertTrue(mExpandableListView.isGroupExpanded(0));
+
+        reset(mockOnGroupExpandListener);
+        assertTrue(mExpandableListView.expandGroup(1));
+        verify(mockOnGroupExpandListener, times(1)).onGroupExpand(1);
+        assertTrue(mExpandableListView.isGroupExpanded(1));
+
+        reset(mockOnGroupExpandListener);
+        assertFalse(mExpandableListView.expandGroup(1));
+        verify(mockOnGroupExpandListener, times(1)).onGroupExpand(1);
+        assertTrue(mExpandableListView.isGroupExpanded(1));
+
+        reset(mockOnGroupExpandListener);
+        mExpandableListView.setAdapter((ExpandableListAdapter) null);
         try {
-            expandableListView.expandGroup(0);
+            mExpandableListView.expandGroup(0);
             fail("should throw NullPointerException");
         } catch (NullPointerException e) {
         }
     }
 
+    public void testExpandGroupSmooth() {
+        mInstrumentation.runOnMainSync(
+                () -> mExpandableListView.setAdapter(new MockExpandableListAdapter()));
+
+        ExpandableListView.OnGroupExpandListener mockOnGroupExpandListener =
+                mock(ExpandableListView.OnGroupExpandListener.class);
+        mExpandableListView.setOnGroupExpandListener(mockOnGroupExpandListener);
+
+        verifyZeroInteractions(mockOnGroupExpandListener);
+        mInstrumentation.runOnMainSync(() -> assertTrue(mExpandableListView.expandGroup(0, true)));
+        mInstrumentation.waitForIdleSync();
+        verify(mockOnGroupExpandListener, times(1)).onGroupExpand(0);
+        assertTrue(mExpandableListView.isGroupExpanded(0));
+
+        reset(mockOnGroupExpandListener);
+        mInstrumentation.runOnMainSync(() -> assertFalse(mExpandableListView.expandGroup(0, true)));
+        mInstrumentation.waitForIdleSync();
+        verify(mockOnGroupExpandListener, times(1)).onGroupExpand(0);
+        assertTrue(mExpandableListView.isGroupExpanded(0));
+
+        reset(mockOnGroupExpandListener);
+        mInstrumentation.runOnMainSync(() -> assertTrue(mExpandableListView.expandGroup(1, true)));
+        mInstrumentation.waitForIdleSync();
+        verify(mockOnGroupExpandListener, times(1)).onGroupExpand(1);
+        assertTrue(mExpandableListView.isGroupExpanded(1));
+
+        reset(mockOnGroupExpandListener);
+        mInstrumentation.runOnMainSync(() -> assertFalse(mExpandableListView.expandGroup(1, true)));
+        mInstrumentation.waitForIdleSync();
+        verify(mockOnGroupExpandListener, times(1)).onGroupExpand(1);
+        assertTrue(mExpandableListView.isGroupExpanded(1));
+
+        reset(mockOnGroupExpandListener);
+        mInstrumentation.runOnMainSync(() -> {
+            mExpandableListView.setAdapter((ExpandableListAdapter) null);
+            try {
+                mExpandableListView.expandGroup(0);
+                fail("should throw NullPointerException");
+            } catch (NullPointerException e) {
+            }
+        });
+    }
+
+    @UiThreadTest
     public void testCollapseGroup() {
-        ExpandableListView expandableListView = new ExpandableListView(mContext);
         ExpandableListAdapter expandableAdapter = new MockExpandableListAdapter();
-        expandableListView.setAdapter(expandableAdapter);
+        mExpandableListView.setAdapter(expandableAdapter);
 
-        MockOnGroupCollapseListener mockOnGroupCollapseListener =
-            new MockOnGroupCollapseListener();
-        expandableListView.setOnGroupCollapseListener(mockOnGroupCollapseListener);
+        ExpandableListView.OnGroupCollapseListener mockOnGroupCollapseListener =
+                mock(ExpandableListView.OnGroupCollapseListener.class);
+        mExpandableListView.setOnGroupCollapseListener(mockOnGroupCollapseListener);
 
-        assertFalse(mockOnGroupCollapseListener.hasCalledOnGroupCollapse());
-        assertFalse(expandableListView.collapseGroup(0));
-        assertTrue(mockOnGroupCollapseListener.hasCalledOnGroupCollapse());
-        mockOnGroupCollapseListener.reset();
+        verifyZeroInteractions(mockOnGroupCollapseListener);
+        assertFalse(mExpandableListView.collapseGroup(0));
+        verify(mockOnGroupCollapseListener, times(1)).onGroupCollapse(0);
+        assertFalse(mExpandableListView.isGroupExpanded(0));
 
-        expandableListView.expandGroup(0);
-        assertTrue(expandableListView.collapseGroup(0));
-        assertTrue(mockOnGroupCollapseListener.hasCalledOnGroupCollapse());
-        mockOnGroupCollapseListener.reset();
-        assertFalse(expandableListView.collapseGroup(1));
-        assertTrue(mockOnGroupCollapseListener.hasCalledOnGroupCollapse());
-        mockOnGroupCollapseListener.reset();
+        reset(mockOnGroupCollapseListener);
+        mExpandableListView.expandGroup(0);
+        assertTrue(mExpandableListView.collapseGroup(0));
+        verify(mockOnGroupCollapseListener, times(1)).onGroupCollapse(0);
+        assertFalse(mExpandableListView.isGroupExpanded(0));
 
-        expandableListView.setAdapter((ExpandableListAdapter) null);
+        reset(mockOnGroupCollapseListener);
+        assertFalse(mExpandableListView.collapseGroup(1));
+        verify(mockOnGroupCollapseListener, times(1)).onGroupCollapse(1);
+        assertFalse(mExpandableListView.isGroupExpanded(1));
+
+        reset(mockOnGroupCollapseListener);
+        mExpandableListView.setAdapter((ExpandableListAdapter) null);
         try {
-            expandableListView.collapseGroup(0);
+            mExpandableListView.collapseGroup(0);
             fail("should throw NullPointerException");
         } catch (NullPointerException e) {
         }
     }
 
+    @UiThreadTest
     public void testSetOnGroupClickListener() {
-        ExpandableListView expandableListView = new ExpandableListView(mContext);
-        expandableListView.setAdapter(new MockExpandableListAdapter());
-        MockOnGroupClickListener listener = new MockOnGroupClickListener();
+        mExpandableListView.setAdapter(new MockExpandableListAdapter());
 
-        expandableListView.setOnGroupClickListener(listener);
-        assertFalse(listener.hasCalledOnGroupClick());
-        expandableListView.performItemClick(null, 0, 0);
-        assertTrue(listener.hasCalledOnGroupClick());
+        ExpandableListView.OnGroupClickListener mockOnGroupClickListener =
+                mock(ExpandableListView.OnGroupClickListener.class);
+
+        mExpandableListView.setOnGroupClickListener(mockOnGroupClickListener);
+        verifyZeroInteractions(mockOnGroupClickListener);
+
+        mExpandableListView.performItemClick(null, 0, 0);
+        verify(mockOnGroupClickListener, times(1)).onGroupClick(eq(mExpandableListView),
+                any(View.class), eq(0), eq(0L));
     }
 
+    @UiThreadTest
     public void testSetOnChildClickListener() {
-        ExpandableListView expandableListView = new ExpandableListView(mContext);
-        expandableListView.setAdapter(new MockExpandableListAdapter());
-        MockOnChildClickListener listener = new MockOnChildClickListener();
+        mExpandableListView.setAdapter(new MockExpandableListAdapter());
 
-        expandableListView.setOnChildClickListener(listener);
-        assertFalse(listener.hasCalledOnChildClick());
+        ExpandableListView.OnChildClickListener mockOnChildClickListener =
+                mock(ExpandableListView.OnChildClickListener.class);
+
+        mExpandableListView.setOnChildClickListener(mockOnChildClickListener);
+        verifyZeroInteractions(mockOnChildClickListener);
+
         // first let the list expand
-        expandableListView.expandGroup(0);
+        mExpandableListView.expandGroup(0);
         // click on the child list of the first group
-        expandableListView.performItemClick(null, 1, 0);
-        assertTrue(listener.hasCalledOnChildClick());
+        mExpandableListView.performItemClick(null, 1, 0);
+        verify(mockOnChildClickListener, times(1)).onChildClick(eq(mExpandableListView),
+                any(View.class), eq(0), eq(0), eq(0L));
     }
 
+    @UiThreadTest
     public void testGetExpandableListPosition() {
-        ExpandableListView expandableListView = new ExpandableListView(mContext);
-        expandableListView.setAdapter(new MockExpandableListAdapter());
+        mExpandableListView.setAdapter(new MockExpandableListAdapter());
 
-        assertEquals(0, expandableListView.getExpandableListPosition(0));
+        assertEquals(0, mExpandableListView.getExpandableListPosition(0));
 
         // Group 0 is not expanded, position 1 is invalid
         assertEquals(ExpandableListView.PACKED_POSITION_VALUE_NULL,
-                expandableListView.getExpandableListPosition(1));
+                mExpandableListView.getExpandableListPosition(1));
 
         // Position 1 becomes valid when group 0 is expanded
-        expandableListView.expandGroup(0);
+        mExpandableListView.expandGroup(0);
         assertEquals(ExpandableListView.getPackedPositionForChild(0, 0),
-                expandableListView.getExpandableListPosition(1));
+                mExpandableListView.getExpandableListPosition(1));
 
         // Position 2 is still invalid (only one child).
         assertEquals(ExpandableListView.PACKED_POSITION_VALUE_NULL,
-                expandableListView.getExpandableListPosition(2));
+                mExpandableListView.getExpandableListPosition(2));
     }
 
+    @UiThreadTest
     public void testGetFlatListPosition() {
-        ExpandableListView expandableListView = new ExpandableListView(mContext);
-        expandableListView.setAdapter(new MockExpandableListAdapter());
+        mExpandableListView.setAdapter(new MockExpandableListAdapter());
 
         try {
-            expandableListView.getFlatListPosition(ExpandableListView.PACKED_POSITION_VALUE_NULL);
+            mExpandableListView.getFlatListPosition(ExpandableListView.PACKED_POSITION_VALUE_NULL);
         } catch (NullPointerException e) {
         }
-        assertEquals(0, expandableListView.getFlatListPosition(
+        assertEquals(0, mExpandableListView.getFlatListPosition(
                 ExpandableListView.PACKED_POSITION_TYPE_CHILD<<32));
         // 0x8000000100000000L means this is a child and group position is 1.
-        assertEquals(1, expandableListView.getFlatListPosition(0x8000000100000000L));
+        assertEquals(1, mExpandableListView.getFlatListPosition(0x8000000100000000L));
     }
 
+    @UiThreadTest
     public void testGetSelectedPosition() {
-        ExpandableListView expandableListView = new ExpandableListView(mContext);
-
         assertEquals(ExpandableListView.PACKED_POSITION_VALUE_NULL,
-                expandableListView.getSelectedPosition());
+                mExpandableListView.getSelectedPosition());
 
-        expandableListView.setAdapter(new MockExpandableListAdapter());
+        mExpandableListView.setAdapter(new MockExpandableListAdapter());
 
-        expandableListView.setSelectedGroup(0);
-        assertEquals(0, expandableListView.getSelectedPosition());
+        mExpandableListView.setSelectedGroup(0);
+        assertEquals(0, mExpandableListView.getSelectedPosition());
 
-        expandableListView.setSelectedGroup(1);
-        assertEquals(0, expandableListView.getSelectedPosition());
+        mExpandableListView.setSelectedGroup(1);
+        assertEquals(0, mExpandableListView.getSelectedPosition());
     }
 
+    @UiThreadTest
     public void testGetSelectedId() {
-        ExpandableListView expandableListView = new ExpandableListView(mContext);
+        assertEquals(-1, mExpandableListView.getSelectedId());
+        mExpandableListView.setAdapter(new MockExpandableListAdapter());
 
-        assertEquals(-1, expandableListView.getSelectedId());
-        expandableListView.setAdapter(new MockExpandableListAdapter());
+        mExpandableListView.setSelectedGroup(0);
+        assertEquals(0, mExpandableListView.getSelectedId());
 
-        expandableListView.setSelectedGroup(0);
-        assertEquals(0, expandableListView.getSelectedId());
-
-        expandableListView.setSelectedGroup(1);
-        assertEquals(0, expandableListView.getSelectedId());
+        mExpandableListView.setSelectedGroup(1);
+        assertEquals(0, mExpandableListView.getSelectedId());
     }
 
+    @UiThreadTest
     public void testSetSelectedGroup() {
-        ExpandableListView expandableListView = new ExpandableListView(mContext);
-        expandableListView.setAdapter(new MockExpandableListAdapter());
+        mExpandableListView.setAdapter(new MockExpandableListAdapter());
 
-        expandableListView.setSelectedGroup(0);
-        assertEquals(0, expandableListView.getSelectedPosition());
+        mExpandableListView.setSelectedGroup(0);
+        assertEquals(0, mExpandableListView.getSelectedPosition());
 
-        expandableListView.setSelectedGroup(1);
-        assertEquals(0, expandableListView.getSelectedPosition());
+        mExpandableListView.setSelectedGroup(1);
+        assertEquals(0, mExpandableListView.getSelectedPosition());
     }
 
+    @UiThreadTest
     public void testSetSelectedChild() {
-        ExpandableListView expandableListView = new ExpandableListView(mContext);
-        expandableListView.setAdapter(new MockExpandableListAdapter());
+        mExpandableListView.setAdapter(new MockExpandableListAdapter());
 
-        assertTrue(expandableListView.setSelectedChild(0, 0, false));
-        assertTrue(expandableListView.setSelectedChild(0, 1, true));
+        assertTrue(mExpandableListView.setSelectedChild(0, 0, false));
+        assertTrue(mExpandableListView.setSelectedChild(0, 1, true));
     }
 
+    @UiThreadTest
     public void testIsGroupExpanded() {
-        ExpandableListView expandableListView = new ExpandableListView(mContext);
-        expandableListView.setAdapter(new MockExpandableListAdapter());
+        mExpandableListView.setAdapter(new MockExpandableListAdapter());
 
-        expandableListView.expandGroup(1);
-        assertFalse(expandableListView.isGroupExpanded(0));
-        assertTrue(expandableListView.isGroupExpanded(1));
+        mExpandableListView.expandGroup(1);
+        assertFalse(mExpandableListView.isGroupExpanded(0));
+        assertTrue(mExpandableListView.isGroupExpanded(1));
     }
 
     public void testGetPackedPositionType() {
@@ -356,31 +442,35 @@ public class ExpandableListViewTest extends AndroidTestCase {
     }
 
     public void testSetChildIndicator() {
-        ExpandableListView expandableListView = new ExpandableListView(mContext);
-        expandableListView.setChildIndicator(null);
+        mExpandableListView.setChildIndicator(null);
     }
 
     public void testSetChildIndicatorBounds() {
-        ExpandableListView expandableListView = new ExpandableListView(mContext);
-        expandableListView.setChildIndicatorBounds(10, 10);
+        mExpandableListView.setChildIndicatorBounds(10, 20);
+    }
+
+    public void testSetChildIndicatorBoundsRelative() {
+        mExpandableListView.setChildIndicatorBoundsRelative(10, 20);
     }
 
     public void testSetGroupIndicator() {
-        ExpandableListView expandableListView = new ExpandableListView(mContext);
         Drawable drawable = new BitmapDrawable();
-        expandableListView.setGroupIndicator(drawable);
+        mExpandableListView.setGroupIndicator(drawable);
     }
 
     public void testSetIndicatorBounds() {
-        ExpandableListView expandableListView = new ExpandableListView(mContext);
-        expandableListView.setIndicatorBounds(10,10);
+        mExpandableListView.setIndicatorBounds(10, 30);
+    }
+
+    public void testSetIndicatorBoundsRelative() {
+        mExpandableListView.setIndicatorBoundsRelative(10, 30);
     }
 
     public void testOnSaveInstanceState() {
-        ExpandableListView src = new ExpandableListView(mContext);
+        ExpandableListView src = new ExpandableListView(mActivity);
         Parcelable p1 = src.onSaveInstanceState();
 
-        ExpandableListView dest = new ExpandableListView(mContext);
+        ExpandableListView dest = new ExpandableListView(mActivity);
         dest.onRestoreInstanceState(p1);
         Parcelable p2 = dest.onSaveInstanceState();
 
@@ -389,11 +479,17 @@ public class ExpandableListViewTest extends AndroidTestCase {
     }
 
     public void testDispatchDraw() {
-        MockExpandableListView expandableListView = new MockExpandableListView(mContext);
+        MockExpandableListView expandableListView = new MockExpandableListView(mActivity);
         expandableListView.dispatchDraw(new Canvas());
     }
 
     private class MockExpandableListAdapter implements ExpandableListAdapter {
+        private final LayoutInflater mLayoutInflater;
+
+        public MockExpandableListAdapter() {
+            mLayoutInflater = LayoutInflater.from(mActivity);
+        }
+
         public void registerDataSetObserver(DataSetObserver observer) {
         }
 
@@ -443,12 +539,24 @@ public class ExpandableListViewTest extends AndroidTestCase {
 
         public View getGroupView(int groupPosition, boolean isExpanded,
                 View convertView, ViewGroup parent) {
-            return null;
+            TextView result = (TextView) convertView;
+            if (result == null) {
+                result = (TextView) mLayoutInflater.inflate(
+                        R.layout.expandablelistview_group, parent, false);
+            }
+            result.setText("Group " + groupPosition);
+            return result;
         }
 
         public View getChildView(int groupPosition, int childPosition,
                 boolean isLastChild, View convertView, ViewGroup parent) {
-            return null;
+            TextView result = (TextView) convertView;
+            if (result == null) {
+                result = (TextView) mLayoutInflater.inflate(
+                        R.layout.expandablelistview_child, parent, false);
+            }
+            result.setText("Child " + childPosition);
+            return result;
         }
 
         public boolean isChildSelectable(int groupPosition, int childPosition) {
@@ -475,72 +583,6 @@ public class ExpandableListViewTest extends AndroidTestCase {
 
         public long getCombinedGroupId(long groupId) {
             return 0;
-        }
-    }
-
-    private class MockOnGroupExpandListener implements ExpandableListView.OnGroupExpandListener {
-        private boolean mCalledOnGroupExpand = false;
-
-        public void onGroupExpand(int groupPosition) {
-            mCalledOnGroupExpand = true;
-        }
-
-        public boolean hasCalledOnGroupExpand() {
-            return mCalledOnGroupExpand;
-        }
-
-        public void reset() {
-            mCalledOnGroupExpand = false;
-        }
-    }
-
-    private class MockOnGroupCollapseListener implements
-            ExpandableListView.OnGroupCollapseListener {
-        private boolean mCalledOnGroupCollapse = false;
-
-        public void onGroupCollapse(int groupPosition) {
-            mCalledOnGroupCollapse = true;
-        }
-
-        public boolean hasCalledOnGroupCollapse() {
-            return mCalledOnGroupCollapse;
-        }
-
-        public void reset() {
-            mCalledOnGroupCollapse = false;
-        }
-    }
-
-    private class MockOnItemClickListener implements OnItemClickListener {
-        public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-        }
-    }
-
-    private class MockOnGroupClickListener implements OnGroupClickListener {
-        private boolean mCalledOnGroupClick = false;
-
-        public boolean onGroupClick(ExpandableListView parent, View v,
-                int groupPosition, long id) {
-            mCalledOnGroupClick = true;
-            return true;
-        }
-
-        public boolean hasCalledOnGroupClick() {
-            return mCalledOnGroupClick;
-        }
-    }
-
-    private class MockOnChildClickListener implements OnChildClickListener {
-        private boolean mCalledOnChildClick = false;
-
-        public boolean onChildClick(ExpandableListView parent, View v,
-                int groupPosition, int childPosition, long id) {
-            mCalledOnChildClick = true;
-            return true;
-        }
-
-        public boolean hasCalledOnChildClick() {
-            return mCalledOnChildClick;
         }
     }
 
