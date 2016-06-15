@@ -124,8 +124,6 @@ public class VideoEncoderDecoderTest extends CtsAndroidTestCase {
         long now = System.currentTimeMillis();
         mRandom = new Random(now);
         mTestConfig = new TestConfig();
-        String streamName = "video_encoder_decoder_test";
-        mReportLog = new DeviceReportLog(REPORT_LOG_NAME, streamName);
         super.setUp();
     }
 
@@ -139,7 +137,6 @@ public class VideoEncoderDecoderTest extends CtsAndroidTestCase {
         mUVDirectBuffer = null;
         mRandom = null;
         mTestConfig = null;
-        mReportLog.submit(getInstrumentation());
         super.tearDown();
     }
 
@@ -555,20 +552,28 @@ public class VideoEncoderDecoderTest extends CtsAndroidTestCase {
             // it will be good to clean everything to make every run the same.
             System.gc();
         }
-        mReportLog.addValues("encoder", encoderFpsResults, ResultType.HIGHER_BETTER,
+        String streamName = "video_encoder_decoder_test";
+        mReportLog = new DeviceReportLog(REPORT_LOG_NAME, streamName);
+        mReportLog.addValue("encoder_name", encoderName, ResultType.NEUTRAL, ResultUnit.NONE);
+        mReportLog.addValue("decoder_name", decoderName, ResultType.NEUTRAL, ResultUnit.NONE);
+        mReportLog.addValue("mime_type", mimeType, ResultType.NEUTRAL, ResultUnit.NONE);
+        mReportLog.addValue("width", w, ResultType.NEUTRAL, ResultUnit.NONE);
+        mReportLog.addValue("height", h, ResultType.NEUTRAL, ResultUnit.NONE);
+        mReportLog.addValues("encoder_fps", encoderFpsResults, ResultType.HIGHER_BETTER,
                 ResultUnit.FPS);
         mReportLog.addValues("rms_error", decoderRmsErrorResults, ResultType.LOWER_BETTER,
                 ResultUnit.NONE);
-        mReportLog.addValues("decoder", decoderFpsResults, ResultType.HIGHER_BETTER,
+        mReportLog.addValues("decoder_fps", decoderFpsResults, ResultType.HIGHER_BETTER,
                 ResultUnit.FPS);
-        mReportLog.addValues("encoder_decoder", totalFpsResults, ResultType.HIGHER_BETTER,
+        mReportLog.addValues("encoder_decoder_fps", totalFpsResults, ResultType.HIGHER_BETTER,
                 ResultUnit.FPS);
-        mReportLog.addValue(mimeType + "_encoder_average_fps_for_" + w + "x" + h,
-                Stat.getAverage(encoderFpsResults), ResultType.HIGHER_BETTER, ResultUnit.FPS);
-        mReportLog.addValue(mimeType + "_decoder_average_fps_for_" + w + "x" + h,
-                Stat.getAverage(decoderFpsResults), ResultType.HIGHER_BETTER, ResultUnit.FPS);
-        mReportLog.setSummary("encoder_decoder", Stat.getAverage(totalFpsResults),
+        mReportLog.addValue("encoder_average_fps", Stat.getAverage(encoderFpsResults),
                 ResultType.HIGHER_BETTER, ResultUnit.FPS);
+        mReportLog.addValue("decoder_average_fps", Stat.getAverage(decoderFpsResults),
+                ResultType.HIGHER_BETTER, ResultUnit.FPS);
+        mReportLog.setSummary("encoder_decoder_average_fps", Stat.getAverage(totalFpsResults),
+                ResultType.HIGHER_BETTER, ResultUnit.FPS);
+        mReportLog.submit(getInstrumentation());
 
         boolean encTestPassed = false;
         boolean decTestPassed = false;
@@ -581,24 +586,48 @@ public class VideoEncoderDecoderTest extends CtsAndroidTestCase {
                         + decoderRmsErrorResults[i] + " vs " + mRmsErrorMargain);
             }
 
+            if (mTestConfig.mReportFrameTime || mTestConfig.mTestResult) {
+                streamName = "video_encoder_decoder_test_details";
+                mReportLog = new DeviceReportLog(REPORT_LOG_NAME, streamName);
+                mReportLog.addValue("round", i, ResultType.NEUTRAL, ResultUnit.NONE);
+                mReportLog.addValue("encoder_name", encoderName, ResultType.NEUTRAL, ResultUnit.NONE);
+                mReportLog.addValue("decoder_name", decoderName, ResultType.NEUTRAL, ResultUnit.NONE);
+                mReportLog.addValue("mime_type", mimeType, ResultType.NEUTRAL, ResultUnit.NONE);
+                mReportLog.addValue("width", w, ResultType.NEUTRAL, ResultUnit.NONE);
+                mReportLog.addValue("height", h, ResultType.NEUTRAL, ResultUnit.NONE);
+            }
+
             if (mTestConfig.mReportFrameTime) {
-                mReportLog.addValue(
-                        "encodertest#" + i + ": " + Arrays.toString(mEncoderFrameTimeDiff[i]),
-                        0, ResultType.NEUTRAL, ResultUnit.NONE);
-                mReportLog.addValue(
-                        "decodertest#" + i + ": " + Arrays.toString(mDecoderFrameTimeDiff[i]),
-                        0, ResultType.NEUTRAL, ResultUnit.NONE);
+                mReportLog.addValues("encoder_test", mEncoderFrameTimeDiff[i],
+                        ResultType.NEUTRAL, ResultUnit.NONE);
+                mReportLog.addValues("decoder_test", mDecoderFrameTimeDiff[i],
+                        ResultType.NEUTRAL, ResultUnit.NONE);
             }
 
             if (mTestConfig.mTestResult) {
                 MediaUtils.Stats encStats =
                     new MediaUtils.Stats(mEncoderFrameTimeDiff[i])
                             .movingAverage(MOVING_AVERAGE_NUM);
-                String prefix = "codec=" + encoderName + " round=" + i +
+                String encInputFormat = "" + mEncInputFormat;
+                String encOutputFormat = "" + mEncOutputFormat;
+                String decOutputFormat = "" + mDecOutputFormat;
+                decOutputFormat = decOutputFormat.substring(1, decOutputFormat.length() - 1);
+                encInputFormat = encInputFormat.substring(1, encInputFormat.length() - 1);
+                encOutputFormat = encOutputFormat.substring(1, encOutputFormat.length() - 1);
+                mReportLog.addValue("encoder_input_format", encInputFormat, ResultType.NEUTRAL,
+                        ResultUnit.NONE);
+                mReportLog.addValue("encoder_output_format", encOutputFormat, ResultType.NEUTRAL,
+                        ResultUnit.NONE);
+                mReportLog.addValue("decoder_output_format", decOutputFormat, ResultType.NEUTRAL,
+                        ResultUnit.NONE);
+
+                // prefix for MediaUtils must be lowercase alphanumeric underscored format.
+                String prefix = "encoder";
+                String message = "codec=" + encoderName + " round=" + i +
                         " EncInputFormat=" + mEncInputFormat +
                         " EncOutputFormat=" + mEncOutputFormat;
-                String result =
-                        MediaUtils.logAchievableRatesResults(mReportLog, prefix, encStats);
+                String result = MediaUtils.logAchievableRatesResults(mReportLog, prefix, message,
+                        encStats);
                 double measuredEncFps = 1000000000 / encStats.getMin();
                 resultRawData[i] = result;
                 measuredFps[i] = measuredEncFps;
@@ -610,14 +639,20 @@ public class VideoEncoderDecoderTest extends CtsAndroidTestCase {
                 MediaUtils.Stats decStats =
                     new MediaUtils.Stats(mDecoderFrameTimeDiff[i])
                             .movingAverage(MOVING_AVERAGE_NUM);
-                prefix = "codec=" + decoderName + " size=" + w + "x" + h + " round=" + i +
+                // prefix for MediaUtils must be lowercase alphanumeric underscored format.
+                prefix = "decoder";
+                message = "codec=" + decoderName + " size=" + w + "x" + h + " round=" + i +
                         " DecOutputFormat=" + mDecOutputFormat;
-                MediaUtils.logAchievableRatesResults(mReportLog, prefix, decStats);
+                MediaUtils.logAchievableRatesResults(mReportLog, prefix, message, decStats);
                 double measuredDecFps = 1000000000 / decStats.getMin();
                 if (!decTestPassed) {
                     decTestPassed = MediaUtils.verifyResults(
                             decoderName, mimeType, w, h, measuredDecFps);
                 }
+            }
+
+            if (mTestConfig.mReportFrameTime || mTestConfig.mTestResult) {
+                mReportLog.submit(getInstrumentation());
             }
         }
 
