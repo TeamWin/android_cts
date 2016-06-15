@@ -34,10 +34,17 @@ public class PrivilegedUpdateTests extends DeviceTestCase implements IAbiReceive
     /** Package name of the tests to be run */
     private static final String TEST_PKG = "com.android.cts.privilegedupdate";
 
-    /** APK that contains the shim; to test upgrading */
+    /** APK that contains the shim update; to test upgrading */
     private static final String SHIM_UPDATE_APK = "CtsShimPrivUpgradePrebuilt.apk";
+    /** APK that contains the shim update w/ incorrect SHA; to test upgrade fails */
+    private static final String SHIM_UPDATE_FAIL_APK = "CtsShimPrivUpgradeWrongSHAPrebuilt.apk";
     /** APK that contains individual shim test cases */
     private static final String TEST_APK = "CtsPrivilegedUpdateTests.apk";
+
+    private static final String RESTRICTED_UPGRADE_FAILURE =
+            "INSTALL_FAILED_INVALID_APK:"
+            + " New package fails restrict-update check:"
+            + " com.android.cts.priv.ctsshim";
 
     private IAbi mAbi;
     private IBuildInfo mCtsBuild;
@@ -74,6 +81,12 @@ public class PrivilegedUpdateTests extends DeviceTestCase implements IAbiReceive
         getDevice().uninstallPackage(SHIM_PKG);
         getDevice().uninstallPackage(TEST_PKG);
         getDevice().executeShellCommand("pm enable " + SHIM_PKG);
+    }
+
+    public void testPrivilegedAppUpgradeRestricted() throws Exception {
+        getDevice().uninstallPackage(SHIM_PKG);
+        assertEquals(RESTRICTED_UPGRADE_FAILURE, getDevice().installPackage(
+                MigrationHelper.getTestFile(mCtsBuild, SHIM_UPDATE_FAIL_APK), true));
     }
 
     public void testSystemAppPriorities() throws Exception {

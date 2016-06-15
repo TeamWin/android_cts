@@ -111,7 +111,8 @@ public class PackageSignatureTest extends AndroidTestCase {
             "android.core.tests.libcore.package.tests",
 
             // Test package to verify upgrades to privileged applications
-            "com.android.cts.priv.ctsshim"
+            "com.android.cts.priv.ctsshim",
+            "com.android.cts.ctsshim"
 
             ));
 

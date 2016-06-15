@@ -35,6 +35,7 @@ cts_security_apps_list := \
     CtsSharedUidInstall \
     CtsSharedUidInstallDiffCert \
     CtsShimPrivUpgradePrebuilt \
+    CtsShimPrivUpgradeWrongSHAPrebuilt \
     CtsSimpleAppInstall \
     CtsSimpleAppInstallDiffCert \
     CtsSplitApp \
