@@ -117,7 +117,7 @@ static jboolean android_security_cts_NativeCodeTest_doVrootTest(JNIEnv*, jobject
     args.oldlenp = (size_t *) 0xc0000000; // PAGE_OFFSET
 
     int result = syscall(__NR__sysctl, &args);
-    return ((result == -1) && (errno == EFAULT));
+    return ((result == -1) && (errno == EFAULT || errno == ENOSYS));
 #else
     return true;
 #endif
@@ -274,4 +274,3 @@ int register_android_security_cts_NativeCodeTest(JNIEnv* env)
     return env->RegisterNatives(clazz, gMethods,
             sizeof(gMethods) / sizeof(JNINativeMethod));
 }
-
