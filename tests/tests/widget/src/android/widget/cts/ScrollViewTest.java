@@ -24,6 +24,7 @@ import android.widget.FrameLayout;
 import android.widget.cts.R;
 
 
+import android.widget.cts.util.TestUtils;
 import org.xmlpull.v1.XmlPullParser;
 
 import android.app.Activity;
@@ -75,11 +76,10 @@ public class ScrollViewTest extends ActivityInstrumentationTestCase2<ScrollViewC
         mScrollView = (MyScrollView) mActivity.findViewById(R.id.scroll_view);
 
         // calculate pixel positions from dpi constants.
-        final float density = getActivity().getResources().getDisplayMetrics().density;
-        mItemWidth = (int) (ITEM_WIDTH_DPI * density + 0.5f);
-        mItemHeight = (int) (ITEM_HEIGHT_DPI * density + 0.5f);
-        mPageWidth = (int) (PAGE_WIDTH_DPI * density + 0.5f);
-        mPageHeight = (int) (PAGE_HEIGHT_DPI * density + 0.5f);
+        mItemWidth = TestUtils.dpToPx(mActivity, ITEM_WIDTH_DPI);
+        mItemHeight = TestUtils.dpToPx(mActivity, ITEM_HEIGHT_DPI);
+        mPageWidth = TestUtils.dpToPx(mActivity, PAGE_WIDTH_DPI);
+        mPageHeight = TestUtils.dpToPx(mActivity, PAGE_HEIGHT_DPI);
 
         mScrollBottom = mItemHeight * ITEM_COUNT - mPageHeight;
         mScrollRight = mItemWidth - mPageWidth;

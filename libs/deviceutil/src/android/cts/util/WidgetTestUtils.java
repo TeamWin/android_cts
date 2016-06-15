@@ -33,10 +33,11 @@ import junit.framework.Assert;
  */
 public class WidgetTestUtils {
     /**
-     * Assert that two bitmaps are equal.
+     * Assert that two bitmaps have identical content (same dimensions, same configuration,
+     * same pixel content).
      *
-     * @param Bitmap b1 the first bitmap which needs to compare.
-     * @param Bitmap b2 the second bitmap which needs to compare.
+     * @param b1 the first bitmap which needs to compare.
+     * @param b2 the second bitmap which needs to compare.
      */
     public static void assertEquals(Bitmap b1, Bitmap b2) {
         if (b1 == b2) {

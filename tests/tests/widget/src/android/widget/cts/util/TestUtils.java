@@ -18,11 +18,14 @@ package android.widget.cts.util;
 
 import android.annotation.ColorInt;
 import android.annotation.NonNull;
+import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
+import android.text.Editable;
+import android.text.TextUtils;
 import android.util.Pair;
 import android.view.View;
 import android.view.ViewParent;
@@ -330,7 +333,7 @@ public class TestUtils {
             @Override
             public boolean matches(Object o) {
                 if (o instanceof CharSequence) {
-                    return expected.toString().compareTo(o.toString()) == 0;
+                    return TextUtils.equals(expected, (CharSequence) o);
                 }
                 return false;
             }
@@ -340,5 +343,10 @@ public class TestUtils {
                 description.appendText("doesn't match " + expected);
             }
         });
+    }
+
+    public static int dpToPx(Context context, int dp) {
+        final float density = context.getResources().getDisplayMetrics().density;
+        return (int) (dp * density + 0.5f);
     }
 }
