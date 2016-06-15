@@ -21,6 +21,7 @@ import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.NameNotFoundException;
 import android.content.pm.Signature;
 import android.content.res.Resources.NotFoundException;
+import android.platform.test.annotations.RestrictedBuildTest;
 import android.test.AndroidTestCase;
 import android.util.Log;
 
@@ -41,6 +42,7 @@ public class PackageSignatureTest extends AndroidTestCase {
     private static final String TAG = PackageSignatureTest.class.getSimpleName();
     private static final Pattern TEST_PACKAGE_PATTERN = Pattern.compile("android\\.[^\\.]+\\.cts");
 
+    @RestrictedBuildTest
     public void testPackageSignatures() throws Exception {
         Set<String> badPackages = new HashSet<String>();
         Set<Signature> wellKnownSignatures = getWellKnownSignatures();
