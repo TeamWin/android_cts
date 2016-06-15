@@ -42,7 +42,6 @@ include $(CLEAR_VARS)
 
 LOCAL_MODULE := CtsShimPrivUpgradePrebuilt
 LOCAL_MODULE_TAGS := tests
-#LOCAL_PRIVILEGED_MODULE := true
 LOCAL_MODULE_CLASS := APPS
 LOCAL_BUILT_MODULE_STEM := package.apk
 # Make sure the build system doesn't try to resign the APK
@@ -50,6 +49,37 @@ LOCAL_CERTIFICATE := PRESIGNED
 LOCAL_COMPATIBILITY_SUITE := cts
 
 LOCAL_SRC_FILES := CtsShimPrivUpgrade.apk
+
+include $(BUILD_PREBUILT)
+
+# Add package to the set of APKs available to CTS
+# Unceremoneously ripped from cts/build/support_package.mk
+cts_support_apks :=
+$(foreach fp, $(ALL_MODULES.$(LOCAL_MODULE).BUILT_INSTALLED),\
+  $(eval pair := $(subst :,$(space),$(fp)))\
+  $(eval built := $(word 1,$(pair)))\
+  $(eval installed := $(CTS_TESTCASES_OUT)/$(notdir $(word 2,$(pair))))\
+  $(eval $(call copy-one-file, $(built), $(installed)))\
+  $(eval cts_support_apks += $(installed)))
+
+# Have the module name depend on the cts files; so the cts files get generated when you run mm/mmm/mma/mmma.
+$(my_register_name) : $(cts_support_apks)
+
+
+###########################################################
+# Variant: Privileged app upgrade (wrong SHA)
+
+include $(CLEAR_VARS)
+
+LOCAL_MODULE := CtsShimPrivUpgradeWrongSHAPrebuilt
+LOCAL_MODULE_TAGS := tests
+LOCAL_MODULE_CLASS := APPS
+LOCAL_BUILT_MODULE_STEM := package.apk
+# Make sure the build system doesn't try to resign the APK
+LOCAL_CERTIFICATE := PRESIGNED
+LOCAL_COMPATIBILITY_SUITE := cts
+
+LOCAL_SRC_FILES := CtsShimPrivUpgradeWrongSHA.apk
 
 include $(BUILD_PREBUILT)
 
