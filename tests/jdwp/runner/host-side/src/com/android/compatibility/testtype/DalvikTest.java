@@ -40,6 +40,7 @@ import com.android.tradefed.testtype.ITestCollector;
 import com.android.tradefed.testtype.ITestFileFilterReceiver;
 import com.android.tradefed.testtype.ITestFilterReceiver;
 import com.android.tradefed.util.ArrayUtil;
+import com.android.tradefed.util.FileUtil;
 import com.android.tradefed.util.TimeVal;
 import com.google.common.base.Splitter;
 
@@ -105,8 +106,8 @@ public class DalvikTest implements IAbiReceiver, IBuildReceiver, IDeviceTest, IR
     // include and exclude filters, and exclude filters file.
     private static final String COMMAND = "dalvikvm%s -classpath %s %s "
             + "com.android.compatibility.dalvik.DalvikTestRunner --abi=%s %s %s %s %s %s %s";
-    private static final String INCLUDE_FILE = "/data/local/tmp/ctsjdwp/includes";
-    private static final String EXCLUDE_FILE = "/data/local/tmp/ctsjdwp/excludes";
+    private static final String INCLUDE_FILE = "/data/local/tmp/dalvik/includes";
+    private static final String EXCLUDE_FILE = "/data/local/tmp/dalvik/excludes";
     private static String START_RUN = "start-run";
     private static String END_RUN = "end-run";
     private static String START_TEST = "start-test";
@@ -283,9 +284,7 @@ public class DalvikTest implements IAbiReceiver, IBuildReceiver, IDeviceTest, IR
         } catch (IOException e) {
             throw new RuntimeException("Failed to parse expectations", e);
         } finally {
-            if (tmpExcludeFile != null) {
-                tmpExcludeFile.delete();
-            }
+            FileUtil.deleteFile(tmpExcludeFile);
         }
 
         // push one file of include filters to the device, if file exists
