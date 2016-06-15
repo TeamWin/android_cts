@@ -72,13 +72,10 @@ public class VideoDecoderPerfTest extends MediaPlayerTestBase {
         super.setUp();
         mVerifyResults = true;
         mResources = mContext.getResources();
-        String streamName = "video_decoder_perf_test";
-        mReportLog = new DeviceReportLog(REPORT_LOG_NAME, streamName);
     }
 
     @Override
     protected void tearDown() throws Exception {
-        mReportLog.submit(getInstrumentation());
         super.tearDown();
     }
 
@@ -150,8 +147,6 @@ public class VideoDecoderPerfTest extends MediaPlayerTestBase {
             mMeasuredFps = null;
             mResultRawData = null;
         }
-        // use 0 for summary line, detail for each test config is in the report.
-        mReportLog.setSummary("average_fps", 0, ResultType.HIGHER_BETTER, ResultUnit.FPS);
         mSamplesInMemory.clear();
     }
 
@@ -168,6 +163,16 @@ public class VideoDecoderPerfTest extends MediaPlayerTestBase {
         String mime = format.getString(MediaFormat.KEY_MIME);
         ByteBuffer[] codecInputBuffers;
         ByteBuffer[] codecOutputBuffers;
+
+        String streamName = "video_decoder_perf_test";
+        mReportLog = new DeviceReportLog(REPORT_LOG_NAME, streamName);
+        mReportLog.addValue("decoder_name", name, ResultType.HIGHER_BETTER, ResultUnit.NONE);
+        mReportLog.addValue("video", video, ResultType.HIGHER_BETTER, ResultUnit.NONE);
+        mReportLog.addValue("width", w, ResultType.HIGHER_BETTER, ResultUnit.NONE);
+        mReportLog.addValue("height", h, ResultType.HIGHER_BETTER, ResultUnit.NONE);
+        mReportLog.addValue("decode_to", surface == null ? "buffer" : "surface",
+                ResultType.HIGHER_BETTER, ResultUnit.NONE);
+        mReportLog.addValue("round", round, ResultType.HIGHER_BETTER, ResultUnit.NONE);
 
         if (mSamplesInMemory.size() == 0) {
             int totalMemory = 0;
@@ -297,15 +302,21 @@ public class VideoDecoderPerfTest extends MediaPlayerTestBase {
                 " decodeto=" + ((surface == null) ? "buffer" : "surface") +
                 " mime=" + mime + " round=" + round +
                 " DecOutputFormat=" + mDecOutputFormat;
+        String decOutputFormat = "" + mDecOutputFormat;
+        decOutputFormat = decOutputFormat.substring(1, decOutputFormat.length() - 1);
+        mReportLog.addValue("mime", mime, ResultType.NEUTRAL, ResultUnit.NONE);
+        mReportLog.addValue("decoder_output_format", decOutputFormat, ResultType.NEUTRAL,
+                ResultUnit.NONE);
 
-        String message = "average fps for " + testConfig;
         double fps = (double)outputNum / ((finish - start) / 1000.0);
-        mReportLog.addValue(message, fps, ResultType.HIGHER_BETTER, ResultUnit.FPS);
+        mReportLog.addValue("average_fps", fps, ResultType.HIGHER_BETTER, ResultUnit.FPS);
 
         MediaUtils.Stats stats =
             new MediaUtils.Stats(frameTimeDiff).movingAverage(MOVING_AVERAGE_NUM);
-        String result =
-                MediaUtils.logAchievableRatesResults(mReportLog, testConfig, stats);
+        // prefix for MediaUtils must be lowercase alphanumeric underscored format.
+        String prefix = "decoder";
+        String message = "average fps for " + testConfig;
+        String result = MediaUtils.logAchievableRatesResults(mReportLog, prefix, message, stats);
         fps = 1000000000 / stats.getMin();
         if (surface != null) {
             mMeasuredFps[round] = fps;
@@ -315,7 +326,7 @@ public class VideoDecoderPerfTest extends MediaPlayerTestBase {
         if (!mVerifyResults) {
             return true;
         }
-
+        mReportLog.submit(getInstrumentation());
         return MediaUtils.verifyResults(name, mime, w, h, fps);
     }
 
