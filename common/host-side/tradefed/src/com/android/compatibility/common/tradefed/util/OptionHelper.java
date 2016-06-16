@@ -100,21 +100,28 @@ public final class OptionHelper {
         Set<String> optionShortNames = OptionHelper.getOptionShortNames(object);
         List<String> validCliArgs = new ArrayList<String>();
 
-        // get "-(-)option" or "-(-)option value" substrings from the command-line string
-        Pattern cliPattern = Pattern.compile("-[-\\w]+([ =][^-]+)?");
+        // get option/value substrings from the command-line string
+        // N.B. tradefed rewrites some expressions from option="value a b" to "option=value a b"
+        String quoteMatching = "(\"[^\"]+\")";
+        Pattern cliPattern = Pattern.compile(
+            "((-[-\\w]+([ =]"                       // match -option=value or --option=value
+            + "(" + quoteMatching + "|[^-\"]+))?"   // allow -option "..." and -option x y z
+            + "))|"
+            + quoteMatching                         // allow anything in direct quotes
+        );
         Matcher matcher = cliPattern.matcher(commandString);
 
         while (matcher.find()) {
             String optionInput = matcher.group();
             // split between the option name and value
             String[] keyNameTokens = optionInput.split("[ =]", 2);
-            // remove initial hyphens from option args
-            String keyName = keyNameTokens[0].replaceFirst("^--?", "");
+            // remove initial hyphens and any starting double quote from option args
+            String keyName = keyNameTokens[0].replaceFirst("^\"?--?", "");
 
             // add substrings only when the options are recognized
             if (optionShortNames.contains(keyName) || optionNames.contains(keyName)) {
                 // add values separated by spaces or in quotes separately to the return array
-                Pattern tokenPattern = Pattern.compile("(\".*\")|\\S+");
+                Pattern tokenPattern = Pattern.compile("(\".*\")|[^\\s=]+");
                 Matcher tokenMatcher = tokenPattern.matcher(optionInput);
                 while (tokenMatcher.find()) {
                     String token = tokenMatcher.group().replaceAll("\"", "");
