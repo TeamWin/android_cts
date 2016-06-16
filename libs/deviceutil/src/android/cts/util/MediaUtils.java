@@ -569,6 +569,38 @@ public class MediaUtils {
     }
 
     /*
+     *  ---------------------- HELPER METHODS FOR CODEC CONFIGURATION
+     */
+
+    /** Format must contain mime, width and height.
+     *  Throws Exception if encoder does not support this width and height */
+    public static void setMaxEncoderFrameAndBitrates(
+            MediaCodec encoder, MediaFormat format, int maxFps) {
+        String mime = format.getString(MediaFormat.KEY_MIME);
+
+        VideoCapabilities vidCaps =
+            encoder.getCodecInfo().getCapabilitiesForType(mime).getVideoCapabilities();
+        setMaxEncoderFrameAndBitrates(vidCaps, format, maxFps);
+    }
+
+    public static void setMaxEncoderFrameAndBitrates(
+            VideoCapabilities vidCaps, MediaFormat format, int maxFps) {
+        int width = format.getInteger(MediaFormat.KEY_WIDTH);
+        int height = format.getInteger(MediaFormat.KEY_HEIGHT);
+
+        int maxWidth = vidCaps.getSupportedWidths().getUpper();
+        int maxHeight = vidCaps.getSupportedHeightsFor(maxWidth).getUpper();
+        int frameRate = Math.min(
+                maxFps, vidCaps.getSupportedFrameRatesFor(width, height).getUpper().intValue());
+        format.setInteger(MediaFormat.KEY_FRAME_RATE, frameRate);
+
+        int bitrate = vidCaps.getBitrateRange().clamp(
+            (int)(vidCaps.getBitrateRange().getUpper() /
+                  Math.sqrt((double)maxWidth * maxHeight / width / height)));
+        format.setInteger(MediaFormat.KEY_BIT_RATE, bitrate);
+    }
+
+    /*
      *  ------------------ HELPER METHODS FOR STATISTICS AND REPORTING ------------------
      */
 

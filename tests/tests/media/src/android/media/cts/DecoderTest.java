@@ -362,6 +362,7 @@ public class DecoderTest extends MediaPlayerTestBase {
                     if (n < 0) {
                         flags = MediaCodec.BUFFER_FLAG_END_OF_STREAM;
                         sawInputEOS = true;
+                        n = 0;
                     }
                     dec.queueInputBuffer(bufidx, 0, n, time, flags);
                     ex.advance();

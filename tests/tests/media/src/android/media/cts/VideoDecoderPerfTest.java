@@ -41,10 +41,12 @@ import java.util.LinkedList;
 public class VideoDecoderPerfTest extends MediaPlayerTestBase {
     private static final String TAG = "VideoDecoderPerfTest";
     private static final String REPORT_LOG_NAME = "CtsMediaTestCases";
-    private static final int TOTAL_FRAMES = 3000;
+    private static final int TOTAL_FRAMES = 30000;
+    private static final int MIN_FRAMES = 3000;
     private static final int MAX_TIME_MS = 120000;  // 2 minutes
-    private static final int MAX_TEST_TIMEOUT_MS = 600000;   // 10 minutes
-    private static final int NUMBER_OF_REPEAT = 2;
+    private static final int MAX_TEST_TIMEOUT_MS = 600000;  // 10 minutes
+    private static final int MIN_TEST_MS = 10000;  // 10 seconds
+    private static final int NUMBER_OF_REPEATS = 2;
     private static final String VIDEO_AVC = MediaFormat.MIMETYPE_VIDEO_AVC;
     private static final String VIDEO_VP8 = MediaFormat.MIMETYPE_VIDEO_VP8;
     private static final String VIDEO_VP9 = MediaFormat.MIMETYPE_VIDEO_VP9;
@@ -52,10 +54,11 @@ public class VideoDecoderPerfTest extends MediaPlayerTestBase {
     private static final String VIDEO_H263 = MediaFormat.MIMETYPE_VIDEO_H263;
     private static final String VIDEO_MPEG4 = MediaFormat.MIMETYPE_VIDEO_MPEG4;
 
-    private static final int MAX_SIZE_SAMPLES_IN_MEMORY_BYTES = 5 * 1024 * 1024;  // 5MB
+    private static final int MAX_SIZE_SAMPLES_IN_MEMORY_BYTES = 12 << 20;  // 12MB
     LinkedList<ByteBuffer> mSamplesInMemory = new LinkedList<ByteBuffer>();
     private MediaFormat mDecInputFormat;
     private MediaFormat mDecOutputFormat;
+    private int mBitrate;
 
     private Resources mResources;
 
@@ -86,11 +89,11 @@ public class VideoDecoderPerfTest extends MediaPlayerTestBase {
         }
         // Ensure we can finish this test within the test timeout. Allow 25% slack (4/5).
         long maxTimeMs = Math.min(
-                testTimeoutMs / names.length * 4 / 5 / NUMBER_OF_REPEAT, MAX_TIME_MS);
+                testTimeoutMs / names.length * 4 / 5 / NUMBER_OF_REPEATS, MAX_TIME_MS);
         for (String name : names) {
-            double measuredFps[] = new double[NUMBER_OF_REPEAT];
+            double measuredFps[] = new double[NUMBER_OF_REPEATS];
             Log.d(TAG, "testing " + name + " for " + maxTimeMs + " msecs");
-            for (int i = 0; i < NUMBER_OF_REPEAT; ++i) {
+            for (int i = 0; i < NUMBER_OF_REPEATS; ++i) {
                 // Decode to Surface.
                 Log.d(TAG, "round #" + i + " decode to surface");
                 Surface s = getActivity().getSurfaceHolder().getSurface();
@@ -140,7 +143,11 @@ public class VideoDecoderPerfTest extends MediaPlayerTestBase {
             }
             Log.d(TAG, mSamplesInMemory.size() + " samples in memory for " +
                     (totalMemory / 1024) + " KB.");
+            // bitrate normalized to 30fps
+            mBitrate = (int)Math.round(totalMemory * 30. * 8. / mSamplesInMemory.size());
         }
+        format.setInteger(MediaFormat.KEY_BIT_RATE, mBitrate);
+
         int sampleIndex = 0;
 
         extractor.release();
@@ -158,7 +165,7 @@ public class VideoDecoderPerfTest extends MediaPlayerTestBase {
         // start decode loop
         MediaCodec.BufferInfo info = new MediaCodec.BufferInfo();
 
-        final long kTimeOutUs = 5000; // 5ms timeout
+        final long kTimeOutUs = 1000; // 1ms timeout
         double[] frameTimeUsDiff = new double[TOTAL_FRAMES - 1];
         long lastOutputTimeUs = 0;
         boolean sawInputEOS = false;
@@ -181,11 +188,10 @@ public class VideoDecoderPerfTest extends MediaPlayerTestBase {
                     // use 120fps to compute pts
                     long presentationTimeUs = inputNum * 1000000L / frameRate;
 
-                    sawInputEOS = (++inputNum == TOTAL_FRAMES);
-                    if (!sawInputEOS &&
-                            ((System.currentTimeMillis() - start) > maxTimeMs)) {
-                        sawInputEOS = true;
-                    }
+                    long elapsed = System.currentTimeMillis() - start;
+                    sawInputEOS = ((++inputNum == TOTAL_FRAMES)
+                                   || (elapsed > maxTimeMs)
+                                   || (elapsed > MIN_TEST_MS && outputNum > MIN_FRAMES));
                     if (sawInputEOS) {
                         Log.d(TAG, "saw input EOS (stop at sample).");
                     }
