@@ -16,6 +16,8 @@
 
 package android.security.cts;
 
+import android.platform.test.annotations.RestrictedBuildTest;
+
 import com.android.cts.migration.MigrationHelper;
 import com.android.tradefed.build.IBuildInfo;
 import com.android.tradefed.device.CollectingOutputReceiver;
@@ -132,6 +134,7 @@ public class SELinuxHostTest extends DeviceTestCase implements IBuildReceiver, I
      *
      * @throws Exception
      */
+    @RestrictedBuildTest
     public void testAllDomainsEnforcing() throws Exception {
 
         /* run sepolicy-analyze permissive check on policy file */
@@ -739,6 +742,7 @@ public class SELinuxHostTest extends DeviceTestCase implements IBuildReceiver, I
      * Nothing should be running in this domain, cardinality test is all thats
      * needed
      */
+    @RestrictedBuildTest
     public void testSuDomain() throws DeviceNotAvailableException {
         assertDomainEmpty("u:r:su:s0");
     }

@@ -28,7 +28,7 @@ LOCAL_MODULE := CtsSecurityHostTestCases
 
 LOCAL_MODULE_CLASS := JAVA_LIBRARIES
 
-LOCAL_JAVA_LIBRARIES := cts-tradefed tradefed-prebuilt
+LOCAL_JAVA_LIBRARIES := cts-tradefed tradefed-prebuilt compatibility-host-util
 
 LOCAL_STATIC_JAVA_LIBRARIES := cts-migration-lib
 
