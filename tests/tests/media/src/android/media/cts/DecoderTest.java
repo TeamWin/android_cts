@@ -47,7 +47,6 @@ import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.List;
 import java.util.zip.CRC32;
 import java.util.concurrent.TimeUnit;
@@ -289,24 +288,6 @@ public class DecoderTest extends MediaPlayerTestBase {
         return 1;
       }
 
-    private static String[] getDecoderNames(String mime) {
-        MediaCodecList mcl = new MediaCodecList(MediaCodecList.REGULAR_CODECS);
-        ArrayList<String> result = new ArrayList<String>();
-        for (MediaCodecInfo info : mcl.getCodecInfos()) {
-            if (info.isEncoder()) {
-                continue;
-            }
-            CodecCapabilities caps = null;
-            try {
-                caps = info.getCapabilitiesForType(mime);
-            } catch (IllegalArgumentException e) {  // mime is not supported
-                continue;
-            }
-            result.add(info.getName());
-        }
-        return result.toArray(new String[result.size()]);
-    }
-
     /**
      * Test ColorAspects of all the AVC decoders. Decoders should handle
      * the colors aspects presented in both the mp4 atom 'colr' and VUI
@@ -322,19 +303,36 @@ public class DecoderTest extends MediaPlayerTestBase {
      *  color_176x144_bt601_fr_sdr_h264 |  1  6  6  0  |  5  2  2  1
      */
     public void testH264ColorAspects() throws Exception {
-        String[] decoderNames = getDecoderNames(MediaFormat.MIMETYPE_VIDEO_AVC);
-        for (String decoderName: decoderNames) {
-            testColorAspects(
-                    decoderName, R.raw.color_176x144_bt709_lr_sdr_h264, 1 /* testId */,
-                    MediaFormat.COLOR_RANGE_LIMITED, MediaFormat.COLOR_STANDARD_BT709, MediaFormat.COLOR_TRANSFER_SDR_VIDEO);
-            testColorAspects(
-                    decoderName, R.raw.color_176x144_bt601_fr_sdr_h264, 2 /* testId */,
-                    MediaFormat.COLOR_RANGE_FULL, MediaFormat.COLOR_STANDARD_BT601_PAL, MediaFormat.COLOR_TRANSFER_SDR_VIDEO);
+        testColorAspects(
+                R.raw.color_176x144_bt709_lr_sdr_h264, 1 /* testId */,
+                MediaFormat.COLOR_RANGE_LIMITED, MediaFormat.COLOR_STANDARD_BT709,
+                MediaFormat.COLOR_TRANSFER_SDR_VIDEO);
+        testColorAspects(
+                R.raw.color_176x144_bt601_fr_sdr_h264, 2 /* testId */,
+                MediaFormat.COLOR_RANGE_FULL, MediaFormat.COLOR_STANDARD_BT601_PAL,
+                MediaFormat.COLOR_TRANSFER_SDR_VIDEO);
+    }
+
+    private void testColorAspects(
+            int res, int testId, int expectRange, int expectStandard, int expectTransfer)
+            throws Exception {
+        MediaFormat format = MediaUtils.getTrackFormatForResource(mContext, res, "video");
+        MediaFormat mimeFormat = new MediaFormat();
+        mimeFormat.setString(MediaFormat.KEY_MIME, format.getString(MediaFormat.KEY_MIME));
+
+        for (String decoderName: MediaUtils.getDecoderNames(mimeFormat)) {
+            if (!MediaUtils.supports(decoderName, format)) {
+                MediaUtils.skipTest(decoderName + " cannot play resource " + res);
+            } else {
+                testColorAspects(
+                        decoderName, res, testId, expectRange, expectStandard, expectTransfer);
+            }
         }
     }
 
     private void testColorAspects(
-            String decoderName, int res, int testId, int expectRange, int expectStandard, int expectTransfer) throws Exception {
+            String decoderName, int res, int testId, int expectRange,
+            int expectStandard, int expectTransfer) throws Exception {
         AssetFileDescriptor fd = mResources.openRawResourceFd(res);
         MediaExtractor ex = new MediaExtractor();
         ex.setDataSource(fd.getFileDescriptor(), fd.getStartOffset(), fd.getLength());
@@ -397,16 +395,25 @@ public class DecoderTest extends MediaPlayerTestBase {
             }
         }
 
-        DeviceReportLog log = new DeviceReportLog();
         String reportName = decoderName + "_colorAspectsTest Test " + testId +
                 " (Get R: " + colorRange + " S: " + colorStandard + " T: " + colorTransfer + ")" +
                 " (Expect R: " + expectRange + " S: " + expectStandard + " T: " + expectTransfer + ")";
         Log.d(TAG, reportName);
 
+        DeviceReportLog log = new DeviceReportLog("CtsMediaTestCases", "color_aspects_test");
+        log.addValue("decoder_name", decoderName, ResultType.NEUTRAL, ResultUnit.NONE);
+        log.addValue("test_id", testId, ResultType.NEUTRAL, ResultUnit.NONE);
+        log.addValues(
+                "rst_actual", new int[] { colorRange, colorStandard, colorTransfer },
+                ResultType.NEUTRAL, ResultUnit.NONE);
+        log.addValues(
+                "rst_expected", new int[] { expectRange, expectStandard, expectTransfer },
+                ResultType.NEUTRAL, ResultUnit.NONE);
+
         if (rangeMatch && colorMatch && transferMatch) {
-            log.addValue(reportName + " Result: ", 1, ResultType.NEUTRAL, ResultUnit.NONE);
+            log.setSummary("result", 1, ResultType.HIGHER_BETTER, ResultUnit.COUNT);
         } else {
-            log.addValue(reportName + " Result: ", 0, ResultType.NEUTRAL, ResultUnit.NONE);
+            log.setSummary("result", 0, ResultType.HIGHER_BETTER, ResultUnit.COUNT);
         }
         log.submit(getInstrumentation());
 
@@ -1979,7 +1986,7 @@ public class DecoderTest extends MediaPlayerTestBase {
         extractor.selectTrack(0); // consider variable looping on track
         MediaFormat format = extractor.getTrackFormat(0);
 
-        Collection<String> decoderNames = MediaUtils.getDecodersForFormat(format);
+        String[] decoderNames = MediaUtils.getDecoderNames(format);
         for (String decoderName: decoderNames) {
             List<Long> outputChecksums = new ArrayList<Long>();
             List<Long> outputTimestamps = new ArrayList<Long>();

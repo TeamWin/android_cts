@@ -19,6 +19,7 @@ package android.media.cts;
 import android.media.cts.R;
 
 import android.content.Context;
+import android.cts.util.MediaUtils;
 import android.media.MediaCodec;
 import android.media.MediaCodecInfo;
 import android.media.MediaCodecList;
@@ -31,6 +32,7 @@ import java.io.File;
 import java.io.InputStream;
 import java.nio.BufferOverflowException;
 import java.nio.ByteBuffer;
+import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Random;
@@ -141,8 +143,13 @@ public class EncoderTest extends AndroidTestCase {
     }
 
     private void testEncoderWithFormats(
-            String mime, List<MediaFormat> formats) {
-        List<String> componentNames = getEncoderNamesForType(mime);
+            String mime, List<MediaFormat> formatList) {
+        MediaFormat[] formats = formatList.toArray(new MediaFormat[formatList.size()]);
+        String[] componentNames = MediaUtils.getEncoderNames(formats);
+        if (componentNames.length == 0) {
+            MediaUtils.skipTest("no encoders found for " + Arrays.toString(formats));
+            return;
+        }
         ExecutorService pool = Executors.newFixedThreadPool(3);
 
         for (String componentName : componentNames) {
@@ -158,25 +165,6 @@ public class EncoderTest extends AndroidTestCase {
         } catch (InterruptedException e) {
             fail("interrupted while waiting for encoder threads");
         }
-    }
-
-    private List<String> getEncoderNamesForType(String mime) {
-        LinkedList<String> names = new LinkedList<String>();
-
-        MediaCodecList mcl = new MediaCodecList(MediaCodecList.REGULAR_CODECS);
-        for (MediaCodecInfo info : mcl.getCodecInfos()) {
-            if (!info.isEncoder()) {
-                continue;
-            }
-            for (String type : info.getSupportedTypes()) {
-                if (type.equalsIgnoreCase(mime)) {
-                    names.push(info.getName());
-                    break;
-                }
-            }
-        }
-
-        return names;
     }
 
     // See bug 25843966

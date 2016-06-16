@@ -158,6 +158,56 @@ public class MediaUtils {
      *  ------------------- HELPER METHODS FOR CHECKING CODEC SUPPORT -------------------
      */
 
+    // returns the list of codecs that support any one of the formats
+    private static String[] getCodecNames(
+            boolean isEncoder, Boolean isGoog, MediaFormat... formats) {
+        MediaCodecList mcl = new MediaCodecList(MediaCodecList.REGULAR_CODECS);
+        ArrayList<String> result = new ArrayList<>();
+        for (MediaCodecInfo info : mcl.getCodecInfos()) {
+            if (info.isEncoder() != isEncoder) {
+                continue;
+            }
+            if (isGoog != null
+                    && info.getName().toLowerCase().startsWith("omx.google.") != isGoog) {
+                continue;
+            }
+
+            for (MediaFormat format : formats) {
+                String mime = format.getString(MediaFormat.KEY_MIME);
+
+                CodecCapabilities caps = null;
+                try {
+                    caps = info.getCapabilitiesForType(mime);
+                } catch (IllegalArgumentException e) {  // mime is not supported
+                    continue;
+                }
+                if (caps.isFormatSupported(format)) {
+                    result.add(info.getName());
+                    break;
+                }
+            }
+        }
+        return result.toArray(new String[result.size()]);
+    }
+
+    /* Use isGoog = null to query all decoders */
+    public static String[] getDecoderNames(/* Nullable */ Boolean isGoog, MediaFormat... formats) {
+        return getCodecNames(false /* isEncoder */, isGoog, formats);
+    }
+
+    public static String[] getDecoderNames(MediaFormat... formats) {
+        return getCodecNames(false /* isEncoder */, null /* isGoog */, formats);
+    }
+
+    /* Use isGoog = null to query all decoders */
+    public static String[] getEncoderNames(/* Nullable */ Boolean isGoog, MediaFormat... formats) {
+        return getCodecNames(true /* isEncoder */, isGoog, formats);
+    }
+
+    public static String[] getEncoderNames(MediaFormat... formats) {
+        return getCodecNames(true /* isEncoder */, null /* isGoog */, formats);
+    }
+
     public static MediaCodec getDecoder(MediaFormat format) {
         String decoder = sMCL.findDecoderForFormat(format);
         if (decoder != null) {
@@ -186,13 +236,31 @@ public class MediaUtils {
     }
 
     public static boolean supports(String codecName, String mime, int w, int h) {
+        // While this could be simply written as such, give more graceful feedback.
+        // MediaFormat format = MediaFormat.createVideoFormat(mime, w, h);
+        // return supports(codecName, format);
+
+        VideoCapabilities vidCap = getVideoCapabilities(codecName, mime);
+        if (vidCap == null) {
+            return false;
+        } else if (vidCap.isSizeSupported(w, h)) {
+            return true;
+        }
+
+        Log.w(TAG, "unsupported size " + w + "x" + h);
+        return false;
+    }
+
+    public static boolean supports(String codecName, MediaFormat format) {
         MediaCodec codec;
         try {
             codec = MediaCodec.createByCodecName(codecName);
         } catch (IOException e) {
+            Log.w(TAG, "codec not found: " + codecName);
             return false;
         }
 
+        String mime = format.getString(MediaFormat.KEY_MIME);
         CodecCapabilities cap = null;
         try {
             cap = codec.getCodecInfo().getCapabilitiesForType(mime);
@@ -202,21 +270,7 @@ public class MediaUtils {
             return false;
         }
 
-        VideoCapabilities vidCap = cap.getVideoCapabilities();
-        if (vidCap == null) {
-            Log.w(TAG, "not a video codec: " + codecName);
-            codec.release();
-            return false;
-        }
-        try {
-            Range<Double> fps = vidCap.getSupportedFrameRatesFor(w, h);
-        } catch (IllegalArgumentException e) {
-            Log.w(TAG, "unsupported size " + w + "x" + h);
-            codec.release();
-            return false;
-        }
-        codec.release();
-        return true;
+        return cap.isFormatSupported(format);
     }
 
     public static boolean hasCodecForTrack(MediaExtractor ex, int track) {
@@ -436,6 +490,58 @@ public class MediaUtils {
      *  ----------------------- HELPER METHODS FOR MEDIA HANDLING -----------------------
      */
 
+    public static VideoCapabilities getVideoCapabilities(String codecName, String mime) {
+        for (MediaCodecInfo info : sMCL.getCodecInfos()) {
+            if (!info.getName().equalsIgnoreCase(codecName)) {
+                continue;
+            }
+            CodecCapabilities caps;
+            try {
+                caps = info.getCapabilitiesForType(mime);
+            } catch (IllegalArgumentException e) {
+                // mime is not supported
+                Log.w(TAG, "not supported mime: " + mime);
+                return null;
+            }
+            VideoCapabilities vidCaps = caps.getVideoCapabilities();
+            if (vidCaps == null) {
+                Log.w(TAG, "not a video codec: " + codecName);
+            }
+            return vidCaps;
+        }
+        Log.w(TAG, "codec not found: " + codecName);
+        return null;
+    }
+
+    public static MediaFormat getTrackFormatForResource(
+            Context context, int resourceId, String mimeTypePrefix)
+            throws IOException {
+        MediaFormat format = null;
+        MediaExtractor extractor = new MediaExtractor();
+        AssetFileDescriptor afd = context.getResources().openRawResourceFd(resourceId);
+        try {
+            extractor.setDataSource(
+                    afd.getFileDescriptor(), afd.getStartOffset(), afd.getLength());
+        } finally {
+            afd.close();
+        }
+        int trackIndex;
+        for (trackIndex = 0; trackIndex < extractor.getTrackCount(); trackIndex++) {
+            MediaFormat trackMediaFormat = extractor.getTrackFormat(trackIndex);
+            if (trackMediaFormat.getString(MediaFormat.KEY_MIME).startsWith(mimeTypePrefix)) {
+                format = trackMediaFormat;
+                break;
+            }
+        }
+        extractor.release();
+        afd.close();
+        if (format == null) {
+            throw new RuntimeException("couldn't get a track for " + mimeTypePrefix);
+        }
+
+        return format;
+    }
+
     public static MediaExtractor createMediaExtractorForMimeType(
             Context context, int resourceId, String mimeTypePrefix)
             throws IOException {
@@ -461,29 +567,6 @@ public class MediaUtils {
         }
 
         return extractor;
-    }
-
-    /**
-     * return mime type of the resourceId
-     */
-    public static Collection<String> getDecodersForFormat(MediaFormat format) {
-        ArrayList<String> decoders = new ArrayList<String>();
-        String mime = format.getString(MediaFormat.KEY_MIME);
-        MediaCodecList mcl = new MediaCodecList(MediaCodecList.REGULAR_CODECS);
-        for (MediaCodecInfo info : mcl.getCodecInfos()) {
-            if (info.isEncoder()) {
-                continue;
-            }
-            CodecCapabilities caps = null;
-            try {
-                caps = info.getCapabilitiesForType(mime);
-            } catch (IllegalArgumentException e) {  // mime is not supported
-                continue;
-            }
-            if (caps.isFormatSupported(format))
-                decoders.add(info.getName());
-        }
-        return decoders;
     }
 
     /*
@@ -739,23 +822,6 @@ public class MediaUtils {
                 ResultUnit.FPS);
         Log.i(TAG, msg);
         return msg;
-    }
-
-    public static VideoCapabilities getVideoCapabilities(String codecName, String mime) {
-        for (MediaCodecInfo info : sMCL.getCodecInfos()) {
-            if (!info.getName().equalsIgnoreCase(codecName)) {
-                continue;
-            }
-            CodecCapabilities caps;
-            try {
-                caps = info.getCapabilitiesForType(mime);
-            } catch (IllegalArgumentException e) {
-                // mime is not supported
-                continue;
-            }
-            return caps.getVideoCapabilities();
-        }
-        return null;
     }
 
     public static Range<Double> getAchievableFrameRatesFor(

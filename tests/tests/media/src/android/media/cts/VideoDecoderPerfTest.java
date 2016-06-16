@@ -80,29 +80,6 @@ public class VideoDecoderPerfTest extends MediaPlayerTestBase {
         super.tearDown();
     }
 
-    private static String[] getDecoderName(String mime, boolean isGoog, int width, int height) {
-        MediaCodecList mcl = new MediaCodecList(MediaCodecList.REGULAR_CODECS);
-        ArrayList<String> result = new ArrayList<String>();
-        for (MediaCodecInfo info : mcl.getCodecInfos()) {
-            if (info.isEncoder() ||
-                    info.getName().toLowerCase().startsWith("omx.google.") != isGoog) {
-                continue;
-            }
-            try {
-                CodecCapabilities caps = info.getCapabilitiesForType(mime);
-                if (!caps.getVideoCapabilities().isSizeSupported(width, height)) {
-                    Log.i(TAG, info.getName() + " does not support size " + width + "x" + height);
-                    continue;
-                }
-            } catch (IllegalArgumentException | NullPointerException e) {
-                // mime is not supported or is not a video codec
-                continue;
-            }
-            result.add(info.getName());
-        }
-        return result.toArray(new String[result.size()]);
-    }
-
     private void decode(String mime, int video, int width, int height,
             boolean isGoog) throws Exception {
         decode(mime, video, width, height, isGoog, 600000 /* timeoutMs */);
@@ -110,7 +87,8 @@ public class VideoDecoderPerfTest extends MediaPlayerTestBase {
 
     private void decode(String mime, int video, int width, int height,
             boolean isGoog, long testTimeoutMs) throws Exception {
-        String[] names = getDecoderName(mime, isGoog, width, height);
+        MediaFormat format = MediaFormat.createVideoFormat(mime, width, height);
+        String[] names = MediaUtils.getDecoderNames(isGoog, format);
         if (names.length == 0) {
             MediaUtils.skipTest("no codecs support this type or size");
             return;
@@ -200,14 +178,7 @@ public class VideoDecoderPerfTest extends MediaPlayerTestBase {
 
         MediaCodec codec = MediaCodec.createByCodecName(name);
         VideoCapabilities cap = codec.getCodecInfo().getCapabilitiesForType(mime).getVideoCapabilities();
-        int frameRate = 120;
-        try {
-            frameRate = cap.getSupportedFrameRatesFor(w, h).getUpper().intValue();
-        } catch (IllegalArgumentException e) {
-            Log.w(TAG, "unsupported size");
-            codec.release();
-            return false;
-        }
+        int frameRate = cap.getSupportedFrameRatesFor(w, h).getUpper().intValue();
         codec.configure(format, surface, null /* crypto */, 0 /* flags */);
         codec.start();
         codecInputBuffers = codec.getInputBuffers();

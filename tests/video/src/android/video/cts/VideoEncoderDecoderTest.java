@@ -140,58 +140,6 @@ public class VideoEncoderDecoderTest extends CtsAndroidTestCase {
         super.tearDown();
     }
 
-    private String getEncoderName(String mime) {
-        return getCodecName(mime, true /* isEncoder */);
-    }
-
-    private String getDecoderName(String mime) {
-        return getCodecName(mime, false /* isEncoder */);
-    }
-
-    private String getCodecName(String mime, boolean isEncoder) {
-        MediaCodecList mcl = new MediaCodecList(MediaCodecList.REGULAR_CODECS);
-        for (MediaCodecInfo info : mcl.getCodecInfos()) {
-            if (info.isEncoder() != isEncoder) {
-                continue;
-            }
-            CodecCapabilities caps = null;
-            try {
-                caps = info.getCapabilitiesForType(mime);
-            } catch (IllegalArgumentException e) {  // mime is not supported
-                continue;
-            }
-            return info.getName();
-        }
-        return null;
-    }
-
-    private String[] getEncoderName(String mime, boolean isGoog) {
-        return getCodecName(mime, isGoog, true /* isEncoder */);
-    }
-
-    private String[] getDecoderName(String mime, boolean isGoog) {
-        return getCodecName(mime, isGoog, false /* isEncoder */);
-    }
-
-    private String[] getCodecName(String mime, boolean isGoog, boolean isEncoder) {
-        MediaCodecList mcl = new MediaCodecList(MediaCodecList.REGULAR_CODECS);
-        ArrayList<String> result = new ArrayList<String>();
-        for (MediaCodecInfo info : mcl.getCodecInfos()) {
-            if (info.isEncoder() != isEncoder
-                    || info.getName().toLowerCase().startsWith("omx.google.") != isGoog) {
-                continue;
-            }
-            CodecCapabilities caps = null;
-            try {
-                caps = info.getCapabilitiesForType(mime);
-            } catch (IllegalArgumentException e) {  // mime is not supported
-                continue;
-            }
-            result.add(info.getName());
-        }
-        return result.toArray(new String[result.size()]);
-    }
-
     public void testAvc0176x0144() throws Exception {
         doTestDefault(VIDEO_AVC, 176, 144);
     }
@@ -418,19 +366,20 @@ public class VideoEncoderDecoderTest extends CtsAndroidTestCase {
     }
 
     private void doTestDefault(String mimeType, int w, int h) throws Exception {
-        String encoderName = getEncoderName(mimeType);
-        if (encoderName == null) {
-            Log.i(TAG, "Encoder for " + mimeType + " not found");
+        MediaFormat format = MediaFormat.createVideoFormat(mimeType, w, h);
+        String[] encoderNames = MediaUtils.getEncoderNames(format);
+        if (encoderNames.length == 0) {
+            Log.i(TAG, "Encoder for " + format + " not found");
             return;
         }
 
-        String decoderName = getDecoderName(mimeType);
-        if (decoderName == null) {
-            Log.i(TAG, "Encoder for " + mimeType + " not found");
+        String[] decoderNames = MediaUtils.getDecoderNames(format);
+        if (decoderNames.length == 0) {
+            Log.i(TAG, "Decoder for " + format + " not found");
             return;
         }
 
-        doTestByName(encoderName, decoderName, mimeType, w, h);
+        doTestByName(encoderNames[0], decoderNames[0], mimeType, w, h);
     }
 
     /**
@@ -442,17 +391,18 @@ public class VideoEncoderDecoderTest extends CtsAndroidTestCase {
      */
     private void doTest(boolean isGoog, String mimeType, int w, int h)
             throws Exception {
-        String[] encoderNames = getEncoderName(mimeType, isGoog);
+        MediaFormat format = MediaFormat.createVideoFormat(mimeType, w, h);
+        String[] encoderNames = MediaUtils.getEncoderNames(isGoog, format);
         if (encoderNames.length == 0) {
             Log.i(TAG, isGoog ? "Google " : "Non-google "
-                    + "encoder for " + mimeType + " not found");
+                    + "encoder for " + format + " not found");
             return;
         }
 
-        String[] decoderNames = getDecoderName(mimeType, isGoog);
+        String[] decoderNames = MediaUtils.getDecoderNames(isGoog, format);
         if (decoderNames.length == 0) {
             Log.i(TAG, isGoog ? "Google " : "Non-google "
-                    + "decoder for " + mimeType + " not found");
+                    + "decoder for " + format + " not found");
             return;
         }
 
@@ -467,10 +417,7 @@ public class VideoEncoderDecoderTest extends CtsAndroidTestCase {
             String encoderName, String decoderName, String mimeType, int w, int h)
             throws Exception {
         CodecInfo infoEnc = CodecInfo.getSupportedFormatInfo(encoderName, mimeType, w, h);
-        if (infoEnc == null) {
-            Log.i(TAG, "Encoder " + mimeType + " with " + w + "," + h + " not supported");
-            return;
-        }
+        assertNotNull(infoEnc);
         CodecInfo infoDec = CodecInfo.getSupportedFormatInfo(decoderName, mimeType, w, h);
         assertNotNull(infoDec);
         mVideoWidth = w;

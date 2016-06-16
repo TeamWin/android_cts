@@ -242,7 +242,9 @@ public class DecoderConformanceTest extends MediaPlayerTestBase {
     }
 
     void decodeTestVectors(String mime, boolean isGoog) throws Exception {
-        String[] decoderNames = CodecUtils.getDecoderNames(mime, isGoog);
+        MediaFormat format = new MediaFormat();
+        format.setString(MediaFormat.KEY_MIME, mime);
+        String[] decoderNames = MediaUtils.getDecoderNames(isGoog, format);
         for (String decoderName: decoderNames) {
             List<String> testVectors = readCodecTestVectors(mime);
             for (String vectorName: testVectors) {
