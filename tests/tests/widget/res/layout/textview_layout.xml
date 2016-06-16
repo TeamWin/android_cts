@@ -255,6 +255,16 @@
                 android:drawableBottom="@drawable/icon_yellow"
                 android:layoutDirection="rtl" />
 
+            <TextView
+                android:id="@+id/textview_with_shadow"
+                android:layout_height="wrap_content"
+                android:layout_width="wrap_content"
+                android:text="@string/text_view_hello"
+                android:shadowDx="1.0"
+                android:shadowDy="2.0"
+                android:shadowRadius="3.0"
+                android:shadowColor="@color/testcolor1" />
+
         </LinearLayout>
 
 </ScrollView>

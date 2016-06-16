@@ -687,24 +687,31 @@ public class TextViewTest extends ActivityInstrumentationTestCase2<TextViewCtsAc
 
         setMaxHeight(originalHeight + 1);
         assertEquals(originalHeight, mTextView.getHeight());
+        assertEquals(originalHeight + 1, mTextView.getMaxHeight());
 
         setMaxHeight(originalHeight - 1);
         assertEquals(originalHeight - 1, mTextView.getHeight());
+        assertEquals(originalHeight - 1, mTextView.getMaxHeight());
 
         setMaxHeight(-1);
         assertEquals(0, mTextView.getHeight());
+        assertEquals(-1, mTextView.getMaxHeight());
 
         setMaxHeight(Integer.MAX_VALUE);
         assertEquals(originalHeight, mTextView.getHeight());
+        assertEquals(Integer.MAX_VALUE, mTextView.getMaxHeight());
 
         setMinHeight(originalHeight + 1);
         assertEquals(originalHeight + 1, mTextView.getHeight());
+        assertEquals(originalHeight + 1, mTextView.getMinHeight());
 
         setMinHeight(originalHeight - 1);
         assertEquals(originalHeight, mTextView.getHeight());
+        assertEquals(originalHeight - 1, mTextView.getMinHeight());
 
         setMinHeight(-1);
         assertEquals(originalHeight, mTextView.getHeight());
+        assertEquals(-1, mTextView.getMinHeight());
 
         setMinHeight(0);
         setMaxHeight(Integer.MAX_VALUE);
@@ -727,10 +734,12 @@ public class TextViewTest extends ActivityInstrumentationTestCase2<TextViewCtsAc
         setMinWidth(originalWidth + 1);
         assertEquals(1, mTextView.getLineCount());
         assertEquals(originalWidth + 1, mTextView.getWidth());
+        assertEquals(originalWidth + 1, mTextView.getMinWidth());
 
         setMinWidth(originalWidth - 1);
         assertEquals(2, mTextView.getLineCount());
         assertEquals(originalWidth - 1, mTextView.getWidth());
+        assertEquals(originalWidth - 1, mTextView.getMinWidth());
 
         // Width
         setWidth(originalWidth + 1);
@@ -751,9 +760,13 @@ public class TextViewTest extends ActivityInstrumentationTestCase2<TextViewCtsAc
 
         setMinEms(originalEms + 1);
         assertEquals((originalEms + 1) * mTextView.getLineHeight(), mTextView.getWidth());
+        assertEquals(-1, mTextView.getMinWidth());
+        assertEquals(originalEms + 1, mTextView.getMinEms());
 
         setMinEms(originalEms - 1);
         assertEquals(originalWidth, mTextView.getWidth());
+        assertEquals(-1, mTextView.getMinWidth());
+        assertEquals(originalEms - 1, mTextView.getMinEms());
     }
 
     public void testSetMaxEms() {
@@ -765,11 +778,15 @@ public class TextViewTest extends ActivityInstrumentationTestCase2<TextViewCtsAc
         setMaxEms(originalEms + 1);
         assertEquals(1, mTextView.getLineCount());
         assertEquals(originalWidth, mTextView.getWidth());
+        assertEquals(-1, mTextView.getMaxWidth());
+        assertEquals(originalEms + 1, mTextView.getMaxEms());
 
         setMaxEms(originalEms - 1);
         assertTrue(1 < mTextView.getLineCount());
         assertEquals((originalEms - 1) * mTextView.getLineHeight(),
                 mTextView.getWidth());
+        assertEquals(-1, mTextView.getMaxWidth());
+        assertEquals(originalEms - 1, mTextView.getMaxEms());
     }
 
     public void testSetEms() {
@@ -782,11 +799,19 @@ public class TextViewTest extends ActivityInstrumentationTestCase2<TextViewCtsAc
         assertEquals(1, mTextView.getLineCount());
         assertEquals((originalEms + 1) * mTextView.getLineHeight(),
                 mTextView.getWidth());
+        assertEquals(-1, mTextView.getMinWidth());
+        assertEquals(-1, mTextView.getMaxWidth());
+        assertEquals(originalEms + 1, mTextView.getMinEms());
+        assertEquals(originalEms + 1, mTextView.getMaxEms());
 
         setEms(originalEms - 1);
         assertTrue((1 < mTextView.getLineCount()));
         assertEquals((originalEms - 1) * mTextView.getLineHeight(),
                 mTextView.getWidth());
+        assertEquals(-1, mTextView.getMinWidth());
+        assertEquals(-1, mTextView.getMaxWidth());
+        assertEquals(originalEms - 1, mTextView.getMinEms());
+        assertEquals(originalEms - 1, mTextView.getMaxEms());
     }
 
     public void testSetLineSpacing() {
@@ -953,31 +978,30 @@ public class TextViewTest extends ActivityInstrumentationTestCase2<TextViewCtsAc
     public void testSetEditableFactory() {
         mTextView = new TextView(mActivity);
         String text = "sample";
-        MockEditableFactory factory = new MockEditableFactory();
-        mTextView.setEditableFactory(factory);
 
-        factory.reset();
+        final Editable.Factory mockEditableFactory = spy(new Editable.Factory());
+        doCallRealMethod().when(mockEditableFactory).newEditable(any(CharSequence.class));
+        mTextView.setEditableFactory(mockEditableFactory);
+
         mTextView.setText(text);
-        assertFalse(factory.hasCalledNewEditable());
+        verify(mockEditableFactory, never()).newEditable(any(CharSequence.class));
 
-        factory.reset();
+        reset(mockEditableFactory);
         mTextView.setText(text, BufferType.SPANNABLE);
-        assertFalse(factory.hasCalledNewEditable());
+        verify(mockEditableFactory, never()).newEditable(any(CharSequence.class));
 
-        factory.reset();
+        reset(mockEditableFactory);
         mTextView.setText(text, BufferType.NORMAL);
-        assertFalse(factory.hasCalledNewEditable());
+        verify(mockEditableFactory, never()).newEditable(any(CharSequence.class));
 
-        factory.reset();
+        reset(mockEditableFactory);
         mTextView.setText(text, BufferType.EDITABLE);
-        assertTrue(factory.hasCalledNewEditable());
-        assertEquals(text, factory.getSource());
+        verify(mockEditableFactory, times(1)).newEditable(text);
 
         mTextView.setKeyListener(DigitsKeyListener.getInstance());
-        factory.reset();
+        reset(mockEditableFactory);
         mTextView.setText(text, BufferType.EDITABLE);
-        assertTrue(factory.hasCalledNewEditable());
-        assertEquals(text, factory.getSource());
+        verify(mockEditableFactory, times(1)).newEditable(text);
 
         try {
             mTextView.setEditableFactory(null);
@@ -989,31 +1013,30 @@ public class TextViewTest extends ActivityInstrumentationTestCase2<TextViewCtsAc
     public void testSetSpannableFactory() {
         mTextView = new TextView(mActivity);
         String text = "sample";
-        MockSpannableFactory factory = new MockSpannableFactory();
-        mTextView.setSpannableFactory(factory);
 
-        factory.reset();
+        final Spannable.Factory mockSpannableFactory = spy(new Spannable.Factory());
+        doCallRealMethod().when(mockSpannableFactory).newSpannable(any(CharSequence.class));
+        mTextView.setSpannableFactory(mockSpannableFactory);
+
         mTextView.setText(text);
-        assertFalse(factory.hasCalledNewSpannable());
+        verify(mockSpannableFactory, never()).newSpannable(any(CharSequence.class));
 
-        factory.reset();
+        reset(mockSpannableFactory);
         mTextView.setText(text, BufferType.EDITABLE);
-        assertFalse(factory.hasCalledNewSpannable());
+        verify(mockSpannableFactory, never()).newSpannable(any(CharSequence.class));
 
-        factory.reset();
+        reset(mockSpannableFactory);
         mTextView.setText(text, BufferType.NORMAL);
-        assertFalse(factory.hasCalledNewSpannable());
+        verify(mockSpannableFactory, never()).newSpannable(any(CharSequence.class));
 
-        factory.reset();
+        reset(mockSpannableFactory);
         mTextView.setText(text, BufferType.SPANNABLE);
-        assertTrue(factory.hasCalledNewSpannable());
-        assertEquals(text, factory.getSource());
+        verify(mockSpannableFactory, times(1)).newSpannable(text);
 
         mTextView.setMovementMethod(LinkMovementMethod.getInstance());
-        factory.reset();
+        reset(mockSpannableFactory);
         mTextView.setText(text, BufferType.NORMAL);
-        assertTrue(factory.hasCalledNewSpannable());
-        assertEquals(text, factory.getSource());
+        verify(mockSpannableFactory, times(1)).newSpannable(text);
 
         try {
             mTextView.setSpannableFactory(null);
@@ -3223,7 +3246,7 @@ public class TextViewTest extends ActivityInstrumentationTestCase2<TextViewCtsAc
     }
 
     @UiThreadTest
-    public void testSetMaxLines() {
+    public void testAccessMaxLines() {
         mTextView = findTextView(R.id.textview_text);
 
         float[] widths = new float[LONG_TEXT.length()];
@@ -3242,6 +3265,8 @@ public class TextViewTest extends ActivityInstrumentationTestCase2<TextViewCtsAc
         mTextView.setMaxLines(maxLines);
         mTextView.requestLayout();
 
+        assertEquals(2, mTextView.getMaxLines());
+        assertEquals(-1, mTextView.getMaxHeight());
         assertTrue(mTextView.getHeight() <= maxLines * mTextView.getLineHeight());
     }
 
@@ -3335,17 +3360,20 @@ public class TextViewTest extends ActivityInstrumentationTestCase2<TextViewCtsAc
         mTextView.setMaxLines(-1);
     }
 
-    public void testSetMinLines() {
+    public void testAccessMinLines() {
         mTextView = findTextView(R.id.textview_text);
         setWidth(mTextView.getWidth() >> 3);
-        int originalHeight = mTextView.getHeight();
         int originalLines = mTextView.getLineCount();
 
         setMinLines(originalLines - 1);
         assertTrue((originalLines - 1) * mTextView.getLineHeight() <= mTextView.getHeight());
+        assertEquals(originalLines - 1, mTextView.getMinLines());
+        assertEquals(-1, mTextView.getMinHeight());
 
         setMinLines(originalLines + 1);
         assertTrue((originalLines + 1) * mTextView.getLineHeight() <= mTextView.getHeight());
+        assertEquals(originalLines + 1, mTextView.getMinLines());
+        assertEquals(-1, mTextView.getMinHeight());
     }
 
     public void testSetLines() {
@@ -4041,14 +4069,16 @@ public class TextViewTest extends ActivityInstrumentationTestCase2<TextViewCtsAc
     public void testSetOnEditorActionListener() {
         mTextView = findTextView(R.id.textview_text);
 
-        MockOnEditorActionListener listener = new MockOnEditorActionListener();
-        assertFalse(listener.isOnEditorActionCalled());
+        final TextView.OnEditorActionListener mockOnEditorActionListener =
+                mock(TextView.OnEditorActionListener.class);
+        verifyZeroInteractions(mockOnEditorActionListener);
 
-        mTextView.setOnEditorActionListener(listener);
-        assertFalse(listener.isOnEditorActionCalled());
+        mTextView.setOnEditorActionListener(mockOnEditorActionListener);
+        verifyZeroInteractions(mockOnEditorActionListener);
 
         mTextView.onEditorAction(EditorInfo.IME_ACTION_DONE);
-        assertTrue(listener.isOnEditorActionCalled());
+        verify(mockOnEditorActionListener, times(1)).onEditorAction(mTextView,
+                EditorInfo.IME_ACTION_DONE, null);
     }
 
     public void testAccessImeOptions() {
@@ -5127,9 +5157,11 @@ public class TextViewTest extends ActivityInstrumentationTestCase2<TextViewCtsAc
         // Check default value.
         assertNull(mTextView.getCustomSelectionActionModeCallback());
 
-        MockActionModeCallback callbackBlockActionMode = new MockActionModeCallback(false);
-        mTextView.setCustomSelectionActionModeCallback(callbackBlockActionMode);
-        assertEquals(callbackBlockActionMode,
+        final ActionMode.Callback mockActionModeCallback = mock(ActionMode.Callback.class);
+        when(mockActionModeCallback.onCreateActionMode(any(ActionMode.class), any(Menu.class))).
+                thenReturn(Boolean.FALSE);
+        mTextView.setCustomSelectionActionModeCallback(mockActionModeCallback);
+        assertEquals(mockActionModeCallback,
                 mTextView.getCustomSelectionActionModeCallback());
 
         mActivity.runOnUiThread(new Runnable() {
@@ -5144,7 +5176,8 @@ public class TextViewTest extends ActivityInstrumentationTestCase2<TextViewCtsAc
         });
         mInstrumentation.waitForIdleSync();
 
-        assertEquals(1, callbackBlockActionMode.getCreateCount());
+        verify(mockActionModeCallback, times(1)).onCreateActionMode(
+                any(ActionMode.class), any(Menu.class));
 
         mActivity.runOnUiThread(new Runnable() {
             public void run() {
@@ -5155,12 +5188,13 @@ public class TextViewTest extends ActivityInstrumentationTestCase2<TextViewCtsAc
         mInstrumentation.waitForIdleSync();
 
         // Action mode was blocked.
-        assertEquals(0, callbackBlockActionMode.getDestroyCount());
+        verify(mockActionModeCallback, never()).onDestroyActionMode(any(ActionMode.class));
 
-        // Overwrite callback.
-        MockActionModeCallback callbackStartActionMode = new MockActionModeCallback(true);
-        mTextView.setCustomSelectionActionModeCallback(callbackStartActionMode);
-        assertEquals(callbackStartActionMode, mTextView.getCustomSelectionActionModeCallback());
+        // Reset and reconfigure callback.
+        reset(mockActionModeCallback);
+        when(mockActionModeCallback.onCreateActionMode(any(ActionMode.class), any(Menu.class))).
+                thenReturn(Boolean.TRUE);
+        assertEquals(mockActionModeCallback, mTextView.getCustomSelectionActionModeCallback());
 
         mActivity.runOnUiThread(new Runnable() {
             public void run() {
@@ -5175,7 +5209,8 @@ public class TextViewTest extends ActivityInstrumentationTestCase2<TextViewCtsAc
         });
         mInstrumentation.waitForIdleSync();
 
-        assertEquals(1, callbackStartActionMode.getCreateCount());
+        verify(mockActionModeCallback, times(1)).onCreateActionMode(
+                any(ActionMode.class), any(Menu.class));
 
         mActivity.runOnUiThread(new Runnable() {
             public void run() {
@@ -5186,70 +5221,41 @@ public class TextViewTest extends ActivityInstrumentationTestCase2<TextViewCtsAc
         mInstrumentation.waitForIdleSync();
 
         // Action mode was started
-        assertEquals(1, callbackStartActionMode.getDestroyCount());
+        verify(mockActionModeCallback, times(1)).onDestroyActionMode(any(ActionMode.class));
     }
 
-    public void testSetAndGetCustomInseltionActionMode() {
+    public void testSetAndGetCustomInsertionActionMode() {
         initTextViewForTyping();
         // Check default value.
         assertNull(mTextView.getCustomInsertionActionModeCallback());
 
-        MockActionModeCallback callback = new MockActionModeCallback(false);
-        mTextView.setCustomInsertionActionModeCallback(callback);
-        assertEquals(callback, mTextView.getCustomInsertionActionModeCallback());
+        final ActionMode.Callback mockActionModeCallback = mock(ActionMode.Callback.class);
+        when(mockActionModeCallback.onCreateActionMode(any(ActionMode.class), any(Menu.class))).
+                thenReturn(Boolean.FALSE);
+        mTextView.setCustomInsertionActionModeCallback(mockActionModeCallback);
+        assertEquals(mockActionModeCallback, mTextView.getCustomInsertionActionModeCallback());
         // TODO(Bug: 22033189): Tests the set callback is actually used.
     }
 
-    private static class MockActionModeCallback implements ActionMode.Callback {
-        private int mCreateCount = 0;
-        private int mDestroyCount = 0;
-        private final boolean mAllowToStartActionMode;
+    public void testTextShadows() {
+        final TextView textViewWithConfiguredShadow =
+                (TextView) mActivity.findViewById(R.id.textview_with_shadow);
+        assertEquals(1.0f, textViewWithConfiguredShadow.getShadowDx());
+        assertEquals(2.0f, textViewWithConfiguredShadow.getShadowDy());
+        assertEquals(3.0f, textViewWithConfiguredShadow.getShadowRadius());
+        assertEquals(Color.GREEN, textViewWithConfiguredShadow.getShadowColor());
 
-        public MockActionModeCallback(boolean allowToStartActionMode) {
-            mAllowToStartActionMode = allowToStartActionMode;
-        }
+        final TextView textView = (TextView) mActivity.findViewById(R.id.textview_text);
+        assertEquals(0.0f, textView.getShadowDx());
+        assertEquals(0.0f, textView.getShadowDy());
+        assertEquals(0.0f, textView.getShadowRadius());
 
-        public int getCreateCount() {
-            return mCreateCount;
-        }
-
-        public int getDestroyCount() {
-            return mDestroyCount;
-        }
-
-        @Override
-        public boolean onPrepareActionMode(ActionMode mode, Menu menu) {
-            return false;
-        }
-
-        @Override
-        public void onDestroyActionMode(ActionMode mode) {
-            mDestroyCount++;
-        }
-
-        @Override
-        public boolean onCreateActionMode(ActionMode mode, Menu menu) {
-            mCreateCount++;
-            return mAllowToStartActionMode;
-        }
-
-        @Override
-        public boolean onActionItemClicked(ActionMode mode, MenuItem item) {
-            return false;
-        }
-    };
-
-    private static class MockOnEditorActionListener implements OnEditorActionListener {
-        private boolean isOnEditorActionCalled;
-
-        public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
-            isOnEditorActionCalled = true;
-            return true;
-        }
-
-        public boolean isOnEditorActionCalled() {
-            return isOnEditorActionCalled;
-        }
+        mActivity.runOnUiThread(() -> textView.setShadowLayer(5.0f, 3.0f, 4.0f, Color.RED));
+        mInstrumentation.waitForIdleSync();
+        assertEquals(3.0f, textView.getShadowDx());
+        assertEquals(4.0f, textView.getShadowDy());
+        assertEquals(5.0f, textView.getShadowRadius());
+        assertEquals(Color.RED, textView.getShadowColor());
     }
 
     private void layout(final TextView textView) {
@@ -5459,56 +5465,6 @@ public class TextViewTest extends ActivityInstrumentationTestCase2<TextViewCtsAc
 
         public void saveLayout() {
             mLayout = mTextView.getLayout();
-        }
-    }
-
-    private class MockEditableFactory extends Editable.Factory {
-        private boolean mhasCalledNewEditable;
-        private CharSequence mSource;
-
-        public boolean hasCalledNewEditable() {
-            return mhasCalledNewEditable;
-        }
-
-        public void reset() {
-            mhasCalledNewEditable = false;
-            mSource = null;
-        }
-
-        public CharSequence getSource() {
-            return mSource;
-        }
-
-        @Override
-        public Editable newEditable(CharSequence source) {
-            mhasCalledNewEditable = true;
-            mSource = source;
-            return super.newEditable(source);
-        }
-    }
-
-    private class MockSpannableFactory extends Spannable.Factory {
-        private boolean mHasCalledNewSpannable;
-        private CharSequence mSource;
-
-        public boolean hasCalledNewSpannable() {
-            return mHasCalledNewSpannable;
-        }
-
-        public void reset() {
-            mHasCalledNewSpannable = false;
-            mSource = null;
-        }
-
-        public CharSequence getSource() {
-            return mSource;
-        }
-
-        @Override
-        public Spannable newSpannable(CharSequence source) {
-            mHasCalledNewSpannable = true;
-            mSource = source;
-            return super.newSpannable(source);
         }
     }
 
