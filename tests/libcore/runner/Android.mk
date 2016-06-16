@@ -12,5 +12,29 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Build the test APK using its own makefile, and any other CTS-related packages
-include $(call all-subdir-makefiles)
+LOCAL_PATH:= $(call my-dir)
+
+include $(CLEAR_VARS)
+
+LOCAL_PACKAGE_NAME := CtsLibcoreTestRunner
+
+LOCAL_STATIC_JAVA_LIBRARIES := \
+    cts-core-test-runner
+
+# Don't include this package in any target
+LOCAL_MODULE_TAGS := tests
+
+# When built, explicitly put it in the data partition.
+LOCAL_MODULE_PATH := $(TARGET_OUT_DATA_APPS)
+
+LOCAL_DEX_PREOPT := false
+LOCAL_JACK_FLAGS := --multi-dex native
+
+LOCAL_PROGUARD_ENABLED := disabled
+
+# Tag this module as a cts test artifact
+LOCAL_COMPATIBILITY_SUITE := cts
+
+LOCAL_JAVA_LANGUAGE_VERSION := 1.8
+
+include $(BUILD_CTS_SUPPORT_PACKAGE)
