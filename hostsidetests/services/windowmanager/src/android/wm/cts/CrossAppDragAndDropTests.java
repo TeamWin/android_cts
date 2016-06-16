@@ -45,6 +45,8 @@ public class CrossAppDragAndDropTests extends DeviceTestCase {
 
     private static final String SOURCE_PACKAGE_NAME = "android.wm.cts.dndsourceapp";
     private static final String TARGET_PACKAGE_NAME = "android.wm.cts.dndtargetapp";
+    private static final String TARGET_23_PACKAGE_NAME = "android.wm.cts.dndtargetappsdk23";
+
 
     private static final String SOURCE_ACTIVITY_NAME = "DragSource";
     private static final String TARGET_ACTIVITY_NAME = "DropTarget";
@@ -78,17 +80,22 @@ public class CrossAppDragAndDropTests extends DeviceTestCase {
 
     private Map<String, String> mResults;
 
+    private String mSourcePackageName;
+    private String mTargetPackageName;
+
     @Override
     protected void setUp() throws Exception {
         super.setUp();
         mDevice = getDevice();
+        mSourcePackageName = SOURCE_PACKAGE_NAME;
+        mTargetPackageName = TARGET_PACKAGE_NAME;
     }
 
     @Override
     protected void tearDown() throws Exception {
         super.tearDown();
-        mDevice.executeShellCommand(AM_FORCE_STOP + SOURCE_PACKAGE_NAME);
-        mDevice.executeShellCommand(AM_FORCE_STOP + TARGET_PACKAGE_NAME);
+        mDevice.executeShellCommand(AM_FORCE_STOP + mSourcePackageName);
+        mDevice.executeShellCommand(AM_FORCE_STOP + mTargetPackageName);
     }
 
     private String adbShell(String command) throws DeviceNotAvailableException {
@@ -222,14 +229,14 @@ public class CrossAppDragAndDropTests extends DeviceTestCase {
     private void doTestDragAndDrop(String sourceMode, String targetMode, String expectedDropResult)
             throws Exception {
 
-        launchDockedActivity(SOURCE_PACKAGE_NAME, SOURCE_ACTIVITY_NAME, sourceMode);
-        launchFullscreenActivity(TARGET_PACKAGE_NAME, TARGET_ACTIVITY_NAME, targetMode);
+        launchDockedActivity(mSourcePackageName, SOURCE_ACTIVITY_NAME, sourceMode);
+        launchFullscreenActivity(mTargetPackageName, TARGET_ACTIVITY_NAME, targetMode);
 
         clearLogs();
 
         injectInput(
-                getWindowCenter(getComponentName(SOURCE_PACKAGE_NAME, SOURCE_ACTIVITY_NAME)),
-                getWindowCenter(getComponentName(TARGET_PACKAGE_NAME, TARGET_ACTIVITY_NAME)),
+                getWindowCenter(getComponentName(mSourcePackageName, SOURCE_ACTIVITY_NAME)),
+                getWindowCenter(getComponentName(mTargetPackageName, TARGET_ACTIVITY_NAME)),
                 SWIPE_DURATION_MS);
 
         mResults = getLogResults(TARGET_LOG_TAG);
@@ -256,6 +263,12 @@ public class CrossAppDragAndDropTests extends DeviceTestCase {
 
     public void testDisallowGlobal() throws Exception {
         doTestDragAndDrop(DISALLOW_GLOBAL, REQUEST_NONE, null);
+        assertResult(RESULT_KEY_DRAG_STARTED, null);
+    }
+
+    public void testDisallowGlobalBelowSdk24() throws Exception {
+        mTargetPackageName = TARGET_23_PACKAGE_NAME;
+        doTestDragAndDrop(GRANT_NONE, REQUEST_NONE, null);
         assertResult(RESULT_KEY_DRAG_STARTED, null);
     }
 
