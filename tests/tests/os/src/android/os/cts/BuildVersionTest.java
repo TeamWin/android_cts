@@ -17,6 +17,7 @@
 package android.os.cts;
 
 import android.os.Build;
+import android.platform.test.annotations.RestrictedBuildTest;
 import android.util.Log;
 
 import java.util.Arrays;
@@ -35,6 +36,7 @@ public class BuildVersionTest extends TestCase {
     private static final String EXPECTED_TAG = "release-keys";
 
     @SuppressWarnings("deprecation")
+    @RestrictedBuildTest
     public void testReleaseVersion() {
         // Applications may rely on the exact release version
         assertAnyOf("BUILD.VERSION.RELEASE", Build.VERSION.RELEASE, EXPECTED_RELEASES);
@@ -54,6 +56,7 @@ public class BuildVersionTest extends TestCase {
      * (BUILD_NUMBER):(BUILD_VARIANT)/(TAGS)
      * </code>
      */
+    @RestrictedBuildTest
     public void testBuildFingerprint() {
         final String fingerprint = Build.FINGERPRINT;
         Log.i(LOG_TAG, String.format("Testing fingerprint %s", fingerprint));
