@@ -67,11 +67,16 @@ public class VideoEncoderDecoderTest extends CtsAndroidTestCase {
     private static final int MAX_FPS = 30; // measure performance at 30fps, this is relevant for
                                            // the meaning of bitrate
 
-    private static final String VIDEO_AVC = MediaFormat.MIMETYPE_VIDEO_AVC;
-    private static final String VIDEO_VP8 = MediaFormat.MIMETYPE_VIDEO_VP8;
-    private static final String VIDEO_H263 = MediaFormat.MIMETYPE_VIDEO_H263;
-    private static final String VIDEO_MPEG4 = MediaFormat.MIMETYPE_VIDEO_MPEG4;
-    private static final String VIDEO_HEVC = MediaFormat.MIMETYPE_VIDEO_HEVC;
+    private static final String AVC = MediaFormat.MIMETYPE_VIDEO_AVC;
+    private static final String H263 = MediaFormat.MIMETYPE_VIDEO_H263;
+    private static final String HEVC = MediaFormat.MIMETYPE_VIDEO_HEVC;
+    private static final String MPEG2 = MediaFormat.MIMETYPE_VIDEO_MPEG2;
+    private static final String MPEG4 = MediaFormat.MIMETYPE_VIDEO_MPEG4;
+    private static final String VP8 = MediaFormat.MIMETYPE_VIDEO_VP8;
+    private static final String VP9 = MediaFormat.MIMETYPE_VIDEO_VP9;
+
+    private static final boolean GOOG = true;
+    private static final boolean OTHER = false;
 
     // test results:
 
@@ -159,187 +164,350 @@ public class VideoEncoderDecoderTest extends CtsAndroidTestCase {
         super.tearDown();
     }
 
-    public void testAvc0176x0144() throws Exception {
-        doTestDefault(VIDEO_AVC, 176, 144);
+    private void count(String mime, int width, int height, int numGoog, int numOther)
+            throws Exception {
+        MediaFormat format = MediaFormat.createVideoFormat(mime, width, height);
+        MediaUtils.verifyNumCodecs(numGoog,  true /* isEncoder */, true /* isGoog */,  format);
+        MediaUtils.verifyNumCodecs(numOther, true /* isEncoder */, false /* isGoog */, format);
     }
 
-    public void testAvc0352x0288() throws Exception {
-        doTestDefault(VIDEO_AVC, 352, 288);
+    /** run performance test. */
+    private void perf(String mimeType, int w, int h, boolean isGoog, int ix) throws Exception {
+        doTest(mimeType, w, h, true /* isPerf */, isGoog, ix);
     }
 
-    public void testAvc0720x0480() throws Exception {
-        doTestDefault(VIDEO_AVC, 720, 480);
+    /** run quality test. */
+    private void qual(String mimeType, int w, int h, boolean isGoog, int ix) throws Exception {
+        doTest(mimeType, w, h, false /* isPerf */, isGoog, ix);
     }
 
-    public void testAvc1280x0720() throws Exception {
-        doTestDefault(VIDEO_AVC, 1280, 720);
-    }
+    // Poor man's Parametrized test as this test must still run on CTSv1 runner.
 
-    /**
-     * resolution intentionally set to 1072 not 1080
-     * as 1080 is not multiple of 16, and it requires additional setting like stride
-     * which is not specified in API documentation.
-     */
-    public void testAvc1920x1072() throws Exception {
-        doTestDefault(VIDEO_AVC, 1920, 1072);
-    }
+    // The count tests are to ensure this Cts test covers all encoders. Add further
+    // tests and change the count if there can be more encoders.
 
-    // Avc tests
-    public void testAvc0320x0240Other() throws Exception {
-        doTestOther(VIDEO_AVC, 320, 240);
-    }
-
-    public void testAvc0320x0240Goog() throws Exception {
-        doTestGoog(VIDEO_AVC, 320, 240);
-    }
-
-    public void testAvc0720x0480Other() throws Exception {
-        doTestOther(VIDEO_AVC, 720, 480);
-    }
-
-    public void testAvc0720x0480Goog() throws Exception {
-        doTestGoog(VIDEO_AVC, 720, 480);
-    }
-
-    public void testAvc1280x0720Other() throws Exception {
-        doTestOther(VIDEO_AVC, 1280, 720);
-    }
-
-    public void testAvc1280x0720Goog() throws Exception {
-        doTestGoog(VIDEO_AVC, 1280, 720);
-    }
-
-    public void testAvc1920x1080Other() throws Exception {
-        doTestOther(VIDEO_AVC, 1920, 1080);
-    }
-
-    public void testAvc1920x1080Goog() throws Exception {
-        doTestGoog(VIDEO_AVC, 1920, 1080);
-    }
-
-    // Vp8 tests
-    public void testVp80320x0180Other() throws Exception {
-        doTestOther(VIDEO_VP8, 320, 180);
-    }
-
-    public void testVp80320x0180Goog() throws Exception {
-        doTestGoog(VIDEO_VP8, 320, 180);
-    }
-
-    public void testVp80640x0360Other() throws Exception {
-        doTestOther(VIDEO_VP8, 640, 360);
-    }
-
-    public void testVp80640x0360Goog() throws Exception {
-        doTestGoog(VIDEO_VP8, 640, 360);
-    }
-
-    public void testVp81280x0720Other() throws Exception {
-        doTestOther(VIDEO_VP8, 1280, 720);
-    }
-
-    public void testVp81280x0720Goog() throws Exception {
-        doTestGoog(VIDEO_VP8, 1280, 720);
-    }
-
-    public void testVp81920x1080Other() throws Exception {
-        doTestOther(VIDEO_VP8, 1920, 1080);
-    }
-
-    public void testVp81920x1080Goog() throws Exception {
-        doTestGoog(VIDEO_VP8, 1920, 1080);
-    }
+    // AVC tests
+    public void testAvcCount0320x0240() throws Exception { count(AVC, 320, 240, 1, 4); }
+    public void testAvcGoog0Qual0320x0240() throws Exception { qual(AVC, 320, 240, GOOG, 0); }
+    public void testAvcGoog0Perf0320x0240() throws Exception { perf(AVC, 320, 240, GOOG, 0); }
+    public void testAvcOther0Qual0320x0240() throws Exception { qual(AVC, 320, 240, OTHER, 0); }
+    public void testAvcOther0Perf0320x0240() throws Exception { perf(AVC, 320, 240, OTHER, 0); }
+    public void testAvcOther1Qual0320x0240() throws Exception { qual(AVC, 320, 240, OTHER, 1); }
+    public void testAvcOther1Perf0320x0240() throws Exception { perf(AVC, 320, 240, OTHER, 1); }
+    public void testAvcOther2Qual0320x0240() throws Exception { qual(AVC, 320, 240, OTHER, 2); }
+    public void testAvcOther2Perf0320x0240() throws Exception { perf(AVC, 320, 240, OTHER, 2); }
+    public void testAvcOther3Qual0320x0240() throws Exception { qual(AVC, 320, 240, OTHER, 3); }
+    public void testAvcOther3Perf0320x0240() throws Exception { perf(AVC, 320, 240, OTHER, 3); }
+    public void testAvcCount0720x0480() throws Exception { count(AVC, 720, 480, 1, 4); }
+    public void testAvcGoog0Qual0720x0480() throws Exception { qual(AVC, 720, 480, GOOG, 0); }
+    public void testAvcGoog0Perf0720x0480() throws Exception { perf(AVC, 720, 480, GOOG, 0); }
+    public void testAvcOther0Qual0720x0480() throws Exception { qual(AVC, 720, 480, OTHER, 0); }
+    public void testAvcOther0Perf0720x0480() throws Exception { perf(AVC, 720, 480, OTHER, 0); }
+    public void testAvcOther1Qual0720x0480() throws Exception { qual(AVC, 720, 480, OTHER, 1); }
+    public void testAvcOther1Perf0720x0480() throws Exception { perf(AVC, 720, 480, OTHER, 1); }
+    public void testAvcOther2Qual0720x0480() throws Exception { qual(AVC, 720, 480, OTHER, 2); }
+    public void testAvcOther2Perf0720x0480() throws Exception { perf(AVC, 720, 480, OTHER, 2); }
+    public void testAvcOther3Qual0720x0480() throws Exception { qual(AVC, 720, 480, OTHER, 3); }
+    public void testAvcOther3Perf0720x0480() throws Exception { perf(AVC, 720, 480, OTHER, 3); }
+    public void testAvcCount1280x0720() throws Exception { count(AVC, 1280, 720, 1, 4); }
+    public void testAvcGoog0Qual1280x0720() throws Exception { qual(AVC, 1280, 720, GOOG, 0); }
+    public void testAvcGoog0Perf1280x0720() throws Exception { perf(AVC, 1280, 720, GOOG, 0); }
+    public void testAvcOther0Qual1280x0720() throws Exception { qual(AVC, 1280, 720, OTHER, 0); }
+    public void testAvcOther0Perf1280x0720() throws Exception { perf(AVC, 1280, 720, OTHER, 0); }
+    public void testAvcOther1Qual1280x0720() throws Exception { qual(AVC, 1280, 720, OTHER, 1); }
+    public void testAvcOther1Perf1280x0720() throws Exception { perf(AVC, 1280, 720, OTHER, 1); }
+    public void testAvcOther2Qual1280x0720() throws Exception { qual(AVC, 1280, 720, OTHER, 2); }
+    public void testAvcOther2Perf1280x0720() throws Exception { perf(AVC, 1280, 720, OTHER, 2); }
+    public void testAvcOther3Qual1280x0720() throws Exception { qual(AVC, 1280, 720, OTHER, 3); }
+    public void testAvcOther3Perf1280x0720() throws Exception { perf(AVC, 1280, 720, OTHER, 3); }
+    public void testAvcCount1920x1080() throws Exception { count(AVC, 1920, 1080, 1, 4); }
+    public void testAvcGoog0Qual1920x1080() throws Exception { qual(AVC, 1920, 1080, GOOG, 0); }
+    public void testAvcGoog0Perf1920x1080() throws Exception { perf(AVC, 1920, 1080, GOOG, 0); }
+    public void testAvcOther0Qual1920x1080() throws Exception { qual(AVC, 1920, 1080, OTHER, 0); }
+    public void testAvcOther0Perf1920x1080() throws Exception { perf(AVC, 1920, 1080, OTHER, 0); }
+    public void testAvcOther1Qual1920x1080() throws Exception { qual(AVC, 1920, 1080, OTHER, 1); }
+    public void testAvcOther1Perf1920x1080() throws Exception { perf(AVC, 1920, 1080, OTHER, 1); }
+    public void testAvcOther2Qual1920x1080() throws Exception { qual(AVC, 1920, 1080, OTHER, 2); }
+    public void testAvcOther2Perf1920x1080() throws Exception { perf(AVC, 1920, 1080, OTHER, 2); }
+    public void testAvcOther3Qual1920x1080() throws Exception { qual(AVC, 1920, 1080, OTHER, 3); }
+    public void testAvcOther3Perf1920x1080() throws Exception { perf(AVC, 1920, 1080, OTHER, 3); }
 
     // H263 tests
-    public void testH2630176x0144Other() throws Exception {
-        doTestOther(VIDEO_H263, 176, 144);
-    }
+    public void testH263Count0176x0144() throws Exception { count(H263, 176, 144, 1, 2); }
+    public void testH263Goog0Qual0176x0144() throws Exception { qual(H263, 176, 144, GOOG, 0); }
+    public void testH263Goog0Perf0176x0144() throws Exception { perf(H263, 176, 144, GOOG, 0); }
+    public void testH263Other0Qual0176x0144() throws Exception { qual(H263, 176, 144, OTHER, 0); }
+    public void testH263Other0Perf0176x0144() throws Exception { perf(H263, 176, 144, OTHER, 0); }
+    public void testH263Other1Qual0176x0144() throws Exception { qual(H263, 176, 144, OTHER, 1); }
+    public void testH263Other1Perf0176x0144() throws Exception { perf(H263, 176, 144, OTHER, 1); }
+    public void testH263Count0352x0288() throws Exception { count(H263, 352, 288, 1, 2); }
+    public void testH263Goog0Qual0352x0288() throws Exception { qual(H263, 352, 288, GOOG, 0); }
+    public void testH263Goog0Perf0352x0288() throws Exception { perf(H263, 352, 288, GOOG, 0); }
+    public void testH263Other0Qual0352x0288() throws Exception { qual(H263, 352, 288, OTHER, 0); }
+    public void testH263Other0Perf0352x0288() throws Exception { perf(H263, 352, 288, OTHER, 0); }
+    public void testH263Other1Qual0352x0288() throws Exception { qual(H263, 352, 288, OTHER, 1); }
+    public void testH263Other1Perf0352x0288() throws Exception { perf(H263, 352, 288, OTHER, 1); }
+    public void testH263Count0704x0576() throws Exception { count(H263, 704, 576, 1, 2); }
+    public void testH263Goog0Qual0704x0576() throws Exception { qual(H263, 704, 576, GOOG, 0); }
+    public void testH263Goog0Perf0704x0576() throws Exception { perf(H263, 704, 576, GOOG, 0); }
+    public void testH263Other0Qual0704x0576() throws Exception { qual(H263, 704, 576, OTHER, 0); }
+    public void testH263Other0Perf0704x0576() throws Exception { perf(H263, 704, 576, OTHER, 0); }
+    public void testH263Other1Qual0704x0576() throws Exception { qual(H263, 704, 576, OTHER, 1); }
+    public void testH263Other1Perf0704x0576() throws Exception { perf(H263, 704, 576, OTHER, 1); }
+    public void testH263Count1408x1152() throws Exception { count(H263, 1408, 1152, 1, 2); }
+    public void testH263Goog0Qual1408x1152() throws Exception { qual(H263, 1408, 1152, GOOG, 0); }
+    public void testH263Goog0Perf1408x1152() throws Exception { perf(H263, 1408, 1152, GOOG, 0); }
+    public void testH263Other0Qual1408x1152() throws Exception { qual(H263, 1408, 1152, OTHER, 0); }
+    public void testH263Other0Perf1408x1152() throws Exception { perf(H263, 1408, 1152, OTHER, 0); }
+    public void testH263Other1Qual1408x1152() throws Exception { qual(H263, 1408, 1152, OTHER, 1); }
+    public void testH263Other1Perf1408x1152() throws Exception { perf(H263, 1408, 1152, OTHER, 1); }
 
-    public void testH2630176x0144Goog() throws Exception {
-        doTestGoog(VIDEO_H263, 176, 144);
-    }
+    // HEVC tests
+    public void testHevcCount0320x0240() throws Exception { count(HEVC, 320, 240, 1, 4); }
+    public void testHevcGoog0Qual0320x0240() throws Exception { qual(HEVC, 320, 240, GOOG, 0); }
+    public void testHevcGoog0Perf0320x0240() throws Exception { perf(HEVC, 320, 240, GOOG, 0); }
+    public void testHevcOther0Qual0320x0240() throws Exception { qual(HEVC, 320, 240, OTHER, 0); }
+    public void testHevcOther0Perf0320x0240() throws Exception { perf(HEVC, 320, 240, OTHER, 0); }
+    public void testHevcOther1Qual0320x0240() throws Exception { qual(HEVC, 320, 240, OTHER, 1); }
+    public void testHevcOther1Perf0320x0240() throws Exception { perf(HEVC, 320, 240, OTHER, 1); }
+    public void testHevcOther2Qual0320x0240() throws Exception { qual(HEVC, 320, 240, OTHER, 2); }
+    public void testHevcOther2Perf0320x0240() throws Exception { perf(HEVC, 320, 240, OTHER, 2); }
+    public void testHevcOther3Qual0320x0240() throws Exception { qual(HEVC, 320, 240, OTHER, 3); }
+    public void testHevcOther3Perf0320x0240() throws Exception { perf(HEVC, 320, 240, OTHER, 3); }
+    public void testHevcCount0720x0480() throws Exception { count(HEVC, 720, 480, 1, 4); }
+    public void testHevcGoog0Qual0720x0480() throws Exception { qual(HEVC, 720, 480, GOOG, 0); }
+    public void testHevcGoog0Perf0720x0480() throws Exception { perf(HEVC, 720, 480, GOOG, 0); }
+    public void testHevcOther0Qual0720x0480() throws Exception { qual(HEVC, 720, 480, OTHER, 0); }
+    public void testHevcOther0Perf0720x0480() throws Exception { perf(HEVC, 720, 480, OTHER, 0); }
+    public void testHevcOther1Qual0720x0480() throws Exception { qual(HEVC, 720, 480, OTHER, 1); }
+    public void testHevcOther1Perf0720x0480() throws Exception { perf(HEVC, 720, 480, OTHER, 1); }
+    public void testHevcOther2Qual0720x0480() throws Exception { qual(HEVC, 720, 480, OTHER, 2); }
+    public void testHevcOther2Perf0720x0480() throws Exception { perf(HEVC, 720, 480, OTHER, 2); }
+    public void testHevcOther3Qual0720x0480() throws Exception { qual(HEVC, 720, 480, OTHER, 3); }
+    public void testHevcOther3Perf0720x0480() throws Exception { perf(HEVC, 720, 480, OTHER, 3); }
+    public void testHevcCount1280x0720() throws Exception { count(HEVC, 1280, 720, 1, 4); }
+    public void testHevcGoog0Qual1280x0720() throws Exception { qual(HEVC, 1280, 720, GOOG, 0); }
+    public void testHevcGoog0Perf1280x0720() throws Exception { perf(HEVC, 1280, 720, GOOG, 0); }
+    public void testHevcOther0Qual1280x0720() throws Exception { qual(HEVC, 1280, 720, OTHER, 0); }
+    public void testHevcOther0Perf1280x0720() throws Exception { perf(HEVC, 1280, 720, OTHER, 0); }
+    public void testHevcOther1Qual1280x0720() throws Exception { qual(HEVC, 1280, 720, OTHER, 1); }
+    public void testHevcOther1Perf1280x0720() throws Exception { perf(HEVC, 1280, 720, OTHER, 1); }
+    public void testHevcOther2Qual1280x0720() throws Exception { qual(HEVC, 1280, 720, OTHER, 2); }
+    public void testHevcOther2Perf1280x0720() throws Exception { perf(HEVC, 1280, 720, OTHER, 2); }
+    public void testHevcOther3Qual1280x0720() throws Exception { qual(HEVC, 1280, 720, OTHER, 3); }
+    public void testHevcOther3Perf1280x0720() throws Exception { perf(HEVC, 1280, 720, OTHER, 3); }
+    public void testHevcCount1920x1080() throws Exception { count(HEVC, 1920, 1080, 1, 4); }
+    public void testHevcGoog0Qual1920x1080() throws Exception { qual(HEVC, 1920, 1080, GOOG, 0); }
+    public void testHevcGoog0Perf1920x1080() throws Exception { perf(HEVC, 1920, 1080, GOOG, 0); }
+    public void testHevcOther0Qual1920x1080() throws Exception { qual(HEVC, 1920, 1080, OTHER, 0); }
+    public void testHevcOther0Perf1920x1080() throws Exception { perf(HEVC, 1920, 1080, OTHER, 0); }
+    public void testHevcOther1Qual1920x1080() throws Exception { qual(HEVC, 1920, 1080, OTHER, 1); }
+    public void testHevcOther1Perf1920x1080() throws Exception { perf(HEVC, 1920, 1080, OTHER, 1); }
+    public void testHevcOther2Qual1920x1080() throws Exception { qual(HEVC, 1920, 1080, OTHER, 2); }
+    public void testHevcOther2Perf1920x1080() throws Exception { perf(HEVC, 1920, 1080, OTHER, 2); }
+    public void testHevcOther3Qual1920x1080() throws Exception { qual(HEVC, 1920, 1080, OTHER, 3); }
+    public void testHevcOther3Perf1920x1080() throws Exception { perf(HEVC, 1920, 1080, OTHER, 3); }
+    public void testHevcCount3840x2160() throws Exception { count(HEVC, 3840, 2160, 1, 4); }
+    public void testHevcGoog0Qual3840x2160() throws Exception { qual(HEVC, 3840, 2160, GOOG, 0); }
+    public void testHevcGoog0Perf3840x2160() throws Exception { perf(HEVC, 3840, 2160, GOOG, 0); }
+    public void testHevcOther0Qual3840x2160() throws Exception { qual(HEVC, 3840, 2160, OTHER, 0); }
+    public void testHevcOther0Perf3840x2160() throws Exception { perf(HEVC, 3840, 2160, OTHER, 0); }
+    public void testHevcOther1Qual3840x2160() throws Exception { qual(HEVC, 3840, 2160, OTHER, 1); }
+    public void testHevcOther1Perf3840x2160() throws Exception { perf(HEVC, 3840, 2160, OTHER, 1); }
+    public void testHevcOther2Qual3840x2160() throws Exception { qual(HEVC, 3840, 2160, OTHER, 2); }
+    public void testHevcOther2Perf3840x2160() throws Exception { perf(HEVC, 3840, 2160, OTHER, 2); }
+    public void testHevcOther3Qual3840x2160() throws Exception { qual(HEVC, 3840, 2160, OTHER, 3); }
+    public void testHevcOther3Perf3840x2160() throws Exception { perf(HEVC, 3840, 2160, OTHER, 3); }
 
-    public void testH2630352x0288Other() throws Exception {
-        doTestOther(VIDEO_H263, 352, 288);
-    }
+    // MPEG2 tests
+    public void testMpeg2Count0176x0144() throws Exception { count(MPEG2, 176, 144, 1, 4); }
+    public void testMpeg2Goog0Qual0176x0144() throws Exception { qual(MPEG2, 176, 144, GOOG, 0); }
+    public void testMpeg2Goog0Perf0176x0144() throws Exception { perf(MPEG2, 176, 144, GOOG, 0); }
+    public void testMpeg2Other0Qual0176x0144() throws Exception { qual(MPEG2, 176, 144, OTHER, 0); }
+    public void testMpeg2Other0Perf0176x0144() throws Exception { perf(MPEG2, 176, 144, OTHER, 0); }
+    public void testMpeg2Other1Qual0176x0144() throws Exception { qual(MPEG2, 176, 144, OTHER, 1); }
+    public void testMpeg2Other1Perf0176x0144() throws Exception { perf(MPEG2, 176, 144, OTHER, 1); }
+    public void testMpeg2Other2Qual0176x0144() throws Exception { qual(MPEG2, 176, 144, OTHER, 2); }
+    public void testMpeg2Other2Perf0176x0144() throws Exception { perf(MPEG2, 176, 144, OTHER, 2); }
+    public void testMpeg2Other3Qual0176x0144() throws Exception { qual(MPEG2, 176, 144, OTHER, 3); }
+    public void testMpeg2Other3Perf0176x0144() throws Exception { perf(MPEG2, 176, 144, OTHER, 3); }
+    public void testMpeg2Count0352x0288() throws Exception { count(MPEG2, 352, 288, 1, 4); }
+    public void testMpeg2Goog0Qual0352x0288() throws Exception { qual(MPEG2, 352, 288, GOOG, 0); }
+    public void testMpeg2Goog0Perf0352x0288() throws Exception { perf(MPEG2, 352, 288, GOOG, 0); }
+    public void testMpeg2Other0Qual0352x0288() throws Exception { qual(MPEG2, 352, 288, OTHER, 0); }
+    public void testMpeg2Other0Perf0352x0288() throws Exception { perf(MPEG2, 352, 288, OTHER, 0); }
+    public void testMpeg2Other1Qual0352x0288() throws Exception { qual(MPEG2, 352, 288, OTHER, 1); }
+    public void testMpeg2Other1Perf0352x0288() throws Exception { perf(MPEG2, 352, 288, OTHER, 1); }
+    public void testMpeg2Other2Qual0352x0288() throws Exception { qual(MPEG2, 352, 288, OTHER, 2); }
+    public void testMpeg2Other2Perf0352x0288() throws Exception { perf(MPEG2, 352, 288, OTHER, 2); }
+    public void testMpeg2Other3Qual0352x0288() throws Exception { qual(MPEG2, 352, 288, OTHER, 3); }
+    public void testMpeg2Other3Perf0352x0288() throws Exception { perf(MPEG2, 352, 288, OTHER, 3); }
+    public void testMpeg2Count0640x0480() throws Exception { count(MPEG2, 640, 480, 1, 4); }
+    public void testMpeg2Goog0Qual0640x0480() throws Exception { qual(MPEG2, 640, 480, GOOG, 0); }
+    public void testMpeg2Goog0Perf0640x0480() throws Exception { perf(MPEG2, 640, 480, GOOG, 0); }
+    public void testMpeg2Other0Qual0640x0480() throws Exception { qual(MPEG2, 640, 480, OTHER, 0); }
+    public void testMpeg2Other0Perf0640x0480() throws Exception { perf(MPEG2, 640, 480, OTHER, 0); }
+    public void testMpeg2Other1Qual0640x0480() throws Exception { qual(MPEG2, 640, 480, OTHER, 1); }
+    public void testMpeg2Other1Perf0640x0480() throws Exception { perf(MPEG2, 640, 480, OTHER, 1); }
+    public void testMpeg2Other2Qual0640x0480() throws Exception { qual(MPEG2, 640, 480, OTHER, 2); }
+    public void testMpeg2Other2Perf0640x0480() throws Exception { perf(MPEG2, 640, 480, OTHER, 2); }
+    public void testMpeg2Other3Qual0640x0480() throws Exception { qual(MPEG2, 640, 480, OTHER, 3); }
+    public void testMpeg2Other3Perf0640x0480() throws Exception { perf(MPEG2, 640, 480, OTHER, 3); }
+    public void testMpeg2Count1280x0720() throws Exception { count(MPEG2, 1280, 720, 1, 4); }
+    public void testMpeg2Goog0Qual1280x0720() throws Exception { qual(MPEG2, 1280, 720, GOOG, 0); }
+    public void testMpeg2Goog0Perf1280x0720() throws Exception { perf(MPEG2, 1280, 720, GOOG, 0); }
+    public void testMpeg2Other0Qual1280x0720() throws Exception { qual(MPEG2, 1280, 720, OTHER, 0); }
+    public void testMpeg2Other0Perf1280x0720() throws Exception { perf(MPEG2, 1280, 720, OTHER, 0); }
+    public void testMpeg2Other1Qual1280x0720() throws Exception { qual(MPEG2, 1280, 720, OTHER, 1); }
+    public void testMpeg2Other1Perf1280x0720() throws Exception { perf(MPEG2, 1280, 720, OTHER, 1); }
+    public void testMpeg2Other2Qual1280x0720() throws Exception { qual(MPEG2, 1280, 720, OTHER, 2); }
+    public void testMpeg2Other2Perf1280x0720() throws Exception { perf(MPEG2, 1280, 720, OTHER, 2); }
+    public void testMpeg2Other3Qual1280x0720() throws Exception { qual(MPEG2, 1280, 720, OTHER, 3); }
+    public void testMpeg2Other3Perf1280x0720() throws Exception { perf(MPEG2, 1280, 720, OTHER, 3); }
+    public void testMpeg2Count1920x1080() throws Exception { count(MPEG2, 1920, 1080, 1, 4); }
+    public void testMpeg2Goog0Qual1920x1080() throws Exception { qual(MPEG2, 1920, 1080, GOOG, 0); }
+    public void testMpeg2Goog0Perf1920x1080() throws Exception { perf(MPEG2, 1920, 1080, GOOG, 0); }
+    public void testMpeg2Other0Qual1920x1080() throws Exception { qual(MPEG2, 1920, 1080, OTHER, 0); }
+    public void testMpeg2Other0Perf1920x1080() throws Exception { perf(MPEG2, 1920, 1080, OTHER, 0); }
+    public void testMpeg2Other1Qual1920x1080() throws Exception { qual(MPEG2, 1920, 1080, OTHER, 1); }
+    public void testMpeg2Other1Perf1920x1080() throws Exception { perf(MPEG2, 1920, 1080, OTHER, 1); }
+    public void testMpeg2Other2Qual1920x1080() throws Exception { qual(MPEG2, 1920, 1080, OTHER, 2); }
+    public void testMpeg2Other2Perf1920x1080() throws Exception { perf(MPEG2, 1920, 1080, OTHER, 2); }
+    public void testMpeg2Other3Qual1920x1080() throws Exception { qual(MPEG2, 1920, 1080, OTHER, 3); }
+    public void testMpeg2Other3Perf1920x1080() throws Exception { perf(MPEG2, 1920, 1080, OTHER, 3); }
 
-    public void testH2630352x0288Goog() throws Exception {
-        doTestGoog(VIDEO_H263, 352, 288);
-    }
+    // MPEG4 tests
+    public void testMpeg4Count0176x0144() throws Exception { count(MPEG4, 176, 144, 1, 4); }
+    public void testMpeg4Goog0Qual0176x0144() throws Exception { qual(MPEG4, 176, 144, GOOG, 0); }
+    public void testMpeg4Goog0Perf0176x0144() throws Exception { perf(MPEG4, 176, 144, GOOG, 0); }
+    public void testMpeg4Other0Qual0176x0144() throws Exception { qual(MPEG4, 176, 144, OTHER, 0); }
+    public void testMpeg4Other0Perf0176x0144() throws Exception { perf(MPEG4, 176, 144, OTHER, 0); }
+    public void testMpeg4Other1Qual0176x0144() throws Exception { qual(MPEG4, 176, 144, OTHER, 1); }
+    public void testMpeg4Other1Perf0176x0144() throws Exception { perf(MPEG4, 176, 144, OTHER, 1); }
+    public void testMpeg4Other2Qual0176x0144() throws Exception { qual(MPEG4, 176, 144, OTHER, 2); }
+    public void testMpeg4Other2Perf0176x0144() throws Exception { perf(MPEG4, 176, 144, OTHER, 2); }
+    public void testMpeg4Other3Qual0176x0144() throws Exception { qual(MPEG4, 176, 144, OTHER, 3); }
+    public void testMpeg4Other3Perf0176x0144() throws Exception { perf(MPEG4, 176, 144, OTHER, 3); }
+    public void testMpeg4Count0352x0288() throws Exception { count(MPEG4, 352, 288, 1, 4); }
+    public void testMpeg4Goog0Qual0352x0288() throws Exception { qual(MPEG4, 352, 288, GOOG, 0); }
+    public void testMpeg4Goog0Perf0352x0288() throws Exception { perf(MPEG4, 352, 288, GOOG, 0); }
+    public void testMpeg4Other0Qual0352x0288() throws Exception { qual(MPEG4, 352, 288, OTHER, 0); }
+    public void testMpeg4Other0Perf0352x0288() throws Exception { perf(MPEG4, 352, 288, OTHER, 0); }
+    public void testMpeg4Other1Qual0352x0288() throws Exception { qual(MPEG4, 352, 288, OTHER, 1); }
+    public void testMpeg4Other1Perf0352x0288() throws Exception { perf(MPEG4, 352, 288, OTHER, 1); }
+    public void testMpeg4Other2Qual0352x0288() throws Exception { qual(MPEG4, 352, 288, OTHER, 2); }
+    public void testMpeg4Other2Perf0352x0288() throws Exception { perf(MPEG4, 352, 288, OTHER, 2); }
+    public void testMpeg4Other3Qual0352x0288() throws Exception { qual(MPEG4, 352, 288, OTHER, 3); }
+    public void testMpeg4Other3Perf0352x0288() throws Exception { perf(MPEG4, 352, 288, OTHER, 3); }
+    public void testMpeg4Count0640x0480() throws Exception { count(MPEG4, 640, 480, 1, 4); }
+    public void testMpeg4Goog0Qual0640x0480() throws Exception { qual(MPEG4, 640, 480, GOOG, 0); }
+    public void testMpeg4Goog0Perf0640x0480() throws Exception { perf(MPEG4, 640, 480, GOOG, 0); }
+    public void testMpeg4Other0Qual0640x0480() throws Exception { qual(MPEG4, 640, 480, OTHER, 0); }
+    public void testMpeg4Other0Perf0640x0480() throws Exception { perf(MPEG4, 640, 480, OTHER, 0); }
+    public void testMpeg4Other1Qual0640x0480() throws Exception { qual(MPEG4, 640, 480, OTHER, 1); }
+    public void testMpeg4Other1Perf0640x0480() throws Exception { perf(MPEG4, 640, 480, OTHER, 1); }
+    public void testMpeg4Other2Qual0640x0480() throws Exception { qual(MPEG4, 640, 480, OTHER, 2); }
+    public void testMpeg4Other2Perf0640x0480() throws Exception { perf(MPEG4, 640, 480, OTHER, 2); }
+    public void testMpeg4Other3Qual0640x0480() throws Exception { qual(MPEG4, 640, 480, OTHER, 3); }
+    public void testMpeg4Other3Perf0640x0480() throws Exception { perf(MPEG4, 640, 480, OTHER, 3); }
+    public void testMpeg4Count1280x0720() throws Exception { count(MPEG4, 1280, 720, 1, 4); }
+    public void testMpeg4Goog0Qual1280x0720() throws Exception { qual(MPEG4, 1280, 720, GOOG, 0); }
+    public void testMpeg4Goog0Perf1280x0720() throws Exception { perf(MPEG4, 1280, 720, GOOG, 0); }
+    public void testMpeg4Other0Qual1280x0720() throws Exception { qual(MPEG4, 1280, 720, OTHER, 0); }
+    public void testMpeg4Other0Perf1280x0720() throws Exception { perf(MPEG4, 1280, 720, OTHER, 0); }
+    public void testMpeg4Other1Qual1280x0720() throws Exception { qual(MPEG4, 1280, 720, OTHER, 1); }
+    public void testMpeg4Other1Perf1280x0720() throws Exception { perf(MPEG4, 1280, 720, OTHER, 1); }
+    public void testMpeg4Other2Qual1280x0720() throws Exception { qual(MPEG4, 1280, 720, OTHER, 2); }
+    public void testMpeg4Other2Perf1280x0720() throws Exception { perf(MPEG4, 1280, 720, OTHER, 2); }
+    public void testMpeg4Other3Qual1280x0720() throws Exception { qual(MPEG4, 1280, 720, OTHER, 3); }
+    public void testMpeg4Other3Perf1280x0720() throws Exception { perf(MPEG4, 1280, 720, OTHER, 3); }
 
-    // Mpeg4 tests
-    public void testMpeg40176x0144Other() throws Exception {
-        doTestOther(VIDEO_MPEG4, 176, 144);
-    }
+    // VP8 tests
+    public void testVp8Count0320x0180() throws Exception { count(VP8, 320, 180, 1, 2); }
+    public void testVp8Goog0Qual0320x0180() throws Exception { qual(VP8, 320, 180, GOOG, 0); }
+    public void testVp8Goog0Perf0320x0180() throws Exception { perf(VP8, 320, 180, GOOG, 0); }
+    public void testVp8Other0Qual0320x0180() throws Exception { qual(VP8, 320, 180, OTHER, 0); }
+    public void testVp8Other0Perf0320x0180() throws Exception { perf(VP8, 320, 180, OTHER, 0); }
+    public void testVp8Other1Qual0320x0180() throws Exception { qual(VP8, 320, 180, OTHER, 1); }
+    public void testVp8Other1Perf0320x0180() throws Exception { perf(VP8, 320, 180, OTHER, 1); }
+    public void testVp8Count0640x0360() throws Exception { count(VP8, 640, 360, 1, 2); }
+    public void testVp8Goog0Qual0640x0360() throws Exception { qual(VP8, 640, 360, GOOG, 0); }
+    public void testVp8Goog0Perf0640x0360() throws Exception { perf(VP8, 640, 360, GOOG, 0); }
+    public void testVp8Other0Qual0640x0360() throws Exception { qual(VP8, 640, 360, OTHER, 0); }
+    public void testVp8Other0Perf0640x0360() throws Exception { perf(VP8, 640, 360, OTHER, 0); }
+    public void testVp8Other1Qual0640x0360() throws Exception { qual(VP8, 640, 360, OTHER, 1); }
+    public void testVp8Other1Perf0640x0360() throws Exception { perf(VP8, 640, 360, OTHER, 1); }
+    public void testVp8Count1280x0720() throws Exception { count(VP8, 1280, 720, 1, 2); }
+    public void testVp8Goog0Qual1280x0720() throws Exception { qual(VP8, 1280, 720, GOOG, 0); }
+    public void testVp8Goog0Perf1280x0720() throws Exception { perf(VP8, 1280, 720, GOOG, 0); }
+    public void testVp8Other0Qual1280x0720() throws Exception { qual(VP8, 1280, 720, OTHER, 0); }
+    public void testVp8Other0Perf1280x0720() throws Exception { perf(VP8, 1280, 720, OTHER, 0); }
+    public void testVp8Other1Qual1280x0720() throws Exception { qual(VP8, 1280, 720, OTHER, 1); }
+    public void testVp8Other1Perf1280x0720() throws Exception { perf(VP8, 1280, 720, OTHER, 1); }
+    public void testVp8Count1920x1080() throws Exception { count(VP8, 1920, 1080, 1, 2); }
+    public void testVp8Goog0Qual1920x1080() throws Exception { qual(VP8, 1920, 1080, GOOG, 0); }
+    public void testVp8Goog0Perf1920x1080() throws Exception { perf(VP8, 1920, 1080, GOOG, 0); }
+    public void testVp8Other0Qual1920x1080() throws Exception { qual(VP8, 1920, 1080, OTHER, 0); }
+    public void testVp8Other0Perf1920x1080() throws Exception { perf(VP8, 1920, 1080, OTHER, 0); }
+    public void testVp8Other1Qual1920x1080() throws Exception { qual(VP8, 1920, 1080, OTHER, 1); }
+    public void testVp8Other1Perf1920x1080() throws Exception { perf(VP8, 1920, 1080, OTHER, 1); }
 
-    public void testMpeg40176x0144Goog() throws Exception {
-        doTestGoog(VIDEO_MPEG4, 176, 144);
-    }
-
-    public void testMpeg40352x0288Other() throws Exception {
-        doTestOther(VIDEO_MPEG4, 352, 288);
-    }
-
-    public void testMpeg40352x0288Goog() throws Exception {
-        doTestGoog(VIDEO_MPEG4, 352, 288);
-    }
-
-    public void testMpeg40640x0480Other() throws Exception {
-        doTestOther(VIDEO_MPEG4, 640, 480);
-    }
-
-    public void testMpeg40640x0480Goog() throws Exception {
-        doTestGoog(VIDEO_MPEG4, 640, 480);
-    }
-
-    public void testMpeg41280x0720Other() throws Exception {
-        doTestOther(VIDEO_MPEG4, 1280, 720);
-    }
-
-    public void testMpeg41280x0720Goog() throws Exception {
-        doTestGoog(VIDEO_MPEG4, 1280, 720);
-    }
-
-    // Hevc tests
-    public void testHevc0320x0240Other() throws Exception {
-        doTestOther(VIDEO_HEVC, 320, 240);
-    }
-
-    public void testHevc0320x0240Goog() throws Exception {
-        doTestGoog(VIDEO_HEVC, 320, 240);
-    }
-
-    public void testHevc0720x0480Other() throws Exception {
-        doTestOther(VIDEO_HEVC, 720, 480);
-    }
-
-    public void testHevc0720x0480Goog() throws Exception {
-        doTestGoog(VIDEO_HEVC, 720, 480);
-    }
-
-    public void testHevc1280x0720Other() throws Exception {
-        doTestOther(VIDEO_HEVC, 1280, 720);
-    }
-
-    public void testHevc1280x0720Goog() throws Exception {
-        doTestGoog(VIDEO_HEVC, 1280, 720);
-    }
-
-    public void testHevc1920x1080Other() throws Exception {
-        doTestOther(VIDEO_HEVC, 1920, 1080);
-    }
-
-    public void testHevc1920x1080Goog() throws Exception {
-        doTestGoog(VIDEO_HEVC, 1920, 1080);
-    }
-
-    public void testHevc3840x2160Other() throws Exception {
-        doTestOther(VIDEO_HEVC, 3840, 2160);
-    }
-
-    public void testHevc3840x2160Goog() throws Exception {
-        doTestGoog(VIDEO_HEVC, 3840, 2160);
-    }
+    // VP9 tests
+    public void testVp9Count0320x0180() throws Exception { count(VP9, 320, 180, 1, 4); }
+    public void testVp9Goog0Qual0320x0180() throws Exception { qual(VP9, 320, 180, GOOG, 0); }
+    public void testVp9Goog0Perf0320x0180() throws Exception { perf(VP9, 320, 180, GOOG, 0); }
+    public void testVp9Other0Qual0320x0180() throws Exception { qual(VP9, 320, 180, OTHER, 0); }
+    public void testVp9Other0Perf0320x0180() throws Exception { perf(VP9, 320, 180, OTHER, 0); }
+    public void testVp9Other1Qual0320x0180() throws Exception { qual(VP9, 320, 180, OTHER, 1); }
+    public void testVp9Other1Perf0320x0180() throws Exception { perf(VP9, 320, 180, OTHER, 1); }
+    public void testVp9Other2Qual0320x0180() throws Exception { qual(VP9, 320, 180, OTHER, 2); }
+    public void testVp9Other2Perf0320x0180() throws Exception { perf(VP9, 320, 180, OTHER, 2); }
+    public void testVp9Other3Qual0320x0180() throws Exception { qual(VP9, 320, 180, OTHER, 3); }
+    public void testVp9Other3Perf0320x0180() throws Exception { perf(VP9, 320, 180, OTHER, 3); }
+    public void testVp9Count0640x0360() throws Exception { count(VP9, 640, 360, 1, 4); }
+    public void testVp9Goog0Qual0640x0360() throws Exception { qual(VP9, 640, 360, GOOG, 0); }
+    public void testVp9Goog0Perf0640x0360() throws Exception { perf(VP9, 640, 360, GOOG, 0); }
+    public void testVp9Other0Qual0640x0360() throws Exception { qual(VP9, 640, 360, OTHER, 0); }
+    public void testVp9Other0Perf0640x0360() throws Exception { perf(VP9, 640, 360, OTHER, 0); }
+    public void testVp9Other1Qual0640x0360() throws Exception { qual(VP9, 640, 360, OTHER, 1); }
+    public void testVp9Other1Perf0640x0360() throws Exception { perf(VP9, 640, 360, OTHER, 1); }
+    public void testVp9Other2Qual0640x0360() throws Exception { qual(VP9, 640, 360, OTHER, 2); }
+    public void testVp9Other2Perf0640x0360() throws Exception { perf(VP9, 640, 360, OTHER, 2); }
+    public void testVp9Other3Qual0640x0360() throws Exception { qual(VP9, 640, 360, OTHER, 3); }
+    public void testVp9Other3Perf0640x0360() throws Exception { perf(VP9, 640, 360, OTHER, 3); }
+    public void testVp9Count1280x0720() throws Exception { count(VP9, 1280, 720, 1, 4); }
+    public void testVp9Goog0Qual1280x0720() throws Exception { qual(VP9, 1280, 720, GOOG, 0); }
+    public void testVp9Goog0Perf1280x0720() throws Exception { perf(VP9, 1280, 720, GOOG, 0); }
+    public void testVp9Other0Qual1280x0720() throws Exception { qual(VP9, 1280, 720, OTHER, 0); }
+    public void testVp9Other0Perf1280x0720() throws Exception { perf(VP9, 1280, 720, OTHER, 0); }
+    public void testVp9Other1Qual1280x0720() throws Exception { qual(VP9, 1280, 720, OTHER, 1); }
+    public void testVp9Other1Perf1280x0720() throws Exception { perf(VP9, 1280, 720, OTHER, 1); }
+    public void testVp9Other2Qual1280x0720() throws Exception { qual(VP9, 1280, 720, OTHER, 2); }
+    public void testVp9Other2Perf1280x0720() throws Exception { perf(VP9, 1280, 720, OTHER, 2); }
+    public void testVp9Other3Qual1280x0720() throws Exception { qual(VP9, 1280, 720, OTHER, 3); }
+    public void testVp9Other3Perf1280x0720() throws Exception { perf(VP9, 1280, 720, OTHER, 3); }
+    public void testVp9Count1920x1080() throws Exception { count(VP9, 1920, 1080, 1, 4); }
+    public void testVp9Goog0Qual1920x1080() throws Exception { qual(VP9, 1920, 1080, GOOG, 0); }
+    public void testVp9Goog0Perf1920x1080() throws Exception { perf(VP9, 1920, 1080, GOOG, 0); }
+    public void testVp9Other0Qual1920x1080() throws Exception { qual(VP9, 1920, 1080, OTHER, 0); }
+    public void testVp9Other0Perf1920x1080() throws Exception { perf(VP9, 1920, 1080, OTHER, 0); }
+    public void testVp9Other1Qual1920x1080() throws Exception { qual(VP9, 1920, 1080, OTHER, 1); }
+    public void testVp9Other1Perf1920x1080() throws Exception { perf(VP9, 1920, 1080, OTHER, 1); }
+    public void testVp9Other2Qual1920x1080() throws Exception { qual(VP9, 1920, 1080, OTHER, 2); }
+    public void testVp9Other2Perf1920x1080() throws Exception { perf(VP9, 1920, 1080, OTHER, 2); }
+    public void testVp9Other3Qual1920x1080() throws Exception { qual(VP9, 1920, 1080, OTHER, 3); }
+    public void testVp9Other3Perf1920x1080() throws Exception { perf(VP9, 1920, 1080, OTHER, 3); }
+    public void testVp9Count3840x2160() throws Exception { count(VP9, 3840, 2160, 1, 4); }
+    public void testVp9Goog0Qual3840x2160() throws Exception { qual(VP9, 3840, 2160, GOOG, 0); }
+    public void testVp9Goog0Perf3840x2160() throws Exception { perf(VP9, 3840, 2160, GOOG, 0); }
+    public void testVp9Other0Qual3840x2160() throws Exception { qual(VP9, 3840, 2160, OTHER, 0); }
+    public void testVp9Other0Perf3840x2160() throws Exception { perf(VP9, 3840, 2160, OTHER, 0); }
+    public void testVp9Other1Qual3840x2160() throws Exception { qual(VP9, 3840, 2160, OTHER, 1); }
+    public void testVp9Other1Perf3840x2160() throws Exception { perf(VP9, 3840, 2160, OTHER, 1); }
+    public void testVp9Other2Qual3840x2160() throws Exception { qual(VP9, 3840, 2160, OTHER, 2); }
+    public void testVp9Other2Perf3840x2160() throws Exception { perf(VP9, 3840, 2160, OTHER, 2); }
+    public void testVp9Other3Qual3840x2160() throws Exception { qual(VP9, 3840, 2160, OTHER, 3); }
+    public void testVp9Other3Perf3840x2160() throws Exception { perf(VP9, 3840, 2160, OTHER, 3); }
 
     private boolean isSrcSemiPlanar() {
         return mSrcColorFormat == CodecCapabilities.COLOR_FormatYUV420SemiPlanar;
@@ -392,35 +560,7 @@ public class VideoEncoderDecoderTest extends CtsAndroidTestCase {
         }
     }
 
-    private void doTestGoog(String mimeType, int w, int h) throws Exception {
-        mTestConfig.initPerfTest();
-        doTest(true /* isGoog */, mimeType, w, h);
-    }
-
-    private void doTestOther(String mimeType, int w, int h) throws Exception {
-        mTestConfig.initPerfTest();
-        doTest(false /* isGoog */, mimeType, w, h);
-    }
-
-    private void doTestDefault(String mimeType, int w, int h) throws Exception {
-        MediaFormat format = MediaFormat.createVideoFormat(mimeType, w, h);
-        String[] encoderNames = MediaUtils.getEncoderNames(format);
-        if (encoderNames.length == 0) {
-            MediaUtils.skipTest("No encoders for " + format);
-            return;
-        }
-
-        doTestByName(encoderNames[0], mimeType, w, h, false /* isPerf */);
-    }
-
-    /**
-     * Run encoding / decoding test for given mimeType of codec
-     * @param isGoog test google or non-google codec.
-     * @param mimeType like video/avc
-     * @param w video width
-     * @param h video height
-     */
-    private void doTest(boolean isGoog, String mimeType, int w, int h)
+    private void doTest(String mimeType, int w, int h, boolean isPerf, boolean isGoog, int ix)
             throws Exception {
         MediaFormat format = MediaFormat.createVideoFormat(mimeType, w, h);
         String[] encoderNames = MediaUtils.getEncoderNames(isGoog, format);
@@ -428,14 +568,17 @@ public class VideoEncoderDecoderTest extends CtsAndroidTestCase {
         if (encoderNames.length == 0) {
             MediaUtils.skipTest("No " + kind + " encoders for " + format);
             return;
+        } else if (encoderNames.length <= ix) {
+            Log.i(TAG, "No more " + kind + " encoders for " + format);
+            return;
         }
 
-        doTestByName(encoderNames[0], mimeType, w, h, true /* isPerf */);
-    }
+        if (isPerf) {
+            mTestConfig.initPerfTest();
+        }
 
-    private void doTestByName(
-            String encoderName, String mimeType, int w, int h, boolean isPerf)
-            throws Exception {
+        String encoderName = encoderNames[ix];
+
         CodecInfo infoEnc = CodecInfo.getSupportedFormatInfo(encoderName, mimeType, w, h, MAX_FPS);
         assertNotNull(infoEnc);
 
@@ -444,7 +587,6 @@ public class VideoEncoderDecoderTest extends CtsAndroidTestCase {
         int codingPasses = 1;  // used for time limit. 1 for encoding pass
         int numRuns = mTestConfig.mNumberOfRepeat;  // used for result array sizing
         if (!isPerf) {
-            MediaFormat format = MediaFormat.createVideoFormat(mimeType, w, h);
             // consider all decoders for quality tests
             decoderNames = MediaUtils.getDecoderNames(format);
             if (decoderNames.length == 0) {
@@ -489,7 +631,7 @@ public class VideoEncoderDecoderTest extends CtsAndroidTestCase {
         int runIx = 0;
         for (int i = 0; i < mTestConfig.mNumberOfRepeat && success; i++) {
             mCurrentTestRound = runIx;
-            MediaFormat format = new MediaFormat();
+            format = new MediaFormat();
             format.setString(MediaFormat.KEY_MIME, mimeType);
             format.setInteger(MediaFormat.KEY_BIT_RATE, infoEnc.mBitRate);
             format.setInteger(MediaFormat.KEY_WIDTH, w);

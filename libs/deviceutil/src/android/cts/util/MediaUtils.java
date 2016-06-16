@@ -25,6 +25,7 @@ import android.media.MediaCodecList;
 import android.media.MediaExtractor;
 import android.media.MediaFormat;
 import android.net.Uri;
+import android.util.Log;
 import android.util.Range;
 
 import com.android.compatibility.common.util.DeviceReportLog;
@@ -37,7 +38,8 @@ import static java.lang.reflect.Modifier.isStatic;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Map;
-import android.util.Log;
+
+import static junit.framework.Assert.assertTrue;
 
 import java.io.IOException;
 
@@ -205,6 +207,19 @@ public class MediaUtils {
 
     public static String[] getEncoderNames(MediaFormat... formats) {
         return getCodecNames(true /* isEncoder */, null /* isGoog */, formats);
+    }
+
+    public static void verifyNumCodecs(
+            int count, boolean isEncoder, Boolean isGoog, MediaFormat... formats) {
+        String desc = (isEncoder ? "encoders" : "decoders") + " for "
+                + (formats.length == 1 ? formats[0].toString() : Arrays.toString(formats));
+        if (isGoog != null) {
+            desc = (isGoog ? "Google " : "non-Google ") + desc;
+        }
+
+        String[] codecs = getCodecNames(isEncoder, isGoog, formats);
+        assertTrue("test can only verify " + count + " " + desc + "; found " + codecs.length + ": "
+                + Arrays.toString(codecs), codecs.length <= count);
     }
 
     public static MediaCodec getDecoder(MediaFormat format) {

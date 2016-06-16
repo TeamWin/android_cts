@@ -47,12 +47,17 @@ public class VideoDecoderPerfTest extends MediaPlayerTestBase {
     private static final int MAX_TEST_TIMEOUT_MS = 600000;  // 10 minutes
     private static final int MIN_TEST_MS = 10000;  // 10 seconds
     private static final int NUMBER_OF_REPEATS = 2;
-    private static final String VIDEO_AVC = MediaFormat.MIMETYPE_VIDEO_AVC;
-    private static final String VIDEO_VP8 = MediaFormat.MIMETYPE_VIDEO_VP8;
-    private static final String VIDEO_VP9 = MediaFormat.MIMETYPE_VIDEO_VP9;
-    private static final String VIDEO_HEVC = MediaFormat.MIMETYPE_VIDEO_HEVC;
-    private static final String VIDEO_H263 = MediaFormat.MIMETYPE_VIDEO_H263;
-    private static final String VIDEO_MPEG4 = MediaFormat.MIMETYPE_VIDEO_MPEG4;
+
+    private static final String AVC = MediaFormat.MIMETYPE_VIDEO_AVC;
+    private static final String H263 = MediaFormat.MIMETYPE_VIDEO_H263;
+    private static final String HEVC = MediaFormat.MIMETYPE_VIDEO_HEVC;
+    private static final String MPEG2 = MediaFormat.MIMETYPE_VIDEO_MPEG2;
+    private static final String MPEG4 = MediaFormat.MIMETYPE_VIDEO_MPEG4;
+    private static final String VP8 = MediaFormat.MIMETYPE_VIDEO_VP8;
+    private static final String VP9 = MediaFormat.MIMETYPE_VIDEO_VP9;
+
+    private static final boolean GOOG = true;
+    private static final boolean OTHER = false;
 
     private static final int MAX_SIZE_SAMPLES_IN_MEMORY_BYTES = 12 << 20;  // 12MB
     LinkedList<ByteBuffer> mSamplesInMemory = new LinkedList<ByteBuffer>();
@@ -73,42 +78,31 @@ public class VideoDecoderPerfTest extends MediaPlayerTestBase {
         super.tearDown();
     }
 
-    private void decode(String mime, int video, int width, int height,
-            boolean isGoog) throws Exception {
-        decode(mime, video, width, height, isGoog, MAX_TEST_TIMEOUT_MS /* timeoutMs */);
-    }
+    private void decode(String name, int resourceId, MediaFormat format) throws Exception {
+        int width = format.getInteger(MediaFormat.KEY_WIDTH);
+        int height = format.getInteger(MediaFormat.KEY_HEIGHT);
+        String mime = format.getString(MediaFormat.KEY_MIME);
 
-    private void decode(String mime, int video, int width, int height,
-            boolean isGoog, long testTimeoutMs) throws Exception {
-        MediaFormat format = MediaFormat.createVideoFormat(mime, width, height);
-        String[] names = MediaUtils.getDecoderNames(isGoog, format);
-        String kind = isGoog ? "Google" : "non-Google";
-        if (names.length == 0) {
-            MediaUtils.skipTest("no " + kind + " decoders for " + format);
-            return;
-        }
         // Ensure we can finish this test within the test timeout. Allow 25% slack (4/5).
         long maxTimeMs = Math.min(
-                testTimeoutMs / names.length * 4 / 5 / NUMBER_OF_REPEATS, MAX_TIME_MS);
-        for (String name : names) {
-            double measuredFps[] = new double[NUMBER_OF_REPEATS];
-            Log.d(TAG, "testing " + name + " for " + maxTimeMs + " msecs");
-            for (int i = 0; i < NUMBER_OF_REPEATS; ++i) {
-                // Decode to Surface.
-                Log.d(TAG, "round #" + i + " decode to surface");
-                Surface s = getActivity().getSurfaceHolder().getSurface();
-                // only verify the result for decode to surface case.
-                measuredFps[i] = doDecode(name, video, width, height, s, i, maxTimeMs);
+                MAX_TEST_TIMEOUT_MS * 4 / 5 / NUMBER_OF_REPEATS, MAX_TIME_MS);
+        double measuredFps[] = new double[NUMBER_OF_REPEATS];
 
-                // We don't test decoding to buffer.
-                // Log.d(TAG, "round #" + i + " decode to buffer");
-                // doDecode(name, video, width, height, null, i, maxTimeMs);
-            }
+        for (int i = 0; i < NUMBER_OF_REPEATS; ++i) {
+            // Decode to Surface.
+            Log.d(TAG, "round #" + i + ": " + name + " for " + maxTimeMs + " msecs to surface");
+            Surface s = getActivity().getSurfaceHolder().getSurface();
+            // only verify the result for decode to surface case.
+            measuredFps[i] = doDecode(name, resourceId, width, height, s, i, maxTimeMs);
 
-            String error =
-                MediaPerfUtils.verifyAchievableFrameRates(name, mime, width, height, measuredFps);
-            assertNull(error, error);
+            // We don't test decoding to buffer.
+            // Log.d(TAG, "round #" + i + " decode to buffer");
+            // doDecode(name, video, width, height, null, i, maxTimeMs);
         }
+
+        String error =
+            MediaPerfUtils.verifyAchievableFrameRates(name, mime, width, height, measuredFps);
+        assertNull(error, error);
         mSamplesInMemory.clear();
     }
 
@@ -265,280 +259,319 @@ public class VideoDecoderPerfTest extends MediaPlayerTestBase {
         return fps;
     }
 
-    public void testH2640320x0240Other() throws Exception {
-        decode(VIDEO_AVC,
-               R.raw.video_320x240_mp4_h264_800kbps_30fps_aac_stereo_128kbps_44100hz,
-               320, 240, false /* isGoog */);
+    private MediaFormat[] getVideoTrackFormats(int... resources) throws Exception {
+        MediaFormat[] formats = new MediaFormat[resources.length];
+        for (int i = 0; i < resources.length; ++i) {
+            formats[i] = MediaUtils.getTrackFormatForResource(mContext, resources[i], "video/");
+        }
+        return formats;
     }
 
-    public void testH2640320x0240Goog() throws Exception {
-        decode(VIDEO_AVC,
-               R.raw.video_320x240_mp4_h264_800kbps_30fps_aac_stereo_128kbps_44100hz,
-               320, 240, true /* isGoog */);
+    private void count(int[] resources, int numGoog, int numOther) throws Exception {
+        MediaFormat[] formats = getVideoTrackFormats(resources);
+        MediaUtils.verifyNumCodecs(numGoog,  false /* isEncoder */, true /* isGoog */,  formats);
+        MediaUtils.verifyNumCodecs(numOther, false /* isEncoder */, false /* isGoog */, formats);
     }
 
-    public void testH2640720x0480Other() throws Exception {
-        decode(VIDEO_AVC,
-               R.raw.video_720x480_mp4_h264_2048kbps_30fps_aac_stereo_128kbps_44100hz,
-               720, 480, false /* isGoog */);
+    private void perf(int[] resources, boolean isGoog, int ix)  throws Exception {
+        MediaFormat[] formats = getVideoTrackFormats(resources);
+        String[] decoders = MediaUtils.getDecoderNames(isGoog, formats);
+        String kind = isGoog ? "Google" : "non-Google";
+        if (decoders.length == 0) {
+            MediaUtils.skipTest("No " + kind + " decoders for " + Arrays.toString(formats));
+            return;
+        } else if (ix >= decoders.length) {
+            Log.i(TAG, "No more " + kind + " decoders for " + Arrays.toString(formats));
+            return;
+        }
+
+        String decoderName = decoders[ix];
+
+        // Decode/measure the first supported video resource
+        for (int i = 0; i < resources.length; ++i) {
+            if (MediaUtils.supports(decoderName, formats[i])) {
+                decode(decoderName, resources[i], formats[i]);
+                break;
+            }
+        }
     }
 
-    public void testH2640720x0480Goog() throws Exception {
-        decode(VIDEO_AVC,
-               R.raw.video_720x480_mp4_h264_2048kbps_30fps_aac_stereo_128kbps_44100hz,
-               720, 480, true /* isGoog */);
-    }
+    // Poor man's Parametrized test as this test must still run on CTSv1 runner.
 
-    public void testH2641280x0720Other() throws Exception {
-        decode(VIDEO_AVC,
-               R.raw.video_1280x720_mp4_h264_8192kbps_30fps_aac_stereo_128kbps_44100hz,
-               1280, 720, false /* isGoog */);
-    }
+    // The count tests are to ensure this Cts test covers all decoders. Add further
+    // tests and change the count if there can be more decoders.
 
-    public void testH2641280x0720Goog() throws Exception {
-        decode(VIDEO_AVC,
-               R.raw.video_1280x720_mp4_h264_8192kbps_30fps_aac_stereo_128kbps_44100hz,
-               1280, 720, true /* isGoog */);
-    }
+    // AVC tests
 
-    public void testH2641920x1080Other() throws Exception {
-        decode(VIDEO_AVC,
-               R.raw.video_1920x1080_mp4_h264_20480kbps_30fps_aac_stereo_128kbps_44100hz,
-               1920, 1080, false /* isGoog */);
-    }
+    private static final int[] sAvcMedia0320x0240 = {
+        R.raw.video_320x240_mp4_h264_800kbps_30fps_aac_stereo_128kbps_44100hz,
+    };
 
-    public void testH2641920x1080Goog() throws Exception {
-        decode(VIDEO_AVC,
-               R.raw.video_1920x1080_mp4_h264_20480kbps_30fps_aac_stereo_128kbps_44100hz,
-               1920, 1080, true /* isGoog */);
-    }
+    public void testAvcCount0320x0240() throws Exception { count(sAvcMedia0320x0240, 1, 4); }
+    public void testAvcGoog0Perf0320x0240() throws Exception { perf(sAvcMedia0320x0240, GOOG, 0); }
+    public void testAvcOther0Perf0320x0240() throws Exception { perf(sAvcMedia0320x0240, OTHER, 0); }
+    public void testAvcOther1Perf0320x0240() throws Exception { perf(sAvcMedia0320x0240, OTHER, 1); }
+    public void testAvcOther2Perf0320x0240() throws Exception { perf(sAvcMedia0320x0240, OTHER, 2); }
+    public void testAvcOther3Perf0320x0240() throws Exception { perf(sAvcMedia0320x0240, OTHER, 3); }
 
-    public void testVP80320x0240Other() throws Exception {
-        decode(VIDEO_VP8,
-               R.raw.video_320x240_webm_vp8_800kbps_30fps_vorbis_stereo_128kbps_44100hz,
-               320, 240, false /* isGoog */);
-    }
+    private static final int[] sAvcMedia0720x0480 = {
+        R.raw.video_720x480_mp4_h264_2048kbps_30fps_aac_stereo_128kbps_44100hz,
+    };
 
-    public void testVP80320x0240Goog() throws Exception {
-        decode(VIDEO_VP8,
-               R.raw.video_320x240_webm_vp8_800kbps_30fps_vorbis_stereo_128kbps_44100hz,
-               320, 240, true /* isGoog */);
-    }
+    public void testAvcCount0720x0480() throws Exception { count(sAvcMedia0720x0480, 1, 4); }
+    public void testAvcGoog0Perf0720x0480() throws Exception { perf(sAvcMedia0720x0480, GOOG, 0); }
+    public void testAvcOther0Perf0720x0480() throws Exception { perf(sAvcMedia0720x0480, OTHER, 0); }
+    public void testAvcOther1Perf0720x0480() throws Exception { perf(sAvcMedia0720x0480, OTHER, 1); }
+    public void testAvcOther2Perf0720x0480() throws Exception { perf(sAvcMedia0720x0480, OTHER, 2); }
+    public void testAvcOther3Perf0720x0480() throws Exception { perf(sAvcMedia0720x0480, OTHER, 3); }
 
-    public void testVP80640x0360Other() throws Exception {
-        decode(VIDEO_VP8,
-               R.raw.video_640x360_webm_vp8_2048kbps_30fps_vorbis_stereo_128kbps_48000hz,
-               640, 360, false /* isGoog */);
-    }
+    private static final int[] sAvcMedia1280x0720 = {
+        R.raw.video_1280x720_mp4_h264_8192kbps_30fps_aac_stereo_128kbps_44100hz,
+    };
 
-    public void testVP80640x0360Goog() throws Exception {
-        decode(VIDEO_VP8,
-               R.raw.video_640x360_webm_vp8_2048kbps_30fps_vorbis_stereo_128kbps_48000hz,
-               640, 360, true /* isGoog */);
-    }
+    public void testAvcCount1280x0720() throws Exception { count(sAvcMedia1280x0720, 1, 4); }
+    public void testAvcGoog0Perf1280x0720() throws Exception { perf(sAvcMedia1280x0720, GOOG, 0); }
+    public void testAvcOther0Perf1280x0720() throws Exception { perf(sAvcMedia1280x0720, OTHER, 0); }
+    public void testAvcOther1Perf1280x0720() throws Exception { perf(sAvcMedia1280x0720, OTHER, 1); }
+    public void testAvcOther2Perf1280x0720() throws Exception { perf(sAvcMedia1280x0720, OTHER, 2); }
+    public void testAvcOther3Perf1280x0720() throws Exception { perf(sAvcMedia1280x0720, OTHER, 3); }
 
-    public void testVP81280x0720Other() throws Exception {
-        decode(VIDEO_VP8,
-               R.raw.video_1280x720_webm_vp8_8192kbps_30fps_vorbis_stereo_128kbps_48000hz,
-               1280, 720, false /* isGoog */);
-    }
+    private static final int[] sAvcMedia1920x1080 = {
+        R.raw.video_1920x1080_mp4_h264_20480kbps_30fps_aac_stereo_128kbps_44100hz,
+    };
 
-    public void testVP81280x0720Goog() throws Exception {
-        decode(VIDEO_VP8,
-               R.raw.video_1280x720_webm_vp8_8192kbps_30fps_vorbis_stereo_128kbps_48000hz,
-               1280, 720, true /* isGoog */);
-    }
+    public void testAvcCount1920x1080() throws Exception { count(sAvcMedia1920x1080, 1, 4); }
+    public void testAvcGoog0Perf1920x1080() throws Exception { perf(sAvcMedia1920x1080, GOOG, 0); }
+    public void testAvcOther0Perf1920x1080() throws Exception { perf(sAvcMedia1920x1080, OTHER, 0); }
+    public void testAvcOther1Perf1920x1080() throws Exception { perf(sAvcMedia1920x1080, OTHER, 1); }
+    public void testAvcOther2Perf1920x1080() throws Exception { perf(sAvcMedia1920x1080, OTHER, 2); }
+    public void testAvcOther3Perf1920x1080() throws Exception { perf(sAvcMedia1920x1080, OTHER, 3); }
 
-    public void testVP81920x1080Other() throws Exception {
-        decode(VIDEO_VP8,
-               R.raw.video_1920x1080_webm_vp8_20480kbps_30fps_vorbis_stereo_128kbps_48000hz,
-               1920, 1080, false /* isGoog */);
-    }
+    // H263 tests
 
-    public void testVP81920x1080Goog() throws Exception {
-        decode(VIDEO_VP8,
-               R.raw.video_1920x1080_webm_vp8_20480kbps_30fps_vorbis_stereo_128kbps_48000hz,
-               1920, 1080, true /* isGoog */);
-    }
+    private static final int[] sH263Media0176x0144 = {
+        R.raw.video_176x144_3gp_h263_300kbps_12fps_aac_stereo_128kbps_22050hz,
+    };
 
-    public void testVP90320x0240Other() throws Exception {
-        decode(VIDEO_VP9,
-               R.raw.video_320x240_webm_vp9_600kbps_30fps_vorbis_stereo_128kbps_48000hz,
-               320, 240, false /* isGoog */);
-    }
+    public void testH263Count0176x0144() throws Exception { count(sH263Media0176x0144, 1, 2); }
+    public void testH263Goog0Perf0176x0144() throws Exception { perf(sH263Media0176x0144, GOOG, 0); }
+    public void testH263Other0Perf0176x0144() throws Exception { perf(sH263Media0176x0144, OTHER, 0); }
+    public void testH263Other1Perf0176x0144() throws Exception { perf(sH263Media0176x0144, OTHER, 1); }
 
-    public void testVP90320x0240Goog() throws Exception {
-        decode(VIDEO_VP9,
-               R.raw.video_320x240_webm_vp9_600kbps_30fps_vorbis_stereo_128kbps_48000hz,
-               320, 240, true /* isGoog */);
-    }
+    private static final int[] sH263Media0352x0288 = {
+        R.raw.video_352x288_3gp_h263_300kbps_12fps_aac_stereo_128kbps_22050hz,
+    };
 
-    public void testVP90640x0360Other() throws Exception {
-        decode(VIDEO_VP9,
-               R.raw.video_640x360_webm_vp9_1600kbps_30fps_vorbis_stereo_128kbps_48000hz,
-               640, 360, false /* isGoog */);
-    }
+    public void testH263Count0352x0288() throws Exception { count(sH263Media0352x0288, 1, 2); }
+    public void testH263Goog0Perf0352x0288() throws Exception { perf(sH263Media0352x0288, GOOG, 0); }
+    public void testH263Other0Perf0352x0288() throws Exception { perf(sH263Media0352x0288, OTHER, 0); }
+    public void testH263Other1Perf0352x0288() throws Exception { perf(sH263Media0352x0288, OTHER, 1); }
 
-    public void testVP90640x0360Goog() throws Exception {
-        decode(VIDEO_VP9,
-               R.raw.video_640x360_webm_vp9_1600kbps_30fps_vorbis_stereo_128kbps_48000hz,
-               640, 360, true /* isGoog */);
-    }
+    // No media for H263 704x576
 
-    public void testVP91280x0720Other() throws Exception {
-        decode(VIDEO_VP9,
-               R.raw.video_1280x720_webm_vp9_4096kbps_30fps_vorbis_stereo_128kbps_44100hz,
-               1280, 720, false /* isGoog */);
-    }
+    // No media for H263 1408x1152
 
-    public void testVP91280x0720Goog() throws Exception {
-        decode(VIDEO_VP9,
-               R.raw.video_1280x720_webm_vp9_4096kbps_30fps_vorbis_stereo_128kbps_44100hz,
-               1280, 720, true /* isGoog */);
-    }
+    // HEVC tests
 
-    public void testVP91920x1080Other() throws Exception {
-        decode(VIDEO_VP9,
-               R.raw.video_1920x1080_webm_vp9_10240kbps_30fps_vorbis_stereo_128kbps_48000hz,
-               1920, 1080, false /* isGoog */);
-    }
+    private static final int[] sHevcMedia0352x0288 = {
+        R.raw.video_352x288_mp4_hevc_600kbps_30fps_aac_stereo_128kbps_44100hz,
+    };
 
-    public void testVP91920x1080Goog() throws Exception {
-        decode(VIDEO_VP9,
-               R.raw.video_1920x1080_webm_vp9_10240kbps_30fps_vorbis_stereo_128kbps_48000hz,
-               1920, 1080, true /* isGoog */);
-    }
+    public void testHevcCount0352x0288() throws Exception { count(sHevcMedia0352x0288, 1, 4); }
+    public void testHevcGoog0Perf0352x0288() throws Exception { perf(sHevcMedia0352x0288, GOOG, 0); }
+    public void testHevcOther0Perf0352x0288() throws Exception { perf(sHevcMedia0352x0288, OTHER, 0); }
+    public void testHevcOther1Perf0352x0288() throws Exception { perf(sHevcMedia0352x0288, OTHER, 1); }
+    public void testHevcOther2Perf0352x0288() throws Exception { perf(sHevcMedia0352x0288, OTHER, 2); }
+    public void testHevcOther3Perf0352x0288() throws Exception { perf(sHevcMedia0352x0288, OTHER, 3); }
 
-    public void testVP93840x2160Other() throws Exception {
-        decode(VIDEO_VP9,
-               R.raw.video_3840x2160_webm_vp9_20480kbps_30fps_vorbis_stereo_128kbps_48000hz,
-               3840, 2160, false /* isGoog */);
-    }
+    private static final int[] sHevcMedia0640x0360 = {
+        R.raw.video_640x360_mp4_hevc_1638kbps_30fps_aac_stereo_128kbps_44100hz,
+    };
 
-    public void testVP93840x2160Goog() throws Exception {
-        decode(VIDEO_VP9,
-               R.raw.video_3840x2160_webm_vp9_20480kbps_30fps_vorbis_stereo_128kbps_48000hz,
-               3840, 2160, true /* isGoog */);
-    }
+    public void testHevcCount0640x0360() throws Exception { count(sHevcMedia0640x0360, 1, 4); }
+    public void testHevcGoog0Perf0640x0360() throws Exception { perf(sHevcMedia0640x0360, GOOG, 0); }
+    public void testHevcOther0Perf0640x0360() throws Exception { perf(sHevcMedia0640x0360, OTHER, 0); }
+    public void testHevcOther1Perf0640x0360() throws Exception { perf(sHevcMedia0640x0360, OTHER, 1); }
+    public void testHevcOther2Perf0640x0360() throws Exception { perf(sHevcMedia0640x0360, OTHER, 2); }
+    public void testHevcOther3Perf0640x0360() throws Exception { perf(sHevcMedia0640x0360, OTHER, 3); }
 
-    public void testHEVC0352x0288Other() throws Exception {
-        decode(VIDEO_HEVC,
-               R.raw.video_352x288_mp4_hevc_600kbps_30fps_aac_stereo_128kbps_44100hz,
-               352, 288, false /* isGoog */);
-    }
+    // No media for HEVC 720x480
 
-    public void testHEVC0352x0288Goog() throws Exception {
-        decode(VIDEO_HEVC,
-               R.raw.video_352x288_mp4_hevc_600kbps_30fps_aac_stereo_128kbps_44100hz,
-               352, 288, true /* isGoog */);
-    }
+    private static final int[] sHevcMedia1280x0720 = {
+        R.raw.video_1280x720_mp4_hevc_4096kbps_30fps_aac_stereo_128kbps_44100hz,
+    };
 
-    public void testHEVC0640x0360Other() throws Exception {
-        decode(VIDEO_HEVC,
-               R.raw.video_640x360_mp4_hevc_1638kbps_30fps_aac_stereo_128kbps_44100hz,
-               640, 360, false /* isGoog */);
-    }
+    public void testHevcCount1280x0720() throws Exception { count(sHevcMedia1280x0720, 1, 4); }
+    public void testHevcGoog0Perf1280x0720() throws Exception { perf(sHevcMedia1280x0720, GOOG, 0); }
+    public void testHevcOther0Perf1280x0720() throws Exception { perf(sHevcMedia1280x0720, OTHER, 0); }
+    public void testHevcOther1Perf1280x0720() throws Exception { perf(sHevcMedia1280x0720, OTHER, 1); }
+    public void testHevcOther2Perf1280x0720() throws Exception { perf(sHevcMedia1280x0720, OTHER, 2); }
+    public void testHevcOther3Perf1280x0720() throws Exception { perf(sHevcMedia1280x0720, OTHER, 3); }
 
-    public void testHEVC0640x0360Goog() throws Exception {
-        decode(VIDEO_HEVC,
-               R.raw.video_640x360_mp4_hevc_1638kbps_30fps_aac_stereo_128kbps_44100hz,
-               640, 360, true /* isGoog */);
-    }
+    private static final int[] sHevcMedia1920x1080 = {
+        R.raw.video_1920x1080_mp4_hevc_10240kbps_30fps_aac_stereo_128kbps_44100hz,
+    };
 
-    public void testHEVC1280x0720Other() throws Exception {
-        decode(VIDEO_HEVC,
-               R.raw.video_1280x720_mp4_hevc_4096kbps_30fps_aac_stereo_128kbps_44100hz,
-               1280, 720, false /* isGoog */);
-    }
+    public void testHevcCount1920x1080() throws Exception { count(sHevcMedia1920x1080, 1, 4); }
+    public void testHevcGoog0Perf1920x1080() throws Exception { perf(sHevcMedia1920x1080, GOOG, 0); }
+    public void testHevcOther0Perf1920x1080() throws Exception { perf(sHevcMedia1920x1080, OTHER, 0); }
+    public void testHevcOther1Perf1920x1080() throws Exception { perf(sHevcMedia1920x1080, OTHER, 1); }
+    public void testHevcOther2Perf1920x1080() throws Exception { perf(sHevcMedia1920x1080, OTHER, 2); }
+    public void testHevcOther3Perf1920x1080() throws Exception { perf(sHevcMedia1920x1080, OTHER, 3); }
 
-    public void testHEVC1280x0720Goog() throws Exception {
-        decode(VIDEO_HEVC,
-               R.raw.video_1280x720_mp4_hevc_4096kbps_30fps_aac_stereo_128kbps_44100hz,
-               1280, 720, true /* isGoog */);
-    }
+    private static final int[] sHevcMedia3840x2160 = {
+        R.raw.video_3840x2160_mp4_hevc_20480kbps_30fps_aac_stereo_128kbps_44100hz,
+    };
 
-    public void testHEVC1920x1080Other() throws Exception {
-        decode(VIDEO_HEVC,
-               R.raw.video_1920x1080_mp4_hevc_10240kbps_30fps_aac_stereo_128kbps_44100hz,
-               1920, 1080, false /* isGoog */);
-    }
+    public void testHevcCount3840x2160() throws Exception { count(sHevcMedia3840x2160, 1, 4); }
+    public void testHevcGoog0Perf3840x2160() throws Exception { perf(sHevcMedia3840x2160, GOOG, 0); }
+    public void testHevcOther0Perf3840x2160() throws Exception { perf(sHevcMedia3840x2160, OTHER, 0); }
+    public void testHevcOther1Perf3840x2160() throws Exception { perf(sHevcMedia3840x2160, OTHER, 1); }
+    public void testHevcOther2Perf3840x2160() throws Exception { perf(sHevcMedia3840x2160, OTHER, 2); }
+    public void testHevcOther3Perf3840x2160() throws Exception { perf(sHevcMedia3840x2160, OTHER, 3); }
 
-    public void testHEVC1920x1080Goog() throws Exception {
-        decode(VIDEO_HEVC,
-               R.raw.video_1920x1080_mp4_hevc_10240kbps_30fps_aac_stereo_128kbps_44100hz,
-               1920, 1080, true /* isGoog */);
-    }
+    // MPEG2 tests
 
-    public void testHEVC3840x2160Other() throws Exception {
-        decode(VIDEO_HEVC,
-               R.raw.video_3840x2160_mp4_hevc_20480kbps_30fps_aac_stereo_128kbps_44100hz,
-               3840, 2160, false /* isGoog */);
-    }
+    // No media for MPEG2 176x144
 
-    public void testHEVC3840x2160Goog() throws Exception {
-        decode(VIDEO_HEVC,
-               R.raw.video_3840x2160_mp4_hevc_20480kbps_30fps_aac_stereo_128kbps_44100hz,
-               3840, 2160, true /* isGoog */);
-    }
+    // No media for MPEG2 352x288
 
-    public void testH2630176x0144Other() throws Exception {
-        decode(VIDEO_H263,
-               R.raw.video_176x144_3gp_h263_300kbps_12fps_aac_stereo_128kbps_22050hz,
-               176, 144, false /* isGoog */);
-    }
+    // No media for MPEG2 640x480
 
-    public void testH2630176x0144Goog() throws Exception {
-        decode(VIDEO_H263,
-               R.raw.video_176x144_3gp_h263_300kbps_12fps_aac_stereo_128kbps_22050hz,
-               176, 144, true /* isGoog */);
-    }
+    // No media for MPEG2 1280x720
 
-    public void testH2630352x0288Other() throws Exception {
-        decode(VIDEO_H263,
-               R.raw.video_352x288_3gp_h263_300kbps_12fps_aac_stereo_128kbps_22050hz,
-               352, 288, false /* isGoog */);
-    }
+    // No media for MPEG2 1920x1080
 
-    public void testH2630352x0288Goog() throws Exception {
-        decode(VIDEO_H263,
-               R.raw.video_352x288_3gp_h263_300kbps_12fps_aac_stereo_128kbps_22050hz,
-               352, 288, true /* isGoog */);
-    }
+    // MPEG4 tests
 
-    public void testMPEG40176x0144Other() throws Exception {
-        decode(VIDEO_MPEG4,
-               R.raw.video_176x144_mp4_mpeg4_300kbps_25fps_aac_stereo_128kbps_44100hz,
-               176, 144, false /* isGoog */);
-    }
+    private static final int[] sMpeg4Media0176x0144 = {
+        R.raw.video_176x144_mp4_mpeg4_300kbps_25fps_aac_stereo_128kbps_44100hz,
+    };
 
-    public void testMPEG40176x0144Goog() throws Exception {
-        decode(VIDEO_MPEG4,
-               R.raw.video_176x144_mp4_mpeg4_300kbps_25fps_aac_stereo_128kbps_44100hz,
-               176, 144, true /* isGoog */);
-    }
+    public void testMpeg4Count0176x0144() throws Exception { count(sMpeg4Media0176x0144, 1, 4); }
+    public void testMpeg4Goog0Perf0176x0144() throws Exception { perf(sMpeg4Media0176x0144, GOOG, 0); }
+    public void testMpeg4Other0Perf0176x0144() throws Exception { perf(sMpeg4Media0176x0144, OTHER, 0); }
+    public void testMpeg4Other1Perf0176x0144() throws Exception { perf(sMpeg4Media0176x0144, OTHER, 1); }
+    public void testMpeg4Other2Perf0176x0144() throws Exception { perf(sMpeg4Media0176x0144, OTHER, 2); }
+    public void testMpeg4Other3Perf0176x0144() throws Exception { perf(sMpeg4Media0176x0144, OTHER, 3); }
 
-    public void testMPEG40480x0360Other() throws Exception {
-        decode(VIDEO_MPEG4,
-               R.raw.video_480x360_mp4_mpeg4_860kbps_25fps_aac_stereo_128kbps_44100hz,
-               480, 360, false /* isGoog */);
-    }
+    private static final int[] sMpeg4Media0480x0360 = {
+        R.raw.video_480x360_mp4_mpeg4_860kbps_25fps_aac_stereo_128kbps_44100hz,
+    };
 
-    public void testMPEG40480x0360Goog() throws Exception {
-        decode(VIDEO_MPEG4,
-               R.raw.video_480x360_mp4_mpeg4_860kbps_25fps_aac_stereo_128kbps_44100hz,
-               480, 360, true /* isGoog */);
-    }
+    public void testMpeg4Count0480x0360() throws Exception { count(sMpeg4Media0480x0360, 1, 4); }
+    public void testMpeg4Goog0Perf0480x0360() throws Exception { perf(sMpeg4Media0480x0360, GOOG, 0); }
+    public void testMpeg4Other0Perf0480x0360() throws Exception { perf(sMpeg4Media0480x0360, OTHER, 0); }
+    public void testMpeg4Other1Perf0480x0360() throws Exception { perf(sMpeg4Media0480x0360, OTHER, 1); }
+    public void testMpeg4Other2Perf0480x0360() throws Exception { perf(sMpeg4Media0480x0360, OTHER, 2); }
+    public void testMpeg4Other3Perf0480x0360() throws Exception { perf(sMpeg4Media0480x0360, OTHER, 3); }
 
-    public void testMPEG41280x0720Other() throws Exception {
-        decode(VIDEO_MPEG4,
-               R.raw.video_1280x720_mp4_mpeg4_1000kbps_25fps_aac_stereo_128kbps_44100hz,
-               1280, 720, false /* isGoog */);
-    }
+   // No media for MPEG4 640x480
 
-    public void testMPEG41280x0720Goog() throws Exception {
-        decode(VIDEO_MPEG4,
-               R.raw.video_1280x720_mp4_mpeg4_1000kbps_25fps_aac_stereo_128kbps_44100hz,
-               1280, 720, true /* isGoog */);
-    }
+    private static final int[] sMpeg4Media1280x0720 = {
+        R.raw.video_1280x720_mp4_mpeg4_1000kbps_25fps_aac_stereo_128kbps_44100hz,
+    };
+
+    public void testMpeg4Count1280x0720() throws Exception { count(sMpeg4Media1280x0720, 1, 4); }
+    public void testMpeg4Goog0Perf1280x0720() throws Exception { perf(sMpeg4Media1280x0720, GOOG, 0); }
+    public void testMpeg4Other0Perf1280x0720() throws Exception { perf(sMpeg4Media1280x0720, OTHER, 0); }
+    public void testMpeg4Other1Perf1280x0720() throws Exception { perf(sMpeg4Media1280x0720, OTHER, 1); }
+    public void testMpeg4Other2Perf1280x0720() throws Exception { perf(sMpeg4Media1280x0720, OTHER, 2); }
+    public void testMpeg4Other3Perf1280x0720() throws Exception { perf(sMpeg4Media1280x0720, OTHER, 3); }
+
+    // VP8 tests
+
+    private static final int[] sVp8Media0320x0240 = {
+        R.raw.video_320x240_webm_vp8_800kbps_30fps_vorbis_stereo_128kbps_44100hz,
+    };
+
+    public void testVp8Count0320x0240() throws Exception { count(sVp8Media0320x0240, 1, 2); }
+    public void testVp8Goog0Perf0320x0240() throws Exception { perf(sVp8Media0320x0240, GOOG, 0); }
+    public void testVp8Other0Perf0320x0240() throws Exception { perf(sVp8Media0320x0240, OTHER, 0); }
+    public void testVp8Other1Perf0320x0240() throws Exception { perf(sVp8Media0320x0240, OTHER, 1); }
+
+    private static final int[] sVp8Media0640x0360 = {
+        R.raw.video_640x360_webm_vp8_2048kbps_30fps_vorbis_stereo_128kbps_48000hz,
+    };
+
+    public void testVp8Count0640x0360() throws Exception { count(sVp8Media0640x0360, 1, 2); }
+    public void testVp8Goog0Perf0640x0360() throws Exception { perf(sVp8Media0640x0360, GOOG, 0); }
+    public void testVp8Other0Perf0640x0360() throws Exception { perf(sVp8Media0640x0360, OTHER, 0); }
+    public void testVp8Other1Perf0640x0360() throws Exception { perf(sVp8Media0640x0360, OTHER, 1); }
+
+    private static final int[] sVp8Media1280x0720 = {
+        R.raw.video_1280x720_webm_vp8_8192kbps_30fps_vorbis_stereo_128kbps_48000hz,
+    };
+
+    public void testVp8Count1280x0720() throws Exception { count(sVp8Media1280x0720, 1, 2); }
+    public void testVp8Goog0Perf1280x0720() throws Exception { perf(sVp8Media1280x0720, GOOG, 0); }
+    public void testVp8Other0Perf1280x0720() throws Exception { perf(sVp8Media1280x0720, OTHER, 0); }
+    public void testVp8Other1Perf1280x0720() throws Exception { perf(sVp8Media1280x0720, OTHER, 1); }
+
+    private static final int[] sVp8Media1920x1080 = {
+        R.raw.video_1920x1080_webm_vp8_20480kbps_30fps_vorbis_stereo_128kbps_48000hz,
+    };
+
+    public void testVp8Count1920x1080() throws Exception { count(sVp8Media1920x1080, 1, 2); }
+    public void testVp8Goog0Perf1920x1080() throws Exception { perf(sVp8Media1920x1080, GOOG, 0); }
+    public void testVp8Other0Perf1920x1080() throws Exception { perf(sVp8Media1920x1080, OTHER, 0); }
+    public void testVp8Other1Perf1920x1080() throws Exception { perf(sVp8Media1920x1080, OTHER, 1); }
+
+    // VP9 tests
+
+    private static final int[] sVp9Media0320x0240 = {
+        R.raw.video_320x240_webm_vp9_600kbps_30fps_vorbis_stereo_128kbps_48000hz,
+    };
+
+    public void testVp9Count0320x0240() throws Exception { count(sVp9Media0320x0240, 1, 4); }
+    public void testVp9Goog0Perf0320x0240() throws Exception { perf(sVp9Media0320x0240, GOOG, 0); }
+    public void testVp9Other0Perf0320x0240() throws Exception { perf(sVp9Media0320x0240, OTHER, 0); }
+    public void testVp9Other1Perf0320x0240() throws Exception { perf(sVp9Media0320x0240, OTHER, 1); }
+    public void testVp9Other2Perf0320x0240() throws Exception { perf(sVp9Media0320x0240, OTHER, 2); }
+    public void testVp9Other3Perf0320x0240() throws Exception { perf(sVp9Media0320x0240, OTHER, 3); }
+
+    private static final int[] sVp9Media0640x0360 = {
+        R.raw.video_640x360_webm_vp9_1600kbps_30fps_vorbis_stereo_128kbps_48000hz,
+    };
+
+    public void testVp9Count0640x0360() throws Exception { count(sVp9Media0640x0360, 1, 4); }
+    public void testVp9Goog0Perf0640x0360() throws Exception { perf(sVp9Media0640x0360, GOOG, 0); }
+    public void testVp9Other0Perf0640x0360() throws Exception { perf(sVp9Media0640x0360, OTHER, 0); }
+    public void testVp9Other1Perf0640x0360() throws Exception { perf(sVp9Media0640x0360, OTHER, 1); }
+    public void testVp9Other2Perf0640x0360() throws Exception { perf(sVp9Media0640x0360, OTHER, 2); }
+    public void testVp9Other3Perf0640x0360() throws Exception { perf(sVp9Media0640x0360, OTHER, 3); }
+
+    private static final int[] sVp9Media1280x0720 = {
+        R.raw.video_1280x720_webm_vp9_4096kbps_30fps_vorbis_stereo_128kbps_44100hz,
+    };
+
+    public void testVp9Count1280x0720() throws Exception { count(sVp9Media1280x0720, 1, 4); }
+    public void testVp9Goog0Perf1280x0720() throws Exception { perf(sVp9Media1280x0720, GOOG, 0); }
+    public void testVp9Other0Perf1280x0720() throws Exception { perf(sVp9Media1280x0720, OTHER, 0); }
+    public void testVp9Other1Perf1280x0720() throws Exception { perf(sVp9Media1280x0720, OTHER, 1); }
+    public void testVp9Other2Perf1280x0720() throws Exception { perf(sVp9Media1280x0720, OTHER, 2); }
+    public void testVp9Other3Perf1280x0720() throws Exception { perf(sVp9Media1280x0720, OTHER, 3); }
+
+    private static final int[] sVp9Media1920x1080 = {
+        R.raw.video_1920x1080_webm_vp9_10240kbps_30fps_vorbis_stereo_128kbps_48000hz,
+    };
+
+    public void testVp9Count1920x1080() throws Exception { count(sVp9Media1920x1080, 1, 4); }
+    public void testVp9Goog0Perf1920x1080() throws Exception { perf(sVp9Media1920x1080, GOOG, 0); }
+    public void testVp9Other0Perf1920x1080() throws Exception { perf(sVp9Media1920x1080, OTHER, 0); }
+    public void testVp9Other1Perf1920x1080() throws Exception { perf(sVp9Media1920x1080, OTHER, 1); }
+    public void testVp9Other2Perf1920x1080() throws Exception { perf(sVp9Media1920x1080, OTHER, 2); }
+    public void testVp9Other3Perf1920x1080() throws Exception { perf(sVp9Media1920x1080, OTHER, 3); }
+
+    private static final int[] sVp9Media3840x2160 = {
+        R.raw.video_3840x2160_webm_vp9_20480kbps_30fps_vorbis_stereo_128kbps_48000hz,
+    };
+
+    public void testVp9Count3840x2160() throws Exception { count(sVp9Media3840x2160, 1, 4); }
+    public void testVp9Goog0Perf3840x2160() throws Exception { perf(sVp9Media3840x2160, GOOG, 0); }
+    public void testVp9Other0Perf3840x2160() throws Exception { perf(sVp9Media3840x2160, OTHER, 0); }
+    public void testVp9Other1Perf3840x2160() throws Exception { perf(sVp9Media3840x2160, OTHER, 1); }
+    public void testVp9Other2Perf3840x2160() throws Exception { perf(sVp9Media3840x2160, OTHER, 2); }
+    public void testVp9Other3Perf3840x2160() throws Exception { perf(sVp9Media3840x2160, OTHER, 3); }
 }
 
