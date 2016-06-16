@@ -85,18 +85,23 @@ public class Utils {
         ParcelFileDescriptor fd = null;
         if (on) {
             // Change the settings to enable the media cts package
+            final String newEnabledServices = (alreadyEnabledServices == null) ? packageName
+                    : alreadyEnabledServices + ":" + packageName;
             fd = uiAutomation.executeShellCommand(
                     "settings --user cur put secure "
                             + Settings.Secure.ENABLED_NOTIFICATION_POLICY_ACCESS_PACKAGES + " "
-                            + alreadyEnabledServices + ":"
-                            + packageName);
-        } else {
+                            + newEnabledServices);
+        } else if (alreadyEnabledServices != null) {
             int index =  alreadyEnabledServices.indexOf(":" + packageName);
             if (index >= 0) {
                 fd = uiAutomation.executeShellCommand(
                         "settings --user cur put secure "
                                 + Settings.Secure.ENABLED_NOTIFICATION_POLICY_ACCESS_PACKAGES + " "
                                 + alreadyEnabledServices.substring(0, index));
+            } else if (alreadyEnabledServices.equals(packageName)) {
+                // "packageName" is the only enabled service
+                fd = uiAutomation.executeShellCommand("settings --user cur put secure "
+                        + Settings.Secure.ENABLED_NOTIFICATION_POLICY_ACCESS_PACKAGES + " ");
             }
         }
         if (fd != null) {
