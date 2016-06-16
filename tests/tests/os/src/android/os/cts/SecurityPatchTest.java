@@ -32,7 +32,7 @@ public class SecurityPatchTest extends InstrumentationTestCase {
     private static final String SECURITY_PATCH_DATE_ERROR =
             "ro.build.version.security_patch should be \"%d-%02d\" or later. Found \"%s\"";
     private static final int SECURITY_PATCH_YEAR = 2016;
-    private static final int SECURITY_PATCH_MONTH = 05;
+    private static final int SECURITY_PATCH_MONTH = 06;
 
     private boolean mSkipTests = false;
 
@@ -48,7 +48,7 @@ public class SecurityPatchTest extends InstrumentationTestCase {
             return;
         }
 
-        String buildSecurityPatch = SystemProperties.get("ro.build.version.security_patch", "");
+        String buildSecurityPatch = Build.VERSION.SECURITY_PATCH;
         String error = String.format(SECURITY_PATCH_ERROR, buildSecurityPatch);
         assertTrue(error, !buildSecurityPatch.isEmpty());
     }
@@ -60,7 +60,7 @@ public class SecurityPatchTest extends InstrumentationTestCase {
             return;
         }
 
-        String buildSecurityPatch = SystemProperties.get("ro.build.version.security_patch", "");
+        String buildSecurityPatch = Build.VERSION.SECURITY_PATCH;
         String error = String.format(SECURITY_PATCH_ERROR, buildSecurityPatch);
 
         assertEquals(error, 10, buildSecurityPatch.length());
@@ -83,7 +83,7 @@ public class SecurityPatchTest extends InstrumentationTestCase {
             return;
         }
 
-        String buildSecurityPatch = SystemProperties.get("ro.build.version.security_patch", "");
+        String buildSecurityPatch = Build.VERSION.SECURITY_PATCH;
         String error = String.format(SECURITY_PATCH_DATE_ERROR,
                                      SECURITY_PATCH_YEAR,
                                      SECURITY_PATCH_MONTH,
