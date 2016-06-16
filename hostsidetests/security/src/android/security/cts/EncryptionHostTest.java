@@ -41,9 +41,15 @@ public class EncryptionHostTest extends DeviceTestCase {
         if (!mUserDebug) {
             return;
         }
+        mDevice.enableAdbRoot();
+    }
 
-        mDevice.executeAdbCommand("root");
-        assertTrue(mDevice.isAdbRoot());
+    @Override
+    protected void tearDown() throws Exception {
+        if (mUserDebug) {
+            mDevice.disableAdbRoot();
+        }
+        super.tearDown();
     }
 
     public void testEncrypted() throws DeviceNotAvailableException {
