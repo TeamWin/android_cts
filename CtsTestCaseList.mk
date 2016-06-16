@@ -179,6 +179,7 @@ cts_host_libraries := \
     CtsHostUi \
     CtsJdwpSecurityHostTestCases \
     CtsMonkeyTestCases \
+    CtsMultiUserHostTestCases \
     CtsThemeHostTestCases \
     CtsSecurityHostTestCases \
     CtsUsbTests
