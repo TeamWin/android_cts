@@ -36,4 +36,12 @@
 
     <dimen name="linear_layout_divider_size">10px</dimen>
     <dimen name="linear_layout_divider_padding">8px</dimen>
+
+    <dimen name="textview_padding_left">4dip</dimen>
+    <dimen name="textview_padding_right">6dip</dimen>
+    <dimen name="textview_padding_start">8dip</dimen>
+    <dimen name="textview_padding_end">10dip</dimen>
+    <dimen name="textview_padding_top">2dip</dimen>
+    <dimen name="textview_padding_bottom">4dip</dimen>
+    <dimen name="textview_drawable_padding">2dip</dimen>
 </resources>

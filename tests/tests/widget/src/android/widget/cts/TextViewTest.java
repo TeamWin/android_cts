@@ -16,12 +16,15 @@
 
 package android.widget.cts;
 
+import android.annotation.IdRes;
+import android.annotation.NonNull;
 import android.app.Activity;
 import android.app.Instrumentation;
 import android.app.Instrumentation.ActivityMonitor;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.res.ColorStateList;
+import android.content.res.Resources;
 import android.content.res.Resources.NotFoundException;
 import android.cts.util.KeyEventUtil;
 import android.cts.util.PollingCheck;
@@ -87,8 +90,6 @@ import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.view.View.OnCreateContextMenuListener;
-import android.view.View.OnLongClickListener;
 import android.view.ViewGroup;
 import android.view.accessibility.AccessibilityNodeInfo;
 import android.view.inputmethod.BaseInputConnection;
@@ -103,11 +104,17 @@ import android.widget.Scroller;
 import android.widget.TextView;
 import android.widget.TextView.BufferType;
 import android.widget.TextView.OnEditorActionListener;
+import android.widget.cts.util.TestUtils;
 
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
 import org.xmlpull.v1.XmlPullParserException;
 
 import java.io.IOException;
 import java.util.Locale;
+
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.*;
 
 /**
  * Test {@link TextView}.
@@ -134,12 +141,7 @@ public class TextViewTest extends ActivityInstrumentationTestCase2<TextViewCtsAc
     protected void setUp() throws Exception {
         super.setUp();
         mActivity = getActivity();
-        new PollingCheck() {
-            @Override
-                protected boolean check() {
-                return mActivity.hasWindowFocus();
-            }
-        }.run();
+        PollingCheck.waitFor(() -> mActivity.hasWindowFocus());
         mInstrumentation = getInstrumentation();
         mKeyEventUtil = new KeyEventUtil(mInstrumentation);
     }
@@ -164,7 +166,9 @@ public class TextViewTest extends ActivityInstrumentationTestCase2<TextViewCtsAc
 
         new TextView(mActivity, null);
 
-        new TextView(mActivity, null, 0);
+        new TextView(mActivity, null, android.R.attr.textViewStyle);
+
+        new TextView(mActivity, null, 0, android.R.style.Widget_Material_Light_TextView);
     }
 
     @UiThreadTest
@@ -2750,27 +2754,41 @@ public class TextViewTest extends ActivityInstrumentationTestCase2<TextViewCtsAc
     public void testPerformLongClick() {
         mTextView = findTextView(R.id.textview_text);
         mTextView.setText("This is content");
-        MockOnLongClickListener onLongClickListener = new MockOnLongClickListener(true);
-        MockOnCreateContextMenuListener onCreateContextMenuListener
-                = new MockOnCreateContextMenuListener(false);
-        mTextView.setOnLongClickListener(onLongClickListener);
-        mTextView.setOnCreateContextMenuListener(onCreateContextMenuListener);
-        assertTrue(mTextView.performLongClick());
-        assertTrue(onLongClickListener.hasLongClicked());
-        assertFalse(onCreateContextMenuListener.hasCreatedContextMenu());
 
-        onLongClickListener = new MockOnLongClickListener(false);
-        mTextView.setOnLongClickListener(onLongClickListener);
-        mTextView.setOnCreateContextMenuListener(onCreateContextMenuListener);
-        assertTrue(mTextView.performLongClick());
-        assertTrue(onLongClickListener.hasLongClicked());
-        assertTrue(onCreateContextMenuListener.hasCreatedContextMenu());
+        View.OnLongClickListener mockOnLongClickListener = mock(View.OnLongClickListener.class);
+        when(mockOnLongClickListener.onLongClick(any(View.class))).thenReturn(Boolean.TRUE);
 
+        View.OnCreateContextMenuListener mockOnCreateContextMenuListener =
+                mock(View.OnCreateContextMenuListener.class);
+        doAnswer(new Answer() {
+            public Object answer(InvocationOnMock invocation) {
+                ((ContextMenu) invocation.getArguments() [0]).add("menu item");
+                return null;
+            }
+        }).when(mockOnCreateContextMenuListener).onCreateContextMenu(
+                any(ContextMenu.class), any(View.class), any(ContextMenuInfo.class));
+
+        mTextView.setOnLongClickListener(mockOnLongClickListener);
+        mTextView.setOnCreateContextMenuListener(mockOnCreateContextMenuListener);
+        assertTrue(mTextView.performLongClick());
+        verify(mockOnLongClickListener, times(1)).onLongClick(mTextView);
+        verifyZeroInteractions(mockOnCreateContextMenuListener);
+
+        reset(mockOnLongClickListener);
+        when(mockOnLongClickListener.onLongClick(any(View.class))).thenReturn(Boolean.FALSE);
+        assertTrue(mTextView.performLongClick());
+        verify(mockOnLongClickListener, times(1)).onLongClick(mTextView);
+        verify(mockOnCreateContextMenuListener, times(1)).onCreateContextMenu(
+                any(ContextMenu.class), eq(mTextView), any(ContextMenuInfo.class));
+
+        reset(mockOnCreateContextMenuListener);
         mTextView.setOnLongClickListener(null);
-        onCreateContextMenuListener = new MockOnCreateContextMenuListener(true);
-        mTextView.setOnCreateContextMenuListener(onCreateContextMenuListener);
+        doNothing().when(mockOnCreateContextMenuListener).onCreateContextMenu(
+                any(ContextMenu.class), any(View.class), any(ContextMenuInfo.class));
         assertFalse(mTextView.performLongClick());
-        assertTrue(onCreateContextMenuListener.hasCreatedContextMenu());
+        verifyNoMoreInteractions(mockOnLongClickListener);
+        verify(mockOnCreateContextMenuListener, times(1)).onCreateContextMenu(
+                any(ContextMenu.class), eq(mTextView), any(ContextMenuInfo.class));
     }
 
     @UiThreadTest
@@ -4827,228 +4845,213 @@ public class TextViewTest extends ActivityInstrumentationTestCase2<TextViewCtsAc
         assertEquals(View.TEXT_ALIGNMENT_GRAVITY, tv.getTextAlignment());
     }
 
+    private void verifyCompoundDrawables(@NonNull TextView textView,
+            @IdRes int expectedLeftDrawableId, @IdRes int expectedRightDrawableId,
+            @IdRes int expectedTopDrawableId, @IdRes int expectedBottomDrawableId) {
+        final Drawable[] compoundDrawables = textView.getCompoundDrawables();
+        if (expectedLeftDrawableId < 0) {
+            assertNull(compoundDrawables[0]);
+        } else {
+            WidgetTestUtils.assertEquals(getBitmap(expectedLeftDrawableId),
+                    ((BitmapDrawable) compoundDrawables[0]).getBitmap());
+        }
+        if (expectedTopDrawableId < 0) {
+            assertNull(compoundDrawables[1]);
+        } else {
+            WidgetTestUtils.assertEquals(getBitmap(expectedTopDrawableId),
+                    ((BitmapDrawable) compoundDrawables[1]).getBitmap());
+        }
+        if (expectedRightDrawableId < 0) {
+            assertNull(compoundDrawables[2]);
+        } else {
+            WidgetTestUtils.assertEquals(getBitmap(expectedRightDrawableId),
+                    ((BitmapDrawable) compoundDrawables[2]).getBitmap());
+        }
+        if (expectedBottomDrawableId < 0) {
+            assertNull(compoundDrawables[3]);
+        } else {
+            WidgetTestUtils.assertEquals(getBitmap(expectedBottomDrawableId),
+                    ((BitmapDrawable) compoundDrawables[3]).getBitmap());
+        }
+    }
+
+    private void verifyCompoundDrawablesRelative(@NonNull TextView textView,
+            @IdRes int expectedStartDrawableId, @IdRes int expectedEndDrawableId,
+            @IdRes int expectedTopDrawableId, @IdRes int expectedBottomDrawableId) {
+        final Drawable[] compoundDrawablesRelative = textView.getCompoundDrawablesRelative();
+        if (expectedStartDrawableId < 0) {
+            assertNull(compoundDrawablesRelative[0]);
+        } else {
+            WidgetTestUtils.assertEquals(getBitmap(expectedStartDrawableId),
+                    ((BitmapDrawable) compoundDrawablesRelative[0]).getBitmap());
+        }
+        if (expectedTopDrawableId < 0) {
+            assertNull(compoundDrawablesRelative[1]);
+        } else {
+            WidgetTestUtils.assertEquals(getBitmap(expectedTopDrawableId),
+                    ((BitmapDrawable) compoundDrawablesRelative[1]).getBitmap());
+        }
+        if (expectedEndDrawableId < 0) {
+            assertNull(compoundDrawablesRelative[2]);
+        } else {
+            WidgetTestUtils.assertEquals(getBitmap(expectedEndDrawableId),
+                    ((BitmapDrawable) compoundDrawablesRelative[2]).getBitmap());
+        }
+        if (expectedBottomDrawableId < 0) {
+            assertNull(compoundDrawablesRelative[3]);
+        } else {
+            WidgetTestUtils.assertEquals(getBitmap(expectedBottomDrawableId),
+                    ((BitmapDrawable) compoundDrawablesRelative[3]).getBitmap());
+        }
+    }
+
     @UiThreadTest
     public void testDrawableResolution() {
-        final int LEFT = 0;
-        final int TOP = 1;
-        final int RIGHT = 2;
-        final int BOTTOM = 3;
-
-        TextViewCtsActivity activity = getActivity();
-
         // Case 1.1: left / right drawable defined in default LTR mode
-        TextView tv = (TextView) activity.findViewById(R.id.textview_drawable_1_1);
-        Drawable[] drawables = tv.getCompoundDrawables();
-
-        WidgetTestUtils.assertEquals(getBitmap(R.drawable.icon_blue),
-                ((BitmapDrawable) drawables[LEFT]).getBitmap());
-        WidgetTestUtils.assertEquals(getBitmap(R.drawable.icon_red),
-                ((BitmapDrawable) drawables[RIGHT]).getBitmap());
-        WidgetTestUtils.assertEquals(getBitmap(R.drawable.icon_green),
-                ((BitmapDrawable) drawables[TOP]).getBitmap());
-        WidgetTestUtils.assertEquals(getBitmap(R.drawable.icon_yellow),
-                ((BitmapDrawable) drawables[BOTTOM]).getBitmap());
+        TextView tv = (TextView) mActivity.findViewById(R.id.textview_drawable_1_1);
+        verifyCompoundDrawables(tv, R.drawable.icon_blue, R.drawable.icon_red,
+                R.drawable.icon_green, R.drawable.icon_yellow);
+        verifyCompoundDrawablesRelative(tv, -1, -1,
+                R.drawable.icon_green, R.drawable.icon_yellow);
 
         // Case 1.2: left / right drawable defined in default RTL mode
-        tv = (TextView) activity.findViewById(R.id.textview_drawable_1_2);
-        drawables = tv.getCompoundDrawables();
-
-        WidgetTestUtils.assertEquals(getBitmap(R.drawable.icon_blue),
-                ((BitmapDrawable) drawables[LEFT]).getBitmap());
-        WidgetTestUtils.assertEquals(getBitmap(R.drawable.icon_red),
-                ((BitmapDrawable) drawables[RIGHT]).getBitmap());
-        WidgetTestUtils.assertEquals(getBitmap(R.drawable.icon_green),
-                ((BitmapDrawable) drawables[TOP]).getBitmap());
-        WidgetTestUtils.assertEquals(getBitmap(R.drawable.icon_yellow),
-                ((BitmapDrawable) drawables[BOTTOM]).getBitmap());
+        tv = (TextView) mActivity.findViewById(R.id.textview_drawable_1_2);
+        verifyCompoundDrawables(tv, R.drawable.icon_blue, R.drawable.icon_red,
+                R.drawable.icon_green, R.drawable.icon_yellow);
+        verifyCompoundDrawablesRelative(tv, -1, -1,
+                R.drawable.icon_green, R.drawable.icon_yellow);
 
         // Case 2.1: start / end drawable defined in LTR mode
-        tv = (TextView) activity.findViewById(R.id.textview_drawable_2_1);
-        drawables = tv.getCompoundDrawables();
-
-        WidgetTestUtils.assertEquals(getBitmap(R.drawable.icon_blue),
-                ((BitmapDrawable) drawables[LEFT]).getBitmap());
-        WidgetTestUtils.assertEquals(getBitmap(R.drawable.icon_red),
-                ((BitmapDrawable) drawables[RIGHT]).getBitmap());
-        WidgetTestUtils.assertEquals(getBitmap(R.drawable.icon_green),
-                ((BitmapDrawable) drawables[TOP]).getBitmap());
-        WidgetTestUtils.assertEquals(getBitmap(R.drawable.icon_yellow),
-                ((BitmapDrawable) drawables[BOTTOM]).getBitmap());
+        tv = (TextView) mActivity.findViewById(R.id.textview_drawable_2_1);
+        verifyCompoundDrawables(tv, R.drawable.icon_blue, R.drawable.icon_red,
+                R.drawable.icon_green, R.drawable.icon_yellow);
+        verifyCompoundDrawablesRelative(tv, R.drawable.icon_blue, R.drawable.icon_red,
+                R.drawable.icon_green, R.drawable.icon_yellow);
 
         // Case 2.2: start / end drawable defined in RTL mode
-        tv = (TextView) activity.findViewById(R.id.textview_drawable_2_2);
-        drawables = tv.getCompoundDrawables();
-
-        WidgetTestUtils.assertEquals(getBitmap(R.drawable.icon_red),
-                ((BitmapDrawable) drawables[LEFT]).getBitmap());
-        WidgetTestUtils.assertEquals(getBitmap(R.drawable.icon_blue),
-                ((BitmapDrawable) drawables[RIGHT]).getBitmap());
-        WidgetTestUtils.assertEquals(getBitmap(R.drawable.icon_green),
-                ((BitmapDrawable) drawables[TOP]).getBitmap());
-        WidgetTestUtils.assertEquals(getBitmap(R.drawable.icon_yellow),
-                ((BitmapDrawable) drawables[BOTTOM]).getBitmap());
+        tv = (TextView) mActivity.findViewById(R.id.textview_drawable_2_2);
+        verifyCompoundDrawables(tv, R.drawable.icon_red, R.drawable.icon_blue,
+                R.drawable.icon_green, R.drawable.icon_yellow);
+        verifyCompoundDrawablesRelative(tv, R.drawable.icon_blue, R.drawable.icon_red,
+                R.drawable.icon_green, R.drawable.icon_yellow);
 
         // Case 3.1: left / right / start / end drawable defined in LTR mode
-        tv = (TextView) activity.findViewById(R.id.textview_drawable_3_1);
-        drawables = tv.getCompoundDrawables();
-
-        WidgetTestUtils.assertEquals(getBitmap(R.drawable.icon_blue),
-                ((BitmapDrawable) drawables[LEFT]).getBitmap());
-        WidgetTestUtils.assertEquals(getBitmap(R.drawable.icon_red),
-                ((BitmapDrawable) drawables[RIGHT]).getBitmap());
-        WidgetTestUtils.assertEquals(getBitmap(R.drawable.icon_green),
-                ((BitmapDrawable) drawables[TOP]).getBitmap());
-        WidgetTestUtils.assertEquals(getBitmap(R.drawable.icon_yellow),
-                ((BitmapDrawable) drawables[BOTTOM]).getBitmap());
+        tv = (TextView) mActivity.findViewById(R.id.textview_drawable_3_1);
+        verifyCompoundDrawables(tv, R.drawable.icon_blue, R.drawable.icon_red,
+                R.drawable.icon_green, R.drawable.icon_yellow);
+        verifyCompoundDrawablesRelative(tv, R.drawable.icon_blue, R.drawable.icon_red,
+                R.drawable.icon_green, R.drawable.icon_yellow);
 
         // Case 3.2: left / right / start / end drawable defined in RTL mode
-        tv = (TextView) activity.findViewById(R.id.textview_drawable_3_2);
-        drawables = tv.getCompoundDrawables();
-
-        WidgetTestUtils.assertEquals(getBitmap(R.drawable.icon_red),
-                ((BitmapDrawable) drawables[LEFT]).getBitmap());
-        WidgetTestUtils.assertEquals(getBitmap(R.drawable.icon_blue),
-                ((BitmapDrawable) drawables[RIGHT]).getBitmap());
-        WidgetTestUtils.assertEquals(getBitmap(R.drawable.icon_green),
-                ((BitmapDrawable) drawables[TOP]).getBitmap());
-        WidgetTestUtils.assertEquals(getBitmap(R.drawable.icon_yellow),
-                ((BitmapDrawable) drawables[BOTTOM]).getBitmap());
+        tv = (TextView) mActivity.findViewById(R.id.textview_drawable_3_2);
+        verifyCompoundDrawables(tv, R.drawable.icon_red, R.drawable.icon_blue,
+                R.drawable.icon_green, R.drawable.icon_yellow);
+        verifyCompoundDrawablesRelative(tv, R.drawable.icon_blue, R.drawable.icon_red,
+                R.drawable.icon_green, R.drawable.icon_yellow);
 
         // Case 4.1: start / end drawable defined in LTR mode inside a layout
         // that defines the layout direction
-        tv = (TextView) activity.findViewById(R.id.textview_drawable_4_1);
-        drawables = tv.getCompoundDrawables();
-
-        WidgetTestUtils.assertEquals(getBitmap(R.drawable.icon_blue),
-                ((BitmapDrawable) drawables[LEFT]).getBitmap());
-        WidgetTestUtils.assertEquals(getBitmap(R.drawable.icon_red),
-                ((BitmapDrawable) drawables[RIGHT]).getBitmap());
-        WidgetTestUtils.assertEquals(getBitmap(R.drawable.icon_green),
-                ((BitmapDrawable) drawables[TOP]).getBitmap());
-        WidgetTestUtils.assertEquals(getBitmap(R.drawable.icon_yellow),
-                ((BitmapDrawable) drawables[BOTTOM]).getBitmap());
+        tv = (TextView) mActivity.findViewById(R.id.textview_drawable_4_1);
+        verifyCompoundDrawables(tv, R.drawable.icon_blue, R.drawable.icon_red,
+                R.drawable.icon_green, R.drawable.icon_yellow);
+        verifyCompoundDrawablesRelative(tv, R.drawable.icon_blue, R.drawable.icon_red,
+                R.drawable.icon_green, R.drawable.icon_yellow);
 
         // Case 4.2: start / end drawable defined in RTL mode inside a layout
         // that defines the layout direction
-        tv = (TextView) activity.findViewById(R.id.textview_drawable_4_2);
-        drawables = tv.getCompoundDrawables();
-
-        WidgetTestUtils.assertEquals(getBitmap(R.drawable.icon_red),
-                ((BitmapDrawable) drawables[LEFT]).getBitmap());
-        WidgetTestUtils.assertEquals(getBitmap(R.drawable.icon_blue),
-                ((BitmapDrawable) drawables[RIGHT]).getBitmap());
-        WidgetTestUtils.assertEquals(getBitmap(R.drawable.icon_green),
-                ((BitmapDrawable) drawables[TOP]).getBitmap());
-        WidgetTestUtils.assertEquals(getBitmap(R.drawable.icon_yellow),
-                ((BitmapDrawable) drawables[BOTTOM]).getBitmap());
+        tv = (TextView) mActivity.findViewById(R.id.textview_drawable_4_2);
+        verifyCompoundDrawables(tv, R.drawable.icon_red, R.drawable.icon_blue,
+                R.drawable.icon_green, R.drawable.icon_yellow);
+        verifyCompoundDrawablesRelative(tv, R.drawable.icon_blue, R.drawable.icon_red,
+                R.drawable.icon_green, R.drawable.icon_yellow);
 
         // Case 5.1: left / right / start / end drawable defined in LTR mode inside a layout
         // that defines the layout direction
-        tv = (TextView) activity.findViewById(R.id.textview_drawable_3_1);
-        drawables = tv.getCompoundDrawables();
-
-        WidgetTestUtils.assertEquals(getBitmap(R.drawable.icon_blue),
-                ((BitmapDrawable) drawables[LEFT]).getBitmap());
-        WidgetTestUtils.assertEquals(getBitmap(R.drawable.icon_red),
-                ((BitmapDrawable) drawables[RIGHT]).getBitmap());
-        WidgetTestUtils.assertEquals(getBitmap(R.drawable.icon_green),
-                ((BitmapDrawable) drawables[TOP]).getBitmap());
-        WidgetTestUtils.assertEquals(getBitmap(R.drawable.icon_yellow),
-                ((BitmapDrawable) drawables[BOTTOM]).getBitmap());
+        tv = (TextView) mActivity.findViewById(R.id.textview_drawable_5_1);
+        verifyCompoundDrawables(tv, R.drawable.icon_blue, R.drawable.icon_red,
+                R.drawable.icon_green, R.drawable.icon_yellow);
+        verifyCompoundDrawablesRelative(tv, R.drawable.icon_blue, R.drawable.icon_red,
+                R.drawable.icon_green, R.drawable.icon_yellow);
 
         // Case 5.2: left / right / start / end drawable defined in RTL mode inside a layout
         // that defines the layout direction
-        tv = (TextView) activity.findViewById(R.id.textview_drawable_3_2);
-        drawables = tv.getCompoundDrawables();
-
-        WidgetTestUtils.assertEquals(getBitmap(R.drawable.icon_red),
-                ((BitmapDrawable) drawables[LEFT]).getBitmap());
-        WidgetTestUtils.assertEquals(getBitmap(R.drawable.icon_blue),
-                ((BitmapDrawable) drawables[RIGHT]).getBitmap());
-        WidgetTestUtils.assertEquals(getBitmap(R.drawable.icon_green),
-                ((BitmapDrawable) drawables[TOP]).getBitmap());
-        WidgetTestUtils.assertEquals(getBitmap(R.drawable.icon_yellow),
-                ((BitmapDrawable) drawables[BOTTOM]).getBitmap());
+        tv = (TextView) mActivity.findViewById(R.id.textview_drawable_5_2);
+        verifyCompoundDrawables(tv, R.drawable.icon_red, R.drawable.icon_blue,
+                R.drawable.icon_green, R.drawable.icon_yellow);
+        verifyCompoundDrawablesRelative(tv, R.drawable.icon_blue, R.drawable.icon_red,
+                R.drawable.icon_green, R.drawable.icon_yellow);
     }
 
     @UiThreadTest
     public void testDrawableResolution2() {
-        final int LEFT = 0;
-        final int TOP = 1;
-        final int RIGHT = 2;
-        final int BOTTOM = 3;
-
-        TextViewCtsActivity activity = getActivity();
-
         // Case 1.1: left / right drawable defined in default LTR mode
-        TextView tv = (TextView) activity.findViewById(R.id.textview_drawable_1_1);
-        Drawable[] drawables = tv.getCompoundDrawables();
-
-        WidgetTestUtils.assertEquals(getBitmap(R.drawable.icon_blue),
-                ((BitmapDrawable) drawables[LEFT]).getBitmap());
-        WidgetTestUtils.assertEquals(getBitmap(R.drawable.icon_red),
-                ((BitmapDrawable) drawables[RIGHT]).getBitmap());
-        WidgetTestUtils.assertEquals(getBitmap(R.drawable.icon_green),
-                ((BitmapDrawable) drawables[TOP]).getBitmap());
-        WidgetTestUtils.assertEquals(getBitmap(R.drawable.icon_yellow),
-                ((BitmapDrawable) drawables[BOTTOM]).getBitmap());
+        TextView tv = (TextView) mActivity.findViewById(R.id.textview_drawable_1_1);
+        verifyCompoundDrawables(tv, R.drawable.icon_blue, R.drawable.icon_red,
+                R.drawable.icon_green, R.drawable.icon_yellow);
 
         tv.setCompoundDrawables(null, null, getDrawable(R.drawable.icon_yellow), null);
-        drawables = tv.getCompoundDrawables();
+        verifyCompoundDrawables(tv, -1, R.drawable.icon_yellow, -1, -1);
 
-        assertNull(drawables[LEFT]);
-        WidgetTestUtils.assertEquals(getBitmap(R.drawable.icon_yellow),
-                ((BitmapDrawable) drawables[RIGHT]).getBitmap());
-        assertNull(drawables[TOP]);
-        assertNull(drawables[BOTTOM]);
-
-        tv = (TextView) activity.findViewById(R.id.textview_drawable_1_2);
-        drawables = tv.getCompoundDrawables();
-
-        WidgetTestUtils.assertEquals(getBitmap(R.drawable.icon_blue),
-                ((BitmapDrawable) drawables[LEFT]).getBitmap());
-        WidgetTestUtils.assertEquals(getBitmap(R.drawable.icon_red),
-                ((BitmapDrawable) drawables[RIGHT]).getBitmap());
-        WidgetTestUtils.assertEquals(getBitmap(R.drawable.icon_green),
-                ((BitmapDrawable) drawables[TOP]).getBitmap());
-        WidgetTestUtils.assertEquals(getBitmap(R.drawable.icon_yellow),
-                ((BitmapDrawable) drawables[BOTTOM]).getBitmap());
+        tv = (TextView) mActivity.findViewById(R.id.textview_drawable_1_2);
+        verifyCompoundDrawables(tv, R.drawable.icon_blue, R.drawable.icon_red,
+                R.drawable.icon_green, R.drawable.icon_yellow);
 
         tv.setCompoundDrawables(getDrawable(R.drawable.icon_yellow), null, null, null);
-        drawables = tv.getCompoundDrawables();
+        verifyCompoundDrawables(tv, R.drawable.icon_yellow, -1, -1, -1);
 
-        WidgetTestUtils.assertEquals(getBitmap(R.drawable.icon_yellow),
-                ((BitmapDrawable) drawables[LEFT]).getBitmap());
-        assertNull(drawables[RIGHT]);
-        assertNull(drawables[TOP]);
-        assertNull(drawables[BOTTOM]);
+        tv = (TextView) mActivity.findViewById(R.id.textview_ltr);
+        verifyCompoundDrawables(tv, -1, -1, -1, -1);
 
-        tv = (TextView) activity.findViewById(R.id.textview_ltr);
-        drawables = tv.getCompoundDrawables();
-
-        assertNull(drawables[LEFT]);
-        assertNull(drawables[RIGHT]);
-        assertNull(drawables[TOP]);
-        assertNull(drawables[BOTTOM]);
-
-        tv.setCompoundDrawables(getDrawable(R.drawable.icon_blue), null, getDrawable(R.drawable.icon_red), null);
-        drawables = tv.getCompoundDrawables();
-
-        WidgetTestUtils.assertEquals(getBitmap(R.drawable.icon_blue),
-                ((BitmapDrawable) drawables[LEFT]).getBitmap());
-        WidgetTestUtils.assertEquals(getBitmap(R.drawable.icon_red),
-                ((BitmapDrawable) drawables[RIGHT]).getBitmap());
-        assertNull(drawables[TOP]);
-        assertNull(drawables[BOTTOM]);
+        tv.setCompoundDrawables(getDrawable(R.drawable.icon_blue), null,
+                getDrawable(R.drawable.icon_red), null);
+        verifyCompoundDrawables(tv, R.drawable.icon_blue, R.drawable.icon_red, -1, -1);
 
         tv.setCompoundDrawablesRelative(getDrawable(R.drawable.icon_yellow), null, null, null);
-        drawables = tv.getCompoundDrawables();
+        verifyCompoundDrawables(tv, R.drawable.icon_yellow, -1, -1, -1);
+    }
 
-        WidgetTestUtils.assertEquals(getBitmap(R.drawable.icon_yellow),
-                ((BitmapDrawable) drawables[LEFT]).getBitmap());
-        assertNull(drawables[RIGHT]);
-        assertNull(drawables[TOP]);
-        assertNull(drawables[BOTTOM]);
+    public void testCompoundAndTotalPadding() {
+        final Resources res = mActivity.getResources();
+        final int drawablePadding = res.getDimensionPixelSize(R.dimen.textview_drawable_padding);
+        final int paddingLeft = res.getDimensionPixelSize(R.dimen.textview_padding_left);
+        final int paddingRight = res.getDimensionPixelSize(R.dimen.textview_padding_right);
+        final int paddingTop = res.getDimensionPixelSize(R.dimen.textview_padding_top);
+        final int paddingBottom = res.getDimensionPixelSize(R.dimen.textview_padding_bottom);
+        final int iconSize = TestUtils.dpToPx(mActivity, 32);
+
+        final TextView textViewLtr = (TextView) mActivity.findViewById(
+                R.id.textview_compound_drawable_ltr);
+        final int combinedPaddingLeftLtr = paddingLeft + drawablePadding + iconSize;
+        final int combinedPaddingRightLtr = paddingRight + drawablePadding + iconSize;
+        assertEquals(combinedPaddingLeftLtr, textViewLtr.getCompoundPaddingLeft());
+        assertEquals(combinedPaddingLeftLtr, textViewLtr.getCompoundPaddingStart());
+        assertEquals(combinedPaddingLeftLtr, textViewLtr.getTotalPaddingLeft());
+        assertEquals(combinedPaddingLeftLtr, textViewLtr.getTotalPaddingStart());
+        assertEquals(combinedPaddingRightLtr, textViewLtr.getCompoundPaddingRight());
+        assertEquals(combinedPaddingRightLtr, textViewLtr.getCompoundPaddingEnd());
+        assertEquals(combinedPaddingRightLtr, textViewLtr.getTotalPaddingRight());
+        assertEquals(combinedPaddingRightLtr, textViewLtr.getTotalPaddingEnd());
+        assertEquals(paddingTop + drawablePadding + iconSize,
+                textViewLtr.getCompoundPaddingTop());
+        assertEquals(paddingBottom + drawablePadding + iconSize,
+                textViewLtr.getCompoundPaddingBottom());
+
+        final TextView textViewRtl = (TextView) mActivity.findViewById(
+                R.id.textview_compound_drawable_rtl);
+        final int combinedPaddingLeftRtl = paddingLeft + drawablePadding + iconSize;
+        final int combinedPaddingRightRtl = paddingRight + drawablePadding + iconSize;
+        assertEquals(combinedPaddingLeftRtl, textViewRtl.getCompoundPaddingLeft());
+        assertEquals(combinedPaddingLeftRtl, textViewRtl.getCompoundPaddingEnd());
+        assertEquals(combinedPaddingLeftRtl, textViewRtl.getTotalPaddingLeft());
+        assertEquals(combinedPaddingLeftRtl, textViewRtl.getTotalPaddingEnd());
+        assertEquals(combinedPaddingRightRtl, textViewRtl.getCompoundPaddingRight());
+        assertEquals(combinedPaddingRightRtl, textViewRtl.getCompoundPaddingStart());
+        assertEquals(combinedPaddingRightRtl, textViewRtl.getTotalPaddingRight());
+        assertEquals(combinedPaddingRightRtl, textViewRtl.getTotalPaddingStart());
+        assertEquals(paddingTop + drawablePadding + iconSize,
+                textViewRtl.getCompoundPaddingTop());
+        assertEquals(paddingBottom + drawablePadding + iconSize,
+                textViewRtl.getCompoundPaddingBottom());
     }
 
     public void testSetGetBreakStrategy() {
@@ -5542,70 +5545,6 @@ public class TextViewTest extends ActivityInstrumentationTestCase2<TextViewCtsAc
 
         public void onTextChanged(CharSequence s, int start, int before, int count) {
             mHasOnTextChanged = true;
-        }
-    }
-
-    /**
-     * The listener interface for receiving mockOnLongClick events. The class
-     * that is interested in processing a mockOnLongClick event implements this
-     * interface, and the object created with that class is registered with a
-     * component using the component's
-     * <code>addMockOnLongClickListener<code> method. When
-     * the mockOnLongClick event occurs, that object's appropriate
-     * method is invoked.
-     *
-     * @see MockOnLongClickEvent
-     */
-    private static class MockOnLongClickListener implements OnLongClickListener {
-        private boolean mExpectedOnLongClickResult;
-        private boolean mHasLongClicked;
-
-        MockOnLongClickListener(boolean result) {
-            mExpectedOnLongClickResult = result;
-        }
-
-        public boolean hasLongClicked() {
-            return mHasLongClicked;
-        }
-
-        public boolean onLongClick(View v) {
-            mHasLongClicked = true;
-            return mExpectedOnLongClickResult;
-        }
-    }
-
-    /**
-     * The listener interface for receiving mockOnCreateContextMenu events. The
-     * class that is interested in processing a mockOnCreateContextMenu event
-     * implements this interface, and the object created with that class is
-     * registered with a component using the component's
-     * <code>addMockOnCreateContextMenuListener<code> method. When the
-     * mockOnCreateContextMenu event occurs, that object's appropriate method is
-     * invoked.
-     *
-     * @see MockOnCreateContextMenuEvent
-     */
-    private static class MockOnCreateContextMenuListener implements OnCreateContextMenuListener {
-        private boolean mIsMenuItemsBlank;
-        private boolean mHasCreatedContextMenu;
-
-        MockOnCreateContextMenuListener(boolean isBlank) {
-            this.mIsMenuItemsBlank = isBlank;
-        }
-
-        public boolean hasCreatedContextMenu() {
-            return mHasCreatedContextMenu;
-        }
-
-        public void reset() {
-            mHasCreatedContextMenu = false;
-        }
-
-        public void onCreateContextMenu(ContextMenu menu, View v, ContextMenuInfo menuInfo) {
-            mHasCreatedContextMenu = true;
-            if (!mIsMenuItemsBlank) {
-                menu.add("menu item");
-            }
         }
     }
 
