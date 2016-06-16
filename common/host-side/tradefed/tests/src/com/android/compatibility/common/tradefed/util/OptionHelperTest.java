@@ -82,8 +82,8 @@ public class OptionHelperTest extends TestCase {
         List<String> validQuoteSubset = Arrays.asList("-" + TEST_CLASS_SHORTNAME, fakeTestClass,
             "--" + TEST_NAME + "=" + fakeTestMethod, "--" + TEST_FILTER, fakeTestClass + " "
             + fakeTestMethod);
-        String[] inputArray = {"foocts ", "-", TEST_CLASS_SHORTNAME, " ", fakeTestClass, " --",
-            TEST_NAME, "=", fakeTestMethod, " -z \"FAKE1 FAKE2\" --", TEST_FILTER, " ", " \"",
+        String[] inputArray = {"foocts ", "-", TEST_CLASS_SHORTNAME, " ", fakeTestClass, " \"--",
+            TEST_NAME, "=", fakeTestMethod, "\" -z \"FAKE1 FAKE2\" --", TEST_FILTER, " \"",
             fakeTestClass, " ", fakeTestMethod + "\""};
         String inputString = String.join("", inputArray);
 
