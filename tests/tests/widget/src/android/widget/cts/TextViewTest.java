@@ -21,6 +21,7 @@ import android.annotation.NonNull;
 import android.app.Activity;
 import android.app.Instrumentation;
 import android.app.Instrumentation.ActivityMonitor;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.res.ColorStateList;
@@ -42,8 +43,11 @@ import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Handler;
 import android.os.LocaleList;
+import android.os.Looper;
 import android.os.Parcelable;
+import android.os.ResultReceiver;
 import android.test.ActivityInstrumentationTestCase2;
 import android.test.TouchUtils;
 import android.test.UiThreadTest;
@@ -88,7 +92,6 @@ import android.view.ContextMenu.ContextMenuInfo;
 import android.view.Gravity;
 import android.view.KeyEvent;
 import android.view.Menu;
-import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.accessibility.AccessibilityNodeInfo;
@@ -97,13 +100,14 @@ import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.ExtractedText;
 import android.view.inputmethod.ExtractedTextRequest;
 import android.view.inputmethod.InputConnection;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.FrameLayout;
 import android.widget.LinearLayout;
+import android.widget.ScrollView;
 import android.widget.Scroller;
 import android.widget.TextView;
 import android.widget.TextView.BufferType;
-import android.widget.TextView.OnEditorActionListener;
 import android.widget.cts.util.TestUtils;
 
 import org.mockito.invocation.InvocationOnMock;
@@ -132,6 +136,7 @@ public class TextViewTest extends ActivityInstrumentationTestCase2<TextViewCtsAc
     private static final long TIMEOUT = 5000;
     private CharSequence mTransformedText;
     private KeyEventUtil mKeyEventUtil;
+    private Handler mHandler = new Handler(Looper.getMainLooper());
 
     public TextViewTest() {
         super("android.widget.cts", TextViewCtsActivity.class);
@@ -474,10 +479,42 @@ public class TextViewTest extends ActivityInstrumentationTestCase2<TextViewCtsAc
         }
     }
 
-    public void testSetHighlightColor() {
-        mTextView = new TextView(mActivity);
+    public void testAccessHighlightColor() {
+        final TextView textView = (TextView) mActivity.findViewById(R.id.textview_text);
 
-        mTextView.setHighlightColor(0x00ff00ff);
+        mActivity.runOnUiThread(() -> {
+            textView.setTextIsSelectable(true);
+            textView.setText("abcd", BufferType.EDITABLE);
+            textView.setHighlightColor(Color.BLUE);
+        });
+        mInstrumentation.waitForIdleSync();
+
+        assertTrue(textView.isTextSelectable());
+        assertEquals(Color.BLUE, textView.getHighlightColor());
+
+        // Long click on the text selects all text and shows selection handlers. The view has an
+        // attribute layout_width="wrap_content", so clicked location (the center of the view)
+        // should be on the text.
+        TouchUtils.longClickView(this, textView);
+
+        // At this point the entire content of our TextView should be selected and highlighted
+        // with blue. Now change the highlight to red while the selection is still on.
+        mActivity.runOnUiThread(() -> textView.setHighlightColor(Color.RED));
+        mInstrumentation.waitForIdleSync();
+
+        assertEquals(Color.RED, textView.getHighlightColor());
+        assertTrue(TextUtils.equals("abcd", textView.getText()));
+
+        // Remove the selection
+        mActivity.runOnUiThread(() -> Selection.removeSelection((Spannable) textView.getText()));
+        mInstrumentation.waitForIdleSync();
+
+        // And switch highlight to green after the selection has been removed
+        mActivity.runOnUiThread(() -> textView.setHighlightColor(Color.GREEN));
+        mInstrumentation.waitForIdleSync();
+
+        assertEquals(Color.GREEN, textView.getHighlightColor());
+        assertTrue(TextUtils.equals("abcd", textView.getText()));
     }
 
     public void testSetShadowLayer() {
@@ -1401,29 +1438,25 @@ public class TextViewTest extends ActivityInstrumentationTestCase2<TextViewCtsAc
     public void testRemoveSelectionWithSelectionHandles() {
         initTextViewForTyping();
 
-        mActivity.runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                mTextView.setTextIsSelectable(true);
-                mTextView.setText("abcd", BufferType.EDITABLE);
-            }
+        assertFalse(mTextView.isTextSelectable());
+        mActivity.runOnUiThread(() -> {
+            mTextView.setTextIsSelectable(true);
+            mTextView.setText("abcd", BufferType.EDITABLE);
         });
         mInstrumentation.waitForIdleSync();
+        assertTrue(mTextView.isTextSelectable());
 
         // Long click on the text selects all text and shows selection handlers. The view has an
         // attribute layout_width="wrap_content", so clicked location (the center of the view)
         // should be on the text.
         TouchUtils.longClickView(this, mTextView);
 
-        mActivity.runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                Selection.removeSelection((Spannable) mTextView.getText());
-            }
-        });
+        mActivity.runOnUiThread(() -> Selection.removeSelection((Spannable) mTextView.getText()));
 
         // Make sure that a crash doesn't happen with {@link Selection#removeSelection}.
         mInstrumentation.waitForIdleSync();
+
+        assertTrue(TextUtils.equals("abcd", mTextView.getText()));
     }
 
     public void testUndo_insert() {
@@ -2746,11 +2779,13 @@ public class TextViewTest extends ActivityInstrumentationTestCase2<TextViewCtsAc
                 textView.getWidth() > oldWidth);
     }
 
-    public void testSetCursorVisible() {
+    public void testAccessCursorVisible() {
         mTextView = new TextView(mActivity);
 
         mTextView.setCursorVisible(true);
+        assertTrue(mTextView.isCursorVisible());
         mTextView.setCursorVisible(false);
+        assertFalse(mTextView.isCursorVisible());
     }
 
     public void testOnWindowFocusChanged() {
@@ -3080,15 +3115,10 @@ public class TextViewTest extends ActivityInstrumentationTestCase2<TextViewCtsAc
         });
         mInstrumentation.waitForIdleSync();
 
-        // it will get transformed after a while
-        new PollingCheck(TIMEOUT) {
-            @Override
-            protected boolean check() {
-                // "******"
-                return mTransformedText.toString()
-                        .equals("\u2022\u2022\u2022\u2022\u2022\u2022");
-            }
-        }.run();
+        // It will get transformed after a while
+        // We're waiting for transformation to "******"
+        PollingCheck.waitFor(TIMEOUT, () -> mTransformedText.toString()
+                .equals("\u2022\u2022\u2022\u2022\u2022\u2022"));
 
         // set null
         mActivity.runOnUiThread(new Runnable() {
@@ -3770,7 +3800,11 @@ public class TextViewTest extends ActivityInstrumentationTestCase2<TextViewCtsAc
     }
 
     public void testMarquee() {
-        final MockTextView textView = new MockTextView(mActivity);
+        // Both are pointing to the same object. This works around current limitation in CTS
+        // coverage report tool for properly reporting coverage of base class method calls.
+        final MockTextView mockTextView = new MockTextView(mActivity);
+        final TextView textView = mockTextView;
+
         textView.setText(LONG_TEXT);
         textView.setSingleLine();
         textView.setEllipsize(TruncateAt.MARQUEE);
@@ -3782,11 +3816,7 @@ public class TextViewTest extends ActivityInstrumentationTestCase2<TextViewCtsAc
         // make the fading to be shown
         textView.setHorizontalFadingEdgeEnabled(true);
 
-        mActivity.runOnUiThread(new Runnable() {
-            public void run() {
-                mActivity.setContentView(layout);
-            }
-        });
+        mActivity.runOnUiThread(() -> mActivity.setContentView(layout));
         mInstrumentation.waitForIdleSync();
 
         TestSelectedRunnable runnable = new TestSelectedRunnable(textView) {
@@ -3802,23 +3832,15 @@ public class TextViewTest extends ActivityInstrumentationTestCase2<TextViewCtsAc
 
         // wait for the marquee to run
         // fading is shown on both sides if the marquee runs for a while
-        new PollingCheck(TIMEOUT) {
-            @Override
-            protected boolean check() {
-                return textView.getLeftFadingEdgeStrength() > 0.0f
-                        && textView.getRightFadingEdgeStrength() > 0.0f;
-            }
-        }.run();
+        PollingCheck.waitFor(TIMEOUT, () -> mockTextView.getLeftFadingEdgeStrength() > 0.0f
+                && mockTextView.getRightFadingEdgeStrength() > 0.0f);
 
         // wait for left marquee to fully apply
-        new PollingCheck(TIMEOUT) {
-            @Override
-            protected boolean check() {
-                return textView.getLeftFadingEdgeStrength() > 0.99f;
-            }
-        }.run();
+        PollingCheck.waitFor(TIMEOUT, () -> mockTextView.getLeftFadingEdgeStrength() > 0.99f);
+
         assertFalse(runnable.getIsSelected1());
         assertTrue(runnable.getIsSelected2());
+        assertEquals(-1, textView.getMarqueeRepeatLimit());
 
         runnable = new TestSelectedRunnable(textView) {
             public void run() {
@@ -3835,27 +3857,20 @@ public class TextViewTest extends ActivityInstrumentationTestCase2<TextViewCtsAc
         mInstrumentation.waitForIdleSync();
         assertTrue(runnable.getIsSelected1());
         assertFalse(runnable.getIsSelected2());
-        assertEquals(0.0f, textView.getLeftFadingEdgeStrength(), 0.01f);
-        assertTrue(textView.getRightFadingEdgeStrength() > 0.0f);
+        assertEquals(0.0f, mockTextView.getLeftFadingEdgeStrength(), 0.01f);
+        assertTrue(mockTextView.getRightFadingEdgeStrength() > 0.0f);
+        assertEquals(0, textView.getMarqueeRepeatLimit());
 
-        mActivity.runOnUiThread(new Runnable() {
-            public void run() {
-                textView.setGravity(Gravity.RIGHT);
-            }
-        });
+        mActivity.runOnUiThread(() -> textView.setGravity(Gravity.RIGHT));
         mInstrumentation.waitForIdleSync();
-        assertTrue(textView.getLeftFadingEdgeStrength() > 0.0f);
-        assertEquals(0.0f, textView.getRightFadingEdgeStrength(), 0.01f);
+        assertTrue(mockTextView.getLeftFadingEdgeStrength() > 0.0f);
+        assertEquals(0.0f, mockTextView.getRightFadingEdgeStrength(), 0.01f);
 
-        mActivity.runOnUiThread(new Runnable() {
-            public void run() {
-                textView.setGravity(Gravity.CENTER_HORIZONTAL);
-            }
-        });
+        mActivity.runOnUiThread(() -> textView.setGravity(Gravity.CENTER_HORIZONTAL));
         mInstrumentation.waitForIdleSync();
         // there is no left fading (Is it correct?)
-        assertEquals(0.0f, textView.getLeftFadingEdgeStrength(), 0.01f);
-        assertTrue(textView.getRightFadingEdgeStrength() > 0.0f);
+        assertEquals(0.0f, mockTextView.getLeftFadingEdgeStrength(), 0.01f);
+        assertTrue(mockTextView.getRightFadingEdgeStrength() > 0.0f);
     }
 
     public void testOnKeyMultiple() {
@@ -4247,12 +4262,7 @@ public class TextViewTest extends ActivityInstrumentationTestCase2<TextViewCtsAc
         mInstrumentation.waitForIdleSync();
         assertTrue(mTextView.isFocused());
 
-        new PollingCheck() {
-            @Override
-            protected boolean check() {
-                return mTextView.isInputMethodTarget();
-            }
-        }.run();
+        PollingCheck.waitFor(() -> mTextView.isInputMethodTarget());
     }
 
     public void testBeginEndBatchEdit() {
@@ -5256,6 +5266,95 @@ public class TextViewTest extends ActivityInstrumentationTestCase2<TextViewCtsAc
         assertEquals(4.0f, textView.getShadowDy());
         assertEquals(5.0f, textView.getShadowRadius());
         assertEquals(Color.RED, textView.getShadowColor());
+    }
+
+    public void testFontFeatureSettings() {
+        final TextView textView = (TextView) mActivity.findViewById(R.id.textview_text);
+        assertTrue(TextUtils.isEmpty(textView.getFontFeatureSettings()));
+
+        mActivity.runOnUiThread(() -> textView.setFontFeatureSettings("smcp"));
+        mInstrumentation.waitForIdleSync();
+        assertEquals("smcp", textView.getFontFeatureSettings());
+
+        mActivity.runOnUiThread(() -> textView.setFontFeatureSettings("frac"));
+        mInstrumentation.waitForIdleSync();
+        assertEquals("frac", textView.getFontFeatureSettings());
+    }
+
+    private static class SoftInputResultReceiver extends ResultReceiver {
+        private boolean mIsDone;
+        private int mResultCode;
+
+        public SoftInputResultReceiver(Handler handler) {
+            super(handler);
+        }
+
+        @Override
+        protected void onReceiveResult(int resultCode, Bundle resultData) {
+            mResultCode = resultCode;
+            mIsDone = true;
+        }
+
+        public void reset() {
+            mIsDone = false;
+        }
+    }
+
+    public void testAccessShowSoftInputOnFocus() {
+        if (!mActivity.getPackageManager().hasSystemFeature(PackageManager.FEATURE_INPUT_METHODS)) {
+            return;
+        }
+
+        // Scroll down to our EditText
+        final ScrollView scrollView = (ScrollView) mActivity.findViewById(R.id.scroller);
+        mTextView = findTextView(R.id.editview_text);
+        mActivity.runOnUiThread(() -> scrollView.fullScroll(View.FOCUS_DOWN));
+        mInstrumentation.waitForIdleSync();
+
+        // Mark it to show soft input on focus
+        mActivity.runOnUiThread(() -> mTextView.setShowSoftInputOnFocus(true));
+        mInstrumentation.waitForIdleSync();
+        assertTrue(mTextView.getShowSoftInputOnFocus());
+
+        // And emulate click on it
+        TouchUtils.clickView(this, mTextView);
+
+        // Verify that input method manager is active and accepting text
+        final InputMethodManager imManager = (InputMethodManager) mActivity
+                .getSystemService(Context.INPUT_METHOD_SERVICE);
+        PollingCheck.waitFor(() -> imManager.isActive());
+        assertTrue(imManager.isAcceptingText());
+        assertTrue(imManager.isActive(mTextView));
+
+        // Since there is no API to check that soft input is showing, we're going to ask
+        // the input method manager to show soft input, passing our custom result receiver.
+        // We're expecting to get UNCHANGED_SHOWN, indicating that the soft input was already
+        // showing before showSoftInput was called.
+        SoftInputResultReceiver receiver = new SoftInputResultReceiver(mHandler);
+        imManager.showSoftInput(mTextView, 0, receiver);
+        PollingCheck.waitFor(() -> receiver.mIsDone);
+        assertEquals(InputMethodManager.RESULT_UNCHANGED_SHOWN, receiver.mResultCode);
+
+        // Close soft input
+        sendKeys(KeyEvent.KEYCODE_BACK);
+
+        // Reconfigure our edit text to not show soft input on focus
+        mActivity.runOnUiThread(() -> mTextView.setShowSoftInputOnFocus(false));
+        mInstrumentation.waitForIdleSync();
+        assertFalse(mTextView.getShowSoftInputOnFocus());
+
+        // Emulate click on it
+        TouchUtils.clickView(this, mTextView);
+
+        // Ask input method manager to show soft input again. This time we're expecting to get
+        // SHOWN, indicating that the soft input was not showing before showSoftInput was called.
+        receiver.reset();
+        imManager.showSoftInput(mTextView, 0, receiver);
+        PollingCheck.waitFor(() -> receiver.mIsDone);
+        assertEquals(InputMethodManager.RESULT_SHOWN, receiver.mResultCode);
+
+        // Close soft input
+        sendKeys(KeyEvent.KEYCODE_BACK);
     }
 
     private void layout(final TextView textView) {
