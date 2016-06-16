@@ -60,6 +60,20 @@ public class MediaUtils {
      * tests. This centralizes the way to signal errors during a test.
      */
     public static String getTestName() {
+        return getTestName(false /* withClass */);
+    }
+
+    /**
+     * Returns the test name with the full class (heuristically).
+     *
+     * Since it uses heuristics, this method has only been verified for media
+     * tests. This centralizes the way to signal errors during a test.
+     */
+    public static String getTestNameWithClass() {
+        return getTestName(true /* withClass */);
+    }
+
+    private static String getTestName(boolean withClass) {
         int bestScore = -1;
         String testName = "test???";
         Map<Thread, StackTraceElement[]> traces = Thread.getAllStackTraces();
@@ -122,6 +136,9 @@ public class MediaUtils {
                 if (score > bestScore) {
                     bestScore = score;
                     testName = methodName;
+                    if (withClass) {
+                        testName = stack[index].getClassName() + "." + testName;
+                    }
                 }
             }
         }
@@ -136,6 +153,14 @@ public class MediaUtils {
      */
     public static void skipTest(String tag, String reason) {
         Log.i(tag, "SKIPPING " + getTestName() + "(): " + reason);
+        DeviceReportLog log = new DeviceReportLog("CtsMediaSkippedTests", "test_skipped");
+        log.addValue("reason", reason, ResultType.NEUTRAL, ResultUnit.NONE);
+        log.addValue(
+                "test", getTestNameWithClass(), ResultType.NEUTRAL, ResultUnit.NONE);
+        // TODO: replace with submit() when it is added to DeviceReportLog
+        try {
+            log.submit(null);
+        } catch (NullPointerException e) { }
     }
 
     /**
