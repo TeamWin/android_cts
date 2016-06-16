@@ -103,7 +103,7 @@ public class CrossProfileUtils extends AndroidTestCase {
                getContext().getSystemService(Context.DEVICE_POLICY_SERVICE);
         Intent webIntent = new Intent(Intent.ACTION_VIEW);
         webIntent.setData(Uri.parse("http://com.android.cts.intent.receiver"));
-        List<ResolveInfo> ris = pm.queryIntentActivities(webIntent, 0 /* no flags*/);
+        List<ResolveInfo> ris = pm.queryIntentActivities(webIntent, PackageManager.MATCH_ALL /* all browser*/);
         for (ResolveInfo ri : ris) {
             Log.d(TAG, "Hiding " + ri.activityInfo.packageName);
             dpm.setApplicationHidden(ADMIN_RECEIVER_COMPONENT, ri.activityInfo.packageName, true);
