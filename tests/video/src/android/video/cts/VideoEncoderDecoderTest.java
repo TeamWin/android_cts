@@ -497,7 +497,8 @@ public class VideoEncoderDecoderTest extends CtsAndroidTestCase {
             mFrameRate = infoEnc.mFps;
             format.setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, KEY_I_FRAME_INTERVAL);
 
-            RunResult encodingResult = runEncoder(encoderName, format, mTestConfig.mTotalFrames);
+            RunResult encodingResult =
+                runEncoder(encoderName, format, mTestConfig.mTotalFrames, i);
             double encodingTime = encodingResult.mDurationMs;
             int framesEncoded = encodingResult.mNumFrames;
 
@@ -514,7 +515,7 @@ public class VideoEncoderDecoderTest extends CtsAndroidTestCase {
                     format.setInteger(MediaFormat.KEY_WIDTH, w);
                     format.setInteger(MediaFormat.KEY_HEIGHT, h);
                     format.setInteger(MediaFormat.KEY_COLOR_FORMAT, mDstColorFormat);
-                    RunResult decoderResult = runDecoder(decoderName, format);
+                    RunResult decoderResult = runDecoder(decoderName, format, i);
                     if (decoderResult == null) {
                         success = false;
                     } else {
@@ -625,7 +626,8 @@ public class VideoEncoderDecoderTest extends CtsAndroidTestCase {
      * @param totalFrames total number of frames to encode
      * @return time taken in ms to encode the frames. This does not include initialization time.
      */
-    private RunResult runEncoder(String encoderName, MediaFormat format, int totalFrames) {
+    private RunResult runEncoder(
+            String encoderName, MediaFormat format, int totalFrames, int runId) {
         MediaCodec codec = null;
         try {
             codec = MediaCodec.createByCodecName(encoderName);
@@ -674,12 +676,12 @@ public class VideoEncoderDecoderTest extends CtsAndroidTestCase {
                         assertTrue(image != null);
                         size = queueInputImageEncoder(
                                 codec, image, index, inFramesCount,
-                                eos ? MediaCodec.BUFFER_FLAG_END_OF_STREAM : 0);
+                                eos ? MediaCodec.BUFFER_FLAG_END_OF_STREAM : 0, runId);
                     } else {
                         ByteBuffer buffer = codec.getInputBuffer(index);
                         size = queueInputBufferEncoder(
                                 codec, buffer, index, inFramesCount,
-                                eos ? MediaCodec.BUFFER_FLAG_END_OF_STREAM : 0);
+                                eos ? MediaCodec.BUFFER_FLAG_END_OF_STREAM : 0, runId);
                     }
                     inFramesCount++;
                     numBytesSubmitted += size;
@@ -751,10 +753,10 @@ public class VideoEncoderDecoderTest extends CtsAndroidTestCase {
      * @return size of enqueued data.
      */
     private int queueInputBufferEncoder(
-            MediaCodec codec, ByteBuffer buffer, int index, int frameCount, int flags) {
+            MediaCodec codec, ByteBuffer buffer, int index, int frameCount, int flags, int runId) {
         buffer.clear();
 
-        Point origin = getOrigin(frameCount);
+        Point origin = getOrigin(frameCount, runId);
         // Y color first
         int srcOffsetY = origin.x + origin.y * mBufferWidth;
         final byte[] yBuffer = mYBuffer.array();
@@ -799,11 +801,11 @@ public class VideoEncoderDecoderTest extends CtsAndroidTestCase {
      * @return size of enqueued data.
      */
     private int queueInputImageEncoder(
-            MediaCodec codec, Image image, int index, int frameCount, int flags) {
+            MediaCodec codec, Image image, int index, int frameCount, int flags, int runId) {
         assertTrue(image.getFormat() == ImageFormat.YUV_420_888);
 
 
-        Point origin = getOrigin(frameCount);
+        Point origin = getOrigin(frameCount, runId);
 
         // Y color first
         CodecImage srcImage = new YUVImage(
@@ -849,7 +851,7 @@ public class VideoEncoderDecoderTest extends CtsAndroidTestCase {
      * @param format format of media to decode
      * @return returns length-2 array with 0: time for decoding, 1 : rms error of pixels
      */
-    private RunResult runDecoder(String decoderName, MediaFormat format) {
+    private RunResult runDecoder(String decoderName, MediaFormat format, int runId) {
         MediaCodec codec = null;
         try {
             codec = MediaCodec.createByCodecName(decoderName);
@@ -914,7 +916,7 @@ public class VideoEncoderDecoderTest extends CtsAndroidTestCase {
                     lastOutputTimeUs = nowUs;
 
                     if (mTestConfig.mTestPixels) {
-                        Point origin = getOrigin(outFrameCount);
+                        Point origin = getOrigin(outFrameCount, runId);
                         int i;
 
                         // if decoder supports planar or semiplanar, check output with
@@ -1001,17 +1003,35 @@ public class VideoEncoderDecoderTest extends CtsAndroidTestCase {
      *  returns origin in the absolute frame for given frame count.
      *  The video scene is moving by moving origin per each frame.
      */
-    private Point getOrigin(int frameCount) {
-        if (frameCount < 100) {
-            return new Point(2 * frameCount, 0);
-        } else if (frameCount < 200) {
-            return new Point(200, (frameCount - 100) * 2);
-        } else {
-            if (frameCount > 300) { // for safety
-                frameCount = 300;
-            }
-            return new Point(600 - frameCount * 2, 600 - frameCount * 2);
+    private Point getOrigin(int frameCount, int runId) {
+        // Translation is basically:
+        //    x = A * sin(B * t) + C * t
+        //    y = D * cos(E * t) + F * t
+        //    'bouncing' in a [0, length] regions (constrained to [0, length] by mirroring at 0
+        //    and length.)
+        double x = (1 - Math.sin(frameCount / (7. + (runId % 2)))) * 0.1 + frameCount * 0.005;
+        double y = (1 - Math.cos(frameCount / (10. + (runId & ~1))))
+                + frameCount * (0.01 + runId / 1000.);
+
+        // At every 32nd or 13th frame out of 32, an additional varying offset is added to
+        // produce a jerk.
+        if (frameCount % 32 == 0) {
+            x += ((frameCount % 64) / 32) + 0.3 + y;
         }
+        if (frameCount % 32 == 13) {
+            y += ((frameCount % 64) / 32) + 0.6 + x;
+        }
+
+        // constrain to region
+        int xi = (int)((x % 2) * YUV_PLANE_ADDITIONAL_LENGTH);
+        int yi = (int)((y % 2) * YUV_PLANE_ADDITIONAL_LENGTH);
+        if (xi > YUV_PLANE_ADDITIONAL_LENGTH) {
+            xi = 2 * YUV_PLANE_ADDITIONAL_LENGTH - xi;
+        }
+        if (yi > YUV_PLANE_ADDITIONAL_LENGTH) {
+            yi = 2 * YUV_PLANE_ADDITIONAL_LENGTH - yi;
+        }
+        return new Point(xi, yi);
     }
 
     /**
