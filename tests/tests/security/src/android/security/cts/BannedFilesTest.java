@@ -17,6 +17,7 @@
 package android.security.cts;
 
 import android.cts.util.FileUtils;
+import android.platform.test.annotations.RestrictedBuildTest;
 
 import junit.framework.TestCase;
 
@@ -69,6 +70,7 @@ public class BannedFilesTest extends TestCase {
         assertFalse("/dev/socket/fota", new File("/dev/socket/fota").exists());
     }
 
+    @RestrictedBuildTest
     public void testNoSu() {
         assertFalse("/sbin/su",        new File("/sbin/su").exists());
         assertFalse("/system/bin/su",  new File("/system/bin/su").exists());
@@ -77,6 +79,7 @@ public class BannedFilesTest extends TestCase {
         assertFalse("/vendor/bin/su",  new File("/vendor/bin/su").exists());
     }
 
+    @RestrictedBuildTest
     public void testNoSuInPath() {
         String path = System.getenv("PATH");
         if (path == null) {
