@@ -36,6 +36,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.ConfigurationInfo;
+import android.platform.test.annotations.RestrictedBuildTest;
 import android.test.InstrumentationTestCase;
 
 import java.util.ArrayList;
@@ -371,6 +372,7 @@ public class ActivityManagerTest extends InstrumentationTestCase {
     /**
      * Verify that {@link ActivityManager.isRunningInTestHarness()} is false.
      */
+    @RestrictedBuildTest
     public void testIsRunningInTestHarness() {
         assertFalse("isRunningInTestHarness must be false in production builds",
                 ActivityManager.isRunningInTestHarness());
