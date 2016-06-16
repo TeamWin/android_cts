@@ -21,26 +21,21 @@ import android.media.cts.R;
 import android.content.Context;
 import android.content.res.AssetFileDescriptor;
 import android.content.res.Resources;
+import android.cts.util.MediaPerfUtils;
 import android.cts.util.MediaUtils;
 import android.media.MediaCodec;
-import android.media.MediaCodecList;
-import android.media.MediaCodecInfo;
-import android.media.MediaCodecInfo.CodecCapabilities;
 import android.media.MediaCodecInfo.VideoCapabilities;
 import android.media.MediaExtractor;
 import android.media.MediaFormat;
 import android.util.Log;
-import android.util.Range;
 import android.view.Surface;
 
 import com.android.compatibility.common.util.DeviceReportLog;
 import com.android.compatibility.common.util.ResultType;
 import com.android.compatibility.common.util.ResultUnit;
-import com.android.compatibility.common.util.Stat;
 
 import java.nio.ByteBuffer;
 import java.util.Arrays;
-import java.util.ArrayList;
 import java.util.LinkedList;
 
 public class VideoDecoderPerfTest extends MediaPlayerTestBase {
@@ -48,6 +43,7 @@ public class VideoDecoderPerfTest extends MediaPlayerTestBase {
     private static final String REPORT_LOG_NAME = "CtsMediaTestCases";
     private static final int TOTAL_FRAMES = 3000;
     private static final int MAX_TIME_MS = 120000;  // 2 minutes
+    private static final int MAX_TEST_TIMEOUT_MS = 600000;   // 10 minutes
     private static final int NUMBER_OF_REPEAT = 2;
     private static final String VIDEO_AVC = MediaFormat.MIMETYPE_VIDEO_AVC;
     private static final String VIDEO_VP8 = MediaFormat.MIMETYPE_VIDEO_VP8;
@@ -58,20 +54,14 @@ public class VideoDecoderPerfTest extends MediaPlayerTestBase {
 
     private static final int MAX_SIZE_SAMPLES_IN_MEMORY_BYTES = 5 * 1024 * 1024;  // 5MB
     LinkedList<ByteBuffer> mSamplesInMemory = new LinkedList<ByteBuffer>();
-    private static final int MOVING_AVERAGE_NUM_FRAMES = 10;
-    private static final int MOVING_AVERAGE_WINDOW_MS = 1000;
+    private MediaFormat mDecInputFormat;
     private MediaFormat mDecOutputFormat;
-    private double[] mMeasuredFps;
-    private String[] mResultRawData;
-    private boolean mVerifyResults;
 
     private Resources mResources;
-    private DeviceReportLog mReportLog;
 
     @Override
     protected void setUp() throws Exception {
         super.setUp();
-        mVerifyResults = true;
         mResources = mContext.getResources();
     }
 
@@ -82,54 +72,44 @@ public class VideoDecoderPerfTest extends MediaPlayerTestBase {
 
     private void decode(String mime, int video, int width, int height,
             boolean isGoog) throws Exception {
-        decode(mime, video, width, height, isGoog, 600000 /* timeoutMs */);
+        decode(mime, video, width, height, isGoog, MAX_TEST_TIMEOUT_MS /* timeoutMs */);
     }
 
     private void decode(String mime, int video, int width, int height,
             boolean isGoog, long testTimeoutMs) throws Exception {
         MediaFormat format = MediaFormat.createVideoFormat(mime, width, height);
         String[] names = MediaUtils.getDecoderNames(isGoog, format);
+        String kind = isGoog ? "Google" : "non-Google";
         if (names.length == 0) {
-            MediaUtils.skipTest("no codecs support this type or size");
+            MediaUtils.skipTest("no " + kind + " decoders for " + format);
             return;
         }
         // Ensure we can finish this test within the test timeout. Allow 25% slack (4/5).
-        // We test each decoder twice per repeat.
         long maxTimeMs = Math.min(
-                testTimeoutMs / names.length * 2 / 5 / NUMBER_OF_REPEAT, MAX_TIME_MS);
+                testTimeoutMs / names.length * 4 / 5 / NUMBER_OF_REPEAT, MAX_TIME_MS);
         for (String name : names) {
-            boolean pass = false;
-            mMeasuredFps = new double[NUMBER_OF_REPEAT];
-            mResultRawData = new String[NUMBER_OF_REPEAT];
+            double measuredFps[] = new double[NUMBER_OF_REPEAT];
             Log.d(TAG, "testing " + name + " for " + maxTimeMs + " msecs");
             for (int i = 0; i < NUMBER_OF_REPEAT; ++i) {
                 // Decode to Surface.
                 Log.d(TAG, "round #" + i + " decode to surface");
                 Surface s = getActivity().getSurfaceHolder().getSurface();
                 // only verify the result for decode to surface case.
-                if (doDecode(name, video, width, height, s, i, maxTimeMs)) {
-                    pass = true;
-                }
+                measuredFps[i] = doDecode(name, video, width, height, s, i, maxTimeMs);
 
-                // Decode to buffer.
-                Log.d(TAG, "round #" + i + " decode to buffer");
-                doDecode(name, video, width, height, null, i, maxTimeMs);
+                // We don't test decoding to buffer.
+                // Log.d(TAG, "round #" + i + " decode to buffer");
+                // doDecode(name, video, width, height, null, i, maxTimeMs);
             }
 
-            if (!pass) {
-                Range<Double> reportedRange =
-                    MediaUtils.getAchievableFrameRatesFor(name, mime, width, height);
-                String failMessage =
-                    MediaUtils.getErrorMessage(reportedRange, mMeasuredFps, mResultRawData);
-                fail(failMessage);
-            }
-            mMeasuredFps = null;
-            mResultRawData = null;
+            String error =
+                MediaPerfUtils.verifyAchievableFrameRates(name, mime, width, height, measuredFps);
+            assertNull(error, error);
         }
         mSamplesInMemory.clear();
     }
 
-    private boolean doDecode(
+    private double doDecode(
             String name, int video, int w, int h, Surface surface, int round, long maxTimeMs)
             throws Exception {
         AssetFileDescriptor testFd = mResources.openRawResourceFd(video);
@@ -142,16 +122,6 @@ public class VideoDecoderPerfTest extends MediaPlayerTestBase {
         String mime = format.getString(MediaFormat.KEY_MIME);
         ByteBuffer[] codecInputBuffers;
         ByteBuffer[] codecOutputBuffers;
-
-        String streamName = "video_decoder_perf_test";
-        mReportLog = new DeviceReportLog(REPORT_LOG_NAME, streamName);
-        mReportLog.addValue("decoder_name", name, ResultType.HIGHER_BETTER, ResultUnit.NONE);
-        mReportLog.addValue("video", video, ResultType.HIGHER_BETTER, ResultUnit.NONE);
-        mReportLog.addValue("width", w, ResultType.HIGHER_BETTER, ResultUnit.NONE);
-        mReportLog.addValue("height", h, ResultType.HIGHER_BETTER, ResultUnit.NONE);
-        mReportLog.addValue("decode_to", surface == null ? "buffer" : "surface",
-                ResultType.HIGHER_BETTER, ResultUnit.NONE);
-        mReportLog.addValue("round", round, ResultType.HIGHER_BETTER, ResultUnit.NONE);
 
         if (mSamplesInMemory.size() == 0) {
             int totalMemory = 0;
@@ -183,13 +153,14 @@ public class VideoDecoderPerfTest extends MediaPlayerTestBase {
         codec.start();
         codecInputBuffers = codec.getInputBuffers();
         codecOutputBuffers = codec.getOutputBuffers();
+        mDecInputFormat = codec.getInputFormat();
 
         // start decode loop
         MediaCodec.BufferInfo info = new MediaCodec.BufferInfo();
 
         final long kTimeOutUs = 5000; // 5ms timeout
-        double[] frameTimeDiff = new double[TOTAL_FRAMES - 1];
-        long lastOutputTimeNs = 0;
+        double[] frameTimeUsDiff = new double[TOTAL_FRAMES - 1];
+        long lastOutputTimeUs = 0;
         boolean sawInputEOS = false;
         boolean sawOutputEOS = false;
         int inputNum = 0;
@@ -236,10 +207,11 @@ public class VideoDecoderPerfTest extends MediaPlayerTestBase {
 
             if (outputBufIndex >= 0) {
                 if (info.size > 0) { // Disregard 0-sized buffers at the end.
-                    if (lastOutputTimeNs > 0) {
-                        frameTimeDiff[outputNum - 1] = System.nanoTime() - lastOutputTimeNs;
+                    long nowUs = (System.nanoTime() + 500) / 1000;
+                    if (outputNum > 1) {
+                        frameTimeUsDiff[outputNum - 1] = nowUs - lastOutputTimeUs;
                     }
-                    lastOutputTimeNs = System.nanoTime();
+                    lastOutputTimeUs = nowUs;
                     outputNum++;
                 }
                 codec.releaseOutputBuffer(outputBufIndex, false /* render */);
@@ -264,50 +236,27 @@ public class VideoDecoderPerfTest extends MediaPlayerTestBase {
         }
         long finish = System.currentTimeMillis();
         int validDataNum = outputNum - 1;
-        frameTimeDiff = Arrays.copyOf(frameTimeDiff, validDataNum);
+        frameTimeUsDiff = Arrays.copyOf(frameTimeUsDiff, validDataNum);
         codec.stop();
         codec.release();
 
         Log.d(TAG, "input num " + inputNum + " vs output num " + outputNum);
 
-        String testConfig = "codec=" + name +
-                " decodeto=" + ((surface == null) ? "buffer" : "surface") +
-                " mime=" + mime + " round=" + round +
-                " DecOutputFormat=" + mDecOutputFormat;
-        String decOutputFormat = "" + mDecOutputFormat;
-        decOutputFormat = decOutputFormat.substring(1, decOutputFormat.length() - 1);
-        mReportLog.addValue("mime", mime, ResultType.NEUTRAL, ResultUnit.NONE);
-        mReportLog.addValue("decoder_output_format", decOutputFormat, ResultType.NEUTRAL,
-                ResultUnit.NONE);
+        DeviceReportLog log = new DeviceReportLog(REPORT_LOG_NAME, "video_decoder_performance");
+        String message = MediaPerfUtils.addPerformanceHeadersToLog(
+                log, "decoder stats: decodeTo=" + ((surface == null) ? "buffer" : "surface"),
+                round, name, format, mDecInputFormat, mDecOutputFormat);
+        log.addValue("video_res", video, ResultType.NEUTRAL, ResultUnit.NONE);
+        log.addValue("decode_to", surface == null ? "buffer" : "surface",
+                ResultType.NEUTRAL, ResultUnit.NONE);
 
-        double fps = (double)outputNum / ((finish - start) / 1000.0);
-        mReportLog.addValue("average_fps", fps, ResultType.HIGHER_BETTER, ResultUnit.FPS);
+        double fps = outputNum / ((finish - start) / 1000.0);
+        log.addValue("average_fps", fps, ResultType.HIGHER_BETTER, ResultUnit.FPS);
 
-        MediaUtils.Stats stats =
-            new MediaUtils.Stats(frameTimeDiff).movingAverage(MOVING_AVERAGE_NUM_FRAMES);
-        // prefix for MediaUtils must be lowercase alphanumeric underscored format.
-        String prefix = "decoder_frame_window";
-        String message = "frame-averaged stats for " + testConfig;
-        String result = MediaUtils.logAchievableRatesResults(mReportLog, prefix, message, stats);
-
-        // frameTimeDiff is in nanoseconds, so convert window to nanoseconds
-        stats = new MediaUtils.Stats(frameTimeDiff)
-                .movingAverageOverSum(MOVING_AVERAGE_WINDOW_MS * 1e6);
-        // prefix for MediaUtils must be lowercase alphanumeric underscored format.
-        prefix = "decoder_time_window";
-        message = "time-averaged stats for " + testConfig;
-        result = MediaUtils.logAchievableRatesResults(mReportLog, prefix, message, stats);
-        fps = 1000000000 / stats.getPercentiles(95)[0];
-        if (surface != null) {
-            mMeasuredFps[round] = fps;
-            mResultRawData[round] = result;
-        }
-
-        if (!mVerifyResults) {
-            return true;
-        }
-        mReportLog.submit(getInstrumentation());
-        return MediaUtils.verifyResults(name, mime, w, h, fps);
+        MediaUtils.Stats stats = new MediaUtils.Stats(frameTimeUsDiff);
+        fps = MediaPerfUtils.addPerformanceStatsToLog(log, stats, message);
+        log.submit(getInstrumentation());
+        return fps;
     }
 
     public void testH2640320x0240Other() throws Exception {
@@ -551,14 +500,12 @@ public class VideoDecoderPerfTest extends MediaPlayerTestBase {
     }
 
     public void testMPEG40176x0144Other() throws Exception {
-        mVerifyResults = false;
         decode(VIDEO_MPEG4,
                R.raw.video_176x144_mp4_mpeg4_300kbps_25fps_aac_stereo_128kbps_44100hz,
                176, 144, false /* isGoog */);
     }
 
     public void testMPEG40176x0144Goog() throws Exception {
-        mVerifyResults = false;
         decode(VIDEO_MPEG4,
                R.raw.video_176x144_mp4_mpeg4_300kbps_25fps_aac_stereo_128kbps_44100hz,
                176, 144, true /* isGoog */);

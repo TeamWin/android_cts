@@ -34,9 +34,8 @@ import com.android.compatibility.common.util.ResultUnit;
 import java.lang.reflect.Method;
 import static java.lang.reflect.Modifier.isPublic;
 import static java.lang.reflect.Modifier.isStatic;
-import java.util.Arrays;
 import java.util.ArrayList;
-import java.util.Collection;
+import java.util.Arrays;
 import java.util.Map;
 import android.util.Log;
 
@@ -788,81 +787,6 @@ public class MediaUtils {
     }
 
     /*
-     *  ------------------ HELPER METHODS FOR ACHIEVABLE FRAME RATES ------------------
+     *  -------------------------------------- END --------------------------------------
      */
-
-    /**
-     * logs results for achievable frame rates test. prefix must be lowercase alphanumeric
-     * underscored format.
-     */
-    public static String logAchievableRatesResults(DeviceReportLog log, String prefix,
-            String message, Stats stats) {
-        String msg = message;
-        msg += " num=" + stats.getNum()
-                + " avg=" + Math.round(stats.getAverage() / 1000)
-                + " stdev=" + Math.round(stats.getStdev() / 1000);
-        log.addValue(prefix + "_num", stats.getNum(), ResultType.NEUTRAL, ResultUnit.NONE);
-        log.addValue(prefix + "_avg", Math.round(stats.getAverage() / 1000), ResultType.NEUTRAL,
-                ResultUnit.NONE);
-        log.addValue(prefix + "_stdev", Math.round(stats.getStdev() / 1000), ResultType.NEUTRAL,
-                ResultUnit.NONE);
-        String[] labels = {
-                "min", "p5", "p10", "p20", "p30", "p40", "p50", "p60", "p70", "p80", "p90", "p95",
-                "max" };
-        double[] percentiles = stats.getPercentiles(new double[] {
-                0, 5, 10, 20, 30, 40, 50, 60, 70, 80, 90, 95, 100 });
-
-        for (int i = 0; i < labels.length; ++i) {
-            msg += " " + labels[i] + "=" + Math.round(percentiles[i] / 1000);
-            log.addValue(prefix + "_" + labels[i], Math.round(percentiles[i] / 1000),
-                    ResultType.NEUTRAL, ResultUnit.NONE);
-        }
-
-        log.addValue(prefix + "_fps", 1000000000 / stats.getMin(), ResultType.HIGHER_BETTER,
-                ResultUnit.FPS);
-        Log.i(TAG, msg);
-        return msg;
-    }
-
-    public static Range<Double> getAchievableFrameRatesFor(
-            String codecName, String mimeType, int width, int height) {
-        VideoCapabilities cap = getVideoCapabilities(codecName, mimeType);
-        if (cap == null) {
-            return null;
-        }
-        return cap.getAchievableFrameRatesFor(width, height);
-    }
-
-    private static final double FRAMERATE_TOLERANCE = Math.sqrt(12.1);
-    public static boolean verifyResults(String name, String mime, int w, int h, double measured) {
-        Range<Double> reported = getAchievableFrameRatesFor(name, mime, w, h);
-        if (reported == null) {
-            Log.d(TAG, "Failed to getAchievableFrameRatesFor " +
-                    name + " " + mime + " " + w + "x" + h);
-            return false;
-        }
-        double lowerBoundary1 = reported.getLower() / FRAMERATE_TOLERANCE;
-        double upperBoundary1 = reported.getUpper() * FRAMERATE_TOLERANCE;
-        double lowerBoundary2 = reported.getUpper() / Math.pow(FRAMERATE_TOLERANCE, 2);
-        double upperBoundary2 = reported.getLower() * Math.pow(FRAMERATE_TOLERANCE, 2);
-        Log.d(TAG, name + " " + mime + " " + w + "x" + h + " " +
-                "lowerBoundary1 " + lowerBoundary1 + " upperBoundary1 " + upperBoundary1 +
-                " lowerBoundary2 " + lowerBoundary2 + " upperBoundary2 " + upperBoundary2 +
-                " measured " + measured);
-        return (measured >= lowerBoundary1 && measured <= upperBoundary1 &&
-                measured >= lowerBoundary2 && measured <= upperBoundary2);
-    }
-
-    public static String getErrorMessage(
-            Range<Double> reportedRange, double[] measuredFps, String[] rawData) {
-        String msg = "";
-        if (reportedRange == null) {
-            msg += "Failed to get achievable frame rate.\n";
-        } else {
-            msg += "Expected achievable frame rate range: " + reportedRange + ".\n";
-        }
-        msg += "Measured frame rate: " + Arrays.toString(measuredFps) + ".\n";
-        msg += "Raw data: " + Arrays.toString(rawData) + ".\n";
-        return msg;
-    }
 }
