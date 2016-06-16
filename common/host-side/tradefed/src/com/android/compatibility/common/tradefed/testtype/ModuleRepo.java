@@ -456,6 +456,7 @@ public class ModuleRepo implements IModuleRepo {
                 out.close();
             }
         }
+        filterFile.deleteOnExit();
         return filterFile;
     }
 
