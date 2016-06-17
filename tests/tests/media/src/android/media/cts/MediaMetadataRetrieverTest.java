@@ -187,7 +187,7 @@ public class MediaMetadataRetrieverTest extends AndroidTestCase {
     }
 
     public void testThumbnailVP8() {
-        testThumbnail(R.raw.video_640x360_webm_vp8_2048kbps_30fps_vorbis_stereo_128kbps_48000hz);
+        testThumbnail(R.raw.bbb_s1_640x360_webm_vp8_2mbps_30fps_vorbis_5ch_320kbps_48000hz);
     }
 
     public void testThumbnailVP9() {

@@ -509,7 +509,7 @@ public class VideoDecoderPerfTest extends MediaPlayerTestBase {
     public void testVp8Other1Perf0320x0180() throws Exception { perf(sVp8Media0320x0180, OTHER, 1); }
 
     private static final int[] sVp8Media0640x0360 = {
-        R.raw.video_640x360_webm_vp8_2048kbps_30fps_vorbis_stereo_128kbps_48000hz,
+        R.raw.bbb_s1_640x360_webm_vp8_2mbps_30fps_vorbis_5ch_320kbps_48000hz,
     };
 
     public void testVp8Count0640x0360() throws Exception { count(sVp8Media0640x0360, 1, 2); }

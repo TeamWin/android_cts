@@ -1669,7 +1669,7 @@ public class DecoderTest extends MediaPlayerTestBase {
     }
 
     public void testVP8Decode640x360() throws Exception {
-        testDecode(R.raw.video_640x360_webm_vp8_2048kbps_30fps_vorbis_stereo_128kbps_48000hz, 249);
+        testDecode(R.raw.bbb_s1_640x360_webm_vp8_2mbps_30fps_vorbis_5ch_320kbps_48000hz, 300);
     }
 
     public void testVP8Decode30fps1280x720Tv() throws Exception {
