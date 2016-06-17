@@ -16,8 +16,6 @@
 
 package android.hardware.cts;
 
-import com.android.cts.util.TimeoutReq;
-
 import junit.framework.Assert;
 
 import android.content.Context;
@@ -303,7 +301,6 @@ public class SensorTest extends SensorTestCase {
 
     // TODO: remove when parametized tests are supported and EventTimestampSynchronization
     //       verification is added to default verifications
-    @TimeoutReq(minutes=60)
     public void testSensorTimeStamps() throws Exception {
         ArrayList<Throwable> errorsFound = new ArrayList<>();
         for (Sensor sensor : mSensorList) {
@@ -315,7 +312,6 @@ public class SensorTest extends SensorTestCase {
     }
 
     // TODO: remove when parameterized tests are supported (see SensorBatchingTests.java)
-    @TimeoutReq(minutes=20)
     public void testBatchAndFlush() throws Exception {
         // TODO - replace this constant once method to do so is made available
         final int SENSOR_TYPE_DEVICE_PRIVATE_BASE = 0x10000;
@@ -332,7 +328,6 @@ public class SensorTest extends SensorTestCase {
     /**
      * Verifies that sensor events arrive in the given message queue (Handler).
      */
-    @TimeoutReq(minutes=10)
     public void testBatchAndFlushWithHandler() throws Exception {
         SensorCtsHelper.sleep(3, TimeUnit.SECONDS);
         Sensor sensor = null;
@@ -369,7 +364,6 @@ public class SensorTest extends SensorTestCase {
     /**
      *  Explicit testing the SensorManager.registerListener(SensorEventListener, Sensor, int, int).
      */
-    @TimeoutReq(minutes=10)
     public void testBatchAndFlushUseDefaultHandler() throws Exception {
         SensorCtsHelper.sleep(3, TimeUnit.SECONDS);
         Sensor sensor = null;

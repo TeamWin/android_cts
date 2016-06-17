@@ -22,7 +22,6 @@ import android.cts.util.CtsAndroidTestCase;
 import android.cts.util.SystemUtil;
 
 import com.android.compatibility.common.util.DeviceReportLog;
-import com.android.cts.util.TimeoutReq;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -95,7 +94,6 @@ public class AlmostFullTest extends CtsAndroidTestCase {
         super.tearDown();
     }
 
-    @TimeoutReq(minutes = 30)
     public void testSequentialUpdate() throws Exception {
         // now about freeSpaceToLeave should be left
         // and try updating exceeding the free space size
@@ -115,7 +113,6 @@ public class AlmostFullTest extends CtsAndroidTestCase {
 
     // TODO: file size too small and caching will give wrong better result.
     // needs to flush cache by reading big files per each read.
-    @TimeoutReq(minutes = 60)
     public void testRandomRead() throws Exception {
         final int BUFFER_SIZE = 4 * 1024;
         final long fileSize = 400L * 1024L * 1024L;
@@ -130,7 +127,6 @@ public class AlmostFullTest extends CtsAndroidTestCase {
         report.submit(getInstrumentation());
     }
 
-    @TimeoutReq(minutes = 60)
     public void testRandomUpdate() throws Exception {
         final int BUFFER_SIZE = 4 * 1024;
         final long fileSize = 256L * 1024L * 1024L;

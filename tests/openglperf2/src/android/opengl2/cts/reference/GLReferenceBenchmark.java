@@ -20,7 +20,6 @@ import android.test.ActivityInstrumentationTestCase2;
 import com.android.compatibility.common.util.DeviceReportLog;
 import com.android.compatibility.common.util.ResultType;
 import com.android.compatibility.common.util.ResultUnit;
-import com.android.cts.util.TimeoutReq;
 
 /**
  * Runs the Reference OpenGL ES 2.0 Benchmark.
@@ -40,7 +39,6 @@ public class GLReferenceBenchmark extends ActivityInstrumentationTestCase2<GLRef
     /**
      * Runs the reference benchmark.
      */
-    @TimeoutReq(minutes = 30)
     public void testReferenceBenchmark() throws Exception {
         Intent intent = new Intent();
         intent.putExtra(GLActivityIntentKeys.INTENT_EXTRA_NUM_FRAMES, NUM_FRAMES);

@@ -27,8 +27,6 @@ import android.security.cts.activity.ISecureRandomService;
 import android.security.cts.activity.SecureRandomService;
 import android.test.AndroidTestCase;
 
-import com.android.cts.util.TimeoutReq;
-
 import java.io.BufferedReader;
 import java.io.EOFException;
 import java.io.FileReader;
@@ -93,7 +91,6 @@ public class ClonedSecureRandomTest extends AndroidTestCase {
      * sees two newly started processes with the same PID and compares their
      * output.
      */
-    @TimeoutReq(minutes=15)
     public void testCheckForDuplicateOutput() throws Exception {
         assertEquals("Only supports up to " + MAX_PID + " because of memory requirements",
                 Integer.toString(MAX_PID), getFirstLineFromFile("/proc/sys/kernel/pid_max"));
