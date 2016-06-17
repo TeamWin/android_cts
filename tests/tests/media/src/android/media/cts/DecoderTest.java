@@ -51,6 +51,8 @@ import java.util.List;
 import java.util.zip.CRC32;
 import java.util.concurrent.TimeUnit;
 
+import static android.media.MediaCodecInfo.CodecProfileLevel.*;
+
 public class DecoderTest extends MediaPlayerTestBase {
     private static final String TAG = "DecoderTest";
 
@@ -1569,34 +1571,46 @@ public class DecoderTest extends MediaPlayerTestBase {
 
     public void testH264Decode30fps1280x720Tv() throws Exception {
         if (checkTv()) {
-            assertTrue(MediaUtils.canDecodeVideo(MediaFormat.MIMETYPE_VIDEO_AVC, 1280, 720, 30));
+            assertTrue(MediaUtils.canDecodeVideo(
+                    MediaFormat.MIMETYPE_VIDEO_AVC, 1280, 720, 30,
+                    AVCProfileHigh, AVCLevel31, 8000000));
         }
     }
 
     public void testH264SecureDecode30fps1280x720Tv() throws Exception {
         if (checkTv()) {
-            verifySecureVideoDecodeSupport(MediaFormat.MIMETYPE_VIDEO_AVC, 1280, 720, 30);
+            verifySecureVideoDecodeSupport(
+                    MediaFormat.MIMETYPE_VIDEO_AVC, 1280, 720, 30,
+                    AVCProfileHigh, AVCLevel31, 8000000);
         }
     }
 
     public void testH264Decode30fps1280x720() throws Exception {
-        testDecode(R.raw.video_1280x720_mp4_h264_8192kbps_30fps_aac_stereo_128kbps_44100hz, 299);
+        testDecode(R.raw.bbb_s4_1280x720_mp4_h264_mp31_8mbps_30fps_aac_he_mono_40kbps_44100hz, 300);
     }
 
     public void testH264Decode60fps1280x720Tv() throws Exception {
         if (checkTv()) {
-            assertTrue(MediaUtils.canDecodeVideo(MediaFormat.MIMETYPE_VIDEO_AVC, 1280, 720, 60));
+            assertTrue(MediaUtils.canDecodeVideo(
+                    MediaFormat.MIMETYPE_VIDEO_AVC, 1280, 720, 60,
+                    AVCProfileHigh, AVCLevel32, 8000000));
+            testDecode(
+                    R.raw.bbb_s3_1280x720_mp4_h264_hp32_8mbps_60fps_aac_he_v2_stereo_48kbps_48000hz,
+                    600);
         }
     }
 
     public void testH264SecureDecode60fps1280x720Tv() throws Exception {
         if (checkTv()) {
-            verifySecureVideoDecodeSupport(MediaFormat.MIMETYPE_VIDEO_AVC, 1280, 720, 60);
+            verifySecureVideoDecodeSupport(
+                    MediaFormat.MIMETYPE_VIDEO_AVC, 1280, 720, 60,
+                    AVCProfileHigh, AVCLevel32, 8000000);
         }
     }
 
     public void testH264Decode60fps1280x720() throws Exception {
-        testDecode(R.raw.video_1280x720_mp4_h264_8192kbps_60fps_aac_stereo_128kbps_44100hz, 596);
+        testDecode(
+            R.raw.bbb_s3_1280x720_mp4_h264_mp32_8mbps_60fps_aac_he_v2_6ch_144kbps_44100hz, 600);
     }
 
     public void testH264Decode30fps1920x1080Tv() throws Exception {
@@ -1607,7 +1621,9 @@ public class DecoderTest extends MediaPlayerTestBase {
 
     public void testH264SecureDecode30fps1920x1080Tv() throws Exception {
         if (checkTv()) {
-            verifySecureVideoDecodeSupport(MediaFormat.MIMETYPE_VIDEO_AVC, 1920, 1080, 30);
+            verifySecureVideoDecodeSupport(
+                    MediaFormat.MIMETYPE_VIDEO_AVC, 1920, 1080, 30,
+                    AVCProfileHigh, AVCLevel4, 20000000);
         }
     }
 
@@ -1623,7 +1639,9 @@ public class DecoderTest extends MediaPlayerTestBase {
 
     public void testH264SecureDecode60fps1920x1080Tv() throws Exception {
         if (checkTv()) {
-            verifySecureVideoDecodeSupport(MediaFormat.MIMETYPE_VIDEO_AVC, 1920, 1080, 60);
+            verifySecureVideoDecodeSupport(
+                    MediaFormat.MIMETYPE_VIDEO_AVC, 1920, 1080, 60,
+                    AVCProfileHigh, AVCLevel42, 20000000);
         }
     }
 
@@ -1886,7 +1904,8 @@ public class DecoderTest extends MediaPlayerTestBase {
         assertEquals("different number of frames when using flushed codec", frames1, frames3);
     }
 
-    private static void verifySecureVideoDecodeSupport(String mime, int width, int height, float rate) {
+    private static void verifySecureVideoDecodeSupport(
+            String mime, int width, int height, float rate, int profile, int level, int bitrate) {
         MediaFormat baseFormat = new MediaFormat();
         baseFormat.setString(MediaFormat.KEY_MIME, mime);
         baseFormat.setFeatureEnabled(CodecCapabilities.FEATURE_SecurePlayback, true);
@@ -1894,6 +1913,9 @@ public class DecoderTest extends MediaPlayerTestBase {
         MediaFormat format = MediaFormat.createVideoFormat(mime, width, height);
         format.setFeatureEnabled(CodecCapabilities.FEATURE_SecurePlayback, true);
         format.setFloat(MediaFormat.KEY_FRAME_RATE, rate);
+        format.setInteger(MediaFormat.KEY_PROFILE, profile);
+        format.setInteger(MediaFormat.KEY_LEVEL, level);
+        format.setInteger(MediaFormat.KEY_BIT_RATE, bitrate);
 
         MediaCodecList mcl = new MediaCodecList(MediaCodecList.ALL_CODECS);
         if (mcl.findDecoderForFormat(baseFormat) == null) {

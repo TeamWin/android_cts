@@ -492,6 +492,23 @@ public class MediaUtils {
         return canDecode(format);
     }
 
+    public static boolean canDecodeVideo(
+            String mime, int width, int height, float rate,
+            Integer profile, Integer level, Integer bitrate) {
+        MediaFormat format = MediaFormat.createVideoFormat(mime, width, height);
+        format.setFloat(MediaFormat.KEY_FRAME_RATE, rate);
+        if (profile != null) {
+            format.setInteger(MediaFormat.KEY_PROFILE, profile);
+            if (level != null) {
+                format.setInteger(MediaFormat.KEY_LEVEL, level);
+            }
+        }
+        if (bitrate != null) {
+            format.setInteger(MediaFormat.KEY_BIT_RATE, bitrate);
+        }
+        return canDecode(format);
+    }
+
     public static boolean checkEncoderForFormat(MediaFormat format) {
         return check(canEncode(format), "no encoder for " + format);
     }
