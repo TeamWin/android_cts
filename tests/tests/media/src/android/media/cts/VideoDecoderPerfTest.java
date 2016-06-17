@@ -541,16 +541,16 @@ public class VideoDecoderPerfTest extends MediaPlayerTestBase {
 
     // VP9 tests
 
-    private static final int[] sVp9Media0320x0240 = {
-        R.raw.video_320x240_webm_vp9_600kbps_30fps_vorbis_stereo_128kbps_48000hz,
+    private static final int[] sVp9Media0320x0180 = {
+        R.raw.bbb_s1_320x180_webm_vp9_0p11_600kbps_30fps_vorbis_mono_64kbps_48000hz,
     };
 
-    public void testVp9Count0320x0240() throws Exception { count(sVp9Media0320x0240, 1, 4); }
-    public void testVp9Goog0Perf0320x0240() throws Exception { perf(sVp9Media0320x0240, GOOG, 0); }
-    public void testVp9Other0Perf0320x0240() throws Exception { perf(sVp9Media0320x0240, OTHER, 0); }
-    public void testVp9Other1Perf0320x0240() throws Exception { perf(sVp9Media0320x0240, OTHER, 1); }
-    public void testVp9Other2Perf0320x0240() throws Exception { perf(sVp9Media0320x0240, OTHER, 2); }
-    public void testVp9Other3Perf0320x0240() throws Exception { perf(sVp9Media0320x0240, OTHER, 3); }
+    public void testVp9Count0320x0180() throws Exception { count(sVp9Media0320x0180, 1, 4); }
+    public void testVp9Goog0Perf0320x0180() throws Exception { perf(sVp9Media0320x0180, GOOG, 0); }
+    public void testVp9Other0Perf0320x0180() throws Exception { perf(sVp9Media0320x0180, OTHER, 0); }
+    public void testVp9Other1Perf0320x0180() throws Exception { perf(sVp9Media0320x0180, OTHER, 1); }
+    public void testVp9Other2Perf0320x0180() throws Exception { perf(sVp9Media0320x0180, OTHER, 2); }
+    public void testVp9Other3Perf0320x0180() throws Exception { perf(sVp9Media0320x0180, OTHER, 3); }
 
     private static final int[] sVp9Media0640x0360 = {
         R.raw.video_640x360_webm_vp9_1600kbps_30fps_vorbis_stereo_128kbps_48000hz,

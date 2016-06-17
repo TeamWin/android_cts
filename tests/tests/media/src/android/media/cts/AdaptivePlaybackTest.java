@@ -107,7 +107,7 @@ public class AdaptivePlaybackTest extends MediaPlayerTestBase {
                 "OMX.google.vp9.decoder",
                 R.raw.video_480x360_webm_vp9_333kbps_25fps_vorbis_stereo_128kbps_48000hz,
                 R.raw.video_1280x720_webm_vp9_309kbps_25fps_vorbis_stereo_128kbps_48000hz,
-                R.raw.video_320x240_webm_vp9_600kbps_30fps_vorbis_stereo_128kbps_48000hz);
+                R.raw.bbb_s1_320x180_webm_vp9_0p11_600kbps_30fps_vorbis_mono_64kbps_48000hz);
     }
 
     CodecFactory ALL = new CodecFactory();
