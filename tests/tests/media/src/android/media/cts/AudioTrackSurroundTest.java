@@ -501,39 +501,56 @@ public class AudioTrackSurroundTest extends CtsAndroidTestCase {
         }
     }
 
+    public void testPcmSupport() throws Exception {
+        // There should always be a dummy PCM device available.
+        assertTrue("testPcmSupport: PCM should be supported."
+                + " On ATV device please check HDMI connection.",
+                mInfoPCM16 != null);
+    }
+
     public void testPlaySineSweepShorts() throws Exception {
-        SamplePlayerShorts player = new SamplePlayerShorts(
-                44100, AudioFormat.ENCODING_PCM_16BIT, AudioFormat.CHANNEL_OUT_STEREO,
-                R.raw.sinesweepraw);
-        player.playAndMeasureRate();
+        if (mInfoPCM16 != null) {
+            SamplePlayerShorts player = new SamplePlayerShorts(
+                    44100, AudioFormat.ENCODING_PCM_16BIT, AudioFormat.CHANNEL_OUT_STEREO,
+                    R.raw.sinesweepraw);
+            player.playAndMeasureRate();
+        }
     }
 
     public void testPlaySineSweepBytes() throws Exception {
-        SamplePlayerBytes player = new SamplePlayerBytes(
-                44100, AudioFormat.ENCODING_PCM_16BIT, AudioFormat.CHANNEL_OUT_STEREO,
-                R.raw.sinesweepraw);
-        player.playAndMeasureRate();
+        if (mInfoPCM16 != null) {
+            SamplePlayerBytes player = new SamplePlayerBytes(
+                    44100, AudioFormat.ENCODING_PCM_16BIT, AudioFormat.CHANNEL_OUT_STEREO,
+                    R.raw.sinesweepraw);
+            player.playAndMeasureRate();
+        }
     }
 
     public void testPlaySineSweepBytes48000() throws Exception {
-        SamplePlayerBytes player = new SamplePlayerBytes(
-                48000, AudioFormat.ENCODING_PCM_16BIT, AudioFormat.CHANNEL_OUT_STEREO,
-                R.raw.sinesweepraw);
-        player.playAndMeasureRate();
+        if (mInfoPCM16 != null) {
+            SamplePlayerBytes player = new SamplePlayerBytes(
+                    48000, AudioFormat.ENCODING_PCM_16BIT, AudioFormat.CHANNEL_OUT_STEREO,
+                    R.raw.sinesweepraw);
+            player.playAndMeasureRate();
+        }
     }
 
     public void testPlaySineSweepShortsMono() throws Exception {
-        SamplePlayerShorts player = new SamplePlayerShorts(44100, AudioFormat.ENCODING_PCM_16BIT,
-                AudioFormat.CHANNEL_OUT_MONO,
-                R.raw.sinesweepraw);
-        player.playAndMeasureRate();
+        if (mInfoPCM16 != null) {
+            SamplePlayerShorts player = new SamplePlayerShorts(44100, AudioFormat.ENCODING_PCM_16BIT,
+                    AudioFormat.CHANNEL_OUT_MONO,
+                    R.raw.sinesweepraw);
+            player.playAndMeasureRate();
+        }
     }
 
     public void testPlaySineSweepBytesMono()
             throws Exception {
-        SamplePlayerBytes player = new SamplePlayerBytes(44100,
-                AudioFormat.ENCODING_PCM_16BIT, AudioFormat.CHANNEL_OUT_MONO, R.raw.sinesweepraw);
-        player.playAndMeasureRate();
+        if (mInfoPCM16 != null) {
+            SamplePlayerBytes player = new SamplePlayerBytes(44100,
+                    AudioFormat.ENCODING_PCM_16BIT, AudioFormat.CHANNEL_OUT_MONO, R.raw.sinesweepraw);
+            player.playAndMeasureRate();
+        }
     }
 
 }
