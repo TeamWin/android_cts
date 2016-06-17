@@ -517,8 +517,10 @@ public class VideoDecoderPerfTest extends MediaPlayerTestBase {
     public void testVp8Other0Perf0640x0360() throws Exception { perf(sVp8Media0640x0360, OTHER, 0); }
     public void testVp8Other1Perf0640x0360() throws Exception { perf(sVp8Media0640x0360, OTHER, 1); }
 
+    // prefer highest effective bitrate
     private static final int[] sVp8Media1280x0720 = {
-        R.raw.video_1280x720_webm_vp8_8192kbps_30fps_vorbis_stereo_128kbps_48000hz,
+        R.raw.bbb_s4_1280x720_webm_vp8_8mbps_30fps_opus_mono_64kbps_48000hz,
+        R.raw.bbb_s3_1280x720_webm_vp8_8mbps_60fps_opus_6ch_384kbps_48000hz,
     };
 
     public void testVp8Count1280x0720() throws Exception { count(sVp8Media1280x0720, 1, 2); }

@@ -96,7 +96,7 @@ public class AdaptivePlaybackTest extends MediaPlayerTestBase {
                 MediaFormat.MIMETYPE_VIDEO_VP8,
                 "OMX.google.vp8.decoder",
                 R.raw.video_480x360_webm_vp8_333kbps_25fps_vorbis_stereo_128kbps_48000hz,
-                R.raw.video_1280x720_webm_vp8_333kbps_25fps_vorbis_stereo_128kbps_44100hz,
+                R.raw.bbb_s3_1280x720_webm_vp8_8mbps_60fps_opus_6ch_384kbps_48000hz,
                 R.raw.bbb_s1_320x180_webm_vp8_800kbps_30fps_opus_5ch_320kbps_48000hz);
     }
 
@@ -1320,7 +1320,7 @@ class Media {
             }
         }
 
-        ByteBuffer readBuf = ByteBuffer.allocate(200000);
+        ByteBuffer readBuf = ByteBuffer.allocate(2000000);
         for (int ix = 0; ix < numFrames; ix++) {
             int sampleSize = extractor.readSampleData(readBuf, 0 /* offset */);
 
