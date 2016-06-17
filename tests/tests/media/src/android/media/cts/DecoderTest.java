@@ -1699,8 +1699,8 @@ public class DecoderTest extends MediaPlayerTestBase {
     }
 
     public void testVP8Decode30fps1920x1080() throws Exception {
-        testDecode(R.raw.video_1920x1080_webm_vp8_20480kbps_30fps_vorbis_stereo_128kbps_48000hz,
-                249);
+        testDecode(
+                R.raw.bbb_s4_1920x1080_wide_webm_vp8_20mbps_30fps_vorbis_6ch_384kbps_44100hz, 150);
     }
 
     public void testVP8Decode60fps1920x1080Tv() throws Exception {
@@ -1710,8 +1710,7 @@ public class DecoderTest extends MediaPlayerTestBase {
     }
 
     public void testVP8Decode60fps1920x1080() throws Exception {
-        testDecode(R.raw.video_1920x1080_webm_vp8_20480kbps_60fps_vorbis_stereo_128kbps_44100hz,
-                249);
+        testDecode(R.raw.bbb_s2_1920x1080_webm_vp8_20mbps_60fps_vorbis_6ch_384kbps_48000hz, 300);
     }
 
     public void testVP9Decode320x240() throws Exception {
