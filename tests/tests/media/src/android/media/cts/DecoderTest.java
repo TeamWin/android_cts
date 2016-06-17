@@ -1779,7 +1779,13 @@ public class DecoderTest extends MediaPlayerTestBase {
     }
 
     public void testHEVCDecode30fps3840x2160() throws Exception {
-        testDecode(R.raw.video_3840x2160_mp4_hevc_20480kbps_30fps_aac_stereo_128kbps_44100hz, 299);
+        testDecode(
+                R.raw.bbb_s4_3840x2160_mp4_hevc_mp5_20mbps_30fps_aac_lc_6ch_384kbps_24000hz, 150);
+    }
+
+    public void testHEVCDecode60fps3840x2160() throws Exception {
+        testDecode(
+                R.raw.bbb_s2_3840x2160_mp4_hevc_mp51_20mbps_60fps_aac_lc_6ch_384kbps_32000hz, 300);
     }
 
     private void testCodecEarlyEOS(int resid, int eosFrame) throws Exception {

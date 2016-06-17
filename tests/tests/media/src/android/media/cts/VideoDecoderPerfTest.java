@@ -435,8 +435,10 @@ public class VideoDecoderPerfTest extends MediaPlayerTestBase {
     public void testHevcOther2Perf1920x1080() throws Exception { perf(sHevcMedia1920x1080, OTHER, 2); }
     public void testHevcOther3Perf1920x1080() throws Exception { perf(sHevcMedia1920x1080, OTHER, 3); }
 
+    // prefer highest effective bitrate
     private static final int[] sHevcMedia3840x2160 = {
-        R.raw.video_3840x2160_mp4_hevc_20480kbps_30fps_aac_stereo_128kbps_44100hz,
+        R.raw.bbb_s4_3840x2160_mp4_hevc_mp5_20mbps_30fps_aac_lc_6ch_384kbps_24000hz,
+        R.raw.bbb_s2_3840x2160_mp4_hevc_mp51_20mbps_60fps_aac_lc_6ch_384kbps_32000hz,
     };
 
     public void testHevcCount3840x2160() throws Exception { count(sHevcMedia3840x2160, 1, 4); }
