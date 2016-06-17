@@ -499,14 +499,14 @@ public class VideoDecoderPerfTest extends MediaPlayerTestBase {
 
     // VP8 tests
 
-    private static final int[] sVp8Media0320x0240 = {
-        R.raw.video_320x240_webm_vp8_800kbps_30fps_vorbis_stereo_128kbps_44100hz,
+    private static final int[] sVp8Media0320x0180 = {
+        R.raw.bbb_s1_320x180_webm_vp8_800kbps_30fps_opus_5ch_320kbps_48000hz,
     };
 
-    public void testVp8Count0320x0240() throws Exception { count(sVp8Media0320x0240, 1, 2); }
-    public void testVp8Goog0Perf0320x0240() throws Exception { perf(sVp8Media0320x0240, GOOG, 0); }
-    public void testVp8Other0Perf0320x0240() throws Exception { perf(sVp8Media0320x0240, OTHER, 0); }
-    public void testVp8Other1Perf0320x0240() throws Exception { perf(sVp8Media0320x0240, OTHER, 1); }
+    public void testVp8Count0320x0180() throws Exception { count(sVp8Media0320x0180, 1, 2); }
+    public void testVp8Goog0Perf0320x0180() throws Exception { perf(sVp8Media0320x0180, GOOG, 0); }
+    public void testVp8Other0Perf0320x0180() throws Exception { perf(sVp8Media0320x0180, OTHER, 0); }
+    public void testVp8Other1Perf0320x0180() throws Exception { perf(sVp8Media0320x0180, OTHER, 1); }
 
     private static final int[] sVp8Media0640x0360 = {
         R.raw.video_640x360_webm_vp8_2048kbps_30fps_vorbis_stereo_128kbps_48000hz,
