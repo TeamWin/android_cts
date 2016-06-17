@@ -13,10 +13,15 @@
      See the License for the specific language governing permissions and
      limitations under the License.
 -->
-<configuration description="CTS package preparer for install/uninstall of the apk used as a test operation target">
-    <include name="common-config" />
-    <!-- This will tell tradefed to install the test apk. -->
-    <option name="cts-apk-installer:test-file-name" value="CtsDragAndDropSourceApp.apk" />
-    <option name="cts-apk-installer:test-file-name" value="CtsDragAndDropTargetApp.apk" />
-    <option name="cts-apk-installer:test-file-name" value="CtsDragAndDropTargetAppSdk23.apk" />
-</configuration>
+
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+        package="android.wm.cts.dndtargetappsdk23">
+    <application android:label="CtsDnDTarget">
+        <activity android:name="android.wm.cts.dndtargetappsdk23.DropTarget">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.intent.category.LAUNCHER"/>
+            </intent-filter>
+        </activity>
+    </application>
+</manifest>
