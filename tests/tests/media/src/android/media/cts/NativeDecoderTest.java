@@ -445,7 +445,9 @@ public class NativeDecoderTest extends MediaPlayerTestBase {
     }
 
     public void testMuxerVp9NoCsd() throws Exception {
-        testMuxer(R.raw.video_640x360_webm_vp9_1600kbps_30fps_vorbis_stereo_128kbps_48000hz, true);
+        testMuxer(
+                R.raw.bbb_s1_640x360_webm_vp9_0p21_1600kbps_30fps_vorbis_stereo_128kbps_48000hz,
+                true);
     }
 
     public void testMuxerVp9Hdr() throws Exception {
