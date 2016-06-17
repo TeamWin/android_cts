@@ -315,7 +315,7 @@ public class VideoDecoderPerfTest extends MediaPlayerTestBase {
     public void testAvcOther3Perf0320x0240() throws Exception { perf(sAvcMedia0320x0240, OTHER, 3); }
 
     private static final int[] sAvcMedia0720x0480 = {
-        R.raw.video_720x480_mp4_h264_2048kbps_30fps_aac_stereo_128kbps_44100hz,
+        R.raw.bbb_s1_720x480_mp4_h264_mp3_2mbps_30fps_aac_lc_5ch_320kbps_48000hz,
     };
 
     public void testAvcCount0720x0480() throws Exception { count(sAvcMedia0720x0480, 1, 4); }

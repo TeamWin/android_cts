@@ -57,7 +57,7 @@ public class AdaptivePlaybackTest extends MediaPlayerTestBase {
                 "OMX.google.h264.decoder",
                 R.raw.video_480x360_mp4_h264_1000kbps_25fps_aac_stereo_128kbps_44100hz,
                 R.raw.video_1280x720_mp4_h264_1000kbps_25fps_aac_stereo_128kbps_44100hz,
-                R.raw.video_720x480_mp4_h264_2048kbps_30fps_aac_stereo_128kbps_44100hz);
+                R.raw.bbb_s1_720x480_mp4_h264_mp3_2mbps_30fps_aac_lc_5ch_320kbps_48000hz);
     }
 
     public Iterable<Codec> HEVC(CodecFactory factory) {
