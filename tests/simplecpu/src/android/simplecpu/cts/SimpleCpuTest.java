@@ -23,7 +23,6 @@ import com.android.compatibility.common.util.DeviceReportLog;
 import com.android.compatibility.common.util.ResultType;
 import com.android.compatibility.common.util.ResultUnit;
 import com.android.compatibility.common.util.Stat;
-import com.android.cts.util.TimeoutReq;
 
 /**
  * Very simple CPU benchmarking to check the basic capability of CPU.
@@ -78,7 +77,6 @@ public class SimpleCpuTest extends CtsAndroidTestCase {
     }
 
     // will exceed L2
-    @TimeoutReq(minutes = 30)
     public void testMatrixMultiplication600() {
         doMatrixMultiplication(NUMBER_REPEAT, 600);
     }

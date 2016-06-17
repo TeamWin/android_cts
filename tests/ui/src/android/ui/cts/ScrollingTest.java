@@ -23,7 +23,6 @@ import com.android.compatibility.common.util.MeasureTime;
 import com.android.compatibility.common.util.ResultType;
 import com.android.compatibility.common.util.ResultUnit;
 import com.android.compatibility.common.util.Stat;
-import com.android.cts.util.TimeoutReq;
 
 import java.io.IOException;
 
@@ -60,7 +59,6 @@ public class ScrollingTest extends ActivityInstrumentationTestCase2<ScrollingAct
         super.tearDown();
     }
 
-    @TimeoutReq(minutes = 30)
     public void testFullScrolling() throws Exception {
         final int NUMBER_REPEAT = 10;
         final ScrollingActivity activity = mActivity;

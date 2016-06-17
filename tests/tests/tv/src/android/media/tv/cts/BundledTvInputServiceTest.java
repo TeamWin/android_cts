@@ -29,8 +29,6 @@ import android.util.ArrayMap;
 
 import android.tv.cts.R;
 
-import com.android.cts.util.TimeoutReq;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -155,7 +153,6 @@ public class BundledTvInputServiceTest
         }
     }
 
-    @TimeoutReq(minutes = 5)
     public void testTuneStress() throws Throwable {
         if (!Utils.hasTvInputFramework(getActivity())) {
             return;
