@@ -36,8 +36,9 @@ import org.junit.Rule;
 import org.junit.rules.TestName;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 import static org.junit.Assert.assertTrue;
 
@@ -134,6 +135,13 @@ public abstract class ActivityTestBase {
                 testCase.layoutID, testCase.canvasClient,
                 null, testCase.viewInitializer, testCase.useHardware);
         testCase.wasTestRan = true;
+        if (testCase.readyFence != null) {
+            try {
+                testCase.readyFence.await(5, TimeUnit.SECONDS);
+            } catch (InterruptedException e) {
+                throw new RuntimeException("readyFence didn't signal within 5 seconds");
+            }
+        }
         return testOffset;
     }
 
@@ -297,6 +305,14 @@ public abstract class ActivityTestBase {
             return this;
         }
 
+        public TestCaseBuilder addLayout(int layoutId, @Nullable ViewInitializer viewInitializer,
+                boolean useHardware, CountDownLatch readyFence) {
+            TestCase test = new TestCase(layoutId, viewInitializer, useHardware);
+            test.readyFence = readyFence;
+            mTestCases.add(test);
+            return this;
+        }
+
         public TestCaseBuilder addCanvasClient(CanvasClient canvasClient) {
             return addCanvasClient(null, canvasClient);
         }
@@ -324,6 +340,11 @@ public abstract class ActivityTestBase {
     private class TestCase {
         public int layoutID;
         public ViewInitializer viewInitializer;
+        /** After launching the test case this fence is used to signal when
+         * to proceed with capture & verification. If this is null the test
+         * proceeds immediately to verification */
+        @Nullable
+        public CountDownLatch readyFence;
 
         public CanvasClient canvasClient;
         public String canvasClientDebugString;
