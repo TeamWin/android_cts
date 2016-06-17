@@ -27,8 +27,6 @@ import android.util.Log;
 import android.view.View;
 import android.view.WindowManager;
 
-import com.android.cts.util.TimeoutReq;
-
 @TargetApi(16)
 public class DecodeAccuracyTest extends DecodeAccuracyTestBase {
 
@@ -36,25 +34,21 @@ public class DecodeAccuracyTest extends DecodeAccuracyTestBase {
     private static final String H264_VIDEO_FILE_NAME = "480ph264decodertest.mp4";
     private static final String VP9_VIDEO_FILE_NAME = "360pvp9decodertest.webm";
     private static final int ALLOWED_GREATEST_PIXEL_DIFFERENCE = 90;
-    private static final int TESTCASE_WAITTIME_MIN = 1;
     private static final int OFFSET = 10;
 
     /* <------------- Tests Using H264 -------------> */
-    @TimeoutReq(minutes = TESTCASE_WAITTIME_MIN)
     public void testH264GLViewVideoDecode() throws Exception {
         runDecodeAccuracyTest(
                 new GLSurfaceViewFactory(),
                 new VideoFormat(H264_VIDEO_FILE_NAME));
     }
 
-    @TimeoutReq(minutes = TESTCASE_WAITTIME_MIN)
     public void testH264GLViewLargerHeightVideoDecode() throws Exception {
         runDecodeAccuracyTest(
                 new GLSurfaceViewFactory(),
                 getLargerHeightVideoFormat(new VideoFormat(H264_VIDEO_FILE_NAME)));
     }
 
-    @TimeoutReq(minutes = TESTCASE_WAITTIME_MIN)
     public void testH264GLViewLargerWidthVideoDecode() throws Exception {
         runDecodeAccuracyTest(
                 new GLSurfaceViewFactory(),
@@ -62,21 +56,18 @@ public class DecodeAccuracyTest extends DecodeAccuracyTestBase {
     }
 
     /* <------------- Tests Using VP9 -------------> */
-    @TimeoutReq(minutes = TESTCASE_WAITTIME_MIN)
     public void testVP9GLViewVideoDecode() throws Exception {
         runDecodeAccuracyTest(
                 new GLSurfaceViewFactory(),
                 new VideoFormat(VP9_VIDEO_FILE_NAME));
     }
 
-    @TimeoutReq(minutes = TESTCASE_WAITTIME_MIN)
     public void testVP9GLViewLargerHeightVideoDecode() throws Exception {
         runDecodeAccuracyTest(
                 new GLSurfaceViewFactory(),
                 getLargerHeightVideoFormat(new VideoFormat(VP9_VIDEO_FILE_NAME)));
     }
 
-    @TimeoutReq(minutes = TESTCASE_WAITTIME_MIN)
     public void testVP9GLViewLargerWidthVideoDecode() throws Exception {
         runDecodeAccuracyTest(
                 new GLSurfaceViewFactory(),

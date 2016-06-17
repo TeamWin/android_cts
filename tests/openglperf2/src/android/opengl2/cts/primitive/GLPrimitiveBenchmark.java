@@ -20,7 +20,6 @@ import android.test.ActivityInstrumentationTestCase2;
 import com.android.compatibility.common.util.DeviceReportLog;
 import com.android.compatibility.common.util.ResultType;
 import com.android.compatibility.common.util.ResultUnit;
-import com.android.cts.util.TimeoutReq;
 
 /**
  * Runs the Primitive OpenGL ES 2.0 Benchmarks.
@@ -39,7 +38,6 @@ public class GLPrimitiveBenchmark extends ActivityInstrumentationTestCase2<GLPri
     /**
      * Runs the full OpenGL ES 2.0 pipeline test offscreen.
      */
-    @TimeoutReq(minutes = 100)
     public void testFullPipelineOffscreen() throws Exception {
         String streamName = "test_full_pipeline_offscreen";
         runBenchmark(BenchmarkName.FullPipeline, true, NUM_FRAMES, NUM_ITERATIONS, TIMEOUT,
@@ -49,7 +47,6 @@ public class GLPrimitiveBenchmark extends ActivityInstrumentationTestCase2<GLPri
     /**
      * Runs the full OpenGL ES 2.0 pipeline test onscreen.
      */
-    @TimeoutReq(minutes = 100)
     public void testFullPipelineOnscreen() throws Exception {
         String streamName = "test_full_pipeline_onscreen";
         runBenchmark(BenchmarkName.FullPipeline, false, NUM_FRAMES, NUM_ITERATIONS, TIMEOUT,
@@ -59,7 +56,6 @@ public class GLPrimitiveBenchmark extends ActivityInstrumentationTestCase2<GLPri
     /**
      * Runs the pixel output test offscreen.
      */
-    @TimeoutReq(minutes = 100)
     public void testPixelOutputOffscreen() throws Exception {
         String streamName = "test_pixel_output_offscreen";
         runBenchmark(BenchmarkName.PixelOutput, true, NUM_FRAMES, NUM_ITERATIONS, TIMEOUT,
@@ -69,7 +65,6 @@ public class GLPrimitiveBenchmark extends ActivityInstrumentationTestCase2<GLPri
     /**
      * Runs the pixel output test onscreen.
      */
-    @TimeoutReq(minutes = 100)
     public void testPixelOutputOnscreen() throws Exception {
         String streamName = "test_pixel_output_onscreen";
         runBenchmark(BenchmarkName.PixelOutput, false, NUM_FRAMES, NUM_ITERATIONS, TIMEOUT,
@@ -79,7 +74,6 @@ public class GLPrimitiveBenchmark extends ActivityInstrumentationTestCase2<GLPri
     /**
      * Runs the shader performance test offscreen.
      */
-    @TimeoutReq(minutes = 100)
     public void testShaderPerfOffscreen() throws Exception {
         String streamName = "test_shader_perf_offscreen";
         runBenchmark(BenchmarkName.ShaderPerf, true, NUM_FRAMES, NUM_ITERATIONS, TIMEOUT,
@@ -89,7 +83,6 @@ public class GLPrimitiveBenchmark extends ActivityInstrumentationTestCase2<GLPri
     /**
      * Runs the shader performance test onscreen.
      */
-    @TimeoutReq(minutes = 100)
     public void testShaderPerfOnscreen() throws Exception {
         String streamName = "test_shader_perf_onscreen";
         runBenchmark(BenchmarkName.ShaderPerf, false, NUM_FRAMES, NUM_ITERATIONS, TIMEOUT,
@@ -99,7 +92,6 @@ public class GLPrimitiveBenchmark extends ActivityInstrumentationTestCase2<GLPri
     /**
      * Runs the context switch overhead test offscreen.
      */
-    @TimeoutReq(minutes = 100)
     public void testContextSwitchOffscreen() throws Exception {
         String streamName = "test_context_switch_offscreen";
         runBenchmark(BenchmarkName.ContextSwitch, true, NUM_FRAMES, NUM_ITERATIONS, TIMEOUT,
@@ -109,7 +101,6 @@ public class GLPrimitiveBenchmark extends ActivityInstrumentationTestCase2<GLPri
     /**
      * Runs the context switch overhead test onscreen.
      */
-    @TimeoutReq(minutes = 100)
     public void testContextSwitchOnscreen() throws Exception {
         String streamName = "test_context_switch_onscreen";
         runBenchmark(BenchmarkName.ContextSwitch, false, NUM_FRAMES, NUM_ITERATIONS, TIMEOUT,
