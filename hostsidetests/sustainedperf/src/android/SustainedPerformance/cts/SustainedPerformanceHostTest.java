@@ -110,6 +110,7 @@ public class SustainedPerformanceHostTest extends DeviceTestCase {
         Double[] testSet = new Double[10];
         int index = 0;
         double min = Double.MAX_VALUE, max = Double.MIN_VALUE;
+        boolean first = true;
 
         Scanner in = new Scanner(logs);
         while (in.hasNextLine()) {
@@ -118,6 +119,11 @@ public class SustainedPerformanceHostTest extends DeviceTestCase {
                 Double time = Double.parseDouble(line.split(":")[1]);
                 testSet[index++] = time;
                 if (index == 10) {
+                    if (first) {
+                        first = false;
+                        index = 0;
+                        continue;
+                    }
                     Arrays.sort(testSet);
                     if (mode) {
                         appResultsWithMode.add(testSet[5]);
