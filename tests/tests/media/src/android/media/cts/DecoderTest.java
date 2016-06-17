@@ -1742,7 +1742,8 @@ public class DecoderTest extends MediaPlayerTestBase {
     }
 
     public void testHEVCDecode352x288() throws Exception {
-        testDecode(R.raw.video_352x288_mp4_hevc_600kbps_30fps_aac_stereo_128kbps_44100hz, 299);
+        testDecode(
+                R.raw.bbb_s1_352x288_mp4_hevc_mp2_600kbps_30fps_aac_he_stereo_96kbps_48000hz, 300);
     }
 
     public void testHEVCDecode640x360() throws Exception {

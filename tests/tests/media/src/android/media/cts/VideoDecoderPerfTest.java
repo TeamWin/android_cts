@@ -381,7 +381,7 @@ public class VideoDecoderPerfTest extends MediaPlayerTestBase {
     // HEVC tests
 
     private static final int[] sHevcMedia0352x0288 = {
-        R.raw.video_352x288_mp4_hevc_600kbps_30fps_aac_stereo_128kbps_44100hz,
+        R.raw.bbb_s1_352x288_mp4_hevc_mp2_600kbps_30fps_aac_he_stereo_96kbps_48000hz,
     };
 
     public void testHevcCount0352x0288() throws Exception { count(sHevcMedia0352x0288, 1, 4); }
