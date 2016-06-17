@@ -1615,7 +1615,12 @@ public class DecoderTest extends MediaPlayerTestBase {
 
     public void testH264Decode30fps1920x1080Tv() throws Exception {
         if (checkTv()) {
-            assertTrue(MediaUtils.canDecodeVideo(MediaFormat.MIMETYPE_VIDEO_AVC, 1920, 1080, 30));
+            assertTrue(MediaUtils.canDecodeVideo(
+                    MediaFormat.MIMETYPE_VIDEO_AVC, 1920, 1080, 30,
+                    AVCProfileHigh, AVCLevel4, 20000000));
+            testDecode(
+                    R.raw.bbb_s4_1920x1080_wide_mp4_h264_hp4_20mbps_30fps_aac_lc_6ch_384kbps_44100hz,
+                    150);
         }
     }
 
@@ -1628,12 +1633,19 @@ public class DecoderTest extends MediaPlayerTestBase {
     }
 
     public void testH264Decode30fps1920x1080() throws Exception {
-        testDecode(R.raw.video_1920x1080_mp4_h264_20480kbps_30fps_aac_stereo_128kbps_44100hz, 299);
+        testDecode(
+                R.raw.bbb_s4_1920x1080_wide_mp4_h264_mp4_20mbps_30fps_aac_he_5ch_200kbps_44100hz,
+                150);
     }
 
     public void testH264Decode60fps1920x1080Tv() throws Exception {
         if (checkTv()) {
-            assertTrue(MediaUtils.canDecodeVideo(MediaFormat.MIMETYPE_VIDEO_AVC, 1920, 1080, 60));
+            assertTrue(MediaUtils.canDecodeVideo(
+                    MediaFormat.MIMETYPE_VIDEO_AVC, 1920, 1080, 60,
+                    AVCProfileHigh, AVCLevel42, 20000000));
+            testDecode(
+                    R.raw.bbb_s2_1920x1080_mp4_h264_hp42_20mbps_60fps_aac_lc_6ch_384kbps_48000hz,
+                    300);
         }
     }
 
@@ -1646,7 +1658,9 @@ public class DecoderTest extends MediaPlayerTestBase {
     }
 
     public void testH264Decode60fps1920x1080() throws Exception {
-        testDecode(R.raw.video_1920x1080_mp4_h264_20480kbps_60fps_aac_stereo_128kbps_44100hz, 596);
+        testDecode(
+                R.raw.bbb_s2_1920x1080_mp4_h264_mp42_20mbps_60fps_aac_he_v2_5ch_160kbps_48000hz,
+                300);
     }
 
     public void testVP8Decode320x240() throws Exception {
@@ -2806,13 +2820,13 @@ public class DecoderTest extends MediaPlayerTestBase {
 
         // Test throughput by decoding 1920x1080 @ 30fps x 4 instances.
         decodeInParallel(
-                R.raw.video_1920x1080_mp4_h264_20480kbps_30fps_aac_stereo_128kbps_44100hz, 299, 30,
-                4);
+                R.raw.bbb_s4_1920x1080_wide_mp4_h264_mp4_20mbps_30fps_aac_he_5ch_200kbps_44100hz,
+                150, 30, 4);
 
         // Test throughput by decoding 1920x1080 @ 60fps x 2 instances.
         decodeInParallel(
-                R.raw.video_1920x1080_mp4_h264_20480kbps_60fps_aac_stereo_128kbps_44100hz, 596, 60,
-                2);
+                R.raw.bbb_s2_1920x1080_mp4_h264_mp42_20mbps_60fps_aac_he_v2_5ch_160kbps_48000hz,
+                300, 60, 2);
     }
 
     public void testVrHighPerformanceHEVC() throws Exception {

@@ -339,8 +339,12 @@ public class VideoDecoderPerfTest extends MediaPlayerTestBase {
     public void testAvcOther2Perf1280x0720() throws Exception { perf(sAvcMedia1280x0720, OTHER, 2); }
     public void testAvcOther3Perf1280x0720() throws Exception { perf(sAvcMedia1280x0720, OTHER, 3); }
 
+    // prefer highest effective bitrate, then high profile
     private static final int[] sAvcMedia1920x1080 = {
-        R.raw.video_1920x1080_mp4_h264_20480kbps_30fps_aac_stereo_128kbps_44100hz,
+        R.raw.bbb_s4_1920x1080_wide_mp4_h264_hp4_20mbps_30fps_aac_lc_6ch_384kbps_44100hz,
+        R.raw.bbb_s4_1920x1080_wide_mp4_h264_mp4_20mbps_30fps_aac_he_5ch_200kbps_44100hz,
+        R.raw.bbb_s2_1920x1080_mp4_h264_hp42_20mbps_60fps_aac_lc_6ch_384kbps_48000hz,
+        R.raw.bbb_s2_1920x1080_mp4_h264_mp42_20mbps_60fps_aac_he_v2_5ch_160kbps_48000hz,
     };
 
     public void testAvcCount1920x1080() throws Exception { count(sAvcMedia1920x1080, 1, 4); }
