@@ -1767,12 +1767,15 @@ public class DecoderTest extends MediaPlayerTestBase {
 
     public void testHEVCDecode30fps1920x1080Tv() throws Exception {
         if (checkTv()) {
-            assertTrue(MediaUtils.canDecodeVideo(MediaFormat.MIMETYPE_VIDEO_HEVC, 1920, 1080, 30));
+            assertTrue(MediaUtils.canDecodeVideo(
+                    MediaFormat.MIMETYPE_VIDEO_HEVC, 1920, 1080, 30,
+                    HEVCProfileMain, HEVCMainTierLevel41, 10000000));
         }
     }
 
-    public void testHEVCDecode30fps1920x1080() throws Exception {
-        testDecode(R.raw.video_1920x1080_mp4_hevc_10240kbps_30fps_aac_stereo_128kbps_44100hz, 299);
+    public void testHEVCDecode60fps1920x1080() throws Exception {
+        testDecode(
+                R.raw.bbb_s2_1920x1080_mp4_hevc_mp41_10mbps_60fps_aac_lc_6ch_384kbps_22050hz, 300);
     }
 
     public void testHEVCDecode30fps3840x2160() throws Exception {
@@ -2849,8 +2852,9 @@ public class DecoderTest extends MediaPlayerTestBase {
 
         // Test throughput by decoding 1920x1080 @ 30fps x 4 instances.
         decodeInParallel(
-                R.raw.video_1920x1080_mp4_hevc_10240kbps_30fps_aac_stereo_128kbps_44100hz, 299, 30,
-                4);
+                // using the 60fps sample to save on apk size, but decoding only at 30fps @ 5Mbps
+                R.raw.bbb_s2_1920x1080_mp4_hevc_mp41_10mbps_60fps_aac_lc_6ch_384kbps_22050hz,
+                300, 30 /* fps */, 4);
     }
 
     public void testVrHighPerformanceVP9() throws Exception {
