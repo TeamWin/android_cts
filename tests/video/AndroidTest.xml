@@ -20,5 +20,7 @@
     </target_preparer>
     <test class="com.android.tradefed.testtype.AndroidJUnitTest" >
         <option name="package" value="android.video.cts" />
+        <!-- test-timeout unit is ms, value = 10 min -->
+        <option name="test-timeout" value="600000" />
     </test>
 </configuration>

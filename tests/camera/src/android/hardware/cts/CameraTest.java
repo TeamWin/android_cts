@@ -45,8 +45,6 @@ import android.test.suitebuilder.annotation.LargeTest;
 import android.util.Log;
 import android.view.SurfaceHolder;
 
-import com.android.cts.util.TimeoutReq;
-
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -1771,7 +1769,6 @@ public class CameraTest extends ActivityInstrumentationTestCase2<CameraCtsActivi
     }
 
     @UiThreadTest
-    @TimeoutReq(minutes = 30)
     public void testPreviewPictureSizesCombination() throws Exception {
         int nCameras = Camera.getNumberOfCameras();
         for (int id = 0; id < nCameras; id++) {

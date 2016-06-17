@@ -16,8 +16,6 @@
 
 package android.keystore.cts;
 
-import com.android.cts.util.TimeoutReq;
-
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -2245,7 +2243,7 @@ public class KeyStoreTest extends TestCase {
                 if (isNullPasswordAllowed(keyStore) || isKeyPasswordIgnored(keyStore)) {
                     keyStore.setEntry(ALIAS_SECRET, new SecretKeyEntry(getSecretKey()), null);
                     assertSecretKey(keyStore.getKey(ALIAS_SECRET, null));
-                } else {                    
+                } else {
                     try {
                         keyStore.setEntry(ALIAS_SECRET, new SecretKeyEntry(getSecretKey()), null);
                         fail(keyStore.getType());
@@ -2380,7 +2378,6 @@ public class KeyStoreTest extends TestCase {
     }
 
     // TODO(27810271): investigate why this is taking too long for armeabi-v7a
-    @TimeoutReq(minutes=10)
     public void test_KeyStore_Builder() throws Exception {
         for (KeyStore keyStore : keyStores()) {
             keyStore.load(null, null);
