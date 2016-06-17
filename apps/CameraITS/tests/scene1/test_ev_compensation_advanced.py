@@ -22,9 +22,14 @@ import matplotlib
 import matplotlib.pyplot
 import numpy
 
+#AE must converge within this number of auto requests for EV
+THREASH_CONVERGE_FOR_EV = 8
+
 def main():
     """Tests that EV compensation is applied.
     """
+    LOCKED = 3
+
     NAME = os.path.basename(__file__).split(".")[0]
 
     MAX_LUMA_DELTA_THRESH = 0.05
@@ -64,10 +69,15 @@ def main():
             req["android.tonemap.curveRed"] = [0.0,0.0, 1.0,1.0]
             req["android.tonemap.curveGreen"] = [0.0,0.0, 1.0,1.0]
             req["android.tonemap.curveBlue"] = [0.0,0.0, 1.0,1.0]
-            cap = cam.do_capture(req)
-            y = its.image.convert_capture_to_planes(cap)[0]
-            tile = its.image.get_image_patch(y, 0.45,0.45,0.1,0.1)
-            lumas.append(its.image.compute_image_means(tile)[0])
+            caps = cam.do_capture([req]*THREASH_CONVERGE_FOR_EV)
+
+            for cap in caps:
+                if (cap['metadata']['android.control.aeState'] == LOCKED):
+                    y = its.image.convert_capture_to_planes(cap)[0]
+                    tile = its.image.get_image_patch(y, 0.45,0.45,0.1,0.1)
+                    lumas.append(its.image.compute_image_means(tile)[0])
+                    break
+            assert(cap['metadata']['android.control.aeState'] == LOCKED)
 
         print "ev_step_size_in_stops", ev_per_step
         shift_mid = ev_shifts[imid]
