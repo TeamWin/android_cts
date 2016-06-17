@@ -1153,6 +1153,42 @@ public class ConfigTest extends AndroidTestCase {
     }
 
     @MediumTest
+    public void testNormalLocales() {
+        Resources res;
+        TotalConfig config = makeClassicConfig();
+        // Hebrew
+        config.setProperty(Properties.LANGUAGE, "iw");
+        res = config.getResources();
+        checkValue(res, R.configVarying.simple, "simple iw");
+        checkValue(res, R.configVarying.bag,
+                R.styleable.TestConfig, new String[]{"bag iw"});
+
+        // Hebrew for Israel
+        config.setProperty(Properties.LANGUAGE, "iw");
+        config.setProperty(Properties.COUNTRY, "IL");
+        res = config.getResources();
+        checkValue(res, R.configVarying.simple, "simple iw IL");
+        checkValue(res, R.configVarying.bag,
+                R.styleable.TestConfig, new String[]{"bag iw IL"});
+
+        config = makeClassicConfig();
+        // Macedonian
+        config.setProperty(Properties.LANGUAGE, "mk");
+        res = config.getResources();
+        checkValue(res, R.configVarying.simple, "simple mk");
+        checkValue(res, R.configVarying.bag,
+                R.styleable.TestConfig, new String[]{"bag mk"});
+
+        // Macedonian for Macedonia
+        config.setProperty(Properties.LANGUAGE, "mk");
+        config.setProperty(Properties.COUNTRY, "MK");
+        res = config.getResources();
+        checkValue(res, R.configVarying.simple, "simple mk MK");
+        checkValue(res, R.configVarying.bag,
+                R.styleable.TestConfig, new String[]{"bag mk MK"});
+    }
+
+    @MediumTest
     public void testExtendedLocales() {
         TotalConfig config = makeClassicConfig();
         // BCP 47 Locale kok
