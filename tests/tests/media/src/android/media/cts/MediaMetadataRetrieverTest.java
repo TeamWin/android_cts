@@ -195,6 +195,6 @@ public class MediaMetadataRetrieverTest extends AndroidTestCase {
     }
 
     public void testThumbnailHEVC() {
-        testThumbnail(R.raw.video_1280x720_mp4_hevc_1150kbps_30fps_aac_stereo_128kbps_48000hz);
+        testThumbnail(R.raw.bbb_s1_720x480_mp4_hevc_mp3_1600kbps_30fps_aac_he_6ch_240kbps_48000hz);
     }
 }

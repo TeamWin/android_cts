@@ -66,7 +66,7 @@ public class AdaptivePlaybackTest extends MediaPlayerTestBase {
                 MediaFormat.MIMETYPE_VIDEO_HEVC,
                 "OMX.google.hevc.decoder",
                 R.raw.bbb_s1_720x480_mp4_hevc_mp3_1600kbps_30fps_aac_he_6ch_240kbps_48000hz,
-                R.raw.video_1280x720_mp4_hevc_1150kbps_30fps_aac_stereo_128kbps_48000hz,
+                R.raw.bbb_s4_1280x720_mp4_hevc_mp31_4mbps_30fps_aac_he_stereo_80kbps_32000hz,
                 R.raw.bbb_s1_352x288_mp4_hevc_mp2_600kbps_30fps_aac_he_stereo_96kbps_48000hz);
     }
 

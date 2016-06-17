@@ -1542,7 +1542,8 @@ public class DecoderTest extends MediaPlayerTestBase {
     }
 
     public void testCodecBasicHEVC() throws Exception {
-        testDecode(R.raw.video_1280x720_mp4_hevc_1150kbps_30fps_aac_stereo_128kbps_48000hz, 300);
+        testDecode(
+                R.raw.bbb_s1_720x480_mp4_hevc_mp3_1600kbps_30fps_aac_he_6ch_240kbps_48000hz, 300);
     }
 
     public void testCodecBasicH263() throws Exception {
@@ -1753,12 +1754,15 @@ public class DecoderTest extends MediaPlayerTestBase {
 
     public void testHEVCDecode30fps1280x720Tv() throws Exception {
         if (checkTv()) {
-            assertTrue(MediaUtils.canDecodeVideo(MediaFormat.MIMETYPE_VIDEO_HEVC, 1280, 720, 30));
+            assertTrue(MediaUtils.canDecodeVideo(
+                    MediaFormat.MIMETYPE_VIDEO_HEVC, 1280, 720, 30,
+                    HEVCProfileMain, HEVCMainTierLevel31, 4000000));
         }
     }
 
     public void testHEVCDecode30fps1280x720() throws Exception {
-        testDecode(R.raw.video_1280x720_mp4_hevc_4096kbps_30fps_aac_stereo_128kbps_44100hz, 299);
+        testDecode(
+                R.raw.bbb_s4_1280x720_mp4_hevc_mp31_4mbps_30fps_aac_he_stereo_80kbps_32000hz, 300);
     }
 
     public void testHEVCDecode30fps1920x1080Tv() throws Exception {
@@ -1833,13 +1837,13 @@ public class DecoderTest extends MediaPlayerTestBase {
 
     public void testCodecResetsHEVCWithoutSurface() throws Exception {
         testCodecResets(
-                R.raw.video_1280x720_mp4_hevc_1150kbps_30fps_aac_stereo_128kbps_48000hz, null);
+                R.raw.bbb_s1_720x480_mp4_hevc_mp3_1600kbps_30fps_aac_he_6ch_240kbps_48000hz, null);
     }
 
     public void testCodecResetsHEVCWithSurface() throws Exception {
         Surface s = getActivity().getSurfaceHolder().getSurface();
         testCodecResets(
-                R.raw.video_1280x720_mp4_hevc_1150kbps_30fps_aac_stereo_128kbps_48000hz, s);
+                R.raw.bbb_s1_720x480_mp4_hevc_mp3_1600kbps_30fps_aac_he_6ch_240kbps_48000hz, s);
     }
 
     public void testCodecResetsH263WithoutSurface() throws Exception {

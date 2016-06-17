@@ -414,7 +414,7 @@ public class VideoDecoderPerfTest extends MediaPlayerTestBase {
     public void testHevcOther3Perf0720x0480() throws Exception { perf(sHevcMedia0720x0480, OTHER, 3); }
 
     private static final int[] sHevcMedia1280x0720 = {
-        R.raw.video_1280x720_mp4_hevc_4096kbps_30fps_aac_stereo_128kbps_44100hz,
+        R.raw.bbb_s4_1280x720_mp4_hevc_mp31_4mbps_30fps_aac_he_stereo_80kbps_32000hz,
     };
 
     public void testHevcCount1280x0720() throws Exception { count(sHevcMedia1280x0720, 1, 4); }
