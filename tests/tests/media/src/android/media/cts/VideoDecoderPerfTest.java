@@ -392,7 +392,7 @@ public class VideoDecoderPerfTest extends MediaPlayerTestBase {
     public void testHevcOther3Perf0352x0288() throws Exception { perf(sHevcMedia0352x0288, OTHER, 3); }
 
     private static final int[] sHevcMedia0640x0360 = {
-        R.raw.video_640x360_mp4_hevc_1638kbps_30fps_aac_stereo_128kbps_44100hz,
+        R.raw.bbb_s1_640x360_mp4_hevc_mp21_1600kbps_30fps_aac_he_6ch_288kbps_44100hz,
     };
 
     public void testHevcCount0640x0360() throws Exception { count(sHevcMedia0640x0360, 1, 4); }
@@ -402,7 +402,16 @@ public class VideoDecoderPerfTest extends MediaPlayerTestBase {
     public void testHevcOther2Perf0640x0360() throws Exception { perf(sHevcMedia0640x0360, OTHER, 2); }
     public void testHevcOther3Perf0640x0360() throws Exception { perf(sHevcMedia0640x0360, OTHER, 3); }
 
-    // No media for HEVC 720x480
+    private static final int[] sHevcMedia0720x0480 = {
+        R.raw.bbb_s1_720x480_mp4_hevc_mp3_1600kbps_30fps_aac_he_6ch_240kbps_48000hz,
+    };
+
+    public void testHevcCount0720x0480() throws Exception { count(sHevcMedia0720x0480, 1, 4); }
+    public void testHevcGoog0Perf0720x0480() throws Exception { perf(sHevcMedia0720x0480, GOOG, 0); }
+    public void testHevcOther0Perf0720x0480() throws Exception { perf(sHevcMedia0720x0480, OTHER, 0); }
+    public void testHevcOther1Perf0720x0480() throws Exception { perf(sHevcMedia0720x0480, OTHER, 1); }
+    public void testHevcOther2Perf0720x0480() throws Exception { perf(sHevcMedia0720x0480, OTHER, 2); }
+    public void testHevcOther3Perf0720x0480() throws Exception { perf(sHevcMedia0720x0480, OTHER, 3); }
 
     private static final int[] sHevcMedia1280x0720 = {
         R.raw.video_1280x720_mp4_hevc_4096kbps_30fps_aac_stereo_128kbps_44100hz,
