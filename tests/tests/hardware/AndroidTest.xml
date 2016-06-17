@@ -27,6 +27,8 @@
     <test class="com.android.tradefed.testtype.AndroidJUnitTest" >
         <option name="package" value="android.hardware.cts" />
         <option name="runtime-hint" value="47m28s" />
+        <!-- test-timeout unit is ms, value = 60 min -->
+        <option name="test-timeout" value="3600000" />
     </test>
 
 </configuration>

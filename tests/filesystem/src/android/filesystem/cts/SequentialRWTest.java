@@ -24,7 +24,6 @@ import com.android.compatibility.common.util.MeasureTime;
 import com.android.compatibility.common.util.ResultType;
 import com.android.compatibility.common.util.ResultUnit;
 import com.android.compatibility.common.util.Stat;
-import com.android.cts.util.TimeoutReq;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -45,7 +44,6 @@ public class SequentialRWTest extends CtsAndroidTestCase {
         super.tearDown();
     }
 
-    @TimeoutReq(minutes = 30)
     public void testSingleSequentialWrite() throws Exception {
         final long fileSize = FileUtil.getFileSizeExceedingMemory(getContext(), BUFFER_SIZE);
         if (fileSize == 0) { // not enough space, give up
@@ -76,7 +74,6 @@ public class SequentialRWTest extends CtsAndroidTestCase {
         report.submit(getInstrumentation());
     }
 
-    @TimeoutReq(minutes = 60)
     public void testSingleSequentialUpdate() throws Exception {
         final long fileSize = FileUtil.getFileSizeExceedingMemory(getContext(), BUFFER_SIZE);
         if (fileSize == 0) { // not enough space, give up
@@ -88,7 +85,6 @@ public class SequentialRWTest extends CtsAndroidTestCase {
                 NUMBER_REPETITION, REPORT_LOG_NAME, streamName);
     }
 
-    @TimeoutReq(minutes = 30)
     public void testSingleSequentialRead() throws Exception {
         final long fileSize = FileUtil.getFileSizeExceedingMemory(getContext(), BUFFER_SIZE);
         if (fileSize == 0) { // not enough space, give up
