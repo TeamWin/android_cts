@@ -575,7 +575,7 @@ public class VideoDecoderPerfTest extends MediaPlayerTestBase {
     public void testVp9Other3Perf1280x0720() throws Exception { perf(sVp9Media1280x0720, OTHER, 3); }
 
     private static final int[] sVp9Media1920x1080 = {
-        R.raw.video_1920x1080_webm_vp9_10240kbps_30fps_vorbis_stereo_128kbps_48000hz,
+        R.raw.bbb_s2_1920x1080_webm_vp9_0p41_10mbps_60fps_vorbis_6ch_384kbps_22050hz,
     };
 
     public void testVp9Count1920x1080() throws Exception { count(sVp9Media1920x1080, 1, 4); }

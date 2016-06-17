@@ -1734,9 +1734,9 @@ public class DecoderTest extends MediaPlayerTestBase {
                 R.raw.bbb_s4_1280x720_webm_vp9_0p31_4mbps_30fps_opus_stereo_128kbps_48000hz, 300);
     }
 
-    public void testVP9Decode30fps1920x1080() throws Exception {
-        testDecode(R.raw.video_1920x1080_webm_vp9_10240kbps_30fps_vorbis_stereo_128kbps_48000hz,
-                249);
+    public void testVP9Decode60fps1920x1080() throws Exception {
+        testDecode(
+                R.raw.bbb_s2_1920x1080_webm_vp9_0p41_10mbps_60fps_vorbis_6ch_384kbps_22050hz, 300);
     }
 
     public void testVP9Decode30fps3840x2160() throws Exception {
@@ -2879,8 +2879,9 @@ public class DecoderTest extends MediaPlayerTestBase {
 
         // Test throughput by decoding 1920x1080 @ 30fps x 4 instances.
         decodeInParallel(
-                R.raw.video_1920x1080_webm_vp9_10240kbps_30fps_vorbis_stereo_128kbps_48000hz, 249,
-                30, 4);
+                // using the 60fps sample to save on apk size, but decoding only at 30fps @ 5Mbps
+                R.raw.bbb_s2_1920x1080_webm_vp9_0p41_10mbps_60fps_vorbis_6ch_384kbps_22050hz,
+                300, 30 /* fps */, 4);
     }
 
     private boolean supportsVrHighPerformance() {
