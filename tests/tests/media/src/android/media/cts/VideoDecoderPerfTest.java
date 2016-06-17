@@ -304,7 +304,7 @@ public class VideoDecoderPerfTest extends MediaPlayerTestBase {
     // AVC tests
 
     private static final int[] sAvcMedia0320x0240 = {
-        R.raw.video_320x240_mp4_h264_800kbps_30fps_aac_stereo_128kbps_44100hz,
+        R.raw.bbb_s1_320x240_mp4_h264_mp2_800kbps_30fps_aac_lc_5ch_240kbps_44100hz,
     };
 
     public void testAvcCount0320x0240() throws Exception { count(sAvcMedia0320x0240, 1, 4); }

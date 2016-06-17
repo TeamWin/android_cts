@@ -1560,7 +1560,7 @@ public class DecoderTest extends MediaPlayerTestBase {
     }
 
     public void testH264Decode320x240() throws Exception {
-        testDecode(R.raw.video_320x240_mp4_h264_800kbps_30fps_aac_stereo_128kbps_44100hz, 299);
+        testDecode(R.raw.bbb_s1_320x240_mp4_h264_mp2_800kbps_30fps_aac_lc_5ch_240kbps_44100hz, 300);
     }
 
     public void testH264Decode720x480() throws Exception {
