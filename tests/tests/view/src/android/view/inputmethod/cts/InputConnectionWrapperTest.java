@@ -97,13 +97,13 @@ public class InputConnectionWrapperTest extends AndroidTestCase {
         assertFalse(inputConnection.isGetHandlerCalled);
         assertNull(inputConnection.getHandler());
         assertTrue(inputConnection.isGetHandlerCalled);
-        assertFalse(inputConnection.isInsertContentCalled);
+        assertFalse(inputConnection.isCommitContentCalled);
         final InputContentInfo inputContentInfo = new InputContentInfo(
                 Uri.parse("content://com.example/path"),
                 new ClipDescription("sample content", new String[]{"image/png"}),
                 Uri.parse("https://example.com"));
-        assertTrue(inputConnection.insertContent(inputContentInfo, null /* opt */));
-        assertTrue(inputConnection.isInsertContentCalled);
+        assertTrue(inputConnection.commitContent(inputContentInfo, null /* opt */));
+        assertTrue(inputConnection.isCommitContentCalled);
     }
 
     private class MockInputConnection implements InputConnection {
@@ -132,7 +132,7 @@ public class InputConnectionWrapperTest extends AndroidTestCase {
         public boolean isRequestCursorUpdatesCalled;
         public boolean isGetHandlerCalled;
         public boolean isCloseConnectionCalled;
-        public boolean isInsertContentCalled;
+        public boolean isCommitContentCalled;
 
         public boolean beginBatchEdit() {
             isBeginBatchEditCalled = true;
@@ -258,8 +258,8 @@ public class InputConnectionWrapperTest extends AndroidTestCase {
             isCloseConnectionCalled = true;
         }
 
-        public boolean insertContent(InputContentInfo inputContentInfo, Bundle opts) {
-            isInsertContentCalled = true;
+        public boolean commitContent(InputContentInfo inputContentInfo, Bundle opts) {
+            isCommitContentCalled = true;
             return true;
         }
     }
