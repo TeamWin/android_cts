@@ -38,7 +38,6 @@ import com.android.compatibility.common.util.MeasureTime;
 import com.android.compatibility.common.util.ResultType;
 import com.android.compatibility.common.util.ResultUnit;
 import com.android.compatibility.common.util.Stat;
-import com.android.cts.util.TimeoutReq;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -78,7 +77,6 @@ public class TvProviderPerfTest extends CtsAndroidTestCase {
         }
     }
 
-    @TimeoutReq(minutes = 8)
     public void testChannels() throws Exception {
         if (!mHasTvInputFramework) return;
         double[] averages = new double[5];
@@ -193,7 +191,6 @@ public class TvProviderPerfTest extends CtsAndroidTestCase {
         report.submit(getInstrumentation());
     }
 
-    @TimeoutReq(minutes = 12)
     public void testPrograms() throws Exception {
         if (!mHasTvInputFramework) return;
         double[] averages = new double[7];
