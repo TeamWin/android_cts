@@ -44,7 +44,7 @@ public class VideoDecoderPerfTest extends MediaPlayerTestBase {
     private static final int TOTAL_FRAMES = 30000;
     private static final int MIN_FRAMES = 3000;
     private static final int MAX_TIME_MS = 120000;  // 2 minutes
-    private static final int MAX_TEST_TIMEOUT_MS = 600000;  // 10 minutes
+    private static final int MAX_TEST_TIMEOUT_MS = 300000;  // 5 minutes
     private static final int MIN_TEST_MS = 10000;  // 10 seconds
     private static final int NUMBER_OF_REPEATS = 2;
 

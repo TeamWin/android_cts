@@ -91,7 +91,7 @@ public class VideoEncoderDecoderTest extends CtsAndroidTestCase {
 
     // i frame interval for encoder
     private static final int KEY_I_FRAME_INTERVAL = 5;
-    private static final int MAX_TEST_TIMEOUT_MS = 600000;   // 10 minutes
+    private static final int MAX_TEST_TIMEOUT_MS = 300000;   // 5 minutes
 
     private static final int Y_CLAMP_MIN = 16;
     private static final int Y_CLAMP_MAX = 235;
