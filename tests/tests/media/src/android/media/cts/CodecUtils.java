@@ -147,21 +147,6 @@ public class CodecUtils  {
 
     public native static float[] Raw2YUVStats(long[] rawStats);
 
-    public static String[] getDecoderNames(String mime, boolean isGoog) {
-        MediaCodecList mcl = new MediaCodecList(MediaCodecList.REGULAR_CODECS);
-        ArrayList<String> result = new ArrayList<String>();
-        for (MediaCodecInfo info : mcl.getCodecInfos()) {
-            CodecCapabilities caps = null;
-            try {
-                caps = info.getCapabilitiesForType(mime);
-            } catch (IllegalArgumentException e) {  // mime is not supported
-                continue;
-            }
-            result.add(info.getName());
-        }
-        return result.toArray(new String[result.size()]);
-    }
-
     public static String getImageMD5Checksum(Image image) throws Exception {
         int format = image.getFormat();
         if (ImageFormat.YUV_420_888 != format) {

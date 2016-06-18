@@ -261,27 +261,12 @@ public class VideoEncoderTest extends MediaPlayerTestBase {
 
             MediaFormat outFmt = MediaFormat.createVideoFormat(outMime, width, height);
             int bitRate = 0;
-            {
-                int maxWidth = encCaps.getSupportedWidths().getUpper();
-                int maxHeight = encCaps.getSupportedHeightsFor(maxWidth).getUpper();
-                int frameRate = mFrameRate;
-                if (frameRate <= 0) {
-                    int maxRate =
-                        encCaps.getSupportedFrameRatesFor(maxWidth, maxHeight)
-                        .getUpper().intValue();
-                    frameRate = Math.min(30, maxRate);
-                }
-                outFmt.setInteger(MediaFormat.KEY_FRAME_RATE, frameRate);
-
-                bitRate = mBitRate;
-                if (bitRate <= 0) {
-                    bitRate = encCaps.getBitrateRange().clamp(
-                        (int)(encCaps.getBitrateRange().getUpper() /
-                                Math.sqrt((double)maxWidth * maxHeight / width / height)));
-                }
-                outFmt.setInteger(MediaFormat.KEY_BIT_RATE, bitRate);
-
-                Log.d(TAG, "frame rate = " + frameRate + ", bit rate = " + bitRate);
+            MediaUtils.setMaxEncoderFrameAndBitrates(encCaps, outFmt, 30);
+            if (mFrameRate > 0) {
+                outFmt.setInteger(MediaFormat.KEY_FRAME_RATE, mFrameRate);
+            }
+            if (mBitRate > 0) {
+                outFmt.setInteger(MediaFormat.KEY_BIT_RATE, mBitRate);
             }
             outFmt.setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, 1);
             outFmt.setInteger(MediaFormat.KEY_COLOR_FORMAT, colorFormat);

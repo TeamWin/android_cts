@@ -16,6 +16,8 @@
 
 package android.video.cts;
 
+import android.cts.util.MediaUtils;
+
 import android.media.MediaCodec;
 import android.media.MediaCodecInfo;
 import android.media.MediaCodecInfo.CodecCapabilities;
@@ -53,7 +55,7 @@ public class CodecInfo {
      * @return null if the configuration is not supported.
      */
     public static CodecInfo getSupportedFormatInfo(
-            String codecName, String mimeType, int w, int h) {
+            String codecName, String mimeType, int w, int h, int maxFps) {
         MediaCodec codec;
         try {
             codec = MediaCodec.createByCodecName(codecName);
@@ -79,16 +81,11 @@ public class CodecInfo {
         }
         printIntArray("supported colors", cap.colorFormats);
 
-        VideoCapabilities vidCap = cap.getVideoCapabilities();
-        try {
-            info.mFps = vidCap.getSupportedFrameRatesFor(w, h).getUpper().intValue();
-        } catch (IllegalArgumentException e) {
-            Log.w(TAG, "unsupported size");
-            codec.release();
-            return null;
-        }
-        info.mBitRate = vidCap.getBitrateRange().getUpper();
-        Log.i(TAG, "test bit rate " + info.mBitRate + " fps " + info.mFps);
+        MediaFormat format = MediaFormat.createVideoFormat(mimeType, w, h);
+        MediaUtils.setMaxEncoderFrameAndBitrates(cap.getVideoCapabilities(), format, maxFps);
+        info.mFps = format.getInteger(MediaFormat.KEY_FRAME_RATE);
+        info.mBitRate = format.getInteger(MediaFormat.KEY_BIT_RATE);
+
         codec.release();
         return info;
     }

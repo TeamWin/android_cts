@@ -25,6 +25,7 @@ import android.media.MediaCodecList;
 import android.media.MediaExtractor;
 import android.media.MediaFormat;
 import android.net.Uri;
+import android.util.Log;
 import android.util.Range;
 
 import com.android.compatibility.common.util.DeviceReportLog;
@@ -34,11 +35,11 @@ import com.android.compatibility.common.util.ResultUnit;
 import java.lang.reflect.Method;
 import static java.lang.reflect.Modifier.isPublic;
 import static java.lang.reflect.Modifier.isStatic;
-import java.util.Arrays;
 import java.util.ArrayList;
-import java.util.Collection;
+import java.util.Arrays;
 import java.util.Map;
-import android.util.Log;
+
+import static junit.framework.Assert.assertTrue;
 
 import java.io.IOException;
 
@@ -158,6 +159,69 @@ public class MediaUtils {
      *  ------------------- HELPER METHODS FOR CHECKING CODEC SUPPORT -------------------
      */
 
+    // returns the list of codecs that support any one of the formats
+    private static String[] getCodecNames(
+            boolean isEncoder, Boolean isGoog, MediaFormat... formats) {
+        MediaCodecList mcl = new MediaCodecList(MediaCodecList.REGULAR_CODECS);
+        ArrayList<String> result = new ArrayList<>();
+        for (MediaCodecInfo info : mcl.getCodecInfos()) {
+            if (info.isEncoder() != isEncoder) {
+                continue;
+            }
+            if (isGoog != null
+                    && info.getName().toLowerCase().startsWith("omx.google.") != isGoog) {
+                continue;
+            }
+
+            for (MediaFormat format : formats) {
+                String mime = format.getString(MediaFormat.KEY_MIME);
+
+                CodecCapabilities caps = null;
+                try {
+                    caps = info.getCapabilitiesForType(mime);
+                } catch (IllegalArgumentException e) {  // mime is not supported
+                    continue;
+                }
+                if (caps.isFormatSupported(format)) {
+                    result.add(info.getName());
+                    break;
+                }
+            }
+        }
+        return result.toArray(new String[result.size()]);
+    }
+
+    /* Use isGoog = null to query all decoders */
+    public static String[] getDecoderNames(/* Nullable */ Boolean isGoog, MediaFormat... formats) {
+        return getCodecNames(false /* isEncoder */, isGoog, formats);
+    }
+
+    public static String[] getDecoderNames(MediaFormat... formats) {
+        return getCodecNames(false /* isEncoder */, null /* isGoog */, formats);
+    }
+
+    /* Use isGoog = null to query all decoders */
+    public static String[] getEncoderNames(/* Nullable */ Boolean isGoog, MediaFormat... formats) {
+        return getCodecNames(true /* isEncoder */, isGoog, formats);
+    }
+
+    public static String[] getEncoderNames(MediaFormat... formats) {
+        return getCodecNames(true /* isEncoder */, null /* isGoog */, formats);
+    }
+
+    public static void verifyNumCodecs(
+            int count, boolean isEncoder, Boolean isGoog, MediaFormat... formats) {
+        String desc = (isEncoder ? "encoders" : "decoders") + " for "
+                + (formats.length == 1 ? formats[0].toString() : Arrays.toString(formats));
+        if (isGoog != null) {
+            desc = (isGoog ? "Google " : "non-Google ") + desc;
+        }
+
+        String[] codecs = getCodecNames(isEncoder, isGoog, formats);
+        assertTrue("test can only verify " + count + " " + desc + "; found " + codecs.length + ": "
+                + Arrays.toString(codecs), codecs.length <= count);
+    }
+
     public static MediaCodec getDecoder(MediaFormat format) {
         String decoder = sMCL.findDecoderForFormat(format);
         if (decoder != null) {
@@ -186,13 +250,31 @@ public class MediaUtils {
     }
 
     public static boolean supports(String codecName, String mime, int w, int h) {
+        // While this could be simply written as such, give more graceful feedback.
+        // MediaFormat format = MediaFormat.createVideoFormat(mime, w, h);
+        // return supports(codecName, format);
+
+        VideoCapabilities vidCap = getVideoCapabilities(codecName, mime);
+        if (vidCap == null) {
+            return false;
+        } else if (vidCap.isSizeSupported(w, h)) {
+            return true;
+        }
+
+        Log.w(TAG, "unsupported size " + w + "x" + h);
+        return false;
+    }
+
+    public static boolean supports(String codecName, MediaFormat format) {
         MediaCodec codec;
         try {
             codec = MediaCodec.createByCodecName(codecName);
         } catch (IOException e) {
+            Log.w(TAG, "codec not found: " + codecName);
             return false;
         }
 
+        String mime = format.getString(MediaFormat.KEY_MIME);
         CodecCapabilities cap = null;
         try {
             cap = codec.getCodecInfo().getCapabilitiesForType(mime);
@@ -202,21 +284,7 @@ public class MediaUtils {
             return false;
         }
 
-        VideoCapabilities vidCap = cap.getVideoCapabilities();
-        if (vidCap == null) {
-            Log.w(TAG, "not a video codec: " + codecName);
-            codec.release();
-            return false;
-        }
-        try {
-            Range<Double> fps = vidCap.getSupportedFrameRatesFor(w, h);
-        } catch (IllegalArgumentException e) {
-            Log.w(TAG, "unsupported size " + w + "x" + h);
-            codec.release();
-            return false;
-        }
-        codec.release();
-        return true;
+        return cap.isFormatSupported(format);
     }
 
     public static boolean hasCodecForTrack(MediaExtractor ex, int track) {
@@ -424,6 +492,23 @@ public class MediaUtils {
         return canDecode(format);
     }
 
+    public static boolean canDecodeVideo(
+            String mime, int width, int height, float rate,
+            Integer profile, Integer level, Integer bitrate) {
+        MediaFormat format = MediaFormat.createVideoFormat(mime, width, height);
+        format.setFloat(MediaFormat.KEY_FRAME_RATE, rate);
+        if (profile != null) {
+            format.setInteger(MediaFormat.KEY_PROFILE, profile);
+            if (level != null) {
+                format.setInteger(MediaFormat.KEY_LEVEL, level);
+            }
+        }
+        if (bitrate != null) {
+            format.setInteger(MediaFormat.KEY_BIT_RATE, bitrate);
+        }
+        return canDecode(format);
+    }
+
     public static boolean checkEncoderForFormat(MediaFormat format) {
         return check(canEncode(format), "no encoder for " + format);
     }
@@ -435,6 +520,58 @@ public class MediaUtils {
     /*
      *  ----------------------- HELPER METHODS FOR MEDIA HANDLING -----------------------
      */
+
+    public static VideoCapabilities getVideoCapabilities(String codecName, String mime) {
+        for (MediaCodecInfo info : sMCL.getCodecInfos()) {
+            if (!info.getName().equalsIgnoreCase(codecName)) {
+                continue;
+            }
+            CodecCapabilities caps;
+            try {
+                caps = info.getCapabilitiesForType(mime);
+            } catch (IllegalArgumentException e) {
+                // mime is not supported
+                Log.w(TAG, "not supported mime: " + mime);
+                return null;
+            }
+            VideoCapabilities vidCaps = caps.getVideoCapabilities();
+            if (vidCaps == null) {
+                Log.w(TAG, "not a video codec: " + codecName);
+            }
+            return vidCaps;
+        }
+        Log.w(TAG, "codec not found: " + codecName);
+        return null;
+    }
+
+    public static MediaFormat getTrackFormatForResource(
+            Context context, int resourceId, String mimeTypePrefix)
+            throws IOException {
+        MediaFormat format = null;
+        MediaExtractor extractor = new MediaExtractor();
+        AssetFileDescriptor afd = context.getResources().openRawResourceFd(resourceId);
+        try {
+            extractor.setDataSource(
+                    afd.getFileDescriptor(), afd.getStartOffset(), afd.getLength());
+        } finally {
+            afd.close();
+        }
+        int trackIndex;
+        for (trackIndex = 0; trackIndex < extractor.getTrackCount(); trackIndex++) {
+            MediaFormat trackMediaFormat = extractor.getTrackFormat(trackIndex);
+            if (trackMediaFormat.getString(MediaFormat.KEY_MIME).startsWith(mimeTypePrefix)) {
+                format = trackMediaFormat;
+                break;
+            }
+        }
+        extractor.release();
+        afd.close();
+        if (format == null) {
+            throw new RuntimeException("couldn't get a track for " + mimeTypePrefix);
+        }
+
+        return format;
+    }
 
     public static MediaExtractor createMediaExtractorForMimeType(
             Context context, int resourceId, String mimeTypePrefix)
@@ -463,27 +600,36 @@ public class MediaUtils {
         return extractor;
     }
 
-    /**
-     * return mime type of the resourceId
+    /*
+     *  ---------------------- HELPER METHODS FOR CODEC CONFIGURATION
      */
-    public static Collection<String> getDecodersForFormat(MediaFormat format) {
-        ArrayList<String> decoders = new ArrayList<String>();
+
+    /** Format must contain mime, width and height.
+     *  Throws Exception if encoder does not support this width and height */
+    public static void setMaxEncoderFrameAndBitrates(
+            MediaCodec encoder, MediaFormat format, int maxFps) {
         String mime = format.getString(MediaFormat.KEY_MIME);
-        MediaCodecList mcl = new MediaCodecList(MediaCodecList.REGULAR_CODECS);
-        for (MediaCodecInfo info : mcl.getCodecInfos()) {
-            if (info.isEncoder()) {
-                continue;
-            }
-            CodecCapabilities caps = null;
-            try {
-                caps = info.getCapabilitiesForType(mime);
-            } catch (IllegalArgumentException e) {  // mime is not supported
-                continue;
-            }
-            if (caps.isFormatSupported(format))
-                decoders.add(info.getName());
-        }
-        return decoders;
+
+        VideoCapabilities vidCaps =
+            encoder.getCodecInfo().getCapabilitiesForType(mime).getVideoCapabilities();
+        setMaxEncoderFrameAndBitrates(vidCaps, format, maxFps);
+    }
+
+    public static void setMaxEncoderFrameAndBitrates(
+            VideoCapabilities vidCaps, MediaFormat format, int maxFps) {
+        int width = format.getInteger(MediaFormat.KEY_WIDTH);
+        int height = format.getInteger(MediaFormat.KEY_HEIGHT);
+
+        int maxWidth = vidCaps.getSupportedWidths().getUpper();
+        int maxHeight = vidCaps.getSupportedHeightsFor(maxWidth).getUpper();
+        int frameRate = Math.min(
+                maxFps, vidCaps.getSupportedFrameRatesFor(width, height).getUpper().intValue());
+        format.setInteger(MediaFormat.KEY_FRAME_RATE, frameRate);
+
+        int bitrate = vidCaps.getBitrateRange().clamp(
+            (int)(vidCaps.getBitrateRange().getUpper() /
+                  Math.sqrt((double)maxWidth * maxHeight / width / height)));
+        format.setInteger(MediaFormat.KEY_BIT_RATE, bitrate);
     }
 
     /*
@@ -578,6 +724,83 @@ public class MediaUtils {
             return new Stats(avgs);
         }
 
+        /** returns the statistics for the moving average over a window over the
+         *  cumulative sum. Basically, moves a window from: [0, window] to
+         *  [sum - window, sum] over the cumulative sum, over ((sum - window) / average)
+         *  steps, and returns the average value over each window.
+         *  This method is used to average time-diff data over a window of a constant time.
+         */
+        public Stats movingAverageOverSum(double window) {
+            if (window <= 0 || mNum < 1) {
+                return new Stats(null);
+            }
+
+            analyze();
+            double average = mSumX / mNum;
+            if (window >= mSumX) {
+                return new Stats(new double[] { average });
+            }
+            int samples = (int)Math.ceil((mSumX - window) / average);
+            double[] avgs = new double[samples];
+
+            // A somewhat brute force approach to calculating the moving average.
+            // TODO: add support for weights in Stats, so we can do a more refined approach.
+            double sum = 0; // sum of elements in the window
+            int num = 0; // number of elements in the moving window
+            int bi = 0; // index of the first element in the moving window
+            int ei = 0; // index of the last element in the moving window
+            double space = window; // space at the end of the window
+            double foot = 0; // space at the beginning of the window
+
+            // invariants: foot + sum + space == window
+            //             bi + num == ei
+            //
+            //  window:             |-------------------------------|
+            //                      |    <-----sum------>           |
+            //                      <foot>               <---space-->
+            //                           |               |
+            //  intervals:   |-----------|-------|-------|--------------------|--------|
+            //                           ^bi             ^ei
+
+            int ix = 0; // index in the result
+            while (ix < samples) {
+                // add intervals while there is space in the window
+                while (ei < mData.length && mData[ei] <= space) {
+                    space -= mData[ei];
+                    sum += mData[ei];
+                    num++;
+                    ei++;
+                }
+
+                // calculate average over window and deal with odds and ends (e.g. if there are no
+                // intervals in the current window: pick whichever element overlaps the window
+                // most.
+                if (num > 0) {
+                    avgs[ix++] = sum / num;
+                } else if (bi > 0 && foot > space) {
+                    // consider previous
+                    avgs[ix++] = mData[bi - 1];
+                } else if (ei == mData.length) {
+                    break;
+                } else {
+                    avgs[ix++] = mData[ei];
+                }
+
+                // move the window to the next position
+                foot -= average;
+                space += average;
+
+                // remove intervals that are now partially or wholly outside of the window
+                while (bi < ei && foot < 0) {
+                    foot += mData[bi];
+                    sum -= mData[bi];
+                    num--;
+                    bi++;
+                }
+            }
+            return new Stats(Arrays.copyOf(avgs, ix));
+        }
+
         /** calculate mSortedData */
         private void sort() {
             if (mSorted || mNum == 0) {
@@ -628,98 +851,6 @@ public class MediaUtils {
     }
 
     /*
-     *  ------------------ HELPER METHODS FOR ACHIEVABLE FRAME RATES ------------------
+     *  -------------------------------------- END --------------------------------------
      */
-
-    /**
-     * logs results for achievable frame rates test. prefix must be lowercase alphanumeric
-     * underscored format.
-     */
-    public static String logAchievableRatesResults(DeviceReportLog log, String prefix,
-            String message, Stats stats) {
-        String msg = message;
-        msg += " num=" + stats.getNum()
-                + " avg=" + Math.round(stats.getAverage() / 1000)
-                + " stdev=" + Math.round(stats.getStdev() / 1000);
-        log.addValue(prefix + "_num", stats.getNum(), ResultType.NEUTRAL, ResultUnit.NONE);
-        log.addValue(prefix + "_avg", Math.round(stats.getAverage() / 1000), ResultType.NEUTRAL,
-                ResultUnit.NONE);
-        log.addValue(prefix + "_stdev", Math.round(stats.getStdev() / 1000), ResultType.NEUTRAL,
-                ResultUnit.NONE);
-        String[] labels = {
-                "min", "p5", "p10", "p20", "p30", "p40", "p50", "p60", "p70", "p80", "p90", "p95",
-                "max" };
-        double[] percentiles = stats.getPercentiles(new double[] {
-                0, 5, 10, 20, 30, 40, 50, 60, 70, 80, 90, 95, 100 });
-
-        for (int i = 0; i < labels.length; ++i) {
-            msg += " " + labels[i] + "=" + Math.round(percentiles[i] / 1000);
-            log.addValue(prefix + "_" + labels[i], Math.round(percentiles[i] / 1000),
-                    ResultType.NEUTRAL, ResultUnit.NONE);
-        }
-
-        log.addValue(prefix + "_fps", 1000000000 / stats.getMin(), ResultType.HIGHER_BETTER,
-                ResultUnit.FPS);
-        Log.i(TAG, msg);
-        return msg;
-    }
-
-    public static VideoCapabilities getVideoCapabilities(String codecName, String mime) {
-        for (MediaCodecInfo info : sMCL.getCodecInfos()) {
-            if (!info.getName().equalsIgnoreCase(codecName)) {
-                continue;
-            }
-            CodecCapabilities caps;
-            try {
-                caps = info.getCapabilitiesForType(mime);
-            } catch (IllegalArgumentException e) {
-                // mime is not supported
-                continue;
-            }
-            return caps.getVideoCapabilities();
-        }
-        return null;
-    }
-
-    public static Range<Double> getAchievableFrameRatesFor(
-            String codecName, String mimeType, int width, int height) {
-        VideoCapabilities cap = getVideoCapabilities(codecName, mimeType);
-        if (cap == null) {
-            return null;
-        }
-        return cap.getAchievableFrameRatesFor(width, height);
-    }
-
-    private static final double FRAMERATE_TOLERANCE = Math.sqrt(12.1);
-    public static boolean verifyResults(String name, String mime, int w, int h, double measured) {
-        Range<Double> reported = getAchievableFrameRatesFor(name, mime, w, h);
-        if (reported == null) {
-            Log.d(TAG, "Failed to getAchievableFrameRatesFor " +
-                    name + " " + mime + " " + w + "x" + h);
-            return false;
-        }
-        double lowerBoundary1 = reported.getLower() / FRAMERATE_TOLERANCE;
-        double upperBoundary1 = reported.getUpper() * FRAMERATE_TOLERANCE;
-        double lowerBoundary2 = reported.getUpper() / Math.pow(FRAMERATE_TOLERANCE, 2);
-        double upperBoundary2 = reported.getLower() * Math.pow(FRAMERATE_TOLERANCE, 2);
-        Log.d(TAG, name + " " + mime + " " + w + "x" + h + " " +
-                "lowerBoundary1 " + lowerBoundary1 + " upperBoundary1 " + upperBoundary1 +
-                " lowerBoundary2 " + lowerBoundary2 + " upperBoundary2 " + upperBoundary2 +
-                " measured " + measured);
-        return (measured >= lowerBoundary1 && measured <= upperBoundary1 &&
-                measured >= lowerBoundary2 && measured <= upperBoundary2);
-    }
-
-    public static String getErrorMessage(
-            Range<Double> reportedRange, double[] measuredFps, String[] rawData) {
-        String msg = "";
-        if (reportedRange == null) {
-            msg += "Failed to get achievable frame rate.\n";
-        } else {
-            msg += "Expected achievable frame rate range: " + reportedRange + ".\n";
-        }
-        msg += "Measured frame rate: " + Arrays.toString(measuredFps) + ".\n";
-        msg += "Raw data: " + Arrays.toString(rawData) + ".\n";
-        return msg;
-    }
 }
