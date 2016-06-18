@@ -47,10 +47,11 @@ import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.List;
 import java.util.zip.CRC32;
 import java.util.concurrent.TimeUnit;
+
+import static android.media.MediaCodecInfo.CodecProfileLevel.*;
 
 public class DecoderTest extends MediaPlayerTestBase {
     private static final String TAG = "DecoderTest";
@@ -289,24 +290,6 @@ public class DecoderTest extends MediaPlayerTestBase {
         return 1;
       }
 
-    private static String[] getDecoderNames(String mime) {
-        MediaCodecList mcl = new MediaCodecList(MediaCodecList.REGULAR_CODECS);
-        ArrayList<String> result = new ArrayList<String>();
-        for (MediaCodecInfo info : mcl.getCodecInfos()) {
-            if (info.isEncoder()) {
-                continue;
-            }
-            CodecCapabilities caps = null;
-            try {
-                caps = info.getCapabilitiesForType(mime);
-            } catch (IllegalArgumentException e) {  // mime is not supported
-                continue;
-            }
-            result.add(info.getName());
-        }
-        return result.toArray(new String[result.size()]);
-    }
-
     /**
      * Test ColorAspects of all the AVC decoders. Decoders should handle
      * the colors aspects presented in both the mp4 atom 'colr' and VUI
@@ -322,19 +305,36 @@ public class DecoderTest extends MediaPlayerTestBase {
      *  color_176x144_bt601_fr_sdr_h264 |  1  6  6  0  |  5  2  2  1
      */
     public void testH264ColorAspects() throws Exception {
-        String[] decoderNames = getDecoderNames(MediaFormat.MIMETYPE_VIDEO_AVC);
-        for (String decoderName: decoderNames) {
-            testColorAspects(
-                    decoderName, R.raw.color_176x144_bt709_lr_sdr_h264, 1 /* testId */,
-                    MediaFormat.COLOR_RANGE_LIMITED, MediaFormat.COLOR_STANDARD_BT709, MediaFormat.COLOR_TRANSFER_SDR_VIDEO);
-            testColorAspects(
-                    decoderName, R.raw.color_176x144_bt601_fr_sdr_h264, 2 /* testId */,
-                    MediaFormat.COLOR_RANGE_FULL, MediaFormat.COLOR_STANDARD_BT601_PAL, MediaFormat.COLOR_TRANSFER_SDR_VIDEO);
+        testColorAspects(
+                R.raw.color_176x144_bt709_lr_sdr_h264, 1 /* testId */,
+                MediaFormat.COLOR_RANGE_LIMITED, MediaFormat.COLOR_STANDARD_BT709,
+                MediaFormat.COLOR_TRANSFER_SDR_VIDEO);
+        testColorAspects(
+                R.raw.color_176x144_bt601_fr_sdr_h264, 2 /* testId */,
+                MediaFormat.COLOR_RANGE_FULL, MediaFormat.COLOR_STANDARD_BT601_PAL,
+                MediaFormat.COLOR_TRANSFER_SDR_VIDEO);
+    }
+
+    private void testColorAspects(
+            int res, int testId, int expectRange, int expectStandard, int expectTransfer)
+            throws Exception {
+        MediaFormat format = MediaUtils.getTrackFormatForResource(mContext, res, "video");
+        MediaFormat mimeFormat = new MediaFormat();
+        mimeFormat.setString(MediaFormat.KEY_MIME, format.getString(MediaFormat.KEY_MIME));
+
+        for (String decoderName: MediaUtils.getDecoderNames(mimeFormat)) {
+            if (!MediaUtils.supports(decoderName, format)) {
+                MediaUtils.skipTest(decoderName + " cannot play resource " + res);
+            } else {
+                testColorAspects(
+                        decoderName, res, testId, expectRange, expectStandard, expectTransfer);
+            }
         }
     }
 
     private void testColorAspects(
-            String decoderName, int res, int testId, int expectRange, int expectStandard, int expectTransfer) throws Exception {
+            String decoderName, int res, int testId, int expectRange,
+            int expectStandard, int expectTransfer) throws Exception {
         AssetFileDescriptor fd = mResources.openRawResourceFd(res);
         MediaExtractor ex = new MediaExtractor();
         ex.setDataSource(fd.getFileDescriptor(), fd.getStartOffset(), fd.getLength());
@@ -364,6 +364,7 @@ public class DecoderTest extends MediaPlayerTestBase {
                     if (n < 0) {
                         flags = MediaCodec.BUFFER_FLAG_END_OF_STREAM;
                         sawInputEOS = true;
+                        n = 0;
                     }
                     dec.queueInputBuffer(bufidx, 0, n, time, flags);
                     ex.advance();
@@ -397,16 +398,25 @@ public class DecoderTest extends MediaPlayerTestBase {
             }
         }
 
-        DeviceReportLog log = new DeviceReportLog();
         String reportName = decoderName + "_colorAspectsTest Test " + testId +
                 " (Get R: " + colorRange + " S: " + colorStandard + " T: " + colorTransfer + ")" +
                 " (Expect R: " + expectRange + " S: " + expectStandard + " T: " + expectTransfer + ")";
         Log.d(TAG, reportName);
 
+        DeviceReportLog log = new DeviceReportLog("CtsMediaTestCases", "color_aspects_test");
+        log.addValue("decoder_name", decoderName, ResultType.NEUTRAL, ResultUnit.NONE);
+        log.addValue("test_id", testId, ResultType.NEUTRAL, ResultUnit.NONE);
+        log.addValues(
+                "rst_actual", new int[] { colorRange, colorStandard, colorTransfer },
+                ResultType.NEUTRAL, ResultUnit.NONE);
+        log.addValues(
+                "rst_expected", new int[] { expectRange, expectStandard, expectTransfer },
+                ResultType.NEUTRAL, ResultUnit.NONE);
+
         if (rangeMatch && colorMatch && transferMatch) {
-            log.addValue(reportName + " Result: ", 1, ResultType.NEUTRAL, ResultUnit.NONE);
+            log.setSummary("result", 1, ResultType.HIGHER_BETTER, ResultUnit.COUNT);
         } else {
-            log.addValue(reportName + " Result: ", 0, ResultType.NEUTRAL, ResultUnit.NONE);
+            log.setSummary("result", 0, ResultType.HIGHER_BETTER, ResultUnit.COUNT);
         }
         log.submit(getInstrumentation());
 
@@ -1532,7 +1542,8 @@ public class DecoderTest extends MediaPlayerTestBase {
     }
 
     public void testCodecBasicHEVC() throws Exception {
-        testDecode(R.raw.video_1280x720_mp4_hevc_1150kbps_30fps_aac_stereo_128kbps_48000hz, 300);
+        testDecode(
+                R.raw.bbb_s1_720x480_mp4_hevc_mp3_1600kbps_30fps_aac_he_6ch_240kbps_48000hz, 300);
     }
 
     public void testCodecBasicH263() throws Exception {
@@ -1552,83 +1563,113 @@ public class DecoderTest extends MediaPlayerTestBase {
     }
 
     public void testH264Decode320x240() throws Exception {
-        testDecode(R.raw.video_320x240_mp4_h264_800kbps_30fps_aac_stereo_128kbps_44100hz, 299);
+        testDecode(R.raw.bbb_s1_320x240_mp4_h264_mp2_800kbps_30fps_aac_lc_5ch_240kbps_44100hz, 300);
     }
 
     public void testH264Decode720x480() throws Exception {
-        testDecode(R.raw.video_720x480_mp4_h264_2048kbps_30fps_aac_stereo_128kbps_44100hz, 299);
+        testDecode(R.raw.bbb_s1_720x480_mp4_h264_mp3_2mbps_30fps_aac_lc_5ch_320kbps_48000hz, 300);
     }
 
     public void testH264Decode30fps1280x720Tv() throws Exception {
         if (checkTv()) {
-            assertTrue(MediaUtils.canDecodeVideo(MediaFormat.MIMETYPE_VIDEO_AVC, 1280, 720, 30));
+            assertTrue(MediaUtils.canDecodeVideo(
+                    MediaFormat.MIMETYPE_VIDEO_AVC, 1280, 720, 30,
+                    AVCProfileHigh, AVCLevel31, 8000000));
         }
     }
 
     public void testH264SecureDecode30fps1280x720Tv() throws Exception {
         if (checkTv()) {
-            verifySecureVideoDecodeSupport(MediaFormat.MIMETYPE_VIDEO_AVC, 1280, 720, 30);
+            verifySecureVideoDecodeSupport(
+                    MediaFormat.MIMETYPE_VIDEO_AVC, 1280, 720, 30,
+                    AVCProfileHigh, AVCLevel31, 8000000);
         }
     }
 
     public void testH264Decode30fps1280x720() throws Exception {
-        testDecode(R.raw.video_1280x720_mp4_h264_8192kbps_30fps_aac_stereo_128kbps_44100hz, 299);
+        testDecode(R.raw.bbb_s4_1280x720_mp4_h264_mp31_8mbps_30fps_aac_he_mono_40kbps_44100hz, 300);
     }
 
     public void testH264Decode60fps1280x720Tv() throws Exception {
         if (checkTv()) {
-            assertTrue(MediaUtils.canDecodeVideo(MediaFormat.MIMETYPE_VIDEO_AVC, 1280, 720, 60));
+            assertTrue(MediaUtils.canDecodeVideo(
+                    MediaFormat.MIMETYPE_VIDEO_AVC, 1280, 720, 60,
+                    AVCProfileHigh, AVCLevel32, 8000000));
+            testDecode(
+                    R.raw.bbb_s3_1280x720_mp4_h264_hp32_8mbps_60fps_aac_he_v2_stereo_48kbps_48000hz,
+                    600);
         }
     }
 
     public void testH264SecureDecode60fps1280x720Tv() throws Exception {
         if (checkTv()) {
-            verifySecureVideoDecodeSupport(MediaFormat.MIMETYPE_VIDEO_AVC, 1280, 720, 60);
+            verifySecureVideoDecodeSupport(
+                    MediaFormat.MIMETYPE_VIDEO_AVC, 1280, 720, 60,
+                    AVCProfileHigh, AVCLevel32, 8000000);
         }
     }
 
     public void testH264Decode60fps1280x720() throws Exception {
-        testDecode(R.raw.video_1280x720_mp4_h264_8192kbps_60fps_aac_stereo_128kbps_44100hz, 596);
+        testDecode(
+            R.raw.bbb_s3_1280x720_mp4_h264_mp32_8mbps_60fps_aac_he_v2_6ch_144kbps_44100hz, 600);
     }
 
     public void testH264Decode30fps1920x1080Tv() throws Exception {
         if (checkTv()) {
-            assertTrue(MediaUtils.canDecodeVideo(MediaFormat.MIMETYPE_VIDEO_AVC, 1920, 1080, 30));
+            assertTrue(MediaUtils.canDecodeVideo(
+                    MediaFormat.MIMETYPE_VIDEO_AVC, 1920, 1080, 30,
+                    AVCProfileHigh, AVCLevel4, 20000000));
+            testDecode(
+                    R.raw.bbb_s4_1920x1080_wide_mp4_h264_hp4_20mbps_30fps_aac_lc_6ch_384kbps_44100hz,
+                    150);
         }
     }
 
     public void testH264SecureDecode30fps1920x1080Tv() throws Exception {
         if (checkTv()) {
-            verifySecureVideoDecodeSupport(MediaFormat.MIMETYPE_VIDEO_AVC, 1920, 1080, 30);
+            verifySecureVideoDecodeSupport(
+                    MediaFormat.MIMETYPE_VIDEO_AVC, 1920, 1080, 30,
+                    AVCProfileHigh, AVCLevel4, 20000000);
         }
     }
 
     public void testH264Decode30fps1920x1080() throws Exception {
-        testDecode(R.raw.video_1920x1080_mp4_h264_20480kbps_30fps_aac_stereo_128kbps_44100hz, 299);
+        testDecode(
+                R.raw.bbb_s4_1920x1080_wide_mp4_h264_mp4_20mbps_30fps_aac_he_5ch_200kbps_44100hz,
+                150);
     }
 
     public void testH264Decode60fps1920x1080Tv() throws Exception {
         if (checkTv()) {
-            assertTrue(MediaUtils.canDecodeVideo(MediaFormat.MIMETYPE_VIDEO_AVC, 1920, 1080, 60));
+            assertTrue(MediaUtils.canDecodeVideo(
+                    MediaFormat.MIMETYPE_VIDEO_AVC, 1920, 1080, 60,
+                    AVCProfileHigh, AVCLevel42, 20000000));
+            testDecode(
+                    R.raw.bbb_s2_1920x1080_mp4_h264_hp42_20mbps_60fps_aac_lc_6ch_384kbps_48000hz,
+                    300);
         }
     }
 
     public void testH264SecureDecode60fps1920x1080Tv() throws Exception {
         if (checkTv()) {
-            verifySecureVideoDecodeSupport(MediaFormat.MIMETYPE_VIDEO_AVC, 1920, 1080, 60);
+            verifySecureVideoDecodeSupport(
+                    MediaFormat.MIMETYPE_VIDEO_AVC, 1920, 1080, 60,
+                    AVCProfileHigh, AVCLevel42, 20000000);
         }
     }
 
     public void testH264Decode60fps1920x1080() throws Exception {
-        testDecode(R.raw.video_1920x1080_mp4_h264_20480kbps_60fps_aac_stereo_128kbps_44100hz, 596);
+        testDecode(
+                R.raw.bbb_s2_1920x1080_mp4_h264_mp42_20mbps_60fps_aac_he_v2_5ch_160kbps_48000hz,
+                300);
     }
 
-    public void testVP8Decode320x240() throws Exception {
-        testDecode(R.raw.video_320x240_webm_vp8_800kbps_30fps_vorbis_stereo_128kbps_44100hz, 249);
+    public void testVP8Decode320x180() throws Exception {
+        testDecode(R.raw.bbb_s1_320x180_webm_vp8_800kbps_30fps_opus_5ch_320kbps_48000hz, 300);
     }
 
     public void testVP8Decode640x360() throws Exception {
-        testDecode(R.raw.video_640x360_webm_vp8_2048kbps_30fps_vorbis_stereo_128kbps_48000hz, 249);
+        testDecode(R.raw.bbb_s1_640x360_webm_vp8_2mbps_30fps_vorbis_5ch_320kbps_48000hz, 300);
     }
 
     public void testVP8Decode30fps1280x720Tv() throws Exception {
@@ -1638,7 +1679,7 @@ public class DecoderTest extends MediaPlayerTestBase {
     }
 
     public void testVP8Decode30fps1280x720() throws Exception {
-        testDecode(R.raw.video_1280x720_webm_vp8_8192kbps_30fps_vorbis_stereo_128kbps_48000hz, 249);
+        testDecode(R.raw.bbb_s4_1280x720_webm_vp8_8mbps_30fps_opus_mono_64kbps_48000hz, 300);
     }
 
     public void testVP8Decode60fps1280x720Tv() throws Exception {
@@ -1648,7 +1689,7 @@ public class DecoderTest extends MediaPlayerTestBase {
     }
 
     public void testVP8Decode60fps1280x720() throws Exception {
-        testDecode(R.raw.video_1280x720_webm_vp8_8192kbps_60fps_vorbis_stereo_128kbps_48000hz, 249);
+        testDecode(R.raw.bbb_s3_1280x720_webm_vp8_8mbps_60fps_opus_6ch_384kbps_48000hz, 600);
     }
 
     public void testVP8Decode30fps1920x1080Tv() throws Exception {
@@ -1658,8 +1699,8 @@ public class DecoderTest extends MediaPlayerTestBase {
     }
 
     public void testVP8Decode30fps1920x1080() throws Exception {
-        testDecode(R.raw.video_1920x1080_webm_vp8_20480kbps_30fps_vorbis_stereo_128kbps_48000hz,
-                249);
+        testDecode(
+                R.raw.bbb_s4_1920x1080_wide_webm_vp8_20mbps_30fps_vorbis_6ch_384kbps_44100hz, 150);
     }
 
     public void testVP8Decode60fps1920x1080Tv() throws Exception {
@@ -1669,16 +1710,17 @@ public class DecoderTest extends MediaPlayerTestBase {
     }
 
     public void testVP8Decode60fps1920x1080() throws Exception {
-        testDecode(R.raw.video_1920x1080_webm_vp8_20480kbps_60fps_vorbis_stereo_128kbps_44100hz,
-                249);
+        testDecode(R.raw.bbb_s2_1920x1080_webm_vp8_20mbps_60fps_vorbis_6ch_384kbps_48000hz, 300);
     }
 
-    public void testVP9Decode320x240() throws Exception {
-        testDecode(R.raw.video_320x240_webm_vp9_600kbps_30fps_vorbis_stereo_128kbps_48000hz, 249);
+    public void testVP9Decode320x180() throws Exception {
+        testDecode(R.raw.bbb_s1_320x180_webm_vp9_0p11_600kbps_30fps_vorbis_mono_64kbps_48000hz, 300);
     }
 
     public void testVP9Decode640x360() throws Exception {
-        testDecode(R.raw.video_640x360_webm_vp9_1600kbps_30fps_vorbis_stereo_128kbps_48000hz, 249);
+        testDecode(
+                R.raw.bbb_s1_640x360_webm_vp9_0p21_1600kbps_30fps_vorbis_stereo_128kbps_48000hz,
+                300);
     }
 
     public void testVP9Decode30fps1280x720Tv() throws Exception {
@@ -1688,49 +1730,69 @@ public class DecoderTest extends MediaPlayerTestBase {
     }
 
     public void testVP9Decode30fps1280x720() throws Exception {
-        testDecode(R.raw.video_1280x720_webm_vp9_4096kbps_30fps_vorbis_stereo_128kbps_44100hz, 249);
+        testDecode(
+                R.raw.bbb_s4_1280x720_webm_vp9_0p31_4mbps_30fps_opus_stereo_128kbps_48000hz, 300);
     }
 
-    public void testVP9Decode30fps1920x1080() throws Exception {
-        testDecode(R.raw.video_1920x1080_webm_vp9_10240kbps_30fps_vorbis_stereo_128kbps_48000hz,
-                249);
+    public void testVP9Decode60fps1920x1080() throws Exception {
+        testDecode(
+                R.raw.bbb_s2_1920x1080_webm_vp9_0p41_10mbps_60fps_vorbis_6ch_384kbps_22050hz, 300);
     }
 
     public void testVP9Decode30fps3840x2160() throws Exception {
-        testDecode(R.raw.video_3840x2160_webm_vp9_20480kbps_30fps_vorbis_stereo_128kbps_48000hz,
-                249);
+        testDecode(
+                R.raw.bbb_s4_3840x2160_webm_vp9_0p5_20mbps_30fps_vorbis_6ch_384kbps_24000hz, 150);
+    }
+
+    public void testVP9Decode60fps3840x2160() throws Exception {
+        testDecode(
+                R.raw.bbb_s2_3840x2160_webm_vp9_0p51_20mbps_60fps_vorbis_6ch_384kbps_32000hz, 300);
     }
 
     public void testHEVCDecode352x288() throws Exception {
-        testDecode(R.raw.video_352x288_mp4_hevc_600kbps_30fps_aac_stereo_128kbps_44100hz, 299);
+        testDecode(
+                R.raw.bbb_s1_352x288_mp4_hevc_mp2_600kbps_30fps_aac_he_stereo_96kbps_48000hz, 300);
     }
 
-    public void testHEVCDecode640x360() throws Exception {
-        testDecode(R.raw.video_640x360_mp4_hevc_1638kbps_30fps_aac_stereo_128kbps_44100hz, 299);
+    public void testHEVCDecode720x480() throws Exception {
+        testDecode(
+                R.raw.bbb_s1_720x480_mp4_hevc_mp3_1600kbps_30fps_aac_he_6ch_240kbps_48000hz, 300);
     }
 
     public void testHEVCDecode30fps1280x720Tv() throws Exception {
         if (checkTv()) {
-            assertTrue(MediaUtils.canDecodeVideo(MediaFormat.MIMETYPE_VIDEO_HEVC, 1280, 720, 30));
+            assertTrue(MediaUtils.canDecodeVideo(
+                    MediaFormat.MIMETYPE_VIDEO_HEVC, 1280, 720, 30,
+                    HEVCProfileMain, HEVCMainTierLevel31, 4000000));
         }
     }
 
     public void testHEVCDecode30fps1280x720() throws Exception {
-        testDecode(R.raw.video_1280x720_mp4_hevc_4096kbps_30fps_aac_stereo_128kbps_44100hz, 299);
+        testDecode(
+                R.raw.bbb_s4_1280x720_mp4_hevc_mp31_4mbps_30fps_aac_he_stereo_80kbps_32000hz, 300);
     }
 
     public void testHEVCDecode30fps1920x1080Tv() throws Exception {
         if (checkTv()) {
-            assertTrue(MediaUtils.canDecodeVideo(MediaFormat.MIMETYPE_VIDEO_HEVC, 1920, 1080, 30));
+            assertTrue(MediaUtils.canDecodeVideo(
+                    MediaFormat.MIMETYPE_VIDEO_HEVC, 1920, 1080, 30,
+                    HEVCProfileMain, HEVCMainTierLevel41, 10000000));
         }
     }
 
-    public void testHEVCDecode30fps1920x1080() throws Exception {
-        testDecode(R.raw.video_1920x1080_mp4_hevc_10240kbps_30fps_aac_stereo_128kbps_44100hz, 299);
+    public void testHEVCDecode60fps1920x1080() throws Exception {
+        testDecode(
+                R.raw.bbb_s2_1920x1080_mp4_hevc_mp41_10mbps_60fps_aac_lc_6ch_384kbps_22050hz, 300);
     }
 
     public void testHEVCDecode30fps3840x2160() throws Exception {
-        testDecode(R.raw.video_3840x2160_mp4_hevc_20480kbps_30fps_aac_stereo_128kbps_44100hz, 299);
+        testDecode(
+                R.raw.bbb_s4_3840x2160_mp4_hevc_mp5_20mbps_30fps_aac_lc_6ch_384kbps_24000hz, 150);
+    }
+
+    public void testHEVCDecode60fps3840x2160() throws Exception {
+        testDecode(
+                R.raw.bbb_s2_3840x2160_mp4_hevc_mp51_20mbps_60fps_aac_lc_6ch_384kbps_32000hz, 300);
     }
 
     private void testCodecEarlyEOS(int resid, int eosFrame) throws Exception {
@@ -1791,13 +1853,13 @@ public class DecoderTest extends MediaPlayerTestBase {
 
     public void testCodecResetsHEVCWithoutSurface() throws Exception {
         testCodecResets(
-                R.raw.video_1280x720_mp4_hevc_1150kbps_30fps_aac_stereo_128kbps_48000hz, null);
+                R.raw.bbb_s1_720x480_mp4_hevc_mp3_1600kbps_30fps_aac_he_6ch_240kbps_48000hz, null);
     }
 
     public void testCodecResetsHEVCWithSurface() throws Exception {
         Surface s = getActivity().getSurfaceHolder().getSurface();
         testCodecResets(
-                R.raw.video_1280x720_mp4_hevc_1150kbps_30fps_aac_stereo_128kbps_48000hz, s);
+                R.raw.bbb_s1_720x480_mp4_hevc_mp3_1600kbps_30fps_aac_he_6ch_240kbps_48000hz, s);
     }
 
     public void testCodecResetsH263WithoutSurface() throws Exception {
@@ -1878,7 +1940,8 @@ public class DecoderTest extends MediaPlayerTestBase {
         assertEquals("different number of frames when using flushed codec", frames1, frames3);
     }
 
-    private static void verifySecureVideoDecodeSupport(String mime, int width, int height, float rate) {
+    private static void verifySecureVideoDecodeSupport(
+            String mime, int width, int height, float rate, int profile, int level, int bitrate) {
         MediaFormat baseFormat = new MediaFormat();
         baseFormat.setString(MediaFormat.KEY_MIME, mime);
         baseFormat.setFeatureEnabled(CodecCapabilities.FEATURE_SecurePlayback, true);
@@ -1886,6 +1949,9 @@ public class DecoderTest extends MediaPlayerTestBase {
         MediaFormat format = MediaFormat.createVideoFormat(mime, width, height);
         format.setFeatureEnabled(CodecCapabilities.FEATURE_SecurePlayback, true);
         format.setFloat(MediaFormat.KEY_FRAME_RATE, rate);
+        format.setInteger(MediaFormat.KEY_PROFILE, profile);
+        format.setInteger(MediaFormat.KEY_LEVEL, level);
+        format.setInteger(MediaFormat.KEY_BIT_RATE, bitrate);
 
         MediaCodecList mcl = new MediaCodecList(MediaCodecList.ALL_CODECS);
         if (mcl.findDecoderForFormat(baseFormat) == null) {
@@ -1979,7 +2045,7 @@ public class DecoderTest extends MediaPlayerTestBase {
         extractor.selectTrack(0); // consider variable looping on track
         MediaFormat format = extractor.getTrackFormat(0);
 
-        Collection<String> decoderNames = MediaUtils.getDecodersForFormat(format);
+        String[] decoderNames = MediaUtils.getDecoderNames(format);
         for (String decoderName: decoderNames) {
             List<Long> outputChecksums = new ArrayList<Long>();
             List<Long> outputTimestamps = new ArrayList<Long>();
@@ -2776,13 +2842,13 @@ public class DecoderTest extends MediaPlayerTestBase {
 
         // Test throughput by decoding 1920x1080 @ 30fps x 4 instances.
         decodeInParallel(
-                R.raw.video_1920x1080_mp4_h264_20480kbps_30fps_aac_stereo_128kbps_44100hz, 299, 30,
-                4);
+                R.raw.bbb_s4_1920x1080_wide_mp4_h264_mp4_20mbps_30fps_aac_he_5ch_200kbps_44100hz,
+                150, 30, 4);
 
         // Test throughput by decoding 1920x1080 @ 60fps x 2 instances.
         decodeInParallel(
-                R.raw.video_1920x1080_mp4_h264_20480kbps_60fps_aac_stereo_128kbps_44100hz, 596, 60,
-                2);
+                R.raw.bbb_s2_1920x1080_mp4_h264_mp42_20mbps_60fps_aac_he_v2_5ch_160kbps_48000hz,
+                300, 60, 2);
     }
 
     public void testVrHighPerformanceHEVC() throws Exception {
@@ -2799,8 +2865,9 @@ public class DecoderTest extends MediaPlayerTestBase {
 
         // Test throughput by decoding 1920x1080 @ 30fps x 4 instances.
         decodeInParallel(
-                R.raw.video_1920x1080_mp4_hevc_10240kbps_30fps_aac_stereo_128kbps_44100hz, 299, 30,
-                4);
+                // using the 60fps sample to save on apk size, but decoding only at 30fps @ 5Mbps
+                R.raw.bbb_s2_1920x1080_mp4_hevc_mp41_10mbps_60fps_aac_lc_6ch_384kbps_22050hz,
+                300, 30 /* fps */, 4);
     }
 
     public void testVrHighPerformanceVP9() throws Exception {
@@ -2817,8 +2884,9 @@ public class DecoderTest extends MediaPlayerTestBase {
 
         // Test throughput by decoding 1920x1080 @ 30fps x 4 instances.
         decodeInParallel(
-                R.raw.video_1920x1080_webm_vp9_10240kbps_30fps_vorbis_stereo_128kbps_48000hz, 249,
-                30, 4);
+                // using the 60fps sample to save on apk size, but decoding only at 30fps @ 5Mbps
+                R.raw.bbb_s2_1920x1080_webm_vp9_0p41_10mbps_60fps_vorbis_6ch_384kbps_22050hz,
+                300, 30 /* fps */, 4);
     }
 
     private boolean supportsVrHighPerformance() {
