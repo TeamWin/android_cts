@@ -91,8 +91,8 @@ public class NativeDecoderTest extends MediaPlayerTestBase {
         testExtractor(R.raw.sinesweepwav);
 
         testExtractor(R.raw.video_1280x720_mp4_h264_1000kbps_25fps_aac_stereo_128kbps_44100hz);
-        testExtractor(R.raw.video_1280x720_webm_vp8_333kbps_25fps_vorbis_stereo_128kbps_44100hz);
-        testExtractor(R.raw.video_1280x720_webm_vp9_309kbps_25fps_vorbis_stereo_128kbps_48000hz);
+        testExtractor(R.raw.bbb_s3_1280x720_webm_vp8_8mbps_60fps_opus_6ch_384kbps_48000hz);
+        testExtractor(R.raw.bbb_s4_1280x720_webm_vp9_0p31_4mbps_30fps_opus_stereo_128kbps_48000hz);
         testExtractor(R.raw.video_176x144_3gp_h263_300kbps_12fps_aac_mono_24kbps_11025hz);
         testExtractor(R.raw.video_480x360_mp4_mpeg4_860kbps_25fps_aac_stereo_128kbps_44100hz);
 
@@ -193,8 +193,8 @@ public class NativeDecoderTest extends MediaPlayerTestBase {
             testDecoder(R.raw.sinesweepwav) +
 
             testDecoder(R.raw.video_1280x720_mp4_h264_1000kbps_25fps_aac_stereo_128kbps_44100hz) +
-            testDecoder(R.raw.video_1280x720_webm_vp8_333kbps_25fps_vorbis_stereo_128kbps_44100hz) +
-            testDecoder(R.raw.video_1280x720_webm_vp9_309kbps_25fps_vorbis_stereo_128kbps_48000hz) +
+            testDecoder(R.raw.bbb_s1_640x360_webm_vp8_2mbps_30fps_vorbis_5ch_320kbps_48000hz) +
+            testDecoder(R.raw.bbb_s1_640x360_webm_vp9_0p21_1600kbps_30fps_vorbis_stereo_128kbps_48000hz) +
             testDecoder(R.raw.video_176x144_3gp_h263_300kbps_12fps_aac_mono_24kbps_11025hz) +
             testDecoder(R.raw.video_480x360_mp4_mpeg4_860kbps_25fps_aac_stereo_128kbps_44100hz);
         if (testsRun == 0) {
@@ -391,9 +391,9 @@ public class NativeDecoderTest extends MediaPlayerTestBase {
             testVideoPlayback(
                     R.raw.video_1280x720_mp4_h264_1000kbps_25fps_aac_stereo_128kbps_44100hz) +
             testVideoPlayback(
-                    R.raw.video_1280x720_webm_vp8_333kbps_25fps_vorbis_stereo_128kbps_44100hz) +
+                    R.raw.bbb_s1_640x360_webm_vp8_2mbps_30fps_vorbis_5ch_320kbps_48000hz) +
             testVideoPlayback(
-                    R.raw.video_1280x720_webm_vp9_309kbps_25fps_vorbis_stereo_128kbps_48000hz) +
+                    R.raw.bbb_s1_640x360_webm_vp9_0p21_1600kbps_30fps_vorbis_stereo_128kbps_48000hz) +
             testVideoPlayback(
                     R.raw.video_176x144_3gp_h263_300kbps_12fps_aac_mono_24kbps_11025hz) +
             testVideoPlayback(
@@ -435,7 +435,7 @@ public class NativeDecoderTest extends MediaPlayerTestBase {
     }
 
     public void testMuxerVp8() throws Exception {
-        testMuxer(R.raw.video_640x360_webm_vp8_2048kbps_30fps_vorbis_stereo_128kbps_48000hz, true);
+        testMuxer(R.raw.bbb_s1_640x360_webm_vp8_2mbps_30fps_vorbis_5ch_320kbps_48000hz, true);
     }
 
     public void testMuxerVp9() throws Exception {
@@ -445,7 +445,9 @@ public class NativeDecoderTest extends MediaPlayerTestBase {
     }
 
     public void testMuxerVp9NoCsd() throws Exception {
-        testMuxer(R.raw.video_640x360_webm_vp9_1600kbps_30fps_vorbis_stereo_128kbps_48000hz, true);
+        testMuxer(
+                R.raw.bbb_s1_640x360_webm_vp9_0p21_1600kbps_30fps_vorbis_stereo_128kbps_48000hz,
+                true);
     }
 
     public void testMuxerVp9Hdr() throws Exception {
