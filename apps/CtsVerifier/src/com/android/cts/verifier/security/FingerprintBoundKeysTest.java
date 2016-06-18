@@ -59,6 +59,7 @@ import javax.crypto.NoSuchPaddingException;
 import javax.crypto.SecretKey;
 
 public class FingerprintBoundKeysTest extends PassFailButtons.Activity {
+    private static final boolean DEBUG = false;
     private static final String TAG = "FingerprintBoundKeysTest";
 
     /** Alias for our key in the Android Key Store. */
@@ -104,28 +105,11 @@ public class FingerprintBoundKeysTest extends PassFailButtons.Activity {
                 return;
             }
 
-            createKey();
-
-            try {
-                KeyStore keyStore = KeyStore.getInstance("AndroidKeyStore");
-                keyStore.load(null);
-                SecretKey secretKey = (SecretKey) keyStore.getKey(KEY_NAME, null);
-                mCipher = Cipher.getInstance(KeyProperties.KEY_ALGORITHM_AES + "/"
-                            + KeyProperties.BLOCK_MODE_CBC + "/"
-                            + KeyProperties.ENCRYPTION_PADDING_PKCS7);
-
-                mCipher.init(Cipher.ENCRYPT_MODE, secretKey);
-            } catch (KeyPermanentlyInvalidatedException e) {
-                createKey();
-                showToast("The key has been invalidated, please try again.\n");
-            } catch (NoSuchPaddingException | KeyStoreException | CertificateException | UnrecoverableKeyException | IOException
-                    | NoSuchAlgorithmException | InvalidKeyException e) {
-                throw new RuntimeException("Failed to init Cipher", e);
-            }
-
             startTestButton.setOnClickListener(new OnClickListener() {
                 @Override
                 public void onClick(View v) {
+                    createKey();
+                    prepareEncrypt();
                     if (tryEncrypt()) {
                         showToast("Test failed. Key accessible without auth.");
                     } else {
@@ -158,23 +142,78 @@ public class FingerprintBoundKeysTest extends PassFailButtons.Activity {
                     .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_PKCS7)
                     .build());
             keyGenerator.generateKey();
+            if (DEBUG) {
+                Log.i(TAG, "createKey: [1]: done");
+            }
         } catch (NoSuchAlgorithmException | NoSuchProviderException
                 | InvalidAlgorithmParameterException | KeyStoreException
                 | CertificateException | IOException e) {
+            if (DEBUG) {
+                Log.i(TAG, "createKey: [2]: failed");
+            }
             throw new RuntimeException("Failed to create a symmetric key", e);
         }
     }
 
     /**
+     * create and init cipher; has to be done before we do auth
+     */
+    private boolean prepareEncrypt() {
+        return encryptInternal(false);
+    }
+
+    /**
      * Tries to encrypt some data with the generated key in {@link #createKey} which is
      * only works if the user has just authenticated via device credentials.
+     * has to be run after successful auth, in order to succeed
      */
     private boolean tryEncrypt() {
+        return encryptInternal(true);
+    }
+
+    private boolean encryptInternal(boolean doEncrypt) {
         try {
-            mCipher.doFinal(SECRET_BYTE_ARRAY);
+            KeyStore keyStore = KeyStore.getInstance("AndroidKeyStore");
+            keyStore.load(null);
+            SecretKey secretKey = (SecretKey) keyStore.getKey(KEY_NAME, null);
+            if (DEBUG) {
+                Log.i(TAG, "encryptInternal: [1]: key retrieved");
+            }
+            if (!doEncrypt) {
+                if (mCipher == null) {
+                    mCipher = Cipher.getInstance(KeyProperties.KEY_ALGORITHM_AES + "/"
+                            + KeyProperties.BLOCK_MODE_CBC + "/"
+                            + KeyProperties.ENCRYPTION_PADDING_PKCS7);
+                }
+                mCipher.init(Cipher.ENCRYPT_MODE, secretKey);
+                if (DEBUG) {
+                    Log.i(TAG, "encryptInternal: [2]: cipher initialized");
+                }
+            } else {
+                mCipher.doFinal(SECRET_BYTE_ARRAY);
+                if (DEBUG) {
+                    Log.i(TAG, "encryptInternal: [3]: encryption performed");
+                }
+            }
             return true;
         } catch (BadPaddingException | IllegalBlockSizeException e) {
+            // this happens in "no-error" scenarios routinely;
+            // All we want it to see the event in the log;
+            // Extra exception info is not valuable
+            if (DEBUG) {
+                Log.i(TAG, "encryptInternal: [4]: Encryption failed");
+            }
             return false;
+        } catch (KeyPermanentlyInvalidatedException e) {
+            // Extra exception info is not of big value, but let's have it,
+            // since this is an unlikely sutuation and potential error condition
+            Log.w(TAG, "encryptInternal: [5]: Key invalidated", e);
+            createKey();
+            showToast("The key has been invalidated, please try again.\n");
+            return false;
+        } catch (NoSuchPaddingException | KeyStoreException | CertificateException | UnrecoverableKeyException | IOException
+                | NoSuchAlgorithmException | InvalidKeyException e) {
+            throw new RuntimeException("Failed to init Cipher", e);
         }
     }
 
@@ -197,6 +236,9 @@ public class FingerprintBoundKeysTest extends PassFailButtons.Activity {
         class FingerprintManagerCallback extends FingerprintManager.AuthenticationCallback {
             @Override
             public void onAuthenticationError(int errMsgId, CharSequence errString) {
+                if (DEBUG) {
+                    Log.i(TAG,"onAuthenticationError: id=" + errMsgId + "; str=" + errString);
+                }
                 if (!mSelfCancelled) {
                     showToast(errString.toString());
                 }
@@ -209,11 +251,17 @@ public class FingerprintBoundKeysTest extends PassFailButtons.Activity {
 
             @Override
             public void onAuthenticationFailed() {
+                if (DEBUG) {
+                    Log.i(TAG,"onAuthenticationFailed");
+                }
                 showToast(getString(R.string.sec_fp_auth_failed));
             }
 
             @Override
             public void onAuthenticationSucceeded(FingerprintManager.AuthenticationResult result) {
+                if (DEBUG) {
+                    Log.i(TAG,"onAuthenticationSucceeded");
+                }
                 if (tryEncrypt()) {
                     showToast("Test passed.");
                     getPassButton().setEnabled(true);
