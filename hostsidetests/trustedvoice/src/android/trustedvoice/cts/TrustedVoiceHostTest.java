@@ -22,8 +22,6 @@ import java.io.File;
 import java.lang.String;
 import java.util.Scanner;
 
-
-
 /**
  * Test to check the APK logs to Logcat.
  * This test first locks the device screen and then runs the associated app to run the test.
@@ -42,7 +40,12 @@ public class TrustedVoiceHostTest extends DeviceTestCase {
     /**
      * Lock screen key event code.
      */
-    private static final int LOCK_KEYEVENT = 26;
+    private static final int SLEEP_KEYEVENT = 223;
+
+    /**
+     * Lock screen key event code.
+     */
+    private static final int AWAKE_KEYEVENT = 224;
 
     /**
      * The file name of the APK.
@@ -61,10 +64,21 @@ public class TrustedVoiceHostTest extends DeviceTestCase {
             "am start -W -a android.intent.action.MAIN -n %s/%s.%s", PACKAGE, PACKAGE, CLASS);
 
     /**
-     * The command to lock the device.
+     * The command to put the device to sleep.
      */
-    private static final String LOCKSCREEN_COMMAND = String.format(
-            "input keyevent %d", LOCK_KEYEVENT);
+    private static final String SLEEP_COMMAND = String.format(
+            "input keyevent %d", SLEEP_KEYEVENT);
+
+    /**
+     * The command to wake the device up.
+     */
+    private static final String AWAKE_COMMAND = String.format(
+            "input keyevent %d", AWAKE_KEYEVENT);
+
+    /**
+     * The command to dismiss the keyguard.
+     */
+    private static final String DISMISS_KEYGUARD_COMMAND = "wm dismiss-keyguard";
 
     /**
      * The test string to look for.
@@ -72,23 +86,26 @@ public class TrustedVoiceHostTest extends DeviceTestCase {
     private static final String TEST_STRING = "TrustedVoiceTestString";
 
     /**
-     * Tests the string was successfully logged to Logcat from the activity.
+     * Tests the app successfully unlocked the device.
      *
      * @throws Exception
      */
-    public void testLogcat() throws Exception {
-        // Clear logcat.
-        getDevice().executeAdbCommand("logcat", "-c");
-        // Lock the device
-        getDevice().executeShellCommand(LOCKSCREEN_COMMAND);
-        // Start the APK and wait for it to complete.
-        getDevice().executeShellCommand(START_COMMAND);
-        // Dump logcat.
-        String logs = getDevice().executeAdbCommand("logcat", "-v", "brief", "-d", CLASS + ":I", "*S");
-        // Search for string.
-        Scanner in = new Scanner(logs);
-        String testString = "";
+    public void testUnlock() throws Exception {
+        Scanner in = null;
         try {
+            // Clear logcat.
+            getDevice().executeAdbCommand("logcat", "-c");
+            // Lock the device
+            getDevice().executeShellCommand(SLEEP_COMMAND);
+            // Start the APK and wait for it to complete.
+            getDevice().executeShellCommand(START_COMMAND);
+            // Dump logcat.
+            String logs = getDevice().executeAdbCommand(
+                    "logcat", "-v", "brief", "-d", CLASS + ":I", "*S");
+            // Search for string.
+            in = new Scanner(logs);
+            String testString = "";
+
             while (in.hasNextLine()) {
                 String line = in.nextLine();
                 if(line.contains(TEST_STRING)) {
@@ -101,7 +118,12 @@ public class TrustedVoiceHostTest extends DeviceTestCase {
             assertNotNull("Test string must not be null", testString);
             assertEquals("Test string does not match", TEST_STRING, testString);
         } finally {
-            in.close();
+            if (in != null) {
+                in.close();
+            }
+            // Unlock the device
+            getDevice().executeShellCommand(AWAKE_COMMAND);
+            getDevice().executeShellCommand(DISMISS_KEYGUARD_COMMAND);
         }
     }
 }
