@@ -119,7 +119,7 @@ public class VideoEncoderDecoderTest extends CtsAndroidTestCase {
     private static final int PIXEL_CHECK_PER_FRAME = 1000;
     // RMS error in pixel values above this will be treated as error.
     private static final double PIXEL_RMS_ERROR_MARGIN = 20.0;
-    private double mRmsErrorMargin = PIXEL_RMS_ERROR_MARGIN;
+    private double mRmsErrorMargin;
     private Random mRandom;
 
     private class TestConfig {
@@ -144,6 +144,7 @@ public class VideoEncoderDecoderTest extends CtsAndroidTestCase {
     @Override
     protected void setUp() throws Exception {
         mEncodedOutputBuffer = new LinkedList<Pair<ByteBuffer, BufferInfo>>();
+        mRmsErrorMargin = PIXEL_RMS_ERROR_MARGIN;
         // Use time as a seed, hoping to prevent checking pixels in the same pattern
         long now = System.currentTimeMillis();
         mRandom = new Random(now);
@@ -178,6 +179,13 @@ public class VideoEncoderDecoderTest extends CtsAndroidTestCase {
 
     /** run quality test. */
     private void qual(String mimeType, int w, int h, boolean isGoog, int ix) throws Exception {
+        doTest(mimeType, w, h, false /* isPerf */, isGoog, ix);
+    }
+
+    /** run quality test but do not report error. */
+    private void qual(String mimeType, int w, int h, boolean isGoog, int ix, double margin)
+            throws Exception {
+        mRmsErrorMargin = margin;
         doTest(mimeType, w, h, false /* isPerf */, isGoog, ix);
     }
 
@@ -248,18 +256,18 @@ public class VideoEncoderDecoderTest extends CtsAndroidTestCase {
     public void testH263Other1Qual0352x0288() throws Exception { qual(H263, 352, 288, OTHER, 1); }
     public void testH263Other1Perf0352x0288() throws Exception { perf(H263, 352, 288, OTHER, 1); }
     public void testH263Count0704x0576() throws Exception { count(H263, 704, 576, 1, 2); }
-    public void testH263Goog0Qual0704x0576() throws Exception { qual(H263, 704, 576, GOOG, 0); }
+    public void testH263Goog0Qual0704x0576() throws Exception { qual(H263, 704, 576, GOOG, 0, 25); }
     public void testH263Goog0Perf0704x0576() throws Exception { perf(H263, 704, 576, GOOG, 0); }
-    public void testH263Other0Qual0704x0576() throws Exception { qual(H263, 704, 576, OTHER, 0); }
+    public void testH263Other0Qual0704x0576() throws Exception { qual(H263, 704, 576, OTHER, 0, 25); }
     public void testH263Other0Perf0704x0576() throws Exception { perf(H263, 704, 576, OTHER, 0); }
-    public void testH263Other1Qual0704x0576() throws Exception { qual(H263, 704, 576, OTHER, 1); }
+    public void testH263Other1Qual0704x0576() throws Exception { qual(H263, 704, 576, OTHER, 1, 25); }
     public void testH263Other1Perf0704x0576() throws Exception { perf(H263, 704, 576, OTHER, 1); }
     public void testH263Count1408x1152() throws Exception { count(H263, 1408, 1152, 1, 2); }
-    public void testH263Goog0Qual1408x1152() throws Exception { qual(H263, 1408, 1152, GOOG, 0); }
+    public void testH263Goog0Qual1408x1152() throws Exception { qual(H263, 1408, 1152, GOOG, 0, 25); }
     public void testH263Goog0Perf1408x1152() throws Exception { perf(H263, 1408, 1152, GOOG, 0); }
-    public void testH263Other0Qual1408x1152() throws Exception { qual(H263, 1408, 1152, OTHER, 0); }
+    public void testH263Other0Qual1408x1152() throws Exception { qual(H263, 1408, 1152, OTHER, 0, 25); }
     public void testH263Other0Perf1408x1152() throws Exception { perf(H263, 1408, 1152, OTHER, 0); }
-    public void testH263Other1Qual1408x1152() throws Exception { qual(H263, 1408, 1152, OTHER, 1); }
+    public void testH263Other1Qual1408x1152() throws Exception { qual(H263, 1408, 1152, OTHER, 1, 25); }
     public void testH263Other1Perf1408x1152() throws Exception { perf(H263, 1408, 1152, OTHER, 1); }
 
     // HEVC tests
