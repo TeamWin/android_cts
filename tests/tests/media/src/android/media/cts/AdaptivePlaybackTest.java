@@ -57,7 +57,7 @@ public class AdaptivePlaybackTest extends MediaPlayerTestBase {
                 "OMX.google.h264.decoder",
                 R.raw.video_480x360_mp4_h264_1000kbps_25fps_aac_stereo_128kbps_44100hz,
                 R.raw.video_1280x720_mp4_h264_1000kbps_25fps_aac_stereo_128kbps_44100hz,
-                R.raw.video_720x480_mp4_h264_2048kbps_30fps_aac_stereo_128kbps_44100hz);
+                R.raw.bbb_s1_720x480_mp4_h264_mp3_2mbps_30fps_aac_lc_5ch_320kbps_48000hz);
     }
 
     public Iterable<Codec> HEVC(CodecFactory factory) {
@@ -65,9 +65,9 @@ public class AdaptivePlaybackTest extends MediaPlayerTestBase {
                 mContext,
                 MediaFormat.MIMETYPE_VIDEO_HEVC,
                 "OMX.google.hevc.decoder",
-                R.raw.video_640x360_mp4_hevc_450kbps_30fps_aac_stereo_128kbps_48000hz,
-                R.raw.video_1280x720_mp4_hevc_1150kbps_30fps_aac_stereo_128kbps_48000hz,
-                R.raw.video_352x288_mp4_hevc_600kbps_30fps_aac_stereo_128kbps_44100hz);
+                R.raw.bbb_s1_720x480_mp4_hevc_mp3_1600kbps_30fps_aac_he_6ch_240kbps_48000hz,
+                R.raw.bbb_s4_1280x720_mp4_hevc_mp31_4mbps_30fps_aac_he_stereo_80kbps_32000hz,
+                R.raw.bbb_s1_352x288_mp4_hevc_mp2_600kbps_30fps_aac_he_stereo_96kbps_48000hz);
     }
 
     public Iterable<Codec> H263(CodecFactory factory) {
@@ -96,8 +96,8 @@ public class AdaptivePlaybackTest extends MediaPlayerTestBase {
                 MediaFormat.MIMETYPE_VIDEO_VP8,
                 "OMX.google.vp8.decoder",
                 R.raw.video_480x360_webm_vp8_333kbps_25fps_vorbis_stereo_128kbps_48000hz,
-                R.raw.video_1280x720_webm_vp8_333kbps_25fps_vorbis_stereo_128kbps_44100hz,
-                R.raw.video_320x240_webm_vp8_800kbps_30fps_vorbis_stereo_128kbps_44100hz);
+                R.raw.bbb_s3_1280x720_webm_vp8_8mbps_60fps_opus_6ch_384kbps_48000hz,
+                R.raw.bbb_s1_320x180_webm_vp8_800kbps_30fps_opus_5ch_320kbps_48000hz);
     }
 
     public Iterable<Codec> VP9(CodecFactory factory) {
@@ -106,8 +106,8 @@ public class AdaptivePlaybackTest extends MediaPlayerTestBase {
                 MediaFormat.MIMETYPE_VIDEO_VP9,
                 "OMX.google.vp9.decoder",
                 R.raw.video_480x360_webm_vp9_333kbps_25fps_vorbis_stereo_128kbps_48000hz,
-                R.raw.video_1280x720_webm_vp9_309kbps_25fps_vorbis_stereo_128kbps_48000hz,
-                R.raw.video_320x240_webm_vp9_600kbps_30fps_vorbis_stereo_128kbps_48000hz);
+                R.raw.bbb_s4_1280x720_webm_vp9_0p31_4mbps_30fps_opus_stereo_128kbps_48000hz,
+                R.raw.bbb_s1_320x180_webm_vp9_0p11_600kbps_30fps_vorbis_mono_64kbps_48000hz);
     }
 
     CodecFactory ALL = new CodecFactory();
@@ -1320,7 +1320,7 @@ class Media {
             }
         }
 
-        ByteBuffer readBuf = ByteBuffer.allocate(200000);
+        ByteBuffer readBuf = ByteBuffer.allocate(2000000);
         for (int ix = 0; ix < numFrames; ix++) {
             int sampleSize = extractor.readSampleData(readBuf, 0 /* offset */);
 
