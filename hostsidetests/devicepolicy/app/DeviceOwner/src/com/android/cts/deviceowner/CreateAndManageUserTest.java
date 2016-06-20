@@ -34,91 +34,91 @@ import android.provider.Settings;
 
 import java.lang.reflect.Field;
 
+/**
+ * Test {@link DevicePolicyManager#createAndManageUser}.
+ */
+public class CreateAndManageUserTest extends BaseDeviceOwnerTest {
+
+    private static final String BROADCAST_EXTRA = "broadcastExtra";
+    private static final String ACTION_EXTRA = "actionExtra";
+    private static final String SERIAL_EXTRA = "serialExtra";
+    private static final String PROFILE_OWNER_EXTRA = "profileOwnerExtra";
+    private static final String SETUP_COMPLETE_EXTRA = "setupCompleteExtra";
+    private static final int BROADCAST_TIMEOUT = 15_000;
+    private static final int USER_SWITCH_DELAY = 10_000;
+    private PackageManager mPackageManager;
+    private ActivityManager mActivityManager;
+    private volatile boolean mReceived;
+    private volatile boolean mTestProfileOwnerWasUsed;
+    private volatile boolean mSetupComplete;
+    private UserHandle mUserHandle;
+
+    @Override
+    protected void setUp() throws Exception {
+        super.setUp();
+        mPackageManager = mContext.getPackageManager();
+        mActivityManager = (ActivityManager) mContext.getSystemService(Context.ACTIVITY_SERVICE);
+    }
+
+    @Override
+    protected void tearDown() throws Exception {
+        mDevicePolicyManager.clearUserRestriction(getWho(), UserManager.DISALLOW_ADD_USER);
+        mDevicePolicyManager.clearUserRestriction(getWho(), UserManager.DISALLOW_REMOVE_USER);
+        // Remove user in case of failed test.
+        if (mUserHandle != null) {
+            mDevicePolicyManager.removeUser(getWho(), mUserHandle);
+            mUserHandle = null;
+        }
+        super.tearDown();
+    }
+
+    // This class is used by createAndManageUserTest as profile owner for the new user. When
+    // enabled, it sends a broadcast to signal success.
+    public static class TestProfileOwner extends DeviceAdminReceiver {
+        @Override
+        public void onEnabled(Context context, Intent intent) {
+            if (intent.getBooleanExtra(BROADCAST_EXTRA, false)) {
+                Intent i = new Intent(intent.getStringExtra(ACTION_EXTRA));
+                UserManager userManager = (UserManager)
+                        context.getSystemService(Context.USER_SERVICE);
+                long serial = intent.getLongExtra(SERIAL_EXTRA, 0);
+                UserHandle handle = userManager.getUserForSerialNumber(serial);
+                i.putExtra(PROFILE_OWNER_EXTRA, true);
+                // find value of user_setup_complete on new user, and send the result back
+                try {
+                    boolean setupComplete = (Settings.Secure.getInt(context.getContentResolver(),
+                            "user_setup_complete") == 1);
+                    i.putExtra(SETUP_COMPLETE_EXTRA, setupComplete);
+                } catch (Settings.SettingNotFoundException e) {
+                    fail("Did not find settings user_setup_complete");
+                }
+
+                context.sendBroadcastAsUser(i, handle);
+            }
+        }
+
+        public static ComponentName getComponentName() {
+            return new ComponentName(CreateAndManageUserTest.class.getPackage().getName(),
+                    TestProfileOwner.class.getName());
+        }
+    }
+
+    private void waitForBroadcastLocked() {
+        // Wait for broadcast. Time is measured in a while loop because of spurious wakeups.
+        final long initTime = System.currentTimeMillis();
+        while (!mReceived) {
+            try {
+                wait(BROADCAST_TIMEOUT - (System.currentTimeMillis() - initTime));
+            } catch (InterruptedException e) {
+                fail("InterruptedException: " + e.getMessage());
+            }
+            if (!mReceived && System.currentTimeMillis() - initTime > BROADCAST_TIMEOUT) {
+                fail("Timeout while waiting for broadcast after createAndManageUser.");
+            }
+        }
+    }
+
 // Disabled due to b/29072728
-///**
-// * Test {@link DevicePolicyManager#createAndManageUser}.
-// */
-//public class CreateAndManageUserTest extends BaseDeviceOwnerTest {
-//
-//    private static final String BROADCAST_EXTRA = "broadcastExtra";
-//    private static final String ACTION_EXTRA = "actionExtra";
-//    private static final String SERIAL_EXTRA = "serialExtra";
-//    private static final String PROFILE_OWNER_EXTRA = "profileOwnerExtra";
-//    private static final String SETUP_COMPLETE_EXTRA = "setupCompleteExtra";
-//    private static final int BROADCAST_TIMEOUT = 15_000;
-//    private static final int USER_SWITCH_DELAY = 10_000;
-//    private PackageManager mPackageManager;
-//    private ActivityManager mActivityManager;
-//    private volatile boolean mReceived;
-//    private volatile boolean mTestProfileOwnerWasUsed;
-//    private volatile boolean mSetupComplete;
-//    private UserHandle mUserHandle;
-//
-//    @Override
-//    protected void setUp() throws Exception {
-//        super.setUp();
-//        mPackageManager = mContext.getPackageManager();
-//        mActivityManager = (ActivityManager) mContext.getSystemService(Context.ACTIVITY_SERVICE);
-//    }
-//
-//    @Override
-//    protected void tearDown() throws Exception {
-//        mDevicePolicyManager.clearUserRestriction(getWho(), UserManager.DISALLOW_ADD_USER);
-//        mDevicePolicyManager.clearUserRestriction(getWho(), UserManager.DISALLOW_REMOVE_USER);
-//        // Remove user in case of failed test.
-//        if (mUserHandle != null) {
-//            mDevicePolicyManager.removeUser(getWho(), mUserHandle);
-//            mUserHandle = null;
-//        }
-//        super.tearDown();
-//    }
-//
-//    // This class is used by createAndManageUserTest as profile owner for the new user. When
-//    // enabled, it sends a broadcast to signal success.
-//    public static class TestProfileOwner extends DeviceAdminReceiver {
-//        @Override
-//        public void onEnabled(Context context, Intent intent) {
-//            if (intent.getBooleanExtra(BROADCAST_EXTRA, false)) {
-//                Intent i = new Intent(intent.getStringExtra(ACTION_EXTRA));
-//                UserManager userManager = (UserManager)
-//                        context.getSystemService(Context.USER_SERVICE);
-//                long serial = intent.getLongExtra(SERIAL_EXTRA, 0);
-//                UserHandle handle = userManager.getUserForSerialNumber(serial);
-//                i.putExtra(PROFILE_OWNER_EXTRA, true);
-//                // find value of user_setup_complete on new user, and send the result back
-//                try {
-//                    boolean setupComplete = (Settings.Secure.getInt(context.getContentResolver(),
-//                            "user_setup_complete") == 1);
-//                    i.putExtra(SETUP_COMPLETE_EXTRA, setupComplete);
-//                } catch (Settings.SettingNotFoundException e) {
-//                    fail("Did not find settings user_setup_complete");
-//                }
-//
-//                context.sendBroadcastAsUser(i, handle);
-//            }
-//        }
-//
-//        public static ComponentName getComponentName() {
-//            return new ComponentName(CreateAndManageUserTest.class.getPackage().getName(),
-//                    TestProfileOwner.class.getName());
-//        }
-//    }
-//
-//    private void waitForBroadcastLocked() {
-//        // Wait for broadcast. Time is measured in a while loop because of spurious wakeups.
-//        final long initTime = System.currentTimeMillis();
-//        while (!mReceived) {
-//            try {
-//                wait(BROADCAST_TIMEOUT - (System.currentTimeMillis() - initTime));
-//            } catch (InterruptedException e) {
-//                fail("InterruptedException: " + e.getMessage());
-//            }
-//            if (!mReceived && System.currentTimeMillis() - initTime > BROADCAST_TIMEOUT) {
-//                fail("Timeout while waiting for broadcast after createAndManageUser.");
-//            }
-//        }
-//    }
-//
 //    // This test will create a user that will get passed a bundle that we specify. The bundle will
 //    // contain an action and a serial (for user handle) to broadcast to notify the test that the
 //    // configuration was triggered.
@@ -187,59 +187,60 @@ import java.lang.reflect.Field;
 //
 //        mContext.unregisterReceiver(receiver);
 //    }
-//
-//    /**
-//     * Test creating an ephemeral user using the {@link DevicePolicyManager#createAndManageUser}
-//     * method.
-//     *
-//     * <p>The test creates a user by calling to {@link DevicePolicyManager#createAndManageUser}. It
-//     * doesn't remove the user afterwards, so its properties can be queried and tested by host-side
-//     * tests.
-//     * <p>The user's flags will be checked from the corresponding host-side test.
-//     */
-//    public void testCreateAndManageEphemeralUser() throws Exception {
-//        String testUserName = "TestUser_" + System.currentTimeMillis();
-//
-//        // Use reflection to get the value of the hidden flag to make the new user ephemeral.
-//        Field field = DevicePolicyManager.class.getField("MAKE_USER_EPHEMERAL");
-//        int makeEphemeralFlag = field.getInt(null);
-//
-//        // Do not assign return value to mUserHandle, so it is not removed in tearDown.
-//        mDevicePolicyManager.createAndManageUser(
-//                getWho(),
-//                testUserName,
-//                getWho(),
-//                null,
-//                makeEphemeralFlag);
-//    }
-//
-//    /**
-//     * Test creating an ephemeral user using the {@link DevicePolicyManager#createAndManageUser}
-//     * method fails on systems without the split system user.
-//     *
-//     * <p>To be used by host-side test on systems without the split system user.
-//     */
-//    public void testCreateAndManageEphemeralUserFails() throws Exception {
-//        String testUserName = "TestUser_" + System.currentTimeMillis();
-//
-//        // Use reflection to get the value of the hidden flag to make the new user ephemeral.
-//        Field field = DevicePolicyManager.class.getField("MAKE_USER_EPHEMERAL");
-//        int makeEphemeralFlag = field.getInt(null);
-//
-//        try {
-//            mDevicePolicyManager.createAndManageUser(
-//                    getWho(),
-//                    testUserName,
-//                    getWho(),
-//                    null,
-//                    makeEphemeralFlag);
-//        } catch (IllegalArgumentException e) {
-//            // Success, the expected exception was thrown.
-//            return;
-//        }
-//        fail("createAndManageUser should have thrown IllegalArgumentException");
-//    }
-//
+
+    /**
+     * Test creating an ephemeral user using the {@link DevicePolicyManager#createAndManageUser}
+     * method.
+     *
+     * <p>The test creates a user by calling to {@link DevicePolicyManager#createAndManageUser}. It
+     * doesn't remove the user afterwards, so its properties can be queried and tested by host-side
+     * tests.
+     * <p>The user's flags will be checked from the corresponding host-side test.
+     */
+    public void testCreateAndManageEphemeralUser() throws Exception {
+        String testUserName = "TestUser_" + System.currentTimeMillis();
+
+        // Use reflection to get the value of the hidden flag to make the new user ephemeral.
+        Field field = DevicePolicyManager.class.getField("MAKE_USER_EPHEMERAL");
+        int makeEphemeralFlag = field.getInt(null);
+
+        // Do not assign return value to mUserHandle, so it is not removed in tearDown.
+        mDevicePolicyManager.createAndManageUser(
+                getWho(),
+                testUserName,
+                getWho(),
+                null,
+                makeEphemeralFlag);
+    }
+
+    /**
+     * Test creating an ephemeral user using the {@link DevicePolicyManager#createAndManageUser}
+     * method fails on systems without the split system user.
+     *
+     * <p>To be used by host-side test on systems without the split system user.
+     */
+    public void testCreateAndManageEphemeralUserFails() throws Exception {
+        String testUserName = "TestUser_" + System.currentTimeMillis();
+
+        // Use reflection to get the value of the hidden flag to make the new user ephemeral.
+        Field field = DevicePolicyManager.class.getField("MAKE_USER_EPHEMERAL");
+        int makeEphemeralFlag = field.getInt(null);
+
+        try {
+            mDevicePolicyManager.createAndManageUser(
+                    getWho(),
+                    testUserName,
+                    getWho(),
+                    null,
+                    makeEphemeralFlag);
+        } catch (IllegalArgumentException e) {
+            // Success, the expected exception was thrown.
+            return;
+        }
+        fail("createAndManageUser should have thrown IllegalArgumentException");
+    }
+
+// Disabled due to b/29072728
 //    public void testCreateAndManageUser_SkipSetupWizard() {
 //        createAndManageUserTest(DevicePolicyManager.SKIP_SETUP_WIZARD);
 //    }
@@ -251,24 +252,24 @@ import java.lang.reflect.Field;
 //            createAndManageUserTest(0);
 //        }
 //    }
-//
-//    // createAndManageUser should circumvent the DISALLOW_ADD_USER restriction
-//    public void testCreateAndManageUser_AddRestrictionSet() {
-//        mDevicePolicyManager.addUserRestriction(getWho(), UserManager.DISALLOW_ADD_USER);
-//
-//        mUserHandle = mDevicePolicyManager.createAndManageUser(getWho(), "Test User", getWho(),
-//                null, 0);
-//        assertNotNull(mUserHandle);
-//    }
-//
-//    public void testCreateAndManageUser_RemoveRestrictionSet() {
-//        mDevicePolicyManager.addUserRestriction(getWho(), UserManager.DISALLOW_REMOVE_USER);
-//
-//        mUserHandle = mDevicePolicyManager.createAndManageUser(getWho(), "Test User", getWho(),
-//                null, 0);
-//        assertNotNull(mUserHandle);
-//
-//        boolean removed = mDevicePolicyManager.removeUser(getWho(), mUserHandle);
-//        assertFalse(removed);
-//    }
-//}
+
+    // createAndManageUser should circumvent the DISALLOW_ADD_USER restriction
+    public void testCreateAndManageUser_AddRestrictionSet() {
+        mDevicePolicyManager.addUserRestriction(getWho(), UserManager.DISALLOW_ADD_USER);
+
+        mUserHandle = mDevicePolicyManager.createAndManageUser(getWho(), "Test User", getWho(),
+                null, 0);
+        assertNotNull(mUserHandle);
+    }
+
+    public void testCreateAndManageUser_RemoveRestrictionSet() {
+        mDevicePolicyManager.addUserRestriction(getWho(), UserManager.DISALLOW_REMOVE_USER);
+
+        mUserHandle = mDevicePolicyManager.createAndManageUser(getWho(), "Test User", getWho(),
+                null, 0);
+        assertNotNull(mUserHandle);
+
+        boolean removed = mDevicePolicyManager.removeUser(getWho(), mUserHandle);
+        assertFalse(removed);
+    }
+}
