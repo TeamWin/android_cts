@@ -59,7 +59,7 @@ LOCAL_SRC_FILES := $(call all-java-files-under, src)\
 
 LOCAL_PACKAGE_NAME := CtsSecurityTestCases
 
-LOCAL_SDK_VERSION := current
+#LOCAL_SDK_VERSION := current
 
 # Tag this module as a cts test artifact
 LOCAL_COMPATIBILITY_SUITE := cts
