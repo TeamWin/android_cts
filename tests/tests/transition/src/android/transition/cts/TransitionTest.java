@@ -515,6 +515,29 @@ public class TransitionTest extends BaseTransitionTest {
         waitForEnd(400);
     }
 
+    public void testGetTransitionProperties() throws Throwable {
+        enterScene(R.layout.scene1);
+        // Make the transition make changes to properties in getTransitionProperties.
+        TransitionPropertiesTransition transition = new TransitionPropertiesTransition(false);
+        mTransition = transition;
+        resetListener();
+        startTransition(R.layout.scene2);
+        assertTrue(transition.latch.await(500, TimeUnit.MILLISECONDS));
+        endTransition();
+
+        // Now make the transition only make changes to unimportant properties.
+        transition = new TransitionPropertiesTransition(true);
+        mTransition = transition;
+        resetListener();
+        startTransition(R.layout.scene1);
+        assertTrue(mListener.endLatch.await(500, TimeUnit.MILLISECONDS));
+        // createAnimator shouldn't have been called.
+        assertEquals(1, transition.latch.getCount());
+
+        assertNotNull(transition.getTransitionProperties());
+        assertEquals(1, transition.getTransitionProperties().length);
+    }
+
     private class NotRequiredTransition extends TestTransition {
         @Override
         public boolean isTransitionRequired(TransitionValues startValues,
@@ -574,6 +597,49 @@ public class TransitionTest extends BaseTransitionTest {
         @Override
         public void onAnimationStart(Animator animation) {
             startLatch.countDown();
+        }
+    }
+
+    private static class TransitionPropertiesTransition extends Transition {
+        private static final String SIDE_PROP = "prop1";
+        private static final String IMPORTANT_PROP = "prop2";
+        private static final String[] PROPERTIES = {
+                IMPORTANT_PROP
+        };
+
+        private boolean mOnlyUnimportant;
+        public CountDownLatch latch = new CountDownLatch(1);
+
+        public TransitionPropertiesTransition(boolean onlyUnimportant) {
+            mOnlyUnimportant = onlyUnimportant;
+        }
+
+        @Override
+        public String[] getTransitionProperties() {
+            return PROPERTIES;
+        }
+
+        @Override
+        public void captureStartValues(TransitionValues transitionValues) {
+            transitionValues.values.put(SIDE_PROP, 1);
+            transitionValues.values.put(IMPORTANT_PROP, 1);
+        }
+
+        @Override
+        public void captureEndValues(TransitionValues transitionValues) {
+            transitionValues.values.put(SIDE_PROP, 2);
+            int val = mOnlyUnimportant ? 1 : 2;
+            transitionValues.values.put(IMPORTANT_PROP, val);
+        }
+
+        @Override
+        public Animator createAnimator(ViewGroup sceneRoot, TransitionValues startValues,
+                TransitionValues endValues) {
+            if (startValues != null && endValues != null) {
+                latch.countDown();
+            }
+
+            return null;
         }
     }
 }
