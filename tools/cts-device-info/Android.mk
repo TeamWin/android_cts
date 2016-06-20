@@ -20,6 +20,8 @@ LOCAL_SRC_FILES := $(call all-java-files-under, src)
 
 LOCAL_JNI_SHARED_LIBRARIES := libctsdeviceinfo
 
+LOCAL_MULTILIB := both
+
 DEVICE_INFO_MIN_SDK := 23
 DEVICE_INFO_TARGET_SDK := 23
 
