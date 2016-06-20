@@ -263,8 +263,6 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
             synchronized (mModuleRepo) {
                 if (!mModuleRepo.isInitialized()) {
                     setupFilters();
-                    // Set retry mode for module repo
-                    mModuleRepo.setRetryMode(mRetrySessionId != null);
                     // Initialize the repository, {@link CompatibilityBuildHelper#getTestsDir} can
                     // throw a {@link FileNotFoundException}
                     mModuleRepo.initialize(mTotalShards, mBuildHelper.getTestsDir(), getAbis(),
