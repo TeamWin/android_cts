@@ -35,7 +35,8 @@
 #include <string.h>
 #include <unistd.h>
 
-int slesInit(sles_data ** ppSles, int samplingRate, int frameCount, int micSource) {
+int slesInit(sles_data ** ppSles, int samplingRate, int frameCount, int micSource,
+             int numFramesToIgnore) {
     int status = SLES_FAIL;
     if (ppSles != NULL) {
         sles_data * pSles = (sles_data*) calloc(1, sizeof (sles_data));
@@ -46,7 +47,8 @@ int slesInit(sles_data ** ppSles, int samplingRate, int frameCount, int micSourc
         {
             SLES_PRINTF("creating server. Sampling rate =%d, frame count = %d",samplingRate,
                     frameCount);
-            status = slesCreateServer(pSles, samplingRate, frameCount, micSource);
+            status = slesCreateServer(pSles, samplingRate, frameCount, micSource,
+                                      numFramesToIgnore);
             SLES_PRINTF("slesCreateServer =%d", status);
         }
     }
@@ -92,6 +94,17 @@ static void recorderCallback(SLAndroidSimpleBufferQueueItf caller __unused, void
         // Remove buffer from record queue
         if (++pSles->rxFront > pSles->rxBufCount) {
             pSles->rxFront = 0;
+        }
+
+        // Throw out first frames
+        if (pSles->numFramesToIgnore) {
+            SLuint32 framesToErase = pSles->numFramesToIgnore;
+            if (framesToErase > pSles->bufSizeInFrames) {
+                framesToErase = pSles->bufSizeInFrames;
+            }
+            pSles->numFramesToIgnore -= framesToErase;
+            // FIXME: this assumes each sample is a short
+            memset(buffer, 0, framesToErase * pSles->channels * sizeof(short));
         }
 
         ssize_t actual = audio_utils_fifo_write(&(pSles->fifo), buffer,
@@ -199,7 +212,8 @@ static void playerCallback(SLBufferQueueItf caller __unused, void *context) {
     } //pSles not null
 }
 
-int slesCreateServer(sles_data *pSles, int samplingRate, int frameCount, int micSource) {
+int slesCreateServer(sles_data *pSles, int samplingRate, int frameCount,
+                     int micSource, int numFramesToIgnore) {
     int status = SLES_FAIL;
 
     if (pSles == NULL) {
@@ -253,6 +267,12 @@ int slesCreateServer(sles_data *pSles, int samplingRate, int frameCount, int mic
     pSles->freeBufCount = 0;   // calculated
     pSles->bufSizeInBytes = 0; // calculated
     pSles->injectImpulse = 300; // -i#i
+
+    if (numFramesToIgnore > 0) {
+        pSles->numFramesToIgnore = numFramesToIgnore;
+    } else {
+        pSles->numFramesToIgnore = 0;
+    }
 
     // Storage area for the buffer queues
     //        char **rxBuffers;
