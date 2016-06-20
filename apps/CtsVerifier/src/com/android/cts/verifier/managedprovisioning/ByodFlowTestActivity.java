@@ -73,8 +73,6 @@ public class ByodFlowTestActivity extends PassFailButtons.ListActivity {
     private TestItem mDeviceAdminVisibleTest;
     private TestItem mWorkAppVisibleTest;
     private TestItem mCrossProfileIntentFiltersTest;
-    private TestItem mDisableNonMarketTest;
-    private TestItem mEnableNonMarketTest;
     private TestItem mWorkNotificationBadgedTest;
     private TestItem mAppSettingsVisibleTest;
     private TestItem mLocationSettingsVisibleTest;
@@ -184,16 +182,6 @@ public class ByodFlowTestActivity extends PassFailButtons.ListActivity {
                 new Intent(WorkNotificationTestActivity.ACTION_WORK_NOTIFICATION),
                 R.drawable.ic_corp_icon);
 
-        mDisableNonMarketTest = new TestItem(this, R.string.provisioning_byod_nonmarket_deny,
-                R.string.provisioning_byod_nonmarket_deny_info,
-                new Intent(ByodHelperActivity.ACTION_INSTALL_APK)
-                        .putExtra(ByodHelperActivity.EXTRA_ALLOW_NON_MARKET_APPS, false));
-
-        mEnableNonMarketTest = new TestItem(this, R.string.provisioning_byod_nonmarket_allow,
-                R.string.provisioning_byod_nonmarket_allow_info,
-                new Intent(ByodHelperActivity.ACTION_INSTALL_APK)
-                        .putExtra(ByodHelperActivity.EXTRA_ALLOW_NON_MARKET_APPS, true));
-
         mProfileAccountVisibleTest = new TestItem(this, R.string.provisioning_byod_profile_visible,
                 R.string.provisioning_byod_profile_visible_instruction,
                 new Intent(Settings.ACTION_SETTINGS));
@@ -242,8 +230,6 @@ public class ByodFlowTestActivity extends PassFailButtons.ListActivity {
         mTests.add(mPrintSettingsVisibleTest);
 
         mTests.add(mCrossProfileIntentFiltersTest);
-        mTests.add(mDisableNonMarketTest);
-        mTests.add(mEnableNonMarketTest);
 
         if (canResolveIntent(ByodHelperActivity.getCaptureImageIntent())) {
             // Capture image intent can be resolved in primary profile, so test.
@@ -542,4 +528,5 @@ public class ByodFlowTestActivity extends PassFailButtons.ListActivity {
             return view;
         }
     }
+
 }
