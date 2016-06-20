@@ -82,4 +82,13 @@ public abstract class PollingCheck {
             }
         }.run();
     }
+
+    public static void waitFor(long timeout, final PollingCheckCondition condition) {
+        new PollingCheck(timeout) {
+            @Override
+            protected boolean check() {
+                return condition.canProceed();
+            }
+        }.run();
+    }
 }
