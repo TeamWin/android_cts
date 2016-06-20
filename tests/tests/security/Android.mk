@@ -32,7 +32,7 @@ LOCAL_SRC_FILES := $(call all-java-files-under, src)\
 
 LOCAL_PACKAGE_NAME := CtsSecurityTestCases
 
-LOCAL_SDK_VERSION := current
+#LOCAL_SDK_VERSION := current
 
 include $(BUILD_CTS_PACKAGE)
 
