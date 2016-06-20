@@ -58,6 +58,9 @@ public class AudioLoopbackActivity extends PassFailButtons.Activity {
     private static final double CONFIDENCE_THRESHOLD = 0.6;
     private Correlation mCorrelation = new Correlation();
 
+    // TODO: remove this when no longer necessary
+    private int mNumFramesToIgnore = mSamplingRate / 10; // ignore first 100 ms
+
     OnBtnClickListener mBtnClickListener = new OnBtnClickListener();
     Context mContext;
 
@@ -221,7 +224,8 @@ public class AudioLoopbackActivity extends PassFailButtons.Activity {
             nativeAudioThread.setParams(mSamplingRate,
                     minBufferSizeInBytes,
                     minBufferSizeInBytes,
-                    0x03 /*voice recognition*/);
+                    0x03 /*voice recognition*/,
+                    mNumFramesToIgnore);
             nativeAudioThread.start();
 
             try {
