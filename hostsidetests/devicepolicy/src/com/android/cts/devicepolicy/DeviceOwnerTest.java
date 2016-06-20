@@ -215,49 +215,49 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
         assertTrue("User must be ephemeral", 0 != (getUserFlags(userId) & FLAG_EPHEMERAL));
     }
 
+    /**
+     * Test creating an epehemeral user using the DevicePolicyManager's createAndManageUser method.
+     */
+    public void testCreateAndManageEphemeralUser() throws Exception {
+        if (!mHasEphemeralUserFeature) {
+            return;
+        }
+
+        ArrayList<Integer> originalUsers = listUsers();
+        executeDeviceTestMethod(".CreateAndManageUserTest", "testCreateAndManageEphemeralUser");
+
+        ArrayList<Integer> newUsers = listUsers();
+
+        // Check that exactly one new user was created.
+        assertEquals(
+                "One user should have been created", originalUsers.size() + 1, newUsers.size());
+
+        // Get the id of the newly created user.
+        int newUserId = -1;
+        for (int userId : newUsers) {
+            if (!originalUsers.contains(userId)) {
+                newUserId = userId;
+                break;
+            }
+        }
+
+        // Get the flags of the new user and check the user is ephemeral.
+        int flags = getUserFlags(newUserId);
+        assertEquals("Ephemeral flag must be set", FLAG_EPHEMERAL, flags & FLAG_EPHEMERAL);
+    }
+
+    /**
+     * Test that creating an epehemeral user using the DevicePolicyManager's createAndManageUser
+     * method fails on systems without the split system user.
+     */
+    public void testCreateAndManageEphemeralUserFailsWithoutSplitSystemUser() throws Exception {
+        if (mHasDisabledEphemeralUserFeature) {
+            executeDeviceTestMethod(
+                    ".CreateAndManageUserTest", "testCreateAndManageEphemeralUserFails");
+        }
+    }
+
 // Disabled due to b/29072728
-//    /**
-//     * Test creating an epehemeral user using the DevicePolicyManager's createAndManageUser method.
-//     */
-//    public void testCreateAndManageEphemeralUser() throws Exception {
-//        if (!mHasEphemeralUserFeature) {
-//            return;
-//        }
-//
-//        ArrayList<Integer> originalUsers = listUsers();
-//        executeDeviceTestMethod(".CreateAndManageUserTest", "testCreateAndManageEphemeralUser");
-//
-//        ArrayList<Integer> newUsers = listUsers();
-//
-//        // Check that exactly one new user was created.
-//        assertEquals(
-//                "One user should have been created", originalUsers.size() + 1, newUsers.size());
-//
-//        // Get the id of the newly created user.
-//        int newUserId = -1;
-//        for (int userId : newUsers) {
-//            if (!originalUsers.contains(userId)) {
-//                newUserId = userId;
-//                break;
-//            }
-//        }
-//
-//        // Get the flags of the new user and check the user is ephemeral.
-//        int flags = getUserFlags(newUserId);
-//        assertEquals("Ephemeral flag must be set", FLAG_EPHEMERAL, flags & FLAG_EPHEMERAL);
-//    }
-//
-//    /**
-//     * Test that creating an epehemeral user using the DevicePolicyManager's createAndManageUser
-//     * method fails on systems without the split system user.
-//     */
-//    public void testCreateAndManageEphemeralUserFailsWithoutSplitSystemUser() throws Exception {
-//        if (mHasDisabledEphemeralUserFeature) {
-//            executeDeviceTestMethod(
-//                    ".CreateAndManageUserTest", "testCreateAndManageEphemeralUserFails");
-//        }
-//    }
-//
 //    public void testCreateAndManageUser_SkipSetupWizard() throws Exception {
 //        if (mHasCreateAndManageUserFeature) {
 //            executeDeviceTestMethod(".CreateAndManageUserTest",
@@ -271,20 +271,20 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
 //                "testCreateAndManageUser_DontSkipSetupWizard");
 //        }
 //    }
-//
-//    public void testCreateAndManageUser_AddRestrictionSet() throws Exception {
-//        if (mHasCreateAndManageUserFeature) {
-//            executeDeviceTestMethod(".CreateAndManageUserTest",
-//                "testCreateAndManageUser_AddRestrictionSet");
-//        }
-//    }
-//
-//    public void testCreateAndManageUser_RemoveRestrictionSet() throws Exception {
-//        if (mHasCreateAndManageUserFeature) {
-//            executeDeviceTestMethod(".CreateAndManageUserTest",
-//                "testCreateAndManageUser_RemoveRestrictionSet");
-//        }
-//    }
+
+    public void testCreateAndManageUser_AddRestrictionSet() throws Exception {
+        if (mHasCreateAndManageUserFeature) {
+            executeDeviceTestMethod(".CreateAndManageUserTest",
+                "testCreateAndManageUser_AddRestrictionSet");
+        }
+    }
+
+    public void testCreateAndManageUser_RemoveRestrictionSet() throws Exception {
+        if (mHasCreateAndManageUserFeature) {
+            executeDeviceTestMethod(".CreateAndManageUserTest",
+                "testCreateAndManageUser_RemoveRestrictionSet");
+        }
+    }
 
     public void testSecurityLoggingWithTwoUsers() throws Exception {
         if (!mHasFeature || getMaxNumberOfUsersSupported() < 2) {
