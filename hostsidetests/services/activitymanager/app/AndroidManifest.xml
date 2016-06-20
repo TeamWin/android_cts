@@ -143,6 +143,9 @@
                           android:minHeight="80dp"
                   />
         </activity>
+        <activity android:name=".TurnScreenOnActivity"
+                  android:exported="true"
+        />
     </application>
 </manifest>
 
