@@ -240,6 +240,7 @@ public class TransitionTest extends BaseTransitionTest {
     public void testIsTransitionRequired() throws Throwable {
         enterScene(R.layout.scene1);
         mTransition = new NotRequiredTransition();
+        assertFalse(mTransition.isTransitionRequired(null, null));
         resetListener();
         runTestOnUiThread(new Runnable() {
             @Override
