@@ -97,9 +97,6 @@ public class ItsService extends Service implements SensorEventListener {
     private static final int TIMEOUT_CALLBACK = 10;
     private static final int TIMEOUT_3A = 10;
 
-    // Timeout for doCapture command polling
-    private static final int TIMEOUT_POLL_MS = 500;
-
     // Time given for background requests to warm up pipeline
     private static final long PIPELINE_WARMUP_TIME_MS = 2000;
 
@@ -1180,6 +1177,29 @@ public class ItsService extends Service implements SensorEventListener {
         prepareImageReaders(outputSizes, outputFormats, inputSize, inputFormat, maxInputBuffers);
     }
 
+    /**
+     * Wait until mCountCallbacksRemaining is 0 or a specified amount of time has elapsed between
+     * each callback.
+     */
+    private void waitForCallbacks(long timeoutMs) throws ItsException {
+        synchronized(mCountCallbacksRemaining) {
+            int currentCount = mCountCallbacksRemaining.get();
+            while (currentCount > 0) {
+                try {
+                    mCountCallbacksRemaining.wait(timeoutMs);
+                } catch (InterruptedException e) {
+                    throw new ItsException("Waiting for callbacks was interrupted.", e);
+                }
+
+                int newCount = mCountCallbacksRemaining.get();
+                if (newCount == currentCount) {
+                    throw new ItsException("No callback received within timeout");
+                }
+                currentCount = newCount;
+            }
+        }
+    }
+
     private void doCapture(JSONObject params) throws ItsException {
         try {
             // Parse the JSON to get the list of capture requests.
@@ -1279,24 +1299,7 @@ public class ItsService extends Service implements SensorEventListener {
             }
             // Make sure all callbacks have been hit (wait until captures are done).
             // If no timeouts are received after a timeout, then fail.
-            int currentCount = mCountCallbacksRemaining.get();
-            long totalSleep = 0;
-            while (currentCount > 0) {
-                try {
-                    Thread.sleep(TIMEOUT_POLL_MS);
-                } catch (InterruptedException e) {
-                    throw new ItsException("Timeout failure", e);
-                }
-                totalSleep += TIMEOUT_POLL_MS;
-                int newCount = mCountCallbacksRemaining.get();
-                if (newCount == currentCount && totalSleep > timeout) {
-                    throw new ItsException(
-                            "No callback received within timeout");
-                } else if (newCount < currentCount) {
-                    totalSleep = 0;
-                }
-                currentCount = newCount;
-            }
+            waitForCallbacks(timeout);
 
             // Close session and wait until session is fully closed
             mSession.close();
@@ -1435,6 +1438,12 @@ public class ItsService extends Service implements SensorEventListener {
                         mSaveHandlers[i]);
             }
 
+            // Plan for how many callbacks need to be received throughout the duration of this
+            // sequence of capture requests. There is one callback per image surface, and one
+            // callback for the CaptureResult, for each capture.
+            int numCaptures = reprocessOutputRequests.size();
+            mCountCallbacksRemaining.set(numCaptures * (numOutputSurfaces + 1));
+
             // Initiate the captures.
             for (int i = 0; i < reprocessOutputRequests.size(); i++) {
                 CaptureRequest.Builder req = reprocessOutputRequests.get(i);
@@ -1450,28 +1459,9 @@ public class ItsService extends Service implements SensorEventListener {
                 mSession.capture(req.build(), mCaptureResultListener, mResultHandler);
             }
 
-            // Plan for how many callbacks need to be received throughout the duration of this
-            // sequence of capture requests. There is one callback per image surface, and one
-            // callback for the CaptureResult, for each capture.
-            int numCaptures = reprocessOutputRequests.size();
-            mCountCallbacksRemaining.set(numCaptures * (numOutputSurfaces + 1));
-
             // Make sure all callbacks have been hit (wait until captures are done).
             // If no timeouts are received after a timeout, then fail.
-            int currentCount = mCountCallbacksRemaining.get();
-            while (currentCount > 0) {
-                try {
-                    Thread.sleep(TIMEOUT_CALLBACK*1000);
-                } catch (InterruptedException e) {
-                    throw new ItsException("Timeout failure", e);
-                }
-                int newCount = mCountCallbacksRemaining.get();
-                if (newCount == currentCount) {
-                    throw new ItsException(
-                            "No callback received within timeout");
-                }
-                currentCount = newCount;
-            }
+            waitForCallbacks(TIMEOUT_CALLBACK * 1000);
         } catch (android.hardware.camera2.CameraAccessException e) {
             throw new ItsException("Access error: ", e);
         } finally {
@@ -1597,7 +1587,11 @@ public class ItsService extends Service implements SensorEventListener {
                 } else {
                     throw new ItsException("Unsupported image format: " + format);
                 }
-                mCountCallbacksRemaining.decrementAndGet();
+
+                synchronized(mCountCallbacksRemaining) {
+                    mCountCallbacksRemaining.decrementAndGet();
+                    mCountCallbacksRemaining.notify();
+                }
             } catch (IOException e) {
                 Logt.e(TAG, "Script error: ", e);
             } catch (InterruptedException e) {
@@ -1768,7 +1762,10 @@ public class ItsService extends Service implements SensorEventListener {
                     mCaptureResults[count] = result;
                     mSocketRunnableObj.sendResponseCaptureResult(mCameraCharacteristics,
                             request, result, mOutputImageReaders);
-                    mCountCallbacksRemaining.decrementAndGet();
+                    synchronized(mCountCallbacksRemaining) {
+                        mCountCallbacksRemaining.decrementAndGet();
+                        mCountCallbacksRemaining.notify();
+                    }
                 }
             } catch (ItsException e) {
                 Logt.e(TAG, "Script error: ", e);
