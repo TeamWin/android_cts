@@ -68,7 +68,6 @@ public class ModuleRepo implements IModuleRepo {
     private int mMediumModulesPerShard;
     private int mLargeModulesPerShard;
     private int mModuleCount = 0;
-    private boolean mIsRetry = false;
     private Set<String> mSerials = new HashSet<>();
     private Map<String, Set<String>> mDeviceTokens = new HashMap<>();
     private Map<String, Map<String, String>> mTestArgs = new HashMap<>();
@@ -200,11 +199,6 @@ public class ModuleRepo implements IModuleRepo {
     @Override
     public boolean isInitialized() {
         return mInitialized;
-    }
-
-    @Override
-    public void setRetryMode(boolean isRetry) {
-        mIsRetry = isRetry;
     }
 
     /**
@@ -409,7 +403,7 @@ public class ModuleRepo implements IModuleRepo {
 
     private void addTestIncludes(ITestFilterReceiver test, List<TestFilter> includes,
             String name) {
-        if (mIsRetry && test instanceof ITestFileFilterReceiver) {
+        if (test instanceof ITestFileFilterReceiver) {
             File includeFile = createFilterFile(name, ".include", includes);
             ((ITestFileFilterReceiver)test).setIncludeTestFile(includeFile);
         } else {
@@ -425,7 +419,7 @@ public class ModuleRepo implements IModuleRepo {
 
     private void addTestExcludes(ITestFilterReceiver test, List<TestFilter> excludes,
             String name) {
-        if (mIsRetry && test instanceof ITestFileFilterReceiver) {
+        if (test instanceof ITestFileFilterReceiver) {
             File excludeFile = createFilterFile(name, ".exclude", excludes);
             ((ITestFileFilterReceiver)test).setExcludeTestFile(excludeFile);
         } else {
