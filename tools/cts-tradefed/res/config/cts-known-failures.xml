@@ -27,9 +27,7 @@
     <option name="compatibility:exclude-filter" value="CtsAdminTestCases android.admin.cts.DevicePolicyManagerTest#testUninstallAllUserCaCerts_failIfNotProfileOwner" />
 
     <!-- b/23776083 -->
-    <option name="compatibility:exclude-filter" value="CtsAlarmClockTestCases android.alarmclock.cts.DismissAlarmTest#testAll" />
-    <option name="compatibility:exclude-filter" value="CtsAlarmClockTestCases android.alarmclock.cts.SetAlarmTest#testAll" />
-    <option name="compatibility:exclude-filter" value="CtsAlarmClockTestCases android.alarmclock.cts.SnoozeAlarmTest#testAll" />
+    <option name="compatibility:exclude-filter" value="CtsAlarmClockTestCases" />
 
     <!-- b/17993121 -->
     <option name="compatibility:exclude-filter" value="CtsAppWidgetTestCases android.appwidget.cts.AppWidgetTest#testAppWidgetProviderCallbacks" />
@@ -48,7 +46,7 @@
     <option name="compatibility:exclude-filter" value="CtsAppWidgetTestCases android.appwidget.cts.AppWidgetTest#testUpdateAppWidgetViaWidgetIds" />
 
     <!-- b/23776099 -->
-    <option name="compatibility:exclude-filter" value="CtsCallLogTestCases android.calllog.cts.CallLogBackupTest#testSingleCallBackup" />
+    <option name="compatibility:exclude-filter" value="CtsCallLogTestCases" />
 
     <!-- b/17530117 -->
     <option name="compatibility:exclude-filter" value="CtsCameraTestCases android.hardware.camera2.cts.AllocationTest#testBlackWhite" />
@@ -178,7 +176,7 @@
     <option name="compatibility:exclude-filter" value="CtsSignatureTestCases android.signature.cts.tests" />
 
     <!-- b/23427621 -->
-    <option name="compatibility:exclude-filter" value="CtsSystemUiTestCases android.systemui.cts.LightStatusBarTests#testLightStatusBarIcons" />
+    <option name="compatibility:exclude-filter" value="CtsSystemUiTestCases" />
 
     <!-- b/27873815 -->
     <option name="compatibility:exclude-filter" value="arm64-v8a CtsRenderscriptLegacyTestCases" />
