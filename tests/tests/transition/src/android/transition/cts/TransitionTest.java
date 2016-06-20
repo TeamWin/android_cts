@@ -489,10 +489,13 @@ public class TransitionTest extends BaseTransitionTest {
 
     public void testTransitionValues() throws Throwable {
         enterScene(R.layout.scene1);
-        mTransition = new CheckTransitionValuesTransition();
+        CheckTransitionValuesTransition transition = new CheckTransitionValuesTransition();
+        mTransition = transition;
         mTransition.setDuration(10);
         resetListener();
-        startTransition(R.layout.scene4);
+        startTransition(R.layout.scene2);
+        assertTrue(transition.onDisappearCalled.await(500, TimeUnit.MILLISECONDS));
+        assertTrue(transition.onAppearCalled.await(500, TimeUnit.MILLISECONDS));
         // The transition has all the asserts in it, so we can just end it now.
         endTransition();
     }
@@ -551,9 +554,12 @@ public class TransitionTest extends BaseTransitionTest {
     }
 
     private class CheckTransitionValuesTransition extends TestTransition {
+        public CountDownLatch onAppearCalled = new CountDownLatch(1);
+        public CountDownLatch onDisappearCalled = new CountDownLatch(1);
         @Override
         public Animator onAppear(ViewGroup sceneRoot, View view, TransitionValues startValues,
                 TransitionValues endValues) {
+            onAppearCalled.countDown();
             assertNull(getTransitionValues(endValues.view, true));
             assertEquals(endValues, getTransitionValues(endValues.view, false));
             return super.onAppear(sceneRoot, view, startValues, endValues);
@@ -562,6 +568,7 @@ public class TransitionTest extends BaseTransitionTest {
         @Override
         public Animator onDisappear(ViewGroup sceneRoot, View view, TransitionValues startValues,
                 TransitionValues endValues) {
+            onDisappearCalled.countDown();
             assertNull(getTransitionValues(startValues.view, false));
             assertEquals(startValues, getTransitionValues(startValues.view, true));
             return super.onDisappear(sceneRoot, view, startValues, endValues);
