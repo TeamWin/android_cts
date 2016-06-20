@@ -16,20 +16,20 @@
 
 package android.widget.cts;
 
-import android.widget.cts.R;
-
-
 import android.app.Activity;
 import android.app.Instrumentation;
 import android.os.SystemClock;
 import android.test.ActivityInstrumentationTestCase2;
+import android.test.suitebuilder.annotation.SmallTest;
 import android.view.MotionEvent;
 import android.widget.SeekBar;
-import android.widget.SeekBar.OnSeekBarChangeListener;
+
+import static org.mockito.Mockito.*;
 
 /**
  * Test {@link SeekBar}.
  */
+@SmallTest
 public class SeekBarTest extends ActivityInstrumentationTestCase2<SeekBarCtsActivity> {
     private SeekBar mSeekBar;
 
@@ -55,13 +55,15 @@ public class SeekBarTest extends ActivityInstrumentationTestCase2<SeekBarCtsActi
         new SeekBar(mActivity, null);
 
         new SeekBar(mActivity, null, android.R.attr.seekBarStyle);
+
+        new SeekBar(mActivity, null, 0, android.R.style.Widget_Material_Light_SeekBar);
     }
 
     public void testSetOnSeekBarChangeListener() {
-        MockOnSeekBarListener listener = new MockOnSeekBarListener();
+        SeekBar.OnSeekBarChangeListener mockChangeListener =
+                mock(SeekBar.OnSeekBarChangeListener.class);
 
-        mSeekBar.setOnSeekBarChangeListener(listener);
-        listener.reset();
+        mSeekBar.setOnSeekBarChangeListener(mockChangeListener);
         long downTime = SystemClock.uptimeMillis();
         long eventTime = SystemClock.uptimeMillis();
         int seekBarXY[] = new int[2];
@@ -70,66 +72,28 @@ public class SeekBarTest extends ActivityInstrumentationTestCase2<SeekBarCtsActi
                 seekBarXY[0], seekBarXY[1], 0);
         mInstrumentation.sendPointerSync(event);
         mInstrumentation.waitForIdleSync();
-        assertTrue(listener.hasCalledOnStartTrackingTouch());
+        verify(mockChangeListener, times(1)).onStartTrackingTouch(mSeekBar);
         // while starting to track, the progress is changed also
-        assertTrue(listener.hasCalledOnProgressChanged());
+        verify(mockChangeListener, atLeastOnce()).onProgressChanged(eq(mSeekBar), anyInt(),
+                eq(true));
 
-        listener.reset();
+        reset(mockChangeListener);
         downTime = SystemClock.uptimeMillis();
         eventTime = SystemClock.uptimeMillis();
         event = MotionEvent.obtain(downTime, eventTime, MotionEvent.ACTION_MOVE,
                 seekBarXY[0] + (mSeekBar.getWidth() >> 1), seekBarXY[1], 0);
         mInstrumentation.sendPointerSync(event);
         mInstrumentation.waitForIdleSync();
-        assertTrue(listener.hasCalledOnProgressChanged());
+        verify(mockChangeListener, atLeastOnce()).onProgressChanged(eq(mSeekBar), anyInt(),
+                eq(true));
 
-        listener.reset();
+        reset(mockChangeListener);
         downTime = SystemClock.uptimeMillis();
         eventTime = SystemClock.uptimeMillis();
         event = MotionEvent.obtain(downTime, eventTime, MotionEvent.ACTION_UP,
                 seekBarXY[0] + (mSeekBar.getWidth() >> 1), seekBarXY[1], 0);
         mInstrumentation.sendPointerSync(event);
         mInstrumentation.waitForIdleSync();
-        assertTrue(listener.hasCalledOnStopTrackingTouch());
-
-        mSeekBar.setOnSeekBarChangeListener(null);
-    }
-
-    private class MockOnSeekBarListener implements OnSeekBarChangeListener {
-        private boolean mHasCalledOnProgressChanged;
-
-        private boolean mHasCalledOnStartTrackingTouch;
-
-        private boolean mHasCalledOnStopTrackingTouch;
-
-        public boolean hasCalledOnProgressChanged() {
-            return mHasCalledOnProgressChanged;
-        }
-
-        public boolean hasCalledOnStartTrackingTouch() {
-            return mHasCalledOnStartTrackingTouch;
-        }
-
-        public boolean hasCalledOnStopTrackingTouch() {
-            return mHasCalledOnStopTrackingTouch;
-        }
-
-        public void reset(){
-            mHasCalledOnProgressChanged = false;
-            mHasCalledOnStartTrackingTouch = false;
-            mHasCalledOnStopTrackingTouch = false;
-        }
-
-        public void onProgressChanged(SeekBar seekBar, int progress, boolean fromTouch) {
-            mHasCalledOnProgressChanged = true;
-        }
-
-        public void onStartTrackingTouch(SeekBar seekBar) {
-            mHasCalledOnStartTrackingTouch = true;
-        }
-
-        public void onStopTrackingTouch(SeekBar seekBar) {
-            mHasCalledOnStopTrackingTouch = true;
-        }
+        verify(mockChangeListener, times(1)).onStopTrackingTouch(mSeekBar);
     }
 }
