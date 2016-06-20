@@ -55,6 +55,24 @@ public class DecodeAccuracyTest extends DecodeAccuracyTestBase {
                 getLargerWidthVideoFormat(new VideoFormat(H264_VIDEO_FILE_NAME)));
     }
 
+    public void testH264SurfaceViewVideoDecode() throws Exception {
+        runDecodeAccuracyTest(
+                new SurfaceViewFactory(),
+                new VideoFormat(H264_VIDEO_FILE_NAME));
+    }
+
+    public void testH264SurfaceViewLargerHeightVideoDecode() throws Exception {
+        runDecodeAccuracyTest(
+                new SurfaceViewFactory(),
+                getLargerHeightVideoFormat(new VideoFormat(H264_VIDEO_FILE_NAME)));
+    }
+
+    public void testH264SurfaceViewLargerWidthVideoDecode() throws Exception {
+        runDecodeAccuracyTest(
+                new SurfaceViewFactory(),
+                getLargerWidthVideoFormat(new VideoFormat(H264_VIDEO_FILE_NAME)));
+    }
+
     /* <------------- Tests Using VP9 -------------> */
     public void testVP9GLViewVideoDecode() throws Exception {
         runDecodeAccuracyTest(
@@ -74,6 +92,24 @@ public class DecodeAccuracyTest extends DecodeAccuracyTestBase {
                 getLargerWidthVideoFormat(new VideoFormat(VP9_VIDEO_FILE_NAME)));
     }
 
+    public void testVP9SurfaceViewVideoDecode() throws Exception {
+        runDecodeAccuracyTest(
+                new SurfaceViewFactory(),
+                new VideoFormat(VP9_VIDEO_FILE_NAME));
+    }
+
+    public void testVP9SurfaceViewLargerHeightVideoDecode() throws Exception {
+        runDecodeAccuracyTest(
+                new SurfaceViewFactory(),
+                getLargerHeightVideoFormat(new VideoFormat(VP9_VIDEO_FILE_NAME)));
+    }
+
+    public void testVP9SurfaceViewLargerWidthVideoDecode() throws Exception {
+        runDecodeAccuracyTest(
+                new SurfaceViewFactory(),
+                getLargerWidthVideoFormat(new VideoFormat(VP9_VIDEO_FILE_NAME)));
+    }
+
     private void runDecodeAccuracyTest(VideoViewFactory videoViewFactory, VideoFormat videoFormat) {
         checkNotNull(videoViewFactory);
         checkNotNull(videoFormat);
@@ -83,15 +119,16 @@ public class DecodeAccuracyTest extends DecodeAccuracyTestBase {
             getHelper().generateView(videoView);
         }
         videoViewFactory.waitForViewIsAvailable();
-
+        // In the case of SurfaceView, VideoViewSnapshot can only capture incoming frames,
+        // so it needs to be created before start decoding.
+        final VideoViewSnapshot videoViewSnapshot = videoViewFactory.getVideoViewSnapshot();
         decodeVideo(videoFormat, videoViewFactory);
-        validateResult(videoFormat, videoViewFactory);
+        validateResult(videoFormat, videoViewSnapshot);
 
         if (videoView != null) {
             getHelper().cleanUpView(videoView);
         }
         videoViewFactory.release();
-        getHelper().unsetOrientation();
     }
 
     private void decodeVideo(VideoFormat videoFormat, VideoViewFactory videoViewFactory) {
@@ -103,9 +140,8 @@ public class DecodeAccuracyTest extends DecodeAccuracyTestBase {
         assertTrue("Failed to decode the video.", playerResult.isSuccess());
     }
 
-    private void validateResult(VideoFormat videoFormat, VideoViewFactory videoViewFactory) {
-        final Bitmap result = getHelper().generateBitmapFromVideoViewSnapshot(
-                videoViewFactory.getVideoViewSnapshot());
+    private void validateResult(VideoFormat videoFormat, VideoViewSnapshot videoViewSnapshot) {
+        final Bitmap result = getHelper().generateBitmapFromVideoViewSnapshot(videoViewSnapshot);
         final Bitmap golden;
         final String mime = videoFormat.getMimeType();
         if (mime.equals(MimeTypes.VIDEO_H264)) {
