@@ -128,6 +128,75 @@ public class ActivityManagerDockedStackTests extends ActivityManagerTestBase {
                         .getTaskByActivityName(TEST_ACTIVITY_NAME, FULLSCREEN_WORKSPACE_STACK_ID));
     }
 
+    public void testLaunchToSideMultipleWithDifferentIntent() throws Exception {
+        launchActivityInDockStack(LAUNCH_TO_SIDE_ACTIVITY_NAME);
+        printStacksAndTasks();
+        final String[] waitForActivitiesVisible = new String[] {TEST_ACTIVITY_NAME};
+
+        // Launch activity to side with data.
+        launchActivityToSide(LAUNCH_TO_SIDE_ACTIVITY_NAME, true, false);
+        mAmWmState.computeState(mDevice, waitForActivitiesVisible);
+        int taskNumberInitial = mAmWmState.getAmState().getStackById(FULLSCREEN_WORKSPACE_STACK_ID)
+                .getTasks().size();
+        mAmWmState.assertNotNull("Launched to side activity must be in fullscreen stack.",
+                mAmWmState.getAmState()
+                        .getTaskByActivityName(TEST_ACTIVITY_NAME, FULLSCREEN_WORKSPACE_STACK_ID));
+
+        // Try to launch to side same activity again with different data.
+        launchActivityToSide(LAUNCH_TO_SIDE_ACTIVITY_NAME, true, false);
+        mAmWmState.computeState(mDevice, waitForActivitiesVisible);
+        int taskNumberSecondLaunch = mAmWmState.getAmState()
+                .getStackById(FULLSCREEN_WORKSPACE_STACK_ID).getTasks().size();
+        mAmWmState.assertEquals("Task number must be incremented.", taskNumberInitial + 1,
+                taskNumberSecondLaunch);
+        mAmWmState.assertFocusedActivity("Launched to side activity must be in front.",
+                TEST_ACTIVITY_NAME);
+        mAmWmState.assertNotNull("Launched to side activity must be launched in fullscreen stack.",
+                mAmWmState.getAmState()
+                        .getTaskByActivityName(TEST_ACTIVITY_NAME, FULLSCREEN_WORKSPACE_STACK_ID));
+
+        // Try to launch to side same activity again with no data.
+        launchActivityToSide(LAUNCH_TO_SIDE_ACTIVITY_NAME);
+        mAmWmState.computeState(mDevice, waitForActivitiesVisible);
+        int taskNumberFinal = mAmWmState.getAmState().getStackById(FULLSCREEN_WORKSPACE_STACK_ID)
+                .getTasks().size();
+        mAmWmState.assertEquals("Task number must be incremented.", taskNumberSecondLaunch + 1,
+                taskNumberFinal);
+        mAmWmState.assertFocusedActivity("Launched to side activity must be in front.",
+                TEST_ACTIVITY_NAME);
+        mAmWmState.assertNotNull("Launched to side activity must be launched in fullscreen stack.",
+                mAmWmState.getAmState()
+                        .getTaskByActivityName(TEST_ACTIVITY_NAME, FULLSCREEN_WORKSPACE_STACK_ID));
+    }
+
+    public void testLaunchToSideMultipleWithFlag() throws Exception {
+        launchActivityInDockStack(LAUNCH_TO_SIDE_ACTIVITY_NAME);
+        printStacksAndTasks();
+        final String[] waitForActivitiesVisible = new String[] {TEST_ACTIVITY_NAME};
+
+        // Launch activity to side.
+        launchActivityToSide(LAUNCH_TO_SIDE_ACTIVITY_NAME);
+        mAmWmState.computeState(mDevice, waitForActivitiesVisible);
+        int taskNumberInitial = mAmWmState.getAmState().getStackById(FULLSCREEN_WORKSPACE_STACK_ID)
+                .getTasks().size();
+        mAmWmState.assertNotNull("Launched to side activity must be in fullscreen stack.",
+                mAmWmState.getAmState()
+                        .getTaskByActivityName(TEST_ACTIVITY_NAME, FULLSCREEN_WORKSPACE_STACK_ID));
+
+        // Try to launch to side same activity again, but with Intent#FLAG_ACTIVITY_MULTIPLE_TASK.
+        launchActivityToSide(LAUNCH_TO_SIDE_ACTIVITY_NAME, false, true);
+        mAmWmState.computeState(mDevice, waitForActivitiesVisible);
+        int taskNumberFinal = mAmWmState.getAmState().getStackById(FULLSCREEN_WORKSPACE_STACK_ID)
+                .getTasks().size();
+        mAmWmState.assertEquals("Task number must be incremented.", taskNumberInitial + 1,
+                taskNumberFinal);
+        mAmWmState.assertFocusedActivity("Launched to side activity must be in front.",
+                TEST_ACTIVITY_NAME);
+        mAmWmState.assertNotNull("Launched to side activity must remain in fullscreen stack.",
+                mAmWmState.getAmState()
+                        .getTaskByActivityName(TEST_ACTIVITY_NAME, FULLSCREEN_WORKSPACE_STACK_ID));
+    }
+
     public void testRotationWhenDocked() throws Exception {
         launchActivityInDockStack(LAUNCH_TO_SIDE_ACTIVITY_NAME);
         launchActivityToSide(LAUNCH_TO_SIDE_ACTIVITY_NAME);
@@ -257,7 +326,19 @@ public class ActivityManagerDockedStackTests extends ActivityManagerTestBase {
     }
 
     private void launchActivityToSide(String activityName) throws Exception {
-        executeShellCommand(
-                getAmStartCmd(activityName) + " -f 0x20000000 --ez launch_to_the_side true");
+        launchActivityToSide(activityName, false, false);
+    }
+
+    private void launchActivityToSide(String activityName, boolean randomData,
+                                      boolean multipleTaskFlag) throws Exception {
+        StringBuilder commandBuilder = new StringBuilder(getAmStartCmd(activityName));
+        commandBuilder.append(" -f 0x20000000 --ez launch_to_the_side true");
+        if (randomData) {
+            commandBuilder.append(" --ez random_data true");
+        }
+        if (multipleTaskFlag) {
+            commandBuilder.append(" --ez multiple_task true");
+        }
+        executeShellCommand(commandBuilder.toString());
     }
 }

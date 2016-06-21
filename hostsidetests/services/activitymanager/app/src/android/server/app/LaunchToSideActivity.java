@@ -1,10 +1,12 @@
 package android.server.app;
 
 import static android.content.Intent.FLAG_ACTIVITY_LAUNCH_ADJACENT;
+import static android.content.Intent.FLAG_ACTIVITY_MULTIPLE_TASK;
 import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 
 public class LaunchToSideActivity extends Activity {
@@ -12,9 +14,18 @@ public class LaunchToSideActivity extends Activity {
     protected void onNewIntent(Intent intent) {
         super.onNewIntent(intent);
         final Bundle extras = intent.getExtras();
-         if (extras != null && extras.getBoolean("launch_to_the_side")) {
+        if (extras != null && extras.getBoolean("launch_to_the_side")) {
             Intent newIntent = new Intent(this, TestActivity.class);
             newIntent.addFlags(FLAG_ACTIVITY_NEW_TASK | FLAG_ACTIVITY_LAUNCH_ADJACENT);
+            if (extras.getBoolean("multiple_task")) {
+                newIntent.addFlags(FLAG_ACTIVITY_MULTIPLE_TASK);
+            }
+            if (extras.getBoolean("random_data")) {
+                Uri data = new Uri.Builder()
+                        .path(String.valueOf(System.currentTimeMillis()))
+                        .build();
+                newIntent.setData(data);
+            }
             startActivity(newIntent);
         }
     }
