@@ -19,6 +19,7 @@ import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.animation.ObjectAnimator;
 import android.animation.ValueAnimator;
+import android.graphics.Color;
 import android.test.ActivityInstrumentationTestCase2;
 import android.view.animation.AccelerateInterpolator;
 import android.view.animation.LinearInterpolator;
@@ -391,6 +392,57 @@ public class ValueAnimatorTest extends
         Integer animatedValue = (Integer) valueAnimatorLocal.getAnimatedValue();
         assertTrue(animatedValue >= start);
         assertTrue(animatedValue <= end);
+    }
+
+    public void testOfArgb() throws Throwable {
+        int start = 0xffff0000;
+        int end = 0xff0000ff;
+        int[] values = {start, end};
+        int startRed = Color.red(start);
+        int startBlue = Color.blue(start);
+        int endRed = Color.red(end);
+        int endBlue = Color.blue(end);
+        final ValueAnimator valueAnimatorLocal = ValueAnimator.ofArgb(values);
+        valueAnimatorLocal.setDuration(mDuration);
+
+        final CountDownLatch latch = new CountDownLatch(1);
+        valueAnimatorLocal.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+            @Override
+            public void onAnimationUpdate(ValueAnimator animation) {
+                if (animation.getAnimatedFraction() > .05f) {
+                    latch.countDown();
+                }
+            }
+        });
+
+        this.runTestOnUiThread(new Runnable(){
+            public void run() {
+                valueAnimatorLocal.start();
+            }
+        });
+        boolean isRunning = valueAnimatorLocal.isRunning();
+        assertTrue(isRunning);
+
+        assertTrue(latch.await(500, TimeUnit.MILLISECONDS));
+
+        Integer animatedValue = (Integer) valueAnimatorLocal.getAnimatedValue();
+        int alpha = Color.alpha(animatedValue);
+        int red = Color.red(animatedValue);
+        int green = Color.green(animatedValue);
+        int blue = Color.blue(animatedValue);
+        assertTrue(red < startRed);
+        assertTrue(red > endRed);
+        assertTrue(blue > startBlue);
+        assertTrue(blue < endBlue);
+        assertEquals(255, alpha);
+        assertEquals(0, green);
+
+        runTestOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                valueAnimatorLocal.cancel();
+            }
+        });
     }
 
     public void testNoDelayOnSeekAnimation() throws Throwable {

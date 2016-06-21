@@ -20,6 +20,7 @@ import android.animation.ArgbEvaluator;
 import android.animation.ObjectAnimator;
 import android.animation.PropertyValuesHolder;
 import android.animation.ValueAnimator;
+import android.graphics.Color;
 import android.test.ActivityInstrumentationTestCase2;
 import android.util.Property;
 import android.view.View;
@@ -164,6 +165,59 @@ public class ObjectAnimatorTest extends
         //We are going from less negative value to a more negative value
         assertTrue(i.intValue() <= startColor);
         assertTrue(endColor <= i.intValue());
+    }
+
+    public void testOfArgb() throws Throwable {
+        Object object = mActivity.view;
+        String property = "backgroundColor";
+        int start = 0xffff0000;
+        int end = 0xff0000ff;
+        int[] values = {start, end};
+        int startRed = Color.red(start);
+        int startBlue = Color.blue(start);
+        int endRed = Color.red(end);
+        int endBlue = Color.blue(end);
+        final ObjectAnimator animator = ObjectAnimator.ofArgb(object, property, start, end);
+        animator.setDuration(mDuration);
+
+        final CountDownLatch latch = new CountDownLatch(1);
+        animator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+            @Override
+            public void onAnimationUpdate(ValueAnimator animation) {
+                if (animation.getAnimatedFraction() > .05f) {
+                    latch.countDown();
+                }
+            }
+        });
+
+        this.runTestOnUiThread(new Runnable(){
+            public void run() {
+                animator.start();
+            }
+        });
+        boolean isRunning = animator.isRunning();
+        assertTrue(isRunning);
+
+        assertTrue(latch.await(500, TimeUnit.MILLISECONDS));
+
+        Integer animatedValue = (Integer) animator.getAnimatedValue();
+        int alpha = Color.alpha(animatedValue);
+        int red = Color.red(animatedValue);
+        int green = Color.green(animatedValue);
+        int blue = Color.blue(animatedValue);
+        assertTrue(red < startRed);
+        assertTrue(red > endRed);
+        assertTrue(blue > startBlue);
+        assertTrue(blue < endBlue);
+        assertEquals(255, alpha);
+        assertEquals(0, green);
+
+        runTestOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                animator.cancel();
+            }
+        });
     }
 
     public void testGetPropertyName() throws Throwable {
