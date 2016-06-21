@@ -104,7 +104,6 @@ cts_test_packages := \
     CtsDeviceUi \
     CtsDeviceDram \
     CtsDeviceSimpleCpu \
-    CtsDeviceBrowserBench \
     CtsDeviceVideoPerf \
     CtsDeviceOpenGl \
     CtsDeviceTvProviderPerf \
