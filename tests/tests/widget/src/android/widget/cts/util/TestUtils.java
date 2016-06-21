@@ -19,6 +19,7 @@ package android.widget.cts.util;
 import android.annotation.ColorInt;
 import android.annotation.NonNull;
 import android.content.Context;
+import android.content.res.ColorStateList;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
@@ -341,6 +342,24 @@ public class TestUtils {
             @Override
             public void describeTo(Description description) {
                 description.appendText("doesn't match " + expected);
+            }
+        });
+    }
+
+    public static ColorStateList colorStateListOf(final @ColorInt int color) {
+        return argThat(new BaseMatcher<ColorStateList>() {
+            @Override
+            public boolean matches(Object o) {
+                if (o instanceof ColorStateList) {
+                    final ColorStateList actual = (ColorStateList) o;
+                    return (actual.getColors().length == 1) && (actual.getDefaultColor() == color);
+                }
+                return false;
+            }
+
+            @Override
+            public void describeTo(Description description) {
+                description.appendText("doesn't match " + formatColorToHex(color));
             }
         });
     }
