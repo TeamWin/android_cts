@@ -45,7 +45,7 @@
                         <tr>
                             <td class="rowtitle">Suite / Plan</td>
                             <td>
-                                <xsl:value-of select="Result/@suite_name"/> / <xsl:value-of select="Result/@plan"/>
+                                <xsl:value-of select="Result/@suite_name"/> / <xsl:value-of select="Result/@suite_plan"/>
                             </td>
                         </tr>
                         <tr>
