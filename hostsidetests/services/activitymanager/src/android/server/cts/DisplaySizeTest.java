@@ -31,6 +31,7 @@ public class DisplaySizeTest extends DeviceTestCase {
     private static final String AM_START_COMMAND = "am start -n %s/%s.%s";
     private static final String AM_FORCE_STOP = "am force-stop %s";
 
+    private static final int ACTIVITY_TIMEOUT_MILLIS = 1000;
     private static final int WINDOW_TIMEOUT_MILLIS = 1000;
 
     private ITestDevice mDevice;
@@ -45,7 +46,7 @@ public class DisplaySizeTest extends DeviceTestCase {
         // since the feature verifies that we're in a non-default density.
         final int stableDensity = getStableDensity();
         final int targetDensity = (int) (stableDensity * 0.85);
-        mDevice.executeShellCommand("wm density " + targetDensity);
+        setDensity(targetDensity);
     }
 
     @Override
@@ -65,6 +66,7 @@ public class DisplaySizeTest extends DeviceTestCase {
 
     public void testCompatibilityDialog() throws Exception {
         startActivity("android.displaysize.app", "SmallestWidthActivity");
+        verifyWindowDisplayed("SmallestWidthActivity", ACTIVITY_TIMEOUT_MILLIS);
         verifyWindowDisplayed("UnsupportedDisplaySizeDialog", WINDOW_TIMEOUT_MILLIS);
     }
 
@@ -81,6 +83,16 @@ public class DisplaySizeTest extends DeviceTestCase {
         } catch (DeviceNotAvailableException e) {
             return 0;
         }
+    }
+
+    private void setDensity(int targetDensity) throws DeviceNotAvailableException {
+        mDevice.executeShellCommand("wm density " + targetDensity);
+
+        // Verify that the density is changed.
+        final String output = mDevice.executeShellCommand("wm density");
+        final boolean success = output.contains("Override density: " + targetDensity);
+
+        assertTrue("Failed to set density to " + targetDensity, success);
     }
 
     private void forceStopPackage(String packageName) throws DeviceNotAvailableException {
