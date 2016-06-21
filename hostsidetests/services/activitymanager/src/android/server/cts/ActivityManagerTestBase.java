@@ -108,6 +108,12 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
 
         // Get the device, this gives a handle to run commands and install APKs.
         mDevice = getDevice();
+        unlockDevice();
+        // Remove special stacks.
+        executeShellCommand(AM_REMOVE_STACK + PINNED_STACK_ID);
+        executeShellCommand(AM_REMOVE_STACK + DOCKED_STACK_ID);
+        executeShellCommand(AM_REMOVE_STACK + FREEFORM_WORKSPACE_STACK_ID);
+        // Store rotation settings.
         mInitialAccelerometerRotation = getAccelerometerRotation();
         mUserRotation = getUserRotation();
     }
@@ -118,6 +124,7 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
         try {
             unlockDevice();
             executeShellCommand(AM_FORCE_STOP_TEST_PACKAGE);
+            // Restore rotation settings to the state they were before test.
             setAccelerometerRotation(mInitialAccelerometerRotation);
             setUserRotation(mUserRotation);
             // Remove special stacks.
@@ -272,8 +279,10 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
     }
 
     protected void unlockDevice() throws DeviceNotAvailableException {
-        runCommandAndPrintOutput("input keyevent 26");
-        runCommandAndPrintOutput("input keyevent 82");
+        if (!isDisplayOn()) {
+            runCommandAndPrintOutput("input keyevent 224");
+            runCommandAndPrintOutput("input keyevent 82");
+        }
     }
 
     protected void setDeviceRotation(int rotation) throws DeviceNotAvailableException {
