@@ -36,10 +36,16 @@ public class CrossAppDragAndDropTests extends DeviceTestCase {
     /** ID of stack that occupies a dedicated region of the screen. */
     private static final int DOCKED_STACK_ID = FREEFORM_WORKSPACE_STACK_ID + 1;
 
+    /** ID of stack that always on top (always visible) when it exists. */
+    private static final int PINNED_STACK_ID = DOCKED_STACK_ID + 1;
+
     private static final String AM_FORCE_STOP = "am force-stop ";
+    private static final String AM_MOVE_TASK = "am stack movetask ";
+    private static final String AM_REMOVE_STACK = "am stack remove ";
     private static final String AM_START_N = "am start -n ";
     private static final String AM_STACK_LIST = "am stack list";
     private static final String INPUT_MOUSE_SWIPE = "input mouse swipe ";
+    private static final String TASK_ID_PREFIX = "taskId";
 
     private static final int SWIPE_DURATION_MS = 500;
 
@@ -89,6 +95,7 @@ public class CrossAppDragAndDropTests extends DeviceTestCase {
         mDevice = getDevice();
         mSourcePackageName = SOURCE_PACKAGE_NAME;
         mTargetPackageName = TARGET_PACKAGE_NAME;
+        cleanupState();
     }
 
     @Override
@@ -98,27 +105,59 @@ public class CrossAppDragAndDropTests extends DeviceTestCase {
         mDevice.executeShellCommand(AM_FORCE_STOP + mTargetPackageName);
     }
 
-    private String adbShell(String command) throws DeviceNotAvailableException {
+    private String executeShellCommand(String command) throws DeviceNotAvailableException {
         return mDevice.executeShellCommand(command);
     }
 
     private void clearLogs() throws DeviceNotAvailableException {
-        adbShell("logcat -c");
+        executeShellCommand("logcat -c");
     }
 
     private String getStartCommand(String componentName, String modeExtra) {
         return AM_START_N + componentName + " -e mode " + modeExtra;
     }
 
+    private String getMoveTaskCommand(int taskId, int stackId) throws Exception {
+        return AM_MOVE_TASK + taskId + " " + stackId + " true";
+    }
+
     private String getComponentName(String packageName, String activityName) {
         return packageName + "/" + packageName + "." + activityName;
+    }
+
+    /**
+     * Make sure that the special activity stacks are removed and the ActivityManager/WindowManager
+     * is in a good state.
+     */
+    private void cleanupState() throws Exception {
+        executeShellCommand(AM_FORCE_STOP + SOURCE_PACKAGE_NAME);
+        executeShellCommand(AM_FORCE_STOP + TARGET_PACKAGE_NAME);
+        executeShellCommand(AM_FORCE_STOP + TARGET_23_PACKAGE_NAME);
+        unlockDevice();
+
+        // Reinitialize the docked stack to force the window manager to reset its default bounds.
+        // See b/29068935.
+        clearLogs();
+        final String componentName = getComponentName(mSourcePackageName, SOURCE_ACTIVITY_NAME);
+        executeShellCommand(getStartCommand(componentName, null) + " --stack " +
+                FULLSCREEN_WORKSPACE_STACK_ID);
+        final int taskId = getActivityTaskId(componentName);
+        // Moving a task from the full screen stack to the docked stack resets
+        // WindowManagerService#mDockedStackCreateBounds.
+        executeShellCommand(getMoveTaskCommand(taskId, DOCKED_STACK_ID));
+        waitForResume(mSourcePackageName, SOURCE_ACTIVITY_NAME);
+
+        // Remove special stacks.
+        executeShellCommand(AM_REMOVE_STACK + PINNED_STACK_ID);
+        executeShellCommand(AM_REMOVE_STACK + DOCKED_STACK_ID);
+        executeShellCommand(AM_REMOVE_STACK + FREEFORM_WORKSPACE_STACK_ID);
     }
 
     private void launchDockedActivity(String packageName, String activityName, String mode)
             throws Exception {
         clearLogs();
         final String componentName = getComponentName(packageName, activityName);
-        adbShell(getStartCommand(componentName, mode) + " --stack " + DOCKED_STACK_ID);
+        executeShellCommand(getStartCommand(componentName, mode) + " --stack " + DOCKED_STACK_ID);
         waitForResume(packageName, activityName);
     }
 
@@ -126,7 +165,7 @@ public class CrossAppDragAndDropTests extends DeviceTestCase {
             throws Exception {
         clearLogs();
         final String componentName = getComponentName(packageName, activityName);
-        adbShell(getStartCommand(componentName, mode) + " --stack "
+        executeShellCommand(getStartCommand(componentName, mode) + " --stack "
                 + FULLSCREEN_WORKSPACE_STACK_ID);
         waitForResume(packageName, activityName);
     }
@@ -135,7 +174,7 @@ public class CrossAppDragAndDropTests extends DeviceTestCase {
         final String fullActivityName = packageName + "." + activityName;
         int retryCount = 3;
         do {
-            String logs = adbShell("logcat -d -b events");
+            String logs = executeShellCommand("logcat -d -b events");
             for (String line : logs.split("\\n")) {
                 if(line.contains("am_on_resume_called") && line.contains(fullActivityName)) {
                     return;
@@ -147,7 +186,8 @@ public class CrossAppDragAndDropTests extends DeviceTestCase {
     }
 
     private void injectInput(Point from, Point to, int durationMs) throws Exception {
-        adbShell(INPUT_MOUSE_SWIPE + from.x + " " + from.y + " " + to.x + " " + to.y + " " +
+        executeShellCommand(
+                INPUT_MOUSE_SWIPE + from.x + " " + from.y + " " + to.x + " " + to.y + " " +
                 durationMs);
     }
 
@@ -189,6 +229,17 @@ public class CrossAppDragAndDropTests extends DeviceTestCase {
         return false;
     }
 
+    private int getActivityTaskId(String name) throws Exception {
+        final String taskInfo = findTaskInfo(name);
+        for (String word : taskInfo.split("\\s+")) {
+            if (word.startsWith(TASK_ID_PREFIX)) {
+                final String withColon = word.split("=")[1];
+                return Integer.parseInt(withColon.substring(0, withColon.length() - 1));
+            }
+        }
+        return -1;
+    }
+
     private Point getWindowCenter(String name) throws Exception {
         Point p1 = new Point();
         Point p2 = new Point();
@@ -204,12 +255,19 @@ public class CrossAppDragAndDropTests extends DeviceTestCase {
         point.y = Integer.parseInt(parts[1]);
     }
 
+    private void unlockDevice() throws DeviceNotAvailableException {
+        // Wake up the device, if necessary.
+        executeShellCommand("input keyevent 224");
+        // Unlock the screen.
+        executeShellCommand("input keyevent 82");
+    }
+
     private Map<String, String> getLogResults(String className) throws Exception {
         int retryCount = 3;
         Map<String, String> output = new HashMap<String, String>();
         do {
 
-            String logs = adbShell("logcat -v brief -d " + className + ":I" + " *:S");
+            String logs = executeShellCommand("logcat -v brief -d " + className + ":I" + " *:S");
             for (String line : logs.split("\\n")) {
                 if (line.startsWith("I/" + className)) {
                     String payload = line.split(":")[1].trim();
