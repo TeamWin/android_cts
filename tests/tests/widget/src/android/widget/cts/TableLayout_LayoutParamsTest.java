@@ -16,6 +16,7 @@
 
 package android.widget.cts;
 
+import android.view.ViewGroup;
 import android.widget.cts.R;
 
 import org.xmlpull.v1.XmlPullParser;
@@ -42,28 +43,47 @@ public class TableLayout_LayoutParamsTest extends InstrumentationTestCase {
     }
 
     public void testConstructor() {
-        new TableLayout.LayoutParams(mTargetContext, null);
+        // We expect width to be MATCH and height to be WRAP as documented in TableLayout
+        TableLayout.LayoutParams layoutParams = new TableLayout.LayoutParams();
+        assertEquals(TableLayout.LayoutParams.MATCH_PARENT, layoutParams.width);
+        assertEquals(TableLayout.LayoutParams.WRAP_CONTENT, layoutParams.height);
 
-        TableLayout.LayoutParams layoutParams = new TableLayout.LayoutParams(200, 300);
+        // We expect width to be MATCH and height to be WRAP as documented in TableLayout
+        layoutParams = new TableLayout.LayoutParams(mTargetContext, null);
+        assertEquals(TableLayout.LayoutParams.MATCH_PARENT, layoutParams.width);
+        assertEquals(TableLayout.LayoutParams.WRAP_CONTENT, layoutParams.height);
+
+        // We expect width to be MATCH, ignoring what is passed in the constructor
+        layoutParams = new TableLayout.LayoutParams(200, 300);
         assertEquals(TableLayout.LayoutParams.MATCH_PARENT, layoutParams.width);
         assertEquals(300, layoutParams.height);
-        TableLayout.LayoutParams oldParams = layoutParams;
 
-        layoutParams = new TableLayout.LayoutParams(200, 300, 1.2f);
+        // We expect width to be MATCH, ignoring what is passed in the constructor
+        layoutParams = new TableLayout.LayoutParams(250, 350, 1.2f);
         assertEquals(TableLayout.LayoutParams.MATCH_PARENT, layoutParams.width);
-        assertEquals(300, layoutParams.height);
+        assertEquals(350, layoutParams.height);
         assertEquals(1.2f, layoutParams.weight);
-        TableLayout.LayoutParams oldMarginParams = layoutParams;
 
-        new TableLayout.LayoutParams();
-
-        layoutParams = new TableLayout.LayoutParams(oldParams);
+        // We expect width to be MATCH, ignoring what is set on the passed object
+        layoutParams = new TableLayout.LayoutParams(new ViewGroup.LayoutParams(300, 360));
         assertEquals(TableLayout.LayoutParams.MATCH_PARENT, layoutParams.width);
-        assertEquals(300, layoutParams.height);
+        assertEquals(360, layoutParams.height);
 
-        layoutParams = new TableLayout.LayoutParams(oldMarginParams);
+        // We expect width to be MATCH, ignoring what is set on the passed object
+        layoutParams = new TableLayout.LayoutParams(new ViewGroup.MarginLayoutParams(320, 420));
         assertEquals(TableLayout.LayoutParams.MATCH_PARENT, layoutParams.width);
-        assertEquals(300, layoutParams.height);
+        assertEquals(420, layoutParams.height);
+
+        // We expect width to be MATCH as that is copied from the passed object
+        layoutParams = new TableLayout.LayoutParams(new TableLayout.LayoutParams(500, 400));
+        assertEquals(TableLayout.LayoutParams.MATCH_PARENT, layoutParams.width);
+        assertEquals(400, layoutParams.height);
+
+        // We expect width to be MATCH as that is copied from the passed object
+        layoutParams = new TableLayout.LayoutParams(new TableLayout.LayoutParams(550, 650, 1.4f));
+        assertEquals(TableLayout.LayoutParams.MATCH_PARENT, layoutParams.width);
+        assertEquals(650, layoutParams.height);
+        assertEquals(1.4f, layoutParams.weight);
     }
 
     public void testSetBaseAttributes() {
