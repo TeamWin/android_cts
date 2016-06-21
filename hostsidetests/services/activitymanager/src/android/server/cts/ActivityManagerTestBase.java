@@ -116,6 +116,7 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
     protected void tearDown() throws Exception {
         super.tearDown();
         try {
+            unlockDevice();
             executeShellCommand(AM_FORCE_STOP_TEST_PACKAGE);
             setAccelerometerRotation(mInitialAccelerometerRotation);
             setUserRotation(mUserRotation);
@@ -231,8 +232,43 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
         return result;
     }
 
+    private boolean isDisplayOn() throws DeviceNotAvailableException {
+        final Pattern displayStatePattern = Pattern.compile("Display Power: state=(.+)");
+        final CollectingOutputReceiver outputReceiver = new CollectingOutputReceiver();
+        mDevice.executeShellCommand("dumpsys power", outputReceiver);
+        final LinkedList<String> dumpLines = new LinkedList();
+        Collections.addAll(dumpLines, outputReceiver.getOutput().split("\\n"));
+
+        while (!dumpLines.isEmpty()) {
+            final String line = dumpLines.pop().trim();
+
+            Matcher matcher = displayStatePattern.matcher(line);
+            if (matcher.matches()) {
+                final String state = matcher.group(1);
+                log("power state=" + state);
+                return "ON".equals(state);
+            }
+        }
+        log("power state :(");
+        return false;
+    }
+
     protected void lockDevice() throws DeviceNotAvailableException {
+        int retriesLeft = 5;
         runCommandAndPrintOutput("input keyevent 26");
+        do {
+            if (isDisplayOn()) {
+                log("***Waiting for display to turn off...");
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException e) {
+                    log(e.toString());
+                    // Well I guess we are not waiting...
+                }
+            } else {
+                break;
+            }
+        } while (retriesLeft-- > 0);
     }
 
     protected void unlockDevice() throws DeviceNotAvailableException {
