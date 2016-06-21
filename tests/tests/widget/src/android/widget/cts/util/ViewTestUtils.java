@@ -22,6 +22,7 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.ViewConfiguration;
 import android.view.ViewTreeObserver;
 import android.view.ViewTreeObserver.OnDrawListener;
 import junit.framework.Assert;
@@ -158,6 +159,50 @@ public class ViewTestUtils {
         MotionEvent eventUp = MotionEvent.obtain(
                 upTime, upTime, MotionEvent.ACTION_UP, dragStartX + dragAmountX,
                 dragStartY + dragAmountY, 1);
+        instrumentation.sendPointerSync(eventUp);
+
+        // Wait for the system to process all events in the queue
+        instrumentation.waitForIdleSync();
+    }
+
+    /**
+     * Emulates a long click in the center of the passed {@link View}.
+     *
+     * @param instrumentation the instrumentation used to run the test
+     * @param view the view to "long click"
+     * @param extraWaitMs the duration of emulated long click in milliseconds starting
+     *      after system-level long press timeout.
+     */
+    public static void emulateLongClick(Instrumentation instrumentation, View view,
+            long extraWaitMs) {
+        // Use instrumentation to emulate a tap on the spinner to bring down its popup
+        final int[] viewOnScreenXY = new int[2];
+        view.getLocationOnScreen(viewOnScreenXY);
+        int emulatedTapX = viewOnScreenXY[0] + view.getWidth() / 2;
+        int emulatedTapY = viewOnScreenXY[1] + view.getHeight() / 2;
+
+        // Inject DOWN event
+        long downTime = SystemClock.uptimeMillis();
+        MotionEvent eventDown = MotionEvent.obtain(
+                downTime, downTime, MotionEvent.ACTION_DOWN, emulatedTapX, emulatedTapY, 1);
+        instrumentation.sendPointerSync(eventDown);
+
+        // Inject MOVE event
+        long moveTime = SystemClock.uptimeMillis();
+        MotionEvent eventMove = MotionEvent.obtain(
+                moveTime, moveTime, MotionEvent.ACTION_MOVE, emulatedTapX, emulatedTapY, 1);
+        instrumentation.sendPointerSync(eventMove);
+
+        try {
+            Thread.sleep(ViewConfiguration.getLongPressTimeout() + extraWaitMs);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
+        // Inject UP event
+        long upTime = SystemClock.uptimeMillis();
+        MotionEvent eventUp = MotionEvent.obtain(
+                upTime, upTime, MotionEvent.ACTION_UP, emulatedTapX, emulatedTapY, 1);
         instrumentation.sendPointerSync(eventUp);
 
         // Wait for the system to process all events in the queue

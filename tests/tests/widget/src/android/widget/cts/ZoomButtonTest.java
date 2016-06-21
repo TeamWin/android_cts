@@ -16,23 +16,28 @@
 
 package android.widget.cts;
 
-import android.widget.cts.R;
-
-
-import org.xmlpull.v1.XmlPullParser;
-
 import android.app.Activity;
-import android.cts.util.PollingCheck;
 import android.test.ActivityInstrumentationTestCase2;
 import android.test.UiThreadTest;
+import android.test.suitebuilder.annotation.LargeTest;
+import android.test.suitebuilder.annotation.SmallTest;
 import android.util.AttributeSet;
 import android.util.Xml;
 import android.view.View;
-import android.view.View.OnClickListener;
+import android.view.ViewConfiguration;
 import android.widget.ListView;
 import android.widget.ZoomButton;
+import android.widget.cts.util.ViewTestUtils;
 
+import org.xmlpull.v1.XmlPullParser;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
+@SmallTest
 public class ZoomButtonTest extends ActivityInstrumentationTestCase2<ZoomButtonCtsActivity> {
+    private static long NANOS_IN_MILLI = 1000000;
     private ZoomButton mZoomButton;
     private Activity mActivity;
 
@@ -54,7 +59,9 @@ public class ZoomButtonTest extends ActivityInstrumentationTestCase2<ZoomButtonC
 
         new ZoomButton(mActivity, null);
 
-        new ZoomButton(mActivity, null, 0);
+        new ZoomButton(mActivity, null, android.R.attr.imageButtonStyle);
+
+        new ZoomButton(mActivity, null, 0, android.R.style.Widget_Material_Light_ImageButton);
 
         XmlPullParser parser = mActivity.getResources().getXml(R.layout.zoombutton_layout);
         AttributeSet attrs = Xml.asAttributeSet(parser);
@@ -81,6 +88,7 @@ public class ZoomButtonTest extends ActivityInstrumentationTestCase2<ZoomButtonC
         }
     }
 
+    @UiThreadTest
     public void testSetEnabled() {
         assertFalse(mZoomButton.isPressed());
         mZoomButton.setEnabled(true);
@@ -105,21 +113,54 @@ public class ZoomButtonTest extends ActivityInstrumentationTestCase2<ZoomButtonC
         assertFalse(mZoomButton.dispatchUnhandledMove(null, View.FOCUS_DOWN));
     }
 
-    public void testOnLongClick() {
-        final MockOnClickListener listener = new MockOnClickListener();
-        mZoomButton.setOnClickListener(listener);
-        mZoomButton.setEnabled(true);
-        long speed = 2000;
-        mZoomButton.setZoomSpeed(speed);
+    private void verifyZoomSpeed(ZoomClickListener zoomClickListener, long zoomSpeedMs) {
+        mZoomButton.setZoomSpeed(zoomSpeedMs);
 
-        assertFalse(listener.hasOnClickCalled());
-        mZoomButton.performLongClick();
-        new PollingCheck(speed + 500) {
-            @Override
-            protected boolean check() {
-                return listener.hasOnClickCalled();
+        final long startTime = System.nanoTime();
+        // Emulate long click that "lasts" for ten seconds
+        ViewTestUtils.emulateLongClick(getInstrumentation(), mZoomButton, 10000);
+
+        final List<Long> callbackInvocations = zoomClickListener.getClickTimes();
+        assertFalse("Expecting at least one callback", callbackInvocations.isEmpty());
+
+        // Verify that the first callback is fired after the system-level long press timeout.
+        final long minTimeUntilFirstInvocationMs = ViewConfiguration.getLongPressTimeout();
+        final long actualTimeUntilFirstInvocationNs = callbackInvocations.get(0) - startTime;
+        assertTrue("First callback not during long press timeout was " +
+                        actualTimeUntilFirstInvocationNs / NANOS_IN_MILLI +
+                        " while long press timeout is " + minTimeUntilFirstInvocationMs,
+                (callbackInvocations.get(0) - startTime) >
+                        minTimeUntilFirstInvocationMs * NANOS_IN_MILLI);
+
+        // Verify that subsequent callbacks are at least zoom-speed milliseconds apart. Note that
+        // we do not have any hard guarantee about the max limit on the time between successive
+        // callbacks.
+        final long minTimeBetweenInvocationsNs = zoomSpeedMs * NANOS_IN_MILLI;
+        if (callbackInvocations.size() > 1) {
+            for (int i = 0; i < callbackInvocations.size() - 1; i++) {
+                final long actualTimeBetweenInvocationsNs =
+                        (callbackInvocations.get(i + 1) - callbackInvocations.get(i)) *
+                                NANOS_IN_MILLI;
+                assertTrue("Callback " + (i + 1) + " happened " +
+                                actualTimeBetweenInvocationsNs / NANOS_IN_MILLI +
+                                " after the previous one, while zoom speed is " + zoomSpeedMs,
+                        actualTimeBetweenInvocationsNs > minTimeBetweenInvocationsNs);
             }
-        };
+        }
+    }
+
+    @LargeTest
+    public void testOnLongClick() {
+        // Since Mockito doesn't have utilities to track the timestamps of method invocations,
+        // we're using our own custom click listener for that. We want to verify that the
+        // first listener invocation was after long press timeout, and the rest were spaced
+        // by at least our zoom speed milliseconds
+
+        mZoomButton.setEnabled(true);
+        ZoomClickListener zoomClickListener = new ZoomClickListener();
+        mZoomButton.setOnClickListener(zoomClickListener);
+
+        verifyZoomSpeed(zoomClickListener, 2000);
     }
 
     public void testOnTouchEvent() {
@@ -130,22 +171,35 @@ public class ZoomButtonTest extends ActivityInstrumentationTestCase2<ZoomButtonC
         // Do not test. Implementation details.
     }
 
+    @LargeTest
     public void testSetZoomSpeed() {
-        mZoomButton.setZoomSpeed(100);
+        final long[] zoomSpeeds = { 100, -1, 5000, 1000, 2500 };
+        mZoomButton.setEnabled(true);
+        ZoomClickListener zoomClickListener = new ZoomClickListener();
+        mZoomButton.setOnClickListener(zoomClickListener);
 
-        mZoomButton.setZoomSpeed(-1);
-        // TODO: how to check?
+        for (long zoomSpeed : zoomSpeeds) {
+            // Reset the tracker list of our listener, but continue using it for testing
+            // various zoom speeds on the same ZoomButton
+            zoomClickListener.reset();
+            verifyZoomSpeed(zoomClickListener, zoomSpeed);
+        }
     }
 
-    private static class MockOnClickListener implements OnClickListener {
-        private boolean mOnClickCalled = false;
+    private static class ZoomClickListener implements View.OnClickListener {
+        private List<Long> mClickTimes = new ArrayList<>();
 
-        public boolean hasOnClickCalled() {
-            return mOnClickCalled;
+        public void reset() {
+            mClickTimes.clear();
+        }
+
+        public List<Long> getClickTimes() {
+            return Collections.unmodifiableList(mClickTimes);
         }
 
         public void onClick(View v) {
-            mOnClickCalled = true;
+            // Add the current system time to the tracker list
+            mClickTimes.add(System.nanoTime());
         }
     }
 }
