@@ -1,4 +1,4 @@
-# Copyright (C) 2015 The Android Open Source Project
+# Copyright (C) 2016 The Android Open Source Project
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,16 +16,13 @@ LOCAL_PATH:= $(call my-dir)
 
 include $(CLEAR_VARS)
 
-LOCAL_PACKAGE_NAME := CtsLibcoreTestCases
+LOCAL_PACKAGE_NAME := CtsLibcoreOkHttpTestCases
 
 LOCAL_STATIC_JAVA_LIBRARIES := \
-    apache-harmony-tests \
-    conscrypt-tests \
-    core-tests \
+    bouncycastle-nojarjar \
     cts-core-test-runner \
-    jsr166-tests \
-    mockito-target \
-    tzdata_update-tests
+    okhttp-nojarjar \
+    okhttp-tests-nojarjar
 
 # Don't include this package in any target
 LOCAL_MODULE_TAGS := tests
@@ -38,16 +35,12 @@ LOCAL_JACK_FLAGS := --multi-dex native
 
 LOCAL_PROGUARD_ENABLED := disabled
 
-LOCAL_JNI_SHARED_LIBRARIES := libjavacoretests libsqlite_jni libnativehelper_compat_libc++ libc++
-
 # Include both the 32 and 64 bit versions of libjavacoretests,
 # where applicable.
 LOCAL_MULTILIB := both
 
 # Tag this module as a cts test artifact
 LOCAL_COMPATIBILITY_SUITE := cts
-
-LOCAL_JAVA_RESOURCE_DIRS := resources
 
 LOCAL_JAVA_RESOURCE_FILES := \
     libcore/expectations/brokentests.txt \
