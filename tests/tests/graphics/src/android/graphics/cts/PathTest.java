@@ -16,8 +16,6 @@
 
 package android.graphics.cts;
 
-import junit.framework.TestCase;
-
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
@@ -25,8 +23,16 @@ import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.RectF;
+import android.support.test.runner.AndroidJUnit4;
+import android.test.suitebuilder.annotation.SmallTest;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
-public class PathTest extends TestCase {
+import static org.junit.Assert.*;
+
+@SmallTest
+@RunWith(AndroidJUnit4.class)
+public class PathTest {
 
     // Test constants
     private static final float LEFT = 10.0f;
@@ -36,6 +42,7 @@ public class PathTest extends TestCase {
     private static final float XCOORD = 40.0f;
     private static final float YCOORD = 40.0f;
 
+    @Test
     public void testConstructor() {
         // new the Path instance
         new Path();
@@ -44,9 +51,8 @@ public class PathTest extends TestCase {
         new Path(new Path());
     }
 
+    @Test
     public void testAddRect1() {
-
-        // new the Path instance
         Path path = new Path();
         assertTrue(path.isEmpty());
         RectF rect = new RectF(LEFT, TOP, RIGHT, BOTTOM);
@@ -54,34 +60,34 @@ public class PathTest extends TestCase {
         assertFalse(path.isEmpty());
     }
 
+    @Test
     public void testAddRect2() {
-
-        // new the Path instance
         Path path = new Path();
         assertTrue(path.isEmpty());
         path.addRect(LEFT, TOP, RIGHT, BOTTOM, Path.Direction.CW);
         assertFalse(path.isEmpty());
     }
 
+    @Test
     public void testMoveTo() {
-        // new the Path instance
         Path path = new Path();
         path.moveTo(10.0f, 10.0f);
     }
 
+    @Test
     public void testSet() {
-        // new the Path instance
         Path path = new Path();
         assertTrue(path.isEmpty());
         Path path1 = new Path();
-        setPath(path1);
+        addRectToPath(path1);
         path.set(path1);
         assertPathsAreEquivalent(path, path1);
     }
 
+    @Test
     public void testSetCleanOld() {
         Path path = new Path();
-        setPath(path);
+        addRectToPath(path);
         path.addRect(new RectF(0, 0, 10, 10), Path.Direction.CW);
         Path path1 = new Path();
         path1.addRect(new RectF(10, 10, 20, 20), Path.Direction.CW);
@@ -89,15 +95,16 @@ public class PathTest extends TestCase {
         assertPathsAreEquivalent(path, path1);
     }
 
+    @Test
     public void testSetEmptyPath() {
-        // new the Path instance
         Path path = new Path();
-        setPath(path);
+        addRectToPath(path);
         Path path1 = new Path();
         path.set(path1);
         assertPathsAreEquivalent(path, path1);
     }
 
+    @Test
     public void testAccessFillType() {
         // set the expected value
         Path.FillType expected1 = Path.FillType.EVEN_ODD;
@@ -118,52 +125,49 @@ public class PathTest extends TestCase {
         assertEquals(expected4, path.getFillType());
     }
 
+    @Test
     public void testRQuadTo() {
-        // new the Path instance
         Path path = new Path();
         assertTrue(path.isEmpty());
         path.rQuadTo(5.0f, 5.0f, 10.0f, 10.0f);
         assertFalse(path.isEmpty());
     }
 
+    @Test
     public void testTransform1() {
-        // new the Path instance
         Path path = new Path();
         assertTrue(path.isEmpty());
         Path dst = new Path();
-        setPath(path);
+        addRectToPath(path);
         path.transform(new Matrix(), dst);
         assertFalse(dst.isEmpty());
     }
 
-    public void testTransform2() {
-
-    }
-
+    @Test
     public void testLineTo() {
-        // new the Path instance
         Path path = new Path();
         assertTrue(path.isEmpty());
         path.lineTo(XCOORD, YCOORD);
         assertFalse(path.isEmpty());
     }
 
+    @Test
     public void testClose() {
-        // new the Path instance
         Path path = new Path();
         assertTrue(path.isEmpty());
-        setPath(path);
+        addRectToPath(path);
         path.close();
     }
 
+    @Test
     public void testQuadTo() {
-        // new the Path instance
         Path path = new Path();
         assertTrue(path.isEmpty());
         path.quadTo(20.0f, 20.0f, 40.0f, 40.0f);
         assertFalse(path.isEmpty());
     }
 
+    @Test
     public void testAddCircle() {
         // new the Path instance
         Path path = new Path();
@@ -172,8 +176,8 @@ public class PathTest extends TestCase {
         assertFalse(path.isEmpty());
     }
 
+    @Test
     public void testArcTo1() {
-        // new the Path instance
         Path path = new Path();
         assertTrue(path.isEmpty());
         RectF oval = new RectF(LEFT, TOP, RIGHT, BOTTOM);
@@ -181,8 +185,8 @@ public class PathTest extends TestCase {
         assertFalse(path.isEmpty());
     }
 
+    @Test
     public void testArcTo2() {
-        // new the Path instance
         Path path = new Path();
         assertTrue(path.isEmpty());
         RectF oval = new RectF(LEFT, TOP, RIGHT, BOTTOM);
@@ -190,81 +194,77 @@ public class PathTest extends TestCase {
         assertFalse(path.isEmpty());
     }
 
+    @Test
     public void testComputeBounds1() {
-
         RectF expected = new RectF(0.0f, 0.0f, 0.0f, 0.0f);
-        // new the Path instance
         Path path = new Path();
         assertTrue(path.isEmpty());
         RectF bounds = new RectF();
         path.computeBounds(bounds, true);
-        assertEquals(expected.width(), bounds.width());
-        assertEquals(expected.height(), bounds.height());
+        assertEquals(expected.width(), bounds.width(), 0.0f);
+        assertEquals(expected.height(), bounds.height(), 0.0f);
         path.computeBounds(bounds, false);
-        assertEquals(expected.width(), bounds.width());
-        assertEquals(expected.height(), bounds.height());
+        assertEquals(expected.width(), bounds.width(), 0.0f);
+        assertEquals(expected.height(), bounds.height(), 0.0f);
     }
 
+    @Test
     public void testComputeBounds2() {
-
         RectF expected = new RectF(LEFT, TOP, RIGHT, BOTTOM);
-        // new the Path instance
         Path path = new Path();
         assertTrue(path.isEmpty());
         RectF bounds = new RectF(LEFT, TOP, RIGHT, BOTTOM);
         path.addRect(bounds, Path.Direction.CW);
         path.computeBounds(bounds, true);
-        assertEquals(expected.width(), bounds.width());
-        assertEquals(expected.height(), bounds.height());
+        assertEquals(expected.width(), bounds.width(), 0.0f);
+        assertEquals(expected.height(), bounds.height(), 0.0f);
         path.computeBounds(bounds, false);
-        assertEquals(expected.width(), bounds.width());
-        assertEquals(expected.height(), bounds.height());
+        assertEquals(expected.width(), bounds.width(), 0.0f);
+        assertEquals(expected.height(), bounds.height(), 0.0f);
     }
 
+    @Test
     public void testRMoveTo() {
-        // new the Path instance
     }
 
+    @Test
     public void testSetLastPoint() {
-        // new the Path instance
         Path path = new Path();
         path.setLastPoint(10.0f, 10.0f);
     }
 
+    @Test
     public void testRLineTo() {
-        // new the Path instance
         Path path = new Path();
         assertTrue(path.isEmpty());
         path.rLineTo(10.0f, 10.0f);
         assertFalse(path.isEmpty());
     }
 
+    @Test
     public void testIsEmpty() {
 
-        // new the Path instance
         Path path = new Path();
         assertTrue(path.isEmpty());
-        setPath(path);
+        addRectToPath(path);
         assertFalse(path.isEmpty());
     }
 
+    @Test
     public void testRewind() {
-
-        // set the expected value
         Path.FillType expected = Path.FillType.EVEN_ODD;
 
-        // new the Path instance
         Path path = new Path();
         assertTrue(path.isEmpty());
-        setPath(path);
+        addRectToPath(path);
         path.rewind();
         path.setFillType(Path.FillType.EVEN_ODD);
         assertTrue(path.isEmpty());
         assertEquals(expected, path.getFillType());
     }
 
+    @Test
     public void testAddOval() {
-        // new the Path instance
         Path path = new Path();
         assertTrue(path.isEmpty());
         RectF oval = new RectF(LEFT, TOP, RIGHT, BOTTOM);
@@ -272,50 +272,46 @@ public class PathTest extends TestCase {
         assertFalse(path.isEmpty());
     }
 
+    @Test
     public void testIsRect() {
-
-        // new the Path instance
         Path path = new Path();
         assertTrue(path.isEmpty());
-        setPath(path);
+        addRectToPath(path);
     }
 
-    public void testIncReserve() {
-    }
-
+    @Test
     public void testAddPath1() {
-        // new the Path instance
         Path path = new Path();
         assertTrue(path.isEmpty());
         Path src = new Path();
-        setPath(src);
+        addRectToPath(src);
         path.addPath(src, 10.0f, 10.0f);
         assertFalse(path.isEmpty());
     }
 
+    @Test
     public void testAddPath2() {
-        // new the Path instance
         Path path = new Path();
         assertTrue(path.isEmpty());
         Path src = new Path();
-        setPath(src);
+        addRectToPath(src);
         path.addPath(src);
         assertFalse(path.isEmpty());
     }
 
+    @Test
     public void testAddPath3() {
-        // new the Path instance
         Path path = new Path();
         assertTrue(path.isEmpty());
         Path src = new Path();
-        setPath(src);
+        addRectToPath(src);
         Matrix matrix = new Matrix();
         path.addPath(src, matrix);
         assertFalse(path.isEmpty());
     }
 
+    @Test
     public void testAddRoundRect1() {
-        // new the Path instance
         Path path = new Path();
         assertTrue(path.isEmpty());
         RectF rect = new RectF(LEFT, TOP, RIGHT, BOTTOM);
@@ -323,8 +319,8 @@ public class PathTest extends TestCase {
         assertFalse(path.isEmpty());
     }
 
+    @Test
     public void testAddRoundRect2() {
-        // new the Path instance
         Path path = new Path();
         assertTrue(path.isEmpty());
         RectF rect = new RectF(LEFT, TOP, RIGHT, BOTTOM);
@@ -336,59 +332,84 @@ public class PathTest extends TestCase {
         assertFalse(path.isEmpty());
     }
 
-    public void testIsInverseFillType() {
+    @Test
+    public void testIsConvex1() {
+        Path path = new Path();
+        path.addRect(0, 0, 100, 10, Path.Direction.CW);
+        assertTrue(path.isConvex());
 
-        // new the Path instance
+        path.addRect(0, 0, 10, 100, Path.Direction.CW);
+        assertFalse(path.isConvex()); // path is concave
+    }
+
+    @Test
+    public void testIsConvex2() {
+        Path path = new Path();
+        path.addRect(0, 0, 40, 40, Path.Direction.CW);
+        assertTrue(path.isConvex());
+
+        path.addRect(10, 10, 30, 30, Path.Direction.CCW);
+        assertFalse(path.isConvex()); // path has hole, isn't convex
+    }
+
+    @Test
+    public void testIsConvex3() {
+        Path path = new Path();
+        path.addRect(0, 0, 10, 10, Path.Direction.CW);
+        assertTrue(path.isConvex());
+
+        path.addRect(0, 20, 10, 10, Path.Direction.CW);
+        assertFalse(path.isConvex()); // path isn't one convex shape
+    }
+
+    @Test
+    public void testIsInverseFillType() {
         Path path = new Path();
         assertFalse(path.isInverseFillType());
         path.setFillType(Path.FillType.INVERSE_EVEN_ODD);
         assertTrue(path.isInverseFillType());
     }
 
+    @Test
     public void testOffset1() {
-        // new the Path instance
         Path path = new Path();
         assertTrue(path.isEmpty());
-        setPath(path);
+        addRectToPath(path);
         Path dst = new Path();
         path.offset(XCOORD, YCOORD, dst);
         assertFalse(dst.isEmpty());
     }
 
-    public void testOffset2() {
-        // new the Path instance
-    }
-
+    @Test
     public void testCubicTo() {
-        // new the Path instance
         Path path = new Path();
         assertTrue(path.isEmpty());
         path.cubicTo(10.0f, 10.0f, 20.0f, 20.0f, 30.0f, 30.0f);
         assertFalse(path.isEmpty());
     }
 
+    @Test
     public void testReset() {
-        // new the Path instance
         Path path = new Path();
         assertTrue(path.isEmpty());
         Path path1 = new Path();
-        setPath(path1);
+        addRectToPath(path1);
         path.set(path1);
         assertFalse(path.isEmpty());
         path.reset();
         assertTrue(path.isEmpty());
     }
 
+    @Test
     public void testToggleInverseFillType() {
-        // new the Path instance
         Path path = new Path();
         assertTrue(path.isEmpty());
         path.toggleInverseFillType();
         assertTrue(path.isInverseFillType());
     }
 
+    @Test
     public void testAddArc() {
-        // new the Path instance
         Path path = new Path();
         assertTrue(path.isEmpty());
         RectF oval = new RectF(LEFT, TOP, RIGHT, BOTTOM);
@@ -396,8 +417,8 @@ public class PathTest extends TestCase {
         assertFalse(path.isEmpty());
     }
 
+    @Test
     public void testRCubicTo() {
-        // new the Path instance
         Path path = new Path();
         assertTrue(path.isEmpty());
         path.rCubicTo(10.0f, 10.0f, 11.0f, 11.0f, 12.0f, 12.0f);
@@ -423,7 +444,7 @@ public class PathTest extends TestCase {
         return bitmap;
     }
 
-    private void setPath(Path path) {
+    private void addRectToPath(Path path) {
         RectF rect = new RectF(LEFT, TOP, RIGHT, BOTTOM);
         path.addRect(rect, Path.Direction.CW);
     }
