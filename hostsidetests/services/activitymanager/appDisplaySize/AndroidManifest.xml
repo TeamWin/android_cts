@@ -25,7 +25,8 @@
     <supports-screens android:requiresSmallestWidthDp="100000" />
 
     <application>
-        <activity android:name=".SmallestWidthActivity" />
+        <activity android:name=".SmallestWidthActivity"
+                  android:exported="true" />
     </application>
 
 </manifest>
