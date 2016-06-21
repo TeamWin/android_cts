@@ -19,98 +19,123 @@ import android.media.cts.R;
 
 import android.annotation.TargetApi;
 import android.content.Context;
-import android.cts.util.MediaUtils;
 import android.graphics.Bitmap;
-import android.os.Build;
-import android.util.DisplayMetrics;
-import android.util.Log;
 import android.view.View;
-import android.view.WindowManager;
 
-@TargetApi(16)
+@TargetApi(24)
 public class DecodeAccuracyTest extends DecodeAccuracyTestBase {
 
     private static final String TAG = DecodeAccuracyTest.class.getSimpleName();
     private static final String H264_VIDEO_FILE_NAME = "480ph264decodertest.mp4";
     private static final String VP9_VIDEO_FILE_NAME = "360pvp9decodertest.webm";
+    private static final String H264_CROPPED_VIDEO_FILE_NAME = "520x360h264decodertest.mp4";
     private static final int ALLOWED_GREATEST_PIXEL_DIFFERENCE = 90;
     private static final int OFFSET = 10;
 
     /* <------------- Tests Using H264 -------------> */
     public void testH264GLViewVideoDecode() throws Exception {
-        runDecodeAccuracyTest(
+        runH264DecodeAccuracyTest(
                 new GLSurfaceViewFactory(),
                 new VideoFormat(H264_VIDEO_FILE_NAME));
     }
 
     public void testH264GLViewLargerHeightVideoDecode() throws Exception {
-        runDecodeAccuracyTest(
+        runH264DecodeAccuracyTest(
                 new GLSurfaceViewFactory(),
                 getLargerHeightVideoFormat(new VideoFormat(H264_VIDEO_FILE_NAME)));
     }
 
     public void testH264GLViewLargerWidthVideoDecode() throws Exception {
-        runDecodeAccuracyTest(
+        runH264DecodeAccuracyTest(
                 new GLSurfaceViewFactory(),
                 getLargerWidthVideoFormat(new VideoFormat(H264_VIDEO_FILE_NAME)));
     }
 
     public void testH264SurfaceViewVideoDecode() throws Exception {
-        runDecodeAccuracyTest(
+        runH264DecodeAccuracyTest(
                 new SurfaceViewFactory(),
                 new VideoFormat(H264_VIDEO_FILE_NAME));
     }
 
     public void testH264SurfaceViewLargerHeightVideoDecode() throws Exception {
-        runDecodeAccuracyTest(
+        runH264DecodeAccuracyTest(
                 new SurfaceViewFactory(),
                 getLargerHeightVideoFormat(new VideoFormat(H264_VIDEO_FILE_NAME)));
     }
 
     public void testH264SurfaceViewLargerWidthVideoDecode() throws Exception {
-        runDecodeAccuracyTest(
+        runH264DecodeAccuracyTest(
                 new SurfaceViewFactory(),
                 getLargerWidthVideoFormat(new VideoFormat(H264_VIDEO_FILE_NAME)));
     }
 
     /* <------------- Tests Using VP9 -------------> */
     public void testVP9GLViewVideoDecode() throws Exception {
-        runDecodeAccuracyTest(
+        runVP9DecodeAccuracyTest(
                 new GLSurfaceViewFactory(),
                 new VideoFormat(VP9_VIDEO_FILE_NAME));
     }
 
     public void testVP9GLViewLargerHeightVideoDecode() throws Exception {
-        runDecodeAccuracyTest(
+        runVP9DecodeAccuracyTest(
                 new GLSurfaceViewFactory(),
                 getLargerHeightVideoFormat(new VideoFormat(VP9_VIDEO_FILE_NAME)));
     }
 
     public void testVP9GLViewLargerWidthVideoDecode() throws Exception {
-        runDecodeAccuracyTest(
+        runVP9DecodeAccuracyTest(
                 new GLSurfaceViewFactory(),
                 getLargerWidthVideoFormat(new VideoFormat(VP9_VIDEO_FILE_NAME)));
     }
 
     public void testVP9SurfaceViewVideoDecode() throws Exception {
-        runDecodeAccuracyTest(
+        runVP9DecodeAccuracyTest(
                 new SurfaceViewFactory(),
                 new VideoFormat(VP9_VIDEO_FILE_NAME));
     }
 
     public void testVP9SurfaceViewLargerHeightVideoDecode() throws Exception {
-        runDecodeAccuracyTest(
+        runVP9DecodeAccuracyTest(
                 new SurfaceViewFactory(),
                 getLargerHeightVideoFormat(new VideoFormat(VP9_VIDEO_FILE_NAME)));
     }
 
     public void testVP9SurfaceViewLargerWidthVideoDecode() throws Exception {
-        runDecodeAccuracyTest(
+        runVP9DecodeAccuracyTest(
                 new SurfaceViewFactory(),
                 getLargerWidthVideoFormat(new VideoFormat(VP9_VIDEO_FILE_NAME)));
     }
 
-    private void runDecodeAccuracyTest(VideoViewFactory videoViewFactory, VideoFormat videoFormat) {
+    /* <------------- Tests H264 with cropping -------------> */
+    public void testH264GLViewCroppedVideoDecode() throws Exception {
+        runH264DecodeCroppedTest(
+                new GLSurfaceViewFactory(),
+                new VideoFormat(H264_CROPPED_VIDEO_FILE_NAME));
+    }
+
+    public void testH264SurfaceViewCroppedVideoDecode() throws Exception {
+        runH264DecodeCroppedTest(
+                new SurfaceViewFactory(),
+                new VideoFormat(H264_CROPPED_VIDEO_FILE_NAME));
+    }
+
+    private void runH264DecodeAccuracyTest(
+            VideoViewFactory videoViewFactory, VideoFormat videoFormat) {
+        runDecodeAccuracyTest(videoViewFactory, videoFormat, R.raw.h264decodertestgolden);
+    }
+
+    private void runVP9DecodeAccuracyTest(
+            VideoViewFactory videoViewFactory, VideoFormat videoFormat) {
+        runDecodeAccuracyTest(videoViewFactory, videoFormat, R.raw.vp9decodertestgolden);
+    }
+
+    private void runH264DecodeCroppedTest(
+            VideoViewFactory videoViewFactory, VideoFormat videoFormat) {
+        runDecodeAccuracyTest(videoViewFactory, videoFormat, R.raw.h264decodertest520x360golden);
+    }
+
+    private void runDecodeAccuracyTest(
+            VideoViewFactory videoViewFactory, VideoFormat videoFormat, int goldenResId) {
         checkNotNull(videoViewFactory);
         checkNotNull(videoFormat);
         View videoView = videoViewFactory.createView(getHelper().getContext());
@@ -123,7 +148,7 @@ public class DecodeAccuracyTest extends DecodeAccuracyTestBase {
         // so it needs to be created before start decoding.
         final VideoViewSnapshot videoViewSnapshot = videoViewFactory.getVideoViewSnapshot();
         decodeVideo(videoFormat, videoViewFactory);
-        validateResult(videoFormat, videoViewSnapshot);
+        validateResult(videoFormat, videoViewSnapshot, goldenResId);
 
         if (videoView != null) {
             getHelper().cleanUpView(videoView);
@@ -140,20 +165,16 @@ public class DecodeAccuracyTest extends DecodeAccuracyTestBase {
         assertTrue("Failed to decode the video.", playerResult.isSuccess());
     }
 
-    private void validateResult(VideoFormat videoFormat, VideoViewSnapshot videoViewSnapshot) {
+    private void validateResult(
+            VideoFormat videoFormat, VideoViewSnapshot videoViewSnapshot, int goldenResId) {
         final Bitmap result = getHelper().generateBitmapFromVideoViewSnapshot(videoViewSnapshot);
-        final Bitmap golden;
-        final String mime = videoFormat.getMimeType();
-        if (mime.equals(MimeTypes.VIDEO_H264)) {
-            golden = getHelper().generateBitmapFromImageResourceId(R.raw.h264decodertestgolden);
-        } else if (mime.equals(MimeTypes.VIDEO_VP9)) {
-            golden = getHelper().generateBitmapFromImageResourceId(R.raw.vp9decodertestgolden);
-        } else {
-            fail("Unsupported MIME type " + mime);
-            return;
-        }
-        final BitmapCompare.Difference difference = BitmapCompare.computeDifference(golden, result);
-        assertTrue("Greatest pixel difference is "
+        final Bitmap golden = getHelper().generateBitmapFromImageResourceId(goldenResId);
+        final BitmapCompare.Difference difference = BitmapCompare.computeMinimumDifference(
+                result, golden, videoFormat.getOriginalWidth(), videoFormat.getOriginalHeight());
+        assertTrue("With the best matched border crop ("
+                    + difference.bestMatchBorderCrop.first + ", "
+                    + difference.bestMatchBorderCrop.second + "), "
+                    + "greatest pixel difference is "
                     + difference.greatestPixelDifference
                     + (difference.greatestPixelDifferenceCoordinates != null
                     ? " at (" + difference.greatestPixelDifferenceCoordinates.first + ", "
