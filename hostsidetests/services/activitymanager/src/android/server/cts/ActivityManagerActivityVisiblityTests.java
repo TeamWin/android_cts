@@ -28,6 +28,7 @@ public class ActivityManagerActivityVisiblityTests extends ActivityManagerTestBa
     private static final String TEST_ACTIVITY_NAME = "TestActivity";
     private static final String TRANSLUCENT_ACTIVITY_NAME = "TranslucentActivity";
     private static final String DOCKED_ACTIVITY_NAME = "DockedActivity";
+    private static final String TURN_SCREEN_ON_ACTIVITY_NAME = "TurnScreenOnActivity";
 
     public void testVisibleBehindHomeActivity() throws Exception {
         executeShellCommand(getAmStartCmd(VISIBLE_BEHIND_ACTIVITY));
@@ -132,5 +133,13 @@ public class ActivityManagerActivityVisiblityTests extends ActivityManagerTestBa
         mAmWmState.assertVisibility(DOCKED_ACTIVITY_NAME, true);
         mAmWmState.assertVisibility(TEST_ACTIVITY_NAME, true);
         mAmWmState.assertVisibility(TRANSLUCENT_ACTIVITY_NAME, true);
+    }
+
+    public void testTurnScreenOnActivity() throws Exception {
+        lockDevice();
+        executeShellCommand(getAmStartCmd(TURN_SCREEN_ON_ACTIVITY_NAME));
+        mAmWmState.computeState(mDevice, new String[] { TURN_SCREEN_ON_ACTIVITY_NAME });
+        mAmWmState.assertSanity();
+        mAmWmState.assertVisibility(TURN_SCREEN_ON_ACTIVITY_NAME, true);
     }
 }
