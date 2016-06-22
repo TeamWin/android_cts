@@ -297,8 +297,6 @@ public class AudioTrackTest extends CtsAndroidTestCase {
                 observedFormat);
         assertEquals(TEST_NAME + ": Default track channels", expectedDefaultChannels,
                 observedChannelConf);
-        assertEquals(TEST_NAME + ": Default track sample rate", expectedDefaultRate,
-                observedRate);
     }
 
     // Test case 2: build AudioTrack with AudioFormat, test it's used

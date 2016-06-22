@@ -339,16 +339,12 @@ public class AudioRecordTest extends CtsAndroidTestCase {
         final String TEST_NAME = "testAudioRecordBuilderDefault";
         // expected values below match the AudioRecord.Builder documentation
         final int expectedCapturePreset = MediaRecorder.AudioSource.DEFAULT;
-        final String rateStr = new AudioManager(getContext())
-                .getProperty(AudioManager.PROPERTY_OUTPUT_SAMPLE_RATE);
-        final int expectedRate = Integer.valueOf(rateStr).intValue();
         final int expectedChannel = AudioFormat.CHANNEL_IN_MONO;
         final int expectedEncoding = AudioFormat.ENCODING_PCM_16BIT;
         final int expectedState = AudioRecord.STATE_INITIALIZED;
         // use builder with default values
         final AudioRecord rec = new AudioRecord.Builder().build();
         // save results
-        final int observedRate = rec.getSampleRate();
         final int observedSource = rec.getAudioSource();
         final int observedChannel = rec.getChannelConfiguration();
         final int observedEncoding = rec.getAudioFormat();
@@ -357,7 +353,6 @@ public class AudioRecordTest extends CtsAndroidTestCase {
         rec.release();
         // compare results
         assertEquals(TEST_NAME + ": default capture preset", expectedCapturePreset, observedSource);
-        assertEquals(TEST_NAME + ": default rate", expectedRate, observedRate);
         assertEquals(TEST_NAME + ": default channel config", expectedChannel, observedChannel);
         assertEquals(TEST_NAME + ": default encoding", expectedEncoding, observedEncoding);
         assertEquals(TEST_NAME + ": state", expectedState, observedState);
