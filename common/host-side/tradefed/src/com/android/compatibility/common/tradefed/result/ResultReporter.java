@@ -284,8 +284,8 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
             }
         } else {
             // host test should be checked into MetricsStore.
-            report = MetricsStore.removeResult(
-                    mDeviceSerial, mCurrentModuleResult.getAbi(), test.toString());
+            report = MetricsStore.removeResult(mBuildHelper.getBuildInfo(),
+                    mCurrentModuleResult.getAbi(), test.toString());
         }
         if (mCurrentResult.getResultStatus() == null) {
             // Only claim that we passed when we're certain our result was

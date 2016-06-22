@@ -74,7 +74,7 @@ public class InstallTimeTest extends DeviceTestCase implements IAbiReceiver, IBu
 
     public void testInstallTime() throws Exception {
         String streamName = "test_install_time";
-        MetricsReportLog report = new MetricsReportLog(mDevice.getSerialNumber(), mAbi.getName(),
+        MetricsReportLog report = new MetricsReportLog(mBuild, mAbi.getName(),
                 String.format("%s#%s", getClass().getName(), "testInstallTime"), REPORT_LOG_NAME,
                 streamName);
         final int NUMBER_REPEAT = 10;
