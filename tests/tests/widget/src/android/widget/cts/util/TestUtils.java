@@ -35,6 +35,7 @@ import org.hamcrest.BaseMatcher;
 import org.hamcrest.Description;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import static org.mockito.Matchers.argThat;
@@ -367,5 +368,29 @@ public class TestUtils {
     public static int dpToPx(Context context, int dp) {
         final float density = context.getResources().getDisplayMetrics().density;
         return (int) (dp * density + 0.5f);
+    }
+
+    private static String arrayToString(final long[] array) {
+        final StringBuffer buffer = new StringBuffer();
+        if (array == null) {
+            buffer.append("null");
+        } else {
+            buffer.append("[");
+            for (int i = 0; i < array.length; i++) {
+                if (i > 0) {
+                    buffer.append(", ");
+                }
+                buffer.append(array[i]);
+            }
+            buffer.append("]");
+        }
+        return buffer.toString();
+    }
+
+    public static void assertIdentical(final long[] expected, final long[] actual) {
+        if (!Arrays.equals(expected, actual)) {
+            Assert.fail("Expected " + arrayToString(expected) + ", actual "
+                    + arrayToString(actual));
+        }
     }
 }

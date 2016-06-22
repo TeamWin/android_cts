@@ -21,7 +21,9 @@ import android.app.Instrumentation;
 import android.content.Context;
 import android.cts.util.PollingCheck;
 import android.graphics.Canvas;
+import android.graphics.Color;
 import android.graphics.Rect;
+import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.test.ActivityInstrumentationTestCase2;
 import android.test.UiThreadTest;
@@ -43,6 +45,7 @@ import android.widget.ArrayAdapter;
 import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.TextView;
+import android.widget.cts.util.TestUtils;
 import android.widget.cts.util.ViewTestUtils;
 import junit.framework.Assert;
 
@@ -950,28 +953,27 @@ public class ListViewTest extends ActivityInstrumentationTestCase2<ListViewCtsAc
     }
 
     public void testTransientStateStableIds() throws Exception {
-        final ListView listView = mListView;
         final ArrayList<String> items = new ArrayList<>(Arrays.asList(mCountryList));
         final StableArrayAdapter<String> adapter = new StableArrayAdapter<>(mActivity,
                 android.R.layout.simple_list_item_1, items);
 
         ViewTestUtils.runOnMainAndDrawSync(mInstrumentation, mListView,
-                () -> listView.setAdapter(adapter));
+                () -> mListView.setAdapter(adapter));
 
         final Object tag = new Object();
-        final View oldItem = listView.getChildAt(2);
+        final View oldItem = mListView.getChildAt(2);
         final CharSequence oldText = ((TextView) oldItem.findViewById(android.R.id.text1))
                 .getText();
         oldItem.setHasTransientState(true);
         oldItem.setTag(tag);
 
-        ViewTestUtils.runOnMainAndDrawSync(mInstrumentation, listView,
+        ViewTestUtils.runOnMainAndDrawSync(mInstrumentation, mListView,
                 () -> {
                     adapter.remove(adapter.getItem(0));
                     adapter.notifyDataSetChanged();
                 });
 
-        final View newItem = listView.getChildAt(1);
+        final View newItem = mListView.getChildAt(1);
         final CharSequence newText = ((TextView) newItem.findViewById(android.R.id.text1))
                 .getText();
 
@@ -1042,5 +1044,85 @@ public class ListViewTest extends ActivityInstrumentationTestCase2<ListViewCtsAc
             // ignore
         }
         assertTrue("Timed out while waiting for the target view to be scrolled into view", result);
+    }
+
+    private static class PositionArrayAdapter<T> extends ArrayAdapter<T> {
+        public PositionArrayAdapter(Context context, int resource, List<T> objects) {
+            super(context, resource, objects);
+        }
+
+        @Override
+        public long getItemId(int position) {
+            return position;
+        }
+
+        @Override
+        public boolean hasStableIds() {
+            return true;
+        }
+    }
+
+    public void testGetCheckItemIds() {
+        final ArrayList<String> items = new ArrayList<>(Arrays.asList(mCountryList));
+        final ArrayAdapter<String> adapter = new PositionArrayAdapter<>(mActivity,
+                android.R.layout.simple_list_item_1, items);
+
+        ViewTestUtils.runOnMainAndDrawSync(mInstrumentation, mListView,
+                () -> mListView.setAdapter(adapter));
+
+        mInstrumentation.runOnMainSync(
+                () -> mListView.setChoiceMode(ListView.CHOICE_MODE_MULTIPLE));
+        assertTrue(mListView.getCheckItemIds().length == 0);
+
+        mInstrumentation.runOnMainSync(() -> mListView.setItemChecked(2, true));
+        TestUtils.assertIdentical(new long[] { 2 }, mListView.getCheckItemIds());
+
+        mInstrumentation.runOnMainSync(() -> mListView.setItemChecked(4, true));
+        TestUtils.assertIdentical(new long[] { 2, 4 }, mListView.getCheckItemIds());
+
+        mInstrumentation.runOnMainSync(() -> mListView.setItemChecked(2, false));
+        TestUtils.assertIdentical(new long[] { 4 }, mListView.getCheckItemIds());
+
+        mInstrumentation.runOnMainSync(() -> mListView.setItemChecked(4, false));
+        assertTrue(mListView.getCheckItemIds().length == 0);
+    }
+
+    public void testAccessOverscrollHeader() {
+        final Drawable overscrollHeaderDrawable = spy(new ColorDrawable(Color.YELLOW));
+        ViewTestUtils.runOnMainAndDrawSync(mInstrumentation, mListView, () -> {
+            mListView.setAdapter(mAdapter_longCountries);
+            mListView.setOverscrollHeader(overscrollHeaderDrawable);
+        });
+
+        assertEquals(overscrollHeaderDrawable, mListView.getOverscrollHeader());
+        verify(overscrollHeaderDrawable, never()).draw(any(Canvas.class));
+
+        ViewTestUtils.runOnMainAndDrawSync(mInstrumentation, mListView,
+                () -> mListView.setScrollY(-mListView.getHeight() / 2));
+
+        verify(overscrollHeaderDrawable, atLeastOnce()).draw(any(Canvas.class));
+    }
+
+    public void testAccessOverscrollFooter() {
+        final Drawable overscrollFooterDrawable = spy(new ColorDrawable(Color.MAGENTA));
+        ViewTestUtils.runOnMainAndDrawSync(mInstrumentation, mListView, () -> {
+            // Configure ListView to automatically scroll to the selected item
+            mListView.setStackFromBottom(true);
+            mListView.setTranscriptMode(AbsListView.TRANSCRIPT_MODE_ALWAYS_SCROLL);
+
+            mListView.setAdapter(mAdapter_longCountries);
+            mListView.setOverscrollFooter(overscrollFooterDrawable);
+
+            // Set selection to the last item
+            mListView.setSelection(mAdapter_longCountries.getCount() - 1);
+        });
+
+        assertEquals(overscrollFooterDrawable, mListView.getOverscrollFooter());
+        verify(overscrollFooterDrawable, never()).draw(any(Canvas.class));
+
+        ViewTestUtils.runOnMainAndDrawSync(mInstrumentation, mListView,
+                () -> mListView.setScrollY(mListView.getHeight() / 2));
+
+        verify(overscrollFooterDrawable, atLeastOnce()).draw(any(Canvas.class));
     }
 }
