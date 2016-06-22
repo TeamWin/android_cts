@@ -144,7 +144,13 @@ public class EncryptionAppTest extends InstrumentationTestCase {
         // Enter current PIN
         UiObject view = new UiObject(new UiSelector()
                 .resourceId("com.android.settings:id/password_entry"));
-        assertTrue("password_entry", view.waitForExists(TIMEOUT));
+        if (!view.waitForExists(TIMEOUT)) {
+            // Odd, maybe there is a crash dialog showing; try dismissing it
+            mDevice.pressBack();
+            mDevice.waitForIdle();
+
+            assertTrue("password_entry", view.waitForExists(TIMEOUT));
+        }
 
         enterTestPin();
 
