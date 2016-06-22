@@ -154,8 +154,12 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
     }
 
     protected void moveActivityToDockStack(String activityName) throws Exception {
+        moveActivityToStack(activityName, DOCKED_STACK_ID);
+    }
+
+    protected void moveActivityToStack(String activityName, int stackId) throws Exception {
         final int taskId = getActivityTaskId(activityName);
-        final String cmd = AM_MOVE_TASK + taskId + " " + DOCKED_STACK_ID + " true";
+        final String cmd = AM_MOVE_TASK + taskId + " " + stackId + " true";
         executeShellCommand(cmd);
     }
 
