@@ -1598,6 +1598,189 @@ public class PrintDocumentAdapterContractTest extends BasePrintTest {
         verifyNoMoreInteractions(adapter);
     }
 
+    public void testLayoutCallbackCalledTwice() throws Exception {
+        if (!supportsPrinting()) {
+            return;
+        }
+        // Configure the print services.
+        FirstPrintService.setCallbacks(createFirstMockPrintServiceCallbacks());
+        SecondPrintService.setCallbacks(createSecondMockPrintServiceCallbacks());
+
+        // Create a mock print adapter.
+        final PrintDocumentAdapter adapter = createMockPrintDocumentAdapter(
+                new Answer<Void>() {
+                    @Override
+                    public Void answer(InvocationOnMock invocation) throws Throwable {
+                        PrintDocumentInfo info = new PrintDocumentInfo.Builder(PRINT_JOB_NAME)
+                                .setContentType(PrintDocumentInfo.CONTENT_TYPE_DOCUMENT)
+                                .setPageCount(1)
+                                .build();
+                        LayoutResultCallback callback = (LayoutResultCallback) invocation
+                                .getArguments()[3];
+
+                        // Break the contract and call the callback twice.
+                        callback.onLayoutFinished(info, true);
+                        callback.onLayoutFinished(info, true);
+
+                        // Mark layout called.
+                        onLayoutCalled();
+                        return null;
+                    }
+                }, null, new Answer<Void>() {
+                    @Override
+                    public Void answer(InvocationOnMock invocation) throws Throwable {
+                        // Mark finish was called.
+                        onFinishCalled();
+                        return null;
+                    }
+                });
+
+        // Start printing.
+        print(adapter);
+
+        // Wait for layout.
+        waitForLayoutAdapterCallbackCount(1);
+
+        // Cancel printing.
+        getUiDevice().pressBack(); // wakes up the device.
+        getUiDevice().pressBack();
+
+        // Wait for a finish.
+        waitForAdapterFinishCallbackCalled();
+
+        // Wait for the session to be destroyed to isolate tests.
+        waitForPrinterDiscoverySessionDestroyCallbackCalled(1);
+
+        // Verify the expected calls.
+        InOrder inOrder = inOrder(adapter);
+
+        // Start is always called first.
+        inOrder.verify(adapter).onStart();
+
+        // Start is always followed by a layout. The PDF printer is selected if
+        // there are other printers but none of them was used.
+        PrintAttributes firstOldAttributes = new PrintAttributes.Builder().build();
+        PrintAttributes firstNewAttributes = new PrintAttributes.Builder()
+                .setMediaSize(getDefaultMediaSize())
+                .setResolution(new Resolution("PDF resolution", "PDF resolution", 300, 300))
+                .setMinMargins(Margins.NO_MARGINS).setColorMode(PrintAttributes.COLOR_MODE_COLOR)
+                .setDuplexMode(PrintAttributes.DUPLEX_MODE_NONE)
+                .build();
+        verifyLayoutCall(inOrder, adapter, firstOldAttributes, firstNewAttributes, true);
+
+        PageRange[] firstPage = new PageRange[] {new PageRange(0, 0)};
+        inOrder.verify(adapter).onWrite(eq(firstPage), any(ParcelFileDescriptor.class),
+                any(CancellationSignal.class), any(WriteResultCallback.class));
+
+        // Finish is always called last.
+        inOrder.verify(adapter).onFinish();
+
+        // No other call are expected.
+        verifyNoMoreInteractions(adapter);
+    }
+
+    public void testWriteCallbackCalledTwice() throws Exception {
+        if (!supportsPrinting()) {
+            return;
+        }
+        // Configure the print services.
+        FirstPrintService.setCallbacks(createFirstMockPrintServiceCallbacks());
+        SecondPrintService.setCallbacks(createSecondMockPrintServiceCallbacks());
+
+        final PrintAttributes[] printAttributes = new PrintAttributes[1];
+
+        // Create a mock print adapter.
+        final PrintDocumentAdapter adapter = createMockPrintDocumentAdapter(
+                new Answer<Void>() {
+                    @Override
+                    public Void answer(InvocationOnMock invocation) throws Throwable {
+                        printAttributes[0] = (PrintAttributes) invocation.getArguments()[1];
+                        PrintDocumentInfo info = new PrintDocumentInfo.Builder(PRINT_JOB_NAME)
+                                .setContentType(PrintDocumentInfo.CONTENT_TYPE_DOCUMENT)
+                                .setPageCount(1)
+                                .build();
+                        LayoutResultCallback callback = (LayoutResultCallback) invocation
+                                .getArguments()[3];
+
+                        callback.onLayoutFinished(info, true);
+
+                        // Mark layout called.
+                        onLayoutCalled();
+                        return null;
+                    }
+                }, new Answer<Void>() {
+                    @Override
+                    public Void answer(InvocationOnMock invocation) throws Throwable {
+                        Object[] args = invocation.getArguments();
+                        PageRange[] pages = (PageRange[]) args[0];
+                        ParcelFileDescriptor fd = (ParcelFileDescriptor) args[1];
+                        WriteResultCallback callback = (WriteResultCallback) args[3];
+
+                        // Write only one pages
+                        writeBlankPages(printAttributes[0], fd, 0, 0);
+                        fd.close();
+
+                        // Break the contract and call callback twice
+                        callback.onWriteFinished(pages);
+                        callback.onWriteFinished(pages);
+
+                        // Mark write called
+                        onWriteCalled();
+                        return null;
+                    }
+                }, new Answer<Void>() {
+                    @Override
+                    public Void answer(InvocationOnMock invocation) throws Throwable {
+                        // Mark finish was called.
+                        onFinishCalled();
+                        return null;
+                    }
+                });
+
+        // Start printing.
+        print(adapter);
+
+        // Wait for layout.
+        waitForLayoutAdapterCallbackCount(1);
+
+        // Cancel printing.
+        getUiDevice().pressBack(); // wakes up the device.
+        getUiDevice().pressBack();
+
+        // Wait for a finish.
+        waitForAdapterFinishCallbackCalled();
+
+        // Wait for the session to be destroyed to isolate tests.
+        waitForPrinterDiscoverySessionDestroyCallbackCalled(1);
+
+        // Verify the expected calls.
+        InOrder inOrder = inOrder(adapter);
+
+        // Start is always called first.
+        inOrder.verify(adapter).onStart();
+
+        // Start is always followed by a layout. The PDF printer is selected if
+        // there are other printers but none of them was used.
+        PrintAttributes firstOldAttributes = new PrintAttributes.Builder().build();
+        PrintAttributes firstNewAttributes = new PrintAttributes.Builder()
+                .setMediaSize(getDefaultMediaSize())
+                .setResolution(new Resolution("PDF resolution", "PDF resolution", 300, 300))
+                .setMinMargins(Margins.NO_MARGINS).setColorMode(PrintAttributes.COLOR_MODE_COLOR)
+                .setDuplexMode(PrintAttributes.DUPLEX_MODE_NONE)
+                .build();
+        verifyLayoutCall(inOrder, adapter, firstOldAttributes, firstNewAttributes, true);
+
+        PageRange[] firstPage = new PageRange[] {new PageRange(0, 0)};
+        inOrder.verify(adapter).onWrite(eq(firstPage), any(ParcelFileDescriptor.class),
+                any(CancellationSignal.class), any(WriteResultCallback.class));
+
+        // Finish is always called last.
+        inOrder.verify(adapter).onFinish();
+
+        // No other call are expected.
+        verifyNoMoreInteractions(adapter);
+    }
+
     /**
      * Pretend to have written two pages, but only actually write one page
      *
