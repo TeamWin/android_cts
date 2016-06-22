@@ -40,6 +40,7 @@ import com.android.compatibility.common.util.Stat;
  * Completion of launch is notified via broadcast.
  */
 public class TaskSwitchingDeviceTest extends CtsAndroidTestCase {
+    private static final String REPORT_LOG_NAME = "CtsUiHostTestCases";
     private static final String PKG_A = "android.taskswitching.appa";
     private static final String PKG_B = "android.taskswitching.appb";
     private static final String ACTIVITY_A = "AppAActivity";
@@ -84,11 +85,12 @@ public class TaskSwitchingDeviceTest extends CtsAndroidTestCase {
                 }
             }
         });
-        DeviceReportLog report = new DeviceReportLog();
-        report.addValues("task switching time", results, ResultType.LOWER_BETTER, ResultUnit.MS);
+        String streamName = "test_measure_task_switching";
+        DeviceReportLog report = new DeviceReportLog(REPORT_LOG_NAME, streamName);
+        report.addValues("task_switching_time", results, ResultType.LOWER_BETTER, ResultUnit.MS);
         Stat.StatResult stat = Stat.getStat(results);
-        report.setSummary("task switching time", stat.mAverage,
-                ResultType.LOWER_BETTER, ResultUnit.MS);
+        report.setSummary("task_switching_time_average", stat.mAverage, ResultType.LOWER_BETTER,
+                ResultUnit.MS);
         report.submit(getInstrumentation());
     }
 
