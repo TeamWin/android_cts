@@ -317,6 +317,19 @@ public class TransitionTest extends BaseTransitionTest {
         endTransition();
     }
 
+    public void testExcludeChildrenClass() throws Throwable {
+        enterScene(R.layout.scene1);
+        mTransition.excludeChildren(RelativeLayout.class, true);
+        startTransition(R.layout.scene2);
+        waitForEnd(0); // Should already be ended, since no children are transitioning
+
+        resetListener();
+        mTransition.excludeChildren(RelativeLayout.class, false); // remove it
+        startTransition(R.layout.scene1);
+        assertEquals(1, mListener.endLatch.getCount()); // It is running
+        endTransition();
+    }
+
     public void testExcludeTargetView() throws Throwable {
         View layout1 = loadLayout(R.layout.scene1);
         Scene scene1 = loadScene(layout1);
