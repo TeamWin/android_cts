@@ -384,6 +384,7 @@ public class TransitionTest extends BaseTransitionTest {
     }
 
     public void testEpicenter() throws Throwable {
+        assertNull(mTransition.getEpicenter());
         EpicenterCallback callback = new EpicenterCallback() {
             @Override
             public Rect onGetEpicenter(Transition transition) {
@@ -391,7 +392,8 @@ public class TransitionTest extends BaseTransitionTest {
             }
         };
         mTransition.setEpicenterCallback(callback);
-        assertEquals(callback, mTransition.getEpicenterCallback());
+        assertSame(callback, mTransition.getEpicenterCallback());
+        assertEquals(new Rect(0, 0, 1, 1), mTransition.getEpicenter());
     }
 
     public void testInterpolator() throws Throwable {
