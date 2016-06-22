@@ -1949,10 +1949,11 @@ public class AudioTrackTest extends CtsAndroidTestCase {
         final int frameSize =
                 AudioFormat.getBytesPerSample(encoding)
                 * AudioFormat.channelCountFromOutChannelMask(channelMask);
-        final int frameCount = sampleRate * TEST_BUFFER_MS / 1000;
         // see whether we can use fast mode
-        final boolean fast =
-                sampleRate == AudioTrack.getNativeOutputSampleRate(AudioManager.STREAM_MUSIC);
+        final int nativeOutputSampleRate =
+                AudioTrack.getNativeOutputSampleRate(AudioManager.STREAM_MUSIC);
+        Log.d(TAG, "Native output sample rate " + nativeOutputSampleRate);
+        final boolean fast = (sampleRate == nativeOutputSampleRate);
 
         AudioAttributes attributes = (fast ? new AudioAttributes.Builder()
                 .setFlags(AudioAttributes.FLAG_LOW_LATENCY) : new AudioAttributes.Builder())
@@ -1971,6 +1972,10 @@ public class AudioTrackTest extends CtsAndroidTestCase {
                 .setTransferMode(transferMode)
                 .build();
         assertEquals(AudioTrack.STATE_INITIALIZED, track.getState());
+        // We generally use a transfer size of 100ms for testing, but in rare cases
+        // (e.g. Bluetooth) this needs to be larger to exceed the internal track buffer.
+        final int frameCount =
+                Math.max(track.getBufferCapacityInFrames(), sampleRate * TEST_BUFFER_MS / 1000);
         track.play();
 
         ByteBuffer data = ByteBuffer.allocate(frameCount * frameSize);
@@ -2047,11 +2052,12 @@ public class AudioTrackTest extends CtsAndroidTestCase {
                             maxJitter = jitterFrames;
                         }
                     }
-                    final long NANOS_PER_MILLIS = 1000000;
-                    final long closeTimeNs = TEST_BUFFER_MS * 2 * NANOS_PER_MILLIS;
+                    final long NANOS_PER_SECOND = 1000000000;
+                    final long closeTimeNs = frameCount * 2 * NANOS_PER_SECOND / sampleRate;
                     // We check that the timestamp time is reasonably current.
                     assertTrue("framesPresentedAt(" + framesPresentedAt
                             + ") close to writeTime(" + writeTime
+                            + ") tolerance(" + closeTimeNs
                             + ")", Math.abs(framesPresentedAt - writeTime) <= closeTimeNs);
                     assertTrue("timestamps must have causal time",
                             writeTime >= lastFramesPresentedAt);
@@ -2064,8 +2070,10 @@ public class AudioTrackTest extends CtsAndroidTestCase {
         Thread.sleep(1000 /* millis */);
         // check that we are really at the end of playback.
         assertTrue("timestamp should be valid while draining", track.getTimestamp(timestamp));
-        if (!fast) {  // fast tracks may not fully drain
-            assertEquals("timestamp should fully drain", framesWritten, timestamp.framePosition);
+        // fast tracks and sw emulated tracks may not fully drain.  we log the status here.
+        if (framesWritten != timestamp.framePosition) {
+            Log.d(TAG, "timestamp should fully drain.  written: "
+                    + framesWritten + " position: " + timestamp.framePosition);
         }
         assertTrue("sufficient nonzero timestamps", differentials > 2);
 
