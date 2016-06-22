@@ -433,9 +433,14 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
         // UserManager.DISALLOW_INSTALL_UNKNOWN_SOURCES
         final String DISALLOW_INSTALL_UNKNOWN_SOURCES = "no_install_unknown_sources";
         final String UNKNOWN_SOURCES_SETTING = "install_non_market_apps";
+        final String PACKAGE_VERIFIER_USER_CONSENT_SETTING = "package_verifier_user_consent";
+        final String PACKAGE_VERIFIER_ENABLE_SETTING = "package_verifier_enable";
         final String SECURE_SETTING_CATEGORY = "secure";
+        final String GLOBAL_SETTING_CATEGORY = "global";
         final File apk = MigrationHelper.getTestFile(mCtsBuild, TEST_APP_APK);
         String unknownSourceSetting = null;
+        String packageVerifierEnableSetting = null;
+        String packageVerifierUserConsentSetting = null;
         try {
             // Install the test and prepare the test apk.
             installAppAsUser(PACKAGE_INSTALLER_APK, mUserId);
@@ -455,9 +460,21 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
             // Enable Unknown sources in Settings.
             unknownSourceSetting =
                     getSettings(SECURE_SETTING_CATEGORY, UNKNOWN_SOURCES_SETTING, mUserId);
+            packageVerifierUserConsentSetting = getSettings(SECURE_SETTING_CATEGORY,
+                    PACKAGE_VERIFIER_USER_CONSENT_SETTING, mUserId);
+            packageVerifierEnableSetting = getSettings(GLOBAL_SETTING_CATEGORY,
+                    PACKAGE_VERIFIER_ENABLE_SETTING, mUserId);
+
             putSettings(SECURE_SETTING_CATEGORY, UNKNOWN_SOURCES_SETTING, "1", mUserId);
+            putSettings(SECURE_SETTING_CATEGORY, PACKAGE_VERIFIER_USER_CONSENT_SETTING, "-1",
+                    mUserId);
+            putSettings(GLOBAL_SETTING_CATEGORY, PACKAGE_VERIFIER_ENABLE_SETTING, "0", mUserId);
             assertEquals("1",
                     getSettings(SECURE_SETTING_CATEGORY, UNKNOWN_SOURCES_SETTING, mUserId));
+            assertEquals("-1", getSettings(SECURE_SETTING_CATEGORY,
+                    PACKAGE_VERIFIER_USER_CONSENT_SETTING, mUserId));
+            assertEquals("0", getSettings(GLOBAL_SETTING_CATEGORY,
+                    PACKAGE_VERIFIER_ENABLE_SETTING, mUserId));
             assertTrue(runDeviceTestsAsUser(PACKAGE_INSTALLER_PKG, ".ManualPackageInstallTest",
                     "testManualInstallSucceeded", mUserId));
         } finally {
@@ -468,6 +485,14 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
             if (unknownSourceSetting != null) {
                 putSettings(SECURE_SETTING_CATEGORY, UNKNOWN_SOURCES_SETTING, unknownSourceSetting,
                         mUserId);
+            }
+            if (packageVerifierEnableSetting != null) {
+                putSettings(GLOBAL_SETTING_CATEGORY, PACKAGE_VERIFIER_ENABLE_SETTING,
+                        packageVerifierEnableSetting, mUserId);
+            }
+            if (packageVerifierUserConsentSetting != null) {
+                putSettings(SECURE_SETTING_CATEGORY, PACKAGE_VERIFIER_USER_CONSENT_SETTING,
+                        packageVerifierUserConsentSetting, mUserId);
             }
         }
     }
