@@ -84,13 +84,15 @@ public class Utils {
                 cr, Settings.Secure.ENABLED_NOTIFICATION_POLICY_ACCESS_PACKAGES);
         ParcelFileDescriptor fd = null;
         if (on) {
-            // Change the settings to enable the media cts package
-            final String newEnabledServices = (alreadyEnabledServices == null) ? packageName
-                    : alreadyEnabledServices + ":" + packageName;
-            fd = uiAutomation.executeShellCommand(
-                    "settings --user cur put secure "
-                            + Settings.Secure.ENABLED_NOTIFICATION_POLICY_ACCESS_PACKAGES + " "
-                            + newEnabledServices);
+            if ((alreadyEnabledServices == null) || !alreadyEnabledServices.contains(packageName)) {
+                // Change the settings to enable the media cts package
+                final String newEnabledServices = (alreadyEnabledServices == null) ? packageName
+                        : alreadyEnabledServices + ":" + packageName;
+                fd = uiAutomation.executeShellCommand(
+                        "settings --user cur put secure "
+                                + Settings.Secure.ENABLED_NOTIFICATION_POLICY_ACCESS_PACKAGES + " "
+                                + newEnabledServices);
+            }
         } else if (alreadyEnabledServices != null) {
             int index =  alreadyEnabledServices.indexOf(":" + packageName);
             if (index >= 0) {
@@ -101,7 +103,7 @@ public class Utils {
             } else if (alreadyEnabledServices.equals(packageName)) {
                 // "packageName" is the only enabled service
                 fd = uiAutomation.executeShellCommand("settings --user cur put secure "
-                        + Settings.Secure.ENABLED_NOTIFICATION_POLICY_ACCESS_PACKAGES + " ");
+                        + Settings.Secure.ENABLED_NOTIFICATION_POLICY_ACCESS_PACKAGES + "  null");
             }
         }
         if (fd != null) {
