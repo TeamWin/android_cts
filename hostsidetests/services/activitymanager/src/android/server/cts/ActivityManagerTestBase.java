@@ -26,9 +26,7 @@ import com.android.tradefed.testtype.DeviceTestCase;
 import java.lang.Exception;
 import java.lang.Integer;
 import java.lang.String;
-import java.util.Collections;
 import java.util.HashSet;
-import java.util.LinkedList;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -360,40 +358,66 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
         }
     }
 
+    private String[] getDeviceLogsForActivity(String activityName)
+            throws DeviceNotAvailableException {
+        return mDevice.executeAdbCommand("logcat", "-v", "brief", "-d", activityName + ":I", "*:S")
+                .split("\\n");
+    }
+
+    private static final Pattern sCreatePattern = Pattern.compile("(.+): onCreate");
+    private static final Pattern sConfigurationChangedPattern =
+            Pattern.compile("(.+): onConfigurationChanged");
+    private static final Pattern sDestroyPattern = Pattern.compile("(.+): onDestroy");
+    private static final Pattern sNewConfigPattern = Pattern.compile(
+                    "(.+): config size=\\((\\d+),(\\d+)\\) displaySize=\\((\\d+),(\\d+)\\)");
+
+    protected class ReportedSizes {
+        int widthDp;
+        int heightDp;
+        int displayWidth;
+        int displayHeight;
+    }
+
+    protected ReportedSizes getLastReportedSizesForActivity(String activityName)
+            throws DeviceNotAvailableException {
+        final String[] lines = getDeviceLogsForActivity(activityName);
+        for (int i = lines.length - 1; i >= 0; i--) {
+            final String line = lines[i].trim();
+            final Matcher matcher = sNewConfigPattern.matcher(line);
+            if (matcher.matches()) {
+                ReportedSizes details = new ReportedSizes();
+                details.widthDp = Integer.parseInt(matcher.group(2));
+                details.heightDp = Integer.parseInt(matcher.group(3));
+                details.displayWidth = Integer.parseInt(matcher.group(4));
+                details.displayHeight = Integer.parseInt(matcher.group(5));
+                return details;
+            }
+        }
+        return null;
+    }
+
     private class ActivityLifecycleCounts {
-
-        private final Pattern mCreatePattern = Pattern.compile("(.+): onCreate");
-        private final Pattern mConfigurationChangedPattern =
-                Pattern.compile("(.+): onConfigurationChanged");
-        private final Pattern mDestroyPattern = Pattern.compile("(.+): onDestroy");
-
-        private final LinkedList<String> mLogs = new LinkedList();
         int mCreateCount;
         int mConfigurationChangedCount;
         int mDestroyCount;
 
         public ActivityLifecycleCounts(String activityName) throws DeviceNotAvailableException {
+            for (String line : getDeviceLogsForActivity(activityName)) {
+                line = line.trim();
 
-            final String logs = mDevice.executeAdbCommand(
-                    "logcat", "-v", "brief", "-d", activityName + ":I", "*:S");
-            Collections.addAll(mLogs, logs.split("\\n"));
-
-            while (!mLogs.isEmpty()) {
-                final String line = mLogs.pop().trim();
-
-                Matcher matcher = mCreatePattern.matcher(line);
+                Matcher matcher = sCreatePattern.matcher(line);
                 if (matcher.matches()) {
                     mCreateCount++;
                     continue;
                 }
 
-                matcher = mConfigurationChangedPattern.matcher(line);
+                matcher = sConfigurationChangedPattern.matcher(line);
                 if (matcher.matches()) {
                     mConfigurationChangedCount++;
                     continue;
                 }
 
-                matcher = mDestroyPattern.matcher(line);
+                matcher = sDestroyPattern.matcher(line);
                 if (matcher.matches()) {
                     mDestroyCount++;
                     continue;
