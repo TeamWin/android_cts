@@ -109,6 +109,7 @@ import android.widget.Scroller;
 import android.widget.TextView;
 import android.widget.TextView.BufferType;
 import android.widget.cts.util.TestUtils;
+import android.widget.cts.util.ViewTestUtils;
 
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
@@ -5890,6 +5891,193 @@ public class TextViewTest extends ActivityInstrumentationTestCase2<TextViewCtsAc
 
         // Close soft input
         sendKeys(KeyEvent.KEYCODE_BACK);
+    }
+
+    public void testIsSuggestionsEnabled() {
+        mTextView = findTextView(R.id.textview_text);
+
+        // Anything without InputType.TYPE_CLASS_TEXT doesn't have suggestions enabled
+        mInstrumentation.runOnMainSync(() -> mTextView.setInputType(InputType.TYPE_CLASS_DATETIME));
+        assertFalse(mTextView.isSuggestionsEnabled());
+
+        mInstrumentation.runOnMainSync(() -> mTextView.setInputType(InputType.TYPE_CLASS_PHONE));
+        assertFalse(mTextView.isSuggestionsEnabled());
+
+        mInstrumentation.runOnMainSync(() -> mTextView.setInputType(InputType.TYPE_CLASS_NUMBER));
+        assertFalse(mTextView.isSuggestionsEnabled());
+
+        // From this point our text view has InputType.TYPE_CLASS_TEXT
+
+        // Anything with InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS doesn't have suggestions enabled
+        mInstrumentation.runOnMainSync(
+                () -> mTextView.setInputType(
+                        InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS));
+        assertFalse(mTextView.isSuggestionsEnabled());
+
+        mInstrumentation.runOnMainSync(
+                () -> mTextView.setInputType(
+                        InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_NORMAL |
+                                InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS));
+        assertFalse(mTextView.isSuggestionsEnabled());
+
+        mInstrumentation.runOnMainSync(
+                () -> mTextView.setInputType(
+                        InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS |
+                                InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS));
+        assertFalse(mTextView.isSuggestionsEnabled());
+
+        // Otherwise suggestions are enabled for specific type variations enumerated in the
+        // documentation of TextView.isSuggestionsEnabled
+        mInstrumentation.runOnMainSync(
+                () -> mTextView.setInputType(
+                        InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_NORMAL));
+        assertTrue(mTextView.isSuggestionsEnabled());
+
+        mInstrumentation.runOnMainSync(
+                () -> mTextView.setInputType(
+                        InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_EMAIL_SUBJECT));
+        assertTrue(mTextView.isSuggestionsEnabled());
+
+        mInstrumentation.runOnMainSync(
+                () -> mTextView.setInputType(
+                        InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_LONG_MESSAGE));
+        assertTrue(mTextView.isSuggestionsEnabled());
+
+        mInstrumentation.runOnMainSync(
+                () -> mTextView.setInputType(
+                        InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_SHORT_MESSAGE));
+        assertTrue(mTextView.isSuggestionsEnabled());
+
+        mInstrumentation.runOnMainSync(
+                () -> mTextView.setInputType(
+                        InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_WEB_EDIT_TEXT));
+        assertTrue(mTextView.isSuggestionsEnabled());
+
+        // and not on any other type variation
+        mInstrumentation.runOnMainSync(
+                () -> mTextView.setInputType(
+                        InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS));
+        assertFalse(mTextView.isSuggestionsEnabled());
+
+        mInstrumentation.runOnMainSync(
+                () -> mTextView.setInputType(
+                        InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_FILTER));
+        assertFalse(mTextView.isSuggestionsEnabled());
+
+        mInstrumentation.runOnMainSync(
+                () -> mTextView.setInputType(
+                        InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD));
+        assertFalse(mTextView.isSuggestionsEnabled());
+
+        mInstrumentation.runOnMainSync(
+                () -> mTextView.setInputType(
+                        InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PERSON_NAME));
+        assertFalse(mTextView.isSuggestionsEnabled());
+
+        mInstrumentation.runOnMainSync(
+                () -> mTextView.setInputType(
+                        InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PHONETIC));
+        assertFalse(mTextView.isSuggestionsEnabled());
+
+        mInstrumentation.runOnMainSync(
+                () -> mTextView.setInputType(
+                        InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_POSTAL_ADDRESS));
+        assertFalse(mTextView.isSuggestionsEnabled());
+
+        mInstrumentation.runOnMainSync(
+                () -> mTextView.setInputType(
+                        InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_URI));
+        assertFalse(mTextView.isSuggestionsEnabled());
+
+        mInstrumentation.runOnMainSync(
+                () -> mTextView.setInputType(
+                        InputType.TYPE_CLASS_TEXT |
+                                InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD));
+        assertFalse(mTextView.isSuggestionsEnabled());
+
+        mInstrumentation.runOnMainSync(
+                () -> mTextView.setInputType(
+                        InputType.TYPE_CLASS_TEXT |
+                                InputType.TYPE_TEXT_VARIATION_WEB_EMAIL_ADDRESS));
+        assertFalse(mTextView.isSuggestionsEnabled());
+
+        mInstrumentation.runOnMainSync(
+                () -> mTextView.setInputType(
+                        InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_WEB_PASSWORD));
+        assertFalse(mTextView.isSuggestionsEnabled());
+    }
+
+    public void testAccessLetterSpacing() {
+        mTextView = findTextView(R.id.textview_text);
+        assertEquals(0.0f, mTextView.getLetterSpacing());
+
+        final CharSequence text = mTextView.getText();
+        final int textLength = text.length();
+
+        // Get advance widths of each character at the default letter spacing
+        final float[] initialWidths = new float[textLength];
+        mTextView.getPaint().getTextWidths(text.toString(), initialWidths);
+
+        // Get advance widths of each character at letter spacing = 1.0f
+        ViewTestUtils.runOnMainAndDrawSync(mInstrumentation, mTextView,
+                () -> mTextView.setLetterSpacing(1.0f));
+        assertEquals(1.0f, mTextView.getLetterSpacing());
+        final float[] singleWidths = new float[textLength];
+        mTextView.getPaint().getTextWidths(text.toString(), singleWidths);
+
+        // Get advance widths of each character at letter spacing = 2.0f
+        ViewTestUtils.runOnMainAndDrawSync(mInstrumentation, mTextView,
+                () -> mTextView.setLetterSpacing(2.0f));
+        assertEquals(2.0f, mTextView.getLetterSpacing());
+        final float[] doubleWidths = new float[textLength];
+        mTextView.getPaint().getTextWidths(text.toString(), doubleWidths);
+
+        // Since letter spacing setter treats the parameter as EM units, and we don't have
+        // a way to convert EMs into pixels, go over the three arrays of advance widths and
+        // test that the extra advance width at letter spacing 2.0f is double the extra
+        // advance width at letter spacing 1.0f.
+        for (int i = 0; i < textLength; i++) {
+            float singleWidthDelta = singleWidths[i] - initialWidths[i];
+            float doubleWidthDelta = doubleWidths[i] - initialWidths[i];
+            assertEquals("At index " + i + " initial is " + initialWidths[i] +
+                ", single is " + singleWidths[i] + " and double is " + doubleWidths[i],
+                    singleWidthDelta * 2.0f, doubleWidthDelta, 0.05f);
+        }
+    }
+
+    private void verifyGetOffsetForPosition(final int x, final int y) {
+        final int actual = mTextView.getOffsetForPosition(x, y);
+
+        final Layout layout = mTextView.getLayout();
+        if (layout == null) {
+            assertEquals("For [" + x + ", " + y + "]", -1, actual);
+            return;
+        }
+
+        // Get the line which corresponds to the Y position
+        final int line = layout.getLineForVertical(y + mTextView.getScrollY());
+        // Get the offset in that line that corresponds to the X position
+        final int expected = layout.getOffsetForHorizontal(line, x + mTextView.getScrollX());
+        assertEquals("For [" + x + ", " + y + "]", expected, actual);
+    }
+
+    public void testGetOffsetForPosition() {
+        mTextView = findTextView(R.id.textview_text);
+        ViewTestUtils.runOnMainAndDrawSync(mInstrumentation, mTextView, () -> {
+            mTextView.setText(LONG_TEXT);
+            mTextView.setPadding(0, 0, 0, 0);
+        });
+
+        assertNotNull(mTextView.getLayout());
+        final int viewWidth = mTextView.getWidth();
+        final int viewHeight = mTextView.getHeight();
+        final int lineHeight = mTextView.getLineHeight();
+
+        verifyGetOffsetForPosition(0, 0);
+        verifyGetOffsetForPosition(0, viewHeight / 2);
+        verifyGetOffsetForPosition(viewWidth / 3, lineHeight / 2);
+        verifyGetOffsetForPosition(viewWidth / 2, viewHeight / 2);
+        verifyGetOffsetForPosition(viewWidth, viewHeight);
     }
 
     private void layout(final TextView textView) {
