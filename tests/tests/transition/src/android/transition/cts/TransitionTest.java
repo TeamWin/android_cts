@@ -23,6 +23,7 @@ import android.os.SystemClock;
 import android.transition.ArcMotion;
 import android.transition.AutoTransition;
 import android.transition.ChangeBounds;
+import android.transition.CircularPropagation;
 import android.transition.PathMotion;
 import android.transition.Scene;
 import android.transition.Transition;
@@ -468,6 +469,14 @@ public class TransitionTest extends BaseTransitionTest {
         assertEquals(0, redSquareAnimator.getStartDelay());
         assertEquals(diffTop, greenSquareAnimator.getStartDelay());
         endTransition();
+    }
+
+    public void testSetPropagation() throws Throwable {
+        Transition transition = new ChangeBounds();
+        assertNull(transition.getPropagation());
+        TransitionPropagation propagation = new CircularPropagation();
+        transition.setPropagation(propagation);
+        assertSame(propagation, transition.getPropagation());
     }
 
     public void testStartDelay() throws Throwable {
