@@ -205,4 +205,24 @@ public class TypedValueTest extends TestCase {
 
         assertEquals(TypedValue.complexToDimension(10, dm), tv.getDimension(dm));
     }
+
+    public void testGetComplexUnit() {
+        TypedValue tv = new TypedValue();
+        tv.data = 256;
+        assertEquals(TypedValue.COMPLEX_UNIT_PX, tv.getComplexUnit());
+        tv.data = 257;
+        assertEquals(TypedValue.COMPLEX_UNIT_DIP, tv.getComplexUnit());
+        tv.data = 258;
+        assertEquals(TypedValue.COMPLEX_UNIT_SP, tv.getComplexUnit());
+        tv.data = 259;
+        assertEquals(TypedValue.COMPLEX_UNIT_PT, tv.getComplexUnit());
+        tv.data = 260;
+        assertEquals(TypedValue.COMPLEX_UNIT_IN, tv.getComplexUnit());
+        tv.data = 261;
+        assertEquals(TypedValue.COMPLEX_UNIT_MM, tv.getComplexUnit());
+        tv.data = 21474864;
+        assertEquals(TypedValue.COMPLEX_UNIT_FRACTION, tv.getComplexUnit());
+        tv.data = 21474865;
+        assertEquals(TypedValue.COMPLEX_UNIT_FRACTION_PARENT, tv.getComplexUnit());
+    }
 }
