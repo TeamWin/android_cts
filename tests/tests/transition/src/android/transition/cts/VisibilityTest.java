@@ -15,9 +15,15 @@
  */
 package android.transition.cts;
 
+import android.animation.Animator;
+import android.transition.TransitionManager;
 import android.transition.TransitionValues;
 import android.transition.Visibility;
 import android.view.View;
+import android.view.ViewGroup;
+
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 public class VisibilityTest extends BaseTransitionTest {
     Visibility mVisibilityTransition;
@@ -103,6 +109,103 @@ public class VisibilityTest extends BaseTransitionTest {
         goneValues.view = redSquare;
         mTransition.captureStartValues(goneValues);
         assertFalse(mVisibilityTransition.isVisible(goneValues));
+    }
+
+    public void testOnAppear() throws Throwable {
+        enterScene(R.layout.scene4);
+        AppearTransition transition = new AppearTransition();
+        mTransition = transition;
+        resetListener();
+        startTransition(R.layout.scene5);
+        assertTrue(transition.onAppearCalled.await(500, TimeUnit.MILLISECONDS));
+        // No need to end the transition since AppearTransition doesn't create
+        // any animators.
+    }
+
+    public void testOnDisppear() throws Throwable {
+        // First, test with overlay
+        enterScene(R.layout.scene5);
+        DisappearTransition transition = new DisappearTransition(true);
+        mTransition = transition;
+        resetListener();
+        startTransition(R.layout.scene4);
+        assertTrue(transition.onDisppearCalled.await(500, TimeUnit.MILLISECONDS));
+        // No need to end the transition since DisappearTransition doesn't create
+        // any animators.
+
+        // Next test without overlay
+        enterScene(R.layout.scene5);
+        transition = new DisappearTransition(false);
+        mTransition = transition;
+        resetListener();
+        final View text = getActivity().findViewById(R.id.text);
+        runTestOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                TransitionManager.beginDelayedTransition(mSceneRoot, mTransition);
+                text.setVisibility(View.GONE);
+            }
+        });
+        assertTrue(transition.onDisppearCalled.await(500, TimeUnit.MILLISECONDS));
+        // No need to end the transition since DisappearTransition doesn't create
+        // any animators.
+    }
+
+    static class AppearTransition extends Visibility {
+        private View mExpectedView;
+        public CountDownLatch onAppearCalled = new CountDownLatch(1);
+        @Override
+        public Animator onAppear(ViewGroup sceneRoot, TransitionValues startValues,
+                int startVisibility, TransitionValues endValues, int endVisibility) {
+            assertNotNull(endValues);
+            mExpectedView = endValues.view;
+            return super.onAppear(sceneRoot, startValues, startVisibility, endValues,
+                    endVisibility);
+        }
+
+        @Override
+        public Animator onAppear(ViewGroup sceneRoot, View view, TransitionValues startValues,
+                TransitionValues endValues) {
+            assertSame(mExpectedView, view);
+            onAppearCalled.countDown();
+            return null;
+        }
+    }
+
+    static class DisappearTransition extends Visibility {
+        private View mExpectedView;
+        private final boolean mExpectingOverlay;
+        public CountDownLatch onDisppearCalled = new CountDownLatch(1);
+
+        public DisappearTransition(boolean expectingOverlay) {
+            mExpectingOverlay = expectingOverlay;
+        }
+
+        @Override
+        public Animator onDisappear(ViewGroup sceneRoot, TransitionValues startValues,
+                int startVisibility, TransitionValues endValues, int endVisibility) {
+            assertNotNull(startValues);
+            if (mExpectingOverlay) {
+                assertNull(endValues);
+                mExpectedView = null;
+            } else {
+                assertNotNull(endValues);
+                mExpectedView = endValues.view;
+            }
+            return super.onDisappear(sceneRoot, startValues, startVisibility, endValues,
+                    endVisibility);
+        }
+
+        @Override
+        public Animator onDisappear(ViewGroup sceneRoot, View view, TransitionValues startValues,
+                TransitionValues endValues) {
+            assertNotNull(view);
+            if (mExpectedView != null) {
+                assertSame(mExpectedView, view);
+            }
+            onDisppearCalled.countDown();
+            return null;
+        }
     }
 }
 
