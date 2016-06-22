@@ -91,39 +91,55 @@ public class AudioTrackSurroundTest extends CtsAndroidTestCase {
     }
 
     private void scanDevicesForEncodings() throws Exception {
+        final String MTAG = "scanDevicesForEncodings";
         // Scan devices to see which encodings are supported.
         AudioManager audioManager = (AudioManager) getContext()
                 .getSystemService(Context.AUDIO_SERVICE);
         AudioDeviceInfo[] infos = audioManager.getDevices(AudioManager.GET_DEVICES_OUTPUTS);
         for (AudioDeviceInfo info : infos) {
-            log("scanDevicesForEncodings", "scanning devices, info = " + info
-                    + ", id = " + info.getId() + "---------------");
+            log(MTAG, "scanning devices, name = " + info.getProductName()
+                    + ", id = " + info.getId()
+                    + ", " + (info.isSink() ? "sink" : "source")
+                    + ", type = " + info.getType()
+                    + " ------");
+            String text = "{";
+            for (int encoding : info.getEncodings()) {
+                text += String.format("0x%08X, ", encoding);
+            }
+            text += "}";
+            log(MTAG, "  encodings = " + text);
+            text = "{";
+            for (int rate : info.getSampleRates()) {
+                text += rate + ", ";
+            }
+            text += "}";
+            log(MTAG, "  sample rates = " + text);
             if (info.isSink()) {
                 for (int encoding : info.getEncodings()) {
                     switch (encoding) {
                         case AudioFormat.ENCODING_PCM_16BIT:
                             mInfoPCM16 = info;
-                            log(TAG, "mInfoPCM16 set to " + info);
+                            log(MTAG, "mInfoPCM16 set to " + info);
                             break;
                         case AudioFormat.ENCODING_AC3:
                             mInfoAC3 = info;
-                            log(TAG, "mInfoAC3 set to " + info);
+                            log(MTAG, "mInfoAC3 set to " + info);
                             break;
                         case AudioFormat.ENCODING_E_AC3:
                             mInfoE_AC3 = info;
-                            log(TAG, "mInfoE_AC3 set to " + info);
+                            log(MTAG, "mInfoE_AC3 set to " + info);
                             break;
                         case AudioFormat.ENCODING_DTS:
                             mInfoDTS = info;
-                            log(TAG, "mInfoDTS set to " + info);
+                            log(MTAG, "mInfoDTS set to " + info);
                             break;
                         case AudioFormat.ENCODING_DTS_HD:
                             mInfoDTS_HD = info;
-                            log(TAG, "mInfoDTS_HD set to " + info);
+                            log(MTAG, "mInfoDTS_HD set to " + info);
                             break;
                         case AudioFormat.ENCODING_IEC61937:
                             mInfoIEC61937 = info;
-                            log(TAG, "mInfoIEC61937 set to " + info);
+                            log(MTAG, "mInfoIEC61937 set to " + info);
                             break;
                         default:
                             // This is OK. It is just an encoding that we don't care about.
@@ -337,6 +353,9 @@ public class AudioTrackSurroundTest extends CtsAndroidTestCase {
 
                 // Play for a while.
                 mTrack.play();
+
+                log(TEST_NAME, "native rate = "
+                        + mTrack.getNativeOutputSampleRate(mTrack.getStreamType()));
                 long elapsedMillis = 0;
                 long startTime = System.currentTimeMillis();
                 while (elapsedMillis < TEST_DURATION_MILLIS) {
