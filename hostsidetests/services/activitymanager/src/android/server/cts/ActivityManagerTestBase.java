@@ -238,16 +238,13 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
     }
 
     private boolean isDisplayOn() throws DeviceNotAvailableException {
-        final Pattern displayStatePattern = Pattern.compile("Display Power: state=(.+)");
         final CollectingOutputReceiver outputReceiver = new CollectingOutputReceiver();
         mDevice.executeShellCommand("dumpsys power", outputReceiver);
-        final LinkedList<String> dumpLines = new LinkedList();
-        Collections.addAll(dumpLines, outputReceiver.getOutput().split("\\n"));
 
-        while (!dumpLines.isEmpty()) {
-            final String line = dumpLines.pop().trim();
+        for (String line : outputReceiver.getOutput().split("\\n")) {
+            line = line.trim();
 
-            Matcher matcher = displayStatePattern.matcher(line);
+            final Matcher matcher = sDisplayStatePattern.matcher(line);
             if (matcher.matches()) {
                 final String state = matcher.group(1);
                 log("power state=" + state);
@@ -370,6 +367,8 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
     private static final Pattern sDestroyPattern = Pattern.compile("(.+): onDestroy");
     private static final Pattern sNewConfigPattern = Pattern.compile(
                     "(.+): config size=\\((\\d+),(\\d+)\\) displaySize=\\((\\d+),(\\d+)\\)");
+    private static final Pattern sDisplayStatePattern =
+            Pattern.compile("Display Power: state=(.+)");
 
     protected class ReportedSizes {
         int widthDp;
