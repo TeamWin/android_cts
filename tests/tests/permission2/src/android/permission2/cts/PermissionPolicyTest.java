@@ -115,7 +115,8 @@ public class PermissionPolicyTest extends AndroidTestCase {
             if (!expectedPermissionGroups.contains(declaredGroup.name)) {
                 assertFalse("Cannot define group " + declaredGroup.name + " in android namespace",
                         declaredGroup.name != null
-                        && declaredGroup.name.startsWith(PLATFORM_ROOT_NAMESPACE));
+                                && declaredGroup.packageName.equals(PLATFORM_PACKAGE_NAME)
+                                && declaredGroup.name.startsWith(PLATFORM_ROOT_NAMESPACE));
             }
         }
     }
