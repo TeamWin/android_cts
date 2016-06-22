@@ -13,8 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.android.cts.deviceowner;
+package com.android.cts.deviceandprofileowner;
 
+import android.content.ComponentName;
 import android.net.http.X509TrustManagerExtensions;
 import android.security.NetworkSecurityPolicy;
 
@@ -32,17 +33,19 @@ import javax.net.ssl.TrustManager;
 import javax.net.ssl.TrustManagerFactory;
 import javax.net.ssl.X509TrustManager;
 
-import static com.android.cts.deviceowner.FakeKeys.FAKE_DSA_1;
-import static com.android.cts.deviceowner.FakeKeys.FAKE_RSA_1;
+import static android.cts.util.FakeKeys.FAKE_DSA_1;
+import static android.cts.util.FakeKeys.FAKE_RSA_1;
 
-public class CaCertManagementTest extends BaseDeviceOwnerTest {
+public class CaCertManagementTest extends BaseDeviceAdminTest {
+    private final ComponentName mAdmin = ADMIN_RECEIVER_COMPONENT;
+
     /**
      * Test: device admins should be able to list all installed certs.
      *
      * <p>The list of certificates must never be {@code null}.
      */
     public void testCanRetrieveListOfInstalledCaCerts() {
-        List<byte[]> caCerts = mDevicePolicyManager.getInstalledCaCerts(getWho());
+        List<byte[]> caCerts = mDevicePolicyManager.getInstalledCaCerts(mAdmin);
         assertNotNull(caCerts);
     }
 
@@ -54,11 +57,11 @@ public class CaCertManagementTest extends BaseDeviceOwnerTest {
         assertUninstalled(FAKE_RSA_1.caCertificate);
         assertUninstalled(FAKE_DSA_1.caCertificate);
 
-        assertTrue(mDevicePolicyManager.installCaCert(getWho(), FAKE_RSA_1.caCertificate));
+        assertTrue(mDevicePolicyManager.installCaCert(mAdmin, FAKE_RSA_1.caCertificate));
         assertInstalled(FAKE_RSA_1.caCertificate);
         assertUninstalled(FAKE_DSA_1.caCertificate);
 
-        mDevicePolicyManager.uninstallCaCert(getWho(), FAKE_RSA_1.caCertificate);
+        mDevicePolicyManager.uninstallCaCert(mAdmin, FAKE_RSA_1.caCertificate);
         assertUninstalled(FAKE_RSA_1.caCertificate);
         assertUninstalled(FAKE_DSA_1.caCertificate);
     }
@@ -68,14 +71,14 @@ public class CaCertManagementTest extends BaseDeviceOwnerTest {
      */
     public void testUninstallationIsSelective()
             throws CertificateException, GeneralSecurityException {
-        assertTrue(mDevicePolicyManager.installCaCert(getWho(), FAKE_RSA_1.caCertificate));
-        assertTrue(mDevicePolicyManager.installCaCert(getWho(), FAKE_DSA_1.caCertificate));
+        assertTrue(mDevicePolicyManager.installCaCert(mAdmin, FAKE_RSA_1.caCertificate));
+        assertTrue(mDevicePolicyManager.installCaCert(mAdmin, FAKE_DSA_1.caCertificate));
 
-        mDevicePolicyManager.uninstallCaCert(getWho(), FAKE_DSA_1.caCertificate);
+        mDevicePolicyManager.uninstallCaCert(mAdmin, FAKE_DSA_1.caCertificate);
         assertInstalled(FAKE_RSA_1.caCertificate);
         assertUninstalled(FAKE_DSA_1.caCertificate);
 
-        mDevicePolicyManager.uninstallCaCert(getWho(), FAKE_RSA_1.caCertificate);
+        mDevicePolicyManager.uninstallCaCert(mAdmin, FAKE_RSA_1.caCertificate);
     }
 
     /**
@@ -84,10 +87,10 @@ public class CaCertManagementTest extends BaseDeviceOwnerTest {
      */
     public void testCanUninstallAllUserCaCerts()
             throws CertificateException, GeneralSecurityException {
-        assertTrue(mDevicePolicyManager.installCaCert(getWho(), FAKE_RSA_1.caCertificate));
-        assertTrue(mDevicePolicyManager.installCaCert(getWho(), FAKE_DSA_1.caCertificate));
+        assertTrue(mDevicePolicyManager.installCaCert(mAdmin, FAKE_RSA_1.caCertificate));
+        assertTrue(mDevicePolicyManager.installCaCert(mAdmin, FAKE_DSA_1.caCertificate));
 
-        mDevicePolicyManager.uninstallAllUserCaCerts(getWho());
+        mDevicePolicyManager.uninstallAllUserCaCerts(mAdmin);
         assertUninstalled(FAKE_RSA_1.caCertificate);
         assertUninstalled(FAKE_DSA_1.caCertificate);
     }
@@ -131,10 +134,10 @@ public class CaCertManagementTest extends BaseDeviceOwnerTest {
      */
     private boolean isCaCertInstalledAndTrusted(Certificate caCert)
             throws GeneralSecurityException, CertificateException {
-        boolean installed = mDevicePolicyManager.hasCaCertInstalled(getWho(), caCert.getEncoded());
+        boolean installed = mDevicePolicyManager.hasCaCertInstalled(mAdmin, caCert.getEncoded());
 
         boolean listed = false;
-        for (byte[] certBuffer : mDevicePolicyManager.getInstalledCaCerts(getWho())) {
+        for (byte[] certBuffer : mDevicePolicyManager.getInstalledCaCerts(mAdmin)) {
             if (caCert.equals(readCertificate(certBuffer))) {
                 listed = true;
             }
@@ -153,7 +156,7 @@ public class CaCertManagementTest extends BaseDeviceOwnerTest {
         boolean userAddedCertificate = xtm.isUserAddedCertificate((X509Certificate) caCert);
 
         // All three responses should match - if an installed certificate isn't trusted or (worse)
-        // a trusted certificate isn't even installed we should 
+        // a trusted certificate isn't even installed we should fail now, loudly.
         assertEquals(installed, listed);
         assertEquals(installed, trusted);
         assertEquals(installed, userAddedCertificate);
