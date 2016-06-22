@@ -369,6 +369,34 @@ public class RationalTest extends junit.framework.TestCase {
         }
     }
 
+    @SmallTest
+    public void testParseRational() {
+        assertEquals(new Rational(1, 2), Rational.parseRational("3:+6"));
+        assertEquals(new Rational(1, 2), Rational.parseRational("-3:-6"));
+        assertEquals(Rational.NaN, Rational.parseRational("NaN"));
+        assertEquals(Rational.POSITIVE_INFINITY, Rational.parseRational("Infinity"));
+        assertEquals(Rational.NEGATIVE_INFINITY, Rational.parseRational("-Infinity"));
+        assertEquals(Rational.ZERO, Rational.parseRational("0/261"));
+        assertEquals(Rational.NaN, Rational.parseRational("0/-0"));
+        assertEquals(Rational.POSITIVE_INFINITY, Rational.parseRational("1000/+0"));
+        assertEquals(Rational.NEGATIVE_INFINITY, Rational.parseRational("-1000/-0"));
+
+        try {
+            fail("Parsing " + Rational.parseRational("1.5") + " should not have succeeded");
+        } catch (NumberFormatException exception) {
+            // OK
+        }
+
+        try {
+            fail("Parsing " + Rational.parseRational("239") + " should not have succeeded");
+        } catch (NumberFormatException exception) {
+            // OK
+        }
+
+        Rational r = new Rational(10, 15);
+        assertEquals(r, Rational.parseRational(r.toString()));
+    }
+
     private static void assertValueEquals(Rational object, float expected) {
         assertEquals("Checking floatValue() for " + object + ";",
                 expected, object.floatValue());
