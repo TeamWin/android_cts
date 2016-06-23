@@ -58,14 +58,14 @@ public class DynamicConfigHandler {
         }
 
         JSONObject rootObj  = new JSONObject(new JSONTokener(apbsConfigJson));
-        JSONArray configEntries = rootObj.getJSONArray("dynamicConfigEntries");
-        for (int i = 0; i < configEntries.length(); i++) {
-            JSONObject configEntry = configEntries.getJSONObject(i);
-            String key = configEntry.getString("configAttribute");
-            JSONArray configValues = configEntry.getJSONArray("configValues");
+        JSONObject configObject = rootObj.getJSONObject("dynamicConfigEntries");
+        JSONArray keys = configObject.names();
+        for (int i = 0; i < keys.length(); i++) {
+            String key = keys.getString(i);
+            JSONArray jsonValues = configObject.getJSONObject(key).getJSONArray("configValues");
             List<String> values = new ArrayList<>();
-            for (int j = 0; j < configValues.length(); j++) {
-                values.add(configValues.getString(j));
+            for (int j = 0; j < jsonValues.length(); j ++) {
+                values.add(jsonValues.getString(j));
             }
             configMap.put(key, values);
         }

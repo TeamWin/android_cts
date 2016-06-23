@@ -60,50 +60,33 @@ public class DynamicConfigHandlerTest extends TestCase {
 
     private static final String overrideJson =
             "{\n" +
-            "  \"dynamicConfigEntries\": [\n" +
-            "    {\n" +
-            "      \"configAttribute\": \"version\",\n" +
-            "      \"configValues\": [\n" +
-            "        \"1.0\"\n" +
-            "      ]\n" +
-            "    },\n" +
-            "    {\n" +
-            "      \"configAttribute\": \"suite\",\n" +
-            "      \"configValues\": [\n" +
-            "        \"CTS_V2\"\n" +
-            "      ]\n" +
-            "    },\n" +
-            "    {\n" +
-            "      \"configAttribute\": \"override-config-1\",\n" +
+            "  \"dynamicConfigEntries\": {\n" +
+            "    \"override-config-1\": {\n" +
             "      \"configValues\": [\n" +
             "        \"override-config-val-1\"\n" +
             "      ]\n" +
             "    },\n" +
-            "    {\n" +
-            "      \"configAttribute\": \"override-config-2\",\n" +
+            "    \"override-config-2\": {\n" +
             "      \"configValues\": [\n" +
             "        \"override-config-val-2\"\n" +
             "      ]\n" +
             "    },\n" +
-            "    {\n" +
-            "      \"configAttribute\": \"override-config-list-1\",\n" +
+            "    \"override-config-list-1\": {\n" +
             "      \"configValues\": [\n" +
             "        \"override-config-list-val-1-1\",\n" +
             "        \"override-config-list-val-1-2\"\n" +
             "      ]\n" +
             "    },\n" +
-            "    {\n" +
-            "      \"configAttribute\": \"override-config-list-2\",\n" +
+            "    \"override-config-list-2\": {\n" +
             "      \"configValues\": [\n" +
             "        \"override-config-list-val-2-1\"\n" +
             "      ]\n" +
             "    },\n" +
-            "    {\n" +
-            "      \"configAttribute\": \"override-config-list-3\",\n" +
+            "    \"override-config-list-3\": {\n" +
             "      \"configValues\": [\n" +
             "      ]\n" +
             "    }\n" +
-            "  ]\n" +
+            "  }\n" +
             "}";
 
     public void testDynamicConfigHandler() throws Exception {
