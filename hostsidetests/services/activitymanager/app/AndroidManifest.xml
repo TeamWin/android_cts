@@ -46,7 +46,7 @@
         />
         <activity android:name=".NoRelaunchActivity"
                 android:resizeableActivity="true"
-                android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout"
+                android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout|fontScale"
                 android:exported="true"
                 android:taskAffinity="nobody.but.NoRelaunchActivity"
         />
