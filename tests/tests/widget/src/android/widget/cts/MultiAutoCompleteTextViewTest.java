@@ -67,6 +67,12 @@ public class MultiAutoCompleteTextViewTest
         new MultiAutoCompleteTextView(mActivity, null);
         new MultiAutoCompleteTextView(mActivity, null, android.R.attr.autoCompleteTextViewStyle);
         new MultiAutoCompleteTextView(mActivity, null, 0,
+                android.R.style.Widget_DeviceDefault_AutoCompleteTextView);
+        new MultiAutoCompleteTextView(mActivity, null, 0,
+                android.R.style.Widget_DeviceDefault_Light_AutoCompleteTextView);
+        new MultiAutoCompleteTextView(mActivity, null, 0,
+                android.R.style.Widget_Material_AutoCompleteTextView);
+        new MultiAutoCompleteTextView(mActivity, null, 0,
                 android.R.style.Widget_Material_Light_AutoCompleteTextView);
 
         try {

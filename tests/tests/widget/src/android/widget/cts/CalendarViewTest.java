@@ -66,6 +66,13 @@ public class CalendarViewTest extends ActivityInstrumentationTestCase2<CalendarV
 
         new CalendarView(mActivity, null, android.R.attr.calendarViewStyle);
 
+        new CalendarView(mActivity, null, 0, android.R.style.Widget_DeviceDefault_CalendarView);
+
+        new CalendarView(mActivity, null, 0,
+                android.R.style.Widget_DeviceDefault_Light_CalendarView);
+
+        new CalendarView(mActivity, null, 0, android.R.style.Widget_Material_CalendarView);
+
         new CalendarView(mActivity, null, 0, android.R.style.Widget_Material_Light_CalendarView);
     }
 

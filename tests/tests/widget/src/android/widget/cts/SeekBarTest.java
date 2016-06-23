@@ -56,6 +56,12 @@ public class SeekBarTest extends ActivityInstrumentationTestCase2<SeekBarCtsActi
 
         new SeekBar(mActivity, null, android.R.attr.seekBarStyle);
 
+        new SeekBar(mActivity, null, 0, android.R.style.Widget_DeviceDefault_SeekBar);
+
+        new SeekBar(mActivity, null, 0, android.R.style.Widget_DeviceDefault_Light_SeekBar);
+
+        new SeekBar(mActivity, null, 0, android.R.style.Widget_Material_SeekBar);
+
         new SeekBar(mActivity, null, 0, android.R.style.Widget_Material_Light_SeekBar);
     }
 

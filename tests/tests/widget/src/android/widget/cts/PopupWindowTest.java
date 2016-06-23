@@ -87,6 +87,12 @@ public class PopupWindowTest extends
 
         new PopupWindow(mActivity, null, android.R.attr.popupWindowStyle);
 
+        new PopupWindow(mActivity, null, 0, android.R.style.Widget_DeviceDefault_PopupWindow);
+
+        new PopupWindow(mActivity, null, 0, android.R.style.Widget_DeviceDefault_Light_PopupWindow);
+
+        new PopupWindow(mActivity, null, 0, android.R.style.Widget_Material_PopupWindow);
+
         new PopupWindow(mActivity, null, 0, android.R.style.Widget_Material_Light_PopupWindow);
 
         mPopupWindow = new PopupWindow();

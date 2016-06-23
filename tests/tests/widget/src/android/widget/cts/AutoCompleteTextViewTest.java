@@ -140,6 +140,12 @@ public class AutoCompleteTextViewTest extends
         new AutoCompleteTextView(mActivity, null);
         new AutoCompleteTextView(mActivity, null, android.R.attr.autoCompleteTextViewStyle);
         new AutoCompleteTextView(mActivity, null, 0,
+                android.R.style.Widget_DeviceDefault_AutoCompleteTextView);
+        new AutoCompleteTextView(mActivity, null, 0,
+                android.R.style.Widget_DeviceDefault_Light_AutoCompleteTextView);
+        new AutoCompleteTextView(mActivity, null, 0,
+                android.R.style.Widget_Material_AutoCompleteTextView);
+        new AutoCompleteTextView(mActivity, null, 0,
                 android.R.style.Widget_Material_Light_AutoCompleteTextView);
 
         final Resources.Theme popupTheme = mActivity.getResources().newTheme();

@@ -105,7 +105,16 @@ public class ListPopupWindowTest extends
 
         new ListPopupWindow(mActivity, null, android.R.attr.popupWindowStyle);
 
+        new ListPopupWindow(mActivity, null, 0,
+                android.R.style.Widget_DeviceDefault_ListPopupWindow);
+
+        new ListPopupWindow(mActivity, null, 0,
+                android.R.style.Widget_DeviceDefault_Light_ListPopupWindow);
+
         new ListPopupWindow(mActivity, null, 0, android.R.style.Widget_Material_ListPopupWindow);
+
+        new ListPopupWindow(mActivity, null, 0,
+                android.R.style.Widget_Material_Light_ListPopupWindow);
     }
 
     public void testNoDefaultVisibility() {

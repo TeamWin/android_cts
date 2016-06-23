@@ -68,6 +68,12 @@ public class CheckedTextViewTest extends
         new CheckedTextView(mActivity, null);
         new CheckedTextView(mActivity, null, android.R.attr.checkedTextViewStyle);
         new CheckedTextView(mActivity, null, 0,
+                android.R.style.Widget_DeviceDefault_CheckedTextView);
+        new CheckedTextView(mActivity, null, 0,
+                android.R.style.Widget_DeviceDefault_Light_CheckedTextView);
+        new CheckedTextView(mActivity, null, 0,
+                android.R.style.Widget_Material_CheckedTextView);
+        new CheckedTextView(mActivity, null, 0,
                 android.R.style.Widget_Material_Light_CheckedTextView);
 
         try {

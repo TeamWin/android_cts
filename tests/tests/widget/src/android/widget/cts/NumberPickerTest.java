@@ -57,6 +57,8 @@ public class NumberPickerTest extends ActivityInstrumentationTestCase2<NumberPic
 
         new NumberPicker(mActivity, null, android.R.attr.numberPickerStyle);
 
+        new NumberPicker(mActivity, null, 0, android.R.style.Widget_Material_NumberPicker);
+
         new NumberPicker(mActivity, null, 0, android.R.style.Widget_Material_Light_NumberPicker);
     }
 

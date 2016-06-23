@@ -48,6 +48,9 @@ public class ImageButtonTest extends ActivityInstrumentationTestCase2<ImageButto
         new ImageButton(mActivity);
         new ImageButton(mActivity, null);
         new ImageButton(mActivity, null, android.R.attr.imageButtonStyle);
+        new ImageButton(mActivity, null, 0, android.R.style.Widget_DeviceDefault_ImageButton);
+        new ImageButton(mActivity, null, 0, android.R.style.Widget_DeviceDefault_Light_ImageButton);
+        new ImageButton(mActivity, null, 0, android.R.style.Widget_Material_ImageButton);
         new ImageButton(mActivity, null, 0, android.R.style.Widget_Material_Light_ImageButton);
 
         try {

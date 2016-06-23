@@ -82,6 +82,7 @@ public class TimePickerTest extends ActivityInstrumentationTestCase2<TimePickerC
         new TimePicker(mActivity, null, 0);
         new TimePicker(mActivity, attrs, 0);
         new TimePicker(mActivity, null, android.R.attr.timePickerStyle);
+        new TimePicker(mActivity, null, 0, android.R.style.Widget_Material_TimePicker);
         new TimePicker(mActivity, null, 0, android.R.style.Widget_Material_Light_TimePicker);
     }
 

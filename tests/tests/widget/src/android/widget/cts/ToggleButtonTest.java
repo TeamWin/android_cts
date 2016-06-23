@@ -63,6 +63,10 @@ public class ToggleButtonTest extends ActivityInstrumentationTestCase2<ToggleBut
         new ToggleButton(mActivity);
         new ToggleButton(mActivity, null);
         new ToggleButton(mActivity, null, android.R.attr.buttonStyleToggle);
+        new ToggleButton(mActivity, null, 0, android.R.style.Widget_DeviceDefault_Button_Toggle);
+        new ToggleButton(mActivity, null, 0,
+                android.R.style.Widget_DeviceDefault_Light_Button_Toggle);
+        new ToggleButton(mActivity, null, 0, android.R.style.Widget_Material_Button_Toggle);
         new ToggleButton(mActivity, null, 0, android.R.style.Widget_Material_Light_Button_Toggle);
 
         try {

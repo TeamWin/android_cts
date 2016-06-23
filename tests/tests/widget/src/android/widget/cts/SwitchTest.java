@@ -64,6 +64,8 @@ public class SwitchTest extends ActivityInstrumentationTestCase2<SwitchCtsActivi
 
         new Switch(mActivity, null, android.R.attr.switchStyle);
 
+        new Switch(mActivity, null, 0, android.R.style.Widget_Material_CompoundButton_Switch);
+
         new Switch(mActivity, null, 0, android.R.style.Widget_Material_Light_CompoundButton_Switch);
     }
 
