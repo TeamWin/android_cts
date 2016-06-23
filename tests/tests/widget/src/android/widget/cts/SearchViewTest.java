@@ -59,6 +59,8 @@ public class SearchViewTest extends ActivityInstrumentationTestCase2<SearchViewC
 
         new SearchView(mActivity, null, android.R.attr.searchViewStyle);
 
+        new SearchView(mActivity, null, 0, android.R.style.Widget_Material_SearchView);
+
         new SearchView(mActivity, null, 0, android.R.style.Widget_Material_Light_SearchView);
     }
 

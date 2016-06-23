@@ -78,6 +78,29 @@ public class ProgressBarTest extends ActivityInstrumentationTestCase2<ProgressBa
 
         new ProgressBar(mActivity, null, android.R.attr.progressBarStyleSmallTitle);
 
+        new ProgressBar(mActivity, null, 0, android.R.style.Widget_DeviceDefault_Light_ProgressBar);
+
+        new ProgressBar(mActivity, null, 0,
+                android.R.style.Widget_DeviceDefault_Light_ProgressBar_Horizontal);
+
+        new ProgressBar(mActivity, null, 0,
+                android.R.style.Widget_DeviceDefault_Light_ProgressBar_Inverse);
+
+        new ProgressBar(mActivity, null, 0,
+                android.R.style.Widget_DeviceDefault_Light_ProgressBar_Large);
+
+        new ProgressBar(mActivity, null, 0,
+                android.R.style.Widget_DeviceDefault_Light_ProgressBar_Large_Inverse);
+
+        new ProgressBar(mActivity, null, 0,
+                android.R.style.Widget_DeviceDefault_Light_ProgressBar_Small);
+
+        new ProgressBar(mActivity, null, 0,
+                android.R.style.Widget_DeviceDefault_Light_ProgressBar_Small_Inverse);
+
+        new ProgressBar(mActivity, null, 0,
+                android.R.style.Widget_DeviceDefault_Light_ProgressBar_Small_Title);
+
         new ProgressBar(mActivity, null, 0, android.R.style.Widget_Material_Light_ProgressBar);
 
         new ProgressBar(mActivity, null, 0,

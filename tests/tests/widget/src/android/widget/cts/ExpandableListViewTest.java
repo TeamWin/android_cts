@@ -70,6 +70,15 @@ public class ExpandableListViewTest extends ActivityInstrumentationTestCase2<Exp
         new ExpandableListView(mActivity, null, android.R.attr.expandableListViewStyle);
 
         new ExpandableListView(mActivity, null, 0,
+                android.R.style.Widget_DeviceDefault_ExpandableListView);
+
+        new ExpandableListView(mActivity, null, 0,
+                android.R.style.Widget_DeviceDefault_Light_ExpandableListView);
+
+        new ExpandableListView(mActivity, null, 0,
+                android.R.style.Widget_Material_ExpandableListView);
+
+        new ExpandableListView(mActivity, null, 0,
                 android.R.style.Widget_Material_Light_ExpandableListView);
 
         XmlPullParser parser =

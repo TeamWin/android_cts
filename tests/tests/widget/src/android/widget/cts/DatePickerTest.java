@@ -61,6 +61,10 @@ public class DatePickerTest extends ActivityInstrumentationTestCase2<DatePickerC
 
         new DatePicker(mActivity, null, android.R.attr.datePickerStyle);
 
+        new DatePicker(mActivity, null, 0, android.R.style.Widget_DeviceDefault_DatePicker);
+
+        new DatePicker(mActivity, null, 0, android.R.style.Widget_Material_DatePicker);
+
         new DatePicker(mActivity, null, 0, android.R.style.Widget_Material_Light_DatePicker);
     }
 

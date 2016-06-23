@@ -50,6 +50,12 @@ public class CheckBoxTest extends ActivityInstrumentationTestCase2<CheckBoxCtsAc
         new CheckBox(mActivity, null);
         new CheckBox(mActivity, null, android.R.attr.checkboxStyle);
         new CheckBox(mActivity, null, 0,
+                android.R.style.Widget_DeviceDefault_CompoundButton_CheckBox);
+        new CheckBox(mActivity, null, 0,
+                android.R.style.Widget_DeviceDefault_Light_CompoundButton_CheckBox);
+        new CheckBox(mActivity, null, 0,
+                android.R.style.Widget_Material_CompoundButton_CheckBox);
+        new CheckBox(mActivity, null, 0,
                 android.R.style.Widget_Material_Light_CompoundButton_CheckBox);
 
         try {

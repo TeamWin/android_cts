@@ -173,6 +173,12 @@ public class TextViewTest extends ActivityInstrumentationTestCase2<TextViewCtsAc
 
         new TextView(mActivity, null, android.R.attr.textViewStyle);
 
+        new TextView(mActivity, null, 0, android.R.style.Widget_DeviceDefault_TextView);
+
+        new TextView(mActivity, null, 0, android.R.style.Widget_DeviceDefault_Light_TextView);
+
+        new TextView(mActivity, null, 0, android.R.style.Widget_Material_TextView);
+
         new TextView(mActivity, null, 0, android.R.style.Widget_Material_Light_TextView);
     }
 

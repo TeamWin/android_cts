@@ -58,6 +58,12 @@ public class RadioButtonTest extends ActivityInstrumentationTestCase2<RadioButto
         new RadioButton(mActivity, null);
         new RadioButton(mActivity, null, android.R.attr.radioButtonStyle);
         new RadioButton(mActivity, null, 0,
+                android.R.style.Widget_DeviceDefault_CompoundButton_RadioButton);
+        new RadioButton(mActivity, null, 0,
+                android.R.style.Widget_DeviceDefault_Light_CompoundButton_RadioButton);
+        new RadioButton(mActivity, null, 0,
+                android.R.style.Widget_Material_CompoundButton_RadioButton);
+        new RadioButton(mActivity, null, 0,
                 android.R.style.Widget_Material_Light_CompoundButton_RadioButton);
 
         try {

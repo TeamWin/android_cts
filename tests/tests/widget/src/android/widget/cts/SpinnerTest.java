@@ -76,10 +76,40 @@ public class SpinnerTest extends ActivityInstrumentationTestCase2<SpinnerCtsActi
 
         new Spinner(mActivity, null, android.R.attr.spinnerStyle, Spinner.MODE_DROPDOWN);
 
+        new Spinner(mActivity, null, 0, android.R.style.Widget_DeviceDefault_Spinner,
+                Spinner.MODE_DIALOG);
+
+        new Spinner(mActivity, null, 0, android.R.style.Widget_DeviceDefault_Spinner,
+                Spinner.MODE_DROPDOWN);
+
+        new Spinner(mActivity, null, 0, android.R.style.Widget_DeviceDefault_Light_Spinner,
+                Spinner.MODE_DIALOG);
+
+        new Spinner(mActivity, null, 0, android.R.style.Widget_DeviceDefault_Light_Spinner,
+                Spinner.MODE_DROPDOWN);
+
+        new Spinner(mActivity, null, 0, android.R.style.Widget_Material_Spinner,
+                Spinner.MODE_DIALOG);
+
+        new Spinner(mActivity, null, 0, android.R.style.Widget_Material_Spinner,
+                Spinner.MODE_DROPDOWN);
+
+        new Spinner(mActivity, null, 0, android.R.style.Widget_Material_Spinner_Underlined,
+                Spinner.MODE_DIALOG);
+
+        new Spinner(mActivity, null, 0, android.R.style.Widget_Material_Spinner_Underlined,
+                Spinner.MODE_DROPDOWN);
+
         new Spinner(mActivity, null, 0, android.R.style.Widget_Material_Light_Spinner,
                 Spinner.MODE_DIALOG);
 
         new Spinner(mActivity, null, 0, android.R.style.Widget_Material_Light_Spinner,
+                Spinner.MODE_DROPDOWN);
+
+        new Spinner(mActivity, null, 0, android.R.style.Widget_Material_Light_Spinner_Underlined,
+                Spinner.MODE_DIALOG);
+
+        new Spinner(mActivity, null, 0, android.R.style.Widget_Material_Light_Spinner_Underlined,
                 Spinner.MODE_DROPDOWN);
 
         final Resources.Theme popupTheme = mActivity.getResources().newTheme();

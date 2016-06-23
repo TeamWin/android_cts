@@ -49,7 +49,15 @@ public class RatingBarTest extends ActivityInstrumentationTestCase2<RatingBarCts
         new RatingBar(mActivity);
         new RatingBar(mActivity, null);
         new RatingBar(mActivity, null, android.R.attr.ratingBarStyle);
+        new RatingBar(mActivity, null, 0, android.R.style.Widget_DeviceDefault_RatingBar);
+        new RatingBar(mActivity, null, 0, android.R.style.Widget_DeviceDefault_RatingBar_Indicator);
+        new RatingBar(mActivity, null, 0, android.R.style.Widget_DeviceDefault_RatingBar_Small);
+        new RatingBar(mActivity, null, 0, android.R.style.Widget_Material_RatingBar);
+        new RatingBar(mActivity, null, 0, android.R.style.Widget_Material_RatingBar_Indicator);
+        new RatingBar(mActivity, null, 0, android.R.style.Widget_Material_RatingBar_Small);
         new RatingBar(mActivity, null, 0, android.R.style.Widget_Material_Light_RatingBar);
+        new RatingBar(mActivity, null, 0, android.R.style.Widget_Material_Light_RatingBar_Indicator);
+        new RatingBar(mActivity, null, 0, android.R.style.Widget_Material_Light_RatingBar_Small);
     }
 
     public void testAttributesFromLayout() {
