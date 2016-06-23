@@ -41,12 +41,6 @@ public class DisplaySizeTest extends DeviceTestCase {
         super.setUp();
 
         mDevice = getDevice();
-
-        // Set device to 0.85 zoom. It doesn't matter that we're zooming out
-        // since the feature verifies that we're in a non-default density.
-        final int stableDensity = getStableDensity();
-        final int targetDensity = (int) (stableDensity * 0.85);
-        setDensity(targetDensity);
     }
 
     @Override
@@ -54,20 +48,61 @@ public class DisplaySizeTest extends DeviceTestCase {
         super.tearDown();
 
         try {
-            // Restore default density.
-            mDevice.executeShellCommand("wm density reset");
+            resetDensity();
 
             // Ensure app process is stopped.
             forceStopPackage("android.displaysize.app");
+            forceStopPackage("android.server.app");
         } catch (DeviceNotAvailableException e) {
             // Do nothing.
         }
     }
 
     public void testCompatibilityDialog() throws Exception {
+        // Launch some other app (not to perform density change on launcher).
+        startActivity("android.server.app", "TestActivity");
+        verifyWindowDisplayed("TestActivity", ACTIVITY_TIMEOUT_MILLIS);
+
+        setUnsupportedDensity();
+
+        // Launch target app.
         startActivity("android.displaysize.app", "SmallestWidthActivity");
         verifyWindowDisplayed("SmallestWidthActivity", ACTIVITY_TIMEOUT_MILLIS);
         verifyWindowDisplayed("UnsupportedDisplaySizeDialog", WINDOW_TIMEOUT_MILLIS);
+    }
+
+    public void testCompatibilityDialogWhenFocused() throws Exception {
+        startActivity("android.displaysize.app", "SmallestWidthActivity");
+        verifyWindowDisplayed("SmallestWidthActivity", ACTIVITY_TIMEOUT_MILLIS);
+
+        setUnsupportedDensity();
+
+        verifyWindowDisplayed("UnsupportedDisplaySizeDialog", WINDOW_TIMEOUT_MILLIS);
+    }
+
+    public void testCompatibilityDialogAfterReturn() throws Exception {
+        // Launch target app.
+        startActivity("android.displaysize.app", "SmallestWidthActivity");
+        verifyWindowDisplayed("SmallestWidthActivity", ACTIVITY_TIMEOUT_MILLIS);
+        // Launch another activity.
+        startOtherActivityOnTop("android.displaysize.app", "SmallestWidthActivity");
+        verifyWindowDisplayed("TestActivity", ACTIVITY_TIMEOUT_MILLIS);
+
+        setUnsupportedDensity();
+
+        // Go back.
+        mDevice.executeShellCommand("input keyevent 4");
+
+        verifyWindowDisplayed("SmallestWidthActivity", ACTIVITY_TIMEOUT_MILLIS);
+        verifyWindowDisplayed("UnsupportedDisplaySizeDialog", WINDOW_TIMEOUT_MILLIS);
+    }
+
+    private void setUnsupportedDensity() throws DeviceNotAvailableException {
+        // Set device to 0.85 zoom. It doesn't matter that we're zooming out
+        // since the feature verifies that we're in a non-default density.
+        final int stableDensity = getStableDensity();
+        final int targetDensity = (int) (stableDensity * 0.85);
+        setDensity(targetDensity);
     }
 
     private int getStableDensity() {
@@ -95,6 +130,10 @@ public class DisplaySizeTest extends DeviceTestCase {
         assertTrue("Failed to set density to " + targetDensity, success);
     }
 
+    private void resetDensity() throws DeviceNotAvailableException {
+        mDevice.executeShellCommand("wm density reset");
+    }
+
     private void forceStopPackage(String packageName) throws DeviceNotAvailableException {
         final String forceStopCmd = String.format(AM_FORCE_STOP, packageName);
         mDevice.executeShellCommand(forceStopCmd);
@@ -102,9 +141,18 @@ public class DisplaySizeTest extends DeviceTestCase {
 
     private void startActivity(String packageName, String activityName)
             throws DeviceNotAvailableException {
-        final String startCmd = String.format(
-                AM_START_COMMAND, packageName, packageName, activityName);
+        mDevice.executeShellCommand(getStartCommand(packageName, activityName));
+    }
+
+    private void startOtherActivityOnTop(String packageName, String activityName)
+            throws DeviceNotAvailableException {
+        final String startCmd = getStartCommand(packageName, activityName)
+                + " -f 0x20000000 --ez launch_another_activity true";
         mDevice.executeShellCommand(startCmd);
+    }
+
+    private String getStartCommand(String packageName, String activityName) {
+        return String.format(AM_START_COMMAND, packageName, packageName, activityName);
     }
 
     private void verifyWindowDisplayed(String windowName, long timeoutMillis)

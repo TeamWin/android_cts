@@ -17,14 +17,22 @@
 package android.displaysize.app;
 
 import android.app.Activity;
+import android.content.ComponentName;
+import android.content.Intent;
 import android.os.Bundle;
 
 public class SmallestWidthActivity extends Activity {
 
     @Override
-    public void onCreate(Bundle icicle) {
-        super.onCreate(icicle);
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
 
-        // Nothing to see here.
+        final Bundle extras = intent.getExtras();
+        if (extras != null && extras.getBoolean("launch_another_activity")) {
+            Intent startIntent = new Intent();
+            startIntent.setComponent(
+                    new ComponentName("android.server.app", "android.server.app.TestActivity"));
+            startActivity(startIntent);
+        }
     }
 }
