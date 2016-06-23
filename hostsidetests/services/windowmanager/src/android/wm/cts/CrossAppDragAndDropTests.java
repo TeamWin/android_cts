@@ -146,6 +146,7 @@ public class CrossAppDragAndDropTests extends DeviceTestCase {
         // WindowManagerService#mDockedStackCreateBounds.
         executeShellCommand(getMoveTaskCommand(taskId, DOCKED_STACK_ID));
         waitForResume(mSourcePackageName, SOURCE_ACTIVITY_NAME);
+        executeShellCommand(AM_FORCE_STOP + SOURCE_PACKAGE_NAME);
 
         // Remove special stacks.
         executeShellCommand(AM_REMOVE_STACK + PINNED_STACK_ID);
@@ -174,6 +175,7 @@ public class CrossAppDragAndDropTests extends DeviceTestCase {
         final String fullActivityName = packageName + "." + activityName;
         int retryCount = 3;
         do {
+            Thread.sleep(500);
             String logs = executeShellCommand("logcat -d -b events");
             for (String line : logs.split("\\n")) {
                 if(line.contains("am_on_resume_called") && line.contains(fullActivityName)) {
