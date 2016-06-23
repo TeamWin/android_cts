@@ -14,7 +14,7 @@
 -->
 
 <dynamicConfig>
-    <entry key="MediaFilesUrl">
-         <value>https://dl.google.com/dl/android/cts/android-cts-media-1.1.zip</value>
+    <entry key="media_files_url">
+         <value>https://dl.google.com/dl/android/cts/android-cts-media-1.2.zip</value>
     </entry>
 </dynamicConfig>

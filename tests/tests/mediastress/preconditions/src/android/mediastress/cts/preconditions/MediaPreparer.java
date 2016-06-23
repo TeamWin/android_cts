@@ -66,7 +66,7 @@ public class MediaPreparer extends PreconditionPreparer {
     protected static final String MEDIA_FOLDER_NAME = "android-cts-media";
 
     /* The key used to retrieve the media files URL from the dynamic configuration */
-    private static final String MEDIA_FILES_URL_KEY = "MediaFilesUrl";
+    private static final String MEDIA_FILES_URL_KEY = "media_files_url";
 
     /* For a target preparer, the "module" of the configuration is the test suite */
     private static final String DYNAMIC_CONFIG_MODULE = "cts";
@@ -241,7 +241,7 @@ public class MediaPreparer extends PreconditionPreparer {
                     new BufferedOutputStream(new FileOutputStream(mediaFolderZip));
             byte[] buffer = new byte[1024];
             int count;
-            logInfo("Downloading media files to host");
+            logInfo("Downloading media files to host from %s", url.toString());
             while ((count = in.read(buffer)) >= 0) {
                 out.write(buffer, 0, count);
             }
@@ -255,7 +255,8 @@ public class MediaPreparer extends PreconditionPreparer {
         } catch (IOException e) {
             FileUtil.recursiveDelete(mediaFolder);
             FileUtil.recursiveDelete(mediaFolderZip);
-            throw new TargetSetupError("Failed to open media files on host");
+            throw new TargetSetupError("Failed to download and open media files on host, the"
+                    + " device requires these media files for CTS media tests");
         }
     }
 
