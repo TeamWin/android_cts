@@ -18,17 +18,24 @@ package android.text.util.cts;
 
 
 import android.test.AndroidTestCase;
+import android.test.suitebuilder.annotation.SmallTest;
 import android.text.util.Rfc822Token;
 import android.text.util.Rfc822Tokenizer;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Test {@link Rfc822Tokenizer}.
  */
 public class Rfc822TokenizerTest extends AndroidTestCase {
+
+    @SmallTest
     public void testConstructor() {
         new Rfc822Tokenizer();
     }
 
+    @SmallTest
     public void testFindTokenStart() {
         Rfc822Tokenizer rfc822Tokenizer = new Rfc822Tokenizer();
 
@@ -61,6 +68,7 @@ public class Rfc822TokenizerTest extends AndroidTestCase {
         }
     }
 
+    @SmallTest
     public void testFindTokenEnd() {
         Rfc822Tokenizer rfc822Tokenizer = new Rfc822Tokenizer();
 
@@ -96,6 +104,7 @@ public class Rfc822TokenizerTest extends AndroidTestCase {
         }
     }
 
+    @SmallTest
     public void testTerminateToken() {
         Rfc822Tokenizer rfc822Tokenizer = new Rfc822Tokenizer();
 
@@ -110,27 +119,54 @@ public class Rfc822TokenizerTest extends AndroidTestCase {
         assertEquals(text + comma + space, rfc822Tokenizer.terminateToken(null));
     }
 
+    @SmallTest
     public void testTokenize() {
         Rfc822Token[] tokens = Rfc822Tokenizer.tokenize("");
         assertEquals(0, tokens.length);
 
-        String text = "\"Berg\" (home) <berg\\@google.com>, tom\\@google.com (work)";
+        String text = "\"Berg\" (home) <berg\\@example.com>, tom\\@example.com (work)";
         tokens = Rfc822Tokenizer.tokenize(text);
         assertEquals(2, tokens.length);
-        localAssertEquals(tokens[0], "Berg", "berg\\@google.com", "home");
-        localAssertEquals(tokens[1], null, "tom\\@google.com", "work");
+        localAssertEquals(tokens[0], "Berg", "berg\\@example.com", "home");
+        localAssertEquals(tokens[1], null, "tom\\@example.com", "work");
 
-        text = "Foo Bar (something) <foo\\@google.com>, blah\\@google.com (something)";
+        text = "Foo Bar (something) <foo\\@example.com>, blah\\@example.com (something)";
         tokens = Rfc822Tokenizer.tokenize(text);
         assertEquals(2, tokens.length);
-        localAssertEquals(tokens[0], "Foo Bar", "foo\\@google.com", "something");
-        localAssertEquals(tokens[1], null, "blah\\@google.com", "something");
+        localAssertEquals(tokens[0], "Foo Bar", "foo\\@example.com", "something");
+        localAssertEquals(tokens[1], null, "blah\\@example.com", "something");
 
         try {
             Rfc822Tokenizer.tokenize(null);
             fail("Should throw NullPointerException!");
         } catch (NullPointerException e) {
             // issue 1695243, not clear what is supposed result if text is null
+        }
+    }
+
+    @SmallTest
+    public void testTokenize_withListParam() {
+        final List<Rfc822Token> list = new ArrayList<>();
+        Rfc822Tokenizer.tokenize("", list);
+        assertEquals(0, list.size());
+
+        String text = "\"Berg\" (home) <berg\\@example.com>, tom\\@example.com (work)";
+        Rfc822Tokenizer.tokenize(text, list);
+        assertEquals(2, list.size());
+        localAssertEquals(list.get(0), "Berg", "berg\\@example.com", "home");
+        localAssertEquals(list.get(1), null, "tom\\@example.com", "work");
+
+        text = "Foo Bar (something) <foo\\@example.com>, blah\\@example.com (something)";
+        list.clear();
+        Rfc822Tokenizer.tokenize(text, list);
+        assertEquals(2, list.size());
+        localAssertEquals(list.get(0), "Foo Bar", "foo\\@example.com", "something");
+        localAssertEquals(list.get(1), null, "blah\\@example.com", "something");
+
+        try {
+            Rfc822Tokenizer.tokenize(null);
+            fail("Should throw NullPointerException");
+        } catch (NullPointerException e) {
         }
     }
 

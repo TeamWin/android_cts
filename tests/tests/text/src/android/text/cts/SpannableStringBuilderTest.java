@@ -378,6 +378,28 @@ public class SpannableStringBuilderTest extends AndroidTestCase {
         }
     }
 
+    @SmallTest
+    public void testAppend_textWithSpan() {
+        final QuoteSpan span = new QuoteSpan();
+        final SpannableStringBuilder builder = new SpannableStringBuilder("hello ");
+        final int spanStart = builder.length();
+        builder.append("planet", span, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        final int spanEnd = builder.length();
+        builder.append(" earth");
+
+        assertEquals("SpannableStringBuilder.append should append text to existing whole text",
+                "hello planet earth", builder.toString());
+
+        final Object[] spans = builder.getSpans(0, builder.length(), Object.class);
+        assertNotNull("Appended text included a Quote span", spans);
+        assertEquals("Appended text included a Quote span", 1, spans.length);
+        assertSame("Should be the same span instance", span, spans[0]);
+        assertEquals("Appended span should start at appended text start",
+                spanStart, builder.getSpanStart(spans[0]));
+        assertEquals("Appended span should end at appended text end",
+                spanEnd, builder.getSpanEnd(spans[0]));
+    }
+
     public void testClearSpans() {
         SpannableStringBuilder builder = new SpannableStringBuilder("hello, world");
 
