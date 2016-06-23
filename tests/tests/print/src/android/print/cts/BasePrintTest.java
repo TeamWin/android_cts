@@ -415,12 +415,11 @@ public abstract class BasePrintTest extends InstrumentationTestCase {
     }
 
     protected void answerPrintServicesWarning(boolean confirm) throws UiObjectNotFoundException {
-        UiDevice uiDevice = UiDevice.getInstance(getInstrumentation());
         UiObject button;
         if (confirm) {
-            button = uiDevice.findObject(new UiSelector().resourceId("android:id/button1"));
+            button = mUiDevice.findObject(new UiSelector().resourceId("android:id/button1"));
         } else {
-            button = uiDevice.findObject(new UiSelector().resourceId("android:id/button2"));
+            button = mUiDevice.findObject(new UiSelector().resourceId("android:id/button2"));
         }
         button.click();
     }
