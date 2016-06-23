@@ -25,6 +25,8 @@ public class ActivityManagerDockedStackTests extends ActivityManagerTestBase {
     private static final String DOCKED_ACTIVITY_NAME = "DockedActivity";
     private static final String LAUNCH_TO_SIDE_ACTIVITY_NAME = "LaunchToSideActivity";
     private static final String NO_RELAUNCH_ACTIVITY_NAME = "NoRelaunchActivity";
+    private static final String SINGLE_INSTANCE_ACTIVITY_NAME = "SingleInstanceActivity";
+    private static final String SINGLE_TASK_ACTIVITY_NAME = "SingleTaskActivity";
 
     private static final int TASK_SIZE = 600;
     private static final int STACK_SIZE = 300;
@@ -57,7 +59,6 @@ public class ActivityManagerDockedStackTests extends ActivityManagerTestBase {
 
     public void testLaunchToSide() throws Exception {
         launchActivityInDockStack(LAUNCH_TO_SIDE_ACTIVITY_NAME);
-        printStacksAndTasks();
         launchActivityToSide(LAUNCH_TO_SIDE_ACTIVITY_NAME);
         mAmWmState.computeState(mDevice, new String[] {LAUNCH_TO_SIDE_ACTIVITY_NAME});
 
@@ -68,7 +69,6 @@ public class ActivityManagerDockedStackTests extends ActivityManagerTestBase {
 
     public void testLaunchToSideAndBringToFront() throws Exception {
         launchActivityInDockStack(LAUNCH_TO_SIDE_ACTIVITY_NAME);
-        printStacksAndTasks();
         final String[] waitForFirstVisible = new String[] {TEST_ACTIVITY_NAME};
         final String[] waitForSecondVisible = new String[] {NO_RELAUNCH_ACTIVITY_NAME};
 
@@ -103,7 +103,6 @@ public class ActivityManagerDockedStackTests extends ActivityManagerTestBase {
 
     public void testLaunchToSideMultiple() throws Exception {
         launchActivityInDockStack(LAUNCH_TO_SIDE_ACTIVITY_NAME);
-        printStacksAndTasks();
         final String[] waitForActivitiesVisible = new String[] {TEST_ACTIVITY_NAME};
 
         // Launch activity to side.
@@ -128,50 +127,71 @@ public class ActivityManagerDockedStackTests extends ActivityManagerTestBase {
                         .getTaskByActivityName(TEST_ACTIVITY_NAME, FULLSCREEN_WORKSPACE_STACK_ID));
     }
 
+    public void testLaunchToSideSingleInstance() throws Exception {
+        launchTargetToSide(SINGLE_INSTANCE_ACTIVITY_NAME, false);
+    }
+
+    public void testLaunchToSideSingleTask() throws Exception {
+        launchTargetToSide(SINGLE_TASK_ACTIVITY_NAME, false);
+    }
+
     public void testLaunchToSideMultipleWithDifferentIntent() throws Exception {
+        launchTargetToSide(TEST_ACTIVITY_NAME, true);
+    }
+
+    private void launchTargetToSide(String targetActivityName,
+                                    boolean taskCountMustIncrement) throws Exception {
         launchActivityInDockStack(LAUNCH_TO_SIDE_ACTIVITY_NAME);
-        printStacksAndTasks();
-        final String[] waitForActivitiesVisible = new String[] {TEST_ACTIVITY_NAME};
+        final String[] waitForActivitiesVisible = new String[] {targetActivityName};
 
         // Launch activity to side with data.
-        launchActivityToSide(LAUNCH_TO_SIDE_ACTIVITY_NAME, true, false);
+        launchActivityToSide(LAUNCH_TO_SIDE_ACTIVITY_NAME, true, false, targetActivityName);
         mAmWmState.computeState(mDevice, waitForActivitiesVisible);
         int taskNumberInitial = mAmWmState.getAmState().getStackById(FULLSCREEN_WORKSPACE_STACK_ID)
                 .getTasks().size();
         mAmWmState.assertNotNull("Launched to side activity must be in fullscreen stack.",
                 mAmWmState.getAmState()
-                        .getTaskByActivityName(TEST_ACTIVITY_NAME, FULLSCREEN_WORKSPACE_STACK_ID));
+                        .getTaskByActivityName(targetActivityName, FULLSCREEN_WORKSPACE_STACK_ID));
 
         // Try to launch to side same activity again with different data.
-        launchActivityToSide(LAUNCH_TO_SIDE_ACTIVITY_NAME, true, false);
+        launchActivityToSide(LAUNCH_TO_SIDE_ACTIVITY_NAME, true, false, targetActivityName);
         mAmWmState.computeState(mDevice, waitForActivitiesVisible);
         int taskNumberSecondLaunch = mAmWmState.getAmState()
                 .getStackById(FULLSCREEN_WORKSPACE_STACK_ID).getTasks().size();
-        mAmWmState.assertEquals("Task number must be incremented.", taskNumberInitial + 1,
-                taskNumberSecondLaunch);
+        if (taskCountMustIncrement) {
+            mAmWmState.assertEquals("Task number must be incremented.", taskNumberInitial + 1,
+                    taskNumberSecondLaunch);
+        } else {
+            mAmWmState.assertEquals("Task number must not change.", taskNumberInitial,
+                    taskNumberSecondLaunch);
+        }
         mAmWmState.assertFocusedActivity("Launched to side activity must be in front.",
-                TEST_ACTIVITY_NAME);
+                targetActivityName);
         mAmWmState.assertNotNull("Launched to side activity must be launched in fullscreen stack.",
                 mAmWmState.getAmState()
-                        .getTaskByActivityName(TEST_ACTIVITY_NAME, FULLSCREEN_WORKSPACE_STACK_ID));
+                        .getTaskByActivityName(targetActivityName, FULLSCREEN_WORKSPACE_STACK_ID));
 
         // Try to launch to side same activity again with no data.
-        launchActivityToSide(LAUNCH_TO_SIDE_ACTIVITY_NAME);
+        launchActivityToSide(LAUNCH_TO_SIDE_ACTIVITY_NAME, false, false, targetActivityName);
         mAmWmState.computeState(mDevice, waitForActivitiesVisible);
         int taskNumberFinal = mAmWmState.getAmState().getStackById(FULLSCREEN_WORKSPACE_STACK_ID)
                 .getTasks().size();
-        mAmWmState.assertEquals("Task number must be incremented.", taskNumberSecondLaunch + 1,
-                taskNumberFinal);
+        if (taskCountMustIncrement) {
+            mAmWmState.assertEquals("Task number must be incremented.", taskNumberSecondLaunch + 1,
+                    taskNumberFinal);
+        } else {
+            mAmWmState.assertEquals("Task number must not change.", taskNumberSecondLaunch,
+                    taskNumberFinal);
+        }
         mAmWmState.assertFocusedActivity("Launched to side activity must be in front.",
-                TEST_ACTIVITY_NAME);
+                targetActivityName);
         mAmWmState.assertNotNull("Launched to side activity must be launched in fullscreen stack.",
                 mAmWmState.getAmState()
-                        .getTaskByActivityName(TEST_ACTIVITY_NAME, FULLSCREEN_WORKSPACE_STACK_ID));
+                        .getTaskByActivityName(targetActivityName, FULLSCREEN_WORKSPACE_STACK_ID));
     }
 
     public void testLaunchToSideMultipleWithFlag() throws Exception {
         launchActivityInDockStack(LAUNCH_TO_SIDE_ACTIVITY_NAME);
-        printStacksAndTasks();
         final String[] waitForActivitiesVisible = new String[] {TEST_ACTIVITY_NAME};
 
         // Launch activity to side.
@@ -331,6 +351,12 @@ public class ActivityManagerDockedStackTests extends ActivityManagerTestBase {
 
     private void launchActivityToSide(String activityName, boolean randomData,
                                       boolean multipleTaskFlag) throws Exception {
+        launchActivityToSide(activityName, randomData, multipleTaskFlag, null);
+    }
+
+    private void launchActivityToSide(String activityName, boolean randomData,
+                                      boolean multipleTaskFlag, String targetActivityName)
+            throws Exception {
         StringBuilder commandBuilder = new StringBuilder(getAmStartCmd(activityName));
         commandBuilder.append(" -f 0x20000000 --ez launch_to_the_side true");
         if (randomData) {
@@ -338,6 +364,9 @@ public class ActivityManagerDockedStackTests extends ActivityManagerTestBase {
         }
         if (multipleTaskFlag) {
             commandBuilder.append(" --ez multiple_task true");
+        }
+        if (targetActivityName != null) {
+            commandBuilder.append(" --es target_activity ").append(targetActivityName);
         }
         executeShellCommand(commandBuilder.toString());
     }
