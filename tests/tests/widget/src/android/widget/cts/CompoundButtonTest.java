@@ -16,21 +16,14 @@
 
 package android.widget.cts;
 
-import android.content.res.ColorStateList;
-import android.graphics.Color;
-import android.graphics.ColorFilter;
-import android.graphics.PorterDuff;
-import android.view.LayoutInflater;
-import android.widget.ToggleButton;
-import android.widget.cts.R;
-
-
-import org.xmlpull.v1.XmlPullParser;
-
 import android.content.Context;
+import android.content.res.ColorStateList;
 import android.content.res.Resources;
 import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.PorterDuff;
 import android.graphics.Rect;
+import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.Parcelable;
 import android.test.AndroidTestCase;
@@ -38,10 +31,17 @@ import android.util.AttributeSet;
 import android.util.StateSet;
 import android.util.Xml;
 import android.view.Gravity;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.CompoundButton;
-import android.widget.CompoundButton.OnCheckedChangeListener;
+import android.widget.ToggleButton;
+import android.widget.cts.util.TestUtils;
+
+import org.xmlpull.v1.XmlPullParser;
+
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.*;
 
 /**
  * Test {@link CompoundButton}.
@@ -87,44 +87,42 @@ public class CompoundButtonTest extends AndroidTestCase {
 
     public void testAccessChecked() {
         CompoundButton compoundButton = new MockCompoundButton(mContext);
-        MockOnCheckedChangeListener listener = new MockOnCheckedChangeListener();
-        compoundButton.setOnCheckedChangeListener(listener);
+        CompoundButton.OnCheckedChangeListener mockCheckedChangeListener =
+                mock(CompoundButton.OnCheckedChangeListener.class);
+        compoundButton.setOnCheckedChangeListener(mockCheckedChangeListener);
         assertFalse(compoundButton.isChecked());
-        assertFalse(listener.hasCalledCheckedChange());
+        verifyZeroInteractions(mockCheckedChangeListener);
 
         compoundButton.setChecked(true);
         assertTrue(compoundButton.isChecked());
-        assertTrue(listener.hasCalledCheckedChange());
-        assertSame(compoundButton, listener.getInputCompoundButton());
-        assertTrue(listener.getInputChecked());
+        verify(mockCheckedChangeListener, times(1)).onCheckedChanged(compoundButton, true);
 
-        listener.reset();
+        reset(mockCheckedChangeListener);
         compoundButton.setChecked(true);
         assertTrue(compoundButton.isChecked());
-        assertFalse(listener.hasCalledCheckedChange());
+        verifyZeroInteractions(mockCheckedChangeListener);
 
         compoundButton.setChecked(false);
         assertFalse(compoundButton.isChecked());
-        assertTrue(listener.hasCalledCheckedChange());
-        assertSame(compoundButton, listener.getInputCompoundButton());
-        assertFalse(listener.getInputChecked());
+        verify(mockCheckedChangeListener, times(1)).onCheckedChanged(compoundButton, false);
     }
 
     public void testSetOnCheckedChangeListener() {
         CompoundButton compoundButton = new MockCompoundButton(mContext);
-        MockOnCheckedChangeListener listener = new MockOnCheckedChangeListener();
-        compoundButton.setOnCheckedChangeListener(listener);
+        CompoundButton.OnCheckedChangeListener mockCheckedChangeListener =
+                mock(CompoundButton.OnCheckedChangeListener.class);
+        compoundButton.setOnCheckedChangeListener(mockCheckedChangeListener);
         assertFalse(compoundButton.isChecked());
-        assertFalse(listener.hasCalledCheckedChange());
+        verifyZeroInteractions(mockCheckedChangeListener);
 
         compoundButton.setChecked(true);
-        assertTrue(listener.hasCalledCheckedChange());
+        verify(mockCheckedChangeListener, times(1)).onCheckedChanged(compoundButton, true);
 
         // set null
         compoundButton.setOnCheckedChangeListener(null);
-        listener.reset();
+        reset(mockCheckedChangeListener);
         compoundButton.setChecked(false);
-        assertFalse(listener.hasCalledCheckedChange());
+        verifyZeroInteractions(mockCheckedChangeListener);
     }
 
     public void testToggle() {
@@ -340,53 +338,22 @@ public class CompoundButtonTest extends AndroidTestCase {
         assertEquals("Button tint mode inflated correctly",
                 PorterDuff.Mode.SRC_OVER, inflatedView.getButtonTintMode());
 
-        MockDrawable button = new MockDrawable();
+        Drawable mockDrawable = spy(new ColorDrawable(Color.GREEN));
         CompoundButton view = new ToggleButton(mContext);
 
-        view.setButtonDrawable(button);
-        assertFalse("No button tint applied by default", button.hasCalledSetTint());
+        view.setButtonDrawable(mockDrawable);
+        // No button tint applied by default
+        verify(mockDrawable, never()).setTintList(any(ColorStateList.class));
 
         view.setButtonTintList(ColorStateList.valueOf(Color.WHITE));
-        assertTrue("Button tint applied when setButtonTintList() called after setButton()",
-                button.hasCalledSetTint());
+        // Button tint applied when setButtonTintList() called after setButton()
+        verify(mockDrawable, times(1)).setTintList(TestUtils.colorStateListOf(Color.WHITE));
 
-        button.reset();
+        reset(mockDrawable);
         view.setButtonDrawable(null);
-        view.setButtonDrawable(button);
-        assertTrue("Button tint applied when setButtonTintList() called before setButton()",
-                button.hasCalledSetTint());
-    }
-
-    private static class MockDrawable extends Drawable {
-        private boolean mCalledSetTint = false;
-
-        @Override
-        public void draw(Canvas canvas) {}
-
-        @Override
-        public void setAlpha(int alpha) {}
-
-        @Override
-        public void setColorFilter(ColorFilter cf) {}
-
-        @Override
-        public void setTintList(ColorStateList tint) {
-            super.setTintList(tint);
-            mCalledSetTint = true;
-        }
-
-        @Override
-        public int getOpacity() {
-            return 0;
-        }
-
-        public boolean hasCalledSetTint() {
-            return mCalledSetTint;
-        }
-
-        public void reset() {
-            mCalledSetTint = false;
-        }
+        view.setButtonDrawable(mockDrawable);
+        // Button tint applied when setButtonTintList() called before setButton()
+        verify(mockDrawable, times(1)).setTintList(TestUtils.colorStateListOf(Color.WHITE));
     }
 
     private final class MockCompoundButton extends CompoundButton {
@@ -420,36 +387,6 @@ public class CompoundButtonTest extends AndroidTestCase {
         @Override
         protected boolean verifyDrawable(Drawable who) {
             return super.verifyDrawable(who);
-        }
-    }
-
-    private final class MockOnCheckedChangeListener implements OnCheckedChangeListener {
-        private boolean mHasCalledChecked;
-        private CompoundButton mCompoundButton;
-        private boolean mIsChecked;
-
-        public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-            mHasCalledChecked = true;
-            mCompoundButton = buttonView;
-            mIsChecked = isChecked;
-        }
-
-        public boolean getInputChecked() {
-            return mIsChecked;
-        }
-
-        public CompoundButton getInputCompoundButton() {
-            return mCompoundButton;
-        }
-
-        public boolean hasCalledCheckedChange() {
-            return mHasCalledChecked;
-        }
-
-        public void reset() {
-            mHasCalledChecked = false;
-            mCompoundButton = null;
-            mIsChecked = false;
         }
     }
 }
