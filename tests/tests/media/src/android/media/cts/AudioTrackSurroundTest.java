@@ -60,6 +60,8 @@ public class AudioTrackSurroundTest extends CtsAndroidTestCase {
 
     private final static int RES_AC3_VOICE_48000 = R.raw.voice12_48k_128kbps_15s_ac3;
 
+    private static int mLastPlayedEncoding = AudioFormat.ENCODING_INVALID;
+
     // Devices that support various encodings.
     private static boolean mDeviceScanComplete = false;
     private static AudioDeviceInfo mInfoPCM16 = null;
@@ -334,6 +336,20 @@ public class AudioTrackSurroundTest extends CtsAndroidTestCase {
         public void playAndMeasureRate() throws Exception {
             final String TEST_NAME = "playAndMeasureRate";
             final long TEST_DURATION_MILLIS = 5000; // just long enough to measure the rate
+
+            if (mLastPlayedEncoding == AudioFormat.ENCODING_INVALID ||
+                    !AudioFormat.isEncodingLinearPcm(mEncoding) ||
+                    !AudioFormat.isEncodingLinearPcm(mLastPlayedEncoding)) {
+                Log.d(TAG, "switching from format: " + mLastPlayedEncoding
+                        + " to: " + mEncoding
+                        + " requires sleep");
+                // Switching between compressed formats may require
+                // some time for the HAL to adjust and give proper timing.
+                // One second should be ok, but we use 2 just in case.
+                Thread.sleep(2000 /* millis */);
+            }
+            mLastPlayedEncoding = mEncoding;
+
             log(TEST_NAME, String.format("test using rate = %d, encoding = 0x%08x",
                     mSampleRate, mEncoding));
             // Create a track and prime it.
