@@ -100,8 +100,6 @@ public class StaticLayoutTest extends AndroidTestCase {
                 maxLines);
     }
 
-
-
     /**
      * Constructor test
      */
@@ -523,37 +521,53 @@ public class StaticLayoutTest extends AndroidTestCase {
                     TextUtils.TruncateAt.MARQUEE, 1);
             assertTrue(layout.getEllipsisCount(0) == 0);
         }
+        {
+            final String text = "\u3042" // HIRAGANA LETTER A
+                    + "abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz";
+            final float textWidth = mDefaultPaint.measureText(text);
+            final int halfWidth = (int)(textWidth / 2.0f);
+            {
+                StaticLayout layout = new StaticLayout(text, 0, text.length(), mDefaultPaint,
+                        halfWidth, DEFAULT_ALIGN, TextDirectionHeuristics.FIRSTSTRONG_LTR,
+                        SPACE_MULTI, SPACE_ADD, false, TextUtils.TruncateAt.END, halfWidth, 1);
+                assertTrue(layout.getEllipsisCount(0) > 0);
+                assertTrue(layout.getEllipsisStart(0) > 0);
+            }
+            {
+                StaticLayout layout = new StaticLayout(text, 0, text.length(), mDefaultPaint,
+                        halfWidth, DEFAULT_ALIGN, TextDirectionHeuristics.FIRSTSTRONG_LTR,
+                        SPACE_MULTI, SPACE_ADD, false, TextUtils.TruncateAt.START, halfWidth, 1);
+                assertTrue(layout.getEllipsisCount(0) > 0);
+                assertEquals(0, mDefaultLayout.getEllipsisStart(0));
+            }
+            {
+                StaticLayout layout = new StaticLayout(text, 0, text.length(), mDefaultPaint,
+                        halfWidth, DEFAULT_ALIGN, TextDirectionHeuristics.FIRSTSTRONG_LTR,
+                        SPACE_MULTI, SPACE_ADD, false, TextUtils.TruncateAt.MIDDLE, halfWidth, 1);
+                assertTrue(layout.getEllipsisCount(0) > 0);
+                assertTrue(layout.getEllipsisStart(0) > 0);
+            }
+            {
+                StaticLayout layout = new StaticLayout(text, 0, text.length(), mDefaultPaint,
+                        halfWidth, DEFAULT_ALIGN, TextDirectionHeuristics.FIRSTSTRONG_LTR,
+                        SPACE_MULTI, SPACE_ADD, false, TextUtils.TruncateAt.MARQUEE, halfWidth, 1);
+                assertEquals(0, layout.getEllipsisCount(0));
+            }
+        }
 
-        final String text = "\u3042" // HIRAGANA LETTER A
-                + "abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz";
-        final float textWidth = mDefaultPaint.measureText(text);
-        final int halfWidth = (int)(textWidth / 2.0f);
         {
-            StaticLayout layout = new StaticLayout(text, 0, text.length(), mDefaultPaint,
-                    halfWidth, DEFAULT_ALIGN, TextDirectionHeuristics.FIRSTSTRONG_LTR,
-                    SPACE_MULTI, SPACE_ADD, false, TextUtils.TruncateAt.END, halfWidth, 1);
-            assertTrue(layout.getEllipsisCount(0) > 0);
-            assertTrue(layout.getEllipsisStart(0) > 0);
-        }
-        {
-            StaticLayout layout = new StaticLayout(text, 0, text.length(), mDefaultPaint,
-                    halfWidth, DEFAULT_ALIGN, TextDirectionHeuristics.FIRSTSTRONG_LTR,
-                    SPACE_MULTI, SPACE_ADD, false, TextUtils.TruncateAt.START, halfWidth, 1);
-            assertTrue(layout.getEllipsisCount(0) > 0);
-            assertEquals(0, mDefaultLayout.getEllipsisStart(0));
-        }
-        {
-            StaticLayout layout = new StaticLayout(text, 0, text.length(), mDefaultPaint,
-                    halfWidth, DEFAULT_ALIGN, TextDirectionHeuristics.FIRSTSTRONG_LTR,
-                    SPACE_MULTI, SPACE_ADD, false, TextUtils.TruncateAt.MIDDLE, halfWidth, 1);
-            assertTrue(layout.getEllipsisCount(0) > 0);
-            assertTrue(layout.getEllipsisStart(0) > 0);
-        }
-        {
-            StaticLayout layout = new StaticLayout(text, 0, text.length(), mDefaultPaint,
-                    halfWidth, DEFAULT_ALIGN, TextDirectionHeuristics.FIRSTSTRONG_LTR,
-                    SPACE_MULTI, SPACE_ADD, false, TextUtils.TruncateAt.MARQUEE, halfWidth, 1);
-            assertEquals(0, layout.getEllipsisCount(0));
+            // The white spaces in this text will be trailing if maxLines is larger than 1, but
+            // width of the trailing white spaces must not be ignored if ellipsis is applied.
+            final String text = "abc                                             def";
+            final float textWidth = mDefaultPaint.measureText(text);
+            final int halfWidth = (int)(textWidth / 2.0f);
+            {
+                StaticLayout layout = new StaticLayout(text, 0, text.length(), mDefaultPaint,
+                        halfWidth, DEFAULT_ALIGN, TextDirectionHeuristics.FIRSTSTRONG_LTR,
+                        SPACE_MULTI, SPACE_ADD, false, TextUtils.TruncateAt.END, halfWidth, 1);
+                assertTrue(layout.getEllipsisCount(0) > 0);
+                assertTrue(layout.getEllipsisStart(0) > 0);
+            }
         }
     }
 
