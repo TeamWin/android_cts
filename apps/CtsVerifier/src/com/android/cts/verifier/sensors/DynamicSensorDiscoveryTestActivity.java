@@ -63,6 +63,16 @@ public class DynamicSensorDiscoveryTestActivity extends SensorCtsVerifierTestAct
         }
         mFeatureSupported = mSensorManager.isDynamicSensorDiscoverySupported();
 
+        try {
+            featureSupportedOrSkip();
+        } catch (SensorTestStateNotSupportedException e) {
+            // This device doesn't support dynamic sensors.  So we won't
+            // be running any of the tests, and really don't want to
+            // confuse the user by telling them they need to hoook one up.
+            // TODO(b/29606675): This is pretty hack, and should have
+            //     a better overall approach.
+            return;
+        }
         showUserMessage("This test will requires the user to connect an external sensor (" +
                 "physical or simulated) and then disconnect it.");
         waitForUserToContinue();
