@@ -50,14 +50,14 @@ public class TaskswitchingDeviceTest extends CtsAndroidTestCase {
     @Override
     protected void setUp() throws Exception {
         super.setUp();
+        getContext().registerReceiver(mReceiverA, new IntentFilter(PKG_A));
+        getContext().registerReceiver(mReceiverB, new IntentFilter(PKG_B));
+
         startActivity(PKG_A, ACTIVITY_A);
+        assertTrue(mReceiverA.waitForBroadcast(TASK_SWITCHING_WAIT_TIME));
+
         startActivity(PKG_B, ACTIVITY_B);
-        IntentFilter filterA = new IntentFilter();
-        filterA.addAction(PKG_A);
-        IntentFilter filterB = new IntentFilter();
-        filterB.addAction(PKG_B);
-        getContext().registerReceiver(mReceiverA, filterA);
-        getContext().registerReceiver(mReceiverB, filterB);
+        assertTrue(mReceiverB.waitForBroadcast(TASK_SWITCHING_WAIT_TIME));
     }
 
     @Override
