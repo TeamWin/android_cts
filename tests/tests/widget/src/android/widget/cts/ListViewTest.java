@@ -29,6 +29,7 @@ import android.cts.util.PollingCheck;
 import android.graphics.Canvas;
 import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
+import android.os.Parcelable;
 import android.test.ActivityInstrumentationTestCase2;
 import android.test.UiThreadTest;
 import android.test.suitebuilder.annotation.MediumTest;
@@ -418,8 +419,24 @@ public class ListViewTest extends ActivityInstrumentationTestCase2<ListViewCtsAc
         verifyNoMoreInteractions(onClickListener);
     }
 
-    public void testSaveAndRestoreInstanceState() {
-        // implementation details, do NOT test
+    public void testSaveAndRestoreInstanceState_positionIsRestored() {
+        ListView listView = new ListView(mActivity);
+        listView.setAdapter(mAdapter_countries);
+        assertEquals(0, listView.getSelectedItemPosition());
+
+        int positionToTest = mAdapter_countries.getCount() - 1;
+        listView.setSelection(positionToTest);
+        assertEquals(positionToTest, listView.getSelectedItemPosition());
+        Parcelable savedState = listView.onSaveInstanceState();
+
+        listView.setSelection(positionToTest - 1);
+        assertEquals(positionToTest - 1, listView.getSelectedItemPosition());
+
+        listView.onRestoreInstanceState(savedState);
+        int measureSpec = View.MeasureSpec.makeMeasureSpec(100, View.MeasureSpec.EXACTLY);
+        listView.measure(measureSpec,measureSpec);
+        listView.layout(0, 0, 100, 100);
+        assertEquals(positionToTest, listView.getSelectedItemPosition());
     }
 
     public void testDispatchKeyEvent() {
