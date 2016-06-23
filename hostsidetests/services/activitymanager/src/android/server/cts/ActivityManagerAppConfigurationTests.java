@@ -27,16 +27,41 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
      * and heights. The values reported in fullscreen should be larger than those reported in
      * docked state.
      */
-    public void testConfigurationUpdatesWhenResized() throws Exception {
+    public void testConfigurationUpdatesWhenResizedFromFullscreen() throws Exception {
         launchActivityInStack(TEST_ACTIVITY_NAME, FULLSCREEN_WORKSPACE_STACK_ID);
         final ReportedSizes fullscreenSizes = getActivityDisplaySize(TEST_ACTIVITY_NAME,
                 FULLSCREEN_WORKSPACE_STACK_ID);
-        final boolean portrait = fullscreenSizes.displayWidth < fullscreenSizes.displayHeight;
 
-        moveActivityToDockStack(TEST_ACTIVITY_NAME);
+        moveActivityToStack(TEST_ACTIVITY_NAME, DOCKED_STACK_ID);
         final ReportedSizes dockedSizes = getActivityDisplaySize(TEST_ACTIVITY_NAME,
                 DOCKED_STACK_ID);
 
+        assertSizesAreSane(fullscreenSizes, dockedSizes);
+    }
+
+    /**
+     * Same as {@link #testConfigurationUpdatesWhenResizedFromFullscreen()} but resizing
+     * from docked state to fullscreen (reverse).
+     */
+    public void testConfigurationUpdatesWhenResizedFromDockedStack() throws Exception {
+        launchActivityInStack(TEST_ACTIVITY_NAME, DOCKED_STACK_ID);
+        final ReportedSizes dockedSizes = getActivityDisplaySize(TEST_ACTIVITY_NAME,
+                DOCKED_STACK_ID);
+
+        moveActivityToStack(TEST_ACTIVITY_NAME, FULLSCREEN_WORKSPACE_STACK_ID);
+        final ReportedSizes fullscreenSizes = getActivityDisplaySize(TEST_ACTIVITY_NAME,
+                FULLSCREEN_WORKSPACE_STACK_ID);
+
+        assertSizesAreSane(fullscreenSizes, dockedSizes);
+    }
+
+    /**
+     * Throws an AssertionError if fullscreenSizes has widths/heights (depending on aspect ratio)
+     * that are smaller than the dockedSizes.
+     */
+    private static void assertSizesAreSane(ReportedSizes fullscreenSizes, ReportedSizes dockedSizes)
+            throws Exception {
+        final boolean portrait = fullscreenSizes.displayWidth < fullscreenSizes.displayHeight;
         if (portrait) {
             assertTrue(dockedSizes.displayHeight < fullscreenSizes.displayHeight);
             assertTrue(dockedSizes.heightDp < fullscreenSizes.heightDp);
