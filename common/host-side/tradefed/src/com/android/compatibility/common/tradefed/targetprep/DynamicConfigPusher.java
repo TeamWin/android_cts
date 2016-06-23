@@ -94,14 +94,15 @@ public class DynamicConfigPusher implements ITargetCleaner {
         String originUrl = buildHelper.getDynamicConfigUrl();
 
         if (originUrl != null) {
+            String requestUrl = originUrl;
             try {
-                String requestUrl = originUrl
+                requestUrl = originUrl
                         .replace("{module}", mModuleName).replace("{version}", mVersion);
                 java.net.URL request = new URL(requestUrl);
                 apfeConfigInJson = StreamUtil.getStringFromStream(request.openStream());
             } catch (IOException e) {
                 LogUtil.printLog(Log.LogLevel.WARN, LOG_TAG,
-                        "Cannot download and parse json config from URL");
+                        "Cannot download and parse json config from URL " + requestUrl);
             }
         } else {
             LogUtil.printLog(Log.LogLevel.INFO, LOG_TAG,
@@ -161,7 +162,9 @@ public class DynamicConfigPusher implements ITargetCleaner {
                 }
                 break;
             case HOST:
-                new File(mFilePushed).delete();
+                if (mFilePushed != null) {
+                    FileUtil.deleteFile(new File(mFilePushed));
+                }
         }
     }
 }
