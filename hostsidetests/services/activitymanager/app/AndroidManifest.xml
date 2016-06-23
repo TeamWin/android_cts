@@ -151,6 +151,14 @@
         <activity android:name=".TurnScreenOnActivity"
                   android:exported="true"
         />
+        <activity android:name=".SingleTaskActivity"
+            android:exported="true"
+            android:launchMode="singleTask"
+        />
+        <activity android:name=".SingleInstanceActivity"
+            android:exported="true"
+            android:launchMode="singleInstance"
+        />
     </application>
 </manifest>
 
