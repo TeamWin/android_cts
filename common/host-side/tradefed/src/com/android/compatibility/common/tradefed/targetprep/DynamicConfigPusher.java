@@ -56,14 +56,15 @@ public class DynamicConfigPusher implements ITargetCleaner {
     private boolean mCleanup = true;
 
     @Option(name="config-filename", description = "The module name for module-level " +
-            "configurations, or the suite name for suite-level configurations")
+            "configurations, or the suite name for suite-level configurations", mandatory = true)
     private String mModuleName;
 
-    @Option(name = "target", description = "The test target, \"device\" or \"host\"")
+    @Option(name = "target", description = "The test target, \"device\" or \"host\"",
+            mandatory = true)
     private TestTarget mTarget;
 
     @Option(name = "version", description = "The version of the configuration to retrieve " +
-            "from the server, e.g. \"1\"")
+            "from the server, e.g. \"1.0\". Defaults to suite version string.")
     private static String mVersion;
 
 
@@ -88,6 +89,10 @@ public class DynamicConfigPusher implements ITargetCleaner {
         } catch (FileNotFoundException e) {
             throw new TargetSetupError(
                     "Cannot get local dynamic config file from test directory", e);
+        }
+
+        if (mVersion == null) {
+            mVersion = buildHelper.getSuiteVersion();
         }
 
         String apfeConfigInJson = null;
