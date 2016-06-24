@@ -54,6 +54,10 @@ public class AudioTrackSurroundTest extends CtsAndroidTestCase {
     // So only set true when debugging that problem.
     private static final boolean USE_PREFERRED_DEVICE = false;
 
+    // Should we fail if there is no PCM16 device reported by device enumeration?
+    // This can happen if, for example, an ATV set top box does not have its HDMI cable plugged in.
+    private static final boolean REQUIRE_PCM_DEVICE = false;
+
     private final static long NANOS_PER_MILLISECOND = 1000000L;
     private final static int MILLIS_PER_SECOND = 1000;
     private final static long NANOS_PER_SECOND = NANOS_PER_MILLISECOND * MILLIS_PER_SECOND;
@@ -299,6 +303,13 @@ public class AudioTrackSurroundTest extends CtsAndroidTestCase {
             return writeBlock(Integer.MAX_VALUE);
         }
 
+        // Add a warning to the assert message that might help folks figure out why their
+        // PCM test is failing.
+        private String getPcmWarning() {
+            return (mInfoPCM16 == null && AudioFormat.isEncodingLinearPcm(mEncoding))
+                ? " (No PCM device!)" : "";
+        }
+
         /**
          * Use a device that we know supports the current encoding.
          */
@@ -355,7 +366,8 @@ public class AudioTrackSurroundTest extends CtsAndroidTestCase {
             // Create a track and prime it.
             mTrack = createAudioTrack(mSampleRate, mEncoding, mChannelConfig);
             try {
-                assertEquals(TEST_NAME + ": track created", AudioTrack.STATE_INITIALIZED,
+                assertEquals(TEST_NAME + ": track created" + getPcmWarning(),
+                        AudioTrack.STATE_INITIALIZED,
                         mTrack.getState());
 
                 if (USE_PREFERRED_DEVICE) {
@@ -364,7 +376,8 @@ public class AudioTrackSurroundTest extends CtsAndroidTestCase {
 
                 int bytesWritten = 0;
                 mOffset = primeBuffer(); // prime the buffer
-                assertTrue(TEST_NAME + ": priming offset = " + mOffset, mOffset > 0);
+                assertTrue(TEST_NAME + ": priming offset = " + mOffset + getPcmWarning(),
+                    mOffset > 0);
                 bytesWritten += mOffset;
 
                 // Play for a while.
@@ -383,12 +396,12 @@ public class AudioTrackSurroundTest extends CtsAndroidTestCase {
                 // Did we underrun? Allow 0 or 1 because there is sometimes
                 // an underrun on startup.
                 int underrunCount1 = mTrack.getUnderrunCount();
-                assertTrue(TEST_NAME + ": too many underruns, got underrunCount1",
+                assertTrue(TEST_NAME + ": too many underruns, got underrunCount1" + getPcmWarning(),
                         underrunCount1 < 2);
 
                 // Estimate the sample rate and compare it with expected.
                 double estimatedRate = mTimestampAnalyzer.estimateSampleRate();
-                assertEquals(TEST_NAME + ": measured sample rate",
+                assertEquals(TEST_NAME + ": measured sample rate" + getPcmWarning(),
                         mSampleRate, estimatedRate, mSampleRate * MAX_RATE_TOLERANCE_FRACTION);
             } finally {
                 mTrack.release();
@@ -537,14 +550,20 @@ public class AudioTrackSurroundTest extends CtsAndroidTestCase {
     }
 
     public void testPcmSupport() throws Exception {
-        // There should always be a dummy PCM device available.
-        assertTrue("testPcmSupport: PCM should be supported."
-                + " On ATV device please check HDMI connection.",
-                mInfoPCM16 != null);
+        if (REQUIRE_PCM_DEVICE) {
+            // There should always be a dummy PCM device available.
+            assertTrue("testPcmSupport: PCM should be supported."
+                    + " On ATV device please check HDMI connection.",
+                    mInfoPCM16 != null);
+        }
+    }
+
+    private boolean isPcmTestingEnabled() {
+        return (mInfoPCM16 != null || !REQUIRE_PCM_DEVICE);
     }
 
     public void testPlaySineSweepShorts() throws Exception {
-        if (mInfoPCM16 != null) {
+        if (isPcmTestingEnabled()) {
             SamplePlayerShorts player = new SamplePlayerShorts(
                     44100, AudioFormat.ENCODING_PCM_16BIT, AudioFormat.CHANNEL_OUT_STEREO,
                     R.raw.sinesweepraw);
@@ -553,7 +572,7 @@ public class AudioTrackSurroundTest extends CtsAndroidTestCase {
     }
 
     public void testPlaySineSweepBytes() throws Exception {
-        if (mInfoPCM16 != null) {
+        if (isPcmTestingEnabled()) {
             SamplePlayerBytes player = new SamplePlayerBytes(
                     44100, AudioFormat.ENCODING_PCM_16BIT, AudioFormat.CHANNEL_OUT_STEREO,
                     R.raw.sinesweepraw);
@@ -562,7 +581,7 @@ public class AudioTrackSurroundTest extends CtsAndroidTestCase {
     }
 
     public void testPlaySineSweepBytes48000() throws Exception {
-        if (mInfoPCM16 != null) {
+        if (isPcmTestingEnabled()) {
             SamplePlayerBytes player = new SamplePlayerBytes(
                     48000, AudioFormat.ENCODING_PCM_16BIT, AudioFormat.CHANNEL_OUT_STEREO,
                     R.raw.sinesweepraw);
@@ -571,7 +590,7 @@ public class AudioTrackSurroundTest extends CtsAndroidTestCase {
     }
 
     public void testPlaySineSweepShortsMono() throws Exception {
-        if (mInfoPCM16 != null) {
+        if (isPcmTestingEnabled()) {
             SamplePlayerShorts player = new SamplePlayerShorts(44100, AudioFormat.ENCODING_PCM_16BIT,
                     AudioFormat.CHANNEL_OUT_MONO,
                     R.raw.sinesweepraw);
@@ -581,7 +600,7 @@ public class AudioTrackSurroundTest extends CtsAndroidTestCase {
 
     public void testPlaySineSweepBytesMono()
             throws Exception {
-        if (mInfoPCM16 != null) {
+        if (isPcmTestingEnabled()) {
             SamplePlayerBytes player = new SamplePlayerBytes(44100,
                     AudioFormat.ENCODING_PCM_16BIT, AudioFormat.CHANNEL_OUT_MONO, R.raw.sinesweepraw);
             player.playAndMeasureRate();
