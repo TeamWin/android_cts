@@ -379,5 +379,12 @@
   names: [
     "android.permission2.cts.PermissionPolicyTest#testPlatformPermissionPolicyUnaltered"
   ]
+},
+{
+  description: "Libskia security test not working.",
+  bug: 29635350,
+  names: [
+    "android.security.cts.SkiaJpegDecodingTest#testLibskiaOverFlowJpegProcessing"
+  ]
 }
 ]
