@@ -370,7 +370,8 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
             Pattern.compile("(.+): onConfigurationChanged");
     private static final Pattern sDestroyPattern = Pattern.compile("(.+): onDestroy");
     private static final Pattern sNewConfigPattern = Pattern.compile(
-                    "(.+): config size=\\((\\d+),(\\d+)\\) displaySize=\\((\\d+),(\\d+)\\)");
+            "(.+): config size=\\((\\d+),(\\d+)\\) displaySize=\\((\\d+),(\\d+)\\)" +
+            " metricsSize=\\((\\d+),(\\d+)\\)");
     private static final Pattern sDisplayStatePattern =
             Pattern.compile("Display Power: state=(.+)");
 
@@ -379,6 +380,8 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
         int heightDp;
         int displayWidth;
         int displayHeight;
+        int metricsWidth;
+        int metricsHeight;
     }
 
     protected ReportedSizes getLastReportedSizesForActivity(String activityName)
@@ -393,6 +396,8 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
                 details.heightDp = Integer.parseInt(matcher.group(3));
                 details.displayWidth = Integer.parseInt(matcher.group(4));
                 details.displayHeight = Integer.parseInt(matcher.group(5));
+                details.metricsWidth = Integer.parseInt(matcher.group(6));
+                details.metricsHeight = Integer.parseInt(matcher.group(7));
                 return details;
             }
         }
