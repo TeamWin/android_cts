@@ -99,6 +99,7 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
 
     private int mInitialAccelerometerRotation;
     private int mUserRotation;
+    private float mFontScale;
 
     @Override
     protected void setUp() throws Exception {
@@ -114,6 +115,7 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
         // Store rotation settings.
         mInitialAccelerometerRotation = getAccelerometerRotation();
         mUserRotation = getUserRotation();
+        mFontScale = getFontScale();
     }
 
     @Override
@@ -125,6 +127,7 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
             // Restore rotation settings to the state they were before test.
             setAccelerometerRotation(mInitialAccelerometerRotation);
             setUserRotation(mUserRotation);
+            setFontScale(mFontScale);
             // Remove special stacks.
             executeShellCommand(AM_REMOVE_STACK + PINNED_STACK_ID);
             executeShellCommand(AM_REMOVE_STACK + DOCKED_STACK_ID);
@@ -319,6 +322,22 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
         }
     }
 
+    protected void setFontScale(float fontScale) throws DeviceNotAvailableException {
+        if (fontScale == 0.0f) {
+            runCommandAndPrintOutput(
+                    "settings delete system font_scale");
+        } else {
+            runCommandAndPrintOutput(
+                    "settings put system font_scale " + fontScale);
+        }
+    }
+
+    protected float getFontScale() throws DeviceNotAvailableException {
+        final String fontScale =
+                runCommandAndPrintOutput("settings get system font_scale").trim();
+        return Float.parseFloat(fontScale);
+    }
+
     protected String runCommandAndPrintOutput(String command) throws DeviceNotAvailableException {
         final String output = executeShellCommand(command);
         log(output);
@@ -356,6 +375,23 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
                         + "mConfigurationChangedCount="
                         + lifecycleCounts.mConfigurationChangedCount);
             }
+        }
+    }
+
+    protected void assertRelaunchOrConfigChanged(
+            String activityName, int numRelaunch, int numConfigChange)
+            throws DeviceNotAvailableException {
+        final ActivityLifecycleCounts lifecycleCounts = new ActivityLifecycleCounts(activityName);
+
+        if (lifecycleCounts.mDestroyCount != numRelaunch) {
+            fail(activityName + " has been destroyed " + lifecycleCounts.mDestroyCount
+                    + " time(s), expecting " + numRelaunch);
+        } else if (lifecycleCounts.mCreateCount != numRelaunch) {
+            fail(activityName + " has been (re)created " + lifecycleCounts.mCreateCount
+                    + " time(s), expecting " + numRelaunch);
+        } else if (lifecycleCounts.mConfigurationChangedCount != numConfigChange) {
+            fail(activityName + " has received " + lifecycleCounts.mConfigurationChangedCount
+                    + " onConfigurationChanged() calls, expecting " + numConfigChange);
         }
     }
 
