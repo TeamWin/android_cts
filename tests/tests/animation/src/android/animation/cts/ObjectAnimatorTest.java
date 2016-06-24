@@ -16,11 +16,16 @@
 
 package android.animation.cts;
 
+import android.animation.Animator;
+import android.animation.AnimatorListenerAdapter;
 import android.animation.ArgbEvaluator;
 import android.animation.ObjectAnimator;
 import android.animation.PropertyValuesHolder;
+import android.animation.TypeConverter;
 import android.animation.ValueAnimator;
 import android.graphics.Color;
+import android.graphics.Path;
+import android.graphics.PointF;
 import android.test.ActivityInstrumentationTestCase2;
 import android.util.Property;
 import android.view.View;
@@ -32,6 +37,18 @@ import java.util.concurrent.TimeUnit;
 
 public class ObjectAnimatorTest extends
         ActivityInstrumentationTestCase2<AnimationActivity> {
+    private static final float LINE1_START = -32f;
+    private static final float LINE1_END = -2f;
+    private static final float LINE1_Y = 0f;
+    private static final float LINE2_START = 2f;
+    private static final float LINE2_END = 12f;
+    private static final float QUADRATIC_CTRL_PT1_X = 0f;
+    private static final float QUADRATIC_CTRL_PT1_Y = 0f;
+    private static final float QUADRATIC_CTRL_PT2_X = 50f;
+    private static final float QUADRATIC_CTRL_PT2_Y = 20f;
+    private static final float QUADRATIC_CTRL_PT3_X = 100f;
+    private static final float QUADRATIC_CTRL_PT3_Y = 0f;
+
     private AnimationActivity mActivity;
     private ObjectAnimator mObjectAnimator;
     private long mDuration = 1000;
@@ -286,6 +303,473 @@ public class ObjectAnimatorTest extends
         assertEquals(object, cloneAnimator.getTarget());
         assertEquals(property, cloneAnimator.getPropertyName());
         assertEquals(interpolator, cloneAnimator.getInterpolator());
+    }
+
+    public void testOfFloat_Path() throws Throwable {
+        // Test for ObjectAnimator.ofFloat(Object, String, String, Path)
+        // Create a path that contains two disconnected line segments. Check that the animated
+        // property x and property y always stay on the line segments.
+        Path path = new Path();
+        path.moveTo(LINE1_START, LINE1_Y);
+        path.lineTo(LINE1_END, LINE1_Y);
+        path.moveTo(LINE2_START, LINE2_START);
+        path.lineTo(LINE2_END, LINE2_END);
+        final double totalLength = (LINE1_END - LINE1_START) + Math.sqrt(
+                (LINE2_END - LINE2_START) * (LINE2_END - LINE2_START) +
+                (LINE2_END - LINE2_START) * (LINE2_END - LINE2_START));
+        final double firstSegEndFraction = (LINE1_END - LINE1_START) / totalLength;
+        final float delta = 0.01f;
+
+        Object target = new Object() {
+            public void setX(float x) {
+            }
+
+            public void setY(float y) {
+            }
+        };
+        final CountDownLatch endLatch = new CountDownLatch(1);
+
+        final ObjectAnimator anim = ObjectAnimator.ofFloat(target, "x", "y", path);
+        anim.setDuration(200);
+        // Linear interpolator
+        anim.setInterpolator(null);
+        anim.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+            @Override
+            public void onAnimationUpdate(ValueAnimator animation) {
+                float fraction = animation.getAnimatedFraction();
+                float x = (Float) animation.getAnimatedValue("x");
+                float y = (Float) animation.getAnimatedValue("y");
+
+                // Check that the point is on the path.
+                if (x <= 0) {
+                    // First line segment is a horizontal line.
+                    assertTrue(x >= LINE1_START);
+                    assertTrue(x <= LINE1_END);
+                    assertEquals(LINE1_Y, y);
+
+                    // Check that the time animation stays on the first segment is proportional to
+                    // the length of the first line segment.
+                    assertTrue(fraction < firstSegEndFraction + delta);
+                } else {
+                    assertTrue(x >= LINE2_START);
+                    assertTrue(x <= LINE2_END);
+                    assertEquals(x, y);
+
+                    // Check that the time animation stays on the second segment is proportional to
+                    // the length of the second line segment.
+                    assertTrue(fraction > firstSegEndFraction - delta);
+                }
+            }
+        });
+        anim.addListener(new AnimatorListenerAdapter() {
+            @Override
+            public void onAnimationEnd(Animator animation) {
+                endLatch.countDown();
+            }
+        });
+        runTestOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                anim.start();
+            }
+        });
+        assertTrue(endLatch.await(400, TimeUnit.MILLISECONDS));
+    }
+
+    public void testOfInt_Path() throws Throwable {
+        // Test for ObjectAnimator.ofInt(Object, String, String, Path)
+        // Create a path that contains two disconnected line segments. Check that the animated
+        // property x and property y always stay on the line segments.
+        Path path = new Path();
+        path.moveTo(LINE1_START, -LINE1_START);
+        path.lineTo(LINE1_END, -LINE1_END);
+        path.moveTo(LINE2_START, LINE2_START);
+        path.lineTo(LINE2_END, LINE2_END);
+
+        Object target = new Object() {
+            public void setX(float x) {
+            }
+
+            public void setY(float y) {
+            }
+        };
+        final CountDownLatch endLatch = new CountDownLatch(1);
+        final ObjectAnimator anim = ObjectAnimator.ofInt(target, "x", "y", path);
+        anim.setDuration(200);
+
+        // Linear interpolator
+        anim.setInterpolator(null);
+        anim.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+            @Override
+            public void onAnimationUpdate(ValueAnimator animation) {
+                float fraction = animation.getAnimatedFraction();
+                int x = (Integer) animation.getAnimatedValue("x");
+                int y = (Integer) animation.getAnimatedValue("y");
+
+                // Check that the point is on the path.
+                if (x <= 0) {
+                    // Check that the time animation stays on the first segment is proportional to
+                    // the length of the first line segment.
+                    assertTrue(x >= LINE1_START);
+                    assertTrue(x <= LINE1_END);
+                    assertEquals(x, -y);
+
+                    // First line segment is 3 times as long as the second line segment, so the
+                    // 3/4 of the animation duration will be spent on the first line segment.
+                    assertTrue(fraction <= 0.75f);
+                } else {
+                    // Check that the time animation stays on the second segment is proportional to
+                    // the length of the second line segment.
+                    assertTrue(x >= LINE2_START);
+                    assertTrue(x <= LINE2_END);
+                    assertEquals(x, y);
+
+                    assertTrue(fraction >= 0.75f);
+                }
+            }
+        });
+        anim.addListener(new AnimatorListenerAdapter() {
+            @Override
+            public void onAnimationEnd(Animator animation) {
+                endLatch.countDown();
+            }
+        });
+        runTestOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                anim.start();
+            }
+        });
+        assertTrue(endLatch.await(400, TimeUnit.MILLISECONDS));
+
+    }
+
+    public void testOfMultiFloat_Path() throws Throwable {
+        // Test for ObjectAnimator.ofMultiFloat(Object, String, Path);
+        // Create a quadratic bezier curve that are symmetric about the vertical line (x = 50).
+        // Expect when fraction < 0.5, x < 50, otherwise, x >= 50.
+        Path path = new Path();
+        path.moveTo(QUADRATIC_CTRL_PT1_X, QUADRATIC_CTRL_PT1_Y);
+        path.quadTo(QUADRATIC_CTRL_PT2_X, QUADRATIC_CTRL_PT2_Y,
+                QUADRATIC_CTRL_PT3_X, QUADRATIC_CTRL_PT3_Y);
+
+        Object target = new Object() {
+            public void setPosition(float x, float y) {
+            }
+        };
+
+        final CountDownLatch endLatch = new CountDownLatch(1);
+        final ObjectAnimator anim = ObjectAnimator.ofMultiFloat(target, "position", path);
+        // Linear interpolator
+        anim.setInterpolator(null);
+        anim.setDuration(200);
+
+        anim.addListener(new AnimatorListenerAdapter() {
+            @Override
+            public void onAnimationEnd(Animator animation) {
+                endLatch.countDown();
+            }
+        });
+
+        anim.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+            float lastFraction = 0;
+            float lastX = 0;
+            float lastY = 0;
+            @Override
+            public void onAnimationUpdate(ValueAnimator animation) {
+                float[] values = (float[]) animation.getAnimatedValue();
+                assertEquals(2, values.length);
+                float x = values[0];
+                float y = values[1];
+                float fraction = animation.getAnimatedFraction();
+                // Given that the curve is symmetric about the line (x = 50), x should be less than
+                // 50 for half of the animation duration.
+                if (fraction < 0.5) {
+                    assertTrue(x < QUADRATIC_CTRL_PT2_X);
+                } else {
+                    assertTrue(x >= QUADRATIC_CTRL_PT2_X);
+                }
+
+                if (lastFraction > 0.5) {
+                    // x should be increasing, y should be decreasing
+                    assertTrue(x >= lastX);
+                    assertTrue(y <= lastY);
+                } else if (fraction <= 0.5) {
+                    // when fraction <= 0.5, both x, y should be increasing
+                    assertTrue(x >= lastX);
+                    assertTrue(y >= lastY);
+                }
+                lastX = x;
+                lastY = y;
+                lastFraction = fraction;
+            }
+        });
+        runTestOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                anim.start();
+            }
+        });
+        assertTrue(endLatch.await(400, TimeUnit.MILLISECONDS));
+    }
+
+    public void testOfMultiFloat() throws Throwable {
+        // Test for ObjectAnimator.ofMultiFloat(Object, String, float[][]);
+        final float[][] data = new float[10][];
+        for (int i = 0; i < data.length; i++) {
+            data[i] = new float[3];
+            data[i][0] = i;
+            data[i][1] = i * 2;
+            data[i][2] = 0f;
+        }
+
+        Object target = new Object() {
+            public void setPosition(float x, float y, float z) {
+            }
+        };
+        final CountDownLatch endLatch = new CountDownLatch(1);
+        final ObjectAnimator anim = ObjectAnimator.ofMultiFloat(target, "position", data);
+        anim.setInterpolator(null);
+        anim.setDuration(60);
+        anim.addListener(new AnimatorListenerAdapter() {
+            @Override
+            public void onAnimationEnd(Animator animation) {
+                endLatch.countDown();
+            }
+        });
+
+        anim.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+            @Override
+            public void onAnimationUpdate(ValueAnimator animation) {
+                float fraction = animation.getAnimatedFraction();
+                float[] values = (float[]) animation.getAnimatedValue();
+                assertEquals(3, values.length);
+
+                float expectedX = fraction * (data.length - 1);
+
+                assertEquals(expectedX, values[0]);
+                assertEquals(expectedX * 2, values[1]);
+                assertEquals(0f, values[2]);
+            }
+        });
+
+        runTestOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                anim.start();
+            }
+        });
+        assertTrue(endLatch.await(200, TimeUnit.MILLISECONDS));
+    }
+
+    public void testOfMultiInt_Path() throws Throwable {
+        // Test for ObjectAnimator.ofMultiInt(Object, String, Path);
+        // Create a quadratic bezier curve that are symmetric about the vertical line (x = 50).
+        // Expect when fraction < 0.5, x < 50, otherwise, x >= 50.
+        Path path = new Path();
+        path.moveTo(QUADRATIC_CTRL_PT1_X, QUADRATIC_CTRL_PT1_Y);
+        path.quadTo(QUADRATIC_CTRL_PT2_X, QUADRATIC_CTRL_PT2_Y,
+                QUADRATIC_CTRL_PT3_X, QUADRATIC_CTRL_PT3_Y);
+
+        Object target = new Object() {
+            public void setPosition(int x, int y) {
+            }
+        };
+
+        final CountDownLatch endLatch = new CountDownLatch(1);
+        final ObjectAnimator anim = ObjectAnimator.ofMultiInt(target, "position", path);
+        // Linear interpolator
+        anim.setInterpolator(null);
+        anim.setDuration(200);
+
+        anim.addListener(new AnimatorListenerAdapter() {
+            @Override
+            public void onAnimationEnd(Animator animation) {
+                endLatch.countDown();
+            }
+        });
+
+        anim.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+            float lastFraction = 0;
+            int lastX = 0;
+            int lastY = 0;
+            @Override
+            public void onAnimationUpdate(ValueAnimator animation) {
+                int[] values = (int[]) animation.getAnimatedValue();
+                assertEquals(2, values.length);
+                int x = values[0];
+                int y = values[1];
+                float fraction = animation.getAnimatedFraction();
+                // Given that the curve is symmetric about the line (x = 50), x should be less than
+                // 50 for half of the animation duration.
+                if (fraction < 0.5) {
+                    assertTrue(x < QUADRATIC_CTRL_PT2_X);
+                } else {
+                    assertTrue(x >= QUADRATIC_CTRL_PT2_X);
+                }
+
+                if (lastFraction > 0.5) {
+                    // x should be increasing, y should be decreasing
+                    assertTrue(x >= lastX);
+                    assertTrue(y <= lastY);
+                } else if (fraction <= 0.5) {
+                    // when fraction <= 0.5, both x, y should be increasing
+                    assertTrue(x >= lastX);
+                    assertTrue(y >= lastY);
+                }
+                lastX = x;
+                lastY = y;
+                lastFraction = fraction;
+            }
+        });
+        runTestOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                anim.start();
+            }
+        });
+        assertTrue(endLatch.await(400, TimeUnit.MILLISECONDS));
+    }
+
+    public void testOfMultiInt() throws Throwable {
+        // Test for ObjectAnimator.ofMultiFloat(Object, String, int[][]);
+        final int[][] data = new int[10][];
+        for (int i = 0; i < data.length; i++) {
+            data[i] = new int[3];
+            data[i][0] = i;
+            data[i][1] = i * 2;
+            data[i][2] = 0;
+        }
+
+        Object target = new Object() {
+            public void setPosition(int x, int y, int z) {
+            }
+        };
+        final CountDownLatch endLatch = new CountDownLatch(1);
+        final ObjectAnimator anim = ObjectAnimator.ofMultiInt(target, "position", data);
+        anim.setInterpolator(null);
+        anim.setDuration(60);
+        anim.addListener(new AnimatorListenerAdapter() {
+            @Override
+            public void onAnimationEnd(Animator animation) {
+                endLatch.countDown();
+            }
+        });
+
+        anim.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+            @Override
+            public void onAnimationUpdate(ValueAnimator animation) {
+                float fraction = animation.getAnimatedFraction();
+                int[] values = (int[]) animation.getAnimatedValue();
+                assertEquals(3, values.length);
+
+                int expectedX = Math.round(fraction * (data.length - 1));
+                int expectedY = Math.round(fraction * (data.length - 1) * 2);
+
+                // Allow a delta of 1 for rounding errors.
+                assertEquals(expectedX, values[0], 1);
+                assertEquals(expectedY, values[1], 1);
+                assertEquals(0, values[2]);
+            }
+        });
+
+        runTestOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                anim.start();
+            }
+        });
+        assertTrue(endLatch.await(200, TimeUnit.MILLISECONDS));
+    }
+
+    public void testOfObject_Converter() throws Throwable {
+        // Test for ObjectAnimator.ofObject(Object, String, TypeConverter<T, V>, Path)
+        // Create a path that contains two disconnected line segments. Check that the animated
+        // property x and property y always stay on the line segments.
+        Path path = new Path();
+        path.moveTo(LINE1_START, -LINE1_START);
+        path.lineTo(LINE1_END, -LINE1_END);
+        path.moveTo(LINE2_START, LINE2_START);
+        path.lineTo(LINE2_END, LINE2_END);
+
+        Object target1 = new Object() {
+            public void setDistance(float distance) {
+            }
+        };
+        Object target2 = new Object() {
+            public void setPosition(PointF pos) {
+            }
+        };
+        TypeConverter<PointF, Float> converter = new TypeConverter<PointF, Float>(
+                PointF.class, Float.class) {
+            @Override
+            public Float convert(PointF value) {
+                return (float) Math.sqrt(value.x * value.x + value.y * value.y);
+            }
+        };
+        final CountDownLatch endLatch = new CountDownLatch(2);
+
+        // Create two animators. One use a converter that converts the point to distance to origin.
+        // The other one does not have a type converter.
+        final ObjectAnimator anim1 = ObjectAnimator.ofObject(target1, "distance", converter, path);
+        anim1.setDuration(100);
+        anim1.setInterpolator(null);
+        anim1.addListener(new AnimatorListenerAdapter() {
+            @Override
+            public void onAnimationEnd(Animator animation) {
+                endLatch.countDown();
+            }
+        });
+
+        final ObjectAnimator anim2 = ObjectAnimator.ofObject(target2, "position", null, path);
+        anim2.setDuration(100);
+        anim2.setInterpolator(null);
+        anim2.addListener(new AnimatorListenerAdapter() {
+            @Override
+            public void onAnimationEnd(Animator animation) {
+                endLatch.countDown();
+            }
+        });
+        anim2.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+            // Set the initial value of the distance to the distance between the first point on
+            // the path to the origin.
+            float mLastDistance = (float) (32 * Math.sqrt(2));
+            float mLastFraction = 0f;
+            @Override
+            public void onAnimationUpdate(ValueAnimator animation) {
+                float fraction = anim1.getAnimatedFraction();
+                assertEquals(fraction, anim2.getAnimatedFraction());
+                float distance = (Float) anim1.getAnimatedValue();
+                PointF position = (PointF) anim2.getAnimatedValue();
+
+                // Manually calculate the distance for the animator that doesn't have a
+                // TypeConverter, and expect the result to be the same as the animation value from
+                // the type converter.
+                float distanceFromPosition = (float) Math.sqrt(
+                        position.x * position.x + position.y * position.y);
+                assertEquals(distance, distanceFromPosition, 0.0001f);
+
+                if (mLastFraction > 0.75) {
+                    // In the 2nd line segment of the path, distance to origin should be increasing.
+                    assertTrue(distance >= mLastDistance);
+                } else if (fraction < 0.75) {
+                    assertTrue(distance <= mLastDistance);
+                }
+                mLastDistance = distance;
+                mLastFraction = fraction;
+            }
+        });
+
+        runTestOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                anim1.start();
+                anim2.start();
+            }
+        });
+
+        // Wait until both of the animations finish
+        assertTrue(endLatch.await(200, TimeUnit.MILLISECONDS));
     }
 
     public void testIsStarted() throws Throwable {
