@@ -16,46 +16,28 @@
 
 package android.graphics.cts;
 
-
 import android.graphics.Rect;
 import android.graphics.RectF;
 import android.os.Parcel;
+import android.support.test.filters.SmallTest;
 import android.test.AndroidTestCase;
 
+@SmallTest
 public class RectFTest extends AndroidTestCase {
-
     private RectF mRectF;
 
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
-        mRectF = null;
-    }
-
     public void testConstructor() {
-
-        mRectF = null;
-        // new the RectF instance
         mRectF = new RectF();
-
-        mRectF = null;
-        // new the RectF instance
         mRectF = new RectF(1.5f, 2.5f, 20.3f, 40.9f);
 
-        mRectF = null;
         RectF rectF = new RectF(1.5f, 2.5f, 20.3f, 40.9f);
-        // new the RectF instance
         mRectF = new RectF(rectF);
 
-        mRectF = null;
         Rect rect = new Rect(0, 0, 10, 10);
-        // new the RectF instance
         mRectF = new RectF(rect);
-
     }
 
     public void testSort() {
-
         mRectF = new RectF(10, 10, 5, 5);
         assertEquals(10.0f, mRectF.left);
         assertEquals(10.0f, mRectF.top);
@@ -67,22 +49,18 @@ public class RectFTest extends AndroidTestCase {
         assertEquals(5.0f, mRectF.top);
         assertEquals(10.0f, mRectF.right);
         assertEquals(10.0f, mRectF.bottom);
-
     }
 
     public void testSet1() {
-
         mRectF = new RectF();
         mRectF.set(1.0f, 2.0f, 3.0f, 4.0f);
         assertEquals(1.0f, mRectF.left);
         assertEquals(2.0f, mRectF.top);
         assertEquals(3.0f, mRectF.right);
         assertEquals(4.0f, mRectF.bottom);
-
     }
 
     public void testSet2() {
-
         RectF rectF = new RectF(1.0f, 2.0f, 3.0f, 4.0f);
         mRectF = new RectF();
         mRectF.set(rectF);
@@ -90,11 +68,9 @@ public class RectFTest extends AndroidTestCase {
         assertEquals(2.0f, mRectF.top);
         assertEquals(3.0f, mRectF.right);
         assertEquals(4.0f, mRectF.bottom);
-
     }
 
     public void testSet3() {
-
         Rect rect = new Rect(1, 2, 3, 4);
         mRectF = new RectF();
         mRectF.set(rect);
@@ -102,11 +78,9 @@ public class RectFTest extends AndroidTestCase {
         assertEquals(2.0f, mRectF.top);
         assertEquals(3.0f, mRectF.right);
         assertEquals(4.0f, mRectF.bottom);
-
     }
 
     public void testIntersects1() {
-
         mRectF = new RectF(0, 0, 10, 10);
         assertTrue(mRectF.intersects(5, 5, 15, 15));
         assertEquals(0.0f, mRectF.left);
@@ -120,11 +94,9 @@ public class RectFTest extends AndroidTestCase {
         assertEquals(0.0f, mRectF.top);
         assertEquals(10.0f, mRectF.right);
         assertEquals(10.0f, mRectF.bottom);
-
     }
 
     public void testIntersects2() {
-
         RectF rectF1;
         RectF rectF2;
 
@@ -135,11 +107,9 @@ public class RectFTest extends AndroidTestCase {
         rectF1 = new RectF(0, 0, 10, 10);
         rectF2 = new RectF(15, 15, 25, 25);
         assertFalse(RectF.intersects(rectF1, rectF2));
-
     }
 
     public void testIntersect1() {
-
         mRectF = new RectF(0, 0, 10, 10);
         assertTrue(mRectF.intersect(5, 5, 15, 15));
         assertEquals(5.0f, mRectF.left);
@@ -153,11 +123,9 @@ public class RectFTest extends AndroidTestCase {
         assertEquals(0.0f, mRectF.top);
         assertEquals(10.0f, mRectF.right);
         assertEquals(10.0f, mRectF.bottom);
-
     }
 
     public void testIntersect2() {
-
         RectF rectF;
 
         mRectF = new RectF(0, 0, 10, 10);
@@ -175,11 +143,9 @@ public class RectFTest extends AndroidTestCase {
         assertEquals(0.0f, mRectF.top);
         assertEquals(10.0f, mRectF.right);
         assertEquals(10.0f, mRectF.bottom);
-
     }
 
     public void testUnion1() {
-
         // Both rect1 and rect2 are not empty.
         // 1. left < right, top < bottom
         // this.left < this.right, this.top < this.bottom
@@ -225,11 +191,9 @@ public class RectFTest extends AndroidTestCase {
         assertEquals(0.0f, mRectF.left);
         assertEquals(1.0f, mRectF.right);
         assertEquals(1.0f, mRectF.bottom);
-
     }
 
     public void testUnion2() {
-
         RectF rectF;
 
         // Both rect1 and rect2 are not empty.
@@ -282,11 +246,9 @@ public class RectFTest extends AndroidTestCase {
         assertEquals(0.0f, mRectF.left);
         assertEquals(1.0f, mRectF.right);
         assertEquals(1.0f, mRectF.bottom);
-
     }
 
     public void testUnion3() {
-
         // rect1 is not empty (x > right, y > bottom).
         mRectF = new RectF(0.0f, 0.0f, 1.0f, 1.0f);
         mRectF.union(2.0f, 2.0f);
@@ -318,21 +280,17 @@ public class RectFTest extends AndroidTestCase {
         assertEquals(0.0f, mRectF.left);
         assertEquals(2.0f, mRectF.right);
         assertEquals(2.0f, mRectF.bottom);
-
     }
 
     public void testContains1() {
-
         mRectF = new RectF(1.0f, 1.0f, 20.0f, 20.0f);
         assertFalse(mRectF.contains(0.9f, 0.9f));
         assertTrue(mRectF.contains(1.0f, 1.0f));
         assertTrue(mRectF.contains(19.9f, 19.9f));
         assertFalse(mRectF.contains(20.0f, 20.0f));
-
     }
 
     public void testContains2() {
-
         mRectF = new RectF(1.0f, 1.0f, 20.0f, 20.0f);
         assertTrue(mRectF.contains(1.0f, 1.0f, 20.0f, 20.0f));
         assertTrue(mRectF.contains(2.0f, 2.0f, 19.0f, 19.0f));
@@ -341,7 +299,6 @@ public class RectFTest extends AndroidTestCase {
     }
 
     public void testContains3() {
-
         RectF rectF;
         mRectF = new RectF(1.0f, 1.0f, 20.0f, 20.0f);
         rectF = new RectF(1.0f, 1.0f, 20.0f, 20.0f);
@@ -352,22 +309,18 @@ public class RectFTest extends AndroidTestCase {
         assertFalse(mRectF.contains(rectF));
         rectF = new RectF(0.0f, 0.0f, 19.0f, 19.0f);
         assertFalse(mRectF.contains(rectF));
-
     }
 
     public void testOffset() {
-
        mRectF = new RectF(5, 5, 10, 10);
        mRectF.offset(1.0f, 1.0f);
        assertEquals(6.0f, mRectF.left);
        assertEquals(6.0f, mRectF.top);
        assertEquals(11.0f, mRectF.right);
        assertEquals(11.0f, mRectF.bottom);
-
     }
 
     public void testInset() {
-
         mRectF = new RectF(5.0f, 5.0f, 10.0f, 10.0f);
         mRectF.inset(1.0f, 1.0f);
         assertEquals(6.0f, mRectF.left);
@@ -381,7 +334,6 @@ public class RectFTest extends AndroidTestCase {
         assertEquals(4.0f, mRectF.top);
         assertEquals(11.0f, mRectF.right);
         assertEquals(11.0f, mRectF.bottom);
-
     }
 
     public void testHeight() {
@@ -395,18 +347,15 @@ public class RectFTest extends AndroidTestCase {
     }
 
     public void testOffsetTo() {
-
         mRectF = new RectF(5, 5, 10, 10);
         mRectF.offsetTo(1.0f, 1.0f);
         assertEquals(1.0f, mRectF.left);
         assertEquals(1.0f, mRectF.top);
         assertEquals(6.0f, mRectF.right);
         assertEquals(6.0f, mRectF.bottom);
-
     }
 
     public void testSetEmpty() {
-
         // Before setEmpty()
         mRectF = new RectF(1, 2, 3, 4);
         assertEquals(1.0f, mRectF.left);
@@ -420,11 +369,9 @@ public class RectFTest extends AndroidTestCase {
         assertEquals(0.0f, mRectF.top);
         assertEquals(0.0f, mRectF.right);
         assertEquals(0.0f, mRectF.bottom);
-
     }
 
     public void testIsEmpty() {
-
         mRectF = new RectF();
         assertTrue(mRectF.isEmpty());
         mRectF = new RectF(1.0f, 1.0f, 1.0f, 1.0f);
@@ -433,22 +380,18 @@ public class RectFTest extends AndroidTestCase {
         assertTrue(mRectF.isEmpty());
         mRectF = new RectF(1.0f, 1.0f, 20.0f, 20.0f);
         assertFalse(mRectF.isEmpty());
-
     }
 
     public void testCenterX() {
-
         mRectF = new RectF(10.0f, 10.0f, 20.0f, 20.0f);
         assertEquals(15.0f, mRectF.centerX());
         mRectF = new RectF(10.5f, 10.0f, 20.0f, 20.0f);
         assertEquals(15.25f, mRectF.centerX());
         mRectF = new RectF(10.4f, 10.0f, 20.0f, 20.0f);
         assertEquals(15.2f, mRectF.centerX());
-
     }
 
     public void testCenterY() {
-
         mRectF = new RectF(10.0f, 10.0f, 20.0f, 20.0f);
         assertEquals(15.0f, mRectF.centerY());
         mRectF = new RectF(10.0f, 10.5f, 20.0f, 20.0f);
@@ -458,12 +401,16 @@ public class RectFTest extends AndroidTestCase {
     }
 
     public void testToString() {
-        mRectF = new RectF();
-        assertNotNull(mRectF.toString());
+        mRectF = new RectF(10.0f, 20.0f, 30.0f, 40.0f);
+        assertEquals("RectF(10.0, 20.0, 30.0, 40.0)", mRectF.toString());
+    }
+
+    public void testToShortString() {
+        mRectF = new RectF(10.0f, 20.0f, 30.0f, 40.0f);
+        assertEquals("[10.0,20.0][30.0,40.0]", mRectF.toShortString());
     }
 
     public void testSetIntersect() {
-
         RectF rectF1 = new RectF(0, 0, 10, 10);
         RectF rectF2 = new RectF(5, 5, 15, 15);
 
@@ -482,11 +429,9 @@ public class RectFTest extends AndroidTestCase {
         assertEquals(5.0f, mRectF.top);
         assertEquals(10.0f, mRectF.right);
         assertEquals(10.0f, mRectF.bottom);
-
     }
 
     public void testRoundOut() {
-
         Rect rect = new Rect();
         mRectF = new RectF(1.2f, 1.8f, 5.2f, 5.8f);
         mRectF.roundOut(rect);
@@ -494,11 +439,9 @@ public class RectFTest extends AndroidTestCase {
         assertEquals(1, rect.top);
         assertEquals(6, rect.right);
         assertEquals(6, rect.bottom);
-
     }
 
     public void testRound() {
-
         Rect rect = new Rect();
         mRectF = new RectF(1.2f, 1.8f, 5.2f, 5.8f);
         mRectF.round(rect);
@@ -506,7 +449,6 @@ public class RectFTest extends AndroidTestCase {
         assertEquals(2, rect.top);
         assertEquals(5, rect.right);
         assertEquals(6, rect.bottom);
-
     }
 
     public void testWriteReadParcel() {
