@@ -21,9 +21,13 @@ import android.animation.ArgbEvaluator;
 import android.animation.Keyframe;
 import android.animation.ObjectAnimator;
 import android.animation.PropertyValuesHolder;
+import android.animation.TypeConverter;
 import android.animation.ValueAnimator;
+import android.graphics.Path;
+import android.graphics.PointF;
 import android.graphics.drawable.ShapeDrawable;
 import android.test.ActivityInstrumentationTestCase2;
+import android.util.FloatProperty;
 import android.util.Property;
 import android.view.View;
 import android.view.animation.AccelerateInterpolator;
@@ -33,6 +37,18 @@ import java.util.concurrent.TimeUnit;
 
 public class PropertyValuesHolderTest extends
         ActivityInstrumentationTestCase2<AnimationActivity> {
+    private static final float LINE1_START = -32f;
+    private static final float LINE1_END = -2f;
+    private static final float LINE1_Y = 0f;
+    private static final float LINE2_START = 2f;
+    private static final float LINE2_END = 12f;
+    private static final float QUADRATIC_CTRL_PT1_X = 0f;
+    private static final float QUADRATIC_CTRL_PT1_Y = 0f;
+    private static final float QUADRATIC_CTRL_PT2_X = 50f;
+    private static final float QUADRATIC_CTRL_PT2_Y = 20f;
+    private static final float QUADRATIC_CTRL_PT3_X = 100f;
+    private static final float QUADRATIC_CTRL_PT3_Y = 0f;
+
     private AnimationActivity mActivity;
     private Animator mAnimator;
     private long mDuration = 1000;
@@ -276,6 +292,416 @@ public class PropertyValuesHolderTest extends
         //We are going from less negative value to a more negative value
         assertTrue(i.intValue() <= startColor);
         assertTrue(endColor <= i.intValue());
+    }
+
+    public void testOfMultiFloat_Path() throws Throwable {
+        // Test for PropertyValuesHolder.ofMultiFloat(String, Path);
+        // Create a quadratic bezier curve that are symmetric about the vertical line (x = 50).
+        // Expect when fraction < 0.5, x < 50, otherwise, x >= 50.
+        Path path = new Path();
+        path.moveTo(QUADRATIC_CTRL_PT1_X, QUADRATIC_CTRL_PT1_Y);
+        path.quadTo(QUADRATIC_CTRL_PT2_X, QUADRATIC_CTRL_PT2_Y,
+                QUADRATIC_CTRL_PT3_X, QUADRATIC_CTRL_PT3_Y);
+
+        PropertyValuesHolder pvh = PropertyValuesHolder.ofMultiFloat("position", path);
+        final ValueAnimator anim = ValueAnimator.ofPropertyValuesHolder(pvh);
+
+        final CountDownLatch endLatch = new CountDownLatch(1);
+        // Linear interpolator
+        anim.setInterpolator(null);
+        anim.setDuration(200);
+
+        anim.addListener(new AnimatorListenerAdapter() {
+            @Override
+            public void onAnimationEnd(Animator animation) {
+                endLatch.countDown();
+            }
+        });
+
+        anim.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+            float lastFraction = 0;
+            float lastX = 0;
+            float lastY = 0;
+            @Override
+            public void onAnimationUpdate(ValueAnimator animation) {
+                float[] values = (float[]) animation.getAnimatedValue();
+                assertEquals(2, values.length);
+                float x = values[0];
+                float y = values[1];
+                float fraction = animation.getAnimatedFraction();
+                // Given that the curve is symmetric about the line (x = 50), x should be less than
+                // 50 for half of the animation duration.
+                if (fraction < 0.5) {
+                    assertTrue(x < QUADRATIC_CTRL_PT2_X);
+                } else {
+                    assertTrue(x >= QUADRATIC_CTRL_PT2_X);
+                }
+
+                if (lastFraction > 0.5) {
+                    // x should be increasing, y should be decreasing
+                    assertTrue(x >= lastX);
+                    assertTrue(y <= lastY);
+                } else if (fraction <= 0.5) {
+                    // when fraction <= 0.5, both x, y should be increasing
+                    assertTrue(x >= lastX);
+                    assertTrue(y >= lastY);
+                }
+                lastX = x;
+                lastY = y;
+                lastFraction = fraction;
+            }
+        });
+        runTestOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                anim.start();
+            }
+        });
+        assertTrue(endLatch.await(400, TimeUnit.MILLISECONDS));
+    }
+
+    public void testOfMultiFloat_Array() throws Throwable {
+        // Test for PropertyValuesHolder.ofMultiFloat(String, float[][]);
+        final float[][] data = new float[10][];
+        for (int i = 0; i < data.length; i++) {
+            data[i] = new float[3];
+            data[i][0] = i;
+            data[i][1] = i * 2;
+            data[i][2] = 0f;
+        }
+        final CountDownLatch endLatch = new CountDownLatch(1);
+        final PropertyValuesHolder pvh = PropertyValuesHolder.ofMultiFloat("position", data);
+
+        final ValueAnimator anim = ValueAnimator.ofPropertyValuesHolder(pvh);
+        anim.setInterpolator(null);
+        anim.setDuration(60);
+        anim.addListener(new AnimatorListenerAdapter() {
+            @Override
+            public void onAnimationEnd(Animator animation) {
+                endLatch.countDown();
+            }
+        });
+
+        anim.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+            @Override
+            public void onAnimationUpdate(ValueAnimator animation) {
+                float fraction = animation.getAnimatedFraction();
+                float[] values = (float[]) animation.getAnimatedValue();
+                assertEquals(3, values.length);
+
+                float expectedX = fraction * (data.length - 1);
+
+                assertEquals(expectedX, values[0]);
+                assertEquals(expectedX * 2, values[1]);
+                assertEquals(0f, values[2]);
+            }
+        });
+
+        runTestOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                anim.start();
+            }
+        });
+        assertTrue(endLatch.await(200, TimeUnit.MILLISECONDS));
+    }
+
+    public void testOfMultiInt_Path() throws Throwable {
+        // Test for PropertyValuesHolder.ofMultiInt(String, Path);
+        // Create a quadratic bezier curve that are symmetric about the vertical line (x = 50).
+        // Expect when fraction < 0.5, x < 50, otherwise, x >= 50.
+        Path path = new Path();
+        path.moveTo(QUADRATIC_CTRL_PT1_X, QUADRATIC_CTRL_PT1_Y);
+        path.quadTo(QUADRATIC_CTRL_PT2_X, QUADRATIC_CTRL_PT2_Y,
+                QUADRATIC_CTRL_PT3_X, QUADRATIC_CTRL_PT3_Y);
+
+        final CountDownLatch endLatch = new CountDownLatch(1);
+        final PropertyValuesHolder pvh = PropertyValuesHolder.ofMultiInt("position", path);
+        final ValueAnimator anim = ValueAnimator.ofPropertyValuesHolder(pvh);
+        // Linear interpolator
+        anim.setInterpolator(null);
+        anim.setDuration(200);
+
+        anim.addListener(new AnimatorListenerAdapter() {
+            @Override
+            public void onAnimationEnd(Animator animation) {
+                endLatch.countDown();
+            }
+        });
+
+        anim.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+            float lastFraction = 0;
+            int lastX = 0;
+            int lastY = 0;
+            @Override
+            public void onAnimationUpdate(ValueAnimator animation) {
+                int[] values = (int[]) animation.getAnimatedValue();
+                assertEquals(2, values.length);
+                int x = values[0];
+                int y = values[1];
+                float fraction = animation.getAnimatedFraction();
+                // Given that the curve is symmetric about the line (x = 50), x should be less than
+                // 50 for half of the animation duration.
+                if (fraction < 0.5) {
+                    assertTrue(x < QUADRATIC_CTRL_PT2_X);
+                } else {
+                    assertTrue(x >= QUADRATIC_CTRL_PT2_X);
+                }
+
+                if (lastFraction > 0.5) {
+                    // x should be increasing, y should be decreasing
+                    assertTrue(x >= lastX);
+                    assertTrue(y <= lastY);
+                } else if (fraction <= 0.5) {
+                    // when fraction <= 0.5, both x, y should be increasing
+                    assertTrue(x >= lastX);
+                    assertTrue(y >= lastY);
+                }
+                lastX = x;
+                lastY = y;
+                lastFraction = fraction;
+            }
+        });
+        runTestOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                anim.start();
+            }
+        });
+        assertTrue(endLatch.await(400, TimeUnit.MILLISECONDS));
+    }
+
+    public void testOfMultiInt_Array() throws Throwable {
+        // Test for PropertyValuesHolder.ofMultiFloat(String, int[][]);
+        final int[][] data = new int[10][];
+        for (int i = 0; i < data.length; i++) {
+            data[i] = new int[3];
+            data[i][0] = i;
+            data[i][1] = i * 2;
+            data[i][2] = 0;
+        }
+
+        final CountDownLatch endLatch = new CountDownLatch(1);
+        final PropertyValuesHolder pvh = PropertyValuesHolder.ofMultiInt("position", data);
+        final ValueAnimator anim = ValueAnimator.ofPropertyValuesHolder(pvh);
+        anim.setInterpolator(null);
+        anim.setDuration(60);
+        anim.addListener(new AnimatorListenerAdapter() {
+            @Override
+            public void onAnimationEnd(Animator animation) {
+                endLatch.countDown();
+            }
+        });
+
+        anim.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+            @Override
+            public void onAnimationUpdate(ValueAnimator animation) {
+                float fraction = animation.getAnimatedFraction();
+                int[] values = (int[]) animation.getAnimatedValue();
+                assertEquals(3, values.length);
+
+                int expectedX = Math.round(fraction * (data.length - 1));
+                int expectedY = Math.round(fraction * (data.length - 1) * 2);
+
+                // Allow a delta of 1 for rounding errors.
+                assertEquals(expectedX, values[0], 1);
+                assertEquals(expectedY, values[1], 1);
+                assertEquals(0, values[2]);
+            }
+        });
+
+        runTestOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                anim.start();
+            }
+        });
+        assertTrue(endLatch.await(200, TimeUnit.MILLISECONDS));
+    }
+
+    public void testOfObject_Converter() throws Throwable {
+        // Test for PropertyValuesHolder.ofObject(String, TypeConverter<T, V>, Path)
+        // and for PropertyValuesHolder.ofObject(Property, TypeConverter<T, V>, Path)
+        // Create a path that contains two disconnected line segments. Check that the animated
+        // property x and property y always stay on the line segments.
+        Path path = new Path();
+        path.moveTo(LINE1_START, -LINE1_START);
+        path.lineTo(LINE1_END, -LINE1_END);
+        path.moveTo(LINE2_START, LINE2_START);
+        path.lineTo(LINE2_END, LINE2_END);
+        TypeConverter<PointF, Float> converter = new TypeConverter<PointF, Float>(
+                PointF.class, Float.class) {
+            @Override
+            public Float convert(PointF value) {
+                return (float) Math.sqrt(value.x * value.x + value.y * value.y);
+            }
+        };
+        final CountDownLatch endLatch = new CountDownLatch(3);
+
+        // Create three animators. The first one use a converter that converts the point to distance
+        // to  origin. The second one does not have a type converter. The third animator uses a
+        // converter to changes sign of the x, y value of the input pointF.
+        FloatProperty property = new FloatProperty("distance") {
+            @Override
+            public void setValue(Object object, float value) {
+            }
+
+            @Override
+            public Object get(Object object) {
+                return null;
+            }
+        };
+        final PropertyValuesHolder pvh1 =
+                PropertyValuesHolder.ofObject(property, converter, path);
+        final ValueAnimator anim1 = ValueAnimator.ofPropertyValuesHolder(pvh1);
+        anim1.setDuration(100);
+        anim1.setInterpolator(null);
+        anim1.addListener(new AnimatorListenerAdapter() {
+            @Override
+            public void onAnimationEnd(Animator animation) {
+                endLatch.countDown();
+            }
+        });
+
+        final PropertyValuesHolder pvh2 =
+                PropertyValuesHolder.ofObject("position", null, path);
+        final ValueAnimator anim2 = ValueAnimator.ofPropertyValuesHolder(pvh2);
+        anim2.setDuration(100);
+        anim2.setInterpolator(null);
+        anim2.addListener(new AnimatorListenerAdapter() {
+            @Override
+            public void onAnimationEnd(Animator animation) {
+                endLatch.countDown();
+            }
+        });
+
+        TypeConverter<PointF, PointF> converter3 = new TypeConverter<PointF, PointF>(
+                PointF.class, PointF.class) {
+            PointF mValue = new PointF();
+            @Override
+            public PointF convert(PointF value) {
+                mValue.x = -value.x;
+                mValue.y = -value.y;
+                return mValue;
+            }
+        };
+        final PropertyValuesHolder pvh3 =
+                PropertyValuesHolder.ofObject("position", converter3, path);
+        final ValueAnimator anim3 = ValueAnimator.ofPropertyValuesHolder(pvh3);
+        anim3.setDuration(100);
+        anim3.setInterpolator(null);
+        anim3.addListener(new AnimatorListenerAdapter() {
+            @Override
+            public void onAnimationEnd(Animator animation) {
+                endLatch.countDown();
+            }
+        });
+
+        anim3.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+            // Set the initial value of the distance to the distance between the first point on
+            // the path to the origin.
+            float mLastDistance = (float) (32 * Math.sqrt(2));
+            float mLastFraction = 0f;
+            @Override
+            public void onAnimationUpdate(ValueAnimator animation) {
+                float fraction = anim1.getAnimatedFraction();
+                assertEquals(fraction, anim2.getAnimatedFraction());
+                assertEquals(fraction, anim3.getAnimatedFraction());
+                float distance = (Float) anim1.getAnimatedValue();
+                PointF position = (PointF) anim2.getAnimatedValue();
+                PointF positionReverseSign = (PointF) anim3.getAnimatedValue();
+                assertEquals(position.x, -positionReverseSign.x);
+                assertEquals(position.y, -positionReverseSign.y);
+
+                // Manually calculate the distance for the animator that doesn't have a
+                // TypeConverter, and expect the result to be the same as the animation value from
+                // the type converter.
+                float distanceFromPosition = (float) Math.sqrt(
+                        position.x * position.x + position.y * position.y);
+                assertEquals(distance, distanceFromPosition, 0.0001f);
+
+                if (mLastFraction > 0.75) {
+                    // In the 2nd line segment of the path, distance to origin should be increasing.
+                    assertTrue(distance >= mLastDistance);
+                } else if (fraction < 0.75) {
+                    assertTrue(distance <= mLastDistance);
+                }
+                mLastDistance = distance;
+                mLastFraction = fraction;
+            }
+        });
+
+        runTestOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                anim1.start();
+                anim2.start();
+                anim3.start();
+            }
+        });
+
+        // Wait until both of the animations finish
+        assertTrue(endLatch.await(200, TimeUnit.MILLISECONDS));
+    }
+
+    public void testSetConverter() throws Throwable {
+        // Test for PropertyValuesHolder.setConverter()
+        PropertyValuesHolder pvh = PropertyValuesHolder.ofObject("", null, 0f, 1f);
+        // Reverse the sign of the float in the converter, and use that value as the new type
+        // PointF's x value.
+        pvh.setConverter(new TypeConverter<Float, PointF>(Float.class, PointF.class) {
+            PointF mValue = new PointF();
+            @Override
+            public PointF convert(Float value) {
+                mValue.x = value * (-1f);
+                mValue.y = 0f;
+                return mValue;
+            }
+        });
+        final CountDownLatch endLatch = new CountDownLatch(2);
+
+        final ValueAnimator anim1 = ValueAnimator.ofPropertyValuesHolder(pvh);
+        anim1.setInterpolator(null);
+        anim1.setDuration(100);
+        anim1.addListener(new AnimatorListenerAdapter() {
+            @Override
+            public void onAnimationEnd(Animator animation) {
+                endLatch.countDown();
+            }
+        });
+
+        final ValueAnimator anim2 = ValueAnimator.ofFloat(0f, 1f);
+        anim2.setInterpolator(null);
+        anim2.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+            @Override
+            public void onAnimationUpdate(ValueAnimator animation) {
+                assertEquals(anim1.getAnimatedFraction(), anim2.getAnimatedFraction());
+                // Check that the pvh with type converter did reverse the sign of float, and set
+                // the x value of the PointF with it.
+                PointF value1 = (PointF) anim1.getAnimatedValue();
+                float value2 = (Float) anim2.getAnimatedValue();
+                assertEquals(value2, -value1.x);
+                assertEquals(0f, value1.y);
+            }
+        });
+        anim2.setDuration(100);
+        anim2.addListener(new AnimatorListenerAdapter() {
+            @Override
+            public void onAnimationEnd(Animator animation) {
+                endLatch.countDown();
+            }
+        });
+
+        runTestOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                anim1.start();
+                anim2.start();
+            }
+        });
+
+        // Wait until both of the animations finish
+        assertTrue(endLatch.await(200, TimeUnit.MILLISECONDS));
     }
 
     public void testSetProperty() throws Throwable {
