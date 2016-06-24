@@ -451,7 +451,8 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
             File resultFile = ResultHandler.writeResults(mBuildHelper.getSuiteName(),
                     mBuildHelper.getSuiteVersion(), mBuildHelper.getSuitePlan(),
                     mBuildHelper.getSuiteBuild(), mResult, mResultDir, startTime,
-                    elapsedTime + startTime, mReferenceUrl, mBuildHelper.getCommandLineArgs());
+                    elapsedTime + startTime, mReferenceUrl, getLogUrl(),
+                    mBuildHelper.getCommandLineArgs());
             info("Test Result: %s", resultFile.getCanonicalPath());
 
             // Zip the full test results directory.
@@ -545,12 +546,24 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
         if (zippedResults != null) {
             FileInputStream zipResultStream = null;
             try {
-                zipResultStream =  new FileInputStream(zippedResults);
+                zipResultStream = new FileInputStream(zippedResults);
                 mLogSaver.saveLogData("results", LogDataType.ZIP, zipResultStream);
             } finally {
                 StreamUtil.close(zipResultStream);
             }
         }
+    }
+
+    /**
+     * Return the path in which log saver persists log files or null if
+     * logSaver is not enabled.
+     */
+    private String getLogUrl() {
+        if (!mUseLogSaver || mLogSaver == null) {
+            return null;
+        }
+
+        return mLogSaver.getLogReportDir().getUrl();
     }
 
     @Override
