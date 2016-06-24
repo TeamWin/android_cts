@@ -170,6 +170,28 @@ public class AnimatedVectorDrawableTest extends ActivityInstrumentationTestCase2
     }
 
     @SmallTest
+    public void testEmptyAnimatorSet() throws InterruptedException {
+        int resId = R.drawable.avd_empty_animator;
+        final MyCallback callback = new MyCallback();
+        final AnimatedVectorDrawable d1 =
+                (AnimatedVectorDrawable) mResources.getDrawable(resId);
+        d1.registerAnimationCallback(callback);
+        mActivity.runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                mActivity.setContentView(mLayoutId);
+                ImageView imageView = (ImageView) mActivity.findViewById(mImageViewId);
+                imageView.setImageDrawable(d1);
+                d1.start();
+            }
+        });
+
+        getInstrumentation().waitForIdleSync();
+        // Check that the AVD with empty AnimatorSet has finished
+        assertTrue(callback.mEnd);
+    }
+
+    @SmallTest
     public void testGetChangingConfigurations() {
         AnimatedVectorDrawable avd = new AnimatedVectorDrawable();
         ConstantState constantState = avd.getConstantState();
