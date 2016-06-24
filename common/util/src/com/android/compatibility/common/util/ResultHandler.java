@@ -67,6 +67,7 @@ public class ResultHandler {
     private static final String JAVA_VENDOR_ATTR = "java_vendor";
     private static final String JAVA_VERSION_ATTR = "java_version";
     private static final String LOGCAT_TAG = "Logcat";
+    private static final String LOG_URL_ATTR = "log_url";
     private static final String MESSAGE_ATTR = "message";
     private static final String MODULE_TAG = "Module";
     private static final String MODULES_EXECUTED_ATTR = "modules_done";
@@ -216,6 +217,7 @@ public class ResultHandler {
      * @param resultDir
      * @param startTime
      * @param referenceUrl A nullable string that can contain a URL to a related data
+     * @param logUrl A nullable string that can contain a URL to related log files
      * @param commandLineArgs A string containing the arguments to the run command
      * @return The result file created.
      * @throws IOException
@@ -223,7 +225,8 @@ public class ResultHandler {
      */
     public static File writeResults(String suiteName, String suiteVersion, String suitePlan,
             String suiteBuild, IInvocationResult result, File resultDir,
-            long startTime, long endTime, String referenceUrl, String commandLineArgs)
+            long startTime, long endTime, String referenceUrl, String logUrl,
+            String commandLineArgs)
                     throws IOException, XmlPullParserException {
         int passed = result.countResults(TestStatus.PASS);
         int failed = result.countResults(TestStatus.FAIL);
@@ -251,6 +254,10 @@ public class ResultHandler {
 
         if (referenceUrl != null) {
             serializer.attribute(NS, REFERENCE_URL_ATTR, referenceUrl);
+        }
+
+        if (logUrl != null) {
+            serializer.attribute(NS, LOG_URL_ATTR, logUrl);
         }
 
         // Device Info
