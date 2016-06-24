@@ -18,15 +18,14 @@ package com.android.compatibility.common.tradefed.testtype;
 
 import com.android.compatibility.SuiteInfo;
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
-import com.android.compatibility.common.tradefed.result.IInvocationResultRepo;
-import com.android.compatibility.common.tradefed.result.InvocationResultRepo;
+import com.android.compatibility.common.tradefed.targetprep.NetworkConnectivityChecker;
+import com.android.compatibility.common.tradefed.targetprep.SystemStatusChecker;
 import com.android.compatibility.common.tradefed.util.OptionHelper;
 import com.android.compatibility.common.util.AbiUtils;
 import com.android.compatibility.common.util.ICaseResult;
 import com.android.compatibility.common.util.IInvocationResult;
 import com.android.compatibility.common.util.IModuleResult;
 import com.android.compatibility.common.util.ITestResult;
-import com.android.compatibility.common.util.MonitoringUtils;
 import com.android.compatibility.common.util.ResultHandler;
 import com.android.compatibility.common.util.TestFilter;
 import com.android.compatibility.common.util.TestStatus;
@@ -34,6 +33,9 @@ import com.android.ddmlib.Log.LogLevel;
 import com.android.tradefed.build.IBuildInfo;
 import com.android.tradefed.config.ArgsOptionParser;
 import com.android.tradefed.config.ConfigurationException;
+import com.android.tradefed.config.ConfigurationFactory;
+import com.android.tradefed.config.IConfiguration;
+import com.android.tradefed.config.IConfigurationFactory;
 import com.android.tradefed.config.Option;
 import com.android.tradefed.config.Option.Importance;
 import com.android.tradefed.config.OptionClass;
@@ -41,8 +43,12 @@ import com.android.tradefed.config.OptionCopier;
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.device.DeviceUnresponsiveException;
 import com.android.tradefed.device.ITestDevice;
+import com.android.tradefed.log.ITestLogger;
 import com.android.tradefed.log.LogUtil.CLog;
 import com.android.tradefed.result.ITestInvocationListener;
+import com.android.tradefed.result.InputStreamSource;
+import com.android.tradefed.result.LogDataType;
+import com.android.tradefed.targetprep.ITargetPreparer;
 import com.android.tradefed.testtype.IAbi;
 import com.android.tradefed.testtype.IBuildReceiver;
 import com.android.tradefed.testtype.IDeviceTest;
@@ -61,8 +67,6 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 
 /**
@@ -202,6 +206,28 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
             + "If not specified, all configured preparers are run.")
     private Set<String> mPreparerWhitelist = new HashSet<>();
 
+    @Option(name = "skip-all-system-status-check",
+            description = "Whether all system status check between modules should be skipped")
+    private boolean mSkipAllSystemStatusCheck = false;
+
+    @Option(name = "skip-system-status-check",
+            description = "Disable specific system status checkers."
+            + "Specify zero or more SystemStatusChecker as canonical class names. e.g. "
+            + "\"com.android.compatibility.common.tradefed.targetprep.NetworkConnectivityChecker\" "
+            + "If not specified, all configured or whitelisted system status checkers are run.")
+    private Set<String> mSystemStatusCheckBlacklist = new HashSet<>();
+
+    @Option(name = "system-status-check-whitelist",
+            description = "Only run specific system status checkers."
+            + "Specify zero or more SystemStatusChecker as canonical class names. e.g. "
+            + "\"com.android.compatibility.common.tradefed.targetprep.NetworkConnectivityChecker\" "
+            + "If not specified, all configured system status checkers are run.")
+    private Set<String> mSystemStatusCheckWhitelist = new HashSet<>();
+
+    @Option(name = "system-status-checker-config", description = "Configuration file for system "
+            + "status checkers invoked between module execution.")
+    private String mSystemStatusCheckerConfig = "system-status-checkers";
+
     private int mTotalShards;
     private IModuleRepo mModuleRepo;
     private ITestDevice mDevice;
@@ -291,8 +317,22 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
                 CLog.d("Rebooting device before test starts as requested.");
                 mDevice.reboot();
             }
-            if (!mSkipConnectivityCheck) {
-                MonitoringUtils.checkDeviceConnectivity(getDevice(), listener, "start");
+
+            if (mSkipConnectivityCheck) {
+                String clazz = NetworkConnectivityChecker.class.getCanonicalName();
+                CLog.logAndDisplay(LogLevel.INFO, "\"--skip-connectivity-check\" is deprecated, "
+                        + "please use \"--skip-system-status-check %s\" instead", clazz);
+                mSystemStatusCheckBlacklist.add(clazz);
+            }
+
+            // Get system status checkers
+            List<SystemStatusChecker> checkers = null;
+            if (!mSkipAllSystemStatusCheck) {
+                try {
+                    checkers = initSystemStatusCheckers();
+                } catch (ConfigurationException ce) {
+                    throw new RuntimeException("failed to load system status checker config", ce);
+                }
             }
 
             // Set values and run preconditions
@@ -319,6 +359,8 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
                     }
                 }
 
+                // execute pre module execution checker
+                runPreModuleCheck(module.getName(), checkers, mDevice, listener);
                 try {
                     module.run(listener);
                 } catch (DeviceUnresponsiveException due) {
@@ -348,10 +390,7 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
                             TimeUtil.formatElapsedTime(expected),
                             TimeUtil.formatElapsedTime(duration));
                 }
-                if (!mSkipConnectivityCheck) {
-                    MonitoringUtils.checkDeviceConnectivity(getDevice(), listener,
-                            String.format("%s-%s", module.getName(), module.getAbi().getName()));
-                }
+                runPostModuleCheck(module.getName(), checkers, mDevice, listener);
             }
         } catch (FileNotFoundException fnfe) {
             throw new RuntimeException("Failed to initialize modules", fnfe);
@@ -384,6 +423,90 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
             }
         }
         return abis;
+    }
+
+    private List<SystemStatusChecker> initSystemStatusCheckers() throws ConfigurationException {
+        IConfigurationFactory cf = ConfigurationFactory.getInstance();
+        IConfiguration config = cf.createConfigurationFromArgs(
+                new String[]{mSystemStatusCheckerConfig});
+        // only checks the target preparers from the config
+        List<ITargetPreparer> preparers = config.getTargetPreparers();
+        List<SystemStatusChecker> checkers = new ArrayList<>();
+        for (ITargetPreparer p : preparers) {
+            if (p instanceof SystemStatusChecker) {
+                SystemStatusChecker s = (SystemStatusChecker)p;
+                if (shouldIncludeSystemStatusChecker(s)) {
+                    checkers.add(s);
+                } else {
+                    CLog.i("%s skipped because it's not whitelisted.",
+                            s.getClass().getCanonicalName());
+                }
+            } else {
+                CLog.w("Preparer %s does not have type %s, ignored ",
+                        p.getClass().getCanonicalName(),
+                        SystemStatusChecker.class.getCanonicalName());
+            }
+        }
+        return checkers;
+    }
+
+    /**
+     * Resolve the inclusion and exclusion logic of system status checkers
+     *
+     * @param s the {@link SystemStatusChecker} to perform filtering logic on
+     * @return
+     */
+    private boolean shouldIncludeSystemStatusChecker(SystemStatusChecker s) {
+        String clazz = s.getClass().getCanonicalName();
+        boolean shouldInclude = mSystemStatusCheckWhitelist.isEmpty()
+                || mSystemStatusCheckWhitelist.contains(clazz);
+        boolean shouldExclude = !mSystemStatusCheckBlacklist.isEmpty()
+                && mSystemStatusCheckBlacklist.contains(clazz);
+        return shouldInclude && !shouldExclude;
+    }
+
+    private void runPreModuleCheck(String moduleName, List<SystemStatusChecker> checkers,
+            ITestDevice device, ITestLogger logger) throws DeviceNotAvailableException {
+        CLog.i("Running system status checker before module execution: %s", moduleName);
+        List<String> failures = new ArrayList<>();
+        for (SystemStatusChecker checker : checkers) {
+            boolean result = checker.preExecutionCheck(device);
+            if (!result) {
+                failures.add(checker.getClass().getCanonicalName());
+                CLog.w("System status checker [%s] failed with message: %s",
+                        checker.getClass().getCanonicalName(), checker.getFailureMessage());
+            }
+        }
+        if (!failures.isEmpty()) {
+            CLog.w("There are failed system status checkers: %s capturing a bugreport",
+                    failures.toString());
+            InputStreamSource bugSource = device.getBugreport();
+            logger.testLog(String.format("bugreport-checker-pre-module-%s", moduleName),
+                    LogDataType.TEXT, bugSource);
+            bugSource.cancel();
+        }
+    }
+
+    private void runPostModuleCheck(String moduleName, List<SystemStatusChecker> checkers,
+            ITestDevice device, ITestLogger logger) throws DeviceNotAvailableException {
+        CLog.i("Running system status checker after module execution: %s", moduleName);
+        List<String> failures = new ArrayList<>();
+        for (SystemStatusChecker checker : checkers) {
+            boolean result = checker.postExecutionCheck(device);
+            if (!result) {
+                failures.add(checker.getClass().getCanonicalName());
+                CLog.w("System status checker [%s] failed with message: %s",
+                        checker.getClass().getCanonicalName(), checker.getFailureMessage());
+            }
+        }
+        if (!failures.isEmpty()) {
+            CLog.w("There are failed system status checkers: %s capturing a bugreport",
+                    failures.toString());
+            InputStreamSource bugSource = device.getBugreport();
+            logger.testLog(String.format("bugreport-checker-post-module-%s", moduleName),
+                    LogDataType.TEXT, bugSource);
+            bugSource.cancel();
+        }
     }
 
     /**
