@@ -123,6 +123,11 @@ public abstract class InteractiveVerifierActivity extends PassFailButtons.Activi
             logWithStack("failed " + this.getClass().getSimpleName() +
                     ((message == null) ? "" : ": " + message));
         }
+
+        protected void logFail(String message, Exception e) {
+            Log.e(TAG, "failed " + this.getClass().getSimpleName() +
+                    ((message == null) ? "" : ": " + message), e);
+        }
     }
 
     abstract int getTitleResource();
