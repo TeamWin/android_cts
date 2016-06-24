@@ -9,6 +9,7 @@ Local modifications:
 - Use __android_log_print() instead of fprintf()
 - Rename main() to seccomp_test_main()
 - Add get_seccomp_test_list()
+- Add parentheses in macro IS_SECCOMP_EVENT(status)
 
 The diff of modifications can be found in local-modifications-android.diff.
 

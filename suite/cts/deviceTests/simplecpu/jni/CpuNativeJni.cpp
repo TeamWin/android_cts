@@ -25,24 +25,24 @@
 static __inline char    *med3(char *, char *, char *, int (*)(const void *, const void *));
 static __inline void     swapfunc(char *, char *, int, int);
 
-#define min(a, b)   (a) < (b) ? a : b
+#define min(a, b)   ((a) < (b) ? (a) : (b))
 
 /*
  * Qsort routine from Bentley & McIlroy's "Engineering a Sort Function".
  */
 #define swapcode(TYPE, parmi, parmj, n) {       \
-    long i = (n) / sizeof (TYPE);           \
-    TYPE *pi = (TYPE *) (parmi);            \
-    TYPE *pj = (TYPE *) (parmj);            \
-    do {                        \
-        TYPE    t = *pi;            \
-        *pi++ = *pj;                \
-        *pj++ = t;              \
-        } while (--i > 0);              \
+    long i = (n) / sizeof (TYPE);               \
+    auto pi = (TYPE *) (parmi);                 \
+    auto pj = (TYPE *) (parmj);                 \
+    do {                                        \
+        TYPE    t = *pi;                        \
+        *pi++ = *pj;                            \
+        *pj++ = t;                              \
+        } while (--i > 0);                      \
 }
 
-#define SWAPINIT(a, es) swaptype = ((char *)a - (char *)0) % sizeof(long) || \
-    es % sizeof(long) ? 2 : es == sizeof(long)? 0 : 1;
+#define SWAPINIT(a, es) swaptype = ((char *)(a) - (char *)0) % sizeof(long) || \
+    (es) % sizeof(long) ? 2 : (es) == sizeof(long)? 0 : 1;
 
 static __inline void
 swapfunc(char *a, char *b, int n, int swaptype)
