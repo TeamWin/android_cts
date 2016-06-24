@@ -18,33 +18,21 @@ package android.graphics.cts;
 
 import android.graphics.Point;
 import android.graphics.PointF;
+import android.os.Parcel;
+import android.support.test.filters.SmallTest;
 import android.test.AndroidTestCase;
 
+@SmallTest
 public class PointFTest extends AndroidTestCase {
 
     private PointF mPointF;
 
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
-        mPointF = null;
-    }
-
     public void testConstructor() {
-
-        mPointF = null;
-        // new the PointF instance
         mPointF = new PointF();
-
-        mPointF = null;
-        // new the PointF instance
         mPointF = new PointF(10.0f, 10.0f);
 
-        mPointF = null;
         Point point = new Point(10, 10);
-        // new the PointF instance
         mPointF = new PointF(point);
-
     }
 
     public void testNegate() {
@@ -91,4 +79,20 @@ public class PointFTest extends AndroidTestCase {
         assertEquals(11.1f, mPointF.y);
     }
 
+    public void testDescribeContents() {
+        mPointF = new PointF(10.0f, 20.0f);
+        assertEquals(0, mPointF.describeContents());
+    }
+
+    public void testParceling() {
+        mPointF = new PointF(10.0f, 20.0f);
+        Parcel p = Parcel.obtain();
+        mPointF.writeToParcel(p, 0);
+        p.setDataPosition(0);
+
+        mPointF = new PointF();
+        mPointF.readFromParcel(p);
+        assertEquals(10.0f, mPointF.x);
+        assertEquals(20.0f, mPointF.y);
+    }
 }

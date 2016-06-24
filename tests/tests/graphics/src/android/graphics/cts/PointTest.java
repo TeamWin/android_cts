@@ -17,30 +17,21 @@
 package android.graphics.cts;
 
 import android.graphics.Point;
+import android.os.Parcel;
+import android.support.test.filters.SmallTest;
 import android.test.AndroidTestCase;
 
+@SmallTest
 public class PointTest extends AndroidTestCase {
 
     private Point mPoint;
 
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
-        mPoint = null;
-    }
-
     public void testConstructor() {
-
-        // new the Point instance
         mPoint = new Point();
-
-        // new the Point instance
         mPoint = new Point(10, 10);
 
         Point point = new Point(10, 10);
-        // new the Point instance
         mPoint = new Point(point);
-
     }
 
     public void testSet() {
@@ -89,4 +80,20 @@ public class PointTest extends AndroidTestCase {
         assertEquals(-10, mPoint.y);
     }
 
+    public void testDescribeContents() {
+        mPoint = new Point(10, 20);
+        assertEquals(0, mPoint.describeContents());
+    }
+
+    public void testParceling() {
+        mPoint = new Point(10, 20);
+        Parcel p = Parcel.obtain();
+        mPoint.writeToParcel(p, 0);
+        p.setDataPosition(0);
+
+        mPoint = new Point();
+        mPoint.readFromParcel(p);
+        assertEquals(10, mPoint.x);
+        assertEquals(20, mPoint.y);
+    }
 }

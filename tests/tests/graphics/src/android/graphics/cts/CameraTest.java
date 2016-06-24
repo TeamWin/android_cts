@@ -18,8 +18,10 @@ package android.graphics.cts;
 import android.graphics.Camera;
 import android.graphics.Canvas;
 import android.graphics.Matrix;
+import android.support.test.filters.SmallTest;
 import android.test.AndroidTestCase;
 
+@SmallTest
 public class CameraTest extends AndroidTestCase {
     private Camera mCamera;
 
@@ -125,6 +127,35 @@ public class CameraTest extends AndroidTestCase {
         assertEquals(0.0f, f[6]);
         assertEquals(0.0f, f[7]);
         assertEquals(1.0f, f[8]);
+    }
+
+    public void testRotate() {
+        Matrix m1 = new Matrix();
+        preCompare(m1);
+
+        mCamera.rotate(15.0f, 30.0f, 45.0f);
+        Matrix m2 = new Matrix();
+        mCamera.getMatrix(m2);
+        assertFalse(m1.equals(m2));
+
+        float[] f = new float[9];
+        m2.getValues(f);
+        assertEquals(0.6123724f, f[0]);
+        assertEquals(0.6123724f, f[1]);
+        assertEquals(0.0f, f[2]);
+        assertEquals(-0.5915063f, f[3]);
+        assertEquals(0.774519f, f[4]);
+        assertEquals(0.0f, f[5]);
+        assertEquals(0.0009106233f, f[6]);
+        assertEquals(0.00027516257f, f[7]);
+        assertEquals(1.0f, f[8]);
+    }
+
+    public void testLocationAccessors() {
+        mCamera.setLocation(10.0f, 20.0f, 30.0f);
+        assertEquals(10.0f, mCamera.getLocationX());
+        assertEquals(20.0f, mCamera.getLocationY());
+        assertEquals(30.0f, mCamera.getLocationZ());
     }
 
     public void testApplyToCanvas() {

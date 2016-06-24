@@ -16,9 +16,6 @@
 
 package android.graphics.cts;
 
-import android.graphics.cts.R;
-
-
 import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -29,8 +26,10 @@ import android.graphics.Paint;
 import android.graphics.Rect;
 import android.graphics.RectF;
 import android.graphics.Region;
+import android.support.test.filters.SmallTest;
 import android.test.AndroidTestCase;
 
+@SmallTest
 public class NinePatchTest extends AndroidTestCase {
     private static int ALPHA_OPAQUE = 0xFF;
 
@@ -57,13 +56,37 @@ public class NinePatchTest extends AndroidTestCase {
     }
 
     public void testConstructor() {
-        mNinePatch = null;
+        try {
+            mNinePatch = new NinePatch(mBitmap, new byte[2]);
+            fail("should throw exception");
+        } catch (Exception e) {
+        }
+
         try {
             mNinePatch = new NinePatch(mBitmap, new byte[2], NAME);
             fail("should throw exception");
         } catch (Exception e) {
         }
+
+        mNinePatch = new NinePatch(mBitmap, mChunk);
+        assertEquals(mBitmap, mNinePatch.getBitmap());
+        assertEquals(null, mNinePatch.getName());
+
         mNinePatch = new NinePatch(mBitmap, mChunk, NAME);
+        assertEquals(mBitmap, mNinePatch.getBitmap());
+        assertEquals(NAME, mNinePatch.getName());
+    }
+
+    public void testPaintAccessors() {
+        Paint p = new Paint();
+        mNinePatch = new NinePatch(mBitmap, mChunk, NAME);
+        assertNull(mNinePatch.getPaint());
+
+        mNinePatch.setPaint(p);
+        assertEquals(p, mNinePatch.getPaint());
+
+        mNinePatch.setPaint(null);
+        assertNull(mNinePatch.getPaint());
     }
 
     public void testIsNinePatchChunk() {
@@ -71,7 +94,6 @@ public class NinePatchTest extends AndroidTestCase {
         Bitmap bitmap = Bitmap.createBitmap(COLOR, 10, 10, Bitmap.Config.ARGB_4444);
         assertFalse(NinePatch.isNinePatchChunk(bitmap.getNinePatchChunk()));
         assertFalse(NinePatch.isNinePatchChunk(null));
-
     }
 
     public void testDraw() {
