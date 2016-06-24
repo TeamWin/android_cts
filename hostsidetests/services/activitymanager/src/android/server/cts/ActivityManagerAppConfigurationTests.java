@@ -56,6 +56,59 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
     }
 
     /**
+     * Tests whether the Display sizes change when rotating the device.
+     */
+    public void testConfigurationUpdatesWhenRotatingWhileFullscreen() throws Exception {
+        setDeviceRotation(0);
+        launchActivityInStack(TEST_ACTIVITY_NAME, FULLSCREEN_WORKSPACE_STACK_ID);
+        final ReportedSizes orientationASizes = getActivityDisplaySize(TEST_ACTIVITY_NAME,
+                FULLSCREEN_WORKSPACE_STACK_ID);
+
+        setDeviceRotation(1);
+        final ReportedSizes orientationBSizes = getActivityDisplaySize(TEST_ACTIVITY_NAME,
+                FULLSCREEN_WORKSPACE_STACK_ID);
+        assertSizesRotate(orientationASizes, orientationBSizes);
+    }
+
+
+    /**
+     * Same as {@link #testConfigurationUpdatesWhenRotatingWhileFullscreen()} but when the Activity
+     * is in the docked stack.
+     */
+    public void testConfigurationUpdatesWhenRotatingWhileDocked() throws Exception {
+        setDeviceRotation(0);
+        launchActivityInStack(TEST_ACTIVITY_NAME, DOCKED_STACK_ID);
+        final ReportedSizes orientationASizes = getActivityDisplaySize(TEST_ACTIVITY_NAME,
+                DOCKED_STACK_ID);
+
+        setDeviceRotation(1);
+        final ReportedSizes orientationBSizes = getActivityDisplaySize(TEST_ACTIVITY_NAME,
+                DOCKED_STACK_ID);
+        assertSizesRotate(orientationASizes, orientationBSizes);
+    }
+
+    /**
+     * Asserts that after rotation, the aspect ratios of display size, metrics, and configuration
+     * have flipped.
+     */
+    private static void assertSizesRotate(ReportedSizes rotationA, ReportedSizes rotationB)
+            throws Exception {
+        assertEquals(rotationA.displayWidth, rotationA.metricsWidth);
+        assertEquals(rotationA.displayHeight, rotationA.metricsHeight);
+        assertEquals(rotationB.displayWidth, rotationB.metricsWidth);
+        assertEquals(rotationB.displayHeight, rotationB.metricsHeight);
+
+        final boolean beforePortrait = rotationA.displayWidth < rotationA.displayHeight;
+        final boolean afterPortrait = rotationB.displayWidth < rotationB.displayHeight;
+        assertFalse(beforePortrait == afterPortrait);
+
+        final boolean beforeConfigPortrait = rotationA.widthDp < rotationA.heightDp;
+        final boolean afterConfigPortrait = rotationB.widthDp < rotationB.heightDp;
+        assertEquals(beforePortrait, beforeConfigPortrait);
+        assertEquals(afterPortrait, afterConfigPortrait);
+    }
+
+    /**
      * Throws an AssertionError if fullscreenSizes has widths/heights (depending on aspect ratio)
      * that are smaller than the dockedSizes.
      */
@@ -65,9 +118,11 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
         if (portrait) {
             assertTrue(dockedSizes.displayHeight < fullscreenSizes.displayHeight);
             assertTrue(dockedSizes.heightDp < fullscreenSizes.heightDp);
+            assertTrue(dockedSizes.metricsHeight < fullscreenSizes.metricsHeight);
         } else {
             assertTrue(dockedSizes.displayWidth < fullscreenSizes.displayWidth);
             assertTrue(dockedSizes.widthDp < fullscreenSizes.widthDp);
+            assertTrue(dockedSizes.metricsWidth < fullscreenSizes.metricsWidth);
         }
     }
 
