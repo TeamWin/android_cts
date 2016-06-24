@@ -16,23 +16,21 @@
 
 package android.widget.cts;
 
-import android.widget.BaseAdapter;
-import android.widget.LinearLayout;
-import android.widget.cts.R;
-
-import org.xmlpull.v1.XmlPullParser;
-
 import android.app.Activity;
 import android.app.Instrumentation;
 import android.content.Context;
 import android.cts.util.PollingCheck;
 import android.graphics.Canvas;
+import android.graphics.Color;
 import android.graphics.Rect;
+import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.Parcelable;
 import android.test.ActivityInstrumentationTestCase2;
 import android.test.UiThreadTest;
+import android.test.suitebuilder.annotation.LargeTest;
 import android.test.suitebuilder.annotation.MediumTest;
+import android.test.suitebuilder.annotation.SmallTest;
 import android.util.AttributeSet;
 import android.util.Pair;
 import android.util.SparseBooleanArray;
@@ -41,24 +39,40 @@ import android.view.KeyEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.LayoutAnimationController;
+import android.widget.AbsListView;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
 import android.widget.ArrayAdapter;
+import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.TextView;
+import android.widget.cts.util.TestUtils;
 import android.widget.cts.util.ViewTestUtils;
+import junit.framework.Assert;
+
+import org.xmlpull.v1.XmlPullParser;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-
-import junit.framework.Assert;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 import static org.mockito.Mockito.*;
 
+@SmallTest
 public class ListViewTest extends ActivityInstrumentationTestCase2<ListViewCtsActivity> {
     private final String[] mCountryList = new String[] {
         "Argentina", "Australia", "China", "France", "Germany", "Italy", "Japan", "United States"
+    };
+    private final String[] mLongCountryList = new String[] {
+        "Argentina", "Australia", "Belize", "Botswana", "Brazil", "Cameroon", "China", "Cyprus",
+        "Denmark", "Djibouti", "Ethiopia", "Fiji", "Finland", "France", "Gabon", "Germany",
+        "Ghana", "Haiti", "Honduras", "Iceland", "India", "Indonesia", "Ireland", "Italy",
+        "Japan", "Kiribati", "Laos", "Lesotho", "Liberia", "Malaysia", "Mongolia", "Myanmar",
+        "Nauru", "Norway", "Oman", "Pakistan", "Philippines", "Portugal", "Romania", "Russia",
+        "Rwanda", "Singapore", "Slovakia", "Slovenia", "Somalia", "Swaziland", "Togo", "Tuvalu",
+        "Uganda", "Ukraine", "United States", "Vanuatu", "Venezuela", "Zimbabwe"
     };
     private final String[] mNameList = new String[] {
         "Jacky", "David", "Kevin", "Michael", "Andy"
@@ -70,6 +84,7 @@ public class ListViewTest extends ActivityInstrumentationTestCase2<ListViewCtsAc
     private Instrumentation mInstrumentation;
     private AttributeSet mAttributeSet;
     private ArrayAdapter<String> mAdapter_countries;
+    private ArrayAdapter<String> mAdapter_longCountries;
     private ArrayAdapter<String> mAdapter_names;
     private ArrayAdapter<String> mAdapter_empty;
 
@@ -85,11 +100,13 @@ public class ListViewTest extends ActivityInstrumentationTestCase2<ListViewCtsAc
         XmlPullParser parser = mActivity.getResources().getXml(R.layout.listview_layout);
         mAttributeSet = Xml.asAttributeSet(parser);
 
-        mAdapter_countries = new ArrayAdapter<String>(mActivity,
+        mAdapter_countries = new ArrayAdapter<>(mActivity,
                 android.R.layout.simple_list_item_1, mCountryList);
-        mAdapter_names = new ArrayAdapter<String>(mActivity, android.R.layout.simple_list_item_1,
+        mAdapter_longCountries = new ArrayAdapter<>(mActivity,
+                android.R.layout.simple_list_item_1, mLongCountryList);
+        mAdapter_names = new ArrayAdapter<>(mActivity, android.R.layout.simple_list_item_1,
                 mNameList);
-        mAdapter_empty = new ArrayAdapter<String>(mActivity, android.R.layout.simple_list_item_1,
+        mAdapter_empty = new ArrayAdapter<>(mActivity, android.R.layout.simple_list_item_1,
                 mEmptyList);
 
         mListView = (ListView) mActivity.findViewById(R.id.listview_default);
@@ -143,12 +160,7 @@ public class ListViewTest extends ActivityInstrumentationTestCase2<ListViewCtsAc
 
         Drawable d = mListView.getDivider();
         final Rect r = d.getBounds();
-        new PollingCheck() {
-            @Override
-            protected boolean check() {
-                return r.bottom - r.top > 0;
-            }
-        }.run();
+        PollingCheck.waitFor(() -> r.bottom - r.top > 0);
 
         ViewTestUtils.runOnMainAndDrawSync(mInstrumentation, mListView,
                 () -> mListView.setDividerHeight(20));
@@ -267,14 +279,18 @@ public class ListViewTest extends ActivityInstrumentationTestCase2<ListViewCtsAc
         footerView2.setText("footerview2");
 
         mInstrumentation.runOnMainSync(() -> mListView.setFooterDividersEnabled(true));
+        assertTrue(mListView.areFooterDividersEnabled());
         assertEquals(0, mListView.getFooterViewsCount());
 
         mInstrumentation.runOnMainSync(() -> mListView.addFooterView(footerView1, null, true));
+        assertTrue(mListView.areFooterDividersEnabled());
         assertEquals(1, mListView.getFooterViewsCount());
 
-        mInstrumentation.runOnMainSync(() -> mListView.addFooterView(footerView2));
-
-        mInstrumentation.waitForIdleSync();
+        mInstrumentation.runOnMainSync(() -> {
+            mListView.setFooterDividersEnabled(false);
+            mListView.addFooterView(footerView2);
+        });
+        assertFalse(mListView.areFooterDividersEnabled());
         assertEquals(2, mListView.getFooterViewsCount());
 
         ViewTestUtils.runOnMainAndDrawSync(mInstrumentation, mListView,
@@ -282,10 +298,12 @@ public class ListViewTest extends ActivityInstrumentationTestCase2<ListViewCtsAc
 
         ViewTestUtils.runOnMainAndDrawSync(mInstrumentation, mListView,
                 () -> mListView.removeFooterView(footerView1));
+        assertFalse(mListView.areFooterDividersEnabled());
         assertEquals(1, mListView.getFooterViewsCount());
 
         ViewTestUtils.runOnMainAndDrawSync(mInstrumentation, mListView,
                 () -> mListView.removeFooterView(footerView2));
+        assertFalse(mListView.areFooterDividersEnabled());
         assertEquals(0, mListView.getFooterViewsCount());
     }
 
@@ -294,18 +312,28 @@ public class ListViewTest extends ActivityInstrumentationTestCase2<ListViewCtsAc
         final TextView headerView2 = (TextView) mActivity.findViewById(R.id.headerview2);
 
         mInstrumentation.runOnMainSync(() -> mListView.setHeaderDividersEnabled(true));
+        assertTrue(mListView.areHeaderDividersEnabled());
         assertEquals(0, mListView.getHeaderViewsCount());
 
         mInstrumentation.runOnMainSync(() -> mListView.addHeaderView(headerView2, null, true));
+        assertTrue(mListView.areHeaderDividersEnabled());
         assertEquals(1, mListView.getHeaderViewsCount());
 
-        mInstrumentation.runOnMainSync(() -> mListView.addHeaderView(headerView1));
+        mInstrumentation.runOnMainSync(() -> {
+            mListView.setHeaderDividersEnabled(false);
+            mListView.addHeaderView(headerView1);
+        });
+        assertFalse(mListView.areHeaderDividersEnabled());
         assertEquals(2, mListView.getHeaderViewsCount());
+
+        mInstrumentation.runOnMainSync(() -> mListView.removeHeaderView(headerView2));
+        assertFalse(mListView.areHeaderDividersEnabled());
+        assertEquals(1, mListView.getHeaderViewsCount());
     }
 
     public void testHeaderFooterType() throws Throwable {
         final TextView headerView = new TextView(getActivity());
-        final List<Pair<View, View>> mismatch = new ArrayList<Pair<View, View>>();
+        final List<Pair<View, View>> mismatch = new ArrayList<>();
         final ArrayAdapter adapter = new ArrayAdapter<String>(mActivity,
                 android.R.layout.simple_list_item_1, mNameList) {
             @Override
@@ -318,7 +346,7 @@ public class ListViewTest extends ActivityInstrumentationTestCase2<ListViewCtsAc
             public View getView(int position, View convertView, ViewGroup parent) {
                 if (position == 0) {
                     if (convertView != null && convertView != headerView) {
-                        mismatch.add(new Pair<View, View>(headerView, convertView));
+                        mismatch.add(new Pair<>(headerView, convertView));
                     }
                     return headerView;
                 } else {
@@ -346,12 +374,7 @@ public class ListViewTest extends ActivityInstrumentationTestCase2<ListViewCtsAc
 
         Drawable defaultDrawable = mListView.getDivider();
         final Rect r = defaultDrawable.getBounds();
-        new PollingCheck() {
-            @Override
-            protected boolean check() {
-                return r.bottom - r.top > 0;
-            }
-        }.run();
+        PollingCheck.waitFor(() -> r.bottom - r.top > 0);
 
         final Drawable d = mActivity.getResources().getDrawable(R.drawable.scenery);
 
@@ -591,7 +614,7 @@ public class ListViewTest extends ActivityInstrumentationTestCase2<ListViewCtsAc
         ListView listView = new ListView(mActivity);
         List<String> items = new ArrayList<>();
         items.add("hello");
-        Adapter<String> adapter = new Adapter<String>(mActivity, 0, items);
+        Adapter<String> adapter = new Adapter<>(mActivity, 0, items);
         listView.setAdapter(adapter);
 
         int measureSpec = View.MeasureSpec.makeMeasureSpec(100, View.MeasureSpec.EXACTLY);
@@ -616,7 +639,7 @@ public class ListViewTest extends ActivityInstrumentationTestCase2<ListViewCtsAc
         listView.addHeaderView(new View(mActivity), null, false);
         List<String> items = new ArrayList<>();
         items.add("hello");
-        Adapter<String> adapter = new Adapter<String>(mActivity, 0, items);
+        Adapter<String> adapter = new Adapter<>(mActivity, 0, items);
         listView.setAdapter(adapter);
 
         listView.setSelection(1);
@@ -947,28 +970,27 @@ public class ListViewTest extends ActivityInstrumentationTestCase2<ListViewCtsAc
     }
 
     public void testTransientStateStableIds() throws Exception {
-        final ListView listView = mListView;
-        final ArrayList<String> items = new ArrayList<String>(Arrays.asList(mCountryList));
-        final StableArrayAdapter<String> adapter = new StableArrayAdapter<String>(mActivity,
+        final ArrayList<String> items = new ArrayList<>(Arrays.asList(mCountryList));
+        final StableArrayAdapter<String> adapter = new StableArrayAdapter<>(mActivity,
                 android.R.layout.simple_list_item_1, items);
 
         ViewTestUtils.runOnMainAndDrawSync(mInstrumentation, mListView,
-                () -> listView.setAdapter(adapter));
+                () -> mListView.setAdapter(adapter));
 
         final Object tag = new Object();
-        final View oldItem = listView.getChildAt(2);
+        final View oldItem = mListView.getChildAt(2);
         final CharSequence oldText = ((TextView) oldItem.findViewById(android.R.id.text1))
                 .getText();
         oldItem.setHasTransientState(true);
         oldItem.setTag(tag);
 
-        ViewTestUtils.runOnMainAndDrawSync(mInstrumentation, listView,
+        ViewTestUtils.runOnMainAndDrawSync(mInstrumentation, mListView,
                 () -> {
                     adapter.remove(adapter.getItem(0));
                     adapter.notifyDataSetChanged();
                 });
 
-        final View newItem = listView.getChildAt(1);
+        final View newItem = mListView.getChildAt(1);
         final CharSequence newText = ((TextView) newItem.findViewById(android.R.id.text1))
                 .getText();
 
@@ -991,5 +1013,133 @@ public class ListViewTest extends ActivityInstrumentationTestCase2<ListViewCtsAc
         public boolean hasStableIds() {
             return true;
         }
+    }
+
+    @LargeTest
+    public void testSmoothScrollByOffset() {
+        final int itemCount = mLongCountryList.length;
+
+        mActivity.runOnUiThread(() -> mListView.setAdapter(mAdapter_longCountries));
+        mInstrumentation.waitForIdleSync();
+
+        assertEquals(0, mListView.getFirstVisiblePosition());
+
+        // If we're on a really big display, we might be in a situation where the position
+        // we're going to scroll to is already visible. In that case the logic in the rest
+        // of this test will never fire off a listener callback and then fail the test.
+        final int positionToScrollTo = itemCount - 10;
+        final int lastVisiblePosition = mListView.getLastVisiblePosition();
+        if (positionToScrollTo <= lastVisiblePosition) {
+            return;
+        }
+
+        // Register a scroll listener on our ListView. The listener will notify our latch
+        // when the "target" item comes into view. If that never happens, the latch will
+        // time out and fail the test.
+        final CountDownLatch latch = new CountDownLatch(1);
+        mListView.setOnScrollListener(new AbsListView.OnScrollListener() {
+            @Override
+            public void onScrollStateChanged(AbsListView view, int scrollState) {
+            }
+
+            @Override
+            public void onScroll(AbsListView view, int firstVisibleItem, int visibleItemCount,
+                    int totalItemCount) {
+                if ((positionToScrollTo >= firstVisibleItem) &&
+                        (positionToScrollTo <= (firstVisibleItem + visibleItemCount))) {
+                    latch.countDown();
+                }
+            }
+        });
+        int offset = positionToScrollTo - lastVisiblePosition;
+        mActivity.runOnUiThread(() -> mListView.smoothScrollByOffset(offset));
+
+        boolean result = false;
+        try {
+            result = latch.await(20, TimeUnit.SECONDS);
+        } catch (InterruptedException e) {
+            // ignore
+        }
+        assertTrue("Timed out while waiting for the target view to be scrolled into view", result);
+    }
+
+    private static class PositionArrayAdapter<T> extends ArrayAdapter<T> {
+        public PositionArrayAdapter(Context context, int resource, List<T> objects) {
+            super(context, resource, objects);
+        }
+
+        @Override
+        public long getItemId(int position) {
+            return position;
+        }
+
+        @Override
+        public boolean hasStableIds() {
+            return true;
+        }
+    }
+
+    public void testGetCheckItemIds() {
+        final ArrayList<String> items = new ArrayList<>(Arrays.asList(mCountryList));
+        final ArrayAdapter<String> adapter = new PositionArrayAdapter<>(mActivity,
+                android.R.layout.simple_list_item_1, items);
+
+        ViewTestUtils.runOnMainAndDrawSync(mInstrumentation, mListView,
+                () -> mListView.setAdapter(adapter));
+
+        mInstrumentation.runOnMainSync(
+                () -> mListView.setChoiceMode(ListView.CHOICE_MODE_MULTIPLE));
+        assertTrue(mListView.getCheckItemIds().length == 0);
+
+        mInstrumentation.runOnMainSync(() -> mListView.setItemChecked(2, true));
+        TestUtils.assertIdentical(new long[] { 2 }, mListView.getCheckItemIds());
+
+        mInstrumentation.runOnMainSync(() -> mListView.setItemChecked(4, true));
+        TestUtils.assertIdentical(new long[] { 2, 4 }, mListView.getCheckItemIds());
+
+        mInstrumentation.runOnMainSync(() -> mListView.setItemChecked(2, false));
+        TestUtils.assertIdentical(new long[] { 4 }, mListView.getCheckItemIds());
+
+        mInstrumentation.runOnMainSync(() -> mListView.setItemChecked(4, false));
+        assertTrue(mListView.getCheckItemIds().length == 0);
+    }
+
+    public void testAccessOverscrollHeader() {
+        final Drawable overscrollHeaderDrawable = spy(new ColorDrawable(Color.YELLOW));
+        ViewTestUtils.runOnMainAndDrawSync(mInstrumentation, mListView, () -> {
+            mListView.setAdapter(mAdapter_longCountries);
+            mListView.setOverscrollHeader(overscrollHeaderDrawable);
+        });
+
+        assertEquals(overscrollHeaderDrawable, mListView.getOverscrollHeader());
+        verify(overscrollHeaderDrawable, never()).draw(any(Canvas.class));
+
+        ViewTestUtils.runOnMainAndDrawSync(mInstrumentation, mListView,
+                () -> mListView.setScrollY(-mListView.getHeight() / 2));
+
+        verify(overscrollHeaderDrawable, atLeastOnce()).draw(any(Canvas.class));
+    }
+
+    public void testAccessOverscrollFooter() {
+        final Drawable overscrollFooterDrawable = spy(new ColorDrawable(Color.MAGENTA));
+        ViewTestUtils.runOnMainAndDrawSync(mInstrumentation, mListView, () -> {
+            // Configure ListView to automatically scroll to the selected item
+            mListView.setStackFromBottom(true);
+            mListView.setTranscriptMode(AbsListView.TRANSCRIPT_MODE_ALWAYS_SCROLL);
+
+            mListView.setAdapter(mAdapter_longCountries);
+            mListView.setOverscrollFooter(overscrollFooterDrawable);
+
+            // Set selection to the last item
+            mListView.setSelection(mAdapter_longCountries.getCount() - 1);
+        });
+
+        assertEquals(overscrollFooterDrawable, mListView.getOverscrollFooter());
+        verify(overscrollFooterDrawable, never()).draw(any(Canvas.class));
+
+        ViewTestUtils.runOnMainAndDrawSync(mInstrumentation, mListView,
+                () -> mListView.setScrollY(mListView.getHeight() / 2));
+
+        verify(overscrollFooterDrawable, atLeastOnce()).draw(any(Canvas.class));
     }
 }
