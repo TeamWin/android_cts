@@ -52,7 +52,7 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
         }
 
         mAmWmState.waitForValidState(mDevice, true, new String[] {topActivityName},
-                new int[] {PINNED_STACK_ID});
+                new int[] {PINNED_STACK_ID}, false /* compareTaskAndStackBounds */);
         mAmWmState.computeState(mDevice, null);
 
         if (supportsPip()) {

@@ -99,7 +99,8 @@ class ActivityAndWindowManagersState extends Assert {
      */
     void computeState(ITestDevice device, boolean visibleOnly, String[] waitForActivitiesVisible,
                       boolean compareTaskAndStackBounds) throws Exception {
-        waitForValidState(device, visibleOnly, waitForActivitiesVisible, null);
+        waitForValidState(device, visibleOnly, waitForActivitiesVisible, null,
+                compareTaskAndStackBounds);
 
         assertSanity();
         assertValidBounds(compareTaskAndStackBounds);
@@ -115,12 +116,15 @@ class ActivityAndWindowManagersState extends Assert {
      *                 Pass null to skip this check.
      */
     void waitForValidState(ITestDevice device, boolean visibleOnly,
-                           String[] waitForActivitiesVisible, int[] stackIds) throws Exception {
+                           String[] waitForActivitiesVisible, int[] stackIds,
+                           boolean compareTaskAndStackBounds) throws Exception {
         int retriesLeft = 5;
         do {
+            // TODO: Get state of AM and WM at the same time to avoid mismatches caused by
+            // requesting dump in some intermediate state.
             mAmState.computeState(device);
             mWmState.computeState(device, visibleOnly);
-            if (shouldWaitForValidStacks()
+            if (shouldWaitForValidStacks(compareTaskAndStackBounds)
                     || shouldWaitForActivities(waitForActivitiesVisible, stackIds)) {
                 log("***Waiting for valid stacks and activities states...");
                 try {
@@ -153,7 +157,7 @@ class ActivityAndWindowManagersState extends Assert {
         } while (retriesLeft-- > 0);
     }
 
-    private boolean shouldWaitForValidStacks() {
+    private boolean shouldWaitForValidStacks(boolean compareTaskAndStackBounds) {
         if (!taskListsInAmAndWmAreEqual()) {
             // We want to wait for equal task lists in AM and WM in case we caught them in the
             // middle of some state change operations.
@@ -164,6 +168,14 @@ class ActivityAndWindowManagersState extends Assert {
             // We want to wait a little for the stacks in AM and WM to have equal bounds as there
             // might be a transition animation ongoing when we got the states from WM AM separately.
             log("***stackBoundsInAMAndWMAreEqual=false");
+            return true;
+        }
+        try {
+            // Temporary fix to avoid catching intermediate state with different task bounds in AM
+            // and WM.
+            assertValidBounds(compareTaskAndStackBounds);
+        } catch (AssertionError e) {
+            log("***taskBoundsInAMAndWMAreEqual=false : " + e.getMessage());
             return true;
         }
         return false;
