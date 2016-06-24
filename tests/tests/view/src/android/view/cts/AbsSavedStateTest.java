@@ -18,83 +18,128 @@ package android.view.cts;
 
 import android.os.Parcel;
 import android.os.Parcelable;
+import android.support.test.filters.SmallTest;
 import android.test.InstrumentationTestCase;
 import android.view.AbsSavedState;
 
+import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+
+@SmallTest
 public class AbsSavedStateTest extends InstrumentationTestCase {
 
-    // constant for test of writeToParcel
-    public static final int TEST_NUMBER = 1;
-
     public void testConstructor() {
-        MockParcelable superState = new MockParcelable();
-        assertNotNull(superState);
-        new MockAbsSavedState(superState);
+        try {
+            new AbsSavedStateImpl((Parcelable) null);
+            fail("Expected NullPointerException");
+        } catch (IllegalArgumentException e) {
+            // Expected.
+        }
+
+        try {
+            new AbsSavedStateImpl((Parcel) null);
+            fail("Expected NullPointerException");
+        } catch (NullPointerException e) {
+            // Expected.
+        }
+
+        try {
+            new AbsSavedStateImpl(null, null);
+            fail("Expected NullPointerException");
+        } catch (NullPointerException e) {
+            // Expected.
+        }
+
+        AbsSavedState superState = new AbsSavedStateImpl(Parcel.obtain());
+        assertNull(superState.getSuperState());
+
+        AbsSavedState s = new AbsSavedStateImpl(superState);
+        assertSame(superState, s.getSuperState());
 
         Parcel source = Parcel.obtain();
-        new MockAbsSavedState(source);
+        source.writeParcelable(superState, 0);
+        source.setDataPosition(0);
+        s = new AbsSavedStateImpl(source);
+        assertTrue(s.getSuperState() instanceof AbsSavedState);
 
-        MockAbsSavedState savedState = new MockAbsSavedState(source);
-        assertEquals(0, savedState.describeContents());
+        source = Parcel.obtain();
+        s = new AbsSavedStateImpl(source);
+        assertSame(AbsSavedState.EMPTY_STATE, s.getSuperState());
+
+        ClassLoader loader = AbsSavedState.class.getClassLoader();
+        source = Parcel.obtain();
+        source.writeParcelable(superState, 0);
+        source.setDataPosition(0);
+        s = new AbsSavedStateImpl(source, loader);
+        assertTrue(s.getSuperState() instanceof AbsSavedState);
+
+        source = Parcel.obtain();
+        s = new AbsSavedStateImpl(source, loader);
+        assertSame(AbsSavedState.EMPTY_STATE, s.getSuperState());
     }
 
-    public void testGetSuperState() {
-        MockParcelable superState = new MockParcelable();
-        assertNotNull(superState);
-        MockAbsSavedState savedState = new MockAbsSavedState(superState);
+    public void testCreator() {
+        int size = 10;
+        AbsSavedState[] array = AbsSavedState.CREATOR.newArray(size);
+        assertNotNull(array);
+        assertEquals(size, array.length);
+        for (AbsSavedState state : array) {
+            assertNull(state);
+        }
 
-        assertSame(superState, savedState.getSuperState());
+        AbsSavedState state = new AbsSavedStateImpl(AbsSavedState.EMPTY_STATE);
+        Parcel parcel = Parcel.obtain();
+        state.writeToParcel(parcel, 0);
+        parcel.setDataPosition(0);
+        AbsSavedState unparceled = AbsSavedState.CREATOR.createFromParcel(parcel);
+        assertNotNull(unparceled);
+        assertEquals(AbsSavedState.EMPTY_STATE, unparceled.getSuperState());
+
+        AbsSavedState stateWithSuper = new AbsSavedStateImpl(state);
+        parcel = Parcel.obtain();
+        stateWithSuper.writeToParcel(parcel, 0);
+        parcel.setDataPosition(0);
+        try {
+            AbsSavedState.CREATOR.createFromParcel(parcel);
+            fail("Expected IllegalStateException");
+        } catch (IllegalStateException e) {
+            // Expected.
+        }
     }
 
     public void testWriteToParcel() {
-        MockParcelable superState = new MockParcelable();
-        assertNotNull(superState);
-        MockAbsSavedState savedState = new MockAbsSavedState(superState);
-
+        Parcelable superState = mock(Parcelable.class);
+        AbsSavedState savedState = new AbsSavedStateImpl(superState);
         Parcel dest = Parcel.obtain();
         int flags = 2;
         savedState.writeToParcel(dest, flags);
-
-        // we instantiate the writeToParcel of Parcalable
-        // and give a return for test
-        assertEquals(TEST_NUMBER, superState.writeToParcelRunSymbol());
-        assertEquals(flags, superState.getFlags());
+        verify(superState).writeToParcel(eq(dest), eq(flags));
     }
 
-    static class MockAbsSavedState extends AbsSavedState {
-
-        public MockAbsSavedState(Parcelable superState) {
+    private static class AbsSavedStateImpl extends AbsSavedState {
+        AbsSavedStateImpl(Parcelable superState) {
             super(superState);
         }
 
-        public MockAbsSavedState(Parcel source) {
+        AbsSavedStateImpl(Parcel source) {
             super(source);
         }
-    }
 
-    static class MockParcelable implements Parcelable {
-
-        // Test for writeToParcel
-        private int mTest;
-        private int mFlags;
-
-        public int describeContents() {
-            return 0;
+        AbsSavedStateImpl(Parcel source, ClassLoader loader) {
+            super(source, loader);
         }
 
-        // Instantiate writeToParcel
-        public void writeToParcel(Parcel dest, int flags) {
-            mTest = TEST_NUMBER;
-            mFlags = flags;
-        }
+        public static final Creator<AbsSavedStateImpl> CREATOR = new Creator<AbsSavedStateImpl>() {
+            @Override
+            public AbsSavedStateImpl createFromParcel(Parcel source) {
+                return new AbsSavedStateImpl(source);
+            }
 
-        // For test of writeToParcel
-        public int writeToParcelRunSymbol() {
-            return mTest;
-        }
-
-        public int getFlags() {
-            return mFlags;
-        }
+            @Override
+            public AbsSavedStateImpl[] newArray(int size) {
+                return new AbsSavedStateImpl[size];
+            }
+        };
     }
 }
