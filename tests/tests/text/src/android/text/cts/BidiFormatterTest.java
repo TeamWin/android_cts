@@ -16,6 +16,7 @@
 
 package android.text.cts;
 
+import android.icu.util.ULocale;
 import android.test.AndroidTestCase;
 import android.text.BidiFormatter;
 import android.text.SpannableString;
@@ -235,6 +236,41 @@ public class BidiFormatterTest extends AndroidTestCase {
         assertEquals("overall dir (but not entry or exit dir) opposite to RTL context, no isolation",
                 LRE + HE + EN + HE + PDF,
                 RTL_FMT_EXIT_RESET.unicodeWrap(HE + EN + HE, TextDirectionHeuristics.LTR, false));
+    }
+
+    public void testGetStereoReset() {
+        assertTrue(LTR_FMT.getStereoReset());
+        assertTrue(RTL_FMT.getStereoReset());
+        assertFalse(LTR_FMT_EXIT_RESET.getStereoReset());
+        assertFalse(RTL_FMT_EXIT_RESET.getStereoReset());
+    }
+
+    public void testBuilder_construction() {
+        final BidiFormatter defaultFmt = new BidiFormatter.Builder().build();
+        // Test that the default locale and the BidiFormatter's locale have the same direction.
+        assertEquals(ULocale.getDefault().isRightToLeft(), defaultFmt.isRtlContext());
+
+        final BidiFormatter ltrFmt = new BidiFormatter.Builder(false).build();
+        assertFalse(ltrFmt.isRtlContext());
+
+        final BidiFormatter rtlFmt = new BidiFormatter.Builder(true).build();
+        assertTrue(rtlFmt.isRtlContext());
+
+        final BidiFormatter englishFmt = new BidiFormatter.Builder(Locale.ENGLISH).build();
+        assertFalse(englishFmt.isRtlContext());
+
+        final BidiFormatter arabicFmt =
+                new BidiFormatter.Builder(Locale.forLanguageTag("ar")).build();
+        assertTrue(arabicFmt.isRtlContext());
+    }
+
+    public void testBuilder_setTextDirectionHeuristic() {
+        final BidiFormatter defaultFmt = new BidiFormatter.Builder().build();
+        assertFalse(defaultFmt.isRtl(EN + HE + EN));
+
+        final BidiFormatter modifiedFmt = new BidiFormatter.Builder().setTextDirectionHeuristic(
+                TextDirectionHeuristics.ANYRTL_LTR).build();
+        assertTrue(modifiedFmt.isRtl(EN + HE + EN));
     }
 
     public void testCharSequenceApis() {
