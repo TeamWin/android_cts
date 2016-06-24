@@ -21,7 +21,6 @@ import android.media.cts.R;
 import android.content.Context;
 import android.content.res.AssetFileDescriptor;
 import android.content.res.Resources;
-import android.cts.util.DeviceReportLog;
 import android.cts.util.MediaUtils;
 import android.media.cts.CodecUtils;
 import android.media.Image;
@@ -32,8 +31,9 @@ import android.media.MediaFormat;
 import android.util.Log;
 import android.util.Range;
 
-import com.android.cts.util.ResultType;
-import com.android.cts.util.ResultUnit;
+import com.android.compatibility.common.util.DeviceReportLog;
+import com.android.compatibility.common.util.ResultType;
+import com.android.compatibility.common.util.ResultUnit;
 import com.android.compatibility.common.util.Stat;
 
 import java.io.BufferedReader;
@@ -62,6 +62,7 @@ public class DecoderConformanceTest extends MediaPlayerTestBase {
         SKIP;
     }
 
+    private static final String REPORT_LOG_NAME = "CtsMediaTestCases";
     private static final String TAG = "DecoderConformanceTest";
     private Resources mResources;
     private DeviceReportLog mReportLog;
@@ -76,12 +77,10 @@ public class DecoderConformanceTest extends MediaPlayerTestBase {
     protected void setUp() throws Exception {
         super.setUp();
         mResources = mContext.getResources();
-        mReportLog = new DeviceReportLog();
     }
 
     @Override
     protected void tearDown() throws Exception {
-        mReportLog.deliverReportToHost(getInstrumentation());
         super.tearDown();
     }
 
@@ -261,15 +260,22 @@ public class DecoderConformanceTest extends MediaPlayerTestBase {
                     Log.e(TAG, "Decode " + vectorName + " fail");
                 }
 
-                if (pass) {
-                    mReportLog.printValue(vectorName, 1, ResultType.NEUTRAL, ResultUnit.NONE);
-                } else {
-                    mReportLog.printValue(vectorName, 0, ResultType.NEUTRAL, ResultUnit.NONE);
-                    // Release mediacodec in failure or exception casees.
+                String streamName = "decoder_conformance_test";
+                mReportLog = new DeviceReportLog(REPORT_LOG_NAME, streamName);
+                mReportLog.addValue("mime", mime, ResultType.NEUTRAL, ResultUnit.NONE);
+                mReportLog.addValue("is_goog", isGoog, ResultType.NEUTRAL, ResultUnit.NONE);
+                mReportLog.addValue("pass", pass, ResultType.NEUTRAL, ResultUnit.NONE);
+                mReportLog.addValue("vector_name", vectorName, ResultType.NEUTRAL, ResultUnit.NONE);
+                mReportLog.addValue("decode_name", decoderName, ResultType.NEUTRAL,
+                        ResultUnit.NONE);
+                mReportLog.submit(getInstrumentation());
+
+                if (!pass) {
+                    // Release mediacodec in failure or exception cases.
                     releaseMediacodec();
                 }
             }
-            mReportLog.printSummary(decoderName, 0, ResultType.NEUTRAL, ResultUnit.NONE);
+
         }
     }
 
