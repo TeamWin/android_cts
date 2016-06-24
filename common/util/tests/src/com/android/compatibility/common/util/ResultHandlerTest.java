@@ -80,6 +80,7 @@ public class ResultHandlerTest extends TestCase {
     private static final String END_DISPLAY = "Fri Aug 20 15:13:04 PDT 2010";
 
     private static final String REFERENCE_URL="http://android.com";
+    private static final String LOG_URL ="file:///path/to/logs";
     private static final String COMMAND_LINE_ARGS = "cts -m CtsMyModuleTestCases";
     private static final String JOIN = "%s%s";
     private static final String XML_BASE =
@@ -90,7 +91,8 @@ public class ResultHandlerTest extends TestCase {
             "suite_plan=\"%s\" suite_build_number=\"%s\" report_version=\"%s\" " +
             "devices=\"%s\" host_name=\"%s\"" +
             "os_name=\"%s\" os_version=\"%s\" os_arch=\"%s\" java_vendor=\"%s\"" +
-            "java_version=\"%s\" reference_url=\"%s\" command_line_args=\"%s\">\n" +
+            "java_version=\"%s\" reference_url=\"%s\" log_url=\"%s\"" +
+            "command_line_args=\"%s\">\n" +
             "%s%s%s" +
             "</Result>";
     private static final String XML_BUILD_INFO =
@@ -172,7 +174,8 @@ public class ResultHandlerTest extends TestCase {
 
         // Serialize to file
         ResultHandler.writeResults(SUITE_NAME, SUITE_VERSION, SUITE_PLAN, SUITE_BUILD,
-                result, resultDir, START_MS, END_MS, REFERENCE_URL, COMMAND_LINE_ARGS);
+                result, resultDir, START_MS, END_MS, REFERENCE_URL, LOG_URL,
+                COMMAND_LINE_ARGS);
 
         // Parse the results and assert correctness
         checkResult(ResultHandler.getResults(resultsDir), resultDir);
@@ -213,7 +216,8 @@ public class ResultHandlerTest extends TestCase {
             String output = String.format(XML_BASE, START_MS, END_MS, START_DISPLAY, END_DISPLAY,
                     SUITE_NAME, SUITE_VERSION, SUITE_PLAN, SUITE_BUILD, REPORT_VERSION, DEVICES,
                     hostName, OS_NAME, OS_VERSION, OS_ARCH, JAVA_VENDOR,
-                    JAVA_VERSION, REFERENCE_URL, COMMAND_LINE_ARGS, buildInfo, summary, modules);
+                    JAVA_VERSION, REFERENCE_URL, LOG_URL, COMMAND_LINE_ARGS,
+                    buildInfo, summary, modules);
             writer.write(output);
             writer.flush();
 
