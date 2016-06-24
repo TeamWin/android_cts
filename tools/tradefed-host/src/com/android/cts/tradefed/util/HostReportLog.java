@@ -18,6 +18,7 @@ package com.android.cts.tradefed.util;
 
 import com.android.compatibility.common.util.MetricsReportLog;
 import com.android.cts.util.ReportLog;
+import com.android.tradefed.build.IBuildInfo;
 
 /**
  * ReportLog for host tests
@@ -28,13 +29,13 @@ import com.android.cts.util.ReportLog;
 @Deprecated
 public class HostReportLog extends ReportLog {
     /**
-     * @param deviceSerial serial number of the device
-     * @param abiName the name of the ABI on which the test was run
+     * @param buildInfo the test build info.
+     * @param abiName the name of the ABI on which the test was run.
      * @param classMethodName class name and method name of the test in class#method format.
      *        Note that ReportLog.getClassMethodNames() provide this.
      */
-    public HostReportLog(String deviceSerial, String abiName, String classMethodName) {
-        super(new MetricsReportLog(deviceSerial, abiName, classMethodName));
+    public HostReportLog(IBuildInfo buildInfo, String abiName, String classMethodName) {
+        super(new MetricsReportLog(buildInfo, abiName, classMethodName));
     }
 
     public void deliverReportToHost() {

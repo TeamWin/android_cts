@@ -16,6 +16,8 @@
 
 package com.android.compatibility.common.util;
 
+import com.android.tradefed.build.IBuildInfo;
+
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -28,34 +30,38 @@ public class MetricsStore {
     private static final ConcurrentHashMap<String, ReportLog> mMap =
             new ConcurrentHashMap<String, ReportLog>();
 
+    private static final String START_TIME_TAG = "START_TIME_MS";
+
     private MetricsStore() {}
 
     /**
      * Stores a result. Existing result with the same key will be replaced.
-     * Note that key is generated in the form of device_serial#class#method name.
+     * Note that key is generated in the form of start_time#class#method name.
      * So there should be no concurrent test for the same (serial, class, method).
-     * @param deviceSerial
+     * @param buildInfo
      * @param abi
      * @param classMethodName
      * @param reportLog Contains the result to be stored
      */
-    public static void storeResult(
-            String deviceSerial, String abi, String classMethodName, ReportLog reportLog) {
-        mMap.put(generateTestKey(deviceSerial, abi, classMethodName), reportLog);
+    public static void storeResult(IBuildInfo buildInfo, String abi, String classMethodName,
+            ReportLog reportLog) {
+        String startTime = buildInfo.getBuildAttributes().get(START_TIME_TAG);
+        mMap.put(generateTestKey(startTime, abi, classMethodName), reportLog);
     }
 
     /**
      * retrieves a metric result for the given condition and remove it from the internal
      * storage. If there is no result for the given condition, it will return null.
      */
-    public static ReportLog removeResult(String deviceSerial, String abi, String classMethodName) {
-        return mMap.remove(generateTestKey(deviceSerial, abi, classMethodName));
+    public static ReportLog removeResult(IBuildInfo buildInfo, String abi, String classMethodName) {
+        String startTime = buildInfo.getBuildAttributes().get(START_TIME_TAG);
+        return mMap.remove(generateTestKey(startTime, abi, classMethodName));
     }
 
     /**
-     * @return test key in the form of device_serial#abi#class_name#method_name
+     * @return test key in the form of start_time#abi#class_name#method_name
      */
-    private static String generateTestKey(String deviceSerial, String abi, String classMethodName) {
-        return String.format("%s#%s#%s", deviceSerial, abi, classMethodName);
+    private static String generateTestKey(String startTime, String abi, String classMethodName) {
+        return String.format("%s#%s#%s", startTime, abi, classMethodName);
     }
 }
