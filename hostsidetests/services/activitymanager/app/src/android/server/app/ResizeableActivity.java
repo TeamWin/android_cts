@@ -18,6 +18,7 @@ package android.server.app;
 import android.content.res.Configuration;
 import android.graphics.Point;
 import android.os.Bundle;
+import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.Display;
 import android.view.WindowManager;
@@ -46,10 +47,13 @@ public class ResizeableActivity extends AbstractLifecycleLogActivity {
         final Display display = wm.getDefaultDisplay();
         final Point point = new Point();
         display.getSize(point);
+        final DisplayMetrics metrics = getResources().getDisplayMetrics();
 
         final String line = "config" +
                 " size=" + buildCoordString(config.screenWidthDp, config.screenHeightDp) +
-                " displaySize=" + buildCoordString(point.x, point.y);
+                " displaySize=" + buildCoordString(point.x, point.y) +
+                " metricsSize=" + buildCoordString(metrics.widthPixels, metrics.heightPixels);
+
         Log.i(getTag(), line);
     }
 
