@@ -1354,6 +1354,168 @@ public class PrintDocumentAdapterContractTest extends BasePrintTest {
         verifyNoMoreInteractions(adapter);
     }
 
+    public void testUnexpectedLayoutCancel() throws Exception {
+        if (!supportsPrinting()) {
+            return;
+        }
+        // Configure the print services.
+        FirstPrintService.setCallbacks(createFirstMockPrintServiceCallbacks());
+        SecondPrintService.setCallbacks(createSecondMockPrintServiceCallbacks());
+
+        final PrintAttributes[] printAttributes = new PrintAttributes[1];
+        final int[] numLayoutCalls = new int[1];
+
+        // Create a mock print adapter.
+        final PrintDocumentAdapter adapter = createMockPrintDocumentAdapter(
+                new Answer<Void>() {
+                    @Override
+                    public Void answer(InvocationOnMock invocation) throws Throwable {
+                        printAttributes[0] = (PrintAttributes) invocation.getArguments()[1];
+                        LayoutResultCallback callback = (LayoutResultCallback) invocation.getArguments()[3];
+
+                        // Returned cancelled for the second layout call which is unexpected
+                        if (numLayoutCalls[0] == 1) {
+                            callback.onLayoutCancelled();
+                        } else {
+                            callback.onLayoutFinished(
+                                    (new PrintDocumentInfo.Builder(PRINT_JOB_NAME)).build(), false);
+                        }
+                        numLayoutCalls[0]++;
+                        // Mark layout was called.
+                        onLayoutCalled();
+                        return null;
+                    }
+                }, new Answer<Void>() {
+                    @Override
+                    public Void answer(InvocationOnMock invocation) throws Throwable {
+                        Object[] args = invocation.getArguments();
+                        PageRange[] pages = (PageRange[]) args[0];
+                        ParcelFileDescriptor fd = (ParcelFileDescriptor) args[1];
+                        WriteResultCallback callback = (WriteResultCallback) args[3];
+                        writeBlankPages(printAttributes[0], fd, 0, 1);
+                        fd.close();
+                        callback.onWriteFinished(pages);
+                        // Mark write was called.
+                        onWriteCalled();
+                        return null;
+                    }
+                }, new Answer<Void>() {
+                    @Override
+                    public Void answer(InvocationOnMock invocation) throws Throwable {
+                        // Mark finish was called.
+                        onFinishCalled();
+                        return null;
+                    }
+                });
+
+        // Start printing.
+        print(adapter);
+
+        // Wait for layout.
+        waitForLayoutAdapterCallbackCount(1);
+
+        // Select the second printer.
+        selectPrinter("Second printer");
+
+        // Wait for layout.
+        waitForLayoutAdapterCallbackCount(2);
+
+        // Retry layout (which should succeed) as the layout call will stop canceling after the
+        // second time
+        clickRetryButton();
+
+        // Click the print button.
+        clickPrintButton();
+
+        // Answer the dialog for the print service cloud warning
+        answerPrintServicesWarning(true);
+
+        // Wait for the session to be destroyed to isolate tests.
+        waitForPrinterDiscoverySessionDestroyCallbackCalled(1);
+    }
+
+    public void testUnexpectedWriteCancel() throws Exception {
+        if (!supportsPrinting()) {
+            return;
+        }
+        // Configure the print services.
+        FirstPrintService.setCallbacks(createFirstMockPrintServiceCallbacks());
+        SecondPrintService.setCallbacks(createSecondMockPrintServiceCallbacks());
+
+        final PrintAttributes[] printAttributes = new PrintAttributes[1];
+        final int[] numWriteCalls = new int[1];
+
+        // Create a mock print adapter.
+        final PrintDocumentAdapter adapter = createMockPrintDocumentAdapter(
+                new Answer<Void>() {
+                    @Override
+                    public Void answer(InvocationOnMock invocation) throws Throwable {
+                        printAttributes[0] = (PrintAttributes) invocation.getArguments()[1];
+                        LayoutResultCallback callback = (LayoutResultCallback) invocation.getArguments()[3];
+
+                        callback.onLayoutFinished(
+                                    (new PrintDocumentInfo.Builder(PRINT_JOB_NAME)).build(), true);
+
+                        // Mark layout was called.
+                        onLayoutCalled();
+                        return null;
+                    }
+                }, new Answer<Void>() {
+                    @Override
+                    public Void answer(InvocationOnMock invocation) throws Throwable {
+                        Object[] args = invocation.getArguments();
+                        WriteResultCallback callback = (WriteResultCallback) args[3];
+
+                        // Returned cancelled for the second write call which is unexpected
+                        if (numWriteCalls[0] == 1) {
+                            callback.onWriteCancelled();
+                        } else {
+                            PageRange[] pages = (PageRange[]) args[0];
+                            ParcelFileDescriptor fd = (ParcelFileDescriptor) args[1];
+                            writeBlankPages(printAttributes[0], fd, 0, 1);
+                            fd.close();
+                            callback.onWriteFinished(pages);
+                        }
+                        numWriteCalls[0]++;
+
+                        // Mark write was called.
+                        onWriteCalled();
+                        return null;
+                    }
+                }, new Answer<Void>() {
+                    @Override
+                    public Void answer(InvocationOnMock invocation) throws Throwable {
+                        // Mark finish was called.
+                        onFinishCalled();
+                        return null;
+                    }
+                });
+
+        // Start printing.
+        print(adapter);
+
+        waitForWriteAdapterCallback(1);
+
+        // Select the second printer.
+        selectPrinter("Second printer");
+
+        // Wait for layout.
+        waitForWriteAdapterCallback(2);
+
+        // Retry write (which should succeed) as the write call will stop canceling after the
+        // second time
+        clickRetryButton();
+
+        // Click the print button.
+        clickPrintButton();
+
+        // Answer the dialog for the print service cloud warning
+        answerPrintServicesWarning(true);
+
+        // Wait for the session to be destroyed to isolate tests.
+        waitForPrinterDiscoverySessionDestroyCallbackCalled(1);
+    }
+
     public void testRequestedPagesNotWritten() throws Exception {
         if (!supportsPrinting()) {
             return;

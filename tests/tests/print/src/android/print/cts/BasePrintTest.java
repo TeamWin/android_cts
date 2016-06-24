@@ -543,6 +543,17 @@ public abstract class BasePrintTest extends InstrumentationTestCase {
         }
     }
 
+    protected void clickRetryButton() throws UiObjectNotFoundException, IOException {
+        try {
+            UiObject retryButton = mUiDevice.findObject(new UiSelector().resourceId(
+                    "com.android.printspooler:id/action_button"));
+            retryButton.click();
+        } catch (UiObjectNotFoundException e) {
+            dumpWindowHierarchy();
+            throw e;
+        }
+    }
+
     protected void dumpWindowHierarchy() throws IOException {
         ByteArrayOutputStream os = new ByteArrayOutputStream();
         mUiDevice.dumpWindowHierarchy(os);
