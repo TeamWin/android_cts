@@ -20,12 +20,16 @@ package android.text.cts;
 import static android.view.View.LAYOUT_DIRECTION_LTR;
 import static android.view.View.LAYOUT_DIRECTION_RTL;
 
+import android.content.Context;
 import android.content.res.ColorStateList;
+import android.content.res.Configuration;
+import android.content.res.Resources;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Paint.FontMetricsInt;
 import android.graphics.Typeface;
+import android.os.LocaleList;
 import android.os.Parcel;
 import android.os.Parcelable;
 import android.test.AndroidTestCase;
@@ -45,6 +49,8 @@ import android.util.Log;
 import android.util.StringBuilderPrinter;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Locale;
 import java.util.regex.Pattern;
 
@@ -78,6 +84,107 @@ public class TextUtilsTest extends AndroidTestCase {
         float width = p.measureText(text.substring(1));
         String re = TextUtils.ellipsize(text, p, width, TruncateAt.START).toString();
         return re.substring(0, re.indexOf("x"));
+    }
+
+    /**
+     * @return the number of times the code unit appears in the CharSequence.
+     */
+    private int countChars(CharSequence s, char c) {
+        int count = 0;
+        for (int i = 0; i < s.length(); i++) {
+            if (s.charAt(i) == c) {
+                count++;
+            }
+        }
+        return count;
+    }
+
+    public void testListEllipsize() {
+        final Context context = getContext();
+        final TextPaint paint = new TextPaint();
+        final int moreId = R.plurals.list_ellipsize_test;  // "one more" for 1, "%d more" for other
+
+        final List fullList = Arrays.asList("A", "B", "C", "D", "E", "F", "G", "H", "I", "J");
+        final String separator = ", ";
+        final String fullString = TextUtils.join(separator, fullList);
+        final float fullWidth = paint.measureText(fullString);
+        assertEquals("",
+            TextUtils.listEllipsize(context, null, separator, paint, fullWidth, moreId));
+
+        final List<CharSequence> emptyList = new ArrayList<CharSequence>();
+        assertEquals("",
+            TextUtils.listEllipsize(context, emptyList, separator, paint, fullWidth, moreId));
+
+        // Null context should cause ellipsis to be used at the end.
+        final String ellipsizedWithNull = TextUtils.listEllipsize(
+                null, fullList, separator, paint, fullWidth / 2, 0).toString();
+        assertTrue(ellipsizedWithNull.endsWith(getEllipsis()));
+
+        // Test that the empty string gets returned if there's no space.
+        assertEquals("",
+                TextUtils.listEllipsize(context, fullList, separator, paint, 1.0f, moreId));
+
+        // Test that the full string itself can get returned if there's enough space.
+        assertEquals(fullString,
+                TextUtils.listEllipsize(context, fullList, separator, paint, fullWidth, moreId)
+                        .toString());
+        assertEquals(fullString,
+                TextUtils.listEllipsize(context, fullList, separator, paint, fullWidth * 2,
+                        moreId).toString());
+
+        final float epsilon = fullWidth / 20;
+        for (float width = epsilon; width < fullWidth - epsilon / 2; width += epsilon) {
+            final String ellipsized = TextUtils.listEllipsize(
+                    context, fullList, separator, paint, width, moreId).toString();
+            // Since we don't have the full space, test that we are not getting the full string.
+            assertFalse(fullString.equals(ellipsized));
+
+            if (!ellipsized.isEmpty()) {
+                assertTrue(ellipsized.endsWith(" more"));
+                // Test that the number of separators (which equals the number of output elements),
+                // plus the number output before more always equals the number of original elements.
+                final int lastSpace = ellipsized.lastIndexOf(' ');
+                final int penultimateSpace = ellipsized.lastIndexOf(' ', lastSpace - 1);
+                assertEquals(',', ellipsized.charAt(penultimateSpace - 1));
+                final String moreCountString = ellipsized.substring(
+                        penultimateSpace + 1, lastSpace);
+                final int moreCount = (moreCountString.equals("one"))
+                        ? 1 : Integer.parseInt(moreCountString);
+                final int commaCount = countChars(ellipsized, ',');
+                assertEquals(fullList.size(), commaCount + moreCount);
+            }
+        }
+}
+
+    public void testListEllipsize_rtl() {
+        final Context context = getContext();
+        final Resources res = context.getResources();
+        final Configuration newConfig = new Configuration(res.getConfiguration());
+
+        // save the locales and set them to just Arabic
+        final LocaleList previousLocales = newConfig.getLocales();
+        newConfig.setLocales(LocaleList.forLanguageTags("ar"));
+        res.updateConfiguration(newConfig, null);
+
+        final TextPaint paint = new TextPaint();
+        final int moreId = R.plurals.list_ellipsize_test;  // "one more" for 1, "%d more" for other
+        final String RLM = "\u200F";
+        final String LRE = "\u202A";
+        final String PDF = "\u202C";
+
+        final List fullList = Arrays.asList("A", "B");
+        final String separator = ", ";
+        final String expectedString =
+                RLM + LRE + "A" + PDF + RLM + ", " + RLM + LRE + "B" + PDF + RLM;
+        final float enoughWidth = paint.measureText(expectedString);
+
+        assertEquals(expectedString,
+                TextUtils.listEllipsize(context, fullList, separator, paint, enoughWidth,
+                                        moreId).toString());
+
+        // Restore the original locales
+        newConfig.setLocales(previousLocales);
+        res.updateConfiguration(newConfig, null);
     }
 
     public void testCommaEllipsize() {
