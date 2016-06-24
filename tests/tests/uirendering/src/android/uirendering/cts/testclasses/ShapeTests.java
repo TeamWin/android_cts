@@ -12,11 +12,10 @@ import org.junit.Test;
 public class ShapeTests extends ActivityTestBase {
     @Test
     public void testDashedOval() {
-        Bitmap goldenBitmap = BitmapFactory.decodeResource(getActivity().getResources(),
-                R.drawable.golden_dashed_oval);
         createTest()
                 .addLayout(R.layout.frame_layout,
                         view -> view.setBackgroundResource(R.drawable.dashed_oval))
-                .runWithVerifier(new GoldenImageVerifier(goldenBitmap, new MSSIMComparer(0.99)));
+                .runWithVerifier(new GoldenImageVerifier(getActivity(),
+                        R.drawable.golden_dashed_oval, new MSSIMComparer(0.99)));
     }
 }
