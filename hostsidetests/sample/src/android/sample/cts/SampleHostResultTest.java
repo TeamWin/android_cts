@@ -138,7 +138,8 @@ public class SampleHostResultTest extends DeviceTestCase implements IAbiReceiver
         Stat.StatResult stat = Stat.getStat(result);
         // Get the report for this test and add the results to record.
         String streamName = "test_transfer_time_metrics";
-        MetricsReportLog report = new MetricsReportLog(mDevice.getSerialNumber(), mAbi.getName(),
+        MetricsReportLog report = new MetricsReportLog(
+                mBuildHelper.getBuildInfo(), mAbi.getName(),
                 String.format("%s#testTransferTime", getClass().getCanonicalName()),
                 REPORT_LOG_NAME, streamName);
         report.addValues("times", result, ResultType.LOWER_BETTER, ResultUnit.MS);

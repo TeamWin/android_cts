@@ -16,6 +16,7 @@
 
 package com.android.compatibility.common.util;
 
+import com.android.tradefed.build.IBuildInfo;
 import com.android.tradefed.util.FileUtil;
 
 import java.io.File;
@@ -26,9 +27,9 @@ import java.util.List;
  * A {@link ReportLog} that can be used with the in memory metrics store used for host side metrics.
  */
 public final class MetricsReportLog extends ReportLog {
-    private final String mDeviceSerial;
     private final String mAbi;
     private final String mClassMethodName;
+    private final IBuildInfo mBuildInfo;
 
     // TODO(mishragaurav): Remove default names and constructor after fixing b/27950009.
     private static final String DEFAULT_REPORT_LOG_NAME = "DefaultHostTestMetrics";
@@ -39,39 +40,39 @@ public final class MetricsReportLog extends ReportLog {
     private ReportLogHostInfoStore store;
 
     /**
-     * @param deviceSerial serial number of the device
-     * @param abi abi the test was run on
+     * @param buildInfo the test build info.
+     * @param abi abi the test was run on.
      * @param classMethodName class name and method name of the test in class#method format.
      *        Note that ReportLog.getClassMethodNames() provide this.
      */
-    public MetricsReportLog(String deviceSerial, String abi, String classMethodName) {
-        this(deviceSerial, abi, classMethodName, DEFAULT_REPORT_LOG_NAME, DEFAULT_STREAM_NAME);
+    public MetricsReportLog(IBuildInfo buildInfo, String abi, String classMethodName) {
+        this(buildInfo, abi, classMethodName, DEFAULT_REPORT_LOG_NAME, DEFAULT_STREAM_NAME);
     }
 
     /**
-     * @param deviceSerial serial number of the device
-     * @param abi abi the test was run on
+     * @param buildInfo the test build info.
+     * @param abi abi the test was run on.
      * @param classMethodName class name and method name of the test in class#method format.
      *        Note that ReportLog.getClassMethodNames() provide this.
      * @param reportLogName the name of the report log file. Metrics will be written out to this.
      */
-    public MetricsReportLog(String deviceSerial, String abi, String classMethodName,
+    public MetricsReportLog(IBuildInfo buildInfo, String abi, String classMethodName,
             String reportLogName) {
-        this(deviceSerial, abi, classMethodName, reportLogName, DEFAULT_STREAM_NAME);
+        this(buildInfo, abi, classMethodName, reportLogName, DEFAULT_STREAM_NAME);
     }
 
     /**
-     * @param deviceSerial serial number of the device
-     * @param abi abi the test was run on
+     * @param buildInfo the test build info.
+     * @param abi abi the test was run on.
      * @param classMethodName class name and method name of the test in class#method format.
      *        Note that ReportLog.getClassMethodNames() provide this.
      * @param reportLogName the name of the report log file. Metrics will be written out to this.
      * @param streamName the key for the JSON object of the set of metrics to be logged.
      */
-    public MetricsReportLog(String deviceSerial, String abi, String classMethodName,
+    public MetricsReportLog(IBuildInfo buildInfo, String abi, String classMethodName,
             String reportLogName, String streamName) {
         super(reportLogName, streamName);
-        mDeviceSerial = deviceSerial;
+        mBuildInfo = buildInfo;
         mAbi = abi;
         mClassMethodName = classMethodName;
         try {
@@ -283,6 +284,6 @@ public final class MetricsReportLog extends ReportLog {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        MetricsStore.storeResult(mDeviceSerial, mAbi, mClassMethodName, this);
+        MetricsStore.storeResult(mBuildInfo, mAbi, mClassMethodName, this);
     }
 }
