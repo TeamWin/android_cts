@@ -103,7 +103,7 @@ public class TaskSwitchingTest extends DeviceTestCase implements IAbiReceiver, I
             fail(result.getRunFailureMessage());
         }
         assertNotNull("no performance data", mReport);
-        MetricsStore.storeResult(mDevice.getSerialNumber(), mAbi.getName(),
+        MetricsStore.storeResult(mBuild, mAbi.getName(),
                 String.format("%s#%s", getClass().getName(), "testTaskSwitching"), mReport);
 
     }
