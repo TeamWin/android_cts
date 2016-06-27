@@ -74,6 +74,8 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
 
     private static final String AM_MOVE_TASK = "am stack movetask ";
 
+    private static final String INPUT_KEYEVENT_HOME = "input keyevent 3";
+
     /** A reference to the device under test. */
     protected ITestDevice mDevice;
 
@@ -180,6 +182,10 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
         executeShellCommand(AM_RESIZE_DOCKED_STACK
                 + "0 0 " + stackWidth + " " + stackHeight
                 + " 0 0 " + taskWidth + " " + taskHeight);
+    }
+
+    protected void pressHomeButton() throws DeviceNotAvailableException {
+        executeShellCommand(INPUT_KEYEVENT_HOME);
     }
 
     // Utility method for debugging, not used directly here, but useful, so kept around.
@@ -395,10 +401,20 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
         }
     }
 
-    private String[] getDeviceLogsForActivity(String activityName)
+    protected String[] getDeviceLogsForComponent(String componentName)
             throws DeviceNotAvailableException {
-        return mDevice.executeAdbCommand("logcat", "-v", "brief", "-d", activityName + ":I", "*:S")
-                .split("\\n");
+        return mDevice.executeAdbCommand(
+                "logcat", "-v", "brief", "-d", componentName + ":I", "*:S").split("\\n");
+    }
+
+    protected String[] getDeviceLogsForComponents(final String[] componentNames)
+            throws DeviceNotAvailableException {
+        String filters = "";
+        for (int i = 0; i < componentNames.length; i++) {
+            filters += componentNames[i] + ":I ";
+        }
+        return mDevice.executeAdbCommand(
+                "logcat", "-v", "brief", "-d", filters, "*:S").split("\\n");
     }
 
     private static final Pattern sCreatePattern = Pattern.compile("(.+): onCreate");
@@ -422,7 +438,7 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
 
     protected ReportedSizes getLastReportedSizesForActivity(String activityName)
             throws DeviceNotAvailableException {
-        final String[] lines = getDeviceLogsForActivity(activityName);
+        final String[] lines = getDeviceLogsForComponent(activityName);
         for (int i = lines.length - 1; i >= 0; i--) {
             final String line = lines[i].trim();
             final Matcher matcher = sNewConfigPattern.matcher(line);
@@ -446,7 +462,7 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
         int mDestroyCount;
 
         public ActivityLifecycleCounts(String activityName) throws DeviceNotAvailableException {
-            for (String line : getDeviceLogsForActivity(activityName)) {
+            for (String line : getDeviceLogsForComponent(activityName)) {
                 line = line.trim();
 
                 Matcher matcher = sCreatePattern.matcher(line);
