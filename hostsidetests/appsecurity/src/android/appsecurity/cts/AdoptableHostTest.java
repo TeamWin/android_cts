@@ -150,7 +150,7 @@ public class AdoptableHostTest extends DeviceTestCase implements IAbiReceiver, I
         final LocalVolumeInfo vol = getAdoptionVolume();
 
         // Move storage there and verify that data went along for ride
-        final CollectingOutputReceiver out = new CollectingOutputReceiver();
+        CollectingOutputReceiver out = new CollectingOutputReceiver();
         getDevice().executeShellCommand("pm move-primary-storage " + vol.uuid, out, 2,
                 TimeUnit.HOURS, 1);
         assertSuccess(out.getOutput());
@@ -170,7 +170,11 @@ public class AdoptableHostTest extends DeviceTestCase implements IAbiReceiver, I
         runDeviceTests(PKG, CLASS, "testPrimaryDataRead");
 
         // And move back to internal
-        assertSuccess(getDevice().executeShellCommand("pm move-primary-storage internal"));
+        out = new CollectingOutputReceiver();
+        getDevice().executeShellCommand("pm move-primary-storage internal", out, 2,
+                TimeUnit.HOURS, 1);
+        assertSuccess(out.getOutput());
+
         runDeviceTests(PKG, CLASS, "testPrimaryInternal");
         runDeviceTests(PKG, CLASS, "testPrimaryDataRead");
 
