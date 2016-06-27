@@ -74,7 +74,7 @@ public class DeviceReportTest extends TestCase {
     private static final String STREAM_NAME_4 = "SampleStream4";
 
     public void testSubmit() throws Exception {
-        DeviceReportLog log = new DeviceReportLog();
+        DeviceReportLog log = new DeviceReportLog(REPORT_NAME_1, STREAM_NAME_1);
         log.addValue(TEST_MESSAGE_1, TEST_VALUE_1, TEST_TYPE_1, TEST_UNIT_1);
         log.setSummary(TEST_MESSAGE_2, TEST_VALUE_2, TEST_TYPE_2, TEST_UNIT_2);
         TestInstrumentation inst = new TestInstrumentation();
