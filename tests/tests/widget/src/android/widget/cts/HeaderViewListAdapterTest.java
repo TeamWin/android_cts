@@ -31,6 +31,8 @@ import android.widget.ListView;
 
 import java.util.ArrayList;
 
+import static org.mockito.Mockito.mock;
+
 /**
  * Test {@link HeaderViewListAdapter}.
  */
@@ -334,21 +336,21 @@ public class HeaderViewListAdapterTest extends InstrumentationTestCase {
         HeaderViewFullAdapter fullAdapter = new HeaderViewFullAdapter();
         HeaderViewListAdapter headerViewListAdapter =
             new HeaderViewListAdapter(null, null, fullAdapter);
-        DataSetObserver observer = new HeaderViewDataSetObserver();
-        headerViewListAdapter.registerDataSetObserver(observer);
-        assertSame(observer, fullAdapter.getDataSetObserver());
+        DataSetObserver mockDataSetObserver = mock(DataSetObserver.class);
+        headerViewListAdapter.registerDataSetObserver(mockDataSetObserver);
+        assertSame(mockDataSetObserver, fullAdapter.getDataSetObserver());
     }
 
     public void testUnregisterDataSetObserver() {
         HeaderViewFullAdapter fullAdapter = new HeaderViewFullAdapter();
         HeaderViewListAdapter headerViewListAdapter =
             new HeaderViewListAdapter(null, null, fullAdapter);
-        DataSetObserver observer = new HeaderViewDataSetObserver();
-        headerViewListAdapter.registerDataSetObserver(observer);
+        DataSetObserver mockDataSetObserver = mock(DataSetObserver.class);
+        headerViewListAdapter.registerDataSetObserver(mockDataSetObserver);
 
         headerViewListAdapter.unregisterDataSetObserver(null);
-        assertSame(observer, fullAdapter.getDataSetObserver());
-        headerViewListAdapter.unregisterDataSetObserver(observer);
+        assertSame(mockDataSetObserver, fullAdapter.getDataSetObserver());
+        headerViewListAdapter.unregisterDataSetObserver(mockDataSetObserver);
         assertNull(fullAdapter.getDataSetObserver());
     }
 
@@ -502,18 +504,6 @@ public class HeaderViewListAdapterTest extends InstrumentationTestCase {
 
         @Override
         protected void publishResults(CharSequence constraint, Filter.FilterResults results) {
-        }
-    }
-
-    private class HeaderViewDataSetObserver extends DataSetObserver {
-        @Override
-        public void onChanged() {
-            // Do nothing
-        }
-
-        @Override
-        public void onInvalidated() {
-            // Do nothing
         }
     }
 }

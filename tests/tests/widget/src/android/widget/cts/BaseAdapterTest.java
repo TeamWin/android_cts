@@ -22,6 +22,8 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 
+import static org.mockito.Mockito.*;
+
 /**
  * Test {@link BaseAdapter}.
  */
@@ -33,34 +35,34 @@ public class BaseAdapterTest extends AndroidTestCase {
 
     public void testDataSetObserver() {
         BaseAdapter baseAdapter = new MockBaseAdapter();
-        MockDataSetObserver dataSetObserver = new MockDataSetObserver();
+        DataSetObserver mockDataSetObserver = mock(DataSetObserver.class);
 
-        assertFalse(dataSetObserver.hasCalledOnChanged());
+        verifyZeroInteractions(mockDataSetObserver);
         baseAdapter.notifyDataSetChanged();
-        assertFalse(dataSetObserver.hasCalledOnChanged());
+        verifyZeroInteractions(mockDataSetObserver);
 
-        baseAdapter.registerDataSetObserver(dataSetObserver);
+        baseAdapter.registerDataSetObserver(mockDataSetObserver);
         baseAdapter.notifyDataSetChanged();
-        assertTrue(dataSetObserver.hasCalledOnChanged());
+        verify(mockDataSetObserver, times(1)).onChanged();
 
-        dataSetObserver.reset();
-        assertFalse(dataSetObserver.hasCalledOnChanged());
-        baseAdapter.unregisterDataSetObserver(dataSetObserver);
+        reset(mockDataSetObserver);
+        verifyZeroInteractions(mockDataSetObserver);
+        baseAdapter.unregisterDataSetObserver(mockDataSetObserver);
         baseAdapter.notifyDataSetChanged();
-        assertFalse(dataSetObserver.hasCalledOnChanged());
+        verifyZeroInteractions(mockDataSetObserver);
     }
 
     public void testNotifyDataSetInvalidated() {
         BaseAdapter baseAdapter = new MockBaseAdapter();
-        MockDataSetObserver dataSetObserver = new MockDataSetObserver();
+        DataSetObserver mockDataSetObserver = mock(DataSetObserver.class);
 
-        assertFalse(dataSetObserver.hasCalledOnInvalidated());
+        verifyZeroInteractions(mockDataSetObserver);
         baseAdapter.notifyDataSetInvalidated();
-        assertFalse(dataSetObserver.hasCalledOnInvalidated());
+        verifyZeroInteractions(mockDataSetObserver);
 
-        baseAdapter.registerDataSetObserver(dataSetObserver);
+        baseAdapter.registerDataSetObserver(mockDataSetObserver);
         baseAdapter.notifyDataSetInvalidated();
-        assertTrue(dataSetObserver.hasCalledOnInvalidated());
+        verify(mockDataSetObserver, times(1)).onInvalidated();
     }
 
     public void testAreAllItemsEnabled() {
@@ -119,36 +121,6 @@ public class BaseAdapterTest extends AndroidTestCase {
 
         public View getView(int position, View convertView, ViewGroup parent) {
             return null;
-        }
-    }
-
-    private static class MockDataSetObserver extends DataSetObserver {
-        private boolean mCalledOnChanged = false;
-        private boolean mCalledOnInvalidated = false;
-
-        @Override
-        public void onChanged() {
-            super.onChanged();
-            mCalledOnChanged = true;
-        }
-
-        public boolean hasCalledOnChanged() {
-            return mCalledOnChanged;
-        }
-
-        @Override
-        public void onInvalidated() {
-            super.onInvalidated();
-            mCalledOnInvalidated = true;
-        }
-
-        public boolean hasCalledOnInvalidated() {
-            return mCalledOnInvalidated;
-        }
-
-        public void reset() {
-            mCalledOnChanged = false;
-            mCalledOnInvalidated = false;
         }
     }
 }

@@ -16,40 +16,29 @@
 
 package android.widget.cts;
 
-import android.widget.cts.R;
-
-import org.xmlpull.v1.XmlPullParser;
-import org.xmlpull.v1.XmlPullParserException;
-
 import android.app.Activity;
 import android.app.Instrumentation;
-import android.content.ComponentName;
 import android.content.Context;
-import android.content.Intent;
 import android.cts.util.WidgetTestUtils;
-import android.graphics.drawable.Drawable;
 import android.os.SystemClock;
 import android.test.ActivityInstrumentationTestCase2;
 import android.test.UiThreadTest;
 import android.test.ViewAsserts;
 import android.util.AttributeSet;
 import android.util.Xml;
-import android.view.ContextMenu;
 import android.view.Gravity;
 import android.view.KeyEvent;
-import android.view.MenuItem;
-import android.view.SubMenu;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.ContextMenu.ContextMenuInfo;
-import android.view.View.OnCreateContextMenuListener;
 import android.view.ViewGroup.LayoutParams;
 import android.view.animation.Transformation;
 import android.widget.AdapterView;
 import android.widget.BaseAdapter;
 import android.widget.Gallery;
 import android.widget.ImageView;
-import android.widget.AdapterView.OnItemSelectedListener;
+
+import org.xmlpull.v1.XmlPullParser;
+import org.xmlpull.v1.XmlPullParserException;
 
 import java.io.IOException;
 
@@ -347,38 +336,5 @@ public class GalleryTest extends ActivityInstrumentationTestCase2<GalleryCtsActi
                 R.drawable.scenery,
                 R.drawable.testimage,
         };
-    }
-
-    private static class MockOnItemSelectedListener implements OnItemSelectedListener {
-        private boolean mIsItemSelected;
-        private boolean mNothingSelected;
-        private int mItemSelectedCalledCount;
-
-        public boolean isItemSelected() {
-            return mIsItemSelected;
-        }
-
-        public boolean hasNothingSelected() {
-            return mNothingSelected;
-        }
-
-        public int getItemSelectedCalledCount() {
-            return mItemSelectedCalledCount;
-        }
-
-        public void reset() {
-            mIsItemSelected = false;
-            mNothingSelected = true;
-            mItemSelectedCalledCount = 0;
-        }
-
-        public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-            mIsItemSelected = true;
-            mItemSelectedCalledCount++;
-        }
-
-        public void onNothingSelected(AdapterView<?> parent) {
-            mNothingSelected = true;
-        }
     }
 }

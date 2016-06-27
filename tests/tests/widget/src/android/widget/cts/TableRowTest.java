@@ -24,17 +24,15 @@ import android.test.UiThreadTest;
 import android.util.AttributeSet;
 import android.util.Xml;
 import android.view.View;
-import android.view.ViewGroup;
 import android.view.View.MeasureSpec;
-import android.view.ViewGroup.OnHierarchyChangeListener;
+import android.view.ViewGroup;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.TableLayout;
 import android.widget.TableRow;
 import android.widget.TextView;
 
-import android.widget.cts.R;
-
+import static org.mockito.Mockito.*;
 
 /**
  * Test {@link TableRow}.
@@ -63,21 +61,21 @@ public class TableRowTest extends ActivityInstrumentationTestCase2<TableCtsActiv
     public void testSetOnHierarchyChangeListener() {
         TableRow tableRow = new TableRow(mContext);
 
-        MockOnHierarchyChangeListener listener = new MockOnHierarchyChangeListener();
-        tableRow.setOnHierarchyChangeListener(listener);
+        ViewGroup.OnHierarchyChangeListener mockHierarchyChangeListener =
+                mock(ViewGroup.OnHierarchyChangeListener.class);
+        tableRow.setOnHierarchyChangeListener(mockHierarchyChangeListener);
 
-        tableRow.addView(new TextView(mContext));
-        assertTrue(listener.hasCalledOnChildViewAdded());
+        View toAdd = new TextView(mContext);
+        tableRow.addView(toAdd);
+        verify(mockHierarchyChangeListener, times(1)).onChildViewAdded(tableRow, toAdd);
         tableRow.removeViewAt(0);
-        assertTrue(listener.hasCalledOnChildViewRemoved());
-
-        listener.reset();
+        verify(mockHierarchyChangeListener, times(1)).onChildViewRemoved(tableRow, toAdd);
+        verifyNoMoreInteractions(mockHierarchyChangeListener);
 
         tableRow.setOnHierarchyChangeListener(null);
         tableRow.addView(new TextView(mContext));
-        assertFalse(listener.hasCalledOnChildViewAdded());
         tableRow.removeViewAt(0);
-        assertFalse(listener.hasCalledOnChildViewRemoved());
+        verifyNoMoreInteractions(mockHierarchyChangeListener);
     }
 
     @UiThreadTest
@@ -187,46 +185,6 @@ public class TableRowTest extends ActivityInstrumentationTestCase2<TableCtsActiv
         MockTableRow mockTableRow = new MockTableRow(mContext);
 
         mockTableRow.onMeasure(MeasureSpec.EXACTLY, MeasureSpec.EXACTLY);
-    }
-
-    private class MockOnHierarchyChangeListener implements OnHierarchyChangeListener {
-        private boolean mCalledOnChildViewAdded = false;
-        private boolean mCalledOnChildViewRemoved = false;
-
-        /*
-         * (non-Javadoc)
-         *
-         * @see
-         * android.view.ViewGroup.OnHierarchyChangeListener#onChildViewAdded
-         * (View, View)
-         */
-        public void onChildViewAdded(View parent, View child) {
-            mCalledOnChildViewAdded = true;
-        }
-
-        /*
-         * (non-Javadoc)
-         *
-         * @see
-         * android.view.ViewGroup.OnHierarchyChangeListener#onChildViewRemoved
-         * (View, View)
-         */
-        public void onChildViewRemoved(View parent, View child) {
-            mCalledOnChildViewRemoved = true;
-        }
-
-        public boolean hasCalledOnChildViewAdded() {
-            return mCalledOnChildViewAdded;
-        }
-
-        public boolean hasCalledOnChildViewRemoved() {
-            return mCalledOnChildViewRemoved;
-        }
-
-        public void reset() {
-            mCalledOnChildViewAdded = false;
-            mCalledOnChildViewRemoved = false;
-        }
     }
 
     /*

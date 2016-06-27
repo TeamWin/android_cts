@@ -77,14 +77,7 @@ public class DatePickerDialogTest extends
         assertFalse("Date picker still dismissed", d.isShowing());
     }
 
-    private MockDatePickerDialog createDatePickerDialog() {
-        return new MockDatePickerDialog(mActivity, null, 1970, 1, 1);
-    }
-
-    private class MockDatePickerDialog extends DatePickerDialog {
-        public MockDatePickerDialog(Context context, OnDateSetListener callBack,
-                int year, int monthOfYear, int dayOfMonth) {
-            super(context, callBack, year, monthOfYear, dayOfMonth);
-        }
+    private DatePickerDialog createDatePickerDialog() {
+        return new DatePickerDialog(mActivity, null, 1970, 1, 1);
     }
 }

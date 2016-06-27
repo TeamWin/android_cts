@@ -90,12 +90,7 @@ public class AbsListViewTest extends ActivityInstrumentationTestCase2<ListViewCt
         super.setUp();
 
         mActivity = getActivity();
-        new PollingCheck() {
-            @Override
-                protected boolean check() {
-                return mActivity.hasWindowFocus();
-            }
-        }.run();
+        PollingCheck.waitFor(() -> mActivity.hasWindowFocus());
         mInstrumentation = getInstrumentation();
 
         XmlPullParser parser = mActivity.getResources().getXml(R.layout.listview_layout);
@@ -385,12 +380,7 @@ public class AbsListViewTest extends ActivityInstrumentationTestCase2<ListViewCt
         final Rect r = drawable.getBounds();
 
         final TextView v = (TextView) mListView.getSelectedView();
-        new PollingCheck() {
-            @Override
-            protected boolean check() {
-                return v.getRight() == r.right;
-            }
-        }.run();
+        PollingCheck.waitFor(() -> v.getRight() == r.right);
         assertEquals(v.getLeft(), r.left);
         assertEquals(v.getTop(), r.top);
         assertEquals(v.getBottom(), r.bottom);

@@ -24,6 +24,16 @@ import android.os.Looper;
 import android.test.ActivityInstrumentationTestCase2;
 import android.widget.Filter;
 import android.widget.Filter.FilterListener;
+import org.junit.Assert;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
+
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+
+import static org.mockito.Matchers.anyInt;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.mock;
 
 public class FilterTest extends ActivityInstrumentationTestCase2<CtsActivity> {
     private static final long TIME_OUT = 10000;
@@ -66,26 +76,22 @@ public class FilterTest extends ActivityInstrumentationTestCase2<CtsActivity> {
         });
         getInstrumentation().waitForIdleSync();
 
-        new PollingCheck(TIME_OUT) {
-            @Override
-            protected boolean check() {
-                return mMockFilter.hadPerformedFiltering();
-            }
-        }.run();
+        PollingCheck.waitFor(TIME_OUT, () -> mMockFilter.hadPerformedFiltering());
         assertEquals(TEST_CONSTRAINT, mMockFilter.getPerformFilteringConstraint());
 
-        new PollingCheck(TIME_OUT) {
-            @Override
-            protected boolean check() {
-                return mMockFilter.hadPublishedResults();
-            }
-        }.run();
+        PollingCheck.waitFor(TIME_OUT, () -> mMockFilter.hadPublishedResults());
         assertEquals(TEST_CONSTRAINT, mMockFilter.getPublishResultsConstraint());
         assertSame(mMockFilter.getExpectResults(), mMockFilter.getResults());
     }
 
     public void testFilter2() {
-        final MockFilterListener mockFilterListener = new MockFilterListener();
+        final CountDownLatch countDownLatch = new CountDownLatch(1);
+        final Filter.FilterListener mockFilterListener = mock(Filter.FilterListener.class);
+        doAnswer((InvocationOnMock invocation) -> {
+            countDownLatch.countDown();
+            return null;
+        }).when(mockFilterListener).onFilterComplete(anyInt());
+
         getActivity().runOnUiThread(new Runnable() {
             public void run() {
                 mMockFilter = new MockFilter();
@@ -94,29 +100,18 @@ public class FilterTest extends ActivityInstrumentationTestCase2<CtsActivity> {
         });
         getInstrumentation().waitForIdleSync();
 
-        new PollingCheck(TIME_OUT) {
-            @Override
-            protected boolean check() {
-                return mMockFilter.hadPerformedFiltering();
-            }
-        }.run();
+        PollingCheck.waitFor(TIME_OUT, () -> mMockFilter.hadPerformedFiltering());
         assertEquals(TEST_CONSTRAINT, mMockFilter.getPerformFilteringConstraint());
 
-        new PollingCheck(TIME_OUT) {
-            @Override
-            protected boolean check() {
-                return mMockFilter.hadPublishedResults();
-            }
-        }.run();
+        PollingCheck.waitFor(TIME_OUT, () -> mMockFilter.hadPublishedResults());
         assertEquals(TEST_CONSTRAINT, mMockFilter.getPublishResultsConstraint());
         assertSame(mMockFilter.getExpectResults(), mMockFilter.getResults());
 
-        new PollingCheck(TIME_OUT) {
-            @Override
-            protected boolean check() {
-                return mockFilterListener.hasCalledOnFilterComplete();
-            }
-        }.run();
+        try {
+            countDownLatch.await(TIME_OUT, TimeUnit.MILLISECONDS);
+        } catch (InterruptedException ie) {
+            Assert.fail(ie.toString());
+        }
     }
 
     private static class MockFilter extends Filter {
@@ -183,18 +178,6 @@ public class FilterTest extends ActivityInstrumentationTestCase2<CtsActivity> {
                 mResults = results;
                 mHadPublishedResults = true;
             }
-        }
-    }
-
-    private static class MockFilterListener implements FilterListener {
-        private boolean mCalledOnFilterComplete = false;
-
-        public void onFilterComplete(int count) {
-            mCalledOnFilterComplete = true;
-        }
-
-        public boolean hasCalledOnFilterComplete() {
-            return mCalledOnFilterComplete;
         }
     }
 }

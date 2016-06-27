@@ -74,22 +74,12 @@ public class ToastTest extends ActivityInstrumentationTestCase2<CtsActivity> {
     }
 
     private void assertShowToast(final View view) {
-        new PollingCheck(TIME_OUT) {
-            @Override
-            protected boolean check() {
-                return null != view.getParent();
-            }
-        }.run();
+        PollingCheck.waitFor(TIME_OUT, () -> null != view.getParent());
     }
 
     private void assertShowAndHide(final View view) {
         assertShowToast(view);
-        new PollingCheck(TIME_OUT) {
-            @Override
-            protected boolean check() {
-                return null == view.getParent();
-            }
-        }.run();
+        PollingCheck.waitFor(TIME_OUT, () -> null == view.getParent());
     }
 
     private void assertNotShowToast(final View view) throws InterruptedException {
@@ -104,12 +94,7 @@ public class ToastTest extends ActivityInstrumentationTestCase2<CtsActivity> {
     }
 
     private void assertLayoutDone(final View view) {
-        new PollingCheck(TIME_OUT) {
-            @Override
-            protected boolean check() {
-                return mLayoutDone;
-            }
-        }.run();
+        PollingCheck.waitFor(TIME_OUT, () -> mLayoutDone);
         view.getViewTreeObserver().removeOnGlobalLayoutListener(mLayoutListener);
     }
 

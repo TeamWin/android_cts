@@ -16,19 +16,11 @@
 
 package android.widget.cts;
 
-import android.widget.cts.R;
-
 import android.app.Activity;
 import android.app.Instrumentation;
 import android.content.Context;
 import android.cts.util.MediaUtils;
-import android.cts.util.PollingCheck;
-import android.media.MediaCodecInfo;
-import android.media.MediaCodecList;
 import android.media.MediaPlayer;
-import android.media.MediaPlayer.OnCompletionListener;
-import android.media.MediaPlayer.OnErrorListener;
-import android.media.MediaPlayer.OnPreparedListener;
 import android.test.ActivityInstrumentationTestCase2;
 import android.test.UiThreadTest;
 import android.util.Log;
@@ -36,9 +28,16 @@ import android.view.View.MeasureSpec;
 import android.widget.MediaController;
 import android.widget.VideoView;
 
+import org.mockito.invocation.InvocationOnMock;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.*;
 
 /**
  * Test {@link VideoView}.
@@ -62,43 +61,6 @@ public class VideoViewTest extends ActivityInstrumentationTestCase2<VideoViewCts
     private Activity mActivity;
     private Instrumentation mInstrumentation;
     private String mVideoPath;
-
-    private static class MockListener {
-        private boolean mTriggered;
-
-        MockListener() {
-            mTriggered = false;
-        }
-
-        public boolean isTriggered() {
-            return mTriggered;
-        }
-
-        protected void onEvent() {
-            mTriggered = true;
-        }
-    }
-
-    private static class MockOnPreparedListener extends MockListener
-            implements OnPreparedListener {
-        public void onPrepared(MediaPlayer mp) {
-            super.onEvent();
-        }
-    }
-
-    private static class MockOnErrorListener extends MockListener implements OnErrorListener {
-        public boolean onError(MediaPlayer mp, int what, int extra) {
-            super.onEvent();
-            return false;
-        }
-    }
-
-    private static class MockOnCompletionListener extends MockListener
-            implements OnCompletionListener {
-        public void onCompletion(MediaPlayer mp) {
-            super.onEvent();
-        }
-    }
 
     private boolean hasCodec() {
         return MediaUtils.hasCodecsForResource(mActivity, R.raw.testvideo);
@@ -190,42 +152,46 @@ public class VideoViewTest extends ActivityInstrumentationTestCase2<VideoViewCts
             return;
         }
 
-        final MockOnPreparedListener preparedListener = new MockOnPreparedListener();
-        mVideoView.setOnPreparedListener(preparedListener);
-        final MockOnCompletionListener completionListener = new MockOnCompletionListener();
-        mVideoView.setOnCompletionListener(completionListener);
+        final MediaPlayer.OnPreparedListener mockPreparedListener =
+                mock(MediaPlayer.OnPreparedListener.class);
+        final CountDownLatch preparedLatch = new CountDownLatch(1);
+        doAnswer((InvocationOnMock invocation) -> {
+            preparedLatch.countDown();
+            return null;
+        }).when(mockPreparedListener).onPrepared(any(MediaPlayer.class));
+        mVideoView.setOnPreparedListener(mockPreparedListener);
 
-        runTestOnUiThread(new Runnable() {
-            public void run() {
-                mVideoView.setVideoPath(mVideoPath);
-            }
-        });
-        new PollingCheck(TIME_OUT) {
-            @Override
-            protected boolean check() {
-                return preparedListener.isTriggered();
-            }
-        }.run();
-        assertFalse(completionListener.isTriggered());
+        final MediaPlayer.OnCompletionListener mockCompletionListener =
+                mock(MediaPlayer.OnCompletionListener.class);
+        final CountDownLatch completionLatch = new CountDownLatch(1);
+        doAnswer((InvocationOnMock invocation) -> {
+            completionLatch.countDown();
+            return null;
+        }).when(mockCompletionListener).onCompletion(any(MediaPlayer.class));
+        mVideoView.setOnCompletionListener(mockCompletionListener);
 
-        runTestOnUiThread(new Runnable() {
-            public void run() {
-                mVideoView.start();
-            }
-        });
+        runTestOnUiThread(() -> mVideoView.setVideoPath(mVideoPath));
+        preparedLatch.await(TIME_OUT, TimeUnit.MILLISECONDS);
+        verify(mockPreparedListener, times(1)).onPrepared(any(MediaPlayer.class));
+        verifyZeroInteractions(mockCompletionListener);
+
+        runTestOnUiThread(() -> mVideoView.start());
         // wait time is longer than duration in case system is sluggish
-        new PollingCheck(mVideoView.getDuration() + TIME_OUT) {
-            @Override
-            protected boolean check() {
-                return completionListener.isTriggered();
-            }
-        }.run();
+        completionLatch.await(mVideoView.getDuration() + TIME_OUT, TimeUnit.MILLISECONDS);
+        verify(mockCompletionListener, times(1)).onCompletion(any(MediaPlayer.class));
     }
 
     public void testSetOnErrorListener() throws Throwable {
         makeVideoView();
-        final MockOnErrorListener listener = new MockOnErrorListener();
-        mVideoView.setOnErrorListener(listener);
+
+        final MediaPlayer.OnErrorListener mockErrorListener =
+                mock(MediaPlayer.OnErrorListener.class);
+        final CountDownLatch errorLatch = new CountDownLatch(1);
+        doAnswer((InvocationOnMock invocation) -> {
+            errorLatch.countDown();
+            return null;
+        }).when(mockErrorListener).onError(any(MediaPlayer.class), anyInt(), anyInt());
+        mVideoView.setOnErrorListener(mockErrorListener);
 
         runTestOnUiThread(new Runnable() {
             public void run() {
@@ -236,12 +202,8 @@ public class VideoViewTest extends ActivityInstrumentationTestCase2<VideoViewCts
         });
         mInstrumentation.waitForIdleSync();
 
-        new PollingCheck(TIME_OUT) {
-            @Override
-            protected boolean check() {
-                return listener.isTriggered();
-            }
-        }.run();
+        errorLatch.await(TIME_OUT, TimeUnit.MILLISECONDS);
+        verify(mockErrorListener, times(1)).onError(any(MediaPlayer.class), anyInt(), anyInt());
     }
 
     public void testGetBufferPercentage() throws Throwable {
@@ -252,22 +214,20 @@ public class VideoViewTest extends ActivityInstrumentationTestCase2<VideoViewCts
             return;
         }
 
-        final MockOnPreparedListener prepareListener = new MockOnPreparedListener();
-        mVideoView.setOnPreparedListener(prepareListener);
+        final MediaPlayer.OnPreparedListener mockPreparedListener =
+                mock(MediaPlayer.OnPreparedListener.class);
+        final CountDownLatch preparedLatch = new CountDownLatch(1);
+        doAnswer((InvocationOnMock invocation) -> {
+            preparedLatch.countDown();
+            return null;
+        }).when(mockPreparedListener).onPrepared(any(MediaPlayer.class));
+        mVideoView.setOnPreparedListener(mockPreparedListener);
 
-        runTestOnUiThread(new Runnable() {
-            public void run() {
-                mVideoView.setVideoPath(mVideoPath);
-            }
-        });
+        runTestOnUiThread(() -> mVideoView.setVideoPath(mVideoPath));
         mInstrumentation.waitForIdleSync();
 
-        new PollingCheck(TIME_OUT) {
-            @Override
-            protected boolean check() {
-                return prepareListener.isTriggered();
-            }
-        }.run();
+        preparedLatch.await(TIME_OUT, TimeUnit.MILLISECONDS);
+        verify(mockPreparedListener, times(1)).onPrepared(any(MediaPlayer.class));
         int percent = mVideoView.getBufferPercentage();
         assertTrue(percent >= 0 && percent <= 100);
     }
@@ -295,11 +255,7 @@ public class VideoViewTest extends ActivityInstrumentationTestCase2<VideoViewCts
             return;
         }
 
-        runTestOnUiThread(new Runnable() {
-            public void run() {
-                mVideoView.setVideoPath(mVideoPath);
-            }
-        });
+        runTestOnUiThread(() -> mVideoView.setVideoPath(mVideoPath));
         waitForOperationComplete();
         assertTrue(Math.abs(mVideoView.getDuration() - TEST_VIDEO_DURATION) < DURATION_DELTA);
     }

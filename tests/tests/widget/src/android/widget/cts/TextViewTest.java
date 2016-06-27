@@ -2940,11 +2940,9 @@ public class TextViewTest extends ActivityInstrumentationTestCase2<TextViewCtsAc
 
         View.OnCreateContextMenuListener mockOnCreateContextMenuListener =
                 mock(View.OnCreateContextMenuListener.class);
-        doAnswer(new Answer() {
-            public Object answer(InvocationOnMock invocation) {
-                ((ContextMenu) invocation.getArguments() [0]).add("menu item");
-                return null;
-            }
+        doAnswer((InvocationOnMock invocation) -> {
+            ((ContextMenu) invocation.getArguments() [0]).add("menu item");
+            return null;
         }).when(mockOnCreateContextMenuListener).onCreateContextMenu(
                 any(ContextMenu.class), any(View.class), any(ContextMenuInfo.class));
 

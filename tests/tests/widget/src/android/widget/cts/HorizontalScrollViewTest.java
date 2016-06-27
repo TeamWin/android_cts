@@ -16,12 +16,6 @@
 
 package android.widget.cts;
 
-import android.widget.FrameLayout;
-import android.widget.cts.R;
-
-
-import org.xmlpull.v1.XmlPullParser;
-
 import android.app.Activity;
 import android.content.Context;
 import android.cts.util.PollingCheck;
@@ -32,10 +26,14 @@ import android.test.UiThreadTest;
 import android.util.AttributeSet;
 import android.util.Xml;
 import android.view.View;
-import android.view.ViewGroup;
 import android.view.View.MeasureSpec;
+import android.view.ViewGroup;
+import android.widget.FrameLayout;
 import android.widget.HorizontalScrollView;
 import android.widget.TextView;
+
+import org.xmlpull.v1.XmlPullParser;
+
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
@@ -800,55 +798,34 @@ public class HorizontalScrollViewTest
         }
 
         if (fromY != toY) {
-            new PollingCheck() {
-                @Override
-                protected boolean check() {
-                    return isInRange(mScrollView.getScrollY(), fromY, toY);
-                }
-            }.run();
+            PollingCheck.waitFor(() -> isInRange(mScrollView.getScrollY(), fromY, toY));
         }
 
         if (fromX != toX) {
-            new PollingCheck() {
-                @Override
-                protected boolean check() {
-                    return isInRange(mScrollView.getScrollX(), fromX, toX);
-                }
-            }.run();
+            PollingCheck.waitFor(() -> isInRange(mScrollView.getScrollX(), fromX, toX));
         }
 
-        new PollingCheck() {
-            @Override
-            protected boolean check() {
-                return toX == mScrollView.getScrollX() && toY == mScrollView.getScrollY();
-            }
-        }.run();
+        PollingCheck.waitFor(
+                () -> toX == mScrollView.getScrollX() && toY == mScrollView.getScrollY());
     }
 
     private void pollingCheckFling(final int startPosition, final boolean movingRight) {
-        new PollingCheck() {
-            @Override
-            protected boolean check() {
-                if (movingRight) {
-                    return mScrollView.getScrollX() > startPosition;
-                }
-                return mScrollView.getScrollX() < startPosition;
+        PollingCheck.waitFor(() -> {
+            if (movingRight) {
+                return mScrollView.getScrollX() > startPosition;
             }
-        }.run();
+            return mScrollView.getScrollX() < startPosition;
+        });
 
-        new PollingCheck() {
-            private int mPreviousScrollX = mScrollView.getScrollX();
-
-            @Override
-            protected boolean check() {
-                if (mScrollView.getScrollX() == mPreviousScrollX) {
-                    return true;
-                } else {
-                    mPreviousScrollX = mScrollView.getScrollX();
-                    return false;
-                }
+        final int[] previousScrollX = new int[] { mScrollView.getScrollX() };
+        PollingCheck.waitFor(() -> {
+            if (mScrollView.getScrollX() == previousScrollX[0]) {
+                return true;
+            } else {
+                previousScrollX[0] = mScrollView.getScrollX();
+                return false;
             }
-        }.run();
+        });
     }
 
     public static class MyView extends View {
