@@ -16,12 +16,14 @@
 
 package com.android.compatibility.common.util;
 
+import com.android.ddmlib.Log.LogLevel;
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.log.LogUtil.CLog;
 import com.android.tradefed.result.ITestInvocationListener;
 import com.android.tradefed.result.InputStreamSource;
 import com.android.tradefed.result.LogDataType;
+import com.android.tradefed.util.RunUtil;
 
 /**
  * Utility functions related to device state monitoring during compatibility test.
@@ -31,26 +33,31 @@ public class MonitoringUtils {
     private static final long CONNECTIVITY_CHECK_TIME_MS = 60 * 1000;
     private static final long CONNECTIVITY_CHECK_INTERVAL_MS = 5 * 1000;
 
+    public static boolean checkDeviceConnectivity(ITestDevice device)
+            throws DeviceNotAvailableException {
+        long start = System.currentTimeMillis();
+        while (System.currentTimeMillis() - start < CONNECTIVITY_CHECK_TIME_MS) {
+            if (device.checkConnectivity()) {
+                CLog.i("Connectivity: passed check.");
+                return true;
+            } else {
+                CLog.logAndDisplay(LogLevel.INFO,
+                        "Connectivity check failed, retrying in %dms",
+                        CONNECTIVITY_CHECK_INTERVAL_MS);
+                RunUtil.getDefault().sleep(CONNECTIVITY_CHECK_INTERVAL_MS);
+            }
+        }
+        return false;
+    }
+
     public static void checkDeviceConnectivity(ITestDevice device, ITestInvocationListener listener,
             String tag) throws DeviceNotAvailableException {
-            long start = System.currentTimeMillis();
-            while (System.currentTimeMillis() - start < CONNECTIVITY_CHECK_TIME_MS) {
-                if (device.checkConnectivity()) {
-                    CLog.i("Connectivity: passed check.");
-                    return;
-                } else {
-                    try {
-                        Thread.sleep(CONNECTIVITY_CHECK_INTERVAL_MS);
-                    } catch (InterruptedException ie) {
-                        return;
-                    }
-                }
-            }
+        if (!checkDeviceConnectivity(device)) {
             CLog.w("Connectivity: check failed.");
             InputStreamSource bugSource = device.getBugreport();
             listener.testLog(String.format("bugreport-connectivity-%s", tag),
                     LogDataType.TEXT, bugSource);
             bugSource.cancel();
         }
-
+    }
 }
