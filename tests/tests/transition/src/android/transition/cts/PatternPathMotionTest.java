@@ -47,5 +47,14 @@ public class PatternPathMotionTest extends PathMotionTest {
 
         assertPathMatches(expected, pathMotion.getPath(0, 0, 0, 100));
     }
+
+    public void testSetPatternPath() throws Throwable {
+        Path pattern = new Path();
+        pattern.addArc(0, 0, 100, 100, 0, 180);
+
+        PatternPathMotion patternPathMotion = new PatternPathMotion();
+        patternPathMotion.setPatternPath(pattern);
+        assertSame(pattern, patternPathMotion.getPatternPath());
+    }
 }
 
