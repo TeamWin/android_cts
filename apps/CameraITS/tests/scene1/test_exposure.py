@@ -62,7 +62,8 @@ def main():
             s_test = round(s*m)
             e_test = s_e_product / s_test
             print "Testing s:", s_test, "e:", e_test
-            req = its.objects.manual_capture_request(s_test, e_test, True, props)
+            req = its.objects.manual_capture_request(
+                    s_test, e_test, 0.0, True, props)
             cap = cam.do_capture(req)
             s_res = cap["metadata"]["android.sensor.sensitivity"]
             e_res = cap["metadata"]["android.sensor.exposureTime"]
