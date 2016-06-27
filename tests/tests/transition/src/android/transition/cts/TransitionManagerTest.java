@@ -15,11 +15,13 @@
  */
 package android.transition.cts;
 
+import android.graphics.Rect;
 import android.transition.cts.R;
 
 import android.transition.Scene;
 import android.transition.TransitionManager;
 import android.view.View;
+import android.view.ViewTreeObserver;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -57,6 +59,49 @@ public class TransitionManagerTest extends BaseTransitionTest {
         });
     }
 
+    public void testDefaultBeginDelayedTransition() throws Throwable {
+        enterScene(R.layout.scene1);
+        final CountDownLatch startLatch = new CountDownLatch(1);
+        mSceneRoot.getViewTreeObserver().addOnPreDrawListener(
+                new ViewTreeObserver.OnPreDrawListener() {
+                    @Override
+                    public boolean onPreDraw() {
+                        mSceneRoot.getViewTreeObserver().removeOnPreDrawListener(this);
+                        startLatch.countDown();
+                        return true;
+                    }
+                });
+        runTestOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                TransitionManager.beginDelayedTransition(mSceneRoot);
+            }
+        });
+        enterScene(R.layout.scene6);
+        assertTrue(startLatch.await(500, TimeUnit.MILLISECONDS));
+        ensureRedSquareIsMoving();
+        endTransition();
+    }
+
+    private void ensureRedSquareIsMoving() throws InterruptedException {
+        final View view = getActivity().findViewById(R.id.redSquare);
+        assertNotNull(view);
+        // We should see a ChangeBounds on redSquare
+        final Rect position = new Rect(view.getLeft(), view.getTop(), view.getRight(),
+                view.getBottom());
+        final CountDownLatch latch = new CountDownLatch(1);
+        view.postOnAnimationDelayed(new Runnable() {
+            @Override
+            public void run() {
+                Rect next = new Rect(view.getLeft(), view.getTop(), view.getRight(),
+                        view.getBottom());
+                assertTrue(!next.equals(position));
+                latch.countDown();
+            }
+        }, 20);
+        assertTrue(latch.await(500, TimeUnit.MILLISECONDS));
+    }
+
     public void testGo() throws Throwable {
         startTransition(R.layout.scene1);
         waitForStart();
@@ -75,6 +120,30 @@ public class TransitionManagerTest extends BaseTransitionTest {
                 assertNotNull(mActivity.findViewById(R.id.greenSquare));
             }
         });
+    }
+
+    public void testDefaultGo() throws Throwable {
+        enterScene(R.layout.scene1);
+        final CountDownLatch startLatch = new CountDownLatch(1);
+        mSceneRoot.getViewTreeObserver().addOnPreDrawListener(
+                new ViewTreeObserver.OnPreDrawListener() {
+                    @Override
+                    public boolean onPreDraw() {
+                        mSceneRoot.getViewTreeObserver().removeOnPreDrawListener(this);
+                        startLatch.countDown();
+                        return true;
+                    }
+                });
+        final Scene scene6 = loadScene(R.layout.scene6);
+        runTestOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                TransitionManager.go(scene6);
+            }
+        });
+        assertTrue(startLatch.await(500, TimeUnit.MILLISECONDS));
+        ensureRedSquareIsMoving();
+        endTransition();
     }
 
     public void testSetTransition1() throws Throwable {

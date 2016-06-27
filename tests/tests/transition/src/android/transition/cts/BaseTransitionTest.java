@@ -89,7 +89,7 @@ public class BaseTransitionTest extends ActivityInstrumentationTestCase2<Transit
     }
 
     protected Scene loadScene(final View layout) throws Throwable {
-        Scene[] scene = new Scene[1];
+        final Scene[] scene = new Scene[1];
         runTestOnUiThread(new Runnable() {
             @Override
             public void run() {
@@ -101,7 +101,7 @@ public class BaseTransitionTest extends ActivityInstrumentationTestCase2<Transit
     }
 
     protected Scene loadScene(final int layoutId) throws Throwable {
-        Scene scene[] = new Scene[1];
+        final Scene scene[] = new Scene[1];
         runTestOnUiThread(new Runnable() {
             @Override
             public void run() {
