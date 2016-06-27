@@ -16,13 +16,29 @@
 
 package android.graphics.drawable.cts;
 
-import android.content.res.Resources.Theme;
-import android.graphics.drawable.Drawable.Callback;
-import android.view.View;
-import android.graphics.cts.R;
-
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
+
+import android.content.ContentResolver;
+import android.content.res.Resources;
+import android.content.res.Resources.Theme;
+import android.graphics.BitmapFactory;
+import android.graphics.Canvas;
+import android.graphics.ColorFilter;
+import android.graphics.PixelFormat;
+import android.graphics.PorterDuff;
+import android.graphics.Rect;
+import android.graphics.cts.R;
+import android.graphics.drawable.Drawable;
+import android.graphics.drawable.Drawable.Callback;
+import android.net.Uri;
+import android.support.test.filters.SmallTest;
+import android.test.AndroidTestCase;
+import android.util.AttributeSet;
+import android.util.StateSet;
+import android.util.TypedValue;
+import android.util.Xml;
+import android.view.View;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -32,24 +48,11 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
-import android.content.ContentResolver;
-import android.content.res.Resources;
-import android.graphics.BitmapFactory;
-import android.graphics.Canvas;
-import android.graphics.ColorFilter;
-import android.graphics.PixelFormat;
-import android.graphics.PorterDuff;
-import android.graphics.Rect;
-import android.graphics.drawable.Drawable;
-import android.net.Uri;
-import android.test.AndroidTestCase;
-import android.util.AttributeSet;
-import android.util.StateSet;
-import android.util.TypedValue;
-import android.util.Xml;
-
+import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 
+@SmallTest
 public class DrawableTest extends AndroidTestCase {
     Resources mResources;
 
@@ -546,13 +549,22 @@ public class DrawableTest extends AndroidTestCase {
     }
 
     public void testScheduleSelf() {
-        MockDrawable mockDrawable = new MockDrawable();
-        MockCallback mockCallback = new MockCallback();
-        mockDrawable.setCallback(mockCallback);
+        Drawable mockDrawable = new MockDrawable();
         mockDrawable.scheduleSelf(null, 1000L);
-        assertEquals(mockDrawable, mockCallback.getScheduleDrawable());
-        assertNull(mockCallback.getRunnable());
-        assertEquals(1000L, mockCallback.getWhen());
+
+        Runnable runnable = mock(Runnable.class);
+        mockDrawable.scheduleSelf(runnable, 1000L);
+
+        Callback mockCallback = mock(Callback.class);
+        mockDrawable.setCallback(mockCallback);
+        mockDrawable.scheduleSelf(runnable, 1000L);
+        verify(mockCallback).scheduleDrawable(eq(mockDrawable), eq(runnable), eq(1000L));
+
+        mockDrawable.scheduleSelf(runnable, 0L);
+        verify(mockCallback).scheduleDrawable(eq(mockDrawable), eq(runnable), eq(0L));
+
+        mockDrawable.scheduleSelf(runnable, -1000L);
+        verify(mockCallback).scheduleDrawable(eq(mockDrawable), eq(runnable), eq(-1000L));
     }
 
     public void testAccessCallback() {
