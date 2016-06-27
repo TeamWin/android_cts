@@ -198,8 +198,6 @@
 
         <activity android:name="android.app.stubs.FragmentResultActivity" android:label="FragmentResultActivity" />
 
-        <activity android:name="android.app.stubs.ChildTabActivity" android:label="ChildTabActivity" />
-
         <activity android:name="android.app.stubs.LauncherActivityStub"
                   android:label="LauncherActivityStub" >
             <intent-filter>
