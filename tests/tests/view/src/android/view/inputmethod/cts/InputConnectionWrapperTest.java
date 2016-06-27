@@ -102,7 +102,7 @@ public class InputConnectionWrapperTest extends AndroidTestCase {
                 Uri.parse("content://com.example/path"),
                 new ClipDescription("sample content", new String[]{"image/png"}),
                 Uri.parse("https://example.com"));
-        assertTrue(inputConnection.commitContent(inputContentInfo, null /* opt */));
+        assertTrue(inputConnection.commitContent(inputContentInfo, 0 /* flags */, null /* opt */));
         assertTrue(inputConnection.isCommitContentCalled);
     }
 
@@ -258,7 +258,7 @@ public class InputConnectionWrapperTest extends AndroidTestCase {
             isCloseConnectionCalled = true;
         }
 
-        public boolean commitContent(InputContentInfo inputContentInfo, Bundle opts) {
+        public boolean commitContent(InputContentInfo inputContentInfo, int flags, Bundle opts) {
             isCommitContentCalled = true;
             return true;
         }
