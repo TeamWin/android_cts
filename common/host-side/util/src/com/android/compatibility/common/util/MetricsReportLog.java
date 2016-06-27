@@ -31,35 +31,10 @@ public final class MetricsReportLog extends ReportLog {
     private final String mClassMethodName;
     private final IBuildInfo mBuildInfo;
 
-    // TODO(mishragaurav): Remove default names and constructor after fixing b/27950009.
-    private static final String DEFAULT_REPORT_LOG_NAME = "DefaultHostTestMetrics";
-    private static final String DEFAULT_STREAM_NAME = "DefaultStream";
     // Temporary folder must match the temp-dir value configured in ReportLogCollector target
     // preparer in cts/tools/cts-tradefed/res/config/cts-oreconditions.xml
     private static final String TEMPORARY_REPORT_FOLDER = "temp-report-logs/";
     private ReportLogHostInfoStore store;
-
-    /**
-     * @param buildInfo the test build info.
-     * @param abi abi the test was run on.
-     * @param classMethodName class name and method name of the test in class#method format.
-     *        Note that ReportLog.getClassMethodNames() provide this.
-     */
-    public MetricsReportLog(IBuildInfo buildInfo, String abi, String classMethodName) {
-        this(buildInfo, abi, classMethodName, DEFAULT_REPORT_LOG_NAME, DEFAULT_STREAM_NAME);
-    }
-
-    /**
-     * @param buildInfo the test build info.
-     * @param abi abi the test was run on.
-     * @param classMethodName class name and method name of the test in class#method format.
-     *        Note that ReportLog.getClassMethodNames() provide this.
-     * @param reportLogName the name of the report log file. Metrics will be written out to this.
-     */
-    public MetricsReportLog(IBuildInfo buildInfo, String abi, String classMethodName,
-            String reportLogName) {
-        this(buildInfo, abi, classMethodName, reportLogName, DEFAULT_STREAM_NAME);
-    }
 
     /**
      * @param buildInfo the test build info.

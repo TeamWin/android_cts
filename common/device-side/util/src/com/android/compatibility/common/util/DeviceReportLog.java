@@ -38,21 +38,10 @@ import java.util.List;
 public class DeviceReportLog extends ReportLog {
     private static final String TAG = DeviceReportLog.class.getSimpleName();
     private static final String RESULT = "COMPATIBILITY_TEST_RESULT";
-    // TODO(mishragaurav): Remove default names and constructor after fixing b/27950009.
-    private static final String DEFAULT_REPORT_LOG_NAME = "DefaultDeviceTestMetrics";
-    private static final String DEFAULT_STREAM_NAME = "DefaultStream";
     private static final int INST_STATUS_ERROR = -1;
     private static final int INST_STATUS_IN_PROGRESS = 2;
 
     private ReportLogDeviceInfoStore store;
-
-    public DeviceReportLog() {
-        this(DEFAULT_REPORT_LOG_NAME, DEFAULT_STREAM_NAME);
-    }
-
-    public DeviceReportLog(String reportLogName) {
-        this(reportLogName, DEFAULT_STREAM_NAME);
-    }
 
     public DeviceReportLog(String reportLogName, String streamName) {
         super(reportLogName, streamName);
