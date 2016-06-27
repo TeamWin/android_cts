@@ -16,6 +16,7 @@
 
 package android.graphics.drawable.cts;
 
+import junit.framework.TestCase;
 
 import android.graphics.Canvas;
 import android.graphics.ColorFilter;
@@ -23,12 +24,12 @@ import android.graphics.PixelFormat;
 import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.DrawableContainer;
-import android.graphics.drawable.LevelListDrawable;
 import android.graphics.drawable.DrawableContainer.DrawableContainerState;
+import android.graphics.drawable.LevelListDrawable;
+import android.support.test.filters.SmallTest;
 
-import junit.framework.TestCase;
-
-public class DrawableContainerStateTest extends TestCase{
+@SmallTest
+public class DrawableContainerStateTest extends TestCase {
     private DrawableContainerState mDrawableContainerState;
 
     private DrawableContainer mDrawableContainer;
@@ -36,6 +37,7 @@ public class DrawableContainerStateTest extends TestCase{
     @Override
     protected void setUp() throws Exception {
         super.setUp();
+
         // DrawableContainerState has no public constructor. Obtain an instance through
         // LevelListDrawable.getConstants(). This is fine for testing the final methods of
         // DrawableContainerState.

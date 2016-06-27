@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008 The Android Open Source Project.
+ * Copyright (C) 2016 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,25 +18,16 @@ package android.graphics.drawable.cts;
 
 import junit.framework.TestCase;
 
-import android.graphics.Shader;
-import android.graphics.drawable.ShapeDrawable.ShaderFactory;
+import android.graphics.drawable.Animatable2.AnimationCallback;
 import android.support.test.filters.SmallTest;
 
 @SmallTest
-public class ShapeDrawable_ShaderFactoryTest extends TestCase {
+public class Animatable2_AnimationCallbackTest extends TestCase {
 
-    public void testResize() {
-        // This is an abstract function, but coverage
-        // complains if we don't call it.
-        ShaderFactory impl = new ShaderFactoryImpl();
-        assertNull(impl.resize(0, 0));
-    }
-
-    private class ShaderFactoryImpl extends ShaderFactory {
-
-        @Override
-        public Shader resize(int width, int height) {
-            return null;
-        }
+    public void testCallback() {
+        // These are no-op methods. Just make sure they don't crash.
+        AnimationCallback callback = new AnimationCallback() {};
+        callback.onAnimationStart(null);
+        callback.onAnimationEnd(null);
     }
 }
