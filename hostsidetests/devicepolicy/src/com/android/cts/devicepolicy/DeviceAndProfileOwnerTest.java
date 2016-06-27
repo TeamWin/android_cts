@@ -182,6 +182,37 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
         executeDeviceTestClass(".AlwaysOnVpnTest");
     }
 
+    public void testAlwaysOnVpnLockDown() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
+
+        installAppAsUser(VPN_APP_APK, mUserId);
+        try {
+            executeDeviceTestMethod(".AlwaysOnVpnMultiStageTest", "testAlwaysOnSet");
+            forceStopPackageForUser(VPN_APP_PKG, mUserId);
+            executeDeviceTestMethod(".AlwaysOnVpnMultiStageTest", "testNetworkBlocked");
+        } finally {
+            executeDeviceTestMethod(".AlwaysOnVpnMultiStageTest", "testCleanup");
+        }
+    }
+
+    public void testAlwaysOnVpnPackageUninstalled() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
+
+        installAppAsUser(VPN_APP_APK, mUserId);
+        try {
+            executeDeviceTestMethod(".AlwaysOnVpnMultiStageTest", "testAlwaysOnSet");
+            getDevice().uninstallPackage(VPN_APP_PKG);
+            executeDeviceTestMethod(".AlwaysOnVpnMultiStageTest", "testAlwaysOnVpnDisabled");
+            executeDeviceTestMethod(".AlwaysOnVpnMultiStageTest", "testSetNonExistingPackage");
+        } finally {
+            executeDeviceTestMethod(".AlwaysOnVpnMultiStageTest", "testCleanup");
+        }
+    }
+
     public void testPermissionPolicy() throws Exception {
         if (!mHasFeature) {
             return;
