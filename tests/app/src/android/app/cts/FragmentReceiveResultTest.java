@@ -146,7 +146,7 @@ public class FragmentReceiveResultTest extends
         getInstrumentation().waitForIdleSync();
     }
 
-    public final class TestFragment extends Fragment {
+    public static class TestFragment extends Fragment {
         boolean mHasResult = false;
         int mRequestCode = -1;
         int mResultCode = 100;
