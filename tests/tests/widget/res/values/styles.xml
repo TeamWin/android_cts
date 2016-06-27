@@ -207,4 +207,14 @@
         <item name="android:textOn">@string/toggle_text_on</item>
         <item name="android:textOff">@string/toggle_text_off</item>
     </style>
+
+    <style name="ChronometerStyle" parent="@android:style/Widget.Material.Light.TextView">
+        <item name="android:format">@string/chronometer_format</item>
+        <item name="android:countDown">true</item>
+    </style>
+
+    <style name="ChronometerAwareTheme" parent="@android:style/Theme.Material.Light">
+        <item name="chronometerStyle">@style/ChronometerStyle</item>
+    </style>
+
 </resources>

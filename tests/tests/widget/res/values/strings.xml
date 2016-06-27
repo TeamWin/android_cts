@@ -200,4 +200,6 @@ I think so, so how about double this string, like copy and paste! </string>
     <string name="toggle_text_off">Off</string>
     <string name="toggle_text_on_alt">On Alt</string>
     <string name="toggle_text_off_alt">Off Alt</string>
+
+    <string name="chronometer_format">Current count: %s</string>
 </resources>
