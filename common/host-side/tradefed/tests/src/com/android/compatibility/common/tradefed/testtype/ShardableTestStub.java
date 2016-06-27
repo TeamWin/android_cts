@@ -33,6 +33,7 @@ import junit.framework.Assert;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 
 public class ShardableTestStub implements IRemoteTest, IShardableTest, IBuildReceiver,
         IAbiReceiver, IRuntimeHintProvider, ITestCollector, ITestFilterReceiver {
@@ -99,7 +100,7 @@ public class ShardableTestStub implements IRemoteTest, IShardableTest, IBuildRec
     }
 
     @Override
-    public void addAllIncludeFilters(List<String> filters) {
+    public void addAllIncludeFilters(Set<String> filters) {
 
     }
 
@@ -109,7 +110,7 @@ public class ShardableTestStub implements IRemoteTest, IShardableTest, IBuildRec
     }
 
     @Override
-    public void addAllExcludeFilters(List<String> filters) {
+    public void addAllExcludeFilters(Set<String> filters) {
 
     }
 
