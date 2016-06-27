@@ -22,6 +22,8 @@ import android.support.test.rule.ActivityTestRule;
 import android.support.test.runner.AndroidJUnit4;
 import android.test.suitebuilder.annotation.MediumTest;
 import android.view.View;
+import android.view.ViewGroup;
+
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -221,6 +223,65 @@ public class FragmentLifecycleTest {
         View newView1 = f1.getView();
         assertNotSame("fragment 1 had same view from last attachment", origView1, newView1);
         assertTrue("fragment 1's view not attached", newView1.isAttachedToWindow());
+    }
+
+    @Test
+    @MediumTest
+    public void viewReplaceMultiple() throws Throwable {
+        // Replace several views with one, then reverse it with the back stack
+
+        final FragmentManager fm = mActivityRule.getActivity().getFragmentManager();
+        final StrictViewFragment f1 = new StrictViewFragment();
+        final StrictViewFragment f2 = new StrictViewFragment();
+        final StrictViewFragment f3 = new StrictViewFragment();
+
+        fm.beginTransaction().add(android.R.id.content, f1).commit();
+        fm.beginTransaction().add(android.R.id.content, f2).commit();
+        executePendingTransactions(fm);
+
+        assertTrue("fragment 1 is not added", f1.isAdded());
+        assertTrue("fragment 2 is not added", f2.isAdded());
+
+        View origView1 = f1.getView();
+        assertNotNull("fragment 1 returned null view", origView1);
+        assertTrue("fragment 1's view not attached", origView1.isAttachedToWindow());
+        assertSame(origView1, ((ViewGroup)origView1.getParent()).getChildAt(0));
+
+        View origView2 = f2.getView();
+        assertNotNull("fragment 2 returned null view", origView2);
+        assertTrue("fragment 2's view not attached", origView2.isAttachedToWindow());
+        assertSame(origView2, ((ViewGroup)origView1.getParent()).getChildAt(1));
+
+        fm.beginTransaction().replace(android.R.id.content, f3).addToBackStack("stack1").commit();
+        executePendingTransactions(fm);
+
+        assertFalse("fragment 1 is added", f1.isAdded());
+        assertFalse("fragment 2 is added", f2.isAdded());
+        assertTrue("fragment 3 is added", f3.isAdded());
+        assertNull("fragment 1 returned non-null view", f1.getView());
+        assertNull("fragment 2 returned non-null view", f2.getView());
+        assertFalse("fragment 1's old view still attached", origView1.isAttachedToWindow());
+        assertFalse("fragment 2's old view still attached", origView2.isAttachedToWindow());
+        View origView3 = f3.getView();
+        assertNotNull("fragment 3 returned null view", origView3);
+        assertTrue("fragment 3's view not attached", origView3.isAttachedToWindow());
+
+        fm.popBackStack();
+        executePendingTransactions(fm);
+
+        assertTrue("fragment 1 is not added", f1.isAdded());
+        assertTrue("fragment 2 is not added", f2.isAdded());
+        assertFalse("fragment 3 is added", f3.isAdded());
+        assertNull("fragment 3 returned non-null view", f3.getView());
+        assertFalse("fragment 3's view still attached", origView3.isAttachedToWindow());
+        View newView1 = f1.getView();
+        View newView2 = f2.getView();
+        assertNotSame("fragment 1 had same view from last attachment", origView1, newView1);
+        assertNotSame("fragment 2 had same view from last attachment", origView2, newView1);
+        assertTrue("fragment 1's view not attached", newView1.isAttachedToWindow());
+        assertTrue("fragment 2's view not attached", newView2.isAttachedToWindow());
+        assertSame(newView1, ((ViewGroup)newView1.getParent()).getChildAt(0));
+        assertSame(newView2, ((ViewGroup)newView1.getParent()).getChildAt(1));
     }
 
     private void executePendingTransactions(final FragmentManager fm) throws Throwable {

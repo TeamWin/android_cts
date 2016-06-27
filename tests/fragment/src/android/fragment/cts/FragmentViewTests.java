@@ -63,13 +63,13 @@ public class FragmentViewTests {
         final StrictViewFragment fragment1 = new StrictViewFragment();
         fm.beginTransaction().add(R.id.fragmentContainer, fragment1).addToBackStack(null).commit();
         FragmentTestUtil.executePendingTransactions(mActivityRule);
-        assertChildren(container, fragment1);
+        FragmentTestUtil.assertChildren(container, fragment1);
 
         // Add another on top
         final StrictViewFragment fragment2 = new StrictViewFragment();
         fm.beginTransaction().add(R.id.fragmentContainer, fragment2).addToBackStack(null).commit();
         FragmentTestUtil.executePendingTransactions(mActivityRule);
-        assertChildren(container, fragment1, fragment2);
+        FragmentTestUtil.assertChildren(container, fragment1, fragment2);
 
         // Now add two in one transaction:
         final StrictViewFragment fragment3 = new StrictViewFragment();
@@ -80,20 +80,20 @@ public class FragmentViewTests {
                 .addToBackStack(null)
                 .commit();
         FragmentTestUtil.executePendingTransactions(mActivityRule);
-        assertChildren(container, fragment1, fragment2, fragment3, fragment4);
+        FragmentTestUtil.assertChildren(container, fragment1, fragment2, fragment3, fragment4);
 
         fm.popBackStack();
         FragmentTestUtil.executePendingTransactions(mActivityRule);
-        assertChildren(container, fragment1, fragment2);
+        FragmentTestUtil.assertChildren(container, fragment1, fragment2);
 
         fm.popBackStack();
         FragmentTestUtil.executePendingTransactions(mActivityRule);
         assertEquals(1, container.getChildCount());
-        assertChildren(container, fragment1);
+        FragmentTestUtil.assertChildren(container, fragment1);
 
         fm.popBackStack();
         FragmentTestUtil.executePendingTransactions(mActivityRule);
-        assertChildren(container);
+        FragmentTestUtil.assertChildren(container);
     }
 
     // Add fragments to multiple containers in the same transaction. Make sure that
@@ -110,12 +110,12 @@ public class FragmentViewTests {
         final StrictViewFragment fragment1 = new StrictViewFragment();
         fm.beginTransaction().add(R.id.fragmentContainer1, fragment1).addToBackStack(null).commit();
         FragmentTestUtil.executePendingTransactions(mActivityRule);
-        assertChildren(container1, fragment1);
+        FragmentTestUtil.assertChildren(container1, fragment1);
 
         final StrictViewFragment fragment2 = new StrictViewFragment();
         fm.beginTransaction().add(R.id.fragmentContainer2, fragment2).addToBackStack(null).commit();
         FragmentTestUtil.executePendingTransactions(mActivityRule);
-        assertChildren(container2, fragment2);
+        FragmentTestUtil.assertChildren(container2, fragment2);
 
         final StrictViewFragment fragment3 = new StrictViewFragment();
         final StrictViewFragment fragment4 = new StrictViewFragment();
@@ -126,18 +126,18 @@ public class FragmentViewTests {
                 .commit();
         FragmentTestUtil.executePendingTransactions(mActivityRule);
 
-        assertChildren(container1, fragment1, fragment3);
-        assertChildren(container2, fragment2, fragment4);
+        FragmentTestUtil.assertChildren(container1, fragment1, fragment3);
+        FragmentTestUtil.assertChildren(container2, fragment2, fragment4);
 
         fm.popBackStack();
         FragmentTestUtil.executePendingTransactions(mActivityRule);
-        assertChildren(container1, fragment1);
-        assertChildren(container2, fragment2);
+        FragmentTestUtil.assertChildren(container1, fragment1);
+        FragmentTestUtil.assertChildren(container2, fragment2);
 
         fm.popBackStack();
         FragmentTestUtil.executePendingTransactions(mActivityRule);
-        assertChildren(container1, fragment1);
-        assertChildren(container2);
+        FragmentTestUtil.assertChildren(container1, fragment1);
+        FragmentTestUtil.assertChildren(container2);
 
         fm.popBackStack();
         FragmentTestUtil.executePendingTransactions(mActivityRule);
@@ -189,19 +189,19 @@ public class FragmentViewTests {
                 .add(R.id.fragmentContainer, fragment4, "4")
                 .commit();
         FragmentTestUtil.executePendingTransactions(mActivityRule);
-        assertChildren(container, fragment1, fragment2, fragment3, fragment4);
+        FragmentTestUtil.assertChildren(container, fragment1, fragment2, fragment3, fragment4);
 
         // Remove a view
         fm.beginTransaction().remove(fragment4).addToBackStack(null).commit();
         FragmentTestUtil.executePendingTransactions(mActivityRule);
 
         assertEquals(3, container.getChildCount());
-        assertChildren(container, fragment1, fragment2, fragment3);
+        FragmentTestUtil.assertChildren(container, fragment1, fragment2, fragment3);
 
         // remove another one
         fm.beginTransaction().remove(fragment2).addToBackStack(null).commit();
         FragmentTestUtil.executePendingTransactions(mActivityRule);
-        assertChildren(container, fragment1, fragment3);
+        FragmentTestUtil.assertChildren(container, fragment1, fragment3);
 
         // Now remove the remaining:
         fm.beginTransaction()
@@ -210,23 +210,23 @@ public class FragmentViewTests {
                 .addToBackStack(null)
                 .commit();
         FragmentTestUtil.executePendingTransactions(mActivityRule);
-        assertChildren(container);
+        FragmentTestUtil.assertChildren(container);
 
         fm.popBackStack();
         FragmentTestUtil.executePendingTransactions(mActivityRule);
         final Fragment replacement1 = fm.findFragmentByTag("1");
         final Fragment replacement3 = fm.findFragmentByTag("3");
-        assertChildren(container, replacement1, replacement3);
+        FragmentTestUtil.assertChildren(container, replacement1, replacement3);
 
         fm.popBackStack();
         FragmentTestUtil.executePendingTransactions(mActivityRule);
         final Fragment replacement2 = fm.findFragmentByTag("2");
-        assertChildren(container, replacement1, replacement3, replacement2);
+        FragmentTestUtil.assertChildren(container, replacement1, replacement3, replacement2);
 
         fm.popBackStack();
         FragmentTestUtil.executePendingTransactions(mActivityRule);
         final Fragment replacement4 = fm.findFragmentByTag("4");
-        assertChildren(container, replacement1, replacement3, replacement2, replacement4);
+        FragmentTestUtil.assertChildren(container, replacement1, replacement3, replacement2, replacement4);
     }
 
     // Removing a hidden fragment should remove the View and popping should bring it back hidden
@@ -239,17 +239,17 @@ public class FragmentViewTests {
         final StrictViewFragment fragment1 = new StrictViewFragment();
         fm.beginTransaction().add(R.id.fragmentContainer, fragment1, "1").hide(fragment1).commit();
         FragmentTestUtil.executePendingTransactions(mActivityRule);
-        assertChildren(container, fragment1);
+        FragmentTestUtil.assertChildren(container, fragment1);
         assertTrue(fragment1.isHidden());
 
         fm.beginTransaction().remove(fragment1).addToBackStack(null).commit();
         FragmentTestUtil.executePendingTransactions(mActivityRule);
-        assertChildren(container);
+        FragmentTestUtil.assertChildren(container);
 
         fm.popBackStack();
         FragmentTestUtil.executePendingTransactions(mActivityRule);
         final Fragment replacement1 = fm.findFragmentByTag("1");
-        assertChildren(container, replacement1);
+        FragmentTestUtil.assertChildren(container, replacement1);
         assertTrue(replacement1.isHidden());
         assertEquals(View.GONE, replacement1.getView().getVisibility());
         mInstrumentation.waitForIdleSync();
@@ -269,17 +269,17 @@ public class FragmentViewTests {
                 .detach(fragment1)
                 .commit();
         FragmentTestUtil.executePendingTransactions(mActivityRule);
-        assertChildren(container);
+        FragmentTestUtil.assertChildren(container);
         assertTrue(fragment1.isDetached());
 
         fm.beginTransaction().remove(fragment1).addToBackStack(null).commit();
         FragmentTestUtil.executePendingTransactions(mActivityRule);
-        assertChildren(container);
+        FragmentTestUtil.assertChildren(container);
 
         fm.popBackStack();
         FragmentTestUtil.executePendingTransactions(mActivityRule);
         final Fragment replacement1 = fm.findFragmentByTag("1");
-        assertChildren(container);
+        FragmentTestUtil.assertChildren(container);
         assertTrue(replacement1.isDetached());
     }
 
@@ -299,11 +299,11 @@ public class FragmentViewTests {
                 .addToBackStack(null)
                 .commit();
         FragmentTestUtil.executePendingTransactions(mActivityRule);
-        assertChildren(container, fragment);
+        FragmentTestUtil.assertChildren(container, fragment);
 
         fm.popBackStack();
         FragmentTestUtil.executePendingTransactions(mActivityRule);
-        assertChildren(container);
+        FragmentTestUtil.assertChildren(container);
     }
 
     // Removing a fragment that isn't in should throw
@@ -332,20 +332,20 @@ public class FragmentViewTests {
         fm.beginTransaction().add(R.id.fragmentContainer, fragment).commit();
         FragmentTestUtil.executePendingTransactions(mActivityRule);
 
-        assertChildren(container, fragment);
+        FragmentTestUtil.assertChildren(container, fragment);
         assertEquals(View.VISIBLE, fragment.getView().getVisibility());
 
         fm.beginTransaction().hide(fragment).addToBackStack(null).commit();
         FragmentTestUtil.executePendingTransactions(mActivityRule);
 
-        assertChildren(container, fragment);
+        FragmentTestUtil.assertChildren(container, fragment);
         assertTrue(fragment.isHidden());
         assertEquals(View.GONE, fragment.getView().getVisibility());
 
         fm.popBackStack();
         FragmentTestUtil.executePendingTransactions(mActivityRule);
 
-        assertChildren(container, fragment);
+        FragmentTestUtil.assertChildren(container, fragment);
         assertFalse(fragment.isHidden());
         assertEquals(View.VISIBLE, fragment.getView().getVisibility());
     }
@@ -387,7 +387,7 @@ public class FragmentViewTests {
     }
 
     // Show a hidden fragment and its View should be VISIBLE. Then pop it and the View should be
-    // BONE.
+    // GONE.
     @Test
     public void showFragment() throws Throwable {
         FragmentTestUtil.setContentView(mActivityRule, R.layout.simple_container);
@@ -398,21 +398,21 @@ public class FragmentViewTests {
         fm.beginTransaction().add(R.id.fragmentContainer, fragment).hide(fragment).commit();
         FragmentTestUtil.executePendingTransactions(mActivityRule);
 
-        assertChildren(container, fragment);
+        FragmentTestUtil.assertChildren(container, fragment);
         assertTrue(fragment.isHidden());
         assertEquals(View.GONE, fragment.getView().getVisibility());
 
         fm.beginTransaction().show(fragment).addToBackStack(null).commit();
         FragmentTestUtil.executePendingTransactions(mActivityRule);
 
-        assertChildren(container, fragment);
+        FragmentTestUtil.assertChildren(container, fragment);
         assertFalse(fragment.isHidden());
         assertEquals(View.VISIBLE, fragment.getView().getVisibility());
 
         fm.popBackStack();
         FragmentTestUtil.executePendingTransactions(mActivityRule);
 
-        assertChildren(container, fragment);
+        FragmentTestUtil.assertChildren(container, fragment);
         assertTrue(fragment.isHidden());
         assertEquals(View.GONE, fragment.getView().getVisibility());
     }
@@ -464,20 +464,20 @@ public class FragmentViewTests {
         fm.beginTransaction().add(R.id.fragmentContainer, fragment).commit();
         FragmentTestUtil.executePendingTransactions(mActivityRule);
 
-        assertChildren(container, fragment);
+        FragmentTestUtil.assertChildren(container, fragment);
         assertFalse(fragment.isDetached());
         assertEquals(View.VISIBLE, fragment.getView().getVisibility());
 
         fm.beginTransaction().detach(fragment).addToBackStack(null).commit();
         FragmentTestUtil.executePendingTransactions(mActivityRule);
 
-        assertChildren(container);
+        FragmentTestUtil.assertChildren(container);
         assertTrue(fragment.isDetached());
 
         fm.popBackStack();
         FragmentTestUtil.executePendingTransactions(mActivityRule);
 
-        assertChildren(container, fragment);
+        FragmentTestUtil.assertChildren(container, fragment);
         assertFalse(fragment.isDetached());
         assertEquals(View.VISIBLE, fragment.getView().getVisibility());
     }
@@ -494,7 +494,7 @@ public class FragmentViewTests {
         fm.beginTransaction().add(R.id.fragmentContainer, fragment).hide(fragment).commit();
         FragmentTestUtil.executePendingTransactions(mActivityRule);
 
-        assertChildren(container, fragment);
+        FragmentTestUtil.assertChildren(container, fragment);
         assertFalse(fragment.isDetached());
         assertTrue(fragment.isHidden());
         assertEquals(View.GONE, fragment.getView().getVisibility());
@@ -502,14 +502,14 @@ public class FragmentViewTests {
         fm.beginTransaction().detach(fragment).addToBackStack(null).commit();
         FragmentTestUtil.executePendingTransactions(mActivityRule);
 
-        assertChildren(container);
+        FragmentTestUtil.assertChildren(container);
         assertTrue(fragment.isHidden());
         assertTrue(fragment.isDetached());
 
         fm.popBackStack();
         FragmentTestUtil.executePendingTransactions(mActivityRule);
 
-        assertChildren(container, fragment);
+        FragmentTestUtil.assertChildren(container, fragment);
         assertTrue(fragment.isHidden());
         assertFalse(fragment.isDetached());
         assertEquals(View.GONE, fragment.getView().getVisibility());
@@ -563,20 +563,20 @@ public class FragmentViewTests {
         fm.beginTransaction().add(R.id.fragmentContainer, fragment).detach(fragment).commit();
         FragmentTestUtil.executePendingTransactions(mActivityRule);
 
-        assertChildren(container);
+        FragmentTestUtil.assertChildren(container);
         assertTrue(fragment.isDetached());
 
         fm.beginTransaction().attach(fragment).addToBackStack(null).commit();
         FragmentTestUtil.executePendingTransactions(mActivityRule);
 
-        assertChildren(container, fragment);
+        FragmentTestUtil.assertChildren(container, fragment);
         assertFalse(fragment.isDetached());
         assertEquals(View.VISIBLE, fragment.getView().getVisibility());
 
         fm.popBackStack();
         FragmentTestUtil.executePendingTransactions(mActivityRule);
 
-        assertChildren(container);
+        FragmentTestUtil.assertChildren(container);
         assertTrue(fragment.isDetached());
     }
 
@@ -596,14 +596,14 @@ public class FragmentViewTests {
                 .commit();
         FragmentTestUtil.executePendingTransactions(mActivityRule);
 
-        assertChildren(container);
+        FragmentTestUtil.assertChildren(container);
         assertTrue(fragment.isDetached());
         assertTrue(fragment.isHidden());
 
         fm.beginTransaction().attach(fragment).addToBackStack(null).commit();
         FragmentTestUtil.executePendingTransactions(mActivityRule);
 
-        assertChildren(container, fragment);
+        FragmentTestUtil.assertChildren(container, fragment);
         assertTrue(fragment.isHidden());
         assertFalse(fragment.isDetached());
         assertEquals(View.GONE, fragment.getView().getVisibility());
@@ -611,7 +611,7 @@ public class FragmentViewTests {
         fm.popBackStack();
         FragmentTestUtil.executePendingTransactions(mActivityRule);
 
-        assertChildren(container);
+        FragmentTestUtil.assertChildren(container);
         assertTrue(fragment.isDetached());
         assertTrue(fragment.isHidden());
     }
@@ -662,7 +662,7 @@ public class FragmentViewTests {
         fm.beginTransaction().add(R.id.fragmentContainer, fragment1, "1").commit();
         FragmentTestUtil.executePendingTransactions(mActivityRule);
 
-        assertChildren(container, fragment1);
+        FragmentTestUtil.assertChildren(container, fragment1);
 
         final StrictViewFragment fragment2 = new StrictViewFragment();
         fm.beginTransaction()
@@ -671,7 +671,7 @@ public class FragmentViewTests {
                 .commit();
         FragmentTestUtil.executePendingTransactions(mActivityRule);
 
-        assertChildren(container, fragment2);
+        FragmentTestUtil.assertChildren(container, fragment2);
         assertEquals(View.VISIBLE, fragment2.getView().getVisibility());
 
         fm.popBackStack();
@@ -679,7 +679,7 @@ public class FragmentViewTests {
 
         Fragment replacement1 = fm.findFragmentByTag("1");
         assertNotNull(replacement1);
-        assertChildren(container, replacement1);
+        FragmentTestUtil.assertChildren(container, replacement1);
         assertFalse(replacement1.isHidden());
         assertTrue(replacement1.isAdded());
         assertFalse(replacement1.isDetached());
@@ -702,7 +702,7 @@ public class FragmentViewTests {
                 .commit();
         FragmentTestUtil.executePendingTransactions(mActivityRule);
 
-        assertChildren(container, fragment1, fragment2);
+        FragmentTestUtil.assertChildren(container, fragment1, fragment2);
 
         final StrictViewFragment fragment3 = new StrictViewFragment();
         fm.beginTransaction()
@@ -711,7 +711,7 @@ public class FragmentViewTests {
                 .commit();
         FragmentTestUtil.executePendingTransactions(mActivityRule);
 
-        assertChildren(container, fragment3);
+        FragmentTestUtil.assertChildren(container, fragment3);
         assertEquals(View.VISIBLE, fragment3.getView().getVisibility());
 
         fm.popBackStack();
@@ -721,7 +721,7 @@ public class FragmentViewTests {
         Fragment replacement2 = fm.findFragmentByTag("2");
         assertNotNull(replacement1);
         assertNotNull(replacement2);
-        assertChildren(container, replacement1, replacement2);
+        FragmentTestUtil.assertChildren(container, replacement1, replacement2);
         assertFalse(replacement1.isHidden());
         assertTrue(replacement1.isAdded());
         assertFalse(replacement1.isDetached());
@@ -749,13 +749,84 @@ public class FragmentViewTests {
                 .commit();
         FragmentTestUtil.executePendingTransactions(mActivityRule);
 
-        assertChildren(container, fragment);
+        FragmentTestUtil.assertChildren(container, fragment);
         assertEquals(View.VISIBLE, fragment.getView().getVisibility());
 
         fm.popBackStack();
         FragmentTestUtil.executePendingTransactions(mActivityRule);
 
-        assertChildren(container);
+        FragmentTestUtil.assertChildren(container);
+    }
+
+    // Replace a fragment that exists with itself
+    @Test
+    public void replaceExisting() throws Throwable {
+        FragmentTestUtil.setContentView(mActivityRule, R.layout.simple_container);
+        ViewGroup container = (ViewGroup)
+                mActivityRule.getActivity().findViewById(R.id.fragmentContainer);
+        final FragmentManager fm = mActivityRule.getActivity().getFragmentManager();
+        final StrictViewFragment fragment1 = new StrictViewFragment();
+        final StrictViewFragment fragment2 = new StrictViewFragment();
+        fm.beginTransaction()
+                .add(R.id.fragmentContainer, fragment1, "1")
+                .add(R.id.fragmentContainer, fragment2, "2")
+                .commit();
+        FragmentTestUtil.executePendingTransactions(mActivityRule);
+
+        FragmentTestUtil.assertChildren(container, fragment1, fragment2);
+
+        fm.beginTransaction()
+                .replace(R.id.fragmentContainer, fragment1)
+                .addToBackStack(null)
+                .commit();
+        FragmentTestUtil.executePendingTransactions(mActivityRule);
+
+        FragmentTestUtil.assertChildren(container, fragment1);
+
+        fm.popBackStack();
+        FragmentTestUtil.executePendingTransactions(mActivityRule);
+
+        final Fragment replacement1 = fm.findFragmentByTag("1");
+        final Fragment replacement2 = fm.findFragmentByTag("2");
+
+        assertSame(fragment1, replacement1);
+        FragmentTestUtil.assertChildren(container, replacement1, replacement2);
+    }
+
+    // Have two replace operations in the same transaction to ensure that they
+    // don't interfere with each other
+    @Test
+    public void replaceReplace() throws Throwable {
+        FragmentTestUtil.setContentView(mActivityRule, R.layout.double_container);
+        ViewGroup container1 = (ViewGroup)
+                mActivityRule.getActivity().findViewById(R.id.fragmentContainer1);
+        ViewGroup container2 = (ViewGroup)
+                mActivityRule.getActivity().findViewById(R.id.fragmentContainer2);
+        final FragmentManager fm = mActivityRule.getActivity().getFragmentManager();
+
+        final StrictViewFragment fragment1 = new StrictViewFragment();
+        final StrictViewFragment fragment2 = new StrictViewFragment();
+        final StrictViewFragment fragment3 = new StrictViewFragment();
+        final StrictViewFragment fragment4 = new StrictViewFragment();
+        final StrictViewFragment fragment5 = new StrictViewFragment();
+        fm.beginTransaction()
+                .add(R.id.fragmentContainer1, fragment1)
+                .add(R.id.fragmentContainer2, fragment2)
+                .replace(R.id.fragmentContainer1, fragment3)
+                .replace(R.id.fragmentContainer2, fragment4)
+                .replace(R.id.fragmentContainer1, fragment5)
+                .addToBackStack(null)
+                .commit();
+        FragmentTestUtil.executePendingTransactions(mActivityRule);
+
+        assertChildren(container1, fragment5);
+        assertChildren(container2, fragment4);
+
+        fm.popBackStack();
+        FragmentTestUtil.executePendingTransactions(mActivityRule);
+
+        assertChildren(container1);
+        assertChildren(container2);
     }
 
     private void assertChildren(ViewGroup container, Fragment... fragments) {
