@@ -16,11 +16,6 @@
 
 package android.widget.cts;
 
-import android.widget.cts.R;
-
-
-import org.xmlpull.v1.XmlPullParser;
-
 import android.app.Activity;
 import android.app.Instrumentation;
 import android.content.Context;
@@ -31,13 +26,16 @@ import android.util.AttributeSet;
 import android.util.Xml;
 import android.view.MotionEvent;
 import android.view.View;
-import android.view.View.OnClickListener;
 import android.widget.MediaController;
 import android.widget.VideoView;
+
+import org.xmlpull.v1.XmlPullParser;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+
+import static org.mockito.Mockito.mock;
 
 /**
  * Test {@link MediaController}.
@@ -47,7 +45,6 @@ public class MediaControllerTest extends
     private MediaController mMediaController;
     private Activity mActivity;
     private Instrumentation mInstrumentation;
-    private static final long DEFAULT_TIMEOUT = 3000;
 
     public MediaControllerTest() {
         super("android.widget.cts", MediaControllerCtsActivity.class);
@@ -151,12 +148,7 @@ public class MediaControllerTest extends
         assertTrue(mMediaController.isShowing());
 
         // isShowing() should return false, but MediaController still shows, this may be a bug.
-        new PollingCheck(timeout + 500) {
-            @Override
-            protected boolean check() {
-                return mMediaController.isShowing();
-            }
-        }.run();
+        PollingCheck.waitFor(500, () -> mMediaController.isShowing());
     }
 
     private String prepareSampleVideo() {
@@ -236,9 +228,9 @@ public class MediaControllerTest extends
         mMediaController.setAnchorView(videoView);
         mMediaController.setMediaPlayer(mediaPlayerControl);
 
-        final MockOnClickListener next = new MockOnClickListener();
-        final MockOnClickListener prev = new MockOnClickListener();
-        mMediaController.setPrevNextListeners(next, prev);
+        final View.OnClickListener mockNextClickListener = mock(View.OnClickListener.class);
+        final View.OnClickListener mockPrevClickListener = mock(View.OnClickListener.class);
+        mMediaController.setPrevNextListeners(mockNextClickListener, mockPrevClickListener);
 
         mMediaController.show();
 
@@ -258,9 +250,9 @@ public class MediaControllerTest extends
         mMediaController.setAnchorView(videoView);
         mMediaController.setMediaPlayer(mediaPlayerControl);
 
-        final MockOnClickListener next = new MockOnClickListener();
-        final MockOnClickListener prev = new MockOnClickListener();
-        mMediaController.setPrevNextListeners(next, prev);
+        final View.OnClickListener mockNextClickListener = mock(View.OnClickListener.class);
+        final View.OnClickListener mockPrevClickListener = mock(View.OnClickListener.class);
+        mMediaController.setPrevNextListeners(mockNextClickListener, mockPrevClickListener);
     }
 
     private static class MockMediaPlayerControl implements MediaController.MediaPlayerControl {
@@ -316,18 +308,6 @@ public class MediaControllerTest extends
         @Override
         public int getAudioSessionId() {
             return 0;
-        }
-    }
-
-    private static class MockOnClickListener implements OnClickListener {
-        private boolean mOnClickCalled = false;
-
-        public boolean hasOnClickCalled() {
-            return mOnClickCalled;
-        }
-
-        public void onClick(View v) {
-            mOnClickCalled = true;
         }
     }
 }

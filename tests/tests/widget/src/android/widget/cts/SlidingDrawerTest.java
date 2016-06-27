@@ -16,29 +16,27 @@
 
 package android.widget.cts;
 
-import android.widget.cts.R;
-
-
-import org.xmlpull.v1.XmlPullParser;
-import org.xmlpull.v1.XmlPullParserException;
-
 import android.app.Activity;
-import android.content.Context;
 import android.cts.util.PollingCheck;
 import android.test.ActivityInstrumentationTestCase2;
 import android.test.UiThreadTest;
 import android.util.AttributeSet;
 import android.util.Xml;
-import android.view.MotionEvent;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.SlidingDrawer;
 import android.widget.TextView;
-import android.widget.SlidingDrawer.OnDrawerCloseListener;
-import android.widget.SlidingDrawer.OnDrawerOpenListener;
-import android.widget.SlidingDrawer.OnDrawerScrollListener;
+
+import org.mockito.InOrder;
+import org.mockito.invocation.InvocationOnMock;
+import org.xmlpull.v1.XmlPullParser;
+import org.xmlpull.v1.XmlPullParserException;
 
 import java.io.IOException;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+
+import static org.mockito.Mockito.*;
 
 /**
  * Test {@link SlidingDrawer}.
@@ -48,7 +46,6 @@ public class SlidingDrawerTest
 
     private static final long TEST_TIMEOUT = 5000L;
     private Activity mActivity;
-    private Object mLock;
 
     public SlidingDrawerTest() {
         super("android.widget.cts", SlidingDrawerCtsActivity.class);
@@ -58,7 +55,6 @@ public class SlidingDrawerTest
     protected void setUp() throws Exception {
         super.setUp();
         mActivity = getActivity();
-        mLock = new Object();
     }
 
     @UiThreadTest
@@ -118,40 +114,20 @@ public class SlidingDrawerTest
         assertFalse(drawer.isOpened());
         assertEquals(View.GONE, content.getVisibility());
 
-        runTestOnUiThread(new Runnable() {
-            public void run() {
-                drawer.animateOpen();
-            }
-        });
+        runTestOnUiThread(() -> drawer.animateOpen());
         assertTrue(drawer.isMoving());
-        assertOpened(false, drawer);
         assertEquals(View.GONE, content.getVisibility());
 
-        new PollingCheck() {
-            @Override
-            protected boolean check() {
-                return !drawer.isMoving();
-            }
-        }.run();
-        assertOpened(true, drawer);
+        PollingCheck.waitFor(() -> !drawer.isMoving());
+        PollingCheck.waitFor(() -> drawer.isOpened());
         assertEquals(View.VISIBLE, content.getVisibility());
 
-        runTestOnUiThread(new Runnable() {
-            public void run() {
-                drawer.animateClose();
-            }
-        });
+        runTestOnUiThread(() -> drawer.animateClose());
         assertTrue(drawer.isMoving());
-        assertOpened(true, drawer);
         assertEquals(View.GONE, content.getVisibility());
 
-        new PollingCheck() {
-            @Override
-            protected boolean check() {
-                return !drawer.isMoving();
-            }
-        }.run();
-        assertOpened(false, drawer);
+        PollingCheck.waitFor(() -> !drawer.isMoving());
+        PollingCheck.waitFor(() -> !drawer.isOpened());
         assertEquals(View.GONE, content.getVisibility());
     }
 
@@ -162,50 +138,21 @@ public class SlidingDrawerTest
         assertFalse(drawer.isOpened());
         assertEquals(View.GONE, content.getVisibility());
 
-        runTestOnUiThread(new Runnable() {
-            public void run() {
-                drawer.animateToggle();
-            }
-        });
+        runTestOnUiThread(() -> drawer.animateToggle());
         assertTrue(drawer.isMoving());
-        assertOpened(false, drawer);
         assertEquals(View.GONE, content.getVisibility());
 
-        new PollingCheck() {
-            @Override
-            protected boolean check() {
-                return !drawer.isMoving();
-            }
-        }.run();
-        assertOpened(true, drawer);
+        PollingCheck.waitFor(() -> !drawer.isMoving());
+        PollingCheck.waitFor(() -> drawer.isOpened());
         assertEquals(View.VISIBLE, content.getVisibility());
 
-        runTestOnUiThread(new Runnable() {
-            public void run() {
-                drawer.animateToggle();
-            }
-        });
+        runTestOnUiThread(() -> drawer.animateToggle());
         assertTrue(drawer.isMoving());
-        assertOpened(true, drawer);
         assertEquals(View.GONE, content.getVisibility());
 
-        new PollingCheck() {
-            @Override
-            protected boolean check() {
-                return !drawer.isMoving();
-            }
-        }.run();
-        assertOpened(false, drawer);
+        PollingCheck.waitFor(() -> !drawer.isMoving());
+        PollingCheck.waitFor(() -> !drawer.isOpened());
         assertEquals(View.GONE, content.getVisibility());
-    }
-
-    private void assertOpened(final boolean opened, final SlidingDrawer drawer) {
-        new PollingCheck() {
-            @Override
-            protected boolean check() {
-                return drawer.isOpened() == opened;
-            }
-        }.run();
     }
 
     @UiThreadTest
@@ -254,56 +201,61 @@ public class SlidingDrawerTest
     @UiThreadTest
     public void testSetOnDrawerOpenListener() {
         SlidingDrawer drawer = (SlidingDrawer) mActivity.findViewById(R.id.drawer);
-        MockOnDrawerOpenListener listener = new MockOnDrawerOpenListener();
-        drawer.setOnDrawerOpenListener(listener);
+        SlidingDrawer.OnDrawerOpenListener mockOpenListener =
+                mock(SlidingDrawer.OnDrawerOpenListener.class);
+        drawer.setOnDrawerOpenListener(mockOpenListener);
 
-        assertFalse(listener.hadOpenedDrawer());
+        verifyZeroInteractions(mockOpenListener);
 
         drawer.open();
-        assertTrue(listener.hadOpenedDrawer());
+        verify(mockOpenListener, times(1)).onDrawerOpened();
     }
 
     @UiThreadTest
     public void testSetOnDrawerCloseListener() {
         SlidingDrawer drawer = (SlidingDrawer) mActivity.findViewById(R.id.drawer);
-        MockOnDrawerCloseListener listener = new MockOnDrawerCloseListener();
-        drawer.setOnDrawerCloseListener(listener);
+        SlidingDrawer.OnDrawerCloseListener mockCloseListener =
+                mock(SlidingDrawer.OnDrawerCloseListener.class);
+        drawer.setOnDrawerCloseListener(mockCloseListener);
 
-        assertFalse(listener.hadClosedDrawer());
+        verifyZeroInteractions(mockCloseListener);
 
         drawer.open();
-        assertFalse(listener.hadClosedDrawer());
+        verifyZeroInteractions(mockCloseListener);
 
         drawer.close();
-        assertTrue(listener.hadClosedDrawer());
+        verify(mockCloseListener, times(1)).onDrawerClosed();
     }
 
     public void testSetOnDrawerScrollListener() throws Throwable {
         final SlidingDrawer drawer = (SlidingDrawer) mActivity.findViewById(R.id.drawer);
-        MockOnDrawerScrollListener listener = new MockOnDrawerScrollListener();
-        drawer.setOnDrawerScrollListener(listener);
-        assertFalse(listener.hadStartedScroll());
-        assertFalse(listener.hadEndedScroll());
 
-        runTestOnUiThread(new Runnable() {
-            public void run() {
-                drawer.animateOpen();
-            }
-        });
-        if ( !listener.hadStartedScroll() ) {
-            synchronized (mLock) {
-                mLock.wait(TEST_TIMEOUT);
-            }
-        }
-        assertTrue(listener.hadStartedScroll());
+        final CountDownLatch countDownLatch = new CountDownLatch(2);
+        final SlidingDrawer.OnDrawerScrollListener mockScrollListener =
+                mock(SlidingDrawer.OnDrawerScrollListener.class);
+        doAnswer((InvocationOnMock invocation) -> {
+            countDownLatch.countDown();
+            return null;
+        }).when(mockScrollListener).onScrollStarted();
+        doAnswer((InvocationOnMock invocation) -> {
+            countDownLatch.countDown();
+            return null;
+        }).when(mockScrollListener).onScrollEnded();
+        drawer.setOnDrawerScrollListener(mockScrollListener);
 
-        if ( !listener.hadEndedScroll() ) {
-            synchronized (mLock) {
-                mLock.wait(TEST_TIMEOUT);
-            }
+        runTestOnUiThread(() -> drawer.animateOpen());
+
+        try {
+            countDownLatch.await(2 * TEST_TIMEOUT, TimeUnit.MILLISECONDS);
+        } catch (InterruptedException ie) {
+            // Do nothing as we're about to verify that both callbacks have been called
+            // in any case
         }
-        assertTrue(listener.hadStartedScroll());
-        assertTrue(listener.hadEndedScroll());
+
+        InOrder inOrder = inOrder(mockScrollListener);
+        inOrder.verify(mockScrollListener).onScrollStarted();
+        inOrder.verify(mockScrollListener).onScrollEnded();
+        verifyNoMoreInteractions(mockScrollListener);
     }
 
     public void testOnLayout() {
@@ -328,57 +280,5 @@ public class SlidingDrawerTest
 
     public void testOnTouchEvent() {
         // onTouchEvent() is implementation details, do NOT test
-    }
-
-    private static final class MockOnDrawerOpenListener implements OnDrawerOpenListener {
-        private boolean mHadOpenedDrawer = false;
-
-        public void onDrawerOpened() {
-            mHadOpenedDrawer = true;
-        }
-
-        public boolean hadOpenedDrawer() {
-            return mHadOpenedDrawer;
-        }
-    }
-
-    private static final class MockOnDrawerCloseListener implements OnDrawerCloseListener {
-        private boolean mHadClosedDrawer = false;
-
-        public void onDrawerClosed() {
-            mHadClosedDrawer = true;
-        }
-
-        public boolean hadClosedDrawer() {
-            return mHadClosedDrawer;
-        }
-    }
-
-    private final class MockOnDrawerScrollListener implements OnDrawerScrollListener {
-        private boolean mHadEndedScroll = false;
-        private boolean mHadStartedScroll = false;
-
-        public void onScrollEnded() {
-            synchronized (mLock) {
-                assertTrue(mHadStartedScroll);
-                mHadEndedScroll = true;
-                mLock.notify();
-            }
-        }
-
-        public void onScrollStarted() {
-            synchronized (mLock) {
-                mHadStartedScroll = true;
-                mLock.notify();
-            }
-        }
-
-        public boolean hadEndedScroll() {
-            return mHadEndedScroll;
-        }
-
-        public boolean hadStartedScroll() {
-            return mHadStartedScroll;
-        }
     }
 }

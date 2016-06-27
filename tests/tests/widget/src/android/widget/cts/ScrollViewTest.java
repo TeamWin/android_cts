@@ -829,55 +829,34 @@ public class ScrollViewTest extends ActivityInstrumentationTestCase2<ScrollViewC
         }
 
         if (fromY != toY) {
-            new PollingCheck() {
-                @Override
-                protected boolean check() {
-                    return isInRange(mScrollView.getScrollY(), fromY, toY);
-                }
-            }.run();
+            PollingCheck.waitFor(() -> isInRange(mScrollView.getScrollY(), fromY, toY));
         }
 
         if (fromX != toX) {
-            new PollingCheck() {
-                @Override
-                protected boolean check() {
-                    return isInRange(mScrollView.getScrollX(), fromX, toX);
-                }
-            }.run();
+            PollingCheck.waitFor(() -> isInRange(mScrollView.getScrollX(), fromX, toX));
         }
 
-        new PollingCheck() {
-            @Override
-            protected boolean check() {
-                return toX == mScrollView.getScrollX() && toY == mScrollView.getScrollY();
-            }
-        }.run();
+        PollingCheck.waitFor(
+                () -> toX == mScrollView.getScrollX() && toY == mScrollView.getScrollY());
     }
 
     private void pollingCheckFling(final int startPosition, final boolean movingDown) {
-        new PollingCheck() {
-            @Override
-            protected boolean check() {
-                if (movingDown) {
-                    return mScrollView.getScrollY() > startPosition;
-                }
-                return mScrollView.getScrollY() < startPosition;
+        PollingCheck.waitFor(() -> {
+            if (movingDown) {
+                return mScrollView.getScrollY() > startPosition;
             }
-        };
+            return mScrollView.getScrollY() < startPosition;
+        });
 
-        new PollingCheck() {
-            private int mPreviousScrollY = mScrollView.getScrollY();
-
-            @Override
-            protected boolean check() {
-                if (mScrollView.getScrollY() == mPreviousScrollY) {
-                    return true;
-                } else {
-                    mPreviousScrollY = mScrollView.getScrollY();
-                    return false;
-                }
+        final int[] previousScrollY = new int[] { mScrollView.getScrollY() };
+        PollingCheck.waitFor(() -> {
+            if (mScrollView.getScrollY() == previousScrollY[0]) {
+                return true;
+            } else {
+                previousScrollY[0] = mScrollView.getScrollY();
+                return false;
             }
-        }.run();
+        });
     }
 
     public static class MyView extends View {

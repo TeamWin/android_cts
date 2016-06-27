@@ -20,7 +20,8 @@ package android.widget.cts;
 import android.test.ActivityInstrumentationTestCase2;
 import android.test.UiThreadTest;
 import android.widget.Chronometer;
-import android.widget.Chronometer.OnChronometerTickListener;
+
+import static org.mockito.Mockito.*;
 
 /**
  * Test {@link Chronometer}.
@@ -133,35 +134,21 @@ public class ChronometerTest extends ActivityInstrumentationTestCase2<Chronomete
 
     public void testAccessOnChronometerTickListener() throws Throwable {
         final Chronometer chronometer = mActivity.getChronometer();
-        final MockOnChronometerTickListener listener = new MockOnChronometerTickListener();
+        final Chronometer.OnChronometerTickListener mockTickListener =
+                mock(Chronometer.OnChronometerTickListener.class);
 
         runTestOnUiThread(new Runnable() {
             public void run() {
-                chronometer.setOnChronometerTickListener(listener);
+                chronometer.setOnChronometerTickListener(mockTickListener);
                 chronometer.start();
             }
         });
         getInstrumentation().waitForIdleSync();
-        assertEquals(listener, chronometer.getOnChronometerTickListener());
-        assertTrue(listener.hasCalledOnChronometerTick());
-        listener.reset();
+        assertEquals(mockTickListener, chronometer.getOnChronometerTickListener());
+        verify(mockTickListener, atLeastOnce()).onChronometerTick(chronometer);
+
+        reset(mockTickListener);
         Thread.sleep(1500);
-        assertTrue(listener.hasCalledOnChronometerTick());
-    }
-
-    private static class MockOnChronometerTickListener implements OnChronometerTickListener {
-        private boolean mCalledOnChronometerTick = false;
-
-        public void onChronometerTick(Chronometer chronometer) {
-            mCalledOnChronometerTick = true;
-        }
-
-        public boolean hasCalledOnChronometerTick() {
-            return mCalledOnChronometerTick;
-        }
-
-        public void reset() {
-            mCalledOnChronometerTick = false;
-        }
+        verify(mockTickListener, atLeastOnce()).onChronometerTick(chronometer);
     }
 }

@@ -347,6 +347,23 @@ public class TestUtils {
         });
     }
 
+    public static Editable sameEditable(final Editable expected) {
+        return argThat(new BaseMatcher<Editable>() {
+            @Override
+            public boolean matches(Object o) {
+                if (o instanceof Editable) {
+                    return TextUtils.equals(expected, (Editable) o);
+                }
+                return false;
+            }
+
+            @Override
+            public void describeTo(Description description) {
+                description.appendText("doesn't match " + expected);
+            }
+        });
+    }
+
     public static ColorStateList colorStateListOf(final @ColorInt int color) {
         return argThat(new BaseMatcher<ColorStateList>() {
             @Override

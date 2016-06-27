@@ -16,8 +16,6 @@
 
 package android.widget.cts;
 
-import android.widget.cts.R;
-
 import android.content.Context;
 import android.content.res.XmlResourceParser;
 import android.test.ActivityInstrumentationTestCase2;
@@ -25,15 +23,16 @@ import android.test.UiThreadTest;
 import android.util.AttributeSet;
 import android.util.Xml;
 import android.view.View;
-import android.view.ViewGroup;
 import android.view.View.MeasureSpec;
-import android.view.ViewGroup.OnHierarchyChangeListener;
+import android.view.ViewGroup;
 import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.RelativeLayout;
 import android.widget.TableLayout;
 import android.widget.TableRow;
 import android.widget.TextView;
+
+import static org.mockito.Mockito.*;
 
 /**
  * Test {@link TableLayout}.
@@ -72,21 +71,21 @@ public class TableLayoutTest extends ActivityInstrumentationTestCase2<TableCtsAc
     public void testSetOnHierarchyChangeListener() {
         TableLayout tableLayout = new TableLayout(mContext);
 
-        MockOnHierarchyChangeListener listener = new MockOnHierarchyChangeListener();
-        tableLayout.setOnHierarchyChangeListener(listener);
+        ViewGroup.OnHierarchyChangeListener mockHierarchyChangeListener =
+                mock(ViewGroup.OnHierarchyChangeListener.class);
+        tableLayout.setOnHierarchyChangeListener(mockHierarchyChangeListener);
 
-        tableLayout.addView(new TextView(mContext));
-        assertTrue(listener.hasCalledOnChildViewAdded());
+        View toAdd = new TextView(mContext);
+        tableLayout.addView(toAdd);
+        verify(mockHierarchyChangeListener, times(1)).onChildViewAdded(tableLayout, toAdd);
         tableLayout.removeViewAt(0);
-        assertTrue(listener.hasCalledOnChildViewRemoved());
-
-        listener.reset();
+        verify(mockHierarchyChangeListener, times(1)).onChildViewRemoved(tableLayout, toAdd);
+        verifyNoMoreInteractions(mockHierarchyChangeListener);
 
         tableLayout.setOnHierarchyChangeListener(null);
         tableLayout.addView(new TextView(mContext));
-        assertFalse(listener.hasCalledOnChildViewAdded());
         tableLayout.removeViewAt(0);
-        assertFalse(listener.hasCalledOnChildViewRemoved());
+        verifyNoMoreInteractions(mockHierarchyChangeListener);
     }
 
     public void testRequestLayout() {
@@ -456,7 +455,8 @@ public class TableLayoutTest extends ActivityInstrumentationTestCase2<TableCtsAc
         assertNull(child1.getLayoutParams());
         tableLayout.addView(child1, new ViewGroup.LayoutParams(100, 200));
         assertSame(child1, tableLayout.getChildAt(0));
-        assertEquals(100, tableLayout.getChildAt(0).getLayoutParams().width);
+        assertEquals(ViewGroup.LayoutParams.MATCH_PARENT,
+                tableLayout.getChildAt(0).getLayoutParams().width);
         assertEquals(200, tableLayout.getChildAt(0).getLayoutParams().height);
         assertTrue(tableLayout.getChildAt(0).isLayoutRequested());
 
@@ -467,9 +467,11 @@ public class TableLayoutTest extends ActivityInstrumentationTestCase2<TableCtsAc
         tableLayout.addView(child2, new TableRow.LayoutParams(200, 300, 1));
         assertSame(child1, tableLayout.getChildAt(0));
         assertSame(child2, tableLayout.getChildAt(1));
-        assertEquals(100, tableLayout.getChildAt(0).getLayoutParams().width);
+        assertEquals(ViewGroup.LayoutParams.MATCH_PARENT,
+                tableLayout.getChildAt(0).getLayoutParams().width);
         assertEquals(200, tableLayout.getChildAt(0).getLayoutParams().height);
-        assertEquals(200, tableLayout.getChildAt(1).getLayoutParams().width);
+        assertEquals(ViewGroup.LayoutParams.MATCH_PARENT,
+                tableLayout.getChildAt(1).getLayoutParams().width);
         assertEquals(300, tableLayout.getChildAt(1).getLayoutParams().height);
         assertTrue(tableLayout.getChildAt(0).isLayoutRequested());
         assertTrue(tableLayout.getChildAt(1).isLayoutRequested());
@@ -494,7 +496,8 @@ public class TableLayoutTest extends ActivityInstrumentationTestCase2<TableCtsAc
         assertNull(child1.getLayoutParams());
         tableLayout.addView(child1, 0, new ViewGroup.LayoutParams(100, 200));
         assertSame(child1, tableLayout.getChildAt(0));
-        assertEquals(100, tableLayout.getChildAt(0).getLayoutParams().width);
+        assertEquals(ViewGroup.LayoutParams.MATCH_PARENT,
+                tableLayout.getChildAt(0).getLayoutParams().width);
         assertEquals(200, tableLayout.getChildAt(0).getLayoutParams().height);
         assertTrue(tableLayout.getChildAt(0).isLayoutRequested());
 
@@ -505,9 +508,11 @@ public class TableLayoutTest extends ActivityInstrumentationTestCase2<TableCtsAc
         tableLayout.addView(child2, 0, new TableRow.LayoutParams(200, 300, 1));
         assertSame(child2, tableLayout.getChildAt(0));
         assertSame(child1, tableLayout.getChildAt(1));
-        assertEquals(200, tableLayout.getChildAt(0).getLayoutParams().width);
+        assertEquals(ViewGroup.LayoutParams.MATCH_PARENT,
+                tableLayout.getChildAt(0).getLayoutParams().width);
         assertEquals(300, tableLayout.getChildAt(0).getLayoutParams().height);
-        assertEquals(100, tableLayout.getChildAt(1).getLayoutParams().width);
+        assertEquals(ViewGroup.LayoutParams.MATCH_PARENT,
+                tableLayout.getChildAt(1).getLayoutParams().width);
         assertEquals(200, tableLayout.getChildAt(1).getLayoutParams().height);
         assertTrue(tableLayout.getChildAt(0).isLayoutRequested());
         assertTrue(tableLayout.getChildAt(1).isLayoutRequested());
@@ -520,11 +525,14 @@ public class TableLayoutTest extends ActivityInstrumentationTestCase2<TableCtsAc
         assertSame(child2, tableLayout.getChildAt(0));
         assertSame(child1, tableLayout.getChildAt(1));
         assertSame(child3, tableLayout.getChildAt(2));
-        assertEquals(200, tableLayout.getChildAt(0).getLayoutParams().width);
+        assertEquals(ViewGroup.LayoutParams.MATCH_PARENT,
+                tableLayout.getChildAt(0).getLayoutParams().width);
         assertEquals(300, tableLayout.getChildAt(0).getLayoutParams().height);
-        assertEquals(100, tableLayout.getChildAt(1).getLayoutParams().width);
+        assertEquals(ViewGroup.LayoutParams.MATCH_PARENT,
+                tableLayout.getChildAt(1).getLayoutParams().width);
         assertEquals(200, tableLayout.getChildAt(1).getLayoutParams().height);
-        assertEquals(300, tableLayout.getChildAt(2).getLayoutParams().width);
+        assertEquals(ViewGroup.LayoutParams.MATCH_PARENT,
+                tableLayout.getChildAt(2).getLayoutParams().width);
         assertEquals(400, tableLayout.getChildAt(2).getLayoutParams().height);
         assertTrue(tableLayout.getChildAt(0).isLayoutRequested());
         assertTrue(tableLayout.getChildAt(1).isLayoutRequested());
@@ -588,7 +596,7 @@ public class TableLayoutTest extends ActivityInstrumentationTestCase2<TableCtsAc
         LinearLayout.LayoutParams layoutParams = mockTableLayout.generateLayoutParams(
                 new ViewGroup.LayoutParams(200, 300));
         assertNotNull(layoutParams);
-        assertEquals(200, layoutParams.width);
+        assertEquals(ViewGroup.LayoutParams.MATCH_PARENT, layoutParams.width);
         assertEquals(300, layoutParams.height);
         assertTrue(layoutParams instanceof TableLayout.LayoutParams);
 
@@ -609,50 +617,6 @@ public class TableLayoutTest extends ActivityInstrumentationTestCase2<TableCtsAc
         MockTableLayout mockTableLayout = new MockTableLayout(mContext);
 
         mockTableLayout.onMeasure(MeasureSpec.EXACTLY, MeasureSpec.EXACTLY);
-    }
-
-    private int dropNegative(int number) {
-        return (number > 0 ? number : 0);
-    }
-
-    private class MockOnHierarchyChangeListener implements OnHierarchyChangeListener {
-        private boolean mCalledOnChildViewAdded = false;
-        private boolean mCalledOnChildViewRemoved = false;
-
-        /*
-         * (non-Javadoc)
-         *
-         * @see
-         * android.view.ViewGroup.OnHierarchyChangeListener#onChildViewAdded
-         * (View, View)
-         */
-        public void onChildViewAdded(View parent, View child) {
-            mCalledOnChildViewAdded = true;
-        }
-
-        /*
-         * (non-Javadoc)
-         *
-         * @see
-         * android.view.ViewGroup.OnHierarchyChangeListener#onChildViewRemoved
-         * (View, View)
-         */
-        public void onChildViewRemoved(View parent, View child) {
-            mCalledOnChildViewRemoved = true;
-        }
-
-        public boolean hasCalledOnChildViewAdded() {
-            return mCalledOnChildViewAdded;
-        }
-
-        public boolean hasCalledOnChildViewRemoved() {
-            return mCalledOnChildViewRemoved;
-        }
-
-        public void reset() {
-            mCalledOnChildViewAdded = false;
-            mCalledOnChildViewRemoved = false;
-        }
     }
 
     /*

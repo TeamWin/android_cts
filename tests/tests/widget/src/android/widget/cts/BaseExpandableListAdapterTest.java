@@ -22,6 +22,8 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseExpandableListAdapter;
 
+import static org.mockito.Mockito.*;
+
 /**
  * Test {@link BaseExpandableListAdapter}.
  */
@@ -54,22 +56,22 @@ public class BaseExpandableListAdapterTest extends InstrumentationTestCase {
 
     public void testNotifyDataSetChanged() {
         MockBaseExpandableListAdapter adapter = new MockBaseExpandableListAdapter();
-        MockDataSetObserver dataSetObserver = new MockDataSetObserver();
-        adapter.registerDataSetObserver(dataSetObserver);
+        DataSetObserver mockDataSetObserver = mock(DataSetObserver.class);
+        adapter.registerDataSetObserver(mockDataSetObserver);
 
-        assertFalse(dataSetObserver.hasCalledOnChanged());
+        verifyZeroInteractions(mockDataSetObserver);
         adapter.notifyDataSetChanged();
-        assertTrue(dataSetObserver.hasCalledOnChanged());
+        verify(mockDataSetObserver, times(1)).onChanged();
     }
 
     public void testNotifyDataSetInvalidated() {
         MockBaseExpandableListAdapter adapter = new MockBaseExpandableListAdapter();
-        MockDataSetObserver dataSetObserver = new MockDataSetObserver();
-        adapter.registerDataSetObserver(dataSetObserver);
+        DataSetObserver mockDataSetObserver = mock(DataSetObserver.class);
+        adapter.registerDataSetObserver(mockDataSetObserver);
 
-        assertFalse(dataSetObserver.hasCalledOnInvalidated());
+        verifyZeroInteractions(mockDataSetObserver);
         adapter.notifyDataSetInvalidated();
-        assertTrue(dataSetObserver.hasCalledOnInvalidated());
+        verify(mockDataSetObserver, times(1)).onInvalidated();
     }
 
     public void testOnGroupCollapsed() {
@@ -86,47 +88,18 @@ public class BaseExpandableListAdapterTest extends InstrumentationTestCase {
 
     public void testDataSetObserver() {
         MockBaseExpandableListAdapter adapter = new MockBaseExpandableListAdapter();
-        MockDataSetObserver dataSetObserver = new MockDataSetObserver();
-        adapter.registerDataSetObserver(dataSetObserver);
+        DataSetObserver mockDataSetObserver = mock(DataSetObserver.class);
+        adapter.registerDataSetObserver(mockDataSetObserver);
 
-        assertFalse(dataSetObserver.hasCalledOnChanged());
+        verifyZeroInteractions(mockDataSetObserver);
         adapter.notifyDataSetChanged();
-        assertTrue(dataSetObserver.hasCalledOnChanged());
+        verify(mockDataSetObserver, times(1)).onChanged();
 
-        dataSetObserver.reset();
-        assertFalse(dataSetObserver.hasCalledOnChanged());
-        adapter.unregisterDataSetObserver(dataSetObserver);
+        reset(mockDataSetObserver);
+        verifyZeroInteractions(mockDataSetObserver);
+        adapter.unregisterDataSetObserver(mockDataSetObserver);
         adapter.notifyDataSetChanged();
-        assertFalse(dataSetObserver.hasCalledOnChanged());
-    }
-
-    private class MockDataSetObserver extends DataSetObserver {
-        private boolean mCalledOnChanged = false;
-        private boolean mCalledOnInvalidated = false;
-
-        @Override
-        public void onChanged() {
-            super.onChanged();
-            mCalledOnChanged = true;
-        }
-
-        public boolean hasCalledOnChanged() {
-            return mCalledOnChanged;
-        }
-
-        @Override
-        public void onInvalidated() {
-            super.onInvalidated();
-            mCalledOnInvalidated = true;
-        }
-
-        public boolean hasCalledOnInvalidated() {
-            return mCalledOnInvalidated;
-        }
-
-        public void reset() {
-            mCalledOnChanged = false;
-        }
+        verifyZeroInteractions(mockDataSetObserver);
     }
 
     private class MockBaseExpandableListAdapter extends BaseExpandableListAdapter {

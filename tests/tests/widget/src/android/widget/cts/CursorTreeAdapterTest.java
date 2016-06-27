@@ -34,6 +34,8 @@ import android.widget.TextView;
 
 import android.widget.cts.R;
 
+import static org.mockito.Mockito.*;
+
 
 /**
  * Test {@link CursorTreeAdapter}.
@@ -199,23 +201,23 @@ public class CursorTreeAdapterTest extends InstrumentationTestCase {
     @UiThreadTest
     public void testNotifyDataSetChangedBoolean() {
         MockCursorTreeAdapter adapter = new MockCursorTreeAdapter(mGroupCursor, mContext);
-        MockDataSetObserver observer = new MockDataSetObserver();
-        adapter.registerDataSetObserver(observer);
+        DataSetObserver mockDataSetObserver = mock(DataSetObserver.class);
+        adapter.registerDataSetObserver(mockDataSetObserver);
 
         // mChildrenCursorHelpers is empty
-        assertFalse(observer.hasCalledOnChanged());
+        verifyZeroInteractions(mockDataSetObserver);
         adapter.notifyDataSetChanged(false);
-        assertTrue(observer.hasCalledOnChanged());
+        verify(mockDataSetObserver, times(1)).onChanged();
 
         // add group 0 into mChildrenCursorHelpers
         adapter.getChild(0, 0);
         // add group 1 into mChildrenCursorHelpers
         adapter.getChild(1, 0);
-        observer.reset();
-        assertFalse(observer.hasCalledOnChanged());
+        reset(mockDataSetObserver);
+        verifyZeroInteractions(mockDataSetObserver);
 
         adapter.notifyDataSetChanged(true);
-        assertTrue(observer.hasCalledOnChanged());
+        verify(mockDataSetObserver, times(1)).onChanged();
         adapter.reset();
         adapter.getChild(0, 0);
         assertTrue(adapter.hasAddedChild1IntoCache());
@@ -223,11 +225,11 @@ public class CursorTreeAdapterTest extends InstrumentationTestCase {
         assertTrue(adapter.hasAddedChild2IntoCache());
 
         // both group 0 and group 1 are in mChildrenCursorHelpers
-        observer.reset();
-        assertFalse(observer.hasCalledOnChanged());
+        reset(mockDataSetObserver);
+        verifyZeroInteractions(mockDataSetObserver);
         // does not release cursors
         adapter.notifyDataSetChanged(false);
-        assertTrue(observer.hasCalledOnChanged());
+        verify(mockDataSetObserver, times(1)).onChanged();
         adapter.reset();
         adapter.getChild(0, 0);
         assertFalse(adapter.hasAddedChild1IntoCache());
@@ -238,22 +240,22 @@ public class CursorTreeAdapterTest extends InstrumentationTestCase {
     @UiThreadTest
     public void testNotifyDataSetChanged() {
         MockCursorTreeAdapter adapter = new MockCursorTreeAdapter(mGroupCursor, mContext);
-        MockDataSetObserver observer = new MockDataSetObserver();
-        adapter.registerDataSetObserver(observer);
+        DataSetObserver mockDataSetObserver = mock(DataSetObserver.class);
+        adapter.registerDataSetObserver(mockDataSetObserver);
 
         // mChildrenCursorHelpers is empty
-        assertFalse(observer.hasCalledOnChanged());
+        verifyZeroInteractions(mockDataSetObserver);
         adapter.notifyDataSetChanged();
-        assertTrue(observer.hasCalledOnChanged());
+        verify(mockDataSetObserver, times(1)).onChanged();
 
         // add group 0 into mChildrenCursorHelpers
         adapter.getChild(0, 0);
         // add group 1 into mChildrenCursorHelpers
         adapter.getChild(1, 0);
-        observer.reset();
-        assertFalse(observer.hasCalledOnChanged());
+        reset(mockDataSetObserver);
+        verifyZeroInteractions(mockDataSetObserver);
         adapter.notifyDataSetChanged();
-        assertTrue(observer.hasCalledOnChanged());
+        verify(mockDataSetObserver, times(1)).onChanged();
         adapter.reset();
         adapter.getChild(0, 0);
         assertTrue(adapter.hasAddedChild1IntoCache());
@@ -264,22 +266,22 @@ public class CursorTreeAdapterTest extends InstrumentationTestCase {
     @UiThreadTest
     public void testNotifyDataSetInvalidated() {
         MockCursorTreeAdapter adapter = new MockCursorTreeAdapter(mGroupCursor, mContext);
-        MockDataSetObserver observer = new MockDataSetObserver();
-        adapter.registerDataSetObserver(observer);
+        DataSetObserver mockDataSetObserver = mock(DataSetObserver.class);
+        adapter.registerDataSetObserver(mockDataSetObserver);
 
-        assertFalse(observer.hasCalledOnInvalidated());
+        verifyZeroInteractions(mockDataSetObserver);
         // mChildrenCursorHelpers is empty
         adapter.notifyDataSetInvalidated();
-        assertTrue(observer.hasCalledOnInvalidated());
+        verify(mockDataSetObserver, times(1)).onInvalidated();
 
         // add group 0 into mChildrenCursorHelpers
         adapter.getChild(0, 0);
         // add group 1 into mChildrenCursorHelpers
         adapter.getChild(1, 0);
-        observer.reset();
-        assertFalse(observer.hasCalledOnInvalidated());
+        reset(mockDataSetObserver);
+        verifyZeroInteractions(mockDataSetObserver);
         adapter.notifyDataSetInvalidated();
-        assertTrue(observer.hasCalledOnInvalidated());
+        verify(mockDataSetObserver, times(1)).onInvalidated();
         adapter.reset();
         adapter.getChild(0, 0);
         assertTrue(adapter.hasAddedChild1IntoCache());
@@ -705,36 +707,6 @@ public class CursorTreeAdapterTest extends InstrumentationTestCase {
     private final class MockFilterQueryProvider implements FilterQueryProvider {
         public Cursor runQuery(CharSequence constraint) {
             return null;
-        }
-    }
-
-    private final class MockDataSetObserver extends DataSetObserver {
-        private boolean mHasCalledOnChanged = false;
-        private boolean mHasCalledOnInvalidated = false;
-
-        @Override
-        public void onChanged() {
-            super.onChanged();
-            mHasCalledOnChanged = true;
-        }
-
-        @Override
-        public void onInvalidated() {
-            super.onInvalidated();
-            mHasCalledOnInvalidated = true;
-        }
-
-        public boolean hasCalledOnChanged() {
-            return mHasCalledOnChanged;
-        }
-
-        public boolean hasCalledOnInvalidated() {
-            return mHasCalledOnInvalidated;
-        }
-
-        public void reset() {
-            mHasCalledOnChanged = false;
-            mHasCalledOnInvalidated = false;
         }
     }
 }

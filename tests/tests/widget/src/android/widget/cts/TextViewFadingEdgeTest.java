@@ -120,12 +120,7 @@ public class TextViewFadingEdgeTest extends ActivityInstrumentationTestCase2<Emp
     @Override
     protected void setUp() throws Exception {
         super.setUp();
-        new PollingCheck() {
-            @Override
-            protected boolean check() {
-                return getActivity().hasWindowFocus();
-            }
-        }.run();
+        PollingCheck.waitFor(() -> getActivity().hasWindowFocus());
     }
 
     public void testFadingEdge() {

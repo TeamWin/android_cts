@@ -152,10 +152,7 @@ public class CompoundButtonTest extends AndroidTestCase {
         assertFalse(compoundButton.isChecked());
 
         // performClick with OnClickListener will return true.
-        compoundButton.setOnClickListener(new OnClickListener() {
-            public void onClick(View v) {
-            }
-        });
+        compoundButton.setOnClickListener((view) -> {});
         assertTrue(compoundButton.performClick());
         assertTrue(compoundButton.isChecked());
 
