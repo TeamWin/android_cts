@@ -28,6 +28,7 @@ import com.android.tradefed.testtype.ITestCollector;
 import com.android.tradefed.testtype.ITestFilterReceiver;
 
 import java.util.List;
+import java.util.Set;
 
 public class TestStub implements IRemoteTest, IAbiReceiver, IRuntimeHintProvider, ITestCollector,
         ITestFilterReceiver {
@@ -68,7 +69,7 @@ public class TestStub implements IRemoteTest, IAbiReceiver, IRuntimeHintProvider
     }
 
     @Override
-    public void addAllIncludeFilters(List<String> filters) {
+    public void addAllIncludeFilters(Set<String> filters) {
 
     }
 
@@ -78,7 +79,7 @@ public class TestStub implements IRemoteTest, IAbiReceiver, IRuntimeHintProvider
     }
 
     @Override
-    public void addAllExcludeFilters(List<String> filters) {
+    public void addAllExcludeFilters(Set<String> filters) {
 
     }
 
