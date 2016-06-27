@@ -23,6 +23,7 @@ import android.animation.ObjectAnimator;
 import android.animation.PropertyValuesHolder;
 import android.animation.TypeConverter;
 import android.animation.ValueAnimator;
+import android.graphics.Color;
 import android.graphics.Path;
 import android.graphics.PointF;
 import android.graphics.drawable.ShapeDrawable;
@@ -215,7 +216,7 @@ public class PropertyValuesHolderTest extends
         assertEquals("Animation should run as expected", 100f, mActivity.view.newBall.getY());
     }
 
-    public void testOffloat() throws Throwable {
+    public void testOfFloat() throws Throwable {
         float[] values = {mStartY, mEndY};
         PropertyValuesHolder pVHolder = PropertyValuesHolder.ofFloat(mProperty, values);
         assertNotNull(pVHolder);
@@ -288,10 +289,15 @@ public class PropertyValuesHolderTest extends
             mDuration);
         startAnimation(objectAnimator, colorAnimator);
         Thread.sleep(1000);
-        Integer i = (Integer) colorAnimator.getAnimatedValue();
-        //We are going from less negative value to a more negative value
-        assertTrue(i.intValue() <= startColor);
-        assertTrue(endColor <= i.intValue());
+        Integer animatedValue = (Integer) colorAnimator.getAnimatedValue();
+        int redMin = Math.min(Color.red(startColor), Color.red(endColor));
+        int redMax = Math.max(Color.red(startColor), Color.red(endColor));
+        int blueMin = Math.min(Color.blue(startColor), Color.blue(endColor));
+        int blueMax = Math.max(Color.blue(startColor), Color.blue(endColor));
+        assertTrue(Color.red(animatedValue) >= redMin);
+        assertTrue(Color.red(animatedValue) <= redMax);
+        assertTrue(Color.blue(animatedValue) >= blueMin);
+        assertTrue(Color.blue(animatedValue) <= blueMax);
     }
 
     public void testOfMultiFloat_Path() throws Throwable {
