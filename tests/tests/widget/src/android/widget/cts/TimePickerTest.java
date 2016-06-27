@@ -20,11 +20,18 @@ import android.app.Activity;
 import android.app.Instrumentation;
 import android.content.Context;
 import android.os.Parcelable;
+import android.os.SystemClock;
 import android.test.ActivityInstrumentationTestCase2;
 import android.test.UiThreadTest;
 import android.test.suitebuilder.annotation.SmallTest;
 import android.util.AttributeSet;
+import android.view.KeyEvent;
+import android.view.View;
+import android.view.ViewGroup;
 import android.widget.TimePicker;
+
+import java.util.ArrayList;
+import java.util.Collections;
 
 import static org.mockito.Mockito.*;
 
@@ -47,7 +54,7 @@ public class TimePickerTest extends ActivityInstrumentationTestCase2<TimePickerC
 
         mInstrumentation = getInstrumentation();
         mActivity = getActivity();
-        mTimePicker = (TimePicker) mActivity.findViewById(R.id.timepicker);
+        mTimePicker = (TimePicker) mActivity.findViewById(R.id.timepicker_clock);
     }
 
     public void testConstructors() {
@@ -274,6 +281,140 @@ public class TimePickerTest extends ActivityInstrumentationTestCase2<TimePickerC
 
         assertEquals(Integer.valueOf(expectHour), dest.getCurrentHour());
         assertEquals(Integer.valueOf(expectMinute), dest.getCurrentMinute());
+    }
+
+    public void testKeyboardTabTraversal_modeClock() {
+        TimePicker timePickerClock = (TimePicker) mActivity.findViewById(R.id.timepicker_clock);
+
+        mInstrumentation.runOnMainSync(() -> timePickerClock.setIs24HourView(false));
+        mInstrumentation.waitForIdleSync();
+        verifyTimePickerKeyboardTraversal(timePickerClock,
+                true /* goForward */,
+                false /* is24HourView */,
+                false /* isSpinner */);
+        verifyTimePickerKeyboardTraversal(timePickerClock,
+                false /* goForward */,
+                false /* is24HourView */,
+                false /* isSpinner */);
+
+        mInstrumentation.runOnMainSync(() -> timePickerClock.setIs24HourView(true));
+        mInstrumentation.waitForIdleSync();
+        verifyTimePickerKeyboardTraversal(timePickerClock,
+                true /* goForward */,
+                true /* is24HourView */,
+                false /* isSpinner */);
+        verifyTimePickerKeyboardTraversal(timePickerClock,
+                false /* goForward */,
+                true /* is24HourView */,
+                false /* isSpinner */);
+    }
+
+    public void testKeyboardTabTraversal_modeSpinner() {
+        TimePicker timePickerSpinner = (TimePicker) mActivity.findViewById(R.id.timepicker_spinner);
+
+        mInstrumentation.runOnMainSync(() -> timePickerSpinner.setIs24HourView(false));
+        mInstrumentation.waitForIdleSync();
+        verifyTimePickerKeyboardTraversal(timePickerSpinner,
+                true /* goForward */,
+                false /* is24HourView */,
+                true /* isSpinner */);
+        verifyTimePickerKeyboardTraversal(timePickerSpinner,
+                false /* goForward */,
+                false /* is24HourView */,
+                true /* isSpinner */);
+
+        mInstrumentation.runOnMainSync(() -> timePickerSpinner.setIs24HourView(true));
+        mInstrumentation.waitForIdleSync();
+        verifyTimePickerKeyboardTraversal(timePickerSpinner,
+                true /* goForward */,
+                true /* is24HourView */,
+                true /* isSpinner */);
+        verifyTimePickerKeyboardTraversal(timePickerSpinner,
+                false /* goForward */,
+                true /* is24HourView */,
+                true /* isSpinner */);
+    }
+
+    private void verifyTimePickerKeyboardTraversal(TimePicker timepicker, boolean goForward,
+            boolean is24HourView, boolean isSpinner) {
+        ArrayList<View> forwardViews = new ArrayList<>();
+        String summary = (goForward ? " forward " : " backward ")
+                + "traversal, is24HourView=" + is24HourView
+                + (isSpinner ? ", mode spinner" : ", mode clock");
+        assertNotNull("Unexpected NULL hour view for" + summary, timepicker.getHourView());
+        forwardViews.add(timepicker.getHourView());
+        assertNotNull("Unexpected NULL minute view for" + summary, timepicker.getMinuteView());
+        forwardViews.add(timepicker.getMinuteView());
+        if (!is24HourView) {
+            if (isSpinner) {
+                // The spinner mode only contains one view for inputting AM/PM.
+                assertNotNull("Unexpected NULL AP/PM view for" + summary, timepicker.getAmView());
+                forwardViews.add(timepicker.getAmView());
+            } else {
+                assertNotNull("Unexpected NULL AM view for" + summary, timepicker.getAmView());
+                forwardViews.add(timepicker.getAmView());
+                assertNotNull("Unexpected NULL PM view for" + summary, timepicker.getPmView());
+                forwardViews.add(timepicker.getPmView());
+            }
+        }
+
+        if (!goForward) {
+            Collections.reverse(forwardViews);
+        }
+
+        final int viewsSize = forwardViews.size();
+        for (int i = 0; i < viewsSize; i++) {
+            final View currentView = forwardViews.get(i);
+            String afterKeyCodeFormattedString = "";
+            int keyCode = KeyEvent.KEYCODE_TAB;
+
+            if (i == 0) {
+                // Make sure we always start by focusing the 1st element in the list.
+                mInstrumentation.runOnMainSync(() -> currentView.requestFocus());
+            } else {
+                if (goForward) {
+                    afterKeyCodeFormattedString = " after pressing="
+                            + KeyEvent.keyCodeToString(keyCode);
+                } else {
+                    afterKeyCodeFormattedString = " after pressing="
+                            + KeyEvent.keyCodeToString(KeyEvent.KEYCODE_SHIFT_LEFT)
+                            + "+" + KeyEvent.keyCodeToString(keyCode)  + " for" + summary;
+                }
+            }
+
+            assertTrue("View='" + currentView + "'" + " with index " + i + " is not enabled"
+                    + afterKeyCodeFormattedString + " for" + summary, currentView.isEnabled());
+            assertTrue("View='" + currentView + "'" + " with index " + i + " is not focused"
+                    + afterKeyCodeFormattedString + " for" + summary, currentView.isFocused());
+
+            if (i < viewsSize - 1) {
+                if (goForward) {
+                    mInstrumentation.sendKeyDownUpSync(keyCode);
+                } else {
+                    sendShiftKeyWith(keyCode);
+                }
+            }
+        }
+    }
+
+    private void sendShiftKeyWith(int keycode) {
+        final KeyEvent shiftDown = new KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_SHIFT_LEFT);
+        mInstrumentation.sendKeySync(shiftDown);
+
+        final KeyEvent keyDown = new KeyEvent(SystemClock.uptimeMillis(),
+                SystemClock.uptimeMillis(), KeyEvent.ACTION_DOWN, keycode, 0,
+                KeyEvent.META_SHIFT_ON);
+        mInstrumentation.sendKeySync(keyDown);
+
+        final KeyEvent keyUp = new KeyEvent(SystemClock.uptimeMillis(),
+                SystemClock.uptimeMillis(), KeyEvent.ACTION_UP, keycode, 0,
+                KeyEvent.META_SHIFT_ON);
+        mInstrumentation.sendKeySync(keyUp);
+
+        final KeyEvent shiftUp = new KeyEvent(KeyEvent.ACTION_UP, KeyEvent.KEYCODE_SHIFT_LEFT);
+        mInstrumentation.sendKeySync(shiftUp);
+
+        mInstrumentation.waitForIdleSync();
     }
 
     private class MyTimePicker extends TimePicker {
