@@ -16,12 +16,6 @@
 
 package android.widget.cts;
 
-import android.test.suitebuilder.annotation.MediumTest;
-import android.widget.cts.R;
-
-import org.xmlpull.v1.XmlPullParser;
-import org.xmlpull.v1.XmlPullParserException;
-
 import android.app.Activity;
 import android.app.Instrumentation;
 import android.content.Context;
@@ -33,6 +27,7 @@ import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
 import android.test.ActivityInstrumentationTestCase2;
 import android.test.TouchUtils;
+import android.test.suitebuilder.annotation.MediumTest;
 import android.text.Editable;
 import android.text.SpannableStringBuilder;
 import android.util.AttributeSet;
@@ -42,17 +37,29 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AbsListView;
 import android.widget.AbsListView.OnScrollListener;
-import android.widget.AbsListView.RecyclerListener;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemLongClickListener;
 import android.widget.ArrayAdapter;
 import android.widget.ListAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
+import android.widget.cts.util.TestUtilsMatchers;
+
+import org.hamcrest.MatcherAssert;
+import org.mockito.ArgumentCaptor;
+import org.mockito.InOrder;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
+import org.xmlpull.v1.XmlPullParser;
+import org.xmlpull.v1.XmlPullParserException;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+
+import static org.mockito.Mockito.*;
 
 public class AbsListViewTest extends ActivityInstrumentationTestCase2<ListViewCtsActivity> {
     private final String[] mShortList = new String[] {
@@ -156,90 +163,110 @@ public class AbsListViewTest extends ActivityInstrumentationTestCase2<ListViewCt
         });
         mInstrumentation.waitForIdleSync();
     }
+
     public void testSetOnScrollListener() throws Throwable {
-        MockOnScrollListener onScrollListener = new MockOnScrollListener();
+        AbsListView.OnScrollListener mockScrollListener =
+                mock(AbsListView.OnScrollListener.class);
 
-        assertNull(onScrollListener.getView());
-        assertEquals(0, onScrollListener.getFirstVisibleItem());
-        assertEquals(0, onScrollListener.getVisibleItemCount());
-        assertEquals(0, onScrollListener.getTotalItemCount());
-        assertEquals(-1, onScrollListener.getScrollState());
+        verifyZeroInteractions(mockScrollListener);
 
-        assertFalse(onScrollListener.isOnScrollCalled());
-        assertFalse(onScrollListener.isOnScrollStateChangedCalled());
+        mListView.setOnScrollListener(mockScrollListener);
+        verify(mockScrollListener, times(1)).onScroll(mListView, 0, 0, 0);
+        verifyNoMoreInteractions(mockScrollListener);
 
-        mListView.setOnScrollListener(onScrollListener);
-        assertSame(mListView, onScrollListener.getView());
-        assertEquals(0, onScrollListener.getFirstVisibleItem());
-        assertEquals(0, onScrollListener.getVisibleItemCount());
-        assertEquals(0, onScrollListener.getTotalItemCount());
-        assertEquals(-1, onScrollListener.getScrollState());
-
-        assertTrue(onScrollListener.isOnScrollCalled());
-        assertFalse(onScrollListener.isOnScrollStateChangedCalled());
-        onScrollListener.reset();
+        reset(mockScrollListener);
 
         setAdapter();
+        verify(mockScrollListener, times(1)).onScroll(mListView, 0, mListView.getChildCount(),
+                mCountryList.length);
+        verifyNoMoreInteractions(mockScrollListener);
 
-        assertSame(mListView, onScrollListener.getView());
-        assertEquals(0, onScrollListener.getFirstVisibleItem());
-        assertEquals(mListView.getChildCount(), onScrollListener.getVisibleItemCount());
-        assertEquals(mCountryList.length, onScrollListener.getTotalItemCount());
-        assertEquals(-1, onScrollListener.getScrollState());
-
-        assertTrue(onScrollListener.isOnScrollCalled());
-        assertFalse(onScrollListener.isOnScrollStateChangedCalled());
-        onScrollListener.reset();
+        reset(mockScrollListener);
 
         TouchUtils.scrollToBottom(this, mActivity, mListView);
-        assertSame(mListView, onScrollListener.getView());
-        assertEquals(mListView.getChildCount(), onScrollListener.getVisibleItemCount());
-        assertEquals(mCountryList.length, onScrollListener.getTotalItemCount());
 
-        assertTrue(onScrollListener.isOnScrollCalled());
-        assertTrue(onScrollListener.isOnScrollStateChangedCalled());
+        ArgumentCaptor<Integer> firstVisibleItemCaptor = ArgumentCaptor.forClass(Integer.class);
+        ArgumentCaptor<Integer> visibleItemCountCaptor = ArgumentCaptor.forClass(Integer.class);
+        verify(mockScrollListener, atLeastOnce()).onScroll(eq(mListView),
+                firstVisibleItemCaptor.capture(), visibleItemCountCaptor.capture(),
+                eq(mCountryList.length));
+
+        // We expect the first visible item values to be increasing
+        MatcherAssert.assertThat(firstVisibleItemCaptor.getAllValues(),
+                TestUtilsMatchers.inAscendingOrder());
+        // The number of visible items during scrolling may change depending on the specific
+        // scroll position. As such we only test this number at the very end
+        final List<Integer> capturedVisibleItemCounts = visibleItemCountCaptor.getAllValues();
+        assertEquals(mListView.getChildCount(),
+                (int) capturedVisibleItemCounts.get(capturedVisibleItemCounts.size() - 1));
+
+        ArgumentCaptor<Integer> scrollStateCaptor = ArgumentCaptor.forClass(Integer.class);
+        verify(mockScrollListener, atLeastOnce()).onScrollStateChanged(eq(mListView),
+                scrollStateCaptor.capture());
+
+        // Verify that the last scroll state is IDLE
+        final List<Integer> capturedScrollStates = scrollStateCaptor.getAllValues();
+        assertEquals(AbsListView.OnScrollListener.SCROLL_STATE_IDLE,
+                (int) capturedScrollStates.get(capturedScrollStates.size() - 1));
     }
 
     public void testFling() throws Throwable {
-        MockOnScrollListener onScrollListener = new MockOnScrollListener();
-        mListView.setOnScrollListener(onScrollListener);
+        AbsListView.OnScrollListener mockScrollListener = mock(AbsListView.OnScrollListener.class);
+        mListView.setOnScrollListener(mockScrollListener);
 
         setAdapter();
 
         // Fling down from top, expect a scroll.
-        fling(10000, onScrollListener);
-        assertTrue(onScrollListener.isOnScrollCalled());
-        assertTrue(0 < onScrollListener.getFirstVisibleItem());
+        fling(10000, mockScrollListener);
+        ArgumentCaptor<Integer> firstVisibleItemCaptor = ArgumentCaptor.forClass(Integer.class);
+        verify(mockScrollListener, atLeastOnce()).onScroll(eq(mListView),
+                firstVisibleItemCaptor.capture(), anyInt(), eq(mCountryList.length));
+        List<Integer> capturedFirstVisibleItems = firstVisibleItemCaptor.getAllValues();
+        assertTrue(capturedFirstVisibleItems.get(capturedFirstVisibleItems.size() - 1) > 0);
 
         // Fling up the same amount, expect a scroll to the original position.
-        fling(-10000, onScrollListener);
-        assertTrue(onScrollListener.isOnScrollCalled());
-        assertEquals(0, onScrollListener.getFirstVisibleItem());
+        fling(-10000, mockScrollListener);
+        firstVisibleItemCaptor = ArgumentCaptor.forClass(Integer.class);
+        verify(mockScrollListener, atLeastOnce()).onScroll(eq(mListView),
+                firstVisibleItemCaptor.capture(), anyInt(), eq(mCountryList.length));
+        capturedFirstVisibleItems = firstVisibleItemCaptor.getAllValues();
+        assertTrue(capturedFirstVisibleItems.get(capturedFirstVisibleItems.size() - 1) == 0);
 
         // Fling up again, expect no scroll, as the viewport is already at top.
-        fling(-10000, onScrollListener);
-        assertFalse(onScrollListener.isOnScrollCalled());
-        assertEquals(0, onScrollListener.getFirstVisibleItem());
+        fling(-10000, mockScrollListener);
+        verify(mockScrollListener, never()).onScroll(any(AbsListView.class), anyInt(), anyInt(),
+                anyInt());
 
         // Fling up again with a huge velocity, expect no scroll.
-        fling(-50000, onScrollListener);
-        assertFalse(onScrollListener.isOnScrollCalled());
-        assertEquals(0, onScrollListener.getFirstVisibleItem());
+        fling(-50000, mockScrollListener);
+        verify(mockScrollListener, never()).onScroll(any(AbsListView.class), anyInt(), anyInt(),
+                anyInt());
     }
 
-    private void fling(int velocityY, MockOnScrollListener onScrollListener) throws Throwable {
-        onScrollListener.reset();
+    private void fling(int velocityY, OnScrollListener mockScrollListener) throws Throwable {
+        reset(mockScrollListener);
 
-        final int v = velocityY;
-        runTestOnUiThread(new Runnable() {
-            public void run() {
-                mListView.fling(v);
-            }
-        });
+        // Create a count down latch and configure it to be counted down when out mock
+        // listener is invoked with IDLE state
+        final CountDownLatch countDownLatch = new CountDownLatch(1);
+        doAnswer(new Answer<Void>() {
+                     @Override
+                     public Void answer(InvocationOnMock invocation) {
+                         countDownLatch.countDown();
+                         return null;
+                     }
+                 }
+        ).when(mockScrollListener).onScrollStateChanged(
+                mListView, OnScrollListener.SCROLL_STATE_IDLE);
 
-        do {
-            mInstrumentation.waitForIdleSync();
-        } while (onScrollListener.getScrollState() != OnScrollListener.SCROLL_STATE_IDLE);
+        // Now fling the list view
+        runTestOnUiThread(() -> mListView.fling(velocityY));
+
+        // And wait for the latch to be triggered
+        try {
+            assertTrue(countDownLatch.await(20L, TimeUnit.SECONDS));
+        } catch (InterruptedException e) {
+        }
     }
 
     public void testGetFocusedRect() throws Throwable {
@@ -428,17 +455,23 @@ public class AbsListViewTest extends ActivityInstrumentationTestCase2<ListViewCt
     public void testSetRecyclerListener() throws Throwable {
         setAdapter();
 
-        MockRecyclerListener recyclerListener = new MockRecyclerListener();
-        List<View> views = new ArrayList<View>();
+        AbsListView.RecyclerListener mockRecyclerListener =
+                mock(AbsListView.RecyclerListener.class);
+        verifyZeroInteractions(mockRecyclerListener);
 
-        assertNull(recyclerListener.getView());
-        mListView.setRecyclerListener(recyclerListener);
+        mListView.setRecyclerListener(mockRecyclerListener);
+        List<View> views = new ArrayList<>();
         mListView.reclaimViews(views);
 
         assertTrue(views.size() > 0);
-        assertNotNull(recyclerListener.getView());
 
-        assertSame(recyclerListener.getView(), views.get(views.size() - 1));
+        // Verify that onMovedToScrapHeap was called on each view in the order that they were
+        // put in the list that we passed to reclaimViews
+        final InOrder reclaimedOrder = inOrder(mockRecyclerListener);
+        for (View reclaimed : views) {
+            reclaimedOrder.verify(mockRecyclerListener, times(1)).onMovedToScrapHeap(reclaimed);
+        }
+        verifyNoMoreInteractions(mockRecyclerListener);
     }
 
     public void testAccessCacheColorHint() {
@@ -577,27 +610,37 @@ public class AbsListViewTest extends ActivityInstrumentationTestCase2<ListViewCt
         final TextView v = (TextView) listView.getSelectedView();
         assertNull(listView.getContextMenuInfo());
 
-        final MockOnItemLongClickListener listener = new MockOnItemLongClickListener();
-        listView.setOnItemLongClickListener(listener);
+        final AbsListView.OnItemLongClickListener mockOnItemLongClickListener =
+                mock(AbsListView.OnItemLongClickListener.class);
+        listView.setOnItemLongClickListener(mockOnItemLongClickListener);
 
-        assertNull(listener.getParent());
-        assertNull(listener.getView());
-        assertEquals(0, listener.getPosition());
-        assertEquals(0, listener.getID());
+        verifyZeroInteractions(mockOnItemLongClickListener);
+
+        // Create a count down latch and configure it to be counted down when out mock
+        // listener is invoked with the expected view
+        final CountDownLatch countDownLatch = new CountDownLatch(1);
+        doAnswer(new Answer<Void>() {
+             @Override
+             public Void answer(InvocationOnMock invocation) {
+                 countDownLatch.countDown();
+                 return null;
+             }
+         }).when(mockOnItemLongClickListener).onItemLongClick(listView, v, 2,
+                listView.getItemIdAtPosition(2));
 
         mInstrumentation.waitForIdleSync();
+
+        // Now long click our view
         TouchUtils.longClickView(this, v);
 
-        new PollingCheck() {
-            @Override
-            protected boolean check() {
-                return v == listener.getView();
-            }
-        }.run();
+        // And wait for the latch to be triggered
+        try {
+            assertTrue(countDownLatch.await(20L, TimeUnit.SECONDS));
+        } catch (InterruptedException e) {
+        }
 
-        assertSame(listView, listener.getParent());
-        assertEquals(2, listener.getPosition());
-        assertEquals(listView.getItemIdAtPosition(2), listener.getID());
+        verify(mockOnItemLongClickListener, times(1)).onItemLongClick(listView, v, 2,
+                listView.getItemIdAtPosition(2));
 
         ContextMenuInfo cmi = listView.getContextMenuInfo();
         assertNotNull(cmi);
@@ -746,131 +789,6 @@ public class AbsListViewTest extends ActivityInstrumentationTestCase2<ListViewCt
          * the subclass ListView and GridView override this method, so we can not test
          * this method.
          */
-    }
-
-    public void testFoo() {
-        /**
-         * Do not test these APIs. They are callbacks which:
-         *
-         * 1. The callback machanism has been tested in super class
-         * 2. The functionality is implmentation details, no need to test
-         */
-    }
-
-    private static class MockOnScrollListener implements OnScrollListener {
-        private AbsListView mView;
-        private int mFirstVisibleItem;
-        private int mVisibleItemCount;
-        private int mTotalItemCount;
-        private int mScrollState;
-
-        private boolean mIsOnScrollCalled;
-        private boolean mIsOnScrollStateChangedCalled;
-
-        private MockOnScrollListener() {
-            mView = null;
-            mFirstVisibleItem = 0;
-            mVisibleItemCount = 0;
-            mTotalItemCount = 0;
-            mScrollState = -1;
-
-            mIsOnScrollCalled = false;
-            mIsOnScrollStateChangedCalled = false;
-        }
-
-        public void onScroll(AbsListView view, int firstVisibleItem,
-                int visibleItemCount, int totalItemCount) {
-            mView = view;
-            mFirstVisibleItem = firstVisibleItem;
-            mVisibleItemCount = visibleItemCount;
-            mTotalItemCount = totalItemCount;
-            mIsOnScrollCalled = true;
-        }
-
-        public void onScrollStateChanged(AbsListView view, int scrollState) {
-            mScrollState = scrollState;
-            mIsOnScrollStateChangedCalled = true;
-        }
-
-        public AbsListView getView() {
-            return mView;
-        }
-
-        public int getFirstVisibleItem() {
-            return mFirstVisibleItem;
-        }
-
-        public int getVisibleItemCount() {
-            return mVisibleItemCount;
-        }
-
-        public int getTotalItemCount() {
-            return mTotalItemCount;
-        }
-
-        public int getScrollState() {
-            return mScrollState;
-        }
-
-        public boolean isOnScrollCalled() {
-            return mIsOnScrollCalled;
-        }
-
-        public boolean isOnScrollStateChangedCalled() {
-            return mIsOnScrollStateChangedCalled;
-        }
-
-        public void reset() {
-            mIsOnScrollCalled = false;
-            mIsOnScrollStateChangedCalled = false;
-        }
-    }
-
-    private static class MockRecyclerListener implements RecyclerListener {
-        private View mView;
-
-        private MockRecyclerListener() {
-            mView = null;
-        }
-
-        public void onMovedToScrapHeap(View view) {
-            mView = view;
-        }
-
-        public View getView() {
-            return mView;
-        }
-    }
-
-    private static class MockOnItemLongClickListener implements OnItemLongClickListener {
-        private AdapterView<?> parent;
-        private View view;
-        private int position;
-        private long id;
-
-        public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
-            this.parent = parent;
-            this.view = view;
-            this.position = position;
-            this.id = id;
-            return false;
-        }
-
-        public AdapterView<?> getParent() {
-            return parent;
-        }
-
-        public View getView() {
-            return view;
-        }
-
-        public int getPosition() {
-            return position;
-        }
-
-        public long getID() {
-            return id;
-        }
     }
 
     /**
