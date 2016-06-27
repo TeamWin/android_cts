@@ -32,6 +32,7 @@ import junit.framework.TestCase;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 public class ModuleDefTest extends TestCase {
 
@@ -63,7 +64,7 @@ public class ModuleDefTest extends TestCase {
         }
 
         @Override
-        public void addAllIncludeFilters(List<String> filters) {
+        public void addAllIncludeFilters(Set<String> filters) {
             mIncludeFilters.addAll(filters);
         }
 
@@ -73,7 +74,7 @@ public class ModuleDefTest extends TestCase {
         }
 
         @Override
-        public void addAllExcludeFilters(List<String> filters) {
+        public void addAllExcludeFilters(Set<String> filters) {
             mExcludeFilters.addAll(filters);
         }
 
