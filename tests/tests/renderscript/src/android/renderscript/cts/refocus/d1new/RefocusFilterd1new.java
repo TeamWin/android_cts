@@ -143,8 +143,9 @@ public class RefocusFilterd1new extends
 
     startnow = System.nanoTime();
     //scriptC.forEach_MarkLayerMask(buffers.inAllocation);
-    // Pass sharp meta allocation directly into the kernel
-    scriptC.forEach_MarkLayerMaskPassInput(buffers.sharpActualDepthAllocation, buffers.sharpDilatedDepthAllocation);
+    // Pass the sharp actual depth allocation directly into the kernel, and modify the dilated depth
+    // allocation which is set as a global.
+    scriptC.forEach_MarkLayerMaskPassInput(buffers.sharpActualDepthAllocation);
     endnow = System.nanoTime();
     Log.d(myTAG, "MarkLayerMask: "+(endnow - startnow)+ " ns" );
 
@@ -213,8 +214,9 @@ public class RefocusFilterd1new extends
 
     startnow = System.nanoTime();
     //scriptC.forEach_MarkLayerMask(buffers.inAllocation);
-    // Pass sharp meta allocation directly into the kernel
-    scriptC.forEach_MarkLayerMaskPassInput(buffers.sharpActualDepthAllocation, buffers.sharpDilatedDepthAllocation);
+    // Pass the sharp actual depth allocation directly into the kernel, and modify the dilated depth
+    // allocation which is set as a global.
+    scriptC.forEach_MarkLayerMaskPassInput(buffers.sharpActualDepthAllocation);
     endnow = System.nanoTime();
     Log.d(myTAG, "MarkLayerMask: "+(endnow - startnow)+ " ns" );
 
