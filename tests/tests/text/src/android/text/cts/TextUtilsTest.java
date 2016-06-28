@@ -166,25 +166,27 @@ public class TextUtilsTest extends AndroidTestCase {
         newConfig.setLocales(LocaleList.forLanguageTags("ar"));
         res.updateConfiguration(newConfig, null);
 
-        final TextPaint paint = new TextPaint();
-        final int moreId = R.plurals.list_ellipsize_test;  // "one more" for 1, "%d more" for other
-        final String RLM = "\u200F";
-        final String LRE = "\u202A";
-        final String PDF = "\u202C";
+        try {
+            final TextPaint paint = new TextPaint();
+            final int moreId = R.plurals.list_ellipsize_test;  // "one more" for 1, else "%d more"
+            final String RLM = "\u200F";
+            final String LRE = "\u202A";
+            final String PDF = "\u202C";
 
-        final List fullList = Arrays.asList("A", "B");
-        final String separator = ", ";
-        final String expectedString =
-                RLM + LRE + "A" + PDF + RLM + ", " + RLM + LRE + "B" + PDF + RLM;
-        final float enoughWidth = paint.measureText(expectedString);
+            final List fullList = Arrays.asList("A", "B");
+            final String separator = ", ";
+            final String expectedString =
+                    RLM + LRE + "A" + PDF + RLM + ", " + RLM + LRE + "B" + PDF + RLM;
+            final float enoughWidth = paint.measureText(expectedString);
 
-        assertEquals(expectedString,
-                TextUtils.listEllipsize(context, fullList, separator, paint, enoughWidth,
-                                        moreId).toString());
-
-        // Restore the original locales
-        newConfig.setLocales(previousLocales);
-        res.updateConfiguration(newConfig, null);
+            assertEquals(expectedString,
+                    TextUtils.listEllipsize(context, fullList, separator, paint, enoughWidth,
+                                            moreId).toString());
+        } finally {
+            // Restore the original locales
+            newConfig.setLocales(previousLocales);
+            res.updateConfiguration(newConfig, null);
+        }
     }
 
     public void testCommaEllipsize() {
