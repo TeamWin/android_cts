@@ -196,6 +196,8 @@ I think so, so how about double this string, like copy and paste! </string>
 
     <string name="search_query_hint">query hint</string>
 
+    <string name="remote_content_description">remote description</string>
+
     <string name="toggle_text_on">On</string>
     <string name="toggle_text_off">Off</string>
     <string name="toggle_text_on_alt">On Alt</string>
