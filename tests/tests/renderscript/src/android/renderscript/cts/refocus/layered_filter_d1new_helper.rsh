@@ -73,7 +73,7 @@ static inline void Alloc_ComputeLayerMatteHelper(uchar sharp_input_actual_depth,
   }
 
   // Converts min_dist to a matte value.
-  rsSetElementAt_uchar(g_sharp_matte, (uchar)(dilation_radius + 1 - (int)half_sqrt((float)min_dist)), index_sharp_meta);
+  rsSetElementAt_uchar(g_sharp_matte, (uchar)(dilation_radius + 1 - (int)(half_sqrt((float)min_dist) + 0.5f)), index_sharp_meta);
   // If sharp->matte > 0, depth must be within the depth range of this layer.
   rsSetElementAt_uchar(g_sharp_dilated_depth, (uchar)depth, index_sharp_meta);
 }
@@ -113,7 +113,7 @@ static inline uchar ComputeLayerMattePassInputHelper(uchar sharp_input_actual_de
     current_meta_index += jump_to_next_row;
   }
   // Converts min_dist to a matte value.
-  rsSetElementAt_uchar(g_sharp_matte, (uchar)(dilation_radius + 1 - (int)half_sqrt((float)min_dist)), index_sharp_meta);
+  rsSetElementAt_uchar(g_sharp_matte, (uchar)(dilation_radius + 1 - (int)(half_sqrt((float)min_dist) + 0.5f)), index_sharp_meta);
   // If sharp->matte > 0, depth must be within the depth range of this layer.
   return (uchar)depth;
 }
