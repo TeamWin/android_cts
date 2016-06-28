@@ -55,7 +55,6 @@ import android.support.test.uiautomator.UiObject;
 import android.support.test.uiautomator.UiObjectNotFoundException;
 import android.support.test.uiautomator.UiSelector;
 import android.test.InstrumentationTestCase;
-import android.util.DisplayMetrics;
 import android.util.Log;
 
 import org.hamcrest.BaseMatcher;
@@ -71,7 +70,6 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 import java.util.concurrent.TimeoutException;
 /**
  * This is the base class for print tests.
@@ -91,6 +89,35 @@ public abstract class BasePrintTest extends InstrumentationTestCase {
 
     private static PrintDocumentActivity sActivity;
     private UiDevice mUiDevice;
+
+    /**
+     * Make sure that a runnable eventually finishes without throwing a exception.
+     *
+     * @param r The runnable to run.
+     */
+    protected static void eventually(Runnable r) {
+        final long TIMEOUT_MILLS = 5000;
+        long start = System.currentTimeMillis();
+
+        while (true) {
+            try {
+                r.run();
+                break;
+            } catch (Throwable e) {
+                if (System.currentTimeMillis() - start < TIMEOUT_MILLS) {
+                    Log.e(LOG_TAG, "Ignoring exception", e);
+
+                    try {
+                        Thread.sleep(100);
+                    } catch (InterruptedException e1) {
+                        Log.e(LOG_TAG, "Interrupted", e);
+                    }
+                } else {
+                    throw e;
+                }
+            }
+        }
+    }
 
     /**
      * Return the UI device

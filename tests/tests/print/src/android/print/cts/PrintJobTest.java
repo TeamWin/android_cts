@@ -37,8 +37,6 @@ import android.print.cts.services.PrinterDiscoverySessionCallbacks;
 import android.print.cts.services.SecondPrintService;
 import android.print.cts.services.StubbablePrinterDiscoverySession;
 import android.printservice.PrintJob;
-import android.support.test.uiautomator.UiObject;
-import android.support.test.uiautomator.UiSelector;
 import android.util.Log;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
@@ -205,35 +203,6 @@ public class PrintJobTest extends BasePrintTest {
                         return null;
                     }
                 }, null);
-    }
-
-    /**
-     * Make sure that a runnable eventually finishes without throwing a exception.
-     *
-     * @param r The runnable to run.
-     */
-    private static void eventually(Runnable r) {
-        final long TIMEOUT_MILLS = 5000;
-        long start = System.currentTimeMillis();
-
-        while (true) {
-            try {
-                r.run();
-                break;
-            } catch (Exception e) {
-                if (System.currentTimeMillis() - start < TIMEOUT_MILLS) {
-                    Log.e(LOG_TAG, "Ignoring exception as we know that the print spooler does " +
-                            "not guarantee to process commands in order", e);
-                    try {
-                        Thread.sleep(100);
-                    } catch (InterruptedException e1) {
-                        Log.e(LOG_TAG, "Interrupted", e);
-                    }
-                } else {
-                    throw e;
-                }
-            }
-        }
     }
 
     /**
