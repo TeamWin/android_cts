@@ -16,8 +16,6 @@
 
 package android.widget.cts;
 
-import android.annotation.IdRes;
-import android.annotation.NonNull;
 import android.app.Activity;
 import android.app.Instrumentation;
 import android.app.Instrumentation.ActivityMonitor;
@@ -30,7 +28,6 @@ import android.content.res.Resources.NotFoundException;
 import android.cts.util.KeyEventUtil;
 import android.cts.util.PollingCheck;
 import android.cts.util.WidgetTestUtils;
-import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Path;
@@ -112,7 +109,6 @@ import android.widget.cts.util.TestUtils;
 import android.widget.cts.util.ViewTestUtils;
 
 import org.mockito.invocation.InvocationOnMock;
-import org.mockito.stubbing.Answer;
 import org.xmlpull.v1.XmlPullParserException;
 
 import java.io.IOException;
@@ -2328,7 +2324,7 @@ public class TextViewTest extends ActivityInstrumentationTestCase2<TextViewCtsAc
         mInstrumentation.waitForIdleSync();
         assertNull(mTextView.getError());
 
-        final Drawable icon = getDrawable(R.drawable.failed);
+        final Drawable icon = TestUtils.getDrawable(mActivity, R.drawable.failed);
         mActivity.runOnUiThread(new Runnable() {
             public void run() {
                 mTextView.setError(errorText, icon);
@@ -3273,7 +3269,7 @@ public class TextViewTest extends ActivityInstrumentationTestCase2<TextViewCtsAc
         textView.setSingleLine(true);
 
         // add a compound drawable to TextView to make offset calculation more interesting
-        final Drawable drawable = getDrawable(R.drawable.red);
+        final Drawable drawable = TestUtils.getDrawable(mActivity, R.drawable.red);
         drawable.setBounds(0, 0, 10, 10);
         textView.setCompoundDrawables(drawable, drawable, drawable, drawable);
 
@@ -3328,7 +3324,7 @@ public class TextViewTest extends ActivityInstrumentationTestCase2<TextViewCtsAc
         textView.setLines(2);
 
         // add a compound drawable to TextView to make offset calculation more interesting
-        final Drawable drawable = getDrawable(R.drawable.red);
+        final Drawable drawable = TestUtils.getDrawable(mActivity, R.drawable.red);
         drawable.setBounds(0, 0, 10, 10);
         textView.setCompoundDrawables(drawable, drawable, drawable, drawable);
 
@@ -3390,7 +3386,7 @@ public class TextViewTest extends ActivityInstrumentationTestCase2<TextViewCtsAc
         textView.setLines(2);
 
         // add a compound drawable to TextView to make offset calculation more interesting
-        final Drawable drawable = getDrawable(R.drawable.red);
+        final Drawable drawable = TestUtils.getDrawable(mActivity, R.drawable.red);
         drawable.setBounds(0, 0, 10, 10);
         textView.setCompoundDrawables(drawable, drawable, drawable, drawable);
 
@@ -3550,20 +3546,20 @@ public class TextViewTest extends ActivityInstrumentationTestCase2<TextViewCtsAc
         drawables = mTextView.getCompoundDrawables();
 
         // drawableLeft
-        WidgetTestUtils.assertEquals(getBitmap(R.drawable.start),
+        WidgetTestUtils.assertEquals(TestUtils.getBitmap(mActivity, R.drawable.start),
                 ((BitmapDrawable) drawables[0]).getBitmap());
         // drawableTop
-        WidgetTestUtils.assertEquals(getBitmap(R.drawable.pass),
+        WidgetTestUtils.assertEquals(TestUtils.getBitmap(mActivity, R.drawable.pass),
                 ((BitmapDrawable) drawables[1]).getBitmap());
         // drawableRight
-        WidgetTestUtils.assertEquals(getBitmap(R.drawable.failed),
+        WidgetTestUtils.assertEquals(TestUtils.getBitmap(mActivity, R.drawable.failed),
                 ((BitmapDrawable) drawables[2]).getBitmap());
         // drawableBottom
         assertNull(drawables[3]);
 
-        Drawable left = getDrawable(R.drawable.blue);
-        Drawable right = getDrawable(R.drawable.yellow);
-        Drawable top = getDrawable(R.drawable.red);
+        Drawable left = TestUtils.getDrawable(mActivity, R.drawable.blue);
+        Drawable right = TestUtils.getDrawable(mActivity, R.drawable.yellow);
+        Drawable top = TestUtils.getDrawable(mActivity, R.drawable.red);
 
         // using drawables directly
         mTextView.setCompoundDrawablesWithIntrinsicBounds(left, top, right, null);
@@ -3621,10 +3617,10 @@ public class TextViewTest extends ActivityInstrumentationTestCase2<TextViewCtsAc
         mTextView = new TextView(mActivity);
 
         // prepare drawables
-        final Drawable start = getDrawable(R.drawable.blue);
-        final Drawable end = getDrawable(R.drawable.yellow);
-        final Drawable top = getDrawable(R.drawable.red);
-        final Drawable bottom = getDrawable(R.drawable.black);
+        final Drawable start = TestUtils.getDrawable(mActivity, R.drawable.blue);
+        final Drawable end = TestUtils.getDrawable(mActivity, R.drawable.yellow);
+        final Drawable top = TestUtils.getDrawable(mActivity, R.drawable.red);
+        final Drawable bottom = TestUtils.getDrawable(mActivity, R.drawable.black);
         assertNotNull(start);
         assertNotNull(end);
         assertNotNull(top);
@@ -3892,7 +3888,7 @@ public class TextViewTest extends ActivityInstrumentationTestCase2<TextViewCtsAc
         assertEquals(0, mTextView.getExtendedPaddingTop());
 
         // After Set a Drawable
-        final Drawable top = getDrawable(R.drawable.red);
+        final Drawable top = TestUtils.getDrawable(mActivity, R.drawable.red);
         top.setBounds(0, 0, 100, 10);
         mTextView.setCompoundDrawables(null, top, null, null);
         assertEquals(mTextView.getCompoundPaddingTop(), mTextView.getExtendedPaddingTop());
@@ -3911,7 +3907,7 @@ public class TextViewTest extends ActivityInstrumentationTestCase2<TextViewCtsAc
         assertEquals(0, mTextView.getExtendedPaddingBottom());
 
         // After Set a Drawable
-        final Drawable bottom = getDrawable(R.drawable.red);
+        final Drawable bottom = TestUtils.getDrawable(mActivity, R.drawable.red);
         bottom.setBounds(0, 0, 100, 10);
         mTextView.setCompoundDrawables(null, null, null, bottom);
         assertEquals(mTextView.getCompoundPaddingBottom(), mTextView.getExtendedPaddingBottom());
@@ -3929,7 +3925,7 @@ public class TextViewTest extends ActivityInstrumentationTestCase2<TextViewCtsAc
         assertEquals(0, mTextView.getTotalPaddingTop());
 
         // After Set a Drawable
-        final Drawable top = getDrawable(R.drawable.red);
+        final Drawable top = TestUtils.getDrawable(mActivity, R.drawable.red);
         top.setBounds(0, 0, 100, 10);
         mActivity.runOnUiThread(new Runnable() {
             public void run() {
@@ -3955,7 +3951,7 @@ public class TextViewTest extends ActivityInstrumentationTestCase2<TextViewCtsAc
         assertEquals(0, mTextView.getTotalPaddingBottom());
 
         // After Set a Drawable
-        final Drawable bottom = getDrawable(R.drawable.red);
+        final Drawable bottom = TestUtils.getDrawable(mActivity, R.drawable.red);
         bottom.setBounds(0, 0, 100, 10);
         mActivity.runOnUiThread(new Runnable() {
             public void run() {
@@ -3984,7 +3980,7 @@ public class TextViewTest extends ActivityInstrumentationTestCase2<TextViewCtsAc
         assertEquals(0, mTextView.getTotalPaddingLeft());
 
         // After Set a Drawable
-        Drawable left = getDrawable(R.drawable.red);
+        Drawable left = TestUtils.getDrawable(mActivity, R.drawable.red);
         left.setBounds(0, 0, 10, 100);
         mTextView.setCompoundDrawables(left, null, null, null);
         mTextView.setGravity(Gravity.RIGHT);
@@ -4002,7 +3998,7 @@ public class TextViewTest extends ActivityInstrumentationTestCase2<TextViewCtsAc
         assertEquals(0, mTextView.getTotalPaddingRight());
 
         // After Set a Drawable
-        Drawable right = getDrawable(R.drawable.red);
+        Drawable right = TestUtils.getDrawable(mActivity, R.drawable.red);
         right.setBounds(0, 0, 10, 100);
         mTextView.setCompoundDrawables(null, null, right, null);
         mTextView.setGravity(Gravity.CENTER_HORIZONTAL);
@@ -4533,7 +4529,7 @@ public class TextViewTest extends ActivityInstrumentationTestCase2<TextViewCtsAc
     public void testVerifyDrawable() {
         MockTextView textView = new MockTextView(mActivity);
 
-        Drawable d = getDrawable(R.drawable.pass);
+        Drawable d = TestUtils.getDrawable(mActivity, R.drawable.pass);
         assertFalse(textView.verifyDrawable(d));
 
         textView.setCompoundDrawables(null, d, null, null);
@@ -4843,7 +4839,7 @@ public class TextViewTest extends ActivityInstrumentationTestCase2<TextViewCtsAc
         MockTextView textView = new MockTextView(mActivity);
         assertEquals(0, textView.computeVerticalScrollExtent());
 
-        Drawable d = getDrawable(R.drawable.pass);
+        Drawable d = TestUtils.getDrawable(mActivity, R.drawable.pass);
         textView.setCompoundDrawables(null, d, null, d);
 
         assertEquals(0, textView.computeVerticalScrollExtent());
@@ -5419,140 +5415,80 @@ public class TextViewTest extends ActivityInstrumentationTestCase2<TextViewCtsAc
         assertEquals(View.TEXT_ALIGNMENT_GRAVITY, tv.getTextAlignment());
     }
 
-    private void verifyCompoundDrawables(@NonNull TextView textView,
-            @IdRes int expectedLeftDrawableId, @IdRes int expectedRightDrawableId,
-            @IdRes int expectedTopDrawableId, @IdRes int expectedBottomDrawableId) {
-        final Drawable[] compoundDrawables = textView.getCompoundDrawables();
-        if (expectedLeftDrawableId < 0) {
-            assertNull(compoundDrawables[0]);
-        } else {
-            WidgetTestUtils.assertEquals(getBitmap(expectedLeftDrawableId),
-                    ((BitmapDrawable) compoundDrawables[0]).getBitmap());
-        }
-        if (expectedTopDrawableId < 0) {
-            assertNull(compoundDrawables[1]);
-        } else {
-            WidgetTestUtils.assertEquals(getBitmap(expectedTopDrawableId),
-                    ((BitmapDrawable) compoundDrawables[1]).getBitmap());
-        }
-        if (expectedRightDrawableId < 0) {
-            assertNull(compoundDrawables[2]);
-        } else {
-            WidgetTestUtils.assertEquals(getBitmap(expectedRightDrawableId),
-                    ((BitmapDrawable) compoundDrawables[2]).getBitmap());
-        }
-        if (expectedBottomDrawableId < 0) {
-            assertNull(compoundDrawables[3]);
-        } else {
-            WidgetTestUtils.assertEquals(getBitmap(expectedBottomDrawableId),
-                    ((BitmapDrawable) compoundDrawables[3]).getBitmap());
-        }
-    }
-
-    private void verifyCompoundDrawablesRelative(@NonNull TextView textView,
-            @IdRes int expectedStartDrawableId, @IdRes int expectedEndDrawableId,
-            @IdRes int expectedTopDrawableId, @IdRes int expectedBottomDrawableId) {
-        final Drawable[] compoundDrawablesRelative = textView.getCompoundDrawablesRelative();
-        if (expectedStartDrawableId < 0) {
-            assertNull(compoundDrawablesRelative[0]);
-        } else {
-            WidgetTestUtils.assertEquals(getBitmap(expectedStartDrawableId),
-                    ((BitmapDrawable) compoundDrawablesRelative[0]).getBitmap());
-        }
-        if (expectedTopDrawableId < 0) {
-            assertNull(compoundDrawablesRelative[1]);
-        } else {
-            WidgetTestUtils.assertEquals(getBitmap(expectedTopDrawableId),
-                    ((BitmapDrawable) compoundDrawablesRelative[1]).getBitmap());
-        }
-        if (expectedEndDrawableId < 0) {
-            assertNull(compoundDrawablesRelative[2]);
-        } else {
-            WidgetTestUtils.assertEquals(getBitmap(expectedEndDrawableId),
-                    ((BitmapDrawable) compoundDrawablesRelative[2]).getBitmap());
-        }
-        if (expectedBottomDrawableId < 0) {
-            assertNull(compoundDrawablesRelative[3]);
-        } else {
-            WidgetTestUtils.assertEquals(getBitmap(expectedBottomDrawableId),
-                    ((BitmapDrawable) compoundDrawablesRelative[3]).getBitmap());
-        }
-    }
-
     @UiThreadTest
     public void testDrawableResolution() {
         // Case 1.1: left / right drawable defined in default LTR mode
         TextView tv = (TextView) mActivity.findViewById(R.id.textview_drawable_1_1);
-        verifyCompoundDrawables(tv, R.drawable.icon_blue, R.drawable.icon_red,
+        TestUtils.verifyCompoundDrawables(tv, R.drawable.icon_blue, R.drawable.icon_red,
                 R.drawable.icon_green, R.drawable.icon_yellow);
-        verifyCompoundDrawablesRelative(tv, -1, -1,
+        TestUtils.verifyCompoundDrawablesRelative(tv, -1, -1,
                 R.drawable.icon_green, R.drawable.icon_yellow);
 
         // Case 1.2: left / right drawable defined in default RTL mode
         tv = (TextView) mActivity.findViewById(R.id.textview_drawable_1_2);
-        verifyCompoundDrawables(tv, R.drawable.icon_blue, R.drawable.icon_red,
+        TestUtils.verifyCompoundDrawables(tv, R.drawable.icon_blue, R.drawable.icon_red,
                 R.drawable.icon_green, R.drawable.icon_yellow);
-        verifyCompoundDrawablesRelative(tv, -1, -1,
+        TestUtils.verifyCompoundDrawablesRelative(tv, -1, -1,
                 R.drawable.icon_green, R.drawable.icon_yellow);
 
         // Case 2.1: start / end drawable defined in LTR mode
         tv = (TextView) mActivity.findViewById(R.id.textview_drawable_2_1);
-        verifyCompoundDrawables(tv, R.drawable.icon_blue, R.drawable.icon_red,
+        TestUtils.verifyCompoundDrawables(tv, R.drawable.icon_blue, R.drawable.icon_red,
                 R.drawable.icon_green, R.drawable.icon_yellow);
-        verifyCompoundDrawablesRelative(tv, R.drawable.icon_blue, R.drawable.icon_red,
+        TestUtils.verifyCompoundDrawablesRelative(tv, R.drawable.icon_blue, R.drawable.icon_red,
                 R.drawable.icon_green, R.drawable.icon_yellow);
 
         // Case 2.2: start / end drawable defined in RTL mode
         tv = (TextView) mActivity.findViewById(R.id.textview_drawable_2_2);
-        verifyCompoundDrawables(tv, R.drawable.icon_red, R.drawable.icon_blue,
+        TestUtils.verifyCompoundDrawables(tv, R.drawable.icon_red, R.drawable.icon_blue,
                 R.drawable.icon_green, R.drawable.icon_yellow);
-        verifyCompoundDrawablesRelative(tv, R.drawable.icon_blue, R.drawable.icon_red,
+        TestUtils.verifyCompoundDrawablesRelative(tv, R.drawable.icon_blue, R.drawable.icon_red,
                 R.drawable.icon_green, R.drawable.icon_yellow);
 
         // Case 3.1: left / right / start / end drawable defined in LTR mode
         tv = (TextView) mActivity.findViewById(R.id.textview_drawable_3_1);
-        verifyCompoundDrawables(tv, R.drawable.icon_blue, R.drawable.icon_red,
+        TestUtils.verifyCompoundDrawables(tv, R.drawable.icon_blue, R.drawable.icon_red,
                 R.drawable.icon_green, R.drawable.icon_yellow);
-        verifyCompoundDrawablesRelative(tv, R.drawable.icon_blue, R.drawable.icon_red,
+        TestUtils.verifyCompoundDrawablesRelative(tv, R.drawable.icon_blue, R.drawable.icon_red,
                 R.drawable.icon_green, R.drawable.icon_yellow);
 
         // Case 3.2: left / right / start / end drawable defined in RTL mode
         tv = (TextView) mActivity.findViewById(R.id.textview_drawable_3_2);
-        verifyCompoundDrawables(tv, R.drawable.icon_red, R.drawable.icon_blue,
+        TestUtils.verifyCompoundDrawables(tv, R.drawable.icon_red, R.drawable.icon_blue,
                 R.drawable.icon_green, R.drawable.icon_yellow);
-        verifyCompoundDrawablesRelative(tv, R.drawable.icon_blue, R.drawable.icon_red,
+        TestUtils.verifyCompoundDrawablesRelative(tv, R.drawable.icon_blue, R.drawable.icon_red,
                 R.drawable.icon_green, R.drawable.icon_yellow);
 
         // Case 4.1: start / end drawable defined in LTR mode inside a layout
         // that defines the layout direction
         tv = (TextView) mActivity.findViewById(R.id.textview_drawable_4_1);
-        verifyCompoundDrawables(tv, R.drawable.icon_blue, R.drawable.icon_red,
+        TestUtils.verifyCompoundDrawables(tv, R.drawable.icon_blue, R.drawable.icon_red,
                 R.drawable.icon_green, R.drawable.icon_yellow);
-        verifyCompoundDrawablesRelative(tv, R.drawable.icon_blue, R.drawable.icon_red,
+        TestUtils.verifyCompoundDrawablesRelative(tv, R.drawable.icon_blue, R.drawable.icon_red,
                 R.drawable.icon_green, R.drawable.icon_yellow);
 
         // Case 4.2: start / end drawable defined in RTL mode inside a layout
         // that defines the layout direction
         tv = (TextView) mActivity.findViewById(R.id.textview_drawable_4_2);
-        verifyCompoundDrawables(tv, R.drawable.icon_red, R.drawable.icon_blue,
+        TestUtils.verifyCompoundDrawables(tv, R.drawable.icon_red, R.drawable.icon_blue,
                 R.drawable.icon_green, R.drawable.icon_yellow);
-        verifyCompoundDrawablesRelative(tv, R.drawable.icon_blue, R.drawable.icon_red,
+        TestUtils.verifyCompoundDrawablesRelative(tv, R.drawable.icon_blue, R.drawable.icon_red,
                 R.drawable.icon_green, R.drawable.icon_yellow);
 
         // Case 5.1: left / right / start / end drawable defined in LTR mode inside a layout
         // that defines the layout direction
         tv = (TextView) mActivity.findViewById(R.id.textview_drawable_5_1);
-        verifyCompoundDrawables(tv, R.drawable.icon_blue, R.drawable.icon_red,
+        TestUtils.verifyCompoundDrawables(tv, R.drawable.icon_blue, R.drawable.icon_red,
                 R.drawable.icon_green, R.drawable.icon_yellow);
-        verifyCompoundDrawablesRelative(tv, R.drawable.icon_blue, R.drawable.icon_red,
+        TestUtils.verifyCompoundDrawablesRelative(tv, R.drawable.icon_blue, R.drawable.icon_red,
                 R.drawable.icon_green, R.drawable.icon_yellow);
 
         // Case 5.2: left / right / start / end drawable defined in RTL mode inside a layout
         // that defines the layout direction
         tv = (TextView) mActivity.findViewById(R.id.textview_drawable_5_2);
-        verifyCompoundDrawables(tv, R.drawable.icon_red, R.drawable.icon_blue,
+        TestUtils.verifyCompoundDrawables(tv, R.drawable.icon_red, R.drawable.icon_blue,
                 R.drawable.icon_green, R.drawable.icon_yellow);
-        verifyCompoundDrawablesRelative(tv, R.drawable.icon_blue, R.drawable.icon_red,
+        TestUtils.verifyCompoundDrawablesRelative(tv, R.drawable.icon_blue, R.drawable.icon_red,
                 R.drawable.icon_green, R.drawable.icon_yellow);
     }
 
@@ -5560,28 +5496,31 @@ public class TextViewTest extends ActivityInstrumentationTestCase2<TextViewCtsAc
     public void testDrawableResolution2() {
         // Case 1.1: left / right drawable defined in default LTR mode
         TextView tv = (TextView) mActivity.findViewById(R.id.textview_drawable_1_1);
-        verifyCompoundDrawables(tv, R.drawable.icon_blue, R.drawable.icon_red,
+        TestUtils.verifyCompoundDrawables(tv, R.drawable.icon_blue, R.drawable.icon_red,
                 R.drawable.icon_green, R.drawable.icon_yellow);
 
-        tv.setCompoundDrawables(null, null, getDrawable(R.drawable.icon_yellow), null);
-        verifyCompoundDrawables(tv, -1, R.drawable.icon_yellow, -1, -1);
+        tv.setCompoundDrawables(null, null,
+                TestUtils.getDrawable(mActivity, R.drawable.icon_yellow), null);
+        TestUtils.verifyCompoundDrawables(tv, -1, R.drawable.icon_yellow, -1, -1);
 
         tv = (TextView) mActivity.findViewById(R.id.textview_drawable_1_2);
-        verifyCompoundDrawables(tv, R.drawable.icon_blue, R.drawable.icon_red,
+        TestUtils.verifyCompoundDrawables(tv, R.drawable.icon_blue, R.drawable.icon_red,
                 R.drawable.icon_green, R.drawable.icon_yellow);
 
-        tv.setCompoundDrawables(getDrawable(R.drawable.icon_yellow), null, null, null);
-        verifyCompoundDrawables(tv, R.drawable.icon_yellow, -1, -1, -1);
+        tv.setCompoundDrawables(TestUtils.getDrawable(mActivity, R.drawable.icon_yellow), null,
+                null, null);
+        TestUtils.verifyCompoundDrawables(tv, R.drawable.icon_yellow, -1, -1, -1);
 
         tv = (TextView) mActivity.findViewById(R.id.textview_ltr);
-        verifyCompoundDrawables(tv, -1, -1, -1, -1);
+        TestUtils.verifyCompoundDrawables(tv, -1, -1, -1, -1);
 
-        tv.setCompoundDrawables(getDrawable(R.drawable.icon_blue), null,
-                getDrawable(R.drawable.icon_red), null);
-        verifyCompoundDrawables(tv, R.drawable.icon_blue, R.drawable.icon_red, -1, -1);
+        tv.setCompoundDrawables(TestUtils.getDrawable(mActivity, R.drawable.icon_blue), null,
+                TestUtils.getDrawable(mActivity, R.drawable.icon_red), null);
+        TestUtils.verifyCompoundDrawables(tv, R.drawable.icon_blue, R.drawable.icon_red, -1, -1);
 
-        tv.setCompoundDrawablesRelative(getDrawable(R.drawable.icon_yellow), null, null, null);
-        verifyCompoundDrawables(tv, R.drawable.icon_yellow, -1, -1, -1);
+        tv.setCompoundDrawablesRelative(TestUtils.getDrawable(mActivity, R.drawable.icon_yellow),
+                null, null, null);
+        TestUtils.verifyCompoundDrawables(tv, R.drawable.icon_yellow, -1, -1, -1);
     }
 
     public void testCompoundAndTotalPadding() {
@@ -6102,14 +6041,6 @@ public class TextViewTest extends ActivityInstrumentationTestCase2<TextViewCtsAc
 
     private int getAutoLinkMask(int id) {
         return findTextView(id).getAutoLinkMask();
-    }
-
-    private Bitmap getBitmap(int resid) {
-        return ((BitmapDrawable) getDrawable(resid)).getBitmap();
-    }
-
-    private Drawable getDrawable(int resid) {
-        return mActivity.getResources().getDrawable(resid);
     }
 
     private void setMaxLines(final int lines) {

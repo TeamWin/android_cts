@@ -27,9 +27,26 @@
         android:layout_height="10dip" />
 
     <TextView
+        android:id="@+id/remoteView_label"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content" />
+
+    <TextView
         android:id="@+id/remoteView_text"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content" />
+
+    <TextView
+        android:id="@+id/remoteView_text_ltr"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layoutDirection="ltr" />
+
+    <TextView
+        android:id="@+id/remoteView_text_rtl"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layoutDirection="rtl" />
 
     <ImageView
         android:id="@+id/remoteView_image"
