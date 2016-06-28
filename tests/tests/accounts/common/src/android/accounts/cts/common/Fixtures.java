@@ -70,5 +70,7 @@ public final class Fixtures {
     public static final String KEY_RESULT = "test:result";
     public static final String KEY_TOKEN_EXPIRY = "test:token_duration";
 
+    public static final String KEY_ACCOUNT_SESSION_BUNDLE = "test:account_session_bundle";
+
     private Fixtures() {}
 }

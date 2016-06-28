@@ -25,6 +25,7 @@ import android.accounts.cts.common.AuthenticatorContentProvider;
 import android.accounts.cts.common.Fixtures;
 import android.content.ContentProviderClient;
 import android.content.ContentResolver;
+import android.os.Bundle;
 import android.os.RemoteException;
 import android.test.AndroidTestCase;
 
@@ -221,6 +222,42 @@ public class AccountManagerUnaffiliatedAuthenticatorTests extends AndroidTestCas
                 Fixtures.TYPE_STANDARD_UNAFFILIATED,
                 getContext().getPackageName());
         assertEquals(0, accounts.length);
+    }
+
+    /**
+     * Tests startAddAccountSession default implementation. An encrypted session
+     * bundle should always be returned without password or status token.
+     */
+    public void testStartAddAccountSessionDefaultImpl()
+            throws OperationCanceledException, AuthenticatorException, IOException {
+        Bundle options = new Bundle();
+        String accountName = Fixtures.PREFIX_NAME_SUCCESS + "@" + Fixtures.SUFFIX_NAME_FIXTURE;
+        options.putString(Fixtures.KEY_ACCOUNT_NAME, accountName);
+
+        AccountManagerFuture<Bundle> future = mAccountManager.startAddAccountSession(
+                Fixtures.TYPE_STANDARD_UNAFFILIATED, null /* authTokenType */,
+                null /* requiredFeatures */, options, null /* activity */, null /* callback */,
+                null /* handler */);
+
+        Bundle result = future.getResult();
+
+        // Validate that auth token was stripped from result.
+        assertNull(result.get(AccountManager.KEY_AUTHTOKEN));
+
+        // Validate that no password nor status token is returned in the result
+        // for default implementation.
+        validateNullPasswordAndStatusToken(result);
+
+        Bundle sessionBundle = result.getBundle(AccountManager.KEY_ACCOUNT_SESSION_BUNDLE);
+        // Validate session bundle is returned but data in the bundle is
+        // encrypted and hence not visible.
+        assertNotNull(sessionBundle);
+        assertNull(sessionBundle.getString(AccountManager.KEY_ACCOUNT_TYPE));
+    }
+
+    private void validateNullPasswordAndStatusToken(Bundle result) {
+        assertNull(result.getString(AccountManager.KEY_PASSWORD));
+        assertNull(result.getString(AccountManager.KEY_ACCOUNT_STATUS_TOKEN));
     }
 }
 

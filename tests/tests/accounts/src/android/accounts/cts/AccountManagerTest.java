@@ -24,6 +24,7 @@ import android.accounts.AuthenticatorDescription;
 import android.accounts.AuthenticatorException;
 import android.accounts.OnAccountsUpdateListener;
 import android.accounts.OperationCanceledException;
+import android.accounts.cts.common.Fixtures;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
@@ -62,6 +63,8 @@ public class AccountManagerTest extends ActivityInstrumentationTestCase2<Account
 
     public static final String ACCOUNT_PASSWORD = "android.accounts.cts.account.password";
 
+    public static final String ACCOUNT_STATUS_TOKEN = "android.accounts.cts.account.status.token";
+
     public static final String AUTH_TOKEN_TYPE = "mockAuthTokenType";
     public static final String AUTH_EXPIRING_TOKEN_TYPE = "mockAuthExpiringTokenType";
     public static final String AUTH_TOKEN_LABEL = "mockAuthTokenLabel";
@@ -98,6 +101,12 @@ public class AccountManagerTest extends ActivityInstrumentationTestCase2<Account
     public static final Account CUSTOM_TOKEN_ACCOUNT =
             new Account(ACCOUNT_NAME,ACCOUNT_TYPE_CUSTOM);
 
+    public static final Bundle SESSION_BUNDLE = new Bundle();
+    public static final String SESSION_DATA_NAME_1 = "session.data.name.1";
+    public static final String SESSION_DATA_VALUE_1 = "session.data.value.1";
+
+    public static final String ERROR_MESSAGE = "android.accounts.cts.account.error.message";
+
     private static MockAccountAuthenticator mockAuthenticator;
     private static final int LATCH_TIMEOUT_MS = 500;
     private static AccountManager am;
@@ -126,6 +135,8 @@ public class AccountManagerTest extends ActivityInstrumentationTestCase2<Account
         OPTIONS_BUNDLE.putString(OPTION_NAME_2, OPTION_VALUE_2);
 
         USERDATA_BUNDLE.putString(USERDATA_NAME_1, USERDATA_VALUE_1);
+
+        SESSION_BUNDLE.putString(SESSION_DATA_NAME_1, SESSION_DATA_VALUE_1);
 
         getMockAuthenticator(mContext);
 
@@ -2040,4 +2051,405 @@ public class AccountManagerTest extends ActivityInstrumentationTestCase2<Account
         }
     }
 
+    /**
+     * Tests a basic startAddAccountSession() which returns a bundle containing
+     * encrypted session bundle, account password and status token.
+     */
+    public void testStartAddAccountSession()
+            throws IOException, AuthenticatorException, OperationCanceledException {
+        final String accountName = Fixtures.PREFIX_NAME_SUCCESS + "@"
+                + Fixtures.SUFFIX_NAME_FIXTURE;
+        final Bundle options = createOptionsWithAccountName(accountName);
+
+        Bundle resultBundle = startAddAccountSession(am, ACCOUNT_TYPE, AUTH_TOKEN_TYPE,
+                REQUIRED_FEATURES,
+                options, null /* activity */, null /* callback */, null /* handler */);
+
+        validateStartAddAccountSessionParametersAndOptions(accountName, options);
+
+        // Assert returned result
+        // Assert that auth token was stripped.
+        assertNull(resultBundle.get(AccountManager.KEY_AUTHTOKEN));
+        validateSessionBundleAndPasswordAndStatusTokenResult(resultBundle);
+    }
+
+    /**
+     * Tests startAddAccountSession() with null session bundle. Only account
+     * password and status token should be included in the result as session
+     * bundle is not inspected.
+     */
+    public void testStartAddAccountSessionWithNullSessionBundle()
+            throws IOException, AuthenticatorException, OperationCanceledException {
+        final Bundle options = new Bundle();
+        final String accountName = Fixtures.PREFIX_NAME_SUCCESS + "@"
+                + Fixtures.SUFFIX_NAME_FIXTURE;
+        options.putString(Fixtures.KEY_ACCOUNT_NAME, accountName);
+        options.putAll(OPTIONS_BUNDLE);
+
+        Bundle resultBundle = startAddAccountSession(am, ACCOUNT_TYPE, AUTH_TOKEN_TYPE,
+                REQUIRED_FEATURES,
+                options, null /* activity */, null /* callback */, null /* handler */);
+
+        validateStartAddAccountSessionParametersAndOptions(accountName, options);
+
+        // Assert returned result
+        // Assert that auth token was stripped.
+        assertNull(resultBundle.get(AccountManager.KEY_AUTHTOKEN));
+        assertNull(resultBundle.getBundle(AccountManager.KEY_ACCOUNT_SESSION_BUNDLE));
+        assertEquals(ACCOUNT_PASSWORD, resultBundle.getString(AccountManager.KEY_PASSWORD));
+        assertEquals(ACCOUNT_STATUS_TOKEN,
+                resultBundle.getString(AccountManager.KEY_ACCOUNT_STATUS_TOKEN));
+    }
+
+    /**
+     * Tests startAddAccountSession() with empty session bundle. An encrypted
+     * session bundle, account password and status token should be included in
+     * the result as session bundle is not inspected.
+     */
+    public void testStartAddAccountSessionWithEmptySessionBundle()
+            throws IOException, AuthenticatorException, OperationCanceledException {
+        final Bundle options = new Bundle();
+        final String accountName = Fixtures.PREFIX_NAME_SUCCESS + "@"
+                + Fixtures.SUFFIX_NAME_FIXTURE;
+        options.putString(Fixtures.KEY_ACCOUNT_NAME, accountName);
+        options.putBundle(Fixtures.KEY_ACCOUNT_SESSION_BUNDLE, new Bundle());
+        options.putAll(OPTIONS_BUNDLE);
+
+        Bundle resultBundle = startAddAccountSession(am, ACCOUNT_TYPE, AUTH_TOKEN_TYPE,
+                REQUIRED_FEATURES,
+                options, null /* activity */, null /* callback */, null /* handler */);
+
+        validateStartAddAccountSessionParametersAndOptions(accountName, options);
+
+        // Assert returned result
+        // Assert that auth token was stripped.
+        assertNull(resultBundle.get(AccountManager.KEY_AUTHTOKEN));
+        validateSessionBundleAndPasswordAndStatusTokenResult(resultBundle);
+    }
+
+    /**
+     * Tests startAddAccountSession with authenticator activity started. When
+     * Activity is provided, AccountManager would start the resolution Intent
+     * and return the final result which contains an encrypted session bundle,
+     * account password and status token.
+     */
+    public void testStartAddAccountSessionIntervene()
+            throws IOException, AuthenticatorException, OperationCanceledException {
+        final String accountName = Fixtures.PREFIX_NAME_INTERVENE + "@"
+                + Fixtures.SUFFIX_NAME_FIXTURE;
+        final Bundle options = createOptionsWithAccountName(accountName);
+
+        Bundle resultBundle = startAddAccountSession(am, ACCOUNT_TYPE, AUTH_TOKEN_TYPE,
+                REQUIRED_FEATURES,
+                options, mActivity, null /* callback */, null /* handler */);
+
+        validateStartAddAccountSessionParametersAndOptions(accountName, options);
+
+        // Assert returned result
+        assertNull(resultBundle.getParcelable(AccountManager.KEY_INTENT));
+        // Assert that auth token was stripped.
+        assertNull(resultBundle.get(AccountManager.KEY_AUTHTOKEN));
+        validateSessionBundleAndPasswordAndStatusTokenResult(resultBundle);
+    }
+
+    /**
+     * Tests startAddAccountSession with KEY_INTENT returned but not started
+     * automatically. When no Activity is provided and authenticator requires
+     * additional data from user, KEY_INTENT will be returned by AccountManager.
+     */
+    public void testStartAddAccountSessionWithReturnIntent()
+            throws IOException, AuthenticatorException, OperationCanceledException {
+        final String accountName = Fixtures.PREFIX_NAME_INTERVENE + "@"
+                + Fixtures.SUFFIX_NAME_FIXTURE;
+        final Bundle options = createOptionsWithAccountName(accountName);
+
+        Bundle resultBundle = startAddAccountSession(am, ACCOUNT_TYPE, AUTH_TOKEN_TYPE,
+                REQUIRED_FEATURES,
+                options, null /* activity */, null /* callback */, null /* handler */);
+
+        validateStartAddAccountSessionParametersAndOptions(accountName, options);
+
+        // Assert returned result
+        Intent returnIntent = resultBundle.getParcelable(AccountManager.KEY_INTENT);
+        // Assert that KEY_INTENT is returned.
+        assertNotNull(returnIntent);
+        assertNotNull(returnIntent.getParcelableExtra(Fixtures.KEY_RESULT));
+        // Assert that no other data is returned.
+        assertNull(resultBundle.getString(AccountManager.KEY_ACCOUNT_STATUS_TOKEN));
+        assertNull(resultBundle.getString(AccountManager.KEY_PASSWORD));
+        assertNull(resultBundle.getString(AccountManager.KEY_ACCOUNT_SESSION_BUNDLE));
+        assertNull(resultBundle.get(AccountManager.KEY_AUTHTOKEN));
+    }
+
+    /**
+     * Tests startAddAccountSession error case. AuthenticatorException is
+     * expected when authenticator return
+     * {@link AccountManager#ERROR_CODE_INVALID_RESPONSE} error code.
+     */
+    public void testStartAddAccountSessionError() throws IOException, OperationCanceledException {
+        final String accountName = Fixtures.PREFIX_NAME_ERROR + "@"
+                + Fixtures.SUFFIX_NAME_FIXTURE;
+        final Bundle options = createOptionsWithAccountName(accountName);
+        options.putInt(AccountManager.KEY_ERROR_CODE, AccountManager.ERROR_CODE_INVALID_RESPONSE);
+        options.putString(AccountManager.KEY_ERROR_MESSAGE, ERROR_MESSAGE);
+
+        try {
+            startAddAccountSession(am, ACCOUNT_TYPE, AUTH_TOKEN_TYPE, REQUIRED_FEATURES,
+                options, null /* activity */, null /* callback */, null /* handler */);
+            fail("startAddAccountSession should throw AuthenticatorException in error case.");
+        } catch (AuthenticatorException e) {
+        }
+    }
+
+    /**
+     * Tests startAddAccountSession() with callback and handler. An encrypted
+     * session bundle, account password and status token should be included in
+     * the result. Callback should be triggered with the result regardless of a
+     * handler is provider or not.
+     */
+    public void testStartAddAccountSessionWithCallbackAndHandler()
+            throws IOException, AuthenticatorException, OperationCanceledException {
+        testStartAddAccountSessionWithCallbackAndHandler(null /* handler */);
+        testStartAddAccountSessionWithCallbackAndHandler(new Handler(Looper.getMainLooper()));
+    }
+
+    /**
+     * Tests startAddAccountSession() with callback and handler and activity
+     * started. When Activity is provided, AccountManager would start the
+     * resolution Intent and return the final result which contains an encrypted
+     * session bundle, account password and status token. Callback should be
+     * triggered with the result regardless of a handler is provider or not.
+     */
+    public void testStartAddAccountSessionWithCallbackAndHandlerWithIntervene()
+            throws IOException, AuthenticatorException, OperationCanceledException {
+        testStartAddAccountSessionWithCallbackAndHandlerWithIntervene(null /* handler */);
+        testStartAddAccountSessionWithCallbackAndHandlerWithIntervene(
+                new Handler(Looper.getMainLooper()));
+    }
+
+    /**
+     * Tests startAddAccountSession() with callback and handler with KEY_INTENT
+     * returned. When no Activity is provided and authenticator requires
+     * additional data from user, KEY_INTENT will be returned by AccountManager
+     * in callback regardless of a handler is provider or not.
+     */
+    public void testStartAddAccountSessionWithCallbackAndHandlerWithReturnIntent()
+            throws IOException, AuthenticatorException, OperationCanceledException {
+        testStartAddAccountSessionWithCallbackAndHandlerWithReturnIntent(null /* handler */);
+        testStartAddAccountSessionWithCallbackAndHandlerWithReturnIntent(
+                new Handler(Looper.getMainLooper()));
+    }
+
+    /**
+     * Tests startAddAccountSession() error case with callback and handler.
+     * AuthenticatorException is expected when authenticator return
+     * {@link AccountManager#ERROR_CODE_INVALID_RESPONSE} error code.
+     */
+    public void testStartAddAccountSessionErrorWithCallbackAndHandler()
+            throws IOException, OperationCanceledException {
+        testStartAddAccountSessionErrorWithCallbackAndHandler(null /* handler */);
+        testStartAddAccountSessionErrorWithCallbackAndHandler(new Handler(Looper.getMainLooper()));
+    }
+
+    private void testStartAddAccountSessionWithCallbackAndHandler(Handler handler)
+            throws IOException, AuthenticatorException, OperationCanceledException {
+        final String accountName = Fixtures.PREFIX_NAME_SUCCESS + "@"
+                + Fixtures.SUFFIX_NAME_FIXTURE;
+        final Bundle options = createOptionsWithAccountName(accountName);
+
+        // Wait with timeout for the callback to do its work
+        final CountDownLatch latch = new CountDownLatch(1);
+
+        AccountManagerCallback<Bundle> callback = new AccountManagerCallback<Bundle>() {
+            @Override
+            public void run(AccountManagerFuture<Bundle> bundleFuture) {
+                Bundle resultBundle = getResultExpectNoException(bundleFuture);
+
+                validateStartAddAccountSessionParametersAndOptions(accountName, options);
+
+                // Assert returned result
+                // Assert that auth token was stripped.
+                assertNull(resultBundle.get(AccountManager.KEY_AUTHTOKEN));
+                validateSessionBundleAndPasswordAndStatusTokenResult(resultBundle);
+
+                latch.countDown();
+            }
+        };
+
+        startAddAccountSession(am, ACCOUNT_TYPE, AUTH_TOKEN_TYPE, REQUIRED_FEATURES, options,
+                mActivity, callback, handler);
+        waitForLatch(latch);
+    }
+
+    private void testStartAddAccountSessionWithCallbackAndHandlerWithIntervene(Handler handler)
+            throws IOException, AuthenticatorException, OperationCanceledException {
+        final String accountName = Fixtures.PREFIX_NAME_INTERVENE + "@"
+                + Fixtures.SUFFIX_NAME_FIXTURE;
+        final Bundle options = createOptionsWithAccountName(accountName);
+
+        // Wait with timeout for the callback to do its work
+        final CountDownLatch latch = new CountDownLatch(1);
+
+        AccountManagerCallback<Bundle> callback = new AccountManagerCallback<Bundle>() {
+            @Override
+            public void run(AccountManagerFuture<Bundle> bundleFuture) {
+                Bundle resultBundle = getResultExpectNoException(bundleFuture);
+
+                validateStartAddAccountSessionParametersAndOptions(accountName, options);
+
+                // Assert returned result
+                assertNull(resultBundle.getParcelable(AccountManager.KEY_INTENT));
+                // Assert that auth token was stripped.
+                assertNull(resultBundle.get(AccountManager.KEY_AUTHTOKEN));
+                validateSessionBundleAndPasswordAndStatusTokenResult(resultBundle);
+
+                latch.countDown();
+            }
+        };
+
+        startAddAccountSession(am, ACCOUNT_TYPE, AUTH_TOKEN_TYPE, REQUIRED_FEATURES, options,
+                mActivity, callback, handler);
+        waitForLatch(latch);
+    }
+
+    private void testStartAddAccountSessionWithCallbackAndHandlerWithReturnIntent(Handler handler)
+            throws IOException, AuthenticatorException, OperationCanceledException {
+        final String accountName = Fixtures.PREFIX_NAME_INTERVENE + "@"
+                + Fixtures.SUFFIX_NAME_FIXTURE;
+        final Bundle options = createOptionsWithAccountName(accountName);
+
+        // Wait with timeout for the callback to do its work
+        final CountDownLatch latch = new CountDownLatch(1);
+
+        AccountManagerCallback<Bundle> callback = new AccountManagerCallback<Bundle>() {
+            @Override
+            public void run(AccountManagerFuture<Bundle> bundleFuture) {
+                Bundle resultBundle = getResultExpectNoException(bundleFuture);
+
+                validateStartAddAccountSessionParametersAndOptions(accountName, options);
+
+                // Assert returned result
+                Intent returnIntent = resultBundle.getParcelable(AccountManager.KEY_INTENT);
+                // Assert KEY_INTENT is returned.
+                assertNotNull(returnIntent);
+                assertNotNull(returnIntent.getParcelableExtra(Fixtures.KEY_RESULT));
+                // Assert that no other data is returned.
+                assertNull(resultBundle.getString(AccountManager.KEY_ACCOUNT_STATUS_TOKEN));
+                assertNull(resultBundle.getString(AccountManager.KEY_PASSWORD));
+                assertNull(resultBundle.getString(AccountManager.KEY_ACCOUNT_SESSION_BUNDLE));
+                assertNull(resultBundle.get(AccountManager.KEY_AUTHTOKEN));
+
+                latch.countDown();
+            }
+        };
+
+        startAddAccountSession(am, ACCOUNT_TYPE, AUTH_TOKEN_TYPE, REQUIRED_FEATURES, options, null,
+                callback, handler);
+        waitForLatch(latch);
+    }
+
+    private void testStartAddAccountSessionErrorWithCallbackAndHandler(Handler handler)
+            throws IOException, OperationCanceledException {
+        final String accountName = Fixtures.PREFIX_NAME_ERROR + "@" + Fixtures.SUFFIX_NAME_FIXTURE;
+        final Bundle options = createOptionsWithAccountName(accountName);
+        options.putInt(AccountManager.KEY_ERROR_CODE, AccountManager.ERROR_CODE_INVALID_RESPONSE);
+        options.putString(AccountManager.KEY_ERROR_MESSAGE, ERROR_MESSAGE);
+
+        // Wait with timeout for the callback to do its work
+        final CountDownLatch latch = new CountDownLatch(1);
+
+        AccountManagerCallback<Bundle> callback = new AccountManagerCallback<Bundle>() {
+            @Override
+            public void run(AccountManagerFuture<Bundle> bundleFuture) {
+                try {
+                    bundleFuture.getResult();
+                    fail("should have thrown an AuthenticatorException");
+                } catch (OperationCanceledException e) {
+                    fail("should not throw an OperationCanceledException");
+                } catch (IOException e) {
+                    fail("should not throw an IOException");
+                } catch (AuthenticatorException e) {
+                    latch.countDown();
+                }
+            }
+        };
+
+        try {
+            startAddAccountSession(am, ACCOUNT_TYPE, AUTH_TOKEN_TYPE, REQUIRED_FEATURES, options,
+                    mActivity, callback, handler);
+            // AuthenticatorException should be thrown when authenticator
+            // returns AccountManager.ERROR_CODE_INVALID_RESPONSE.
+            fail("should have thrown an AuthenticatorException");
+        } catch (AuthenticatorException e1) {
+        }
+
+        waitForLatch(latch);
+    }
+
+    private Bundle startAddAccountSession(AccountManager am, String accountType,
+            String authTokenType,
+            String[] requiredFeatures, Bundle options, Activity activity,
+            AccountManagerCallback<Bundle> callback, Handler handler)
+                    throws IOException, AuthenticatorException, OperationCanceledException {
+
+        AccountManagerFuture<Bundle> futureBundle = am.startAddAccountSession(accountType,
+                authTokenType,
+                requiredFeatures, options, activity, callback, handler);
+
+        Bundle resultBundle = futureBundle.getResult();
+        assertTrue(futureBundle.isDone());
+        assertNotNull(resultBundle);
+
+        return resultBundle;
+    }
+
+    private Bundle createOptionsWithAccountName(final String accountName) {
+        Bundle options = new Bundle();
+        options.putString(Fixtures.KEY_ACCOUNT_NAME, accountName);
+        options.putBundle(Fixtures.KEY_ACCOUNT_SESSION_BUNDLE, SESSION_BUNDLE);
+        options.putAll(OPTIONS_BUNDLE);
+        return options;
+    }
+
+    private void validateStartAddAccountSessionParametersAndOptions(
+            String accountName, Bundle options) {
+        // Assert parameters has been passed correctly
+        validateAccountAndAuthTokenType();
+        validateFeatures();
+
+        // Validate options
+        validateOptions(options, mockAuthenticator.mOptionsStartAddAccountSession);
+        assertNotNull(mockAuthenticator.mOptionsStartAddAccountSession);
+        assertEquals(accountName, mockAuthenticator.mOptionsStartAddAccountSession
+                .getString(Fixtures.KEY_ACCOUNT_NAME));
+
+        validateSystemOptions(mockAuthenticator.mOptionsStartAddAccountSession);
+        validateOptions(null, mockAuthenticator.mOptionsUpdateCredentials);
+        validateOptions(null, mockAuthenticator.mOptionsConfirmCredentials);
+        validateOptions(null, mockAuthenticator.mOptionsGetAuthToken);
+        validateOptions(null, mockAuthenticator.mOptionsAddAccount);
+    }
+
+    private void validateSessionBundleAndPasswordAndStatusTokenResult(Bundle resultBundle) {
+        Bundle sessionBundle = resultBundle.getBundle(AccountManager.KEY_ACCOUNT_SESSION_BUNDLE);
+        assertNotNull(sessionBundle);
+        // Assert that session bundle is encrypted and hence data not visible.
+        assertNull(sessionBundle.getString(SESSION_DATA_NAME_1));
+        assertEquals(ACCOUNT_PASSWORD, resultBundle.getString(AccountManager.KEY_PASSWORD));
+        assertEquals(ACCOUNT_STATUS_TOKEN,
+                resultBundle.getString(AccountManager.KEY_ACCOUNT_STATUS_TOKEN));
+    }
+
+    private Bundle getResultExpectNoException(AccountManagerFuture<Bundle> bundleFuture) {
+        try {
+            return bundleFuture.getResult();
+        } catch (OperationCanceledException e) {
+            fail("should not throw an OperationCanceledException");
+        } catch (IOException e) {
+            fail("should not throw an IOException");
+        } catch (AuthenticatorException e) {
+            fail("should not throw an AuthenticatorException");
+        }
+        return null;
+    }
 }
