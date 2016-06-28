@@ -118,6 +118,39 @@ public class CalendarViewTest extends ActivityInstrumentationTestCase2<CalendarV
         assertEquals(mCalendarViewMaterial.getMaxDate(), maxDate);
     }
 
+    public void testCalendarViewMinMaxRangeRestrictions() {
+        verifyMinMaxRangeRestrictions(mCalendarViewHolo);
+        verifyMinMaxRangeRestrictions(mCalendarViewMaterial);
+    }
+
+    private void verifyMinMaxRangeRestrictions(CalendarView calendarView) {
+        final Instrumentation instrumentation = getInstrumentation();
+        // Use a range of minus/plus one year as min/max dates.
+        final Calendar minCalendar = new GregorianCalendar();
+        minCalendar.set(Calendar.YEAR, minCalendar.get(Calendar.YEAR) - 1);
+        final Calendar maxCalendar = new GregorianCalendar();
+        maxCalendar.set(Calendar.YEAR, maxCalendar.get(Calendar.YEAR) + 1);
+        final long minDate = minCalendar.getTime().getTime();
+        final long maxDate = maxCalendar.getTime().getTime();
+
+        instrumentation.runOnMainSync(() -> {
+            calendarView.setMinDate(minDate);
+            calendarView.setMaxDate(maxDate);
+
+            try {
+                calendarView.setDate(minDate - 1);
+                fail("Should throw IllegalArgumentException, date is before minDate");
+            } catch (IllegalArgumentException e) {
+            }
+
+            try {
+                calendarView.setDate(maxDate + 1);
+                fail("Should throw IllegalArgumentException, date is after maxDate");
+            } catch (IllegalArgumentException e) {
+            }
+        });
+    }
+
     private void verifyOnDateChangeListener(CalendarView calendarView,
             boolean onlyAllowOneChangeEvent) {
         final Instrumentation instrumentation = getInstrumentation();
