@@ -60,6 +60,7 @@ public class DeviceInfoCollector extends ApkInstrumentationPreparer {
         BUILD_KEYS.put("cts:build_version_sdk", "ro.build.version.sdk");
         BUILD_KEYS.put("cts:build_version_base_os", "ro.build.version.base_os");
         BUILD_KEYS.put("cts:build_version_security_patch", "ro.build.version.security_patch");
+        BUILD_KEYS.put("cts:build_reference_fingerprint", "ro.build.reference.fingerprint");
     }
 
     @Option(name = CompatibilityTest.SKIP_DEVICE_INFO_OPTION,
