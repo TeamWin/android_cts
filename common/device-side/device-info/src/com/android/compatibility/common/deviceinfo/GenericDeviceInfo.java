@@ -56,6 +56,7 @@ public class GenericDeviceInfo extends DeviceInfo {
     public static final String BUILD_VERSION_SDK_INT = "build_version_sdk_int";
     public static final String BUILD_VERSION_BASE_OS = "build_version_base_os";
     public static final String BUILD_VERSION_SECURITY_PATCH = "build_version_security_patch";
+    public static final String BUILD_REFERENCE_FINGERPRINT = "build_reference_fingerprint";
 
     private final Map<String, String> mDeviceInfo = new HashMap<>();
 
@@ -75,6 +76,8 @@ public class GenericDeviceInfo extends DeviceInfo {
         store.addResult(BUILD_SERIAL, Build.SERIAL);
         store.addResult(BUILD_VERSION_RELEASE, Build.VERSION.RELEASE);
         store.addResult(BUILD_VERSION_SDK, Build.VERSION.SDK);
+        store.addResult(BUILD_REFERENCE_FINGERPRINT,
+                SystemProperties.get("ro.build.reference.fingerprint", ""));
 
         // Collect build fields available in API level 21
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
