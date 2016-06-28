@@ -467,7 +467,11 @@ public class SystemFeaturesTest extends InstrumentationTestCase {
     }
 
     public void testUsbAccessory() {
-        assertAvailable(PackageManager.FEATURE_USB_ACCESSORY);
+        if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE) &&
+                !mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEVISION) &&
+                !mPackageManager.hasSystemFeature(PackageManager.FEATURE_WATCH)) {
+            assertAvailable(PackageManager.FEATURE_USB_ACCESSORY);
+        }
     }
 
     public void testWifiFeature() throws Exception {
