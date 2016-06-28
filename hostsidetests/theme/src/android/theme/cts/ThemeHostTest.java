@@ -278,6 +278,7 @@ public class ThemeHostTest extends DeviceTestCase implements IAbiReceiver, IBuil
     }
 
     private static boolean checkHardwareTypeSkipTest(String hardwareTypeString) {
-        return hardwareTypeString.contains("android.hardware.type.watch");
+        return hardwareTypeString.contains("android.hardware.type.watch")
+                || hardwareTypeString.contains("android.hardware.type.television");
     }
 }
