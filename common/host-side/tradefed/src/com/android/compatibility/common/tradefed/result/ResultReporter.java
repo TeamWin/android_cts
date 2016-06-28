@@ -485,8 +485,13 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
     @Override
     public void testLog(String name, LogDataType type, InputStreamSource stream) {
         // This is safe to be invoked on either the master or a shard ResultReporter
+        if (isShardResultReporter()) {
+            // Shard ResultReporters forward testLog to the mMasterResultReporter
+            mMasterResultReporter.testLog(name, type, stream);
+            return;
+        }
         try {
-            LogFileSaver saver = new LogFileSaver(mMasterResultReporter.mLogDir);
+            LogFileSaver saver = new LogFileSaver(mLogDir);
             File logFile = saver.saveAndZipLogData(name, type, stream.createInputStream());
             info("Saved logs for %s in %s", name, logFile.getAbsolutePath());
         } catch (IOException e) {
