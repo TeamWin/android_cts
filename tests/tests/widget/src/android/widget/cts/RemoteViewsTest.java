@@ -17,8 +17,8 @@
 package android.widget.cts;
 
 import android.graphics.drawable.Icon;
+import android.os.Bundle;
 import android.test.UiThreadTest;
-import android.widget.cts.R;
 
 
 import android.app.Activity;
@@ -34,20 +34,34 @@ import android.graphics.drawable.BitmapDrawable;
 import android.net.Uri;
 import android.os.Parcel;
 import android.test.ActivityInstrumentationTestCase2;
+import android.text.TextUtils;
+import android.util.TypedValue;
 import android.view.View;
 import android.widget.AbsoluteLayout;
+import android.widget.AnalogClock;
+import android.widget.Button;
 import android.widget.Chronometer;
+import android.widget.DatePicker;
+import android.widget.DateTimeView;
 import android.widget.EditText;
 import android.widget.FrameLayout;
+import android.widget.GridLayout;
 import android.widget.GridView;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ListView;
+import android.widget.NumberPicker;
 import android.widget.ProgressBar;
+import android.widget.RatingBar;
 import android.widget.RelativeLayout;
 import android.widget.RemoteViews;
+import android.widget.SeekBar;
+import android.widget.StackView;
+import android.widget.TextClock;
 import android.widget.TextView;
 import android.widget.RemoteViews.ActionException;
+import android.widget.ViewFlipper;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -61,15 +75,17 @@ import java.io.OutputStream;
 public class RemoteViewsTest extends ActivityInstrumentationTestCase2<RemoteViewsCtsActivity> {
     private static final String PACKAGE_NAME = "android.widget.cts";
 
-    private static final int INVALD_ID = -1;
+    private static final int INVALID_ID = -1;
 
     private static final long TEST_TIMEOUT = 5000;
+
+    private Instrumentation mInstrumentation;
+
+    private Activity mActivity;
 
     private RemoteViews mRemoteViews;
 
     private View mResult;
-
-    private Activity mActivity;
 
     public RemoteViewsTest() {
         super(PACKAGE_NAME, RemoteViewsCtsActivity.class);
@@ -78,13 +94,12 @@ public class RemoteViewsTest extends ActivityInstrumentationTestCase2<RemoteView
     @Override
     protected void setUp() throws Exception {
         super.setUp();
+
+        mInstrumentation = getInstrumentation();
         mActivity = getActivity();
-        getInstrumentation().runOnMainSync(new Runnable() {
-            @Override
-            public void run() {
-                mRemoteViews = new RemoteViews(PACKAGE_NAME, R.layout.remoteviews_good);
-                mResult = mRemoteViews.apply(mActivity, null);
-            }
+        mInstrumentation.runOnMainSync(() -> {
+            mRemoteViews = new RemoteViews(PACKAGE_NAME, R.layout.remoteviews_good);
+            mResult = mRemoteViews.apply(mActivity, null);
         });
     }
 
@@ -107,11 +122,22 @@ public class RemoteViewsTest extends ActivityInstrumentationTestCase2<RemoteView
         mRemoteViews = new RemoteViews(PACKAGE_NAME, R.layout.listview_layout);
         assertEquals(R.layout.listview_layout, mRemoteViews.getLayoutId());
 
-        mRemoteViews = new RemoteViews(PACKAGE_NAME, INVALD_ID);
-        assertEquals(INVALD_ID, mRemoteViews.getLayoutId());
+        mRemoteViews = new RemoteViews(PACKAGE_NAME, INVALID_ID);
+        assertEquals(INVALID_ID, mRemoteViews.getLayoutId());
 
         mRemoteViews = new RemoteViews(PACKAGE_NAME, 0);
         assertEquals(0, mRemoteViews.getLayoutId());
+    }
+
+    public void testSetContentDescription() {
+        View view = mResult.findViewById(R.id.remoteView_frame);
+
+        assertNull(view.getContentDescription());
+
+        CharSequence contentDescription = mActivity.getString(R.string.remote_content_description);
+        mRemoteViews.setContentDescription(R.id.remoteView_frame, contentDescription);
+        mRemoteViews.reapply(mActivity, mResult);
+        assertTrue(TextUtils.equals(contentDescription, view.getContentDescription()));
     }
 
     public void testSetViewVisibility() {
@@ -149,6 +175,23 @@ public class RemoteViewsTest extends ActivityInstrumentationTestCase2<RemoteView
             mRemoteViews.reapply(mActivity, mResult);
             fail("Should throw ActionException");
         } catch (ActionException e) {
+            // expected
+        }
+    }
+
+    public void testSetTextViewTextSize() {
+        TextView textView = (TextView) mResult.findViewById(R.id.remoteView_text);
+
+        mRemoteViews.setTextViewTextSize(R.id.remoteView_text, TypedValue.COMPLEX_UNIT_SP, 18);
+        mRemoteViews.reapply(mActivity, mResult);
+        assertEquals(mActivity.getResources().getDisplayMetrics().scaledDensity * 18,
+                textView.getTextSize());
+
+        mRemoteViews.setTextViewTextSize(R.id.remoteView_absolute, TypedValue.COMPLEX_UNIT_SP, 20);
+        try {
+            mRemoteViews.reapply(mActivity, mResult);
+            fail("Should throw Throwable");
+        } catch (Throwable t) {
             // expected
         }
     }
@@ -262,6 +305,26 @@ public class RemoteViewsTest extends ActivityInstrumentationTestCase2<RemoteView
         }
     }
 
+    public void testSetChronometerCountDown() {
+        Chronometer chronometer = (Chronometer) mResult.findViewById(R.id.remoteView_chronometer);
+
+        mRemoteViews.setChronometerCountDown(R.id.remoteView_chronometer, true);
+        mRemoteViews.reapply(mActivity, mResult);
+        assertTrue(chronometer.isCountDown());
+
+        mRemoteViews.setChronometerCountDown(R.id.remoteView_chronometer, false);
+        mRemoteViews.reapply(mActivity, mResult);
+        assertFalse(chronometer.isCountDown());
+
+        mRemoteViews.setChronometerCountDown(R.id.remoteView_absolute, true);
+        try {
+            mRemoteViews.reapply(mActivity, mResult);
+            fail("Should throw ActionException");
+        } catch (ActionException e) {
+            // expected
+        }
+    }
+
     public void testSetProgressBar() {
         ProgressBar progress = (ProgressBar) mResult.findViewById(R.id.remoteView_progress);
         assertEquals(100, progress.getMax());
@@ -305,7 +368,6 @@ public class RemoteViewsTest extends ActivityInstrumentationTestCase2<RemoteView
     }
 
     public void testReapply() {
-        TextView text = new TextView(mActivity);
         ImageView image = (ImageView) mResult.findViewById(R.id.remoteView_image);
         assertNull(image.getDrawable());
 
@@ -321,19 +383,31 @@ public class RemoteViewsTest extends ActivityInstrumentationTestCase2<RemoteView
     public void testOnLoadClass() {
         mRemoteViews = new RemoteViews(Parcel.obtain());
 
-        assertTrue(mRemoteViews.onLoadClass(RelativeLayout.class));
-        assertTrue(mRemoteViews.onLoadClass(FrameLayout.class));
         assertTrue(mRemoteViews.onLoadClass(AbsoluteLayout.class));
-        assertTrue(mRemoteViews.onLoadClass(LinearLayout.class));
-        assertTrue(mRemoteViews.onLoadClass(TextView.class));
-        assertTrue(mRemoteViews.onLoadClass(ImageView.class));
-        assertTrue(mRemoteViews.onLoadClass(ProgressBar.class));
+        assertTrue(mRemoteViews.onLoadClass(AnalogClock.class));
+        assertTrue(mRemoteViews.onLoadClass(Button.class));
         assertTrue(mRemoteViews.onLoadClass(Chronometer.class));
-        assertTrue(mRemoteViews.onLoadClass(ListView.class));
+        assertTrue(mRemoteViews.onLoadClass(DateTimeView.class));
+        assertTrue(mRemoteViews.onLoadClass(FrameLayout.class));
+        assertTrue(mRemoteViews.onLoadClass(GridLayout.class));
         assertTrue(mRemoteViews.onLoadClass(GridView.class));
+        assertTrue(mRemoteViews.onLoadClass(ImageButton.class));
+        assertTrue(mRemoteViews.onLoadClass(ImageView.class));
+        assertTrue(mRemoteViews.onLoadClass(LinearLayout.class));
+        assertTrue(mRemoteViews.onLoadClass(ListView.class));
+        assertTrue(mRemoteViews.onLoadClass(ProgressBar.class));
+        assertTrue(mRemoteViews.onLoadClass(RelativeLayout.class));
+        assertTrue(mRemoteViews.onLoadClass(StackView.class));
+        assertTrue(mRemoteViews.onLoadClass(TextClock.class));
+        assertTrue(mRemoteViews.onLoadClass(TextView.class));
+        assertTrue(mRemoteViews.onLoadClass(ViewFlipper.class));
 
         // those classes without annotation @RemoteView
         assertFalse(mRemoteViews.onLoadClass(EditText.class));
+        assertFalse(mRemoteViews.onLoadClass(DatePicker.class));
+        assertFalse(mRemoteViews.onLoadClass(NumberPicker.class));
+        assertFalse(mRemoteViews.onLoadClass(RatingBar.class));
+        assertFalse(mRemoteViews.onLoadClass(SeekBar.class));
     }
 
     public void testDescribeContents() {
@@ -609,32 +683,105 @@ public class RemoteViewsTest extends ActivityInstrumentationTestCase2<RemoteView
         }
     }
 
-    public void testNotFeasibleSetters() {
-        // there is no RemotableViewMethods to use them, how to test?
+    public void testSetByte() {
+        MyRemotableView customView = (MyRemotableView) mResult.findViewById(R.id.remoteView_custom);
+        assertEquals(0, customView.getByteField());
+
+        byte b = 100;
+        mRemoteViews.setByte(R.id.remoteView_custom, "setByteField", b);
+        mRemoteViews.reapply(mActivity, mResult);
+        assertEquals(b, customView.getByteField());
+
+        mRemoteViews.setByte(R.id.remoteView_absolute, "setByteField", b);
+        try {
+            mRemoteViews.reapply(mActivity, mResult);
+            fail("Should throw ActionException");
+        } catch (ActionException e) {
+            // expected
+        }
+    }
+
+    public void testSetChar() {
+        MyRemotableView customView = (MyRemotableView) mResult.findViewById(R.id.remoteView_custom);
+        assertEquals('\u0000', customView.getCharField());
+
+        mRemoteViews.setChar(R.id.remoteView_custom, "setCharField", 'q');
+        mRemoteViews.reapply(mActivity, mResult);
+        assertEquals('q', customView.getCharField());
+
+        mRemoteViews.setChar(R.id.remoteView_absolute, "setCharField", 'w');
+        try {
+            mRemoteViews.reapply(mActivity, mResult);
+            fail("Should throw ActionException");
+        } catch (ActionException e) {
+            // expected
+        }
+    }
+
+    public void testSetDouble() {
+        MyRemotableView customView = (MyRemotableView) mResult.findViewById(R.id.remoteView_custom);
+        assertEquals(0.0, customView.getDoubleField());
+
+        mRemoteViews.setDouble(R.id.remoteView_custom, "setDoubleField", 0.5);
+        mRemoteViews.reapply(mActivity, mResult);
+        assertEquals(0.5, customView.getDoubleField());
+
+        mRemoteViews.setDouble(R.id.remoteView_absolute, "setDoubleField", 1.0);
+        try {
+            mRemoteViews.reapply(mActivity, mResult);
+            fail("Should throw ActionException");
+        } catch (ActionException e) {
+            // expected
+        }
+    }
+
+    public void testSetShort() {
+        MyRemotableView customView = (MyRemotableView) mResult.findViewById(R.id.remoteView_custom);
+        assertEquals(0, customView.getShortField());
+
+        short s = 25;
+        mRemoteViews.setShort(R.id.remoteView_custom, "setShortField", s);
+        mRemoteViews.reapply(mActivity, mResult);
+        assertEquals(s, customView.getShortField());
+
+        mRemoteViews.setShort(R.id.remoteView_absolute, "setShortField", s);
+        try {
+            mRemoteViews.reapply(mActivity, mResult);
+            fail("Should throw ActionException");
+        } catch (ActionException e) {
+            // expected
+        }
+    }
+
+    public void testSetBundle() {
+        MyRemotableView customView = (MyRemotableView) mResult.findViewById(R.id.remoteView_custom);
+        assertNull(customView.getBundleField());
+
+        final Bundle bundle = new Bundle();
+        bundle.putString("STR", "brexit");
+        bundle.putInt("INT", 2016);
+        mRemoteViews.setBundle(R.id.remoteView_custom, "setBundleField", bundle);
+        mRemoteViews.reapply(mActivity, mResult);
+        Bundle fromRemote = customView.getBundleField();
+        assertEquals("brexit", fromRemote.getString("STR", ""));
+        assertEquals(2016, fromRemote.getInt("INT", 0));
+
+        mRemoteViews.setBundle(R.id.remoteView_absolute, "setBundleField", bundle);
+        try {
+            mRemoteViews.reapply(mActivity, mResult);
+            fail("Should throw ActionException");
+        } catch (ActionException e) {
+            // expected
+        }
     }
 
     private void createSampleImage(File imagefile, int resid) throws IOException {
-        InputStream source = null;
-        OutputStream target = null;
-
-        try {
-            source = mActivity.getResources().openRawResource(resid);
-            target = new FileOutputStream(imagefile);
+        try (InputStream source = mActivity.getResources().openRawResource(resid);
+             OutputStream target = new FileOutputStream(imagefile)) {
 
             byte[] buffer = new byte[1024];
             for (int len = source.read(buffer); len > 0; len = source.read(buffer)) {
                 target.write(buffer, 0, len);
-            }
-        } finally {
-            try {
-                if (source != null) {
-                    source.close();
-                }
-                if (target != null) {
-                    target.close();
-                }
-            } catch (IOException ignored) {
-                // Ignore the IOException.
             }
         }
     }
