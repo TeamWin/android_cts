@@ -486,7 +486,7 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
     public void testLog(String name, LogDataType type, InputStreamSource stream) {
         // This is safe to be invoked on either the master or a shard ResultReporter
         try {
-            LogFileSaver saver = new LogFileSaver(mLogDir);
+            LogFileSaver saver = new LogFileSaver(mMasterResultReporter.mLogDir);
             File logFile = saver.saveAndZipLogData(name, type, stream.createInputStream());
             info("Saved logs for %s in %s", name, logFile.getAbsolutePath());
         } catch (IOException e) {
