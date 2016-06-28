@@ -16,10 +16,19 @@
 
 package android.widget.cts;
 
-
+import android.app.Instrumentation;
+import android.content.Context;
+import android.os.SystemClock;
 import android.test.ActivityInstrumentationTestCase2;
 import android.test.UiThreadTest;
+import android.test.suitebuilder.annotation.LargeTest;
+import android.view.ContextThemeWrapper;
 import android.widget.Chronometer;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
+
+import java.util.ArrayList;
+import java.util.List;
 
 import static org.mockito.Mockito.*;
 
@@ -27,7 +36,9 @@ import static org.mockito.Mockito.*;
  * Test {@link Chronometer}.
  */
 public class ChronometerTest extends ActivityInstrumentationTestCase2<ChronometerCtsActivity> {
+    private Instrumentation mInstrumentation;
     private ChronometerCtsActivity mActivity;
+
     public ChronometerTest() {
         super("android.widget.cts", ChronometerCtsActivity.class);
     }
@@ -35,6 +46,8 @@ public class ChronometerTest extends ActivityInstrumentationTestCase2<Chronomete
     @Override
     protected void setUp() throws Exception {
         super.setUp();
+
+        mInstrumentation = getInstrumentation();
         mActivity = getActivity();
     }
 
@@ -45,6 +58,22 @@ public class ChronometerTest extends ActivityInstrumentationTestCase2<Chronomete
         new Chronometer(mActivity, null);
 
         new Chronometer(mActivity, null, 0);
+    }
+
+    @UiThreadTest
+    public void testConstructorFromAttr() {
+        final Context context = new ContextThemeWrapper(mActivity, R.style.ChronometerAwareTheme);
+        final Chronometer chronometer = new Chronometer(context, null, R.attr.chronometerStyle);
+        assertTrue(chronometer.isCountDown());
+        assertEquals(mActivity.getString(R.string.chronometer_format), chronometer.getFormat());
+    }
+
+    @UiThreadTest
+    public void testConstructorFromStyle() {
+        final Chronometer chronometer = new Chronometer(mActivity, null, 0,
+                R.style.ChronometerStyle);
+        assertTrue(chronometer.isCountDown());
+        assertEquals(mActivity.getString(R.string.chronometer_format), chronometer.getFormat());
     }
 
     @UiThreadTest
@@ -90,65 +119,94 @@ public class ChronometerTest extends ActivityInstrumentationTestCase2<Chronomete
         assertTrue(text.endsWith("trail"));
     }
 
-    public void testFoo() {
-        // Do not test these APIs. They are callbacks which:
-        // 1. The callback machanism has been tested in super class
-        // 2. The functionality is implmentation details, no need to test
-    }
-
-    public void testStartAndStop() throws Throwable {
+    public void testStartAndStop() {
         final Chronometer chronometer = mActivity.getChronometer();
 
         // we will check the text is really updated every 1000ms after start,
         // so we need sleep a moment to wait wait this time. The sleep code shouldn't
         // in the same thread with UI, that's why we use runOnMainSync here.
-        runTestOnUiThread(new Runnable() {
-            public void run() {
-                // the text will update immediately when call start.
-                CharSequence expected = chronometer.getText();
-                chronometer.start();
-                assertNotSame(expected, chronometer.getText());
-            }
+        mInstrumentation.runOnMainSync(() -> {
+            // the text will update immediately when call start.
+            final CharSequence valueBeforeStart = chronometer.getText();
+            chronometer.start();
+            assertNotSame(valueBeforeStart, chronometer.getText());
         });
-        getInstrumentation().waitForIdleSync();
+        mInstrumentation.waitForIdleSync();
+
         CharSequence expected = chronometer.getText();
-        Thread.sleep(1500);
+        SystemClock.sleep(1500);
         assertFalse(expected.equals(chronometer.getText()));
 
         // we will check the text is really NOT updated anymore every 1000ms after stop,
         // so we need sleep a moment to wait wait this time. The sleep code shouldn't
         // in the same thread with UI, that's why we use runOnMainSync here.
-        runTestOnUiThread(new Runnable() {
-            public void run() {
-                // the text will never be updated when call stop.
-                CharSequence expected = chronometer.getText();
-                chronometer.stop();
-                assertSame(expected, chronometer.getText());
-            }
+        mInstrumentation.runOnMainSync(() -> {
+            // the text will never be updated when call stop.
+            final CharSequence valueBeforeStop = chronometer.getText();
+            chronometer.stop();
+            assertSame(valueBeforeStop, chronometer.getText());
         });
-        getInstrumentation().waitForIdleSync();
+        mInstrumentation.waitForIdleSync();
+
         expected = chronometer.getText();
-        Thread.sleep(1500);
+        SystemClock.sleep(1500);
         assertTrue(expected.equals(chronometer.getText()));
     }
 
-    public void testAccessOnChronometerTickListener() throws Throwable {
+    public void testAccessOnChronometerTickListener() {
         final Chronometer chronometer = mActivity.getChronometer();
         final Chronometer.OnChronometerTickListener mockTickListener =
                 mock(Chronometer.OnChronometerTickListener.class);
 
-        runTestOnUiThread(new Runnable() {
-            public void run() {
-                chronometer.setOnChronometerTickListener(mockTickListener);
-                chronometer.start();
-            }
+        mInstrumentation.runOnMainSync(() -> {
+            chronometer.setOnChronometerTickListener(mockTickListener);
+            chronometer.start();
         });
-        getInstrumentation().waitForIdleSync();
+        mInstrumentation.waitForIdleSync();
+
         assertEquals(mockTickListener, chronometer.getOnChronometerTickListener());
         verify(mockTickListener, atLeastOnce()).onChronometerTick(chronometer);
 
         reset(mockTickListener);
-        Thread.sleep(1500);
+        SystemClock.sleep(1500);
+        verify(mockTickListener, atLeastOnce()).onChronometerTick(chronometer);
+    }
+
+    @LargeTest
+    public void testCountDown() {
+        final Chronometer chronometer = mActivity.getChronometer();
+        final Chronometer.OnChronometerTickListener mockTickListener =
+                mock(Chronometer.OnChronometerTickListener.class);
+
+        mInstrumentation.runOnMainSync(() -> {
+            chronometer.setCountDown(true);
+            chronometer.setOnChronometerTickListener(mockTickListener);
+            chronometer.start();
+        });
+        mInstrumentation.waitForIdleSync();
+
+        assertTrue(chronometer.isCountDown());
+
+        SystemClock.sleep(5000);
+        verify(mockTickListener, atLeastOnce()).onChronometerTick(chronometer);
+    }
+
+    @LargeTest
+    public void testCountUp() {
+        final Chronometer chronometer = mActivity.getChronometer();
+        final Chronometer.OnChronometerTickListener mockTickListener =
+                mock(Chronometer.OnChronometerTickListener.class);
+
+        mInstrumentation.runOnMainSync(() -> {
+            chronometer.setCountDown(false);
+            chronometer.setOnChronometerTickListener(mockTickListener);
+            chronometer.start();
+        });
+        mInstrumentation.waitForIdleSync();
+
+        assertFalse(chronometer.isCountDown());
+
+        SystemClock.sleep(5000);
         verify(mockTickListener, atLeastOnce()).onChronometerTick(chronometer);
     }
 }
