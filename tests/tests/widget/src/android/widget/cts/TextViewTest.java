@@ -3284,13 +3284,8 @@ public class TextViewTest extends ActivityInstrumentationTestCase2<TextViewCtsAc
         layout.addView(textView, layoutParams);
         layout.setLayoutParams(layoutParams);
 
-        mActivity.runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                getActivity().setContentView(layout);
-            }
-        });
-        getInstrumentation().waitForIdleSync();
+        mInstrumentation.runOnMainSync(() -> getActivity().setContentView(layout));
+        mInstrumentation.waitForIdleSync();
 
         final int firstOffset = 0;
         final int lastOffset = text.length() - 1;
@@ -3314,13 +3309,13 @@ public class TextViewTest extends ActivityInstrumentationTestCase2<TextViewCtsAc
         assertEquals(firstOffset, textView.getOffsetForPosition(x, y));
 
         // horizontal center of text
-        x = textView.getLayout().getLineWidth(0) / 2f - 1f;
+        x = (float) Math.floor(textView.getLayout().getLineWidth(0) / 2f + 0.5f);
         assertEquals(midOffset, textView.getOffsetForPosition(x, y));
     }
 
     @MediumTest
     public void testGetOffsetForPosition_multiLineLtr() {
-        final String line = "aa\n";
+        final String line = "aaa\n";
         final String threeLines = line + line + line;
         final TextView textView = new TextView(mActivity);
         textView.setText(threeLines);
@@ -3339,13 +3334,8 @@ public class TextViewTest extends ActivityInstrumentationTestCase2<TextViewCtsAc
         layout.addView(textView, layoutParams);
         layout.setLayoutParams(layoutParams);
 
-        mActivity.runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                getActivity().setContentView(layout);
-            }
-        });
-        getInstrumentation().waitForIdleSync();
+        mInstrumentation.runOnMainSync(() -> getActivity().setContentView(layout));
+        mInstrumentation.waitForIdleSync();
 
         final Rect lineBounds = new Rect();
         textView.getLayout().getLineBounds(0, lineBounds);
@@ -3376,13 +3366,14 @@ public class TextViewTest extends ActivityInstrumentationTestCase2<TextViewCtsAc
         assertEquals(line.length() + line.length() - 1, textView.getOffsetForPosition(x, y));
 
         // horizontal center of text at second line
-        x = textView.getLayout().getLineWidth(1) / 2f;
-        assertEquals(line.length() + line.length() / 2, textView.getOffsetForPosition(x, y));
+        x = (float) Math.floor(textView.getLayout().getLineWidth(1) / 2f + 0.5f);
+        // second line mid offset shoud not include next line, therefore subtract one
+        assertEquals(line.length() + (line.length() - 1) / 2, textView.getOffsetForPosition(x, y));
     }
 
     @MediumTest
     public void testGetOffsetForPosition_multiLineRtl() {
-        final String line = "\u0635\u0635\n";
+        final String line = "\u0635\u0635\u0635\n";
         final String threeLines = line + line + line;
         final TextView textView = new TextView(mActivity);
         textView.setText(threeLines);
@@ -3401,13 +3392,8 @@ public class TextViewTest extends ActivityInstrumentationTestCase2<TextViewCtsAc
         layout.addView(textView, layoutParams);
         layout.setLayoutParams(layoutParams);
 
-        mActivity.runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                getActivity().setContentView(layout);
-            }
-        });
-        getInstrumentation().waitForIdleSync();
+        mInstrumentation.runOnMainSync(() -> getActivity().setContentView(layout));
+        mInstrumentation.waitForIdleSync();
 
         final Rect lineBounds = new Rect();
         textView.getLayout().getLineBounds(0, lineBounds);
@@ -3438,8 +3424,10 @@ public class TextViewTest extends ActivityInstrumentationTestCase2<TextViewCtsAc
         assertEquals(line.length() + line.length() - 1, textView.getOffsetForPosition(x, y));
 
         // horizontal center of text at second line
-        x = textView.getWidth() - (textView.getLayout().getLineWidth(1) / 2f);
-        assertEquals(line.length() + line.length() / 2, textView.getOffsetForPosition(x, y));
+        x = textView.getWidth() - (float) Math.floor(
+                textView.getLayout().getLineWidth(1) / 2f + 0.5f);
+        // second line mid offset shoud not include next line, therefore subtract one
+        assertEquals(line.length() + (line.length() - 1) / 2, textView.getOffsetForPosition(x, y));
     }
 
     @MediumTest
