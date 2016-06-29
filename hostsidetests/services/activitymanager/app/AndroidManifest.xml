@@ -159,6 +159,15 @@
             android:exported="true"
             android:launchMode="singleInstance"
         />
+        <activity android:name=".TrampolineActivity"
+                  android:exported="true"
+                  android:theme="@android:style/Theme.NoDisplay"
+        />
+        <activity-alias android:enabled="true"
+                android:exported="true"
+                android:name=".EntryPointAliasActivity"
+                android:targetActivity=".TrampolineActivity" >
+        </activity-alias>
     </application>
 </manifest>
 
