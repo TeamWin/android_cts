@@ -2690,7 +2690,7 @@ public class TextViewTest extends ActivityInstrumentationTestCase2<TextViewCtsAc
 
     @MediumTest
     public void testOnSelectionChanged_isTriggeredWhenSelectionChanges() {
-        final MockTextView textView = new MockTextView(mActivity);
+        final MockTextView textView = spy(new MockTextView(mActivity));
         final String text = "any text";
         textView.setText(text, BufferType.SPANNABLE);
 
@@ -2699,40 +2699,18 @@ public class TextViewTest extends ActivityInstrumentationTestCase2<TextViewCtsAc
 
         // select all
         Selection.selectAll((Spannable) textView.getText());
+        // After selectAll OnSelectionChanged should have been called
+        verify(textView, times(1)).onSelectionChanged(0, text.length());
 
-        assertTrue("After selectAll OnSelectionChanged should have been called",
-                textView.hasCalledOnSelectionChanged());
-        assertEquals("OnSelectionChanged should have been called with 0 for selection start",
-                0, textView.getSelectionChangedStart());
-        assertEquals("OnSelectionChanged should have been called with text length for "
-                        + "selection end",
-                text.length(), textView.getSelectionChangedEnd());
-
-        // reset MockTextView selection flags
-        textView.reset();
-
+        reset(textView);
         // change selection
         Selection.setSelection((Spannable) textView.getText(), 1, 5);
+        verify(textView, times(1)).onSelectionChanged(1, 5);
 
-        assertTrue("OnSelectionChanged should have been called",
-                textView.hasCalledOnSelectionChanged());
-        assertEquals("OnSelectionChanged should have been called with 1 for selection start",
-                1, textView.getSelectionChangedStart());
-        assertEquals("OnSelectionChanged should have been called with -1 for selection end",
-                5, textView.getSelectionChangedEnd());
-
-        // reset MockTextView selection flags
-        textView.reset();
-
+        reset(textView);
         // clear selection
         Selection.removeSelection((Spannable) textView.getText());
-
-        assertTrue("OnSelectionChanged should have been called",
-                textView.hasCalledOnSelectionChanged());
-        assertEquals("OnSelectionChanged should have been called with -1 for selection start",
-                -1, textView.getSelectionChangedStart());
-        assertEquals("OnSelectionChanged should have been called with -1 for selection end",
-                -1, textView.getSelectionChangedEnd());
+        verify(textView, times(1)).onSelectionChanged(-1, -1);
     }
 
     @UiThreadTest
@@ -4179,11 +4157,10 @@ public class TextViewTest extends ActivityInstrumentationTestCase2<TextViewCtsAc
     }
 
     public void testDrawableStateChanged() {
-        MockTextView textView = new MockTextView(mActivity);
-
-        textView.reset();
+        MockTextView textView = spy(new MockTextView(mActivity));
+        reset(textView);
         textView.refreshDrawableState();
-        assertTrue(textView.hasCalledDrawableStateChanged());
+        verify(textView, times(1)).drawableStateChanged();
     }
 
     public void testGetDefaultEditable() {
@@ -4229,20 +4206,20 @@ public class TextViewTest extends ActivityInstrumentationTestCase2<TextViewCtsAc
 
         //Assign a new size to this view
         assertTrue(textView.setFrame(0, 0, 320, 480));
-        assertEquals(0, textView.getFrameLeft());
-        assertEquals(0, textView.getFrameTop());
-        assertEquals(320, textView.getFrameRight());
-        assertEquals(480, textView.getFrameBottom());
+        assertEquals(0, textView.getLeft());
+        assertEquals(0, textView.getTop());
+        assertEquals(320, textView.getRight());
+        assertEquals(480, textView.getBottom());
 
         //Assign a same size to this view
         assertFalse(textView.setFrame(0, 0, 320, 480));
 
         //negative input
         assertTrue(textView.setFrame(-1, -1, -1, -1));
-        assertEquals(-1, textView.getFrameLeft());
-        assertEquals(-1, textView.getFrameTop());
-        assertEquals(-1, textView.getFrameRight());
-        assertEquals(-1, textView.getFrameBottom());
+        assertEquals(-1, textView.getLeft());
+        assertEquals(-1, textView.getTop());
+        assertEquals(-1, textView.getRight());
+        assertEquals(-1, textView.getBottom());
     }
 
     public void testMarquee() {
@@ -4721,30 +4698,27 @@ public class TextViewTest extends ActivityInstrumentationTestCase2<TextViewCtsAc
 
     @MediumTest
     public void testBeginEndBatchEditAreNotCalledForNonEditableText() {
-        final MockTextView mockTextView = new MockTextView(mActivity);
+        final TextView mockTextView = spy(new TextView(mActivity));
 
-        assertFalse("TextView should not call onBeginBatchEdit during initialization",
-                mockTextView.hasCalledOnBeginBatchEdit());
-        assertFalse("TextView should not call onEndBatchEdit during initialization",
-                mockTextView.hasCalledOnEndBatchEdit());
+        // TextView should not call onBeginBatchEdit or onEndBatchEdit during initialization
+        verify(mockTextView, never()).onBeginBatchEdit();
+        verify(mockTextView, never()).onEndBatchEdit();
 
-        // Since TextView doesn't support editing, the callbacks should not be called
+
         mockTextView.beginBatchEdit();
-        assertFalse("Should not call onBeginBatchEdit when TextView doesn't support editing",
-                mockTextView.hasCalledOnBeginBatchEdit());
-        assertFalse("Should not call onEndBatchEdit when TextView doesn't support editing",
-                mockTextView.hasCalledOnEndBatchEdit());
+        // Since TextView doesn't support editing, the callbacks should not be called
+        verify(mockTextView, never()).onBeginBatchEdit();
+        verify(mockTextView, never()).onEndBatchEdit();
 
         mockTextView.endBatchEdit();
-        assertFalse("Should not call onBeginBatchEdit when TextView doesn't support editing",
-                mockTextView.hasCalledOnEndBatchEdit());
-        assertFalse("Should not call onEndBatchEdit when TextView doesn't support editing",
-                mockTextView.hasCalledOnEndBatchEdit());
+        // Since TextView doesn't support editing, the callbacks should not be called
+        verify(mockTextView, never()).onBeginBatchEdit();
+        verify(mockTextView, never()).onEndBatchEdit();
     }
 
     @MediumTest
     public void testBeginEndBatchEditCallbacksAreCalledForEditableText() {
-        final MockTextView mockTextView = new MockTextView(mActivity);
+        final TextView mockTextView = spy(new TextView(mActivity));
 
         final FrameLayout layout = new FrameLayout(getActivity());
         ViewGroup.LayoutParams layoutParams = new ViewGroup.LayoutParams(
@@ -4753,41 +4727,30 @@ public class TextViewTest extends ActivityInstrumentationTestCase2<TextViewCtsAc
         layout.addView(mockTextView, layoutParams);
         layout.setLayoutParams(layoutParams);
 
-        mActivity.runOnUiThread(new Runnable() {
-            public void run() {
-                getActivity().setContentView(layout);
-            }
+        mActivity.runOnUiThread(() -> mActivity.setContentView(layout));
+        mInstrumentation.waitForIdleSync();
+
+        mActivity.runOnUiThread(() -> {
+            mockTextView.setKeyListener(QwertyKeyListener.getInstance(false, Capitalize.NONE));
+            mockTextView.setText("", BufferType.EDITABLE);
+            mockTextView.requestFocus();
         });
         mInstrumentation.waitForIdleSync();
 
-        mActivity.runOnUiThread(new Runnable() {
-            public void run() {
-                mockTextView.setKeyListener(QwertyKeyListener.getInstance(false, Capitalize.NONE));
-                mockTextView.setText("", BufferType.EDITABLE);
-                mockTextView.requestFocus();
-            }
-        });
-        mInstrumentation.waitForIdleSync();
-
-        mockTextView.reset();
+        reset(mockTextView);
         assertTrue(mockTextView.hasFocus());
-        assertFalse("onBeginBatchEdit should be false",
-                mockTextView.hasCalledOnBeginBatchEdit());
-        assertFalse("onEndBatchEdit should be false",
-                mockTextView.hasCalledOnEndBatchEdit());
+        verify(mockTextView, never()).onBeginBatchEdit();
+        verify(mockTextView, never()).onEndBatchEdit();
 
         mockTextView.beginBatchEdit();
-        assertTrue("onBeginBatchEdit should be called after beginBatchEdit",
-                mockTextView.hasCalledOnBeginBatchEdit());
-        assertFalse("onEndBatchEdit should not be called after beginBatchEdit",
-                mockTextView.hasCalledOnEndBatchEdit());
 
-        mockTextView.reset();
+        verify(mockTextView, times(1)).onBeginBatchEdit();
+        verify(mockTextView, never()).onEndBatchEdit();
+
+        reset(mockTextView);
         mockTextView.endBatchEdit();
-        assertFalse("onBeginBatchEdit should not be called after endBatchEdit",
-                mockTextView.hasCalledOnBeginBatchEdit());
-        assertTrue("onEndBatchEdit should be called after endBatchEdit",
-                mockTextView.hasCalledOnEndBatchEdit());
+        verify(mockTextView, never()).onBeginBatchEdit();
+        verify(mockTextView, times(1)).onEndBatchEdit();
     }
 
     @UiThreadTest
