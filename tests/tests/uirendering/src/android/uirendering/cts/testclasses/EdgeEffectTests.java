@@ -22,6 +22,7 @@ import android.app.Activity;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.Paint;
 import android.support.test.rule.ActivityTestRule;
 import android.support.test.runner.AndroidJUnit4;
 import android.test.suitebuilder.annotation.MediumTest;
@@ -37,7 +38,13 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestName;
 import org.junit.runner.RunWith;
+import org.mockito.ArgumentCaptor;
+
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.fail;
+import static org.mockito.Matchers.anyFloat;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 
 @MediumTest
 @RunWith(AndroidJUnit4.class)
@@ -153,6 +160,55 @@ public class EdgeEffectTests {
         assertTrue(edgeEffect.getMaxHeight() <= 200 * 2 + 1);
         edgeEffect.setSize(200, 0);
         assertEquals(0, edgeEffect.getMaxHeight());
+    }
+
+    private interface AlphaVerifier {
+        void verify(int oldAlpha, int newAlpha);
+    }
+
+    // validates changes to the alpha of draw commands produced by EdgeEffect
+    // over the course of an animation
+    private void verifyAlpha(EdgeEffectInitializer initializer, AlphaVerifier alphaVerifier) {
+        Canvas canvas = mock(Canvas.class);
+        ArgumentCaptor<Paint> captor = ArgumentCaptor.forClass(Paint.class);
+        EdgeEffect edgeEffect = new EdgeEffect(getActivity());
+        edgeEffect.setSize(200, 200);
+        initializer.initialize(edgeEffect);
+        edgeEffect.draw(canvas);
+        verify(canvas).drawCircle(anyFloat(), anyFloat(), anyFloat(), captor.capture());
+        int oldAlpha = captor.getValue().getAlpha();
+        for (int i = 0; i < 3; i++) {
+            try {
+                Thread.sleep(20);
+            } catch (InterruptedException e) {
+                fail();
+            }
+            canvas = mock(Canvas.class);
+            edgeEffect.draw(canvas);
+            verify(canvas).drawCircle(anyFloat(), anyFloat(), anyFloat(), captor.capture());
+            int newAlpha = captor.getValue().getAlpha();
+            alphaVerifier.verify(oldAlpha, newAlpha);
+            oldAlpha = newAlpha;
+        }
+    }
+
+    @Test
+    public void testOnAbsorb() {
+        verifyAlpha(edgeEffect -> {
+            edgeEffect.onAbsorb(10000);
+        }, ((oldAlpha, newAlpha) -> {
+            assertTrue("Alpha should grow", oldAlpha < newAlpha);
+        }));
+    }
+
+    @Test
+    public void testOnRelease() {
+        verifyAlpha(edgeEffect -> {
+            edgeEffect.onPull(1);
+            edgeEffect.onRelease();
+        }, ((oldAlpha, newAlpha) -> {
+            assertTrue("Alpha should decrease", oldAlpha > newAlpha);
+        }));
     }
 
 }
