@@ -203,6 +203,11 @@ public class ActivityManagerAmStartOptionsTests extends ActivityManagerTestBase 
                 Matcher matcher = sDisplayTimePattern.matcher(line);
                 if (matcher.matches()) {
                     activityName = matcher.group(2);
+                    // Ignore activitiy displays from other packages, we don't
+                    // want some random activity starts to ruin our test.
+                    if (!activityName.startsWith("android.server.app")) {
+                        continue;
+                    }
                     if (!shouldStart) {
                         fail("Shouldn't display anything but displayed " + activityName);
                     }
