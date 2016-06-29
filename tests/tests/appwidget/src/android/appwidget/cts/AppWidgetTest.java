@@ -90,10 +90,10 @@ public class AppWidgetTest extends InstrumentationTestCase {
     }
 
     private static final String GRANT_BIND_APP_WIDGET_PERMISSION_COMMAND =
-            "appwidget grantbind --package android.cts.appwidget --user 0";
+            "appwidget grantbind --package android.appwidget.cts --user 0";
 
     private static final String REVOKE_BIND_APP_WIDGET_PERMISSION_COMMAND =
-            "appwidget revokebind --package android.cts.appwidget --user 0";
+            "appwidget revokebind --package android.appwidget.cts --user 0";
 
 
     private boolean hasAppWidgets() {
