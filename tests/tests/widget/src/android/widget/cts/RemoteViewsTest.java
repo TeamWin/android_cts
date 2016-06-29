@@ -900,6 +900,48 @@ public class RemoteViewsTest extends ActivityInstrumentationTestCase2<RemoteView
         assertEquals(R.id.remoteView_text, labelView.getLabelFor());
     }
 
+    public void testSetAccessibilityTraversalAfter() {
+        View textView = mResult.findViewById(R.id.remoteView_text);
+
+        mRemoteViews.setAccessibilityTraversalAfter(R.id.remoteView_text, R.id.remoteView_frame);
+        mRemoteViews.reapply(mActivity, mResult);
+        assertEquals(R.id.remoteView_frame, textView.getAccessibilityTraversalAfter());
+
+        mRemoteViews.setAccessibilityTraversalAfter(R.id.remoteView_text, R.id.remoteView_linear);
+        mRemoteViews.reapply(mActivity, mResult);
+        assertEquals(R.id.remoteView_linear, textView.getAccessibilityTraversalAfter());
+    }
+
+    public void testSetAccessibilityTraversalBefore() {
+        View textView = mResult.findViewById(R.id.remoteView_text);
+
+        mRemoteViews.setAccessibilityTraversalBefore(R.id.remoteView_text, R.id.remoteView_frame);
+        mRemoteViews.reapply(mActivity, mResult);
+        assertEquals(R.id.remoteView_frame, textView.getAccessibilityTraversalBefore());
+
+        mRemoteViews.setAccessibilityTraversalBefore(R.id.remoteView_text, R.id.remoteView_linear);
+        mRemoteViews.reapply(mActivity, mResult);
+        assertEquals(R.id.remoteView_linear, textView.getAccessibilityTraversalBefore());
+    }
+
+    public void testSetViewPadding() {
+        View textView = mResult.findViewById(R.id.remoteView_text);
+
+        mRemoteViews.setViewPadding(R.id.remoteView_text, 10, 20, 30, 40);
+        mRemoteViews.reapply(mActivity, mResult);
+        assertEquals(10, textView.getPaddingLeft());
+        assertEquals(20, textView.getPaddingTop());
+        assertEquals(30, textView.getPaddingRight());
+        assertEquals(40, textView.getPaddingBottom());
+
+        mRemoteViews.setViewPadding(R.id.remoteView_text, 40, 30, 20, 10);
+        mRemoteViews.reapply(mActivity, mResult);
+        assertEquals(40, textView.getPaddingLeft());
+        assertEquals(30, textView.getPaddingTop());
+        assertEquals(20, textView.getPaddingRight());
+        assertEquals(10, textView.getPaddingBottom());
+    }
+
     private void createSampleImage(File imagefile, int resid) throws IOException {
         try (InputStream source = mActivity.getResources().openRawResource(resid);
              OutputStream target = new FileOutputStream(imagefile)) {
