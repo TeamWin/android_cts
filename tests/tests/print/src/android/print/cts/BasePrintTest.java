@@ -96,7 +96,6 @@ public abstract class BasePrintTest extends InstrumentationTestCase {
      * @param r The runnable to run.
      */
     protected static void eventually(Runnable r) {
-        final long TIMEOUT_MILLS = 5000;
         long start = System.currentTimeMillis();
 
         while (true) {
@@ -104,11 +103,11 @@ public abstract class BasePrintTest extends InstrumentationTestCase {
                 r.run();
                 break;
             } catch (Throwable e) {
-                if (System.currentTimeMillis() - start < TIMEOUT_MILLS) {
+                if (System.currentTimeMillis() - start < OPERATION_TIMEOUT_MILLIS) {
                     Log.e(LOG_TAG, "Ignoring exception", e);
 
                     try {
-                        Thread.sleep(100);
+                        Thread.sleep(500);
                     } catch (InterruptedException e1) {
                         Log.e(LOG_TAG, "Interrupted", e);
                     }
