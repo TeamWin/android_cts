@@ -17,19 +17,24 @@
 package android.widget.cts.util;
 
 import android.annotation.ColorInt;
+import android.annotation.DrawableRes;
+import android.annotation.IdRes;
 import android.annotation.NonNull;
 import android.content.Context;
 import android.content.res.ColorStateList;
+import android.cts.util.WidgetTestUtils;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Rect;
+import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.text.Editable;
 import android.text.TextUtils;
 import android.util.Pair;
 import android.view.View;
 import android.view.ViewParent;
+import android.widget.TextView;
 import junit.framework.Assert;
 import org.hamcrest.BaseMatcher;
 import org.hamcrest.Description;
@@ -38,6 +43,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import static org.junit.Assert.assertNull;
 import static org.mockito.Matchers.argThat;
 
 public class TestUtils {
@@ -408,6 +414,76 @@ public class TestUtils {
         if (!Arrays.equals(expected, actual)) {
             Assert.fail("Expected " + arrayToString(expected) + ", actual "
                     + arrayToString(actual));
+        }
+    }
+
+    public static Drawable getDrawable(Context context, @DrawableRes int resid) {
+        return context.getResources().getDrawable(resid);
+    }
+
+    public static Bitmap getBitmap(Context context, @DrawableRes int resid) {
+        return ((BitmapDrawable) getDrawable(context, resid)).getBitmap();
+    }
+
+    public static void verifyCompoundDrawables(@NonNull TextView textView,
+            @DrawableRes int expectedLeftDrawableId, @DrawableRes int expectedRightDrawableId,
+            @DrawableRes int expectedTopDrawableId, @DrawableRes int expectedBottomDrawableId) {
+        final Context context = textView.getContext();
+        final Drawable[] compoundDrawables = textView.getCompoundDrawables();
+        if (expectedLeftDrawableId < 0) {
+            assertNull(compoundDrawables[0]);
+        } else {
+            WidgetTestUtils.assertEquals(getBitmap(context, expectedLeftDrawableId),
+                    ((BitmapDrawable) compoundDrawables[0]).getBitmap());
+        }
+        if (expectedTopDrawableId < 0) {
+            assertNull(compoundDrawables[1]);
+        } else {
+            WidgetTestUtils.assertEquals(getBitmap(context, expectedTopDrawableId),
+                    ((BitmapDrawable) compoundDrawables[1]).getBitmap());
+        }
+        if (expectedRightDrawableId < 0) {
+            assertNull(compoundDrawables[2]);
+        } else {
+            WidgetTestUtils.assertEquals(getBitmap(context, expectedRightDrawableId),
+                    ((BitmapDrawable) compoundDrawables[2]).getBitmap());
+        }
+        if (expectedBottomDrawableId < 0) {
+            assertNull(compoundDrawables[3]);
+        } else {
+            WidgetTestUtils.assertEquals(getBitmap(context, expectedBottomDrawableId),
+                    ((BitmapDrawable) compoundDrawables[3]).getBitmap());
+        }
+    }
+
+    public static void verifyCompoundDrawablesRelative(@NonNull TextView textView,
+            @DrawableRes int expectedStartDrawableId, @DrawableRes int expectedEndDrawableId,
+            @DrawableRes int expectedTopDrawableId, @DrawableRes int expectedBottomDrawableId) {
+        final Context context = textView.getContext();
+        final Drawable[] compoundDrawablesRelative = textView.getCompoundDrawablesRelative();
+        if (expectedStartDrawableId < 0) {
+            assertNull(compoundDrawablesRelative[0]);
+        } else {
+            WidgetTestUtils.assertEquals(getBitmap(context, expectedStartDrawableId),
+                    ((BitmapDrawable) compoundDrawablesRelative[0]).getBitmap());
+        }
+        if (expectedTopDrawableId < 0) {
+            assertNull(compoundDrawablesRelative[1]);
+        } else {
+            WidgetTestUtils.assertEquals(getBitmap(context, expectedTopDrawableId),
+                    ((BitmapDrawable) compoundDrawablesRelative[1]).getBitmap());
+        }
+        if (expectedEndDrawableId < 0) {
+            assertNull(compoundDrawablesRelative[2]);
+        } else {
+            WidgetTestUtils.assertEquals(getBitmap(context, expectedEndDrawableId),
+                    ((BitmapDrawable) compoundDrawablesRelative[2]).getBitmap());
+        }
+        if (expectedBottomDrawableId < 0) {
+            assertNull(compoundDrawablesRelative[3]);
+        } else {
+            WidgetTestUtils.assertEquals(getBitmap(context, expectedBottomDrawableId),
+                    ((BitmapDrawable) compoundDrawablesRelative[3]).getBitmap());
         }
     }
 }

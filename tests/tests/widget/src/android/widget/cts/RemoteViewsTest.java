@@ -16,6 +16,7 @@
 
 package android.widget.cts;
 
+import android.graphics.drawable.Drawable;
 import android.graphics.drawable.Icon;
 import android.os.Bundle;
 import android.test.UiThreadTest;
@@ -37,6 +38,7 @@ import android.test.ActivityInstrumentationTestCase2;
 import android.text.TextUtils;
 import android.util.TypedValue;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.AbsoluteLayout;
 import android.widget.AnalogClock;
 import android.widget.Button;
@@ -62,6 +64,7 @@ import android.widget.TextClock;
 import android.widget.TextView;
 import android.widget.RemoteViews.ActionException;
 import android.widget.ViewFlipper;
+import android.widget.cts.util.TestUtils;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -624,6 +627,70 @@ public class RemoteViewsTest extends ActivityInstrumentationTestCase2<RemoteView
         }
     }
 
+    public void testSetTextCompoundDrawables() {
+        TextView textView = (TextView) mResult.findViewById(R.id.remoteView_text);
+
+        TestUtils.verifyCompoundDrawables(textView, -1, -1, -1, -1);
+
+        mRemoteViews.setTextViewCompoundDrawables(R.id.remoteView_text, R.drawable.start,
+                R.drawable.pass, R.drawable.failed, 0);
+        mRemoteViews.reapply(mActivity, mResult);
+        TestUtils.verifyCompoundDrawables(textView, R.drawable.start, R.drawable.failed,
+                R.drawable.pass, -1);
+
+        mRemoteViews.setTextViewCompoundDrawables(R.id.remoteView_text, 0,
+                R.drawable.icon_black, R.drawable.icon_red, R.drawable.icon_green);
+        mRemoteViews.reapply(mActivity, mResult);
+        TestUtils.verifyCompoundDrawables(textView, -1,  R.drawable.icon_red, R.drawable.icon_black,
+                R.drawable.icon_green);
+
+        mRemoteViews.setTextViewCompoundDrawables(R.id.remoteView_absolute, 0,
+                R.drawable.start, R.drawable.failed, 0);
+        try {
+            mRemoteViews.reapply(mActivity, mResult);
+            fail("Should throw Throwable");
+        } catch (Throwable t) {
+            // expected
+        }
+    }
+
+    public void testSetTextCompoundDrawablesRelative() {
+        TextView textViewLtr = (TextView) mResult.findViewById(R.id.remoteView_text_ltr);
+        TextView textViewRtl = (TextView) mResult.findViewById(R.id.remoteView_text_rtl);
+
+        TestUtils.verifyCompoundDrawables(textViewLtr, -1, -1, -1, -1);
+        TestUtils.verifyCompoundDrawables(textViewRtl, -1, -1, -1, -1);
+
+        mRemoteViews.setTextViewCompoundDrawablesRelative(R.id.remoteView_text_ltr,
+                R.drawable.start, R.drawable.pass, R.drawable.failed, 0);
+        mRemoteViews.setTextViewCompoundDrawablesRelative(R.id.remoteView_text_rtl,
+                R.drawable.start, R.drawable.pass, R.drawable.failed, 0);
+        mRemoteViews.reapply(mActivity, mResult);
+        TestUtils.verifyCompoundDrawables(textViewLtr, R.drawable.start, R.drawable.failed,
+                R.drawable.pass, -1);
+        TestUtils.verifyCompoundDrawables(textViewRtl, R.drawable.failed, R.drawable.start,
+                R.drawable.pass, -1);
+
+        mRemoteViews.setTextViewCompoundDrawablesRelative(R.id.remoteView_text_ltr, 0,
+                R.drawable.icon_black, R.drawable.icon_red, R.drawable.icon_green);
+        mRemoteViews.setTextViewCompoundDrawablesRelative(R.id.remoteView_text_rtl, 0,
+                R.drawable.icon_black, R.drawable.icon_red, R.drawable.icon_green);
+        mRemoteViews.reapply(mActivity, mResult);
+        TestUtils.verifyCompoundDrawables(textViewLtr, -1, R.drawable.icon_red,
+                R.drawable.icon_black, R.drawable.icon_green);
+        TestUtils.verifyCompoundDrawables(textViewRtl, R.drawable.icon_red, -1,
+                R.drawable.icon_black, R.drawable.icon_green);
+
+        mRemoteViews.setTextViewCompoundDrawablesRelative(R.id.remoteView_absolute, 0,
+                R.drawable.start, R.drawable.failed, 0);
+        try {
+            mRemoteViews.reapply(mActivity, mResult);
+            fail("Should throw Throwable");
+        } catch (Throwable t) {
+            // expected
+        }
+    }
+
     public void testSetOnClickPendingIntent() {
         Uri uri = Uri.parse("ctstest://RemoteView/test");
         Instrumentation instrumentation = getInstrumentation();
@@ -762,7 +829,7 @@ public class RemoteViewsTest extends ActivityInstrumentationTestCase2<RemoteView
         bundle.putInt("INT", 2016);
         mRemoteViews.setBundle(R.id.remoteView_custom, "setBundleField", bundle);
         mRemoteViews.reapply(mActivity, mResult);
-        Bundle fromRemote = customView.getBundleField();
+        final Bundle fromRemote = customView.getBundleField();
         assertEquals("brexit", fromRemote.getString("STR", ""));
         assertEquals(2016, fromRemote.getInt("INT", 0));
 
@@ -773,6 +840,64 @@ public class RemoteViewsTest extends ActivityInstrumentationTestCase2<RemoteView
         } catch (ActionException e) {
             // expected
         }
+    }
+
+    public void testSetIntent() {
+        MyRemotableView customView = (MyRemotableView) mResult.findViewById(R.id.remoteView_custom);
+        assertNull(customView.getIntentField());
+
+        final Intent intent = new Intent(mActivity, SwitchCtsActivity.class);
+        intent.putExtra("STR", "brexit");
+        intent.putExtra("INT", 2016);
+        mRemoteViews.setIntent(R.id.remoteView_custom, "setIntentField", intent);
+        mRemoteViews.reapply(mActivity, mResult);
+        final Intent fromRemote = customView.getIntentField();
+        assertEquals(SwitchCtsActivity.class.getName(), fromRemote.getComponent().getClassName());
+        assertEquals("brexit", fromRemote.getStringExtra("STR"));
+        assertEquals(2016, fromRemote.getIntExtra("INT", 0));
+
+        mRemoteViews.setIntent(R.id.remoteView_absolute, "setIntentField", intent);
+        try {
+            mRemoteViews.reapply(mActivity, mResult);
+            fail("Should throw ActionException");
+        } catch (ActionException e) {
+            // expected
+        }
+    }
+
+    public void testRemoveAllViews() {
+        ViewGroup root = (ViewGroup) mResult.findViewById(R.id.remoteViews_good);
+        assertTrue(root.getChildCount() > 0);
+
+        mRemoteViews.removeAllViews(R.id.remoteViews_good);
+        mRemoteViews.reapply(mActivity, mResult);
+        assertEquals(0, root.getChildCount());
+    }
+
+    public void testAddView() {
+        ViewGroup root = (ViewGroup) mResult.findViewById(R.id.remoteViews_good);
+        int originalChildCount = root.getChildCount();
+
+        assertNull(root.findViewById(R.id.remoteView_frame_extra));
+
+        // Create a RemoteViews wrapper around a layout and add it to our root
+        RemoteViews extra = new RemoteViews(PACKAGE_NAME, R.layout.remoteviews_extra);
+        mRemoteViews.addView(R.id.remoteViews_good, extra);
+        mRemoteViews.reapply(mActivity, mResult);
+
+        // Verify that our root has that layout as its last (new) child
+        assertEquals(originalChildCount + 1, root.getChildCount());
+        assertNotNull(root.findViewById(R.id.remoteView_frame_extra));
+        assertEquals(R.id.remoteView_frame_extra, root.getChildAt(originalChildCount).getId());
+    }
+
+    public void testSetLabelFor() {
+        View labelView = mResult.findViewById(R.id.remoteView_label);
+        assertEquals(View.NO_ID, labelView.getLabelFor());
+
+        mRemoteViews.setLabelFor(R.id.remoteView_label, R.id.remoteView_text);
+        mRemoteViews.reapply(mActivity, mResult);
+        assertEquals(R.id.remoteView_text, labelView.getLabelFor());
     }
 
     private void createSampleImage(File imagefile, int resid) throws IOException {

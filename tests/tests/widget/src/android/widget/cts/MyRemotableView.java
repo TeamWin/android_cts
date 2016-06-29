@@ -17,6 +17,7 @@
 package android.widget.cts;
 
 import android.content.Context;
+import android.content.Intent;
 import android.graphics.Rect;
 import android.os.Bundle;
 import android.util.AttributeSet;
@@ -32,6 +33,7 @@ public class MyRemotableView extends TextView {
     private double mDoubleField;
     private short mShortField;
     private Bundle mBundleField;
+    private Intent mIntentField;
 
     public MyRemotableView(Context context) {
         super(context);
@@ -88,5 +90,14 @@ public class MyRemotableView extends TextView {
 
     public Bundle getBundleField() {
         return mBundleField;
+    }
+
+    @android.view.RemotableViewMethod
+    public void setIntentField(Intent value) {
+        mIntentField = value;
+    }
+
+    public Intent getIntentField() {
+        return mIntentField;
     }
 }
