@@ -617,6 +617,7 @@ class TextureViewFactory extends VideoViewFactory implements TextureView.Surface
 /**
  * Factory for building a {@link SurfaceView}
  */
+@TargetApi(24)
 class SurfaceViewFactory extends VideoViewFactory implements SurfaceHolder.Callback {
 
     private static final String TAG = SurfaceViewFactory.class.getSimpleName();
@@ -1294,6 +1295,8 @@ class VideoFormat {
     private int height = UNSET;
     private int maxWidth = UNSET;
     private int maxHeight = UNSET;
+    private int originalWidth = UNSET;
+    private int originalHeight = UNSET;
 
     public VideoFormat(String filename, Uri uri) {
         this.filename = filename;
@@ -1331,6 +1334,9 @@ class VideoFormat {
 
     public void setWidth(int width) {
         this.width = width;
+        if (this.originalWidth == UNSET) {
+            this.originalWidth = width;
+        }
     }
 
     public void setMaxWidth(int maxWidth) {
@@ -1345,8 +1351,15 @@ class VideoFormat {
         return maxWidth;
     }
 
+    public int getOriginalWidth() {
+        return originalWidth;
+    }
+
     public void setHeight(int height) {
         this.height = height;
+        if (this.originalHeight == UNSET) {
+            this.originalHeight = height;
+        }
     }
 
     public void setMaxHeight(int maxHeight) {
@@ -1359,6 +1372,10 @@ class VideoFormat {
 
     public int getMaxHeight() {
         return maxHeight;
+    }
+
+    public int getOriginalHeight() {
+        return originalHeight;
     }
 
     private Uri createCacheFile(Context context) {
@@ -1563,22 +1580,167 @@ class BitmapCompare {
         return (int) Math.round(Math.sqrt(result));
     }
 
+    /**
+     * Crops the border of the array representing an image by hBorderSize
+     * pixels on the left and right borders, and by vBorderSize pixels on the
+     * top and bottom borders (so the width is 2 * hBorderSize smaller and
+     * the height is 2 * vBorderSize smaller), then scales the image up to
+     * match the original size using bilinear interpolation.
+     */
+    private static Bitmap shrinkAndScaleBilinear(
+            Bitmap input, double hBorderSize, double vBorderSize) {
+
+        int width = input.getWidth();
+        int height = input.getHeight();
+
+        // Compute the proper step sizes
+        double xInc = ((double) width - 1 - hBorderSize * 2) / (double) (width - 1);
+        double yInc = ((double) height - 1 - vBorderSize * 2) / (double) (height - 1);
+
+        // Read the input bitmap into RGB arrays.
+        int[] inputPixels = new int[width * height];
+        input.getPixels(inputPixels, 0, width, 0, 0, width, height);
+        int[][] inputRgb = new int[width * height][3];
+        for (int i = 0; i < width * height; ++i) {
+            inputRgb[i][0] = Color.red(inputPixels[i]);
+            inputRgb[i][1] = Color.green(inputPixels[i]);
+            inputRgb[i][2] = Color.blue(inputPixels[i]);
+        }
+        inputPixels = null;
+
+        // Prepare the output buffer.
+        int[] outputPixels = new int[width * height];
+
+        // Start the iteration. The first y coordinate is vBorderSize.
+        double y = vBorderSize;
+        for (int yIndex = 0; yIndex < height; ++yIndex) {
+            // The first x coordinate is hBorderSize.
+            double x = hBorderSize;
+            for (int xIndex = 0; xIndex < width; ++xIndex) {
+                // Determine the square of interest.
+                int left = (int)x;    // This is floor(x).
+                int top = (int)y;     // This is floor(y).
+                int right = left + 1;
+                int bottom = top + 1;
+
+                // (u, v) is the fractional part of (x, y).
+                double u = x - (double)left;
+                double v = y - (double)top;
+
+                // Precompute necessary products to save time.
+                double p00 = (1.0 - u) * (1.0 - v);
+                double p01 = (1.0 - u) * v;
+                double p10 = u * (1.0 - v);
+                double p11 = u * v;
+
+                // Clamp the indices to prevent out-of-bound that may be caused
+                // by round-off error.
+                if (left >= width) left = width - 1;
+                if (top >= height) top = height - 1;
+                if (right >= width) right = width - 1;
+                if (bottom >= height) bottom = height - 1;
+
+                // Sample RGB values from the four corners.
+                int[] rgb00 = inputRgb[top * width + left];
+                int[] rgb01 = inputRgb[bottom * width + left];
+                int[] rgb10 = inputRgb[top * width + right];
+                int[] rgb11 = inputRgb[bottom * width + right];
+
+                // Interpolate each component of RGB separately.
+                int[] mixedColor = new int[3];
+                for (int k = 0; k < 3; ++k) {
+                    mixedColor[k] = (int)Math.round(
+                            p00 * (double) rgb00[k] + p01 * (double) rgb01[k]
+                            + p10 * (double) rgb10[k] + p11 * (double) rgb11[k]);
+                }
+                // Convert RGB to bitmap Color format and store.
+                outputPixels[yIndex * width + xIndex] = Color.rgb(
+                        mixedColor[0], mixedColor[1], mixedColor[2]);
+                x += xInc;
+            }
+            y += yInc;
+        }
+        // Assemble the output buffer into a Bitmap object.
+        return Bitmap.createBitmap(outputPixels, width, height, input.getConfig());
+    }
+
+    /**
+     * Calls computeDifference on multiple cropped-and-scaled versions of
+     * bitmap2.
+     */
+    @TargetApi(12)
+    public static Difference computeMinimumDifference(
+            Bitmap bitmap1, Bitmap bitmap2, Pair<Double, Double>[] borderCrops) {
+
+        // Compute the difference with the original image (bitmap2) first.
+        Difference minDiff = computeDifference(bitmap1, bitmap2);
+        // Then go through the list of borderCrops.
+        for (Pair<Double, Double> borderCrop : borderCrops) {
+            // Compute the difference between bitmap1 and a transformed
+            // version of bitmap2.
+            Bitmap bitmap2s = shrinkAndScaleBilinear(bitmap2, borderCrop.first, borderCrop.second);
+            Difference d = computeDifference(bitmap1, bitmap2s);
+            // Keep the minimum difference.
+            if (d.greatestPixelDifference < minDiff.greatestPixelDifference) {
+                minDiff = d;
+                minDiff.bestMatchBorderCrop = borderCrop;
+            }
+        }
+        return minDiff;
+    }
+
+    /**
+     * Calls computeMinimumDifference on a default list of borderCrop.
+     */
+    @TargetApi(12)
+    public static Difference computeMinimumDifference(
+            Bitmap bitmap1, Bitmap bitmap2, int trueWidth, int trueHeight) {
+
+        double hBorder = (double) bitmap1.getWidth() / (double) trueWidth;
+        double vBorder = (double) bitmap1.getHeight() / (double) trueHeight;
+        double hBorderH = 0.5 * hBorder; // Half-texel horizontal border
+        double vBorderH = 0.5 * vBorder; // Half-texel vertical border
+        return computeMinimumDifference(
+                bitmap1,
+                bitmap2,
+                new Pair[] {
+                    Pair.create(hBorderH, 0.0),
+                    Pair.create(hBorderH, vBorderH),
+                    Pair.create(0.0, vBorderH),
+                    Pair.create(hBorder, 0.0),
+                    Pair.create(hBorder, vBorder),
+                    Pair.create(0.0, vBorder)
+                });
+        // This default list of borderCrop comes from the behavior of
+        // GLConsumer.computeTransformMatrix().
+    }
+
     /* Describes the difference between two {@link Bitmap} instances. */
     public static final class Difference {
 
         public final int greatestPixelDifference;
         public final Pair<Integer, Integer> greatestPixelDifferenceCoordinates;
+        public Pair<Double, Double> bestMatchBorderCrop;
 
         private Difference(int greatestPixelDifference) {
-            this(greatestPixelDifference, null);
+            this(greatestPixelDifference, null, Pair.create(0.0, 0.0));
         }
 
         private Difference(
                 int greatestPixelDifference,
                 Pair<Integer, Integer> greatestPixelDifferenceCoordinates) {
+            this(greatestPixelDifference, greatestPixelDifferenceCoordinates,
+                    Pair.create(0.0, 0.0));
+        }
+
+        private Difference(
+                int greatestPixelDifference,
+                Pair<Integer, Integer> greatestPixelDifferenceCoordinates,
+                Pair<Double, Double> bestMatchBorderCrop) {
             this.greatestPixelDifference = greatestPixelDifference;
             this.greatestPixelDifferenceCoordinates = greatestPixelDifferenceCoordinates;
-        }
+            this.bestMatchBorderCrop = bestMatchBorderCrop;
+       }
     }
 
 }
