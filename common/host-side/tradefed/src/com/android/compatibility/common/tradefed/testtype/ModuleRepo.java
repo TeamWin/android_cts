@@ -47,6 +47,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -78,6 +79,10 @@ public class ModuleRepo implements IModuleRepo {
     private IConfigurationFactory mConfigFactory = ConfigurationFactory.getInstance();
 
     private volatile boolean mInitialized = false;
+    // Whether the modules in this repo are ready to run on their assigned devices.
+    // True until explicitly set false in setPrepared().
+    private volatile boolean mPrepared = true;
+    private CountDownLatch mPreparedLatch;
 
     // Holds all the small tests waiting to be run.
     private List<IModuleDef> mSmallModules = new ArrayList<>();
@@ -197,6 +202,28 @@ public class ModuleRepo implements IModuleRepo {
      * {@inheritDoc}
      */
     @Override
+    public boolean isPrepared() {
+        try {
+            mPreparedLatch.await();
+        } catch (InterruptedException e) {
+            return false;
+        }
+        return mPrepared;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void setPrepared(boolean isPrepared) {
+        mPrepared &= isPrepared;
+        mPreparedLatch.countDown();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
     public boolean isInitialized() {
         return mInitialized;
     }
@@ -214,6 +241,7 @@ public class ModuleRepo implements IModuleRepo {
                 includeFilters, excludeFilters);
         mInitialized = true;
         mShards = shards;
+        mPreparedLatch = new CountDownLatch(shards);
         for (String line : deviceTokens) {
             String[] parts = line.split(":");
             if (parts.length == 2) {
