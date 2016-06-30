@@ -29,7 +29,13 @@ LOCAL_MODULE_PATH := $(TARGET_OUT_DATA_APPS)
 
 LOCAL_STATIC_JAVA_LIBRARIES := ctstestrunner
 
-LOCAL_JNI_SHARED_LIBRARIES := libjnitest libnativehelper_compat_libc++
+LOCAL_JNI_SHARED_LIBRARIES := \
+  libjninamespacea1 \
+  libjninamespacea2 \
+  libjninamespaceb \
+  libjnicommon \
+  libjnitest \
+  libnativehelper_compat_libc++
 
 LOCAL_SRC_FILES := $(call all-java-files-under, src)
 
@@ -38,4 +44,4 @@ LOCAL_SDK_VERSION := current
 include $(BUILD_CTS_PACKAGE)
 
 # Include the associated library's makefile.
-include $(LOCAL_PATH)/libjnitest/Android.mk
+include $(call all-makefiles-under,$(LOCAL_PATH))
