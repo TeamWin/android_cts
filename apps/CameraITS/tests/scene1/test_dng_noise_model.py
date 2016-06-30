@@ -54,7 +54,7 @@ def main():
         # Expose for the scene with min sensitivity
         sens_min, sens_max = props['android.sensor.info.sensitivityRange']
         sens_step = (sens_max - sens_min) / NUM_STEPS
-        s_ae,e_ae,_,_,_  = cam.do_3a(get_results=True)
+        s_ae,e_ae,_,_,f_dist  = cam.do_3a(get_results=True)
         s_e_prod = s_ae * e_ae
         sensitivities = range(sens_min, sens_max, sens_step)
 
@@ -64,7 +64,7 @@ def main():
 
             # Capture a raw frame with the desired sensitivity.
             exp = int(s_e_prod / float(sens))
-            req = its.objects.manual_capture_request(sens, exp)
+            req = its.objects.manual_capture_request(sens, exp, f_dist)
             cap = cam.do_capture(req, cam.CAP_RAW)
 
             # Test each raw color channel (R, GR, GB, B):
