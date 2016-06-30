@@ -86,7 +86,7 @@ def main():
         print "AWB transform", xform
         print "AF distance", focus
         req = its.objects.manual_capture_request(
-                sens, exp, True, props)
+                sens, exp, focus, True, props)
         xform_rat = its.objects.float_to_rational(xform)
         req["android.colorCorrection.gains"] = gains
         req["android.colorCorrection.transform"] = xform_rat
