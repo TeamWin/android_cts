@@ -34,6 +34,7 @@ import android.print.cts.services.PrinterDiscoverySessionCallbacks;
 import android.print.cts.services.SecondPrintService;
 import android.print.cts.services.StubbablePrinterDiscoverySession;
 import android.support.annotation.NonNull;
+import android.util.Log;
 
 import java.util.ArrayList;
 
@@ -42,10 +43,10 @@ import java.util.ArrayList;
  */
 public class AppPrintInterfaceTest extends BasePrintTest {
     private static final String TEST_PRINTER = "Test printer";
+    private static final String LOG_TAG = "AppPrintInterfaceTest";
 
     private static final PrintAttributes.Resolution TWO_HUNDRED_DPI = new PrintAttributes.Resolution(
-            "200x200", "200dpi", 200,
-            200);
+            "200x200", "200dpi", 200, 200);
 
     /**
      * @return The print manager
@@ -76,15 +77,17 @@ public class AppPrintInterfaceTest extends BasePrintTest {
 
         return createMockPrintDocumentAdapter(
                 invocation -> {
+                    PrintAttributes oldAttributes = (PrintAttributes) invocation.getArguments()[0];
                     printAttributes[0] = (PrintAttributes) invocation.getArguments()[1];
                     PrintDocumentAdapter.LayoutResultCallback callback =
                             (PrintDocumentAdapter.LayoutResultCallback) invocation
                                     .getArguments()[3];
 
                     callback.onLayoutFinished(new PrintDocumentInfo.Builder("doc")
-                            .setPageCount(1).build(), false);
+                            .setPageCount(1).build(), !oldAttributes.equals(printAttributes[0]));
 
-                    onLayoutCalled();
+                    oldAttributes = printAttributes[0];
+
                     return null;
                 }, invocation -> {
                     Object[] args = invocation.getArguments();
@@ -95,6 +98,7 @@ public class AppPrintInterfaceTest extends BasePrintTest {
                     writeBlankPages(printAttributes[0], fd, pages[0].getStart(), pages[0].getEnd());
                     fd.close();
                     callback.onWriteFinished(pages);
+                    onWriteCalled();
                     return null;
                 }, invocation -> null);
     }
@@ -151,23 +155,28 @@ public class AppPrintInterfaceTest extends BasePrintTest {
 
                     switch (blockAfterState) {
                         case PrintJobInfo.STATE_CREATED:
-                            assertEquals(PrintJobInfo.STATE_CREATED, job.getInfo().getState());
+                            eventually(() -> assertEquals(PrintJobInfo.STATE_CREATED,
+                                    job.getInfo().getState()));
                             break;
                         case PrintJobInfo.STATE_STARTED:
+                            eventually(() -> assertTrue(job.isQueued()));
                             job.start();
                             break;
                         case PrintJobInfo.STATE_QUEUED:
-                            assertEquals(PrintJobInfo.STATE_QUEUED, job.getInfo().getState());
+                            eventually(() -> assertTrue(job.isQueued()));
                             break;
                         case PrintJobInfo.STATE_BLOCKED:
+                            eventually(() -> assertTrue(job.isQueued()));
                             job.start();
                             job.block("test block");
                             break;
                         case PrintJobInfo.STATE_FAILED:
+                            eventually(() -> assertTrue(job.isQueued()));
                             job.start();
                             job.fail("test fail");
                             break;
                         case PrintJobInfo.STATE_COMPLETED:
+                            eventually(() -> assertTrue(job.isQueued()));
                             job.start();
                             job.complete();
                             break;
@@ -181,6 +190,7 @@ public class AppPrintInterfaceTest extends BasePrintTest {
                             .getArguments()[0];
 
                     job.cancel();
+                    Log.d(LOG_TAG, "job.cancel()");
 
                     return null;
                 });
@@ -241,7 +251,10 @@ public class AppPrintInterfaceTest extends BasePrintTest {
         PrintDocumentAdapter adapter = setupPrint(cancelAfterState);
 
         print(adapter, printJobName);
+        waitForWriteAdapterCallback(1);
+
         selectPrinter(TEST_PRINTER);
+        waitForWriteAdapterCallback(2);
 
         clickPrintButton();
         answerPrintServicesWarning(true);
@@ -251,8 +264,7 @@ public class AppPrintInterfaceTest extends BasePrintTest {
         eventually(() -> assertEquals(cancelAfterState, job.getInfo().getState()));
 
         job.cancel();
-
-        eventually(() -> assertEquals(PrintJobInfo.STATE_CANCELED, job.getInfo().getState()));
+        eventually(() -> assertTrue(job.isCancelled()));
 
         waitForPrinterDiscoverySessionDestroyCallbackCalled(1);
     }
@@ -261,21 +273,20 @@ public class AppPrintInterfaceTest extends BasePrintTest {
         PrintDocumentAdapter adapter = setupPrint(PrintJobInfo.STATE_STARTED);
 
         print(adapter, "testAttemptCancelCreatedPrintJob");
-        selectPrinter(TEST_PRINTER);
+        waitForWriteAdapterCallback(1);
 
-        waitForLayoutAdapterCallbackCount(1);
+        selectPrinter(TEST_PRINTER);
+        waitForWriteAdapterCallback(2);
 
         PrintJob job = getPrintJob("testAttemptCancelCreatedPrintJob");
 
         // Cancel does not have an effect on created jobs
         job.cancel();
-
         eventually(() -> assertEquals(PrintJobInfo.STATE_CREATED, job.getInfo().getState()));
 
         // Cancel printing by exiting print activity
         getUiDevice().pressBack();
-
-        eventually(() -> assertEquals(PrintJobInfo.STATE_CANCELED, job.getInfo().getState()));
+        eventually(() -> assertTrue(job.isCancelled()));
 
         waitForPrinterDiscoverySessionDestroyCallbackCalled(1);
     }
@@ -296,23 +307,26 @@ public class AppPrintInterfaceTest extends BasePrintTest {
         PrintDocumentAdapter adapter = setupPrint(PrintJobInfo.STATE_FAILED);
 
         print(adapter, "testRestartFailedPrintJob");
+        waitForWriteAdapterCallback(1);
+
         selectPrinter(TEST_PRINTER);
+        waitForWriteAdapterCallback(2);
 
         clickPrintButton();
         answerPrintServicesWarning(true);
 
         PrintJob job = getPrintJob("testRestartFailedPrintJob");
 
-        eventually(() -> assertEquals(PrintJobInfo.STATE_FAILED, job.getInfo().getState()));
+        eventually(() -> assertTrue(job.isFailed()));
 
         // Restart goes from failed right to queued, so stop the print job at "queued" now
         setupPrint(PrintJobInfo.STATE_QUEUED);
 
         job.restart();
-        eventually(() -> assertEquals(PrintJobInfo.STATE_QUEUED, job.getInfo().getState()));
+        eventually(() -> assertTrue(job.isQueued()));
 
         job.cancel();
-        eventually(() -> assertEquals(PrintJobInfo.STATE_CANCELED, job.getInfo().getState()));
+        eventually(() -> assertTrue(job.isCancelled()));
 
         waitForPrinterDiscoverySessionDestroyCallbackCalled(1);
     }
@@ -320,23 +334,30 @@ public class AppPrintInterfaceTest extends BasePrintTest {
     public void testGetTwoPrintJobStates() throws Exception {
         PrintDocumentAdapter adapter = setupPrint(PrintJobInfo.STATE_BLOCKED);
         print(adapter, "testGetTwoPrintJobStates-block");
+        waitForWriteAdapterCallback(1);
+
         selectPrinter(TEST_PRINTER);
+        waitForWriteAdapterCallback(2);
+
         clickPrintButton();
         answerPrintServicesWarning(true);
 
+        waitForPrinterDiscoverySessionDestroyCallbackCalled(1);
+
         PrintJob job1 = getPrintJob("testGetTwoPrintJobStates-block");
-        eventually(() -> assertEquals(PrintJobInfo.STATE_BLOCKED, job1.getInfo().getState()));
+        eventually(() -> assertTrue(job1.isBlocked()));
 
         adapter = setupPrint(PrintJobInfo.STATE_COMPLETED);
         print(adapter, "testGetTwoPrintJobStates-complete");
+        waitForWriteAdapterCallback(3);
         clickPrintButton();
 
         PrintJob job2 = getPrintJob("testGetTwoPrintJobStates-complete");
-        eventually(() -> assertEquals(PrintJobInfo.STATE_COMPLETED, job2.getInfo().getState()));
+        eventually(() -> assertTrue(job2.isCompleted()));
 
         // First print job should still be there
         PrintJob job1again = getPrintJob("testGetTwoPrintJobStates-block");
-        assertEquals(PrintJobInfo.STATE_BLOCKED, job1again.getInfo().getState());
+        assertTrue(job1again.isBlocked());
 
         // Check attributes that should have been applied
         assertEquals(PrintAttributes.MediaSize.ISO_A5,
