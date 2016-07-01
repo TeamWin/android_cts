@@ -15,13 +15,10 @@
  */
 package android.app.cts;
 
-import static junit.framework.TestCase.assertEquals;
-import static junit.framework.TestCase.assertTrue;
-import static junit.framework.TestCase.fail;
+import static org.mockito.Mockito.*;
 
 import android.app.Activity;
 import android.app.Fragment;
-import android.app.Instrumentation;
 import android.app.PendingIntent;
 import android.app.stubs.FragmentResultActivity;
 import android.app.stubs.FragmentTestActivity;
@@ -31,6 +28,8 @@ import android.content.IntentSender;
 import android.test.ActivityInstrumentationTestCase2;
 import android.test.suitebuilder.annotation.SmallTest;
 
+import org.mockito.ArgumentCaptor;
+
 /**
  * Tests Fragment's startActivityForResult and startIntentSenderForResult.
  */
@@ -38,7 +37,7 @@ public class FragmentReceiveResultTest extends
         ActivityInstrumentationTestCase2<FragmentTestActivity> {
 
     private FragmentTestActivity mActivity;
-    private TestFragment mFragment;
+    private Fragment mFragment;
 
     public FragmentReceiveResultTest() {
         super(FragmentTestActivity.class);
@@ -55,44 +54,52 @@ public class FragmentReceiveResultTest extends
     public void testStartActivityForResultOk() {
         startActivityForResult(10, Activity.RESULT_OK, "content 10");
 
-        assertTrue("Fragment should receive result", mFragment.mHasResult);
-        assertEquals(10, mFragment.mRequestCode);
-        assertEquals(Activity.RESULT_OK, mFragment.mResultCode);
-        assertEquals("content 10", mFragment.mResultContent);
+        ArgumentCaptor<Intent> captor = ArgumentCaptor.forClass(Intent.class);
+        verify(mFragment, times(1))
+                .onActivityResult(eq(10), eq(Activity.RESULT_OK), captor.capture());
+        final String data = captor.getValue()
+                .getStringExtra(FragmentResultActivity.EXTRA_RESULT_CONTENT);
+        assertEquals("content 10", data);
     }
 
     @SmallTest
     public void testStartActivityForResultCanceled() {
         startActivityForResult(20, Activity.RESULT_CANCELED, "content 20");
 
-        assertTrue("Fragment should receive result", mFragment.mHasResult);
-        assertEquals(20, mFragment.mRequestCode);
-        assertEquals(Activity.RESULT_CANCELED, mFragment.mResultCode);
-        assertEquals("content 20", mFragment.mResultContent);
+        ArgumentCaptor<Intent> captor = ArgumentCaptor.forClass(Intent.class);
+        verify(mFragment, times(1))
+                .onActivityResult(eq(20), eq(Activity.RESULT_CANCELED), captor.capture());
+        final String data = captor.getValue()
+                .getStringExtra(FragmentResultActivity.EXTRA_RESULT_CONTENT);
+        assertEquals("content 20", data);
     }
 
     @SmallTest
     public void testStartIntentSenderForResultOk() {
         startIntentSenderForResult(30, Activity.RESULT_OK, "content 30");
 
-        assertTrue("Fragment should receive result", mFragment.mHasResult);
-        assertEquals(30, mFragment.mRequestCode);
-        assertEquals(Activity.RESULT_OK, mFragment.mResultCode);
-        assertEquals("content 30", mFragment.mResultContent);
+        ArgumentCaptor<Intent> captor = ArgumentCaptor.forClass(Intent.class);
+        verify(mFragment, times(1))
+                .onActivityResult(eq(30), eq(Activity.RESULT_OK), captor.capture());
+        final String data = captor.getValue()
+                .getStringExtra(FragmentResultActivity.EXTRA_RESULT_CONTENT);
+        assertEquals("content 30", data);
     }
 
     @SmallTest
     public void testStartIntentSenderForResultCanceled() {
         startIntentSenderForResult(40, Activity.RESULT_CANCELED, "content 40");
 
-        assertTrue("Fragment should receive result", mFragment.mHasResult);
-        assertEquals(40, mFragment.mRequestCode);
-        assertEquals(Activity.RESULT_CANCELED, mFragment.mResultCode);
-        assertEquals("content 40", mFragment.mResultContent);
+        ArgumentCaptor<Intent> captor = ArgumentCaptor.forClass(Intent.class);
+        verify(mFragment, times(1))
+                .onActivityResult(eq(40), eq(Activity.RESULT_CANCELED), captor.capture());
+        final String data = captor.getValue()
+                .getStringExtra(FragmentResultActivity.EXTRA_RESULT_CONTENT);
+        assertEquals("content 40", data);
     }
 
-    private TestFragment attachTestFragment() {
-        final TestFragment fragment = new TestFragment();
+    private Fragment attachTestFragment() {
+        final Fragment fragment = spy(new Fragment());
         getInstrumentation().waitForIdleSync();
         getInstrumentation().runOnMainSync(new Runnable() {
             @Override
@@ -144,21 +151,6 @@ public class FragmentReceiveResultTest extends
             }
         });
         getInstrumentation().waitForIdleSync();
-    }
-
-    public static class TestFragment extends Fragment {
-        boolean mHasResult = false;
-        int mRequestCode = -1;
-        int mResultCode = 100;
-        String mResultContent;
-
-        @Override
-        public void onActivityResult(int requestCode, int resultCode, Intent data) {
-            mHasResult = true;
-            mRequestCode = requestCode;
-            mResultCode = resultCode;
-            mResultContent = data.getStringExtra(FragmentResultActivity.EXTRA_RESULT_CONTENT);
-        }
     }
 
 }
