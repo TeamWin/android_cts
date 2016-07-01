@@ -24,32 +24,13 @@ import android.support.test.runner.AndroidJUnit4;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import static android.print.cts.Utils.assertException;
+
 /**
  * Test that the print attributes are correctly propagated through the print framework
  */
 @RunWith(AndroidJUnit4.class)
 public class ClassParametersTest {
-    /**
-     * Run a runnable and expect and exception of a certain type.
-     *
-     * @param r The runnable to run
-     * @param expectedClass The expected exception type
-     */
-    private void assertException(Runnable r, Class<? extends RuntimeException> expectedClass) {
-        try {
-            r.run();
-        } catch (Exception e) {
-            if (e.getClass().isAssignableFrom(expectedClass)) {
-                return;
-            } else {
-                throw new AssertionError("Expected: " + expectedClass.getName() + ", got: "
-                        + e.getClass().getName());
-            }
-        }
-
-        throw new AssertionError("No exception thrown");
-    }
-
     /**
      * Test that we cannot create PrintAttributes with illegal parameters.
      *
