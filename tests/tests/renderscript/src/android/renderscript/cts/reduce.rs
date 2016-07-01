@@ -67,17 +67,17 @@ static void fMMAccumulator(MinAndMax *accum, float in, int x) {
   me.val = in;
   me.idx = x;
 
-  if (me.val < accum->min.val)
+  if (me.val <= accum->min.val)
     accum->min = me;
-  if (me.val > accum->max.val)
+  if (me.val >= accum->max.val)
     accum->max = me;
 }
 
 static void fMMCombiner(MinAndMax *accum,
                         const MinAndMax *val) {
-  if (val->min.val < accum->min.val)
+  if ((accum->min.idx < 0) || (val->min.val < accum->min.val))
     accum->min = val->min;
-  if (val->max.val > accum->max.val)
+  if ((accum->max.idx < 0) || (val->max.val > accum->max.val))
     accum->max = val->max;
 }
 
