@@ -50,6 +50,9 @@ public class AnimatedVectorDrawableTest extends ActivityInstrumentationTestCase2
 
     private static final int IMAGE_WIDTH = 64;
     private static final int IMAGE_HEIGHT = 64;
+    private static final long MAX_TIMEOUT_MS = 1000;
+    private static final long MAX_START_TIMEOUT_MS = 5000;
+    private static final int MS_TO_NS = 1000000;
 
     private DrawableStubActivity mActivity;
     private Resources mResources;
@@ -139,7 +142,8 @@ public class AnimatedVectorDrawableTest extends ActivityInstrumentationTestCase2
     }
 
     @MediumTest
-    public void testSingleFrameAnimation() throws Exception {
+    public void testSingleFrameAnimation() {
+        final MyCallback callback = new MyCallback();
         int resId = R.drawable.avd_single_frame;
         final AnimatedVectorDrawable d1 =
                 (AnimatedVectorDrawable) mResources.getDrawable(resId);
@@ -155,17 +159,10 @@ public class AnimatedVectorDrawableTest extends ActivityInstrumentationTestCase2
                 d1.setBounds(0, 0, IMAGE_WIDTH, IMAGE_HEIGHT);
                 mBitmap.eraseColor(0);
                 d1.draw(mCanvas);
+                int endColor = mBitmap.getPixel(IMAGE_WIDTH / 2, IMAGE_HEIGHT / 2);
+                assertEquals("Center point's color must be green", 0xFF00FF00, endColor);
             }
         });
-
-        getInstrumentation().waitForIdleSync();
-        int endColor = mBitmap.getPixel(IMAGE_WIDTH / 2, IMAGE_HEIGHT / 2);
-
-        if (DBG_DUMP_PNG) {
-            saveVectorDrawableIntoPNG(mBitmap, resId);
-        }
-
-        assertEquals("Center point's color must be green", 0xFF00FF00, endColor);
     }
 
     @SmallTest
@@ -181,13 +178,16 @@ public class AnimatedVectorDrawableTest extends ActivityInstrumentationTestCase2
                 mActivity.setContentView(mLayoutId);
                 ImageView imageView = (ImageView) mActivity.findViewById(mImageViewId);
                 imageView.setImageDrawable(d1);
+                d1.registerAnimationCallback(callback);
                 d1.start();
+                callback.notifyStarted();
             }
         });
-
-        getInstrumentation().waitForIdleSync();
+        callback.waitForStart();
+        waitForAVDStop(callback, MAX_TIMEOUT_MS);
         // Check that the AVD with empty AnimatorSet has finished
-        assertTrue(callback.mEnd);
+        callback.assertEnded(true);
+        callback.assertAVDRuntime(0, 32* MS_TO_NS); // 2 frames
     }
 
     @SmallTest
@@ -274,33 +274,36 @@ public class AnimatedVectorDrawableTest extends ActivityInstrumentationTestCase2
 
     @MediumTest
     public void testReset() {
+        final MyCallback callback = new MyCallback();
         final AnimatedVectorDrawable d1 = (AnimatedVectorDrawable) mResources.getDrawable(mResId);
         // The AVD has a duration as 100ms.
         mActivity.runOnUiThread(new Runnable() {
             @Override
             public void run() {
+                d1.registerAnimationCallback(callback);
                 d1.start();
                 d1.reset();
             }
         });
-        getInstrumentation().waitForIdleSync();
+        waitForAVDStop(callback, MAX_TIMEOUT_MS);
         assertFalse(d1.isRunning());
 
     }
 
     @MediumTest
     public void testStop() {
+        final MyCallback callback = new MyCallback();
         final AnimatedVectorDrawable d1 = (AnimatedVectorDrawable) mResources.getDrawable(mResId);
         // The AVD has a duration as 100ms.
         mActivity.runOnUiThread(new Runnable() {
             @Override
             public void run() {
+                d1.registerAnimationCallback(callback);
                 d1.start();
                 d1.stop();
-
             }
         });
-        getInstrumentation().waitForIdleSync();
+        waitForAVDStop(callback, MAX_TIMEOUT_MS);
         assertFalse(d1.isRunning());
     }
 
@@ -316,12 +319,13 @@ public class AnimatedVectorDrawableTest extends ActivityInstrumentationTestCase2
                 AnimatedVectorDrawable d1 = (AnimatedVectorDrawable) imageView.getDrawable();
                 d1.registerAnimationCallback(callback);
                 d1.start();
+                callback.notifyStarted();
             }
         });
-        getInstrumentation().waitForIdleSync();
-        sleep(200);
-        assertTrue(callback.mStart);
-        assertTrue(callback.mEnd);
+        callback.waitForStart();
+        waitForAVDStop(callback, MAX_TIMEOUT_MS);
+        callback.assertStarted(true);
+        callback.assertEnded(true);
     }
 
     @MediumTest
@@ -339,12 +343,14 @@ public class AnimatedVectorDrawableTest extends ActivityInstrumentationTestCase2
                 d1.reset();
                 d1.registerAnimationCallback(callback);
                 d1.start();
+                callback.notifyStarted();
             }
         });
-        getInstrumentation().waitForIdleSync();
-        sleep(200);
-        assertTrue(callback.mStart);
-        assertTrue(callback.mEnd);
+        callback.waitForStart();
+        waitForAVDStop(callback, MAX_TIMEOUT_MS);
+
+        callback.assertStarted(true);
+        callback.assertEnded(true);
     }
 
     @MediumTest
@@ -359,17 +365,20 @@ public class AnimatedVectorDrawableTest extends ActivityInstrumentationTestCase2
                 AnimatedVectorDrawable d1 = (AnimatedVectorDrawable) imageView.getDrawable();
                 d1.start();
                 d1.registerAnimationCallback(callback);
+                callback.notifyStarted();
             }
         });
-        getInstrumentation().waitForIdleSync();
-        sleep(200);
+        callback.waitForStart();
+
+        waitForAVDStop(callback, MAX_TIMEOUT_MS);
         // Whether or not the callback.start is true could vary when running on Render Thread.
-        // Therefore, we don't make assertion here. The most useful flag is the callback.mEnd.
-        assertTrue(callback.mEnd);
+        // Therefore, we don't make assertion here. The most useful flag is the callback.mEnded.
+        callback.assertEnded(true);
+        callback.assertAVDRuntime(0, 200 * MS_TO_NS); // twice of the duration of the AVD.
     }
 
     @MediumTest
-    public void testRemoveCallback() {
+    public void testRemoveCallback() throws InterruptedException {
         final MyCallback callback = new MyCallback();
         // The AVD has a duration as 100ms.
         mActivity.runOnUiThread(new Runnable() {
@@ -381,16 +390,18 @@ public class AnimatedVectorDrawableTest extends ActivityInstrumentationTestCase2
                 d1.registerAnimationCallback(callback);
                 assertTrue(d1.unregisterAnimationCallback(callback));
                 d1.start();
+                callback.notifyStarted();
             }
         });
-        getInstrumentation().waitForIdleSync();
+        callback.waitForStart();
 
-        assertFalse(callback.mStart);
-        assertFalse(callback.mEnd);
+        waitForAVDStop(callback, MAX_TIMEOUT_MS);
+        callback.assertStarted(false);
+        callback.assertEnded(false);
     }
 
     @MediumTest
-    public void testClearCallback() {
+    public void testClearCallback() throws InterruptedException {
         final MyCallback callback = new MyCallback();
 
         // The AVD has a duration as 100ms.
@@ -403,27 +414,91 @@ public class AnimatedVectorDrawableTest extends ActivityInstrumentationTestCase2
                 d1.registerAnimationCallback(callback);
                 d1.clearAnimationCallbacks();
                 d1.start();
+                callback.notifyStarted();
             }
         });
+        callback.waitForStart();
 
-        getInstrumentation().waitForIdleSync();
-
-        assertFalse(callback.mStart);
-        assertFalse(callback.mEnd);
+        waitForAVDStop(callback, MAX_TIMEOUT_MS);
+        callback.assertStarted(false);
+        callback.assertEnded(false);
     }
 
+    // The time out is expected when the listener is removed successfully.
+    // Such that we don't get the end event.
+    private void waitForAVDStop(MyCallback callback, long timeout) {
+        try {
+            callback.waitForEnd(timeout);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+            fail("We should not see the AVD run this long time!");
+        }
+    }
+
+    // Now this class can not only listen to the events, but also synchronize the key events,
+    // logging the event timestamp, and centralize some assertions.
     class MyCallback extends Animatable2.AnimationCallback {
-        boolean mStart = false;
-        boolean mEnd = false;
+        private boolean mStarted = false;
+        private boolean mEnded = false;
+
+        private long mStartNs = Long.MAX_VALUE;
+        private long mEndNs = Long.MIN_VALUE;
+
+        // Use this lock to make sure the onAnimationEnd() has been called.
+        // Each sub test should have its own lock.
+        private final Object mEndLock = new Object();
+
+        // Use this lock to make sure the test thread know when the AVD.start() has been called.
+        // Each sub test should have its own lock.
+        private final Object mStartLock = new Object();
+
+        public void waitForEnd(long timeoutMs) throws InterruptedException {
+            synchronized (mEndLock) {
+                mEndLock.wait(timeoutMs);
+            }
+        }
+
+        public void waitForStart() throws InterruptedException {
+            synchronized(mStartLock) {
+                mStartLock.wait(MAX_START_TIMEOUT_MS);
+            }
+        }
+
+        public void notifyStarted() {
+            mStartNs = System.nanoTime();
+            synchronized(mStartLock) {
+                mStartLock.notify();
+            }
+        }
 
         @Override
         public void onAnimationStart(Drawable drawable) {
-            mStart = true;
+            mStarted = true;
         }
 
         @Override
         public void onAnimationEnd(Drawable drawable) {
-            mEnd = true;
+            mEndNs = System.nanoTime();
+            mEnded = true;
+            synchronized (mEndLock) {
+                mEndLock.notify();
+            }
+        }
+
+        public void assertStarted(boolean started) {
+            assertEquals(started, mStarted);
+        }
+
+        public void assertEnded(boolean ended) {
+            assertEquals(ended, mEnded);
+        }
+
+        public void assertAVDRuntime(long min, long max) {
+            assertTrue(mStartNs != Long.MAX_VALUE);
+            assertTrue(mEndNs != Long.MIN_VALUE);
+            long durationNs = mEndNs - mStartNs;
+            assertTrue("current duration " + durationNs + " should be within " +
+                    min + "," + max, durationNs <= max && durationNs >= min);
         }
     }
 }
