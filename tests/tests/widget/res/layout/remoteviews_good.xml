@@ -79,6 +79,11 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content" />
 
+    <StackView
+        android:id="@+id/remoteView_stack"
+        android:layout_width="100dip"
+        android:layout_height="100dip" />
+
     <android.widget.cts.MyRemotableView
         android:id="@+id/remoteView_custom"
         android:layout_width="wrap_content"
