@@ -48,13 +48,13 @@ import static org.junit.Assert.fail;
 class Utils {
     private static final String LOG_TAG = "Utils";
 
+    private static Map<Integer, File> sFiles = new ArrayMap<>();
+    private static Map<Integer, Bitmap> sRenderedBitmaps = new ArrayMap<>();
+
     static final int A4_WIDTH_PTS = 595;
     static final int A4_HEIGHT_PTS = 841;
     static final int A4_PORTRAIT = android.graphics.cts.R.raw.a4_portrait_rgbb;
     static final int A5_PORTRAIT = android.graphics.cts.R.raw.a5_portrait_rgbb;
-
-    private static Map<Integer, File> sFiles = new ArrayMap<>();
-    private static Map<Integer, Bitmap> sRenderedBitmaps = new ArrayMap<>();
 
     /**
      * Create a {@link PdfRenderer} pointing to a file copied from a resource.
@@ -265,5 +265,35 @@ class Utils {
             a.recycle();
             b.recycle();
         }
+    }
+
+    /**
+     * Run a runnable and expect and exception of a certain type.
+     *
+     * @param r             The {@link Invokable} to run
+     * @param expectedClass The expected exception type
+     */
+    static void assertException(@NonNull Invokable r,
+            @NonNull Class<? extends Exception> expectedClass) {
+        try {
+            r.run();
+        } catch (Exception e) {
+            if (e.getClass().isAssignableFrom(expectedClass)) {
+                return;
+            } else {
+                Log.e(LOG_TAG, "Incorrect exception", e);
+                throw new AssertionError("Expected: " + expectedClass.getName() + ", got: "
+                        + e.getClass().getName());
+            }
+        }
+
+        throw new AssertionError("No exception thrown");
+    }
+
+    /**
+     * A runnable that can throw an exception.
+     */
+    interface Invokable {
+        void run() throws Exception;
     }
 }
