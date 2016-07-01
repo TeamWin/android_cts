@@ -54,7 +54,7 @@ public class FragmentViewTests {
     // should remove the correct Views.
     @Test
     public void addFragments() throws Throwable {
-        setContentView(R.layout.simple_container);
+        FragmentTestUtil.setContentView(mActivityRule, R.layout.simple_container);
         ViewGroup container = (ViewGroup)
                 mActivityRule.getActivity().findViewById(R.id.fragmentContainer);
         final FragmentManager fm = mActivityRule.getActivity().getFragmentManager();
@@ -62,13 +62,13 @@ public class FragmentViewTests {
         // One fragment with a view
         final StrictViewFragment fragment1 = new StrictViewFragment();
         fm.beginTransaction().add(R.id.fragmentContainer, fragment1).addToBackStack(null).commit();
-        executePendingTransactions();
+        FragmentTestUtil.executePendingTransactions(mActivityRule);
         assertChildren(container, fragment1);
 
         // Add another on top
         final StrictViewFragment fragment2 = new StrictViewFragment();
         fm.beginTransaction().add(R.id.fragmentContainer, fragment2).addToBackStack(null).commit();
-        executePendingTransactions();
+        FragmentTestUtil.executePendingTransactions(mActivityRule);
         assertChildren(container, fragment1, fragment2);
 
         // Now add two in one transaction:
@@ -79,20 +79,20 @@ public class FragmentViewTests {
                 .add(R.id.fragmentContainer, fragment4)
                 .addToBackStack(null)
                 .commit();
-        executePendingTransactions();
+        FragmentTestUtil.executePendingTransactions(mActivityRule);
         assertChildren(container, fragment1, fragment2, fragment3, fragment4);
 
         fm.popBackStack();
-        executePendingTransactions();
+        FragmentTestUtil.executePendingTransactions(mActivityRule);
         assertChildren(container, fragment1, fragment2);
 
         fm.popBackStack();
-        executePendingTransactions();
+        FragmentTestUtil.executePendingTransactions(mActivityRule);
         assertEquals(1, container.getChildCount());
         assertChildren(container, fragment1);
 
         fm.popBackStack();
-        executePendingTransactions();
+        FragmentTestUtil.executePendingTransactions(mActivityRule);
         assertChildren(container);
     }
 
@@ -100,7 +100,7 @@ public class FragmentViewTests {
     // they pop correctly, too.
     @Test
     public void addTwoContainers() throws Throwable {
-        setContentView(R.layout.double_container);
+        FragmentTestUtil.setContentView(mActivityRule, R.layout.double_container);
         ViewGroup container1 = (ViewGroup)
                 mActivityRule.getActivity().findViewById(R.id.fragmentContainer1);
         ViewGroup container2 = (ViewGroup)
@@ -109,12 +109,12 @@ public class FragmentViewTests {
 
         final StrictViewFragment fragment1 = new StrictViewFragment();
         fm.beginTransaction().add(R.id.fragmentContainer1, fragment1).addToBackStack(null).commit();
-        executePendingTransactions();
+        FragmentTestUtil.executePendingTransactions(mActivityRule);
         assertChildren(container1, fragment1);
 
         final StrictViewFragment fragment2 = new StrictViewFragment();
         fm.beginTransaction().add(R.id.fragmentContainer2, fragment2).addToBackStack(null).commit();
-        executePendingTransactions();
+        FragmentTestUtil.executePendingTransactions(mActivityRule);
         assertChildren(container2, fragment2);
 
         final StrictViewFragment fragment3 = new StrictViewFragment();
@@ -124,36 +124,34 @@ public class FragmentViewTests {
                 .add(R.id.fragmentContainer2, fragment4)
                 .addToBackStack(null)
                 .commit();
-        executePendingTransactions();
+        FragmentTestUtil.executePendingTransactions(mActivityRule);
 
         assertChildren(container1, fragment1, fragment3);
         assertChildren(container2, fragment2, fragment4);
 
         fm.popBackStack();
-        executePendingTransactions();
+        FragmentTestUtil.executePendingTransactions(mActivityRule);
         assertChildren(container1, fragment1);
         assertChildren(container2, fragment2);
 
         fm.popBackStack();
-        executePendingTransactions();
+        FragmentTestUtil.executePendingTransactions(mActivityRule);
         assertChildren(container1, fragment1);
         assertChildren(container2);
 
         fm.popBackStack();
-        executePendingTransactions();
+        FragmentTestUtil.executePendingTransactions(mActivityRule);
         assertEquals(0, container1.getChildCount());
     }
 
     // When you add a fragment that's has already been added, it should throw.
     @Test
     public void doubleAdd() throws Throwable {
-        setContentView(R.layout.simple_container);
-        ViewGroup container = (ViewGroup)
-                mActivityRule.getActivity().findViewById(R.id.fragmentContainer);
+        FragmentTestUtil.setContentView(mActivityRule, R.layout.simple_container);
         final FragmentManager fm = mActivityRule.getActivity().getFragmentManager();
         final StrictViewFragment fragment1 = new StrictViewFragment();
         fm.beginTransaction().add(R.id.fragmentContainer, fragment1).commit();
-        executePendingTransactions();
+        FragmentTestUtil.executePendingTransactions(mActivityRule);
 
         mInstrumentation.runOnMainSync(new Runnable() {
             @Override
@@ -176,7 +174,7 @@ public class FragmentViewTests {
     // add the Views back properly
     @Test
     public void removeFragments() throws Throwable {
-        setContentView(R.layout.simple_container);
+        FragmentTestUtil.setContentView(mActivityRule, R.layout.simple_container);
         ViewGroup container = (ViewGroup)
                 mActivityRule.getActivity().findViewById(R.id.fragmentContainer);
         final FragmentManager fm = mActivityRule.getActivity().getFragmentManager();
@@ -190,19 +188,19 @@ public class FragmentViewTests {
                 .add(R.id.fragmentContainer, fragment3, "3")
                 .add(R.id.fragmentContainer, fragment4, "4")
                 .commit();
-        executePendingTransactions();
+        FragmentTestUtil.executePendingTransactions(mActivityRule);
         assertChildren(container, fragment1, fragment2, fragment3, fragment4);
 
         // Remove a view
         fm.beginTransaction().remove(fragment4).addToBackStack(null).commit();
-        executePendingTransactions();
+        FragmentTestUtil.executePendingTransactions(mActivityRule);
 
         assertEquals(3, container.getChildCount());
         assertChildren(container, fragment1, fragment2, fragment3);
 
         // remove another one
         fm.beginTransaction().remove(fragment2).addToBackStack(null).commit();
-        executePendingTransactions();
+        FragmentTestUtil.executePendingTransactions(mActivityRule);
         assertChildren(container, fragment1, fragment3);
 
         // Now remove the remaining:
@@ -211,22 +209,22 @@ public class FragmentViewTests {
                 .remove(fragment1)
                 .addToBackStack(null)
                 .commit();
-        executePendingTransactions();
+        FragmentTestUtil.executePendingTransactions(mActivityRule);
         assertChildren(container);
 
         fm.popBackStack();
-        executePendingTransactions();
+        FragmentTestUtil.executePendingTransactions(mActivityRule);
         final Fragment replacement1 = fm.findFragmentByTag("1");
         final Fragment replacement3 = fm.findFragmentByTag("3");
         assertChildren(container, replacement1, replacement3);
 
         fm.popBackStack();
-        executePendingTransactions();
+        FragmentTestUtil.executePendingTransactions(mActivityRule);
         final Fragment replacement2 = fm.findFragmentByTag("2");
         assertChildren(container, replacement1, replacement3, replacement2);
 
         fm.popBackStack();
-        executePendingTransactions();
+        FragmentTestUtil.executePendingTransactions(mActivityRule);
         final Fragment replacement4 = fm.findFragmentByTag("4");
         assertChildren(container, replacement1, replacement3, replacement2, replacement4);
     }
@@ -234,22 +232,22 @@ public class FragmentViewTests {
     // Removing a hidden fragment should remove the View and popping should bring it back hidden
     @Test
     public void removeHiddenView() throws Throwable {
-        setContentView(R.layout.simple_container);
+        FragmentTestUtil.setContentView(mActivityRule, R.layout.simple_container);
         ViewGroup container = (ViewGroup)
                 mActivityRule.getActivity().findViewById(R.id.fragmentContainer);
         final FragmentManager fm = mActivityRule.getActivity().getFragmentManager();
         final StrictViewFragment fragment1 = new StrictViewFragment();
         fm.beginTransaction().add(R.id.fragmentContainer, fragment1, "1").hide(fragment1).commit();
-        executePendingTransactions();
+        FragmentTestUtil.executePendingTransactions(mActivityRule);
         assertChildren(container, fragment1);
         assertTrue(fragment1.isHidden());
 
         fm.beginTransaction().remove(fragment1).addToBackStack(null).commit();
-        executePendingTransactions();
+        FragmentTestUtil.executePendingTransactions(mActivityRule);
         assertChildren(container);
 
         fm.popBackStack();
-        executePendingTransactions();
+        FragmentTestUtil.executePendingTransactions(mActivityRule);
         final Fragment replacement1 = fm.findFragmentByTag("1");
         assertChildren(container, replacement1);
         assertTrue(replacement1.isHidden());
@@ -261,7 +259,7 @@ public class FragmentViewTests {
     // the Fragment back detached
     @Test
     public void removeDetatchedView() throws Throwable {
-        setContentView(R.layout.simple_container);
+        FragmentTestUtil.setContentView(mActivityRule, R.layout.simple_container);
         ViewGroup container = (ViewGroup)
                 mActivityRule.getActivity().findViewById(R.id.fragmentContainer);
         final FragmentManager fm = mActivityRule.getActivity().getFragmentManager();
@@ -270,16 +268,16 @@ public class FragmentViewTests {
                 .add(R.id.fragmentContainer, fragment1, "1")
                 .detach(fragment1)
                 .commit();
-        executePendingTransactions();
+        FragmentTestUtil.executePendingTransactions(mActivityRule);
         assertChildren(container);
         assertTrue(fragment1.isDetached());
 
         fm.beginTransaction().remove(fragment1).addToBackStack(null).commit();
-        executePendingTransactions();
+        FragmentTestUtil.executePendingTransactions(mActivityRule);
         assertChildren(container);
 
         fm.popBackStack();
-        executePendingTransactions();
+        FragmentTestUtil.executePendingTransactions(mActivityRule);
         final Fragment replacement1 = fm.findFragmentByTag("1");
         assertChildren(container);
         assertTrue(replacement1.isDetached());
@@ -289,7 +287,7 @@ public class FragmentViewTests {
     // add the same fragment in one transaction.
     @Test
     public void addRemoveAdd() throws Throwable {
-        setContentView(R.layout.simple_container);
+        FragmentTestUtil.setContentView(mActivityRule, R.layout.simple_container);
         ViewGroup container = (ViewGroup)
                 mActivityRule.getActivity().findViewById(R.id.fragmentContainer);
         final FragmentManager fm = mActivityRule.getActivity().getFragmentManager();
@@ -300,23 +298,23 @@ public class FragmentViewTests {
                 .add(R.id.fragmentContainer, fragment)
                 .addToBackStack(null)
                 .commit();
-        executePendingTransactions();
+        FragmentTestUtil.executePendingTransactions(mActivityRule);
         assertChildren(container, fragment);
 
         fm.popBackStack();
-        executePendingTransactions();
+        FragmentTestUtil.executePendingTransactions(mActivityRule);
         assertChildren(container);
     }
 
     // Removing a fragment that isn't in should throw
     @Test
     public void removeNothThere() throws Throwable {
-        setContentView(R.layout.simple_container);
+        FragmentTestUtil.setContentView(mActivityRule, R.layout.simple_container);
         final FragmentManager fm = mActivityRule.getActivity().getFragmentManager();
         final StrictViewFragment fragment = new StrictViewFragment();
         fm.beginTransaction().remove(fragment).commit();
         try {
-            executePendingTransactions();
+            FragmentTestUtil.executePendingTransactions(mActivityRule);
             fail("Removing a fragment that isn't in should throw an exception");
         } catch (Throwable t) {
             // expected
@@ -326,26 +324,26 @@ public class FragmentViewTests {
     // Hide a fragment and its View should be GONE. Then pop it and the View should be VISIBLE
     @Test
     public void hideFragment() throws Throwable {
-        setContentView(R.layout.simple_container);
+        FragmentTestUtil.setContentView(mActivityRule, R.layout.simple_container);
         ViewGroup container = (ViewGroup)
                 mActivityRule.getActivity().findViewById(R.id.fragmentContainer);
         final FragmentManager fm = mActivityRule.getActivity().getFragmentManager();
         final StrictViewFragment fragment = new StrictViewFragment();
         fm.beginTransaction().add(R.id.fragmentContainer, fragment).commit();
-        executePendingTransactions();
+        FragmentTestUtil.executePendingTransactions(mActivityRule);
 
         assertChildren(container, fragment);
         assertEquals(View.VISIBLE, fragment.getView().getVisibility());
 
         fm.beginTransaction().hide(fragment).addToBackStack(null).commit();
-        executePendingTransactions();
+        FragmentTestUtil.executePendingTransactions(mActivityRule);
 
         assertChildren(container, fragment);
         assertTrue(fragment.isHidden());
         assertEquals(View.GONE, fragment.getView().getVisibility());
 
         fm.popBackStack();
-        executePendingTransactions();
+        FragmentTestUtil.executePendingTransactions(mActivityRule);
 
         assertChildren(container, fragment);
         assertFalse(fragment.isHidden());
@@ -355,7 +353,7 @@ public class FragmentViewTests {
     // Hiding a hidden fragment should throw
     @Test
     public void doubleHide() throws Throwable {
-        setContentView(R.layout.simple_container);
+        FragmentTestUtil.setContentView(mActivityRule, R.layout.simple_container);
         final FragmentManager fm = mActivityRule.getActivity().getFragmentManager();
         final StrictViewFragment fragment = new StrictViewFragment();
         fm.beginTransaction()
@@ -364,7 +362,7 @@ public class FragmentViewTests {
                 .hide(fragment)
                 .commit();
         try {
-            executePendingTransactions();
+            FragmentTestUtil.executePendingTransactions(mActivityRule);
             fail("Hiding a hidden fragment should throw an exception");
         } catch (Throwable t) {
             // expected
@@ -374,14 +372,14 @@ public class FragmentViewTests {
     // Hiding a non-existing fragment should throw
     @Test
     public void hideUnAdded() throws Throwable {
-        setContentView(R.layout.simple_container);
+        FragmentTestUtil.setContentView(mActivityRule, R.layout.simple_container);
         final FragmentManager fm = mActivityRule.getActivity().getFragmentManager();
         final StrictViewFragment fragment = new StrictViewFragment();
         fm.beginTransaction()
                 .hide(fragment)
                 .commit();
         try {
-            executePendingTransactions();
+            FragmentTestUtil.executePendingTransactions(mActivityRule);
             fail("Hiding a non-existing fragment should throw an exception");
         } catch (Throwable t) {
             // expected
@@ -392,27 +390,27 @@ public class FragmentViewTests {
     // BONE.
     @Test
     public void showFragment() throws Throwable {
-        setContentView(R.layout.simple_container);
+        FragmentTestUtil.setContentView(mActivityRule, R.layout.simple_container);
         ViewGroup container = (ViewGroup)
                 mActivityRule.getActivity().findViewById(R.id.fragmentContainer);
         final FragmentManager fm = mActivityRule.getActivity().getFragmentManager();
         final StrictViewFragment fragment = new StrictViewFragment();
         fm.beginTransaction().add(R.id.fragmentContainer, fragment).hide(fragment).commit();
-        executePendingTransactions();
+        FragmentTestUtil.executePendingTransactions(mActivityRule);
 
         assertChildren(container, fragment);
         assertTrue(fragment.isHidden());
         assertEquals(View.GONE, fragment.getView().getVisibility());
 
         fm.beginTransaction().show(fragment).addToBackStack(null).commit();
-        executePendingTransactions();
+        FragmentTestUtil.executePendingTransactions(mActivityRule);
 
         assertChildren(container, fragment);
         assertFalse(fragment.isHidden());
         assertEquals(View.VISIBLE, fragment.getView().getVisibility());
 
         fm.popBackStack();
-        executePendingTransactions();
+        FragmentTestUtil.executePendingTransactions(mActivityRule);
 
         assertChildren(container, fragment);
         assertTrue(fragment.isHidden());
@@ -422,7 +420,7 @@ public class FragmentViewTests {
     // Showing a shown fragment should throw
     @Test
     public void showShown() throws Throwable {
-        setContentView(R.layout.simple_container);
+        FragmentTestUtil.setContentView(mActivityRule, R.layout.simple_container);
         final FragmentManager fm = mActivityRule.getActivity().getFragmentManager();
         final StrictViewFragment fragment = new StrictViewFragment();
         fm.beginTransaction()
@@ -430,7 +428,7 @@ public class FragmentViewTests {
                 .show(fragment)
                 .commit();
         try {
-            executePendingTransactions();
+            FragmentTestUtil.executePendingTransactions(mActivityRule);
             fail("Showing a visible fragment should throw an exception");
         } catch (Throwable t) {
             // expected
@@ -440,14 +438,14 @@ public class FragmentViewTests {
     // Showing a non-existing fragment should throw
     @Test
     public void showUnAdded() throws Throwable {
-        setContentView(R.layout.simple_container);
+        FragmentTestUtil.setContentView(mActivityRule, R.layout.simple_container);
         final FragmentManager fm = mActivityRule.getActivity().getFragmentManager();
         final StrictViewFragment fragment = new StrictViewFragment();
         fm.beginTransaction()
                 .show(fragment)
                 .commit();
         try {
-            executePendingTransactions();
+            FragmentTestUtil.executePendingTransactions(mActivityRule);
             fail("Showing a non-existing fragment should throw an exception");
         } catch (Throwable t) {
             // expected
@@ -458,26 +456,26 @@ public class FragmentViewTests {
     // bring it back VISIBLE
     @Test
     public void detachFragment() throws Throwable {
-        setContentView(R.layout.simple_container);
+        FragmentTestUtil.setContentView(mActivityRule, R.layout.simple_container);
         ViewGroup container = (ViewGroup)
                 mActivityRule.getActivity().findViewById(R.id.fragmentContainer);
         final FragmentManager fm = mActivityRule.getActivity().getFragmentManager();
         final StrictViewFragment fragment = new StrictViewFragment();
         fm.beginTransaction().add(R.id.fragmentContainer, fragment).commit();
-        executePendingTransactions();
+        FragmentTestUtil.executePendingTransactions(mActivityRule);
 
         assertChildren(container, fragment);
         assertFalse(fragment.isDetached());
         assertEquals(View.VISIBLE, fragment.getView().getVisibility());
 
         fm.beginTransaction().detach(fragment).addToBackStack(null).commit();
-        executePendingTransactions();
+        FragmentTestUtil.executePendingTransactions(mActivityRule);
 
         assertChildren(container);
         assertTrue(fragment.isDetached());
 
         fm.popBackStack();
-        executePendingTransactions();
+        FragmentTestUtil.executePendingTransactions(mActivityRule);
 
         assertChildren(container, fragment);
         assertFalse(fragment.isDetached());
@@ -488,13 +486,13 @@ public class FragmentViewTests {
     // bring it back hidden
     @Test
     public void detachHiddenFragment() throws Throwable {
-        setContentView(R.layout.simple_container);
+        FragmentTestUtil.setContentView(mActivityRule, R.layout.simple_container);
         ViewGroup container = (ViewGroup)
                 mActivityRule.getActivity().findViewById(R.id.fragmentContainer);
         final FragmentManager fm = mActivityRule.getActivity().getFragmentManager();
         final StrictViewFragment fragment = new StrictViewFragment();
         fm.beginTransaction().add(R.id.fragmentContainer, fragment).hide(fragment).commit();
-        executePendingTransactions();
+        FragmentTestUtil.executePendingTransactions(mActivityRule);
 
         assertChildren(container, fragment);
         assertFalse(fragment.isDetached());
@@ -502,14 +500,14 @@ public class FragmentViewTests {
         assertEquals(View.GONE, fragment.getView().getVisibility());
 
         fm.beginTransaction().detach(fragment).addToBackStack(null).commit();
-        executePendingTransactions();
+        FragmentTestUtil.executePendingTransactions(mActivityRule);
 
         assertChildren(container);
         assertTrue(fragment.isHidden());
         assertTrue(fragment.isDetached());
 
         fm.popBackStack();
-        executePendingTransactions();
+        FragmentTestUtil.executePendingTransactions(mActivityRule);
 
         assertChildren(container, fragment);
         assertTrue(fragment.isHidden());
@@ -520,7 +518,7 @@ public class FragmentViewTests {
     // Detaching a detached fragment should throw
     @Test
     public void detachDetatched() throws Throwable {
-        setContentView(R.layout.simple_container);
+        FragmentTestUtil.setContentView(mActivityRule, R.layout.simple_container);
         final FragmentManager fm = mActivityRule.getActivity().getFragmentManager();
         final StrictViewFragment fragment = new StrictViewFragment();
         fm.beginTransaction()
@@ -529,7 +527,7 @@ public class FragmentViewTests {
                 .detach(fragment)
                 .commit();
         try {
-            executePendingTransactions();
+            FragmentTestUtil.executePendingTransactions(mActivityRule);
             fail("Detaching a detached fragment should throw an exception");
         } catch (Throwable t) {
             // expected
@@ -539,14 +537,14 @@ public class FragmentViewTests {
     // Detaching a non-existing fragment should throw
     @Test
     public void detachUnAdded() throws Throwable {
-        setContentView(R.layout.simple_container);
+        FragmentTestUtil.setContentView(mActivityRule, R.layout.simple_container);
         final FragmentManager fm = mActivityRule.getActivity().getFragmentManager();
         final StrictViewFragment fragment = new StrictViewFragment();
         fm.beginTransaction()
                 .detach(fragment)
                 .commit();
         try {
-            executePendingTransactions();
+            FragmentTestUtil.executePendingTransactions(mActivityRule);
             fail("Detaching a non-existing fragment should throw an exception");
         } catch (Throwable t) {
             // expected
@@ -557,26 +555,26 @@ public class FragmentViewTests {
     // remove it again
     @Test
     public void attachFragment() throws Throwable {
-        setContentView(R.layout.simple_container);
+        FragmentTestUtil.setContentView(mActivityRule, R.layout.simple_container);
         ViewGroup container = (ViewGroup)
                 mActivityRule.getActivity().findViewById(R.id.fragmentContainer);
         final FragmentManager fm = mActivityRule.getActivity().getFragmentManager();
         final StrictViewFragment fragment = new StrictViewFragment();
         fm.beginTransaction().add(R.id.fragmentContainer, fragment).detach(fragment).commit();
-        executePendingTransactions();
+        FragmentTestUtil.executePendingTransactions(mActivityRule);
 
         assertChildren(container);
         assertTrue(fragment.isDetached());
 
         fm.beginTransaction().attach(fragment).addToBackStack(null).commit();
-        executePendingTransactions();
+        FragmentTestUtil.executePendingTransactions(mActivityRule);
 
         assertChildren(container, fragment);
         assertFalse(fragment.isDetached());
         assertEquals(View.VISIBLE, fragment.getView().getVisibility());
 
         fm.popBackStack();
-        executePendingTransactions();
+        FragmentTestUtil.executePendingTransactions(mActivityRule);
 
         assertChildren(container);
         assertTrue(fragment.isDetached());
@@ -586,7 +584,7 @@ public class FragmentViewTests {
     // remove it again.
     @Test
     public void attachHiddenFragment() throws Throwable {
-        setContentView(R.layout.simple_container);
+        FragmentTestUtil.setContentView(mActivityRule, R.layout.simple_container);
         ViewGroup container = (ViewGroup)
                 mActivityRule.getActivity().findViewById(R.id.fragmentContainer);
         final FragmentManager fm = mActivityRule.getActivity().getFragmentManager();
@@ -596,14 +594,14 @@ public class FragmentViewTests {
                 .hide(fragment)
                 .detach(fragment)
                 .commit();
-        executePendingTransactions();
+        FragmentTestUtil.executePendingTransactions(mActivityRule);
 
         assertChildren(container);
         assertTrue(fragment.isDetached());
         assertTrue(fragment.isHidden());
 
         fm.beginTransaction().attach(fragment).addToBackStack(null).commit();
-        executePendingTransactions();
+        FragmentTestUtil.executePendingTransactions(mActivityRule);
 
         assertChildren(container, fragment);
         assertTrue(fragment.isHidden());
@@ -611,7 +609,7 @@ public class FragmentViewTests {
         assertEquals(View.GONE, fragment.getView().getVisibility());
 
         fm.popBackStack();
-        executePendingTransactions();
+        FragmentTestUtil.executePendingTransactions(mActivityRule);
 
         assertChildren(container);
         assertTrue(fragment.isDetached());
@@ -621,7 +619,7 @@ public class FragmentViewTests {
     // Attaching an attached fragment should throw
     @Test
     public void attachAttached() throws Throwable {
-        setContentView(R.layout.simple_container);
+        FragmentTestUtil.setContentView(mActivityRule, R.layout.simple_container);
         final FragmentManager fm = mActivityRule.getActivity().getFragmentManager();
         final StrictViewFragment fragment = new StrictViewFragment();
         fm.beginTransaction()
@@ -629,7 +627,7 @@ public class FragmentViewTests {
                 .attach(fragment)
                 .commit();
         try {
-            executePendingTransactions();
+            FragmentTestUtil.executePendingTransactions(mActivityRule);
             fail("Attaching an attached fragment should throw an exception");
         } catch (Throwable t) {
             // expected
@@ -639,14 +637,14 @@ public class FragmentViewTests {
     // Attaching a non-existing fragment should throw
     @Test
     public void attachUnAdded() throws Throwable {
-        setContentView(R.layout.simple_container);
+        FragmentTestUtil.setContentView(mActivityRule, R.layout.simple_container);
         final FragmentManager fm = mActivityRule.getActivity().getFragmentManager();
         final StrictViewFragment fragment = new StrictViewFragment();
         fm.beginTransaction()
                 .attach(fragment)
                 .commit();
         try {
-            executePendingTransactions();
+            FragmentTestUtil.executePendingTransactions(mActivityRule);
             fail("Attaching a non-existing fragment should throw an exception");
         } catch (Throwable t) {
             // expected
@@ -656,13 +654,13 @@ public class FragmentViewTests {
     // Simple replace of one fragment in a container. Popping should replace it back again
     @Test
     public void replaceOne() throws Throwable {
-        setContentView(R.layout.simple_container);
+        FragmentTestUtil.setContentView(mActivityRule, R.layout.simple_container);
         ViewGroup container = (ViewGroup)
                 mActivityRule.getActivity().findViewById(R.id.fragmentContainer);
         final FragmentManager fm = mActivityRule.getActivity().getFragmentManager();
         final StrictViewFragment fragment1 = new StrictViewFragment();
         fm.beginTransaction().add(R.id.fragmentContainer, fragment1, "1").commit();
-        executePendingTransactions();
+        FragmentTestUtil.executePendingTransactions(mActivityRule);
 
         assertChildren(container, fragment1);
 
@@ -671,13 +669,13 @@ public class FragmentViewTests {
                 .replace(R.id.fragmentContainer, fragment2)
                 .addToBackStack(null)
                 .commit();
-        executePendingTransactions();
+        FragmentTestUtil.executePendingTransactions(mActivityRule);
 
         assertChildren(container, fragment2);
         assertEquals(View.VISIBLE, fragment2.getView().getVisibility());
 
         fm.popBackStack();
-        executePendingTransactions();
+        FragmentTestUtil.executePendingTransactions(mActivityRule);
 
         Fragment replacement1 = fm.findFragmentByTag("1");
         assertNotNull(replacement1);
@@ -691,7 +689,7 @@ public class FragmentViewTests {
     // Replace of multiple fragments in a container. Popping should replace it back again
     @Test
     public void replaceTwo() throws Throwable {
-        setContentView(R.layout.simple_container);
+        FragmentTestUtil.setContentView(mActivityRule, R.layout.simple_container);
         ViewGroup container = (ViewGroup)
                 mActivityRule.getActivity().findViewById(R.id.fragmentContainer);
         final FragmentManager fm = mActivityRule.getActivity().getFragmentManager();
@@ -702,7 +700,7 @@ public class FragmentViewTests {
                 .add(R.id.fragmentContainer, fragment2, "2")
                 .hide(fragment2)
                 .commit();
-        executePendingTransactions();
+        FragmentTestUtil.executePendingTransactions(mActivityRule);
 
         assertChildren(container, fragment1, fragment2);
 
@@ -711,13 +709,13 @@ public class FragmentViewTests {
                 .replace(R.id.fragmentContainer, fragment3)
                 .addToBackStack(null)
                 .commit();
-        executePendingTransactions();
+        FragmentTestUtil.executePendingTransactions(mActivityRule);
 
         assertChildren(container, fragment3);
         assertEquals(View.VISIBLE, fragment3.getView().getVisibility());
 
         fm.popBackStack();
-        executePendingTransactions();
+        FragmentTestUtil.executePendingTransactions(mActivityRule);
 
         Fragment replacement1 = fm.findFragmentByTag("1");
         Fragment replacement2 = fm.findFragmentByTag("2");
@@ -739,7 +737,7 @@ public class FragmentViewTests {
     // Replace of empty container. Should act as add and popping should just remove the fragment
     @Test
     public void replaceZero() throws Throwable {
-        setContentView(R.layout.simple_container);
+        FragmentTestUtil.setContentView(mActivityRule, R.layout.simple_container);
         ViewGroup container = (ViewGroup)
                 mActivityRule.getActivity().findViewById(R.id.fragmentContainer);
         final FragmentManager fm = mActivityRule.getActivity().getFragmentManager();
@@ -749,33 +747,15 @@ public class FragmentViewTests {
                 .replace(R.id.fragmentContainer, fragment)
                 .addToBackStack(null)
                 .commit();
-        executePendingTransactions();
+        FragmentTestUtil.executePendingTransactions(mActivityRule);
 
         assertChildren(container, fragment);
         assertEquals(View.VISIBLE, fragment.getView().getVisibility());
 
         fm.popBackStack();
-        executePendingTransactions();
+        FragmentTestUtil.executePendingTransactions(mActivityRule);
 
         assertChildren(container);
-    }
-
-    private void executePendingTransactions() throws Throwable {
-        mInstrumentation.runOnMainSync(new Runnable() {
-            @Override
-            public void run() {
-                mActivityRule.getActivity().getFragmentManager().executePendingTransactions();
-            }
-        });
-    }
-
-    private void setContentView(final int layoutId) throws Throwable {
-        mInstrumentation.runOnMainSync(new Runnable() {
-            @Override
-            public void run() {
-                mActivityRule.getActivity().setContentView(layoutId);
-            }
-        });
     }
 
     private void assertChildren(ViewGroup container, Fragment... fragments) {
