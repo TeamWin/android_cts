@@ -17,11 +17,12 @@
 -->
 <appwidget-provider
     xmlns:android="http://schemas.android.com/apk/res/android"
-    android:minWidth="40dp"
-    android:minHeight="40dp"
-    android:minResizeWidth="60dp"
-    android:minResizeHeight="60dp"
+    android:minWidth="200dp"
+    android:minHeight="200dp"
+    android:minResizeWidth="300dp"
+    android:minResizeHeight="300dp"
     android:updatePeriodMillis="86400000"
+    android:initialLayout="@layout/remoteviews_adapter"
     android:resizeMode="horizontal|vertical"
     android:widgetCategory="home_screen|keyguard"
     android:previewImage="@drawable/icon_red">
