@@ -18,6 +18,7 @@ package com.android.cts.tradefed.testtype;
 import com.android.compatibility.common.util.AbiUtils;
 import com.android.ddmlib.Log;
 import com.android.ddmlib.testrunner.TestIdentifier;
+import com.android.tradefed.testtype.Abi;
 import com.android.tradefed.util.xml.AbstractXmlParser;
 
 import org.xml.sax.Attributes;

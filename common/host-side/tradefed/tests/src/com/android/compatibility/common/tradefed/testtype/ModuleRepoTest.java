@@ -21,6 +21,7 @@ import com.android.compatibility.common.tradefed.testtype.ModuleRepo.ConfigFilte
 import com.android.compatibility.common.tradefed.testtype.IModuleDef;
 import com.android.compatibility.common.util.AbiUtils;
 import com.android.tradefed.build.IBuildInfo;
+import com.android.tradefed.testtype.Abi;
 import com.android.tradefed.testtype.IAbi;
 import com.android.tradefed.testtype.IRemoteTest;
 import com.android.tradefed.testtype.IShardableTest;

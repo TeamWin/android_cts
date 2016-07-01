@@ -22,7 +22,6 @@ import com.android.cts.tradefed.result.TestResultsTest;
 import com.android.cts.tradefed.result.TestSummaryXmlTest;
 import com.android.cts.tradefed.result.TestTest;
 import com.android.cts.tradefed.result.TestLogTest;
-import com.android.cts.tradefed.testtype.Abi;
 import com.android.cts.tradefed.testtype.CtsTestTest;
 import com.android.cts.tradefed.testtype.DeqpTestRunnerTest;
 import com.android.cts.tradefed.testtype.GeeTestTest;
@@ -32,6 +31,7 @@ import com.android.cts.tradefed.testtype.TestPackageDefTest;
 import com.android.cts.tradefed.testtype.TestPackageXmlParserTest;
 import com.android.cts.tradefed.testtype.TestPlanTest;
 import com.android.cts.tradefed.testtype.WrappedGTestResultParserTest;
+import com.android.tradefed.testtype.Abi;
 import com.android.tradefed.testtype.IAbi;
 
 import junit.framework.Test;
