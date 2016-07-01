@@ -93,6 +93,7 @@ public class VectorDrawableTest extends AndroidTestCase {
             R.drawable.vector_icon_stroke_3,
             R.drawable.vector_icon_scale_1,
             R.drawable.vector_icon_scale_2,
+            R.drawable.vector_icon_group_clip,
     };
 
     private static final int[] L_M_GOLDEN_IMAGES = new int[] {
@@ -109,6 +110,7 @@ public class VectorDrawableTest extends AndroidTestCase {
             R.drawable.vector_icon_stroke_3_golden,
             R.drawable.vector_icon_scale_1_golden,
             R.drawable.vector_icon_scale_2_golden,
+            R.drawable.vector_icon_group_clip_golden,
     };
 
     private static final int[] N_ICON_RES_IDS = new int[] {
