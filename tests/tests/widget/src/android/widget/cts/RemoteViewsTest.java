@@ -708,6 +708,7 @@ public class RemoteViewsTest extends ActivityInstrumentationTestCase2<RemoteView
         view.performClick();
         newActivity = am.waitForActivityWithTimeout(TEST_TIMEOUT);
         assertNotNull(newActivity);
+        assertTrue(newActivity instanceof MockURLSpanTestActivity);
         newActivity.finish();
     }
 

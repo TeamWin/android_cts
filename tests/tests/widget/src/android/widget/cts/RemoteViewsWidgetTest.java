@@ -16,6 +16,7 @@
 
 package android.widget.cts;
 
+import android.app.Activity;
 import android.app.Instrumentation;
 import android.appwidget.AppWidgetHost;
 import android.appwidget.AppWidgetHostView;
@@ -27,10 +28,12 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.cts.util.PollingCheck;
 import android.cts.util.SystemUtil;
+import android.os.Bundle;
 import android.os.Process;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.runner.AndroidJUnit4;
 import android.test.suitebuilder.annotation.LargeTest;
+import android.view.View;
 import android.widget.RemoteViews;
 import android.widget.RemoteViewsService;
 import android.widget.StackView;
@@ -138,6 +141,15 @@ public class RemoteViewsWidgetTest {
                 RemoteViews remoteViews = new RemoteViews(mContext.getPackageName(),
                         R.layout.remoteviews_adapter_item);
                 remoteViews.setTextViewText(R.id.item, COUNTRY_LIST[position]);
+
+                // Set a fill-intent which will be used to fill-in the pending intent template
+                // which is set on the collection view in MyAppWidgetProvider.
+                Bundle extras = new Bundle();
+                extras.putString(MockURLSpanTestActivity.KEY_PARAM, COUNTRY_LIST[position]);
+                Intent fillInIntent = new Intent();
+                fillInIntent.putExtras(extras);
+                remoteViews.setOnClickFillInIntent(R.id.item, fillInIntent);
+
                 if (position == 0) {
                     factoryCountDownLatch.countDown();
                 }
@@ -314,5 +326,38 @@ public class RemoteViewsWidgetTest {
         verifyShowCommand(MyAppWidgetProvider.KEY_SHOW_NEXT, COUNTRY_LIST.length - 1);
         verifyShowCommand(MyAppWidgetProvider.KEY_SHOW_NEXT, 0);
         verifyShowCommand(MyAppWidgetProvider.KEY_SHOW_NEXT, 1);
+    }
+
+    private void verifyItemClickIntents(int indexToClick) {
+        Instrumentation.ActivityMonitor am = mInstrumentation.addMonitor(
+                MockURLSpanTestActivity.class.getName(), null, false);
+
+        mStackView = (StackView) mAppWidgetHostView.findViewById(R.id.remoteViews_stack);
+        PollingCheck.waitFor(() -> mStackView.getCurrentView() != null);
+        final View initialView = mStackView.getCurrentView();
+        mStackView.performItemClick(initialView, indexToClick, 0L);
+
+        Activity newActivity = am.waitForActivityWithTimeout(TEST_TIMEOUT_MS);
+        assertNotNull(newActivity);
+        assertTrue(newActivity instanceof MockURLSpanTestActivity);
+        assertEquals(COUNTRY_LIST[indexToClick], ((MockURLSpanTestActivity) newActivity).getParam());
+        newActivity.finish();
+    }
+
+    @Test
+    public void testSetOnClickPendingIntent() {
+        if (!mHasAppWidgets) {
+            return;
+        }
+
+        verifyItemClickIntents(0);
+
+        // Switch to another child
+        verifySetDisplayedChild(2);
+        verifyItemClickIntents(2);
+
+        // And one more
+        verifyShowCommand(MyAppWidgetProvider.KEY_SHOW_NEXT, 3);
+        verifyItemClickIntents(3);
     }
 }

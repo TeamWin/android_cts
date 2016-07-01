@@ -16,12 +16,14 @@
 
 package android.widget.cts.appwidget;
 
+import android.app.PendingIntent;
 import android.appwidget.AppWidgetManager;
 import android.appwidget.AppWidgetProvider;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
 import android.widget.RemoteViews;
+import android.widget.cts.MockURLSpanTestActivity;
 import android.widget.cts.R;
 
 import java.util.concurrent.CountDownLatch;
@@ -52,15 +54,15 @@ public final class MyAppWidgetProvider extends AppWidgetProvider {
 
     @Override
     public void onUpdate(Context context, AppWidgetManager appWidgetManager, int[] appWidgetIds) {
-        final Intent intent = new Intent(context, MyAppWidgetService.class);
         final int appWidgetId = appWidgetIds[0];
 
-        intent.putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId);
-        intent.setData(Uri.parse(intent.toUri(Intent.URI_INTENT_SCHEME)));
+        final Intent stackIntent = new Intent(context, MyAppWidgetService.class);
+        stackIntent.putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId);
+        stackIntent.setData(Uri.parse(stackIntent.toUri(Intent.URI_INTENT_SCHEME)));
 
         final RemoteViews widgetAdapterView = new RemoteViews(context.getPackageName(),
                 R.layout.remoteviews_adapter);
-        widgetAdapterView.setRemoteAdapter(R.id.remoteViews_stack, intent);
+        widgetAdapterView.setRemoteAdapter(R.id.remoteViews_stack, stackIntent);
         widgetAdapterView.setEmptyView(R.id.remoteViews_stack, R.id.remoteViews_empty);
 
         if (mDisplayedChildIndex >= 0) {
@@ -72,6 +74,17 @@ public final class MyAppWidgetProvider extends AppWidgetProvider {
         if (mShowPrevious) {
             widgetAdapterView.showPrevious(R.id.remoteViews_stack);
         }
+
+        // Here we setup the a pending intent template. Individuals items of a collection
+        // cannot setup their own pending intents, instead, the collection as a whole can
+        // setup a pending intent template, and the individual items can set a fillInIntent
+        // to create unique before on an item to item basis.
+        Intent viewIntent = new Intent(Intent.ACTION_VIEW,
+                Uri.parse("ctstest://RemoteView/testWidget"));
+        PendingIntent pendingIntent = PendingIntent.getActivity(context, 0, viewIntent,
+                PendingIntent.FLAG_UPDATE_CURRENT);
+
+        widgetAdapterView.setPendingIntentTemplate(R.id.remoteViews_stack, pendingIntent);
 
         appWidgetManager.updateAppWidget(appWidgetId, widgetAdapterView);
 
