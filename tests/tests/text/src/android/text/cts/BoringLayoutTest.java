@@ -17,16 +17,20 @@
 package android.text.cts;
 
 import android.graphics.Bitmap;
+import android.graphics.Bitmap.Config;
 import android.graphics.Canvas;
 import android.graphics.Paint;
-import android.graphics.Bitmap.Config;
 import android.test.AndroidTestCase;
 import android.text.BoringLayout;
 import android.text.BoringLayout.Metrics;
 import android.text.Layout;
+import android.text.Layout.Alignment;
 import android.text.TextPaint;
 import android.text.TextUtils;
-import android.text.Layout.Alignment;
+
+import static android.cts.util.WidgetTestUtils.sameCharSequence;
+import static org.mockito.Matchers.*;
+import static org.mockito.Mockito.*;
 
 public class BoringLayoutTest extends AndroidTestCase {
     private static final float SPACING_MULT_NO_SCALE = 1.0f;
@@ -282,7 +286,7 @@ public class BoringLayoutTest extends AndroidTestCase {
     }
 
     public void testDraw() {
-        BoringLayout boringLayout = BoringLayout.make((String)DEFAULT_CHAR_SEQUENCE,
+        BoringLayout boringLayout = BoringLayout.make(DEFAULT_CHAR_SEQUENCE,
                 DEFAULT_PAINT,
                 DEFAULT_OUTER_WIDTH,
                 Alignment.ALIGN_NORMAL,
@@ -291,24 +295,24 @@ public class BoringLayoutTest extends AndroidTestCase {
                 DEFAULT_METRICS,
                 true);
 
-        Bitmap mMutableBitmap = Bitmap.createBitmap(10, 28, Config.ARGB_8888);
-        MockCanvas c = new MockCanvas(mMutableBitmap);
-        boringLayout.draw(c, null, null, 0);
-        assertTrue(c.isCanvasCalling);
-    }
+        Bitmap mutableBitmap = Bitmap.createBitmap(10, 28, Config.ARGB_8888);
+        Canvas canvas = spy(new Canvas(mutableBitmap));
+        boringLayout.draw(canvas, null, null, 0);
+        verify(canvas, times(1)).drawText(eq(DEFAULT_CHAR_SEQUENCE.toString()),
+                anyFloat(), anyFloat(), any(Paint.class));
 
-    private class MockCanvas extends Canvas {
-        public boolean isCanvasCalling = false;
-
-        public MockCanvas(Bitmap bitmap) {
-            super(bitmap);
-        }
-
-        @Override
-        public void drawText(String text, float x, float y, Paint paint) {
-            super.drawText(text, x, y, paint);
-            isCanvasCalling = true;
-        }
+        reset(canvas);
+        boringLayout = BoringLayout.make(DEFAULT_CHAR_SEQUENCE,
+                DEFAULT_PAINT,
+                DEFAULT_OUTER_WIDTH,
+                Alignment.ALIGN_OPPOSITE,
+                SPACING_MULT_NO_SCALE,
+                SPACING_ADD_NO_SCALE,
+                DEFAULT_METRICS,
+                true);
+        boringLayout.draw(canvas, null, null, 0);
+        verify(canvas, times(1)).drawText(sameCharSequence(DEFAULT_CHAR_SEQUENCE),
+                anyInt(), anyInt(), anyFloat(), anyFloat(), any(Paint.class));
     }
 
     private static Metrics createMetrics(

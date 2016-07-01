@@ -22,7 +22,7 @@ LOCAL_SRC_FILES := \
 
 LOCAL_ADDITIONAL_DEPENDENCIES := $(LOCAL_PATH)/Android.mk
 
-LOCAL_STATIC_JAVA_LIBRARIES := compatibility-device-util
+LOCAL_STATIC_JAVA_LIBRARIES := compatibility-device-util android-support-test mockito-target
 
 LOCAL_MODULE_TAGS := optional
 

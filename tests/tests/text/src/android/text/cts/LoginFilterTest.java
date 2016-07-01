@@ -16,11 +16,16 @@
 
 package android.text.cts;
 
-import junit.framework.TestCase;
 import android.text.LoginFilter;
+import android.text.LoginFilter.UsernameFilterGeneric;
 import android.text.SpannableString;
 import android.text.Spanned;
 import android.text.SpannedString;
+
+import junit.framework.TestCase;
+
+import static org.mockito.Matchers.*;
+import static org.mockito.Mockito.*;
 
 public class LoginFilterTest extends TestCase {
 
@@ -31,57 +36,57 @@ public class LoginFilterTest extends TestCase {
 
     public void testFilter() {
         CharSequence result;
-        MockLoginFilter loginFilter = new MockLoginFilter();
+        LoginFilter loginFilter = spy(new UsernameFilterGeneric());
         Spanned dest1 = new SpannedString("dest_without_invalid_char");
         Spanned dest2 = new SpannedString("&*dest_with_invalid_char#$");
         String source1 = "source_without_invalid_char";
         String source2 = "+=source_with_invalid_char%!";
         Spanned spannedSource = new SpannedString("&*spanned_source_with_invalid_char#$");
 
-        assertFalse(loginFilter.isStarted());
-        assertFalse(loginFilter.isStopped());
-        assertEquals(0, loginFilter.getInvalidCharacterCount());
+        verify(loginFilter, never()).onStart();
+        verify(loginFilter, never()).onStop();
+        verify(loginFilter, never()).onInvalidCharacter(anyChar());
 
         assertNull(loginFilter.filter(source1, 0, source1.length(), dest1, 0, dest1.length()));
-        assertTrue(loginFilter.isStarted());
-        assertTrue(loginFilter.isStopped());
-        assertEquals(0, loginFilter.getInvalidCharacterCount());
+        verify(loginFilter, times(1)).onStart();
+        verify(loginFilter, times(1)).onStop();
+        verify(loginFilter, never()).onInvalidCharacter(anyChar());
 
-        loginFilter.reset();
+        reset(loginFilter);
         assertNull(loginFilter.filter(source1, 0, source1.length(), dest2, 5, 6));
-        assertTrue(loginFilter.isStarted());
-        assertTrue(loginFilter.isStopped());
-        assertEquals(4, loginFilter.getInvalidCharacterCount());
+        verify(loginFilter, times(1)).onStart();
+        verify(loginFilter, times(1)).onStop();
+        verify(loginFilter, times(4)).onInvalidCharacter(anyChar());
 
-        loginFilter = new MockLoginFilter(true);
+        loginFilter = spy(new UsernameFilterGeneric(true));
         assertNull(loginFilter.filter(source2, 0, source2.length(),
                 dest1, 0, dest1.length()));
-        assertTrue(loginFilter.isStarted());
-        assertTrue(loginFilter.isStopped());
-        assertEquals(3, loginFilter.getInvalidCharacterCount());
+        verify(loginFilter, times(1)).onStart();
+        verify(loginFilter, times(1)).onStop();
+        verify(loginFilter, times(3)).onInvalidCharacter(anyChar());
 
-        loginFilter.reset();
+        reset(loginFilter);
         assertNull(loginFilter.filter(spannedSource, 0, spannedSource.length(),
                 dest1, 0, dest1.length()));
-        assertTrue(loginFilter.isStarted());
-        assertTrue(loginFilter.isStopped());
-        assertEquals(4, loginFilter.getInvalidCharacterCount());
+        verify(loginFilter, times(1)).onStart();
+        verify(loginFilter, times(1)).onStop();
+        verify(loginFilter, times(4)).onInvalidCharacter(anyChar());
 
-        loginFilter = new MockLoginFilter(false);
+        loginFilter = spy(new UsernameFilterGeneric(false));
         result = loginFilter.filter(source2, 0, source2.length(), dest1, 0, dest1.length());
         assertFalse(result instanceof SpannableString);
         assertEquals("+source_with_invalid_char", result.toString());
-        assertTrue(loginFilter.isStarted());
-        assertTrue(loginFilter.isStopped());
-        assertEquals(3, loginFilter.getInvalidCharacterCount());
+        verify(loginFilter, times(1)).onStart();
+        verify(loginFilter, times(1)).onStop();
+        verify(loginFilter, times(3)).onInvalidCharacter(anyChar());
 
-        loginFilter.reset();
+        reset(loginFilter);
         result = loginFilter.filter(spannedSource, 0, spannedSource.length(),
                 dest1, 0, dest1.length());
         assertEquals("spanned_source_with_invalid_char", result.toString());
-        assertTrue(loginFilter.isStarted());
-        assertTrue(loginFilter.isStopped());
-        assertEquals(4, loginFilter.getInvalidCharacterCount());
+        verify(loginFilter, times(1)).onStart();
+        verify(loginFilter, times(1)).onStop();
+        verify(loginFilter, times(4)).onInvalidCharacter(anyChar());
 
         try {
             loginFilter.filter(null, 0, source1.length(), dest1, 0, dest1.length());
@@ -117,71 +122,21 @@ public class LoginFilterTest extends TestCase {
     // This method does nothing. we only test onInvalidCharacter function here,
     // the callback should be tested in testFilter()
     public void testOnInvalidCharacter() {
-        LoginFilter loginFilter = new MockLoginFilter();
+        LoginFilter loginFilter = new UsernameFilterGeneric();
         loginFilter.onInvalidCharacter('a');
     }
 
     // This method does nothing. we only test onStop function here,
     // the callback should be tested in testFilter()
     public void testOnStop() {
-        LoginFilter loginFilter = new MockLoginFilter();
+        LoginFilter loginFilter = new UsernameFilterGeneric();
         loginFilter.onStop();
     }
 
     // This method does nothing. we only test onStart function here,
     // the callback should be tested in testFilter()
     public void testOnStart() {
-        LoginFilter loginFilter = new LoginFilter.UsernameFilterGeneric();
+        LoginFilter loginFilter = new UsernameFilterGeneric();
         loginFilter.onStart();
-    }
-
-    private final class MockLoginFilter extends LoginFilter.UsernameFilterGeneric {
-        private int mInvalidCharacterCount;
-        private boolean mIsStarted = false;
-        private boolean mIsStopped = false;
-
-        public MockLoginFilter() {
-            super();
-        }
-
-        public MockLoginFilter(boolean appendInvalid) {
-            super(appendInvalid);
-        }
-
-        @Override
-        public void onInvalidCharacter(char c) {
-            mInvalidCharacterCount++;
-            super.onInvalidCharacter(c);
-        }
-
-        public int getInvalidCharacterCount() {
-            return mInvalidCharacterCount;
-        }
-
-        @Override
-        public void onStart() {
-            mIsStarted = true;
-            super.onStart();
-        }
-
-        public boolean isStarted() {
-            return mIsStarted;
-        }
-
-        @Override
-        public void onStop() {
-            mIsStopped = true;
-            super.onStop();
-        }
-
-        public boolean isStopped() {
-            return mIsStopped;
-        }
-
-        public void reset() {
-            mInvalidCharacterCount = 0;
-            mIsStarted = false;
-            mIsStopped = false;
-        }
     }
 }

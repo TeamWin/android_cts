@@ -34,6 +34,9 @@ import android.view.View;
 import android.widget.TextView;
 import android.widget.TextView.BufferType;
 
+import static org.mockito.Matchers.*;
+import static org.mockito.Mockito.*;
+
 /**
  * Test {@link LinkMovementMethod}. The class is an implementation of interface
  * {@link MovementMethod}. The typical usage of {@link MovementMethod} is tested in
@@ -52,9 +55,9 @@ public class LinkMovementMethodTest extends
 
     private Spannable mSpannable;
 
-    private MockClickableSpan mClickable0;
+    private ClickableSpan mClickable0;
 
-    private MockClickableSpan mClickable1;
+    private ClickableSpan mClickable1;
 
     public LinkMovementMethodTest() {
         super("android.text.cts", CtsActivity.class);
@@ -69,11 +72,7 @@ public class LinkMovementMethodTest extends
         mView = new TextViewNoIme(getActivity());
         mView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 10);
         mView.setText(CONTENT, BufferType.SPANNABLE);
-        getInstrumentation().runOnMainSync(new Runnable() {
-            public void run() {
-                getActivity().setContentView(mView);
-            }
-        });
+        getInstrumentation().runOnMainSync(() -> getActivity().setContentView(mView));
         getInstrumentation().waitForIdleSync();
 
         mSpannable = (Spannable) mView.getText();
@@ -142,51 +141,51 @@ public class LinkMovementMethodTest extends
     public void testOnKeyDown() {
         // no selection
         assertSelection(mSpannable, -1);
-        mClickable0.reset();
-        mClickable1.reset();
+        reset(mClickable0);
+        reset(mClickable1);
         assertFalse(mMethod.onKeyDown(mView, mSpannable, KeyEvent.KEYCODE_ENTER,
                 new KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_ENTER)));
-        assertFalse(mClickable0.hasCalledOnClick());
-        assertFalse(mClickable1.hasCalledOnClick());
+        verify(mClickable0, never()).onClick(any());
+        verify(mClickable1, never()).onClick(any());
 
         // select clickable0
         Selection.setSelection(mSpannable, mSpannable.getSpanStart(mClickable0),
                 mSpannable.getSpanEnd(mClickable0));
-        mClickable0.reset();
-        mClickable1.reset();
+        reset(mClickable0);
+        reset(mClickable1);
         assertFalse(mMethod.onKeyDown(mView, mSpannable, KeyEvent.KEYCODE_DPAD_CENTER,
                 new KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_DPAD_CENTER)));
-        assertTrue(mClickable0.hasCalledOnClick());
-        assertFalse(mClickable1.hasCalledOnClick());
+        verify(mClickable0, times(1)).onClick(any());
+        verify(mClickable1, never()).onClick(any());
 
         // select unclickable
         Selection.setSelection(mSpannable, mSpannable.getSpanEnd(mClickable0),
                 mSpannable.getSpanStart(mClickable1));
-        mClickable0.reset();
-        mClickable1.reset();
+        reset(mClickable0);
+        reset(mClickable1);
         assertFalse(mMethod.onKeyDown(mView, mSpannable, KeyEvent.KEYCODE_ENTER,
                 new KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_ENTER)));
-        assertFalse(mClickable0.hasCalledOnClick());
-        assertFalse(mClickable1.hasCalledOnClick());
+        verify(mClickable0, never()).onClick(any());
+        verify(mClickable1, never()).onClick(any());
 
         // select all clickables(more than one)
         Selection.selectAll(mSpannable);
-        mClickable0.reset();
-        mClickable1.reset();
+        reset(mClickable0);
+        reset(mClickable1);
         assertFalse(mMethod.onKeyDown(mView, mSpannable, KeyEvent.KEYCODE_DPAD_CENTER,
                 new KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_DPAD_CENTER)));
-        assertFalse(mClickable0.hasCalledOnClick());
-        assertFalse(mClickable1.hasCalledOnClick());
+        verify(mClickable0, never()).onClick(any());
+        verify(mClickable1, never()).onClick(any());
 
         // part of selection is clickable
         Selection.setSelection(mSpannable, mSpannable.getSpanEnd(mClickable0),
                 mSpannable.getSpanEnd(mClickable1));
-        mClickable0.reset();
-        mClickable1.reset();
+        reset(mClickable0);
+        reset(mClickable1);
         assertFalse(mMethod.onKeyDown(mView, mSpannable, KeyEvent.KEYCODE_DPAD_CENTER,
                 new KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_DPAD_CENTER)));
-        assertFalse(mClickable0.hasCalledOnClick());
-        assertTrue(mClickable1.hasCalledOnClick());
+        verify(mClickable0, never()).onClick(any());
+        verify(mClickable1, times(1)).onClick(any());
 
         // selection contains only clickable1 and repeat count of the event is not 0
         Selection.setSelection(mSpannable, mSpannable.getSpanEnd(mClickable0),
@@ -195,11 +194,11 @@ public class LinkMovementMethodTest extends
         KeyEvent event = new KeyEvent(now, now, KeyEvent.ACTION_DOWN,
                 KeyEvent.KEYCODE_DPAD_CENTER, 1);
 
-        mClickable0.reset();
-        mClickable1.reset();
+        reset(mClickable0);
+        reset(mClickable1);
         assertFalse(mMethod.onKeyDown(mView, mSpannable, KeyEvent.KEYCODE_DPAD_CENTER, event));
-        assertFalse(mClickable0.hasCalledOnClick());
-        assertFalse(mClickable1.hasCalledOnClick());
+        verify(mClickable0, never()).onClick(any());
+        verify(mClickable1, never()).onClick(any());
 
         // null parameters
         try {
@@ -245,9 +244,9 @@ public class LinkMovementMethodTest extends
         assertSelectClickableLeftToRight(mSpannable, mClickable0);
 
         // release on first line
-        assertFalse(mClickable0.hasCalledOnClick());
+        verify(mClickable0, never()).onClick(any());
         assertTrue(releaseOnLine(0));
-        assertTrue(mClickable0.hasCalledOnClick());
+        verify(mClickable0, times(1)).onClick(any());
 
         // press on second line (unclickable)
         assertSelectClickableLeftToRight(mSpannable, mClickable0);
@@ -260,9 +259,9 @@ public class LinkMovementMethodTest extends
         assertSelectClickableLeftToRight(mSpannable, mClickable1);
 
         // release on last line
-        assertFalse(mClickable1.hasCalledOnClick());
+        verify(mClickable1, never()).onClick(any());
         assertTrue(releaseOnLine(2));
-        assertTrue(mClickable1.hasCalledOnClick());
+        verify(mClickable1, times(1)).onClick(any());
 
         // release on second line (unclickable)
         assertSelectClickableLeftToRight(mSpannable, mClickable1);
@@ -457,13 +456,10 @@ public class LinkMovementMethodTest extends
         }
     }
 
-    private MockClickableSpan markClickable(final int start, final int end) {
-        final MockClickableSpan clickableSpan = new MockClickableSpan();
-        getInstrumentation().runOnMainSync(new Runnable() {
-            public void run() {
-                mSpannable.setSpan(clickableSpan, start, end, Spanned.SPAN_MARK_MARK);
-            }
-        });
+    private ClickableSpan markClickable(final int start, final int end) {
+        final ClickableSpan clickableSpan = spy(new MockClickableSpan());
+        getInstrumentation().runOnMainSync(() -> mSpannable.setSpan(clickableSpan, start, end,
+                Spanned.SPAN_MARK_MARK));
         getInstrumentation().waitForIdleSync();
         return clickableSpan;
     }
@@ -495,13 +491,13 @@ public class LinkMovementMethodTest extends
     }
 
     private void assertSelectClickableLeftToRight(Spannable spannable,
-            MockClickableSpan clickableSpan) {
+            ClickableSpan clickableSpan) {
         assertSelection(spannable, spannable.getSpanStart(clickableSpan),
                 spannable.getSpanEnd(clickableSpan));
     }
 
     private void assertSelectClickableRightToLeft(Spannable spannable,
-            MockClickableSpan clickableSpan) {
+            ClickableSpan clickableSpan) {
         assertSelection(spannable,  spannable.getSpanEnd(clickableSpan),
                 spannable.getSpanStart(clickableSpan));
     }
@@ -528,20 +524,9 @@ public class LinkMovementMethodTest extends
         }
     }
 
-    private static class MockClickableSpan extends ClickableSpan {
-        private boolean mHasCalledOnClick;
-
+    public static class MockClickableSpan extends ClickableSpan {
         @Override
         public void onClick(View widget) {
-            mHasCalledOnClick = true;
-        }
-
-        public boolean hasCalledOnClick() {
-            return mHasCalledOnClick;
-        }
-
-        public void reset() {
-            mHasCalledOnClick = false;
         }
     }
 }
