@@ -360,7 +360,9 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
                 }
 
                 // execute pre module execution checker
-                runPreModuleCheck(module.getName(), checkers, mDevice, listener);
+                if (checkers != null && !checkers.isEmpty()) {
+                    runPreModuleCheck(module.getName(), checkers, mDevice, listener);
+                }
                 try {
                     module.run(listener);
                 } catch (DeviceUnresponsiveException due) {
@@ -390,7 +392,9 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
                             TimeUtil.formatElapsedTime(expected),
                             TimeUtil.formatElapsedTime(duration));
                 }
-                runPostModuleCheck(module.getName(), checkers, mDevice, listener);
+                if (checkers != null && !checkers.isEmpty()) {
+                    runPostModuleCheck(module.getName(), checkers, mDevice, listener);
+                }
             }
         } catch (FileNotFoundException fnfe) {
             throw new RuntimeException("Failed to initialize modules", fnfe);
