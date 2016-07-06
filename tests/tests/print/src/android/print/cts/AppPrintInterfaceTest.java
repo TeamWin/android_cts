@@ -121,9 +121,14 @@ public class AppPrintInterfaceTest extends BasePrintTest {
 
                 printer.setCapabilities(new PrinterCapabilitiesInfo.Builder(printerId)
                         .addMediaSize(PrintAttributes.MediaSize.ISO_A5, true)
+                        .addMediaSize(PrintAttributes.MediaSize.ISO_A3, false)
                         .addResolution(TWO_HUNDRED_DPI, true)
-                        .setColorModes(PrintAttributes.COLOR_MODE_MONOCHROME,
+                        .setColorModes(PrintAttributes.COLOR_MODE_MONOCHROME
+                                | PrintAttributes.COLOR_MODE_COLOR,
                                 PrintAttributes.COLOR_MODE_MONOCHROME)
+                        .setDuplexModes(PrintAttributes.DUPLEX_MODE_NONE
+                                | PrintAttributes.DUPLEX_MODE_LONG_EDGE,
+                                PrintAttributes.DUPLEX_MODE_NONE)
                         .setMinMargins(new PrintAttributes.Margins(0, 0, 0, 0)).build());
 
                 ArrayList<PrinterInfo> printers = new ArrayList<>(1);
@@ -261,7 +266,30 @@ public class AppPrintInterfaceTest extends BasePrintTest {
 
         PrintJob job = getPrintJob(printJobName);
 
+        // Check getState
         eventually(() -> assertEquals(cancelAfterState, job.getInfo().getState()));
+
+        // Check
+        switch (cancelAfterState) {
+            case PrintJobInfo.STATE_QUEUED:
+                assertTrue(job.isQueued());
+                break;
+            case PrintJobInfo.STATE_STARTED:
+                assertTrue(job.isStarted());
+                break;
+            case PrintJobInfo.STATE_BLOCKED:
+                assertTrue(job.isBlocked());
+                break;
+            case PrintJobInfo.STATE_COMPLETED:
+                assertTrue(job.isCompleted());
+                break;
+            case PrintJobInfo.STATE_FAILED:
+                assertTrue(job.isFailed());
+                break;
+            case PrintJobInfo.STATE_CANCELED:
+                assertTrue(job.isCancelled());
+                break;
+        }
 
         job.cancel();
         eventually(() -> assertTrue(job.isCancelled()));
@@ -355,17 +383,64 @@ public class AppPrintInterfaceTest extends BasePrintTest {
         PrintJob job2 = getPrintJob("testGetTwoPrintJobStates-complete");
         eventually(() -> assertTrue(job2.isCompleted()));
 
+        // Ids have to be unique
+        assertFalse(job1.getId().equals(job2.getId()));
+        assertFalse(job1.equals(job2));
+
+        // Ids have to be the same in job and info and if we find the same job again
+        assertEquals(job1.getId(), job1.getInfo().getId());
+        assertEquals(job1.getId(), getPrintJob("testGetTwoPrintJobStates-block").getId());
+        assertEquals(job1, getPrintJob("testGetTwoPrintJobStates-block"));
+        assertEquals(job2.getId(), job2.getInfo().getId());
+        assertEquals(job2.getId(), getPrintJob("testGetTwoPrintJobStates-complete").getId());
+        assertEquals(job2, getPrintJob("testGetTwoPrintJobStates-complete"));
+
         // First print job should still be there
         PrintJob job1again = getPrintJob("testGetTwoPrintJobStates-block");
         assertTrue(job1again.isBlocked());
 
-        // Check attributes that should have been applied
-        assertEquals(PrintAttributes.MediaSize.ISO_A5,
-                job1again.getInfo().getAttributes().getMediaSize());
-        assertEquals(PrintAttributes.COLOR_MODE_MONOCHROME,
-                job1again.getInfo().getAttributes().getColorMode());
-        assertEquals(TWO_HUNDRED_DPI, job1again.getInfo().getAttributes().getResolution());
-
         waitForPrinterDiscoverySessionDestroyCallbackCalled(2);
+    }
+
+    public void testChangedPrintJobInfo() throws Exception {
+        PrintDocumentAdapter adapter = setupPrint(PrintJobInfo.STATE_COMPLETED);
+        long beforeStart = System.currentTimeMillis();
+        print(adapter, "testPrintJobInfo");
+        waitForWriteAdapterCallback(1);
+        long afterStart = System.currentTimeMillis();
+
+        selectPrinter(TEST_PRINTER);
+        waitForWriteAdapterCallback(2);
+
+        PrintJob job = getPrintJob("testPrintJobInfo");
+
+        // Set some non default options
+        openPrintOptions();
+        changeCopies(2);
+        changeColor(getPrintSpoolerStringArray("color_mode_labels")[1]);
+        // Leave duplex as default to test that defaults are retained
+        changeMediaSize(PrintAttributes.MediaSize.ISO_A3.getLabel(getActivity().getPackageManager()));
+        changeOrientation(getPrintSpoolerStringArray("orientation_labels")[1]);
+
+        // Print and wait until it is completed
+        clickPrintButton();
+        answerPrintServicesWarning(true);
+        waitForPrinterDiscoverySessionDestroyCallbackCalled(1);
+        eventually(() -> job.isCompleted());
+
+        // Make sure all options were applied
+        assertEquals(TEST_PRINTER, job.getInfo().getPrinterId().getLocalId());
+        assertEquals(2, job.getInfo().getCopies());
+        assertEquals(PrintAttributes.COLOR_MODE_COLOR,
+                job.getInfo().getAttributes().getColorMode());
+        assertEquals(PrintAttributes.DUPLEX_MODE_NONE,
+                job.getInfo().getAttributes().getDuplexMode());
+        assertEquals(PrintAttributes.MediaSize.ISO_A3.asLandscape(),
+                job.getInfo().getAttributes().getMediaSize());
+        assertEquals(TWO_HUNDRED_DPI, job.getInfo().getAttributes().getResolution());
+
+        // Check creation time with 5 sec jitter allowance
+        assertTrue(beforeStart - 5000 <= job.getInfo().getCreationTime());
+        assertTrue(job.getInfo().getCreationTime() <= afterStart + 5000);
     }
 }

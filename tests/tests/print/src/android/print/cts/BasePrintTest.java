@@ -547,6 +547,17 @@ public abstract class BasePrintTest extends InstrumentationTestCase {
         }
     }
 
+    protected void changeCopies(int newCopies) throws UiObjectNotFoundException, IOException {
+        try {
+            UiObject copies = mUiDevice.findObject(new UiSelector().resourceId(
+                    "com.android.printspooler:id/copies_edittext"));
+            copies.setText(Integer.valueOf(newCopies).toString());
+        } catch (UiObjectNotFoundException e) {
+            dumpWindowHierarchy();
+            throw e;
+        }
+    }
+
     protected String getCopies() throws UiObjectNotFoundException, IOException {
         try {
             UiObject copies = mUiDevice.findObject(new UiSelector().resourceId(
