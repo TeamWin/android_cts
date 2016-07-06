@@ -524,6 +524,7 @@ public class PrinterCapabilitiesTest extends BasePrintTest {
                                                 .generatePrinterId(Integer.valueOf(printers.size())
                                                         .toString());
 
+                                        // Setup capabilities
                                         PrinterCapabilitiesInfo.Builder b =
                                                 new PrinterCapabilitiesInfo.Builder(printerId);
 
@@ -549,10 +550,43 @@ public class PrinterCapabilitiesTest extends BasePrintTest {
                                         b.setDuplexModes(allDuplexModes,
                                                 duplexModes[duplexIndex - 1]);
 
-                                        printers.add((new PrinterInfo.Builder(printerId,
+                                        b.setMinMargins(DEFAULT_MARGINS);
+
+                                        // Create printer
+                                        PrinterInfo printer = (new PrinterInfo.Builder(printerId,
                                                 Integer.valueOf(printers.size()).toString(),
                                                 PrinterInfo.STATUS_IDLE)).setCapabilities(b.build())
-                                                .build());
+                                                .build();
+
+                                        // Verify capabilities
+                                        PrinterCapabilitiesInfo cap = printer.getCapabilities();
+
+                                        assertEquals(mediaSizeIndex, cap.getMediaSizes().size());
+                                        assertEquals(mediaSizes[mediaSizeIndex - 1],
+                                                cap.getDefaults().getMediaSize());
+                                        for (int i = 0; i < mediaSizeIndex; i++) {
+                                            assertTrue(cap.getMediaSizes().contains(mediaSizes[i]));
+                                        }
+
+                                        assertEquals(resolutionIndex, cap.getResolutions().size());
+                                        assertEquals(resolutions[resolutionIndex - 1],
+                                                cap.getDefaults().getResolution());
+                                        for (int i = 0; i < resolutionIndex; i++) {
+                                            assertTrue(cap.getResolutions().contains(resolutions[i]));
+                                        }
+
+                                        assertEquals(allColors, cap.getColorModes());
+                                        assertEquals(colorModes[colorIndex - 1],
+                                                cap.getDefaults().getColorMode());
+
+                                        assertEquals(allDuplexModes, cap.getDuplexModes());
+                                        assertEquals(duplexModes[duplexIndex - 1],
+                                                cap.getDefaults().getDuplexMode());
+
+                                        assertEquals(DEFAULT_MARGINS, cap.getMinMargins());
+
+                                        // Add printer
+                                        printers.add(printer);
                                     }
                                 }
                             }
