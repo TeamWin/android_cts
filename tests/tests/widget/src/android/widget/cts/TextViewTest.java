@@ -45,6 +45,7 @@ import android.os.LocaleList;
 import android.os.Looper;
 import android.os.Parcelable;
 import android.os.ResultReceiver;
+import android.os.SystemClock;
 import android.test.ActivityInstrumentationTestCase2;
 import android.test.TouchUtils;
 import android.test.UiThreadTest;
@@ -77,6 +78,7 @@ import android.text.method.TextKeyListener;
 import android.text.method.TextKeyListener.Capitalize;
 import android.text.method.TimeKeyListener;
 import android.text.method.TransformationMethod;
+import android.text.style.ClickableSpan;
 import android.text.style.ImageSpan;
 import android.text.style.URLSpan;
 import android.text.style.UnderlineSpan;
@@ -87,8 +89,11 @@ import android.view.ActionMode;
 import android.view.ContextMenu;
 import android.view.ContextMenu.ContextMenuInfo;
 import android.view.Gravity;
+import android.view.InputDevice;
 import android.view.KeyEvent;
 import android.view.Menu;
+import android.view.MotionEvent;
+import android.view.PointerIcon;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.accessibility.AccessibilityNodeInfo;
@@ -5966,6 +5971,65 @@ public class TextViewTest extends ActivityInstrumentationTestCase2<TextViewCtsAc
         verifyGetOffsetForPosition(viewWidth / 3, lineHeight / 2);
         verifyGetOffsetForPosition(viewWidth / 2, viewHeight / 2);
         verifyGetOffsetForPosition(viewWidth, viewHeight);
+    }
+
+    @UiThreadTest
+    public void testOnResolvePointerIcon() throws InterruptedException {
+        final TextView selectableTextView = findTextView(R.id.textview_pointer);
+        final MotionEvent event = createMouseHoverEvent(selectableTextView);
+
+        // A selectable view shows the I beam
+        selectableTextView.setTextIsSelectable(true);
+
+        assertEquals(PointerIcon.getSystemIcon(mActivity, PointerIcon.TYPE_TEXT),
+                selectableTextView.onResolvePointerIcon(event, 0));
+        selectableTextView.setTextIsSelectable(false);
+
+        // A clickable view shows the hand
+        selectableTextView.setLinksClickable(true);
+        SpannableString builder = new SpannableString("hello world");
+        selectableTextView.setText(builder, BufferType.SPANNABLE);
+        Spannable text = (Spannable) selectableTextView.getText();
+        text.setSpan(
+                new ClickableSpan() {
+                    @Override
+                    public void onClick(View widget) {
+
+                    }
+                }, 0, text.length(), Spanned.SPAN_INCLUSIVE_INCLUSIVE);
+
+        assertEquals(PointerIcon.getSystemIcon(mActivity, PointerIcon.TYPE_HAND),
+                selectableTextView.onResolvePointerIcon(event, 0));
+
+        // A selectable & clickable view shows hand
+        selectableTextView.setTextIsSelectable(true);
+
+        assertEquals(PointerIcon.getSystemIcon(mActivity, PointerIcon.TYPE_HAND),
+                selectableTextView.onResolvePointerIcon(event, 0));
+
+        // An editable view shows the I-beam
+        final TextView editableTextView = new EditText(mActivity);
+
+        assertEquals(PointerIcon.getSystemIcon(mActivity, PointerIcon.TYPE_TEXT),
+                editableTextView.onResolvePointerIcon(event, 0));
+    }
+
+    private MotionEvent createMouseHoverEvent(View view) {
+        final int[] xy = new int[2];
+        view.getLocationOnScreen(xy);
+        final int viewWidth = view.getWidth();
+        final int viewHeight = view.getHeight();
+        float x = xy[0] + viewWidth / 2.0f;
+        float y = xy[1] + viewHeight / 2.0f;
+        long eventTime = SystemClock.uptimeMillis();
+        MotionEvent.PointerCoords[] pointerCoords = new MotionEvent.PointerCoords[1];
+        pointerCoords[0] = new MotionEvent.PointerCoords();
+        pointerCoords[0].x = x;
+        pointerCoords[0].y = y;
+        final int[] pointerIds = new int[1];
+        pointerIds[0] = 0;
+        return MotionEvent.obtain(0, eventTime, MotionEvent.ACTION_HOVER_MOVE, 1, pointerIds,
+                pointerCoords, 0, 0, 0, 0, 0, InputDevice.SOURCE_MOUSE, 0);
     }
 
     private void layout(final TextView textView) {
