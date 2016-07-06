@@ -24,10 +24,7 @@ import android.content.Context;
 import android.content.res.ColorStateList;
 import android.content.res.Configuration;
 import android.content.res.Resources;
-import android.graphics.Canvas;
 import android.graphics.Color;
-import android.graphics.Paint;
-import android.graphics.Paint.FontMetricsInt;
 import android.graphics.Typeface;
 import android.os.LocaleList;
 import android.os.Parcel;
@@ -45,8 +42,10 @@ import android.text.style.BackgroundColorSpan;
 import android.text.style.ReplacementSpan;
 import android.text.style.TextAppearanceSpan;
 import android.text.style.URLSpan;
-import android.util.Log;
 import android.util.StringBuilderPrinter;
+
+import static org.mockito.Matchers.*;
+import static org.mockito.Mockito.*;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -996,10 +995,6 @@ public class TextUtilsTest extends AndroidTestCase {
     private class MockCharSequence implements CharSequence {
         private char mText[];
 
-        public MockCharSequence() {
-            this("");
-        }
-
         public MockCharSequence(String text) {
             mText = text.toCharArray();
         }
@@ -1041,7 +1036,8 @@ public class TextUtilsTest extends AndroidTestCase {
                 TextUtils.getOffsetAfter(text, POS_FIRST_DBFF));
 
         // the CharSequence string has a span.
-        MockReplacementSpan mockReplacementSpan = new MockReplacementSpan();
+        ReplacementSpan mockReplacementSpan = mock(ReplacementSpan.class);
+        when(mockReplacementSpan.getSize(any(), any(), anyInt(), anyInt(), any())).thenReturn(0);
         text.setSpan(mockReplacementSpan, POS_FIRST_D800 - 1, text.length() - 1,
                 Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         assertEquals(text.length() - 1, TextUtils.getOffsetAfter(text, POS_FIRST_D800));
@@ -1066,21 +1062,6 @@ public class TextUtilsTest extends AndroidTestCase {
         }
     }
 
-    /**
-     * MockReplacementSpan for test.
-     */
-    private class MockReplacementSpan extends ReplacementSpan {
-        @Override
-        public void draw(Canvas canvas, CharSequence text, int start, int end, float x, int top,
-                int y, int bottom, Paint paint) {
-        }
-
-        @Override
-        public int getSize(Paint paint, CharSequence text, int start, int end, FontMetricsInt fm) {
-            return 0;
-        }
-    }
-
     public void testGetOffsetBefore() {
         // the first '\uDC00' is index 10, the second 'uDC00' is index 17
         // the '\uDFFF' is index 27
@@ -1102,7 +1083,8 @@ public class TextUtilsTest extends AndroidTestCase {
                 TextUtils.getOffsetBefore(text, POS_FIRST_DFFF + 1));
 
         // the CharSequence string has a span.
-        MockReplacementSpan mockReplacementSpan = new MockReplacementSpan();
+        ReplacementSpan mockReplacementSpan = mock(ReplacementSpan.class);
+        when(mockReplacementSpan.getSize(any(), any(), anyInt(), anyInt(), any())).thenReturn(0);
         text.setSpan(mockReplacementSpan, 0, POS_FIRST_DC00 + 1,
                 Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         assertEquals(0, TextUtils.getOffsetBefore(text, POS_FIRST_DC00));

@@ -18,7 +18,6 @@ package android.widget.cts.util;
 
 import android.annotation.ColorInt;
 import android.annotation.DrawableRes;
-import android.annotation.IdRes;
 import android.annotation.NonNull;
 import android.content.Context;
 import android.content.res.ColorStateList;
@@ -29,13 +28,13 @@ import android.graphics.Color;
 import android.graphics.Rect;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
-import android.text.Editable;
-import android.text.TextUtils;
 import android.util.Pair;
 import android.view.View;
 import android.view.ViewParent;
 import android.widget.TextView;
+
 import junit.framework.Assert;
+
 import org.hamcrest.BaseMatcher;
 import org.hamcrest.Description;
 
@@ -334,40 +333,6 @@ public class TestUtils {
     private static int compositeComponent(int fgC, int fgA, int bgC, int bgA, int a) {
         if (a == 0) return 0;
         return ((0xFF * fgC * fgA) + (bgC * bgA * (0xFF - fgA))) / (a * 0xFF);
-    }
-
-    public static CharSequence sameCharSequence(final CharSequence expected) {
-        return argThat(new BaseMatcher<CharSequence>() {
-            @Override
-            public boolean matches(Object o) {
-                if (o instanceof CharSequence) {
-                    return TextUtils.equals(expected, (CharSequence) o);
-                }
-                return false;
-            }
-
-            @Override
-            public void describeTo(Description description) {
-                description.appendText("doesn't match " + expected);
-            }
-        });
-    }
-
-    public static Editable sameEditable(final Editable expected) {
-        return argThat(new BaseMatcher<Editable>() {
-            @Override
-            public boolean matches(Object o) {
-                if (o instanceof Editable) {
-                    return TextUtils.equals(expected, (Editable) o);
-                }
-                return false;
-            }
-
-            @Override
-            public void describeTo(Description description) {
-                description.appendText("doesn't match " + expected);
-            }
-        });
     }
 
     public static ColorStateList colorStateListOf(final @ColorInt int color) {

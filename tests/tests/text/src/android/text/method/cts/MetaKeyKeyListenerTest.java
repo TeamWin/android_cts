@@ -20,13 +20,15 @@ import android.text.Editable;
 import android.text.Selection;
 import android.text.Spannable;
 import android.text.Spanned;
-import android.text.method.cts.KeyListenerTestCase;
 import android.text.method.DateKeyListener;
 import android.text.method.MetaKeyKeyListener;
 import android.view.KeyCharacterMap;
 import android.view.KeyEvent;
 import android.view.View;
 import android.widget.ImageView;
+
+import static org.mockito.Matchers.*;
+import static org.mockito.Mockito.*;
 
 /**
  * Test {@link MetaKeyKeyListener}.
@@ -206,18 +208,18 @@ public class MetaKeyKeyListenerTest extends KeyListenerTestCase {
     public void testResetLockedMeta() {
         MockMetaKeyKeyListener mockMetaKeyKeyListener = new MockMetaKeyKeyListener();
 
-        MockSpannable str = new MockSpannable();
+        MockSpannable str = spy(new MockSpannable());
         str.setSpan(new Object(), 0, 0, Spannable.SPAN_MARK_MARK
                 | (4 << Spannable.SPAN_USER_SHIFT));
-        assertFalse(str.hasCalledRemoveSpan());
+        verify(str, never()).removeSpan(any());
         mockMetaKeyKeyListener.callResetLockedMeta(str);
-        assertTrue(str.hasCalledRemoveSpan());
+        verify(str, atLeastOnce()).removeSpan(any());
 
-        str = new MockSpannable();
+        str = spy(new MockSpannable());
         str.setSpan(new Object(), 0, 0, Spannable.SPAN_MARK_POINT);
-        assertFalse(str.hasCalledRemoveSpan());
+        verify(str, never()).removeSpan(any());
         mockMetaKeyKeyListener.callResetLockedMeta(str);
-        assertFalse(str.hasCalledRemoveSpan());
+        verify(str, never()).removeSpan(any());
 
         try {
             mockMetaKeyKeyListener.callResetLockedMeta(null);
@@ -357,20 +359,14 @@ public class MetaKeyKeyListenerTest extends KeyListenerTestCase {
     /**
      * A mocked {@link android.text.Spannable} for testing purposes.
      */
-    private class MockSpannable implements Spannable {
+    public static class MockSpannable implements Spannable {
         private int mFlags;
-        private boolean mCalledRemoveSpan = false;
-
-        public boolean hasCalledRemoveSpan() {
-            return mCalledRemoveSpan;
-        }
 
         public void setSpan(Object what, int start, int end, int flags) {
             mFlags = flags;
         }
 
         public void removeSpan(Object what) {
-            mCalledRemoveSpan = true;
         }
 
         public <T> T[] getSpans(int start, int end, Class<T> type) {

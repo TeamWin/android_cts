@@ -16,17 +16,23 @@
 
 package android.cts.util;
 
-import org.xmlpull.v1.XmlPullParser;
-import org.xmlpull.v1.XmlPullParserException;
-
 import android.content.Context;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.text.Editable;
+import android.text.TextUtils;
+
+import junit.framework.Assert;
+
+import org.hamcrest.BaseMatcher;
+import org.hamcrest.Description;
+import org.xmlpull.v1.XmlPullParser;
+import org.xmlpull.v1.XmlPullParserException;
 
 import java.io.IOException;
 
-import junit.framework.Assert;
+import static org.mockito.Matchers.*;
 
 /**
  * The useful methods for widget test.
@@ -136,4 +142,53 @@ public class WidgetTestUtils {
         options.inPreferredConfig = config;
         return BitmapFactory.decodeResource(resources, resId, options);
     }
+
+    /**
+     * Argument matcher for equality check of a CharSequence.
+     *
+     * @param expected expected CharSequence
+     *
+     * @return
+     */
+    public static CharSequence sameCharSequence(final CharSequence expected) {
+        return argThat(new BaseMatcher<CharSequence>() {
+            @Override
+            public boolean matches(Object o) {
+                if (o instanceof CharSequence) {
+                    return TextUtils.equals(expected, (CharSequence) o);
+                }
+                return false;
+            }
+
+            @Override
+            public void describeTo(Description description) {
+                description.appendText("doesn't match " + expected);
+            }
+        });
+    }
+
+    /**
+     * Argument matcher for equality check of an Editable.
+     *
+     * @param expected expected Editable
+     *
+     * @return
+     */
+    public static Editable sameEditable(final Editable expected) {
+        return argThat(new BaseMatcher<Editable>() {
+            @Override
+            public boolean matches(Object o) {
+                if (o instanceof Editable) {
+                    return TextUtils.equals(expected, (Editable) o);
+                }
+                return false;
+            }
+
+            @Override
+            public void describeTo(Description description) {
+                description.appendText("doesn't match " + expected);
+            }
+        });
+    }
+
 }

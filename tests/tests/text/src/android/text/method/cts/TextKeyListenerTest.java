@@ -30,6 +30,8 @@ import android.view.KeyCharacterMap;
 import android.view.KeyEvent;
 import android.widget.TextView.BufferType;
 
+import static org.mockito.Mockito.*;
+
 public class TextKeyListenerTest extends KeyListenerTestCase {
     /**
      * time out of MultiTapKeyListener. longer than 2000ms in case the system is sluggish.
@@ -83,20 +85,17 @@ public class TextKeyListenerTest extends KeyListenerTestCase {
     }
 
     public void testOnSpanAdded() {
-        final MockTextKeyListener mockTextKeyListener
-                = new MockTextKeyListener(Capitalize.CHARACTERS, true);
+        final TextKeyListener mockTextKeyListener = spy(
+                new TextKeyListener(Capitalize.CHARACTERS, true));
         final Spannable text = new SpannableStringBuilder("123456");
 
-        assertFalse(mockTextKeyListener.hadAddedSpan());
-        mActivity.runOnUiThread(new Runnable() {
-            public void run() {
-                mTextView.setKeyListener(mockTextKeyListener);
-                mTextView.setText(text, BufferType.EDITABLE);
-            }
+        verify(mockTextKeyListener, never()).onSpanAdded(any(), any(), anyInt(), anyInt());
+        mActivity.runOnUiThread(() -> {
+            mTextView.setKeyListener(mockTextKeyListener);
+            mTextView.setText(text, BufferType.EDITABLE);
         });
         mInstrumentation.waitForIdleSync();
-
-        assertTrue(mockTextKeyListener.hadAddedSpan());
+        verify(mockTextKeyListener, atLeastOnce()).onSpanAdded(any(), any(), anyInt(), anyInt());
 
         mockTextKeyListener.release();
     }
@@ -187,13 +186,11 @@ public class TextKeyListenerTest extends KeyListenerTestCase {
         final TextKeyListener textKeyListener
                 = TextKeyListener.getInstance(false, Capitalize.NONE);
 
-        mActivity.runOnUiThread(new Runnable() {
-            public void run() {
-                mTextView.setText("", BufferType.EDITABLE);
-                Selection.setSelection((Editable) mTextView.getText(), 0, 0);
-                mTextView.setKeyListener(textKeyListener);
-                mTextView.requestFocus();
-            }
+        mActivity.runOnUiThread(() -> {
+            mTextView.setText("", BufferType.EDITABLE);
+            Selection.setSelection(mTextView.getText(), 0, 0);
+            mTextView.setKeyListener(textKeyListener);
+            mTextView.requestFocus();
         });
         mInstrumentation.waitForIdleSync();
         assertEquals("", mTextView.getText().toString());
@@ -219,12 +216,10 @@ public class TextKeyListenerTest extends KeyListenerTestCase {
         final TextKeyListener textKeyListener
                 = TextKeyListener.getInstance(false, Capitalize.NONE);
 
-        mActivity.runOnUiThread(new Runnable() {
-            public void run() {
-                mTextView.setText("", BufferType.EDITABLE);
-                Selection.setSelection((Editable) mTextView.getText(), 0, 0);
-                mTextView.setKeyListener(textKeyListener);
-            }
+        mActivity.runOnUiThread(() -> {
+            mTextView.setText("", BufferType.EDITABLE);
+            Selection.setSelection(mTextView.getText(), 0, 0);
+            mTextView.setKeyListener(textKeyListener);
         });
         mInstrumentation.waitForIdleSync();
         assertEquals("", mTextView.getText().toString());
@@ -253,27 +248,4 @@ public class TextKeyListenerTest extends KeyListenerTestCase {
         listener.release();
     }
 
-    /**
-     * A mocked {@link android.text.method.TextKeyListener} for testing purposes.
-     *
-     * Tracks whether {@link MockTextKeyListener#onSpanAdded(Spannable, Object, int, int)} has been
-     * called.
-     */
-    private class MockTextKeyListener extends TextKeyListener {
-        private boolean mHadAddedSpan;
-
-        public MockTextKeyListener(Capitalize cap, boolean autotext) {
-            super(cap, autotext);
-        }
-
-        @Override
-        public void onSpanAdded(Spannable s, Object what, int start, int end) {
-            mHadAddedSpan = true;
-            super.onSpanAdded(s, what, start, end);
-        }
-
-        public boolean hadAddedSpan() {
-            return mHadAddedSpan;
-        }
-    }
 }

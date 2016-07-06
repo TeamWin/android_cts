@@ -27,9 +27,9 @@ import android.graphics.Color;
 import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
 import android.os.SystemClock;
-import android.test.ActivityInstrumentationTestCase2;
+import android.support.test.filters.MediumTest;
 import android.test.UiThreadTest;
-import android.test.suitebuilder.annotation.MediumTest;
+import android.test.ActivityInstrumentationTestCase2;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.AttributeSet;
@@ -47,6 +47,7 @@ import android.widget.Filterable;
 import android.widget.cts.util.TestUtils;
 import org.xmlpull.v1.XmlPullParser;
 
+import static android.cts.util.WidgetTestUtils.sameCharSequence;
 import static org.mockito.Mockito.*;
 
 @MediumTest
@@ -288,12 +289,12 @@ public class AutoCompleteTextViewTest extends
                 anyInt(), anyInt(), anyInt());
 
         mAutoCompleteTextView.setText(STRING_TEST);
-        verify(mockTextWatcher, times(1)).onTextChanged(TestUtils.sameCharSequence(STRING_TEST),
+        verify(mockTextWatcher, times(1)).onTextChanged(sameCharSequence(STRING_TEST),
                 eq(0), eq(0), eq(STRING_TEST.length()));
 
         // Test replacing text.
         mAutoCompleteTextView.setText(STRING_CHECK);
-        verify(mockTextWatcher, times(1)).onTextChanged(TestUtils.sameCharSequence(STRING_CHECK),
+        verify(mockTextWatcher, times(1)).onTextChanged(sameCharSequence(STRING_CHECK),
                 eq(0), eq(STRING_TEST.length()), eq(STRING_CHECK.length()));
     }
 
@@ -399,12 +400,12 @@ public class AutoCompleteTextViewTest extends
 
         autoCompleteTextView.replaceText("Text");
         assertEquals("Text", autoCompleteTextView.getText().toString());
-        verify(mockTextWatcher, times(1)).onTextChanged(TestUtils.sameCharSequence("Text"),
+        verify(mockTextWatcher, times(1)).onTextChanged(sameCharSequence("Text"),
                 eq(0), eq(0), eq("Text".length()));
 
         autoCompleteTextView.replaceText("Another");
         assertEquals("Another", autoCompleteTextView.getText().toString());
-        verify(mockTextWatcher, times(1)).onTextChanged(TestUtils.sameCharSequence("Another"),
+        verify(mockTextWatcher, times(1)).onTextChanged(sameCharSequence("Another"),
                 eq(0), eq("Text".length()), eq("Another".length()));
     }
 
@@ -650,7 +651,7 @@ public class AutoCompleteTextViewTest extends
         assertFalse(mAutoCompleteTextView.isPerformingCompletion());
         assertFalse(mAutoCompleteTextView.isPopupShowing());
 
-        verify(spyTextWatcher, atLeastOnce()).onTextChanged(TestUtils.sameCharSequence(WORDS[1]),
+        verify(spyTextWatcher, atLeastOnce()).onTextChanged(sameCharSequence(WORDS[1]),
                 eq(0), eq(0), eq(WORDS[1].length()));
         verifyNoMoreInteractions(mockItemClickListener);
     }
