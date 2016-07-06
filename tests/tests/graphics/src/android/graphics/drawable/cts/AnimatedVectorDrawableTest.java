@@ -56,8 +56,6 @@ public class AnimatedVectorDrawableTest extends ActivityInstrumentationTestCase2
 
     private DrawableStubActivity mActivity;
     private Resources mResources;
-    private Bitmap mBitmap;
-    private Canvas mCanvas;
     private static final boolean DBG_DUMP_PNG = false;
     private final int mResId = R.drawable.animation_vector_drawable_grouping_1;
     private final int mLayoutId = R.layout.animated_vector_drawable_source;
@@ -71,9 +69,6 @@ public class AnimatedVectorDrawableTest extends ActivityInstrumentationTestCase2
     @Override
     protected void setUp() throws Exception {
         super.setUp();
-
-        mBitmap = Bitmap.createBitmap(IMAGE_WIDTH, IMAGE_HEIGHT, Bitmap.Config.ARGB_8888);
-        mCanvas = new Canvas(mBitmap);
 
         mActivity = getActivity();
         mResources = mActivity.getResources();
@@ -126,18 +121,20 @@ public class AnimatedVectorDrawableTest extends ActivityInstrumentationTestCase2
         if (type != XmlPullParser.START_TAG) {
             throw new XmlPullParserException("No start tag found");
         }
+        Bitmap bitmap = Bitmap.createBitmap(IMAGE_WIDTH, IMAGE_HEIGHT, Bitmap.Config.ARGB_8888);
+        Canvas canvas = new Canvas(bitmap);
         AnimatedVectorDrawable drawable = new AnimatedVectorDrawable();
         drawable.inflate(mResources, parser, attrs);
         drawable.setBounds(0, 0, IMAGE_WIDTH, IMAGE_HEIGHT);
-        mBitmap.eraseColor(0);
-        drawable.draw(mCanvas);
-        int sunColor = mBitmap.getPixel(IMAGE_WIDTH / 2, IMAGE_HEIGHT / 2);
-        int earthColor = mBitmap.getPixel(IMAGE_WIDTH * 3 / 4 + 2, IMAGE_HEIGHT / 2);
+        bitmap.eraseColor(0);
+        drawable.draw(canvas);
+        int sunColor = bitmap.getPixel(IMAGE_WIDTH / 2, IMAGE_HEIGHT / 2);
+        int earthColor = bitmap.getPixel(IMAGE_WIDTH * 3 / 4 + 2, IMAGE_HEIGHT / 2);
         assertTrue(sunColor == 0xFFFF8000);
         assertTrue(earthColor == 0xFF5656EA);
 
         if (DBG_DUMP_PNG) {
-            saveVectorDrawableIntoPNG(mBitmap, mResId);
+            saveVectorDrawableIntoPNG(bitmap, mResId);
         }
     }
 
@@ -151,15 +148,19 @@ public class AnimatedVectorDrawableTest extends ActivityInstrumentationTestCase2
         mActivity.runOnUiThread(new Runnable() {
             @Override
             public void run() {
+                Bitmap bitmap =
+                        Bitmap.createBitmap(IMAGE_WIDTH, IMAGE_HEIGHT, Bitmap.Config.ARGB_8888);
+                Canvas canvas = new Canvas(bitmap);
+
                 mActivity.setContentView(mLayoutId);
                 ImageView imageView = (ImageView) mActivity.findViewById(mImageViewId);
                 imageView.setImageDrawable(d1);
                 d1.start();
                 d1.stop();
                 d1.setBounds(0, 0, IMAGE_WIDTH, IMAGE_HEIGHT);
-                mBitmap.eraseColor(0);
-                d1.draw(mCanvas);
-                int endColor = mBitmap.getPixel(IMAGE_WIDTH / 2, IMAGE_HEIGHT / 2);
+                bitmap.eraseColor(0);
+                d1.draw(canvas);
+                int endColor = bitmap.getPixel(IMAGE_WIDTH / 2, IMAGE_HEIGHT / 2);
                 assertEquals("Center point's color must be green", 0xFF00FF00, endColor);
             }
         });
