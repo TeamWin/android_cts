@@ -21,6 +21,7 @@ import static org.mockito.Mockito.*;
 import android.graphics.BitmapFactory;
 import com.android.internal.view.menu.ContextMenuBuilder;
 
+import android.content.ClipData;
 import android.content.Context;
 import android.content.res.ColorStateList;
 import android.content.res.Resources;
@@ -3965,6 +3966,40 @@ public class ViewTest extends ActivityInstrumentationTestCase2<ViewTestCtsActivi
         overridingView.forceHasOverlappingRendering(true);
         assertTrue(overridingView.getHasOverlappingRendering());
         assertTrue(overridingView.hasOverlappingRendering());
+    }
+
+    public void testUpdateDragShadow() {
+        View view = mActivity.findViewById(R.id.fit_windows);
+        assertTrue(view.isAttachedToWindow());
+
+        View.DragShadowBuilder shadowBuilder = mock(View.DragShadowBuilder.class);
+        view.startDrag(ClipData.newPlainText("", ""), shadowBuilder, view, 0);
+        reset(shadowBuilder);
+
+        view.updateDragShadow(shadowBuilder);
+        // TODO: Verify with the canvas from the drag surface instead.
+        verify(shadowBuilder).onDrawShadow(any(Canvas.class));
+    }
+
+    public void testUpdateDragShadow_detachedView() {
+        View view = new View(mActivity);
+        assertFalse(view.isAttachedToWindow());
+
+        View.DragShadowBuilder shadowBuilder = mock(View.DragShadowBuilder.class);
+        view.startDrag(ClipData.newPlainText("", ""), shadowBuilder, view, 0);
+        reset(shadowBuilder);
+
+        view.updateDragShadow(shadowBuilder);
+        verify(shadowBuilder, never()).onDrawShadow(any(Canvas.class));
+    }
+
+    public void testUpdateDragShadow_noActiveDrag() {
+        View view = mActivity.findViewById(R.id.fit_windows);
+        assertTrue(view.isAttachedToWindow());
+
+        View.DragShadowBuilder shadowBuilder = mock(View.DragShadowBuilder.class);
+        view.updateDragShadow(shadowBuilder);
+        verify(shadowBuilder, never()).onDrawShadow(any(Canvas.class));
     }
 
     private void setVisibilityOnUiThread(final View view, final int visibility) throws Throwable {
