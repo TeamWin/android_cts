@@ -2016,52 +2016,64 @@ public class PrintDocumentAdapterContractTest extends BasePrintTest {
     /**
      * Executes a print process with a given print document info
      *
-     * @param info The print document info to declare on layout
+     * @param name The name of the document info
+     * @param contentType The content type of the document
+     * @param pageCount The number of pages in the document
+     * @param dataSize The size of the data attached to the printDocument
      */
-    private void printDocumentInfoBaseTest(final PrintDocumentInfo info) throws Exception {
+    private void printDocumentBaseTest(String name, Integer contentType, Integer pageCount,
+            Long dataSize)
+            throws Exception {
         if (!supportsPrinting()) {
             return;
         }
-        // Configure the print services.
-        FirstPrintService.setCallbacks(createFirstMockPrintServiceCallbacks());
+
+        PrintDocumentInfo.Builder b = new PrintDocumentInfo.Builder(name);
+        if (contentType != null) {
+            b.setContentType(contentType);
+        }
+        if (pageCount != null) {
+            b.setPageCount(pageCount);
+        }
+        PrintDocumentInfo info = b.build();
+
+        PrintDocumentInfo queuedInfo[] = new PrintDocumentInfo[1];
+
+        PrinterDiscoverySessionCallbacks printerDiscoverySessionCallbacks =
+                createFirstMockDiscoverySessionCallbacks();
+        PrintServiceCallbacks printServiceCallbacks = createMockPrintServiceCallbacks(
+                invocation -> printerDiscoverySessionCallbacks,
+                invocation -> {
+                    PrintJob printJob = (PrintJob) invocation.getArguments()[0];
+                    queuedInfo[0] = printJob.getDocument().getInfo();
+                    printJob.complete();
+                    return null;
+                }, null);
+
+        FirstPrintService.setCallbacks(printServiceCallbacks);
         SecondPrintService.setCallbacks(createSecondMockPrintServiceCallbacks());
 
         final PrintAttributes[] printAttributes = new PrintAttributes[1];
 
         // Create a mock print adapter.
         final PrintDocumentAdapter adapter = createMockPrintDocumentAdapter(
-                new Answer<Void>() {
-                    @Override
-                    public Void answer(InvocationOnMock invocation) throws Throwable {
-                        printAttributes[0] = (PrintAttributes) invocation.getArguments()[1];
-                        LayoutResultCallback callback = (LayoutResultCallback) invocation.getArguments()[3];
-                        callback.onLayoutFinished(info, false);
-                        // Mark layout was called.
-                        onLayoutCalled();
-                        return null;
-                    }
-                }, new Answer<Void>() {
-                    @Override
-                    public Void answer(InvocationOnMock invocation) throws Throwable {
-                        Object[] args = invocation.getArguments();
-                        PageRange[] pages = (PageRange[]) args[0];
-                        ParcelFileDescriptor fd = (ParcelFileDescriptor) args[1];
-                        WriteResultCallback callback = (WriteResultCallback) args[3];
-                        writeBlankPages(printAttributes[0], fd, 0, 1);
-                        fd.close();
-                        callback.onWriteFinished(pages);
-                        // Mark write was called.
-                        onWriteCalled();
-                        return null;
-                    }
-                }, new Answer<Void>() {
-                    @Override
-                    public Void answer(InvocationOnMock invocation) throws Throwable {
-                        // Mark finish was called.
-                        onFinishCalled();
-                        return null;
-                    }
-                });
+                invocation -> {
+                    printAttributes[0] = (PrintAttributes) invocation.getArguments()[1];
+                    LayoutResultCallback callback = (LayoutResultCallback) invocation.getArguments()[3];
+                    callback.onLayoutFinished(info, false);
+                    // Mark layout was called.
+                    onLayoutCalled();
+                    return null;
+                }, invocation -> {
+                    Object[] args = invocation.getArguments();
+                    PageRange[] pages = (PageRange[]) args[0];
+                    ParcelFileDescriptor fd = (ParcelFileDescriptor) args[1];
+                    WriteResultCallback callback = (WriteResultCallback) args[3];
+                    writeBlankPages(printAttributes[0], fd, 0, 1);
+                    fd.close();
+                    callback.onWriteFinished(pages);
+                    return null;
+                }, invocation -> null);
 
         // Start printing.
         print(adapter);
@@ -2080,6 +2092,25 @@ public class PrintDocumentAdapterContractTest extends BasePrintTest {
 
         // Wait for the session to be destroyed to isolate tests.
         waitForPrinterDiscoverySessionDestroyCallbackCalled(1);
+
+        // Check that the document name was carried over 1:1
+        eventually(() -> assertEquals(name, queuedInfo[0].getName()));
+
+        // Content type is set to document by default, but is otherwise unrestricted
+        if (contentType != null) {
+            assertEquals(contentType, Integer.valueOf(queuedInfo[0].getContentType()));
+        } else {
+            assertEquals(PrintDocumentInfo.CONTENT_TYPE_DOCUMENT, queuedInfo[0].getContentType());
+        }
+
+        // Page count is set to the real value if unknown, 0 or unset.
+        // Otherwise the set value is used
+        if (pageCount != null && pageCount != PrintDocumentInfo.PAGE_COUNT_UNKNOWN
+                && pageCount != 0) {
+            assertEquals(pageCount, Integer.valueOf(queuedInfo[0].getPageCount()));
+        } else {
+            assertEquals(2, queuedInfo[0].getPageCount());
+        }
     }
 
     /**
@@ -2088,7 +2119,7 @@ public class PrintDocumentAdapterContractTest extends BasePrintTest {
      * @throws Exception If anything unexpected happens
      */
     public void testDocumentInfoNothingSet() throws Exception {
-        printDocumentInfoBaseTest((new PrintDocumentInfo.Builder(PRINT_JOB_NAME)).build());
+        printDocumentBaseTest(PRINT_JOB_NAME, null, null, null);
     }
 
     /**
@@ -2097,8 +2128,7 @@ public class PrintDocumentAdapterContractTest extends BasePrintTest {
      * @throws Exception If anything unexpected happens
      */
     public void testDocumentInfoUnknownPageCount() throws Exception {
-        printDocumentInfoBaseTest((new PrintDocumentInfo.Builder(PRINT_JOB_NAME))
-                .setPageCount(PrintDocumentInfo.PAGE_COUNT_UNKNOWN).build());
+        printDocumentBaseTest(PRINT_JOB_NAME, null, PrintDocumentInfo.PAGE_COUNT_UNKNOWN, null);
     }
 
     /**
@@ -2107,8 +2137,7 @@ public class PrintDocumentAdapterContractTest extends BasePrintTest {
      * @throws Exception If anything unexpected happens
      */
     public void testDocumentInfoZeroPageCount() throws Exception {
-        printDocumentInfoBaseTest((new PrintDocumentInfo.Builder(PRINT_JOB_NAME))
-                .setPageCount(0).build());
+        printDocumentBaseTest(PRINT_JOB_NAME, null, 0, null);
     }
 
     /**
@@ -2117,8 +2146,7 @@ public class PrintDocumentAdapterContractTest extends BasePrintTest {
      * @throws Exception If anything unexpected happens
      */
     public void testDocumentInfoOnePageCount() throws Exception {
-        printDocumentInfoBaseTest((new PrintDocumentInfo.Builder(PRINT_JOB_NAME))
-                .setPageCount(1).build());
+        printDocumentBaseTest(PRINT_JOB_NAME, null, 1, null);
     }
 
     /**
@@ -2127,8 +2155,7 @@ public class PrintDocumentAdapterContractTest extends BasePrintTest {
      * @throws Exception If anything unexpected happens
      */
     public void testDocumentInfoThreePageCount() throws Exception {
-        printDocumentInfoBaseTest((new PrintDocumentInfo.Builder(PRINT_JOB_NAME))
-                .setPageCount(3).build());
+        printDocumentBaseTest(PRINT_JOB_NAME, null, 3, null);
     }
 
     /**
@@ -2137,8 +2164,7 @@ public class PrintDocumentAdapterContractTest extends BasePrintTest {
      * @throws Exception If anything unexpected happens
      */
     public void testDocumentInfoContentTypePhoto() throws Exception {
-        printDocumentInfoBaseTest((new PrintDocumentInfo.Builder(PRINT_JOB_NAME))
-                .setContentType(PrintDocumentInfo.CONTENT_TYPE_PHOTO).build());
+        printDocumentBaseTest(PRINT_JOB_NAME, PrintDocumentInfo.CONTENT_TYPE_PHOTO, null, null);
     }
 
     /**
@@ -2147,8 +2173,7 @@ public class PrintDocumentAdapterContractTest extends BasePrintTest {
      * @throws Exception If anything unexpected happens
      */
     public void testDocumentInfoContentTypeUnknown() throws Exception {
-        printDocumentInfoBaseTest((new PrintDocumentInfo.Builder(PRINT_JOB_NAME))
-                .setContentType(PrintDocumentInfo.CONTENT_TYPE_UNKNOWN).build());
+        printDocumentBaseTest(PRINT_JOB_NAME, PrintDocumentInfo.CONTENT_TYPE_UNKNOWN, null, null);
     }
 
     /**
@@ -2157,108 +2182,98 @@ public class PrintDocumentAdapterContractTest extends BasePrintTest {
      * @throws Exception If anything unexpected happens
      */
     public void testDocumentInfoContentTypeNonDefined() throws Exception {
-        printDocumentInfoBaseTest((new PrintDocumentInfo.Builder(PRINT_JOB_NAME))
-                .setContentType(-23).build());
+        printDocumentBaseTest(PRINT_JOB_NAME, -23, null, null);
     }
 
-    private PrintServiceCallbacks createFirstMockPrintServiceCallbacks() {
-        final PrinterDiscoverySessionCallbacks callbacks =
-                createMockPrinterDiscoverySessionCallbacks(new Answer<Void>() {
-            @Override
-            public Void answer(InvocationOnMock invocation) {
-                PrinterDiscoverySessionCallbacks mock = (PrinterDiscoverySessionCallbacks)
-                        invocation.getMock();
+    private PrinterDiscoverySessionCallbacks createFirstMockDiscoverySessionCallbacks() {
+        return createMockPrinterDiscoverySessionCallbacks(invocation -> {
+            PrinterDiscoverySessionCallbacks mock = (PrinterDiscoverySessionCallbacks)
+                    invocation.getMock();
 
-                StubbablePrinterDiscoverySession session = mock.getSession();
-                PrintService service = session.getService();
+            StubbablePrinterDiscoverySession session = mock.getSession();
+            PrintService service = session.getService();
 
-                if (session.getPrinters().isEmpty()) {
-                    List<PrinterInfo> printers = new ArrayList<PrinterInfo>();
+            if (session.getPrinters().isEmpty()) {
+                List<PrinterInfo> printers = new ArrayList<>();
 
-                    // Add the first printer.
-                    PrinterId firstPrinterId = service.generatePrinterId("first_printer");
-                    PrinterCapabilitiesInfo firstCapabilities =
-                            new PrinterCapabilitiesInfo.Builder(firstPrinterId)
-                        .setMinMargins(new Margins(200, 200, 200, 200))
-                        .addMediaSize(MediaSize.ISO_A0, true)
-                        .addMediaSize(MediaSize.ISO_A5, false)
-                        .addResolution(new Resolution("300x300", "300x300", 300, 300), true)
-                        .setColorModes(PrintAttributes.COLOR_MODE_COLOR,
-                                PrintAttributes.COLOR_MODE_COLOR)
-                        .build();
-                    PrinterInfo firstPrinter = new PrinterInfo.Builder(firstPrinterId,
-                            "First printer", PrinterInfo.STATUS_IDLE)
-                        .setCapabilities(firstCapabilities)
-                        .build();
-                    printers.add(firstPrinter);
-
-                    // Add the second printer.
-                    PrinterId secondPrinterId = service.generatePrinterId("second_printer");
-                    PrinterCapabilitiesInfo secondCapabilities =
-                            new PrinterCapabilitiesInfo.Builder(secondPrinterId)
-                        .addMediaSize(MediaSize.ISO_A3, true)
-                        .addMediaSize(MediaSize.ISO_A0, false)
-                        .addResolution(new Resolution("200x200", "200x200", 200, 200), true)
-                        .addResolution(new Resolution("300x300", "300x300", 300, 300), false)
-                        .setColorModes(PrintAttributes.COLOR_MODE_COLOR
-                                        | PrintAttributes.COLOR_MODE_MONOCHROME,
-                                PrintAttributes.COLOR_MODE_MONOCHROME
-                        )
-                        .setDuplexModes(PrintAttributes.DUPLEX_MODE_LONG_EDGE
-                                        | PrintAttributes.DUPLEX_MODE_SHORT_EDGE,
-                                PrintAttributes.DUPLEX_MODE_LONG_EDGE
-                        )
-                        .build();
-                    PrinterInfo secondPrinter = new PrinterInfo.Builder(secondPrinterId,
-                            "Second printer", PrinterInfo.STATUS_IDLE)
-                        .setCapabilities(secondCapabilities)
-                        .build();
-                    printers.add(secondPrinter);
-
-                    // Add the third printer.
-                    PrinterId thirdPrinterId = service.generatePrinterId("third_printer");
-                    PrinterCapabilitiesInfo thirdCapabilities =
-                            null;
-                    try {
-                        thirdCapabilities = new PrinterCapabilitiesInfo.Builder(thirdPrinterId)
-                                .addMediaSize(getDefaultMediaSize(), true)
+                // Add the first printer.
+                PrinterId firstPrinterId = service.generatePrinterId("first_printer");
+                PrinterCapabilitiesInfo firstCapabilities =
+                        new PrinterCapabilitiesInfo.Builder(firstPrinterId)
+                                .setMinMargins(new Margins(200, 200, 200, 200))
+                                .addMediaSize(MediaSize.ISO_A0, true)
+                                .addMediaSize(MediaSize.ISO_A5, false)
                                 .addResolution(new Resolution("300x300", "300x300", 300, 300), true)
                                 .setColorModes(PrintAttributes.COLOR_MODE_COLOR,
                                         PrintAttributes.COLOR_MODE_COLOR)
                                 .build();
-                    } catch (Exception e) {
-                        Log.e(LOG_TAG, "Cannot create third printer", e);
-                    }
-                    PrinterInfo thirdPrinter = new PrinterInfo.Builder(thirdPrinterId,
-                            "Third printer", PrinterInfo.STATUS_IDLE)
+                PrinterInfo firstPrinter = new PrinterInfo.Builder(firstPrinterId,
+                        "First printer", PrinterInfo.STATUS_IDLE)
+                        .setCapabilities(firstCapabilities)
+                        .build();
+                printers.add(firstPrinter);
+
+                // Add the second printer.
+                PrinterId secondPrinterId = service.generatePrinterId("second_printer");
+                PrinterCapabilitiesInfo secondCapabilities =
+                        new PrinterCapabilitiesInfo.Builder(secondPrinterId)
+                                .addMediaSize(MediaSize.ISO_A3, true)
+                                .addMediaSize(MediaSize.ISO_A0, false)
+                                .addResolution(new Resolution("200x200", "200x200", 200, 200), true)
+                                .addResolution(new Resolution("300x300", "300x300", 300, 300),
+                                        false)
+                                .setColorModes(PrintAttributes.COLOR_MODE_COLOR
+                                                | PrintAttributes.COLOR_MODE_MONOCHROME,
+                                        PrintAttributes.COLOR_MODE_MONOCHROME
+                                )
+                                .setDuplexModes(PrintAttributes.DUPLEX_MODE_LONG_EDGE
+                                                | PrintAttributes.DUPLEX_MODE_SHORT_EDGE,
+                                        PrintAttributes.DUPLEX_MODE_LONG_EDGE
+                                )
+                                .build();
+                PrinterInfo secondPrinter = new PrinterInfo.Builder(secondPrinterId,
+                        "Second printer", PrinterInfo.STATUS_IDLE)
+                        .setCapabilities(secondCapabilities)
+                        .build();
+                printers.add(secondPrinter);
+
+                // Add the third printer.
+                PrinterId thirdPrinterId = service.generatePrinterId("third_printer");
+                PrinterCapabilitiesInfo thirdCapabilities =
+                        null;
+                try {
+                    thirdCapabilities = new PrinterCapabilitiesInfo.Builder(thirdPrinterId)
+                            .addMediaSize(getDefaultMediaSize(), true)
+                            .addResolution(new Resolution("300x300", "300x300", 300, 300), true)
+                            .setColorModes(PrintAttributes.COLOR_MODE_COLOR,
+                                    PrintAttributes.COLOR_MODE_COLOR)
+                            .build();
+                } catch (Exception e) {
+                    Log.e(LOG_TAG, "Cannot create third printer", e);
+                }
+                PrinterInfo thirdPrinter = new PrinterInfo.Builder(thirdPrinterId,
+                        "Third printer", PrinterInfo.STATUS_IDLE)
                         .setCapabilities(thirdCapabilities)
                         .build();
-                    printers.add(thirdPrinter);
+                printers.add(thirdPrinter);
 
-                    session.addPrinters(printers);
-                }
-                return null;
+                session.addPrinters(printers);
             }
-        }, null, null, null, null, null, new Answer<Void>() {
-                @Override
-                public Void answer(InvocationOnMock invocation) throws Throwable {
-                    // Take a note onDestroy was called.
-                    onPrinterDiscoverySessionDestroyCalled();
-                    return null;
-                }
-            });
-        return createMockPrintServiceCallbacks(new Answer<PrinterDiscoverySessionCallbacks>() {
-            @Override
-            public PrinterDiscoverySessionCallbacks answer(InvocationOnMock invocation) {
-                return callbacks;
-            }
-        }, new Answer<Void>() {
-            @Override
-            public Void answer(InvocationOnMock invocation) throws Throwable {
-                PrintJob printJob = (PrintJob) invocation.getArguments()[0];
-                printJob.complete();
-                return null;
-            }
+            return null;
+        }, null, null, null, null, null, invocation -> {
+            // Take a note onDestroy was called.
+            onPrinterDiscoverySessionDestroyCalled();
+            return null;
+        });
+    }
+
+    private PrintServiceCallbacks createFirstMockPrintServiceCallbacks() {
+        final PrinterDiscoverySessionCallbacks callbacks =
+                createFirstMockDiscoverySessionCallbacks();
+        return createMockPrintServiceCallbacks(invocation -> callbacks, invocation -> {
+            PrintJob printJob = (PrintJob) invocation.getArguments()[0];
+            printJob.complete();
+            return null;
         }, null);
     }
 
