@@ -3973,7 +3973,7 @@ public class ViewTest extends ActivityInstrumentationTestCase2<ViewTestCtsActivi
         assertTrue(view.isAttachedToWindow());
 
         View.DragShadowBuilder shadowBuilder = mock(View.DragShadowBuilder.class);
-        view.startDrag(ClipData.newPlainText("", ""), shadowBuilder, view, 0);
+        view.startDragAndDrop(ClipData.newPlainText("", ""), shadowBuilder, view, 0);
         reset(shadowBuilder);
 
         view.updateDragShadow(shadowBuilder);
@@ -3986,7 +3986,7 @@ public class ViewTest extends ActivityInstrumentationTestCase2<ViewTestCtsActivi
         assertFalse(view.isAttachedToWindow());
 
         View.DragShadowBuilder shadowBuilder = mock(View.DragShadowBuilder.class);
-        view.startDrag(ClipData.newPlainText("", ""), shadowBuilder, view, 0);
+        view.startDragAndDrop(ClipData.newPlainText("", ""), shadowBuilder, view, 0);
         reset(shadowBuilder);
 
         view.updateDragShadow(shadowBuilder);
