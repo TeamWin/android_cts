@@ -18,6 +18,9 @@ package android.fragment.cts;
 import static junit.framework.Assert.*;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -26,14 +29,18 @@ import android.animation.AnimatorListenerAdapter;
 import android.animation.AnimatorSet;
 import android.animation.ValueAnimator;
 import android.app.Fragment;
+import android.app.FragmentController;
 import android.app.FragmentManager;
+import android.app.FragmentManagerNonConfig;
 import android.app.Instrumentation;
 import android.os.Debug;
+import android.os.Parcelable;
 import android.os.SystemClock;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.filters.MediumTest;
 import android.support.test.rule.ActivityTestRule;
 import android.support.test.runner.AndroidJUnit4;
+import android.util.Pair;
 import android.view.View;
 import android.view.ViewGroup;
 
@@ -79,7 +86,7 @@ public class FragmentAnimatorTest {
                 .add(R.id.fragmentContainer, fragment)
                 .addToBackStack(null)
                 .commit();
-        FragmentTestUtil.executePendingTransactions(mActivityRule);
+        FragmentTestUtil.waitForExecution(mActivityRule);
 
         assertEnterPopExit(fragment);
     }
@@ -92,14 +99,14 @@ public class FragmentAnimatorTest {
         // One fragment with a view
         final AnimatorFragment fragment = new AnimatorFragment();
         fm.beginTransaction().add(R.id.fragmentContainer, fragment, "1").commit();
-        FragmentTestUtil.executePendingTransactions(mActivityRule);
+        FragmentTestUtil.waitForExecution(mActivityRule);
 
         fm.beginTransaction()
                 .setCustomAnimations(ENTER, EXIT, POP_ENTER, POP_EXIT)
                 .remove(fragment)
                 .addToBackStack(null)
                 .commit();
-        FragmentTestUtil.executePendingTransactions(mActivityRule);
+        FragmentTestUtil.waitForExecution(mActivityRule);
 
         assertExitPopEnter(fragment);
     }
@@ -112,14 +119,14 @@ public class FragmentAnimatorTest {
         // One fragment with a view
         final AnimatorFragment fragment = new AnimatorFragment();
         fm.beginTransaction().add(R.id.fragmentContainer, fragment).hide(fragment).commit();
-        FragmentTestUtil.executePendingTransactions(mActivityRule);
+        FragmentTestUtil.waitForExecution(mActivityRule);
 
         fm.beginTransaction()
                 .setCustomAnimations(ENTER, EXIT, POP_ENTER, POP_EXIT)
                 .show(fragment)
                 .addToBackStack(null)
                 .commit();
-        FragmentTestUtil.executePendingTransactions(mActivityRule);
+        FragmentTestUtil.waitForExecution(mActivityRule);
 
         assertEnterPopExit(fragment);
     }
@@ -132,14 +139,14 @@ public class FragmentAnimatorTest {
         // One fragment with a view
         final AnimatorFragment fragment = new AnimatorFragment();
         fm.beginTransaction().add(R.id.fragmentContainer, fragment, "1").commit();
-        FragmentTestUtil.executePendingTransactions(mActivityRule);
+        FragmentTestUtil.waitForExecution(mActivityRule);
 
         fm.beginTransaction()
                 .setCustomAnimations(ENTER, EXIT, POP_ENTER, POP_EXIT)
                 .hide(fragment)
                 .addToBackStack(null)
                 .commit();
-        FragmentTestUtil.executePendingTransactions(mActivityRule);
+        FragmentTestUtil.waitForExecution(mActivityRule);
 
         assertExitPopEnter(fragment);
     }
@@ -152,14 +159,14 @@ public class FragmentAnimatorTest {
         // One fragment with a view
         final AnimatorFragment fragment = new AnimatorFragment();
         fm.beginTransaction().add(R.id.fragmentContainer, fragment).detach(fragment).commit();
-        FragmentTestUtil.executePendingTransactions(mActivityRule);
+        FragmentTestUtil.waitForExecution(mActivityRule);
 
         fm.beginTransaction()
                 .setCustomAnimations(ENTER, EXIT, POP_ENTER, POP_EXIT)
                 .attach(fragment)
                 .addToBackStack(null)
                 .commit();
-        FragmentTestUtil.executePendingTransactions(mActivityRule);
+        FragmentTestUtil.waitForExecution(mActivityRule);
 
         assertEnterPopExit(fragment);
     }
@@ -172,14 +179,14 @@ public class FragmentAnimatorTest {
         // One fragment with a view
         final AnimatorFragment fragment = new AnimatorFragment();
         fm.beginTransaction().add(R.id.fragmentContainer, fragment, "1").commit();
-        FragmentTestUtil.executePendingTransactions(mActivityRule);
+        FragmentTestUtil.waitForExecution(mActivityRule);
 
         fm.beginTransaction()
                 .setCustomAnimations(ENTER, EXIT, POP_ENTER, POP_EXIT)
                 .detach(fragment)
                 .addToBackStack(null)
                 .commit();
-        FragmentTestUtil.executePendingTransactions(mActivityRule);
+        FragmentTestUtil.waitForExecution(mActivityRule);
 
         assertExitPopEnter(fragment);
     }
@@ -197,7 +204,7 @@ public class FragmentAnimatorTest {
                 .add(R.id.fragmentContainer, fragment1, "1")
                 .add(R.id.fragmentContainer, fragment2, "2")
                 .commit();
-        FragmentTestUtil.executePendingTransactions(mActivityRule);
+        FragmentTestUtil.waitForExecution(mActivityRule);
 
         final AnimatorFragment fragment3 = new AnimatorFragment();
         fm.beginTransaction()
@@ -205,16 +212,14 @@ public class FragmentAnimatorTest {
                 .replace(R.id.fragmentContainer, fragment3)
                 .addToBackStack(null)
                 .commit();
-        FragmentTestUtil.executePendingTransactions(mActivityRule);
+        FragmentTestUtil.waitForExecution(mActivityRule);
 
         assertFragmentAnimation(fragment1, 1, false, EXIT);
         assertFragmentAnimation(fragment2, 1, false, EXIT);
         assertFragmentAnimation(fragment3, 1, true, ENTER);
 
-        mInstrumentation.waitForIdleSync();
-
         fm.popBackStack();
-        FragmentTestUtil.executePendingTransactions(mActivityRule);
+        FragmentTestUtil.waitForExecution(mActivityRule);
 
         assertFragmentAnimation(fragment3, 2, false, POP_EXIT);
         final AnimatorFragment replacement1 = (AnimatorFragment) fm.findFragmentByTag("1");
@@ -224,30 +229,209 @@ public class FragmentAnimatorTest {
         assertFragmentAnimation(replacement2, expectedAnimations, true, POP_ENTER);
     }
 
+    // Ensure that adding and popping a Fragment uses the enter and popExit animators,
+    // but the animators are delayed when an entering Fragment is postponed.
+    @Test
+    public void postponedAddAnimators() throws Throwable {
+        final FragmentManager fm = mActivityRule.getActivity().getFragmentManager();
+
+        final AnimatorFragment fragment = new AnimatorFragment();
+        fragment.postponeEnterTransition();
+        fm.beginTransaction()
+                .setCustomAnimations(ENTER, EXIT, POP_ENTER, POP_EXIT)
+                .add(R.id.fragmentContainer, fragment)
+                .addToBackStack(null)
+                .commit();
+        FragmentTestUtil.waitForExecution(mActivityRule);
+
+        assertPostponed(fragment, 0);
+        fragment.startPostponedEnterTransition();
+
+        FragmentTestUtil.waitForExecution(mActivityRule);
+        assertEnterPopExit(fragment);
+    }
+
+    // Ensure that removing and popping a Fragment uses the exit and popEnter animators,
+    // but the animators are delayed when an entering Fragment is postponed.
+    @Test
+    public void postponedRemoveAnimators() throws Throwable {
+        final FragmentManager fm = mActivityRule.getActivity().getFragmentManager();
+
+        final AnimatorFragment fragment = new AnimatorFragment();
+        fm.beginTransaction().add(R.id.fragmentContainer, fragment, "1").commit();
+        FragmentTestUtil.waitForExecution(mActivityRule);
+
+        fm.beginTransaction()
+                .setCustomAnimations(ENTER, EXIT, POP_ENTER, POP_EXIT)
+                .remove(fragment)
+                .addToBackStack(null)
+                .commit();
+        FragmentTestUtil.waitForExecution(mActivityRule);
+
+        assertExitPostponedPopEnter(fragment);
+    }
+
+    // Ensure that adding and popping a Fragment is postponed in both directions
+    // when the fragments have been marked for postponing.
+    @Test
+    public void postponedAddRemove() throws Throwable {
+        final FragmentManager fm = mActivityRule.getActivity().getFragmentManager();
+
+        final AnimatorFragment fragment1 = new AnimatorFragment();
+        fm.beginTransaction()
+                .add(R.id.fragmentContainer, fragment1)
+                .addToBackStack(null)
+                .commit();
+        FragmentTestUtil.waitForExecution(mActivityRule);
+
+        final AnimatorFragment fragment2 = new AnimatorFragment();
+        fragment2.postponeEnterTransition();
+
+        fm.beginTransaction()
+                .setCustomAnimations(ENTER, EXIT, POP_ENTER, POP_EXIT)
+                .replace(R.id.fragmentContainer, fragment2)
+                .addToBackStack(null)
+                .commit();
+
+        FragmentTestUtil.waitForExecution(mActivityRule);
+
+        assertPostponed(fragment2, 0);
+        assertNotNull(fragment1.getView());
+        assertEquals(View.VISIBLE, fragment1.getView().getVisibility());
+        assertTrue(fragment1.getView().isAttachedToWindow());
+
+        fragment2.startPostponedEnterTransition();
+        FragmentTestUtil.waitForExecution(mActivityRule);
+
+        assertExitPostponedPopEnter(fragment1);
+    }
+
+    // Popping a postponed transaction should result in no animators
+    @Test
+    public void popPostponed() throws Throwable {
+        final FragmentManager fm = mActivityRule.getActivity().getFragmentManager();
+
+        final AnimatorFragment fragment1 = new AnimatorFragment();
+        fm.beginTransaction()
+                .add(R.id.fragmentContainer, fragment1)
+                .commit();
+        FragmentTestUtil.waitForExecution(mActivityRule);
+        assertEquals(0, fragment1.numAnimators);
+
+        final AnimatorFragment fragment2 = new AnimatorFragment();
+        fragment2.postponeEnterTransition();
+
+        fm.beginTransaction()
+                .setCustomAnimations(ENTER, EXIT, POP_ENTER, POP_EXIT)
+                .replace(R.id.fragmentContainer, fragment2)
+                .addToBackStack(null)
+                .commit();
+
+        FragmentTestUtil.waitForExecution(mActivityRule);
+
+        assertPostponed(fragment2, 0);
+
+        // Now pop the postponed transaction
+        FragmentTestUtil.popBackStackImmediate(mActivityRule);
+
+        assertNotNull(fragment1.getView());
+        assertEquals(View.VISIBLE, fragment1.getView().getVisibility());
+        assertTrue(fragment1.getView().isAttachedToWindow());
+        assertTrue(fragment1.isAdded());
+
+        assertNull(fragment2.getView());
+        assertFalse(fragment2.isAdded());
+
+        assertEquals(0, fragment1.numAnimators);
+        assertEquals(0, fragment2.numAnimators);
+        assertNull(fragment1.animator);
+        assertNull(fragment2.animator);
+    }
+
+    // Make sure that if the state was saved while a Fragment was animating that its
+    // state is proper after restoring.
+    @Test
+    public void saveWhileAnimatingAway() throws Throwable {
+        final FragmentController fc1 = FragmentTestUtil.createController(mActivityRule);
+        FragmentTestUtil.resume(mActivityRule, fc1, null);
+
+        final FragmentManager fm1 = fc1.getFragmentManager();
+
+        StrictViewFragment fragment1 = new StrictViewFragment();
+        fragment1.setLayoutId(R.layout.scene1);
+        fm1.beginTransaction()
+                .add(R.id.fragmentContainer, fragment1, "1")
+                .commit();
+        FragmentTestUtil.waitForExecution(mActivityRule);
+
+        StrictViewFragment fragment2 = new StrictViewFragment();
+
+        fm1.beginTransaction()
+                .setCustomAnimations(0, 0, 0, R.animator.slow_fade_out)
+                .replace(R.id.fragmentContainer, fragment2, "2")
+                .addToBackStack(null)
+                .commit();
+        mInstrumentation.runOnMainSync(fm1::executePendingTransactions);
+        FragmentTestUtil.waitForExecution(mActivityRule);
+
+        fm1.popBackStack();
+
+        mInstrumentation.runOnMainSync(fm1::executePendingTransactions);
+        FragmentTestUtil.waitForExecution(mActivityRule);
+        // Now fragment2 should be animating away
+        assertFalse(fragment2.isAdded());
+        assertEquals(fragment2, fm1.findFragmentByTag("2")); // still exists because it is animating
+
+        Pair<Parcelable, FragmentManagerNonConfig> state =
+                FragmentTestUtil.destroy(mActivityRule, fc1);
+
+        final FragmentController fc2 = FragmentTestUtil.createController(mActivityRule);
+        FragmentTestUtil.resume(mActivityRule, fc2, state);
+
+        final FragmentManager fm2 = fc2.getFragmentManager();
+        Fragment fragment2restored = fm2.findFragmentByTag("2");
+        assertNull(fragment2restored);
+
+        Fragment fragment1restored = fm2.findFragmentByTag("1");
+        assertNotNull(fragment1restored);
+        assertNotNull(fragment1restored.getView());
+    }
+
     private void assertEnterPopExit(AnimatorFragment fragment) throws Throwable {
         assertFragmentAnimation(fragment, 1, true, ENTER);
-        mInstrumentation.waitForIdleSync();
 
         final FragmentManager fm = mActivityRule.getActivity().getFragmentManager();
         fm.popBackStack();
-        FragmentTestUtil.executePendingTransactions(mActivityRule);
+        FragmentTestUtil.waitForExecution(mActivityRule);
 
         assertFragmentAnimation(fragment, 2, false, POP_EXIT);
     }
 
     private void assertExitPopEnter(AnimatorFragment fragment) throws Throwable {
         assertFragmentAnimation(fragment, 1, false, EXIT);
-        mInstrumentation.waitForIdleSync();
 
         final FragmentManager fm = mActivityRule.getActivity().getFragmentManager();
         fm.popBackStack();
-        FragmentTestUtil.executePendingTransactions(mActivityRule);
+        FragmentTestUtil.waitForExecution(mActivityRule);
 
         AnimatorFragment replacement = (AnimatorFragment) fm.findFragmentByTag("1");
 
         boolean isSameFragment = replacement == fragment;
         int expectedAnimators = isSameFragment ? 2 : 1;
         assertFragmentAnimation(replacement, expectedAnimators, true, POP_ENTER);
+    }
+
+    private void assertExitPostponedPopEnter(AnimatorFragment fragment) throws Throwable {
+        assertFragmentAnimation(fragment, 1, false, EXIT);
+
+        fragment.postponeEnterTransition();
+        FragmentTestUtil.popBackStackImmediate(mActivityRule);
+
+        assertPostponed(fragment, 1);
+
+        fragment.startPostponedEnterTransition();
+        FragmentTestUtil.waitForExecution(mActivityRule);
+        assertFragmentAnimation(fragment, 2, true, POP_ENTER);
     }
 
     private void assertFragmentAnimation(AnimatorFragment fragment, int numAnimators,
@@ -257,7 +441,14 @@ public class FragmentAnimatorTest {
         assertEquals(animatorResourceId, fragment.resourceId);
         assertNotNull(fragment.animator);
         assertTrue(fragment.wasStarted);
-        assertTrue(fragment.endLatch.await(100, TimeUnit.MILLISECONDS));
+        assertTrue(fragment.endLatch.await(200, TimeUnit.MILLISECONDS));
+    }
+
+    private void assertPostponed(AnimatorFragment fragment, int expectedAnimators)
+            throws InterruptedException {
+        assertTrue(fragment.mOnCreateViewCalled);
+        assertEquals(View.INVISIBLE, fragment.getView().getVisibility());
+        assertEquals(expectedAnimators, fragment.numAnimators);
     }
 
     public static class AnimatorFragment extends StrictViewFragment {
