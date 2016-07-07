@@ -38,6 +38,8 @@ import android.util.Log;
 
 import java.util.ArrayList;
 
+import static android.print.cts.Utils.eventually;
+
 /**
  * Test interface from the application to the print service.
  */
@@ -252,7 +254,7 @@ public class AppPrintInterfaceTest extends BasePrintTest {
      * @throws Exception If anything is unexpected
      */
     private void cancelPrintJobBaseTest(int cancelAfterState, @NonNull String printJobName)
-            throws Exception {
+            throws Throwable {
         PrintDocumentAdapter adapter = setupPrint(cancelAfterState);
 
         print(adapter, printJobName);
@@ -297,7 +299,7 @@ public class AppPrintInterfaceTest extends BasePrintTest {
         waitForPrinterDiscoverySessionDestroyCallbackCalled(1);
     }
 
-    public void testAttemptCancelCreatedPrintJob() throws Exception {
+    public void testAttemptCancelCreatedPrintJob() throws Throwable {
         PrintDocumentAdapter adapter = setupPrint(PrintJobInfo.STATE_STARTED);
 
         print(adapter, "testAttemptCancelCreatedPrintJob");
@@ -319,19 +321,19 @@ public class AppPrintInterfaceTest extends BasePrintTest {
         waitForPrinterDiscoverySessionDestroyCallbackCalled(1);
     }
 
-    public void testCancelStartedPrintJob() throws Exception {
+    public void testCancelStartedPrintJob() throws Throwable {
         cancelPrintJobBaseTest(PrintJobInfo.STATE_STARTED, "testCancelStartedPrintJob");
     }
 
-    public void testCancelBlockedPrintJob() throws Exception {
+    public void testCancelBlockedPrintJob() throws Throwable {
         cancelPrintJobBaseTest(PrintJobInfo.STATE_BLOCKED, "testCancelBlockedPrintJob");
     }
 
-    public void testCancelFailedPrintJob() throws Exception {
+    public void testCancelFailedPrintJob() throws Throwable {
         cancelPrintJobBaseTest(PrintJobInfo.STATE_FAILED, "testCancelFailedPrintJob");
     }
 
-    public void testRestartFailedPrintJob() throws Exception {
+    public void testRestartFailedPrintJob() throws Throwable {
         PrintDocumentAdapter adapter = setupPrint(PrintJobInfo.STATE_FAILED);
 
         print(adapter, "testRestartFailedPrintJob");
@@ -359,7 +361,7 @@ public class AppPrintInterfaceTest extends BasePrintTest {
         waitForPrinterDiscoverySessionDestroyCallbackCalled(1);
     }
 
-    public void testGetTwoPrintJobStates() throws Exception {
+    public void testGetTwoPrintJobStates() throws Throwable {
         PrintDocumentAdapter adapter = setupPrint(PrintJobInfo.STATE_BLOCKED);
         print(adapter, "testGetTwoPrintJobStates-block");
         waitForWriteAdapterCallback(1);
@@ -402,7 +404,7 @@ public class AppPrintInterfaceTest extends BasePrintTest {
         waitForPrinterDiscoverySessionDestroyCallbackCalled(2);
     }
 
-    public void testChangedPrintJobInfo() throws Exception {
+    public void testChangedPrintJobInfo() throws Throwable {
         PrintDocumentAdapter adapter = setupPrint(PrintJobInfo.STATE_COMPLETED);
         long beforeStart = System.currentTimeMillis();
         print(adapter, "testPrintJobInfo");
@@ -426,7 +428,7 @@ public class AppPrintInterfaceTest extends BasePrintTest {
         clickPrintButton();
         answerPrintServicesWarning(true);
         waitForPrinterDiscoverySessionDestroyCallbackCalled(1);
-        eventually(() -> job.isCompleted());
+        eventually(job::isCompleted);
 
         // Make sure all options were applied
         assertEquals(TEST_PRINTER, job.getInfo().getPrinterId().getLocalId());

@@ -16,6 +16,7 @@
 
 package android.print.cts;
 
+import static android.print.cts.Utils.eventually;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.inOrder;
@@ -2022,7 +2023,7 @@ public class PrintDocumentAdapterContractTest extends BasePrintTest {
      * @param pageCount The number of pages in the document
      */
     private void printDocumentBaseTest(String name, Integer contentType, Integer pageCount)
-            throws Exception {
+            throws Throwable {
         if (!supportsPrinting()) {
             return;
         }
@@ -2136,7 +2137,7 @@ public class PrintDocumentAdapterContractTest extends BasePrintTest {
      *
      * @throws Exception If anything unexpected happens
      */
-    public void testDocumentInfoNothingSet() throws Exception {
+    public void testDocumentInfoNothingSet() throws Throwable {
         printDocumentBaseTest(PRINT_JOB_NAME, null, null);
     }
 
@@ -2145,7 +2146,7 @@ public class PrintDocumentAdapterContractTest extends BasePrintTest {
      *
      * @throws Exception If anything unexpected happens
      */
-    public void testDocumentInfoUnknownPageCount() throws Exception {
+    public void testDocumentInfoUnknownPageCount() throws Throwable {
         printDocumentBaseTest(PRINT_JOB_NAME, null, PrintDocumentInfo.PAGE_COUNT_UNKNOWN);
     }
 
@@ -2154,7 +2155,7 @@ public class PrintDocumentAdapterContractTest extends BasePrintTest {
      *
      * @throws Exception If anything unexpected happens
      */
-    public void testDocumentInfoZeroPageCount() throws Exception {
+    public void testDocumentInfoZeroPageCount() throws Throwable {
         printDocumentBaseTest(PRINT_JOB_NAME, null, 0);
     }
 
@@ -2163,7 +2164,7 @@ public class PrintDocumentAdapterContractTest extends BasePrintTest {
      *
      * @throws Exception If anything unexpected happens
      */
-    public void testDocumentInfoOnePageCount() throws Exception {
+    public void testDocumentInfoOnePageCount() throws Throwable {
         printDocumentBaseTest(PRINT_JOB_NAME, null, 1);
     }
 
@@ -2172,7 +2173,7 @@ public class PrintDocumentAdapterContractTest extends BasePrintTest {
      *
      * @throws Exception If anything unexpected happens
      */
-    public void testDocumentInfoThreePageCount() throws Exception {
+    public void testDocumentInfoThreePageCount() throws Throwable {
         printDocumentBaseTest(PRINT_JOB_NAME, null, 3);
     }
 
@@ -2181,7 +2182,7 @@ public class PrintDocumentAdapterContractTest extends BasePrintTest {
      *
      * @throws Exception If anything unexpected happens
      */
-    public void testDocumentInfoContentTypePhoto() throws Exception {
+    public void testDocumentInfoContentTypePhoto() throws Throwable {
         printDocumentBaseTest(PRINT_JOB_NAME, PrintDocumentInfo.CONTENT_TYPE_PHOTO, null);
     }
 
@@ -2190,7 +2191,7 @@ public class PrintDocumentAdapterContractTest extends BasePrintTest {
      *
      * @throws Exception If anything unexpected happens
      */
-    public void testDocumentInfoContentTypeUnknown() throws Exception {
+    public void testDocumentInfoContentTypeUnknown() throws Throwable {
         printDocumentBaseTest(PRINT_JOB_NAME, PrintDocumentInfo.CONTENT_TYPE_UNKNOWN, null);
     }
 
@@ -2199,7 +2200,7 @@ public class PrintDocumentAdapterContractTest extends BasePrintTest {
      *
      * @throws Exception If anything unexpected happens
      */
-    public void testDocumentInfoContentTypeNonDefined() throws Exception {
+    public void testDocumentInfoContentTypeNonDefined() throws Throwable {
         printDocumentBaseTest(PRINT_JOB_NAME, -23, null);
     }
 

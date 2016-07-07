@@ -26,13 +26,11 @@ import static org.mockito.Mockito.when;
 
 import android.content.Context;
 import android.content.pm.PackageManager;
-import android.content.res.Configuration;
 import android.content.res.Resources;
 import android.cts.util.SystemUtil;
 import android.graphics.pdf.PdfDocument;
 import android.os.Bundle;
 import android.os.CancellationSignal;
-import android.os.LocaleList;
 import android.os.ParcelFileDescriptor;
 import android.os.SystemClock;
 import android.print.PageRange;
@@ -89,34 +87,6 @@ public abstract class BasePrintTest extends InstrumentationTestCase {
 
     private static PrintDocumentActivity sActivity;
     private UiDevice mUiDevice;
-
-    /**
-     * Make sure that a runnable eventually finishes without throwing a exception.
-     *
-     * @param r The runnable to run.
-     */
-    protected static void eventually(Runnable r) {
-        long start = System.currentTimeMillis();
-
-        while (true) {
-            try {
-                r.run();
-                break;
-            } catch (Throwable e) {
-                if (System.currentTimeMillis() - start < OPERATION_TIMEOUT_MILLIS) {
-                    Log.e(LOG_TAG, "Ignoring exception", e);
-
-                    try {
-                        Thread.sleep(500);
-                    } catch (InterruptedException e1) {
-                        Log.e(LOG_TAG, "Interrupted", e);
-                    }
-                } else {
-                    throw e;
-                }
-            }
-        }
-    }
 
     /**
      * Return the UI device
