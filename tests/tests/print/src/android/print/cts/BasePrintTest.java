@@ -748,6 +748,7 @@ public abstract class BasePrintTest extends InstrumentationTestCase {
         }
         FileOutputStream fos = new FileOutputStream(output.getFileDescriptor());
         document.writeTo(fos);
+        fos.flush();
         document.close();
     }
 
