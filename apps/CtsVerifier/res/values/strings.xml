@@ -1901,6 +1901,16 @@ You should be prompted to select credentials; choose the ones you just installed
             your phone are not and cannot be downloaded through USB.\n
             Please mark the test accordingly.
     </string>
+    <string name="device_owner_set_user_icon">Setting the user icon</string>
+    <string name="device_owner_set_user_icon_instruction">
+        This test verifies that the user icon can be set.\n
+        1. Press the set user icon button.\n
+        2. Press the go button to go to Settings.\n
+        3a. If there is a "users" section in Settings, check that the icon of the user "owner" is the CtsVerifier one and mark this test accordingly.\n
+        3b. If there is no "users" section, mark this test as passed.\n
+    </string>
+    <string name="device_owner_set_user_icon_button">Set user icon</string>
+
     <string name="profile_owner_permission_lockdown_test_info">
         <b>
         Before proceeding, check if com.android.cts.permissionapp (aka CtsPermissionApp) is installed in work profile by going to Settings &gt; Apps. If not, please install the app before proceeding.\n\n
