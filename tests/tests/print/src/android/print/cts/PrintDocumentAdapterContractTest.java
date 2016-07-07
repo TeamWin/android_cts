@@ -49,6 +49,7 @@ import org.mockito.InOrder;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -2019,10 +2020,8 @@ public class PrintDocumentAdapterContractTest extends BasePrintTest {
      * @param name The name of the document info
      * @param contentType The content type of the document
      * @param pageCount The number of pages in the document
-     * @param dataSize The size of the data attached to the printDocument
      */
-    private void printDocumentBaseTest(String name, Integer contentType, Integer pageCount,
-            Long dataSize)
+    private void printDocumentBaseTest(String name, Integer contentType, Integer pageCount)
             throws Exception {
         if (!supportsPrinting()) {
             return;
@@ -2038,6 +2037,8 @@ public class PrintDocumentAdapterContractTest extends BasePrintTest {
         PrintDocumentInfo info = b.build();
 
         PrintDocumentInfo queuedInfo[] = new PrintDocumentInfo[1];
+        ParcelFileDescriptor queuedData[] = new ParcelFileDescriptor[1];
+        final long[] writtenFileSize = new long[1];
 
         PrinterDiscoverySessionCallbacks printerDiscoverySessionCallbacks =
                 createFirstMockDiscoverySessionCallbacks();
@@ -2046,6 +2047,7 @@ public class PrintDocumentAdapterContractTest extends BasePrintTest {
                 invocation -> {
                     PrintJob printJob = (PrintJob) invocation.getArguments()[0];
                     queuedInfo[0] = printJob.getDocument().getInfo();
+                    queuedData[0] = printJob.getDocument().getData();
                     printJob.complete();
                     return null;
                 }, null);
@@ -2059,7 +2061,8 @@ public class PrintDocumentAdapterContractTest extends BasePrintTest {
         final PrintDocumentAdapter adapter = createMockPrintDocumentAdapter(
                 invocation -> {
                     printAttributes[0] = (PrintAttributes) invocation.getArguments()[1];
-                    LayoutResultCallback callback = (LayoutResultCallback) invocation.getArguments()[3];
+                    LayoutResultCallback callback = (LayoutResultCallback) invocation
+                            .getArguments()[3];
                     callback.onLayoutFinished(info, false);
                     // Mark layout was called.
                     onLayoutCalled();
@@ -2111,6 +2114,21 @@ public class PrintDocumentAdapterContractTest extends BasePrintTest {
         } else {
             assertEquals(2, queuedInfo[0].getPageCount());
         }
+
+        // Verify data (== pdf file) size
+        assertTrue(queuedInfo[0].getDataSize() > 0);
+
+        long bytesRead = 0;
+        try (FileInputStream is = new FileInputStream(queuedData[0].getFileDescriptor())) {
+            while (true) {
+                int ret = is.read();
+                if (ret == -1) {
+                    break;
+                }
+                bytesRead++;
+            }
+        }
+        assertEquals(queuedInfo[0].getDataSize(), bytesRead);
     }
 
     /**
@@ -2119,7 +2137,7 @@ public class PrintDocumentAdapterContractTest extends BasePrintTest {
      * @throws Exception If anything unexpected happens
      */
     public void testDocumentInfoNothingSet() throws Exception {
-        printDocumentBaseTest(PRINT_JOB_NAME, null, null, null);
+        printDocumentBaseTest(PRINT_JOB_NAME, null, null);
     }
 
     /**
@@ -2128,7 +2146,7 @@ public class PrintDocumentAdapterContractTest extends BasePrintTest {
      * @throws Exception If anything unexpected happens
      */
     public void testDocumentInfoUnknownPageCount() throws Exception {
-        printDocumentBaseTest(PRINT_JOB_NAME, null, PrintDocumentInfo.PAGE_COUNT_UNKNOWN, null);
+        printDocumentBaseTest(PRINT_JOB_NAME, null, PrintDocumentInfo.PAGE_COUNT_UNKNOWN);
     }
 
     /**
@@ -2137,7 +2155,7 @@ public class PrintDocumentAdapterContractTest extends BasePrintTest {
      * @throws Exception If anything unexpected happens
      */
     public void testDocumentInfoZeroPageCount() throws Exception {
-        printDocumentBaseTest(PRINT_JOB_NAME, null, 0, null);
+        printDocumentBaseTest(PRINT_JOB_NAME, null, 0);
     }
 
     /**
@@ -2146,7 +2164,7 @@ public class PrintDocumentAdapterContractTest extends BasePrintTest {
      * @throws Exception If anything unexpected happens
      */
     public void testDocumentInfoOnePageCount() throws Exception {
-        printDocumentBaseTest(PRINT_JOB_NAME, null, 1, null);
+        printDocumentBaseTest(PRINT_JOB_NAME, null, 1);
     }
 
     /**
@@ -2155,7 +2173,7 @@ public class PrintDocumentAdapterContractTest extends BasePrintTest {
      * @throws Exception If anything unexpected happens
      */
     public void testDocumentInfoThreePageCount() throws Exception {
-        printDocumentBaseTest(PRINT_JOB_NAME, null, 3, null);
+        printDocumentBaseTest(PRINT_JOB_NAME, null, 3);
     }
 
     /**
@@ -2164,7 +2182,7 @@ public class PrintDocumentAdapterContractTest extends BasePrintTest {
      * @throws Exception If anything unexpected happens
      */
     public void testDocumentInfoContentTypePhoto() throws Exception {
-        printDocumentBaseTest(PRINT_JOB_NAME, PrintDocumentInfo.CONTENT_TYPE_PHOTO, null, null);
+        printDocumentBaseTest(PRINT_JOB_NAME, PrintDocumentInfo.CONTENT_TYPE_PHOTO, null);
     }
 
     /**
@@ -2173,7 +2191,7 @@ public class PrintDocumentAdapterContractTest extends BasePrintTest {
      * @throws Exception If anything unexpected happens
      */
     public void testDocumentInfoContentTypeUnknown() throws Exception {
-        printDocumentBaseTest(PRINT_JOB_NAME, PrintDocumentInfo.CONTENT_TYPE_UNKNOWN, null, null);
+        printDocumentBaseTest(PRINT_JOB_NAME, PrintDocumentInfo.CONTENT_TYPE_UNKNOWN, null);
     }
 
     /**
@@ -2182,7 +2200,7 @@ public class PrintDocumentAdapterContractTest extends BasePrintTest {
      * @throws Exception If anything unexpected happens
      */
     public void testDocumentInfoContentTypeNonDefined() throws Exception {
-        printDocumentBaseTest(PRINT_JOB_NAME, -23, null, null);
+        printDocumentBaseTest(PRINT_JOB_NAME, -23, null);
     }
 
     private PrinterDiscoverySessionCallbacks createFirstMockDiscoverySessionCallbacks() {
