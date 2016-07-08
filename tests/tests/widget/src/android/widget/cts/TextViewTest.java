@@ -5978,6 +5978,56 @@ public class TextViewTest extends ActivityInstrumentationTestCase2<TextViewCtsAc
         }
     }
 
+    public void testTextIsSelectableFocusAndOnClick() {
+        // Prepare a focusable TextView with an onClickListener attached.
+        final View.OnClickListener mockOnClickListener = mock(View.OnClickListener.class);
+        mActivity.runOnUiThread(() -> {
+            mTextView = new TextView(mActivity);
+            mTextView.setText("...zekiel 25:17. The path of the righteous...");
+            mTextView.setFocusable(true);
+            mTextView.setOnClickListener(mockOnClickListener);
+            mActivity.setContentView(mTextView);
+        });
+        mInstrumentation.waitForIdleSync();
+        assertTrue(mTextView.isFocusable());
+        assertFalse(mTextView.isTextSelectable());
+        assertFalse(mTextView.isFocusableInTouchMode());
+        assertFalse(mTextView.isFocused());
+        assertFalse(mTextView.isInTouchMode());
+
+        // First tap on the view triggers onClick() but does not focus the TextView.
+        ViewTestUtils.emulateTapOnViewCenter(mInstrumentation, mTextView);
+        assertTrue(mTextView.isInTouchMode());
+        assertFalse(mTextView.isFocused());
+        verify(mockOnClickListener, times(1)).onClick(mTextView);
+        // So does the second tap.
+        reset(mockOnClickListener);
+        ViewTestUtils.emulateTapOnViewCenter(mInstrumentation, mTextView);
+        assertTrue(mTextView.isInTouchMode());
+        assertFalse(mTextView.isFocused());
+        verify(mockOnClickListener, times(1)).onClick(mTextView);
+
+        mActivity.runOnUiThread(() -> mTextView.setTextIsSelectable(true));
+        mInstrumentation.waitForIdleSync();
+        assertTrue(mTextView.isFocusable());
+        assertTrue(mTextView.isTextSelectable());
+        assertTrue(mTextView.isFocusableInTouchMode());
+        assertFalse(mTextView.isFocused());
+
+        // First tap on the view focuses the TextView but does not trigger onClick().
+        reset(mockOnClickListener);
+        ViewTestUtils.emulateTapOnViewCenter(mInstrumentation, mTextView);
+        assertTrue(mTextView.isInTouchMode());
+        assertTrue(mTextView.isFocused());
+        verify(mockOnClickListener, never()).onClick(mTextView);
+        // The second tap triggers onClick() and keeps the focus.
+        reset(mockOnClickListener);
+        ViewTestUtils.emulateTapOnViewCenter(mInstrumentation, mTextView);
+        assertTrue(mTextView.isInTouchMode());
+        assertTrue(mTextView.isFocused());
+        verify(mockOnClickListener, times(1)).onClick(mTextView);
+    }
+
     private void verifyGetOffsetForPosition(final int x, final int y) {
         final int actual = mTextView.getOffsetForPosition(x, y);
 
