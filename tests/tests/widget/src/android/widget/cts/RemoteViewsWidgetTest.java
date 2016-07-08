@@ -188,6 +188,16 @@ public class RemoteViewsWidgetTest {
         } catch (InterruptedException ie) {
             fail(ie.getMessage());
         }
+
+        // Add our host view to the activity behind this test. This is similar to how launchers
+        // add widgets to the on-screen UI.
+        ViewGroup root = (ViewGroup) mActivityRule.getActivity().findViewById(R.id.remoteView_host);
+        FrameLayout.MarginLayoutParams lp = new FrameLayout.MarginLayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT);
+        mAppWidgetHostView.setLayoutParams(lp);
+
+        mInstrumentation.runOnMainSync(() -> root.addView(mAppWidgetHostView));
     }
 
     @After
@@ -370,14 +380,6 @@ public class RemoteViewsWidgetTest {
             return;
         }
 
-        ViewGroup root = (ViewGroup) mActivityRule.getActivity().findViewById(R.id.remoteView_host);
-        FrameLayout.MarginLayoutParams lp = new FrameLayout.MarginLayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.MATCH_PARENT);
-        mAppWidgetHostView.setLayoutParams(lp);
-
-        mInstrumentation.runOnMainSync(() -> root.addView(mAppWidgetHostView));
-
         verifyItemClickIntents(0);
 
         // Switch to another child
@@ -462,16 +464,6 @@ public class RemoteViewsWidgetTest {
         }
         // And wait until the underlying ListView has been updated to be visible
         PollingCheck.waitFor(TEST_TIMEOUT_MS, () -> mListView.getVisibility() == View.VISIBLE);
-
-        // Add our host view to the activity behind this test. This is similar to how launchers
-        // add widgets to the on-screen UI.
-        ViewGroup root = (ViewGroup) mActivityRule.getActivity().findViewById(R.id.remoteView_host);
-        FrameLayout.MarginLayoutParams lp = new FrameLayout.MarginLayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.MATCH_PARENT);
-        mAppWidgetHostView.setLayoutParams(lp);
-
-        mInstrumentation.runOnMainSync(() -> root.addView(mAppWidgetHostView));
 
         // Wait until our ListView has at least one visible child view. At that point we know
         // that not only the host view is on screen, but also that the list view has completed
