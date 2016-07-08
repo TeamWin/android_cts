@@ -17,7 +17,7 @@
 package android.text.cts;
 
 import android.test.AndroidTestCase;
-import android.test.suitebuilder.annotation.SmallTest;
+import android.support.test.filters.SmallTest;
 import android.text.SpannableString;
 import android.text.Spanned;
 import android.text.style.LocaleSpan;
@@ -28,6 +28,7 @@ import java.util.Locale;
 
 public class SpannableStringTest extends AndroidTestCase {
 
+    @SmallTest
     public void testConstructor() {
         new SpannableString("test");
 
@@ -38,6 +39,7 @@ public class SpannableStringTest extends AndroidTestCase {
         }
     }
 
+    @SmallTest
     public void testValueOf() {
         String text = "test valueOf";
         SpannableString spannable = SpannableString.valueOf(text);
@@ -54,6 +56,7 @@ public class SpannableStringTest extends AndroidTestCase {
         }
     }
 
+    @SmallTest
     public void testSetSpan() {
         String text = "hello, world";
         SpannableString spannable = new SpannableString(text);
@@ -84,6 +87,7 @@ public class SpannableStringTest extends AndroidTestCase {
         }
     }
 
+    @SmallTest
     public void testRemoveSpan() {
         SpannableString spannable = new SpannableString("hello, world");
 
@@ -107,6 +111,7 @@ public class SpannableStringTest extends AndroidTestCase {
         assertEquals(0, spannable.getSpanFlags(underlineSpan));
     }
 
+    @SmallTest
     public void testSubSequence() {
         String text = "hello, world";
         SpannableString spannable = new SpannableString(text);
