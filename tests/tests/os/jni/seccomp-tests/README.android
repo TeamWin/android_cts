@@ -10,7 +10,8 @@ Local modifications:
 - Rename main() to seccomp_test_main()
 - Add get_seccomp_test_list()
 - Backport TEST(syscall_restart) from upstream
-- Add parentheses in macro IS_SECCOMP_EVENT(status)
+- Add parentheses in macro IS_SECCOMP_EVENT(status),
+  __TEST_IMPL, __TEST_F_IMPL, __EXPECT_STR, and _CONSTRUCTOR_ORDER_BACKWARD.
 
 The diff of modifications can be found in local-modifications-android.diff
 and local-modifications-android-2.diff. Note, the TEST(syscall_restart)
