@@ -41,15 +41,16 @@ public class Utils {
      * @param expectedClass The expected {@link Throwable} type
      */
     public static void assertException(@NonNull Invokable r,
-            @NonNull Class<? extends Throwable> expectedClass) {
+            @NonNull Class<? extends Throwable> expectedClass) throws Throwable {
         try {
             r.run();
         } catch (Throwable e) {
             if (e.getClass().isAssignableFrom(expectedClass)) {
                 return;
             } else {
-                throw new AssertionError("Expected: " + expectedClass.getName() + ", got: "
+                Log.e(LOG_TAG, "Expected: " + expectedClass.getName() + ", got: "
                         + e.getClass().getName());
+                throw e;
             }
         }
 

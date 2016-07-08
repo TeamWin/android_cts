@@ -55,6 +55,7 @@ import android.support.test.uiautomator.UiSelector;
 import java.util.ArrayList;
 import java.util.List;
 
+import static android.print.cts.Utils.assertException;
 import static android.print.cts.Utils.eventually;
 import static android.print.cts.Utils.runOnMainThread;
 
@@ -439,5 +440,42 @@ public class PrintServicesTest extends BasePrintTest {
         updatePrinter((new PrinterInfo.Builder(sPrinter)).setHasCustomPrinterIcon(true).build());
 
         assertThatIconIs(renderDrawable(mIcon.loadDrawable(getActivity())));
+    }
+
+    /**
+     * Test that we cannot call attachBaseContext
+     *
+     * @throws Throwable If anything is unexpected.
+     */
+    public void testCannotUseAttachBaseContext() throws Throwable {
+        if (!supportsPrinting()) {
+            return;
+        }
+        // Create the session callbacks that we will be checking.
+        final PrinterDiscoverySessionCallbacks sessionCallbacks
+                = createFirstMockPrinterDiscoverySessionCallbacks();
+
+        // Create the service callbacks for the first print service.
+        PrintServiceCallbacks serviceCallbacks = createFirstMockPrinterServiceCallbacks(
+                sessionCallbacks);
+
+        // Configure the print services.
+        FirstPrintService.setCallbacks(serviceCallbacks);
+
+        // Create a print adapter that respects the print contract.
+        PrintDocumentAdapter adapter = createMockPrintDocumentAdapter();
+
+        // We don't use the second service, but we have to still configure it
+        SecondPrintService.setCallbacks(createMockPrintServiceCallbacks(null, null, null));
+
+        // Start printing to set serviceCallbacks.getService()
+        print(adapter);
+        eventually(() -> assertNotNull(serviceCallbacks.getService()));
+
+        // attachBaseContext should always throw an exception no matter what input value
+        assertException(() -> serviceCallbacks.getService().callAttachBaseContext(null),
+                IllegalStateException.class);
+        assertException(() -> serviceCallbacks.getService().callAttachBaseContext(getActivity()),
+                IllegalStateException.class);
     }
 }

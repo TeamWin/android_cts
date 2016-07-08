@@ -16,6 +16,7 @@
 
 package android.print.cts.services;
 
+import android.content.Context;
 import android.printservice.PrintJob;
 import android.printservice.PrintService;
 import android.printservice.PrinterDiscoverySession;
@@ -49,4 +50,8 @@ public abstract class StubbablePrintService extends PrintService {
     }
 
     protected abstract PrintServiceCallbacks getCallbacks();
+
+    public void callAttachBaseContext(Context base) {
+        attachBaseContext(base);
+    }
 }
