@@ -21,6 +21,8 @@ import android.printservice.PrintJob;
 import android.printservice.PrintService;
 import android.printservice.PrinterDiscoverySession;
 
+import java.util.List;
+
 public abstract class StubbablePrintService extends PrintService {
 
     @Override
@@ -54,4 +56,9 @@ public abstract class StubbablePrintService extends PrintService {
     public void callAttachBaseContext(Context base) {
         attachBaseContext(base);
     }
+
+    public List<PrintJob> callGetActivePrintJobs() {
+        return getActivePrintJobs();
+    }
+
 }

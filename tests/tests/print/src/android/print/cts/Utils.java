@@ -16,8 +16,11 @@
 
 package android.print.cts;
 
+import android.content.Context;
 import android.os.Handler;
 import android.os.Looper;
+import android.print.PrintJob;
+import android.print.PrintManager;
 import android.support.annotation.NonNull;
 import android.util.Log;
 
@@ -116,6 +119,24 @@ public class Utils {
                 }
             }
         }
+    }
+
+    /**
+     * @param name Name of print job
+     *
+     * @return The print job for the name
+     *
+     * @throws Exception If print job could not be found
+     */
+    public static @NonNull PrintJob getPrintJob(@NonNull PrintManager pm, @NonNull String name)
+            throws Exception {
+        for (android.print.PrintJob job : pm.getPrintJobs()) {
+            if (job.getInfo().getLabel().equals(name)) {
+                return job;
+            }
+        }
+
+        throw new Exception("Print job " + name + " not found in " + pm.getPrintJobs());
     }
 
 }
