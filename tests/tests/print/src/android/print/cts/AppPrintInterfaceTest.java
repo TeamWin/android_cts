@@ -39,6 +39,7 @@ import android.util.Log;
 import java.util.ArrayList;
 
 import static android.print.cts.Utils.eventually;
+import static android.print.cts.Utils.getPrintJob;
 
 /**
  * Test interface from the application to the print service.
@@ -126,10 +127,10 @@ public class AppPrintInterfaceTest extends BasePrintTest {
                         .addMediaSize(PrintAttributes.MediaSize.ISO_A3, false)
                         .addResolution(TWO_HUNDRED_DPI, true)
                         .setColorModes(PrintAttributes.COLOR_MODE_MONOCHROME
-                                | PrintAttributes.COLOR_MODE_COLOR,
+                                        | PrintAttributes.COLOR_MODE_COLOR,
                                 PrintAttributes.COLOR_MODE_MONOCHROME)
                         .setDuplexModes(PrintAttributes.DUPLEX_MODE_NONE
-                                | PrintAttributes.DUPLEX_MODE_LONG_EDGE,
+                                        | PrintAttributes.DUPLEX_MODE_LONG_EDGE,
                                 PrintAttributes.DUPLEX_MODE_NONE)
                         .setMinMargins(new PrintAttributes.Margins(0, 0, 0, 0)).build());
 
@@ -228,24 +229,6 @@ public class AppPrintInterfaceTest extends BasePrintTest {
     }
 
     /**
-     * @param name Name of print job
-     *
-     * @return The print job for the name
-     *
-     * @throws Exception If print job could not be found
-     */
-    private @NonNull PrintJob getPrintJob(@NonNull String name) throws Exception {
-        for (PrintJob job : getPrintManager().getPrintJobs()) {
-            if (job.getInfo().getLabel().equals(name)) {
-                return job;
-            }
-        }
-
-        throw new Exception(
-                "Print job " + name + " not found in " + getPrintManager().getPrintJobs());
-    }
-
-    /**
      * Base test for all cancel print job tests
      *
      * @param cancelAfterState The print job state state to progress to canceling
@@ -266,7 +249,7 @@ public class AppPrintInterfaceTest extends BasePrintTest {
         clickPrintButton();
         answerPrintServicesWarning(true);
 
-        PrintJob job = getPrintJob(printJobName);
+        PrintJob job = getPrintJob(getPrintManager(), printJobName);
 
         // Check getState
         eventually(() -> assertEquals(cancelAfterState, job.getInfo().getState()));
@@ -308,7 +291,7 @@ public class AppPrintInterfaceTest extends BasePrintTest {
         selectPrinter(TEST_PRINTER);
         waitForWriteAdapterCallback(2);
 
-        PrintJob job = getPrintJob("testAttemptCancelCreatedPrintJob");
+        PrintJob job = getPrintJob(getPrintManager(), "testAttemptCancelCreatedPrintJob");
 
         // Cancel does not have an effect on created jobs
         job.cancel();
@@ -345,7 +328,7 @@ public class AppPrintInterfaceTest extends BasePrintTest {
         clickPrintButton();
         answerPrintServicesWarning(true);
 
-        PrintJob job = getPrintJob("testRestartFailedPrintJob");
+        PrintJob job = getPrintJob(getPrintManager(), "testRestartFailedPrintJob");
 
         eventually(() -> assertTrue(job.isFailed()));
 
@@ -374,7 +357,7 @@ public class AppPrintInterfaceTest extends BasePrintTest {
 
         waitForPrinterDiscoverySessionDestroyCallbackCalled(1);
 
-        PrintJob job1 = getPrintJob("testGetTwoPrintJobStates-block");
+        PrintJob job1 = getPrintJob(getPrintManager(), "testGetTwoPrintJobStates-block");
         eventually(() -> assertTrue(job1.isBlocked()));
 
         adapter = setupPrint(PrintJobInfo.STATE_COMPLETED);
@@ -382,7 +365,7 @@ public class AppPrintInterfaceTest extends BasePrintTest {
         waitForWriteAdapterCallback(3);
         clickPrintButton();
 
-        PrintJob job2 = getPrintJob("testGetTwoPrintJobStates-complete");
+        PrintJob job2 = getPrintJob(getPrintManager(), "testGetTwoPrintJobStates-complete");
         eventually(() -> assertTrue(job2.isCompleted()));
 
         // Ids have to be unique
@@ -391,14 +374,16 @@ public class AppPrintInterfaceTest extends BasePrintTest {
 
         // Ids have to be the same in job and info and if we find the same job again
         assertEquals(job1.getId(), job1.getInfo().getId());
-        assertEquals(job1.getId(), getPrintJob("testGetTwoPrintJobStates-block").getId());
-        assertEquals(job1, getPrintJob("testGetTwoPrintJobStates-block"));
+        assertEquals(job1.getId(),
+                getPrintJob(getPrintManager(), "testGetTwoPrintJobStates-block").getId());
+        assertEquals(job1, getPrintJob(getPrintManager(), "testGetTwoPrintJobStates-block"));
         assertEquals(job2.getId(), job2.getInfo().getId());
-        assertEquals(job2.getId(), getPrintJob("testGetTwoPrintJobStates-complete").getId());
-        assertEquals(job2, getPrintJob("testGetTwoPrintJobStates-complete"));
+        assertEquals(job2.getId(),
+                getPrintJob(getPrintManager(), "testGetTwoPrintJobStates-complete").getId());
+        assertEquals(job2, getPrintJob(getPrintManager(), "testGetTwoPrintJobStates-complete"));
 
         // First print job should still be there
-        PrintJob job1again = getPrintJob("testGetTwoPrintJobStates-block");
+        PrintJob job1again = getPrintJob(getPrintManager(), "testGetTwoPrintJobStates-block");
         assertTrue(job1again.isBlocked());
 
         waitForPrinterDiscoverySessionDestroyCallbackCalled(2);
@@ -414,14 +399,15 @@ public class AppPrintInterfaceTest extends BasePrintTest {
         selectPrinter(TEST_PRINTER);
         waitForWriteAdapterCallback(2);
 
-        PrintJob job = getPrintJob("testPrintJobInfo");
+        PrintJob job = getPrintJob(getPrintManager(), "testPrintJobInfo");
 
         // Set some non default options
         openPrintOptions();
         changeCopies(2);
         changeColor(getPrintSpoolerStringArray("color_mode_labels")[1]);
         // Leave duplex as default to test that defaults are retained
-        changeMediaSize(PrintAttributes.MediaSize.ISO_A3.getLabel(getActivity().getPackageManager()));
+        changeMediaSize(
+                PrintAttributes.MediaSize.ISO_A3.getLabel(getActivity().getPackageManager()));
         changeOrientation(getPrintSpoolerStringArray("orientation_labels")[1]);
 
         // Print and wait until it is completed
