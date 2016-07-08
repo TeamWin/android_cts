@@ -17,7 +17,6 @@
 package android.print.cts.services;
 
 import android.printservice.PrintJob;
-import android.printservice.PrintService;
 
 public abstract class PrintServiceCallbacks {
 

@@ -29,16 +29,11 @@ import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.Icon;
-import android.os.ParcelFileDescriptor;
-import android.print.PageRange;
 import android.print.PrintAttributes;
 import android.print.PrintAttributes.Margins;
 import android.print.PrintAttributes.MediaSize;
 import android.print.PrintAttributes.Resolution;
 import android.print.PrintDocumentAdapter;
-import android.print.PrintDocumentAdapter.LayoutResultCallback;
-import android.print.PrintDocumentAdapter.WriteResultCallback;
-import android.print.PrintDocumentInfo;
 import android.print.PrintManager;
 import android.print.PrinterCapabilitiesInfo;
 import android.print.PrinterId;
@@ -68,7 +63,6 @@ import static android.print.cts.Utils.runOnMainThread;
  */
 public class PrintServicesTest extends BasePrintTest {
     private static final String PRINTER_NAME = "Test printer";
-    private static final int NUM_PAGES = 2;
 
     /** The print job processed in the test */
     private static PrintJob sPrintJob;
@@ -78,51 +72,6 @@ public class PrintServicesTest extends BasePrintTest {
 
     /** The custom printer icon to use */
     private Icon mIcon;
-
-    /**
-     * Create a mock {@link PrintDocumentAdapter} that provides {@link #NUM_PAGES} empty pages.
-     *
-     * @return The mock adapter
-     */
-    private PrintDocumentAdapter createMockPrintDocumentAdapter() {
-        final PrintAttributes[] printAttributes = new PrintAttributes[1];
-
-        return createMockPrintDocumentAdapter(
-                invocation -> {
-                    printAttributes[0] = (PrintAttributes) invocation.getArguments()[1];
-                    LayoutResultCallback callback = (LayoutResultCallback) invocation
-                            .getArguments()[3];
-
-                    PrintDocumentInfo info = new PrintDocumentInfo.Builder(PRINT_JOB_NAME)
-                            .setContentType(PrintDocumentInfo.CONTENT_TYPE_DOCUMENT)
-                            .setPageCount(NUM_PAGES)
-                            .build();
-
-                    callback.onLayoutFinished(info, false);
-
-                    // Mark layout was called.
-                    onLayoutCalled();
-                    return null;
-                }, invocation -> {
-                    Object[] args = invocation.getArguments();
-                    PageRange[] pages = (PageRange[]) args[0];
-                    ParcelFileDescriptor fd = (ParcelFileDescriptor) args[1];
-                    WriteResultCallback callback = (WriteResultCallback) args[3];
-
-                    writeBlankPages(printAttributes[0], fd, pages[0].getStart(),
-                            pages[0].getEnd());
-                    fd.close();
-                    callback.onWriteFinished(pages);
-
-                    // Mark write was called.
-                    onWriteCalled();
-                    return null;
-                }, invocation -> {
-                    // Mark finish was called.
-                    onFinishCalled();
-                    return null;
-                });
-    }
 
     /**
      * Create a mock {@link PrinterDiscoverySessionCallbacks} that discovers a single printer with
@@ -310,7 +259,7 @@ public class PrintServicesTest extends BasePrintTest {
         SecondPrintService.setCallbacks(createMockPrintServiceCallbacks(null, null, null));
 
         // Create a print adapter that respects the print contract.
-        PrintDocumentAdapter adapter = createMockPrintDocumentAdapter();
+        PrintDocumentAdapter adapter = createDefaultPrintDocumentAdapter(1);
 
         // Start printing.
         print(adapter);
@@ -418,7 +367,7 @@ public class PrintServicesTest extends BasePrintTest {
         SecondPrintService.setCallbacks(createMockPrintServiceCallbacks(null, null, null));
 
         // Create a print adapter that respects the print contract.
-        PrintDocumentAdapter adapter = createMockPrintDocumentAdapter();
+        PrintDocumentAdapter adapter = createDefaultPrintDocumentAdapter(1);
 
         // Start printing.
         print(adapter);
@@ -477,7 +426,7 @@ public class PrintServicesTest extends BasePrintTest {
         FirstPrintService.setCallbacks(serviceCallbacks);
 
         // Create a print adapter that respects the print contract.
-        PrintDocumentAdapter adapter = createMockPrintDocumentAdapter();
+        PrintDocumentAdapter adapter = createDefaultPrintDocumentAdapter(1);
 
         // We don't use the second service, but we have to still configure it
         SecondPrintService.setCallbacks(createMockPrintServiceCallbacks(null, null, null));
@@ -520,7 +469,7 @@ public class PrintServicesTest extends BasePrintTest {
         SecondPrintService.setCallbacks(serviceCallbacks2);
 
         // Create a print adapter that respects the print contract.
-        PrintDocumentAdapter adapter = createMockPrintDocumentAdapter();
+        PrintDocumentAdapter adapter = createDefaultPrintDocumentAdapter(1);
 
         runOnMainThread(() -> pm.print("job1", adapter, null));
 
@@ -583,7 +532,7 @@ public class PrintServicesTest extends BasePrintTest {
         // Cancel job. Canceled jobs are not active
         runOnMainThread(() -> assertEquals(2, firstService.callGetActivePrintJobs().size()));
         android.print.PrintJob job2 = getPrintJob(pm, "job2");
-        runOnMainThread(() -> job2.cancel());
+        runOnMainThread(job2::cancel);
         eventually(() -> runOnMainThread(() -> assertTrue(job2.isCancelled())));
         runOnMainThread(() -> assertEquals(1, firstService.callGetActivePrintJobs().size()));
 

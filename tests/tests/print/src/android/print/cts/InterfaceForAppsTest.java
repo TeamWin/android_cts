@@ -16,15 +16,10 @@
 
 package android.print.cts;
 
-import android.content.Context;
-import android.os.ParcelFileDescriptor;
-import android.print.PageRange;
 import android.print.PrintAttributes;
 import android.print.PrintDocumentAdapter;
-import android.print.PrintDocumentInfo;
 import android.print.PrintJob;
 import android.print.PrintJobInfo;
-import android.print.PrintManager;
 import android.print.PrinterCapabilitiesInfo;
 import android.print.PrinterId;
 import android.print.PrinterInfo;
@@ -40,71 +35,17 @@ import java.util.ArrayList;
 
 import static android.print.cts.Utils.eventually;
 import static android.print.cts.Utils.getPrintJob;
+import static android.print.cts.Utils.getPrintManager;
 
 /**
  * Test interface from the application to the print service.
  */
-public class AppPrintInterfaceTest extends BasePrintTest {
+public class InterfaceForAppsTest extends BasePrintTest {
     private static final String TEST_PRINTER = "Test printer";
-    private static final String LOG_TAG = "AppPrintInterfaceTest";
+    private static final String LOG_TAG = "InterfaceForAppsTest";
 
-    private static final PrintAttributes.Resolution TWO_HUNDRED_DPI = new PrintAttributes.Resolution(
-            "200x200", "200dpi", 200, 200);
-
-    /**
-     * @return The print manager
-     */
-    private @NonNull PrintManager getPrintManager() {
-        return (PrintManager) getActivity().getSystemService(Context.PRINT_SERVICE);
-    }
-
-    /**
-     * Start printing
-     *
-     * @param adapter      Adapter supplying data to print
-     * @param printJobName The name of the print job
-     */
-    protected void print(@NonNull PrintDocumentAdapter adapter, @NonNull String printJobName) {
-        // Initiate printing as if coming from the app.
-        getInstrumentation()
-                .runOnMainSync(() -> getPrintManager().print(printJobName, adapter, null));
-    }
-
-    /**
-     * Create a mock {@link PrintDocumentAdapter} that provides one empty page.
-     *
-     * @return The mock adapter
-     */
-    private @NonNull PrintDocumentAdapter createMockPrintDocumentAdapter() {
-        final PrintAttributes[] printAttributes = new PrintAttributes[1];
-
-        return createMockPrintDocumentAdapter(
-                invocation -> {
-                    PrintAttributes oldAttributes = (PrintAttributes) invocation.getArguments()[0];
-                    printAttributes[0] = (PrintAttributes) invocation.getArguments()[1];
-                    PrintDocumentAdapter.LayoutResultCallback callback =
-                            (PrintDocumentAdapter.LayoutResultCallback) invocation
-                                    .getArguments()[3];
-
-                    callback.onLayoutFinished(new PrintDocumentInfo.Builder("doc")
-                            .setPageCount(1).build(), !oldAttributes.equals(printAttributes[0]));
-
-                    oldAttributes = printAttributes[0];
-
-                    return null;
-                }, invocation -> {
-                    Object[] args = invocation.getArguments();
-                    PageRange[] pages = (PageRange[]) args[0];
-                    ParcelFileDescriptor fd = (ParcelFileDescriptor) args[1];
-                    PrintDocumentAdapter.WriteResultCallback callback = (PrintDocumentAdapter.WriteResultCallback) args[3];
-
-                    writeBlankPages(printAttributes[0], fd, pages[0].getStart(), pages[0].getEnd());
-                    fd.close();
-                    callback.onWriteFinished(pages);
-                    onWriteCalled();
-                    return null;
-                }, invocation -> null);
-    }
+    private static final PrintAttributes.Resolution TWO_HUNDRED_DPI =
+            new PrintAttributes.Resolution("200x200", "200dpi", 200, 200);
 
     /**
      * Create a mock {@link PrinterDiscoverySessionCallbacks} that discovers a simple test printer.
@@ -225,7 +166,7 @@ public class AppPrintInterfaceTest extends BasePrintTest {
         // We don't use the second service, but we have to still configure it
         SecondPrintService.setCallbacks(createMockPrintServiceCallbacks(null, null, null));
 
-        return createMockPrintDocumentAdapter();
+        return createDefaultPrintDocumentAdapter(1);
     }
 
     /**
@@ -249,7 +190,7 @@ public class AppPrintInterfaceTest extends BasePrintTest {
         clickPrintButton();
         answerPrintServicesWarning(true);
 
-        PrintJob job = getPrintJob(getPrintManager(), printJobName);
+        PrintJob job = getPrintJob(getPrintManager(getActivity()), printJobName);
 
         // Check getState
         eventually(() -> assertEquals(cancelAfterState, job.getInfo().getState()));
@@ -291,7 +232,8 @@ public class AppPrintInterfaceTest extends BasePrintTest {
         selectPrinter(TEST_PRINTER);
         waitForWriteAdapterCallback(2);
 
-        PrintJob job = getPrintJob(getPrintManager(), "testAttemptCancelCreatedPrintJob");
+        PrintJob job = getPrintJob(getPrintManager(getActivity()),
+                "testAttemptCancelCreatedPrintJob");
 
         // Cancel does not have an effect on created jobs
         job.cancel();
@@ -328,7 +270,7 @@ public class AppPrintInterfaceTest extends BasePrintTest {
         clickPrintButton();
         answerPrintServicesWarning(true);
 
-        PrintJob job = getPrintJob(getPrintManager(), "testRestartFailedPrintJob");
+        PrintJob job = getPrintJob(getPrintManager(getActivity()), "testRestartFailedPrintJob");
 
         eventually(() -> assertTrue(job.isFailed()));
 
@@ -357,7 +299,8 @@ public class AppPrintInterfaceTest extends BasePrintTest {
 
         waitForPrinterDiscoverySessionDestroyCallbackCalled(1);
 
-        PrintJob job1 = getPrintJob(getPrintManager(), "testGetTwoPrintJobStates-block");
+        PrintJob job1 = getPrintJob(getPrintManager(getActivity()),
+                "testGetTwoPrintJobStates-block");
         eventually(() -> assertTrue(job1.isBlocked()));
 
         adapter = setupPrint(PrintJobInfo.STATE_COMPLETED);
@@ -365,7 +308,8 @@ public class AppPrintInterfaceTest extends BasePrintTest {
         waitForWriteAdapterCallback(3);
         clickPrintButton();
 
-        PrintJob job2 = getPrintJob(getPrintManager(), "testGetTwoPrintJobStates-complete");
+        PrintJob job2 = getPrintJob(getPrintManager(getActivity()),
+                "testGetTwoPrintJobStates-complete");
         eventually(() -> assertTrue(job2.isCompleted()));
 
         // Ids have to be unique
@@ -375,15 +319,19 @@ public class AppPrintInterfaceTest extends BasePrintTest {
         // Ids have to be the same in job and info and if we find the same job again
         assertEquals(job1.getId(), job1.getInfo().getId());
         assertEquals(job1.getId(),
-                getPrintJob(getPrintManager(), "testGetTwoPrintJobStates-block").getId());
-        assertEquals(job1, getPrintJob(getPrintManager(), "testGetTwoPrintJobStates-block"));
+                getPrintJob(getPrintManager(getActivity()),
+                        "testGetTwoPrintJobStates-block").getId());
+        assertEquals(job1, getPrintJob(getPrintManager(getActivity()),
+                "testGetTwoPrintJobStates-block"));
         assertEquals(job2.getId(), job2.getInfo().getId());
-        assertEquals(job2.getId(),
-                getPrintJob(getPrintManager(), "testGetTwoPrintJobStates-complete").getId());
-        assertEquals(job2, getPrintJob(getPrintManager(), "testGetTwoPrintJobStates-complete"));
+        assertEquals(job2.getId(), getPrintJob(getPrintManager(getActivity()),
+                "testGetTwoPrintJobStates-complete").getId());
+        assertEquals(job2, getPrintJob(getPrintManager(getActivity()),
+                "testGetTwoPrintJobStates-complete"));
 
         // First print job should still be there
-        PrintJob job1again = getPrintJob(getPrintManager(), "testGetTwoPrintJobStates-block");
+        PrintJob job1again = getPrintJob(getPrintManager(getActivity()),
+                "testGetTwoPrintJobStates-block");
         assertTrue(job1again.isBlocked());
 
         waitForPrinterDiscoverySessionDestroyCallbackCalled(2);
@@ -399,7 +347,7 @@ public class AppPrintInterfaceTest extends BasePrintTest {
         selectPrinter(TEST_PRINTER);
         waitForWriteAdapterCallback(2);
 
-        PrintJob job = getPrintJob(getPrintManager(), "testPrintJobInfo");
+        PrintJob job = getPrintJob(getPrintManager(getActivity()), "testPrintJobInfo");
 
         // Set some non default options
         openPrintOptions();

@@ -37,14 +37,14 @@ import android.print.cts.services.StubbablePrinterDiscoverySession;
 import android.util.Log;
 import android.support.test.uiautomator.UiObject;
 import android.support.test.uiautomator.UiSelector;
-import org.mockito.invocation.InvocationOnMock;
-import org.mockito.stubbing.Answer;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Consumer;
 import java.util.function.Function;
+
+import static android.print.cts.Utils.assertException;
 
 /**
  * This test verifies changes to the printer capabilities are applied correctly.
@@ -133,14 +133,10 @@ public class PrinterCapabilitiesTest extends BasePrintTest {
      */
     private void changeCapabilities(final StubbablePrinterDiscoverySession session,
             final PrinterId printerId, final MediaSize mediaSize, final boolean isAvailable) {
-        getInstrumentation().runOnMainSync(new Runnable() {
-            @Override
-            public void run() {
-                session.addPrinters(generatePrinters(printerId, mediaSize, isAvailable ?
+        getInstrumentation().runOnMainSync(
+                () -> session.addPrinters(generatePrinters(printerId, mediaSize, isAvailable ?
                         PrinterInfo.STATUS_IDLE :
-                        PrinterInfo.STATUS_UNAVAILABLE));
-            }
-        });
+                        PrinterInfo.STATUS_UNAVAILABLE)));
     }
 
     /**
@@ -187,47 +183,40 @@ public class PrinterCapabilitiesTest extends BasePrintTest {
         final PrintAttributes[] writeAttributes = new PrintAttributes[1];
 
         PrintDocumentAdapter adapter = createMockPrintDocumentAdapter(
-                new Answer<Void>() {
-                    @Override
-                    public Void answer(InvocationOnMock invocation) throws Throwable {
-                        LayoutResultCallback callback = (LayoutResultCallback) invocation
-                                .getArguments()[3];
-                        PrintDocumentInfo info = new PrintDocumentInfo.Builder(PRINT_JOB_NAME)
-                                .setContentType(PrintDocumentInfo.CONTENT_TYPE_DOCUMENT)
-                                .setPageCount(1)
-                                .build();
+                invocation -> {
+                    LayoutResultCallback callback = (LayoutResultCallback) invocation
+                            .getArguments()[3];
+                    PrintDocumentInfo info = new PrintDocumentInfo.Builder(PRINT_JOB_NAME)
+                            .setContentType(PrintDocumentInfo.CONTENT_TYPE_DOCUMENT)
+                            .setPageCount(1)
+                            .build();
 
-                        synchronized (PrinterCapabilitiesTest.this) {
-                            layoutAttributes[0] = (PrintAttributes) invocation.getArguments()[1];
+                    synchronized (PrinterCapabilitiesTest.this) {
+                        layoutAttributes[0] = (PrintAttributes) invocation.getArguments()[1];
 
-                            PrinterCapabilitiesTest.this.notify();
-                        }
-
-                        callback.onLayoutFinished(info, true);
-                        return null;
+                        PrinterCapabilitiesTest.this.notify();
                     }
-                },
-                new Answer<Void>() {
-                    @Override
-                    public Void answer(InvocationOnMock invocation) throws Throwable {
-                        Object[] args = invocation.getArguments();
-                        PageRange[] pages = (PageRange[]) args[0];
-                        ParcelFileDescriptor fd = (ParcelFileDescriptor) args[1];
-                        WriteResultCallback callback = (WriteResultCallback) args[3];
 
-                        writeBlankPages(layoutAttributes[0], fd, pages[0].getStart(),
-                                pages[0].getEnd());
-                        fd.close();
+                    callback.onLayoutFinished(info, true);
+                    return null;
+                }, invocation -> {
+                    Object[] args = invocation.getArguments();
+                    PageRange[] pages = (PageRange[]) args[0];
+                    ParcelFileDescriptor fd = (ParcelFileDescriptor) args[1];
+                    WriteResultCallback callback = (WriteResultCallback) args[3];
 
-                        synchronized (PrinterCapabilitiesTest.this) {
-                            writeAttributes[0] = layoutAttributes[0];
+                    writeBlankPages(layoutAttributes[0], fd, pages[0].getStart(),
+                            pages[0].getEnd());
+                    fd.close();
 
-                            PrinterCapabilitiesTest.this.notify();
-                        }
+                    synchronized (PrinterCapabilitiesTest.this) {
+                        writeAttributes[0] = layoutAttributes[0];
 
-                        callback.onWriteFinished(pages);
-                        return null;
+                        PrinterCapabilitiesTest.this.notify();
                     }
+
+                    callback.onWriteFinished(pages);
+                    return null;
                 }, null);
 
         // Start printing.
@@ -276,34 +265,23 @@ public class PrinterCapabilitiesTest extends BasePrintTest {
 
         // Create the session[0] callbacks that we will be checking.
         final PrinterDiscoverySessionCallbacks firstSessionCallbacks =
-                createMockPrinterDiscoverySessionCallbacks(new Answer<Void>() {
-                    @Override
-                    public Void answer(InvocationOnMock invocation) {
-                        session[0] = ((PrinterDiscoverySessionCallbacks) invocation.getMock())
-                                .getSession();
+                createMockPrinterDiscoverySessionCallbacks(invocation -> {
+                    session[0] = ((PrinterDiscoverySessionCallbacks) invocation.getMock())
+                            .getSession();
 
-                        printerId[0] = session[0].getService().generatePrinterId(PRINTER_NAME);
+                    printerId[0] = session[0].getService().generatePrinterId(PRINTER_NAME);
 
-                        session[0].addPrinters(generatePrinters(printerId[0], MediaSize.NA_LETTER,
-                                PrinterInfo.STATUS_IDLE));
-                        return null;
-                    }
-                }, null, null, null, null, null, new Answer<Void>() {
-                    @Override
-                    public Void answer(InvocationOnMock invocation) {
-                        onPrinterDiscoverySessionDestroyCalled();
-                        return null;
-                    }
+                    session[0].addPrinters(generatePrinters(printerId[0], MediaSize.NA_LETTER,
+                            PrinterInfo.STATUS_IDLE));
+                    return null;
+                }, null, null, null, null, null, invocation -> {
+                    onPrinterDiscoverySessionDestroyCalled();
+                    return null;
                 });
 
         // Create the service callbacks for the first print service.
         PrintServiceCallbacks firstServiceCallbacks = createMockPrintServiceCallbacks(
-                new Answer<PrinterDiscoverySessionCallbacks>() {
-                    @Override
-                    public PrinterDiscoverySessionCallbacks answer(InvocationOnMock invocation) {
-                        return firstSessionCallbacks;
-                    }
-                }, null, null);
+                invocation -> firstSessionCallbacks, null, null);
 
         // Configure the print services.
         FirstPrintService.setCallbacks(firstServiceCallbacks);
@@ -336,27 +314,6 @@ public class PrinterCapabilitiesTest extends BasePrintTest {
     }
 
     /**
-     * Run a runnable and expect and exception of a certain type.
-     *
-     * @param r The runnable to run
-     * @param expectedClass The expected exception type
-     */
-    private void assertException(Runnable r, Class<? extends RuntimeException> expectedClass) {
-        try {
-            r.run();
-        } catch (Exception e) {
-            if (e.getClass().isAssignableFrom(expectedClass)) {
-                return;
-            } else {
-                throw new AssertionError("Expected: " + expectedClass.getName() + ", got: "
-                        + e.getClass().getName());
-            }
-        }
-
-        throw new AssertionError("No exception thrown");
-    }
-
-    /**
      * That that you cannot create illegal PrinterCapabilityInfos.
      *
      * @throws Exception If anything is unexpected
@@ -367,105 +324,94 @@ public class PrinterCapabilitiesTest extends BasePrintTest {
         }
 
         final PrinterDiscoverySessionCallbacks firstSessionCallbacks =
-                createMockPrinterDiscoverySessionCallbacks(new Answer<Void>() {
-                    @Override
-                    public Void answer(InvocationOnMock invocation) {
-                        StubbablePrinterDiscoverySession session =
-                                ((PrinterDiscoverySessionCallbacks)
-                                        invocation.getMock()).getSession();
+                createMockPrinterDiscoverySessionCallbacks(invocation -> {
+                    StubbablePrinterDiscoverySession session =
+                            ((PrinterDiscoverySessionCallbacks)
+                                    invocation.getMock()).getSession();
 
-                        PrinterId printerId = session.getService().generatePrinterId(PRINTER_NAME);
+                    PrinterId printerId = session.getService().generatePrinterId(PRINTER_NAME);
 
-                        // printerId need to be set
-                        assertException(() -> new PrinterCapabilitiesInfo.Builder(null),
-                                IllegalArgumentException.class);
+                    // printerId need to be set
+                    assertException(() -> new PrinterCapabilitiesInfo.Builder(null),
+                            IllegalArgumentException.class);
 
-                        // All capability fields (beside duplex) need to be initialized:
-                        // Test no color
-                        assertException(() ->
-                                        (new PrinterCapabilitiesInfo.Builder(printerId))
-                                                .setMinMargins(DEFAULT_MARGINS)
-                                                .addMediaSize(MediaSize.ISO_A4, true)
-                                                .addResolution(RESOLUTION_300, true).build(),
-                                IllegalStateException.class);
-                        // Test bad colors
-                        assertException(() ->
-                                        (new PrinterCapabilitiesInfo.Builder(printerId))
-                                                .setColorModes(0xffff,
-                                                        PrintAttributes.COLOR_MODE_MONOCHROME),
-                                IllegalArgumentException.class);
-                        // Test bad duplex mode
-                        assertException(() ->
-                                        (new PrinterCapabilitiesInfo.Builder(printerId))
-                                                .setDuplexModes(0xffff,
-                                                        PrintAttributes.DUPLEX_MODE_NONE),
-                                IllegalArgumentException.class);
-                        // Test no mediasize
-                        assertException(() ->
-                                        (new PrinterCapabilitiesInfo.Builder(printerId))
-                                                .setColorModes(PrintAttributes.COLOR_MODE_COLOR,
-                                                        PrintAttributes.COLOR_MODE_COLOR)
-                                                .setMinMargins(DEFAULT_MARGINS)
-                                                .addResolution(RESOLUTION_300, true).build(),
-                                IllegalStateException.class);
-                        // Test no default mediasize
-                        assertException(() ->
-                                        (new PrinterCapabilitiesInfo.Builder(printerId))
-                                                .setColorModes(PrintAttributes.COLOR_MODE_COLOR,
-                                                        PrintAttributes.COLOR_MODE_COLOR)
-                                                .setMinMargins(DEFAULT_MARGINS)
-                                                .addMediaSize(MediaSize.ISO_A4, false)
-                                                .addResolution(RESOLUTION_300, true).build(),
-                                IllegalStateException.class);
-                        // Test two default mediasizes
-                        assertException(() ->
-                                        (new PrinterCapabilitiesInfo.Builder(printerId))
-                                                .addMediaSize(MediaSize.ISO_A4, true)
-                                                .addMediaSize(MediaSize.ISO_A5, true),
-                                IllegalArgumentException.class);
-                        // Test no resolution
-                        assertException(() ->
-                                        (new PrinterCapabilitiesInfo.Builder(printerId))
-                                                .setColorModes(PrintAttributes.COLOR_MODE_COLOR,
-                                                        PrintAttributes.COLOR_MODE_COLOR)
-                                                .setMinMargins(DEFAULT_MARGINS)
-                                                .addMediaSize(MediaSize.ISO_A4, true).build(),
-                                IllegalStateException.class);
-                        // Test no default resolution
-                        assertException(() ->
-                                        (new PrinterCapabilitiesInfo.Builder(printerId))
-                                                .setColorModes(PrintAttributes.COLOR_MODE_COLOR,
-                                                        PrintAttributes.COLOR_MODE_COLOR)
-                                                .setMinMargins(DEFAULT_MARGINS)
-                                                .addMediaSize(MediaSize.ISO_A4, true)
-                                                .addResolution(RESOLUTION_300, false).build(),
-                                IllegalStateException.class);
-                        // Test two default resolutions
-                        assertException(() ->
-                                        (new PrinterCapabilitiesInfo.Builder(printerId))
-                                                .addResolution(RESOLUTION_300, true)
-                                                .addResolution(RESOLUTION_600, true),
-                                IllegalArgumentException.class);
+                    // All capability fields (beside duplex) need to be initialized:
+                    // Test no color
+                    assertException(() ->
+                                    (new PrinterCapabilitiesInfo.Builder(printerId))
+                                            .setMinMargins(DEFAULT_MARGINS)
+                                            .addMediaSize(MediaSize.ISO_A4, true)
+                                            .addResolution(RESOLUTION_300, true).build(),
+                            IllegalStateException.class);
+                    // Test bad colors
+                    assertException(() ->
+                                    (new PrinterCapabilitiesInfo.Builder(printerId))
+                                            .setColorModes(0xffff,
+                                                    PrintAttributes.COLOR_MODE_MONOCHROME),
+                            IllegalArgumentException.class);
+                    // Test bad duplex mode
+                    assertException(() ->
+                                    (new PrinterCapabilitiesInfo.Builder(printerId))
+                                            .setDuplexModes(0xffff,
+                                                    PrintAttributes.DUPLEX_MODE_NONE),
+                            IllegalArgumentException.class);
+                    // Test no mediasize
+                    assertException(() ->
+                                    (new PrinterCapabilitiesInfo.Builder(printerId))
+                                            .setColorModes(PrintAttributes.COLOR_MODE_COLOR,
+                                                    PrintAttributes.COLOR_MODE_COLOR)
+                                            .setMinMargins(DEFAULT_MARGINS)
+                                            .addResolution(RESOLUTION_300, true).build(),
+                            IllegalStateException.class);
+                    // Test no default mediasize
+                    assertException(() ->
+                                    (new PrinterCapabilitiesInfo.Builder(printerId))
+                                            .setColorModes(PrintAttributes.COLOR_MODE_COLOR,
+                                                    PrintAttributes.COLOR_MODE_COLOR)
+                                            .setMinMargins(DEFAULT_MARGINS)
+                                            .addMediaSize(MediaSize.ISO_A4, false)
+                                            .addResolution(RESOLUTION_300, true).build(),
+                            IllegalStateException.class);
+                    // Test two default mediasizes
+                    assertException(() ->
+                                    (new PrinterCapabilitiesInfo.Builder(printerId))
+                                            .addMediaSize(MediaSize.ISO_A4, true)
+                                            .addMediaSize(MediaSize.ISO_A5, true),
+                            IllegalArgumentException.class);
+                    // Test no resolution
+                    assertException(() ->
+                                    (new PrinterCapabilitiesInfo.Builder(printerId))
+                                            .setColorModes(PrintAttributes.COLOR_MODE_COLOR,
+                                                    PrintAttributes.COLOR_MODE_COLOR)
+                                            .setMinMargins(DEFAULT_MARGINS)
+                                            .addMediaSize(MediaSize.ISO_A4, true).build(),
+                            IllegalStateException.class);
+                    // Test no default resolution
+                    assertException(() ->
+                                    (new PrinterCapabilitiesInfo.Builder(printerId))
+                                            .setColorModes(PrintAttributes.COLOR_MODE_COLOR,
+                                                    PrintAttributes.COLOR_MODE_COLOR)
+                                            .setMinMargins(DEFAULT_MARGINS)
+                                            .addMediaSize(MediaSize.ISO_A4, true)
+                                            .addResolution(RESOLUTION_300, false).build(),
+                            IllegalStateException.class);
+                    // Test two default resolutions
+                    assertException(() ->
+                                    (new PrinterCapabilitiesInfo.Builder(printerId))
+                                            .addResolution(RESOLUTION_300, true)
+                                            .addResolution(RESOLUTION_600, true),
+                            IllegalArgumentException.class);
 
-                        onPrinterDiscoverySessionCreateCalled();
-                        return null;
-                    }
-                }, null, null, null, null, null, new Answer<Void>() {
-                    @Override
-                    public Void answer(InvocationOnMock invocation) {
-                        onPrinterDiscoverySessionDestroyCalled();
-                        return null;
-                    }
+                    onPrinterDiscoverySessionCreateCalled();
+                    return null;
+                }, null, null, null, null, null, invocation -> {
+                    onPrinterDiscoverySessionDestroyCalled();
+                    return null;
                 });
 
         // Create the service callbacks for the first print service.
         PrintServiceCallbacks firstServiceCallbacks = createMockPrintServiceCallbacks(
-                new Answer<PrinterDiscoverySessionCallbacks>() {
-                    @Override
-                    public PrinterDiscoverySessionCallbacks answer(InvocationOnMock invocation) {
-                        return firstSessionCallbacks;
-                    }
-                }, null, null);
+                invocation -> firstSessionCallbacks, null, null);
 
         // Configure the print services.
         FirstPrintService.setCallbacks(firstServiceCallbacks);
@@ -494,125 +440,114 @@ public class PrinterCapabilitiesTest extends BasePrintTest {
         }
 
         final PrinterDiscoverySessionCallbacks firstSessionCallbacks =
-                createMockPrinterDiscoverySessionCallbacks(new Answer<Void>() {
-                    @Override
-                    public Void answer(InvocationOnMock invocation) {
-                        StubbablePrinterDiscoverySession session =
-                                ((PrinterDiscoverySessionCallbacks)
-                                        invocation.getMock()).getSession();
+                createMockPrinterDiscoverySessionCallbacks(invocation -> {
+                    StubbablePrinterDiscoverySession session =
+                            ((PrinterDiscoverySessionCallbacks)
+                                    invocation.getMock()).getSession();
 
-                        MediaSize[] mediaSizes = {MediaSize.ISO_A0, MediaSize.ISO_A0,
-                                MediaSize.ISO_A1};
-                        Resolution[] resolutions = {RESOLUTION_300, RESOLUTION_300,
-                                RESOLUTION_600};
-                        int[] colorModes = {PrintAttributes.COLOR_MODE_MONOCHROME,
-                                PrintAttributes.COLOR_MODE_COLOR};
-                        int[] duplexModes = {PrintAttributes.DUPLEX_MODE_NONE,
-                                PrintAttributes.DUPLEX_MODE_LONG_EDGE,
-                                PrintAttributes.DUPLEX_MODE_SHORT_EDGE};
+                    MediaSize[] mediaSizes = {MediaSize.ISO_A0, MediaSize.ISO_A0,
+                            MediaSize.ISO_A1};
+                    Resolution[] resolutions = {RESOLUTION_300, RESOLUTION_300,
+                            RESOLUTION_600};
+                    int[] colorModes = {PrintAttributes.COLOR_MODE_MONOCHROME,
+                            PrintAttributes.COLOR_MODE_COLOR};
+                    int[] duplexModes = {PrintAttributes.DUPLEX_MODE_NONE,
+                            PrintAttributes.DUPLEX_MODE_LONG_EDGE,
+                            PrintAttributes.DUPLEX_MODE_SHORT_EDGE};
 
-                        ArrayList<PrinterInfo> printers = new ArrayList<>();
-                        for (int mediaSizeIndex = 1; mediaSizeIndex < mediaSizes.length;
-                             mediaSizeIndex++) {
-                            for (int resolutionIndex = 1; resolutionIndex < mediaSizes.length;
-                                 resolutionIndex++) {
-                                for (int colorIndex = 1; colorIndex < colorModes.length;
-                                     colorIndex++) {
-                                    for (int duplexIndex = 1; duplexIndex < duplexModes.length;
-                                         duplexIndex++) {
-                                        PrinterId printerId = session.getService()
-                                                .generatePrinterId(Integer.valueOf(printers.size())
-                                                        .toString());
+                    ArrayList<PrinterInfo> printers = new ArrayList<>();
+                    for (int mediaSizeIndex = 1; mediaSizeIndex < mediaSizes.length;
+                         mediaSizeIndex++) {
+                        for (int resolutionIndex = 1; resolutionIndex < mediaSizes.length;
+                             resolutionIndex++) {
+                            for (int colorIndex = 1; colorIndex < colorModes.length;
+                                 colorIndex++) {
+                                for (int duplexIndex = 1; duplexIndex < duplexModes.length;
+                                     duplexIndex++) {
+                                    PrinterId printerId = session.getService()
+                                            .generatePrinterId(Integer.valueOf(printers.size())
+                                                    .toString());
 
-                                        // Setup capabilities
-                                        PrinterCapabilitiesInfo.Builder b =
-                                                new PrinterCapabilitiesInfo.Builder(printerId);
+                                    // Setup capabilities
+                                    PrinterCapabilitiesInfo.Builder b =
+                                            new PrinterCapabilitiesInfo.Builder(printerId);
 
-                                        for (int i = 0; i < mediaSizeIndex; i++) {
-                                            b.addMediaSize(mediaSizes[i], i == mediaSizeIndex - 1);
-                                        }
-
-                                        for (int i = 0; i < resolutionIndex; i++) {
-                                            b.addResolution(resolutions[i],
-                                                    i == resolutionIndex - 1);
-                                        }
-
-                                        int allColors = 0;
-                                        for (int i = 0; i < colorIndex; i++) {
-                                            allColors |= colorModes[i];
-                                        }
-                                        b.setColorModes(allColors, colorModes[colorIndex - 1]);
-
-                                        int allDuplexModes = 0;
-                                        for (int i = 0; i < duplexIndex; i++) {
-                                            allDuplexModes |= duplexModes[i];
-                                        }
-                                        b.setDuplexModes(allDuplexModes,
-                                                duplexModes[duplexIndex - 1]);
-
-                                        b.setMinMargins(DEFAULT_MARGINS);
-
-                                        // Create printer
-                                        PrinterInfo printer = (new PrinterInfo.Builder(printerId,
-                                                Integer.valueOf(printers.size()).toString(),
-                                                PrinterInfo.STATUS_IDLE)).setCapabilities(b.build())
-                                                .build();
-
-                                        // Verify capabilities
-                                        PrinterCapabilitiesInfo cap = printer.getCapabilities();
-
-                                        assertEquals(mediaSizeIndex, cap.getMediaSizes().size());
-                                        assertEquals(mediaSizes[mediaSizeIndex - 1],
-                                                cap.getDefaults().getMediaSize());
-                                        for (int i = 0; i < mediaSizeIndex; i++) {
-                                            assertTrue(cap.getMediaSizes().contains(mediaSizes[i]));
-                                        }
-
-                                        assertEquals(resolutionIndex, cap.getResolutions().size());
-                                        assertEquals(resolutions[resolutionIndex - 1],
-                                                cap.getDefaults().getResolution());
-                                        for (int i = 0; i < resolutionIndex; i++) {
-                                            assertTrue(cap.getResolutions().contains(resolutions[i]));
-                                        }
-
-                                        assertEquals(allColors, cap.getColorModes());
-                                        assertEquals(colorModes[colorIndex - 1],
-                                                cap.getDefaults().getColorMode());
-
-                                        assertEquals(allDuplexModes, cap.getDuplexModes());
-                                        assertEquals(duplexModes[duplexIndex - 1],
-                                                cap.getDefaults().getDuplexMode());
-
-                                        assertEquals(DEFAULT_MARGINS, cap.getMinMargins());
-
-                                        // Add printer
-                                        printers.add(printer);
+                                    for (int i = 0; i < mediaSizeIndex; i++) {
+                                        b.addMediaSize(mediaSizes[i], i == mediaSizeIndex - 1);
                                     }
+
+                                    for (int i = 0; i < resolutionIndex; i++) {
+                                        b.addResolution(resolutions[i],
+                                                i == resolutionIndex - 1);
+                                    }
+
+                                    int allColors = 0;
+                                    for (int i = 0; i < colorIndex; i++) {
+                                        allColors |= colorModes[i];
+                                    }
+                                    b.setColorModes(allColors, colorModes[colorIndex - 1]);
+
+                                    int allDuplexModes = 0;
+                                    for (int i = 0; i < duplexIndex; i++) {
+                                        allDuplexModes |= duplexModes[i];
+                                    }
+                                    b.setDuplexModes(allDuplexModes,
+                                            duplexModes[duplexIndex - 1]);
+
+                                    b.setMinMargins(DEFAULT_MARGINS);
+
+                                    // Create printer
+                                    PrinterInfo printer = (new PrinterInfo.Builder(printerId,
+                                            Integer.valueOf(printers.size()).toString(),
+                                            PrinterInfo.STATUS_IDLE)).setCapabilities(b.build())
+                                            .build();
+
+                                    // Verify capabilities
+                                    PrinterCapabilitiesInfo cap = printer.getCapabilities();
+
+                                    assertEquals(mediaSizeIndex, cap.getMediaSizes().size());
+                                    assertEquals(mediaSizes[mediaSizeIndex - 1],
+                                            cap.getDefaults().getMediaSize());
+                                    for (int i = 0; i < mediaSizeIndex; i++) {
+                                        assertTrue(cap.getMediaSizes().contains(mediaSizes[i]));
+                                    }
+
+                                    assertEquals(resolutionIndex, cap.getResolutions().size());
+                                    assertEquals(resolutions[resolutionIndex - 1],
+                                            cap.getDefaults().getResolution());
+                                    for (int i = 0; i < resolutionIndex; i++) {
+                                        assertTrue(cap.getResolutions().contains(resolutions[i]));
+                                    }
+
+                                    assertEquals(allColors, cap.getColorModes());
+                                    assertEquals(colorModes[colorIndex - 1],
+                                            cap.getDefaults().getColorMode());
+
+                                    assertEquals(allDuplexModes, cap.getDuplexModes());
+                                    assertEquals(duplexModes[duplexIndex - 1],
+                                            cap.getDefaults().getDuplexMode());
+
+                                    assertEquals(DEFAULT_MARGINS, cap.getMinMargins());
+
+                                    // Add printer
+                                    printers.add(printer);
                                 }
                             }
                         }
-
-                        session.addPrinters(printers);
-
-                        onPrinterDiscoverySessionCreateCalled();
-                        return null;
                     }
-                }, null, null, null, null, null, new Answer<Void>() {
-                    @Override
-                    public Void answer(InvocationOnMock invocation) {
-                        onPrinterDiscoverySessionDestroyCalled();
-                        return null;
-                    }
+
+                    session.addPrinters(printers);
+
+                    onPrinterDiscoverySessionCreateCalled();
+                    return null;
+                }, null, null, null, null, null, invocation -> {
+                    onPrinterDiscoverySessionDestroyCalled();
+                    return null;
                 });
 
         // Create the service callbacks for the first print service.
         PrintServiceCallbacks firstServiceCallbacks = createMockPrintServiceCallbacks(
-                new Answer<PrinterDiscoverySessionCallbacks>() {
-                    @Override
-                    public PrinterDiscoverySessionCallbacks answer(InvocationOnMock invocation) {
-                        return firstSessionCallbacks;
-                    }
-                }, null, null);
+                invocation -> firstSessionCallbacks, null, null);
 
         // Configure the print services.
         FirstPrintService.setCallbacks(firstServiceCallbacks);
@@ -643,42 +578,31 @@ public class PrinterCapabilitiesTest extends BasePrintTest {
         }
 
         final PrinterDiscoverySessionCallbacks firstSessionCallbacks =
-                createMockPrinterDiscoverySessionCallbacks(new Answer<Void>() {
-                    @Override
-                    public Void answer(InvocationOnMock invocation) {
-                        StubbablePrinterDiscoverySession session =
-                                ((PrinterDiscoverySessionCallbacks)
-                                        invocation.getMock()).getSession();
+                createMockPrinterDiscoverySessionCallbacks(invocation -> {
+                    StubbablePrinterDiscoverySession session =
+                            ((PrinterDiscoverySessionCallbacks)
+                                    invocation.getMock()).getSession();
 
-                        PrinterId printerId = session.getService()
-                                .generatePrinterId(PRINTER_NAME);
+                    PrinterId printerId = session.getService()
+                            .generatePrinterId(PRINTER_NAME);
 
-                        ArrayList<PrinterInfo> printers = new ArrayList<>();
-                        printers.add((new PrinterInfo.Builder(printerId, PRINTER_NAME,
-                                PrinterInfo.STATUS_IDLE))
-                                .setCapabilities(capBuilder.apply(printerId)).build());
+                    ArrayList<PrinterInfo> printers = new ArrayList<>();
+                    printers.add((new PrinterInfo.Builder(printerId, PRINTER_NAME,
+                            PrinterInfo.STATUS_IDLE))
+                            .setCapabilities(capBuilder.apply(printerId)).build());
 
-                        session.addPrinters(printers);
+                    session.addPrinters(printers);
 
-                        onPrinterDiscoverySessionCreateCalled();
-                        return null;
-                    }
-                }, null, null, null, null, null, new Answer<Void>() {
-                    @Override
-                    public Void answer(InvocationOnMock invocation) {
-                        onPrinterDiscoverySessionDestroyCalled();
-                        return null;
-                    }
+                    onPrinterDiscoverySessionCreateCalled();
+                    return null;
+                }, null, null, null, null, null, invocation -> {
+                    onPrinterDiscoverySessionDestroyCalled();
+                    return null;
                 });
 
         // Create the service callbacks for the first print service.
         PrintServiceCallbacks firstServiceCallbacks = createMockPrintServiceCallbacks(
-                new Answer<PrinterDiscoverySessionCallbacks>() {
-                    @Override
-                    public PrinterDiscoverySessionCallbacks answer(InvocationOnMock invocation) {
-                        return firstSessionCallbacks;
-                    }
-                }, null, null);
+                invocation -> firstSessionCallbacks, null, null);
 
         // Configure the print services.
         FirstPrintService.setCallbacks(firstServiceCallbacks);
@@ -687,35 +611,29 @@ public class PrinterCapabilitiesTest extends BasePrintTest {
         final PrintAttributes[] layoutAttributes = new PrintAttributes[1];
 
         PrintDocumentAdapter adapter = createMockPrintDocumentAdapter(
-                new Answer<Void>() {
-                    @Override
-                    public Void answer(InvocationOnMock invocation) throws Throwable {
-                        LayoutResultCallback callback = (LayoutResultCallback) invocation
-                                .getArguments()[3];
-                        PrintDocumentInfo info = new PrintDocumentInfo.Builder(PRINT_JOB_NAME)
-                                .setPageCount(1)
-                                .build();
-                        layoutAttributes[0] = (PrintAttributes) invocation.getArguments()[1];
+                invocation -> {
+                    LayoutResultCallback callback = (LayoutResultCallback) invocation
+                            .getArguments()[3];
+                    PrintDocumentInfo info = new PrintDocumentInfo.Builder(PRINT_JOB_NAME)
+                            .setPageCount(1)
+                            .build();
+                    layoutAttributes[0] = (PrintAttributes) invocation.getArguments()[1];
 
-                        callback.onLayoutFinished(info, true);
-                        return null;
-                    }
+                    callback.onLayoutFinished(info, true);
+                    return null;
                 },
-                new Answer<Void>() {
-                    @Override
-                    public Void answer(InvocationOnMock invocation) throws Throwable {
-                        Object[] args = invocation.getArguments();
-                        PageRange[] pages = (PageRange[]) args[0];
-                        ParcelFileDescriptor fd = (ParcelFileDescriptor) args[1];
-                        WriteResultCallback callback = (WriteResultCallback) args[3];
+                invocation -> {
+                    Object[] args = invocation.getArguments();
+                    PageRange[] pages = (PageRange[]) args[0];
+                    ParcelFileDescriptor fd = (ParcelFileDescriptor) args[1];
+                    WriteResultCallback callback = (WriteResultCallback) args[3];
 
-                        writeBlankPages(layoutAttributes[0], fd, pages[0].getStart(),
-                                pages[0].getEnd());
-                        fd.close();
+                    writeBlankPages(layoutAttributes[0], fd, pages[0].getStart(),
+                            pages[0].getEnd());
+                    fd.close();
 
-                        callback.onWriteFinished(pages);
-                        return null;
-                    }
+                    callback.onWriteFinished(pages);
+                    return null;
                 }, null);
 
         // Start printing.

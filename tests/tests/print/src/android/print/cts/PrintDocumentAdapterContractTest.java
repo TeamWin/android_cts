@@ -23,7 +23,6 @@ import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 
 import android.os.CancellationSignal;
-import android.os.CancellationSignal.OnCancelListener;
 import android.os.ParcelFileDescriptor;
 import android.print.PageRange;
 import android.print.PrintAttributes;
@@ -47,8 +46,6 @@ import android.printservice.PrintService;
 import android.util.Log;
 
 import org.mockito.InOrder;
-import org.mockito.invocation.InvocationOnMock;
-import org.mockito.stubbing.Answer;
 
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -75,42 +72,33 @@ public class PrintDocumentAdapterContractTest extends BasePrintTest {
 
         // Create a mock print adapter.
         final PrintDocumentAdapter adapter = createMockPrintDocumentAdapter(
-            new Answer<Void>() {
-            @Override
-            public Void answer(InvocationOnMock invocation) throws Throwable {
-                printAttributes[0] = (PrintAttributes) invocation.getArguments()[1];
-                LayoutResultCallback callback = (LayoutResultCallback) invocation.getArguments()[3];
-                PrintDocumentInfo info = new PrintDocumentInfo.Builder(PRINT_JOB_NAME)
-                        .setContentType(PrintDocumentInfo.CONTENT_TYPE_DOCUMENT)
-                        .setPageCount(2)
-                        .build();
-                callback.onLayoutFinished(info, false);
-                // Mark layout was called.
-                onLayoutCalled();
-                return null;
-            }
-        }, new Answer<Void>() {
-            @Override
-            public Void answer(InvocationOnMock invocation) throws Throwable {
-                Object[] args = invocation.getArguments();
-                PageRange[] pages = (PageRange[]) args[0];
-                ParcelFileDescriptor fd = (ParcelFileDescriptor) args[1];
-                WriteResultCallback callback = (WriteResultCallback) args[3];
-                writeBlankPages(printAttributes[0], fd, pages[0].getStart(), pages[0].getEnd());
-                fd.close();
-                callback.onWriteFinished(pages);
-                // Mark write was called.
-                onWriteCalled();
-                return null;
-            }
-        }, new Answer<Void>() {
-            @Override
-            public Void answer(InvocationOnMock invocation) throws Throwable {
-                // Mark finish was called.
-                onFinishCalled();
-                return null;
-            }
-        });
+                invocation -> {
+                    printAttributes[0] = (PrintAttributes) invocation.getArguments()[1];
+                    LayoutResultCallback callback = (LayoutResultCallback) invocation.getArguments()[3];
+                    PrintDocumentInfo info = new PrintDocumentInfo.Builder(PRINT_JOB_NAME)
+                            .setContentType(PrintDocumentInfo.CONTENT_TYPE_DOCUMENT)
+                            .setPageCount(2)
+                            .build();
+                    callback.onLayoutFinished(info, false);
+                    // Mark layout was called.
+                    onLayoutCalled();
+                    return null;
+                }, invocation -> {
+                    Object[] args = invocation.getArguments();
+                    PageRange[] pages = (PageRange[]) args[0];
+                    ParcelFileDescriptor fd = (ParcelFileDescriptor) args[1];
+                    WriteResultCallback callback = (WriteResultCallback) args[3];
+                    writeBlankPages(printAttributes[0], fd, pages[0].getStart(), pages[0].getEnd());
+                    fd.close();
+                    callback.onWriteFinished(pages);
+                    // Mark write was called.
+                    onWriteCalled();
+                    return null;
+                }, invocation -> {
+                    // Mark finish was called.
+                    onFinishCalled();
+                    return null;
+                });
 
         // Start printing.
         print(adapter);
@@ -195,45 +183,8 @@ public class PrintDocumentAdapterContractTest extends BasePrintTest {
         FirstPrintService.setCallbacks(createFirstMockPrintServiceCallbacks());
         SecondPrintService.setCallbacks(createSecondMockPrintServiceCallbacks());
 
-        final PrintAttributes[] printAttributes = new PrintAttributes[1];
-
         // Create a mock print adapter.
-        final PrintDocumentAdapter adapter = createMockPrintDocumentAdapter(
-            new Answer<Void>() {
-            @Override
-            public Void answer(InvocationOnMock invocation) throws Throwable {
-                printAttributes[0] = (PrintAttributes) invocation.getArguments()[1];
-                LayoutResultCallback callback = (LayoutResultCallback)
-                        invocation.getArguments()[3];
-                PrintDocumentInfo info = new PrintDocumentInfo.Builder(PRINT_JOB_NAME)
-                    .setContentType(PrintDocumentInfo.CONTENT_TYPE_DOCUMENT)
-                    .setPageCount(1)
-                    .build();
-                callback.onLayoutFinished(info, false);
-                return null;
-            }
-        }, new Answer<Void>() {
-            @Override
-            public Void answer(InvocationOnMock invocation) throws Throwable {
-                Object[] args = invocation.getArguments();
-                PageRange[] pages = (PageRange[]) args[0];
-                ParcelFileDescriptor fd = (ParcelFileDescriptor) args[1];
-                WriteResultCallback callback = (WriteResultCallback) args[3];
-                writeBlankPages(printAttributes[0], fd, pages[0].getStart(), pages[0].getEnd());
-                fd.close();
-                callback.onWriteFinished(pages);
-                // Mark write was called.
-                onWriteCalled();
-                return null;
-            }
-        }, new Answer<Void>() {
-            @Override
-            public Void answer(InvocationOnMock invocation) throws Throwable {
-                // Mark finish was called.
-                onFinishCalled();
-                return null;
-            }
-        });
+        PrintDocumentAdapter adapter = createDefaultPrintDocumentAdapter(1);
 
         // Start printing.
         print(adapter);
@@ -293,43 +244,34 @@ public class PrintDocumentAdapterContractTest extends BasePrintTest {
 
         // Create a mock print adapter.
         final PrintDocumentAdapter adapter = createMockPrintDocumentAdapter(
-            new Answer<Void>() {
-            @Override
-            public Void answer(InvocationOnMock invocation) throws Throwable {
-                printAttributes[0] = (PrintAttributes) invocation.getArguments()[1];
-                LayoutResultCallback callback = (LayoutResultCallback)
-                        invocation.getArguments()[3];
-                PrintDocumentInfo info = new PrintDocumentInfo.Builder(PRINT_JOB_NAME)
-                    .setContentType(PrintDocumentInfo.CONTENT_TYPE_DOCUMENT)
-                    .setPageCount(1)
-                    .build();
-                callback.onLayoutFinished(info, false);
-                // Mark layout was called.
-                onLayoutCalled();
-                return null;
-            }
-        }, new Answer<Void>() {
-            @Override
-            public Void answer(InvocationOnMock invocation) throws Throwable {
-                Object[] args = invocation.getArguments();
-                PageRange[] pages = (PageRange[]) args[0];
-                ParcelFileDescriptor fd = (ParcelFileDescriptor) args[1];
-                WriteResultCallback callback = (WriteResultCallback) args[3];
-                writeBlankPages(printAttributes[0], fd, pages[0].getStart(), pages[0].getEnd());
-                fd.close();
-                callback.onWriteFinished(pages);
-                // Mark write was called.
-                onWriteCalled();
-                return null;
-            }
-        }, new Answer<Void>() {
-            @Override
-            public Void answer(InvocationOnMock invocation) throws Throwable {
-                // Mark finish was called.
-                onFinishCalled();
-                return null;
-            }
-        });
+                invocation -> {
+                    printAttributes[0] = (PrintAttributes) invocation.getArguments()[1];
+                    LayoutResultCallback callback = (LayoutResultCallback)
+                            invocation.getArguments()[3];
+                    PrintDocumentInfo info = new PrintDocumentInfo.Builder(PRINT_JOB_NAME)
+                        .setContentType(PrintDocumentInfo.CONTENT_TYPE_DOCUMENT)
+                        .setPageCount(1)
+                        .build();
+                    callback.onLayoutFinished(info, false);
+                    // Mark layout was called.
+                    onLayoutCalled();
+                    return null;
+                }, invocation -> {
+                    Object[] args = invocation.getArguments();
+                    PageRange[] pages = (PageRange[]) args[0];
+                    ParcelFileDescriptor fd = (ParcelFileDescriptor) args[1];
+                    WriteResultCallback callback = (WriteResultCallback) args[3];
+                    writeBlankPages(printAttributes[0], fd, pages[0].getStart(), pages[0].getEnd());
+                    fd.close();
+                    callback.onWriteFinished(pages);
+                    // Mark write was called.
+                    onWriteCalled();
+                    return null;
+                }, invocation -> {
+                    // Mark finish was called.
+                    onFinishCalled();
+                    return null;
+                });
 
         // Start printing.
         print(adapter);
@@ -497,43 +439,34 @@ public class PrintDocumentAdapterContractTest extends BasePrintTest {
 
         // Create a mock print adapter.
         final PrintDocumentAdapter adapter = createMockPrintDocumentAdapter(
-            new Answer<Void>() {
-            @Override
-            public Void answer(InvocationOnMock invocation) throws Throwable {
-                printAttributes[0] = (PrintAttributes) invocation.getArguments()[1];
-                LayoutResultCallback callback = (LayoutResultCallback)
-                        invocation.getArguments()[3];
-                PrintDocumentInfo info = new PrintDocumentInfo.Builder(PRINT_JOB_NAME)
-                    .setContentType(PrintDocumentInfo.CONTENT_TYPE_DOCUMENT)
-                    .setPageCount(1)
-                    .build();
-                callback.onLayoutFinished(info, false);
-                // Mark layout was called.
-                onLayoutCalled();
-                return null;
-            }
-        }, new Answer<Void>() {
-            @Override
-            public Void answer(InvocationOnMock invocation) throws Throwable {
-                Object[] args = invocation.getArguments();
-                PageRange[] pages = (PageRange[]) args[0];
-                ParcelFileDescriptor fd = (ParcelFileDescriptor) args[1];
-                WriteResultCallback callback = (WriteResultCallback) args[3];
-                writeBlankPages(printAttributes[0], fd, pages[0].getStart(), pages[0].getEnd());
-                fd.close();
-                callback.onWriteFinished(pages);
-                // Mark write was called.
-                onWriteCalled();
-                return null;
-            }
-        }, new Answer<Void>() {
-            @Override
-            public Void answer(InvocationOnMock invocation) throws Throwable {
-                // Mark finish was called.
-                onFinishCalled();
-                return null;
-            }
-        });
+                invocation -> {
+                    printAttributes[0] = (PrintAttributes) invocation.getArguments()[1];
+                    LayoutResultCallback callback = (LayoutResultCallback)
+                            invocation.getArguments()[3];
+                    PrintDocumentInfo info = new PrintDocumentInfo.Builder(PRINT_JOB_NAME)
+                        .setContentType(PrintDocumentInfo.CONTENT_TYPE_DOCUMENT)
+                        .setPageCount(1)
+                        .build();
+                    callback.onLayoutFinished(info, false);
+                    // Mark layout was called.
+                    onLayoutCalled();
+                    return null;
+                }, invocation -> {
+                    Object[] args = invocation.getArguments();
+                    PageRange[] pages = (PageRange[]) args[0];
+                    ParcelFileDescriptor fd = (ParcelFileDescriptor) args[1];
+                    WriteResultCallback callback = (WriteResultCallback) args[3];
+                    writeBlankPages(printAttributes[0], fd, pages[0].getStart(), pages[0].getEnd());
+                    fd.close();
+                    callback.onWriteFinished(pages);
+                    // Mark write was called.
+                    onWriteCalled();
+                    return null;
+                }, invocation -> {
+                    // Mark finish was called.
+                    onFinishCalled();
+                    return null;
+                });
 
         // Start printing.
         print(adapter);
@@ -662,43 +595,34 @@ public class PrintDocumentAdapterContractTest extends BasePrintTest {
 
         // Create a mock print adapter.
         final PrintDocumentAdapter adapter = createMockPrintDocumentAdapter(
-            new Answer<Void>() {
-            @Override
-            public Void answer(InvocationOnMock invocation) throws Throwable {
-                printAttributes[0] = (PrintAttributes) invocation.getArguments()[1];
-                LayoutResultCallback callback = (LayoutResultCallback) invocation.getArguments()[3];
-                PrintDocumentInfo info = new PrintDocumentInfo.Builder(PRINT_JOB_NAME)
-                        .setContentType(PrintDocumentInfo.CONTENT_TYPE_DOCUMENT)
-                        .setPageCount(1)
-                        .build();
-                // The content changes after every layout.
-                callback.onLayoutFinished(info, true);
-                // Mark layout was called.
-                onLayoutCalled();
-                return null;
-            }
-        }, new Answer<Void>() {
-            @Override
-            public Void answer(InvocationOnMock invocation) throws Throwable {
-                Object[] args = invocation.getArguments();
-                PageRange[] pages = (PageRange[]) args[0];
-                ParcelFileDescriptor fd = (ParcelFileDescriptor) args[1];
-                WriteResultCallback callback = (WriteResultCallback) args[3];
-                writeBlankPages(printAttributes[0], fd, pages[0].getStart(), pages[0].getEnd());
-                fd.close();
-                callback.onWriteFinished(pages);
-                // Mark write was called.
-                onWriteCalled();
-                return null;
-            }
-        }, new Answer<Void>() {
-            @Override
-            public Void answer(InvocationOnMock invocation) throws Throwable {
-                // Mark finish was called.
-                onFinishCalled();
-                return null;
-            }
-        });
+                invocation -> {
+                    printAttributes[0] = (PrintAttributes) invocation.getArguments()[1];
+                    LayoutResultCallback callback = (LayoutResultCallback) invocation.getArguments()[3];
+                    PrintDocumentInfo info = new PrintDocumentInfo.Builder(PRINT_JOB_NAME)
+                            .setContentType(PrintDocumentInfo.CONTENT_TYPE_DOCUMENT)
+                            .setPageCount(1)
+                            .build();
+                    // The content changes after every layout.
+                    callback.onLayoutFinished(info, true);
+                    // Mark layout was called.
+                    onLayoutCalled();
+                    return null;
+                }, invocation -> {
+                    Object[] args = invocation.getArguments();
+                    PageRange[] pages = (PageRange[]) args[0];
+                    ParcelFileDescriptor fd = (ParcelFileDescriptor) args[1];
+                    WriteResultCallback callback = (WriteResultCallback) args[3];
+                    writeBlankPages(printAttributes[0], fd, pages[0].getStart(), pages[0].getEnd());
+                    fd.close();
+                    callback.onWriteFinished(pages);
+                    // Mark write was called.
+                    onWriteCalled();
+                    return null;
+                }, invocation -> {
+                    // Mark finish was called.
+                    onFinishCalled();
+                    return null;
+                });
 
         // Start printing.
         print(adapter);
@@ -795,41 +719,32 @@ public class PrintDocumentAdapterContractTest extends BasePrintTest {
 
         // Create a mock print adapter.
         final PrintDocumentAdapter adapter = createMockPrintDocumentAdapter(
-            new Answer<Void>() {
-            @Override
-            public Void answer(InvocationOnMock invocation) throws Throwable {
-                printAttributes[0] = (PrintAttributes) invocation.getArguments()[1];
-                LayoutResultCallback callback = (LayoutResultCallback) invocation.getArguments()[3];
-                PrintDocumentInfo info = new PrintDocumentInfo.Builder(PRINT_JOB_NAME)
-                        .setContentType(PrintDocumentInfo.CONTENT_TYPE_DOCUMENT)
-                        .setPageCount(1)
-                        .build();
-                // The content changes after every layout.
-                callback.onLayoutFinished(info, true);
-                return null;
-            }
-        }, new Answer<Void>() {
-            @Override
-            public Void answer(InvocationOnMock invocation) throws Throwable {
-                Object[] args = invocation.getArguments();
-                PageRange[] pages = (PageRange[]) args[0];
-                ParcelFileDescriptor fd = (ParcelFileDescriptor) args[1];
-                WriteResultCallback callback = (WriteResultCallback) args[3];
-                writeBlankPages(printAttributes[0], fd, pages[0].getStart(), pages[0].getEnd());
-                fd.close();
-                callback.onWriteFinished(pages);
-                // Mark write was called.
-                onWriteCalled();
-                return null;
-            }
-        }, new Answer<Void>() {
-            @Override
-            public Void answer(InvocationOnMock invocation) throws Throwable {
-                // Mark finish was called.
-                onFinishCalled();
-                return null;
-            }
-        });
+                invocation -> {
+                    printAttributes[0] = (PrintAttributes) invocation.getArguments()[1];
+                    LayoutResultCallback callback = (LayoutResultCallback) invocation.getArguments()[3];
+                    PrintDocumentInfo info = new PrintDocumentInfo.Builder(PRINT_JOB_NAME)
+                            .setContentType(PrintDocumentInfo.CONTENT_TYPE_DOCUMENT)
+                            .setPageCount(1)
+                            .build();
+                    // The content changes after every layout.
+                    callback.onLayoutFinished(info, true);
+                    return null;
+                }, invocation -> {
+                    Object[] args = invocation.getArguments();
+                    PageRange[] pages = (PageRange[]) args[0];
+                    ParcelFileDescriptor fd = (ParcelFileDescriptor) args[1];
+                    WriteResultCallback callback = (WriteResultCallback) args[3];
+                    writeBlankPages(printAttributes[0], fd, pages[0].getStart(), pages[0].getEnd());
+                    fd.close();
+                    callback.onWriteFinished(pages);
+                    // Mark write was called.
+                    onWriteCalled();
+                    return null;
+                }, invocation -> {
+                    // Mark finish was called.
+                    onFinishCalled();
+                    return null;
+                });
 
         // Start printing.
         print(adapter);
@@ -904,42 +819,33 @@ public class PrintDocumentAdapterContractTest extends BasePrintTest {
 
         // Create a mock print adapter.
         final PrintDocumentAdapter adapter = createMockPrintDocumentAdapter(
-            new Answer<Void>() {
-            @Override
-            public Void answer(InvocationOnMock invocation) throws Throwable {
-                printAttributes[0] = (PrintAttributes) invocation.getArguments()[1];
-                LayoutResultCallback callback = (LayoutResultCallback) invocation.getArguments()[3];
-                PrintDocumentInfo info = new PrintDocumentInfo.Builder(PRINT_JOB_NAME)
-                        .setContentType(PrintDocumentInfo.CONTENT_TYPE_DOCUMENT)
-                        .setPageCount(3)
-                        .build();
-                callback.onLayoutFinished(info, false);
-                // Mark layout was called.
-                onLayoutCalled();
-                return null;
-            }
-        }, new Answer<Void>() {
-            @Override
-            public Void answer(InvocationOnMock invocation) throws Throwable {
-                Object[] args = invocation.getArguments();
-                ParcelFileDescriptor fd = (ParcelFileDescriptor) args[1];
-                WriteResultCallback callback = (WriteResultCallback) args[3];
-                PageRange[] pages = (PageRange[]) args[0];
-                writeBlankPages(printAttributes[0], fd, pages[0].getStart(), pages[0].getEnd());
-                fd.close();
-                callback.onWriteFinished(new PageRange[] {PageRange.ALL_PAGES});
-                // Mark write was called.
-                onWriteCalled();
-                return null;
-            }
-        }, new Answer<Void>() {
-            @Override
-            public Void answer(InvocationOnMock invocation) throws Throwable {
-                // Mark finish was called.
-                onFinishCalled();
-                return null;
-            }
-        });
+                invocation -> {
+                    printAttributes[0] = (PrintAttributes) invocation.getArguments()[1];
+                    LayoutResultCallback callback = (LayoutResultCallback) invocation.getArguments()[3];
+                    PrintDocumentInfo info = new PrintDocumentInfo.Builder(PRINT_JOB_NAME)
+                            .setContentType(PrintDocumentInfo.CONTENT_TYPE_DOCUMENT)
+                            .setPageCount(3)
+                            .build();
+                    callback.onLayoutFinished(info, false);
+                    // Mark layout was called.
+                    onLayoutCalled();
+                    return null;
+                }, invocation -> {
+                    Object[] args = invocation.getArguments();
+                    ParcelFileDescriptor fd = (ParcelFileDescriptor) args[1];
+                    WriteResultCallback callback = (WriteResultCallback) args[3];
+                    PageRange[] pages = (PageRange[]) args[0];
+                    writeBlankPages(printAttributes[0], fd, pages[0].getStart(), pages[0].getEnd());
+                    fd.close();
+                    callback.onWriteFinished(new PageRange[] {PageRange.ALL_PAGES});
+                    // Mark write was called.
+                    onWriteCalled();
+                    return null;
+                }, invocation -> {
+                    // Mark finish was called.
+                    onFinishCalled();
+                    return null;
+                });
 
         // Start printing.
         print(adapter);
@@ -1032,30 +938,21 @@ public class PrintDocumentAdapterContractTest extends BasePrintTest {
 
         // Create a mock print adapter.
         final PrintDocumentAdapter adapter = createMockPrintDocumentAdapter(
-            new Answer<Void>() {
-            @Override
-            public Void answer(InvocationOnMock invocation) throws Throwable {
-                CancellationSignal cancellation = (CancellationSignal) invocation.getArguments()[2];
-                final LayoutResultCallback callback = (LayoutResultCallback) invocation
-                        .getArguments()[3];
-                cancellation.setOnCancelListener(new OnCancelListener() {
-                    @Override
-                    public void onCancel() {
+                invocation -> {
+                    CancellationSignal cancellation = (CancellationSignal) invocation.getArguments()[2];
+                    final LayoutResultCallback callback = (LayoutResultCallback) invocation
+                            .getArguments()[3];
+                    cancellation.setOnCancelListener(() -> {
                         onCancelOperationCalled();
                         callback.onLayoutCancelled();
-                    }
+                    });
+                    onLayoutCalled();
+                    return null;
+                }, null, invocation -> {
+                    // Mark finish was called.
+                    onFinishCalled();
+                    return null;
                 });
-                onLayoutCalled();
-                return null;
-            }
-        }, null, new Answer<Void>() {
-            @Override
-            public Void answer(InvocationOnMock invocation) throws Throwable {
-                // Mark finish was called.
-                onFinishCalled();
-                return null;
-            }
-        });
 
         // Start printing.
         print(adapter);
@@ -1110,26 +1007,19 @@ public class PrintDocumentAdapterContractTest extends BasePrintTest {
 
         // Create a mock print adapter.
         final PrintDocumentAdapter adapter = createMockPrintDocumentAdapter(
-            new Answer<Void>() {
-            @Override
-            public Void answer(InvocationOnMock invocation) throws Throwable {
-                LayoutResultCallback callback = (LayoutResultCallback) invocation.getArguments()[3];
-                PrintDocumentInfo info = new PrintDocumentInfo.Builder(PRINT_JOB_NAME)
-                        .setContentType(PrintDocumentInfo.CONTENT_TYPE_DOCUMENT).setPageCount(1)
-                        .build();
-                callback.onLayoutFinished(info, false);
-                return null;
-            }
-        }, new Answer<Void>() {
-            @Override
-            public Void answer(InvocationOnMock invocation) throws Throwable {
-                Object[] args = invocation.getArguments();
-                final ParcelFileDescriptor fd = (ParcelFileDescriptor) args[1];
-                final CancellationSignal cancellation = (CancellationSignal) args[2];
-                final WriteResultCallback callback = (WriteResultCallback) args[3];
-                cancellation.setOnCancelListener(new OnCancelListener() {
-                    @Override
-                    public void onCancel() {
+                invocation -> {
+                    LayoutResultCallback callback = (LayoutResultCallback) invocation.getArguments()[3];
+                    PrintDocumentInfo info = new PrintDocumentInfo.Builder(PRINT_JOB_NAME)
+                            .setContentType(PrintDocumentInfo.CONTENT_TYPE_DOCUMENT).setPageCount(1)
+                            .build();
+                    callback.onLayoutFinished(info, false);
+                    return null;
+                }, invocation -> {
+                    Object[] args = invocation.getArguments();
+                    final ParcelFileDescriptor fd = (ParcelFileDescriptor) args[1];
+                    final CancellationSignal cancellation = (CancellationSignal) args[2];
+                    final WriteResultCallback callback = (WriteResultCallback) args[3];
+                    cancellation.setOnCancelListener(() -> {
                         try {
                             fd.close();
                         } catch (IOException ioe) {
@@ -1137,20 +1027,15 @@ public class PrintDocumentAdapterContractTest extends BasePrintTest {
                         }
                         onCancelOperationCalled();
                         callback.onWriteCancelled();
-                    }
+                    });
+                    // Mark write was called.
+                    onWriteCalled();
+                    return null;
+                }, invocation -> {
+                    // Mark finish was called.
+                    onFinishCalled();
+                    return null;
                 });
-                // Mark write was called.
-                onWriteCalled();
-                return null;
-            }
-        }, new Answer<Void>() {
-            @Override
-            public Void answer(InvocationOnMock invocation) throws Throwable {
-                // Mark finish was called.
-                onFinishCalled();
-                return null;
-            }
-        });
 
         // Start printing.
         print(adapter);
@@ -1210,23 +1095,17 @@ public class PrintDocumentAdapterContractTest extends BasePrintTest {
 
         // Create a mock print adapter.
         final PrintDocumentAdapter adapter = createMockPrintDocumentAdapter(
-            new Answer<Void>() {
-            @Override
-            public Void answer(InvocationOnMock invocation) throws Throwable {
-                LayoutResultCallback callback = (LayoutResultCallback) invocation.getArguments()[3];
-                callback.onLayoutFailed(null);
-                // Mark layout was called.
-                onLayoutCalled();
-                return null;
-            }
-        }, null, new Answer<Void>() {
-            @Override
-            public Void answer(InvocationOnMock invocation) throws Throwable {
-                // Mark finish was called.
-                onFinishCalled();
-                return null;
-            }
-        });
+                invocation -> {
+                    LayoutResultCallback callback = (LayoutResultCallback) invocation.getArguments()[3];
+                    callback.onLayoutFailed(null);
+                    // Mark layout was called.
+                    onLayoutCalled();
+                    return null;
+                }, null, invocation -> {
+                    // Mark finish was called.
+                    onFinishCalled();
+                    return null;
+                });
 
         // Start printing.
         print(adapter);
@@ -1280,36 +1159,27 @@ public class PrintDocumentAdapterContractTest extends BasePrintTest {
 
         // Create a mock print adapter.
         final PrintDocumentAdapter adapter = createMockPrintDocumentAdapter(
-            new Answer<Void>() {
-            @Override
-            public Void answer(InvocationOnMock invocation) throws Throwable {
-                LayoutResultCallback callback = (LayoutResultCallback) invocation.getArguments()[3];
-                PrintDocumentInfo info = new PrintDocumentInfo.Builder(PRINT_JOB_NAME)
-                        .setContentType(PrintDocumentInfo.CONTENT_TYPE_DOCUMENT).setPageCount(1)
-                        .build();
-                callback.onLayoutFinished(info, false);
-                return null;
-            }
-        }, new Answer<Void>() {
-            @Override
-            public Void answer(InvocationOnMock invocation) throws Throwable {
-                Object[] args = invocation.getArguments();
-                ParcelFileDescriptor fd = (ParcelFileDescriptor) args[1];
-                WriteResultCallback callback = (WriteResultCallback) args[3];
-                fd.close();
-                callback.onWriteFailed(null);
-                // Mark write was called.
-                onWriteCalled();
-                return null;
-            }
-        }, new Answer<Void>() {
-            @Override
-            public Void answer(InvocationOnMock invocation) throws Throwable {
-                // Mark finish was called.
-                onFinishCalled();
-                return null;
-            }
-        });
+                invocation -> {
+                    LayoutResultCallback callback = (LayoutResultCallback) invocation.getArguments()[3];
+                    PrintDocumentInfo info = new PrintDocumentInfo.Builder(PRINT_JOB_NAME)
+                            .setContentType(PrintDocumentInfo.CONTENT_TYPE_DOCUMENT).setPageCount(1)
+                            .build();
+                    callback.onLayoutFinished(info, false);
+                    return null;
+                }, invocation -> {
+                    Object[] args = invocation.getArguments();
+                    ParcelFileDescriptor fd = (ParcelFileDescriptor) args[1];
+                    WriteResultCallback callback = (WriteResultCallback) args[3];
+                    fd.close();
+                    callback.onWriteFailed(null);
+                    // Mark write was called.
+                    onWriteCalled();
+                    return null;
+                }, invocation -> {
+                    // Mark finish was called.
+                    onFinishCalled();
+                    return null;
+                });
 
         // Start printing.
         print(adapter);
@@ -1369,45 +1239,36 @@ public class PrintDocumentAdapterContractTest extends BasePrintTest {
 
         // Create a mock print adapter.
         final PrintDocumentAdapter adapter = createMockPrintDocumentAdapter(
-                new Answer<Void>() {
-                    @Override
-                    public Void answer(InvocationOnMock invocation) throws Throwable {
-                        printAttributes[0] = (PrintAttributes) invocation.getArguments()[1];
-                        LayoutResultCallback callback = (LayoutResultCallback) invocation.getArguments()[3];
+                invocation -> {
+                    printAttributes[0] = (PrintAttributes) invocation.getArguments()[1];
+                    LayoutResultCallback callback = (LayoutResultCallback) invocation.getArguments()[3];
 
-                        // Returned cancelled for the second layout call which is unexpected
-                        if (numLayoutCalls[0] == 1) {
-                            callback.onLayoutCancelled();
-                        } else {
-                            callback.onLayoutFinished(
-                                    (new PrintDocumentInfo.Builder(PRINT_JOB_NAME)).build(), false);
-                        }
-                        numLayoutCalls[0]++;
-                        // Mark layout was called.
-                        onLayoutCalled();
-                        return null;
+                    // Returned cancelled for the second layout call which is unexpected
+                    if (numLayoutCalls[0] == 1) {
+                        callback.onLayoutCancelled();
+                    } else {
+                        callback.onLayoutFinished(
+                                (new PrintDocumentInfo.Builder(PRINT_JOB_NAME)).build(), false);
                     }
-                }, new Answer<Void>() {
-                    @Override
-                    public Void answer(InvocationOnMock invocation) throws Throwable {
-                        Object[] args = invocation.getArguments();
-                        PageRange[] pages = (PageRange[]) args[0];
-                        ParcelFileDescriptor fd = (ParcelFileDescriptor) args[1];
-                        WriteResultCallback callback = (WriteResultCallback) args[3];
-                        writeBlankPages(printAttributes[0], fd, 0, 1);
-                        fd.close();
-                        callback.onWriteFinished(pages);
-                        // Mark write was called.
-                        onWriteCalled();
-                        return null;
-                    }
-                }, new Answer<Void>() {
-                    @Override
-                    public Void answer(InvocationOnMock invocation) throws Throwable {
-                        // Mark finish was called.
-                        onFinishCalled();
-                        return null;
-                    }
+                    numLayoutCalls[0]++;
+                    // Mark layout was called.
+                    onLayoutCalled();
+                    return null;
+                }, invocation -> {
+                    Object[] args = invocation.getArguments();
+                    PageRange[] pages = (PageRange[]) args[0];
+                    ParcelFileDescriptor fd = (ParcelFileDescriptor) args[1];
+                    WriteResultCallback callback = (WriteResultCallback) args[3];
+                    writeBlankPages(printAttributes[0], fd, 0, 1);
+                    fd.close();
+                    callback.onWriteFinished(pages);
+                    // Mark write was called.
+                    onWriteCalled();
+                    return null;
+                }, invocation -> {
+                    // Mark finish was called.
+                    onFinishCalled();
+                    return null;
                 });
 
         // Start printing.
@@ -1449,48 +1310,39 @@ public class PrintDocumentAdapterContractTest extends BasePrintTest {
 
         // Create a mock print adapter.
         final PrintDocumentAdapter adapter = createMockPrintDocumentAdapter(
-                new Answer<Void>() {
-                    @Override
-                    public Void answer(InvocationOnMock invocation) throws Throwable {
-                        printAttributes[0] = (PrintAttributes) invocation.getArguments()[1];
-                        LayoutResultCallback callback = (LayoutResultCallback) invocation.getArguments()[3];
+                invocation -> {
+                    printAttributes[0] = (PrintAttributes) invocation.getArguments()[1];
+                    LayoutResultCallback callback = (LayoutResultCallback) invocation.getArguments()[3];
 
-                        callback.onLayoutFinished(
-                                    (new PrintDocumentInfo.Builder(PRINT_JOB_NAME)).build(), true);
+                    callback.onLayoutFinished(
+                                (new PrintDocumentInfo.Builder(PRINT_JOB_NAME)).build(), true);
 
-                        // Mark layout was called.
-                        onLayoutCalled();
-                        return null;
+                    // Mark layout was called.
+                    onLayoutCalled();
+                    return null;
+                }, invocation -> {
+                    Object[] args = invocation.getArguments();
+                    WriteResultCallback callback = (WriteResultCallback) args[3];
+
+                    // Returned cancelled for the second write call which is unexpected
+                    if (numWriteCalls[0] == 1) {
+                        callback.onWriteCancelled();
+                    } else {
+                        PageRange[] pages = (PageRange[]) args[0];
+                        ParcelFileDescriptor fd = (ParcelFileDescriptor) args[1];
+                        writeBlankPages(printAttributes[0], fd, 0, 1);
+                        fd.close();
+                        callback.onWriteFinished(pages);
                     }
-                }, new Answer<Void>() {
-                    @Override
-                    public Void answer(InvocationOnMock invocation) throws Throwable {
-                        Object[] args = invocation.getArguments();
-                        WriteResultCallback callback = (WriteResultCallback) args[3];
+                    numWriteCalls[0]++;
 
-                        // Returned cancelled for the second write call which is unexpected
-                        if (numWriteCalls[0] == 1) {
-                            callback.onWriteCancelled();
-                        } else {
-                            PageRange[] pages = (PageRange[]) args[0];
-                            ParcelFileDescriptor fd = (ParcelFileDescriptor) args[1];
-                            writeBlankPages(printAttributes[0], fd, 0, 1);
-                            fd.close();
-                            callback.onWriteFinished(pages);
-                        }
-                        numWriteCalls[0]++;
-
-                        // Mark write was called.
-                        onWriteCalled();
-                        return null;
-                    }
-                }, new Answer<Void>() {
-                    @Override
-                    public Void answer(InvocationOnMock invocation) throws Throwable {
-                        // Mark finish was called.
-                        onFinishCalled();
-                        return null;
-                    }
+                    // Mark write was called.
+                    onWriteCalled();
+                    return null;
+                }, invocation -> {
+                    // Mark finish was called.
+                    onFinishCalled();
+                    return null;
                 });
 
         // Start printing.
@@ -1530,40 +1382,31 @@ public class PrintDocumentAdapterContractTest extends BasePrintTest {
 
         // Create a mock print adapter.
         final PrintDocumentAdapter adapter = createMockPrintDocumentAdapter(
-            new Answer<Void>() {
-            @Override
-            public Void answer(InvocationOnMock invocation) throws Throwable {
-                printAttributes[0] = (PrintAttributes) invocation.getArguments()[1];
-                LayoutResultCallback callback = (LayoutResultCallback) invocation.getArguments()[3];
-                PrintDocumentInfo info = new PrintDocumentInfo.Builder(PRINT_JOB_NAME)
-                      .setContentType(PrintDocumentInfo.CONTENT_TYPE_DOCUMENT).setPageCount(1)
-                      .build();
-                callback.onLayoutFinished(info, false);
-                return null;
-            }
-        }, new Answer<Void>() {
-            @Override
-            public Void answer(InvocationOnMock invocation) throws Throwable {
-                Object[] args = invocation.getArguments();
-                ParcelFileDescriptor fd = (ParcelFileDescriptor) args[1];
-                WriteResultCallback callback = (WriteResultCallback) args[3];
-                writeBlankPages(printAttributes[0], fd, Integer.MAX_VALUE, Integer.MAX_VALUE);
-                fd.close();
-                // Write wrong pages.
-                callback.onWriteFinished(new PageRange[] {
-                        new PageRange(Integer.MAX_VALUE,Integer.MAX_VALUE)});
-                // Mark write was called.
-                onWriteCalled();
-                return null;
-            }
-        }, new Answer<Void>() {
-            @Override
-            public Void answer(InvocationOnMock invocation) throws Throwable {
-                // Mark finish was called.
-                onFinishCalled();
-                return null;
-            }
-        });
+                invocation -> {
+                    printAttributes[0] = (PrintAttributes) invocation.getArguments()[1];
+                    LayoutResultCallback callback = (LayoutResultCallback) invocation.getArguments()[3];
+                    PrintDocumentInfo info = new PrintDocumentInfo.Builder(PRINT_JOB_NAME)
+                          .setContentType(PrintDocumentInfo.CONTENT_TYPE_DOCUMENT).setPageCount(1)
+                          .build();
+                    callback.onLayoutFinished(info, false);
+                    return null;
+                }, invocation -> {
+                    Object[] args = invocation.getArguments();
+                    ParcelFileDescriptor fd = (ParcelFileDescriptor) args[1];
+                    WriteResultCallback callback = (WriteResultCallback) args[3];
+                    writeBlankPages(printAttributes[0], fd, Integer.MAX_VALUE, Integer.MAX_VALUE);
+                    fd.close();
+                    // Write wrong pages.
+                    callback.onWriteFinished(new PageRange[] {
+                            new PageRange(Integer.MAX_VALUE,Integer.MAX_VALUE)});
+                    // Mark write was called.
+                    onWriteCalled();
+                    return null;
+                }, invocation -> {
+                    // Mark finish was called.
+                    onFinishCalled();
+                    return null;
+                });
 
         // Start printing.
         print(adapter);
@@ -1620,22 +1463,16 @@ public class PrintDocumentAdapterContractTest extends BasePrintTest {
 
         // Create a mock print adapter.
         final PrintDocumentAdapter adapter = createMockPrintDocumentAdapter(
-            new Answer<Void>() {
-            @Override
-            public Void answer(InvocationOnMock invocation) throws Throwable {
-                // Break the contract and never call the callback.
-                // Mark layout called.
-                onLayoutCalled();
-                return null;
-            }
-        }, null, new Answer<Void>() {
-            @Override
-            public Void answer(InvocationOnMock invocation) throws Throwable {
-                // Mark finish was called.
-                onFinishCalled();
-                return null;
-            }
-        });
+                invocation -> {
+                    // Break the contract and never call the callback.
+                    // Mark layout called.
+                    onLayoutCalled();
+                    return null;
+                }, null, invocation -> {
+                    // Mark finish was called.
+                    onFinishCalled();
+                    return null;
+                });
 
         // Start printing.
         print(adapter);
@@ -1687,35 +1524,26 @@ public class PrintDocumentAdapterContractTest extends BasePrintTest {
 
         // Create a mock print adapter.
         final PrintDocumentAdapter adapter = createMockPrintDocumentAdapter(
-            new Answer<Void>() {
-            @Override
-            public Void answer(InvocationOnMock invocation) throws Throwable {
-                LayoutResultCallback callback = (LayoutResultCallback) invocation.getArguments()[3];
-                PrintDocumentInfo info = new PrintDocumentInfo.Builder(PRINT_JOB_NAME)
-                        .setContentType(PrintDocumentInfo.CONTENT_TYPE_DOCUMENT).setPageCount(1)
-                        .build();
-                callback.onLayoutFinished(info, false);
-                return null;
-            }
-        }, new Answer<Void>() {
-            @Override
-            public Void answer(InvocationOnMock invocation) throws Throwable {
-                Object[] args = invocation.getArguments();
-                ParcelFileDescriptor fd = (ParcelFileDescriptor) args[1];
-                fd.close();
-                // Break the contract and never call the callback.
-                // Mark write was called.
-                onWriteCalled();
-                return null;
-            }
-        }, new Answer<Void>() {
-            @Override
-            public Void answer(InvocationOnMock invocation) throws Throwable {
-                // Mark finish was called.
-                onFinishCalled();
-                return null;
-            }
-        });
+                invocation -> {
+                    LayoutResultCallback callback = (LayoutResultCallback) invocation.getArguments()[3];
+                    PrintDocumentInfo info = new PrintDocumentInfo.Builder(PRINT_JOB_NAME)
+                            .setContentType(PrintDocumentInfo.CONTENT_TYPE_DOCUMENT).setPageCount(1)
+                            .build();
+                    callback.onLayoutFinished(info, false);
+                    return null;
+                }, invocation -> {
+                    Object[] args = invocation.getArguments();
+                    ParcelFileDescriptor fd = (ParcelFileDescriptor) args[1];
+                    fd.close();
+                    // Break the contract and never call the callback.
+                    // Mark write was called.
+                    onWriteCalled();
+                    return null;
+                }, invocation -> {
+                    // Mark finish was called.
+                    onFinishCalled();
+                    return null;
+                });
 
         // Start printing.
         print(adapter);
@@ -1772,31 +1600,25 @@ public class PrintDocumentAdapterContractTest extends BasePrintTest {
 
         // Create a mock print adapter.
         final PrintDocumentAdapter adapter = createMockPrintDocumentAdapter(
-                new Answer<Void>() {
-                    @Override
-                    public Void answer(InvocationOnMock invocation) throws Throwable {
-                        PrintDocumentInfo info = new PrintDocumentInfo.Builder(PRINT_JOB_NAME)
-                                .setContentType(PrintDocumentInfo.CONTENT_TYPE_DOCUMENT)
-                                .setPageCount(1)
-                                .build();
-                        LayoutResultCallback callback = (LayoutResultCallback) invocation
-                                .getArguments()[3];
+                invocation -> {
+                    PrintDocumentInfo info = new PrintDocumentInfo.Builder(PRINT_JOB_NAME)
+                            .setContentType(PrintDocumentInfo.CONTENT_TYPE_DOCUMENT)
+                            .setPageCount(1)
+                            .build();
+                    LayoutResultCallback callback = (LayoutResultCallback) invocation
+                            .getArguments()[3];
 
-                        // Break the contract and call the callback twice.
-                        callback.onLayoutFinished(info, true);
-                        callback.onLayoutFinished(info, true);
+                    // Break the contract and call the callback twice.
+                    callback.onLayoutFinished(info, true);
+                    callback.onLayoutFinished(info, true);
 
-                        // Mark layout called.
-                        onLayoutCalled();
-                        return null;
-                    }
-                }, null, new Answer<Void>() {
-                    @Override
-                    public Void answer(InvocationOnMock invocation) throws Throwable {
-                        // Mark finish was called.
-                        onFinishCalled();
-                        return null;
-                    }
+                    // Mark layout called.
+                    onLayoutCalled();
+                    return null;
+                }, null, invocation -> {
+                    // Mark finish was called.
+                    onFinishCalled();
+                    return null;
                 });
 
         // Start printing.
@@ -1855,50 +1677,41 @@ public class PrintDocumentAdapterContractTest extends BasePrintTest {
 
         // Create a mock print adapter.
         final PrintDocumentAdapter adapter = createMockPrintDocumentAdapter(
-                new Answer<Void>() {
-                    @Override
-                    public Void answer(InvocationOnMock invocation) throws Throwable {
-                        printAttributes[0] = (PrintAttributes) invocation.getArguments()[1];
-                        PrintDocumentInfo info = new PrintDocumentInfo.Builder(PRINT_JOB_NAME)
-                                .setContentType(PrintDocumentInfo.CONTENT_TYPE_DOCUMENT)
-                                .setPageCount(1)
-                                .build();
-                        LayoutResultCallback callback = (LayoutResultCallback) invocation
-                                .getArguments()[3];
+                invocation -> {
+                    printAttributes[0] = (PrintAttributes) invocation.getArguments()[1];
+                    PrintDocumentInfo info = new PrintDocumentInfo.Builder(PRINT_JOB_NAME)
+                            .setContentType(PrintDocumentInfo.CONTENT_TYPE_DOCUMENT)
+                            .setPageCount(1)
+                            .build();
+                    LayoutResultCallback callback = (LayoutResultCallback) invocation
+                            .getArguments()[3];
 
-                        callback.onLayoutFinished(info, true);
+                    callback.onLayoutFinished(info, true);
 
-                        // Mark layout called.
-                        onLayoutCalled();
-                        return null;
-                    }
-                }, new Answer<Void>() {
-                    @Override
-                    public Void answer(InvocationOnMock invocation) throws Throwable {
-                        Object[] args = invocation.getArguments();
-                        PageRange[] pages = (PageRange[]) args[0];
-                        ParcelFileDescriptor fd = (ParcelFileDescriptor) args[1];
-                        WriteResultCallback callback = (WriteResultCallback) args[3];
+                    // Mark layout called.
+                    onLayoutCalled();
+                    return null;
+                }, invocation -> {
+                    Object[] args = invocation.getArguments();
+                    PageRange[] pages = (PageRange[]) args[0];
+                    ParcelFileDescriptor fd = (ParcelFileDescriptor) args[1];
+                    WriteResultCallback callback = (WriteResultCallback) args[3];
 
-                        // Write only one pages
-                        writeBlankPages(printAttributes[0], fd, 0, 0);
-                        fd.close();
+                    // Write only one pages
+                    writeBlankPages(printAttributes[0], fd, 0, 0);
+                    fd.close();
 
-                        // Break the contract and call callback twice
-                        callback.onWriteFinished(pages);
-                        callback.onWriteFinished(pages);
+                    // Break the contract and call callback twice
+                    callback.onWriteFinished(pages);
+                    callback.onWriteFinished(pages);
 
-                        // Mark write called
-                        onWriteCalled();
-                        return null;
-                    }
-                }, new Answer<Void>() {
-                    @Override
-                    public Void answer(InvocationOnMock invocation) throws Throwable {
-                        // Mark finish was called.
-                        onFinishCalled();
-                        return null;
-                    }
+                    // Mark write called
+                    onWriteCalled();
+                    return null;
+                }, invocation -> {
+                    // Mark finish was called.
+                    onFinishCalled();
+                    return null;
                 });
 
         // Start printing.
@@ -1961,44 +1774,35 @@ public class PrintDocumentAdapterContractTest extends BasePrintTest {
         final PrintAttributes[] printAttributes = new PrintAttributes[1];
 
         final PrintDocumentAdapter adapter = createMockPrintDocumentAdapter(
-                new Answer<Void>() {
-                    @Override
-                    public Void answer(InvocationOnMock invocation) throws Throwable {
-                        printAttributes[0] = (PrintAttributes) invocation.getArguments()[1];
-                        LayoutResultCallback callback = (LayoutResultCallback) invocation
-                                .getArguments()[3];
+                invocation -> {
+                    printAttributes[0] = (PrintAttributes) invocation.getArguments()[1];
+                    LayoutResultCallback callback = (LayoutResultCallback) invocation
+                            .getArguments()[3];
 
-                        // Lay out two pages
-                        PrintDocumentInfo info = new PrintDocumentInfo.Builder(PRINT_JOB_NAME)
-                                .setContentType(PrintDocumentInfo.CONTENT_TYPE_DOCUMENT)
-                                .setPageCount(2)
-                                .build();
-                        callback.onLayoutFinished(info, true);
-                        return null;
-                    }
-                }, new Answer<Void>() {
-                    @Override
-                    public Void answer(InvocationOnMock invocation) throws Throwable {
-                        Object[] args = invocation.getArguments();
-                        PageRange[] pages = (PageRange[]) args[0];
-                        ParcelFileDescriptor fd = (ParcelFileDescriptor) args[1];
-                        WriteResultCallback callback = (WriteResultCallback) args[3];
+                    // Lay out two pages
+                    PrintDocumentInfo info = new PrintDocumentInfo.Builder(PRINT_JOB_NAME)
+                            .setContentType(PrintDocumentInfo.CONTENT_TYPE_DOCUMENT)
+                            .setPageCount(2)
+                            .build();
+                    callback.onLayoutFinished(info, true);
+                    return null;
+                }, invocation -> {
+                    Object[] args = invocation.getArguments();
+                    PageRange[] pages = (PageRange[]) args[0];
+                    ParcelFileDescriptor fd = (ParcelFileDescriptor) args[1];
+                    WriteResultCallback callback = (WriteResultCallback) args[3];
 
-                        // Write only one pages
-                        writeBlankPages(printAttributes[0], fd, 0, 0);
-                        fd.close();
+                    // Write only one pages
+                    writeBlankPages(printAttributes[0], fd, 0, 0);
+                    fd.close();
 
-                        // Break the contract and report that two pages were written
-                        callback.onWriteFinished(pages);
-                        onWriteCalled();
-                        return null;
-                    }
-                }, new Answer<Void>() {
-                    @Override
-                    public Void answer(InvocationOnMock invocation) throws Throwable {
-                        onFinishCalled();
-                        return null;
-                    }
+                    // Break the contract and report that two pages were written
+                    callback.onWriteFinished(pages);
+                    onWriteCalled();
+                    return null;
+                }, invocation -> {
+                    onFinishCalled();
+                    return null;
                 });
 
         print(adapter);
@@ -2039,7 +1843,6 @@ public class PrintDocumentAdapterContractTest extends BasePrintTest {
 
         PrintDocumentInfo queuedInfo[] = new PrintDocumentInfo[1];
         ParcelFileDescriptor queuedData[] = new ParcelFileDescriptor[1];
-        final long[] writtenFileSize = new long[1];
 
         PrinterDiscoverySessionCallbacks printerDiscoverySessionCallbacks =
                 createFirstMockDiscoverySessionCallbacks();

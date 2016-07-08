@@ -64,7 +64,8 @@
         <activity
             android:name="android.print.cts.services.CustomPrintOptionsActivity"
             android:permission="android.permission.START_PRINT_SERVICE_CONFIG_ACTIVITY"
-            android:exported="true">
+            android:exported="true"
+            android:theme="@style/Theme.Translucent">
         </activity>
 
   </application>
