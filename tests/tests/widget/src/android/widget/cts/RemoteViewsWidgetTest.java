@@ -31,9 +31,14 @@ import android.cts.util.SystemUtil;
 import android.os.Bundle;
 import android.os.Process;
 import android.support.test.InstrumentationRegistry;
+import android.support.test.rule.ActivityTestRule;
 import android.support.test.runner.AndroidJUnit4;
 import android.test.suitebuilder.annotation.LargeTest;
 import android.view.View;
+import android.view.ViewGroup;
+import android.widget.AbsListView;
+import android.widget.FrameLayout;
+import android.widget.ListView;
 import android.widget.RemoteViews;
 import android.widget.RemoteViewsService;
 import android.widget.StackView;
@@ -42,6 +47,7 @@ import android.widget.cts.appwidget.MyAppWidgetService;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.invocation.InvocationOnMock;
@@ -51,6 +57,7 @@ import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import static org.junit.Assert.*;
 import static org.mockito.Matchers.any;
@@ -62,8 +69,14 @@ import static org.mockito.Mockito.*;
 @LargeTest
 @RunWith(AndroidJUnit4.class)
 public class RemoteViewsWidgetTest {
-    public static final String[] COUNTRY_LIST = new String[]{
-        "Argentina", "Australia", "China", "France", "Germany", "Italy", "Japan", "United States"
+    public static final String[] COUNTRY_LIST = new String[] {
+        "Argentina", "Australia", "Belize", "Botswana", "Brazil", "Cameroon", "China", "Cyprus",
+        "Denmark", "Djibouti", "Ethiopia", "Fiji", "Finland", "France", "Gabon", "Germany",
+        "Ghana", "Haiti", "Honduras", "Iceland", "India", "Indonesia", "Ireland", "Italy",
+        "Japan", "Kiribati", "Laos", "Lesotho", "Liberia", "Malaysia", "Mongolia", "Myanmar",
+        "Nauru", "Norway", "Oman", "Pakistan", "Philippines", "Portugal", "Romania", "Russia",
+        "Rwanda", "Singapore", "Slovakia", "Slovenia", "Somalia", "Swaziland", "Togo", "Tuvalu",
+        "Uganda", "Ukraine", "United States", "Vanuatu", "Venezuela", "Zimbabwe"
     };
 
     private static final String GRANT_BIND_APP_WIDGET_PERMISSION_COMMAND =
@@ -73,6 +86,10 @@ public class RemoteViewsWidgetTest {
         "appwidget revokebind --package android.widget.cts --user 0";
 
     private static final long TEST_TIMEOUT_MS = 5000;
+
+    @Rule
+    public ActivityTestRule<RemoteViewsCtsActivity> mActivityRule
+            = new ActivityTestRule<>(RemoteViewsCtsActivity.class);
 
     private Instrumentation mInstrumentation;
 
@@ -85,6 +102,8 @@ public class RemoteViewsWidgetTest {
     private int mAppWidgetId;
 
     private StackView mStackView;
+
+    private ListView mListView;
 
     private AppWidgetHost mAppWidgetHost;
 
@@ -109,7 +128,7 @@ public class RemoteViewsWidgetTest {
 
         // Configure the app widget provider behavior
         final CountDownLatch providerCountDownLatch = new CountDownLatch(2);
-        MyAppWidgetProvider.setCountDownLatch(providerCountDownLatch);
+        MyAppWidgetProvider.configure(providerCountDownLatch, null, null);
 
         // Grab the provider to be bound
         final AppWidgetProviderInfo providerInfo = getAppWidgetProviderInfo();
@@ -246,7 +265,7 @@ public class RemoteViewsWidgetTest {
 
     private void verifySetDisplayedChild(int displayedChildIndex) {
         final CountDownLatch updateLatch = new CountDownLatch(1);
-        MyAppWidgetProvider.setCountDownLatch(updateLatch);
+        MyAppWidgetProvider.configure(updateLatch, null, null);
 
         // Create the intent to update the widget. Note that we're passing the value
         // for displayed child index in the intent
@@ -283,7 +302,7 @@ public class RemoteViewsWidgetTest {
 
     private void verifyShowCommand(String intentShowKey, int expectedDisplayedChild) {
         final CountDownLatch updateLatch = new CountDownLatch(1);
-        MyAppWidgetProvider.setCountDownLatch(updateLatch);
+        MyAppWidgetProvider.configure(updateLatch, null, null);
 
         // Create the intent to update the widget. Note that we're passing the "indication"
         // which one of showNext / showPrevious APIs to execute in the intent that we're
@@ -335,7 +354,8 @@ public class RemoteViewsWidgetTest {
         mStackView = (StackView) mAppWidgetHostView.findViewById(R.id.remoteViews_stack);
         PollingCheck.waitFor(() -> mStackView.getCurrentView() != null);
         final View initialView = mStackView.getCurrentView();
-        mStackView.performItemClick(initialView, indexToClick, 0L);
+        mInstrumentation.runOnMainSync(
+                () -> mStackView.performItemClick(initialView, indexToClick, 0L));
 
         Activity newActivity = am.waitForActivityWithTimeout(TEST_TIMEOUT_MS);
         assertNotNull(newActivity);
@@ -350,6 +370,14 @@ public class RemoteViewsWidgetTest {
             return;
         }
 
+        ViewGroup root = (ViewGroup) mActivityRule.getActivity().findViewById(R.id.remoteView_host);
+        FrameLayout.MarginLayoutParams lp = new FrameLayout.MarginLayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT);
+        mAppWidgetHostView.setLayoutParams(lp);
+
+        mInstrumentation.runOnMainSync(() -> root.addView(mAppWidgetHostView));
+
         verifyItemClickIntents(0);
 
         // Switch to another child
@@ -359,5 +387,134 @@ public class RemoteViewsWidgetTest {
         // And one more
         verifyShowCommand(MyAppWidgetProvider.KEY_SHOW_NEXT, 3);
         verifyItemClickIntents(3);
+    }
+
+    private class ListScrollListener implements AbsListView.OnScrollListener {
+        private CountDownLatch mLatchToNotify;
+
+        private int mTargetPosition;
+
+        public ListScrollListener(CountDownLatch latchToNotify, int targetPosition) {
+            mLatchToNotify = latchToNotify;
+            mTargetPosition = targetPosition;
+        }
+
+        @Override
+        public void onScrollStateChanged(AbsListView view, int scrollState) {
+        }
+
+        @Override
+        public void onScroll(AbsListView view, int firstVisibleItem, int visibleItemCount,
+                int totalItemCount) {
+            if ((mTargetPosition >= firstVisibleItem) &&
+                    (mTargetPosition <= (firstVisibleItem + visibleItemCount))) {
+                mLatchToNotify.countDown();
+            }
+        }
+    }
+
+    @Test
+    public void testSetScrollPosition() {
+        if (!mHasAppWidgets) {
+            return;
+        }
+
+        mListView = (ListView) mAppWidgetHostView.findViewById(R.id.remoteViews_list);
+
+        final CountDownLatch updateLatch = new CountDownLatch(1);
+        final AtomicBoolean scrollToPositionIsComplete = new AtomicBoolean(false);
+        // We're configuring our provider with three parameters:
+        // 1. The CountDownLatch to be notified when the provider has been enabled
+        // 2. The gating condition that waits until ListView has populated its content
+        //    so that we can proceed to call setScrollPosition on it
+        // 3. The gating condition that waits until the setScrollPosition has completed
+        //    its processing / scrolling so that we can proceed to call
+        //    setRelativeScrollPosition on it
+        MyAppWidgetProvider.configure(updateLatch, () -> mListView.getChildCount() > 0,
+                () -> scrollToPositionIsComplete.get());
+
+        final int positionToScrollTo = COUNTRY_LIST.length - 10;
+        final int scrollByAmount = COUNTRY_LIST.length / 2;
+        final int offsetScrollTarget = positionToScrollTo - scrollByAmount;
+
+        // Register the first scroll listener on our ListView. The listener will notify our latch
+        // when the "target" item comes into view. If that never happens, the latch will
+        // time out and fail the test.
+        final CountDownLatch scrollToPositionLatch = new CountDownLatch(1);
+        mListView.setOnScrollListener(
+                new ListScrollListener(scrollToPositionLatch, positionToScrollTo));
+
+        // Create the intent to update the widget. Note that we're passing the "indication"
+        // to switch to our ListView in the intent that we're creating.
+        Intent intent = new Intent(mContext, MyAppWidgetProvider.class);
+        intent.setAction(AppWidgetManager.ACTION_APPWIDGET_UPDATE);
+        intent.putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, new  int[] { mAppWidgetId });
+        intent.putExtra(MyAppWidgetProvider.KEY_SWITCH_TO_LIST, true);
+        intent.putExtra(MyAppWidgetProvider.KEY_SCROLL_POSITION, positionToScrollTo);
+        intent.putExtra(MyAppWidgetProvider.KEY_SCROLL_OFFSET, -scrollByAmount);
+        mContext.sendBroadcast(intent);
+
+        // Wait until the update request has been processed
+        try {
+            assertTrue(updateLatch.await(TEST_TIMEOUT_MS, TimeUnit.MILLISECONDS));
+        } catch (InterruptedException ie) {
+            fail(ie.getMessage());
+        }
+        // And wait until the underlying ListView has been updated to be visible
+        PollingCheck.waitFor(TEST_TIMEOUT_MS, () -> mListView.getVisibility() == View.VISIBLE);
+
+        // Add our host view to the activity behind this test. This is similar to how launchers
+        // add widgets to the on-screen UI.
+        ViewGroup root = (ViewGroup) mActivityRule.getActivity().findViewById(R.id.remoteView_host);
+        FrameLayout.MarginLayoutParams lp = new FrameLayout.MarginLayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT);
+        mAppWidgetHostView.setLayoutParams(lp);
+
+        mInstrumentation.runOnMainSync(() -> root.addView(mAppWidgetHostView));
+
+        // Wait until our ListView has at least one visible child view. At that point we know
+        // that not only the host view is on screen, but also that the list view has completed
+        // its layout pass after having asked its adapter to populate the list content.
+        PollingCheck.waitFor(TEST_TIMEOUT_MS, () -> mListView.getChildCount() > 0);
+
+        // If we're on a really big display, we might be in a situation where the position
+        // we're going to scroll to is already visible. In that case the logic in the rest
+        // of this test will never fire off a listener callback and then fail the test.
+        final int lastVisiblePosition = mListView.getLastVisiblePosition();
+        if (positionToScrollTo <= lastVisiblePosition) {
+            return;
+        }
+
+        boolean result = false;
+        try {
+            result = scrollToPositionLatch.await(20, TimeUnit.SECONDS);
+        } catch (InterruptedException e) {
+            // ignore
+        }
+        assertTrue("Timed out while waiting for the target view to be scrolled into view", result);
+
+        if ((offsetScrollTarget < 0) ||
+                (offsetScrollTarget >= mListView.getFirstVisiblePosition())) {
+            // We can't scroll up because the target is either already visible or negative
+            return;
+        }
+
+        // Now register another scroll listener on our ListView. The listener will notify our latch
+        // when our new "target" item comes into view. If that never happens, the latch will
+        // time out and fail the test.
+        final CountDownLatch scrollByOffsetLatch = new CountDownLatch(1);
+        mListView.setOnScrollListener(
+                new ListScrollListener(scrollByOffsetLatch, offsetScrollTarget));
+
+        // Update our atomic boolean to "kick off" the widget provider request to call
+        // setRelativeScrollPosition on our RemoteViews
+        scrollToPositionIsComplete.set(true);
+        try {
+            result = scrollByOffsetLatch.await(20, TimeUnit.SECONDS);
+        } catch (InterruptedException e) {
+            // ignore
+        }
+        assertTrue("Timed out while waiting for the target view to be scrolled into view", result);
     }
 }
