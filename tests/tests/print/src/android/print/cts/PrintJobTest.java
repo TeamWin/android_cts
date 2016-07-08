@@ -38,16 +38,10 @@ import android.print.cts.services.SecondPrintService;
 import android.print.cts.services.StubbablePrinterDiscoverySession;
 import android.printservice.PrintJob;
 import android.util.Log;
-import org.mockito.invocation.InvocationOnMock;
-import org.mockito.stubbing.Answer;
 
 import java.util.ArrayList;
 
-import static junit.framework.Assert.assertEquals;
-import static junit.framework.Assert.assertNotNull;
-import static junit.framework.Assert.assertNull;
-import static junit.framework.Assert.assertTrue;
-import static junit.framework.Assert.assertFalse;
+import static android.print.cts.Utils.eventually;
 
 
 /**
@@ -69,7 +63,7 @@ public class PrintJobTest extends BasePrintTest {
     private final boolean testSuccess[] = new boolean[1];
 
     /** The printer discovery session used in this test */
-    private static StubbablePrinterDiscoverySession mDiscoverySession;
+    private static StubbablePrinterDiscoverySession sDiscoverySession;
 
     /**
      * Create a mock {@link PrintDocumentAdapter} that provides one empty page.
@@ -80,41 +74,30 @@ public class PrintJobTest extends BasePrintTest {
         final PrintAttributes[] printAttributes = new PrintAttributes[1];
 
         return createMockPrintDocumentAdapter(
-                new Answer<Void>() {
-                    @Override
-                    public Void answer(InvocationOnMock invocation) throws Throwable {
-                        printAttributes[0] = (PrintAttributes) invocation.getArguments()[1];
-                        LayoutResultCallback callback = (LayoutResultCallback) invocation
-                                .getArguments()[3];
+                invocation -> {
+                    printAttributes[0] = (PrintAttributes) invocation.getArguments()[1];
+                    LayoutResultCallback callback = (LayoutResultCallback) invocation
+                            .getArguments()[3];
 
-                        PrintDocumentInfo info = new PrintDocumentInfo.Builder(PRINT_JOB_NAME)
-                                .setContentType(PrintDocumentInfo.CONTENT_TYPE_DOCUMENT)
-                                .setPageCount(1)
-                                .build();
+                    PrintDocumentInfo info = new PrintDocumentInfo.Builder(PRINT_JOB_NAME)
+                            .setContentType(PrintDocumentInfo.CONTENT_TYPE_DOCUMENT)
+                            .setPageCount(1)
+                            .build();
 
-                        callback.onLayoutFinished(info, false);
-                        return null;
-                    }
-                }, new Answer<Void>() {
-                    @Override
-                    public Void answer(InvocationOnMock invocation) throws Throwable {
-                        Object[] args = invocation.getArguments();
-                        PageRange[] pages = (PageRange[]) args[0];
-                        ParcelFileDescriptor fd = (ParcelFileDescriptor) args[1];
-                        WriteResultCallback callback = (WriteResultCallback) args[3];
+                    callback.onLayoutFinished(info, false);
+                    return null;
+                }, invocation -> {
+                    Object[] args = invocation.getArguments();
+                    PageRange[] pages = (PageRange[]) args[0];
+                    ParcelFileDescriptor fd = (ParcelFileDescriptor) args[1];
+                    WriteResultCallback callback = (WriteResultCallback) args[3];
 
-                        writeBlankPages(printAttributes[0], fd, pages[0].getStart(),
-                                pages[0].getEnd());
-                        fd.close();
-                        callback.onWriteFinished(pages);
-                        return null;
-                    }
-                }, new Answer<Void>() {
-                    @Override
-                    public Void answer(InvocationOnMock invocation) throws Throwable {
-                        return null;
-                    }
-                });
+                    writeBlankPages(printAttributes[0], fd, pages[0].getStart(),
+                            pages[0].getEnd());
+                    fd.close();
+                    callback.onWriteFinished(pages);
+                    return null;
+                }, invocation -> null);
     }
 
     /**
@@ -123,51 +106,40 @@ public class PrintJobTest extends BasePrintTest {
      * @return The mock session callbacks
      */
     private PrinterDiscoverySessionCallbacks createFirstMockPrinterDiscoverySessionCallbacks() {
-        return createMockPrinterDiscoverySessionCallbacks(new Answer<Void>() {
-            @Override
-            public Void answer(InvocationOnMock invocation) {
-                // Get the session.
-                mDiscoverySession = ((PrinterDiscoverySessionCallbacks) invocation.getMock())
-                        .getSession();
+        return createMockPrinterDiscoverySessionCallbacks(invocation -> {
+            // Get the session.
+            sDiscoverySession = ((PrinterDiscoverySessionCallbacks) invocation.getMock())
+                    .getSession();
 
-                if (mDiscoverySession.getPrinters().isEmpty()) {
-                    PrinterId printerId =
-                            mDiscoverySession.getService().generatePrinterId(PRINTER_NAME);
-                    PrinterInfo.Builder printer = new PrinterInfo.Builder(
-                            mDiscoverySession.getService().generatePrinterId(PRINTER_NAME),
-                            PRINTER_NAME, PrinterInfo.STATUS_IDLE);
+            if (sDiscoverySession.getPrinters().isEmpty()) {
+                PrinterId printerId =
+                        sDiscoverySession.getService().generatePrinterId(PRINTER_NAME);
+                PrinterInfo.Builder printer = new PrinterInfo.Builder(
+                        sDiscoverySession.getService().generatePrinterId(PRINTER_NAME),
+                        PRINTER_NAME, PrinterInfo.STATUS_IDLE);
 
-                    printer.setCapabilities(new PrinterCapabilitiesInfo.Builder(printerId)
-                            .addMediaSize(MediaSize.ISO_A4, true)
-                            .addResolution(new Resolution("300x300", "300dpi", 300, 300), true)
-                            .setColorModes(PrintAttributes.COLOR_MODE_COLOR,
-                                    PrintAttributes.COLOR_MODE_COLOR)
-                            .setMinMargins(new Margins(0, 0, 0, 0)).build());
+                printer.setCapabilities(new PrinterCapabilitiesInfo.Builder(printerId)
+                        .addMediaSize(MediaSize.ISO_A4, true)
+                        .addResolution(new Resolution("300x300", "300dpi", 300, 300), true)
+                        .setColorModes(PrintAttributes.COLOR_MODE_COLOR,
+                                PrintAttributes.COLOR_MODE_COLOR)
+                        .setMinMargins(new Margins(0, 0, 0, 0)).build());
 
-                    ArrayList<PrinterInfo> printers = new ArrayList<>(1);
-                    printers.add(printer.build());
+                ArrayList<PrinterInfo> printers = new ArrayList<>(1);
+                printers.add(printer.build());
 
-                    mDiscoverySession.addPrinters(printers);
-                }
-                return null;
+                sDiscoverySession.addPrinters(printers);
             }
-        }, null, null, new Answer<Void>() {
-            @Override
-            public Void answer(InvocationOnMock invocation) throws Throwable {
-                return null;
-            }
-        }, null, null, new Answer<Void>() {
-            @Override
-            public Void answer(InvocationOnMock invocation) throws Throwable {
-                // Take a note onDestroy was called.
-                onPrinterDiscoverySessionDestroyCalled();
-                return null;
-            }
+            return null;
+        }, null, null, invocation -> null, null, null, invocation -> {
+            // Take a note onDestroy was called.
+            onPrinterDiscoverySessionDestroyCalled();
+            return null;
         });
     }
 
     private interface PrintJobTestFn {
-        void onPrintJobQueued(PrintJob printJob) throws Exception;
+        void onPrintJobQueued(PrintJob printJob) throws Throwable;
     }
 
     /**
@@ -181,27 +153,19 @@ public class PrintJobTest extends BasePrintTest {
             final PrinterDiscoverySessionCallbacks sessionCallbacks,
             final PrintJobTestFn printJobTest) {
         return createMockPrintServiceCallbacks(
-                new Answer<PrinterDiscoverySessionCallbacks>() {
-                    @Override
-                    public PrinterDiscoverySessionCallbacks answer(InvocationOnMock invocation) {
-                        return sessionCallbacks;
+                invocation -> sessionCallbacks, invocation -> {
+                    PrintJob printJob = (PrintJob) invocation.getArguments()[0];
+
+                    try {
+                        printJobTest.onPrintJobQueued(printJob);
+                        testSuccess[0] = true;
+                    } catch (Throwable t) {
+                        throw new RuntimeException(t);
                     }
-                }, new Answer<Void>() {
-                    @Override
-                    public Void answer(InvocationOnMock invocation) {
-                        PrintJob printJob = (PrintJob) invocation.getArguments()[0];
 
-                        try {
-                            printJobTest.onPrintJobQueued(printJob);
-                            testSuccess[0] = true;
-                        } catch (Exception e) {
-                            Log.e(LOG_TAG, "Test function failed", e);
-                        }
+                    onPrintJobQueuedCalled();
 
-                        onPrintJobQueuedCalled();
-
-                        return null;
-                    }
+                    return null;
                 }, null);
     }
 
@@ -324,7 +288,7 @@ public class PrintJobTest extends BasePrintTest {
         }
     }
 
-    private static void checkState(PrintJob job, int state) {
+    private static void checkState(PrintJob job, int state) throws Throwable {
         eventually(() -> assertEquals(state, job.getInfo().getState()));
         switch (state) {
             case PrintJobInfo.STATE_QUEUED:
@@ -385,43 +349,40 @@ public class PrintJobTest extends BasePrintTest {
 
                     Log.i(LOG_TAG, "Test " + state1 + " -> " + state2 + " -> " + state3);
 
-                    baseTest(new PrintJobTestFn() {
-                        @Override
-                        public void onPrintJobQueued(PrintJob printJob) throws Exception {
-                            knownFailures[PrintJobInfo.STATE_QUEUED][state1] = true;
+                    baseTest(printJob -> {
+                        knownFailures[PrintJobInfo.STATE_QUEUED][state1] = true;
 
-                            boolean success = setState(printJob, state1);
-                            assertEquals(isStateTransitionAllowed(PrintJobInfo.STATE_QUEUED,
-                                    state1), success);
-                            if (!success) {
-                                return;
-                            }
-                            checkState(printJob, state1);
-
-                            knownFailures[PrintJobInfo.STATE_QUEUED][state1] = false;
-
-                            knownFailures[state1][state2] = true;
-
-                            success = setState(printJob, state2);
-                            assertEquals(isStateTransitionAllowed(state1, state2), success);
-                            if (!success) {
-                                return;
-                            }
-                            checkState(printJob, state2);
-
-                            knownFailures[state1][state2] = false;
-
-                            knownFailures[state2][state3] = true;
-
-                            success = setState(printJob, state3);
-                            assertEquals(isStateTransitionAllowed(state2, state3), success);
-                            if (!success) {
-                                return;
-                            }
-                            checkState(printJob, state3);
-
-                            knownFailures[state2][state3] = false;
+                        boolean success = setState(printJob, state1);
+                        assertEquals(isStateTransitionAllowed(PrintJobInfo.STATE_QUEUED,
+                                state1), success);
+                        if (!success) {
+                            return;
                         }
+                        checkState(printJob, state1);
+
+                        knownFailures[PrintJobInfo.STATE_QUEUED][state1] = false;
+
+                        knownFailures[state1][state2] = true;
+
+                        success = setState(printJob, state2);
+                        assertEquals(isStateTransitionAllowed(state1, state2), success);
+                        if (!success) {
+                            return;
+                        }
+                        checkState(printJob, state2);
+
+                        knownFailures[state1][state2] = false;
+
+                        knownFailures[state2][state3] = true;
+
+                        success = setState(printJob, state3);
+                        assertEquals(isStateTransitionAllowed(state2, state3), success);
+                        if (!success) {
+                            return;
+                        }
+                        checkState(printJob, state3);
+
+                        knownFailures[state2][state3] = false;
                     }, testCaseNum);
 
                     testCaseNum++;
@@ -431,70 +392,61 @@ public class PrintJobTest extends BasePrintTest {
     }
 
     public void testBlockWithReason() throws Exception {
-        baseTest(new PrintJobTestFn() {
-            @Override
-            public void onPrintJobQueued(PrintJob printJob) throws Exception {
-                printJob.start();
-                checkState(printJob, PrintJobInfo.STATE_STARTED);
+        baseTest(printJob -> {
+            printJob.start();
+            checkState(printJob, PrintJobInfo.STATE_STARTED);
 
-                printJob.setStatus(R.string.testStr1);
-                eventually(() -> assertEquals(getActivity().getString(R.string.testStr1),
-                        printJob.getInfo().getStatus(getActivity().getPackageManager())));
+            printJob.setStatus(R.string.testStr1);
+            eventually(() -> assertEquals(getActivity().getString(R.string.testStr1),
+                    printJob.getInfo().getStatus(getActivity().getPackageManager())));
 
-                boolean success = printJob.block("test reason");
-                assertTrue(success);
-                checkState(printJob, PrintJobInfo.STATE_BLOCKED);
-                eventually(() -> assertEquals("test reason",
-                        printJob.getInfo().getStatus(getActivity().getPackageManager())));
+            boolean success = printJob.block("test reason");
+            assertTrue(success);
+            checkState(printJob, PrintJobInfo.STATE_BLOCKED);
+            eventually(() -> assertEquals("test reason",
+                    printJob.getInfo().getStatus(getActivity().getPackageManager())));
 
-                success = printJob.block("another reason");
-                assertFalse(success);
-                checkState(printJob, PrintJobInfo.STATE_BLOCKED);
-                eventually(() -> assertEquals("test reason",
-                        printJob.getInfo().getStatus(getActivity().getPackageManager())));
+            success = printJob.block("another reason");
+            assertFalse(success);
+            checkState(printJob, PrintJobInfo.STATE_BLOCKED);
+            eventually(() -> assertEquals("test reason",
+                    printJob.getInfo().getStatus(getActivity().getPackageManager())));
 
-                printJob.setStatus(R.string.testStr2);
-                eventually(() -> assertEquals(getActivity().getString(R.string.testStr2),
-                        printJob.getInfo().getStatus(getActivity().getPackageManager())));
-            }
+            printJob.setStatus(R.string.testStr2);
+            eventually(() -> assertEquals(getActivity().getString(R.string.testStr2),
+                    printJob.getInfo().getStatus(getActivity().getPackageManager())));
         }, 0);
     }
 
     public void testFailWithReason() throws Exception {
-        baseTest(new PrintJobTestFn() {
-            @Override
-            public void onPrintJobQueued(PrintJob printJob) throws Exception {
-                printJob.start();
-                checkState(printJob, PrintJobInfo.STATE_STARTED);
+        baseTest(printJob -> {
+            printJob.start();
+            checkState(printJob, PrintJobInfo.STATE_STARTED);
 
-                boolean success = printJob.fail("test reason");
-                assertTrue(success);
-                checkState(printJob, PrintJobInfo.STATE_FAILED);
-                eventually(() -> assertEquals("test reason",
-                        printJob.getInfo().getStatus(getActivity().getPackageManager())));
+            boolean success = printJob.fail("test reason");
+            assertTrue(success);
+            checkState(printJob, PrintJobInfo.STATE_FAILED);
+            eventually(() -> assertEquals("test reason",
+                    printJob.getInfo().getStatus(getActivity().getPackageManager())));
 
-                success = printJob.fail("another reason");
-                assertFalse(success);
-                checkState(printJob, PrintJobInfo.STATE_FAILED);
-                eventually(() -> assertEquals("test reason",
-                        printJob.getInfo().getStatus(getActivity().getPackageManager())));
-            }
+            success = printJob.fail("another reason");
+            assertFalse(success);
+            checkState(printJob, PrintJobInfo.STATE_FAILED);
+            eventually(() -> assertEquals("test reason",
+                    printJob.getInfo().getStatus(getActivity().getPackageManager())));
         }, 0);
     }
 
     public void testTag() throws Exception {
-        baseTest(new PrintJobTestFn() {
-            @Override
-            public void onPrintJobQueued(PrintJob printJob) throws Exception {
-                // Default value should be null
-                assertNull(printJob.getTag());
+        baseTest(printJob -> {
+            // Default value should be null
+            assertNull(printJob.getTag());
 
-                printJob.setTag("testTag");
-                eventually(() -> assertEquals("testTag", printJob.getTag()));
+            printJob.setTag("testTag");
+            eventually(() -> assertEquals("testTag", printJob.getTag()));
 
-                printJob.setTag(null);
-                eventually(() -> assertNull(printJob.getTag()));
-            }
+            printJob.setTag(null);
+            eventually(() -> assertNull(printJob.getTag()));
         }, 0);
     }
 
@@ -511,54 +463,47 @@ public class PrintJobTest extends BasePrintTest {
 
         // Create the service callbacks for the first print service.
         PrintServiceCallbacks serviceCallbacks = createFirstMockPrinterServiceCallbacks(
-                sessionCallbacks, new PrintJobTestFn() {
-                    @Override
-                    public void onPrintJobQueued(PrintJob printJob) throws Exception {
-                        assertTrue(printJob.hasAdvancedOption(VALID_STRING_KEY));
-                        assertEquals(STRING_VALUE, printJob.getAdvancedStringOption(VALID_STRING_KEY));
+                sessionCallbacks, printJob -> {
+                    assertTrue(printJob.hasAdvancedOption(VALID_STRING_KEY));
+                    assertEquals(STRING_VALUE, printJob.getAdvancedStringOption(VALID_STRING_KEY));
 
-                        assertFalse(printJob.hasAdvancedOption(INVALID_STRING_KEY));
-                        assertNull(printJob.getAdvancedStringOption(INVALID_STRING_KEY));
+                    assertFalse(printJob.hasAdvancedOption(INVALID_STRING_KEY));
+                    assertNull(printJob.getAdvancedStringOption(INVALID_STRING_KEY));
 
-                        assertTrue(printJob.hasAdvancedOption(VALID_INT_KEY));
-                        assertEquals(INT_VALUE, printJob.getAdvancedIntOption(VALID_INT_KEY));
+                    assertTrue(printJob.hasAdvancedOption(VALID_INT_KEY));
+                    assertEquals(INT_VALUE, printJob.getAdvancedIntOption(VALID_INT_KEY));
 
-                        assertTrue(printJob.hasAdvancedOption(VALID_NULL_KEY));
-                        assertNull(printJob.getAdvancedStringOption(VALID_NULL_KEY));
+                    assertTrue(printJob.hasAdvancedOption(VALID_NULL_KEY));
+                    assertNull(printJob.getAdvancedStringOption(VALID_NULL_KEY));
 
-                        assertFalse(printJob.hasAdvancedOption(INVALID_INT_KEY));
-                        assertEquals(0, printJob.getAdvancedIntOption(INVALID_INT_KEY));
+                    assertFalse(printJob.hasAdvancedOption(INVALID_INT_KEY));
+                    assertEquals(0, printJob.getAdvancedIntOption(INVALID_INT_KEY));
 
-                        assertNull(printJob.getAdvancedStringOption(VALID_INT_KEY));
-                        assertEquals(0, printJob.getAdvancedIntOption(VALID_STRING_KEY));
-                    }
+                    assertNull(printJob.getAdvancedStringOption(VALID_INT_KEY));
+                    assertEquals(0, printJob.getAdvancedIntOption(VALID_STRING_KEY));
                 });
 
         CustomPrintOptionsActivity.setCallBack(
-                new CustomPrintOptionsActivity.CustomPrintOptionsCallback() {
-                    @Override
-                    public PrintJobInfo executeCustomPrintOptionsActivity(
-                            PrintJobInfo printJob, PrinterInfo printer) {
-                        PrintJobInfo.Builder printJobBuilder = new PrintJobInfo.Builder(printJob);
+                (printJob, printer) -> {
+                    PrintJobInfo.Builder printJobBuilder = new PrintJobInfo.Builder(printJob);
 
-                        try {
-                            printJobBuilder.putAdvancedOption(null, STRING_VALUE);
-                            throw new RuntimeException("Should not be able to use a null key");
-                        } catch (NullPointerException e) {
-                            // expected
-                        }
-
-                        // Second put overrides the first
-                        printJobBuilder.putAdvancedOption(VALID_STRING_KEY, "something");
-                        printJobBuilder.putAdvancedOption(VALID_STRING_KEY, STRING_VALUE);
-
-                        printJobBuilder.putAdvancedOption(VALID_INT_KEY, "something");
-                        printJobBuilder.putAdvancedOption(VALID_INT_KEY, INT_VALUE);
-
-                        printJobBuilder.putAdvancedOption(VALID_NULL_KEY, null);
-
-                        return printJobBuilder.build();
+                    try {
+                        printJobBuilder.putAdvancedOption(null, STRING_VALUE);
+                        throw new RuntimeException("Should not be able to use a null key");
+                    } catch (NullPointerException e) {
+                        // expected
                     }
+
+                    // Second put overrides the first
+                    printJobBuilder.putAdvancedOption(VALID_STRING_KEY, "something");
+                    printJobBuilder.putAdvancedOption(VALID_STRING_KEY, STRING_VALUE);
+
+                    printJobBuilder.putAdvancedOption(VALID_INT_KEY, "something");
+                    printJobBuilder.putAdvancedOption(VALID_INT_KEY, INT_VALUE);
+
+                    printJobBuilder.putAdvancedOption(VALID_NULL_KEY, null);
+
+                    return printJobBuilder.build();
                 });
 
         // Configure the print services.
@@ -591,57 +536,51 @@ public class PrintJobTest extends BasePrintTest {
     }
 
     public void testOther() throws Exception {
-        baseTest(new PrintJobTestFn() {
-            @Override
-            public void onPrintJobQueued(PrintJob printJob) throws Exception {
-                assertNotNull(printJob.getDocument());
-                assertNotNull(printJob.getId());
-            }
+        baseTest(printJob -> {
+            assertNotNull(printJob.getDocument());
+            assertNotNull(printJob.getId());
         }, 0);
     }
 
     public void testSetStatus() throws Exception {
-        baseTest(new PrintJobTestFn() {
-            @Override
-            public void onPrintJobQueued(PrintJob printJob) throws Exception {
-                printJob.start();
+        baseTest(printJob -> {
+            printJob.start();
 
-                printJob.setStatus(R.string.testStr1);
-                eventually(() -> assertEquals(getActivity().getString(R.string.testStr1),
-                        printJob.getInfo().getStatus(getActivity().getPackageManager())));
+            printJob.setStatus(R.string.testStr1);
+            eventually(() -> assertEquals(getActivity().getString(R.string.testStr1),
+                    printJob.getInfo().getStatus(getActivity().getPackageManager())));
 
-                printJob.setStatus("testStr3");
-                eventually(() -> assertEquals("testStr3",
-                        printJob.getInfo().getStatus(getActivity().getPackageManager())));
+            printJob.setStatus("testStr3");
+            eventually(() -> assertEquals("testStr3",
+                    printJob.getInfo().getStatus(getActivity().getPackageManager())));
 
-                printJob.setStatus(R.string.testStr2);
-                eventually(() -> assertEquals(getActivity().getString(R.string.testStr2),
-                        printJob.getInfo().getStatus(getActivity().getPackageManager())));
+            printJob.setStatus(R.string.testStr2);
+            eventually(() -> assertEquals(getActivity().getString(R.string.testStr2),
+                    printJob.getInfo().getStatus(getActivity().getPackageManager())));
 
-                printJob.setStatus(null);
-                eventually(() -> assertNull(
-                        printJob.getInfo().getStatus(getActivity().getPackageManager())));
+            printJob.setStatus(null);
+            eventually(() -> assertNull(
+                    printJob.getInfo().getStatus(getActivity().getPackageManager())));
 
-                printJob.block("testStr4");
-                eventually(() -> assertEquals("testStr4",
-                        printJob.getInfo().getStatus(getActivity().getPackageManager())));
+            printJob.block("testStr4");
+            eventually(() -> assertEquals("testStr4",
+                    printJob.getInfo().getStatus(getActivity().getPackageManager())));
 
-                printJob.setStatus(R.string.testStr2);
-                eventually(() -> assertEquals(getActivity().getString(R.string.testStr2),
-                        printJob.getInfo().getStatus(getActivity().getPackageManager())));
+            printJob.setStatus(R.string.testStr2);
+            eventually(() -> assertEquals(getActivity().getString(R.string.testStr2),
+                    printJob.getInfo().getStatus(getActivity().getPackageManager())));
 
-                printJob.setStatus(0);
-                eventually(() -> assertNull(
-                        printJob.getInfo().getStatus(getActivity().getPackageManager())));
+            printJob.setStatus(0);
+            eventually(() -> assertNull(
+                    printJob.getInfo().getStatus(getActivity().getPackageManager())));
 
-                printJob.setStatus("testStr3");
-                eventually(() -> assertEquals("testStr3",
-                        printJob.getInfo().getStatus(getActivity().getPackageManager())));
+            printJob.setStatus("testStr3");
+            eventually(() -> assertEquals("testStr3",
+                    printJob.getInfo().getStatus(getActivity().getPackageManager())));
 
-                printJob.setStatus(-1);
-                eventually(() -> assertNull(
-                        printJob.getInfo().getStatus(getActivity().getPackageManager())));
-            }
+            printJob.setStatus(-1);
+            eventually(() -> assertNull(
+                    printJob.getInfo().getStatus(getActivity().getPackageManager())));
         }, 0);
     }
 }

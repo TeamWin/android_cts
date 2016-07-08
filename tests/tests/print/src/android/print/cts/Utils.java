@@ -16,21 +16,35 @@
 
 package android.print.cts;
 
+import android.os.Handler;
+import android.os.Looper;
+import android.support.annotation.NonNull;
+import android.util.Log;
+
 /**
  * Utilities for print tests
  */
 public class Utils {
+    private static final String LOG_TAG = "Utils";
+
     /**
-     * Run a runnable and expect and exception of a certain type.
-     *
-     * @param r             The runnable to run
-     * @param expectedClass The expected exception type
+     * A {@link Runnable} that can throw an {@link Throwable}.
      */
-    public static void assertException(Runnable r,
-            Class<? extends RuntimeException> expectedClass) {
+    public interface Invokable {
+        void run() throws Throwable;
+    }
+
+    /**
+     * Run a {@link Invokable} and expect and {@link Throwable} of a certain type.
+     *
+     * @param r             The {@link Invokable} to run
+     * @param expectedClass The expected {@link Throwable} type
+     */
+    public static void assertException(@NonNull Invokable r,
+            @NonNull Class<? extends Throwable> expectedClass) {
         try {
             r.run();
-        } catch (Exception e) {
+        } catch (Throwable e) {
             if (e.getClass().isAssignableFrom(expectedClass)) {
                 return;
             } else {
@@ -39,6 +53,68 @@ public class Utils {
             }
         }
 
-        throw new AssertionError("No exception thrown");
+        throw new AssertionError("No throwable thrown");
     }
+
+    /**
+     * Run a {@link Invokable} on the main thread and forward the {@link Throwable} if one was
+     * thrown.
+     *
+     * @param r The {@link Invokable} to run
+     *
+     * @throws Throwable If the {@link Runnable} caused an issue
+     */
+    public static void runOnMainThread(@NonNull final Invokable r) throws Throwable {
+        final Object synchronizer = new Object();
+        final Throwable[] thrown = new Throwable[1];
+
+        synchronized (synchronizer) {
+            (new Handler(Looper.getMainLooper())).post(() -> {
+                synchronized (synchronizer) {
+                    try {
+                        r.run();
+                    } catch (Throwable t) {
+                        thrown[0] = t;
+                    }
+
+                    synchronizer.notify();
+                }
+            });
+
+            synchronizer.wait();
+        }
+
+        if (thrown[0] != null) {
+            throw thrown[0];
+        }
+    }
+
+    /**
+     * Make sure that a {@link Invokable} eventually finishes without throwing a {@link Throwable}.
+     *
+     * @param r The {@link Invokable} to run.
+     */
+    public static void eventually(@NonNull Invokable r) throws Throwable {
+        long start = System.currentTimeMillis();
+
+        while (true) {
+            try {
+                r.run();
+                break;
+            } catch (Throwable e) {
+                if (System.currentTimeMillis() - start < BasePrintTest.OPERATION_TIMEOUT_MILLIS) {
+                    Log.e(LOG_TAG, "Ignoring exception", e);
+
+                    try {
+                        Thread.sleep(500);
+                    } catch (InterruptedException e1) {
+                        Log.e(LOG_TAG, "Interrupted", e);
+                    }
+                } else {
+                    throw e;
+                }
+            }
+        }
+    }
+
 }

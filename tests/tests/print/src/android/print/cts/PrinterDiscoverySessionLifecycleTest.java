@@ -16,6 +16,8 @@
 
 package android.print.cts;
 
+import static android.print.cts.Utils.eventually;
+import static android.print.cts.Utils.runOnMainThread;
 import static org.mockito.Mockito.inOrder;
 
 import android.os.ParcelFileDescriptor;
@@ -41,8 +43,6 @@ import android.printservice.PrinterDiscoverySession;
 
 import org.mockito.InOrder;
 import org.mockito.exceptions.verification.VerificationInOrderFailure;
-import org.mockito.invocation.InvocationOnMock;
-import org.mockito.stubbing.Answer;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -59,7 +59,9 @@ public class PrinterDiscoverySessionLifecycleTest extends BasePrintTest {
     private static final String FIRST_PRINTER_LOCAL_ID= "first_printer";
     private static final String SECOND_PRINTER_LOCAL_ID = "second_printer";
 
-    public void testNormalLifecycle() throws Exception {
+    private static StubbablePrinterDiscoverySession sSession;
+
+    public void testNormalLifecycle() throws Throwable {
         if (!supportsPrinting()) {
             return;
         }
@@ -69,21 +71,13 @@ public class PrinterDiscoverySessionLifecycleTest extends BasePrintTest {
 
         // Create the service callbacks for the first print service.
         PrintServiceCallbacks firstServiceCallbacks = createMockPrintServiceCallbacks(
-                new Answer<PrinterDiscoverySessionCallbacks>() {
-                @Override
-                public PrinterDiscoverySessionCallbacks answer(InvocationOnMock invocation) {
-                        return firstSessionCallbacks;
-                    }
-                },
-                new Answer<Void>() {
-                @Override
-                public Void answer(InvocationOnMock invocation) {
+                invocation -> firstSessionCallbacks,
+                invocation -> {
                     PrintJob printJob = (PrintJob) invocation.getArguments()[0];
                     // We pretend the job is handled immediately.
                     printJob.complete();
                     return null;
-                }
-            }, null);
+                }, null);
 
         // Configure the print services.
         FirstPrintService.setCallbacks(firstServiceCallbacks);
@@ -98,8 +92,16 @@ public class PrinterDiscoverySessionLifecycleTest extends BasePrintTest {
         // Wait for write of the first page.
         waitForWriteAdapterCallback(1);
 
+        runOnMainThread(() -> assertFalse(sSession.isDestroyed()));
+        runOnMainThread(() -> assertEquals(0, sSession.getTrackedPrinters().size()));
+
         // Select the first printer.
         selectPrinter(FIRST_PRINTER_NAME);
+
+        eventually(() -> runOnMainThread(() -> assertEquals(FIRST_PRINTER_LOCAL_ID,
+                sSession.getTrackedPrinters().get(0).getLocalId())));
+        runOnMainThread(() -> assertTrue(sSession.isPrinterDiscoveryStarted()));
+        runOnMainThread(() -> assertEquals(1, sSession.getTrackedPrinters().size()));
 
         // Wait for layout as the printer has different capabilities.
         waitForLayoutAdapterCallbackCount(2);
@@ -108,13 +110,17 @@ public class PrinterDiscoverySessionLifecycleTest extends BasePrintTest {
         // one so no layout should happen).
         selectPrinter(SECOND_PRINTER_NAME);
 
+        eventually(() -> runOnMainThread(() -> assertEquals(SECOND_PRINTER_LOCAL_ID,
+                sSession.getTrackedPrinters().get(0).getLocalId())));
+        runOnMainThread(() -> assertEquals(1, sSession.getTrackedPrinters().size()));
+
         // While the printer discovery session is still alive store the
         // ids of printers as we want to make some assertions about them
         // but only the print service can create printer ids which means
         // that we need to get the created ones.
-        PrinterId firstPrinterId = getAddedPrinterIdForLocalId(firstSessionCallbacks,
+        PrinterId firstPrinterId = getAddedPrinterIdForLocalId(
                 FIRST_PRINTER_LOCAL_ID);
-        PrinterId secondPrinterId = getAddedPrinterIdForLocalId(firstSessionCallbacks,
+        PrinterId secondPrinterId = getAddedPrinterIdForLocalId(
                 SECOND_PRINTER_LOCAL_ID);
         assertNotNull("Coundn't find printer:" + FIRST_PRINTER_LOCAL_ID, firstPrinterId);
         assertNotNull("Coundn't find printer:" + SECOND_PRINTER_LOCAL_ID, secondPrinterId);
@@ -127,6 +133,10 @@ public class PrinterDiscoverySessionLifecycleTest extends BasePrintTest {
 
         // Wait for all print jobs to be handled after which the session destroyed.
         waitForPrinterDiscoverySessionDestroyCallbackCalled(1);
+
+        runOnMainThread(() -> assertTrue(sSession.isDestroyed()));
+        runOnMainThread(() -> assertFalse(sSession.isPrinterDiscoveryStarted()));
+        runOnMainThread(() -> assertEquals(0, sSession.getTrackedPrinters().size()));
 
         // Verify the expected calls.
         InOrder inOrder = inOrder(firstSessionCallbacks);
@@ -159,7 +169,7 @@ public class PrinterDiscoverySessionLifecycleTest extends BasePrintTest {
         inOrder.verify(firstSessionCallbacks).onDestroy();
     }
 
-    public void testCancelPrintServicesAlertDialog() throws Exception {
+    public void testCancelPrintServicesAlertDialog() throws Throwable {
         if (!supportsPrinting()) {
             return;
         }
@@ -169,20 +179,12 @@ public class PrinterDiscoverySessionLifecycleTest extends BasePrintTest {
 
         // Create the service callbacks for the first print service.
         PrintServiceCallbacks firstServiceCallbacks = createMockPrintServiceCallbacks(
-                new Answer<PrinterDiscoverySessionCallbacks>() {
-                    @Override
-                    public PrinterDiscoverySessionCallbacks answer(InvocationOnMock invocation) {
-                        return firstSessionCallbacks;
-                    }
-                },
-                new Answer<Void>() {
-                    @Override
-                    public Void answer(InvocationOnMock invocation) {
-                        PrintJob printJob = (PrintJob) invocation.getArguments()[0];
-                        // We pretend the job is handled immediately.
-                        printJob.complete();
-                        return null;
-                    }
+                invocation -> firstSessionCallbacks,
+                invocation -> {
+                    PrintJob printJob = (PrintJob) invocation.getArguments()[0];
+                    // We pretend the job is handled immediately.
+                    printJob.complete();
+                    return null;
                 }, null);
 
         // Configure the print services.
@@ -198,14 +200,22 @@ public class PrinterDiscoverySessionLifecycleTest extends BasePrintTest {
         // Wait for write of the first page.
         waitForWriteAdapterCallback(1);
 
+        runOnMainThread(() -> assertFalse(sSession.isDestroyed()));
+        runOnMainThread(() -> assertEquals(0, sSession.getTrackedPrinters().size()));
+
         // Select the first printer.
         selectPrinter(FIRST_PRINTER_NAME);
+
+        eventually(() -> runOnMainThread(() -> assertEquals(FIRST_PRINTER_LOCAL_ID,
+                sSession.getTrackedPrinters().get(0).getLocalId())));
+        runOnMainThread(() -> assertTrue(sSession.isPrinterDiscoveryStarted()));
+        runOnMainThread(() -> assertEquals(1, sSession.getTrackedPrinters().size()));
 
         // While the printer discovery session is still alive store the
         // ids of printers as we want to make some assertions about them
         // but only the print service can create printer ids which means
         // that we need to get the created ones.
-        PrinterId firstPrinterId = getAddedPrinterIdForLocalId(firstSessionCallbacks,
+        PrinterId firstPrinterId = getAddedPrinterIdForLocalId(
                 FIRST_PRINTER_LOCAL_ID);
         assertNotNull("Coundn't find printer:" + FIRST_PRINTER_LOCAL_ID, firstPrinterId);
 
@@ -223,6 +233,10 @@ public class PrinterDiscoverySessionLifecycleTest extends BasePrintTest {
 
         // Wait for all print jobs to be handled after which the session destroyed.
         waitForPrinterDiscoverySessionDestroyCallbackCalled(1);
+
+        runOnMainThread(() -> assertTrue(sSession.isDestroyed()));
+        runOnMainThread(() -> assertFalse(sSession.isPrinterDiscoveryStarted()));
+        runOnMainThread(() -> assertEquals(0, sSession.getTrackedPrinters().size()));
 
         // Verify the expected calls.
         InOrder inOrder = inOrder(firstSessionCallbacks);
@@ -247,7 +261,7 @@ public class PrinterDiscoverySessionLifecycleTest extends BasePrintTest {
         inOrder.verify(firstSessionCallbacks).onDestroy();
     }
 
-    public void testStartPrinterDiscoveryWithHistoricalPrinters() throws Exception {
+    public void testStartPrinterDiscoveryWithHistoricalPrinters() throws Throwable {
         if (!supportsPrinting()) {
             return;
         }
@@ -257,21 +271,13 @@ public class PrinterDiscoverySessionLifecycleTest extends BasePrintTest {
 
         // Create the service callbacks for the first print service.
         PrintServiceCallbacks firstServiceCallbacks = createMockPrintServiceCallbacks(
-                new Answer<PrinterDiscoverySessionCallbacks>() {
-                @Override
-                public PrinterDiscoverySessionCallbacks answer(InvocationOnMock invocation) {
-                        return firstSessionCallbacks;
-                    }
-                },
-                new Answer<Void>() {
-                @Override
-                public Void answer(InvocationOnMock invocation) {
+                invocation -> firstSessionCallbacks,
+                invocation -> {
                     PrintJob printJob = (PrintJob) invocation.getArguments()[0];
                     // We pretend the job is handled immediately.
                     printJob.complete();
                     return null;
-                }
-            }, null);
+                }, null);
 
         // Configure the print services.
         FirstPrintService.setCallbacks(firstServiceCallbacks);
@@ -286,8 +292,16 @@ public class PrinterDiscoverySessionLifecycleTest extends BasePrintTest {
         // Wait for write of the first page.
         waitForWriteAdapterCallback(1);
 
+        runOnMainThread(() -> assertFalse(sSession.isDestroyed()));
+        runOnMainThread(() -> assertEquals(0, sSession.getTrackedPrinters().size()));
+
         // Select the first printer.
         selectPrinter(FIRST_PRINTER_NAME);
+
+        eventually(() -> runOnMainThread(() -> assertEquals(FIRST_PRINTER_LOCAL_ID,
+                sSession.getTrackedPrinters().get(0).getLocalId())));
+        runOnMainThread(() -> assertTrue(sSession.isPrinterDiscoveryStarted()));
+        runOnMainThread(() -> assertEquals(1, sSession.getTrackedPrinters().size()));
 
         // Wait for a layout to finish - first layout was for the
         // PDF printer, second for the first printer in preview mode.
@@ -298,7 +312,7 @@ public class PrinterDiscoverySessionLifecycleTest extends BasePrintTest {
         // but only the print service can create printer ids which means
         // that we need to get the created one.
         PrinterId firstPrinterId = getAddedPrinterIdForLocalId(
-                firstSessionCallbacks, FIRST_PRINTER_LOCAL_ID);
+                FIRST_PRINTER_LOCAL_ID);
 
         // Click the print button.
         clickPrintButton();
@@ -326,11 +340,15 @@ public class PrinterDiscoverySessionLifecycleTest extends BasePrintTest {
         // Wait for all print jobs to be handled after which the is session destroyed.
         waitForPrinterDiscoverySessionDestroyCallbackCalled(1);
 
+        runOnMainThread(() -> assertTrue(sSession.isDestroyed()));
+        runOnMainThread(() -> assertFalse(sSession.isPrinterDiscoveryStarted()));
+        runOnMainThread(() -> assertEquals(0, sSession.getTrackedPrinters().size()));
+
         // Verify the expected calls.
         InOrder inOrder = inOrder(firstSessionCallbacks);
 
         // We start discovery with no printer history.
-        List<PrinterId> priorityList = new ArrayList<PrinterId>();
+        List<PrinterId> priorityList = new ArrayList<>();
         inOrder.verify(firstSessionCallbacks).onStartPrinterDiscovery(
                 priorityList);
 
@@ -371,16 +389,11 @@ public class PrinterDiscoverySessionLifecycleTest extends BasePrintTest {
         inOrder.verify(firstSessionCallbacks).onDestroy();
     }
 
-    private PrinterId getAddedPrinterIdForLocalId(
-            final PrinterDiscoverySessionCallbacks sessionCallbacks, String printerLocalId) {
-        final List<PrinterInfo> reportedPrinters = new ArrayList<PrinterInfo>();
-        getInstrumentation().runOnMainSync(new Runnable() {
-            @Override
-            public void run() {
-                // Grab the printer ids as only the service can create such.
-                StubbablePrinterDiscoverySession session = sessionCallbacks.getSession();
-                reportedPrinters.addAll(session.getPrinters());
-            }
+    private PrinterId getAddedPrinterIdForLocalId(String printerLocalId) {
+        final List<PrinterInfo> reportedPrinters = new ArrayList<>();
+        getInstrumentation().runOnMainSync(() -> {
+            // Grab the printer ids as only the service can create such.
+            reportedPrinters.addAll(sSession.getPrinters());
         });
 
         final int reportedPrinterCount = reportedPrinters.size();
@@ -400,91 +413,92 @@ public class PrinterDiscoverySessionLifecycleTest extends BasePrintTest {
     }
 
     private PrinterDiscoverySessionCallbacks createFirstMockPrinterDiscoverySessionCallbacks() {
-        return createMockPrinterDiscoverySessionCallbacks(new Answer<Void>() {
-            @Override
-            public Void answer(InvocationOnMock invocation) {
-                // Get the session.
-                StubbablePrinterDiscoverySession session = ((PrinterDiscoverySessionCallbacks)
-                        invocation.getMock()).getSession();
+        return createMockPrinterDiscoverySessionCallbacks(invocation -> {
+            // Get the session.
+            sSession = ((PrinterDiscoverySessionCallbacks)
+                    invocation.getMock()).getSession();
 
-                if (session.getPrinters().isEmpty()) {
-                    List<PrinterInfo> printers = new ArrayList<PrinterInfo>();
+            assertTrue(sSession.isPrinterDiscoveryStarted());
 
-                    // Add the first printer.
-                    PrinterId firstPrinterId = session.getService().generatePrinterId(
-                            FIRST_PRINTER_LOCAL_ID);
-                    PrinterInfo firstPrinter = new PrinterInfo.Builder(firstPrinterId,
-                            FIRST_PRINTER_NAME, PrinterInfo.STATUS_IDLE)
-                        .build();
-                    printers.add(firstPrinter);
+            if (sSession.getPrinters().isEmpty()) {
+                List<PrinterInfo> printers = new ArrayList<>();
 
-                    // Add the first printer.
-                    PrinterId secondPrinterId = session.getService().generatePrinterId(
-                            SECOND_PRINTER_LOCAL_ID);
-                    PrinterInfo secondPrinter = new PrinterInfo.Builder(secondPrinterId,
-                            SECOND_PRINTER_NAME, PrinterInfo.STATUS_IDLE)
-                        .build();
-                    printers.add(secondPrinter);
+                // Add the first printer.
+                PrinterId firstPrinterId = sSession.getService().generatePrinterId(
+                        FIRST_PRINTER_LOCAL_ID);
+                PrinterInfo firstPrinter = new PrinterInfo.Builder(firstPrinterId,
+                        FIRST_PRINTER_NAME, PrinterInfo.STATUS_IDLE)
+                    .build();
+                printers.add(firstPrinter);
 
-                    session.addPrinters(printers);
-                }
-                return null;
+                // Add the first printer.
+                PrinterId secondPrinterId = sSession.getService().generatePrinterId(
+                        SECOND_PRINTER_LOCAL_ID);
+                PrinterInfo secondPrinter = new PrinterInfo.Builder(secondPrinterId,
+                        SECOND_PRINTER_NAME, PrinterInfo.STATUS_IDLE)
+                    .build();
+                printers.add(secondPrinter);
+
+                sSession.addPrinters(printers);
             }
-        }, null, null, new Answer<Void>() {
-            @Override
-            public Void answer(InvocationOnMock invocation) throws Throwable {
-                // Get the session.
-                StubbablePrinterDiscoverySession session = ((PrinterDiscoverySessionCallbacks)
-                        invocation.getMock()).getSession();
+            return null;
+        }, invocation -> {
+            assertFalse(sSession.isPrinterDiscoveryStarted());
+            return null;
+        }, null, invocation -> {
+            // Get the session.
+            StubbablePrinterDiscoverySession session = ((PrinterDiscoverySessionCallbacks)
+                    invocation.getMock()).getSession();
 
-                PrinterId trackedPrinterId = (PrinterId) invocation.getArguments()[0];
-                List<PrinterInfo> reportedPrinters = session.getPrinters();
+            PrinterId trackedPrinterId = (PrinterId) invocation.getArguments()[0];
+            List<PrinterInfo> reportedPrinters = session.getPrinters();
 
-                // We should be tracking a printer that we added.
-                PrinterInfo trackedPrinter = null;
-                final int reportedPrinterCount = reportedPrinters.size();
-                for (int i = 0; i < reportedPrinterCount; i++) {
-                    PrinterInfo reportedPrinter = reportedPrinters.get(i);
-                    if (reportedPrinter.getId().equals(trackedPrinterId)) {
-                        trackedPrinter = reportedPrinter;
-                        break;
-                    }
+            // We should be tracking a printer that we added.
+            PrinterInfo trackedPrinter = null;
+            final int reportedPrinterCount = reportedPrinters.size();
+            for (int i = 0; i < reportedPrinterCount; i++) {
+                PrinterInfo reportedPrinter = reportedPrinters.get(i);
+                if (reportedPrinter.getId().equals(trackedPrinterId)) {
+                    trackedPrinter = reportedPrinter;
+                    break;
                 }
-                assertNotNull("Can track only added printers", trackedPrinter);
+            }
+            assertNotNull("Can track only added printers", trackedPrinter);
 
-                // If the printer does not have capabilities reported add them.
-                if (trackedPrinter.getCapabilities() == null) {
+            assertTrue(sSession.getTrackedPrinters().contains(trackedPrinter.getId()));
+            assertEquals(1, sSession.getTrackedPrinters().size());
 
-                    // Add the capabilities to emulate lazy discovery.
-                    // Same for each printer is fine for what we test.
-                    PrinterCapabilitiesInfo capabilities =
-                            new PrinterCapabilitiesInfo.Builder(trackedPrinterId)
-                        .setMinMargins(new Margins(200, 200, 200, 200))
-                        .addMediaSize(MediaSize.ISO_A4, true)
-                        .addMediaSize(MediaSize.ISO_A5, false)
-                        .addResolution(new Resolution("300x300", "300x300", 300, 300), true)
-                        .setColorModes(PrintAttributes.COLOR_MODE_COLOR,
-                                PrintAttributes.COLOR_MODE_COLOR)
-                        .build();
-                    PrinterInfo updatedPrinter = new PrinterInfo.Builder(trackedPrinter)
+            // If the printer does not have capabilities reported add them.
+            if (trackedPrinter.getCapabilities() == null) {
+
+                // Add the capabilities to emulate lazy discovery.
+                // Same for each printer is fine for what we test.
+                PrinterCapabilitiesInfo capabilities =
+                        new PrinterCapabilitiesInfo.Builder(trackedPrinterId)
+                                .setMinMargins(new Margins(200, 200, 200, 200))
+                                .addMediaSize(MediaSize.ISO_A4, true)
+                                .addMediaSize(MediaSize.ISO_A5, false)
+                                .addResolution(new Resolution("300x300", "300x300", 300, 300), true)
+                                .setColorModes(PrintAttributes.COLOR_MODE_COLOR,
+                                        PrintAttributes.COLOR_MODE_COLOR)
+                                .build();
+                PrinterInfo updatedPrinter = new PrinterInfo.Builder(trackedPrinter)
                         .setCapabilities(capabilities)
                         .build();
 
-                    // Update the printer.
-                    List<PrinterInfo> printers = new ArrayList<PrinterInfo>();
-                    printers.add(updatedPrinter);
-                    session.addPrinters(printers);
-                }
+                // Update the printer.
+                List<PrinterInfo> printers = new ArrayList<>();
+                printers.add(updatedPrinter);
+                session.addPrinters(printers);
+            }
 
-                return null;
-            }
-        }, null, null, new Answer<Void>() {
-            @Override
-            public Void answer(InvocationOnMock invocation) throws Throwable {
-                // Take a note onDestroy was called.
-                onPrinterDiscoverySessionDestroyCalled();
-                return null;
-            }
+            return null;
+        }, null, null, invocation -> {
+            assertTrue(sSession.isDestroyed());
+
+            // Take a note onDestroy was called.
+            onPrinterDiscoverySessionDestroyCalled();
+            return null;
         });
     }
 
@@ -492,41 +506,32 @@ public class PrinterDiscoverySessionLifecycleTest extends BasePrintTest {
         final PrintAttributes[] printAttributes = new PrintAttributes[1];
 
         return createMockPrintDocumentAdapter(
-            new Answer<Void>() {
-            @Override
-            public Void answer(InvocationOnMock invocation) throws Throwable {
-                printAttributes[0] = (PrintAttributes) invocation.getArguments()[1];
-                LayoutResultCallback callback = (LayoutResultCallback) invocation.getArguments()[3];
-                PrintDocumentInfo info = new PrintDocumentInfo.Builder(PRINT_JOB_NAME)
-                        .setContentType(PrintDocumentInfo.CONTENT_TYPE_DOCUMENT)
-                        .setPageCount(3)
-                        .build();
-                callback.onLayoutFinished(info, false);
-                // Mark layout was called.
-                onLayoutCalled();
-                return null;
-            }
-        }, new Answer<Void>() {
-            @Override
-            public Void answer(InvocationOnMock invocation) throws Throwable {
-                Object[] args = invocation.getArguments();
-                PageRange[] pages = (PageRange[]) args[0];
-                ParcelFileDescriptor fd = (ParcelFileDescriptor) args[1];
-                WriteResultCallback callback = (WriteResultCallback) args[3];
-                writeBlankPages(printAttributes[0], fd, pages[0].getStart(), pages[0].getEnd());
-                fd.close();
-                callback.onWriteFinished(pages);
-                // Mark write was called.
-                onWriteCalled();
-                return null;
-            }
-        }, new Answer<Void>() {
-            @Override
-            public Void answer(InvocationOnMock invocation) throws Throwable {
-                // Mark finish was called.
-                onFinishCalled();
-                return null;
-            }
-        });
+                invocation -> {
+                    printAttributes[0] = (PrintAttributes) invocation.getArguments()[1];
+                    LayoutResultCallback callback = (LayoutResultCallback) invocation.getArguments()[3];
+                    PrintDocumentInfo info = new PrintDocumentInfo.Builder(PRINT_JOB_NAME)
+                            .setContentType(PrintDocumentInfo.CONTENT_TYPE_DOCUMENT)
+                            .setPageCount(3)
+                            .build();
+                    callback.onLayoutFinished(info, false);
+                    // Mark layout was called.
+                    onLayoutCalled();
+                    return null;
+                }, invocation -> {
+                    Object[] args = invocation.getArguments();
+                    PageRange[] pages = (PageRange[]) args[0];
+                    ParcelFileDescriptor fd = (ParcelFileDescriptor) args[1];
+                    WriteResultCallback callback = (WriteResultCallback) args[3];
+                    writeBlankPages(printAttributes[0], fd, pages[0].getStart(), pages[0].getEnd());
+                    fd.close();
+                    callback.onWriteFinished(pages);
+                    // Mark write was called.
+                    onWriteCalled();
+                    return null;
+                }, invocation -> {
+                    // Mark finish was called.
+                    onFinishCalled();
+                    return null;
+                });
     }
 }
