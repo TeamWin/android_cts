@@ -46,19 +46,19 @@ public class PrintedPdfDocumentTest {
     }
 
     @Test
-    public void createWithNullAttributes() throws Exception {
+    public void createWithNullAttributes() throws Throwable {
         assertException(() -> new PrintedPdfDocument(mContext, null), NullPointerException.class);
     }
 
     @Test
-    public void createWithNullMediaSize() throws Exception {
+    public void createWithNullMediaSize() throws Throwable {
         PrintAttributes attr = new PrintAttributes.Builder().setMinMargins(ZERO_MARGINS).build();
         assertException(() -> new PrintedPdfDocument(mContext, attr),
                 NullPointerException.class);
     }
 
     @Test
-    public void createWithNullMargins() throws Exception {
+    public void createWithNullMargins() throws Throwable {
         PrintAttributes attr = new PrintAttributes.Builder()
                 .setMediaSize(PrintAttributes.MediaSize.ISO_A4).build();
         assertException(() -> new PrintedPdfDocument(mContext, attr),
@@ -87,7 +87,7 @@ public class PrintedPdfDocumentTest {
     }
 
     @Test
-    public void oneMilPageSize() throws Exception {
+    public void oneMilPageSize() throws Throwable {
         PrintAttributes attr = new PrintAttributes.Builder().setMinMargins(ZERO_MARGINS)
                 .setMediaSize(new PrintAttributes.MediaSize("oneMil", "oneMil", 1, 1)).build();
 

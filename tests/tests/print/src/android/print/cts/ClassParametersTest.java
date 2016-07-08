@@ -41,7 +41,7 @@ public class ClassParametersTest {
      * @throws Exception If anything is unexpected
      */
     @Test
-    public void testIllegalPrintAttributesColorMode() throws Exception {
+    public void testIllegalPrintAttributesColorMode() throws Throwable {
         assertException(() -> (new PrintAttributes.Builder()).setColorMode(-1),
                 IllegalArgumentException.class);
         assertException(() -> (new PrintAttributes.Builder()).setColorMode(0),
@@ -57,7 +57,7 @@ public class ClassParametersTest {
      * @throws Exception If anything is unexpected
      */
     @Test
-    public void testIllegalPrintAttributesDuplexMode() throws Exception {
+    public void testIllegalPrintAttributesDuplexMode() throws Throwable {
         assertException(() -> (new PrintAttributes.Builder()).setDuplexMode(-1),
                 IllegalArgumentException.class);
         assertException(() -> (new PrintAttributes.Builder()).setDuplexMode(0),
@@ -73,7 +73,7 @@ public class ClassParametersTest {
      * @throws Exception If anything is unexpected
      */
     @Test
-    public void testIllegalPrintAttributesResolution() throws Exception {
+    public void testIllegalPrintAttributesResolution() throws Throwable {
         assertException(() -> new Resolution(null, "label", 10, 10),
                 IllegalArgumentException.class);
         assertException(() -> new Resolution("", "label", 10, 10),
@@ -128,7 +128,7 @@ public class ClassParametersTest {
      * @throws Exception If anything is unexpected
      */
     @Test
-    public void testIllegalPrintAttributesMediaSize() throws Exception {
+    public void testIllegalPrintAttributesMediaSize() throws Throwable {
         assertException(() -> new MediaSize(null, "label", 10, 10),
                 IllegalArgumentException.class);
         assertException(() -> new MediaSize("", "label", 10, 10),
@@ -228,7 +228,7 @@ public class ClassParametersTest {
      * @throws Exception If anything is unexpected
      */
     @Test
-    public void testIllegalPrintDocumentInfo() throws Exception {
+    public void testIllegalPrintDocumentInfo() throws Throwable {
         assertException(() -> new PrintDocumentInfo.Builder(null),
                 IllegalArgumentException.class);
         assertException(() -> new PrintDocumentInfo.Builder(""),

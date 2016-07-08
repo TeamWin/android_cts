@@ -42,6 +42,7 @@ import android.print.PrintManager;
 import android.print.PrinterId;
 import android.print.cts.services.PrintServiceCallbacks;
 import android.print.cts.services.PrinterDiscoverySessionCallbacks;
+import android.print.cts.services.StubbablePrintService;
 import android.print.cts.services.StubbablePrinterDiscoverySession;
 import android.print.pdf.PrintedPdfDocument;
 import android.printservice.CustomPrinterIconCallback;
@@ -690,7 +691,7 @@ public abstract class BasePrintTest extends InstrumentationTestCase {
             Answer<Void> onPrintJobQueued, Answer<Void> onRequestCancelPrintJob) {
         final PrintServiceCallbacks service = mock(PrintServiceCallbacks.class);
 
-        doCallRealMethod().when(service).setService(any(PrintService.class));
+        doCallRealMethod().when(service).setService(any(StubbablePrintService.class));
         when(service.getService()).thenCallRealMethod();
 
         if (onCreatePrinterDiscoverySessionCallbacks != null) {
