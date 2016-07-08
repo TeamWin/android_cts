@@ -222,7 +222,7 @@
 #define __TEST_IMPL(test_name, _signal) \
   static void test_name(struct __test_metadata *_metadata); \
   static struct __test_metadata _##test_name##_object = \
-    { name: "global." #test_name, fn: &test_name, termsig: _signal }; \
+    { name: "global." #test_name, fn: &(test_name), termsig: (_signal) }; \
   static void __attribute__((constructor)) _register_##test_name(void) { \
     __register_test(&_##test_name##_object); \
   } \
@@ -280,7 +280,7 @@
   static struct __test_metadata _##fixture_name##_##test_name##_object = { \
     name: #fixture_name "." #test_name, \
     fn: &wrapper_##fixture_name##_##test_name, \
-    termsig: signal, \
+    termsig: (signal), \
    }; \
   static void __attribute__((constructor)) \
       _register_##fixture_name##_##test_name(void) { \
@@ -378,7 +378,7 @@
 #define __EXPECT_STR(_expected, _seen, _t, _assert) do { \
   const char *__exp = (_expected); \
   const char *__seen = (_seen); \
-  if (!(strcmp(__exp, __seen) _t 0))  { \
+  if (!(strcmp(__exp, __seen) _t (0)))  { \
     __TH_LOG("Expected '%s' %s '%s'.", __exp, #_t, __seen); \
     _metadata->passed = 0; \
     _metadata->trigger = 1; \
@@ -402,7 +402,7 @@ static unsigned int __fixture_count = 0;
 static int __constructor_order = 0;
 
 #define _CONSTRUCTOR_ORDER_FORWARD   1
-#define _CONSTRUCTOR_ORDER_BACKWARD -1
+#define _CONSTRUCTOR_ORDER_BACKWARD (-1)
 
 /*
  * Since constructors are called in reverse order, reverse the test
