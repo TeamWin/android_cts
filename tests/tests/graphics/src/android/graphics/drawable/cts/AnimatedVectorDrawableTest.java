@@ -188,7 +188,7 @@ public class AnimatedVectorDrawableTest extends ActivityInstrumentationTestCase2
         waitForAVDStop(callback, MAX_TIMEOUT_MS);
         // Check that the AVD with empty AnimatorSet has finished
         callback.assertEnded(true);
-        callback.assertAVDRuntime(0, 32* MS_TO_NS); // 2 frames
+        callback.assertAVDRuntime(0, 64 * MS_TO_NS); // 4 frames
     }
 
     @SmallTest
@@ -375,7 +375,7 @@ public class AnimatedVectorDrawableTest extends ActivityInstrumentationTestCase2
         // Whether or not the callback.start is true could vary when running on Render Thread.
         // Therefore, we don't make assertion here. The most useful flag is the callback.mEnded.
         callback.assertEnded(true);
-        callback.assertAVDRuntime(0, 200 * MS_TO_NS); // twice of the duration of the AVD.
+        callback.assertAVDRuntime(0, 400 * MS_TO_NS); // 4 times of the duration of the AVD.
     }
 
     @MediumTest
