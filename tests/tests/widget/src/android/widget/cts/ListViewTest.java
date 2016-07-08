@@ -43,7 +43,7 @@ import android.widget.AbsListView;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
 import android.widget.ArrayAdapter;
-import android.widget.LinearLayout;
+import android.widget.FrameLayout;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.cts.util.TestUtils;
@@ -140,13 +140,18 @@ public class ListViewTest extends ActivityInstrumentationTestCase2<ListViewCtsAc
     }
 
     public void testGetMaxScrollAmount() {
-        setAdapter(mAdapter_empty);
-        int scrollAmount = mListView.getMaxScrollAmount();
-        assertEquals(0, scrollAmount);
-
         setAdapter(mAdapter_names);
-        scrollAmount = mListView.getMaxScrollAmount();
+        int scrollAmount = mListView.getMaxScrollAmount();
         assertTrue(scrollAmount > 0);
+
+        mInstrumentation.runOnMainSync(() -> {
+            mListView.getLayoutParams().height = 0;
+            mListView.requestLayout();
+        });
+        PollingCheck.waitFor(() -> mListView.getHeight() == 0);
+
+        scrollAmount = mListView.getMaxScrollAmount();
+        assertEquals(0, scrollAmount);
     }
 
     private void setAdapter(final ArrayAdapter<String> adapter) {
@@ -789,7 +794,7 @@ public class ListViewTest extends ActivityInstrumentationTestCase2<ListViewCtsAc
         view.setMinimumHeight(30);
         final DummyAdapter adapter = new DummyAdapter(2, view);
         ViewTestUtils.runOnMainAndDrawSync(getInstrumentation(), mListView, () -> {
-            mListView.setLayoutParams(new LinearLayout.LayoutParams(200, 100));
+            mListView.setLayoutParams(new FrameLayout.LayoutParams(200, 100));
             mListView.setAdapter(adapter);
         });
         assertEquals("test sanity", 200, mListView.getWidth());
