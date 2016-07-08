@@ -93,6 +93,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.accessibility.AccessibilityNodeInfo;
 import android.view.inputmethod.BaseInputConnection;
+import android.view.inputmethod.CorrectionInfo;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.ExtractedText;
 import android.view.inputmethod.ExtractedTextRequest;
@@ -1658,6 +1659,51 @@ public class TextViewTest extends ActivityInstrumentationTestCase2<TextViewCtsAc
     }
 
     @UiThreadTest
+    public void testUndo_imeInsertAndDeleteLatin() {
+        InputConnection input = initTextViewForSimulatedIme();
+
+        setComposingTextInBatch(input, "t");
+        setComposingTextInBatch(input, "te");
+        setComposingTextInBatch(input, "tes");
+        setComposingTextInBatch(input, "test");
+        setComposingTextInBatch(input, "tes");
+        setComposingTextInBatch(input, "te");
+        setComposingTextInBatch(input, "t");
+
+        input.beginBatchEdit();
+        input.setComposingText("", 1);
+        input.finishComposingText();
+        input.endBatchEdit();
+
+        mTextView.onTextContextMenuItem(android.R.id.undo);
+        assertEquals("test", mTextView.getText().toString());
+        mTextView.onTextContextMenuItem(android.R.id.undo);
+        assertEquals("", mTextView.getText().toString());
+    }
+
+    @UiThreadTest
+    public void testUndo_imeAutoCorrection() {
+        InputConnection input = initTextViewForSimulatedIme();
+
+        // Start typing a composition.
+        setComposingTextInBatch(input, "t");
+        setComposingTextInBatch(input, "te");
+        setComposingTextInBatch(input, "teh");
+
+        input.beginBatchEdit();
+        // Auto correct "teh" to "the".
+        input.commitCorrection(new CorrectionInfo(0, "teh", "the"));
+        input.commitText("the", 1);
+        input.endBatchEdit();
+
+        assertEquals("the", mTextView.getText().toString());
+        mTextView.onTextContextMenuItem(android.R.id.undo);
+        assertEquals("teh", mTextView.getText().toString());
+        mTextView.onTextContextMenuItem(android.R.id.undo);
+        assertEquals("", mTextView.getText().toString());
+    }
+
+    @UiThreadTest
     public void testUndo_imeCancel() {
         InputConnection input = initTextViewForSimulatedIme();
         mTextView.setText("flower");
@@ -1671,9 +1717,8 @@ public class TextViewTest extends ActivityInstrumentationTestCase2<TextViewCtsAc
         // Cancel the composition.
         setComposingTextInBatch(input, "");
 
-        // Undo and redo do nothing.
         mTextView.onTextContextMenuItem(android.R.id.undo);
-        assertEquals("flower", mTextView.getText().toString());
+        assertEquals(HA + "n" + "flower", mTextView.getText().toString());
         mTextView.onTextContextMenuItem(android.R.id.redo);
         assertEquals("flower", mTextView.getText().toString());
     }
