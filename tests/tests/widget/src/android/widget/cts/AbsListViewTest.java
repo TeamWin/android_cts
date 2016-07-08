@@ -25,9 +25,12 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
-import android.test.ActivityInstrumentationTestCase2;
-import android.test.TouchUtils;
+import android.support.test.InstrumentationRegistry;
+import android.support.test.rule.ActivityTestRule;
+import android.support.test.runner.AndroidJUnit4;
+import android.test.suitebuilder.annotation.LargeTest;
 import android.test.suitebuilder.annotation.MediumTest;
+import android.test.suitebuilder.annotation.SmallTest;
 import android.text.Editable;
 import android.text.SpannableStringBuilder;
 import android.util.AttributeSet;
@@ -37,15 +40,18 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AbsListView;
 import android.widget.AbsListView.OnScrollListener;
-import android.widget.AdapterView;
-import android.widget.AdapterView.OnItemLongClickListener;
 import android.widget.ArrayAdapter;
 import android.widget.ListAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.cts.util.TestUtilsMatchers;
+import android.widget.cts.util.ViewTestUtils;
 
 import org.hamcrest.MatcherAssert;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InOrder;
 import org.mockito.invocation.InvocationOnMock;
@@ -59,58 +65,60 @@ import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
+import static org.junit.Assert.*;
 import static org.mockito.Mockito.*;
 
-public class AbsListViewTest extends ActivityInstrumentationTestCase2<ListViewCtsActivity> {
-    private final String[] mShortList = new String[] {
-        "This", "is", "short", "!",
-    };
-    private final String[] mCountryList = new String[] {
-        "Argentina", "Australia", "China", "France", "Germany", "Italy", "Japan", "United States",
-        "Argentina", "Australia", "China", "France", "Germany", "Italy", "Japan", "United States",
-        "Argentina", "Australia", "China", "France", "Germany", "Italy", "Japan", "United States"
+@SmallTest
+@RunWith(AndroidJUnit4.class)
+public class AbsListViewTest {
+    private static final String[] SHORT_LIST = new String[] { "This", "is", "short", "!" };
+
+    private static final String[] COUNTRY_LIST = new String[] {
+            "Argentina", "Australia", "Belize", "Botswana", "Brazil", "Cameroon", "China", "Cyprus",
+            "Denmark", "Djibouti", "Ethiopia", "Fiji", "Finland", "France", "Gabon", "Germany",
+            "Ghana", "Haiti", "Honduras", "Iceland", "India", "Indonesia", "Ireland", "Italy",
+            "Japan", "Kiribati", "Laos", "Lesotho", "Liberia", "Malaysia", "Mongolia", "Myanmar",
+            "Nauru", "Norway", "Oman", "Pakistan", "Philippines", "Portugal", "Romania", "Russia",
+            "Rwanda", "Singapore", "Slovakia", "Slovenia", "Somalia", "Swaziland", "Togo", "Tuvalu",
+            "Uganda", "Ukraine", "United States", "Vanuatu", "Venezuela", "Zimbabwe"
     };
 
+    @Rule
+    public ActivityTestRule<ListViewCtsActivity> mActivityRule
+            = new ActivityTestRule<>(ListViewCtsActivity.class);
+
     private ListView mListView;
-    private Activity mActivity;
+    private Context mContext;
     private Instrumentation mInstrumentation;
     private AttributeSet mAttributeSet;
-    private ArrayAdapter<String> mAdapter_short;
-    private ArrayAdapter<String> mAdapter_countries;
+    private ArrayAdapter<String> mShortAdapter;
+    private ArrayAdapter<String> mCountriesAdapter;
 
     private static final float DELTA = 0.001f;
 
-    public AbsListViewTest() {
-        super("android.widget.cts", ListViewCtsActivity.class);
-    }
+    @Before
+    public void setup() throws Exception {
 
+        mInstrumentation = InstrumentationRegistry.getInstrumentation();
+        mContext = mInstrumentation.getTargetContext();
 
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
+        final Activity activity = mActivityRule.getActivity();
 
-        mActivity = getActivity();
-        PollingCheck.waitFor(() -> mActivity.hasWindowFocus());
-        mInstrumentation = getInstrumentation();
+        PollingCheck.waitFor(() -> activity.hasWindowFocus());
 
-        XmlPullParser parser = mActivity.getResources().getXml(R.layout.listview_layout);
+        XmlPullParser parser = mContext.getResources().getXml(R.layout.listview_layout);
         WidgetTestUtils.beginDocument(parser, "LinearLayout");
         mAttributeSet = Xml.asAttributeSet(parser);
 
-        mAdapter_short = new ArrayAdapter<String>(mActivity,
-                android.R.layout.simple_list_item_1, mShortList);
-        mAdapter_countries = new ArrayAdapter<String>(mActivity,
-                android.R.layout.simple_list_item_1, mCountryList);
+        mShortAdapter = new ArrayAdapter<>(mContext,
+                android.R.layout.simple_list_item_1, SHORT_LIST);
+        mCountriesAdapter = new ArrayAdapter<>(mContext,
+                android.R.layout.simple_list_item_1, COUNTRY_LIST);
 
-        mListView = (ListView)mActivity.findViewById(R.id.listview_default);
+        mListView = (ListView) activity.findViewById(R.id.listview_default);
     }
 
-    public void testConstructor() {
-        /**
-         * We can not test the constructors.
-         */
-    }
-
+    @Test
     public void testAccessFastScrollEnabled() {
         mListView.setFastScrollEnabled(false);
         assertFalse(mListView.isFastScrollEnabled());
@@ -119,6 +127,7 @@ public class AbsListViewTest extends ActivityInstrumentationTestCase2<ListViewCt
         assertTrue(mListView.isFastScrollEnabled());
     }
 
+    @Test
     public void testAccessSmoothScrollbarEnabled() {
         mListView.setSmoothScrollbarEnabled(false);
         assertFalse(mListView.isSmoothScrollbarEnabled());
@@ -127,6 +136,7 @@ public class AbsListViewTest extends ActivityInstrumentationTestCase2<ListViewCt
         assertTrue(mListView.isSmoothScrollbarEnabled());
     }
 
+    @Test
     public void testAccessScrollingCacheEnabled() {
         mListView.setScrollingCacheEnabled(false);
         assertFalse(mListView.isScrollingCacheEnabled());
@@ -135,31 +145,23 @@ public class AbsListViewTest extends ActivityInstrumentationTestCase2<ListViewCt
         assertTrue(mListView.isScrollingCacheEnabled());
     }
 
-    private void setAdapter() throws Throwable {
-        setAdapter(mAdapter_countries);
+    private void setAdapter() {
+        setAdapter(mCountriesAdapter);
     }
 
-    private void setAdapter(final ListAdapter adapter) throws Throwable {
-        runTestOnUiThread(new Runnable() {
-            public void run() {
-                mListView.setAdapter(adapter);
-            }
-        });
+    private void setAdapter(final ListAdapter adapter) {
+        mInstrumentation.runOnMainSync(() -> mListView.setAdapter(adapter));
         mInstrumentation.waitForIdleSync();
     }
 
-    private void setListSelection(int index) throws Throwable {
-        final int i = index;
-
-        runTestOnUiThread(new Runnable() {
-            public void run() {
-                mListView.setSelection(i);
-            }
-        });
+    private void setListSelection(int index) {
+        mInstrumentation.runOnMainSync(() -> mListView.setSelection(index));
         mInstrumentation.waitForIdleSync();
     }
 
-    public void testSetOnScrollListener() throws Throwable {
+    @LargeTest
+    @Test
+    public void testSetOnScrollListener() {
         AbsListView.OnScrollListener mockScrollListener =
                 mock(AbsListView.OnScrollListener.class);
 
@@ -173,18 +175,18 @@ public class AbsListViewTest extends ActivityInstrumentationTestCase2<ListViewCt
 
         setAdapter();
         verify(mockScrollListener, times(1)).onScroll(mListView, 0, mListView.getChildCount(),
-                mCountryList.length);
+                COUNTRY_LIST.length);
         verifyNoMoreInteractions(mockScrollListener);
 
         reset(mockScrollListener);
 
-        TouchUtils.scrollToBottom(this, mActivity, mListView);
+        ViewTestUtils.emulateScrollToBottom(mInstrumentation, mListView);
 
         ArgumentCaptor<Integer> firstVisibleItemCaptor = ArgumentCaptor.forClass(Integer.class);
         ArgumentCaptor<Integer> visibleItemCountCaptor = ArgumentCaptor.forClass(Integer.class);
         verify(mockScrollListener, atLeastOnce()).onScroll(eq(mListView),
                 firstVisibleItemCaptor.capture(), visibleItemCountCaptor.capture(),
-                eq(mCountryList.length));
+                eq(COUNTRY_LIST.length));
 
         // We expect the first visible item values to be increasing
         MatcherAssert.assertThat(firstVisibleItemCaptor.getAllValues(),
@@ -205,7 +207,9 @@ public class AbsListViewTest extends ActivityInstrumentationTestCase2<ListViewCt
                 (int) capturedScrollStates.get(capturedScrollStates.size() - 1));
     }
 
-    public void testFling() throws Throwable {
+    @LargeTest
+    @Test
+    public void testFling() {
         AbsListView.OnScrollListener mockScrollListener = mock(AbsListView.OnScrollListener.class);
         mListView.setOnScrollListener(mockScrollListener);
 
@@ -215,7 +219,7 @@ public class AbsListViewTest extends ActivityInstrumentationTestCase2<ListViewCt
         fling(10000, mockScrollListener);
         ArgumentCaptor<Integer> firstVisibleItemCaptor = ArgumentCaptor.forClass(Integer.class);
         verify(mockScrollListener, atLeastOnce()).onScroll(eq(mListView),
-                firstVisibleItemCaptor.capture(), anyInt(), eq(mCountryList.length));
+                firstVisibleItemCaptor.capture(), anyInt(), eq(COUNTRY_LIST.length));
         List<Integer> capturedFirstVisibleItems = firstVisibleItemCaptor.getAllValues();
         assertTrue(capturedFirstVisibleItems.get(capturedFirstVisibleItems.size() - 1) > 0);
 
@@ -223,7 +227,7 @@ public class AbsListViewTest extends ActivityInstrumentationTestCase2<ListViewCt
         fling(-10000, mockScrollListener);
         firstVisibleItemCaptor = ArgumentCaptor.forClass(Integer.class);
         verify(mockScrollListener, atLeastOnce()).onScroll(eq(mListView),
-                firstVisibleItemCaptor.capture(), anyInt(), eq(mCountryList.length));
+                firstVisibleItemCaptor.capture(), anyInt(), eq(COUNTRY_LIST.length));
         capturedFirstVisibleItems = firstVisibleItemCaptor.getAllValues();
         assertTrue(capturedFirstVisibleItems.get(capturedFirstVisibleItems.size() - 1) == 0);
 
@@ -238,24 +242,20 @@ public class AbsListViewTest extends ActivityInstrumentationTestCase2<ListViewCt
                 anyInt());
     }
 
-    private void fling(int velocityY, OnScrollListener mockScrollListener) throws Throwable {
+    private void fling(int velocityY, OnScrollListener mockScrollListener) {
         reset(mockScrollListener);
 
-        // Create a count down latch and configure it to be counted down when out mock
+        // Create a count down latch and configure it to be counted down when our mock
         // listener is invoked with IDLE state
         final CountDownLatch countDownLatch = new CountDownLatch(1);
-        doAnswer(new Answer<Void>() {
-                     @Override
-                     public Void answer(InvocationOnMock invocation) {
-                         countDownLatch.countDown();
-                         return null;
-                     }
-                 }
-        ).when(mockScrollListener).onScrollStateChanged(
+        doAnswer((InvocationOnMock invocation) -> {
+             countDownLatch.countDown();
+             return null;
+        }).when(mockScrollListener).onScrollStateChanged(
                 mListView, OnScrollListener.SCROLL_STATE_IDLE);
 
         // Now fling the list view
-        runTestOnUiThread(() -> mListView.fling(velocityY));
+        mInstrumentation.runOnMainSync(() -> mListView.fling(velocityY));
 
         // And wait for the latch to be triggered
         try {
@@ -264,8 +264,9 @@ public class AbsListViewTest extends ActivityInstrumentationTestCase2<ListViewCt
         }
     }
 
-    public void testGetFocusedRect() throws Throwable {
-        setAdapter(mAdapter_short);
+    @Test
+    public void testGetFocusedRect() {
+        setAdapter(mShortAdapter);
         setListSelection(0);
 
         Rect r1 = new Rect();
@@ -289,46 +290,48 @@ public class AbsListViewTest extends ActivityInstrumentationTestCase2<ListViewCt
         assertEquals(r1.right, r2.right);
     }
 
-    public void testAccessStackFromBottom() throws Throwable {
+    @Test
+    public void testAccessStackFromBottom() {
         setAdapter();
 
-        runTestOnUiThread(new Runnable() {
-            public void run() {
-                mListView.setStackFromBottom(false);
-            }
-        });
+        mInstrumentation.runOnMainSync(() -> mListView.setStackFromBottom(false));
         assertFalse(mListView.isStackFromBottom());
         assertEquals(0, mListView.getSelectedItemPosition());
 
-        runTestOnUiThread(new Runnable() {
-            public void run() {
-                mListView.setStackFromBottom(true);
-            }
-        });
+        mInstrumentation.runOnMainSync(() -> mListView.setStackFromBottom(true));
 
         mInstrumentation.waitForIdleSync();
         assertTrue(mListView.isStackFromBottom());
         // ensure last item in list is selected
-        assertEquals(mCountryList.length-1, mListView.getSelectedItemPosition());
+        assertEquals(COUNTRY_LIST.length-1, mListView.getSelectedItemPosition());
     }
 
-    public void testAccessSelectedItem() throws Throwable {
+    @Test
+    public void testAccessSelectedItem() {
         assertNull(mListView.getSelectedView());
 
         setAdapter();
+
+        final int lastVisiblePosition = mListView.getLastVisiblePosition();
+
         TextView tv = (TextView) mListView.getSelectedView();
-        assertEquals(mCountryList[0], tv.getText().toString());
+        assertEquals(COUNTRY_LIST[0], tv.getText().toString());
 
-        setListSelection(5);
-        tv = (TextView) mListView.getSelectedView();
-        assertEquals(mCountryList[5], tv.getText().toString());
+        if (lastVisiblePosition >= 5) {
+            setListSelection(5);
+            tv = (TextView) mListView.getSelectedView();
+            assertEquals(COUNTRY_LIST[5], tv.getText().toString());
+        }
 
-        setListSelection(2);
-        tv = (TextView) mListView.getSelectedView();
-        assertEquals(mCountryList[2], tv.getText().toString());
+        if (lastVisiblePosition >= 2) {
+            setListSelection(2);
+            tv = (TextView) mListView.getSelectedView();
+            assertEquals(COUNTRY_LIST[2], tv.getText().toString());
+        }
     }
 
-    public void testAccessListPadding() throws Throwable {
+    @Test
+    public void testAccessListPadding() {
         setAdapter();
 
         assertEquals(0, mListView.getListPaddingLeft());
@@ -337,11 +340,8 @@ public class AbsListViewTest extends ActivityInstrumentationTestCase2<ListViewCt
         assertEquals(0, mListView.getListPaddingBottom());
 
         final Rect r = new Rect(0, 0, 40, 60);
-        runTestOnUiThread(new Runnable() {
-            public void run() {
-                mListView.setPadding(r.left, r.top, r.right, r.bottom);
-            }
-        });
+        mInstrumentation.runOnMainSync(
+                () -> mListView.setPadding(r.left, r.top, r.right, r.bottom));
         mInstrumentation.waitForIdleSync();
 
         assertEquals(r.left, mListView.getListPaddingLeft());
@@ -350,17 +350,14 @@ public class AbsListViewTest extends ActivityInstrumentationTestCase2<ListViewCt
         assertEquals(r.bottom, mListView.getListPaddingBottom());
     }
 
-    public void testAccessSelector() throws Throwable {
+    @Test
+    public void testAccessSelector() {
         setAdapter();
 
-        final Drawable d = mActivity.getResources().getDrawable(R.drawable.pass);
+        final Drawable d = mContext.getDrawable(R.drawable.pass);
         mListView.setSelector(d);
 
-        runTestOnUiThread(new Runnable() {
-            public void run() {
-                mListView.requestLayout();
-            }
-        });
+        mInstrumentation.runOnMainSync(() -> mListView.requestLayout());
         mInstrumentation.waitForIdleSync();
         assertSame(d, mListView.getSelector());
         assertTrue(mListView.verifyDrawable(d));
@@ -368,11 +365,7 @@ public class AbsListViewTest extends ActivityInstrumentationTestCase2<ListViewCt
         mListView.setSelector(R.drawable.failed);
         mListView.setDrawSelectorOnTop(true);
 
-        runTestOnUiThread(new Runnable() {
-            public void run() {
-                mListView.requestLayout();
-            }
-        });
+        mInstrumentation.runOnMainSync(() -> mListView.requestLayout());
         mInstrumentation.waitForIdleSync();
 
         Drawable drawable = mListView.getSelector();
@@ -386,23 +379,22 @@ public class AbsListViewTest extends ActivityInstrumentationTestCase2<ListViewCt
         assertEquals(v.getBottom(), r.bottom);
     }
 
-    public void testSetScrollIndicators() throws Throwable {
-        TextView tv1 = (TextView) mActivity.findViewById(R.id.headerview1);
-        TextView tv2 = (TextView) mActivity.findViewById(R.id.footerview1);
+    @Test
+    public void testSetScrollIndicators() {
+        final Activity activity = mActivityRule.getActivity();
+        TextView tv1 = (TextView) activity.findViewById(R.id.headerview1);
+        TextView tv2 = (TextView) activity.findViewById(R.id.footerview1);
 
         setAdapter();
 
         mListView.setScrollIndicators(tv1, tv2);
 
-        runTestOnUiThread(new Runnable() {
-            public void run() {
-                mListView.requestLayout();
-            }
-        });
+        mInstrumentation.runOnMainSync(() -> mListView.requestLayout());
         mInstrumentation.waitForIdleSync();
     }
 
-    public void testShowContextMenuForChild() throws Throwable {
+    @Test
+    public void testShowContextMenuForChild() {
         setAdapter();
         setListSelection(1);
 
@@ -412,7 +404,8 @@ public class AbsListViewTest extends ActivityInstrumentationTestCase2<ListViewCt
         // TODO: how to show the contextMenu success
     }
 
-    public void testPointToPosition() throws Throwable {
+    @Test
+    public void testPointToPosition() {
         assertEquals(AbsListView.INVALID_POSITION, mListView.pointToPosition(-1, -1));
         assertEquals(AbsListView.INVALID_ROW_ID, mListView.pointToRowId(-1, -1));
 
@@ -425,24 +418,15 @@ public class AbsListViewTest extends ActivityInstrumentationTestCase2<ListViewCt
         int position1 = mListView.pointToPosition(0, 0);
         int position2 = mListView.pointToPosition(50, middleOfSecondRow);
 
-        assertEquals(mAdapter_countries.getItemId(position1), mListView.pointToRowId(0, 0));
-        assertEquals(mAdapter_countries.getItemId(position2),
+        assertEquals(mCountriesAdapter.getItemId(position1), mListView.pointToRowId(0, 0));
+        assertEquals(mCountriesAdapter.getItemId(position2),
                 mListView.pointToRowId(50, middleOfSecondRow));
 
         assertTrue(position2 > position1);
     }
 
-    public void testDraw() {
-        Canvas canvas = new Canvas();
-        mListView.draw(canvas);
-
-        MyListView listView = new MyListView(mActivity);
-        listView.dispatchDraw(canvas);
-
-        // TODO: how to check
-    }
-
-    public void testSetRecyclerListener() throws Throwable {
+    @Test
+    public void testSetRecyclerListener() {
         setAdapter();
 
         AbsListView.RecyclerListener mockRecyclerListener =
@@ -464,6 +448,7 @@ public class AbsListViewTest extends ActivityInstrumentationTestCase2<ListViewCt
         verifyNoMoreInteractions(mockRecyclerListener);
     }
 
+    @Test
     public void testAccessCacheColorHint() {
         mListView.setCacheColorHint(Color.RED);
         assertEquals(Color.RED, mListView.getCacheColorHint());
@@ -478,6 +463,7 @@ public class AbsListViewTest extends ActivityInstrumentationTestCase2<ListViewCt
         assertEquals(Color.GRAY, mListView.getSolidColor());
     }
 
+    @Test
     public void testAccessTranscriptMode() {
         mListView.setTranscriptMode(AbsListView.TRANSCRIPT_MODE_ALWAYS_SCROLL);
         assertEquals(AbsListView.TRANSCRIPT_MODE_ALWAYS_SCROLL, mListView.getTranscriptMode());
@@ -489,8 +475,9 @@ public class AbsListViewTest extends ActivityInstrumentationTestCase2<ListViewCt
         assertEquals(AbsListView.TRANSCRIPT_MODE_NORMAL, mListView.getTranscriptMode());
     }
 
+    @Test
     public void testCheckLayoutParams() {
-        MyListView listView = new MyListView(mActivity);
+        MyListView listView = new MyListView(mContext);
 
         AbsListView.LayoutParams param1 = new AbsListView.LayoutParams(10, 10);
         assertTrue(listView.checkLayoutParams(param1));
@@ -499,15 +486,16 @@ public class AbsListViewTest extends ActivityInstrumentationTestCase2<ListViewCt
         assertFalse(listView.checkLayoutParams(param2));
     }
 
+    @Test
     public void testComputeVerticalScrollValues() {
-        MyListView listView = new MyListView(mActivity);
+        MyListView listView = new MyListView(mContext);
         assertEquals(0, listView.computeVerticalScrollRange());
         assertEquals(0, listView.computeVerticalScrollOffset());
         assertEquals(0, listView.computeVerticalScrollExtent());
 
-        listView.setAdapter(mAdapter_countries);
+        listView.setAdapter(mCountriesAdapter);
         listView.setSmoothScrollbarEnabled(false);
-        assertEquals(mAdapter_countries.getCount(), listView.computeVerticalScrollRange());
+        assertEquals(mCountriesAdapter.getCount(), listView.computeVerticalScrollRange());
         assertEquals(0, listView.computeVerticalScrollOffset());
         assertEquals(0, listView.computeVerticalScrollExtent());
 
@@ -516,14 +504,15 @@ public class AbsListViewTest extends ActivityInstrumentationTestCase2<ListViewCt
         assertEquals(0, listView.computeVerticalScrollExtent());
     }
 
+    @Test
     public void testGenerateLayoutParams() throws XmlPullParserException, IOException {
         ViewGroup.LayoutParams res = mListView.generateLayoutParams(mAttributeSet);
         assertNotNull(res);
         assertTrue(res instanceof AbsListView.LayoutParams);
 
-        MyListView listView = new MyListView(mActivity);
-        ViewGroup.LayoutParams p = new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
-                                                              ViewGroup.LayoutParams.WRAP_CONTENT);
+        MyListView listView = new MyListView(mContext);
+        ViewGroup.LayoutParams p = new ViewGroup.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
 
         res = listView.generateLayoutParams(p);
         assertNotNull(res);
@@ -532,6 +521,7 @@ public class AbsListViewTest extends ActivityInstrumentationTestCase2<ListViewCt
         assertEquals(ViewGroup.LayoutParams.WRAP_CONTENT, res.height);
     }
 
+    @Test
     public void testBeforeAndAfterTextChanged() {
         // The java doc says these two methods do nothing
         CharSequence str = "test";
@@ -541,8 +531,8 @@ public class AbsListViewTest extends ActivityInstrumentationTestCase2<ListViewCt
         mListView.afterTextChanged(sb);
 
         // test callback
-        MyListView listView = new MyListView(mActivity);
-        TextView tv = new TextView(mActivity);
+        MyListView listView = new MyListView(mContext);
+        TextView tv = new TextView(mContext);
 
         assertFalse(listView.isBeforeTextChangedCalled());
         assertFalse(listView.isOnTextChangedCalled());
@@ -559,8 +549,9 @@ public class AbsListViewTest extends ActivityInstrumentationTestCase2<ListViewCt
         assertTrue(listView.isAfterTextChangedCalled());
     }
 
-    public void testAddTouchables() throws Throwable {
-        ArrayList<View> views = new ArrayList<View>();
+    @Test
+    public void testAddTouchables() {
+        ArrayList<View> views = new ArrayList<>();
         assertEquals(0, views.size());
 
         setAdapter();
@@ -569,31 +560,28 @@ public class AbsListViewTest extends ActivityInstrumentationTestCase2<ListViewCt
         assertEquals(mListView.getChildCount(), views.size());
     }
 
-    public void testInvalidateViews() throws Throwable {
-        TextView tv1 = (TextView) mActivity.findViewById(R.id.headerview1);
-        TextView tv2 = (TextView) mActivity.findViewById(R.id.footerview1);
+    @Test
+    public void testInvalidateViews() {
+        final Activity activity = mActivityRule.getActivity();
+        TextView tv1 = (TextView) activity.findViewById(R.id.headerview1);
+        TextView tv2 = (TextView) activity.findViewById(R.id.footerview1);
 
         setAdapter();
 
         mListView.setScrollIndicators(tv1, tv2);
 
-        runTestOnUiThread(new Runnable() {
-            public void run() {
-                mListView.invalidateViews();
-            }
-        });
+        mInstrumentation.runOnMainSync(() -> mListView.invalidateViews());
         mInstrumentation.waitForIdleSync();
     }
 
-    public void testGetContextMenuInfo() throws Throwable {
-        final MyListView listView = new MyListView(mActivity, mAttributeSet);
+    @Test
+    public void testGetContextMenuInfo() {
+        final MyListView listView = new MyListView(mContext, mAttributeSet);
 
-        runTestOnUiThread(new Runnable() {
-            public void run() {
-                mActivity.setContentView(listView);
-                listView.setAdapter(mAdapter_countries);
-                listView.setSelection(2);
-            }
+        mInstrumentation.runOnMainSync(() ->  {
+            mActivityRule.getActivity().setContentView(listView);
+            listView.setAdapter(mCountriesAdapter);
+            listView.setSelection(2);
         });
         mInstrumentation.waitForIdleSync();
 
@@ -606,7 +594,7 @@ public class AbsListViewTest extends ActivityInstrumentationTestCase2<ListViewCt
 
         verifyZeroInteractions(mockOnItemLongClickListener);
 
-        // Create a count down latch and configure it to be counted down when out mock
+        // Create a count down latch and configure it to be counted down when our mock
         // listener is invoked with the expected view
         final CountDownLatch countDownLatch = new CountDownLatch(1);
         doAnswer(new Answer<Void>() {
@@ -621,7 +609,7 @@ public class AbsListViewTest extends ActivityInstrumentationTestCase2<ListViewCt
         mInstrumentation.waitForIdleSync();
 
         // Now long click our view
-        TouchUtils.longClickView(this, v);
+        ViewTestUtils.emulateLongClick(mInstrumentation, v, 500);
 
         // And wait for the latch to be triggered
         try {
@@ -636,21 +624,24 @@ public class AbsListViewTest extends ActivityInstrumentationTestCase2<ListViewCt
         assertNotNull(cmi);
     }
 
+    @Test
     public void testGetTopBottomFadingEdgeStrength() {
-        MyListView listView = new MyListView(mActivity);
+        MyListView listView = new MyListView(mContext);
 
         assertEquals(0.0f, listView.getTopFadingEdgeStrength(), DELTA);
         assertEquals(0.0f, listView.getBottomFadingEdgeStrength(), DELTA);
     }
 
+    @Test
     public void testHandleDataChanged() {
-        MyListView listView = new MyListView(mActivity, mAttributeSet, 0);
+        MyListView listView = new MyListView(mContext, mAttributeSet, 0);
         listView.handleDataChanged();
         // TODO: how to check?
     }
 
+    @Test
     public void testSetFilterText() {
-        MyListView listView = new MyListView(mActivity, mAttributeSet, 0);
+        MyListView listView = new MyListView(mContext, mAttributeSet, 0);
         String filterText = "xyz";
 
         assertFalse(listView.isTextFilterEnabled());
@@ -683,102 +674,55 @@ public class AbsListViewTest extends ActivityInstrumentationTestCase2<ListViewCt
     }
 
     @MediumTest
-    public void testSetItemChecked_multipleModeSameValue()
-            throws Throwable {
+    @Test
+    public void testSetItemChecked_multipleModeSameValue() {
         // Calling setItemChecked with the same value in multiple choice mode should not cause
         // requestLayout
         mListView.setChoiceMode(ListView.CHOICE_MODE_MULTIPLE);
-        runTestOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                mListView.setItemChecked(0, false);
-            }
-        });
+        mInstrumentation.runOnMainSync(() -> mListView.setItemChecked(0, false));
         mInstrumentation.waitForIdleSync();
         assertFalse(mListView.isLayoutRequested());
-        runTestOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                mListView.setItemChecked(0, false);
-            }
-        });
+        mInstrumentation.runOnMainSync(() -> mListView.setItemChecked(0, false));
         assertFalse(mListView.isLayoutRequested());
     }
 
     @MediumTest
-    public void testSetItemChecked_singleModeSameValue()
-            throws Throwable {
+    @Test
+    public void testSetItemChecked_singleModeSameValue() {
         // Calling setItemChecked with the same value in single choice mode should not cause
         // requestLayout
         mListView.setChoiceMode(ListView.CHOICE_MODE_SINGLE);
-        runTestOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                mListView.setItemChecked(0, false);
-            }
-        });
+        mInstrumentation.runOnMainSync(() -> mListView.setItemChecked(0, false));
         mInstrumentation.waitForIdleSync();
         assertFalse(mListView.isLayoutRequested());
-        runTestOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                mListView.setItemChecked(0, false);
-            }
-        });
+        mInstrumentation.runOnMainSync(() -> mListView.setItemChecked(0, false));
         assertFalse(mListView.isLayoutRequested());
     }
 
     @MediumTest
-    public void testSetItemChecked_multipleModeDifferentValue()
-            throws Throwable {
+    @Test
+    public void testSetItemChecked_multipleModeDifferentValue() {
         // Calling setItemChecked with a different value in multiple choice mode should cause
         // requestLayout
         mListView.setChoiceMode(ListView.CHOICE_MODE_MULTIPLE);
-        runTestOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                mListView.setItemChecked(0, false);
-            }
-        });
+        mInstrumentation.runOnMainSync(() -> mListView.setItemChecked(0, false));
         mInstrumentation.waitForIdleSync();
         assertFalse(mListView.isLayoutRequested());
-        runTestOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                mListView.setItemChecked(0, true);
-            }
-        });
+        mInstrumentation.runOnMainSync(() -> mListView.setItemChecked(0, true));
         assertTrue(mListView.isLayoutRequested());
     }
 
     @MediumTest
-    public void testSetItemChecked_singleModeDifferentValue()
-            throws Throwable {
+    @Test
+    public void testSetItemChecked_singleModeDifferentValue() {
         // Calling setItemChecked with a different value in single choice mode should cause
         // requestLayout
         mListView.setChoiceMode(ListView.CHOICE_MODE_SINGLE);
-        runTestOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                mListView.setItemChecked(0, false);
-            }
-        });
+        mInstrumentation.runOnMainSync(() -> mListView.setItemChecked(0, false));
         mInstrumentation.waitForIdleSync();
         assertFalse(mListView.isLayoutRequested());
-        runTestOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                mListView.setItemChecked(0, true);
-            }
-        });
+        mInstrumentation.runOnMainSync(() -> mListView.setItemChecked(0, true));
         assertTrue(mListView.isLayoutRequested());
-    }
-
-    public void testLayoutChildren() {
-        /**
-         * the subclass ListView and GridView override this method, so we can not test
-         * this method.
-         */
     }
 
     /**
