@@ -40,6 +40,10 @@ public class ImageSpanTest extends AndroidTestCase {
         new ImageSpan(b, DynamicDrawableSpan.ALIGN_BOTTOM);
         new ImageSpan(b, DynamicDrawableSpan.ALIGN_BASELINE);
 
+        new ImageSpan(mContext, b);
+        new ImageSpan(mContext, b, DynamicDrawableSpan.ALIGN_BOTTOM);
+        new ImageSpan(mContext, b, DynamicDrawableSpan.ALIGN_BASELINE);
+
         Drawable d = mContext.getResources().getDrawable(R.drawable.pass);
         new ImageSpan(d);
         new ImageSpan(d, DynamicDrawableSpan.ALIGN_BOTTOM);
