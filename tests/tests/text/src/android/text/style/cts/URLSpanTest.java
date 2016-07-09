@@ -16,14 +16,12 @@
 
 package android.text.style.cts;
 
-import android.text.cts.R;
-
-
 import android.app.Activity;
 import android.app.Instrumentation;
 import android.app.Instrumentation.ActivityMonitor;
 import android.os.Parcel;
 import android.test.ActivityInstrumentationTestCase2;
+import android.text.cts.R;
 import android.text.style.URLSpan;
 import android.widget.TextView;
 
@@ -69,11 +67,7 @@ public class URLSpanTest extends ActivityInstrumentationTestCase2<URLSpanCtsActi
                 null, false);
 
         try {
-            runTestOnUiThread(new Runnable() {
-                public void run() {
-                    urlSpan.onClick(textView);
-                }
-            });
+            runTestOnUiThread(() -> urlSpan.onClick(textView));
         } catch (Throwable e) {
             fail("Exception error!");
         }

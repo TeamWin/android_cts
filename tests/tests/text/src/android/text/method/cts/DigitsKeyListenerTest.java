@@ -580,11 +580,9 @@ public class DigitsKeyListenerTest extends KeyListenerTestCase {
         assertEquals("5", mTextView.getText().toString());
 
         // remove DigitsKeyListener
-        mActivity.runOnUiThread(new Runnable() {
-            public void run() {
-                mTextView.setKeyListener(null);
-                mTextView.requestFocus();
-            }
+        mInstrumentation.runOnMainSync(() -> {
+            mTextView.setKeyListener(null);
+            mTextView.requestFocus();
         });
         mInstrumentation.waitForIdleSync();
         assertEquals("5", mTextView.getText().toString());

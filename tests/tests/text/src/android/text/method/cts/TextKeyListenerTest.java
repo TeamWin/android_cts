@@ -90,7 +90,7 @@ public class TextKeyListenerTest extends KeyListenerTestCase {
         final Spannable text = new SpannableStringBuilder("123456");
 
         verify(mockTextKeyListener, never()).onSpanAdded(any(), any(), anyInt(), anyInt());
-        mActivity.runOnUiThread(() -> {
+        mInstrumentation.runOnMainSync(() -> {
             mTextView.setKeyListener(mockTextKeyListener);
             mTextView.setText(text, BufferType.EDITABLE);
         });
@@ -186,7 +186,7 @@ public class TextKeyListenerTest extends KeyListenerTestCase {
         final TextKeyListener textKeyListener
                 = TextKeyListener.getInstance(false, Capitalize.NONE);
 
-        mActivity.runOnUiThread(() -> {
+        mInstrumentation.runOnMainSync(() -> {
             mTextView.setText("", BufferType.EDITABLE);
             Selection.setSelection(mTextView.getText(), 0, 0);
             mTextView.setKeyListener(textKeyListener);
@@ -216,7 +216,7 @@ public class TextKeyListenerTest extends KeyListenerTestCase {
         final TextKeyListener textKeyListener
                 = TextKeyListener.getInstance(false, Capitalize.NONE);
 
-        mActivity.runOnUiThread(() -> {
+        mInstrumentation.runOnMainSync(() -> {
             mTextView.setText("", BufferType.EDITABLE);
             Selection.setSelection(mTextView.getText(), 0, 0);
             mTextView.setKeyListener(textKeyListener);
