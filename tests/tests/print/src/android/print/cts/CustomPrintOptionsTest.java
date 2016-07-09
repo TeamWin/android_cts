@@ -49,6 +49,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeoutException;
 
+import static android.print.cts.Utils.eventually;
+
 /**
  * This test verifies changes to the printer capabilities are applied correctly.
  */
@@ -345,25 +347,14 @@ public class CustomPrintOptionsTest extends BasePrintTest {
                 }
 
                 Log.d(LOG_TAG, "Check pages");
-                while (true) {
-                    try {
-                        PageRange[] actualPages = getPages();
-                        if (!Arrays.equals(newPages, actualPages)) {
-                            new AssertionError(
-                                    "Expected " + Arrays.toString(newPages) + ", actual " +
-                                            Arrays.toString(actualPages));
-                        }
-
-                        break;
-                    } catch (Throwable e) {
-                        if (endTime < System.currentTimeMillis()) {
-                            throw e;
-                        } else {
-                            Log.e(LOG_TAG, "Could not verify pages, retrying", e);
-                            Thread.sleep(100);
-                        }
+                eventually(() -> {
+                    PageRange[] actualPages = getPages();
+                    if (!Arrays.equals(newPages, actualPages)) {
+                        throw new AssertionError(
+                                "Expected " + Arrays.toString(newPages) + ", actual " +
+                                        Arrays.toString(actualPages));
                     }
-                }
+                });
 
                 break;
             } catch (Throwable e) {
@@ -379,13 +370,15 @@ public class CustomPrintOptionsTest extends BasePrintTest {
         }
 
         // Abort printing
-        getActivity().finish();
+        getUiDevice().pressBack();
+        getUiDevice().pressBack();
+        getUiDevice().pressBack();
 
         waitForPrinterDiscoverySessionDestroyCallbackCalled(1);
     }
 
-    public void testChangeToChangeEveryThing() throws Throwable {
-        testCase(false, 2, PAGESS[1], MEDIA_SIZES[1], false, COLOR_MODES[1], DUPLEX_MODES[1],
+    public void testChangeToChangeEveryThingButPages() throws Throwable {
+        testCase(false, 2, null, MEDIA_SIZES[1], false, COLOR_MODES[1], DUPLEX_MODES[1],
                 RESOLUTIONS[1]);
     }
 
@@ -427,5 +420,9 @@ public class CustomPrintOptionsTest extends BasePrintTest {
 
     public void testChangeToAllPages() throws Throwable {
         testCase(false, null, PAGESS[2], null, true, null, null, null);
+    }
+
+    public void testChangeToSomePages() throws Throwable {
+        testCase(false, null, PAGESS[1], null, true, null, null, null);
     }
 }

@@ -20,16 +20,11 @@ import static android.print.cts.Utils.eventually;
 import static android.print.cts.Utils.runOnMainThread;
 import static org.mockito.Mockito.inOrder;
 
-import android.os.ParcelFileDescriptor;
-import android.print.PageRange;
 import android.print.PrintAttributes;
 import android.print.PrintAttributes.Margins;
 import android.print.PrintAttributes.MediaSize;
 import android.print.PrintAttributes.Resolution;
 import android.print.PrintDocumentAdapter;
-import android.print.PrintDocumentAdapter.LayoutResultCallback;
-import android.print.PrintDocumentAdapter.WriteResultCallback;
-import android.print.PrintDocumentInfo;
 import android.print.PrinterCapabilitiesInfo;
 import android.print.PrinterId;
 import android.print.PrinterInfo;
@@ -84,7 +79,7 @@ public class PrinterDiscoverySessionLifecycleTest extends BasePrintTest {
         SecondPrintService.setCallbacks(createSecondMockPrintServiceCallbacks());
 
         // Create a print adapter that respects the print contract.
-        PrintDocumentAdapter adapter = createMockPrintDocumentAdapter();
+        PrintDocumentAdapter adapter = createDefaultPrintDocumentAdapter(1);
 
         // Start printing.
         print(adapter);
@@ -192,7 +187,7 @@ public class PrinterDiscoverySessionLifecycleTest extends BasePrintTest {
         SecondPrintService.setCallbacks(createSecondMockPrintServiceCallbacks());
 
         // Create a print adapter that respects the print contract.
-        PrintDocumentAdapter adapter = createMockPrintDocumentAdapter();
+        PrintDocumentAdapter adapter = createDefaultPrintDocumentAdapter(1);
 
         // Start printing.
         print(adapter);
@@ -284,7 +279,7 @@ public class PrinterDiscoverySessionLifecycleTest extends BasePrintTest {
         SecondPrintService.setCallbacks(createSecondMockPrintServiceCallbacks());
 
         // Create a print adapter that respects the print contract.
-        PrintDocumentAdapter adapter = createMockPrintDocumentAdapter();
+        PrintDocumentAdapter adapter = createDefaultPrintDocumentAdapter(1);
 
         // Start printing.
         print(adapter);
@@ -389,9 +384,9 @@ public class PrinterDiscoverySessionLifecycleTest extends BasePrintTest {
         inOrder.verify(firstSessionCallbacks).onDestroy();
     }
 
-    private PrinterId getAddedPrinterIdForLocalId(String printerLocalId) {
+    private PrinterId getAddedPrinterIdForLocalId(String printerLocalId) throws Throwable {
         final List<PrinterInfo> reportedPrinters = new ArrayList<>();
-        getInstrumentation().runOnMainSync(() -> {
+        runOnMainThread(() -> {
             // Grab the printer ids as only the service can create such.
             reportedPrinters.addAll(sSession.getPrinters());
         });
@@ -500,38 +495,5 @@ public class PrinterDiscoverySessionLifecycleTest extends BasePrintTest {
             onPrinterDiscoverySessionDestroyCalled();
             return null;
         });
-    }
-
-    public PrintDocumentAdapter createMockPrintDocumentAdapter() {
-        final PrintAttributes[] printAttributes = new PrintAttributes[1];
-
-        return createMockPrintDocumentAdapter(
-                invocation -> {
-                    printAttributes[0] = (PrintAttributes) invocation.getArguments()[1];
-                    LayoutResultCallback callback = (LayoutResultCallback) invocation.getArguments()[3];
-                    PrintDocumentInfo info = new PrintDocumentInfo.Builder(PRINT_JOB_NAME)
-                            .setContentType(PrintDocumentInfo.CONTENT_TYPE_DOCUMENT)
-                            .setPageCount(3)
-                            .build();
-                    callback.onLayoutFinished(info, false);
-                    // Mark layout was called.
-                    onLayoutCalled();
-                    return null;
-                }, invocation -> {
-                    Object[] args = invocation.getArguments();
-                    PageRange[] pages = (PageRange[]) args[0];
-                    ParcelFileDescriptor fd = (ParcelFileDescriptor) args[1];
-                    WriteResultCallback callback = (WriteResultCallback) args[3];
-                    writeBlankPages(printAttributes[0], fd, pages[0].getStart(), pages[0].getEnd());
-                    fd.close();
-                    callback.onWriteFinished(pages);
-                    // Mark write was called.
-                    onWriteCalled();
-                    return null;
-                }, invocation -> {
-                    // Mark finish was called.
-                    onFinishCalled();
-                    return null;
-                });
     }
 }

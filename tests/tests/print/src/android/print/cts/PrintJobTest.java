@@ -66,41 +66,6 @@ public class PrintJobTest extends BasePrintTest {
     private static StubbablePrinterDiscoverySession sDiscoverySession;
 
     /**
-     * Create a mock {@link PrintDocumentAdapter} that provides one empty page.
-     *
-     * @return The mock adapter
-     */
-    private PrintDocumentAdapter createMockPrintDocumentAdapter() {
-        final PrintAttributes[] printAttributes = new PrintAttributes[1];
-
-        return createMockPrintDocumentAdapter(
-                invocation -> {
-                    printAttributes[0] = (PrintAttributes) invocation.getArguments()[1];
-                    LayoutResultCallback callback = (LayoutResultCallback) invocation
-                            .getArguments()[3];
-
-                    PrintDocumentInfo info = new PrintDocumentInfo.Builder(PRINT_JOB_NAME)
-                            .setContentType(PrintDocumentInfo.CONTENT_TYPE_DOCUMENT)
-                            .setPageCount(1)
-                            .build();
-
-                    callback.onLayoutFinished(info, false);
-                    return null;
-                }, invocation -> {
-                    Object[] args = invocation.getArguments();
-                    PageRange[] pages = (PageRange[]) args[0];
-                    ParcelFileDescriptor fd = (ParcelFileDescriptor) args[1];
-                    WriteResultCallback callback = (WriteResultCallback) args[3];
-
-                    writeBlankPages(printAttributes[0], fd, pages[0].getStart(),
-                            pages[0].getEnd());
-                    fd.close();
-                    callback.onWriteFinished(pages);
-                    return null;
-                }, invocation -> null);
-    }
-
-    /**
      * Create a mock {@link PrinterDiscoverySessionCallbacks} that discovers a simple test printer.
      *
      * @return The mock session callbacks
@@ -198,7 +163,7 @@ public class PrintJobTest extends BasePrintTest {
         SecondPrintService.setCallbacks(createMockPrintServiceCallbacks(null, null, null));
 
         // Create a print adapter that respects the print contract.
-        PrintDocumentAdapter adapter = createMockPrintDocumentAdapter();
+        PrintDocumentAdapter adapter = createDefaultPrintDocumentAdapter(1);
 
         // Start printing.
         print(adapter);
@@ -513,7 +478,7 @@ public class PrintJobTest extends BasePrintTest {
         SecondPrintService.setCallbacks(createMockPrintServiceCallbacks(null, null, null));
 
         // Create a print adapter that respects the print contract.
-        PrintDocumentAdapter adapter = createMockPrintDocumentAdapter();
+        PrintDocumentAdapter adapter = createDefaultPrintDocumentAdapter(1);
 
         // Start printing.
         print(adapter);

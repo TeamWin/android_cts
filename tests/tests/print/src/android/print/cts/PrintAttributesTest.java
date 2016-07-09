@@ -37,8 +37,6 @@ import android.print.cts.services.StubbablePrinterDiscoverySession;
 import android.printservice.PrintJob;
 
 import android.util.Log;
-import org.mockito.invocation.InvocationOnMock;
-import org.mockito.stubbing.Answer;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -140,73 +138,62 @@ public class PrintAttributesTest extends BasePrintTest {
             final MediaSize defaultMediaSize, final int colorModes[], final int defaultColorMode,
             final int duplexModes[], final int defaultDuplexMode, final Resolution resolutions[],
             final Resolution defaultResolution) {
-        return createMockPrinterDiscoverySessionCallbacks(new Answer<Void>() {
-            @Override
-            public Void answer(InvocationOnMock invocation) {
-                StubbablePrinterDiscoverySession session =
-                        ((PrinterDiscoverySessionCallbacks) invocation.getMock()).getSession();
+        return createMockPrinterDiscoverySessionCallbacks(invocation -> {
+            StubbablePrinterDiscoverySession session =
+                    ((PrinterDiscoverySessionCallbacks) invocation.getMock()).getSession();
 
-                if (session.getPrinters().isEmpty()) {
-                    List<PrinterInfo> printers = new ArrayList<PrinterInfo>();
-                    PrinterId printerId = session.getService().generatePrinterId(PRINTER_NAME);
+            if (session.getPrinters().isEmpty()) {
+                List<PrinterInfo> printers = new ArrayList<>();
+                PrinterId printerId = session.getService().generatePrinterId(PRINTER_NAME);
 
-                    PrinterCapabilitiesInfo.Builder builder =
-                            new PrinterCapabilitiesInfo.Builder(printerId);
+                PrinterCapabilitiesInfo.Builder builder =
+                        new PrinterCapabilitiesInfo.Builder(printerId);
 
-                    builder.setMinMargins(minMargins);
+                builder.setMinMargins(minMargins);
 
-                    int mediaSizesLength = mediaSizes.length;
-                    for (int i = 0; i < mediaSizesLength; i++) {
-                        if (mediaSizes[i].equals(defaultMediaSize)) {
-                            builder.addMediaSize(mediaSizes[i], true);
-                        } else {
-                            builder.addMediaSize(mediaSizes[i], false);
-                        }
+                int mediaSizesLength = mediaSizes.length;
+                for (int i = 0; i < mediaSizesLength; i++) {
+                    if (mediaSizes[i].equals(defaultMediaSize)) {
+                        builder.addMediaSize(mediaSizes[i], true);
+                    } else {
+                        builder.addMediaSize(mediaSizes[i], false);
                     }
-
-                    int colorModesMask = 0;
-                    int colorModesLength = colorModes.length;
-                    for (int i = 0; i < colorModesLength; i++) {
-                        colorModesMask |= colorModes[i];
-                    }
-                    builder.setColorModes(colorModesMask, defaultColorMode);
-
-                    int duplexModesMask = 0;
-                    int duplexModeLength = duplexModes.length;
-                    for (int i = 0; i < duplexModeLength; i++) {
-                        duplexModesMask |= duplexModes[i];
-                    }
-                    builder.setDuplexModes(duplexModesMask, defaultDuplexMode);
-
-                    int resolutionsLength = resolutions.length;
-                    for (int i = 0; i < resolutionsLength; i++) {
-                        if (resolutions[i].equals(defaultResolution)) {
-                            builder.addResolution(resolutions[i], true);
-                        } else {
-                            builder.addResolution(resolutions[i], false);
-                        }
-                    }
-
-                    PrinterInfo printer = new PrinterInfo.Builder(printerId, PRINTER_NAME,
-                            PrinterInfo.STATUS_IDLE).setCapabilities(builder.build()).build();
-                    printers.add(printer);
-
-                    session.addPrinters(printers);
                 }
-                return null;
+
+                int colorModesMask = 0;
+                int colorModesLength = colorModes.length;
+                for (int i = 0; i < colorModesLength; i++) {
+                    colorModesMask |= colorModes[i];
+                }
+                builder.setColorModes(colorModesMask, defaultColorMode);
+
+                int duplexModesMask = 0;
+                int duplexModeLength = duplexModes.length;
+                for (int i = 0; i < duplexModeLength; i++) {
+                    duplexModesMask |= duplexModes[i];
+                }
+                builder.setDuplexModes(duplexModesMask, defaultDuplexMode);
+
+                int resolutionsLength = resolutions.length;
+                for (int i = 0; i < resolutionsLength; i++) {
+                    if (resolutions[i].equals(defaultResolution)) {
+                        builder.addResolution(resolutions[i], true);
+                    } else {
+                        builder.addResolution(resolutions[i], false);
+                    }
+                }
+
+                PrinterInfo printer = new PrinterInfo.Builder(printerId, PRINTER_NAME,
+                        PrinterInfo.STATUS_IDLE).setCapabilities(builder.build()).build();
+                printers.add(printer);
+
+                session.addPrinters(printers);
             }
-        }, null, null, new Answer<Void>() {
-            @Override
-            public Void answer(InvocationOnMock invocation) throws Throwable {
-                return null;
-            }
-        }, null, null, new Answer<Void>() {
-            @Override
-            public Void answer(InvocationOnMock invocation) throws Throwable {
-                // Take a note onDestroy was called.
-                onPrinterDiscoverySessionDestroyCalled();
-                return null;
-            }
+            return null;
+        }, null, null, invocation -> null, null, null, invocation -> {
+            // Take a note onDestroy was called.
+            onPrinterDiscoverySessionDestroyCalled();
+            return null;
         });
     }
 
@@ -229,43 +216,34 @@ public class PrintAttributesTest extends BasePrintTest {
      */
     private PrintDocumentAdapter createMockPrintDocumentAdapter() {
         return createMockPrintDocumentAdapter(
-                new Answer<Void>() {
-                    @Override
-                    public Void answer(InvocationOnMock invocation) throws Throwable {
-                        mLayoutAttributes = (PrintAttributes) invocation.getArguments()[1];
-                        LayoutResultCallback callback =
-                                (LayoutResultCallback) invocation.getArguments()[3];
-                        PrintDocumentInfo info = new PrintDocumentInfo.Builder(PRINT_JOB_NAME)
-                                .setContentType(PrintDocumentInfo.CONTENT_TYPE_DOCUMENT)
-                                .setPageCount(1)
-                                .build();
-                        callback.onLayoutFinished(info, false);
-                        // Mark layout was called.
-                        onLayoutCalled();
-                        return null;
-                    }
-                }, new Answer<Void>() {
-                    @Override
-                    public Void answer(InvocationOnMock invocation) throws Throwable {
-                        Object[] args = invocation.getArguments();
-                        PageRange[] pages = (PageRange[]) args[0];
-                        ParcelFileDescriptor fd = (ParcelFileDescriptor) args[1];
-                        WriteResultCallback callback = (WriteResultCallback) args[3];
-                        writeBlankPages(mLayoutAttributes, fd, pages[0].getStart(),
-                                pages[0].getEnd());
-                        fd.close();
-                        callback.onWriteFinished(pages);
-                        // Mark write was called.
-                        onWriteCalled();
-                        return null;
-                    }
-                }, new Answer<Void>() {
-                    @Override
-                    public Void answer(InvocationOnMock invocation) throws Throwable {
-                        // Mark finish was called.
-                        onFinishCalled();
-                        return null;
-                    }
+                invocation -> {
+                    mLayoutAttributes = (PrintAttributes) invocation.getArguments()[1];
+                    LayoutResultCallback callback =
+                            (LayoutResultCallback) invocation.getArguments()[3];
+                    PrintDocumentInfo info = new PrintDocumentInfo.Builder(PRINT_JOB_NAME)
+                            .setContentType(PrintDocumentInfo.CONTENT_TYPE_DOCUMENT)
+                            .setPageCount(1)
+                            .build();
+                    callback.onLayoutFinished(info, false);
+                    // Mark layout was called.
+                    onLayoutCalled();
+                    return null;
+                }, invocation -> {
+                    Object[] args = invocation.getArguments();
+                    PageRange[] pages = (PageRange[]) args[0];
+                    ParcelFileDescriptor fd = (ParcelFileDescriptor) args[1];
+                    WriteResultCallback callback = (WriteResultCallback) args[3];
+                    writeBlankPages(mLayoutAttributes, fd, pages[0].getStart(),
+                            pages[0].getEnd());
+                    fd.close();
+                    callback.onWriteFinished(pages);
+                    // Mark write was called.
+                    onWriteCalled();
+                    return null;
+                }, invocation -> {
+                    // Mark finish was called.
+                    onFinishCalled();
+                    return null;
                 });
     }
 
@@ -293,20 +271,12 @@ public class PrintAttributesTest extends BasePrintTest {
                         defaultDuplexMode, resolutions, defaultResolution);
 
         PrintServiceCallbacks serviceCallbacks = createMockPrintServiceCallbacks(
-                new Answer<PrinterDiscoverySessionCallbacks>() {
-                    @Override
-                    public PrinterDiscoverySessionCallbacks answer(InvocationOnMock invocation) {
-                        return sessionCallbacks;
-                    }
-                },
-                new Answer<Void>() {
-                    @Override
-                    public Void answer(InvocationOnMock invocation) {
-                        PrintJob printJob = (PrintJob) invocation.getArguments()[0];
-                        // We pretend the job is handled immediately.
-                        printJob.complete();
-                        return null;
-                    }
+                invocation -> sessionCallbacks,
+                invocation -> {
+                    PrintJob printJob = (PrintJob) invocation.getArguments()[0];
+                    // We pretend the job is handled immediately.
+                    printJob.complete();
+                    return null;
                 }, null);
 
         // Configure the print services.

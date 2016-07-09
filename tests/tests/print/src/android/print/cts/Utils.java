@@ -68,7 +68,7 @@ public class Utils {
      *
      * @throws Throwable If the {@link Runnable} caused an issue
      */
-    public static void runOnMainThread(@NonNull final Invokable r) throws Throwable {
+    static void runOnMainThread(@NonNull final Invokable r) throws Throwable {
         final Object synchronizer = new Object();
         final Throwable[] thrown = new Throwable[1];
 
@@ -128,7 +128,7 @@ public class Utils {
      *
      * @throws Exception If print job could not be found
      */
-    public static @NonNull PrintJob getPrintJob(@NonNull PrintManager pm, @NonNull String name)
+    static @NonNull PrintJob getPrintJob(@NonNull PrintManager pm, @NonNull String name)
             throws Exception {
         for (android.print.PrintJob job : pm.getPrintJobs()) {
             if (job.getInfo().getLabel().equals(name)) {
@@ -139,4 +139,10 @@ public class Utils {
         throw new Exception("Print job " + name + " not found in " + pm.getPrintJobs());
     }
 
+    /**
+     * @return The print manager
+     */
+    static @NonNull PrintManager getPrintManager(@NonNull Context context) {
+        return (PrintManager) context.getSystemService(Context.PRINT_SERVICE);
+    }
 }
