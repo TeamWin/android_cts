@@ -384,6 +384,81 @@ public class PrinterDiscoverySessionLifecycleTest extends BasePrintTest {
         inOrder.verify(firstSessionCallbacks).onDestroy();
     }
 
+    public void testAddRemovePrinters() throws Throwable {
+        if (!supportsPrinting()) {
+            return;
+        }
+
+        StubbablePrinterDiscoverySession[] session = new StubbablePrinterDiscoverySession[1];
+
+        // Create the session callbacks that we will be checking.
+        final PrinterDiscoverySessionCallbacks firstSessionCallbacks =
+                createMockPrinterDiscoverySessionCallbacks(invocation -> {
+                    session[0] = ((PrinterDiscoverySessionCallbacks)
+                            invocation.getMock()).getSession();
+
+                    onPrinterDiscoverySessionCreateCalled();
+                    return null;
+                }, null, null, null, null, null, invocation -> {
+                    onPrinterDiscoverySessionDestroyCalled();
+                    return null;
+                });
+
+        // Create the service callbacks for the first print service.
+        PrintServiceCallbacks firstServiceCallbacks = createMockPrintServiceCallbacks(
+                invocation -> firstSessionCallbacks, null, null);
+
+        // Configure the print services.
+        FirstPrintService.setCallbacks(firstServiceCallbacks);
+        SecondPrintService.setCallbacks(createSecondMockPrintServiceCallbacks());
+
+        print(createDefaultPrintDocumentAdapter(1));
+
+        waitForPrinterDiscoverySessionCreateCallbackCalled();
+
+        runOnMainThread(() -> assertEquals(0, session[0].getPrinters().size()));
+
+        PrinterId[] printerIds = new PrinterId[3];
+        runOnMainThread(() -> {
+            printerIds[0] = session[0].getService().generatePrinterId("0");
+            printerIds[1] = session[0].getService().generatePrinterId("1");
+            printerIds[2] = session[0].getService().generatePrinterId("2");
+        });
+
+        PrinterInfo printer1 = (new PrinterInfo.Builder(printerIds[0], "0",
+                PrinterInfo.STATUS_IDLE)).build();
+
+        PrinterInfo printer2 = (new PrinterInfo.Builder(printerIds[1], "1",
+                PrinterInfo.STATUS_IDLE)).build();
+
+        PrinterInfo printer3 = (new PrinterInfo.Builder(printerIds[2], "2",
+                PrinterInfo.STATUS_IDLE)).build();
+
+        ArrayList<PrinterInfo> printers = new ArrayList<>();
+        printers.add(printer1);
+        runOnMainThread(() -> session[0].addPrinters(printers));
+        eventually(() -> runOnMainThread(() -> assertEquals(1, session[0].getPrinters().size())));
+
+        printers.add(printer2);
+        printers.add(printer3);
+        runOnMainThread(() -> session[0].addPrinters(printers));
+        eventually(() -> runOnMainThread(() -> assertEquals(3, session[0].getPrinters().size())));
+
+        ArrayList<PrinterId> printerIdsToRemove = new ArrayList<>();
+        printerIdsToRemove.add(printer1.getId());
+        runOnMainThread(() -> session[0].removePrinters(printerIdsToRemove));
+        eventually(() -> runOnMainThread(() -> assertEquals(2, session[0].getPrinters().size())));
+
+        printerIdsToRemove.add(printer2.getId());
+        printerIdsToRemove.add(printer3.getId());
+        runOnMainThread(() -> session[0].removePrinters(printerIdsToRemove));
+        eventually(() -> runOnMainThread(() -> assertEquals(0, session[0].getPrinters().size())));
+
+        getUiDevice().pressBack();
+
+        waitForPrinterDiscoverySessionDestroyCallbackCalled(1);
+    }
+
     private PrinterId getAddedPrinterIdForLocalId(String printerLocalId) throws Throwable {
         final List<PrinterInfo> reportedPrinters = new ArrayList<>();
         runOnMainThread(() -> {
