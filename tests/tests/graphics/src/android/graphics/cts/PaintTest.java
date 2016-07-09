@@ -1547,4 +1547,23 @@ public class PaintTest extends AndroidTestCase {
             }
         }
     }
+
+    public void testElegantText() {
+        final Paint p = new Paint();
+        p.setTextSize(10);
+        assertFalse(p.isElegantTextHeight());
+        final float nonElegantTop = p.getFontMetrics().top;
+        final float nonElegantBottom = p.getFontMetrics().bottom;
+
+        p.setElegantTextHeight(true);
+        assertTrue(p.isElegantTextHeight());
+        final float elegantTop = p.getFontMetrics().top;
+        final float elegantBottom = p.getFontMetrics().bottom;
+
+        assertTrue(elegantTop < nonElegantTop);
+        assertTrue(elegantBottom > nonElegantBottom);
+
+        p.setElegantTextHeight(false);
+        assertFalse(p.isElegantTextHeight());
+    }
 }
