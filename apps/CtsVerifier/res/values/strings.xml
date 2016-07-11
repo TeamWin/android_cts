@@ -147,7 +147,21 @@
     <string name="sec_fp_dialog_message">Authenticate now with fingerprint</string>
     <string name="sec_fp_auth_failed">Authentication failed</string>
     <string name="sec_start_test">Start Test</string>
-
+    <!--CA certificate Test - CA Certificates installed for WiFi are trusted by whole system-->
+    <string name="sec_wifi_ca_cert_test">WiFi CA Certificate Test</string>
+    <string name="sec_wifi_ca_cert_test_info">This test ensures that the CA certificates installed for WiFi should not be trusted by the whole system</string>
+    <string name="sec_push_ca_certificate_to_device_text">Click on the below button to transfer the Certificate to internal storage of your device.</string>
+    <string name="sec_push_ca_certificate_to_device_clearcreds_text">1. Click on below button to launch the security settings of the device.\n2. Select the Clear Credentials option. Select OK.\n3. Come back to the test case. Proceed to the next step</string>
+    <string name="sec_certificate_trust_text">1. Click on the button below to check if the certificate is trusted or not.</string>
+    <string name="sec_launch_wifi_settings">1. Click on the button below to launch the wifi settings.\n2. Access the Action Overflow menu and select Advanced.\n3. Select Install Certificates option.\n4. On left hand slider menu, select Internal Storage.\n5. Browse to \'myCA.cer\' file.\n6. Type \'bug\' in Certificate Name and select WiFi under Credential use dropdown.\n7. Select OK. Come back to the test case.</string>
+    <string name="sec_file_transfer_failed">Failed to transfer the Certificate to the device</string>
+    <string name="sec_file_transferred_text">The certificate has been transferred to the device successfully</string>
+    <string name="sec_cert_nottrusted_text">Certificate not trusted by the system. Proceed to the next step</string>
+    <string name="sec_cert_trusted_text">Certificate trusted by the system. Proceed to the next step</string>
+    <string name="sec_pass_test_instruction">Please PASS the test case, as the certificate is not trusted</string>
+    <string name="sec_fail_test_instruction">Please FAIL the test case, as the certificate is trusted</string>
+    <string name="sec_read_cert_exception">Exception occurred while reading the certificate</string>
+    <string name="passfail_instruction"></string>
     <!-- Strings for BluetoothActivity -->
     <string name="bluetooth_test">Bluetooth Test</string>
     <string name="bluetooth_test_info">The Bluetooth Control tests check whether or not the device
