@@ -160,6 +160,10 @@ public class StagefrightTest extends InstrumentationTestCase {
         doStagefrightTest(R.raw.cve_2015_6608_b_23680780);
     }
 
+    public void testStagefright_bug_28333006() throws Exception {
+        doStagefrightTest(R.raw.bug_28333006);
+    }
+
     private void doStagefrightTest(final int rid) throws Exception {
         doStagefrightTestMediaPlayer(rid);
         doStagefrightTestMediaCodec(rid);
@@ -191,81 +195,83 @@ public class StagefrightTest extends InstrumentationTestCase {
         return new Surface(surfaceTex);
     }
 
-    private void doStagefrightTestMediaPlayer(final int rid) throws Exception {
-        class MediaPlayerCrashListener
-                implements MediaPlayer.OnErrorListener,
-                    MediaPlayer.OnPreparedListener,
-                    MediaPlayer.OnCompletionListener {
-            @Override
-            public boolean onError(MediaPlayer mp, int newWhat, int extra) {
-                Log.i(TAG, "error: " + newWhat);
-                // don't overwrite a more severe error with a less severe one
-                if (what != MediaPlayer.MEDIA_ERROR_SERVER_DIED) {
-                    what = newWhat;
-                }
-                lock.lock();
-                condition.signal();
-                lock.unlock();
-
-                return true; // don't call oncompletion
+    class MediaPlayerCrashListener
+    implements MediaPlayer.OnErrorListener,
+        MediaPlayer.OnPreparedListener,
+        MediaPlayer.OnCompletionListener {
+        @Override
+        public boolean onError(MediaPlayer mp, int newWhat, int extra) {
+            Log.i(TAG, "error: " + newWhat + "/" + extra);
+            // don't overwrite a more severe error with a less severe one
+            if (what != MediaPlayer.MEDIA_ERROR_SERVER_DIED) {
+                what = newWhat;
             }
+            lock.lock();
+            condition.signal();
+            lock.unlock();
 
-            @Override
-            public void onPrepared(MediaPlayer mp) {
-                mp.start();
-            }
-
-            @Override
-            public void onCompletion(MediaPlayer mp) {
-                // preserve error condition, if any
-                lock.lock();
-                condition.signal();
-                lock.unlock();
-            }
-
-            public int waitForError() throws InterruptedException {
-                lock.lock();
-                if (condition.awaitNanos(TIMEOUT_NS) <= 0) {
-                    Log.d(TAG, "timed out on waiting for error");
-                }
-                lock.unlock();
-                if (what != 0) {
-                    // Sometimes mediaserver signals a decoding error first, and *then* crashes
-                    // due to additional in-flight buffers being processed, so wait a little
-                    // and see if more errors show up.
-                    SystemClock.sleep(1000);
-                }
-                return what;
-            }
-
-            ReentrantLock lock = new ReentrantLock();
-            Condition condition = lock.newCondition();
-            int what;
+            return true; // don't call oncompletion
         }
+
+        @Override
+        public void onPrepared(MediaPlayer mp) {
+            mp.start();
+        }
+
+        @Override
+        public void onCompletion(MediaPlayer mp) {
+            // preserve error condition, if any
+            lock.lock();
+            condition.signal();
+            lock.unlock();
+        }
+
+        public int waitForError() throws InterruptedException {
+            lock.lock();
+            if (condition.awaitNanos(TIMEOUT_NS) <= 0) {
+                Log.d(TAG, "timed out on waiting for error");
+            }
+            lock.unlock();
+            if (what != 0) {
+                // Sometimes mediaserver signals a decoding error first, and *then* crashes
+                // due to additional in-flight buffers being processed, so wait a little
+                // and see if more errors show up.
+                SystemClock.sleep(1000);
+            }
+            return what;
+        }
+
+        ReentrantLock lock = new ReentrantLock();
+        Condition condition = lock.newCondition();
+        int what;
+    }
+
+    class LooperThread extends Thread {
+        private Looper mLooper;
+
+        LooperThread(Runnable runner) {
+            super(runner);
+        }
+
+        @Override
+        public void run() {
+            Looper.prepare();
+            mLooper = Looper.myLooper();
+            super.run();
+        }
+
+        public void stopLooper() {
+            mLooper.quitSafely();
+        }
+    }
+
+    private void doStagefrightTestMediaPlayer(final int rid) throws Exception {
 
         String name = getInstrumentation().getContext().getResources().getResourceEntryName(rid);
         Log.i(TAG, "start mediaplayer test for: " + name);
-        
+
         final MediaPlayerCrashListener mpcl = new MediaPlayerCrashListener();
 
-        class LooperThread extends Thread {
-            private Looper mLooper;
-
-            LooperThread(Runnable runner) {
-                super(runner);
-            }
-
-            @Override
-            public void run() {
-                Looper.prepare();
-                mLooper = Looper.myLooper();
-                super.run();
-            }
-
-            public void stopLooper() {
-                mLooper.quitSafely();
-            }
-        }
 
         LooperThread t = new LooperThread(new Runnable() {
             @Override
@@ -302,10 +308,50 @@ public class StagefrightTest extends InstrumentationTestCase {
     }
 
     private void doStagefrightTestMediaCodec(final int rid) throws Exception {
+
+        final MediaPlayerCrashListener mpcl = new MediaPlayerCrashListener();
+
+        LooperThread thr = new LooperThread(new Runnable() {
+            @Override
+            public void run() {
+
+                MediaPlayer mp = new MediaPlayer();
+                mp.setOnErrorListener(mpcl);
+                try {
+                    AssetFileDescriptor fd = getInstrumentation().getContext().getResources()
+                        .openRawResourceFd(R.raw.good);
+
+                    // the onErrorListener won't receive MEDIA_ERROR_SERVER_DIED until
+                    // setDataSource has been called
+                    mp.setDataSource(fd.getFileDescriptor(),
+                                     fd.getStartOffset(),
+                                     fd.getLength());
+                } catch (Exception e) {
+                    // this is a known-good file, so no failure should occur
+                    fail("setDataSource of known-good file failed");
+                }
+
+                synchronized(mpcl) {
+                    mpcl.notify();
+                }
+                Looper.loop();
+                mp.release();
+            }
+        });
+        thr.start();
+        // wait until the thread has initialized the MediaPlayer
+        synchronized(mpcl) {
+            mpcl.wait();
+        }
+
         Resources resources =  getInstrumentation().getContext().getResources();
         AssetFileDescriptor fd = resources.openRawResourceFd(rid);
         MediaExtractor ex = new MediaExtractor();
-        ex.setDataSource(fd.getFileDescriptor(), fd.getStartOffset(), fd.getLength());
+        try {
+            ex.setDataSource(fd.getFileDescriptor(), fd.getStartOffset(), fd.getLength());
+        } catch (IOException e) {
+            // ignore
+        }
         MediaCodecList codecList = new MediaCodecList(MediaCodecList.REGULAR_CODECS);
         int numtracks = ex.getTrackCount();
         String rname = resources.getResourceEntryName(rid);
@@ -386,5 +432,10 @@ public class StagefrightTest extends InstrumentationTestCase {
             }
         }
         ex.release();
+        String cve = rname.replace("_", "-").toUpperCase();
+        assertFalse("Device *IS* vulnerable to " + cve,
+                    mpcl.waitForError() == MediaPlayer.MEDIA_ERROR_SERVER_DIED);
+        thr.stopLooper();
+
     }
 }
