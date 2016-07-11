@@ -167,7 +167,8 @@ cts_test_packages := \
     CtsViewTestCases \
     CtsWebkitTestCases \
     CtsWebGLTestCases \
-    CtsWidgetTestCases
+    CtsWidgetTestCases \
+    CtsSMSSendConfirmationCheckTestCases
 
 # All APKs that need to be scanned by the coverage utilities.
 CTS_COVERAGE_TEST_CASE_LIST := \
