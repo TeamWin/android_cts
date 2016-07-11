@@ -363,5 +363,14 @@
     "android.security.cts.ServicePermissionsTest#testDumpProtected"
   ],
   bug: 23377274
+},
+{
+  description: "Media encode decode test fails on Nakasi",
+  names: [
+    "android.media.cts.EncodeDecodeTest#testEncodeDecodeVideoFromBufferToBuffer720p",
+    "android.media.cts.EncodeDecodeTest#testEncodeDecodeVideoFromBufferToBufferQCIF",
+    "android.media.cts.EncodeDecodeTest#testEncodeDecodeVideoFromBufferToBufferQVGA"
+  ],
+  bug: 29832792
 }
 ]
