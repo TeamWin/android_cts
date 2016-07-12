@@ -15,6 +15,7 @@
  */
 package android.media.cts;
 
+import android.media.AudioAttributes;
 import android.media.AudioManager;
 import android.media.Rating;
 import android.media.VolumeProvider;
@@ -50,6 +51,22 @@ public class MediaControllerTest extends AndroidTestCase {
         mSession = new MediaSession(getContext(), SESSION_TAG);
         mSession.setCallback(mCallback, mHandler);
         mController = mSession.getController();
+    }
+
+    public void testGetPackageName() {
+        assertEquals(getContext().getPackageName(), mController.getPackageName());
+    }
+
+    public void testGetRatingType() {
+        assertEquals("Default rating type of a session must be Rating.RATING_NONE",
+                Rating.RATING_NONE, mController.getRatingType());
+
+        mSession.setRatingType(Rating.RATING_5_STARS);
+        assertEquals(Rating.RATING_5_STARS, mController.getRatingType());
+    }
+
+    public void testGetSessionToken() throws Exception {
+        assertEquals(mSession.getSessionToken(), mController.getSessionToken());
     }
 
     public void testSendCommand() throws Exception {
@@ -243,6 +260,23 @@ public class MediaControllerTest extends AndroidTestCase {
         }
     }
 
+    public void testPlaybackInfo() {
+        final int playbackType = MediaController.PlaybackInfo.PLAYBACK_TYPE_LOCAL;
+        final int volumeControl = VolumeProvider.VOLUME_CONTROL_ABSOLUTE;
+        final int maxVolume = 10;
+        final int currentVolume = 3;
+
+        AudioAttributes audioAttributes = new AudioAttributes.Builder().build();
+        MediaController.PlaybackInfo info = new MediaController.PlaybackInfo(
+                playbackType, audioAttributes, volumeControl, maxVolume, currentVolume);
+
+        assertEquals(playbackType, info.getPlaybackType());
+        assertEquals(audioAttributes, info.getAudioAttributes());
+        assertEquals(volumeControl, info.getVolumeControl());
+        assertEquals(maxVolume, info.getMaxVolume());
+        assertEquals(currentVolume, info.getCurrentVolume());
+    }
+
     private class MediaSessionCallback extends MediaSession.Callback {
         private long mSeekPosition;
         private long mQueueItemId;
@@ -415,7 +449,7 @@ public class MediaControllerTest extends AndroidTestCase {
         @Override
         public void onCustomAction(String action, Bundle extras) {
             synchronized (mWaitLock) {
-                mOnCustomActionCalled= true;
+                mOnCustomActionCalled = true;
                 mAction = action;
                 mExtras = extras;
                 mWaitLock.notify();
