@@ -33,6 +33,7 @@ import android.test.suitebuilder.annotation.MediumTest;
 import android.test.suitebuilder.annotation.SmallTest;
 import android.text.Editable;
 import android.text.SpannableStringBuilder;
+import android.text.TextUtils;
 import android.util.AttributeSet;
 import android.util.Xml;
 import android.view.ContextMenu.ContextMenuInfo;
@@ -74,7 +75,8 @@ public class AbsListViewTest {
     private static final String[] SHORT_LIST = new String[] { "This", "is", "short", "!" };
 
     private static final String[] COUNTRY_LIST = new String[] {
-            "Argentina", "Australia", "Belize", "Botswana", "Brazil", "Cameroon", "China", "Cyprus",
+            "Argentina", "Armenia", "Aruba", "Australia", "Belarus", "Belgium", "Belize", "Benin",
+            "Botswana", "Brazil", "Cameroon", "China", "Colombia", "Costa Rica", "Cyprus",
             "Denmark", "Djibouti", "Ethiopia", "Fiji", "Finland", "France", "Gabon", "Germany",
             "Ghana", "Haiti", "Honduras", "Iceland", "India", "Indonesia", "Ireland", "Italy",
             "Japan", "Kiribati", "Laos", "Lesotho", "Liberia", "Malaysia", "Mongolia", "Myanmar",
@@ -852,8 +854,87 @@ public class AbsListViewTest {
         assertTrue(mListView.isLayoutRequested());
     }
 
+    @LargeTest
+    @Test
+    public void testTextFilter() {
+        setAdapter();
+
+        // Default state - no text filter
+        assertFalse(mListView.isTextFilterEnabled());
+        assertFalse(mListView.hasTextFilter());
+        assertTrue(TextUtils.isEmpty(mListView.getTextFilter()));
+
+        // Enable text filter and verify that while it's enabled, the filtering is
+        // still no on
+        mInstrumentation.runOnMainSync(() -> mListView.setTextFilterEnabled(true));
+        assertTrue(mListView.isTextFilterEnabled());
+        assertFalse(mListView.hasTextFilter());
+        assertTrue(TextUtils.isEmpty(mListView.getTextFilter()));
+
+        // Verify the initial content of the list
+        assertEquals(COUNTRY_LIST.length, mListView.getCount());
+
+        // Set text filter to A - we expect four entries to be left displayed in the list
+        mInstrumentation.runOnMainSync(() -> mListView.setFilterText("A"));
+        PollingCheck.waitFor(() -> mListView.getCount() == 4);
+        assertTrue(mListView.isTextFilterEnabled());
+        assertTrue(mListView.hasTextFilter());
+        assertTrue(TextUtils.equals("A", mListView.getTextFilter()));
+
+        // Set text filter to Ar - we expect three entries to be left displayed in the list
+        mInstrumentation.runOnMainSync(() -> mListView.setFilterText("Ar"));
+        PollingCheck.waitFor(() -> mListView.getCount() == 3);
+        assertTrue(mListView.isTextFilterEnabled());
+        assertTrue(mListView.hasTextFilter());
+        assertTrue(TextUtils.equals("Ar", mListView.getTextFilter()));
+
+        // Clear text filter - we expect to go back to the initial content
+        mInstrumentation.runOnMainSync(() -> mListView.clearTextFilter());
+        PollingCheck.waitFor(() -> mListView.getCount() == COUNTRY_LIST.length);
+        assertTrue(mListView.isTextFilterEnabled());
+        assertFalse(mListView.hasTextFilter());
+        assertTrue(TextUtils.isEmpty(mListView.getTextFilter()));
+
+        // Set text filter to Be - we expect four entries to be left displayed in the list
+        mInstrumentation.runOnMainSync(() -> mListView.setFilterText("Be"));
+        PollingCheck.waitFor(() -> mListView.getCount() == 4);
+        assertTrue(mListView.isTextFilterEnabled());
+        assertTrue(mListView.hasTextFilter());
+        assertTrue(TextUtils.equals("Be", mListView.getTextFilter()));
+
+        // Set text filter to Q - we no entries displayed in the list
+        mInstrumentation.runOnMainSync(() -> mListView.setFilterText("Q"));
+        PollingCheck.waitFor(() -> mListView.getCount() == 0);
+        assertTrue(mListView.isTextFilterEnabled());
+        assertTrue(mListView.hasTextFilter());
+        assertTrue(TextUtils.equals("Q", mListView.getTextFilter()));
+    }
+
+    @Test
+    public void testOnFilterComplete() {
+        // Note that we're not using spy() due to Mockito not being able to spy on ListView,
+        // at least yet.
+        final MyListView listView = new MyListView(mContext, mAttributeSet);
+
+        mInstrumentation.runOnMainSync(() -> {
+            mActivityRule.getActivity().setContentView(listView);
+            listView.setAdapter(mCountriesAdapter);
+            listView.setTextFilterEnabled(true);
+        });
+        mInstrumentation.waitForIdleSync();
+
+        // Set text filter to A - we expect four entries to be left displayed in the list
+        mInstrumentation.runOnMainSync(() -> listView.setFilterText("A"));
+        PollingCheck.waitFor(() -> listView.getCount() == 4);
+        assertTrue(listView.isTextFilterEnabled());
+        assertTrue(listView.hasTextFilter());
+        assertTrue(TextUtils.equals("A", listView.getTextFilter()));
+
+        assertEquals(4, listView.getOnFilterCompleteCount());
+    }
+
     /**
-     * MyListView for test
+     * MyListView for test.
      */
     private static class MyListView extends ListView {
         public MyListView(Context context) {
@@ -960,6 +1041,18 @@ public class AbsListViewTest {
 
         public boolean isAfterTextChangedCalled() {
             return mIsAfterTextChangedCalled;
+        }
+
+        private int mOnFilterCompleteCount = -1;
+
+        @Override
+        public void onFilterComplete(int count) {
+            super.onFilterComplete(count);
+            mOnFilterCompleteCount = count;
+        }
+
+        public int getOnFilterCompleteCount() {
+            return mOnFilterCompleteCount;
         }
     }
 }
