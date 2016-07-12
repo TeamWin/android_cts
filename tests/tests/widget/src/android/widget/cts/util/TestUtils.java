@@ -29,6 +29,7 @@ import android.graphics.Rect;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.util.Pair;
+import android.util.SparseBooleanArray;
 import android.view.View;
 import android.view.ViewParent;
 import android.widget.TextView;
@@ -380,6 +381,38 @@ public class TestUtils {
             Assert.fail("Expected " + arrayToString(expected) + ", actual "
                     + arrayToString(actual));
         }
+    }
+
+    public static void assertTrueValuesAtPositions(final long[] expectedIndexesForTrueValues,
+            final SparseBooleanArray array) {
+        if (array == null) {
+           if ((expectedIndexesForTrueValues != null)
+                   && (expectedIndexesForTrueValues.length > 0)) {
+               Assert.fail("Expected " + arrayToString(expectedIndexesForTrueValues)
+                    + ", actual [null]");
+           }
+           return;
+        }
+
+        final int totalValuesCount = array.size();
+        // "Convert" the input array into a long[] array that has indexes of true values
+        int trueValuesCount = 0;
+        for (int i = 0; i < totalValuesCount; i++) {
+            if (array.valueAt(i)) {
+                trueValuesCount++;
+            }
+        }
+
+        final long[] trueValuePositions = new long[trueValuesCount];
+        int position = 0;
+        for (int i = 0; i < totalValuesCount; i++) {
+            if (array.valueAt(i)) {
+                trueValuePositions[position++] = array.keyAt(i);
+            }
+        }
+
+        Arrays.sort(trueValuePositions);
+        assertIdentical(expectedIndexesForTrueValues, trueValuePositions);
     }
 
     public static Drawable getDrawable(Context context, @DrawableRes int resid) {
