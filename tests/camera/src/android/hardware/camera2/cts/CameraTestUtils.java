@@ -2179,8 +2179,16 @@ public class CameraTestUtils extends Assert {
 
         // TAG_ISO
         int iso = exif.getAttributeInt(ExifInterface.TAG_ISO, /*defaultValue*/-1);
-        if (staticInfo.areKeysAvailable(CaptureResult.SENSOR_SENSITIVITY)) {
-            int expectedIso = result.get(CaptureResult.SENSOR_SENSITIVITY);
+        if (staticInfo.areKeysAvailable(CaptureResult.SENSOR_SENSITIVITY) ||
+                staticInfo.areKeysAvailable(CaptureResult.CONTROL_POST_RAW_SENSITIVITY_BOOST)) {
+            int expectedIso = 100;
+            if (staticInfo.areKeysAvailable(CaptureResult.SENSOR_SENSITIVITY)) {
+                expectedIso = result.get(CaptureResult.SENSOR_SENSITIVITY);
+            }
+            if (staticInfo.areKeysAvailable(CaptureResult.CONTROL_POST_RAW_SENSITIVITY_BOOST)) {
+                expectedIso = expectedIso *
+                        result.get(CaptureResult.CONTROL_POST_RAW_SENSITIVITY_BOOST) / 100;
+            }
             collector.expectEquals("Exif TAG_ISO is incorrect", expectedIso, iso);
         }
 
