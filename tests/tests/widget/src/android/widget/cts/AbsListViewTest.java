@@ -36,7 +36,9 @@ import android.text.SpannableStringBuilder;
 import android.text.TextUtils;
 import android.util.AttributeSet;
 import android.util.Xml;
+import android.view.ActionMode;
 import android.view.ContextMenu.ContextMenuInfo;
+import android.view.Menu;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AbsListView;
@@ -45,6 +47,7 @@ import android.widget.ArrayAdapter;
 import android.widget.ListAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
+import android.widget.cts.util.TestUtils;
 import android.widget.cts.util.TestUtilsMatchers;
 import android.widget.cts.util.ViewTestUtils;
 
@@ -62,6 +65,7 @@ import org.xmlpull.v1.XmlPullParserException;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -931,6 +935,171 @@ public class AbsListViewTest {
         assertTrue(TextUtils.equals("A", listView.getTextFilter()));
 
         assertEquals(4, listView.getOnFilterCompleteCount());
+    }
+
+    private static class PositionArrayAdapter<T> extends ArrayAdapter<T> {
+        public PositionArrayAdapter(Context context, int resource, List<T> objects) {
+            super(context, resource, objects);
+        }
+
+        @Override
+        public long getItemId(int position) {
+            return position;
+        }
+
+        @Override
+        public boolean hasStableIds() {
+            return true;
+        }
+    }
+
+    private void verifyCheckedState(final long[] expectedCheckedItems) {
+        TestUtils.assertIdentical(expectedCheckedItems, mListView.getCheckedItemIds());
+
+        assertEquals(expectedCheckedItems.length, mListView.getCheckedItemCount());
+
+        final long expectedCheckedItemPosition =
+                (mListView.getChoiceMode() == AbsListView.CHOICE_MODE_SINGLE) &&
+                        (expectedCheckedItems.length == 1)
+                        ? expectedCheckedItems[0]
+                        : AbsListView.INVALID_POSITION;
+        assertEquals(expectedCheckedItemPosition, mListView.getCheckedItemPosition());
+
+        // Note that getCheckedItemPositions doesn't have a guarantee that it only holds
+        // true values, which is why we're not doing the size() == 0 check even in the initial
+        // state
+        TestUtils.assertTrueValuesAtPositions(
+                expectedCheckedItems, mListView.getCheckedItemPositions());
+    }
+
+    @MediumTest
+    @Test
+    public void testCheckedItemsUnderNoneChoiceMode() {
+        final ArrayList<String> items = new ArrayList<>(Arrays.asList(COUNTRY_LIST));
+        final ArrayAdapter<String> adapter = new PositionArrayAdapter<>(mContext,
+                android.R.layout.simple_list_item_1, items);
+        ViewTestUtils.runOnMainAndDrawSync(mInstrumentation, mListView,
+                () -> mListView.setAdapter(adapter));
+
+        mInstrumentation.runOnMainSync(
+                () -> mListView.setChoiceMode(AbsListView.CHOICE_MODE_NONE));
+        verifyCheckedState(new long[] {});
+
+        mInstrumentation.runOnMainSync(() -> mListView.setItemChecked(2, true));
+        verifyCheckedState(new long[] {});
+
+        mInstrumentation.runOnMainSync(() -> mListView.setItemChecked(4, true));
+        verifyCheckedState(new long[] {});
+
+        mInstrumentation.runOnMainSync(() -> mListView.setItemChecked(2, false));
+        verifyCheckedState(new long[] {});
+
+        mInstrumentation.runOnMainSync(() -> mListView.setItemChecked(4, false));
+        verifyCheckedState(new long[] {});
+    }
+
+    @MediumTest
+    @Test
+    public void testCheckedItemsUnderSingleChoiceMode() {
+        final ArrayList<String> items = new ArrayList<>(Arrays.asList(COUNTRY_LIST));
+        final ArrayAdapter<String> adapter = new PositionArrayAdapter<>(mContext,
+                android.R.layout.simple_list_item_1, items);
+        ViewTestUtils.runOnMainAndDrawSync(mInstrumentation, mListView,
+                () -> mListView.setAdapter(adapter));
+
+        mInstrumentation.runOnMainSync(
+                () -> mListView.setChoiceMode(AbsListView.CHOICE_MODE_SINGLE));
+        verifyCheckedState(new long[] {});
+
+        mInstrumentation.runOnMainSync(() -> mListView.setItemChecked(2, true));
+        verifyCheckedState(new long[] { 2 });
+
+        mInstrumentation.runOnMainSync(() -> mListView.setItemChecked(4, true));
+        verifyCheckedState(new long[] { 4 });
+
+        mInstrumentation.runOnMainSync(() -> mListView.setItemChecked(2, false));
+        verifyCheckedState(new long[] { 4 });
+
+        mInstrumentation.runOnMainSync(() -> mListView.setItemChecked(4, false));
+        verifyCheckedState(new long[] {});
+    }
+
+    @MediumTest
+    @Test
+    public void testCheckedItemsUnderMultipleChoiceMode() {
+        final ArrayList<String> items = new ArrayList<>(Arrays.asList(COUNTRY_LIST));
+        final ArrayAdapter<String> adapter = new PositionArrayAdapter<>(mContext,
+                android.R.layout.simple_list_item_1, items);
+        ViewTestUtils.runOnMainAndDrawSync(mInstrumentation, mListView,
+                () -> mListView.setAdapter(adapter));
+
+        mInstrumentation.runOnMainSync(
+                () -> mListView.setChoiceMode(AbsListView.CHOICE_MODE_MULTIPLE));
+        verifyCheckedState(new long[] {});
+
+        mInstrumentation.runOnMainSync(() -> mListView.setItemChecked(2, true));
+        verifyCheckedState(new long[] { 2 });
+
+        mInstrumentation.runOnMainSync(() -> mListView.setItemChecked(4, true));
+        verifyCheckedState(new long[] { 2, 4 });
+
+        mInstrumentation.runOnMainSync(() -> mListView.setItemChecked(2, false));
+        verifyCheckedState(new long[] { 4 });
+
+        mInstrumentation.runOnMainSync(() -> mListView.setItemChecked(4, false));
+        verifyCheckedState(new long[] {});
+    }
+
+    @MediumTest
+    @Test
+    public void testCheckedItemsUnderMultipleModalChoiceMode() {
+        final ArrayList<String> items = new ArrayList<>(Arrays.asList(COUNTRY_LIST));
+        final ArrayAdapter<String> adapter = new PositionArrayAdapter<>(mContext,
+                android.R.layout.simple_list_item_1, items);
+        ViewTestUtils.runOnMainAndDrawSync(mInstrumentation, mListView,
+                () -> mListView.setAdapter(adapter));
+
+        // Configure a multi-choice mode listener to configure our test contextual action bar
+        // content. We will subsequently query that listener for calls to its
+        // onItemCheckedStateChanged method
+        final AbsListView.MultiChoiceModeListener mockMultiChoiceModeListener =
+                mock(AbsListView.MultiChoiceModeListener.class);
+        doAnswer((InvocationOnMock invocation) -> {
+            final ActionMode actionMode = (ActionMode) invocation.getArguments() [0];
+            final Menu menu = (Menu) invocation.getArguments() [1];
+            actionMode.getMenuInflater().inflate(R.menu.cab_menu, menu);
+            return true;
+        }).when(mockMultiChoiceModeListener).onCreateActionMode(
+                any(ActionMode.class), any(Menu.class));
+        mListView.setMultiChoiceModeListener(mockMultiChoiceModeListener);
+
+        mInstrumentation.runOnMainSync(
+                () -> mListView.setChoiceMode(AbsListView.CHOICE_MODE_MULTIPLE_MODAL));
+        verifyCheckedState(new long[] {});
+
+        mInstrumentation.runOnMainSync(() -> mListView.setItemChecked(2, true));
+        verifyCheckedState(new long[] { 2 });
+        verify(mockMultiChoiceModeListener, times(1)).onItemCheckedStateChanged(
+                any(ActionMode.class), eq(2), eq(2L), eq(true));
+
+        reset(mockMultiChoiceModeListener);
+        mInstrumentation.runOnMainSync(() -> mListView.setItemChecked(4, true));
+        verifyCheckedState(new long[] { 2, 4 });
+        verify(mockMultiChoiceModeListener, times(1)).onItemCheckedStateChanged(
+                any(ActionMode.class), eq(4), eq(4L), eq(true));
+
+        reset(mockMultiChoiceModeListener);
+        mInstrumentation.runOnMainSync(() -> mListView.setItemChecked(2, false));
+        verifyCheckedState(new long[] { 4 });
+        verify(mockMultiChoiceModeListener, times(1)).onItemCheckedStateChanged(
+                any(ActionMode.class), eq(2), eq(2L), eq(false));
+
+        reset(mockMultiChoiceModeListener);
+        mInstrumentation.runOnMainSync(() -> mListView.setItemChecked(4, false));
+        verifyCheckedState(new long[] {});
+        mListView.setMultiChoiceModeListener(mockMultiChoiceModeListener);
+        verify(mockMultiChoiceModeListener, times(1)).onItemCheckedStateChanged(
+                any(ActionMode.class), eq(4), eq(4L), eq(false));
     }
 
     /**
