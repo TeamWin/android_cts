@@ -23,8 +23,10 @@ import android.support.annotation.Nullable;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewConfiguration;
+import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
 import android.view.ViewTreeObserver.OnDrawListener;
+
 import junit.framework.Assert;
 
 import java.util.concurrent.CountDownLatch;
@@ -135,6 +137,12 @@ public class ViewTestUtils {
      */
     public static void emulateDragGesture(Instrumentation instrumentation,
             int dragStartX, int dragStartY, int dragAmountX, int dragAmountY) {
+        emulateDragGesture(instrumentation, dragStartX, dragStartY, dragAmountX, dragAmountY, 2000);
+    }
+
+    private static void emulateDragGesture(Instrumentation instrumentation,
+            int dragStartX, int dragStartY, int dragAmountX, int dragAmountY,
+            int dragDurationMs) {
         // Inject DOWN event
         long downTime = SystemClock.uptimeMillis();
         MotionEvent eventDown = MotionEvent.obtain(
@@ -150,8 +158,8 @@ public class ViewTestUtils {
             MotionEvent eventMove = MotionEvent.obtain(
                     moveTime, moveTime, MotionEvent.ACTION_MOVE, moveX, moveY, 1);
             instrumentation.sendPointerSync(eventMove);
-            // sleep for a bit to emulate a 2-second swipe
-            SystemClock.sleep(2000 / moveEventCount);
+            // sleep for a bit to emulate the overall swipe gesture
+            SystemClock.sleep(dragDurationMs / moveEventCount);
         }
 
         // Inject UP event
@@ -163,6 +171,76 @@ public class ViewTestUtils {
 
         // Wait for the system to process all events in the queue
         instrumentation.waitForIdleSync();
+    }
+
+    private static class ViewStateSnapshot {
+        final View mFirst;
+        final View mLast;
+        final int mFirstTop;
+        final int mLastBottom;
+        final int mChildCount;
+        private ViewStateSnapshot(ViewGroup viewGroup) {
+            mChildCount = viewGroup.getChildCount();
+            if (mChildCount == 0) {
+                mFirst = mLast = null;
+                mFirstTop = mLastBottom = Integer.MIN_VALUE;
+            } else {
+                mFirst = viewGroup.getChildAt(0);
+                mLast = viewGroup.getChildAt(mChildCount - 1);
+                mFirstTop = mFirst.getTop();
+                mLastBottom = mLast.getBottom();
+            }
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) {
+                return true;
+            }
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
+
+            final ViewStateSnapshot that = (ViewStateSnapshot) o;
+            return mFirstTop == that.mFirstTop &&
+                    mLastBottom == that.mLastBottom &&
+                    mFirst == that.mFirst &&
+                    mLast == that.mLast &&
+                    mChildCount == that.mChildCount;
+        }
+
+        @Override
+        public int hashCode() {
+            int result = mFirst != null ? mFirst.hashCode() : 0;
+            result = 31 * result + (mLast != null ? mLast.hashCode() : 0);
+            result = 31 * result + mFirstTop;
+            result = 31 * result + mLastBottom;
+            result = 31 * result + mChildCount;
+            return result;
+        }
+    }
+
+    /**
+     * Emulates a scroll to the bottom of the specified {@link ViewGroup}.
+     *
+     * @param instrumentation the instrumentation used to run the test
+     * @param viewGroup View group
+     */
+    public static void emulateScrollToBottom(Instrumentation instrumentation, ViewGroup viewGroup) {
+        final int[] viewGroupOnScreenXY = new int[2];
+        viewGroup.getLocationOnScreen(viewGroupOnScreenXY);
+
+        final int emulatedX = viewGroupOnScreenXY[0] + viewGroup.getWidth() / 2;
+        final int emulatedStartY = viewGroupOnScreenXY[1] + 3 * viewGroup.getHeight() / 4;
+        final int swipeAmount = viewGroup.getHeight() / 2;
+
+        ViewStateSnapshot prev;
+        ViewStateSnapshot next = new ViewStateSnapshot(viewGroup);
+        do {
+            prev = next;
+            emulateDragGesture(instrumentation, emulatedX, emulatedStartY, 0, -swipeAmount, 300);
+            next = new ViewStateSnapshot(viewGroup);
+        } while (!prev.equals(next));
     }
 
     /**
