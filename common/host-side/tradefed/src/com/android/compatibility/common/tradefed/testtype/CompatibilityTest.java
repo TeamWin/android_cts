@@ -571,12 +571,18 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
             }
             // Append each test that failed or was not executed to the filters
             for (IModuleResult module : result.getModules()) {
-                for (ICaseResult testResultList : module.getResults()) {
-                    for (ITestResult testResult : testResultList.getResults(TestStatus.PASS)) {
-                        // Create the filter for the test to be run.
-                        TestFilter filter = new TestFilter(
-                                module.getAbi(), module.getName(), testResult.getFullName());
-                        mExcludeFilters.add(filter.toString());
+                if (module.isPassed()) {
+                    // Whole module passed, exclude entire module
+                    TestFilter filter = new TestFilter(module.getAbi(), module.getName(), null);
+                    mExcludeFilters.add(filter.toString());
+                } else {
+                    for (ICaseResult testResultList : module.getResults()) {
+                        for (ITestResult testResult : testResultList.getResults(TestStatus.PASS)) {
+                            // Test passed, exclude it for retry
+                            TestFilter filter = new TestFilter(
+                                    module.getAbi(), module.getName(), testResult.getFullName());
+                            mExcludeFilters.add(filter.toString());
+                        }
                     }
                 }
             }

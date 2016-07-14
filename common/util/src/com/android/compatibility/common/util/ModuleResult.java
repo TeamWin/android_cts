@@ -60,6 +60,15 @@ public class ModuleResult implements IModuleResult {
      * {@inheritDoc}
      */
     @Override
+    public boolean isPassed() {
+        return mDone &&
+                (countResults(TestStatus.FAIL) + countResults(TestStatus.NOT_EXECUTED) == 0);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
     public String getId() {
         return mId;
     }
