@@ -58,6 +58,8 @@
                        android:value="1" />
 
         </service>
+        <meta-data android:name="android.accounts.SupportedLoginTypes"
+                android:value="com.google;com.facebook;com.twitter" />
     </application>
 
     <instrumentation android:name="android.support.test.runner.AndroidJUnitRunner"
