@@ -47,9 +47,7 @@ def main():
                              its.caps.per_frame_control(props))
 
         white_level = float(props['android.sensor.info.whiteLevel'])
-        black_levels = props['android.sensor.blackLevelPattern']
         cfa_idxs = its.image.get_canonical_cfa_order(props)
-        black_levels = [black_levels[i] for i in cfa_idxs]
 
         # Expose for the scene with min sensitivity
         sens_min, sens_max = props['android.sensor.info.sensitivityRange']
@@ -79,8 +77,10 @@ def main():
                 # non-uniform lighting or vignetting doesn't affect the variance
                 # calculation).
                 plane = its.image.convert_capture_to_planes(cap, props)[ch]
-                plane = (plane * white_level - black_levels[ch]) / (
-                        white_level - black_levels[ch])
+                black_level = its.image.get_black_level(
+                    ch, props, cap["metadata"])
+                plane = (plane * white_level - black_level) / (
+                    white_level - black_level)
                 tile = its.image.get_image_patch(plane, 0.49,0.49,0.02,0.02)
                 mean = tile.mean()
 
