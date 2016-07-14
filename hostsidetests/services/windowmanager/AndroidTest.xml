@@ -19,6 +19,7 @@
         <option name="test-file-name" value="CtsDragAndDropSourceApp.apk" />
         <option name="test-file-name" value="CtsDragAndDropTargetApp.apk" />
         <option name="test-file-name" value="CtsDragAndDropTargetAppSdk23.apk" />
+        <option name="test-file-name" value="CtsDeviceWindowFramesTestApp.apk" />
     </target_preparer>
     <test class="com.android.compatibility.common.tradefed.testtype.JarHostTest" >
         <option name="jar" value="CtsDragAndDropHostTestCases.jar" />

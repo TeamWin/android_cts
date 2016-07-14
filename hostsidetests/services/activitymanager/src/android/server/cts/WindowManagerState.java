@@ -34,7 +34,7 @@ import java.util.regex.Matcher;
 import static android.server.cts.StateLogger.log;
 import static android.server.cts.StateLogger.logE;
 
-class WindowManagerState {
+public class WindowManagerState {
     private static final String DUMPSYS_WINDOWS_APPS = "dumpsys window apps";
     private static final String DUMPSYS_WINDOWS_VISIBLE_APPS = "dumpsys window visible-apps";
 
@@ -215,7 +215,7 @@ class WindowManagerState {
         }
     }
 
-    void getMatchingWindowState(final String windowName, List<WindowState> windowList) {
+    public void getMatchingWindowState(final String windowName, List<WindowState> windowList) {
         windowList.clear();
         for (WindowState ws : mWindowStates) {
             if (windowName.equals(ws.getName())) {
@@ -586,14 +586,19 @@ class WindowManagerState {
         }
     }
 
-    static class WindowState extends WindowContainer {
+    public static class WindowState extends WindowContainer {
         private static final String TAG = "[WindowState] ";
 
         private static final String RECT_STR = "\\[(\\d+),(\\d+)\\]\\[(\\d+),(\\d+)\\]";
+        private static final Pattern sMainFramePattern = Pattern.compile("mFrame=" + RECT_STR + ".+");
         private static final Pattern sFramePattern =
                 Pattern.compile("Frames: containing=" + RECT_STR + " parent=" + RECT_STR);
+        private static final Pattern sContentFramePattern =
+            Pattern.compile("content=" + RECT_STR + " .+");
         private static final Pattern sWindowAssociationPattern =
                 Pattern.compile("mDisplayId=(\\d+) stackId=(\\d+) (.+)");
+        private static final Pattern sSurfaceInsetsPattern =
+            Pattern.compile("Cur insets.+surface=" + RECT_STR + ".+");
 
         private final String mName;
         private final String mAppToken;
@@ -603,6 +608,9 @@ class WindowManagerState {
         private int mStackId;
         private Rectangle mContainingFrame = new Rectangle();
         private Rectangle mParentFrame = new Rectangle();
+        private Rectangle mContentFrame = new Rectangle();
+        private Rectangle mFrame = new Rectangle();
+        private Rectangle mSurfaceInsets = new Rectangle();
 
         private WindowState(Matcher matcher, boolean starting, boolean exiting) {
             mName = matcher.group(4);
@@ -611,7 +619,7 @@ class WindowManagerState {
             mExiting = exiting;
         }
 
-        String getName() {
+        public String getName() {
             return mName;
         }
 
@@ -635,8 +643,20 @@ class WindowManagerState {
             return mStackId;
         }
 
-        Rectangle getContainingFrame() {
+        public Rectangle getContainingFrame() {
             return mContainingFrame;
+        }
+
+        public Rectangle getFrame() {
+            return mFrame;
+        }
+
+        public Rectangle getSurfaceInsets() {
+            return mSurfaceInsets;
+        }
+
+        public Rectangle getContentFrame() {
+            return mContentFrame;
         }
 
         Rectangle getParentFrame() {
@@ -685,11 +705,30 @@ class WindowManagerState {
                     continue;
                 }
 
+                matcher = sMainFramePattern.matcher(line);
+                if (matcher.matches()) {
+                    log(TAG + "MAIN WINDOW FRAME: " + line);
+                    mFrame = extractBounds(matcher);
+                    continue;
+                }
+
                 matcher = sFramePattern.matcher(line);
                 if (matcher.matches()) {
                     log(TAG + "FRAME: " + line);
                     extractMultipleBounds(matcher, 1, mContainingFrame, mParentFrame);
                     continue;
+                }
+
+                matcher = sContentFramePattern.matcher(line);
+                if (matcher.matches()) {
+                    log(TAG + "CONTENT FRAME: " + line);
+                    mContentFrame = extractBounds(matcher);
+                }
+
+                matcher = sSurfaceInsetsPattern.matcher(line);
+                if (matcher.matches()) {
+                    log(TAG + "INSETS: " + line);
+                    mSurfaceInsets = extractBounds(matcher);
                 }
 
                 // Extract other info here if needed
