@@ -329,6 +329,9 @@
 
         <activity android:name="android.app.stubs.KeyboardShortcutsActivity" />
 
+        <activity android:name="android.app.stubs.NewDocumentTestActivity"
+                  android:documentLaunchMode="intoExisting" />
+
     </application>
 
 </manifest>
