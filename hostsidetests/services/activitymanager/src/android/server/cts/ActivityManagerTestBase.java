@@ -76,6 +76,8 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
 
     private static final String INPUT_KEYEVENT_HOME = "input keyevent 3";
 
+    static String componentName = "android.server.app";
+
     /** A reference to the device under test. */
     protected ITestDevice mDevice;
 
@@ -85,16 +87,29 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
         return "am start -n " + getActivityComponentName(activityName);
     }
 
+    protected static String getAmStartCmd(final String activityName,
+            final String extraDataName,
+            final String extraDataValue) {
+        String base = getAmStartCmd(activityName);
+        return base + " --es " + extraDataName + " " + extraDataValue;
+    }
+
     protected static String getAmStartCmdOverHome(final String activityName) {
         return "am start --activity-task-on-home -n " + getActivityComponentName(activityName);
     }
 
     static String getActivityComponentName(final String activityName) {
-        return "android.server.app/." + activityName;
+        return componentName + "/." + activityName;
+    }
+
+    // A little ugly, but lets avoid having to strip static everywhere for
+    // now.
+    public static void setComponentName(String name) {
+        componentName = name;
     }
 
     static String getWindowName(final String activityName) {
-        return "android.server.app/android.server.app." + activityName;
+        return componentName + "/" + componentName + "." + activityName;
     }
 
     protected ActivityAndWindowManagersState mAmWmState = new ActivityAndWindowManagersState();

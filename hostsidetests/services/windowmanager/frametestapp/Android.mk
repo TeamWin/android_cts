@@ -12,27 +12,20 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-LOCAL_PATH := $(call my-dir)
+LOCAL_PATH:= $(call my-dir)
 
 include $(CLEAR_VARS)
 
+# Don't include this package in any target.
 LOCAL_MODULE_TAGS := tests
-
-# Must match the package name in OldCtsTestCaseList.mk
-LOCAL_MODULE := CtsDragAndDropHostTestCases
 
 LOCAL_SRC_FILES := $(call all-java-files-under, src)
 
-LOCAL_JAVA_LIBRARIES := cts-tradefed tradefed-prebuilt CtsServicesHostTestCases
-
-LOCAL_CTS_TEST_PACKAGE := android.wm.cts
-
-LOCAL_CTS_MODULE_CONFIG := $(LOCAL_PATH)/Old$(CTS_MODULE_TEST_CONFIG)
+LOCAL_SDK_VERSION := test_current
 
 # Tag this module as a cts test artifact
 LOCAL_COMPATIBILITY_SUITE := cts
 
-include $(BUILD_CTS_HOST_JAVA_LIBRARY)
+LOCAL_PACKAGE_NAME := CtsDeviceWindowFramesTestApp
 
-# Build the test APKs using their own makefiles
-include $(call all-makefiles-under,$(LOCAL_PATH))
+include $(BUILD_CTS_SUPPORT_PACKAGE)

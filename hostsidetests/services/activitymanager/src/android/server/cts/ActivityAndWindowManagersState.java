@@ -35,7 +35,7 @@ import static android.server.cts.ActivityManagerTestBase.PINNED_STACK_ID;
 import static android.server.cts.StateLogger.log;
 
 /** Combined state of the activity manager and window manager. */
-class ActivityAndWindowManagersState extends Assert {
+public class ActivityAndWindowManagersState extends Assert {
 
     // Clone of android DisplayMetrics.DENSITY_DEFAULT (DENSITY_MEDIUM)
     // (Needed in host-side tests to convert dp to px.)
@@ -57,7 +57,7 @@ class ActivityAndWindowManagersState extends Assert {
      * @param device test device.
      * @param waitForActivitiesVisible array of activity names to wait for.
      */
-    void computeState(ITestDevice device, String[] waitForActivitiesVisible) throws Exception {
+    public void computeState(ITestDevice device, String[] waitForActivitiesVisible) throws Exception {
         computeState(device, waitForActivitiesVisible, true);
     }
 
@@ -222,7 +222,7 @@ class ActivityAndWindowManagersState extends Assert {
         return mAmState;
     }
 
-    WindowManagerState getWmState() {
+    public WindowManagerState getWmState() {
         return mWmState;
     }
 
