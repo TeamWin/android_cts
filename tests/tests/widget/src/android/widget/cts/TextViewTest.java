@@ -98,6 +98,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.accessibility.AccessibilityNodeInfo;
 import android.view.inputmethod.BaseInputConnection;
+import android.view.inputmethod.CompletionInfo;
 import android.view.inputmethod.CorrectionInfo;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.ExtractedText;
@@ -1548,9 +1549,13 @@ public class TextViewTest extends ActivityInstrumentationTestCase2<TextViewCtsAc
     // Initialize the text view for simulated IME typing. Must be called on UI thread.
     private InputConnection initTextViewForSimulatedIme() {
         mTextView = findTextView(R.id.textview_text);
-        mTextView.setKeyListener(QwertyKeyListener.getInstance(false, Capitalize.NONE));
-        mTextView.setText("", BufferType.EDITABLE);
-        return mTextView.onCreateInputConnection(new EditorInfo());
+        return initTextViewForSimulatedIme(mTextView);
+    }
+
+    private InputConnection initTextViewForSimulatedIme(TextView textView) {
+        textView.setKeyListener(QwertyKeyListener.getInstance(false, Capitalize.NONE));
+        textView.setText("", BufferType.EDITABLE);
+        return textView.onCreateInputConnection(new EditorInfo());
     }
 
     // Simulates IME composing text behavior.
@@ -1628,24 +1633,56 @@ public class TextViewTest extends ActivityInstrumentationTestCase2<TextViewCtsAc
 
     @UiThreadTest
     public void testUndo_imeAutoCorrection() {
-        InputConnection input = initTextViewForSimulatedIme();
+        mTextView = findTextView(R.id.textview_text);
+        TextView spiedTextView = spy(mTextView);
+        InputConnection input = initTextViewForSimulatedIme(spiedTextView);
 
         // Start typing a composition.
         setComposingTextInBatch(input, "t");
         setComposingTextInBatch(input, "te");
         setComposingTextInBatch(input, "teh");
 
+        CorrectionInfo correctionInfo = new CorrectionInfo(0, "teh", "the");
+        reset(spiedTextView);
         input.beginBatchEdit();
         // Auto correct "teh" to "the".
-        input.commitCorrection(new CorrectionInfo(0, "teh", "the"));
+        assertTrue(input.commitCorrection(correctionInfo));
         input.commitText("the", 1);
         input.endBatchEdit();
 
-        assertEquals("the", mTextView.getText().toString());
-        mTextView.onTextContextMenuItem(android.R.id.undo);
-        assertEquals("teh", mTextView.getText().toString());
-        mTextView.onTextContextMenuItem(android.R.id.undo);
-        assertEquals("", mTextView.getText().toString());
+        verify(spiedTextView, times(1)).onCommitCorrection(refEq(correctionInfo));
+
+        assertEquals("the", spiedTextView.getText().toString());
+        spiedTextView.onTextContextMenuItem(android.R.id.undo);
+        assertEquals("teh", spiedTextView.getText().toString());
+        spiedTextView.onTextContextMenuItem(android.R.id.undo);
+        assertEquals("", spiedTextView.getText().toString());
+    }
+
+    @UiThreadTest
+    public void testUndo_imeAutoCompletion() {
+        mTextView = findTextView(R.id.textview_text);
+        TextView spiedTextView = spy(mTextView);
+        InputConnection input = initTextViewForSimulatedIme(spiedTextView);
+
+        // Start typing a composition.
+        setComposingTextInBatch(input, "a");
+        setComposingTextInBatch(input, "an");
+        setComposingTextInBatch(input, "and");
+
+        CompletionInfo completionInfo = new CompletionInfo(0, 0, "android");
+        reset(spiedTextView);
+        input.beginBatchEdit();
+        // Auto complete "and" to "android".
+        assertTrue(input.commitCompletion(completionInfo));
+        input.commitText("android", 1);
+        input.endBatchEdit();
+
+        verify(spiedTextView, times(1)).onCommitCompletion(refEq(completionInfo));
+
+        assertEquals("android", spiedTextView.getText().toString());
+        spiedTextView.onTextContextMenuItem(android.R.id.undo);
+        assertEquals("", spiedTextView.getText().toString());
     }
 
     @UiThreadTest
