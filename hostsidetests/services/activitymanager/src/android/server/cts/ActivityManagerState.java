@@ -45,18 +45,18 @@ class ActivityManagerState {
 
     private final Pattern mDisplayIdPattern = Pattern.compile("Display #(\\d+)");
     private final Pattern mStackIdPattern = Pattern.compile("Stack #(\\d+)\\:");
-    private final Pattern mFocusedActivityPattern =
-            Pattern.compile("mFocusedActivity\\: ActivityRecord\\{(.+) u(\\d+) (\\S+) (\\S+)\\}");
+    private final Pattern mResumedActivityPattern =
+            Pattern.compile("ResumedActivity\\: ActivityRecord\\{(.+) u(\\d+) (\\S+) (\\S+)\\}");
     private final Pattern mFocusedStackPattern =
             Pattern.compile("mFocusedStack=ActivityStack\\{(.+) stackId=(\\d+), (.+)\\}(.+)");
 
     private final Pattern[] mExtractStackExitPatterns =
-            { mStackIdPattern, mFocusedActivityPattern, mFocusedStackPattern};
+            { mStackIdPattern, mResumedActivityPattern, mFocusedStackPattern};
 
     // Stacks in z-order with the top most at the front of the list.
     private final List<ActivityStack> mStacks = new ArrayList();
     private int mFocusedStackId = -1;
-    private String mFocusedActivityRecord = null;
+    private String mResumedActivityRecord = null;
     private final List<String> mResumedActivities = new ArrayList();
     private final LinkedList<String> mSysDump = new LinkedList();
 
@@ -88,7 +88,7 @@ class ActivityManagerState {
             dump = outputReceiver.getOutput();
             parseSysDump(dump);
 
-            retry = mStacks.isEmpty() || mFocusedStackId == -1 || mFocusedActivityRecord == null
+            retry = mStacks.isEmpty() || mFocusedStackId == -1 || mResumedActivityRecord == null
                     || mResumedActivities.isEmpty();
         } while (retry && retriesLeft-- > 0);
 
@@ -102,7 +102,7 @@ class ActivityManagerState {
         if (mFocusedStackId == -1) {
             logE("No focused stack found...");
         }
-        if (mFocusedActivityRecord == null) {
+        if (mResumedActivityRecord == null) {
             logE("No focused activity found...");
         }
         if (mResumedActivities.isEmpty()) {
@@ -139,11 +139,11 @@ class ActivityManagerState {
                 continue;
             }
 
-            matcher = mFocusedActivityPattern.matcher(line);
+            matcher = mResumedActivityPattern.matcher(line);
             if (matcher.matches()) {
                 log(line);
-                mFocusedActivityRecord = matcher.group(3);
-                log(mFocusedActivityRecord);
+                mResumedActivityRecord = matcher.group(3);
+                log(mResumedActivityRecord);
                 continue;
             }
 
@@ -160,7 +160,7 @@ class ActivityManagerState {
     private void reset() {
         mStacks.clear();
         mFocusedStackId = -1;
-        mFocusedActivityRecord = null;
+        mResumedActivityRecord = null;
         mResumedActivities.clear();
         mSysDump.clear();
     }
@@ -174,7 +174,7 @@ class ActivityManagerState {
     }
 
     String getFocusedActivity() {
-        return mFocusedActivityRecord;
+        return mResumedActivityRecord;
     }
 
     String getResumedActivity() {
