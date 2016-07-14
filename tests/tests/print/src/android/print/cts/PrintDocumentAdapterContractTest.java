@@ -232,6 +232,77 @@ public class PrintDocumentAdapterContractTest extends BasePrintTest {
         verifyNoMoreInteractions(adapter);
     }
 
+    public void testNonCallingBackWrite() throws Exception {
+        if (!supportsPrinting()) {
+            return;
+        }
+
+        // Configure the print services.
+        FirstPrintService.setCallbacks(createFirstMockPrintServiceCallbacks());
+        SecondPrintService.setCallbacks(createSecondMockPrintServiceCallbacks());
+
+        final PrintAttributes[] printAttributes = new PrintAttributes[1];
+        final boolean[] isWriteBroken = new boolean[1];
+
+        // Create a mock print adapter.
+        PrintDocumentAdapter adapter = createMockPrintDocumentAdapter(
+                invocation -> {
+                    printAttributes[0] = (PrintAttributes) invocation.getArguments()[1];
+                    PrintDocumentAdapter.LayoutResultCallback callback =
+                            (PrintDocumentAdapter.LayoutResultCallback) invocation
+                                    .getArguments()[3];
+
+                    callback.onLayoutFinished(new PrintDocumentInfo.Builder(PRINT_JOB_NAME)
+                                    .setPageCount(PrintDocumentInfo.PAGE_COUNT_UNKNOWN).build(),
+                            false);
+
+                    onLayoutCalled();
+                    return null;
+                }, invocation -> {
+                    Object[] args = invocation.getArguments();
+                    PrintDocumentAdapter.WriteResultCallback callback =
+                            (PrintDocumentAdapter.WriteResultCallback) args[3];
+
+                    if (isWriteBroken[0]) {
+                        ((CancellationSignal) args[2])
+                                .setOnCancelListener(() -> callback.onWriteCancelled());
+                    } else {
+                        try (ParcelFileDescriptor fd = (ParcelFileDescriptor) args[1]) {
+                            writeBlankPages(printAttributes[0], fd, 0, 1);
+                        }
+                        callback.onWriteFinished(new PageRange[]{new PageRange(0, 0)});
+                    }
+
+                    onWriteCalled();
+                    return null;
+                }, invocation -> {
+                    onFinishCalled();
+                    return null;
+                });
+
+        // never return from writes until we repair the write call later
+        isWriteBroken[0] = true;
+
+        // Start printing.
+        print(adapter);
+
+        // Wait for write. This will happen as the the first layout always triggers a write
+        waitForWriteAdapterCallback(1);
+
+        // Finally return useful data from the adapter's write call
+        isWriteBroken[0] = false;
+
+        selectPrinter("Third printer");
+        clickPrintButton();
+        answerPrintServicesWarning(true);
+
+        // The layout reports that the doc did not change and none of the print attributes changed.
+        // Still: As the pages are not written yet we still get a write call
+        waitForWriteAdapterCallback(2);
+
+        waitForPrinterDiscoverySessionDestroyCallbackCalled(1);
+    }
+
     public void testPrintOptionsChangeAndNoPrinterChange() throws Exception {
         if (!supportsPrinting()) {
             return;
