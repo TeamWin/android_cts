@@ -812,7 +812,7 @@ public class DecoderTest extends MediaPlayerTestBase {
         return decoded;
     }
 
-    private void queueConfig(MediaCodec codec, MediaFormat format) {
+    private static void queueConfig(MediaCodec codec, MediaFormat format) {
         for (String csdKey : CSD_KEYS) {
             if (!format.containsKey(csdKey)) {
                 continue;
@@ -1441,6 +1441,10 @@ public class DecoderTest extends MediaPlayerTestBase {
             codecOutputBuffers = codec.getOutputBuffers();
         } else if (resetMode == RESET_MODE_FLUSH) {
             codec.flush();
+
+            // We must always queue CSD after a flush that is potentially
+            // before we receive output format has changed.
+            queueConfig(codec, format);
         }
 
         // start decode loop
