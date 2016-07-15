@@ -21,6 +21,7 @@ import android.app.Activity;
 import android.app.Instrumentation;
 import android.content.Context;
 import android.content.res.Resources;
+import android.cts.util.WidgetTestUtils;
 import android.graphics.Color;
 import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
@@ -40,7 +41,6 @@ import android.widget.LinearLayout.LayoutParams;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.cts.util.TestUtils;
-import android.widget.cts.util.ViewTestUtils;
 
 import org.xmlpull.v1.XmlPullParser;
 
@@ -801,20 +801,20 @@ public class LinearLayoutTest extends ActivityInstrumentationTestCase<LinearLayo
                 dividerSize, Color.RED, dividerPadding);
 
         // Change the divider to magenta
-        ViewTestUtils.runOnMainAndDrawSync(instrumentation, parent,
+        WidgetTestUtils.runOnMainAndDrawSync(instrumentation, parent,
                 () -> parent.setDividerDrawable(
                         mActivity.getDrawable(R.drawable.linear_layout_divider_magenta)));
         verifyVisualsOfVerticalLayoutWithDivider(parent, LinearLayout.SHOW_DIVIDER_MIDDLE,
                 dividerSize, Color.MAGENTA, dividerPadding);
 
         // Change the divider to null (no divider effectively)
-        ViewTestUtils.runOnMainAndDrawSync(instrumentation, parent,
+        WidgetTestUtils.runOnMainAndDrawSync(instrumentation, parent,
                 () -> parent.setDividerDrawable(null));
         verifyVisualsOfVerticalLayoutWithDivider(parent, LinearLayout.SHOW_DIVIDER_MIDDLE,
                 0, Color.TRANSPARENT, 0);
 
         // Change the divider back to red
-        ViewTestUtils.runOnMainAndDrawSync(instrumentation, parent,
+        WidgetTestUtils.runOnMainAndDrawSync(instrumentation, parent,
                 () -> parent.setDividerDrawable(
                         mActivity.getDrawable(R.drawable.linear_layout_divider_red)));
         verifyVisualsOfVerticalLayoutWithDivider(parent, LinearLayout.SHOW_DIVIDER_MIDDLE,
@@ -822,7 +822,7 @@ public class LinearLayoutTest extends ActivityInstrumentationTestCase<LinearLayo
 
         // Change the padding to half the original size
         final int halfPadding = dividerPadding / 2;
-        ViewTestUtils.runOnMainAndDrawSync(instrumentation, parent,
+        WidgetTestUtils.runOnMainAndDrawSync(instrumentation, parent,
                 () -> parent.setDividerPadding(halfPadding));
         assertEquals(halfPadding, parent.getDividerPadding());
         verifyVisualsOfVerticalLayoutWithDivider(parent, LinearLayout.SHOW_DIVIDER_MIDDLE,
@@ -830,42 +830,42 @@ public class LinearLayoutTest extends ActivityInstrumentationTestCase<LinearLayo
 
         // Change the padding to twice the original size
         final int doublePadding = dividerPadding * 2;
-        ViewTestUtils.runOnMainAndDrawSync(instrumentation, parent,
+        WidgetTestUtils.runOnMainAndDrawSync(instrumentation, parent,
                 () -> parent.setDividerPadding(doublePadding));
         assertEquals(doublePadding, parent.getDividerPadding());
         verifyVisualsOfVerticalLayoutWithDivider(parent, LinearLayout.SHOW_DIVIDER_MIDDLE,
                 dividerSize, Color.RED, doublePadding);
 
         // And back to the original padding
-        ViewTestUtils.runOnMainAndDrawSync(instrumentation, parent,
+        WidgetTestUtils.runOnMainAndDrawSync(instrumentation, parent,
                 () -> parent.setDividerPadding(dividerPadding));
         assertEquals(dividerPadding, parent.getDividerPadding());
         verifyVisualsOfVerticalLayoutWithDivider(parent, LinearLayout.SHOW_DIVIDER_MIDDLE,
                 dividerSize, Color.RED, dividerPadding);
 
         // Set show dividers to NONE (no divider effectively)
-        ViewTestUtils.runOnMainAndDrawSync(instrumentation, parent,
+        WidgetTestUtils.runOnMainAndDrawSync(instrumentation, parent,
                 () -> parent.setShowDividers(LinearLayout.SHOW_DIVIDER_NONE));
         assertEquals(LinearLayout.SHOW_DIVIDER_NONE, parent.getShowDividers());
         verifyVisualsOfVerticalLayoutWithDivider(parent, LinearLayout.SHOW_DIVIDER_NONE,
                 0, Color.TRANSPARENT, 0);
 
         // Show only top divider
-        ViewTestUtils.runOnMainAndDrawSync(instrumentation, parent,
+        WidgetTestUtils.runOnMainAndDrawSync(instrumentation, parent,
                 () -> parent.setShowDividers(LinearLayout.SHOW_DIVIDER_BEGINNING));
         assertEquals(LinearLayout.SHOW_DIVIDER_BEGINNING, parent.getShowDividers());
         verifyVisualsOfVerticalLayoutWithDivider(parent, LinearLayout.SHOW_DIVIDER_BEGINNING,
                 dividerSize, Color.RED, dividerPadding);
 
         // Show only bottom divider
-        ViewTestUtils.runOnMainAndDrawSync(instrumentation, parent,
+        WidgetTestUtils.runOnMainAndDrawSync(instrumentation, parent,
                 () -> parent.setShowDividers(LinearLayout.SHOW_DIVIDER_END));
         assertEquals(LinearLayout.SHOW_DIVIDER_END, parent.getShowDividers());
         verifyVisualsOfVerticalLayoutWithDivider(parent, LinearLayout.SHOW_DIVIDER_END,
                 dividerSize, Color.RED, dividerPadding);
 
         // Show top and bottom dividers
-        ViewTestUtils.runOnMainAndDrawSync(instrumentation, parent,
+        WidgetTestUtils.runOnMainAndDrawSync(instrumentation, parent,
                 () -> parent.setShowDividers(
                         LinearLayout.SHOW_DIVIDER_BEGINNING | LinearLayout.SHOW_DIVIDER_END));
         assertEquals(LinearLayout.SHOW_DIVIDER_BEGINNING | LinearLayout.SHOW_DIVIDER_END,
@@ -875,7 +875,7 @@ public class LinearLayoutTest extends ActivityInstrumentationTestCase<LinearLayo
                 dividerSize, Color.RED, dividerPadding);
 
         // Show top and middle dividers
-        ViewTestUtils.runOnMainAndDrawSync(instrumentation, parent,
+        WidgetTestUtils.runOnMainAndDrawSync(instrumentation, parent,
                 () -> parent.setShowDividers(
                         LinearLayout.SHOW_DIVIDER_BEGINNING | LinearLayout.SHOW_DIVIDER_MIDDLE));
         assertEquals(LinearLayout.SHOW_DIVIDER_BEGINNING | LinearLayout.SHOW_DIVIDER_MIDDLE,
@@ -885,7 +885,7 @@ public class LinearLayoutTest extends ActivityInstrumentationTestCase<LinearLayo
                 dividerSize, Color.RED, dividerPadding);
 
         // Show middle and bottom dividers
-        ViewTestUtils.runOnMainAndDrawSync(instrumentation, parent,
+        WidgetTestUtils.runOnMainAndDrawSync(instrumentation, parent,
                 () -> parent.setShowDividers(
                         LinearLayout.SHOW_DIVIDER_MIDDLE | LinearLayout.SHOW_DIVIDER_END));
         assertEquals(LinearLayout.SHOW_DIVIDER_MIDDLE | LinearLayout.SHOW_DIVIDER_END,
@@ -895,7 +895,7 @@ public class LinearLayoutTest extends ActivityInstrumentationTestCase<LinearLayo
                 dividerSize, Color.RED, dividerPadding);
 
         // Show top, middle and bottom dividers
-        ViewTestUtils.runOnMainAndDrawSync(instrumentation, parent,
+        WidgetTestUtils.runOnMainAndDrawSync(instrumentation, parent,
                 () -> parent.setShowDividers(
                         LinearLayout.SHOW_DIVIDER_BEGINNING | LinearLayout.SHOW_DIVIDER_MIDDLE
                                 | LinearLayout.SHOW_DIVIDER_END));
@@ -1065,20 +1065,20 @@ public class LinearLayoutTest extends ActivityInstrumentationTestCase<LinearLayo
                 dividerSize, Color.RED, dividerPadding);
 
         // Change the divider to magenta
-        ViewTestUtils.runOnMainAndDrawSync(instrumentation, parent,
+        WidgetTestUtils.runOnMainAndDrawSync(instrumentation, parent,
                 () -> parent.setDividerDrawable(
                         mActivity.getDrawable(R.drawable.linear_layout_divider_magenta)));
         verifyVisualsOfHorizontalLayoutWithDivider(parent, LinearLayout.SHOW_DIVIDER_MIDDLE,
                 dividerSize, Color.MAGENTA, dividerPadding);
 
         // Change the divider to null (no divider effectively)
-        ViewTestUtils.runOnMainAndDrawSync(instrumentation, parent,
+        WidgetTestUtils.runOnMainAndDrawSync(instrumentation, parent,
                 () -> parent.setDividerDrawable(null));
         verifyVisualsOfHorizontalLayoutWithDivider(parent, LinearLayout.SHOW_DIVIDER_MIDDLE,
                 0, Color.TRANSPARENT, 0);
 
         // Change the divider back to red
-        ViewTestUtils.runOnMainAndDrawSync(instrumentation, parent,
+        WidgetTestUtils.runOnMainAndDrawSync(instrumentation, parent,
                 () -> parent.setDividerDrawable(
                         mActivity.getDrawable(R.drawable.linear_layout_divider_red)));
         verifyVisualsOfHorizontalLayoutWithDivider(parent, LinearLayout.SHOW_DIVIDER_MIDDLE,
@@ -1086,7 +1086,7 @@ public class LinearLayoutTest extends ActivityInstrumentationTestCase<LinearLayo
 
         // Change the padding to half the original size
         final int halfPadding = dividerPadding / 2;
-        ViewTestUtils.runOnMainAndDrawSync(instrumentation, parent,
+        WidgetTestUtils.runOnMainAndDrawSync(instrumentation, parent,
                 () -> parent.setDividerPadding(halfPadding));
         assertEquals(halfPadding, parent.getDividerPadding());
         verifyVisualsOfHorizontalLayoutWithDivider(parent, LinearLayout.SHOW_DIVIDER_MIDDLE,
@@ -1094,42 +1094,42 @@ public class LinearLayoutTest extends ActivityInstrumentationTestCase<LinearLayo
 
         // Change the padding to twice the original size
         final int doublePadding = dividerPadding * 2;
-        ViewTestUtils.runOnMainAndDrawSync(instrumentation, parent,
+        WidgetTestUtils.runOnMainAndDrawSync(instrumentation, parent,
                 () -> parent.setDividerPadding(doublePadding));
         assertEquals(doublePadding, parent.getDividerPadding());
         verifyVisualsOfHorizontalLayoutWithDivider(parent, LinearLayout.SHOW_DIVIDER_MIDDLE,
                 dividerSize, Color.RED, doublePadding);
 
         // And back to the original padding
-        ViewTestUtils.runOnMainAndDrawSync(instrumentation, parent,
+        WidgetTestUtils.runOnMainAndDrawSync(instrumentation, parent,
                 () -> parent.setDividerPadding(dividerPadding));
         assertEquals(dividerPadding, parent.getDividerPadding());
         verifyVisualsOfHorizontalLayoutWithDivider(parent, LinearLayout.SHOW_DIVIDER_MIDDLE,
                 dividerSize, Color.RED, dividerPadding);
 
         // Set show dividers to NONE (no divider effectively)
-        ViewTestUtils.runOnMainAndDrawSync(instrumentation, parent,
+        WidgetTestUtils.runOnMainAndDrawSync(instrumentation, parent,
                 () -> parent.setShowDividers(LinearLayout.SHOW_DIVIDER_NONE));
         assertEquals(LinearLayout.SHOW_DIVIDER_NONE, parent.getShowDividers());
         verifyVisualsOfHorizontalLayoutWithDivider(parent, LinearLayout.SHOW_DIVIDER_NONE,
                 0, Color.TRANSPARENT, 0);
 
         // Show only left divider
-        ViewTestUtils.runOnMainAndDrawSync(instrumentation, parent,
+        WidgetTestUtils.runOnMainAndDrawSync(instrumentation, parent,
                 () -> parent.setShowDividers(LinearLayout.SHOW_DIVIDER_BEGINNING));
         assertEquals(LinearLayout.SHOW_DIVIDER_BEGINNING, parent.getShowDividers());
         verifyVisualsOfHorizontalLayoutWithDivider(parent, LinearLayout.SHOW_DIVIDER_BEGINNING,
                 dividerSize, Color.RED, dividerPadding);
 
         // Show only right divider
-        ViewTestUtils.runOnMainAndDrawSync(instrumentation, parent,
+        WidgetTestUtils.runOnMainAndDrawSync(instrumentation, parent,
                 () -> parent.setShowDividers(LinearLayout.SHOW_DIVIDER_END));
         assertEquals(LinearLayout.SHOW_DIVIDER_END, parent.getShowDividers());
         verifyVisualsOfHorizontalLayoutWithDivider(parent, LinearLayout.SHOW_DIVIDER_END,
                 dividerSize, Color.RED, dividerPadding);
 
         // Show left and right dividers
-        ViewTestUtils.runOnMainAndDrawSync(instrumentation, parent,
+        WidgetTestUtils.runOnMainAndDrawSync(instrumentation, parent,
                 () -> parent.setShowDividers(
                         LinearLayout.SHOW_DIVIDER_BEGINNING | LinearLayout.SHOW_DIVIDER_END));
         assertEquals(LinearLayout.SHOW_DIVIDER_BEGINNING | LinearLayout.SHOW_DIVIDER_END,
@@ -1139,7 +1139,7 @@ public class LinearLayoutTest extends ActivityInstrumentationTestCase<LinearLayo
                 dividerSize, Color.RED, dividerPadding);
 
         // Show left and middle dividers
-        ViewTestUtils.runOnMainAndDrawSync(instrumentation, parent,
+        WidgetTestUtils.runOnMainAndDrawSync(instrumentation, parent,
                 () -> parent.setShowDividers(
                         LinearLayout.SHOW_DIVIDER_BEGINNING | LinearLayout.SHOW_DIVIDER_MIDDLE));
         assertEquals(LinearLayout.SHOW_DIVIDER_BEGINNING | LinearLayout.SHOW_DIVIDER_MIDDLE,
@@ -1149,7 +1149,7 @@ public class LinearLayoutTest extends ActivityInstrumentationTestCase<LinearLayo
                 dividerSize, Color.RED, dividerPadding);
 
         // Show middle and right dividers
-        ViewTestUtils.runOnMainAndDrawSync(instrumentation, parent,
+        WidgetTestUtils.runOnMainAndDrawSync(instrumentation, parent,
                 () -> parent.setShowDividers(
                         LinearLayout.SHOW_DIVIDER_MIDDLE | LinearLayout.SHOW_DIVIDER_END));
         assertEquals(LinearLayout.SHOW_DIVIDER_MIDDLE | LinearLayout.SHOW_DIVIDER_END,
@@ -1159,7 +1159,7 @@ public class LinearLayoutTest extends ActivityInstrumentationTestCase<LinearLayo
                 dividerSize, Color.RED, dividerPadding);
 
         // Show left, middle and right dividers
-        ViewTestUtils.runOnMainAndDrawSync(instrumentation, parent,
+        WidgetTestUtils.runOnMainAndDrawSync(instrumentation, parent,
                 () -> parent.setShowDividers(
                         LinearLayout.SHOW_DIVIDER_BEGINNING | LinearLayout.SHOW_DIVIDER_MIDDLE
                                 | LinearLayout.SHOW_DIVIDER_END));

@@ -28,9 +28,7 @@ import android.content.Context;
 import android.content.res.ColorStateList;
 import android.cts.util.PollingCheck;
 import android.cts.util.WidgetTestUtils;
-import android.graphics.Canvas;
 import android.graphics.Color;
-import android.graphics.ColorFilter;
 import android.graphics.PorterDuff;
 import android.graphics.Rect;
 import android.graphics.Region;
@@ -47,8 +45,6 @@ import android.widget.FrameLayout;
 import android.widget.FrameLayout.LayoutParams;
 import android.widget.LinearLayout;
 import android.widget.TextView;
-import android.widget.cts.R;
-import android.widget.cts.util.ViewTestUtils;
 
 import java.io.IOException;
 
@@ -94,7 +90,7 @@ public class FrameLayoutTest extends ActivityInstrumentationTestCase2<FrameLayou
         assertTrue(mFrameLayout.getWidth() > foreground.getIntrinsicWidth());
         assertNull(mFrameLayout.getForeground());
 
-        ViewTestUtils.runOnMainAndDrawSync(mInstrumentation, mFrameLayout,
+        WidgetTestUtils.runOnMainAndDrawSync(mInstrumentation, mFrameLayout,
                 () -> mFrameLayout.setForeground(foreground));
         assertSame(foreground, mFrameLayout.getForeground());
         // check the default gravity FILL, it completely fills its container
@@ -112,7 +108,7 @@ public class FrameLayoutTest extends ActivityInstrumentationTestCase2<FrameLayou
         assertTrue(mFrameLayout.getHeight() > newForeground.getIntrinsicHeight());
         assertTrue(mFrameLayout.getWidth() > foreground.getIntrinsicWidth());
 
-        ViewTestUtils.runOnMainAndDrawSync(mInstrumentation, mFrameLayout, () -> {
+        WidgetTestUtils.runOnMainAndDrawSync(mInstrumentation, mFrameLayout, () -> {
             mFrameLayout.setForeground(newForeground);
             mFrameLayout.setForegroundGravity(Gravity.CENTER);
         });
@@ -130,7 +126,7 @@ public class FrameLayoutTest extends ActivityInstrumentationTestCase2<FrameLayou
         final LinearLayout container =
                 (LinearLayout) mActivity.findViewById(R.id.framelayout_container);
         final Drawable foreground = mActivity.getResources().getDrawable(R.drawable.size_48x48);
-        ViewTestUtils.runOnMainAndDrawSync(mInstrumentation, mFrameLayout, () -> {
+        WidgetTestUtils.runOnMainAndDrawSync(mInstrumentation, mFrameLayout, () -> {
             mFrameLayout.setForeground(foreground);
             mFrameLayout.setForegroundGravity(Gravity.CENTER);
         });
@@ -138,7 +134,7 @@ public class FrameLayoutTest extends ActivityInstrumentationTestCase2<FrameLayou
         Region region = new Region(foreground.getBounds());
         assertTrue(mFrameLayout.gatherTransparentRegion(region));
 
-        ViewTestUtils.runOnMainAndDrawSync(mInstrumentation, mFrameLayout,
+        WidgetTestUtils.runOnMainAndDrawSync(mInstrumentation, mFrameLayout,
                 () -> container.requestTransparentRegion(mFrameLayout));
         mInstrumentation.waitForIdleSync();
         region = new Region(foreground.getBounds());

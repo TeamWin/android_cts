@@ -17,18 +17,14 @@
 package android.widget.cts;
 
 import android.app.Instrumentation;
+import android.cts.util.WidgetTestUtils;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.test.ActivityInstrumentationTestCase2;
-import android.test.UiThreadTest;
 import android.test.suitebuilder.annotation.MediumTest;
 import android.view.Menu;
-import android.view.MenuItem;
-import android.view.View;
 import android.widget.ActionMenuView;
-import android.widget.Toolbar;
 import android.widget.cts.util.TestUtils;
-import android.widget.cts.util.ViewTestUtils;
 
 import static org.mockito.Mockito.*;
 
@@ -143,7 +139,7 @@ public class ActionMenuViewTest
                         R.menu.toolbar_menu, mActionMenuView.getMenu()));
 
         final Drawable overflowIcon = mActivity.getDrawable(R.drawable.icon_red);
-        ViewTestUtils.runOnMainAndDrawSync(mInstrumentation, mActionMenuView,
+        WidgetTestUtils.runOnMainAndDrawSync(mInstrumentation, mActionMenuView,
                 () -> mActionMenuView.setOverflowIcon(overflowIcon));
 
         final Drawable toolbarOverflowIcon = mActionMenuView.getOverflowIcon();

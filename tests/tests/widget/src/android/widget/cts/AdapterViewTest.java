@@ -18,6 +18,7 @@ package android.widget.cts;
 
 import android.app.Instrumentation;
 import android.content.Context;
+import android.cts.util.WidgetTestUtils;
 import android.os.Parcelable;
 import android.provider.Settings;
 import android.test.ActivityInstrumentationTestCase2;
@@ -35,7 +36,6 @@ import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.ListAdapter;
 import android.widget.ListView;
-import android.widget.cts.util.ViewTestUtils;
 
 import org.xmlpull.v1.XmlPullParser;
 
@@ -282,7 +282,7 @@ public class AdapterViewTest extends ActivityInstrumentationTestCase2<AdapterVie
     public void testAccessOnItemSelectedListener() {
         mAdapterView = mActivity.getListView();
         final Instrumentation instrumentation = getInstrumentation();
-        ViewTestUtils.runOnMainAndDrawSync(instrumentation, mAdapterView,
+        WidgetTestUtils.runOnMainAndDrawSync(instrumentation, mAdapterView,
                 () -> mAdapterView.setLayoutParams(new FrameLayout.LayoutParams(
                         ViewGroup.LayoutParams.MATCH_PARENT,
                         ViewGroup.LayoutParams.MATCH_PARENT)));
@@ -297,7 +297,7 @@ public class AdapterViewTest extends ActivityInstrumentationTestCase2<AdapterVie
         verifyZeroInteractions(mockSelectedListener);
 
         // Select item #1 and verify that the listener has been notified
-        ViewTestUtils.runOnMainAndDrawSync(instrumentation, mAdapterView,
+        WidgetTestUtils.runOnMainAndDrawSync(instrumentation, mAdapterView,
                 () -> mAdapterView.setSelection(1));
         verify(mockSelectedListener, times(1)).onItemSelected(eq(mAdapterView), any(View.class),
                 eq(1), eq(1L));
@@ -305,7 +305,7 @@ public class AdapterViewTest extends ActivityInstrumentationTestCase2<AdapterVie
 
         // Select last item and verify that the listener has been notified
         reset(mockSelectedListener);
-        ViewTestUtils.runOnMainAndDrawSync(instrumentation, mAdapterView,
+        WidgetTestUtils.runOnMainAndDrawSync(instrumentation, mAdapterView,
                 () -> mAdapterView.setSelection(FRUIT.length - 1));
         verify(mockSelectedListener, times(1)).onItemSelected(
                 eq(mAdapterView), any(View.class), eq(FRUIT.length - 1),

@@ -20,6 +20,7 @@ import android.app.Activity;
 import android.app.Instrumentation;
 import android.content.Context;
 import android.content.res.ColorStateList;
+import android.cts.util.WidgetTestUtils;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.PorterDuff;
@@ -36,7 +37,6 @@ import android.widget.CheckedTextView;
 import android.widget.ListAdapter;
 import android.widget.ListView;
 import android.widget.cts.util.TestUtils;
-import android.widget.cts.util.ViewTestUtils;
 
 import java.util.Arrays;
 
@@ -303,7 +303,7 @@ public class CheckedTextViewTest extends
 
     public void testCheckMarkTinting() {
         mInstrumentation.runOnMainSync(() -> mCheckedTextView.setChecked(true));
-        ViewTestUtils.runOnMainAndDrawSync(mInstrumentation, mCheckedTextView,
+        WidgetTestUtils.runOnMainAndDrawSync(mInstrumentation, mCheckedTextView,
                 () -> mCheckedTextView.setCheckMarkDrawable(R.drawable.icon_red));
 
         Drawable checkMark = mCheckedTextView.getCheckMarkDrawable();
@@ -313,7 +313,7 @@ public class CheckedTextViewTest extends
 
         // With SRC_IN we're expecting the translucent tint color to "take over" the
         // original red checkmark.
-        ViewTestUtils.runOnMainAndDrawSync(mInstrumentation, mCheckedTextView, () -> {
+        WidgetTestUtils.runOnMainAndDrawSync(mInstrumentation, mCheckedTextView, () -> {
             mCheckedTextView.setCheckMarkTintMode(PorterDuff.Mode.SRC_IN);
             mCheckedTextView.setCheckMarkTintList(ColorStateList.valueOf(0x8000FF00));
         });
@@ -327,7 +327,7 @@ public class CheckedTextViewTest extends
 
         // With SRC_OVER we're expecting the translucent tint color to be drawn on top
         // of the original red checkmark, creating a composite color fill as the result.
-        ViewTestUtils.runOnMainAndDrawSync(mInstrumentation, mCheckedTextView,
+        WidgetTestUtils.runOnMainAndDrawSync(mInstrumentation, mCheckedTextView,
                 () -> mCheckedTextView.setCheckMarkTintMode(PorterDuff.Mode.SRC_OVER));
 
         assertEquals(PorterDuff.Mode.SRC_OVER, mCheckedTextView.getCheckMarkTintMode());
@@ -339,7 +339,7 @@ public class CheckedTextViewTest extends
 
         // Switch to a different color for the underlying checkmark and verify that the
         // currently configured tinting (50% green overlay) is still respected
-        ViewTestUtils.runOnMainAndDrawSync(mInstrumentation, mCheckedTextView,
+        WidgetTestUtils.runOnMainAndDrawSync(mInstrumentation, mCheckedTextView,
                 () -> mCheckedTextView.setCheckMarkDrawable(R.drawable.icon_yellow));
         assertEquals(PorterDuff.Mode.SRC_OVER, mCheckedTextView.getCheckMarkTintMode());
         assertEquals(0x8000FF00, mCheckedTextView.getCheckMarkTintList().getDefaultColor());

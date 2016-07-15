@@ -5717,14 +5717,14 @@ public class TextViewTest extends ActivityInstrumentationTestCase2<TextViewCtsAc
         mTextView.getPaint().getTextWidths(text.toString(), initialWidths);
 
         // Get advance widths of each character at letter spacing = 1.0f
-        ViewTestUtils.runOnMainAndDrawSync(mInstrumentation, mTextView,
+        WidgetTestUtils.runOnMainAndDrawSync(mInstrumentation, mTextView,
                 () -> mTextView.setLetterSpacing(1.0f));
         assertEquals(1.0f, mTextView.getLetterSpacing());
         final float[] singleWidths = new float[textLength];
         mTextView.getPaint().getTextWidths(text.toString(), singleWidths);
 
         // Get advance widths of each character at letter spacing = 2.0f
-        ViewTestUtils.runOnMainAndDrawSync(mInstrumentation, mTextView,
+        WidgetTestUtils.runOnMainAndDrawSync(mInstrumentation, mTextView,
                 () -> mTextView.setLetterSpacing(2.0f));
         assertEquals(2.0f, mTextView.getLetterSpacing());
         final float[] doubleWidths = new float[textLength];
@@ -5811,7 +5811,7 @@ public class TextViewTest extends ActivityInstrumentationTestCase2<TextViewCtsAc
 
     public void testGetOffsetForPosition() {
         mTextView = findTextView(R.id.textview_text);
-        ViewTestUtils.runOnMainAndDrawSync(mInstrumentation, mTextView, () -> {
+        WidgetTestUtils.runOnMainAndDrawSync(mInstrumentation, mTextView, () -> {
             mTextView.setText(LONG_TEXT);
             mTextView.setPadding(0, 0, 0, 0);
         });

@@ -18,64 +18,15 @@ package android.widget.cts.util;
 
 import android.app.Instrumentation;
 import android.os.SystemClock;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewConfiguration;
 import android.view.ViewGroup;
-import android.view.ViewTreeObserver;
-import android.view.ViewTreeObserver.OnDrawListener;
-
-import junit.framework.Assert;
-
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Utilities for testing View behavior.
  */
 public class ViewTestUtils {
-
-    /**
-     * Runs the specified Runnable on the main thread and ensures that the specified View's tree is
-     * drawn before returning.
-     *
-     * @param instrumentation the instrumentation used to run the test
-     * @param view the view whose tree should be drawn before returning
-     * @param runner the runnable to run on the main thread, or {@code null} to
-     *               simply force invalidation and a draw pass
-     */
-    public static void runOnMainAndDrawSync(@NonNull Instrumentation instrumentation,
-            @NonNull final View view, @Nullable final Runnable runner) {
-        final CountDownLatch latch = new CountDownLatch(1);
-
-        instrumentation.runOnMainSync(() -> {
-            final ViewTreeObserver observer = view.getViewTreeObserver();
-            final OnDrawListener listener = new OnDrawListener() {
-                @Override
-                public void onDraw() {
-                    observer.removeOnDrawListener(this);
-                    view.post(() -> latch.countDown());
-                }
-            };
-
-            observer.addOnDrawListener(listener);
-
-            if (runner != null) {
-                runner.run();
-            } else {
-                view.invalidate();
-            }
-        });
-
-        try {
-            Assert.assertTrue("Expected draw pass occurred within 5 seconds",
-                    latch.await(5, TimeUnit.SECONDS));
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
-        }
-    }
 
     /**
      * Emulates a tap in the center of the passed {@link View}.
