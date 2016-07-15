@@ -5748,7 +5748,7 @@ public class TextViewTest extends ActivityInstrumentationTestCase2<TextViewCtsAc
         final View.OnClickListener mockOnClickListener = mock(View.OnClickListener.class);
         mActivity.runOnUiThread(() -> {
             mTextView = new TextView(mActivity);
-            mTextView.setText("...zekiel 25:17. The path of the righteous...");
+            mTextView.setText("...text 11:11. some more text is in here...");
             mTextView.setFocusable(true);
             mTextView.setOnClickListener(mockOnClickListener);
             mActivity.setContentView(mTextView);
