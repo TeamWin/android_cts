@@ -16,6 +16,8 @@
 
 package android.widget.cts;
 
+import static org.mockito.Mockito.*;
+
 import android.app.Instrumentation;
 import android.cts.util.WidgetTestUtils;
 import android.graphics.Color;
@@ -25,8 +27,6 @@ import android.test.suitebuilder.annotation.MediumTest;
 import android.view.Menu;
 import android.widget.ActionMenuView;
 import android.widget.cts.util.TestUtils;
-
-import static org.mockito.Mockito.*;
 
 @MediumTest
 public class ActionMenuViewTest

@@ -16,11 +16,8 @@
 
 package android.widget.cts;
 
-import android.graphics.drawable.ColorDrawable;
-import android.test.suitebuilder.annotation.SmallTest;
-import org.mockito.ArgumentCaptor;
-import org.xmlpull.v1.XmlPullParser;
-import org.xmlpull.v1.XmlPullParserException;
+import static org.mockito.Matchers.*;
+import static org.mockito.Mockito.*;
 
 import android.app.Activity;
 import android.app.Instrumentation;
@@ -33,8 +30,10 @@ import android.graphics.PorterDuff;
 import android.graphics.Rect;
 import android.graphics.Region;
 import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.test.ActivityInstrumentationTestCase2;
+import android.test.suitebuilder.annotation.SmallTest;
 import android.util.AttributeSet;
 import android.util.Xml;
 import android.view.Gravity;
@@ -46,10 +45,11 @@ import android.widget.FrameLayout.LayoutParams;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
-import java.io.IOException;
+import org.mockito.ArgumentCaptor;
+import org.xmlpull.v1.XmlPullParser;
+import org.xmlpull.v1.XmlPullParserException;
 
-import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.*;
+import java.io.IOException;
 
 @SmallTest
 public class FrameLayoutTest extends ActivityInstrumentationTestCase2<FrameLayoutCtsActivity> {

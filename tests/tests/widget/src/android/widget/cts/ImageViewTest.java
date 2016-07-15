@@ -16,48 +16,44 @@
 
 package android.widget.cts;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-
-import android.content.res.ColorStateList;
-import android.graphics.Color;
-
-import android.graphics.drawable.ColorDrawable;
-import android.test.suitebuilder.annotation.SmallTest;
-import android.widget.cts.util.TestUtils;
-import android.widget.cts.util.ViewTestUtils;
-import org.junit.Assert;
-import org.xmlpull.v1.XmlPullParser;
+import static org.mockito.Matchers.*;
+import static org.mockito.Mockito.*;
 
 import android.app.Activity;
 import android.content.Context;
+import android.content.res.ColorStateList;
 import android.cts.util.WidgetTestUtils;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
+import android.graphics.Color;
 import android.graphics.ColorFilter;
 import android.graphics.Matrix;
 import android.graphics.PorterDuff;
 import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.Icon;
 import android.graphics.drawable.PaintDrawable;
 import android.net.Uri;
 import android.test.ActivityInstrumentationTestCase;
 import android.test.UiThreadTest;
+import android.test.suitebuilder.annotation.SmallTest;
 import android.util.AttributeSet;
-import android.util.StateSet;
 import android.util.Xml;
 import android.widget.ImageView;
 import android.widget.ImageView.ScaleType;
-
 import android.widget.cts.R;
+import android.widget.cts.util.TestUtils;
 
-import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.*;
+import org.junit.Assert;
+import org.xmlpull.v1.XmlPullParser;
+
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 
 
 /**

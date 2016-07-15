@@ -16,6 +16,8 @@
 
 package android.widget.cts;
 
+import static org.mockito.Mockito.*;
+
 import android.app.Activity;
 import android.app.Instrumentation;
 import android.content.Context;
@@ -27,13 +29,10 @@ import android.test.suitebuilder.annotation.SmallTest;
 import android.util.AttributeSet;
 import android.view.KeyEvent;
 import android.view.View;
-import android.view.ViewGroup;
 import android.widget.TimePicker;
 
 import java.util.ArrayList;
 import java.util.Collections;
-
-import static org.mockito.Mockito.*;
 
 /**
  * Test {@link TimePicker}.

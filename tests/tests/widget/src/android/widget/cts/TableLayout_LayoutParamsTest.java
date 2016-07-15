@@ -16,19 +16,18 @@
 
 package android.widget.cts;
 
-import android.view.ViewGroup;
-import android.widget.cts.R;
-
-import org.xmlpull.v1.XmlPullParser;
-
 import android.content.Context;
 import android.content.res.TypedArray;
 import android.content.res.XmlResourceParser;
 import android.test.InstrumentationTestCase;
 import android.util.AttributeSet;
 import android.util.Xml;
+import android.view.ViewGroup;
 import android.widget.TableLayout;
+import android.widget.cts.R;
 import android.widget.cts.util.XmlUtils;
+
+import org.xmlpull.v1.XmlPullParser;
 
 /**
  * Test {@link TableLayout.LayoutParams}.

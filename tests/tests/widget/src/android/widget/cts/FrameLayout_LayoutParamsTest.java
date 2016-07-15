@@ -16,21 +16,19 @@
 
 package android.widget.cts;
 
-import android.view.Gravity;
-import android.widget.cts.R;
-
-
-import org.xmlpull.v1.XmlPullParser;
-import org.xmlpull.v1.XmlPullParserException;
-
 import android.cts.util.WidgetTestUtils;
 import android.test.AndroidTestCase;
 import android.util.AttributeSet;
 import android.util.Xml;
+import android.view.Gravity;
 import android.view.ViewGroup;
 import android.view.ViewGroup.MarginLayoutParams;
 import android.widget.FrameLayout;
 import android.widget.FrameLayout.LayoutParams;
+import android.widget.cts.R;
+
+import org.xmlpull.v1.XmlPullParser;
+import org.xmlpull.v1.XmlPullParserException;
 
 import java.io.IOException;
 

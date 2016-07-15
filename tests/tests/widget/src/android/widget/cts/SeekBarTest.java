@@ -16,6 +16,8 @@
 
 package android.widget.cts;
 
+import static org.mockito.Mockito.*;
+
 import android.app.Activity;
 import android.app.Instrumentation;
 import android.os.SystemClock;
@@ -23,8 +25,6 @@ import android.test.ActivityInstrumentationTestCase2;
 import android.test.suitebuilder.annotation.SmallTest;
 import android.view.MotionEvent;
 import android.widget.SeekBar;
-
-import static org.mockito.Mockito.*;
 
 /**
  * Test {@link SeekBar}.

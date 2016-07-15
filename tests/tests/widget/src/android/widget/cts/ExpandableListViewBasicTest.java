@@ -25,8 +25,8 @@ import android.widget.BaseExpandableListAdapter;
 import android.widget.ExpandableListAdapter;
 import android.widget.ExpandableListView;
 import android.widget.cts.util.ExpandableListScenario;
-import android.widget.cts.util.ListUtil;
 import android.widget.cts.util.ExpandableListScenario.MyGroup;
+import android.widget.cts.util.ListUtil;
 
 import java.util.List;
 

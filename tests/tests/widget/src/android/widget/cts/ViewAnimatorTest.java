@@ -16,11 +16,6 @@
 
 package android.widget.cts;
 
-import android.widget.cts.R;
-
-
-import org.xmlpull.v1.XmlPullParser;
-
 import android.app.Activity;
 import android.app.Instrumentation;
 import android.test.ActivityInstrumentationTestCase2;
@@ -34,6 +29,9 @@ import android.view.animation.Animation;
 import android.view.animation.AnimationSet;
 import android.widget.RelativeLayout;
 import android.widget.ViewAnimator;
+import android.widget.cts.R;
+
+import org.xmlpull.v1.XmlPullParser;
 
 public class ViewAnimatorTest extends
         ActivityInstrumentationTestCase2<ViewAnimatorCtsActivity> {

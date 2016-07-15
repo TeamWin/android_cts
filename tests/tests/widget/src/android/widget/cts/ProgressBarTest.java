@@ -16,6 +16,9 @@
 
 package android.widget.cts;
 
+import static org.mockito.Matchers.*;
+import static org.mockito.Mockito.*;
+
 import android.content.Context;
 import android.content.res.ColorStateList;
 import android.graphics.Canvas;
@@ -34,9 +37,6 @@ import android.view.animation.Interpolator;
 import android.view.animation.LinearInterpolator;
 import android.widget.ProgressBar;
 import android.widget.cts.util.TestUtils;
-
-import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.*;
 
 @SmallTest
 public class ProgressBarTest extends ActivityInstrumentationTestCase2<ProgressBarCtsActivity> {

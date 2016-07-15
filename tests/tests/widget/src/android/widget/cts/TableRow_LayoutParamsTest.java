@@ -16,10 +16,6 @@
 
 package android.widget.cts;
 
-import android.widget.cts.R;
-
-import org.xmlpull.v1.XmlPullParser;
-
 import android.content.Context;
 import android.content.res.TypedArray;
 import android.content.res.XmlResourceParser;
@@ -32,7 +28,10 @@ import android.view.ViewGroup;
 import android.view.ViewGroup.MarginLayoutParams;
 import android.widget.TableLayout;
 import android.widget.TableRow;
+import android.widget.cts.R;
 import android.widget.cts.util.XmlUtils;
+
+import org.xmlpull.v1.XmlPullParser;
 
 /**
  * Test {@link TableRow.LayoutParams}.

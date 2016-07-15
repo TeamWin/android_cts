@@ -18,21 +18,12 @@ package android.widget.cts;
 
 import android.app.Activity;
 import android.app.Instrumentation;
-import android.test.ActivityInstrumentationTestCase2;
-import android.test.suitebuilder.annotation.SmallTest;
-import android.widget.RadioButton;
-import org.xmlpull.v1.XmlPullParser;
-
 import android.content.Context;
-import android.content.res.Resources;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.StateListDrawable;
-import android.test.InstrumentationTestCase;
-import android.test.UiThreadTest;
-import android.util.AttributeSet;
-import android.util.Xml;
+import android.test.ActivityInstrumentationTestCase2;
+import android.test.suitebuilder.annotation.SmallTest;
 import android.widget.ToggleButton;
-
 import android.widget.cts.R;
 
 

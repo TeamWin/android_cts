@@ -16,20 +16,20 @@
 
 package android.widget.cts;
 
-import android.cts.util.PollingCheck;
-import android.test.ActivityInstrumentationTestCase2;
-import android.view.ViewGroup;
-import android.widget.FrameLayout;
-
 import static android.view.Gravity.CENTER;
 import static android.view.Gravity.LEFT;
 import static android.view.Gravity.NO_GRAVITY;
 import static android.view.Gravity.RIGHT;
 import static android.view.View.TEXT_ALIGNMENT_INHERIT;
-import static android.widget.TextView.TEXT_ALIGNMENT_TEXT_START;
 import static android.widget.TextView.TEXT_ALIGNMENT_TEXT_END;
-import static android.widget.TextView.TEXT_ALIGNMENT_VIEW_START;
+import static android.widget.TextView.TEXT_ALIGNMENT_TEXT_START;
 import static android.widget.TextView.TEXT_ALIGNMENT_VIEW_END;
+import static android.widget.TextView.TEXT_ALIGNMENT_VIEW_START;
+
+import android.cts.util.PollingCheck;
+import android.test.ActivityInstrumentationTestCase2;
+import android.view.ViewGroup;
+import android.widget.FrameLayout;
 
 public class TextViewFadingEdgeTest extends ActivityInstrumentationTestCase2<EmptyCtsActivity> {
 

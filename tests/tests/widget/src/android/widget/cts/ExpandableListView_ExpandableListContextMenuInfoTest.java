@@ -18,10 +18,9 @@
 package android.widget.cts;
 
 import android.test.AndroidTestCase;
-import android.view.View;
 import android.widget.ExpandableListView;
-import android.widget.ListView;
 import android.widget.ExpandableListView.ExpandableListContextMenuInfo;
+import android.widget.ListView;
 
 /**
  * Test {@link ExpandableListContextMenuInfo}.

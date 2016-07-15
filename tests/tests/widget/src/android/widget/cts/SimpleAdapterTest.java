@@ -17,8 +17,6 @@
 package android.widget.cts;
 
 import android.R;
-
-
 import android.content.Context;
 import android.content.res.Resources.Theme;
 import android.cts.util.WidgetTestUtils;
@@ -31,9 +29,9 @@ import android.view.View;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.SimpleAdapter;
+import android.widget.SimpleAdapter.ViewBinder;
 import android.widget.TextView;
 import android.widget.TwoLineListItem;
-import android.widget.SimpleAdapter.ViewBinder;
 
 import java.util.ArrayList;
 import java.util.HashMap;

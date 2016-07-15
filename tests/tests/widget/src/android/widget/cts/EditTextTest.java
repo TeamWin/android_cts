@@ -16,8 +16,6 @@
 
 package android.widget.cts;
 
-import org.xmlpull.v1.XmlPullParser;
-
 import android.content.Context;
 import android.test.AndroidTestCase;
 import android.test.suitebuilder.annotation.SmallTest;
@@ -28,8 +26,9 @@ import android.util.AttributeSet;
 import android.util.Xml;
 import android.widget.EditText;
 import android.widget.TextView.BufferType;
-
 import android.widget.cts.R;
+
+import org.xmlpull.v1.XmlPullParser;
 
 
 public class EditTextTest extends AndroidTestCase {

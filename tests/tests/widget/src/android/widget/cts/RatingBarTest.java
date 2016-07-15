@@ -16,12 +16,12 @@
 
 package android.widget.cts;
 
+import static org.mockito.Mockito.*;
+
 import android.app.Instrumentation;
 import android.test.ActivityInstrumentationTestCase2;
 import android.test.suitebuilder.annotation.SmallTest;
 import android.widget.RatingBar;
-
-import static org.mockito.Mockito.*;
 
 /**
  * Test {@link RatingBar}.

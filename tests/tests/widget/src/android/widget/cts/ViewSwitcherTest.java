@@ -16,9 +16,6 @@
 
 package android.widget.cts;
 
-import org.xmlpull.v1.XmlPullParser;
-
-import android.content.Context;
 import android.test.AndroidTestCase;
 import android.util.AttributeSet;
 import android.util.Xml;
@@ -27,8 +24,9 @@ import android.view.ViewGroup;
 import android.widget.ListView;
 import android.widget.ViewSwitcher;
 import android.widget.ViewSwitcher.ViewFactory;
-
 import android.widget.cts.R;
+
+import org.xmlpull.v1.XmlPullParser;
 
 
 /**

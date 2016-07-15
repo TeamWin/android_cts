@@ -16,13 +16,13 @@
 
 package android.widget.cts;
 
+import static org.mockito.Mockito.*;
+
 import android.annotation.ColorInt;
 import android.app.Instrumentation;
 import android.graphics.Rect;
-import android.os.SystemClock;
 import android.test.ActivityInstrumentationTestCase2;
 import android.test.suitebuilder.annotation.MediumTest;
-import android.view.MotionEvent;
 import android.view.ViewGroup;
 import android.widget.CalendarView;
 import android.widget.ScrollView;
@@ -31,8 +31,6 @@ import android.widget.cts.util.ViewTestUtils;
 
 import java.util.Calendar;
 import java.util.GregorianCalendar;
-
-import static org.mockito.Mockito.*;
 
 @MediumTest
 public class CalendarViewTest extends ActivityInstrumentationTestCase2<CalendarViewCtsActivity> {

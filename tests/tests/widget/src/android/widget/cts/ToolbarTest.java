@@ -16,6 +16,8 @@
 
 package android.widget.cts;
 
+import static org.mockito.Mockito.*;
+
 import android.app.Instrumentation;
 import android.cts.util.WidgetTestUtils;
 import android.graphics.Color;
@@ -28,8 +30,6 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.Toolbar;
 import android.widget.cts.util.TestUtils;
-
-import static org.mockito.Mockito.*;
 
 @MediumTest
 public class ToolbarTest extends ActivityInstrumentationTestCase2<ToolbarCtsActivity> {

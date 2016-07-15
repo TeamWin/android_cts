@@ -17,13 +17,10 @@
 package android.widget.cts;
 
 import android.R;
-
-
 import android.content.Context;
 import android.test.InstrumentationTestCase;
 import android.view.LayoutInflater;
 import android.view.View;
-import android.view.ViewGroup;
 import android.widget.LinearLayout;
 import android.widget.SimpleExpandableListAdapter;
 import android.widget.TextView;
@@ -31,7 +28,6 @@ import android.widget.TwoLineListItem;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 
 /**
  * Test {@link SimpleExpandableListAdapter}.

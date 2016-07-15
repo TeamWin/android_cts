@@ -16,9 +16,6 @@
 
 package android.widget.cts;
 
-import android.widget.cts.R;
-
-
 import android.app.Activity;
 import android.app.Instrumentation;
 import android.app.Instrumentation.ActivityMonitor;
@@ -33,8 +30,9 @@ import android.view.View;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TabHost;
-import android.widget.TextView;
 import android.widget.TabHost.TabSpec;
+import android.widget.TextView;
+import android.widget.cts.R;
 
 /**
  * Test {@link TabSpec}.

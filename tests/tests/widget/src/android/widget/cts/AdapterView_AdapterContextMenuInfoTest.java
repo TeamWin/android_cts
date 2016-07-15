@@ -19,7 +19,6 @@ package android.widget.cts;
 import android.test.AndroidTestCase;
 import android.view.View;
 import android.widget.AdapterView;
-import android.widget.AdapterView.AdapterContextMenuInfo;
 
 public class AdapterView_AdapterContextMenuInfoTest extends AndroidTestCase {
     public void testConstructor() {

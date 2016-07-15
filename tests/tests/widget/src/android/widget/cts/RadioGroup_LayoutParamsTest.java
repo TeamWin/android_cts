@@ -17,11 +17,6 @@
 package android.widget.cts;
 
 import android.R;
-
-
-import org.xmlpull.v1.XmlPullParser;
-import org.xmlpull.v1.XmlPullParserException;
-
 import android.content.Context;
 import android.content.res.TypedArray;
 import android.test.AndroidTestCase;
@@ -32,6 +27,9 @@ import android.view.ViewGroup;
 import android.view.ViewGroup.MarginLayoutParams;
 import android.widget.RadioGroup;
 import android.widget.RadioGroup.LayoutParams;
+
+import org.xmlpull.v1.XmlPullParser;
+import org.xmlpull.v1.XmlPullParserException;
 
 import java.io.IOException;
 

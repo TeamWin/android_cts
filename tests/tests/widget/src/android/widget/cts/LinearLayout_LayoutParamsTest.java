@@ -23,6 +23,7 @@ import android.view.ViewGroup.LayoutParams;
 import android.view.ViewGroup.MarginLayoutParams;
 import android.widget.LinearLayout;
 import android.widget.cts.util.XmlUtils;
+
 import org.xmlpull.v1.XmlPullParserException;
 
 import java.io.IOException;

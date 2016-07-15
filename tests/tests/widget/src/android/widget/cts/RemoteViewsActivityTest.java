@@ -25,7 +25,6 @@ import android.view.InflateException;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.RemoteViews;
-
 import android.widget.cts.R;
 
 public class RemoteViewsActivityTest

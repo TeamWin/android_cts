@@ -16,6 +16,8 @@
 
 package android.widget.cts;
 
+import static org.mockito.Mockito.*;
+
 import android.app.Activity;
 import android.app.Instrumentation;
 import android.content.Context;
@@ -43,8 +45,6 @@ import android.widget.ListView;
 import android.widget.PopupWindow;
 import android.widget.TextView;
 import android.widget.cts.util.ViewTestUtils;
-
-import static org.mockito.Mockito.*;
 
 @SmallTest
 public class ListPopupWindowTest extends

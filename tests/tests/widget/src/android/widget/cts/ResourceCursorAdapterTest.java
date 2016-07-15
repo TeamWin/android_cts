@@ -16,9 +16,6 @@
 
 package android.widget.cts;
 
-import android.widget.cts.R;
-
-
 import android.content.Context;
 import android.database.Cursor;
 import android.database.MatrixCursor;
@@ -28,6 +25,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ResourceCursorAdapter;
+import android.widget.cts.R;
 
 /**
  * Test {@link ResourceCursorAdapter}.

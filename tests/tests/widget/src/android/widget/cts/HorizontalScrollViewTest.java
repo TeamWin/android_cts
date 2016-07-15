@@ -16,6 +16,9 @@
 
 package android.widget.cts;
 
+import static org.mockito.Matchers.*;
+import static org.mockito.Mockito.*;
+
 import android.app.Activity;
 import android.content.Context;
 import android.cts.util.PollingCheck;
@@ -33,10 +36,6 @@ import android.widget.HorizontalScrollView;
 import android.widget.TextView;
 
 import org.xmlpull.v1.XmlPullParser;
-
-import static org.mockito.Matchers.eq;
-import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.verify;
 
 /**
  * Test {@link HorizontalScrollView}.

@@ -16,15 +16,13 @@
 
 package android.widget.cts;
 
-import org.xmlpull.v1.XmlPullParser;
-
-import android.content.Context;
 import android.test.AndroidTestCase;
 import android.util.AttributeSet;
 import android.util.Xml;
 import android.widget.Button;
-
 import android.widget.cts.R;
+
+import org.xmlpull.v1.XmlPullParser;
 
 
 public class ButtonTest extends AndroidTestCase {

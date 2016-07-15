@@ -16,6 +16,8 @@
 
 package android.widget.cts;
 
+import static org.mockito.Mockito.*;
+
 import android.app.Activity;
 import android.cts.util.PollingCheck;
 import android.test.ActivityInstrumentationTestCase2;
@@ -35,8 +37,6 @@ import org.xmlpull.v1.XmlPullParserException;
 import java.io.IOException;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
-
-import static org.mockito.Mockito.*;
 
 /**
  * Test {@link SlidingDrawer}.

@@ -16,6 +16,8 @@
 
 package android.widget.cts;
 
+import static org.mockito.Mockito.*;
+
 import android.app.Activity;
 import android.app.Instrumentation;
 import android.content.Context;
@@ -37,8 +39,6 @@ import android.widget.cts.util.TestUtils;
 import org.mockito.ArgumentCaptor;
 
 import java.util.List;
-
-import static org.mockito.Mockito.*;
 
 /**
  * Test {@link AbsSeekBar}.

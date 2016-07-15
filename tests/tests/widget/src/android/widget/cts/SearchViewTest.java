@@ -16,6 +16,8 @@
 
 package android.widget.cts;
 
+import static org.mockito.Mockito.*;
+
 import android.app.Activity;
 import android.app.Instrumentation;
 import android.content.res.Resources;
@@ -26,8 +28,6 @@ import android.text.InputType;
 import android.text.TextUtils;
 import android.view.inputmethod.EditorInfo;
 import android.widget.SearchView;
-
-import static org.mockito.Mockito.*;
 
 /**
  * Test {@link SearchView}.
