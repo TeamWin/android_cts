@@ -48,13 +48,18 @@ public class DialogFrameTests extends ActivityManagerTestBase {
         executeShellCommand(cmd);
     }
 
-    WindowState getSingleWindow(String windowName) throws Exception {
+    @Override
+    protected void tearDown() throws Exception{
+        executeShellCommand("am force-stop android.server.FrameTestApp");
+    }
+
+    WindowState getSingleWindow(String windowName) {
         try {
             mAmWmState.getWmState().getMatchingWindowState(baseWindowName + windowName, mWindowList);
             return mWindowList.get(0);
         } catch (Exception e) {
             CLog.logAndDisplay(LogLevel.INFO, "Couldn't find window: " + windowName);
-            throw e;
+            return null;
         }
     }
 
@@ -76,7 +81,7 @@ public class DialogFrameTests extends ActivityManagerTestBase {
     // With Width and Height as MATCH_PARENT we should fill
     // the same content frame as the main activity window
     public void testMatchParentDialog() throws Exception {
-        doDialogTest("MatchParentDialog",
+        doDialogTest("MatchParent",
             (WindowState parent, WindowState dialog) -> {
                 assertEquals(parent.getContentFrame(), dialog.getFrame());
             });
@@ -86,7 +91,7 @@ public class DialogFrameTests extends ActivityManagerTestBase {
     // we will not be constrained to the insets and so we will be the same size
     // as the main window main frame.
     public void testMatchParentDialogLayoutInOverscan() throws Exception {
-        doDialogTest("MatchParentDialogLayoutInOverscan",
+        doDialogTest("MatchParentLayoutInOverscan",
             (WindowState parent, WindowState dialog) -> {
                 assertEquals(parent.getFrame(), dialog.getFrame());
             });
@@ -96,7 +101,7 @@ public class DialogFrameTests extends ActivityManagerTestBase {
 
     // The default gravity for dialogs should center them.
     public void testExplicitSizeDefaultGravity() throws Exception {
-        doDialogTest("ExplicitSizeDialog",
+        doDialogTest("ExplicitSize",
             (WindowState parent, WindowState dialog) -> {
                 Rectangle contentFrame = parent.getContentFrame();
                 Rectangle expectedFrame = new Rectangle(
@@ -108,7 +113,7 @@ public class DialogFrameTests extends ActivityManagerTestBase {
     }
 
     public void testExplicitSizeTopLeftGravity() throws Exception {
-        doDialogTest("ExplicitSizeDialogTopLeftGravity",
+        doDialogTest("ExplicitSizeTopLeftGravity",
             (WindowState parent, WindowState dialog) -> {
                 Rectangle contentFrame = parent.getContentFrame();
                 Rectangle expectedFrame = new Rectangle(
@@ -121,7 +126,7 @@ public class DialogFrameTests extends ActivityManagerTestBase {
     }
 
     public void testExplicitSizeBottomRightGravity() throws Exception {
-        doDialogTest("ExplicitSizeDialogBottomRightGravity",
+        doDialogTest("ExplicitSizeBottomRightGravity",
             (WindowState parent, WindowState dialog) -> {
                 Rectangle contentFrame = parent.getContentFrame();
                 Rectangle expectedFrame = new Rectangle(
@@ -145,11 +150,10 @@ public class DialogFrameTests extends ActivityManagerTestBase {
     //         });
     //    }
 
+    static final int oversizedDimension = 5000;
     // With FLAG_LAYOUT_NO_LIMITS  we should get the size we request, even if its much
     // larger than the screen.
     public void testOversizedDimensionsNoLimits() throws Exception {
-        final int oversizedDimension = 5000;
-
         doDialogTest("OversizedDimensionsNoLimits",
             (WindowState parent, WindowState dialog) -> {
                 Rectangle contentFrame = parent.getContentFrame();
@@ -182,5 +186,47 @@ public class DialogFrameTests extends ActivityManagerTestBase {
                         contentFrame.width,
                         contentFrame.height);
             });
+    }
+
+    public void testDialogReceivesFocus() throws Exception {
+        doDialogTest("MatchParent",
+            (WindowState parent, WindowState dialog) -> {
+                assertEquals(dialog.getName(), mAmWmState.getWmState().getFocusedWindow());
+        });
+    }
+
+    public void testNoFocusDialog() throws Exception {
+        doDialogTest("NoFocus",
+            (WindowState parent, WindowState dialog) -> {
+                assertEquals(parent.getName(), mAmWmState.getWmState().getFocusedWindow());
+        });
+    }
+
+    //   TODO: Commented out because it doesn't pass...the margin doesn't
+    //   seem to be an accurate percentage of the frame or the content frame.
+    //   b/30195361
+    //    public void testMarginsArePercentages() throws Exception {
+    //        float horizontalMargin = .25f;
+    //        float verticalMargin = .35f;
+    //        doDialogTest("DialogWithMargins",
+    //            (WindowState parent, WindowState dialog) -> {
+    //                Rectangle frame = parent.getFrame();
+    //                Rectangle expectedFrame = new Rectangle(
+    //                        (int)(horizontalMargin*frame.width),
+    //                        (int)(verticalMargin*frame.height),
+    //                        explicitDimension,
+    //                        explicitDimension);
+    //                assertEquals(expectedFrame, dialog.getFrame());
+    //        });
+    //    }
+
+    public void testDialogPlacedAboveParent() throws Exception {
+        doDialogTest("MatchParent",
+            (WindowState parent, WindowState dialog) -> {
+                // Not only should the dialog be higher, but it should be
+                // leave multiple layers of space inbetween for DimLayers,
+                // etc...
+                assertTrue(dialog.getLayer() - parent.getLayer() >= 5);
+        });
     }
 }

@@ -19,7 +19,7 @@ include $(CLEAR_VARS)
 LOCAL_MODULE_TAGS := tests
 
 # Must match the package name in OldCtsTestCaseList.mk
-LOCAL_MODULE := CtsDragAndDropHostTestCases
+LOCAL_MODULE := CtsWindowManagerHostTestCases
 
 LOCAL_SRC_FILES := $(call all-java-files-under, src)
 

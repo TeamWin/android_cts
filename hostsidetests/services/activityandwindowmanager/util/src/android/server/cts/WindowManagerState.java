@@ -599,6 +599,8 @@ public class WindowManagerState {
                 Pattern.compile("mDisplayId=(\\d+) stackId=(\\d+) (.+)");
         private static final Pattern sSurfaceInsetsPattern =
             Pattern.compile("Cur insets.+surface=" + RECT_STR + ".+");
+        private static final Pattern sLayerPattern =
+            Pattern.compile("Surface:.+layer=(\\d+).+");
 
         private final String mName;
         private final String mAppToken;
@@ -606,6 +608,7 @@ public class WindowManagerState {
         private final boolean mExiting;
         private int mDisplayId;
         private int mStackId;
+        private int mLayer;
         private Rectangle mContainingFrame = new Rectangle();
         private Rectangle mParentFrame = new Rectangle();
         private Rectangle mContentFrame = new Rectangle();
@@ -643,19 +646,23 @@ public class WindowManagerState {
             return mStackId;
         }
 
-        public Rectangle getContainingFrame() {
+        int getLayer() {
+            return mLayer;
+        }
+
+        Rectangle getContainingFrame() {
             return mContainingFrame;
         }
 
-        public Rectangle getFrame() {
+        Rectangle getFrame() {
             return mFrame;
         }
 
-        public Rectangle getSurfaceInsets() {
+        Rectangle getSurfaceInsets() {
             return mSurfaceInsets;
         }
 
-        public Rectangle getContentFrame() {
+        Rectangle getContentFrame() {
             return mContentFrame;
         }
 
@@ -731,6 +738,11 @@ public class WindowManagerState {
                     mSurfaceInsets = extractBounds(matcher);
                 }
 
+                matcher = sLayerPattern.matcher(line);
+                if (matcher.matches()) {
+                    log(TAG + "LAYER: " + line);
+                    mLayer = Integer.valueOf(matcher.group(1));
+                }
                 // Extract other info here if needed
             }
         }

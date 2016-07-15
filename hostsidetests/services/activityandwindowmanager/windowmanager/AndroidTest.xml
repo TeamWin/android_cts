@@ -22,6 +22,6 @@
         <option name="test-file-name" value="CtsDeviceWindowFramesTestApp.apk" />
     </target_preparer>
     <test class="com.android.compatibility.common.tradefed.testtype.JarHostTest" >
-        <option name="jar" value="CtsDragAndDropHostTestCases.jar" />
+        <option name="jar" value="CtsWindowManagerHostTestCases.jar" />
     </test>
 </configuration>

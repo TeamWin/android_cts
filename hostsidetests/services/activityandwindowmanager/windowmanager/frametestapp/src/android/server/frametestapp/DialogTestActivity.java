@@ -35,18 +35,22 @@ public class DialogTestActivity extends Activity {
         String testCase = intent.getStringExtra(
                 "android.server.FrameTestApp.DialogTestCase");
         switch (testCase) {
-           case "MatchParentDialog": {
-               testMatchParentDialog();
+           case "MatchParent": {
+               testMatchParent();
                break;
-           } case "MatchParentDialogLayoutInOverscan": {
-               testMatchParentDialogLayoutInOverscan();
+           } case "MatchParentLayoutInOverscan": {
+               testMatchParentLayoutInOverscan();
            }  break;
-           case "ExplicitSizeDialog": {
-               testExplicitSizeDialog();
+           case "ExplicitSize": {
+               testExplicitSize();
                break;
            }
-           case "ExplicitSizeDialogTopLeftGravity": {
-               testExplicitSizeDialogTopLeftGravity();
+           case "ExplicitSizeTopLeftGravity": {
+               testExplicitSizeTopLeftGravity();
+               break;
+           }
+           case "ExplicitSizeBottomRightGravity": {
+               testExplicitSizeBottomRightGravity();
                break;
            }
            case "OversizedDimensions": {
@@ -63,6 +67,14 @@ public class DialogTestActivity extends Activity {
            }
            case "ExplicitPositionMatchParentNoLimits": {
                testExplicitPositionMatchParentNoLimits();
+               break;
+           }
+           case "NoFocus": {
+               testNoFocus();
+               break;
+           }
+           case "WithMargins": {
+               testWithMargins();
                break;
            }
            default:
@@ -89,14 +101,14 @@ public class DialogTestActivity extends Activity {
         dialog.show();
     }
 
-    private void testMatchParentDialog() {
+    private void testMatchParent() {
         doLayoutParamTest((WindowManager.LayoutParams params) -> {
             params.width = WindowManager.LayoutParams.MATCH_PARENT;
             params.height = WindowManager.LayoutParams.MATCH_PARENT;
         });
     }
 
-    private void testMatchParentDialogLayoutInOverscan() {
+    private void testMatchParentLayoutInOverscan() {
         doLayoutParamTest((WindowManager.LayoutParams params) -> {
             params.width = WindowManager.LayoutParams.MATCH_PARENT;
             params.height = WindowManager.LayoutParams.MATCH_PARENT;
@@ -105,18 +117,26 @@ public class DialogTestActivity extends Activity {
         });
     }
 
-    private void testExplicitSizeDialog() {
+    private void testExplicitSize() {
         doLayoutParamTest((WindowManager.LayoutParams params) -> {
             params.width = 200;
             params.height = 200;
         });
     }
 
-    private void testExplicitSizeDialogTopLeftGravity() {
+    private void testExplicitSizeTopLeftGravity() {
         doLayoutParamTest((WindowManager.LayoutParams params) -> {
             params.width = 200;
             params.height = 200;
             params.gravity = Gravity.TOP | Gravity.LEFT;
+        });
+    }
+
+    private void testExplicitSizeBottomRightGravity() {
+        doLayoutParamTest((WindowManager.LayoutParams params) -> {
+            params.width = 200;
+            params.height = 200;
+            params.gravity = Gravity.BOTTOM | Gravity.RIGHT;
         });
     }
 
@@ -153,6 +173,24 @@ public class DialogTestActivity extends Activity {
             params.flags |= WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS;
             params.x = 100;
             params.y = 100;
+        });
+    }
+
+    private void testNoFocus() {
+        doLayoutParamTest((WindowManager.LayoutParams params) -> {
+            params.flags |= WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE;
+        });
+    }
+
+    private void testWithMargins() {
+        doLayoutParamTest((WindowManager.LayoutParams params) -> {
+            params.gravity = Gravity.LEFT | Gravity.TOP;
+            params.horizontalMargin = .25f;
+            params.verticalMargin = .35f;
+            params.width = 200;
+            params.height = 200;
+            params.x = 0;
+            params.y = 0;
         });
     }
 }
