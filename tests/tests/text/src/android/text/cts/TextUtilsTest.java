@@ -16,9 +16,11 @@
 
 package android.text.cts;
 
-
 import static android.view.View.LAYOUT_DIRECTION_LTR;
 import static android.view.View.LAYOUT_DIRECTION_RTL;
+
+import static org.mockito.Matchers.*;
+import static org.mockito.Mockito.*;
 
 import android.content.Context;
 import android.content.res.ColorStateList;
@@ -43,9 +45,6 @@ import android.text.style.ReplacementSpan;
 import android.text.style.TextAppearanceSpan;
 import android.text.style.URLSpan;
 import android.util.StringBuilderPrinter;
-
-import static org.mockito.Matchers.*;
-import static org.mockito.Mockito.*;
 
 import java.util.ArrayList;
 import java.util.Arrays;

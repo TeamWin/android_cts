@@ -16,6 +16,11 @@
 
 package android.text.cts;
 
+import static android.cts.util.WidgetTestUtils.sameCharSequence;
+
+import static org.mockito.Matchers.*;
+import static org.mockito.Mockito.*;
+
 import android.graphics.Bitmap;
 import android.graphics.Bitmap.Config;
 import android.graphics.Canvas;
@@ -27,10 +32,6 @@ import android.text.Layout;
 import android.text.Layout.Alignment;
 import android.text.TextPaint;
 import android.text.TextUtils;
-
-import static android.cts.util.WidgetTestUtils.sameCharSequence;
-import static org.mockito.Matchers.*;
-import static org.mockito.Mockito.*;
 
 public class BoringLayoutTest extends AndroidTestCase {
     private static final float SPACING_MULT_NO_SCALE = 1.0f;

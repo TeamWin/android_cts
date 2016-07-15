@@ -16,11 +16,12 @@
 
 package android.text.cts;
 
-import java.util.Locale;
+import android.content.res.Configuration;
 import android.test.AndroidTestCase;
 import android.text.AutoText;
 import android.view.View;
-import android.content.res.Configuration;
+
+import java.util.Locale;
 
 public class AutoTextTest extends AndroidTestCase {
 

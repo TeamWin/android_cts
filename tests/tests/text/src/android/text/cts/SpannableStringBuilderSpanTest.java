@@ -16,8 +16,6 @@
 
 package android.text.cts;
 
-import java.util.ArrayList;
-
 import android.test.AndroidTestCase;
 import android.test.suitebuilder.annotation.SmallTest;
 import android.text.Html;
@@ -28,6 +26,8 @@ import android.text.SpannableStringBuilder;
 import android.text.Spanned;
 import android.text.style.ParagraphStyle;
 import android.text.style.QuoteSpan;
+
+import java.util.ArrayList;
 
 /**
  * Test {@link SpannableStringBuilder}.

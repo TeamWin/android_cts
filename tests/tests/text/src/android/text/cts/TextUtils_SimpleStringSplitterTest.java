@@ -16,10 +16,10 @@
 
 package android.text.cts;
 
-import java.util.Iterator;
-
 import android.test.AndroidTestCase;
 import android.text.TextUtils.SimpleStringSplitter;
+
+import java.util.Iterator;
 
 /**
  * Test {@link SimpleStringSplitter}.

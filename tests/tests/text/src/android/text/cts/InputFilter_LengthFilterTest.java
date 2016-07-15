@@ -18,8 +18,8 @@ package android.text.cts;
 
 import android.test.AndroidTestCase;
 import android.text.InputFilter;
-import android.text.SpannableStringBuilder;
 import android.text.InputFilter.LengthFilter;
+import android.text.SpannableStringBuilder;
 
 public class InputFilter_LengthFilterTest extends AndroidTestCase {
 

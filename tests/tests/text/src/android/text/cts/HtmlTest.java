@@ -17,8 +17,6 @@
 package android.text.cts;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import org.hamcrest.Description;
-import org.hamcrest.BaseMatcher;
 
 import android.graphics.Typeface;
 import android.test.AndroidTestCase;
@@ -27,8 +25,6 @@ import android.text.Layout;
 import android.text.Spannable;
 import android.text.SpannableString;
 import android.text.Spanned;
-import android.text.Html.ImageGetter;
-import android.text.Html.TagHandler;
 import android.text.style.AlignmentSpan;
 import android.text.style.BackgroundColorSpan;
 import android.text.style.BulletSpan;
@@ -41,6 +37,9 @@ import android.text.style.SuperscriptSpan;
 import android.text.style.TypefaceSpan;
 import android.text.style.URLSpan;
 import android.text.style.UnderlineSpan;
+
+import org.hamcrest.BaseMatcher;
+import org.hamcrest.Description;
 
 public class HtmlTest extends AndroidTestCase {
     private final static int SPAN_EXCLUSIVE_INCLUSIVE = Spannable.SPAN_EXCLUSIVE_INCLUSIVE;

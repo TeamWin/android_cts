@@ -18,8 +18,8 @@ package android.text.cts;
 
 import android.test.AndroidTestCase;
 import android.text.Editable;
-import android.text.SpannableStringBuilder;
 import android.text.Editable.Factory;
+import android.text.SpannableStringBuilder;
 
 public class Editable_FactoryTest extends AndroidTestCase {
 

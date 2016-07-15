@@ -20,10 +20,10 @@ package android.text.cts;
 import android.graphics.Rect;
 import android.test.AndroidTestCase;
 import android.text.Layout;
+import android.text.Layout.Alignment;
 import android.text.Spannable;
 import android.text.SpannableString;
 import android.text.TextPaint;
-import android.text.Layout.Alignment;
 import android.text.style.StrikethroughSpan;
 
 public class LayoutTest extends AndroidTestCase {

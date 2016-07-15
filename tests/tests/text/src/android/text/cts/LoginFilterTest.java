@@ -16,6 +16,9 @@
 
 package android.text.cts;
 
+import static org.mockito.Matchers.*;
+import static org.mockito.Mockito.*;
+
 import android.text.LoginFilter;
 import android.text.LoginFilter.UsernameFilterGeneric;
 import android.text.SpannableString;
@@ -23,9 +26,6 @@ import android.text.Spanned;
 import android.text.SpannedString;
 
 import junit.framework.TestCase;
-
-import static org.mockito.Matchers.*;
-import static org.mockito.Mockito.*;
 
 public class LoginFilterTest extends TestCase {
 

@@ -16,10 +16,9 @@
 
 package android.text.cts;
 
-import android.test.AndroidTestCase;
 import android.support.test.filters.SmallTest;
+import android.test.AndroidTestCase;
 import android.text.GetChars;
-import android.text.Spannable;
 import android.text.SpannableString;
 import android.text.SpannableStringBuilder;
 import android.text.SpannedString;

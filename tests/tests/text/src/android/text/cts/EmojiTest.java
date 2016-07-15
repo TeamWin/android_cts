@@ -25,11 +25,10 @@ import android.graphics.Picture;
 import android.test.ActivityInstrumentationTestCase2;
 import android.util.TypedValue;
 import android.view.KeyEvent;
-import android.view.Menu;
 import android.view.View;
-import android.widget.TextView;
-import android.widget.EditText;
 import android.webkit.cts.WebViewOnUiThread;
+import android.widget.EditText;
+import android.widget.TextView;
 
 public class EmojiTest extends ActivityInstrumentationTestCase2<EmojiCtsActivity> {
 

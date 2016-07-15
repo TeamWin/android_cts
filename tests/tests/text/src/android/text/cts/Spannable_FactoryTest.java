@@ -18,8 +18,8 @@ package android.text.cts;
 
 import android.test.AndroidTestCase;
 import android.text.Spannable;
-import android.text.SpannableString;
 import android.text.Spannable.Factory;
+import android.text.SpannableString;
 
 public class Spannable_FactoryTest extends AndroidTestCase {
 
