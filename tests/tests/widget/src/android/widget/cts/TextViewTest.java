@@ -2022,7 +2022,7 @@ public class TextViewTest extends ActivityInstrumentationTestCase2<TextViewCtsAc
         mKeyEventUtil.sendKeys(mTextView, KeyEvent.KEYCODE_PASTE);
         assertEquals("bca", mTextView.getText().toString());
 
-        mActivity.runOnUiThread(() -> {
+        mInstrumentation.runOnMainSync(() -> {
             Selection.selectAll((Spannable) mTextView.getText());
             KeyEvent cutWithMeta = new KeyEvent(0, 0, KeyEvent.ACTION_DOWN,
                     KeyEvent.KEYCODE_CUT, 0, KeyEvent.META_SHIFT_LEFT_ON);
@@ -2042,6 +2042,7 @@ public class TextViewTest extends ActivityInstrumentationTestCase2<TextViewCtsAc
             mTextView.onKeyDown(KeyEvent.KEYCODE_CUT, cutWithMeta);
             assertEquals("bca", mTextView.getText().toString());
         });
+        mInstrumentation.waitForIdleSync();
     }
 
     private static boolean hasSpansAtMiddleOfText(final TextView textView, final Class<?> type) {
