@@ -16,16 +16,20 @@
 
 package android.widget.cts;
 
+import static android.view.View.LAYOUT_DIRECTION_INHERIT;
+import static android.view.View.LAYOUT_DIRECTION_LOCALE;
+import static android.view.View.LAYOUT_DIRECTION_LTR;
+import static android.view.View.LAYOUT_DIRECTION_RTL;
+
 import android.test.ActivityInstrumentationTestCase2;
 import android.test.UiThreadTest;
 import android.view.ViewGroup;
-import android.widget.*;
+import android.widget.FrameLayout;
+import android.widget.GridLayout;
+import android.widget.LinearLayout;
+import android.widget.RelativeLayout;
+import android.widget.TableLayout;
 import android.widget.cts.R;
-
-import static android.view.View.LAYOUT_DIRECTION_LTR;
-import static android.view.View.LAYOUT_DIRECTION_RTL;
-import static android.view.View.LAYOUT_DIRECTION_INHERIT;
-import static android.view.View.LAYOUT_DIRECTION_LOCALE;
 
 public class LayoutDirectionTest extends ActivityInstrumentationTestCase2<LayoutDirectionCtsActivity> {
 

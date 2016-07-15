@@ -16,11 +16,6 @@
 
 package android.widget.cts;
 
-import android.widget.cts.R;
-
-
-import org.xmlpull.v1.XmlPullParser;
-
 import android.app.Activity;
 import android.test.ActivityInstrumentationTestCase;
 import android.test.UiThreadTest;
@@ -29,6 +24,9 @@ import android.util.Xml;
 import android.view.View;
 import android.widget.TextView;
 import android.widget.ViewFlipper;
+import android.widget.cts.R;
+
+import org.xmlpull.v1.XmlPullParser;
 
 /**
  * Test {@link ViewFlipper}.

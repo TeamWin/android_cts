@@ -16,6 +16,8 @@
 
 package android.widget.cts;
 
+import static org.mockito.Mockito.*;
+
 import android.app.Instrumentation;
 import android.test.ActivityInstrumentationTestCase2;
 import android.test.UiThreadTest;
@@ -23,9 +25,8 @@ import android.test.suitebuilder.annotation.SmallTest;
 import android.text.TextUtils;
 import android.widget.NumberPicker;
 import android.widget.cts.util.ViewTestUtils;
-import org.mockito.InOrder;
 
-import static org.mockito.Mockito.*;
+import org.mockito.InOrder;
 
 @SmallTest
 public class NumberPickerTest extends ActivityInstrumentationTestCase2<NumberPickerCtsActivity> {

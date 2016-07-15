@@ -20,13 +20,6 @@ import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 
-import android.widget.FrameLayout;
-import android.widget.cts.R;
-
-
-import android.widget.cts.util.TestUtils;
-import org.xmlpull.v1.XmlPullParser;
-
 import android.app.Activity;
 import android.content.Context;
 import android.cts.util.PollingCheck;
@@ -35,13 +28,16 @@ import android.test.ActivityInstrumentationTestCase2;
 import android.test.UiThreadTest;
 import android.util.AttributeSet;
 import android.util.Xml;
-import android.view.KeyEvent;
-import android.view.MotionEvent;
 import android.view.View;
-import android.view.ViewGroup;
 import android.view.View.MeasureSpec;
+import android.view.ViewGroup;
+import android.widget.FrameLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
+import android.widget.cts.R;
+import android.widget.cts.util.TestUtils;
+
+import org.xmlpull.v1.XmlPullParser;
 
 /**
  * Test {@link ScrollView}.

@@ -16,10 +16,6 @@
 
 package android.widget.cts;
 
-import android.widget.cts.R;
-
-import org.xmlpull.v1.XmlPullParserException;
-
 import android.app.Activity;
 import android.content.Context;
 import android.content.res.XmlResourceParser;
@@ -29,7 +25,10 @@ import android.util.AttributeSet;
 import android.util.Xml;
 import android.widget.DigitalClock;
 import android.widget.LinearLayout;
+import android.widget.cts.R;
 import android.widget.cts.util.XmlUtils;
+
+import org.xmlpull.v1.XmlPullParserException;
 
 import java.io.IOException;
 

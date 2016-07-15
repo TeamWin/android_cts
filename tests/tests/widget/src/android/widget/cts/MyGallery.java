@@ -19,10 +19,9 @@ package android.widget.cts;
 import android.content.Context;
 import android.graphics.Rect;
 import android.util.AttributeSet;
+import android.view.ContextMenu.ContextMenuInfo;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.ViewParent;
-import android.view.ContextMenu.ContextMenuInfo;
 import android.view.animation.Transformation;
 import android.widget.Gallery;
 

@@ -16,16 +16,10 @@
 
 package android.widget.cts;
 
-import android.widget.cts.R;
-
-
-import org.xmlpull.v1.XmlPullParser;
-
 import android.content.Context;
 import android.content.res.Resources;
 import android.cts.util.WidgetTestUtils;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
@@ -34,6 +28,9 @@ import android.util.AttributeSet;
 import android.util.Xml;
 import android.widget.ImageSwitcher;
 import android.widget.ImageView;
+import android.widget.cts.R;
+
+import org.xmlpull.v1.XmlPullParser;
 
 import java.io.File;
 import java.io.FileOutputStream;

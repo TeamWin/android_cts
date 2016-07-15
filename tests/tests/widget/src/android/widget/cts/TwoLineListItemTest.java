@@ -16,17 +16,15 @@
 
 package android.widget.cts;
 
-import android.widget.cts.R;
-
-
 import android.app.Activity;
 import android.content.Context;
 import android.content.res.Resources;
 import android.test.ActivityInstrumentationTestCase;
 import android.util.AttributeSet;
+import android.widget.RelativeLayout.LayoutParams;
 import android.widget.TextView;
 import android.widget.TwoLineListItem;
-import android.widget.RelativeLayout.LayoutParams;
+import android.widget.cts.R;
 
 /**
  * Test {@link TwoLineListItem}.

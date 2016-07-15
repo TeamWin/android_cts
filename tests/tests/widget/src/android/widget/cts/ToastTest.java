@@ -16,9 +16,6 @@
 
 package android.widget.cts;
 
-import android.widget.cts.R;
-
-
 import android.app.Activity;
 import android.app.Instrumentation;
 import android.cts.util.PollingCheck;
@@ -32,6 +29,7 @@ import android.view.ViewTreeObserver;
 import android.view.WindowManager;
 import android.widget.ImageView;
 import android.widget.Toast;
+import android.widget.cts.R;
 
 public class ToastTest extends ActivityInstrumentationTestCase2<CtsActivity> {
     private static final String TEST_TOAST_TEXT = "test toast";

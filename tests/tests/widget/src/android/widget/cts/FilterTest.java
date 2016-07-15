@@ -16,24 +16,20 @@
 
 package android.widget.cts;
 
+import static org.mockito.Matchers.anyInt;
+import static org.mockito.Mockito.*;
 
 import android.cts.util.PollingCheck;
-import android.cts.util.ReadElf;
 import android.cts.util.TestThread;
 import android.os.Looper;
 import android.test.ActivityInstrumentationTestCase2;
 import android.widget.Filter;
-import android.widget.Filter.FilterListener;
+
 import org.junit.Assert;
 import org.mockito.invocation.InvocationOnMock;
-import org.mockito.stubbing.Answer;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
-
-import static org.mockito.Matchers.anyInt;
-import static org.mockito.Mockito.doAnswer;
-import static org.mockito.Mockito.mock;
 
 public class FilterTest extends ActivityInstrumentationTestCase2<CtsActivity> {
     private static final long TIME_OUT = 10000;

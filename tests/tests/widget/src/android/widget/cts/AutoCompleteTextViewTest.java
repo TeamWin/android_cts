@@ -16,6 +16,10 @@
 
 package android.widget.cts;
 
+import static android.cts.util.WidgetTestUtils.sameCharSequence;
+
+import static org.mockito.Mockito.*;
+
 import android.app.Activity;
 import android.app.Instrumentation;
 import android.app.UiModeManager;
@@ -28,8 +32,8 @@ import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
 import android.os.SystemClock;
 import android.support.test.filters.MediumTest;
-import android.test.UiThreadTest;
 import android.test.ActivityInstrumentationTestCase2;
+import android.test.UiThreadTest;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.AttributeSet;
@@ -45,10 +49,8 @@ import android.widget.AutoCompleteTextView.Validator;
 import android.widget.Filter;
 import android.widget.Filterable;
 import android.widget.cts.util.TestUtils;
-import org.xmlpull.v1.XmlPullParser;
 
-import static android.cts.util.WidgetTestUtils.sameCharSequence;
-import static org.mockito.Mockito.*;
+import org.xmlpull.v1.XmlPullParser;
 
 @MediumTest
 public class AutoCompleteTextViewTest extends

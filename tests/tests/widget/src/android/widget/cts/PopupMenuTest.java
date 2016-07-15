@@ -16,23 +16,21 @@
 
 package android.widget.cts;
 
+import static org.mockito.Mockito.*;
+
 import android.app.Activity;
 import android.app.Instrumentation;
-import android.os.SystemClock;
 import android.test.ActivityInstrumentationTestCase2;
 import android.test.suitebuilder.annotation.SmallTest;
 import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
-import android.view.MotionEvent;
 import android.view.SubMenu;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.PopupMenu;
 import android.widget.cts.util.ViewTestUtils;
-
-import static org.mockito.Mockito.*;
 
 @SmallTest
 public class PopupMenuTest extends

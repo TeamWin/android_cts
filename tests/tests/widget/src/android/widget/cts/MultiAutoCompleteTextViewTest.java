@@ -16,6 +16,9 @@
 
 package android.widget.cts;
 
+import static org.mockito.Matchers.*;
+import static org.mockito.Mockito.*;
+
 import android.app.Activity;
 import android.app.Instrumentation;
 import android.content.Context;
@@ -31,12 +34,9 @@ import android.widget.Filter;
 import android.widget.MultiAutoCompleteTextView;
 import android.widget.MultiAutoCompleteTextView.CommaTokenizer;
 import android.widget.MultiAutoCompleteTextView.Tokenizer;
+
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
-
-import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 @MediumTest
 public class MultiAutoCompleteTextViewTest

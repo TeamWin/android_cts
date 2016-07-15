@@ -16,6 +16,8 @@
 
 package android.widget.cts;
 
+import static org.mockito.Mockito.*;
+
 import android.app.Activity;
 import android.app.Instrumentation;
 import android.content.Context;
@@ -45,13 +47,6 @@ import android.widget.PopupWindow;
 import android.widget.PopupWindow.OnDismissListener;
 import android.widget.TextView;
 import android.widget.cts.R;
-
-import static org.mockito.Mockito.any;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
 @SmallTest
 public class PopupWindowTest extends

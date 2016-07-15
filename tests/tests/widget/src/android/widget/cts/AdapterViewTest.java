@@ -16,6 +16,8 @@
 
 package android.widget.cts;
 
+import static org.mockito.Mockito.*;
+
 import android.app.Instrumentation;
 import android.content.Context;
 import android.cts.util.WidgetTestUtils;
@@ -38,8 +40,6 @@ import android.widget.ListAdapter;
 import android.widget.ListView;
 
 import org.xmlpull.v1.XmlPullParser;
-
-import static org.mockito.Mockito.*;
 
 @SmallTest
 public class AdapterViewTest extends ActivityInstrumentationTestCase2<AdapterViewCtsActivity> {

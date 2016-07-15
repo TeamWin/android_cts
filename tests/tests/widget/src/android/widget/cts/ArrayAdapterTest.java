@@ -16,9 +16,7 @@
 
 package android.widget.cts;
 
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
+import static org.mockito.Mockito.*;
 
 import android.content.Context;
 import android.content.res.Resources.Theme;
@@ -30,7 +28,8 @@ import android.widget.ArrayAdapter;
 import android.widget.Filter;
 import android.widget.TextView;
 
-import static org.mockito.Mockito.*;
+import java.util.ArrayList;
+import java.util.List;
 
 @SmallTest
 public class ArrayAdapterTest extends InstrumentationTestCase {

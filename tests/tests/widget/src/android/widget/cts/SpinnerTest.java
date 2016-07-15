@@ -16,6 +16,8 @@
 
 package android.widget.cts;
 
+import static org.mockito.Mockito.*;
+
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
@@ -37,8 +39,6 @@ import android.widget.ArrayAdapter;
 import android.widget.Spinner;
 import android.widget.cts.util.TestUtils;
 import android.widget.cts.util.ViewTestUtils;
-
-import static org.mockito.Mockito.mock;
 
 /**
  * Test {@link Spinner}.

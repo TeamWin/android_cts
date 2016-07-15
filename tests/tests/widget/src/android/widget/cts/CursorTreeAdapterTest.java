@@ -16,7 +16,7 @@
 
 package android.widget.cts;
 
-import java.io.File;
+import static org.mockito.Mockito.*;
 
 import android.content.Context;
 import android.database.Cursor;
@@ -31,10 +31,9 @@ import android.widget.CursorTreeAdapter;
 import android.widget.Filter;
 import android.widget.FilterQueryProvider;
 import android.widget.TextView;
-
 import android.widget.cts.R;
 
-import static org.mockito.Mockito.*;
+import java.io.File;
 
 
 /**

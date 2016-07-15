@@ -18,7 +18,6 @@ package android.widget.cts;
 
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.MenuItem.OnMenuItemClickListener;
 import android.widget.BaseExpandableListAdapter;
 import android.widget.cts.util.ExpandableListScenario;
 

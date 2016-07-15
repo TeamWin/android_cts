@@ -16,17 +16,15 @@
 
 package android.widget.cts;
 
-import android.widget.cts.R;
-
-
-import org.xmlpull.v1.XmlPullParser;
-
 import android.app.Activity;
 import android.test.ActivityInstrumentationTestCase2;
 import android.test.UiThreadTest;
 import android.util.AttributeSet;
 import android.util.Xml;
 import android.widget.AnalogClock;
+import android.widget.cts.R;
+
+import org.xmlpull.v1.XmlPullParser;
 
 public class AnalogClockTest extends ActivityInstrumentationTestCase2<FrameLayoutCtsActivity> {
     private AttributeSet mAttrSet;

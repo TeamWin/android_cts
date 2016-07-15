@@ -16,6 +16,8 @@
 
 package android.widget.cts;
 
+import static org.mockito.Mockito.*;
+
 import android.app.Instrumentation;
 import android.content.Context;
 import android.cts.util.PollingCheck;
@@ -39,8 +41,6 @@ import android.widget.TextView;
 import android.widget.cts.util.ExpandableListScenario;
 
 import org.xmlpull.v1.XmlPullParser;
-
-import static org.mockito.Mockito.*;
 
 @MediumTest
 public class ExpandableListViewTest extends ActivityInstrumentationTestCase2<ExpandableList> {

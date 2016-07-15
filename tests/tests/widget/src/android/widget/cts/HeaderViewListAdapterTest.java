@@ -16,6 +16,8 @@
 
 package android.widget.cts;
 
+import static org.mockito.Mockito.*;
+
 import android.content.Context;
 import android.database.DataSetObserver;
 import android.test.InstrumentationTestCase;
@@ -30,8 +32,6 @@ import android.widget.ListAdapter;
 import android.widget.ListView;
 
 import java.util.ArrayList;
-
-import static org.mockito.Mockito.mock;
 
 /**
  * Test {@link HeaderViewListAdapter}.

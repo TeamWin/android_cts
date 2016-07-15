@@ -16,6 +16,9 @@
 
 package android.widget.cts;
 
+import static org.mockito.Matchers.*;
+import static org.mockito.Mockito.*;
+
 import android.app.Activity;
 import android.app.Instrumentation;
 import android.cts.util.PollingCheck;
@@ -29,10 +32,6 @@ import android.widget.CursorAdapter;
 import android.widget.SearchView;
 import android.widget.SimpleCursorAdapter;
 import android.widget.cts.util.ViewTestUtils;
-
-import static org.mockito.Matchers.anyInt;
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Mockito.*;
 
 /**
  * Test {@link SearchView} with {@link Cursor}-backed suggestions adapter.

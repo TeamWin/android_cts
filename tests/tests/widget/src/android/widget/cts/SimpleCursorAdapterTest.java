@@ -16,9 +16,6 @@
 
 package android.widget.cts;
 
-import android.widget.cts.R;
-
-
 import android.content.Context;
 import android.cts.util.WidgetTestUtils;
 import android.database.Cursor;
@@ -33,9 +30,10 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.SimpleCursorAdapter;
-import android.widget.TextView;
 import android.widget.SimpleCursorAdapter.CursorToStringConverter;
 import android.widget.SimpleCursorAdapter.ViewBinder;
+import android.widget.TextView;
+import android.widget.cts.R;
 
 import java.io.IOException;
 import java.io.InputStream;

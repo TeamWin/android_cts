@@ -16,6 +16,8 @@
 
 package android.widget.cts;
 
+import static android.widget.GridLayout.spec;
+
 import android.content.Context;
 import android.test.ActivityInstrumentationTestCase;
 import android.util.AttributeSet;
@@ -28,10 +30,8 @@ import android.widget.Button;
 import android.widget.GridLayout;
 import android.widget.TextView;
 import android.widget.cts.R;
-import org.xmlpull.v1.XmlPullParser;
 
-import static android.view.ViewGroup.LAYOUT_MODE_OPTICAL_BOUNDS;
-import static android.widget.GridLayout.spec;
+import org.xmlpull.v1.XmlPullParser;
 
 /**
  * Test {@link android.widget.GridLayout}.

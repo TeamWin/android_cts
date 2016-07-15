@@ -16,11 +16,6 @@
 
 package android.widget.cts;
 
-import android.widget.cts.R;
-
-
-import org.xmlpull.v1.XmlPullParser;
-
 import android.app.Activity;
 import android.app.Instrumentation;
 import android.content.Context;
@@ -34,10 +29,12 @@ import android.util.AttributeSet;
 import android.util.Log;
 import android.util.Xml;
 import android.view.KeyCharacterMap;
-import android.view.KeyEvent;
 import android.widget.DialerFilter;
 import android.widget.EditText;
 import android.widget.RelativeLayout;
+import android.widget.cts.R;
+
+import org.xmlpull.v1.XmlPullParser;
 
 public class DialerFilterTest extends ActivityInstrumentationTestCase2<DialerFilterCtsActivity> {
     private Activity mActivity;

@@ -16,17 +16,15 @@
 
 package android.widget.cts;
 
-import android.widget.cts.R;
-
-
-import org.xmlpull.v1.XmlPullParser;
-
 import android.cts.util.WidgetTestUtils;
 import android.test.AndroidTestCase;
 import android.util.AttributeSet;
 import android.util.Xml;
 import android.widget.AbsListView;
 import android.widget.AbsListView.LayoutParams;
+import android.widget.cts.R;
+
+import org.xmlpull.v1.XmlPullParser;
 
 public class AbsListView_LayoutParamsTest extends AndroidTestCase {
     private AttributeSet mAttributeSet;

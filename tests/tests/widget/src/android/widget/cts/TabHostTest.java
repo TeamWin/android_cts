@@ -16,6 +16,8 @@
 
 package android.widget.cts;
 
+import static org.mockito.Mockito.*;
+
 import android.app.Activity;
 import android.app.ActivityGroup;
 import android.content.Intent;
@@ -29,8 +31,6 @@ import android.widget.TabHost;
 import android.widget.TabHost.OnTabChangeListener;
 import android.widget.TabHost.TabSpec;
 import android.widget.TextView;
-
-import static org.mockito.Mockito.*;
 
 /**
  * Test {@link TabHost}.

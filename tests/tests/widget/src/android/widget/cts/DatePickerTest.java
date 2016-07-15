@@ -16,6 +16,8 @@
 
 package android.widget.cts;
 
+import static org.mockito.Mockito.*;
+
 import android.app.Activity;
 import android.app.Instrumentation;
 import android.content.Context;
@@ -29,8 +31,6 @@ import android.widget.DatePicker;
 
 import java.util.Calendar;
 import java.util.GregorianCalendar;
-
-import static org.mockito.Mockito.*;
 
 /**
  * Test {@link DatePicker}.

@@ -16,26 +16,26 @@
 
 package android.widget.cts;
 
-import android.content.Context;
-import android.graphics.drawable.Icon;
-import android.os.Bundle;
-import android.support.test.InstrumentationRegistry;
-import android.support.test.rule.ActivityTestRule;
-import android.support.test.runner.AndroidJUnit4;
-
+import static org.junit.Assert.*;
 
 import android.app.Activity;
 import android.app.Instrumentation;
-import android.app.PendingIntent;
 import android.app.Instrumentation.ActivityMonitor;
+import android.app.PendingIntent;
+import android.content.Context;
 import android.content.Intent;
 import android.content.res.ColorStateList;
 import android.cts.util.WidgetTestUtils;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.Icon;
 import android.net.Uri;
+import android.os.Bundle;
 import android.os.Parcel;
+import android.support.test.InstrumentationRegistry;
+import android.support.test.rule.ActivityTestRule;
+import android.support.test.runner.AndroidJUnit4;
 import android.test.suitebuilder.annotation.LargeTest;
 import android.test.suitebuilder.annotation.MediumTest;
 import android.text.TextUtils;
@@ -61,11 +61,11 @@ import android.widget.ProgressBar;
 import android.widget.RatingBar;
 import android.widget.RelativeLayout;
 import android.widget.RemoteViews;
+import android.widget.RemoteViews.ActionException;
 import android.widget.SeekBar;
 import android.widget.StackView;
 import android.widget.TextClock;
 import android.widget.TextView;
-import android.widget.RemoteViews.ActionException;
 import android.widget.ViewFlipper;
 import android.widget.cts.util.TestUtils;
 
@@ -80,8 +80,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-
-import static org.junit.Assert.*;
 
 /**
  * Test {@link RemoteViews}.

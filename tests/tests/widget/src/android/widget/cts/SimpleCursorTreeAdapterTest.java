@@ -16,9 +16,6 @@
 
 package android.widget.cts;
 
-import android.widget.cts.R;
-
-
 import android.content.Context;
 import android.cts.util.WidgetTestUtils;
 import android.database.Cursor;
@@ -31,6 +28,7 @@ import android.view.View;
 import android.widget.ImageView;
 import android.widget.SimpleCursorTreeAdapter;
 import android.widget.TextView;
+import android.widget.cts.R;
 
 /**
  * Test {@link SimpleCursorTreeAdapter}.

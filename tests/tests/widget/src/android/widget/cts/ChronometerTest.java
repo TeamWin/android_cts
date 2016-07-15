@@ -16,6 +16,8 @@
 
 package android.widget.cts;
 
+import static org.mockito.Mockito.*;
+
 import android.app.Instrumentation;
 import android.content.Context;
 import android.os.SystemClock;
@@ -24,13 +26,6 @@ import android.test.UiThreadTest;
 import android.test.suitebuilder.annotation.LargeTest;
 import android.view.ContextThemeWrapper;
 import android.widget.Chronometer;
-import org.mockito.invocation.InvocationOnMock;
-import org.mockito.stubbing.Answer;
-
-import java.util.ArrayList;
-import java.util.List;
-
-import static org.mockito.Mockito.*;
 
 /**
  * Test {@link Chronometer}.

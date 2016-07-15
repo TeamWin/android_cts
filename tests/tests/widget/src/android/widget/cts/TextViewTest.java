@@ -16,6 +16,9 @@
 
 package android.widget.cts;
 
+import static org.mockito.Matchers.*;
+import static org.mockito.Mockito.*;
+
 import android.app.Activity;
 import android.app.Instrumentation;
 import android.app.Instrumentation.ActivityMonitor;
@@ -119,9 +122,6 @@ import org.xmlpull.v1.XmlPullParserException;
 
 import java.io.IOException;
 import java.util.Locale;
-
-import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.*;
 
 /**
  * Test {@link TextView}.

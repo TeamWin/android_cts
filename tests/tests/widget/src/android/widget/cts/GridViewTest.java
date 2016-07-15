@@ -16,6 +16,9 @@
 
 package android.widget.cts;
 
+import static org.mockito.Matchers.*;
+import static org.mockito.Mockito.*;
+
 import android.app.Activity;
 import android.app.Instrumentation;
 import android.content.Context;
@@ -49,12 +52,6 @@ import org.xmlpull.v1.XmlPullParser;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
-
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyInt;
-import static org.mockito.Matchers.anyLong;
-import static org.mockito.Mockito.eq;
-import static org.mockito.Mockito.*;
 
 /**
  * Test {@link GridView}.

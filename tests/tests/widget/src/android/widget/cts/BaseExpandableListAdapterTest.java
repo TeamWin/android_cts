@@ -16,13 +16,13 @@
 
 package android.widget.cts;
 
+import static org.mockito.Mockito.*;
+
 import android.database.DataSetObserver;
 import android.test.InstrumentationTestCase;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseExpandableListAdapter;
-
-import static org.mockito.Mockito.*;
 
 /**
  * Test {@link BaseExpandableListAdapter}.

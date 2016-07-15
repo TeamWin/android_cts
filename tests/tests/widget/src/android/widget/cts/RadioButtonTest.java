@@ -16,23 +16,16 @@
 
 package android.widget.cts;
 
+import static org.mockito.Mockito.*;
+
 import android.app.Activity;
 import android.app.Instrumentation;
 import android.test.ActivityInstrumentationTestCase2;
 import android.test.suitebuilder.annotation.SmallTest;
 import android.text.TextUtils;
-import android.widget.CheckBox;
-import android.widget.cts.R;
-
-
-import android.content.Context;
-import android.test.InstrumentationTestCase;
-import android.test.UiThreadTest;
-import android.util.AttributeSet;
 import android.widget.RadioButton;
+import android.widget.cts.R;
 import android.widget.cts.util.ViewTestUtils;
-
-import static org.mockito.Mockito.*;
 
 @SmallTest
 public class RadioButtonTest extends ActivityInstrumentationTestCase2<RadioButtonCtsActivity> {

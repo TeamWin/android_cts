@@ -16,11 +16,6 @@
 
 package android.widget.cts;
 
-import android.widget.cts.R;
-
-
-import org.xmlpull.v1.XmlPullParser;
-
 import android.content.Context;
 import android.database.DataSetObserver;
 import android.graphics.Rect;
@@ -38,6 +33,9 @@ import android.widget.Gallery;
 import android.widget.ImageView;
 import android.widget.Spinner;
 import android.widget.SpinnerAdapter;
+import android.widget.cts.R;
+
+import org.xmlpull.v1.XmlPullParser;
 
 public class AbsSpinnerTest extends ActivityInstrumentationTestCase2<RelativeLayoutCtsActivity> {
     private Context mContext;
