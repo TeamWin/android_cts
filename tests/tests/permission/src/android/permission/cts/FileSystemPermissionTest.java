@@ -929,67 +929,6 @@ public class FileSystemPermissionTest extends AndroidTestCase {
                 .fileHasOnly("/system/bin/run-as"));
     }
 
-    private static Set<File>
-    getAllInsecureDevicesInDirAndSubdir(File dir, int type) throws Exception {
-        assertTrue(dir.isDirectory());
-        Set<File> retval = new HashSet<File>();
-
-        if (isSymbolicLink(dir)) {
-            // don't examine symbolic links.
-            return retval;
-        }
-
-        File[] subDirectories = dir.listFiles(new FileFilter() {
-            @Override public boolean accept(File pathname) {
-                return pathname.isDirectory();
-            }
-        });
-
-
-        /* recurse into subdirectories */
-        if (subDirectories != null) {
-            for (File f : subDirectories) {
-                retval.addAll(getAllInsecureDevicesInDirAndSubdir(f, type));
-            }
-        }
-
-        File[] filesInThisDirectory = dir.listFiles();
-        if (filesInThisDirectory == null) {
-            return retval;
-        }
-
-        for (File f: filesInThisDirectory) {
-            FileUtils.FileStatus status = new FileUtils.FileStatus();
-            FileUtils.getFileStatus(f.getAbsolutePath(), status, false);
-            if (status.isOfType(type)) {
-                if (f.canRead() || f.canWrite() || f.canExecute()) {
-                    retval.add(f);
-                }
-                if (status.uid == 2000) {
-                    // The shell user should not own any devices
-                    retval.add(f);
-                }
-
-                // Don't allow devices owned by GIDs
-                // accessible to non-privileged applications.
-                if ((status.gid == 1007)           // AID_LOG
-                          || (status.gid == 1015)  // AID_SDCARD_RW
-                          || (status.gid == 1023)  // AID_MEDIA_RW
-                          || (status.gid == 1028)  // AID_SDCARD_R
-                          || (status.gid == 2000)) // AID_SHELL
-                {
-                    if (status.hasModeFlag(FileUtils.S_IRGRP)
-                            || status.hasModeFlag(FileUtils.S_IWGRP)
-                            || status.hasModeFlag(FileUtils.S_IXGRP))
-                    {
-                        retval.add(f);
-                    }
-                }
-            }
-        }
-        return retval;
-    }
-
     private Set<File> getWritableDirectoriesAndSubdirectoriesOf(File dir) throws Exception {
         Set<File> retval = new HashSet<File>();
         if (!dir.isDirectory()) {
