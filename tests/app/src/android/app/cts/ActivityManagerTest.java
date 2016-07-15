@@ -173,6 +173,11 @@ public class ActivityManagerTest extends InstrumentationTestCase {
         recentTaskList = mActivityManager.getRecentTasks(maxNum, flags);
         int numberOfEntriesSecondRun = recentTaskList.size();
         assertTrue(numberOfEntriesSecondRun == numberOfEntriesFirstRun);
+
+        // Tell the activity to finalize.
+        intent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
+        intent.putExtra("finish", true);
+        mContext.startActivity(intent);
     }
 
     // The receiver filter needs to be instantiated with the command to filter for before calling
