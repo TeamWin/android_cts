@@ -17,6 +17,7 @@
 package android.view.cts;
 
 import android.app.Instrumentation;
+import android.cts.util.WidgetTestUtils;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.Point;
@@ -24,7 +25,6 @@ import android.support.test.InstrumentationRegistry;
 import android.support.test.filters.MediumTest;
 import android.support.test.rule.ActivityTestRule;
 import android.view.View;
-import android.view.cts.util.ViewTestUtils;
 
 import org.junit.Before;
 import org.junit.Rule;
@@ -74,8 +74,8 @@ public class TextureViewTest {
         updatedCount = mActivity.waitForSurfaceUpdateCount(1);
         assertEquals(1, updatedCount);
         assertEquals(Color.WHITE, getPixel(center));
-        ViewTestUtils.runOnMainAndDrawSync(mInstrumentation, mActivity,
-                () -> mActivity.removeCover());
+        WidgetTestUtils.runOnMainAndDrawSync(mInstrumentation,
+                mActivity.findViewById(android.R.id.content), () -> mActivity.removeCover());
 
         int color;
         color = waitForChange(center, Color.WHITE);

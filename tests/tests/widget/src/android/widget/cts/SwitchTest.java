@@ -19,12 +19,12 @@ package android.widget.cts;
 import android.app.Activity;
 import android.app.Instrumentation;
 import android.content.res.ColorStateList;
+import android.cts.util.WidgetTestUtils;
 import android.graphics.Color;
 import android.graphics.PorterDuff.Mode;
 import android.graphics.Rect;
 import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
-import android.test.ActivityInstrumentationTestCase;
 import android.test.ActivityInstrumentationTestCase2;
 import android.test.UiThreadTest;
 import android.test.suitebuilder.annotation.SmallTest;
@@ -32,7 +32,6 @@ import android.view.ContextThemeWrapper;
 import android.view.ViewGroup;
 import android.widget.Switch;
 import android.widget.cts.util.TestUtils;
-import android.widget.cts.util.ViewTestUtils;
 
 /**
  * Test {@link Switch}.
@@ -112,7 +111,7 @@ public class SwitchTest extends ActivityInstrumentationTestCase2<SwitchCtsActivi
                 Color.BLUE, 1, true);
 
         // Change thumb drawable to red
-        ViewTestUtils.runOnMainAndDrawSync(instrumentation, mSwitch,
+        WidgetTestUtils.runOnMainAndDrawSync(instrumentation, mSwitch,
                 () -> mSwitch.setThumbDrawable(mActivity.getDrawable(R.drawable.icon_red)));
         thumbDrawable = mSwitch.getThumbDrawable();
         TestUtils.assertAllPixelsOfColor("Thumb drawable should be red", thumbDrawable,
@@ -120,7 +119,7 @@ public class SwitchTest extends ActivityInstrumentationTestCase2<SwitchCtsActivi
                 Color.RED, 1, true);
 
         // Change thumb drawable to green
-        ViewTestUtils.runOnMainAndDrawSync(instrumentation, mSwitch,
+        WidgetTestUtils.runOnMainAndDrawSync(instrumentation, mSwitch,
                 () -> mSwitch.setThumbResource(R.drawable.icon_green));
         thumbDrawable = mSwitch.getThumbDrawable();
         TestUtils.assertAllPixelsOfColor("Thumb drawable should be green", thumbDrawable,
@@ -128,7 +127,7 @@ public class SwitchTest extends ActivityInstrumentationTestCase2<SwitchCtsActivi
                 Color.GREEN, 1, true);
 
         // Now tint the latest (green) thumb drawable with 50% blue SRC_OVER
-        ViewTestUtils.runOnMainAndDrawSync(instrumentation, mSwitch, () -> {
+        WidgetTestUtils.runOnMainAndDrawSync(instrumentation, mSwitch, () -> {
             mSwitch.setThumbTintList(ColorStateList.valueOf(0x800000FF));
             mSwitch.setThumbTintMode(Mode.SRC_OVER);
         });
@@ -141,7 +140,7 @@ public class SwitchTest extends ActivityInstrumentationTestCase2<SwitchCtsActivi
     public void testAccessTrackDrawable() {
         mSwitch = findSwitchById(R.id.switch2);
         final Instrumentation instrumentation = getInstrumentation();
-        ViewTestUtils.runOnMainAndDrawSync(instrumentation, mSwitch,
+        WidgetTestUtils.runOnMainAndDrawSync(instrumentation, mSwitch,
             () -> mSwitch.setTrackTintMode(Mode.DST));
 
         // This is the default set in layout XML
@@ -152,7 +151,7 @@ public class SwitchTest extends ActivityInstrumentationTestCase2<SwitchCtsActivi
                 0x80FF0000, 1, true);
 
         // Change track drawable to blue
-        ViewTestUtils.runOnMainAndDrawSync(instrumentation, mSwitch,
+        WidgetTestUtils.runOnMainAndDrawSync(instrumentation, mSwitch,
                 () -> mSwitch.setTrackDrawable(mActivity.getDrawable(R.drawable.blue_fill)));
         trackDrawable = mSwitch.getTrackDrawable();
         trackDrawableBounds = trackDrawable.getBounds();
@@ -161,7 +160,7 @@ public class SwitchTest extends ActivityInstrumentationTestCase2<SwitchCtsActivi
                 Color.BLUE, 1, true);
 
         // Change track drawable to green
-        ViewTestUtils.runOnMainAndDrawSync(instrumentation, mSwitch,
+        WidgetTestUtils.runOnMainAndDrawSync(instrumentation, mSwitch,
                 () -> mSwitch.setTrackResource(R.drawable.green_fill));
         trackDrawable = mSwitch.getTrackDrawable();
         trackDrawableBounds = trackDrawable.getBounds();
@@ -170,7 +169,7 @@ public class SwitchTest extends ActivityInstrumentationTestCase2<SwitchCtsActivi
                 Color.GREEN, 1, true);
 
         // Now tint the latest (green) track drawable with 50% blue SRC_OVER
-        ViewTestUtils.runOnMainAndDrawSync(instrumentation, mSwitch, () -> {
+        WidgetTestUtils.runOnMainAndDrawSync(instrumentation, mSwitch, () -> {
             mSwitch.setTrackTintList(ColorStateList.valueOf(0x800000FF));
             mSwitch.setTrackTintMode(Mode.SRC_OVER);
         });
@@ -191,49 +190,49 @@ public class SwitchTest extends ActivityInstrumentationTestCase2<SwitchCtsActivi
                 () -> ((ViewGroup) mActivity.findViewById(R.id.container)).addView(mSwitch));
 
         // Set "on" text and verify it
-        ViewTestUtils.runOnMainAndDrawSync(instrumentation, mSwitch,
+        WidgetTestUtils.runOnMainAndDrawSync(instrumentation, mSwitch,
                 () -> mSwitch.setTextOn("Text on"));
         assertEquals("Text on", mSwitch.getTextOn());
 
         // Set "off" text and verify it
-        ViewTestUtils.runOnMainAndDrawSync(instrumentation, mSwitch,
+        WidgetTestUtils.runOnMainAndDrawSync(instrumentation, mSwitch,
                 () -> mSwitch.setTextOff("Text off"));
         assertEquals("Text off", mSwitch.getTextOff());
 
         // Turn text display on
-        ViewTestUtils.runOnMainAndDrawSync(instrumentation, mSwitch,
+        WidgetTestUtils.runOnMainAndDrawSync(instrumentation, mSwitch,
                 () -> mSwitch.setShowText(true));
         assertTrue(mSwitch.getShowText());
 
         // Use custom text appearance. Since we don't have APIs to query this facet of Switch,
         // just test that it's not crashing.
-        ViewTestUtils.runOnMainAndDrawSync(instrumentation, mSwitch,
+        WidgetTestUtils.runOnMainAndDrawSync(instrumentation, mSwitch,
                 () -> mSwitch.setSwitchTextAppearance(mActivity, R.style.TextAppearance_WithColor));
 
         // Use custom typeface. Since we don't have APIs to query this facet of Switch,
         // just test that it's not crashing.
-        ViewTestUtils.runOnMainAndDrawSync(instrumentation, mSwitch,
+        WidgetTestUtils.runOnMainAndDrawSync(instrumentation, mSwitch,
                 () -> mSwitch.setSwitchTypeface(Typeface.MONOSPACE));
 
-        ViewTestUtils.runOnMainAndDrawSync(instrumentation, mSwitch,
+        WidgetTestUtils.runOnMainAndDrawSync(instrumentation, mSwitch,
                 () -> mSwitch.setSwitchTypeface(Typeface.SERIF, Typeface.ITALIC));
 
         // Set and verify padding between the thumb and the text
         final int thumbTextPadding = mActivity.getResources().getDimensionPixelSize(
                 R.dimen.switch_thumb_text_padding);
-        ViewTestUtils.runOnMainAndDrawSync(instrumentation, mSwitch,
+        WidgetTestUtils.runOnMainAndDrawSync(instrumentation, mSwitch,
                 () -> mSwitch.setThumbTextPadding(thumbTextPadding));
         assertEquals(thumbTextPadding, mSwitch.getThumbTextPadding());
 
         // Set and verify padding between the switch and the text
         final int switchPadding = mActivity.getResources().getDimensionPixelSize(
                 R.dimen.switch_padding);
-        ViewTestUtils.runOnMainAndDrawSync(instrumentation, mSwitch,
+        WidgetTestUtils.runOnMainAndDrawSync(instrumentation, mSwitch,
                 () -> mSwitch.setSwitchPadding(switchPadding));
         assertEquals(switchPadding, mSwitch.getSwitchPadding());
 
         // Turn text display off
-        ViewTestUtils.runOnMainAndDrawSync(instrumentation, mSwitch,
+        WidgetTestUtils.runOnMainAndDrawSync(instrumentation, mSwitch,
                 () -> mSwitch.setShowText(false));
         assertFalse(mSwitch.getShowText());
     }
@@ -245,7 +244,7 @@ public class SwitchTest extends ActivityInstrumentationTestCase2<SwitchCtsActivi
         // Set custom min width on the switch and verify that it's at least that wide
         final int switchMinWidth = mActivity.getResources().getDimensionPixelSize(
                 R.dimen.switch_min_width);
-        ViewTestUtils.runOnMainAndDrawSync(instrumentation, mSwitch,
+        WidgetTestUtils.runOnMainAndDrawSync(instrumentation, mSwitch,
                 () -> mSwitch.setSwitchMinWidth(switchMinWidth));
         assertEquals(switchMinWidth, mSwitch.getSwitchMinWidth());
         assertTrue(mSwitch.getWidth() >= switchMinWidth);
@@ -253,7 +252,7 @@ public class SwitchTest extends ActivityInstrumentationTestCase2<SwitchCtsActivi
         // And set another (larger) min width
         final int switchMinWidth2 = mActivity.getResources().getDimensionPixelSize(
                 R.dimen.switch_min_width2);
-        ViewTestUtils.runOnMainAndDrawSync(instrumentation, mSwitch,
+        WidgetTestUtils.runOnMainAndDrawSync(instrumentation, mSwitch,
                 () -> mSwitch.setSwitchMinWidth(switchMinWidth2));
         assertEquals(switchMinWidth2, mSwitch.getSwitchMinWidth());
         assertTrue(mSwitch.getWidth() >= switchMinWidth2);
@@ -263,11 +262,11 @@ public class SwitchTest extends ActivityInstrumentationTestCase2<SwitchCtsActivi
         mSwitch = findSwitchById(R.id.switch3);
         final Instrumentation instrumentation = getInstrumentation();
 
-        ViewTestUtils.runOnMainAndDrawSync(instrumentation, mSwitch,
+        WidgetTestUtils.runOnMainAndDrawSync(instrumentation, mSwitch,
                 () -> mSwitch.setSplitTrack(true));
         assertTrue(mSwitch.getSplitTrack());
 
-        ViewTestUtils.runOnMainAndDrawSync(instrumentation, mSwitch,
+        WidgetTestUtils.runOnMainAndDrawSync(instrumentation, mSwitch,
                 () -> mSwitch.setSplitTrack(false));
         assertFalse(mSwitch.getSplitTrack());
     }

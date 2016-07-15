@@ -21,6 +21,7 @@ import android.app.Instrumentation;
 import android.content.Context;
 import android.content.res.ColorStateList;
 import android.cts.util.PollingCheck;
+import android.cts.util.WidgetTestUtils;
 import android.graphics.Color;
 import android.graphics.PorterDuff;
 import android.graphics.drawable.ColorDrawable;
@@ -32,7 +33,6 @@ import android.view.KeyEvent;
 import android.widget.AbsSeekBar;
 import android.widget.SeekBar;
 import android.widget.cts.util.TestUtils;
-import android.widget.cts.util.ViewTestUtils;
 
 import org.mockito.ArgumentCaptor;
 
@@ -300,11 +300,11 @@ public class AbsSeekBarTest extends ActivityInstrumentationTestCase2<AbsSeekBarC
     public void testAccessSplitTrack() {
         AbsSeekBar inflatedView = (AbsSeekBar) mActivity.findViewById(R.id.tick_mark_tint);
 
-        ViewTestUtils.runOnMainAndDrawSync(mInstrumentation, inflatedView,
+        WidgetTestUtils.runOnMainAndDrawSync(mInstrumentation, inflatedView,
                 () -> inflatedView.setSplitTrack(true));
         assertTrue(inflatedView.getSplitTrack());
 
-        ViewTestUtils.runOnMainAndDrawSync(mInstrumentation, inflatedView,
+        WidgetTestUtils.runOnMainAndDrawSync(mInstrumentation, inflatedView,
                 () -> inflatedView.setSplitTrack(false));
         assertFalse(inflatedView.getSplitTrack());
     }

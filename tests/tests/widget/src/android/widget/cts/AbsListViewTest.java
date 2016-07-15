@@ -978,7 +978,7 @@ public class AbsListViewTest {
         final ArrayList<String> items = new ArrayList<>(Arrays.asList(COUNTRY_LIST));
         final ArrayAdapter<String> adapter = new PositionArrayAdapter<>(mContext,
                 android.R.layout.simple_list_item_1, items);
-        ViewTestUtils.runOnMainAndDrawSync(mInstrumentation, mListView,
+        WidgetTestUtils.runOnMainAndDrawSync(mInstrumentation, mListView,
                 () -> mListView.setAdapter(adapter));
 
         mInstrumentation.runOnMainSync(
@@ -1004,7 +1004,7 @@ public class AbsListViewTest {
         final ArrayList<String> items = new ArrayList<>(Arrays.asList(COUNTRY_LIST));
         final ArrayAdapter<String> adapter = new PositionArrayAdapter<>(mContext,
                 android.R.layout.simple_list_item_1, items);
-        ViewTestUtils.runOnMainAndDrawSync(mInstrumentation, mListView,
+        WidgetTestUtils.runOnMainAndDrawSync(mInstrumentation, mListView,
                 () -> mListView.setAdapter(adapter));
 
         mInstrumentation.runOnMainSync(
@@ -1030,7 +1030,7 @@ public class AbsListViewTest {
         final ArrayList<String> items = new ArrayList<>(Arrays.asList(COUNTRY_LIST));
         final ArrayAdapter<String> adapter = new PositionArrayAdapter<>(mContext,
                 android.R.layout.simple_list_item_1, items);
-        ViewTestUtils.runOnMainAndDrawSync(mInstrumentation, mListView,
+        WidgetTestUtils.runOnMainAndDrawSync(mInstrumentation, mListView,
                 () -> mListView.setAdapter(adapter));
 
         mInstrumentation.runOnMainSync(
@@ -1056,7 +1056,7 @@ public class AbsListViewTest {
         final ArrayList<String> items = new ArrayList<>(Arrays.asList(COUNTRY_LIST));
         final ArrayAdapter<String> adapter = new PositionArrayAdapter<>(mContext,
                 android.R.layout.simple_list_item_1, items);
-        ViewTestUtils.runOnMainAndDrawSync(mInstrumentation, mListView,
+        WidgetTestUtils.runOnMainAndDrawSync(mInstrumentation, mListView,
                 () -> mListView.setAdapter(adapter));
 
         // Configure a multi-choice mode listener to configure our test contextual action bar

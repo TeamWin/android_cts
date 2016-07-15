@@ -23,6 +23,7 @@ import android.app.Instrumentation;
 import android.content.res.Resources;
 import android.content.res.Resources.NotFoundException;
 import android.content.res.Resources.Theme;
+import android.cts.util.WidgetTestUtils;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.test.ActivityInstrumentationTestCase2;
@@ -267,7 +268,7 @@ public class SpinnerTest extends ActivityInstrumentationTestCase2<SpinnerCtsActi
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         instrumentation.runOnMainSync(() -> spinner.setAdapter(adapter));
 
-        ViewTestUtils.runOnMainAndDrawSync(instrumentation, spinner, () -> {
+        WidgetTestUtils.runOnMainAndDrawSync(instrumentation, spinner, () -> {
             spinner.setSelection(1);
             spinner.getLayoutParams().width = ViewGroup.LayoutParams.MATCH_PARENT;
             spinner.requestLayout();

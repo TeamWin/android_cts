@@ -16,12 +16,17 @@
 
 package android.cts.util;
 
+import android.app.Instrumentation;
 import android.content.Context;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.text.Editable;
 import android.text.TextUtils;
+import android.view.View;
+import android.view.ViewTreeObserver;
 
 import junit.framework.Assert;
 
@@ -31,7 +36,10 @@ import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
 
 import java.io.IOException;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
+import static android.view.ViewTreeObserver.*;
 import static org.mockito.Matchers.*;
 
 /**
@@ -189,6 +197,47 @@ public class WidgetTestUtils {
                 description.appendText("doesn't match " + expected);
             }
         });
+    }
+
+    /**
+     * Runs the specified Runnable on the main thread and ensures that the specified View's tree is
+     * drawn before returning.
+     *
+     * @param instrumentation the instrumentation used to run the test
+     * @param view the view whose tree should be drawn before returning
+     * @param runner the runnable to run on the main thread, or {@code null} to
+     *               simply force invalidation and a draw pass
+     */
+    public static void runOnMainAndDrawSync(@NonNull Instrumentation instrumentation,
+                                            @NonNull final View view,
+                                            @Nullable final Runnable runner) {
+        final CountDownLatch latch = new CountDownLatch(1);
+
+        instrumentation.runOnMainSync(() -> {
+            final ViewTreeObserver observer = view.getViewTreeObserver();
+            final OnDrawListener listener = new OnDrawListener() {
+                @Override
+                public void onDraw() {
+                    observer.removeOnDrawListener(this);
+                    view.post(() -> latch.countDown());
+                }
+            };
+
+            observer.addOnDrawListener(listener);
+
+            if (runner != null) {
+                runner.run();
+            } else {
+                view.invalidate();
+            }
+        });
+
+        try {
+            Assert.assertTrue("Expected draw pass occurred within 5 seconds",
+                    latch.await(5, TimeUnit.SECONDS));
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
     }
 
 }
