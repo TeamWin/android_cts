@@ -110,7 +110,7 @@ public class AbsListViewTest {
 
         final Activity activity = mActivityRule.getActivity();
 
-        PollingCheck.waitFor(() -> activity.hasWindowFocus());
+        PollingCheck.waitFor(activity::hasWindowFocus);
 
         XmlPullParser parser = mContext.getResources().getXml(R.layout.listview_layout);
         WidgetTestUtils.beginDocument(parser, "FrameLayout");
@@ -490,7 +490,7 @@ public class AbsListViewTest {
         final Drawable d = mContext.getDrawable(R.drawable.pass);
         mListView.setSelector(d);
 
-        mInstrumentation.runOnMainSync(() -> mListView.requestLayout());
+        mInstrumentation.runOnMainSync(mListView::requestLayout);
         mInstrumentation.waitForIdleSync();
         assertSame(d, mListView.getSelector());
         assertTrue(mListView.verifyDrawable(d));
@@ -498,7 +498,7 @@ public class AbsListViewTest {
         mListView.setSelector(R.drawable.failed);
         mListView.setDrawSelectorOnTop(true);
 
-        mInstrumentation.runOnMainSync(() -> mListView.requestLayout());
+        mInstrumentation.runOnMainSync(mListView::requestLayout);
         mInstrumentation.waitForIdleSync();
 
         Drawable drawable = mListView.getSelector();
@@ -522,7 +522,7 @@ public class AbsListViewTest {
 
         mListView.setScrollIndicators(tv1, tv2);
 
-        mInstrumentation.runOnMainSync(() -> mListView.requestLayout());
+        mInstrumentation.runOnMainSync(mListView::requestLayout);
         mInstrumentation.waitForIdleSync();
     }
 
@@ -703,7 +703,7 @@ public class AbsListViewTest {
 
         mListView.setScrollIndicators(tv1, tv2);
 
-        mInstrumentation.runOnMainSync(() -> mListView.invalidateViews());
+        mInstrumentation.runOnMainSync(mListView::invalidateViews);
         mInstrumentation.waitForIdleSync();
     }
 

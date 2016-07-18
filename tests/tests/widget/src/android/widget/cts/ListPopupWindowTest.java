@@ -366,7 +366,7 @@ public class ListPopupWindowTest extends
                 mPopupWindow.getSoftInputMode());
     }
 
-    private void verifyDismissalViaTouch(boolean setupAsModal) throws Throwable {
+    private void verifyDismissalViaTouch(boolean setupAsModal) {
         // Register a click listener on the top-level container
         final View mainContainer = mActivity.findViewById(R.id.main_container);
         View.OnClickListener mockContainerClickListener = mock(View.OnClickListener.class);
@@ -406,19 +406,19 @@ public class ListPopupWindowTest extends
         verify(mockContainerClickListener, times(setupAsModal ? 0 : 1)).onClick(mainContainer);
     }
 
-    public void testDismissalOutsideNonModal() throws Throwable {
+    public void testDismissalOutsideNonModal() {
         verifyDismissalViaTouch(false);
     }
 
-    public void testDismissalOutsideModal() throws Throwable {
+    public void testDismissalOutsideModal() {
         verifyDismissalViaTouch(true);
     }
 
-    public void testItemClicks() throws Throwable {
+    public void testItemClicks() {
         mPopupWindowBuilder = new Builder().withItemClickListener().withDismissListener();
         mPopupWindowBuilder.show();
 
-        runTestOnUiThread(() -> mPopupWindow.performItemClick(2));
+        mInstrumentation.runOnMainSync(() -> mPopupWindow.performItemClick(2));
         mInstrumentation.waitForIdleSync();
 
         verify(mPopupWindowBuilder.mOnItemClickListener, times(1)).onItemClick(
@@ -428,7 +428,8 @@ public class ListPopupWindowTest extends
         verify(mPopupWindowBuilder.mOnDismissListener, times(1)).onDismiss();
 
         mPopupWindowBuilder.showAgain();
-        runTestOnUiThread(() -> mPopupWindow.getListView().performItemClick(null, 1, 1));
+        mInstrumentation.runOnMainSync(
+                () -> mPopupWindow.getListView().performItemClick(null, 1, 1));
         mInstrumentation.waitForIdleSync();
 
         verify(mPopupWindowBuilder.mOnItemClickListener, times(1)).onItemClick(
@@ -441,7 +442,7 @@ public class ListPopupWindowTest extends
         verifyNoMoreInteractions(mPopupWindowBuilder.mOnItemClickListener);
     }
 
-    public void testPromptViewAbove() throws Throwable {
+    public void testPromptViewAbove() {
         final View promptView = LayoutInflater.from(mActivity).inflate(
                 R.layout.popupwindow_prompt, null);
         mPopupWindowBuilder = new Builder().withPrompt(
@@ -466,7 +467,7 @@ public class ListPopupWindowTest extends
         assertTrue(promptViewOnScreenXY[1] + promptView.getHeight() <= firstChildOnScreenXY[1]);
     }
 
-    public void testPromptViewBelow() throws Throwable {
+    public void testPromptViewBelow() {
         final View promptView = LayoutInflater.from(mActivity).inflate(
                 R.layout.popupwindow_prompt, null);
         mPopupWindowBuilder = new Builder().withPrompt(
@@ -492,7 +493,7 @@ public class ListPopupWindowTest extends
     }
 
     @Presubmit
-    public void testAccessSelection() throws Throwable {
+    public void testAccessSelection() {
         mPopupWindowBuilder = new Builder().withItemSelectedListener();
         mPopupWindowBuilder.show();
 
@@ -530,7 +531,7 @@ public class ListPopupWindowTest extends
 
         // Clear selection
         WidgetTestUtils.runOnMainAndDrawSync(mInstrumentation, listView,
-                () -> mPopupWindow.clearListSelection());
+                mPopupWindow::clearListSelection);
 
         // And verify empty selection state + no more selection listener invocation
         verify(mPopupWindowBuilder.mOnItemSelectedListener, times(1)).onNothingSelected(
@@ -542,7 +543,7 @@ public class ListPopupWindowTest extends
         verifyNoMoreInteractions(mPopupWindowBuilder.mOnItemSelectedListener);
     }
 
-    public void testNoDefaultDismissalWithBackButton() throws Throwable {
+    public void testNoDefaultDismissalWithBackButton() {
         mPopupWindowBuilder = new Builder().withDismissListener();
         mPopupWindowBuilder.show();
 
@@ -554,7 +555,7 @@ public class ListPopupWindowTest extends
         assertTrue(mPopupWindow.isShowing());
     }
 
-    public void testCustomDismissalWithBackButton() throws Throwable {
+    public void testCustomDismissalWithBackButton() {
         mPopupWindowBuilder = new Builder().withAnchor(R.id.anchor_upper_left)
                 .withDismissListener();
         mPopupWindowBuilder.show();
@@ -564,7 +565,7 @@ public class ListPopupWindowTest extends
                 (MockViewForListPopupWindow) mPopupWindow.getAnchorView();
         anchor.wireTo(mPopupWindow);
         // Request focus on our EditText
-        runTestOnUiThread(() -> anchor.requestFocus());
+        mInstrumentation.runOnMainSync(anchor::requestFocus);
         mInstrumentation.waitForIdleSync();
         assertTrue(anchor.isFocused());
 
@@ -576,7 +577,7 @@ public class ListPopupWindowTest extends
         assertFalse(mPopupWindow.isShowing());
     }
 
-    public void testListSelectionWithDPad() throws Throwable {
+    public void testListSelectionWithDPad() {
         mPopupWindowBuilder = new Builder().withAnchor(R.id.anchor_upper_left)
                 .withDismissListener().withItemSelectedListener();
         mPopupWindowBuilder.show();
@@ -588,7 +589,7 @@ public class ListPopupWindowTest extends
                 (MockViewForListPopupWindow) mPopupWindow.getAnchorView();
         anchor.wireTo(mPopupWindow);
         // Request focus on our EditText
-        runTestOnUiThread(() -> anchor.requestFocus());
+        mInstrumentation.runOnMainSync(anchor::requestFocus);
         mInstrumentation.waitForIdleSync();
         assertTrue(anchor.isFocused());
 
@@ -648,7 +649,7 @@ public class ListPopupWindowTest extends
         verifyNoMoreInteractions(mPopupWindowBuilder.mOnDismissListener);
     }
 
-    public void testCreateOnDragListener() throws Throwable {
+    public void testCreateOnDragListener() {
         // In this test we want precise control over the height of the popup content since
         // we need to know by how much to swipe down to end the emulated gesture over the
         // specific item in the popup. This is why we're using a popup style that removes

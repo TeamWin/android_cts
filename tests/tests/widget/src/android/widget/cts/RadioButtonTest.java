@@ -129,12 +129,12 @@ public class RadioButtonTest extends ActivityInstrumentationTestCase2<RadioButto
         assertFalse(mRadioButton.isChecked());
 
         // toggle to checked
-        mInstrumentation.runOnMainSync(() -> mRadioButton.toggle());
+        mInstrumentation.runOnMainSync(mRadioButton::toggle);
         verify(mockCheckedChangeListener, times(1)).onCheckedChanged(mRadioButton, true);
         assertTrue(mRadioButton.isChecked());
 
         // try toggle to not checked - this should leave the radio button in checked state
-        mInstrumentation.runOnMainSync(() -> mRadioButton.toggle());
+        mInstrumentation.runOnMainSync(mRadioButton::toggle);
         assertTrue(mRadioButton.isChecked());
 
         verifyNoMoreInteractions(mockCheckedChangeListener);
@@ -169,12 +169,12 @@ public class RadioButtonTest extends ActivityInstrumentationTestCase2<RadioButto
         assertFalse(mRadioButton.isChecked());
 
         // click to checked
-        mInstrumentation.runOnMainSync(() -> mRadioButton.performClick());
+        mInstrumentation.runOnMainSync(mRadioButton::performClick);
         verify(mockCheckedChangeListener, times(1)).onCheckedChanged(mRadioButton, true);
         assertTrue(mRadioButton.isChecked());
 
         // click to not checked - this should leave the radio button in checked state
-        mInstrumentation.runOnMainSync(() -> mRadioButton.performClick());
+        mInstrumentation.runOnMainSync(mRadioButton::performClick);
         assertTrue(mRadioButton.isChecked());
 
         verifyNoMoreInteractions(mockCheckedChangeListener);

@@ -78,7 +78,6 @@ public class ListViewTest extends ActivityInstrumentationTestCase2<ListViewCtsAc
     private final String[] mNameList = new String[] {
         "Jacky", "David", "Kevin", "Michael", "Andy"
     };
-    private final String[] mEmptyList = new String[0];
 
     private ListView mListView;
     private Activity mActivity;
@@ -87,7 +86,6 @@ public class ListViewTest extends ActivityInstrumentationTestCase2<ListViewCtsAc
     private ArrayAdapter<String> mAdapter_countries;
     private ArrayAdapter<String> mAdapter_longCountries;
     private ArrayAdapter<String> mAdapter_names;
-    private ArrayAdapter<String> mAdapter_empty;
 
     public ListViewTest() {
         super("android.widget.cts", ListViewCtsActivity.class);
@@ -107,8 +105,6 @@ public class ListViewTest extends ActivityInstrumentationTestCase2<ListViewCtsAc
                 android.R.layout.simple_list_item_1, mLongCountryList);
         mAdapter_names = new ArrayAdapter<>(mActivity, android.R.layout.simple_list_item_1,
                 mNameList);
-        mAdapter_empty = new ArrayAdapter<>(mActivity, android.R.layout.simple_list_item_1,
-                mEmptyList);
 
         mListView = (ListView) mActivity.findViewById(R.id.listview_default);
     }
@@ -369,7 +365,7 @@ public class ListViewTest extends ActivityInstrumentationTestCase2<ListViewCtsAc
                 () -> mListView.setAdapter(adapter));
 
         WidgetTestUtils.runOnMainAndDrawSync(mInstrumentation, mListView,
-                () -> adapter.notifyDataSetChanged());
+                adapter::notifyDataSetChanged);
 
         assertEquals(0, mismatch.size());
     }
@@ -410,7 +406,7 @@ public class ListViewTest extends ActivityInstrumentationTestCase2<ListViewCtsAc
         assertEquals(mCountryList[5], item);
 
         WidgetTestUtils.runOnMainAndDrawSync(mInstrumentation, mListView,
-                () -> mListView.setSelectionAfterHeaderView());
+                mListView::setSelectionAfterHeaderView);
         item = (String) mListView.getSelectedItem();
         assertEquals(mCountryList[0], item);
     }
@@ -666,13 +662,13 @@ public class ListViewTest extends ActivityInstrumentationTestCase2<ListViewCtsAc
     @MediumTest
     public void testFullDetachHeaderViewOnScroll() {
         final AttachDetachAwareView header = new AttachDetachAwareView(mActivity);
-        WidgetTestUtils.runOnMainAndDrawSync(getInstrumentation(), mListView, () -> {
+        WidgetTestUtils.runOnMainAndDrawSync(mInstrumentation, mListView, () -> {
             mListView.setAdapter(new DummyAdapter(1000));
             mListView.addHeaderView(header);
         });
         assertEquals("test sanity", 1, header.mOnAttachCount);
         assertEquals("test sanity", 0, header.mOnDetachCount);
-        WidgetTestUtils.runOnMainAndDrawSync(getInstrumentation(), mListView, () -> {
+        WidgetTestUtils.runOnMainAndDrawSync(mInstrumentation, mListView, () -> {
             mListView.scrollListBy(mListView.getHeight() * 3);
         });
         assertNull("test sanity, header should be removed", header.getParent());
@@ -683,13 +679,13 @@ public class ListViewTest extends ActivityInstrumentationTestCase2<ListViewCtsAc
     @MediumTest
     public void testFullDetachHeaderViewOnRelayout() {
         final AttachDetachAwareView header = new AttachDetachAwareView(mActivity);
-        WidgetTestUtils.runOnMainAndDrawSync(getInstrumentation(), mListView, () -> {
+        WidgetTestUtils.runOnMainAndDrawSync(mInstrumentation, mListView, () -> {
             mListView.setAdapter(new DummyAdapter(1000));
             mListView.addHeaderView(header);
         });
         assertEquals("test sanity", 1, header.mOnAttachCount);
         assertEquals("test sanity", 0, header.mOnDetachCount);
-        WidgetTestUtils.runOnMainAndDrawSync(getInstrumentation(), mListView, () -> {
+        WidgetTestUtils.runOnMainAndDrawSync(mInstrumentation, mListView, () -> {
             mListView.setSelection(800);
         });
         assertNull("test sanity, header should be removed", header.getParent());
@@ -700,7 +696,7 @@ public class ListViewTest extends ActivityInstrumentationTestCase2<ListViewCtsAc
     @MediumTest
     public void testFullDetachHeaderViewOnScrollForFocus() {
         final AttachDetachAwareView header = new AttachDetachAwareView(mActivity);
-        WidgetTestUtils.runOnMainAndDrawSync(getInstrumentation(), mListView, () -> {
+        WidgetTestUtils.runOnMainAndDrawSync(mInstrumentation, mListView, () -> {
             mListView.setAdapter(new DummyAdapter(1000));
             mListView.addHeaderView(header);
         });
@@ -709,7 +705,7 @@ public class ListViewTest extends ActivityInstrumentationTestCase2<ListViewCtsAc
         while(header.getParent() != null) {
             assertEquals("header view should NOT be detached", 0, header.mOnDetachCount);
             sendKeys(KeyEvent.KEYCODE_DPAD_DOWN);
-            WidgetTestUtils.runOnMainAndDrawSync(getInstrumentation(), mListView, null);
+            WidgetTestUtils.runOnMainAndDrawSync(mInstrumentation, mListView, null);
         }
         assertEquals("header view should be detached", 1, header.mOnDetachCount);
         assertFalse(header.isTemporarilyDetached());
@@ -718,18 +714,18 @@ public class ListViewTest extends ActivityInstrumentationTestCase2<ListViewCtsAc
     @MediumTest
     public void testFullyDetachUnusedViewOnScroll() {
         final AttachDetachAwareView theView = new AttachDetachAwareView(mActivity);
-        WidgetTestUtils.runOnMainAndDrawSync(getInstrumentation(), mListView, () -> {
+        WidgetTestUtils.runOnMainAndDrawSync(mInstrumentation, mListView, () -> {
             mListView.setAdapter(new DummyAdapter(1000, theView));
         });
         assertEquals("test sanity", 1, theView.mOnAttachCount);
         assertEquals("test sanity", 0, theView.mOnDetachCount);
-        WidgetTestUtils.runOnMainAndDrawSync(getInstrumentation(), mListView, () -> {
+        WidgetTestUtils.runOnMainAndDrawSync(mInstrumentation, mListView, () -> {
             mListView.scrollListBy(mListView.getHeight() * 2);
         });
         assertNull("test sanity, unused view should be removed", theView.getParent());
         assertEquals("unused view should be detached", 1, theView.mOnDetachCount);
         assertFalse(theView.isTemporarilyDetached());
-        WidgetTestUtils.runOnMainAndDrawSync(getInstrumentation(), mListView, () -> {
+        WidgetTestUtils.runOnMainAndDrawSync(mInstrumentation, mListView, () -> {
             mListView.scrollListBy(-mListView.getHeight() * 2);
             // listview limits scroll to 1 page which is why we call it twice here.
             mListView.scrollListBy(-mListView.getHeight() * 2);
@@ -743,18 +739,18 @@ public class ListViewTest extends ActivityInstrumentationTestCase2<ListViewCtsAc
     @MediumTest
     public void testFullyDetachUnusedViewOnReLayout() {
         final AttachDetachAwareView theView = new AttachDetachAwareView(mActivity);
-        WidgetTestUtils.runOnMainAndDrawSync(getInstrumentation(), mListView, () -> {
+        WidgetTestUtils.runOnMainAndDrawSync(mInstrumentation, mListView, () -> {
             mListView.setAdapter(new DummyAdapter(1000, theView));
         });
         assertEquals("test sanity", 1, theView.mOnAttachCount);
         assertEquals("test sanity", 0, theView.mOnDetachCount);
-        WidgetTestUtils.runOnMainAndDrawSync(getInstrumentation(), mListView, () -> {
+        WidgetTestUtils.runOnMainAndDrawSync(mInstrumentation, mListView, () -> {
             mListView.setSelection(800);
         });
         assertNull("test sanity, unused view should be removed", theView.getParent());
         assertEquals("unused view should be detached", 1, theView.mOnDetachCount);
         assertFalse(theView.isTemporarilyDetached());
-        WidgetTestUtils.runOnMainAndDrawSync(getInstrumentation(), mListView, () -> {
+        WidgetTestUtils.runOnMainAndDrawSync(mInstrumentation, mListView, () -> {
             mListView.setSelection(0);
         });
         assertNotNull("test sanity, view should be re-added", theView.getParent());
@@ -766,7 +762,7 @@ public class ListViewTest extends ActivityInstrumentationTestCase2<ListViewCtsAc
     @MediumTest
     public void testFullyDetachUnusedViewOnScrollForFocus() {
         final AttachDetachAwareView theView = new AttachDetachAwareView(mActivity);
-        WidgetTestUtils.runOnMainAndDrawSync(getInstrumentation(), mListView, () -> {
+        WidgetTestUtils.runOnMainAndDrawSync(mInstrumentation, mListView, () -> {
             mListView.setAdapter(new DummyAdapter(1000, theView));
         });
         assertEquals("test sanity", 1, theView.mOnAttachCount);
@@ -774,13 +770,13 @@ public class ListViewTest extends ActivityInstrumentationTestCase2<ListViewCtsAc
         while(theView.getParent() != null) {
             assertEquals("the view should NOT be detached", 0, theView.mOnDetachCount);
             sendKeys(KeyEvent.KEYCODE_DPAD_DOWN);
-            WidgetTestUtils.runOnMainAndDrawSync(getInstrumentation(), mListView, null);
+            WidgetTestUtils.runOnMainAndDrawSync(mInstrumentation, mListView, null);
         }
         assertEquals("the view should be detached", 1, theView.mOnDetachCount);
         assertFalse(theView.isTemporarilyDetached());
         while(theView.getParent() == null) {
             sendKeys(KeyEvent.KEYCODE_DPAD_UP);
-            WidgetTestUtils.runOnMainAndDrawSync(getInstrumentation(), mListView, null);
+            WidgetTestUtils.runOnMainAndDrawSync(mInstrumentation, mListView, null);
         }
         assertEquals("the view should be re-attached", 2, theView.mOnAttachCount);
         assertEquals("the view should not recieve another detach", 1, theView.mOnDetachCount);
@@ -794,19 +790,19 @@ public class ListViewTest extends ActivityInstrumentationTestCase2<ListViewCtsAc
                 ViewGroup.LayoutParams.WRAP_CONTENT));
         view.setMinimumHeight(30);
         final DummyAdapter adapter = new DummyAdapter(2, view);
-        WidgetTestUtils.runOnMainAndDrawSync(getInstrumentation(), mListView, () -> {
+        WidgetTestUtils.runOnMainAndDrawSync(mInstrumentation, mListView, () -> {
             mListView.setLayoutParams(new FrameLayout.LayoutParams(200, 100));
             mListView.setAdapter(adapter);
         });
         assertEquals("test sanity", 200, mListView.getWidth());
         assertEquals(200, view.getWidth());
-        WidgetTestUtils.runOnMainAndDrawSync(getInstrumentation(), mListView, () -> {
+        WidgetTestUtils.runOnMainAndDrawSync(mInstrumentation, mListView, () -> {
             mListView.setPadding(10, 0, 5, 0);
             assertTrue(view.isLayoutRequested());
         });
         assertEquals(185, view.getWidth());
         assertFalse(view.isLayoutRequested());
-        WidgetTestUtils.runOnMainAndDrawSync(getInstrumentation(), mListView, () -> {
+        WidgetTestUtils.runOnMainAndDrawSync(mInstrumentation, mListView, () -> {
             mListView.setPadding(10, 0, 5, 0);
             assertFalse(view.isLayoutRequested());
         });

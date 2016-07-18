@@ -116,7 +116,7 @@ public class AutoCompleteTextViewTest extends
     protected void setUp() throws Exception {
         super.setUp();
         mActivity = getActivity();
-        PollingCheck.waitFor(() -> mActivity.hasWindowFocus());
+        PollingCheck.waitFor(mActivity::hasWindowFocus);
 
         mInstrumentation = getInstrumentation();
         mAutoCompleteTextView = (AutoCompleteTextView) mActivity
@@ -306,15 +306,15 @@ public class AutoCompleteTextViewTest extends
         mAutoCompleteTextView.setOnDismissListener(mockDismissListener);
 
         assertFalse(mAutoCompleteTextView.isPopupShowing());
-        mInstrumentation.runOnMainSync(() -> mAutoCompleteTextView.showDropDown());
+        mInstrumentation.runOnMainSync(mAutoCompleteTextView::showDropDown);
         assertTrue(mAutoCompleteTextView.isPopupShowing());
         verifyZeroInteractions(mockDismissListener);
 
-        mInstrumentation.runOnMainSync(() -> mAutoCompleteTextView.dismissDropDown());
+        mInstrumentation.runOnMainSync(mAutoCompleteTextView::dismissDropDown);
         assertFalse(mAutoCompleteTextView.isPopupShowing());
         verify(mockDismissListener, times(1)).onDismiss();
 
-        mInstrumentation.runOnMainSync(() -> mAutoCompleteTextView.showDropDown());
+        mInstrumentation.runOnMainSync(mAutoCompleteTextView::showDropDown);
         assertTrue(mAutoCompleteTextView.isPopupShowing());
         verify(mockDismissListener, times(1)).onDismiss();
 
@@ -328,7 +328,7 @@ public class AutoCompleteTextViewTest extends
         assertEquals(STRING_TEST, mAutoCompleteTextView.getText().toString());
 
         // clearFocus will trigger onFocusChanged, and onFocusChanged will validate the text.
-        mInstrumentation.runOnMainSync(() -> mAutoCompleteTextView.clearFocus());
+        mInstrumentation.runOnMainSync(mAutoCompleteTextView::clearFocus);
         assertFalse(mAutoCompleteTextView.isPopupShowing());
         assertEquals(STRING_VALIDATED, mAutoCompleteTextView.getText().toString());
         verify(mockDismissListener, times(2)).onDismiss();
@@ -594,7 +594,7 @@ public class AutoCompleteTextViewTest extends
                 eq(0), eq(0L));
         assertEquals(WORDS[0], mAutoCompleteTextView.getText().toString());
 
-        mInstrumentation.runOnMainSync(() -> mAutoCompleteTextView.showDropDown());
+        mInstrumentation.runOnMainSync(mAutoCompleteTextView::showDropDown);
         mInstrumentation.waitForIdleSync();
         mInstrumentation.sendKeyDownUpSync(KeyEvent.KEYCODE_DPAD_DOWN);
         mInstrumentation.sendKeyDownUpSync(KeyEvent.KEYCODE_DPAD_CENTER);
@@ -603,7 +603,7 @@ public class AutoCompleteTextViewTest extends
         assertEquals(WORDS[0], mAutoCompleteTextView.getText().toString());
         assertFalse(mAutoCompleteTextView.isPerformingCompletion());
 
-        mInstrumentation.runOnMainSync(() -> mAutoCompleteTextView.showDropDown());
+        mInstrumentation.runOnMainSync(mAutoCompleteTextView::showDropDown);
         mInstrumentation.sendKeyDownUpSync(KeyEvent.KEYCODE_DPAD_DOWN);
         // Test normal key code.
         mInstrumentation.sendKeyDownUpSync(KeyEvent.KEYCODE_0);
@@ -612,7 +612,7 @@ public class AutoCompleteTextViewTest extends
         assertFalse(mAutoCompleteTextView.isPerformingCompletion());
 
         // Test the method on the scene of popup is closed.
-        mInstrumentation.runOnMainSync(() -> mAutoCompleteTextView.dismissDropDown());
+        mInstrumentation.runOnMainSync(mAutoCompleteTextView::dismissDropDown);
 
         mInstrumentation.sendKeyDownUpSync(KeyEvent.KEYCODE_DPAD_DOWN);
         mInstrumentation.sendKeyDownUpSync(KeyEvent.KEYCODE_ENTER);
@@ -646,7 +646,7 @@ public class AutoCompleteTextViewTest extends
 
         mInstrumentation.sendKeyDownUpSync(KeyEvent.KEYCODE_DPAD_DOWN);
         mInstrumentation.sendKeyDownUpSync(KeyEvent.KEYCODE_DPAD_DOWN);
-        mInstrumentation.runOnMainSync(() -> mAutoCompleteTextView.performCompletion());
+        mInstrumentation.runOnMainSync(mAutoCompleteTextView::performCompletion);
         verify(mockItemClickListener, times(1)).onItemClick(any(AdapterView.class), any(View.class),
                 eq(1), eq(1L));
         assertEquals(WORDS[1], mAutoCompleteTextView.getText().toString());

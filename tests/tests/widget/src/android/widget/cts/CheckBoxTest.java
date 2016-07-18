@@ -131,12 +131,12 @@ public class CheckBoxTest extends ActivityInstrumentationTestCase2<CheckBoxCtsAc
         assertFalse(mCheckBox.isChecked());
 
         // toggle to checked
-        mInstrumentation.runOnMainSync(() -> mCheckBox.toggle());
+        mInstrumentation.runOnMainSync(mCheckBox::toggle);
         verify(mockCheckedChangeListener, times(1)).onCheckedChanged(mCheckBox, true);
         assertTrue(mCheckBox.isChecked());
 
         // toggle to not checked
-        mInstrumentation.runOnMainSync(() -> mCheckBox.toggle());
+        mInstrumentation.runOnMainSync(mCheckBox::toggle);
         verify(mockCheckedChangeListener, times(1)).onCheckedChanged(mCheckBox, false);
         assertFalse(mCheckBox.isChecked());
 
@@ -173,12 +173,12 @@ public class CheckBoxTest extends ActivityInstrumentationTestCase2<CheckBoxCtsAc
         assertFalse(mCheckBox.isChecked());
 
         // click to checked
-        mInstrumentation.runOnMainSync(() -> mCheckBox.performClick());
+        mInstrumentation.runOnMainSync(mCheckBox::performClick);
         verify(mockCheckedChangeListener, times(1)).onCheckedChanged(mCheckBox, true);
         assertTrue(mCheckBox.isChecked());
 
         // click to not checked
-        mInstrumentation.runOnMainSync(() -> mCheckBox.performClick());
+        mInstrumentation.runOnMainSync(mCheckBox::performClick);
         verify(mockCheckedChangeListener, times(1)).onCheckedChanged(mCheckBox, false);
         assertFalse(mCheckBox.isChecked());
 

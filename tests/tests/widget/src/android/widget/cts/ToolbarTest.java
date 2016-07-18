@@ -186,7 +186,7 @@ public class ToolbarTest extends ActivityInstrumentationTestCase2<ToolbarCtsActi
         assertFalse(mMainToolbar.isOverflowMenuShowing());
 
         // Ask to show overflow menu and check that it's showing
-        mInstrumentation.runOnMainSync(() -> mMainToolbar.showOverflowMenu());
+        mInstrumentation.runOnMainSync(mMainToolbar::showOverflowMenu);
         mInstrumentation.waitForIdleSync();
         assertTrue(mMainToolbar.isOverflowMenuShowing());
 
@@ -204,7 +204,7 @@ public class ToolbarTest extends ActivityInstrumentationTestCase2<ToolbarCtsActi
                 menu.findItem(R.id.action_share));
 
         // Ask to dismiss all the popups and check that we're not showing the overflow menu
-        mInstrumentation.runOnMainSync(() -> mMainToolbar.dismissPopupMenus());
+        mInstrumentation.runOnMainSync(mMainToolbar::dismissPopupMenus);
         mInstrumentation.waitForIdleSync();
         assertFalse(mMainToolbar.isOverflowMenuShowing());
     }
@@ -233,27 +233,27 @@ public class ToolbarTest extends ActivityInstrumentationTestCase2<ToolbarCtsActi
         // Expand search menu item's action view and verify that main toolbar has an expanded
         // action view
         final MenuItem searchMenuItem = mMainToolbar.getMenu().findItem(R.id.action_search);
-        mInstrumentation.runOnMainSync(() -> searchMenuItem.expandActionView());
+        mInstrumentation.runOnMainSync(searchMenuItem::expandActionView);
         mInstrumentation.waitForIdleSync();
         assertTrue(searchMenuItem.isActionViewExpanded());
         assertTrue(mMainToolbar.hasExpandedActionView());
 
         // Collapse search menu item's action view and verify that main toolbar doesn't have an
         // expanded action view
-        mInstrumentation.runOnMainSync(() -> searchMenuItem.collapseActionView());
+        mInstrumentation.runOnMainSync(searchMenuItem::collapseActionView);
         mInstrumentation.waitForIdleSync();
         assertFalse(searchMenuItem.isActionViewExpanded());
         assertFalse(mMainToolbar.hasExpandedActionView());
 
         // Expand search menu item's action view again
-        mInstrumentation.runOnMainSync(() -> searchMenuItem.expandActionView());
+        mInstrumentation.runOnMainSync(searchMenuItem::expandActionView);
         mInstrumentation.waitForIdleSync();
         assertTrue(searchMenuItem.isActionViewExpanded());
         assertTrue(mMainToolbar.hasExpandedActionView());
 
         // Now collapse search menu item's action view via toolbar's API and verify that main
         // toolbar doesn't have an expanded action view
-        mInstrumentation.runOnMainSync(() -> mMainToolbar.collapseActionView());
+        mInstrumentation.runOnMainSync(mMainToolbar::collapseActionView);
         mInstrumentation.waitForIdleSync();
         assertFalse(searchMenuItem.isActionViewExpanded());
         assertFalse(mMainToolbar.hasExpandedActionView());

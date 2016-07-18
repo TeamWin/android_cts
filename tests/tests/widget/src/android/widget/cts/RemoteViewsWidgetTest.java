@@ -433,7 +433,7 @@ public class RemoteViewsWidgetTest {
         //    its processing / scrolling so that we can proceed to call
         //    setRelativeScrollPosition on it
         MyAppWidgetProvider.configure(updateLatch, () -> mListView.getChildCount() > 0,
-                () -> scrollToPositionIsComplete.get());
+                scrollToPositionIsComplete::get);
 
         final int positionToScrollTo = COUNTRY_LIST.length - 10;
         final int scrollByAmount = COUNTRY_LIST.length / 2;

@@ -49,7 +49,7 @@ public class ExpandableListViewBasicTest extends
 
         mInstrumentation = getInstrumentation();
         mActivity = getActivity();
-        PollingCheck.waitFor(() -> mActivity.hasWindowFocus());
+        PollingCheck.waitFor(mActivity::hasWindowFocus);
         mExpandableListView = mActivity.getExpandableListView();
         mAdapter = mExpandableListView.getExpandableListAdapter();
         mListUtil = new ListUtil(mExpandableListView, getInstrumentation());
@@ -111,7 +111,7 @@ public class ExpandableListViewBasicTest extends
                 mAdapter instanceof BaseExpandableListAdapter);
         final BaseExpandableListAdapter adapter = (BaseExpandableListAdapter) mAdapter;
 
-        mInstrumentation.runOnMainSync(() -> adapter.notifyDataSetChanged());
+        mInstrumentation.runOnMainSync(adapter::notifyDataSetChanged);
         mInstrumentation.waitForIdleSync();
 
         // Make sure the right group is expanded

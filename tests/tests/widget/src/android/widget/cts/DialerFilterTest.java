@@ -50,7 +50,7 @@ public class DialerFilterTest extends ActivityInstrumentationTestCase2<DialerFil
         super.setUp();
 
         mActivity = getActivity();
-        PollingCheck.waitFor(() -> mActivity.hasWindowFocus());
+        PollingCheck.waitFor(mActivity::hasWindowFocus);
         mInstrumentation = getInstrumentation();
 
         mDialerFilter = (DialerFilter) mActivity.findViewById(R.id.dialer_filter);

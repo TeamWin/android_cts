@@ -74,7 +74,7 @@ public class GridViewTest extends ActivityInstrumentationTestCase<GridViewCtsAct
         mActivity = getActivity();
         mGridView = (GridView) mActivity.findViewById(R.id.gridview);
 
-        PollingCheck.waitFor(() -> mActivity.hasWindowFocus());
+        PollingCheck.waitFor(mActivity::hasWindowFocus);
     }
 
     public void testConstructor() {

@@ -200,7 +200,7 @@ public class AbsSeekBarTest extends ActivityInstrumentationTestCase2<AbsSeekBarC
             seekBar.setFocusable(true);
             seekBar.requestFocus();
         });
-        PollingCheck.waitFor(1000, () -> seekBar.hasWindowFocus());
+        PollingCheck.waitFor(1000, seekBar::hasWindowFocus);
         assertEquals(keyProgressIncrement, seekBar.getKeyProgressIncrement());
 
         int oldProgress = seekBar.getProgress();

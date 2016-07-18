@@ -160,7 +160,7 @@ public class MultiAutoCompleteTextViewTest
 
         when(validator.isValid(any(CharSequence.class))).thenReturn(false);
         mInstrumentation.runOnMainSync(
-                () -> mMultiAutoCompleteTextView_country.performValidation());
+                mMultiAutoCompleteTextView_country::performValidation);
         assertEquals(str + ", ", mMultiAutoCompleteTextView_country.getText().toString());
     }
 

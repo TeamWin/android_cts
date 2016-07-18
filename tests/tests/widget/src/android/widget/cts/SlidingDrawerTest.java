@@ -114,15 +114,15 @@ public class SlidingDrawerTest
         assertFalse(drawer.isOpened());
         assertEquals(View.GONE, content.getVisibility());
 
-        runTestOnUiThread(() -> drawer.animateOpen());
+        runTestOnUiThread(drawer::animateOpen);
         assertTrue(drawer.isMoving());
         assertEquals(View.GONE, content.getVisibility());
 
         PollingCheck.waitFor(() -> !drawer.isMoving());
-        PollingCheck.waitFor(() -> drawer.isOpened());
+        PollingCheck.waitFor(drawer::isOpened);
         assertEquals(View.VISIBLE, content.getVisibility());
 
-        runTestOnUiThread(() -> drawer.animateClose());
+        runTestOnUiThread(drawer::animateClose);
         assertTrue(drawer.isMoving());
         assertEquals(View.GONE, content.getVisibility());
 
@@ -138,15 +138,15 @@ public class SlidingDrawerTest
         assertFalse(drawer.isOpened());
         assertEquals(View.GONE, content.getVisibility());
 
-        runTestOnUiThread(() -> drawer.animateToggle());
+        runTestOnUiThread(drawer::animateToggle);
         assertTrue(drawer.isMoving());
         assertEquals(View.GONE, content.getVisibility());
 
         PollingCheck.waitFor(() -> !drawer.isMoving());
-        PollingCheck.waitFor(() -> drawer.isOpened());
+        PollingCheck.waitFor(drawer::isOpened);
         assertEquals(View.VISIBLE, content.getVisibility());
 
-        runTestOnUiThread(() -> drawer.animateToggle());
+        runTestOnUiThread(drawer::animateToggle);
         assertTrue(drawer.isMoving());
         assertEquals(View.GONE, content.getVisibility());
 
@@ -243,7 +243,7 @@ public class SlidingDrawerTest
         }).when(mockScrollListener).onScrollEnded();
         drawer.setOnDrawerScrollListener(mockScrollListener);
 
-        runTestOnUiThread(() -> drawer.animateOpen());
+        runTestOnUiThread(drawer::animateOpen);
 
         try {
             countDownLatch.await(2 * TEST_TIMEOUT, TimeUnit.MILLISECONDS);

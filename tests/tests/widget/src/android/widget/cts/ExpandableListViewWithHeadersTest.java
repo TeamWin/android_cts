@@ -39,7 +39,7 @@ public class ExpandableListViewWithHeadersTest extends
         super.setUp();
 
         final ExpandableListWithHeaders activity = getActivity();
-        PollingCheck.waitFor(() -> activity.hasWindowFocus());
+        PollingCheck.waitFor(activity::hasWindowFocus);
         mExpandableListView = activity.getExpandableListView();
         mListUtil = new ListUtil(mExpandableListView, getInstrumentation());
     }

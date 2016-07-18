@@ -91,12 +91,12 @@ public class ActionMenuViewTest
         assertFalse(mActionMenuView.isOverflowMenuShowing());
 
         // Ask to show overflow menu and check that it's showing
-        mInstrumentation.runOnMainSync(() -> mActionMenuView.showOverflowMenu());
+        mInstrumentation.runOnMainSync(mActionMenuView::showOverflowMenu);
         mInstrumentation.waitForIdleSync();
         assertTrue(mActionMenuView.isOverflowMenuShowing());
 
         // Ask to hide the overflow menu and check that it's not showing
-        mInstrumentation.runOnMainSync(() -> mActionMenuView.hideOverflowMenu());
+        mInstrumentation.runOnMainSync(mActionMenuView::hideOverflowMenu);
         mInstrumentation.waitForIdleSync();
         assertFalse(mActionMenuView.isOverflowMenuShowing());
     }
@@ -109,7 +109,7 @@ public class ActionMenuViewTest
         assertFalse(mActionMenuView.isOverflowMenuShowing());
 
         // Ask to show overflow menu and check that it's showing
-        mInstrumentation.runOnMainSync(() -> mActionMenuView.showOverflowMenu());
+        mInstrumentation.runOnMainSync(mActionMenuView::showOverflowMenu);
         mInstrumentation.waitForIdleSync();
         assertTrue(mActionMenuView.isOverflowMenuShowing());
 
@@ -127,7 +127,7 @@ public class ActionMenuViewTest
                 menu.findItem(R.id.action_share));
 
         // Ask to dismiss all the popups and check that we're not showing the overflow menu
-        mInstrumentation.runOnMainSync(() -> mActionMenuView.dismissPopupMenus());
+        mInstrumentation.runOnMainSync(mActionMenuView::dismissPopupMenus);
         mInstrumentation.waitForIdleSync();
         assertFalse(mActionMenuView.isOverflowMenuShowing());
     }
