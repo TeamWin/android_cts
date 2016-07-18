@@ -1584,4 +1584,21 @@
     <string name="error_screen_pinning_did_not_start">Screen was not pinned.</string>
     <string name="error_screen_pinning_did_not_exit">Screen was not unpinned.</string>
     <string name="error_screen_pinning_couldnt_exit">Could not exit screen pinning through API.</string>
+
+    <string name="appwidgettest_title">AppWidgetServiceImpl Test</string>
+    <string name="appwidgettest_info">This test verifies AppWidgetServiceImpl creating IntentSender
+        with system privileges which reads contacts without required permission</string>
+    <string name="appwidgettest_instruction1">Please add \"CTS Verifier\" widget (having
+        \"EXAMPLE\" as label) to your Home screen and then return to this app</string>
+    <string name="appwidgettest_ready">Winget successfully added to Home screen</string>
+    <string name="appwidgettest_instruction2">Click on \"Read Contacts\" to get available
+        contacts count in the device</string>
+    <string name="appwidgettest_widget_text">EXAMPLE</string>
+    <string name="appwidgettest_start">Read contacts</string>
+    <string name="appwidgettest_pnt1">1.</string>
+    <string name="appwidgettest_pnt2">2.</string>
+    <string name="appwidgettest_passtest">If nothing is happening after clicking on
+        \"Read Contacts\", Please Pass the test case</string>
+    <string name="appwidgettest_failtest">If a new activity is displayed, showing number of
+        contacts available in the device(You have # contacts), Please fail the test case</string>
 </resources>
