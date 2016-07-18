@@ -63,8 +63,9 @@ public class ViewTestUtils {
 
         // Inject MOVE event
         long moveTime = SystemClock.uptimeMillis();
-        MotionEvent eventMove = MotionEvent.obtain(
-                moveTime, moveTime, MotionEvent.ACTION_MOVE, emulatedTapX, emulatedTapY, 1);
+        final int touchSlop = ViewConfiguration.get(anchorView.getContext()).getScaledTouchSlop();
+        MotionEvent eventMove = MotionEvent.obtain(downTime, moveTime, MotionEvent.ACTION_MOVE,
+                emulatedTapX + (touchSlop / 2.0f), emulatedTapY + (touchSlop / 2.0f), 1);
         instrumentation.sendPointerSync(eventMove);
 
         // Inject UP event
