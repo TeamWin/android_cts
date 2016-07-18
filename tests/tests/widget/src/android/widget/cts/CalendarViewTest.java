@@ -16,47 +16,65 @@
 
 package android.widget.cts;
 
-import static org.mockito.Mockito.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
+import static org.mockito.Mockito.verifyZeroInteractions;
 
 import android.annotation.ColorInt;
 import android.app.Instrumentation;
 import android.cts.util.CtsTouchUtils;
 import android.graphics.Rect;
-import android.test.ActivityInstrumentationTestCase2;
+import android.support.test.InstrumentationRegistry;
+import android.support.test.rule.ActivityTestRule;
+import android.support.test.runner.AndroidJUnit4;
 import android.test.suitebuilder.annotation.MediumTest;
 import android.view.ViewGroup;
 import android.widget.CalendarView;
 import android.widget.ScrollView;
 import android.widget.cts.util.TestUtils;
 
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+
 import java.util.Calendar;
 import java.util.GregorianCalendar;
 
 @MediumTest
-public class CalendarViewTest extends ActivityInstrumentationTestCase2<CalendarViewCtsActivity> {
+@RunWith(AndroidJUnit4.class)
+public class CalendarViewTest {
+    private Instrumentation mInstrumentation;
     private CalendarViewCtsActivity mActivity;
     private CalendarView mCalendarViewMaterial;
     private CalendarView mCalendarViewHolo;
 
-    public CalendarViewTest() {
-        super("android.widget.cts", CalendarViewCtsActivity.class);
-    }
+    @Rule
+    public ActivityTestRule<CalendarViewCtsActivity> mActivityRule
+            = new ActivityTestRule<>(CalendarViewCtsActivity.class);
 
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
-        mActivity = getActivity();
+    @Before
+    public void setup() {
+        mInstrumentation = InstrumentationRegistry.getInstrumentation();
+        mActivity = mActivityRule.getActivity();
         mCalendarViewMaterial = (CalendarView) mActivity.findViewById(R.id.calendar_view_material);
         mCalendarViewHolo = (CalendarView) mActivity.findViewById(R.id.calendar_view_holoyolo);
 
         // Initialize both calendar views to the current date
         final long currentDate = new GregorianCalendar().getTime().getTime();
-        getInstrumentation().runOnMainSync(() -> {
+        mInstrumentation.runOnMainSync(() -> {
             mCalendarViewMaterial.setDate(currentDate);
             mCalendarViewHolo.setDate(currentDate);
         });
     }
 
+    @Test
     public void testConstructor() {
         new CalendarView(mActivity);
 
@@ -74,15 +92,14 @@ public class CalendarViewTest extends ActivityInstrumentationTestCase2<CalendarV
         new CalendarView(mActivity, null, 0, android.R.style.Widget_Material_Light_CalendarView);
     }
 
+    @Test
     public void testAccessDate() {
-        final Instrumentation instrumentation = getInstrumentation();
-
         // Go back one year
         final Calendar newCalendar = new GregorianCalendar();
         newCalendar.set(Calendar.YEAR, newCalendar.get(Calendar.YEAR) - 1);
         final long yearAgoDate = newCalendar.getTime().getTime();
 
-        instrumentation.runOnMainSync(
+        mInstrumentation.runOnMainSync(
                 () -> mCalendarViewMaterial.setDate(yearAgoDate));
         assertEquals(yearAgoDate, mCalendarViewMaterial.getDate());
 
@@ -90,14 +107,13 @@ public class CalendarViewTest extends ActivityInstrumentationTestCase2<CalendarV
         newCalendar.set(Calendar.YEAR, newCalendar.get(Calendar.YEAR) + 2);
         final long yearHenceDate = newCalendar.getTime().getTime();
 
-        instrumentation.runOnMainSync(
+        mInstrumentation.runOnMainSync(
                 () -> mCalendarViewMaterial.setDate(yearHenceDate, true, false));
         assertEquals(yearHenceDate, mCalendarViewMaterial.getDate());
     }
 
+    @Test
     public void testAccessMinMaxDate() {
-        final Instrumentation instrumentation = getInstrumentation();
-
         // Use a range of minus/plus one year as min/max dates
         final Calendar minCalendar = new GregorianCalendar();
         minCalendar.set(Calendar.YEAR, minCalendar.get(Calendar.YEAR) - 1);
@@ -107,7 +123,7 @@ public class CalendarViewTest extends ActivityInstrumentationTestCase2<CalendarV
         final long minDate = minCalendar.getTime().getTime();
         final long maxDate = maxCalendar.getTime().getTime();
 
-        instrumentation.runOnMainSync(() -> {
+        mInstrumentation.runOnMainSync(() -> {
             mCalendarViewMaterial.setMinDate(minDate);
             mCalendarViewMaterial.setMaxDate(maxDate);
         });
@@ -116,13 +132,13 @@ public class CalendarViewTest extends ActivityInstrumentationTestCase2<CalendarV
         assertEquals(mCalendarViewMaterial.getMaxDate(), maxDate);
     }
 
+    @Test
     public void testCalendarViewMinMaxRangeRestrictions() {
         verifyMinMaxRangeRestrictions(mCalendarViewHolo);
         verifyMinMaxRangeRestrictions(mCalendarViewMaterial);
     }
 
     private void verifyMinMaxRangeRestrictions(CalendarView calendarView) {
-        final Instrumentation instrumentation = getInstrumentation();
         // Use a range of minus/plus one year as min/max dates.
         final Calendar minCalendar = new GregorianCalendar();
         minCalendar.set(Calendar.YEAR, minCalendar.get(Calendar.YEAR) - 1);
@@ -131,7 +147,7 @@ public class CalendarViewTest extends ActivityInstrumentationTestCase2<CalendarV
         final long minDate = minCalendar.getTime().getTime();
         final long maxDate = maxCalendar.getTime().getTime();
 
-        instrumentation.runOnMainSync(() -> {
+        mInstrumentation.runOnMainSync(() -> {
             calendarView.setMinDate(minDate);
             calendarView.setMaxDate(maxDate);
 
@@ -151,8 +167,6 @@ public class CalendarViewTest extends ActivityInstrumentationTestCase2<CalendarV
 
     private void verifyOnDateChangeListener(CalendarView calendarView,
             boolean onlyAllowOneChangeEvent) {
-        final Instrumentation instrumentation = getInstrumentation();
-
         final CalendarView.OnDateChangeListener mockDateChangeListener =
                 mock(CalendarView.OnDateChangeListener.class);
         calendarView.setOnDateChangeListener(mockDateChangeListener);
@@ -162,9 +176,9 @@ public class CalendarViewTest extends ActivityInstrumentationTestCase2<CalendarV
         calendar.set(Calendar.YEAR, 2008);
         calendar.set(Calendar.MONTH, Calendar.SEPTEMBER);
         calendar.set(Calendar.DAY_OF_MONTH, 16);
-        instrumentation.runOnMainSync(
+        mInstrumentation.runOnMainSync(
                 () -> calendarView.setDate(calendar.getTime().getTime(), false, true));
-        instrumentation.waitForIdleSync();
+        mInstrumentation.waitForIdleSync();
 
         // Get bounds of 09/23/2008
         calendar.set(Calendar.DAY_OF_MONTH, 23);
@@ -178,7 +192,7 @@ public class CalendarViewTest extends ActivityInstrumentationTestCase2<CalendarV
         }
 
         // Use instrumentation to emulate a tap on 09/23/2008
-        CtsTouchUtils.emulateTapOnScreen(instrumentation, calendarView,
+        CtsTouchUtils.emulateTapOnScreen(mInstrumentation, calendarView,
                 dayBounds.left + dayBounds.width() / 2,
                 dayBounds.top + dayBounds.height() / 2);
 
@@ -189,24 +203,26 @@ public class CalendarViewTest extends ActivityInstrumentationTestCase2<CalendarV
         }
     }
 
+    @Test
     public void testOnDateChangeListenerHolo() {
         // Scroll the Holo calendar view all the way up so it's fully visible
         final ScrollView scroller = (ScrollView) mActivity.findViewById(R.id.scroller);
         final ViewGroup container = (ViewGroup) scroller.findViewById(R.id.container);
-        final Instrumentation instrumentation = getInstrumentation();
 
-        instrumentation.runOnMainSync(() -> scroller.scrollTo(0, container.getHeight()));
+        mInstrumentation.runOnMainSync(() -> scroller.scrollTo(0, container.getHeight()));
         // Note that in pre-Material world we are "allowing" the CalendarView to notify
         // the date change listener on multiple occasions. This is the old behavior of the widget.
         verifyOnDateChangeListener(mCalendarViewHolo, false);
     }
 
+    @Test
     public void testOnDateChangeListenerMaterial() {
         // Note that in Material world only "real" date change events are allowed to be reported
         // to our listener. This is the new behavior of the widget.
         verifyOnDateChangeListener(mCalendarViewMaterial, true);
     }
 
+    @Test
     public void testAppearanceMaterial() {
         // The logic in this method is performed on a Material-styled CalendarView and
         // non-deprecated attributes / visual appearance APIs
@@ -218,10 +234,8 @@ public class CalendarViewTest extends ActivityInstrumentationTestCase2<CalendarV
         assertEquals(R.style.TextAppearance_WithColorGreen,
                 mCalendarViewMaterial.getWeekDayTextAppearance());
 
-        final Instrumentation instrumentation = getInstrumentation();
-
         // Change the visual appearance of the widget
-        instrumentation.runOnMainSync(() -> {
+        mInstrumentation.runOnMainSync(() -> {
             mCalendarViewMaterial.setFirstDayOfWeek(Calendar.TUESDAY);
             mCalendarViewMaterial.setDateTextAppearance(R.style.TextAppearance_WithColorBlue);
             mCalendarViewMaterial.setWeekDayTextAppearance(R.style.TextAppearance_WithColorMagenta);
@@ -234,6 +248,7 @@ public class CalendarViewTest extends ActivityInstrumentationTestCase2<CalendarV
                 mCalendarViewMaterial.getWeekDayTextAppearance());
     }
 
+    @Test
     public void testAppearanceHolo() {
         // All the logic in this method is performed on a Holo-styled CalendarView, as
         // under Material design we are ignoring most of these decorative attributes
@@ -255,8 +270,6 @@ public class CalendarViewTest extends ActivityInstrumentationTestCase2<CalendarV
         TestUtils.assertAllPixelsOfColor("Selected date vertical bar blue",
                 mCalendarViewHolo.getSelectedDateVerticalBar(), 40, 40, true, 0xFF0000FF, 1, true);
 
-        final Instrumentation instrumentation = getInstrumentation();
-
         // Change the visual appearance of the widget
         final @ColorInt int newSelectedWeekBackgroundColor =
                 mActivity.getColor(R.color.calendarview_week_background_new);
@@ -269,7 +282,7 @@ public class CalendarViewTest extends ActivityInstrumentationTestCase2<CalendarV
         final @ColorInt int newWeekSeparatorLineColor =
                 mActivity.getColor(R.color.calendarview_week_separatorline_new);
 
-        instrumentation.runOnMainSync(() -> {
+        mInstrumentation.runOnMainSync(() -> {
             mCalendarViewHolo.setFirstDayOfWeek(Calendar.SUNDAY);
             mCalendarViewHolo.setShownWeekCount(4);
             mCalendarViewHolo.setShowWeekNumber(true);
@@ -300,12 +313,12 @@ public class CalendarViewTest extends ActivityInstrumentationTestCase2<CalendarV
         assertEquals(newWeekSeparatorLineColor,
                 mCalendarViewHolo.getWeekSeparatorLineColor());
 
-        instrumentation.runOnMainSync(
+        mInstrumentation.runOnMainSync(
                 () -> mCalendarViewHolo.setSelectedDateVerticalBar(R.drawable.yellow_fill));
         TestUtils.assertAllPixelsOfColor("Selected date vertical bar yellow",
                 mCalendarViewHolo.getSelectedDateVerticalBar(), 40, 40, true, 0xFFFFFF00, 1, true);
 
-        instrumentation.runOnMainSync(
+        mInstrumentation.runOnMainSync(
                 () -> mCalendarViewHolo.setSelectedDateVerticalBar(
                         mActivity.getDrawable(R.drawable.magenta_fill)));
         TestUtils.assertAllPixelsOfColor("Selected date vertical bar magenta",

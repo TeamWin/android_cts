@@ -16,14 +16,31 @@
 
 package android.widget.cts;
 
-import static org.mockito.Mockito.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertSame;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.anyInt;
+import static org.mockito.Mockito.anyLong;
+import static org.mockito.Mockito.eq;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.reset;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
+import static org.mockito.Mockito.verifyZeroInteractions;
+import static org.mockito.Mockito.when;
 
 import android.app.Instrumentation;
 import android.content.Context;
 import android.cts.util.WidgetTestUtils;
 import android.os.Parcelable;
 import android.provider.Settings;
-import android.test.ActivityInstrumentationTestCase2;
+import android.support.test.InstrumentationRegistry;
+import android.support.test.rule.ActivityTestRule;
+import android.support.test.runner.AndroidJUnit4;
 import android.test.suitebuilder.annotation.SmallTest;
 import android.util.AttributeSet;
 import android.util.SparseArray;
@@ -39,10 +56,15 @@ import android.widget.ImageView;
 import android.widget.ListAdapter;
 import android.widget.ListView;
 
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.xmlpull.v1.XmlPullParser;
 
 @SmallTest
-public class AdapterViewTest extends ActivityInstrumentationTestCase2<AdapterViewCtsActivity> {
+@RunWith(AndroidJUnit4.class)
+public class AdapterViewTest {
 
     private final static int INVALID_ID = -1;
 
@@ -54,17 +76,17 @@ public class AdapterViewTest extends ActivityInstrumentationTestCase2<AdapterVie
     private AdapterViewCtsActivity mActivity;
     private AdapterView<ListAdapter> mAdapterView;
 
-    public AdapterViewTest() {
-        super("android.widget.cts", AdapterViewCtsActivity.class);
-    }
+    @Rule
+    public ActivityTestRule<AdapterViewCtsActivity> mActivityRule
+            = new ActivityTestRule<>(AdapterViewCtsActivity.class);
 
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
-        mActivity = getActivity();
+    @Before
+    public void setup() {
+        mActivity = mActivityRule.getActivity();
         mAdapterView = new ListView(mActivity);
     }
 
+    @Test
     public void testConstructor() {
         XmlPullParser parser = mActivity.getResources().getXml(R.layout.adapterview_layout);
         AttributeSet attrs = Xml.asAttributeSet(parser);
@@ -75,83 +97,60 @@ public class AdapterViewTest extends ActivityInstrumentationTestCase2<AdapterVie
 
         new MockAdapterView(mActivity, attrs, 0);
 
-        try {
-            new MockAdapterView(null);
-            fail("Should throw NullPointerException");
-        } catch (NullPointerException e) {
-            //expected
-        }
-
         new MockAdapterView(mActivity, null, INVALID_ID);
     }
 
-    /**
-     * test not supported methods, all should throw UnsupportedOperationException
-     */
-    public void testUnsupportedMethods() {
-        ListView subView = new ListView(mActivity);
-
-        try {
-            mAdapterView.addView(subView);
-            fail("addView(View) is not supported in AdapterView.");
-        } catch (UnsupportedOperationException e) {
-            //expected
-        }
-
-        try {
-            mAdapterView.addView(subView, 0);
-            fail("addView(View, int) is not supported in AdapterView.");
-        } catch (UnsupportedOperationException e) {
-            //expected
-        }
-
-        try {
-            mAdapterView.addView(subView, (ViewGroup.LayoutParams) null);
-            fail("addView(View, ViewGroup.LayoutParams) is not supported in AdapterView.");
-        } catch (UnsupportedOperationException e) {
-            //expected
-        }
-
-        try {
-            mAdapterView.addView(subView, 0, (ViewGroup.LayoutParams) null);
-            fail("addView(View, int, ViewGroup.LayoutParams) is not supported in AdapterView.");
-        } catch (UnsupportedOperationException e) {
-            //expected
-        }
-
-        try {
-            mAdapterView.removeViewAt(0);
-            fail("removeViewAt(int) is not supported in AdapterView");
-        } catch (UnsupportedOperationException e) {
-            //expected
-        }
-
-        try {
-            mAdapterView.removeAllViews();
-            fail("removeAllViews() is not supported in AdapterView");
-        } catch (UnsupportedOperationException e) {
-            //expected
-        }
-
-        try {
-            mAdapterView.removeView(subView);
-            fail("removeView(View) is not supported in AdapterView");
-        } catch (UnsupportedOperationException e) {
-            //expected
-        }
-
-        try {
-            mAdapterView.setOnClickListener(new android.view.View.OnClickListener() {
-                public void onClick(View v) {
-                }
-            });
-            fail("function setOnClickListener(android.view.View.OnClickListener) "
-                    + "should throw out runtime exception");
-        } catch (RuntimeException e) {
-            // expected
-        }
+    @Test(expected=NullPointerException.class)
+    public void testConstructorWithNullContext() {
+        new MockAdapterView(null);
     }
 
+    @Test(expected=UnsupportedOperationException.class)
+    public void testAddView1() {
+        ListView subView = new ListView(mActivity);
+        mAdapterView.addView(subView);
+    }
+
+    @Test(expected=UnsupportedOperationException.class)
+    public void testAddView2() {
+        ListView subView = new ListView(mActivity);
+        mAdapterView.addView(subView, 0);
+    }
+
+    @Test(expected=UnsupportedOperationException.class)
+    public void testAddView3() {
+        ListView subView = new ListView(mActivity);
+        mAdapterView.addView(subView, (ViewGroup.LayoutParams) null);
+    }
+
+    @Test(expected=UnsupportedOperationException.class)
+    public void testAddView4() {
+        ListView subView = new ListView(mActivity);
+        mAdapterView.addView(subView, 0, (ViewGroup.LayoutParams) null);
+    }
+
+    @Test(expected=UnsupportedOperationException.class)
+    public void testRemoveView1() {
+        mAdapterView.removeViewAt(0);
+    }
+
+    @Test(expected=UnsupportedOperationException.class)
+    public void testRemoveView2() {
+        ListView subView = new ListView(mActivity);
+        mAdapterView.removeView(subView);
+    }
+
+    @Test(expected=UnsupportedOperationException.class)
+    public void testRemoveAllViews() {
+        mAdapterView.removeAllViews();
+    }
+
+    @Test(expected=RuntimeException.class)
+    public void testSetOnClickListener() {
+        mAdapterView.setOnClickListener((View v) -> {});
+    }
+
+    @Test
     public void testGetCount() {
         // Before setAdapter, the count should be zero.
         assertEquals(0, mAdapterView.getCount());
@@ -162,6 +161,7 @@ public class AdapterViewTest extends ActivityInstrumentationTestCase2<AdapterVie
         assertEquals(FRUIT.length, mAdapterView.getCount());
     }
 
+    @Test
     public void testAccessEmptyView() {
         ImageView emptyView = new ImageView(mActivity);
 
@@ -203,8 +203,8 @@ public class AdapterViewTest extends ActivityInstrumentationTestCase2<AdapterVie
         assertEquals(View.VISIBLE, emptyView.getVisibility());
     }
 
+    @Test
     public void testAccessVisiblePosition() {
-
         assertEquals(0, mAdapterView.getFirstVisiblePosition());
         // If no adapter has been set, the value should be -1;
         assertEquals(-1, mAdapterView.getLastVisiblePosition());
@@ -212,7 +212,8 @@ public class AdapterViewTest extends ActivityInstrumentationTestCase2<AdapterVie
         setArrayAdapter(mAdapterView);
 
         // LastVisiblePosition should be adapter's getCount - 1,by mocking method
-        float fontScale = Settings.System.getFloat(mActivity.getContentResolver(), Settings.System.FONT_SCALE, 1);
+        float fontScale = Settings.System.getFloat(
+                mActivity.getContentResolver(), Settings.System.FONT_SCALE, 1);
         if (fontScale < 1) {
             fontScale = 1;
         }
@@ -222,6 +223,7 @@ public class AdapterViewTest extends ActivityInstrumentationTestCase2<AdapterVie
         assertEquals(FRUIT.length - 1, mAdapterView.getLastVisiblePosition());
     }
 
+    @Test
     public void testItemOrItemIdAtPosition() {
         // no adapter set
         assertNull(mAdapterView.getItemAtPosition(0));
@@ -235,12 +237,6 @@ public class AdapterViewTest extends ActivityInstrumentationTestCase2<AdapterVie
             assertEquals(FRUIT[i], mAdapterView.getItemAtPosition(i));
         }
         assertNull(mAdapterView.getItemAtPosition(-1));
-        try {
-            mAdapterView.getItemAtPosition(FRUIT.length);
-            fail("should throw IndexOutOfBoundsException");
-        } catch (IndexOutOfBoundsException e) {
-            //expected
-        }
 
         for (int i = 0; i < count; i++) {
             assertEquals(i, mAdapterView.getItemIdAtPosition(i));
@@ -249,6 +245,13 @@ public class AdapterViewTest extends ActivityInstrumentationTestCase2<AdapterVie
         assertEquals(FRUIT.length, mAdapterView.getItemIdAtPosition(FRUIT.length));
     }
 
+    @Test(expected=IndexOutOfBoundsException.class)
+    public void testItemAtPositionInvalidIndex() {
+        setArrayAdapter(mAdapterView);
+        mAdapterView.getItemAtPosition(FRUIT.length);
+    }
+
+    @Test
     public void testAccessOnItemClickAndLongClickListener() {
         AdapterView.OnItemClickListener mockClickListener =
                 mock(AdapterView.OnItemClickListener.class);
@@ -279,9 +282,10 @@ public class AdapterViewTest extends ActivityInstrumentationTestCase2<AdapterVie
                 eq(0), eq(0L));
     }
 
+    @Test
     public void testAccessOnItemSelectedListener() {
         mAdapterView = mActivity.getListView();
-        final Instrumentation instrumentation = getInstrumentation();
+        final Instrumentation instrumentation = InstrumentationRegistry.getInstrumentation();
         WidgetTestUtils.runOnMainAndDrawSync(instrumentation, mAdapterView,
                 () -> mAdapterView.setLayoutParams(new FrameLayout.LayoutParams(
                         ViewGroup.LayoutParams.MATCH_PARENT,
@@ -321,6 +325,7 @@ public class AdapterViewTest extends ActivityInstrumentationTestCase2<AdapterVie
      * it's hard to scroll the list in unit test, so we just test without scrolling
      * this means the position of item is same as position of the children in parent layout
      */
+    @Test
     public void testGetPositionForView() {
         setArrayAdapter(mAdapterView);
         mAdapterView.layout(0, 0, LAYOUT_WIDTH, LAYOUT_HEIGHT);
@@ -330,17 +335,18 @@ public class AdapterViewTest extends ActivityInstrumentationTestCase2<AdapterVie
             assertEquals(i, mAdapterView.getPositionForView(mAdapterView.getChildAt(i)));
         }
 
-        try {
-            assertEquals(AdapterView.INVALID_POSITION, mAdapterView.getPositionForView(null));
-            fail("Should throw NullPointerException");
-        } catch (NullPointerException e) {
-            //expected
-        }
-
         assertEquals(AdapterView.INVALID_POSITION,
                 mAdapterView.getPositionForView(new ImageView(mActivity)));
     }
 
+    @Test(expected=NullPointerException.class)
+    public void testGetPositionForNull() {
+        setArrayAdapter(mAdapterView);
+        mAdapterView.layout(0, 0, LAYOUT_WIDTH, LAYOUT_HEIGHT);
+        mAdapterView.getPositionForView(null);
+    }
+
+    @Test
     public void testChangeFocusable() {
         assertFalse(mAdapterView.isFocusable());
         assertFalse(mAdapterView.isFocusableInTouchMode());
@@ -364,16 +370,10 @@ public class AdapterViewTest extends ActivityInstrumentationTestCase2<AdapterVie
     }
 
     /*
-     * skip this test, no need to test
-     */
-    public void testOnLayout() {
-        // onLayout() is implementation details, do NOT test
-    }
-
-    /*
      * set and get the selected id, position and item.
      * values will not change if invalid id given.
      */
+    @Test
     public void testGetSelected() {
         assertEquals(AdapterView.INVALID_ROW_ID, mAdapterView.getSelectedItemId());
         assertEquals(AdapterView.INVALID_POSITION, mAdapterView.getSelectedItemPosition());
@@ -408,6 +408,7 @@ public class AdapterViewTest extends ActivityInstrumentationTestCase2<AdapterVie
     /*
      * not update this test until the ViewGroup's test finish.
      */
+    @Test
     public void testDispatchSaveInstanceState() {
         MockAdapterView adapterView = new MockAdapterView(mActivity);
         adapterView.setSaveEnabled(true);
@@ -420,6 +421,7 @@ public class AdapterViewTest extends ActivityInstrumentationTestCase2<AdapterVie
     /*
      * not update this test until the ViewGroup's test finish.
      */
+    @Test
     public void testDispatchRestoreInstanceState() {
         MockAdapterView adapterView = new MockAdapterView(mActivity);
         adapterView.setSaveEnabled(true);
@@ -433,11 +435,12 @@ public class AdapterViewTest extends ActivityInstrumentationTestCase2<AdapterVie
      * if no child added, it always return false
      * this method is protected, so we involve the mock
      */
+    @Test
     public void testCanAnimate() {
         MockAdapterView adapterView = new MockAdapterView(mActivity);
         LayoutAnimationController lAC = new LayoutAnimationController(new AnimationSet(true));
 
-            // no child added, always false
+        // no child added, always false
         assertNull(adapterView.getAdapter());
         adapterView.setLayoutAnimation(lAC);
         assertFalse(adapterView.canAnimate());

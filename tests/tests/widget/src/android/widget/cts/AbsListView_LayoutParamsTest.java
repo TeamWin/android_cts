@@ -16,35 +16,45 @@
 
 package android.widget.cts;
 
+import static org.junit.Assert.assertEquals;
+
+import android.content.Context;
 import android.cts.util.WidgetTestUtils;
-import android.test.AndroidTestCase;
+import android.support.test.InstrumentationRegistry;
+import android.support.test.runner.AndroidJUnit4;
+import android.test.suitebuilder.annotation.SmallTest;
 import android.util.AttributeSet;
 import android.util.Xml;
 import android.widget.AbsListView;
 import android.widget.AbsListView.LayoutParams;
-import android.widget.cts.R;
 
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.xmlpull.v1.XmlPullParser;
 
-public class AbsListView_LayoutParamsTest extends AndroidTestCase {
+@SmallTest
+@RunWith(AndroidJUnit4.class)
+public class AbsListView_LayoutParamsTest {
+    private Context mContext;
     private AttributeSet mAttributeSet;
 
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
-
+    @Before
+    public void setup() throws Exception {
+        mContext = InstrumentationRegistry.getTargetContext();
         XmlPullParser parser = mContext.getResources().getXml(R.layout.abslistview_layout);
         WidgetTestUtils.beginDocument(parser, "ViewGroup_Layout");
         mAttributeSet = Xml.asAttributeSet(parser);
     }
 
+    @Test
     public void testConstructors() {
         int TEST_WIDTH = 25;
         int TEST_HEIGHT = 25;
         int TEST_HEIGHT2 = 30;
         AbsListView.LayoutParams layoutParams;
 
-        layoutParams = new AbsListView.LayoutParams(getContext(), mAttributeSet);
+        layoutParams = new AbsListView.LayoutParams(mContext, mAttributeSet);
         assertEquals(TEST_WIDTH, layoutParams.width);
         assertEquals(TEST_HEIGHT, layoutParams.height);
 

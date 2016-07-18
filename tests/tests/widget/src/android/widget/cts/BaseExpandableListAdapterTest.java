@@ -16,23 +16,37 @@
 
 package android.widget.cts;
 
-import static org.mockito.Mockito.*;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.reset;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyZeroInteractions;
 
 import android.database.DataSetObserver;
-import android.test.InstrumentationTestCase;
+import android.support.test.runner.AndroidJUnit4;
+import android.test.suitebuilder.annotation.SmallTest;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseExpandableListAdapter;
 
+import org.junit.Test;
+import org.junit.runner.RunWith;
+
 /**
  * Test {@link BaseExpandableListAdapter}.
  */
-public class BaseExpandableListAdapterTest extends InstrumentationTestCase {
+@SmallTest
+@RunWith(AndroidJUnit4.class)
+public class BaseExpandableListAdapterTest {
+    @Test
     public void testAreAllItemsEnabled() {
         MockBaseExpandableListAdapter adapter = new MockBaseExpandableListAdapter();
         assertTrue(adapter.areAllItemsEnabled());
     }
 
+    @Test
     public void testGetCombinedId() {
         MockBaseExpandableListAdapter adapter = new MockBaseExpandableListAdapter();
 
@@ -47,6 +61,7 @@ public class BaseExpandableListAdapterTest extends InstrumentationTestCase {
         assertTrue(childID != groupID);
     }
 
+    @Test
     public void testIsEmpty() {
         MockBaseExpandableListAdapter adapter = new MockBaseExpandableListAdapter();
         assertTrue(adapter.isEmpty());
@@ -54,6 +69,7 @@ public class BaseExpandableListAdapterTest extends InstrumentationTestCase {
         assertFalse(adapter.isEmpty());
     }
 
+    @Test
     public void testNotifyDataSetChanged() {
         MockBaseExpandableListAdapter adapter = new MockBaseExpandableListAdapter();
         DataSetObserver mockDataSetObserver = mock(DataSetObserver.class);
@@ -64,6 +80,7 @@ public class BaseExpandableListAdapterTest extends InstrumentationTestCase {
         verify(mockDataSetObserver, times(1)).onChanged();
     }
 
+    @Test
     public void testNotifyDataSetInvalidated() {
         MockBaseExpandableListAdapter adapter = new MockBaseExpandableListAdapter();
         DataSetObserver mockDataSetObserver = mock(DataSetObserver.class);
@@ -74,18 +91,21 @@ public class BaseExpandableListAdapterTest extends InstrumentationTestCase {
         verify(mockDataSetObserver, times(1)).onInvalidated();
     }
 
+    @Test
     public void testOnGroupCollapsed() {
         MockBaseExpandableListAdapter adapter = new MockBaseExpandableListAdapter();
         // this function is non-operation.
         adapter.onGroupCollapsed(0);
     }
 
+    @Test
     public void testOnGroupExpanded() {
         MockBaseExpandableListAdapter adapter = new MockBaseExpandableListAdapter();
         // this function is non-operation.
         adapter.onGroupExpanded(0);
     }
 
+    @Test
     public void testDataSetObserver() {
         MockBaseExpandableListAdapter adapter = new MockBaseExpandableListAdapter();
         DataSetObserver mockDataSetObserver = mock(DataSetObserver.class);

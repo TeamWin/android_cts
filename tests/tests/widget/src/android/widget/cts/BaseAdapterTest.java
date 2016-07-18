@@ -16,23 +16,39 @@
 
 package android.widget.cts;
 
-import static org.mockito.Mockito.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.reset;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyZeroInteractions;
 
 import android.database.DataSetObserver;
-import android.test.AndroidTestCase;
+import android.support.test.runner.AndroidJUnit4;
+import android.test.suitebuilder.annotation.SmallTest;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 
+import org.junit.Test;
+import org.junit.runner.RunWith;
+
 /**
  * Test {@link BaseAdapter}.
  */
-public class BaseAdapterTest extends AndroidTestCase {
+@SmallTest
+@RunWith(AndroidJUnit4.class)
+public class BaseAdapterTest {
+    @Test
     public void testHasStableIds() {
         BaseAdapter baseAdapter = new MockBaseAdapter();
         assertFalse(baseAdapter.hasStableIds());
     }
 
+    @Test
     public void testDataSetObserver() {
         BaseAdapter baseAdapter = new MockBaseAdapter();
         DataSetObserver mockDataSetObserver = mock(DataSetObserver.class);
@@ -52,6 +68,7 @@ public class BaseAdapterTest extends AndroidTestCase {
         verifyZeroInteractions(mockDataSetObserver);
     }
 
+    @Test
     public void testNotifyDataSetInvalidated() {
         BaseAdapter baseAdapter = new MockBaseAdapter();
         DataSetObserver mockDataSetObserver = mock(DataSetObserver.class);
@@ -65,31 +82,37 @@ public class BaseAdapterTest extends AndroidTestCase {
         verify(mockDataSetObserver, times(1)).onInvalidated();
     }
 
+    @Test
     public void testAreAllItemsEnabled() {
         BaseAdapter baseAdapter = new MockBaseAdapter();
         assertTrue(baseAdapter.areAllItemsEnabled());
     }
 
+    @Test
     public void testIsEnabled() {
         BaseAdapter baseAdapter = new MockBaseAdapter();
         assertTrue(baseAdapter.isEnabled(0));
     }
 
+    @Test
     public void testGetDropDownView() {
         BaseAdapter baseAdapter = new MockBaseAdapter();
         assertNull(baseAdapter.getDropDownView(0, null, null));
     }
 
+    @Test
     public void testGetItemViewType() {
         BaseAdapter baseAdapter = new MockBaseAdapter();
         assertEquals(0, baseAdapter.getItemViewType(0));
     }
 
+    @Test
     public void testGetViewTypeCount() {
         BaseAdapter baseAdapter = new MockBaseAdapter();
         assertEquals(1, baseAdapter.getViewTypeCount());
     }
 
+    @Test
     public void testIsEmpty() {
         MockBaseAdapter baseAdapter = new MockBaseAdapter();
 

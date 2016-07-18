@@ -453,8 +453,6 @@ public class RemoteViewsTest {
         assertEquals(View.GONE, result.findViewById(R.id.remoteView_frame).getVisibility());
 
         p = Parcel.obtain();
-        mExpectedException.expect(NullPointerException.class);
-        mRemoteViews.writeToParcel(null, 0);
 
         // currently the flag is not used
         mRemoteViews.writeToParcel(p, -1);
@@ -464,8 +462,15 @@ public class RemoteViewsTest {
         RemoteViews[] remote = RemoteViews.CREATOR.newArray(1);
         assertNotNull(remote);
         assertEquals(1, remote.length);
+    }
 
-        mExpectedException.expect(NegativeArraySizeException.class);
+    @Test(expected=NullPointerException.class)
+    public void testWriteNullToParcel() {
+        mRemoteViews.writeToParcel(null, 0);
+    }
+
+    @Test(expected=NegativeArraySizeException.class)
+    public void testCreateNegativeSizedArray() {
         RemoteViews.CREATOR.newArray(-1);
     }
 

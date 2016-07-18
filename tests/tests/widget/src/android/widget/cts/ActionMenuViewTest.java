@@ -16,51 +16,63 @@
 
 package android.widget.cts;
 
-import static org.mockito.Mockito.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 
 import android.app.Instrumentation;
 import android.cts.util.WidgetTestUtils;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;
-import android.test.ActivityInstrumentationTestCase2;
+import android.support.test.InstrumentationRegistry;
+import android.support.test.rule.ActivityTestRule;
+import android.support.test.runner.AndroidJUnit4;
 import android.test.suitebuilder.annotation.MediumTest;
 import android.view.Menu;
 import android.widget.ActionMenuView;
 import android.widget.cts.util.TestUtils;
 
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+
 @MediumTest
-public class ActionMenuViewTest
-        extends ActivityInstrumentationTestCase2<ActionMenuViewCtsActivity> {
+@RunWith(AndroidJUnit4.class)
+public class ActionMenuViewTest {
     private Instrumentation mInstrumentation;
     private ActionMenuViewCtsActivity mActivity;
     private ActionMenuView mActionMenuView;
 
-    public ActionMenuViewTest() {
-        super("android.widget.cts", ActionMenuViewCtsActivity.class);
-    }
+    @Rule
+    public ActivityTestRule<ActionMenuViewCtsActivity> mActivityRule
+            = new ActivityTestRule<>(ActionMenuViewCtsActivity.class);
 
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
-
-        mInstrumentation = getInstrumentation();
-        mActivity = getActivity();
+    @Before
+    public void setup() {
+        mInstrumentation = InstrumentationRegistry.getInstrumentation();
+        mActivity = mActivityRule.getActivity();
         mActionMenuView = (ActionMenuView) mActivity.findViewById(R.id.action_menu_view);
     }
 
+    @Test
     public void testConstructor() {
         new ActionMenuView(mActivity);
 
         new ActionMenuView(mActivity, null);
     }
 
+    @Test
     public void testMenuContent() {
         final Menu menu = mActionMenuView.getMenu();
         assertNotNull(menu);
 
         mInstrumentation.runOnMainSync(
-                () -> mActivity.getMenuInflater().inflate(
-                        R.menu.toolbar_menu, menu));
+                () -> mActivity.getMenuInflater().inflate(R.menu.toolbar_menu, menu));
 
         assertEquals(6, menu.size());
         assertEquals(R.id.action_highlight, menu.getItem(0).getItemId());
@@ -83,6 +95,7 @@ public class ActionMenuViewTest
                 menu.findItem(R.id.action_share));
     }
 
+    @Test
     public void testMenuOverflowShowHide() {
         // Inflate menu and check that we're not showing overflow menu yet
         mInstrumentation.runOnMainSync(
@@ -101,6 +114,7 @@ public class ActionMenuViewTest
         assertFalse(mActionMenuView.isOverflowMenuShowing());
     }
 
+    @Test
     public void testMenuOverflowSubmenu() {
         // Inflate menu and check that we're not showing overflow menu yet
         mInstrumentation.runOnMainSync(
@@ -132,6 +146,7 @@ public class ActionMenuViewTest
         assertFalse(mActionMenuView.isOverflowMenuShowing());
     }
 
+    @Test
     public void testMenuOverflowIcon() {
         // Inflate menu and check that we're not showing overflow menu yet
         mInstrumentation.runOnMainSync(
@@ -148,6 +163,7 @@ public class ActionMenuViewTest
                 true, Color.RED, 1, false);
     }
 
+    @Test
     public void testPopupTheme() {
         mInstrumentation.runOnMainSync(() -> {
                 mActivity.getMenuInflater().inflate(R.menu.toolbar_menu, mActionMenuView.getMenu());

@@ -16,37 +16,52 @@
 
 package android.widget.cts;
 
-import static org.mockito.Mockito.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotSame;
+import static org.junit.Assert.assertSame;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.reset;
+import static org.mockito.Mockito.verify;
 
 import android.app.Instrumentation;
 import android.content.Context;
 import android.os.SystemClock;
-import android.test.ActivityInstrumentationTestCase2;
-import android.test.UiThreadTest;
+import android.support.test.InstrumentationRegistry;
+import android.support.test.rule.ActivityTestRule;
+import android.support.test.runner.AndroidJUnit4;
 import android.test.suitebuilder.annotation.LargeTest;
+import android.test.suitebuilder.annotation.SmallTest;
 import android.view.ContextThemeWrapper;
 import android.widget.Chronometer;
+
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
 /**
  * Test {@link Chronometer}.
  */
-public class ChronometerTest extends ActivityInstrumentationTestCase2<ChronometerCtsActivity> {
+@SmallTest
+@RunWith(AndroidJUnit4.class)
+public class ChronometerTest {
     private Instrumentation mInstrumentation;
     private ChronometerCtsActivity mActivity;
 
-    public ChronometerTest() {
-        super("android.widget.cts", ChronometerCtsActivity.class);
+    @Rule
+    public ActivityTestRule<ChronometerCtsActivity> mActivityRule
+            = new ActivityTestRule<>(ChronometerCtsActivity.class);
+
+    @Before
+    public void setup() {
+        mInstrumentation = InstrumentationRegistry.getInstrumentation();
+        mActivity = mActivityRule.getActivity();
     }
 
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
-
-        mInstrumentation = getInstrumentation();
-        mActivity = getActivity();
-    }
-
-    @UiThreadTest
+    @Test
     public void testConstructor() {
         new Chronometer(mActivity);
 
@@ -55,7 +70,7 @@ public class ChronometerTest extends ActivityInstrumentationTestCase2<Chronomete
         new Chronometer(mActivity, null, 0);
     }
 
-    @UiThreadTest
+    @Test
     public void testConstructorFromAttr() {
         final Context context = new ContextThemeWrapper(mActivity, R.style.ChronometerAwareTheme);
         final Chronometer chronometer = new Chronometer(context, null, R.attr.chronometerStyle);
@@ -63,7 +78,7 @@ public class ChronometerTest extends ActivityInstrumentationTestCase2<Chronomete
         assertEquals(mActivity.getString(R.string.chronometer_format), chronometer.getFormat());
     }
 
-    @UiThreadTest
+    @Test
     public void testConstructorFromStyle() {
         final Chronometer chronometer = new Chronometer(mActivity, null, 0,
                 R.style.ChronometerStyle);
@@ -71,36 +86,32 @@ public class ChronometerTest extends ActivityInstrumentationTestCase2<Chronomete
         assertEquals(mActivity.getString(R.string.chronometer_format), chronometer.getFormat());
     }
 
-    @UiThreadTest
+    @Test
     public void testAccessBase() {
         Chronometer chronometer = mActivity.getChronometer();
         CharSequence oldText = chronometer.getText();
 
-        int expected = 100000;
-        chronometer.setBase(expected);
-        assertEquals(expected, chronometer.getBase());
+        mInstrumentation.runOnMainSync(() -> chronometer.setBase(100000));
+        assertEquals(100000, chronometer.getBase());
         assertNotSame(oldText, chronometer.getText());
 
-        expected = 100;
         oldText = chronometer.getText();
-        chronometer.setBase(expected);
-        assertEquals(expected, chronometer.getBase());
+        mInstrumentation.runOnMainSync(() -> chronometer.setBase(100));
+        assertEquals(100, chronometer.getBase());
         assertNotSame(oldText, chronometer.getText());
 
-        expected = -1;
         oldText = chronometer.getText();
-        chronometer.setBase(expected);
-        assertEquals(expected, chronometer.getBase());
+        mInstrumentation.runOnMainSync(() -> chronometer.setBase(-1));
+        assertEquals(-1, chronometer.getBase());
         assertNotSame(oldText, chronometer.getText());
 
-        expected = Integer.MAX_VALUE;
         oldText = chronometer.getText();
-        chronometer.setBase(expected);
-        assertEquals(expected, chronometer.getBase());
+        mInstrumentation.runOnMainSync(() -> chronometer.setBase(Integer.MAX_VALUE));
+        assertEquals(Integer.MAX_VALUE, chronometer.getBase());
         assertNotSame(oldText, chronometer.getText());
     }
 
-    @UiThreadTest
+    @Test
     public void testAccessFormat() {
         Chronometer chronometer = mActivity.getChronometer();
         String expected = "header-%S-trail";
@@ -108,12 +119,14 @@ public class ChronometerTest extends ActivityInstrumentationTestCase2<Chronomete
         chronometer.setFormat(expected);
         assertEquals(expected, chronometer.getFormat());
 
-        chronometer.start();
+        mInstrumentation.runOnMainSync(() -> chronometer.start());
         String text = chronometer.getText().toString();
         assertTrue(text.startsWith("header"));
         assertTrue(text.endsWith("trail"));
     }
 
+    @Test
+    @LargeTest
     public void testStartAndStop() {
         final Chronometer chronometer = mActivity.getChronometer();
 
@@ -148,6 +161,8 @@ public class ChronometerTest extends ActivityInstrumentationTestCase2<Chronomete
         assertTrue(expected.equals(chronometer.getText()));
     }
 
+    @Test
+    @LargeTest
     public void testAccessOnChronometerTickListener() {
         final Chronometer chronometer = mActivity.getChronometer();
         final Chronometer.OnChronometerTickListener mockTickListener =
@@ -167,6 +182,7 @@ public class ChronometerTest extends ActivityInstrumentationTestCase2<Chronomete
         verify(mockTickListener, atLeastOnce()).onChronometerTick(chronometer);
     }
 
+    @Test
     @LargeTest
     public void testCountDown() {
         final Chronometer chronometer = mActivity.getChronometer();
@@ -186,6 +202,7 @@ public class ChronometerTest extends ActivityInstrumentationTestCase2<Chronomete
         verify(mockTickListener, atLeastOnce()).onChronometerTick(chronometer);
     }
 
+    @Test
     @LargeTest
     public void testCountUp() {
         final Chronometer chronometer = mActivity.getChronometer();

@@ -16,23 +16,36 @@
 
 package android.widget.cts;
 
-import static org.mockito.Mockito.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertSame;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.reset;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyZeroInteractions;
 
+import android.app.Instrumentation;
 import android.content.Context;
 import android.content.res.Resources.Theme;
 import android.database.DataSetObserver;
-import android.test.InstrumentationTestCase;
-import android.test.UiThreadTest;
+import android.support.test.InstrumentationRegistry;
+import android.support.test.runner.AndroidJUnit4;
 import android.test.suitebuilder.annotation.SmallTest;
 import android.widget.ArrayAdapter;
 import android.widget.Filter;
 import android.widget.TextView;
 
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+
 import java.util.ArrayList;
 import java.util.List;
 
 @SmallTest
-public class ArrayAdapterTest extends InstrumentationTestCase {
+@RunWith(AndroidJUnit4.class)
+public class ArrayAdapterTest {
 
     private static final int INVALID_ID = -1;
     private static final String STR1 = "string1";
@@ -42,15 +55,14 @@ public class ArrayAdapterTest extends InstrumentationTestCase {
     private ArrayAdapter<String> mArrayAdapter;
     private Context mContext;
 
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
-        mContext = getInstrumentation().getTargetContext();
+    @Before
+    public void setup() {
+        mContext = InstrumentationRegistry.getTargetContext();
         mArrayAdapter = new ArrayAdapter<>(mContext, R.layout.simple_dropdown_item_1line);
     }
 
+    @Test
     public void testConstructor() {
-
         new ArrayAdapter<String>(mContext, R.layout.simple_dropdown_item_1line);
         new ArrayAdapter<String>(mContext, INVALID_ID); // invalid resource id
 
@@ -70,16 +82,14 @@ public class ArrayAdapterTest extends InstrumentationTestCase {
         new ArrayAdapter<>(mContext, R.layout.simple_dropdown_item_1line, list);
 
         new ArrayAdapter<>(mContext, R.layout.simple_dropdown_item_1line, R.id.text1, list);
-
-        // invalid input
-        try {
-            new ArrayAdapter<String>(null, R.layout.simple_dropdown_item_1line);
-            fail("should throw NullPointerException");
-        } catch (NullPointerException e) {
-            // expected exception
-        }
     }
 
+    @Test(expected=NullPointerException.class)
+    public void testConstructorWithNullContext() {
+        new ArrayAdapter<String>(null, R.layout.simple_dropdown_item_1line);
+    }
+
+    @Test
     public void testDataChangeEvent() {
         final DataSetObserver mockDataSetObserver = mock(DataSetObserver.class);
         mArrayAdapter.registerDataSetObserver(mockDataSetObserver);
@@ -123,6 +133,7 @@ public class ArrayAdapterTest extends InstrumentationTestCase {
         verify(mockDataSetObserver, times(3)).onChanged();
     }
 
+    @Test
     public void testAccessView() {
         final TextView textView = new TextView(mContext);
         textView.setText(STR3);
@@ -145,40 +156,41 @@ public class ArrayAdapterTest extends InstrumentationTestCase {
         assertSame(textView, mArrayAdapter.getView(0, textView, null));
         assertSame(textView, mArrayAdapter.getDropDownView(0, textView, null));
         assertEquals(STR1, textView.getText());
-
-        try {
-            assertEquals(textView, mArrayAdapter.getView(-1, textView, null));
-            fail("should throw IndexOutOfBoundsException");
-        } catch (IndexOutOfBoundsException e) {
-        }
-
-        try {
-            assertEquals(textView, mArrayAdapter.getDropDownView(-1, textView, null));
-            fail("should throw IndexOutOfBoundsException");
-        } catch (IndexOutOfBoundsException e) {
-        }
-
-        try {
-            assertEquals(textView,
-                    mArrayAdapter.getView(mArrayAdapter.getCount(), textView, null));
-            fail("should throw IndexOutOfBoundsException");
-        } catch (IndexOutOfBoundsException e) {
-        }
-
-        try {
-            assertEquals(textView,
-                    mArrayAdapter.getDropDownView(mArrayAdapter.getCount(), textView, null));
-            fail("should throw IndexOutOfBoundsException");
-        } catch (IndexOutOfBoundsException e) {
-        }
     }
 
-    @UiThreadTest
-    public void testGetFilter() {
-        Filter filter = mArrayAdapter.getFilter();
+    @Test(expected=IndexOutOfBoundsException.class)
+    public void testGetViewOutOfBoundsLow() {
+        final TextView textView = new TextView(mContext);
+        mArrayAdapter.getView(-1, textView, null);
+    }
 
-        assertNotNull(mArrayAdapter.getFilter());
-        assertSame(filter, mArrayAdapter.getFilter());
+    @Test(expected=IndexOutOfBoundsException.class)
+    public void testDropDownGetViewOutOfBoundsLow() {
+        final TextView textView = new TextView(mContext);
+        mArrayAdapter.getDropDownView(-1, textView, null);
+    }
+
+    @Test(expected=IndexOutOfBoundsException.class)
+    public void testGetViewOutOfBoundsHigh() {
+        final TextView textView = new TextView(mContext);
+        mArrayAdapter.getView(mArrayAdapter.getCount(), textView, null);
+    }
+
+    @Test(expected=IndexOutOfBoundsException.class)
+    public void testDropDownGetViewOutOfBoundsHigh() {
+        final TextView textView = new TextView(mContext);
+        mArrayAdapter.getDropDownView(mArrayAdapter.getCount(), textView, null);
+    }
+
+    @Test
+    public void testGetFilter() {
+        Instrumentation instrumentation = InstrumentationRegistry.getInstrumentation();
+        instrumentation.runOnMainSync(() -> {
+            Filter filter = mArrayAdapter.getFilter();
+
+            assertNotNull(mArrayAdapter.getFilter());
+            assertSame(filter, mArrayAdapter.getFilter());
+        });
     }
 
     /**
@@ -186,7 +198,8 @@ public class ArrayAdapterTest extends InstrumentationTestCase {
      * we set a xml that not contain a textview, so exception should throw to lete us know
      * sucessfully change the dropdown xml, but should not affect the normal view by getview
      */
-    public void testSetDropDownViewResouce() {
+    @Test
+    public void testSetDropDownViewResource() {
         mArrayAdapter.add(STR1);
 
         mArrayAdapter.getDropDownView(0, null, null);
@@ -194,17 +207,18 @@ public class ArrayAdapterTest extends InstrumentationTestCase {
         mArrayAdapter.setDropDownViewResource(R.layout.tabhost_layout);
         // getview is ok
         mArrayAdapter.getView(0, null, null);
-        // getDropDownView error for it changed
-        try {
-            mArrayAdapter.getDropDownView(0, null, null);
-            fail("should throw IllegalStateException");
-        } catch (IllegalStateException e) {
-            // expected exception
-        }
 
         mArrayAdapter.setDropDownViewResource(INVALID_ID);
     }
 
+    @Test(expected=IllegalStateException.class)
+    public void testSetDropDownViewResourceIllegal() {
+        mArrayAdapter.add(STR1);
+        mArrayAdapter.setDropDownViewResource(R.layout.tabhost_layout);
+        mArrayAdapter.getDropDownView(0, null, null);
+    }
+
+    @Test
     public void testAccessDropDownViewTheme() {
         Theme theme = mContext.getResources().newTheme();
         mArrayAdapter.setDropDownViewTheme(theme);
@@ -215,6 +229,7 @@ public class ArrayAdapterTest extends InstrumentationTestCase {
      * insert the item to the specific position, notify data changed
      * check -1, normal, > count
      */
+    @Test
     public void testInsert() {
         mArrayAdapter.setNotifyOnChange(true);
         final DataSetObserver mockDataSetObserver = mock(DataSetObserver.class);
@@ -235,26 +250,31 @@ public class ArrayAdapterTest extends InstrumentationTestCase {
 
         mArrayAdapter.insert(null, 0);
         assertEquals(0, mArrayAdapter.getPosition(null));
+    }
 
-        try {
-            mArrayAdapter.insert(STR1, -1);
-            fail("should throw IndexOutOfBoundsException");
-        } catch (IndexOutOfBoundsException e) {
-            // expected exception
-        }
+    @Test(expected=IndexOutOfBoundsException.class)
+    public void testInsertOutOfBoundsLow() {
+        mArrayAdapter.insert(STR1, 0);
+        mArrayAdapter.insert(STR2, 0);
+        mArrayAdapter.insert(null, 0);
 
-        try {
-            mArrayAdapter.insert(STR1, mArrayAdapter.getCount() + 1);
-            fail("should throw IndexOutOfBoundsException");
-        } catch (IndexOutOfBoundsException e) {
-            // expected exception
-        }
+        mArrayAdapter.insert(STR1, -1);
+    }
+
+    @Test(expected=IndexOutOfBoundsException.class)
+    public void testInsertOutOfBoundsHigh() {
+        mArrayAdapter.insert(STR1, 0);
+        mArrayAdapter.insert(STR2, 0);
+        mArrayAdapter.insert(null, 0);
+
+        mArrayAdapter.insert(STR1, mArrayAdapter.getCount() + 1);
     }
 
     /**
      * return the given position obj
      * test range: -1, normal, > count
      */
+    @Test
     public void testGetItem() {
         mArrayAdapter.add(STR1);
         mArrayAdapter.add(STR2);
@@ -263,26 +283,30 @@ public class ArrayAdapterTest extends InstrumentationTestCase {
         assertSame(STR1, mArrayAdapter.getItem(0));
         assertSame(STR2, mArrayAdapter.getItem(1));
         assertSame(STR3, mArrayAdapter.getItem(2));
+    }
 
-        // test invalid input
-        try {
-            mArrayAdapter.getItem(-1);
-            fail("should throw IndexOutOfBoundsException");
-        } catch (IndexOutOfBoundsException e) {
-            // expected exception
-        }
+    @Test(expected=IndexOutOfBoundsException.class)
+    public void testGetItemOutOfBoundsLow() {
+        mArrayAdapter.add(STR1);
+        mArrayAdapter.add(STR2);
+        mArrayAdapter.add(STR3);
 
-        try {
-            mArrayAdapter.getItem(mArrayAdapter.getCount());
-            fail("should throw IndexOutOfBoundsException");
-        } catch (IndexOutOfBoundsException e) {
-            // expected exception
-        }
+        mArrayAdapter.getItem(-1);
+    }
+
+    @Test(expected=IndexOutOfBoundsException.class)
+    public void testGetItemOutOfBoundsHigh() {
+        mArrayAdapter.add(STR1);
+        mArrayAdapter.add(STR2);
+        mArrayAdapter.add(STR3);
+
+        mArrayAdapter.getItem(mArrayAdapter.getCount());
     }
 
     /**
      * just return the given position
      */
+    @Test
     public void testGetItemId() {
         mArrayAdapter.add(STR1);
         mArrayAdapter.add(STR2);
@@ -300,6 +324,7 @@ public class ArrayAdapterTest extends InstrumentationTestCase {
     /*
      * return the obj position that in the array, if there are same objs, return the first one
      */
+    @Test
     public void testGetPosition() {
         mArrayAdapter.add(STR1);
         mArrayAdapter.add(STR2);
@@ -320,6 +345,7 @@ public class ArrayAdapterTest extends InstrumentationTestCase {
      * Removes the specified object from the array. notify data changed
      * remove first one if duplicated string in the array
      */
+    @Test
     public void testRemove() {
         final DataSetObserver mockDataSetObserver = mock(DataSetObserver.class);
         mArrayAdapter.registerDataSetObserver(mockDataSetObserver);
@@ -362,27 +388,24 @@ public class ArrayAdapterTest extends InstrumentationTestCase {
      * Creates a new ArrayAdapter from external resources. The content of the array is
      * obtained through {@link android.content.res.Resources#getTextArray(int)}.
      */
+    @Test
     public void testCreateFromResource() {
         ArrayAdapter.createFromResource(mContext, R.array.string, R.layout.simple_spinner_item);
 
-        // invalid input
-        try {
-            ArrayAdapter.createFromResource(null, R.array.string, R.layout.simple_spinner_item);
-            fail("should throw NullPointerException");
-        } catch (NullPointerException e) {
-            // expected exception
-        }
-
-        try {
-            ArrayAdapter.createFromResource(mContext, INVALID_ID, R.layout.simple_spinner_item);
-            fail("should throw NullPointerException");
-        } catch (NullPointerException e) {
-            // expected exception
-        }
-
-       ArrayAdapter.createFromResource(mContext, R.array.string, INVALID_ID);
+        ArrayAdapter.createFromResource(mContext, R.array.string, INVALID_ID);
     }
 
+    @Test(expected=NullPointerException.class)
+    public void testCreateFromResourceWithNullContext() {
+        ArrayAdapter.createFromResource(null, R.array.string, R.layout.simple_spinner_item);
+    }
+
+    @Test(expected=NullPointerException.class)
+    public void testCreateFromResourceWithInvalidId() {
+        ArrayAdapter.createFromResource(mContext, INVALID_ID, R.layout.simple_spinner_item);
+    }
+
+    @Test
     public void testSort() {
         final DataSetObserver mockDataSetObserver = mock(DataSetObserver.class);
         mArrayAdapter.registerDataSetObserver(mockDataSetObserver);
@@ -400,6 +423,7 @@ public class ArrayAdapterTest extends InstrumentationTestCase {
      * insert multiple items via add, notify data changed
      * check count and content
      */
+    @Test
     public void testAdd() {
         mArrayAdapter.setNotifyOnChange(true);
         final DataSetObserver mockDataSetObserver = mock(DataSetObserver.class);
@@ -419,6 +443,7 @@ public class ArrayAdapterTest extends InstrumentationTestCase {
      * insert multiple items via addAll, notify data changed
      * check count and content
      */
+    @Test
     public void testAddAllCollection() {
         mArrayAdapter.setNotifyOnChange(true);
         final DataSetObserver mockDataSetObserver = mock(DataSetObserver.class);
@@ -446,6 +471,7 @@ public class ArrayAdapterTest extends InstrumentationTestCase {
      * insert multiple items via addAll, notify data changed
      * check count and content
      */
+    @Test
     public void testAddAllParams() {
         mArrayAdapter.setNotifyOnChange(true);
         final DataSetObserver mockDataSetObserver = mock(DataSetObserver.class);
