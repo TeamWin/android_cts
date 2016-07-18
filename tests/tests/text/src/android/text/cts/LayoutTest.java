@@ -17,14 +17,21 @@
 package android.text.cts;
 
 
+import android.graphics.Bitmap;
+import android.graphics.Canvas;
+import android.graphics.Paint;
 import android.graphics.Rect;
 import android.test.AndroidTestCase;
+import android.test.suitebuilder.annotation.SmallTest;
 import android.text.Layout;
 import android.text.Layout.Alignment;
 import android.text.Spannable;
 import android.text.SpannableString;
 import android.text.TextPaint;
 import android.text.style.StrikethroughSpan;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class LayoutTest extends AndroidTestCase {
     private final static int LINE_COUNT = 5;
@@ -322,7 +329,7 @@ public class LayoutTest extends AndroidTestCase {
 
         @Override
         public Directions getLineDirections(int line) {
-            return null;
+            return Layout.DIRS_ALL_LEFT_TO_RIGHT;
         }
 
         @Override
@@ -349,6 +356,83 @@ public class LayoutTest extends AndroidTestCase {
         @Override
         public int getTopPadding() {
             return 0;
+        }
+    }
+
+    @SmallTest
+    public void testDraw() {
+        Layout layout = new MockLayout(LAYOUT_TEXT, mTextPaint, mWidth,
+                mAlign, mSpacingmult, mSpacingadd);
+        final int width = 256;
+        final int height = 256;
+        MockCanvas c = new MockCanvas(width, height);
+        layout.draw(c);
+        List<MockCanvas.DrawCommand> drawCommands = c.getDrawCommands();
+        assertEquals(LINE_COUNT, drawCommands.size());
+        for (int i = 0; i < LINE_COUNT; i++) {
+            MockCanvas.DrawCommand drawCommand = drawCommands.get(i);
+            int start = layout.getLineStart(i);
+            int end = layout.getLineEnd(i);
+            assertEquals(LAYOUT_TEXT.toString().substring(start, end), drawCommand.text);
+            float expected_y = (i + 1) * LINE_HEIGHT - LINE_DESCENT;
+            assertEquals(expected_y, drawCommand.y);
+        }
+    }
+
+    private final class MockCanvas extends Canvas {
+
+        class DrawCommand {
+            final String text;
+            final float x;
+            final float y;
+            DrawCommand(String text, float x, float y) {
+                this.text = text;
+                this.x = x;
+                this.y = y;
+            }
+        }
+
+        List<DrawCommand> mDrawCommands;
+
+        public MockCanvas(int width, int height) {
+            super();
+            mDrawCommands = new ArrayList<>();
+            Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
+            setBitmap(bitmap);
+        }
+
+        // Drawing text with either drawText or drawTextRun is valid; we don't care which.
+        // We also don't care which of the string representations is used.
+
+        @Override
+        public void drawText(String text, int start, int end, float x, float y, Paint p) {
+            mDrawCommands.add(new DrawCommand(text.substring(start, end), x, y));
+        }
+
+        @Override
+        public void drawText(CharSequence text, int start, int end, float x, float y, Paint p) {
+            drawText(text.toString(), start, end, x, y, p);
+        }
+
+        @Override
+        public void drawText(char[] text, int index, int count, float x, float y, Paint p) {
+            mDrawCommands.add(new DrawCommand(new String(text, index, count), x, y));
+        }
+
+        @Override
+        public void drawTextRun(CharSequence text, int start, int end, int contextStart,
+                int contextEnd, float x, float y, boolean isRtl, Paint paint) {
+            drawText(text, start, end, x, y, paint);
+        }
+
+        @Override
+        public void drawTextRun(char[] text, int index, int count, int contextIndex,
+                int contextCount, float x, float y, boolean isRtl, Paint paint) {
+            drawText(text, index, count, x, y, paint);
+        }
+
+        List<DrawCommand> getDrawCommands() {
+            return mDrawCommands;
         }
     }
 }
