@@ -175,7 +175,7 @@ public class VideoViewTest extends ActivityInstrumentationTestCase2<VideoViewCts
         verify(mockPreparedListener, times(1)).onPrepared(any(MediaPlayer.class));
         verifyZeroInteractions(mockCompletionListener);
 
-        runTestOnUiThread(() -> mVideoView.start());
+        runTestOnUiThread(mVideoView::start);
         // wait time is longer than duration in case system is sluggish
         completionLatch.await(mVideoView.getDuration() + TIME_OUT, TimeUnit.MILLISECONDS);
         verify(mockCompletionListener, times(1)).onCompletion(any(MediaPlayer.class));

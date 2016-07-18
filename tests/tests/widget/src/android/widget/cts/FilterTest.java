@@ -72,10 +72,10 @@ public class FilterTest extends ActivityInstrumentationTestCase2<CtsActivity> {
         });
         getInstrumentation().waitForIdleSync();
 
-        PollingCheck.waitFor(TIME_OUT, () -> mMockFilter.hadPerformedFiltering());
+        PollingCheck.waitFor(TIME_OUT, mMockFilter::hadPerformedFiltering);
         assertEquals(TEST_CONSTRAINT, mMockFilter.getPerformFilteringConstraint());
 
-        PollingCheck.waitFor(TIME_OUT, () -> mMockFilter.hadPublishedResults());
+        PollingCheck.waitFor(TIME_OUT, mMockFilter::hadPublishedResults);
         assertEquals(TEST_CONSTRAINT, mMockFilter.getPublishResultsConstraint());
         assertSame(mMockFilter.getExpectResults(), mMockFilter.getResults());
     }
@@ -96,10 +96,10 @@ public class FilterTest extends ActivityInstrumentationTestCase2<CtsActivity> {
         });
         getInstrumentation().waitForIdleSync();
 
-        PollingCheck.waitFor(TIME_OUT, () -> mMockFilter.hadPerformedFiltering());
+        PollingCheck.waitFor(TIME_OUT, mMockFilter::hadPerformedFiltering);
         assertEquals(TEST_CONSTRAINT, mMockFilter.getPerformFilteringConstraint());
 
-        PollingCheck.waitFor(TIME_OUT, () -> mMockFilter.hadPublishedResults());
+        PollingCheck.waitFor(TIME_OUT, mMockFilter::hadPublishedResults);
         assertEquals(TEST_CONSTRAINT, mMockFilter.getPublishResultsConstraint());
         assertSame(mMockFilter.getExpectResults(), mMockFilter.getResults());
 

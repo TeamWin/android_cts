@@ -89,13 +89,13 @@ public class RelativeLayoutTest extends
         ViewAsserts.assertRightAligned(relativeLayout, view13);
 
         relativeLayout.setIgnoreGravity(R.id.relative_view13);
-        mInstrumentation.runOnMainSync(() -> relativeLayout.requestLayout());
+        mInstrumentation.runOnMainSync(relativeLayout::requestLayout);
         mInstrumentation.waitForIdleSync();
         ViewAsserts.assertRightAligned(relativeLayout, view12);
         ViewAsserts.assertLeftAligned(relativeLayout, view13);
 
         relativeLayout.setIgnoreGravity(0);
-        mInstrumentation.runOnMainSync(() -> relativeLayout.requestLayout());
+        mInstrumentation.runOnMainSync(relativeLayout::requestLayout);
         mInstrumentation.waitForIdleSync();
         ViewAsserts.assertRightAligned(relativeLayout, view12);
         ViewAsserts.assertRightAligned(relativeLayout, view13);

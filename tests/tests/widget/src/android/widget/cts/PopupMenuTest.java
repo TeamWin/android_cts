@@ -69,7 +69,7 @@ public class PopupMenuTest extends
     protected void tearDown() throws Exception {
         if (mPopupMenu != null) {
             try {
-                runTestOnUiThread(() -> mPopupMenu.dismiss());
+                runTestOnUiThread(mPopupMenu::dismiss);
             } catch (Throwable t) {
                 throw new RuntimeException(t);
             }
@@ -96,7 +96,7 @@ public class PopupMenuTest extends
 
     public void testPopulateViaInflater() throws Throwable {
         mBuilder = new Builder().inflateWithInflater(true);
-        runTestOnUiThread(() -> mBuilder.show());
+        runTestOnUiThread(mBuilder::show);
         mInstrumentation.waitForIdleSync();
 
         verifyMenuContent();
@@ -104,7 +104,7 @@ public class PopupMenuTest extends
 
     public void testDirectPopulate() throws Throwable {
         mBuilder = new Builder().inflateWithInflater(false);
-        runTestOnUiThread(() -> mBuilder.show());
+        runTestOnUiThread(mBuilder::show);
         mInstrumentation.waitForIdleSync();
 
         verifyMenuContent();
@@ -112,7 +112,7 @@ public class PopupMenuTest extends
 
     public void testAccessGravity() throws Throwable {
         mBuilder = new Builder();
-        runTestOnUiThread(() -> mBuilder.show());
+        runTestOnUiThread(mBuilder::show);
 
         assertEquals(Gravity.NO_GRAVITY, mPopupMenu.getGravity());
         mPopupMenu.setGravity(Gravity.TOP);
@@ -121,23 +121,23 @@ public class PopupMenuTest extends
 
     public void testConstructorWithGravity() throws Throwable {
         mBuilder = new Builder().withGravity(Gravity.TOP);
-        runTestOnUiThread(() -> mBuilder.show());
+        runTestOnUiThread(mBuilder::show);
 
         assertEquals(Gravity.TOP, mPopupMenu.getGravity());
     }
 
     public void testDismissalViaAPI() throws Throwable {
         mBuilder = new Builder().withDismissListener();
-        runTestOnUiThread(() -> mBuilder.show());
+        runTestOnUiThread(mBuilder::show);
 
         mInstrumentation.waitForIdleSync();
         verify(mBuilder.mOnDismissListener, never()).onDismiss(mPopupMenu);
 
-        runTestOnUiThread(() -> mPopupMenu.dismiss());
+        runTestOnUiThread(mPopupMenu::dismiss);
         mInstrumentation.waitForIdleSync();
         verify(mBuilder.mOnDismissListener, times(1)).onDismiss(mPopupMenu);
 
-        runTestOnUiThread(() -> mPopupMenu.dismiss());
+        runTestOnUiThread(mPopupMenu::dismiss);
         mInstrumentation.waitForIdleSync();
         // Shouldn't have any more interactions with our dismiss listener since the menu was
         // already dismissed when we called dismiss()
@@ -150,7 +150,7 @@ public class PopupMenuTest extends
         // "click" a submenu item.
         mBuilder = new Builder().withDismissListener()
                 .withPopupStyleResource(R.style.PopupWindow_NullTransitions);
-        runTestOnUiThread(() -> mBuilder.show());
+        runTestOnUiThread(mBuilder::show);
         mInstrumentation.waitForIdleSync();
         verify(mBuilder.mOnDismissListener, never()).onDismiss(mPopupMenu);
 
@@ -161,11 +161,11 @@ public class PopupMenuTest extends
                         performIdentifierAction(R.id.action_share_email, 0));
         mInstrumentation.waitForIdleSync();
 
-        runTestOnUiThread(() -> mPopupMenu.dismiss());
+        runTestOnUiThread(mPopupMenu::dismiss);
         mInstrumentation.waitForIdleSync();
         verify(mBuilder.mOnDismissListener, times(1)).onDismiss(mPopupMenu);
 
-        runTestOnUiThread(() -> mPopupMenu.dismiss());
+        runTestOnUiThread(mPopupMenu::dismiss);
         mInstrumentation.waitForIdleSync();
         // Shouldn't have any more interactions with our dismiss listener since the menu was
         // already dismissed when we called dismiss()
@@ -179,7 +179,7 @@ public class PopupMenuTest extends
         mBuilder = new Builder().withDismissListener()
                 .withPopupMenuContent(R.menu.popup_menu_single)
                 .withPopupStyleResource(R.style.PopupWindow_NullTransitions);
-        runTestOnUiThread(() -> mBuilder.show());
+        runTestOnUiThread(mBuilder::show);
         mInstrumentation.waitForIdleSync();
 
         // The call below uses Instrumentation to emulate a tap outside the bounds of the
@@ -199,7 +199,7 @@ public class PopupMenuTest extends
 
     public void testSimpleMenuItemClickViaAPI() throws Throwable {
         mBuilder = new Builder().withMenuItemClickListener().withDismissListener();
-        runTestOnUiThread(() -> mBuilder.show());
+        runTestOnUiThread(mBuilder::show);
 
         // Verify that our menu item click listener hasn't been called yet
         verify(mBuilder.mOnMenuItemClickListener, never()).onMenuItemClick(any(MenuItem.class));
@@ -222,7 +222,7 @@ public class PopupMenuTest extends
         // "click" a submenu item.
         mBuilder = new Builder().withDismissListener().withMenuItemClickListener()
                 .withPopupStyleResource(R.style.PopupWindow_NullTransitions);
-        runTestOnUiThread(() -> mBuilder.show());
+        runTestOnUiThread(mBuilder::show);
         mInstrumentation.waitForIdleSync();
 
         // Verify that our menu item click listener hasn't been called yet

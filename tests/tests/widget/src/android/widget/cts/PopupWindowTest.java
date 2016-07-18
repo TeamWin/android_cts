@@ -515,7 +515,7 @@ public class PopupWindowTest extends
         assertTrue("Content (" + contentFrame + ") extends outside display (" + displayFrame + ")",
                 displayFrame.contains(contentFrame));
 
-        getInstrumentation().runOnMainSync(() -> popup.dismiss());
+        getInstrumentation().runOnMainSync(popup::dismiss);
         getInstrumentation().waitForIdleSync();
 
         assertFalse(popup.isShowing());
@@ -790,7 +790,7 @@ public class PopupWindowTest extends
         assertEquals(0, WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS & p.flags);
         assertEquals(0, WindowManager.LayoutParams.FLAG_ALT_FOCUSABLE_IM & p.flags);
 
-        mInstrumentation.runOnMainSync(() -> mPopupWindow.update());
+        mInstrumentation.runOnMainSync(mPopupWindow::update);
         mInstrumentation.waitForIdleSync();
 
         assertEquals(WindowManager.LayoutParams.FLAG_IGNORE_CHEEK_PRESSES,
@@ -832,7 +832,7 @@ public class PopupWindowTest extends
         verify(exitListener, never()).onTransitionStart(any(Transition.class));
         verify(dismissListener, never()).onDismiss();
 
-        mInstrumentation.runOnMainSync(() -> mPopupWindow.dismiss());
+        mInstrumentation.runOnMainSync(mPopupWindow::dismiss);
         mInstrumentation.waitForIdleSync();
         verify(enterListener, times(1)).onTransitionStart(any(Transition.class));
         verify(exitListener, times(1)).onTransitionStart(any(Transition.class));
@@ -924,7 +924,7 @@ public class PopupWindowTest extends
         assertEquals(50, mPopupWindow.getWidth());
         assertEquals(50, mPopupWindow.getHeight());
 
-        mInstrumentation.runOnMainSync(() -> mPopupWindow.dismiss());
+        mInstrumentation.runOnMainSync(mPopupWindow::dismiss);
         mInstrumentation.waitForIdleSync();
     }
 

@@ -149,7 +149,7 @@ public class TextViewTest extends ActivityInstrumentationTestCase2<TextViewCtsAc
     protected void setUp() throws Exception {
         super.setUp();
         mActivity = getActivity();
-        PollingCheck.waitFor(() -> mActivity.hasWindowFocus());
+        PollingCheck.waitFor(mActivity::hasWindowFocus);
         mInstrumentation = getInstrumentation();
         mKeyEventUtil = new KeyEventUtil(mInstrumentation);
     }
@@ -3534,7 +3534,7 @@ public class TextViewTest extends ActivityInstrumentationTestCase2<TextViewCtsAc
         }
 
         // same behaviours as setSingLine(true)
-        mActivity.runOnUiThread(() -> textView.setSingleLine());
+        mActivity.runOnUiThread(textView::setSingleLine);
         mInstrumentation.waitForIdleSync();
         assertEquals(SingleLineTransformationMethod.getInstance(),
                 textView.getTransformationMethod());
@@ -4518,7 +4518,7 @@ public class TextViewTest extends ActivityInstrumentationTestCase2<TextViewCtsAc
         mInstrumentation.waitForIdleSync();
         assertTrue(mTextView.isFocused());
 
-        PollingCheck.waitFor(() -> mTextView.isInputMethodTarget());
+        PollingCheck.waitFor(mTextView::isInputMethodTarget);
     }
 
     @MediumTest
@@ -5556,7 +5556,7 @@ public class TextViewTest extends ActivityInstrumentationTestCase2<TextViewCtsAc
         // Verify that input method manager is active and accepting text
         final InputMethodManager imManager = (InputMethodManager) mActivity
                 .getSystemService(Context.INPUT_METHOD_SERVICE);
-        PollingCheck.waitFor(() -> imManager.isActive());
+        PollingCheck.waitFor(imManager::isActive);
         assertTrue(imManager.isAcceptingText());
         assertTrue(imManager.isActive(mTextView));
 

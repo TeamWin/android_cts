@@ -58,7 +58,7 @@ public class ExpandableListViewTest extends ActivityInstrumentationTestCase2<Exp
 
         mInstrumentation = getInstrumentation();
         mActivity = getActivity();
-        PollingCheck.waitFor(() -> mActivity.hasWindowFocus());
+        PollingCheck.waitFor(mActivity::hasWindowFocus);
         mExpandableListView = mActivity.getExpandableListView();
     }
 

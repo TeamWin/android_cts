@@ -148,7 +148,7 @@ public class MediaControllerTest extends
         assertTrue(mMediaController.isShowing());
 
         // isShowing() should return false, but MediaController still shows, this may be a bug.
-        PollingCheck.waitFor(500, () -> mMediaController.isShowing());
+        PollingCheck.waitFor(500, mMediaController::isShowing);
     }
 
     private String prepareSampleVideo() {

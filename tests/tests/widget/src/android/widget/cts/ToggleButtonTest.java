@@ -126,7 +126,7 @@ public class ToggleButtonTest extends ActivityInstrumentationTestCase2<ToggleBut
         drawable.setState(null);
         assertNull(drawable.getState());
 
-        mInstrumentation.runOnMainSync(() -> toggleButton.drawableStateChanged());
+        mInstrumentation.runOnMainSync(toggleButton::drawableStateChanged);
         assertNotNull(drawable.getState());
         assertEquals(toggleButton.getDrawableState(), drawable.getState());
     }
