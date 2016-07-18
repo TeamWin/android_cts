@@ -34,7 +34,7 @@ import android.widget.EditText;
  * {@link MultiTapKeyListenerTest}
  * {@link NumberKeyListenerTest}
  * {@link QwertyKeyListenerTest}
- * {@link TextKeyKeyListenerTest}
+ * {@link TextKeyListenerTest}
  *
  * @see BaseKeyListenerTest
  * @see DateKeyListenerTest
@@ -43,7 +43,7 @@ import android.widget.EditText;
  * @see MultiTapKeyListenerTest
  * @see NumberKeyListenerTest
  * @see QwertyKeyListenerTest
- * @see TextKeyKeyListenerTest
+ * @see TextKeyListenerTest
  */
 public abstract class KeyListenerTestCase extends
         ActivityInstrumentationTestCase2<KeyListenerCtsActivity> {
@@ -63,12 +63,8 @@ public abstract class KeyListenerTestCase extends
         mInstrumentation = getInstrumentation();
         mTextView = (EditText) mActivity.findViewById(R.id.keylistener_textview);
 
-        mActivity.runOnUiThread(new Runnable() {
-            public void run() {
-                // Ensure that the screen is on for this test.
-                mTextView.setKeepScreenOn(true);
-            }
-        });
+        // Ensure that the screen is on for this test.
+        mInstrumentation.runOnMainSync(() -> mTextView.setKeepScreenOn(true));
         mInstrumentation.waitForIdleSync();
         assertTrue(mActivity.waitForWindowFocus(5 * DateUtils.SECOND_IN_MILLIS));
     }
@@ -77,11 +73,7 @@ public abstract class KeyListenerTestCase extends
      * Synchronously sets mTextView's key listener on the UI thread.
      */
     protected void setKeyListenerSync(final KeyListener keyListener) {
-        mActivity.runOnUiThread(new Runnable() {
-            public void run() {
-                mTextView.setKeyListener(keyListener);
-            }
-        });
+        mInstrumentation.runOnMainSync(() -> mTextView.setKeyListener(keyListener));
         mInstrumentation.waitForIdleSync();
     }
 

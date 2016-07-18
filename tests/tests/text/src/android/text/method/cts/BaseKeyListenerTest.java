@@ -22,10 +22,14 @@ import android.text.Editable;
 import android.text.InputType;
 import android.text.Selection;
 import android.text.Spannable;
+import android.text.SpannableStringBuilder;
 import android.text.method.BaseKeyListener;
 import android.view.KeyCharacterMap;
 import android.view.KeyEvent;
 import android.widget.TextView.BufferType;
+
+import static org.mockito.Matchers.*;
+import static org.mockito.Mockito.*;
 
 /**
  * Test {@link android.text.method.BaseKeyListener}.
@@ -524,6 +528,29 @@ public class BaseKeyListenerTest extends KeyListenerTestCase {
 //        assertEquals("13abcd456", mTextView.getText().toString());
     }
 
+    public void testOnKeyOther() {
+        final MockBaseKeyListener mockBaseKeyListener = new MockBaseKeyListener();
+        final String string = "abc";
+        final SpannableStringBuilder content = new SpannableStringBuilder(string);
+
+        KeyEvent event = new KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_UNKNOWN);
+        assertFalse(mockBaseKeyListener.onKeyOther(mTextView, content, event));
+        assertEquals(string, content.toString());
+
+        event = new KeyEvent(KeyEvent.ACTION_MULTIPLE, KeyEvent.KEYCODE_0);
+        assertFalse(mockBaseKeyListener.onKeyOther(mTextView, content, event));
+        assertEquals(string, content.toString());
+
+        Selection.setSelection(content, 1, 0);
+        event = new KeyEvent(KeyEvent.ACTION_MULTIPLE, KeyEvent.KEYCODE_UNKNOWN);
+        assertFalse(mockBaseKeyListener.onKeyOther(mTextView, content, event));
+        assertEquals(string, content.toString());
+
+        event = new KeyEvent(SystemClock.uptimeMillis(), "b", 0, 0);
+        assertTrue(mockBaseKeyListener.onKeyOther(mTextView, content, event));
+        assertEquals("bbc", content.toString());
+    }
+
     private void executeAltBackspace(Editable content, MockBaseKeyListener listener) {
         final KeyEvent delKeyEvent = getKey(KeyEvent.KEYCODE_DEL,
                 KeyEvent.META_ALT_ON | KeyEvent.META_ALT_LEFT_ON);
@@ -548,14 +575,12 @@ public class BaseKeyListenerTest extends KeyListenerTestCase {
      */
     private void prepTextViewSync(final CharSequence content, final BaseKeyListener keyListener,
             final boolean selectInTextView, final int selectionStart, final int selectionEnd) {
-        mActivity.runOnUiThread(new Runnable() {
-            public void run() {
-                mTextView.setText(content, BufferType.EDITABLE);
-                mTextView.setKeyListener(keyListener);
-                Selection.setSelection(
-                        (Spannable) (selectInTextView ? mTextView.getText() : content),
-                        selectionStart, selectionEnd);
-            }
+        mInstrumentation.runOnMainSync(() -> {
+            mTextView.setText(content, BufferType.EDITABLE);
+            mTextView.setKeyListener(keyListener);
+            Selection.setSelection(
+                    selectInTextView ? mTextView.getText() : (Spannable) content,
+                    selectionStart, selectionEnd);
         });
         mInstrumentation.waitForIdleSync();
         assertTrue(mTextView.hasWindowFocus());
