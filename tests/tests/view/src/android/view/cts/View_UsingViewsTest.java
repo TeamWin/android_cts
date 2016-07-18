@@ -21,11 +21,11 @@ import android.view.cts.R;
 
 import android.app.Activity;
 import android.app.Instrumentation;
+import android.cts.util.CtsTouchUtils;
 import android.cts.util.PollingCheck;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.test.ActivityInstrumentationTestCase2;
-import android.test.TouchUtils;
 import android.test.UiThreadTest;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -357,7 +357,7 @@ public class View_UsingViewsTest extends ActivityInstrumentationTestCase2<UsingV
         assertNull(onLongClickListener.getView());
 
         mInstrumentation.waitForIdleSync();
-        TouchUtils.longClickView(this, mEditText);
+        CtsTouchUtils.emulateLongClick(mInstrumentation, mEditText);
         new PollingCheck() {
             @Override
             protected boolean check() {
@@ -367,55 +367,35 @@ public class View_UsingViewsTest extends ActivityInstrumentationTestCase2<UsingV
         assertSame(mEditText, onLongClickListener.getView());
 
         // click the Cancel button
-        runTestOnUiThread(new Runnable() {
-            public void run() {
-                mEditText.setText("Germany");
-            }
-        });
+        runTestOnUiThread(() -> mEditText.setText("Germany"));
         mInstrumentation.waitForIdleSync();
 
-        TouchUtils.clickView(this, mButtonCancel);
+        CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mButtonCancel);
         assertEquals("", mEditText.getText().toString());
 
         // click the OK button
-        runTestOnUiThread(new Runnable() {
-            public void run() {
-                mEditText.setText(ARGENTINA);
-            }
-        });
+        runTestOnUiThread(() -> mEditText.setText(ARGENTINA));
         mInstrumentation.waitForIdleSync();
 
-        TouchUtils.clickView(this, mButtonOk);
+        CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mButtonOk);
         assertEquals(ARGENTINA_SYMBOL, mSymbolTextView.getText().toString());
 
-        runTestOnUiThread(new Runnable() {
-            public void run() {
-                mEditText.setText(AMERICA);
-            }
-        });
+        runTestOnUiThread(() -> mEditText.setText(AMERICA));
         mInstrumentation.waitForIdleSync();
 
-        TouchUtils.clickView(this, mButtonOk);
+        CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mButtonOk);
         assertEquals(AMERICA_SYMBOL, mSymbolTextView.getText().toString());
 
-        runTestOnUiThread(new Runnable() {
-            public void run() {
-                mEditText.setText(CHINA);
-            }
-        });
+        runTestOnUiThread(() -> mEditText.setText(CHINA));
         mInstrumentation.waitForIdleSync();
 
-        TouchUtils.clickView(this, mButtonOk);
+        CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mButtonOk);
         assertEquals(CHINA_SYMBOL, mSymbolTextView.getText().toString());
 
-        runTestOnUiThread(new Runnable() {
-            public void run() {
-                mEditText.setText("Unknown");
-            }
-        });
+        runTestOnUiThread(() -> mEditText.setText("Unknown"));
         mInstrumentation.waitForIdleSync();
 
-        TouchUtils.clickView(this, mButtonOk);
+        CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mButtonOk);
         assertEquals(View.VISIBLE, mWarningTextView.getVisibility());
     }
 

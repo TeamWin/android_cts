@@ -20,9 +20,9 @@ import android.view.cts.R;
 
 import android.app.Activity;
 import android.app.Instrumentation;
+import android.cts.util.CtsTouchUtils;
 import android.cts.util.PollingCheck;
 import android.test.ActivityInstrumentationTestCase2;
-import android.test.TouchUtils;
 import android.view.View;
 import android.view.ViewTreeObserver;
 import android.view.ViewTreeObserver.OnGlobalFocusChangeListener;
@@ -60,12 +60,7 @@ public class ViewTreeObserverTest extends ActivityInstrumentationTestCase2<MockA
     }
 
     private void layout(final int layoutId) {
-        mInstrumentation.runOnMainSync(new Runnable() {
-            @Override
-            public void run() {
-                mActivity.setContentView(layoutId);
-            }
-        });
+        mInstrumentation.runOnMainSync(() -> mActivity.setContentView(layoutId));
         mInstrumentation.waitForIdleSync();
     }
 
@@ -74,24 +69,14 @@ public class ViewTreeObserverTest extends ActivityInstrumentationTestCase2<MockA
         final View view1 = mActivity.findViewById(R.id.view1);
         final View view2 = mActivity.findViewById(R.id.view2);
 
-        mInstrumentation.runOnMainSync(new Runnable() {
-            @Override
-            public void run() {
-                view1.requestFocus();
-            }
-        });
+        mInstrumentation.runOnMainSync(view1::requestFocus);
 
         mViewTreeObserver = layout.getViewTreeObserver();
         final MockOnGlobalFocusChangeListener listener = new MockOnGlobalFocusChangeListener();
         mViewTreeObserver.addOnGlobalFocusChangeListener(listener);
         assertFalse(listener.hasCalledOnGlobalFocusChanged());
 
-        mInstrumentation.runOnMainSync(new Runnable() {
-            @Override
-            public void run() {
-                view2.requestFocus();
-            }
-        });
+        mInstrumentation.runOnMainSync(view2::requestFocus);
         mInstrumentation.waitForIdleSync();
         new PollingCheck() {
             @Override
@@ -129,7 +114,7 @@ public class ViewTreeObserverTest extends ActivityInstrumentationTestCase2<MockA
         final Button b = (Button) mActivity.findViewById(R.id.button1);
 
         // let the button be touch mode.
-        TouchUtils.tapView(this, b);
+        CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, b);
 
         mViewTreeObserver = b.getViewTreeObserver();
 
@@ -137,12 +122,7 @@ public class ViewTreeObserverTest extends ActivityInstrumentationTestCase2<MockA
         assertFalse(listener.hasCalledOnTouchModeChanged());
         mViewTreeObserver.addOnTouchModeChangeListener(listener);
 
-        mInstrumentation.runOnMainSync(new Runnable() {
-            @Override
-            public void run() {
-                b.requestFocusFromTouch();
-            }
-        });
+        mInstrumentation.runOnMainSync(b::requestFocusFromTouch);
         mInstrumentation.waitForIdleSync();
 
         new PollingCheck() {
@@ -204,23 +184,13 @@ public class ViewTreeObserverTest extends ActivityInstrumentationTestCase2<MockA
         final View view1 = mActivity.findViewById(R.id.view1);
         final View view2 = mActivity.findViewById(R.id.view2);
 
-        mInstrumentation.runOnMainSync(new Runnable() {
-            @Override
-            public void run() {
-                view1.requestFocus();
-            }
-        });
+        mInstrumentation.runOnMainSync(view1::requestFocus);
 
         mViewTreeObserver = layout.getViewTreeObserver();
         final MockOnGlobalFocusChangeListener listener = new MockOnGlobalFocusChangeListener();
         mViewTreeObserver.addOnGlobalFocusChangeListener(listener);
         assertFalse(listener.hasCalledOnGlobalFocusChanged());
-        mInstrumentation.runOnMainSync(new Runnable() {
-            @Override
-            public void run() {
-                view2.requestFocus();
-            }
-        });
+        mInstrumentation.runOnMainSync(view2::requestFocus);
         mInstrumentation.waitForIdleSync();
         new PollingCheck() {
             @Override
@@ -233,12 +203,7 @@ public class ViewTreeObserverTest extends ActivityInstrumentationTestCase2<MockA
         listener.reset();
         mViewTreeObserver.removeOnGlobalFocusChangeListener(listener);
         assertFalse(listener.hasCalledOnGlobalFocusChanged());
-        mInstrumentation.runOnMainSync(new Runnable() {
-            @Override
-            public void run() {
-                view1.requestFocus();
-            }
-        });
+        mInstrumentation.runOnMainSync(view1::requestFocus);
         mInstrumentation.waitForIdleSync();
         new PollingCheck() {
             @Override
@@ -268,19 +233,14 @@ public class ViewTreeObserverTest extends ActivityInstrumentationTestCase2<MockA
     public void testRemoveOnTouchModeChangeListener() {
         final Button b = (Button) mActivity.findViewById(R.id.button1);
         // let the button be touch mode.
-        TouchUtils.tapView(this, b);
+        CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, b);
 
         mViewTreeObserver = b.getViewTreeObserver();
 
         MockOnTouchModeChangeListener listener = new MockOnTouchModeChangeListener();
         mViewTreeObserver.addOnTouchModeChangeListener(listener);
         assertFalse(listener.hasCalledOnTouchModeChanged());
-        mInstrumentation.runOnMainSync(new Runnable() {
-            @Override
-            public void run() {
-                b.requestFocusFromTouch();
-            }
-        });
+        mInstrumentation.runOnMainSync(b::requestFocusFromTouch);
         mInstrumentation.waitForIdleSync();
         final MockOnTouchModeChangeListener l = listener;
         new PollingCheck() {
@@ -292,12 +252,7 @@ public class ViewTreeObserverTest extends ActivityInstrumentationTestCase2<MockA
 
         listener = new MockOnTouchModeChangeListener();
         assertFalse(listener.hasCalledOnTouchModeChanged());
-        mInstrumentation.runOnMainSync(new Runnable() {
-            @Override
-            public void run() {
-                b.requestFocusFromTouch();
-            }
-        });
+        mInstrumentation.runOnMainSync(b::requestFocusFromTouch);
         mInstrumentation.waitForIdleSync();
         final MockOnTouchModeChangeListener l2 = listener;
         new PollingCheck() {
@@ -318,12 +273,7 @@ public class ViewTreeObserverTest extends ActivityInstrumentationTestCase2<MockA
         assertFalse(listener.hasCalledOnScrollChanged());
         mViewTreeObserver.addOnScrollChangedListener(listener);
 
-        runTestOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                scrollView.fullScroll(View.FOCUS_DOWN);
-            }
-        });
+        runTestOnUiThread(() -> scrollView.fullScroll(View.FOCUS_DOWN));
         mInstrumentation.waitForIdleSync();
         new PollingCheck() {
             @Override
@@ -336,12 +286,7 @@ public class ViewTreeObserverTest extends ActivityInstrumentationTestCase2<MockA
         assertFalse(listener.hasCalledOnScrollChanged());
 
         mViewTreeObserver.removeOnScrollChangedListener(listener);
-        runTestOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                scrollView.fullScroll(View.FOCUS_UP);
-            }
-        });
+        runTestOnUiThread(() -> scrollView.fullScroll(View.FOCUS_UP));
         assertFalse(listener.hasCalledOnScrollChanged());
     }
 
