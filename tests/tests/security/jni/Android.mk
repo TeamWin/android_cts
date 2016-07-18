@@ -35,10 +35,15 @@ LOCAL_SRC_FILES := \
 		android_security_cts_AudioPolicyBinderTest.cpp \
 		android_security_cts_AudioFlingerBinderTest.cpp \
 		android_security_cts_MediaPlayerInfoLeakTest.cpp \
-		android_security_cts_AudioEffectBinderTest.cpp
+		android_security_cts_AudioEffectBinderTest.cpp \
+		android_security_cts_AudioPolicyServiceTest.cpp
 
-LOCAL_C_INCLUDES := $(JNI_H_INCLUDE)
+LOCAL_C_INCLUDES := $(JNI_H_INCLUDE) \
+		frameworks/av/media/libmedia
 
-LOCAL_SHARED_LIBRARIES := libnativehelper liblog libbinder libutils libmedia libselinux libdl
+LOCAL_SHARED_LIBRARIES := libnativehelper liblog libbinder libutils libmedia libselinux libdl \
+                          libmediaplayerservice
+
+LOCAL_CFLAGS += -fpermissive
 
 include $(BUILD_SHARED_LIBRARY)
