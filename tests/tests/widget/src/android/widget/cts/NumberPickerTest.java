@@ -19,12 +19,12 @@ package android.widget.cts;
 import static org.mockito.Mockito.*;
 
 import android.app.Instrumentation;
+import android.cts.util.CtsTouchUtils;
 import android.test.ActivityInstrumentationTestCase2;
 import android.test.UiThreadTest;
 import android.test.suitebuilder.annotation.SmallTest;
 import android.text.TextUtils;
 import android.widget.NumberPicker;
-import android.widget.cts.util.ViewTestUtils;
 
 import org.mockito.InOrder;
 
@@ -306,7 +306,7 @@ public class NumberPickerTest extends ActivityInstrumentationTestCase2<NumberPic
         final int[] numberPickerLocationOnScreen = new int[2];
         mNumberPicker.getLocationOnScreen(numberPickerLocationOnScreen);
 
-        ViewTestUtils.emulateDragGesture(mInstrumentation,
+        CtsTouchUtils.emulateDragGesture(mInstrumentation,
                 numberPickerLocationOnScreen[0] + mNumberPicker.getWidth() / 2,
                 numberPickerLocationOnScreen[1] + 1,
                 0,
@@ -350,7 +350,7 @@ public class NumberPickerTest extends ActivityInstrumentationTestCase2<NumberPic
         final int[] numberPickerLocationOnScreen = new int[2];
         mNumberPicker.getLocationOnScreen(numberPickerLocationOnScreen);
 
-        ViewTestUtils.emulateDragGesture(mInstrumentation,
+        CtsTouchUtils.emulateDragGesture(mInstrumentation,
                 numberPickerLocationOnScreen[0] + mNumberPicker.getWidth() / 2,
                 numberPickerLocationOnScreen[1] + mNumberPicker.getHeight() - 1,
                 0,

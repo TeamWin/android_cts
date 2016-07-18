@@ -22,6 +22,7 @@ import static org.mockito.Mockito.*;
 import android.app.Activity;
 import android.app.Instrumentation;
 import android.cts.util.PollingCheck;
+import android.cts.util.CtsTouchUtils;
 import android.database.Cursor;
 import android.database.MatrixCursor;
 import android.provider.BaseColumns;
@@ -31,7 +32,6 @@ import android.text.TextUtils;
 import android.widget.CursorAdapter;
 import android.widget.SearchView;
 import android.widget.SimpleCursorAdapter;
-import android.widget.cts.util.ViewTestUtils;
 
 /**
  * Test {@link SearchView} with {@link Cursor}-backed suggestions adapter.
@@ -167,7 +167,7 @@ public class SearchView_CursorTest extends ActivityInstrumentationTestCase2<Sear
         // Emulate click on the first suggestion - which should be Dido
         final int suggestionRowHeight = mActivity.getResources().getDimensionPixelSize(
                 R.dimen.search_view_suggestion_row_height);
-        ViewTestUtils.emulateTapOnScreen(mInstrumentation, mSearchView, mSearchView.getWidth() / 2,
+        CtsTouchUtils.emulateTapOnScreen(mInstrumentation, mSearchView, mSearchView.getWidth() / 2,
                 mSearchView.getHeight() + suggestionRowHeight / 2);
 
         // At this point we expect the click on the first suggestion to have activated a sequence

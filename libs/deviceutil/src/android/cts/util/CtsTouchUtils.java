@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.widget.cts.util;
+package android.cts.util;
 
 import android.app.Instrumentation;
 import android.os.SystemClock;
@@ -24,9 +24,9 @@ import android.view.ViewConfiguration;
 import android.view.ViewGroup;
 
 /**
- * Utilities for testing View behavior.
+ * Test utilities for touch emulation.
  */
-public class ViewTestUtils {
+public class CtsTouchUtils {
 
     /**
      * Emulates a tap in the center of the passed {@link View}.

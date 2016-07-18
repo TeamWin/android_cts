@@ -22,6 +22,7 @@ import android.app.Activity;
 import android.app.Instrumentation;
 import android.content.Context;
 import android.cts.util.KeyEventUtil;
+import android.cts.util.CtsTouchUtils;
 import android.cts.util.WidgetTestUtils;
 import android.graphics.Rect;
 import android.graphics.drawable.ColorDrawable;
@@ -44,7 +45,6 @@ import android.widget.ListPopupWindow;
 import android.widget.ListView;
 import android.widget.PopupWindow;
 import android.widget.TextView;
-import android.widget.cts.util.ViewTestUtils;
 
 @SmallTest
 public class ListPopupWindowTest extends
@@ -393,7 +393,7 @@ public class ListPopupWindowTest extends
         final ListView popupListView = mPopupWindow.getListView();
         final Rect rect = new Rect();
         mPopupWindow.getBackground().getPadding(rect);
-        ViewTestUtils.emulateTapOnScreen(instrumentation, popupListView,
+        CtsTouchUtils.emulateTapOnScreen(instrumentation, popupListView,
                 -rect.left - 20, popupListView.getHeight() + rect.top + rect.bottom + 20);
 
         // At this point our popup should not be showing and should have notified its
@@ -684,7 +684,7 @@ public class ListPopupWindowTest extends
         int swipeAmount = 2 * popupRowHeight;
 
         // Emulate drag-down gesture with a sequence of motion events
-        ViewTestUtils.emulateDragGesture(getInstrumentation(), emulatedX, emulatedStartY,
+        CtsTouchUtils.emulateDragGesture(getInstrumentation(), emulatedX, emulatedStartY,
                 0, swipeAmount);
 
         // We expect the swipe / drag gesture to result in clicking the second item in our list.

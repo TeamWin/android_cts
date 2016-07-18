@@ -20,6 +20,7 @@ import static org.mockito.Mockito.*;
 
 import android.app.Activity;
 import android.app.Instrumentation;
+import android.cts.util.CtsTouchUtils;
 import android.test.ActivityInstrumentationTestCase2;
 import android.test.suitebuilder.annotation.SmallTest;
 import android.view.Gravity;
@@ -30,7 +31,6 @@ import android.view.SubMenu;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.PopupMenu;
-import android.widget.cts.util.ViewTestUtils;
 
 @SmallTest
 public class PopupMenuTest extends
@@ -191,7 +191,7 @@ public class PopupMenuTest extends
         // of Instrumentation is necessary here since Espresso's actions operate at the level
         // of view or data. Also, we don't want to use View.dispatchTouchEvent directly as
         // that would require emulation of two separate sequences as well.
-        ViewTestUtils.emulateTapOnScreen(mInstrumentation, mBuilder.mAnchor, 10, -20);
+        CtsTouchUtils.emulateTapOnScreen(mInstrumentation, mBuilder.mAnchor, 10, -20);
 
         // At this point our popup should have notified its dismiss listener
         verify(mBuilder.mOnDismissListener, times(1)).onDismiss(mPopupMenu);

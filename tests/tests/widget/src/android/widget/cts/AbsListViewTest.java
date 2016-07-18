@@ -23,6 +23,7 @@ import android.app.Activity;
 import android.app.Instrumentation;
 import android.content.Context;
 import android.cts.util.PollingCheck;
+import android.cts.util.CtsTouchUtils;
 import android.cts.util.WidgetTestUtils;
 import android.graphics.Canvas;
 import android.graphics.Color;
@@ -52,7 +53,6 @@ import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.cts.util.TestUtils;
 import android.widget.cts.util.TestUtilsMatchers;
-import android.widget.cts.util.ViewTestUtils;
 
 import org.hamcrest.MatcherAssert;
 import org.junit.Before;
@@ -186,7 +186,7 @@ public class AbsListViewTest {
 
         reset(mockScrollListener);
 
-        ViewTestUtils.emulateScrollToBottom(mInstrumentation, mListView);
+        CtsTouchUtils.emulateScrollToBottom(mInstrumentation, mListView);
 
         ArgumentCaptor<Integer> firstVisibleItemCaptor = ArgumentCaptor.forClass(Integer.class);
         ArgumentCaptor<Integer> visibleItemCountCaptor = ArgumentCaptor.forClass(Integer.class);
@@ -742,7 +742,7 @@ public class AbsListViewTest {
         mInstrumentation.waitForIdleSync();
 
         // Now long click our view
-        ViewTestUtils.emulateLongClick(mInstrumentation, v, 500);
+        CtsTouchUtils.emulateLongClick(mInstrumentation, v, 500);
 
         // And wait for the latch to be triggered
         try {

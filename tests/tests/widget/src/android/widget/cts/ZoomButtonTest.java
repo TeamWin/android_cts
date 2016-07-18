@@ -17,6 +17,7 @@
 package android.widget.cts;
 
 import android.app.Activity;
+import android.cts.util.CtsTouchUtils;
 import android.test.ActivityInstrumentationTestCase2;
 import android.test.UiThreadTest;
 import android.test.suitebuilder.annotation.LargeTest;
@@ -27,7 +28,6 @@ import android.view.View;
 import android.view.ViewConfiguration;
 import android.widget.ListView;
 import android.widget.ZoomButton;
-import android.widget.cts.util.ViewTestUtils;
 
 import org.xmlpull.v1.XmlPullParser;
 
@@ -118,7 +118,7 @@ public class ZoomButtonTest extends ActivityInstrumentationTestCase2<ZoomButtonC
 
         final long startTime = System.nanoTime();
         // Emulate long click that "lasts" for ten seconds
-        ViewTestUtils.emulateLongClick(getInstrumentation(), mZoomButton, 10000);
+        CtsTouchUtils.emulateLongClick(getInstrumentation(), mZoomButton, 10000);
 
         final List<Long> callbackInvocations = zoomClickListener.getClickTimes();
         assertFalse("Expecting at least one callback", callbackInvocations.isEmpty());

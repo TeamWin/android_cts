@@ -20,11 +20,11 @@ import static org.mockito.Mockito.*;
 
 import android.app.Activity;
 import android.app.Instrumentation;
+import android.cts.util.CtsTouchUtils;
 import android.test.ActivityInstrumentationTestCase2;
 import android.test.suitebuilder.annotation.SmallTest;
 import android.text.TextUtils;
 import android.widget.CheckBox;
-import android.widget.cts.util.ViewTestUtils;
 
 @SmallTest
 public class CheckBoxTest extends ActivityInstrumentationTestCase2<CheckBoxCtsActivity> {
@@ -152,12 +152,12 @@ public class CheckBoxTest extends ActivityInstrumentationTestCase2<CheckBoxCtsAc
         assertFalse(mCheckBox.isChecked());
 
         // tap to checked
-        ViewTestUtils.emulateTapOnViewCenter(mInstrumentation, mCheckBox);
+        CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mCheckBox);
         verify(mockCheckedChangeListener, times(1)).onCheckedChanged(mCheckBox, true);
         assertTrue(mCheckBox.isChecked());
 
         // tap to not checked
-        ViewTestUtils.emulateTapOnViewCenter(mInstrumentation, mCheckBox);
+        CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mCheckBox);
         verify(mockCheckedChangeListener, times(1)).onCheckedChanged(mCheckBox, false);
         assertFalse(mCheckBox.isChecked());
 

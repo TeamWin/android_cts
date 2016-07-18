@@ -20,6 +20,7 @@ import static org.mockito.Mockito.*;
 
 import android.annotation.ColorInt;
 import android.app.Instrumentation;
+import android.cts.util.CtsTouchUtils;
 import android.graphics.Rect;
 import android.test.ActivityInstrumentationTestCase2;
 import android.test.suitebuilder.annotation.MediumTest;
@@ -27,7 +28,6 @@ import android.view.ViewGroup;
 import android.widget.CalendarView;
 import android.widget.ScrollView;
 import android.widget.cts.util.TestUtils;
-import android.widget.cts.util.ViewTestUtils;
 
 import java.util.Calendar;
 import java.util.GregorianCalendar;
@@ -178,7 +178,7 @@ public class CalendarViewTest extends ActivityInstrumentationTestCase2<CalendarV
         }
 
         // Use instrumentation to emulate a tap on 09/23/2008
-        ViewTestUtils.emulateTapOnScreen(instrumentation, calendarView,
+        CtsTouchUtils.emulateTapOnScreen(instrumentation, calendarView,
                 dayBounds.left + dayBounds.width() / 2,
                 dayBounds.top + dayBounds.height() / 2);
 
