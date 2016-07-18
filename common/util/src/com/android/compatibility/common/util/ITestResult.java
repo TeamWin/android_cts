@@ -118,14 +118,6 @@ public interface ITestResult extends Comparable<ITestResult> {
     void passed(ReportLog report);
 
     /**
-     * Report that the test was not executed.
-     *
-     * This means something like a loss of connection to the hardware,
-     * and indicates the run of this test was invalid and needs to be redone.
-     */
-    void notExecuted();
-
-    /**
      * Report that the test was skipped.
      *
      * This means that the test is not considered appropriate for the

@@ -36,6 +36,7 @@ public class InvocationResult implements IInvocationResult {
     private String mBuildFingerprint;
     private String mTestPlan;
     private String mCommandLineArgs;
+    private int mNotExecuted = 0;
 
     /**
      * {@inheritDoc}
@@ -57,6 +58,22 @@ public class InvocationResult implements IInvocationResult {
             total += m.countResults(result);
         }
         return total;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void notExecuted(int count) {
+        mNotExecuted += count;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public int getNotExecuted() {
+        return mNotExecuted;
     }
 
     /**
