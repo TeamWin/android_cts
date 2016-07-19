@@ -297,12 +297,14 @@ public class DecoderTest extends MediaPlayerTestBase {
      * aspects contained in the color box and VUI for the test stream.
      * P = primaries, T = transfer, M = coeffs, R = range. '-' means
      * empty value.
-     *                                      |   colr       |    VUI
+     *                                      |     colr     |    VUI
      * -------------------------------------------------------------------
      *         File Name                    |  P  T  M  R  |  P  T  M  R
      * -------------------------------------------------------------------
      *  color_176x144_bt709_lr_sdr_h264     |  1  1  1  0  |  -  -  -  -
      *  color_176x144_bt601_625_fr_sdr_h264 |  1  6  6  0  |  5  2  2  1
+     *  color_176x144_bt601_525_lr_sdr_h264 |  6  5  4  0  |  2  6  6  0
+     *  color_176x144_srgb_lr_sdr_h264      |  2  0  2  1  |  1  13 1  0
      */
     public void testH264ColorAspects() throws Exception {
         testColorAspects(
@@ -313,6 +315,14 @@ public class DecoderTest extends MediaPlayerTestBase {
                 R.raw.color_176x144_bt601_625_fr_sdr_h264, 2 /* testId */,
                 MediaFormat.COLOR_RANGE_FULL, MediaFormat.COLOR_STANDARD_BT601_PAL,
                 MediaFormat.COLOR_TRANSFER_SDR_VIDEO);
+        testColorAspects(
+                R.raw.color_176x144_bt601_525_lr_sdr_h264, 3 /* testId */,
+                MediaFormat.COLOR_RANGE_LIMITED, MediaFormat.COLOR_STANDARD_BT601_NTSC,
+                MediaFormat.COLOR_TRANSFER_SDR_VIDEO);
+        testColorAspects(
+                R.raw.color_176x144_srgb_lr_sdr_h264, 4 /* testId */,
+                MediaFormat.COLOR_RANGE_LIMITED, MediaFormat.COLOR_STANDARD_BT709,
+                2 /* MediaFormat.COLOR_TRANSFER_SRGB */);
     }
 
     private void testColorAspects(
