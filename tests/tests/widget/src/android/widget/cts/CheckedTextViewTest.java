@@ -16,6 +16,11 @@
 
 package android.widget.cts;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+
 import android.app.Activity;
 import android.app.Instrumentation;
 import android.content.Context;
@@ -26,7 +31,9 @@ import android.graphics.Color;
 import android.graphics.PorterDuff;
 import android.graphics.drawable.Drawable;
 import android.os.Parcelable;
-import android.test.ActivityInstrumentationTestCase2;
+import android.support.test.InstrumentationRegistry;
+import android.support.test.rule.ActivityTestRule;
+import android.support.test.runner.AndroidJUnit4;
 import android.test.suitebuilder.annotation.SmallTest;
 import android.util.AttributeSet;
 import android.util.StateSet;
@@ -38,31 +45,35 @@ import android.widget.ListAdapter;
 import android.widget.ListView;
 import android.widget.cts.util.TestUtils;
 
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+
 import java.util.Arrays;
 
 @SmallTest
-public class CheckedTextViewTest extends
-        ActivityInstrumentationTestCase2<CheckedTextViewCtsActivity> {
+@RunWith(AndroidJUnit4.class)
+public class CheckedTextViewTest {
     private Instrumentation mInstrumentation;
     private Activity mActivity;
     private ListView mListView;
     private CheckedTextView mCheckedTextView;
     private Parcelable mState;
 
-    public CheckedTextViewTest() {
-        super("android.widget.cts", CheckedTextViewCtsActivity.class);
-    }
+    @Rule
+    public ActivityTestRule<CheckedTextViewCtsActivity> mActivityRule
+            = new ActivityTestRule<>(CheckedTextViewCtsActivity.class);
 
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
-
-        mInstrumentation = getInstrumentation();
-        mActivity = getActivity();
+    @Before
+    public void setup() {
+        mInstrumentation = InstrumentationRegistry.getInstrumentation();
+        mActivity = mActivityRule.getActivity();
         mListView = (ListView) mActivity.findViewById(R.id.checkedtextview_listview);
         mCheckedTextView = (CheckedTextView) mActivity.findViewById(R.id.checkedtextview_test);
     }
 
+    @Test
     public void testConstructor() {
         new CheckedTextView(mActivity);
         new CheckedTextView(mActivity, null);
@@ -75,29 +86,24 @@ public class CheckedTextViewTest extends
                 android.R.style.Widget_Material_CheckedTextView);
         new CheckedTextView(mActivity, null, 0,
                 android.R.style.Widget_Material_Light_CheckedTextView);
-
-        try {
-            new CheckedTextView(null, null, -1);
-            fail("Should throw NullPointerException.");
-        } catch (NullPointerException e) {
-            // expected, test success.
-        }
-
-        try {
-            new CheckedTextView(null, null);
-            fail("Should throw NullPointerException.");
-        } catch (NullPointerException e) {
-            // expected, test success.
-        }
-
-        try {
-            new CheckedTextView(null);
-            fail("Should throw NullPointerException.");
-        } catch (NullPointerException e) {
-            // expected, test success.
-        }
     }
 
+    @Test(expected=NullPointerException.class)
+    public void testConstructorWithNullContext1() {
+        new CheckedTextView(null);
+    }
+
+    @Test(expected=NullPointerException.class)
+    public void testConstructorWithNullContext2() {
+        new CheckedTextView(null, null);
+    }
+
+    @Test(expected=NullPointerException.class)
+    public void testConstructorWithNullContext3() {
+        new CheckedTextView(null, null, -1);
+    }
+
+    @Test
     public void testChecked() {
         mInstrumentation.runOnMainSync(() -> {
             mListView.setAdapter(new CheckedTextViewAdapter());
@@ -136,6 +142,7 @@ public class CheckedTextViewTest extends
         assertFalse(view2.isChecked());
     }
 
+    @Test
     public void testToggle() {
         assertFalse(mCheckedTextView.isChecked());
 
@@ -152,6 +159,7 @@ public class CheckedTextViewTest extends
         assertFalse(mCheckedTextView.isChecked());
     }
 
+    @Test
     public void testDrawableStateChanged() {
         MockCheckedTextView checkedTextView = new MockCheckedTextView(mActivity);
 
@@ -160,6 +168,7 @@ public class CheckedTextViewTest extends
         assertTrue(checkedTextView.hasDrawableStateChanged());
     }
 
+    @Test
     public void testSetPadding() {
         mInstrumentation.runOnMainSync(() -> {
             mListView.setPadding(1, 2, 3, 4);
@@ -191,6 +200,7 @@ public class CheckedTextViewTest extends
         }
     }
 
+    @Test
     public void testSetCheckMarkDrawableByDrawable() {
         int basePaddingRight = 10;
 
@@ -232,6 +242,7 @@ public class CheckedTextViewTest extends
         assertTrue(mCheckedTextView.isLayoutRequested());
     }
 
+    @Test
     public void testSetCheckMarkDrawableById() {
         int basePaddingRight = 10;
 
@@ -274,6 +285,7 @@ public class CheckedTextViewTest extends
         assertFalse(mCheckedTextView.isLayoutRequested());
     }
 
+    @Test
     public void testSetCheckMarkByMixedTypes() {
         cleanUpForceLayoutFlags(mCheckedTextView);
 
@@ -286,6 +298,7 @@ public class CheckedTextViewTest extends
         assertNotNull(mCheckedTextView.getCheckMarkDrawable());
     }
 
+    @Test
     public void testAccessInstanceState() {
         assertFalse(mCheckedTextView.isChecked());
         assertFalse(mCheckedTextView.getFreezesText());
@@ -301,6 +314,7 @@ public class CheckedTextViewTest extends
         assertTrue(mCheckedTextView.isLayoutRequested());
     }
 
+    @Test
     public void testCheckMarkTinting() {
         mInstrumentation.runOnMainSync(() -> mCheckedTextView.setChecked(true));
         WidgetTestUtils.runOnMainAndDrawSync(mInstrumentation, mCheckedTextView,

@@ -16,67 +16,77 @@
 
 package android.widget.cts;
 
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.DatePickerDialog;
-import android.test.ActivityInstrumentationTestCase2;
-import android.test.UiThreadTest;
+import android.app.Instrumentation;
+import android.support.test.InstrumentationRegistry;
+import android.support.test.rule.ActivityTestRule;
+import android.support.test.runner.AndroidJUnit4;
+import android.test.suitebuilder.annotation.MediumTest;
+
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
 /**
  * Test {@link DatePickerDialog}.
  */
-public class DatePickerDialogTest extends
-        ActivityInstrumentationTestCase2<DatePickerDialogCtsActivity> {
-
+@MediumTest
+@RunWith(AndroidJUnit4.class)
+public class DatePickerDialogTest {
+    private Instrumentation mInstrumentation;
     private Activity mActivity;
+    private DatePickerDialog mDatePickerDialog;
 
-    public DatePickerDialogTest() {
-        super(DatePickerDialogCtsActivity.class);
+    @Rule
+    public ActivityTestRule<DatePickerDialogCtsActivity> mActivityRule
+            = new ActivityTestRule<>(DatePickerDialogCtsActivity.class);
+
+    @Before
+    public void setup() {
+        mInstrumentation = InstrumentationRegistry.getInstrumentation();
+        mActivity = mActivityRule.getActivity();
     }
 
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
-        mActivity = getActivity();
-    }
-
-    @UiThreadTest
-    @SuppressWarnings("deprecation")
+    @Test
     public void testConstructor() {
-        new DatePickerDialog(mActivity, null, 1970, 1, 1);
+        mInstrumentation.runOnMainSync(() -> {
+                new DatePickerDialog(mActivity, null, 1970, 1, 1);
 
-        new DatePickerDialog(mActivity, AlertDialog.THEME_TRADITIONAL, null, 1970, 1, 1);
+                new DatePickerDialog(mActivity, AlertDialog.THEME_TRADITIONAL, null, 1970, 1, 1);
 
-        new DatePickerDialog(mActivity, AlertDialog.THEME_HOLO_DARK, null, 1970, 1, 1);
+                new DatePickerDialog(mActivity, AlertDialog.THEME_HOLO_DARK, null, 1970, 1, 1);
 
-        new DatePickerDialog(mActivity,
-                android.R.style.Theme_Material_Dialog_Alert, null, 1970, 1, 1);
-
-        try {
-            new DatePickerDialog(null, null, 1970, 1, 1);
-            fail("should throw NullPointerException");
-        } catch (Exception e) {
-        }
+                new DatePickerDialog(mActivity,
+                        android.R.style.Theme_Material_Dialog_Alert, null, 1970, 1, 1);
+        });
     }
 
-    @UiThreadTest
+    @Test(expected=NullPointerException.class)
+    public void testConstructorWithNullContext() {
+        new DatePickerDialog(null, null, 1970, 1, 1);
+    }
+
+    @Test
     public void testShowDismiss() {
-        DatePickerDialog d = createDatePickerDialog();
+        mInstrumentation.runOnMainSync(
+                () -> mDatePickerDialog = new DatePickerDialog(mActivity, null, 1970, 1, 1));
 
-        d.show();
-        assertTrue("Showing date picker", d.isShowing());
+        mInstrumentation.runOnMainSync(mDatePickerDialog::show);
+        assertTrue("Showing date picker", mDatePickerDialog.isShowing());
 
-        d.show();
-        assertTrue("Date picker still showing", d.isShowing());
+        mInstrumentation.runOnMainSync(mDatePickerDialog::show);
+        assertTrue("Date picker still showing", mDatePickerDialog.isShowing());
 
-        d.dismiss();
-        assertFalse("Dismissed date picker", d.isShowing());
+        mInstrumentation.runOnMainSync(mDatePickerDialog::dismiss);
+        assertFalse("Dismissed date picker", mDatePickerDialog.isShowing());
 
-        d.dismiss();
-        assertFalse("Date picker still dismissed", d.isShowing());
-    }
-
-    private DatePickerDialog createDatePickerDialog() {
-        return new DatePickerDialog(mActivity, null, 1970, 1, 1);
+        mInstrumentation.runOnMainSync(mDatePickerDialog::dismiss);
+        assertFalse("Date picker still dismissed", mDatePickerDialog.isShowing());
     }
 }

@@ -16,21 +16,36 @@
 
 package android.widget.cts;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+
+import android.content.Context;
 import android.cts.util.WidgetTestUtils;
-import android.test.AndroidTestCase;
+import android.support.test.InstrumentationRegistry;
+import android.support.test.runner.AndroidJUnit4;
+import android.test.suitebuilder.annotation.SmallTest;
 import android.util.AttributeSet;
 import android.util.Xml;
 import android.widget.AbsoluteLayout;
 import android.widget.AbsoluteLayout.LayoutParams;
-import android.widget.cts.R;
 
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
 
 import java.io.IOException;
 
-@SuppressWarnings("deprecation")
-public class AbsoluteLayout_LayoutParamsTest extends AndroidTestCase {
+@SmallTest
+@RunWith(AndroidJUnit4.class)
+public class AbsoluteLayout_LayoutParamsTest {
+    private Context mContext;
+
+    @Before
+    public void setup() {
+        mContext = InstrumentationRegistry.getTargetContext();
+    }
 
     private AttributeSet getAttributeSet() throws XmlPullParserException, IOException {
         XmlPullParser parser = mContext.getResources().getLayout(R.layout.absolute_layout);
@@ -38,6 +53,7 @@ public class AbsoluteLayout_LayoutParamsTest extends AndroidTestCase {
         return Xml.asAttributeSet(parser);
     }
 
+    @Test
     public void testConstructor() throws XmlPullParserException, IOException {
         LayoutParams layoutParams;
 
@@ -56,6 +72,7 @@ public class AbsoluteLayout_LayoutParamsTest extends AndroidTestCase {
         new AbsoluteLayout.LayoutParams(mContext, getAttributeSet());
     }
 
+    @Test
     public void testDebug() {
         LayoutParams layoutParams = new AbsoluteLayout.LayoutParams(1, 2, 3, 4);
         assertNotNull(layoutParams.debug("test: "));

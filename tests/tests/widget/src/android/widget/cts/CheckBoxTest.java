@@ -16,35 +16,48 @@
 
 package android.widget.cts;
 
-import static org.mockito.Mockito.*;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
+import static org.mockito.Mockito.verifyZeroInteractions;
 
 import android.app.Activity;
 import android.app.Instrumentation;
 import android.cts.util.CtsTouchUtils;
-import android.test.ActivityInstrumentationTestCase2;
+import android.support.test.InstrumentationRegistry;
+import android.support.test.rule.ActivityTestRule;
+import android.support.test.runner.AndroidJUnit4;
 import android.test.suitebuilder.annotation.SmallTest;
 import android.text.TextUtils;
 import android.widget.CheckBox;
 
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+
 @SmallTest
-public class CheckBoxTest extends ActivityInstrumentationTestCase2<CheckBoxCtsActivity> {
+@RunWith(AndroidJUnit4.class)
+public class CheckBoxTest {
     private Instrumentation mInstrumentation;
     private Activity mActivity;
     private CheckBox mCheckBox;
 
-    public CheckBoxTest() {
-        super("android.widget.cts", CheckBoxCtsActivity.class);
-    }
+    @Rule
+    public ActivityTestRule<CheckBoxCtsActivity> mActivityRule
+            = new ActivityTestRule<>(CheckBoxCtsActivity.class);
 
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
-
-        mInstrumentation = getInstrumentation();
-        mActivity = getActivity();
+    @Before
+    public void setup() {
+        mInstrumentation = InstrumentationRegistry.getInstrumentation();
+        mActivity = mActivityRule.getActivity();
         mCheckBox = (CheckBox) mActivity.findViewById(R.id.check_box);
     }
 
+    @Test
     public void testConstructor() {
         new CheckBox(mActivity);
         new CheckBox(mActivity, null);
@@ -57,29 +70,24 @@ public class CheckBoxTest extends ActivityInstrumentationTestCase2<CheckBoxCtsAc
                 android.R.style.Widget_Material_CompoundButton_CheckBox);
         new CheckBox(mActivity, null, 0,
                 android.R.style.Widget_Material_Light_CompoundButton_CheckBox);
-
-        try {
-            new CheckBox(null, null, -1);
-            fail("Should throw NullPointerException.");
-        } catch (NullPointerException e) {
-            // expected, test success.
-        }
-
-        try {
-            new CheckBox(null, null);
-            fail("Should throw NullPointerException.");
-        } catch (NullPointerException e) {
-            // expected, test success.
-        }
-
-        try {
-            new CheckBox(null);
-            fail("Should throw NullPointerException.");
-        } catch (NullPointerException e) {
-            // expected, test success.
-        }
     }
 
+    @Test(expected=NullPointerException.class)
+    public void testConstructorWithNullContext1() {
+        new CheckBox(null);
+    }
+
+    @Test(expected=NullPointerException.class)
+    public void testConstructorWithNullContext2() {
+        new CheckBox(null, null);
+    }
+
+    @Test(expected=NullPointerException.class)
+    public void testConstructorWithNullContext3() {
+        new CheckBox(null, null, -1);
+    }
+
+    @Test
     public void testText() {
         assertTrue(TextUtils.equals(
                 mActivity.getString(R.string.hello_world), mCheckBox.getText()));
@@ -91,6 +99,7 @@ public class CheckBoxTest extends ActivityInstrumentationTestCase2<CheckBoxCtsAc
         assertTrue(TextUtils.equals(mActivity.getString(R.string.text_name), mCheckBox.getText()));
     }
 
+    @Test
     public void testAccessChecked() {
         final CheckBox.OnCheckedChangeListener mockCheckedChangeListener =
                 mock(CheckBox.OnCheckedChangeListener.class);
@@ -122,6 +131,7 @@ public class CheckBoxTest extends ActivityInstrumentationTestCase2<CheckBoxCtsAc
         verifyNoMoreInteractions(mockCheckedChangeListener);
     }
 
+    @Test
     public void testToggleViaApi() {
         final CheckBox.OnCheckedChangeListener mockCheckedChangeListener =
                 mock(CheckBox.OnCheckedChangeListener.class);
@@ -143,6 +153,7 @@ public class CheckBoxTest extends ActivityInstrumentationTestCase2<CheckBoxCtsAc
         verifyNoMoreInteractions(mockCheckedChangeListener);
     }
 
+    @Test
     public void testToggleViaEmulatedTap() {
         final CheckBox.OnCheckedChangeListener mockCheckedChangeListener =
                 mock(CheckBox.OnCheckedChangeListener.class);
@@ -164,6 +175,7 @@ public class CheckBoxTest extends ActivityInstrumentationTestCase2<CheckBoxCtsAc
         verifyNoMoreInteractions(mockCheckedChangeListener);
     }
 
+    @Test
     public void testToggleViaPerformClick() {
         final CheckBox.OnCheckedChangeListener mockCheckedChangeListener =
                 mock(CheckBox.OnCheckedChangeListener.class);

@@ -16,8 +16,20 @@
 
 package android.widget.cts;
 
-import static org.mockito.Matchers.*;
-import static org.mockito.Mockito.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertSame;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.reset;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyZeroInteractions;
 
 import android.content.Context;
 import android.content.res.ColorStateList;
@@ -29,7 +41,9 @@ import android.graphics.Rect;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.Parcelable;
-import android.test.AndroidTestCase;
+import android.support.test.InstrumentationRegistry;
+import android.support.test.runner.AndroidJUnit4;
+import android.test.suitebuilder.annotation.SmallTest;
 import android.util.AttributeSet;
 import android.util.StateSet;
 import android.util.Xml;
@@ -40,20 +54,27 @@ import android.widget.CompoundButton;
 import android.widget.ToggleButton;
 import android.widget.cts.util.TestUtils;
 
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.xmlpull.v1.XmlPullParser;
 
 /**
  * Test {@link CompoundButton}.
  */
-public class CompoundButtonTest extends AndroidTestCase {
+@SmallTest
+@RunWith(AndroidJUnit4.class)
+public class CompoundButtonTest  {
+    private Context mContext;
     private Resources mResources;
 
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
+    @Before
+    public void setup() {
+        mContext = InstrumentationRegistry.getTargetContext();
         mResources = mContext.getResources();
     }
 
+    @Test
     public void testConstructor() {
         XmlPullParser parser = mContext.getResources().getXml(R.layout.togglebutton_layout);
         AttributeSet mAttrSet = Xml.asAttributeSet(parser);
@@ -61,29 +82,24 @@ public class CompoundButtonTest extends AndroidTestCase {
         new MockCompoundButton(mContext, mAttrSet, 0);
         new MockCompoundButton(mContext, mAttrSet);
         new MockCompoundButton(mContext);
-
-        try {
-            new MockCompoundButton(null, null, -1);
-            fail("Should throw NullPointerException.");
-        } catch (NullPointerException e) {
-            // expected, test success.
-        }
-
-        try {
-            new MockCompoundButton(null, null);
-            fail("Should throw NullPointerException.");
-        } catch (NullPointerException e) {
-            // expected, test success.
-        }
-
-        try {
-            new MockCompoundButton(null);
-            fail("Should throw NullPointerException.");
-        } catch (NullPointerException e) {
-            // expected, test success.
-        }
     }
 
+    @Test(expected=NullPointerException.class)
+    public void testConstructorWithNullContext1() {
+        new MockCompoundButton(null);
+    }
+
+    @Test(expected=NullPointerException.class)
+    public void testConstructorWithNullContext2() {
+        new MockCompoundButton(null, null);
+    }
+
+    @Test(expected=NullPointerException.class)
+    public void testConstructorWithNullContext3() {
+        new MockCompoundButton(null, null, -1);
+    }
+
+    @Test
     public void testAccessChecked() {
         CompoundButton compoundButton = new MockCompoundButton(mContext);
         CompoundButton.OnCheckedChangeListener mockCheckedChangeListener =
@@ -106,6 +122,7 @@ public class CompoundButtonTest extends AndroidTestCase {
         verify(mockCheckedChangeListener, times(1)).onCheckedChanged(compoundButton, false);
     }
 
+    @Test
     public void testSetOnCheckedChangeListener() {
         CompoundButton compoundButton = new MockCompoundButton(mContext);
         CompoundButton.OnCheckedChangeListener mockCheckedChangeListener =
@@ -124,6 +141,7 @@ public class CompoundButtonTest extends AndroidTestCase {
         verifyZeroInteractions(mockCheckedChangeListener);
     }
 
+    @Test
     public void testToggle() {
         CompoundButton compoundButton = new MockCompoundButton(mContext);
         assertFalse(compoundButton.isChecked());
@@ -139,6 +157,7 @@ public class CompoundButtonTest extends AndroidTestCase {
         assertFalse(compoundButton.isChecked());
     }
 
+    @Test
     public void testPerformClick() {
         CompoundButton compoundButton = new MockCompoundButton(mContext);
         assertFalse(compoundButton.isChecked());
@@ -159,6 +178,7 @@ public class CompoundButtonTest extends AndroidTestCase {
         assertFalse(compoundButton.isChecked());
     }
 
+    @Test
     public void testDrawableStateChanged() {
         MockCompoundButton compoundButton = new MockCompoundButton(mContext);
         assertFalse(compoundButton.isChecked());
@@ -176,6 +196,7 @@ public class CompoundButtonTest extends AndroidTestCase {
         assertSame(compoundButton.getDrawableState(), drawable.getState());
     }
 
+    @Test
     public void testSetButtonDrawableByDrawable() {
         CompoundButton compoundButton;
 
@@ -208,6 +229,7 @@ public class CompoundButtonTest extends AndroidTestCase {
         assertFalse(firstDrawable.isVisible());
     }
 
+    @Test
     public void testSetButtonDrawableById() {
         CompoundButton compoundButton;
         // resId is 0
@@ -225,6 +247,7 @@ public class CompoundButtonTest extends AndroidTestCase {
         compoundButton.setButtonDrawable(R.drawable.pass);
     }
 
+    @Test
     public void testOnCreateDrawableState() {
         MockCompoundButton compoundButton;
 
@@ -246,6 +269,7 @@ public class CompoundButtonTest extends AndroidTestCase {
         assertEquals(0, state[state.length - 1]);
     }
 
+    @Test
     public void testOnDraw() {
         int viewHeight;
         int drawableWidth;
@@ -294,6 +318,7 @@ public class CompoundButtonTest extends AndroidTestCase {
         assertEquals( (viewHeight - drawableHeight) / 2 + drawableHeight, bounds.bottom);
     }
 
+    @Test
     public void testAccessInstanceState() {
         CompoundButton compoundButton = new MockCompoundButton(mContext);
         Parcelable state;
@@ -312,6 +337,7 @@ public class CompoundButtonTest extends AndroidTestCase {
         assertTrue(compoundButton.isLayoutRequested());
     }
 
+    @Test
     public void testVerifyDrawable() {
         MockCompoundButton compoundButton = new MockCompoundButton(mContext);
         Drawable drawable = mContext.getResources().getDrawable(R.drawable.scenery);
@@ -324,6 +350,7 @@ public class CompoundButtonTest extends AndroidTestCase {
         assertTrue(compoundButton.verifyDrawable(drawable));
     }
 
+    @Test
     public void testButtonTint() {
         LayoutInflater inflater = LayoutInflater.from(mContext);
         View layout = inflater.inflate(R.layout.togglebutton_layout, null);
