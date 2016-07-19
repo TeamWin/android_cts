@@ -48,8 +48,15 @@ public class DialogFrameTests extends ActivityManagerTestBase {
         executeShellCommand(cmd);
     }
 
-    @Override
-    protected void tearDown() throws Exception{
+    public void startTestCaseDocked(String testCase) throws Exception{
+        setComponentName("android.server.FrameTestApp");
+        String cmd = getAmStartCmd(ACTIVITY_NAME, INTENT_KEY, testCase);
+        CLog.logAndDisplay(LogLevel.INFO, cmd);
+        executeShellCommand(cmd);
+        moveActivityToDockStack("DialogTestActivity");
+    }
+
+    void stopTestCase() throws Exception{
         executeShellCommand("am force-stop android.server.FrameTestApp");
     }
 
@@ -67,8 +74,7 @@ public class DialogFrameTests extends ActivityManagerTestBase {
         void doTest(WindowState parent, WindowState dialog);
     }
 
-    void doDialogTest(String testCase, DialogWindowTest t) throws Exception {
-        startTestCase(testCase);
+    void doSingleTest(DialogWindowTest t) throws Exception {
         final String[] waitForVisible = new String[] { "TestDialog" };
 
         mAmWmState.computeState(mDevice, waitForVisible);
@@ -76,6 +82,24 @@ public class DialogFrameTests extends ActivityManagerTestBase {
         WindowState parent = getSingleWindow("DialogTestActivity");
 
         t.doTest(parent, dialog);
+        stopTestCase();
+    }
+
+    void doFullscreenTest(String testCase, DialogWindowTest t) throws Exception {
+        CLog.logAndDisplay(LogLevel.INFO, "Running test fullscreen");
+        startTestCase(testCase);
+        doSingleTest(t);
+    }
+
+    void doDockedTest(String testCase, DialogWindowTest t) throws Exception {
+        CLog.logAndDisplay(LogLevel.INFO, "Running test docked");
+        startTestCaseDocked(testCase);
+        doSingleTest(t);
+    }
+
+    void doDialogTest(String testCase, DialogWindowTest t) throws Exception {
+        doFullscreenTest(testCase, t);
+        doDockedTest(testCase, t);
     }
 
     // With Width and Height as MATCH_PARENT we should fill
@@ -167,11 +191,13 @@ public class DialogFrameTests extends ActivityManagerTestBase {
     // able to fit all of our content, so we should be adjusted to just fit the
     // content frame.
     public void testExplicitPositionMatchParent() throws Exception {
-             doDialogTest("ExplicitPositionMatchParent",
-                 (WindowState parent, WindowState dialog) -> {
-                     assertEquals(parent.getContentFrame(),
-                             dialog.getFrame());
-              });
+        // TODO: We run this test in fullscreen only because of
+        // b/30225290
+        doFullscreenTest("ExplicitPositionMatchParent",
+             (WindowState parent, WindowState dialog) -> {
+                    assertEquals(parent.getContentFrame(),
+                            dialog.getFrame());
+             });
     }
 
     // Unless we pass NO_LIMITS in which case our requested position should
@@ -188,15 +214,17 @@ public class DialogFrameTests extends ActivityManagerTestBase {
             });
     }
 
+    // We run the two focus tests fullscreen only because switching to the
+    // docked stack will strip away focus from the task anyway.
     public void testDialogReceivesFocus() throws Exception {
-        doDialogTest("MatchParent",
+        doFullscreenTest("MatchParent",
             (WindowState parent, WindowState dialog) -> {
                 assertEquals(dialog.getName(), mAmWmState.getWmState().getFocusedWindow());
         });
     }
 
     public void testNoFocusDialog() throws Exception {
-        doDialogTest("NoFocus",
+        doFullscreenTest("NoFocus",
             (WindowState parent, WindowState dialog) -> {
                 assertEquals(parent.getName(), mAmWmState.getWmState().getFocusedWindow());
         });

@@ -26,8 +26,18 @@ import android.view.Gravity;
 
 public class DialogTestActivity extends Activity {
 
+    AlertDialog mDialog;
+
     protected void onCreate(Bundle icicle) {
         super.onCreate(icicle);
+    }
+
+    protected void onStop() {
+        super.onStop();
+        mDialog.dismiss();
+    }
+    protected void onResume() {
+        super.onResume();
         setupTest(getIntent());
     }
 
@@ -87,18 +97,18 @@ public class DialogTestActivity extends Activity {
     }
 
     private void doLayoutParamTest(DialogLayoutParamsTest t) {
-        AlertDialog dialog = new AlertDialog.Builder(this).create();
+        mDialog = new AlertDialog.Builder(this).create();
 
-        dialog.setMessage("Testing is fun!");
-        dialog.setTitle("android.server.FrameTestApp/android.server.FrameTestApp.TestDialog");
-        dialog.create();
+        mDialog.setMessage("Testing is fun!");
+        mDialog.setTitle("android.server.FrameTestApp/android.server.FrameTestApp.TestDialog");
+        mDialog.create();
 
-        Window w = dialog.getWindow();
+        Window w = mDialog.getWindow();
         final WindowManager.LayoutParams params = w.getAttributes();
         t.doSetup(params);
         w.setAttributes(params);
 
-        dialog.show();
+        mDialog.show();
     }
 
     private void testMatchParent() {

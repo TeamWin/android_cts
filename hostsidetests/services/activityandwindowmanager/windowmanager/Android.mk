@@ -26,7 +26,7 @@ LOCAL_SRC_FILES := $(call all-java-files-under, src)
 LOCAL_JAVA_LIBRARIES := cts-tradefed tradefed-prebuilt CtsServicesHostTestCases
 LOCAL_STATIC_JAVA_LIBRARIES := cts-amwm-util
 
-LOCAL_CTS_TEST_PACKAGE := android.wm.cts
+LOCAL_CTS_TEST_PACKAGE := android.server.cts
 
 LOCAL_CTS_MODULE_CONFIG := $(LOCAL_PATH)/Old$(CTS_MODULE_TEST_CONFIG)
 
