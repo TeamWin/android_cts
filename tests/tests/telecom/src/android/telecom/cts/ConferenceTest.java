@@ -234,14 +234,14 @@ public class ConferenceTest extends BaseTelecomTestWithMockServices {
         assertCallState(conf, Call.STATE_ACTIVE);
 
         int properties  = mConferenceObject.getConnectionProperties();
-        properties |= Connection.PROPERTY_IS_EXTERNAL_CALL;
+        properties |= Connection.PROPERTY_HAS_CDMA_VOICE_PRIVACY;
 
         mConferenceObject.setConnectionProperties(properties);
 
         // Wait for 2nd properties change; the first will be when the conference is marked with
         // Call.Details.PROPERTY_CONFERENCE.
-        assertCallProperties(conf, Call.Details.PROPERTY_IS_EXTERNAL_CALL);
-        assertTrue(conf.getDetails().hasProperty(Call.Details.PROPERTY_IS_EXTERNAL_CALL));
+        assertCallProperties(conf, Call.Details.PROPERTY_HAS_CDMA_VOICE_PRIVACY);
+        assertTrue(conf.getDetails().hasProperty(Call.Details.PROPERTY_HAS_CDMA_VOICE_PRIVACY));
     }
 
     /**
