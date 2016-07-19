@@ -157,6 +157,24 @@ public class ActivityAndWindowManagersState extends Assert {
         } while (retriesLeft-- > 0);
     }
 
+    void waitForRecentsActivityVisible(ITestDevice device) throws Exception {
+        int retriesLeft = 5;
+        do {
+            mAmState.computeState(device);
+            if (!mAmState.isRecentsActivityVisible()) {
+                log("***Waiting for recents activity to be visible...");
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException e) {
+                    log(e.toString());
+                    // Well I guess we are not waiting...
+                }
+            } else {
+                break;
+            }
+        } while (retriesLeft-- > 0);
+    }
+
     private boolean shouldWaitForValidStacks(boolean compareTaskAndStackBounds) {
         if (!taskListsInAmAndWmAreEqual()) {
             // We want to wait for equal task lists in AM and WM in case we caught them in the
