@@ -28,9 +28,9 @@ import android.content.pm.PackageManager;
 import android.content.res.ColorStateList;
 import android.content.res.Resources;
 import android.content.res.Resources.NotFoundException;
+import android.cts.util.CtsTouchUtils;
 import android.cts.util.KeyEventUtil;
 import android.cts.util.PollingCheck;
-import android.cts.util.CtsTouchUtils;
 import android.cts.util.WidgetTestUtils;
 import android.graphics.Color;
 import android.graphics.Paint;
@@ -51,7 +51,6 @@ import android.os.Parcelable;
 import android.os.ResultReceiver;
 import android.os.SystemClock;
 import android.test.ActivityInstrumentationTestCase2;
-import android.test.TouchUtils;
 import android.test.UiThreadTest;
 import android.test.suitebuilder.annotation.MediumTest;
 import android.test.suitebuilder.annotation.SmallTest;
@@ -488,7 +487,7 @@ public class TextViewTest extends ActivityInstrumentationTestCase2<TextViewCtsAc
         // Long click on the text selects all text and shows selection handlers. The view has an
         // attribute layout_width="wrap_content", so clicked location (the center of the view)
         // should be on the text.
-        TouchUtils.longClickView(this, textView);
+        CtsTouchUtils.emulateLongClick(mInstrumentation, textView);
 
         // At this point the entire content of our TextView should be selected and highlighted
         // with blue. Now change the highlight to red while the selection is still on.
@@ -1473,7 +1472,7 @@ public class TextViewTest extends ActivityInstrumentationTestCase2<TextViewCtsAc
         // Long click on the text selects all text and shows selection handlers. The view has an
         // attribute layout_width="wrap_content", so clicked location (the center of the view)
         // should be on the text.
-        TouchUtils.longClickView(this, mTextView);
+        CtsTouchUtils.emulateLongClick(mInstrumentation, mTextView);
 
         mActivity.runOnUiThread(() -> Selection.removeSelection((Spannable) mTextView.getText()));
         mInstrumentation.waitForIdleSync();
@@ -3608,7 +3607,7 @@ public class TextViewTest extends ActivityInstrumentationTestCase2<TextViewCtsAc
         assertTrue(mTextView.getHeight() <= maxLines * mTextView.getLineHeight());
     }
 
-    public int calculateTextWidth(String text) {
+    private int calculateTextWidth(String text) {
         mTextView = findTextView(R.id.textview_text);
 
         // Set the TextView width as the half of the whole text.
@@ -4627,7 +4626,7 @@ public class TextViewTest extends ActivityInstrumentationTestCase2<TextViewCtsAc
 
     public void testCancelLongPress() {
         mTextView = findTextView(R.id.textview_text);
-        TouchUtils.longClickView(this, mTextView);
+        CtsTouchUtils.emulateLongClick(mInstrumentation, mTextView);
         mTextView.cancelLongPress();
     }
 
@@ -4685,7 +4684,7 @@ public class TextViewTest extends ActivityInstrumentationTestCase2<TextViewCtsAc
         mInstrumentation.waitForIdleSync();
 
         // Tap the view to show InsertPointController.
-        TouchUtils.tapView(this, mTextView);
+        CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mTextView);
         // bad workaround for waiting onStartInputView of LeanbackIme.apk done
         try {
             Thread.sleep(1000);
@@ -5589,7 +5588,7 @@ public class TextViewTest extends ActivityInstrumentationTestCase2<TextViewCtsAc
         assertTrue(mTextView.getShowSoftInputOnFocus());
 
         // And emulate click on it
-        TouchUtils.clickView(this, mTextView);
+        CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mTextView);
 
         // Verify that input method manager is active and accepting text
         final InputMethodManager imManager = (InputMethodManager) mActivity
@@ -5616,7 +5615,7 @@ public class TextViewTest extends ActivityInstrumentationTestCase2<TextViewCtsAc
         assertFalse(mTextView.getShowSoftInputOnFocus());
 
         // Emulate click on it
-        TouchUtils.clickView(this, mTextView);
+        CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mTextView);
 
         // Ask input method manager to show soft input again. This time we're expecting to get
         // SHOWN, indicating that the soft input was not showing before showSoftInput was called.

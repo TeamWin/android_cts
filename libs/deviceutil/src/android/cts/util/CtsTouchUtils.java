@@ -200,6 +200,16 @@ public class CtsTouchUtils {
      *
      * @param instrumentation the instrumentation used to run the test
      * @param view the view to "long click"
+     */
+    public static void emulateLongClick(Instrumentation instrumentation, View view) {
+        emulateLongClick(instrumentation, view, 0);
+    }
+
+    /**
+     * Emulates a long click in the center of the passed {@link View}.
+     *
+     * @param instrumentation the instrumentation used to run the test
+     * @param view the view to "long click"
      * @param extraWaitMs the duration of emulated long click in milliseconds starting
      *      after system-level long press timeout.
      */
@@ -224,7 +234,7 @@ public class CtsTouchUtils {
         instrumentation.sendPointerSync(eventMove);
 
         try {
-            Thread.sleep(ViewConfiguration.getLongPressTimeout() + extraWaitMs);
+            Thread.sleep((long) (ViewConfiguration.getLongPressTimeout() * 1.5f) + extraWaitMs);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
