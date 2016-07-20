@@ -270,7 +270,7 @@ cts_host_libraries := \
     CtsAtraceHostTestCases \
     CtsCppToolsTestCases \
     CtsDevicePolicyManagerTestCases \
-    CtsDragAndDropHostTestCases \
+    CtsWindowManagerHostTestCases \
     CtsDumpsysHostTestCases \
     CtsHostsideNetworkTests \
     CtsJdwpSecurityHostTestCases \
