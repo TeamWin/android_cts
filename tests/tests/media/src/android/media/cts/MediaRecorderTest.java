@@ -449,7 +449,7 @@ public class MediaRecorderTest extends ActivityInstrumentationTestCase2<MediaStu
     }
 
     public void testRecorderAudio() throws Exception {
-        if (!hasMicrophone() || !hasAmrNb()) {
+        if (!hasMicrophone() || !hasAac()) {
             MediaUtils.skipTest("no audio codecs or microphone");
             return;
         }
@@ -457,7 +457,7 @@ public class MediaRecorderTest extends ActivityInstrumentationTestCase2<MediaStu
         assertEquals(0, mMediaRecorder.getMaxAmplitude());
         mMediaRecorder.setOutputFormat(MediaRecorder.OutputFormat.THREE_GPP);
         mMediaRecorder.setOutputFile(OUTPUT_PATH);
-        mMediaRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AMR_NB);
+        mMediaRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AAC);
         mMediaRecorder.setAudioChannels(AUDIO_NUM_CHANNELS);
         mMediaRecorder.setAudioSamplingRate(AUDIO_SAMPLE_RATE_HZ);
         mMediaRecorder.setAudioEncodingBitRate(AUDIO_BIT_RATE_IN_BPS);
@@ -465,14 +465,14 @@ public class MediaRecorderTest extends ActivityInstrumentationTestCase2<MediaStu
     }
 
     public void testOnInfoListener() throws Exception {
-        if (!hasMicrophone() || !hasAmrNb()) {
+        if (!hasMicrophone() || !hasAac()) {
             MediaUtils.skipTest("no audio codecs or microphone");
             return;
         }
         mMediaRecorder.setAudioSource(MediaRecorder.AudioSource.MIC);
         mMediaRecorder.setOutputFormat(MediaRecorder.OutputFormat.THREE_GPP);
         mMediaRecorder.setMaxDuration(MAX_DURATION_MSEC);
-        mMediaRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AMR_NB);
+        mMediaRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AAC);
         mMediaRecorder.prepare();
         mMediaRecorder.start();
         Thread.sleep(RECORD_TIME_MS);
@@ -480,7 +480,7 @@ public class MediaRecorderTest extends ActivityInstrumentationTestCase2<MediaStu
     }
 
     public void testSetMaxDuration() throws Exception {
-        if (!hasMicrophone() || !hasAmrNb()) {
+        if (!hasMicrophone() || !hasAac()) {
             MediaUtils.skipTest("no audio codecs or microphone");
             return;
         }
@@ -491,7 +491,7 @@ public class MediaRecorderTest extends ActivityInstrumentationTestCase2<MediaStu
         mMediaRecorder.setAudioSource(MediaRecorder.AudioSource.MIC);
         mMediaRecorder.setOutputFormat(MediaRecorder.OutputFormat.THREE_GPP);
         mMediaRecorder.setMaxDuration((int)durationMs);
-        mMediaRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AMR_NB);
+        mMediaRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AAC);
         mMediaRecorder.prepare();
         mMediaRecorder.start();
         long startTimeMs = System.currentTimeMillis();
@@ -556,13 +556,13 @@ public class MediaRecorderTest extends ActivityInstrumentationTestCase2<MediaStu
     }
 
     public void testOnErrorListener() throws Exception {
-        if (!hasMicrophone() || !hasAmrNb()) {
+        if (!hasMicrophone() || !hasAac()) {
             MediaUtils.skipTest("no audio codecs or microphone");
             return;
         }
         mMediaRecorder.setAudioSource(MediaRecorder.AudioSource.DEFAULT);
         mMediaRecorder.setOutputFormat(MediaRecorder.OutputFormat.THREE_GPP);
-        mMediaRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AMR_NB);
+        mMediaRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AAC);
 
         recordMedia(MAX_FILE_SIZE, mOutFile);
         // TODO: how can we trigger a recording error?
