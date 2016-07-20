@@ -45,6 +45,18 @@ DEFAULT_INVGAMMA_LUT = numpy.array(
 
 MAX_LUT_SIZE = 65536
 
+CHART_FILE = os.path.join(os.environ['CAMERA_ITS_TOP'], 'pymodules', 'its',
+                                  'test_images', 'ISO12233.png')
+CHART_HEIGHT = 16.5  # cm
+CHART_DISTANCE = 40.0  # cm
+CHART_SCALE_START = 0.65
+CHART_SCALE_STOP = 1.35
+CHART_SCALE_STEP = 0.05
+
+NUM_TRYS = 2
+NUM_FRAMES = 4
+
+
 def convert_capture_to_rgb_image(cap,
                                  ccm_yuv_to_rgb=DEFAULT_YUV_TO_RGB_CCM,
                                  yuv_off=DEFAULT_YUV_OFFSETS,
@@ -727,6 +739,98 @@ def scale_img(img, scale=1.0):
     """Scale and image based on a real number scale factor."""
     dim = (int(img.shape[1]*scale), int(img.shape[0]*scale))
     return cv2.resize(img.copy(), dim, interpolation=cv2.INTER_AREA)
+
+
+def normalize_img(img):
+    """Normalize the image values to between 0 and 1.
+
+    Args:
+        img: 2-D numpy array of image values
+    Returns:
+        Normalized image
+    """
+    return (img - numpy.amin(img))/(numpy.amax(img) - numpy.amin(img))
+
+
+def find_chart_bbox(img, chart, scale_factor):
+    """Find the crop area for the chart."""
+    scale_start = CHART_SCALE_START * scale_factor
+    scale_stop = CHART_SCALE_STOP * scale_factor
+    scale_step = CHART_SCALE_STEP * scale_factor
+    bbox = its.image.find_chart(chart, img,
+                                scale_start, scale_stop, scale_step)
+    # convert bbox to (xnorm, ynorm, wnorm, hnorm)
+    wnorm = float((bbox[1][0]) - bbox[0][0]) / img.shape[1]
+    hnorm = float((bbox[1][1]) - bbox[0][1]) / img.shape[0]
+    xnorm = float(bbox[0][0]) / img.shape[1]
+    ynorm = float(bbox[0][1]) / img.shape[0]
+    return xnorm, ynorm, wnorm, hnorm
+
+
+def stationary_lens_cap(cam, req, fmt):
+    """Take up to NUM_TRYS caps and save the 1st one with lens stationary.
+
+    Args:
+        cam:    open device session
+        req:    capture request
+        fmt:    format for capture
+
+    Returns:
+        capture
+    """
+    trys = 0
+    done = False
+    reqs = [req] * NUM_FRAMES
+    while not done:
+        print 'Waiting for lens to move to correct location...'
+        cap = cam.do_capture(reqs, fmt)
+        done = (cap[NUM_FRAMES-1]['metadata']['android.lens.state'] == 0)
+        print ' status: ', done
+        trys += 1
+        if trys == NUM_TRYS:
+            raise its.error.Error('Cannot settle lens after %d trys!' % trys)
+    return cap[NUM_FRAMES-1]
+
+
+def find_af_chart(cam, props, sensitivity, exp, af_fd):
+    """Take an AF image to find the chart location.
+
+    Args:
+        cam:            An open device session.
+        props:          Properties of cam
+        sensitivity:    Sensitivity for the AF request as defined in
+                        android.sensor.sensitivity
+        exp:            Exposure time for the AF request as defined in
+                        android.sensor.exposureTime
+        af_fd:          float; autofocus lens position
+    Returns:
+        xnorm:  float; x location normalized to [0, 1]
+        ynorm:  float; y location normalized to [0, 1]
+        wnorm:  float; width normalized to [0, 1]
+        hnorm:  float; height normalized to [0, 1]
+    """
+    # find maximum size 4:3 format
+    fmts = props['android.scaler.streamConfigurationMap']['availableStreamConfigurations']
+    fmts = [f for f in fmts if f['format'] == 256]
+    fmt = {'format': 'yuv', 'width': fmts[0]['width'],
+           'height': fmts[0]['height']}
+    req = its.objects.manual_capture_request(sensitivity, exp)
+    req['android.lens.focusDistance'] = af_fd
+    cap_chart = stationary_lens_cap(cam, req, fmt)
+    y, _, _ = its.image.convert_capture_to_planes(cap_chart, props)
+    template = cv2.imread(CHART_FILE, cv2.IMREAD_ANYDEPTH)
+    focal_l = cap_chart['metadata']['android.lens.focalLength']
+    pixel_pitch = (props['android.sensor.info.physicalSize']['height'] /
+                   y.shape[0])
+    print ' Chart distance: %.2fcm' % CHART_DISTANCE
+    print ' Chart height: %.2fcm' % CHART_HEIGHT
+    print ' Focal length: %.2fmm' % focal_l
+    print ' Pixel pitch: %.2fum' % (pixel_pitch*1E3)
+    print ' Template height: %dpixels' % template.shape[0]
+    chart_pixel_h = CHART_HEIGHT * focal_l / (CHART_DISTANCE * pixel_pitch)
+    scale_factor = template.shape[0] / chart_pixel_h
+    print 'Chart/image scale factor = %.2f' % scale_factor
+    return find_chart_bbox(y, template, scale_factor)
 
 
 def find_chart(chart, img, scale_start, scale_stop, scale_step):

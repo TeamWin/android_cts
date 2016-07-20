@@ -14,7 +14,6 @@
 
 import os
 
-import cv2
 import its.caps
 import its.device
 import its.image
@@ -22,101 +21,12 @@ import its.objects
 import numpy as np
 
 NUM_IMGS = 12
-NUM_TRYS = 8
 FRAME_TIME_TOL = 10  # ms
 SHARPNESS_TOL = 0.10  # percentage
 POSITION_TOL = 0.10  # percentage
-CHART_FILE = os.path.join(os.environ['CAMERA_ITS_TOP'], 'pymodules', 'its',
-                          'test_images', 'ISO12233.png')
-CHART_HEIGHT = 16.5  # cm
-CHART_DISTANCE = 40.0  # cm
-CHART_SCALE_START = 0.75
-CHART_SCALE_STOP = 1.25
-CHART_SCALE_STEP = 0.05
 VGA_WIDTH = 640
 VGA_HEIGHT = 480
 NAME = os.path.basename(__file__).split('.')[0]
-
-
-def normalize_img(img):
-    """Normalize the image values to between 0 and 1.
-
-    Args:
-        img: 2-D numpy array of image values
-    Returns:
-        Normalized image
-    """
-    return (img - np.amin(img))/(np.amax(img) - np.amin(img))
-
-
-def find_chart_bbox(img, chart, scale_factor):
-    """Find the crop area for the chart."""
-    scale_start = CHART_SCALE_START * scale_factor
-    scale_stop = CHART_SCALE_STOP * scale_factor
-    scale_step = CHART_SCALE_STEP * scale_factor
-    bbox = its.image.find_chart(chart, img,
-                                scale_start, scale_stop, scale_step)
-    # convert bbox to (xnorm, ynorm, wnorm, hnorm)
-    wnorm = float((bbox[1][0]) - bbox[0][0]) / img.shape[1]
-    hnorm = float((bbox[1][1]) - bbox[0][1]) / img.shape[0]
-    xnorm = float(bbox[0][0]) / img.shape[1]
-    ynorm = float(bbox[0][1]) / img.shape[0]
-    return xnorm, ynorm, wnorm, hnorm
-
-
-def find_af_chart(cam, props, sensitivity, exp, af_fd):
-    """Take an AF image to find the chart location.
-
-    Args:
-        cam:    An open device session.
-        props:  Properties of cam
-        sensitivity: Sensitivity for the AF request as defined in
-                     android.sensor.sensitivity
-        exp:    Exposure time for the AF request as defined in
-                android.sensor.exposureTime
-        af_fd:  float; autofocus lens position
-    Returns:
-        xnorm:  float; x location normalized to [0, 1]
-        ynorm:  float; y location normalized to [0, 1]
-        wnorm:  float; width normalized to [0, 1]
-        hnorm:  float; height normalized to [0, 1]
-    """
-    # find maximum size 4:3 format
-    fmts = props['android.scaler.streamConfigurationMap']['availableStreamConfigurations']
-    fmts = [f for f in fmts if f['format'] == 256]
-    fmt = {'format': 'yuv', 'width': fmts[0]['width'],
-           'height': fmts[0]['height']}
-    req = its.objects.manual_capture_request(sensitivity, exp)
-    req['android.lens.focusDistance'] = af_fd
-    trys = 0
-    done = False
-    while not done:
-        print 'Waiting for lens to move to correct location...'
-        cap_chart = cam.do_capture(req, fmt)
-        done = (cap_chart['metadata']['android.lens.state'] == 0)
-        print ' status: ', done
-        trys += 1
-        if trys == NUM_TRYS:
-            raise its.error.Error('Error: cannot settle lens in %d trys!'
-                                  % (trys))
-    y, _, _ = its.image.convert_capture_to_planes(cap_chart, props)
-    its.image.write_image(y, '%s_AF_image.jpg' % NAME)
-    template = cv2.imread(CHART_FILE, cv2.IMREAD_ANYDEPTH)
-    focal_l = cap_chart['metadata']['android.lens.focalLength']
-    pixel_pitch = (props['android.sensor.info.physicalSize']['height'] /
-                   y.shape[0])
-    print ' Chart distance: %.2fcm' % CHART_DISTANCE
-    print ' Chart height: %.2fcm' % CHART_HEIGHT
-    print ' Focal length: %.2fmm' % focal_l
-    print ' Pixel pitch: %.2fum' % (pixel_pitch*1E3)
-    print ' Template height: %d' % template.shape[0]
-    chart_pixel_h = CHART_HEIGHT * focal_l / (CHART_DISTANCE * pixel_pitch)
-    scale_factor = template.shape[0] / chart_pixel_h
-    print 'Chart/image scale factor = %.2f' % scale_factor
-    xnorm, ynorm, wnorm, hnorm = find_chart_bbox(y, template, scale_factor)
-    chart = its.image.get_image_patch(y, xnorm, ynorm, wnorm, hnorm)
-    its.image.write_image(chart, '%s_AF_chart.jpg' % NAME)
-    return xnorm, ynorm, wnorm, hnorm
 
 
 def test_lens_movement_reporting(cam, props, fmt, sensitivity, exp, af_fd):
@@ -140,8 +50,9 @@ def test_lens_movement_reporting(cam, props, fmt, sensitivity, exp, af_fd):
     """
 
     print 'Take AF image for chart locator.'
-    xnorm, ynorm, wnorm, hnorm = find_af_chart(cam, props, sensitivity,
-                                               exp, af_fd)
+    xnorm, ynorm, wnorm, hnorm = its.image.find_af_chart(cam, props,
+                                                         sensitivity,
+                                                         exp, af_fd)
     data_set = {}
     white_level = int(props['android.sensor.info.whiteLevel'])
     min_fd = props['android.lens.info.minimumFocusDistance']
@@ -167,8 +78,9 @@ def test_lens_movement_reporting(cam, props, fmt, sensitivity, exp, af_fd):
         print ' current lens location (diopters): %.3f' % data['loc']
         print ' lens moving %r' % data['lens_moving']
         y, _, _ = its.image.convert_capture_to_planes(cap[i], props)
-        chart = normalize_img(its.image.get_image_patch(y, xnorm, ynorm,
-                                                        wnorm, hnorm))
+        chart = its.image.normalize_img(its.image.get_image_patch(y,
+                                                                  xnorm, ynorm,
+                                                                  wnorm, hnorm))
         its.image.write_image(chart, '%s_i=%d_chart.jpg' % (NAME, i))
         data['sharpness'] = white_level*its.image.compute_image_sharpness(chart)
         print 'Chart sharpness: %.1f\n' % data['sharpness']
@@ -207,7 +119,6 @@ def main():
         print 'Asserting frames are consecutive'
         times = [v['timestamp'] for v in d.itervalues()]
         diffs = np.gradient(times)
-        print diffs
         assert np.isclose(np.amax(diffs)-np.amax(diffs), 0, atol=FRAME_TIME_TOL)
 
         # remove data when lens is moving
