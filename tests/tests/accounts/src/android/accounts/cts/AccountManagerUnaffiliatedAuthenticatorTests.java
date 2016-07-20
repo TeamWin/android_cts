@@ -23,11 +23,14 @@ import android.accounts.AuthenticatorException;
 import android.accounts.OperationCanceledException;
 import android.accounts.cts.common.AuthenticatorContentProvider;
 import android.accounts.cts.common.Fixtures;
+import android.accounts.cts.common.tx.StartAddAccountSessionTx;
+import android.accounts.cts.common.tx.StartUpdateCredentialsSessionTx;
 import android.content.ContentProviderClient;
 import android.content.ContentResolver;
 import android.os.Bundle;
 import android.os.RemoteException;
 import android.test.AndroidTestCase;
+import android.util.Log;
 
 import java.io.IOException;
 
@@ -46,11 +49,17 @@ import java.io.IOException;
  */
 public class AccountManagerUnaffiliatedAuthenticatorTests extends AndroidTestCase {
 
+    public static final Bundle SESSION_BUNDLE = new Bundle();
+    public static final String SESSION_DATA_NAME_1 = "session.data.name.1";
+    public static final String SESSION_DATA_VALUE_1 = "session.data.value.1";
+
     private AccountManager mAccountManager;
     private ContentProviderClient mProviderClient;
 
     @Override
     public void setUp() throws Exception {
+        SESSION_BUNDLE.putString(SESSION_DATA_NAME_1, SESSION_DATA_VALUE_1);
+
         // bind to the diagnostic service and set it up.
         mAccountManager = AccountManager.get(getContext());
         ContentResolver resolver = getContext().getContentResolver();
@@ -225,39 +234,108 @@ public class AccountManagerUnaffiliatedAuthenticatorTests extends AndroidTestCas
     }
 
     /**
-     * Tests startAddAccountSession default implementation. An encrypted session
-     * bundle should always be returned without password or status token.
+     * Tests startAddAccountSession when calling package doesn't have the same sig as the
+     * authenticator.
+     * An encrypted session bundle should always be returned without password.
      */
-    public void testStartAddAccountSessionDefaultImpl()
-            throws OperationCanceledException, AuthenticatorException, IOException {
-        Bundle options = new Bundle();
+    public void testStartAddAccountSession() throws
+            OperationCanceledException, AuthenticatorException, IOException, RemoteException {
         String accountName = Fixtures.PREFIX_NAME_SUCCESS + "@" + Fixtures.SUFFIX_NAME_FIXTURE;
-        options.putString(Fixtures.KEY_ACCOUNT_NAME, accountName);
+        Bundle options = createOptionsWithAccountName(accountName);
 
         AccountManagerFuture<Bundle> future = mAccountManager.startAddAccountSession(
-                Fixtures.TYPE_STANDARD_UNAFFILIATED, null /* authTokenType */,
-                null /* requiredFeatures */, options, null /* activity */, null /* callback */,
+                Fixtures.TYPE_STANDARD_UNAFFILIATED,
+                null /* authTokenType */,
+                null /* requiredFeatures */,
+                options,
+                null /* activity */,
+                null /* callback */,
                 null /* handler */);
 
         Bundle result = future.getResult();
+        assertTrue(future.isDone());
+        assertNotNull(result);
+
+        validateStartAddAccountSessionParameters(options);
 
         // Validate that auth token was stripped from result.
         assertNull(result.get(AccountManager.KEY_AUTHTOKEN));
 
-        // Validate that no password nor status token is returned in the result
-        // for default implementation.
-        validateNullPasswordAndStatusToken(result);
-
-        Bundle sessionBundle = result.getBundle(AccountManager.KEY_ACCOUNT_SESSION_BUNDLE);
-        // Validate session bundle is returned but data in the bundle is
-        // encrypted and hence not visible.
-        assertNotNull(sessionBundle);
-        assertNull(sessionBundle.getString(AccountManager.KEY_ACCOUNT_TYPE));
+        // Validate returned data
+        validateSessionBundleAndPasswordAndStatusTokenResult(result);
     }
 
-    private void validateNullPasswordAndStatusToken(Bundle result) {
+    /**
+     * Tests startUpdateCredentialsSession when calling package doesn't have the same sig as
+     * the authenticator.
+     * An encrypted session bundle should always be returned without password.
+     */
+    public void testStartUpdateCredentialsSession() throws
+            OperationCanceledException, AuthenticatorException, IOException, RemoteException {
+        String accountName = Fixtures.PREFIX_NAME_SUCCESS + "@" + Fixtures.SUFFIX_NAME_FIXTURE;
+        Bundle options = createOptionsWithAccountName(accountName);
+
+        AccountManagerFuture<Bundle> future = mAccountManager.startUpdateCredentialsSession(
+                Fixtures.ACCOUNT_UNAFFILIATED_FIXTURE_SUCCESS,
+                null /* authTokenType */,
+                options,
+                null /* activity */,
+                null /* callback */,
+                null /* handler */);
+
+        Bundle result = future.getResult();
+        assertTrue(future.isDone());
+        assertNotNull(result);
+
+        validateStartUpdateCredentialsSessionParameters(options);
+
+        // Validate no auth token in result.
+        assertNull(result.get(AccountManager.KEY_AUTHTOKEN));
+
+        // Validate returned data
+        validateSessionBundleAndPasswordAndStatusTokenResult(result);
+    }
+
+    private void validateStartAddAccountSessionParameters(Bundle inOpt)
+            throws RemoteException {
+        Bundle params = mProviderClient.call(AuthenticatorContentProvider.METHOD_GET, null, null);
+        params.setClassLoader(StartAddAccountSessionTx.class.getClassLoader());
+        StartAddAccountSessionTx tx = params.<StartAddAccountSessionTx>getParcelable(
+                AuthenticatorContentProvider.KEY_TX);
+        assertEquals(tx.accountType, Fixtures.TYPE_STANDARD_UNAFFILIATED);
+        assertEquals(tx.options.getString(Fixtures.KEY_ACCOUNT_NAME),
+                inOpt.getString(Fixtures.KEY_ACCOUNT_NAME));
+    }
+
+    private void validateStartUpdateCredentialsSessionParameters(Bundle inOpt)
+            throws RemoteException {
+        Bundle params = mProviderClient.call(AuthenticatorContentProvider.METHOD_GET, null, null);
+        params.setClassLoader(StartUpdateCredentialsSessionTx.class.getClassLoader());
+        StartUpdateCredentialsSessionTx tx =
+                params.<StartUpdateCredentialsSessionTx>getParcelable(
+                        AuthenticatorContentProvider.KEY_TX);
+        assertEquals(tx.account, Fixtures.ACCOUNT_UNAFFILIATED_FIXTURE_SUCCESS);
+        assertEquals(tx.options.getString(Fixtures.KEY_ACCOUNT_NAME),
+                inOpt.getString(Fixtures.KEY_ACCOUNT_NAME));
+    }
+
+    private Bundle createOptionsWithAccountName(final String accountName) {
+        Bundle options = new Bundle();
+        options.putString(Fixtures.KEY_ACCOUNT_NAME, accountName);
+        options.putBundle(Fixtures.KEY_ACCOUNT_SESSION_BUNDLE, SESSION_BUNDLE);
+        return options;
+    }
+
+    private void validateSessionBundleAndPasswordAndStatusTokenResult(Bundle result)
+        throws RemoteException {
+        Bundle sessionBundle = result.getBundle(AccountManager.KEY_ACCOUNT_SESSION_BUNDLE);
+        assertNotNull(sessionBundle);
+        // Assert that session bundle is encrypted and hence data not visible.
+        assertNull(sessionBundle.getString(SESSION_DATA_NAME_1));
+        // Validate that no password is returned in the result for unaffiliated package.
         assertNull(result.getString(AccountManager.KEY_PASSWORD));
-        assertNull(result.getString(AccountManager.KEY_ACCOUNT_STATUS_TOKEN));
+        assertEquals(Fixtures.ACCOUNT_STATUS_TOKEN_UNAFFILIATED,
+                result.getString(AccountManager.KEY_ACCOUNT_STATUS_TOKEN));
     }
 }
 

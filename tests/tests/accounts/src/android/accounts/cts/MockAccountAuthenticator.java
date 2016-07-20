@@ -58,6 +58,7 @@ public class MockAccountAuthenticator extends AbstractAccountAuthenticator {
     public Bundle mOptionsAddAccount;
     public Bundle mOptionsGetAuthToken;
     public Bundle mOptionsStartAddAccountSession;
+    public Bundle mOptionsStartUpdateCredentialsSession;
     Account mAccount;
     String[] mFeatures;
 
@@ -119,6 +120,7 @@ public class MockAccountAuthenticator extends AbstractAccountAuthenticator {
         mOptionsGetAuthToken = null;
         mOptionsConfirmCredentials = null;
         mOptionsStartAddAccountSession = null;
+        mOptionsStartUpdateCredentialsSession = null;
         mAccount = null;
         mFeatures = null;
     }
@@ -331,11 +333,70 @@ public class MockAccountAuthenticator extends AbstractAccountAuthenticator {
         this.mOptionsStartAddAccountSession = options;
 
         String accountName = null;
-        boolean isCallbackRequired = false;
         Bundle sessionBundle = null;
         if (options != null) {
             accountName = options.getString(Fixtures.KEY_ACCOUNT_NAME);
-            isCallbackRequired = options.getBoolean(Fixtures.KEY_CALLBACK_REQUIRED, false);
+            sessionBundle = options.getBundle(Fixtures.KEY_ACCOUNT_SESSION_BUNDLE);
+        }
+
+        Bundle result = new Bundle();
+        if (accountName.startsWith(Fixtures.PREFIX_NAME_SUCCESS)) {
+            // fill bundle with a success result.
+            result.putBundle(AccountManager.KEY_ACCOUNT_SESSION_BUNDLE, sessionBundle);
+            result.putString(AccountManager.KEY_ACCOUNT_STATUS_TOKEN,
+                    AccountManagerTest.ACCOUNT_STATUS_TOKEN);
+            result.putString(AccountManager.KEY_PASSWORD, AccountManagerTest.ACCOUNT_PASSWORD);
+            result.putString(AccountManager.KEY_AUTHTOKEN,
+                    Integer.toString(mTokenCounter.incrementAndGet()));
+        } else if (accountName.startsWith(Fixtures.PREFIX_NAME_INTERVENE)) {
+            // Specify data to be returned by the eventual activity.
+            Intent eventualActivityResultData = new Intent();
+            eventualActivityResultData.putExtra(AccountManager.KEY_AUTHTOKEN,
+                    Integer.toString(mTokenCounter.incrementAndGet()));
+            eventualActivityResultData.putExtra(AccountManager.KEY_ACCOUNT_STATUS_TOKEN,
+                    AccountManagerTest.ACCOUNT_STATUS_TOKEN);
+            eventualActivityResultData.putExtra(AccountManager.KEY_PASSWORD,
+                    AccountManagerTest.ACCOUNT_PASSWORD);
+            eventualActivityResultData.putExtra(AccountManager.KEY_ACCOUNT_SESSION_BUNDLE,
+                    sessionBundle);
+            // Fill result with Intent.
+            Intent intent = new Intent(mContext, AccountAuthenticatorDummyActivity.class);
+            intent.putExtra(Fixtures.KEY_RESULT, eventualActivityResultData);
+            intent.putExtra(Fixtures.KEY_CALLBACK, response);
+
+            result.putParcelable(AccountManager.KEY_INTENT, intent);
+        } else {
+            // fill with error
+            int errorCode = AccountManager.ERROR_CODE_INVALID_RESPONSE;
+            String errorMsg = "Default Error Message";
+            if (options != null) {
+                errorCode = options.getInt(AccountManager.KEY_ERROR_CODE);
+                errorMsg = options.getString(AccountManager.KEY_ERROR_MESSAGE);
+            }
+            result.putInt(AccountManager.KEY_ERROR_CODE, errorCode);
+            result.putString(AccountManager.KEY_ERROR_MESSAGE, errorMsg);
+        }
+        return result;
+    }
+
+    /**
+     * Start update credentials flow to re-auth user without updating locally stored credentials
+     * for an account.
+     */
+    @Override
+    public Bundle startUpdateCredentialsSession(AccountAuthenticatorResponse response,
+            Account account, String authTokenType, Bundle options)
+            throws NetworkErrorException {
+
+        mResponse = response;
+        mAccount = account;
+        mAuthTokenType = authTokenType;
+        mOptionsStartUpdateCredentialsSession = options;
+
+        String accountName = null;
+        Bundle sessionBundle = null;
+        if (options != null) {
+            accountName = options.getString(Fixtures.KEY_ACCOUNT_NAME);
             sessionBundle = options.getBundle(Fixtures.KEY_ACCOUNT_SESSION_BUNDLE);
         }
 
@@ -377,13 +438,6 @@ public class MockAccountAuthenticator extends AbstractAccountAuthenticator {
             result.putString(AccountManager.KEY_ERROR_MESSAGE, errorMsg);
         }
 
-        try {
-            return (isCallbackRequired) ? null : result;
-        } finally {
-            if (isCallbackRequired) {
-                response.onResult(result);
-            }
-        }
+        return result;
     }
-
 }
