@@ -2696,17 +2696,17 @@ public class TextViewTest extends ActivityInstrumentationTestCase2<TextViewCtsAc
     }
 
     public void testEllipsizeEndAndNoEllipsizeHasSameBaselineForSingleLine() {
-        int textWidth = calculateTextWidth(LONG_TEXT);
-
         TextView tvEllipsizeEnd = new TextView(getActivity());
         tvEllipsizeEnd.setEllipsize(TruncateAt.END);
         tvEllipsizeEnd.setMaxLines(1);
-        tvEllipsizeEnd.setWidth(textWidth >> 2);
         tvEllipsizeEnd.setText(LONG_TEXT);
 
         TextView tvEllipsizeNone = new TextView(getActivity());
-        tvEllipsizeNone.setWidth(textWidth >> 2);
         tvEllipsizeNone.setText("a");
+
+        final int textWidth = (int) tvEllipsizeEnd.getPaint().measureText(LONG_TEXT) / 4;
+        tvEllipsizeEnd.setWidth(textWidth);
+        tvEllipsizeNone.setWidth(textWidth);
 
         final FrameLayout layout = new FrameLayout(mActivity);
         ViewGroup.LayoutParams layoutParams = new ViewGroup.LayoutParams(
@@ -2726,18 +2726,18 @@ public class TextViewTest extends ActivityInstrumentationTestCase2<TextViewCtsAc
     }
 
     public void testEllipsizeEndAndNoEllipsizeHasSameBaselineForMultiLine() {
-        int textWidth = calculateTextWidth(LONG_TEXT);
-
         TextView tvEllipsizeEnd = new TextView(getActivity());
         tvEllipsizeEnd.setEllipsize(TruncateAt.END);
         tvEllipsizeEnd.setMaxLines(2);
-        tvEllipsizeEnd.setWidth(textWidth >> 2);
         tvEllipsizeEnd.setText(LONG_TEXT);
 
         TextView tvEllipsizeNone = new TextView(getActivity());
         tvEllipsizeNone.setMaxLines(2);
-        tvEllipsizeNone.setWidth(textWidth >> 2);
         tvEllipsizeNone.setText(LONG_TEXT);
+
+        final int textWidth = (int) tvEllipsizeEnd.getPaint().measureText(LONG_TEXT) / 2;
+        tvEllipsizeEnd.setWidth(textWidth);
+        tvEllipsizeNone.setWidth(textWidth);
 
         final FrameLayout layout = new FrameLayout(mActivity);
         ViewGroup.LayoutParams layoutParams = new ViewGroup.LayoutParams(
@@ -3585,15 +3585,7 @@ public class TextViewTest extends ActivityInstrumentationTestCase2<TextViewCtsAc
     @UiThreadTest
     public void testAccessMaxLines() {
         mTextView = findTextView(R.id.textview_text);
-
-        float[] widths = new float[LONG_TEXT.length()];
-        mTextView.getPaint().getTextWidths(LONG_TEXT, widths);
-        float totalWidth = 0.0f;
-        for (float f : widths) {
-            totalWidth += f;
-        }
-        final int stringWidth = (int) totalWidth;
-        mTextView.setWidth(stringWidth >> 2);
+        mTextView.setWidth((int) (mTextView.getPaint().measureText(LONG_TEXT) / 4));
         mTextView.setText(LONG_TEXT);
 
         final int maxLines = 2;
@@ -3607,20 +3599,6 @@ public class TextViewTest extends ActivityInstrumentationTestCase2<TextViewCtsAc
         assertTrue(mTextView.getHeight() <= maxLines * mTextView.getLineHeight());
     }
 
-    private int calculateTextWidth(String text) {
-        mTextView = findTextView(R.id.textview_text);
-
-        // Set the TextView width as the half of the whole text.
-        float[] widths = new float[text.length()];
-        mTextView.getPaint().getTextWidths(text, widths);
-        float textfieldWidth = 0.0f;
-        for (int i = 0; i < text.length(); ++i) {
-            textfieldWidth += widths[i];
-        }
-        return (int)textfieldWidth;
-
-    }
-
     @UiThreadTest
     public void testHyphenationNotHappen_frequencyNone() {
         final int[] BREAK_STRATEGIES = {
@@ -3632,7 +3610,8 @@ public class TextViewTest extends ActivityInstrumentationTestCase2<TextViewCtsAc
         for (int breakStrategy : BREAK_STRATEGIES) {
             for (int charWidth = 10; charWidth < 120; charWidth += 5) {
                 // Change the text view's width to charWidth width.
-                mTextView.setWidth(calculateTextWidth(LONG_TEXT.substring(0, charWidth)));
+                final String substring = LONG_TEXT.substring(0, charWidth);
+                mTextView.setWidth((int) Math.ceil(mTextView.getPaint().measureText(substring)));
 
                 mTextView.setText(LONG_TEXT);
                 mTextView.setBreakStrategy(breakStrategy);
@@ -3666,7 +3645,8 @@ public class TextViewTest extends ActivityInstrumentationTestCase2<TextViewCtsAc
         for (int hyphenationFrequency: HYPHENATION_FREQUENCIES) {
             for (int charWidth = 10; charWidth < 120; charWidth += 5) {
                 // Change the text view's width to charWidth width.
-                mTextView.setWidth(calculateTextWidth(LONG_TEXT.substring(0, charWidth)));
+                final String substring = LONG_TEXT.substring(0, charWidth);
+                mTextView.setWidth((int) Math.ceil(mTextView.getPaint().measureText(substring)));
 
                 mTextView.setText(LONG_TEXT);
                 mTextView.setBreakStrategy(Layout.BREAK_STRATEGY_SIMPLE);
