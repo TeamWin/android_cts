@@ -18,6 +18,7 @@ package android.widget.cts;
 
 import static org.mockito.Mockito.*;
 
+import android.app.ActionBar.LayoutParams;
 import android.app.Activity;
 import android.app.Instrumentation;
 import android.content.Context;
@@ -36,10 +37,12 @@ import android.test.suitebuilder.annotation.MediumTest;
 import android.test.suitebuilder.annotation.SmallTest;
 import android.util.AttributeSet;
 import android.util.Pair;
+import android.util.SparseArray;
 import android.util.SparseBooleanArray;
 import android.util.Xml;
 import android.view.KeyEvent;
 import android.view.View;
+import android.view.View.MeasureSpec;
 import android.view.ViewGroup;
 import android.view.animation.LayoutAnimationController;
 import android.widget.AbsListView;
@@ -873,6 +876,94 @@ public class ListViewTest extends ActivityInstrumentationTestCase2<ListViewCtsAc
         assertEquals(childView0, listView.getChildAt(0));
         assertEquals(childView1, listView.getChildAt(1));
         assertEquals(childView2, listView.getChildAt(2));
+    }
+
+    private static final int EXACTLY_500_PX = MeasureSpec.makeMeasureSpec(500, MeasureSpec.EXACTLY);
+
+    @MediumTest
+    public void testJumpDrawables() {
+        FrameLayout layout = new FrameLayout(mActivity);
+        ListView listView = new ListView(mActivity);
+        ArrayAdapterWithMockDrawable adapter = new ArrayAdapterWithMockDrawable(mActivity);
+        for (int i = 0; i < 50; i++) {
+            adapter.add(Integer.toString(i));
+        }
+
+        // Initial state should jump exactly once during attach.
+        mInstrumentation.runOnMainSync(() -> {
+            listView.setAdapter(adapter);
+            layout.addView(listView, new LayoutParams(LayoutParams.MATCH_PARENT, 200));
+            mActivity.setContentView(layout);
+        });
+        mInstrumentation.waitForIdleSync();
+        assertTrue("List is not showing any children", listView.getChildCount() > 0);
+        Drawable firstBackground = listView.getChildAt(0).getBackground();
+        verify(firstBackground, times(1)).jumpToCurrentState();
+
+        // Lay out views without recycling. This should not jump again.
+        mInstrumentation.runOnMainSync(() -> listView.requestLayout());
+        mInstrumentation.waitForIdleSync();
+        assertSame(firstBackground, listView.getChildAt(0).getBackground());
+        verify(firstBackground, times(1)).jumpToCurrentState();
+
+        // If we're on a really big display, we might be in a position where
+        // the position we're going to scroll to is already visible, in which
+        // case we won't be able to test jump behavior when recycling.
+        int lastVisiblePosition = listView.getLastVisiblePosition();
+        int targetPosition = adapter.getCount() - 1;
+        if (targetPosition <= lastVisiblePosition) {
+            return;
+        }
+
+        // Reset the call counts before continuing, since the backgrounds may
+        // be recycled from either views that were on-screen or in the scrap
+        // heap, and those would have slightly different call counts.
+        adapter.resetMockBackgrounds();
+
+        // Scroll so that we have new views on screen. This should jump at
+        // least once when the view is recycled in a new position (but may be
+        // more if it was recycled from a view that was previously on-screen).
+        mInstrumentation.runOnMainSync(() -> listView.setSelection(targetPosition));
+        mInstrumentation.waitForIdleSync();
+
+        View lastChild = listView.getChildAt(listView.getChildCount() - 1);
+        verify(lastChild.getBackground(), atLeast(1)).jumpToCurrentState();
+
+        // Reset the call counts before continuing.
+        adapter.resetMockBackgrounds();
+
+        // Scroll back to the top. This should jump at least once when the view
+        // is recycled in a new position (but may be more if it was recycled
+        // from a view that was previously on-screen).
+        mInstrumentation.runOnMainSync(() -> listView.setSelection(0));
+        mInstrumentation.waitForIdleSync();
+
+        View firstChild = listView.getChildAt(0);
+        verify(firstChild.getBackground(), atLeast(1)).jumpToCurrentState();
+    }
+
+    private static class ArrayAdapterWithMockDrawable extends ArrayAdapter<String> {
+        private SparseArray<Drawable> mBackgrounds = new SparseArray<>();
+
+        public ArrayAdapterWithMockDrawable(Context context) {
+            super(context, android.R.layout.simple_list_item_1);
+        }
+
+        @Override
+        public View getView(int position, View convertView, ViewGroup parent) {
+            final View view = super.getView(position, convertView, parent);
+            if (view.getBackground() == null) {
+                view.setBackground(spy(new ColorDrawable(Color.BLACK)));
+            }
+            return view;
+        }
+
+        public void resetMockBackgrounds() {
+            for (int i = 0; i < mBackgrounds.size(); i++) {
+                Drawable background = mBackgrounds.valueAt(i);
+                reset(background);
+            }
+        }
     }
 
     private class TemporarilyDetachableMockView extends View {
