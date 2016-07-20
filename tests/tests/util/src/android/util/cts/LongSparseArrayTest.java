@@ -179,4 +179,19 @@ public class LongSparseArrayTest extends TestCase {
         assertEquals(Long.MIN_VALUE, sparseArray.valueAt(3).longValue());
     }
 
+    public void testIndexOfValueByValue() {
+        LongSparseArray<String> sparseArray = new LongSparseArray<String>();
+        // Insert a number of String Objects into array
+        sparseArray.put(1L, "Index 0");
+        sparseArray.put(15L, "Index 1");
+        sparseArray.put(25L, "Index 2");
+        sparseArray.put(50L, "Index 3");
+        sparseArray.put(51L, "Index 4");
+
+        assertTrue(sparseArray.indexOfValueByValue("Index 0") == 0);
+        assertTrue(sparseArray.indexOfValueByValue("Index 1") == 1);
+        assertTrue(sparseArray.indexOfValueByValue("Index 2") == 2);
+        assertTrue(sparseArray.indexOfValueByValue("Index 3") == 3);
+        assertTrue(sparseArray.indexOfValueByValue("Index 4") == 4);
+    }
 }
