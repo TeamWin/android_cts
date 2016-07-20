@@ -16,6 +16,9 @@
 
 package android.text.method.cts;
 
+import static org.mockito.Matchers.*;
+import static org.mockito.Mockito.*;
+
 import android.text.Editable;
 import android.text.Selection;
 import android.text.Spannable;
@@ -26,9 +29,6 @@ import android.view.KeyCharacterMap;
 import android.view.KeyEvent;
 import android.view.View;
 import android.widget.ImageView;
-
-import static org.mockito.Matchers.*;
-import static org.mockito.Mockito.*;
 
 /**
  * Test {@link MetaKeyKeyListener}.
@@ -191,6 +191,37 @@ public class MetaKeyKeyListenerTest extends KeyListenerTestCase {
                 MetaKeyKeyListener.META_SYM_ON));
         assertEquals(2, MetaKeyKeyListener.getMetaState(MetaKeyKeyListener.META_SYM_LOCKED,
                 MetaKeyKeyListener.META_SYM_ON));
+    }
+
+    public void testGetMetaState_withCharSequenceAndKeyEvent() {
+        KeyEvent event = new KeyEvent(0, 0, KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_0, 0,
+                KeyEvent.META_SHIFT_MASK);
+
+        assertEquals(KeyEvent.META_SHIFT_MASK, MetaKeyKeyListener.getMetaState(null, event));
+        assertEquals(KeyEvent.META_SHIFT_MASK, MetaKeyKeyListener.getMetaState("", event));
+    }
+
+    public void testGetMetaState_withCharSequenceAndMetaAndKeyEvent() {
+        KeyEvent event = new KeyEvent(0, 0, KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_0, 0,
+                KeyEvent.META_CTRL_ON);
+
+        assertEquals(0, MetaKeyKeyListener.getMetaState("", MetaKeyKeyListener.META_SHIFT_ON,
+                event));
+
+        event = new KeyEvent(0, 0, KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_0, 0,
+                KeyEvent.META_SHIFT_ON);
+
+        assertEquals(1, MetaKeyKeyListener.getMetaState("", MetaKeyKeyListener.META_SHIFT_ON,
+                event));
+
+        event = new KeyEvent(0, 0, KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_0, 0,
+                KeyEvent.META_SYM_LOCKED);
+
+        assertEquals(2, MetaKeyKeyListener.getMetaState("", MetaKeyKeyListener.META_SYM_ON,
+                event));
+
+        assertEquals(2, MetaKeyKeyListener.getMetaState(null, MetaKeyKeyListener.META_SYM_ON,
+                event));
     }
 
     public void testIsMetaTracker() {
