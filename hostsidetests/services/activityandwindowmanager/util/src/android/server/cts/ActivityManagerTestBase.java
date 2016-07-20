@@ -354,9 +354,15 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
     }
 
     protected float getFontScale() throws DeviceNotAvailableException {
-        final String fontScale =
-                runCommandAndPrintOutput("settings get system font_scale").trim();
-        return Float.parseFloat(fontScale);
+        try {
+            final String fontScale =
+                    runCommandAndPrintOutput("settings get system font_scale").trim();
+            return Float.parseFloat(fontScale);
+        } catch (NumberFormatException e) {
+            // If we don't have a valid font scale key, return 0.0f now so
+            // that we delete the key in tearDown().
+            return 0.0f;
+        }
     }
 
     protected String runCommandAndPrintOutput(String command) throws DeviceNotAvailableException {
