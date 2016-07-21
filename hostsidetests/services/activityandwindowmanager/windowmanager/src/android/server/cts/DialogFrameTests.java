@@ -230,23 +230,20 @@ public class DialogFrameTests extends ActivityManagerTestBase {
         });
     }
 
-    //   TODO: Commented out because it doesn't pass...the margin doesn't
-    //   seem to be an accurate percentage of the frame or the content frame.
-    //   b/30195361
-    //    public void testMarginsArePercentages() throws Exception {
-    //        float horizontalMargin = .25f;
-    //        float verticalMargin = .35f;
-    //        doDialogTest("DialogWithMargins",
-    //            (WindowState parent, WindowState dialog) -> {
-    //                Rectangle frame = parent.getFrame();
-    //                Rectangle expectedFrame = new Rectangle(
-    //                        (int)(horizontalMargin*frame.width),
-    //                        (int)(verticalMargin*frame.height),
-    //                        explicitDimension,
-    //                        explicitDimension);
-    //                assertEquals(expectedFrame, dialog.getFrame());
-    //        });
-    //    }
+    public void testMarginsArePercentagesOfContentFrame() throws Exception {
+        float horizontalMargin = .25f;
+        float verticalMargin = .35f;
+        doDialogTest("WithMargins",
+            (WindowState parent, WindowState dialog) -> {
+                Rectangle frame = parent.getContentFrame();
+                Rectangle expectedFrame = new Rectangle(
+                        (int)(horizontalMargin*frame.width + frame.x),
+                        (int)(verticalMargin*frame.height + frame.y),
+                        explicitDimension,
+                        explicitDimension);
+                assertEquals(expectedFrame, dialog.getFrame());
+                });
+    }
 
     public void testDialogPlacedAboveParent() throws Exception {
         doDialogTest("MatchParent",
