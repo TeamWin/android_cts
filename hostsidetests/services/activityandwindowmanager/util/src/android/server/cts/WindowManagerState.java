@@ -601,6 +601,8 @@ public class WindowManagerState {
             Pattern.compile("Cur insets.+surface=" + RECT_STR + ".+");
         private static final Pattern sLayerPattern =
             Pattern.compile("Surface:.+layer=(\\d+).+");
+        private static final Pattern sCropPattern =
+            Pattern.compile(".+mLastClipRect=" + RECT_STR + ".*");
 
         private final String mName;
         private final String mAppToken;
@@ -614,6 +616,7 @@ public class WindowManagerState {
         private Rectangle mContentFrame = new Rectangle();
         private Rectangle mFrame = new Rectangle();
         private Rectangle mSurfaceInsets = new Rectangle();
+        private Rectangle mCrop = new Rectangle();
 
         private WindowState(Matcher matcher, boolean starting, boolean exiting) {
             mName = matcher.group(4);
@@ -668,6 +671,10 @@ public class WindowManagerState {
 
         Rectangle getParentFrame() {
             return mParentFrame;
+        }
+
+        Rectangle getCrop() {
+            return mCrop;
         }
 
         static WindowState create(LinkedList<String> dump, Pattern[] exitPatterns) {
@@ -742,6 +749,12 @@ public class WindowManagerState {
                 if (matcher.matches()) {
                     log(TAG + "LAYER: " + line);
                     mLayer = Integer.valueOf(matcher.group(1));
+                }
+
+                matcher = sCropPattern.matcher(line);
+                if (matcher.matches()) {
+                    log(TAG + "CROP: " + line);
+                    mCrop = extractBounds(matcher);
                 }
                 // Extract other info here if needed
             }
