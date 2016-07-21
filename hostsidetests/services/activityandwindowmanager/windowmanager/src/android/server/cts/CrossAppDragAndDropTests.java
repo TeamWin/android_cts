@@ -77,6 +77,8 @@ public class CrossAppDragAndDropTests extends DeviceTestCase {
     private static final String RESULT_KEY_DRAG_STARTED = "DRAG_STARTED";
     private static final String RESULT_KEY_EXTRAS = "EXTRAS";
     private static final String RESULT_KEY_DROP_RESULT = "DROP";
+    private static final String RESULT_KEY_ACCESS_BEFORE = "BEFORE";
+    private static final String RESULT_KEY_ACCESS_AFTER = "AFTER";
 
     private static final String RESULT_OK = "OK";
     private static final String RESULT_EXCEPTION = "Exception";
@@ -301,6 +303,10 @@ public class CrossAppDragAndDropTests extends DeviceTestCase {
 
         mResults = getLogResults(TARGET_LOG_TAG);
         assertResult(RESULT_KEY_DROP_RESULT, expectedDropResult);
+        if (expectedDropResult != null) {
+            assertResult(RESULT_KEY_ACCESS_BEFORE, RESULT_EXCEPTION);
+            assertResult(RESULT_KEY_ACCESS_AFTER, RESULT_EXCEPTION);
+        }
     }
 
 
@@ -311,7 +317,7 @@ public class CrossAppDragAndDropTests extends DeviceTestCase {
             }
         } else {
             assertTrue("Missing " + resultKey, mResults.containsKey(resultKey));
-            assertEquals(expectedResult, mResults.get(resultKey));
+            assertEquals(resultKey + " result mismatch,", expectedResult, mResults.get(resultKey));
         }
     }
 

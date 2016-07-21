@@ -36,6 +36,8 @@ public class DropTarget extends Activity {
     private static final String RESULT_KEY_EXTRAS = "EXTRAS";
     private static final String RESULT_KEY_DROP_RESULT = "DROP";
     private static final String RESULT_KEY_DETAILS = "DETAILS";
+    private static final String RESULT_KEY_ACCESS_AFTER = "AFTER";
+    private static final String RESULT_KEY_ACCESS_BEFORE = "BEFORE";
 
     public static final String RESULT_OK = "OK";
     public static final String RESULT_EXCEPTION = "Exception";
@@ -110,14 +112,14 @@ public class DropTarget extends Activity {
                     return true;
 
                 case DragEvent.ACTION_DROP:
-                    String result;
-                    try {
-                        result = processDrop(event, requestPermissions);
-                    } catch (Exception e) {
-                        result = RESULT_EXCEPTION;
-                        logResult(RESULT_KEY_DETAILS, e.getMessage());
-                    }
-                    logResult(RESULT_KEY_DROP_RESULT, result);
+                    // Try accessing the Uri without the permissions grant.
+                    accessContent(event, RESULT_KEY_ACCESS_BEFORE, false);
+
+                    // Try accessing the Uri with the permission grant (if required);
+                    accessContent(event, RESULT_KEY_DROP_RESULT, requestPermissions);
+
+                    // Try accessing the Uri after the permissions have been released.
+                    accessContent(event, RESULT_KEY_ACCESS_AFTER, false);
                     return true;
 
                 case DragEvent.ACTION_DRAG_ENDED:
@@ -126,6 +128,19 @@ public class DropTarget extends Activity {
                 default:
                     return false;
             }
+        }
+
+        private void accessContent(DragEvent event, String resultKey, boolean requestPermissions) {
+            String result;
+            try {
+                result = processDrop(event, requestPermissions);
+            } catch (SecurityException e) {
+                result = RESULT_EXCEPTION;
+                if (resultKey.equals(RESULT_KEY_DROP_RESULT)) {
+                    logResult(RESULT_KEY_DETAILS, e.getMessage());
+                }
+            }
+            logResult(resultKey, result);
         }
 
         private String processDrop(DragEvent event, boolean requestPermissions) {
