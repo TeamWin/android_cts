@@ -16,6 +16,9 @@
 
 package android.media.cts;
 
+
+import android.app.ActivityManager;
+import android.content.Context;
 import android.content.pm.PackageManager;
 import android.cts.util.CtsAndroidTestCase;
 import android.media.AudioFormat;
@@ -1494,11 +1497,17 @@ public class AudioTrackTest extends CtsAndroidTestCase {
         };
         final int TEST_MODE = AudioTrack.MODE_STREAM;
         final int TEST_STREAM_TYPE = AudioManager.STREAM_MUSIC;
+        final boolean TEST_IS_LOW_RAM_DEVICE = isLowRamDevice();
 
         for (int TEST_FORMAT : TEST_FORMAT_ARRAY) {
             double frequency = 400; // frequency changes for each test
             for (int TEST_SR : TEST_SR_ARRAY) {
                 for (int TEST_CONF : TEST_CONF_ARRAY) {
+                    final int channelCount = Integer.bitCount(TEST_CONF);
+                    if (TEST_IS_LOW_RAM_DEVICE
+                            && (TEST_SR > 96000 || channelCount > 4)) {
+                        continue; // ignore. FIXME: reenable when AF memory allocation is updated.
+                    }
                     // -------- initialization --------------
                     final int minBufferSize = AudioTrack.getMinBufferSize(TEST_SR,
                             TEST_CONF, TEST_FORMAT); // in bytes
@@ -1672,6 +1681,11 @@ public class AudioTrackTest extends CtsAndroidTestCase {
     private boolean hasAudioOutput() {
         return getContext().getPackageManager()
             .hasSystemFeature(PackageManager.FEATURE_AUDIO_OUTPUT);
+    }
+
+    private boolean isLowRamDevice() {
+        return ((ActivityManager) getContext().getSystemService(Context.ACTIVITY_SERVICE))
+                .isLowRamDevice();
     }
 
     public void testGetTimestamp() throws Exception {
