@@ -20,9 +20,11 @@ package android.text.cts;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Paint;
+import android.graphics.Path;
 import android.graphics.Rect;
+import android.graphics.RectF;
+import android.support.test.filters.SmallTest;
 import android.test.AndroidTestCase;
-import android.test.suitebuilder.annotation.SmallTest;
 import android.text.Layout;
 import android.text.Layout.Alignment;
 import android.text.Spannable;
@@ -360,6 +362,33 @@ public class LayoutTest extends AndroidTestCase {
     }
 
     @SmallTest
+    public void testGetLineWidth() {
+        Layout layout = new MockLayout(LAYOUT_TEXT, mTextPaint, mWidth,
+                mAlign, mSpacingmult, mSpacingadd);
+        for (int i = 0; i < LINE_COUNT; i++) {
+            int start = layout.getLineStart(i);
+            int end = layout.getLineEnd(i);
+            String text = LAYOUT_TEXT.toString().substring(start, end);
+            assertEquals(mTextPaint.measureText(text), layout.getLineWidth(i), 1.0f);
+        }
+    }
+
+    @SmallTest
+    public void testGetCursorPath() {
+        Layout layout = new MockLayout(LAYOUT_TEXT, mTextPaint, mWidth,
+                mAlign, mSpacingmult, mSpacingadd);
+        Path path = new Path();
+        final float epsilon = 1.0f;
+        for (int i = 0; i < LINE_COUNT; i++) {
+            layout.getCursorPath(i, path, LAYOUT_TEXT);
+            RectF bounds = new RectF();
+            path.computeBounds(bounds, false);
+            assertTrue(bounds.top >= layout.getLineTop(i) - epsilon);
+            assertTrue(bounds.bottom <= layout.getLineBottom(i) + epsilon);
+        }
+    }
+
+    @SmallTest
     public void testDraw() {
         Layout layout = new MockLayout(LAYOUT_TEXT, mTextPaint, mWidth,
                 mAlign, mSpacingmult, mSpacingadd);
@@ -385,6 +414,7 @@ public class LayoutTest extends AndroidTestCase {
             final String text;
             final float x;
             final float y;
+
             DrawCommand(String text, float x, float y) {
                 this.text = text;
                 this.x = x;
