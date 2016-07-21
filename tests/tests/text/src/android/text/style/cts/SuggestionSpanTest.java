@@ -16,19 +16,40 @@
 
 package android.text.style.cts;
 
-import junit.framework.TestCase;
+import static org.junit.Assert.assertArrayEquals;
 
 import android.annotation.NonNull;
 import android.annotation.Nullable;
+import android.content.Context;
+import android.content.res.Configuration;
+import android.os.LocaleList;
 import android.os.Parcel;
+import android.test.AndroidTestCase;
 import android.test.suitebuilder.annotation.SmallTest;
 import android.text.style.SuggestionSpan;
 
 import java.util.Locale;
 
-import static org.junit.Assert.assertArrayEquals;
+/**
+ * Test {@link SuggestionSpan}.
+ */
+public class SuggestionSpanTest extends AndroidTestCase {
 
-public class SuggestionSpanTest extends TestCase {
+    @SmallTest
+    public void testConstructorWithContext() {
+        final String[] suggestions = new String[]{"suggestion1", "suggestion2"};
+        final Configuration overrideConfig = new Configuration();
+        final Locale locale = Locale.forLanguageTag("az-Arab");
+        overrideConfig.setLocales(new LocaleList(locale));
+        final Context context = getContext().createConfigurationContext(overrideConfig);
+
+        final SuggestionSpan span = new SuggestionSpan(context, suggestions,
+                SuggestionSpan.FLAG_AUTO_CORRECTION);
+
+        assertEquals(locale, span.getLocaleObject());
+        assertArrayEquals(suggestions, span.getSuggestions());
+        assertEquals(SuggestionSpan.FLAG_AUTO_CORRECTION, span.getFlags());
+    }
 
     @SmallTest
     public void testGetSuggestionSpans() {
