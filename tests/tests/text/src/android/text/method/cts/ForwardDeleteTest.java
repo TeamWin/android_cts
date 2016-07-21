@@ -35,22 +35,16 @@ public class ForwardDeleteTest extends KeyListenerTestCase {
     // Sync the state to the TextView and call onKeyDown with KEYCODE_FORWARD_DEL key event.
     // Then update the state to the result of TextView.
     private void forwardDelete(final EditorState state, int modifiers) {
-        mActivity.runOnUiThread(new Runnable() {
-            public void run() {
-                mTextView.setText(state.mText, BufferType.EDITABLE);
-                mTextView.setKeyListener(mKeyListener);
-                mTextView.setSelection(state.mSelectionStart, state.mSelectionEnd);
-            }
+        mInstrumentation.runOnMainSync(() -> {
+            mTextView.setText(state.mText, BufferType.EDITABLE);
+            mTextView.setKeyListener(mKeyListener);
+            mTextView.setSelection(state.mSelectionStart, state.mSelectionEnd);
         });
         mInstrumentation.waitForIdleSync();
         assertTrue(mTextView.hasWindowFocus());
 
         final KeyEvent keyEvent = getKey(KeyEvent.KEYCODE_FORWARD_DEL, modifiers);
-        mActivity.runOnUiThread(new Runnable() {
-            public void run() {
-                mTextView.onKeyDown(keyEvent.getKeyCode(), keyEvent);
-            }
-        });
+        mActivity.runOnUiThread(() -> mTextView.onKeyDown(keyEvent.getKeyCode(), keyEvent));
         mInstrumentation.waitForIdleSync();
 
         state.mText = mTextView.getText();

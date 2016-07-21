@@ -154,13 +154,9 @@ public class EmojiTest extends ActivityInstrumentationTestCase2<EmojiCtsActivity
             newStr = editText.getText().toString();
             assertEquals(newStr.codePointCount(0, newStr.length()), origStr.length() + 1);
 
-            runTestOnUiThread(new Runnable() {
-                public void run() {
-                    // Delete added character by sending KEYCODE_DEL event
-                    editText.dispatchKeyEvent(
-                            new KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_DEL));
-                }
-            });
+            // Delete added character by sending KEYCODE_DEL event
+            runTestOnUiThread(() -> editText.dispatchKeyEvent(
+                    new KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_DEL)));
             getInstrumentation().waitForIdleSync();
 
             newStr = editText.getText().toString();

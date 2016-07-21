@@ -56,51 +56,33 @@ public class TouchTest extends ActivityInstrumentationTestCase2<CtsActivity> {
         final TextView tv = new TextViewNoIme(mActivity);
         tv.setTextSize(TypedValue.COMPLEX_UNIT_SP, 10);
 
-        runTestOnUiThread(new Runnable() {
-            public void run() {
-                mActivity.setContentView(tv);
-                tv.setSingleLine(true);
-                tv.setLines(2);
-            }
+        runTestOnUiThread(() -> {
+            mActivity.setContentView(tv);
+            tv.setSingleLine(true);
+            tv.setLines(2);
         });
         getInstrumentation().waitForIdleSync();
         TextPaint paint = tv.getPaint();
         final Layout layout = tv.getLayout();
 
-        runTestOnUiThread(new Runnable() {
-            public void run() {
-                tv.setText(LONG_TEXT);
-            }
-        });
+        runTestOnUiThread(() -> tv.setText(LONG_TEXT));
         getInstrumentation().waitForIdleSync();
 
         // get the total length of string
         final int width = getTextWidth(LONG_TEXT, paint);
 
-        runTestOnUiThread(new Runnable() {
-            public void run() {
-                Touch.scrollTo(tv, layout, width - tv.getWidth() - 1, 0);
-            }
-        });
+        runTestOnUiThread(() -> Touch.scrollTo(tv, layout, width - tv.getWidth() - 1, 0));
         getInstrumentation().waitForIdleSync();
         assertEquals(width - tv.getWidth() - 1, tv.getScrollX());
         assertEquals(0, tv.getScrollY());
 
         // the X to which scroll is greater than the total length of string.
-        runTestOnUiThread(new Runnable() {
-            public void run() {
-                Touch.scrollTo(tv, layout, width + 100, 5);
-            }
-        });
+        runTestOnUiThread(() -> Touch.scrollTo(tv, layout, width + 100, 5));
         getInstrumentation().waitForIdleSync();
         assertEquals(width - tv.getWidth(), tv.getScrollX(), 1.0f);
         assertEquals(5, tv.getScrollY());
 
-        runTestOnUiThread(new Runnable() {
-            public void run() {
-                Touch.scrollTo(tv, layout, width - 10, 5);
-            }
-        });
+        runTestOnUiThread(() -> Touch.scrollTo(tv, layout, width - 10, 5));
         getInstrumentation().waitForIdleSync();
         assertEquals(width - tv.getWidth(), tv.getScrollX(), 1.0f);
         assertEquals(5, tv.getScrollY());
@@ -126,12 +108,10 @@ public class TouchTest extends ActivityInstrumentationTestCase2<CtsActivity> {
         assertTrue(dragAmount > 0);
         final String finalText = text;
         final SpannableString spannable = new SpannableString(finalText);
-        runTestOnUiThread(new Runnable() {
-            public void run() {
-                mActivity.setContentView(tv);
-                tv.setSingleLine(true);
-                tv.setText(finalText);
-            }
+        runTestOnUiThread(() -> {
+            mActivity.setContentView(tv);
+            tv.setSingleLine(true);
+            tv.setText(finalText);
         });
         getInstrumentation().waitForIdleSync();
 
@@ -146,11 +126,7 @@ public class TouchTest extends ActivityInstrumentationTestCase2<CtsActivity> {
         assertEquals(0, tv.getScrollX());
         assertEquals(0, tv.getScrollY());
         mReturnFromTouchEvent = false;
-        runTestOnUiThread(new Runnable() {
-            public void run() {
-                mReturnFromTouchEvent = Touch.onTouchEvent(tv, spannable, event1);
-            }
-        });
+        runTestOnUiThread(() -> mReturnFromTouchEvent = Touch.onTouchEvent(tv, spannable, event1));
         getInstrumentation().waitForIdleSync();
         assertTrue(mReturnFromTouchEvent);
         // TextView has not been scrolled.
@@ -160,11 +136,7 @@ public class TouchTest extends ActivityInstrumentationTestCase2<CtsActivity> {
         assertEquals(0, Touch.getInitialScrollY(tv, spannable));
 
         mReturnFromTouchEvent = false;
-        runTestOnUiThread(new Runnable() {
-            public void run() {
-                mReturnFromTouchEvent = Touch.onTouchEvent(tv, spannable, event2);
-            }
-        });
+        runTestOnUiThread(() -> mReturnFromTouchEvent = Touch.onTouchEvent(tv, spannable, event2));
         getInstrumentation().waitForIdleSync();
         assertTrue(mReturnFromTouchEvent);
         // TextView has been scrolled.
@@ -174,11 +146,7 @@ public class TouchTest extends ActivityInstrumentationTestCase2<CtsActivity> {
         assertEquals(0, Touch.getInitialScrollY(tv, spannable));
 
         mReturnFromTouchEvent = false;
-        runTestOnUiThread(new Runnable() {
-            public void run() {
-                mReturnFromTouchEvent = Touch.onTouchEvent(tv, spannable, event3);
-            }
-        });
+        runTestOnUiThread(() -> mReturnFromTouchEvent = Touch.onTouchEvent(tv, spannable, event3));
         getInstrumentation().waitForIdleSync();
         assertTrue(mReturnFromTouchEvent);
         // TextView has not been scrolled.

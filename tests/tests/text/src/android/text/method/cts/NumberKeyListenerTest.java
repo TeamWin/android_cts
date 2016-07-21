@@ -17,7 +17,6 @@
 package android.text.method.cts;
 
 import android.cts.util.KeyEventUtil;
-import android.text.Editable;
 import android.text.Selection;
 import android.text.Spannable;
 import android.text.SpannableString;
@@ -133,13 +132,11 @@ public class NumberKeyListenerTest extends KeyListenerTestCase {
         final MockNumberKeyListener mockNumberKeyListener =
             new MockNumberKeyListener(MockNumberKeyListener.DIGITS);
 
-        mActivity.runOnUiThread(new Runnable() {
-            public void run() {
-                mTextView.setText(text, BufferType.EDITABLE);
-                mTextView.setKeyListener(mockNumberKeyListener);
-                mTextView.requestFocus();
-                Selection.setSelection((Editable) mTextView.getText(), 0, 0);
-            }
+        mInstrumentation.runOnMainSync(() -> {
+            mTextView.setText(text, BufferType.EDITABLE);
+            mTextView.setKeyListener(mockNumberKeyListener);
+            mTextView.requestFocus();
+            Selection.setSelection(mTextView.getText(), 0, 0);
         });
         mInstrumentation.waitForIdleSync();
         assertEquals("123456", mTextView.getText().toString());
@@ -155,11 +152,9 @@ public class NumberKeyListenerTest extends KeyListenerTestCase {
             assertEquals("0123456", mTextView.getText().toString());
         }
 
-        mActivity.runOnUiThread(new Runnable() {
-            public void run() {
-                mTextView.setKeyListener(null);
-                mTextView.requestFocus();
-            }
+        mInstrumentation.runOnMainSync(() -> {
+            mTextView.setKeyListener(null);
+            mTextView.requestFocus();
         });
         mInstrumentation.waitForIdleSync();
         // press '0' key.

@@ -20,14 +20,11 @@ import android.text.InputType;
 import android.text.Selection;
 import android.text.Spannable;
 import android.text.SpannableStringBuilder;
-import android.text.method.cts.KeyListenerTestCase;
 import android.text.method.MultiTapKeyListener;
 import android.text.method.TextKeyListener.Capitalize;
 import android.view.KeyEvent;
-import android.widget.TextView;
 import android.widget.TextView.BufferType;
 
-import java.util.concurrent.TimeUnit;
 
 public class MultiTapKeyListenerTest extends KeyListenerTestCase {
     /**
@@ -49,11 +46,9 @@ public class MultiTapKeyListenerTest extends KeyListenerTestCase {
         final Spannable text = new SpannableStringBuilder("123456");
 
         assertFalse(mockMultiTapKeyListener.hadAddedSpan());
-        mActivity.runOnUiThread(new Runnable() {
-            public void run() {
-                mTextView.setKeyListener(mockMultiTapKeyListener);
-                mTextView.setText(text, BufferType.EDITABLE);
-            }
+        mInstrumentation.runOnMainSync(() -> {
+            mTextView.setKeyListener(mockMultiTapKeyListener);
+            mTextView.setText(text, BufferType.EDITABLE);
         });
         mInstrumentation.waitForIdleSync();
 
@@ -169,11 +164,9 @@ public class MultiTapKeyListenerTest extends KeyListenerTestCase {
     }
 
     private void prepareEmptyTextView() {
-        mActivity.runOnUiThread(new Runnable() {
-            public void run() {
-                mTextView.setText("", BufferType.EDITABLE);
-                Selection.setSelection(mTextView.getEditableText(), 0, 0);
-            }
+        mInstrumentation.runOnMainSync(() -> {
+            mTextView.setText("", BufferType.EDITABLE);
+            Selection.setSelection(mTextView.getEditableText(), 0, 0);
         });
         mInstrumentation.waitForIdleSync();
         assertEquals("", mTextView.getText().toString());
@@ -181,12 +174,10 @@ public class MultiTapKeyListenerTest extends KeyListenerTestCase {
 
     private void callOnKeyDown(final MultiTapKeyListener keyListener, final int keyCode,
             final int numTimes) {
-        mActivity.runOnUiThread(new Runnable() {
-            public void run() {
-                for (int i = 0; i < numTimes; i++) {
-                    keyListener.onKeyDown(mTextView, mTextView.getEditableText(), keyCode,
-                            new KeyEvent(KeyEvent.ACTION_DOWN, keyCode));
-                }
+        mInstrumentation.runOnMainSync(() -> {
+            for (int i = 0; i < numTimes; i++) {
+                keyListener.onKeyDown(mTextView, mTextView.getEditableText(), keyCode,
+                        new KeyEvent(KeyEvent.ACTION_DOWN, keyCode));
             }
         });
         mInstrumentation.waitForIdleSync();
@@ -200,11 +191,7 @@ public class MultiTapKeyListenerTest extends KeyListenerTestCase {
     }
 
     private void addSpace() {
-        mActivity.runOnUiThread(new Runnable() {
-            public void run() {
-                mTextView.append(" ");
-            }
-        });
+        mInstrumentation.runOnMainSync(() -> mTextView.append(" "));
         mInstrumentation.waitForIdleSync();
     }
 
