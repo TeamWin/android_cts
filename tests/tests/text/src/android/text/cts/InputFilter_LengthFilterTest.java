@@ -31,6 +31,8 @@ public class InputFilter_LengthFilterTest extends AndroidTestCase {
         LengthFilter lengthFilter = new LengthFilter(10);
         InputFilter[] filters = {lengthFilter};
 
+        assertEquals(10, lengthFilter.getMax());
+
         // filter() implicitly invoked. If the total length > filter length, the filter will
         // cut off the source CharSequence from beginning to fit the filter length.
         source = "abc";
