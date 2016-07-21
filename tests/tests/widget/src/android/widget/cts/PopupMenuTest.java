@@ -187,10 +187,9 @@ public class PopupMenuTest extends
         // the ACTION_OUTSIDE for the popup itself, as well as DOWN / MOVE / UP for the underlying
         // view root if the popup is not modal.
         // It is not correct to emulate these two sequences separately in the test, as it
-        // wouldn't emulate the user-facing interaction for this test. Note that usage
-        // of Instrumentation is necessary here since Espresso's actions operate at the level
-        // of view or data. Also, we don't want to use View.dispatchTouchEvent directly as
-        // that would require emulation of two separate sequences as well.
+        // wouldn't emulate the user-facing interaction for this test. Also, we don't want to use
+        // View.dispatchTouchEvent directly as that would require emulation of two separate
+        // sequences as well.
         CtsTouchUtils.emulateTapOnScreen(mInstrumentation, mBuilder.mAnchor, 10, -20);
 
         // At this point our popup should have notified its dismiss listener
