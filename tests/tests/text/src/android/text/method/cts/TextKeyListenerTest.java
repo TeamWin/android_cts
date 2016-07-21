@@ -16,7 +16,7 @@
 
 package android.text.method.cts;
 
-import android.cts.util.KeyEventUtil;
+import android.cts.util.CtsKeyEventUtil;
 import android.os.SystemClock;
 import android.test.UiThreadTest;
 import android.text.Editable;
@@ -37,14 +37,6 @@ public class TextKeyListenerTest extends KeyListenerTestCase {
      * time out of MultiTapKeyListener. longer than 2000ms in case the system is sluggish.
      */
     private static final long TIME_OUT = 3000;
-
-    private KeyEventUtil mKeyEventUtil;
-
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
-        mKeyEventUtil = new KeyEventUtil(getInstrumentation());
-    }
 
     public void testConstructor() {
         new TextKeyListener(Capitalize.NONE, true);
@@ -151,7 +143,7 @@ public class TextKeyListenerTest extends KeyListenerTestCase {
         CharSequence text = "123456";
         mTextView.setText(text, BufferType.EDITABLE);
 
-        Editable content = (Editable) mTextView.getText();
+        Editable content = mTextView.getText();
         assertEquals(text, content.toString());
 
         TextKeyListener.clear(content);
@@ -195,7 +187,7 @@ public class TextKeyListenerTest extends KeyListenerTestCase {
         mInstrumentation.waitForIdleSync();
         assertEquals("", mTextView.getText().toString());
 
-        mKeyEventUtil.sendKeys(mTextView, KeyEvent.KEYCODE_4);
+        CtsKeyEventUtil.sendKeys(mInstrumentation, mTextView, KeyEvent.KEYCODE_4);
         waitForListenerTimeout();
         String text = mTextView.getText().toString();
         int keyType = KeyCharacterMap.load(KeyCharacterMap.VIRTUAL_KEYBOARD).getKeyboardType();
@@ -227,7 +219,7 @@ public class TextKeyListenerTest extends KeyListenerTestCase {
         // test ACTION_MULTIPLE KEYCODE_UNKNOWN key event.
         KeyEvent event = new KeyEvent(SystemClock.uptimeMillis(), text,
                 1, KeyEvent.FLAG_WOKE_HERE);
-        mKeyEventUtil.sendKey(mTextView, event);
+        CtsKeyEventUtil.sendKey(mInstrumentation, mTextView, event);
         mInstrumentation.waitForIdleSync();
         // the text of TextView is never changed, onKeyOther never works.
 //        assertEquals(text, mTextView.getText().toString()); issue 1731439

@@ -29,7 +29,7 @@ import android.content.res.ColorStateList;
 import android.content.res.Resources;
 import android.content.res.Resources.NotFoundException;
 import android.cts.util.CtsTouchUtils;
-import android.cts.util.KeyEventUtil;
+import android.cts.util.CtsKeyEventUtil;
 import android.cts.util.PollingCheck;
 import android.cts.util.WidgetTestUtils;
 import android.graphics.Color;
@@ -138,7 +138,6 @@ public class TextViewTest extends ActivityInstrumentationTestCase2<TextViewCtsAc
             + "this text, I would love to see the kind of devices you guys now use!";
     private static final long TIMEOUT = 5000;
     private CharSequence mTransformedText;
-    private KeyEventUtil mKeyEventUtil;
     private Handler mHandler = new Handler(Looper.getMainLooper());
 
     public TextViewTest() {
@@ -151,7 +150,6 @@ public class TextViewTest extends ActivityInstrumentationTestCase2<TextViewCtsAc
         mActivity = getActivity();
         PollingCheck.waitFor(mActivity::hasWindowFocus);
         mInstrumentation = getInstrumentation();
-        mKeyEventUtil = new KeyEventUtil(mInstrumentation);
     }
 
     /**
@@ -271,8 +269,8 @@ public class TextViewTest extends ActivityInstrumentationTestCase2<TextViewCtsAc
         assertSame(movementMethod, mTextView.getMovementMethod());
         assertEquals(selectionStart, Selection.getSelectionStart(mTextView.getText()));
         assertEquals(selectionEnd, Selection.getSelectionEnd(mTextView.getText()));
-        mKeyEventUtil.sendKeys(mTextView, KeyEvent.KEYCODE_SHIFT_LEFT, KeyEvent.KEYCODE_ALT_LEFT,
-                KeyEvent.KEYCODE_DPAD_UP);
+        CtsKeyEventUtil.sendKeys(mInstrumentation, mTextView, KeyEvent.KEYCODE_SHIFT_LEFT,
+                KeyEvent.KEYCODE_ALT_LEFT, KeyEvent.KEYCODE_DPAD_UP);
         // the selection has been removed.
         assertEquals(selectionStart, Selection.getSelectionStart(mTextView.getText()));
         assertEquals(selectionStart, Selection.getSelectionEnd(mTextView.getText()));
@@ -288,8 +286,8 @@ public class TextViewTest extends ActivityInstrumentationTestCase2<TextViewCtsAc
         assertNull(mTextView.getMovementMethod());
         assertEquals(selectionStart, Selection.getSelectionStart(mTextView.getText()));
         assertEquals(selectionEnd, Selection.getSelectionEnd(mTextView.getText()));
-        mKeyEventUtil.sendKeys(mTextView, KeyEvent.KEYCODE_SHIFT_LEFT, KeyEvent.KEYCODE_ALT_LEFT,
-                KeyEvent.KEYCODE_DPAD_UP);
+        CtsKeyEventUtil.sendKeys(mInstrumentation, mTextView, KeyEvent.KEYCODE_SHIFT_LEFT,
+                KeyEvent.KEYCODE_ALT_LEFT, KeyEvent.KEYCODE_DPAD_UP);
         // the selection will not be changed.
         assertEquals(selectionStart, Selection.getSelectionStart(mTextView.getText()));
         assertEquals(selectionEnd, Selection.getSelectionEnd(mTextView.getText()));
@@ -1484,7 +1482,7 @@ public class TextViewTest extends ActivityInstrumentationTestCase2<TextViewCtsAc
         initTextViewForTypingOnUiThread();
 
         // Type some text.
-        mKeyEventUtil.sendString(mTextView, "abc");
+        CtsKeyEventUtil.sendString(mInstrumentation, mTextView, "abc");
         mActivity.runOnUiThread(() -> {
             // Precondition: The cursor is at the end of the text.
             assertEquals(3, mTextView.getSelectionStart());
@@ -1514,9 +1512,9 @@ public class TextViewTest extends ActivityInstrumentationTestCase2<TextViewCtsAc
         initTextViewForTypingOnUiThread();
 
         // Simulate deleting text and undoing it.
-        mKeyEventUtil.sendString(mTextView, "xyz");
-        mKeyEventUtil.sendKeys(mTextView, KeyEvent.KEYCODE_DEL, KeyEvent.KEYCODE_DEL,
-                KeyEvent.KEYCODE_DEL);
+        CtsKeyEventUtil.sendString(mInstrumentation, mTextView, "xyz");
+        CtsKeyEventUtil.sendKeys(mInstrumentation, mTextView, KeyEvent.KEYCODE_DEL,
+                KeyEvent.KEYCODE_DEL, KeyEvent.KEYCODE_DEL);
         mActivity.runOnUiThread(() -> {
             // Precondition: The text was actually deleted.
             assertEquals("", mTextView.getText().toString());
@@ -1724,9 +1722,9 @@ public class TextViewTest extends ActivityInstrumentationTestCase2<TextViewCtsAc
         initTextViewForTypingOnUiThread();
 
         // Create two undo operations, an insert and a delete.
-        mKeyEventUtil.sendString(mTextView, "xyz");
-        mKeyEventUtil.sendKeys(mTextView, KeyEvent.KEYCODE_DEL, KeyEvent.KEYCODE_DEL,
-                KeyEvent.KEYCODE_DEL);
+        CtsKeyEventUtil.sendString(mInstrumentation, mTextView, "xyz");
+        CtsKeyEventUtil.sendKeys(mInstrumentation, mTextView, KeyEvent.KEYCODE_DEL,
+                KeyEvent.KEYCODE_DEL, KeyEvent.KEYCODE_DEL);
         mActivity.runOnUiThread(() -> {
             // Calling setText() clears both undo operations, so undo doesn't happen.
             mTextView.setText("Hello", BufferType.EDITABLE);
@@ -1745,7 +1743,7 @@ public class TextViewTest extends ActivityInstrumentationTestCase2<TextViewCtsAc
         initTextViewForTypingOnUiThread();
 
         // Type some text. This creates an undo entry.
-        mKeyEventUtil.sendString(mTextView, "abc");
+        CtsKeyEventUtil.sendString(mInstrumentation, mTextView, "abc");
         mActivity.runOnUiThread(() -> {
             // Undo the typing to create a redo entry.
             mTextView.onTextContextMenuItem(android.R.id.undo);
@@ -1762,7 +1760,7 @@ public class TextViewTest extends ActivityInstrumentationTestCase2<TextViewCtsAc
         initTextViewForTypingOnUiThread();
 
         // Type some text.
-        mKeyEventUtil.sendString(mTextView, "abc");
+        CtsKeyEventUtil.sendString(mInstrumentation, mTextView, "abc");
         mActivity.runOnUiThread(() -> {
             // Programmatically append some text.
             mTextView.append("def");
@@ -1783,7 +1781,7 @@ public class TextViewTest extends ActivityInstrumentationTestCase2<TextViewCtsAc
         initTextViewForTypingOnUiThread();
 
         // Type some text.
-        mKeyEventUtil.sendString(mTextView, "abc");
+        CtsKeyEventUtil.sendString(mInstrumentation, mTextView, "abc");
         mActivity.runOnUiThread(() -> {
             // Directly modify the underlying Editable to insert some text.
             // NOTE: This is a violation of the API of getText() which specifies that the
@@ -1826,7 +1824,7 @@ public class TextViewTest extends ActivityInstrumentationTestCase2<TextViewCtsAc
         mTextView.addTextChangedListener(new ConvertToSpacesTextWatcher());
 
         // Type some text.
-        mKeyEventUtil.sendString(mTextView, "abc");
+        CtsKeyEventUtil.sendString(mInstrumentation, mTextView, "abc");
         mActivity.runOnUiThread(() -> {
             // TextWatcher altered the text.
             assertEquals("   ", mTextView.getText().toString());
@@ -1858,7 +1856,7 @@ public class TextViewTest extends ActivityInstrumentationTestCase2<TextViewCtsAc
         initTextViewForTypingOnUiThread();
 
         // Type some text.
-        mKeyEventUtil.sendString(mTextView, "abc");
+        CtsKeyEventUtil.sendString(mInstrumentation, mTextView, "abc");
         mActivity.runOnUiThread(() -> {
             // Pressing Control-Z triggers undo.
             KeyEvent control = new KeyEvent(0, 0, KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_Z, 0,
@@ -1879,7 +1877,7 @@ public class TextViewTest extends ActivityInstrumentationTestCase2<TextViewCtsAc
         initTextViewForTypingOnUiThread();
 
         // Type some text to create an undo operation.
-        mKeyEventUtil.sendString(mTextView, "abc");
+        CtsKeyEventUtil.sendString(mInstrumentation, mTextView, "abc");
         mActivity.runOnUiThread(() -> {
             // Parcel and unparcel the TextView.
             Parcelable state = mTextView.onSaveInstanceState();
@@ -1888,7 +1886,7 @@ public class TextViewTest extends ActivityInstrumentationTestCase2<TextViewCtsAc
         mInstrumentation.waitForIdleSync();
 
         // Delete a character to create a new undo operation.
-        mKeyEventUtil.sendKeys(mTextView, KeyEvent.KEYCODE_DEL);
+        CtsKeyEventUtil.sendKeys(mInstrumentation, mTextView, KeyEvent.KEYCODE_DEL);
         mActivity.runOnUiThread(() -> {
             assertEquals("ab", mTextView.getText().toString());
 
@@ -1913,8 +1911,8 @@ public class TextViewTest extends ActivityInstrumentationTestCase2<TextViewCtsAc
         initTextViewForTypingOnUiThread();
 
         // Type and delete to create two new undo operations.
-        mKeyEventUtil.sendString(mTextView, "a");
-        mKeyEventUtil.sendKeys(mTextView, KeyEvent.KEYCODE_DEL);
+        CtsKeyEventUtil.sendString(mInstrumentation, mTextView, "a");
+        CtsKeyEventUtil.sendKeys(mInstrumentation, mTextView, KeyEvent.KEYCODE_DEL);
         mActivity.runOnUiThread(() -> {
             // Empty the undo stack then parcel and unparcel the TextView. While the undo
             // stack contains no operations it may contain other state.
@@ -1926,8 +1924,8 @@ public class TextViewTest extends ActivityInstrumentationTestCase2<TextViewCtsAc
         mInstrumentation.waitForIdleSync();
 
         // Create two more undo operations.
-        mKeyEventUtil.sendString(mTextView, "b");
-        mKeyEventUtil.sendKeys(mTextView, KeyEvent.KEYCODE_DEL);
+        CtsKeyEventUtil.sendString(mInstrumentation, mTextView, "b");
+        CtsKeyEventUtil.sendKeys(mInstrumentation, mTextView, KeyEvent.KEYCODE_DEL);
         mActivity.runOnUiThread(() -> {
             // Verify undo still works.
             mTextView.onTextContextMenuItem(android.R.id.undo);
@@ -1964,14 +1962,14 @@ public class TextViewTest extends ActivityInstrumentationTestCase2<TextViewCtsAc
         initTextViewForTypingOnUiThread();
 
         // Type "abc".
-        mKeyEventUtil.sendString(mTextView, "abc");
+        CtsKeyEventUtil.sendString(mInstrumentation, mTextView, "abc");
         mActivity.runOnUiThread(() -> {
             // Select "bc"
             Selection.setSelection((Spannable) mTextView.getText(), 1, 3);
         });
         mInstrumentation.waitForIdleSync();
         // Copy "bc"
-        mKeyEventUtil.sendKeys(mTextView, KeyEvent.KEYCODE_COPY);
+        CtsKeyEventUtil.sendKeys(mInstrumentation, mTextView, KeyEvent.KEYCODE_COPY);
 
         mActivity.runOnUiThread(() -> {
             // Set cursor between 'b' and 'c'.
@@ -1979,7 +1977,7 @@ public class TextViewTest extends ActivityInstrumentationTestCase2<TextViewCtsAc
         });
         mInstrumentation.waitForIdleSync();
         // Paste "bc"
-        mKeyEventUtil.sendKeys(mTextView, KeyEvent.KEYCODE_PASTE);
+        CtsKeyEventUtil.sendKeys(mInstrumentation, mTextView, KeyEvent.KEYCODE_PASTE);
         assertEquals("abbcc", mTextView.getText().toString());
 
         mActivity.runOnUiThread(() -> {
@@ -2039,14 +2037,14 @@ public class TextViewTest extends ActivityInstrumentationTestCase2<TextViewCtsAc
         initTextViewForTypingOnUiThread();
 
         // Type "abc".
-        mKeyEventUtil.sendString(mTextView, "abc");
+        CtsKeyEventUtil.sendString(mInstrumentation, mTextView, "abc");
         mActivity.runOnUiThread(() -> {
             // Select "bc"
             Selection.setSelection((Spannable) mTextView.getText(), 1, 3);
         });
         mInstrumentation.waitForIdleSync();
         // Cut "bc"
-        mKeyEventUtil.sendKeys(mTextView, KeyEvent.KEYCODE_CUT);
+        CtsKeyEventUtil.sendKeys(mInstrumentation, mTextView, KeyEvent.KEYCODE_CUT);
 
         mActivity.runOnUiThread(() -> {
             assertEquals("a", mTextView.getText().toString());
@@ -2055,7 +2053,7 @@ public class TextViewTest extends ActivityInstrumentationTestCase2<TextViewCtsAc
         });
         mInstrumentation.waitForIdleSync();
         // Paste "bc"
-        mKeyEventUtil.sendKeys(mTextView, KeyEvent.KEYCODE_PASTE);
+        CtsKeyEventUtil.sendKeys(mInstrumentation, mTextView, KeyEvent.KEYCODE_PASTE);
         assertEquals("bca", mTextView.getText().toString());
 
         mInstrumentation.runOnMainSync(() -> {
@@ -2318,7 +2316,7 @@ public class TextViewTest extends ActivityInstrumentationTestCase2<TextViewCtsAc
 
         assertEquals(errorText, mTextView.getError().toString());
 
-        mKeyEventUtil.sendString(mTextView, "a");
+        CtsKeyEventUtil.sendString(mInstrumentation, mTextView, "a");
         // a key event that will not change the TextView's text
         assertEquals("", mTextView.getText().toString());
         // The icon and error message will not be reset to null
@@ -2332,7 +2330,7 @@ public class TextViewTest extends ActivityInstrumentationTestCase2<TextViewCtsAc
         });
         mInstrumentation.waitForIdleSync();
 
-        mKeyEventUtil.sendString(mTextView, "1");
+        CtsKeyEventUtil.sendString(mInstrumentation, mTextView, "1");
         // a key event cause changes to the TextView's text
         assertEquals("1", mTextView.getText().toString());
         // the error message and icon will be cleared.
@@ -2356,13 +2354,13 @@ public class TextViewTest extends ActivityInstrumentationTestCase2<TextViewCtsAc
 
         assertSame(expected, mTextView.getFilters());
 
-        mKeyEventUtil.sendString(mTextView, "a");
+        CtsKeyEventUtil.sendString(mInstrumentation, mTextView, "a");
         // the text is capitalized by InputFilter.AllCaps
         assertEquals("A", mTextView.getText().toString());
-        mKeyEventUtil.sendString(mTextView, "b");
+        CtsKeyEventUtil.sendString(mInstrumentation, mTextView, "b");
         // the text is capitalized by InputFilter.AllCaps
         assertEquals("AB", mTextView.getText().toString());
-        mKeyEventUtil.sendString(mTextView, "c");
+        CtsKeyEventUtil.sendString(mInstrumentation, mTextView, "c");
         // 'C' could not be accepted, because there is a length filter.
         assertEquals("AB", mTextView.getText().toString());
 
@@ -2547,11 +2545,11 @@ public class TextViewTest extends ActivityInstrumentationTestCase2<TextViewCtsAc
     public void testPressKey() {
         initTextViewForTypingOnUiThread();
 
-        mKeyEventUtil.sendString(mTextView, "a");
+        CtsKeyEventUtil.sendString(mInstrumentation, mTextView, "a");
         assertEquals("a", mTextView.getText().toString());
-        mKeyEventUtil.sendString(mTextView, "b");
+        CtsKeyEventUtil.sendString(mInstrumentation, mTextView, "b");
         assertEquals("ab", mTextView.getText().toString());
-        mKeyEventUtil.sendKeys(mTextView, KeyEvent.KEYCODE_DEL);
+        CtsKeyEventUtil.sendKeys(mInstrumentation, mTextView, KeyEvent.KEYCODE_DEL);
         assertEquals("a", mTextView.getText().toString());
     }
 
@@ -3374,7 +3372,7 @@ public class TextViewTest extends ActivityInstrumentationTestCase2<TextViewCtsAc
         assertSame(PasswordTransformationMethod.getInstance(),
                 mTextView.getTransformationMethod());
 
-        mKeyEventUtil.sendKeys(mTextView, "H E 2*L O");
+        CtsKeyEventUtil.sendKeys(mInstrumentation, mTextView, "H E 2*L O");
         mActivity.runOnUiThread(() -> mTextView.append(" "));
         mInstrumentation.waitForIdleSync();
 

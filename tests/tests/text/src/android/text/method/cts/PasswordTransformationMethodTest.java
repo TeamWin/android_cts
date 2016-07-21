@@ -17,7 +17,8 @@
 package android.text.method.cts;
 
 
-import android.cts.util.KeyEventUtil;
+import android.app.Instrumentation;
+import android.cts.util.CtsKeyEventUtil;
 import android.cts.util.PollingCheck;
 import android.os.ParcelFileDescriptor;
 import android.provider.Settings.SettingNotFoundException;
@@ -63,11 +64,11 @@ public class PasswordTransformationMethodTest extends
 
     private CharSequence mTransformedText;
 
+    private Instrumentation mInstrumentation;
+
     public PasswordTransformationMethodTest() {
         super("android.text.cts", CtsActivity.class);
     }
-
-    private KeyEventUtil mKeyEventUtil;
 
     @Override
     protected void setUp() throws Exception {
@@ -79,6 +80,7 @@ public class PasswordTransformationMethodTest extends
                 return mActivity.hasWindowFocus();
             }
         }.run();
+        mInstrumentation = getInstrumentation();
         mMethod = spy(new PasswordTransformationMethod());
         try {
             runTestOnUiThread(() -> {
@@ -99,12 +101,10 @@ public class PasswordTransformationMethodTest extends
         } catch (Throwable e) {
             fail("Exception thrown is UI thread:" + e.getMessage());
         }
-        getInstrumentation().waitForIdleSync();
+        mInstrumentation.waitForIdleSync();
 
         mEditText = (EditText) getActivity().findViewById(EDIT_TXT_ID);
         assertTrue(mEditText.isFocused());
-
-        mKeyEventUtil = new KeyEventUtil(getInstrumentation());
 
         enableAppOps();
         savePasswordPref();
@@ -114,19 +114,19 @@ public class PasswordTransformationMethodTest extends
     private void enableAppOps() {
         StringBuilder cmd = new StringBuilder();
         cmd.append("appops set ");
-        cmd.append(getInstrumentation().getContext().getPackageName());
+        cmd.append(mInstrumentation.getContext().getPackageName());
         cmd.append(" android:write_settings allow");
-        getInstrumentation().getUiAutomation().executeShellCommand(cmd.toString());
+        mInstrumentation.getUiAutomation().executeShellCommand(cmd.toString());
 
         StringBuilder query = new StringBuilder();
         query.append("appops get ");
-        query.append(getInstrumentation().getContext().getPackageName());
+        query.append(mInstrumentation.getContext().getPackageName());
         query.append(" android:write_settings");
         String queryStr = query.toString();
 
         String result = "No operations.";
         while (result.contains("No operations")) {
-            ParcelFileDescriptor pfd = getInstrumentation().getUiAutomation().executeShellCommand(
+            ParcelFileDescriptor pfd = mInstrumentation.getUiAutomation().executeShellCommand(
                                         queryStr);
             InputStream inputStream = new FileInputStream(pfd.getFileDescriptor());
             result = convertStreamToString(inputStream);
@@ -159,10 +159,11 @@ public class PasswordTransformationMethodTest extends
         KeyCharacterMap keymap = KeyCharacterMap.load(KeyCharacterMap.VIRTUAL_KEYBOARD);
         if (keymap.getKeyboardType() == KeyCharacterMap.NUMERIC) {
             // "HELLO" in case of 12-key(NUMERIC) keyboard
-            mKeyEventUtil.sendKeys(mEditText, "6*4 6*3 7*5 DPAD_RIGHT 7*5 7*6 DPAD_RIGHT");
+            CtsKeyEventUtil.sendKeys(mInstrumentation, mEditText,
+                    "6*4 6*3 7*5 DPAD_RIGHT 7*5 7*6 DPAD_RIGHT");
         }
         else {
-            mKeyEventUtil.sendKeys(mEditText, "H E 2*L O");
+            CtsKeyEventUtil.sendKeys(mInstrumentation, mEditText, "H E 2*L O");
         }
         verify(mMethod, atLeastOnce()).beforeTextChanged(any(), anyInt(), anyInt(), anyInt());
         verify(mMethod, atLeastOnce()).onTextChanged(any(), anyInt(), anyInt(), anyInt());
@@ -214,14 +215,14 @@ public class PasswordTransformationMethodTest extends
         // lose focus
         reset(mMethod);
         assertTrue(mEditText.isFocused());
-        mKeyEventUtil.sendKeys(mEditText, "DPAD_DOWN");
+        CtsKeyEventUtil.sendKeys(mInstrumentation, mEditText, "DPAD_DOWN");
         assertFalse(mEditText.isFocused());
         verify(mMethod, atLeastOnce()).onFocusChanged(any(), any(), anyBoolean(), anyInt(), any());
 
         // gain focus
         reset(mMethod);
         assertFalse(mEditText.isFocused());
-        mKeyEventUtil.sendKeys(mEditText, "DPAD_UP");
+        CtsKeyEventUtil.sendKeys(mInstrumentation, mEditText, "DPAD_UP");
         assertTrue(mEditText.isFocused());
         verify(mMethod, atLeastOnce()).onFocusChanged(any(), any(), anyBoolean(), anyInt(), any());
     }

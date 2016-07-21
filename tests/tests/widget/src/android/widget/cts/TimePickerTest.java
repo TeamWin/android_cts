@@ -21,7 +21,7 @@ import static org.mockito.Mockito.*;
 import android.app.Activity;
 import android.app.Instrumentation;
 import android.content.Context;
-import android.cts.util.KeyEventUtil;
+import android.cts.util.CtsKeyEventUtil;
 import android.os.Parcelable;
 import android.test.ActivityInstrumentationTestCase2;
 import android.test.UiThreadTest;
@@ -42,7 +42,6 @@ public class TimePickerTest extends ActivityInstrumentationTestCase2<TimePickerC
     private TimePicker mTimePicker;
     private Activity mActivity;
     private Instrumentation mInstrumentation;
-    private KeyEventUtil mKeyEventUtil;
 
     public TimePickerTest() {
         super("android.widget.cts", TimePickerCtsActivity.class);
@@ -55,7 +54,6 @@ public class TimePickerTest extends ActivityInstrumentationTestCase2<TimePickerC
         mInstrumentation = getInstrumentation();
         mActivity = getActivity();
         mTimePicker = (TimePicker) mActivity.findViewById(R.id.timepicker_clock);
-        mKeyEventUtil = new KeyEventUtil(mInstrumentation);
     }
 
     public void testConstructors() {
@@ -391,10 +389,10 @@ public class TimePickerTest extends ActivityInstrumentationTestCase2<TimePickerC
 
             if (i < viewsSize - 1) {
                 if (goForward) {
-                    mKeyEventUtil.sendKeyDownUp(currentView, goForwardKeyCode);
+                    CtsKeyEventUtil.sendKeyDownUp(mInstrumentation, currentView, goForwardKeyCode);
                 } else {
-                    mKeyEventUtil.sendKeyWhileHoldingModifier(
-                            currentView, goForwardKeyCode, modifierKeyCodeToHold);
+                    CtsKeyEventUtil.sendKeyWhileHoldingModifier(mInstrumentation, currentView,
+                            goForwardKeyCode, modifierKeyCodeToHold);
                 }
             }
         }

@@ -26,7 +26,9 @@ import android.view.ViewGroup;
 /**
  * Test utilities for touch emulation.
  */
-public class CtsTouchUtils {
+public final class CtsTouchUtils {
+
+    private CtsTouchUtils() {}
 
     /**
      * Emulates a tap in the center of the passed {@link View}.

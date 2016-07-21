@@ -21,7 +21,7 @@ import static org.mockito.Mockito.*;
 import android.app.Activity;
 import android.app.Instrumentation;
 import android.content.Context;
-import android.cts.util.KeyEventUtil;
+import android.cts.util.CtsKeyEventUtil;
 import android.cts.util.CtsTouchUtils;
 import android.cts.util.WidgetTestUtils;
 import android.graphics.Rect;
@@ -51,7 +51,6 @@ public class ListPopupWindowTest extends
         ActivityInstrumentationTestCase2<ListPopupWindowCtsActivity> {
     private Instrumentation mInstrumentation;
     private Activity mActivity;
-    private KeyEventUtil mKeyEventUtil;
     private Builder mPopupWindowBuilder;
 
     /** The list popup window. */
@@ -85,7 +84,6 @@ public class ListPopupWindowTest extends
         mInstrumentation = getInstrumentation();
         mActivity = getActivity();
         mItemClickListener = new PopupItemClickListener();
-        mKeyEventUtil = new KeyEventUtil(mInstrumentation);
     }
 
     @Override
@@ -602,7 +600,7 @@ public class ListPopupWindowTest extends
         // Send DPAD_DOWN key event. As our custom extension of EditText calls
         // ListPopupWindow.onKeyDown and onKeyUp, the end result should be transfer of selection
         // down one row
-        mKeyEventUtil.sendKeyDownUp(listView, KeyEvent.KEYCODE_DPAD_DOWN);
+        CtsKeyEventUtil.sendKeyDownUp(mInstrumentation, listView, KeyEvent.KEYCODE_DPAD_DOWN);
         mInstrumentation.waitForIdleSync();
 
         WidgetTestUtils.runOnMainAndDrawSync(mInstrumentation, root, null);
@@ -614,7 +612,7 @@ public class ListPopupWindowTest extends
         // Send a DPAD_UP key event. As our custom extension of EditText calls
         // ListPopupWindow.onKeyDown and onKeyUp, the end result should be transfer of selection
         // up one row
-        mKeyEventUtil.sendKeyDownUp(listView, KeyEvent.KEYCODE_DPAD_UP);
+        CtsKeyEventUtil.sendKeyDownUp(mInstrumentation, listView, KeyEvent.KEYCODE_DPAD_UP);
         mInstrumentation.waitForIdleSync();
 
         WidgetTestUtils.runOnMainAndDrawSync(mInstrumentation, root, null);
@@ -626,7 +624,7 @@ public class ListPopupWindowTest extends
         // Send one more DPAD_UP key event. As our custom extension of EditText calls
         // ListPopupWindow.onKeyDown and onKeyUp, the end result should be transfer of selection
         // up one more row
-        mKeyEventUtil.sendKeyDownUp(listView, KeyEvent.KEYCODE_DPAD_UP);
+        CtsKeyEventUtil.sendKeyDownUp(mInstrumentation, listView, KeyEvent.KEYCODE_DPAD_UP);
         mInstrumentation.waitForIdleSync();
 
         WidgetTestUtils.runOnMainAndDrawSync(mInstrumentation, root, null);
@@ -638,7 +636,7 @@ public class ListPopupWindowTest extends
         // Send ENTER key event. As our custom extension of EditText calls
         // ListPopupWindow.onKeyDown and onKeyUp, the end result should be dismissal of
         // the popup window
-        mKeyEventUtil.sendKeyDownUp(listView, KeyEvent.KEYCODE_ENTER);
+        CtsKeyEventUtil.sendKeyDownUp(mInstrumentation,listView, KeyEvent.KEYCODE_ENTER);
         mInstrumentation.waitForIdleSync();
 
         verify(mPopupWindowBuilder.mOnDismissListener, times(1)).onDismiss();

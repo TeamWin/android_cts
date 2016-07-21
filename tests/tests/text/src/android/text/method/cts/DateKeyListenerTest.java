@@ -16,7 +16,7 @@
 
 package android.text.method.cts;
 
-import android.cts.util.KeyEventUtil;
+import android.cts.util.CtsKeyEventUtil;
 import android.text.InputType;
 import android.text.method.DateKeyListener;
 import android.view.KeyEvent;
@@ -25,14 +25,6 @@ import android.view.KeyEvent;
  * Test {@link android.text.method.DateKeyListener}.
  */
 public class DateKeyListenerTest extends KeyListenerTestCase {
-
-    private KeyEventUtil mKeyEventUtil;
-
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
-        mKeyEventUtil = new KeyEventUtil(getInstrumentation());
-    }
 
     public void testConstructor() {
         new DateKeyListener();
@@ -77,26 +69,26 @@ public class DateKeyListenerTest extends KeyListenerTestCase {
         assertEquals("", mTextView.getText().toString());
 
         // press '1' key.
-        mKeyEventUtil.sendKeys(mTextView, KeyEvent.KEYCODE_1);
+        CtsKeyEventUtil.sendKeys(mInstrumentation, mTextView, KeyEvent.KEYCODE_1);
         assertEquals("1", mTextView.getText().toString());
 
         // press '2' key.
-        mKeyEventUtil.sendKeys(mTextView, KeyEvent.KEYCODE_2);
+        CtsKeyEventUtil.sendKeys(mInstrumentation, mTextView, KeyEvent.KEYCODE_2);
         assertEquals("12", mTextView.getText().toString());
 
         // press an unaccepted key if it exists.
         int keyCode = TextMethodUtils.getUnacceptedKeyCode(DateKeyListener.CHARACTERS);
         if (-1 != keyCode) {
-            mKeyEventUtil.sendKeys(mTextView, keyCode);
+            CtsKeyEventUtil.sendKeys(mInstrumentation, mTextView, keyCode);
             assertEquals("12", mTextView.getText().toString());
         }
 
         // press '-' key.
-        mKeyEventUtil.sendKeys(mTextView, KeyEvent.KEYCODE_MINUS);
+        CtsKeyEventUtil.sendKeys(mInstrumentation, mTextView, KeyEvent.KEYCODE_MINUS);
         assertEquals("12-", mTextView.getText().toString());
 
         // press '/' key.
-        mKeyEventUtil.sendKeys(mTextView, KeyEvent.KEYCODE_SLASH);
+        CtsKeyEventUtil.sendKeys(mInstrumentation, mTextView, KeyEvent.KEYCODE_SLASH);
         assertEquals("12-/", mTextView.getText().toString());
 
         // remove DateKeyListener
@@ -104,7 +96,7 @@ public class DateKeyListenerTest extends KeyListenerTestCase {
         assertEquals("12-/", mTextView.getText().toString());
 
         // press '/' key, it will not be accepted.
-        mKeyEventUtil.sendKeys(mTextView, KeyEvent.KEYCODE_SLASH);
+        CtsKeyEventUtil.sendKeys(mInstrumentation, mTextView, KeyEvent.KEYCODE_SLASH);
         assertEquals("12-/", mTextView.getText().toString());
     }
 

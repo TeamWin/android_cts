@@ -16,7 +16,7 @@
 
 package android.text.method.cts;
 
-import android.cts.util.KeyEventUtil;
+import android.cts.util.CtsKeyEventUtil;
 import android.text.Selection;
 import android.text.Spannable;
 import android.text.SpannableString;
@@ -28,14 +28,6 @@ import android.widget.TextView.BufferType;
 
 public class NumberKeyListenerTest extends KeyListenerTestCase {
     private MockNumberKeyListener mMockNumberKeyListener;
-
-    private KeyEventUtil mKeyEventUtil;
-
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
-        mKeyEventUtil = new KeyEventUtil(getInstrumentation());
-    }
 
     /**
      * Check point:
@@ -132,7 +124,7 @@ public class NumberKeyListenerTest extends KeyListenerTestCase {
         final MockNumberKeyListener mockNumberKeyListener =
             new MockNumberKeyListener(MockNumberKeyListener.DIGITS);
 
-        mInstrumentation.runOnMainSync(() -> {
+        mActivity.runOnUiThread(() -> {
             mTextView.setText(text, BufferType.EDITABLE);
             mTextView.setKeyListener(mockNumberKeyListener);
             mTextView.requestFocus();
@@ -141,13 +133,13 @@ public class NumberKeyListenerTest extends KeyListenerTestCase {
         mInstrumentation.waitForIdleSync();
         assertEquals("123456", mTextView.getText().toString());
         // press '0' key.
-        mKeyEventUtil.sendKeys(mTextView, KeyEvent.KEYCODE_0);
+        CtsKeyEventUtil.sendKeys(mInstrumentation, mTextView, KeyEvent.KEYCODE_0);
         assertEquals("0123456", mTextView.getText().toString());
 
         // an unaccepted key if it exists.
         int keyCode = TextMethodUtils.getUnacceptedKeyCode(MockNumberKeyListener.DIGITS);
         if (-1 != keyCode) {
-            mKeyEventUtil.sendKeys(mTextView, keyCode);
+            CtsKeyEventUtil.sendKeys(mInstrumentation, mTextView, keyCode);
             // text of TextView will not be changed.
             assertEquals("0123456", mTextView.getText().toString());
         }
@@ -158,7 +150,7 @@ public class NumberKeyListenerTest extends KeyListenerTestCase {
         });
         mInstrumentation.waitForIdleSync();
         // press '0' key.
-        mKeyEventUtil.sendKeys(mTextView, KeyEvent.KEYCODE_0);
+        CtsKeyEventUtil.sendKeys(mInstrumentation, mTextView, KeyEvent.KEYCODE_0);
         assertEquals("0123456", mTextView.getText().toString());
     }
 

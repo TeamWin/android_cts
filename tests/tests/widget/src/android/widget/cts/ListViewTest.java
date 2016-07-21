@@ -813,17 +813,17 @@ public class ListViewTest extends ActivityInstrumentationTestCase2<ListViewCtsAc
 
     @MediumTest
     public void testResolveRtlOnReAttach() {
-        View spacer = new View(getActivity());
+        View spacer = new View(mActivity);
         spacer.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
                 250));
         final DummyAdapter adapter = new DummyAdapter(50, spacer);
-        WidgetTestUtils.runOnMainAndDrawSync(getInstrumentation(), mListView, () -> {
+        WidgetTestUtils.runOnMainAndDrawSync(mInstrumentation, mListView, () -> {
             mListView.setLayoutDirection(View.LAYOUT_DIRECTION_RTL);
             mListView.setLayoutParams(new FrameLayout.LayoutParams(200, 150));
             mListView.setAdapter(adapter);
         });
         assertEquals("test sanity", 1, mListView.getChildCount());
-        WidgetTestUtils.runOnMainAndDrawSync(getInstrumentation(), mListView, () -> {
+        WidgetTestUtils.runOnMainAndDrawSync(mInstrumentation, mListView, () -> {
             // we scroll in pieces because list view caps scroll by its height
             mListView.scrollListBy(100);
             mListView.scrollListBy(100);
@@ -831,14 +831,14 @@ public class ListViewTest extends ActivityInstrumentationTestCase2<ListViewCtsAc
         });
         assertEquals("test sanity", 1, mListView.getChildCount());
         assertEquals("test sanity", 1, mListView.getFirstVisiblePosition());
-        WidgetTestUtils.runOnMainAndDrawSync(getInstrumentation(), mListView, () -> {
+        WidgetTestUtils.runOnMainAndDrawSync(mInstrumentation, mListView, () -> {
             mListView.scrollListBy(-100);
             mListView.scrollListBy(-100);
             mListView.scrollListBy(-60);
         });
         assertEquals("test sanity", 1, mListView.getChildCount());
         assertEquals("item 0 should be visible", 0, mListView.getFirstVisiblePosition());
-        WidgetTestUtils.runOnMainAndDrawSync(getInstrumentation(), mListView, () -> {
+        WidgetTestUtils.runOnMainAndDrawSync(mInstrumentation, mListView, () -> {
             mListView.scrollListBy(100);
             mListView.scrollListBy(100);
             mListView.scrollListBy(60);

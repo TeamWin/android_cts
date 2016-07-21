@@ -29,25 +29,24 @@ import android.view.inputmethod.InputMethodManager;
 import java.lang.reflect.Field;
 
 /**
- * Utility class to send KeyEvents to TextView bypassing the IME. The code is similar to functions
- * in {@link Instrumentation} and {@link android.test.InstrumentationTestCase} classes. It uses
+ * Utility class to send KeyEvents bypassing the IME. The code is similar to functions in
+ * {@link Instrumentation} and {@link android.test.InstrumentationTestCase} classes. It uses
  * {@link InputMethodManager#dispatchKeyEventFromInputMethod(View, KeyEvent)} to send the events.
  * After sending the events waits for idle.
  */
-public class KeyEventUtil {
-    private final Instrumentation mInstrumentation;
+public final class CtsKeyEventUtil {
 
-    public KeyEventUtil(Instrumentation instrumentation) {
-        this.mInstrumentation = instrumentation;
-    }
+    private CtsKeyEventUtil() {}
 
     /**
      * Sends the key events corresponding to the text to the app being instrumented.
      *
+     * @param instrumentation the instrumentation used to run the test.
      * @param targetView View to find the ViewRootImpl and dispatch.
      * @param text The text to be sent. Null value returns immediately.
      */
-    public final void sendString(final View targetView, final String text) {
+    public static void sendString(final Instrumentation instrumentation, final View targetView,
+            final String text) {
         if (text == null) {
             return;
         }
@@ -61,8 +60,8 @@ public class KeyEventUtil {
                 // time stamp and the system rejects too old events. Hence, it is
                 // possible for an event to become stale before it is injected if it
                 // takes too long to inject the preceding ones.
-                sendKey(targetView, KeyEvent.changeTimeRepeat(events[i], SystemClock.uptimeMillis(),
-                        0));
+                sendKey(instrumentation, targetView, KeyEvent.changeTimeRepeat(
+                        events[i], SystemClock.uptimeMillis(), 0 /* newRepeat */));
             }
         }
     }
@@ -71,15 +70,17 @@ public class KeyEventUtil {
      * Sends a series of key events through instrumentation. For instance:
      * sendKeys(view, KEYCODE_DPAD_LEFT, KEYCODE_DPAD_CENTER).
      *
+     * @param instrumentation the instrumentation used to run the test.
      * @param targetView View to find the ViewRootImpl and dispatch.
      * @param keys The series of key codes.
      */
-    public final void sendKeys(final View targetView, final int...keys) {
+    public static void sendKeys(final Instrumentation instrumentation, final View targetView,
+            final int...keys) {
         final int count = keys.length;
 
         for (int i = 0; i < count; i++) {
             try {
-                sendKeyDownUp(targetView, keys[i]);
+                sendKeyDownUp(instrumentation, targetView, keys[i]);
             } catch (SecurityException e) {
                 // Ignore security exceptions that are now thrown
                 // when trying to send to another app, to retain
@@ -95,10 +96,12 @@ public class KeyEventUtil {
      * the N* prefix. For instance, to send two KEYCODE_DPAD_LEFT, use the following:
      * sendKeys(view, "2*DPAD_LEFT").
      *
+     * @param instrumentation the instrumentation used to run the test.
      * @param targetView View to find the ViewRootImpl and dispatch.
      * @param keysSequence The sequence of keys.
      */
-    public final void sendKeys(final View targetView, final String keysSequence) {
+    public static void sendKeys(final Instrumentation instrumentation, final View targetView,
+            final String keysSequence) {
         final String[] keys = keysSequence.split(" ");
         final int count = keys.length;
 
@@ -123,7 +126,7 @@ public class KeyEventUtil {
                     final Field keyCodeField = KeyEvent.class.getField("KEYCODE_" + key);
                     final int keyCode = keyCodeField.getInt(null);
                     try {
-                        sendKeyDownUp(targetView, keyCode);
+                        sendKeyDownUp(instrumentation, targetView, keyCode);
                     } catch (SecurityException e) {
                         // Ignore security exceptions that are now thrown
                         // when trying to send to another app, to retain
@@ -143,21 +146,25 @@ public class KeyEventUtil {
     /**
      * Sends an up and down key events.
      *
+     * @param instrumentation the instrumentation used to run the test.
      * @param targetView View to find the ViewRootImpl and dispatch.
      * @param key The integer keycode for the event to be sent.
      */
-    public final void sendKeyDownUp(final View targetView, final int key) {
-        sendKey(targetView, new KeyEvent(KeyEvent.ACTION_DOWN, key));
-        sendKey(targetView, new KeyEvent(KeyEvent.ACTION_UP, key));
+    public static void sendKeyDownUp(final Instrumentation instrumentation, final View targetView,
+            final int key) {
+        sendKey(instrumentation, targetView, new KeyEvent(KeyEvent.ACTION_DOWN, key));
+        sendKey(instrumentation, targetView, new KeyEvent(KeyEvent.ACTION_UP, key));
     }
 
     /**
      * Sends a key event.
      *
+     * @param instrumentation the instrumentation used to run the test.
      * @param targetView View to find the ViewRootImpl and dispatch.
      * @param event KeyEvent to be send.
      */
-    public final void sendKey(final View targetView, final KeyEvent event) {
+    public static void sendKey(final Instrumentation instrumentation, final View targetView,
+            final KeyEvent event) {
         validateNotAppThread();
 
         long downTime = event.getDownTime();
@@ -167,7 +174,7 @@ public class KeyEventUtil {
         int repeatCount = event.getRepeatCount();
         int metaState = event.getMetaState();
         int deviceId = event.getDeviceId();
-        int scancode = event.getScanCode();
+        int scanCode = event.getScanCode();
         int source = event.getSource();
         int flags = event.getFlags();
         if (source == InputDevice.SOURCE_UNKNOWN) {
@@ -181,46 +188,48 @@ public class KeyEventUtil {
         }
 
         final KeyEvent newEvent = new KeyEvent(downTime, eventTime, action, code, repeatCount,
-                metaState, deviceId, scancode, flags, source);
+                metaState, deviceId, scanCode, flags, source);
 
         InputMethodManager imm = targetView.getContext().getSystemService(InputMethodManager.class);
         imm.dispatchKeyEventFromInputMethod(null, newEvent);
-        mInstrumentation.waitForIdleSync();
+        instrumentation.waitForIdleSync();
     }
 
     /**
      * Sends a key event while holding another modifier key down, then releases both keys and
      * waits for idle sync. Useful for sending combinations like shift + tab.
      *
+     * @param instrumentation the instrumentation used to run the test.
      * @param targetView View to find the ViewRootImpl and dispatch.
      * @param keyCodeToSend The integer keycode for the event to be sent.
      * @param modifierKeyCodeToHold The integer keycode of the modifier to be held.
      */
-    public final void sendKeyWhileHoldingModifier(final View targetView, final int keyCodeToSend,
+    public static void sendKeyWhileHoldingModifier(final Instrumentation instrumentation,
+            final View targetView, final int keyCodeToSend,
             final int modifierKeyCodeToHold) {
         final int metaState = getMetaStateForModifierKeyCode(modifierKeyCodeToHold);
         final long downTime = SystemClock.uptimeMillis();
 
         final KeyEvent holdKeyDown = new KeyEvent(downTime, downTime, KeyEvent.ACTION_DOWN,
                 modifierKeyCodeToHold, 0 /* repeat */);
-        sendKey(targetView, holdKeyDown);
+        sendKey(instrumentation ,targetView, holdKeyDown);
 
         final KeyEvent keyDown = new KeyEvent(downTime, downTime, KeyEvent.ACTION_DOWN,
                 keyCodeToSend, 0 /* repeat */, metaState);
-        sendKey(targetView, keyDown);
+        sendKey(instrumentation, targetView, keyDown);
 
         final KeyEvent keyUp = new KeyEvent(downTime, downTime, KeyEvent.ACTION_UP,
                 keyCodeToSend, 0 /* repeat */, metaState);
-        sendKey(targetView, keyUp);
+        sendKey(instrumentation, targetView, keyUp);
 
         final KeyEvent holdKeyUp = new KeyEvent(downTime, downTime, KeyEvent.ACTION_UP,
                 modifierKeyCodeToHold, 0 /* repeat */);
-        sendKey(targetView, holdKeyUp);
+        sendKey(instrumentation, targetView, holdKeyUp);
 
-        mInstrumentation.waitForIdleSync();
+        instrumentation.waitForIdleSync();
     }
 
-    private int getMetaStateForModifierKeyCode(int modifierKeyCode) {
+    private static int getMetaStateForModifierKeyCode(int modifierKeyCode) {
         if (!KeyEvent.isModifierKey(modifierKeyCode)) {
             throw new IllegalArgumentException("Modifier key expected, but got: "
                     + KeyEvent.keyCodeToString(modifierKeyCode));
@@ -270,12 +279,12 @@ public class KeyEventUtil {
         return KeyEvent.normalizeMetaState(metaState);
     }
 
-    private KeyEvent[] getKeyEvents(final String text) {
+    private static KeyEvent[] getKeyEvents(final String text) {
         KeyCharacterMap keyCharacterMap = KeyCharacterMap.load(KeyCharacterMap.VIRTUAL_KEYBOARD);
         return keyCharacterMap.getEvents(text.toCharArray());
     }
 
-    private void validateNotAppThread() {
+    private static void validateNotAppThread() {
         if (Looper.myLooper() == Looper.getMainLooper()) {
             throw new RuntimeException(
                     "This method can not be called from the main application thread");
