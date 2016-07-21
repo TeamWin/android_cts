@@ -144,7 +144,7 @@ public class KeyEventUtil {
      * Sends an up and down key events.
      *
      * @param targetView View to find the ViewRootImpl and dispatch.
-     * @param key The integer keycode for the event to be send.
+     * @param key The integer keycode for the event to be sent.
      */
     public final void sendKeyDownUp(final View targetView, final int key) {
         sendKey(targetView, new KeyEvent(KeyEvent.ACTION_DOWN, key));
@@ -186,6 +186,88 @@ public class KeyEventUtil {
         InputMethodManager imm = targetView.getContext().getSystemService(InputMethodManager.class);
         imm.dispatchKeyEventFromInputMethod(null, newEvent);
         mInstrumentation.waitForIdleSync();
+    }
+
+    /**
+     * Sends a key event while holding another modifier key down, then releases both keys and
+     * waits for idle sync. Useful for sending combinations like shift + tab.
+     *
+     * @param targetView View to find the ViewRootImpl and dispatch.
+     * @param keyCodeToSend The integer keycode for the event to be sent.
+     * @param modifierKeyCodeToHold The integer keycode of the modifier to be held.
+     */
+    public final void sendKeyWhileHoldingModifier(final View targetView, final int keyCodeToSend,
+            final int modifierKeyCodeToHold) {
+        final int metaState = getMetaStateForModifierKeyCode(modifierKeyCodeToHold);
+        final long downTime = SystemClock.uptimeMillis();
+
+        final KeyEvent holdKeyDown = new KeyEvent(downTime, downTime, KeyEvent.ACTION_DOWN,
+                modifierKeyCodeToHold, 0 /* repeat */);
+        sendKey(targetView, holdKeyDown);
+
+        final KeyEvent keyDown = new KeyEvent(downTime, downTime, KeyEvent.ACTION_DOWN,
+                keyCodeToSend, 0 /* repeat */, metaState);
+        sendKey(targetView, keyDown);
+
+        final KeyEvent keyUp = new KeyEvent(downTime, downTime, KeyEvent.ACTION_UP,
+                keyCodeToSend, 0 /* repeat */, metaState);
+        sendKey(targetView, keyUp);
+
+        final KeyEvent holdKeyUp = new KeyEvent(downTime, downTime, KeyEvent.ACTION_UP,
+                modifierKeyCodeToHold, 0 /* repeat */);
+        sendKey(targetView, holdKeyUp);
+
+        mInstrumentation.waitForIdleSync();
+    }
+
+    private int getMetaStateForModifierKeyCode(int modifierKeyCode) {
+        if (!KeyEvent.isModifierKey(modifierKeyCode)) {
+            throw new IllegalArgumentException("Modifier key expected, but got: "
+                    + KeyEvent.keyCodeToString(modifierKeyCode));
+        }
+
+        int metaState;
+        switch (modifierKeyCode) {
+            case KeyEvent.KEYCODE_SHIFT_LEFT:
+                metaState = KeyEvent.META_SHIFT_LEFT_ON;
+                break;
+            case KeyEvent.KEYCODE_SHIFT_RIGHT:
+                metaState = KeyEvent.META_SHIFT_RIGHT_ON;
+                break;
+            case KeyEvent.KEYCODE_ALT_LEFT:
+                metaState = KeyEvent.META_ALT_LEFT_ON;
+                break;
+            case KeyEvent.KEYCODE_ALT_RIGHT:
+                metaState = KeyEvent.META_ALT_RIGHT_ON;
+                break;
+            case KeyEvent.KEYCODE_CTRL_LEFT:
+                metaState = KeyEvent.META_CTRL_LEFT_ON;
+                break;
+            case KeyEvent.KEYCODE_CTRL_RIGHT:
+                metaState = KeyEvent.META_CTRL_RIGHT_ON;
+                break;
+            case KeyEvent.KEYCODE_META_LEFT:
+                metaState = KeyEvent.META_META_LEFT_ON;
+                break;
+            case KeyEvent.KEYCODE_META_RIGHT:
+                metaState = KeyEvent.META_META_RIGHT_ON;
+                break;
+            case KeyEvent.KEYCODE_SYM:
+                metaState = KeyEvent.META_SYM_ON;
+                break;
+            case KeyEvent.KEYCODE_NUM:
+                metaState = KeyEvent.META_NUM_LOCK_ON;
+                break;
+            case KeyEvent.KEYCODE_FUNCTION:
+                metaState = KeyEvent.META_FUNCTION_ON;
+                break;
+            default:
+                // Safety net: all modifier keys need to have at least one meta state associated.
+                throw new UnsupportedOperationException("No meta state associated with "
+                        + "modifier key: " + KeyEvent.keyCodeToString(modifierKeyCode));
+        }
+
+        return KeyEvent.normalizeMetaState(metaState);
     }
 
     private KeyEvent[] getKeyEvents(final String text) {

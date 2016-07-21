@@ -21,8 +21,8 @@ import static org.mockito.Mockito.*;
 import android.app.Activity;
 import android.app.Instrumentation;
 import android.content.Context;
+import android.cts.util.KeyEventUtil;
 import android.os.Parcelable;
-import android.os.SystemClock;
 import android.test.ActivityInstrumentationTestCase2;
 import android.test.UiThreadTest;
 import android.test.suitebuilder.annotation.SmallTest;
@@ -42,6 +42,7 @@ public class TimePickerTest extends ActivityInstrumentationTestCase2<TimePickerC
     private TimePicker mTimePicker;
     private Activity mActivity;
     private Instrumentation mInstrumentation;
+    private KeyEventUtil mKeyEventUtil;
 
     public TimePickerTest() {
         super("android.widget.cts", TimePickerCtsActivity.class);
@@ -54,6 +55,7 @@ public class TimePickerTest extends ActivityInstrumentationTestCase2<TimePickerC
         mInstrumentation = getInstrumentation();
         mActivity = getActivity();
         mTimePicker = (TimePicker) mActivity.findViewById(R.id.timepicker_clock);
+        mKeyEventUtil = new KeyEventUtil(mInstrumentation);
     }
 
     public void testConstructors() {
@@ -365,7 +367,8 @@ public class TimePickerTest extends ActivityInstrumentationTestCase2<TimePickerC
         for (int i = 0; i < viewsSize; i++) {
             final View currentView = forwardViews.get(i);
             String afterKeyCodeFormattedString = "";
-            int keyCode = KeyEvent.KEYCODE_TAB;
+            int goForwardKeyCode = KeyEvent.KEYCODE_TAB;
+            int modifierKeyCodeToHold = KeyEvent.KEYCODE_SHIFT_LEFT;
 
             if (i == 0) {
                 // Make sure we always start by focusing the 1st element in the list.
@@ -373,11 +376,11 @@ public class TimePickerTest extends ActivityInstrumentationTestCase2<TimePickerC
             } else {
                 if (goForward) {
                     afterKeyCodeFormattedString = " after pressing="
-                            + KeyEvent.keyCodeToString(keyCode);
+                            + KeyEvent.keyCodeToString(goForwardKeyCode);
                 } else {
                     afterKeyCodeFormattedString = " after pressing="
-                            + KeyEvent.keyCodeToString(KeyEvent.KEYCODE_SHIFT_LEFT)
-                            + "+" + KeyEvent.keyCodeToString(keyCode)  + " for" + summary;
+                            + KeyEvent.keyCodeToString(modifierKeyCodeToHold)
+                            + "+" + KeyEvent.keyCodeToString(goForwardKeyCode)  + " for" + summary;
                 }
             }
 
@@ -388,32 +391,13 @@ public class TimePickerTest extends ActivityInstrumentationTestCase2<TimePickerC
 
             if (i < viewsSize - 1) {
                 if (goForward) {
-                    mInstrumentation.sendKeyDownUpSync(keyCode);
+                    mKeyEventUtil.sendKeyDownUp(currentView, goForwardKeyCode);
                 } else {
-                    sendShiftKeyWith(keyCode);
+                    mKeyEventUtil.sendKeyWhileHoldingModifier(
+                            currentView, goForwardKeyCode, modifierKeyCodeToHold);
                 }
             }
         }
-    }
-
-    private void sendShiftKeyWith(int keycode) {
-        final KeyEvent shiftDown = new KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_SHIFT_LEFT);
-        mInstrumentation.sendKeySync(shiftDown);
-
-        final KeyEvent keyDown = new KeyEvent(SystemClock.uptimeMillis(),
-                SystemClock.uptimeMillis(), KeyEvent.ACTION_DOWN, keycode, 0,
-                KeyEvent.META_SHIFT_ON);
-        mInstrumentation.sendKeySync(keyDown);
-
-        final KeyEvent keyUp = new KeyEvent(SystemClock.uptimeMillis(),
-                SystemClock.uptimeMillis(), KeyEvent.ACTION_UP, keycode, 0,
-                KeyEvent.META_SHIFT_ON);
-        mInstrumentation.sendKeySync(keyUp);
-
-        final KeyEvent shiftUp = new KeyEvent(KeyEvent.ACTION_UP, KeyEvent.KEYCODE_SHIFT_LEFT);
-        mInstrumentation.sendKeySync(shiftUp);
-
-        mInstrumentation.waitForIdleSync();
     }
 
     private class MyTimePicker extends TimePicker {
