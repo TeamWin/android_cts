@@ -28,9 +28,6 @@ import android.view.KeyCharacterMap;
 import android.view.KeyEvent;
 import android.widget.TextView.BufferType;
 
-import static org.mockito.Matchers.*;
-import static org.mockito.Mockito.*;
-
 /**
  * Test {@link android.text.method.BaseKeyListener}.
  */
@@ -50,7 +47,7 @@ public class BaseKeyListenerTest extends KeyListenerTestCase {
     }
 
     private void testBackspace(int modifiers) {
-        final MockBaseKeyListener mockBaseKeyListener = new MockBaseKeyListener();
+        final BaseKeyListener mockBaseKeyListener = new MockBaseKeyListener();
         final KeyEvent event = getKey(KeyEvent.KEYCODE_DEL, modifiers);
         Editable content = Editable.Factory.getInstance().newEditable(TEST_STRING);
 
@@ -112,7 +109,7 @@ public class BaseKeyListenerTest extends KeyListenerTestCase {
     }
 
     public void testBackspace_withAlt() {
-        final MockBaseKeyListener mockBaseKeyListener = new MockBaseKeyListener();
+        final BaseKeyListener mockBaseKeyListener = new MockBaseKeyListener();
         Editable content = Editable.Factory.getInstance().newEditable(TEST_STRING);
 
         // Delete the entire line with ALT + DEL, even if we're at the head...
@@ -136,7 +133,7 @@ public class BaseKeyListenerTest extends KeyListenerTestCase {
     }
 
     public void testBackspace_withSendKeys() {
-        final MockBaseKeyListener mockBaseKeyListener = new MockBaseKeyListener();
+        final BaseKeyListener mockBaseKeyListener = new MockBaseKeyListener();
 
         // Delete the first character '1'
         prepTextViewSync(TEST_STRING, mockBaseKeyListener, true, 1, 1);
@@ -170,7 +167,7 @@ public class BaseKeyListenerTest extends KeyListenerTestCase {
     }
 
     public void testBackspace_withCtrl() {
-        final MockBaseKeyListener mockBaseKeyListener = new MockBaseKeyListener();
+        final BaseKeyListener mockBaseKeyListener = new MockBaseKeyListener();
 
         // If the contents only having symbolic characters, delete all characters.
         String testText = "!#$%&'()`{*}_?+";
@@ -325,7 +322,7 @@ public class BaseKeyListenerTest extends KeyListenerTestCase {
     }
 
     public void testForwardDelete_withCtrl() {
-        final MockBaseKeyListener mockBaseKeyListener = new MockBaseKeyListener();
+        final BaseKeyListener mockBaseKeyListener = new MockBaseKeyListener();
 
         // If the contents only having symbolic characters, delete all characters.
         String testText = "!#$%&'()`{*}_?+";
@@ -506,7 +503,7 @@ public class BaseKeyListenerTest extends KeyListenerTestCase {
      * 3. ACTION_MULTIPLE KEYCODE_UNKNOWN by inserting the event's text into the content.
      */
     public void testPressKey() {
-        final MockBaseKeyListener mockBaseKeyListener = new MockBaseKeyListener();
+        final BaseKeyListener mockBaseKeyListener = new MockBaseKeyListener();
 
         // press '0' key.
         prepTextViewSync(TEST_STRING, mockBaseKeyListener, true, 0, 0);
@@ -529,7 +526,7 @@ public class BaseKeyListenerTest extends KeyListenerTestCase {
     }
 
     public void testOnKeyOther() {
-        final MockBaseKeyListener mockBaseKeyListener = new MockBaseKeyListener();
+        final BaseKeyListener mockBaseKeyListener = new MockBaseKeyListener();
         final String string = "abc";
         final SpannableStringBuilder content = new SpannableStringBuilder(string);
 
@@ -551,19 +548,19 @@ public class BaseKeyListenerTest extends KeyListenerTestCase {
         assertEquals("bbc", content.toString());
     }
 
-    private void executeAltBackspace(Editable content, MockBaseKeyListener listener) {
+    private void executeAltBackspace(Editable content, BaseKeyListener listener) {
         final KeyEvent delKeyEvent = getKey(KeyEvent.KEYCODE_DEL,
                 KeyEvent.META_ALT_ON | KeyEvent.META_ALT_LEFT_ON);
         listener.backspace(mTextView, content, KeyEvent.KEYCODE_DEL, delKeyEvent);
     }
 
-    private void executeCtrlBackspace(Editable content, MockBaseKeyListener listener) {
+    private void executeCtrlBackspace(Editable content, BaseKeyListener listener) {
         final KeyEvent delKeyEvent = getKey(KeyEvent.KEYCODE_DEL,
                 KeyEvent.META_CTRL_ON | KeyEvent.META_CTRL_LEFT_ON);
         listener.backspace(mTextView, content, KeyEvent.KEYCODE_DEL, delKeyEvent);
     }
 
-    private void executeCtrlForwardDelete(Editable content, MockBaseKeyListener listener) {
+    private void executeCtrlForwardDelete(Editable content, BaseKeyListener listener) {
         final KeyEvent delKeyEvent = getKey(KeyEvent.KEYCODE_FORWARD_DEL,
                 KeyEvent.META_CTRL_ON | KeyEvent.META_CTRL_LEFT_ON);
         listener.forwardDelete(mTextView, content, KeyEvent.KEYCODE_FORWARD_DEL, delKeyEvent);
