@@ -191,9 +191,7 @@ public class DialogFrameTests extends ActivityManagerTestBase {
     // able to fit all of our content, so we should be adjusted to just fit the
     // content frame.
     public void testExplicitPositionMatchParent() throws Exception {
-        // TODO: We run this test in fullscreen only because of
-        // b/30225290
-        doFullscreenTest("ExplicitPositionMatchParent",
+        doDialogTest("ExplicitPositionMatchParent",
              (WindowState parent, WindowState dialog) -> {
                     assertEquals(parent.getContentFrame(),
                             dialog.getFrame());
