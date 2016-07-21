@@ -279,7 +279,15 @@
         </activity>
 
         <activity android:name="android.widget.cts.ListViewCtsActivity"
-            android:label="ListViewCtsActivity">
+                  android:label="ListViewCtsActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.FRAMEWORK_INSTRUMENTATION_TEST" />
+            </intent-filter>
+        </activity>
+
+        <activity android:name="android.widget.cts.ListViewFixedCtsActivity"
+                  android:label="ListViewFixedCtsActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.FRAMEWORK_INSTRUMENTATION_TEST" />

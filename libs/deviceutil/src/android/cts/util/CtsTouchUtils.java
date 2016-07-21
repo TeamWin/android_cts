@@ -49,7 +49,7 @@ public class CtsTouchUtils {
      */
     public static void emulateTapOnScreen(Instrumentation instrumentation, View anchorView,
             int offsetX, int offsetY) {
-        // Use instrumentation to emulate a tap on the spinner to bring down its popup
+        // Get anchor coordinates on the screen
         final int[] viewOnScreenXY = new int[2];
         anchorView.getLocationOnScreen(viewOnScreenXY);
         int emulatedTapX = viewOnScreenXY[0] + offsetX;
@@ -89,12 +89,13 @@ public class CtsTouchUtils {
      */
     public static void emulateDragGesture(Instrumentation instrumentation,
             int dragStartX, int dragStartY, int dragAmountX, int dragAmountY) {
-        emulateDragGesture(instrumentation, dragStartX, dragStartY, dragAmountX, dragAmountY, 2000);
+        emulateDragGesture(instrumentation, dragStartX, dragStartY, dragAmountX, dragAmountY,
+                2000, 20);
     }
 
     private static void emulateDragGesture(Instrumentation instrumentation,
             int dragStartX, int dragStartY, int dragAmountX, int dragAmountY,
-            int dragDurationMs) {
+            int dragDurationMs, int moveEventCount) {
         // Inject DOWN event
         long downTime = SystemClock.uptimeMillis();
         MotionEvent eventDown = MotionEvent.obtain(
@@ -102,7 +103,6 @@ public class CtsTouchUtils {
         instrumentation.sendPointerSync(eventDown);
 
         // Inject a sequence of MOVE events that emulate a "swipe down" gesture
-        final int moveEventCount = 20;
         for (int i = 0; i < moveEventCount; i++) {
             long moveTime = SystemClock.uptimeMillis();
             final int moveX = dragStartX + dragAmountX * i / moveEventCount;
@@ -123,6 +123,31 @@ public class CtsTouchUtils {
 
         // Wait for the system to process all events in the queue
         instrumentation.waitForIdleSync();
+    }
+
+    public static void emulateFlingGesture(Instrumentation instrumentation,
+            View view, boolean isDownwardsFlingGesture) {
+        final ViewConfiguration configuration = ViewConfiguration.get(view.getContext());
+        final int flingVelocity = (configuration.getScaledMinimumFlingVelocity() +
+                configuration.getScaledMaximumFlingVelocity()) / 2;
+        // Get view coordinates on the screen
+        final int[] viewOnScreenXY = new int[2];
+        view.getLocationOnScreen(viewOnScreenXY);
+
+        // Our fling gesture will be from 25% height of the view to 75% height of the view
+        // for downwards fling gesture, and the other way around for upwards fling gesture
+        final int viewHeight = view.getHeight();
+        final int x = viewOnScreenXY[0] + view.getWidth() / 2;
+        final int startY = isDownwardsFlingGesture ? viewOnScreenXY[1] + viewHeight / 4
+                : viewOnScreenXY[1] + 3 * viewHeight / 4;
+        final int amountY = isDownwardsFlingGesture ? viewHeight / 2 : -viewHeight / 2;
+
+        // Compute fling gesture duration based on the distance (50% height of the view) and
+        // fling velocity
+        final int durationMs = (1000 * viewHeight) / (2 * flingVelocity);
+
+        // And do the same event injection sequence as our generic drag gesture
+        emulateDragGesture(instrumentation, x, startY, 0, amountY, durationMs, 3);
     }
 
     private static class ViewStateSnapshot {
@@ -190,7 +215,7 @@ public class CtsTouchUtils {
         ViewStateSnapshot next = new ViewStateSnapshot(viewGroup);
         do {
             prev = next;
-            emulateDragGesture(instrumentation, emulatedX, emulatedStartY, 0, -swipeAmount, 300);
+            emulateDragGesture(instrumentation, emulatedX, emulatedStartY, 0, -swipeAmount, 300, 10);
             next = new ViewStateSnapshot(viewGroup);
         } while (!prev.equals(next));
     }
