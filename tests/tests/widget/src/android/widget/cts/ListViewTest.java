@@ -809,7 +809,45 @@ public class ListViewTest extends ActivityInstrumentationTestCase2<ListViewCtsAc
             mListView.setPadding(10, 0, 5, 0);
             assertFalse(view.isLayoutRequested());
         });
+    }
 
+    @MediumTest
+    public void testResolveRtlOnReAttach() {
+        View spacer = new View(getActivity());
+        spacer.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
+                250));
+        final DummyAdapter adapter = new DummyAdapter(50, spacer);
+        ViewTestUtils.runOnMainAndDrawSync(getInstrumentation(), mListView, () -> {
+            mListView.setLayoutDirection(View.LAYOUT_DIRECTION_RTL);
+            mListView.setLayoutParams(new LinearLayout.LayoutParams(200, 150));
+            mListView.setAdapter(adapter);
+        });
+        assertEquals("test sanity", 1, mListView.getChildCount());
+        ViewTestUtils.runOnMainAndDrawSync(getInstrumentation(), mListView, () -> {
+            // we scroll in pieces because list view caps scroll by its height
+            mListView.scrollListBy(100);
+            mListView.scrollListBy(100);
+            mListView.scrollListBy(60);
+        });
+        assertEquals("test sanity", 1, mListView.getChildCount());
+        assertEquals("test sanity", 1, mListView.getFirstVisiblePosition());
+        ViewTestUtils.runOnMainAndDrawSync(getInstrumentation(), mListView, () -> {
+            mListView.scrollListBy(-100);
+            mListView.scrollListBy(-100);
+            mListView.scrollListBy(-60);
+        });
+        assertEquals("test sanity", 1, mListView.getChildCount());
+        assertEquals("item 0 should be visible", 0, mListView.getFirstVisiblePosition());
+        ViewTestUtils.runOnMainAndDrawSync(getInstrumentation(), mListView, () -> {
+            mListView.scrollListBy(100);
+            mListView.scrollListBy(100);
+            mListView.scrollListBy(60);
+        });
+        assertEquals("test sanity", 1, mListView.getChildCount());
+        assertEquals("test sanity", 1, mListView.getFirstVisiblePosition());
+
+        assertEquals("the view's RTL properties must be resolved",
+                mListView.getChildAt(0).getLayoutDirection(), View.LAYOUT_DIRECTION_RTL);
     }
 
     private class MockView extends View {
