@@ -34,6 +34,7 @@ public class ConfigurationTest extends AndroidTestCase {
     protected void setUp() throws Exception {
         super.setUp();
         mConfigDefault = new Configuration();
+        mConfigDefault.setToDefaults();
         makeConfiguration();
     }
 
@@ -312,11 +313,60 @@ public class ConfigurationTest extends AndroidTestCase {
     }
 
     public void testSetToDefaults() {
-        final Configuration temp = new Configuration(mConfig);
-        assertFalse(temp.equals(mConfigDefault));
-        temp.setToDefaults();
-        assertTrue(temp.equals(mConfigDefault));
-        assertTrue(temp.getLocales().isEmpty());
+        final Configuration config = new Configuration(mConfig);
+        assertFalse(config.equals(mConfigDefault));
+
+        config.setToDefaults();
+        assertTrue(config.equals(mConfigDefault));
+
+        assertEquals(1.0f, config.fontScale);
+        assertEquals(0, config.mcc);
+        assertEquals(0, config.mnc);
+        assertTrue(config.getLocales().isEmpty());
+        assertEquals(null, config.locale);
+        assertFalse(config.userSetLocale);
+        assertEquals(Configuration.TOUCHSCREEN_UNDEFINED, config.touchscreen);
+        assertEquals(Configuration.KEYBOARD_UNDEFINED, config.keyboard);
+        assertEquals(Configuration.KEYBOARDHIDDEN_UNDEFINED, config.keyboardHidden);
+        assertEquals(Configuration.HARDKEYBOARDHIDDEN_UNDEFINED, config.hardKeyboardHidden);
+        assertEquals(Configuration.NAVIGATION_UNDEFINED, config.navigation);
+        assertEquals(Configuration.NAVIGATIONHIDDEN_UNDEFINED, config.navigationHidden);
+        assertEquals(Configuration.ORIENTATION_UNDEFINED, config.orientation);
+        assertEquals(Configuration.SCREENLAYOUT_UNDEFINED, config.screenLayout);
+        assertEquals(Configuration.UI_MODE_TYPE_UNDEFINED, config.uiMode);
+        assertEquals(Configuration.SCREEN_WIDTH_DP_UNDEFINED, config.screenWidthDp);
+        assertEquals(Configuration.SCREEN_WIDTH_DP_UNDEFINED, config.compatScreenWidthDp);
+        assertEquals(Configuration.SCREEN_HEIGHT_DP_UNDEFINED, config.screenHeightDp);
+        assertEquals(Configuration.SCREEN_HEIGHT_DP_UNDEFINED, config.compatScreenHeightDp);
+        assertEquals(Configuration.SMALLEST_SCREEN_WIDTH_DP_UNDEFINED,
+                config.smallestScreenWidthDp);
+        assertEquals(Configuration.DENSITY_DPI_UNDEFINED, config.densityDpi);
+    }
+
+    public void testUnset() {
+        Configuration config = new Configuration();
+        assertEquals(0.0f, config.fontScale);
+        assertEquals(0, config.mcc);
+        assertEquals(0, config.mnc);
+        assertTrue(config.getLocales().isEmpty());
+        assertEquals(null, config.locale);
+        assertFalse(config.userSetLocale);
+        assertEquals(Configuration.TOUCHSCREEN_UNDEFINED, config.touchscreen);
+        assertEquals(Configuration.KEYBOARD_UNDEFINED, config.keyboard);
+        assertEquals(Configuration.KEYBOARDHIDDEN_UNDEFINED, config.keyboardHidden);
+        assertEquals(Configuration.HARDKEYBOARDHIDDEN_UNDEFINED, config.hardKeyboardHidden);
+        assertEquals(Configuration.NAVIGATION_UNDEFINED, config.navigation);
+        assertEquals(Configuration.NAVIGATIONHIDDEN_UNDEFINED, config.navigationHidden);
+        assertEquals(Configuration.ORIENTATION_UNDEFINED, config.orientation);
+        assertEquals(Configuration.SCREENLAYOUT_UNDEFINED, config.screenLayout);
+        assertEquals(Configuration.UI_MODE_TYPE_UNDEFINED, config.uiMode);
+        assertEquals(Configuration.SCREEN_WIDTH_DP_UNDEFINED, config.screenWidthDp);
+        assertEquals(Configuration.SCREEN_WIDTH_DP_UNDEFINED, config.compatScreenWidthDp);
+        assertEquals(Configuration.SCREEN_HEIGHT_DP_UNDEFINED, config.screenHeightDp);
+        assertEquals(Configuration.SCREEN_HEIGHT_DP_UNDEFINED, config.compatScreenHeightDp);
+        assertEquals(Configuration.SMALLEST_SCREEN_WIDTH_DP_UNDEFINED,
+                config.smallestScreenWidthDp);
+        assertEquals(Configuration.DENSITY_DPI_UNDEFINED, config.densityDpi);
     }
 
     public void testToString() {
