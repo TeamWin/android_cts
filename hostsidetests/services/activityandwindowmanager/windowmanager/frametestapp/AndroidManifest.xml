@@ -22,6 +22,9 @@
         <activity android:name=".DialogTestActivity"
                 android:exported="true"
         />
+        <activity android:name=".SurfaceViewTestActivity"
+                  android:exported="true"
+        />
     </application>
 </manifest>
 
