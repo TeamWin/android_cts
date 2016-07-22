@@ -21,6 +21,7 @@ import android.graphics.BitmapFactory;
 import android.test.AndroidTestCase;
 
 import java.io.InputStream;
+import java.lang.IllegalStateException;
 
 import com.android.cts.security.R;
 
@@ -37,6 +38,10 @@ public class AllocatePixelRefIntOverflowTest extends AndroidTestCase {
          * The decodeStream method results in SIGSEGV (Segmentation fault) on unpatched devices
          * while decoding the exploit image which will lead to process crash
          */
-        BitmapFactory.decodeStream(exploitImage);
+        try {
+            BitmapFactory.decodeStream(exploitImage);
+        } catch(IllegalArgumentException e) {
+            assertTrue(e.getMessage().equals("bitmap size exceeds 32 bits"));
+        }
     }
 }
