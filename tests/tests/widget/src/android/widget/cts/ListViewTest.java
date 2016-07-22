@@ -817,13 +817,13 @@ public class ListViewTest extends ActivityInstrumentationTestCase2<ListViewCtsAc
         spacer.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
                 250));
         final DummyAdapter adapter = new DummyAdapter(50, spacer);
-        ViewTestUtils.runOnMainAndDrawSync(getInstrumentation(), mListView, () -> {
+        WidgetTestUtils.runOnMainAndDrawSync(getInstrumentation(), mListView, () -> {
             mListView.setLayoutDirection(View.LAYOUT_DIRECTION_RTL);
-            mListView.setLayoutParams(new LinearLayout.LayoutParams(200, 150));
+            mListView.setLayoutParams(new FrameLayout.LayoutParams(200, 150));
             mListView.setAdapter(adapter);
         });
         assertEquals("test sanity", 1, mListView.getChildCount());
-        ViewTestUtils.runOnMainAndDrawSync(getInstrumentation(), mListView, () -> {
+        WidgetTestUtils.runOnMainAndDrawSync(getInstrumentation(), mListView, () -> {
             // we scroll in pieces because list view caps scroll by its height
             mListView.scrollListBy(100);
             mListView.scrollListBy(100);
@@ -831,14 +831,14 @@ public class ListViewTest extends ActivityInstrumentationTestCase2<ListViewCtsAc
         });
         assertEquals("test sanity", 1, mListView.getChildCount());
         assertEquals("test sanity", 1, mListView.getFirstVisiblePosition());
-        ViewTestUtils.runOnMainAndDrawSync(getInstrumentation(), mListView, () -> {
+        WidgetTestUtils.runOnMainAndDrawSync(getInstrumentation(), mListView, () -> {
             mListView.scrollListBy(-100);
             mListView.scrollListBy(-100);
             mListView.scrollListBy(-60);
         });
         assertEquals("test sanity", 1, mListView.getChildCount());
         assertEquals("item 0 should be visible", 0, mListView.getFirstVisiblePosition());
-        ViewTestUtils.runOnMainAndDrawSync(getInstrumentation(), mListView, () -> {
+        WidgetTestUtils.runOnMainAndDrawSync(getInstrumentation(), mListView, () -> {
             mListView.scrollListBy(100);
             mListView.scrollListBy(100);
             mListView.scrollListBy(60);
