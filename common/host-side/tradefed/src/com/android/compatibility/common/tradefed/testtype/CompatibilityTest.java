@@ -418,8 +418,13 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
         Set<IAbi> abis = new HashSet<>();
         Set<String> archAbis = AbiUtils.getAbisForArch(SuiteInfo.TARGET_ARCH);
         if (mPrimaryAbiRun) {
-            // Get the primary from the device and make it the --abi to run.
-            mAbiName = mDevice.getProperty("ro.product.cpu.abi").trim();
+            if (mAbiName == null) {
+                // Get the primary from the device and make it the --abi to run.
+                mAbiName = mDevice.getProperty("ro.product.cpu.abi").trim();
+            } else {
+                CLog.d("Option --%s supersedes the option --%s, using abi: %s", ABI_OPTION,
+                        PRIMARY_ABI_RUN, mAbiName);
+            }
         }
         for (String abi : AbiFormatter.getSupportedAbis(mDevice, "")) {
             // Only test against ABIs supported by Compatibility, and if the
