@@ -1513,7 +1513,6 @@ public class AudioTrackTest extends CtsAndroidTestCase {
                             TEST_CONF, TEST_FORMAT); // in bytes
                     final int bufferSamples = 12 * minBufferSize
                             / AudioFormat.getBytesPerSample(TEST_FORMAT);
-                    final int channelCount = Integer.bitCount(TEST_CONF);
                     final double testFrequency = frequency / channelCount;
                     AudioTrack track = new AudioTrack(TEST_STREAM_TYPE, TEST_SR,
                             TEST_CONF, TEST_FORMAT, minBufferSize, TEST_MODE);
