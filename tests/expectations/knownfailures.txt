@@ -372,5 +372,12 @@
     "android.media.cts.EncodeDecodeTest#testEncodeDecodeVideoFromBufferToBufferQVGA"
   ],
   bug: 29832792
+},
+{
+  description: "Libskia security test not working.",
+  bug: 29635350,
+  names: [
+    "android.security.cts.SkiaJpegDecodingTest#testLibskiaOverFlowJpegProcessing"
+  ]
 }
 ]
