@@ -285,7 +285,7 @@ public class ConnectionTest extends AndroidTestCase {
 
         final Bundle retrieved = connection.getExtras();
         assertNotNull(retrieved);
-        assertFalse(extras.containsKey("test-extra-key"));
+        assertFalse(retrieved.containsKey("test-extra-key"));
     }
 
     /**
