@@ -303,7 +303,7 @@ public class ConferenceTest extends BaseTelecomTestWithMockServices {
         mOnExtrasChangedCounter.waitForCount(2);
         Bundle extras = mConferenceObject.getExtras();
 
-        assertNull(extras);
+        assertTrue(extras == null || extras.isEmpty());
     }
 
     private void setupExtras() {
