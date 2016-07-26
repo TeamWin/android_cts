@@ -17,7 +17,9 @@
 package android.cts.util;
 
 import android.app.Instrumentation;
+import android.app.UiAutomation;
 import android.os.SystemClock;
+import android.view.InputDevice;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewConfiguration;
@@ -62,6 +64,7 @@ public final class CtsTouchUtils {
         MotionEvent eventDown = MotionEvent.obtain(
                 downTime, downTime, MotionEvent.ACTION_DOWN, emulatedTapX, emulatedTapY, 1);
         instrumentation.sendPointerSync(eventDown);
+        eventDown.recycle();
 
         // Inject MOVE event
         long moveTime = SystemClock.uptimeMillis();
@@ -69,12 +72,14 @@ public final class CtsTouchUtils {
         MotionEvent eventMove = MotionEvent.obtain(downTime, moveTime, MotionEvent.ACTION_MOVE,
                 emulatedTapX + (touchSlop / 2.0f), emulatedTapY + (touchSlop / 2.0f), 1);
         instrumentation.sendPointerSync(eventMove);
+        eventMove.recycle();
 
         // Inject UP event
         long upTime = SystemClock.uptimeMillis();
         MotionEvent eventUp = MotionEvent.obtain(
                 upTime, upTime, MotionEvent.ACTION_UP, emulatedTapX, emulatedTapY, 1);
         instrumentation.sendPointerSync(eventUp);
+        eventUp.recycle();
 
         // Wait for the system to process all events in the queue
         instrumentation.waitForIdleSync();
@@ -98,20 +103,29 @@ public final class CtsTouchUtils {
     private static void emulateDragGesture(Instrumentation instrumentation,
             int dragStartX, int dragStartY, int dragAmountX, int dragAmountY,
             int dragDurationMs, int moveEventCount) {
+        // We are using the UiAutomation object to inject events so that drag works
+        // across view / window boundaries (such as for the emulated drag and drop
+        // sequences)
+        final UiAutomation uiAutomation = instrumentation.getUiAutomation();
+
         // Inject DOWN event
         long downTime = SystemClock.uptimeMillis();
         MotionEvent eventDown = MotionEvent.obtain(
                 downTime, downTime, MotionEvent.ACTION_DOWN, dragStartX, dragStartY, 1);
-        instrumentation.sendPointerSync(eventDown);
+        eventDown.setSource(InputDevice.SOURCE_TOUCHSCREEN);
+        uiAutomation.injectInputEvent(eventDown, true);
+        eventDown.recycle();
 
-        // Inject a sequence of MOVE events that emulate a "swipe down" gesture
+        // Inject a sequence of MOVE events that emulate the "move" part of the gesture
         for (int i = 0; i < moveEventCount; i++) {
             long moveTime = SystemClock.uptimeMillis();
             final int moveX = dragStartX + dragAmountX * i / moveEventCount;
             final int moveY = dragStartY + dragAmountY * i / moveEventCount;
             MotionEvent eventMove = MotionEvent.obtain(
                     moveTime, moveTime, MotionEvent.ACTION_MOVE, moveX, moveY, 1);
-            instrumentation.sendPointerSync(eventMove);
+            eventMove.setSource(InputDevice.SOURCE_TOUCHSCREEN);
+            uiAutomation.injectInputEvent(eventMove, true);
+            eventMove.recycle();
             // sleep for a bit to emulate the overall swipe gesture
             SystemClock.sleep(dragDurationMs / moveEventCount);
         }
@@ -121,7 +135,9 @@ public final class CtsTouchUtils {
         MotionEvent eventUp = MotionEvent.obtain(
                 upTime, upTime, MotionEvent.ACTION_UP, dragStartX + dragAmountX,
                 dragStartY + dragAmountY, 1);
-        instrumentation.sendPointerSync(eventUp);
+        eventUp.setSource(InputDevice.SOURCE_TOUCHSCREEN);
+        uiAutomation.injectInputEvent(eventUp, true);
+        eventUp.recycle();
 
         // Wait for the system to process all events in the queue
         instrumentation.waitForIdleSync();
@@ -217,7 +233,8 @@ public final class CtsTouchUtils {
         ViewStateSnapshot next = new ViewStateSnapshot(viewGroup);
         do {
             prev = next;
-            emulateDragGesture(instrumentation, emulatedX, emulatedStartY, 0, -swipeAmount, 300, 10);
+            emulateDragGesture(instrumentation, emulatedX, emulatedStartY, 0, -swipeAmount,
+                    300, 10);
             next = new ViewStateSnapshot(viewGroup);
         } while (!prev.equals(next));
     }
@@ -253,24 +270,23 @@ public final class CtsTouchUtils {
         MotionEvent eventDown = MotionEvent.obtain(
                 downTime, downTime, MotionEvent.ACTION_DOWN, emulatedTapX, emulatedTapY, 1);
         instrumentation.sendPointerSync(eventDown);
+        eventDown.recycle();
 
         // Inject MOVE event
         long moveTime = SystemClock.uptimeMillis();
         MotionEvent eventMove = MotionEvent.obtain(
                 moveTime, moveTime, MotionEvent.ACTION_MOVE, emulatedTapX, emulatedTapY, 1);
         instrumentation.sendPointerSync(eventMove);
+        eventMove.recycle();
 
-        try {
-            Thread.sleep((long) (ViewConfiguration.getLongPressTimeout() * 1.5f) + extraWaitMs);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
+        SystemClock.sleep((long) (ViewConfiguration.getLongPressTimeout() * 1.5f) + extraWaitMs);
 
         // Inject UP event
         long upTime = SystemClock.uptimeMillis();
         MotionEvent eventUp = MotionEvent.obtain(
                 upTime, upTime, MotionEvent.ACTION_UP, emulatedTapX, emulatedTapY, 1);
         instrumentation.sendPointerSync(eventUp);
+        eventUp.recycle();
 
         // Wait for the system to process all events in the queue
         instrumentation.waitForIdleSync();

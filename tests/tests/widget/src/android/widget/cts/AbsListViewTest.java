@@ -16,14 +16,32 @@
 
 package android.widget.cts;
 
-import static org.junit.Assert.*;
-import static org.mockito.Mockito.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertSame;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.anyInt;
+import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.eq;
+import static org.mockito.Mockito.inOrder;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.reset;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
+import static org.mockito.Mockito.verifyZeroInteractions;
 
 import android.app.Activity;
 import android.app.Instrumentation;
 import android.content.Context;
-import android.cts.util.PollingCheck;
 import android.cts.util.CtsTouchUtils;
+import android.cts.util.PollingCheck;
 import android.cts.util.WidgetTestUtils;
 import android.graphics.Canvas;
 import android.graphics.Color;
@@ -99,6 +117,7 @@ public class AbsListViewTest {
     private AttributeSet mAttributeSet;
     private ArrayAdapter<String> mShortAdapter;
     private ArrayAdapter<String> mCountriesAdapter;
+    private AbsListView.MultiChoiceModeListener mMultiChoiceModeListener;
 
     private static final float DELTA = 0.001f;
 
@@ -923,9 +942,7 @@ public class AbsListViewTest {
         verifyCheckedState(new long[] {});
     }
 
-    @MediumTest
-    @Test
-    public void testCheckedItemsUnderMultipleModalChoiceMode() {
+    private void configureMultiChoiceModalState() {
         final ArrayList<String> items = new ArrayList<>(Arrays.asList(COUNTRY_LIST));
         final ArrayAdapter<String> adapter = new PositionArrayAdapter<>(mContext,
                 android.R.layout.simple_list_item_1, items);
@@ -935,44 +952,163 @@ public class AbsListViewTest {
         // Configure a multi-choice mode listener to configure our test contextual action bar
         // content. We will subsequently query that listener for calls to its
         // onItemCheckedStateChanged method
-        final AbsListView.MultiChoiceModeListener mockMultiChoiceModeListener =
+        mMultiChoiceModeListener =
                 mock(AbsListView.MultiChoiceModeListener.class);
         doAnswer((InvocationOnMock invocation) -> {
             final ActionMode actionMode = (ActionMode) invocation.getArguments() [0];
             final Menu menu = (Menu) invocation.getArguments() [1];
             actionMode.getMenuInflater().inflate(R.menu.cab_menu, menu);
             return true;
-        }).when(mockMultiChoiceModeListener).onCreateActionMode(
+        }).when(mMultiChoiceModeListener).onCreateActionMode(
                 any(ActionMode.class), any(Menu.class));
-        mListView.setMultiChoiceModeListener(mockMultiChoiceModeListener);
+        mListView.setMultiChoiceModeListener(mMultiChoiceModeListener);
 
         mInstrumentation.runOnMainSync(
                 () -> mListView.setChoiceMode(AbsListView.CHOICE_MODE_MULTIPLE_MODAL));
         verifyCheckedState(new long[] {});
+    }
+
+    @MediumTest
+    @Test
+    public void testCheckedItemsUnderMultipleModalChoiceMode() {
+        configureMultiChoiceModalState();
 
         mInstrumentation.runOnMainSync(() -> mListView.setItemChecked(2, true));
         verifyCheckedState(new long[] { 2 });
-        verify(mockMultiChoiceModeListener, times(1)).onItemCheckedStateChanged(
+        verify(mMultiChoiceModeListener, times(1)).onItemCheckedStateChanged(
                 any(ActionMode.class), eq(2), eq(2L), eq(true));
 
-        reset(mockMultiChoiceModeListener);
+        reset(mMultiChoiceModeListener);
         mInstrumentation.runOnMainSync(() -> mListView.setItemChecked(4, true));
         verifyCheckedState(new long[] { 2, 4 });
-        verify(mockMultiChoiceModeListener, times(1)).onItemCheckedStateChanged(
+        verify(mMultiChoiceModeListener, times(1)).onItemCheckedStateChanged(
                 any(ActionMode.class), eq(4), eq(4L), eq(true));
 
-        reset(mockMultiChoiceModeListener);
+        reset(mMultiChoiceModeListener);
         mInstrumentation.runOnMainSync(() -> mListView.setItemChecked(2, false));
         verifyCheckedState(new long[] { 4 });
-        verify(mockMultiChoiceModeListener, times(1)).onItemCheckedStateChanged(
+        verify(mMultiChoiceModeListener, times(1)).onItemCheckedStateChanged(
                 any(ActionMode.class), eq(2), eq(2L), eq(false));
 
-        reset(mockMultiChoiceModeListener);
+        reset(mMultiChoiceModeListener);
         mInstrumentation.runOnMainSync(() -> mListView.setItemChecked(4, false));
         verifyCheckedState(new long[] {});
-        mListView.setMultiChoiceModeListener(mockMultiChoiceModeListener);
-        verify(mockMultiChoiceModeListener, times(1)).onItemCheckedStateChanged(
+        mListView.setMultiChoiceModeListener(mMultiChoiceModeListener);
+        verify(mMultiChoiceModeListener, times(1)).onItemCheckedStateChanged(
                 any(ActionMode.class), eq(4), eq(4L), eq(false));
+    }
+
+    private void configureMultiChoiceModeListenerOnItemChecked(final CountDownLatch countDownLatch,
+            int positionToBecomeChecked) {
+        doAnswer((InvocationOnMock invocation) -> {
+            countDownLatch.countDown();
+            return null;
+        }).when(mMultiChoiceModeListener).onItemCheckedStateChanged(
+                any(ActionMode.class), eq(positionToBecomeChecked),
+                eq((long) positionToBecomeChecked), eq(true));
+    }
+
+    @LargeTest
+    @Test
+    public void testMultiSelectionWithLongPressAndTaps() {
+        configureMultiChoiceModalState();
+
+        final int firstVisiblePosition = mListView.getFirstVisiblePosition();
+        final int lastVisiblePosition = mListView.getLastVisiblePosition();
+
+        // Emulate long-click on the middle item of the currently visible content
+        final int positionForInitialSelection = (firstVisiblePosition + lastVisiblePosition) / 2;
+        final CountDownLatch initialCheckedLatch = new CountDownLatch(1);
+        configureMultiChoiceModeListenerOnItemChecked(
+                initialCheckedLatch, positionForInitialSelection);
+        CtsTouchUtils.emulateLongClick(mInstrumentation,
+                mListView.getChildAt(positionForInitialSelection));
+        try {
+            assertTrue(initialCheckedLatch.await(1, TimeUnit.SECONDS));
+        } catch (InterruptedException ie) {
+            fail();
+        }
+        // and verify that the item is now checked
+        verifyCheckedState(new long[] { positionForInitialSelection });
+
+        if (firstVisiblePosition != positionForInitialSelection) {
+            final CountDownLatch secondCheckedLatch = new CountDownLatch(1);
+            configureMultiChoiceModeListenerOnItemChecked(
+                    secondCheckedLatch, firstVisiblePosition);
+            // Tap the first element in our list
+            CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation,
+                    mListView.getChildAt(firstVisiblePosition));
+            try {
+                assertTrue(secondCheckedLatch.await(1, TimeUnit.SECONDS));
+            } catch (InterruptedException ie) {
+                fail();
+            }
+            // and verify that the item is now checked
+            verifyCheckedState(new long[] { firstVisiblePosition, positionForInitialSelection });
+        }
+
+        // Scroll down
+        CtsTouchUtils.emulateScrollToBottom(mInstrumentation, mListView);
+        final int lastListPosition = COUNTRY_LIST.length - 1;
+        if (lastListPosition != positionForInitialSelection) {
+            final CountDownLatch thirdCheckedLatch = new CountDownLatch(1);
+            configureMultiChoiceModeListenerOnItemChecked(thirdCheckedLatch, lastListPosition);
+            // Tap the last element in our list
+            CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation,
+                    mListView.getChildAt(mListView.getChildCount() - 1));
+            try {
+                assertTrue(thirdCheckedLatch.await(1, TimeUnit.SECONDS));
+            } catch (InterruptedException ie) {
+                fail();
+            }
+            // and verify that the item is now checked and our listener has been notified
+            verifyCheckedState(new long[] { firstVisiblePosition, positionForInitialSelection,
+                    lastListPosition });
+        }
+    }
+
+    @LargeTest
+    @Test
+    public void testFastScroll() {
+        setAdapter();
+
+        final int lastVisiblePosition = mListView.getLastVisiblePosition();
+        if (lastVisiblePosition == (COUNTRY_LIST.length - 1)) {
+            // This can happen on very large screens - the entire content fits and there's
+            // nothing to scroll
+            return;
+        }
+
+        mListView.setFastScrollAlwaysVisible(true);
+        assertTrue(mListView.isFastScrollEnabled());
+        assertTrue(mListView.isFastScrollAlwaysVisible());
+
+        final int[] listViewOnScreenXY = new int[2];
+        mListView.getLocationOnScreen(listViewOnScreenXY);
+
+        final int topEdgeY = listViewOnScreenXY[1];
+        final int bottomEdgeY = listViewOnScreenXY[1] + mListView.getHeight();
+        final int rightEdgeX = listViewOnScreenXY[0] + mListView.getWidth();
+
+        // Emulate a downwards gesture that should bring us all the way to the last element
+        // of the list (when fast scroll is enabled)
+        CtsTouchUtils.emulateDragGesture(mInstrumentation,
+                rightEdgeX - 1,              // X start of the drag
+                topEdgeY + 1,                // Y start of the drag
+                0,                           // X amount of the drag (vertical)
+                mListView.getHeight() - 2);  // Y amount of the drag (downwards)
+
+        assertEquals(COUNTRY_LIST.length - 1, mListView.getLastVisiblePosition());
+
+        // Emulate an upwards gesture that should bring us all the way to the first element
+        // of the list (when fast scroll is enabled)
+        CtsTouchUtils.emulateDragGesture(mInstrumentation,
+                rightEdgeX - 1,               // X start of the drag
+                bottomEdgeY - 1,              // Y start of the drag
+                0,                            // X amount of the drag (vertical)
+                -mListView.getHeight() + 2);  // Y amount of the drag (upwards)
+
+        assertEquals(0, mListView.getFirstVisiblePosition());
     }
 
     /**
