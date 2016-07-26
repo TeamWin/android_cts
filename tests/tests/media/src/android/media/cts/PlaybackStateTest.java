@@ -37,6 +37,7 @@ public class PlaybackStateTest extends AndroidTestCase {
     private static final long TEST_QUEUE_ITEM_ID = 23L;
     private static final float TEST_PLAYBACK_SPEED = 3.0f;
     private static final float TEST_PLAYBACK_SPEED_ON_REWIND = -2.0f;
+    private static final float DELTA = 1e-7f;
 
     private static final String TEST_ERROR_MSG = "test-error-msg";
     private static final String TEST_CUSTOM_ACTION = "test-custom-action";
@@ -56,7 +57,7 @@ public class PlaybackStateTest extends AndroidTestCase {
         assertEquals(0, state.getState());
         assertEquals(0L, state.getPosition());
         assertEquals(0L, state.getBufferedPosition());
-        assertEquals(0.0f, state.getPlaybackSpeed(), 0);
+        assertEquals(0.0f, state.getPlaybackSpeed(), DELTA);
         assertEquals(0L, state.getActions());
         assertNull(state.getErrorMessage());
         assertEquals(0L, state.getLastPositionUpdateTime());
@@ -87,7 +88,7 @@ public class PlaybackStateTest extends AndroidTestCase {
                 .build();
         assertEquals(PlaybackState.STATE_PLAYING, state.getState());
         assertEquals(TEST_POSITION, state.getPosition());
-        assertEquals(TEST_PLAYBACK_SPEED, state.getPlaybackSpeed(), 0);
+        assertEquals(TEST_PLAYBACK_SPEED, state.getPlaybackSpeed(), DELTA);
         assertEquals(TEST_ACTIONS, state.getActions());
         assertEquals(TEST_QUEUE_ITEM_ID, state.getActiveQueueItemId());
         assertEquals(TEST_BUFFERED_POSITION, state.getBufferedPosition());
@@ -104,7 +105,7 @@ public class PlaybackStateTest extends AndroidTestCase {
                 TEST_PLAYBACK_SPEED_ON_REWIND, TEST_UPDATE_TIME).build();
         assertEquals(PlaybackState.STATE_REWINDING, state.getState());
         assertEquals(TEST_POSITION, state.getPosition());
-        assertEquals(TEST_PLAYBACK_SPEED_ON_REWIND, state.getPlaybackSpeed(), 0);
+        assertEquals(TEST_PLAYBACK_SPEED_ON_REWIND, state.getPlaybackSpeed(), DELTA);
         assertEquals(TEST_UPDATE_TIME, state.getLastPositionUpdateTime());
     }
 
@@ -194,7 +195,7 @@ public class PlaybackStateTest extends AndroidTestCase {
         PlaybackState stateOut = PlaybackState.CREATOR.createFromParcel(parcel);
         assertEquals(PlaybackState.STATE_CONNECTING, stateOut.getState());
         assertEquals(TEST_POSITION, stateOut.getPosition());
-        assertEquals(TEST_PLAYBACK_SPEED, stateOut.getPlaybackSpeed());
+        assertEquals(TEST_PLAYBACK_SPEED, stateOut.getPlaybackSpeed(), DELTA);
         assertEquals(TEST_UPDATE_TIME, stateOut.getLastPositionUpdateTime());
         assertEquals(TEST_BUFFERED_POSITION, stateOut.getBufferedPosition());
         assertEquals(TEST_ACTIONS, stateOut.getActions());
