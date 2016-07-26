@@ -38,6 +38,7 @@ import junit.framework.Assert;
 
 import org.hamcrest.BaseMatcher;
 import org.hamcrest.Description;
+import org.mockito.verification.VerificationMode;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -483,5 +484,9 @@ public class TestUtils {
             WidgetTestUtils.assertEquals(getBitmap(context, expectedBottomDrawableId),
                     ((BitmapDrawable) compoundDrawablesRelative[3]).getBitmap());
         }
+    }
+
+    public static VerificationMode within(long timeout) {
+        return new Within(timeout);
     }
 }

@@ -16,11 +16,13 @@
 
 package android.widget.cts;
 
+import static android.widget.cts.util.TestUtils.within;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertSame;
 import static org.mockito.Matchers.anyInt;
-import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 
 import android.app.Instrumentation;
 import android.cts.util.PollingCheck;
@@ -31,14 +33,9 @@ import android.support.test.runner.AndroidJUnit4;
 import android.test.suitebuilder.annotation.SmallTest;
 import android.widget.Filter;
 
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.invocation.InvocationOnMock;
-
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
 
 @SmallTest
 @RunWith(AndroidJUnit4.class)
@@ -92,12 +89,7 @@ public class FilterTest {
 
     @Test
     public void testFilter2() {
-        final CountDownLatch countDownLatch = new CountDownLatch(1);
         final Filter.FilterListener mockFilterListener = mock(Filter.FilterListener.class);
-        doAnswer((InvocationOnMock invocation) -> {
-            countDownLatch.countDown();
-            return null;
-        }).when(mockFilterListener).onFilterComplete(anyInt());
 
         mInstrumentation.runOnMainSync(() -> {
             mMockFilter = new MockFilter();
@@ -112,11 +104,7 @@ public class FilterTest {
         assertEquals(TEST_CONSTRAINT, mMockFilter.getPublishResultsConstraint());
         assertSame(mMockFilter.getExpectResults(), mMockFilter.getResults());
 
-        try {
-            countDownLatch.await(TIME_OUT, TimeUnit.MILLISECONDS);
-        } catch (InterruptedException ie) {
-            Assert.fail(ie.toString());
-        }
+        verify(mockFilterListener, within(TIME_OUT)).onFilterComplete(anyInt());
     }
 
     private static class MockFilter extends Filter {
