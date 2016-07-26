@@ -396,7 +396,7 @@ public class PrintServicesTest extends BasePrintTest {
 
         // Update icon to bitmap
         Bitmap bm = BitmapFactory.decodeResource(getActivity().getResources(),
-                R.raw.yellow_printer);
+                R.raw.yellow);
         // Icon will be picked up from the discovery session once setHasCustomPrinterIcon is set
         mIcon = Icon.createWithBitmap(bm);
         updatePrinter(sessionCallbacks,
