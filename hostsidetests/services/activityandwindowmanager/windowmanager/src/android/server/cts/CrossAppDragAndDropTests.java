@@ -75,10 +75,14 @@ public class CrossAppDragAndDropTests extends DeviceTestCase {
     private static final String TARGET_LOG_TAG = "DropTarget";
 
     private static final String RESULT_KEY_DRAG_STARTED = "DRAG_STARTED";
+    private static final String RESULT_KEY_DRAG_ENDED = "DRAG_ENDED";
     private static final String RESULT_KEY_EXTRAS = "EXTRAS";
     private static final String RESULT_KEY_DROP_RESULT = "DROP";
     private static final String RESULT_KEY_ACCESS_BEFORE = "BEFORE";
     private static final String RESULT_KEY_ACCESS_AFTER = "AFTER";
+    private static final String RESULT_KEY_CLIP_DATA_ERROR = "CLIP_DATA_ERROR";
+    private static final String RESULT_KEY_CLIP_DESCR_ERROR = "CLIP_DESCR_ERROR";
+    private static final String RESULT_KEY_LOCAL_STATE_ERROR = "LOCAL_STATE_ERROR";
 
     private static final String RESULT_OK = "OK";
     private static final String RESULT_EXCEPTION = "Exception";
@@ -267,7 +271,7 @@ public class CrossAppDragAndDropTests extends DeviceTestCase {
     }
 
     private Map<String, String> getLogResults(String className) throws Exception {
-        int retryCount = 3;
+        int retryCount = 10;
         Map<String, String> output = new HashMap<String, String>();
         do {
 
@@ -281,7 +285,7 @@ public class CrossAppDragAndDropTests extends DeviceTestCase {
                     }
                 }
             }
-            if (output.containsKey(RESULT_KEY_DROP_RESULT)) {
+            if (output.containsKey(RESULT_KEY_DRAG_ENDED)) {
                 return output;
             }
         } while (retryCount-- > 0);
@@ -306,9 +310,19 @@ public class CrossAppDragAndDropTests extends DeviceTestCase {
         if (expectedDropResult != null) {
             assertResult(RESULT_KEY_ACCESS_BEFORE, RESULT_EXCEPTION);
             assertResult(RESULT_KEY_ACCESS_AFTER, RESULT_EXCEPTION);
+            assertListenerResults(RESULT_OK);
         }
     }
 
+    private void assertListenerResults(String expectedResult) {
+        assertResult(RESULT_KEY_DRAG_STARTED, expectedResult);
+        assertResult(RESULT_KEY_DRAG_ENDED, expectedResult);
+        assertResult(RESULT_KEY_EXTRAS, expectedResult);
+
+        assertResult(RESULT_KEY_CLIP_DATA_ERROR, null);
+        assertResult(RESULT_KEY_CLIP_DESCR_ERROR, null);
+        assertResult(RESULT_KEY_LOCAL_STATE_ERROR, null);
+    }
 
     private void assertResult(String resultKey, String expectedResult) {
         if (expectedResult == null) {
@@ -323,25 +337,22 @@ public class CrossAppDragAndDropTests extends DeviceTestCase {
 
     public void testCancelSoon() throws Exception {
         doTestDragAndDrop(CANCEL_SOON, REQUEST_NONE, null);
-        assertResult(RESULT_KEY_DRAG_STARTED, RESULT_OK);
-        assertResult(RESULT_KEY_EXTRAS, RESULT_OK);
+        assertListenerResults(RESULT_OK);
     }
 
     public void testDisallowGlobal() throws Exception {
         doTestDragAndDrop(DISALLOW_GLOBAL, REQUEST_NONE, null);
-        assertResult(RESULT_KEY_DRAG_STARTED, null);
+        assertListenerResults(null);
     }
 
     public void testDisallowGlobalBelowSdk24() throws Exception {
         mTargetPackageName = TARGET_23_PACKAGE_NAME;
         doTestDragAndDrop(GRANT_NONE, REQUEST_NONE, null);
-        assertResult(RESULT_KEY_DRAG_STARTED, null);
+        assertListenerResults(null);
     }
 
     public void testGrantNoneRequestNone() throws Exception {
         doTestDragAndDrop(GRANT_NONE, REQUEST_NONE, RESULT_EXCEPTION);
-        assertResult(RESULT_KEY_DRAG_STARTED, RESULT_OK);
-        assertResult(RESULT_KEY_EXTRAS, RESULT_OK);
     }
 
     public void testGrantNoneRequestRead() throws Exception {

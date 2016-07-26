@@ -18,6 +18,7 @@ package android.wm.cts.dndtargetapp;
 
 import android.app.Activity;
 import android.content.ClipData;
+import android.content.ClipDescription;
 import android.content.ContentValues;
 import android.database.Cursor;
 import android.net.Uri;
@@ -33,14 +34,20 @@ public class DropTarget extends Activity {
     public static final String LOG_TAG = "DropTarget";
 
     private static final String RESULT_KEY_DRAG_STARTED = "DRAG_STARTED";
+    private static final String RESULT_KEY_DRAG_ENDED = "DRAG_ENDED";
     private static final String RESULT_KEY_EXTRAS = "EXTRAS";
     private static final String RESULT_KEY_DROP_RESULT = "DROP";
     private static final String RESULT_KEY_DETAILS = "DETAILS";
     private static final String RESULT_KEY_ACCESS_AFTER = "AFTER";
     private static final String RESULT_KEY_ACCESS_BEFORE = "BEFORE";
+    private static final String RESULT_KEY_CLIP_DATA_ERROR = "CLIP_DATA_ERROR";
+    private static final String RESULT_KEY_CLIP_DESCR_ERROR = "CLIP_DESCR_ERROR";
+    private static final String RESULT_KEY_LOCAL_STATE_ERROR = "LOCAL_STATE_ERROR";
 
     public static final String RESULT_OK = "OK";
     public static final String RESULT_EXCEPTION = "Exception";
+    public static final String RESULT_MISSING = "MISSING";
+    public static final String RESULT_LEAKING = "LEAKING";
 
     protected static final String MAGIC_VALUE = "42";
 
@@ -96,6 +103,8 @@ public class DropTarget extends Activity {
 
         @Override
         public boolean onDrag(View v, DragEvent event) {
+            checkDragEvent(event);
+
             switch (event.getAction()) {
                 case DragEvent.ACTION_DRAG_STARTED:
                     logResult(RESULT_KEY_DRAG_STARTED, RESULT_OK);
@@ -123,6 +132,7 @@ public class DropTarget extends Activity {
                     return true;
 
                 case DragEvent.ACTION_DRAG_ENDED:
+                    logResult(RESULT_KEY_DRAG_ENDED, RESULT_OK);
                     return true;
 
                 default:
@@ -178,6 +188,40 @@ public class DropTarget extends Activity {
         }
 
         abstract protected String processUri(Uri uri);
+    }
+
+    private void checkDragEvent(DragEvent event) {
+        final int action = event.getAction();
+
+        // ClipData should be available for ACTION_DROP only.
+        final ClipData clipData = event.getClipData();
+        if (action == DragEvent.ACTION_DROP) {
+            if (clipData == null) {
+                logResult(RESULT_KEY_CLIP_DATA_ERROR, RESULT_MISSING);
+            }
+        } else {
+            if (clipData != null) {
+                logResult(RESULT_KEY_CLIP_DATA_ERROR, RESULT_LEAKING + action);
+            }
+        }
+
+        // ClipDescription should be always available except for ACTION_DRAG_ENDED.
+        final ClipDescription clipDescription = event.getClipDescription();
+        if (action != DragEvent.ACTION_DRAG_ENDED) {
+            if (clipDescription == null) {
+                logResult(RESULT_KEY_CLIP_DESCR_ERROR, RESULT_MISSING + action);
+            }
+        } else {
+            if (clipDescription != null) {
+                logResult(RESULT_KEY_CLIP_DESCR_ERROR, RESULT_LEAKING);
+            }
+        }
+
+        // Local state should be always null for cross-app drags.
+        final Object localState = event.getLocalState();
+        if (localState != null) {
+            logResult(RESULT_KEY_LOCAL_STATE_ERROR, RESULT_LEAKING + action);
+        }
     }
 
     private class OnDragUriReadListener extends OnDragUriListener {
