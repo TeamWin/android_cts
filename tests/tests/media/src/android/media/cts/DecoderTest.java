@@ -354,6 +354,41 @@ public class DecoderTest extends MediaPlayerTestBase {
                 2 /* MediaFormat.COLOR_TRANSFER_SRGB */);
     }
 
+    /**
+     * Test ColorAspects of all the MPEG2 decoders if avaiable. Decoders should
+     * handle the colors aspects presented in both the mp4 atom 'colr' and Sequence
+     * in the bitstream correctly. The following table lists the color aspects
+     * contained in the color box and SeqInfo for the test stream.
+     * P = primaries, T = transfer, M = coeffs, R = range. '-' means
+     * empty value.
+     *                                       |     colr     |    SeqInfo
+     * -------------------------------------------------------------------
+     *         File Name                     |  P  T  M  R  |  P  T  M  R
+     * -------------------------------------------------------------------
+     *  color_176x144_bt709_lr_sdr_mpeg2     |  1  1  1  0  |  -  -  -  -
+     *  color_176x144_bt601_625_lr_sdr_mpeg2 |  1  6  6  0  |  5  2  2  0
+     *  color_176x144_bt601_525_lr_sdr_mpeg2 |  6  5  4  0  |  2  6  6  0
+     *  color_176x144_srgb_lr_sdr_mpeg2      |  2  0  2  0  |  1  13 1  0
+     */
+    public void testMPEG2ColorAspectsTV() throws Exception {
+        testColorAspects(
+                R.raw.color_176x144_bt709_lr_sdr_mpeg2, 1 /* testId */,
+                MediaFormat.COLOR_RANGE_LIMITED, MediaFormat.COLOR_STANDARD_BT709,
+                MediaFormat.COLOR_TRANSFER_SDR_VIDEO);
+        testColorAspects(
+                R.raw.color_176x144_bt601_625_lr_sdr_mpeg2, 2 /* testId */,
+                MediaFormat.COLOR_RANGE_LIMITED, MediaFormat.COLOR_STANDARD_BT601_PAL,
+                MediaFormat.COLOR_TRANSFER_SDR_VIDEO);
+        testColorAspects(
+                R.raw.color_176x144_bt601_525_lr_sdr_mpeg2, 3 /* testId */,
+                MediaFormat.COLOR_RANGE_LIMITED, MediaFormat.COLOR_STANDARD_BT601_NTSC,
+                MediaFormat.COLOR_TRANSFER_SDR_VIDEO);
+        testColorAspects(
+                R.raw.color_176x144_srgb_lr_sdr_mpeg2, 4 /* testId */,
+                MediaFormat.COLOR_RANGE_LIMITED, MediaFormat.COLOR_STANDARD_BT709,
+                2 /* MediaFormat.COLOR_TRANSFER_SRGB */);
+    }
+
     private void testColorAspects(
             int res, int testId, int expectRange, int expectStandard, int expectTransfer)
             throws Exception {
