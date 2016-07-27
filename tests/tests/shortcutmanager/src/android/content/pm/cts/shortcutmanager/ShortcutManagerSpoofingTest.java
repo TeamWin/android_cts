@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package android.content.pm.cts;
+package android.content.pm.cts.shortcutmanager;
 
 import static com.android.server.pm.shortcutmanagertest.ShortcutManagerTestUtils.assertCallbackNotReceived;
 import static com.android.server.pm.shortcutmanagertest.ShortcutManagerTestUtils.assertCallbackReceived;
@@ -31,10 +31,12 @@ import android.content.pm.LauncherApps;
 import android.content.pm.ShortcutInfo;
 import android.os.Handler;
 import android.os.Looper;
+import android.test.suitebuilder.annotation.SmallTest;
 
 /**
  * Make sure switching between mPackageContext1..3 and mLauncherContext1..3 will work as intended.
  */
+@SmallTest
 public class ShortcutManagerSpoofingTest extends ShortcutManagerCtsTestsBase {
     /**
      * Create shortcuts from different packages and make sure they're really different.

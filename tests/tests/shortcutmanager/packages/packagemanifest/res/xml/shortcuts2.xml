@@ -16,19 +16,30 @@
 <shortcuts xmlns:android="http://schemas.android.com/apk/res/android" >
     <shortcut
         android:shortcutId="ms21"
-        android:icon="@drawable/icon1"
+        android:icon="@drawable/black_16x16"
         android:shortcutShortLabel="@string/label1"
         android:shortcutLongLabel="@string/long_label1"
         android:shortcutDisabledMessage="@string/disabled_message1">
         <intent
-            android:action="android.intent.action.VIEW"
-            android:data="http://www.google.com/" />
+            android:action="android.intent.action.VIEW" />
         <categories android:name="android.shortcut.conversation" />
         <categories android:name="android.shortcut.media" />
     </shortcut>
     <shortcut
         android:shortcutId="ms22"
         android:shortcutShortLabel="@string/label2">
-        <intent android:action="android.intent.action.DIAL" />
+        <intent android:action="action" />
+        <intent android:action="action2"
+            android:data="data"
+            android:mimeType="a/b"
+            android:targetPackage="pkg"
+            android:targetClass="pkg.class"
+            >
+            <categories android:name="icat1"/>
+            <categories android:name="icat2"/>
+            <extra android:name="key1" android:value="value1" />
+            <extra android:name="key2" android:value="123" />
+            <extra android:name="key3" android:value="true" />
+        </intent>
     </shortcut>
 </shortcuts>
