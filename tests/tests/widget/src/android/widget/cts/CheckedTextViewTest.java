@@ -32,6 +32,7 @@ import android.graphics.PorterDuff;
 import android.graphics.drawable.Drawable;
 import android.os.Parcelable;
 import android.support.test.InstrumentationRegistry;
+import android.support.test.annotation.UiThreadTest;
 import android.support.test.rule.ActivityTestRule;
 import android.support.test.runner.AndroidJUnit4;
 import android.test.suitebuilder.annotation.SmallTest;
@@ -59,7 +60,6 @@ public class CheckedTextViewTest {
     private Activity mActivity;
     private ListView mListView;
     private CheckedTextView mCheckedTextView;
-    private Parcelable mState;
 
     @Rule
     public ActivityTestRule<CheckedTextViewCtsActivity> mActivityRule
@@ -142,20 +142,19 @@ public class CheckedTextViewTest {
         assertFalse(view2.isChecked());
     }
 
+    @UiThreadTest
     @Test
     public void testToggle() {
         assertFalse(mCheckedTextView.isChecked());
 
-        mInstrumentation.runOnMainSync(() -> mCheckedTextView.toggle());
+        mCheckedTextView.toggle();
         assertTrue(mCheckedTextView.isChecked());
 
-        mInstrumentation.runOnMainSync(() -> mCheckedTextView.toggle());
+        mCheckedTextView.toggle();
         assertFalse(mCheckedTextView.isChecked());
 
-        mInstrumentation.runOnMainSync(() -> {
-            mCheckedTextView.setChecked(true);
-            mCheckedTextView.toggle();
-        });
+        mCheckedTextView.setChecked(true);
+        mCheckedTextView.toggle();
         assertFalse(mCheckedTextView.isChecked());
     }
 
@@ -195,41 +194,40 @@ public class CheckedTextViewTest {
 
     private void cleanUpForceLayoutFlags(View view) {
         if (view != null) {
-            mInstrumentation.runOnMainSync(() -> view.layout(0, 0, 0, 0));
+            view.layout(0, 0, 0, 0);
             assertFalse(view.isLayoutRequested());
         }
     }
 
+    @UiThreadTest
     @Test
     public void testSetCheckMarkDrawableByDrawable() {
         int basePaddingRight = 10;
 
         // set drawable when checkedTextView is GONE
-        mInstrumentation.runOnMainSync(() -> mCheckedTextView.setVisibility(View.GONE));
+        mCheckedTextView.setVisibility(View.GONE);
         final Drawable firstDrawable = mActivity.getDrawable(R.drawable.scenery);
         firstDrawable.setVisible(true, false);
         assertEquals(StateSet.WILD_CARD, firstDrawable.getState());
         cleanUpForceLayoutFlags(mCheckedTextView);
 
-        mInstrumentation.runOnMainSync(() -> mCheckedTextView.setCheckMarkDrawable(firstDrawable));
+        mCheckedTextView.setCheckMarkDrawable(firstDrawable);
         assertEquals(firstDrawable.getIntrinsicWidth(), mCheckedTextView.getPaddingRight());
         assertFalse(firstDrawable.isVisible());
         assertTrue(Arrays.equals(mCheckedTextView.getDrawableState(), firstDrawable.getState()));
         assertTrue(mCheckedTextView.isLayoutRequested());
 
-        mInstrumentation.runOnMainSync(() -> mCheckedTextView.setCheckMarkDrawable(null));
+        mCheckedTextView.setCheckMarkDrawable(null);
 
         // update drawable when checkedTextView is VISIBLE
-        mInstrumentation.runOnMainSync(() -> {
-            mCheckedTextView.setVisibility(View.VISIBLE);
-            mCheckedTextView.setPadding(0, 0, basePaddingRight, 0);
-        });
+        mCheckedTextView.setVisibility(View.VISIBLE);
+        mCheckedTextView.setPadding(0, 0, basePaddingRight, 0);
         final Drawable secondDrawable = mActivity.getDrawable(R.drawable.pass);
         secondDrawable.setVisible(true, false);
         assertEquals(StateSet.WILD_CARD, secondDrawable.getState());
         cleanUpForceLayoutFlags(mCheckedTextView);
 
-        mInstrumentation.runOnMainSync(() -> mCheckedTextView.setCheckMarkDrawable(secondDrawable));
+        mCheckedTextView.setCheckMarkDrawable(secondDrawable);
         assertEquals(secondDrawable.getIntrinsicWidth() + basePaddingRight,
                 mCheckedTextView.getPaddingRight());
         assertTrue(secondDrawable.isVisible());
@@ -237,79 +235,76 @@ public class CheckedTextViewTest {
         assertTrue(mCheckedTextView.isLayoutRequested());
 
         cleanUpForceLayoutFlags(mCheckedTextView);
-        mInstrumentation.runOnMainSync(() -> mCheckedTextView.setCheckMarkDrawable(null));
+        mCheckedTextView.setCheckMarkDrawable(null);
         assertEquals(basePaddingRight, mCheckedTextView.getPaddingRight());
         assertTrue(mCheckedTextView.isLayoutRequested());
     }
 
+    @UiThreadTest
     @Test
     public void testSetCheckMarkDrawableById() {
         int basePaddingRight = 10;
 
         // set drawable
-        mInstrumentation.runOnMainSync(
-                () -> mCheckedTextView.setPadding(0, 0, basePaddingRight, 0));
+        mCheckedTextView.setPadding(0, 0, basePaddingRight, 0);
         Drawable firstDrawable = mActivity.getDrawable(R.drawable.scenery);
         cleanUpForceLayoutFlags(mCheckedTextView);
 
-        mInstrumentation.runOnMainSync(
-                () -> mCheckedTextView.setCheckMarkDrawable(R.drawable.scenery));
+        mCheckedTextView.setCheckMarkDrawable(R.drawable.scenery);
         assertEquals(firstDrawable.getIntrinsicWidth() + basePaddingRight,
                 mCheckedTextView.getPaddingRight());
         assertTrue(mCheckedTextView.isLayoutRequested());
 
         // set the same drawable again
         cleanUpForceLayoutFlags(mCheckedTextView);
-        mInstrumentation.runOnMainSync(
-                () -> mCheckedTextView.setCheckMarkDrawable(R.drawable.scenery));
+        mCheckedTextView.setCheckMarkDrawable(R.drawable.scenery);
         assertEquals(firstDrawable.getIntrinsicWidth() + basePaddingRight,
                 mCheckedTextView.getPaddingRight());
         assertFalse(mCheckedTextView.isLayoutRequested());
 
         // update drawable
         final Drawable secondDrawable = mActivity.getDrawable(R.drawable.pass);
-        mInstrumentation.runOnMainSync(() -> mCheckedTextView.setCheckMarkDrawable(secondDrawable));
+        mCheckedTextView.setCheckMarkDrawable(secondDrawable);
         assertEquals(secondDrawable.getIntrinsicWidth() + basePaddingRight,
                 mCheckedTextView.getPaddingRight());
         assertTrue(mCheckedTextView.isLayoutRequested());
 
-        mInstrumentation.runOnMainSync(() -> mCheckedTextView.setCheckMarkDrawable(null));
+        mCheckedTextView.setCheckMarkDrawable(null);
 
         // resId is 0
-        mInstrumentation.runOnMainSync(
-                () -> mCheckedTextView.setPadding(0, 0, basePaddingRight, 0));
+        mCheckedTextView.setPadding(0, 0, basePaddingRight, 0);
         cleanUpForceLayoutFlags(mCheckedTextView);
 
-        mInstrumentation.runOnMainSync(() -> mCheckedTextView.setCheckMarkDrawable(0));
+        mCheckedTextView.setCheckMarkDrawable(0);
         assertEquals(basePaddingRight, mCheckedTextView.getPaddingRight());
         assertFalse(mCheckedTextView.isLayoutRequested());
     }
 
+    @UiThreadTest
     @Test
     public void testSetCheckMarkByMixedTypes() {
         cleanUpForceLayoutFlags(mCheckedTextView);
 
         // Specifically test for b/22626247 (AOSP issue 180455).
-        mInstrumentation.runOnMainSync(() -> {
-            mCheckedTextView.setCheckMarkDrawable(R.drawable.scenery);
-            mCheckedTextView.setCheckMarkDrawable(null);
-            mCheckedTextView.setCheckMarkDrawable(R.drawable.scenery);
-        });
+        mCheckedTextView.setCheckMarkDrawable(R.drawable.scenery);
+        mCheckedTextView.setCheckMarkDrawable(null);
+        mCheckedTextView.setCheckMarkDrawable(R.drawable.scenery);
         assertNotNull(mCheckedTextView.getCheckMarkDrawable());
     }
 
+    @UiThreadTest
     @Test
     public void testAccessInstanceState() {
         assertFalse(mCheckedTextView.isChecked());
         assertFalse(mCheckedTextView.getFreezesText());
 
-        mInstrumentation.runOnMainSync(() -> mState = mCheckedTextView.onSaveInstanceState());
-        assertNotNull(mState);
+        final Parcelable state = mCheckedTextView.onSaveInstanceState();
+        assertNotNull(state);
         assertFalse(mCheckedTextView.getFreezesText());
 
-        mInstrumentation.runOnMainSync(() -> mCheckedTextView.setChecked(true));
+        mCheckedTextView.setChecked(true);
 
-        mInstrumentation.runOnMainSync(() -> mCheckedTextView.onRestoreInstanceState(mState));
+        mCheckedTextView.onRestoreInstanceState(state);
         assertFalse(mCheckedTextView.isChecked());
         assertTrue(mCheckedTextView.isLayoutRequested());
     }

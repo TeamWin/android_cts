@@ -29,6 +29,7 @@ import android.cts.util.WidgetTestUtils;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.support.test.InstrumentationRegistry;
+import android.support.test.annotation.UiThreadTest;
 import android.support.test.rule.ActivityTestRule;
 import android.support.test.runner.AndroidJUnit4;
 import android.test.suitebuilder.annotation.MediumTest;
@@ -66,13 +67,13 @@ public class ActionMenuViewTest {
         new ActionMenuView(mActivity, null);
     }
 
+    @UiThreadTest
     @Test
     public void testMenuContent() {
         final Menu menu = mActionMenuView.getMenu();
         assertNotNull(menu);
 
-        mInstrumentation.runOnMainSync(
-                () -> mActivity.getMenuInflater().inflate(R.menu.toolbar_menu, menu));
+        mActivity.getMenuInflater().inflate(R.menu.toolbar_menu, menu);
 
         assertEquals(6, menu.size());
         assertEquals(R.id.action_highlight, menu.getItem(0).getItemId());
@@ -163,12 +164,11 @@ public class ActionMenuViewTest {
                 true, Color.RED, 1, false);
     }
 
+    @UiThreadTest
     @Test
     public void testPopupTheme() {
-        mInstrumentation.runOnMainSync(() -> {
-                mActivity.getMenuInflater().inflate(R.menu.toolbar_menu, mActionMenuView.getMenu());
-                mActionMenuView.setPopupTheme(R.style.ToolbarPopupTheme_Test);
-        });
+        mActivity.getMenuInflater().inflate(R.menu.toolbar_menu, mActionMenuView.getMenu());
+        mActionMenuView.setPopupTheme(R.style.ToolbarPopupTheme_Test);
         assertEquals(R.style.ToolbarPopupTheme_Test, mActionMenuView.getPopupTheme());
     }
 }
