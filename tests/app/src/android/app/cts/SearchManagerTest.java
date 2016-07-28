@@ -33,7 +33,7 @@ public class SearchManagerTest extends CTSActivityTestCaseBase {
     }
 
     public void testStopSearch() throws InterruptedException {
-        if (isTelevision()) {
+        if (isTelevision() || isWatch()) {
             return;
         }
         SearchManagerStubActivity.setCTSResult(this);
@@ -42,7 +42,7 @@ public class SearchManagerTest extends CTSActivityTestCaseBase {
     }
 
     public void testSetOnDismissListener() throws InterruptedException {
-        if (isTelevision()) {
+        if (isTelevision() || isWatch()) {
             return;
         }
         SearchManagerStubActivity.setCTSResult(this);
@@ -51,7 +51,7 @@ public class SearchManagerTest extends CTSActivityTestCaseBase {
     }
 
     public void testSetOnCancelListener() throws InterruptedException {
-        if (isTelevision()) {
+        if (isTelevision() || isWatch()) {
             return;
         }
         SearchManagerStubActivity.setCTSResult(this);
@@ -64,5 +64,11 @@ public class SearchManagerTest extends CTSActivityTestCaseBase {
         PackageManager pm = context.getPackageManager();
         return pm.hasSystemFeature(PackageManager.FEATURE_TELEVISION)
                 || pm.hasSystemFeature(PackageManager.FEATURE_LEANBACK);
+    }
+
+    private boolean isWatch() {
+        Context context = getInstrumentation().getTargetContext();
+        PackageManager pm = context.getPackageManager();
+        return pm.hasSystemFeature(PackageManager.FEATURE_WATCH);
     }
 }
