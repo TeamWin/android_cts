@@ -20,13 +20,13 @@
     <application>
         <uses-library android:name="android.test.runner" />
 
-        <activity android:name="android.content.pm.cts.MyActivity" />
+        <activity android:name="android.content.pm.cts.shortcutmanager.MyActivity" />
 
         <activity-alias android:name="non_main"
-            android:targetActivity="android.content.pm.cts.MyActivity" >
+            android:targetActivity="android.content.pm.cts.shortcutmanager.MyActivity" >
         </activity-alias>
         <activity-alias android:name="disabled_main"
-            android:targetActivity="android.content.pm.cts.MyActivity"
+            android:targetActivity="android.content.pm.cts.shortcutmanager.MyActivity"
             android:enabled="false">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -35,7 +35,7 @@
             </intent-filter>
         </activity-alias>
         <activity-alias android:name="main"
-            android:targetActivity="android.content.pm.cts.MyActivity">
+            android:targetActivity="android.content.pm.cts.shortcutmanager.MyActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.DEFAULT" />

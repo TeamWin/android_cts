@@ -14,17 +14,65 @@
      limitations under the License.
 -->
 <shortcuts xmlns:android="http://schemas.android.com/apk/res/android" >
+    <!-- Invalid: no ID -->
+    <shortcut
+        android:shortcutShortLabel="@string/label1"
+        >
+        <intent android:action="android.intent.action.VIEW" />
+    </shortcut>
+
+    <!-- Invalid: no short label -->
+    <shortcut
+        android:shortcutId="x1"
+        >
+        <intent android:action="android.intent.action.VIEW" >
+        </intent>
+    </shortcut>
+
+    <!-- Invalid: no Intent -->
     <shortcut
         android:shortcutId="manifest-shortcut-3"
         android:shortcutShortLabel="@string/label1"
     />
+
+    <!-- Invalid: ID must be literal -->
     <shortcut
-        android:shortcutId="x3"
+        android:shortcutId="@string/label1"
         android:shortcutShortLabel="@string/label1"
         >
-        <intent
-            android:action="android.intent.action.VIEW"
-            >
+        <intent android:action="android.intent.action.VIEW" />
+    </shortcut>
+
+    <!-- Valid: disabled shortcut doesn't need an intent -->
+    <shortcut
+        android:shortcutId="disabled1"
+        android:enabled="false"
+        android:shortcutShortLabel="@string/label1"
+    />
+
+    <!-- Valid, but disabled shortcut's intent will be ignored. -->
+    <shortcut
+        android:shortcutId="disabled2"
+        android:enabled="false"
+        android:shortcutShortLabel="@string/label1"
+        >
+        <intent android:action="action4" />
+    </shortcut>
+
+    <!-- Invalid, no intent action (if any of the intents is invalid, the entire shortcut will be invalid.) -->
+    <shortcut
+        android:shortcutId="x1"
+        android:shortcutShortLabel="@string/label1"
+    >
+        <intent android:data="x"/>
+        <intent android:action="actionx"/>
+    </shortcut>
+
+    <shortcut
+        android:shortcutId="valid"
+        android:shortcutShortLabel="@string/label1"
+        >
+        <intent android:action="android.intent.action.VIEW" >
         </intent>
     </shortcut>
 </shortcuts>
