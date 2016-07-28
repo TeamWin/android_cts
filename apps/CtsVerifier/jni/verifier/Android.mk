@@ -35,5 +35,7 @@ LOCAL_SHARED_LIBRARIES := liblog \
 
 LOCAL_CXX_STL := libstdc++
 
+LOCAL_CXX_STL := libstdc++
+
 include $(BUILD_SHARED_LIBRARY)
 
