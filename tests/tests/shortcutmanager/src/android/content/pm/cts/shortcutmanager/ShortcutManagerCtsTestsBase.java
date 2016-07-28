@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package android.content.pm.cts;
+package android.content.pm.cts.shortcutmanager;
 
 import static com.android.server.pm.shortcutmanagertest.ShortcutManagerTestUtils.*;
 
@@ -23,19 +23,25 @@ import android.content.Context;
 import android.content.ContextWrapper;
 import android.content.Intent;
 import android.content.pm.LauncherApps;
+import android.content.pm.LauncherApps.ShortcutQuery;
 import android.content.pm.ShortcutInfo;
 import android.content.pm.ShortcutManager;
+import android.content.res.Resources;
+import android.graphics.drawable.Drawable;
 import android.graphics.drawable.Icon;
 import android.os.Bundle;
+import android.os.PersistableBundle;
 import android.os.UserHandle;
 import android.support.annotation.NonNull;
 import android.test.InstrumentationTestCase;
 import android.text.TextUtils;
 
+import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicReference;
 
 public abstract class ShortcutManagerCtsTestsBase extends InstrumentationTestCase {
 
@@ -55,6 +61,8 @@ public abstract class ShortcutManagerCtsTestsBase extends InstrumentationTestCas
         }
     }
 
+    protected static final SecureRandom sRandom = new SecureRandom();
+
     private Context mCurrentCallerPackage;
     private int mUserId;
     private UserHandle mUserHandle;
@@ -71,16 +79,29 @@ public abstract class ShortcutManagerCtsTestsBase extends InstrumentationTestCas
     protected Context mLauncherContext3;
     protected Context mLauncherContext4;
 
-    protected LauncherApps mLauncherApps1;
-    protected LauncherApps mLauncherApps2;
-    protected LauncherApps mLauncherApps3;
-    protected LauncherApps mLauncherApps4;
+    private LauncherApps mLauncherApps1;
+    private LauncherApps mLauncherApps2;
+    private LauncherApps mLauncherApps3;
+    private LauncherApps mLauncherApps4;
 
     private Map<Context, ShortcutManager> mManagers = new HashMap<>();
     private Map<Context, LauncherApps> mLauncherAppses = new HashMap<>();
 
     private ShortcutManager mCurrentManager;
     private LauncherApps mCurrentLauncherApps;
+
+    private static final String[] ACTIVITIES_WITH_MANIFEST_SHORTCUTS = {
+            "Launcher_manifest_1",
+            "Launcher_manifest_2",
+            "Launcher_manifest_3",
+            "Launcher_manifest_4a",
+            "Launcher_manifest_4b",
+            "Launcher_manifest_error_1",
+            "Launcher_manifest_error_2",
+            "Launcher_manifest_error_3"
+    };
+
+    private ComponentName mTargetActivityOverride;
 
     private static class ShortcutActivity extends Activity {
     }
@@ -92,6 +113,7 @@ public abstract class ShortcutManagerCtsTestsBase extends InstrumentationTestCas
         mUserId = getTestContext().getUserId();
         mUserHandle = android.os.Process.myUserHandle();
 
+        resetConfig(getInstrumentation());
         final String config = getOverrideConfig();
         if (config != null) {
             overrideConfig(getInstrumentation(), config);
@@ -129,10 +151,17 @@ public abstract class ShortcutManagerCtsTestsBase extends InstrumentationTestCas
 
         // Make sure shortcuts are removed.
         withCallers(getAllPublishers(), () -> {
+            // Clear all shortcuts.
+            clearShortcuts(getInstrumentation(), mUserId, getCurrentCallingPackage());
+
+            disableActivitiesWithManifestShortucts();
+
             assertEquals("for " + getCurrentCallingPackage(),
                     0, getManager().getDynamicShortcuts().size());
             assertEquals("for " + getCurrentCallingPackage(),
                     0, getManager().getPinnedShortcuts().size());
+            assertEquals("for " + getCurrentCallingPackage(),
+                    0, getManager().getManifestShortcuts().size());
         });
     }
 
@@ -141,6 +170,8 @@ public abstract class ShortcutManagerCtsTestsBase extends InstrumentationTestCas
         if (DUMPSYS_IN_TEARDOWN) {
             dumpsysShortcut(getInstrumentation());
         }
+
+        withCallers(getAllPublishers(), () -> disableActivitiesWithManifestShortucts());
 
         resetConfig(getInstrumentation());
 
@@ -175,6 +206,30 @@ public abstract class ShortcutManagerCtsTestsBase extends InstrumentationTestCas
                 mLauncherContext1, mLauncherContext2, mLauncherContext3, mLauncherContext4);
     }
 
+    protected ComponentName getActivity(String className) {
+        return new ComponentName(getCurrentCallingPackage(),
+                "android.content.pm.cts.shortcutmanager.packages." + className);
+
+    }
+
+    protected void disableActivitiesWithManifestShortucts() {
+        if (getManager().getManifestShortcuts().size() > 0) {
+            // Disable DISABLED_ACTIVITIES
+            for (String className : ACTIVITIES_WITH_MANIFEST_SHORTCUTS) {
+                enableManifestActivity(className, false);
+            }
+        }
+    }
+
+    protected void enableManifestActivity(String className, boolean enabled) {
+        enableComponent(getInstrumentation(), getActivity(className), enabled);
+    }
+
+    protected void setTargetActivityOverride(String className) {
+        mTargetActivityOverride = getActivity(className);
+    }
+
+
     protected void withCallers(List<Context> callers, Runnable r) {
         for (Context c : callers) {
             runWithCaller(c, r);
@@ -197,6 +252,8 @@ public abstract class ShortcutManagerCtsTestsBase extends InstrumentationTestCas
             mLauncherAppses.put(mCurrentCallerPackage, new LauncherApps(mCurrentCallerPackage));
         }
         mCurrentLauncherApps = mLauncherAppses.get(mCurrentCallerPackage);
+
+        mTargetActivityOverride = null;
     }
 
     protected Context getCurrentCallerContext() {
@@ -252,11 +309,44 @@ public abstract class ShortcutManagerCtsTestsBase extends InstrumentationTestCas
         return ret;
     }
 
+    public static PersistableBundle makePersistableBundle(Object... keysAndValues) {
+        assertTrue((keysAndValues.length % 2) == 0);
+
+        if (keysAndValues.length == 0) {
+            return null;
+        }
+        final PersistableBundle ret = new PersistableBundle();
+
+        for (int i = keysAndValues.length - 2; i >= 0; i -= 2) {
+            final String key = keysAndValues[i].toString();
+            final Object value = keysAndValues[i + 1];
+
+            if (value == null) {
+                ret.putString(key, null);
+            } else if (value instanceof Integer) {
+                ret.putInt(key, (Integer) value);
+            } else if (value instanceof String) {
+                ret.putString(key, (String) value);
+            } else if (value instanceof PersistableBundle) {
+                ret.putPersistableBundle(key, (PersistableBundle) value);
+            } else {
+                fail("Type not supported yet: " + value.getClass().getName());
+            }
+        }
+        return ret;
+    }
+
     /**
      * Make a shortcut with an ID.
      */
     protected ShortcutInfo makeShortcut(String id) {
         return makeShortcut(id, "Title-" + id);
+    }
+
+    protected ShortcutInfo makeShortcutWithRank(String id, int rank) {
+        return makeShortcut(
+                id, "Title-" + id, /* activity =*/ null, /* icon =*/ null,
+                makeIntent(Intent.ACTION_VIEW, ShortcutActivity.class), rank);
     }
 
     /**
@@ -265,6 +355,12 @@ public abstract class ShortcutManagerCtsTestsBase extends InstrumentationTestCas
     protected ShortcutInfo makeShortcut(String id, String shortLabel) {
         return makeShortcut(
                 id, shortLabel, /* activity =*/ null, /* icon =*/ null,
+                makeIntent(Intent.ACTION_VIEW, ShortcutActivity.class), /* rank =*/ 0);
+    }
+
+    protected ShortcutInfo makeShortcut(String id, ComponentName activity) {
+        return makeShortcut(
+                id, "Title-" + id, activity, /* icon =*/ null,
                 makeIntent(Intent.ACTION_VIEW, ShortcutActivity.class), /* rank =*/ 0);
     }
 
@@ -303,6 +399,8 @@ public abstract class ShortcutManagerCtsTestsBase extends InstrumentationTestCas
                 .setIntent(intent);
         if (activity != null) {
             b.setActivity(activity);
+        } else if (mTargetActivityOverride != null) {
+            b.setActivity(mTargetActivityOverride);
         }
         if (icon != null) {
             b.setIcon(icon);
@@ -328,4 +426,94 @@ public abstract class ShortcutManagerCtsTestsBase extends InstrumentationTestCas
         return new ComponentName(getCurrentCallerContext(), clazz);
     }
 
+    protected Drawable getIconAsLauncher(Context launcherContext, String packageName,
+            String shortcutId) {
+        return getIconAsLauncher(launcherContext, packageName, shortcutId, /* withBadge=*/ true);
+    }
+
+    protected Drawable getIconAsLauncher(Context launcherContext, String packageName,
+            String shortcutId, boolean withBadge) {
+        setDefaultLauncher(getInstrumentation(), launcherContext);
+
+        final AtomicReference<Drawable> ret = new AtomicReference<>();
+
+        runWithCaller(launcherContext, () -> {
+            final ShortcutQuery q = new ShortcutQuery()
+                    .setQueryFlags(ShortcutQuery.FLAG_MATCH_DYNAMIC
+                                    | ShortcutQuery.FLAG_MATCH_MANIFEST
+                                    | ShortcutQuery.FLAG_MATCH_PINNED
+                                    | ShortcutQuery.FLAG_GET_KEY_FIELDS_ONLY)
+                    .setPackage(packageName)
+                    .setShortcutIds(list(shortcutId));
+            final List<ShortcutInfo> found = getLauncherApps().getShortcuts(q, getUserHandle());
+
+            assertEquals("Shortcut not found", 1, found.size());
+
+            if (withBadge) {
+                ret.set(getLauncherApps().getShortcutBadgedIconDrawable(found.get(0), 0));
+            } else {
+                ret.set(getLauncherApps().getShortcutIconDrawable(found.get(0), 0));
+            }
+        });
+        return ret.get();
+    }
+
+    protected void assertIconDimensions(Context launcherContext, String packageName,
+            String shortcutId, Icon expectedIcon) {
+        final Drawable actual = getIconAsLauncher(launcherContext, packageName, shortcutId);
+        if (actual == null && expectedIcon == null) {
+            return; // okay
+        }
+        final Drawable expected = expectedIcon.loadDrawable(getTestContext());
+        assertEquals(expected.getIntrinsicWidth(), actual.getIntrinsicWidth());
+        assertEquals(expected.getIntrinsicHeight(), actual.getIntrinsicHeight());
+    }
+
+    protected void assertIconDimensions(Icon expectedIcon, Drawable actual) {
+        if (actual == null && expectedIcon == null) {
+            return; // okay
+        }
+        final Drawable expected = expectedIcon.loadDrawable(getTestContext());
+
+        assertEquals(expected.getIntrinsicWidth(), actual.getIntrinsicWidth());
+        assertEquals(expected.getIntrinsicHeight(), actual.getIntrinsicHeight());
+    }
+
+    protected Icon loadPackageDrawableIcon(Context packageContext, String resName)
+            throws Exception {
+        final Resources res = getTestContext().getPackageManager().getResourcesForApplication(
+                packageContext.getPackageName());
+
+        // Note the resource package names don't have the numbers.
+        final int id = res.getIdentifier(resName, "drawable",
+                "android.content.pm.cts.shortcutmanager.packages");
+        if (id == 0) {
+            fail("Drawable " + resName + " is not found in package "
+                    + packageContext.getPackageName());
+        }
+        return Icon.createWithResource(packageContext, id);
+    }
+
+    protected Icon loadCallerDrawableIcon(String resName) throws Exception {
+        return loadPackageDrawableIcon(getCurrentCallerContext(), resName);
+    }
+
+    protected List<ShortcutInfo> getShortcutsAsLauncher(
+            int flags, String packageName, String activityName,
+            long changedSince, List<String> ids) {
+        final ShortcutQuery q = new ShortcutQuery();
+        q.setQueryFlags(flags);
+        if (packageName != null) {
+            q.setPackage(packageName);
+            if (activityName != null) {
+                q.setActivity(new ComponentName(packageName,
+                        "android.content.pm.cts.shortcutmanager.packages." + activityName));
+            }
+        }
+        q.setChangedSince(changedSince);
+        if (ids != null && ids.size() > 0) {
+            q.setShortcutIds(ids);
+        }
+        return getLauncherApps().getShortcuts(q, getUserHandle());
+    }
 }
