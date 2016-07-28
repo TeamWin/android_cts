@@ -22,13 +22,15 @@ import android.app.Activity;
 import android.app.Instrumentation;
 import android.content.Context;
 import android.cts.util.CtsKeyEventUtil;
+import android.cts.util.CtsTouchUtils;
 import android.os.Parcelable;
 import android.test.ActivityInstrumentationTestCase2;
 import android.test.UiThreadTest;
-import android.test.suitebuilder.annotation.SmallTest;
+import android.test.suitebuilder.annotation.MediumTest;
 import android.util.AttributeSet;
 import android.view.KeyEvent;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.TimePicker;
 
 import java.util.ArrayList;
@@ -37,7 +39,7 @@ import java.util.Collections;
 /**
  * Test {@link TimePicker}.
  */
-@SmallTest
+@MediumTest
 public class TimePickerTest extends ActivityInstrumentationTestCase2<TimePickerCtsActivity> {
     private TimePicker mTimePicker;
     private Activity mActivity;
@@ -332,6 +334,170 @@ public class TimePickerTest extends ActivityInstrumentationTestCase2<TimePickerC
                 false /* goForward */,
                 true /* is24HourView */,
                 true /* isSpinner */);
+    }
+
+    public void testKeyboardInputModeClockAmPm() {
+        final int initialHour = 6;
+        final int initialMinute = 59;
+        prepareForKeyboardInput(initialHour, initialMinute, false);
+
+        // Input valid hour.
+        assertEquals(initialHour, mTimePicker.getHour());
+        CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mTimePicker.getHourView());
+        CtsKeyEventUtil.sendKeyDownUp(mInstrumentation, mTimePicker, KeyEvent.KEYCODE_1);
+        CtsKeyEventUtil.sendKeyDownUp(mInstrumentation, mTimePicker, KeyEvent.KEYCODE_0);
+        assertEquals(10, mTimePicker.getHour());
+        assertTrue(mTimePicker.getMinuteView().hasFocus());
+
+        // Input valid minute.
+        assertEquals(initialMinute, mTimePicker.getMinute());
+        CtsKeyEventUtil.sendKeyDownUp(mInstrumentation, mTimePicker, KeyEvent.KEYCODE_4);
+        CtsKeyEventUtil.sendKeyDownUp(mInstrumentation, mTimePicker, KeyEvent.KEYCODE_3);
+        CtsKeyEventUtil.sendKeyDownUp(mInstrumentation, mTimePicker, KeyEvent.KEYCODE_TAB);
+        assertEquals(43, mTimePicker.getMinute());
+        assertTrue(mTimePicker.getAmView().hasFocus());
+
+        // Accepting AM changes nothing.
+        CtsKeyEventUtil.sendKeyDownUp(mInstrumentation, mTimePicker, KeyEvent.KEYCODE_ENTER);
+        assertEquals(10, mTimePicker.getHour());
+        assertEquals(43, mTimePicker.getMinute());
+
+        // Focus PM radio.
+        CtsKeyEventUtil.sendKeyDownUp(mInstrumentation, mTimePicker, KeyEvent.KEYCODE_TAB);
+        assertTrue(mTimePicker.getPmView().hasFocus());
+        // Still nothing has changed.
+        assertEquals(10, mTimePicker.getHour());
+        assertEquals(43, mTimePicker.getMinute());
+        // Select PM and verify the hour has changed.
+        CtsKeyEventUtil.sendKeyDownUp(mInstrumentation, mTimePicker, KeyEvent.KEYCODE_ENTER);
+        assertEquals(22, mTimePicker.getHour());
+        assertEquals(43, mTimePicker.getMinute());
+        // Set AM again.
+        CtsKeyEventUtil.sendKeyWhileHoldingModifier(mInstrumentation, mTimePicker,
+                KeyEvent.KEYCODE_TAB, KeyEvent.KEYCODE_SHIFT_LEFT);
+        assertTrue(mTimePicker.getAmView().hasFocus());
+        CtsKeyEventUtil.sendKeyDownUp(mInstrumentation, mTimePicker, KeyEvent.KEYCODE_ENTER);
+        assertEquals(10, mTimePicker.getHour());
+
+        // Re-focus the hour view.
+        CtsKeyEventUtil.sendKeyDownUp(mInstrumentation, mTimePicker, KeyEvent.KEYCODE_TAB);
+        CtsKeyEventUtil.sendKeyDownUp(mInstrumentation, mTimePicker, KeyEvent.KEYCODE_TAB);
+        assertTrue(mTimePicker.getHourView().hasFocus());
+
+        // Input an invalid value (larger than 12).
+        CtsKeyEventUtil.sendKeyDownUp(mInstrumentation, mTimePicker, KeyEvent.KEYCODE_1);
+        CtsKeyEventUtil.sendKeyDownUp(mInstrumentation, mTimePicker, KeyEvent.KEYCODE_3);
+        // Force setting the hour by moving to minute.
+        CtsKeyEventUtil.sendKeyDownUp(mInstrumentation, mTimePicker, KeyEvent.KEYCODE_TAB);
+        // After sending 1 and 3 only 1 is accepted.
+        assertEquals(1, mTimePicker.getHour());
+        assertEquals(43, mTimePicker.getMinute());
+        CtsKeyEventUtil.sendKeyWhileHoldingModifier(mInstrumentation, mTimePicker,
+                KeyEvent.KEYCODE_TAB, KeyEvent.KEYCODE_SHIFT_LEFT);
+        // The hour view still has focus.
+        assertTrue(mTimePicker.getHourView().hasFocus());
+
+        // This time send a valid hour (11).
+        CtsKeyEventUtil.sendKeyDownUp(mInstrumentation, mTimePicker, KeyEvent.KEYCODE_1);
+        CtsKeyEventUtil.sendKeyDownUp(mInstrumentation, mTimePicker, KeyEvent.KEYCODE_1);
+        // The value is valid.
+        assertEquals(11, mTimePicker.getHour());
+        assertEquals(43, mTimePicker.getMinute());
+
+        verifyModeClockMinuteInput();
+    }
+
+    public void testKeyboardInputModeClock24H() {
+        final int initialHour = 6;
+        final int initialMinute = 59;
+        prepareForKeyboardInput(initialHour, initialMinute, true);
+
+        // Input valid hour.
+        assertEquals(initialHour, mTimePicker.getHour());
+        CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mTimePicker.getHourView());
+        CtsKeyEventUtil.sendKeyDownUp(mInstrumentation, mTimePicker, KeyEvent.KEYCODE_1);
+        CtsKeyEventUtil.sendKeyDownUp(mInstrumentation, mTimePicker, KeyEvent.KEYCODE_0);
+        assertEquals(10, mTimePicker.getHour());
+        assertTrue(mTimePicker.getMinuteView().hasFocus());
+
+        // Input valid minute.
+        assertEquals(initialMinute, mTimePicker.getMinute());
+        CtsKeyEventUtil.sendKeyDownUp(mInstrumentation, mTimePicker, KeyEvent.KEYCODE_4);
+        CtsKeyEventUtil.sendKeyDownUp(mInstrumentation, mTimePicker, KeyEvent.KEYCODE_3);
+        assertEquals(43, mTimePicker.getMinute());
+
+        // Re-focus the hour view.
+        CtsKeyEventUtil.sendKeyWhileHoldingModifier(mInstrumentation, mTimePicker,
+                KeyEvent.KEYCODE_TAB, KeyEvent.KEYCODE_SHIFT_LEFT);
+        assertTrue(mTimePicker.getHourView().hasFocus());
+
+        // Input an invalid value (larger than 24).
+        CtsKeyEventUtil.sendKeyDownUp(mInstrumentation, mTimePicker, KeyEvent.KEYCODE_2);
+        CtsKeyEventUtil.sendKeyDownUp(mInstrumentation, mTimePicker, KeyEvent.KEYCODE_5);
+        // Force setting the hour by moving to minute.
+        CtsKeyEventUtil.sendKeyDownUp(mInstrumentation, mTimePicker, KeyEvent.KEYCODE_TAB);
+        // After sending 2 and 5 only 2 is accepted.
+        assertEquals(2, mTimePicker.getHour());
+        assertEquals(43, mTimePicker.getMinute());
+        CtsKeyEventUtil.sendKeyWhileHoldingModifier(mInstrumentation, mTimePicker,
+                KeyEvent.KEYCODE_TAB, KeyEvent.KEYCODE_SHIFT_LEFT);
+        // The hour view still has focus.
+        assertTrue(mTimePicker.getHourView().hasFocus());
+
+        // This time send a valid hour.
+        CtsKeyEventUtil.sendKeyDownUp(mInstrumentation, mTimePicker, KeyEvent.KEYCODE_2);
+        CtsKeyEventUtil.sendKeyDownUp(mInstrumentation, mTimePicker, KeyEvent.KEYCODE_3);
+        // The value is valid.
+        assertEquals(23, mTimePicker.getHour());
+        assertEquals(43, mTimePicker.getMinute());
+
+        verifyModeClockMinuteInput();
+    }
+
+    private void verifyModeClockMinuteInput() {
+        assertTrue(mTimePicker.getMinuteView().hasFocus());
+        // Send a invalid minute.
+        CtsKeyEventUtil.sendKeyDownUp(mInstrumentation, mTimePicker, KeyEvent.KEYCODE_6);
+        CtsKeyEventUtil.sendKeyDownUp(mInstrumentation, mTimePicker, KeyEvent.KEYCODE_7);
+        // Sent 6 and 7 but only 6 was valid.
+        assertEquals(6, mTimePicker.getMinute());
+        // No matter what other invalid values we send, the minute is unchanged and the focus is
+        // kept.
+        // 61 invalid.
+        CtsKeyEventUtil.sendKeyDownUp(mInstrumentation, mTimePicker, KeyEvent.KEYCODE_1);
+        assertTrue(mTimePicker.getMinuteView().hasFocus());
+        // 62 invalid.
+        CtsKeyEventUtil.sendKeyDownUp(mInstrumentation, mTimePicker, KeyEvent.KEYCODE_2);
+        assertTrue(mTimePicker.getMinuteView().hasFocus());
+        // 63 invalid.
+        CtsKeyEventUtil.sendKeyDownUp(mInstrumentation, mTimePicker, KeyEvent.KEYCODE_3);
+        assertTrue(mTimePicker.getMinuteView().hasFocus());
+        assertEquals(6, mTimePicker.getMinute());
+        // Refocus.
+        CtsKeyEventUtil.sendKeyDownUp(mInstrumentation, mTimePicker, KeyEvent.KEYCODE_TAB);
+        CtsKeyEventUtil.sendKeyWhileHoldingModifier(mInstrumentation, mTimePicker,
+                KeyEvent.KEYCODE_TAB, KeyEvent.KEYCODE_SHIFT_LEFT);
+        assertTrue(mTimePicker.getMinuteView().hasFocus());
+
+        // In the end pass a valid minute.
+        CtsKeyEventUtil.sendKeyDownUp(mInstrumentation, mTimePicker, KeyEvent.KEYCODE_5);
+        CtsKeyEventUtil.sendKeyDownUp(mInstrumentation, mTimePicker, KeyEvent.KEYCODE_9);
+        assertEquals(59, mTimePicker.getMinute());
+    }
+
+    private void prepareForKeyboardInput(int initialHour, int initialMinute, boolean is24hFormat) {
+        mTimePicker = (TimePicker) mActivity.findViewById(R.id.timepicker_clock);
+        final View spinnerTimePicker = mActivity.findViewById(R.id.timepicker_spinner);
+
+        mInstrumentation.runOnMainSync(() -> {
+            // Remove the spinner TimePicker.
+            ((ViewGroup) spinnerTimePicker.getParent()).removeView(spinnerTimePicker);
+            mTimePicker.setIs24HourView(is24hFormat);
+            mTimePicker.setHour(initialHour);
+            mTimePicker.setMinute(initialMinute);
+            mTimePicker.requestFocus();
+        });
+        mInstrumentation.waitForIdleSync();
     }
 
     private void verifyTimePickerKeyboardTraversal(boolean goForward, boolean is24HourView,
