@@ -224,6 +224,11 @@ class ActivityManagerState {
         return homeActivity != null && homeActivity.visible;
     }
 
+    boolean isRecentsActivityVisible() {
+        final Activity recentsActivity = getRecentsActivity();
+        return recentsActivity != null && recentsActivity.visible;
+    }
+
     private Activity getHomeActivity() {
         for (ActivityStack stack : mStacks) {
             if (stack.mStackId != HOME_STACK_ID) {
@@ -233,6 +238,27 @@ class ActivityManagerState {
             for (ActivityTask task : stack.mTasks) {
                 if (task.mTaskType != HOME_ACTIVITY_TYPE) {
                     continue;
+                }
+                return task.mActivities.get(task.mActivities.size() - 1);
+            }
+
+            return null;
+        }
+        return null;
+    }
+
+    private Activity getRecentsActivity() {
+        for (ActivityStack stack : mStacks) {
+            if (stack.mStackId != HOME_STACK_ID) {
+                continue;
+            }
+
+            for (ActivityTask task : stack.mTasks) {
+                if (task.mTaskType != RECENTS_ACTIVITY_TYPE) {
+                    continue;
+                }
+                if (task.mActivities.isEmpty()) {
+                    return null;
                 }
                 return task.mActivities.get(task.mActivities.size() - 1);
             }

@@ -163,6 +163,17 @@
                   android:exported="true"
                   android:theme="@android:style/Theme.NoDisplay"
         />
+        <activity android:name=".OnTopLauncherActivity"
+            android:exported="true"
+            android:launchMode="singleInstance"
+            android:clearTaskOnLaunch="true"
+            android:resumeWhilePausing="true"
+            android:excludeFromRecents="true"
+            androidprv:onTopLauncher="true"
+            android:resizeableActivity="false"
+            android:theme="@android:style/Theme.Translucent.NoTitleBar"
+            android:enabled="true">
+        </activity>
         <activity-alias android:enabled="true"
                 android:exported="true"
                 android:name=".EntryPointAliasActivity"
