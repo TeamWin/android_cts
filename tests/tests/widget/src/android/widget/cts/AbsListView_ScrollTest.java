@@ -26,11 +26,16 @@ import android.support.test.InstrumentationRegistry;
 import android.support.test.rule.ActivityTestRule;
 import android.support.test.runner.AndroidJUnit4;
 import android.test.suitebuilder.annotation.LargeTest;
+import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewConfiguration;
+import android.view.ViewGroup;
 import android.widget.AbsListView;
 import android.widget.AbsListView.OnScrollListener;
 import android.widget.ArrayAdapter;
+import android.widget.BaseAdapter;
 import android.widget.ListView;
+import android.widget.TextView;
 
 import org.junit.Before;
 import org.junit.Rule;
@@ -68,7 +73,6 @@ public class AbsListView_ScrollTest {
 
     @Before
     public void setup() throws Exception {
-
         mInstrumentation = InstrumentationRegistry.getInstrumentation();
         mContext = mInstrumentation.getTargetContext();
 
@@ -585,5 +589,141 @@ public class AbsListView_ScrollTest {
     @Test
     public void testListScrollAndEmulateUpwardsFlingGesture() {
         verifyListScrollAndEmulateFlingGesture(false);
+    }
+
+    @Test
+    public void testListFlingWithZeroVelocity() {
+        mListView.setVelocityScale(0.0f);
+
+        final CountDownLatch flingLatch = new CountDownLatch(1);
+        mListView.setOnScrollListener(new ScrollIdleListListener(flingLatch));
+        final int flingAmount =
+                CtsTouchUtils.emulateFlingGesture(mInstrumentation, mListView, false);
+
+        try {
+            assertTrue("Timed out while waiting for the fling to complete",
+                    flingLatch.await(5, TimeUnit.SECONDS));
+        } catch (InterruptedException e) {
+            // ignore
+        }
+
+        // Since our velocity scale is 0, we expect that the emulated fling gesture didn't
+        // result in any fling, but just a simple scroll that stopped at the ACTION_UP
+        // event.
+        final int expectedTopOffsetAtFlingEnd = -flingAmount;
+        final int expectedBottomOffsetAtFlingEnd = mListView.getHeight() - flingAmount;
+        final int expectedTopPositionAtFlingEnd = expectedTopOffsetAtFlingEnd / ROW_HEIGHT_PX;
+        final int expectedBottomPositionAtFlingEnd = expectedBottomOffsetAtFlingEnd / ROW_HEIGHT_PX;
+
+        assertEquals(expectedTopPositionAtFlingEnd, mListView.getFirstVisiblePosition());
+        assertEquals(expectedBottomPositionAtFlingEnd, mListView.getLastVisiblePosition());
+    }
+
+    private static class LargeContentAdapter extends BaseAdapter {
+        private final Context mContext;
+        private final int mCount;
+        private final LayoutInflater mLayoutInflater;
+
+        public LargeContentAdapter(Context context, int count) {
+            mContext = context;
+            mCount = count;
+            mLayoutInflater = LayoutInflater.from(mContext);
+        }
+
+        @Override
+        public int getCount() {
+            return mCount;
+        }
+
+        @Override
+        public boolean hasStableIds() {
+            return true;
+        }
+
+        @Override
+        public long getItemId(int position) {
+            return position;
+        }
+
+        @Override
+        public Object getItem(int position) {
+            return null;
+        }
+
+        @Override
+        public View getView(int position, View convertView, ViewGroup parent) {
+            final TextView textView = (convertView != null) ? (TextView) convertView
+                    : (TextView) mLayoutInflater.inflate(R.layout.listitemfixed_layout,
+                            parent, false);
+            textView.setText("Item " + position);
+            return textView;
+        }
+    }
+
+    @Test
+    public void testFriction() {
+        // Set an adapter with 100K items so that no matter how fast our fling is, we won't
+        // get to the bottom of the list in one fling
+        mInstrumentation.runOnMainSync(
+                () -> mListView.setAdapter(new LargeContentAdapter(mContext, 100000)));
+        mInstrumentation.waitForIdleSync();
+
+        final CountDownLatch initialFlingLatch = new CountDownLatch(1);
+        mListView.setOnScrollListener(new ScrollIdleListListener(initialFlingLatch));
+        CtsTouchUtils.emulateFlingGesture(mInstrumentation, mListView, false);
+        try {
+            assertTrue("Timed out while waiting for the fling to complete",
+                    initialFlingLatch.await(5, TimeUnit.SECONDS));
+        } catch (InterruptedException e) {
+            // ignore
+        }
+
+        final int lastVisiblePositionAfterDefaultFling = mListView.getLastVisiblePosition();
+
+        // Scroll back to the top of the list
+        verifyScrollToPosition(0);
+        // configure the fling to have less friction
+        mListView.setFriction(ViewConfiguration.getScrollFriction() / 2.0f);
+        // and do the fling again
+        final CountDownLatch fastFlingLatch = new CountDownLatch(1);
+        mListView.setOnScrollListener(new ScrollIdleListListener(fastFlingLatch));
+        CtsTouchUtils.emulateFlingGesture(mInstrumentation, mListView, false);
+        try {
+            assertTrue("Timed out while waiting for the fling to complete",
+                    fastFlingLatch.await(5, TimeUnit.SECONDS));
+        } catch (InterruptedException e) {
+            // ignore
+        }
+
+        final int lastVisiblePositionAfterFastFling = mListView.getLastVisiblePosition();
+
+        // We expect a fast fling (with lower scroll friction) to end up scrolling more
+        // of our content
+        assertTrue("Default fling ended at " + lastVisiblePositionAfterDefaultFling
+                        + ", while fast fling ended at " + lastVisiblePositionAfterFastFling,
+                lastVisiblePositionAfterFastFling > lastVisiblePositionAfterDefaultFling);
+
+        // Scroll back to the top of the list
+        verifyScrollToPosition(0);
+        // configure the fling to have more friction
+        mListView.setFriction(ViewConfiguration.getScrollFriction() * 2.0f);
+        // and do the fling again
+        final CountDownLatch slowFlingLatch = new CountDownLatch(1);
+        mListView.setOnScrollListener(new ScrollIdleListListener(slowFlingLatch));
+        CtsTouchUtils.emulateFlingGesture(mInstrumentation, mListView, false);
+        try {
+            assertTrue("Timed out while waiting for the fling to complete",
+                    slowFlingLatch.await(5, TimeUnit.SECONDS));
+        } catch (InterruptedException e) {
+            // ignore
+        }
+
+        final int lastVisiblePositionAfterSlowFling = mListView.getLastVisiblePosition();
+
+        // We expect a slow fling (with higher scroll friction) to end up scrolling less
+        // of our content
+        assertTrue("Default fling ended at " + lastVisiblePositionAfterDefaultFling
+                        + ", while slow fling ended at " + lastVisiblePositionAfterSlowFling,
+                lastVisiblePositionAfterSlowFling < lastVisiblePositionAfterDefaultFling);
     }
 }

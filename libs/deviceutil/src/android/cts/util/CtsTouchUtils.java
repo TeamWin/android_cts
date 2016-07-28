@@ -119,8 +119,10 @@ public final class CtsTouchUtils {
         // Inject a sequence of MOVE events that emulate the "move" part of the gesture
         for (int i = 0; i < moveEventCount; i++) {
             long moveTime = SystemClock.uptimeMillis();
-            final int moveX = dragStartX + dragAmountX * i / moveEventCount;
-            final int moveY = dragStartY + dragAmountY * i / moveEventCount;
+            // Note that we divide by (moveEventCount - 1) so that our last MOVE event is
+            // at the same coordinates as the subsequent UP event.
+            final int moveX = dragStartX + dragAmountX * i / (moveEventCount - 1);
+            final int moveY = dragStartY + dragAmountY * i / (moveEventCount - 1);
             MotionEvent eventMove = MotionEvent.obtain(
                     moveTime, moveTime, MotionEvent.ACTION_MOVE, moveX, moveY, 1);
             eventMove.setSource(InputDevice.SOURCE_TOUCHSCREEN);
@@ -143,7 +145,16 @@ public final class CtsTouchUtils {
         instrumentation.waitForIdleSync();
     }
 
-    public static void emulateFlingGesture(Instrumentation instrumentation,
+    /**
+     * Emulates a fling gesture across the horizontal center of the passed view.
+     *
+     * @param instrumentation the instrumentation used to run the test
+     * @param view the view to fling
+     * @param isDownwardsFlingGesture if <code>true</code>, the emulated fling will
+     *      be a downwards gesture
+     * @return The vertical amount of emulated fling in pixels
+     */
+    public static int emulateFlingGesture(Instrumentation instrumentation,
             View view, boolean isDownwardsFlingGesture) {
         final ViewConfiguration configuration = ViewConfiguration.get(view.getContext());
         final int flingVelocity = (configuration.getScaledMinimumFlingVelocity() +
@@ -166,6 +177,8 @@ public final class CtsTouchUtils {
 
         // And do the same event injection sequence as our generic drag gesture
         emulateDragGesture(instrumentation, x, startY, 0, amountY, durationMs, 3);
+
+        return amountY;
     }
 
     private static class ViewStateSnapshot {
