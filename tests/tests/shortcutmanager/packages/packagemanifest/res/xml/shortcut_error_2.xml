@@ -13,22 +13,18 @@
      See the License for the specific language governing permissions and
      limitations under the License.
 -->
-<shortcuts xmlns:android="http://schemas.android.com/apk/res/android" >
-    <shortcut
-        android:shortcutId="manifest-shortcut-3"
-        >
-        <intent
-            android:action="android.intent.action.VIEW"
-            >
-        </intent>
-    </shortcut>
-    <shortcut
-        android:shortcutId="x2"
+<!-- Invalid: tag name shouldn't be capitalized -->
+<Shortcuts xmlns:android="http://schemas.android.com/apk/res/android" >
+    <Shortcut
+        android:shortcutId="ms1"
+        android:icon="@drawable/icon1"
         android:shortcutShortLabel="@string/label1"
-        >
+        android:shortcutLongLabel="@string/long_label1"
+        android:shortcutDisabledMessage="@string/disabled_message1">
         <intent
             android:action="android.intent.action.VIEW"
-            >
-        </intent>
-    </shortcut>
-</shortcuts>
+            android:data="http://www.google.com/" />
+        <categories android:name="android.shortcut.conversation" />
+        <categories android:name="android.shortcut.media" />
+    </Shortcut>
+</Shortcuts>
