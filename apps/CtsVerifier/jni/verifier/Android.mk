@@ -33,5 +33,7 @@ LOCAL_CXX_STL := libc++_static
 LOCAL_SHARED_LIBRARIES := liblog \
 		libnativehelper_compat_libc++
 
+LOCAL_CXX_STL := libstdc++
+
 include $(BUILD_SHARED_LIBRARY)
 
