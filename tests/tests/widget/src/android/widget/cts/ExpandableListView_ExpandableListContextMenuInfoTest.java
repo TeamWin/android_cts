@@ -17,17 +17,29 @@
 
 package android.widget.cts;
 
-import android.test.AndroidTestCase;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertSame;
+
+import android.support.test.InstrumentationRegistry;
+import android.support.test.runner.AndroidJUnit4;
+import android.test.suitebuilder.annotation.MediumTest;
 import android.widget.ExpandableListView;
 import android.widget.ExpandableListView.ExpandableListContextMenuInfo;
 import android.widget.ListView;
 
+import org.junit.Test;
+import org.junit.runner.RunWith;
+
 /**
  * Test {@link ExpandableListContextMenuInfo}.
  */
-public class ExpandableListView_ExpandableListContextMenuInfoTest extends AndroidTestCase {
+@MediumTest
+@RunWith(AndroidJUnit4.class)
+public class ExpandableListView_ExpandableListContextMenuInfoTest {
+    @Test
     public void testConstructor() {
-        ListView listview = new ListView(getContext());
+        ListView listview = new ListView(InstrumentationRegistry.getTargetContext());
         ExpandableListContextMenuInfo expandableListContextMenuInfo =
             new ExpandableListView.ExpandableListContextMenuInfo(listview, 100L, 80L);
         assertNotNull(expandableListContextMenuInfo);

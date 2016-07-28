@@ -16,61 +16,71 @@
 
 package android.widget.cts;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertSame;
 import static org.mockito.Matchers.anyInt;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.mock;
 
+import android.app.Instrumentation;
 import android.cts.util.PollingCheck;
 import android.cts.util.TestThread;
 import android.os.Looper;
-import android.test.ActivityInstrumentationTestCase2;
+import android.support.test.InstrumentationRegistry;
+import android.support.test.runner.AndroidJUnit4;
+import android.test.suitebuilder.annotation.SmallTest;
 import android.widget.Filter;
 
 import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.invocation.InvocationOnMock;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
-public class FilterTest extends ActivityInstrumentationTestCase2<CtsActivity> {
+@SmallTest
+@RunWith(AndroidJUnit4.class)
+public class FilterTest {
     private static final long TIME_OUT = 10000;
     private static final long RUN_TIME = 1000;
     private static final String TEST_CONSTRAINT = "filter test";
+
+    private Instrumentation mInstrumentation;
     private MockFilter mMockFilter;
 
-    public FilterTest() {
-        super("android.widget.cts", CtsActivity.class);
+    @Before
+    public void setup() {
+        mInstrumentation = InstrumentationRegistry.getInstrumentation();
     }
 
+    @Test
     public void testConstructor() throws Throwable {
-        TestThread t = new TestThread(new Runnable() {
-            public void run() {
-                Looper.prepare();
-                new MockFilter();
-            }
-        });
-        t.runTest(RUN_TIME);
-    }
-
-    public void testConvertResultToString() throws Throwable {
-        final String testStr = "Test";
-        new TestThread(new Runnable() {
-            public void run() {
-                Looper.prepare();
-                MockFilter filter = new MockFilter();
-                assertEquals("", filter.convertResultToString(null));
-                assertEquals(testStr, filter.convertResultToString(testStr));
-            }
+        new TestThread(() -> {
+            Looper.prepare();
+            new MockFilter();
         }).runTest(RUN_TIME);
     }
 
+    @Test
+    public void testConvertResultToString() throws Throwable {
+        final String testStr = "Test";
+        new TestThread(() -> {
+            Looper.prepare();
+            MockFilter filter = new MockFilter();
+            assertEquals("", filter.convertResultToString(null));
+            assertEquals(testStr, filter.convertResultToString(testStr));
+        }).runTest(RUN_TIME);
+    }
+
+    @Test
     public void testFilter1() {
-        getActivity().runOnUiThread(new Runnable() {
-            public void run() {
-                mMockFilter = new MockFilter();
-                mMockFilter.filter(TEST_CONSTRAINT);
-            }
+        mInstrumentation.runOnMainSync(() -> {
+            mMockFilter = new MockFilter();
+            mMockFilter.filter(TEST_CONSTRAINT);
         });
-        getInstrumentation().waitForIdleSync();
+        mInstrumentation.waitForIdleSync();
 
         PollingCheck.waitFor(TIME_OUT, mMockFilter::hadPerformedFiltering);
         assertEquals(TEST_CONSTRAINT, mMockFilter.getPerformFilteringConstraint());
@@ -80,6 +90,7 @@ public class FilterTest extends ActivityInstrumentationTestCase2<CtsActivity> {
         assertSame(mMockFilter.getExpectResults(), mMockFilter.getResults());
     }
 
+    @Test
     public void testFilter2() {
         final CountDownLatch countDownLatch = new CountDownLatch(1);
         final Filter.FilterListener mockFilterListener = mock(Filter.FilterListener.class);
@@ -88,13 +99,11 @@ public class FilterTest extends ActivityInstrumentationTestCase2<CtsActivity> {
             return null;
         }).when(mockFilterListener).onFilterComplete(anyInt());
 
-        getActivity().runOnUiThread(new Runnable() {
-            public void run() {
-                mMockFilter = new MockFilter();
-                mMockFilter.filter(TEST_CONSTRAINT, mockFilterListener);
-            }
+        mInstrumentation.runOnMainSync(() -> {
+            mMockFilter = new MockFilter();
+            mMockFilter.filter(TEST_CONSTRAINT, mockFilterListener);
         });
-        getInstrumentation().waitForIdleSync();
+        mInstrumentation.waitForIdleSync();
 
         PollingCheck.waitFor(TIME_OUT, mMockFilter::hadPerformedFiltering);
         assertEquals(TEST_CONSTRAINT, mMockFilter.getPerformFilteringConstraint());

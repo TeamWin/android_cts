@@ -17,6 +17,8 @@
 package android.widget.cts;
 
 import android.app.Instrumentation;
+import android.cts.util.CtsKeyEventUtil;
+import android.support.test.InstrumentationRegistry;
 import android.test.ActivityInstrumentationTestCase2;
 import android.view.KeyEvent;
 import android.view.View;
@@ -31,22 +33,13 @@ public class ExpandableListTester {
     private final ExpandableListView mExpandableListView;
     private final ExpandableListAdapter mAdapter;
     private final ListUtil mListUtil;
+    private final Instrumentation mInstrumentation;
 
-    private final ActivityInstrumentationTestCase2<? extends ExpandableListScenario>
-        mActivityInstrumentation;
-
-    Instrumentation mInstrumentation;
-
-    public ExpandableListTester(
-            ExpandableListView expandableListView,
-            ActivityInstrumentationTestCase2<? extends ExpandableListScenario>
-            activityInstrumentation) {
+    public ExpandableListTester(ExpandableListView expandableListView) {
         mExpandableListView = expandableListView;
-        Instrumentation instrumentation = activityInstrumentation.getInstrumentation();
-        mListUtil = new ListUtil(mExpandableListView, instrumentation);
+        mInstrumentation = InstrumentationRegistry.getInstrumentation();
+        mListUtil = new ListUtil(mExpandableListView, mInstrumentation);
         mAdapter = mExpandableListView.getExpandableListAdapter();
-        mActivityInstrumentation = activityInstrumentation;
-        mInstrumentation = mActivityInstrumentation.getInstrumentation();
     }
 
     private void expandGroup(final int groupIndex, int flatPosition) {
@@ -54,9 +47,10 @@ public class ExpandableListTester {
                 .isGroupExpanded(groupIndex));
         mListUtil.arrowScrollToSelectedPosition(flatPosition);
         mInstrumentation.waitForIdleSync();
-        mActivityInstrumentation.sendKeys(KeyEvent.KEYCODE_DPAD_CENTER);
-        mActivityInstrumentation.getInstrumentation().waitForIdleSync();
-        Assert.assertTrue("Group did not expand " + groupIndex, 
+        CtsKeyEventUtil.sendKeys(mInstrumentation, mExpandableListView,
+                KeyEvent.KEYCODE_DPAD_CENTER);
+        mInstrumentation.waitForIdleSync();
+        Assert.assertTrue("Group did not expand " + groupIndex,
                 mExpandableListView.isGroupExpanded(groupIndex));
     }
 
@@ -139,7 +133,7 @@ public class ExpandableListTester {
     }
 
     // This method assumes that NO group is expanded when called
-    void testConvertionBetweenFlatAndPackedOnGroups() {
+    void testConversionBetweenFlatAndPackedOnGroups() {
         final int headerCount = mExpandableListView.getHeaderViewsCount();
 
         for (int i=0; i<headerCount; i++) {
@@ -170,7 +164,7 @@ public class ExpandableListTester {
     }
 
     // This method assumes that NO group is expanded when called
-    void testConvertionBetweenFlatAndPackedOnChildren() {
+    void testConversionBetweenFlatAndPackedOnChildren() {
         // Test with an expanded group
         final int headerCount = mExpandableListView.getHeaderViewsCount();
         final int groupIndex = expandAGroup();
