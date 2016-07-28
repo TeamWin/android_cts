@@ -1015,9 +1015,8 @@ public class AbsListViewTest {
         }
     }
 
-    @LargeTest
-    @Test
-    public void testFastScroll() throws Throwable {
+    // Helper method that emulates fast scroll by dragging along the right edge of our ListView.
+    private void verifyFastScroll() throws Throwable {
         setAdapter();
 
         final int lastVisiblePosition = mListView.getLastVisiblePosition();
@@ -1027,7 +1026,8 @@ public class AbsListViewTest {
             return;
         }
 
-        mListView.setFastScrollAlwaysVisible(true);
+        mActivityRule.runOnUiThread(() -> mListView.setFastScrollAlwaysVisible(true));
+        mInstrumentation.waitForIdleSync();
         assertTrue(mListView.isFastScrollEnabled());
         assertTrue(mListView.isFastScrollAlwaysVisible());
 
@@ -1057,6 +1057,20 @@ public class AbsListViewTest {
                 -mListView.getHeight() + 2);  // Y amount of the drag (upwards)
 
         assertEquals(0, mListView.getFirstVisiblePosition());
+    }
+
+    @LargeTest
+    @Test
+    public void testFastScroll() throws Throwable {
+        verifyFastScroll();
+    }
+
+    @LargeTest
+    @Test
+    public void testFastScrollStyle() throws Throwable {
+        mListView.setFastScrollStyle(R.style.FastScrollCustomStyle);
+
+        verifyFastScroll();
     }
 
     /**
