@@ -30,6 +30,7 @@ import android.app.Instrumentation;
 import android.content.Context;
 import android.os.SystemClock;
 import android.support.test.InstrumentationRegistry;
+import android.support.test.annotation.UiThreadTest;
 import android.support.test.rule.ActivityTestRule;
 import android.support.test.runner.AndroidJUnit4;
 import android.test.suitebuilder.annotation.LargeTest;
@@ -86,31 +87,33 @@ public class ChronometerTest {
         assertEquals(mActivity.getString(R.string.chronometer_format), chronometer.getFormat());
     }
 
+    @UiThreadTest
     @Test
     public void testAccessBase() {
         Chronometer chronometer = mActivity.getChronometer();
         CharSequence oldText = chronometer.getText();
 
-        mInstrumentation.runOnMainSync(() -> chronometer.setBase(100000));
+        chronometer.setBase(100000);
         assertEquals(100000, chronometer.getBase());
         assertNotSame(oldText, chronometer.getText());
 
         oldText = chronometer.getText();
-        mInstrumentation.runOnMainSync(() -> chronometer.setBase(100));
+        chronometer.setBase(100);
         assertEquals(100, chronometer.getBase());
         assertNotSame(oldText, chronometer.getText());
 
         oldText = chronometer.getText();
-        mInstrumentation.runOnMainSync(() -> chronometer.setBase(-1));
+        chronometer.setBase(-1);
         assertEquals(-1, chronometer.getBase());
         assertNotSame(oldText, chronometer.getText());
 
         oldText = chronometer.getText();
-        mInstrumentation.runOnMainSync(() -> chronometer.setBase(Integer.MAX_VALUE));
+        chronometer.setBase(Integer.MAX_VALUE);
         assertEquals(Integer.MAX_VALUE, chronometer.getBase());
         assertNotSame(oldText, chronometer.getText());
     }
 
+    @UiThreadTest
     @Test
     public void testAccessFormat() {
         Chronometer chronometer = mActivity.getChronometer();
@@ -119,7 +122,7 @@ public class ChronometerTest {
         chronometer.setFormat(expected);
         assertEquals(expected, chronometer.getFormat());
 
-        mInstrumentation.runOnMainSync(() -> chronometer.start());
+        chronometer.start();
         String text = chronometer.getText().toString();
         assertTrue(text.startsWith("header"));
         assertTrue(text.endsWith("trail"));

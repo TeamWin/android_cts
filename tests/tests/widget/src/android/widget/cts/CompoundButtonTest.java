@@ -31,9 +31,10 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyZeroInteractions;
 
+import android.app.Activity;
+import android.app.Instrumentation;
 import android.content.Context;
 import android.content.res.ColorStateList;
-import android.content.res.Resources;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.PorterDuff;
@@ -42,19 +43,20 @@ import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.Parcelable;
 import android.support.test.InstrumentationRegistry;
+import android.support.test.annotation.UiThreadTest;
+import android.support.test.rule.ActivityTestRule;
 import android.support.test.runner.AndroidJUnit4;
 import android.test.suitebuilder.annotation.SmallTest;
 import android.util.AttributeSet;
 import android.util.StateSet;
 import android.util.Xml;
 import android.view.Gravity;
-import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.CompoundButton;
-import android.widget.ToggleButton;
 import android.widget.cts.util.TestUtils;
 
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.xmlpull.v1.XmlPullParser;
@@ -65,23 +67,29 @@ import org.xmlpull.v1.XmlPullParser;
 @SmallTest
 @RunWith(AndroidJUnit4.class)
 public class CompoundButtonTest  {
-    private Context mContext;
-    private Resources mResources;
+    private Instrumentation mInstrumentation;
+    private Activity mActivity;
+    private CompoundButton mCompoundButton;
+
+    @Rule
+    public ActivityTestRule<CompoundButtonCtsActivity> mActivityRule
+            = new ActivityTestRule<>(CompoundButtonCtsActivity.class);
 
     @Before
     public void setup() {
-        mContext = InstrumentationRegistry.getTargetContext();
-        mResources = mContext.getResources();
+        mInstrumentation = InstrumentationRegistry.getInstrumentation();
+        mActivity = mActivityRule.getActivity();
+        mCompoundButton = (CompoundButton) mActivity.findViewById(R.id.compound_button);
     }
 
     @Test
     public void testConstructor() {
-        XmlPullParser parser = mContext.getResources().getXml(R.layout.togglebutton_layout);
+        XmlPullParser parser = mActivity.getResources().getXml(R.layout.compoundbutton_layout);
         AttributeSet mAttrSet = Xml.asAttributeSet(parser);
 
-        new MockCompoundButton(mContext, mAttrSet, 0);
-        new MockCompoundButton(mContext, mAttrSet);
-        new MockCompoundButton(mContext);
+        new MockCompoundButton(mActivity, mAttrSet, 0);
+        new MockCompoundButton(mActivity, mAttrSet);
+        new MockCompoundButton(mActivity);
     }
 
     @Test(expected=NullPointerException.class)
@@ -99,94 +107,95 @@ public class CompoundButtonTest  {
         new MockCompoundButton(null, null, -1);
     }
 
+    @UiThreadTest
     @Test
     public void testAccessChecked() {
-        CompoundButton compoundButton = new MockCompoundButton(mContext);
         CompoundButton.OnCheckedChangeListener mockCheckedChangeListener =
                 mock(CompoundButton.OnCheckedChangeListener.class);
-        compoundButton.setOnCheckedChangeListener(mockCheckedChangeListener);
-        assertFalse(compoundButton.isChecked());
+        mCompoundButton.setOnCheckedChangeListener(mockCheckedChangeListener);
+        assertFalse(mCompoundButton.isChecked());
         verifyZeroInteractions(mockCheckedChangeListener);
 
-        compoundButton.setChecked(true);
-        assertTrue(compoundButton.isChecked());
-        verify(mockCheckedChangeListener, times(1)).onCheckedChanged(compoundButton, true);
+        mCompoundButton.setChecked(true);
+        assertTrue(mCompoundButton.isChecked());
+        verify(mockCheckedChangeListener, times(1)).onCheckedChanged(mCompoundButton, true);
 
         reset(mockCheckedChangeListener);
-        compoundButton.setChecked(true);
-        assertTrue(compoundButton.isChecked());
+        mCompoundButton.setChecked(true);
+        assertTrue(mCompoundButton.isChecked());
         verifyZeroInteractions(mockCheckedChangeListener);
 
-        compoundButton.setChecked(false);
-        assertFalse(compoundButton.isChecked());
-        verify(mockCheckedChangeListener, times(1)).onCheckedChanged(compoundButton, false);
+        mCompoundButton.setChecked(false);
+        assertFalse(mCompoundButton.isChecked());
+        verify(mockCheckedChangeListener, times(1)).onCheckedChanged(mCompoundButton, false);
     }
 
+    @UiThreadTest
     @Test
     public void testSetOnCheckedChangeListener() {
-        CompoundButton compoundButton = new MockCompoundButton(mContext);
         CompoundButton.OnCheckedChangeListener mockCheckedChangeListener =
                 mock(CompoundButton.OnCheckedChangeListener.class);
-        compoundButton.setOnCheckedChangeListener(mockCheckedChangeListener);
-        assertFalse(compoundButton.isChecked());
+        mCompoundButton.setOnCheckedChangeListener(mockCheckedChangeListener);
+        assertFalse(mCompoundButton.isChecked());
         verifyZeroInteractions(mockCheckedChangeListener);
 
-        compoundButton.setChecked(true);
-        verify(mockCheckedChangeListener, times(1)).onCheckedChanged(compoundButton, true);
+        mCompoundButton.setChecked(true);
+        verify(mockCheckedChangeListener, times(1)).onCheckedChanged(mCompoundButton, true);
 
         // set null
-        compoundButton.setOnCheckedChangeListener(null);
+        mCompoundButton.setOnCheckedChangeListener(null);
         reset(mockCheckedChangeListener);
-        compoundButton.setChecked(false);
+        mCompoundButton.setChecked(false);
         verifyZeroInteractions(mockCheckedChangeListener);
     }
 
+    @UiThreadTest
     @Test
     public void testToggle() {
-        CompoundButton compoundButton = new MockCompoundButton(mContext);
-        assertFalse(compoundButton.isChecked());
+        assertFalse(mCompoundButton.isChecked());
 
-        compoundButton.toggle();
-        assertTrue(compoundButton.isChecked());
+        mCompoundButton.toggle();
+        assertTrue(mCompoundButton.isChecked());
 
-        compoundButton.toggle();
-        assertFalse(compoundButton.isChecked());
+        mCompoundButton.toggle();
+        assertFalse(mCompoundButton.isChecked());
 
-        compoundButton.setChecked(true);
-        compoundButton.toggle();
-        assertFalse(compoundButton.isChecked());
+        mCompoundButton.setChecked(true);
+        mCompoundButton.toggle();
+        assertFalse(mCompoundButton.isChecked());
     }
 
+    @UiThreadTest
     @Test
     public void testPerformClick() {
-        CompoundButton compoundButton = new MockCompoundButton(mContext);
-        assertFalse(compoundButton.isChecked());
+        assertFalse(mCompoundButton.isChecked());
 
         // performClick without OnClickListener will return false.
-        assertFalse(compoundButton.performClick());
-        assertTrue(compoundButton.isChecked());
+        assertFalse(mCompoundButton.performClick());
+        assertTrue(mCompoundButton.isChecked());
 
-        assertFalse(compoundButton.performClick());
-        assertFalse(compoundButton.isChecked());
+        assertFalse(mCompoundButton.performClick());
+        assertFalse(mCompoundButton.isChecked());
 
         // performClick with OnClickListener will return true.
-        compoundButton.setOnClickListener((view) -> {});
-        assertTrue(compoundButton.performClick());
-        assertTrue(compoundButton.isChecked());
+        mCompoundButton.setOnClickListener((view) -> {});
+        assertTrue(mCompoundButton.performClick());
+        assertTrue(mCompoundButton.isChecked());
 
-        assertTrue(compoundButton.performClick());
-        assertFalse(compoundButton.isChecked());
+        assertTrue(mCompoundButton.performClick());
+        assertFalse(mCompoundButton.isChecked());
     }
 
+    @UiThreadTest
     @Test
     public void testDrawableStateChanged() {
-        MockCompoundButton compoundButton = new MockCompoundButton(mContext);
+        MockCompoundButton compoundButton = new MockCompoundButton(mActivity);
         assertFalse(compoundButton.isChecked());
         // drawableStateChanged without any drawables.
         compoundButton.drawableStateChanged();
 
         // drawableStateChanged when CheckMarkDrawable is not null.
-        Drawable drawable = mResources.getDrawable(R.drawable.statelistdrawable);
+        Drawable drawable = mActivity.getDrawable(R.drawable.statelistdrawable);
         compoundButton.setButtonDrawable(drawable);
         drawable.setState(null);
         assertNull(drawable.getState());
@@ -196,63 +205,56 @@ public class CompoundButtonTest  {
         assertSame(compoundButton.getDrawableState(), drawable.getState());
     }
 
+    @UiThreadTest
     @Test
     public void testSetButtonDrawableByDrawable() {
-        CompoundButton compoundButton;
-
         // set null drawable
-        compoundButton = new MockCompoundButton(mContext);
-        compoundButton.setButtonDrawable(null);
-        assertNull(compoundButton.getButtonDrawable());
+        mCompoundButton.setButtonDrawable(null);
+        assertNull(mCompoundButton.getButtonDrawable());
 
-        // set drawable when checkedTextView is GONE
-        compoundButton = new MockCompoundButton(mContext);
-        compoundButton.setVisibility(View.GONE);
-        Drawable firstDrawable = mResources.getDrawable(R.drawable.scenery);
+        // set drawable when button is GONE
+        mCompoundButton.setVisibility(View.GONE);
+        Drawable firstDrawable = mActivity.getDrawable(R.drawable.scenery);
         firstDrawable.setVisible(true, false);
         assertEquals(StateSet.WILD_CARD, firstDrawable.getState());
 
-        compoundButton.setButtonDrawable(firstDrawable);
-        assertSame(firstDrawable, compoundButton.getButtonDrawable());
+        mCompoundButton.setButtonDrawable(firstDrawable);
+        assertSame(firstDrawable, mCompoundButton.getButtonDrawable());
         assertFalse(firstDrawable.isVisible());
 
-        // update drawable when checkedTextView is VISIBLE
-        compoundButton.setVisibility(View.VISIBLE);
-        Drawable secondDrawable = mResources.getDrawable(R.drawable.pass);
+        // update drawable when button is VISIBLE
+        mCompoundButton.setVisibility(View.VISIBLE);
+        Drawable secondDrawable = mActivity.getDrawable(R.drawable.pass);
         secondDrawable.setVisible(true, false);
         assertEquals(StateSet.WILD_CARD, secondDrawable.getState());
 
-        compoundButton.setButtonDrawable(secondDrawable);
-        assertSame(secondDrawable, compoundButton.getButtonDrawable());
+        mCompoundButton.setButtonDrawable(secondDrawable);
+        assertSame(secondDrawable, mCompoundButton.getButtonDrawable());
         assertTrue(secondDrawable.isVisible());
         // the firstDrawable is not active.
         assertFalse(firstDrawable.isVisible());
     }
 
+    @UiThreadTest
     @Test
     public void testSetButtonDrawableById() {
-        CompoundButton compoundButton;
         // resId is 0
-        compoundButton = new MockCompoundButton(mContext);
-        compoundButton.setButtonDrawable(0);
+        mCompoundButton.setButtonDrawable(0);
 
         // set drawable
-        compoundButton = new MockCompoundButton(mContext);
-        compoundButton.setButtonDrawable(R.drawable.scenery);
+        mCompoundButton.setButtonDrawable(R.drawable.scenery);
 
         // set the same drawable again
-        compoundButton.setButtonDrawable(R.drawable.scenery);
+        mCompoundButton.setButtonDrawable(R.drawable.scenery);
 
         // update drawable
-        compoundButton.setButtonDrawable(R.drawable.pass);
+        mCompoundButton.setButtonDrawable(R.drawable.pass);
     }
 
     @Test
     public void testOnCreateDrawableState() {
-        MockCompoundButton compoundButton;
-
         // compoundButton is not checked, append 0 to state array.
-        compoundButton = new MockCompoundButton(mContext);
+        MockCompoundButton compoundButton = new MockCompoundButton(mActivity);
         int[] state = compoundButton.onCreateDrawableState(0);
         assertEquals(0, state[state.length - 1]);
 
@@ -281,12 +283,12 @@ public class CompoundButtonTest  {
         MockCompoundButton compoundButton;
 
         // onDraw when there is no drawable
-        compoundButton = new MockCompoundButton(mContext);
+        compoundButton = new MockCompoundButton(mActivity);
         compoundButton.onDraw(canvas);
 
         // onDraw when Gravity.TOP, it's default.
-        compoundButton = new MockCompoundButton(mContext);
-        drawable = mResources.getDrawable(R.drawable.scenery);
+        compoundButton = new MockCompoundButton(mActivity);
+        drawable = mActivity.getDrawable(R.drawable.scenery);
         compoundButton.setButtonDrawable(drawable);
         viewHeight = compoundButton.getHeight();
         drawableWidth = drawable.getIntrinsicWidth();
@@ -318,29 +320,29 @@ public class CompoundButtonTest  {
         assertEquals( (viewHeight - drawableHeight) / 2 + drawableHeight, bounds.bottom);
     }
 
+    @UiThreadTest
     @Test
     public void testAccessInstanceState() {
-        CompoundButton compoundButton = new MockCompoundButton(mContext);
         Parcelable state;
 
-        assertFalse(compoundButton.isChecked());
-        assertFalse(compoundButton.getFreezesText());
+        assertFalse(mCompoundButton.isChecked());
+        assertFalse(mCompoundButton.getFreezesText());
 
-        state = compoundButton.onSaveInstanceState();
+        state = mCompoundButton.onSaveInstanceState();
         assertNotNull(state);
-        assertFalse(compoundButton.getFreezesText());
+        assertFalse(mCompoundButton.getFreezesText());
 
-        compoundButton.setChecked(true);
+        mCompoundButton.setChecked(true);
 
-        compoundButton.onRestoreInstanceState(state);
-        assertFalse(compoundButton.isChecked());
-        assertTrue(compoundButton.isLayoutRequested());
+        mCompoundButton.onRestoreInstanceState(state);
+        assertFalse(mCompoundButton.isChecked());
+        assertTrue(mCompoundButton.isLayoutRequested());
     }
 
     @Test
     public void testVerifyDrawable() {
-        MockCompoundButton compoundButton = new MockCompoundButton(mContext);
-        Drawable drawable = mContext.getResources().getDrawable(R.drawable.scenery);
+        MockCompoundButton compoundButton = new MockCompoundButton(mActivity);
+        Drawable drawable = mActivity.getDrawable(R.drawable.scenery);
 
         assertTrue(compoundButton.verifyDrawable(null));
         assertFalse(compoundButton.verifyDrawable(drawable));
@@ -350,36 +352,34 @@ public class CompoundButtonTest  {
         assertTrue(compoundButton.verifyDrawable(drawable));
     }
 
+    @UiThreadTest
     @Test
     public void testButtonTint() {
-        LayoutInflater inflater = LayoutInflater.from(mContext);
-        View layout = inflater.inflate(R.layout.togglebutton_layout, null);
-        CompoundButton inflatedView = (CompoundButton) layout.findViewById(R.id.button_tint);
+        CompoundButton tintedButton = (CompoundButton) mActivity.findViewById(R.id.button_tint);
 
         assertEquals("Button tint inflated correctly",
-                Color.WHITE, inflatedView.getButtonTintList().getDefaultColor());
+                Color.WHITE, tintedButton.getButtonTintList().getDefaultColor());
         assertEquals("Button tint mode inflated correctly",
-                PorterDuff.Mode.SRC_OVER, inflatedView.getButtonTintMode());
+                PorterDuff.Mode.SRC_OVER, tintedButton.getButtonTintMode());
 
         Drawable mockDrawable = spy(new ColorDrawable(Color.GREEN));
-        CompoundButton view = new ToggleButton(mContext);
 
-        view.setButtonDrawable(mockDrawable);
+        mCompoundButton.setButtonDrawable(mockDrawable);
         // No button tint applied by default
         verify(mockDrawable, never()).setTintList(any(ColorStateList.class));
 
-        view.setButtonTintList(ColorStateList.valueOf(Color.WHITE));
+        mCompoundButton.setButtonTintList(ColorStateList.valueOf(Color.WHITE));
         // Button tint applied when setButtonTintList() called after setButton()
         verify(mockDrawable, times(1)).setTintList(TestUtils.colorStateListOf(Color.WHITE));
 
         reset(mockDrawable);
-        view.setButtonDrawable(null);
-        view.setButtonDrawable(mockDrawable);
+        mCompoundButton.setButtonDrawable(null);
+        mCompoundButton.setButtonDrawable(mockDrawable);
         // Button tint applied when setButtonTintList() called before setButton()
         verify(mockDrawable, times(1)).setTintList(TestUtils.colorStateListOf(Color.WHITE));
     }
 
-    private final class MockCompoundButton extends CompoundButton {
+    public static final class MockCompoundButton extends CompoundButton {
         public MockCompoundButton(Context context) {
             super(context);
         }

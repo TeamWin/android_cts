@@ -49,6 +49,7 @@ import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
 import android.os.SystemClock;
 import android.support.test.InstrumentationRegistry;
+import android.support.test.annotation.UiThreadTest;
 import android.support.test.rule.ActivityTestRule;
 import android.support.test.runner.AndroidJUnit4;
 import android.test.suitebuilder.annotation.MediumTest;
@@ -219,6 +220,7 @@ public class AutoCompleteTextViewTest {
         assertNull(mAutoCompleteTextView.getAdapter());
     }
 
+    @UiThreadTest
     @Test
     public void testAccessFilter() {
         MockAutoCompleteTextView autoCompleteTextView = new MockAutoCompleteTextView(mActivity);
@@ -230,13 +232,11 @@ public class AutoCompleteTextViewTest {
         assertNull(autoCompleteTextView.getAdapter());
         assertNull(autoCompleteTextView.getFilter());
 
-        mInstrumentation.runOnMainSync(() -> {
-                Filter filter = mAdapter.getFilter();
-                assertNotNull(filter);
-                autoCompleteTextView.setAdapter(mAdapter);
-                assertSame(mAdapter, autoCompleteTextView.getAdapter());
-                assertSame(filter, autoCompleteTextView.getFilter());
-        });
+        Filter filter = mAdapter.getFilter();
+        assertNotNull(filter);
+        autoCompleteTextView.setAdapter(mAdapter);
+        assertSame(mAdapter, autoCompleteTextView.getAdapter());
+        assertSame(filter, autoCompleteTextView.getFilter());
 
         // Re-set adapter to null
         autoCompleteTextView.setAdapter(null);
@@ -288,21 +288,21 @@ public class AutoCompleteTextViewTest {
         verifyZeroInteractions(mockItemSelectedListener);
     }
 
+    @UiThreadTest
     @Test
     public void testConvertSelectionToString() {
         MockAutoCompleteTextView autoCompleteTextView = new MockAutoCompleteTextView(mActivity);
 
         // Set Threshold to 4 characters
-        mInstrumentation.runOnMainSync(() -> {
-                autoCompleteTextView.setThreshold(4);
-                autoCompleteTextView.setAdapter(mAdapter);
-        });
+        autoCompleteTextView.setThreshold(4);
+        autoCompleteTextView.setAdapter(mAdapter);
         assertNotNull(autoCompleteTextView.getAdapter());
 
         assertEquals("", autoCompleteTextView.convertSelectionToString(null));
         assertEquals(STRING_TEST, autoCompleteTextView.convertSelectionToString(STRING_TEST));
     }
 
+    @UiThreadTest
     @Test
     public void testOnTextChanged() {
         final TextWatcher mockTextWatcher = mock(TextWatcher.class);
@@ -310,16 +310,17 @@ public class AutoCompleteTextViewTest {
         verify(mockTextWatcher, never()).onTextChanged(any(CharSequence.class),
                 anyInt(), anyInt(), anyInt());
 
-        mInstrumentation.runOnMainSync(() -> mAutoCompleteTextView.setText(STRING_TEST));
+        mAutoCompleteTextView.setText(STRING_TEST);
         verify(mockTextWatcher, times(1)).onTextChanged(sameCharSequence(STRING_TEST),
                 eq(0), eq(0), eq(STRING_TEST.length()));
 
         // Test replacing text.
-        mInstrumentation.runOnMainSync(() -> mAutoCompleteTextView.setText(STRING_CHECK));
+        mAutoCompleteTextView.setText(STRING_CHECK);
         verify(mockTextWatcher, times(1)).onTextChanged(sameCharSequence(STRING_CHECK),
                 eq(0), eq(STRING_TEST.length()), eq(STRING_CHECK.length()));
     }
 
+    @UiThreadTest
     @Test
     public void testPopupWindow() {
         final AutoCompleteTextView.OnDismissListener mockDismissListener =
@@ -327,29 +328,27 @@ public class AutoCompleteTextViewTest {
         mAutoCompleteTextView.setOnDismissListener(mockDismissListener);
 
         assertFalse(mAutoCompleteTextView.isPopupShowing());
-        mInstrumentation.runOnMainSync(mAutoCompleteTextView::showDropDown);
+        mAutoCompleteTextView.showDropDown();
         assertTrue(mAutoCompleteTextView.isPopupShowing());
         verifyZeroInteractions(mockDismissListener);
 
-        mInstrumentation.runOnMainSync(mAutoCompleteTextView::dismissDropDown);
+        mAutoCompleteTextView.dismissDropDown();
         assertFalse(mAutoCompleteTextView.isPopupShowing());
         verify(mockDismissListener, times(1)).onDismiss();
 
-        mInstrumentation.runOnMainSync(mAutoCompleteTextView::showDropDown);
+        mAutoCompleteTextView.showDropDown();
         assertTrue(mAutoCompleteTextView.isPopupShowing());
         verify(mockDismissListener, times(1)).onDismiss();
 
         final MockValidator validator = new MockValidator();
         mAutoCompleteTextView.setValidator(validator);
-        mInstrumentation.runOnMainSync(() -> {
-            mAutoCompleteTextView.requestFocus();
-            mAutoCompleteTextView.showDropDown();
-            mAutoCompleteTextView.setText(STRING_TEST);
-        });
+        mAutoCompleteTextView.requestFocus();
+        mAutoCompleteTextView.showDropDown();
+        mAutoCompleteTextView.setText(STRING_TEST);
         assertEquals(STRING_TEST, mAutoCompleteTextView.getText().toString());
 
         // clearFocus will trigger onFocusChanged, and onFocusChanged will validate the text.
-        mInstrumentation.runOnMainSync(mAutoCompleteTextView::clearFocus);
+        mAutoCompleteTextView.clearFocus();
         assertFalse(mAutoCompleteTextView.isPopupShowing());
         assertEquals(STRING_VALIDATED, mAutoCompleteTextView.getText().toString());
         verify(mockDismissListener, times(2)).onDismiss();
@@ -357,9 +356,10 @@ public class AutoCompleteTextViewTest {
         verifyNoMoreInteractions(mockDismissListener);
     }
 
+    @UiThreadTest
     @Test
     public void testDropDownMetrics() {
-        mInstrumentation.runOnMainSync(() -> mAutoCompleteTextView.setAdapter(mAdapter));
+        mAutoCompleteTextView.setAdapter(mAdapter);
 
         final Resources res = mActivity.getResources();
         final int dropDownWidth =
@@ -371,14 +371,12 @@ public class AutoCompleteTextViewTest {
         final int dropDownOffsetVertical =
                 res.getDimensionPixelSize(R.dimen.autocomplete_textview_dropdown_offset_v);
 
-        mInstrumentation.runOnMainSync(() -> {
-            mAutoCompleteTextView.setDropDownWidth(dropDownWidth);
-            mAutoCompleteTextView.setDropDownHeight(dropDownHeight);
-            mAutoCompleteTextView.setDropDownHorizontalOffset(dropDownOffsetHorizontal);
-            mAutoCompleteTextView.setDropDownVerticalOffset(dropDownOffsetVertical);
+        mAutoCompleteTextView.setDropDownWidth(dropDownWidth);
+        mAutoCompleteTextView.setDropDownHeight(dropDownHeight);
+        mAutoCompleteTextView.setDropDownHorizontalOffset(dropDownOffsetHorizontal);
+        mAutoCompleteTextView.setDropDownVerticalOffset(dropDownOffsetVertical);
 
-            mAutoCompleteTextView.showDropDown();
-        });
+        mAutoCompleteTextView.showDropDown();
 
         assertEquals(dropDownWidth, mAutoCompleteTextView.getDropDownWidth());
         assertEquals(dropDownHeight, mAutoCompleteTextView.getDropDownHeight());
@@ -727,16 +725,15 @@ public class AutoCompleteTextViewTest {
         verifyZeroInteractions(mockItemClickListener);
     }
 
+    @UiThreadTest
     @Test
     public void testPerformValidation() {
         final CharSequence text = "this";
 
-        mInstrumentation.runOnMainSync(() -> {
-                mAutoCompleteTextView.setValidator(mValidator);
-                mAutoCompleteTextView.setAdapter((ArrayAdapter<String>) null);
-                mAutoCompleteTextView.setText(text);
-                mAutoCompleteTextView.performValidation();
-        });
+        mAutoCompleteTextView.setValidator(mValidator);
+        mAutoCompleteTextView.setAdapter((ArrayAdapter<String>) null);
+        mAutoCompleteTextView.setText(text);
+        mAutoCompleteTextView.performValidation();
 
         assertEquals(STRING_VALIDATED, mAutoCompleteTextView.getText().toString());
         mAutoCompleteTextView.setValidator(null);

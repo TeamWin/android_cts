@@ -23,11 +23,10 @@ import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 
 import android.app.Activity;
-import android.app.Instrumentation;
 import android.database.DataSetObserver;
 import android.graphics.Rect;
 import android.os.Parcelable;
-import android.support.test.InstrumentationRegistry;
+import android.support.test.annotation.UiThreadTest;
 import android.support.test.rule.ActivityTestRule;
 import android.support.test.runner.AndroidJUnit4;
 import android.test.suitebuilder.annotation.SmallTest;
@@ -52,7 +51,6 @@ import org.xmlpull.v1.XmlPullParser;
 @SmallTest
 @RunWith(AndroidJUnit4.class)
 public class AbsSpinnerTest {
-    private Instrumentation mInstrumentation;
     private Activity mActivity;
     private AbsSpinner mAbsSpinner;
 
@@ -62,7 +60,6 @@ public class AbsSpinnerTest {
 
     @Before
     public void setup() {
-        mInstrumentation = InstrumentationRegistry.getInstrumentation();
         mActivity = mActivityRule.getActivity();
         mAbsSpinner = (AbsSpinner) mActivity.findViewById(R.id.spinner1);
     }
@@ -89,19 +86,19 @@ public class AbsSpinnerTest {
      * Check points:
      * 1. Jump to the specific item.
      */
+    @UiThreadTest
     @Test
     public void testSetSelectionIntBoolean() {
         ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(mActivity,
                 android.widget.cts.R.array.string, android.R.layout.simple_spinner_item);
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        mInstrumentation.runOnMainSync(() -> mAbsSpinner.setAdapter(adapter));
+        mAbsSpinner.setAdapter(adapter);
         assertEquals(0, mAbsSpinner.getSelectedItemPosition());
 
-        mInstrumentation.runOnMainSync(() -> mAbsSpinner.setSelection(1, true));
+        mAbsSpinner.setSelection(1, true);
         assertEquals(1, mAbsSpinner.getSelectedItemPosition());
 
-        mInstrumentation.runOnMainSync(
-                () -> mAbsSpinner.setSelection(mAbsSpinner.getCount() - 1, false));
+        mAbsSpinner.setSelection(mAbsSpinner.getCount() - 1, false);
         assertEquals(mAbsSpinner.getCount() - 1, mAbsSpinner.getSelectedItemPosition());
 
         // The animation effect depends on implementation in AbsSpinner's subClass.
@@ -112,19 +109,19 @@ public class AbsSpinnerTest {
      * Check points:
      * 1. the currently selected item should be the one which set using this method.
      */
+    @UiThreadTest
     @Test
     public void testSetSelectionInt() {
         ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(mActivity,
                 android.widget.cts.R.array.string, android.R.layout.simple_spinner_item);
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        mInstrumentation.runOnMainSync(() -> mAbsSpinner.setAdapter(adapter));
+        mAbsSpinner.setAdapter(adapter);
         assertEquals(0, mAbsSpinner.getSelectedItemPosition());
 
-        mInstrumentation.runOnMainSync(() -> mAbsSpinner.setSelection(1));
+        mAbsSpinner.setSelection(1);
         assertEquals(1, mAbsSpinner.getSelectedItemPosition());
 
-        mInstrumentation.runOnMainSync(
-                () -> mAbsSpinner.setSelection(mAbsSpinner.getCount() - 1));
+        mAbsSpinner.setSelection(mAbsSpinner.getCount() - 1);
         assertEquals(mAbsSpinner.getCount() - 1, mAbsSpinner.getSelectedItemPosition());
     }
 
@@ -134,18 +131,19 @@ public class AbsSpinnerTest {
      * 2. the adapter provides methods to transform spinner items based on their position
      * relative to the selected item.
      */
+    @UiThreadTest
     @Test
     public void testAccessAdapter() {
         ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(mActivity,
                 android.widget.cts.R.array.string, android.R.layout.simple_spinner_item);
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
 
-        mInstrumentation.runOnMainSync(() -> mAbsSpinner.setAdapter(adapter));
+        mAbsSpinner.setAdapter(adapter);
         assertSame(adapter, mAbsSpinner.getAdapter());
         assertEquals(adapter.getCount(), mAbsSpinner.getCount());
         assertEquals(0, mAbsSpinner.getSelectedItemPosition());
         assertEquals(adapter.getItemId(0), mAbsSpinner.getSelectedItemId());
-        mInstrumentation.runOnMainSync(() -> mAbsSpinner.setSelection(1));
+        mAbsSpinner.setSelection(1);
         assertEquals(1, mAbsSpinner.getSelectedItemPosition());
         assertEquals(adapter.getItemId(1), mAbsSpinner.getSelectedItemId());
     }
@@ -165,19 +163,20 @@ public class AbsSpinnerTest {
      * 1. The value returned from getCount() equals the count of Adapter associated with
      * this AdapterView.
      */
+    @UiThreadTest
     @Test
     public void testGetCount() {
         ArrayAdapter<CharSequence> adapter1 = ArrayAdapter.createFromResource(mActivity,
                 android.widget.cts.R.array.string, android.R.layout.simple_spinner_item);
 
-        mInstrumentation.runOnMainSync(() -> mAbsSpinner.setAdapter(adapter1));
+        mAbsSpinner.setAdapter(adapter1);
         assertEquals(adapter1.getCount(), mAbsSpinner.getCount());
 
         CharSequence anotherStringArray[] = { "another array string 1", "another array string 2" };
         ArrayAdapter<CharSequence> adapter2 = new ArrayAdapter<>(mActivity,
                 android.R.layout.simple_spinner_item, anotherStringArray);
 
-        mInstrumentation.runOnMainSync(() -> mAbsSpinner.setAdapter(adapter2));
+        mAbsSpinner.setAdapter(adapter2);
         assertEquals(anotherStringArray.length, mAbsSpinner.getCount());
     }
 
@@ -240,26 +239,25 @@ public class AbsSpinnerTest {
      * 1. the view's current state saved by onSaveInstanceState() should be correctly restored
      * after onRestoreInstanceState().
      */
+    @UiThreadTest
     @Test
     public void testOnSaveAndRestoreInstanceState() {
         ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(mActivity,
                 android.widget.cts.R.array.string, android.R.layout.simple_spinner_item);
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        mInstrumentation.runOnMainSync(() -> mAbsSpinner.setAdapter(adapter));
+        mAbsSpinner.setAdapter(adapter);
         assertEquals(0, mAbsSpinner.getSelectedItemPosition());
         assertEquals(adapter.getItemId(0), mAbsSpinner.getSelectedItemId());
         Parcelable parcelable = mAbsSpinner.onSaveInstanceState();
 
-        mInstrumentation.runOnMainSync(() -> mAbsSpinner.setSelection(1));
+        mAbsSpinner.setSelection(1);
         assertEquals(1, mAbsSpinner.getSelectedItemPosition());
         assertEquals(adapter.getItemId(1), mAbsSpinner.getSelectedItemId());
 
-        mInstrumentation.runOnMainSync(() -> {
-                mAbsSpinner.onRestoreInstanceState(parcelable);
-                mAbsSpinner.measure(View.MeasureSpec.EXACTLY, View.MeasureSpec.EXACTLY);
-                mAbsSpinner.layout(mAbsSpinner.getLeft(), mAbsSpinner.getTop(),
-                        mAbsSpinner.getRight(), mAbsSpinner.getBottom());
-        });
+        mAbsSpinner.onRestoreInstanceState(parcelable);
+        mAbsSpinner.measure(View.MeasureSpec.EXACTLY, View.MeasureSpec.EXACTLY);
+        mAbsSpinner.layout(mAbsSpinner.getLeft(), mAbsSpinner.getTop(),
+                mAbsSpinner.getRight(), mAbsSpinner.getBottom());
         assertEquals(0, mAbsSpinner.getSelectedItemPosition());
         assertEquals(adapter.getItemId(0), mAbsSpinner.getSelectedItemId());
     }

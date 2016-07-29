@@ -37,6 +37,7 @@ import android.graphics.PorterDuff;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.support.test.InstrumentationRegistry;
+import android.support.test.annotation.UiThreadTest;
 import android.support.test.rule.ActivityTestRule;
 import android.support.test.runner.AndroidJUnit4;
 import android.test.suitebuilder.annotation.SmallTest;
@@ -263,6 +264,7 @@ public class AbsSeekBarTest {
         assertEquals(keyProgressIncrement + 1, myAbsSeekBar.getKeyProgressIncrement());
     }
 
+    @UiThreadTest
     @Test
     public void testThumbTint() {
         AbsSeekBar inflatedView = (AbsSeekBar) mActivity.findViewById(R.id.thumb_tint);
@@ -274,27 +276,24 @@ public class AbsSeekBarTest {
 
         Drawable mockThumb = spy(new ColorDrawable(Color.BLUE));
 
-        mInstrumentation.runOnMainSync(() -> inflatedView.setThumb(mockThumb));
+        inflatedView.setThumb(mockThumb);
         verify(mockThumb, times(1)).setTintList(TestUtils.colorStateListOf(Color.WHITE));
 
         reset(mockThumb);
-        mInstrumentation.runOnMainSync(
-                () -> inflatedView.setThumbTintList(ColorStateList.valueOf(Color.RED)));
+        inflatedView.setThumbTintList(ColorStateList.valueOf(Color.RED));
         verify(mockThumb, times(1)).setTintList(TestUtils.colorStateListOf(Color.RED));
 
-        mInstrumentation.runOnMainSync(
-                () -> inflatedView.setThumbTintMode(PorterDuff.Mode.DST_ATOP));
+        inflatedView.setThumbTintMode(PorterDuff.Mode.DST_ATOP);
         assertEquals("Thumb tint mode changed correctly",
                 PorterDuff.Mode.DST_ATOP, inflatedView.getThumbTintMode());
 
         reset(mockThumb);
-        mInstrumentation.runOnMainSync(() -> {
-                inflatedView.setThumb(null);
-                inflatedView.setThumb(mockThumb);
-        });
+        inflatedView.setThumb(null);
+        inflatedView.setThumb(mockThumb);
         verify(mockThumb, times(1)).setTintList(TestUtils.colorStateListOf(Color.RED));
     }
 
+    @UiThreadTest
     @Test
     public void testTickMarkTint() {
         AbsSeekBar inflatedView = (AbsSeekBar) mActivity.findViewById(R.id.tick_mark_tint);
@@ -306,24 +305,20 @@ public class AbsSeekBarTest {
 
         Drawable mockTickMark = spy(new ColorDrawable(Color.BLUE));
 
-        mInstrumentation.runOnMainSync(() -> inflatedView.setTickMark(mockTickMark));
+        inflatedView.setTickMark(mockTickMark);
         verify(mockTickMark, times(1)).setTintList(TestUtils.colorStateListOf(Color.WHITE));
 
         reset(mockTickMark);
-        mInstrumentation.runOnMainSync(
-                () -> inflatedView.setTickMarkTintList(ColorStateList.valueOf(Color.RED)));
+        inflatedView.setTickMarkTintList(ColorStateList.valueOf(Color.RED));
         verify(mockTickMark, times(1)).setTintList(TestUtils.colorStateListOf(Color.RED));
 
-        mInstrumentation.runOnMainSync(
-                () -> inflatedView.setTickMarkTintMode(PorterDuff.Mode.DARKEN));
+        inflatedView.setTickMarkTintMode(PorterDuff.Mode.DARKEN);
         assertEquals("TickMark tint mode changed correctly",
                 PorterDuff.Mode.DARKEN, inflatedView.getTickMarkTintMode());
 
         reset(mockTickMark);
-        mInstrumentation.runOnMainSync(() -> {
-                inflatedView.setTickMark(null);
-                inflatedView.setTickMark(mockTickMark);
-        });
+        inflatedView.setTickMark(null);
+        inflatedView.setTickMark(mockTickMark);
         verify(mockTickMark, times(1)).setTintList(TestUtils.colorStateListOf(Color.RED));
     }
 
