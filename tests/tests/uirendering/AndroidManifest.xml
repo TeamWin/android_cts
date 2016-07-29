@@ -21,11 +21,17 @@
     <uses-permission android:name="android.permission.DISABLE_KEYGUARD" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <application>
+        <!--
+         * Some tests (e.g. ShadowTests#testShadowLayout) may have different results depending on
+         * the position on screen, so current implementation of verifier assumes that rendered image
+         * is centered. Therefore activity made non-resizable to work correctly on devices that
+         * start up in multi-window mode.
+         -->
         <activity android:name="android.uirendering.cts.testinfrastructure.DrawActivity"
-                android:theme="@style/WhiteBackgroundTheme"></activity>
+                  android:theme="@style/WhiteBackgroundTheme"
+                  android:resizeableActivity="false" />
         <activity android:name="android.uirendering.cts.testinfrastructure.MaterialActivity"
-                android:theme="@android:style/Theme.Material.Light">
-        </activity>
+                  android:theme="@android:style/Theme.Material.Light" />
         <uses-library android:name="android.test.runner" />
     </application>
 
