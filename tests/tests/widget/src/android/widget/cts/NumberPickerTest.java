@@ -16,20 +16,36 @@
 
 package android.widget.cts;
 
-import static org.mockito.Mockito.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+import static org.mockito.Mockito.inOrder;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
+import static org.mockito.Mockito.verifyZeroInteractions;
 
 import android.app.Instrumentation;
 import android.cts.util.CtsTouchUtils;
-import android.test.ActivityInstrumentationTestCase2;
-import android.test.UiThreadTest;
+import android.support.test.InstrumentationRegistry;
+import android.support.test.annotation.UiThreadTest;
+import android.support.test.rule.ActivityTestRule;
+import android.support.test.runner.AndroidJUnit4;
 import android.test.suitebuilder.annotation.SmallTest;
 import android.text.TextUtils;
 import android.widget.NumberPicker;
 
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.InOrder;
 
 @SmallTest
-public class NumberPickerTest extends ActivityInstrumentationTestCase2<NumberPickerCtsActivity> {
+@RunWith(AndroidJUnit4.class)
+public class NumberPickerTest {
     private static final String[] NUMBER_NAMES3 = {"One", "Two", "Three"};
     private static final String[] NUMBER_NAMES_ALT3 = {"Three", "Four", "Five"};
     private static final String[] NUMBER_NAMES5 = {"One", "Two", "Three", "Four", "Five"};
@@ -38,19 +54,19 @@ public class NumberPickerTest extends ActivityInstrumentationTestCase2<NumberPic
     private NumberPickerCtsActivity mActivity;
     private NumberPicker mNumberPicker;
 
-    public NumberPickerTest() {
-        super("android.widget.cts", NumberPickerCtsActivity.class);
-    }
+    @Rule
+    public ActivityTestRule<NumberPickerCtsActivity> mActivityRule =
+            new ActivityTestRule<>(NumberPickerCtsActivity.class);
 
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
-        mInstrumentation = getInstrumentation();
-        mActivity = getActivity();
+    @Before
+    public void setup() {
+        mInstrumentation = InstrumentationRegistry.getInstrumentation();
+        mActivity = mActivityRule.getActivity();
         mNumberPicker = (NumberPicker) mActivity.findViewById(R.id.number_picker);
     }
 
     @UiThreadTest
+    @Test
     public void testConstructor() {
         new NumberPicker(mActivity);
 
@@ -71,212 +87,203 @@ public class NumberPickerTest extends ActivityInstrumentationTestCase2<NumberPic
         }
     }
 
+    @UiThreadTest
+    @Test
     public void testSetDisplayedValuesRangeMatch() {
-        mInstrumentation.runOnMainSync(() -> {
-            mNumberPicker.setMinValue(10);
-            mNumberPicker.setMaxValue(12);
-            mNumberPicker.setDisplayedValues(NUMBER_NAMES3);
-        });
+        mNumberPicker.setMinValue(10);
+        mNumberPicker.setMaxValue(12);
+        mNumberPicker.setDisplayedValues(NUMBER_NAMES3);
 
         assertEquals(10, mNumberPicker.getMinValue());
         assertEquals(12, mNumberPicker.getMaxValue());
         verifyDisplayedValues(NUMBER_NAMES3);
 
         // Set a different displayed values array, but still matching the min/max range
-        mInstrumentation.runOnMainSync(() -> {
-            mNumberPicker.setDisplayedValues(NUMBER_NAMES_ALT3);
-        });
+        mNumberPicker.setDisplayedValues(NUMBER_NAMES_ALT3);
 
         assertEquals(10, mNumberPicker.getMinValue());
         assertEquals(12, mNumberPicker.getMaxValue());
         verifyDisplayedValues(NUMBER_NAMES_ALT3);
 
-        mInstrumentation.runOnMainSync(() -> {
-            mNumberPicker.setMinValue(24);
-            mNumberPicker.setMaxValue(26);
-        });
+        mNumberPicker.setMinValue(24);
+        mNumberPicker.setMaxValue(26);
 
         assertEquals(24, mNumberPicker.getMinValue());
         assertEquals(26, mNumberPicker.getMaxValue());
         verifyDisplayedValues(NUMBER_NAMES_ALT3);
     }
 
+    @UiThreadTest
+    @Test
     public void testSetDisplayedValuesRangeMismatch() {
-        mInstrumentation.runOnMainSync(() -> {
-            mNumberPicker.setMinValue(10);
-            mNumberPicker.setMaxValue(14);
-        });
+        mNumberPicker.setMinValue(10);
+        mNumberPicker.setMaxValue(14);
         assertEquals(10, mNumberPicker.getMinValue());
         assertEquals(14, mNumberPicker.getMaxValue());
 
         // Try setting too few displayed entries
-        mInstrumentation.runOnMainSync(() -> {
-            try {
-                // This is expected to fail since the displayed values only has three entries,
-                // while the min/max range has five.
-                mNumberPicker.setDisplayedValues(NUMBER_NAMES3);
-                fail("The size of the displayed values array must be equal to min/max range!");
-            } catch (Exception e) {
-                // We are expecting to catch an exception. Set displayed values to an array that
-                // matches the min/max range.
-                mNumberPicker.setDisplayedValues(NUMBER_NAMES5);
-            }
-        });
+        try {
+            // This is expected to fail since the displayed values only has three entries,
+            // while the min/max range has five.
+            mNumberPicker.setDisplayedValues(NUMBER_NAMES3);
+            fail("The size of the displayed values array must be equal to min/max range!");
+        } catch (Exception e) {
+            // We are expecting to catch an exception. Set displayed values to an array that
+            // matches the min/max range.
+            mNumberPicker.setDisplayedValues(NUMBER_NAMES5);
+        }
     }
 
+    @UiThreadTest
+    @Test
     public void testSelectionDisplayedValueFromDisplayedValues() {
-        mInstrumentation.runOnMainSync(() -> {
-            mNumberPicker.setMinValue(1);
-            mNumberPicker.setMaxValue(3);
-            mNumberPicker.setDisplayedValues(NUMBER_NAMES3);
-        });
+        mNumberPicker.setMinValue(1);
+        mNumberPicker.setMaxValue(3);
+        mNumberPicker.setDisplayedValues(NUMBER_NAMES3);
 
-        mInstrumentation.runOnMainSync(() -> mNumberPicker.setValue(1));
+        mNumberPicker.setValue(1);
         assertTrue(TextUtils.equals(NUMBER_NAMES3[0],
                 mNumberPicker.getDisplayedValueForCurrentSelection()));
 
-        mInstrumentation.runOnMainSync(() -> mNumberPicker.setValue(2));
+        mNumberPicker.setValue(2);
         assertTrue(TextUtils.equals(NUMBER_NAMES3[1],
                 mNumberPicker.getDisplayedValueForCurrentSelection()));
 
-        mInstrumentation.runOnMainSync(() -> mNumberPicker.setValue(3));
+        mNumberPicker.setValue(3);
         assertTrue(TextUtils.equals(NUMBER_NAMES3[2],
                 mNumberPicker.getDisplayedValueForCurrentSelection()));
 
         // Switch to a different displayed values array
-        mInstrumentation.runOnMainSync(() -> {
-            mNumberPicker.setDisplayedValues(NUMBER_NAMES_ALT3);
-        });
+        mNumberPicker.setDisplayedValues(NUMBER_NAMES_ALT3);
         assertTrue(TextUtils.equals(NUMBER_NAMES_ALT3[2],
                 mNumberPicker.getDisplayedValueForCurrentSelection()));
 
-        mInstrumentation.runOnMainSync(() -> mNumberPicker.setValue(1));
+        mNumberPicker.setValue(1);
         assertTrue(TextUtils.equals(NUMBER_NAMES_ALT3[0],
                 mNumberPicker.getDisplayedValueForCurrentSelection()));
 
-        mInstrumentation.runOnMainSync(() -> mNumberPicker.setValue(2));
+        mNumberPicker.setValue(2);
         assertTrue(TextUtils.equals(NUMBER_NAMES_ALT3[1],
                 mNumberPicker.getDisplayedValueForCurrentSelection()));
     }
 
+    @UiThreadTest
+    @Test
     public void testSelectionDisplayedValueFromFormatter() {
-        mInstrumentation.runOnMainSync(() -> {
-            mNumberPicker.setMinValue(0);
-            mNumberPicker.setMaxValue(4);
-            mNumberPicker.setFormatter((int value) -> "entry " + value);
-        });
+        mNumberPicker.setMinValue(0);
+        mNumberPicker.setMaxValue(4);
+        mNumberPicker.setFormatter((int value) -> "entry " + value);
 
-        mInstrumentation.runOnMainSync(() -> mNumberPicker.setValue(0));
+        mNumberPicker.setValue(0);
         assertTrue(TextUtils.equals("entry 0",
                 mNumberPicker.getDisplayedValueForCurrentSelection()));
 
-        mInstrumentation.runOnMainSync(() -> mNumberPicker.setValue(1));
+        mNumberPicker.setValue(1);
         assertTrue(TextUtils.equals("entry 1",
                 mNumberPicker.getDisplayedValueForCurrentSelection()));
 
-        mInstrumentation.runOnMainSync(() -> mNumberPicker.setValue(2));
+        mNumberPicker.setValue(2);
         assertTrue(TextUtils.equals("entry 2",
                 mNumberPicker.getDisplayedValueForCurrentSelection()));
 
-        mInstrumentation.runOnMainSync(() -> mNumberPicker.setValue(3));
+        mNumberPicker.setValue(3);
         assertTrue(TextUtils.equals("entry 3",
                 mNumberPicker.getDisplayedValueForCurrentSelection()));
 
-        mInstrumentation.runOnMainSync(() -> mNumberPicker.setValue(4));
+        mNumberPicker.setValue(4);
         assertTrue(TextUtils.equals("entry 4",
                 mNumberPicker.getDisplayedValueForCurrentSelection()));
 
         // Switch to a different formatter
-        mInstrumentation.runOnMainSync(
-                () -> mNumberPicker.setFormatter((int value) -> "row " + value));
+        mNumberPicker.setFormatter((int value) -> "row " + value);
         // Check that the currently selected value has new displayed value
         assertTrue(TextUtils.equals("row 4",
                 mNumberPicker.getDisplayedValueForCurrentSelection()));
 
         // and check a couple more values for the new formatting
-        mInstrumentation.runOnMainSync(() -> mNumberPicker.setValue(0));
+        mNumberPicker.setValue(0);
         assertTrue(TextUtils.equals("row 0",
                 mNumberPicker.getDisplayedValueForCurrentSelection()));
 
-        mInstrumentation.runOnMainSync(() -> mNumberPicker.setValue(1));
+        mNumberPicker.setValue(1);
         assertTrue(TextUtils.equals("row 1",
                 mNumberPicker.getDisplayedValueForCurrentSelection()));
     }
 
 
+    @UiThreadTest
+    @Test
     public void testSelectionDisplayedValuePrecedence() {
-        mInstrumentation.runOnMainSync(() -> {
-            mNumberPicker.setMinValue(1);
-            mNumberPicker.setMaxValue(3);
-            mNumberPicker.setDisplayedValues(NUMBER_NAMES3);
-            mNumberPicker.setFormatter((int value) -> "entry " + value);
-        });
+        mNumberPicker.setMinValue(1);
+        mNumberPicker.setMaxValue(3);
+        mNumberPicker.setDisplayedValues(NUMBER_NAMES3);
+        mNumberPicker.setFormatter((int value) -> "entry " + value);
 
         // According to the widget documentation, displayed values take precedence over formatter
-        mInstrumentation.runOnMainSync(() -> mNumberPicker.setValue(1));
+        mNumberPicker.setValue(1);
         assertTrue(TextUtils.equals(NUMBER_NAMES3[0],
                 mNumberPicker.getDisplayedValueForCurrentSelection()));
 
-        mInstrumentation.runOnMainSync(() -> mNumberPicker.setValue(2));
+        mNumberPicker.setValue(2);
         assertTrue(TextUtils.equals(NUMBER_NAMES3[1],
                 mNumberPicker.getDisplayedValueForCurrentSelection()));
 
-        mInstrumentation.runOnMainSync(() -> mNumberPicker.setValue(3));
+        mNumberPicker.setValue(3);
         assertTrue(TextUtils.equals(NUMBER_NAMES3[2],
                 mNumberPicker.getDisplayedValueForCurrentSelection()));
 
         // Set displayed values to null and test that the widget is using the formatter
-        mInstrumentation.runOnMainSync(() -> mNumberPicker.setDisplayedValues(null));
+        mNumberPicker.setDisplayedValues(null);
         assertTrue(TextUtils.equals("entry 3",
                 mNumberPicker.getDisplayedValueForCurrentSelection()));
 
-        mInstrumentation.runOnMainSync(() -> mNumberPicker.setValue(1));
+        mNumberPicker.setValue(1);
         assertTrue(TextUtils.equals("entry 1",
                 mNumberPicker.getDisplayedValueForCurrentSelection()));
 
-        mInstrumentation.runOnMainSync(() -> mNumberPicker.setValue(2));
+        mNumberPicker.setValue(2);
         assertTrue(TextUtils.equals("entry 2",
                 mNumberPicker.getDisplayedValueForCurrentSelection()));
 
         // Set a different displayed values array and test that it's taking precedence
-        mInstrumentation.runOnMainSync(() -> mNumberPicker.setDisplayedValues(NUMBER_NAMES_ALT3));
+        mNumberPicker.setDisplayedValues(NUMBER_NAMES_ALT3);
         assertTrue(TextUtils.equals(NUMBER_NAMES_ALT3[1],
                 mNumberPicker.getDisplayedValueForCurrentSelection()));
 
-        mInstrumentation.runOnMainSync(() -> mNumberPicker.setValue(1));
+        mNumberPicker.setValue(1);
         assertTrue(TextUtils.equals(NUMBER_NAMES_ALT3[0],
                 mNumberPicker.getDisplayedValueForCurrentSelection()));
 
-        mInstrumentation.runOnMainSync(() -> mNumberPicker.setValue(3));
+        mNumberPicker.setValue(3);
         assertTrue(TextUtils.equals(NUMBER_NAMES_ALT3[2],
                 mNumberPicker.getDisplayedValueForCurrentSelection()));
     }
 
+    @UiThreadTest
+    @Test
     public void testAccessValue() {
-        mInstrumentation.runOnMainSync(() -> {
-            mNumberPicker.setMinValue(20);
-            mNumberPicker.setMaxValue(22);
-            mNumberPicker.setDisplayedValues(NUMBER_NAMES3);
-        });
+        mNumberPicker.setMinValue(20);
+        mNumberPicker.setMaxValue(22);
+        mNumberPicker.setDisplayedValues(NUMBER_NAMES3);
 
         final NumberPicker.OnValueChangeListener mockValueChangeListener =
                 mock(NumberPicker.OnValueChangeListener.class);
         mNumberPicker.setOnValueChangedListener(mockValueChangeListener);
 
-        mInstrumentation.runOnMainSync(() -> mNumberPicker.setValue(21));
+        mNumberPicker.setValue(21);
         assertEquals(21, mNumberPicker.getValue());
 
-        mInstrumentation.runOnMainSync(() -> mNumberPicker.setValue(20));
+        mNumberPicker.setValue(20);
         assertEquals(20, mNumberPicker.getValue());
 
-        mInstrumentation.runOnMainSync(() -> mNumberPicker.setValue(22));
+        mNumberPicker.setValue(22);
         assertEquals(22, mNumberPicker.getValue());
 
         // Check trying to set value out of min/max range
-        mInstrumentation.runOnMainSync(() -> mNumberPicker.setValue(10));
+        mNumberPicker.setValue(10);
         assertEquals(20, mNumberPicker.getValue());
 
-        mInstrumentation.runOnMainSync(() -> mNumberPicker.setValue(100));
+        mNumberPicker.setValue(100);
         assertEquals(22, mNumberPicker.getValue());
 
         // Since all changes to value are via API calls, we should have no interactions /
@@ -284,6 +291,7 @@ public class NumberPickerTest extends ActivityInstrumentationTestCase2<NumberPic
         verifyZeroInteractions(mockValueChangeListener);
     }
 
+    @Test
     public void testInteractionWithSwipeDown() {
         mInstrumentation.runOnMainSync(() -> {
             mNumberPicker.setMinValue(6);
@@ -328,6 +336,7 @@ public class NumberPickerTest extends ActivityInstrumentationTestCase2<NumberPic
         verifyNoMoreInteractions(mockScrollListener);
     }
 
+    @Test
     public void testInteractionWithSwipeUp() {
         mInstrumentation.runOnMainSync(() -> {
             mNumberPicker.setMinValue(10);
@@ -372,19 +381,19 @@ public class NumberPickerTest extends ActivityInstrumentationTestCase2<NumberPic
         verifyNoMoreInteractions(mockScrollListener);
     }
 
+    @UiThreadTest
+    @Test
     public void testAccessWrapSelectorValue() {
-        mInstrumentation.runOnMainSync(() -> {
-            mNumberPicker.setMinValue(100);
-            mNumberPicker.setMaxValue(200);
-        });
+        mNumberPicker.setMinValue(100);
+        mNumberPicker.setMaxValue(200);
         // As specified in the Javadocs of NumberPicker.setWrapSelectorWheel, when min/max
         // range is larger than what the widget is showing, the selector wheel is enabled.
         assertTrue(mNumberPicker.getWrapSelectorWheel());
 
-        mInstrumentation.runOnMainSync(() -> mNumberPicker.setWrapSelectorWheel(false));
+        mNumberPicker.setWrapSelectorWheel(false);
         assertFalse(mNumberPicker.getWrapSelectorWheel());
 
-        mInstrumentation.runOnMainSync(() -> mNumberPicker.setWrapSelectorWheel(true));
+        mNumberPicker.setWrapSelectorWheel(true);
         assertTrue(mNumberPicker.getWrapSelectorWheel());
     }
 }

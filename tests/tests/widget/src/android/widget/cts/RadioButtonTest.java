@@ -16,36 +16,49 @@
 
 package android.widget.cts;
 
-import static org.mockito.Mockito.*;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
+import static org.mockito.Mockito.verifyZeroInteractions;
 
 import android.app.Activity;
 import android.app.Instrumentation;
 import android.cts.util.CtsTouchUtils;
-import android.test.ActivityInstrumentationTestCase2;
+import android.support.test.InstrumentationRegistry;
+import android.support.test.annotation.UiThreadTest;
+import android.support.test.rule.ActivityTestRule;
+import android.support.test.runner.AndroidJUnit4;
 import android.test.suitebuilder.annotation.SmallTest;
 import android.text.TextUtils;
 import android.widget.RadioButton;
-import android.widget.cts.R;
+
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
 @SmallTest
-public class RadioButtonTest extends ActivityInstrumentationTestCase2<RadioButtonCtsActivity> {
+@RunWith(AndroidJUnit4.class)
+public class RadioButtonTest {
     private Instrumentation mInstrumentation;
     private Activity mActivity;
     private RadioButton mRadioButton;
 
-    public RadioButtonTest() {
-        super("android.widget.cts", RadioButtonCtsActivity.class);
-    }
+    @Rule
+    public ActivityTestRule<RadioButtonCtsActivity> mActivityRule =
+            new ActivityTestRule<>(RadioButtonCtsActivity.class);
 
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
-
-        mInstrumentation = getInstrumentation();
-        mActivity = getActivity();
+    @Before
+    public void setup() {
+        mInstrumentation = InstrumentationRegistry.getInstrumentation();
+        mActivity = mActivityRule.getActivity();
         mRadioButton = (RadioButton) mActivity.findViewById(R.id.radio_button);
     }
 
+    @Test
     public void testConstructor() {
         new RadioButton(mActivity);
         new RadioButton(mActivity, null);
@@ -58,37 +71,39 @@ public class RadioButtonTest extends ActivityInstrumentationTestCase2<RadioButto
                 android.R.style.Widget_Material_CompoundButton_RadioButton);
         new RadioButton(mActivity, null, 0,
                 android.R.style.Widget_Material_Light_CompoundButton_RadioButton);
-
-        try {
-            new RadioButton(null);
-            fail("The constructor should throw NullPointerException when param Context is null.");
-        } catch (NullPointerException e) {
-        }
-
-        try {
-            new RadioButton(null, null);
-            fail("The constructor should throw NullPointerException when param Context is null.");
-        } catch (NullPointerException e) {
-        }
-        try {
-            new RadioButton(null, null, 0);
-            fail("The constructor should throw NullPointerException when param Context is null.");
-        } catch (NullPointerException e) {
-        }
     }
 
+    @Test(expected=NullPointerException.class)
+    public void testConstructorWithNullContext1() {
+        new RadioButton(null);
+    }
+
+    @Test(expected=NullPointerException.class)
+    public void testConstructorWithNullContext2() {
+        new RadioButton(null, null);
+    }
+
+    @Test(expected=NullPointerException.class)
+    public void testConstructorWithNullContext3() {
+        new RadioButton(null, null, 0);
+    }
+
+    @UiThreadTest
+    @Test
     public void testText() {
         assertTrue(TextUtils.equals(
                 mActivity.getString(R.string.hello_world), mRadioButton.getText()));
 
-        mInstrumentation.runOnMainSync(() -> mRadioButton.setText("new text"));
+        mRadioButton.setText("new text");
         assertTrue(TextUtils.equals("new text", mRadioButton.getText()));
 
-        mInstrumentation.runOnMainSync(() -> mRadioButton.setText(R.string.text_name));
+        mRadioButton.setText(R.string.text_name);
         assertTrue(TextUtils.equals(
                 mActivity.getString(R.string.text_name), mRadioButton.getText()));
     }
 
+    @UiThreadTest
+    @Test
     public void testAccessChecked() {
         final RadioButton.OnCheckedChangeListener mockCheckedChangeListener =
                 mock(RadioButton.OnCheckedChangeListener.class);
@@ -98,28 +113,30 @@ public class RadioButtonTest extends ActivityInstrumentationTestCase2<RadioButto
         assertFalse(mRadioButton.isChecked());
 
         // not checked -> not checked
-        mInstrumentation.runOnMainSync(() -> mRadioButton.setChecked(false));
+        mRadioButton.setChecked(false);
         verifyZeroInteractions(mockCheckedChangeListener);
         assertFalse(mRadioButton.isChecked());
 
         // not checked -> checked
-        mInstrumentation.runOnMainSync(() -> mRadioButton.setChecked(true));
+        mRadioButton.setChecked(true);
         verify(mockCheckedChangeListener, times(1)).onCheckedChanged(mRadioButton, true);
         assertTrue(mRadioButton.isChecked());
 
         // checked -> checked
-        mInstrumentation.runOnMainSync(() -> mRadioButton.setChecked(true));
+        mRadioButton.setChecked(true);
         verify(mockCheckedChangeListener, times(1)).onCheckedChanged(mRadioButton, true);
         assertTrue(mRadioButton.isChecked());
 
         // checked -> not checked
-        mInstrumentation.runOnMainSync(() -> mRadioButton.setChecked(false));
+        mRadioButton.setChecked(false);
         verify(mockCheckedChangeListener, times(1)).onCheckedChanged(mRadioButton, false);
         assertFalse(mRadioButton.isChecked());
 
         verifyNoMoreInteractions(mockCheckedChangeListener);
     }
 
+    @UiThreadTest
+    @Test
     public void testToggleViaApi() {
         final RadioButton.OnCheckedChangeListener mockCheckedChangeListener =
                 mock(RadioButton.OnCheckedChangeListener.class);
@@ -129,17 +146,18 @@ public class RadioButtonTest extends ActivityInstrumentationTestCase2<RadioButto
         assertFalse(mRadioButton.isChecked());
 
         // toggle to checked
-        mInstrumentation.runOnMainSync(mRadioButton::toggle);
+        mRadioButton.toggle();
         verify(mockCheckedChangeListener, times(1)).onCheckedChanged(mRadioButton, true);
         assertTrue(mRadioButton.isChecked());
 
         // try toggle to not checked - this should leave the radio button in checked state
-        mInstrumentation.runOnMainSync(mRadioButton::toggle);
+        mRadioButton.toggle();
         assertTrue(mRadioButton.isChecked());
 
         verifyNoMoreInteractions(mockCheckedChangeListener);
     }
 
+    @Test
     public void testToggleViaEmulatedTap() {
         final RadioButton.OnCheckedChangeListener mockCheckedChangeListener =
                 mock(RadioButton.OnCheckedChangeListener.class);
@@ -160,6 +178,8 @@ public class RadioButtonTest extends ActivityInstrumentationTestCase2<RadioButto
         verifyNoMoreInteractions(mockCheckedChangeListener);
     }
 
+    @UiThreadTest
+    @Test
     public void testToggleViaPerformClick() {
         final RadioButton.OnCheckedChangeListener mockCheckedChangeListener =
                 mock(RadioButton.OnCheckedChangeListener.class);
@@ -169,12 +189,12 @@ public class RadioButtonTest extends ActivityInstrumentationTestCase2<RadioButto
         assertFalse(mRadioButton.isChecked());
 
         // click to checked
-        mInstrumentation.runOnMainSync(mRadioButton::performClick);
+        mRadioButton.performClick();
         verify(mockCheckedChangeListener, times(1)).onCheckedChanged(mRadioButton, true);
         assertTrue(mRadioButton.isChecked());
 
         // click to not checked - this should leave the radio button in checked state
-        mInstrumentation.runOnMainSync(mRadioButton::performClick);
+        mRadioButton.performClick();
         assertTrue(mRadioButton.isChecked());
 
         verifyNoMoreInteractions(mockCheckedChangeListener);

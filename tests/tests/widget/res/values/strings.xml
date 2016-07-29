@@ -204,4 +204,9 @@ I think so, so how about double this string, like copy and paste! </string>
     <string name="toggle_text_off_alt">Off Alt</string>
 
     <string name="chronometer_format">Current count: %s</string>
+
+    <string name="radio_choice_0">choice 0</string>
+    <string name="radio_choice_1">choice 1</string>
+    <string name="radio_choice_2">choice 2</string>
+    <string name="radio_choice_3">choice 3</string>
 </resources>

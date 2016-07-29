@@ -44,4 +44,6 @@
     <dimen name="textview_padding_top">2dip</dimen>
     <dimen name="textview_padding_bottom">4dip</dimen>
     <dimen name="textview_drawable_padding">2dip</dimen>
+
+    <dimen name="radiogroup_margin">4dip</dimen>
 </resources>
