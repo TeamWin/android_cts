@@ -183,6 +183,15 @@
                 android:name=".EntryPointAliasActivity"
                 android:targetActivity=".TrampolineActivity" >
         </activity-alias>
+        <activity android:name=".BottomActivity"
+                  android:exported="true"
+                  android:theme="@style/NoPreview"
+        />
+        <activity android:name=".TopActivity"
+                  android:process=".top_process"
+                  android:exported="true"
+                  android:theme="@style/NoPreview"
+        />
     </application>
 </manifest>
 

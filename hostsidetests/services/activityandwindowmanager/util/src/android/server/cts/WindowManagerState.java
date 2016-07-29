@@ -35,7 +35,7 @@ import static android.server.cts.StateLogger.log;
 import static android.server.cts.StateLogger.logE;
 
 public class WindowManagerState {
-    private static final String DUMPSYS_WINDOWS_APPS = "dumpsys window apps";
+    private static final String DUMPSYS_WINDOWS_APPS = "dumpsys window -a apps";
     private static final String DUMPSYS_WINDOWS_VISIBLE_APPS = "dumpsys window visible-apps";
 
     private static final Pattern sWindowPattern =
@@ -56,12 +56,16 @@ public class WindowManagerState {
             Pattern.compile("mFocusedApp=AppWindowToken\\{(.+) token=Token\\{(.+) "
                     + "ActivityRecord\\{(.+) u(\\d+) (\\S+) (\\S+)");
 
+    private static final Pattern sLastAppTransitionPattern =
+            Pattern.compile("mLastUsedAppTransition=(.+)");
+
     private static final Pattern sStackIdPattern = Pattern.compile("mStackId=(\\d+)");
 
     private static final Pattern[] sExtractStackExitPatterns = {
             sStackIdPattern, sWindowPattern, sStartingWindowPattern, sExitingWindowPattern,
             sFocusedWindowPattern, sAppErrorFocusedWindowPattern,
-            sWaitingForDebuggerFocusedWindowPattern, sFocusedAppPattern };
+            sWaitingForDebuggerFocusedWindowPattern,
+            sFocusedAppPattern, sLastAppTransitionPattern };
 
     // Windows in z-order with the top most at the front of the list.
     private List<String> mWindows = new ArrayList();
@@ -70,6 +74,7 @@ public class WindowManagerState {
     private List<Display> mDisplays = new ArrayList();
     private String mFocusedWindow = null;
     private String mFocusedApp = null;
+    private String mLastTransition = null;
     private final LinkedList<String> mSysDump = new LinkedList();
 
     void computeState(ITestDevice device, boolean visibleOnly) throws DeviceNotAvailableException {
@@ -202,6 +207,15 @@ public class WindowManagerState {
                 mFocusedApp = focusedApp;
                 continue;
             }
+
+            matcher = sLastAppTransitionPattern.matcher(line);
+            if (matcher.matches()) {
+                log(line);
+                final String lastAppTransitionPattern = matcher.group(1);
+                log(lastAppTransitionPattern);
+                mLastTransition = lastAppTransitionPattern;
+                continue;
+            }
         }
     }
 
@@ -246,6 +260,10 @@ public class WindowManagerState {
 
     String getFocusedApp() {
         return mFocusedApp;
+    }
+
+    String getLastTransition() {
+        return mLastTransition;
     }
 
     int getFrontStackId() {
