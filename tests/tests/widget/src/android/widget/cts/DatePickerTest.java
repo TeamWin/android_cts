@@ -16,18 +16,34 @@
 
 package android.widget.cts;
 
-import static org.mockito.Mockito.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.anyInt;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
+import static org.mockito.Mockito.verifyZeroInteractions;
 
 import android.app.Activity;
-import android.app.Instrumentation;
 import android.content.Context;
 import android.os.Parcelable;
-import android.test.ActivityInstrumentationTestCase2;
-import android.test.UiThreadTest;
+import android.support.test.annotation.UiThreadTest;
+import android.support.test.rule.ActivityTestRule;
+import android.support.test.runner.AndroidJUnit4;
 import android.test.suitebuilder.annotation.MediumTest;
 import android.util.SparseArray;
 import android.view.View;
 import android.widget.DatePicker;
+
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
 import java.util.Calendar;
 import java.util.GregorianCalendar;
@@ -36,24 +52,25 @@ import java.util.GregorianCalendar;
  * Test {@link DatePicker}.
  */
 @MediumTest
-public class DatePickerTest extends ActivityInstrumentationTestCase2<DatePickerCtsActivity> {
+@RunWith(AndroidJUnit4.class)
+public class DatePickerTest {
     private Activity mActivity;
     private DatePicker mDatePickerSpinnerMode;
     private DatePicker mDatePickerCalendarMode;
 
-    public DatePickerTest() {
-        super("android.widget.cts", DatePickerCtsActivity.class);
-    }
+    @Rule
+    public ActivityTestRule<DatePickerCtsActivity> mActivityRule
+            = new ActivityTestRule<>(DatePickerCtsActivity.class);
 
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
-        mActivity = getActivity();
+    @Before
+    public void setUp() {
+        mActivity = mActivityRule.getActivity();
         mDatePickerSpinnerMode = (DatePicker) mActivity.findViewById(R.id.date_picker_spinner_mode);
         mDatePickerCalendarMode =
                 (DatePicker) mActivity.findViewById(R.id.date_picker_calendar_mode);
     }
 
+    @Test
     public void testConstructor() {
         new DatePicker(mActivity);
 
@@ -68,25 +85,23 @@ public class DatePickerTest extends ActivityInstrumentationTestCase2<DatePickerC
         new DatePicker(mActivity, null, 0, android.R.style.Widget_Material_Light_DatePicker);
     }
 
+    @UiThreadTest
+    @Test
     public void testSetEnabled() {
-        final Instrumentation instrumentation = getInstrumentation();
-
         assertTrue(mDatePickerCalendarMode.isEnabled());
 
-        instrumentation.runOnMainSync(() -> mDatePickerCalendarMode.setEnabled(false));
+        mDatePickerCalendarMode.setEnabled(false);
         assertFalse(mDatePickerCalendarMode.isEnabled());
 
-        instrumentation.runOnMainSync(() -> mDatePickerCalendarMode.setEnabled(true));
+        mDatePickerCalendarMode.setEnabled(true);
         assertTrue(mDatePickerCalendarMode.isEnabled());
     }
 
     private void verifyInit(DatePicker datePicker) {
-        final Instrumentation instrumentation = getInstrumentation();
         final DatePicker.OnDateChangedListener mockDateChangeListener =
                 mock(DatePicker.OnDateChangedListener.class);
 
-        instrumentation.runOnMainSync(
-                () -> datePicker.init(2000, 10, 15, mockDateChangeListener));
+        datePicker.init(2000, 10, 15, mockDateChangeListener);
         assertEquals(2000, datePicker.getYear());
         assertEquals(10, datePicker.getMonth());
         assertEquals(15, datePicker.getDayOfMonth());
@@ -94,24 +109,25 @@ public class DatePickerTest extends ActivityInstrumentationTestCase2<DatePickerC
         verifyZeroInteractions(mockDateChangeListener);
     }
 
+    @UiThreadTest
+    @Test
     public void testInit() {
         verifyInit(mDatePickerSpinnerMode);
         verifyInit(mDatePickerCalendarMode);
     }
 
     private void verifyAccessDate(DatePicker datePicker) {
-        final Instrumentation instrumentation = getInstrumentation();
         final DatePicker.OnDateChangedListener mockDateChangeListener =
                 mock(DatePicker.OnDateChangedListener.class);
 
-        instrumentation.runOnMainSync(() -> datePicker.init(2000, 10, 15, mockDateChangeListener));
+        datePicker.init(2000, 10, 15, mockDateChangeListener);
         assertEquals(2000, datePicker.getYear());
         assertEquals(10, datePicker.getMonth());
         assertEquals(15, datePicker.getDayOfMonth());
         verify(mockDateChangeListener, never()).onDateChanged(any(DatePicker.class), anyInt(),
                 anyInt(), anyInt());
 
-        instrumentation.runOnMainSync(() -> datePicker.updateDate(1989, 9, 19));
+        datePicker.updateDate(1989, 9, 19);
         assertEquals(1989, datePicker.getYear());
         assertEquals(9, datePicker.getMonth());
         assertEquals(19, datePicker.getDayOfMonth());
@@ -120,29 +136,29 @@ public class DatePickerTest extends ActivityInstrumentationTestCase2<DatePickerC
         verifyNoMoreInteractions(mockDateChangeListener);
     }
 
+    @UiThreadTest
+    @Test
     public void testAccessDate() {
         verifyAccessDate(mDatePickerSpinnerMode);
         verifyAccessDate(mDatePickerCalendarMode);
     }
 
     private void verifySetOnDateChangedListener(DatePicker datePicker) {
-        final Instrumentation instrumentation = getInstrumentation();
         final DatePicker.OnDateChangedListener mockDateChangeListener1 =
                 mock(DatePicker.OnDateChangedListener.class);
         final DatePicker.OnDateChangedListener mockDateChangeListener2 =
                 mock(DatePicker.OnDateChangedListener.class);
 
-        instrumentation.runOnMainSync(() -> datePicker.init(2000, 10, 15, mockDateChangeListener1));
-        instrumentation.runOnMainSync(() -> datePicker.updateDate(1989, 9, 19));
+        datePicker.init(2000, 10, 15, mockDateChangeListener1);
+        datePicker.updateDate(1989, 9, 19);
         assertEquals(1989, datePicker.getYear());
         assertEquals(9, datePicker.getMonth());
         assertEquals(19, datePicker.getDayOfMonth());
         verify(mockDateChangeListener1, times(1)).onDateChanged(datePicker, 1989, 9, 19);
         verify(mockDateChangeListener2, times(0)).onDateChanged(datePicker, 1989, 9, 19);
 
-        instrumentation.runOnMainSync(() -> datePicker.setOnDateChangedListener(
-                mockDateChangeListener2));
-        instrumentation.runOnMainSync(() -> datePicker.updateDate(2000, 10, 15));
+        datePicker.setOnDateChangedListener(mockDateChangeListener2);
+        datePicker.updateDate(2000, 10, 15);
         assertEquals(2000, datePicker.getYear());
         assertEquals(10, datePicker.getMonth());
         assertEquals(15, datePicker.getDayOfMonth());
@@ -151,28 +167,28 @@ public class DatePickerTest extends ActivityInstrumentationTestCase2<DatePickerC
 
     }
 
+    @UiThreadTest
+    @Test
     public void testSetOnDateChangedListener() {
         verifySetOnDateChangedListener(mDatePickerSpinnerMode);
         verifySetOnDateChangedListener(mDatePickerCalendarMode);
     }
 
     private void verifyUpdateDate(DatePicker datePicker) {
-        final Instrumentation instrumentation = getInstrumentation();
-
-        instrumentation.runOnMainSync(() -> datePicker.updateDate(1989, 9, 19));
+        datePicker.updateDate(1989, 9, 19);
         assertEquals(1989, datePicker.getYear());
         assertEquals(9, datePicker.getMonth());
         assertEquals(19, datePicker.getDayOfMonth());
     }
 
+    @UiThreadTest
+    @Test
     public void testUpdateDate() {
         verifyUpdateDate(mDatePickerSpinnerMode);
         verifyUpdateDate(mDatePickerCalendarMode);
     }
 
     private void verifyMinMaxDate(DatePicker datePicker) {
-        final Instrumentation instrumentation = getInstrumentation();
-
         // Use a range of minus/plus one year as min/max dates
         final Calendar minCalendar = new GregorianCalendar();
         minCalendar.set(Calendar.YEAR, minCalendar.get(Calendar.YEAR) - 1);
@@ -182,38 +198,38 @@ public class DatePickerTest extends ActivityInstrumentationTestCase2<DatePickerC
         final long minDate = minCalendar.getTime().getTime();
         final long maxDate = maxCalendar.getTime().getTime();
 
-        instrumentation.runOnMainSync(() -> {
-            datePicker.setMinDate(minDate);
-            datePicker.setMaxDate(maxDate);
-        });
+        datePicker.setMinDate(minDate);
+        datePicker.setMaxDate(maxDate);
 
         assertEquals(datePicker.getMinDate(), minDate);
         assertEquals(datePicker.getMaxDate(), maxDate);
     }
 
+    @UiThreadTest
+    @Test
     public void testMinMaxDate() {
         verifyMinMaxDate(mDatePickerSpinnerMode);
         verifyMinMaxDate(mDatePickerCalendarMode);
     }
 
     private void verifyFirstDayOfWeek(DatePicker datePicker) {
-        final Instrumentation instrumentation = getInstrumentation();
-
-        instrumentation.runOnMainSync(() -> datePicker.setFirstDayOfWeek(Calendar.TUESDAY));
+        datePicker.setFirstDayOfWeek(Calendar.TUESDAY);
         assertEquals(Calendar.TUESDAY, datePicker.getFirstDayOfWeek());
 
-        instrumentation.runOnMainSync(() -> datePicker.setFirstDayOfWeek(Calendar.SUNDAY));
+        datePicker.setFirstDayOfWeek(Calendar.SUNDAY);
         assertEquals(Calendar.SUNDAY, datePicker.getFirstDayOfWeek());
     }
 
+    @UiThreadTest
+    @Test
     public void testFirstDayOfWeek() {
         verifyFirstDayOfWeek(mDatePickerSpinnerMode);
         verifyFirstDayOfWeek(mDatePickerCalendarMode);
     }
 
+    @UiThreadTest
+    @Test
     public void testCalendarViewInSpinnerMode() {
-        final Instrumentation instrumentation = getInstrumentation();
-
         assertNotNull(mDatePickerSpinnerMode.getCalendarView());
 
         // Update the DatePicker and test that its CalendarView is synced to the same date
@@ -221,11 +237,10 @@ public class DatePickerTest extends ActivityInstrumentationTestCase2<DatePickerC
         calendar.set(Calendar.YEAR, 2008);
         calendar.set(Calendar.MONTH, Calendar.SEPTEMBER);
         calendar.set(Calendar.DAY_OF_MONTH, 23);
-        instrumentation.runOnMainSync(
-                () -> mDatePickerSpinnerMode.updateDate(
-                        calendar.get(Calendar.YEAR),
-                        calendar.get(Calendar.MONTH),
-                        calendar.get(Calendar.DAY_OF_MONTH)));
+        mDatePickerSpinnerMode.updateDate(
+                calendar.get(Calendar.YEAR),
+                calendar.get(Calendar.MONTH),
+                calendar.get(Calendar.DAY_OF_MONTH));
 
         final Calendar calendarFromSpinner = new GregorianCalendar();
         final long timeFromSpinnerCalendar = mDatePickerSpinnerMode.getCalendarView().getDate();
@@ -237,30 +252,31 @@ public class DatePickerTest extends ActivityInstrumentationTestCase2<DatePickerC
                 calendarFromSpinner.get(Calendar.DAY_OF_MONTH));
     }
 
+    @UiThreadTest
+    @Test
     public void testPartsVisibilityInSpinnerMode() {
-        final Instrumentation instrumentation = getInstrumentation();
-
         assertTrue(mDatePickerSpinnerMode.getSpinnersShown());
         assertTrue(mDatePickerSpinnerMode.getCalendarViewShown());
 
-        instrumentation.runOnMainSync(() -> mDatePickerSpinnerMode.setSpinnersShown(false));
+        mDatePickerSpinnerMode.setSpinnersShown(false);
         assertFalse(mDatePickerSpinnerMode.getSpinnersShown());
         assertTrue(mDatePickerSpinnerMode.getCalendarViewShown());
 
-        instrumentation.runOnMainSync(() -> mDatePickerSpinnerMode.setCalendarViewShown(false));
+        mDatePickerSpinnerMode.setCalendarViewShown(false);
         assertFalse(mDatePickerSpinnerMode.getSpinnersShown());
         assertFalse(mDatePickerSpinnerMode.getCalendarViewShown());
 
-        instrumentation.runOnMainSync(() -> mDatePickerSpinnerMode.setSpinnersShown(true));
+        mDatePickerSpinnerMode.setSpinnersShown(true);
         assertTrue(mDatePickerSpinnerMode.getSpinnersShown());
         assertFalse(mDatePickerSpinnerMode.getCalendarViewShown());
 
-        instrumentation.runOnMainSync(() -> mDatePickerSpinnerMode.setCalendarViewShown(true));
+        mDatePickerSpinnerMode.setCalendarViewShown(true);
         assertTrue(mDatePickerSpinnerMode.getSpinnersShown());
         assertTrue(mDatePickerSpinnerMode.getCalendarViewShown());
     }
 
     @UiThreadTest
+    @Test
     public void testAccessInstanceState() {
         MockDatePicker datePicker = new MockDatePicker(mActivity);
 

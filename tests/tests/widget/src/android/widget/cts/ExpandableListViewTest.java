@@ -16,7 +16,20 @@
 
 package android.widget.cts;
 
-import static org.mockito.Mockito.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertSame;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.eq;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.reset;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyZeroInteractions;
 
 import android.app.Instrumentation;
 import android.content.Context;
@@ -26,8 +39,10 @@ import android.graphics.Canvas;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.Parcelable;
-import android.test.ActivityInstrumentationTestCase2;
-import android.test.UiThreadTest;
+import android.support.test.InstrumentationRegistry;
+import android.support.test.annotation.UiThreadTest;
+import android.support.test.rule.ActivityTestRule;
+import android.support.test.runner.AndroidJUnit4;
 import android.test.suitebuilder.annotation.MediumTest;
 import android.util.AttributeSet;
 import android.util.Xml;
@@ -40,28 +55,32 @@ import android.widget.ListAdapter;
 import android.widget.TextView;
 import android.widget.cts.util.ExpandableListScenario;
 
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.xmlpull.v1.XmlPullParser;
 
 @MediumTest
-public class ExpandableListViewTest extends ActivityInstrumentationTestCase2<ExpandableList> {
+@RunWith(AndroidJUnit4.class)
+public class ExpandableListViewTest {
     private Instrumentation mInstrumentation;
     private ExpandableListScenario mActivity;
     private ExpandableListView mExpandableListView;
 
-    public ExpandableListViewTest() {
-        super(ExpandableList.class);
-    }
+    @Rule
+    public ActivityTestRule<ExpandableList> mActivityRule
+            = new ActivityTestRule<>(ExpandableList.class);
 
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
-
-        mInstrumentation = getInstrumentation();
-        mActivity = getActivity();
+    @Before
+    public void setup() {
+        mInstrumentation = InstrumentationRegistry.getInstrumentation();
+        mActivity = mActivityRule.getActivity();
         PollingCheck.waitFor(mActivity::hasWindowFocus);
         mExpandableListView = mActivity.getExpandableListView();
     }
 
+    @Test
     public void testConstructor() {
         new ExpandableListView(mActivity);
 
@@ -86,40 +105,36 @@ public class ExpandableListViewTest extends ActivityInstrumentationTestCase2<Exp
         AttributeSet attrs = Xml.asAttributeSet(parser);
         new ExpandableListView(mActivity, attrs);
         new ExpandableListView(mActivity, attrs, 0);
-
-        try {
-            new ExpandableListView(null);
-            fail("should throw NullPointerException.");
-        } catch (NullPointerException e) {
-        }
-
-        try {
-            new ExpandableListView(null, null);
-            fail("should throw NullPointerException.");
-        } catch (NullPointerException e) {
-        }
-
-        try {
-            new ExpandableListView(null, null, 0);
-            fail("should throw NullPointerException.");
-        } catch (NullPointerException e) {
-        }
     }
 
+    @Test(expected=NullPointerException.class)
+    public void testConstructorWithNullContext1() {
+        new ExpandableListView(null);
+    }
+
+    @Test(expected=NullPointerException.class)
+    public void testConstructorWithNullContext2() {
+        new ExpandableListView(null, null);
+    }
+
+    @Test(expected=NullPointerException.class)
+    public void testConstructorWithNullContext3() {
+        new ExpandableListView(null, null, 0);
+    }
+
+    @Test
     public void testSetChildDivider() {
         Drawable drawable = mActivity.getResources().getDrawable(R.drawable.scenery);
         mExpandableListView.setChildDivider(drawable);
     }
 
-    public void testSetAdapter() {
-        try {
-            mExpandableListView.setAdapter((ListAdapter) null);
-            fail("setAdapter(ListAdapter) should throw RuntimeException here.");
-        } catch (RuntimeException e) {
-        }
+    @Test(expected=RuntimeException.class)
+    public void testSetAdapterOfWrongType() {
+        mExpandableListView.setAdapter((ListAdapter) null);
     }
 
     @UiThreadTest
+    @Test
     public void testGetAdapter() {
         assertNull(mExpandableListView.getAdapter());
 
@@ -129,6 +144,7 @@ public class ExpandableListViewTest extends ActivityInstrumentationTestCase2<Exp
     }
 
     @UiThreadTest
+    @Test
     public void testAccessExpandableListAdapter() {
         ExpandableListAdapter expandableAdapter = new MockExpandableListAdapter();
 
@@ -138,6 +154,7 @@ public class ExpandableListViewTest extends ActivityInstrumentationTestCase2<Exp
     }
 
     @UiThreadTest
+    @Test
     public void testPerformItemClick() {
         assertFalse(mExpandableListView.performItemClick(null, 100, 99));
 
@@ -149,6 +166,7 @@ public class ExpandableListViewTest extends ActivityInstrumentationTestCase2<Exp
                 any(View.class), eq(100), eq(99L));
     }
 
+    @Test
     public void testSetOnItemClickListener() {
         ExpandableListView.OnItemClickListener mockOnItemClickListener =
                 mock(ExpandableListView.OnItemClickListener.class);
@@ -159,6 +177,7 @@ public class ExpandableListViewTest extends ActivityInstrumentationTestCase2<Exp
     }
 
     @UiThreadTest
+    @Test
     public void testExpandGroup() {
         ExpandableListAdapter expandableAdapter = new MockExpandableListAdapter();
         mExpandableListView.setAdapter(expandableAdapter);
@@ -197,6 +216,7 @@ public class ExpandableListViewTest extends ActivityInstrumentationTestCase2<Exp
         }
     }
 
+    @Test
     public void testExpandGroupSmooth() {
         mInstrumentation.runOnMainSync(
                 () -> mExpandableListView.setAdapter(new MockExpandableListAdapter()));
@@ -241,6 +261,7 @@ public class ExpandableListViewTest extends ActivityInstrumentationTestCase2<Exp
     }
 
     @UiThreadTest
+    @Test
     public void testCollapseGroup() {
         ExpandableListAdapter expandableAdapter = new MockExpandableListAdapter();
         mExpandableListView.setAdapter(expandableAdapter);
@@ -275,6 +296,7 @@ public class ExpandableListViewTest extends ActivityInstrumentationTestCase2<Exp
     }
 
     @UiThreadTest
+    @Test
     public void testSetOnGroupClickListener() {
         mExpandableListView.setAdapter(new MockExpandableListAdapter());
 
@@ -290,6 +312,7 @@ public class ExpandableListViewTest extends ActivityInstrumentationTestCase2<Exp
     }
 
     @UiThreadTest
+    @Test
     public void testSetOnChildClickListener() {
         mExpandableListView.setAdapter(new MockExpandableListAdapter());
 
@@ -308,6 +331,7 @@ public class ExpandableListViewTest extends ActivityInstrumentationTestCase2<Exp
     }
 
     @UiThreadTest
+    @Test
     public void testGetExpandableListPosition() {
         mExpandableListView.setAdapter(new MockExpandableListAdapter());
 
@@ -328,6 +352,7 @@ public class ExpandableListViewTest extends ActivityInstrumentationTestCase2<Exp
     }
 
     @UiThreadTest
+    @Test
     public void testGetFlatListPosition() {
         mExpandableListView.setAdapter(new MockExpandableListAdapter());
 
@@ -342,6 +367,7 @@ public class ExpandableListViewTest extends ActivityInstrumentationTestCase2<Exp
     }
 
     @UiThreadTest
+    @Test
     public void testGetSelectedPosition() {
         assertEquals(ExpandableListView.PACKED_POSITION_VALUE_NULL,
                 mExpandableListView.getSelectedPosition());
@@ -356,6 +382,7 @@ public class ExpandableListViewTest extends ActivityInstrumentationTestCase2<Exp
     }
 
     @UiThreadTest
+    @Test
     public void testGetSelectedId() {
         assertEquals(-1, mExpandableListView.getSelectedId());
         mExpandableListView.setAdapter(new MockExpandableListAdapter());
@@ -368,6 +395,7 @@ public class ExpandableListViewTest extends ActivityInstrumentationTestCase2<Exp
     }
 
     @UiThreadTest
+    @Test
     public void testSetSelectedGroup() {
         mExpandableListView.setAdapter(new MockExpandableListAdapter());
 
@@ -379,6 +407,7 @@ public class ExpandableListViewTest extends ActivityInstrumentationTestCase2<Exp
     }
 
     @UiThreadTest
+    @Test
     public void testSetSelectedChild() {
         mExpandableListView.setAdapter(new MockExpandableListAdapter());
 
@@ -387,6 +416,7 @@ public class ExpandableListViewTest extends ActivityInstrumentationTestCase2<Exp
     }
 
     @UiThreadTest
+    @Test
     public void testIsGroupExpanded() {
         mExpandableListView.setAdapter(new MockExpandableListAdapter());
 
@@ -395,6 +425,7 @@ public class ExpandableListViewTest extends ActivityInstrumentationTestCase2<Exp
         assertTrue(mExpandableListView.isGroupExpanded(1));
     }
 
+    @Test
     public void testGetPackedPositionType() {
         assertEquals(ExpandableListView.PACKED_POSITION_TYPE_NULL,
                 ExpandableListView.getPackedPositionType(
@@ -409,6 +440,7 @@ public class ExpandableListViewTest extends ActivityInstrumentationTestCase2<Exp
                 ExpandableListView.getPackedPositionType(0x8000000000000000L));
     }
 
+    @Test
     public void testGetPackedPositionGroup() {
         assertEquals(-1, ExpandableListView.getPackedPositionGroup(
                 ExpandableListView.PACKED_POSITION_VALUE_NULL));
@@ -422,6 +454,7 @@ public class ExpandableListViewTest extends ActivityInstrumentationTestCase2<Exp
         assertEquals(0x7FFFFFFF, ExpandableListView.getPackedPositionGroup(0x7FFFFFFF00000000L));
     }
 
+    @Test
     public void testGetPackedPositionChild() {
         assertEquals(-1, ExpandableListView.getPackedPositionChild(
                 ExpandableListView.PACKED_POSITION_VALUE_NULL));
@@ -435,6 +468,7 @@ public class ExpandableListViewTest extends ActivityInstrumentationTestCase2<Exp
         assertEquals(0xffffffff, ExpandableListView.getPackedPositionChild(0x80000000ffffffffL));
     }
 
+    @Test
     public void testGetPackedPositionForChild() {
         assertEquals(0x8000000000000000L,
                 ExpandableListView.getPackedPositionForChild(0, 0));
@@ -443,6 +477,7 @@ public class ExpandableListViewTest extends ActivityInstrumentationTestCase2<Exp
                 ExpandableListView.getPackedPositionForChild(Integer.MAX_VALUE, 0xffffffff));
     }
 
+    @Test
     public void testGetPackedPositionForGroup() {
         assertEquals(0, ExpandableListView.getPackedPositionForGroup(0));
 
@@ -450,31 +485,38 @@ public class ExpandableListViewTest extends ActivityInstrumentationTestCase2<Exp
                 ExpandableListView.getPackedPositionForGroup(Integer.MAX_VALUE));
     }
 
+    @Test
     public void testSetChildIndicator() {
         mExpandableListView.setChildIndicator(null);
     }
 
+    @Test
     public void testSetChildIndicatorBounds() {
         mExpandableListView.setChildIndicatorBounds(10, 20);
     }
 
+    @Test
     public void testSetChildIndicatorBoundsRelative() {
         mExpandableListView.setChildIndicatorBoundsRelative(10, 20);
     }
 
+    @Test
     public void testSetGroupIndicator() {
         Drawable drawable = new BitmapDrawable();
         mExpandableListView.setGroupIndicator(drawable);
     }
 
+    @Test
     public void testSetIndicatorBounds() {
         mExpandableListView.setIndicatorBounds(10, 30);
     }
 
+    @Test
     public void testSetIndicatorBoundsRelative() {
         mExpandableListView.setIndicatorBoundsRelative(10, 30);
     }
 
+    @Test
     public void testOnSaveInstanceState() {
         ExpandableListView src = new ExpandableListView(mActivity);
         Parcelable p1 = src.onSaveInstanceState();
@@ -487,6 +529,7 @@ public class ExpandableListViewTest extends ActivityInstrumentationTestCase2<Exp
         assertNotNull(p2);
     }
 
+    @Test
     public void testDispatchDraw() {
         MockExpandableListView expandableListView = new MockExpandableListView(mActivity);
         expandableListView.dispatchDraw(new Canvas());
