@@ -16,9 +16,17 @@ LOCAL_PATH:= $(call my-dir)
 
 include $(CLEAR_VARS)
 
+# Tag this module as a cts test artifact
+LOCAL_COMPATIBILITY_SUITE := cts
+
+LOCAL_PACKAGE_NAME := CtsShortcutManagerThrottlingTest
+
 LOCAL_MODULE_TAGS := optional
 
 LOCAL_MODULE_PATH := $(TARGET_OUT_DATA_APPS)
+
+LOCAL_SRC_FILES := $(call all-java-files-under, src) \
+    $(call all-java-files-under, ../common/src)
 
 LOCAL_STATIC_JAVA_LIBRARIES := \
     android-support-test \
@@ -29,18 +37,6 @@ LOCAL_STATIC_JAVA_LIBRARIES := \
     ub-uiautomator \
     ShortcutManagerTestUtils
 
-LOCAL_JAVA_LIBRARIES := android.test.runner
-
-LOCAL_SRC_FILES := $(call all-java-files-under, src) \
-    $(call all-java-files-under, common/src)
-
-LOCAL_PACKAGE_NAME := CtsShortcutManagerTestCases
-
-LOCAL_COMPATIBILITY_SUITE := cts
-
-LOCAL_SDK_VERSION := test_current
+LOCAL_SDK_VERSION := current
 
 include $(BUILD_CTS_PACKAGE)
-#include $(BUILD_PACKAGE)
-
-include $(call all-makefiles-under,$(LOCAL_PATH))

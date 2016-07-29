@@ -25,6 +25,7 @@
         <option name="test-file-name" value="CtsShortcutManagerLauncher2.apk" />
         <option name="test-file-name" value="CtsShortcutManagerLauncher3.apk" />
         <option name="test-file-name" value="CtsShortcutManagerLauncher4.apk" />
+        <option name="test-file-name" value="CtsShortcutManagerThrottlingTest.apk" />
     </target_preparer>
     <test class="com.android.tradefed.testtype.AndroidJUnitTest" >
         <option name="package" value="android.content.pm.cts.shortcutmanager" />
