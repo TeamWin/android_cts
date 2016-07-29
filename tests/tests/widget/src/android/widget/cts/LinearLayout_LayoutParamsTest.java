@@ -16,54 +16,66 @@
 
 package android.widget.cts;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+
+import android.content.Context;
 import android.content.res.XmlResourceParser;
-import android.test.AndroidTestCase;
+import android.support.test.InstrumentationRegistry;
+import android.support.test.runner.AndroidJUnit4;
+import android.test.suitebuilder.annotation.SmallTest;
 import android.view.Gravity;
 import android.view.ViewGroup.LayoutParams;
 import android.view.ViewGroup.MarginLayoutParams;
 import android.widget.LinearLayout;
 import android.widget.cts.util.XmlUtils;
 
+import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.xmlpull.v1.XmlPullParserException;
 
 import java.io.IOException;
 
-public class LinearLayout_LayoutParamsTest extends AndroidTestCase {
+@SmallTest
+@RunWith(AndroidJUnit4.class)
+public class LinearLayout_LayoutParamsTest {
+    @Test
     public void testConstructor() throws XmlPullParserException, IOException {
-        XmlResourceParser p = mContext.getResources().getLayout(R.layout.linearlayout_layout);
+        final Context context = InstrumentationRegistry.getTargetContext();
+        XmlResourceParser p = context.getResources().getLayout(R.layout.linearlayout_layout);
 
         XmlUtils.beginDocument(p, "LinearLayout");
         LinearLayout.LayoutParams linearLayoutParams =
-                new LinearLayout.LayoutParams(getContext(), p);
+                new LinearLayout.LayoutParams(context, p);
         assertEquals(LayoutParams.MATCH_PARENT, linearLayoutParams.width);
         assertEquals(LayoutParams.WRAP_CONTENT, linearLayoutParams.height);
-        assertEquals(0.0f, linearLayoutParams.weight);
+        assertEquals(0.0f, linearLayoutParams.weight, 0.0f);
         assertEquals(-1, linearLayoutParams.gravity);
 
         linearLayoutParams = new LinearLayout.LayoutParams(320, 240);
         assertEquals(320, linearLayoutParams.width);
         assertEquals(240, linearLayoutParams.height);
-        assertEquals(0.0f, linearLayoutParams.weight);
+        assertEquals(0.0f, linearLayoutParams.weight, 0.0f);
         assertEquals(-1, linearLayoutParams.gravity);
 
         linearLayoutParams = new LinearLayout.LayoutParams(360, 320, 0.4f);
         assertEquals(360, linearLayoutParams.width);
         assertEquals(320, linearLayoutParams.height);
-        assertEquals(0.4f, linearLayoutParams.weight);
+        assertEquals(0.4f, linearLayoutParams.weight, 0.0f);
         assertEquals(-1, linearLayoutParams.gravity);
 
         LayoutParams layoutParams = new LayoutParams(200, 480);
         linearLayoutParams = new LinearLayout.LayoutParams(layoutParams);
         assertEquals(200, linearLayoutParams.width);
         assertEquals(480, linearLayoutParams.height);
-        assertEquals(0.0f, linearLayoutParams.weight);
+        assertEquals(0.0f, linearLayoutParams.weight, 0.0f);
         assertEquals(-1, linearLayoutParams.gravity);
 
         MarginLayoutParams marginLayoutParams = new MarginLayoutParams(320, 200);
         linearLayoutParams = new LinearLayout.LayoutParams(marginLayoutParams);
         assertEquals(320, linearLayoutParams.width);
         assertEquals(200, linearLayoutParams.height);
-        assertEquals(0.0f, linearLayoutParams.weight);
+        assertEquals(0.0f, linearLayoutParams.weight, 0.0f);
         assertEquals(-1, linearLayoutParams.gravity);
 
         LinearLayout.LayoutParams linearLayoutParams2 = new LinearLayout.LayoutParams(360, 720);
@@ -72,10 +84,11 @@ public class LinearLayout_LayoutParamsTest extends AndroidTestCase {
         linearLayoutParams = new LinearLayout.LayoutParams(linearLayoutParams2);
         assertEquals(360, linearLayoutParams.width);
         assertEquals(720, linearLayoutParams.height);
-        assertEquals(0.9f, linearLayoutParams.weight);
+        assertEquals(0.9f, linearLayoutParams.weight, 0.0f);
         assertEquals(Gravity.RIGHT, linearLayoutParams.gravity);
     }
 
+    @Test
     public void testDebug() {
         LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(320, 240);
         assertNotNull(layoutParams.debug("test: "));

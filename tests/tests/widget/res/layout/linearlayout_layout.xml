@@ -22,7 +22,7 @@
     android:orientation="vertical">
 
     <LinearLayout
-        android:id="@+id/horizontal"
+        android:id="@+id/linear_horizontal"
         android:layout_width="wrap_content"
         android:layout_height="100dip"
         android:orientation="horizontal"
@@ -54,7 +54,7 @@
     </LinearLayout>
 
     <LinearLayout
-        android:id="@+id/vertical"
+        android:id="@+id/linear_vertical"
         android:layout_width="100dip"
         android:layout_height="wrap_content"
         android:orientation="vertical"
@@ -86,7 +86,7 @@
     </LinearLayout>
 
     <LinearLayout
-        android:id="@+id/weightsum"
+        android:id="@+id/linear_weightsum"
         android:layout_width="100dip"
         android:layout_height="100dip"
         android:orientation="horizontal"
@@ -120,7 +120,7 @@
     </LinearLayout>
 
     <LinearLayout
-        android:id="@+id/weightsum_vertical"
+        android:id="@+id/linear_weightsum_vertical"
         android:layout_width="100dip"
         android:layout_height="100dip"
         android:orientation="vertical"
@@ -154,7 +154,7 @@
     </LinearLayout>
 
     <LinearLayout
-        android:id="@+id/baseline_aligned_child_index"
+        android:id="@+id/linear_baseline_aligned_child_index"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:orientation="vertical"
@@ -187,7 +187,7 @@
     </LinearLayout>
 
     <LinearLayout
-        android:id="@+id/vertical_with_divider"
+        android:id="@+id/linear_vertical_with_divider"
         android:layout_width="100px"
         android:layout_height="100px"
         android:orientation="vertical"
@@ -213,7 +213,7 @@
     </LinearLayout>
 
     <LinearLayout
-        android:id="@+id/horizontal_with_divider"
+        android:id="@+id/linear_horizontal_with_divider"
         android:layout_width="100px"
         android:layout_height="100px"
         android:orientation="horizontal"
@@ -238,4 +238,14 @@
 
     </LinearLayout>
 
+    <LinearLayout
+        android:id="@+id/linear_empty"
+        android:layout_width="100px"
+        android:layout_height="100px" />
+
+    <view
+        class="android.widget.cts.LinearLayoutTest$MockLinearLayout"
+        android:id="@+id/linear_custom"
+        android:layout_width="100px"
+        android:layout_height="100px" />
 </LinearLayout>
