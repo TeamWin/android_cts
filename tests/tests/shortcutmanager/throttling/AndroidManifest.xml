@@ -26,6 +26,12 @@
                 <action android:name="android.content.pm.cts.shortcutmanager.ACTION_THROTTLING_TEST" />
             </intent-filter>
         </receiver>
+
+        <activity android:name=".MyActivity" />
+
+        <service android:name=".BgService" />
+
+        <service android:name=".FgService" />
     </application>
 </manifest>
 

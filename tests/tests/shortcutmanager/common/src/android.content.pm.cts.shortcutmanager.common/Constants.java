@@ -27,4 +27,8 @@ public class Constants {
     public static final String TEST_SET_DYNAMIC_SHORTCUTS = "testSetDynamicShortcuts";
     public static final String TEST_ADD_DYNAMIC_SHORTCUTS = "testAddDynamicShortcuts";
     public static final String TEST_UPDATE_SHORTCUTS = "testUpdateShortcuts";
+
+    public static final String TEST_ACTIVITY_UNTHROTTLED = "testActivityUnthrottled";
+    public static final String TEST_FG_SERVICE_UNTHROTTLED = "testFgServiceUnthrottled";
+    public static final String TEST_BG_SERVICE_THROTTLED = "testBgServiceThrottled";
 }
