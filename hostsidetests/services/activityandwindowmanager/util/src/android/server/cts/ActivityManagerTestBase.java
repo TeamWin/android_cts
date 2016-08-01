@@ -70,6 +70,8 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
     protected static final String AM_MOVE_TOP_ACTIVITY_TO_PINNED_STACK_COMMAND =
             "am stack move-top-activity-to-pinned-stack 1 0 0 500 500";
 
+    protected static final String LAUNCHING_ACTIVITY = "LaunchingActivity";
+
     private static final String AM_RESIZE_DOCKED_STACK = "am stack resize-docked-stack ";
 
     private static final String AM_MOVE_TASK = "am stack movetask ";
@@ -162,6 +164,36 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
             throws DeviceNotAvailableException {
         log("adb shell " + command);
         mDevice.executeShellCommand(command, outputReceiver);
+    }
+
+    /**
+     * Launch specific target activity. It uses existing instance of {@link #LAUNCHING_ACTIVITY}, so
+     * that one should be started first.
+     * @param toSide Launch to side in split-screen.
+     * @param randomData Make intent URI random by generating random data.
+     * @param multipleTask Allow multiple task launch.
+     * @param targetActivityName Target activity to be launched. Only class name should be provided,
+     *                           package name of {@link #LAUNCHING_ACTIVITY} will be added
+     *                           automatically.
+     * @throws Exception
+     */
+    protected void launchActivity(boolean toSide, boolean randomData, boolean multipleTask,
+            String targetActivityName) throws Exception {
+        StringBuilder commandBuilder = new StringBuilder(getAmStartCmd(LAUNCHING_ACTIVITY));
+        commandBuilder.append(" -f 0x20000000");
+        if (toSide) {
+            commandBuilder.append(" --ez launch_to_the_side true");
+        }
+        if (randomData) {
+            commandBuilder.append(" --ez random_data true");
+        }
+        if (multipleTask) {
+            commandBuilder.append(" --ez multiple_task true");
+        }
+        if (targetActivityName != null) {
+            commandBuilder.append(" --es target_activity ").append(targetActivityName);
+        }
+        executeShellCommand(commandBuilder.toString());
     }
 
     protected void launchActivityInStack(String activityName, int stackId) throws Exception {

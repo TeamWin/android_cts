@@ -54,7 +54,7 @@
                 android:resizeableActivity="true"
                 android:exported="true"
         />
-        <activity android:name=".LaunchToSideActivity"
+        <activity android:name=".LaunchingActivity"
                 android:resizeableActivity="true"
                 android:exported="true"
                 android:taskAffinity="nobody.but.LaunchToSideActivity"
@@ -174,6 +174,10 @@
             android:theme="@android:style/Theme.Translucent.NoTitleBar"
             android:enabled="true">
         </activity>
+        <activity android:name=".BroadcastReceiverActivity"
+                  android:resizeableActivity="true"
+                  android:exported="true"
+        />
         <activity-alias android:enabled="true"
                 android:exported="true"
                 android:name=".EntryPointAliasActivity"
