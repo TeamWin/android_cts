@@ -92,15 +92,24 @@ public class CrossAppDragAndDropTests extends DeviceTestCase {
     @Override
     protected void setUp() throws Exception {
         super.setUp();
+
+        if (!supportsDragAndDrop()) {
+            return;
+        }
+
         mDevice = getDevice();
         mSourcePackageName = SOURCE_PACKAGE_NAME;
         mTargetPackageName = TARGET_PACKAGE_NAME;
-        cleanupState();
     }
 
     @Override
     protected void tearDown() throws Exception {
         super.tearDown();
+
+        if (!supportsDragAndDrop()) {
+            return;
+        }
+
         mDevice.executeShellCommand(AM_FORCE_STOP + mSourcePackageName);
         mDevice.executeShellCommand(AM_FORCE_STOP + mTargetPackageName);
     }
@@ -288,6 +297,9 @@ public class CrossAppDragAndDropTests extends DeviceTestCase {
 
     private void doTestDragAndDrop(String sourceMode, String targetMode, String expectedDropResult)
             throws Exception {
+        if (!supportsDragAndDrop()) {
+            return;
+        }
 
         launchDockedActivity(mSourcePackageName, SOURCE_ACTIVITY_NAME, sourceMode);
         launchFullscreenActivity(mTargetPackageName, TARGET_ACTIVITY_NAME, targetMode);
@@ -303,8 +315,11 @@ public class CrossAppDragAndDropTests extends DeviceTestCase {
         assertResult(RESULT_KEY_DROP_RESULT, expectedDropResult);
     }
 
+    private void assertResult(String resultKey, String expectedResult) throws Exception {
+        if (!supportsDragAndDrop()) {
+            return;
+        }
 
-    private void assertResult(String resultKey, String expectedResult) {
         if (expectedResult == null) {
             if (mResults.containsKey(resultKey)) {
                 fail("Unexpected " + resultKey + "=" + mResults.get(resultKey));
@@ -313,6 +328,11 @@ public class CrossAppDragAndDropTests extends DeviceTestCase {
             assertTrue("Missing " + resultKey, mResults.containsKey(resultKey));
             assertEquals(expectedResult, mResults.get(resultKey));
         }
+    }
+
+    private boolean supportsDragAndDrop() throws Exception {
+        // Do not run this test on watches.
+        return !mDevice.hasFeature("feature:android.hardware.type.watch");
     }
 
     public void testCancelSoon() throws Exception {
