@@ -18,7 +18,7 @@ package android.view.cts.surfacevalidator;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
-import android.content.res.Configuration;
+import android.content.pm.PackageManager;
 import android.graphics.Point;
 import android.hardware.display.DisplayManager;
 import android.hardware.display.VirtualDisplay;
@@ -75,8 +75,7 @@ public class CapturedActivity extends Activity {
         mMediaPlayer = MediaPlayer.create(this, R.raw.colors_video);
         mMediaPlayer.setLooping(true);
 
-        int uiMode = getResources().getConfiguration().uiMode;
-        mOnWatch = (uiMode & Configuration.UI_MODE_TYPE_WATCH) == Configuration.UI_MODE_TYPE_WATCH;
+        mOnWatch = getPackageManager().hasSystemFeature(PackageManager.FEATURE_WATCH);
     }
 
     /**
