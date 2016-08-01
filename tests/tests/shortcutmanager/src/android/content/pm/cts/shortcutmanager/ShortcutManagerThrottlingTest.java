@@ -62,7 +62,8 @@ public class ShortcutManagerThrottlingTest extends ShortcutManagerCtsTestsBase {
             i.putExtra(Constants.EXTRA_METHOD, method);
             i.putExtra(Constants.EXTRA_REPLY_ACTION, replyAction);
             i.setComponent(ComponentName.unflattenFromString(
-                    "android.content.pm.cts.shortcutmanager.throttling/.ShortcutManagerThrottlingTestReceiver"
+                    "android.content.pm.cts.shortcutmanager.throttling/"
+                            + ".ShortcutManagerThrottlingTestReceiver"
                     ));
             getTestContext().sendBroadcast(i);
 
@@ -92,5 +93,20 @@ public class ShortcutManagerThrottlingTest extends ShortcutManagerCtsTestsBase {
         resetThrottling(getInstrumentation());
 
         callTest(Constants.TEST_UPDATE_SHORTCUTS);
+
+        // --------------------------------------
+        resetThrottling(getInstrumentation());
+
+        callTest(Constants.TEST_BG_SERVICE_THROTTLED);
+
+        // --------------------------------------
+        resetThrottling(getInstrumentation());
+
+        callTest(Constants.TEST_ACTIVITY_UNTHROTTLED);
+
+        // --------------------------------------
+        resetThrottling(getInstrumentation());
+
+        callTest(Constants.TEST_FG_SERVICE_UNTHROTTLED);
     }
 }
