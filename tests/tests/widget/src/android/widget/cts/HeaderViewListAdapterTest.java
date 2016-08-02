@@ -24,9 +24,7 @@ import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
 
 import android.content.Context;
-import android.cts.util.TestThread;
 import android.database.DataSetObserver;
-import android.os.Looper;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.annotation.UiThreadTest;
 import android.support.test.runner.AndroidJUnit4;
@@ -56,14 +54,12 @@ public class HeaderViewListAdapterTest {
     private HeaderViewFullAdapter mFullAdapter;
     private HeaderViewEmptyAdapter mEmptyAdapter;
 
+    @UiThreadTest
     @Before
     public void setup() throws Throwable {
         mContext = InstrumentationRegistry.getTargetContext();
-        new TestThread(() -> {
-            Looper.prepare();
-            mFullAdapter = new HeaderViewFullAdapter();
-            mEmptyAdapter = new HeaderViewEmptyAdapter();
-        }).runTest(1000);
+        mFullAdapter = new HeaderViewFullAdapter();
+        mEmptyAdapter = new HeaderViewEmptyAdapter();
     }
 
     @UiThreadTest

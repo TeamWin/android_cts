@@ -16,7 +16,13 @@
 
 package android.widget.cts;
 
-import java.io.File;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertSame;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import android.content.Context;
 import android.content.res.Resources.Theme;
@@ -27,8 +33,10 @@ import android.database.Cursor;
 import android.database.DataSetObserver;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.Looper;
-import android.test.InstrumentationTestCase;
-import android.test.UiThreadTest;
+import android.support.test.InstrumentationRegistry;
+import android.support.test.annotation.UiThreadTest;
+import android.support.test.runner.AndroidJUnit4;
+import android.test.suitebuilder.annotation.MediumTest;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -37,12 +45,19 @@ import android.widget.Filter;
 import android.widget.FilterQueryProvider;
 import android.widget.TextView;
 
-import android.widget.cts.R;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+
+import java.io.File;
 
 /**
  * Test {@link CursorAdapter}.
  */
-public class CursorAdapterTest extends InstrumentationTestCase {
+@MediumTest
+@RunWith(AndroidJUnit4.class)
+public class CursorAdapterTest {
     private static final long TEST_TIME_OUT = 5000;
     private static final int NUMBER_INDEX = 1;
     private static final String FIRST_NUMBER = "123";
@@ -60,10 +75,9 @@ public class CursorAdapterTest extends InstrumentationTestCase {
     private MockCursorAdapter mMockCursorAdapter;
     private Context mContext;
 
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
-        mContext = getInstrumentation().getTargetContext();
+    @Before
+    public void setup() {
+        mContext = InstrumentationRegistry.getTargetContext();
         File dbDir = mContext.getDir("tests", Context.MODE_PRIVATE);
         mDatabaseFile = new File(dbDir, "database_test.db");
         if (mDatabaseFile.exists()) {
@@ -82,18 +96,18 @@ public class CursorAdapterTest extends InstrumentationTestCase {
         assertNotNull(mParent);
     }
 
-    @Override
-    protected void tearDown() throws Exception {
+    @After
+    public void teardown() {
         if (null != mCursor) {
             mCursor.close();
             mCursor = null;
         }
         mDatabase.close();
         mDatabaseFile.delete();
-        super.tearDown();
     }
 
     @UiThreadTest
+    @Test
     public void testConstructor() {
         new MockCursorAdapter(mContext, mCursor);
 
@@ -105,6 +119,7 @@ public class CursorAdapterTest extends InstrumentationTestCase {
     }
 
     @UiThreadTest
+    @Test
     public void testInit() {
         MockCursorAdapter cursorAdapter = new MockCursorAdapter(null, null, false);
         cursorAdapter.init(null, null, false);
@@ -150,6 +165,7 @@ public class CursorAdapterTest extends InstrumentationTestCase {
     }
 
     @UiThreadTest
+    @Test
     public void testGetCount() {
         CursorAdapter cursorAdapter = new MockCursorAdapter(mContext, null);
         assertEquals(0, cursorAdapter.getCount());
@@ -159,6 +175,7 @@ public class CursorAdapterTest extends InstrumentationTestCase {
     }
 
     @UiThreadTest
+    @Test
     public void testAccessCursor() {
         CursorAdapter cursorAdapter = new MockCursorAdapter(mContext, null);
         assertNull(cursorAdapter.getCursor());
@@ -171,6 +188,7 @@ public class CursorAdapterTest extends InstrumentationTestCase {
     }
 
     @UiThreadTest
+    @Test
     public void testConvertToString() {
         CursorAdapter cursorAdapter = new MockCursorAdapter(mContext, null);
         assertEquals("", cursorAdapter.convertToString(null));
@@ -179,6 +197,7 @@ public class CursorAdapterTest extends InstrumentationTestCase {
     }
 
     @UiThreadTest
+    @Test
     public void testHasStableIds() {
         CursorAdapter cursorAdapter = new MockCursorAdapter(mContext, mCursor);
         assertTrue(cursorAdapter.hasStableIds());
@@ -188,6 +207,7 @@ public class CursorAdapterTest extends InstrumentationTestCase {
     }
 
     @UiThreadTest
+    @Test
     public void testGetView() {
         TextView textView = new TextView(mContext);
         textView.setText("getView test");
@@ -220,6 +240,7 @@ public class CursorAdapterTest extends InstrumentationTestCase {
     }
 
     @UiThreadTest
+    @Test
     public void testNewDropDownView() {
         CursorAdapter cursorAdapter = new MockCursorAdapter(mContext, mCursor);
         // null cursor
@@ -230,6 +251,7 @@ public class CursorAdapterTest extends InstrumentationTestCase {
     }
 
     @UiThreadTest
+    @Test
     public void testGetDropDownView() {
         MockCursorAdapter cursorAdapter = new MockCursorAdapter(mContext, null);
         // null cursor
@@ -252,6 +274,7 @@ public class CursorAdapterTest extends InstrumentationTestCase {
     }
 
     @UiThreadTest
+    @Test
     public void testAccessDropDownViewTheme() {
         CursorAdapter cursorAdapter = new MockCursorAdapter(mContext, null);
         Theme theme = mContext.getResources().newTheme();
@@ -260,6 +283,7 @@ public class CursorAdapterTest extends InstrumentationTestCase {
     }
 
     @UiThreadTest
+    @Test
     public void testGetFilter() {
         CursorAdapter cursorAdapter = new MockCursorAdapter(mContext, mCursor);
         Filter filter = cursorAdapter.getFilter();
@@ -267,6 +291,7 @@ public class CursorAdapterTest extends InstrumentationTestCase {
     }
 
     @UiThreadTest
+    @Test
     public void testGetItem() {
         CursorAdapter cursorAdapter = new MockCursorAdapter(mContext, null);
         // cursor is null
@@ -285,6 +310,7 @@ public class CursorAdapterTest extends InstrumentationTestCase {
     }
 
     @UiThreadTest
+    @Test
     public void testGetItemId() {
         CursorAdapter cursorAdapter = new MockCursorAdapter(mContext, null);
         // cursor is null
@@ -300,6 +326,7 @@ public class CursorAdapterTest extends InstrumentationTestCase {
     }
 
     @UiThreadTest
+    @Test
     public void testAccessFilterQueryProvider() {
         CursorAdapter cursorAdapter = new MockCursorAdapter(mContext, mCursor);
         FilterQueryProvider filterProvider = new MockFilterQueryProvider();
@@ -312,6 +339,7 @@ public class CursorAdapterTest extends InstrumentationTestCase {
     }
 
     @UiThreadTest
+    @Test
     public void testRunQueryOnBackgroundThread() {
         CursorAdapter cursorAdapter = new MockCursorAdapter(mContext, mCursor);
         final String constraint = "constraint";
@@ -325,14 +353,12 @@ public class CursorAdapterTest extends InstrumentationTestCase {
         assertNull(cursorAdapter.runQueryOnBackgroundThread(constraint));
     }
 
+    @Test
     public void testOnContentChanged() throws Throwable {
-        TestThread testThread = new TestThread(new Runnable() {
-            public void run() {
-                Looper.prepare();
-                mMockCursorAdapter = new MockCursorAdapter(mContext, mCursor);
-            }
-        });
-        testThread.runTest(TEST_TIME_OUT);
+        new TestThread(() -> {
+            Looper.prepare();
+            mMockCursorAdapter = new MockCursorAdapter(mContext, mCursor);
+        }).runTest(TEST_TIME_OUT);
         assertFalse(mMockCursorAdapter.hasContentChanged());
         // insert a new row
         mDatabase.execSQL("INSERT INTO test (number) VALUES ('" + FIRST_NUMBER + "');");

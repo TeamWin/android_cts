@@ -31,6 +31,7 @@ import android.app.Instrumentation;
 import android.cts.util.CtsTouchUtils;
 import android.graphics.Rect;
 import android.support.test.InstrumentationRegistry;
+import android.support.test.annotation.UiThreadTest;
 import android.support.test.rule.ActivityTestRule;
 import android.support.test.runner.AndroidJUnit4;
 import android.test.suitebuilder.annotation.MediumTest;
@@ -59,6 +60,7 @@ public class CalendarViewTest {
     public ActivityTestRule<CalendarViewCtsActivity> mActivityRule
             = new ActivityTestRule<>(CalendarViewCtsActivity.class);
 
+    @UiThreadTest
     @Before
     public void setup() {
         mInstrumentation = InstrumentationRegistry.getInstrumentation();
@@ -68,12 +70,11 @@ public class CalendarViewTest {
 
         // Initialize both calendar views to the current date
         final long currentDate = new GregorianCalendar().getTime().getTime();
-        mInstrumentation.runOnMainSync(() -> {
-            mCalendarViewMaterial.setDate(currentDate);
-            mCalendarViewHolo.setDate(currentDate);
-        });
+        mCalendarViewMaterial.setDate(currentDate);
+        mCalendarViewHolo.setDate(currentDate);
     }
 
+    @UiThreadTest
     @Test
     public void testConstructor() {
         new CalendarView(mActivity);
@@ -92,6 +93,7 @@ public class CalendarViewTest {
         new CalendarView(mActivity, null, 0, android.R.style.Widget_Material_Light_CalendarView);
     }
 
+    @UiThreadTest
     @Test
     public void testAccessDate() {
         // Go back one year
@@ -99,19 +101,18 @@ public class CalendarViewTest {
         newCalendar.set(Calendar.YEAR, newCalendar.get(Calendar.YEAR) - 1);
         final long yearAgoDate = newCalendar.getTime().getTime();
 
-        mInstrumentation.runOnMainSync(
-                () -> mCalendarViewMaterial.setDate(yearAgoDate));
+        mCalendarViewMaterial.setDate(yearAgoDate);
         assertEquals(yearAgoDate, mCalendarViewMaterial.getDate());
 
         // Go forward two years (one year from current date in aggregate)
         newCalendar.set(Calendar.YEAR, newCalendar.get(Calendar.YEAR) + 2);
         final long yearHenceDate = newCalendar.getTime().getTime();
 
-        mInstrumentation.runOnMainSync(
-                () -> mCalendarViewMaterial.setDate(yearHenceDate, true, false));
+        mCalendarViewMaterial.setDate(yearHenceDate, true, false);
         assertEquals(yearHenceDate, mCalendarViewMaterial.getDate());
     }
 
+    @UiThreadTest
     @Test
     public void testAccessMinMaxDate() {
         // Use a range of minus/plus one year as min/max dates
@@ -123,15 +124,14 @@ public class CalendarViewTest {
         final long minDate = minCalendar.getTime().getTime();
         final long maxDate = maxCalendar.getTime().getTime();
 
-        mInstrumentation.runOnMainSync(() -> {
-            mCalendarViewMaterial.setMinDate(minDate);
-            mCalendarViewMaterial.setMaxDate(maxDate);
-        });
+        mCalendarViewMaterial.setMinDate(minDate);
+        mCalendarViewMaterial.setMaxDate(maxDate);
 
         assertEquals(mCalendarViewMaterial.getMinDate(), minDate);
         assertEquals(mCalendarViewMaterial.getMaxDate(), maxDate);
     }
 
+    @UiThreadTest
     @Test
     public void testCalendarViewMinMaxRangeRestrictions() {
         verifyMinMaxRangeRestrictions(mCalendarViewHolo);
@@ -147,22 +147,20 @@ public class CalendarViewTest {
         final long minDate = minCalendar.getTime().getTime();
         final long maxDate = maxCalendar.getTime().getTime();
 
-        mInstrumentation.runOnMainSync(() -> {
-            calendarView.setMinDate(minDate);
-            calendarView.setMaxDate(maxDate);
+        calendarView.setMinDate(minDate);
+        calendarView.setMaxDate(maxDate);
 
-            try {
-                calendarView.setDate(minDate - 1);
-                fail("Should throw IllegalArgumentException, date is before minDate");
-            } catch (IllegalArgumentException e) {
-            }
+        try {
+            calendarView.setDate(minDate - 1);
+            fail("Should throw IllegalArgumentException, date is before minDate");
+        } catch (IllegalArgumentException e) {
+        }
 
-            try {
-                calendarView.setDate(maxDate + 1);
-                fail("Should throw IllegalArgumentException, date is after maxDate");
-            } catch (IllegalArgumentException e) {
-            }
-        });
+        try {
+            calendarView.setDate(maxDate + 1);
+            fail("Should throw IllegalArgumentException, date is after maxDate");
+        } catch (IllegalArgumentException e) {
+        }
     }
 
     private void verifyOnDateChangeListener(CalendarView calendarView,
@@ -222,6 +220,7 @@ public class CalendarViewTest {
         verifyOnDateChangeListener(mCalendarViewMaterial, true);
     }
 
+    @UiThreadTest
     @Test
     public void testAppearanceMaterial() {
         // The logic in this method is performed on a Material-styled CalendarView and
@@ -235,11 +234,9 @@ public class CalendarViewTest {
                 mCalendarViewMaterial.getWeekDayTextAppearance());
 
         // Change the visual appearance of the widget
-        mInstrumentation.runOnMainSync(() -> {
-            mCalendarViewMaterial.setFirstDayOfWeek(Calendar.TUESDAY);
-            mCalendarViewMaterial.setDateTextAppearance(R.style.TextAppearance_WithColorBlue);
-            mCalendarViewMaterial.setWeekDayTextAppearance(R.style.TextAppearance_WithColorMagenta);
-        });
+        mCalendarViewMaterial.setFirstDayOfWeek(Calendar.TUESDAY);
+        mCalendarViewMaterial.setDateTextAppearance(R.style.TextAppearance_WithColorBlue);
+        mCalendarViewMaterial.setWeekDayTextAppearance(R.style.TextAppearance_WithColorMagenta);
 
         assertEquals(Calendar.TUESDAY, mCalendarViewMaterial.getFirstDayOfWeek());
         assertEquals(R.style.TextAppearance_WithColorBlue,
@@ -248,6 +245,7 @@ public class CalendarViewTest {
                 mCalendarViewMaterial.getWeekDayTextAppearance());
     }
 
+    @UiThreadTest
     @Test
     public void testAppearanceHolo() {
         // All the logic in this method is performed on a Holo-styled CalendarView, as
@@ -282,18 +280,16 @@ public class CalendarViewTest {
         final @ColorInt int newWeekSeparatorLineColor =
                 mActivity.getColor(R.color.calendarview_week_separatorline_new);
 
-        mInstrumentation.runOnMainSync(() -> {
-            mCalendarViewHolo.setFirstDayOfWeek(Calendar.SUNDAY);
-            mCalendarViewHolo.setShownWeekCount(4);
-            mCalendarViewHolo.setShowWeekNumber(true);
-            mCalendarViewHolo.setDateTextAppearance(R.style.TextAppearance_WithColorBlue);
-            mCalendarViewHolo.setWeekDayTextAppearance(R.style.TextAppearance_WithColorMagenta);
-            mCalendarViewHolo.setSelectedWeekBackgroundColor(newSelectedWeekBackgroundColor);
-            mCalendarViewHolo.setFocusedMonthDateColor(newFocusedMonthDateColor);
-            mCalendarViewHolo.setUnfocusedMonthDateColor(newUnfocusedMonthDataColor);
-            mCalendarViewHolo.setWeekNumberColor(newWeekNumberColor);
-            mCalendarViewHolo.setWeekSeparatorLineColor(newWeekSeparatorLineColor);
-        });
+        mCalendarViewHolo.setFirstDayOfWeek(Calendar.SUNDAY);
+        mCalendarViewHolo.setShownWeekCount(4);
+        mCalendarViewHolo.setShowWeekNumber(true);
+        mCalendarViewHolo.setDateTextAppearance(R.style.TextAppearance_WithColorBlue);
+        mCalendarViewHolo.setWeekDayTextAppearance(R.style.TextAppearance_WithColorMagenta);
+        mCalendarViewHolo.setSelectedWeekBackgroundColor(newSelectedWeekBackgroundColor);
+        mCalendarViewHolo.setFocusedMonthDateColor(newFocusedMonthDateColor);
+        mCalendarViewHolo.setUnfocusedMonthDateColor(newUnfocusedMonthDataColor);
+        mCalendarViewHolo.setWeekNumberColor(newWeekNumberColor);
+        mCalendarViewHolo.setWeekSeparatorLineColor(newWeekSeparatorLineColor);
 
         assertEquals(Calendar.SUNDAY, mCalendarViewHolo.getFirstDayOfWeek());
         assertEquals(4, mCalendarViewHolo.getShownWeekCount());
@@ -313,14 +309,12 @@ public class CalendarViewTest {
         assertEquals(newWeekSeparatorLineColor,
                 mCalendarViewHolo.getWeekSeparatorLineColor());
 
-        mInstrumentation.runOnMainSync(
-                () -> mCalendarViewHolo.setSelectedDateVerticalBar(R.drawable.yellow_fill));
+        mCalendarViewHolo.setSelectedDateVerticalBar(R.drawable.yellow_fill);
         TestUtils.assertAllPixelsOfColor("Selected date vertical bar yellow",
                 mCalendarViewHolo.getSelectedDateVerticalBar(), 40, 40, true, 0xFFFFFF00, 1, true);
 
-        mInstrumentation.runOnMainSync(
-                () -> mCalendarViewHolo.setSelectedDateVerticalBar(
-                        mActivity.getDrawable(R.drawable.magenta_fill)));
+        mCalendarViewHolo.setSelectedDateVerticalBar(
+                mActivity.getDrawable(R.drawable.magenta_fill));
         TestUtils.assertAllPixelsOfColor("Selected date vertical bar magenta",
                 mCalendarViewHolo.getSelectedDateVerticalBar(), 40, 40, true, 0xFFFF00FF, 1, true);
     }

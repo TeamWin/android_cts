@@ -16,14 +16,27 @@
 
 package android.widget.cts;
 
-import static org.mockito.Mockito.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertSame;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.reset;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyZeroInteractions;
 
 import android.content.Context;
 import android.database.Cursor;
 import android.database.DataSetObserver;
 import android.database.sqlite.SQLiteDatabase;
-import android.test.InstrumentationTestCase;
-import android.test.UiThreadTest;
+import android.support.test.InstrumentationRegistry;
+import android.support.test.annotation.UiThreadTest;
+import android.support.test.runner.AndroidJUnit4;
+import android.test.suitebuilder.annotation.MediumTest;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -31,15 +44,20 @@ import android.widget.CursorTreeAdapter;
 import android.widget.Filter;
 import android.widget.FilterQueryProvider;
 import android.widget.TextView;
-import android.widget.cts.R;
+
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
 import java.io.File;
-
 
 /**
  * Test {@link CursorTreeAdapter}.
  */
-public class CursorTreeAdapterTest extends InstrumentationTestCase {
+@MediumTest
+@RunWith(AndroidJUnit4.class)
+public class CursorTreeAdapterTest {
     private static final int NAME_INDEX = 1;
     private static final int VALUE_INDEX = 1;
     private static final String GROUP_ONE         = "group_one";
@@ -93,10 +111,9 @@ public class CursorTreeAdapterTest extends InstrumentationTestCase {
         return mDatabase.query("child2", VALUE_PROJECTION, null, null, null, null, null);
     }
 
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
-        mContext = getInstrumentation().getTargetContext();
+    @Before
+    public void setup() {
+        mContext = InstrumentationRegistry.getTargetContext();
         File dbDir = mContext.getDir("tests", Context.MODE_PRIVATE);
         mDatabaseFile = new File(dbDir, "database_test.db");
         if (mDatabaseFile.exists()) {
@@ -119,8 +136,8 @@ public class CursorTreeAdapterTest extends InstrumentationTestCase {
         assertNotNull(mParent);
     }
 
-    @Override
-    protected void tearDown() throws Exception {
+    @After
+    public void teardown() {
         if (null != mGroupCursor) {
             mGroupCursor.close();
             mGroupCursor = null;
@@ -137,10 +154,10 @@ public class CursorTreeAdapterTest extends InstrumentationTestCase {
         }
         mDatabase.close();
         mDatabaseFile.delete();
-        super.tearDown();
     }
 
     @UiThreadTest
+    @Test
     public void testConstructor() {
         new MockCursorTreeAdapter(mGroupCursor, mContext);
 
@@ -152,6 +169,7 @@ public class CursorTreeAdapterTest extends InstrumentationTestCase {
     }
 
     @UiThreadTest
+    @Test
     public void testGetCursor() {
         CursorTreeAdapter adapter = new MockCursorTreeAdapter(mGroupCursor, mContext);
         assertSame(mGroupCursor, adapter.getCursor());
@@ -164,6 +182,7 @@ public class CursorTreeAdapterTest extends InstrumentationTestCase {
     }
 
     @UiThreadTest
+    @Test
     public void testSetGroupCursor() {
         CursorTreeAdapter adapter = new MockCursorTreeAdapter(mGroupCursor, mContext);
         assertSame(mGroupCursor, adapter.getCursor());
@@ -176,6 +195,7 @@ public class CursorTreeAdapterTest extends InstrumentationTestCase {
     }
 
     @UiThreadTest
+    @Test
     public void testSetChildrenCursor() {
         MockCursorTreeAdapter adapter = new MockCursorTreeAdapter(mGroupCursor, mContext);
         assertTrue(mGroupCursor.moveToFirst());
@@ -186,6 +206,7 @@ public class CursorTreeAdapterTest extends InstrumentationTestCase {
     }
 
     @UiThreadTest
+    @Test
     public void testChangeCursor() {
         CursorTreeAdapter adapter = new MockCursorTreeAdapter(null, mContext);
         assertNull(adapter.getCursor());
@@ -198,6 +219,7 @@ public class CursorTreeAdapterTest extends InstrumentationTestCase {
     }
 
     @UiThreadTest
+    @Test
     public void testNotifyDataSetChangedBoolean() {
         MockCursorTreeAdapter adapter = new MockCursorTreeAdapter(mGroupCursor, mContext);
         DataSetObserver mockDataSetObserver = mock(DataSetObserver.class);
@@ -237,6 +259,7 @@ public class CursorTreeAdapterTest extends InstrumentationTestCase {
     }
 
     @UiThreadTest
+    @Test
     public void testNotifyDataSetChanged() {
         MockCursorTreeAdapter adapter = new MockCursorTreeAdapter(mGroupCursor, mContext);
         DataSetObserver mockDataSetObserver = mock(DataSetObserver.class);
@@ -263,6 +286,7 @@ public class CursorTreeAdapterTest extends InstrumentationTestCase {
     }
 
     @UiThreadTest
+    @Test
     public void testNotifyDataSetInvalidated() {
         MockCursorTreeAdapter adapter = new MockCursorTreeAdapter(mGroupCursor, mContext);
         DataSetObserver mockDataSetObserver = mock(DataSetObserver.class);
@@ -289,6 +313,7 @@ public class CursorTreeAdapterTest extends InstrumentationTestCase {
     }
 
     @UiThreadTest
+    @Test
     public void testOnGroupCollapsed() {
         MockCursorTreeAdapter adapter = new MockCursorTreeAdapter(mGroupCursor, mContext);
 
@@ -327,6 +352,7 @@ public class CursorTreeAdapterTest extends InstrumentationTestCase {
     }
 
     @UiThreadTest
+    @Test
     public void testHasStableIds() {
         CursorTreeAdapter adapter = new MockCursorTreeAdapter(mGroupCursor, mContext);
         assertTrue(adapter.hasStableIds());
@@ -336,6 +362,7 @@ public class CursorTreeAdapterTest extends InstrumentationTestCase {
     }
 
     @UiThreadTest
+    @Test
     public void testIsChildSelectable() {
         CursorTreeAdapter adapter = new MockCursorTreeAdapter(mGroupCursor, mContext);
         assertTrue(adapter.isChildSelectable(0, 0));
@@ -346,6 +373,7 @@ public class CursorTreeAdapterTest extends InstrumentationTestCase {
     }
 
     @UiThreadTest
+    @Test
     public void testConvertToString() {
         CursorTreeAdapter adapter = new MockCursorTreeAdapter(mGroupCursor, mContext);
         assertEquals("", adapter.convertToString(null));
@@ -354,6 +382,7 @@ public class CursorTreeAdapterTest extends InstrumentationTestCase {
     }
 
     @UiThreadTest
+    @Test
     public void testGetFilter() {
         MockCursorTreeAdapter adapter = new MockCursorTreeAdapter(mGroupCursor, mContext);
         Filter filter = adapter.getFilter();
@@ -366,6 +395,7 @@ public class CursorTreeAdapterTest extends InstrumentationTestCase {
     }
 
     @UiThreadTest
+    @Test
     public void testAccessQueryProvider() {
         CursorTreeAdapter adapter = new MockCursorTreeAdapter(mGroupCursor, mContext);
         FilterQueryProvider filterProvider = new MockFilterQueryProvider();
@@ -378,6 +408,7 @@ public class CursorTreeAdapterTest extends InstrumentationTestCase {
     }
 
     @UiThreadTest
+    @Test
     public void testRunQueryOnBackgroundThread() {
         CursorTreeAdapter adapter = new MockCursorTreeAdapter(mGroupCursor, mContext);
         final String constraint = "constraint";
@@ -392,6 +423,7 @@ public class CursorTreeAdapterTest extends InstrumentationTestCase {
     }
 
     @UiThreadTest
+    @Test
     public void testGetGroup() {
         CursorTreeAdapter adapter = new MockCursorTreeAdapter(null, mContext);
 
@@ -412,6 +444,7 @@ public class CursorTreeAdapterTest extends InstrumentationTestCase {
     }
 
     @UiThreadTest
+    @Test
     public void testGetGroupCount() {
         CursorTreeAdapter adapter = new MockCursorTreeAdapter(mGroupCursor, mContext);
         assertEquals(mGroupCursor.getCount(), adapter.getGroupCount());
@@ -421,6 +454,7 @@ public class CursorTreeAdapterTest extends InstrumentationTestCase {
     }
 
     @UiThreadTest
+    @Test
     public void testGetGroupId() {
         CursorTreeAdapter adapter = new MockCursorTreeAdapter(null, mContext);
 
@@ -437,6 +471,7 @@ public class CursorTreeAdapterTest extends InstrumentationTestCase {
     }
 
     @UiThreadTest
+    @Test
     public void testGetGroupView() {
         final String expectedStr = "getGroupView test";
         TextView retView;
@@ -473,6 +508,7 @@ public class CursorTreeAdapterTest extends InstrumentationTestCase {
     }
 
     @UiThreadTest
+    @Test
     public void testGetChild() {
         CursorTreeAdapter adapter = new MockCursorTreeAdapter(mGroupCursor, mContext);
         assertEquals(2, adapter.getGroupCount());
@@ -501,6 +537,7 @@ public class CursorTreeAdapterTest extends InstrumentationTestCase {
     }
 
     @UiThreadTest
+    @Test
     public void testGetChildId() {
         CursorTreeAdapter adapter = new MockCursorTreeAdapter(null, mContext);
 
@@ -530,6 +567,7 @@ public class CursorTreeAdapterTest extends InstrumentationTestCase {
     }
 
     @UiThreadTest
+    @Test
     public void testGetChildrenCount() {
         CursorTreeAdapter adapter = new MockCursorTreeAdapter(null, mContext);
 
@@ -546,6 +584,7 @@ public class CursorTreeAdapterTest extends InstrumentationTestCase {
     }
 
     @UiThreadTest
+    @Test
     public void testGetChildView() {
         final String expectedStr = "getChildView test";
         TextView retView;
