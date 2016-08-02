@@ -422,48 +422,48 @@ public class HorizontalScrollViewTest {
     @Test
     public void testFillViewport() {
         MyView child = new MyView(mActivity);
-        mScrollViewCustomEmpty.setFillViewport(true);
+        mScrollViewRegular.setFillViewport(true);
         child.setLayoutParams(new ViewGroup.LayoutParams(
                 ViewGroup.LayoutParams.WRAP_CONTENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT
         ));
 
-        mScrollViewCustomEmpty.addView(child);
-        mScrollViewCustomEmpty.measure(MeasureSpec.makeMeasureSpec(150, MeasureSpec.EXACTLY),
+        mScrollViewRegular.addView(child);
+        mScrollViewRegular.measure(MeasureSpec.makeMeasureSpec(150, MeasureSpec.EXACTLY),
                 MeasureSpec.makeMeasureSpec(100, MeasureSpec.EXACTLY));
 
         assertEquals(150, child.getMeasuredWidth());
         assertEquals(100, child.getMeasuredHeight());
 
-        mScrollViewCustomEmpty.layout(0, 0, 150, 100);
+        mScrollViewRegular.layout(0, 0, 150, 100);
         assertEquals(0, child.getLeft());
     }
 
     @UiThreadTest
     @Test
     public void testFillViewportWithScrollViewPadding() {
-        mScrollViewCustomEmpty.setFillViewport(true);
-        mScrollViewCustomEmpty.setPadding(3, 10, 5, 7);
+        mScrollViewRegular.setFillViewport(true);
+        mScrollViewRegular.setPadding(3, 10, 5, 7);
 
         MyView child = new MyView(mActivity);
         child.setLayoutParams(new ViewGroup.LayoutParams(10,10));
         child.setDesiredWidth(30);
 
-        mScrollViewCustomEmpty.addView(child);
-        mScrollViewCustomEmpty.measure(MeasureSpec.makeMeasureSpec(100, MeasureSpec.EXACTLY),
+        mScrollViewRegular.addView(child);
+        mScrollViewRegular.measure(MeasureSpec.makeMeasureSpec(100, MeasureSpec.EXACTLY),
                 MeasureSpec.makeMeasureSpec(150, MeasureSpec.EXACTLY));
 
         assertEquals(92, child.getMeasuredWidth());
         assertEquals(10, child.getMeasuredHeight());
 
-        mScrollViewCustomEmpty.layout(0, 0, 100, 150);
+        mScrollViewRegular.layout(0, 0, 100, 150);
         assertEquals(3, child.getLeft());
     }
 
     @UiThreadTest
     @Test
     public void testFillViewportWithChildMargins() {
-        mScrollViewCustomEmpty.setFillViewport(true);
+        mScrollViewRegular.setFillViewport(true);
 
         MyView child = new MyView(mActivity);
         FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(10, 10);
@@ -474,42 +474,42 @@ public class HorizontalScrollViewTest {
         child.setDesiredWidth(30);
         child.setLayoutParams(lp);
 
-        mScrollViewCustomEmpty.addView(child);
-        mScrollViewCustomEmpty.measure(MeasureSpec.makeMeasureSpec(100, MeasureSpec.EXACTLY),
+        mScrollViewRegular.addView(child);
+        mScrollViewRegular.measure(MeasureSpec.makeMeasureSpec(100, MeasureSpec.EXACTLY),
                 MeasureSpec.makeMeasureSpec(150, MeasureSpec.EXACTLY));
 
         assertEquals(92, child.getMeasuredWidth());
         assertEquals(10, child.getMeasuredHeight());
 
-        mScrollViewCustomEmpty.layout(0, 0, 100, 150);
+        mScrollViewRegular.layout(0, 0, 100, 150);
         assertEquals(3, child.getLeft());
     }
 
     @UiThreadTest
     @Test
     public void testFillViewportWithScrollViewPaddingAlreadyFills() {
-        mScrollViewCustomEmpty.setFillViewport(true);
-        mScrollViewCustomEmpty.setPadding(3, 10, 5, 7);
+        mScrollViewRegular.setFillViewport(true);
+        mScrollViewRegular.setPadding(3, 10, 5, 7);
 
         MyView child = new MyView(mActivity);
         child.setDesiredWidth(175);
 
-        mScrollViewCustomEmpty.addView(child);
-        mScrollViewCustomEmpty.measure(MeasureSpec.makeMeasureSpec(100, MeasureSpec.EXACTLY),
+        mScrollViewRegular.addView(child);
+        mScrollViewRegular.measure(MeasureSpec.makeMeasureSpec(100, MeasureSpec.EXACTLY),
                 MeasureSpec.makeMeasureSpec(150, MeasureSpec.EXACTLY));
 
 
         assertEquals(175, child.getMeasuredWidth());
         assertEquals(133, child.getMeasuredHeight());
 
-        mScrollViewCustomEmpty.layout(0, 0, 100, 150);
+        mScrollViewRegular.layout(0, 0, 100, 150);
         assertEquals(3, child.getLeft());
     }
 
     @UiThreadTest
     @Test
     public void testFillViewportWithChildMarginsAlreadyFills() {
-        mScrollViewCustomEmpty.setFillViewport(true);
+        mScrollViewRegular.setFillViewport(true);
         MyView child = new MyView(mActivity);
         FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
@@ -522,14 +522,14 @@ public class HorizontalScrollViewTest {
         child.setLayoutParams(lp);
         child.setDesiredWidth(175);
 
-        mScrollViewCustomEmpty.addView(child);
-        mScrollViewCustomEmpty.measure(MeasureSpec.makeMeasureSpec(100, MeasureSpec.EXACTLY),
+        mScrollViewRegular.addView(child);
+        mScrollViewRegular.measure(MeasureSpec.makeMeasureSpec(100, MeasureSpec.EXACTLY),
                 MeasureSpec.makeMeasureSpec(150, MeasureSpec.EXACTLY));
 
         assertEquals(175, child.getMeasuredWidth());
         assertEquals(133, child.getMeasuredHeight());
 
-        mScrollViewCustomEmpty.layout(0, 0, 100, 150);
+        mScrollViewRegular.layout(0, 0, 100, 150);
         assertEquals(3, child.getLeft());
     }
 

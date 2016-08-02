@@ -16,35 +16,48 @@
 
 package android.widget.cts;
 
-import static org.mockito.Mockito.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertSame;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
+import static org.mockito.Mockito.verifyZeroInteractions;
 
-import android.app.Instrumentation;
-import android.test.ActivityInstrumentationTestCase2;
+import android.support.test.annotation.UiThreadTest;
+import android.support.test.rule.ActivityTestRule;
+import android.support.test.runner.AndroidJUnit4;
 import android.test.suitebuilder.annotation.SmallTest;
 import android.widget.RatingBar;
+
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
 /**
  * Test {@link RatingBar}.
  */
 @SmallTest
-public class RatingBarTest extends ActivityInstrumentationTestCase2<RatingBarCtsActivity> {
-    private Instrumentation mInstrumentation;
+@RunWith(AndroidJUnit4.class)
+public class RatingBarTest {
     private RatingBarCtsActivity mActivity;
     private RatingBar mRatingBar;
 
-    public RatingBarTest() {
-        super("android.widget.cts", RatingBarCtsActivity.class);
-    }
+    @Rule
+    public ActivityTestRule<RatingBarCtsActivity> mActivityRule =
+            new ActivityTestRule<>(RatingBarCtsActivity.class);
 
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
-
-        mInstrumentation = getInstrumentation();
-        mActivity = getActivity();
+    @Before
+    public void setup() {
+        mActivity = mActivityRule.getActivity();
         mRatingBar = (RatingBar) mActivity.findViewById(R.id.ratingbar_constructor);
     }
 
+    @Test
     public void testConstructor() {
         new RatingBar(mActivity);
         new RatingBar(mActivity, null);
@@ -60,13 +73,16 @@ public class RatingBarTest extends ActivityInstrumentationTestCase2<RatingBarCts
         new RatingBar(mActivity, null, 0, android.R.style.Widget_Material_Light_RatingBar_Small);
     }
 
+    @Test
     public void testAttributesFromLayout() {
         assertFalse(mRatingBar.isIndicator());
         assertEquals(50, mRatingBar.getNumStars());
-        assertEquals(1.2f, mRatingBar.getRating());
-        assertEquals(0.2f, mRatingBar.getStepSize());
+        assertEquals(1.2f, mRatingBar.getRating(), 0.0f);
+        assertEquals(0.2f, mRatingBar.getStepSize(), 0.0f);
     }
 
+    @UiThreadTest
+    @Test
     public void testAccessOnRatingBarChangeListener() {
         final RatingBar.OnRatingBarChangeListener listener =
                 mock(RatingBar.OnRatingBarChangeListener.class);
@@ -75,7 +91,7 @@ public class RatingBarTest extends ActivityInstrumentationTestCase2<RatingBarCts
         verifyZeroInteractions(listener);
 
         // normal value
-        mInstrumentation.runOnMainSync(() -> mRatingBar.setRating(2.2f));
+        mRatingBar.setRating(2.2f);
         verify(listener, times(1)).onRatingChanged(mRatingBar, 2.2f, false);
 
         // exceptional value
@@ -85,91 +101,98 @@ public class RatingBarTest extends ActivityInstrumentationTestCase2<RatingBarCts
         verifyNoMoreInteractions(listener);
     }
 
+    @UiThreadTest
+    @Test
     public void testAccessIndicator() {
-        mInstrumentation.runOnMainSync(() -> mRatingBar.setIsIndicator(true));
+        mRatingBar.setIsIndicator(true);
         assertTrue(mRatingBar.isIndicator());
 
-        mInstrumentation.runOnMainSync(() -> mRatingBar.setIsIndicator(false));
+        mRatingBar.setIsIndicator(false);
         assertFalse(mRatingBar.isIndicator());
     }
 
+    @UiThreadTest
+    @Test
     public void testAccessNumStars() {
-        // set NumStars
         // normal value
-        mInstrumentation.runOnMainSync(() -> mRatingBar.setNumStars(20));
+        mRatingBar.setNumStars(20);
         assertEquals(20, mRatingBar.getNumStars());
 
         // invalid value - the currently set one stays
-        mInstrumentation.runOnMainSync(() -> mRatingBar.setNumStars(-10));
+        mRatingBar.setNumStars(-10);
         assertEquals(20, mRatingBar.getNumStars());
 
-        mInstrumentation.runOnMainSync(() -> mRatingBar.setNumStars(Integer.MAX_VALUE));
+        mRatingBar.setNumStars(Integer.MAX_VALUE);
         assertEquals(Integer.MAX_VALUE, mRatingBar.getNumStars());
     }
 
+    @UiThreadTest
+    @Test
     public void testAccessRating() {
-        // set Rating
         // normal value
-        mInstrumentation.runOnMainSync(() -> mRatingBar.setRating(2.0f));
-        assertEquals(2.0f, mRatingBar.getRating());
+        mRatingBar.setRating(2.0f);
+        assertEquals(2.0f, mRatingBar.getRating(), 0.0f);
 
         // exceptional value
-        mInstrumentation.runOnMainSync(() -> mRatingBar.setRating(-2.0f));
-        assertEquals(0f, mRatingBar.getRating());
+        mRatingBar.setRating(-2.0f);
+        assertEquals(0f, mRatingBar.getRating(), 0.0f);
 
-        mInstrumentation.runOnMainSync(() -> mRatingBar.setRating(Float.MAX_VALUE));
-        assertEquals((float) mRatingBar.getNumStars(), mRatingBar.getRating());
+        mRatingBar.setRating(Float.MAX_VALUE);
+        assertEquals((float) mRatingBar.getNumStars(), mRatingBar.getRating(), 0.0f);
     }
 
+    @UiThreadTest
+    @Test
     public void testSetMax() {
         // normal value
-        mInstrumentation.runOnMainSync(() -> mRatingBar.setMax(10));
+        mRatingBar.setMax(10);
         assertEquals(10, mRatingBar.getMax());
 
-        mInstrumentation.runOnMainSync(() -> mRatingBar.setProgress(10));
+        mRatingBar.setProgress(10);
 
         // exceptional values
-        mInstrumentation.runOnMainSync(() -> mRatingBar.setMax(-10));
+        mRatingBar.setMax(-10);
         assertEquals(10, mRatingBar.getMax());
         assertEquals(10, mRatingBar.getProgress());
 
-        mInstrumentation.runOnMainSync(() -> mRatingBar.setMax(Integer.MAX_VALUE));
+        mRatingBar.setMax(Integer.MAX_VALUE);
         assertEquals(Integer.MAX_VALUE, mRatingBar.getMax());
     }
 
+    @UiThreadTest
+    @Test
     public void testAccessStepSize() {
         // normal value
-        mInstrumentation.runOnMainSync(() -> mRatingBar.setStepSize(1.5f));
+        mRatingBar.setStepSize(1.5f);
         final float expectedMax = mRatingBar.getNumStars() / mRatingBar.getStepSize();
         final float expectedProgress = expectedMax / mRatingBar.getMax() * mRatingBar.getProgress();
         assertEquals((int) expectedMax, mRatingBar.getMax());
         assertEquals((int) expectedProgress, mRatingBar.getProgress());
         assertEquals((float) mRatingBar.getNumStars() / (int) (mRatingBar.getNumStars() / 1.5f),
-                mRatingBar.getStepSize());
+                mRatingBar.getStepSize(), 0.0f);
 
         final int currentMax = mRatingBar.getMax();
         final int currentProgress = mRatingBar.getProgress();
         final float currentStepSize = mRatingBar.getStepSize();
         // exceptional value
-        mInstrumentation.runOnMainSync(() -> mRatingBar.setStepSize(-1.5f));
+        mRatingBar.setStepSize(-1.5f);
         assertEquals(currentMax, mRatingBar.getMax());
         assertEquals(currentProgress, mRatingBar.getProgress());
-        assertEquals(currentStepSize, mRatingBar.getStepSize());
+        assertEquals(currentStepSize, mRatingBar.getStepSize(), 0.0f);
 
-        mInstrumentation.runOnMainSync(() -> mRatingBar.setStepSize(0f));
+        mRatingBar.setStepSize(0f);
         assertEquals(currentMax, mRatingBar.getMax());
         assertEquals(currentProgress, mRatingBar.getProgress());
-        assertEquals(currentStepSize, mRatingBar.getStepSize());
+        assertEquals(currentStepSize, mRatingBar.getStepSize(), 0.0f);
 
-        mInstrumentation.runOnMainSync(
-                () -> mRatingBar.setStepSize(mRatingBar.getNumStars() + 0.1f));
+        mRatingBar.setStepSize(mRatingBar.getNumStars() + 0.1f);
         assertEquals(currentMax, mRatingBar.getMax());
         assertEquals(currentProgress, mRatingBar.getProgress());
-        assertEquals(currentStepSize, mRatingBar.getStepSize());
+        assertEquals(currentStepSize, mRatingBar.getStepSize(), 0.0f);
 
-        mInstrumentation.runOnMainSync(() -> mRatingBar.setStepSize(Float.MAX_VALUE));
+        mRatingBar.setStepSize(Float.MAX_VALUE);
         assertEquals(currentMax, mRatingBar.getMax());
         assertEquals(currentProgress, mRatingBar.getProgress());
-        assertEquals(currentStepSize, mRatingBar.getStepSize());
+        assertEquals(currentStepSize, mRatingBar.getStepSize(), 0.0f);
     }
 }

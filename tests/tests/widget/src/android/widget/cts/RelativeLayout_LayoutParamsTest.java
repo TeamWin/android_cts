@@ -16,10 +16,15 @@
 
 package android.widget.cts;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+
 import android.app.Activity;
 import android.content.res.XmlResourceParser;
-import android.test.ActivityInstrumentationTestCase2;
+import android.support.test.rule.ActivityTestRule;
+import android.support.test.runner.AndroidJUnit4;
 import android.test.ViewAsserts;
+import android.test.suitebuilder.annotation.MediumTest;
 import android.util.LayoutDirection;
 import android.view.View;
 import android.view.ViewGroup;
@@ -27,6 +32,10 @@ import android.view.ViewGroup.MarginLayoutParams;
 import android.widget.RelativeLayout;
 import android.widget.cts.util.XmlUtils;
 
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.xmlpull.v1.XmlPullParserException;
 
 import java.io.IOException;
@@ -34,23 +43,22 @@ import java.io.IOException;
 /**
  * Test {@link RelativeLayout.LayoutParams}.
  */
-public class RelativeLayout_LayoutParamsTest extends
-        ActivityInstrumentationTestCase2<RelativeLayoutCtsActivity> {
+@MediumTest
+@RunWith(AndroidJUnit4.class)
+public class RelativeLayout_LayoutParamsTest {
     private Activity mActivity;
 
-    public RelativeLayout_LayoutParamsTest() {
-        super("android.widget.cts", RelativeLayoutCtsActivity.class);
+    @Rule
+    public ActivityTestRule<RelativeLayoutCtsActivity> mActivityRule =
+            new ActivityTestRule<>(RelativeLayoutCtsActivity.class);
+
+    @Before
+    public void setup() {
+        mActivity = mActivityRule.getActivity();
     }
 
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
-
-        mActivity = getActivity();
-    }
-
+    @Test
     public void testConstructor() throws XmlPullParserException, IOException {
-
         RelativeLayout.LayoutParams layoutParams = new RelativeLayout.LayoutParams(200, 300);
         assertEquals(200, layoutParams.width);
         assertEquals(300, layoutParams.height);
@@ -179,6 +187,7 @@ public class RelativeLayout_LayoutParamsTest extends
         assertEquals(R.id.relative_view3, rules[RelativeLayout.ALIGN_BOTTOM]);
     }
 
+    @Test
     public void testStartEnd() {
         RelativeLayout.LayoutParams layoutParams;
 
@@ -355,9 +364,10 @@ public class RelativeLayout_LayoutParamsTest extends
         layoutParams.resolveLayoutDirection(View.LAYOUT_DIRECTION_LTR);
     }
 
-    public void testAccessRule1() {
+    @Test
+    public void testAccessRuleVerb() {
         RelativeLayout.LayoutParams layoutParams = new RelativeLayout.LayoutParams(200, 300);
-        int rules[]= layoutParams.getRules();
+        int rules[] = layoutParams.getRules();
 
         // normal value
         assertEquals(0, rules[RelativeLayout.CENTER_IN_PARENT]);
@@ -369,24 +379,24 @@ public class RelativeLayout_LayoutParamsTest extends
         assertEquals(0, rules[RelativeLayout.ALIGN_LEFT]);
         layoutParams.addRule(RelativeLayout.ALIGN_LEFT);
         assertEquals(RelativeLayout.TRUE, rules[RelativeLayout.ALIGN_LEFT]);
-
-        // exceptional value
-        try {
-            layoutParams.addRule(-1);
-            fail("Should throw ArrayIndexOutOfBoundsException");
-        } catch (ArrayIndexOutOfBoundsException e) {
-            // issue 1695243, not clear what is supposed to happen when verb is exceptional.
-        }
-
-        try {
-            layoutParams.addRule(Integer.MAX_VALUE);
-            fail("Should throw ArrayIndexOutOfBoundsException");
-        } catch (ArrayIndexOutOfBoundsException e) {
-            // issue 1695243, not clear what is supposed to happen when verb is exceptional.
-        }
     }
 
-    public void testAccessRule2() {
+    @Test(expected=ArrayIndexOutOfBoundsException.class)
+    public void testAddRuleVerbTooLow() {
+        RelativeLayout.LayoutParams layoutParams = new RelativeLayout.LayoutParams(200, 300);
+
+        layoutParams.addRule(-1);
+    }
+
+    @Test(expected=ArrayIndexOutOfBoundsException.class)
+    public void testAddRuleVerbTooHigh() {
+        RelativeLayout.LayoutParams layoutParams = new RelativeLayout.LayoutParams(200, 300);
+
+        layoutParams.addRule(Integer.MAX_VALUE);
+    }
+
+    @Test
+    public void testAccessRuleVerbSubject() {
         int rules[];
         RelativeLayout.LayoutParams layoutParams = new RelativeLayout.LayoutParams(200, 300);
 
@@ -416,20 +426,6 @@ public class RelativeLayout_LayoutParamsTest extends
         rules = layoutParams.getRules();
         assertEquals(R.id.relative_view1, rules[RelativeLayout.ALIGN_PARENT_LEFT]);
 
-        try {
-            layoutParams.addRule(-1, 0);
-            fail("Should throw ArrayIndexOutOfBoundsException");
-        } catch (ArrayIndexOutOfBoundsException e) {
-            // issue 1695243, not clear what is supposed to happen when verb is exceptional.
-        }
-
-        try {
-            layoutParams.addRule(Integer.MAX_VALUE, 0);
-            fail("Should throw ArrayIndexOutOfBoundsException");
-        } catch (ArrayIndexOutOfBoundsException e) {
-            // issue 1695243, not clear what is supposed to happen when verb is exceptional.
-        }
-
         layoutParams.addRule(RelativeLayout.ALIGN_LEFT, Integer.MAX_VALUE);
         rules = layoutParams.getRules();
         assertEquals(Integer.MAX_VALUE, rules[RelativeLayout.ALIGN_LEFT]);
@@ -439,6 +435,21 @@ public class RelativeLayout_LayoutParamsTest extends
         assertEquals(Integer.MIN_VALUE, rules[RelativeLayout.ALIGN_LEFT]);
     }
 
+    @Test(expected=ArrayIndexOutOfBoundsException.class)
+    public void testAddRuleVerbSubjectTooLow() {
+        RelativeLayout.LayoutParams layoutParams = new RelativeLayout.LayoutParams(200, 300);
+
+        layoutParams.addRule(-1, 0);
+    }
+
+    @Test(expected=ArrayIndexOutOfBoundsException.class)
+    public void testAddRuleVerbSubjectTooHigh() {
+        RelativeLayout.LayoutParams layoutParams = new RelativeLayout.LayoutParams(200, 300);
+
+        layoutParams.addRule(Integer.MAX_VALUE, 0);
+    }
+
+    @Test
     public void testRemoveRule() {
         RelativeLayout.LayoutParams layoutParams = new RelativeLayout.LayoutParams(200, 300);
 
@@ -462,6 +473,7 @@ public class RelativeLayout_LayoutParamsTest extends
         assertEquals(0, layoutParams.getRule(RelativeLayout.CENTER_HORIZONTAL));
     }
 
+    @Test
     public void testDebug() {
         RelativeLayout.LayoutParams layoutParams = new RelativeLayout.LayoutParams(200, 300);
         assertNotNull(layoutParams.debug("test: "));

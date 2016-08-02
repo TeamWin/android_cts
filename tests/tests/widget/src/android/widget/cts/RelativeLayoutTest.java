@@ -16,12 +16,20 @@
 
 package android.widget.cts;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+
 import android.app.Activity;
 import android.app.Instrumentation;
 import android.content.Context;
 import android.content.res.XmlResourceParser;
-import android.test.ActivityInstrumentationTestCase2;
+import android.support.test.InstrumentationRegistry;
+import android.support.test.rule.ActivityTestRule;
+import android.support.test.runner.AndroidJUnit4;
 import android.test.ViewAsserts;
+import android.test.suitebuilder.annotation.MediumTest;
 import android.util.AttributeSet;
 import android.util.Xml;
 import android.view.Gravity;
@@ -30,9 +38,12 @@ import android.view.ViewGroup;
 import android.view.ViewGroup.LayoutParams;
 import android.widget.AbsListView;
 import android.widget.RelativeLayout;
-import android.widget.cts.R;
 import android.widget.cts.util.XmlUtils;
 
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
 
@@ -41,23 +52,23 @@ import java.io.IOException;
 /**
  * Test {@link RelativeLayout}.
  */
-public class RelativeLayoutTest extends
-        ActivityInstrumentationTestCase2<RelativeLayoutCtsActivity> {
+@MediumTest
+@RunWith(AndroidJUnit4.class)
+public class RelativeLayoutTest {
     private Instrumentation mInstrumentation;
     private Activity mActivity;
 
-    public RelativeLayoutTest() {
-        super("android.widget.cts", RelativeLayoutCtsActivity.class);
+    @Rule
+    public ActivityTestRule<RelativeLayoutCtsActivity> mActivityRule =
+            new ActivityTestRule<>(RelativeLayoutCtsActivity.class);
+
+    @Before
+    public void setup() {
+        mInstrumentation = InstrumentationRegistry.getInstrumentation();
+        mActivity = mActivityRule.getActivity();
     }
 
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
-
-        mInstrumentation = getInstrumentation();
-        mActivity = getActivity();
-    }
-
+    @Test
     public void testConstructor() {
         new RelativeLayout(mActivity);
 
@@ -68,14 +79,14 @@ public class RelativeLayoutTest extends
         XmlPullParser parser = mActivity.getResources().getXml(R.layout.relative_layout);
         AttributeSet attrs = Xml.asAttributeSet(parser);
         new RelativeLayout(mActivity, attrs);
-
-        try {
-            new RelativeLayout(null, null);
-            fail("should throw NullPointerException.");
-        } catch (NullPointerException e) {
-        }
     }
 
+    @Test(expected=NullPointerException.class)
+    public void testConstructorNullContext() {
+        new RelativeLayout(null, null);
+    }
+
+    @Test
     public void testSetIgnoreGravity() {
         // Initial gravity for this RelativeLayout is Gravity.Right.
         final RelativeLayout relativeLayout = (RelativeLayout) mActivity.findViewById(
@@ -101,6 +112,7 @@ public class RelativeLayoutTest extends
         ViewAsserts.assertRightAligned(relativeLayout, view13);
     }
 
+    @Test
     public void testAccessGravity() {
         final RelativeLayout relativeLayout = (RelativeLayout) mActivity.findViewById(
                 R.id.relative_sublayout_gravity);
@@ -155,6 +167,7 @@ public class RelativeLayoutTest extends
         assertEquals(view11.getTop(), view10.getBottom());
     }
 
+    @Test
     public void testSetHorizontalGravity() {
         final RelativeLayout relativeLayout = (RelativeLayout) mActivity.findViewById(
                 R.id.relative_sublayout_gravity);
@@ -189,6 +202,7 @@ public class RelativeLayoutTest extends
         assertEquals(view11.getTop(), view10.getBottom());
     }
 
+    @Test
     public void testSetVerticalGravity() {
         final RelativeLayout relativeLayout = (RelativeLayout) mActivity.findViewById(
                 R.id.relative_sublayout_gravity);
@@ -225,6 +239,7 @@ public class RelativeLayoutTest extends
         assertEquals(view11.getTop(), view10.getBottom());
     }
 
+    @Test
     public void testGetBaseline() {
         RelativeLayout relativeLayout = new RelativeLayout(mActivity);
         assertEquals(-1, relativeLayout.getBaseline());
@@ -234,6 +249,7 @@ public class RelativeLayoutTest extends
         assertEquals(view.getBaseline(), relativeLayout.getBaseline());
     }
 
+    @Test
     public void testGenerateLayoutParams1() throws XmlPullParserException, IOException {
         RelativeLayout relativeLayout = new RelativeLayout(mActivity);
 
@@ -245,6 +261,7 @@ public class RelativeLayoutTest extends
         assertEquals(LayoutParams.MATCH_PARENT, layoutParams.height);
     }
 
+    @Test
     public void testGenerateLayoutParams2() {
         RelativeLayout.LayoutParams p = new RelativeLayout.LayoutParams(200, 300);
 
@@ -255,15 +272,15 @@ public class RelativeLayoutTest extends
                  (RelativeLayout.LayoutParams) myRelativeLayout.generateLayoutParams(p);
          assertEquals(200, layoutParams.width);
          assertEquals(300, layoutParams.height);
-
-        // exceptional value
-         try {
-             myRelativeLayout.generateLayoutParams((ViewGroup.LayoutParams) null);
-             fail("Should throw RuntimeException");
-         } catch (RuntimeException e) {
-         }
     }
 
+    @Test(expected=NullPointerException.class)
+    public void testGenerateLayoutParamsFromNull() {
+        MyRelativeLayout myRelativeLayout = new MyRelativeLayout(mActivity);
+        myRelativeLayout.generateLayoutParams((ViewGroup.LayoutParams) null);
+    }
+
+    @Test
     public void testGenerateDefaultLayoutParams() {
         MyRelativeLayout myRelativeLayout = new MyRelativeLayout(mActivity);
 
@@ -273,6 +290,7 @@ public class RelativeLayoutTest extends
         assertEquals(ViewGroup.LayoutParams.WRAP_CONTENT, layoutParams.height);
     }
 
+    @Test
     public void testGenerateLayoutParamsFromMarginParams() {
         MyRelativeLayout layout = new MyRelativeLayout(mActivity);
         ViewGroup.MarginLayoutParams lp = new ViewGroup.MarginLayoutParams(3, 5);
@@ -292,14 +310,7 @@ public class RelativeLayoutTest extends
         assertEquals(4, generated.bottomMargin);
     }
 
-    public void testOnMeasure() {
-        // onMeasure() is implementation details, do NOT test
-    }
-
-    public void testOnLayout() {
-        // onLayout() is implementation details, do NOT test
-    }
-
+    @Test
     public void testCheckLayoutParams() {
         MyRelativeLayout myRelativeLayout = new MyRelativeLayout(mActivity);
 
@@ -328,6 +339,7 @@ public class RelativeLayoutTest extends
     /**
      * Tests to prevent regressions in baseline alignment.
      */
+    @Test
     public void testBaselineAlignment() {
         mInstrumentation.runOnMainSync(
                 () -> mActivity.setContentView(R.layout.relative_layout_baseline));
