@@ -16,13 +16,22 @@
 
 package android.widget.cts;
 
-import static org.mockito.Mockito.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 
 import android.app.Activity;
 import android.app.Instrumentation;
 import android.cts.util.CtsTouchUtils;
-import android.test.ActivityInstrumentationTestCase2;
-import android.test.suitebuilder.annotation.SmallTest;
+import android.support.test.InstrumentationRegistry;
+import android.support.test.rule.ActivityTestRule;
+import android.support.test.runner.AndroidJUnit4;
+import android.test.suitebuilder.annotation.MediumTest;
 import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -32,49 +41,45 @@ import android.view.View;
 import android.widget.EditText;
 import android.widget.PopupMenu;
 
-@SmallTest
-public class PopupMenuTest extends
-        ActivityInstrumentationTestCase2<PopupMenuCtsActivity> {
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+
+@MediumTest
+@RunWith(AndroidJUnit4.class)
+public class PopupMenuTest {
     private Instrumentation mInstrumentation;
     private Activity mActivity;
 
     private Builder mBuilder;
     private PopupMenu mPopupMenu;
 
-    public PopupMenuTest() {
-        super("android.widget.cts", PopupMenuCtsActivity.class);
+    @Rule
+    public ActivityTestRule<PopupMenuCtsActivity> mActivityRule =
+            new ActivityTestRule<>(PopupMenuCtsActivity.class);
+
+    @Before
+    public void setup() {
+        mInstrumentation = InstrumentationRegistry.getInstrumentation();
+        mActivity = mActivityRule.getActivity();
+
+        mInstrumentation.runOnMainSync(() -> {
+            // Disable and remove focusability on the first child of our activity so that
+            // it doesn't bring in the soft keyboard that can mess up with some of the tests
+            // (such as menu dismissal when we emulate a tap outside the menu bounds).
+            final EditText editText = (EditText) mActivity.findViewById(R.id.anchor_upper_left);
+            editText.setEnabled(false);
+            editText.setFocusable(false);
+        });
     }
 
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
-        mInstrumentation = getInstrumentation();
-        mActivity = getActivity();
-
-        try {
-            runTestOnUiThread(() -> {
-                // Disable and remove focusability on the first child of our activity so that
-                // it doesn't bring in the soft keyboard that can mess up with some of the tests
-                // (such as menu dismissal when we emulate a tap outside the menu bounds).
-                final EditText editText = (EditText) mActivity.findViewById(R.id.anchor_upper_left);
-                editText.setEnabled(false);
-                editText.setFocusable(false);
-            });
-        } catch (Throwable t) {
-            throw new RuntimeException(t);
-        }
-    }
-
-    @Override
-    protected void tearDown() throws Exception {
+    @After
+    public void teardown() {
         if (mPopupMenu != null) {
-            try {
-                runTestOnUiThread(mPopupMenu::dismiss);
-            } catch (Throwable t) {
-                throw new RuntimeException(t);
-            }
+            mInstrumentation.runOnMainSync(mPopupMenu::dismiss);
         }
-        super.tearDown();
     }
 
     private void verifyMenuContent() {
@@ -94,92 +99,101 @@ public class PopupMenuTest extends
         assertEquals(R.id.action_share_circles, shareSubMenu.getItem(1).getItemId());
     }
 
-    public void testPopulateViaInflater() throws Throwable {
+    @Test
+    public void testPopulateViaInflater() {
         mBuilder = new Builder().inflateWithInflater(true);
-        runTestOnUiThread(mBuilder::show);
+        mInstrumentation.runOnMainSync(mBuilder::show);
         mInstrumentation.waitForIdleSync();
 
         verifyMenuContent();
     }
 
-    public void testDirectPopulate() throws Throwable {
+    @Test
+    public void testDirectPopulate() {
         mBuilder = new Builder().inflateWithInflater(false);
-        runTestOnUiThread(mBuilder::show);
+        mInstrumentation.runOnMainSync(mBuilder::show);
         mInstrumentation.waitForIdleSync();
 
         verifyMenuContent();
     }
 
-    public void testAccessGravity() throws Throwable {
+    @Test
+    public void testAccessGravity() {
         mBuilder = new Builder();
-        runTestOnUiThread(mBuilder::show);
+        mInstrumentation.runOnMainSync(mBuilder::show);
 
         assertEquals(Gravity.NO_GRAVITY, mPopupMenu.getGravity());
         mPopupMenu.setGravity(Gravity.TOP);
         assertEquals(Gravity.TOP, mPopupMenu.getGravity());
     }
 
-    public void testConstructorWithGravity() throws Throwable {
+    @Test
+    public void testConstructorWithGravity() {
         mBuilder = new Builder().withGravity(Gravity.TOP);
-        runTestOnUiThread(mBuilder::show);
+        mInstrumentation.runOnMainSync(mBuilder::show);
 
         assertEquals(Gravity.TOP, mPopupMenu.getGravity());
     }
 
-    public void testDismissalViaAPI() throws Throwable {
+    @Test
+    public void testDismissalViaAPI() {
         mBuilder = new Builder().withDismissListener();
-        runTestOnUiThread(mBuilder::show);
+        mInstrumentation.runOnMainSync(mBuilder::show);
 
         mInstrumentation.waitForIdleSync();
         verify(mBuilder.mOnDismissListener, never()).onDismiss(mPopupMenu);
 
-        runTestOnUiThread(mPopupMenu::dismiss);
+        mInstrumentation.runOnMainSync(mPopupMenu::dismiss);
         mInstrumentation.waitForIdleSync();
         verify(mBuilder.mOnDismissListener, times(1)).onDismiss(mPopupMenu);
 
-        runTestOnUiThread(mPopupMenu::dismiss);
+        mInstrumentation.runOnMainSync(mPopupMenu::dismiss);
         mInstrumentation.waitForIdleSync();
         // Shouldn't have any more interactions with our dismiss listener since the menu was
         // already dismissed when we called dismiss()
         verifyNoMoreInteractions(mBuilder.mOnDismissListener);
     }
 
-    public void testNestedDismissalViaAPI() throws Throwable {
+    @Test
+    public void testNestedDismissalViaAPI() {
         // Use empty popup style to remove all transitions from the popup. That way we don't
         // need to synchronize with the popup window enter transition before proceeding to
         // "click" a submenu item.
         mBuilder = new Builder().withDismissListener()
                 .withPopupStyleResource(R.style.PopupWindow_NullTransitions);
-        runTestOnUiThread(mBuilder::show);
+        mInstrumentation.runOnMainSync(mBuilder::show);
         mInstrumentation.waitForIdleSync();
         verify(mBuilder.mOnDismissListener, never()).onDismiss(mPopupMenu);
 
-        runTestOnUiThread(() -> mPopupMenu.getMenu().performIdentifierAction(R.id.action_share, 0));
+        mInstrumentation.runOnMainSync(
+                () -> mPopupMenu.getMenu().performIdentifierAction(R.id.action_share, 0));
         mInstrumentation.waitForIdleSync();
 
-        runTestOnUiThread(() -> mPopupMenu.getMenu().findItem(R.id.action_share).getSubMenu().
+        mInstrumentation.runOnMainSync(
+                () -> mPopupMenu.getMenu().findItem(R.id.action_share).getSubMenu().
                         performIdentifierAction(R.id.action_share_email, 0));
         mInstrumentation.waitForIdleSync();
 
-        runTestOnUiThread(mPopupMenu::dismiss);
+        mInstrumentation.runOnMainSync(mPopupMenu::dismiss);
         mInstrumentation.waitForIdleSync();
         verify(mBuilder.mOnDismissListener, times(1)).onDismiss(mPopupMenu);
 
-        runTestOnUiThread(mPopupMenu::dismiss);
+        mInstrumentation.runOnMainSync(mPopupMenu::dismiss);
         mInstrumentation.waitForIdleSync();
         // Shouldn't have any more interactions with our dismiss listener since the menu was
         // already dismissed when we called dismiss()
         verifyNoMoreInteractions(mBuilder.mOnDismissListener);
     }
 
-    public void testDismissalViaTouch() throws Throwable {
+    @Test
+    public void testDismissalViaTouch() {
         // Use empty popup style to remove all transitions from the popup. That way we don't
         // need to synchronize with the popup window enter transition before proceeding to
         // emulate a click outside the popup window bounds.
         mBuilder = new Builder().withDismissListener()
                 .withPopupMenuContent(R.menu.popup_menu_single)
                 .withPopupStyleResource(R.style.PopupWindow_NullTransitions);
-        runTestOnUiThread(mBuilder::show);
+        mInstrumentation.runOnMainSync(mBuilder::show);
         mInstrumentation.waitForIdleSync();
 
         // The call below uses Instrumentation to emulate a tap outside the bounds of the
@@ -196,14 +210,15 @@ public class PopupMenuTest extends
         verify(mBuilder.mOnDismissListener, times(1)).onDismiss(mPopupMenu);
     }
 
-    public void testSimpleMenuItemClickViaAPI() throws Throwable {
+    @Test
+    public void testSimpleMenuItemClickViaAPI() {
         mBuilder = new Builder().withMenuItemClickListener().withDismissListener();
-        runTestOnUiThread(mBuilder::show);
+        mInstrumentation.runOnMainSync(mBuilder::show);
 
         // Verify that our menu item click listener hasn't been called yet
         verify(mBuilder.mOnMenuItemClickListener, never()).onMenuItemClick(any(MenuItem.class));
 
-        runTestOnUiThread(
+        mInstrumentation.runOnMainSync(
                 () -> mPopupMenu.getMenu().performIdentifierAction(R.id.action_highlight, 0));
 
         // Verify that our menu item click listener has been called with the expected menu item
@@ -215,26 +230,29 @@ public class PopupMenuTest extends
         verifyNoMoreInteractions(mBuilder.mOnDismissListener);
     }
 
-    public void testSubMenuClickViaAPI() throws Throwable {
+    @Test
+    public void testSubMenuClickViaAPI() {
         // Use empty popup style to remove all transitions from the popup. That way we don't
         // need to synchronize with the popup window enter transition before proceeding to
         // "click" a submenu item.
         mBuilder = new Builder().withDismissListener().withMenuItemClickListener()
                 .withPopupStyleResource(R.style.PopupWindow_NullTransitions);
-        runTestOnUiThread(mBuilder::show);
+        mInstrumentation.runOnMainSync(mBuilder::show);
         mInstrumentation.waitForIdleSync();
 
         // Verify that our menu item click listener hasn't been called yet
         verify(mBuilder.mOnMenuItemClickListener, never()).onMenuItemClick(any(MenuItem.class));
 
-        runTestOnUiThread(() -> mPopupMenu.getMenu().performIdentifierAction(R.id.action_share, 0));
+        mInstrumentation.runOnMainSync(
+                () -> mPopupMenu.getMenu().performIdentifierAction(R.id.action_share, 0));
         // Verify that our menu item click listener has been called on "share" action
         // and that the dismiss listener hasn't been called just as a result of opening the submenu.
         verify(mBuilder.mOnMenuItemClickListener, times(1)).onMenuItemClick(
                 mPopupMenu.getMenu().findItem(R.id.action_share));
         verify(mBuilder.mOnDismissListener, never()).onDismiss(mPopupMenu);
 
-        runTestOnUiThread(() -> mPopupMenu.getMenu().findItem(R.id.action_share).getSubMenu().
+        mInstrumentation.runOnMainSync(
+                () -> mPopupMenu.getMenu().findItem(R.id.action_share).getSubMenu().
                         performIdentifierAction(R.id.action_share_email, 0));
 
         // Verify that out menu item click listener has been called with the expected menu item

@@ -16,8 +16,19 @@
 
 package android.widget.cts;
 
-import static org.mockito.Matchers.*;
-import static org.mockito.Mockito.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertSame;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyInt;
+import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.reset;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 
 import android.content.Context;
 import android.content.res.ColorStateList;
@@ -27,9 +38,11 @@ import android.graphics.PorterDuff;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.Parcelable;
-import android.test.ActivityInstrumentationTestCase2;
-import android.test.UiThreadTest;
+import android.support.test.annotation.UiThreadTest;
+import android.support.test.rule.ActivityTestRule;
+import android.support.test.runner.AndroidJUnit4;
 import android.test.suitebuilder.annotation.SmallTest;
+import android.util.AttributeSet;
 import android.view.View;
 import android.view.animation.AccelerateDecelerateInterpolator;
 import android.view.animation.AccelerateInterpolator;
@@ -38,25 +51,30 @@ import android.view.animation.LinearInterpolator;
 import android.widget.ProgressBar;
 import android.widget.cts.util.TestUtils;
 
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+
 @SmallTest
-public class ProgressBarTest extends ActivityInstrumentationTestCase2<ProgressBarCtsActivity> {
+@RunWith(AndroidJUnit4.class)
+public class ProgressBarTest {
     private ProgressBarCtsActivity mActivity;
     private ProgressBar mProgressBar;
     private ProgressBar mProgressBarHorizontal;
 
-    public ProgressBarTest() {
-        super("android.widget.cts", ProgressBarCtsActivity.class);
-    }
+    @Rule
+    public ActivityTestRule<ProgressBarCtsActivity> mActivityRule =
+            new ActivityTestRule<>(ProgressBarCtsActivity.class);
 
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
-
-        mActivity = getActivity();
+    @Before
+    public void setup() {
+        mActivity = mActivityRule.getActivity();
         mProgressBar = (ProgressBar) mActivity.findViewById(R.id.progress);
         mProgressBarHorizontal = (ProgressBar) mActivity.findViewById(R.id.progress_horizontal);
     }
 
+    @Test
     public void testConstructor() {
         new ProgressBar(mActivity);
 
@@ -126,6 +144,7 @@ public class ProgressBarTest extends ActivityInstrumentationTestCase2<ProgressBa
     }
 
     @UiThreadTest
+    @Test
     public void testSetIndeterminate() {
         assertTrue(mProgressBar.isIndeterminate());
 
@@ -146,6 +165,7 @@ public class ProgressBarTest extends ActivityInstrumentationTestCase2<ProgressBa
     }
 
     @UiThreadTest
+    @Test
     public void testAccessIndeterminateDrawable() {
         // set IndeterminateDrawable
         // normal value
@@ -162,6 +182,7 @@ public class ProgressBarTest extends ActivityInstrumentationTestCase2<ProgressBa
     }
 
     @UiThreadTest
+    @Test
     public void testAccessProgressDrawable() {
         // set ProgressDrawable
         // normal value
@@ -178,6 +199,7 @@ public class ProgressBarTest extends ActivityInstrumentationTestCase2<ProgressBa
     }
 
     @UiThreadTest
+    @Test
     public void testAccessProgress() {
         assertEquals(0, mProgressBarHorizontal.getProgress());
 
@@ -207,6 +229,7 @@ public class ProgressBarTest extends ActivityInstrumentationTestCase2<ProgressBa
     }
 
     @UiThreadTest
+    @Test
     public void testAccessSecondaryProgress() {
         assertEquals(0, mProgressBarHorizontal.getSecondaryProgress());
 
@@ -233,6 +256,7 @@ public class ProgressBarTest extends ActivityInstrumentationTestCase2<ProgressBa
     }
 
     @UiThreadTest
+    @Test
     public void testIncrementProgressBy() {
         // normal value
         int increment = 1;
@@ -256,6 +280,7 @@ public class ProgressBarTest extends ActivityInstrumentationTestCase2<ProgressBa
     }
 
     @UiThreadTest
+    @Test
     public void testIncrementSecondaryProgressBy() {
         // normal value
         int increment = 1;
@@ -282,6 +307,7 @@ public class ProgressBarTest extends ActivityInstrumentationTestCase2<ProgressBa
     }
 
     @UiThreadTest
+    @Test
     public void testAccessInterpolator() {
         // default should be LinearInterpolator
         assertTrue(mProgressBar.getInterpolator() instanceof LinearInterpolator);
@@ -295,6 +321,7 @@ public class ProgressBarTest extends ActivityInstrumentationTestCase2<ProgressBa
     }
 
     @UiThreadTest
+    @Test
     public void testSetVisibility() {
         // set visibility
         // normal value
@@ -320,6 +347,7 @@ public class ProgressBarTest extends ActivityInstrumentationTestCase2<ProgressBa
     }
 
     @UiThreadTest
+    @Test
     public void testInvalidateDrawable() {
         ProgressBar mockProgressBar = spy(new ProgressBar(mActivity));
 
@@ -339,11 +367,13 @@ public class ProgressBarTest extends ActivityInstrumentationTestCase2<ProgressBa
     }
 
     @UiThreadTest
+    @Test
     public void testPostInvalidate() {
         mProgressBarHorizontal.postInvalidate();
     }
 
     @UiThreadTest
+    @Test
     public void testAccessMax() {
         // set Progress
         int progress = 10;
@@ -370,11 +400,8 @@ public class ProgressBarTest extends ActivityInstrumentationTestCase2<ProgressBa
         assertEquals(0, mProgressBarHorizontal.getProgress());
     }
 
-    public void testOnDraw() {
-        // Do not test, it's controlled by View. Implementation details
-    }
-
     @UiThreadTest
+    @Test
     public void testProgressTint() {
         ProgressBar tintedProgressBar = (ProgressBar) mActivity.findViewById(R.id.progress_tint);
 
@@ -428,6 +455,7 @@ public class ProgressBarTest extends ActivityInstrumentationTestCase2<ProgressBa
     }
 
     @UiThreadTest
+    @Test
     public void testIndeterminateTint() {
         ProgressBar tintedProgressBar =
                 (ProgressBar) mActivity.findViewById(R.id.indeterminate_tint);
@@ -461,22 +489,16 @@ public class ProgressBarTest extends ActivityInstrumentationTestCase2<ProgressBa
                 TestUtils.colorStateListOf(Color.RED));
     }
 
-    public void testOnMeasure() {
-        // onMeasure() is implementation details, do NOT test
-    }
-
-    public void testOnSizeChange() {
-        // onSizeChanged() is implementation details, do NOT test
-    }
-
     @UiThreadTest
+    @Test
     public void testVerifyDrawable() {
-        MockProgressBar mockProgressBar = new MockProgressBar(mActivity);
+        MockProgressBar mockProgressBar =
+                (MockProgressBar) mActivity.findViewById(R.id.progress_custom);
         assertTrue(mockProgressBar.verifyDrawable(null));
 
-        Drawable d1 = mActivity.getResources().getDrawable(R.drawable.blue);
-        Drawable d2 = mActivity.getResources().getDrawable(R.drawable.red);
-        Drawable d3 = mActivity.getResources().getDrawable(R.drawable.yellow);
+        Drawable d1 = mActivity.getDrawable(R.drawable.blue);
+        Drawable d2 = mActivity.getDrawable(R.drawable.red);
+        Drawable d3 = mActivity.getDrawable(R.drawable.yellow);
 
         mockProgressBar.setBackgroundDrawable(d1);
         assertTrue(mockProgressBar.verifyDrawable(null));
@@ -497,11 +519,8 @@ public class ProgressBarTest extends ActivityInstrumentationTestCase2<ProgressBa
         assertTrue(mockProgressBar.verifyDrawable(d3));
     }
 
-    public void testDrawableStateChanged() {
-        // drawableStateChanged() is implementation details, do NOT test
-    }
-
     @UiThreadTest
+    @Test
     public void testOnSaveAndRestoreInstanceState() {
         int oldProgress = 1;
         int oldSecondaryProgress = mProgressBarHorizontal.getMax() - 1;
@@ -527,9 +546,13 @@ public class ProgressBarTest extends ActivityInstrumentationTestCase2<ProgressBa
     /*
      * Mock class for ProgressBar to test protected methods
      */
-    private class MockProgressBar extends ProgressBar {
+    public static class MockProgressBar extends ProgressBar {
         public MockProgressBar(Context context) {
             super(context);
+        }
+
+        public MockProgressBar(Context context, AttributeSet attrs) {
+            super(context, attrs);
         }
 
         @Override
