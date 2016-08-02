@@ -425,6 +425,7 @@ public class PathTest {
         assertFalse(path.isEmpty());
     }
 
+    @Test
     public void testOffsetTextPath() {
         Paint paint = new Paint();
         Path path = new Path();
