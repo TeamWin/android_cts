@@ -16,28 +16,43 @@
 
 package android.widget.cts;
 
-import static org.mockito.Matchers.*;
-import static org.mockito.Mockito.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.Matchers.anyInt;
+import static org.mockito.Matchers.anyString;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
+import static org.mockito.Mockito.when;
 
 import android.app.Activity;
 import android.app.Instrumentation;
-import android.cts.util.PollingCheck;
 import android.cts.util.CtsTouchUtils;
+import android.cts.util.PollingCheck;
 import android.database.Cursor;
 import android.database.MatrixCursor;
 import android.provider.BaseColumns;
-import android.test.ActivityInstrumentationTestCase2;
+import android.support.test.InstrumentationRegistry;
+import android.support.test.rule.ActivityTestRule;
+import android.support.test.runner.AndroidJUnit4;
 import android.test.suitebuilder.annotation.MediumTest;
 import android.text.TextUtils;
 import android.widget.CursorAdapter;
 import android.widget.SearchView;
 import android.widget.SimpleCursorAdapter;
 
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+
 /**
  * Test {@link SearchView} with {@link Cursor}-backed suggestions adapter.
  */
 @MediumTest
-public class SearchView_CursorTest extends ActivityInstrumentationTestCase2<SearchViewCtsActivity> {
+@RunWith(AndroidJUnit4.class)
+public class SearchView_CursorTest {
     private Instrumentation mInstrumentation;
     private Activity mActivity;
     private SearchView mSearchView;
@@ -90,16 +105,14 @@ public class SearchView_CursorTest extends ActivityInstrumentationTestCase2<Sear
         }
     }
 
-    public SearchView_CursorTest() {
-        super("android.widget.cts", SearchViewCtsActivity.class);
-    }
+    @Rule
+    public ActivityTestRule<SearchViewCtsActivity> mActivityRule =
+            new ActivityTestRule<>(SearchViewCtsActivity.class);
 
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
-
-        mInstrumentation = getInstrumentation();
-        mActivity = getActivity();
+    @Before
+    public void setup() {
+        mInstrumentation = InstrumentationRegistry.getInstrumentation();
+        mActivity = mActivityRule.getActivity();
         mSearchView = (SearchView) mActivity.findViewById(R.id.search_view);
 
         // Local test data for the tests
@@ -120,16 +133,17 @@ public class SearchView_CursorTest extends ActivityInstrumentationTestCase2<Sear
         });
     }
 
+    @Test
     public void testSuggestionFiltering() {
         final SearchView.OnQueryTextListener mockQueryTextListener =
                 spy(new MyQueryTextListener());
         when(mockQueryTextListener.onQueryTextChange(anyString())).thenCallRealMethod();
 
         mInstrumentation.runOnMainSync(() -> {
-                    mSearchView.setIconifiedByDefault(false);
-                    mSearchView.setOnQueryTextListener(mockQueryTextListener);
-                    mSearchView.requestFocus();
-                });
+            mSearchView.setIconifiedByDefault(false);
+            mSearchView.setOnQueryTextListener(mockQueryTextListener);
+            mSearchView.requestFocus();
+        });
 
         assertTrue(mSearchView.hasFocus());
         assertEquals(mSuggestionsAdapter, mSearchView.getSuggestionsAdapter());
@@ -141,6 +155,7 @@ public class SearchView_CursorTest extends ActivityInstrumentationTestCase2<Sear
         verify(mockQueryTextListener, times(1)).onQueryTextChange("Di");
     }
 
+    @Test
     public void testSuggestionSelection() {
         final SearchView.OnSuggestionListener mockSuggestionListener =
                 spy(new MySuggestionListener());

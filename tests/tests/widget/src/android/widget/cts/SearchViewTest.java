@@ -16,42 +16,58 @@
 
 package android.widget.cts;
 
-import static org.mockito.Mockito.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.anyString;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
+import static org.mockito.Mockito.when;
 
 import android.app.Activity;
 import android.app.Instrumentation;
 import android.content.res.Resources;
-import android.test.ActivityInstrumentationTestCase2;
-import android.test.UiThreadTest;
+import android.support.test.InstrumentationRegistry;
+import android.support.test.annotation.UiThreadTest;
+import android.support.test.rule.ActivityTestRule;
+import android.support.test.runner.AndroidJUnit4;
 import android.test.suitebuilder.annotation.MediumTest;
 import android.text.InputType;
 import android.text.TextUtils;
 import android.view.inputmethod.EditorInfo;
 import android.widget.SearchView;
 
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+
 /**
  * Test {@link SearchView}.
  */
 @MediumTest
-public class SearchViewTest extends ActivityInstrumentationTestCase2<SearchViewCtsActivity> {
+@RunWith(AndroidJUnit4.class)
+public class SearchViewTest {
     private Instrumentation mInstrumentation;
     private Activity mActivity;
     private SearchView mSearchView;
 
-    public SearchViewTest() {
-        super("android.widget.cts", SearchViewCtsActivity.class);
-    }
+    @Rule
+    public ActivityTestRule<SearchViewCtsActivity> mActivityRule =
+            new ActivityTestRule<>(SearchViewCtsActivity.class);
 
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
-
-        mInstrumentation = getInstrumentation();
-        mActivity = getActivity();
+    @Before
+    public void setup() {
+        mInstrumentation = InstrumentationRegistry.getInstrumentation();
+        mActivity = mActivityRule.getActivity();
         mSearchView = (SearchView) mActivity.findViewById(R.id.search_view);
     }
 
     @UiThreadTest
+    @Test
     public void testConstructor() {
         new SearchView(mActivity);
 
@@ -65,6 +81,7 @@ public class SearchViewTest extends ActivityInstrumentationTestCase2<SearchViewC
     }
 
     @UiThreadTest
+    @Test
     public void testAttributesFromXml() {
         SearchView searchViewWithAttributes =
                 (SearchView) mActivity.findViewById(R.id.search_view_with_defaults);
@@ -78,22 +95,27 @@ public class SearchViewTest extends ActivityInstrumentationTestCase2<SearchViewC
                 searchViewWithAttributes.getMaxWidth());
     }
 
+    @UiThreadTest
+    @Test
     public void testAccessIconified() {
-        mInstrumentation.runOnMainSync(() -> mSearchView.setIconified(true));
+        mSearchView.setIconified(true);
         assertTrue(mSearchView.isIconified());
 
-        mInstrumentation.runOnMainSync(() -> mSearchView.setIconified(false));
+        mSearchView.setIconified(false);
         assertFalse(mSearchView.isIconified());
     }
 
+    @UiThreadTest
+    @Test
     public void testAccessIconifiedByDefault() {
-        mInstrumentation.runOnMainSync(() -> mSearchView.setIconifiedByDefault(true));
+        mSearchView.setIconifiedByDefault(true);
         assertTrue(mSearchView.isIconfiedByDefault());
 
-        mInstrumentation.runOnMainSync(() -> mSearchView.setIconifiedByDefault(false));
+        mSearchView.setIconifiedByDefault(false);
         assertFalse(mSearchView.isIconfiedByDefault());
     }
 
+    @Test
     public void testDenyIconifyingNonInconifiableView() {
         mInstrumentation.runOnMainSync(() -> {
             mSearchView.setIconifiedByDefault(false);
@@ -109,6 +131,7 @@ public class SearchViewTest extends ActivityInstrumentationTestCase2<SearchViewC
         assertFalse(mSearchView.isIconified());
     }
 
+    @Test
     public void testDenyIconifyingInconifiableView() {
         mInstrumentation.runOnMainSync(() -> {
             mSearchView.setIconifiedByDefault(true);
@@ -130,6 +153,7 @@ public class SearchViewTest extends ActivityInstrumentationTestCase2<SearchViewC
         assertFalse(mSearchView.isIconified());
     }
 
+    @Test
     public void testAllowIconifyingInconifiableView() {
         mInstrumentation.runOnMainSync(() -> {
             mSearchView.setIconifiedByDefault(true);
@@ -151,6 +175,7 @@ public class SearchViewTest extends ActivityInstrumentationTestCase2<SearchViewC
         assertTrue(mSearchView.isIconified());
     }
 
+    @Test
     public void testAccessMaxWidth() {
         final Resources res = mActivity.getResources();
         final int maxWidth1 = res.getDimensionPixelSize(R.dimen.search_view_max_width);
@@ -170,29 +195,31 @@ public class SearchViewTest extends ActivityInstrumentationTestCase2<SearchViewC
         assertTrue(mSearchView.getWidth() <= maxWidth2);
     }
 
+    @UiThreadTest
+    @Test
     public void testAccessQuery() {
-        mInstrumentation.runOnMainSync(() -> mSearchView.setIconified(false));
+        mSearchView.setIconified(false);
 
         final SearchView.OnQueryTextListener mockQueryTextListener =
                 mock(SearchView.OnQueryTextListener.class);
         when(mockQueryTextListener.onQueryTextSubmit(anyString())).thenReturn(Boolean.TRUE);
         mSearchView.setOnQueryTextListener(mockQueryTextListener);
 
-        mInstrumentation.runOnMainSync(() -> mSearchView.setQuery("alpha", false));
+        mSearchView.setQuery("alpha", false);
         assertTrue(TextUtils.equals("alpha", mSearchView.getQuery()));
         // Since we passed false as the second parameter to setQuery, our query text listener
         // should have been invoked only with text change
         verify(mockQueryTextListener, times(1)).onQueryTextChange("alpha");
         verify(mockQueryTextListener, never()).onQueryTextSubmit(anyString());
 
-        mInstrumentation.runOnMainSync(() -> mSearchView.setQuery("beta", true));
+        mSearchView.setQuery("beta", true);
         assertTrue(TextUtils.equals("beta", mSearchView.getQuery()));
         // Since we passed true as the second parameter to setQuery, our query text listener
         // should have been invoked on both callbacks
         verify(mockQueryTextListener, times(1)).onQueryTextChange("beta");
         verify(mockQueryTextListener, times(1)).onQueryTextSubmit("beta");
 
-        mInstrumentation.runOnMainSync(() -> mSearchView.setQuery("gamma", true));
+        mSearchView.setQuery("gamma", true);
         assertTrue(TextUtils.equals("gamma", mSearchView.getQuery()));
         // Since we passed true as the second parameter to setQuery, our query text listener
         // should have been invoked on both callbacks
@@ -202,41 +229,44 @@ public class SearchViewTest extends ActivityInstrumentationTestCase2<SearchViewC
         verifyNoMoreInteractions(mockQueryTextListener);
     }
 
+    @UiThreadTest
+    @Test
     public void testAccessQueryHint() {
-        mInstrumentation.runOnMainSync(() -> mSearchView.setQueryHint("hint 1"));
+        mSearchView.setQueryHint("hint 1");
         assertTrue(TextUtils.equals("hint 1", mSearchView.getQueryHint()));
 
-        mInstrumentation.runOnMainSync(() -> mSearchView.setQueryHint("hint 2"));
+        mSearchView.setQueryHint("hint 2");
         assertTrue(TextUtils.equals("hint 2", mSearchView.getQueryHint()));
     }
 
+    @UiThreadTest
+    @Test
     public void testAccessInputType() {
-        mInstrumentation.runOnMainSync(() ->
-                mSearchView.setInputType(InputType.TYPE_CLASS_NUMBER
-                    | InputType.TYPE_NUMBER_FLAG_DECIMAL
-                    | InputType.TYPE_NUMBER_FLAG_SIGNED));
+        mSearchView.setInputType(InputType.TYPE_CLASS_NUMBER
+                | InputType.TYPE_NUMBER_FLAG_DECIMAL
+                | InputType.TYPE_NUMBER_FLAG_SIGNED);
         assertEquals(InputType.TYPE_CLASS_NUMBER
                 | InputType.TYPE_NUMBER_FLAG_DECIMAL
                 | InputType.TYPE_NUMBER_FLAG_SIGNED, mSearchView.getInputType());
 
-        mInstrumentation.runOnMainSync(() ->
-                mSearchView.setInputType(InputType.TYPE_CLASS_TEXT
-                        | InputType.TYPE_TEXT_FLAG_CAP_WORDS));
+        mSearchView.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_CAP_WORDS);
         assertEquals(InputType.TYPE_CLASS_TEXT
                 | InputType.TYPE_TEXT_FLAG_CAP_WORDS, mSearchView.getInputType());
 
-        mInstrumentation.runOnMainSync(() -> mSearchView.setInputType(InputType.TYPE_CLASS_PHONE));
+        mSearchView.setInputType(InputType.TYPE_CLASS_PHONE);
         assertEquals(InputType.TYPE_CLASS_PHONE, mSearchView.getInputType());
     }
 
+    @UiThreadTest
+    @Test
     public void testAccessImeOptions() {
-        mInstrumentation.runOnMainSync(() -> mSearchView.setImeOptions(EditorInfo.IME_ACTION_GO));
+        mSearchView.setImeOptions(EditorInfo.IME_ACTION_GO);
         assertEquals(EditorInfo.IME_ACTION_GO, mSearchView.getImeOptions());
 
-        mInstrumentation.runOnMainSync(() -> mSearchView.setImeOptions(EditorInfo.IME_ACTION_DONE));
+        mSearchView.setImeOptions(EditorInfo.IME_ACTION_DONE);
         assertEquals(EditorInfo.IME_ACTION_DONE, mSearchView.getImeOptions());
 
-        mInstrumentation.runOnMainSync(() -> mSearchView.setImeOptions(EditorInfo.IME_NULL));
+        mSearchView.setImeOptions(EditorInfo.IME_NULL);
         assertEquals(EditorInfo.IME_NULL, mSearchView.getImeOptions());
     }
 }

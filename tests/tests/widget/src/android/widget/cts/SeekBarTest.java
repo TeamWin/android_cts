@@ -16,39 +16,51 @@
 
 package android.widget.cts;
 
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.anyInt;
+import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.eq;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.reset;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 
 import android.app.Activity;
 import android.app.Instrumentation;
 import android.os.SystemClock;
-import android.test.ActivityInstrumentationTestCase2;
-import android.test.suitebuilder.annotation.SmallTest;
+import android.support.test.InstrumentationRegistry;
+import android.support.test.rule.ActivityTestRule;
+import android.support.test.runner.AndroidJUnit4;
+import android.test.suitebuilder.annotation.MediumTest;
 import android.view.MotionEvent;
 import android.widget.SeekBar;
+
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
 /**
  * Test {@link SeekBar}.
  */
-@SmallTest
-public class SeekBarTest extends ActivityInstrumentationTestCase2<SeekBarCtsActivity> {
+@MediumTest
+@RunWith(AndroidJUnit4.class)
+public class SeekBarTest {
+    private Instrumentation mInstrumentation;
+    private Activity mActivity;
     private SeekBar mSeekBar;
 
-    private Activity mActivity;
+    @Rule
+    public ActivityTestRule<SeekBarCtsActivity> mActivityRule =
+            new ActivityTestRule<>(SeekBarCtsActivity.class);
 
-    private Instrumentation mInstrumentation;
-
-    public SeekBarTest() {
-        super("android.widget.cts", SeekBarCtsActivity.class);
-    }
-
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
-        mInstrumentation = getInstrumentation();
-        mActivity = getActivity();
+    @Before
+    public void setup() {
+        mInstrumentation = InstrumentationRegistry.getInstrumentation();
+        mActivity = mActivityRule.getActivity();
         mSeekBar = (SeekBar) mActivity.findViewById(R.id.seekBar);
     }
 
+    @Test
     public void testConstructor() {
         new SeekBar(mActivity);
 
@@ -65,6 +77,7 @@ public class SeekBarTest extends ActivityInstrumentationTestCase2<SeekBarCtsActi
         new SeekBar(mActivity, null, 0, android.R.style.Widget_Material_Light_SeekBar);
     }
 
+    @Test
     public void testSetOnSeekBarChangeListener() {
         SeekBar.OnSeekBarChangeListener mockChangeListener =
                 mock(SeekBar.OnSeekBarChangeListener.class);
