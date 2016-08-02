@@ -16,7 +16,15 @@
 
 package android.widget.cts;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
 import android.annotation.ColorInt;
+import android.annotation.Nullable;
 import android.app.Activity;
 import android.app.Instrumentation;
 import android.content.Context;
@@ -25,9 +33,12 @@ import android.cts.util.WidgetTestUtils;
 import android.graphics.Color;
 import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
-import android.test.ActivityInstrumentationTestCase;
+import android.support.test.InstrumentationRegistry;
+import android.support.test.annotation.UiThreadTest;
+import android.support.test.rule.ActivityTestRule;
+import android.support.test.runner.AndroidJUnit4;
 import android.test.ViewAsserts;
-import android.test.suitebuilder.annotation.SmallTest;
+import android.test.suitebuilder.annotation.MediumTest;
 import android.util.AttributeSet;
 import android.util.Xml;
 import android.view.Gravity;
@@ -42,6 +53,10 @@ import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.cts.util.TestUtils;
 
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.xmlpull.v1.XmlPullParser;
 
 import java.util.concurrent.CountDownLatch;
@@ -50,117 +65,125 @@ import java.util.concurrent.TimeUnit;
 /**
  * Test {@link LinearLayout}.
  */
-@SmallTest
-public class LinearLayoutTest extends ActivityInstrumentationTestCase<LinearLayoutCtsActivity> {
-    private Context mContext;
+@MediumTest
+@RunWith(AndroidJUnit4.class)
+public class LinearLayoutTest {
+    private Instrumentation mInstrumentation;
     private Activity mActivity;
 
-    public LinearLayoutTest() {
-        super("android.widget.cts", LinearLayoutCtsActivity.class);
+    @Rule
+    public ActivityTestRule<LinearLayoutCtsActivity> mActivityRule =
+            new ActivityTestRule<>(LinearLayoutCtsActivity.class);
+
+    @Before
+    public void setup() {
+        mInstrumentation = InstrumentationRegistry.getInstrumentation();
+        mActivity = mActivityRule.getActivity();
     }
 
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
-        mActivity = getActivity();
-        mContext = getInstrumentation().getTargetContext();
-    }
-
+    @Test
     public void testConstructor() {
-        new LinearLayout(mContext);
+        new LinearLayout(mActivity);
 
-        new LinearLayout(mContext, null);
+        new LinearLayout(mActivity, null);
 
-        XmlPullParser parser = mContext.getResources().getXml(R.layout.linearlayout_layout);
+        XmlPullParser parser = mActivity.getResources().getXml(R.layout.linearlayout_layout);
         AttributeSet attrs = Xml.asAttributeSet(parser);
-        new LinearLayout(mContext, attrs);
-
-        try {
-            new LinearLayout(null, null);
-            fail("should throw NullPointerException.");
-        } catch (NullPointerException e) {
-        }
+        new LinearLayout(mActivity, attrs);
     }
 
-    public void testAccessBaselineAligned() {
-        LinearLayout linearLayout = new LinearLayout(mContext);
-        linearLayout.setBaselineAligned(true);
-        assertTrue(linearLayout.isBaselineAligned());
+    @Test(expected=NullPointerException.class)
+    public void testConstructorNullContext() {
+        new LinearLayout(null, null);
+    }
 
-        linearLayout.setBaselineAligned(false);
-        assertFalse(linearLayout.isBaselineAligned());
+    @UiThreadTest
+    @Test
+    public void testAccessBaselineAligned() {
+        LinearLayout parent = (LinearLayout) mActivity.findViewById(R.id.linear_empty);
+        parent.setBaselineAligned(true);
+        assertTrue(parent.isBaselineAligned());
+
+        parent.setBaselineAligned(false);
+        assertFalse(parent.isBaselineAligned());
 
         // android:baselineAligned="false" in LinearLayout weightsum
-        linearLayout = (LinearLayout) mActivity.findViewById(R.id.weightsum);
-        assertFalse(linearLayout.isBaselineAligned());
+        parent = (LinearLayout) mActivity.findViewById(R.id.linear_weightsum);
+        assertFalse(parent.isBaselineAligned());
 
         // default mBaselineAligned is true.
-        linearLayout = (LinearLayout) mActivity.findViewById(R.id.horizontal);
-        assertTrue(linearLayout.isBaselineAligned());
+        parent = (LinearLayout) mActivity.findViewById(R.id.linear_horizontal);
+        assertTrue(parent.isBaselineAligned());
 
         // default mBaselineAligned is true.
         // Only applicable if {@link #mOrientation} is horizontal
-        linearLayout = (LinearLayout) mActivity.findViewById(R.id.vertical);
-        assertTrue(linearLayout.isBaselineAligned());
+        parent = (LinearLayout) mActivity.findViewById(R.id.linear_vertical);
+        assertTrue(parent.isBaselineAligned());
     }
 
+    @UiThreadTest
+    @Test
     public void testGetBaseline() {
-        LinearLayout linearLayout = new LinearLayout(mContext);
+        LinearLayout parent = (LinearLayout) mActivity.findViewById(R.id.linear_empty);
 
-        ListView lv1 = new ListView(mContext);
-        linearLayout.addView(lv1);
-        assertEquals(-1, linearLayout.getBaseline());
+        ListView lv1 = new ListView(mActivity);
+        parent.addView(lv1);
+        assertEquals(-1, parent.getBaseline());
 
-        ListView lv2 = new ListView(mContext);
-        linearLayout.addView(lv2);
-        linearLayout.setBaselineAlignedChildIndex(1);
+        ListView lv2 = new ListView(mActivity);
+        parent.addView(lv2);
+        parent.setBaselineAlignedChildIndex(1);
         try {
-            linearLayout.getBaseline();
+            parent.getBaseline();
             fail("LinearLayout.getBaseline() should throw exception here.");
         } catch (RuntimeException e) {
         }
 
-        MockListView lv3 = new MockListView(mContext);
-        linearLayout.addView(lv3);
-        linearLayout.setBaselineAlignedChildIndex(2);
-        assertEquals(lv3.getBaseline(), linearLayout.getBaseline());
+        ListView lv3 = new MockListView(mActivity);
+        parent.addView(lv3);
+        parent.setBaselineAlignedChildIndex(2);
+        assertEquals(lv3.getBaseline(), parent.getBaseline());
     }
 
+    @UiThreadTest
+    @Test
     public void testAccessBaselineAlignedChildIndex() {
-        LinearLayout linearLayout = new LinearLayout(mContext);
+        LinearLayout parent = (LinearLayout) mActivity.findViewById(R.id.linear_empty);
+
         // set BaselineAlignedChildIndex
-        ListView lv1 = new ListView(mContext);
-        ListView lv2 = new ListView(mContext);
-        ListView lv3 = new ListView(mContext);
-        linearLayout.addView(lv1);
-        linearLayout.addView(lv2);
-        linearLayout.addView(lv3);
-        linearLayout.setBaselineAlignedChildIndex(1);
-        assertEquals(1, linearLayout.getBaselineAlignedChildIndex());
+        ListView lv1 = new ListView(mActivity);
+        ListView lv2 = new ListView(mActivity);
+        ListView lv3 = new ListView(mActivity);
+        parent.addView(lv1);
+        parent.addView(lv2);
+        parent.addView(lv3);
+        parent.setBaselineAlignedChildIndex(1);
+        assertEquals(1, parent.getBaselineAlignedChildIndex());
 
-        linearLayout.setBaselineAlignedChildIndex(2);
-        assertEquals(2, linearLayout.getBaselineAlignedChildIndex());
+        parent.setBaselineAlignedChildIndex(2);
+        assertEquals(2, parent.getBaselineAlignedChildIndex());
 
         try {
-            linearLayout.setBaselineAlignedChildIndex(-1);
+            parent.setBaselineAlignedChildIndex(-1);
             fail("LinearLayout should throw IllegalArgumentException here.");
         } catch (IllegalArgumentException e) {
         }
         try {
-            linearLayout.setBaselineAlignedChildIndex(3);
+            parent.setBaselineAlignedChildIndex(3);
             fail("LinearLayout should throw IllegalArgumentException here.");
         } catch (IllegalArgumentException e) {
         }
 
-        linearLayout = (LinearLayout) mActivity.findViewById(R.id.baseline_aligned_child_index);
-        assertEquals(1, linearLayout.getBaselineAlignedChildIndex());
+        parent = (LinearLayout) mActivity.findViewById(R.id.linear_baseline_aligned_child_index);
+        assertEquals(1, parent.getBaselineAlignedChildIndex());
     }
 
     /**
      * weightsum is a horizontal LinearLayout. There are three children in it.
      */
+    @Test
     public void testAccessWeightSum() {
-        LinearLayout parent = (LinearLayout) mActivity.findViewById(R.id.weightsum);
+        LinearLayout parent = (LinearLayout) mActivity.findViewById(R.id.linear_weightsum);
         TextView weight02 = (TextView) parent.findViewById(R.id.weight_0_2);
         TextView weight05 = (TextView) parent.findViewById(R.id.weight_0_5);
         TextView weight03 = (TextView) parent.findViewById(R.id.weight_0_3);
@@ -170,15 +193,15 @@ public class LinearLayoutTest extends ActivityInstrumentationTestCase<LinearLayo
         assertNotNull(weight05);
         assertNotNull(weight03);
 
-        assertEquals(mContext.getResources().getString(R.string.horizontal_text_1),
+        assertEquals(mActivity.getResources().getString(R.string.horizontal_text_1),
                 weight02.getText().toString());
-        assertEquals(mContext.getResources().getString(R.string.horizontal_text_2),
+        assertEquals(mActivity.getResources().getString(R.string.horizontal_text_2),
                 weight05.getText().toString());
-        assertEquals(mContext.getResources().getString(R.string.horizontal_text_3),
+        assertEquals(mActivity.getResources().getString(R.string.horizontal_text_3),
                 weight03.getText().toString());
 
         assertEquals(LinearLayout.HORIZONTAL, parent.getOrientation());
-        assertEquals(1.0f, parent.getWeightSum());
+        assertEquals(1.0f, parent.getWeightSum(), 0.0f);
 
         int parentWidth = parent.getWidth();
         assertEquals(Math.ceil(parentWidth * 0.2), weight02.getWidth(), 1.0);
@@ -186,109 +209,113 @@ public class LinearLayoutTest extends ActivityInstrumentationTestCase<LinearLayo
         assertEquals(Math.ceil(parentWidth * 0.3), weight03.getWidth(), 1.0);
     }
 
+    @UiThreadTest
+    @Test
     public void testWeightDistribution() {
-        LinearLayout layout = new LinearLayout(mActivity);
+        LinearLayout parent = (LinearLayout) mActivity.findViewById(R.id.linear_empty);
+
         for (int i = 0; i < 3; i++) {
-            layout.addView(new View(mActivity), new LayoutParams(0, 0, 1));
+            parent.addView(new View(mActivity), new LayoutParams(0, 0, 1));
         }
 
         int size = 100;
         int spec = MeasureSpec.makeMeasureSpec(size, MeasureSpec.EXACTLY);
 
         for (int i = 0; i < 3; i++) {
-            View child = layout.getChildAt(i);
+            View child = parent.getChildAt(i);
             LayoutParams lp = (LayoutParams) child.getLayoutParams();
             lp.height = 0;
             lp.width = LayoutParams.MATCH_PARENT;
             child.setLayoutParams(lp);
         }
-        layout.setOrientation(LinearLayout.VERTICAL);
-        layout.measure(spec, spec);
-        layout.layout(0, 0, size, size);
-        assertEquals(100, layout.getWidth());
-        assertEquals(100, layout.getChildAt(0).getWidth());
-        assertEquals(100, layout.getChildAt(1).getWidth());
-        assertEquals(100, layout.getChildAt(2).getWidth());
-        assertEquals(100, layout.getHeight());
-        assertEquals(33, layout.getChildAt(0).getHeight());
-        assertEquals(33, layout.getChildAt(1).getHeight());
-        assertEquals(34, layout.getChildAt(2).getHeight());
+        parent.setOrientation(LinearLayout.VERTICAL);
+        parent.measure(spec, spec);
+        parent.layout(0, 0, size, size);
+        assertEquals(100, parent.getWidth());
+        assertEquals(100, parent.getChildAt(0).getWidth());
+        assertEquals(100, parent.getChildAt(1).getWidth());
+        assertEquals(100, parent.getChildAt(2).getWidth());
+        assertEquals(100, parent.getHeight());
+        assertEquals(33, parent.getChildAt(0).getHeight());
+        assertEquals(33, parent.getChildAt(1).getHeight());
+        assertEquals(34, parent.getChildAt(2).getHeight());
 
         for (int i = 0; i < 3; i++) {
-            View child = layout.getChildAt(i);
+            View child = parent.getChildAt(i);
             LayoutParams lp = (LayoutParams) child.getLayoutParams();
             lp.height = LayoutParams.MATCH_PARENT;
             lp.width = 0;
             child.setLayoutParams(lp);
         }
-        layout.setOrientation(LinearLayout.HORIZONTAL);
-        layout.measure(spec, spec);
-        layout.layout(0, 0, size, size);
-        assertEquals(100, layout.getWidth());
-        assertEquals(33, layout.getChildAt(0).getWidth());
-        assertEquals(33, layout.getChildAt(1).getWidth());
-        assertEquals(34, layout.getChildAt(2).getWidth());
-        assertEquals(100, layout.getHeight());
-        assertEquals(100, layout.getChildAt(0).getHeight());
-        assertEquals(100, layout.getChildAt(1).getHeight());
-        assertEquals(100, layout.getChildAt(2).getHeight());
+        parent.setOrientation(LinearLayout.HORIZONTAL);
+        parent.measure(spec, spec);
+        parent.layout(0, 0, size, size);
+        assertEquals(100, parent.getWidth());
+        assertEquals(33, parent.getChildAt(0).getWidth());
+        assertEquals(33, parent.getChildAt(1).getWidth());
+        assertEquals(34, parent.getChildAt(2).getWidth());
+        assertEquals(100, parent.getHeight());
+        assertEquals(100, parent.getChildAt(0).getHeight());
+        assertEquals(100, parent.getChildAt(1).getHeight());
+        assertEquals(100, parent.getChildAt(2).getHeight());
     }
 
+    @UiThreadTest
+    @Test
     public void testGenerateLayoutParams() {
         ViewGroup.LayoutParams lp = new ViewGroup.LayoutParams(320, 240);
-        MockLinearLayout mockLinearLayout = new MockLinearLayout(mContext);
-        LayoutParams layoutParams1 = mockLinearLayout.generateLayoutParams(lp);
+        MockLinearLayout parent = (MockLinearLayout) mActivity.findViewById(R.id.linear_custom);
+        LayoutParams layoutParams1 = parent.generateLayoutParams(lp);
         assertEquals(320, layoutParams1.width);
         assertEquals(240, layoutParams1.height);
-
-        // generateLayoutParams() always throw  a RuntimeException.
-//        XmlPullParser parser = mContext.getResources().getXml(R.layout.linearlayout_layout);
-//        AttributeSet attrs = Xml.asAttributeSet(parser);
-//        LinearLayout linearLayout = new LinearLayout(mContext, attrs);
-//        LayoutParams layoutParams2 = linearLayout.generateLayoutParams(attrs);
-//        assertEquals(LayoutParams.MATCH_PARENT, layoutParams2.width);
-//        assertEquals(LayoutParams.WRAP_CONTENT, layoutParams2.height);
     }
 
+    @UiThreadTest
+    @Test
     public void testCheckLayoutParams() {
-        MockLinearLayout mockLinearLayout = new MockLinearLayout(mContext);
+        MockLinearLayout parent = (MockLinearLayout) mActivity.findViewById(R.id.linear_custom);
 
         ViewGroup.LayoutParams params = new AbsoluteLayout.LayoutParams(240, 320, 0, 0);
-        assertFalse(mockLinearLayout.checkLayoutParams(params));
+        assertFalse(parent.checkLayoutParams(params));
 
         params = new LinearLayout.LayoutParams(240, 320);
-        assertTrue(mockLinearLayout.checkLayoutParams(params));
+        assertTrue(parent.checkLayoutParams(params));
     }
 
+    @UiThreadTest
+    @Test
     public void testGenerateDefaultLayoutParams() {
-        MockLinearLayout mockLinearLayout = new MockLinearLayout(mContext);
+        MockLinearLayout parent = (MockLinearLayout) mActivity.findViewById(R.id.linear_custom);
 
-        mockLinearLayout.setOrientation(LinearLayout.HORIZONTAL);
-        ViewGroup.LayoutParams param = mockLinearLayout.generateDefaultLayoutParams();
+        parent.setOrientation(LinearLayout.HORIZONTAL);
+        ViewGroup.LayoutParams param = parent.generateDefaultLayoutParams();
         assertNotNull(param);
         assertTrue(param instanceof LinearLayout.LayoutParams);
         assertEquals(ViewGroup.LayoutParams.WRAP_CONTENT, param.width);
         assertEquals(ViewGroup.LayoutParams.WRAP_CONTENT, param.height);
 
-        mockLinearLayout.setOrientation(LinearLayout.VERTICAL);
-        param = mockLinearLayout.generateDefaultLayoutParams();
+        parent.setOrientation(LinearLayout.VERTICAL);
+        param = parent.generateDefaultLayoutParams();
         assertNotNull(param);
         assertTrue(param instanceof LinearLayout.LayoutParams);
         assertEquals(ViewGroup.LayoutParams.MATCH_PARENT, param.width);
         assertEquals(ViewGroup.LayoutParams.WRAP_CONTENT, param.height);
 
-        mockLinearLayout.setOrientation(-1);
-        assertNull(mockLinearLayout.generateDefaultLayoutParams());
+        parent.setOrientation(-1);
+        assertNull(parent.generateDefaultLayoutParams());
     }
 
+    @UiThreadTest
+    @Test
     public void testGenerateLayoutParamsFromMarginParams() {
-        MockLinearLayout layout = new MockLinearLayout(mContext);
+        MockLinearLayout parent = (MockLinearLayout) mActivity.findViewById(R.id.linear_custom);
+
         ViewGroup.MarginLayoutParams lp = new ViewGroup.MarginLayoutParams(3, 5);
         lp.leftMargin = 1;
         lp.topMargin = 2;
         lp.rightMargin = 3;
         lp.bottomMargin = 4;
-        LinearLayout.LayoutParams generated = layout.generateLayoutParams(lp);
+        LinearLayout.LayoutParams generated = parent.generateLayoutParams(lp);
         assertNotNull(generated);
         assertEquals(3, generated.width);
         assertEquals(5, generated.height);
@@ -310,8 +337,9 @@ public class LinearLayoutTest extends ActivityInstrumentationTestCase<LinearLayo
      * |     parent   |                 | --------------- |
      * ----------------------------------------------------
      */
+    @Test
     public void testLayoutHorizontal() {
-        LinearLayout parent = (LinearLayout) mActivity.findViewById(R.id.horizontal);
+        LinearLayout parent = (LinearLayout) mActivity.findViewById(R.id.linear_horizontal);
         TextView topView = (TextView) mActivity.findViewById(R.id.gravity_top);
         TextView centerView = (TextView) mActivity.findViewById(R.id.gravity_center_vertical);
         TextView bottomView = (TextView) mActivity.findViewById(R.id.gravity_bottom);
@@ -321,11 +349,11 @@ public class LinearLayoutTest extends ActivityInstrumentationTestCase<LinearLayo
         assertNotNull(centerView);
         assertNotNull(bottomView);
 
-        assertEquals(mContext.getResources().getString(R.string.horizontal_text_1),
+        assertEquals(mActivity.getResources().getString(R.string.horizontal_text_1),
                 topView.getText().toString());
-        assertEquals(mContext.getResources().getString(R.string.horizontal_text_2),
+        assertEquals(mActivity.getResources().getString(R.string.horizontal_text_2),
                 centerView.getText().toString());
-        assertEquals(mContext.getResources().getString(R.string.horizontal_text_3),
+        assertEquals(mActivity.getResources().getString(R.string.horizontal_text_3),
                 bottomView.getText().toString());
 
         assertEquals(LinearLayout.HORIZONTAL, parent.getOrientation());
@@ -367,8 +395,9 @@ public class LinearLayoutTest extends ActivityInstrumentationTestCase<LinearLayo
      * |                  -------------- |
      * -----------------------------------
      */
+    @Test
     public void testLayoutVertical() {
-        LinearLayout parent = (LinearLayout) mActivity.findViewById(R.id.vertical);
+        LinearLayout parent = (LinearLayout) mActivity.findViewById(R.id.linear_vertical);
         TextView leftView = (TextView) mActivity.findViewById(R.id.gravity_left);
         TextView centerView = (TextView) mActivity.findViewById(R.id.gravity_center_horizontal);
         TextView rightView = (TextView) mActivity.findViewById(R.id.gravity_right);
@@ -378,11 +407,11 @@ public class LinearLayoutTest extends ActivityInstrumentationTestCase<LinearLayo
         assertNotNull(centerView);
         assertNotNull(rightView);
 
-        assertEquals(mContext.getResources().getString(R.string.vertical_text_1),
+        assertEquals(mActivity.getResources().getString(R.string.vertical_text_1),
                 leftView.getText().toString());
-        assertEquals(mContext.getResources().getString(R.string.vertical_text_2),
+        assertEquals(mActivity.getResources().getString(R.string.vertical_text_2),
                 centerView.getText().toString());
-        assertEquals(mContext.getResources().getString(R.string.vertical_text_3),
+        assertEquals(mActivity.getResources().getString(R.string.vertical_text_3),
                 rightView.getText().toString());
 
         assertEquals(LinearLayout.VERTICAL, parent.getOrientation());
@@ -408,23 +437,23 @@ public class LinearLayoutTest extends ActivityInstrumentationTestCase<LinearLayo
         assertEquals(parent.getWidth(), rightView.getRight());
     }
 
+    @Test
     public void testVerticalCenterGravityOnHorizontalLayout() {
-        final Instrumentation instrumentation = getInstrumentation();
-        LinearLayout parent = (LinearLayout) mActivity.findViewById(R.id.weightsum);
+        LinearLayout parent = (LinearLayout) mActivity.findViewById(R.id.linear_weightsum);
         TextView leftView = (TextView) parent.findViewById(R.id.weight_0_2);
         TextView centerView = (TextView) parent.findViewById(R.id.weight_0_5);
         TextView rightView = (TextView) parent.findViewById(R.id.weight_0_3);
 
-        instrumentation.runOnMainSync(() -> parent.setLayoutDirection(View.LAYOUT_DIRECTION_LTR));
-        instrumentation.waitForIdleSync();
+        mInstrumentation.runOnMainSync(() -> parent.setLayoutDirection(View.LAYOUT_DIRECTION_LTR));
+        mInstrumentation.waitForIdleSync();
 
         int originalLeftViewRight = leftView.getRight();
         int originalCenterViewLeft = centerView.getLeft();
         int originalCenterViewRight = centerView.getRight();
         int originalRightViewLeft = rightView.getLeft();
 
-        instrumentation.runOnMainSync(() -> parent.setVerticalGravity(Gravity.CENTER_VERTICAL));
-        instrumentation.waitForIdleSync();
+        mInstrumentation.runOnMainSync(() -> parent.setVerticalGravity(Gravity.CENTER_VERTICAL));
+        mInstrumentation.waitForIdleSync();
 
         assertEquals(Gravity.CENTER_VERTICAL, parent.getGravity() & Gravity.VERTICAL_GRAVITY_MASK);
 
@@ -453,23 +482,23 @@ public class LinearLayoutTest extends ActivityInstrumentationTestCase<LinearLayo
         assertEquals(parent.getWidth(), rightView.getRight());
     }
 
+    @Test
     public void testBottomGravityOnHorizontalLayout() {
-        final Instrumentation instrumentation = getInstrumentation();
-        LinearLayout parent = (LinearLayout) mActivity.findViewById(R.id.weightsum);
+        LinearLayout parent = (LinearLayout) mActivity.findViewById(R.id.linear_weightsum);
         TextView leftView = (TextView) parent.findViewById(R.id.weight_0_2);
         TextView centerView = (TextView) parent.findViewById(R.id.weight_0_5);
         TextView rightView = (TextView) parent.findViewById(R.id.weight_0_3);
 
-        instrumentation.runOnMainSync(() -> parent.setLayoutDirection(View.LAYOUT_DIRECTION_LTR));
-        instrumentation.waitForIdleSync();
+        mInstrumentation.runOnMainSync(() -> parent.setLayoutDirection(View.LAYOUT_DIRECTION_LTR));
+        mInstrumentation.waitForIdleSync();
 
         int originalLeftViewRight = leftView.getRight();
         int originalCenterViewLeft = centerView.getLeft();
         int originalCenterViewRight = centerView.getRight();
         int originalRightViewLeft = rightView.getLeft();
 
-        instrumentation.runOnMainSync(() -> parent.setVerticalGravity(Gravity.BOTTOM));
-        instrumentation.waitForIdleSync();
+        mInstrumentation.runOnMainSync(() -> parent.setVerticalGravity(Gravity.BOTTOM));
+        mInstrumentation.waitForIdleSync();
 
         assertEquals(Gravity.BOTTOM, parent.getGravity() & Gravity.VERTICAL_GRAVITY_MASK);
 
@@ -495,15 +524,15 @@ public class LinearLayoutTest extends ActivityInstrumentationTestCase<LinearLayo
         assertEquals(parent.getWidth(), rightView.getRight());
     }
 
+    @Test
     public void testHorizontalCenterGravityOnVerticalLayout() {
-        final Instrumentation instrumentation = getInstrumentation();
-        LinearLayout parent = (LinearLayout) mActivity.findViewById(R.id.weightsum_vertical);
+        LinearLayout parent = (LinearLayout) mActivity.findViewById(R.id.linear_weightsum_vertical);
         TextView topView = (TextView) parent.findViewById(R.id.weight_0_1);
         TextView centerView = (TextView) parent.findViewById(R.id.weight_0_4);
         TextView bottomView = (TextView) parent.findViewById(R.id.weight_0_5);
 
-        instrumentation.runOnMainSync(() -> parent.setLayoutDirection(View.LAYOUT_DIRECTION_LTR));
-        instrumentation.waitForIdleSync();
+        mInstrumentation.runOnMainSync(() -> parent.setLayoutDirection(View.LAYOUT_DIRECTION_LTR));
+        mInstrumentation.waitForIdleSync();
 
         final int parentWidth = parent.getHeight();
 
@@ -512,8 +541,9 @@ public class LinearLayoutTest extends ActivityInstrumentationTestCase<LinearLayo
         int originalCenterViewBottom = centerView.getBottom();
         int originalBottomViewTop = bottomView.getTop();
 
-        instrumentation.runOnMainSync(() -> parent.setHorizontalGravity(Gravity.CENTER_HORIZONTAL));
-        instrumentation.waitForIdleSync();
+        mInstrumentation.runOnMainSync(
+                () -> parent.setHorizontalGravity(Gravity.CENTER_HORIZONTAL));
+        mInstrumentation.waitForIdleSync();
 
         assertEquals(Gravity.CENTER_HORIZONTAL,
                 parent.getGravity() & Gravity.HORIZONTAL_GRAVITY_MASK);
@@ -541,15 +571,15 @@ public class LinearLayoutTest extends ActivityInstrumentationTestCase<LinearLayo
         assertEquals(horizontalOffset + bottomView.getWidth(), bottomView.getRight());
     }
 
+    @Test
     public void testRightGravityOnVerticalLayout() {
-        final Instrumentation instrumentation = getInstrumentation();
-        LinearLayout parent = (LinearLayout) mActivity.findViewById(R.id.weightsum_vertical);
+        LinearLayout parent = (LinearLayout) mActivity.findViewById(R.id.linear_weightsum_vertical);
         TextView topView = (TextView) parent.findViewById(R.id.weight_0_1);
         TextView centerView = (TextView) parent.findViewById(R.id.weight_0_4);
         TextView bottomView = (TextView) parent.findViewById(R.id.weight_0_5);
 
-        instrumentation.runOnMainSync(() -> parent.setLayoutDirection(View.LAYOUT_DIRECTION_LTR));
-        instrumentation.waitForIdleSync();
+        mInstrumentation.runOnMainSync(() -> parent.setLayoutDirection(View.LAYOUT_DIRECTION_LTR));
+        mInstrumentation.waitForIdleSync();
 
         final int parentWidth = parent.getHeight();
 
@@ -558,11 +588,10 @@ public class LinearLayoutTest extends ActivityInstrumentationTestCase<LinearLayo
         int originalCenterViewBottom = centerView.getBottom();
         int originalBottomViewTop = bottomView.getTop();
 
-        instrumentation.runOnMainSync(() -> parent.setHorizontalGravity(Gravity.RIGHT));
-        instrumentation.waitForIdleSync();
+        mInstrumentation.runOnMainSync(() -> parent.setHorizontalGravity(Gravity.RIGHT));
+        mInstrumentation.waitForIdleSync();
 
-        assertEquals(Gravity.RIGHT,
-                parent.getGravity() & Gravity.HORIZONTAL_GRAVITY_MASK);
+        assertEquals(Gravity.RIGHT, parent.getGravity() & Gravity.HORIZONTAL_GRAVITY_MASK);
 
         ViewAsserts.assertRightAligned(parent, topView);
         ViewAsserts.assertRightAligned(parent, centerView);
@@ -584,24 +613,26 @@ public class LinearLayoutTest extends ActivityInstrumentationTestCase<LinearLayo
         assertEquals(parentWidth, bottomView.getRight());
     }
 
-    private void checkBounds(final ViewGroup viewGroup, final View view,
+    private void verifyBounds(final ViewGroup viewGroup, final View view,
             final CountDownLatch countDownLatch, final int left, final int top,
             final int width, final int height) {
-        viewGroup.getViewTreeObserver().addOnPreDrawListener(new ViewTreeObserver.OnPreDrawListener() {
-            @Override
-            public boolean onPreDraw() {
-                assertEquals(left, view.getLeft());
-                assertEquals(top, view.getTop());
-                assertEquals(width, view.getWidth());
-                assertEquals(height, view.getHeight());
-                countDownLatch.countDown();
-                viewGroup.getViewTreeObserver().removeOnPreDrawListener(this);
-                return true;
-            }
-        });
+        viewGroup.getViewTreeObserver().addOnPreDrawListener(
+                new ViewTreeObserver.OnPreDrawListener() {
+                    @Override
+                    public boolean onPreDraw() {
+                        assertEquals(left, view.getLeft());
+                        assertEquals(top, view.getTop());
+                        assertEquals(width, view.getWidth());
+                        assertEquals(height, view.getHeight());
+                        countDownLatch.countDown();
+                        viewGroup.getViewTreeObserver().removeOnPreDrawListener(this);
+                        return true;
+                    }
+                });
     }
 
-    public void testVisibilityAffectsLayout() throws Throwable {
+    @Test
+    public void testVisibilityAffectsLayout() {
         // Toggling view visibility between GONE/VISIBLE can affect the position of
         // other children in that container. This test verifies that these changes
         // on the first child of a LinearLayout affects the position of a second child
@@ -622,38 +653,44 @@ public class LinearLayoutTest extends ActivityInstrumentationTestCase<LinearLayo
         final ViewGroup viewGroup = (ViewGroup) mActivity.findViewById(R.id.linearlayout_root);
 
         final CountDownLatch countDownLatch1 = new CountDownLatch(1);
-        runTestOnUiThread(new Runnable() {
-            public void run() {
-                viewGroup.removeAllViews();
-                viewGroup.addView(parent);
-                parent.addView(child1);
-                parent.addView(child2);
-                checkBounds(viewGroup, child1, countDownLatch1, 0, 0, childWidth, childHeight);
-                checkBounds(viewGroup, child2, countDownLatch1,
-                        childWidth, 0, childWidth, childHeight);
-            }
+        mInstrumentation.runOnMainSync(() -> {
+            viewGroup.removeAllViews();
+            viewGroup.addView(parent);
+            parent.addView(child1);
+            parent.addView(child2);
+            verifyBounds(viewGroup, child1, countDownLatch1, 0, 0, childWidth, childHeight);
+            verifyBounds(viewGroup, child2, countDownLatch1,
+                    childWidth, 0, childWidth, childHeight);
         });
-        countDownLatch1.await(500, TimeUnit.MILLISECONDS);
+        try {
+            assertTrue(countDownLatch1.await(500, TimeUnit.MILLISECONDS));
+        } catch (InterruptedException ie) {
+            fail(ie.getMessage());
+        }
 
         final CountDownLatch countDownLatch2 = new CountDownLatch(1);
-        runTestOnUiThread(new Runnable() {
-            public void run() {
-                child1.setVisibility(View.GONE);
-                checkBounds(viewGroup, child2, countDownLatch2, 0, 0, childWidth, childHeight);
-            }
+        mInstrumentation.runOnMainSync(() -> {
+            child1.setVisibility(View.GONE);
+            verifyBounds(viewGroup, child2, countDownLatch2, 0, 0, childWidth, childHeight);
         });
-        countDownLatch2.await(500, TimeUnit.MILLISECONDS);
+        try {
+            assertTrue(countDownLatch2.await(500, TimeUnit.MILLISECONDS));
+        } catch (InterruptedException ie) {
+            fail(ie.getMessage());
+        }
 
         final CountDownLatch countDownLatch3 = new CountDownLatch(2);
-        runTestOnUiThread(new Runnable() {
-            public void run() {
-                child1.setVisibility(View.VISIBLE);
-                checkBounds(viewGroup, child1, countDownLatch3, 0, 0, childWidth, childHeight);
-                checkBounds(viewGroup, child2, countDownLatch3,
-                        childWidth, 0, childWidth, childHeight);
-            }
+        mInstrumentation.runOnMainSync(() -> {
+            child1.setVisibility(View.VISIBLE);
+            verifyBounds(viewGroup, child1, countDownLatch3, 0, 0, childWidth, childHeight);
+            verifyBounds(viewGroup, child2, countDownLatch3,
+                    childWidth, 0, childWidth, childHeight);
         });
-        countDownLatch3.await(500, TimeUnit.MILLISECONDS);
+        try {
+            assertTrue(countDownLatch3.await(500, TimeUnit.MILLISECONDS));
+        } catch (InterruptedException ie) {
+            fail(ie.getMessage());
+        }
     }
 
     private void verifyVisualsOfVerticalLayoutWithDivider(LinearLayout parent,
@@ -779,11 +816,10 @@ public class LinearLayoutTest extends ActivityInstrumentationTestCase<LinearLayo
      * visibility, drawable and paddings of the divider and verify the overall visuals of the
      * container.
      */
+    @Test
     public void testDividersInVerticalLayout() {
         final LinearLayout parent =
-                (LinearLayout) mActivity.findViewById(R.id.vertical_with_divider);
-
-        final Instrumentation instrumentation = getInstrumentation();
+                (LinearLayout) mActivity.findViewById(R.id.linear_vertical_with_divider);
 
         final Resources res = mActivity.getResources();
         final int dividerSize = res.getDimensionPixelSize(R.dimen.linear_layout_divider_size);
@@ -801,20 +837,20 @@ public class LinearLayoutTest extends ActivityInstrumentationTestCase<LinearLayo
                 dividerSize, Color.RED, dividerPadding);
 
         // Change the divider to magenta
-        WidgetTestUtils.runOnMainAndDrawSync(instrumentation, parent,
+        WidgetTestUtils.runOnMainAndDrawSync(mInstrumentation, parent,
                 () -> parent.setDividerDrawable(
                         mActivity.getDrawable(R.drawable.linear_layout_divider_magenta)));
         verifyVisualsOfVerticalLayoutWithDivider(parent, LinearLayout.SHOW_DIVIDER_MIDDLE,
                 dividerSize, Color.MAGENTA, dividerPadding);
 
         // Change the divider to null (no divider effectively)
-        WidgetTestUtils.runOnMainAndDrawSync(instrumentation, parent,
+        WidgetTestUtils.runOnMainAndDrawSync(mInstrumentation, parent,
                 () -> parent.setDividerDrawable(null));
         verifyVisualsOfVerticalLayoutWithDivider(parent, LinearLayout.SHOW_DIVIDER_MIDDLE,
                 0, Color.TRANSPARENT, 0);
 
         // Change the divider back to red
-        WidgetTestUtils.runOnMainAndDrawSync(instrumentation, parent,
+        WidgetTestUtils.runOnMainAndDrawSync(mInstrumentation, parent,
                 () -> parent.setDividerDrawable(
                         mActivity.getDrawable(R.drawable.linear_layout_divider_red)));
         verifyVisualsOfVerticalLayoutWithDivider(parent, LinearLayout.SHOW_DIVIDER_MIDDLE,
@@ -822,7 +858,7 @@ public class LinearLayoutTest extends ActivityInstrumentationTestCase<LinearLayo
 
         // Change the padding to half the original size
         final int halfPadding = dividerPadding / 2;
-        WidgetTestUtils.runOnMainAndDrawSync(instrumentation, parent,
+        WidgetTestUtils.runOnMainAndDrawSync(mInstrumentation, parent,
                 () -> parent.setDividerPadding(halfPadding));
         assertEquals(halfPadding, parent.getDividerPadding());
         verifyVisualsOfVerticalLayoutWithDivider(parent, LinearLayout.SHOW_DIVIDER_MIDDLE,
@@ -830,42 +866,42 @@ public class LinearLayoutTest extends ActivityInstrumentationTestCase<LinearLayo
 
         // Change the padding to twice the original size
         final int doublePadding = dividerPadding * 2;
-        WidgetTestUtils.runOnMainAndDrawSync(instrumentation, parent,
+        WidgetTestUtils.runOnMainAndDrawSync(mInstrumentation, parent,
                 () -> parent.setDividerPadding(doublePadding));
         assertEquals(doublePadding, parent.getDividerPadding());
         verifyVisualsOfVerticalLayoutWithDivider(parent, LinearLayout.SHOW_DIVIDER_MIDDLE,
                 dividerSize, Color.RED, doublePadding);
 
         // And back to the original padding
-        WidgetTestUtils.runOnMainAndDrawSync(instrumentation, parent,
+        WidgetTestUtils.runOnMainAndDrawSync(mInstrumentation, parent,
                 () -> parent.setDividerPadding(dividerPadding));
         assertEquals(dividerPadding, parent.getDividerPadding());
         verifyVisualsOfVerticalLayoutWithDivider(parent, LinearLayout.SHOW_DIVIDER_MIDDLE,
                 dividerSize, Color.RED, dividerPadding);
 
         // Set show dividers to NONE (no divider effectively)
-        WidgetTestUtils.runOnMainAndDrawSync(instrumentation, parent,
+        WidgetTestUtils.runOnMainAndDrawSync(mInstrumentation, parent,
                 () -> parent.setShowDividers(LinearLayout.SHOW_DIVIDER_NONE));
         assertEquals(LinearLayout.SHOW_DIVIDER_NONE, parent.getShowDividers());
         verifyVisualsOfVerticalLayoutWithDivider(parent, LinearLayout.SHOW_DIVIDER_NONE,
                 0, Color.TRANSPARENT, 0);
 
         // Show only top divider
-        WidgetTestUtils.runOnMainAndDrawSync(instrumentation, parent,
+        WidgetTestUtils.runOnMainAndDrawSync(mInstrumentation, parent,
                 () -> parent.setShowDividers(LinearLayout.SHOW_DIVIDER_BEGINNING));
         assertEquals(LinearLayout.SHOW_DIVIDER_BEGINNING, parent.getShowDividers());
         verifyVisualsOfVerticalLayoutWithDivider(parent, LinearLayout.SHOW_DIVIDER_BEGINNING,
                 dividerSize, Color.RED, dividerPadding);
 
         // Show only bottom divider
-        WidgetTestUtils.runOnMainAndDrawSync(instrumentation, parent,
+        WidgetTestUtils.runOnMainAndDrawSync(mInstrumentation, parent,
                 () -> parent.setShowDividers(LinearLayout.SHOW_DIVIDER_END));
         assertEquals(LinearLayout.SHOW_DIVIDER_END, parent.getShowDividers());
         verifyVisualsOfVerticalLayoutWithDivider(parent, LinearLayout.SHOW_DIVIDER_END,
                 dividerSize, Color.RED, dividerPadding);
 
         // Show top and bottom dividers
-        WidgetTestUtils.runOnMainAndDrawSync(instrumentation, parent,
+        WidgetTestUtils.runOnMainAndDrawSync(mInstrumentation, parent,
                 () -> parent.setShowDividers(
                         LinearLayout.SHOW_DIVIDER_BEGINNING | LinearLayout.SHOW_DIVIDER_END));
         assertEquals(LinearLayout.SHOW_DIVIDER_BEGINNING | LinearLayout.SHOW_DIVIDER_END,
@@ -875,7 +911,7 @@ public class LinearLayoutTest extends ActivityInstrumentationTestCase<LinearLayo
                 dividerSize, Color.RED, dividerPadding);
 
         // Show top and middle dividers
-        WidgetTestUtils.runOnMainAndDrawSync(instrumentation, parent,
+        WidgetTestUtils.runOnMainAndDrawSync(mInstrumentation, parent,
                 () -> parent.setShowDividers(
                         LinearLayout.SHOW_DIVIDER_BEGINNING | LinearLayout.SHOW_DIVIDER_MIDDLE));
         assertEquals(LinearLayout.SHOW_DIVIDER_BEGINNING | LinearLayout.SHOW_DIVIDER_MIDDLE,
@@ -885,7 +921,7 @@ public class LinearLayoutTest extends ActivityInstrumentationTestCase<LinearLayo
                 dividerSize, Color.RED, dividerPadding);
 
         // Show middle and bottom dividers
-        WidgetTestUtils.runOnMainAndDrawSync(instrumentation, parent,
+        WidgetTestUtils.runOnMainAndDrawSync(mInstrumentation, parent,
                 () -> parent.setShowDividers(
                         LinearLayout.SHOW_DIVIDER_MIDDLE | LinearLayout.SHOW_DIVIDER_END));
         assertEquals(LinearLayout.SHOW_DIVIDER_MIDDLE | LinearLayout.SHOW_DIVIDER_END,
@@ -895,7 +931,7 @@ public class LinearLayoutTest extends ActivityInstrumentationTestCase<LinearLayo
                 dividerSize, Color.RED, dividerPadding);
 
         // Show top, middle and bottom dividers
-        WidgetTestUtils.runOnMainAndDrawSync(instrumentation, parent,
+        WidgetTestUtils.runOnMainAndDrawSync(mInstrumentation, parent,
                 () -> parent.setShowDividers(
                         LinearLayout.SHOW_DIVIDER_BEGINNING | LinearLayout.SHOW_DIVIDER_MIDDLE
                                 | LinearLayout.SHOW_DIVIDER_END));
@@ -1040,14 +1076,13 @@ public class LinearLayoutTest extends ActivityInstrumentationTestCase<LinearLayo
      * visibility, drawable and paddings of the divider and verify the overall visuals of the
      * container.
      */
+    @Test
     public void testDividersInHorizontalLayout() {
         final LinearLayout parent =
-                (LinearLayout) mActivity.findViewById(R.id.horizontal_with_divider);
+                (LinearLayout) mActivity.findViewById(R.id.linear_horizontal_with_divider);
 
-        final Instrumentation instrumentation = getInstrumentation();
-
-        instrumentation.runOnMainSync(() -> parent.setLayoutDirection(View.LAYOUT_DIRECTION_LTR));
-        instrumentation.waitForIdleSync();
+        mInstrumentation.runOnMainSync(() -> parent.setLayoutDirection(View.LAYOUT_DIRECTION_LTR));
+        mInstrumentation.waitForIdleSync();
 
         final Resources res = mActivity.getResources();
         final int dividerSize = res.getDimensionPixelSize(R.dimen.linear_layout_divider_size);
@@ -1065,20 +1100,20 @@ public class LinearLayoutTest extends ActivityInstrumentationTestCase<LinearLayo
                 dividerSize, Color.RED, dividerPadding);
 
         // Change the divider to magenta
-        WidgetTestUtils.runOnMainAndDrawSync(instrumentation, parent,
+        WidgetTestUtils.runOnMainAndDrawSync(mInstrumentation, parent,
                 () -> parent.setDividerDrawable(
                         mActivity.getDrawable(R.drawable.linear_layout_divider_magenta)));
         verifyVisualsOfHorizontalLayoutWithDivider(parent, LinearLayout.SHOW_DIVIDER_MIDDLE,
                 dividerSize, Color.MAGENTA, dividerPadding);
 
         // Change the divider to null (no divider effectively)
-        WidgetTestUtils.runOnMainAndDrawSync(instrumentation, parent,
+        WidgetTestUtils.runOnMainAndDrawSync(mInstrumentation, parent,
                 () -> parent.setDividerDrawable(null));
         verifyVisualsOfHorizontalLayoutWithDivider(parent, LinearLayout.SHOW_DIVIDER_MIDDLE,
                 0, Color.TRANSPARENT, 0);
 
         // Change the divider back to red
-        WidgetTestUtils.runOnMainAndDrawSync(instrumentation, parent,
+        WidgetTestUtils.runOnMainAndDrawSync(mInstrumentation, parent,
                 () -> parent.setDividerDrawable(
                         mActivity.getDrawable(R.drawable.linear_layout_divider_red)));
         verifyVisualsOfHorizontalLayoutWithDivider(parent, LinearLayout.SHOW_DIVIDER_MIDDLE,
@@ -1086,7 +1121,7 @@ public class LinearLayoutTest extends ActivityInstrumentationTestCase<LinearLayo
 
         // Change the padding to half the original size
         final int halfPadding = dividerPadding / 2;
-        WidgetTestUtils.runOnMainAndDrawSync(instrumentation, parent,
+        WidgetTestUtils.runOnMainAndDrawSync(mInstrumentation, parent,
                 () -> parent.setDividerPadding(halfPadding));
         assertEquals(halfPadding, parent.getDividerPadding());
         verifyVisualsOfHorizontalLayoutWithDivider(parent, LinearLayout.SHOW_DIVIDER_MIDDLE,
@@ -1094,42 +1129,42 @@ public class LinearLayoutTest extends ActivityInstrumentationTestCase<LinearLayo
 
         // Change the padding to twice the original size
         final int doublePadding = dividerPadding * 2;
-        WidgetTestUtils.runOnMainAndDrawSync(instrumentation, parent,
+        WidgetTestUtils.runOnMainAndDrawSync(mInstrumentation, parent,
                 () -> parent.setDividerPadding(doublePadding));
         assertEquals(doublePadding, parent.getDividerPadding());
         verifyVisualsOfHorizontalLayoutWithDivider(parent, LinearLayout.SHOW_DIVIDER_MIDDLE,
                 dividerSize, Color.RED, doublePadding);
 
         // And back to the original padding
-        WidgetTestUtils.runOnMainAndDrawSync(instrumentation, parent,
+        WidgetTestUtils.runOnMainAndDrawSync(mInstrumentation, parent,
                 () -> parent.setDividerPadding(dividerPadding));
         assertEquals(dividerPadding, parent.getDividerPadding());
         verifyVisualsOfHorizontalLayoutWithDivider(parent, LinearLayout.SHOW_DIVIDER_MIDDLE,
                 dividerSize, Color.RED, dividerPadding);
 
         // Set show dividers to NONE (no divider effectively)
-        WidgetTestUtils.runOnMainAndDrawSync(instrumentation, parent,
+        WidgetTestUtils.runOnMainAndDrawSync(mInstrumentation, parent,
                 () -> parent.setShowDividers(LinearLayout.SHOW_DIVIDER_NONE));
         assertEquals(LinearLayout.SHOW_DIVIDER_NONE, parent.getShowDividers());
         verifyVisualsOfHorizontalLayoutWithDivider(parent, LinearLayout.SHOW_DIVIDER_NONE,
                 0, Color.TRANSPARENT, 0);
 
         // Show only left divider
-        WidgetTestUtils.runOnMainAndDrawSync(instrumentation, parent,
+        WidgetTestUtils.runOnMainAndDrawSync(mInstrumentation, parent,
                 () -> parent.setShowDividers(LinearLayout.SHOW_DIVIDER_BEGINNING));
         assertEquals(LinearLayout.SHOW_DIVIDER_BEGINNING, parent.getShowDividers());
         verifyVisualsOfHorizontalLayoutWithDivider(parent, LinearLayout.SHOW_DIVIDER_BEGINNING,
                 dividerSize, Color.RED, dividerPadding);
 
         // Show only right divider
-        WidgetTestUtils.runOnMainAndDrawSync(instrumentation, parent,
+        WidgetTestUtils.runOnMainAndDrawSync(mInstrumentation, parent,
                 () -> parent.setShowDividers(LinearLayout.SHOW_DIVIDER_END));
         assertEquals(LinearLayout.SHOW_DIVIDER_END, parent.getShowDividers());
         verifyVisualsOfHorizontalLayoutWithDivider(parent, LinearLayout.SHOW_DIVIDER_END,
                 dividerSize, Color.RED, dividerPadding);
 
         // Show left and right dividers
-        WidgetTestUtils.runOnMainAndDrawSync(instrumentation, parent,
+        WidgetTestUtils.runOnMainAndDrawSync(mInstrumentation, parent,
                 () -> parent.setShowDividers(
                         LinearLayout.SHOW_DIVIDER_BEGINNING | LinearLayout.SHOW_DIVIDER_END));
         assertEquals(LinearLayout.SHOW_DIVIDER_BEGINNING | LinearLayout.SHOW_DIVIDER_END,
@@ -1139,7 +1174,7 @@ public class LinearLayoutTest extends ActivityInstrumentationTestCase<LinearLayo
                 dividerSize, Color.RED, dividerPadding);
 
         // Show left and middle dividers
-        WidgetTestUtils.runOnMainAndDrawSync(instrumentation, parent,
+        WidgetTestUtils.runOnMainAndDrawSync(mInstrumentation, parent,
                 () -> parent.setShowDividers(
                         LinearLayout.SHOW_DIVIDER_BEGINNING | LinearLayout.SHOW_DIVIDER_MIDDLE));
         assertEquals(LinearLayout.SHOW_DIVIDER_BEGINNING | LinearLayout.SHOW_DIVIDER_MIDDLE,
@@ -1149,7 +1184,7 @@ public class LinearLayoutTest extends ActivityInstrumentationTestCase<LinearLayo
                 dividerSize, Color.RED, dividerPadding);
 
         // Show middle and right dividers
-        WidgetTestUtils.runOnMainAndDrawSync(instrumentation, parent,
+        WidgetTestUtils.runOnMainAndDrawSync(mInstrumentation, parent,
                 () -> parent.setShowDividers(
                         LinearLayout.SHOW_DIVIDER_MIDDLE | LinearLayout.SHOW_DIVIDER_END));
         assertEquals(LinearLayout.SHOW_DIVIDER_MIDDLE | LinearLayout.SHOW_DIVIDER_END,
@@ -1159,7 +1194,7 @@ public class LinearLayoutTest extends ActivityInstrumentationTestCase<LinearLayo
                 dividerSize, Color.RED, dividerPadding);
 
         // Show left, middle and right dividers
-        WidgetTestUtils.runOnMainAndDrawSync(instrumentation, parent,
+        WidgetTestUtils.runOnMainAndDrawSync(mInstrumentation, parent,
                 () -> parent.setShowDividers(
                         LinearLayout.SHOW_DIVIDER_BEGINNING | LinearLayout.SHOW_DIVIDER_MIDDLE
                                 | LinearLayout.SHOW_DIVIDER_END));
@@ -1191,9 +1226,13 @@ public class LinearLayoutTest extends ActivityInstrumentationTestCase<LinearLayo
      * extends from it and override protected methods so that we can access them in
      * our test codes.
      */
-    private class MockLinearLayout extends LinearLayout {
+    public static class MockLinearLayout extends LinearLayout {
         public MockLinearLayout(Context c) {
             super(c);
+        }
+
+        public MockLinearLayout(Context context, @Nullable AttributeSet attrs) {
+            super(context, attrs);
         }
 
         @Override

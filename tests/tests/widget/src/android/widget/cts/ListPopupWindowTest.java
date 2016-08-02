@@ -16,6 +16,12 @@
 
 package android.widget.cts;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertSame;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.*;
 
 import android.app.Activity;
@@ -29,7 +35,12 @@ import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.platform.test.annotations.Presubmit;
 import android.support.test.InstrumentationRegistry;
+import android.support.test.annotation.UiThreadTest;
+import android.support.test.rule.ActivityTestRule;
+import android.support.test.runner.AndroidJUnit4;
 import android.test.ActivityInstrumentationTestCase2;
+import android.test.suitebuilder.annotation.LargeTest;
+import android.test.suitebuilder.annotation.MediumTest;
 import android.test.suitebuilder.annotation.SmallTest;
 import android.view.Display;
 import android.view.Gravity;
@@ -46,9 +57,15 @@ import android.widget.ListView;
 import android.widget.PopupWindow;
 import android.widget.TextView;
 
-@SmallTest
-public class ListPopupWindowTest extends
-        ActivityInstrumentationTestCase2<ListPopupWindowCtsActivity> {
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+
+@LargeTest
+@RunWith(AndroidJUnit4.class)
+public class ListPopupWindowTest {
     private Instrumentation mInstrumentation;
     private Activity mActivity;
     private Builder mPopupWindowBuilder;
@@ -71,30 +88,25 @@ public class ListPopupWindowTest extends
         }
     }
 
-    /**
-     * Instantiates a new popup window test.
-     */
-    public ListPopupWindowTest() {
-        super(ListPopupWindowCtsActivity.class);
-    }
+    @Rule
+    public ActivityTestRule<ListPopupWindowCtsActivity> mActivityRule
+            = new ActivityTestRule<>(ListPopupWindowCtsActivity.class);
 
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
-        mInstrumentation = getInstrumentation();
-        mActivity = getActivity();
+    @Before
+    public void setup() {
+        mInstrumentation = InstrumentationRegistry.getInstrumentation();
+        mActivity = mActivityRule.getActivity();
         mItemClickListener = new PopupItemClickListener();
     }
 
-    @Override
-    protected void tearDown() throws Exception {
+    @After
+    public void teardown() {
         if ((mPopupWindowBuilder != null) && (mPopupWindow != null)) {
             mPopupWindowBuilder.dismiss();
         }
-
-        super.tearDown();
     }
 
+    @Test
     public void testConstructor() {
         new ListPopupWindow(mActivity);
 
@@ -114,11 +126,13 @@ public class ListPopupWindowTest extends
                 android.R.style.Widget_Material_Light_ListPopupWindow);
     }
 
+    @Test
     public void testNoDefaultVisibility() {
         mPopupWindow = new ListPopupWindow(mActivity);
         assertFalse(mPopupWindow.isShowing());
     }
 
+    @Test
     public void testAccessBackground() {
         mPopupWindowBuilder = new Builder();
         mPopupWindowBuilder.show();
@@ -131,6 +145,7 @@ public class ListPopupWindowTest extends
         assertNull(mPopupWindow.getBackground());
     }
 
+    @Test
     public void testAccessAnimationStyle() {
         mPopupWindowBuilder = new Builder();
         mPopupWindowBuilder.show();
@@ -144,6 +159,7 @@ public class ListPopupWindowTest extends
         assertEquals(-100, mPopupWindow.getAnimationStyle());
     }
 
+    @Test
     public void testAccessHeight() {
         mPopupWindowBuilder = new Builder();
         mPopupWindowBuilder.show();
@@ -180,6 +196,7 @@ public class ListPopupWindowTest extends
         return wm.getDefaultDisplay();
     }
 
+    @Test
     public void testAccessWidth() {
         mPopupWindowBuilder = new Builder().ignoreContentWidth();
         mPopupWindowBuilder.show();
@@ -232,6 +249,7 @@ public class ListPopupWindowTest extends
         assertEquals(expectedListViewOnScreenY, listViewOnScreenXY[1]);
     }
 
+    @Test
     public void testAnchoring() {
         mPopupWindowBuilder = new Builder();
         mPopupWindowBuilder.show();
@@ -242,6 +260,7 @@ public class ListPopupWindowTest extends
         verifyAnchoring(0, 0, Gravity.NO_GRAVITY);
     }
 
+    @Test
     public void testAnchoringWithHorizontalOffset() {
         mPopupWindowBuilder = new Builder().withHorizontalOffset(50);
         mPopupWindowBuilder.show();
@@ -252,6 +271,7 @@ public class ListPopupWindowTest extends
         verifyAnchoring(50, 0, Gravity.NO_GRAVITY);
     }
 
+    @Test
     public void testAnchoringWithVerticalOffset() {
         mPopupWindowBuilder = new Builder().withVerticalOffset(60);
         mPopupWindowBuilder.show();
@@ -262,6 +282,7 @@ public class ListPopupWindowTest extends
         verifyAnchoring(0, 60, Gravity.NO_GRAVITY);
     }
 
+    @Test
     public void testAnchoringWithRightGravity() {
         mPopupWindowBuilder = new Builder().withDropDownGravity(Gravity.RIGHT);
         mPopupWindowBuilder.show();
@@ -272,6 +293,7 @@ public class ListPopupWindowTest extends
         verifyAnchoring(0, 0, Gravity.RIGHT);
     }
 
+    @Test
     public void testAnchoringWithEndGravity() {
         mPopupWindowBuilder = new Builder().withDropDownGravity(Gravity.END);
         mPopupWindowBuilder.show();
@@ -282,6 +304,7 @@ public class ListPopupWindowTest extends
         verifyAnchoring(0, 0, Gravity.END);
     }
 
+    @Test
     public void testSetWindowLayoutType() {
         mPopupWindowBuilder = new Builder().withWindowLayoutType(
                 WindowManager.LayoutParams.TYPE_APPLICATION_SUB_PANEL);
@@ -293,6 +316,7 @@ public class ListPopupWindowTest extends
         assertEquals(WindowManager.LayoutParams.TYPE_APPLICATION_SUB_PANEL, p.type);
     }
 
+    @Test
     public void testDismiss() {
         mPopupWindowBuilder = new Builder();
         mPopupWindowBuilder.show();
@@ -305,6 +329,7 @@ public class ListPopupWindowTest extends
         assertFalse(mPopupWindow.isShowing());
     }
 
+    @Test
     public void testSetOnDismissListener() {
         mPopupWindowBuilder = new Builder().withDismissListener();
         mPopupWindowBuilder.show();
@@ -323,6 +348,7 @@ public class ListPopupWindowTest extends
         verifyNoMoreInteractions(mPopupWindowBuilder.mOnDismissListener);
     }
 
+    @Test
     public void testAccessInputMethodMode() {
         mPopupWindowBuilder = new Builder().withDismissListener();
         mPopupWindowBuilder.show();
@@ -347,6 +373,7 @@ public class ListPopupWindowTest extends
         assertFalse(mPopupWindow.isInputMethodNotNeeded());
     }
 
+    @Test
     public void testAccessSoftInputMethodMode() {
         mPopupWindowBuilder = new Builder().withDismissListener();
         mPopupWindowBuilder.show();
@@ -403,14 +430,17 @@ public class ListPopupWindowTest extends
         verify(mockContainerClickListener, times(setupAsModal ? 0 : 1)).onClick(mainContainer);
     }
 
+    @Test
     public void testDismissalOutsideNonModal() {
         verifyDismissalViaTouch(false);
     }
 
+    @Test
     public void testDismissalOutsideModal() {
         verifyDismissalViaTouch(true);
     }
 
+    @Test
     public void testItemClicks() {
         mPopupWindowBuilder = new Builder().withItemClickListener().withDismissListener();
         mPopupWindowBuilder.show();
@@ -439,6 +469,7 @@ public class ListPopupWindowTest extends
         verifyNoMoreInteractions(mPopupWindowBuilder.mOnItemClickListener);
     }
 
+    @Test
     public void testPromptViewAbove() {
         final View promptView = LayoutInflater.from(mActivity).inflate(
                 R.layout.popupwindow_prompt, null);
@@ -464,6 +495,7 @@ public class ListPopupWindowTest extends
         assertTrue(promptViewOnScreenXY[1] + promptView.getHeight() <= firstChildOnScreenXY[1]);
     }
 
+    @Test
     public void testPromptViewBelow() {
         final View promptView = LayoutInflater.from(mActivity).inflate(
                 R.layout.popupwindow_prompt, null);
@@ -490,6 +522,7 @@ public class ListPopupWindowTest extends
     }
 
     @Presubmit
+    @Test
     public void testAccessSelection() {
         mPopupWindowBuilder = new Builder().withItemSelectedListener();
         mPopupWindowBuilder.show();
@@ -540,6 +573,7 @@ public class ListPopupWindowTest extends
         verifyNoMoreInteractions(mPopupWindowBuilder.mOnItemSelectedListener);
     }
 
+    @Test
     public void testNoDefaultDismissalWithBackButton() {
         mPopupWindowBuilder = new Builder().withDismissListener();
         mPopupWindowBuilder.show();
@@ -552,6 +586,7 @@ public class ListPopupWindowTest extends
         assertTrue(mPopupWindow.isShowing());
     }
 
+    @Test
     public void testCustomDismissalWithBackButton() {
         mPopupWindowBuilder = new Builder().withAnchor(R.id.anchor_upper_left)
                 .withDismissListener();
@@ -574,6 +609,7 @@ public class ListPopupWindowTest extends
         assertFalse(mPopupWindow.isShowing());
     }
 
+    @Test
     public void testListSelectionWithDPad() {
         mPopupWindowBuilder = new Builder().withAnchor(R.id.anchor_upper_left)
                 .withDismissListener().withItemSelectedListener();
@@ -646,6 +682,7 @@ public class ListPopupWindowTest extends
         verifyNoMoreInteractions(mPopupWindowBuilder.mOnDismissListener);
     }
 
+    @Test
     public void testCreateOnDragListener() {
         // In this test we want precise control over the height of the popup content since
         // we need to know by how much to swipe down to end the emulated gesture over the
@@ -682,7 +719,7 @@ public class ListPopupWindowTest extends
         int swipeAmount = 2 * popupRowHeight;
 
         // Emulate drag-down gesture with a sequence of motion events
-        CtsTouchUtils.emulateDragGesture(getInstrumentation(), emulatedX, emulatedStartY,
+        CtsTouchUtils.emulateDragGesture(mInstrumentation, emulatedX, emulatedStartY,
                 0, swipeAmount);
 
         // We expect the swipe / drag gesture to result in clicking the second item in our list.
