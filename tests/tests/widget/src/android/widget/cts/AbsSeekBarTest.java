@@ -65,8 +65,8 @@ public class AbsSeekBarTest {
     private Activity mActivity;
 
     @Rule
-    public ActivityTestRule<AbsSeekBarCtsActivity> mActivityRule
-            = new ActivityTestRule<>(AbsSeekBarCtsActivity.class);
+    public ActivityTestRule<AbsSeekBarCtsActivity> mActivityRule =
+            new ActivityTestRule<>(AbsSeekBarCtsActivity.class);
 
     @Before
     public void setup() {

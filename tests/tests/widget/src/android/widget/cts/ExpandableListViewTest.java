@@ -69,8 +69,8 @@ public class ExpandableListViewTest {
     private ExpandableListView mExpandableListView;
 
     @Rule
-    public ActivityTestRule<ExpandableList> mActivityRule
-            = new ActivityTestRule<>(ExpandableList.class);
+    public ActivityTestRule<ExpandableList> mActivityRule =
+            new ActivityTestRule<>(ExpandableList.class);
 
     @Before
     public void setup() {

@@ -50,8 +50,8 @@ public class ActionMenuViewTest {
     private ActionMenuView mActionMenuView;
 
     @Rule
-    public ActivityTestRule<ActionMenuViewCtsActivity> mActivityRule
-            = new ActivityTestRule<>(ActionMenuViewCtsActivity.class);
+    public ActivityTestRule<ActionMenuViewCtsActivity> mActivityRule =
+            new ActivityTestRule<>(ActionMenuViewCtsActivity.class);
 
     @Before
     public void setup() {

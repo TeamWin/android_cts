@@ -53,8 +53,8 @@ public class ChronometerTest {
     private ChronometerCtsActivity mActivity;
 
     @Rule
-    public ActivityTestRule<ChronometerCtsActivity> mActivityRule
-            = new ActivityTestRule<>(ChronometerCtsActivity.class);
+    public ActivityTestRule<ChronometerCtsActivity> mActivityRule =
+            new ActivityTestRule<>(ChronometerCtsActivity.class);
 
     @Before
     public void setup() {

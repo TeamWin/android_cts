@@ -34,6 +34,7 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.Parcel;
 import android.support.test.InstrumentationRegistry;
+import android.support.test.annotation.UiThreadTest;
 import android.support.test.rule.ActivityTestRule;
 import android.support.test.runner.AndroidJUnit4;
 import android.test.suitebuilder.annotation.LargeTest;
@@ -94,8 +95,8 @@ public class RemoteViewsTest {
     private static final long TEST_TIMEOUT = 5000;
 
     @Rule
-    public ActivityTestRule<RemoteViewsCtsActivity> mActivityRule
-            = new ActivityTestRule<>(RemoteViewsCtsActivity.class);
+    public ActivityTestRule<RemoteViewsCtsActivity> mActivityRule =
+            new ActivityTestRule<>(RemoteViewsCtsActivity.class);
 
     @Rule
     public ExpectedException mExpectedException = ExpectedException.none();
@@ -108,25 +109,24 @@ public class RemoteViewsTest {
 
     private View mResult;
 
+    @UiThreadTest
     @Before
     public void setup() {
         mInstrumentation = InstrumentationRegistry.getInstrumentation();
         mContext = mInstrumentation.getTargetContext();
-        mInstrumentation.runOnMainSync(() -> {
-            mRemoteViews = new RemoteViews(PACKAGE_NAME, R.layout.remoteviews_good);
-            mResult = mRemoteViews.apply(mContext, null);
+        mRemoteViews = new RemoteViews(PACKAGE_NAME, R.layout.remoteviews_good);
+        mResult = mRemoteViews.apply(mContext, null);
 
-            // Add our host view to the activity behind this test. This is similar to how launchers
-            // add widgets to the on-screen UI.
-            ViewGroup root = (ViewGroup) mActivityRule.getActivity().findViewById
-                    (R.id.remoteView_host);
-            FrameLayout.MarginLayoutParams lp = new FrameLayout.MarginLayoutParams(
-                    ViewGroup.LayoutParams.MATCH_PARENT,
-                    ViewGroup.LayoutParams.MATCH_PARENT);
-            mResult.setLayoutParams(lp);
+        // Add our host view to the activity behind this test. This is similar to how launchers
+        // add widgets to the on-screen UI.
+        ViewGroup root = (ViewGroup) mActivityRule.getActivity().findViewById
+                (R.id.remoteView_host);
+        FrameLayout.MarginLayoutParams lp = new FrameLayout.MarginLayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT);
+        mResult.setLayoutParams(lp);
 
-            root.addView(mResult);
-        });
+        root.addView(mResult);
     }
 
     @Test

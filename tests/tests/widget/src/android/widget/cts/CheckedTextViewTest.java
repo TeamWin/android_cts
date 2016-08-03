@@ -62,8 +62,8 @@ public class CheckedTextViewTest {
     private CheckedTextView mCheckedTextView;
 
     @Rule
-    public ActivityTestRule<CheckedTextViewCtsActivity> mActivityRule
-            = new ActivityTestRule<>(CheckedTextViewCtsActivity.class);
+    public ActivityTestRule<CheckedTextViewCtsActivity> mActivityRule =
+            new ActivityTestRule<>(CheckedTextViewCtsActivity.class);
 
     @Before
     public void setup() {

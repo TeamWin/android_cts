@@ -16,14 +16,24 @@
 
 package android.widget.cts;
 
-import android.test.AndroidTestCase;
+import static org.junit.Assert.assertEquals;
+
+import android.support.test.InstrumentationRegistry;
+import android.support.test.runner.AndroidJUnit4;
+import android.test.suitebuilder.annotation.SmallTest;
 import android.view.View;
 import android.widget.AdapterView;
 
-public class AdapterView_AdapterContextMenuInfoTest extends AndroidTestCase {
+import org.junit.Test;
+import org.junit.runner.RunWith;
+
+@SmallTest
+@RunWith(AndroidJUnit4.class)
+public class AdapterView_AdapterContextMenuInfoTest {
+    @Test
     public void testConstructor() {
         AdapterView.AdapterContextMenuInfo menuInfo;
-        View testView = new View(getContext());
+        View testView = new View(InstrumentationRegistry.getTargetContext());
         int position = 1;
         long id = 0xffL;
         menuInfo = new AdapterView.AdapterContextMenuInfo(testView, position, id);

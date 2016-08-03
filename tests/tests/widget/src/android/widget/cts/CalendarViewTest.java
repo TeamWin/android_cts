@@ -57,8 +57,8 @@ public class CalendarViewTest {
     private CalendarView mCalendarViewHolo;
 
     @Rule
-    public ActivityTestRule<CalendarViewCtsActivity> mActivityRule
-            = new ActivityTestRule<>(CalendarViewCtsActivity.class);
+    public ActivityTestRule<CalendarViewCtsActivity> mActivityRule =
+            new ActivityTestRule<>(CalendarViewCtsActivity.class);
 
     @UiThreadTest
     @Before

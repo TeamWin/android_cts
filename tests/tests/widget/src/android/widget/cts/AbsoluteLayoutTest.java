@@ -22,10 +22,9 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import android.app.Activity;
-import android.app.Instrumentation;
 import android.content.Context;
 import android.cts.util.WidgetTestUtils;
-import android.support.test.InstrumentationRegistry;
+import android.support.test.annotation.UiThreadTest;
 import android.support.test.rule.ActivityTestRule;
 import android.support.test.runner.AndroidJUnit4;
 import android.test.suitebuilder.annotation.SmallTest;
@@ -52,20 +51,20 @@ public class AbsoluteLayoutTest {
     private static final int DEFAULT_WIDTH  = 20;
     private static final int DEFAULT_HEIGHT = 30;
 
-    private Instrumentation mInstrumentation;
     private Activity mActivity;
+    private AbsoluteLayout mAbsoluteLayout;
     private MyAbsoluteLayout mMyAbsoluteLayout;
     private LayoutParams mAbsoluteLayoutParams;
 
     @Rule
-    public ActivityTestRule<CtsActivity> mActivityRule
-            = new ActivityTestRule<>(CtsActivity.class);
+    public ActivityTestRule<AbsoluteLayoutCtsActivity> mActivityRule =
+            new ActivityTestRule<>(AbsoluteLayoutCtsActivity.class);
 
     @Before
     public void setup() {
-        mInstrumentation = InstrumentationRegistry.getInstrumentation();
         mActivity = mActivityRule.getActivity();
-        mMyAbsoluteLayout = new MyAbsoluteLayout(mActivity);
+        mAbsoluteLayout = (AbsoluteLayout) mActivity.findViewById(R.id.absolute_view);
+        mMyAbsoluteLayout = (MyAbsoluteLayout) mActivity.findViewById(R.id.absolute_view_custom);
         mAbsoluteLayoutParams = new LayoutParams(DEFAULT_WIDTH, DEFAULT_HEIGHT,
                 DEFAULT_X, DEFAULT_Y);
     }
@@ -87,6 +86,7 @@ public class AbsoluteLayoutTest {
         new AbsoluteLayout(mActivity, attrs, -1);
     }
 
+    @UiThreadTest
     @Test
     public void testCheckLayoutParams() {
         assertTrue(mMyAbsoluteLayout.checkLayoutParams(mAbsoluteLayoutParams));
@@ -96,12 +96,11 @@ public class AbsoluteLayoutTest {
         assertFalse(mMyAbsoluteLayout.checkLayoutParams(null));
     }
 
+    @UiThreadTest
     @Test
-    public void testGenerateLayoutParams1() throws Throwable {
-        mInstrumentation.runOnMainSync(() -> mActivity.setContentView(R.layout.absolute_layout));
-        mInstrumentation.waitForIdleSync();
-        AbsoluteLayout layout = (AbsoluteLayout) mActivity.findViewById(R.id.absolute_view);
-        LayoutParams params = (LayoutParams) layout.generateLayoutParams(getAttributeSet());
+    public void testGenerateLayoutParamsFromAttributeSet() throws Throwable {
+        LayoutParams params = (LayoutParams) mAbsoluteLayout.generateLayoutParams(
+                getAttributeSet());
 
         assertNotNull(params);
         assertEquals(LayoutParams.MATCH_PARENT, params.width);
@@ -110,8 +109,9 @@ public class AbsoluteLayoutTest {
         assertEquals(0, params.y);
     }
 
+    @UiThreadTest
     @Test
-    public void testGenerateLayoutParams2() {
+    public void testGenerateLayoutParamsFromLayoutParams() {
         LayoutParams params =
             (LayoutParams) mMyAbsoluteLayout.generateLayoutParams(mAbsoluteLayoutParams);
 
@@ -126,6 +126,7 @@ public class AbsoluteLayoutTest {
         mMyAbsoluteLayout.generateLayoutParams((LayoutParams) null);
     }
 
+    @UiThreadTest
     @Test
     public void testGenerateDefaultLayoutParams() {
         LayoutParams params = (LayoutParams) mMyAbsoluteLayout.generateDefaultLayoutParams();
@@ -136,9 +137,13 @@ public class AbsoluteLayoutTest {
         assertEquals(0, params.y);
     }
 
-    private static class MyAbsoluteLayout extends AbsoluteLayout {
+    public static class MyAbsoluteLayout extends AbsoluteLayout {
         public MyAbsoluteLayout(Context context) {
             super(context);
+        }
+
+        public MyAbsoluteLayout(Context context, AttributeSet attrs) {
+            super(context, attrs);
         }
 
         @Override

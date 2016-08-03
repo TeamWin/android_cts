@@ -76,8 +76,8 @@ public class FrameLayoutTest {
     private FrameLayout mFrameLayout;
 
     @Rule
-    public ActivityTestRule<FrameLayoutCtsActivity> mActivityRule
-            = new ActivityTestRule<>(FrameLayoutCtsActivity.class);
+    public ActivityTestRule<FrameLayoutCtsActivity> mActivityRule =
+            new ActivityTestRule<>(FrameLayoutCtsActivity.class);
 
     @Before
     public void setup() {

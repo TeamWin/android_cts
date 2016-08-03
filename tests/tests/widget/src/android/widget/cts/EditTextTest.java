@@ -51,8 +51,8 @@ public class EditTextTest {
     private AttributeSet mAttributeSet;
 
     @Rule
-    public ActivityTestRule<EditTextCtsActivity> mActivityRule
-            = new ActivityTestRule<>(EditTextCtsActivity.class);
+    public ActivityTestRule<EditTextCtsActivity> mActivityRule =
+            new ActivityTestRule<>(EditTextCtsActivity.class);
 
     @Before
     public void setup() {

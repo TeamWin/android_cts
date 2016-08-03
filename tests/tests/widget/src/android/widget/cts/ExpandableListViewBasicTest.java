@@ -52,8 +52,8 @@ public class ExpandableListViewBasicTest {
     private ListUtil mListUtil;
 
     @Rule
-    public ActivityTestRule<ExpandableListBasic> mActivityRule
-            = new ActivityTestRule<>(ExpandableListBasic.class);
+    public ActivityTestRule<ExpandableListBasic> mActivityRule =
+            new ActivityTestRule<>(ExpandableListBasic.class);
 
     @Before
     public void setup() {

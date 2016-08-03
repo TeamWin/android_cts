@@ -59,8 +59,8 @@ public class DialerFilterTest {
     private DialerFilter mDialerFilter;
 
     @Rule
-    public ActivityTestRule<DialerFilterCtsActivity> mActivityRule
-            = new ActivityTestRule<>(DialerFilterCtsActivity.class);
+    public ActivityTestRule<DialerFilterCtsActivity> mActivityRule =
+            new ActivityTestRule<>(DialerFilterCtsActivity.class);
 
     @Before
     public void setup() {

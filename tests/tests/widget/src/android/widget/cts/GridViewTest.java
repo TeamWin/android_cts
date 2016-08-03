@@ -84,8 +84,8 @@ public class GridViewTest {
     private GridView mGridView;
 
     @Rule
-    public ActivityTestRule<GridViewCtsActivity> mActivityRule
-            = new ActivityTestRule<>(GridViewCtsActivity.class);
+    public ActivityTestRule<GridViewCtsActivity> mActivityRule =
+            new ActivityTestRule<>(GridViewCtsActivity.class);
 
     @Before
     public void setup() {
