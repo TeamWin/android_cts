@@ -16,7 +16,15 @@
 
 package android.widget.cts;
 
-import static org.mockito.Mockito.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.reset;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyZeroInteractions;
 
 import android.app.Activity;
 import android.app.Instrumentation;
@@ -24,13 +32,20 @@ import android.content.Context;
 import android.cts.util.CtsKeyEventUtil;
 import android.cts.util.CtsTouchUtils;
 import android.os.Parcelable;
-import android.test.ActivityInstrumentationTestCase2;
-import android.test.UiThreadTest;
+import android.support.test.InstrumentationRegistry;
+import android.support.test.annotation.UiThreadTest;
+import android.support.test.rule.ActivityTestRule;
+import android.support.test.runner.AndroidJUnit4;
 import android.test.suitebuilder.annotation.MediumTest;
 import android.util.AttributeSet;
 import android.view.KeyEvent;
 import android.view.View;
 import android.widget.TimePicker;
+
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -39,53 +54,34 @@ import java.util.Collections;
  * Test {@link TimePicker}.
  */
 @MediumTest
-public class TimePickerTest extends ActivityInstrumentationTestCase2<TimePickerCtsActivity> {
-    private TimePicker mTimePicker;
-    private Activity mActivity;
+@RunWith(AndroidJUnit4.class)
+public class TimePickerTest {
     private Instrumentation mInstrumentation;
+    private Activity mActivity;
+    private TimePicker mTimePicker;
 
-    public TimePickerTest() {
-        super("android.widget.cts", TimePickerCtsActivity.class);
-    }
+    @Rule
+    public ActivityTestRule<TimePickerCtsActivity> mActivityRule =
+            new ActivityTestRule<>(TimePickerCtsActivity.class);
 
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
-
-        mInstrumentation = getInstrumentation();
-        mActivity = getActivity();
+    @Before
+    public void setup() {
+        mInstrumentation = InstrumentationRegistry.getInstrumentation();
+        mActivity = mActivityRule.getActivity();
         mTimePicker = (TimePicker) mActivity.findViewById(R.id.timepicker_clock);
     }
 
+    @Test
     public void testConstructors() {
-        AttributeSet attrs =
-            mActivity.getResources().getLayout(android.widget.cts.R.layout.timepicker);
+        AttributeSet attrs = mActivity.getResources().getLayout(R.layout.timepicker);
         assertNotNull(attrs);
 
         new TimePicker(mActivity);
-        try {
-            new TimePicker(null);
-            fail("did not throw NullPointerException when param context is null.");
-        } catch (NullPointerException e) {
-            // expected
-        }
 
         new TimePicker(mActivity, attrs);
-        try {
-            new TimePicker(null, attrs);
-            fail("did not throw NullPointerException when param context is null.");
-        } catch (NullPointerException e) {
-            // expected
-        }
         new TimePicker(mActivity, null);
 
         new TimePicker(mActivity, attrs, 0);
-        try {
-            new TimePicker(null, attrs, 0);
-            fail("did not throw NullPointerException when param context is null.");
-        } catch (NullPointerException e) {
-            // expected
-        }
         new TimePicker(mActivity, null, 0);
         new TimePicker(mActivity, attrs, 0);
         new TimePicker(mActivity, null, android.R.attr.timePickerStyle);
@@ -93,7 +89,25 @@ public class TimePickerTest extends ActivityInstrumentationTestCase2<TimePickerC
         new TimePicker(mActivity, null, 0, android.R.style.Widget_Material_Light_TimePicker);
     }
 
+    @Test(expected=NullPointerException.class)
+    public void testConstructorNullContext1() {
+        new TimePicker(null);
+    }
+
+    @Test(expected=NullPointerException.class)
+    public void testConstructorNullContext2() {
+        AttributeSet attrs = mActivity.getResources().getLayout(R.layout.timepicker);
+        new TimePicker(null, attrs);
+    }
+
+    @Test(expected=NullPointerException.class)
+    public void testConstructorNullContext3() {
+        AttributeSet attrs = mActivity.getResources().getLayout(R.layout.timepicker);
+        new TimePicker(null, attrs, 0);
+    }
+
     @UiThreadTest
+    @Test
     public void testSetEnabled() {
         assertTrue(mTimePicker.isEnabled());
 
@@ -104,6 +118,8 @@ public class TimePickerTest extends ActivityInstrumentationTestCase2<TimePickerC
         assertTrue(mTimePicker.isEnabled());
     }
 
+    @UiThreadTest
+    @Test
     public void testSetOnTimeChangedListener() {
         // On time change listener is notified on every call to setCurrentHour / setCurrentMinute.
         // We want to make sure that before we register our listener, we initialize the time picker
@@ -115,19 +131,15 @@ public class TimePickerTest extends ActivityInstrumentationTestCase2<TimePickerC
         final int hourForTesting = 13;
         final int minuteForTesting = 50;
 
-        mInstrumentation.runOnMainSync(() -> {
-            mTimePicker.setHour(initialHour);
-            mTimePicker.setMinute(initialMinute);
-        });
+        mTimePicker.setHour(initialHour);
+        mTimePicker.setMinute(initialMinute);
 
         // Now register the listener
         TimePicker.OnTimeChangedListener mockOnTimeChangeListener =
                 mock(TimePicker.OnTimeChangedListener.class);
         mTimePicker.setOnTimeChangedListener(mockOnTimeChangeListener);
-        mInstrumentation.runOnMainSync(() -> {
-                mTimePicker.setCurrentHour(Integer.valueOf(hourForTesting));
-                mTimePicker.setCurrentMinute(Integer.valueOf(minuteForTesting));
-        });
+        mTimePicker.setCurrentHour(Integer.valueOf(hourForTesting));
+        mTimePicker.setCurrentMinute(Integer.valueOf(minuteForTesting));
         // We're expecting two onTimeChanged callbacks, one with new hour and one with new
         // hour+minute
         verify(mockOnTimeChangeListener, times(1)).onTimeChanged(
@@ -137,33 +149,31 @@ public class TimePickerTest extends ActivityInstrumentationTestCase2<TimePickerC
 
         // set the same hour as current
         reset(mockOnTimeChangeListener);
-        mInstrumentation.runOnMainSync(
-                () -> mTimePicker.setCurrentHour(Integer.valueOf(hourForTesting)));
+        mTimePicker.setCurrentHour(Integer.valueOf(hourForTesting));
         verifyZeroInteractions(mockOnTimeChangeListener);
 
-        mInstrumentation.runOnMainSync(
-                () -> mTimePicker.setCurrentHour(Integer.valueOf(hourForTesting + 1)));
+        mTimePicker.setCurrentHour(Integer.valueOf(hourForTesting + 1));
         verify(mockOnTimeChangeListener, times(1)).onTimeChanged(
                 mTimePicker, hourForTesting + 1, minuteForTesting);
 
         // set the same minute as current
         reset(mockOnTimeChangeListener);
-        mInstrumentation.runOnMainSync(() -> mTimePicker.setCurrentMinute(minuteForTesting));
+        mTimePicker.setCurrentMinute(minuteForTesting);
         verifyZeroInteractions(mockOnTimeChangeListener);
 
         reset(mockOnTimeChangeListener);
-        mInstrumentation.runOnMainSync(() -> mTimePicker.setCurrentMinute(minuteForTesting + 1));
+        mTimePicker.setCurrentMinute(minuteForTesting + 1);
         verify(mockOnTimeChangeListener, times(1)).onTimeChanged(
                 mTimePicker, hourForTesting + 1, minuteForTesting + 1);
 
         // change time picker mode
         reset(mockOnTimeChangeListener);
-        mInstrumentation.runOnMainSync(
-                () -> mTimePicker.setIs24HourView(!mTimePicker.is24HourView()));
+        mTimePicker.setIs24HourView(!mTimePicker.is24HourView());
         verifyZeroInteractions(mockOnTimeChangeListener);
     }
 
     @UiThreadTest
+    @Test
     public void testAccessCurrentHour() {
         // AM/PM mode
         mTimePicker.setIs24HourView(false);
@@ -194,6 +204,7 @@ public class TimePickerTest extends ActivityInstrumentationTestCase2<TimePickerC
     }
 
     @UiThreadTest
+    @Test
     public void testAccessHour() {
         // AM/PM mode
         mTimePicker.setIs24HourView(false);
@@ -224,6 +235,7 @@ public class TimePickerTest extends ActivityInstrumentationTestCase2<TimePickerC
     }
 
     @UiThreadTest
+    @Test
     public void testAccessIs24HourView() {
         assertFalse(mTimePicker.is24HourView());
 
@@ -235,6 +247,7 @@ public class TimePickerTest extends ActivityInstrumentationTestCase2<TimePickerC
     }
 
     @UiThreadTest
+    @Test
     public void testAccessCurrentMinute() {
         mTimePicker.setCurrentMinute(0);
         assertEquals(Integer.valueOf(0), mTimePicker.getCurrentMinute());
@@ -250,6 +263,7 @@ public class TimePickerTest extends ActivityInstrumentationTestCase2<TimePickerC
     }
 
     @UiThreadTest
+    @Test
     public void testAccessMinute() {
         mTimePicker.setMinute(0);
         assertEquals(0, mTimePicker.getMinute());
@@ -264,10 +278,12 @@ public class TimePickerTest extends ActivityInstrumentationTestCase2<TimePickerC
         assertEquals(59, mTimePicker.getMinute());
     }
 
+    @Test
     public void testGetBaseline() {
         assertEquals(-1, mTimePicker.getBaseline());
     }
 
+    @Test
     public void testOnSaveInstanceStateAndOnRestoreInstanceState() {
         MyTimePicker source = new MyTimePicker(mActivity);
         MyTimePicker dest = new MyTimePicker(mActivity);
@@ -283,6 +299,7 @@ public class TimePickerTest extends ActivityInstrumentationTestCase2<TimePickerC
         assertEquals(Integer.valueOf(expectMinute), dest.getCurrentMinute());
     }
 
+    @Test
     public void testKeyboardTabTraversalModeClock() {
         mTimePicker = (TimePicker) mActivity.findViewById(R.id.timepicker_clock);
 
@@ -309,6 +326,7 @@ public class TimePickerTest extends ActivityInstrumentationTestCase2<TimePickerC
                 false /* isSpinner */);
     }
 
+    @Test
     public void testKeyboardTabTraversalModeSpinner() {
         mTimePicker = (TimePicker) mActivity.findViewById(R.id.timepicker_spinner);
 
@@ -335,6 +353,7 @@ public class TimePickerTest extends ActivityInstrumentationTestCase2<TimePickerC
                 true /* isSpinner */);
     }
 
+    @Test
     public void testKeyboardInputModeClockAmPm() {
         final int initialHour = 6;
         final int initialMinute = 59;
@@ -409,6 +428,7 @@ public class TimePickerTest extends ActivityInstrumentationTestCase2<TimePickerC
         verifyModeClockMinuteInput();
     }
 
+    @Test
     public void testKeyboardInputModeClock24H() {
         final int initialHour = 6;
         final int initialMinute = 59;
@@ -457,6 +477,7 @@ public class TimePickerTest extends ActivityInstrumentationTestCase2<TimePickerC
         verifyModeClockMinuteInput();
     }
 
+    @Test
     public void testKeyboardInputModeSpinnerAmPm() {
         final int initialHour = 6;
         final int initialMinute = 59;
@@ -567,6 +588,7 @@ public class TimePickerTest extends ActivityInstrumentationTestCase2<TimePickerC
         assertEquals(initialMinute, mTimePicker.getMinute());
     }
 
+    @Test
     public void testKeyboardInputModeSpinner24H() {
         final int initialHour = 6;
         final int initialMinute = 59;

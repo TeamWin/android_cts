@@ -16,33 +16,49 @@
 
 package android.widget.cts;
 
-import static org.mockito.Matchers.*;
-import static org.mockito.Mockito.*;
+import static android.widget.cts.util.TestUtils.within;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyInt;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyZeroInteractions;
 
 import android.app.Activity;
 import android.app.Instrumentation;
 import android.content.Context;
 import android.cts.util.MediaUtils;
 import android.media.MediaPlayer;
-import android.test.ActivityInstrumentationTestCase2;
-import android.test.UiThreadTest;
+import android.os.SystemClock;
+import android.support.test.InstrumentationRegistry;
+import android.support.test.annotation.UiThreadTest;
+import android.support.test.rule.ActivityTestRule;
+import android.support.test.runner.AndroidJUnit4;
+import android.test.suitebuilder.annotation.LargeTest;
 import android.util.Log;
 import android.view.View.MeasureSpec;
 import android.widget.MediaController;
 import android.widget.VideoView;
 
-import org.mockito.invocation.InvocationOnMock;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Test {@link VideoView}.
  */
-public class VideoViewTest extends ActivityInstrumentationTestCase2<VideoViewCtsActivity> {
+@LargeTest
+@RunWith(AndroidJUnit4.class)
+public class VideoViewTest {
     /** Debug TAG. **/
     private static final String TAG = "VideoViewTest";
     /** The maximum time to wait for an operation. */
@@ -57,85 +73,51 @@ public class VideoViewTest extends ActivityInstrumentationTestCase2<VideoViewCts
         hardware that report a duration that's different by a few milliseconds */
     private static final int DURATION_DELTA = 100;
 
-    private VideoView mVideoView;
-    private Activity mActivity;
     private Instrumentation mInstrumentation;
+    private Activity mActivity;
+    private VideoView mVideoView;
     private String mVideoPath;
+
+    @Rule
+    public ActivityTestRule<VideoViewCtsActivity> mActivityRule =
+            new ActivityTestRule<>(VideoViewCtsActivity.class);
+
+    @Before
+    public void setup() throws Throwable {
+        mInstrumentation = InstrumentationRegistry.getInstrumentation();
+        mActivity = mActivityRule.getActivity();
+        mVideoView = (VideoView) mActivity.findViewById(R.id.videoview);
+
+        mVideoPath = prepareSampleVideo();
+        assertNotNull(mVideoPath);
+    }
 
     private boolean hasCodec() {
         return MediaUtils.hasCodecsForResource(mActivity, R.raw.testvideo);
     }
 
-    /**
-     * Instantiates a new video view test.
-     */
-    public VideoViewTest() {
-        super("android.widget.cts", VideoViewCtsActivity.class);
-    }
-
-    /**
-     * Find the video view specified by id.
-     *
-     * @param id the id
-     * @return the video view
-     */
-    private VideoView findVideoViewById(int id) {
-        return (VideoView) mActivity.findViewById(id);
-    }
-
     private String prepareSampleVideo() throws IOException {
-        InputStream source = null;
-        OutputStream target = null;
-
-        try {
-            source = mActivity.getResources().openRawResource(R.raw.testvideo);
-            target = mActivity.openFileOutput(VIDEO_NAME, Context.MODE_PRIVATE);
-
+        try (InputStream source = mActivity.getResources().openRawResource(R.raw.testvideo);
+             OutputStream target = mActivity.openFileOutput(VIDEO_NAME, Context.MODE_PRIVATE)) {
             final byte[] buffer = new byte[1024];
             for (int len = source.read(buffer); len > 0; len = source.read(buffer)) {
                 target.write(buffer, 0, len);
-            }
-        } finally {
-            if (source != null) {
-                source.close();
-            }
-            if (target != null) {
-                target.close();
             }
         }
 
         return mActivity.getFileStreamPath(VIDEO_NAME).getAbsolutePath();
     }
 
-    /**
-     * Wait for an asynchronous media operation complete.
-     * @throws InterruptedException
-     */
-    private void waitForOperationComplete() throws InterruptedException {
-        Thread.sleep(OPERATION_INTERVAL);
-    }
-
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
-        mActivity = getActivity();
-        mInstrumentation = getInstrumentation();
-        mVideoPath = prepareSampleVideo();
-        assertNotNull(mVideoPath);
-        mVideoView = findVideoViewById(R.id.videoview);
-    }
-
     private void makeVideoView() {
-        mActivity.runOnUiThread(new Runnable() {
-            public void run() {
-                MediaController mediaController = new MediaController(mActivity);
-                mVideoView.setMediaController(mediaController);
-            }
+        mInstrumentation.runOnMainSync(() -> {
+            MediaController mediaController = new MediaController(mActivity);
+            mVideoView.setMediaController(mediaController);
         });
         mInstrumentation.waitForIdleSync();
     }
 
     @UiThreadTest
+    @Test
     public void testConstructor() {
         new VideoView(mActivity);
 
@@ -144,7 +126,8 @@ public class VideoViewTest extends ActivityInstrumentationTestCase2<VideoViewCts
         new VideoView(mActivity, null, 0);
     }
 
-    public void testPlayVideo1() throws Throwable {
+    @Test
+    public void testPlayVideo() {
         makeVideoView();
         // Don't run the test if the codec isn't supported.
         if (!hasCodec()) {
@@ -154,59 +137,45 @@ public class VideoViewTest extends ActivityInstrumentationTestCase2<VideoViewCts
 
         final MediaPlayer.OnPreparedListener mockPreparedListener =
                 mock(MediaPlayer.OnPreparedListener.class);
-        final CountDownLatch preparedLatch = new CountDownLatch(1);
-        doAnswer((InvocationOnMock invocation) -> {
-            preparedLatch.countDown();
-            return null;
-        }).when(mockPreparedListener).onPrepared(any(MediaPlayer.class));
         mVideoView.setOnPreparedListener(mockPreparedListener);
 
         final MediaPlayer.OnCompletionListener mockCompletionListener =
                 mock(MediaPlayer.OnCompletionListener.class);
-        final CountDownLatch completionLatch = new CountDownLatch(1);
-        doAnswer((InvocationOnMock invocation) -> {
-            completionLatch.countDown();
-            return null;
-        }).when(mockCompletionListener).onCompletion(any(MediaPlayer.class));
         mVideoView.setOnCompletionListener(mockCompletionListener);
 
-        runTestOnUiThread(() -> mVideoView.setVideoPath(mVideoPath));
-        preparedLatch.await(TIME_OUT, TimeUnit.MILLISECONDS);
+        mInstrumentation.runOnMainSync(() -> mVideoView.setVideoPath(mVideoPath));
+        verify(mockPreparedListener, within(TIME_OUT)).onPrepared(any(MediaPlayer.class));
         verify(mockPreparedListener, times(1)).onPrepared(any(MediaPlayer.class));
         verifyZeroInteractions(mockCompletionListener);
 
-        runTestOnUiThread(mVideoView::start);
+        mInstrumentation.runOnMainSync(mVideoView::start);
         // wait time is longer than duration in case system is sluggish
-        completionLatch.await(mVideoView.getDuration() + TIME_OUT, TimeUnit.MILLISECONDS);
+        verify(mockCompletionListener, within(TIME_OUT)).onCompletion(any(MediaPlayer.class));
         verify(mockCompletionListener, times(1)).onCompletion(any(MediaPlayer.class));
     }
 
-    public void testSetOnErrorListener() throws Throwable {
+    @Test
+    public void testSetOnErrorListener() {
         makeVideoView();
 
         final MediaPlayer.OnErrorListener mockErrorListener =
                 mock(MediaPlayer.OnErrorListener.class);
-        final CountDownLatch errorLatch = new CountDownLatch(1);
-        doAnswer((InvocationOnMock invocation) -> {
-            errorLatch.countDown();
-            return null;
-        }).when(mockErrorListener).onError(any(MediaPlayer.class), anyInt(), anyInt());
         mVideoView.setOnErrorListener(mockErrorListener);
 
-        runTestOnUiThread(new Runnable() {
-            public void run() {
-                String path = "unknown path";
-                mVideoView.setVideoPath(path);
-                mVideoView.start();
-            }
+        mInstrumentation.runOnMainSync(() -> {
+            String path = "unknown path";
+            mVideoView.setVideoPath(path);
+            mVideoView.start();
         });
         mInstrumentation.waitForIdleSync();
 
-        errorLatch.await(TIME_OUT, TimeUnit.MILLISECONDS);
+        verify(mockErrorListener, within(TIME_OUT)).onError(
+                any(MediaPlayer.class), anyInt(), anyInt());
         verify(mockErrorListener, times(1)).onError(any(MediaPlayer.class), anyInt(), anyInt());
     }
 
-    public void testGetBufferPercentage() throws Throwable {
+    @Test
+    public void testGetBufferPercentage() {
         makeVideoView();
         // Don't run the test if the codec isn't supported.
         if (!hasCodec()) {
@@ -216,23 +185,19 @@ public class VideoViewTest extends ActivityInstrumentationTestCase2<VideoViewCts
 
         final MediaPlayer.OnPreparedListener mockPreparedListener =
                 mock(MediaPlayer.OnPreparedListener.class);
-        final CountDownLatch preparedLatch = new CountDownLatch(1);
-        doAnswer((InvocationOnMock invocation) -> {
-            preparedLatch.countDown();
-            return null;
-        }).when(mockPreparedListener).onPrepared(any(MediaPlayer.class));
         mVideoView.setOnPreparedListener(mockPreparedListener);
 
-        runTestOnUiThread(() -> mVideoView.setVideoPath(mVideoPath));
+        mInstrumentation.runOnMainSync(() -> mVideoView.setVideoPath(mVideoPath));
         mInstrumentation.waitForIdleSync();
 
-        preparedLatch.await(TIME_OUT, TimeUnit.MILLISECONDS);
+        verify(mockPreparedListener, within(TIME_OUT)).onPrepared(any(MediaPlayer.class));
         verify(mockPreparedListener, times(1)).onPrepared(any(MediaPlayer.class));
         int percent = mVideoView.getBufferPercentage();
         assertTrue(percent >= 0 && percent <= 100);
     }
 
     @UiThreadTest
+    @Test
     public void testResolveAdjustedSize() {
         mVideoView = new VideoView(mActivity);
 
@@ -248,19 +213,21 @@ public class VideoViewTest extends ActivityInstrumentationTestCase2<VideoViewCts
         assertEquals(specSize, resolvedSize);
     }
 
-    public void testGetDuration() throws Throwable {
+    @Test
+    public void testGetDuration() {
         // Don't run the test if the codec isn't supported.
         if (!hasCodec()) {
             Log.i(TAG, "SKIPPING testGetDuration(): codec is not supported");
             return;
         }
 
-        runTestOnUiThread(() -> mVideoView.setVideoPath(mVideoPath));
-        waitForOperationComplete();
+        mInstrumentation.runOnMainSync(() -> mVideoView.setVideoPath(mVideoPath));
+        SystemClock.sleep(OPERATION_INTERVAL);
         assertTrue(Math.abs(mVideoView.getDuration() - TEST_VIDEO_DURATION) < DURATION_DELTA);
     }
 
     @UiThreadTest
+    @Test
     public void testSetMediaController() {
         final MediaController ctlr = new MediaController(mActivity);
         mVideoView.setMediaController(ctlr);

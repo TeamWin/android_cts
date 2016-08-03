@@ -49,11 +49,17 @@
             android:layout_height="wrap_content" />
 
         <ToggleButton
-            android:id="@+id/button_tint"
+            android:id="@+id/toggle_tint"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:buttonTint="@android:color/white"
             android:buttonTintMode="src_over" />
+
+        <view
+            class="android.widget.cts.ToggleButtonTest$MockToggleButton"
+            android:id="@+id/toggle_custom"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
 
     </LinearLayout>
 

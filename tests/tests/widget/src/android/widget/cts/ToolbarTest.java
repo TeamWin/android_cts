@@ -16,14 +16,24 @@
 
 package android.widget.cts;
 
-import static org.mockito.Mockito.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 
 import android.app.Instrumentation;
 import android.cts.util.WidgetTestUtils;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;
-import android.test.ActivityInstrumentationTestCase2;
-import android.test.UiThreadTest;
+import android.support.test.InstrumentationRegistry;
+import android.support.test.annotation.UiThreadTest;
+import android.support.test.rule.ActivityTestRule;
+import android.support.test.runner.AndroidJUnit4;
 import android.test.suitebuilder.annotation.MediumTest;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -31,25 +41,30 @@ import android.view.View;
 import android.widget.Toolbar;
 import android.widget.cts.util.TestUtils;
 
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+
 @MediumTest
-public class ToolbarTest extends ActivityInstrumentationTestCase2<ToolbarCtsActivity> {
+@RunWith(AndroidJUnit4.class)
+public class ToolbarTest {
     private Instrumentation mInstrumentation;
     private ToolbarCtsActivity mActivity;
     private Toolbar mMainToolbar;
 
-    public ToolbarTest() {
-        super("android.widget.cts", ToolbarCtsActivity.class);
-    }
+    @Rule
+    public ActivityTestRule<ToolbarCtsActivity> mActivityRule =
+            new ActivityTestRule<>(ToolbarCtsActivity.class);
 
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
-
-        mInstrumentation = getInstrumentation();
-        mActivity = getActivity();
+    @Before
+    public void setup() {
+        mInstrumentation = InstrumentationRegistry.getInstrumentation();
+        mActivity = mActivityRule.getActivity();
         mMainToolbar = mActivity.getMainToolbar();
     }
 
+    @Test
     public void testConstructor() {
         new Toolbar(mActivity);
 
@@ -60,6 +75,7 @@ public class ToolbarTest extends ActivityInstrumentationTestCase2<ToolbarCtsActi
         new Toolbar(mActivity, null, 0, android.R.style.Widget_Material_Toolbar);
     }
 
+    @Test
     public void testTitleAndSubtitleContent() {
         // Note that this method is *not* annotated to run on the UI thread, and every
         // call to setTitle / setSubtitle is wrapped to wait until the next draw pass
@@ -84,6 +100,7 @@ public class ToolbarTest extends ActivityInstrumentationTestCase2<ToolbarCtsActi
         assertEquals("New subtitle", mMainToolbar.getSubtitle());
     }
 
+    @Test
     public void testTitleAndSubtitleAppearance() {
         WidgetTestUtils.runOnMainAndDrawSync(mInstrumentation, mMainToolbar,
                 () -> mMainToolbar.setTitle(R.string.toolbar_title));
@@ -107,6 +124,7 @@ public class ToolbarTest extends ActivityInstrumentationTestCase2<ToolbarCtsActi
     }
 
     @UiThreadTest
+    @Test
     public void testGetTitleMargins() {
         assertEquals(5, mMainToolbar.getTitleMarginStart());
         assertEquals(10, mMainToolbar.getTitleMarginTop());
@@ -115,6 +133,7 @@ public class ToolbarTest extends ActivityInstrumentationTestCase2<ToolbarCtsActi
     }
 
     @UiThreadTest
+    @Test
     public void testSetTitleMargins() {
         Toolbar toolbar = (Toolbar) mActivity.findViewById(R.id.toolbar2);
 
@@ -134,6 +153,7 @@ public class ToolbarTest extends ActivityInstrumentationTestCase2<ToolbarCtsActi
         assertEquals(40, toolbar.getTitleMarginBottom());
     }
 
+    @Test
     public void testMenuContent() {
         WidgetTestUtils.runOnMainAndDrawSync(mInstrumentation, mMainToolbar,
                 () -> mMainToolbar.inflateMenu(R.menu.toolbar_menu));
@@ -163,6 +183,7 @@ public class ToolbarTest extends ActivityInstrumentationTestCase2<ToolbarCtsActi
                 menu.findItem(R.id.action_share));
     }
 
+    @Test
     public void testMenuOverflowShowHide() {
         // Inflate menu and check that we're not showing overflow menu yet
         mInstrumentation.runOnMainSync(() -> mMainToolbar.inflateMenu(R.menu.toolbar_menu));
@@ -179,6 +200,7 @@ public class ToolbarTest extends ActivityInstrumentationTestCase2<ToolbarCtsActi
         assertFalse(mMainToolbar.isOverflowMenuShowing());
     }
 
+    @Test
     public void testMenuOverflowSubmenu() {
         // Inflate menu and check that we're not showing overflow menu yet
         WidgetTestUtils.runOnMainAndDrawSync(mInstrumentation, mMainToolbar,
@@ -209,6 +231,7 @@ public class ToolbarTest extends ActivityInstrumentationTestCase2<ToolbarCtsActi
         assertFalse(mMainToolbar.isOverflowMenuShowing());
     }
 
+    @Test
     public void testMenuOverflowIcon() {
         // Inflate menu and check that we're not showing overflow menu yet
         WidgetTestUtils.runOnMainAndDrawSync(mInstrumentation, mMainToolbar,
@@ -224,6 +247,7 @@ public class ToolbarTest extends ActivityInstrumentationTestCase2<ToolbarCtsActi
                 true, Color.RED, 1, false);
     }
 
+    @Test
     public void testActionView() {
         // Inflate menu and check that we don't have an expanded action view
         WidgetTestUtils.runOnMainAndDrawSync(mInstrumentation, mMainToolbar,
@@ -259,6 +283,7 @@ public class ToolbarTest extends ActivityInstrumentationTestCase2<ToolbarCtsActi
         assertFalse(mMainToolbar.hasExpandedActionView());
     }
 
+    @Test
     public void testNavigationConfiguration() {
         WidgetTestUtils.runOnMainAndDrawSync(mInstrumentation, mMainToolbar,
                 () -> mMainToolbar.setNavigationIcon(R.drawable.icon_green));
@@ -286,6 +311,7 @@ public class ToolbarTest extends ActivityInstrumentationTestCase2<ToolbarCtsActi
         assertEquals("Navigation legend", mMainToolbar.getNavigationContentDescription());
     }
 
+    @Test
     public void testLogoConfiguration() {
         WidgetTestUtils.runOnMainAndDrawSync(mInstrumentation, mMainToolbar,
                 () -> mMainToolbar.setLogo(R.drawable.icon_yellow));
@@ -313,40 +339,43 @@ public class ToolbarTest extends ActivityInstrumentationTestCase2<ToolbarCtsActi
         assertEquals("Logo legend", mMainToolbar.getLogoDescription());
     }
 
+    @UiThreadTest
+    @Test
     public void testContentInsetsLtr() {
-        mInstrumentation.runOnMainSync(
-                () -> mMainToolbar.setLayoutDirection(View.LAYOUT_DIRECTION_LTR));
+        mMainToolbar.setLayoutDirection(View.LAYOUT_DIRECTION_LTR);
 
-        mInstrumentation.runOnMainSync(() -> mMainToolbar.setContentInsetsAbsolute(20, 25));
+        mMainToolbar.setContentInsetsAbsolute(20, 25);
         assertEquals(20, mMainToolbar.getContentInsetLeft());
         assertEquals(20, mMainToolbar.getContentInsetStart());
         assertEquals(25, mMainToolbar.getContentInsetRight());
         assertEquals(25, mMainToolbar.getContentInsetEnd());
 
-        mInstrumentation.runOnMainSync(() -> mMainToolbar.setContentInsetsRelative(40, 20));
+        mMainToolbar.setContentInsetsRelative(40, 20);
         assertEquals(40, mMainToolbar.getContentInsetLeft());
         assertEquals(40, mMainToolbar.getContentInsetStart());
         assertEquals(20, mMainToolbar.getContentInsetRight());
         assertEquals(20, mMainToolbar.getContentInsetEnd());
     }
 
+    @UiThreadTest
+    @Test
     public void testContentInsetsRtl() {
-        mInstrumentation.runOnMainSync(
-                () -> mMainToolbar.setLayoutDirection(View.LAYOUT_DIRECTION_RTL));
+        mMainToolbar.setLayoutDirection(View.LAYOUT_DIRECTION_RTL);
 
-        mInstrumentation.runOnMainSync(() -> mMainToolbar.setContentInsetsAbsolute(20, 25));
+        mMainToolbar.setContentInsetsAbsolute(20, 25);
         assertEquals(20, mMainToolbar.getContentInsetLeft());
         assertEquals(25, mMainToolbar.getContentInsetStart());
         assertEquals(25, mMainToolbar.getContentInsetRight());
         assertEquals(20, mMainToolbar.getContentInsetEnd());
 
-        mInstrumentation.runOnMainSync(() -> mMainToolbar.setContentInsetsRelative(40, 20));
+        mMainToolbar.setContentInsetsRelative(40, 20);
         assertEquals(20, mMainToolbar.getContentInsetLeft());
         assertEquals(40, mMainToolbar.getContentInsetStart());
         assertEquals(40, mMainToolbar.getContentInsetRight());
         assertEquals(20, mMainToolbar.getContentInsetEnd());
     }
 
+    @Test
     public void testCurrentContentInsetsLtr() {
         mInstrumentation.runOnMainSync(
                 () -> mMainToolbar.setLayoutDirection(View.LAYOUT_DIRECTION_LTR));
@@ -398,6 +427,7 @@ public class ToolbarTest extends ActivityInstrumentationTestCase2<ToolbarCtsActi
         assertEquals(35, mMainToolbar.getCurrentContentInsetEnd());
     }
 
+    @Test
     public void testCurrentContentInsetsRtl() {
         mInstrumentation.runOnMainSync(
                 () -> mMainToolbar.setLayoutDirection(View.LAYOUT_DIRECTION_RTL));
@@ -450,18 +480,21 @@ public class ToolbarTest extends ActivityInstrumentationTestCase2<ToolbarCtsActi
     }
 
     @UiThreadTest
+    @Test
     public void testPopupTheme() {
         mMainToolbar.setPopupTheme(R.style.ToolbarPopupTheme_Test);
         assertEquals(R.style.ToolbarPopupTheme_Test, mMainToolbar.getPopupTheme());
     }
 
+    @UiThreadTest
+    @Test
     public void testNavigationOnClickListener() {
         View.OnClickListener mockListener = mock(View.OnClickListener.class);
         mMainToolbar.setNavigationOnClickListener(mockListener);
 
         verify(mockListener, never()).onClick(any(View.class));
 
-        mInstrumentation.runOnMainSync(() -> mMainToolbar.getNavigationView().performClick());
+        mMainToolbar.getNavigationView().performClick();
         verify(mockListener, times(1)).onClick(any(View.class));
 
         verifyNoMoreInteractions(mockListener);
