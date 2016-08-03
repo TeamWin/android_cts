@@ -28,9 +28,11 @@ import android.accounts.cts.common.Fixtures;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
+import android.os.Binder;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.HandlerThread;
+import android.os.IBinder;
 import android.os.Looper;
 import android.os.StrictMode;
 import android.platform.test.annotations.Presubmit;
@@ -968,6 +970,64 @@ public class AccountManagerTest extends ActivityInstrumentationTestCase2<Account
         // Ask for the AuthToken
         assertNotNull(token);
         assertEquals(mockAuthenticator.getLastTokenServed(), token);
+    }
+
+    /*
+     * Test registration of visibility and then test subsequent visibility checks:
+     * Test removeVisibility, makeVisible, isVisible. Note that if no mappings
+     * exist, defaults to visible due to nature of addAccountExplicitly currently!
+     */
+    public void testRegisterVisibility() throws IOException,
+            AuthenticatorException, OperationCanceledException {
+        int uid1 = 12345;
+        int uid2 = 54321;
+        /* notable case, notice that a is visible even though it hasn't been added to a white list,
+        this is because there is no whitelist created and the assumption for no whitelist
+        is visibility.*/
+        assertTrue(am.isAccountVisible(ACCOUNT, uid1));
+        assertTrue(am.makeAccountVisible(ACCOUNT, uid2));
+        assertFalse(am.makeAccountVisible(ACCOUNT, uid2));
+        /* now that there is a whitelist for the account a, uid1 registers as false,
+        whitelist is created through addAccountExplicitlyWithUid */
+        assertFalse(am.isAccountVisible(ACCOUNT, uid1));
+        assertTrue(am.makeAccountVisible(ACCOUNT, uid1));
+        assertTrue(am.isAccountVisible(ACCOUNT, uid1));
+        assertTrue(am.removeAccountVisibility(ACCOUNT, uid2));
+        assertFalse(am.isAccountVisible(ACCOUNT, uid2));
+        assertTrue(am.removeAccountVisibility(ACCOUNT, uid1));
+        /* notice how even though account has a white list of size 0, white list functionality
+        NOT removed, this functionality is only removed through a call to "addAccountsExplicitly",
+        which allows account to be accessed by ALL uids, so removes white listed settings. */
+        assertFalse(am.removeAccountVisibility(ACCOUNT, uid2));
+        assertFalse(am.removeAccountVisibility(ACCOUNT, uid2));
+
+        //clears whitelist by adding account explicitly and then removing account
+        am.addAccountExplicitly(ACCOUNT, ACCOUNT_PASSWORD, null /* userData */);
+
+        removeAccount(am, ACCOUNT, mActivity, null /* callback */);
+
+    }
+
+
+    /*
+     * Test Positive Case for adding accounts explicitly with UID
+     */
+    public void testAddAccountExplicitlyWithUid() throws OperationCanceledException,
+            AuthenticatorException, IOException{
+        boolean result = am.addAccountExplicitly(
+                ACCOUNT,
+                ACCOUNT_PASSWORD,
+                USERDATA_BUNDLE,
+                new int[] {Binder.getCallingUid()});
+        assertTrue(result);
+        Account[] accounts = am.getAccounts();
+        assertTrue(accounts.length == 1);
+        assertTrue(accounts[0].equals(ACCOUNT));
+        /* note that the authenticator and this class have same signature
+        as well as it is in white list */
+        assertTrue(am.isAccountVisible(ACCOUNT, Binder.getCallingUid()));
+        assertTrue(removeAccount(am, ACCOUNT, mActivity, null /* callback */).getBoolean(
+                AccountManager.KEY_BOOLEAN_RESULT));
     }
 
     private static class BlockingGetAuthTokenFetcher implements TokenFetcher {
