@@ -192,6 +192,11 @@
                   android:exported="true"
                   android:theme="@style/NoPreview"
         />
+        <activity android:name=".TranslucentTopActivity"
+                  android:process=".top_process"
+                  android:exported="true"
+                  android:theme="@style/TranslucentTheme"
+        />
     </application>
 </manifest>
 

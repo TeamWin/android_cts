@@ -31,6 +31,7 @@ public class ActivityManagerTransitionSelectionTests extends ActivityManagerTest
 
     private static final String BOTTOM_ACTIVITY_NAME = "BottomActivity";
     private static final String TOP_ACTIVITY_NAME = "TopActivity";
+    private static final String TRANSLUCENT_TOP_ACTIVITY_NAME = "TranslucentTopActivity";
 
     private static final String TRANSIT_ACTIVITY_OPEN = "TRANSIT_ACTIVITY_OPEN";
     private static final String TRANSIT_ACTIVITY_CLOSE = "TRANSIT_ACTIVITY_CLOSE";
@@ -150,32 +151,76 @@ public class ActivityManagerTransitionSelectionTests extends ActivityManagerTest
 
     //------------------------------------------------------------------------//
 
-    private void testOpenActivity(boolean bottomWallpaper,
-            boolean topWallpaper, boolean slowStop, String expectedTransit) throws Exception {
-        testTransitionSelection(true /*testOpen*/, false /*testNewTask*/,
-                bottomWallpaper, topWallpaper, slowStop, expectedTransit);
+    /// Test closing of translucent activity/task
+    public void testCloseActivity_NeitherWallpaper_Translucent() throws Exception {
+        testCloseActivityTranslucent(false /*bottomWallpaper*/, false /*topWallpaper*/,
+                TRANSIT_ACTIVITY_CLOSE);
     }
-    private void testCloseActivity(boolean bottomWallpaper,
-            boolean topWallpaper, boolean slowStop, String expectedTransit) throws Exception {
-        testTransitionSelection(false /*testOpen*/, false /*testNewTask*/,
-                bottomWallpaper, topWallpaper, slowStop, expectedTransit);
+
+    public void testCloseActivity_BottomWallpaper_Translucent() throws Exception {
+        testCloseActivityTranslucent(true /*bottomWallpaper*/, false /*topWallpaper*/,
+                TRANSIT_WALLPAPER_OPEN);
     }
-    private void testOpenTask(boolean bottomWallpaper,
-            boolean topWallpaper, boolean slowStop, String expectedTransit) throws Exception {
-        testTransitionSelection(true /*testOpen*/, true /*testNewTask*/,
-                bottomWallpaper, topWallpaper, slowStop, expectedTransit);
+
+    public void testCloseActivity_BothWallpaper_Translucent() throws Exception {
+        testCloseActivityTranslucent(true /*bottomWallpaper*/, true /*topWallpaper*/,
+                TRANSIT_WALLPAPER_INTRA_CLOSE);
     }
-    private void testCloseTask(boolean bottomWallpaper,
-            boolean topWallpaper, boolean slowStop, String expectedTransit) throws Exception {
-        testTransitionSelection(false /*testOpen*/, true /*testNewTask*/,
-                bottomWallpaper, topWallpaper, slowStop, expectedTransit);
+
+    public void testCloseTask_NeitherWallpaper_Translucent() throws Exception {
+        testCloseTaskTranslucent(false /*bottomWallpaper*/, false /*topWallpaper*/,
+                TRANSIT_TASK_CLOSE);
+    }
+
+    public void testCloseTask_BottomWallpaper_Translucent() throws Exception {
+        testCloseTaskTranslucent(true /*bottomWallpaper*/, false /*topWallpaper*/,
+                TRANSIT_WALLPAPER_OPEN);
+    }
+
+    public void testCloseTask_BothWallpaper_Translucent() throws Exception {
+        testCloseTaskTranslucent(true /*bottomWallpaper*/, true /*topWallpaper*/,
+                TRANSIT_WALLPAPER_INTRA_CLOSE);
     }
 
     //------------------------------------------------------------------------//
 
+    private void testOpenActivity(boolean bottomWallpaper,
+            boolean topWallpaper, boolean slowStop, String expectedTransit) throws Exception {
+        testTransitionSelection(true /*testOpen*/, false /*testNewTask*/,
+                bottomWallpaper, topWallpaper, false /*topTranslucent*/, slowStop, expectedTransit);
+    }
+    private void testCloseActivity(boolean bottomWallpaper,
+            boolean topWallpaper, boolean slowStop, String expectedTransit) throws Exception {
+        testTransitionSelection(false /*testOpen*/, false /*testNewTask*/,
+                bottomWallpaper, topWallpaper, false /*topTranslucent*/, slowStop, expectedTransit);
+    }
+    private void testOpenTask(boolean bottomWallpaper,
+            boolean topWallpaper, boolean slowStop, String expectedTransit) throws Exception {
+        testTransitionSelection(true /*testOpen*/, true /*testNewTask*/,
+                bottomWallpaper, topWallpaper, false /*topTranslucent*/, slowStop, expectedTransit);
+    }
+    private void testCloseTask(boolean bottomWallpaper,
+            boolean topWallpaper, boolean slowStop, String expectedTransit) throws Exception {
+        testTransitionSelection(false /*testOpen*/, true /*testNewTask*/,
+                bottomWallpaper, topWallpaper, false /*topTranslucent*/, slowStop, expectedTransit);
+    }
+    private void testCloseActivityTranslucent(boolean bottomWallpaper,
+            boolean topWallpaper, String expectedTransit) throws Exception {
+        testTransitionSelection(false /*testOpen*/, false /*testNewTask*/,
+                bottomWallpaper, topWallpaper, true /*topTranslucent*/,
+                false /*slowStop*/, expectedTransit);
+    }
+    private void testCloseTaskTranslucent(boolean bottomWallpaper,
+            boolean topWallpaper, String expectedTransit) throws Exception {
+        testTransitionSelection(false /*testOpen*/, true /*testNewTask*/,
+                bottomWallpaper, topWallpaper, true /*topTranslucent*/,
+                false /*slowStop*/, expectedTransit);
+    }
+    //------------------------------------------------------------------------//
+
     private void testTransitionSelection(
             boolean testOpen, boolean testNewTask,
-            boolean bottomWallpaper, boolean topWallpaper,
+            boolean bottomWallpaper, boolean topWallpaper, boolean topTranslucent,
             boolean testSlowStop, String expectedTransit) throws Exception {
         String bottomStartCmd = getAmStartCmd(BOTTOM_ACTIVITY_NAME);
         if (bottomWallpaper) {
@@ -185,12 +230,15 @@ public class ActivityManagerTransitionSelectionTests extends ActivityManagerTest
             bottomStartCmd += " --ei STOP_DELAY 3000";
         }
         executeShellCommand(bottomStartCmd);
+
+        final String topActivityName = topTranslucent ?
+                TRANSLUCENT_TOP_ACTIVITY_NAME : TOP_ACTIVITY_NAME;
         final String[] bottomActivityArray = new String[] {BOTTOM_ACTIVITY_NAME};
-        final String[] topActivityArray = new String[] {TOP_ACTIVITY_NAME};
+        final String[] topActivityArray = new String[] {topActivityName};
 
         mAmWmState.computeState(mDevice, bottomActivityArray);
 
-        String topStartCmd = getAmStartCmd(TOP_ACTIVITY_NAME);
+        String topStartCmd = getAmStartCmd(topActivityName);
         if (testNewTask) {
             topStartCmd += " -f 0x18000000";
         }
