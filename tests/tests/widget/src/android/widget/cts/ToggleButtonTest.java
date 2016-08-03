@@ -16,40 +16,50 @@
 
 package android.widget.cts;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertSame;
+import static org.junit.Assert.assertTrue;
+
 import android.app.Activity;
-import android.app.Instrumentation;
 import android.content.Context;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.StateListDrawable;
-import android.test.ActivityInstrumentationTestCase2;
+import android.support.test.annotation.UiThreadTest;
+import android.support.test.rule.ActivityTestRule;
+import android.support.test.runner.AndroidJUnit4;
 import android.test.suitebuilder.annotation.SmallTest;
+import android.util.AttributeSet;
 import android.widget.ToggleButton;
-import android.widget.cts.R;
 
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
 /**
  * Test {@link ToggleButton}.
  */
 @SmallTest
-public class ToggleButtonTest extends ActivityInstrumentationTestCase2<ToggleButtonCtsActivity> {
+@RunWith(AndroidJUnit4.class)
+public class ToggleButtonTest {
     private static final String TEXT_OFF = "text off";
     private static final String TEXT_ON = "text on";
 
-    private Instrumentation mInstrumentation;
     private Activity mActivity;
 
-    public ToggleButtonTest() {
-        super("android.widget.cts", ToggleButtonCtsActivity.class);
+    @Rule
+    public ActivityTestRule<ToggleButtonCtsActivity> mActivityRule =
+            new ActivityTestRule<>(ToggleButtonCtsActivity.class);
+
+    @Before
+    public void setup() {
+        mActivity = mActivityRule.getActivity();
     }
 
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
-
-        mInstrumentation = getInstrumentation();
-        mActivity = getActivity();
-    }
-
+    @Test
     public void testConstructor() {
         new ToggleButton(mActivity);
         new ToggleButton(mActivity, null);
@@ -59,29 +69,24 @@ public class ToggleButtonTest extends ActivityInstrumentationTestCase2<ToggleBut
                 android.R.style.Widget_DeviceDefault_Light_Button_Toggle);
         new ToggleButton(mActivity, null, 0, android.R.style.Widget_Material_Button_Toggle);
         new ToggleButton(mActivity, null, 0, android.R.style.Widget_Material_Light_Button_Toggle);
-
-        try {
-            new ToggleButton(null, null, -1);
-            fail("There should be a NullPointerException thrown out.");
-        } catch (NullPointerException e) {
-            // expected, test success.
-        }
-
-        try {
-            new ToggleButton(null, null);
-            fail("There should be a NullPointerException thrown out.");
-        } catch (NullPointerException e) {
-            // expected, test success.
-        }
-
-        try {
-            new ToggleButton(null);
-            fail("There should be a NullPointerException thrown out.");
-        } catch (NullPointerException e) {
-            // expected, test success.
-        }
     }
 
+    @Test(expected=NullPointerException.class)
+    public void testConstructorWithNullContext1() {
+        new ToggleButton(null);
+    }
+
+    @Test(expected=NullPointerException.class)
+    public void testConstructorWithNullContext2() {
+        new ToggleButton(null, null);
+    }
+
+    @Test(expected=NullPointerException.class)
+    public void testConstructorWithNullContext3() {
+        new ToggleButton(null, null, -1);
+    }
+
+    @Test
     public void testAttributesFromStyle() {
         final ToggleButton toggleButton =
                 (ToggleButton) mActivity.findViewById(R.id.toggle_with_style);
@@ -89,6 +94,7 @@ public class ToggleButtonTest extends ActivityInstrumentationTestCase2<ToggleBut
         assertEquals(mActivity.getString(R.string.toggle_text_off), toggleButton.getTextOff());
     }
 
+    @Test
     public void testAttributesFromLayout() {
         final ToggleButton toggleButton =
                 (ToggleButton) mActivity.findViewById(R.id.toggle_with_defaults);
@@ -96,24 +102,29 @@ public class ToggleButtonTest extends ActivityInstrumentationTestCase2<ToggleBut
         assertEquals(mActivity.getString(R.string.toggle_text_off_alt), toggleButton.getTextOff());
     }
 
+    @UiThreadTest
+    @Test
     public void testAccessTextOff() {
         final ToggleButton toggleButton = (ToggleButton) mActivity.findViewById(R.id.toggle1);
-        mInstrumentation.runOnMainSync(() -> toggleButton.setTextOff("android"));
+        toggleButton.setTextOff("android");
         assertEquals("android", toggleButton.getTextOff());
-        mInstrumentation.runOnMainSync(() -> toggleButton.setChecked(false));
+        toggleButton.setChecked(false);
 
-        mInstrumentation.runOnMainSync(() -> toggleButton.setTextOff(null));
+        toggleButton.setTextOff(null);
         assertNull(toggleButton.getTextOff());
 
-        mInstrumentation.runOnMainSync(() -> toggleButton.setTextOff(""));
+        toggleButton.setTextOff("");
         assertEquals("", toggleButton.getTextOff());
     }
 
+    @UiThreadTest
+    @Test
     public void testDrawableStateChanged() {
-        final MockToggleButton toggleButton = new MockToggleButton(mActivity);
+        final MockToggleButton toggleButton =
+                (MockToggleButton) mActivity.findViewById(R.id.toggle_custom);
 
         // drawableStateChanged without any drawable.
-        mInstrumentation.runOnMainSync(() -> toggleButton.drawableStateChanged());
+        toggleButton.drawableStateChanged();
 
         final StateListDrawable drawable = new StateListDrawable();
         drawable.addState(new int[] { android.R.attr.state_pressed },
@@ -122,39 +133,44 @@ public class ToggleButtonTest extends ActivityInstrumentationTestCase2<ToggleBut
                 mActivity.getDrawable(R.drawable.scenery));
 
         // drawableStateChanged when CheckMarkDrawable is not null.
-        mInstrumentation.runOnMainSync(() -> toggleButton.setButtonDrawable(drawable));
+        toggleButton.setButtonDrawable(drawable);
         drawable.setState(null);
         assertNull(drawable.getState());
 
-        mInstrumentation.runOnMainSync(toggleButton::drawableStateChanged);
+        toggleButton.drawableStateChanged();
         assertNotNull(drawable.getState());
         assertEquals(toggleButton.getDrawableState(), drawable.getState());
     }
 
+    @UiThreadTest
+    @Test
     public void testOnFinishInflate() {
-        MockToggleButton toggleButton = new MockToggleButton(mActivity);
+        final MockToggleButton toggleButton =
+                (MockToggleButton) mActivity.findViewById(R.id.toggle_custom);
         toggleButton.onFinishInflate();
     }
 
+    @UiThreadTest
+    @Test
     public void testSetChecked() {
         final ToggleButton toggleButton = (ToggleButton) mActivity.findViewById(R.id.toggle1);
         assertFalse(toggleButton.isChecked());
 
-        mInstrumentation.runOnMainSync(() -> toggleButton.setChecked(true));
+        toggleButton.setChecked(true);
         assertTrue(toggleButton.isChecked());
 
-        mInstrumentation.runOnMainSync(() -> toggleButton.setChecked(false));
+        toggleButton.setChecked(false);
         assertFalse(toggleButton.isChecked());
     }
 
+    @UiThreadTest
+    @Test
     public void testToggleText() {
         final ToggleButton toggleButton = (ToggleButton) mActivity.findViewById(R.id.toggle1);
-        mInstrumentation.runOnMainSync(() -> {
-            toggleButton.setText("default text");
-            toggleButton.setTextOn(TEXT_ON);
-            toggleButton.setTextOff(TEXT_OFF);
-            toggleButton.setChecked(true);
-        });
+        toggleButton.setText("default text");
+        toggleButton.setTextOn(TEXT_ON);
+        toggleButton.setTextOff(TEXT_OFF);
+        toggleButton.setChecked(true);
         assertEquals(TEXT_ON, toggleButton.getText().toString());
         toggleButton.setChecked(false);
         assertFalse(toggleButton.isChecked());
@@ -162,55 +178,59 @@ public class ToggleButtonTest extends ActivityInstrumentationTestCase2<ToggleBut
 
         // Set the current displaying text as TEXT_OFF.
         // Then set checked button, but textOn is null.
-        mInstrumentation.runOnMainSync(() -> {
-            toggleButton.setTextOff(TEXT_OFF);
-            toggleButton.setChecked(false);
-            toggleButton.setTextOn(null);
-            toggleButton.setChecked(true);
-        });
+        toggleButton.setTextOff(TEXT_OFF);
+        toggleButton.setChecked(false);
+        toggleButton.setTextOn(null);
+        toggleButton.setChecked(true);
         assertEquals(TEXT_OFF, toggleButton.getText().toString());
 
         // Set the current displaying text as TEXT_ON. Then set unchecked button,
         // but textOff is null.
-        mInstrumentation.runOnMainSync(() -> {
-            toggleButton.setTextOn(TEXT_ON);
-            toggleButton.setChecked(true);
-            toggleButton.setTextOff(null);
-            toggleButton.setChecked(false);
-        });
+        toggleButton.setTextOn(TEXT_ON);
+        toggleButton.setChecked(true);
+        toggleButton.setTextOff(null);
+        toggleButton.setChecked(false);
         assertEquals(TEXT_ON, toggleButton.getText().toString());
     }
 
+    @UiThreadTest
+    @Test
     public void testSetBackgroundDrawable() {
         final ToggleButton toggleButton = (ToggleButton) mActivity.findViewById(R.id.toggle1);
         final Drawable drawable = mActivity.getDrawable(R.drawable.scenery);
 
-        mInstrumentation.runOnMainSync(() -> toggleButton.setBackgroundDrawable(drawable));
+        toggleButton.setBackgroundDrawable(drawable);
         assertSame(drawable, toggleButton.getBackground());
 
         // remove the background
-        mInstrumentation.runOnMainSync(() -> toggleButton.setBackgroundDrawable(null));
+        toggleButton.setBackgroundDrawable(null);
         assertNull(toggleButton.getBackground());
     }
 
+    @UiThreadTest
+    @Test
     public void testAccessTextOn() {
         final ToggleButton toggleButton = (ToggleButton) mActivity.findViewById(R.id.toggle1);
-        mInstrumentation.runOnMainSync(() -> toggleButton.setTextOn("cts"));
+        toggleButton.setTextOn("cts");
         assertEquals("cts", toggleButton.getTextOn());
 
-        mInstrumentation.runOnMainSync(() -> toggleButton.setTextOn(null));
+        toggleButton.setTextOn(null);
         assertNull(toggleButton.getTextOn());
 
-        mInstrumentation.runOnMainSync(() -> toggleButton.setTextOn(""));
+        toggleButton.setTextOn("");
         assertEquals("", toggleButton.getTextOn());
     }
 
     /**
      * MockToggleButton class for testing.
      */
-    private static final class MockToggleButton extends ToggleButton {
+    public static final class MockToggleButton extends ToggleButton {
         public MockToggleButton(Context context) {
             super(context);
+        }
+
+        public MockToggleButton(Context context, AttributeSet attrs) {
+            super(context, attrs);
         }
 
         @Override
