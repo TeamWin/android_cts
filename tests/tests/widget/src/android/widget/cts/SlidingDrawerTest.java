@@ -21,6 +21,8 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.mockito.Mockito.doAnswer;
+import static android.widget.cts.util.TestUtils.within;
+
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
@@ -48,13 +50,10 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InOrder;
-import org.mockito.invocation.InvocationOnMock;
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
 
 import java.io.IOException;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Test {@link SlidingDrawer}.
@@ -250,29 +249,19 @@ public class SlidingDrawerTest {
         verify(mockCloseListener, times(1)).onDrawerClosed();
     }
 
+    @UiThreadTest
     @Test
     public void testSetOnDrawerScrollListener() {
-        final CountDownLatch countDownLatch = new CountDownLatch(2);
+        final SlidingDrawer drawer = (SlidingDrawer) mActivity.findViewById(R.id.drawer);
+
         final SlidingDrawer.OnDrawerScrollListener mockScrollListener =
                 mock(SlidingDrawer.OnDrawerScrollListener.class);
-        doAnswer((InvocationOnMock invocation) -> {
-            countDownLatch.countDown();
-            return null;
-        }).when(mockScrollListener).onScrollStarted();
-        doAnswer((InvocationOnMock invocation) -> {
-            countDownLatch.countDown();
-            return null;
-        }).when(mockScrollListener).onScrollEnded();
-        mDrawer.setOnDrawerScrollListener(mockScrollListener);
+        drawer.setOnDrawerScrollListener(mockScrollListener);
 
-        mInstrumentation.runOnMainSync(mDrawer::animateOpen);
+        drawer.animateOpen();
 
-        try {
-            assertTrue(countDownLatch.await(2 * TEST_TIMEOUT, TimeUnit.MILLISECONDS));
-        } catch (InterruptedException ie) {
-            // Do nothing as we're about to verify that both callbacks have been called
-            // in any case
-        }
+        verify(mockScrollListener, within(TEST_TIMEOUT)).onScrollStarted();
+        verify(mockScrollListener, within(TEST_TIMEOUT)).onScrollEnded();
 
         InOrder inOrder = inOrder(mockScrollListener);
         inOrder.verify(mockScrollListener).onScrollStarted();

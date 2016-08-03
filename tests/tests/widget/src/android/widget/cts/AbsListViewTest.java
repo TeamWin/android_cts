@@ -16,13 +16,14 @@
 
 package android.widget.cts;
 
+import static android.widget.cts.util.TestUtils.within;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.anyInt;
 import static org.mockito.Mockito.atLeastOnce;
@@ -80,7 +81,6 @@ import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InOrder;
 import org.mockito.invocation.InvocationOnMock;
-import org.mockito.stubbing.Answer;
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
 
@@ -88,8 +88,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
 
 @SmallTest
 @RunWith(AndroidJUnit4.class)
@@ -270,23 +268,12 @@ public class AbsListViewTest {
     private void fling(int velocityY, OnScrollListener mockScrollListener) {
         reset(mockScrollListener);
 
-        // Create a count down latch and configure it to be counted down when our mock
-        // listener is invoked with IDLE state
-        final CountDownLatch countDownLatch = new CountDownLatch(1);
-        doAnswer((InvocationOnMock invocation) -> {
-             countDownLatch.countDown();
-             return null;
-        }).when(mockScrollListener).onScrollStateChanged(
-                mListView, OnScrollListener.SCROLL_STATE_IDLE);
-
-        // Now fling the list view
+        // Fling the list view
         mInstrumentation.runOnMainSync(() -> mListView.fling(velocityY));
 
-        // And wait for the latch to be triggered
-        try {
-            assertTrue(countDownLatch.await(20L, TimeUnit.SECONDS));
-        } catch (InterruptedException e) {
-        }
+        // and wait until our mock listener is invoked with IDLE state
+        verify(mockScrollListener, within(20000)).onScrollStateChanged(
+                mListView, OnScrollListener.SCROLL_STATE_IDLE);
     }
 
     @Test
@@ -619,30 +606,10 @@ public class AbsListViewTest {
 
         verifyZeroInteractions(mockOnItemLongClickListener);
 
-        // Create a count down latch and configure it to be counted down when our mock
-        // listener is invoked with the expected view
-        final CountDownLatch countDownLatch = new CountDownLatch(1);
-        doAnswer(new Answer<Void>() {
-             @Override
-             public Void answer(InvocationOnMock invocation) {
-                 countDownLatch.countDown();
-                 return null;
-             }
-         }).when(mockOnItemLongClickListener).onItemLongClick(listView, v, 2,
-                listView.getItemIdAtPosition(2));
-
-        mInstrumentation.waitForIdleSync();
-
         // Now long click our view
         CtsTouchUtils.emulateLongClick(mInstrumentation, v, 500);
-
-        // And wait for the latch to be triggered
-        try {
-            assertTrue(countDownLatch.await(20L, TimeUnit.SECONDS));
-        } catch (InterruptedException e) {
-        }
-
-        verify(mockOnItemLongClickListener, times(1)).onItemLongClick(listView, v, 2,
+        // and wait until our mock listener is invoked with the expected view
+        verify(mockOnItemLongClickListener, within(5000)).onItemLongClick(listView, v, 2,
                 listView.getItemIdAtPosition(2));
 
         ContextMenuInfo cmi = listView.getContextMenuInfo();
@@ -998,16 +965,6 @@ public class AbsListViewTest {
                 any(ActionMode.class), eq(4), eq(4L), eq(false));
     }
 
-    private void configureMultiChoiceModeListenerOnItemChecked(final CountDownLatch countDownLatch,
-            int positionToBecomeChecked) {
-        doAnswer((InvocationOnMock invocation) -> {
-            countDownLatch.countDown();
-            return null;
-        }).when(mMultiChoiceModeListener).onItemCheckedStateChanged(
-                any(ActionMode.class), eq(positionToBecomeChecked),
-                eq((long) positionToBecomeChecked), eq(true));
-    }
-
     @LargeTest
     @Test
     public void testMultiSelectionWithLongPressAndTaps() {
@@ -1018,32 +975,24 @@ public class AbsListViewTest {
 
         // Emulate long-click on the middle item of the currently visible content
         final int positionForInitialSelection = (firstVisiblePosition + lastVisiblePosition) / 2;
-        final CountDownLatch initialCheckedLatch = new CountDownLatch(1);
-        configureMultiChoiceModeListenerOnItemChecked(
-                initialCheckedLatch, positionForInitialSelection);
         CtsTouchUtils.emulateLongClick(mInstrumentation,
                 mListView.getChildAt(positionForInitialSelection));
-        try {
-            assertTrue(initialCheckedLatch.await(1, TimeUnit.SECONDS));
-        } catch (InterruptedException ie) {
-            fail();
-        }
-        // and verify that the item is now checked
+        // wait until our listener has been notified that the item has been checked
+        verify(mMultiChoiceModeListener, within(1000)).onItemCheckedStateChanged(
+                any(ActionMode.class), eq(positionForInitialSelection),
+                eq((long) positionForInitialSelection), eq(true));
+        // and verify the overall checked state of our list
         verifyCheckedState(new long[] { positionForInitialSelection });
 
         if (firstVisiblePosition != positionForInitialSelection) {
-            final CountDownLatch secondCheckedLatch = new CountDownLatch(1);
-            configureMultiChoiceModeListenerOnItemChecked(
-                    secondCheckedLatch, firstVisiblePosition);
             // Tap the first element in our list
             CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation,
                     mListView.getChildAt(firstVisiblePosition));
-            try {
-                assertTrue(secondCheckedLatch.await(1, TimeUnit.SECONDS));
-            } catch (InterruptedException ie) {
-                fail();
-            }
-            // and verify that the item is now checked
+            // wait until our listener has been notified that the item has been checked
+            verify(mMultiChoiceModeListener, within(1000)).onItemCheckedStateChanged(
+                    any(ActionMode.class), eq(firstVisiblePosition),
+                    eq((long) firstVisiblePosition), eq(true));
+            // and verify the overall checked state of our list
             verifyCheckedState(new long[] { firstVisiblePosition, positionForInitialSelection });
         }
 
@@ -1051,17 +1000,14 @@ public class AbsListViewTest {
         CtsTouchUtils.emulateScrollToBottom(mInstrumentation, mListView);
         final int lastListPosition = COUNTRY_LIST.length - 1;
         if (lastListPosition != positionForInitialSelection) {
-            final CountDownLatch thirdCheckedLatch = new CountDownLatch(1);
-            configureMultiChoiceModeListenerOnItemChecked(thirdCheckedLatch, lastListPosition);
             // Tap the last element in our list
             CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation,
                     mListView.getChildAt(mListView.getChildCount() - 1));
-            try {
-                assertTrue(thirdCheckedLatch.await(1, TimeUnit.SECONDS));
-            } catch (InterruptedException ie) {
-                fail();
-            }
-            // and verify that the item is now checked and our listener has been notified
+            // wait until our listener has been notified that the item has been checked
+            verify(mMultiChoiceModeListener, within(1000)).onItemCheckedStateChanged(
+                    any(ActionMode.class), eq(lastListPosition),
+                    eq((long) lastListPosition), eq(true));
+            // and verify the overall checked state of our list
             verifyCheckedState(new long[] { firstVisiblePosition, positionForInitialSelection,
                     lastListPosition });
         }
