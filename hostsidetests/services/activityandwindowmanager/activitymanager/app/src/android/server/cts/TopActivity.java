@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.server.app;
+package android.server.cts;
 
 import android.os.Handler;
 import android.os.Bundle;
