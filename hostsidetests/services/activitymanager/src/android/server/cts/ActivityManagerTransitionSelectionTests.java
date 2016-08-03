@@ -42,6 +42,8 @@ public class ActivityManagerTransitionSelectionTests extends ActivityManagerTest
     private static final String TRANSIT_WALLPAPER_INTRA_OPEN = "TRANSIT_WALLPAPER_INTRA_OPEN";
     private static final String TRANSIT_WALLPAPER_INTRA_CLOSE = "TRANSIT_WALLPAPER_INTRA_CLOSE";
 
+    //------------------------------------------------------------------------//
+
     // Test activity open/close under normal timing
     public void testOpenActivity_NeitherWallpaper() throws Exception {
         testOpenActivity(false /*bottomWallpaper*/, false /*topWallpaper*/,
@@ -72,6 +74,8 @@ public class ActivityManagerTransitionSelectionTests extends ActivityManagerTest
         testCloseActivity(true /*bottomWallpaper*/, true /*topWallpaper*/,
                 false /*slowStop*/, TRANSIT_WALLPAPER_INTRA_CLOSE);
     }
+
+    //------------------------------------------------------------------------//
 
     // Test task open/close under normal timing
     public void testOpenTask_NeitherWallpaper() throws Exception {
@@ -104,44 +108,45 @@ public class ActivityManagerTransitionSelectionTests extends ActivityManagerTest
                 false /*slowStop*/, TRANSIT_WALLPAPER_INTRA_CLOSE);
     }
 
+    //------------------------------------------------------------------------//
+
     // Test activity close -- bottom activity slow in stopping
     // These simulate the case where the bottom activity is resumed
     // before AM receives its activitiyStopped
+    public void testCloseActivity_NeitherWallpaper_SlowStop() throws Exception {
+        testCloseActivity(false /*bottomWallpaper*/, false /*topWallpaper*/,
+                true /*slowStop*/, TRANSIT_ACTIVITY_CLOSE);
+    }
 
-    // TODO: Re-enable when slowStop can successfully trigger the original
-    // failure in b/30255354.
-//    public void testCloseActivity_NeitherWallpaper_SlowStop() throws Exception {
-//        testCloseActivity(false /*bottomWallpaper*/, false /*topWallpaper*/,
-//                true /*slowStop*/, TRANSIT_ACTIVITY_CLOSE);
-//    }
-//
-//    public void testCloseActivity_BottomWallpaper_SlowStop() throws Exception {
-//        testCloseActivity(true /*bottomWallpaper*/, false /*topWallpaper*/,
-//                true /*slowStop*/, TRANSIT_WALLPAPER_OPEN);
-//    }
-//
-//    public void testCloseActivity_BothWallpaper_SlowStop() throws Exception {
-//        testCloseActivity(true /*bottomWallpaper*/, true /*topWallpaper*/,
-//                true /*slowStop*/, TRANSIT_WALLPAPER_INTRA_CLOSE);
-//    }
-//
-//    // Test task close -- bottom task top activity slow in stopping
-//    // These simulate the case where the bottom activity is resumed
-//    // before AM receives its activitiyStopped
-//    public void testCloseTask_NeitherWallpaper_SlowStop() throws Exception {
-//        testCloseTask(false /*bottomWallpaper*/, false /*topWallpaper*/,
-//                true /*slowStop*/, TRANSIT_TASK_CLOSE);
-//    }
-//
-//    public void testCloseTask_BottomWallpaper_SlowStop() throws Exception {
-//        testCloseTask(true /*bottomWallpaper*/, false /*topWallpaper*/,
-//                true /*slowStop*/, TRANSIT_WALLPAPER_OPEN);
-//    }
-//
-//    public void testCloseTask_BothWallpaper_SlowStop() throws Exception {
-//        testCloseTask(true /*bottomWallpaper*/, true /*topWallpaper*/,
-//                true /*slowStop*/, TRANSIT_WALLPAPER_INTRA_CLOSE);
-//    }
+    public void testCloseActivity_BottomWallpaper_SlowStop() throws Exception {
+        testCloseActivity(true /*bottomWallpaper*/, false /*topWallpaper*/,
+                true /*slowStop*/, TRANSIT_WALLPAPER_OPEN);
+    }
+
+    public void testCloseActivity_BothWallpaper_SlowStop() throws Exception {
+        testCloseActivity(true /*bottomWallpaper*/, true /*topWallpaper*/,
+                true /*slowStop*/, TRANSIT_WALLPAPER_INTRA_CLOSE);
+    }
+
+    //------------------------------------------------------------------------//
+
+    // Test task close -- bottom task top activity slow in stopping
+    // These simulate the case where the bottom activity is resumed
+    // before AM receives its activitiyStopped
+    public void testCloseTask_NeitherWallpaper_SlowStop() throws Exception {
+        testCloseTask(false /*bottomWallpaper*/, false /*topWallpaper*/,
+                true /*slowStop*/, TRANSIT_TASK_CLOSE);
+    }
+
+    public void testCloseTask_BottomWallpaper_SlowStop() throws Exception {
+        testCloseTask(true /*bottomWallpaper*/, false /*topWallpaper*/,
+                true /*slowStop*/, TRANSIT_WALLPAPER_OPEN);
+    }
+
+    public void testCloseTask_BothWallpaper_SlowStop() throws Exception {
+        testCloseTask(true /*bottomWallpaper*/, true /*topWallpaper*/,
+                true /*slowStop*/, TRANSIT_WALLPAPER_INTRA_CLOSE);
+    }
 
     //------------------------------------------------------------------------//
 

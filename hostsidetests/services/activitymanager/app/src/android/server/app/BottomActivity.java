@@ -16,12 +16,19 @@
 
 package android.server.app;
 
+import android.content.Context;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.WindowManager;
 
 public class BottomActivity extends AbstractLifecycleLogActivity {
 
     private static final String TAG = BottomActivity.class.getSimpleName();
+
+    private int mStopDelay;
+    private View mFloatingWindow;
 
     @Override
     protected String getTag() {
@@ -36,22 +43,61 @@ public class BottomActivity extends AbstractLifecycleLogActivity {
         if (useWallpaper) {
             setTheme(R.style.WallpaperTheme);
         }
+        setContentView(R.layout.main);
+        getWindow().getAttributes().setTitle("Main");
+
+        // Delayed stop is for simulating a case where resume happens before
+        // activityStopped() is received by AM, and the transition starts without
+        // going through fully stopped state (see b/30255354).
+        // If enabled, we stall onStop() of BottomActivity, open TopActivity but make
+        // it finish before onStop() ends. This will cause BottomActivity to resume before
+        // it notifies AM of activityStopped(). We also add a second window of
+        // TYPE_BASE_APPLICATION, so that the transition animation could start earlier.
+        // Otherwise the main window has to relayout to visible first and the error won't occur.
+        // Note that if the test fails, we shouldn't try to change the app here to make
+        // it pass. The test app is artificially made to simulate an failure case, but
+        // it's not doing anything wrong.
+        mStopDelay = getIntent().getIntExtra("STOP_DELAY", 0);
+        if (mStopDelay > 0) {
+            LayoutInflater inflater = getLayoutInflater();
+            mFloatingWindow = inflater.inflate(R.layout.floating, null);
+
+            WindowManager.LayoutParams params = new WindowManager.LayoutParams();
+            params.height = WindowManager.LayoutParams.WRAP_CONTENT;
+            params.width = WindowManager.LayoutParams.WRAP_CONTENT;
+            params.type = WindowManager.LayoutParams.TYPE_BASE_APPLICATION;
+            params.setTitle("Floating");
+            getWindowManager().addView(mFloatingWindow, params);
+        }
+    }
+
+    @Override
+    public void onResume() {
+        Log.d(TAG, "onResume() E");
+        super.onResume();
+
+        if (mStopDelay > 0) {
+            // Refresh floating window
+            Log.d(TAG, "Scheuling invalidate Floating Window in onResume()");
+            mFloatingWindow.invalidate();
+        }
+
+        Log.d(TAG, "onResume() X");
     }
 
     @Override
     protected void onStop() {
         super.onStop();
 
-        // TODO: delayed stopping is for simulating a case where resume happens before
-        // activityStopped() is received by AM, and the transition starts without going
-        // through fully stopped state (see b/30255354). This sample is however not
-        // failing exactly as in b/30255354. This needs to be resolved first, otherwise
-        // there is no point enabling the slow stop tests (as they always pass).
-        final int stopDelay = getIntent().getIntExtra("STOP_DELAY", 0);
-        if (stopDelay > 0) {
+        if (mStopDelay > 0) {
             try {
-                Thread.sleep(stopDelay);
+                Log.d(TAG, "Stalling onStop() by " + mStopDelay + " ms...");
+                Thread.sleep(mStopDelay);
             } catch(InterruptedException e) {}
+
+            // Refresh floating window
+            Log.d(TAG, "Scheuling invalidate Floating Window in onStop()");
+            mFloatingWindow.invalidate();
         }
     }
 }
