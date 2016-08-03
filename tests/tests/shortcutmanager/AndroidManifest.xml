@@ -42,6 +42,10 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity-alias>
+
+        <!-- It's not exporeted, but should still be launchable. -->
+        <activity android:name="android.content.pm.cts.shortcutmanager.ShortcutLaunchedActivity"
+            android:exported="false"/>
     </application>
 
     <instrumentation android:name="android.support.test.runner.AndroidJUnitRunner"

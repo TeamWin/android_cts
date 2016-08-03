@@ -36,7 +36,7 @@ import junit.framework.AssertionFailedError;
 /**
  * Tests for {@link ShortcutManager} and {@link ShortcutInfo}.
  *
- * In this test, we tests the main functionalities of those, without throttling.  We
+ * In this test, we tests the main functionalities of those, without throttling.
  */
 @SmallTest
 public class ShortcutManagerClientApiTest extends ShortcutManagerCtsTestsBase {
