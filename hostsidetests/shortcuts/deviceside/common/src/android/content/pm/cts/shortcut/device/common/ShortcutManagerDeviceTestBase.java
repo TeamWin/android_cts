@@ -19,6 +19,7 @@ import static com.android.server.pm.shortcutmanagertest.ShortcutManagerTestUtils
 import static com.android.server.pm.shortcutmanagertest.ShortcutManagerTestUtils.list;
 import static com.android.server.pm.shortcutmanagertest.ShortcutManagerTestUtils.setDefaultLauncher;
 
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.pm.LauncherApps;
 import android.content.pm.LauncherApps.ShortcutQuery;
@@ -76,6 +77,11 @@ public abstract class ShortcutManagerDeviceTestBase extends InstrumentationTestC
         return android.os.Process.myUserHandle();
     }
 
+    protected void setAsDefaultLauncher(Class<?> clazz) {
+        setDefaultLauncher(getInstrumentation(),
+                getContext().getPackageName() + "/" + clazz.getName());
+    }
+
     protected Drawable getIconAsLauncher(String packageName, String shortcutId) {
         final ShortcutQuery q = new ShortcutQuery()
                 .setQueryFlags(ShortcutQuery.FLAG_MATCH_DYNAMIC
@@ -100,5 +106,18 @@ public abstract class ShortcutManagerDeviceTestBase extends InstrumentationTestC
         final Drawable expected = expectedIcon.loadDrawable(getContext());
         assertEquals(expected.getIntrinsicWidth(), actual.getIntrinsicWidth());
         assertEquals(expected.getIntrinsicHeight(), actual.getIntrinsicHeight());
+    }
+
+    public ComponentName getActivity(String className) {
+        return new ComponentName(getContext(), getContext().getPackageName() + "." + className);
+    }
+
+    protected List<ShortcutInfo> getPackageShortcuts(String packageName) {
+        final ShortcutQuery q = new ShortcutQuery()
+                .setQueryFlags(ShortcutQuery.FLAG_MATCH_DYNAMIC
+                        | ShortcutQuery.FLAG_MATCH_MANIFEST
+                        | ShortcutQuery.FLAG_MATCH_PINNED)
+                .setPackage(packageName);
+        return getLauncherApps().getShortcuts(q, getUserHandle());
     }
 }
