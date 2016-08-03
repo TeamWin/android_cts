@@ -16,10 +16,17 @@
 
 package android.widget.cts;
 
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+
 import android.app.Activity;
+import android.app.Instrumentation;
 import android.cts.util.CtsTouchUtils;
-import android.test.ActivityInstrumentationTestCase2;
-import android.test.UiThreadTest;
+import android.support.test.InstrumentationRegistry;
+import android.support.test.annotation.UiThreadTest;
+import android.support.test.rule.ActivityTestRule;
+import android.support.test.runner.AndroidJUnit4;
 import android.test.suitebuilder.annotation.LargeTest;
 import android.test.suitebuilder.annotation.SmallTest;
 import android.util.AttributeSet;
@@ -29,6 +36,10 @@ import android.view.ViewConfiguration;
 import android.widget.ListView;
 import android.widget.ZoomButton;
 
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.xmlpull.v1.XmlPullParser;
 
 import java.util.ArrayList;
@@ -36,24 +47,27 @@ import java.util.Collections;
 import java.util.List;
 
 @SmallTest
-public class ZoomButtonTest extends ActivityInstrumentationTestCase2<ZoomButtonCtsActivity> {
+@RunWith(AndroidJUnit4.class)
+public class ZoomButtonTest {
     private static long NANOS_IN_MILLI = 1000000;
+
+    private Instrumentation mInstrumentation;
     private ZoomButton mZoomButton;
     private Activity mActivity;
 
-    public ZoomButtonTest() {
-        super("android.widget.cts", ZoomButtonCtsActivity.class);
-    }
+    @Rule
+    public ActivityTestRule<ZoomButtonCtsActivity> mActivityRule =
+            new ActivityTestRule<>(ZoomButtonCtsActivity.class);
 
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
-
-        mZoomButton = (ZoomButton) getActivity().findViewById(R.id.zoombutton_test);
-        mActivity = getActivity();
+    @Before
+    public void setup() {
+        mInstrumentation = InstrumentationRegistry.getInstrumentation();
+        mActivity = mActivityRule.getActivity();
+        mZoomButton = (ZoomButton) mActivity.findViewById(R.id.zoombutton_test);
     }
 
     @UiThreadTest
+    @Test
     public void testConstructor() {
         new ZoomButton(mActivity);
 
@@ -68,27 +82,25 @@ public class ZoomButtonTest extends ActivityInstrumentationTestCase2<ZoomButtonC
         assertNotNull(attrs);
         new ZoomButton(mActivity, attrs);
         new ZoomButton(mActivity, attrs, 0);
+    }
 
-        try {
-            new ZoomButton(null);
-            fail("should throw NullPointerException.");
-        } catch (NullPointerException e) {
-        }
+    @Test(expected=NullPointerException.class)
+    public void testConstructorWithNullContext1() {
+        new ZoomButton(null);
+    }
 
-        try {
-            new ZoomButton(null, null);
-            fail("should throw NullPointerException.");
-        } catch (NullPointerException e) {
-        }
+    @Test(expected=NullPointerException.class)
+    public void testConstructorWithNullContext2() {
+        new ZoomButton(null, null);
+    }
 
-        try {
-            new ZoomButton(null, null, 0);
-            fail("should throw NullPointerException.");
-        } catch (NullPointerException e) {
-        }
+    @Test(expected=NullPointerException.class)
+    public void testConstructorWithNullContext3() {
+        new ZoomButton(null, null, 0);
     }
 
     @UiThreadTest
+    @Test
     public void testSetEnabled() {
         assertFalse(mZoomButton.isPressed());
         mZoomButton.setEnabled(true);
@@ -107,6 +119,7 @@ public class ZoomButtonTest extends ActivityInstrumentationTestCase2<ZoomButtonC
     }
 
     @UiThreadTest
+    @Test
     public void testDispatchUnhandledMove() {
         assertFalse(mZoomButton.dispatchUnhandledMove(new ListView(mActivity), View.FOCUS_DOWN));
 
@@ -118,7 +131,7 @@ public class ZoomButtonTest extends ActivityInstrumentationTestCase2<ZoomButtonC
 
         final long startTime = System.nanoTime();
         // Emulate long click that "lasts" for ten seconds
-        CtsTouchUtils.emulateLongClick(getInstrumentation(), mZoomButton, 10000);
+        CtsTouchUtils.emulateLongClick(mInstrumentation, mZoomButton, 10000);
 
         final List<Long> callbackInvocations = zoomClickListener.getClickTimes();
         assertFalse("Expecting at least one callback", callbackInvocations.isEmpty());
@@ -150,6 +163,7 @@ public class ZoomButtonTest extends ActivityInstrumentationTestCase2<ZoomButtonC
     }
 
     @LargeTest
+    @Test
     public void testOnLongClick() {
         // Since Mockito doesn't have utilities to track the timestamps of method invocations,
         // we're using our own custom click listener for that. We want to verify that the
@@ -163,15 +177,8 @@ public class ZoomButtonTest extends ActivityInstrumentationTestCase2<ZoomButtonC
         verifyZoomSpeed(zoomClickListener, 2000);
     }
 
-    public void testOnTouchEvent() {
-        // Do not test. Implementation details.
-    }
-
-    public void testOnKeyUp() {
-        // Do not test. Implementation details.
-    }
-
     @LargeTest
+    @Test
     public void testSetZoomSpeed() {
         final long[] zoomSpeeds = { 100, -1, 5000, 1000, 2500 };
         mZoomButton.setEnabled(true);
