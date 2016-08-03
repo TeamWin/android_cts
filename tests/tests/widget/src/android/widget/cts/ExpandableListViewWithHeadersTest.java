@@ -46,8 +46,8 @@ public class ExpandableListViewWithHeadersTest {
     private ListUtil mListUtil;
 
     @Rule
-    public ActivityTestRule<ExpandableListWithHeaders> mActivityRule
-            = new ActivityTestRule<>(ExpandableListWithHeaders.class);
+    public ActivityTestRule<ExpandableListWithHeaders> mActivityRule =
+            new ActivityTestRule<>(ExpandableListWithHeaders.class);
 
     @Before
     public void setup() {

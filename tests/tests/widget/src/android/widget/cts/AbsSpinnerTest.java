@@ -55,8 +55,8 @@ public class AbsSpinnerTest {
     private AbsSpinner mAbsSpinner;
 
     @Rule
-    public ActivityTestRule<RelativeLayoutCtsActivity> mActivityRule
-            = new ActivityTestRule<>(RelativeLayoutCtsActivity.class);
+    public ActivityTestRule<RelativeLayoutCtsActivity> mActivityRule =
+            new ActivityTestRule<>(RelativeLayoutCtsActivity.class);
 
     @Before
     public void setup() {
@@ -90,7 +90,7 @@ public class AbsSpinnerTest {
     @Test
     public void testSetSelectionIntBoolean() {
         ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(mActivity,
-                android.widget.cts.R.array.string, android.R.layout.simple_spinner_item);
+                R.array.string, android.R.layout.simple_spinner_item);
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         mAbsSpinner.setAdapter(adapter);
         assertEquals(0, mAbsSpinner.getSelectedItemPosition());
@@ -113,7 +113,7 @@ public class AbsSpinnerTest {
     @Test
     public void testSetSelectionInt() {
         ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(mActivity,
-                android.widget.cts.R.array.string, android.R.layout.simple_spinner_item);
+                R.array.string, android.R.layout.simple_spinner_item);
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         mAbsSpinner.setAdapter(adapter);
         assertEquals(0, mAbsSpinner.getSelectedItemPosition());
@@ -135,7 +135,7 @@ public class AbsSpinnerTest {
     @Test
     public void testAccessAdapter() {
         ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(mActivity,
-                android.widget.cts.R.array.string, android.R.layout.simple_spinner_item);
+                R.array.string, android.R.layout.simple_spinner_item);
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
 
         mAbsSpinner.setAdapter(adapter);
@@ -167,7 +167,7 @@ public class AbsSpinnerTest {
     @Test
     public void testGetCount() {
         ArrayAdapter<CharSequence> adapter1 = ArrayAdapter.createFromResource(mActivity,
-                android.widget.cts.R.array.string, android.R.layout.simple_spinner_item);
+                R.array.string, android.R.layout.simple_spinner_item);
 
         mAbsSpinner.setAdapter(adapter1);
         assertEquals(adapter1.getCount(), mAbsSpinner.getCount());
@@ -243,7 +243,7 @@ public class AbsSpinnerTest {
     @Test
     public void testOnSaveAndRestoreInstanceState() {
         ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(mActivity,
-                android.widget.cts.R.array.string, android.R.layout.simple_spinner_item);
+                R.array.string, android.R.layout.simple_spinner_item);
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         mAbsSpinner.setAdapter(adapter);
         assertEquals(0, mAbsSpinner.getSelectedItemPosition());

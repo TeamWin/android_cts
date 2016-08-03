@@ -63,12 +63,12 @@ public class AbsListView_ScrollTest {
     };
 
     @Rule
-    public ActivityTestRule<ListViewFixedCtsActivity> mActivityRule
-            = new ActivityTestRule<>(ListViewFixedCtsActivity.class);
+    public ActivityTestRule<ListViewFixedCtsActivity> mActivityRule =
+            new ActivityTestRule<>(ListViewFixedCtsActivity.class);
 
+    private Instrumentation mInstrumentation;
     private AbsListView mListView;
     private Context mContext;
-    private Instrumentation mInstrumentation;
     private ArrayAdapter<String> mCountriesAdapter;
 
     @Before

@@ -29,6 +29,7 @@ import android.app.Activity;
 import android.app.Instrumentation;
 import android.cts.util.CtsTouchUtils;
 import android.support.test.InstrumentationRegistry;
+import android.support.test.annotation.UiThreadTest;
 import android.support.test.rule.ActivityTestRule;
 import android.support.test.runner.AndroidJUnit4;
 import android.test.suitebuilder.annotation.MediumTest;
@@ -60,19 +61,19 @@ public class PopupMenuTest {
     public ActivityTestRule<PopupMenuCtsActivity> mActivityRule =
             new ActivityTestRule<>(PopupMenuCtsActivity.class);
 
+
+    @UiThreadTest
     @Before
     public void setup() {
         mInstrumentation = InstrumentationRegistry.getInstrumentation();
         mActivity = mActivityRule.getActivity();
 
-        mInstrumentation.runOnMainSync(() -> {
-            // Disable and remove focusability on the first child of our activity so that
-            // it doesn't bring in the soft keyboard that can mess up with some of the tests
-            // (such as menu dismissal when we emulate a tap outside the menu bounds).
-            final EditText editText = (EditText) mActivity.findViewById(R.id.anchor_upper_left);
-            editText.setEnabled(false);
-            editText.setFocusable(false);
-        });
+        // Disable and remove focusability on the first child of our activity so that
+        // it doesn't bring in the soft keyboard that can mess up with some of the tests
+        // (such as menu dismissal when we emulate a tap outside the menu bounds).
+        final EditText editText = (EditText) mActivity.findViewById(R.id.anchor_upper_left);
+        editText.setEnabled(false);
+        editText.setFocusable(false);
     }
 
     @After

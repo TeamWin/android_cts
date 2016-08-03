@@ -87,12 +87,13 @@ public class AutoCompleteTextViewTest {
     private Activity mActivity;
     private Instrumentation mInstrumentation;
     private AutoCompleteTextView mAutoCompleteTextView;
+    private MockAutoCompleteTextView mMockAutoCompleteTextView;
     private boolean mNumeric = false;
     private ArrayAdapter<String> mAdapter;
 
     @Rule
-    public ActivityTestRule<AutoCompleteCtsActivity> mActivityRule
-            = new ActivityTestRule<>(AutoCompleteCtsActivity.class);
+    public ActivityTestRule<AutoCompleteCtsActivity> mActivityRule =
+            new ActivityTestRule<>(AutoCompleteCtsActivity.class);
 
     private final Validator mValidator = new Validator() {
         public CharSequence fixText(CharSequence invalidText) {
@@ -135,7 +136,9 @@ public class AutoCompleteTextViewTest {
         mInstrumentation = InstrumentationRegistry.getInstrumentation();
         mAutoCompleteTextView = (AutoCompleteTextView) mActivity
                 .findViewById(R.id.autocompletetv_edit);
-        mAdapter = new ArrayAdapter<String>(mActivity,
+        mMockAutoCompleteTextView = (MockAutoCompleteTextView) mActivity
+                .findViewById(R.id.autocompletetv_custom);
+        mAdapter = new ArrayAdapter<>(mActivity,
                 android.R.layout.simple_dropdown_item_1line, WORDS);
         KeyCharacterMap keymap = KeyCharacterMap.load(KeyCharacterMap.VIRTUAL_KEYBOARD);
         if (keymap.getKeyboardType() == KeyCharacterMap.NUMERIC) {
@@ -207,16 +210,17 @@ public class AutoCompleteTextViewTest {
         assertFalse(mAutoCompleteTextView.enoughToFilter());
     }
 
+    @UiThreadTest
     @Test
     public void testAccessAdapter() {
-        mInstrumentation.runOnMainSync(() -> mAutoCompleteTextView.setAdapter(null));
+        mAutoCompleteTextView.setAdapter(null);
         assertNull(mAutoCompleteTextView.getAdapter());
 
-        mInstrumentation.runOnMainSync(() -> mAutoCompleteTextView.setAdapter(mAdapter));
+        mAutoCompleteTextView.setAdapter(mAdapter);
         assertSame(mAdapter, mAutoCompleteTextView.getAdapter());
 
         // Re-set adapter to null
-        mInstrumentation.runOnMainSync(() -> mAutoCompleteTextView.setAdapter(null));
+        mAutoCompleteTextView.setAdapter(null);
         assertNull(mAutoCompleteTextView.getAdapter());
     }
 
@@ -244,6 +248,7 @@ public class AutoCompleteTextViewTest {
         assertNull(autoCompleteTextView.getFilter());
     }
 
+    @UiThreadTest
     @Test
     public void testAccessItemClickListener() {
         final AdapterView.OnItemClickListener mockItemClickListener =
@@ -266,6 +271,7 @@ public class AutoCompleteTextViewTest {
         verifyZeroInteractions(mockItemClickListener);
     }
 
+    @UiThreadTest
     @Test
     public void testAccessItemSelectedListener() {
         final AdapterView.OnItemSelectedListener mockItemSelectedListener =
@@ -413,50 +419,50 @@ public class AutoCompleteTextViewTest {
                 false, Color.YELLOW, 1, true);
     }
 
+    @UiThreadTest
     @Test
     public void testReplaceText() {
-        MockAutoCompleteTextView autoCompleteTextView = new MockAutoCompleteTextView(mActivity);
         final TextWatcher mockTextWatcher = mock(TextWatcher.class);
-        autoCompleteTextView.addTextChangedListener(mockTextWatcher);
+        mMockAutoCompleteTextView.addTextChangedListener(mockTextWatcher);
         verify(mockTextWatcher, never()).onTextChanged(any(CharSequence.class),
                 anyInt(), anyInt(), anyInt());
 
-        autoCompleteTextView.replaceText("Text");
-        assertEquals("Text", autoCompleteTextView.getText().toString());
+        mMockAutoCompleteTextView.replaceText("Text");
+        assertEquals("Text", mMockAutoCompleteTextView.getText().toString());
         verify(mockTextWatcher, times(1)).onTextChanged(sameCharSequence("Text"),
                 eq(0), eq(0), eq("Text".length()));
 
-        autoCompleteTextView.replaceText("Another");
-        assertEquals("Another", autoCompleteTextView.getText().toString());
+        mMockAutoCompleteTextView.replaceText("Another");
+        assertEquals("Another", mMockAutoCompleteTextView.getText().toString());
         verify(mockTextWatcher, times(1)).onTextChanged(sameCharSequence("Another"),
                 eq(0), eq("Text".length()), eq("Another".length()));
     }
 
+    @UiThreadTest
     @Test
     public void testSetFrame() {
-        MockAutoCompleteTextView autoCompleteTextView = new MockAutoCompleteTextView(mActivity);
-
-        assertTrue(autoCompleteTextView.setFrame(0, 1, 2, 3));
-        assertEquals(0, autoCompleteTextView.getLeft());
-        assertEquals(1, autoCompleteTextView.getTop());
-        assertEquals(2, autoCompleteTextView.getRight());
-        assertEquals(3, autoCompleteTextView.getBottom());
+        assertTrue(mMockAutoCompleteTextView.setFrame(0, 1, 2, 3));
+        assertEquals(0, mMockAutoCompleteTextView.getLeft());
+        assertEquals(1, mMockAutoCompleteTextView.getTop());
+        assertEquals(2, mMockAutoCompleteTextView.getRight());
+        assertEquals(3, mMockAutoCompleteTextView.getBottom());
 
         // If the values are the same as old ones, function will return false
-        assertFalse(autoCompleteTextView.setFrame(0, 1, 2, 3));
-        assertEquals(0, autoCompleteTextView.getLeft());
-        assertEquals(1, autoCompleteTextView.getTop());
-        assertEquals(2, autoCompleteTextView.getRight());
-        assertEquals(3, autoCompleteTextView.getBottom());
+        assertFalse(mMockAutoCompleteTextView.setFrame(0, 1, 2, 3));
+        assertEquals(0, mMockAutoCompleteTextView.getLeft());
+        assertEquals(1, mMockAutoCompleteTextView.getTop());
+        assertEquals(2, mMockAutoCompleteTextView.getRight());
+        assertEquals(3, mMockAutoCompleteTextView.getBottom());
 
         // If the values are not the same as old ones, function will return true
-        assertTrue(autoCompleteTextView.setFrame(2, 3, 4, 5));
-        assertEquals(2, autoCompleteTextView.getLeft());
-        assertEquals(3, autoCompleteTextView.getTop());
-        assertEquals(4, autoCompleteTextView.getRight());
-        assertEquals(5, autoCompleteTextView.getBottom());
+        assertTrue(mMockAutoCompleteTextView.setFrame(2, 3, 4, 5));
+        assertEquals(2, mMockAutoCompleteTextView.getLeft());
+        assertEquals(3, mMockAutoCompleteTextView.getTop());
+        assertEquals(4, mMockAutoCompleteTextView.getRight());
+        assertEquals(5, mMockAutoCompleteTextView.getBottom());
     }
 
+    @UiThreadTest
     @Test
     public void testGetThreshold() {
         assertEquals(1, mAutoCompleteTextView.getThreshold());
@@ -472,6 +478,7 @@ public class AutoCompleteTextViewTest {
         assertEquals(1, mAutoCompleteTextView.getThreshold());
     }
 
+    @UiThreadTest
     @Test
     public void testAccessValidater() {
         final MockValidator validator = new MockValidator();
@@ -739,6 +746,7 @@ public class AutoCompleteTextViewTest {
         mAutoCompleteTextView.setValidator(null);
     }
 
+    @UiThreadTest
     @Test
     public void testAccessCompletionHint() {
         mAutoCompleteTextView.setCompletionHint("TEST HINT");
@@ -774,6 +782,7 @@ public class AutoCompleteTextViewTest {
         mInstrumentation.waitForIdleSync();
     }
 
+    @UiThreadTest
     @Test
     public void testAccessDropDownAnchor() {
         mAutoCompleteTextView.setDropDownAnchor(View.NO_ID);
@@ -783,6 +792,7 @@ public class AutoCompleteTextViewTest {
         assertEquals(0x5555, mAutoCompleteTextView.getDropDownAnchor());
     }
 
+    @UiThreadTest
     @Test
     public void testAccessDropDownWidth() {
         mAutoCompleteTextView.setDropDownWidth(ViewGroup.LayoutParams.WRAP_CONTENT);
@@ -802,7 +812,7 @@ public class AutoCompleteTextViewTest {
         }
     }
 
-    protected static class MockAutoCompleteTextView extends AutoCompleteTextView {
+    public static class MockAutoCompleteTextView extends AutoCompleteTextView {
         public MockAutoCompleteTextView(Context context) {
             super(context);
         }

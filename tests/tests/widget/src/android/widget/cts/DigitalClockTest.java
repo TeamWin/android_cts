@@ -51,8 +51,8 @@ public class DigitalClockTest {
     private Activity mActivity;
 
     @Rule
-    public ActivityTestRule<DigitalClockCtsActivity> mActivityRule
-            = new ActivityTestRule<>(DigitalClockCtsActivity.class);
+    public ActivityTestRule<DigitalClockCtsActivity> mActivityRule =
+            new ActivityTestRule<>(DigitalClockCtsActivity.class);
 
     @Before
     public void setup() {

@@ -106,12 +106,12 @@ public class AbsListViewTest {
     };
 
     @Rule
-    public ActivityTestRule<ListViewCtsActivity> mActivityRule
-            = new ActivityTestRule<>(ListViewCtsActivity.class);
+    public ActivityTestRule<ListViewCtsActivity> mActivityRule =
+            new ActivityTestRule<>(ListViewCtsActivity.class);
 
+    private Instrumentation mInstrumentation;
     private AbsListView mListView;
     private Context mContext;
-    private Instrumentation mInstrumentation;
     private AttributeSet mAttributeSet;
     private ArrayAdapter<String> mShortAdapter;
     private ArrayAdapter<String> mCountriesAdapter;
@@ -121,7 +121,6 @@ public class AbsListViewTest {
 
     @Before
     public void setup() throws Exception {
-
         mInstrumentation = InstrumentationRegistry.getInstrumentation();
         mContext = mInstrumentation.getTargetContext();
 

@@ -77,8 +77,8 @@ public class AdapterViewTest {
     private AdapterView<ListAdapter> mAdapterView;
 
     @Rule
-    public ActivityTestRule<AdapterViewCtsActivity> mActivityRule
-            = new ActivityTestRule<>(AdapterViewCtsActivity.class);
+    public ActivityTestRule<AdapterViewCtsActivity> mActivityRule =
+            new ActivityTestRule<>(AdapterViewCtsActivity.class);
 
     @Before
     public void setup() {

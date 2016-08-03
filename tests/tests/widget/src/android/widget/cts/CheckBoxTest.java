@@ -48,8 +48,8 @@ public class CheckBoxTest {
     private CheckBox mCheckBox;
 
     @Rule
-    public ActivityTestRule<CheckBoxCtsActivity> mActivityRule
-            = new ActivityTestRule<>(CheckBoxCtsActivity.class);
+    public ActivityTestRule<CheckBoxCtsActivity> mActivityRule =
+            new ActivityTestRule<>(CheckBoxCtsActivity.class);
 
     @Before
     public void setup() {

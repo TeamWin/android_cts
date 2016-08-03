@@ -69,8 +69,8 @@ public class GalleryTest  {
     private Gallery mGallery;
 
     @Rule
-    public ActivityTestRule<GalleryCtsActivity> mActivityRule
-            = new ActivityTestRule<>(GalleryCtsActivity.class);
+    public ActivityTestRule<GalleryCtsActivity> mActivityRule =
+            new ActivityTestRule<>(GalleryCtsActivity.class);
 
     @Before
     public void setup() {

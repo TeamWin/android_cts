@@ -88,8 +88,8 @@ public class RemoteViewsWidgetTest {
     private static final long TEST_TIMEOUT_MS = 5000;
 
     @Rule
-    public ActivityTestRule<RemoteViewsCtsActivity> mActivityRule
-            = new ActivityTestRule<>(RemoteViewsCtsActivity.class);
+    public ActivityTestRule<RemoteViewsCtsActivity> mActivityRule =
+            new ActivityTestRule<>(RemoteViewsCtsActivity.class);
 
     private Instrumentation mInstrumentation;
 

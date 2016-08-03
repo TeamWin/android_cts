@@ -72,8 +72,8 @@ public class CompoundButtonTest  {
     private CompoundButton mCompoundButton;
 
     @Rule
-    public ActivityTestRule<CompoundButtonCtsActivity> mActivityRule
-            = new ActivityTestRule<>(CompoundButtonCtsActivity.class);
+    public ActivityTestRule<CompoundButtonCtsActivity> mActivityRule =
+            new ActivityTestRule<>(CompoundButtonCtsActivity.class);
 
     @Before
     public void setup() {

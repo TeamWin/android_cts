@@ -59,8 +59,8 @@ public class DatePickerTest {
     private DatePicker mDatePickerCalendarMode;
 
     @Rule
-    public ActivityTestRule<DatePickerCtsActivity> mActivityRule
-            = new ActivityTestRule<>(DatePickerCtsActivity.class);
+    public ActivityTestRule<DatePickerCtsActivity> mActivityRule =
+            new ActivityTestRule<>(DatePickerCtsActivity.class);
 
     @Before
     public void setUp() {
@@ -164,7 +164,6 @@ public class DatePickerTest {
         assertEquals(15, datePicker.getDayOfMonth());
         verify(mockDateChangeListener1, times(0)).onDateChanged(datePicker, 2000, 10, 15);
         verify(mockDateChangeListener2, times(1)).onDateChanged(datePicker, 2000, 10, 15);
-
     }
 
     @UiThreadTest

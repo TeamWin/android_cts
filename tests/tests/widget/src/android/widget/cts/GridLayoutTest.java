@@ -131,8 +131,8 @@ public class GridLayoutTest {
     private GridLayout mGridLayout;
 
     @Rule
-    public ActivityTestRule<GridLayoutCtsActivity> mActivityRule
-            = new ActivityTestRule<>(GridLayoutCtsActivity.class);
+    public ActivityTestRule<GridLayoutCtsActivity> mActivityRule =
+            new ActivityTestRule<>(GridLayoutCtsActivity.class);
 
     @Before
     public void setup() {

@@ -37,8 +37,8 @@ public class AnalogClockTest {
     private Activity mActivity;
 
     @Rule
-    public ActivityTestRule<FrameLayoutCtsActivity> mActivityRule
-            = new ActivityTestRule<>(FrameLayoutCtsActivity.class);
+    public ActivityTestRule<FrameLayoutCtsActivity> mActivityRule =
+            new ActivityTestRule<>(FrameLayoutCtsActivity.class);
 
     @Before
     public void setup() throws Exception {

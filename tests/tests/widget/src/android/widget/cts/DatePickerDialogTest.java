@@ -41,8 +41,8 @@ public class DatePickerDialogTest {
     private Activity mActivity;
 
     @Rule
-    public ActivityTestRule<DatePickerDialogCtsActivity> mActivityRule
-            = new ActivityTestRule<>(DatePickerDialogCtsActivity.class);
+    public ActivityTestRule<DatePickerDialogCtsActivity> mActivityRule =
+            new ActivityTestRule<>(DatePickerDialogCtsActivity.class);
 
     @Before
     public void setup() {
