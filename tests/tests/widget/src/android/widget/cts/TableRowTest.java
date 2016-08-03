@@ -16,13 +16,24 @@
 
 package android.widget.cts;
 
-import static org.mockito.Mockito.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 
+import android.app.Activity;
 import android.content.Context;
 import android.content.res.Resources;
 import android.content.res.XmlResourceParser;
-import android.test.ActivityInstrumentationTestCase2;
-import android.test.UiThreadTest;
+import android.support.test.annotation.UiThreadTest;
+import android.support.test.rule.ActivityTestRule;
+import android.support.test.runner.AndroidJUnit4;
+import android.test.suitebuilder.annotation.MediumTest;
 import android.util.AttributeSet;
 import android.util.Xml;
 import android.view.View;
@@ -34,38 +45,44 @@ import android.widget.TableLayout;
 import android.widget.TableRow;
 import android.widget.TextView;
 
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+
 /**
  * Test {@link TableRow}.
  */
-public class TableRowTest extends ActivityInstrumentationTestCase2<TableCtsActivity> {
-    Context mContext;
-    Context mTargetContext;
+@MediumTest
+@RunWith(AndroidJUnit4.class)
+public class TableRowTest {
+    Activity mActivity;
 
-    public TableRowTest() {
-        super("android.widget.cts", TableCtsActivity.class);
+    @Rule
+    public ActivityTestRule<TableCtsActivity> mActivityRule =
+            new ActivityTestRule<>(TableCtsActivity.class);
+
+    @Before
+    public void setup() {
+        mActivity = mActivityRule.getActivity();
     }
 
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
-        mContext = getInstrumentation().getContext();
-        mTargetContext = getInstrumentation().getTargetContext();
-    }
-
+    @Test
     public void testConstructor() {
-        new TableRow(mContext);
+        new TableRow(mActivity);
 
-        new TableRow(mContext, null);
+        new TableRow(mActivity, null);
     }
 
+    @Test
     public void testSetOnHierarchyChangeListener() {
-        TableRow tableRow = new TableRow(mContext);
+        TableRow tableRow = new TableRow(mActivity);
 
         ViewGroup.OnHierarchyChangeListener mockHierarchyChangeListener =
                 mock(ViewGroup.OnHierarchyChangeListener.class);
         tableRow.setOnHierarchyChangeListener(mockHierarchyChangeListener);
 
-        View toAdd = new TextView(mContext);
+        View toAdd = new TextView(mActivity);
         tableRow.addView(toAdd);
         verify(mockHierarchyChangeListener, times(1)).onChildViewAdded(tableRow, toAdd);
         tableRow.removeViewAt(0);
@@ -73,20 +90,20 @@ public class TableRowTest extends ActivityInstrumentationTestCase2<TableCtsActiv
         verifyNoMoreInteractions(mockHierarchyChangeListener);
 
         tableRow.setOnHierarchyChangeListener(null);
-        tableRow.addView(new TextView(mContext));
+        tableRow.addView(new TextView(mActivity));
         tableRow.removeViewAt(0);
         verifyNoMoreInteractions(mockHierarchyChangeListener);
     }
 
     @UiThreadTest
+    @Test
     public void testGetVirtualChildAt() {
-        TableCtsActivity activity = getActivity();
-        activity.setContentView(android.widget.cts.R.layout.table_layout_1);
-        TableLayout tableLayout = (TableLayout) activity
+        mActivity.setContentView(android.widget.cts.R.layout.table_layout_1);
+        TableLayout tableLayout = (TableLayout) mActivity
                 .findViewById(android.widget.cts.R.id.table1);
 
         TableRow tableRow = (TableRow) tableLayout.getChildAt(0);
-        Resources resources = activity.getResources();
+        Resources resources = mActivity.getResources();
         assertEquals(resources.getString(R.string.table_layout_first),
                 ((TextView) tableRow.getVirtualChildAt(0)).getText().toString());
         assertEquals(resources.getString(R.string.table_layout_second),
@@ -94,8 +111,8 @@ public class TableRowTest extends ActivityInstrumentationTestCase2<TableCtsActiv
         assertEquals(resources.getString(R.string.table_layout_third),
                 ((TextView) tableRow.getVirtualChildAt(2)).getText().toString());
 
-        activity.setContentView(android.widget.cts.R.layout.table_layout_2);
-        tableLayout = (TableLayout) activity.findViewById(android.widget.cts.R.id.table2);
+        mActivity.setContentView(android.widget.cts.R.layout.table_layout_2);
+        tableLayout = (TableLayout) mActivity.findViewById(android.widget.cts.R.id.table2);
 
         tableRow = (TableRow) tableLayout.getChildAt(0);
         assertNull(tableRow.getVirtualChildAt(0));
@@ -110,26 +127,27 @@ public class TableRowTest extends ActivityInstrumentationTestCase2<TableCtsActiv
     }
 
     @UiThreadTest
+    @Test
     public void testGetVirtualChildCount() {
-        TableCtsActivity activity = getActivity();
-        activity.setContentView(android.widget.cts.R.layout.table_layout_1);
-        TableLayout tableLayout = (TableLayout) activity
+        mActivity.setContentView(android.widget.cts.R.layout.table_layout_1);
+        TableLayout tableLayout = (TableLayout) mActivity
                 .findViewById(android.widget.cts.R.id.table1);
 
         TableRow tableRow = (TableRow) tableLayout.getChildAt(0);
         assertEquals(3, tableRow.getVirtualChildCount());
 
-        activity.setContentView(android.widget.cts.R.layout.table_layout_2);
-        tableLayout = (TableLayout) activity.findViewById(android.widget.cts.R.id.table2);
+        mActivity.setContentView(android.widget.cts.R.layout.table_layout_2);
+        tableLayout = (TableLayout) mActivity.findViewById(android.widget.cts.R.id.table2);
 
         tableRow = (TableRow) tableLayout.getChildAt(0);
         assertEquals(5, tableRow.getVirtualChildCount());
     }
 
-    public void testGenerateLayoutParams() {
-        TableRow tableRow = new TableRow(mContext);
+    @Test
+    public void testGenerateLayoutParamsFromAttributeSet() {
+        TableRow tableRow = new TableRow(mActivity);
 
-        Resources resources = mTargetContext.getResources();
+        Resources resources = mActivity.getResources();
         XmlResourceParser parser = resources.getLayout(R.layout.table_layout_1);
         AttributeSet attr = Xml.asAttributeSet(parser);
 
@@ -138,8 +156,9 @@ public class TableRowTest extends ActivityInstrumentationTestCase2<TableCtsActiv
         assertNotNull(tableRow.generateLayoutParams((AttributeSet) null));
     }
 
+    @Test
     public void testCheckLayoutParams() {
-        MockTableRow mockTableRow = new MockTableRow(mContext);
+        MockTableRow mockTableRow = new MockTableRow(mActivity);
 
         assertTrue(mockTableRow.checkLayoutParams(new TableRow.LayoutParams(200, 300)));
 
@@ -150,16 +169,18 @@ public class TableRowTest extends ActivityInstrumentationTestCase2<TableCtsActiv
         assertFalse(mockTableRow.checkLayoutParams(null));
     }
 
+    @Test
     public void testGenerateDefaultLayoutParams() {
-        MockTableRow mockTableRow = new MockTableRow(mContext);
+        MockTableRow mockTableRow = new MockTableRow(mActivity);
 
         LinearLayout.LayoutParams layoutParams = mockTableRow.generateDefaultLayoutParams();
         assertNotNull(layoutParams);
         assertTrue(layoutParams instanceof TableRow.LayoutParams);
     }
 
-    public void testGenerateLayoutParams2() {
-        MockTableRow mockTableRow = new MockTableRow(mContext);
+    @Test
+    public void testGenerateLayoutParamsFromLayoutParams() {
+        MockTableRow mockTableRow = new MockTableRow(mActivity);
 
         LinearLayout.LayoutParams layoutParams = mockTableRow.generateLayoutParams(
                 new ViewGroup.LayoutParams(200, 300));
@@ -167,22 +188,25 @@ public class TableRowTest extends ActivityInstrumentationTestCase2<TableCtsActiv
         assertEquals(200, layoutParams.width);
         assertEquals(300, layoutParams.height);
         assertTrue(layoutParams instanceof TableRow.LayoutParams);
-
-        try {
-            layoutParams = mockTableRow.generateLayoutParams((ViewGroup.LayoutParams) null);
-            fail("Should throw NullPointerException");
-        } catch (NullPointerException e) {
-        }
     }
 
+    @Test(expected=NullPointerException.class)
+    public void testGenerateLayoutParamsFromLayoutParamsNull() {
+        MockTableRow mockTableRow = new MockTableRow(mActivity);
+
+        mockTableRow.generateLayoutParams((ViewGroup.LayoutParams) null);
+    }
+
+    @Test
     public void testOnLayout() {
-        MockTableRow mockTableRow = new MockTableRow(mContext);
+        MockTableRow mockTableRow = new MockTableRow(mActivity);
 
         mockTableRow.onLayout(false, 0, 0, 200, 300);
     }
 
+    @Test
     public void testOnMeasure() {
-        MockTableRow mockTableRow = new MockTableRow(mContext);
+        MockTableRow mockTableRow = new MockTableRow(mActivity);
 
         mockTableRow.onMeasure(MeasureSpec.EXACTLY, MeasureSpec.EXACTLY);
     }
