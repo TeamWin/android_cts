@@ -16,8 +16,8 @@
 
 package android.widget.cts;
 
+import android.support.test.filters.SmallTest;
 import android.support.test.runner.AndroidJUnit4;
-import android.test.suitebuilder.annotation.SmallTest;
 import android.widget.RemoteViews;
 
 import org.junit.Test;

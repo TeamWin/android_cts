@@ -21,8 +21,8 @@ import static org.junit.Assert.assertTrue;
 
 import android.database.Cursor;
 import android.database.MatrixCursor;
+import android.support.test.filters.SmallTest;
 import android.support.test.runner.AndroidJUnit4;
-import android.test.suitebuilder.annotation.SmallTest;
 import android.widget.AlphabetIndexer;
 
 import org.junit.Test;

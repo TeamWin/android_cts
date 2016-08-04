@@ -17,9 +17,9 @@
 package android.widget.cts;
 
 import android.app.Activity;
+import android.support.test.filters.SmallTest;
 import android.support.test.rule.ActivityTestRule;
 import android.support.test.runner.AndroidJUnit4;
-import android.test.suitebuilder.annotation.SmallTest;
 import android.util.AttributeSet;
 import android.util.Xml;
 import android.widget.AnalogClock;

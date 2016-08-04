@@ -16,6 +16,10 @@
 
 package android.widget.cts;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+
 import android.app.Activity;
 import android.app.Instrumentation;
 import android.content.Context;
@@ -23,9 +27,9 @@ import android.cts.util.CtsTouchUtils;
 import android.cts.util.PollingCheck;
 import android.os.SystemClock;
 import android.support.test.InstrumentationRegistry;
+import android.support.test.filters.LargeTest;
 import android.support.test.rule.ActivityTestRule;
 import android.support.test.runner.AndroidJUnit4;
-import android.test.suitebuilder.annotation.LargeTest;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewConfiguration;
@@ -44,8 +48,6 @@ import org.junit.runner.RunWith;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
-
-import static org.junit.Assert.*;
 
 @LargeTest
 @RunWith(AndroidJUnit4.class)

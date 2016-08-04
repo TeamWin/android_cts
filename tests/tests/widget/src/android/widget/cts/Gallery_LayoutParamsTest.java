@@ -20,8 +20,8 @@ import android.content.Context;
 import android.content.res.XmlResourceParser;
 import android.cts.util.WidgetTestUtils;
 import android.support.test.InstrumentationRegistry;
+import android.support.test.filters.SmallTest;
 import android.support.test.runner.AndroidJUnit4;
-import android.test.suitebuilder.annotation.SmallTest;
 import android.widget.Gallery;
 
 import org.junit.Test;

@@ -29,8 +29,8 @@ import android.cts.util.PollingCheck;
 import android.cts.util.TestThread;
 import android.os.Looper;
 import android.support.test.InstrumentationRegistry;
+import android.support.test.filters.SmallTest;
 import android.support.test.runner.AndroidJUnit4;
-import android.test.suitebuilder.annotation.SmallTest;
 import android.widget.Filter;
 
 import org.junit.Before;

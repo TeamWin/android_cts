@@ -28,9 +28,9 @@ import android.app.Activity;
 import android.app.Instrumentation;
 import android.os.SystemClock;
 import android.support.test.InstrumentationRegistry;
+import android.support.test.filters.MediumTest;
 import android.support.test.rule.ActivityTestRule;
 import android.support.test.runner.AndroidJUnit4;
-import android.test.suitebuilder.annotation.MediumTest;
 import android.view.MotionEvent;
 import android.widget.SeekBar;
 

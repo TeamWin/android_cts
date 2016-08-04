@@ -16,13 +16,12 @@
 
 package android.widget.cts;
 
+import static android.widget.cts.util.TestUtils.within;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
-import static org.mockito.Mockito.doAnswer;
-import static android.widget.cts.util.TestUtils.within;
-
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
@@ -35,9 +34,9 @@ import android.app.Instrumentation;
 import android.cts.util.PollingCheck;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.annotation.UiThreadTest;
+import android.support.test.filters.MediumTest;
 import android.support.test.rule.ActivityTestRule;
 import android.support.test.runner.AndroidJUnit4;
-import android.test.suitebuilder.annotation.MediumTest;
 import android.util.AttributeSet;
 import android.util.Xml;
 import android.view.View;

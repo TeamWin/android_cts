@@ -21,10 +21,10 @@ import static org.junit.Assert.assertNotNull;
 
 import android.app.Activity;
 import android.content.res.XmlResourceParser;
+import android.support.test.filters.MediumTest;
 import android.support.test.rule.ActivityTestRule;
 import android.support.test.runner.AndroidJUnit4;
 import android.test.ViewAsserts;
-import android.test.suitebuilder.annotation.MediumTest;
 import android.util.LayoutDirection;
 import android.view.View;
 import android.view.ViewGroup;
