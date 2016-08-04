@@ -22,6 +22,7 @@ import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 
 import android.content.Context;
+import android.support.test.annotation.UiThreadTest;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.filters.SmallTest;
 import android.support.test.runner.AndroidJUnit4;
@@ -137,21 +138,25 @@ public class SimpleExpandableListAdapterTest {
         assertEquals(expected, mSimpleExpandableListAdapter.getChild(3, 3));
     }
 
+    @UiThreadTest
     @Test(expected=IndexOutOfBoundsException.class)
     public void testGetChildGroupPositionTooLow() {
         mSimpleExpandableListAdapter.getChild(-1, 0);
     }
 
+    @UiThreadTest
     @Test(expected=IndexOutOfBoundsException.class)
     public void testGetChildGroupPositionTooHigh() {
         mSimpleExpandableListAdapter.getChild(4, 0);
     }
 
+    @UiThreadTest
     @Test(expected=IndexOutOfBoundsException.class)
     public void testGetChildChildPositionTooLow() {
         mSimpleExpandableListAdapter.getChild(0, -1);
     }
 
+    @UiThreadTest
     @Test(expected=IndexOutOfBoundsException.class)
     public void testGetChildChildPositionTooHigh() {
         mSimpleExpandableListAdapter.getChild(0, 1);
@@ -169,6 +174,7 @@ public class SimpleExpandableListAdapterTest {
         assertEquals(4, mSimpleExpandableListAdapter.getChildId(0, 4));
     }
 
+    @UiThreadTest
     @Test
     public void testGetChildView() {
         // the normal and last use same layout
@@ -211,27 +217,31 @@ public class SimpleExpandableListAdapterTest {
         assertEquals("child10", ((TextView) result).getText().toString());
     }
 
+    @UiThreadTest
     @Test(expected=IndexOutOfBoundsException.class)
     public void testGetChildViewGroupPositionTooLow() {
         mSimpleExpandableListAdapter.getChildView(-1, 0, false, null, mAdapterHost);
     }
 
+    @UiThreadTest
     @Test(expected=IndexOutOfBoundsException.class)
     public void testGetChildViewGroupPositionTooHigh() {
         mSimpleExpandableListAdapter.getChildView(4, 0, false, null, mAdapterHost);
     }
 
-
+    @UiThreadTest
     @Test(expected=IndexOutOfBoundsException.class)
     public void testGetChildViewChildPositionTooLow() {
         mSimpleExpandableListAdapter.getChildView(0, -1, false, null, mAdapterHost);
     }
 
+    @UiThreadTest
     @Test(expected=IndexOutOfBoundsException.class)
     public void testGetChildViewChildPositionTooHigh() {
         mSimpleExpandableListAdapter.getChildView(0, 1, false, null, mAdapterHost);
     }
 
+    @UiThreadTest
     @Test
     public void testNewChildView() {
         // the normal and last use same layout
@@ -318,6 +328,7 @@ public class SimpleExpandableListAdapterTest {
         assertEquals(4, mSimpleExpandableListAdapter.getGroupId(4));
     }
 
+    @UiThreadTest
     @Test
     public void testGetGroupView() {
         // the collapsed and expanded use same layout
@@ -360,16 +371,19 @@ public class SimpleExpandableListAdapterTest {
         assertEquals("group10", ((TextView) result).getText().toString());
     }
 
+    @UiThreadTest
     @Test(expected=IndexOutOfBoundsException.class)
     public void testGetGroupViewGroupPositionTooLow() {
         mSimpleExpandableListAdapter.getGroupView(-1, false, null, mAdapterHost);
     }
 
+    @UiThreadTest
     @Test(expected=IndexOutOfBoundsException.class)
     public void testGetGroupViewGroupPositionTooHigh() {
         mSimpleExpandableListAdapter.getGroupView(4, false, null, mAdapterHost);
     }
 
+    @UiThreadTest
     @Test
     public void testNewGroupView() {
         // the collapsed and expanded use same layout

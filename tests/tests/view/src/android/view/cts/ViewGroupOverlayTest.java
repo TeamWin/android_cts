@@ -264,18 +264,8 @@ public class ViewGroupOverlayTest {
 
         mActivityRule.runOnUiThread(() -> mViewGroupOverlay.add(redView));
 
-        // If we call performClick or dispatchTouchEvent on the view that we've added to the
-        // overlay, that will invoke the listener that we've registered. But here we need to
-        // test that such a view doesn't get clicks in the regular event processing pipeline
-        // that handles individual events at the screen level. Use Instrumentation to emulate
-        // the high-level sequence of events instead.
-        final int[] viewGroupOnScreenXY = new int[2];
-        mViewGroupWithOverlay.getLocationOnScreen(viewGroupOnScreenXY);
-
         // Emulate a tap in the center of the view we've added to the overlay
-        CtsTouchUtils.emulateTapOnScreen(mInstrumentation, mViewGroupWithOverlay,
-                redView.getLeft() + redView.getWidth() / 2,
-                redView.getTop() + redView.getHeight() / 2);
+        CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mViewGroupWithOverlay);
 
         // Verify that our mock listener hasn't been called
         verify(mockClickListener, never()).onClick(any(View.class));

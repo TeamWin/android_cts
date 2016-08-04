@@ -48,6 +48,7 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
+import android.support.test.annotation.UiThreadTest;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.filters.LargeTest;
 import android.support.test.filters.MediumTest;
@@ -532,6 +533,7 @@ public class AbsListViewTest {
         assertEquals(ViewGroup.LayoutParams.WRAP_CONTENT, res.height);
     }
 
+    @UiThreadTest
     @Test
     public void testBeforeAndAfterTextChanged() {
         // The java doc says these two methods do nothing
@@ -606,7 +608,7 @@ public class AbsListViewTest {
         verifyZeroInteractions(mockOnItemLongClickListener);
 
         // Now long click our view
-        CtsTouchUtils.emulateLongClick(mInstrumentation, v, 500);
+        CtsTouchUtils.emulateLongPressOnViewCenter(mInstrumentation, v, 500);
         // and wait until our mock listener is invoked with the expected view
         verify(mockOnItemLongClickListener, within(5000)).onItemLongClick(listView, v, 2,
                 listView.getItemIdAtPosition(2));
@@ -630,6 +632,7 @@ public class AbsListViewTest {
         // TODO: how to check?
     }
 
+    @UiThreadTest
     @Test
     public void testSetFilterText() {
         MyListView listView = new MyListView(mContext, mAttributeSet, 0);
@@ -974,7 +977,7 @@ public class AbsListViewTest {
 
         // Emulate long-click on the middle item of the currently visible content
         final int positionForInitialSelection = (firstVisiblePosition + lastVisiblePosition) / 2;
-        CtsTouchUtils.emulateLongClick(mInstrumentation,
+        CtsTouchUtils.emulateLongPressOnViewCenter(mInstrumentation,
                 mListView.getChildAt(positionForInitialSelection));
         // wait until our listener has been notified that the item has been checked
         verify(mMultiChoiceModeListener, within(1000)).onItemCheckedStateChanged(

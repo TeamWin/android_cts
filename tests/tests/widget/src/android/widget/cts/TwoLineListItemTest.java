@@ -24,6 +24,7 @@ import static org.junit.Assert.assertSame;
 import android.app.Activity;
 import android.content.Context;
 import android.content.res.Resources;
+import android.support.test.annotation.UiThreadTest;
 import android.support.test.filters.MediumTest;
 import android.support.test.rule.ActivityTestRule;
 import android.support.test.runner.AndroidJUnit4;
@@ -99,6 +100,7 @@ public class TwoLineListItemTest {
                 twoLineListItem.getText2().getText().toString());
     }
 
+    @UiThreadTest
     @Test
     public void testOnFinishInflate() {
         MockTwoLineListItem twoLineListItem = new MockTwoLineListItem(mActivity);

@@ -18,7 +18,9 @@ package android.cts.util;
 
 import android.app.Instrumentation;
 import android.app.UiAutomation;
+import android.graphics.Point;
 import android.os.SystemClock;
+import android.util.SparseArray;
 import android.view.InputDevice;
 import android.view.MotionEvent;
 import android.view.View;
@@ -39,7 +41,7 @@ public final class CtsTouchUtils {
      * @param view the view to "tap"
      */
     public static void emulateTapOnViewCenter(Instrumentation instrumentation, View view) {
-        emulateTapOnScreen(instrumentation, view, view.getWidth() / 2, view.getHeight() / 2);
+        emulateTapOnView(instrumentation, view, view.getWidth() / 2, view.getHeight() / 2);
     }
 
     /**
@@ -51,42 +53,68 @@ public final class CtsTouchUtils {
      * @param offsetX extra X offset for the tap
      * @param offsetY extra Y offset for the tap
      */
-    public static void emulateTapOnScreen(Instrumentation instrumentation, View anchorView,
+    public static void emulateTapOnView(Instrumentation instrumentation, View anchorView,
             int offsetX, int offsetY) {
+        final int touchSlop = ViewConfiguration.get(anchorView.getContext()).getScaledTouchSlop();
         // Get anchor coordinates on the screen
         final int[] viewOnScreenXY = new int[2];
         anchorView.getLocationOnScreen(viewOnScreenXY);
-        int emulatedTapX = viewOnScreenXY[0] + offsetX;
-        int emulatedTapY = viewOnScreenXY[1] + offsetY;
+        int xOnScreen = viewOnScreenXY[0] + offsetX;
+        int yOnScreen = viewOnScreenXY[1] + offsetY;
+        final UiAutomation uiAutomation = instrumentation.getUiAutomation();
+        final long downTime = SystemClock.uptimeMillis();
 
-        // Inject DOWN event
-        long downTime = SystemClock.uptimeMillis();
-        MotionEvent eventDown = MotionEvent.obtain(
-                downTime, downTime, MotionEvent.ACTION_DOWN, emulatedTapX, emulatedTapY, 1);
-        instrumentation.sendPointerSync(eventDown);
-        eventDown.recycle();
-
-        // Inject MOVE event
-        long moveTime = SystemClock.uptimeMillis();
-        final int touchSlop = ViewConfiguration.get(anchorView.getContext()).getScaledTouchSlop();
-        MotionEvent eventMove = MotionEvent.obtain(downTime, moveTime, MotionEvent.ACTION_MOVE,
-                emulatedTapX + (touchSlop / 2.0f), emulatedTapY + (touchSlop / 2.0f), 1);
-        instrumentation.sendPointerSync(eventMove);
-        eventMove.recycle();
-
-        // Inject UP event
-        long upTime = SystemClock.uptimeMillis();
-        MotionEvent eventUp = MotionEvent.obtain(
-                upTime, upTime, MotionEvent.ACTION_UP, emulatedTapX, emulatedTapY, 1);
-        instrumentation.sendPointerSync(eventUp);
-        eventUp.recycle();
+        injectDownEvent(uiAutomation, downTime, xOnScreen, yOnScreen);
+        injectMoveEventForTap(uiAutomation, downTime, touchSlop, xOnScreen, yOnScreen);
+        injectUpEvent(uiAutomation, downTime, xOnScreen, yOnScreen);
 
         // Wait for the system to process all events in the queue
         instrumentation.waitForIdleSync();
     }
 
     /**
-     * Emulates a drag gesture across the screen.
+     * Emulates a double tap in the center of the passed {@link View}.
+     *
+     * @param instrumentation the instrumentation used to run the test
+     * @param view the view to "double tap"
+     */
+    public static void emulateDoubleTapOnViewCenter(Instrumentation instrumentation, View view) {
+        emulateDoubleTapOnView(instrumentation, view, view.getWidth() / 2, view.getHeight() / 2);
+    }
+
+    /**
+     * Emulates a double tap on a point relative to the top-left corner of the passed {@link View}.
+     * Offset parameters are used to compute the final screen coordinates of the tap points.
+     *
+     * @param instrumentation the instrumentation used to run the test
+     * @param anchorView the anchor view to determine the tap location on the screen
+     * @param offsetX extra X offset for the taps
+     * @param offsetY extra Y offset for the taps
+     */
+    public static void emulateDoubleTapOnView(Instrumentation instrumentation, View anchorView,
+            int offsetX, int offsetY) {
+        final int touchSlop = ViewConfiguration.get(anchorView.getContext()).getScaledTouchSlop();
+        // Get anchor coordinates on the screen
+        final int[] viewOnScreenXY = new int[2];
+        anchorView.getLocationOnScreen(viewOnScreenXY);
+        int xOnScreen = viewOnScreenXY[0] + offsetX;
+        int yOnScreen = viewOnScreenXY[1] + offsetY;
+        final UiAutomation uiAutomation = instrumentation.getUiAutomation();
+        final long downTime = SystemClock.uptimeMillis();
+
+        injectDownEvent(uiAutomation, downTime, xOnScreen, yOnScreen);
+        injectMoveEventForTap(uiAutomation, downTime, touchSlop, xOnScreen, yOnScreen);
+        injectUpEvent(uiAutomation, downTime, xOnScreen, yOnScreen);
+        injectDownEvent(uiAutomation, downTime, xOnScreen, yOnScreen);
+        injectMoveEventForTap(uiAutomation, downTime, touchSlop, xOnScreen, yOnScreen);
+        injectUpEvent(uiAutomation, downTime, xOnScreen, yOnScreen);
+
+        // Wait for the system to process all events in the queue
+        instrumentation.waitForIdleSync();
+    }
+
+    /**
+     * Emulates a linear drag gesture between 2 points across the screen.
      *
      * @param instrumentation the instrumentation used to run the test
      * @param dragStartX Start X of the emulated drag gesture
@@ -107,42 +135,116 @@ public final class CtsTouchUtils {
         // across view / window boundaries (such as for the emulated drag and drop
         // sequences)
         final UiAutomation uiAutomation = instrumentation.getUiAutomation();
+        final long downTime = SystemClock.uptimeMillis();
 
-        // Inject DOWN event
-        long downTime = SystemClock.uptimeMillis();
+        injectDownEvent(uiAutomation, downTime, dragStartX, dragStartY);
+
+        // Inject a sequence of MOVE events that emulate the "move" part of the gesture
+        injectMoveEventsForDrag(uiAutomation, downTime, dragStartX, dragStartY,
+                dragStartX + dragAmountX, dragStartY + dragAmountY, moveEventCount, dragDurationMs);
+
+        injectUpEvent(uiAutomation, downTime, dragStartX + dragAmountX, dragStartY + dragAmountY);
+
+        // Wait for the system to process all events in the queue
+        instrumentation.waitForIdleSync();
+    }
+
+    /**
+     * Emulates a series of linear drag gestures across the screen between multiple points without
+     * lifting the finger. Note that this function does not support curve movements between the
+     * points.
+     *
+     * @param instrumentation the instrumentation used to run the test
+     * @param coordinates the ordered list of points for the drag gesture
+     */
+    public static void emulateDragGesture(Instrumentation instrumentation,
+            SparseArray<Point> coordinates) {
+        emulateDragGesture(instrumentation, coordinates, 2000, 20);
+    }
+
+    private static void emulateDragGesture(Instrumentation instrumentation,
+            SparseArray<Point> coordinates, int dragDurationMs, int moveEventCount) {
+        final int coordinatesSize = coordinates.size();
+        if (coordinatesSize < 2) {
+            throw new IllegalArgumentException("Need at least 2 points for emulating drag");
+        }
+        // We are using the UiAutomation object to inject events so that drag works
+        // across view / window boundaries (such as for the emulated drag and drop
+        // sequences)
+        final UiAutomation uiAutomation = instrumentation.getUiAutomation();
+        final long downTime = SystemClock.uptimeMillis();
+
+        injectDownEvent(uiAutomation, downTime, coordinates.get(0).x, coordinates.get(0).y);
+
+        // Move to each coordinate.
+        for (int i = 0; i < coordinatesSize - 1; i++) {
+            // Inject a sequence of MOVE events that emulate the "move" part of the gesture.
+            injectMoveEventsForDrag(uiAutomation,
+                    downTime,
+                    coordinates.get(i).x,
+                    coordinates.get(i).y,
+                    coordinates.get(i + 1).x,
+                    coordinates.get(i + 1).y,
+                    moveEventCount,
+                    dragDurationMs);
+        }
+
+        injectUpEvent(uiAutomation,
+                downTime,
+                coordinates.get(coordinatesSize - 1).x,
+                coordinates.get(coordinatesSize - 1).y);
+
+        // Wait for the system to process all events in the queue
+        instrumentation.waitForIdleSync();
+    }
+
+    private static long injectDownEvent(UiAutomation uiAutomation, long downTime, int xOnScreen,
+            int yOnScreen) {
         MotionEvent eventDown = MotionEvent.obtain(
-                downTime, downTime, MotionEvent.ACTION_DOWN, dragStartX, dragStartY, 1);
+                downTime, downTime, MotionEvent.ACTION_DOWN, xOnScreen, yOnScreen, 1);
         eventDown.setSource(InputDevice.SOURCE_TOUCHSCREEN);
         uiAutomation.injectInputEvent(eventDown, true);
         eventDown.recycle();
+        return downTime;
+    }
 
-        // Inject a sequence of MOVE events that emulate the "move" part of the gesture
+    private static void injectMoveEventForTap(UiAutomation uiAutomation, long downTime,
+            int touchSlop, int xOnScreen, int yOnScreen) {
+        MotionEvent eventMove = MotionEvent.obtain(downTime, downTime, MotionEvent.ACTION_MOVE,
+                xOnScreen + (touchSlop / 2.0f), yOnScreen + (touchSlop / 2.0f), 1);
+        eventMove.setSource(InputDevice.SOURCE_TOUCHSCREEN);
+        uiAutomation.injectInputEvent(eventMove, true);
+        eventMove.recycle();
+    }
+
+    private static void injectMoveEventsForDrag(UiAutomation uiAutomation, long downTime,
+            int dragStartX, int dragStartY, int dragEndX, int dragEndY, int moveEventCount,
+            int dragDurationMs) {
+        int dragAmountX = dragEndX - dragStartX;
+        int dragAmountY = dragEndY - dragStartY;
+
         for (int i = 0; i < moveEventCount; i++) {
-            long moveTime = SystemClock.uptimeMillis();
             // Note that we divide by (moveEventCount - 1) so that our last MOVE event is
             // at the same coordinates as the subsequent UP event.
             final int moveX = dragStartX + dragAmountX * i / (moveEventCount - 1);
             final int moveY = dragStartY + dragAmountY * i / (moveEventCount - 1);
             MotionEvent eventMove = MotionEvent.obtain(
-                    moveTime, moveTime, MotionEvent.ACTION_MOVE, moveX, moveY, 1);
+                    downTime, downTime, MotionEvent.ACTION_MOVE, moveX, moveY, 1);
             eventMove.setSource(InputDevice.SOURCE_TOUCHSCREEN);
             uiAutomation.injectInputEvent(eventMove, true);
             eventMove.recycle();
-            // sleep for a bit to emulate the overall swipe gesture
+            // sleep for a bit to emulate the overall drag gesture.
             SystemClock.sleep(dragDurationMs / moveEventCount);
         }
+    }
 
-        // Inject UP event
-        long upTime = SystemClock.uptimeMillis();
+    private static void injectUpEvent(UiAutomation uiAutomation, long downTime, int xOnScreen,
+            int yOnScreen) {
         MotionEvent eventUp = MotionEvent.obtain(
-                upTime, upTime, MotionEvent.ACTION_UP, dragStartX + dragAmountX,
-                dragStartY + dragAmountY, 1);
+                downTime, downTime, MotionEvent.ACTION_UP, xOnScreen, yOnScreen, 1);
         eventUp.setSource(InputDevice.SOURCE_TOUCHSCREEN);
         uiAutomation.injectInputEvent(eventUp, true);
         eventUp.recycle();
-
-        // Wait for the system to process all events in the queue
-        instrumentation.waitForIdleSync();
     }
 
     /**
@@ -253,53 +355,74 @@ public final class CtsTouchUtils {
     }
 
     /**
-     * Emulates a long click in the center of the passed {@link View}.
+     * Emulates a long press in the center of the passed {@link View}.
      *
      * @param instrumentation the instrumentation used to run the test
-     * @param view the view to "long click"
+     * @param view the view to "long press"
      */
-    public static void emulateLongClick(Instrumentation instrumentation, View view) {
-        emulateLongClick(instrumentation, view, 0);
+    public static void emulateLongPressOnViewCenter(Instrumentation instrumentation, View view) {
+        emulateLongPressOnViewCenter(instrumentation, view, 0);
     }
 
     /**
-     * Emulates a long click in the center of the passed {@link View}.
+     * Emulates a long press in the center of the passed {@link View}.
      *
      * @param instrumentation the instrumentation used to run the test
-     * @param view the view to "long click"
-     * @param extraWaitMs the duration of emulated long click in milliseconds starting
+     * @param view the view to "long press"
+     * @param extraWaitMs the duration of emulated "long press" in milliseconds starting
      *      after system-level long press timeout.
      */
-    public static void emulateLongClick(Instrumentation instrumentation, View view,
+    public static void emulateLongPressOnViewCenter(Instrumentation instrumentation, View view,
             long extraWaitMs) {
+        final int touchSlop = ViewConfiguration.get(view.getContext()).getScaledTouchSlop();
         // Use instrumentation to emulate a tap on the spinner to bring down its popup
         final int[] viewOnScreenXY = new int[2];
         view.getLocationOnScreen(viewOnScreenXY);
-        int emulatedTapX = viewOnScreenXY[0] + view.getWidth() / 2;
-        int emulatedTapY = viewOnScreenXY[1] + view.getHeight() / 2;
+        int xOnScreen = viewOnScreenXY[0] + view.getWidth() / 2;
+        int yOnScreen = viewOnScreenXY[1] + view.getHeight() / 2;
 
-        // Inject DOWN event
-        long downTime = SystemClock.uptimeMillis();
-        MotionEvent eventDown = MotionEvent.obtain(
-                downTime, downTime, MotionEvent.ACTION_DOWN, emulatedTapX, emulatedTapY, 1);
-        instrumentation.sendPointerSync(eventDown);
-        eventDown.recycle();
+        emulateLongPressOnScreen(instrumentation, xOnScreen, yOnScreen, touchSlop, extraWaitMs);
+    }
 
-        // Inject MOVE event
-        long moveTime = SystemClock.uptimeMillis();
-        MotionEvent eventMove = MotionEvent.obtain(
-                moveTime, moveTime, MotionEvent.ACTION_MOVE, emulatedTapX, emulatedTapY, 1);
-        instrumentation.sendPointerSync(eventMove);
-        eventMove.recycle();
+    /**
+     * Emulates a long press confirmed on a point relative to the top-left corner of the passed
+     * {@link View}. Offset parameters are used to compute the final screen coordinates of the
+     * press point.
+     *
+     * @param instrumentation the instrumentation used to run the test
+     * @param view the view to "long press"
+     * @param offsetX extra X offset for the tap
+     * @param offsetY extra Y offset for the tap
+     */
+    public static void emulateLongPressOnView(Instrumentation instrumentation, View view,
+            int offsetX, int offsetY) {
+        final int touchSlop = ViewConfiguration.get(view.getContext()).getScaledTouchSlop();
+        final int[] viewOnScreenXY = new int[2];
+        view.getLocationOnScreen(viewOnScreenXY);
+        int xOnScreen = viewOnScreenXY[0] + offsetX;
+        int yOnScreen = viewOnScreenXY[1] + offsetY;
 
+        emulateLongPressOnScreen(instrumentation, xOnScreen, yOnScreen, touchSlop, 0);
+    }
+
+    /**
+     * Emulates a long press on the screen.
+     *
+     * @param instrumentation the instrumentation used to run the test
+     * @param xOnScreen X position on screen for the "long press"
+     * @param yOnScreen Y position on screen for the "long press"
+     * @param extraWaitMs extra duration of emulated long press in milliseconds added
+     *        after the system-level "long press" timeout.
+     */
+    private static void emulateLongPressOnScreen(Instrumentation instrumentation,
+            int xOnScreen, int yOnScreen, int touchSlop, long extraWaitMs) {
+        final UiAutomation uiAutomation = instrumentation.getUiAutomation();
+        final long downTime = SystemClock.uptimeMillis();
+
+        injectDownEvent(uiAutomation, downTime, xOnScreen, yOnScreen);
+        injectMoveEventForTap(uiAutomation, downTime, touchSlop, xOnScreen, yOnScreen);
         SystemClock.sleep((long) (ViewConfiguration.getLongPressTimeout() * 1.5f) + extraWaitMs);
-
-        // Inject UP event
-        long upTime = SystemClock.uptimeMillis();
-        MotionEvent eventUp = MotionEvent.obtain(
-                upTime, upTime, MotionEvent.ACTION_UP, emulatedTapX, emulatedTapY, 1);
-        instrumentation.sendPointerSync(eventUp);
-        eventUp.recycle();
+        injectUpEvent(uiAutomation, downTime, xOnScreen, yOnScreen);
 
         // Wait for the system to process all events in the queue
         instrumentation.waitForIdleSync();

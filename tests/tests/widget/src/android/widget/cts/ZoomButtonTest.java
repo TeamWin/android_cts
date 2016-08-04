@@ -131,7 +131,7 @@ public class ZoomButtonTest {
 
         final long startTime = System.nanoTime();
         // Emulate long click that "lasts" for ten seconds
-        CtsTouchUtils.emulateLongClick(mInstrumentation, mZoomButton, 10000);
+        CtsTouchUtils.emulateLongPressOnViewCenter(mInstrumentation, mZoomButton, 10000);
 
         final List<Long> callbackInvocations = zoomClickListener.getClickTimes();
         assertFalse("Expecting at least one callback", callbackInvocations.isEmpty());

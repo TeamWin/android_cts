@@ -70,6 +70,7 @@ public class PopupWindowTest {
     private Instrumentation mInstrumentation;
     private Activity mActivity;
     private PopupWindow mPopupWindow;
+    private TextView mTextView;
 
     @Rule
     public ActivityTestRule<PopupWindowCtsActivity> mActivityRule =
@@ -98,6 +99,7 @@ public class PopupWindowTest {
         new PopupWindow(mActivity, null, 0, android.R.style.Widget_Material_Light_PopupWindow);
     }
 
+    @UiThreadTest
     @Test
     public void testSize() {
         mPopupWindow = new PopupWindow();
@@ -228,21 +230,22 @@ public class PopupWindowTest {
         mPopupWindow = new PopupWindow(mActivity);
         assertNull(mPopupWindow.getContentView());
 
-        View view = new TextView(mActivity);
-        mPopupWindow.setContentView(view);
-        assertSame(view, mPopupWindow.getContentView());
+        mActivityRule.runOnUiThread(() -> mTextView = new TextView(mActivity));
+        mInstrumentation.waitForIdleSync();
+        mPopupWindow.setContentView(mTextView);
+        assertSame(mTextView, mPopupWindow.getContentView());
 
         mPopupWindow.setContentView(null);
         assertNull(mPopupWindow.getContentView());
 
         // can not set the content if the old content is shown
-        mPopupWindow.setContentView(view);
+        mPopupWindow.setContentView(mTextView);
         assertFalse(mPopupWindow.isShowing());
         showPopup();
         ImageView img = new ImageView(mActivity);
         assertTrue(mPopupWindow.isShowing());
         mPopupWindow.setContentView(img);
-        assertSame(view, mPopupWindow.getContentView());
+        assertSame(mTextView, mPopupWindow.getContentView());
         dismissPopup();
     }
 
@@ -780,7 +783,9 @@ public class PopupWindowTest {
 
     @Test
     public void testSetOnDismissListener() throws Throwable {
-        mPopupWindow = new PopupWindow(new TextView(mActivity));
+        mActivityRule.runOnUiThread(() -> mTextView = new TextView(mActivity));
+        mInstrumentation.waitForIdleSync();
+        mPopupWindow = new PopupWindow(mTextView);
         mPopupWindow.setOnDismissListener(null);
 
         OnDismissListener onDismissListener = mock(OnDismissListener.class);
@@ -1100,7 +1105,9 @@ public class PopupWindowTest {
 
     @Test
     public void testSetTouchInterceptor() throws Throwable {
-        mPopupWindow = new PopupWindow(new TextView(mActivity));
+        mActivityRule.runOnUiThread(() -> mTextView = new TextView(mActivity));
+        mInstrumentation.waitForIdleSync();
+        mPopupWindow = new PopupWindow(mTextView);
 
         OnTouchListener onTouchListener = mock(OnTouchListener.class);
         when(onTouchListener.onTouch(any(View.class), any(MotionEvent.class))).thenReturn(true);
@@ -1142,7 +1149,9 @@ public class PopupWindowTest {
 
     @Test
     public void testSetWindowLayoutMode() throws Throwable {
-        mPopupWindow = new PopupWindow(new TextView(mActivity));
+        mActivityRule.runOnUiThread(() -> mTextView = new TextView(mActivity));
+        mInstrumentation.waitForIdleSync();
+        mPopupWindow = new PopupWindow(mTextView);
         showPopup();
 
         ViewGroup.LayoutParams p = mPopupWindow.getContentView().getRootView().getLayoutParams();

@@ -386,7 +386,7 @@ public class View_UsingViewsTest {
 
         // long click the edit text
         mInstrumentation.waitForIdleSync();
-        CtsTouchUtils.emulateLongClick(mInstrumentation, mEditText);
+        CtsTouchUtils.emulateLongPressOnViewCenter(mInstrumentation, mEditText);
         verify(onLongClickListener, within(1000)).onLongClick(mEditText);
 
         // click the Cancel button
