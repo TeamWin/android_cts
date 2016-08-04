@@ -19,6 +19,8 @@
     package="android.content.pm.cts.shortcutmanager.packages">
 
     <application>
+        <activity android:name="Launcher" android:enabled="true" android:exported="false">
+        </activity>
     </application>
 </manifest>
 
