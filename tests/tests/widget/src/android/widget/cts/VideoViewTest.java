@@ -108,8 +108,8 @@ public class VideoViewTest {
         return mActivity.getFileStreamPath(VIDEO_NAME).getAbsolutePath();
     }
 
-    private void makeVideoView() {
-        mInstrumentation.runOnMainSync(() -> {
+    private void makeVideoView() throws Throwable {
+        mActivityRule.runOnUiThread(() -> {
             MediaController mediaController = new MediaController(mActivity);
             mVideoView.setMediaController(mediaController);
         });
@@ -127,7 +127,7 @@ public class VideoViewTest {
     }
 
     @Test
-    public void testPlayVideo() {
+    public void testPlayVideo() throws Throwable {
         makeVideoView();
         // Don't run the test if the codec isn't supported.
         if (!hasCodec()) {
@@ -143,26 +143,26 @@ public class VideoViewTest {
                 mock(MediaPlayer.OnCompletionListener.class);
         mVideoView.setOnCompletionListener(mockCompletionListener);
 
-        mInstrumentation.runOnMainSync(() -> mVideoView.setVideoPath(mVideoPath));
+        mActivityRule.runOnUiThread(() -> mVideoView.setVideoPath(mVideoPath));
         verify(mockPreparedListener, within(TIME_OUT)).onPrepared(any(MediaPlayer.class));
         verify(mockPreparedListener, times(1)).onPrepared(any(MediaPlayer.class));
         verifyZeroInteractions(mockCompletionListener);
 
-        mInstrumentation.runOnMainSync(mVideoView::start);
+        mActivityRule.runOnUiThread(mVideoView::start);
         // wait time is longer than duration in case system is sluggish
         verify(mockCompletionListener, within(TIME_OUT)).onCompletion(any(MediaPlayer.class));
         verify(mockCompletionListener, times(1)).onCompletion(any(MediaPlayer.class));
     }
 
     @Test
-    public void testSetOnErrorListener() {
+    public void testSetOnErrorListener() throws Throwable {
         makeVideoView();
 
         final MediaPlayer.OnErrorListener mockErrorListener =
                 mock(MediaPlayer.OnErrorListener.class);
         mVideoView.setOnErrorListener(mockErrorListener);
 
-        mInstrumentation.runOnMainSync(() -> {
+        mActivityRule.runOnUiThread(() -> {
             String path = "unknown path";
             mVideoView.setVideoPath(path);
             mVideoView.start();
@@ -175,7 +175,7 @@ public class VideoViewTest {
     }
 
     @Test
-    public void testGetBufferPercentage() {
+    public void testGetBufferPercentage() throws Throwable {
         makeVideoView();
         // Don't run the test if the codec isn't supported.
         if (!hasCodec()) {
@@ -187,7 +187,7 @@ public class VideoViewTest {
                 mock(MediaPlayer.OnPreparedListener.class);
         mVideoView.setOnPreparedListener(mockPreparedListener);
 
-        mInstrumentation.runOnMainSync(() -> mVideoView.setVideoPath(mVideoPath));
+        mActivityRule.runOnUiThread(() -> mVideoView.setVideoPath(mVideoPath));
         mInstrumentation.waitForIdleSync();
 
         verify(mockPreparedListener, within(TIME_OUT)).onPrepared(any(MediaPlayer.class));
@@ -214,14 +214,14 @@ public class VideoViewTest {
     }
 
     @Test
-    public void testGetDuration() {
+    public void testGetDuration() throws Throwable {
         // Don't run the test if the codec isn't supported.
         if (!hasCodec()) {
             Log.i(TAG, "SKIPPING testGetDuration(): codec is not supported");
             return;
         }
 
-        mInstrumentation.runOnMainSync(() -> mVideoView.setVideoPath(mVideoPath));
+        mActivityRule.runOnUiThread(() -> mVideoView.setVideoPath(mVideoPath));
         SystemClock.sleep(OPERATION_INTERVAL);
         assertTrue(Math.abs(mVideoView.getDuration() - TEST_VIDEO_DURATION) < DURATION_DELTA);
     }

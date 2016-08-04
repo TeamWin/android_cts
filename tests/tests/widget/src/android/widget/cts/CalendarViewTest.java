@@ -164,7 +164,7 @@ public class CalendarViewTest {
     }
 
     private void verifyOnDateChangeListener(CalendarView calendarView,
-            boolean onlyAllowOneChangeEvent) {
+            boolean onlyAllowOneChangeEvent) throws Throwable {
         final CalendarView.OnDateChangeListener mockDateChangeListener =
                 mock(CalendarView.OnDateChangeListener.class);
         calendarView.setOnDateChangeListener(mockDateChangeListener);
@@ -174,7 +174,7 @@ public class CalendarViewTest {
         calendar.set(Calendar.YEAR, 2008);
         calendar.set(Calendar.MONTH, Calendar.SEPTEMBER);
         calendar.set(Calendar.DAY_OF_MONTH, 16);
-        mInstrumentation.runOnMainSync(
+        mActivityRule.runOnUiThread(
                 () -> calendarView.setDate(calendar.getTime().getTime(), false, true));
         mInstrumentation.waitForIdleSync();
 
@@ -202,19 +202,19 @@ public class CalendarViewTest {
     }
 
     @Test
-    public void testOnDateChangeListenerHolo() {
+    public void testOnDateChangeListenerHolo() throws Throwable {
         // Scroll the Holo calendar view all the way up so it's fully visible
         final ScrollView scroller = (ScrollView) mActivity.findViewById(R.id.scroller);
         final ViewGroup container = (ViewGroup) scroller.findViewById(R.id.container);
 
-        mInstrumentation.runOnMainSync(() -> scroller.scrollTo(0, container.getHeight()));
+        mActivityRule.runOnUiThread(() -> scroller.scrollTo(0, container.getHeight()));
         // Note that in pre-Material world we are "allowing" the CalendarView to notify
         // the date change listener on multiple occasions. This is the old behavior of the widget.
         verifyOnDateChangeListener(mCalendarViewHolo, false);
     }
 
     @Test
-    public void testOnDateChangeListenerMaterial() {
+    public void testOnDateChangeListenerMaterial() throws Throwable {
         // Note that in Material world only "real" date change events are allowed to be reported
         // to our listener. This is the new behavior of the widget.
         verifyOnDateChangeListener(mCalendarViewMaterial, true);

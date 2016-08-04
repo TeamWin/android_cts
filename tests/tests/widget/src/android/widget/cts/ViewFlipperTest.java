@@ -89,11 +89,11 @@ public class ViewFlipperTest {
 
     @LargeTest
     @Test
-    public void testViewFlipper() {
+    public void testViewFlipper() throws Throwable {
         final int flipInterval = mActivity.getResources().getInteger(
                 R.integer.view_flipper_interval);
 
-        mInstrumentation.runOnMainSync(() -> {
+        mActivityRule.runOnUiThread(() -> {
             ViewFlipper viewFlipper =
                     (ViewFlipper) mActivity.findViewById(R.id.viewflipper_test);
 
@@ -113,7 +113,7 @@ public class ViewFlipperTest {
         // wait for a longer time to make sure the view flipping is completed.
         SystemClock.sleep(flipInterval + 200);
         mInstrumentation.waitForIdleSync();
-        mInstrumentation.runOnMainSync(() -> {
+        mActivityRule.runOnUiThread(() -> {
             ViewFlipper viewFlipper =
                     (ViewFlipper) mActivity.findViewById(R.id.viewflipper_test);
 
@@ -127,7 +127,7 @@ public class ViewFlipperTest {
 
         SystemClock.sleep(flipInterval + 200);
         mInstrumentation.waitForIdleSync();
-        mInstrumentation.runOnMainSync(() -> {
+        mActivityRule.runOnUiThread(() -> {
             ViewFlipper viewFlipper =
                     (ViewFlipper) mActivity.findViewById(R.id.viewflipper_test);
 

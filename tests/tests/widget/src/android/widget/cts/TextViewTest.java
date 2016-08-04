@@ -194,8 +194,8 @@ public class TextViewTest {
      * Used in test methods that can not entirely be run on the UiThread (e.g: tests that need to
      * emulate touches and/or key presses).
      */
-    private void initTextViewForTypingOnUiThread() {
-        mInstrumentation.runOnMainSync(this::initTextViewForTyping);
+    private void initTextViewForTypingOnUiThread() throws Throwable {
+        mActivityRule.runOnUiThread(this::initTextViewForTyping);
         mInstrumentation.waitForIdleSync();
     }
 
@@ -239,7 +239,7 @@ public class TextViewTest {
     }
 
     @Test
-    public void testGetLayout() {
+    public void testGetLayout() throws Throwable {
         mActivity.runOnUiThread(() -> {
             mTextView = findTextView(R.id.textview_text);
             mTextView.setGravity(Gravity.CENTER);
@@ -261,7 +261,7 @@ public class TextViewTest {
     }
 
     @Test
-    public void testAccessKeyListener() {
+    public void testAccessKeyListener() throws Throwable {
         mActivity.runOnUiThread(() -> mTextView = findTextView(R.id.textview_text));
         mInstrumentation.waitForIdleSync();
 
@@ -281,7 +281,7 @@ public class TextViewTest {
     }
 
     @Test
-    public void testAccessMovementMethod() {
+    public void testAccessMovementMethod() throws Throwable {
         final CharSequence LONG_TEXT = "Scrolls the specified widget to the specified "
                 + "coordinates, except constrains the X scrolling position to the horizontal "
                 + "regions of the text that will be visible after scrolling to "
@@ -387,7 +387,7 @@ public class TextViewTest {
     }
 
     @Test
-    public void testAccessAutoLinkMask() {
+    public void testAccessAutoLinkMask() throws Throwable {
         mTextView = findTextView(R.id.textview_text);
         final CharSequence text1 =
                 new SpannableString("URL: http://www.google.com. mailto: account@gmail.com");
@@ -509,7 +509,7 @@ public class TextViewTest {
     }
 
     @Test
-    public void testAccessHighlightColor() {
+    public void testAccessHighlightColor() throws Throwable {
         final TextView textView = (TextView) mActivity.findViewById(R.id.textview_text);
 
         mActivity.runOnUiThread(() -> {
@@ -761,7 +761,7 @@ public class TextViewTest {
     }
 
     @Test
-    public void testHeight() {
+    public void testHeight() throws Throwable {
         mTextView = findTextView(R.id.textview_text);
         final int originalHeight = mTextView.getHeight();
 
@@ -841,7 +841,7 @@ public class TextViewTest {
     }
 
     @Test
-    public void testWidth() {
+    public void testWidth() throws Throwable {
         mTextView = findTextView(R.id.textview_text);
         int originalWidth = mTextView.getWidth();
 
@@ -886,7 +886,7 @@ public class TextViewTest {
     }
 
     @Test
-    public void testSetMinEms() {
+    public void testSetMinEms() throws Throwable {
         mTextView = findTextView(R.id.textview_text);
         assertEquals(1, mTextView.getLineCount());
 
@@ -908,7 +908,7 @@ public class TextViewTest {
     }
 
     @Test
-    public void testSetMaxEms() {
+    public void testSetMaxEms() throws Throwable {
         mTextView = findTextView(R.id.textview_text);
         assertEquals(1, mTextView.getLineCount());
 
@@ -932,7 +932,7 @@ public class TextViewTest {
     }
 
     @Test
-    public void testSetEms() {
+    public void testSetEms() throws Throwable {
         mTextView = findTextView(R.id.textview_text);
         assertEquals("check height", 1, mTextView.getLineCount());
         final int originalWidth = mTextView.getWidth();
@@ -956,7 +956,7 @@ public class TextViewTest {
     }
 
     @Test
-    public void testSetLineSpacing() {
+    public void testSetLineSpacing() throws Throwable {
         mTextView = new TextView(mActivity);
         int originalLineHeight = mTextView.getLineHeight();
 
@@ -999,7 +999,7 @@ public class TextViewTest {
     }
 
     @Test
-    public void testSetElegantLineHeight() {
+    public void testSetElegantLineHeight() throws Throwable {
         mTextView = findTextView(R.id.textview_text);
         assertFalse(mTextView.getPaint().isElegantTextHeight());
         mActivity.runOnUiThread(() -> {
@@ -1459,7 +1459,7 @@ public class TextViewTest {
     }
 
     @Test
-    public void testSetText_updatesHeightAfterRemovingImageSpan() {
+    public void testSetText_updatesHeightAfterRemovingImageSpan() throws Throwable {
         // Height calculation had problems when TextView had width: match_parent
         final int textViewWidth = ViewGroup.LayoutParams.MATCH_PARENT;
         final Spannable text = new SpannableString("some text");
@@ -1509,7 +1509,7 @@ public class TextViewTest {
     }
 
     @Test
-    public void testRemoveSelectionWithSelectionHandles() {
+    public void testRemoveSelectionWithSelectionHandles() throws Throwable {
         initTextViewForTypingOnUiThread();
 
         assertFalse(mTextView.isTextSelectable());
@@ -1532,7 +1532,7 @@ public class TextViewTest {
     }
 
     @Test
-    public void testUndo_insert() {
+    public void testUndo_insert() throws Throwable {
         initTextViewForTypingOnUiThread();
 
         // Type some text.
@@ -1563,7 +1563,7 @@ public class TextViewTest {
     }
 
     @Test
-    public void testUndo_delete() {
+    public void testUndo_delete() throws Throwable {
         initTextViewForTypingOnUiThread();
 
         // Simulate deleting text and undoing it.
@@ -1781,7 +1781,7 @@ public class TextViewTest {
     }
 
     @Test
-    public void testUndo_setText() {
+    public void testUndo_setText() throws Throwable {
         initTextViewForTypingOnUiThread();
 
         // Create two undo operations, an insert and a delete.
@@ -1803,7 +1803,7 @@ public class TextViewTest {
     }
 
     @Test
-    public void testRedo_setText() {
+    public void testRedo_setText() throws Throwable {
         initTextViewForTypingOnUiThread();
 
         // Type some text. This creates an undo entry.
@@ -1821,7 +1821,7 @@ public class TextViewTest {
     }
 
     @Test
-    public void testUndo_directAppend() {
+    public void testUndo_directAppend() throws Throwable {
         initTextViewForTypingOnUiThread();
 
         // Type some text.
@@ -1843,7 +1843,7 @@ public class TextViewTest {
     }
 
     @Test
-    public void testUndo_directInsert() {
+    public void testUndo_directInsert() throws Throwable {
         initTextViewForTypingOnUiThread();
 
         // Type some text.
@@ -1885,7 +1885,7 @@ public class TextViewTest {
     }
 
     @Test
-    public void testUndo_textWatcher() {
+    public void testUndo_textWatcher() throws Throwable {
         initTextViewForTypingOnUiThread();
 
         // Add a TextWatcher that converts the text to spaces on each change.
@@ -1922,7 +1922,7 @@ public class TextViewTest {
     }
 
     @Test
-    public void testUndo_shortcuts() {
+    public void testUndo_shortcuts() throws Throwable {
         initTextViewForTypingOnUiThread();
 
         // Type some text.
@@ -1944,7 +1944,7 @@ public class TextViewTest {
     }
 
     @Test
-    public void testUndo_saveInstanceState() {
+    public void testUndo_saveInstanceState() throws Throwable {
         initTextViewForTypingOnUiThread();
 
         // Type some text to create an undo operation.
@@ -1979,7 +1979,7 @@ public class TextViewTest {
     }
 
     @Test
-    public void testUndo_saveInstanceStateEmpty() {
+    public void testUndo_saveInstanceStateEmpty() throws Throwable {
         initTextViewForTypingOnUiThread();
 
         // Type and delete to create two new undo operations.
@@ -2032,7 +2032,7 @@ public class TextViewTest {
     }
 
     @Test
-    public void testCopyAndPaste_byKey() {
+    public void testCopyAndPaste_byKey() throws Throwable {
         initTextViewForTypingOnUiThread();
 
         // Type "abc".
@@ -2109,7 +2109,7 @@ public class TextViewTest {
     }
 
     @Test
-    public void testCutAndPaste_byKey() {
+    public void testCutAndPaste_byKey() throws Throwable {
         initTextViewForTypingOnUiThread();
 
         // Type "abc".
@@ -2132,7 +2132,7 @@ public class TextViewTest {
         CtsKeyEventUtil.sendKeys(mInstrumentation, mTextView, KeyEvent.KEYCODE_PASTE);
         assertEquals("bca", mTextView.getText().toString());
 
-        mInstrumentation.runOnMainSync(() -> {
+        mActivityRule.runOnUiThread(() -> {
             Selection.selectAll((Spannable) mTextView.getText());
             KeyEvent cutWithMeta = new KeyEvent(0, 0, KeyEvent.ACTION_DOWN,
                     KeyEvent.KEYCODE_CUT, 0, KeyEvent.META_SHIFT_LEFT_ON);
@@ -2371,7 +2371,7 @@ public class TextViewTest {
     }
 
     @Test
-    public void testAccessError() {
+    public void testAccessError() throws Throwable {
         mTextView = findTextView(R.id.textview_text);
         assertNull(mTextView.getError());
 
@@ -2423,7 +2423,7 @@ public class TextViewTest {
     }
 
     @Test
-    public void testAccessFilters() {
+    public void testAccessFilters() throws Throwable {
         final InputFilter[] expected = { new InputFilter.AllCaps(),
                 new InputFilter.LengthFilter(2) };
 
@@ -2458,7 +2458,7 @@ public class TextViewTest {
     }
 
     @Test
-    public void testGetFocusedRect() {
+    public void testGetFocusedRect() throws Throwable {
         Rect rc = new Rect();
 
         // Basic
@@ -2583,7 +2583,7 @@ public class TextViewTest {
     }
 
     @Test
-    public void testGetLineBounds() {
+    public void testGetLineBounds() throws Throwable {
         Rect rc = new Rect();
         mTextView = new TextView(mActivity);
         assertEquals(0, mTextView.getLineBounds(0, null));
@@ -2616,7 +2616,7 @@ public class TextViewTest {
     }
 
     @Test
-    public void testGetBaseLine() {
+    public void testGetBaseLine() throws Throwable {
         mTextView = new TextView(mActivity);
         assertEquals(-1, mTextView.getBaseline());
 
@@ -2633,7 +2633,7 @@ public class TextViewTest {
     }
 
     @Test
-    public void testPressKey() {
+    public void testPressKey() throws Throwable {
         initTextViewForTypingOnUiThread();
 
         CtsKeyEventUtil.sendString(mInstrumentation, mTextView, "a");
@@ -2645,7 +2645,7 @@ public class TextViewTest {
     }
 
     @Test
-    public void testSetIncludeFontPadding() {
+    public void testSetIncludeFontPadding() throws Throwable {
         mTextView = findTextView(R.id.textview_text);
         assertTrue(mTextView.getIncludeFontPadding());
         mActivity.runOnUiThread(() -> {
@@ -2790,7 +2790,7 @@ public class TextViewTest {
     }
 
     @Test
-    public void testEllipsizeEndAndNoEllipsizeHasSameBaselineForSingleLine() {
+    public void testEllipsizeEndAndNoEllipsizeHasSameBaselineForSingleLine() throws Throwable {
         TextView tvEllipsizeEnd = new TextView(mActivity);
         tvEllipsizeEnd.setEllipsize(TruncateAt.END);
         tvEllipsizeEnd.setMaxLines(1);
@@ -2821,7 +2821,7 @@ public class TextViewTest {
     }
 
     @Test
-    public void testEllipsizeEndAndNoEllipsizeHasSameBaselineForMultiLine() {
+    public void testEllipsizeEndAndNoEllipsizeHasSameBaselineForMultiLine() throws Throwable {
         TextView tvEllipsizeEnd = new TextView(mActivity);
         tvEllipsizeEnd.setEllipsize(TruncateAt.END);
         tvEllipsizeEnd.setMaxLines(2);
@@ -2856,7 +2856,7 @@ public class TextViewTest {
     }
 
     @Test
-    public void testTextViewInWeigthenedLayoutChangesWidthAfterSetText() {
+    public void testTextViewInWeigthenedLayoutChangesWidthAfterSetText() throws Throwable {
         final TextView textView = new TextView(mActivity);
         textView.setEllipsize(TruncateAt.END);
         textView.setSingleLine(true);
@@ -3190,7 +3190,7 @@ public class TextViewTest {
     }
 
     @Test
-    public void testSetLetterSpacing_changesTextWidth() {
+    public void testSetLetterSpacing_changesTextWidth() throws Throwable {
         final TextView textView = new TextView(mActivity);
         textView.setText("aa");
         textView.setLetterSpacing(0f);
@@ -3234,7 +3234,7 @@ public class TextViewTest {
     }
 
     @Test
-    public void testGetOffsetForPosition_singleLineLtr() {
+    public void testGetOffsetForPosition_singleLineLtr() throws Throwable {
         // asserts getOffsetPosition returns correct values for a single line LTR text
         String text = "aaaaa";
         final TextView textView = new TextView(mActivity);
@@ -3254,7 +3254,7 @@ public class TextViewTest {
         layout.addView(textView, layoutParams);
         layout.setLayoutParams(layoutParams);
 
-        mInstrumentation.runOnMainSync(() -> mActivity.setContentView(layout));
+        mActivityRule.runOnUiThread(() -> mActivity.setContentView(layout));
         mInstrumentation.waitForIdleSync();
 
         final int firstOffset = 0;
@@ -3284,7 +3284,7 @@ public class TextViewTest {
     }
 
     @Test
-    public void testGetOffsetForPosition_multiLineLtr() {
+    public void testGetOffsetForPosition_multiLineLtr() throws Throwable {
         final String line = "aaa\n";
         final String threeLines = line + line + line;
         final TextView textView = new TextView(mActivity);
@@ -3304,7 +3304,7 @@ public class TextViewTest {
         layout.addView(textView, layoutParams);
         layout.setLayoutParams(layoutParams);
 
-        mInstrumentation.runOnMainSync(() -> mActivity.setContentView(layout));
+        mActivityRule.runOnUiThread(() -> mActivity.setContentView(layout));
         mInstrumentation.waitForIdleSync();
 
         final Rect lineBounds = new Rect();
@@ -3342,7 +3342,7 @@ public class TextViewTest {
     }
 
     @Test
-    public void testGetOffsetForPosition_multiLineRtl() {
+    public void testGetOffsetForPosition_multiLineRtl() throws Throwable {
         final String line = "\u0635\u0635\u0635\n";
         final String threeLines = line + line + line;
         final TextView textView = new TextView(mActivity);
@@ -3362,7 +3362,7 @@ public class TextViewTest {
         layout.addView(textView, layoutParams);
         layout.setLayoutParams(layoutParams);
 
-        mInstrumentation.runOnMainSync(() -> mActivity.setContentView(layout));
+        mActivityRule.runOnUiThread(() -> mActivity.setContentView(layout));
         mInstrumentation.waitForIdleSync();
 
         final Rect lineBounds = new Rect();
@@ -3436,7 +3436,7 @@ public class TextViewTest {
     }
 
     @Test
-    public void testAccessTransformationMethod() {
+    public void testAccessTransformationMethod() throws Throwable {
         // check the password attribute in xml
         mTextView = findTextView(R.id.textview_password);
         assertNotNull(mTextView);
@@ -3622,7 +3622,7 @@ public class TextViewTest {
     }
 
     @Test
-    public void testSingleLine() {
+    public void testSingleLine() throws Throwable {
         final TextView textView = new TextView(mActivity);
         setSpannableText(textView, "This is a really long sentence"
                 + " which can not be placed in one line on the screen.");
@@ -3773,7 +3773,7 @@ public class TextViewTest {
     }
 
     @Test
-    public void testAccessMinLines() {
+    public void testAccessMinLines() throws Throwable {
         mTextView = findTextView(R.id.textview_text);
         setWidth(mTextView.getWidth() >> 3);
         int originalLines = mTextView.getLineCount();
@@ -3790,7 +3790,7 @@ public class TextViewTest {
     }
 
     @Test
-    public void testSetLines() {
+    public void testSetLines() throws Throwable {
         mTextView = findTextView(R.id.textview_text);
         // make it multiple lines
         setWidth(mTextView.getWidth() >> 3);
@@ -3853,7 +3853,7 @@ public class TextViewTest {
     }
 
     @Test
-    public void testGetTotalPaddingTop() {
+    public void testGetTotalPaddingTop() throws Throwable {
         mTextView = findTextView(R.id.textview_text);
         // Initialized value
         assertEquals(0, mTextView.getTotalPaddingTop());
@@ -3878,7 +3878,7 @@ public class TextViewTest {
     }
 
     @Test
-    public void testGetTotalPaddingBottom() {
+    public void testGetTotalPaddingBottom() throws Throwable {
         mTextView = findTextView(R.id.textview_text);
         // Initialized value
         assertEquals(0, mTextView.getTotalPaddingBottom());
@@ -4084,7 +4084,7 @@ public class TextViewTest {
     }
 
     @Test
-    public void testSetHorizontallyScrolling() {
+    public void testSetHorizontallyScrolling() throws Throwable {
         // make the text view has more than one line
         mTextView = findTextView(R.id.textview_text);
         setWidth(mTextView.getWidth() >> 1);
@@ -4174,7 +4174,7 @@ public class TextViewTest {
     }
 
     @Test
-    public void testMarquee() {
+    public void testMarquee() throws Throwable {
         // Both are pointing to the same object. This works around current limitation in CTS
         // coverage report tool for properly reporting coverage of base class method calls.
         final MockTextView mockTextView = new MockTextView(mActivity);
@@ -4584,31 +4584,31 @@ public class TextViewTest {
         mTextView = findTextView(R.id.textview_text);
 
         // not a spannable text
-        mInstrumentation.runOnMainSync(() -> assertFalse(mTextView.moveCursorToVisibleOffset()));
+        mActivityRule.runOnUiThread(() -> assertFalse(mTextView.moveCursorToVisibleOffset()));
         mInstrumentation.waitForIdleSync();
 
         // a selection range
         final String spannableText = "text";
         mTextView = new TextView(mActivity);
 
-        mInstrumentation.runOnMainSync(
+        mActivityRule.runOnUiThread(
                 () -> mTextView.setText(spannableText, BufferType.SPANNABLE));
         mInstrumentation.waitForIdleSync();
         Selection.setSelection((Spannable) mTextView.getText(), 0, spannableText.length());
 
         assertEquals(0, mTextView.getSelectionStart());
         assertEquals(spannableText.length(), mTextView.getSelectionEnd());
-        mInstrumentation.runOnMainSync(() -> assertFalse(mTextView.moveCursorToVisibleOffset()));
+        mActivityRule.runOnUiThread(() -> assertFalse(mTextView.moveCursorToVisibleOffset()));
         mInstrumentation.waitForIdleSync();
 
         // a spannable without range
-        mInstrumentation.runOnMainSync(() -> {
+        mActivityRule.runOnUiThread(() -> {
             mTextView = findTextView(R.id.textview_text);
             mTextView.setText(spannableText, BufferType.SPANNABLE);
         });
         mInstrumentation.waitForIdleSync();
 
-        mInstrumentation.runOnMainSync(() -> assertTrue(mTextView.moveCursorToVisibleOffset()));
+        mActivityRule.runOnUiThread(() -> assertTrue(mTextView.moveCursorToVisibleOffset()));
         mInstrumentation.waitForIdleSync();
     }
 
@@ -4618,7 +4618,7 @@ public class TextViewTest {
         assertFalse(mTextView.isInputMethodTarget());
 
         assertFalse(mTextView.isFocused());
-        mInstrumentation.runOnMainSync(() -> {
+        mActivityRule.runOnUiThread(() -> {
             mTextView.setFocusable(true);
             mTextView.requestFocus();
          });
@@ -4649,7 +4649,7 @@ public class TextViewTest {
     }
 
     @Test
-    public void testBeginEndBatchEditCallbacksAreCalledForEditableText() {
+    public void testBeginEndBatchEditCallbacksAreCalledForEditableText() throws Throwable {
         final TextView mockTextView = spy(new TextView(mActivity));
 
         final FrameLayout layout = new FrameLayout(mActivity);
@@ -4744,7 +4744,7 @@ public class TextViewTest {
     }
 
     @Test
-    public void testSelectAllJustAfterTap() {
+    public void testSelectAllJustAfterTap() throws Throwable {
         // Prepare an EditText with focus.
         mActivity.runOnUiThread(() -> {
             mTextView = new EditText(mActivity);
@@ -5527,7 +5527,7 @@ public class TextViewTest {
     }
 
     @Test
-    public void testSetAndGetCustomSelectionActionModeCallback() {
+    public void testSetAndGetCustomSelectionActionModeCallback() throws Throwable {
         final String text = "abcde";
         mActivity.runOnUiThread(() -> {
             mTextView = new EditText(mActivity);
@@ -5639,7 +5639,7 @@ public class TextViewTest {
     }
 
     @Test
-    public void testFontFeatureSettings() {
+    public void testFontFeatureSettings() throws Throwable {
         final TextView textView = (TextView) mActivity.findViewById(R.id.textview_text);
         assertTrue(TextUtils.isEmpty(textView.getFontFeatureSettings()));
 
@@ -5672,7 +5672,7 @@ public class TextViewTest {
     }
 
     @Test
-    public void testAccessShowSoftInputOnFocus() {
+    public void testAccessShowSoftInputOnFocus() throws Throwable {
         if (!mActivity.getPackageManager().hasSystemFeature(PackageManager.FEATURE_INPUT_METHODS)) {
             return;
         }
@@ -5730,34 +5730,34 @@ public class TextViewTest {
     }
 
     @Test
-    public void testIsSuggestionsEnabled() {
+    public void testIsSuggestionsEnabled() throws Throwable {
         mTextView = findTextView(R.id.textview_text);
 
         // Anything without InputType.TYPE_CLASS_TEXT doesn't have suggestions enabled
-        mInstrumentation.runOnMainSync(() -> mTextView.setInputType(InputType.TYPE_CLASS_DATETIME));
+        mActivityRule.runOnUiThread(() -> mTextView.setInputType(InputType.TYPE_CLASS_DATETIME));
         assertFalse(mTextView.isSuggestionsEnabled());
 
-        mInstrumentation.runOnMainSync(() -> mTextView.setInputType(InputType.TYPE_CLASS_PHONE));
+        mActivityRule.runOnUiThread(() -> mTextView.setInputType(InputType.TYPE_CLASS_PHONE));
         assertFalse(mTextView.isSuggestionsEnabled());
 
-        mInstrumentation.runOnMainSync(() -> mTextView.setInputType(InputType.TYPE_CLASS_NUMBER));
+        mActivityRule.runOnUiThread(() -> mTextView.setInputType(InputType.TYPE_CLASS_NUMBER));
         assertFalse(mTextView.isSuggestionsEnabled());
 
         // From this point our text view has InputType.TYPE_CLASS_TEXT
 
         // Anything with InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS doesn't have suggestions enabled
-        mInstrumentation.runOnMainSync(
+        mActivityRule.runOnUiThread(
                 () -> mTextView.setInputType(
                         InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS));
         assertFalse(mTextView.isSuggestionsEnabled());
 
-        mInstrumentation.runOnMainSync(
+        mActivityRule.runOnUiThread(
                 () -> mTextView.setInputType(
                         InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_NORMAL |
                                 InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS));
         assertFalse(mTextView.isSuggestionsEnabled());
 
-        mInstrumentation.runOnMainSync(
+        mActivityRule.runOnUiThread(
                 () -> mTextView.setInputType(
                         InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS |
                                 InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS));
@@ -5765,87 +5765,87 @@ public class TextViewTest {
 
         // Otherwise suggestions are enabled for specific type variations enumerated in the
         // documentation of TextView.isSuggestionsEnabled
-        mInstrumentation.runOnMainSync(
+        mActivityRule.runOnUiThread(
                 () -> mTextView.setInputType(
                         InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_NORMAL));
         assertTrue(mTextView.isSuggestionsEnabled());
 
-        mInstrumentation.runOnMainSync(
+        mActivityRule.runOnUiThread(
                 () -> mTextView.setInputType(
                         InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_EMAIL_SUBJECT));
         assertTrue(mTextView.isSuggestionsEnabled());
 
-        mInstrumentation.runOnMainSync(
+        mActivityRule.runOnUiThread(
                 () -> mTextView.setInputType(
                         InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_LONG_MESSAGE));
         assertTrue(mTextView.isSuggestionsEnabled());
 
-        mInstrumentation.runOnMainSync(
+        mActivityRule.runOnUiThread(
                 () -> mTextView.setInputType(
                         InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_SHORT_MESSAGE));
         assertTrue(mTextView.isSuggestionsEnabled());
 
-        mInstrumentation.runOnMainSync(
+        mActivityRule.runOnUiThread(
                 () -> mTextView.setInputType(
                         InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_WEB_EDIT_TEXT));
         assertTrue(mTextView.isSuggestionsEnabled());
 
         // and not on any other type variation
-        mInstrumentation.runOnMainSync(
+        mActivityRule.runOnUiThread(
                 () -> mTextView.setInputType(
                         InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS));
         assertFalse(mTextView.isSuggestionsEnabled());
 
-        mInstrumentation.runOnMainSync(
+        mActivityRule.runOnUiThread(
                 () -> mTextView.setInputType(
                         InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_FILTER));
         assertFalse(mTextView.isSuggestionsEnabled());
 
-        mInstrumentation.runOnMainSync(
+        mActivityRule.runOnUiThread(
                 () -> mTextView.setInputType(
                         InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD));
         assertFalse(mTextView.isSuggestionsEnabled());
 
-        mInstrumentation.runOnMainSync(
+        mActivityRule.runOnUiThread(
                 () -> mTextView.setInputType(
                         InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PERSON_NAME));
         assertFalse(mTextView.isSuggestionsEnabled());
 
-        mInstrumentation.runOnMainSync(
+        mActivityRule.runOnUiThread(
                 () -> mTextView.setInputType(
                         InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PHONETIC));
         assertFalse(mTextView.isSuggestionsEnabled());
 
-        mInstrumentation.runOnMainSync(
+        mActivityRule.runOnUiThread(
                 () -> mTextView.setInputType(
                         InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_POSTAL_ADDRESS));
         assertFalse(mTextView.isSuggestionsEnabled());
 
-        mInstrumentation.runOnMainSync(
+        mActivityRule.runOnUiThread(
                 () -> mTextView.setInputType(
                         InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_URI));
         assertFalse(mTextView.isSuggestionsEnabled());
 
-        mInstrumentation.runOnMainSync(
+        mActivityRule.runOnUiThread(
                 () -> mTextView.setInputType(
                         InputType.TYPE_CLASS_TEXT |
                                 InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD));
         assertFalse(mTextView.isSuggestionsEnabled());
 
-        mInstrumentation.runOnMainSync(
+        mActivityRule.runOnUiThread(
                 () -> mTextView.setInputType(
                         InputType.TYPE_CLASS_TEXT |
                                 InputType.TYPE_TEXT_VARIATION_WEB_EMAIL_ADDRESS));
         assertFalse(mTextView.isSuggestionsEnabled());
 
-        mInstrumentation.runOnMainSync(
+        mActivityRule.runOnUiThread(
                 () -> mTextView.setInputType(
                         InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_WEB_PASSWORD));
         assertFalse(mTextView.isSuggestionsEnabled());
     }
 
     @Test
-    public void testAccessLetterSpacing() {
+    public void testAccessLetterSpacing() throws Throwable {
         mTextView = findTextView(R.id.textview_text);
         assertEquals(0.0f, mTextView.getLetterSpacing(), 0.0f);
 
@@ -5857,14 +5857,14 @@ public class TextViewTest {
         mTextView.getPaint().getTextWidths(text.toString(), initialWidths);
 
         // Get advance widths of each character at letter spacing = 1.0f
-        WidgetTestUtils.runOnMainAndDrawSync(mInstrumentation, mTextView,
+        WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, mTextView,
                 () -> mTextView.setLetterSpacing(1.0f));
         assertEquals(1.0f, mTextView.getLetterSpacing(), 0.0f);
         final float[] singleWidths = new float[textLength];
         mTextView.getPaint().getTextWidths(text.toString(), singleWidths);
 
         // Get advance widths of each character at letter spacing = 2.0f
-        WidgetTestUtils.runOnMainAndDrawSync(mInstrumentation, mTextView,
+        WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, mTextView,
                 () -> mTextView.setLetterSpacing(2.0f));
         assertEquals(2.0f, mTextView.getLetterSpacing(), 0.0f);
         final float[] doubleWidths = new float[textLength];
@@ -5884,7 +5884,7 @@ public class TextViewTest {
     }
 
     @Test
-    public void testTextIsSelectableFocusAndOnClick() {
+    public void testTextIsSelectableFocusAndOnClick() throws Throwable {
         // Prepare a focusable TextView with an onClickListener attached.
         final View.OnClickListener mockOnClickListener = mock(View.OnClickListener.class);
         mActivity.runOnUiThread(() -> {
@@ -5951,9 +5951,9 @@ public class TextViewTest {
     }
 
     @Test
-    public void testGetOffsetForPosition() {
+    public void testGetOffsetForPosition() throws Throwable {
         mTextView = findTextView(R.id.textview_text);
-        WidgetTestUtils.runOnMainAndDrawSync(mInstrumentation, mTextView, () -> {
+        WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, mTextView, () -> {
             mTextView.setText(LONG_TEXT);
             mTextView.setPadding(0, 0, 0, 0);
         });
@@ -6090,42 +6090,42 @@ public class TextViewTest {
         mInstrumentation.waitForIdleSync();
     }
 
-    private void setLines(final int lines) {
+    private void setLines(final int lines) throws Throwable {
         mActivity.runOnUiThread(() -> mTextView.setLines(lines));
         mInstrumentation.waitForIdleSync();
     }
 
-    private void setHorizontallyScrolling(final boolean whether) {
+    private void setHorizontallyScrolling(final boolean whether) throws Throwable {
         mActivity.runOnUiThread(() -> mTextView.setHorizontallyScrolling(whether));
         mInstrumentation.waitForIdleSync();
     }
 
-    private void setWidth(final int pixels) {
+    private void setWidth(final int pixels) throws Throwable {
         mActivity.runOnUiThread(() -> mTextView.setWidth(pixels));
         mInstrumentation.waitForIdleSync();
     }
 
-    private void setHeight(final int pixels) {
+    private void setHeight(final int pixels) throws Throwable {
         mActivity.runOnUiThread(() -> mTextView.setHeight(pixels));
         mInstrumentation.waitForIdleSync();
     }
 
-    private void setMinEms(final int ems) {
+    private void setMinEms(final int ems) throws Throwable {
         mActivity.runOnUiThread(() -> mTextView.setMinEms(ems));
         mInstrumentation.waitForIdleSync();
     }
 
-    private void setMaxEms(final int ems) {
+    private void setMaxEms(final int ems) throws Throwable {
         mActivity.runOnUiThread(() -> mTextView.setMaxEms(ems));
         mInstrumentation.waitForIdleSync();
     }
 
-    private void setEms(final int ems) {
+    private void setEms(final int ems) throws Throwable {
         mActivity.runOnUiThread(() -> mTextView.setEms(ems));
         mInstrumentation.waitForIdleSync();
     }
 
-    private void setLineSpacing(final float add, final float mult) {
+    private void setLineSpacing(final float add, final float mult) throws Throwable {
         mActivity.runOnUiThread(() -> mTextView.setLineSpacing(add, mult));
         mInstrumentation.waitForIdleSync();
     }

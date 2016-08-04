@@ -112,8 +112,8 @@ public class GalleryTest  {
         new Gallery(null, null, 0);
     }
 
-    private void setSpacingAndCheck(final int spacing) {
-        mInstrumentation.runOnMainSync(() -> {
+    private void setSpacingAndCheck(final int spacing) throws Throwable {
+        mActivityRule.runOnUiThread(() -> {
             mGallery.setSpacing(spacing);
             mGallery.requestLayout();
         });
@@ -125,7 +125,7 @@ public class GalleryTest  {
     }
 
     @Test
-    public void testSetSpacing() {
+    public void testSetSpacing() throws Throwable {
         setSpacingAndCheck(0);
 
         setSpacingAndCheck(5);
@@ -188,8 +188,8 @@ public class GalleryTest  {
         assertFalse(mGallery.dispatchKeyEvent(invalidKeyEvent));
     }
 
-    private void setGalleryGravity(final int gravity) {
-        mInstrumentation.runOnMainSync(() -> {
+    private void setGalleryGravity(final int gravity) throws Throwable {
+        mActivityRule.runOnUiThread(() -> {
             mGallery.setGravity(gravity);
             mGallery.invalidate();
             mGallery.requestLayout();
@@ -198,7 +198,7 @@ public class GalleryTest  {
     }
 
     @Test
-    public void testSetGravity() {
+    public void testSetGravity() throws Throwable {
         setGalleryGravity(Gravity.CENTER_HORIZONTAL);
         View v0 = mGallery.getChildAt(0);
         ViewAsserts.assertHorizontalCenterAligned(mGallery, v0);

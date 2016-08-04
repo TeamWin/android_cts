@@ -167,23 +167,23 @@ public class AbsListViewTest {
         assertTrue(mListView.isScrollingCacheEnabled());
     }
 
-    private void setAdapter() {
+    private void setAdapter() throws Throwable {
         setAdapter(mCountriesAdapter);
     }
 
-    private void setAdapter(final ListAdapter adapter) {
-        mInstrumentation.runOnMainSync(() -> mListView.setAdapter(adapter));
+    private void setAdapter(final ListAdapter adapter) throws Throwable {
+        mActivityRule.runOnUiThread(() -> mListView.setAdapter(adapter));
         mInstrumentation.waitForIdleSync();
     }
 
-    private void setListSelection(int index) {
-        mInstrumentation.runOnMainSync(() -> mListView.setSelection(index));
+    private void setListSelection(int index) throws Throwable {
+        mActivityRule.runOnUiThread(() -> mListView.setSelection(index));
         mInstrumentation.waitForIdleSync();
     }
 
     @LargeTest
     @Test
-    public void testSetOnScrollListener() {
+    public void testSetOnScrollListener() throws Throwable {
         AbsListView.OnScrollListener mockScrollListener =
                 mock(AbsListView.OnScrollListener.class);
 
@@ -231,7 +231,7 @@ public class AbsListViewTest {
 
     @LargeTest
     @Test
-    public void testFling() {
+    public void testFling() throws Throwable {
         AbsListView.OnScrollListener mockScrollListener = mock(AbsListView.OnScrollListener.class);
         mListView.setOnScrollListener(mockScrollListener);
 
@@ -264,11 +264,11 @@ public class AbsListViewTest {
                 anyInt());
     }
 
-    private void fling(int velocityY, OnScrollListener mockScrollListener) {
+    private void fling(int velocityY, OnScrollListener mockScrollListener) throws Throwable {
         reset(mockScrollListener);
 
         // Fling the list view
-        mInstrumentation.runOnMainSync(() -> mListView.fling(velocityY));
+        mActivityRule.runOnUiThread(() -> mListView.fling(velocityY));
 
         // and wait until our mock listener is invoked with IDLE state
         verify(mockScrollListener, within(20000)).onScrollStateChanged(
@@ -276,7 +276,7 @@ public class AbsListViewTest {
     }
 
     @Test
-    public void testGetFocusedRect() {
+    public void testGetFocusedRect() throws Throwable {
         setAdapter(mShortAdapter);
         setListSelection(0);
 
@@ -302,14 +302,14 @@ public class AbsListViewTest {
     }
 
     @Test
-    public void testAccessStackFromBottom() {
+    public void testAccessStackFromBottom() throws Throwable {
         setAdapter();
 
-        mInstrumentation.runOnMainSync(() -> mListView.setStackFromBottom(false));
+        mActivityRule.runOnUiThread(() -> mListView.setStackFromBottom(false));
         assertFalse(mListView.isStackFromBottom());
         assertEquals(0, mListView.getSelectedItemPosition());
 
-        mInstrumentation.runOnMainSync(() -> mListView.setStackFromBottom(true));
+        mActivityRule.runOnUiThread(() -> mListView.setStackFromBottom(true));
 
         mInstrumentation.waitForIdleSync();
         assertTrue(mListView.isStackFromBottom());
@@ -318,7 +318,7 @@ public class AbsListViewTest {
     }
 
     @Test
-    public void testAccessSelectedItem() {
+    public void testAccessSelectedItem() throws Throwable {
         assertNull(mListView.getSelectedView());
 
         setAdapter();
@@ -342,7 +342,7 @@ public class AbsListViewTest {
     }
 
     @Test
-    public void testAccessListPadding() {
+    public void testAccessListPadding() throws Throwable {
         setAdapter();
 
         assertEquals(0, mListView.getListPaddingLeft());
@@ -351,7 +351,7 @@ public class AbsListViewTest {
         assertEquals(0, mListView.getListPaddingBottom());
 
         final Rect r = new Rect(0, 0, 40, 60);
-        mInstrumentation.runOnMainSync(
+        mActivityRule.runOnUiThread(
                 () -> mListView.setPadding(r.left, r.top, r.right, r.bottom));
         mInstrumentation.waitForIdleSync();
 
@@ -362,13 +362,13 @@ public class AbsListViewTest {
     }
 
     @Test
-    public void testAccessSelector() {
+    public void testAccessSelector() throws Throwable {
         setAdapter();
 
         final Drawable d = mContext.getDrawable(R.drawable.pass);
         mListView.setSelector(d);
 
-        mInstrumentation.runOnMainSync(mListView::requestLayout);
+        mActivityRule.runOnUiThread(mListView::requestLayout);
         mInstrumentation.waitForIdleSync();
         assertSame(d, mListView.getSelector());
         assertTrue(mListView.verifyDrawable(d));
@@ -376,7 +376,7 @@ public class AbsListViewTest {
         mListView.setSelector(R.drawable.failed);
         mListView.setDrawSelectorOnTop(true);
 
-        mInstrumentation.runOnMainSync(mListView::requestLayout);
+        mActivityRule.runOnUiThread(mListView::requestLayout);
         mInstrumentation.waitForIdleSync();
 
         Drawable drawable = mListView.getSelector();
@@ -391,7 +391,7 @@ public class AbsListViewTest {
     }
 
     @Test
-    public void testSetScrollIndicators() {
+    public void testSetScrollIndicators() throws Throwable {
         final Activity activity = mActivityRule.getActivity();
         TextView tv1 = (TextView) activity.findViewById(R.id.headerview1);
         TextView tv2 = (TextView) activity.findViewById(R.id.footerview1);
@@ -400,12 +400,12 @@ public class AbsListViewTest {
 
         mListView.setScrollIndicators(tv1, tv2);
 
-        mInstrumentation.runOnMainSync(mListView::requestLayout);
+        mActivityRule.runOnUiThread(mListView::requestLayout);
         mInstrumentation.waitForIdleSync();
     }
 
     @Test
-    public void testShowContextMenuForChild() {
+    public void testShowContextMenuForChild() throws Throwable {
         setAdapter();
         setListSelection(1);
 
@@ -416,7 +416,7 @@ public class AbsListViewTest {
     }
 
     @Test
-    public void testPointToPosition() {
+    public void testPointToPosition() throws Throwable {
         assertEquals(AbsListView.INVALID_POSITION, mListView.pointToPosition(-1, -1));
         assertEquals(AbsListView.INVALID_ROW_ID, mListView.pointToRowId(-1, -1));
 
@@ -437,7 +437,7 @@ public class AbsListViewTest {
     }
 
     @Test
-    public void testSetRecyclerListener() {
+    public void testSetRecyclerListener() throws Throwable {
         setAdapter();
 
         AbsListView.RecyclerListener mockRecyclerListener =
@@ -561,7 +561,7 @@ public class AbsListViewTest {
     }
 
     @Test
-    public void testAddTouchables() {
+    public void testAddTouchables() throws Throwable {
         ArrayList<View> views = new ArrayList<>();
         assertEquals(0, views.size());
 
@@ -572,7 +572,7 @@ public class AbsListViewTest {
     }
 
     @Test
-    public void testInvalidateViews() {
+    public void testInvalidateViews() throws Throwable {
         final Activity activity = mActivityRule.getActivity();
         TextView tv1 = (TextView) activity.findViewById(R.id.headerview1);
         TextView tv2 = (TextView) activity.findViewById(R.id.footerview1);
@@ -581,15 +581,15 @@ public class AbsListViewTest {
 
         mListView.setScrollIndicators(tv1, tv2);
 
-        mInstrumentation.runOnMainSync(mListView::invalidateViews);
+        mActivityRule.runOnUiThread(mListView::invalidateViews);
         mInstrumentation.waitForIdleSync();
     }
 
     @Test
-    public void testGetContextMenuInfo() {
+    public void testGetContextMenuInfo() throws Throwable {
         final MyListView listView = new MyListView(mContext, mAttributeSet);
 
-        mInstrumentation.runOnMainSync(() ->  {
+        mActivityRule.runOnUiThread(() ->  {
             mActivityRule.getActivity().setContentView(listView);
             listView.setAdapter(mCountriesAdapter);
             listView.setSelection(2);
@@ -666,59 +666,59 @@ public class AbsListViewTest {
 
     @MediumTest
     @Test
-    public void testSetItemChecked_multipleModeSameValue() {
+    public void testSetItemChecked_multipleModeSameValue() throws Throwable {
         // Calling setItemChecked with the same value in multiple choice mode should not cause
         // requestLayout
         mListView.setChoiceMode(ListView.CHOICE_MODE_MULTIPLE);
-        mInstrumentation.runOnMainSync(() -> mListView.setItemChecked(0, false));
+        mActivityRule.runOnUiThread(() -> mListView.setItemChecked(0, false));
         mInstrumentation.waitForIdleSync();
         assertFalse(mListView.isLayoutRequested());
-        mInstrumentation.runOnMainSync(() -> mListView.setItemChecked(0, false));
+        mActivityRule.runOnUiThread(() -> mListView.setItemChecked(0, false));
         assertFalse(mListView.isLayoutRequested());
     }
 
     @MediumTest
     @Test
-    public void testSetItemChecked_singleModeSameValue() {
+    public void testSetItemChecked_singleModeSameValue() throws Throwable {
         // Calling setItemChecked with the same value in single choice mode should not cause
         // requestLayout
         mListView.setChoiceMode(ListView.CHOICE_MODE_SINGLE);
-        mInstrumentation.runOnMainSync(() -> mListView.setItemChecked(0, false));
+        mActivityRule.runOnUiThread(() -> mListView.setItemChecked(0, false));
         mInstrumentation.waitForIdleSync();
         assertFalse(mListView.isLayoutRequested());
-        mInstrumentation.runOnMainSync(() -> mListView.setItemChecked(0, false));
+        mActivityRule.runOnUiThread(() -> mListView.setItemChecked(0, false));
         assertFalse(mListView.isLayoutRequested());
     }
 
     @MediumTest
     @Test
-    public void testSetItemChecked_multipleModeDifferentValue() {
+    public void testSetItemChecked_multipleModeDifferentValue() throws Throwable {
         // Calling setItemChecked with a different value in multiple choice mode should cause
         // requestLayout
         mListView.setChoiceMode(ListView.CHOICE_MODE_MULTIPLE);
-        mInstrumentation.runOnMainSync(() -> mListView.setItemChecked(0, false));
+        mActivityRule.runOnUiThread(() -> mListView.setItemChecked(0, false));
         mInstrumentation.waitForIdleSync();
         assertFalse(mListView.isLayoutRequested());
-        mInstrumentation.runOnMainSync(() -> mListView.setItemChecked(0, true));
+        mActivityRule.runOnUiThread(() -> mListView.setItemChecked(0, true));
         assertTrue(mListView.isLayoutRequested());
     }
 
     @MediumTest
     @Test
-    public void testSetItemChecked_singleModeDifferentValue() {
+    public void testSetItemChecked_singleModeDifferentValue() throws Throwable {
         // Calling setItemChecked with a different value in single choice mode should cause
         // requestLayout
         mListView.setChoiceMode(ListView.CHOICE_MODE_SINGLE);
-        mInstrumentation.runOnMainSync(() -> mListView.setItemChecked(0, false));
+        mActivityRule.runOnUiThread(() -> mListView.setItemChecked(0, false));
         mInstrumentation.waitForIdleSync();
         assertFalse(mListView.isLayoutRequested());
-        mInstrumentation.runOnMainSync(() -> mListView.setItemChecked(0, true));
+        mActivityRule.runOnUiThread(() -> mListView.setItemChecked(0, true));
         assertTrue(mListView.isLayoutRequested());
     }
 
     @LargeTest
     @Test
-    public void testTextFilter() {
+    public void testTextFilter() throws Throwable {
         setAdapter();
 
         // Default state - no text filter
@@ -728,7 +728,7 @@ public class AbsListViewTest {
 
         // Enable text filter and verify that while it's enabled, the filtering is
         // still no on
-        mInstrumentation.runOnMainSync(() -> mListView.setTextFilterEnabled(true));
+        mActivityRule.runOnUiThread(() -> mListView.setTextFilterEnabled(true));
         assertTrue(mListView.isTextFilterEnabled());
         assertFalse(mListView.hasTextFilter());
         assertTrue(TextUtils.isEmpty(mListView.getTextFilter()));
@@ -737,35 +737,35 @@ public class AbsListViewTest {
         assertEquals(COUNTRY_LIST.length, mListView.getCount());
 
         // Set text filter to A - we expect four entries to be left displayed in the list
-        mInstrumentation.runOnMainSync(() -> mListView.setFilterText("A"));
+        mActivityRule.runOnUiThread(() -> mListView.setFilterText("A"));
         PollingCheck.waitFor(() -> mListView.getCount() == 4);
         assertTrue(mListView.isTextFilterEnabled());
         assertTrue(mListView.hasTextFilter());
         assertTrue(TextUtils.equals("A", mListView.getTextFilter()));
 
         // Set text filter to Ar - we expect three entries to be left displayed in the list
-        mInstrumentation.runOnMainSync(() -> mListView.setFilterText("Ar"));
+        mActivityRule.runOnUiThread(() -> mListView.setFilterText("Ar"));
         PollingCheck.waitFor(() -> mListView.getCount() == 3);
         assertTrue(mListView.isTextFilterEnabled());
         assertTrue(mListView.hasTextFilter());
         assertTrue(TextUtils.equals("Ar", mListView.getTextFilter()));
 
         // Clear text filter - we expect to go back to the initial content
-        mInstrumentation.runOnMainSync(() -> mListView.clearTextFilter());
+        mActivityRule.runOnUiThread(() -> mListView.clearTextFilter());
         PollingCheck.waitFor(() -> mListView.getCount() == COUNTRY_LIST.length);
         assertTrue(mListView.isTextFilterEnabled());
         assertFalse(mListView.hasTextFilter());
         assertTrue(TextUtils.isEmpty(mListView.getTextFilter()));
 
         // Set text filter to Be - we expect four entries to be left displayed in the list
-        mInstrumentation.runOnMainSync(() -> mListView.setFilterText("Be"));
+        mActivityRule.runOnUiThread(() -> mListView.setFilterText("Be"));
         PollingCheck.waitFor(() -> mListView.getCount() == 4);
         assertTrue(mListView.isTextFilterEnabled());
         assertTrue(mListView.hasTextFilter());
         assertTrue(TextUtils.equals("Be", mListView.getTextFilter()));
 
         // Set text filter to Q - we no entries displayed in the list
-        mInstrumentation.runOnMainSync(() -> mListView.setFilterText("Q"));
+        mActivityRule.runOnUiThread(() -> mListView.setFilterText("Q"));
         PollingCheck.waitFor(() -> mListView.getCount() == 0);
         assertTrue(mListView.isTextFilterEnabled());
         assertTrue(mListView.hasTextFilter());
@@ -773,12 +773,12 @@ public class AbsListViewTest {
     }
 
     @Test
-    public void testOnFilterComplete() {
+    public void testOnFilterComplete() throws Throwable {
         // Note that we're not using spy() due to Mockito not being able to spy on ListView,
         // at least yet.
         final MyListView listView = new MyListView(mContext, mAttributeSet);
 
-        mInstrumentation.runOnMainSync(() -> {
+        mActivityRule.runOnUiThread(() -> {
             mActivityRule.getActivity().setContentView(listView);
             listView.setAdapter(mCountriesAdapter);
             listView.setTextFilterEnabled(true);
@@ -786,7 +786,7 @@ public class AbsListViewTest {
         mInstrumentation.waitForIdleSync();
 
         // Set text filter to A - we expect four entries to be left displayed in the list
-        mInstrumentation.runOnMainSync(() -> listView.setFilterText("A"));
+        mActivityRule.runOnUiThread(() -> listView.setFilterText("A"));
         PollingCheck.waitFor(() -> listView.getCount() == 4);
         assertTrue(listView.isTextFilterEnabled());
         assertTrue(listView.hasTextFilter());
@@ -832,87 +832,87 @@ public class AbsListViewTest {
 
     @MediumTest
     @Test
-    public void testCheckedItemsUnderNoneChoiceMode() {
+    public void testCheckedItemsUnderNoneChoiceMode() throws Throwable {
         final ArrayList<String> items = new ArrayList<>(Arrays.asList(COUNTRY_LIST));
         final ArrayAdapter<String> adapter = new PositionArrayAdapter<>(mContext,
                 android.R.layout.simple_list_item_1, items);
-        WidgetTestUtils.runOnMainAndDrawSync(mInstrumentation, mListView,
+        WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, mListView,
                 () -> mListView.setAdapter(adapter));
 
-        mInstrumentation.runOnMainSync(
+        mActivityRule.runOnUiThread(
                 () -> mListView.setChoiceMode(AbsListView.CHOICE_MODE_NONE));
         verifyCheckedState(new long[] {});
 
-        mInstrumentation.runOnMainSync(() -> mListView.setItemChecked(2, true));
+        mActivityRule.runOnUiThread(() -> mListView.setItemChecked(2, true));
         verifyCheckedState(new long[] {});
 
-        mInstrumentation.runOnMainSync(() -> mListView.setItemChecked(4, true));
+        mActivityRule.runOnUiThread(() -> mListView.setItemChecked(4, true));
         verifyCheckedState(new long[] {});
 
-        mInstrumentation.runOnMainSync(() -> mListView.setItemChecked(2, false));
+        mActivityRule.runOnUiThread(() -> mListView.setItemChecked(2, false));
         verifyCheckedState(new long[] {});
 
-        mInstrumentation.runOnMainSync(() -> mListView.setItemChecked(4, false));
+        mActivityRule.runOnUiThread(() -> mListView.setItemChecked(4, false));
         verifyCheckedState(new long[] {});
     }
 
     @MediumTest
     @Test
-    public void testCheckedItemsUnderSingleChoiceMode() {
+    public void testCheckedItemsUnderSingleChoiceMode() throws Throwable {
         final ArrayList<String> items = new ArrayList<>(Arrays.asList(COUNTRY_LIST));
         final ArrayAdapter<String> adapter = new PositionArrayAdapter<>(mContext,
                 android.R.layout.simple_list_item_1, items);
-        WidgetTestUtils.runOnMainAndDrawSync(mInstrumentation, mListView,
+        WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, mListView,
                 () -> mListView.setAdapter(adapter));
 
-        mInstrumentation.runOnMainSync(
+        mActivityRule.runOnUiThread(
                 () -> mListView.setChoiceMode(AbsListView.CHOICE_MODE_SINGLE));
         verifyCheckedState(new long[] {});
 
-        mInstrumentation.runOnMainSync(() -> mListView.setItemChecked(2, true));
+        mActivityRule.runOnUiThread(() -> mListView.setItemChecked(2, true));
         verifyCheckedState(new long[] { 2 });
 
-        mInstrumentation.runOnMainSync(() -> mListView.setItemChecked(4, true));
+        mActivityRule.runOnUiThread(() -> mListView.setItemChecked(4, true));
         verifyCheckedState(new long[] { 4 });
 
-        mInstrumentation.runOnMainSync(() -> mListView.setItemChecked(2, false));
+        mActivityRule.runOnUiThread(() -> mListView.setItemChecked(2, false));
         verifyCheckedState(new long[] { 4 });
 
-        mInstrumentation.runOnMainSync(() -> mListView.setItemChecked(4, false));
+        mActivityRule.runOnUiThread(() -> mListView.setItemChecked(4, false));
         verifyCheckedState(new long[] {});
     }
 
     @MediumTest
     @Test
-    public void testCheckedItemsUnderMultipleChoiceMode() {
+    public void testCheckedItemsUnderMultipleChoiceMode() throws Throwable {
         final ArrayList<String> items = new ArrayList<>(Arrays.asList(COUNTRY_LIST));
         final ArrayAdapter<String> adapter = new PositionArrayAdapter<>(mContext,
                 android.R.layout.simple_list_item_1, items);
-        WidgetTestUtils.runOnMainAndDrawSync(mInstrumentation, mListView,
+        WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, mListView,
                 () -> mListView.setAdapter(adapter));
 
-        mInstrumentation.runOnMainSync(
+        mActivityRule.runOnUiThread(
                 () -> mListView.setChoiceMode(AbsListView.CHOICE_MODE_MULTIPLE));
         verifyCheckedState(new long[] {});
 
-        mInstrumentation.runOnMainSync(() -> mListView.setItemChecked(2, true));
+        mActivityRule.runOnUiThread(() -> mListView.setItemChecked(2, true));
         verifyCheckedState(new long[] { 2 });
 
-        mInstrumentation.runOnMainSync(() -> mListView.setItemChecked(4, true));
+        mActivityRule.runOnUiThread(() -> mListView.setItemChecked(4, true));
         verifyCheckedState(new long[] { 2, 4 });
 
-        mInstrumentation.runOnMainSync(() -> mListView.setItemChecked(2, false));
+        mActivityRule.runOnUiThread(() -> mListView.setItemChecked(2, false));
         verifyCheckedState(new long[] { 4 });
 
-        mInstrumentation.runOnMainSync(() -> mListView.setItemChecked(4, false));
+        mActivityRule.runOnUiThread(() -> mListView.setItemChecked(4, false));
         verifyCheckedState(new long[] {});
     }
 
-    private void configureMultiChoiceModalState() {
+    private void configureMultiChoiceModalState() throws Throwable {
         final ArrayList<String> items = new ArrayList<>(Arrays.asList(COUNTRY_LIST));
         final ArrayAdapter<String> adapter = new PositionArrayAdapter<>(mContext,
                 android.R.layout.simple_list_item_1, items);
-        WidgetTestUtils.runOnMainAndDrawSync(mInstrumentation, mListView,
+        WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, mListView,
                 () -> mListView.setAdapter(adapter));
 
         // Configure a multi-choice mode listener to configure our test contextual action bar
@@ -929,35 +929,35 @@ public class AbsListViewTest {
                 any(ActionMode.class), any(Menu.class));
         mListView.setMultiChoiceModeListener(mMultiChoiceModeListener);
 
-        mInstrumentation.runOnMainSync(
+        mActivityRule.runOnUiThread(
                 () -> mListView.setChoiceMode(AbsListView.CHOICE_MODE_MULTIPLE_MODAL));
         verifyCheckedState(new long[] {});
     }
 
     @MediumTest
     @Test
-    public void testCheckedItemsUnderMultipleModalChoiceMode() {
+    public void testCheckedItemsUnderMultipleModalChoiceMode() throws Throwable {
         configureMultiChoiceModalState();
 
-        mInstrumentation.runOnMainSync(() -> mListView.setItemChecked(2, true));
+        mActivityRule.runOnUiThread(() -> mListView.setItemChecked(2, true));
         verifyCheckedState(new long[] { 2 });
         verify(mMultiChoiceModeListener, times(1)).onItemCheckedStateChanged(
                 any(ActionMode.class), eq(2), eq(2L), eq(true));
 
         reset(mMultiChoiceModeListener);
-        mInstrumentation.runOnMainSync(() -> mListView.setItemChecked(4, true));
+        mActivityRule.runOnUiThread(() -> mListView.setItemChecked(4, true));
         verifyCheckedState(new long[] { 2, 4 });
         verify(mMultiChoiceModeListener, times(1)).onItemCheckedStateChanged(
                 any(ActionMode.class), eq(4), eq(4L), eq(true));
 
         reset(mMultiChoiceModeListener);
-        mInstrumentation.runOnMainSync(() -> mListView.setItemChecked(2, false));
+        mActivityRule.runOnUiThread(() -> mListView.setItemChecked(2, false));
         verifyCheckedState(new long[] { 4 });
         verify(mMultiChoiceModeListener, times(1)).onItemCheckedStateChanged(
                 any(ActionMode.class), eq(2), eq(2L), eq(false));
 
         reset(mMultiChoiceModeListener);
-        mInstrumentation.runOnMainSync(() -> mListView.setItemChecked(4, false));
+        mActivityRule.runOnUiThread(() -> mListView.setItemChecked(4, false));
         verifyCheckedState(new long[] {});
         mListView.setMultiChoiceModeListener(mMultiChoiceModeListener);
         verify(mMultiChoiceModeListener, times(1)).onItemCheckedStateChanged(
@@ -966,7 +966,7 @@ public class AbsListViewTest {
 
     @LargeTest
     @Test
-    public void testMultiSelectionWithLongPressAndTaps() {
+    public void testMultiSelectionWithLongPressAndTaps() throws Throwable {
         configureMultiChoiceModalState();
 
         final int firstVisiblePosition = mListView.getFirstVisiblePosition();
@@ -1014,7 +1014,7 @@ public class AbsListViewTest {
 
     @LargeTest
     @Test
-    public void testFastScroll() {
+    public void testFastScroll() throws Throwable {
         setAdapter();
 
         final int lastVisiblePosition = mListView.getLastVisiblePosition();

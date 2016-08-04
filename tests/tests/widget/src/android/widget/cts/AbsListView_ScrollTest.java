@@ -74,7 +74,7 @@ public class AbsListView_ScrollTest {
     private ArrayAdapter<String> mCountriesAdapter;
 
     @Before
-    public void setup() throws Exception {
+    public void setup() throws Throwable {
         mInstrumentation = InstrumentationRegistry.getInstrumentation();
         mContext = mInstrumentation.getTargetContext();
 
@@ -86,7 +86,7 @@ public class AbsListView_ScrollTest {
                 R.layout.listitemfixed_layout, COUNTRY_LIST);
 
         mListView = (ListView) activity.findViewById(R.id.listview_default);
-        mInstrumentation.runOnMainSync(() -> mListView.setAdapter(mCountriesAdapter));
+        mActivityRule.runOnUiThread(() -> mListView.setAdapter(mCountriesAdapter));
         mInstrumentation.waitForIdleSync();
     }
 
@@ -162,7 +162,7 @@ public class AbsListView_ScrollTest {
                 (position <= mListView.getLastVisiblePosition());
     }
 
-    private void verifyScrollToPosition(int positionToScrollTo) {
+    private void verifyScrollToPosition(int positionToScrollTo) throws Throwable {
         final int firstVisiblePosition = mListView.getFirstVisiblePosition();
         final int lastVisiblePosition = mListView.getLastVisiblePosition();
 
@@ -179,7 +179,7 @@ public class AbsListView_ScrollTest {
         // time out and fail the test.
         final CountDownLatch latch = new CountDownLatch(1);
         mListView.setOnScrollListener(new ScrollIdleListListener(latch));
-        mInstrumentation.runOnMainSync(() -> mListView.smoothScrollToPosition(
+        mActivityRule.runOnUiThread(() -> mListView.smoothScrollToPosition(
                 positionToScrollTo));
 
         boolean result = false;
@@ -197,7 +197,7 @@ public class AbsListView_ScrollTest {
     }
 
     @Test
-    public void testSmoothScrollToPositionDownUpDown() {
+    public void testSmoothScrollToPositionDownUpDown() throws Throwable {
         final int itemCount = COUNTRY_LIST.length;
 
         // Scroll closer to the end of the list
@@ -211,7 +211,7 @@ public class AbsListView_ScrollTest {
     }
 
     @Test
-    public void testSmoothScrollToPositionEveryRow() {
+    public void testSmoothScrollToPositionEveryRow() throws Throwable {
         final int itemCount = COUNTRY_LIST.length;
 
         for (int i = 0; i < itemCount; i++) {
@@ -226,7 +226,7 @@ public class AbsListView_ScrollTest {
     }
 
     private void verifyScrollToPositionWithBound(int positionToScrollTo, int boundPosition,
-            boolean expectTargetPositionToBeVisibleAtEnd) {
+            boolean expectTargetPositionToBeVisibleAtEnd) throws Throwable {
         final int firstVisiblePosition = mListView.getFirstVisiblePosition();
         final int lastVisiblePosition = mListView.getLastVisiblePosition();
 
@@ -243,7 +243,7 @@ public class AbsListView_ScrollTest {
         // time out and fail the test.
         final CountDownLatch latch = new CountDownLatch(1);
         mListView.setOnScrollListener(new ScrollIdleListListener(latch));
-        mInstrumentation.runOnMainSync(() -> mListView.smoothScrollToPosition(
+        mActivityRule.runOnUiThread(() -> mListView.smoothScrollToPosition(
                 positionToScrollTo, boundPosition));
 
         boolean result = false;
@@ -267,7 +267,7 @@ public class AbsListView_ScrollTest {
     }
 
     @Test
-    public void testSmoothScrollToPositionWithBound() {
+    public void testSmoothScrollToPositionWithBound() throws Throwable {
         // Our list is 300px high and each row is 40px high. Without being too precise,
         // the logic in this method relies on at least 8 and at most 10 items on the screen
         // at any time.
@@ -290,7 +290,7 @@ public class AbsListView_ScrollTest {
     }
 
     private void verifyScrollToPositionFromTop(int positionToScrollTo, int offset,
-            int durationMs) {
+            int durationMs) throws Throwable {
         final int startTopPositionInListCoordinates =
                 mListView.getFirstVisiblePosition() * ROW_HEIGHT_PX -
                         mListView.getChildAt(0).getTop();
@@ -315,10 +315,10 @@ public class AbsListView_ScrollTest {
         final CountDownLatch latch = new CountDownLatch(1);
         mListView.setOnScrollListener(new ScrollIdleListListener(latch));
         if (durationMs > 0) {
-            mInstrumentation.runOnMainSync(() -> mListView.smoothScrollToPositionFromTop(
+            mActivityRule.runOnUiThread(() -> mListView.smoothScrollToPositionFromTop(
                     positionToScrollTo, offset, durationMs));
         } else {
-            mInstrumentation.runOnMainSync(() -> mListView.smoothScrollToPositionFromTop(
+            mActivityRule.runOnUiThread(() -> mListView.smoothScrollToPositionFromTop(
                     positionToScrollTo, offset));
         }
 
@@ -341,7 +341,7 @@ public class AbsListView_ScrollTest {
     }
 
     @Test
-    public void testSmoothScrollToPositionFromTop() {
+    public void testSmoothScrollToPositionFromTop() throws Throwable {
         // Ask to scroll so that the top of position 5 is 20 pixels below the top edge of the list
         verifyScrollToPositionFromTop(5, 10, -1);
 
@@ -372,7 +372,7 @@ public class AbsListView_ScrollTest {
     }
 
     @Test
-    public void testSmoothScrollToPositionFromTopWithTime() {
+    public void testSmoothScrollToPositionFromTopWithTime() throws Throwable {
         // Ask to scroll so that the top of position 5 is 20 pixels below the top edge of the list
         verifyScrollToPositionFromTop(5, 10, 200);
 
@@ -403,7 +403,7 @@ public class AbsListView_ScrollTest {
     }
 
     @Test
-    public void testCanScrollList() {
+    public void testCanScrollList() throws Throwable {
         final int itemCount = COUNTRY_LIST.length;
 
         assertEquals(0, mListView.getFirstVisiblePosition());
@@ -431,7 +431,7 @@ public class AbsListView_ScrollTest {
         assertTrue(mListView.canScrollList(1));
     }
 
-    private void verifyScrollBy(int y) {
+    private void verifyScrollBy(int y) throws Throwable {
         // Here we rely on knowing the fixed pixel height of each row
         final int startTopPositionInListCoordinates =
                 mListView.getFirstVisiblePosition() * ROW_HEIGHT_PX -
@@ -439,7 +439,7 @@ public class AbsListView_ScrollTest {
 
         // Since scrollListBy is a synchronous operation, we do not need to wait
         // until we can proceed to test the result
-        mInstrumentation.runOnMainSync(() -> mListView.scrollListBy(y));
+        mActivityRule.runOnUiThread(() -> mListView.scrollListBy(y));
 
         final int endTopPositionInListCoordinates =
                 mListView.getFirstVisiblePosition() * ROW_HEIGHT_PX -
@@ -463,7 +463,7 @@ public class AbsListView_ScrollTest {
     }
 
     @Test
-    public void testScrollListBy() {
+    public void testScrollListBy() throws Throwable {
         final int listHeight = mListView.getHeight();
         final int itemCount = COUNTRY_LIST.length;
 
@@ -501,12 +501,12 @@ public class AbsListView_ScrollTest {
     }
 
     @Test
-    public void testListScrollAndTap() {
+    public void testListScrollAndTap() throws Throwable {
         // Start a programmatic scroll to position 30. We register a scroll listener on the list
         // to notify us when position 15 becomes visible.
         final CountDownLatch scrollLatch = new CountDownLatch(1);
         mListView.setOnScrollListener(new ScrollPositionListListener(scrollLatch, 15));
-        mInstrumentation.runOnMainSync(() -> mListView.smoothScrollToPosition(30));
+        mActivityRule.runOnUiThread(() -> mListView.smoothScrollToPosition(30));
 
         boolean result = false;
         try {
@@ -534,12 +534,13 @@ public class AbsListView_ScrollTest {
         assertTrue(mListView.getLastVisiblePosition() < 30);
     }
 
-    private void verifyListScrollAndEmulateFlingGesture(boolean isDownwardsFlingGesture) {
+    private void verifyListScrollAndEmulateFlingGesture(boolean isDownwardsFlingGesture)
+            throws Throwable {
         // Start a programmatic scroll to position 30. We register a scroll listener on the list
         // to notify us when position 15 becomes visible.
         final CountDownLatch scrollLatch = new CountDownLatch(1);
         mListView.setOnScrollListener(new ScrollPositionListListener(scrollLatch, 15));
-        mInstrumentation.runOnMainSync(() -> mListView.smoothScrollToPosition(30));
+        mActivityRule.runOnUiThread(() -> mListView.smoothScrollToPosition(30));
 
         boolean result = false;
         try {
@@ -584,12 +585,12 @@ public class AbsListView_ScrollTest {
     }
 
     @Test
-    public void testListScrollAndEmulateDownwardsFlingGesture() {
+    public void testListScrollAndEmulateDownwardsFlingGesture() throws Throwable {
         verifyListScrollAndEmulateFlingGesture(true);
     }
 
     @Test
-    public void testListScrollAndEmulateUpwardsFlingGesture() {
+    public void testListScrollAndEmulateUpwardsFlingGesture() throws Throwable {
         verifyListScrollAndEmulateFlingGesture(false);
     }
 
@@ -663,10 +664,10 @@ public class AbsListView_ScrollTest {
     }
 
     @Test
-    public void testFriction() {
+    public void testFriction() throws Throwable {
         // Set an adapter with 100K items so that no matter how fast our fling is, we won't
         // get to the bottom of the list in one fling
-        mInstrumentation.runOnMainSync(
+        mActivityRule.runOnUiThread(
                 () -> mListView.setAdapter(new LargeContentAdapter(mContext, 100000)));
         mInstrumentation.waitForIdleSync();
 

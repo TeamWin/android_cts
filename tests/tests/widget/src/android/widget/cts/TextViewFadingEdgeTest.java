@@ -139,7 +139,7 @@ public class TextViewFadingEdgeTest {
     }
 
     @Test
-    public void testFadingEdge() {
+    public void testFadingEdge() throws Throwable {
         for (TestCase data : TEST_DATA) {
             MockTextView textView = createTextView(data.text, data.horizontalFadingEnabled,
                     data.gravity, data.textAlignment, data.scrollToMiddle);
@@ -152,7 +152,7 @@ public class TextViewFadingEdgeTest {
     }
 
     private final MockTextView createTextView(String text, boolean horizontalFadingEnabled,
-            int gravity, int textAlignment, boolean scrollToMiddle) {
+            int gravity, int textAlignment, boolean scrollToMiddle) throws Throwable {
         final MockTextView textView = new MockTextView(mActivity);
         textView.setSingleLine(true);
         textView.setTextSize(30);
@@ -173,9 +173,9 @@ public class TextViewFadingEdgeTest {
         layout.addView(textView);
 
         final Instrumentation instrumentation = InstrumentationRegistry.getInstrumentation();
-        instrumentation.runOnMainSync(() -> mActivity.setContentView(layout));
+        mActivityRule.runOnUiThread(() -> mActivity.setContentView(layout));
         if (scrollToMiddle) {
-            instrumentation.runOnMainSync(() -> {
+            mActivityRule.runOnUiThread(() -> {
                 float lineMid = (textView.getLayout().getLineLeft(0) +
                         textView.getLayout().getLineRight(0)) / 2;
                 int scrollPosition = (int) lineMid;

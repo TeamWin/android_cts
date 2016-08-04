@@ -31,6 +31,7 @@ import android.os.SystemClock;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.annotation.UiThreadTest;
 import android.support.test.filters.LargeTest;
+import android.support.test.rule.ActivityTestRule;
 import android.support.test.runner.AndroidJUnit4;
 import android.view.Gravity;
 import android.view.View;
@@ -40,6 +41,7 @@ import android.widget.ImageView;
 import android.widget.Toast;
 
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -54,6 +56,10 @@ public class ToastTest {
     private Instrumentation mInstrumentation;
     private boolean mLayoutDone;
     private ViewTreeObserver.OnGlobalLayoutListener mLayoutListener;
+
+    @Rule
+    public ActivityTestRule<CtsActivity> mActivityRule =
+            new ActivityTestRule<>(CtsActivity.class);
 
     @Before
     public void setup() {
@@ -99,14 +105,14 @@ public class ToastTest {
         view.getViewTreeObserver().removeOnGlobalLayoutListener(mLayoutListener);
     }
 
-    private void makeToast() {
-        mInstrumentation.runOnMainSync(
+    private void makeToast() throws Throwable {
+        mActivityRule.runOnUiThread(
                 () -> mToast = Toast.makeText(mContext, TEST_TOAST_TEXT, Toast.LENGTH_LONG));
         mInstrumentation.waitForIdleSync();
     }
 
     @Test
-    public void testShow() {
+    public void testShow() throws Throwable {
         makeToast();
 
         final View view = mToast.getView();
@@ -115,7 +121,7 @@ public class ToastTest {
         assertNull(view.getParent());
         assertEquals(View.VISIBLE, view.getVisibility());
 
-        mInstrumentation.runOnMainSync(mToast::show);
+        mActivityRule.runOnUiThread(mToast::show);
         mInstrumentation.waitForIdleSync();
 
         // view will be attached to screen when show it
@@ -133,14 +139,14 @@ public class ToastTest {
     }
 
     @Test
-    public void testCancel() {
+    public void testCancel() throws Throwable {
         makeToast();
 
         final View view = mToast.getView();
 
         // view has not been attached to screen yet
         assertNull(view.getParent());
-        mInstrumentation.runOnMainSync(() -> {
+        mActivityRule.runOnUiThread(() -> {
             mToast.show();
             mToast.cancel();
         });
@@ -150,7 +156,7 @@ public class ToastTest {
     }
 
     @Test
-    public void testAccessView() {
+    public void testAccessView() throws Throwable {
         makeToast();
         assertFalse(mToast.getView() instanceof ImageView);
 
@@ -158,7 +164,7 @@ public class ToastTest {
         Drawable drawable = mContext.getResources().getDrawable(R.drawable.pass);
         imageView.setImageDrawable(drawable);
 
-        mInstrumentation.runOnMainSync(() -> {
+        mActivityRule.runOnUiThread(() -> {
             mToast.setView(imageView);
             mToast.show();
         });
@@ -168,10 +174,10 @@ public class ToastTest {
     }
 
     @Test
-    public void testAccessDuration() {
+    public void testAccessDuration() throws Throwable {
         long start = SystemClock.uptimeMillis();
         makeToast();
-        mInstrumentation.runOnMainSync(mToast::show);
+        mActivityRule.runOnUiThread(mToast::show);
         mInstrumentation.waitForIdleSync();
         assertEquals(Toast.LENGTH_LONG, mToast.getDuration());
 
@@ -180,7 +186,7 @@ public class ToastTest {
         long longDuration = SystemClock.uptimeMillis() - start;
 
         start = SystemClock.uptimeMillis();
-        mInstrumentation.runOnMainSync(() -> {
+        mActivityRule.runOnUiThread(() -> {
             mToast.setDuration(Toast.LENGTH_SHORT);
             mToast.show();
         });
@@ -195,14 +201,14 @@ public class ToastTest {
     }
 
     @Test
-    public void testAccessMargin() {
+    public void testAccessMargin() throws Throwable {
         makeToast();
         View view = mToast.getView();
         assertFalse(view.getLayoutParams() instanceof WindowManager.LayoutParams);
 
         final float horizontal1 = 1.0f;
         final float vertical1 = 1.0f;
-        mInstrumentation.runOnMainSync(() -> {
+        mActivityRule.runOnUiThread(() -> {
             mToast.setMargin(horizontal1, vertical1);
             mToast.show();
             registerLayoutListener(mToast.getView());
@@ -222,7 +228,7 @@ public class ToastTest {
 
         final float horizontal2 = 0.1f;
         final float vertical2 = 0.1f;
-        mInstrumentation.runOnMainSync(() -> {
+        mActivityRule.runOnUiThread(() -> {
             mToast.setMargin(horizontal2, vertical2);
             mToast.show();
             registerLayoutListener(mToast.getView());
@@ -246,9 +252,9 @@ public class ToastTest {
     }
 
     @Test
-    public void testAccessGravity() {
+    public void testAccessGravity() throws Throwable {
         makeToast();
-        mInstrumentation.runOnMainSync(() -> {
+        mActivityRule.runOnUiThread(() -> {
             mToast.setGravity(Gravity.CENTER, 0, 0);
             mToast.show();
             registerLayoutListener(mToast.getView());
@@ -264,7 +270,7 @@ public class ToastTest {
         view.getLocationOnScreen(centerXY);
         assertShowAndHide(view);
 
-        mInstrumentation.runOnMainSync(() -> {
+        mActivityRule.runOnUiThread(() -> {
             mToast.setGravity(Gravity.BOTTOM, 0, 0);
             mToast.show();
             registerLayoutListener(mToast.getView());
@@ -287,7 +293,7 @@ public class ToastTest {
 
         final int xOffset = 20;
         final int yOffset = 10;
-        mInstrumentation.runOnMainSync(() -> {
+        mActivityRule.runOnUiThread(() -> {
             mToast.setGravity(Gravity.BOTTOM, xOffset, yOffset);
             mToast.show();
             registerLayoutListener(mToast.getView());

@@ -113,7 +113,7 @@ public class RemoteViewsWidgetTest {
     private AppWidgetHost mAppWidgetHost;
 
     @Before
-    public void setup() {
+    public void setup() throws Throwable {
         mInstrumentation = InstrumentationRegistry.getInstrumentation();
         mContext = mInstrumentation.getTargetContext();
 
@@ -183,7 +183,7 @@ public class RemoteViewsWidgetTest {
         when(factory.getViewTypeCount()).thenReturn(1);
         MyAppWidgetService.setFactory(factory);
 
-        mInstrumentation.runOnMainSync(
+        mActivityRule.runOnUiThread(
                 () -> mAppWidgetHostView = mAppWidgetHost.createView(
                         mContext, mAppWidgetId, providerInfo));
 
@@ -202,7 +202,7 @@ public class RemoteViewsWidgetTest {
                 ViewGroup.LayoutParams.MATCH_PARENT);
         mAppWidgetHostView.setLayoutParams(lp);
 
-        mInstrumentation.runOnMainSync(() -> root.addView(mAppWidgetHostView));
+        mActivityRule.runOnUiThread(() -> root.addView(mAppWidgetHostView));
     }
 
     @After
@@ -362,14 +362,14 @@ public class RemoteViewsWidgetTest {
         verifyShowCommand(MyAppWidgetProvider.KEY_SHOW_NEXT, 1);
     }
 
-    private void verifyItemClickIntents(int indexToClick) {
+    private void verifyItemClickIntents(int indexToClick) throws Throwable {
         Instrumentation.ActivityMonitor am = mInstrumentation.addMonitor(
                 MockURLSpanTestActivity.class.getName(), null, false);
 
         mStackView = (StackView) mAppWidgetHostView.findViewById(R.id.remoteViews_stack);
         PollingCheck.waitFor(() -> mStackView.getCurrentView() != null);
         final View initialView = mStackView.getCurrentView();
-        mInstrumentation.runOnMainSync(
+        mActivityRule.runOnUiThread(
                 () -> mStackView.performItemClick(initialView, indexToClick, 0L));
 
         Activity newActivity = am.waitForActivityWithTimeout(TEST_TIMEOUT_MS);
@@ -380,7 +380,7 @@ public class RemoteViewsWidgetTest {
     }
 
     @Test
-    public void testSetOnClickPendingIntent() {
+    public void testSetOnClickPendingIntent() throws Throwable {
         if (!mHasAppWidgets) {
             return;
         }

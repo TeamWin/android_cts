@@ -210,14 +210,14 @@ public class AbsSeekBarTest {
     }
 
     @Test
-    public void testAccessKeyProgressIncrement() {
+    public void testAccessKeyProgressIncrement() throws Throwable {
         // AbsSeekBar is an abstract class, use its subclass: SeekBar to do this test.
-        mInstrumentation.runOnMainSync(() -> mActivity.setContentView(R.layout.seekbar_layout));
+        mActivityRule.runOnUiThread(() -> mActivity.setContentView(R.layout.seekbar_layout));
         mInstrumentation.waitForIdleSync();
 
         final SeekBar seekBar = (SeekBar) mActivity.findViewById(R.id.seekBar);
         final int keyProgressIncrement = 2;
-        mInstrumentation.runOnMainSync(() -> {
+        mActivityRule.runOnUiThread(() -> {
             seekBar.setKeyProgressIncrement(keyProgressIncrement);
             seekBar.setFocusable(true);
             seekBar.requestFocus();
@@ -323,14 +323,14 @@ public class AbsSeekBarTest {
     }
 
     @Test
-    public void testAccessSplitTrack() {
+    public void testAccessSplitTrack() throws Throwable {
         AbsSeekBar inflatedView = (AbsSeekBar) mActivity.findViewById(R.id.tick_mark_tint);
 
-        WidgetTestUtils.runOnMainAndDrawSync(mInstrumentation, inflatedView,
+        WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, inflatedView,
                 () -> inflatedView.setSplitTrack(true));
         assertTrue(inflatedView.getSplitTrack());
 
-        WidgetTestUtils.runOnMainAndDrawSync(mInstrumentation, inflatedView,
+        WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, inflatedView,
                 () -> inflatedView.setSplitTrack(false));
         assertFalse(inflatedView.getSplitTrack());
     }

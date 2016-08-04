@@ -129,13 +129,13 @@ public class SlidingDrawerTest {
     }
 
     @Test
-    public void testAnimateOpenAndClose(){
+    public void testAnimateOpenAndClose() throws Throwable {
         View content = mDrawer.getContent();
         assertFalse(mDrawer.isMoving());
         assertFalse(mDrawer.isOpened());
         assertEquals(View.GONE, content.getVisibility());
 
-        mInstrumentation.runOnMainSync(mDrawer::animateOpen);
+        mActivityRule.runOnUiThread(mDrawer::animateOpen);
         assertTrue(mDrawer.isMoving());
         assertEquals(View.GONE, content.getVisibility());
 
@@ -143,7 +143,7 @@ public class SlidingDrawerTest {
         PollingCheck.waitFor(mDrawer::isOpened);
         assertEquals(View.VISIBLE, content.getVisibility());
 
-        mInstrumentation.runOnMainSync(mDrawer::animateClose);
+        mActivityRule.runOnUiThread(mDrawer::animateClose);
         assertTrue(mDrawer.isMoving());
         assertEquals(View.GONE, content.getVisibility());
 
@@ -153,13 +153,13 @@ public class SlidingDrawerTest {
     }
 
     @Test
-    public void testAnimateToggle() {
+    public void testAnimateToggle() throws Throwable {
         View content = mDrawer.getContent();
         assertFalse(mDrawer.isMoving());
         assertFalse(mDrawer.isOpened());
         assertEquals(View.GONE, content.getVisibility());
 
-        mInstrumentation.runOnMainSync(mDrawer::animateToggle);
+        mActivityRule.runOnUiThread(mDrawer::animateToggle);
         assertTrue(mDrawer.isMoving());
         assertEquals(View.GONE, content.getVisibility());
 
@@ -167,7 +167,7 @@ public class SlidingDrawerTest {
         PollingCheck.waitFor(mDrawer::isOpened);
         assertEquals(View.VISIBLE, content.getVisibility());
 
-        mInstrumentation.runOnMainSync(mDrawer::animateToggle);
+        mActivityRule.runOnUiThread(mDrawer::animateToggle);
         assertTrue(mDrawer.isMoving());
         assertEquals(View.GONE, content.getVisibility());
 

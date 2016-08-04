@@ -34,6 +34,7 @@ import android.database.Cursor;
 import android.database.MatrixCursor;
 import android.provider.BaseColumns;
 import android.support.test.InstrumentationRegistry;
+import android.support.test.annotation.UiThreadTest;
 import android.support.test.filters.MediumTest;
 import android.support.test.rule.ActivityTestRule;
 import android.support.test.runner.AndroidJUnit4;
@@ -109,6 +110,7 @@ public class SearchView_CursorTest {
     public ActivityTestRule<SearchViewCtsActivity> mActivityRule =
             new ActivityTestRule<>(SearchViewCtsActivity.class);
 
+    @UiThreadTest
     @Before
     public void setup() {
         mInstrumentation = InstrumentationRegistry.getInstrumentation();
@@ -118,45 +120,42 @@ public class SearchView_CursorTest {
         // Local test data for the tests
         mTextContent = new String[] { "Akon", "Bono", "Ciara", "Dido", "Diplo" };
 
-        mInstrumentation.runOnMainSync(() -> {
-            // Use an adapter with our custom layout for each entry. The adapter "maps"
-            // the content of the text column of our cursor to the @id/text1 view in the
-            // layout.
-            mSuggestionsAdapter = new SimpleCursorAdapter(
-                    mActivity,
-                    R.layout.searchview_suggestion_item,
-                    null,
-                    new String[] { TEXT_COLUMN_NAME },
-                    new int[] { android.R.id.text1 },
-                    CursorAdapter.FLAG_REGISTER_CONTENT_OBSERVER);
-            mSearchView.setSuggestionsAdapter(mSuggestionsAdapter);
-        });
+        // Use an adapter with our custom layout for each entry. The adapter "maps"
+        // the content of the text column of our cursor to the @id/text1 view in the
+        // layout.
+        mSuggestionsAdapter = new SimpleCursorAdapter(
+                mActivity,
+                R.layout.searchview_suggestion_item,
+                null,
+                new String[] { TEXT_COLUMN_NAME },
+                new int[] { android.R.id.text1 },
+                CursorAdapter.FLAG_REGISTER_CONTENT_OBSERVER);
+        mSearchView.setSuggestionsAdapter(mSuggestionsAdapter);
     }
 
+    @UiThreadTest
     @Test
     public void testSuggestionFiltering() {
         final SearchView.OnQueryTextListener mockQueryTextListener =
                 spy(new MyQueryTextListener());
         when(mockQueryTextListener.onQueryTextChange(anyString())).thenCallRealMethod();
 
-        mInstrumentation.runOnMainSync(() -> {
-            mSearchView.setIconifiedByDefault(false);
-            mSearchView.setOnQueryTextListener(mockQueryTextListener);
-            mSearchView.requestFocus();
-        });
+        mSearchView.setIconifiedByDefault(false);
+        mSearchView.setOnQueryTextListener(mockQueryTextListener);
+        mSearchView.requestFocus();
 
         assertTrue(mSearchView.hasFocus());
         assertEquals(mSuggestionsAdapter, mSearchView.getSuggestionsAdapter());
 
-        mInstrumentation.runOnMainSync(() -> mSearchView.setQuery("Bon", false));
+        mSearchView.setQuery("Bon", false);
         verify(mockQueryTextListener, times(1)).onQueryTextChange("Bon");
 
-        mInstrumentation.runOnMainSync(() -> mSearchView.setQuery("Di", false));
+        mSearchView.setQuery("Di", false);
         verify(mockQueryTextListener, times(1)).onQueryTextChange("Di");
     }
 
     @Test
-    public void testSuggestionSelection() {
+    public void testSuggestionSelection() throws Throwable {
         final SearchView.OnSuggestionListener mockSuggestionListener =
                 spy(new MySuggestionListener());
         when(mockSuggestionListener.onSuggestionClick(anyInt())).thenCallRealMethod();
@@ -165,7 +164,7 @@ public class SearchView_CursorTest {
                 spy(new MyQueryTextListener());
         when(mockQueryTextListener.onQueryTextChange(anyString())).thenCallRealMethod();
 
-        mInstrumentation.runOnMainSync(() -> {
+        mActivityRule.runOnUiThread(() -> {
                     mSearchView.setIconifiedByDefault(false);
                     mSearchView.setOnQueryTextListener(mockQueryTextListener);
                     mSearchView.setOnSuggestionListener(mockSuggestionListener);
@@ -175,7 +174,7 @@ public class SearchView_CursorTest {
         assertTrue(mSearchView.hasFocus());
         assertEquals(mSuggestionsAdapter, mSearchView.getSuggestionsAdapter());
 
-        mInstrumentation.runOnMainSync(() -> mSearchView.setQuery("Di", false));
+        mActivityRule.runOnUiThread(() -> mSearchView.setQuery("Di", false));
         mInstrumentation.waitForIdleSync();
         verify(mockQueryTextListener, times(1)).onQueryTextChange("Di");
 

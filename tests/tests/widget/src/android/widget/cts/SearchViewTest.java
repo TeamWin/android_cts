@@ -116,13 +116,13 @@ public class SearchViewTest {
     }
 
     @Test
-    public void testDenyIconifyingNonInconifiableView() {
-        mInstrumentation.runOnMainSync(() -> {
+    public void testDenyIconifyingNonInconifiableView() throws Throwable {
+        mActivityRule.runOnUiThread(() -> {
             mSearchView.setIconifiedByDefault(false);
             mSearchView.setIconified(false);
         });
 
-        mInstrumentation.runOnMainSync(() -> mSearchView.setIconified(true));
+        mActivityRule.runOnUiThread(() -> mSearchView.setIconified(true));
         mInstrumentation.waitForIdleSync();
 
         // Since our search view is marked with iconifiedByDefault=false, call to setIconified
@@ -132,8 +132,8 @@ public class SearchViewTest {
     }
 
     @Test
-    public void testDenyIconifyingInconifiableView() {
-        mInstrumentation.runOnMainSync(() -> {
+    public void testDenyIconifyingInconifiableView() throws Throwable {
+        mActivityRule.runOnUiThread(() -> {
             mSearchView.setIconifiedByDefault(true);
             mSearchView.setIconified(false);
         });
@@ -143,7 +143,7 @@ public class SearchViewTest {
         when(mockDenyCloseListener.onClose()).thenReturn(Boolean.TRUE);
         mSearchView.setOnCloseListener(mockDenyCloseListener);
 
-        mInstrumentation.runOnMainSync(() -> mSearchView.setIconified(true));
+        mActivityRule.runOnUiThread(() -> mSearchView.setIconified(true));
         mInstrumentation.waitForIdleSync();
 
         // Our mock listener is configured to return true from its onClose, thereby preventing
@@ -154,8 +154,8 @@ public class SearchViewTest {
     }
 
     @Test
-    public void testAllowIconifyingInconifiableView() {
-        mInstrumentation.runOnMainSync(() -> {
+    public void testAllowIconifyingInconifiableView() throws Throwable {
+        mActivityRule.runOnUiThread(() -> {
             mSearchView.setIconifiedByDefault(true);
             mSearchView.setIconified(false);
         });
@@ -165,7 +165,7 @@ public class SearchViewTest {
         when(mockAllowCloseListener.onClose()).thenReturn(Boolean.FALSE);
         mSearchView.setOnCloseListener(mockAllowCloseListener);
 
-        mInstrumentation.runOnMainSync(() -> mSearchView.setIconified(true));
+        mActivityRule.runOnUiThread(() -> mSearchView.setIconified(true));
         mInstrumentation.waitForIdleSync();
 
         // Our mock listener is configured to return false from its onClose, thereby allowing
@@ -176,20 +176,20 @@ public class SearchViewTest {
     }
 
     @Test
-    public void testAccessMaxWidth() {
+    public void testAccessMaxWidth() throws Throwable {
         final Resources res = mActivity.getResources();
         final int maxWidth1 = res.getDimensionPixelSize(R.dimen.search_view_max_width);
         final int maxWidth2 = res.getDimensionPixelSize(R.dimen.search_view_max_width2);
 
         // Set search view to not be iconified before running max-width tests
-        mInstrumentation.runOnMainSync(() -> mSearchView.setIconified(false));
+        mActivityRule.runOnUiThread(() -> mSearchView.setIconified(false));
 
-        mInstrumentation.runOnMainSync(() -> mSearchView.setMaxWidth(maxWidth1));
+        mActivityRule.runOnUiThread(() -> mSearchView.setMaxWidth(maxWidth1));
         mInstrumentation.waitForIdleSync();
         assertEquals(maxWidth1, mSearchView.getMaxWidth());
         assertTrue(mSearchView.getWidth() <= maxWidth1);
 
-        mInstrumentation.runOnMainSync(() -> mSearchView.setMaxWidth(maxWidth2));
+        mActivityRule.runOnUiThread(() -> mSearchView.setMaxWidth(maxWidth2));
         mInstrumentation.waitForIdleSync();
         assertEquals(maxWidth2, mSearchView.getMaxWidth());
         assertTrue(mSearchView.getWidth() <= maxWidth2);

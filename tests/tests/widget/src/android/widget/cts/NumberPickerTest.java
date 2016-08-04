@@ -292,8 +292,8 @@ public class NumberPickerTest {
     }
 
     @Test
-    public void testInteractionWithSwipeDown() {
-        mInstrumentation.runOnMainSync(() -> {
+    public void testInteractionWithSwipeDown() throws Throwable {
+        mActivityRule.runOnUiThread(() -> {
             mNumberPicker.setMinValue(6);
             mNumberPicker.setMaxValue(8);
             mNumberPicker.setDisplayedValues(NUMBER_NAMES_ALT3);
@@ -307,7 +307,7 @@ public class NumberPickerTest {
                 mock(NumberPicker.OnScrollListener.class);
         mNumberPicker.setOnScrollListener(mockScrollListener);
 
-        mInstrumentation.runOnMainSync(() -> mNumberPicker.setValue(7));
+        mActivityRule.runOnUiThread(() -> mNumberPicker.setValue(7));
         assertEquals(7, mNumberPicker.getValue());
 
         // Swipe down across our number picker
@@ -337,8 +337,8 @@ public class NumberPickerTest {
     }
 
     @Test
-    public void testInteractionWithSwipeUp() {
-        mInstrumentation.runOnMainSync(() -> {
+    public void testInteractionWithSwipeUp() throws Throwable {
+        mActivityRule.runOnUiThread(() -> {
             mNumberPicker.setMinValue(10);
             mNumberPicker.setMaxValue(12);
             mNumberPicker.setDisplayedValues(NUMBER_NAMES_ALT3);
@@ -352,7 +352,7 @@ public class NumberPickerTest {
                 mock(NumberPicker.OnScrollListener.class);
         mNumberPicker.setOnScrollListener(mockScrollListener);
 
-        mInstrumentation.runOnMainSync(() -> mNumberPicker.setValue(11));
+        mActivityRule.runOnUiThread(() -> mNumberPicker.setValue(11));
         assertEquals(11, mNumberPicker.getValue());
 
         // Swipe up across our number picker

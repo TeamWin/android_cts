@@ -87,7 +87,7 @@ public class RelativeLayoutTest {
     }
 
     @Test
-    public void testSetIgnoreGravity() {
+    public void testSetIgnoreGravity() throws Throwable {
         // Initial gravity for this RelativeLayout is Gravity.Right.
         final RelativeLayout relativeLayout = (RelativeLayout) mActivity.findViewById(
                 R.id.relative_sublayout_ignore_gravity);
@@ -100,20 +100,20 @@ public class RelativeLayoutTest {
         ViewAsserts.assertRightAligned(relativeLayout, view13);
 
         relativeLayout.setIgnoreGravity(R.id.relative_view13);
-        mInstrumentation.runOnMainSync(relativeLayout::requestLayout);
+        mActivityRule.runOnUiThread(relativeLayout::requestLayout);
         mInstrumentation.waitForIdleSync();
         ViewAsserts.assertRightAligned(relativeLayout, view12);
         ViewAsserts.assertLeftAligned(relativeLayout, view13);
 
         relativeLayout.setIgnoreGravity(0);
-        mInstrumentation.runOnMainSync(relativeLayout::requestLayout);
+        mActivityRule.runOnUiThread(relativeLayout::requestLayout);
         mInstrumentation.waitForIdleSync();
         ViewAsserts.assertRightAligned(relativeLayout, view12);
         ViewAsserts.assertRightAligned(relativeLayout, view13);
     }
 
     @Test
-    public void testAccessGravity() {
+    public void testAccessGravity() throws Throwable {
         final RelativeLayout relativeLayout = (RelativeLayout) mActivity.findViewById(
                 R.id.relative_sublayout_gravity);
 
@@ -127,7 +127,7 @@ public class RelativeLayoutTest {
         assertEquals(view11.getTop(), view10.getBottom());
 
         // -- BOTTOM && RIGHT
-        mInstrumentation.runOnMainSync(
+        mActivityRule.runOnUiThread(
                 () -> relativeLayout.setGravity(Gravity.BOTTOM | Gravity.RIGHT));
         mInstrumentation.waitForIdleSync();
         assertEquals(Gravity.BOTTOM | Gravity.RIGHT, relativeLayout.getGravity());
@@ -137,7 +137,7 @@ public class RelativeLayoutTest {
         ViewAsserts.assertBottomAligned(relativeLayout, view11);
 
         // -- BOTTOM
-        mInstrumentation.runOnMainSync(() -> relativeLayout.setGravity(Gravity.BOTTOM));
+        mActivityRule.runOnUiThread(() -> relativeLayout.setGravity(Gravity.BOTTOM));
         mInstrumentation.waitForIdleSync();
         assertEquals(Gravity.BOTTOM | Gravity.START, relativeLayout.getGravity());
         ViewAsserts.assertLeftAligned(relativeLayout, view10);
@@ -146,7 +146,7 @@ public class RelativeLayoutTest {
         ViewAsserts.assertBottomAligned(relativeLayout, view11);
 
         // CENTER_HORIZONTAL
-        mInstrumentation.runOnMainSync(() -> relativeLayout.setGravity(Gravity.CENTER_HORIZONTAL));
+        mActivityRule.runOnUiThread(() -> relativeLayout.setGravity(Gravity.CENTER_HORIZONTAL));
         mInstrumentation.waitForIdleSync();
         assertEquals(Gravity.CENTER_HORIZONTAL | Gravity.TOP,
                 relativeLayout.getGravity());
@@ -156,7 +156,7 @@ public class RelativeLayoutTest {
         assertEquals(view11.getTop(), view10.getBottom());
 
         // CENTER_VERTICAL
-        mInstrumentation.runOnMainSync(() -> relativeLayout.setGravity(Gravity.CENTER_VERTICAL));
+        mActivityRule.runOnUiThread(() -> relativeLayout.setGravity(Gravity.CENTER_VERTICAL));
         mInstrumentation.waitForIdleSync();
         assertEquals(Gravity.CENTER_VERTICAL | Gravity.START, relativeLayout.getGravity());
         ViewAsserts.assertLeftAligned(relativeLayout, view10);
@@ -168,7 +168,7 @@ public class RelativeLayoutTest {
     }
 
     @Test
-    public void testSetHorizontalGravity() {
+    public void testSetHorizontalGravity() throws Throwable {
         final RelativeLayout relativeLayout = (RelativeLayout) mActivity.findViewById(
                 R.id.relative_sublayout_gravity);
 
@@ -182,7 +182,7 @@ public class RelativeLayoutTest {
         assertEquals(view11.getTop(), view10.getBottom());
 
         // RIGHT
-        mInstrumentation.runOnMainSync(() -> relativeLayout.setHorizontalGravity(Gravity.RIGHT));
+        mActivityRule.runOnUiThread(() -> relativeLayout.setHorizontalGravity(Gravity.RIGHT));
         mInstrumentation.waitForIdleSync();
         assertEquals(Gravity.RIGHT, Gravity.HORIZONTAL_GRAVITY_MASK & relativeLayout.getGravity());
         ViewAsserts.assertRightAligned(relativeLayout, view10);
@@ -191,7 +191,7 @@ public class RelativeLayoutTest {
         assertEquals(view11.getTop(), view10.getBottom());
 
         // CENTER_HORIZONTAL
-        mInstrumentation.runOnMainSync(
+        mActivityRule.runOnUiThread(
                 () -> relativeLayout.setHorizontalGravity(Gravity.CENTER_HORIZONTAL));
         mInstrumentation.waitForIdleSync();
         assertEquals(Gravity.CENTER_HORIZONTAL,
@@ -203,7 +203,7 @@ public class RelativeLayoutTest {
     }
 
     @Test
-    public void testSetVerticalGravity() {
+    public void testSetVerticalGravity() throws Throwable {
         final RelativeLayout relativeLayout = (RelativeLayout) mActivity.findViewById(
                 R.id.relative_sublayout_gravity);
 
@@ -217,7 +217,7 @@ public class RelativeLayoutTest {
         assertEquals(view11.getTop(), view10.getBottom());
 
         // BOTTOM
-        mInstrumentation.runOnMainSync(() -> relativeLayout.setVerticalGravity(Gravity.BOTTOM));
+        mActivityRule.runOnUiThread(() -> relativeLayout.setVerticalGravity(Gravity.BOTTOM));
         mInstrumentation.waitForIdleSync();
         assertEquals(Gravity.BOTTOM, Gravity.VERTICAL_GRAVITY_MASK & relativeLayout.getGravity());
         ViewAsserts.assertLeftAligned(relativeLayout, view10);
@@ -226,7 +226,7 @@ public class RelativeLayoutTest {
         ViewAsserts.assertBottomAligned(relativeLayout, view11);
 
         // CENTER_VERTICAL
-        mInstrumentation.runOnMainSync(
+        mActivityRule.runOnUiThread(
                 () -> relativeLayout.setVerticalGravity(Gravity.CENTER_VERTICAL));
         mInstrumentation.waitForIdleSync();
         assertEquals(Gravity.CENTER_VERTICAL,
@@ -340,8 +340,8 @@ public class RelativeLayoutTest {
      * Tests to prevent regressions in baseline alignment.
      */
     @Test
-    public void testBaselineAlignment() {
-        mInstrumentation.runOnMainSync(
+    public void testBaselineAlignment() throws Throwable {
+        mActivityRule.runOnUiThread(
                 () -> mActivity.setContentView(R.layout.relative_layout_baseline));
         mInstrumentation.waitForIdleSync();
 

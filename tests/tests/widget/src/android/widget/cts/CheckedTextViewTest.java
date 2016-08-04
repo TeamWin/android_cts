@@ -104,8 +104,8 @@ public class CheckedTextViewTest {
     }
 
     @Test
-    public void testChecked() {
-        mInstrumentation.runOnMainSync(() -> {
+    public void testChecked() throws Throwable {
+        mActivityRule.runOnUiThread(() -> {
             mListView.setAdapter(new CheckedTextViewAdapter());
 
             mListView.setChoiceMode(ListView.CHOICE_MODE_SINGLE);
@@ -125,7 +125,7 @@ public class CheckedTextViewTest {
         assertTrue(view1.isChecked());
         assertFalse(view2.isChecked());
 
-        mInstrumentation.runOnMainSync(() -> {
+        mActivityRule.runOnUiThread(() -> {
             mListView.setChoiceMode(ListView.CHOICE_MODE_MULTIPLE);
             mListView.setItemChecked(2, true);
         });
@@ -168,8 +168,8 @@ public class CheckedTextViewTest {
     }
 
     @Test
-    public void testSetPadding() {
-        mInstrumentation.runOnMainSync(() -> {
+    public void testSetPadding() throws Throwable {
+        mActivityRule.runOnUiThread(() -> {
             mListView.setPadding(1, 2, 3, 4);
             mListView.requestLayout();
         });
@@ -180,7 +180,7 @@ public class CheckedTextViewTest {
         final int origLeft = mListView.getPaddingLeft();
         final int origRight = mListView.getPaddingRight();
 
-        mInstrumentation.runOnMainSync(() -> {
+        mActivityRule.runOnUiThread(() -> {
             mListView.setPadding(10, 20, 30, 40);
             mListView.requestLayout();
         });
@@ -310,9 +310,9 @@ public class CheckedTextViewTest {
     }
 
     @Test
-    public void testCheckMarkTinting() {
-        mInstrumentation.runOnMainSync(() -> mCheckedTextView.setChecked(true));
-        WidgetTestUtils.runOnMainAndDrawSync(mInstrumentation, mCheckedTextView,
+    public void testCheckMarkTinting() throws Throwable {
+        mActivityRule.runOnUiThread(() -> mCheckedTextView.setChecked(true));
+        WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, mCheckedTextView,
                 () -> mCheckedTextView.setCheckMarkDrawable(R.drawable.icon_red));
 
         Drawable checkMark = mCheckedTextView.getCheckMarkDrawable();
@@ -322,7 +322,7 @@ public class CheckedTextViewTest {
 
         // With SRC_IN we're expecting the translucent tint color to "take over" the
         // original red checkmark.
-        WidgetTestUtils.runOnMainAndDrawSync(mInstrumentation, mCheckedTextView, () -> {
+        WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, mCheckedTextView, () -> {
             mCheckedTextView.setCheckMarkTintMode(PorterDuff.Mode.SRC_IN);
             mCheckedTextView.setCheckMarkTintList(ColorStateList.valueOf(0x8000FF00));
         });
@@ -336,7 +336,7 @@ public class CheckedTextViewTest {
 
         // With SRC_OVER we're expecting the translucent tint color to be drawn on top
         // of the original red checkmark, creating a composite color fill as the result.
-        WidgetTestUtils.runOnMainAndDrawSync(mInstrumentation, mCheckedTextView,
+        WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, mCheckedTextView,
                 () -> mCheckedTextView.setCheckMarkTintMode(PorterDuff.Mode.SRC_OVER));
 
         assertEquals(PorterDuff.Mode.SRC_OVER, mCheckedTextView.getCheckMarkTintMode());
@@ -348,7 +348,7 @@ public class CheckedTextViewTest {
 
         // Switch to a different color for the underlying checkmark and verify that the
         // currently configured tinting (50% green overlay) is still respected
-        WidgetTestUtils.runOnMainAndDrawSync(mInstrumentation, mCheckedTextView,
+        WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, mCheckedTextView,
                 () -> mCheckedTextView.setCheckMarkDrawable(R.drawable.icon_yellow));
         assertEquals(PorterDuff.Mode.SRC_OVER, mCheckedTextView.getCheckMarkTintMode());
         assertEquals(0x8000FF00, mCheckedTextView.getCheckMarkTintList().getDefaultColor());

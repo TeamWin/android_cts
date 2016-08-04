@@ -139,20 +139,20 @@ public class SpinnerTest {
                 popupTheme);
     }
 
-    private void verifyGetBaseline(Spinner spinner) {
+    private void verifyGetBaseline(Spinner spinner) throws Throwable {
         assertEquals(-1, spinner.getBaseline());
 
         ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(mActivity,
                 R.array.string, android.R.layout.simple_spinner_item);
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        mInstrumentation.runOnMainSync(() -> {
+        mActivityRule.runOnUiThread(() -> {
             spinner.setAdapter(adapter);
             assertTrue(spinner.getBaseline() > 0);
         });
     }
 
     @Test
-    public void testGetBaseline() {
+    public void testGetBaseline() throws Throwable {
         verifyGetBaseline(mSpinnerDialogMode);
         verifyGetBaseline(mSpinnerDropdownMode);
     }
@@ -177,12 +177,12 @@ public class SpinnerTest {
         verifySetOnItemClickListener(mSpinnerDropdownMode);
     }
 
-    private void verifyPerformClick(Spinner spinner) {
-        mInstrumentation.runOnMainSync(() -> assertTrue(spinner.performClick()));
+    private void verifyPerformClick(Spinner spinner) throws Throwable {
+        mActivityRule.runOnUiThread(() -> assertTrue(spinner.performClick()));
     }
 
     @Test
-    public void testPerformClick() {
+    public void testPerformClick() throws Throwable {
         verifyPerformClick(mSpinnerDialogMode);
         verifyPerformClick(mSpinnerDropdownMode);
     }
@@ -220,13 +220,13 @@ public class SpinnerTest {
         verifyOnClick(mSpinnerDropdownMode);
     }
 
-    private void verifyAccessPrompt(Spinner spinner) {
+    private void verifyAccessPrompt(Spinner spinner) throws Throwable {
         final String initialPrompt = mActivity.getString(R.string.text_view_hello);
         assertEquals(initialPrompt, spinner.getPrompt());
 
         final String promptText = "prompt text";
 
-        mInstrumentation.runOnMainSync(() -> spinner.setPrompt(promptText));
+        mActivityRule.runOnUiThread(() -> spinner.setPrompt(promptText));
         assertEquals(promptText, spinner.getPrompt());
 
         spinner.setPrompt(null);
@@ -234,13 +234,13 @@ public class SpinnerTest {
     }
 
     @Test
-    public void testAccessPrompt() {
+    public void testAccessPrompt() throws Throwable {
         verifyAccessPrompt(mSpinnerDialogMode);
         verifyAccessPrompt(mSpinnerDropdownMode);
     }
 
-    private void verifySetPromptId(Spinner spinner) {
-        mInstrumentation.runOnMainSync(() -> spinner.setPromptId(R.string.hello_world));
+    private void verifySetPromptId(Spinner spinner) throws Throwable {
+        mActivityRule.runOnUiThread(() -> spinner.setPromptId(R.string.hello_world));
         assertEquals(mActivity.getString(R.string.hello_world), spinner.getPrompt());
 
         try {
@@ -259,7 +259,7 @@ public class SpinnerTest {
     }
 
     @Test
-    public void testSetPromptId() {
+    public void testSetPromptId() throws Throwable {
         verifySetPromptId(mSpinnerDialogMode);
         verifySetPromptId(mSpinnerDropdownMode);
     }
@@ -277,49 +277,49 @@ public class SpinnerTest {
         assertSame(mActivity, context.getBaseContext());
     }
 
-    private void verifyGravity(Spinner spinner) {
+    private void verifyGravity(Spinner spinner) throws Throwable {
         // Note that here we're using a custom layout for the spinner's selected item
         // that doesn't span the whole width of the parent. That way we're exercising the
         // relevant path in spinner's layout pass that handles the currently set gravity
         ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(mActivity,
                 R.array.string, R.layout.simple_spinner_item_layout);
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        mInstrumentation.runOnMainSync(() -> spinner.setAdapter(adapter));
+        mActivityRule.runOnUiThread(() -> spinner.setAdapter(adapter));
 
-        WidgetTestUtils.runOnMainAndDrawSync(mInstrumentation, spinner, () -> {
+        WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, spinner, () -> {
             spinner.setSelection(1);
             spinner.getLayoutParams().width = ViewGroup.LayoutParams.MATCH_PARENT;
             spinner.requestLayout();
         });
 
-        mInstrumentation.runOnMainSync(() -> spinner.setGravity(Gravity.LEFT));
+        mActivityRule.runOnUiThread(() -> spinner.setGravity(Gravity.LEFT));
         assertEquals(Gravity.LEFT, spinner.getGravity());
 
-        mInstrumentation.runOnMainSync(() -> spinner.setGravity(Gravity.CENTER_HORIZONTAL));
+        mActivityRule.runOnUiThread(() -> spinner.setGravity(Gravity.CENTER_HORIZONTAL));
         assertEquals(Gravity.CENTER_HORIZONTAL, spinner.getGravity());
 
-        mInstrumentation.runOnMainSync((() -> spinner.setGravity(Gravity.RIGHT)));
+        mActivityRule.runOnUiThread((() -> spinner.setGravity(Gravity.RIGHT)));
         assertEquals(Gravity.RIGHT, spinner.getGravity());
 
-        mInstrumentation.runOnMainSync(() -> spinner.setGravity(Gravity.START));
+        mActivityRule.runOnUiThread(() -> spinner.setGravity(Gravity.START));
         assertEquals(Gravity.START, spinner.getGravity());
 
-        mInstrumentation.runOnMainSync(() -> spinner.setGravity(Gravity.END));
+        mActivityRule.runOnUiThread(() -> spinner.setGravity(Gravity.END));
         assertEquals(Gravity.END, spinner.getGravity());
     }
 
     @Test
-    public void testGravity() {
+    public void testGravity() throws Throwable {
         verifyGravity(mSpinnerDialogMode);
         verifyGravity(mSpinnerDropdownMode);
     }
 
     @Test
-    public void testDropDownMetricsDropdownMode() {
+    public void testDropDownMetricsDropdownMode() throws Throwable {
         ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(mActivity,
                 R.array.string, android.R.layout.simple_spinner_item);
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        mInstrumentation.runOnMainSync(() -> mSpinnerDropdownMode.setAdapter(adapter));
+        mActivityRule.runOnUiThread(() -> mSpinnerDropdownMode.setAdapter(adapter));
 
         final Resources res = mActivity.getResources();
         final int dropDownWidth = res.getDimensionPixelSize(R.dimen.spinner_dropdown_width);
@@ -328,7 +328,7 @@ public class SpinnerTest {
         final int dropDownOffsetVertical =
                 res.getDimensionPixelSize(R.dimen.spinner_dropdown_offset_v);
 
-        mInstrumentation.runOnMainSync(() -> {
+        mActivityRule.runOnUiThread(() -> {
             mSpinnerDropdownMode.setDropDownWidth(dropDownWidth);
             mSpinnerDropdownMode.setDropDownHorizontalOffset(dropDownOffsetHorizontal);
             mSpinnerDropdownMode.setDropDownVerticalOffset(dropDownOffsetVertical);
@@ -348,11 +348,11 @@ public class SpinnerTest {
     }
 
     @Test
-    public void testDropDownMetricsDialogMode() {
+    public void testDropDownMetricsDialogMode() throws Throwable {
         ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(mActivity,
                 R.array.string, android.R.layout.simple_spinner_item);
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        mInstrumentation.runOnMainSync(() -> mSpinnerDialogMode.setAdapter(adapter));
+        mActivityRule.runOnUiThread(() -> mSpinnerDialogMode.setAdapter(adapter));
 
         final Resources res = mActivity.getResources();
         final int dropDownWidth = res.getDimensionPixelSize(R.dimen.spinner_dropdown_width);
@@ -361,7 +361,7 @@ public class SpinnerTest {
         final int dropDownOffsetVertical =
                 res.getDimensionPixelSize(R.dimen.spinner_dropdown_offset_v);
 
-        mInstrumentation.runOnMainSync(() -> {
+        mActivityRule.runOnUiThread(() -> {
             // These are all expected to be no-ops
             mSpinnerDialogMode.setDropDownWidth(dropDownWidth);
             mSpinnerDialogMode.setDropDownHorizontalOffset(dropDownOffsetHorizontal);
@@ -380,14 +380,14 @@ public class SpinnerTest {
     }
 
     @Test
-    public void testDropDownBackgroundDropdownMode() {
+    public void testDropDownBackgroundDropdownMode() throws Throwable {
         ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(mActivity,
                 R.array.string, android.R.layout.simple_spinner_item);
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        mInstrumentation.runOnMainSync(() -> mSpinnerDropdownMode.setAdapter(adapter));
+        mActivityRule.runOnUiThread(() -> mSpinnerDropdownMode.setAdapter(adapter));
 
         // Set blue background on the popup
-        mInstrumentation.runOnMainSync(() ->
+        mActivityRule.runOnUiThread(() ->
                 mSpinnerDropdownMode.setPopupBackgroundResource(R.drawable.blue_fill));
 
         // Use instrumentation to emulate a tap on the spinner to bring down its popup
@@ -407,7 +407,7 @@ public class SpinnerTest {
         assertFalse(mSpinnerDropdownMode.isPopupShowing());
 
         // Set yellow background on the popup
-        mInstrumentation.runOnMainSync(() ->
+        mActivityRule.runOnUiThread(() ->
                 mSpinnerDropdownMode.setPopupBackgroundDrawable(
                         mActivity.getDrawable(R.drawable.yellow_fill)));
 
@@ -423,14 +423,14 @@ public class SpinnerTest {
     }
 
     @Test
-    public void testDropDownBackgroundDialogMode() {
+    public void testDropDownBackgroundDialogMode() throws Throwable {
         ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(mActivity,
                 R.array.string, android.R.layout.simple_spinner_item);
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        mInstrumentation.runOnMainSync(() -> mSpinnerDialogMode.setAdapter(adapter));
+        mActivityRule.runOnUiThread(() -> mSpinnerDialogMode.setAdapter(adapter));
 
         // Set blue background on the popup
-        mInstrumentation.runOnMainSync(() ->
+        mActivityRule.runOnUiThread(() ->
                 mSpinnerDialogMode.setPopupBackgroundResource(R.drawable.blue_fill));
 
         // Use instrumentation to emulate a tap on the spinner to bring down its popup
@@ -447,7 +447,7 @@ public class SpinnerTest {
         assertFalse(mSpinnerDialogMode.isPopupShowing());
 
         // Set yellow background on the popup
-        mInstrumentation.runOnMainSync(() ->
+        mActivityRule.runOnUiThread(() ->
                 mSpinnerDialogMode.setPopupBackgroundDrawable(
                         mActivity.getDrawable(R.drawable.yellow_fill)));
 

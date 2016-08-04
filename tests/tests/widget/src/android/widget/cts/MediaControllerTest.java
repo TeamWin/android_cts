@@ -119,8 +119,8 @@ public class MediaControllerTest {
     }
 
     @Test
-    public void testShow() {
-        mInstrumentation.runOnMainSync(
+    public void testShow() throws Throwable {
+        mActivityRule.runOnUiThread(
                 () -> mMediaController = new MediaController(mActivity, true));
         mInstrumentation.waitForIdleSync();
         assertFalse(mMediaController.isShowing());
@@ -132,16 +132,16 @@ public class MediaControllerTest {
                 (VideoView) mActivity.findViewById(R.id.mediacontroller_videoview);
         mMediaController.setAnchorView(videoView);
 
-        mInstrumentation.runOnMainSync(mMediaController::show);
+        mActivityRule.runOnUiThread(mMediaController::show);
         mInstrumentation.waitForIdleSync();
         assertTrue(mMediaController.isShowing());
 
-        mInstrumentation.runOnMainSync(mMediaController::hide);
+        mActivityRule.runOnUiThread(mMediaController::hide);
         mInstrumentation.waitForIdleSync();
         assertFalse(mMediaController.isShowing());
 
         final int timeout = 2000;
-        mInstrumentation.runOnMainSync(() -> mMediaController.show(timeout));
+        mActivityRule.runOnUiThread(() -> mMediaController.show(timeout));
 
         mInstrumentation.waitForIdleSync();
         assertTrue(mMediaController.isShowing());
@@ -168,8 +168,8 @@ public class MediaControllerTest {
     }
 
     @Test
-    public void testOnTrackballEvent() {
-        mInstrumentation.runOnMainSync(() -> mMediaController = new MediaController(mActivity));
+    public void testOnTrackballEvent() throws Throwable {
+        mActivityRule.runOnUiThread(() -> mMediaController = new MediaController(mActivity));
         mInstrumentation.waitForIdleSync();
         final MockMediaPlayerControl mediaPlayerControl = new MockMediaPlayerControl();
         mMediaController.setMediaPlayer(mediaPlayerControl);
@@ -177,7 +177,7 @@ public class MediaControllerTest {
         final VideoView videoView =
                 (VideoView) mActivity.findViewById(R.id.mediacontroller_videoview);
         videoView.setMediaController(mMediaController);
-        mInstrumentation.runOnMainSync(() -> {
+        mActivityRule.runOnUiThread(() -> {
             videoView.setVideoPath(prepareSampleVideo());
             videoView.requestFocus();
         });
