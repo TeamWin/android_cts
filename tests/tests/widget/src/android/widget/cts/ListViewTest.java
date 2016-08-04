@@ -927,6 +927,7 @@ public class ListViewTest {
     }
 
     @MediumTest
+    @Test
     public void testJumpDrawables() {
         FrameLayout layout = new FrameLayout(mActivity);
         ListView listView = new ListView(mActivity);
@@ -1086,6 +1087,7 @@ public class ListViewTest {
         }
     }
 
+    @Test
     public void testTransientStateUnstableIds() throws Exception {
         final ListView listView = mListView;
         final ArrayList<String> items = new ArrayList<String>(Arrays.asList(mCountryList));
@@ -1113,6 +1115,7 @@ public class ListViewTest {
         Assert.assertFalse(oldText.equals(newText));
     }
 
+    @Test
     public void testTransientStateStableIds() throws Exception {
         final ArrayList<String> items = new ArrayList<>(Arrays.asList(mCountryList));
         final StableArrayAdapter<String> adapter = new StableArrayAdapter<>(mActivity,
@@ -1160,6 +1163,7 @@ public class ListViewTest {
     }
 
     @LargeTest
+    @Test
     public void testSmoothScrollByOffset() {
         final int itemCount = mLongCountryList.length;
 
@@ -1223,6 +1227,7 @@ public class ListViewTest {
         }
     }
 
+    @Test
     public void testGetCheckItemIds() {
         final ArrayList<String> items = new ArrayList<>(Arrays.asList(mCountryList));
         final ArrayAdapter<String> adapter = new PositionArrayAdapter<>(mActivity,
@@ -1248,6 +1253,7 @@ public class ListViewTest {
         assertTrue(mListView.getCheckItemIds().length == 0);
     }
 
+    @Test
     public void testAccessOverscrollHeader() {
         final Drawable overscrollHeaderDrawable = spy(new ColorDrawable(Color.YELLOW));
         WidgetTestUtils.runOnMainAndDrawSync(mInstrumentation, mListView, () -> {
@@ -1264,6 +1270,7 @@ public class ListViewTest {
         verify(overscrollHeaderDrawable, atLeastOnce()).draw(any(Canvas.class));
     }
 
+    @Test
     public void testAccessOverscrollFooter() {
         final Drawable overscrollFooterDrawable = spy(new ColorDrawable(Color.MAGENTA));
         WidgetTestUtils.runOnMainAndDrawSync(mInstrumentation, mListView, () -> {
