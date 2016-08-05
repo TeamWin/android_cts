@@ -119,8 +119,11 @@ def main():
             dual_target = fmt_cmpr is not "none"
             # Get the size of "cmpr"
             if dual_target:
-                size_cmpr = its.objects.get_available_output_sizes(
-                        fmt_cmpr, props, fmt["cmpr_size"])[0]
+                sizes = its.objects.get_available_output_sizes(
+                        fmt_cmpr, props, fmt["cmpr_size"])
+                if len(sizes) == 0: # device might not support RAW
+                    continue
+                size_cmpr = sizes[0]
             for size_iter in its.objects.get_available_output_sizes(
                     fmt_iter, props, fmt["iter_max"]):
                 w_iter = size_iter[0]
