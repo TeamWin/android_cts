@@ -337,7 +337,7 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
         mCurrentModuleResult.addRuntime(elapsedTime);
         // Expect them to be equal, but greater than to be safe.
         mCurrentModuleResult.setDone(mCurrentTestNum >= mTotalTestsInModule);
-
+        mResult.notExecuted(Math.max(mTotalTestsInModule - mCurrentTestNum, 0));
         if (isShardResultReporter()) {
             // Forward module results to the master.
             mMasterResultReporter.mergeModuleResult(mCurrentModuleResult);
@@ -442,10 +442,11 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
         String moduleProgress = String.format("%d of %d",
                 mResult.getModuleCompleteCount(), mResult.getModules().size());
 
-        info("Invocation finished in %s. PASSED: %d, FAILED: %d, MODULES: %s",
+        info("Invocation finished in %s. PASSED: %d, FAILED: %d, NOT EXECUTED: %d, MODULES: %s",
                 TimeUtil.formatElapsedTime(elapsedTime),
                 mResult.countResults(TestStatus.PASS),
                 mResult.countResults(TestStatus.FAIL),
+                mResult.getNotExecuted(),
                 moduleProgress);
 
         long startTime = mResult.getStartTime();

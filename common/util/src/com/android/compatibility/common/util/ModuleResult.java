@@ -61,8 +61,7 @@ public class ModuleResult implements IModuleResult {
      */
     @Override
     public boolean isPassed() {
-        return mDone &&
-                (countResults(TestStatus.FAIL) + countResults(TestStatus.NOT_EXECUTED) == 0);
+        return mDone && countResults(TestStatus.FAIL) == 0;
     }
 
     /**
