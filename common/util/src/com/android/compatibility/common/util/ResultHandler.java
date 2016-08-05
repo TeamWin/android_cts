@@ -142,6 +142,8 @@ public class ResultHandler {
                 parser.require(XmlPullParser.END_TAG, NS, BUILD_TAG);
                 parser.nextTag();
                 parser.require(XmlPullParser.START_TAG, NS, SUMMARY_TAG);
+                invocation.notExecuted(
+                        Integer.parseInt(parser.getAttributeValue(NS, NOT_EXECUTED_ATTR)));
                 parser.nextTag();
                 parser.require(XmlPullParser.END_TAG, NS, SUMMARY_TAG);
                 while (parser.nextTag() == XmlPullParser.START_TAG) {
@@ -231,7 +233,7 @@ public class ResultHandler {
                     throws IOException, XmlPullParserException {
         int passed = result.countResults(TestStatus.PASS);
         int failed = result.countResults(TestStatus.FAIL);
-        int notExecuted = result.countResults(TestStatus.NOT_EXECUTED);
+        int notExecuted = result.getNotExecuted();
         File resultFile = new File(resultDir, TEST_RESULT_FILE_NAME);
         OutputStream stream = new FileOutputStream(resultFile);
         XmlSerializer serializer = XmlPullParserFactory.newInstance(TYPE, null).newSerializer();
@@ -316,8 +318,12 @@ public class ResultHandler {
                 serializer.startTag(NS, CASE_TAG);
                 serializer.attribute(NS, NAME_ATTR, cr.getName());
                 for (ITestResult r : cr.getResults()) {
+                    TestStatus status = r.getResultStatus();
+                    if (status == null) {
+                        continue; // test was not executed, don't report
+                    }
                     serializer.startTag(NS, TEST_TAG);
-                    serializer.attribute(NS, RESULT_ATTR, r.getResultStatus().getValue());
+                    serializer.attribute(NS, RESULT_ATTR, status.getValue());
                     serializer.attribute(NS, NAME_ATTR, r.getName());
                     String message = r.getMessage();
                     if (message != null) {
