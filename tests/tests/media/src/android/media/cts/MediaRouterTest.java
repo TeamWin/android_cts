@@ -15,11 +15,17 @@
  */
 package android.media.cts;
 
+import android.app.PendingIntent;
 import android.content.Context;
+import android.content.Intent;
+import android.content.res.Resources;
+import android.graphics.drawable.Drawable;
+import android.media.AudioManager;
 import android.media.MediaRouter;
 import android.media.MediaRouter.RouteCategory;
 import android.media.MediaRouter.RouteInfo;
 import android.media.MediaRouter.UserRouteInfo;
+import android.media.RemoteControlClient;
 import android.test.InstrumentationTestCase;
 
 import java.util.List;
@@ -32,13 +38,24 @@ public class MediaRouterTest extends InstrumentationTestCase {
 
     private MediaRouter mMediaRouter;
     private RouteCategory mTestCategory;
+    private static final String TEST_ROUTE_CATEGORY_NAME = "test_route_category_name";
+    private static final String TEST_ROUTE_NAME = "test_user_route_name";
+    private static final String TEST_ROUTE_DESCRIPTION = "test_user_route_description";
+    private static final String TEST_STATUS = "test_user_route_status";
+    private static final int TEST_MAX_VOLUME = 100;
+    private static final int TEST_VOLUME = 17;
+    private static final int TEST_PLAYBACK_STREAM = AudioManager.STREAM_ALARM;
+    private static final int TEST_VOLUME_HANDLING = RouteInfo.PLAYBACK_VOLUME_VARIABLE;
+    private static final int TEST_PLAYBACK_TYPE = RouteInfo.PLAYBACK_TYPE_LOCAL;
+    private static final Drawable TEST_ICON_DRAWABLE =
+            Resources.getSystem().getDrawable(android.R.drawable.ic_media_next, null);
 
     @Override
     protected void setUp() throws Exception {
         super.setUp();
         final Context context = getInstrumentation().getContext();
         mMediaRouter = (MediaRouter) context.getSystemService(Context.MEDIA_ROUTER_SERVICE);
-        mTestCategory = mMediaRouter.createRouteCategory("testCategory", false);
+        mTestCategory = mMediaRouter.createRouteCategory(TEST_ROUTE_CATEGORY_NAME, false);
     }
 
     protected void tearDown() throws Exception {
@@ -46,71 +63,130 @@ public class MediaRouterTest extends InstrumentationTestCase {
         super.tearDown();
     }
 
-    public void testSelectRoute() throws Exception {
+    /**
+     * Test {@link MediaRouter#selectRoute(int, RouteInfo)}.
+     */
+    public void testSelectRoute() {
         RouteInfo prevSelectedRoute = mMediaRouter.getSelectedRoute(
                 MediaRouter.ROUTE_TYPE_LIVE_AUDIO | MediaRouter.ROUTE_TYPE_LIVE_VIDEO
                 | MediaRouter.ROUTE_TYPE_REMOTE_DISPLAY);
+        assertNotNull(prevSelectedRoute);
 
-        final String newRouteName = "User route's name";
-        UserRouteInfo newRoute = mMediaRouter.createUserRoute(mTestCategory);
-        newRoute.setName(newRouteName);
-        mMediaRouter.addUserRoute(newRoute);
-        mMediaRouter.selectRoute(newRoute.getSupportedTypes(), newRoute);
+        UserRouteInfo userRoute = mMediaRouter.createUserRoute(mTestCategory);
+        mMediaRouter.addUserRoute(userRoute);
+        mMediaRouter.selectRoute(userRoute.getSupportedTypes(), userRoute);
 
         RouteInfo nowSelectedRoute = mMediaRouter.getSelectedRoute(MediaRouter.ROUTE_TYPE_USER);
-        assertEquals(newRoute, nowSelectedRoute);
+        assertEquals(userRoute, nowSelectedRoute);
         assertEquals(mTestCategory, nowSelectedRoute.getCategory());
 
         mMediaRouter.selectRoute(prevSelectedRoute.getSupportedTypes(), prevSelectedRoute);
     }
 
-    public void testGetRouteCount() throws Exception {
+    /**
+     * Test {@link MediaRouter#getRouteCount()}.
+     */
+    public void testGetRouteCount() {
         final int count = mMediaRouter.getRouteCount();
         assertTrue("By default, a media router has at least one route.", count > 0);
 
-        UserRouteInfo userRoute1 = mMediaRouter.createUserRoute(mTestCategory);
-        mMediaRouter.addUserRoute(userRoute1);
+        UserRouteInfo userRoute0 = mMediaRouter.createUserRoute(mTestCategory);
+        mMediaRouter.addUserRoute(userRoute0);
         assertEquals(count + 1, mMediaRouter.getRouteCount());
 
-        mMediaRouter.removeUserRoute(userRoute1);
+        mMediaRouter.removeUserRoute(userRoute0);
         assertEquals(count, mMediaRouter.getRouteCount());
 
-        UserRouteInfo userRoute2 = mMediaRouter.createUserRoute(mTestCategory);
+        UserRouteInfo userRoute1 = mMediaRouter.createUserRoute(mTestCategory);
+        mMediaRouter.addUserRoute(userRoute0);
         mMediaRouter.addUserRoute(userRoute1);
-        mMediaRouter.addUserRoute(userRoute2);
         assertEquals(count + 2, mMediaRouter.getRouteCount());
 
         mMediaRouter.clearUserRoutes();
         assertEquals(count, mMediaRouter.getRouteCount());
     }
 
-    public void testRouteCategory() throws Exception {
+    /**
+     * Test {@link MediaRouter#getRouteAt(int)}.
+     */
+    public void testGetRouteAt() throws Exception {
+        UserRouteInfo userRoute0 = mMediaRouter.createUserRoute(mTestCategory);
+        UserRouteInfo userRoute1 = mMediaRouter.createUserRoute(mTestCategory);
+        mMediaRouter.addUserRoute(userRoute0);
+        mMediaRouter.addUserRoute(userRoute1);
+
+        int count = mMediaRouter.getRouteCount();
+        assertEquals(userRoute0, mMediaRouter.getRouteAt(count - 2));
+        assertEquals(userRoute1, mMediaRouter.getRouteAt(count - 1));
+    }
+
+    /**
+     * Test {@link MediaRouter.UserRouteInfo}.
+     */
+    public void testUserRouteInfo() {
+        UserRouteInfo userRoute = mMediaRouter.createUserRoute(mTestCategory);
+        assertTrue(userRoute.isEnabled());
+        assertFalse(userRoute.isConnecting());
+        assertEquals(mTestCategory, userRoute.getCategory());
+        assertEquals(RouteInfo.DEVICE_TYPE_UNKNOWN, userRoute.getDeviceType());
+        assertEquals(RouteInfo.PLAYBACK_TYPE_REMOTE, userRoute.getPlaybackType());
+
+        userRoute.setName(TEST_ROUTE_NAME);
+        userRoute.setDescription(TEST_ROUTE_DESCRIPTION);
+        userRoute.setStatus(TEST_STATUS);
+        userRoute.setIconDrawable(TEST_ICON_DRAWABLE);
+        userRoute.setPlaybackStream(TEST_PLAYBACK_STREAM);
+
+        assertEquals(TEST_ROUTE_NAME, userRoute.getName());
+        assertEquals(TEST_ROUTE_DESCRIPTION, userRoute.getDescription());
+        assertEquals(TEST_STATUS, userRoute.getStatus());
+        assertEquals(TEST_ICON_DRAWABLE, userRoute.getIconDrawable());
+        assertEquals(TEST_PLAYBACK_STREAM, userRoute.getPlaybackStream());
+
+        Object tag = new Object();
+        userRoute.setTag(tag);
+        assertEquals(tag, userRoute.getTag());
+
+        userRoute.setVolumeMax(TEST_MAX_VOLUME);
+        userRoute.setVolume(TEST_VOLUME);
+        assertEquals(TEST_MAX_VOLUME, userRoute.getVolumeMax());
+        assertEquals(TEST_VOLUME, userRoute.getVolume());
+
+        Intent intent = new Intent(Intent.ACTION_MEDIA_BUTTON);
+        PendingIntent mediaButtonIntent = PendingIntent.getBroadcast(
+                getInstrumentation().getContext(), 0, intent, PendingIntent.FLAG_ONE_SHOT);
+        RemoteControlClient rcc = new RemoteControlClient(mediaButtonIntent);
+        userRoute.setRemoteControlClient(rcc);
+        assertEquals(rcc, userRoute.getRemoteControlClient());
+
+        userRoute.setVolumeHandling(TEST_VOLUME_HANDLING);
+        assertEquals(TEST_VOLUME_HANDLING, userRoute.getVolumeHandling());
+
+        userRoute.setPlaybackType(TEST_PLAYBACK_TYPE);
+        assertEquals(TEST_PLAYBACK_TYPE, userRoute.getPlaybackType());
+    }
+
+    /**
+     * Test {@link MediaRouter.RouteCategory}.
+     */
+    public void testRouteCategory() {
+        assertEquals(TEST_ROUTE_CATEGORY_NAME, mTestCategory.getName());
+        assertFalse(mTestCategory.isGroupable());
+        assertEquals(MediaRouter.ROUTE_TYPE_USER, mTestCategory.getSupportedTypes());
+
         final int count = mMediaRouter.getCategoryCount();
         assertTrue("By default, a media router has at least one route category.", count > 0);
 
-        UserRouteInfo newRoute = mMediaRouter.createUserRoute(mTestCategory);
-        mMediaRouter.addUserRoute(newRoute);
+        UserRouteInfo userRoute = mMediaRouter.createUserRoute(mTestCategory);
+        mMediaRouter.addUserRoute(userRoute);
         assertEquals(count + 1, mMediaRouter.getCategoryCount());
+        assertEquals(mTestCategory, mMediaRouter.getCategoryAt(count));
 
-        for (int i = 0; i < mMediaRouter.getCategoryCount(); i++) {
-            if (mMediaRouter.getCategoryAt(i) == mTestCategory) {
-                List<RouteInfo> routesInCategory = new ArrayList<RouteInfo>();
-                mTestCategory.getRoutes(routesInCategory);
-                assertEquals(1, routesInCategory.size());
+        List<RouteInfo> routesInCategory = new ArrayList<RouteInfo>();
+        mTestCategory.getRoutes(routesInCategory);
+        assertEquals(1, routesInCategory.size());
 
-                RouteInfo route = routesInCategory.get(0);
-                assertEquals(newRoute, route);
-                return;
-            }
-        }
-        assertTrue(false);
-    }
-
-    public void testRouteInfo_getDeviceType() throws Exception {
-        final RouteInfo defaultRoute = mMediaRouter.getDefaultRoute();
-        assertTrue(defaultRoute != null);
-
-        final int deviceType = defaultRoute.getDeviceType();
-        assertEquals(RouteInfo.DEVICE_TYPE_UNKNOWN, deviceType);
+        RouteInfo route = routesInCategory.get(0);
+        assertEquals(userRoute, route);
     }
 }
