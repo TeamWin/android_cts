@@ -16,27 +16,48 @@
 
 package android.view.inputmethod.cts;
 
+import static android.cts.util.WidgetTestUtils.sameCharSequence;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyInt;
+import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 
 import android.content.ClipDescription;
 import android.net.Uri;
 import android.os.Bundle;
-import android.os.Handler;
-import android.test.AndroidTestCase;
+import android.support.test.filters.SmallTest;
+import android.support.test.runner.AndroidJUnit4;
 import android.text.TextUtils;
 import android.view.KeyEvent;
 import android.view.inputmethod.CompletionInfo;
 import android.view.inputmethod.CorrectionInfo;
 import android.view.inputmethod.EditorInfo;
-import android.view.inputmethod.ExtractedText;
 import android.view.inputmethod.ExtractedTextRequest;
 import android.view.inputmethod.InputConnection;
 import android.view.inputmethod.InputConnectionWrapper;
 import android.view.inputmethod.InputContentInfo;
 
-public class InputConnectionWrapperTest extends AndroidTestCase {
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.ArgumentCaptor;
 
+@SmallTest
+@RunWith(AndroidJUnit4.class)
+public class InputConnectionWrapperTest {
+    @Test
     public void testInputConnectionWrapper() {
-        MockInputConnection inputConnection = new MockInputConnection();
+        InputConnection inputConnection = mock(InputConnection.class);
+        doReturn(true).when(inputConnection).commitContent(any(InputContentInfo.class),
+                anyInt(), any(Bundle.class));
         InputConnectionWrapper wrapper = new InputConnectionWrapper(null, true);
         try {
             wrapper.beginBatchEdit();
@@ -47,220 +68,103 @@ public class InputConnectionWrapperTest extends AndroidTestCase {
         wrapper.setTarget(inputConnection);
 
         wrapper.beginBatchEdit();
-        assertTrue(inputConnection.isBeginBatchEditCalled);
+        verify(inputConnection, times(1)).beginBatchEdit();
+
         wrapper.clearMetaKeyStates(KeyEvent.META_ALT_ON);
-        assertTrue(inputConnection.isClearMetaKeyStatesCalled);
+        verify(inputConnection, times(1)).clearMetaKeyStates(KeyEvent.META_ALT_ON);
+
         wrapper.commitCompletion(new CompletionInfo(1, 1, "testText"));
-        assertTrue(inputConnection.isCommitCompletionCalled);
+        ArgumentCaptor<CompletionInfo> completionInfoCaptor =
+                ArgumentCaptor.forClass(CompletionInfo.class);
+        verify(inputConnection, times(1)).commitCompletion(completionInfoCaptor.capture());
+        assertEquals(1, completionInfoCaptor.getValue().getId());
+        assertEquals(1, completionInfoCaptor.getValue().getPosition());
+        assertEquals("testText", completionInfoCaptor.getValue().getText());
+
         wrapper.commitCorrection(new CorrectionInfo(0, "oldText", "newText"));
-        assertTrue(inputConnection.isCommitCorrectionCalled);
+        ArgumentCaptor<CorrectionInfo> correctionInfoCaptor =
+                ArgumentCaptor.forClass(CorrectionInfo.class);
+        verify(inputConnection, times(1)).commitCorrection(correctionInfoCaptor.capture());
+        assertEquals(0, correctionInfoCaptor.getValue().getOffset());
+        assertEquals("oldText", correctionInfoCaptor.getValue().getOldText());
+        assertEquals("newText", correctionInfoCaptor.getValue().getNewText());
+
         wrapper.commitText("Text", 1);
-        assertTrue(inputConnection.isCommitTextCalled);
+        verify(inputConnection, times(1)).commitText(sameCharSequence("Text"), eq(1));
+
         wrapper.deleteSurroundingText(10, 100);
-        assertTrue(inputConnection.isDeleteSurroundingTextCalled);
+        verify(inputConnection, times(1)).deleteSurroundingText(10, 100);
+
         wrapper.deleteSurroundingTextInCodePoints(10, 100);
-        assertTrue(inputConnection.isDeleteSurroundingTextInCodePointsCalled);
+        verify(inputConnection, times(1)).deleteSurroundingTextInCodePoints(10, 100);
+
         wrapper.endBatchEdit();
-        assertTrue(inputConnection.isEndBatchEditCalled);
+        verify(inputConnection, times(1)).endBatchEdit();
+
         wrapper.finishComposingText();
-        assertTrue(inputConnection.isFinishComposingTextCalled);
+        verify(inputConnection, times(1)).finishComposingText();
+
         wrapper.getCursorCapsMode(TextUtils.CAP_MODE_CHARACTERS);
-        assertTrue(inputConnection.isGetCursorCapsModeCalled);
+        verify(inputConnection, times(1)).getCursorCapsMode(TextUtils.CAP_MODE_CHARACTERS);
+
         wrapper.getExtractedText(new ExtractedTextRequest(), 0);
-        assertTrue(inputConnection.isGetExtractedTextCalled);
+        verify(inputConnection, times(1)).getExtractedText(any(ExtractedTextRequest.class), eq(0));
+
         wrapper.getTextAfterCursor(5, 0);
-        assertTrue(inputConnection.isGetTextAfterCursorCalled);
+        verify(inputConnection, times(1)).getTextAfterCursor(5, 0);
+
         wrapper.getTextBeforeCursor(3, 0);
-        assertTrue(inputConnection.isGetTextBeforeCursorCalled);
+        verify(inputConnection, times(1)).getTextBeforeCursor(3, 0);
+
         wrapper.performContextMenuAction(1);
-        assertTrue(inputConnection.isPerformContextMenuActionCalled);
+        verify(inputConnection, times(1)).performContextMenuAction(1);
+
         wrapper.performEditorAction(EditorInfo.IME_ACTION_GO);
-        assertTrue(inputConnection.isPerformEditorActionCalled);
+        verify(inputConnection, times(1)).performEditorAction(EditorInfo.IME_ACTION_GO);
+
         wrapper.performPrivateCommand("com.android.action.MAIN", new Bundle());
-        assertTrue(inputConnection.isPerformPrivateCommandCalled);
+        verify(inputConnection, times(1)).performPrivateCommand(eq("com.android.action.MAIN"),
+                any(Bundle.class));
+
         wrapper.reportFullscreenMode(true);
-        assertTrue(inputConnection.isReportFullscreenModeCalled);
+        verify(inputConnection, times(1)).reportFullscreenMode(true);
+
         wrapper.sendKeyEvent(new KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_0));
-        assertTrue(inputConnection.isSendKeyEventCalled);
+        ArgumentCaptor<KeyEvent> keyEventCaptor = ArgumentCaptor.forClass(KeyEvent.class);
+        verify(inputConnection, times(1)).sendKeyEvent(keyEventCaptor.capture());
+        assertEquals(KeyEvent.ACTION_DOWN, keyEventCaptor.getValue().getAction());
+        assertEquals(KeyEvent.KEYCODE_0, keyEventCaptor.getValue().getKeyCode());
+
         wrapper.setComposingText("Text", 1);
-        assertTrue(inputConnection.isSetComposingTextCalled);
+        verify(inputConnection, times(1)).setComposingText("Text", 1);
+
         wrapper.setSelection(0, 10);
-        assertTrue(inputConnection.isSetSelectionCalled);
+        verify(inputConnection, times(1)).setSelection(0, 10);
+
         wrapper.getSelectedText(0);
-        assertTrue(inputConnection.isGetSelectedTextCalled);
+        verify(inputConnection, times(1)).getSelectedText(0);
+
         wrapper.setComposingRegion(0, 3);
-        assertTrue(inputConnection.isSetComposingRegionCalled);
+        verify(inputConnection, times(1)).setComposingRegion(0, 3);
+
         wrapper.requestCursorUpdates(InputConnection.CURSOR_UPDATE_IMMEDIATE);
-        assertTrue(inputConnection.isRequestCursorUpdatesCalled);
+        verify(inputConnection, times(1)).requestCursorUpdates(InputConnection.CURSOR_UPDATE_IMMEDIATE);
+
         wrapper.closeConnection();
-        assertTrue(inputConnection.isCloseConnectionCalled);
-        assertFalse(inputConnection.isGetHandlerCalled);
+        verify(inputConnection, times(1)).closeConnection();
+
+        verify(inputConnection, never()).getHandler();
         assertNull(inputConnection.getHandler());
-        assertTrue(inputConnection.isGetHandlerCalled);
-        assertFalse(inputConnection.isCommitContentCalled);
+        verify(inputConnection, times(1)).getHandler();
+
+        verify(inputConnection, never()).commitContent(any(InputContentInfo.class), anyInt(),
+            any(Bundle.class));
+
         final InputContentInfo inputContentInfo = new InputContentInfo(
                 Uri.parse("content://com.example/path"),
                 new ClipDescription("sample content", new String[]{"image/png"}),
                 Uri.parse("https://example.com"));
         assertTrue(inputConnection.commitContent(inputContentInfo, 0 /* flags */, null /* opt */));
-        assertTrue(inputConnection.isCommitContentCalled);
-    }
-
-    private class MockInputConnection implements InputConnection {
-        public boolean isBeginBatchEditCalled;
-        public boolean isClearMetaKeyStatesCalled;
-        public boolean isCommitCompletionCalled;
-        public boolean isCommitCorrectionCalled;
-        public boolean isCommitTextCalled;
-        public boolean isDeleteSurroundingTextCalled;
-        public boolean isDeleteSurroundingTextInCodePointsCalled;
-        public boolean isEndBatchEditCalled;
-        public boolean isFinishComposingTextCalled;
-        public boolean isGetCursorCapsModeCalled;
-        public boolean isGetExtractedTextCalled;
-        public boolean isGetTextAfterCursorCalled;
-        public boolean isGetTextBeforeCursorCalled;
-        public boolean isGetSelectedTextCalled;
-        public boolean isPerformContextMenuActionCalled;
-        public boolean isPerformEditorActionCalled;
-        public boolean isPerformPrivateCommandCalled;
-        public boolean isReportFullscreenModeCalled;
-        public boolean isSendKeyEventCalled;
-        public boolean isSetComposingTextCalled;
-        public boolean isSetComposingRegionCalled;
-        public boolean isSetSelectionCalled;
-        public boolean isRequestCursorUpdatesCalled;
-        public boolean isGetHandlerCalled;
-        public boolean isCloseConnectionCalled;
-        public boolean isCommitContentCalled;
-
-        public boolean beginBatchEdit() {
-            isBeginBatchEditCalled = true;
-            return false;
-        }
-
-        public boolean clearMetaKeyStates(int states) {
-            isClearMetaKeyStatesCalled = true;
-            return false;
-        }
-
-        public boolean commitCompletion(CompletionInfo text) {
-            isCommitCompletionCalled = true;
-            return false;
-        }
-
-        public boolean commitCorrection(CorrectionInfo info) {
-            isCommitCorrectionCalled = true;
-            return false;
-        }
-
-        public boolean commitText(CharSequence text, int newCursorPosition) {
-            isCommitTextCalled = true;
-            return false;
-        }
-
-        public boolean deleteSurroundingText(int beforeLength, int afterLength) {
-            isDeleteSurroundingTextCalled = true;
-            return false;
-        }
-
-        public boolean deleteSurroundingTextInCodePoints(int beforeLength, int afterLength) {
-            isDeleteSurroundingTextInCodePointsCalled = true;
-            return false;
-        }
-
-        public boolean endBatchEdit() {
-            isEndBatchEditCalled = true;
-            return false;
-        }
-
-        public boolean finishComposingText() {
-            isFinishComposingTextCalled = true;
-            return false;
-        }
-
-        public int getCursorCapsMode(int reqModes) {
-            isGetCursorCapsModeCalled = true;
-            return 0;
-        }
-
-        public ExtractedText getExtractedText(ExtractedTextRequest request, int flags) {
-            isGetExtractedTextCalled = true;
-            return null;
-        }
-
-        public CharSequence getTextAfterCursor(int n, int flags) {
-            isGetTextAfterCursorCalled = true;
-            return null;
-        }
-
-        public CharSequence getTextBeforeCursor(int n, int flags) {
-            isGetTextBeforeCursorCalled = true;
-            return null;
-        }
-
-        public CharSequence getSelectedText(int flags) {
-            isGetSelectedTextCalled = true;
-            return null;
-        }
-
-        public boolean performContextMenuAction(int id) {
-            isPerformContextMenuActionCalled = true;
-            return false;
-        }
-
-        public boolean performEditorAction(int editorAction) {
-            isPerformEditorActionCalled = true;
-            return false;
-        }
-
-        public boolean performPrivateCommand(String action, Bundle data) {
-            isPerformPrivateCommandCalled = true;
-            return false;
-        }
-
-        public boolean reportFullscreenMode(boolean enabled) {
-            isReportFullscreenModeCalled = true;
-            return false;
-        }
-
-        public boolean sendKeyEvent(KeyEvent event) {
-            isSendKeyEventCalled = true;
-            return false;
-        }
-
-        public boolean setComposingText(CharSequence text, int newCursorPosition) {
-            isSetComposingTextCalled = true;
-            return false;
-        }
-
-        public boolean setComposingRegion(int start, int end) {
-            isSetComposingRegionCalled = true;
-            return false;
-        }
-
-        public boolean setSelection(int start, int end) {
-            isSetSelectionCalled = true;
-            return false;
-        }
-
-        public boolean requestCursorUpdates(int cursorUpdateMode) {
-            isRequestCursorUpdatesCalled = true;
-            return false;
-        }
-
-        public Handler getHandler() {
-            isGetHandlerCalled = true;
-            return null;
-        }
-
-        public void closeConnection() {
-            isCloseConnectionCalled = true;
-        }
-
-        public boolean commitContent(InputContentInfo inputContentInfo, int flags, Bundle opts) {
-            isCommitContentCalled = true;
-            return true;
-        }
+        verify(inputConnection, times(1)).commitContent(inputContentInfo, 0, null);
     }
 }

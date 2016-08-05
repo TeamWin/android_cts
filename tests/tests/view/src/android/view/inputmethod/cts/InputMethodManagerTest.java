@@ -15,7 +15,8 @@
  */
 package android.view.inputmethod.cts;
 
-import android.view.cts.R;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 import android.app.Instrumentation;
 import android.content.Context;
@@ -24,42 +25,50 @@ import android.cts.util.PollingCheck;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.ResultReceiver;
-import android.test.ActivityInstrumentationTestCase2;
+import android.support.test.InstrumentationRegistry;
+import android.support.test.filters.MediumTest;
+import android.support.test.rule.ActivityTestRule;
+import android.support.test.runner.AndroidJUnit4;
 import android.view.KeyEvent;
 import android.view.Window;
+import android.view.cts.R;
 import android.view.inputmethod.BaseInputConnection;
 import android.view.inputmethod.InputMethodInfo;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+
 import java.util.List;
 
-public class InputMethodManagerTest
-                  extends ActivityInstrumentationTestCase2<InputMethodCtsActivity> {
-
-    public InputMethodManagerTest() {
-        super("android.view.cts", InputMethodCtsActivity.class);
-    }
-
-    private InputMethodCtsActivity mActivity;
+@MediumTest
+@RunWith(AndroidJUnit4.class)
+public class InputMethodManagerTest {
     private Instrumentation mInstrumentation;
+    private InputMethodCtsActivity mActivity;
 
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
-        mActivity = getActivity();
-        mInstrumentation = getInstrumentation();
+    @Rule
+    public ActivityTestRule<InputMethodCtsActivity> mActivityRule =
+            new ActivityTestRule<>(InputMethodCtsActivity.class);
+
+    @Before
+    public void setup() {
+        mInstrumentation = InstrumentationRegistry.getInstrumentation();
+        mActivity = mActivityRule.getActivity();
     }
 
-    @Override
-    protected void tearDown() throws Exception {
-        // Close soft input just in case.
-        sendKeys(KeyEvent.KEYCODE_BACK);
-        super.tearDown();
+    @After
+    public void teardown() {
+        mInstrumentation.sendKeyDownUpSync(KeyEvent.KEYCODE_BACK);
     }
 
+    @Test
     public void testInputMethodManager() throws Throwable {
-        if (!getActivity().getPackageManager().hasSystemFeature(
+        if (!mActivity.getPackageManager().hasSystemFeature(
                 PackageManager.FEATURE_INPUT_METHODS)) {
             return;
         }
@@ -67,20 +76,10 @@ public class InputMethodManagerTest
         Window window = mActivity.getWindow();
         final EditText view = (EditText) window.findViewById(R.id.entry);
 
-        new PollingCheck(1000) {
-            @Override
-            protected boolean check() {
-                return view.hasWindowFocus();
-            }
-        }.run();
+        PollingCheck.waitFor(1000, view::hasWindowFocus);
 
-        runTestOnUiThread(new Runnable() {
-           @Override
-            public void run() {
-               view.requestFocus();
-            }
-        });
-        getInstrumentation().waitForIdleSync();
+        mActivityRule.runOnUiThread(view::requestFocus);
+        mInstrumentation.waitForIdleSync();
         assertTrue(view.isFocused());
 
         BaseInputConnection connection = new BaseInputConnection(view, false);
@@ -88,12 +87,7 @@ public class InputMethodManagerTest
         final InputMethodManager imManager = (InputMethodManager) context
                 .getSystemService(Context.INPUT_METHOD_SERVICE);
 
-        new PollingCheck() {
-            @Override
-            protected boolean check() {
-                return imManager.isActive();
-            }
-        }.run();
+        PollingCheck.waitFor(imManager::isActive);
 
         assertTrue(imManager.isAcceptingText());
         assertTrue(imManager.isActive(view));
@@ -104,40 +98,37 @@ public class InputMethodManagerTest
         // application should have no effect.
         assertFalse(imManager.isFullscreenMode());
 
-        runTestOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                IBinder token = view.getWindowToken();
+        mActivityRule.runOnUiThread(() -> {
+            IBinder token = view.getWindowToken();
 
-                // Show and hide input method.
-                assertTrue(imManager.showSoftInput(view, InputMethodManager.SHOW_IMPLICIT));
-                assertTrue(imManager.hideSoftInputFromWindow(token, 0));
+            // Show and hide input method.
+            assertTrue(imManager.showSoftInput(view, InputMethodManager.SHOW_IMPLICIT));
+            assertTrue(imManager.hideSoftInputFromWindow(token, 0));
 
-                Handler handler = new Handler();
-                ResultReceiver receiver = new ResultReceiver(handler);
-                assertTrue(imManager.showSoftInput(view, 0, receiver));
-                receiver = new ResultReceiver(handler);
-                assertTrue(imManager.hideSoftInputFromWindow(token, 0, receiver));
+            Handler handler = new Handler();
+            ResultReceiver receiver = new ResultReceiver(handler);
+            assertTrue(imManager.showSoftInput(view, 0, receiver));
+            receiver = new ResultReceiver(handler);
+            assertTrue(imManager.hideSoftInputFromWindow(token, 0, receiver));
 
-                imManager.showSoftInputFromInputMethod(token, InputMethodManager.SHOW_FORCED);
-                imManager.hideSoftInputFromInputMethod(token, InputMethodManager.HIDE_NOT_ALWAYS);
+            imManager.showSoftInputFromInputMethod(token, InputMethodManager.SHOW_FORCED);
+            imManager.hideSoftInputFromInputMethod(token, InputMethodManager.HIDE_NOT_ALWAYS);
 
-                // status: hide to show to hide
-                imManager.toggleSoftInputFromWindow(token, 0, InputMethodManager.HIDE_NOT_ALWAYS);
-                imManager.toggleSoftInputFromWindow(token, 0, InputMethodManager.HIDE_NOT_ALWAYS);
+            // status: hide to show to hide
+            imManager.toggleSoftInputFromWindow(token, 0, InputMethodManager.HIDE_NOT_ALWAYS);
+            imManager.toggleSoftInputFromWindow(token, 0, InputMethodManager.HIDE_NOT_ALWAYS);
 
-                List<InputMethodInfo> enabledImList = imManager.getEnabledInputMethodList();
-                if (enabledImList != null && enabledImList.size() > 0) {
-                    imManager.setInputMethod(token, enabledImList.get(0).getId());
-                    // cannot test whether setting was successful
-                }
+            List<InputMethodInfo> enabledImList = imManager.getEnabledInputMethodList();
+            if (enabledImList != null && enabledImList.size() > 0) {
+                imManager.setInputMethod(token, enabledImList.get(0).getId());
+                // cannot test whether setting was successful
+            }
 
-                List<InputMethodInfo> imList = imManager.getInputMethodList();
-                if (imList != null && enabledImList != null) {
-                    assertTrue(imList.size() >= enabledImList.size());
-                }
+            List<InputMethodInfo> imList = imManager.getInputMethodList();
+            if (imList != null && enabledImList != null) {
+                assertTrue(imList.size() >= enabledImList.size());
             }
         });
-        getInstrumentation().waitForIdleSync();
+        mInstrumentation.waitForIdleSync();
     }
 }

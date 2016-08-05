@@ -16,18 +16,28 @@
 
 package android.view.inputmethod.cts;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertSame;
 
 import android.os.Binder;
 import android.os.Parcel;
-import android.test.AndroidTestCase;
+import android.support.test.InstrumentationRegistry;
+import android.support.test.filters.SmallTest;
+import android.support.test.runner.AndroidJUnit4;
 import android.view.View;
 import android.view.inputmethod.BaseInputConnection;
 import android.view.inputmethod.InputBinding;
 
-public class InputBindingTest extends AndroidTestCase {
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
+@SmallTest
+@RunWith(AndroidJUnit4.class)
+public class InputBindingTest {
+    @Test
     public void testInputBinding() {
-        View view = new View(getContext());
+        View view = new View(InstrumentationRegistry.getTargetContext());
         BaseInputConnection bic = new BaseInputConnection(view, false);
         Binder binder = new Binder();
         int uid = 1;

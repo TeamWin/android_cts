@@ -16,19 +16,32 @@
 
 package android.view.inputmethod.cts;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.Matchers.anyString;
+import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 
 import android.os.Bundle;
 import android.os.LocaleList;
 import android.os.Parcel;
-import android.test.AndroidTestCase;
+import android.support.test.filters.SmallTest;
+import android.support.test.runner.AndroidJUnit4;
 import android.test.MoreAsserts;
 import android.text.TextUtils;
 import android.util.Printer;
 import android.view.inputmethod.EditorInfo;
 
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
-public class EditorInfoTest extends AndroidTestCase {
-
+@SmallTest
+@RunWith(AndroidJUnit4.class)
+public class EditorInfoTest {
+    @Test
     public void testEditorInfo() {
         EditorInfo info = new EditorInfo();
 
@@ -77,12 +90,13 @@ public class EditorInfoTest extends AndroidTestCase {
         assertEquals(info.hintLocales, targetInfo.hintLocales);
         MoreAsserts.assertEquals(info.contentMimeTypes, targetInfo.contentMimeTypes);
 
-        TestPrinter printer = new TestPrinter();
+        Printer printer = mock(Printer.class);
         String prefix = "TestEditorInfo";
         info.dump(printer, prefix);
-        assertTrue(printer.isPrintlnCalled);
+        verify(printer, atLeastOnce()).println(anyString());
     }
 
+    @Test
     public void testNullHintLocals() {
         EditorInfo info = new EditorInfo();
         info.hintLocales = null;
@@ -92,12 +106,5 @@ public class EditorInfoTest extends AndroidTestCase {
         EditorInfo targetInfo = EditorInfo.CREATOR.createFromParcel(p);
         p.recycle();
         assertNull(targetInfo.hintLocales);
-    }
-
-    private class TestPrinter implements Printer {
-        public boolean isPrintlnCalled;
-        public void println(String x) {
-            isPrintlnCalled = true;
-        }
     }
 }
