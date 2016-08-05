@@ -140,4 +140,14 @@ public interface ITestResult extends Comparable<ITestResult> {
      */
     void reset();
 
+    /**
+     * Sets whether the test result status has been generated from a previous testing session.
+     */
+    void setRetry(boolean isRetry);
+
+    /**
+     * Retrieves whether the test result status has been generated from a previous testing session.
+     */
+    boolean isRetry();
+
 }
