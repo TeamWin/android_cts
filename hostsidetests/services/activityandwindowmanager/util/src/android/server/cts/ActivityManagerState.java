@@ -219,6 +219,19 @@ class ActivityManagerState {
         return false;
     }
 
+    int getActivityProcId(String activityName) {
+        for (ActivityStack stack : mStacks) {
+            for (ActivityTask task : stack.mTasks) {
+               for (Activity activity : task.mActivities) {
+                   if (activity.name.equals(activityName)) {
+                       return activity.procId;
+                   }
+               }
+            }
+        }
+        return -1;
+    }
+
     boolean isHomeActivityVisible() {
         final Activity homeActivity = getHomeActivity();
         return homeActivity != null && homeActivity.visible;
@@ -508,10 +521,13 @@ class ActivityManagerState {
                 + "mStartingWindowState=(\\S+)");
         private static final Pattern FRONT_OF_TASK_PATTERN = Pattern.compile("frontOfTask=(\\S+) "
                 + "task=TaskRecord\\{(\\S+) #(\\d+) A=(\\S+) U=(\\d+) StackId=(\\d+) sz=(\\d+)\\}");
+        private static final Pattern PROCESS_RECORD_PATTERN = Pattern.compile(
+                "app=ProcessRecord\\{(\\S+) (\\d+):(\\S+)/(.+)\\}");
 
         String name;
         boolean visible;
         boolean frontOfTask;
+        int procId = -1;
 
         private Activity() {
         }
@@ -547,6 +563,15 @@ class ActivityManagerState {
                     final String visibleString = matcher.group(3);
                     visible = Boolean.valueOf(visibleString);
                     log(visibleString);
+                    continue;
+                }
+
+                matcher = PROCESS_RECORD_PATTERN.matcher(line);
+                if (matcher.matches()) {
+                    log(line);
+                    final String procIdString = matcher.group(2);
+                    procId = Integer.valueOf(procIdString);
+                    log(procIdString);
                     continue;
                 }
 

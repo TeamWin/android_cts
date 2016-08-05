@@ -35,7 +35,12 @@ import static android.server.cts.StateLogger.log;
 import static android.server.cts.StateLogger.logE;
 
 public class WindowManagerState {
+    public static final int DUMP_MODE_APPS = 0;
+    public static final int DUMP_MODE_VISIBLE = 1;
+    public static final int DUMP_MODE_VISIBLE_APPS = 2;
+
     private static final String DUMPSYS_WINDOWS_APPS = "dumpsys window -a apps";
+    private static final String DUMPSYS_WINDOWS_VISIBLE = "dumpsys window -a visible";
     private static final String DUMPSYS_WINDOWS_VISIBLE_APPS = "dumpsys window visible-apps";
 
     private static final Pattern sWindowPattern =
@@ -44,6 +49,8 @@ public class WindowManagerState {
             Pattern.compile("Window #(\\d+) Window\\{([0-9a-fA-F]+) u(\\d+) Starting (.+)\\}\\:");
     private static final Pattern sExitingWindowPattern =
             Pattern.compile("Window #(\\d+) Window\\{([0-9a-fA-F]+) u(\\d+) (.+) EXITING\\}\\:");
+    private static final Pattern sDebuggerWindowPattern =
+            Pattern.compile("Window #(\\d+) Window\\{([0-9a-fA-F]+) u(\\d+) Waiting For Debugger: (.+)\\}\\:");
 
     private static final Pattern sFocusedWindowPattern = Pattern.compile(
             "mCurrentFocus=Window\\{([0-9a-fA-F]+) u(\\d+) (\\S+)\\}");
@@ -63,7 +70,7 @@ public class WindowManagerState {
 
     private static final Pattern[] sExtractStackExitPatterns = {
             sStackIdPattern, sWindowPattern, sStartingWindowPattern, sExitingWindowPattern,
-            sFocusedWindowPattern, sAppErrorFocusedWindowPattern,
+            sDebuggerWindowPattern, sFocusedWindowPattern, sAppErrorFocusedWindowPattern,
             sWaitingForDebuggerFocusedWindowPattern,
             sFocusedAppPattern, sLastAppTransitionPattern };
 
@@ -77,7 +84,7 @@ public class WindowManagerState {
     private String mLastTransition = null;
     private final LinkedList<String> mSysDump = new LinkedList();
 
-    void computeState(ITestDevice device, boolean visibleOnly) throws DeviceNotAvailableException {
+    void computeState(ITestDevice device, int dumpMode) throws DeviceNotAvailableException {
         // It is possible the system is in the middle of transition to the right state when we get
         // the dump. We try a few times to get the information we need before giving up.
         int retriesLeft = 3;
@@ -100,10 +107,21 @@ public class WindowManagerState {
             }
 
             final CollectingOutputReceiver outputReceiver = new CollectingOutputReceiver();
-            final String dumpsysCmd = visibleOnly ?
-                    DUMPSYS_WINDOWS_VISIBLE_APPS : DUMPSYS_WINDOWS_APPS;
+            final String dumpsysCmd;
+            switch (dumpMode) {
+            case DUMP_MODE_APPS:
+                dumpsysCmd = DUMPSYS_WINDOWS_APPS; break;
+            case DUMP_MODE_VISIBLE:
+                dumpsysCmd = DUMPSYS_WINDOWS_VISIBLE; break;
+            case DUMP_MODE_VISIBLE_APPS:
+            default:
+                dumpsysCmd = DUMPSYS_WINDOWS_VISIBLE_APPS; break;
+            }
             device.executeShellCommand(dumpsysCmd, outputReceiver);
             dump = outputReceiver.getOutput();
+            final boolean visibleOnly =
+                    dumpMode == DUMP_MODE_VISIBLE ||
+                    dumpMode == DUMP_MODE_VISIBLE_APPS;
             parseSysDump(dump, visibleOnly);
 
             retry = mWindows.isEmpty() || mFocusedWindow == null || mFocusedApp == null;
@@ -607,6 +625,11 @@ public class WindowManagerState {
     public static class WindowState extends WindowContainer {
         private static final String TAG = "[WindowState] ";
 
+        private static final int WINDOW_TYPE_NORMAL   = 0;
+        private static final int WINDOW_TYPE_STARTING = 1;
+        private static final int WINDOW_TYPE_EXITING  = 2;
+        private static final int WINDOW_TYPE_DEBUGGER = 3;
+
         private static final String RECT_STR = "\\[(\\d+),(\\d+)\\]\\[(\\d+),(\\d+)\\]";
         private static final Pattern sMainFramePattern = Pattern.compile("mFrame=" + RECT_STR + ".+");
         private static final Pattern sFramePattern =
@@ -624,8 +647,7 @@ public class WindowManagerState {
 
         private final String mName;
         private final String mAppToken;
-        private final boolean mStarting;
-        private final boolean mExiting;
+        private final int mWindowType;
         private int mDisplayId;
         private int mStackId;
         private int mLayer;
@@ -636,11 +658,11 @@ public class WindowManagerState {
         private Rectangle mSurfaceInsets = new Rectangle();
         private Rectangle mCrop = new Rectangle();
 
-        private WindowState(Matcher matcher, boolean starting, boolean exiting) {
+
+        private WindowState(Matcher matcher, int windowType) {
             mName = matcher.group(4);
             mAppToken = matcher.group(2);
-            mStarting = starting;
-            mExiting = exiting;
+            mWindowType = windowType;
         }
 
         public String getName() {
@@ -652,11 +674,15 @@ public class WindowManagerState {
         }
 
         boolean isStartingWindow() {
-            return mStarting;
+            return mWindowType == WINDOW_TYPE_STARTING;
         }
 
         boolean isExitingWindow() {
-            return mExiting;
+            return mWindowType == WINDOW_TYPE_EXITING;
+        }
+
+        boolean isDebuggerWindow() {
+            return mWindowType == WINDOW_TYPE_DEBUGGER;
         }
 
         int getDisplayId() {
@@ -707,18 +733,18 @@ public class WindowManagerState {
             dump.pop();
 
             final WindowState window;
-            Matcher specialMatcher = sStartingWindowPattern.matcher(line);
-            if (specialMatcher.matches()) {
+            Matcher specialMatcher;
+            if ((specialMatcher = sStartingWindowPattern.matcher(line)).matches()) {
                 log(TAG + "STARTING: " + line);
-                window = new WindowState(specialMatcher, true, false);
+                window = new WindowState(specialMatcher, WINDOW_TYPE_STARTING);
+            } else if ((specialMatcher = sExitingWindowPattern.matcher(line)).matches()) {
+                log(TAG + "EXITING: " + line);
+                window = new WindowState(specialMatcher, WINDOW_TYPE_EXITING);
+            } else if ((specialMatcher = sDebuggerWindowPattern.matcher(line)).matches()) {
+                log(TAG + "DEBUGGER: " + line);
+                window = new WindowState(specialMatcher, WINDOW_TYPE_DEBUGGER);
             } else {
-                specialMatcher = sExitingWindowPattern.matcher(line);
-                if (specialMatcher.matches()) {
-                    log(TAG + "EXITING: " + line);
-                    window = new WindowState(specialMatcher, false, true);
-                } else {
-                    window = new WindowState(matcher, false, false);
-                }
+                window = new WindowState(matcher, WINDOW_TYPE_NORMAL);
             }
 
             window.extract(dump, exitPatterns);
@@ -778,10 +804,20 @@ public class WindowManagerState {
             }
         }
 
+        private static String getWindowTypeSuffix(int windowType) {
+            switch (windowType) {
+            case WINDOW_TYPE_STARTING: return " STARTING";
+            case WINDOW_TYPE_EXITING: return " EXITING";
+            case WINDOW_TYPE_DEBUGGER: return " DEBUGGER";
+            default: break;
+            }
+            return "";
+        }
+
         @Override
         public String toString() {
             return "WindowState: {" + mAppToken + " " + mName
-                    + (mStarting ? " STARTING" : "") + (mExiting ? " EXITING" : "") + "}"
+                    + getWindowTypeSuffix(mWindowType) + "}"
                     + " cf=" + mContainingFrame + " pf=" + mParentFrame;
         }
     }
