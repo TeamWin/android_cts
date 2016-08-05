@@ -29,6 +29,7 @@ public class TestResult implements ITestResult {
     private String mBugReport;
     private String mLog;
     private String mScreenshot;
+    private boolean mIsRetry;
 
     /**
      * Create a {@link TestResult} for the given test name.
@@ -226,6 +227,23 @@ public class TestResult implements ITestResult {
         mBugReport = null;
         mLog = null;
         mScreenshot = null;
+        mIsRetry = false;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void setRetry(boolean isRetry) {
+        mIsRetry = isRetry;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public boolean isRetry() {
+        return mIsRetry;
     }
 
     /**

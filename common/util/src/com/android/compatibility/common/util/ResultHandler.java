@@ -162,6 +162,7 @@ public class ResultHandler {
                             ITestResult test = testCase.getOrCreateResult(testName);
                             String result = parser.getAttributeValue(NS, RESULT_ATTR);
                             test.setResultStatus(TestStatus.getStatus(result));
+                            test.setRetry(true);
                             if (parser.nextTag() == XmlPullParser.START_TAG) {
                                 if (parser.getName().equals(FAILURE_TAG)) {
                                     test.setMessage(parser.getAttributeValue(NS, MESSAGE_ATTR));
