@@ -24,6 +24,7 @@ import android.content.ContextWrapper;
 import android.content.Intent;
 import android.content.pm.LauncherApps;
 import android.content.pm.LauncherApps.ShortcutQuery;
+import android.content.pm.PackageManager;
 import android.content.pm.ShortcutInfo;
 import android.content.pm.ShortcutManager;
 import android.content.res.Resources;
@@ -45,7 +46,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 public abstract class ShortcutManagerCtsTestsBase extends InstrumentationTestCase {
 
-    private static final boolean DUMPSYS_IN_TEARDOWN = true; // DO NOT SUBMIT WITH true
+    private static final boolean DUMPSYS_IN_TEARDOWN = false; // DO NOT SUBMIT WITH true
 
     private static class SpoofingContext extends ContextWrapper {
         private final String mPackageName;
@@ -222,7 +223,10 @@ public abstract class ShortcutManagerCtsTestsBase extends InstrumentationTestCas
     }
 
     protected void enableManifestActivity(String className, boolean enabled) {
-        enableComponent(getInstrumentation(), getActivity(className), enabled);
+        getTestContext().getPackageManager().setComponentEnabledSetting(getActivity(className),
+                enabled ? PackageManager.COMPONENT_ENABLED_STATE_ENABLED
+                        : PackageManager.COMPONENT_ENABLED_STATE_DISABLED,
+                PackageManager.DONT_KILL_APP);
     }
 
     protected void setTargetActivityOverride(String className) {
