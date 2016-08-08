@@ -74,6 +74,9 @@ public class ResultHandlerTest extends TestCase {
     private static final String MESSAGE = "Something small is not alright";
     private static final String STACK_TRACE = "Something small is not alright\n " +
             "at four.big.insects.Marley.sing(Marley.java:10)";
+    private static final String BUG_REPORT = "https://cnsviewer.corp.google.com/cns/bugreport.txt";
+    private static final String LOGCAT = "https://cnsviewer.corp.google.com/cns/logcat.gz";
+    private static final String SCREENSHOT = "https://cnsviewer.corp.google.com/screenshot.png";
     private static final long START_MS = 1431586801000L;
     private static final long END_MS = 1431673199000L;
     private static final String START_DISPLAY = "Fri Aug 20 15:13:03 PDT 2010";
@@ -118,6 +121,9 @@ public class ResultHandlerTest extends TestCase {
             "        <Failure message=\"%s\">\n" +
             "          <StackTrace>%s</StackTrace>\n" +
             "        </Failure>\n" +
+            "        <BugReport>%s</BugReport>\n" +
+            "        <Logcat>%s</Logcat>\n" +
+            "        <Screenshot>%s</Screenshot>\n" +
             "      </Test>\n";
     private static final String XML_TEST_RESULT =
             "      <Test result=\"pass\" name=\"%s\">\n" +
@@ -165,6 +171,9 @@ public class ResultHandlerTest extends TestCase {
         moduleBTest3.setResultStatus(TestStatus.FAIL);
         moduleBTest3.setMessage(MESSAGE);
         moduleBTest3.setStackTrace(STACK_TRACE);
+        moduleBTest3.setBugReport(BUG_REPORT);
+        moduleBTest3.setLog(LOGCAT);
+        moduleBTest3.setScreenshot(SCREENSHOT);
         ITestResult moduleBTest4 = moduleBCase.getOrCreateResult(METHOD_4);
         moduleBTest4.setResultStatus(TestStatus.PASS);
         ReportLog report = new ReportLog();
@@ -197,7 +206,8 @@ public class ResultHandlerTest extends TestCase {
             String moduleATest = String.format(XML_TEST_PASS, METHOD_1);
             String moduleACases = String.format(XML_CASE, CLASS_A, moduleATest);
             String moduleA = String.format(XML_MODULE, NAME_A, ABI, DEVICE_A, moduleACases);
-            String moduleBTest3 = String.format(XML_TEST_FAIL, METHOD_3, MESSAGE, STACK_TRACE);
+            String moduleBTest3 = String.format(XML_TEST_FAIL, METHOD_3, MESSAGE, STACK_TRACE,
+                    BUG_REPORT, LOGCAT, SCREENSHOT);
             String moduleBTest4 = String.format(XML_TEST_RESULT, METHOD_4,
                     SUMMARY_SOURCE, SUMMARY_MESSAGE, ResultType.HIGHER_BETTER.toReportString(),
                     ResultUnit.SCORE.toReportString(), Double.toString(SUMMARY_VALUE),
@@ -289,9 +299,9 @@ public class ResultHandlerTest extends TestCase {
         ITestResult moduleBTest3 = moduleBResults.get(0);
         assertEquals("Incorrect name", METHOD_3, moduleBTest3.getName());
         assertEquals("Incorrect result", TestStatus.FAIL, moduleBTest3.getResultStatus());
-        assertNull("Unexpected bugreport", moduleBTest3.getBugReport());
-        assertNull("Unexpected log", moduleBTest3.getLog());
-        assertNull("Unexpected screenshot", moduleBTest3.getScreenshot());
+        assertEquals("Incorrect bugreport", BUG_REPORT, moduleBTest3.getBugReport());
+        assertEquals("Incorrect log", LOGCAT, moduleBTest3.getLog());
+        assertEquals("Incorrect screenshot", SCREENSHOT, moduleBTest3.getScreenshot());
         assertEquals("Incorrect message", MESSAGE, moduleBTest3.getMessage());
         assertEquals("Incorrect stack trace", STACK_TRACE, moduleBTest3.getStackTrace());
         assertNull("Unexpected report", moduleBTest3.getReportLog());
