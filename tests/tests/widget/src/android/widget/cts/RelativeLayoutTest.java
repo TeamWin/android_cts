@@ -324,6 +324,7 @@ public class RelativeLayoutTest {
         assertFalse(myRelativeLayout.checkLayoutParams(p3));
     }
 
+    @Test
     public void testGetRule() {
         RelativeLayout.LayoutParams p = new RelativeLayout.LayoutParams(0, 0);
         p.addRule(RelativeLayout.LEFT_OF, R.id.abslistview_root);
