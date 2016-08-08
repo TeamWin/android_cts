@@ -102,7 +102,7 @@ public class ExpandableListViewBasicTest {
     }
 
     @Test
-    public void testExpandedGroupMovement() {
+    public void testExpandedGroupMovement() throws Throwable {
         // Expand the first group
         mListUtil.arrowScrollToSelectedPosition(0);
         CtsKeyEventUtil.sendKeys(mInstrumentation, mExpandableListView,
@@ -128,7 +128,7 @@ public class ExpandableListViewBasicTest {
                 mAdapter instanceof BaseExpandableListAdapter);
         final BaseExpandableListAdapter adapter = (BaseExpandableListAdapter) mAdapter;
 
-        mInstrumentation.runOnMainSync(adapter::notifyDataSetChanged);
+        mActivityRule.runOnUiThread(adapter::notifyDataSetChanged);
         mInstrumentation.waitForIdleSync();
 
         // Make sure the right group is expanded

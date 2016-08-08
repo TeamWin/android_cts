@@ -164,47 +164,47 @@ public class RemoteViewsTest {
     }
 
     @Test
-    public void testSetContentDescription() {
+    public void testSetContentDescription() throws Throwable {
         View view = mResult.findViewById(R.id.remoteView_frame);
 
         assertNull(view.getContentDescription());
 
         CharSequence contentDescription = mContext.getString(R.string.remote_content_description);
         mRemoteViews.setContentDescription(R.id.remoteView_frame, contentDescription);
-        mInstrumentation.runOnMainSync(() -> mRemoteViews.reapply(mContext, mResult));
+        mActivityRule.runOnUiThread(() -> mRemoteViews.reapply(mContext, mResult));
         assertTrue(TextUtils.equals(contentDescription, view.getContentDescription()));
     }
 
     @Test
-    public void testSetViewVisibility() {
+    public void testSetViewVisibility() throws Throwable {
         View view = mResult.findViewById(R.id.remoteView_chronometer);
         assertEquals(View.VISIBLE, view.getVisibility());
 
         mRemoteViews.setViewVisibility(R.id.remoteView_chronometer, View.INVISIBLE);
-        mInstrumentation.runOnMainSync(() -> mRemoteViews.reapply(mContext, mResult));
+        mActivityRule.runOnUiThread(() -> mRemoteViews.reapply(mContext, mResult));
         assertEquals(View.INVISIBLE, view.getVisibility());
 
         mRemoteViews.setViewVisibility(R.id.remoteView_chronometer, View.GONE);
-        mInstrumentation.runOnMainSync(() -> mRemoteViews.reapply(mContext, mResult));
+        mActivityRule.runOnUiThread(() -> mRemoteViews.reapply(mContext, mResult));
         assertEquals(View.GONE, view.getVisibility());
 
         mRemoteViews.setViewVisibility(R.id.remoteView_chronometer, View.VISIBLE);
-        mInstrumentation.runOnMainSync(() -> mRemoteViews.reapply(mContext, mResult));
+        mActivityRule.runOnUiThread(() -> mRemoteViews.reapply(mContext, mResult));
         assertEquals(View.VISIBLE, view.getVisibility());
     }
 
     @Test
-    public void testSetTextViewText() {
+    public void testSetTextViewText() throws Throwable {
         TextView textView = (TextView) mResult.findViewById(R.id.remoteView_text);
         assertEquals("", textView.getText().toString());
 
         String expected = "This is content";
         mRemoteViews.setTextViewText(R.id.remoteView_text, expected);
-        mInstrumentation.runOnMainSync(() -> mRemoteViews.reapply(mContext, mResult));
+        mActivityRule.runOnUiThread(() -> mRemoteViews.reapply(mContext, mResult));
         assertEquals(expected, textView.getText().toString());
 
         mRemoteViews.setTextViewText(R.id.remoteView_text, null);
-        mInstrumentation.runOnMainSync(() -> mRemoteViews.reapply(mContext, mResult));
+        mActivityRule.runOnUiThread(() -> mRemoteViews.reapply(mContext, mResult));
         assertEquals("", textView.getText().toString());
 
         mExpectedException.expect(ActionException.class);
@@ -213,11 +213,11 @@ public class RemoteViewsTest {
     }
 
     @Test
-    public void testSetTextViewTextSize() {
+    public void testSetTextViewTextSize() throws Throwable {
         TextView textView = (TextView) mResult.findViewById(R.id.remoteView_text);
 
         mRemoteViews.setTextViewTextSize(R.id.remoteView_text, TypedValue.COMPLEX_UNIT_SP, 18);
-        mInstrumentation.runOnMainSync(() -> mRemoteViews.reapply(mContext, mResult));
+        mActivityRule.runOnUiThread(() -> mRemoteViews.reapply(mContext, mResult));
         assertEquals(mContext.getResources().getDisplayMetrics().scaledDensity * 18,
                 textView.getTextSize(), 0.001f);
 
@@ -227,13 +227,13 @@ public class RemoteViewsTest {
     }
 
     @Test
-    public void testSetIcon() {
+    public void testSetIcon() throws Throwable {
         ImageView image = (ImageView) mResult.findViewById(R.id.remoteView_image);
         assertNull(image.getDrawable());
 
         Icon iconBlack = Icon.createWithResource(mContext, R.drawable.icon_black);
         mRemoteViews.setIcon(R.id.remoteView_image, "setImageIcon", iconBlack);
-        mInstrumentation.runOnMainSync(() -> mRemoteViews.reapply(mContext, mResult));
+        mActivityRule.runOnUiThread(() -> mRemoteViews.reapply(mContext, mResult));
         assertNotNull(image.getDrawable());
         BitmapDrawable dBlack = (BitmapDrawable) mContext.getDrawable(R.drawable.icon_black);
         WidgetTestUtils.assertEquals(dBlack.getBitmap(),
@@ -241,13 +241,13 @@ public class RemoteViewsTest {
     }
 
     @Test
-    public void testSetImageViewIcon() {
+    public void testSetImageViewIcon() throws Throwable {
         ImageView image = (ImageView) mResult.findViewById(R.id.remoteView_image);
         assertNull(image.getDrawable());
 
         Icon iconBlue = Icon.createWithResource(mContext, R.drawable.icon_blue);
         mRemoteViews.setImageViewIcon(R.id.remoteView_image, iconBlue);
-        mInstrumentation.runOnMainSync(() -> mRemoteViews.reapply(mContext, mResult));
+        mActivityRule.runOnUiThread(() -> mRemoteViews.reapply(mContext, mResult));
         assertNotNull(image.getDrawable());
         BitmapDrawable dBlue = (BitmapDrawable) mContext.getDrawable(R.drawable.icon_blue);
         WidgetTestUtils.assertEquals(dBlue.getBitmap(),
@@ -256,12 +256,12 @@ public class RemoteViewsTest {
     }
 
     @Test
-    public void testSetImageViewResource() {
+    public void testSetImageViewResource() throws Throwable {
         ImageView image = (ImageView) mResult.findViewById(R.id.remoteView_image);
         assertNull(image.getDrawable());
 
         mRemoteViews.setImageViewResource(R.id.remoteView_image, R.drawable.testimage);
-        mInstrumentation.runOnMainSync(() -> mRemoteViews.reapply(mContext, mResult));
+        mActivityRule.runOnUiThread(() -> mRemoteViews.reapply(mContext, mResult));
         assertNotNull(image.getDrawable());
         BitmapDrawable d = (BitmapDrawable) mContext.getDrawable(R.drawable.testimage);
         WidgetTestUtils.assertEquals(d.getBitmap(),
@@ -273,7 +273,7 @@ public class RemoteViewsTest {
     }
 
     @Test
-    public void testSetImageViewUri() throws IOException {
+    public void testSetImageViewUri() throws Throwable {
         String path = getTestImagePath();
         File imageFile = new File(path);
 
@@ -285,7 +285,7 @@ public class RemoteViewsTest {
             assertNull(image.getDrawable());
 
             mRemoteViews.setImageViewUri(R.id.remoteView_image, uri);
-            mInstrumentation.runOnMainSync(() -> mRemoteViews.reapply(mContext, mResult));
+            mActivityRule.runOnUiThread(() -> mRemoteViews.reapply(mContext, mResult));
 
             Bitmap imageViewBitmap = ((BitmapDrawable) image.getDrawable()).getBitmap();
             Bitmap expectedBitmap = WidgetTestUtils.getUnscaledAndDitheredBitmap(
@@ -304,26 +304,26 @@ public class RemoteViewsTest {
     }
 
     @Test
-    public void testSetChronometer() {
+    public void testSetChronometer() throws Throwable {
         long base1 = 50;
         long base2 = -50;
         Chronometer chronometer = (Chronometer) mResult.findViewById(R.id.remoteView_chronometer);
 
         mRemoteViews.setChronometer(R.id.remoteView_chronometer, base1, "HH:MM:SS",
                 false);
-        mInstrumentation.runOnMainSync(() -> mRemoteViews.reapply(mContext, mResult));
+        mActivityRule.runOnUiThread(() -> mRemoteViews.reapply(mContext, mResult));
         assertEquals(base1, chronometer.getBase());
         assertEquals("HH:MM:SS", chronometer.getFormat());
 
         mRemoteViews.setChronometer(R.id.remoteView_chronometer, base2, "HH:MM:SS",
                 false);
-        mInstrumentation.runOnMainSync(() -> mRemoteViews.reapply(mContext, mResult));
+        mActivityRule.runOnUiThread(() -> mRemoteViews.reapply(mContext, mResult));
         assertEquals(base2, chronometer.getBase());
         assertEquals("HH:MM:SS", chronometer.getFormat());
 
         mRemoteViews.setChronometer(R.id.remoteView_chronometer, base1, "invalid",
                 true);
-        mInstrumentation.runOnMainSync(() -> mRemoteViews.reapply(mContext, mResult));
+        mActivityRule.runOnUiThread(() -> mRemoteViews.reapply(mContext, mResult));
         assertEquals(base1, chronometer.getBase());
         assertEquals("invalid", chronometer.getFormat());
 
@@ -333,15 +333,15 @@ public class RemoteViewsTest {
     }
 
     @Test
-    public void testSetChronometerCountDown() {
+    public void testSetChronometerCountDown() throws Throwable {
         Chronometer chronometer = (Chronometer) mResult.findViewById(R.id.remoteView_chronometer);
 
         mRemoteViews.setChronometerCountDown(R.id.remoteView_chronometer, true);
-        mInstrumentation.runOnMainSync(() -> mRemoteViews.reapply(mContext, mResult));
+        mActivityRule.runOnUiThread(() -> mRemoteViews.reapply(mContext, mResult));
         assertTrue(chronometer.isCountDown());
 
         mRemoteViews.setChronometerCountDown(R.id.remoteView_chronometer, false);
-        mInstrumentation.runOnMainSync(() -> mRemoteViews.reapply(mContext, mResult));
+        mActivityRule.runOnUiThread(() -> mRemoteViews.reapply(mContext, mResult));
         assertFalse(chronometer.isCountDown());
 
         mExpectedException.expect(ActionException.class);
@@ -350,7 +350,7 @@ public class RemoteViewsTest {
     }
 
     @Test
-    public void testSetProgressBar() {
+    public void testSetProgressBar() throws Throwable {
         ProgressBar progress = (ProgressBar) mResult.findViewById(R.id.remoteView_progress);
         assertEquals(100, progress.getMax());
         assertEquals(0, progress.getProgress());
@@ -358,14 +358,14 @@ public class RemoteViewsTest {
         assertFalse(progress.isIndeterminate());
 
         mRemoteViews.setProgressBar(R.id.remoteView_progress, 80, 50, true);
-        mInstrumentation.runOnMainSync(() -> mRemoteViews.reapply(mContext, mResult));
+        mActivityRule.runOnUiThread(() -> mRemoteViews.reapply(mContext, mResult));
         // make the bar indeterminate will not affect max and progress
         assertEquals(100, progress.getMax());
         assertEquals(0, progress.getProgress());
         assertTrue(progress.isIndeterminate());
 
         mRemoteViews.setProgressBar(R.id.remoteView_progress, 60, 50, false);
-        mInstrumentation.runOnMainSync(() -> mRemoteViews.reapply(mContext, mResult));
+        mActivityRule.runOnUiThread(() -> mRemoteViews.reapply(mContext, mResult));
         assertEquals(60, progress.getMax());
         assertEquals(50, progress.getProgress());
         assertFalse(progress.isIndeterminate());
@@ -390,12 +390,12 @@ public class RemoteViewsTest {
     }
 
     @Test
-    public void testReapply() {
+    public void testReapply() throws Throwable {
         ImageView image = (ImageView) mResult.findViewById(R.id.remoteView_image);
         assertNull(image.getDrawable());
 
         mRemoteViews.setImageViewResource(R.id.remoteView_image, R.drawable.testimage);
-        mInstrumentation.runOnMainSync(() -> mRemoteViews.reapply(mContext, image));
+        mActivityRule.runOnUiThread(() -> mRemoteViews.reapply(mContext, image));
         assertNotNull(image.getDrawable());
         BitmapDrawable d = (BitmapDrawable) mContext
                 .getResources().getDrawable(R.drawable.testimage);
@@ -480,14 +480,14 @@ public class RemoteViewsTest {
     }
 
     @Test
-    public void testSetImageViewBitmap() {
+    public void testSetImageViewBitmap() throws Throwable {
         ImageView image = (ImageView) mResult.findViewById(R.id.remoteView_image);
         assertNull(image.getDrawable());
 
         Bitmap bitmap =
                 BitmapFactory.decodeResource(mContext.getResources(), R.drawable.testimage);
         mRemoteViews.setImageViewBitmap(R.id.remoteView_image, bitmap);
-        mInstrumentation.runOnMainSync(() -> mRemoteViews.reapply(mContext, mResult));
+        mActivityRule.runOnUiThread(() -> mRemoteViews.reapply(mContext, mResult));
         assertNotNull(image.getDrawable());
         WidgetTestUtils.assertEquals(bitmap, ((BitmapDrawable) image.getDrawable()).getBitmap());
 
@@ -497,14 +497,14 @@ public class RemoteViewsTest {
     }
 
     @Test
-    public void testSetBitmap() {
+    public void testSetBitmap() throws Throwable {
         ImageView image = (ImageView) mResult.findViewById(R.id.remoteView_image);
         assertNull(image.getDrawable());
 
         Bitmap bitmap =
                 BitmapFactory.decodeResource(mContext.getResources(), R.drawable.testimage);
         mRemoteViews.setBitmap(R.id.remoteView_image, "setImageBitmap", bitmap);
-        mInstrumentation.runOnMainSync(() -> mRemoteViews.reapply(mContext, mResult));
+        mActivityRule.runOnUiThread(() -> mRemoteViews.reapply(mContext, mResult));
         assertNotNull(image.getDrawable());
         WidgetTestUtils.assertEquals(bitmap, ((BitmapDrawable) image.getDrawable()).getBitmap());
 
@@ -514,13 +514,13 @@ public class RemoteViewsTest {
     }
 
     @Test
-    public void testSetBoolean() {
+    public void testSetBoolean() throws Throwable {
         ProgressBar progress = (ProgressBar) mResult.findViewById(R.id.remoteView_progress);
         // the view uses style progressBarHorizontal, so the default is false
         assertFalse(progress.isIndeterminate());
 
         mRemoteViews.setBoolean(R.id.remoteView_progress, "setIndeterminate", true);
-        mInstrumentation.runOnMainSync(() -> mRemoteViews.reapply(mContext, mResult));
+        mActivityRule.runOnUiThread(() -> mRemoteViews.reapply(mContext, mResult));
         assertTrue(progress.isIndeterminate());
 
         mExpectedException.expect(ActionException.class);
@@ -529,17 +529,17 @@ public class RemoteViewsTest {
     }
 
     @Test
-    public void testSetCharSequence() {
+    public void testSetCharSequence() throws Throwable {
         TextView textView = (TextView) mResult.findViewById(R.id.remoteView_text);
         assertEquals("", textView.getText().toString());
 
         String expected = "test setCharSequence";
         mRemoteViews.setCharSequence(R.id.remoteView_text, "setText", expected);
-        mInstrumentation.runOnMainSync(() -> mRemoteViews.reapply(mContext, mResult));
+        mActivityRule.runOnUiThread(() -> mRemoteViews.reapply(mContext, mResult));
         assertEquals(expected, textView.getText().toString());
 
         mRemoteViews.setCharSequence(R.id.remoteView_text, "setText", null);
-        mInstrumentation.runOnMainSync(() -> mRemoteViews.reapply(mContext, mResult));
+        mActivityRule.runOnUiThread(() -> mRemoteViews.reapply(mContext, mResult));
         assertEquals("", textView.getText().toString());
 
         mExpectedException.expect(ActionException.class);
@@ -548,31 +548,31 @@ public class RemoteViewsTest {
     }
 
     @Test
-    public void testSetInt() {
+    public void testSetInt() throws Throwable {
         View view = mResult.findViewById(R.id.remoteView_chronometer);
         assertEquals(View.VISIBLE, view.getVisibility());
 
         mRemoteViews.setInt(R.id.remoteView_chronometer, "setVisibility", View.INVISIBLE);
-        mInstrumentation.runOnMainSync(() -> mRemoteViews.reapply(mContext, mResult));
+        mActivityRule.runOnUiThread(() -> mRemoteViews.reapply(mContext, mResult));
         assertEquals(View.INVISIBLE, view.getVisibility());
 
         mRemoteViews.setInt(R.id.remoteView_chronometer, "setVisibility", View.GONE);
-        mInstrumentation.runOnMainSync(() -> mRemoteViews.reapply(mContext, mResult));
+        mActivityRule.runOnUiThread(() -> mRemoteViews.reapply(mContext, mResult));
         assertEquals(View.GONE, view.getVisibility());
 
         mRemoteViews.setInt(R.id.remoteView_chronometer, "setVisibility", View.VISIBLE);
-        mInstrumentation.runOnMainSync(() -> mRemoteViews.reapply(mContext, mResult));
+        mActivityRule.runOnUiThread(() -> mRemoteViews.reapply(mContext, mResult));
         assertEquals(View.VISIBLE, view.getVisibility());
     }
 
     @Test
-    public void testSetString() {
+    public void testSetString() throws Throwable {
         String format = "HH:MM:SS";
         Chronometer chronometer = (Chronometer) mResult.findViewById(R.id.remoteView_chronometer);
         assertNull(chronometer.getFormat());
 
         mRemoteViews.setString(R.id.remoteView_chronometer, "setFormat", format);
-        mInstrumentation.runOnMainSync(() -> mRemoteViews.reapply(mContext, mResult));
+        mActivityRule.runOnUiThread(() -> mRemoteViews.reapply(mContext, mResult));
         assertEquals(format, chronometer.getFormat());
 
         mExpectedException.expect(ActionException.class);
@@ -581,7 +581,7 @@ public class RemoteViewsTest {
     }
 
     @Test
-    public void testSetUri() throws IOException {
+    public void testSetUri() throws Throwable {
         String path = getTestImagePath();
         File imagefile = new File(path);
 
@@ -593,7 +593,7 @@ public class RemoteViewsTest {
             assertNull(image.getDrawable());
 
             mRemoteViews.setUri(R.id.remoteView_image, "setImageURI", uri);
-            mInstrumentation.runOnMainSync(() -> mRemoteViews.reapply(mContext, mResult));
+            mActivityRule.runOnUiThread(() -> mRemoteViews.reapply(mContext, mResult));
 
             Bitmap imageViewBitmap = ((BitmapDrawable) image.getDrawable()).getBitmap();
             Bitmap expectedBitmap = WidgetTestUtils.getUnscaledAndDitheredBitmap(
@@ -610,15 +610,15 @@ public class RemoteViewsTest {
     }
 
     @Test
-    public void testSetTextColor() {
+    public void testSetTextColor() throws Throwable {
         TextView textView = (TextView) mResult.findViewById(R.id.remoteView_text);
 
         mRemoteViews.setTextColor(R.id.remoteView_text, R.color.testcolor1);
-        mInstrumentation.runOnMainSync(() -> mRemoteViews.reapply(mContext, mResult));
+        mActivityRule.runOnUiThread(() -> mRemoteViews.reapply(mContext, mResult));
         assertSame(ColorStateList.valueOf(R.color.testcolor1), textView.getTextColors());
 
         mRemoteViews.setTextColor(R.id.remoteView_text, R.color.testcolor2);
-        mInstrumentation.runOnMainSync(() -> mRemoteViews.reapply(mContext, mResult));
+        mActivityRule.runOnUiThread(() -> mRemoteViews.reapply(mContext, mResult));
         assertSame(ColorStateList.valueOf(R.color.testcolor2), textView.getTextColors());
 
         mExpectedException.expect(ActionException.class);
@@ -627,20 +627,20 @@ public class RemoteViewsTest {
     }
 
     @Test
-    public void testSetTextCompoundDrawables() {
+    public void testSetTextCompoundDrawables() throws Throwable {
         TextView textView = (TextView) mResult.findViewById(R.id.remoteView_text);
 
         TestUtils.verifyCompoundDrawables(textView, -1, -1, -1, -1);
 
         mRemoteViews.setTextViewCompoundDrawables(R.id.remoteView_text, R.drawable.start,
                 R.drawable.pass, R.drawable.failed, 0);
-        mInstrumentation.runOnMainSync(() -> mRemoteViews.reapply(mContext, mResult));
+        mActivityRule.runOnUiThread(() -> mRemoteViews.reapply(mContext, mResult));
         TestUtils.verifyCompoundDrawables(textView, R.drawable.start, R.drawable.failed,
                 R.drawable.pass, -1);
 
         mRemoteViews.setTextViewCompoundDrawables(R.id.remoteView_text, 0,
                 R.drawable.icon_black, R.drawable.icon_red, R.drawable.icon_green);
-        mInstrumentation.runOnMainSync(() -> mRemoteViews.reapply(mContext, mResult));
+        mActivityRule.runOnUiThread(() -> mRemoteViews.reapply(mContext, mResult));
         TestUtils.verifyCompoundDrawables(textView, -1,  R.drawable.icon_red, R.drawable.icon_black,
                 R.drawable.icon_green);
 
@@ -651,7 +651,7 @@ public class RemoteViewsTest {
     }
 
     @Test
-    public void testSetTextCompoundDrawablesRelative() {
+    public void testSetTextCompoundDrawablesRelative() throws Throwable {
         TextView textViewLtr = (TextView) mResult.findViewById(R.id.remoteView_text_ltr);
         TextView textViewRtl = (TextView) mResult.findViewById(R.id.remoteView_text_rtl);
 
@@ -662,7 +662,7 @@ public class RemoteViewsTest {
                 R.drawable.start, R.drawable.pass, R.drawable.failed, 0);
         mRemoteViews.setTextViewCompoundDrawablesRelative(R.id.remoteView_text_rtl,
                 R.drawable.start, R.drawable.pass, R.drawable.failed, 0);
-        mInstrumentation.runOnMainSync(() -> mRemoteViews.reapply(mContext, mResult));
+        mActivityRule.runOnUiThread(() -> mRemoteViews.reapply(mContext, mResult));
         TestUtils.verifyCompoundDrawables(textViewLtr, R.drawable.start, R.drawable.failed,
                 R.drawable.pass, -1);
         TestUtils.verifyCompoundDrawables(textViewRtl, R.drawable.failed, R.drawable.start,
@@ -672,7 +672,7 @@ public class RemoteViewsTest {
                 R.drawable.icon_black, R.drawable.icon_red, R.drawable.icon_green);
         mRemoteViews.setTextViewCompoundDrawablesRelative(R.id.remoteView_text_rtl, 0,
                 R.drawable.icon_black, R.drawable.icon_red, R.drawable.icon_green);
-        mInstrumentation.runOnMainSync(() -> mRemoteViews.reapply(mContext, mResult));
+        mActivityRule.runOnUiThread(() -> mRemoteViews.reapply(mContext, mResult));
         TestUtils.verifyCompoundDrawables(textViewLtr, -1, R.drawable.icon_red,
                 R.drawable.icon_black, R.drawable.icon_green);
         TestUtils.verifyCompoundDrawables(textViewRtl, R.drawable.icon_red, -1,
@@ -686,7 +686,7 @@ public class RemoteViewsTest {
 
     @LargeTest
     @Test
-    public void testSetOnClickPendingIntent() {
+    public void testSetOnClickPendingIntent() throws Throwable {
         Uri uri = Uri.parse("ctstest://RemoteView/test");
         ActivityMonitor am = mInstrumentation.addMonitor(MockURLSpanTestActivity.class.getName(),
                 null, false);
@@ -698,8 +698,8 @@ public class RemoteViewsTest {
         Intent intent = new Intent(Intent.ACTION_VIEW, uri);
         PendingIntent pendingIntent = PendingIntent.getActivity(mContext, 0, intent, 0);
         mRemoteViews.setOnClickPendingIntent(R.id.remoteView_image, pendingIntent);
-        mInstrumentation.runOnMainSync(() -> mRemoteViews.reapply(mContext, mResult));
-        mInstrumentation.runOnMainSync(() -> view.performClick());
+        mActivityRule.runOnUiThread(() -> mRemoteViews.reapply(mContext, mResult));
+        mActivityRule.runOnUiThread(() -> view.performClick());
         newActivity = am.waitForActivityWithTimeout(TEST_TIMEOUT);
         assertNotNull(newActivity);
         assertTrue(newActivity instanceof MockURLSpanTestActivity);
@@ -707,17 +707,17 @@ public class RemoteViewsTest {
     }
 
     @Test
-    public void testSetLong() {
+    public void testSetLong() throws Throwable {
         long base1 = 50;
         long base2 = -50;
         Chronometer chronometer = (Chronometer) mResult.findViewById(R.id.remoteView_chronometer);
 
         mRemoteViews.setLong(R.id.remoteView_chronometer, "setBase", base1);
-        mInstrumentation.runOnMainSync(() -> mRemoteViews.reapply(mContext, mResult));
+        mActivityRule.runOnUiThread(() -> mRemoteViews.reapply(mContext, mResult));
         assertEquals(base1, chronometer.getBase());
 
         mRemoteViews.setLong(R.id.remoteView_chronometer, "setBase", base2);
-        mInstrumentation.runOnMainSync(() -> mRemoteViews.reapply(mContext, mResult));
+        mActivityRule.runOnUiThread(() -> mRemoteViews.reapply(mContext, mResult));
         assertEquals(base2, chronometer.getBase());
 
         mExpectedException.expect(ActionException.class);
@@ -726,12 +726,12 @@ public class RemoteViewsTest {
     }
 
     @Test
-    public void testSetFloat() {
+    public void testSetFloat() throws Throwable {
         LinearLayout linearLayout = (LinearLayout) mResult.findViewById(R.id.remoteView_linear);
         assertTrue(linearLayout.getWeightSum() <= 0.0f);
 
         mRemoteViews.setFloat(R.id.remoteView_linear, "setWeightSum", 0.5f);
-        mInstrumentation.runOnMainSync(() -> mRemoteViews.reapply(mContext, mResult));
+        mActivityRule.runOnUiThread(() -> mRemoteViews.reapply(mContext, mResult));
         assertEquals(0.5f, linearLayout.getWeightSum(), 0.001f);
 
         mExpectedException.expect(ActionException.class);
@@ -740,13 +740,13 @@ public class RemoteViewsTest {
     }
 
     @Test
-    public void testSetByte() {
+    public void testSetByte() throws Throwable {
         MyRemotableView customView = (MyRemotableView) mResult.findViewById(R.id.remoteView_custom);
         assertEquals(0, customView.getByteField());
 
         byte b = 100;
         mRemoteViews.setByte(R.id.remoteView_custom, "setByteField", b);
-        mInstrumentation.runOnMainSync(() -> mRemoteViews.reapply(mContext, mResult));
+        mActivityRule.runOnUiThread(() -> mRemoteViews.reapply(mContext, mResult));
         assertEquals(b, customView.getByteField());
 
         mExpectedException.expect(ActionException.class);
@@ -755,12 +755,12 @@ public class RemoteViewsTest {
     }
 
     @Test
-    public void testSetChar() {
+    public void testSetChar() throws Throwable {
         MyRemotableView customView = (MyRemotableView) mResult.findViewById(R.id.remoteView_custom);
         assertEquals('\u0000', customView.getCharField());
 
         mRemoteViews.setChar(R.id.remoteView_custom, "setCharField", 'q');
-        mInstrumentation.runOnMainSync(() -> mRemoteViews.reapply(mContext, mResult));
+        mActivityRule.runOnUiThread(() -> mRemoteViews.reapply(mContext, mResult));
         assertEquals('q', customView.getCharField());
 
         mExpectedException.expect(ActionException.class);
@@ -769,12 +769,12 @@ public class RemoteViewsTest {
     }
 
     @Test
-    public void testSetDouble() {
+    public void testSetDouble() throws Throwable {
         MyRemotableView customView = (MyRemotableView) mResult.findViewById(R.id.remoteView_custom);
         assertEquals(0.0, customView.getDoubleField(), 0.0f);
 
         mRemoteViews.setDouble(R.id.remoteView_custom, "setDoubleField", 0.5);
-        mInstrumentation.runOnMainSync(() -> mRemoteViews.reapply(mContext, mResult));
+        mActivityRule.runOnUiThread(() -> mRemoteViews.reapply(mContext, mResult));
         assertEquals(0.5, customView.getDoubleField(), 0.001f);
 
         mExpectedException.expect(ActionException.class);
@@ -783,13 +783,13 @@ public class RemoteViewsTest {
     }
 
     @Test
-    public void testSetShort() {
+    public void testSetShort() throws Throwable {
         MyRemotableView customView = (MyRemotableView) mResult.findViewById(R.id.remoteView_custom);
         assertEquals(0, customView.getShortField());
 
         short s = 25;
         mRemoteViews.setShort(R.id.remoteView_custom, "setShortField", s);
-        mInstrumentation.runOnMainSync(() -> mRemoteViews.reapply(mContext, mResult));
+        mActivityRule.runOnUiThread(() -> mRemoteViews.reapply(mContext, mResult));
         assertEquals(s, customView.getShortField());
 
         mExpectedException.expect(ActionException.class);
@@ -798,7 +798,7 @@ public class RemoteViewsTest {
     }
 
     @Test
-    public void testSetBundle() {
+    public void testSetBundle() throws Throwable {
         MyRemotableView customView = (MyRemotableView) mResult.findViewById(R.id.remoteView_custom);
         assertNull(customView.getBundleField());
 
@@ -806,7 +806,7 @@ public class RemoteViewsTest {
         bundle.putString("STR", "brexit");
         bundle.putInt("INT", 2016);
         mRemoteViews.setBundle(R.id.remoteView_custom, "setBundleField", bundle);
-        mInstrumentation.runOnMainSync(() -> mRemoteViews.reapply(mContext, mResult));
+        mActivityRule.runOnUiThread(() -> mRemoteViews.reapply(mContext, mResult));
         final Bundle fromRemote = customView.getBundleField();
         assertEquals("brexit", fromRemote.getString("STR", ""));
         assertEquals(2016, fromRemote.getInt("INT", 0));
@@ -817,7 +817,7 @@ public class RemoteViewsTest {
     }
 
     @Test
-    public void testSetIntent() {
+    public void testSetIntent() throws Throwable {
         MyRemotableView customView = (MyRemotableView) mResult.findViewById(R.id.remoteView_custom);
         assertNull(customView.getIntentField());
 
@@ -825,7 +825,7 @@ public class RemoteViewsTest {
         intent.putExtra("STR", "brexit");
         intent.putExtra("INT", 2016);
         mRemoteViews.setIntent(R.id.remoteView_custom, "setIntentField", intent);
-        mInstrumentation.runOnMainSync(() -> mRemoteViews.reapply(mContext, mResult));
+        mActivityRule.runOnUiThread(() -> mRemoteViews.reapply(mContext, mResult));
         final Intent fromRemote = customView.getIntentField();
         assertEquals(SwitchCtsActivity.class.getName(), fromRemote.getComponent().getClassName());
         assertEquals("brexit", fromRemote.getStringExtra("STR"));
@@ -837,17 +837,17 @@ public class RemoteViewsTest {
     }
 
     @Test
-    public void testRemoveAllViews() {
+    public void testRemoveAllViews() throws Throwable {
         ViewGroup root = (ViewGroup) mResult.findViewById(R.id.remoteViews_good);
         assertTrue(root.getChildCount() > 0);
 
         mRemoteViews.removeAllViews(R.id.remoteViews_good);
-        mInstrumentation.runOnMainSync(() -> mRemoteViews.reapply(mContext, mResult));
+        mActivityRule.runOnUiThread(() -> mRemoteViews.reapply(mContext, mResult));
         assertEquals(0, root.getChildCount());
     }
 
     @Test
-    public void testAddView() {
+    public void testAddView() throws Throwable {
         ViewGroup root = (ViewGroup) mResult.findViewById(R.id.remoteViews_good);
         int originalChildCount = root.getChildCount();
 
@@ -856,7 +856,7 @@ public class RemoteViewsTest {
         // Create a RemoteViews wrapper around a layout and add it to our root
         RemoteViews extra = new RemoteViews(PACKAGE_NAME, R.layout.remoteviews_extra);
         mRemoteViews.addView(R.id.remoteViews_good, extra);
-        mInstrumentation.runOnMainSync(() -> mRemoteViews.reapply(mContext, mResult));
+        mActivityRule.runOnUiThread(() -> mRemoteViews.reapply(mContext, mResult));
 
         // Verify that our root has that layout as its last (new) child
         assertEquals(originalChildCount + 1, root.getChildCount());
@@ -865,54 +865,54 @@ public class RemoteViewsTest {
     }
 
     @Test
-    public void testSetLabelFor() {
+    public void testSetLabelFor() throws Throwable {
         View labelView = mResult.findViewById(R.id.remoteView_label);
         assertEquals(View.NO_ID, labelView.getLabelFor());
 
         mRemoteViews.setLabelFor(R.id.remoteView_label, R.id.remoteView_text);
-        mInstrumentation.runOnMainSync(() -> mRemoteViews.reapply(mContext, mResult));
+        mActivityRule.runOnUiThread(() -> mRemoteViews.reapply(mContext, mResult));
         assertEquals(R.id.remoteView_text, labelView.getLabelFor());
     }
 
     @Test
-    public void testSetAccessibilityTraversalAfter() {
+    public void testSetAccessibilityTraversalAfter() throws Throwable {
         View textView = mResult.findViewById(R.id.remoteView_text);
 
         mRemoteViews.setAccessibilityTraversalAfter(R.id.remoteView_text, R.id.remoteView_frame);
-        mInstrumentation.runOnMainSync(() -> mRemoteViews.reapply(mContext, mResult));
+        mActivityRule.runOnUiThread(() -> mRemoteViews.reapply(mContext, mResult));
         assertEquals(R.id.remoteView_frame, textView.getAccessibilityTraversalAfter());
 
         mRemoteViews.setAccessibilityTraversalAfter(R.id.remoteView_text, R.id.remoteView_linear);
-        mInstrumentation.runOnMainSync(() -> mRemoteViews.reapply(mContext, mResult));
+        mActivityRule.runOnUiThread(() -> mRemoteViews.reapply(mContext, mResult));
         assertEquals(R.id.remoteView_linear, textView.getAccessibilityTraversalAfter());
     }
 
     @Test
-    public void testSetAccessibilityTraversalBefore() {
+    public void testSetAccessibilityTraversalBefore() throws Throwable {
         View textView = mResult.findViewById(R.id.remoteView_text);
 
         mRemoteViews.setAccessibilityTraversalBefore(R.id.remoteView_text, R.id.remoteView_frame);
-        mInstrumentation.runOnMainSync(() -> mRemoteViews.reapply(mContext, mResult));
+        mActivityRule.runOnUiThread(() -> mRemoteViews.reapply(mContext, mResult));
         assertEquals(R.id.remoteView_frame, textView.getAccessibilityTraversalBefore());
 
         mRemoteViews.setAccessibilityTraversalBefore(R.id.remoteView_text, R.id.remoteView_linear);
-        mInstrumentation.runOnMainSync(() -> mRemoteViews.reapply(mContext, mResult));
+        mActivityRule.runOnUiThread(() -> mRemoteViews.reapply(mContext, mResult));
         assertEquals(R.id.remoteView_linear, textView.getAccessibilityTraversalBefore());
     }
 
     @Test
-    public void testSetViewPadding() {
+    public void testSetViewPadding() throws Throwable {
         View textView = mResult.findViewById(R.id.remoteView_text);
 
         mRemoteViews.setViewPadding(R.id.remoteView_text, 10, 20, 30, 40);
-        mInstrumentation.runOnMainSync(() -> mRemoteViews.reapply(mContext, mResult));
+        mActivityRule.runOnUiThread(() -> mRemoteViews.reapply(mContext, mResult));
         assertEquals(10, textView.getPaddingLeft());
         assertEquals(20, textView.getPaddingTop());
         assertEquals(30, textView.getPaddingRight());
         assertEquals(40, textView.getPaddingBottom());
 
         mRemoteViews.setViewPadding(R.id.remoteView_text, 40, 30, 20, 10);
-        mInstrumentation.runOnMainSync(() -> mRemoteViews.reapply(mContext, mResult));
+        mActivityRule.runOnUiThread(() -> mRemoteViews.reapply(mContext, mResult));
         assertEquals(40, textView.getPaddingLeft());
         assertEquals(30, textView.getPaddingTop());
         assertEquals(20, textView.getPaddingRight());

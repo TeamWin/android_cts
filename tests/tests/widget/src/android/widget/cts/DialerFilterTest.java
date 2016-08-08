@@ -89,11 +89,11 @@ public class DialerFilterTest {
     }
 
     @Test
-    public void testOnKeyUpDown() {
+    public void testOnKeyUpDown() throws Throwable {
         // The exact behavior depends on the implementation of DialerKeyListener and
         // TextKeyListener, but even that may be changed. Simply assert basic scenarios.
 
-        mInstrumentation.runOnMainSync(() -> {
+        mActivityRule.runOnUiThread(() -> {
             mDialerFilter.setMode(DialerFilter.DIGITS_ONLY);
             mDialerFilter.requestFocus();
         });
@@ -105,7 +105,7 @@ public class DialerFilterTest {
         assertEquals("", mDialerFilter.getLetters().toString());
         assertEquals("123", mDialerFilter.getDigits().toString());
 
-        mInstrumentation.runOnMainSync(() -> {
+        mActivityRule.runOnUiThread(() -> {
             mDialerFilter.clearText();
             mDialerFilter.setMode(DialerFilter.LETTERS_ONLY);
         });
@@ -124,7 +124,7 @@ public class DialerFilterTest {
         assertEquals("ADG", mDialerFilter.getLetters().toString());
         assertEquals("", mDialerFilter.getDigits().toString());
 
-        mInstrumentation.runOnMainSync(() -> {
+        mActivityRule.runOnUiThread(() -> {
             mDialerFilter.clearText();
             mDialerFilter.setMode(DialerFilter.DIGITS_AND_LETTERS);
         });
@@ -141,7 +141,7 @@ public class DialerFilterTest {
         assertEquals("ADG", mDialerFilter.getLetters().toString());
         // A, D, K may map to numbers on some keyboards. Don't test.
 
-        mInstrumentation.runOnMainSync(() -> {
+        mActivityRule.runOnUiThread(() -> {
             mDialerFilter.clearText();
             mDialerFilter.setMode(DialerFilter.DIGITS_AND_LETTERS);
         });

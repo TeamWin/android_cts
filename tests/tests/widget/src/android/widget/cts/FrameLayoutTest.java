@@ -96,7 +96,7 @@ public class FrameLayoutTest {
     }
 
     @Test
-    public void testSetForegroundGravity() {
+    public void testSetForegroundGravity() throws Throwable {
         final BitmapDrawable foreground
                 = (BitmapDrawable) mActivity.getResources().getDrawable(R.drawable.size_48x48);
         WidgetTestUtils.assertScaledPixels(48, foreground.getIntrinsicHeight(), mActivity);
@@ -105,7 +105,7 @@ public class FrameLayoutTest {
         assertTrue(mFrameLayout.getWidth() > foreground.getIntrinsicWidth());
         assertNull(mFrameLayout.getForeground());
 
-        WidgetTestUtils.runOnMainAndDrawSync(mInstrumentation, mFrameLayout,
+        WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, mFrameLayout,
                 () -> mFrameLayout.setForeground(foreground));
         assertSame(foreground, mFrameLayout.getForeground());
         // check the default gravity FILL, it completely fills its container
@@ -123,7 +123,7 @@ public class FrameLayoutTest {
         assertTrue(mFrameLayout.getHeight() > newForeground.getIntrinsicHeight());
         assertTrue(mFrameLayout.getWidth() > foreground.getIntrinsicWidth());
 
-        WidgetTestUtils.runOnMainAndDrawSync(mInstrumentation, mFrameLayout, () -> {
+        WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, mFrameLayout, () -> {
             mFrameLayout.setForeground(newForeground);
             mFrameLayout.setForegroundGravity(Gravity.CENTER);
         });
@@ -138,11 +138,11 @@ public class FrameLayoutTest {
     }
 
     @Test
-    public void testGatherTransparentRegion() {
+    public void testGatherTransparentRegion() throws Throwable {
         final LinearLayout container =
                 (LinearLayout) mActivity.findViewById(R.id.framelayout_container);
         final Drawable foreground = mActivity.getResources().getDrawable(R.drawable.size_48x48);
-        WidgetTestUtils.runOnMainAndDrawSync(mInstrumentation, mFrameLayout, () -> {
+        WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, mFrameLayout, () -> {
             mFrameLayout.setForeground(foreground);
             mFrameLayout.setForegroundGravity(Gravity.CENTER);
         });
@@ -150,7 +150,7 @@ public class FrameLayoutTest {
         Region region = new Region(foreground.getBounds());
         assertTrue(mFrameLayout.gatherTransparentRegion(region));
 
-        WidgetTestUtils.runOnMainAndDrawSync(mInstrumentation, mFrameLayout,
+        WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, mFrameLayout,
                 () -> container.requestTransparentRegion(mFrameLayout));
         mInstrumentation.waitForIdleSync();
         region = new Region(foreground.getBounds());
@@ -158,7 +158,7 @@ public class FrameLayoutTest {
     }
 
     @Test
-    public void testAccessMeasureAllChildren() {
+    public void testAccessMeasureAllChildren() throws Throwable {
         final FrameLayout frameLayout
                 = (FrameLayout) mActivity.findViewById(R.id.framelayout_measureall);
         assertFalse(frameLayout.getConsiderGoneChildrenWhenMeasuring());
@@ -171,7 +171,7 @@ public class FrameLayoutTest {
         assertEquals(textView.getMeasuredWidth(), frameLayout.getMeasuredWidth());
 
         // measureAll is false and text view is GONE, text view will NOT be measured
-        mInstrumentation.runOnMainSync(() -> {
+        mActivityRule.runOnUiThread(() -> {
             textView.setVisibility(View.GONE);
             frameLayout.requestLayout();
         });
@@ -184,7 +184,7 @@ public class FrameLayoutTest {
         assertEquals(button.getMeasuredWidth(), frameLayout.getMeasuredWidth());
 
         // measureAll is true and text view is GONE, text view will be measured
-        mInstrumentation.runOnMainSync(() -> {
+        mActivityRule.runOnUiThread(() -> {
             frameLayout.setMeasureAllChildren(true);
             frameLayout.requestLayout();
         });

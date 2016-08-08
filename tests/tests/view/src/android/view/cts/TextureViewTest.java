@@ -16,6 +16,10 @@
 
 package android.view.cts;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+
 import android.app.Instrumentation;
 import android.cts.util.WidgetTestUtils;
 import android.graphics.Bitmap;
@@ -24,18 +28,19 @@ import android.graphics.Point;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.filters.MediumTest;
 import android.support.test.rule.ActivityTestRule;
+import android.support.test.runner.AndroidJUnit4;
 import android.view.View;
 
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
-import static org.junit.Assert.*;
+import org.junit.runner.RunWith;
 
 import java.util.concurrent.TimeoutException;
 
 @MediumTest
+@RunWith(AndroidJUnit4.class)
 public class TextureViewTest {
-
     @Rule
     public ActivityTestRule<TextureViewCtsActivity> mActivityRule = new ActivityTestRule<>(
             TextureViewCtsActivity.class);
@@ -44,7 +49,7 @@ public class TextureViewTest {
     private Instrumentation mInstrumentation;
 
     @Before
-    public void setUp() throws Exception {
+    public void setUp() {
         mActivity = mActivityRule.getActivity();
         mInstrumentation = InstrumentationRegistry.getInstrumentation();
         assertNotNull(mActivity);
@@ -74,7 +79,7 @@ public class TextureViewTest {
         updatedCount = mActivity.waitForSurfaceUpdateCount(1);
         assertEquals(1, updatedCount);
         assertEquals(Color.WHITE, getPixel(center));
-        WidgetTestUtils.runOnMainAndDrawSync(mInstrumentation,
+        WidgetTestUtils.runOnMainAndDrawSync(mActivityRule,
                 mActivity.findViewById(android.R.id.content), () -> mActivity.removeCover());
 
         int color;

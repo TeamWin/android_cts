@@ -23,6 +23,7 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.test.rule.ActivityTestRule;
 import android.text.Editable;
 import android.text.TextUtils;
 import android.view.View;
@@ -203,17 +204,16 @@ public class WidgetTestUtils {
      * Runs the specified Runnable on the main thread and ensures that the specified View's tree is
      * drawn before returning.
      *
-     * @param instrumentation the instrumentation used to run the test
+     * @param activityTestRule the activity test rule used to run the test
      * @param view the view whose tree should be drawn before returning
      * @param runner the runnable to run on the main thread, or {@code null} to
      *               simply force invalidation and a draw pass
      */
-    public static void runOnMainAndDrawSync(@NonNull Instrumentation instrumentation,
-                                            @NonNull final View view,
-                                            @Nullable final Runnable runner) {
+    public static void runOnMainAndDrawSync(@NonNull ActivityTestRule activityTestRule,
+            @NonNull final View view, @Nullable final Runnable runner) throws Throwable {
         final CountDownLatch latch = new CountDownLatch(1);
 
-        instrumentation.runOnMainSync(() -> {
+        activityTestRule.runOnUiThread(() -> {
             final ViewTreeObserver observer = view.getViewTreeObserver();
             final OnDrawListener listener = new OnDrawListener() {
                 @Override

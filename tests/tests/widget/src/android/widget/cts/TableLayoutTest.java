@@ -228,10 +228,10 @@ public class TableLayoutTest {
     }
 
     @Test
-    public void testColumnStretchableEffect() {
+    public void testColumnStretchableEffect() throws Throwable {
         final Instrumentation instrumentation = InstrumentationRegistry.getInstrumentation();
         // Preparation: remove Collapsed mark for column 0.
-        instrumentation.runOnMainSync(() -> mTableDefault.setColumnCollapsed(0, false));
+        mActivityRule.runOnUiThread(() -> mTableDefault.setColumnCollapsed(0, false));
         instrumentation.waitForIdleSync();
         assertFalse(mTableDefault.isColumnStretchable(0));
         assertFalse(mTableDefault.isColumnStretchable(1));
@@ -253,7 +253,7 @@ public class TableLayoutTest {
                 - orignalWidth1 - orignalWidth2;
 
         // Test: set column 1 is able to be stretched.
-        instrumentation.runOnMainSync(() -> mTableDefault.setColumnStretchable(1, true));
+        mActivityRule.runOnUiThread(() -> mTableDefault.setColumnStretchable(1, true));
         instrumentation.waitForIdleSync();
         assertEquals(oldWidth0, column0.getWidth());
         assertTrue(oldWidth1 < column1.getWidth());
@@ -267,7 +267,7 @@ public class TableLayoutTest {
         oldWidth2 = column2.getWidth();
 
         // Test: set column 0 is able to be stretched.
-        instrumentation.runOnMainSync(() -> mTableDefault.setColumnStretchable(0, true));
+        mActivityRule.runOnUiThread(() -> mTableDefault.setColumnStretchable(0, true));
         instrumentation.waitForIdleSync();
         assertTrue(oldWidth0 < column0.getWidth());
         assertTrue(oldWidth1 > column1.getWidth());
@@ -281,7 +281,7 @@ public class TableLayoutTest {
         oldWidth2 = column2.getWidth();
 
         // Test: set column 2 is unable to be stretched.
-        instrumentation.runOnMainSync(() -> mTableDefault.setColumnStretchable(2, false));
+        mActivityRule.runOnUiThread(() -> mTableDefault.setColumnStretchable(2, false));
         instrumentation.waitForIdleSync();
         // assertTrue(oldWidth0 < column0.getWidth());
         // assertTrue(oldWidth1 < column1.getWidth());
@@ -298,7 +298,7 @@ public class TableLayoutTest {
         oldWidth2 = column2.getWidth();
 
         // Test: mark all columns are able to be stretched.
-        instrumentation.runOnMainSync(() -> {
+        mActivityRule.runOnUiThread(() -> {
             mTableDefault.setStretchAllColumns(true);
             mTableDefault.requestLayout();
         });
@@ -317,7 +317,7 @@ public class TableLayoutTest {
         oldWidth2 = column2.getWidth();
 
         // Test: Remove the mark for all columns are able to be stretched.
-        instrumentation.runOnMainSync(() -> {
+        mActivityRule.runOnUiThread(() -> {
             mTableDefault.setStretchAllColumns(false);
             mTableDefault.requestLayout();
         });

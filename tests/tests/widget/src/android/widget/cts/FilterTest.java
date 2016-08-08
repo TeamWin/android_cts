@@ -30,10 +30,12 @@ import android.cts.util.TestThread;
 import android.os.Looper;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.filters.SmallTest;
+import android.support.test.rule.ActivityTestRule;
 import android.support.test.runner.AndroidJUnit4;
 import android.widget.Filter;
 
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -46,6 +48,10 @@ public class FilterTest {
 
     private Instrumentation mInstrumentation;
     private MockFilter mMockFilter;
+
+    @Rule
+    public ActivityTestRule<CtsActivity> mActivityRule =
+            new ActivityTestRule<>(CtsActivity.class);
 
     @Before
     public void setup() {
@@ -72,8 +78,8 @@ public class FilterTest {
     }
 
     @Test
-    public void testFilter1() {
-        mInstrumentation.runOnMainSync(() -> {
+    public void testFilter1() throws Throwable {
+        mActivityRule.runOnUiThread(() -> {
             mMockFilter = new MockFilter();
             mMockFilter.filter(TEST_CONSTRAINT);
         });
@@ -88,10 +94,10 @@ public class FilterTest {
     }
 
     @Test
-    public void testFilter2() {
+    public void testFilter2() throws Throwable {
         final Filter.FilterListener mockFilterListener = mock(Filter.FilterListener.class);
 
-        mInstrumentation.runOnMainSync(() -> {
+        mActivityRule.runOnUiThread(() -> {
             mMockFilter = new MockFilter();
             mMockFilter.filter(TEST_CONSTRAINT, mockFilterListener);
         });

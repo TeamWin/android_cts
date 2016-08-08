@@ -31,12 +31,14 @@ import android.content.res.Resources.Theme;
 import android.database.DataSetObserver;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.filters.SmallTest;
+import android.support.test.rule.ActivityTestRule;
 import android.support.test.runner.AndroidJUnit4;
 import android.widget.ArrayAdapter;
 import android.widget.Filter;
 import android.widget.TextView;
 
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -46,7 +48,6 @@ import java.util.List;
 @SmallTest
 @RunWith(AndroidJUnit4.class)
 public class ArrayAdapterTest {
-
     private static final int INVALID_ID = -1;
     private static final String STR1 = "string1";
     private static final String STR2 = "string2";
@@ -54,6 +55,10 @@ public class ArrayAdapterTest {
 
     private ArrayAdapter<String> mArrayAdapter;
     private Context mContext;
+
+    @Rule
+    public ActivityTestRule<CtsActivity> mActivityRule =
+            new ActivityTestRule<>(CtsActivity.class);
 
     @Before
     public void setup() {
@@ -183,9 +188,8 @@ public class ArrayAdapterTest {
     }
 
     @Test
-    public void testGetFilter() {
-        Instrumentation instrumentation = InstrumentationRegistry.getInstrumentation();
-        instrumentation.runOnMainSync(() -> {
+    public void testGetFilter() throws Throwable {
+        mActivityRule.runOnUiThread(() -> {
             Filter filter = mArrayAdapter.getFilter();
 
             assertNotNull(mArrayAdapter.getFilter());

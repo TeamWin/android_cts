@@ -97,34 +97,34 @@ public class ActionMenuViewTest {
     }
 
     @Test
-    public void testMenuOverflowShowHide() {
+    public void testMenuOverflowShowHide() throws Throwable {
         // Inflate menu and check that we're not showing overflow menu yet
-        mInstrumentation.runOnMainSync(
+        mActivityRule.runOnUiThread(
                 () -> mActivity.getMenuInflater().inflate(
                         R.menu.toolbar_menu, mActionMenuView.getMenu()));
         assertFalse(mActionMenuView.isOverflowMenuShowing());
 
         // Ask to show overflow menu and check that it's showing
-        mInstrumentation.runOnMainSync(mActionMenuView::showOverflowMenu);
+        mActivityRule.runOnUiThread(mActionMenuView::showOverflowMenu);
         mInstrumentation.waitForIdleSync();
         assertTrue(mActionMenuView.isOverflowMenuShowing());
 
         // Ask to hide the overflow menu and check that it's not showing
-        mInstrumentation.runOnMainSync(mActionMenuView::hideOverflowMenu);
+        mActivityRule.runOnUiThread(mActionMenuView::hideOverflowMenu);
         mInstrumentation.waitForIdleSync();
         assertFalse(mActionMenuView.isOverflowMenuShowing());
     }
 
     @Test
-    public void testMenuOverflowSubmenu() {
+    public void testMenuOverflowSubmenu() throws Throwable {
         // Inflate menu and check that we're not showing overflow menu yet
-        mInstrumentation.runOnMainSync(
+        mActivityRule.runOnUiThread(
                 () -> mActivity.getMenuInflater().inflate(
                         R.menu.toolbar_menu, mActionMenuView.getMenu()));
         assertFalse(mActionMenuView.isOverflowMenuShowing());
 
         // Ask to show overflow menu and check that it's showing
-        mInstrumentation.runOnMainSync(mActionMenuView::showOverflowMenu);
+        mActivityRule.runOnUiThread(mActionMenuView::showOverflowMenu);
         mInstrumentation.waitForIdleSync();
         assertTrue(mActionMenuView.isOverflowMenuShowing());
 
@@ -137,25 +137,25 @@ public class ActionMenuViewTest {
 
         // Ask to "perform" the share action and check that the menu click listener has
         // been notified
-        mInstrumentation.runOnMainSync(() -> menu.performIdentifierAction(R.id.action_share, 0));
+        mActivityRule.runOnUiThread(() -> menu.performIdentifierAction(R.id.action_share, 0));
         verify(menuItemClickListener, times(1)).onMenuItemClick(
                 menu.findItem(R.id.action_share));
 
         // Ask to dismiss all the popups and check that we're not showing the overflow menu
-        mInstrumentation.runOnMainSync(mActionMenuView::dismissPopupMenus);
+        mActivityRule.runOnUiThread(mActionMenuView::dismissPopupMenus);
         mInstrumentation.waitForIdleSync();
         assertFalse(mActionMenuView.isOverflowMenuShowing());
     }
 
     @Test
-    public void testMenuOverflowIcon() {
+    public void testMenuOverflowIcon() throws Throwable {
         // Inflate menu and check that we're not showing overflow menu yet
-        mInstrumentation.runOnMainSync(
+        mActivityRule.runOnUiThread(
                 () -> mActivity.getMenuInflater().inflate(
                         R.menu.toolbar_menu, mActionMenuView.getMenu()));
 
         final Drawable overflowIcon = mActivity.getDrawable(R.drawable.icon_red);
-        WidgetTestUtils.runOnMainAndDrawSync(mInstrumentation, mActionMenuView,
+        WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, mActionMenuView,
                 () -> mActionMenuView.setOverflowIcon(overflowIcon));
 
         final Drawable toolbarOverflowIcon = mActionMenuView.getOverflowIcon();

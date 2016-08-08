@@ -130,13 +130,13 @@ public class ChronometerTest {
 
     @Test
     @LargeTest
-    public void testStartAndStop() {
+    public void testStartAndStop() throws Throwable {
         final Chronometer chronometer = mActivity.getChronometer();
 
         // we will check the text is really updated every 1000ms after start,
         // so we need sleep a moment to wait wait this time. The sleep code shouldn't
-        // in the same thread with UI, that's why we use runOnMainSync here.
-        mInstrumentation.runOnMainSync(() -> {
+        // in the same thread with UI, that's why we use runOnUiThread here.
+        mActivityRule.runOnUiThread(() -> {
             // the text will update immediately when call start.
             final CharSequence valueBeforeStart = chronometer.getText();
             chronometer.start();
@@ -150,8 +150,8 @@ public class ChronometerTest {
 
         // we will check the text is really NOT updated anymore every 1000ms after stop,
         // so we need sleep a moment to wait wait this time. The sleep code shouldn't
-        // in the same thread with UI, that's why we use runOnMainSync here.
-        mInstrumentation.runOnMainSync(() -> {
+        // in the same thread with UI, that's why we use runOnUiThread here.
+        mActivityRule.runOnUiThread(() -> {
             // the text will never be updated when call stop.
             final CharSequence valueBeforeStop = chronometer.getText();
             chronometer.stop();
@@ -166,12 +166,12 @@ public class ChronometerTest {
 
     @Test
     @LargeTest
-    public void testAccessOnChronometerTickListener() {
+    public void testAccessOnChronometerTickListener() throws Throwable {
         final Chronometer chronometer = mActivity.getChronometer();
         final Chronometer.OnChronometerTickListener mockTickListener =
                 mock(Chronometer.OnChronometerTickListener.class);
 
-        mInstrumentation.runOnMainSync(() -> {
+        mActivityRule.runOnUiThread(() -> {
             chronometer.setOnChronometerTickListener(mockTickListener);
             chronometer.start();
         });
@@ -187,12 +187,12 @@ public class ChronometerTest {
 
     @Test
     @LargeTest
-    public void testCountDown() {
+    public void testCountDown() throws Throwable {
         final Chronometer chronometer = mActivity.getChronometer();
         final Chronometer.OnChronometerTickListener mockTickListener =
                 mock(Chronometer.OnChronometerTickListener.class);
 
-        mInstrumentation.runOnMainSync(() -> {
+        mActivityRule.runOnUiThread(() -> {
             chronometer.setCountDown(true);
             chronometer.setOnChronometerTickListener(mockTickListener);
             chronometer.start();
@@ -207,12 +207,12 @@ public class ChronometerTest {
 
     @Test
     @LargeTest
-    public void testCountUp() {
+    public void testCountUp() throws Throwable {
         final Chronometer chronometer = mActivity.getChronometer();
         final Chronometer.OnChronometerTickListener mockTickListener =
                 mock(Chronometer.OnChronometerTickListener.class);
 
-        mInstrumentation.runOnMainSync(() -> {
+        mActivityRule.runOnUiThread(() -> {
             chronometer.setCountDown(false);
             chronometer.setOnChronometerTickListener(mockTickListener);
             chronometer.start();

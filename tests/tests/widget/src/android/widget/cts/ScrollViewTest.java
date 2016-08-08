@@ -290,29 +290,29 @@ public class ScrollViewTest {
     }
 
     @Test
-    public void testAccessSmoothScrollingEnabled() {
+    public void testAccessSmoothScrollingEnabled() throws Throwable {
         assertTrue(mScrollViewCustom.isSmoothScrollingEnabled());
 
         // scroll immediately
         mScrollViewCustom.setSmoothScrollingEnabled(false);
         assertFalse(mScrollViewCustom.isSmoothScrollingEnabled());
 
-        mInstrumentation.runOnMainSync(() -> mScrollViewCustom.fullScroll(View.FOCUS_DOWN));
+        mActivityRule.runOnUiThread(() -> mScrollViewCustom.fullScroll(View.FOCUS_DOWN));
 
         assertEquals(mScrollBottom, mScrollViewCustom.getScrollY(), TOLERANCE);
 
-        mInstrumentation.runOnMainSync(() -> mScrollViewCustom.fullScroll(View.FOCUS_UP));
+        mActivityRule.runOnUiThread(() -> mScrollViewCustom.fullScroll(View.FOCUS_UP));
         assertEquals(0, mScrollViewCustom.getScrollY());
 
         // smooth scroll
         mScrollViewCustom.setSmoothScrollingEnabled(true);
         assertTrue(mScrollViewCustom.isSmoothScrollingEnabled());
 
-        mInstrumentation.runOnMainSync(() -> mScrollViewCustom.fullScroll(View.FOCUS_DOWN));
+        mActivityRule.runOnUiThread(() -> mScrollViewCustom.fullScroll(View.FOCUS_DOWN));
         pollingCheckSmoothScrolling(0, 0, 0, mScrollBottom);
         assertEquals(mScrollBottom, mScrollViewCustom.getScrollY(), TOLERANCE);
 
-        mInstrumentation.runOnMainSync(() -> mScrollViewCustom.fullScroll(View.FOCUS_UP));
+        mActivityRule.runOnUiThread(() -> mScrollViewCustom.fullScroll(View.FOCUS_UP));
         pollingCheckSmoothScrolling(0, 0, mScrollBottom, 0);
         assertEquals(0, mScrollViewCustom.getScrollY());
     }
@@ -622,18 +622,18 @@ public class ScrollViewTest {
     }
 
     @Test
-    public void testSmoothScrollBy() {
+    public void testSmoothScrollBy() throws Throwable {
         assertEquals(0, mScrollViewCustom.getScrollX());
         assertEquals(0, mScrollViewCustom.getScrollY());
 
-        mInstrumentation.runOnMainSync(
+        mActivityRule.runOnUiThread(
                 () -> mScrollViewCustom.smoothScrollBy(mScrollRight, mScrollBottom));
         // smoothScrollBy doesn't scroll in X
         pollingCheckSmoothScrolling(0, 0, 0, mScrollBottom);
         assertEquals(0, mScrollViewCustom.getScrollX());
         assertEquals(mScrollBottom, mScrollViewCustom.getScrollY());
 
-        mInstrumentation.runOnMainSync(
+        mActivityRule.runOnUiThread(
                 () -> mScrollViewCustom.smoothScrollBy(-mScrollRight, -mScrollBottom));
         pollingCheckSmoothScrolling(mScrollRight, 0, mScrollBottom, 0);
         assertEquals(0, mScrollViewCustom.getScrollX());
@@ -641,18 +641,18 @@ public class ScrollViewTest {
     }
 
     @Test
-    public void testSmoothScrollTo() {
+    public void testSmoothScrollTo() throws Throwable {
         assertEquals(0, mScrollViewCustom.getScrollX());
         assertEquals(0, mScrollViewCustom.getScrollY());
 
-        mInstrumentation.runOnMainSync(
+        mActivityRule.runOnUiThread(
                 () -> mScrollViewCustom.smoothScrollTo(mScrollRight, mScrollBottom));
         // smoothScrollTo doesn't scroll in X
         pollingCheckSmoothScrolling(0, 0, 0, mScrollBottom);
         assertEquals(0, mScrollViewCustom.getScrollX());
         assertEquals(mScrollBottom, mScrollViewCustom.getScrollY());
 
-        mInstrumentation.runOnMainSync(
+        mActivityRule.runOnUiThread(
                 () -> mScrollViewCustom.smoothScrollTo(mPageWidth, mPageHeight));
         pollingCheckSmoothScrolling(0, 0, mScrollBottom, mPageHeight);
         assertEquals(0, mScrollViewCustom.getScrollX());
@@ -743,17 +743,17 @@ public class ScrollViewTest {
     }
 
     @Test
-    public void testFling() {
+    public void testFling() throws Throwable {
         mScrollViewCustom.setSmoothScrollingEnabled(true);
         assertEquals(0, mScrollViewCustom.getScrollY());
 
         // fling towards bottom
-        mInstrumentation.runOnMainSync(() -> mScrollViewCustom.fling(2000));
+        mActivityRule.runOnUiThread(() -> mScrollViewCustom.fling(2000));
         pollingCheckFling(0, true);
 
         final int currentY = mScrollViewCustom.getScrollY();
         // fling towards top
-        mInstrumentation.runOnMainSync(() -> mScrollViewCustom.fling(-2000));
+        mActivityRule.runOnUiThread(() -> mScrollViewCustom.fling(-2000));
         pollingCheckFling(currentY, false);
     }
 

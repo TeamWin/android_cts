@@ -300,10 +300,10 @@ public class TimePickerTest {
     }
 
     @Test
-    public void testKeyboardTabTraversalModeClock() {
+    public void testKeyboardTabTraversalModeClock() throws Throwable {
         mTimePicker = (TimePicker) mActivity.findViewById(R.id.timepicker_clock);
 
-        mInstrumentation.runOnMainSync(() -> mTimePicker.setIs24HourView(false));
+        mActivityRule.runOnUiThread(() -> mTimePicker.setIs24HourView(false));
         mInstrumentation.waitForIdleSync();
         verifyTimePickerKeyboardTraversal(
                 true /* goForward */,
@@ -314,7 +314,7 @@ public class TimePickerTest {
                 false /* is24HourView */,
                 false /* isSpinner */);
 
-        mInstrumentation.runOnMainSync(() -> mTimePicker.setIs24HourView(true));
+        mActivityRule.runOnUiThread(() -> mTimePicker.setIs24HourView(true));
         mInstrumentation.waitForIdleSync();
         verifyTimePickerKeyboardTraversal(
                 true /* goForward */,
@@ -327,10 +327,10 @@ public class TimePickerTest {
     }
 
     @Test
-    public void testKeyboardTabTraversalModeSpinner() {
+    public void testKeyboardTabTraversalModeSpinner() throws Throwable {
         mTimePicker = (TimePicker) mActivity.findViewById(R.id.timepicker_spinner);
 
-        mInstrumentation.runOnMainSync(() -> mTimePicker.setIs24HourView(false));
+        mActivityRule.runOnUiThread(() -> mTimePicker.setIs24HourView(false));
         mInstrumentation.waitForIdleSync();
         verifyTimePickerKeyboardTraversal(
                 true /* goForward */,
@@ -341,7 +341,7 @@ public class TimePickerTest {
                 false /* is24HourView */,
                 true /* isSpinner */);
 
-        mInstrumentation.runOnMainSync(() -> mTimePicker.setIs24HourView(true));
+        mActivityRule.runOnUiThread(() -> mTimePicker.setIs24HourView(true));
         mInstrumentation.waitForIdleSync();
         verifyTimePickerKeyboardTraversal(
                 true /* goForward */,
@@ -354,7 +354,7 @@ public class TimePickerTest {
     }
 
     @Test
-    public void testKeyboardInputModeClockAmPm() {
+    public void testKeyboardInputModeClockAmPm() throws Throwable {
         final int initialHour = 6;
         final int initialMinute = 59;
         prepareForKeyboardInput(initialHour, initialMinute, false /* is24hFormat */,
@@ -429,7 +429,7 @@ public class TimePickerTest {
     }
 
     @Test
-    public void testKeyboardInputModeClock24H() {
+    public void testKeyboardInputModeClock24H() throws Throwable {
         final int initialHour = 6;
         final int initialMinute = 59;
         prepareForKeyboardInput(initialHour, initialMinute, true /* is24hFormat */,
@@ -478,14 +478,14 @@ public class TimePickerTest {
     }
 
     @Test
-    public void testKeyboardInputModeSpinnerAmPm() {
+    public void testKeyboardInputModeSpinnerAmPm() throws Throwable {
         final int initialHour = 6;
         final int initialMinute = 59;
         prepareForKeyboardInput(initialHour, initialMinute, false /* is24hFormat */,
                 false /* isClockMode */);
 
         assertEquals(initialHour, mTimePicker.getHour());
-        mInstrumentation.runOnMainSync(() -> mTimePicker.getHourView().requestFocus());
+        mActivityRule.runOnUiThread(() -> mTimePicker.getHourView().requestFocus());
         mInstrumentation.waitForIdleSync();
 
         // Input invalid hour.
@@ -525,14 +525,14 @@ public class TimePickerTest {
         verifyModeSpinnerMinuteInput();
 
         // Reset to values preparing to test the AM/PM picker.
-        mInstrumentation.runOnMainSync(() -> {
+        mActivityRule.runOnUiThread(() -> {
             mTimePicker.setHour(6);
             mTimePicker.setMinute(initialMinute);
         });
         mInstrumentation.waitForIdleSync();
         // In spinner mode the AM view and PM view are the same.
         assertEquals(mTimePicker.getAmView(), mTimePicker.getPmView());
-        mInstrumentation.runOnMainSync(() -> mTimePicker.getAmView().requestFocus());
+        mActivityRule.runOnUiThread(() -> mTimePicker.getAmView().requestFocus());
         mInstrumentation.waitForIdleSync();
         assertTrue(mTimePicker.getAmView().hasFocus());
         assertEquals(6, mTimePicker.getHour());
@@ -563,24 +563,24 @@ public class TimePickerTest {
         assertEquals(6, mTimePicker.getHour());
         assertEquals(initialMinute, mTimePicker.getMinute());
         // Given that we are already set to AM, pressing UP changes nothing.
-        mInstrumentation.runOnMainSync(() -> mTimePicker.getAmView().requestFocus());
+        mActivityRule.runOnUiThread(() -> mTimePicker.getAmView().requestFocus());
         mInstrumentation.waitForIdleSync();
         CtsKeyEventUtil.sendKeyDownUp(mInstrumentation, mTimePicker, KeyEvent.KEYCODE_DPAD_UP);
         assertEquals(6, mTimePicker.getHour());
         assertEquals(initialMinute, mTimePicker.getMinute());
-        mInstrumentation.runOnMainSync(() -> mTimePicker.getAmView().requestFocus());
+        mActivityRule.runOnUiThread(() -> mTimePicker.getAmView().requestFocus());
         mInstrumentation.waitForIdleSync();
         // Pressing down switches to PM.
         CtsKeyEventUtil.sendKeyDownUp(mInstrumentation, mTimePicker, KeyEvent.KEYCODE_DPAD_DOWN);
         assertEquals(18, mTimePicker.getHour());
         assertEquals(initialMinute, mTimePicker.getMinute());
-        mInstrumentation.runOnMainSync(() -> mTimePicker.getAmView().requestFocus());
+        mActivityRule.runOnUiThread(() -> mTimePicker.getAmView().requestFocus());
         mInstrumentation.waitForIdleSync();
         // Given that we are set to PM, pressing DOWN again changes nothing.
         CtsKeyEventUtil.sendKeyDownUp(mInstrumentation, mTimePicker, KeyEvent.KEYCODE_DPAD_DOWN);
         assertEquals(18, mTimePicker.getHour());
         assertEquals(initialMinute, mTimePicker.getMinute());
-        mInstrumentation.runOnMainSync(() -> mTimePicker.getAmView().requestFocus());
+        mActivityRule.runOnUiThread(() -> mTimePicker.getAmView().requestFocus());
         mInstrumentation.waitForIdleSync();
         // Pressing UP switches to AM.
         CtsKeyEventUtil.sendKeyDownUp(mInstrumentation, mTimePicker, KeyEvent.KEYCODE_DPAD_UP);
@@ -589,14 +589,14 @@ public class TimePickerTest {
     }
 
     @Test
-    public void testKeyboardInputModeSpinner24H() {
+    public void testKeyboardInputModeSpinner24H() throws Throwable {
         final int initialHour = 6;
         final int initialMinute = 59;
         prepareForKeyboardInput(initialHour, initialMinute, true /* is24hFormat */,
                 false /* isClockMode */);
 
         assertEquals(initialHour, mTimePicker.getHour());
-        mInstrumentation.runOnMainSync(() -> mTimePicker.getHourView().requestFocus());
+        mActivityRule.runOnUiThread(() -> mTimePicker.getHourView().requestFocus());
         mInstrumentation.waitForIdleSync();
 
         // Input invalid hour.
@@ -666,8 +666,8 @@ public class TimePickerTest {
         assertEquals(59, mTimePicker.getMinute());
     }
 
-    private void verifyModeSpinnerMinuteInput() {
-        mInstrumentation.runOnMainSync(() -> mTimePicker.getMinuteView().requestFocus());
+    private void verifyModeSpinnerMinuteInput() throws Throwable {
+        mActivityRule.runOnUiThread(() -> mTimePicker.getMinuteView().requestFocus());
         mInstrumentation.waitForIdleSync();
         assertTrue(mTimePicker.getMinuteView().hasFocus());
 
@@ -702,12 +702,12 @@ public class TimePickerTest {
     }
 
     private void prepareForKeyboardInput(int initialHour, int initialMinute, boolean is24hFormat,
-            boolean isClockMode) {
+            boolean isClockMode) throws Throwable {
         mTimePicker = isClockMode
                 ? (TimePicker) mActivity.findViewById(R.id.timepicker_clock)
                 : (TimePicker) mActivity.findViewById(R.id.timepicker_spinner);
 
-        mInstrumentation.runOnMainSync(() -> {
+        mActivityRule.runOnUiThread(() -> {
             mTimePicker.setIs24HourView(is24hFormat);
             mTimePicker.setHour(initialHour);
             mTimePicker.setMinute(initialMinute);
@@ -717,7 +717,7 @@ public class TimePickerTest {
     }
 
     private void verifyTimePickerKeyboardTraversal(boolean goForward, boolean is24HourView,
-            boolean isSpinner) {
+            boolean isSpinner) throws Throwable {
         ArrayList<View> forwardViews = new ArrayList<>();
         String summary = (goForward ? " forward " : " backward ")
                 + "traversal, is24HourView=" + is24HourView
@@ -752,7 +752,7 @@ public class TimePickerTest {
 
             if (i == 0) {
                 // Make sure we always start by focusing the 1st element in the list.
-                mInstrumentation.runOnMainSync(currentView::requestFocus);
+                mActivityRule.runOnUiThread(currentView::requestFocus);
             } else {
                 if (goForward) {
                     afterKeyCodeFormattedString = " after pressing="

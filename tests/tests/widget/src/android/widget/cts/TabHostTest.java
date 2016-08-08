@@ -105,7 +105,7 @@ public class TabHostTest {
         final Activity activity = mInstrumentation.startActivitySync(launchIntent);
         mInstrumentation.waitForIdleSync();
 
-        mInstrumentation.runOnMainSync(() -> {
+        mActivityRule.runOnUiThread(() -> {
             activity.setContentView(R.layout.tabhost_layout);
 
             TabHost tabHost = (TabHost) activity.findViewById(TAB_HOST_ID);
@@ -140,7 +140,7 @@ public class TabHostTest {
                 (ActivityGroup) mInstrumentation.startActivitySync(launchIntent);
         mInstrumentation.waitForIdleSync();
 
-        mInstrumentation.runOnMainSync(() -> {
+        mActivityRule.runOnUiThread(() -> {
             activity.setContentView(R.layout.tabhost_layout);
 
             TabHost tabHost = (TabHost) activity.findViewById(TAB_HOST_ID);

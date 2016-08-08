@@ -76,49 +76,49 @@ public class ToolbarTest {
     }
 
     @Test
-    public void testTitleAndSubtitleContent() {
+    public void testTitleAndSubtitleContent() throws Throwable {
         // Note that this method is *not* annotated to run on the UI thread, and every
         // call to setTitle / setSubtitle is wrapped to wait until the next draw pass
         // of our main toolbar. While this is not strictly necessary to check the result
         // of getTitle / getSubtitle, this logic follows the path of deferred layout
         // and invalidation of the TextViews that show the title / subtitle in the Toolbar.
 
-        WidgetTestUtils.runOnMainAndDrawSync(mInstrumentation, mMainToolbar,
+        WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, mMainToolbar,
                 () -> mMainToolbar.setTitle(R.string.toolbar_title));
         assertEquals(mActivity.getString(R.string.toolbar_title), mMainToolbar.getTitle());
 
-        WidgetTestUtils.runOnMainAndDrawSync(mInstrumentation, mMainToolbar,
+        WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, mMainToolbar,
                 () -> mMainToolbar.setTitle("New title"));
         assertEquals("New title", mMainToolbar.getTitle());
 
-        WidgetTestUtils.runOnMainAndDrawSync(mInstrumentation, mMainToolbar,
+        WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, mMainToolbar,
                 () -> mMainToolbar.setSubtitle(R.string.toolbar_subtitle));
         assertEquals(mActivity.getString(R.string.toolbar_subtitle), mMainToolbar.getSubtitle());
 
-        WidgetTestUtils.runOnMainAndDrawSync(mInstrumentation, mMainToolbar,
+        WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, mMainToolbar,
                 () -> mMainToolbar.setSubtitle("New subtitle"));
         assertEquals("New subtitle", mMainToolbar.getSubtitle());
     }
 
     @Test
-    public void testTitleAndSubtitleAppearance() {
-        WidgetTestUtils.runOnMainAndDrawSync(mInstrumentation, mMainToolbar,
+    public void testTitleAndSubtitleAppearance() throws Throwable {
+        WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, mMainToolbar,
                 () -> mMainToolbar.setTitle(R.string.toolbar_title));
-        WidgetTestUtils.runOnMainAndDrawSync(mInstrumentation, mMainToolbar,
+        WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, mMainToolbar,
                 () -> mMainToolbar.setSubtitle(R.string.toolbar_subtitle));
 
         // Since there are no APIs to get reference to the underlying implementation of
         // title and subtitle, here we are testing that calling the relevant APIs doesn't crash
 
-        WidgetTestUtils.runOnMainAndDrawSync(mInstrumentation, mMainToolbar,
+        WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, mMainToolbar,
                 () -> mMainToolbar.setTitleTextColor(Color.RED));
-        WidgetTestUtils.runOnMainAndDrawSync(mInstrumentation, mMainToolbar,
+        WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, mMainToolbar,
                 () -> mMainToolbar.setSubtitleTextColor(Color.BLUE));
 
-        WidgetTestUtils.runOnMainAndDrawSync(mInstrumentation, mMainToolbar,
+        WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, mMainToolbar,
                 () -> mMainToolbar.setTitleTextAppearance(
                         mActivity, R.style.TextAppearance_NotColors));
-        WidgetTestUtils.runOnMainAndDrawSync(mInstrumentation, mMainToolbar,
+        WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, mMainToolbar,
                 () -> mMainToolbar.setSubtitleTextAppearance(
                         mActivity, R.style.TextAppearance_WithColor));
     }
@@ -154,8 +154,8 @@ public class ToolbarTest {
     }
 
     @Test
-    public void testMenuContent() {
-        WidgetTestUtils.runOnMainAndDrawSync(mInstrumentation, mMainToolbar,
+    public void testMenuContent() throws Throwable {
+        WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, mMainToolbar,
                 () -> mMainToolbar.inflateMenu(R.menu.toolbar_menu));
 
         final Menu menu = mMainToolbar.getMenu();
@@ -184,31 +184,31 @@ public class ToolbarTest {
     }
 
     @Test
-    public void testMenuOverflowShowHide() {
+    public void testMenuOverflowShowHide() throws Throwable {
         // Inflate menu and check that we're not showing overflow menu yet
-        mInstrumentation.runOnMainSync(() -> mMainToolbar.inflateMenu(R.menu.toolbar_menu));
+        mActivityRule.runOnUiThread(() -> mMainToolbar.inflateMenu(R.menu.toolbar_menu));
         assertFalse(mMainToolbar.isOverflowMenuShowing());
 
         // Ask to show overflow menu and check that it's showing
-        mInstrumentation.runOnMainSync(() -> mMainToolbar.showOverflowMenu());
+        mActivityRule.runOnUiThread(() -> mMainToolbar.showOverflowMenu());
         mInstrumentation.waitForIdleSync();
         assertTrue(mMainToolbar.isOverflowMenuShowing());
 
         // Ask to hide the overflow menu and check that it's not showing
-        mInstrumentation.runOnMainSync(() -> mMainToolbar.hideOverflowMenu());
+        mActivityRule.runOnUiThread(() -> mMainToolbar.hideOverflowMenu());
         mInstrumentation.waitForIdleSync();
         assertFalse(mMainToolbar.isOverflowMenuShowing());
     }
 
     @Test
-    public void testMenuOverflowSubmenu() {
+    public void testMenuOverflowSubmenu() throws Throwable {
         // Inflate menu and check that we're not showing overflow menu yet
-        WidgetTestUtils.runOnMainAndDrawSync(mInstrumentation, mMainToolbar,
+        WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, mMainToolbar,
                 () -> mMainToolbar.inflateMenu(R.menu.toolbar_menu));
         assertFalse(mMainToolbar.isOverflowMenuShowing());
 
         // Ask to show overflow menu and check that it's showing
-        mInstrumentation.runOnMainSync(mMainToolbar::showOverflowMenu);
+        mActivityRule.runOnUiThread(mMainToolbar::showOverflowMenu);
         mInstrumentation.waitForIdleSync();
         assertTrue(mMainToolbar.isOverflowMenuShowing());
 
@@ -221,24 +221,24 @@ public class ToolbarTest {
 
         // Ask to "perform" the share action and check that the menu click listener has
         // been notified
-        mInstrumentation.runOnMainSync(() -> menu.performIdentifierAction(R.id.action_share, 0));
+        mActivityRule.runOnUiThread(() -> menu.performIdentifierAction(R.id.action_share, 0));
         verify(menuItemClickListener, times(1)).onMenuItemClick(
                 menu.findItem(R.id.action_share));
 
         // Ask to dismiss all the popups and check that we're not showing the overflow menu
-        mInstrumentation.runOnMainSync(mMainToolbar::dismissPopupMenus);
+        mActivityRule.runOnUiThread(mMainToolbar::dismissPopupMenus);
         mInstrumentation.waitForIdleSync();
         assertFalse(mMainToolbar.isOverflowMenuShowing());
     }
 
     @Test
-    public void testMenuOverflowIcon() {
+    public void testMenuOverflowIcon() throws Throwable {
         // Inflate menu and check that we're not showing overflow menu yet
-        WidgetTestUtils.runOnMainAndDrawSync(mInstrumentation, mMainToolbar,
+        WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, mMainToolbar,
                 () -> mMainToolbar.inflateMenu(R.menu.toolbar_menu));
 
         final Drawable overflowIcon = mActivity.getDrawable(R.drawable.icon_red);
-        WidgetTestUtils.runOnMainAndDrawSync(mInstrumentation, mMainToolbar,
+        WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, mMainToolbar,
                 () -> mMainToolbar.setOverflowIcon(overflowIcon));
 
         final Drawable toolbarOverflowIcon = mMainToolbar.getOverflowIcon();
@@ -248,44 +248,44 @@ public class ToolbarTest {
     }
 
     @Test
-    public void testActionView() {
+    public void testActionView() throws Throwable {
         // Inflate menu and check that we don't have an expanded action view
-        WidgetTestUtils.runOnMainAndDrawSync(mInstrumentation, mMainToolbar,
+        WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, mMainToolbar,
                 () -> mMainToolbar.inflateMenu(R.menu.toolbar_menu_search));
         assertFalse(mMainToolbar.hasExpandedActionView());
 
         // Expand search menu item's action view and verify that main toolbar has an expanded
         // action view
         final MenuItem searchMenuItem = mMainToolbar.getMenu().findItem(R.id.action_search);
-        mInstrumentation.runOnMainSync(searchMenuItem::expandActionView);
+        mActivityRule.runOnUiThread(searchMenuItem::expandActionView);
         mInstrumentation.waitForIdleSync();
         assertTrue(searchMenuItem.isActionViewExpanded());
         assertTrue(mMainToolbar.hasExpandedActionView());
 
         // Collapse search menu item's action view and verify that main toolbar doesn't have an
         // expanded action view
-        mInstrumentation.runOnMainSync(searchMenuItem::collapseActionView);
+        mActivityRule.runOnUiThread(searchMenuItem::collapseActionView);
         mInstrumentation.waitForIdleSync();
         assertFalse(searchMenuItem.isActionViewExpanded());
         assertFalse(mMainToolbar.hasExpandedActionView());
 
         // Expand search menu item's action view again
-        mInstrumentation.runOnMainSync(searchMenuItem::expandActionView);
+        mActivityRule.runOnUiThread(searchMenuItem::expandActionView);
         mInstrumentation.waitForIdleSync();
         assertTrue(searchMenuItem.isActionViewExpanded());
         assertTrue(mMainToolbar.hasExpandedActionView());
 
         // Now collapse search menu item's action view via toolbar's API and verify that main
         // toolbar doesn't have an expanded action view
-        mInstrumentation.runOnMainSync(mMainToolbar::collapseActionView);
+        mActivityRule.runOnUiThread(mMainToolbar::collapseActionView);
         mInstrumentation.waitForIdleSync();
         assertFalse(searchMenuItem.isActionViewExpanded());
         assertFalse(mMainToolbar.hasExpandedActionView());
     }
 
     @Test
-    public void testNavigationConfiguration() {
-        WidgetTestUtils.runOnMainAndDrawSync(mInstrumentation, mMainToolbar,
+    public void testNavigationConfiguration() throws Throwable {
+        WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, mMainToolbar,
                 () -> mMainToolbar.setNavigationIcon(R.drawable.icon_green));
         Drawable toolbarNavigationIcon = mMainToolbar.getNavigationIcon();
         TestUtils.assertAllPixelsOfColor("Navigation icon is green", toolbarNavigationIcon,
@@ -293,7 +293,7 @@ public class ToolbarTest {
                 toolbarNavigationIcon.getIntrinsicHeight(),
                 true, Color.GREEN, 1, false);
 
-        WidgetTestUtils.runOnMainAndDrawSync(mInstrumentation, mMainToolbar,
+        WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, mMainToolbar,
                 () -> mMainToolbar.setNavigationIcon(mActivity.getDrawable(R.drawable.icon_blue)));
         toolbarNavigationIcon = mMainToolbar.getNavigationIcon();
         TestUtils.assertAllPixelsOfColor("Navigation icon is blue", toolbarNavigationIcon,
@@ -301,19 +301,19 @@ public class ToolbarTest {
                 toolbarNavigationIcon.getIntrinsicHeight(),
                 true, Color.BLUE, 1, false);
 
-        mInstrumentation.runOnMainSync(
+        mActivityRule.runOnUiThread(
                 () -> mMainToolbar.setNavigationContentDescription(R.string.toolbar_navigation));
         assertEquals(mActivity.getResources().getString(R.string.toolbar_navigation),
                 mMainToolbar.getNavigationContentDescription());
 
-        mInstrumentation.runOnMainSync(
+        mActivityRule.runOnUiThread(
                 () -> mMainToolbar.setNavigationContentDescription("Navigation legend"));
         assertEquals("Navigation legend", mMainToolbar.getNavigationContentDescription());
     }
 
     @Test
-    public void testLogoConfiguration() {
-        WidgetTestUtils.runOnMainAndDrawSync(mInstrumentation, mMainToolbar,
+    public void testLogoConfiguration() throws Throwable {
+        WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, mMainToolbar,
                 () -> mMainToolbar.setLogo(R.drawable.icon_yellow));
         Drawable toolbarLogo = mMainToolbar.getLogo();
         TestUtils.assertAllPixelsOfColor("Logo is yellow", toolbarLogo,
@@ -321,7 +321,7 @@ public class ToolbarTest {
                 toolbarLogo.getIntrinsicHeight(),
                 true, Color.YELLOW, 1, false);
 
-        WidgetTestUtils.runOnMainAndDrawSync(mInstrumentation, mMainToolbar,
+        WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, mMainToolbar,
                 () -> mMainToolbar.setLogo(mActivity.getDrawable(R.drawable.icon_red)));
         toolbarLogo = mMainToolbar.getLogo();
         TestUtils.assertAllPixelsOfColor("Logo is red", toolbarLogo,
@@ -329,12 +329,12 @@ public class ToolbarTest {
                 toolbarLogo.getIntrinsicHeight(),
                 true, Color.RED, 1, false);
 
-        mInstrumentation.runOnMainSync(
+        mActivityRule.runOnUiThread(
                 () -> mMainToolbar.setLogoDescription(R.string.toolbar_logo));
         assertEquals(mActivity.getResources().getString(R.string.toolbar_logo),
                 mMainToolbar.getLogoDescription());
 
-        mInstrumentation.runOnMainSync(
+        mActivityRule.runOnUiThread(
                 () -> mMainToolbar.setLogoDescription("Logo legend"));
         assertEquals("Logo legend", mMainToolbar.getLogoDescription());
     }
@@ -376,17 +376,17 @@ public class ToolbarTest {
     }
 
     @Test
-    public void testCurrentContentInsetsLtr() {
-        mInstrumentation.runOnMainSync(
+    public void testCurrentContentInsetsLtr() throws Throwable {
+        mActivityRule.runOnUiThread(
                 () -> mMainToolbar.setLayoutDirection(View.LAYOUT_DIRECTION_LTR));
 
-        mInstrumentation.runOnMainSync(() -> mMainToolbar.setContentInsetsRelative(20, 25));
+        mActivityRule.runOnUiThread(() -> mMainToolbar.setContentInsetsRelative(20, 25));
         assertEquals(20, mMainToolbar.getCurrentContentInsetLeft());
         assertEquals(20, mMainToolbar.getCurrentContentInsetStart());
         assertEquals(25, mMainToolbar.getCurrentContentInsetRight());
         assertEquals(25, mMainToolbar.getCurrentContentInsetEnd());
 
-        mInstrumentation.runOnMainSync(() -> mMainToolbar.setContentInsetStartWithNavigation(50));
+        mActivityRule.runOnUiThread(() -> mMainToolbar.setContentInsetStartWithNavigation(50));
         assertEquals(50, mMainToolbar.getContentInsetStartWithNavigation());
         // Since we haven't configured the navigation icon itself, the current content insets
         // should stay the same
@@ -395,7 +395,7 @@ public class ToolbarTest {
         assertEquals(25, mMainToolbar.getCurrentContentInsetRight());
         assertEquals(25, mMainToolbar.getCurrentContentInsetEnd());
 
-        WidgetTestUtils.runOnMainAndDrawSync(mInstrumentation, mMainToolbar,
+        WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, mMainToolbar,
                 () -> mMainToolbar.setNavigationIcon(R.drawable.icon_green));
         assertEquals(50, mMainToolbar.getContentInsetStartWithNavigation());
         // Since we have configured the navigation icon, and the currently set start inset with
@@ -406,7 +406,7 @@ public class ToolbarTest {
         assertEquals(25, mMainToolbar.getCurrentContentInsetRight());
         assertEquals(25, mMainToolbar.getCurrentContentInsetEnd());
 
-        mInstrumentation.runOnMainSync(() -> mMainToolbar.setContentInsetEndWithActions(35));
+        mActivityRule.runOnUiThread(() -> mMainToolbar.setContentInsetEndWithActions(35));
         assertEquals(35, mMainToolbar.getContentInsetEndWithActions());
         // Since we haven't configured the menu content, the current content insets
         // should stay the same
@@ -415,7 +415,7 @@ public class ToolbarTest {
         assertEquals(25, mMainToolbar.getCurrentContentInsetRight());
         assertEquals(25, mMainToolbar.getCurrentContentInsetEnd());
 
-        WidgetTestUtils.runOnMainAndDrawSync(mInstrumentation, mMainToolbar,
+        WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, mMainToolbar,
                 () -> mMainToolbar.inflateMenu(R.menu.toolbar_menu));
         assertEquals(35, mMainToolbar.getContentInsetEndWithActions());
         // Since we have configured the menu content, and the currently set start inset with
@@ -428,17 +428,17 @@ public class ToolbarTest {
     }
 
     @Test
-    public void testCurrentContentInsetsRtl() {
-        mInstrumentation.runOnMainSync(
+    public void testCurrentContentInsetsRtl() throws Throwable {
+        mActivityRule.runOnUiThread(
                 () -> mMainToolbar.setLayoutDirection(View.LAYOUT_DIRECTION_RTL));
 
-        mInstrumentation.runOnMainSync(() -> mMainToolbar.setContentInsetsRelative(20, 25));
+        mActivityRule.runOnUiThread(() -> mMainToolbar.setContentInsetsRelative(20, 25));
         assertEquals(25, mMainToolbar.getCurrentContentInsetLeft());
         assertEquals(20, mMainToolbar.getCurrentContentInsetStart());
         assertEquals(20, mMainToolbar.getCurrentContentInsetRight());
         assertEquals(25, mMainToolbar.getCurrentContentInsetEnd());
 
-        mInstrumentation.runOnMainSync(() -> mMainToolbar.setContentInsetStartWithNavigation(50));
+        mActivityRule.runOnUiThread(() -> mMainToolbar.setContentInsetStartWithNavigation(50));
         assertEquals(50, mMainToolbar.getContentInsetStartWithNavigation());
         // Since we haven't configured the navigation icon itself, the current content insets
         // should stay the same
@@ -447,7 +447,7 @@ public class ToolbarTest {
         assertEquals(20, mMainToolbar.getCurrentContentInsetRight());
         assertEquals(25, mMainToolbar.getCurrentContentInsetEnd());
 
-        WidgetTestUtils.runOnMainAndDrawSync(mInstrumentation, mMainToolbar,
+        WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, mMainToolbar,
                 () -> mMainToolbar.setNavigationIcon(R.drawable.icon_green));
         assertEquals(50, mMainToolbar.getContentInsetStartWithNavigation());
         // Since we have configured the navigation icon, and the currently set start inset with
@@ -458,7 +458,7 @@ public class ToolbarTest {
         assertEquals(50, mMainToolbar.getCurrentContentInsetRight());
         assertEquals(25, mMainToolbar.getCurrentContentInsetEnd());
 
-        mInstrumentation.runOnMainSync(() -> mMainToolbar.setContentInsetEndWithActions(35));
+        mActivityRule.runOnUiThread(() -> mMainToolbar.setContentInsetEndWithActions(35));
         assertEquals(35, mMainToolbar.getContentInsetEndWithActions());
         // Since we haven't configured the menu content, the current content insets
         // should stay the same
@@ -467,7 +467,7 @@ public class ToolbarTest {
         assertEquals(50, mMainToolbar.getCurrentContentInsetRight());
         assertEquals(25, mMainToolbar.getCurrentContentInsetEnd());
 
-        WidgetTestUtils.runOnMainAndDrawSync(mInstrumentation, mMainToolbar,
+        WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, mMainToolbar,
                 () -> mMainToolbar.inflateMenu(R.menu.toolbar_menu));
         assertEquals(35, mMainToolbar.getContentInsetEndWithActions());
         // Since we have configured the menu content, and the currently set start inset with
