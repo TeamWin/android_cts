@@ -1715,6 +1715,7 @@
                     android:value="android.software.live_tv" />
         </activity>
 
+        <!-- Comment out in M due to b/29916035.
         <activity android:name=".tv.TimeShiftTestActivity"
                 android:label="@string/tv_time_shift_test">
             <intent-filter>
@@ -1725,6 +1726,7 @@
             <meta-data android:name="test_required_features"
                     android:value="android.software.live_tv" />
         </activity>
+        -->
 
         <activity android:name=".tv.AppLinkTestActivity"
             android:label="@string/tv_app_link_test"
