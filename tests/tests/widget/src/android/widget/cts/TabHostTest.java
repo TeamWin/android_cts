@@ -131,6 +131,7 @@ public class TabHostTest {
      * 1. the tabWidget view and tabContent view associated with tabHost are created.
      * 2. no exception occurs when uses TabSpec.setContent(android.content.Intent) after setup().
      */
+    @Test
     public void testSetup2() throws Throwable {
         final Intent launchIntent = new Intent(Intent.ACTION_MAIN);
         launchIntent.setClassName("android.widget.cts", ActivityGroup.class.getName());
