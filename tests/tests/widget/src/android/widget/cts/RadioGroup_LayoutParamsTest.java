@@ -138,6 +138,7 @@ public class RadioGroup_LayoutParamsTest {
         new RadioGroup.LayoutParams(null, getAttributeSet(R.layout.radiogroup_1));
     }
 
+    @Test
     public void testSetBaseAttributes() {
         MockLayoutParams layoutParams = new MockLayoutParams(mContext, null);
         // default values
