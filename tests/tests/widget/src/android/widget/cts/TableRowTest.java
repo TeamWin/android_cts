@@ -56,7 +56,7 @@ import org.junit.runner.RunWith;
 @MediumTest
 @RunWith(AndroidJUnit4.class)
 public class TableRowTest {
-    Activity mActivity;
+    private Activity mActivity;
 
     @Rule
     public ActivityTestRule<TableCtsActivity> mActivityRule =
