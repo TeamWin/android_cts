@@ -180,6 +180,7 @@ cts_host_libraries := \
     CtsHostJank \
     CtsHostUi \
     CtsMonkeyTestCases \
+    CtsMultiUserHostTestCases \
     CtsThemeHostTestCases \
     CtsSecurityHostTestCases \
     CtsTrustedVoiceHostTestCases \
