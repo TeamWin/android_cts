@@ -261,6 +261,8 @@ public class ExifInterfaceTest extends AndroidTestCase {
         if (stringValue != null) {
             stringValue = stringValue.trim();
         }
+        stringValue = (stringValue == "") ? null : stringValue;
+
         assertEquals(expectedValue, stringValue);
     }
 
